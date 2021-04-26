@@ -52,6 +52,7 @@ import android.net.wifi.ScanResult;
 import android.net.wifi.SoftApCapability;
 import android.net.wifi.SoftApConfiguration;
 import android.net.wifi.SoftApInfo;
+import android.net.wifi.WifiAvailableChannel;
 import android.net.wifi.WifiClient;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiEnterpriseConfig;
@@ -4309,12 +4310,29 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         // for test)
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         try {
+            final List<Integer> valid24GhzFreqs = Arrays.asList(
+                2412, 2417, 2422, 2427, 2432, 2437, 2442,
+                2447, 2452, 2457, 2462, 2467, 2472, 2484);
+            Set<Integer> supported24GhzFreqs = new HashSet<Integer>();
             uiAutomation.adoptShellPermissionIdentity();
-            mWifiManager.getAllowedChannels(WIFI_BAND_24_GHZ, OP_MODE_STA);
+            List<WifiAvailableChannel> allowedChannels =
+                mWifiManager.getAllowedChannels(WIFI_BAND_24_GHZ, OP_MODE_STA);
+            assertNotNull(allowedChannels);
+            for (WifiAvailableChannel ch : allowedChannels) {
+                //Must contain a valid 2.4GHz frequency
+                assertTrue(valid24GhzFreqs.contains(ch.getFrequencyMhz()));
+                if(ch.getFrequencyMhz() <= 2462) {
+                    //Channels 1-11 are supported for STA in all countries
+                    assertEquals(ch.getOperationalModes() & OP_MODE_STA, OP_MODE_STA);
+                    supported24GhzFreqs.add(ch.getFrequencyMhz());
+                }
+            }
+            //Channels 1-11 are supported for STA in all countries
+            assertEquals(supported24GhzFreqs.size(), 11);
         } catch (UnsupportedOperationException ex) {
             //expected if the device does not support this API
         } catch (Exception ex) {
-            fail("getAllowedChannels unexpected Exception");
+            fail("getAllowedChannels unexpected Exception " + ex);
         } finally {
             uiAutomation.dropShellPermissionIdentity();
         }
@@ -4335,11 +4353,14 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         try {
             uiAutomation.adoptShellPermissionIdentity();
-            mWifiManager.getUsableChannels(WIFI_BAND_24_GHZ, OP_MODE_STA);
+            List<WifiAvailableChannel> usableChannels =
+                mWifiManager.getUsableChannels(WIFI_BAND_24_GHZ, OP_MODE_STA);
+            //There must be at least one usable channel in 2.4GHz band
+            assertFalse(usableChannels.isEmpty());
         } catch (UnsupportedOperationException ex) {
             //expected if the device does not support this API
         } catch (Exception ex) {
-            fail("getUsableChannels unexpected Exception");
+            fail("getUsableChannels unexpected Exception " + ex);
         } finally {
             uiAutomation.dropShellPermissionIdentity();
         }
