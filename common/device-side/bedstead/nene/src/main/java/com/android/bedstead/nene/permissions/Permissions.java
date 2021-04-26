@@ -198,6 +198,11 @@ public class Permissions {
         }
     }
 
+    void clearPermissions() {
+        mPermissionContexts.clear();
+        applyPermissions();
+    }
+
     private void removePermissionContextsUntilCanApply() {
         try {
             mPermissionContexts.remove(mPermissionContexts.size() - 1);
