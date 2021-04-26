@@ -38,6 +38,7 @@ import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
+import com.google.common.base.Strings;
 import com.google.common.io.ByteStreams;
 
 import org.junit.After;
@@ -1226,7 +1227,7 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
 
         for (String line : outputLines) {
             // Starting a new block of user infos
-            if (!line.startsWith(" ".repeat(lastIndent + 1))) {
+            if (!line.startsWith(Strings.repeat(" ", lastIndent + 1))) {
                 CLog.d("User %d restrictions found, no matched restriction.", userId);
                 return false;
             }
