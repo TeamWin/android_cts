@@ -488,6 +488,8 @@
                   android:resizeableActivity="true"
                   android:supportsPictureInPicture="true"
                   android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density|touchscreen"/>
+        <activity android:name="android.server.wm.BlurTests$ListenerTestActivity"
+                  android:exported="true"/>
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
