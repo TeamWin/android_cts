@@ -97,7 +97,7 @@ public class NNAccuracyTest {
         NNTestBase.getAcceleratorNames(accelerators);
         for (String accelerator : accelerators) {
             if (accelerator.equals("nnapi-reference")) {  // Skip.
-                return;
+                continue;
             }
 
             try (NNTestBase test = mModel.createNNTestBase(/*useNNAPI=*/true,
