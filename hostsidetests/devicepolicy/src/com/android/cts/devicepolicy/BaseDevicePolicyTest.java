@@ -92,6 +92,10 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
     //The maximum time to wait for user to be unlocked.
     private static final long USER_UNLOCK_TIMEOUT_SEC = 30;
     private static final String USER_STATE_UNLOCKED = "RUNNING_UNLOCKED";
+
+    protected static final String PERMISSION_INTERACT_ACROSS_USERS =
+            "android.permission.INTERACT_ACROSS_USERS";
+
     @Option(
             name = "skip-device-admin-feature-check",
             description = "Flag that allows to skip the check for android.software.device_admin "
@@ -1193,6 +1197,12 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
                 isHeadlessSystemUserMode());
     }
 
+    protected void assumeHeadlessSystemUserMode(String reason)
+            throws DeviceNotAvailableException {
+        assumeTrue("Skipping test on non-headless system user mode. Reason: " + reason,
+                isHeadlessSystemUserMode());
+    }
+
     protected void grantDpmWrapperPermissions(String deviceAdminPkg, int userId) throws Exception {
         // TODO(b/176993670): INTERACT_ACROSS_USERS is needed by DevicePolicyManagerWrapper to
         // get the current user; the permission is available on mDeviceOwnerUserId because it
@@ -1200,18 +1210,26 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
         // (DPMS.manageUserUnchecked(), which don't grant it (as this is a privileged permission
         // that's not available to 3rd party apps). If we get rid of DevicePolicyManagerWrapper,
         // we won't need to grant it anymore.
-        CLog.i("Granting INTERACT_ACROSS_USERS package (%s) on user %d as its PO will need to "
-                + "send ordered broadcasts to user 0", deviceAdminPkg, userId);
-        executeShellCommand("pm grant --user %d %s android.permission.INTERACT_ACROSS_USERS",
-                userId, deviceAdminPkg);
+        grantPermission(deviceAdminPkg, PERMISSION_INTERACT_ACROSS_USERS, userId, "its PO needs to "
+                + "send ordered broadcasts to user 0");
 
-        CLog.i("Granting WRITE_SECURE_SETTINGS to admin package (%s) on user %d as some tests need "
-                + "it", deviceAdminPkg, userId);
-        executeShellCommand("pm grant --user %d %s android.permission.WRITE_SECURE_SETTINGS",
-                userId, deviceAdminPkg);
+        grantPermission(deviceAdminPkg, "android.permission.WRITE_SECURE_SETTINGS", userId,
+                "some tests need it");
 
         CLog.i("Granting ALLOW_TEST_API_ACCESS to package %s", deviceAdminPkg);
         executeShellCommand("am compat enable ALLOW_TEST_API_ACCESS %s", deviceAdminPkg);
+    }
+
+    protected void grantPermission(String pkg, String permission, int userId, String reason)
+            throws Exception {
+        CLog.i("Granting permission %s to package (%s) on user %d%s", pkg, permission, userId,
+                (reason == null ? "" : "(reason: " + reason + ")"));
+        executeShellCommand("pm grant --user %d %s %s", userId, pkg, permission);
+    }
+
+    protected void revokePermission(String pkg, String permission, int userId) throws Exception {
+        CLog.i("Revoking permission %s to package (%s) on user %d", pkg, permission, userId);
+        executeShellCommand("pm revoke --user %d %s %s", userId, pkg, permission);
     }
 
     /** Find effective restriction for user */

@@ -27,6 +27,7 @@ import android.os.UserHandle;
 import android.os.UserManager;
 import android.support.test.uiautomator.UiDevice;
 import android.test.AndroidTestCase;
+import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
 
@@ -41,6 +42,8 @@ import com.android.bedstead.dpmwrapper.TestAppSystemServiceFactory;
  * {@link #getWho()}.
  */
 public abstract class BaseDeviceOwnerTest extends AndroidTestCase {
+
+    private static final String TAG = BaseDeviceOwnerTest.class.getSimpleName();
 
     protected DevicePolicyManager mDevicePolicyManager;
     protected Instrumentation mInstrumentation;
@@ -63,6 +66,8 @@ public abstract class BaseDeviceOwnerTest extends AndroidTestCase {
         mHasTelephonyFeature = mContext.getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_TELEPHONY);
         mUserId = mContext.getUserId();
+
+        Log.v(TAG, getClass() + ".setUp(): userId=" + mUserId + ", dpm=" + mDevicePolicyManager);
 
         assertDeviceOwner();
     }
@@ -94,7 +99,7 @@ public abstract class BaseDeviceOwnerTest extends AndroidTestCase {
         return UserManager.isHeadlessSystemUserMode();
     }
 
-    protected UserHandle getCurrentUser() {
+    protected final UserHandle getCurrentUser() {
         return UserHandle.of(ActivityManager.getCurrentUser());
     }
 }
