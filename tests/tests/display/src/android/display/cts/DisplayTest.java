@@ -58,11 +58,9 @@ import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.AdoptShellPermissionsRule;
-import com.android.compatibility.common.util.SettingsStateKeeperRule;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -85,7 +83,6 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 
 @RunWith(AndroidJUnit4.class)
 public class DisplayTest {
@@ -114,6 +111,7 @@ public class DisplayTest {
     private Context mContext;
     private ColorSpace[] mSupportedWideGamuts;
     private Display mDefaultDisplay;
+    private HdrSettings mOriginalHdrSettings;
 
     // To test display mode switches.
     private TestPresentation mPresentation;
@@ -145,17 +143,6 @@ public class DisplayTest {
             Manifest.permission.ACCESS_SURFACE_FLINGER,
             Manifest.permission.WRITE_SECURE_SETTINGS);
 
-
-    @ClassRule
-    public static final SettingsStateKeeperRule mAreUserDisabledHdrFormatsAllowedSettingsKeeper =
-            new SettingsStateKeeperRule(InstrumentationRegistry.getTargetContext(),
-                    Settings.Global.ARE_USER_DISABLED_HDR_FORMATS_ALLOWED);
-
-    @ClassRule
-    public static final SettingsStateKeeperRule mUserDisabledHdrFormatsSettingsKeeper =
-            new SettingsStateKeeperRule(InstrumentationRegistry.getTargetContext(),
-                    Settings.Global.USER_DISABLED_HDR_FORMATS);
-
     @Before
     public void setUp() throws Exception {
         mScreenOnActivity = launchScreenOnActivity();
@@ -165,10 +152,13 @@ public class DisplayTest {
         mUiModeManager = (UiModeManager) mContext.getSystemService(Context.UI_MODE_SERVICE);
         mDefaultDisplay = mDisplayManager.getDisplay(DEFAULT_DISPLAY);
         mSupportedWideGamuts = mDefaultDisplay.getSupportedWideColorGamut();
+        mOriginalHdrSettings = new HdrSettings();
+        cacheOriginalHdrSettings();
     }
 
     @After
     public void tearDown() throws Exception {
+        restoreOriginalHdrSettings();
         if (mScreenOnActivity != null) {
             mScreenOnActivity.finish();
         }
@@ -279,19 +269,14 @@ public class DisplayTest {
     public void
             testGetHdrCapabilitiesWhenUserDisabledFormatsAreNotAllowedReturnsFilteredHdrTypes()
                     throws Exception {
-        final IBinder displayToken = SurfaceControl.getInternalDisplayToken();
-        SurfaceControl.overrideHdrTypes(displayToken, new int[]{
-                HdrCapabilities.HDR_TYPE_DOLBY_VISION, HdrCapabilities.HDR_TYPE_HDR10,
-                HdrCapabilities.HDR_TYPE_HLG, HdrCapabilities.HDR_TYPE_HDR10_PLUS});
         waitUntil(
                 mDefaultDisplay,
                 mDefaultDisplay ->
                         mDefaultDisplay.getHdrCapabilities().getSupportedHdrTypes().length == 4,
                 Duration.ofSeconds(5));
-        assertEquals(4, mDefaultDisplay.getHdrCapabilities().getSupportedHdrTypes().length);
 
         mDisplayManager.setAreUserDisabledHdrTypesAllowed(false);
-        int[] emptyUserDisabledFormats = {};
+        int[] emptyUserDisabledFormats = new int[] {};
         mDisplayManager.setUserDisabledHdrTypes(emptyUserDisabledFormats);
         int[] expectedHdrTypes = new int[]{
                 HdrCapabilities.HDR_TYPE_DOLBY_VISION, HdrCapabilities.HDR_TYPE_HDR10,
@@ -324,16 +309,11 @@ public class DisplayTest {
     public void
             testGetHdrCapabilitiesWhenUserDisabledFormatsAreAllowedReturnsNonFilteredHdrTypes()
                     throws Exception {
-        final IBinder displayToken = SurfaceControl.getInternalDisplayToken();
-        SurfaceControl.overrideHdrTypes(displayToken, new int[]{
-                HdrCapabilities.HDR_TYPE_DOLBY_VISION, HdrCapabilities.HDR_TYPE_HDR10,
-                HdrCapabilities.HDR_TYPE_HLG, HdrCapabilities.HDR_TYPE_HDR10_PLUS});
         waitUntil(
                 mDefaultDisplay,
                 mDefaultDisplay ->
                         mDefaultDisplay.getHdrCapabilities().getSupportedHdrTypes().length == 4,
                 Duration.ofSeconds(5));
-        assertEquals(4, mDefaultDisplay.getHdrCapabilities().getSupportedHdrTypes().length);
 
         mDisplayManager.setAreUserDisabledHdrTypesAllowed(true);
         int[] userDisabledHdrTypes =
@@ -357,16 +337,11 @@ public class DisplayTest {
      */
     @Test
     public void testSetUserDisabledHdrTypesStoresDisabledFormatsInSettings() throws Exception {
-        final IBinder displayToken = SurfaceControl.getInternalDisplayToken();
-        SurfaceControl.overrideHdrTypes(displayToken, new int[]{
-                HdrCapabilities.HDR_TYPE_DOLBY_VISION, HdrCapabilities.HDR_TYPE_HDR10,
-                HdrCapabilities.HDR_TYPE_HLG, HdrCapabilities.HDR_TYPE_HDR10_PLUS});
         waitUntil(
                 mDefaultDisplay,
                 mDefaultDisplay ->
                         mDefaultDisplay.getHdrCapabilities().getSupportedHdrTypes().length == 4,
                 Duration.ofSeconds(5));
-        assertEquals(4, mDefaultDisplay.getHdrCapabilities().getSupportedHdrTypes().length);
 
         mDisplayManager.setAreUserDisabledHdrTypesAllowed(false);
         int[] emptyUserDisabledFormats = {};
@@ -378,13 +353,37 @@ public class DisplayTest {
         String userDisabledFormatsString =
                 Settings.Global.getString(mContext.getContentResolver(),
                         Settings.Global.USER_DISABLED_HDR_FORMATS);
-        int[] userDisabledFormats = new int[]{};
-        userDisabledFormats = Arrays.stream(
+        int[] userDisabledFormats = Arrays.stream(
                 TextUtils.split(userDisabledFormatsString, ","))
                 .mapToInt(Integer::parseInt).toArray();
 
         assertEquals(HdrCapabilities.HDR_TYPE_DOLBY_VISION, userDisabledFormats[0]);
         assertEquals(HdrCapabilities.HDR_TYPE_HLG, userDisabledFormats[1]);
+    }
+
+    private static final class HdrSettings  {
+        public boolean areUserDisabledHdrTypesAllowed;
+        public int[] userDisabledHdrTypes;
+    }
+
+    private void cacheOriginalHdrSettings() {
+        mOriginalHdrSettings.areUserDisabledHdrTypesAllowed =
+                mDisplayManager.areUserDisabledHdrTypesAllowed();
+        mOriginalHdrSettings.userDisabledHdrTypes =
+                mDisplayManager.getUserDisabledHdrTypes();
+        final IBinder displayToken = SurfaceControl.getInternalDisplayToken();
+        SurfaceControl.overrideHdrTypes(displayToken, new int[]{
+                HdrCapabilities.HDR_TYPE_DOLBY_VISION, HdrCapabilities.HDR_TYPE_HDR10,
+                HdrCapabilities.HDR_TYPE_HLG, HdrCapabilities.HDR_TYPE_HDR10_PLUS});
+    }
+
+    private void restoreOriginalHdrSettings() {
+        final IBinder displayToken = SurfaceControl.getInternalDisplayToken();
+        SurfaceControl.overrideHdrTypes(displayToken, new int[]{});
+        mDisplayManager.setUserDisabledHdrTypes(
+                mOriginalHdrSettings.userDisabledHdrTypes);
+        mDisplayManager.setAreUserDisabledHdrTypesAllowed(
+                mOriginalHdrSettings.areUserDisabledHdrTypesAllowed);
     }
 
     private void waitUntil(Display d, Predicate<Display> pred, Duration maxWait) throws Exception {
@@ -418,7 +417,7 @@ public class DisplayTest {
                 if (remainingNanos <= 0L) {
                     throw new TimeoutException();
                 }
-                displayChanged.awaitNanos(remainingNanos);
+                remainingNanos = displayChanged.awaitNanos(remainingNanos);
             }
         } finally {
             lock.unlock();
