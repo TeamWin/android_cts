@@ -16,6 +16,8 @@
 
 package android.hardware.camera2.cts;
 
+import static android.hardware.camera2.cts.CameraTestUtils.REPORT_LOG_NAME;
+
 import static com.android.ex.camera2.blocking.BlockingSessionCallback.SESSION_CLOSED;
 
 import static org.junit.Assert.assertNotNull;
@@ -78,7 +80,6 @@ import java.util.concurrent.TimeUnit;
 @RunWith(JUnit4.class)
 public class PerformanceTest {
     private static final String TAG = "PerformanceTest";
-    private static final String REPORT_LOG_NAME = "CtsCameraTestCases";
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);
     private static final int NUM_TEST_LOOPS = 10;
     private static final int NUM_MAX_IMAGES = 4;
