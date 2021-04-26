@@ -19,6 +19,11 @@
      package="android.appwidget.cts"
      android:targetSandboxVersion="2">
 
+    <queries>
+        <!-- UpdateProviderInfoTest queries widget providers. -->
+        <package android:name="android.appwidget.cts.widgetprovider"/>
+    </queries>
+
   <application>
       <uses-library android:name="android.test.runner"/>
 
