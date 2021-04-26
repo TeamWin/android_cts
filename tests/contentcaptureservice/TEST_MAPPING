@@ -1,7 +1,12 @@
 {
   "presubmit": [
     {
-      "name": "CtsContentCaptureServiceTestCases"
+      "name": "CtsContentCaptureServiceTestCases",
+      "options": [
+        {
+          "exclude-annotation": "androidx.test.filters.FlakyTest"
+        }
+      ]
     }
   ]
 }
