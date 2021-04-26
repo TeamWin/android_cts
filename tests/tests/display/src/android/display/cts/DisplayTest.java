@@ -16,6 +16,7 @@
 
 package android.display.cts;
 
+import static android.content.pm.PackageManager.FEATURE_LEANBACK;
 import static android.view.Display.DEFAULT_DISPLAY;
 
 import static org.junit.Assert.*;
@@ -28,6 +29,7 @@ import android.app.Presentation;
 import android.app.UiModeManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.ColorSpace;
@@ -41,6 +43,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.ParcelFileDescriptor;
+import android.os.SystemProperties;
 import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
 import android.text.TextUtils;
@@ -147,9 +150,9 @@ public class DisplayTest {
     public void setUp() throws Exception {
         mScreenOnActivity = launchScreenOnActivity();
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
-        mDisplayManager = (DisplayManager) mContext.getSystemService(Context.DISPLAY_SERVICE);
-        mWindowManager = (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);
-        mUiModeManager = (UiModeManager) mContext.getSystemService(Context.UI_MODE_SERVICE);
+        mDisplayManager = mContext.getSystemService(DisplayManager.class);
+        mWindowManager = mContext.getSystemService(WindowManager.class);
+        mUiModeManager = mContext.getSystemService(UiModeManager.class);
         mDefaultDisplay = mDisplayManager.getDisplay(DEFAULT_DISPLAY);
         mSupportedWideGamuts = mDefaultDisplay.getSupportedWideColorGamut();
         mOriginalHdrSettings = new HdrSettings();
@@ -892,6 +895,21 @@ public class DisplayTest {
                 && mSupportedWideGamuts.length > 0;
         final boolean supportsP3 = list.contains(displayP3) || list.contains(dciP3);
         assertEquals(supportsWideGamut, supportsP3);
+    }
+
+    @Test
+    public void testRestrictedFramebufferSize() {
+        PackageManager packageManager = mContext.getPackageManager();
+        if (packageManager.hasSystemFeature(FEATURE_LEANBACK)) {
+            // TV devices are allowed to restrict their framebuffer size.
+            return;
+        }
+
+        // Non-TV devices are not allowed by Android CDD to restrict their framebuffer size.
+        String width = SystemProperties.get("ro.surface_flinger.max_graphics_width");
+        assertEquals("", width);
+        String height = SystemProperties.get("ro.surface_flinger.max_graphics_height");
+        assertEquals("", height);
     }
 
     /**
