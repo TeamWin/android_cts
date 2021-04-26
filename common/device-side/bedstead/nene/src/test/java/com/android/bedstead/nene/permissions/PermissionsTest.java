@@ -21,6 +21,7 @@ import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 import static org.testng.Assert.assertThrows;
 
@@ -41,6 +42,8 @@ public class PermissionsTest {
 
     private static final String PERMISSION_HELD_BY_SHELL =
             "android.permission.INTERACT_ACROSS_PROFILES";
+    private static final String DIFFERENT_PERMISSION_HELD_BY_SHELL =
+            "android.permission.INTERACT_ACROSS_USERS_FULL";
     private static final TestApis sTestApis = new TestApis();
     private static final Context sContext = sTestApis.context().instrumentedContext();
 
@@ -48,7 +51,7 @@ public class PermissionsTest {
 
     // We expect these permissions are listed in the Manifest
     private static final String INSTALL_PERMISSION = "android.permission.CHANGE_WIFI_STATE";
-    private static final String DECLARED_PERMISSION_NOT_HELD_BY_SHELL =
+    private static final String DECLARED_PERMISSION_NOT_HELD_BY_SHELL_PRE_S =
             "android.permission.INTERNET";
 
     @Test
@@ -76,7 +79,7 @@ public class PermissionsTest {
 
         assertThrows(NeneException.class,
                 () -> sTestApis.permissions().withoutPermission(
-                        DECLARED_PERMISSION_NOT_HELD_BY_SHELL));
+                        DECLARED_PERMISSION_NOT_HELD_BY_SHELL_PRE_S));
     }
 
     @Test
@@ -123,12 +126,14 @@ public class PermissionsTest {
     public void withoutPermission_permissionIsAlreadyGrantedInInstrumentedApp_permissionIsNotGranted() {
         assumeTrue("assume shell identity is only available on Q+",
                 Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q);
+        assumeFalse("After S, all available permissions are held by shell",
+                Versions.isRunningOn(Versions.S, "S"));
 
         try (PermissionContext p =
                     sTestApis.permissions().withoutPermission(
-                            DECLARED_PERMISSION_NOT_HELD_BY_SHELL)) {
+                            DECLARED_PERMISSION_NOT_HELD_BY_SHELL_PRE_S)) {
             assertThat(
-                    sContext.checkSelfPermission(DECLARED_PERMISSION_NOT_HELD_BY_SHELL))
+                    sContext.checkSelfPermission(DECLARED_PERMISSION_NOT_HELD_BY_SHELL_PRE_S))
                     .isEqualTo(PERMISSION_DENIED);
         }
     }
@@ -140,15 +145,16 @@ public class PermissionsTest {
 
         assertThrows(NeneException.class,
                 () -> sTestApis.permissions().withoutPermission(
-                        DECLARED_PERMISSION_NOT_HELD_BY_SHELL));
+                        DECLARED_PERMISSION_NOT_HELD_BY_SHELL_PRE_S));
     }
 
     @Test
     public void withPermission_permissionIsAlreadyGrantedInInstrumentedApp_permissionIsGranted() {
         try (PermissionContext p =
-                    sTestApis.permissions().withPermission(DECLARED_PERMISSION_NOT_HELD_BY_SHELL)) {
+                    sTestApis.permissions().withPermission(
+                            DECLARED_PERMISSION_NOT_HELD_BY_SHELL_PRE_S)) {
             assertThat(
-                    sContext.checkSelfPermission(DECLARED_PERMISSION_NOT_HELD_BY_SHELL))
+                    sContext.checkSelfPermission(DECLARED_PERMISSION_NOT_HELD_BY_SHELL_PRE_S))
                     .isEqualTo(PERMISSION_GRANTED);
         }
     }
@@ -170,11 +176,11 @@ public class PermissionsTest {
     @Test
     public void withPermissionAndWithoutPermission_bothApplied() {
         try (PermissionContext p = sTestApis.permissions().withPermission(PERMISSION_HELD_BY_SHELL)
-                .withoutPermission(DECLARED_PERMISSION_NOT_HELD_BY_SHELL)) {
+                .withoutPermission(DIFFERENT_PERMISSION_HELD_BY_SHELL)) {
 
             assertThat(sContext.checkSelfPermission(PERMISSION_HELD_BY_SHELL))
                     .isEqualTo(PERMISSION_GRANTED);
-            assertThat(sContext.checkSelfPermission(DECLARED_PERMISSION_NOT_HELD_BY_SHELL))
+            assertThat(sContext.checkSelfPermission(DIFFERENT_PERMISSION_HELD_BY_SHELL))
                     .isEqualTo(PERMISSION_DENIED);
         }
     }
@@ -182,12 +188,12 @@ public class PermissionsTest {
     @Test
     public void withoutPermissionAndWithPermission_bothApplied() {
         try (PermissionContext p = sTestApis.permissions()
-                .withoutPermission(DECLARED_PERMISSION_NOT_HELD_BY_SHELL)
+                .withoutPermission(DIFFERENT_PERMISSION_HELD_BY_SHELL)
                 .withPermission(PERMISSION_HELD_BY_SHELL)) {
 
             assertThat(sContext.checkSelfPermission(PERMISSION_HELD_BY_SHELL))
                     .isEqualTo(PERMISSION_GRANTED);
-            assertThat(sContext.checkSelfPermission(DECLARED_PERMISSION_NOT_HELD_BY_SHELL))
+            assertThat(sContext.checkSelfPermission(DIFFERENT_PERMISSION_HELD_BY_SHELL))
                     .isEqualTo(PERMISSION_DENIED);
         }
     }
@@ -195,32 +201,38 @@ public class PermissionsTest {
     @Test
     public void withPermissionAndWithoutPermission_contradictoryPermissions_throwsException() {
         assertThrows(NeneException.class, () -> sTestApis.permissions()
-                .withPermission(DECLARED_PERMISSION_NOT_HELD_BY_SHELL)
-                .withoutPermission(DECLARED_PERMISSION_NOT_HELD_BY_SHELL));
+                .withPermission(PERMISSION_HELD_BY_SHELL)
+                .withoutPermission(PERMISSION_HELD_BY_SHELL));
     }
 
     @Test
     public void withoutPermissionAndWithPermission_contradictoryPermissions_throwsException() {
         assertThrows(NeneException.class, () -> sTestApis.permissions()
-                .withoutPermission(DECLARED_PERMISSION_NOT_HELD_BY_SHELL)
-                .withPermission(DECLARED_PERMISSION_NOT_HELD_BY_SHELL));
+                .withoutPermission(PERMISSION_HELD_BY_SHELL)
+                .withPermission(PERMISSION_HELD_BY_SHELL));
     }
 
     @Test
     public void withPermissions_androidSAndAbove_restoresPreviousPermissionContext() {
         assumeTrue("restoring permissions is only available on S+",
                 Versions.isRunningOn(Versions.S, "S"));
+        assumeFalse("After S, all available permissions are held by shell",
+                Versions.isRunningOn(Versions.S, "S"));
 
         ShellCommandUtils.uiAutomation()
-                .adoptShellPermissionIdentity(DECLARED_PERMISSION_NOT_HELD_BY_SHELL);
+                .adoptShellPermissionIdentity(DECLARED_PERMISSION_NOT_HELD_BY_SHELL_PRE_S);
 
-        PermissionContext p =
-                     sTestApis.permissions()
-                             .withPermission(DECLARED_PERMISSION_NOT_HELD_BY_SHELL);
-        p.close();
+        try {
+            PermissionContext p =
+                    sTestApis.permissions()
+                            .withPermission(DECLARED_PERMISSION_NOT_HELD_BY_SHELL_PRE_S);
+            p.close();
 
-        assertThat(sContext.checkSelfPermission(DECLARED_PERMISSION_NOT_HELD_BY_SHELL))
-                .isEqualTo(PERMISSION_DENIED);
+            assertThat(sContext.checkSelfPermission(DECLARED_PERMISSION_NOT_HELD_BY_SHELL_PRE_S))
+                    .isEqualTo(PERMISSION_DENIED);
+        } finally {
+            ShellCommandUtils.uiAutomation().dropShellPermissionIdentity();
+        }
     }
 
     @Test
@@ -230,13 +242,17 @@ public class PermissionsTest {
 
         ShellCommandUtils.uiAutomation().adoptShellPermissionIdentity(PERMISSION_HELD_BY_SHELL);
 
-        PermissionContext p =
-                     sTestApis.permissions()
-                             .withoutPermission(PERMISSION_HELD_BY_SHELL);
-        p.close();
+        try {
+            PermissionContext p =
+                    sTestApis.permissions()
+                            .withoutPermission(PERMISSION_HELD_BY_SHELL);
+            p.close();
 
-        assertThat(sContext.checkSelfPermission(PERMISSION_HELD_BY_SHELL))
-                .isEqualTo(PERMISSION_GRANTED);
+            assertThat(sContext.checkSelfPermission(PERMISSION_HELD_BY_SHELL))
+                    .isEqualTo(PERMISSION_GRANTED);
+        } finally {
+            ShellCommandUtils.uiAutomation().dropShellPermissionIdentity();
+        }
     }
 
     // TODO(scottjonathan): Once we can install the testapp without granting all runtime
