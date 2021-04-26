@@ -17,6 +17,7 @@
 package android.media.cts;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.testng.Assert.assertThrows;
 
@@ -166,6 +167,109 @@ public class AudioRecordSharedAudioTest {
 
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .dropShellPermissionIdentity();
+    }
+
+    @Test
+    public void testCapturesMatch() throws Exception {
+        if (!hasMicrophone()) {
+            return;
+        }
+
+        AudioRecord record1 = null;
+        AudioRecord record2 = null;
+        try {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .adoptShellPermissionIdentity();
+
+            record1 = new AudioRecord.Builder().setAudioFormat(new AudioFormat.Builder()
+                                .setSampleRate(SAMPLING_RATE_HZ)
+                                .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                                .setChannelMask(AudioFormat.CHANNEL_IN_MONO).build())
+                            .setBufferSizeInBytes(SAMPLING_RATE_HZ
+                                * AudioFormat.getBytesPerSample(AudioFormat.ENCODING_PCM_16BIT))
+                            .setMaxSharedAudioHistoryMillis(
+                                    AudioRecord.getMaxSharedAudioHistoryMillis() - 1)
+                            .build();
+            assertEquals(AudioRecord.STATE_INITIALIZED, record1.getState());
+
+            record1.startRecording();
+
+            final int RECORD1_NUM_SAMPLES = SAMPLING_RATE_HZ / 2;
+            short[] buffer1 = new short[RECORD1_NUM_SAMPLES];
+
+            // blocking read should allow for at least 500ms of audio in buffer
+            int samplesRead = record1.read(buffer1, 0, RECORD1_NUM_SAMPLES);
+            assertTrue(samplesRead >= RECORD1_NUM_SAMPLES);
+
+
+            final int RECORD2_START_TIME_MS = 100;
+            MediaSyncEvent event = record1.shareAudioHistory(
+                    InstrumentationRegistry.getTargetContext().getPackageName(),
+                    (long) RECORD2_START_TIME_MS /* startFromMillis */);
+            assertEquals(event.getAudioSessionId(), record1.getAudioSessionId());
+
+            record2 = new AudioRecord.Builder().setAudioFormat(new AudioFormat.Builder()
+                                .setSampleRate(SAMPLING_RATE_HZ)
+                                .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                                .setChannelMask(AudioFormat.CHANNEL_IN_MONO).build())
+                            .setBufferSizeInBytes(SAMPLING_RATE_HZ
+                                * AudioFormat.getBytesPerSample(AudioFormat.ENCODING_PCM_16BIT))
+                            .setSharedAudioEvent(event)
+                            .build();
+            assertEquals(AudioRecord.STATE_INITIALIZED, record2.getState());
+
+            record2.startRecording();
+
+            final int RECORD2_NUM_SAMPLES = SAMPLING_RATE_HZ / 5;
+            short[] buffer2 = new short[RECORD2_NUM_SAMPLES];
+
+            samplesRead = record2.read(buffer2, 0, RECORD2_NUM_SAMPLES);
+            assertTrue(samplesRead >= RECORD2_NUM_SAMPLES);
+
+            record2.stop();
+            record1.stop();
+
+            // verify that the audio read by 2nd AudioRecord exactly matches the audio read
+            // by 1st AudioRecord starting from the expected start time with a certain tolerance.
+            final int FIRST_EXPECTED_SAMPLE = RECORD2_START_TIME_MS * SAMPLING_RATE_HZ / 1000;
+            // NOTE: START_TIME_TOLERANCE_MS must always be smaller than RECORD2_START_TIME_MS
+            final int START_TIME_TOLERANCE_MS = 1;
+            final int START_SAMPLE_TOLERANCE = START_TIME_TOLERANCE_MS * SAMPLING_RATE_HZ / 1000;
+
+            boolean buffersMatch = false;
+            for (int i = -START_SAMPLE_TOLERANCE;
+                    i < START_SAMPLE_TOLERANCE && !buffersMatch; i++) {
+                int offset1 = i + FIRST_EXPECTED_SAMPLE;
+                if (offset1 < 0) {
+                    continue;
+                }
+                // unlikely: programming error
+                if (RECORD1_NUM_SAMPLES - offset1 < RECORD2_NUM_SAMPLES) {
+                    Log.w(TAG, "testCapturesMatch: " +
+                            "invalid buffer1 size/buffer2 size/start ms combination!");
+                    break;
+                }
+
+                buffersMatch = true;
+                for (int j = 0; j < RECORD2_NUM_SAMPLES; j++) {
+                     if (buffer2[j] != buffer1[j + offset1]) {
+                         buffersMatch = false;
+                         break;
+                     }
+                }
+            }
+            assertTrue(buffersMatch);
+        } finally {
+            if (record1 != null) {
+                record1.release();
+            }
+            if (record2 != null) {
+                record2.release();
+            }
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+        }
+
     }
 
     private boolean hasMicrophone() {
