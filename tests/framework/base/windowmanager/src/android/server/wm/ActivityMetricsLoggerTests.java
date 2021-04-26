@@ -294,9 +294,8 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
         launchAndWaitForActivity(SECOND_ACTIVITY);
         separateTestJournal();
 
-        final FontScaleSession fontScaleSession = mObjectTracker.manage(new FontScaleSession());
-        final Float originalScale = fontScaleSession.get();
-        fontScaleSession.set((originalScale == null ? 1f : originalScale) + 0.1f);
+        final FontScaleSession fontScaleSession = createManagedFontScaleSession();
+        fontScaleSession.set(fontScaleSession.get() + 0.1f);
         assertActivityLifecycle(SECOND_ACTIVITY, true /* relaunched */);
 
         // Move the task of test activity to front.

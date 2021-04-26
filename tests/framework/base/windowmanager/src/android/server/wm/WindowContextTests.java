@@ -152,11 +152,9 @@ public class WindowContextTests extends WindowContextTestBase {
         final TestComponentCallbacks callbacks = new TestComponentCallbacks();
         final WindowManagerState.DisplayContent display = createManagedVirtualDisplaySession()
                 .setPublicDisplay(true).createDisplay();
-        final FontScaleSession fontScaleSession = createFontScaleSession();
+        final FontScaleSession fontScaleSession = createManagedFontScaleSession();
         final Context windowContext = createWindowContext(display.mId);
-
         windowContext.registerComponentCallbacks(callbacks);
-
         final float expectedFontScale = fontScaleSession.get() + 0.3f;
         fontScaleSession.set(expectedFontScale);
 

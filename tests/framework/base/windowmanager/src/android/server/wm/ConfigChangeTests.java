@@ -43,10 +43,8 @@ import static org.junit.Assume.assumeTrue;
 import android.content.ComponentName;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
-import android.provider.Settings;
 import android.server.wm.CommandSession.ActivityCallback;
 import android.server.wm.TestJournalProvider.TestJournalContainer;
-import android.server.wm.settings.SettingsSession;
 
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -236,7 +234,7 @@ public class ConfigChangeTests extends ActivityManagerTestBase {
     }
 
     private void testChangeFontScale(ComponentName activityName, boolean relaunch) {
-        final FontScaleSession fontScaleSession = createFontScaleSession();
+        final FontScaleSession fontScaleSession = createManagedFontScaleSession();
         fontScaleSession.set(1.0f);
         separateTestJournal();
         launchActivity(activityName);

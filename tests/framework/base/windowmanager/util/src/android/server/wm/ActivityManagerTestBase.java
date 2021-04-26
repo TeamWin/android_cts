@@ -1236,7 +1236,7 @@ public abstract class ActivityManagerTestBase {
     }
 
     /** @see ObjectTracker#manage(AutoCloseable) */
-    protected FontScaleSession createFontScaleSession() {
+    protected FontScaleSession createManagedFontScaleSession() {
         return mObjectTracker.manage(new FontScaleSession());
     }
 
@@ -1657,6 +1657,12 @@ public abstract class ActivityManagerTestBase {
             super(Settings.System.getUriFor(Settings.System.FONT_SCALE),
                     Settings.System::getFloat,
                     Settings.System::putFloat);
+        }
+
+        @Override
+        public Float get() {
+            Float value = super.get();
+            return value == null ? 1f : value;
         }
     }
 
