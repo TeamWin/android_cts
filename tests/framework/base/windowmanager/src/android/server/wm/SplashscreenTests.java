@@ -23,9 +23,11 @@ import static android.app.UiModeManager.MODE_NIGHT_YES;
 import static android.server.wm.CliIntentExtra.extraBool;
 import static android.server.wm.CliIntentExtra.extraString;
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
+import static android.server.wm.WindowManagerState.STATE_STOPPED;
 import static android.server.wm.app.Components.HANDLE_SPLASH_SCREEN_EXIT_ACTIVITY;
 import static android.server.wm.app.Components.SPLASHSCREEN_ACTIVITY;
 import static android.server.wm.app.Components.SPLASH_SCREEN_REPLACE_ICON_ACTIVITY;
+import static android.server.wm.app.Components.SPLASH_SCREEN_REPLACE_THEME_ACTIVITY;
 import static android.server.wm.app.Components.TestStartingWindowKeys.CANCEL_HANDLE_EXIT;
 import static android.server.wm.app.Components.TestStartingWindowKeys.CONTAINS_BRANDING_VIEW;
 import static android.server.wm.app.Components.TestStartingWindowKeys.CONTAINS_CENTER_VIEW;
@@ -35,6 +37,9 @@ import static android.server.wm.app.Components.TestStartingWindowKeys.HANDLE_SPL
 import static android.server.wm.app.Components.TestStartingWindowKeys.ICON_ANIMATION_DURATION;
 import static android.server.wm.app.Components.TestStartingWindowKeys.ICON_ANIMATION_START;
 import static android.server.wm.app.Components.TestStartingWindowKeys.ICON_BACKGROUND_COLOR;
+import static android.server.wm.app.Components.TestStartingWindowKeys.OVERRIDE_THEME_COLOR;
+import static android.server.wm.app.Components.TestStartingWindowKeys.OVERRIDE_THEME_COMPONENT;
+import static android.server.wm.app.Components.TestStartingWindowKeys.OVERRIDE_THEME_ENABLED;
 import static android.server.wm.app.Components.TestStartingWindowKeys.RECEIVE_SPLASH_SCREEN_EXIT;
 import static android.server.wm.app.Components.TestStartingWindowKeys.REPLACE_ICON_EXIT;
 import static android.server.wm.app.Components.TestStartingWindowKeys.REQUEST_HANDLE_EXIT_ON_CREATE;
@@ -280,5 +285,39 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         } finally {
             shortcutManager.removeDynamicShortcuts(Collections.singletonList(shortCutId));
         }
+    }
+
+    @Test
+    public void testOverrideSplashscreenTheme() {
+        // Launch the activity a first time, check that the splashscreen use the default theme,
+        // and override the theme for the next launch
+        launchActivity(SPLASH_SCREEN_REPLACE_THEME_ACTIVITY,
+                extraBool(OVERRIDE_THEME_ENABLED, true));
+
+        mWmState.waitForActivityState(SPLASH_SCREEN_REPLACE_THEME_ACTIVITY, STATE_STOPPED);
+
+        TestJournalProvider.TestJournal journal = TestJournalProvider.TestJournalContainer.get(
+                OVERRIDE_THEME_COMPONENT);
+        assertEquals(Integer.toHexString(Color.BLUE),
+                Integer.toHexString(journal.extras.getInt(OVERRIDE_THEME_COLOR)));
+
+        // Launch the activity a second time, check that the theme has been overridden and reset
+        // to the default theme
+        launchActivity(SPLASH_SCREEN_REPLACE_THEME_ACTIVITY);
+
+        mWmState.waitForActivityState(SPLASH_SCREEN_REPLACE_THEME_ACTIVITY, STATE_STOPPED);
+
+        journal = TestJournalProvider.TestJournalContainer.get(OVERRIDE_THEME_COMPONENT);
+        assertEquals(Integer.toHexString(Color.RED),
+                Integer.toHexString(journal.extras.getInt(OVERRIDE_THEME_COLOR)));
+
+        // Launch the activity a third time just to check that the theme has indeed been reset.
+        launchActivity(SPLASH_SCREEN_REPLACE_THEME_ACTIVITY);
+
+        mWmState.waitForActivityState(SPLASH_SCREEN_REPLACE_THEME_ACTIVITY, STATE_STOPPED);
+
+        journal = TestJournalProvider.TestJournalContainer.get(OVERRIDE_THEME_COMPONENT);
+        assertEquals(Integer.toHexString(Color.BLUE),
+                Integer.toHexString(journal.extras.getInt(OVERRIDE_THEME_COLOR)));
     }
 }
