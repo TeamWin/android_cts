@@ -41,6 +41,7 @@ import com.android.bedstead.harrier.annotations.meta.EnsureHasNoUserAnnotation;
 import com.android.bedstead.harrier.annotations.meta.EnsureHasProfileAnnotation;
 import com.android.bedstead.harrier.annotations.meta.EnsureHasUserAnnotation;
 import com.android.bedstead.harrier.annotations.meta.ParameterizedAnnotation;
+import com.android.bedstead.harrier.annotations.meta.RequireRunOnProfileAnnotation;
 import com.android.bedstead.harrier.annotations.meta.RequireRunOnUserAnnotation;
 import com.android.bedstead.harrier.annotations.meta.RequiresBedsteadJUnit4;
 import com.android.bedstead.nene.TestApis;
@@ -145,10 +146,12 @@ public final class DeviceState implements TestRule {
                     if (ensureHasProfileAnnotation != null) {
                         UserType forUser = (UserType) annotation.annotationType()
                                 .getMethod("forUser").invoke(annotation);
-                        boolean installTestApp = (boolean) annotation.annotationType()
-                                .getMethod("installTestApp").invoke(annotation);
+                        OptionalBoolean installInstrumentedApp = (OptionalBoolean)
+                                annotation.annotationType()
+                                .getMethod("installInstrumentedApp").invoke(annotation);
                             ensureHasProfile(
-                                    ensureHasProfileAnnotation.value(), installTestApp, forUser);
+                                    ensureHasProfileAnnotation.value(), installInstrumentedApp,
+                                    forUser);
                     }
 
 
@@ -161,15 +164,27 @@ public final class DeviceState implements TestRule {
                     EnsureHasUserAnnotation ensureHasUserAnnotation =
                             annotationType.getAnnotation(EnsureHasUserAnnotation.class);
                     if (ensureHasUserAnnotation != null) {
-                        boolean installTestApp = (boolean) annotation.getClass()
-                                .getMethod("installTestApp").invoke(annotation);
-                        ensureHasUser(ensureHasUserAnnotation.value(), installTestApp);
+                        OptionalBoolean installInstrumentedApp = (OptionalBoolean)
+                                annotation.getClass()
+                                .getMethod("installInstrumentedApp").invoke(annotation);
+                        ensureHasUser(ensureHasUserAnnotation.value(), installInstrumentedApp);
                     }
 
                     RequireRunOnUserAnnotation requireRunOnUserAnnotation =
                             annotationType.getAnnotation(RequireRunOnUserAnnotation.class);
                     if (requireRunOnUserAnnotation != null) {
                         requireRunOnUser(requireRunOnUserAnnotation.value());
+                    }
+
+                    RequireRunOnProfileAnnotation requireRunOnProfileAnnotation =
+                            annotationType.getAnnotation(RequireRunOnProfileAnnotation.class);
+                    if (requireRunOnProfileAnnotation != null) {
+                        OptionalBoolean installInstrumentedAppInParent = (OptionalBoolean)
+                                annotation.getClass()
+                                        .getMethod("installInstrumentedAppInParent")
+                                        .invoke(annotation);
+                        requireRunOnProfile(requireRunOnProfileAnnotation.value(),
+                                installInstrumentedAppInParent);
                     }
 
                     if (annotation instanceof RequireFeatures) {
@@ -254,6 +269,20 @@ public final class DeviceState implements TestRule {
     private void requireRunOnUser(String userType) {
         assumeTrue("This test only runs on users of type " + userType,
                 isRunningOnUser(userType));
+    }
+
+    private void requireRunOnProfile(String userType,
+            OptionalBoolean installInstrumentedAppInParent) {
+        assumeTrue("This test only runs on users of type " + userType,
+                isRunningOnUser(userType));
+
+        if (installInstrumentedAppInParent.equals(OptionalBoolean.TRUE)) {
+            sTestApis.packages().find(sContext.getPackageName()).install(
+                    sTestApis.users().instrumented().resolve().parent());
+        } else if (installInstrumentedAppInParent.equals(OptionalBoolean.FALSE)) {
+            sTestApis.packages().find(sContext.getPackageName()).uninstall(
+                    sTestApis.users().instrumented().resolve().parent());
+        }
     }
 
     private void requireFeature(String feature, FailureMode failureMode) {
@@ -460,7 +489,7 @@ public final class DeviceState implements TestRule {
     }
 
     private UserReference ensureHasProfile(
-            String profileType, boolean installTestApp, UserType forUser) {
+            String profileType, OptionalBoolean installInstrumentedApp, UserType forUser) {
         requireFeature("android.software.managed_users", FailureMode.SKIP);
         com.android.bedstead.nene.users.UserType resolvedUserType =
                 requireUserSupported(profileType, FailureMode.SKIP);
@@ -475,9 +504,9 @@ public final class DeviceState implements TestRule {
 
         profile.start();
 
-        if (installTestApp) {
+        if (installInstrumentedApp.equals(OptionalBoolean.TRUE)) {
             sTestApis.packages().find(sContext.getPackageName()).install(profile);
-        } else {
+        } else if (installInstrumentedApp.equals(OptionalBoolean.FALSE)) {
             sTestApis.packages().find(sContext.getPackageName()).uninstall(profile);
         }
 
@@ -511,7 +540,7 @@ public final class DeviceState implements TestRule {
         }
     }
 
-    private void ensureHasUser(String userType, boolean installTestApp) {
+    private void ensureHasUser(String userType, OptionalBoolean installInstrumentedApp) {
         com.android.bedstead.nene.users.UserType resolvedUserType =
                 requireUserSupported(userType, FailureMode.SKIP);
 
@@ -522,9 +551,9 @@ public final class DeviceState implements TestRule {
 
         user.start();
 
-        if (installTestApp) {
+        if (installInstrumentedApp.equals(OptionalBoolean.TRUE)) {
             sTestApis.packages().find(sContext.getPackageName()).install(user);
-        } else {
+        } else if (installInstrumentedApp.equals(OptionalBoolean.FALSE)) {
             sTestApis.packages().find(sContext.getPackageName()).uninstall(user);
         }
 
