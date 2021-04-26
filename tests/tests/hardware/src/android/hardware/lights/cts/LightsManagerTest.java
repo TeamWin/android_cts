@@ -104,6 +104,11 @@ public class LightsManagerTest {
     public void testControlMultipleLights() {
         assumeTrue(mLights.size() >= 2);
 
+        int[] initialColors = new int[mLights.size()];
+        for (int i = 0; i < mLights.size(); i++) {
+            initialColors[i] = mManager.getLightState(mLights.get(i)).getColor();
+        }
+
         try (LightsManager.LightsSession session = mManager.openSession(HIGH_PRIORITY)) {
             // When the session requests to turn two of the lights on:
             session.requestLights(new Builder()
@@ -115,9 +120,10 @@ public class LightsManagerTest {
             assertThat(mManager.getLightState(mLights.get(0)).getColor()).isEqualTo(0xffaaaaff);
             assertThat(mManager.getLightState(mLights.get(1)).getColor()).isEqualTo(0xffbbbbff);
 
-            // Any others should remain off.
+            // Any others should remain in their initial state.
             for (int i = 2; i < mLights.size(); i++) {
-                assertThat(mManager.getLightState(mLights.get(i)).getColor()).isEqualTo(0x00);
+                assertThat(mManager.getLightState(mLights.get(i)).getColor()).isEqualTo(
+                        initialColors[i]);
             }
         }
     }
@@ -145,6 +151,8 @@ public class LightsManagerTest {
     public void testControlLights_firstCallerWinsContention() {
         assumeTrue(mLights.size() >= 1);
 
+        int initialColor = mManager.getLightState(mLights.get(0)).getColor();
+
         try (LightsManager.LightsSession session1 = mManager.openSession(HIGH_PRIORITY);
                 LightsManager.LightsSession session2 = mManager.openSession(HIGH_PRIORITY)) {
 
@@ -161,8 +169,8 @@ public class LightsManagerTest {
 
             // When session2 goes away:
             session2.close();
-            // Then the light should turn off because there are no more sessions.
-            assertThat(mManager.getLightState(mLights.get(0)).getColor()).isEqualTo(0);
+            // Then the light should return to its initial state because there are no more sessions.
+            assertThat(mManager.getLightState(mLights.get(0)).getColor()).isEqualTo(initialColor);
         }
     }
 
