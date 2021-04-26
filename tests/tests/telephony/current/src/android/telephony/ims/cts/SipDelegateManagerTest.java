@@ -550,6 +550,48 @@ public class SipDelegateManagerTest {
     }
 
     @Test
+    public void testImsServiceDisconnected() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+        assertTrue(sServiceConnector.setDefaultSmsApp());
+        connectTestImsServiceWithSipTransportAndConfig();
+
+        TestSipTransport transportImpl = sServiceConnector.getCarrierService().getSipTransport();
+        TestImsRegistration regImpl = sServiceConnector.getCarrierService().getImsRegistration();
+        SipDelegateManager manager = getSipDelegateManager();
+        DelegateRequest request = getDefaultRequest();
+        TestSipDelegateConnection delegateConn = new TestSipDelegateConnection(request);
+
+        TestSipDelegate delegate = createSipDelegateConnectionAndVerify(manager, delegateConn,
+                transportImpl, Collections.emptySet(), 0);
+        assertNotNull(delegate);
+        verifyUpdateRegistrationCalled(regImpl);
+
+        InetSocketAddress localAddr = new InetSocketAddress(
+                InetAddresses.parseNumericAddress("1.1.1.1"), 80);
+        InetSocketAddress serverAddr = new InetSocketAddress(
+                InetAddresses.parseNumericAddress("2.2.2.2"), 81);
+        SipDelegateConfiguration c = new SipDelegateConfiguration.Builder(1,
+                SipDelegateConfiguration.SIP_TRANSPORT_TCP, localAddr, serverAddr).build();
+        verifyRegisteredAndSendSipConfig(delegateConn, delegate, request.getFeatureTags(),
+                Collections.emptySet(), c);
+
+        sendMessageAndVerifyAck(delegateConn, delegate);
+        receiveMessageAndVerifyAck(delegateConn, delegate);
+
+        sServiceConnector.disconnectCarrierImsService();
+        // unbind ImsService suddenly and wait for on destroyed
+        delegateConn.setOperationCountDownLatch(1);
+        transportImpl.waitForLatchCountdownAndReset(TestSipTransport.LATCH_DESTROY_DELEGATE);
+        delegate.notifyOnDestroyed(
+                SipDelegateManager.SIP_DELEGATE_DESTROY_REASON_SERVICE_DEAD);
+        delegateConn.waitForCountDown(ImsUtils.TEST_TIMEOUT_MS);
+        delegateConn.verifyDestroyed(
+                SipDelegateManager.SIP_DELEGATE_DESTROY_REASON_SERVICE_DEAD);
+    }
+
+    @Test
     public void testDeprecatedConfig() throws Exception {
         if (!ImsUtils.shouldTestImsService()) {
             return;
