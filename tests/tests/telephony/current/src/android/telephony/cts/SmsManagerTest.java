@@ -569,10 +569,16 @@ public class SmsManagerTest {
     private void setSmsApp(String pkg) throws Exception {
         executeWithShellPermissionIdentity(() -> {
             Context context = getInstrumentation().getContext();
+            RoleManager roleManager = context.getSystemService(RoleManager.class);
             CompletableFuture<Boolean> result = new CompletableFuture<>();
-            context.getSystemService(RoleManager.class).addRoleHolderAsUser(
-                    RoleManager.ROLE_SMS, pkg, RoleManager.MANAGE_HOLDERS_FLAG_DONT_KILL_APP,
-                    context.getUser(), AsyncTask.THREAD_POOL_EXECUTOR, result::complete);
+            if (roleManager.getRoleHoldersAsUser(RoleManager.ROLE_SMS,
+                    context.getUser()).contains(pkg)) {
+                result.complete(true);
+            } else {
+                roleManager.addRoleHolderAsUser(RoleManager.ROLE_SMS, pkg,
+                        RoleManager.MANAGE_HOLDERS_FLAG_DONT_KILL_APP, context.getUser(),
+                        AsyncTask.THREAD_POOL_EXECUTOR, result::complete);
+            }
             assertTrue(result.get(5, TimeUnit.SECONDS));
         });
     }
