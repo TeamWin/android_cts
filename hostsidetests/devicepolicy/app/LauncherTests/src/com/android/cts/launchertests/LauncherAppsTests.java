@@ -37,22 +37,28 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.os.Messenger;
+import android.os.Process;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.test.AndroidTestCase;
+import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
+
 import com.android.compatibility.common.util.SystemUtil;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * Tests for LauncherApps service
  */
 public class LauncherAppsTests extends AndroidTestCase {
+
+    private static final String TAG = LauncherAppsTests.class.getSimpleName();
 
     public static final String SIMPLE_APP_PACKAGE = "com.android.cts.launcherapps.simpleapp";
     private static final String HAS_LAUNCHER_ACTIVITY_APP_PACKAGE =
@@ -93,20 +99,23 @@ public class LauncherAppsTests extends AndroidTestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
+
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         Bundle arguments = InstrumentationRegistry.getArguments();
-        UserManager userManager = (UserManager) mInstrumentation.getContext().getSystemService(
-                Context.USER_SERVICE);
+        Context context = mInstrumentation.getContext();
+        UserManager userManager = context.getSystemService(UserManager.class);
         mUser = getUserHandleArgument(userManager, "testUser", arguments);
-        mLauncherApps = (LauncherApps) mInstrumentation.getContext().getSystemService(
-                Context.LAUNCHER_APPS_SERVICE);
 
-        final Intent intent = new Intent();
+        Log.d(TAG, "Running as user " + Process.myUserHandle() + " and checking for launcher on "
+                + "user " + mUser);
+        mLauncherApps = context.getSystemService(LauncherApps.class);
+
+        Intent intent = new Intent();
         intent.setComponent(new ComponentName("com.android.cts.launchertests.support",
                         "com.android.cts.launchertests.support.LauncherCallbackTestsService"));
 
         mConnection = new Connection();
-        mInstrumentation.getContext().bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+        context.bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
         mConnection.waitForService();
         mResult = new Result(Looper.getMainLooper());
         mResultMessenger = new Messenger(mResult);
@@ -473,7 +482,11 @@ public class LauncherAppsTests extends AndroidTestCase {
     }
 
     private void assertInjectedActivityNotFound(String targetPackage) {
+        Log.d(TAG, "Searching for package " + targetPackage + " on user " + mUser);
         List<LauncherActivityInfo> activities = mLauncherApps.getActivityList(null, mUser);
+        Log.d(TAG, "Got " + activities.size() + " activities: " + activities.stream()
+                .map((info) -> info.getComponentName().flattenToShortString())
+                .collect(Collectors.toList()));
         for (LauncherActivityInfo activity : activities) {
             if (!activity.getUser().equals(mUser)) {
                 continue;
