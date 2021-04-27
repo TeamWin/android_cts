@@ -1647,7 +1647,7 @@ public class TelephonyManagerTest {
         synchronized (mLock) {
             // reboot takes longer time
             if (!mRadioRebootTriggered) {
-                mLock.wait(10000);
+                mLock.wait(15000);
             }
         }
         assertThat(mTelephonyManager.getRadioPowerState()).isEqualTo(
