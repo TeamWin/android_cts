@@ -28,6 +28,8 @@ import static org.junit.Assert.fail;
 
 import androidx.test.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.PropertyUtil;
+
 public class CellBroadcastDataMigrationTest {
     private static final String TAG = CellBroadcastDataMigrationTest.class.getSimpleName();
     private static final String DEFAULT_LEGACY_DATA_MIGRATION_APP =
@@ -45,6 +47,11 @@ public class CellBroadcastDataMigrationTest {
                 .resolveContentProvider(CellBroadcasts.AUTHORITY_LEGACY, 0);
         if (legacy == null) {
             Log.d(TAG, "Device does not support data migration");
+            return;
+        }
+
+        if(PropertyUtil.getProperty("ro.apex.updatable").equals("false")){
+            Log.d(TAG, "no Google CBS module, does not support data migration");
             return;
         }
 
