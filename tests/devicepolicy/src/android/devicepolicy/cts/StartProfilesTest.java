@@ -16,6 +16,10 @@
 
 package android.devicepolicy.cts;
 
+import static android.Manifest.permission.CREATE_USERS;
+import static android.Manifest.permission.INTERACT_ACROSS_USERS;
+import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
+
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
@@ -33,6 +37,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasTvProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
@@ -43,7 +48,6 @@ import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
 
-import org.junit.After;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -70,11 +74,6 @@ public final class StartProfilesTest {
     @ClassRule @Rule
     public static final DeviceState sDeviceState = new DeviceState();
 
-    @After
-    public void tearDown() {
-        mUiAutomation.dropShellPermissionIdentity();
-    }
-
     private Function<Intent, Boolean> userIsEqual(UserReference user) {
         return (intent) -> user.userHandle().equals(intent.getParcelableExtra(Intent.EXTRA_USER));
     }
@@ -83,11 +82,8 @@ public final class StartProfilesTest {
     @RequireFeatures(PackageManager.FEATURE_MANAGED_USERS)
     @RequireRunOnPrimaryUser
     @EnsureHasWorkProfile
+    @EnsureHasPermission({INTERACT_ACROSS_USERS_FULL, INTERACT_ACROSS_USERS, CREATE_USERS})
     public void startProfile_returnsTrue() {
-        mUiAutomation.adoptShellPermissionIdentity(
-                "android.permission.INTERACT_ACROSS_USERS_FULL",
-                "android.permission.INTERACT_ACROSS_USERS",
-                "android.permission.CREATE_USERS");
         sDeviceState.workProfile().stop();
 
         assertThat(sActivityManager.startProfile(sDeviceState.workProfile().userHandle())).isTrue();
@@ -97,11 +93,8 @@ public final class StartProfilesTest {
     @RequireFeatures(PackageManager.FEATURE_MANAGED_USERS)
     @RequireRunOnPrimaryUser
     @EnsureHasWorkProfile
+    @EnsureHasPermission({INTERACT_ACROSS_USERS_FULL, INTERACT_ACROSS_USERS, CREATE_USERS})
     public void startProfile_broadcastIsReceived_profileIsStarted() {
-        mUiAutomation.adoptShellPermissionIdentity(
-                "android.permission.INTERACT_ACROSS_USERS_FULL",
-                "android.permission.INTERACT_ACROSS_USERS",
-                "android.permission.CREATE_USERS");
         sDeviceState.workProfile().stop();
         BlockingBroadcastReceiver broadcastReceiver = sDeviceState.registerBroadcastReceiver(
                 Intent.ACTION_PROFILE_ACCESSIBLE,
@@ -118,12 +111,8 @@ public final class StartProfilesTest {
     @RequireRunOnPrimaryUser
     @EnsureHasWorkProfile
     @Postsubmit(reason="b/181207615 flaky")
+    @EnsureHasPermission({INTERACT_ACROSS_USERS_FULL, INTERACT_ACROSS_USERS, CREATE_USERS})
     public void stopProfile_returnsTrue() {
-        // TODO(b/171565394): remove after infra supports shell permissions annotation
-        mUiAutomation.adoptShellPermissionIdentity(
-                "android.permission.INTERACT_ACROSS_USERS_FULL",
-                "android.permission.INTERACT_ACROSS_USERS",
-                "android.permission.CREATE_USERS");
         sDeviceState.workProfile().start();
 
         try {
@@ -140,12 +129,8 @@ public final class StartProfilesTest {
     @RequireRunOnPrimaryUser
     @EnsureHasWorkProfile
     @Postsubmit(reason="b/181207615 flaky")
+    @EnsureHasPermission({INTERACT_ACROSS_USERS_FULL, INTERACT_ACROSS_USERS, CREATE_USERS})
     public void stopProfile_profileIsStopped() {
-        // TODO(b/171565394): remove after infra supports shell permissions annotation
-        mUiAutomation.adoptShellPermissionIdentity(
-                "android.permission.INTERACT_ACROSS_USERS_FULL",
-                "android.permission.INTERACT_ACROSS_USERS",
-                "android.permission.CREATE_USERS");
         sDeviceState.workProfile().start();
         BlockingBroadcastReceiver broadcastReceiver = sDeviceState.registerBroadcastReceiver(
                 Intent.ACTION_PROFILE_INACCESSIBLE, userIsEqual(sDeviceState.workProfile()));
@@ -167,12 +152,8 @@ public final class StartProfilesTest {
     @RequireRunOnPrimaryUser
     @EnsureHasWorkProfile
     @Postsubmit(reason="b/181207615 flaky")
+    @EnsureHasPermission({INTERACT_ACROSS_USERS_FULL, INTERACT_ACROSS_USERS, CREATE_USERS})
     public void startUser_immediatelyAfterStopped_profileIsStarted() {
-        // TODO(b/171565394): remove after infra supports shell permissions annotation
-        mUiAutomation.adoptShellPermissionIdentity(
-                "android.permission.INTERACT_ACROSS_USERS_FULL",
-                "android.permission.INTERACT_ACROSS_USERS",
-                "android.permission.CREATE_USERS");
         sDeviceState.workProfile().start();
         BlockingBroadcastReceiver broadcastReceiver = sDeviceState.registerBroadcastReceiver(
                 Intent.ACTION_PROFILE_INACCESSIBLE, userIsEqual(sDeviceState.workProfile()));
@@ -203,12 +184,8 @@ public final class StartProfilesTest {
     @RequireRunOnPrimaryUser
     @EnsureHasWorkProfile
     @Postsubmit(reason="b/181207615 flaky")
+    @EnsureHasPermission({INTERACT_ACROSS_USERS_FULL, INTERACT_ACROSS_USERS, CREATE_USERS})
     public void startUser_userIsStopping_profileIsStarted() {
-        // TODO(b/171565394): remove after infra supports shell permissions annotation
-        mUiAutomation.adoptShellPermissionIdentity(
-                "android.permission.INTERACT_ACROSS_USERS_FULL",
-                "android.permission.INTERACT_ACROSS_USERS",
-                "android.permission.CREATE_USERS");
         sDeviceState.workProfile().start();
 
         // stop and restart profile without waiting for ACTION_PROFILE_INACCESSIBLE broadcast
@@ -252,12 +229,8 @@ public final class StartProfilesTest {
     @RequireRunOnPrimaryUser
     @EnsureHasSecondaryUser
     @Postsubmit(reason="b/181207615 flaky")
+    @EnsureHasPermission({INTERACT_ACROSS_USERS_FULL, INTERACT_ACROSS_USERS, CREATE_USERS})
     public void startProfile_startingFullUser_throwsException() {
-        mUiAutomation.adoptShellPermissionIdentity(
-                "android.permission.INTERACT_ACROSS_USERS_FULL",
-                "android.permission.INTERACT_ACROSS_USERS",
-                "android.permission.CREATE_USERS");
-
         assertThrows(IllegalArgumentException.class,
                 () -> sActivityManager.startProfile(sDeviceState.secondaryUser().userHandle()));
     }
@@ -265,12 +238,8 @@ public final class StartProfilesTest {
     @Test
     @RequireRunOnPrimaryUser
     @EnsureHasSecondaryUser
+    @EnsureHasPermission({INTERACT_ACROSS_USERS_FULL, INTERACT_ACROSS_USERS, CREATE_USERS})
     public void stopProfile_stoppingFullUser_throwsException() {
-        mUiAutomation.adoptShellPermissionIdentity(
-                "android.permission.INTERACT_ACROSS_USERS_FULL",
-                "android.permission.INTERACT_ACROSS_USERS",
-                "android.permission.CREATE_USERS");
-
         try {
             assertThrows(IllegalArgumentException.class,
                     () -> sActivityManager.stopProfile(sDeviceState.secondaryUser().userHandle()));
@@ -283,11 +252,8 @@ public final class StartProfilesTest {
     @Test
     @RequireRunOnPrimaryUser
     @EnsureHasTvProfile
+    @EnsureHasPermission({INTERACT_ACROSS_USERS_FULL, INTERACT_ACROSS_USERS, CREATE_USERS})
     public void startProfile_tvProfile_profileIsStarted() {
-        mUiAutomation.adoptShellPermissionIdentity(
-                "android.permission.INTERACT_ACROSS_USERS_FULL",
-                "android.permission.INTERACT_ACROSS_USERS",
-                "android.permission.CREATE_USERS");
         sDeviceState.tvProfile().stop();
 
         try {
@@ -308,11 +274,8 @@ public final class StartProfilesTest {
     @Test
     @RequireRunOnPrimaryUser
     @EnsureHasTvProfile
+    @EnsureHasPermission({INTERACT_ACROSS_USERS_FULL, INTERACT_ACROSS_USERS, CREATE_USERS})
     public void stopProfile_tvProfile_profileIsStopped() {
-        mUiAutomation.adoptShellPermissionIdentity(
-                "android.permission.INTERACT_ACROSS_USERS_FULL",
-                "android.permission.INTERACT_ACROSS_USERS",
-                "android.permission.CREATE_USERS");
         sDeviceState.tvProfile().start();
 
         try {
