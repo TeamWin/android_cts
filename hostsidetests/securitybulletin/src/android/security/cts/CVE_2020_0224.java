@@ -33,16 +33,10 @@ public class CVE_2020_0224 extends SecurityTestCase {
     @SecurityTest(minPatchLevel = "2020-07")
     @Test
     public void testPocCVE_2020_0224() throws Exception {
-        String inputFiles[] = {"cve_2020_0224.pac"};
-        String binaryName = "CVE-2020-0224";
-        String signals[] = {CrashUtils.SIGSEGV, CrashUtils.SIGBUS, CrashUtils.SIGABRT};
-        AdbUtils.pocConfig testConfig = new AdbUtils.pocConfig(binaryName, getDevice());
-        testConfig.config = new CrashUtils.Config().setProcessPatterns(binaryName);
-        testConfig.config.setSignals(signals);
-        testConfig.config.checkMinAddress(false);
-        testConfig.arguments = AdbUtils.TMP_PATH + inputFiles[0];
-        testConfig.inputFiles = Arrays.asList(inputFiles);
-        testConfig.inputFilesDestination = AdbUtils.TMP_PATH;
-        AdbUtils.runPocAssertNoCrashesNotVulnerable(testConfig);
+        AdbUtils.runProxyAutoConfig("cve_2020_0224", getDevice());
+        AdbUtils.assertNoCrashes(getDevice(), new CrashUtils.Config()
+                .setProcessPatterns("pacrunner")
+                .checkMinAddress(false)
+                .appendSignals(CrashUtils.SIGABRT));
     }
 }
