@@ -19,7 +19,6 @@ package android.voicerecognition.cts;
 import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
-import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assume.assumeTrue;
@@ -67,6 +66,7 @@ public final class RecognitionServiceMicIndicatorTest {
     private final String PRIVACY_CHIP_ID = "privacy_chip";
     private final String PRIVACY_DIALOG_PACKAGE_NAME = "com.android.systemui";
     private final String PRIVACY_DIALOG_CONTENT_ID = "text";
+    private final String CAR_PRIVACY_DIALOG_CONTENT_ID = "car_ui_list_item_title";
     private final String TV_MIC_INDICATOR_WINDOW_TITLE = "MicrophoneCaptureIndicator";
     // The cts app label
     private final String APP_LABEL = "CtsVoiceRecognitionTestCases";
@@ -187,8 +187,7 @@ public final class RecognitionServiceMicIndicatorTest {
         // Start SpeechRecognition
         mActivity.startListening();
 
-        final PackageManager pm = mContext.getPackageManager();
-        if (pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK)) {
+        if (isTv()) {
             assertTvIndicatorsShown(trustVoiceService);
         } else {
             assertPrivacyChipAndIndicatorsPresent(trustVoiceService);
@@ -224,8 +223,9 @@ public final class RecognitionServiceMicIndicatorTest {
         SystemClock.sleep(UI_WAIT_TIMEOUT);
 
         // Make sure dialog is shown
+        String contentId = isCar() ? CAR_PRIVACY_DIALOG_CONTENT_ID : PRIVACY_DIALOG_CONTENT_ID;
         List<UiObject2> recognitionCallingAppLabels = mUiDevice.findObjects(
-                By.res(PRIVACY_DIALOG_PACKAGE_NAME, PRIVACY_DIALOG_CONTENT_ID));
+                By.res(PRIVACY_DIALOG_PACKAGE_NAME, contentId));
         assertWithMessage("No permission dialog shown after clicking  privacy chip.").that(
                 recognitionCallingAppLabels).isNotEmpty();
 
@@ -236,7 +236,15 @@ public final class RecognitionServiceMicIndicatorTest {
                         .map(UiObject2::getText)
                         .collect(Collectors.joining("\n"));
         Log.i(TAG, "Retrieved dialog description " + dialogDescription);
-        if (trustVoiceService) {
+
+        if (isCar()) {
+            // Make sure Voice recognizer's app label is present in dialog.
+            assertWithMessage(
+                    "Voice recognition service can blame the calling app name " + APP_LABEL
+                            + ", but does not find it.")
+                    .that(dialogDescription)
+                    .contains(APP_LABEL);
+        } else if (trustVoiceService) {
             // Check trust recognizer can blame calling apmic permission
             assertWithMessage(
                     "Trusted voice recognition service can blame the calling app name " + APP_LABEL
@@ -255,7 +263,18 @@ public final class RecognitionServiceMicIndicatorTest {
                     .that(dialogDescription)
                     .doesNotContain(APP_LABEL);
         }
+
         // Wait for the privacy indicator to disappear to avoid the test becoming flaky.
         SystemClock.sleep(INDICATOR_DISMISS_TIMEOUT);
+    }
+
+    private boolean isTv() {
+        PackageManager pm = mContext.getPackageManager();
+        return pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK);
+    }
+
+    private boolean isCar() {
+        PackageManager pm = mContext.getPackageManager();
+        return pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
     }
 }

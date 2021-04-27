@@ -30,6 +30,7 @@ import android.content.pm.PermissionInfo;
 import androidx.annotation.Nullable;
 
 import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.annotations.Experimental;
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.permissions.PermissionContext;
@@ -139,6 +140,64 @@ public abstract class PackageReference {
         } finally {
             broadcastReceiver.unregisterQuietly();
         }
+    }
+
+    /**
+     * Enable this package for the given {@link UserReference}.
+     */
+    @Experimental
+    public PackageReference enable(UserReference user) {
+        try {
+            ShellCommand.builderForUser(user, "pm enable")
+                    .addOperand(mPackageName)
+                    .validate(o -> o.contains("new state"))
+                    .execute();
+        } catch (AdbException e) {
+            throw new NeneException("Error enabling package " + this + " for user " + user, e);
+        }
+        return this;
+    }
+
+    /**
+     * Enable this package on the instrumented user.
+     */
+    @Experimental
+    public PackageReference enable() {
+        return enable(mTestApis.users().instrumented());
+    }
+
+    /**
+     * Disable this package for the given {@link UserReference}.
+     */
+    @Experimental
+    public PackageReference disable(UserReference user) {
+        try {
+            ShellCommand.builderForUser(user, "pm disable")
+                    .addOperand(mPackageName)
+                    .validate(o -> o.contains("new state"))
+                    .execute();
+        } catch (AdbException e) {
+            throw new NeneException("Error disabling package " + this + " for user " + user, e);
+        }
+        return this;
+    }
+
+    /**
+     * Disable this package on the instrumented user.
+     */
+    @Experimental
+    public PackageReference disable() {
+        return disable(mTestApis.users().instrumented());
+    }
+
+    /**
+     * Get a reference to the given {@code componentName} within this package.
+     *
+     * <p>This does not guarantee that the component exists.
+     */
+    @Experimental
+    public ComponentReference component(String componentName) {
+        return new ComponentReference(mTestApis, this, componentName);
     }
 
     /**

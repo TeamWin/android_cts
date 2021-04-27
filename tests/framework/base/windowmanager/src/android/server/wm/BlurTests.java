@@ -32,40 +32,53 @@ import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentat
 
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assume.assumeTrue;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.spy;
 
 import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Rect;
+import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
+import android.view.View;
 import android.view.WindowManager;
+import android.widget.LinearLayout;
 
 import androidx.test.filters.FlakyTest;
 
 import com.android.compatibility.common.util.ColorUtils;
 import com.android.compatibility.common.util.SystemUtil;
 
+import java.util.function.Consumer;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 @Presubmit
 @FlakyTest(detail = "Promote once confirmed non-flaky")
-public class BlurTests extends ActivityManagerTestBase {
+public class BlurTests extends WindowManagerTestBase {
     private static final int BACKGROUND_BLUR_PX = dpToPx(50);
     private static final int BLUR_BEHIND_PX = dpToPx(25);
     private static final int NO_BLUR_BACKGROUND_COLOR = Color.BLACK;
     private static final int BLUR_BEHIND_DYNAMIC_UPDATE_WAIT_TIME = 300;
     private static final int BACKGROUND_BLUR_DYNAMIC_UPDATE_WAIT_TIME = 100;
+    private static final int DISABLE_BLUR_BROADCAST_WAIT_TIME = 100;
     private float mAnimatorDurationScale;
+    private boolean mSavedWindowBlurDisabledSetting;
 
     @Before
     public void setUp() {
         assumeTrue(supportsBlur());
-        mContext.getSystemService(WindowManager.class).setForceCrossWindowBlurDisabled(false);
+        mSavedWindowBlurDisabledSetting = Settings.Global.getInt(mContext.getContentResolver(),
+                Settings.Global.DISABLE_WINDOW_BLURS, 0) == 1;
+        setForceBlurDisabled(false);
         SystemUtil.runWithShellPermissionIdentity(() -> {
             final ContentResolver resolver = getInstrumentation().getContext().getContentResolver();
             mAnimatorDurationScale =
@@ -84,7 +97,7 @@ public class BlurTests extends ActivityManagerTestBase {
             Settings.Global.putFloat(getInstrumentation().getContext().getContentResolver(),
                     ANIMATOR_DURATION_SCALE, mAnimatorDurationScale);
         });
-        mContext.getSystemService(WindowManager.class).setForceCrossWindowBlurDisabled(false);
+        setForceBlurDisabled(mSavedWindowBlurDisabledSetting);
     }
 
     @Test
@@ -110,7 +123,7 @@ public class BlurTests extends ActivityManagerTestBase {
 
     @Test
     public void testNoBackgroundBlurWhenBlurDisabled() {
-        mContext.getSystemService(WindowManager.class).setForceCrossWindowBlurDisabled(true);
+        setForceBlurDisabled(true);
         startTestActivity(BLUR_ACTIVITY,
                           extraInt(EXTRA_BACKGROUND_BLUR_RADIUS_PX, BACKGROUND_BLUR_PX),
                           extraInt(EXTRA_NO_BLUR_BACKGROUND_COLOR, Color.TRANSPARENT));
@@ -127,7 +140,7 @@ public class BlurTests extends ActivityManagerTestBase {
 
     @Test
     public void testNoBlurBehindWhenBlurDisabled() {
-        mContext.getSystemService(WindowManager.class).setForceCrossWindowBlurDisabled(true);
+        setForceBlurDisabled(true);
         startTestActivity(BLUR_ACTIVITY,
                           extraInt(EXTRA_BLUR_BEHIND_RADIUS_PX, BLUR_BEHIND_PX),
                           extraInt(EXTRA_NO_BLUR_BACKGROUND_COLOR, Color.TRANSPARENT));
@@ -153,14 +166,14 @@ public class BlurTests extends ActivityManagerTestBase {
         assertBackgroundBlur(takeScreenshot(), windowFrame);
         assertNoBlurBehind(screenshot, windowFrame);
 
-        mContext.getSystemService(WindowManager.class).setForceCrossWindowBlurDisabled(true);
+        setForceBlurDisabled(true);
         Thread.sleep(BACKGROUND_BLUR_DYNAMIC_UPDATE_WAIT_TIME);
 
         screenshot = takeScreenshot();
         assertNoBackgroundBlur(screenshot, windowFrame);
         assertNoBlurBehind(screenshot, windowFrame);
 
-        mContext.getSystemService(WindowManager.class).setForceCrossWindowBlurDisabled(false);
+        setForceBlurDisabled(false);
         Thread.sleep(BACKGROUND_BLUR_DYNAMIC_UPDATE_WAIT_TIME);
 
         screenshot = takeScreenshot();
@@ -179,14 +192,14 @@ public class BlurTests extends ActivityManagerTestBase {
         assertBlurBehind(screenshot, windowFrame);
         assertNoBackgroundBlur(screenshot, windowFrame);
 
-        mContext.getSystemService(WindowManager.class).setForceCrossWindowBlurDisabled(true);
+        setForceBlurDisabled(true);
         Thread.sleep(BLUR_BEHIND_DYNAMIC_UPDATE_WAIT_TIME);
 
         screenshot = takeScreenshot();
         assertNoBackgroundBlur(screenshot, windowFrame);
         assertNoBlurBehind(screenshot, windowFrame);
 
-        mContext.getSystemService(WindowManager.class).setForceCrossWindowBlurDisabled(false);
+        setForceBlurDisabled(false);
         Thread.sleep(BLUR_BEHIND_DYNAMIC_UPDATE_WAIT_TIME);
 
         screenshot = takeScreenshot();
@@ -206,14 +219,14 @@ public class BlurTests extends ActivityManagerTestBase {
         assertBlurBehind(screenshot, windowFrame);
         assertBackgroundBlur(screenshot, windowFrame);
 
-        mContext.getSystemService(WindowManager.class).setForceCrossWindowBlurDisabled(true);
+        setForceBlurDisabled(true);
         Thread.sleep(BLUR_BEHIND_DYNAMIC_UPDATE_WAIT_TIME);
 
         screenshot = takeScreenshot();
         assertNoBackgroundBlur(screenshot, windowFrame);
         assertNoBlurBehind(screenshot, windowFrame);
 
-        mContext.getSystemService(WindowManager.class).setForceCrossWindowBlurDisabled(false);
+        setForceBlurDisabled(false);
         Thread.sleep(BLUR_BEHIND_DYNAMIC_UPDATE_WAIT_TIME);
 
         screenshot = takeScreenshot();
@@ -247,6 +260,60 @@ public class BlurTests extends ActivityManagerTestBase {
         mWmState.waitAndAssertActivityRemoved(BLUR_ACTIVITY);
 
         verifyOnlyBackgroundImageVisible();
+    }
+
+    @Test
+    public void testIsCrossWindowBlurEnabledUpdatedCorrectly() throws Exception {
+        setForceBlurDisabled(true);
+        Thread.sleep(DISABLE_BLUR_BROADCAST_WAIT_TIME);
+        assertFalse(mContext.getSystemService(WindowManager.class).isCrossWindowBlurEnabled());
+
+        setForceBlurDisabled(false);
+        Thread.sleep(DISABLE_BLUR_BROADCAST_WAIT_TIME);
+        assertTrue(mContext.getSystemService(WindowManager.class).isCrossWindowBlurEnabled());
+    }
+
+    @Test
+    public void testBlurListener() throws Exception {
+        ListenerTestActivity activity = startActivity(ListenerTestActivity.class);
+        Mockito.verify(activity.mBlurEnabledListener).accept(true);
+
+        setForceBlurDisabled(true);
+        Thread.sleep(DISABLE_BLUR_BROADCAST_WAIT_TIME);
+        assertFalse(mContext.getSystemService(WindowManager.class).isCrossWindowBlurEnabled());
+        Mockito.verify(activity.mBlurEnabledListener).accept(false);
+
+        setForceBlurDisabled(false);
+        Thread.sleep(DISABLE_BLUR_BROADCAST_WAIT_TIME);
+        assertTrue(mContext.getSystemService(WindowManager.class).isCrossWindowBlurEnabled());
+        Mockito.verify(activity.mBlurEnabledListener, times(2)).accept(true);
+    }
+
+    public static class BlurListener implements Consumer<Boolean> {
+        @Override
+        public void accept(Boolean enabled) {}
+    }
+
+    public static class ListenerTestActivity extends FocusableActivity {
+        Consumer<Boolean> mBlurEnabledListener = spy(new BlurListener());
+
+        @Override
+        protected void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            View v = new LinearLayout(this);
+            v.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
+                @Override
+                public void onViewAttachedToWindow(View view) {
+                    getWindowManager().addCrossWindowBlurEnabledListener(mBlurEnabledListener);
+                }
+
+                @Override
+                public void onViewDetachedFromWindow(View view) {
+                    getWindowManager().removeCrossWindowBlurEnabledListener(mBlurEnabledListener);
+                }
+            });
+            setContentView(v);
+        }
     }
 
     private void startTestActivity(ComponentName activityName, final CliIntentExtra... extras) {
@@ -283,7 +350,7 @@ public class BlurTests extends ActivityManagerTestBase {
 
     private static int dpToPx(int dp) {
         final float density =
-                getInstrumentation().getContext().getResources().getDisplayMetrics().density;
+            getInstrumentation().getContext().getResources().getDisplayMetrics().density;
         return (int) (dp * density + 0.5f);
     }
 
@@ -367,5 +434,10 @@ public class BlurTests extends ActivityManagerTestBase {
                     "failed for pixel (x, y) = (" + unaffectedRedPixelX + ", " + y + ")",
                     Color.RED, screenshot.getPixel(unaffectedRedPixelX, y), 0);
         }
+    }
+
+    private void setForceBlurDisabled(boolean disable) {
+        Settings.Global.putInt(mContext.getContentResolver(),
+                Settings.Global.DISABLE_WINDOW_BLURS, disable ? 1 : 0);
     }
 }

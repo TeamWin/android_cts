@@ -81,7 +81,11 @@ def check_raw_pattern(img_raw):
       if np.allclose(COLOR_CHECKER[color], raw_means, atol=RAW_TOL):
         color_match.append(color)
         logging.debug('%s', color)
-  assert set(color_match) == set(COLOR_BARS), 'RAW does not have all colors'
+      else:
+        logging.debug('RAW means: %s COLOR: %s, ATOL: %.3f',
+                      str(raw_means), str(COLOR_CHECKER[color]), RAW_TOL)
+  if set(color_match) != set(COLOR_BARS):
+    raise AssertionError('RAW COLOR_BARS test pattern does not have all colors')
 
 
 def check_yuv_vs_raw(img_raw, img_yuv):
@@ -117,16 +121,18 @@ def check_yuv_vs_raw(img_raw, img_yuv):
     if not np.allclose(raw_vars, yuv_vars, atol=RGB_VAR_TOL):
       color_variance_errs.append('RAW: %s, RGB: %s, ATOL: %.4f' %
                                  (str(raw_vars), str(yuv_vars), RGB_VAR_TOL))
+
+  # Print all errors before assertion
   if color_match_errs:
-    logging.error('Color match errors:')
     for err in color_match_errs:
       logging.debug(err)
-  if color_variance_errs:
-    logging.error('Color variance errors:')
     for err in color_variance_errs:
       logging.error(err)
-  assert not color_match_errs, 'Color match errors.'
-  assert not color_variance_errs, 'Color variance errors.'
+    raise AssertionError('Color match errors. See test_log.DEBUG')
+  if color_variance_errs:
+    for err in color_variance_errs:
+      logging.error(err)
+    raise AssertionError('Color variance errors. See test_log.DEBUG')
 
 
 def test_tonemap_curve_impl(name, cam, props):
@@ -180,8 +186,8 @@ def test_tonemap_curve_impl(name, cam, props):
     # Check pattern for correctness
     check_yuv_vs_raw(img_raw, img_yuv)
   else:
-    logging.debug('Pattern not in android.sensor.availableTestPatternModes.')
-    assert 0
+    raise AssertionError(
+        'Pattern not in android.sensor.availableTestPatternModes.')
 
 
 class TonemapCurveTest(its_base_test.ItsBaseTest):
