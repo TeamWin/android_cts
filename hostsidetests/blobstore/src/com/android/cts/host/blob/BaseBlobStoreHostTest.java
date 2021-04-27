@@ -24,6 +24,8 @@ import com.android.tradefed.util.Pair;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 abstract class BaseBlobStoreHostTest extends BaseHostJUnit4Test {
@@ -114,5 +116,16 @@ abstract class BaseBlobStoreHostTest extends BaseHostJUnit4Test {
 
     protected Map<String, String> createArgs(Pair<String, String>... keyValues) {
         return Arrays.stream(keyValues).collect(Collectors.toMap(p -> p.first, p -> p.second));
+    }
+
+    protected int getAppUid(String pkgName) throws Exception {
+        final int currentUser = getDevice().getCurrentUser();
+        final String uidLine = getDevice().executeShellCommand(
+                "cmd package list packages -U --user " + currentUser + " " + pkgName);
+        final Pattern pattern = Pattern.compile("package:" + pkgName + " uid:(\\d+)");
+        final Matcher matcher = pattern.matcher(uidLine);
+        assertWithMessage("Pkg not found: " + pkgName).that(matcher.find()).isTrue();
+        final int appUid = Integer.parseInt(matcher.group(1));
+        return appUid;
     }
 }

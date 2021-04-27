@@ -19,7 +19,6 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.cts.statsdatom.lib.AtomTestUtils;
 import android.cts.statsdatom.lib.ConfigUtils;
-import android.cts.statsdatom.lib.DeviceUtils;
 import android.cts.statsdatom.lib.ReportUtils;
 
 import com.android.internal.os.StatsdConfigProto;
@@ -52,7 +51,7 @@ public class StatsdBlobStoreAtomTest extends BaseBlobStoreHostTest {
         ConfigUtils.removeConfig(getDevice());
         ReportUtils.clearReports(getDevice());
         Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
-        mTestAppUid = DeviceUtils.getAppUid(getDevice(), TARGET_PKG);
+        mTestAppUid = getAppUid(TARGET_PKG);
     }
 
     @After
