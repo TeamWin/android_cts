@@ -35,6 +35,7 @@
                 <action android:name="com.android.cts.classloadersplitapp.ACTION"/>
             </intent-filter>
           </receiver>
+        <service android:name=".BaseService" />
         <uses-library android:name="android.test.runner"/>
 
     </application>

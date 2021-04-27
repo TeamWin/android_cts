@@ -35,5 +35,6 @@
                 <action android:name="com.android.cts.classloadersplitapp.ACTION"/>
             </intent-filter>
         </receiver>
+        <service android:name=".feature_b.FeatureBService" />
     </application>
 </manifest>
