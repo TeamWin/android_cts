@@ -331,8 +331,8 @@ public class TestHelper {
                             .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
                             // Needed to ensure that the restricted concurrent connection does not
                             // match this request.
-                            .addUnwantedCapability(NET_CAPABILITY_OEM_PAID)
-                            .addUnwantedCapability(NET_CAPABILITY_OEM_PRIVATE)
+                            .addForbiddenCapability(NET_CAPABILITY_OEM_PAID)
+                            .addForbiddenCapability(NET_CAPABILITY_OEM_PRIVATE)
                             .build(),
                     testNetworkCallback);
             // Trigger the connection.
@@ -780,8 +780,8 @@ public class TestHelper {
             if (BuildCompat.isAtLeastS()) {
                 // Needed to ensure that the restricted concurrent connection does not
                 // match this request.
-                builder.addUnwantedCapability(NET_CAPABILITY_OEM_PAID)
-                        .addUnwantedCapability(NET_CAPABILITY_OEM_PRIVATE);
+                builder.addForbiddenCapability(NET_CAPABILITY_OEM_PAID)
+                        .addForbiddenCapability(NET_CAPABILITY_OEM_PRIVATE);
             }
             mConnectivityManager.registerNetworkCallback(builder.build(), testNetworkCallback);
             // Wait for connection to complete & ensure we are connected to some network capable
