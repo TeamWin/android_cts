@@ -21,6 +21,7 @@ import static android.os.Build.VERSION.SDK_INT;
 
 import static com.android.bedstead.nene.users.User.UserState.RUNNING_UNLOCKED;
 
+import android.content.ComponentName;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Build;
@@ -30,6 +31,7 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
 import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.annotations.Experimental;
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.exceptions.AdbParseException;
 import com.android.bedstead.nene.exceptions.NeneException;
@@ -326,6 +328,21 @@ public final class Packages {
             throw new NullPointerException();
         }
         return new UnresolvedPackage(mTestApis, packageName);
+    }
+
+    /**
+     * Get a reference to a given {@code componentName}.
+     *
+     * <p>This does not guarantee that the component exists.
+     */
+    @Experimental
+    public ComponentReference component(ComponentName componentName) {
+        if (componentName == null) {
+            throw new NullPointerException();
+        }
+
+        return new ComponentReference(mTestApis,
+                find(componentName.getPackageName()), componentName.getClassName());
     }
 
     private void fillCache() {
