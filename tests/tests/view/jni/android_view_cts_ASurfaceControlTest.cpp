@@ -610,10 +610,10 @@ const std::array<JNINativeMethod, 31> JNI_METHODS = {{
         {"nSurfaceTransaction_setEnableBackPressure", "(JJZ)V",
          (void*)SurfaceTransaction_setEnableBackPressure},
         {"nSurfaceTransaction_setOnCompleteCallback",
-         "(JLandroid/view/cts/ASurfaceControlTest$TransactionCompleteListener;)V",
+         "(JLandroid/view/cts/util/ASurfaceControlTestUtils$TransactionCompleteListener;)V",
          (void*)SurfaceTransaction_setOnCompleteCallback},
         {"nSurfaceTransaction_setOnCommitCallback",
-         "(JLandroid/view/cts/ASurfaceControlTest$TransactionCompleteListener;)V",
+         "(JLandroid/view/cts/util/ASurfaceControlTestUtils$TransactionCompleteListener;)V",
          (void*)SurfaceTransaction_setOnCommitCallback},
         {"nSurfaceTransaction_setCrop", "(JJIIII)V", (void*)SurfaceTransaction_setCrop},
         {"nSurfaceTransaction_setPosition", "(JJII)V", (void*)SurfaceTransaction_setPosition},
@@ -621,10 +621,10 @@ const std::array<JNINativeMethod, 31> JNI_METHODS = {{
          (void*)SurfaceTransaction_setBufferTransform},
         {"nSurfaceTransaction_setScale", "(JJFF)V", (void*)SurfaceTransaction_setScale},
         {"nSurfaceTransaction_setOnCompleteCallbackWithoutContext",
-         "(JLandroid/view/cts/ASurfaceControlTest$TransactionCompleteListener;)V",
+         "(JLandroid/view/cts/util/ASurfaceControlTestUtils$TransactionCompleteListener;)V",
          (void*)SurfaceTransaction_setOnCompleteCallbackWithoutContext},
         {"nSurfaceTransaction_setOnCommitCallbackWithoutContext",
-         "(JLandroid/view/cts/ASurfaceControlTest$TransactionCompleteListener;)V",
+         "(JLandroid/view/cts/util/ASurfaceControlTestUtils$TransactionCompleteListener;)V",
          (void*)SurfaceTransaction_setOnCommitCallbackWithoutContext},
 
 }};
@@ -632,12 +632,12 @@ const std::array<JNINativeMethod, 31> JNI_METHODS = {{
 }  // anonymous namespace
 
 jint register_android_view_cts_ASurfaceControlTest(JNIEnv* env) {
-    jclass transactionCompleteListenerClazz =
-            env->FindClass("android/view/cts/ASurfaceControlTest$TransactionCompleteListener");
+    jclass transactionCompleteListenerClazz = env->FindClass(
+            "android/view/cts/util/ASurfaceControlTestUtils$TransactionCompleteListener");
     gTransactionCompleteListenerClassInfo.clazz =
             static_cast<jclass>(env->NewGlobalRef(transactionCompleteListenerClazz));
     gTransactionCompleteListenerClassInfo.onTransactionComplete =
             env->GetMethodID(transactionCompleteListenerClazz, "onTransactionComplete", "(J)V");
-    jclass clazz = env->FindClass("android/view/cts/ASurfaceControlTest");
+    jclass clazz = env->FindClass("android/view/cts/util/ASurfaceControlTestUtils");
     return env->RegisterNatives(clazz, JNI_METHODS.data(), JNI_METHODS.size());
 }
