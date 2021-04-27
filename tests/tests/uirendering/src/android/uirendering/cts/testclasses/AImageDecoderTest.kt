@@ -20,9 +20,12 @@ import androidx.test.InstrumentationRegistry
 
 import android.content.res.AssetManager
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.ImageDecoder
+import android.graphics.Matrix
 import android.graphics.Rect
+import android.media.ExifInterface
 import android.uirendering.cts.bitmapcomparers.MSSIMComparer
 import android.uirendering.cts.bitmapverifiers.BitmapVerifier
 import android.uirendering.cts.bitmapverifiers.ColorVerifier
@@ -761,8 +764,8 @@ class AImageDecoderTest {
     @Parameters(method = "animationsAndAlphas")
     fun testAlphas(image: String, alphas: BooleanArray) = testFrameInfo(image) {
         frameInfo, i ->
-            assertEquals(alphas[i], nGetFrameAlpha(frameInfo), "Mismatch in alpha for $image frame $i "
-                    + "expected ${alphas[i]}")
+            assertEquals(alphas[i], nGetFrameAlpha(frameInfo), "Mismatch in alpha for $image frame $i " +
+                    "expected ${alphas[i]}")
     }
 
     private val ANDROID_IMAGE_DECODER_DISPOSE_OP_NONE = 1
@@ -826,8 +829,8 @@ class AImageDecoderTest {
     @Parameters(method = "animationsAndBlendOps")
     fun testBlendOps(image: String, blendOps: IntArray) = testFrameInfo(image) {
         frameInfo, i ->
-            assertEquals(blendOps[i], nGetBlendOp(frameInfo), "Mismatch in blend op for $image "
-                        + "frame $i, expected: ${blendOps[i]}")
+            assertEquals(blendOps[i], nGetBlendOp(frameInfo), "Mismatch in blend op for $image " +
+                        "frame $i, expected: ${blendOps[i]}")
     }
 
     @Test
@@ -912,6 +915,93 @@ class AImageDecoderTest {
         }
 
         bitmap.recycle()
+        nDeleteDecoder(decoder)
+        nCloseAsset(asset)
+    }
+
+    @Test
+    @Parameters(method = "animationsAndAlphas")
+    fun test565NoAnimation(image: String, alphas: BooleanArray) {
+        val asset = nOpenAsset(getAssets(), image)
+        val decoder = nCreateFromAsset(asset)
+        val ANDROID_BITMAP_FORMAT_RGB_565 = 4
+        if (alphas[0]) {
+            assertEquals(ANDROID_IMAGE_DECODER_INVALID_CONVERSION,
+                    nSetAndroidBitmapFormat(decoder, ANDROID_BITMAP_FORMAT_RGB_565))
+        } else {
+            assertEquals(ANDROID_IMAGE_DECODER_SUCCESS,
+                    nSetAndroidBitmapFormat(decoder, ANDROID_BITMAP_FORMAT_RGB_565))
+            assertEquals(ANDROID_IMAGE_DECODER_INVALID_STATE,
+                    nAdvanceFrame(decoder))
+        }
+
+        nDeleteDecoder(decoder)
+        nCloseAsset(asset)
+    }
+
+    private fun handleRotation(original: Bitmap, image: String): Bitmap {
+        val inputStream = getAssets().open(image)
+        val exifInterface = ExifInterface(inputStream)
+        var rotation = 0
+        when (exifInterface.getAttributeInt(ExifInterface.TAG_ORIENTATION,
+                ExifInterface.ORIENTATION_NORMAL)) {
+            ExifInterface.ORIENTATION_NORMAL, ExifInterface.ORIENTATION_UNDEFINED -> return original
+            ExifInterface.ORIENTATION_ROTATE_90 -> rotation = 90
+            ExifInterface.ORIENTATION_ROTATE_180 -> rotation = 180
+            ExifInterface.ORIENTATION_ROTATE_270 -> rotation = 270
+            else -> fail("Unexpected orientation for $image!")
+        }
+
+        val m = Matrix()
+        m.setRotate(rotation.toFloat(), original.width / 2.0f, original.height / 2.0f)
+        return Bitmap.createBitmap(original, 0, 0, original.width, original.height, m, false)
+    }
+
+    private fun decodeF16(image: String): Bitmap {
+        val options = BitmapFactory.Options()
+        options.inPreferredConfig = Bitmap.Config.RGBA_F16
+        val inputStream = getAssets().open(image)
+        val bm = BitmapFactory.decodeStream(inputStream, null, options)
+        if (bm == null) {
+            fail("Failed to decode $image to RGBA_F16!")
+        }
+        return bm
+    }
+
+    @Test
+    @Parameters(method = "animationsAndFrames")
+    fun testDecodeFramesF16(image: String, frameName: String, numFrames: Int) {
+        var expectedBm = handleRotation(decodeF16(image), image)
+
+        val asset = nOpenAsset(getAssets(), image)
+        val decoder = nCreateFromAsset(asset)
+        val ANDROID_BITMAP_FORMAT_RGBA_F16 = 9
+        nSetAndroidBitmapFormat(decoder, ANDROID_BITMAP_FORMAT_RGBA_F16)
+
+        val testBm = makeEmptyBitmap(expectedBm)
+
+        val mssimThreshold = .95
+        var i = 0
+        while (true) {
+            nDecode(decoder, testBm, ANDROID_IMAGE_DECODER_SUCCESS)
+            val verifier = GoldenImageVerifier(expectedBm, MSSIMComparer(mssimThreshold))
+            assertTrue(verifier.verify(testBm), "$image has mismatch in frame $i")
+            expectedBm.recycle()
+
+            i++
+            when (val result = nAdvanceFrame(decoder)) {
+                ANDROID_IMAGE_DECODER_SUCCESS -> {
+                    assertTrue(i < numFrames, "Unexpected frame $i in $image")
+                    expectedBm = decodeF16(frameName.format(i))
+                }
+                ANDROID_IMAGE_DECODER_FINISHED -> {
+                    assertEquals(i, numFrames, "Expected $numFrames frames in $image; found $i")
+                    break
+                }
+                else -> fail("Unexpected error $result when advancing $image to frame $i")
+            }
+        }
+
         nDeleteDecoder(decoder)
         nCloseAsset(asset)
     }
