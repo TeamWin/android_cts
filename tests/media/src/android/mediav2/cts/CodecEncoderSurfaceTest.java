@@ -83,9 +83,7 @@ public class CodecEncoderSurfaceTest {
 
     static {
         android.os.Bundle args = InstrumentationRegistry.getArguments();
-        CodecTestBase.codecSelKeys = args.getString(CodecTestBase.CODEC_SEL_KEY);
-        if (CodecTestBase.codecSelKeys == null)
-            CodecTestBase.codecSelKeys = CodecTestBase.CODEC_SEL_VALUE;
+        CodecTestBase.mimeSelKeys = args.getString(CodecTestBase.MIME_SEL_KEY);
     }
 
     public CodecEncoderSurfaceTest(String mime, String testFile, int bitrate, int frameRate) {
@@ -567,4 +565,3 @@ public class CodecEncoderSurfaceTest {
         }
     }
 }
-
