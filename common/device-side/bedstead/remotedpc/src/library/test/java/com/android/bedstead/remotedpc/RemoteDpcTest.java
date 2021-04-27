@@ -662,21 +662,55 @@ public class RemoteDpcTest {
 
     @Test
     public void remove_profileOwner_removes() {
-        UserReference profile = sTestApis.users().createUser()
+        try (UserReference profile = sTestApis.users().createUser()
                 .parent(sUser)
                 .type(sTestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
-                .createAndStart();
-        try {
+                .createAndStart()) {
             RemoteDpc remoteDPC = RemoteDpc.setAsProfileOwner(profile);
 
             remoteDPC.remove();
 
             assertThat(sTestApis.devicePolicy().getProfileOwner(profile)).isNull();
-        } finally {
-            profile.remove();
         }
     }
 
     // TODO(scottjonathan): Do we need to support the case where there is both a DO and a PO on
     //  older versions of Android?
+
+    @Test
+    public void frameworkCall_makesCall() {
+        RemoteDpc remoteDPC = RemoteDpc.setAsDeviceOwner(sUser);
+
+        try {
+            // Checking that the call succeeds
+            remoteDPC.devicePolicyManager().getCurrentFailedPasswordAttempts();
+        } finally {
+            remoteDPC.remove();
+        }
+    }
+
+    @Test
+    public void frameworkCall_onProfile_makesCall() {
+        try (UserReference profile = sTestApis.users().createUser()
+                .parent(sUser)
+                .type(sTestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
+                .createAndStart()) {
+            RemoteDpc remoteDPC = RemoteDpc.setAsProfileOwner(profile);
+
+            // Checking that the call succeeds
+            remoteDPC.devicePolicyManager().isUsingUnifiedPassword();
+        }
+    }
+
+    @Test
+    public void frameworkCall_notProfileOwner_throwsSecurityException() {
+        RemoteDpc remoteDPC = RemoteDpc.setAsDeviceOwner(sUser);
+
+        try {
+            assertThrows(SecurityException.class,
+                    () -> remoteDPC.devicePolicyManager().isUsingUnifiedPassword());
+        } finally {
+            remoteDPC.remove();
+        }
+    }
 }
