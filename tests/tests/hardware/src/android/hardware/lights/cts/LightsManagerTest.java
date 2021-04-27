@@ -185,7 +185,7 @@ public class LightsManagerTest {
             session.requestLights(new Builder().addLight(mLights.get(0), STATE_RED).build());
             // And then the session clears it again:
             session.requestLights(new Builder().clearLight(mLights.get(0)).build());
-            // Then the light should turn back off.
+            // Then the light should return to its initial state.
             assertThat(mManager.getLightState(mLights.get(0)).getColor()).isEqualTo(initialColor);
         }
     }
