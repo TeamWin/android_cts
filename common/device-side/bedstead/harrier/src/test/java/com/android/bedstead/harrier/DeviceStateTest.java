@@ -16,13 +16,20 @@
 
 package com.android.bedstead.harrier;
 
+import static android.Manifest.permission.INTERACT_ACROSS_PROFILES;
+import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
+import static android.content.pm.PackageManager.PERMISSION_DENIED;
+import static android.content.pm.PackageManager.PERMISSION_GRANTED;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.testng.Assert.assertThrows;
 
+import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
 import com.android.bedstead.harrier.annotations.EnsureHasNoSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasNoTvProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
+import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasTvProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
@@ -45,6 +52,9 @@ public class DeviceStateTest {
 
     private static final TestApis sTestApis = new TestApis();
     private static final String TV_PROFILE_TYPE_NAME = "com.android.tv.profile";
+
+    private static final String TEST_PERMISSION_1 = INTERACT_ACROSS_PROFILES;
+    private static final String TEST_PERMISSION_2 = INTERACT_ACROSS_USERS_FULL;
 
     @Test
     @EnsureHasWorkProfile
@@ -175,5 +185,49 @@ public class DeviceStateTest {
         assertThat(sTestApis.users().findUserOfType(
                 sTestApis.users().supportedType(UserType.SECONDARY_USER_TYPE_NAME))
         ).isNull();
+    }
+
+    @Test
+    @EnsureHasPermission(TEST_PERMISSION_1)
+    public void ensureHasPermission_permissionIsGranted() {
+        assertThat(sTestApis.context().instrumentedContext()
+                .checkSelfPermission(TEST_PERMISSION_1)).isEqualTo(PERMISSION_GRANTED);
+    }
+
+    @Test
+    @EnsureHasPermission({TEST_PERMISSION_1, TEST_PERMISSION_2})
+    public void ensureHasPermission_multiplePermissions_permissionsAreGranted() {
+        assertThat(sTestApis.context().instrumentedContext()
+                .checkSelfPermission(TEST_PERMISSION_1)).isEqualTo(PERMISSION_GRANTED);
+        assertThat(sTestApis.context().instrumentedContext()
+                .checkSelfPermission(TEST_PERMISSION_2)).isEqualTo(PERMISSION_GRANTED);
+    }
+
+    @Test
+    @EnsureDoesNotHavePermission(TEST_PERMISSION_1)
+    public void ensureDoesNotHavePermission_permissionIsDenied() {
+        assertThat(sTestApis.context().instrumentedContext()
+                .checkSelfPermission(TEST_PERMISSION_1)).isEqualTo(PERMISSION_DENIED);
+    }
+
+    @Test
+    @EnsureDoesNotHavePermission({TEST_PERMISSION_1, TEST_PERMISSION_2})
+    public void ensureDoesNotHavePermission_multiplePermissions_permissionsAreDenied() {
+        assertThat(sTestApis.context().instrumentedContext()
+                .checkSelfPermission(TEST_PERMISSION_1)).isEqualTo(PERMISSION_DENIED);
+        assertThat(sTestApis.context().instrumentedContext()
+                .checkSelfPermission(TEST_PERMISSION_2)).isEqualTo(PERMISSION_DENIED);
+    }
+
+    @Test
+    @EnsureHasPermission(TEST_PERMISSION_1)
+    @EnsureDoesNotHavePermission(TEST_PERMISSION_2)
+    public void ensureHasPermissionAndDoesNotHavePermission_permissionsAreCorrect() {
+        assertThat(sTestApis.context().instrumentedContext()
+                .checkSelfPermission(TEST_PERMISSION_1)).isEqualTo(PERMISSION_GRANTED);
+        assertThat(sTestApis.context().instrumentedContext()
+                .checkSelfPermission(TEST_PERMISSION_2)).isEqualTo(PERMISSION_DENIED);
+
+
     }
 }
