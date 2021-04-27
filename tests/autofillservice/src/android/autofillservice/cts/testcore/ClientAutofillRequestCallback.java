@@ -89,6 +89,29 @@ public class ClientAutofillRequestCallback implements AutofillRequestCallback {
         return mReplier;
     }
 
+    /**
+     * POJO representation of the contents of a
+     * {@link ClientAutofillRequestCallback#onFillRequest(InlineSuggestionsRequest,
+     * CancellationSignal, FillCallback)} that can be asserted at the end of a test case.
+     */
+    public static final class FillRequest {
+
+        public final CancellationSignal cancellationSignal;
+        public final FillCallback callback;
+        public final InlineSuggestionsRequest inlineRequest;
+
+        private FillRequest(CancellationSignal cancellationSignal, FillCallback callback,
+                InlineSuggestionsRequest inlineRequest) {
+            this.cancellationSignal = cancellationSignal;
+            this.callback = callback;
+            this.inlineRequest = inlineRequest;
+        }
+
+        @Override
+        public String toString() {
+            return "FillRequest[has inlineRequest=" + (inlineRequest != null) + "]";
+        }
+    }
 
     /**
      * Object used to answer a
@@ -100,7 +123,7 @@ public class ClientAutofillRequestCallback implements AutofillRequestCallback {
         // TODO: refactor with InstrumentedAutoFillService$Replier
 
         private final BlockingQueue<CannedFillResponse> mResponses = new LinkedBlockingQueue<>();
-        private final BlockingQueue<InlineSuggestionsRequest> mFillRequests =
+        private final BlockingQueue<FillRequest> mFillRequests =
                 new LinkedBlockingQueue<>();
 
         private List<Throwable> mExceptions;
@@ -172,8 +195,8 @@ public class ClientAutofillRequestCallback implements AutofillRequestCallback {
         /**
          * Gets the next fill request, in the order received.
          */
-        public InlineSuggestionsRequest getNextFillRequest() {
-            InlineSuggestionsRequest request;
+        public FillRequest getNextFillRequest() {
+            FillRequest request;
             try {
                 request = mFillRequests.poll(FILL_TIMEOUT.ms(), TimeUnit.MILLISECONDS);
             } catch (InterruptedException e) {
@@ -306,7 +329,10 @@ public class ClientAutofillRequestCallback implements AutofillRequestCallback {
                                 "onFillRequest(): fillResponse = " + fillResponse);
                         callback.onSuccess(fillResponse);
                         // Add a fill request to let test case know response was sent.
-                        Helper.offer(mFillRequests, inlineSuggestionsRequest,
+                        Helper.offer(
+                                mFillRequests,
+                                new FillRequest(cancellationSignal, callback,
+                                        inlineSuggestionsRequest),
                                 CONNECTION_TIMEOUT.ms());
                     }, RESPONSE_DELAY_MS);
                 } else {
@@ -317,7 +343,11 @@ public class ClientAutofillRequestCallback implements AutofillRequestCallback {
                 Log.d(TAG, "onFillRequest(): catch a Throwable: " + t);
                 addException(t);
             } finally {
-                Helper.offer(mFillRequests, inlineSuggestionsRequest, CONNECTION_TIMEOUT.ms());
+                Helper.offer(
+                        mFillRequests,
+                        new FillRequest(cancellationSignal, callback,
+                                inlineSuggestionsRequest),
+                        CONNECTION_TIMEOUT.ms());
             }
         }
 

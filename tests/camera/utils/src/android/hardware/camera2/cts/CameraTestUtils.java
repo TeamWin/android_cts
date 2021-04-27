@@ -705,6 +705,9 @@ public class CameraTestUtils extends Assert {
                 new LinkedBlockingQueue<TotalCaptureResult>();
         private final LinkedBlockingQueue<CaptureFailure> mFailureQueue =
                 new LinkedBlockingQueue<>();
+        // (Surface, framenumber) pair for lost buffers
+        private final LinkedBlockingQueue<Pair<Surface, Long>> mBufferLostQueue =
+                new LinkedBlockingQueue<>();
         private final LinkedBlockingQueue<Integer> mAbortQueue =
                 new LinkedBlockingQueue<>();
         // Pair<CaptureRequest, Long> is a pair of capture request and timestamp.
@@ -768,6 +771,17 @@ public class CameraTestUtils extends Assert {
             } catch (InterruptedException e) {
                 throw new UnsupportedOperationException(
                         "Can't handle InterruptedException in onCaptureSequenceCompleted");
+            }
+        }
+
+        @Override
+        public void onCaptureBufferLost(CameraCaptureSession session,
+                CaptureRequest request, Surface target, long frameNumber) {
+            try {
+                mBufferLostQueue.put(new Pair<>(target, frameNumber));
+            } catch (InterruptedException e) {
+                throw new UnsupportedOperationException(
+                        "Can't handle InterruptedException in onCaptureBufferLost");
             }
         }
 
@@ -939,6 +953,35 @@ public class CameraTestUtils extends Assert {
         }
 
         /**
+         * Get an array list of lost buffers with maxNumLost entries at most.
+         * If it times out before maxNumLost buffer lost callbacks are received, return the
+         * lost callbacks received so far.
+         *
+         * @param maxNumLost The maximal number of buffer lost failures to return. If it times out
+         *                   before the maximal number of failures are received, return the received
+         *                   buffer lost failures so far.
+         * @throws UnsupportedOperationException If an error happens while waiting on the failure.
+         */
+        public ArrayList<Pair<Surface, Long>> getLostBuffers(long maxNumLost) {
+            ArrayList<Pair<Surface, Long>> failures = new ArrayList<>();
+            try {
+                for (int i = 0; i < maxNumLost; i++) {
+                    Pair<Surface, Long> failure = mBufferLostQueue.poll(CAPTURE_RESULT_TIMEOUT_MS,
+                            TimeUnit.MILLISECONDS);
+                    if (failure == null) {
+                        // If waiting on a failure times out, return the failures so far.
+                        break;
+                    }
+                    failures.add(failure);
+                }
+            }  catch (InterruptedException e) {
+                throw new UnsupportedOperationException("Unhandled interrupted exception", e);
+            }
+
+            return failures;
+        }
+
+        /**
          * Get an array list of aborted capture sequence ids with maxNumAborts entries
          * at most. If it times out before maxNumAborts are received, return the aborted sequences
          * received so far.
@@ -1032,6 +1075,11 @@ public class CameraTestUtils extends Assert {
             return !mFailureQueue.isEmpty();
         }
 
+        public int getNumLostBuffers()
+        {
+            return mBufferLostQueue.size();
+        }
+
         public boolean hasMoreAbortedSequences()
         {
             return !mAbortQueue.isEmpty();
@@ -1041,6 +1089,7 @@ public class CameraTestUtils extends Assert {
             mQueue.clear();
             mNumFramesArrived.getAndSet(0);
             mFailureQueue.clear();
+            mBufferLostQueue.clear();
             mCaptureStartQueue.clear();
             mAbortQueue.clear();
         }
