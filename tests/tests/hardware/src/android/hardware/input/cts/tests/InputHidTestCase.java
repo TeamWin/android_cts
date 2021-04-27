@@ -376,12 +376,12 @@ public class InputHidTestCase extends InputTestCase {
                 // Issue the session requests to turn single light on
                 if (test.lightPlayerId > 0) {
                     session.requestLights(new Builder()
-                            .addLight(light, LightState.forPlayerId(test.lightPlayerId))
-                            .build());
+                            .addLight(light, (new LightState.Builder())
+                            .setPlayerId(test.lightPlayerId).build()).build());
                 } else {
                     session.requestLights(new Builder()
-                            .addLight(light, LightState.forColor(test.lightColor))
-                            .build());
+                            .addLight(light, (new LightState.Builder()).setColor(test.lightColor)
+                            .build()).build());
                 }
                 // Some devices (e.g. Sixaxis) defer sending output packets until they've seen at
                 // least one input packet.
