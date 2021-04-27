@@ -1155,7 +1155,7 @@ public class RemoteViewsTest {
             DisplayMetrics displayMetrics = textView.getResources().getDisplayMetrics();
             assertMargins(
                     textView,
-                    resolveDimenOffset(5.5f, COMPLEX_UNIT_DIP, displayMetrics),
+                    resolveDimenOffset(5.5123f, COMPLEX_UNIT_DIP, displayMetrics),
                     resolveDimenOffset(2.5f, COMPLEX_UNIT_DIP, displayMetrics),
                     resolveDimenOffset(3.5f, COMPLEX_UNIT_DIP, displayMetrics),
                     resolveDimenOffset(4.5f, COMPLEX_UNIT_DIP, displayMetrics));
@@ -1196,8 +1196,6 @@ public class RemoteViewsTest {
 
     @Test
     public void testSetViewLayoutMarginAttr_layoutDirection() throws Throwable {
-        View textViewLtr = mResult.findViewById(R.id.remoteView_text_ltr);
-        DisplayMetrics displayMetrics = textViewLtr.getResources().getDisplayMetrics();
         mRemoteViews.setViewLayoutMarginAttr(
                 R.id.remoteView_text_ltr, MARGIN_START, R.attr.themeDimension);
         mRemoteViews.setViewLayoutMarginAttr(
@@ -1206,16 +1204,7 @@ public class RemoteViewsTest {
                 R.id.remoteView_text_ltr, MARGIN_END, R.attr.themeDimension3);
         mRemoteViews.setViewLayoutMarginAttr(
                 R.id.remoteView_text_ltr, MARGIN_BOTTOM, R.attr.themeDimension4);
-        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
-        assertMargins(
-                textViewLtr,
-                resolveDimenOffset(5.5f, COMPLEX_UNIT_DIP, displayMetrics),
-                resolveDimenOffset(2.5f, COMPLEX_UNIT_DIP, displayMetrics),
-                resolveDimenOffset(3.5f, COMPLEX_UNIT_DIP, displayMetrics),
-                resolveDimenOffset(4.5f, COMPLEX_UNIT_DIP, displayMetrics));
 
-        View textViewRtl = mResult.findViewById(R.id.remoteView_text_rtl);
-        displayMetrics = textViewRtl.getResources().getDisplayMetrics();
         mRemoteViews.setViewLayoutMarginAttr(
                 R.id.remoteView_text_rtl, MARGIN_START, R.attr.themeDimension);
         mRemoteViews.setViewLayoutMarginAttr(
@@ -1224,7 +1213,19 @@ public class RemoteViewsTest {
                 R.id.remoteView_text_rtl, MARGIN_END, R.attr.themeDimension3);
         mRemoteViews.setViewLayoutMarginAttr(
                 R.id.remoteView_text_rtl, MARGIN_BOTTOM, R.attr.themeDimension4);
+
         mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
+
+        View textViewLtr = mResult.findViewById(R.id.remoteView_text_ltr);
+        DisplayMetrics displayMetrics = textViewLtr.getResources().getDisplayMetrics();
+        assertMargins(
+                textViewLtr,
+                resolveDimenOffset(5.5123f, COMPLEX_UNIT_DIP, displayMetrics),
+                resolveDimenOffset(2.5f, COMPLEX_UNIT_DIP, displayMetrics),
+                resolveDimenOffset(3.5f, COMPLEX_UNIT_DIP, displayMetrics),
+                resolveDimenOffset(4.5f, COMPLEX_UNIT_DIP, displayMetrics));
+
+        View textViewRtl = mResult.findViewById(R.id.remoteView_text_rtl);
         assertMargins(
                 textViewRtl,
                 resolveDimenOffset(3.5f, COMPLEX_UNIT_DIP, displayMetrics),
