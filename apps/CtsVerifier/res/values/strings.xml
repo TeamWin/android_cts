@@ -788,7 +788,9 @@
         list. Second, make sure your bluetooth device is unreachable(you can power off/reboot your
         Bluetooth device or put it into a Faraday bag) and press the Device Gone button.
         Lastly, make your bluetooth device reachable by waiting for the device to power on or
-        removing it from the Faraday bag and press the Device Present button.
+        removing it from the Faraday bag and press the Device Present button. Note that, if you are
+        using a phone for the testing, please manually pair on another Bluetooth phone before
+        pressing Device Gone and Device Present.
     </string>
 
     <string name="companion_service_test_gone_text">
