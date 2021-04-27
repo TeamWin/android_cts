@@ -21,10 +21,9 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.app.WindowConfiguration.WINDOWING_MODE_MULTI_WINDOW;
 import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
 import static android.server.wm.WindowManagerState.STATE_PAUSED;
-import static android.server.wm.WindowMetricsTestHelper.getBoundsExcludingNavigationBarAndCutout;
+import static android.view.Surface.ROTATION_90;
 import static android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
@@ -73,6 +72,21 @@ public class WindowMetricsActivityTests extends WindowManagerTestBase {
         final MetricsActivity activity = startActivityInWindowingMode(MetricsActivity.class,
                 WINDOWING_MODE_FULLSCREEN);
 
+        assertMetricsValidity(activity);
+    }
+
+    @Test
+    public void testMetricsMatchesActivityBoundsOnNonresizableActivity() {
+        final RotationSession rotationSession = createManagedRotationSession();
+        final MinAspectRatioActivity activity
+                = startActivityInWindowingMode(MinAspectRatioActivity.class,
+                WINDOWING_MODE_FULLSCREEN);
+
+        assertMetricsValidity(activity);
+
+        // Rotating the display might force a non-resizable activity into size compat mode, where
+        // sandboxing might be applied.
+        rotationSession.set(ROTATION_90);
         assertMetricsValidity(activity);
     }
 
@@ -172,6 +186,30 @@ public class WindowMetricsActivityTests extends WindowManagerTestBase {
     }
 
     @Test
+    public void testMetricsMatchesActivityBoundsOnNonresizableSplitActivity() {
+        assumeTrue(supportsSplitScreenMultiWindow());
+
+        final RotationSession rotationSession = createManagedRotationSession();
+        final MinAspectRatioActivity activity
+                = startActivityInWindowingMode(MinAspectRatioActivity.class,
+                WINDOWING_MODE_FULLSCREEN);
+
+        assertMetricsValidity(activity);
+
+        mWmState.computeState(activity.getComponentName());
+        putActivityInPrimarySplit(activity.getComponentName());
+
+        mWmState.computeState(activity.getComponentName());
+        assertTrue(mWmState.getActivity(activity.getComponentName()).getWindowingMode()
+                == WINDOWING_MODE_MULTI_WINDOW);
+
+        // Rotating the display might force a non-resizable activity into size compat mode, where
+        // sandboxing might be applied.
+        rotationSession.set(ROTATION_90);
+        assertMetricsValidity(activity);
+    }
+
+    @Test
     public void testMetricsMatchesLayoutOnFreeformActivity() {
         assumeTrue(supportsFreeform());
 
@@ -261,38 +299,20 @@ public class WindowMetricsActivityTests extends WindowManagerTestBase {
     }
 
     /**
-     * Verify two scenarios for an {@link Activity}
+     * Verifies two scenarios for an {@link Activity}. If the activity is freeform, then the bounds
+     * should not include insets for navigation bar and cutout area.
      * <ul>
      *     <li>{@link WindowManager#getCurrentWindowMetrics()} matches
      *     {@link Display#getSize(Point)}</li>
-     *     <li>{@link WindowManager#getMaximumWindowMetrics()} matches
-     *     DisplayArea bounds which the {@link Activity} is attached to.</li>
+     *     <li>{@link WindowManager#getMaximumWindowMetrics()} and {@link Display#getSize(Point)}
+     *     either matches DisplayArea bounds which the {@link Activity} is attached to, or matches
+     *     {@link WindowManager#getCurrentWindowMetrics()} if sandboxing is applied.</li>
      * </ul>
      */
     private void assertMetricsValidity(Activity activity) {
         mWmState.computeState(activity.getComponentName());
-        final Display display = activity.getDisplay();
-
-        // Check window bounds
-        final Point displaySize = new Point();
-        final boolean isFreeForm = activity.getResources().getConfiguration().windowConfiguration
-                .getWindowingMode() == WINDOWING_MODE_FREEFORM;
-        display.getSize(displaySize);
-        final WindowMetrics windowMetrics = activity.getWindowManager().getCurrentWindowMetrics();
-        // Freeform activity doesn't inset the navigation bar and cutout area.
-        final Rect bounds = isFreeForm ? windowMetrics.getBounds() :
-                getBoundsExcludingNavigationBarAndCutout(windowMetrics);
-        assertEquals("Reported display width must match window width",
-                displaySize.x, bounds.width());
-        assertEquals("Reported display height must match window height",
-                displaySize.y, bounds.height());
-
-        // Check max window bounds
-        final Rect tdaBounds = getTaskDisplayAreaBounds(activity.getComponentName());
-        final WindowMetrics maxWindowMetrics = activity.getWindowManager()
-                .getMaximumWindowMetrics();
-        assertEquals("Display area bounds must match max window size",
-                tdaBounds, maxWindowMetrics.getBounds());
+        WindowMetricsTestHelper.assertMetricsValidity(activity,
+                getTaskDisplayAreaBounds(activity.getComponentName()));
     }
 
     private Rect getTaskDisplayAreaBounds(ComponentName activityName) {
@@ -323,5 +343,8 @@ public class WindowMetricsActivityTests extends WindowManagerTestBase {
             super.onDestroy();
             getWindow().getDecorView().removeOnLayoutChangeListener(mListener);
         }
+    }
+
+    public static class MinAspectRatioActivity extends MetricsActivity {
     }
 }
