@@ -429,6 +429,8 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testReconfigure() throws IOException, InterruptedException {
+        Assume.assumeTrue("Test needs Android 11", IS_AT_LEAST_R);
+
         MediaFormat format = setUpSource(mTestFile);
         mExtractor.release();
         MediaFormat newFormat = setUpSource(mReconfigFile);
