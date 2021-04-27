@@ -587,12 +587,12 @@ public class CellInfoTest {
         if (mRadioHalVersion >= RADIO_HAL_VERSION_1_5) {
             int[] bands = nr.getBands();
 
-            verifyCellIdentityNrBands(bands);
-
             for (int band: bands) {
                 assertTrue("getBand out of range [1, 95] or [257, 261], band = " + band,
                         (band >= BAND_FR1_MIN_NR && band <= BAND_FR1_MAX_NR)
                         || (band >= BAND_FR2_MIN_NR && band <= BAND_FR2_MAX_NR));
+
+                verifyCellIdentityNrBands(bands);
             }
         }
 
@@ -714,11 +714,11 @@ public class CellInfoTest {
         if (mRadioHalVersion >= RADIO_HAL_VERSION_1_5) {
             int[] bands = lte.getBands();
 
-            verifyCellIdentityLteBands(bands);
-
             for (int band: bands) {
                 assertTrue("getBand out of range [1, 88], band = " + band,
                         band >= BAND_MIN_LTE && band <= BAND_MAX_LTE);
+
+                verifyCellIdentityLteBands(bands);
             }
         }
 
