@@ -20,5 +20,6 @@
           package="com.android.bedstead.remotedpc.dpc">
     <uses-sdk android:minSdkVersion="27" />
     <application android:testOnly="true">
+        <service android:name="com.google.android.enterprise.connectedapps.CrossProfileConnector_Service" android:exported="true" />
     </application>
 </manifest>

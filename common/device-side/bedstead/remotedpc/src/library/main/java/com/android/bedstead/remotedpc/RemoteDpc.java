@@ -18,6 +18,7 @@ package com.android.bedstead.remotedpc;
 
 import static com.android.compatibility.common.util.FileUtils.readInputStreamFully;
 
+import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.os.UserHandle;
@@ -30,6 +31,11 @@ import com.android.bedstead.nene.devicepolicy.DevicePolicyController;
 import com.android.bedstead.nene.devicepolicy.ProfileOwner;
 import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.users.UserReference;
+import com.android.bedstead.remotedpc.connected.RemoteDPCBinder;
+import com.android.bedstead.remotedpc.managers.RemoteDevicePolicyManager;
+import com.android.bedstead.remotedpc.managers.RemoteDevicePolicyManagerWrapper;
+
+import com.google.android.enterprise.connectedapps.CrossProfileConnector;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -219,12 +225,16 @@ public final class RemoteDpc {
     }
 
     private final DevicePolicyController mDevicePolicyController;
+    private final CrossProfileConnector mConnector;
 
     private RemoteDpc(DevicePolicyController devicePolicyController) {
         if (devicePolicyController == null) {
             throw new NullPointerException();
         }
         mDevicePolicyController = devicePolicyController;
+        mConnector = CrossProfileConnector.builder(sTestApis.context().instrumentedContext())
+                .setBinder(new RemoteDPCBinder(this))
+                .build();
     }
 
     /**
@@ -256,5 +266,13 @@ public final class RemoteDpc {
 
         RemoteDpc other = (RemoteDpc) obj;
         return other.mDevicePolicyController.equals(mDevicePolicyController);
+    }
+
+    /**
+     * Get a {@link RemoteDevicePolicyManager} to make calls to {@link DevicePolicyManager} using
+     * this RemoteDPC.
+     */
+    public RemoteDevicePolicyManager devicePolicyManager() {
+        return new RemoteDevicePolicyManagerWrapper(mConnector);
     }
 }
