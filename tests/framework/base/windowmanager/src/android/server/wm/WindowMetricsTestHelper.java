@@ -16,6 +16,7 @@
 
 package android.server.wm;
 
+import static android.app.WindowConfiguration.WINDOWING_MODE_FREEFORM;
 import static android.view.WindowInsets.Type.displayCutout;
 import static android.view.WindowInsets.Type.navigationBars;
 import static android.view.WindowInsets.Type.statusBars;
@@ -23,10 +24,15 @@ import static android.view.WindowInsets.Type.statusBars;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import android.app.Activity;
+import android.content.Context;
 import android.graphics.Insets;
+import android.graphics.Point;
 import android.graphics.Rect;
+import android.view.Display;
 import android.view.View;
 import android.view.WindowInsets;
+import android.view.WindowManager;
 import android.view.WindowMetrics;
 
 import java.util.concurrent.CountDownLatch;
@@ -60,6 +66,57 @@ public class WindowMetricsTestHelper {
                 currentMetrics.getWindowInsets().getDisplayCutout());
     }
 
+    /**
+     * Verifies two scenarios for a {@link Context}.
+     * <ul>
+     *     <li>{@link WindowManager#getCurrentWindowMetrics()} matches
+     *     {@link Display#getSize(Point)}</li>
+     *     <li>{@link WindowManager#getMaximumWindowMetrics()} and {@link Display#getSize(Point)}
+     *     either matches DisplayArea bounds which the {@link Context} is attached to, or matches
+     *     {@link WindowManager#getCurrentWindowMetrics()} if sandboxing is applied.</li>
+     * </ul>
+     */
+    public static void assertMetricsValidity(Context context, Rect displayAreaBounds) {
+        final boolean isFreeForm = context instanceof Activity
+                && context.getResources().getConfiguration().windowConfiguration
+                .getWindowingMode() == WINDOWING_MODE_FREEFORM;
+        final WindowManager windowManager = context.getSystemService(WindowManager.class);
+        // Freeform activity doesn't inset the navigation bar and cutout area.
+        final Rect currentBounds = isFreeForm ? windowManager.getCurrentWindowMetrics().getBounds() :
+                getBoundsExcludingNavigationBarAndCutout(windowManager.getCurrentWindowMetrics());
+        final Rect maxBounds = windowManager.getMaximumWindowMetrics().getBounds();
+        final Display display = context.getDisplay();
+
+        // Check window bounds
+        final Point displaySize = new Point();
+        display.getSize(displaySize);
+        assertEquals("Reported display width must match window width",
+                displaySize.x, currentBounds.width());
+        assertEquals("Reported display height must match window height",
+                displaySize.y, currentBounds.height());
+
+        // Max window bounds should match real display size.
+        final Point realDisplaySize = new Point();
+        display.getRealSize(realDisplaySize);
+        assertEquals("Reported real display width must match max window width",
+                realDisplaySize.x, maxBounds.width());
+        assertEquals("Reported real display height must match max window height",
+                realDisplaySize.y, maxBounds.height());
+
+        // Max window bounds should match either DisplayArea bounds, or current window bounds.
+        if (maxWindowBoundsSandboxed(displayAreaBounds, maxBounds)) {
+            // Max window bounds are sandboxed, so max window bounds and real display size
+            // should match current window bounds.
+            assertEquals("Max window size matches current window size, due to sandboxing",
+                    currentBounds, maxBounds);
+        } else {
+            // Max window bounds are not sandboxed, so max window bounds and real display size
+            // should match display area bounds.
+            assertEquals("Display area bounds must match max window size",
+                    displayAreaBounds, maxBounds);
+        }
+    }
+
     public static Rect getBoundsExcludingNavigationBarAndCutout(WindowMetrics windowMetrics) {
         WindowInsets windowInsets = windowMetrics.getWindowInsets();
         final Insets insetsWithCutout =
@@ -67,6 +124,15 @@ public class WindowMetricsTestHelper {
 
         final Rect bounds = windowMetrics.getBounds();
         return inset(bounds, insetsWithCutout);
+    }
+
+    /**
+     * Returns {@code true} if the bounds from {@link WindowManager#getMaximumWindowMetrics()} are
+     * sandboxed, so are smaller than the DisplayArea.
+     */
+    private static boolean maxWindowBoundsSandboxed(Rect displayAreaBounds, Rect maxBounds) {
+        return maxBounds.width() < displayAreaBounds.width()
+                || maxBounds.height() < displayAreaBounds.height();
     }
 
     private static Rect inset(Rect original, Insets insets) {
