@@ -1907,30 +1907,35 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     // TODO(b/184175078): Migrate test to Bedstead when the infra is ready.
     @Test
-    public void testGetNearbyNotificationStreamingPolicy() throws Exception {
+    public void testGetNearbyNotificationStreamingPolicy_getsNearbyStreamingDisabledAsDefault()
+            throws Exception {
         executeDeviceTestMethod(
                 ".NearbyNotificationStreamingPolicyTest",
-                "testGetNearbyNotificationStreamingPolicy");
+                "testGetNearbyNotificationStreamingPolicy_getsNearbyStreamingDisabledAsDefault");
     }
 
     // TODO(b/184175078): Migrate test to Bedstead when the infra is ready.
     @Test
-    public void testSetNearbyNotificationStreamingPolicy() throws Exception {
+    public void testSetNearbyNotificationStreamingPolicy_changesPolicy() throws Exception {
         executeDeviceTestMethod(
                 ".NearbyNotificationStreamingPolicyTest",
-                "testSetNearbyNotificationStreamingPolicy");
+                "testSetNearbyNotificationStreamingPolicy_changesPolicy");
     }
 
     // TODO(b/184175078): Migrate test to Bedstead when the infra is ready.
     @Test
-    public void testGetNearbyAppStreamingPolicy() throws Exception {
-        executeDeviceTestMethod(".NearbyAppStreamingPolicyTest", "testGetNearbyAppStreamingPolicy");
+    public void testGetNearbyAppStreamingPolicy_getsNearbyStreamingDisabledAsDefault()
+            throws Exception {
+        executeDeviceTestMethod(
+                ".NearbyAppStreamingPolicyTest",
+                "testGetNearbyAppStreamingPolicy_getsNearbyStreamingDisabledAsDefault");
     }
 
     // TODO(b/184175078): Migrate test to Bedstead when the infra is ready.
     @Test
-    public void testSetNearbyAppStreamingPolicy() throws Exception {
-        executeDeviceTestMethod(".NearbyAppStreamingPolicyTest", "testSetNearbyAppStreamingPolicy");
+    public void testSetNearbyAppStreamingPolicy_changesPolicy() throws Exception {
+        executeDeviceTestMethod(
+                ".NearbyAppStreamingPolicyTest", "testSetNearbyAppStreamingPolicy_changesPolicy");
     }
 
     /**
