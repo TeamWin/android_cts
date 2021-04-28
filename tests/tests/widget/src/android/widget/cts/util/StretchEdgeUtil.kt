@@ -84,7 +84,7 @@ private fun takeScreenshot(
  * Drags an area of the screen and executes [onFinalMove] after sending the final drag
  * motion and [onUp] after the drag up event has been sent.
  */
-private fun dragAndExecute(
+public fun dragAndExecute(
     activityRule: ActivityTestRule<*>,
     screenX: Int,
     screenY: Int,
@@ -162,7 +162,7 @@ private fun dragAndCapture(
 /**
  * Drags in [view], starting at coordinates ([viewX], [viewY]) relative to [view] and moving
  * ([deltaX], [deltaY]) pixels before lifting. Immediately after the up event, a down event
- * is sent. If it happens within 400 milliseconds of the last motion event, the Bitmap is captured
+ * is sent. If it happens within 50 milliseconds of the last motion event, the Bitmap is captured
  * after 600ms more. If an animation was going to run, this allows that animation to finish before
  * capturing the Bitmap. This is attempted up to 5 times.
  *
@@ -185,12 +185,59 @@ private fun dragHoldAndCapture(
     val screenX = locationOnScreen[0]
     val screenY = locationOnScreen[1]
 
+    return dragHoldAndRun(
+            activityRule,
+            view,
+            viewX,
+            viewY,
+            deltaX,
+            deltaY
+    ) {
+        takeScreenshot(
+                activityRule.activity.window,
+                screenX,
+                screenY,
+                view.width,
+                view.height
+        )
+    }
+}
+
+/**
+ * Drags in [view], starting at coordinates ([viewX], [viewY]) relative to [view] and moving
+ * ([deltaX], [deltaY]) pixels before lifting. Immediately after the up event,
+ * [runBeforeTapDown] is called and then a down event is sent. If it happens within 50 milliseconds
+ * of the last motion event, [runAfterTapDown] is run after 600ms more. If an animation was going
+ * to run, this allows that animation to finish before [runAfterTapDown] is executed.
+ * This is attempted up to 5 times.
+ *
+ * @return The return value from [runAfterTapDown] or `null` if the device did not respond quickly
+ * enough.
+ */
+fun <T> dragHoldAndRun(
+    activityRule: ActivityTestRule<*>,
+    view: View,
+    viewX: Int,
+    viewY: Int,
+    deltaX: Int,
+    deltaY: Int,
+    runBeforeTapDown: () -> Unit = {},
+    runAfterTapDown: () -> T
+): T? {
+    val locationOnScreen = IntArray(2)
+    activityRule.runOnUiThread {
+        view.getLocationOnScreen(locationOnScreen)
+    }
+
+    val screenX = locationOnScreen[0]
+    val screenY = locationOnScreen[1]
+
     val instrumentation = InstrumentationRegistry.getInstrumentation()
 
     // Try 5 times at most. If it fails, just return the null bitmap
     repeat(5) {
         var lastMotion = 0L
-        var bitmap: Bitmap? = null
+        var returnValue: T? = null
         dragAndExecute(
                 activityRule = activityRule,
                 screenX = screenX + viewX,
@@ -202,6 +249,7 @@ private fun dragHoldAndCapture(
                 },
                 onUp = {
                     // Now press
+                    runBeforeTapDown()
                     CtsTouchUtils.injectDownEvent(instrumentation.getUiAutomation(),
                             SystemClock.uptimeMillis(), screenX + viewX,
                             screenY + viewY, null)
@@ -215,13 +263,7 @@ private fun dragHoldAndCapture(
                         // Now make sure that we wait until the release should normally have finished:
                         sleepAnimationTime(600)
 
-                        bitmap = takeScreenshot(
-                                activityRule.activity.window,
-                                screenX,
-                                screenY,
-                                view.width,
-                                view.height
-                        )
+                        returnValue = runAfterTapDown()
                     }
                 }
         )
@@ -230,8 +272,8 @@ private fun dragHoldAndCapture(
                 SystemClock.uptimeMillis(), false,
                 screenX + viewX, screenY + viewY, null)
 
-        if (bitmap != null) {
-            return bitmap // success!
+        if (returnValue != null) {
+            return returnValue // success!
         }
     }
     return null // timing didn't allow for success this time, so return a null
