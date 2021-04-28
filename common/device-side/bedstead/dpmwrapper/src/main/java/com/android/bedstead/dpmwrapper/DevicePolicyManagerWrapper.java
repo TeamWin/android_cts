@@ -219,6 +219,34 @@ final class DevicePolicyManagerWrapper
             doAnswer(answer).when(spy).getOverrideApns(any());
             doAnswer(answer).when(spy).isOverrideApnEnabled(any());
 
+            // Used for DevicePolicyLoggingTest.
+            doAnswer(answer).when(spy).setPasswordMinimumLength(any(), anyInt());
+            doAnswer(answer).when(spy).setPasswordMinimumNumeric(any(), anyInt());
+            doAnswer(answer).when(spy).setPasswordMinimumNonLetter(any(), anyInt());
+            doAnswer(answer).when(spy).setPasswordMinimumLetters(any(), anyInt());
+            doAnswer(answer).when(spy).setPasswordMinimumLowerCase(any(), anyInt());
+            doAnswer(answer).when(spy).setPasswordMinimumUpperCase(any(), anyInt());
+            doAnswer(answer).when(spy).setPasswordMinimumSymbols(any(), anyInt());
+            doAnswer(answer).when(spy).setRequiredPasswordComplexity(anyInt());
+            doAnswer(answer).when(spy).setUninstallBlocked(any(), any(), anyBoolean());
+            doAnswer(answer).when(spy).setPreferentialNetworkServiceEnabled(anyBoolean());
+            doAnswer(answer).when(spy).setPersonalAppsSuspended(any(), anyBoolean());
+
+            // Used by PasswordRequirementsTest
+            doAnswer(answer).when(spy).getPasswordMinimumLength(any());
+            doAnswer(answer).when(spy).getPasswordMinimumNumeric(any());
+            doAnswer(answer).when(spy).getPasswordMinimumLetters(any());
+            doAnswer(answer).when(spy).getPasswordMinimumUpperCase(any());
+            doAnswer(answer).when(spy).getPasswordMinimumLowerCase(any());
+            doAnswer(answer).when(spy).getPasswordMinimumNonLetter(any());
+            doAnswer(answer).when(spy).getPasswordMinimumSymbols(any());
+
+            // Used by SecurityLoggingTest
+            doAnswer(answer).when(spy).getDelegatedScopes(any(), any());
+            doAnswer(answer).when(spy).setPasswordExpirationTimeout(any(), anyLong());
+            doAnswer(answer).when(spy).setPasswordHistoryLength(any(), anyInt());
+            doAnswer(answer).when(spy).setMaximumFailedPasswordsForWipe(any(), anyInt());
+
             // TODO(b/176993670): add more methods below as tests are converted
         } catch (Exception e) {
             // Should never happen, but needs to be catch as some methods declare checked exceptions

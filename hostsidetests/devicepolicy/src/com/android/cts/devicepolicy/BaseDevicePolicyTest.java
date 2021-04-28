@@ -1269,7 +1269,10 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
      * use its "local DPC" or wrap the calls to the system user DPC.
      */
     protected static Map<String, String> paramsForDeviceOwnerTest() {
-        Map<String, String> params = new HashMap<>();
+        return addParamsForDeviceOwnerTest(new HashMap<>());
+    }
+
+    protected static Map<String, String> addParamsForDeviceOwnerTest(Map<String, String> params) {
         params.put("admin_type", "DeviceOwner");
         return params;
     }
