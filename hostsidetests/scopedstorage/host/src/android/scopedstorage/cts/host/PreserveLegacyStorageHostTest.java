@@ -37,7 +37,7 @@ import org.junit.runner.RunWith;
 public class PreserveLegacyStorageHostTest extends BaseHostTestCase {
     private static final String LEGACY_29_APK = "CtsLegacyStorageTestAppRequestLegacy.apk";
     private static final String PRESERVE_30_APK = "CtsLegacyStorageTestAppPreserveLegacy.apk";
-    private static final String PACKAGE_NAME = "android.scopedstorage.cts.legacy";
+    private static final String PACKAGE_NAME = "android.scopedstorage.cts.legacy.preserve";
 
     protected void installApp(String appFileName) throws Exception {
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(getBuild());

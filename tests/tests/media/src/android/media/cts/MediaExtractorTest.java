@@ -73,6 +73,7 @@ public class MediaExtractorTest extends AndroidTestCase {
     private static final UUID UUID_WIDEVINE = new UUID(0xEDEF8BA979D64ACEL, 0xA3C827DCD51D21EDL);
     private static final UUID UUID_PLAYREADY = new UUID(0x9A04F07998404286L, 0xAB92E65BE0885F95L);
     private static boolean mIsAtLeastR = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.R);
+    private static final boolean IS_AT_LEAST_S = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S);
 
     static final String mInpPrefix = WorkDir.getMediaDirString();
     protected MediaExtractor mExtractor;
@@ -427,6 +428,53 @@ public class MediaExtractorTest extends AndroidTestCase {
         // The backward-compatible track should have mime video/av01
         final String mimeType = trackFormat.getString(MediaFormat.KEY_MIME);
         assertEquals("video/av01", mimeType);
+    }
+
+    //MPEG-H 3D Audio single stream (mha1)
+    public void testMpegh3dAudioMediaExtractorMha1() throws Exception {
+        // TODO(b/186267251) move file to cloud storage.
+        AssetFileDescriptor afd = getContext().getResources()
+            .openRawResourceFd(R.raw.sample_mpegh_mha1);
+        mExtractor.setDataSource(afd);
+        assertEquals(1, mExtractor.getTrackCount());
+
+        // The following values below require API Build.VERSION_CODES.S
+        if (!MediaUtils.check(IS_AT_LEAST_S, "test needs Android 12")) return;
+
+        MediaFormat trackFormat = mExtractor.getTrackFormat(0);
+        final String mimeType = trackFormat.getString(MediaFormat.KEY_MIME);
+        assertEquals(MediaFormat.MIMETYPE_AUDIO_MPEGH_MHA1, mimeType);
+
+        final int hpli = trackFormat.getInteger(MediaFormat.KEY_MPEGH_PROFILE_LEVEL_INDICATION);
+        assertEquals(0x0D, hpli);
+
+        final int hrcl = trackFormat.getInteger(MediaFormat.KEY_MPEGH_REFERENCE_CHANNEL_LAYOUT);
+        assertEquals(0x13, hrcl);
+    }
+
+    //MPEG-H 3D Audio single stream encapsulated in MHAS (mhm1)
+    public void testMpegh3dAudioMediaExtractorMhm1() throws Exception {
+        // TODO(b/186267251) move file to cloud storage.
+        AssetFileDescriptor afd = getContext().getResources()
+            .openRawResourceFd(R.raw.sample_mpegh_mhm1);
+        mExtractor.setDataSource(afd);
+        assertEquals(1, mExtractor.getTrackCount());
+
+        // The following values below require API Build.VERSION_CODES.S
+        if (!MediaUtils.check(IS_AT_LEAST_S, "test needs Android 12")) return;
+
+        MediaFormat trackFormat = mExtractor.getTrackFormat(0);
+        final String mimeType = trackFormat.getString(MediaFormat.KEY_MIME);
+        assertEquals(MediaFormat.MIMETYPE_AUDIO_MPEGH_MHM1, mimeType);
+
+        final int hpli = trackFormat.getInteger(MediaFormat.KEY_MPEGH_PROFILE_LEVEL_INDICATION);
+        assertEquals(0x0D, hpli);
+
+        final int hrcl = trackFormat.getInteger(MediaFormat.KEY_MPEGH_REFERENCE_CHANNEL_LAYOUT);
+        assertEquals(0x13, hrcl);
+
+        final ByteBuffer hcos = trackFormat.getByteBuffer(MediaFormat.KEY_MPEGH_COMPATIBLE_SETS);
+        assertEquals(0x12, hcos.get());
     }
 
     public void testGetDrmInitData() throws Exception {

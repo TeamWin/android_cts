@@ -17,13 +17,11 @@
 package android.server.wm;
 
 import static android.server.wm.WindowMetricsTestHelper.assertMetricsMatchesLayout;
-import static android.server.wm.WindowMetricsTestHelper.getBoundsExcludingNavigationBarAndCutout;
+import static android.server.wm.WindowMetricsTestHelper.assertMetricsValidity;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
 import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
-
-import static org.junit.Assert.assertEquals;
 
 import android.content.Context;
 import android.graphics.PixelFormat;
@@ -103,28 +101,21 @@ public class WindowMetricsWindowContextTests extends WindowManagerTestBase {
                     mListener.getLayoutBounds(), mListener.getLayoutInsets());
         }
 
+        /**
+         * Verifies two scenarios for a {@link android.window.WindowContext}.
+         * <ul>
+         *     <li>{@link WindowManager#getCurrentWindowMetrics()} matches
+         *     {@link Display#getSize(Point)}</li>
+         *     <li>{@link WindowManager#getMaximumWindowMetrics()} and
+         *     {@link Display#getSize(Point)} either matches DisplayArea bounds, or matches
+         *     {@link WindowManager#getCurrentWindowMetrics()} if sandboxing is applied.</li>
+         * </ul>
+         */
         private void assertWindowContextMetricsMatchesDisplayArea() {
-            // Check window bounds
-            final Point displaySize = new Point();
-            mWindowContext.getDisplay().getSize(displaySize);
-            final WindowMetrics currentMetrics = mWm.getCurrentWindowMetrics();
-            final Rect bounds = getBoundsExcludingNavigationBarAndCutout(currentMetrics);
-
-            assertEquals("Reported display width must match window width",
-                    displaySize.x, bounds.width());
-            assertEquals("Reported display height must match window height",
-                    displaySize.y, bounds.height());
-
-
             mWmState.computeState();
-
-            // Check max window bounds
-            final WindowMetrics maxMetrics = mWm.getMaximumWindowMetrics();
             WindowManagerState.DisplayArea da = mWmState.getDisplayArea(TEST_WINDOW_NAME);
             final Rect daBounds = da.mFullConfiguration.windowConfiguration.getBounds();
-
-            assertEquals("Display area bounds must match max window size",
-                    daBounds, maxMetrics.getBounds());
+            assertMetricsValidity(mWindowContext, daBounds);
         }
 
         @Override

@@ -178,13 +178,15 @@ public class LightsManagerTest {
     public void testClearLight() {
         assumeTrue(mLights.size() >= 1);
 
+        int initialColor = mManager.getLightState(mLights.get(0)).getColor();
+
         try (LightsManager.LightsSession session = mManager.openSession(HIGH_PRIORITY)) {
             // When the session turns a light on:
             session.requestLights(new Builder().addLight(mLights.get(0), STATE_RED).build());
             // And then the session clears it again:
             session.requestLights(new Builder().clearLight(mLights.get(0)).build());
-            // Then the light should turn back off.
-            assertThat(mManager.getLightState(mLights.get(0)).getColor()).isEqualTo(0);
+            // Then the light should return to its initial state.
+            assertThat(mManager.getLightState(mLights.get(0)).getColor()).isEqualTo(initialColor);
         }
     }
 }

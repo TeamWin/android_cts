@@ -24,6 +24,7 @@ import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.Toast;
@@ -44,6 +45,8 @@ public class CompanionDeviceServiceTestActivity extends PassFailButtons.Activity
 
     private CompanionDeviceManager mCompanionDeviceManager;
 
+    private Handler mHandler;
+
     private Button mPresentButton;
     private Button mGoneButton;
 
@@ -59,6 +62,8 @@ public class CompanionDeviceServiceTestActivity extends PassFailButtons.Activity
         mGoneButton.setEnabled(false);
 
         mCompanionDeviceManager = getSystemService(CompanionDeviceManager.class);
+
+        mHandler = new Handler();
 
         getPassButton().setEnabled(false);
 
@@ -126,7 +131,7 @@ public class CompanionDeviceServiceTestActivity extends PassFailButtons.Activity
         if (Boolean.FALSE.equals(DevicePresenceListener.sDeviceNearBy)) {
             findViewById(R.id.present_button).setOnClickListener(
                     v -> isPresentTest(deviceAddress));
-            mPresentButton.setEnabled(true);
+            mHandler.postDelayed(() -> mPresentButton.setEnabled(true), 5000);
         } else {
             disassociate(deviceAddress);
             fail("Device " + deviceAddress + " should be gone");
@@ -157,8 +162,8 @@ public class CompanionDeviceServiceTestActivity extends PassFailButtons.Activity
             if (deviceAddress != null) {
                 findViewById(R.id.gone_button).setOnClickListener(
                         v -> isGoneTest(deviceAddress));
-                mGoneButton.setEnabled(true);
                 mCompanionDeviceManager.startObservingDevicePresence(deviceAddress);
+                mHandler.postDelayed(() -> mGoneButton.setEnabled(true), 10000);
             } else {
                 fail("The device was present but its address was null");
             }

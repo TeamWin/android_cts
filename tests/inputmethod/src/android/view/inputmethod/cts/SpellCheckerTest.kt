@@ -73,6 +73,7 @@ import org.junit.runner.RunWith
 import java.util.Locale
 import java.util.concurrent.Executor
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 import kotlin.collections.ArrayList
 
 @MediumTest
@@ -516,6 +517,40 @@ class SpellCheckerTest : EndToEndImeTestBase() {
                 waitOnMainUntil({
                     findSuggestionSpanWithFlags(editText, FLAG_GRAMMAR_ERROR) == null
                 }, TIMEOUT)
+            }
+        }
+    }
+
+    @Test
+    fun ignoreInvalidSuggestions() {
+        // Set up a wrong rule:
+        // - Matches the sentence "Context word" and marks "word" as grammar error.
+        val configuration = MockSpellCheckerConfiguration.newBuilder()
+                .setMatchSentence(true)
+                .addSuggestionRules(
+                        MockSpellCheckerProto.SuggestionRule.newBuilder()
+                                .setMatch("Context word")
+                                .addSuggestions("suggestion")
+                                .setStartOffset(8)
+                                .setLength(5) // Should be 4
+                                .setAttributes(RESULT_ATTR_LOOKS_LIKE_TYPO)
+                ).build()
+        MockImeSession.create(context).use { session ->
+            MockSpellCheckerClient.create(context, configuration).use { client ->
+                val (_, editText) = startTestActivity()
+                CtsTouchUtils.emulateTapOnViewCenter(instrumentation, null, editText)
+                waitOnMainUntil({ editText.hasFocus() }, TIMEOUT)
+                InputMethodVisibilityVerifier.expectImeVisible(TIMEOUT)
+                session.callCommitText("Context word", 1)
+                session.callPerformSpellCheck()
+                try {
+                    waitOnMainUntil({
+                        findSuggestionSpanWithFlags(editText, RESULT_ATTR_LOOKS_LIKE_TYPO) != null
+                    }, TIMEOUT)
+                    fail("Invalid suggestions should be ignored")
+                } catch (e: TimeoutException) {
+                    // Expected.
+                }
             }
         }
     }

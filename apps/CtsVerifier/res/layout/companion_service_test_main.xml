@@ -14,11 +14,9 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="vertical">
+    android:layout_height="match_parent">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -30,15 +28,48 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/instructions"
+                    style="@style/InstructionsSmallFont"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:layout_alignParentTop="true"
+                    android:layout_toRightOf="@id/status"
+                    android:text="@string/companion_service_test_info" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginLeft="10dp">
+                    <Button
+                        android:id="@+id/go_button"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentRight="true"
+                        android:layout_marginLeft="20dip"
+                        android:layout_marginRight="20dip"
+                        android:layout_toRightOf="@id/status"
+                        android:text="@string/go_button_text" />
+                </LinearLayout>
+            </LinearLayout>
+
             <TextView
-                android:id="@+id/instructions"
+                android:id="@+id/gone_info"
                 style="@style/InstructionsSmallFont"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_alignParentRight="true"
                 android:layout_alignParentTop="true"
                 android:layout_toRightOf="@id/status"
-                android:text="@string/companion_service_test_info" />
+                android:layout_below="@id/go_button"
+                android:text="@string/companion_service_test_gone_text" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -46,71 +77,44 @@
                 android:orientation="horizontal"
                 android:layout_marginLeft="10dp">
                 <Button
-                    android:id="@+id/go_button"
+                    android:id="@+id/gone_button"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_alignParentRight="true"
                     android:layout_marginLeft="20dip"
                     android:layout_marginRight="20dip"
                     android:layout_toRightOf="@id/status"
-                    android:text="@string/go_button_text" />
+                    android:text="@string/gone_button_text" />
             </LinearLayout>
-        </LinearLayout>
 
-        <TextView
-            android:id="@+id/gone_info"
-            style="@style/InstructionsSmallFont"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_alignParentRight="true"
-            android:layout_alignParentTop="true"
-            android:layout_toRightOf="@id/status"
-            android:layout_below="@id/go_button"
-            android:text="@string/companion_service_test_gone_text" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginLeft="10dp">
-            <Button
-                android:id="@+id/gone_button"
+            <TextView
+                android:id="@+id/present_info"
+                style="@style/InstructionsSmallFont"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_alignParentRight="true"
-                android:layout_marginLeft="20dip"
-                android:layout_marginRight="20dip"
+                android:layout_alignParentTop="true"
                 android:layout_toRightOf="@id/status"
-                android:text="@string/gone_button_text" />
-        </LinearLayout>
+                android:layout_below="@id/gone_button"
+                android:text="@string/companion_service_test_present_text" />
 
-        <TextView
-            android:id="@+id/present_info"
-            style="@style/InstructionsSmallFont"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_alignParentRight="true"
-            android:layout_alignParentTop="true"
-            android:layout_toRightOf="@id/status"
-            android:layout_below="@id/gone_button"
-            android:text="@string/companion_service_test_present_text" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginLeft="10dp">
-            <Button
-                android:id="@+id/present_button"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_alignParentRight="true"
-                android:layout_marginLeft="20dip"
-                android:layout_marginRight="20dip"
-                android:layout_toRightOf="@id/status"
-                android:text="@string/present_button_text" />
-        </LinearLayout>
+                android:orientation="horizontal"
+                android:layout_marginLeft="10dp">
+                <Button
+                    android:id="@+id/present_button"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:layout_marginLeft="20dip"
+                    android:layout_marginRight="20dip"
+                    android:layout_toRightOf="@id/status"
+                    android:text="@string/present_button_text" />
+            </LinearLayout>
 
+        </LinearLayout>
+        <include layout="@layout/pass_fail_buttons" />
     </LinearLayout>
-    <include layout="@layout/pass_fail_buttons" />
-</LinearLayout>
+</ScrollView>

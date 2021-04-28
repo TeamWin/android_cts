@@ -36,6 +36,8 @@ LOCAL_SDK_VERSION := current
 LOCAL_STATIC_JAVA_LIBRARIES := cts_signature_query_service
 LOCAL_COMPATIBILITY_SUITE := cts general-tests
 LOCAL_CERTIFICATE := $(cert_dir)/ec-p256
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
+LOCAL_LICENSE_CONDITIONS := notice
 include $(BUILD_CTS_SUPPORT_PACKAGE)
 
 # This is the second version of the test app signed with the rotated signing
@@ -50,6 +52,8 @@ LOCAL_COMPATIBILITY_SUITE := cts general-tests
 LOCAL_CERTIFICATE := $(cert_dir)/ec-p256_2
 LOCAL_ADDITIONAL_CERTIFICATES := $(cert_dir)/ec-p256
 LOCAL_CERTIFICATE_LINEAGE := $(cert_dir)/ec-p256-por_1_2-default-caps
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
+LOCAL_LICENSE_CONDITIONS := notice
 include $(BUILD_CTS_SUPPORT_PACKAGE)
 
 # This is the third version of the test app signed with the same rotated
@@ -64,6 +68,8 @@ LOCAL_COMPATIBILITY_SUITE := cts general-tests
 LOCAL_CERTIFICATE := $(cert_dir)/ec-p256_2
 LOCAL_ADDITIONAL_CERTIFICATES := $(cert_dir)/ec-p256
 LOCAL_CERTIFICATE_LINEAGE := $(cert_dir)/ec-p256-por_1_2-default-caps
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
+LOCAL_LICENSE_CONDITIONS := notice
 include $(BUILD_CTS_SUPPORT_PACKAGE)
 
 cert_dir :=
