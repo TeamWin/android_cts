@@ -72,8 +72,18 @@ abstract class BaseDeviceOwnerTest extends BaseDevicePolicyTest {
     }
 
     protected final void executeDeviceOwnerTest(String testClassName) throws Exception {
+        executeDeviceOwnerTestOnSpecificUser(testClassName, mPrimaryUserId);
+    }
+
+    protected final void executeDeviceOwnerTestOnDeviceOwnerUser(String testClassName)
+            throws Exception {
+        executeDeviceOwnerTestOnSpecificUser(testClassName, mDeviceOwnerUserId);
+    }
+
+    private void executeDeviceOwnerTestOnSpecificUser(String testClassName, int userId)
+            throws Exception {
         String testClass = DEVICE_OWNER_PKG + "." + testClassName;
-        runDeviceTestsAsUser(DEVICE_OWNER_PKG, testClass, mPrimaryUserId);
+        runDeviceTestsAsUser(DEVICE_OWNER_PKG, testClass, userId);
     }
 
     protected final void executeDeviceOwnerTestMethod(String className, String testName)

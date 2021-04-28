@@ -35,13 +35,21 @@ public class SetLocationEnabledTest extends BaseDeviceOwnerTest {
         LocationManager locationManager = mContext.getSystemService(LocationManager.class);
         boolean enabled = locationManager.isLocationEnabled();
 
-        setLocationEnabledAndWait(!enabled);
-        assertEquals(!enabled, locationManager.isLocationEnabled());
-        setLocationEnabledAndWait(enabled);
+        setLocationEnabledAndWaitIfNecessary(!enabled);
+
+        boolean expected = mIsAutomotive ? enabled : !enabled;
+        assertEquals(expected, locationManager.isLocationEnabled());
+
+        setLocationEnabledAndWaitIfNecessary(enabled);
         assertEquals(enabled, locationManager.isLocationEnabled());
     }
 
-    private void setLocationEnabledAndWait(boolean enabled) throws Exception {
+    private void setLocationEnabledAndWaitIfNecessary(boolean enabled) throws Exception {
+        if (mIsAutomotive) {
+            mDevicePolicyManager.setLocationEnabled(getWho(), enabled);
+            return;
+        }
+
         final CountDownLatch latch = new CountDownLatch(1);
         final BroadcastReceiver receiver = new BroadcastReceiver() {
             @Override
