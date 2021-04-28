@@ -110,142 +110,6 @@ public class ItsTestActivity extends DialogTestListActivity {
                     add("scene4");
                     add("sensor_fusion");
             }};
-
-    private static final ArrayList<String> mScene0Tests = new ArrayList<String>() {{
-            add("test_burst_capture");
-            add("test_capture_result_dump");
-            add("test_gyro_bias");
-            add("test_jitter");
-            add("test_metadata");
-            add("test_param_sensitivity_burst");
-            add("test_read_write");
-            add("test_sensor_events");
-            add("test_solid_color_test_pattern");
-            add("test_test_patterns");
-            add("test_tonemap_curve");
-            add("test_unified_timestamps");
-            add("test_vibration_restriction");
-        }};
-
-    private static final ArrayList<String> mScene1_1Tests = new ArrayList<String>() {{
-            add("test_3a");
-            add("test_ae_af");
-            add("test_ae_precapture_trigger");
-            add("test_auto_vs_manual");
-            add("test_black_white");
-            add("test_burst_sameness_manual");
-            add("test_capture_result");
-            add("test_crop_region_raw");
-            add("test_crop_regions");
-            add("test_dng_noise_model");
-            add("test_ev_compensation_advanced");
-            add("test_ev_compensation_basic");
-            add("test_exposure");
-            add("test_jpeg");
-            add("test_latching");
-            add("test_linearity");
-            add("test_locked_burst");
-            add("test_multi_camera_match");
-            add("test_param_color_correction");
-            add("test_param_exposure_time");
-            add("test_param_flash_mode");
-            add("test_param_noise_reduction");
-        }};
-
-    private static final ArrayList<String> mScene1_2Tests = new ArrayList<String>() {{
-            add("test_param_sensitivity");
-            add("test_param_shading_mode");
-            add("test_param_tonemap_mode");
-            add("test_post_raw_sensitivity_boost");
-            add("test_raw_exposure");
-            add("test_raw_sensitivity_burst");
-            add("test_raw_sensitivity");
-            add("test_reprocess_noise_reduction");
-            add("test_tonemap_sequence");
-            add("test_yuv_jpeg_all");
-            add("test_yuv_plus_dng");
-            add("test_yuv_plus_jpeg");
-            add("test_yuv_plus_raw");
-            add("test_yuv_plus_raw10");
-            add("test_yuv_plus_raw12");
-        }};
-
-    private static final ArrayList<String> mScene2_aTests = new ArrayList<String>() {{
-            add("test_effects");
-            add("test_faces");
-            add("test_format_combos");
-            add("test_jpeg_quality");
-            add("test_num_faces");
-        }};
-
-    private static final ArrayList<String> mScene2_bTests = new ArrayList<String>() {{
-            add("test_auto_per_frame_control");
-            add("test_num_faces");
-        }};
-
-    private static final ArrayList<String> mScene2_cTests = new ArrayList<String>() {{
-            add("test_num_faces");
-        }};
-
-    private static final ArrayList<String> mScene2_dTests = new ArrayList<String>() {{
-            add("test_num_faces");
-        }};
-
-    private static final ArrayList<String> mScene2_eTests = new ArrayList<String>() {{
-            add("test_num_faces");
-            add("test_continuous_picture");
-        }};
-
-    private static final ArrayList<String> mScene3Tests = new ArrayList<String>() {{
-            add("test_3a_consistency");
-            add("test_edge_enhancement");
-            add("test_flip_mirror");
-            add("test_lens_movement_reporting");
-            add("test_lens_position");
-            add("test_reprocess_edge_enhancement");
-        }};
-
-    private static final ArrayList<String> mScene4Tests = new ArrayList<String>() {{
-            add("test_aspect_ratio_and_crop");
-            add("test_multi_camera_alignment");
-        }};
-
-    private static final ArrayList<String> mScene5Tests = new ArrayList<String>() {{
-            add("test_lens_shading_and_color_uniformity");
-        }};
-
-    private static final ArrayList<String> mScene6Tests = new ArrayList<String>() {{
-            add("test_zoom");
-        }};
-
-    private static final ArrayList<String> mSceneChangeTests = new ArrayList<String>() {{
-            add("test_scene_change");
-        }};
-
-    private static final ArrayList<String> mSensorFusionTests = new ArrayList<String>() {{
-            add("test_multi_camera_frame_sync");
-            add("test_sensor_fusion");
-        }};
-
-    private static final HashMap<String,ArrayList<String>> mSceneTestMap =
-        new HashMap<String,ArrayList<String>>() {{
-            put("scene0", mScene0Tests);
-            put("scene1_1",mScene1_1Tests );
-            put("scene1_2", mScene1_2Tests);
-            put("scene2_a",mScene2_aTests);
-            put("scene2_b",mScene2_bTests);
-            put("scene2_c",mScene2_cTests);
-            put("scene2_d", mScene2_dTests);
-            put("scene2_e",mScene2_eTests);
-            put("scene3",mScene3Tests);
-            put("scene4",mScene4Tests);
-            put("scene5",mScene5Tests);
-            put("scene6",mScene6Tests);
-            put("scene_change",mSceneChangeTests);
-            put("sensor_fusion",mSensorFusionTests);
-        }};
-
-
     // TODO: cache the following in saved bundle
     private Set<ResultKey> mAllScenes = null;
     // (camera, scene) -> (pass, fail)
@@ -346,67 +210,12 @@ public class ItsTestActivity extends DialogTestListActivity {
                     while (keys.hasNext()) {
                         scenes.add(keys.next());
                     }
-                    boolean newScenes = false;
-                    if (mAllScenes == null) {
-                        mAllScenes = new TreeSet<>(mComparator);
-                        newScenes = true;
-                    } else { // See if scene lists changed
-                        for (String scene : scenes) {
-                            if (!mAllScenes.contains(new ResultKey(cameraId, scene))) {
-                                // Scene list changed. Cleanup previous test results
-                                newScenes = true;
-                                break;
-                            }
-                        }
-                        for (ResultKey k : mAllScenes) {
-                            if (!scenes.contains(k.sceneId)) {
-                                newScenes = true;
-                                break;
-                            }
-                        }
-                    }
-                    if (newScenes) {
-                        mExecutedScenes.clear();
-                        mAllScenes.clear();
-                        for (String scene : scenes) {
-                            for (String c : mToBeTestedCameraIds) {
-                                mAllScenes.add(new ResultKey(c, scene));
-                            }
-                        }
-                    }
 
                     // Update test execution results
                     for (String scene : scenes) {
                         HashMap<String, String> executedTests = new HashMap<>();
                         JSONObject sceneResult = jsonResults.getJSONObject(scene);
                         Log.v(TAG, sceneResult.toString());
-                        if(sceneResult.has("TEST_STATUS")){
-                            JSONArray testResults = sceneResult.getJSONArray("TEST_STATUS");
-                            for(int i=0;i < testResults.length();i++){
-                                JSONObject obj = (JSONObject)testResults.get(i);
-                                String test_name = obj.get("test").toString();
-                                String test_status = obj.get("status").toString();
-                                executedTests.put(test_name,test_status);
-                            }
-                            Log.v(TAG,"Individual test results are:" + executedTests.toString());
-                            for (Map.Entry<String,String> entry : executedTests.entrySet()){
-                                int testResult;
-                                String test_name,status;
-                                test_name = entry.getKey();
-                                status = entry.getValue();
-                                if(status.equals("PASS")) {
-                                    testResult = TestResult.TEST_RESULT_PASSED;
-                                } else if (status.equals("SKIP")) {
-                                    testResult = TestResult.TEST_RESULT_NOT_EXECUTED;
-                                } else {
-                                    testResult = TestResult.TEST_RESULT_FAILED;
-                                }
-                                setTestResult(testId(cameraId, scene) + "_" + test_name, testResult);
-                                Log.v(TAG, "setTestResult for " +
-                                    testId(cameraId, scene) + "_" + test_name + ": " + testResult);
-                            }
-
-                        }
                         String result = sceneResult.getString("result");
                         if (result == null) {
                             Log.e(TAG, "Result for " + scene + " is null");
@@ -569,17 +378,17 @@ public class ItsTestActivity extends DialogTestListActivity {
             List<String> scenes = cam.contains(ItsUtils.CAMERA_ID_TOKENIZER) ?
                     mHiddenPhysicalCameraSceneIds : mSceneIds;
             for (String scene : scenes) {
+                // Add camera and scene combinations in mAllScenes to avoid adding n/a scenes for
+                // devices with sub-cameras.
+                if(mAllScenes == null){
+                    mAllScenes = new TreeSet<>(mComparator);
+                }
+                mAllScenes.add(new ResultKey(cam, scene));
                 adapter.add(new DialogTestListItem(this,
                 testTitle(cam, scene),
                 testId(cam, scene)));
-                if(mSceneTestMap.containsKey(scene)){
-                    ArrayList<String> testList = mSceneTestMap.get(scene);
-                    for(String test_name : testList){
-                        adapter.add(new DialogTestListItem(
-                            this,test_name,testId(cam, scene) + "_" + test_name));
-                    }
-                }
             }
+            Log.d(TAG,"Total combinations to test on this device:" + mAllScenes.size());
         }
     }
 
