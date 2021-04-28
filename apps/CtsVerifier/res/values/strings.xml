@@ -4404,6 +4404,29 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="device_owner_set_lockscreen_message_hint">My lock screen message</string>
     <string name="device_owner_lockscreen_message_cannot_be_empty">Lock screen message cannot be empty.</string>
 
+    <string name="device_owner_disable_usb_data_signaling_test">Disable USB data signaling</string>
+    <string name="device_owner_disable_usb_data_signaling_test_info">
+         This test verifies that USB data signaling can be disabled by the device owner.\n
+         1. Press the \"Go\" button to go to Settings. Go to Connected devices > USB and select use
+         USB for \"File transfer/Android Auto\". Verify that you can mount the device as a USB drive
+         on your desktop computer and access files from your phone through USB.\n
+         2. Press the \"Disable USB data signaling\" button to disable USB data signaling on
+         the device. When disabled, all USB data connections (except from charging functions)
+         are prohibited.\n
+         3. Press the \"Go\" button to go to Settings and confirm that the following preferences
+         cannot be selected:\n
+              - Connected devices > USB\n
+              - System > Developer Options > USB debugging\n
+              - System > Developer Options > Default USB configuration\n
+              - System > Developer Options > Disable USB audio routing\n
+         4. Verify that you cannot mount the device as a USB drive on your desktop computer and
+         cannot access files from your phone through USB.\n
+         5. Press the \"Enable USB data signaling\" button to re-enable USB data signaling on
+         the device.\n
+         Please mark the test accordingly.
+    </string>
+    <string name="device_owner_enable_usb_data_signaling_test">Enable USB data signaling</string>
+
     <string name="managed_user_test">Managed User</string>
     <string name="managed_user_positive_tests">Managed User positive tests</string>
     <string name="managed_user_positive_tests_instructions">
