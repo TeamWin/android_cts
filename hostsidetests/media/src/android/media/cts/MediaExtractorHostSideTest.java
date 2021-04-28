@@ -83,9 +83,9 @@ public class MediaExtractorHostSideTest extends BaseMediaHostSideTest {
                 .isEqualTo(Mediametrics.ExtractorData.EntryPoint.NDK_WITH_JVM);
     }
 
-    public void testMediaMetricsPlaybackId() throws Exception {
+    public void testMediaMetricsLogSessionId() throws Exception {
         runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, DEVICE_SIDE_TEST_CLASS, "testLogSessionId");
-        assertThat(getMediaExtractorReportedPlaybackId()).isEqualTo("FakePlaybackId");
+        assertThat(getMediaExtractorReportedLogSessionId()).isEqualTo("FakeLogSessionId");
     }
 
     // Internal methods.
@@ -150,13 +150,13 @@ public class MediaExtractorHostSideTest extends BaseMediaHostSideTest {
     }
 
     /**
-     * Asserts that a single playback id has been reported by MediaMetrics and returns it.
+     * Asserts that a single log session id has been reported by MediaMetrics and returns it.
      *
      * <p>Note: Calls {@link #getAndClearReportList()} to obtain the statsd report.
      */
-    private String getMediaExtractorReportedPlaybackId()
+    private String getMediaExtractorReportedLogSessionId()
             throws Exception {
-        return getMediaExtractorReportedData().getPlaybackId();
+        return getMediaExtractorReportedData().getLogSessionId();
     }
 
     private Mediametrics.ExtractorData getMediaExtractorReportedData() throws Exception {
