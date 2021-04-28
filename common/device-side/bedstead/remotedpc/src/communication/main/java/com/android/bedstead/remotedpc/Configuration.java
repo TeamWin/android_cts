@@ -14,13 +14,21 @@
  * limitations under the License.
  */
 
-package com.android.bedstead.remotedpc.connected;
+package com.android.bedstead.remotedpc;
 
-import com.android.bedstead.remotedpc.managers.Provider;
+import android.content.ComponentName;
 
-import com.google.android.enterprise.connectedapps.annotations.CrossProfileConfiguration;
+/**
+ * Utilities and configuration for RemoteDPC Communication.
+ */
+public final class Configuration {
 
-/** Connected Apps SDK Configuration for RemoteDPC. */
-@CrossProfileConfiguration(providers = Provider.class)
-public class Configuration {
+    private Configuration() {
+
+    }
+
+    public static final ComponentName DPC_COMPONENT = new ComponentName(
+            "com.android.bedstead.remotedpc.dpc",
+            "com.android.eventlib.premade.EventLibDeviceAdminReceiver"
+    );
 }
