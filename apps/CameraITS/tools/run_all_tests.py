@@ -427,15 +427,15 @@ def main():
         not s.startswith(('sensor_fusion', '<scene-name>'))):
       scenes[i] = f'scene{s}'
 
+  logging.info('Running ITS on device: %s, camera(s): %s, scene(s): %s',
+               device_id, camera_id_combos, scenes)
+
   # Determine if manual run
   if tablet_id is not None and not set(scenes).intersection(_MANUAL_SCENES):
     auto_scene_switch = True
   else:
     auto_scene_switch = False
     logging.info('Manual testing: no tablet defined or testing scene5.')
-
-  logging.info('Running ITS on device: %s, camera: %s, scene: %s',
-               device_id, camera_id_combos, scenes)
 
   for camera_id in camera_id_combos:
     test_params_content['camera'] = camera_id
@@ -450,11 +450,10 @@ def main():
     else:
       possible_scenes = _AUTO_SCENES if auto_scene_switch else _ALL_SCENES
 
-    if not scenes or '<scene-name>' in scenes:
+    if '<scene-name>' in scenes:
       scenes = possible_scenes
     else:
       # Validate user input scene names
-      valid_scenes = True
       temp_scenes = []
       for s in scenes:
         if s in possible_scenes:
@@ -462,12 +461,12 @@ def main():
         elif s in _GROUPED_SCENES:
           expand_scene(s, temp_scenes)
         else:
-          valid_scenes = False
           raise ValueError(f'Unknown scene specified: {s}')
 
-      # assign temp_scenes back to scenes and remove duplicates
+      # Remove any duplicates
       scenes = sorted(set(temp_scenes), key=temp_scenes.index)
 
+    logging.info('camera: %s, scene(s): %s', camera_id, scenes)
     for s in _ALL_SCENES:
       results[s] = {RESULT_KEY: RESULT_NOT_EXECUTED}
     # A subdir in topdir will be created for each camera_id. All scene test
