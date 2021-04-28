@@ -24,6 +24,7 @@ import static org.junit.Assume.assumeTrue;
 import android.media.MediaCodec;
 import android.media.MediaFormat;
 import android.media.MediaParser;
+import android.media.metrics.LogSessionId;
 import android.os.Build;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -52,6 +53,22 @@ public class MediaParserTest {
     @Before
     public void setUp() {
         assumeTrue(Build.VERSION.SDK_INT >= Build.VERSION_CODES.R);
+    }
+
+    @Test
+    public void testLogSessionId() {
+        // TODO: Replace with Build.VERSION.SDK_INT >= Build.VERSION_CODES.S once possible.
+        assumeTrue(
+                Build.VERSION.SDK_INT == Build.VERSION_CODES.R
+                        && ("S".equals(Build.VERSION.CODENAME)
+                                || "T".equals(Build.VERSION.CODENAME)));
+        MediaParser mediaParser = MediaParser.create(new MockMediaParserOutputConsumer());
+        assertThat(mediaParser.getLogSessionId())
+                .isSameInstanceAs(LogSessionId.LOG_SESSION_ID_NONE);
+        LogSessionId logSessionId = new LogSessionId("FakeLogSessionId");
+        mediaParser.setLogSessionId(logSessionId);
+        assertThat(mediaParser.getLogSessionId()).isSameInstanceAs(logSessionId);
+        mediaParser.release();
     }
 
     @Test
