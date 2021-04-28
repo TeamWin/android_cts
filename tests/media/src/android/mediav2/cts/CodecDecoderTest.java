@@ -674,7 +674,7 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
         for (int i = 0; ; i++) {
             String csdKey = "csd-" + i;
             if (format.containsKey(csdKey)) {
-                mCsdBuffers.add(format.getByteBuffer(csdKey));
+                mCsdBuffers.add(format.getByteBuffer(csdKey).duplicate());
                 format.removeKey(csdKey);
             } else break;
         }
@@ -690,7 +690,8 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
         for (String decoder : listOfDecoders) {
             mCodec = MediaCodec.createByCodecName(decoder);
             int loopCounter = 0;
-            for (MediaFormat fmt : formats) {
+            for (int i = 0; i < formats.size(); i++) {
+                MediaFormat fmt = formats.get(i);
                 for (boolean eosMode : boolStates) {
                     for (boolean isAsync : boolStates) {
                         boolean validateFormat = true;
@@ -709,7 +710,7 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
                             validateFormat = false;
                         }
                         mCodec.start();
-                        queueCodecConfig();
+                        if (i == 0) queueCodecConfig();
                         doWork(Integer.MAX_VALUE);
                         queueEOS();
                         waitForAllOutputs();
