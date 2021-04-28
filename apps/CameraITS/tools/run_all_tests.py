@@ -27,6 +27,8 @@ import camera_properties_utils
 import image_processing_utils
 import its_session_utils
 
+import numpy as np
+
 YAML_FILE_DIR = os.environ['CAMERA_ITS_TOP']
 CONFIG_FILE = os.path.join(YAML_FILE_DIR, 'config.yml')
 TEST_KEY_TABLET = 'tablet'
@@ -313,21 +315,6 @@ def get_device_serial_number(device, config_file_contents):
     return dut_device_id
 
 
-def expand_scene(scene, scenes):
-  """Expand a grouped scene and append its sub_scenes to scenes.
-
-  Args:
-    scene:      scene in GROUPED_SCENES dict
-    scenes:     list of scenes to append to
-
-  Returns:
-     updated scenes
-  """
-  logging.info('Expanding %s  to %s.', scene, str(_GROUPED_SCENES[scene]))
-  for sub_scene in _GROUPED_SCENES[scene]:
-    scenes.append(sub_scene)
-
-
 def get_updated_yml_file(yml_file_contents):
   """Create a new yml file and write the testbed contents in it.
 
@@ -427,6 +414,11 @@ def main():
         not s.startswith(('sensor_fusion', '<scene-name>'))):
       scenes[i] = f'scene{s}'
 
+  # Expand GROUPED_SCENES and remove any duplicates
+  scenes = [_GROUPED_SCENES[s] if s in _GROUPED_SCENES else s for s in scenes]
+  scenes = np.hstack(scenes).tolist()
+  scenes = sorted(set(scenes), key=scenes.index)
+
   logging.info('Running ITS on device: %s, camera(s): %s, scene(s): %s',
                device_id, camera_id_combos, scenes)
 
@@ -451,22 +443,17 @@ def main():
       possible_scenes = _AUTO_SCENES if auto_scene_switch else _ALL_SCENES
 
     if '<scene-name>' in scenes:
-      scenes = possible_scenes
+      per_camera_scenes = possible_scenes
     else:
       # Validate user input scene names
-      temp_scenes = []
+      per_camera_scenes = []
       for s in scenes:
         if s in possible_scenes:
-          temp_scenes.append(s)
-        elif s in _GROUPED_SCENES:
-          expand_scene(s, temp_scenes)
-        else:
-          raise ValueError(f'Unknown scene specified: {s}')
+          per_camera_scenes.append(s)
+      if not per_camera_scenes:
+        raise ValueError('No valid scene specified for this camera.')
 
-      # Remove any duplicates
-      scenes = sorted(set(temp_scenes), key=temp_scenes.index)
-
-    logging.info('camera: %s, scene(s): %s', camera_id, scenes)
+    logging.info('camera: %s, scene(s): %s', camera_id, per_camera_scenes)
     for s in _ALL_SCENES:
       results[s] = {RESULT_KEY: RESULT_NOT_EXECUTED}
     # A subdir in topdir will be created for each camera_id. All scene test
@@ -477,7 +464,7 @@ def main():
     mobly_output_logs_path = os.path.join(topdir, cam_id_string)
     os.mkdir(mobly_output_logs_path)
     tot_pass = 0
-    for s in scenes:
+    for s in per_camera_scenes:
       test_params_content['scene'] = s
       results[s]['TEST_STATUS'] = []
 
