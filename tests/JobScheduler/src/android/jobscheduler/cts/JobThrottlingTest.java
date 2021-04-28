@@ -632,14 +632,18 @@ public class JobThrottlingTest {
     @Test
     public void testExpeditedJobDeferredAfterTimeoutInDoze() throws Exception {
         assumeTrue("device idle not enabled", mDeviceIdleEnabled);
-        mDeviceConfigStateHelper.set("runtime_min_ej_guarantee_ms", Long.toString(60_000L));
+        // Intentionally set a value below 1 minute to ensure the range checks work.
+        mDeviceConfigStateHelper.set("runtime_min_ej_guarantee_ms", Long.toString(30_000L));
 
         toggleDozeState(true);
         mTestAppInterface.scheduleJob(false, JobInfo.NETWORK_TYPE_NONE, true);
         runJob();
         assertTrue("Job did not start after scheduling",
                 mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
-        assertTrue("Job did not stop after timeout", mTestAppInterface.awaitJobStop(70_000L));
+        // Don't put full minute as the timeout to give some leeway with test timing/processing.
+        assertFalse("Job stopped before min runtime limit",
+                mTestAppInterface.awaitJobStop(55_000L));
+        assertTrue("Job did not stop after timeout", mTestAppInterface.awaitJobStop(15_000L));
         assertEquals(JobParameters.STOP_REASON_DEVICE_STATE,
                 mTestAppInterface.getLastParams().getStopReason());
         // Should be rescheduled.
@@ -660,7 +664,8 @@ public class JobThrottlingTest {
     public void testExpeditedJobDeferredAfterTimeoutInBatterySaver() throws Exception {
         BatteryUtils.assumeBatterySaverFeature();
 
-        mDeviceConfigStateHelper.set("runtime_min_ej_guarantee_ms", Long.toString(60_000L));
+        // Intentionally set a value below 1 minute to ensure the range checks work.
+        mDeviceConfigStateHelper.set("runtime_min_ej_guarantee_ms", Long.toString(47_000L));
 
         BatteryUtils.runDumpsysBatteryUnplug();
         BatteryUtils.enableBatterySaver(true);
@@ -668,7 +673,10 @@ public class JobThrottlingTest {
         runJob();
         assertTrue("Job did not start after scheduling",
                 mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
-        assertTrue("Job did not stop after timeout", mTestAppInterface.awaitJobStop(70_000L));
+        // Don't put full minute as the timeout to give some leeway with test timing/processing.
+        assertFalse("Job stopped before min runtime limit",
+                mTestAppInterface.awaitJobStop(55_000L));
+        assertTrue("Job did not stop after timeout", mTestAppInterface.awaitJobStop(15_000L));
         assertEquals(JobParameters.STOP_REASON_DEVICE_STATE,
                 mTestAppInterface.getLastParams().getStopReason());
         // Should be rescheduled.
@@ -697,7 +705,10 @@ public class JobThrottlingTest {
         runJob();
         assertTrue("Job did not start after scheduling",
                 mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
-        assertTrue("Job did not stop after timeout", mTestAppInterface.awaitJobStop(70_000L));
+        // Don't put full minute as the timeout to give some leeway with test timing/processing.
+        assertFalse("Job stopped before min runtime limit",
+                mTestAppInterface.awaitJobStop(55_000L));
+        assertTrue("Job did not stop after timeout", mTestAppInterface.awaitJobStop(15_000L));
         assertEquals(JobParameters.STOP_REASON_DEVICE_STATE,
                 mTestAppInterface.getLastParams().getStopReason());
         // Should be rescheduled.
@@ -720,7 +731,8 @@ public class JobThrottlingTest {
     @Test
     public void testLongExpeditedJobStoppedByDoze() throws Exception {
         assumeTrue("device idle not enabled", mDeviceIdleEnabled);
-        mDeviceConfigStateHelper.set("runtime_min_ej_guarantee_ms", Long.toString(60_000L));
+        // Intentionally set a value below 1 minute to ensure the range checks work.
+        mDeviceConfigStateHelper.set("runtime_min_ej_guarantee_ms", Long.toString(59_000L));
 
         toggleDozeState(false);
         mTestAppInterface.scheduleJob(false, JobInfo.NETWORK_TYPE_NONE, true);
@@ -742,7 +754,8 @@ public class JobThrottlingTest {
     public void testLongExpeditedJobStoppedByBatterySaver() throws Exception {
         BatteryUtils.assumeBatterySaverFeature();
 
-        mDeviceConfigStateHelper.set("runtime_min_ej_guarantee_ms", Long.toString(60_000L));
+        // Intentionally set a value below 1 minute to ensure the range checks work.
+        mDeviceConfigStateHelper.set("runtime_min_ej_guarantee_ms", Long.toString(0L));
 
         BatteryUtils.runDumpsysBatteryUnplug();
         BatteryUtils.enableBatterySaver(false);
