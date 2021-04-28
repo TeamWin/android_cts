@@ -18,7 +18,6 @@ package com.android.cts.webkit;
 
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
-import com.android.tradefed.invoker.TestInformation;
 import com.android.tradefed.log.LogUtil;
 import com.android.tradefed.targetprep.TargetSetupError;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -87,8 +86,8 @@ public class WebViewHostSideMultipleProfileTest extends BaseHostJUnit4Test {
 
         mUserId = createUser(SECONDARY_USER_NAME + System.currentTimeMillis(), true);
         startUser(mUserId);
-        setProfileOwnwer(mUserId, PROFILE_OWNER_CLASS);
         installTestApkForUser(mUserId);
+        setProfileOwnwer(mUserId, PROFILE_OWNER_CLASS);
 
         assertWebViewDeviceTestAsUserPasses(this, "testCreateWebViewAndNavigate", mUserId);
     }
