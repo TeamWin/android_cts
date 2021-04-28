@@ -35,6 +35,16 @@
             </intent-filter>
         </activity>
 
+        <receiver
+            android:name="com.android.cts.webkit.WebViewDeviceSideMultipleProfileTest$BasicAdminReceiver"
+            android:permission="android.permission.BIND_DEVICE_ADMIN"
+            android:exported="true">
+            <meta-data android:name="android.app.device_admin"
+                       android:resource="@xml/profile_owner" />
+            <intent-filter>
+                <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
+            </intent-filter>
+        </receiver>
     </application>
 
 
