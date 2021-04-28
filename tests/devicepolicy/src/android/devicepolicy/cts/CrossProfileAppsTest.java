@@ -17,6 +17,8 @@
 package android.devicepolicy.cts;
 
 import static com.android.bedstead.harrier.DeviceState.UserType.PRIMARY_USER;
+import static com.android.bedstead.harrier.OptionalBoolean.FALSE;
+import static com.android.bedstead.harrier.OptionalBoolean.TRUE;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -38,22 +40,19 @@ import androidx.test.uiautomator.Until;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.OptionalBoolean;
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
-import com.android.bedstead.harrier.annotations.enterprise.PositivePolicyTest;
-import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnNonAffiliatedDeviceOwnerSecondaryUser;
-import com.android.bedstead.harrier.policies.TestPolicy;
 
 import org.junit.ClassRule;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -91,7 +90,7 @@ public final class CrossProfileAppsTest {
     }
 
     @Test
-    @RequireRunOnWorkProfile
+    @RequireRunOnWorkProfile(installInstrumentedAppInParent = TRUE)
     @Postsubmit(reason="new test")
     public void getTargetUserProfiles_callingFromWorkProfile_containsPrimaryUser() {
         List<UserHandle> targetProfiles = sCrossProfileApps.getTargetUserProfiles();
@@ -111,7 +110,7 @@ public final class CrossProfileAppsTest {
 
     @Test
     @RequireRunOnPrimaryUser
-    @EnsureHasWorkProfile(installTestApp = false)
+    @EnsureHasWorkProfile(installInstrumentedApp = FALSE)
     @Postsubmit(reason="new test")
     public void getTargetUserProfiles_callingFromPrimaryUser_appNotInstalledInWorkProfile_doesNotContainWorkProfile() {
         List<UserHandle> targetProfiles = sCrossProfileApps.getTargetUserProfiles();
@@ -131,7 +130,7 @@ public final class CrossProfileAppsTest {
     }
 
     @Test
-    @RequireRunOnWorkProfile
+    @RequireRunOnWorkProfile(installInstrumentedAppInParent = TRUE)
     @Ignore // TODO(scottjonathan): Replace use of UIAutomator
     @Postsubmit(reason="new test")
     public void startMainActivity_callingFromWorkProfile_targetIsPrimaryUser_launches() {
@@ -268,7 +267,7 @@ public final class CrossProfileAppsTest {
     }
 
     @Test
-    @RequireRunOnWorkProfile
+    @RequireRunOnWorkProfile(installInstrumentedAppInParent = TRUE)
     @Postsubmit(reason="new test")
     public void getProfileSwitchingLabel_callingFromWorProfile_targetIsPrimaryUser_notNull() {
         assertThat(sCrossProfileApps.getProfileSwitchingLabel(
@@ -317,7 +316,7 @@ public final class CrossProfileAppsTest {
     }
 
     @Test
-    @RequireRunOnWorkProfile
+    @RequireRunOnWorkProfile(installInstrumentedAppInParent = TRUE)
     @Postsubmit(reason="new test")
     public void getProfileSwitchingIconDrawable_callingFromWorkProfile_targetIsPrimaryUser_notNull() {
         assertThat(sCrossProfileApps.getProfileSwitchingIconDrawable(
