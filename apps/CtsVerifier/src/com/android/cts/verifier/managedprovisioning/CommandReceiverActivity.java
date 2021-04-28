@@ -208,7 +208,7 @@ public class CommandReceiverActivity extends Activity {
                     String restrictionKey = intent.getStringExtra(EXTRA_USER_RESTRICTION);
                     boolean enforced = intent.getBooleanExtra(EXTRA_ENFORCED, false);
                     Log.i(TAG, "Setting '" + restrictionKey + "'=" + enforced + " using " + mDpm
-                            + " on user " + getUserId());
+                            + " on user " + UserHandle.myUserId());
                     if (enforced) {
                         mDpm.addUserRestriction(mAdmin, restrictionKey);
                     } else {
@@ -283,7 +283,7 @@ public class CommandReceiverActivity extends Activity {
                 case COMMAND_REMOVE_DEVICE_OWNER: {
                     if (!mDpm.isDeviceOwnerApp(getPackageName())) {
                         Log.e(TAG, COMMAND_REMOVE_DEVICE_OWNER + ": " + getPackageName()
-                                + " is not DO for user " + getUserId());
+                                + " is not DO for user " + UserHandle.myUserId());
                         return;
                     }
                     clearAllPoliciesAndRestrictions();
@@ -291,7 +291,7 @@ public class CommandReceiverActivity extends Activity {
 
                     // TODO(b/179100903): temporarily removing PO, should be done automatically
                     if (UserManager.isHeadlessSystemUserMode()) {
-                        Log.i(TAG, "Disabling PO on user " + getUserId());
+                        Log.i(TAG, "Disabling PO on user " + UserHandle.myUserId());
                         DevicePolicyManager localDpm = getSystemService(DevicePolicyManager.class);
                         localDpm.clearProfileOwner(mAdmin);
                     }
