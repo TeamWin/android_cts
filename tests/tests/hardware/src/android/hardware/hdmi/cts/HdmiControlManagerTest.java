@@ -27,6 +27,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.hardware.hdmi.HdmiControlManager;
 import android.hardware.hdmi.HdmiDeviceInfo;
+import android.hardware.hdmi.HdmiHotplugEvent;
 import android.hardware.hdmi.HdmiPlaybackClient;
 import android.hardware.hdmi.HdmiSwitchClient;
 import android.hardware.hdmi.HdmiTvClient;
@@ -54,6 +55,7 @@ import java.util.concurrent.TimeUnit;
 public class HdmiControlManagerTest {
 
     private static final int DEVICE_TYPE_SWITCH = 6;
+    private static final int TIMEOUT_HOTPLUG_EVENT_SEC = 3;
     private static final int TIMEOUT_CONTENT_CHANGE_SEC = 13;
 
     private HdmiControlManager mHdmiControlManager;
@@ -142,6 +144,41 @@ public class HdmiControlManagerTest {
             assertThat(mHdmiControlManager.getSwitchClient().getDeviceType()).isEqualTo(
                     DEVICE_TYPE_SWITCH);
         }
+    }
+
+    @Test
+    public void testHotplugEventListener() throws Exception {
+        CountDownLatch notifyLatch = new CountDownLatch(1);
+        HdmiControlManager.HotplugEventListener listener =
+                new HdmiControlManager.HotplugEventListener() {
+                    @Override
+                    public void onReceived(HdmiHotplugEvent event) {
+                        notifyLatch.countDown();
+                    }
+                };
+        mHdmiControlManager.addHotplugEventListener(listener);
+        if (!notifyLatch.await(TIMEOUT_HOTPLUG_EVENT_SEC, TimeUnit.SECONDS)) {
+            fail("Timed out waiting for the initial callback");
+        }
+        mHdmiControlManager.removeHotplugEventListener(listener);
+    }
+
+    @Test
+    public void testHotplugEventListener_WithCustomExecutor() throws Exception {
+        CountDownLatch notifyLatch = new CountDownLatch(1);
+        HdmiControlManager.HotplugEventListener listener =
+                new HdmiControlManager.HotplugEventListener() {
+                    @Override
+                    public void onReceived(HdmiHotplugEvent event) {
+                        notifyLatch.countDown();
+                    }
+                };
+        mHdmiControlManager.addHotplugEventListener(Executors.newSingleThreadExecutor(),
+                listener);
+        if (!notifyLatch.await(TIMEOUT_HOTPLUG_EVENT_SEC, TimeUnit.SECONDS)) {
+            fail("Timed out waiting for the initial callback");
+        }
+        mHdmiControlManager.removeHotplugEventListener(listener);
     }
 
     @Test
