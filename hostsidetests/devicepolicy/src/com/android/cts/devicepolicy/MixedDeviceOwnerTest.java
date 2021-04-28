@@ -163,7 +163,7 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
     public void testWifi() throws Exception {
         assumeHasWifiFeature();
 
-        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".WifiTest", "testGetWifiMacAddress", mUserId);
+        executeDeviceTestMethod(".WifiTest", "testGetWifiMacAddress");
         assertMetricsLogged(getDevice(), () -> {
             executeDeviceTestMethod(".WifiTest", "testGetWifiMacAddress");
         }, new DevicePolicyEventWrapper.Builder(EventId.GET_WIFI_MAC_ADDRESS_VALUE)
@@ -173,8 +173,9 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Test
     public void testAdminConfiguredNetworks() throws Exception {
-        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".AdminConfiguredNetworksTest", mPrimaryUserId);
+        executeDeviceTestClass(".AdminConfiguredNetworksTest");
     }
+
 
     @Test
     public void testSetTime() throws Exception {
@@ -232,7 +233,7 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Test
     public void testLockScreenInfo() throws Exception {
-        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".LockScreenInfoTest", mUserId);
+        executeDeviceTestClass(".LockScreenInfoTest");
 
         assertMetricsLogged(getDevice(), () -> {
             executeDeviceTestMethod(".LockScreenInfoTest", "testSetAndGetLockInfo");
@@ -244,8 +245,7 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
     @Test
     public void testFactoryResetProtectionPolicy() throws Exception {
         try {
-            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DeviceFeatureUtils",
-                    "testHasFactoryResetProtectionPolicy", mUserId);
+            executeDeviceTestMethod(".DeviceFeatureUtils", "testHasFactoryResetProtectionPolicy");
         } catch (AssertionError e) {
             // Unable to continue running tests because factory reset protection policy is not
             // supported on the device
@@ -256,7 +256,7 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
         }
 
         assertMetricsLogged(getDevice(), () -> {
-            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".FactoryResetProtectionPolicyTest", mUserId);
+            executeDeviceTestClass(".FactoryResetProtectionPolicyTest");
         }, new DevicePolicyEventWrapper.Builder(EventId.SET_FACTORY_RESET_PROTECTION_VALUE)
                 .setAdminPackageName(DEVICE_ADMIN_PKG)
                 .build());
@@ -264,14 +264,14 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Test
     public void testCommonCriteriaMode() throws Exception {
-        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".CommonCriteriaModeTest", mUserId);
+        executeDeviceTestClass(".CommonCriteriaModeTest");
     }
 
     @LargeTest
     @Test
     @Ignore("b/145932189")
     public void testSystemUpdatePolicy() throws Exception {
-        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".systemupdate.SystemUpdatePolicyTest", mUserId);
+        executeDeviceTestClass(".systemupdate.SystemUpdatePolicyTest");
     }
 
     @Test
@@ -281,7 +281,7 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
         pushUpdateFileToDevice("wrongPayload.zip");
         pushUpdateFileToDevice("wrongHash.zip");
         pushUpdateFileToDevice("wrongSize.zip");
-        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".systemupdate.InstallUpdateTest", mUserId);
+        executeDeviceTestClass(".systemupdate.InstallUpdateTest");
     }
 
     @Test
@@ -290,8 +290,8 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
 
         pushUpdateFileToDevice("wrongHash.zip");
         assertMetricsLogged(getDevice(), () -> {
-            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".systemupdate.InstallUpdateTest",
-                    "testInstallUpdate_failWrongHash", mUserId);
+            executeDeviceTestMethod(".systemupdate.InstallUpdateTest",
+                    "testInstallUpdate_failWrongHash");
         }, new DevicePolicyEventWrapper.Builder(EventId.INSTALL_SYSTEM_UPDATE_VALUE)
                     .setAdminPackageName(DEVICE_ADMIN_PKG)
                     .setBoolean(/* isDeviceAb */ true)
@@ -386,15 +386,15 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
                     "testCannotAccessApis", mUserId);
 
             // Set security logging delegate
-            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".SecurityLoggingTest",
-                    "testSetDelegateScope_delegationSecurityLogging", mUserId);
+            executeDeviceTestMethod(".SecurityLoggingTest",
+                    "testSetDelegateScope_delegationSecurityLogging");
 
             runSecurityLoggingTests(DELEGATE_APP_PKG,
                     ".SecurityLoggingDelegateTest");
         } finally {
             // Remove security logging delegate
-            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".SecurityLoggingTest",
-                    "testSetDelegateScope_noDelegation", mUserId);
+            executeDeviceTestMethod(".SecurityLoggingTest",
+                    "testSetDelegateScope_noDelegation");
         }
     }
 
@@ -504,14 +504,10 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
     }
 
     @Override
-    protected void executeDeviceTestMethod(String className, String testName) throws Exception {
-        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, className, testName, mUserId,
-                paramsForDeviceOwnerTest());
-    }
-
-    @Override
-    protected void executeDeviceTestClass(String className) throws Exception {
-        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, className, mUserId);
+    protected void executeDeviceTestMethod(String className, String testName,
+            Map<String, String> params) throws Exception {
+        addParamsForDeviceOwnerTest(params);
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, className, testName, mUserId, params);
     }
 
     private void configureNotificationListener() throws DeviceNotAvailableException {
