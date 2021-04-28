@@ -32,6 +32,7 @@ import com.android.cts.packagemanager.verify.domain.java.DomainUtils.DECLARING_P
 import com.android.cts.packagemanager.verify.domain.java.DomainUtils.DECLARING_PKG_NAME_2
 import com.android.cts.packagemanager.verify.domain.java.DomainUtils.DOMAIN_UNHANDLED
 import com.google.common.truth.Truth.assertThat
+import com.google.common.truth.Truth.assertWithMessage
 import org.junit.After
 import org.junit.Assume.assumeTrue
 import org.junit.Before
@@ -92,7 +93,7 @@ abstract class DomainVerificationIntentTestBase(
         this.allResults = allResults
 
         if (assertResolvesToBrowsersInBefore) {
-            assertResolvesTo(browsers)
+            assertResolvesTo(browsers, debug = true)
         }
     }
 
@@ -108,9 +109,17 @@ abstract class DomainVerificationIntentTestBase(
 
     protected fun assertResolvesTo(result: ComponentName) = assertResolvesTo(listOf(result))
 
-    protected fun assertResolvesTo(components: Collection<ComponentName>) {
+    protected fun assertResolvesTo(components: Collection<ComponentName>, debug: Boolean = false) {
+        val message = if (debug) {
+            ShellUtils.runShellCommand(
+                "pm get-app-links --user ${context.userId} $DECLARING_PKG_NAME_1")
+        } else {
+            ""
+        }
+
         // Pass MATCH_DEFAULT_ONLY to mirror startActivity resolution
-        assertThat(packageManager.queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY)
+        assertWithMessage(message)
+            .that(packageManager.queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY)
             .map { it.activityInfo }
             .map { ComponentName(it.packageName, it.name) })
             .containsExactlyElementsIn(components)
