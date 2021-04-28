@@ -564,10 +564,10 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     }
 
     @Test
-    @TemporaryIgnoreOnHeadlessSystemUserMode(bugId = "185523465",
-            reason = "need to decide how to support it")
     public void testSetLocationEnabled() throws Exception {
-        executeDeviceOwnerTest("SetLocationEnabledTest");
+        // Currently this method is only available for device owners, so on headless system user
+        // it must run on system user.
+        executeDeviceOwnerTestOnDeviceOwnerUser("SetLocationEnabledTest");
     }
 
     /**
