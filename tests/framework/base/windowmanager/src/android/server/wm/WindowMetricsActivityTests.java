@@ -21,6 +21,7 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.app.WindowConfiguration.WINDOWING_MODE_MULTI_WINDOW;
 import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
 import static android.server.wm.WindowManagerState.STATE_PAUSED;
+import static android.view.Surface.ROTATION_0;
 import static android.view.Surface.ROTATION_90;
 import static android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
 
@@ -78,9 +79,10 @@ public class WindowMetricsActivityTests extends WindowManagerTestBase {
     @Test
     public void testMetricsMatchesActivityBoundsOnNonresizableActivity() {
         final RotationSession rotationSession = createManagedRotationSession();
-        final MinAspectRatioActivity activity
-                = startActivityInWindowingMode(MinAspectRatioActivity.class,
-                WINDOWING_MODE_FULLSCREEN);
+        final MinAspectRatioActivity activity =
+                startActivityInWindowingMode(MinAspectRatioActivity.class,
+                        WINDOWING_MODE_FULLSCREEN);
+        rotationSession.set(ROTATION_0);
 
         assertMetricsValidity(activity);
 
@@ -193,10 +195,10 @@ public class WindowMetricsActivityTests extends WindowManagerTestBase {
         final MinAspectRatioActivity activity
                 = startActivityInWindowingMode(MinAspectRatioActivity.class,
                 WINDOWING_MODE_FULLSCREEN);
+        rotationSession.set(ROTATION_0);
 
         assertMetricsValidity(activity);
 
-        mWmState.computeState(activity.getComponentName());
         putActivityInPrimarySplit(activity.getComponentName());
 
         mWmState.computeState(activity.getComponentName());

@@ -82,8 +82,10 @@ public class WindowMetricsTestHelper {
                 .getWindowingMode() == WINDOWING_MODE_FREEFORM;
         final WindowManager windowManager = context.getSystemService(WindowManager.class);
         // Freeform activity doesn't inset the navigation bar and cutout area.
-        final Rect currentBounds = isFreeForm ? windowManager.getCurrentWindowMetrics().getBounds() :
-                getBoundsExcludingNavigationBarAndCutout(windowManager.getCurrentWindowMetrics());
+        final Rect currentBounds =
+                isFreeForm ? windowManager.getCurrentWindowMetrics().getBounds() :
+                        getBoundsExcludingNavigationBarAndCutout(
+                                windowManager.getCurrentWindowMetrics());
         final Rect maxBounds = windowManager.getMaximumWindowMetrics().getBounds();
         final Display display = context.getDisplay();
 
