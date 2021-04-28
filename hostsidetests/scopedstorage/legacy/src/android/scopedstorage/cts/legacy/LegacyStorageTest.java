@@ -275,7 +275,7 @@ public class LegacyStorageTest {
         // can open file for read
         FileDescriptor fd = null;
         try {
-            createFileInExternalDir(existingFile);
+            executeShellCommand("touch %s", existingFile);
             MediaStore.scanFile(getContentResolver(), existingFile);
             fd = Os.open(existingFile.getPath(), OsConstants.O_RDONLY, /*mode*/ 0);
         } finally {
