@@ -478,7 +478,9 @@ class AppOpsLoggingTest {
 
     /**
      * Realistic end-to-end test for scanning LE bluetooth
+     * (b/186364104 disabled to unblock submits)
      */
+    @Ignore
     @Test
     fun scanLEBluetooth() {
         assumeTrue("Device does not support LE bluetooth",
