@@ -16,7 +16,10 @@
 
 package com.android.bedstead.harrier.annotations;
 
+import static com.android.bedstead.harrier.OptionalBoolean.TRUE;
+
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.OptionalBoolean;
 import com.android.bedstead.harrier.annotations.meta.EnsureHasUserAnnotation;
 
 import java.lang.annotation.ElementType;
@@ -38,6 +41,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @EnsureHasUserAnnotation("android.os.usertype.full.SECONDARY")
 public @interface EnsureHasSecondaryUser {
-    /** Whether the test app should be installed in the secondary user. */
-    boolean installTestApp() default true;
+    /** Whether the instrumented test app should be installed in the secondary user. */
+    OptionalBoolean installInstrumentedApp() default TRUE;
 }
