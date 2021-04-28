@@ -140,8 +140,7 @@ public abstract class ClientSuggestionsCommonTestCase
                 .build());
 
         // Trigger autofill.
-        mActivity.forceAutofillOnUsername();
-        mUiBot.waitForIdle();
+        mUiBot.waitForWindowChange(() -> mActivity.forceAutofillOnUsername());
         sReplier.getNextFillRequest();
         mClientReplier.assertNoUnhandledFillRequests();
 
