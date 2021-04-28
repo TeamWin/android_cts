@@ -56,6 +56,7 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.os.BuildCompat;
 import androidx.test.InstrumentationRegistry;
 
 import com.android.cts.install.lib.Install;
@@ -1246,10 +1247,16 @@ public class TestUtils {
     }
 
     public static File[] getDefaultTopLevelDirs() {
-        return new File [] { getAlarmsDir(), getAndroidDir(), getAudiobooksDir(), getDcimDir(),
-                getDocumentsDir(), getDownloadDir(), getMusicDir(), getMoviesDir(),
-                getNotificationsDir(), getPicturesDir(), getPodcastsDir(), getRecordingsDir(),
-                getRingtonesDir() };
+        if (BuildCompat.isAtLeastS()) {
+            return new File[]{getAlarmsDir(), getAndroidDir(), getAudiobooksDir(), getDcimDir(),
+                    getDocumentsDir(), getDownloadDir(), getMusicDir(), getMoviesDir(),
+                    getNotificationsDir(), getPicturesDir(), getPodcastsDir(), getRecordingsDir(),
+                    getRingtonesDir()};
+        }
+        return new File[]{getAlarmsDir(), getAndroidDir(), getAudiobooksDir(), getDcimDir(),
+            getDocumentsDir(), getDownloadDir(), getMusicDir(), getMoviesDir(),
+            getNotificationsDir(), getPicturesDir(), getPodcastsDir(),
+            getRingtonesDir()};
     }
 
     private static void assertInputStreamContent(InputStream in, byte[] expectedContent)
