@@ -15,12 +15,17 @@
  */
 package android.media.cts;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
 import android.media.MediaExtractor;
+import android.media.metrics.LogSessionId;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
+
+import com.google.common.truth.Truth;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -61,6 +66,23 @@ public class MediaExtractorDeviceSideTest {
     @Test
     public void testEntryPointNdkWithJvm() {
         extractUsingNdkMediaExtractor(mAssetManager, SAMPLE_PATH, /* withAttachedJvm= */ true);
+    }
+
+    @Test
+    public void testLogSessionId() throws Exception {
+        MediaExtractor mediaExtractor = new MediaExtractor();
+        AssetManager assetManager =
+                InstrumentationRegistry.getInstrumentation().getContext().getAssets();
+        try (AssetFileDescriptor fileDescriptor = assetManager.openFd(SAMPLE_PATH)) {
+            mediaExtractor.setDataSource(fileDescriptor);
+            assertThat(mediaExtractor.getLogSessionId())
+                    .isEqualTo(LogSessionId.LOG_SESSION_ID_NONE);
+            mediaExtractor.setLogSessionId(new LogSessionId("FakeLogSessionId"));
+            assertThat(mediaExtractor.getLogSessionId().getStringId())
+                    .isEqualTo("FakeLogSessionId");
+        } finally {
+            mediaExtractor.release();
+        }
     }
 
     private native void extractUsingNdkMediaExtractor(
