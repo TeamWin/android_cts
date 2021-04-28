@@ -31,6 +31,12 @@ import android.util.Log;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.SystemUtil;
+
+import java.io.IOException;
+
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -41,11 +47,28 @@ public class AudioRecordSharedAudioTest {
     private static final String TAG = "AudioRecordSharedAudioTest";
     private static final int SAMPLING_RATE_HZ = 16000;
 
-    @Test
-    public void testPermissionFailure() throws Exception {
+    @Before
+    public void setUp() throws Exception {
         if (!hasMicrophone()) {
             return;
         }
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity();
+        clearAudioserverPermissionCache();
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .dropShellPermissionIdentity();
+        clearAudioserverPermissionCache();
+    }
+
+    @Test
+    public void testPermissionFailure() throws Exception {
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .dropShellPermissionIdentity();
+        clearAudioserverPermissionCache();
 
         assertThrows(UnsupportedOperationException.class, () -> {
                     AudioRecord record = new AudioRecord.Builder().setMaxSharedAudioHistoryMillis(
@@ -76,13 +99,6 @@ public class AudioRecordSharedAudioTest {
 
     @Test
     public void testPermissionSuccess() throws Exception {
-        if (!hasMicrophone()) {
-            return;
-        }
-
-        InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                .adoptShellPermissionIdentity();
-
         AudioRecord record = new AudioRecord.Builder().setAudioFormat(new AudioFormat.Builder()
                     .setSampleRate(SAMPLING_RATE_HZ)
                     .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
@@ -105,20 +121,11 @@ public class AudioRecordSharedAudioTest {
         } finally {
             record.stop();
             record.release();
-            InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                    .dropShellPermissionIdentity();
         }
     }
 
     @Test
     public void testBadValues() throws Exception {
-        if (!hasMicrophone()) {
-            return;
-        }
-
-        InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                .adoptShellPermissionIdentity();
-
         assertThrows(IllegalArgumentException.class, () -> {
                     AudioRecord.Builder builder = new AudioRecord.Builder()
                             .setMaxSharedAudioHistoryMillis(
@@ -164,23 +171,13 @@ public class AudioRecordSharedAudioTest {
 
         record.stop();
         record.release();
-
-        InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                .dropShellPermissionIdentity();
     }
 
     @Test
     public void testCapturesMatch() throws Exception {
-        if (!hasMicrophone()) {
-            return;
-        }
-
         AudioRecord record1 = null;
         AudioRecord record2 = null;
         try {
-            InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                    .adoptShellPermissionIdentity();
-
             record1 = new AudioRecord.Builder().setAudioFormat(new AudioFormat.Builder()
                                 .setSampleRate(SAMPLING_RATE_HZ)
                                 .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
@@ -266,14 +263,21 @@ public class AudioRecordSharedAudioTest {
             if (record2 != null) {
                 record2.release();
             }
-            InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                    .dropShellPermissionIdentity();
         }
-
     }
 
     private boolean hasMicrophone() {
         return InstrumentationRegistry.getTargetContext().getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_MICROPHONE);
     }
+
+    private void clearAudioserverPermissionCache() {
+        try {
+            SystemUtil.runShellCommand(InstrumentationRegistry.getInstrumentation(),
+                    "cmd media.audio_policy purge_permission-cache");
+        } catch (IOException e) {
+            fail("cannot purge audio server permission cache");
+        }
+    }
+
 }

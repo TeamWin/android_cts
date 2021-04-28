@@ -35,6 +35,7 @@ import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
 import android.provider.DeviceConfig;
 import android.service.dataloader.DataLoaderService;
+import android.system.Os;
 import android.text.TextUtils;
 import android.util.ArrayMap;
 import android.util.Log;
@@ -172,6 +173,40 @@ public class PackageManagerShellCommandIncrementalTest {
                 "Missing all of required IncFS features [" + TextUtils.join(",", validValues) + "]",
                 Arrays.stream(features.split("\\s+")).anyMatch(
                         f -> Arrays.stream(validValues).anyMatch(f::equals)));
+    }
+
+    @LargeTest
+    @Test
+    public void testSpaceAllocatedForPackage() throws Exception {
+        final String apk = createApkPath(TEST_APK);
+        final String idsig = createApkPath(TEST_APK_IDSIG);
+        mSession =
+                new IncrementalInstallSession.Builder()
+                        .addApk(Paths.get(apk), Paths.get(idsig))
+                        .addExtraArgs("-t", "-i", CTS_PACKAGE_NAME)
+                        .setLogger(new IncrementalDeviceConnection.Logger())
+                        .setBlockTransformer(new CompressingBlockTransformer())
+                        .build();
+        getUiAutomation().adoptShellPermissionIdentity();
+        long preAllocatedBlocks = Os.statvfs("/data/incremental").f_bfree;
+        long appFileSize = new File(apk).length();
+        long blockSize = Os.statvfs("/data/incremental").f_bsize;
+        //Assign pre-allocated value to fail test if allocation doesn't occur.
+        long postAllocatedBlocks = preAllocatedBlocks;
+        try {
+            mSession.start(Executors.newSingleThreadExecutor(),
+                    IncrementalDeviceConnection.Factory.reliable());
+            Thread.sleep(50);
+            postAllocatedBlocks = Os.statvfs("/data/incremental").f_bfree;
+            mSession.waitForInstallCompleted(30, TimeUnit.SECONDS);
+        } finally {
+            getUiAutomation().dropShellPermissionIdentity();
+        }
+        long freeSpaceDifference = (preAllocatedBlocks - postAllocatedBlocks) * blockSize;
+
+        assertTrue(isAppInstalled(TEST_APP_PACKAGE));
+        //Check difference in free space after install starts is greater than package size.
+        assertTrue(freeSpaceDifference >= appFileSize);
     }
 
     @Test

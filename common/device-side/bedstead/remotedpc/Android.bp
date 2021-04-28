@@ -3,6 +3,23 @@ package {
 }
 
 android_library {
+    name: "RemoteDPC_Communication",
+    sdk_version: "test_current",
+    srcs: [
+        "src/communication/main/java/**/*.java"
+    ],
+    static_libs: [
+        "Nene",
+        "ConnectedAppsSDK",
+        "ConnectedAppsSDK_Annotations",
+        "androidx.annotation_annotation"
+    ],
+    manifest: "src/communication/main/AndroidManifest.xml",
+    min_sdk_version: "27",
+    plugins: ["ConnectedAppsSDK_Processor"],
+}
+
+android_library {
     name: "RemoteDPC",
     sdk_version: "test_current",
     srcs: [
@@ -10,6 +27,8 @@ android_library {
     ],
     static_libs: [
         "Nene",
+        "RemoteDPC_Communication",
+        "ConnectedAppsSDK",
     ],
     manifest: "src/library/main/AndroidManifest.xml",
     min_sdk_version: "27",
@@ -19,7 +38,8 @@ android_library {
 android_test_helper_app {
     name: "RemoteDPC_DPC",
     static_libs: [
-        "DeviceAdminApp"
+        "DeviceAdminApp",
+        "RemoteDPC_Communication",
     ],
     manifest: "src/dpc/main/AndroidManifest.xml",
     min_sdk_version: "27"
