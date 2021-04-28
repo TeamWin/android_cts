@@ -389,8 +389,9 @@ public class DisplayTest {
                 mOriginalHdrSettings.areUserDisabledHdrTypesAllowed);
     }
 
-    private void waitUntil(Display d, Predicate<Display> pred, Duration maxWait) throws Exception {
-        final int id = d.getDisplayId();
+    private void waitUntil(Display display, Predicate<Display> pred, Duration maxWait)
+            throws Exception {
+        final int id = display.getDisplayId();
         final Lock lock = new ReentrantLock();
         final Condition displayChanged = lock.newCondition();
         DisplayListener listener = new DisplayListener() {
@@ -416,7 +417,7 @@ public class DisplayTest {
         long remainingNanos = maxWait.toNanos();
         lock.lock();
         try {
-            while (!pred.test(mDefaultDisplay)) {
+            while (!pred.test(display)) {
                 if (remainingNanos <= 0L) {
                     throw new TimeoutException();
                 }
