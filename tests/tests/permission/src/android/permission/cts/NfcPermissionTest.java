@@ -172,6 +172,23 @@ public final class NfcPermissionTest {
         }
     }
 
+    /**
+     * Verifies that unregisterControllerAlwaysOnListener() requires Permission.
+     * <p>
+     * Requires Permission: {@link android.Manifest.permission#NFC_SET_CONTROLLER_ALWAYS_ON}.
+     */
+    @Test
+    @AppModeFull
+    public void testUnregisterControllerAlwaysOnListener() {
+        try {
+            mNfcAdapter.unregisterControllerAlwaysOnListener(new AlwaysOnStateListener());
+            fail("mNfcAdapter.unregisterControllerAlwaysOnListener did not throw"
+                    + "SecurityException as expected");
+        } catch (SecurityException se) {
+            // Expected Exception
+        }
+    }
+
     private class SynchronousExecutor implements Executor {
         public void execute(Runnable r) {
             r.run();
