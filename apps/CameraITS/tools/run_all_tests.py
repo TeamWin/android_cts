@@ -348,16 +348,17 @@ def get_updated_yml_file(yml_file_contents):
   new_yaml_file_name = os.path.basename(new_yaml_file)
   return new_yaml_file_name
 
-def enable_external_storage(device_id):
-    """Override apk mode to allow write to external storage.
 
-    Args:
+def enable_external_storage(device_id):
+  """Override apk mode to allow write to external storage.
+
+  Args:
     device_id: Serial number of the device.
 
-    """
-    cmd = f'adb -s {device_id} shell appops '\
-          f'set com.android.cts.verifier MANAGE_EXTERNAL_STORAGE allow'
-    run(cmd)
+  """
+  cmd = (f'adb -s {device_id} shell appops '
+         'set com.android.cts.verifier MANAGE_EXTERNAL_STORAGE allow')
+  run(cmd)
 
 
 def main():
@@ -406,9 +407,8 @@ def main():
     scenes = str(test_params_content['scene']).split(',')
 
   device_id = get_device_serial_number('dut', config_file_contents)
-  # Enable external storage on device for sending the summary report to CTS verifier app.
+  # Enable external storage on DUT to send summary report to CtsVerifier.apk
   enable_external_storage(device_id)
-
 
   config_file_test_key = config_file_contents['TestBeds'][0]['Name'].lower()
   if TEST_KEY_TABLET in config_file_test_key:
