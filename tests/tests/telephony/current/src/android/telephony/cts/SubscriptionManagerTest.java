@@ -910,6 +910,7 @@ public class SubscriptionManagerTest {
         }
     }
 
+    @Test
     public void testSetAndGetD2DStatusSharing() {
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         uiAutomation.adoptShellPermissionIdentity(MODIFY_PHONE_STATE);
