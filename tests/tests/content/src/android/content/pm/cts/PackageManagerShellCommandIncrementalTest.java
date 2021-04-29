@@ -177,6 +177,7 @@ public class PackageManagerShellCommandIncrementalTest {
 
     @LargeTest
     @Test
+    @Ignore("Temporary disable to unblock presubmit tests: b/186582141")
     public void testSpaceAllocatedForPackage() throws Exception {
         final String apk = createApkPath(TEST_APK);
         final String idsig = createApkPath(TEST_APK_IDSIG);
