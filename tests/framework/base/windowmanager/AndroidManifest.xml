@@ -120,14 +120,16 @@
             android:name="android.server.wm.lifecycle.ActivityLifecycleClientTestBase$SecondTranslucentActivity"
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
 
-        <activity android:name="android.server.wm.lifecycle.ActivityLifecycleClientTestBase$CallbackTrackingActivity"/>
+        <activity android:name="android.server.wm.lifecycle.ActivityLifecycleClientTestBase$CallbackTrackingActivity"
+                  android:configChanges="keyboard|keyboardHidden|navigation" />
 
         <activity android:name="android.server.wm.lifecycle.ActivityLifecycleClientTestBase$SecondCallbackTrackingActivity"/>
 
         <activity android:name="android.server.wm.lifecycle.ActivityLifecycleClientTestBase$TranslucentCallbackTrackingActivity"
                   android:theme="@android:style/Theme.Translucent.NoTitleBar" />
 
-        <activity android:name="android.server.wm.lifecycle.ActivityLifecycleClientTestBase$ShowWhenLockedCallbackTrackingActivity" />
+        <activity android:name="android.server.wm.lifecycle.ActivityLifecycleClientTestBase$ShowWhenLockedCallbackTrackingActivity"
+                  android:configChanges="keyboard|keyboardHidden|navigation" />
 
         <activity android:name="android.server.wm.lifecycle.ActivityLifecycleClientTestBase$SecondProcessCallbackTrackingActivity"
                   android:process=":SecondProcess"
@@ -184,10 +186,11 @@
         <activity android:name="android.server.wm.MultiDisplayClientTests$ClientTestActivity" />
         <activity android:name="android.server.wm.MultiDisplayClientTests$NoRelaunchActivity"
                   android:resizeableActivity="true"
-                  android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density|touchscreen"
+                  android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density|touchscreen|keyboard|keyboardHidden|navigation"
         />
 
-        <activity android:name="android.server.wm.KeyguardLockedTests$ShowImeAfterLockscreenActivity" />
+        <activity android:name="android.server.wm.KeyguardLockedTests$ShowImeAfterLockscreenActivity"
+                  android:configChanges="keyboard|keyboardHidden|navigation" />
 
         <activity android:name="android.server.wm.KeyguardLockedTests$ShowWhenLockedImeActivity" />
 
@@ -331,7 +334,7 @@
 
         <activity android:name="android.server.wm.KeyEventActivity"
                   android:exported="true"
-                  android:configChanges="orientation|screenLayout"
+                  android:configChanges="orientation|screenLayout|keyboard|keyboardHidden|navigation"
                   android:showWhenLocked="true"
         />
         <activity android:name="android.server.wm.WindowInsetsPolicyTest$TestActivity"
