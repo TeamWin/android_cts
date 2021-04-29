@@ -238,6 +238,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
         getLifecycleLog().clear();
         final Activity launchForResultActivity = new Launcher(LaunchForResultActivity.class)
                 .customizeIntent(LaunchForResultActivity.forwardFlag(EXTRA_FINISH_IN_ON_RESUME))
+                .setExtraFlags(LaunchForResultActivity.EXTRA_USE_TRANSLUCENT_RESULT)
                 .launch();
 
         waitAndAssertActivityStates(state(baseActivity, ON_STOP));
@@ -252,7 +253,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
                 Arrays.asList(
                         PRE_ON_CREATE, ON_CREATE, ON_START, ON_POST_CREATE, ON_RESUME,
                         ON_TOP_POSITION_GAINED);
-        waitForActivityTransitions(ResultActivity.class, expectedTopActivitySequence);
+        waitForActivityTransitions(TranslucentResultActivity.class, expectedTopActivitySequence);
 
         LifecycleVerifier.assertEntireSequence(Arrays.asList(
                 transition(CallbackTrackingActivity.class, ON_TOP_POSITION_LOST),
@@ -265,19 +266,19 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
                 transition(LaunchForResultActivity.class, ON_TOP_POSITION_GAINED),
                 transition(LaunchForResultActivity.class, ON_TOP_POSITION_LOST),
                 transition(LaunchForResultActivity.class, ON_PAUSE),
-                transition(ResultActivity.class, PRE_ON_CREATE),
-                transition(ResultActivity.class, ON_CREATE),
-                transition(ResultActivity.class, ON_START),
-                transition(ResultActivity.class, ON_POST_CREATE),
-                transition(ResultActivity.class, ON_RESUME),
-                transition(ResultActivity.class, ON_TOP_POSITION_GAINED),
-                transition(ResultActivity.class, ON_TOP_POSITION_LOST),
-                transition(ResultActivity.class, ON_PAUSE),
+                transition(TranslucentResultActivity.class, PRE_ON_CREATE),
+                transition(TranslucentResultActivity.class, ON_CREATE),
+                transition(TranslucentResultActivity.class, ON_START),
+                transition(TranslucentResultActivity.class, ON_POST_CREATE),
+                transition(TranslucentResultActivity.class, ON_RESUME),
+                transition(TranslucentResultActivity.class, ON_TOP_POSITION_GAINED),
+                transition(TranslucentResultActivity.class, ON_TOP_POSITION_LOST),
+                transition(TranslucentResultActivity.class, ON_PAUSE),
                 transition(LaunchForResultActivity.class, ON_ACTIVITY_RESULT),
                 transition(LaunchForResultActivity.class, ON_RESUME),
                 transition(LaunchForResultActivity.class, ON_TOP_POSITION_GAINED),
-                transition(ResultActivity.class, ON_STOP),
-                transition(ResultActivity.class, ON_DESTROY),
+                transition(TranslucentResultActivity.class, ON_STOP),
+                transition(TranslucentResultActivity.class, ON_DESTROY),
                 transition(CallbackTrackingActivity.class, ON_STOP)),
                 getLifecycleLog(), "Double launch sequence must match");
     }
