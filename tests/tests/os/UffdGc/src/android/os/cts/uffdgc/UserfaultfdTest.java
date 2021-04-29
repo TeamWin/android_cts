@@ -59,7 +59,7 @@ public final class UserfaultfdTest {
   public void mremapDontUnmap() {
     // TODO: Change the expected value to 0 once the kernel feature is merged. In meantime, the
     // expected value is EINVAL(22).
-    assertEquals(22, performMremapDontUnmap());
+    assertEquals(0, performMremapDontUnmap());
   }
 
   // Test if userfaultfd works for minor-faults on shmem.
