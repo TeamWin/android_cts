@@ -82,6 +82,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
     private static final String VINTF_DEVICE_JSON = VINTF_DEVICE_CLASS + DEVICE_INFO_SUFFIX;
     // Keep in sync with com.android.compatibility.common.deviceinfo.VintfDeviceInfo
     private static final String SEPOLICY_VERSION_JSON_KEY = "sepolicy_version";
+    private static final String PLATFORM_SEPOLICY_VERSION_JSON_KEY = "platform_sepolicy_version";
 
     private static final Map<ITestDevice, File> cachedDevicePolicyFiles = new HashMap<>(1);
     private static final Map<ITestDevice, File> cachedDevicePlatFcFiles = new HashMap<>(1);
@@ -348,7 +349,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
         String content = FileUtil.readStringFromFile(vintfJson);
         JSONObject object = new JSONObject(content);
         String version = object.getString(SEPOLICY_VERSION_JSON_KEY);
-        return getVendorSepolicyVersionFromMajorMinor(version);
+        return getSepolicyVersionFromMajorMinor(version);
     }
 
     /**
@@ -371,13 +372,26 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
         Element root = doc.getDocumentElement();
         Element sepolicy = (Element) root.getElementsByTagName("sepolicy").item(0);
         Element version = (Element) sepolicy.getElementsByTagName("version").item(0);
-        return getVendorSepolicyVersionFromMajorMinor(version.getTextContent());
+        return getSepolicyVersionFromMajorMinor(version.getTextContent());
+    }
+
+    // NOTE: cts/tools/selinux depends on this method. Rename/change with caution.
+    /**
+     * Returns the major number of sepolicy version of system.
+     */
+    public static int getSystemSepolicyVersion(IBuildInfo build) throws Exception {
+        File deviceInfoDir = build.getFile(DeviceInfoCollector.DEVICE_INFO_DIR);
+        File vintfJson = deviceInfoDir.toPath().resolve(VINTF_DEVICE_JSON).toFile();
+        String content = FileUtil.readStringFromFile(vintfJson);
+        JSONObject object = new JSONObject(content);
+        String version = object.getString(PLATFORM_SEPOLICY_VERSION_JSON_KEY);
+        return getSepolicyVersionFromMajorMinor(version);
     }
 
     /**
      * Get the major number from an SEPolicy version string, e.g. "27.0" => 27.
      */
-    private static int getVendorSepolicyVersionFromMajorMinor(String version) {
+    private static int getSepolicyVersionFromMajorMinor(String version) {
         String sepolicyVersion = version.split("\\.")[0];
         return Integer.parseInt(sepolicyVersion);
     }
