@@ -23,11 +23,13 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 
 import java.util.ArrayList;
+import java.util.function.Consumer;
 
 public class InputCtsActivity extends Activity {
     private static final String TAG = "InputCtsActivity";
 
     private InputCallback mInputCallback;
+    private Consumer<Boolean> mPointerCaptureCallback;
     private final ArrayList<Integer> mUnhandledKeys = new ArrayList<>();
 
     @Override
@@ -72,8 +74,19 @@ public class InputCtsActivity extends Activity {
         return true;
     }
 
+    @Override
+    public void onPointerCaptureChanged(boolean hasCapture) {
+        if (mPointerCaptureCallback != null) {
+            mPointerCaptureCallback.accept(hasCapture);
+        }
+    }
+
     public void setInputCallback(InputCallback callback) {
         mInputCallback = callback;
+    }
+
+    public void setPointerCaptureCallback(Consumer<Boolean> callback) {
+        mPointerCaptureCallback = callback;
     }
 
     public void addUnhandleKeyCode(int keyCode) {
