@@ -29,7 +29,7 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
-import android.hardware.Battery;
+import android.hardware.BatteryState;
 import android.hardware.input.InputManager;
 import android.hardware.lights.Light;
 import android.hardware.lights.LightState;
@@ -116,12 +116,12 @@ public class InputHidTestCase extends InputTestCase {
      * from device registration command.
      * @return Battery object in specified InputDevice
      */
-    private Battery getBattery() {
-        InputDevice inputDevice = getInputDevice((d) -> d.getBattery().hasBattery());
+    private BatteryState getBatteryState() {
+        InputDevice inputDevice = getInputDevice((d) -> d.getBatteryState().isPresent());
         if (inputDevice == null) {
             fail("Failed to find test device with battery");
         }
-        return inputDevice.getBattery();
+        return inputDevice.getBatteryState();
     }
 
     /**
@@ -327,8 +327,8 @@ public class InputHidTestCase extends InputTestCase {
     }
 
     public void testInputBatteryEvents(int resourceId) {
-        final Battery battery = getBattery();
-        assertNotNull(battery);
+        final BatteryState batteryState = getBatteryState();
+        assertNotNull(batteryState);
 
         final List<HidBatteryTestData> tests = mParser.getHidBatteryTestData(resourceId);
         for (HidBatteryTestData testData : tests) {
@@ -340,8 +340,8 @@ public class InputHidTestCase extends InputTestCase {
             }
             // Wait for power_supply sysfs node get updated.
             SystemClock.sleep(100);
-            float capacity = battery.getCapacity();
-            int status = battery.getStatus();
+            float capacity = batteryState.getCapacity();
+            int status = batteryState.getStatus();
             assertEquals("Test: " + testData.name, testData.status, status);
             boolean capacityMatch = false;
             for (int i = 0; i < testData.capacities.length; i++) {
@@ -369,7 +369,7 @@ public class InputHidTestCase extends InputTestCase {
                 }
             }
             assertNotNull("Light type " + test.lightType + " name " + test.lightName
-                    + " does not exist", light);
+                    + " does not exist.  Lights found: " + lights, light);
             try (LightsManager.LightsSession session = lightsManager.openSession()) {
                 // Can't set both player id and color in same LightState
                 assertFalse(test.lightColor > 0 && test.lightPlayerId > 0);
