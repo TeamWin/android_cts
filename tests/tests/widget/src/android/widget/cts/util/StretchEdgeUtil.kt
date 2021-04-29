@@ -84,7 +84,7 @@ private fun takeScreenshot(
  * Drags an area of the screen and executes [onFinalMove] after sending the final drag
  * motion and [onUp] after the drag up event has been sent.
  */
-public fun dragAndExecute(
+fun dragAndExecute(
     activityRule: ActivityTestRule<*>,
     screenX: Int,
     screenY: Int,
@@ -115,6 +115,35 @@ public fun dragAndExecute(
                     onUp()
                 }
             })
+}
+
+/**
+ * Flings [view] from the center by ([deltaX], [deltaY]) pixels over 16 milliseconds.
+ */
+fun fling(
+    activityRule: ActivityTestRule<*>,
+    view: View,
+    deltaX: Int,
+    deltaY: Int
+) {
+    val locationOnScreen = IntArray(2)
+    activityRule.runOnUiThread {
+        view.getLocationOnScreen(locationOnScreen)
+    }
+
+    val screenX = locationOnScreen[0]
+    val screenY = locationOnScreen[1]
+    val instrumentation = InstrumentationRegistry.getInstrumentation()
+
+    CtsTouchUtils.emulateDragGesture(instrumentation, activityRule,
+            screenX + (view.width / 2),
+            screenY + (view.height / 2),
+            deltaX,
+            deltaY,
+            16,
+            4,
+            null
+    )
 }
 
 /**
