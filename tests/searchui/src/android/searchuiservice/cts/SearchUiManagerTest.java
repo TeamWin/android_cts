@@ -96,7 +96,7 @@ public class SearchUiManagerTest {
         mManager = getContext().getSystemService(SearchUiManager.class);
         setService(CtsSearchUiService.SERVICE_NAME);
         SearchContext searchContext = new SearchContext(
-                RESULT_CORPUS1 | RESULT_CORPUS2 | RESULT_CORPUS3, 0, null);
+                RESULT_CORPUS1 | RESULT_CORPUS2 | RESULT_CORPUS3, 0);
         mClient = mManager.createSearchSession(searchContext);
         await(mWatcher.created, "Waiting for onCreate()");
         reset(mWatcher.verifier);
@@ -105,7 +105,7 @@ public class SearchUiManagerTest {
     @After
     public void tearDown() throws Exception {
         Log.d(TAG, "Starting tear down, watcher is: " + mWatcher);
-        mClient.destroy();
+        mClient.close();
         setService(null);
         await(mWatcher.destroyed, "Waiting for onDestroy()");
 
@@ -137,7 +137,7 @@ public class SearchUiManagerTest {
                 .onNotifyEvent(any(), queryArg.capture(), eventArg.capture());
 
         assertTrue(queryArg.getValue().getInput().equals(QUERY_INPUT));
-        assertEquals(queryArg.getValue().getTimestamp(), QUERY_TIMESTAMP);
+        assertEquals(queryArg.getValue().getTimestampMillis(), QUERY_TIMESTAMP);
         assertTrue(eventArg.getValue().getTargetId().equals(targetId));
         assertEquals(eventArg.getValue().getAction(), action);
     }
@@ -186,7 +186,7 @@ public class SearchUiManagerTest {
 
         Query expectedQuery = queryArg.getValue();
         assertTrue(expectedQuery.getInput().equals(QUERY_INPUT));
-        assertEquals(expectedQuery.getTimestamp(), QUERY_TIMESTAMP);
+        assertEquals(expectedQuery.getTimestampMillis(), QUERY_TIMESTAMP);
 
         Consumer<List<SearchTarget>> expectedCallback = callbackArg.getValue();
         expectedCallback.andThen(callbackVerifier);
