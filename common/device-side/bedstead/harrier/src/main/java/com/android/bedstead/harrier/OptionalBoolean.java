@@ -14,18 +14,10 @@
  * limitations under the License.
  */
 
-package com.android.bedstead.remotedpc.managers;
+package com.android.bedstead.harrier;
 
-import android.content.Context;
-
-import com.google.android.enterprise.connectedapps.annotations.CrossProfileProvider;
-
-/** Connected Apps SDK Provider for RemoteDPC. */
-public class Provider {
-
-    /** Provide instance of {@link RemoteDevicePolicyManager} to Connected Apps SDK. */
-    @CrossProfileProvider
-    public RemoteDevicePolicyManager provideRemoteDevicePolicyManager(Context context) {
-        return new RemoteDevicePolicyManagerImpl(context);
-    }
+public enum OptionalBoolean {
+    TRUE,
+    FALSE,
+    ANY
 }

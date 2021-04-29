@@ -42,7 +42,7 @@ public class CtsVerifierReportLog extends ReportLog {
 
     public CtsVerifierReportLog(String reportLogName, String streamName) {
         this(reportLogName, streamName, new File(Environment.getExternalStorageDirectory(),
-                ReportExporter.CTSV_REPORTLOG_FOLDERNAME));
+                ReportExporter.XTSV_REPORTLOG_FOLDERNAME));
     }
 
     public CtsVerifierReportLog(String reportLogName, String streamName, File logDirectory) {

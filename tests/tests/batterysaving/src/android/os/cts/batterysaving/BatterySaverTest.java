@@ -41,6 +41,7 @@ import com.android.compatibility.common.util.DeviceConfigStateHelper;
 import com.android.compatibility.common.util.SettingsUtils;
 
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -52,13 +53,21 @@ import org.junit.runner.RunWith;
 @MediumTest
 @RunWith(AndroidJUnit4.class)
 public class BatterySaverTest extends BatterySavingTestBase {
-    private DeviceConfigStateHelper mDeviceConfigStateHelper =
+    private final DeviceConfigStateHelper mDeviceConfigStateHelper =
             new DeviceConfigStateHelper(DeviceConfig.NAMESPACE_BATTERY_SAVER);
+
+    private String mInitialNightMode;
+
+    @Before
+    public void setUp() {
+        mInitialNightMode = getInitialNightMode();
+    }
 
     @After
     public void tearDown() {
         mDeviceConfigStateHelper.restoreOriginalValues();
         SettingsUtils.delete(SettingsUtils.NAMESPACE_GLOBAL, "battery_saver_constants");
+        runShellCommand("cmd uimode night " + mInitialNightMode);
     }
 
     /**
@@ -115,12 +124,6 @@ public class BatterySaverTest extends BatterySavingTestBase {
     /** Tests that Battery Saver exemptions activate when automotive projection is active. */
     @Test
     public void testAutomotiveProjectionExceptions() throws Exception {
-        final String nightModeText = runShellCommand("cmd uimode night");
-        final String[] nightModeSplit = nightModeText.split(":");
-        if (nightModeSplit.length != 2) {
-            fail("Failed to get initial night mode value from " + nightModeText);
-        }
-        final String initialNightMode = nightModeSplit[1].trim();
         runShellCommand("cmd uimode night no");
         UiModeManager uiModeManager = getContext().getSystemService(UiModeManager.class);
         runWithShellPermissionIdentity(() ->
@@ -183,9 +186,6 @@ public class BatterySaverTest extends BatterySavingTestBase {
             runWithShellPermissionIdentity(
                     () -> uiModeManager.releaseProjection(UiModeManager.PROJECTION_TYPE_AUTOMOTIVE),
                     Manifest.permission.TOGGLE_AUTOMOTIVE_PROJECTION);
-
-            runShellCommand("cmd uimode night " + initialNightMode);
-            SettingsUtils.delete(SettingsUtils.NAMESPACE_GLOBAL, "battery_saver_constants");
         }
     }
 
@@ -238,6 +238,7 @@ public class BatterySaverTest extends BatterySavingTestBase {
     public void testGlobalSettingsOverridesDeviceConfig() throws Exception {
         runDumpsysBatteryUnplug();
         enableBatterySaver(true);
+        runShellCommand("cmd uimode night no");
         final PowerManager powerManager = BatteryUtils.getPowerManager();
 
         mDeviceConfigStateHelper.set("location_mode",
@@ -278,5 +279,14 @@ public class BatterySaverTest extends BatterySavingTestBase {
                         + PowerManager.LOCATION_MODE_THROTTLE_REQUESTS_WHEN_SCREEN_OFF,
                 () -> PowerManager.LOCATION_MODE_THROTTLE_REQUESTS_WHEN_SCREEN_OFF ==
                         powerManager.getLocationPowerSaveMode());
+    }
+
+    private String getInitialNightMode() {
+        final String nightModeText = runShellCommand("cmd uimode night");
+        final String[] nightModeSplit = nightModeText.split(":");
+        if (nightModeSplit.length != 2) {
+            fail("Failed to get initial night mode value from " + nightModeText);
+        }
+        return nightModeSplit[1].trim();
     }
 }

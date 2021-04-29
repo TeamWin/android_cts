@@ -47,6 +47,7 @@ public abstract class BaseDeviceOwnerTest extends AndroidTestCase {
     protected UiDevice mDevice;
     protected boolean mHasSecureLockScreen;
     protected boolean mHasTelephonyFeature;
+    protected boolean mIsAutomotive;
     /** User running the test (obtained from {@code mContext}). */
     protected @UserIdInt int mUserId;
 
@@ -62,6 +63,8 @@ public abstract class BaseDeviceOwnerTest extends AndroidTestCase {
                 PackageManager.FEATURE_SECURE_LOCK_SCREEN);
         mHasTelephonyFeature = mContext.getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_TELEPHONY);
+        mIsAutomotive = mContext.getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_AUTOMOTIVE);
         mUserId = mContext.getUserId();
 
         assertDeviceOwner();

@@ -432,7 +432,8 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
 
         if (!preparePlayback(videoMime, videoFeatures, audioUrl, audioEncrypted, videoUrl,
                 videoEncrypted, videoWidth, videoHeight, scrambled, mSessionId, getSurfaces())) {
-            // TODO(b/182626189) investigate why cuttlefish does not support the requested media codec
+            // Allow device to skip test to keep existing behavior.
+            // We should throw an exception for new tests.
             return;
         }
 
@@ -483,8 +484,13 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
         if (false == playbackPreCheck(MIME_VIDEO_AVC,
                 new String[] { CodecCapabilities.FEATURE_SecurePlayback }, videoUrl,
                 VIDEO_WIDTH_CENC, VIDEO_HEIGHT_CENC)) {
-            Log.e(TAG, "Failed playback precheck");
-            return;
+            // retry with unsecure codec
+            if (false == playbackPreCheck(MIME_VIDEO_AVC,
+                    new String[0], videoUrl,
+                    VIDEO_WIDTH_CENC, VIDEO_HEIGHT_CENC)) {
+                Log.e(TAG, "Failed playback precheck");
+                return;
+            }
         }
 
         mMediaCodecPlayer = new MediaCodecClearKeyPlayer(
@@ -687,12 +693,26 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
         }
     }
 
-    @Presubmit
+    // returns FEATURE_SecurePlayback if device supports secure codec,
+    // else returns an empty string for the codec feature
+    private String[] determineCodecFeatures(String mime,
+            int videoWidth, int videoHeight) {
+        String[] codecFeatures = { CodecCapabilities.FEATURE_SecurePlayback };
+        if (!isResolutionSupported(MIME_VIDEO_AVC, codecFeatures,
+            VIDEO_WIDTH_CENC, VIDEO_HEIGHT_CENC)) {
+            // for device that does not support secure codec
+            codecFeatures = new String[0];
+        }
+        return codecFeatures;
+    }
+
     public void testClearKeyPlaybackCenc() throws Exception {
+        String[] codecFeatures = determineCodecFeatures(MIME_VIDEO_AVC,
+            VIDEO_WIDTH_CENC, VIDEO_HEIGHT_CENC);
         testClearKeyPlayback(
             COMMON_PSSH_SCHEME_UUID,
             // using secure codec even though it is clear key DRM
-            MIME_VIDEO_AVC, new String[] { CodecCapabilities.FEATURE_SecurePlayback },
+            MIME_VIDEO_AVC, codecFeatures,
             "cenc", new byte[][] { CLEAR_KEY_CENC },
             Uri.parse(Utils.getMediaPath() + CENC_AUDIO_PATH), false  /* audioEncrypted */,
             Uri.parse(Utils.getMediaPath() + CENC_VIDEO_PATH), true /* videoEncrypted */,
@@ -702,10 +722,12 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
 
     @Presubmit
     public void testClearKeyPlaybackCenc2() throws Exception {
+        String[] codecFeatures = determineCodecFeatures(MIME_VIDEO_AVC,
+            VIDEO_WIDTH_CENC, VIDEO_HEIGHT_CENC);
         testClearKeyPlayback(
             CLEARKEY_SCHEME_UUID,
             // using secure codec even though it is clear key DRM
-            MIME_VIDEO_AVC, new String[] { CodecCapabilities.FEATURE_SecurePlayback },
+            MIME_VIDEO_AVC, codecFeatures,
             "cenc", new byte[][] { CLEAR_KEY_CENC },
             Uri.parse(Utils.getMediaPath() + CENC_AUDIO_PATH), false /* audioEncrypted */ ,
             Uri.parse(Utils.getMediaPath() + CENC_VIDEO_PATH), true /* videoEncrypted */,
@@ -715,10 +737,12 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
 
     @Presubmit
     public void testClearKeyPlaybackOfflineCenc() throws Exception {
+        String[] codecFeatures = determineCodecFeatures(MIME_VIDEO_AVC,
+            VIDEO_WIDTH_CENC, VIDEO_HEIGHT_CENC);
         testClearKeyPlayback(
                 CLEARKEY_SCHEME_UUID,
                 // using secure codec even though it is clear key DRM
-                MIME_VIDEO_AVC, new String[] { CodecCapabilities.FEATURE_SecurePlayback },
+                MIME_VIDEO_AVC, codecFeatures,
                 "cenc", new byte[][] { CLEAR_KEY_CENC },
                 Uri.parse(Utils.getMediaPath() + CENC_AUDIO_PATH), false /* audioEncrypted */ ,
                 Uri.parse(Utils.getMediaPath() + CENC_VIDEO_PATH), true /* videoEncrypted */,
@@ -1248,7 +1272,7 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
         try {
             if (!preparePlayback(
                     MIME_VIDEO_AVC,
-                    new String[] { CodecCapabilities.FEATURE_SecurePlayback },
+                    new String[0],
                     Uri.parse(Utils.getMediaPath() + CENC_AUDIO_PATH), false /* audioEncrypted */ ,
                     Uri.parse(Utils.getMediaPath() + CENC_VIDEO_PATH), true /* videoEncrypted */,
                     VIDEO_WIDTH_CENC, VIDEO_HEIGHT_CENC, false /* scrambled */,
@@ -1313,7 +1337,7 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
         try {
             if (!preparePlayback(
                     MIME_VIDEO_AVC,
-                    new String[] { CodecCapabilities.FEATURE_SecurePlayback },
+                    new String[0],
                     Uri.parse(Utils.getMediaPath() + CENC_AUDIO_PATH), false /* audioEncrypted */ ,
                     Uri.parse(Utils.getMediaPath() + CENC_VIDEO_PATH), true /* videoEncrypted */,
                     VIDEO_WIDTH_CENC, VIDEO_HEIGHT_CENC, false /* scrambled */,
@@ -1386,7 +1410,7 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
         try {
             if (!preparePlayback(
                     MIME_VIDEO_AVC,
-                    new String[] { CodecCapabilities.FEATURE_SecurePlayback },
+                    new String[0],
                     Uri.parse(Utils.getMediaPath() + CENC_AUDIO_PATH), false /* audioEncrypted */ ,
                     Uri.parse(Utils.getMediaPath() + CENC_VIDEO_PATH), true /* videoEncrypted */,
                     VIDEO_WIDTH_CENC, VIDEO_HEIGHT_CENC, false /* scrambled */,
