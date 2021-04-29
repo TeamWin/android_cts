@@ -592,6 +592,46 @@ public class SipDelegateManagerTest {
     }
 
     @Test
+    public void testCreateDelegateTestInvalidSipMessages() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+        assertTrue(sServiceConnector.setDefaultSmsApp());
+        connectTestImsServiceWithSipTransportAndConfig();
+
+        TestSipTransport transportImpl = sServiceConnector.getCarrierService().getSipTransport();
+        TestImsRegistration regImpl = sServiceConnector.getCarrierService().getImsRegistration();
+        SipDelegateManager manager = getSipDelegateManager();
+        DelegateRequest request = getDefaultRequest();
+        TestSipDelegateConnection delegateConn = new TestSipDelegateConnection(request);
+
+        TestSipDelegate delegate = createSipDelegateConnectionAndVerify(manager, delegateConn,
+                transportImpl, Collections.emptySet(), 0);
+        assertNotNull(delegate);
+        verifyUpdateRegistrationCalled(regImpl);
+
+        InetSocketAddress localAddr = new InetSocketAddress(
+                InetAddresses.parseNumericAddress("1.1.1.1"), 80);
+        InetSocketAddress serverAddr = new InetSocketAddress(
+                InetAddresses.parseNumericAddress("2.2.2.2"), 81);
+        SipDelegateConfiguration c = new SipDelegateConfiguration.Builder(1,
+                SipDelegateConfiguration.SIP_TRANSPORT_TCP, localAddr, serverAddr).build();
+        verifyRegisteredAndSendSipConfig(delegateConn, delegate, request.getFeatureTags(),
+                Collections.emptySet(), c);
+
+        // Verify restricted SIP request methods are not sent to the delegate.
+        sendRestrictedRequestsAndVerifyFailed(delegateConn);
+        // Verify malformed messages are not sent to the delegate.
+        sendInvalidRequestsAndVerifyFailed(delegateConn);
+
+        destroySipDelegateAndVerify(manager, transportImpl, delegateConn, delegate,
+                request.getFeatureTags());
+        assertEquals("There should be no more delegates", 0,
+                transportImpl.getDelegates().size());
+        verifyUpdateRegistrationCalled(regImpl);
+    }
+
+    @Test
     public void testDeprecatedConfig() throws Exception {
         if (!ImsUtils.shouldTestImsService()) {
             return;
@@ -1225,6 +1265,25 @@ public class SipDelegateManagerTest {
                 + "implementation did not receive a request.", info);
         assertEquals(403, info.sipCode);
         assertEquals("FORBIDDEN", info.sipReason);
+    }
+
+    private void sendRestrictedRequestsAndVerifyFailed(
+            TestSipDelegateConnection delegateConn) throws Exception {
+        delegateConn.sendMessageAndVerifyFailure(ImsUtils.TEST_SIP_REGISTER,
+                SipDelegateManager.MESSAGE_FAILURE_REASON_INVALID_START_LINE);
+        delegateConn.sendMessageAndVerifyFailure(ImsUtils.TEST_SIP_PUBLISH,
+                SipDelegateManager.MESSAGE_FAILURE_REASON_INVALID_START_LINE);
+        delegateConn.sendMessageAndVerifyFailure(ImsUtils.TEST_SIP_OPTIONS,
+                SipDelegateManager.MESSAGE_FAILURE_REASON_INVALID_START_LINE);
+        delegateConn.sendMessageAndVerifyFailure(ImsUtils.TEST_SIP_SUBSCRIBE_PRESENCE,
+                SipDelegateManager.MESSAGE_FAILURE_REASON_INVALID_HEADER_FIELDS);
+    }
+    private void sendInvalidRequestsAndVerifyFailed(
+            TestSipDelegateConnection delegateConn) throws Exception {
+        delegateConn.sendMessageAndVerifyFailure(ImsUtils.TEST_SIP_MESSAGE_INVALID_REQUEST,
+                SipDelegateManager.MESSAGE_FAILURE_REASON_INVALID_START_LINE);
+        delegateConn.sendMessageAndVerifyFailure(ImsUtils.TEST_SIP_MESSAGE_INVALID_RESPONSE,
+                SipDelegateManager.MESSAGE_FAILURE_REASON_INVALID_START_LINE);
     }
 
     private void sendMessageAndVerifyAck(TestSipDelegateConnection delegateConn,

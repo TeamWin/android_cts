@@ -383,9 +383,6 @@ public class PermissionPolicyTest {
                 case "incidentReportApprover": {
                     protectionLevel |= PermissionInfo.PROTECTION_FLAG_INCIDENT_REPORT_APPROVER;
                 } break;
-                case "documenter": {
-                    protectionLevel |= PermissionInfo.PROTECTION_FLAG_DOCUMENTER;
-                } break;
                 case "appPredictor": {
                     protectionLevel |= PermissionInfo.PROTECTION_FLAG_APP_PREDICTOR;
                 } break;

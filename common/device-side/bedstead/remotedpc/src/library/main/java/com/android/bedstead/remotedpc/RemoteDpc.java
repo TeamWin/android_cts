@@ -16,10 +16,10 @@
 
 package com.android.bedstead.remotedpc;
 
+import static com.android.bedstead.remotedpc.Configuration.DPC_COMPONENT;
 import static com.android.compatibility.common.util.FileUtils.readInputStreamFully;
 
 import android.app.admin.DevicePolicyManager;
-import android.content.ComponentName;
 import android.content.Context;
 import android.os.UserHandle;
 
@@ -33,7 +33,7 @@ import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.remotedpc.connected.RemoteDPCBinder;
 import com.android.bedstead.remotedpc.managers.RemoteDevicePolicyManager;
-import com.android.bedstead.remotedpc.managers.RemoteDevicePolicyManagerWrapper;
+import com.android.bedstead.remotedpc.managers.RemoteDevicePolicyManager_Wrapper;
 
 import com.google.android.enterprise.connectedapps.CrossProfileConnector;
 
@@ -45,10 +45,6 @@ public final class RemoteDpc {
 
     private static final TestApis sTestApis = new TestApis();
     private static final Context sContext = sTestApis.context().instrumentedContext();
-    private static final ComponentName DPC_COMPONENT = new ComponentName(
-            "com.android.bedstead.remotedpc.dpc",
-            "com.android.eventlib.premade.EventLibDeviceAdminReceiver"
-    );
 
     /**
      * Get the {@link RemoteDpc} instance for the Device Owner.
@@ -273,6 +269,6 @@ public final class RemoteDpc {
      * this RemoteDPC.
      */
     public RemoteDevicePolicyManager devicePolicyManager() {
-        return new RemoteDevicePolicyManagerWrapper(mConnector);
+        return new RemoteDevicePolicyManager_Wrapper(mConnector);
     }
 }

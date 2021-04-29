@@ -53,7 +53,7 @@ class ReportExporter extends AsyncTask<Void, Void, String> {
     public static final String REPORT_DIRECTORY = "verifierReports";
 
     // Report Logs are stored here
-    public static final String CTSV_REPORTLOG_FOLDERNAME = "ctsv-report-logs";
+    public static final String XTSV_REPORTLOG_FOLDERNAME = "R.string.report_log_folder_name";
 
     private static final Logger LOG = Logger.getLogger(ReportExporter.class.getName());
     private static final String COMMAND_LINE_ARGS = "";
@@ -74,7 +74,7 @@ class ReportExporter extends AsyncTask<Void, Void, String> {
     }
 
     //
-    // Copy any ReportLog files created by CTS-Verifier tests into the temp report directory
+    // Copy any ReportLog files created by XTS-Verifier tests into the temp report directory
     // so that they will get ZIPped into the transmitted file.
     //
     private void copyReportFiles(File tempDir) {
@@ -82,7 +82,7 @@ class ReportExporter extends AsyncTask<Void, Void, String> {
         File reportLogFolder =
                 new File(Environment.getExternalStorageDirectory().getAbsolutePath()
                         + File.separator
-                        + CTSV_REPORTLOG_FOLDERNAME);
+                        + XTSV_REPORTLOG_FOLDERNAME);
         File[] reportLogFiles = reportLogFolder.listFiles();
 
         // if no ReportLog files have been created (i.e. the folder doesn't exist)
@@ -117,7 +117,7 @@ class ReportExporter extends AsyncTask<Void, Void, String> {
             LOG.log(Level.WARNING, "Couldn't create test results report", e);
             return mContext.getString(R.string.test_results_error);
         }
-        // create a directory for CTS Verifier reports
+        // create a directory for XTS Verifier reports
         File externalStorageDirectory = Environment.getExternalStorageDirectory();
         File verifierReportsDir = new File(externalStorageDirectory, REPORT_DIRECTORY);
         verifierReportsDir.mkdirs();
