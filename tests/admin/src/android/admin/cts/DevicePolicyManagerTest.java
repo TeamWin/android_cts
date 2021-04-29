@@ -105,6 +105,14 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
                 mPackageManager.hasSystemFeature(PackageManager.FEATURE_SECURE_LOCK_SCREEN);
     }
 
+    @Override
+    protected void tearDown() throws Exception {
+        super.tearDown();
+        SystemUtil.runShellCommand(
+                "dpm set-profile-owner --user cur "
+                        + DeviceAdminInfoTest.getProfileOwnerComponent().flattenToString());
+    }
+
     public void testGetActiveAdmins() {
         if (!mDeviceAdmin) {
             Log.w(TAG, "Skipping testGetActiveAdmins");
@@ -129,10 +137,6 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
                     () -> mDevicePolicyManager.isPreferentialNetworkServiceEnabled());
         }  catch (SecurityException se) {
             Log.w(TAG, "Test is not a profile owner and there is no need to clear.");
-        } finally {
-            SystemUtil.runShellCommand(
-                  "dpm set-profile-owner --user cur "
-                          + DeviceAdminInfoTest.getProfileOwnerComponent().flattenToString());
         }
     }
 
@@ -1188,6 +1192,7 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
             Log.w(TAG, message);
             return;
         }
+        mDevicePolicyManager.clearProfileOwner(DeviceAdminInfoTest.getProfileOwnerComponent());
         assertThrows(
                 SecurityException.class,
                 () ->
@@ -1203,6 +1208,7 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
             Log.w(TAG, message);
             return;
         }
+        mDevicePolicyManager.clearProfileOwner(DeviceAdminInfoTest.getProfileOwnerComponent());
         assertThrows(
                 SecurityException.class,
                 () -> mDevicePolicyManager.getNearbyNotificationStreamingPolicy());
@@ -1215,6 +1221,7 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
             Log.w(TAG, message);
             return;
         }
+        mDevicePolicyManager.clearProfileOwner(DeviceAdminInfoTest.getProfileOwnerComponent());
         assertThrows(
                 SecurityException.class,
                 () ->
@@ -1229,6 +1236,7 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
             Log.w(TAG, message);
             return;
         }
+        mDevicePolicyManager.clearProfileOwner(DeviceAdminInfoTest.getProfileOwnerComponent());
         assertThrows(
                 SecurityException.class, () -> mDevicePolicyManager.getNearbyAppStreamingPolicy());
     }
