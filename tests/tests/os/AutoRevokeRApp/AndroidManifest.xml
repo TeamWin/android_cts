@@ -19,6 +19,7 @@
     package="android.os.cts.autorevokerapp">
 
     <uses-permission android:name="android.permission.READ_CALENDAR" />
+    <uses-permission android:name="android.permission.BLUETOOTH" />
 
     <uses-sdk android:minSdkVersion="30" android:targetSdkVersion="30" />
 
