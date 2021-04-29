@@ -42,6 +42,24 @@ public final class CompatChangesValidConfigTest extends CompatChangeGatingTestCa
         "ALLOW_TEST_API_ACCESS"
     );
 
+    private static final Set<String> OVERRIDABLE_CHANGES = ImmutableSet.of(
+            "ALWAYS_SANDBOX_DISPLAY_APIS",
+            "CTS_SYSTEM_API_OVERRIDABLE_CHANGEID",
+            "DOWNSCALED",
+            "DOWNSCALE_50",
+            "DOWNSCALE_60",
+            "DOWNSCALE_70",
+            "DOWNSCALE_80",
+            "DOWNSCALE_90",
+            "DO_NOT_DOWNSCALE_TO_1080P_ON_TV",
+            "FORCE_NON_RESIZE_APP",
+            "FORCE_RESIZE_APP",
+            "NEVER_SANDBOX_DISPLAY_APIS",
+            "OVERRIDE_MIN_ASPECT_RATIO",
+            "OVERRIDE_MIN_ASPECT_RATIO_LARGE",
+            "OVERRIDE_MIN_ASPECT_RATIO_MEDIUM"
+    );
+
     /**
      * Check that there are no overrides.
      */
@@ -50,6 +68,18 @@ public final class CompatChangesValidConfigTest extends CompatChangeGatingTestCa
             if (!OVERRIDES_ALLOWLIST.contains(c.changeName) && !c.overridable) {
                 assertWithMessage("Change should not have overrides: " + c)
                         .that(c.hasOverrides).isFalse();
+            }
+        }
+    }
+
+    /**
+     * Check that only approved changes are overridable.
+     */
+    public void testOnlyAllowedlistedChangesAreOverridable() throws Exception {
+        for (Change c : getOnDeviceCompatConfig()) {
+            if (c.overridable) {
+                assertWithMessage("Please contact platform-compat-eng@google.com for approval")
+                        .that(OVERRIDABLE_CHANGES).contains(c.changeName);
             }
         }
     }
