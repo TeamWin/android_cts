@@ -129,7 +129,7 @@ public class VcnManagerTest {
                 new VcnGatewayConnectionConfig.Builder(VCN_GATEWAY_CONNECTION_NAME, tunnelParams)
                         .addExposedCapability(NET_CAPABILITY_INTERNET)
                         .addRequiredUnderlyingCapability(NET_CAPABILITY_INTERNET)
-                        .setRetryIntervalsMs(
+                        .setRetryIntervalsMillis(
                                 new long[] {
                                     TimeUnit.SECONDS.toMillis(1),
                                     TimeUnit.MINUTES.toMillis(1),
