@@ -39,6 +39,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -813,11 +814,13 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     }
 
     @Test
-    public void testSetUserControlDisabledPackages() throws Exception {
+    public void testSetUserControlDisabledPackages_singleUser_verifyMetricIsLogged()
+            throws Exception {
+        final List<Integer> otherUserIds = new ArrayList<>();
         try {
-            installAppAsUser(SIMPLE_APP_APK, mPrimaryUserId);
-            // launch the app once before starting the test.
-            startActivityAsUser(mPrimaryUserId, SIMPLE_APP_PKG, SIMPLE_APP_ACTIVITY);
+            setupDeviceForSetUserControlDisabledPackagesTesting(otherUserIds);
+
+            // Set the package under test as a protected package.
             assertMetricsLogged(getDevice(),
                     () -> executeDeviceTestMethod(".UserControlDisabledPackagesTest",
                             "testSetUserControlDisabledPackages"),
@@ -826,24 +829,229 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
                             .setAdminPackageName(DEVICE_OWNER_PKG)
                             .setStrings(new String[] {SIMPLE_APP_PKG})
                             .build());
-            forceStopPackageForUser(SIMPLE_APP_PKG, mPrimaryUserId);
+        } finally {
+            cleanupProtectedPackage(otherUserIds);
+            getDevice().uninstallPackageForUser(SIMPLE_APP_APK, mPrimaryUserId);
+        }
+    }
+
+    @Test
+    public void testSetUserControlDisabledPackages_singleUser_verifyPackageNotStopped()
+            throws Exception {
+        final List<Integer> otherUserIds = new ArrayList<>();
+        try {
+            setupDeviceForSetUserControlDisabledPackagesTesting(otherUserIds);
+            // Set the package under test as a protected package.
             executeDeviceTestMethod(".UserControlDisabledPackagesTest",
-                    "testForceStopWithUserControlDisabled");
+                    "testSetUserControlDisabledPackages");
+
+            // Try to stop the package on the primary user.
+            tryStoppingProtectedPackage(otherUserIds, /* canUserStopPackage= */ false);
+        } finally {
+            cleanupProtectedPackage(otherUserIds);
+            getDevice().uninstallPackageForUser(SIMPLE_APP_APK, mPrimaryUserId);
+        }
+    }
+
+    @Test
+    public void testSetUserControlDisabledPackages_singleUser_reboot_verifyPackageNotStopped()
+            throws Exception {
+        final List<Integer> otherUserIds = new ArrayList<>();
+        try {
+            setupDeviceForSetUserControlDisabledPackagesTesting(otherUserIds);
+            // Set the package under test as a protected package.
+            executeDeviceTestMethod(".UserControlDisabledPackagesTest",
+                    "testSetUserControlDisabledPackages");
+
             // Reboot and verify protected packages are persisted
             rebootAndWaitUntilReady();
+
             // The simple app package seems to be set into stopped state on reboot.
-            // Launch the activity again to get it out of stopped state.
-            startActivityAsUser(mPrimaryUserId, SIMPLE_APP_PKG, SIMPLE_APP_ACTIVITY);
-            forceStopPackageForUser(SIMPLE_APP_PKG, mDeviceOwnerUserId);
+            // Launch the activity again to get it out of stopped state on the primary user.
+            startProtectedPackage(otherUserIds);
+            // Try to stop the package on the primary user.
+            tryStoppingProtectedPackage(otherUserIds, /* canUserStopPackage= */ false);
+        } finally {
+            cleanupProtectedPackage(otherUserIds);
+            getDevice().uninstallPackageForUser(SIMPLE_APP_APK, mPrimaryUserId);
+        }
+    }
+
+    @Test
+    public void testSetUserControlDisabledPackages_multiUser_verifyMetricIsLogged()
+            throws Exception {
+        assumeCanCreateAdditionalUsers(1);
+        final int userId = createUser();
+        final List<Integer> otherUserIds = new ArrayList<>();
+        otherUserIds.add(userId);
+        try {
+            setupDeviceForSetUserControlDisabledPackagesTesting(otherUserIds);
+
+            // Set the package under test as a protected package.
+            assertMetricsLogged(getDevice(),
+                    () -> executeDeviceTestMethod(".UserControlDisabledPackagesTest",
+                            "testSetUserControlDisabledPackages"),
+                    new DevicePolicyEventWrapper.Builder(
+                            EventId.SET_USER_CONTROL_DISABLED_PACKAGES_VALUE)
+                            .setAdminPackageName(DEVICE_OWNER_PKG)
+                            .setStrings(new String[] {SIMPLE_APP_PKG})
+                            .build());
+        } finally {
+            cleanupProtectedPackage(otherUserIds);
+            getDevice().uninstallPackageForUser(SIMPLE_APP_APK, mPrimaryUserId);
+            getDevice().uninstallPackageForUser(SIMPLE_APP_APK, userId);
+            removeUser(userId);
+        }
+    }
+
+    @Test
+    public void testSetUserControlDisabledPackages_multiUser_verifyPackageNotStopped()
+            throws Exception {
+        assumeCanCreateAdditionalUsers(1);
+        final int userId = createUser();
+        final List<Integer> otherUserIds = new ArrayList<>();
+        otherUserIds.add(userId);
+        try {
+            setupDeviceForSetUserControlDisabledPackagesTesting(otherUserIds);
+            // Set the package under test as a protected package.
             executeDeviceTestMethod(".UserControlDisabledPackagesTest",
-                    "testForceStopWithUserControlDisabled");
+                    "testSetUserControlDisabledPackages");
+
+            // Try to stop the package under test on all users.
+            tryStoppingProtectedPackage(otherUserIds, /* canUserStopPackage= */ false);
+        } finally {
+            cleanupProtectedPackage(otherUserIds);
+            getDevice().uninstallPackageForUser(SIMPLE_APP_APK, mPrimaryUserId);
+            getDevice().uninstallPackageForUser(SIMPLE_APP_APK, userId);
+            removeUser(userId);
+        }
+    }
+
+    @Test
+    public void testSetUserControlDisabledPackages_multiUser_reboot_verifyPackageNotStopped()
+            throws Exception {
+        assumeCanCreateAdditionalUsers(1);
+        final int userId = createUser();
+        final List<Integer> otherUserIds = new ArrayList<>();
+        otherUserIds.add(userId);
+        try {
+            setupDeviceForSetUserControlDisabledPackagesTesting(otherUserIds);
+            // Set the package under test as a protected package.
             executeDeviceTestMethod(".UserControlDisabledPackagesTest",
-                    "testClearSetUserControlDisabledPackages");
-            forceStopPackageForUser(SIMPLE_APP_PKG, mPrimaryUserId);
+                    "testSetUserControlDisabledPackages");
+
+            // Reboot and verify protected packages are persisted.
+            rebootAndWaitUntilReady();
+
+            // The simple app package seems to be set into stopped state on reboot.
+            // Launch the activity again to get it out of stopped state for all users.
+            startProtectedPackage(otherUserIds);
+            // Try to stop the package under test on all users.
+            tryStoppingProtectedPackage(otherUserIds, /* canUserStopPackage= */ false);
+        } finally {
+            cleanupProtectedPackage(otherUserIds);
+            getDevice().uninstallPackageForUser(SIMPLE_APP_APK, mPrimaryUserId);
+            getDevice().uninstallPackageForUser(SIMPLE_APP_APK, userId);
+            removeUser(userId);
+        }
+    }
+
+    /**
+     * Helper when testing {@link DevicePolicyManager#setUserControlDisabledPackages} API that
+     * installs the app and starts the activity for the package that is under test for the primary
+     * user and provided users.
+     * @param otherUserIds The user Ids apart from the primary user that were created
+     */
+    private void setupDeviceForSetUserControlDisabledPackagesTesting(List<Integer> otherUserIds)
+            throws Exception {
+        // Install app on the primary user and other users.
+        installAppAsUser(SIMPLE_APP_APK, mPrimaryUserId);
+        if (!otherUserIds.isEmpty()) {
+            for (Integer userId : otherUserIds) {
+                installAppAsUser(SIMPLE_APP_APK, userId);
+            }
+        }
+
+        // Start the activity of the package under test on the primary user and other users.
+        startProtectedPackage(otherUserIds);
+    }
+
+    /**
+     * Helper when testing {@link DevicePolicyManager#setUserControlDisabledPackages} API that
+     * starts the activity for the package that is under test for the primary user and provided
+     * users.
+     * @param otherUserIds The user Ids apart from the primary user that were created
+     */
+    private void startProtectedPackage(List<Integer> otherUserIds) throws Exception {
+        startProtectedPackage(mPrimaryUserId);
+        if (!otherUserIds.isEmpty()) {
+            for (Integer userId : otherUserIds) {
+                switchUser(userId);
+                startProtectedPackage(userId);
+            }
+            switchUser(mPrimaryUserId);
+        }
+    }
+
+    /**
+     * Helper when testing {@link DevicePolicyManager#setUserControlDisabledPackages} API that
+     * starts the activity for the package that is under test for a given user.
+     * @param userId The user Id to start the package for
+     */
+    private void startProtectedPackage(int userId) throws Exception {
+        // Launch the app once before starting the test.
+        startActivityAsUser(userId, SIMPLE_APP_PKG, SIMPLE_APP_ACTIVITY);
+        executeDeviceTestMethod(".UserControlDisabledPackagesTest",
+                "testLaunchActivity");
+    }
+
+    /**
+     * Helper when testing {@link DevicePolicyManager#setUserControlDisabledPackages} API that
+     * removes the package under test as a protected package and stops the package under test for
+     * the primary user and provided users.
+     * @param otherUserIds The user Ids apart from the primary user that were created
+     */
+    private void cleanupProtectedPackage(List<Integer> otherUserIds) throws Exception {
+        executeDeviceTestMethod(".UserControlDisabledPackagesTest",
+                "testClearSetUserControlDisabledPackages");
+        tryStoppingProtectedPackage(otherUserIds, /* canUserStopPackage= */ true);
+    }
+
+    /**
+     * Helper when testing {@link DevicePolicyManager#setUserControlDisabledPackages} API that
+     * attempts to stop protected package under test for the primary user and provided users.
+     * @param otherUserIds The user Ids apart from the primary user that were created
+     * @param canUserStopPackage Whether the user can force stop the protected package
+     */
+    private void tryStoppingProtectedPackage(List<Integer> otherUserIds, boolean canUserStopPackage)
+            throws Exception {
+        if (!otherUserIds.isEmpty()) {
+            for (Integer userId : otherUserIds) {
+                // TODO(b/188464764): Run device tests on the required user instead of switching
+                //  users
+                switchUser(userId);
+                tryStoppingProtectedPackage(userId, canUserStopPackage);
+            }
+            switchUser(mPrimaryUserId);
+        }
+        tryStoppingProtectedPackage(mPrimaryUserId, canUserStopPackage);
+    }
+
+    /**
+     * Helper when testing {@link DevicePolicyManager#setUserControlDisabledPackages} API that
+     * attempts to stop the protected package under test for a given user.
+     * @param userId The user Id to stop the package for
+     * @param canUserStopPackage Whether the user can force stop the protected package
+     */
+    private void tryStoppingProtectedPackage(int userId, boolean canUserStopPackage)
+            throws Exception {
+        forceStopPackageForUser(SIMPLE_APP_PKG, userId);
+        if (canUserStopPackage) {
             executeDeviceTestMethod(".UserControlDisabledPackagesTest",
                     "testForceStopWithUserControlEnabled");
-        } finally {
-            getDevice().uninstallPackage(SIMPLE_APP_APK);
+        } else {
+            executeDeviceTestMethod(".UserControlDisabledPackagesTest",
+                    "testForceStopWithUserControlDisabled");
         }
     }
 
