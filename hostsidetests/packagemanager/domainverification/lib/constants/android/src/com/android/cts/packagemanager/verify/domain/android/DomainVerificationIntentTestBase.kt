@@ -24,7 +24,6 @@ import android.content.pm.verify.domain.DomainVerificationManager
 import android.net.Uri
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.compatibility.common.util.ShellUtils
-import com.android.cts.packagemanager.verify.domain.SharedVerifications
 import com.android.cts.packagemanager.verify.domain.android.DomainUtils.DECLARING_PKG_1_COMPONENT
 import com.android.cts.packagemanager.verify.domain.android.DomainUtils.DECLARING_PKG_2_COMPONENT
 import com.android.cts.packagemanager.verify.domain.java.DomainUtils
@@ -41,7 +40,8 @@ import org.junit.runners.Parameterized
 @RunWith(Parameterized::class)
 abstract class DomainVerificationIntentTestBase(
     private val domain: String,
-    private val assertResolvesToBrowsersInBefore: Boolean = true
+    private val assertResolvesToBrowsersInBefore: Boolean = true,
+    private val resetEnable: Boolean = false,
 ) {
 
     companion object {
@@ -99,7 +99,7 @@ abstract class DomainVerificationIntentTestBase(
     @Before
     @After
     fun reset() {
-        SharedVerifications.reset(context)
+        SharedVerifications.reset(context, resetEnable)
     }
 
     protected fun runShellCommand(vararg commands: String) = commands.forEach {
@@ -122,12 +122,27 @@ abstract class DomainVerificationIntentTestBase(
                 .map { ComponentName(it.packageName, it.name) })
                 .containsExactlyElementsIn(components)
         } else {
+            val expected = allResults.filter {
+                browsers.contains(it) || (isComponentEnabled(
+                    packageManager.getApplicationEnabledSetting(
+                        it.packageName
+                    )
+                ) && isComponentEnabled(packageManager.getComponentEnabledSetting(it)))
+            }
+
             // Verify that non-DEFAULT match returns all results
-            assertThat(packageManager.queryIntentActivities(intent, 0)
-                .map { it.activityInfo }
+            assertThat(
+                packageManager.queryIntentActivities(intent, 0)
+                    .map { it.activityInfo }
                 .map { ComponentName(it.packageName, it.name) })
-                .containsExactlyElementsIn(allResults)
+                .containsExactlyElementsIn(expected)
         }
+    }
+
+    private fun isComponentEnabled(enabledSetting: Int) = when (enabledSetting) {
+        PackageManager.COMPONENT_ENABLED_STATE_DEFAULT,
+        PackageManager.COMPONENT_ENABLED_STATE_ENABLED -> true
+        else -> false
     }
 
     fun resetAppLinks(packageName: String) {
