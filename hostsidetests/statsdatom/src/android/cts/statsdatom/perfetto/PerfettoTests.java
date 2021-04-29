@@ -151,7 +151,7 @@ public class PerfettoTests extends DeviceTestCase implements IBuildReceiver {
 
         TraceConfig.IncidentReportConfig incident =
                 TraceConfig.IncidentReportConfig.newBuilder()
-                        .setDestinationPackage("foo.bar.baz")
+                        .setSkipIncidentd(true)
                         .build();
         builder.setIncidentReportConfig(incident);
 

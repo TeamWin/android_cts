@@ -27,6 +27,8 @@ import camera_properties_utils
 import image_processing_utils
 import its_session_utils
 
+import numpy as np
+
 YAML_FILE_DIR = os.environ['CAMERA_ITS_TOP']
 CONFIG_FILE = os.path.join(YAML_FILE_DIR, 'config.yml')
 TEST_KEY_TABLET = 'tablet'
@@ -313,21 +315,6 @@ def get_device_serial_number(device, config_file_contents):
     return dut_device_id
 
 
-def expand_scene(scene, scenes):
-  """Expand a grouped scene and append its sub_scenes to scenes.
-
-  Args:
-    scene:      scene in GROUPED_SCENES dict
-    scenes:     list of scenes to append to
-
-  Returns:
-     updated scenes
-  """
-  logging.info('Expanding %s  to %s.', scene, str(_GROUPED_SCENES[scene]))
-  for sub_scene in _GROUPED_SCENES[scene]:
-    scenes.append(sub_scene)
-
-
 def get_updated_yml_file(yml_file_contents):
   """Create a new yml file and write the testbed contents in it.
 
@@ -348,16 +335,17 @@ def get_updated_yml_file(yml_file_contents):
   new_yaml_file_name = os.path.basename(new_yaml_file)
   return new_yaml_file_name
 
-def enable_external_storage(device_id):
-    """Override apk mode to allow write to external storage.
 
-    Args:
+def enable_external_storage(device_id):
+  """Override apk mode to allow write to external storage.
+
+  Args:
     device_id: Serial number of the device.
 
-    """
-    cmd = f'adb -s {device_id} shell appops '\
-          f'set com.android.cts.verifier MANAGE_EXTERNAL_STORAGE allow'
-    run(cmd)
+  """
+  cmd = (f'adb -s {device_id} shell appops '
+         'set com.android.cts.verifier MANAGE_EXTERNAL_STORAGE allow')
+  run(cmd)
 
 
 def main():
@@ -406,9 +394,8 @@ def main():
     scenes = str(test_params_content['scene']).split(',')
 
   device_id = get_device_serial_number('dut', config_file_contents)
-  # Enable external storage on device for sending the summary report to CTS verifier app.
+  # Enable external storage on DUT to send summary report to CtsVerifier.apk
   enable_external_storage(device_id)
-
 
   config_file_test_key = config_file_contents['TestBeds'][0]['Name'].lower()
   if TEST_KEY_TABLET in config_file_test_key:
@@ -427,15 +414,20 @@ def main():
         not s.startswith(('sensor_fusion', '<scene-name>'))):
       scenes[i] = f'scene{s}'
 
+  # Expand GROUPED_SCENES and remove any duplicates
+  scenes = [_GROUPED_SCENES[s] if s in _GROUPED_SCENES else s for s in scenes]
+  scenes = np.hstack(scenes).tolist()
+  scenes = sorted(set(scenes), key=scenes.index)
+
+  logging.info('Running ITS on device: %s, camera(s): %s, scene(s): %s',
+               device_id, camera_id_combos, scenes)
+
   # Determine if manual run
   if tablet_id is not None and not set(scenes).intersection(_MANUAL_SCENES):
     auto_scene_switch = True
   else:
     auto_scene_switch = False
     logging.info('Manual testing: no tablet defined or testing scene5.')
-
-  logging.info('Running ITS on device: %s, camera: %s, scene: %s',
-               device_id, camera_id_combos, scenes)
 
   for camera_id in camera_id_combos:
     test_params_content['camera'] = camera_id
@@ -450,24 +442,18 @@ def main():
     else:
       possible_scenes = _AUTO_SCENES if auto_scene_switch else _ALL_SCENES
 
-    if not scenes or '<scene-name>' in scenes:
-      scenes = possible_scenes
+    if '<scene-name>' in scenes:
+      per_camera_scenes = possible_scenes
     else:
       # Validate user input scene names
-      valid_scenes = True
-      temp_scenes = []
+      per_camera_scenes = []
       for s in scenes:
         if s in possible_scenes:
-          temp_scenes.append(s)
-        elif s in _GROUPED_SCENES:
-          expand_scene(s, temp_scenes)
-        else:
-          valid_scenes = False
-          raise ValueError(f'Unknown scene specified: {s}')
+          per_camera_scenes.append(s)
+      if not per_camera_scenes:
+        raise ValueError('No valid scene specified for this camera.')
 
-      # assign temp_scenes back to scenes and remove duplicates
-      scenes = sorted(set(temp_scenes), key=temp_scenes.index)
-
+    logging.info('camera: %s, scene(s): %s', camera_id, per_camera_scenes)
     for s in _ALL_SCENES:
       results[s] = {RESULT_KEY: RESULT_NOT_EXECUTED}
     # A subdir in topdir will be created for each camera_id. All scene test
@@ -478,7 +464,7 @@ def main():
     mobly_output_logs_path = os.path.join(topdir, cam_id_string)
     os.mkdir(mobly_output_logs_path)
     tot_pass = 0
-    for s in scenes:
+    for s in per_camera_scenes:
       test_params_content['scene'] = s
       results[s]['TEST_STATUS'] = []
 

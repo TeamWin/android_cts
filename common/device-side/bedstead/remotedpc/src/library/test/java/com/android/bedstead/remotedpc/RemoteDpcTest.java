@@ -703,7 +703,7 @@ public class RemoteDpcTest {
     }
 
     @Test
-    public void frameworkCall_notProfileOwner_throwsSecurityException() {
+    public void frameworkCallRequiresProfileOwner_notProfileOwner_throwsSecurityException() {
         RemoteDpc remoteDPC = RemoteDpc.setAsDeviceOwner(sUser);
 
         try {

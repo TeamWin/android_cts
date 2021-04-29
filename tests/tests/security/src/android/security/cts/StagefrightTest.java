@@ -2108,9 +2108,8 @@ public class StagefrightTest {
         });
 
         t.start();
-        String cve = name.replace("_", "-").toUpperCase();
-        assertFalse("Device *IS* vulnerable to " + cve,
-                    mpcl.waitForError() == MediaPlayer.MEDIA_ERROR_SERVER_DIED);
+        assertNotEquals("MediaPlayer encountered a security crash when testing MediaPlayer.",
+                MediaPlayer.MEDIA_ERROR_SERVER_DIED, mpcl.waitForError());
         t.stopLooper();
         t.join(); // wait for thread to exit so we're sure the player was released
     }
@@ -2183,9 +2182,8 @@ public class StagefrightTest {
         });
 
         t.start();
-        String cve = name.replace("_", "-").toUpperCase();
-        assertFalse("Device *IS* vulnerable to " + cve,
-                    mpcl.waitForError() == MediaPlayer.MEDIA_ERROR_SERVER_DIED);
+        assertNotEquals("MediaPlayer encountered a security crash when testing CVE-2019-2129.",
+                MediaPlayer.MEDIA_ERROR_SERVER_DIED, mpcl.waitForError());
         t.stopLooper();
         t.join(); // wait for thread to exit so we're sure the player was released
     }
@@ -2369,9 +2367,8 @@ public class StagefrightTest {
             }
         }
         ex.release();
-        String cve = rname.replace("_", "-").toUpperCase();
-        assertFalse("Device *IS* vulnerable to " + cve,
-                    mpcl.waitForError() == MediaPlayer.MEDIA_ERROR_SERVER_DIED);
+        assertNotEquals("MediaPlayer encountered a security crash when testing media codecs.",
+                MediaPlayer.MEDIA_ERROR_SERVER_DIED, mpcl.waitForError());
         thr.stopLooper();
         thr.join();
     }
@@ -2462,9 +2459,8 @@ public class StagefrightTest {
 
         retriever.release();
         String rname = url != null ? url : resources.getResourceEntryName(rid);
-        String cve = rname.replace("_", "-").toUpperCase();
-        assertFalse("Device *IS* vulnerable to " + cve,
-                    mpcl.waitForError() == MediaPlayer.MEDIA_ERROR_SERVER_DIED);
+        assertNotEquals("MediaPlayer encountered a security crash when retrieving media metadata.",
+                MediaPlayer.MEDIA_ERROR_SERVER_DIED, mpcl.waitForError());
         thr.stopLooper();
         thr.join();
     }
@@ -2669,7 +2665,6 @@ public class StagefrightTest {
         FileInputStream fis = fd.createInputStream();
         int numRead = fis.read(blob);
         fis.close();
-        //Log.i("@@@@", "read " + numRead + " bytes");
 
         // find all the available decoders for this format
         ArrayList<String> matchingCodecs = new ArrayList<String>();
@@ -2698,8 +2693,14 @@ public class StagefrightTest {
             Log.i(TAG, "Decoding blob " + rname + " using codec " + codecName);
             MediaCodec codec = MediaCodec.createByCodecName(codecName);
             MediaFormat format = MediaFormat.createVideoFormat(mime, initWidth, initHeight);
-            codec.configure(format, null, null, 0);
-            codec.start();
+            try {
+                codec.configure(format, null, null, 0);
+                codec.start();
+            } catch (Exception e) {
+                Log.i(TAG, "Exception from codec " + codecName);
+                releaseCodec(codec);
+                continue;
+            }
 
             try {
                 MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
@@ -2731,9 +2732,8 @@ public class StagefrightTest {
             }
         }
 
-        String cve = rname.replace("_", "-").toUpperCase();
-        assertFalse("Device *IS* vulnerable to " + cve,
-                    mpcl.waitForError() == MediaPlayer.MEDIA_ERROR_SERVER_DIED);
+        assertNotEquals("MediaPlayer encountered a security crash when testing raw blobs.",
+                MediaPlayer.MEDIA_ERROR_SERVER_DIED, mpcl.waitForError());
         thr.stopLooper();
         thr.join();
     }
@@ -2873,9 +2873,9 @@ public class StagefrightTest {
             }
         }
 
-        String cve = rname.replace("_", "-").toUpperCase();
-        assertFalse("Device *IS* vulnerable to " + cve,
-                    mpcl.waitForError() == MediaPlayer.MEDIA_ERROR_SERVER_DIED);
+        assertNotEquals(
+                "MediaPlayer encountered a security crash when testing raw blobs with frame sizes.",
+                MediaPlayer.MEDIA_ERROR_SERVER_DIED, mpcl.waitForError());
         thr.stopLooper();
         thr.join();
     }
@@ -3057,8 +3057,8 @@ public class StagefrightTest {
         });
 
         t.start();
-        String cve = name.replace("_", "-").toUpperCase();
-        assertTrue("Device *IS* vulnerable to " + cve, mpl.waitForErrorOrCompletion());
+        assertTrue("MediaPlayer failed to complete when testing ANR.",
+                mpl.waitForErrorOrCompletion());
         t.stopLooper();
         t.join(); // wait for thread to exit so we're sure the player was released
     }
@@ -3125,9 +3125,8 @@ public class StagefrightTest {
             }
         }
         ex.release();
-        String cve = rname.replace("_", "-").toUpperCase();
-        assertFalse("Device *IS* vulnerable to " + cve,
-                    mpcl.waitForError() == MediaPlayer.MEDIA_ERROR_SERVER_DIED);
+        assertNotEquals("MediaPlayer encountered a security crash when testing extractor seeking.",
+                MediaPlayer.MEDIA_ERROR_SERVER_DIED, mpcl.waitForError());
         thr.stopLooper();
         thr.join();
     }

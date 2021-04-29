@@ -17,8 +17,10 @@
 package com.android.bedstead.harrier.annotations;
 
 import static com.android.bedstead.harrier.DeviceState.UserType.CURRENT_USER;
+import static com.android.bedstead.harrier.OptionalBoolean.TRUE;
 
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.OptionalBoolean;
 import com.android.bedstead.harrier.annotations.meta.EnsureHasProfileAnnotation;
 
 import java.lang.annotation.ElementType;
@@ -43,6 +45,6 @@ public @interface EnsureHasWorkProfile {
     /** Which user type the work profile should be attached to. */
     DeviceState.UserType forUser() default CURRENT_USER;
 
-    /** Whether the test app should be installed in the work profile. */
-    boolean installTestApp() default true;
+    /** Whether the instrumented test app should be installed in the work profile. */
+    OptionalBoolean installInstrumentedApp() default TRUE;
 }

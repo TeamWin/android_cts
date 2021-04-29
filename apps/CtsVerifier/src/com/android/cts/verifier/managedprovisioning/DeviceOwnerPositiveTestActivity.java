@@ -85,6 +85,7 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
     private static final String REMOVE_DEVICE_OWNER_TEST_ID = "REMOVE_DEVICE_OWNER";
     private static final String DISALLOW_AMBIENT_DISPLAY_ID = "DISALLOW_AMBIENT_DISPLAY";
     private static final String DISALLOW_REMOVE_USER_TEST_ID = "DISALLOW_REMOVE_USER";
+    private static final String DISABLE_USB_DATA_SIGNALING_TEST_ID = "DISABLE_USB_DATA_SIGNALING";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -543,6 +544,27 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                 new Intent(this, LockscreenMessageTestActivity.class),
                 /* requiredFeatures */ null));
 
+        // setUsbDataSignalingEnabled
+        if (canUsbDataSignalingBeDisabled()) {
+            adapter.add(createInteractiveTestItem(this, DISABLE_USB_DATA_SIGNALING_TEST_ID,
+                    R.string.device_owner_disable_usb_data_signaling_test,
+                    R.string.device_owner_disable_usb_data_signaling_test_info,
+                    new ButtonInfo[] {
+                            new ButtonInfo(
+                                    R.string.device_owner_settings_go,
+                                    new Intent(Settings.ACTION_SETTINGS)),
+                            new ButtonInfo(
+                                    R.string.device_owner_disable_usb_data_signaling_test,
+                                    createDisableUsbDataSignalingIntent()),
+                            new ButtonInfo(
+                                    R.string.device_owner_settings_go,
+                                    new Intent(Settings.ACTION_SETTINGS)),
+                            new ButtonInfo(
+                                    R.string.device_owner_enable_usb_data_signaling_test,
+                                    createEnableUsbDataSignalingIntent())
+                    }));
+        }
+
         // removeDeviceOwner
         adapter.add(createInteractiveTestItem(this, REMOVE_DEVICE_OWNER_TEST_ID,
                 R.string.device_owner_remove_device_owner_test,
@@ -621,10 +643,27 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                         CommandReceiverActivity.COMMAND_CREATE_MANAGED_USER_WITHOUT_SETUP);
     }
 
+    private Intent createEnableUsbDataSignalingIntent() {
+        return new Intent(this, CommandReceiverActivity.class)
+                .putExtra(CommandReceiverActivity.EXTRA_COMMAND,
+                        CommandReceiverActivity.COMMAND_ENABLE_USB_DATA_SIGNALING);
+    }
+
+    private Intent createDisableUsbDataSignalingIntent() {
+        return new Intent(this, CommandReceiverActivity.class)
+                .putExtra(CommandReceiverActivity.EXTRA_COMMAND,
+                        CommandReceiverActivity.COMMAND_DISABLE_USB_DATA_SIGNALING);
+    }
+
     private boolean isStatusBarEnabled() {
       // Watches don't support the status bar so this is an ok proxy, but this is not the most
       // general test for that. TODO: add a test API to do a real check for status bar support.
       return !getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH) &&
              !getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
+    }
+
+    private boolean canUsbDataSignalingBeDisabled() {
+        DevicePolicyManager dpm = getSystemService(DevicePolicyManager.class);
+        return dpm != null && dpm.canUsbDataSignalingBeDisabled();
     }
 }

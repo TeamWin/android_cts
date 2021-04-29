@@ -121,6 +121,8 @@ public class CommandReceiverActivity extends Activity {
     public static final String COMMAND_WITHOUT_USER_SWITCHER_MESSAGE =
             "without-user-switcher-message";
     public static final String COMMAND_ENABLE_LOGOUT = "enable-logout";
+    public static final String COMMAND_DISABLE_USB_DATA_SIGNALING = "disable-usb-data-signaling";
+    public static final String COMMAND_ENABLE_USB_DATA_SIGNALING = "enable-usb-data-signaling";
 
     public static final String EXTRA_USER_RESTRICTION =
             "com.android.cts.verifier.managedprovisioning.extra.USER_RESTRICTION";
@@ -527,6 +529,14 @@ public class CommandReceiverActivity extends Activity {
                             null, SKIP_SETUP_WIZARD | MAKE_USER_EPHEMERAL);
                     mDpm.switchUser(mAdmin, userHandle);
                 } break;
+                case COMMAND_DISABLE_USB_DATA_SIGNALING: {
+                    mDpm.setUsbDataSignalingEnabled(false);
+                    break;
+                }
+                case COMMAND_ENABLE_USB_DATA_SIGNALING: {
+                    mDpm.setUsbDataSignalingEnabled(true);
+                    break;
+                }
             }
         } catch (Exception e) {
             Log.e(TAG, "Failed to execute command: " + intent, e);
