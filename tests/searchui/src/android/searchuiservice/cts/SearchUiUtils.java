@@ -21,15 +21,12 @@ import static androidx.test.InstrumentationRegistry.getContext;
 import android.app.search.Query;
 import android.app.search.SearchAction;
 import android.app.search.SearchTarget;
-import android.app.search.SearchTargetEvent;
 import android.appwidget.AppWidgetProviderInfo;
 import android.content.Intent;
 import android.content.pm.ShortcutInfo;
 import android.net.Uri;
-import android.os.Parcel;
+import android.os.Bundle;
 import android.os.UserHandle;
-
-import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -105,7 +102,7 @@ public class SearchUiUtils {
         return builder.build();
     }
 
-    static Query generateQuery() {
-        return new Query(QUERY_INPUT, QUERY_TIMESTAMP, null);
+    static Query generateQuery(Bundle extras) {
+        return new Query(QUERY_INPUT, QUERY_TIMESTAMP, extras);
     }
 }
