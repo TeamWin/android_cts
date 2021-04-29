@@ -49,10 +49,6 @@ public class ReadSettingsFieldsTest extends AndroidTestCase {
                 if (isSettingsDeprecated(ex)) {
                     continue;
                 }
-                /** b/174151290 skip it due to it's @hide but also @TestApi */
-                if (key.equals(Settings.Secure.NFC_PAYMENT_DEFAULT_COMPONENT)) {
-                    continue;
-                }
                 fail("Reading public " + settingsClass.getSimpleName() + " settings key <" + key
                         + "> should not raise exception! "
                         + "Did you forget to add @Readable annotation?\n" + ex.getMessage());
