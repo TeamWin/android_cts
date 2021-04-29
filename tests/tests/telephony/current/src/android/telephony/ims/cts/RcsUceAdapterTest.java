@@ -1128,11 +1128,13 @@ public class RcsUceAdapterTest {
         capabilityExchangeImpl.setSubscribeOperation((uris, cb) -> {
             receiveRequestCount.incrementAndGet();
             cb.onNetworkResponse(networkRespCode, networkRespReason);
-            if (receiveRequestCount.get() == 1) {
+            assertEquals(1, uris.size());
+            String uriPart = uris.iterator().next().getSchemeSpecificPart();
+            if (contact1.getSchemeSpecificPart().equalsIgnoreCase(uriPart)) {
                 cb.onNotifyCapabilitiesUpdate(pidfXml1);
-            } else if (receiveRequestCount.get() == 2) {
+            } else if (contact2.getSchemeSpecificPart().equalsIgnoreCase(uriPart)) {
                 cb.onNotifyCapabilitiesUpdate(pidfXml2);
-            } else if (receiveRequestCount.get() == 3) {
+            } else if (contact3.getSchemeSpecificPart().equalsIgnoreCase(uriPart)) {
                 cb.onNotifyCapabilitiesUpdate(pidfXml3);
             }
             cb.onTerminated("", 0L);
