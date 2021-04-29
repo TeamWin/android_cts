@@ -127,39 +127,4 @@ public class AppErrorAtomTests extends DeviceTestCase implements IBuildReceiver 
         assertFalse((1.0f - atom.getLoadingProgress()) < 0.0000001f);
         assertTrue(atom.getMillisSinceOldestPendingRead() > 0);
     }
-
-    public void testAppAnrIncremental() throws Exception {
-        if (!getDevice().hasFeature(FEATURE_INCREMENTAL_DELIVERY)) {
-            return;
-        }
-        final int atomTag = AtomsProto.Atom.ANR_OCCURRED_FIELD_NUMBER;
-        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
-                atomTag, /*useUidAttributionChain=*/false);
-        final int ANR_WAIT_MILLS = 20_000;
-
-        try (AutoCloseable a = DeviceUtils.withActivity(getDevice(),
-                DeviceUtils.STATSD_ATOM_TEST_PKG, "ANRActivity", null, null)) {
-            Thread.sleep(AtomTestUtils.WAIT_TIME_LONG * 2);
-            getDevice().executeShellCommand(
-                    "am broadcast -a action_anr -p " + DeviceUtils.STATSD_ATOM_TEST_PKG);
-            Thread.sleep(ANR_WAIT_MILLS);
-        }
-
-        // Sorted list of events in order in which they occurred.
-        List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
-
-        assertThat(data).hasSize(1);
-        assertThat(data.get(0).getAtom().hasAnrOccurred()).isTrue();
-        AtomsProto.ANROccurred atom = data.get(0).getAtom().getAnrOccurred();
-        assertThat(atom.getIsInstantApp().getNumber())
-                .isEqualTo(AtomsProto.ANROccurred.InstantApp.FALSE_VALUE);
-        assertThat(atom.getForegroundState().getNumber())
-                .isEqualTo(AtomsProto.ANROccurred.ForegroundState.FOREGROUND_VALUE);
-        assertThat(atom.getErrorSource()).isEqualTo(ErrorSource.DATA_APP);
-        assertThat(atom.getPackageName()).isEqualTo(DeviceUtils.STATSD_ATOM_TEST_PKG);
-        assertTrue(atom.getIsIncremental());
-        assertFalse((1.0f - atom.getLoadingProgress()) < 0.0000001f);
-        // Uncomment after b/184197791 is fixed
-        // assertTrue(atom.getMillisSinceOldestPendingRead() > ANR_WAIT_MILLS);
-    }
 }
