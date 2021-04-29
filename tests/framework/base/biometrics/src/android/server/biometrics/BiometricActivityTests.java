@@ -314,6 +314,7 @@ public class BiometricActivityTests extends BiometricTestBase {
             throws Exception {
         assumeTrue(mSensorProperties.isEmpty());
         try (CredentialSession credentialSession = new CredentialSession()) {
+            credentialSession.setCredential();
             try (ActivitySession activitySession =
                          new ActivitySession(this, CLASS_2_BIOMETRIC_OR_CREDENTIAL_ACTIVITY)){
                 testBiometricOrCredential_credentialButtonInvoked_forConfiguration(null,
