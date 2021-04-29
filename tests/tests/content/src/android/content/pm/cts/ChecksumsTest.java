@@ -651,6 +651,8 @@ public class ChecksumsTest {
 
     @Test
     public void testInstallerChecksumsTrustAllWrongName() throws Exception {
+        // NB: "Invalid checksum name(s):" is used in Play to report checksum related failures.
+        // Please consult with them before changing.
         CommitIntentReceiver.checkFailure(
                 installApkWithChecksums(TEST_FIXED_APK, "apk", "wrong_name",
                         TEST_FIXED_APK_DIGESTS),
