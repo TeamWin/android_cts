@@ -70,18 +70,19 @@ public class BlurTests extends WindowManagerTestBase {
     private static final int BLUR_BEHIND_DYNAMIC_UPDATE_WAIT_TIME = 300;
     private static final int BACKGROUND_BLUR_DYNAMIC_UPDATE_WAIT_TIME = 100;
     private static final int DISABLE_BLUR_BROADCAST_WAIT_TIME = 100;
-    private float mAnimatorDurationScale;
+    private float mSavedAnimatorDurationScale;
     private boolean mSavedWindowBlurDisabledSetting;
 
     @Before
     public void setUp() {
         assumeTrue(supportsBlur());
+
         mSavedWindowBlurDisabledSetting = Settings.Global.getInt(mContext.getContentResolver(),
                 Settings.Global.DISABLE_WINDOW_BLURS, 0) == 1;
         setForceBlurDisabled(false);
         SystemUtil.runWithShellPermissionIdentity(() -> {
             final ContentResolver resolver = getInstrumentation().getContext().getContentResolver();
-            mAnimatorDurationScale =
+            mSavedAnimatorDurationScale =
                     Settings.Global.getFloat(resolver, ANIMATOR_DURATION_SCALE, 1f);
             Settings.Global.putFloat(resolver, ANIMATOR_DURATION_SCALE, 0);
         });
@@ -93,9 +94,11 @@ public class BlurTests extends WindowManagerTestBase {
 
     @After
     public void tearDown() {
+        if (!supportsBlur()) return;
+
         SystemUtil.runWithShellPermissionIdentity(() -> {
             Settings.Global.putFloat(getInstrumentation().getContext().getContentResolver(),
-                    ANIMATOR_DURATION_SCALE, mAnimatorDurationScale);
+                    ANIMATOR_DURATION_SCALE, mSavedAnimatorDurationScale);
         });
         setForceBlurDisabled(mSavedWindowBlurDisabledSetting);
     }
