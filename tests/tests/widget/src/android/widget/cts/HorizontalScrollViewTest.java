@@ -17,6 +17,7 @@
 package android.widget.cts;
 
 import static android.widget.cts.util.StretchEdgeUtil.dragHoldAndRun;
+import static android.widget.cts.util.StretchEdgeUtil.fling;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -898,6 +899,37 @@ public class HorizontalScrollViewTest {
         );
     }
 
+    @Test
+    public void testFlingWhileStretchedLeft() throws Throwable {
+        // Make sure that the scroll view we care about is on screen and at the top:
+        showOnlyStretch();
+
+        ScrollViewTest.CaptureOnAbsorbEdgeEffect
+                edgeEffect = new ScrollViewTest.CaptureOnAbsorbEdgeEffect(mActivity);
+        mScrollViewStretch.mEdgeGlowLeft = edgeEffect;
+        fling(mActivityRule, mScrollViewStretch, 300, 0);
+        assertTrue("Expecting greater than 0, but was " + edgeEffect.onAbsorbVelocity,
+                edgeEffect.onAbsorbVelocity > 0);
+    }
+
+    @Test
+    public void testFlingWhileStretchedRight() throws Throwable {
+        // Make sure that the scroll view we care about is on screen and at the top:
+        showOnlyStretch();
+
+        mActivityRule.runOnUiThread(() -> {
+            // Scroll all the way to the bottom
+            mScrollViewStretch.scrollTo(210, 0);
+        });
+
+        ScrollViewTest.CaptureOnAbsorbEdgeEffect
+                edgeEffect = new ScrollViewTest.CaptureOnAbsorbEdgeEffect(mActivity);
+        mScrollViewStretch.mEdgeGlowRight = edgeEffect;
+        fling(mActivityRule, mScrollViewStretch, -300, 0);
+        assertTrue("Expecting greater than 0, but was " + edgeEffect.onAbsorbVelocity,
+                edgeEffect.onAbsorbVelocity > 0);
+    }
+
     private void showOnlyStretch() throws Throwable {
         mActivityRule.runOnUiThread(() -> {
             mScrollViewCustom.setVisibility(View.GONE);
@@ -908,6 +940,8 @@ public class HorizontalScrollViewTest {
             ArrayList exclusionRects = new ArrayList();
             exclusionRects.add(exclusionRect);
             mScrollViewStretch.setSystemGestureExclusionRects(exclusionRects);
+            mActivity.findViewById(R.id.wrapped_stretch)
+                    .setSystemGestureExclusionRects(exclusionRects);
         });
     }
 
