@@ -62,7 +62,7 @@ public class CtsSearchUiService extends SearchUiService {
     }
 
     @Override
-    public void onCreateSearchSession(SearchContext context,
+    public void onSearchSessionCreated(SearchContext context,
             SearchSessionId sessionId) {
         if (DEBUG) Log.d(TAG, "onCreateSearchSession");
 
