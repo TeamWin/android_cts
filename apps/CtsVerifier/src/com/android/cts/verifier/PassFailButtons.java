@@ -520,7 +520,9 @@ public class PassFailButtons {
         }
 
         // Give tests a chance to handle completion
-        ((PassFailButtons.Activity) activity).setTestResultAndFinish(passed);
+        //TODO(b/186561084) Need to investigate why activity might not be a PassFailButtons.Activity here.
+        // Without this line we won't write the ReportLog for CtsVerifier tests.
+        //((PassFailButtons.Activity) activity).setTestResultAndFinish(passed);
 
         setTestResultAndFinishHelper(activity, testId, testDetails, passed, reportLog, historyCollection);
     }
