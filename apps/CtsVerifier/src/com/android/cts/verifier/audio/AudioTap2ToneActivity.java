@@ -26,6 +26,7 @@ import android.widget.TextView;
 
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
+import com.android.cts.verifier.audio.audiolib.StatUtils;
 import com.android.cts.verifier.CtsVerifierReportLog;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
@@ -74,7 +75,9 @@ public class AudioTap2ToneActivity
     private Button mStartBtn;
     private Button mStopBtn;
 
-    private TextView mTextView;
+    private TextView mSpecView;
+    private TextView mResultsView;
+    private TextView mStatsView;
 
     private WaveformView mWaveformView;
 
@@ -109,9 +112,14 @@ public class AudioTap2ToneActivity
 
     private int[] mNumMeasurements = new int[NUM_TEST_APIS];    // ms
     private int[] mLatencySumSamples = new int[NUM_TEST_APIS];  // ms
-    private int[] mLatencyMin = new int[NUM_TEST_APIS];         // ms
-    private int[] mLatencyMax = new int[NUM_TEST_APIS];         // ms
-    private int[] mLatencyAve = new int[NUM_TEST_APIS];         // ms
+    private double[] mLatencyMin = new double[NUM_TEST_APIS];   // ms
+    private double[] mLatencyMax = new double[NUM_TEST_APIS];   // ms
+    private double[] mLatencyAve = new double[NUM_TEST_APIS];   // ms
+
+    private static final int NUM_TEST_PHASES = 5;
+    private int mTestPhase;
+
+    private double[] mLatencyMillis = new double[NUM_TEST_PHASES];
 
     // ReportLog Schema
     // Note that each key will be suffixed with the ID of the API tested
@@ -139,7 +147,9 @@ public class AudioTap2ToneActivity
 
         ((Button) findViewById(R.id.tap2tone_clearResults)).setOnClickListener(this);
 
-        mTextView = (TextView) findViewById(R.id.tap2tone_resultTxt);
+        mSpecView = (TextView) findViewById(R.id.tap2tone_specTxt);
+        mResultsView = (TextView) findViewById(R.id.tap2tone_resultTxt);
+        mStatsView = (TextView) findViewById(R.id.tap2tone_statsTxt);
 
         mWaveformView = (WaveformView) findViewById(R.id.tap2tone_waveView);
         // Start a blip test when the waveform view is tapped.
@@ -180,6 +190,7 @@ public class AudioTap2ToneActivity
     }
 
     private void startAudio() {
+        Log.i(TAG, "---- startAudio() mIsRecording:" + mIsRecording);
         if (mIsRecording) {
             return;
         }
@@ -195,6 +206,7 @@ public class AudioTap2ToneActivity
         mDuplexAudioManager.start();
 
         mBlipSource = (AudioSource) mDuplexAudioManager.getAudioSource();
+        Log.i(TAG, "---- smBlipSource:" + mBlipSource);
 
         mIsRecording = true;
         enableAudioButtons();
@@ -215,11 +227,17 @@ public class AudioTap2ToneActivity
         mLatencyMin[mActiveTestAPI] =
             mLatencyMax[mActiveTestAPI] =
             mLatencyAve[mActiveTestAPI] = 0;
+
+        java.util.Arrays.fill(mLatencyMillis, 0.0);
+
+        mTestPhase = 0;
     }
 
     private void clearResults() {
         resetStats();
-        mTextView.setText("");
+        mSpecView.setText(getResources().getString(R.string.audio_tap2tone_spec));
+        mResultsView.setText("");
+        mStatsView.setText("");
     }
 
     private void enableAudioButtons() {
@@ -228,8 +246,15 @@ public class AudioTap2ToneActivity
     }
 
     private void calculateTestPass() {
-        getPassButton().setEnabled(mLatencyAve[mActiveTestAPI] != 0
-                && mLatencyAve[mActiveTestAPI] <= MAX_TAP_2_TONE_LATENCY);
+        boolean pass = mLatencyAve[mActiveTestAPI] != 0
+                && mTestPhase >= NUM_TEST_PHASES
+                && mLatencyAve[mActiveTestAPI] <= MAX_TAP_2_TONE_LATENCY;
+
+        if (pass) {
+            mSpecView.setText("Ave: " + mLatencyAve[mActiveTestAPI] + " ms <= "
+                    + MAX_TAP_2_TONE_LATENCY + " ms -- PASS");
+        }
+        getPassButton().setEnabled(pass);
     }
 
     private void recordTestStatus() {
@@ -289,6 +314,46 @@ public class AudioTap2ToneActivity
         public TapLatencyAnalyser.TapLatencyEvent[] events;
     }
 
+    private void processTest(TestResult result) {
+        if (mTestPhase == NUM_TEST_PHASES) {
+            mTestPhase--;
+        }
+
+        int[] cursors = new int[2];
+        cursors[0] = result.events[0].sampleIndex;
+        cursors[1] = result.events[1].sampleIndex;
+        mWaveformView.setCursorData(cursors);
+
+        int latencySamples = cursors[1] - cursors[0];
+        mLatencySumSamples[mActiveTestAPI] += latencySamples;
+        mNumMeasurements[mActiveTestAPI]++;
+
+        double latencyMillis = 1000 * latencySamples / result.frameRate;
+        mLatencyMillis[mTestPhase] = latencyMillis;
+
+        if (mLatencyMin[mActiveTestAPI] == 0
+                || mLatencyMin[mActiveTestAPI] > latencyMillis) {
+            mLatencyMin[mActiveTestAPI] = latencyMillis;
+        }
+        if (mLatencyMax[mActiveTestAPI] == 0
+                || mLatencyMax[mActiveTestAPI] < latencyMillis) {
+            mLatencyMax[mActiveTestAPI] = latencyMillis;
+        }
+
+        mLatencyAve[mActiveTestAPI] = StatUtils.calculateMean(mLatencyMillis);
+        double meanAbsoluteDeviation = StatUtils.calculateMeanAbsoluteDeviation(
+                mLatencyAve[mActiveTestAPI], mLatencyMillis);
+
+        mTestPhase++;
+
+        mLatencyAve[mActiveTestAPI] = 1000
+                * (mLatencySumSamples[mActiveTestAPI] / mNumMeasurements[mActiveTestAPI])
+                / result.frameRate;
+        mResultsView.setText("Phase: " + mTestPhase + " : " + latencyMillis
+                + " ms, Ave: " + mLatencyAve[mActiveTestAPI] + " ms");
+        mStatsView.setText("Deviation: " + String.format("%.2f",meanAbsoluteDeviation));
+    }
+
     private void analyzeCapturedAudio() {
         if (!mIsRecording) {
             return;
@@ -309,33 +374,15 @@ public class AudioTap2ToneActivity
         runOnUiThread(new Runnable() {
             public void run() {
                 if (result.events.length < 2) {
-                    mTextView.setText("Not enough edges. Use fingernail.");
+                    mResultsView.setText(
+                            getResources().getString(R.string.audio_tap2tone_too_few));
+                    mStatsView.setText("");
+                } else if (result.events.length > 2) {
+                    mResultsView.setText(
+                            getResources().getString(R.string.audio_tap2tone_too_many));
+                    mStatsView.setText("");
                 } else {
-                    int[] cursors = new int[2];
-                    cursors[0] = result.events[0].sampleIndex;
-                    cursors[1] = result.events[1].sampleIndex;
-                    mWaveformView.setCursorData(cursors);
-
-                    int latencySamples = cursors[1] - cursors[0];
-                    mLatencySumSamples[mActiveTestAPI] += latencySamples;
-                    mNumMeasurements[mActiveTestAPI]++;
-
-                    int latencyMillis = 1000 * latencySamples / result.frameRate;
-                    if (mLatencyMin[mActiveTestAPI] == 0
-                            || mLatencyMin[mActiveTestAPI] > latencyMillis) {
-                        mLatencyMin[mActiveTestAPI] = latencyMillis;
-                    }
-                    if (mLatencyMax[mActiveTestAPI] == 0
-                            || mLatencyMax[mActiveTestAPI] < latencyMillis) {
-                        mLatencyMax[mActiveTestAPI] = latencyMillis;
-                    }
-
-                    mLatencyAve[mActiveTestAPI] = 1000
-                        * (mLatencySumSamples[mActiveTestAPI] / mNumMeasurements[mActiveTestAPI])
-                        / result.frameRate;
-                    mTextView.setText("Result: " + latencyMillis
-                            + " ms, Ave: " + mLatencyAve[mActiveTestAPI] + " ms");
-
+                    processTest(result);
                 }
 
                 mWaveformView.setSampleData(result.filtered);
