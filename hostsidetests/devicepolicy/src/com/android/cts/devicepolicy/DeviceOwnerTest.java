@@ -890,6 +890,25 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     }
 
     @Test
+    public void testListForegroundAffiliatedUsers_onlyForegroundUserCalledByDeviceOwner()
+            throws Exception {
+        assumeHeadlessSystemUserMode("redundant, same as "
+                + "testListForegroundAffiliatedUsers_onlyForegroundUser");
+
+        // Must temporarily revoke permission to make sure internal checks are allowing it to be
+        // called by profile owner
+        revokePermission(DEVICE_OWNER_PKG, PERMISSION_INTERACT_ACROSS_USERS, mDeviceOwnerUserId);
+
+        try {
+            executeDeviceOwnerTestMethod(".ListForegroundAffiliatedUsersTest",
+                    "testListForegroundAffiliatedUsers_onlyForegroundUser");
+        } finally {
+            grantPermission(DEVICE_OWNER_PKG, PERMISSION_INTERACT_ACROSS_USERS, mDeviceOwnerUserId,
+                    /* reason= */ null);
+        }
+    }
+
+    @Test
     public void testListForegroundAffiliatedUsers_extraUser() throws Exception {
         assumeCanCreateAdditionalUsers(1);
         createAffiliatedSecondaryUser();
