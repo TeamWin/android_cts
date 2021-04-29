@@ -17,7 +17,6 @@
 package android.appsearch.cts;
 
 import static com.google.common.truth.Truth.assertThat;
-import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assume.assumeTrue;
 
@@ -28,18 +27,23 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.Collections;
+import java.util.Map;
+
 /**
- * Test to mock multi-user interacting with AppSearch.
+ * Test to cover multi-user interacting with AppSearch.
  *
  * <p>This test is split into two distinct parts: The first part is the test-apps that runs on the
- * device and interactive with AppSearch.This class is the second part that runs on the host and
+ * device and interactive with AppSearch. This class is the second part that runs on the host and
  * triggers tests in the first part for different users.
  *
  * <p>To trigger a device test, call runDeviceTestAsUser with a specific the test name and specific
  * user.
+ *
+ * <p>Unlock your device when test locally.
  */
 @RunWith(DeviceJUnit4ClassRunner.class)
-public class AppSearchMultiUserTestBase extends AppSearchHostTestBase {
+public class AppSearchMultiUserTest extends AppSearchHostTestBase {
 
     private int mInitialUserId;
     private int mSecondaryUserId;
@@ -74,5 +78,22 @@ public class AppSearchMultiUserTestBase extends AppSearchHostTestBase {
         runDeviceTestAsUserInPkgA("testGetDocuments_exist", mSecondaryUserId);
         // Cannot get the document from another user.
         runDeviceTestAsUserInPkgA("testGetDocuments_nonexist", mInitialUserId);
+    }
+
+    @Test
+    public void testCreateSessionInStoppedUser() throws Exception {
+        Map<String, String> args =
+                Collections.singletonMap(USER_ID_KEY, String.valueOf(mSecondaryUserId));
+        getDevice().stopUser(mSecondaryUserId, /*waitFlag=*/true, /*forceFlag=*/true);
+        runDeviceTestAsUserInPkgA("createSessionInStoppedUser", mInitialUserId, args);
+    }
+
+    @Test
+    public void testStopUser_persistData() throws Exception {
+        runDeviceTestAsUserInPkgA("testPutDocuments", mSecondaryUserId);
+        runDeviceTestAsUserInPkgA("testGetDocuments_exist", mSecondaryUserId);
+        getDevice().stopUser(mSecondaryUserId, /*waitFlag=*/true, /*forceFlag=*/true);
+        getDevice().startUser(mSecondaryUserId, /*waitFlag=*/true);
+        runDeviceTestAsUserInPkgA("testGetDocuments_exist", mSecondaryUserId);
     }
 }
