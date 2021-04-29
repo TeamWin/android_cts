@@ -1765,6 +1765,16 @@ public class StagefrightTest {
      ***********************************************************/
 
     @Test
+    @SecurityTest(minPatchLevel = "2018-11")
+    public void testStagefright_cve_2018_9531() throws Exception {
+        int[] frameSizes = getFrameSizes(R.raw.cve_2018_9531_framelen);
+        CodecConfig codecConfig = new CodecConfig().setAudioParams(48000, 8);
+        doStagefrightTestRawBlob(R.raw.cve_2018_9531_aac, "audio/mp4a-latm", codecConfig,
+                frameSizes, new CrashUtils.Config().setSignals(CrashUtils.SIGSEGV,
+                        CrashUtils.SIGBUS, CrashUtils.SIGABRT));
+    }
+
+    @Test
     @SecurityTest(minPatchLevel = "2019-12")
     public void testStagefright_cve_2019_2222() throws Exception {
         int[] frameSizes = getFrameSizes(R.raw.cve_2019_2222_framelen);
