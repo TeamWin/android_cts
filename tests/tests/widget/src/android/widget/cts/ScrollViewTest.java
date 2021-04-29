@@ -17,6 +17,7 @@
 package android.widget.cts;
 
 import static android.widget.cts.util.StretchEdgeUtil.dragHoldAndRun;
+import static android.widget.cts.util.StretchEdgeUtil.fling;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -941,6 +942,33 @@ public class ScrollViewTest {
         assertTrue(StretchEdgeUtil.dragUpTapAndHoldStretches(mActivityRule, mScrollViewStretch));
     }
 
+    @Test
+    public void testFlingWhileStretchedTop() throws Throwable {
+        // Make sure that the scroll view we care about is on screen and at the top:
+        showOnlyStretch();
+
+        CaptureOnAbsorbEdgeEffect edgeEffect = new CaptureOnAbsorbEdgeEffect(mActivity);
+        mScrollViewStretch.mEdgeGlowTop = edgeEffect;
+        fling(mActivityRule, mScrollViewStretch, 0, 300);
+        assertTrue(edgeEffect.onAbsorbVelocity > 0);
+    }
+
+    @Test
+    public void testFlingWhileStretchedBottom() throws Throwable {
+        // Make sure that the scroll view we care about is on screen and at the top:
+        showOnlyStretch();
+
+        mActivityRule.runOnUiThread(() -> {
+            // Scroll all the way to the bottom
+            mScrollViewStretch.scrollTo(0, 210);
+        });
+
+        CaptureOnAbsorbEdgeEffect edgeEffect = new CaptureOnAbsorbEdgeEffect(mActivity);
+        mScrollViewStretch.mEdgeGlowBottom = edgeEffect;
+        fling(mActivityRule, mScrollViewStretch, 0, -300);
+        assertTrue(edgeEffect.onAbsorbVelocity > 0);
+    }
+
     private void showOnlyStretch() throws Throwable {
         mActivityRule.runOnUiThread(() -> {
             mScrollViewCustom.setVisibility(View.GONE);
@@ -1088,6 +1116,20 @@ public class ScrollViewTest {
         public void requestDisallowInterceptTouchEvent(boolean disallowIntercept) {
             requestDisallowInterceptCalled = true;
             super.requestDisallowInterceptTouchEvent(disallowIntercept);
+        }
+    }
+
+    public static class CaptureOnAbsorbEdgeEffect extends EdgeEffect {
+        public int onAbsorbVelocity;
+
+        public CaptureOnAbsorbEdgeEffect(Context context) {
+            super(context);
+        }
+
+        @Override
+        public void onAbsorb(int velocity) {
+            onAbsorbVelocity = velocity;
+            super.onAbsorb(velocity);
         }
     }
 }
