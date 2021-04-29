@@ -16,6 +16,7 @@
 
 package android.content.pm.cts;
 
+import static android.Manifest.permission.INSTALL_TEST_ONLY_PACKAGE;
 import static android.content.pm.ApplicationInfo.FLAG_HAS_CODE;
 import static android.content.pm.ApplicationInfo.FLAG_INSTALLED;
 import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
@@ -108,6 +109,7 @@ public class PackageManagerTest {
     private static final int NUM_OF_ACTIVITIES_IN_MANIFEST = 12;
 
     private static final String SHIM_APEX_PACKAGE_NAME = "com.android.apex.cts.shim";
+    private static final String SHELL_PACKAGE_NAME = "com.android.shell";
 
     @Before
     public void setup() throws Exception {
@@ -989,5 +991,14 @@ public class PackageManagerTest {
                 packageInfo.signingInfo.getSigningCertificateHistory();
         assertThat(packageInfo.signatures)
                 .asList().containsExactly((Object[]) pastSigningCertificates);
+    }
+
+    @Test
+    public void testInstallTestOnlyPackagePermission_onlyGrantedToShell() {
+        List<PackageInfo> packages = mPackageManager.getPackagesHoldingPermissions(
+                new String[]{INSTALL_TEST_ONLY_PACKAGE}, /* flags= */ 0);
+
+        assertThat(packages).hasSize(1);
+        assertThat(packages.get(0).packageName).isEqualTo(SHELL_PACKAGE_NAME);
     }
 }
