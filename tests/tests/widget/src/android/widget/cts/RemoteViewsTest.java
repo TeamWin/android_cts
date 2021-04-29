@@ -92,7 +92,6 @@ import android.widget.ViewFlipper;
 import android.widget.cts.util.TestUtils;
 
 import androidx.test.InstrumentationRegistry;
-import androidx.test.annotation.UiThreadTest;
 import androidx.test.filters.LargeTest;
 import androidx.test.filters.MediumTest;
 import androidx.test.rule.ActivityTestRule;
@@ -101,6 +100,7 @@ import androidx.test.runner.AndroidJUnit4;
 import com.android.compatibility.common.util.ThrowingRunnable;
 import com.android.compatibility.common.util.WidgetTestUtils;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -140,24 +140,35 @@ public class RemoteViewsTest {
 
     private View mResult;
 
-    @UiThreadTest
+    private String mInitialNightMode;
+
     @Before
-    public void setup() {
-        mInstrumentation = InstrumentationRegistry.getInstrumentation();
-        mContext = mInstrumentation.getTargetContext();
-        mRemoteViews = new RemoteViews(PACKAGE_NAME, R.layout.remoteviews_good);
-        mResult = mRemoteViews.apply(mContext, null);
+    public void setUp() throws Throwable {
+        // Ensure the UI is currently NOT in night mode.
+        mInitialNightMode = changeNightMode(false);
 
-        // Add our host view to the activity behind this test. This is similar to how launchers
-        // add widgets to the on-screen UI.
-        ViewGroup root = (ViewGroup) mActivityRule.getActivity().findViewById
-                (R.id.remoteView_host);
-        FrameLayout.MarginLayoutParams lp = new FrameLayout.MarginLayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT);
-        mResult.setLayoutParams(lp);
+        mActivityRule.runOnUiThread(() -> {
+            mInstrumentation = InstrumentationRegistry.getInstrumentation();
+            mContext = mInstrumentation.getTargetContext();
+            mRemoteViews = new RemoteViews(PACKAGE_NAME, R.layout.remoteviews_good);
+            mResult = mRemoteViews.apply(mContext, null);
 
-        root.addView(mResult);
+            // Add our host view to the activity behind this test. This is similar to how launchers
+            // add widgets to the on-screen UI.
+            ViewGroup root = (ViewGroup) mActivityRule.getActivity().findViewById(
+                    R.id.remoteView_host);
+            FrameLayout.MarginLayoutParams lp = new FrameLayout.MarginLayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT);
+            mResult.setLayoutParams(lp);
+
+            root.addView(mResult);
+        });
+    }
+
+    @After
+    public void tearDown() {
+        runShellCommand("cmd uimode night " + mInitialNightMode);
     }
 
     @Test
@@ -1218,6 +1229,7 @@ public class RemoteViewsTest {
 
         View textViewLtr = mResult.findViewById(R.id.remoteView_text_ltr);
         DisplayMetrics displayMetrics = textViewLtr.getResources().getDisplayMetrics();
+
         assertMargins(
                 textViewLtr,
                 resolveDimenOffset(5.5123f, COMPLEX_UNIT_DIP, displayMetrics),
@@ -1866,15 +1878,8 @@ public class RemoteViewsTest {
 
     private void applyNightModeAndTest(
             boolean nightMode, Runnable uiThreadSetup, ThrowingRunnable test) throws Throwable {
-        final String nightModeText = runShellCommand("cmd uimode night");
-        final String[] nightModeSplit = nightModeText.split(":");
-        if (nightModeSplit.length != 2) {
-            fail("Failed to get initial night mode value from " + nightModeText);
-        }
-        final String initialNightMode = nightModeSplit[1].trim();
-
+        final String initialNightMode = changeNightMode(nightMode);
         try {
-            runShellCommand("cmd uimode night " + (nightMode ? "yes" : "no"));
             mActivityRule.runOnUiThread(uiThreadSetup);
             test.run();
         } finally {
@@ -1922,5 +1927,17 @@ public class RemoteViewsTest {
 
     private <T extends Throwable>  void assertThrowsOnReapply(Class<T> klass) throws Throwable {
         assertThrows(klass, () -> mRemoteViews.reapply(mContext, mResult));
+    }
+
+    // Change the night mode and return the previous mode
+    private String changeNightMode(boolean nightMode) {
+        final String nightModeText = runShellCommand("cmd uimode night");
+        final String[] nightModeSplit = nightModeText.split(":");
+        if (nightModeSplit.length != 2) {
+            fail("Failed to get initial night mode value from " + nightModeText);
+        }
+        String previousMode = nightModeSplit[1].trim();
+        runShellCommand("cmd uimode night " + (nightMode ? "yes" : "no"));
+        return previousMode;
     }
 }
