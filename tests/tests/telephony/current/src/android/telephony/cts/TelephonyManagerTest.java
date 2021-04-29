@@ -4596,28 +4596,12 @@ public class TelephonyManagerTest {
     }
 
     @Test
-    public void testCheckCarrierPrivilegesForPackageAnyPhoneEnforcesReadPrivilege() {
+    public void testCheckCarrierPrivilegesForPackageAnyPhone() {
         try {
-            InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                .adoptShellPermissionIdentity("android.permission.READ_PRIVILEGED_PHONE_STATE");
             mTelephonyManager.checkCarrierPrivilegesForPackageAnyPhone(mSelfPackageName);
         } catch (SecurityException e) {
-            fail("TelephonyManager#checkCarrierPrivilegesForPackageAnyPhone requires "
+            fail("TelephonyManager#checkCarrierPrivilegesForPackageAnyPhone shouldn't require "
                     + "READ_PRIVILEGED_PHONE_STATE");
-        } finally {
-            InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                .dropShellPermissionIdentity();
-        }
-    }
-
-    @Test
-    public void testCheckCarrierPrivilegesForPackageAnyPhoneThrowsExceptionWithoutReadPrivilege() {
-        try {
-            mTelephonyManager.checkCarrierPrivilegesForPackageAnyPhone(mSelfPackageName);
-            fail("TelephonyManager#checkCarrierPrivilegesForPackageAnyPhone must be protected "
-                    + "with READ_PRIVILEGED_PHONE_STATE");
-        } catch (SecurityException e) {
-            // expected
         }
     }
 
