@@ -14,18 +14,26 @@
  * limitations under the License.
  */
 
-package android.view.cts;
+package android.view.cts.receivecontent;
 
 import static android.view.ContentInfo.SOURCE_APP;
 import static android.view.ContentInfo.SOURCE_CLIPBOARD;
+import static android.view.ContentInfo.SOURCE_DRAG_AND_DROP;
+import static android.view.ContentInfo.SOURCE_INPUT_METHOD;
 
 import static com.google.common.truth.Truth.assertThat;
+
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 import android.content.ClipData;
 import android.net.Uri;
 import android.os.Bundle;
+import android.platform.test.annotations.Presubmit;
 import android.util.Pair;
 import android.view.ContentInfo;
+import android.view.DragAndDropPermissions;
+import android.view.inputmethod.InputContentInfo;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
@@ -36,8 +44,9 @@ import org.junit.runner.RunWith;
 /**
  * Tests for {@link ContentInfo}.
  *
- * <p>To run: {@code atest CtsViewTestCases:ContentInfoTest}
+ * <p>To run: {@code atest CtsViewReceiveContentTestCases:ContentInfoTest}
  */
+@Presubmit
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class ContentInfoTest {
@@ -144,5 +153,69 @@ public class ContentInfoTest {
         assertThat(copy.getFlags()).isEqualTo(0);
         assertThat(copy.getLinkUri()).isEqualTo(null);
         assertThat(copy.getExtras()).isEqualTo(null);
+    }
+
+    @Test
+    public void testReleasePermissions() throws Exception {
+        // Verify that releasePermissions() doesn't throw when there is no permissions metadata.
+        ClipData clip = ClipData.newPlainText("", "Hello");
+        ContentInfo payload = new ContentInfo.Builder(clip, SOURCE_CLIPBOARD).build();
+        payload.releasePermissions();
+    }
+
+    @Test
+    public void testReleasePermissions_ime() throws Exception {
+        // Verify that releasePermissions() makes the appropriate call when IME permissions
+        // metadata is present.
+        ClipData clip = ClipData.newPlainText("", "Hello");
+        InputContentInfo inputContentInfo = mock(InputContentInfo.class);
+        ContentInfo payload = new ContentInfo.Builder(clip, SOURCE_INPUT_METHOD)
+                .setInputContentInfo(inputContentInfo)
+                .build();
+        payload.releasePermissions();
+        verify(inputContentInfo).releasePermission();
+    }
+
+    @Test
+    public void testReleasePermissions_ime_afterCopy() throws Exception {
+        ClipData clip = ClipData.newPlainText("", "Hello");
+        InputContentInfo inputContentInfo = mock(InputContentInfo.class);
+        ContentInfo payload = new ContentInfo.Builder(clip, SOURCE_INPUT_METHOD)
+                .setInputContentInfo(inputContentInfo)
+                .build();
+
+        // Verify that making a copy of the payload via the builder carries along the IME
+        // permissions metadata.
+        ContentInfo copy = new ContentInfo.Builder(payload).build();
+        copy.releasePermissions();
+        verify(inputContentInfo).releasePermission();
+    }
+
+    @Test
+    public void testReleasePermissions_dragAndDrop() throws Exception {
+        // Verify that releasePermissions() makes the appropriate call when permissions metadata
+        // for drag-and-drop is present.
+        ClipData clip = ClipData.newPlainText("", "Hello");
+        DragAndDropPermissions dragAndDropPermissions = mock(DragAndDropPermissions.class);
+        ContentInfo payload = new ContentInfo.Builder(clip, SOURCE_DRAG_AND_DROP)
+                .setDragAndDropPermissions(dragAndDropPermissions)
+                .build();
+        payload.releasePermissions();
+        verify(dragAndDropPermissions).release();
+    }
+
+    @Test
+    public void testReleasePermissions_dragAndDrop_afterCopy() throws Exception {
+        ClipData clip = ClipData.newPlainText("", "Hello");
+        DragAndDropPermissions dragAndDropPermissions = mock(DragAndDropPermissions.class);
+        ContentInfo payload = new ContentInfo.Builder(clip, SOURCE_DRAG_AND_DROP)
+                .setDragAndDropPermissions(dragAndDropPermissions)
+                .build();
+
+        // Verify that making a copy of the payload via the builder carries along the permissions
+        // metadata for drag-and-drop.
+        ContentInfo copy = new ContentInfo.Builder(payload).build();
+        copy.releasePermissions();
+        verify(dragAndDropPermissions).release();
     }
 }
