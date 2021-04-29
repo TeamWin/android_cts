@@ -22,5 +22,12 @@
         <activity android:name=".FinishingTaskRootActivity"
                   android:exported="true"
         />
+        <activity
+            android:name=".PipActivity"
+            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:supportsPictureInPicture="true"
+        />
     </application>
 </manifest>

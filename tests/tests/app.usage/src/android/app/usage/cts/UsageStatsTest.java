@@ -122,6 +122,8 @@ public class UsageStatsTest {
     private static final String TEST_APP2_PKG = "android.app.usage.cts.test2";
     private static final String TEST_APP2_CLASS_FINISHING_TASK_ROOT =
             "android.app.usage.cts.test2.FinishingTaskRootActivity";
+    private static final String TEST_APP2_CLASS_PIP =
+            "android.app.usage.cts.test2.PipActivity";
 
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
     private static final long MINUTE = TimeUnit.MINUTES.toMillis(1);
@@ -931,10 +933,20 @@ public class UsageStatsTest {
             Event.KEYGUARD_HIDDEN
     };
 
-    private long getEvents(int[] whichEvents, long startTime, List<Event> out) {
+    private static final int[] PAUSED_EVENT = new int[] {
+            Event.ACTIVITY_PAUSED
+    };
+
+    private static final int[] STOPPED_EVENT = new int[] {
+            Event.ACTIVITY_STOPPED
+    };
+
+    private long getEvents(int[] whichEvents, long startTime, List<Event> out, String packageName) {
         final long endTime = System.currentTimeMillis();
-        if (DEBUG) Log.i(TAG, "Looking for events " + Arrays.toString(whichEvents)
-                + " between " + startTime + " and " + endTime);
+        if (DEBUG) {
+            Log.i(TAG, "Looking for events " + Arrays.toString(whichEvents)
+                    + " between " + startTime + " and " + endTime);
+        }
         UsageEvents events = mUsageStatsManager.queryEvents(startTime, endTime);
 
         long latestTime = 0;
@@ -946,6 +958,10 @@ public class UsageStatsTest {
             final int ev = event.getEventType();
             for (int which : whichEvents) {
                 if (ev == which) {
+                    if (packageName != null && !packageName.equals(event.getPackageName())) {
+                        break;
+                    }
+
                     if (out != null) {
                         out.add(event);
                     }
@@ -962,12 +978,18 @@ public class UsageStatsTest {
         return latestTime;
     }
 
+
     private ArrayList<Event> waitForEventCount(int[] whichEvents, long startTime, int count) {
+        return waitForEventCount(whichEvents, startTime, count, null);
+    }
+
+    private ArrayList<Event> waitForEventCount(int[] whichEvents, long startTime, int count,
+            String packageName) {
         final ArrayList<Event> events = new ArrayList<>();
         final long endTime = SystemClock.uptimeMillis() + 2000;
         do {
             events.clear();
-            getEvents(whichEvents, startTime, events);
+            getEvents(whichEvents, startTime, events, packageName);
             if (events.size() == count) {
                 return events;
             }
@@ -1159,15 +1181,11 @@ public class UsageStatsTest {
             ArrayList<Event> events;
 
             // Determine time to start looking for events.
-            final long startTime = getEvents(ALL_EVENTS, 0, null) + 1;
+            final long startTime = getEvents(ALL_EVENTS, 0, null, null) + 1;
             SparseArray<AggrAllEventsData> baseAggr = getAggrEventData();
 
             // First test -- put device to sleep and make sure we see this event.
-            if (mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH)) {
-              mUiDevice.pressKeyCode(KeyEvent.KEYCODE_SLEEP);
-            } else {
-              mUiDevice.sleep();
-            }
+            sleepDevice();
 
             // Do we have one event, going in to non-interactive mode?
             events = waitForEventCount(INTERACTIVE_EVENTS, startTime, 1);
@@ -1511,6 +1529,133 @@ public class UsageStatsTest {
 
     @AppModeFull(reason = "No usage events access in instant apps")
     @Test
+    public void testPipActivity() throws Exception {
+        mUiDevice.wakeUp();
+        dismissKeyguard(); // also want to start out with the keyguard dismissed.
+        mUiDevice.pressHome();
+
+        final long startTime = System.currentTimeMillis();
+
+        launchTestActivity(TEST_APP2_PKG, TEST_APP2_CLASS_PIP);
+        SystemClock.sleep(500);
+
+        // TEST_APP_PKG should take focus, pausing the TEST_APP2_CLASS_PIP activity.
+        launchTestActivity(TEST_APP_PKG, TEST_APP_CLASS);
+        SystemClock.sleep(500);
+
+        final long endTime = System.currentTimeMillis();
+        final UsageEvents events = mUsageStatsManager.queryEvents(startTime, endTime);
+
+        int resumes = 0;
+        int pauses = 0;
+        int stops = 0;
+
+        while (events.hasNextEvent()) {
+            final UsageEvents.Event event = new UsageEvents.Event();
+            assertTrue(events.getNextEvent(event));
+
+            if(TEST_APP2_PKG.equals(event.getPackageName())) {
+                switch (event.mEventType) {
+                    case Event.ACTIVITY_RESUMED:
+                        assertNotNull("ACTIVITY_RESUMED event Task Root should not be null",
+                                event.getTaskRootPackageName());
+                        resumes++;
+                        break;
+                    case Event.ACTIVITY_PAUSED:
+                        assertNotNull("ACTIVITY_PAUSED event Task Root should not be null",
+                                event.getTaskRootPackageName());
+                        pauses++;
+                        break;
+                    case Event.ACTIVITY_STOPPED:
+                        assertNotNull("ACTIVITY_STOPPED event Task Root should not be null",
+                                event.getTaskRootPackageName());
+                        stops++;
+                        break;
+                }
+            }
+        }
+        assertEquals("Unexpected number of activity resumes", 1, resumes);
+        assertEquals("Unexpected number of activity pauses", 1, pauses);
+        assertEquals("Unexpected number of activity stops", 0, stops);
+    }
+
+    @AppModeFull(reason = "No usage events access in instant apps")
+    @Test
+    public void testPipActivity_StopToPause() throws Exception {
+        mUiDevice.wakeUp();
+        dismissKeyguard(); // also want to start out with the keyguard dismissed.
+        mUiDevice.pressHome();
+
+        final long startTime = System.currentTimeMillis();
+
+        launchTestActivity(TEST_APP2_PKG, TEST_APP2_CLASS_PIP);
+        SystemClock.sleep(500);
+
+        // TEST_APP_PKG should take focus, pausing the TEST_APP2_CLASS_PIP activity.
+        launchTestActivity(TEST_APP_PKG, TEST_APP_CLASS);
+        SystemClock.sleep(500);
+
+        // Sleeping the device should cause the Pip activity to stop.
+        final long sleepTime = System.currentTimeMillis();
+        sleepDevice();
+        final ArrayList<Event> stoppedEvent = waitForEventCount(STOPPED_EVENT, sleepTime, 1,
+                TEST_APP2_PKG);
+        assertEquals(Event.ACTIVITY_STOPPED, stoppedEvent.get(0).getEventType());
+
+        // Waking the device should cause the stopped Pip to return to the paused state.
+        final long wakeTime = System.currentTimeMillis();
+        mUiDevice.wakeUp();
+        dismissKeyguard();
+        final ArrayList<Event> pausedEvent = waitForEventCount(PAUSED_EVENT, wakeTime, 1,
+                TEST_APP2_PKG);
+        assertEquals(Event.ACTIVITY_PAUSED, pausedEvent.get(0).getEventType());
+
+        // Sleeping the device should cause the Pip activity to stop again.
+        final long secondSleepTime = System.currentTimeMillis();
+        sleepDevice();
+        final ArrayList<Event> secondStoppedEvent = waitForEventCount(STOPPED_EVENT,
+                secondSleepTime, 1,
+                TEST_APP2_PKG);
+        assertEquals(Event.ACTIVITY_STOPPED, secondStoppedEvent.get(0).getEventType());
+
+        final long endTime = System.currentTimeMillis();
+        final UsageEvents events = mUsageStatsManager.queryEvents(startTime, endTime);
+
+        int resumes = 0;
+        int pauses = 0;
+        int stops = 0;
+
+        while (events.hasNextEvent()) {
+            final UsageEvents.Event event = new UsageEvents.Event();
+            assertTrue(events.getNextEvent(event));
+
+            if(TEST_APP2_PKG.equals(event.getPackageName())) {
+                switch (event.mEventType) {
+                    case Event.ACTIVITY_RESUMED:
+                        assertNotNull("ACTIVITY_RESUMED event Task Root should not be null",
+                                event.getTaskRootPackageName());
+                        resumes++;
+                        break;
+                    case Event.ACTIVITY_PAUSED:
+                        assertNotNull("ACTIVITY_PAUSED event Task Root should not be null",
+                                event.getTaskRootPackageName());
+                        pauses++;
+                        break;
+                    case Event.ACTIVITY_STOPPED:
+                        assertNotNull("ACTIVITY_STOPPED event Task Root should not be null",
+                                event.getTaskRootPackageName());
+                        stops++;
+                        break;
+                }
+            }
+        }
+        assertEquals("Unexpected number of activity resumes", 1, resumes);
+        assertEquals("Unexpected number of activity pauses", 2, pauses);
+        assertEquals("Unexpected number of activity stops", 2, stops);
+    }
+
+    @AppModeFull(reason = "No usage events access in instant apps")
+    @Test
     public void testLocusIdEventsVisibility() throws Exception {
         final long startTime = System.currentTimeMillis();
         startAndDestroyActivityWithLocus();
@@ -1579,7 +1724,7 @@ public class UsageStatsTest {
 
     private void dismissKeyguard() throws Exception {
         if (mKeyguardManager.isKeyguardLocked()) {
-            final long startTime = getEvents(KEYGUARD_EVENTS, 0, null) + 1;
+            final long startTime = getEvents(KEYGUARD_EVENTS, 0, null, null) + 1;
             executeShellCmd("wm dismiss-keyguard");
             final ArrayList<Event> events = waitForEventCount(KEYGUARD_EVENTS, startTime, 1);
             assertEquals(Event.KEYGUARD_HIDDEN, events.get(0).getEventType());
@@ -1685,5 +1830,21 @@ public class UsageStatsTest {
             throws Exception {
         executeShellCmd(
                 String.format("pm install-existing --user %d --wait %s", userId, packageName));
+    }
+
+    private void sleepDevice() throws Exception {
+        if (mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH)) {
+            mUiDevice.pressKeyCode(KeyEvent.KEYCODE_SLEEP);
+        } else {
+            mUiDevice.sleep();
+        }
+
+        waitUntil(() -> {
+            try {
+                return mUiDevice.isScreenOn();
+            } catch(Exception e) {
+                return true;
+            }
+        }, false);
     }
 }
