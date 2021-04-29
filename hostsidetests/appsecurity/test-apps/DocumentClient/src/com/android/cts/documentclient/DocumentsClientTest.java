@@ -46,6 +46,7 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.os.BuildCompat;
 
 import com.android.cts.documentclient.MyActivity.Result;
 
@@ -431,12 +432,16 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
         // save button is disabled for the storage root
         assertFalse(findSaveButton().isEnabled());
 
-        // We should always have Android directory available
-        findDocument("Android").click();
-        mDevice.waitForIdle();
+        // SAF directory access to /Android is blocked in ag/13163842, this change may not be
+        // present on some R devices, so only test it from above S.
+        if (BuildCompat.isAtLeastS()) {
+            // We should always have Android directory available
+            findDocument("Android").click();
+            mDevice.waitForIdle();
 
-        // save button is disabled for Android folder
-        assertFalse(findSaveButton().isEnabled());
+            // save button is disabled for Android folder
+            assertFalse(findSaveButton().isEnabled());
+        }
 
         findRoot(getDeviceName()).click();
         mDevice.waitForIdle();
@@ -959,6 +964,9 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
         final Uri uri = mActivity.getResult().data.getData();
         assertEquals(displayName, getColumn(uri, Document.COLUMN_DISPLAY_NAME));
         assertEquals(mimeType, getColumn(uri, Document.COLUMN_MIME_TYPE));
+
+        // Multiple calls to this method too quickly may result in onActivityResult being skipped.
+        mDevice.waitForIdle();
 
         return uri;
     }
