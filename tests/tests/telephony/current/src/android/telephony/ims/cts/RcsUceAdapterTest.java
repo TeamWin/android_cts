@@ -236,6 +236,8 @@ public class RcsUceAdapterTest {
         overrideCarrierConfig(null);
         // Remove all the test contacts from EAB database
         removeTestContactFromEab();
+
+        removeUceRequestDisallowedStatus();
     }
 
     @Test
@@ -594,7 +596,7 @@ public class RcsUceAdapterTest {
                 true);
         overrideCarrierConfig(bundle);
 
-        // Preapre the network response is 200 OK and the capabilities update
+        // Prepare the network response is 200 OK and the capabilities update
         int networkRespCode = 200;
         String networkRespReason = "OK";
         capabilityExchangeImpl.setSubscribeOperation((uris, cb) -> {
@@ -1122,9 +1124,7 @@ public class RcsUceAdapterTest {
         // Setup the network response is 200 OK and notify capabilities update
         int networkRespCode = 200;
         String networkRespReason = "OK";
-
         AtomicInteger receiveRequestCount = new AtomicInteger(0);
-
         capabilityExchangeImpl.setSubscribeOperation((uris, cb) -> {
             receiveRequestCount.incrementAndGet();
             cb.onNetworkResponse(networkRespCode, networkRespReason);
@@ -1606,6 +1606,138 @@ public class RcsUceAdapterTest {
         overrideCarrierConfig(null);
     }
 
+    @Test
+    public void testForbidCapabilitiesRequest() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+        ImsManager imsManager = getContext().getSystemService(ImsManager.class);
+        RcsUceAdapter uceAdapter = imsManager.getImsRcsManager(sTestSub).getUceAdapter();
+        assertNotNull("UCE adapter should not be null!", uceAdapter);
+
+        // Remove the test contact capabilities
+        removeTestContactFromEab();
+
+        // Override the carrier config of SIP 489 request forbidden.
+        PersistableBundle bundle = new PersistableBundle();
+        bundle.putBoolean(CarrierConfigManager.Ims.KEY_RCS_REQUEST_FORBIDDEN_BY_SIP_489_BOOL, true);
+        overrideCarrierConfig(bundle);
+
+        // Connect to the ImsService
+        setupTestImsService(uceAdapter, true, true /* presence cap */, false /* OPTIONS */);
+
+        TestRcsCapabilityExchangeImpl capabilityExchangeImpl = sServiceConnector
+                .getCarrierService().getRcsFeature().getRcsCapabilityExchangeImpl();
+
+        BlockingQueue<Integer> errorQueue = new LinkedBlockingQueue<>();
+        BlockingQueue<Long> retryAfterQueue = new LinkedBlockingQueue<>();
+        BlockingQueue<Boolean> completeQueue = new LinkedBlockingQueue<>();
+        List<RcsContactUceCapability> capabilityQueue = new ArrayList<>();
+        RcsUceAdapter.CapabilitiesCallback callback = new RcsUceAdapter.CapabilitiesCallback() {
+            @Override
+            public void onCapabilitiesReceived(List<RcsContactUceCapability> capabilities) {
+                capabilities.forEach(c -> capabilityQueue.add(c));
+            }
+
+            @Override
+            public void onComplete() {
+                completeQueue.offer(true);
+            }
+
+            @Override
+            public void onError(int errorCode, long retryAfterMillis) {
+                errorQueue.offer(errorCode);
+                retryAfterQueue.offer(retryAfterMillis);
+            }
+        };
+
+        // Prepare two contacts
+        final Uri contact1 = sTestNumberUri;
+        final Uri contact2 = sTestContact2Uri;
+        Collection<Uri> contacts = new ArrayList<>(2);
+        contacts.add(contact1);
+        contacts.add(contact2);
+
+        // Prepare the network response.
+        final int sipCodeBadEvent = 489;
+        final int sipCodeForbidden = 403;
+        AtomicInteger subscribeRequestCount = new AtomicInteger(0);
+
+        // Prepare a map to define the sip code and its associated result.
+        Map<Integer, Integer> networkSipCodeMap = new HashMap<>();
+        networkSipCodeMap.put(sipCodeBadEvent, RcsUceAdapter.ERROR_FORBIDDEN);
+        networkSipCodeMap.put(sipCodeForbidden, RcsUceAdapter.ERROR_FORBIDDEN);
+
+        // Verify each command error code and the expected callback result
+        networkSipCodeMap.forEach((sipCode, expectedCallbackResult) -> {
+            // Setup the capabilities request response with the given sip code.
+            capabilityExchangeImpl.setSubscribeOperation((uris, cb) -> {
+                subscribeRequestCount.incrementAndGet();
+                cb.onNetworkResponse(sipCode, "");
+            });
+
+            try {
+                // Request contact uce capabilities
+                requestCapabilities(uceAdapter, contacts, callback);
+
+                // Verify that the callback "onError" is called with the error code FORBIDDEN
+                assertEquals(RcsUceAdapter.ERROR_FORBIDDEN, waitForIntResult(errorQueue));
+                // Verify the retryAfter value
+                long retryAfterMillis = waitForLongResult(retryAfterQueue);
+                if (sipCode == sipCodeForbidden) {
+                    assertEquals(0L, retryAfterMillis);
+                } else if (sipCode == sipCodeBadEvent) {
+                    assertTrue(retryAfterMillis > 0L);
+                }
+
+                // Verify the ImsService received the capabilities request.
+                assertEquals(1, subscribeRequestCount.get());
+            } catch (Exception e) {
+                fail("testForbiddenResponseToCapabilitiesRequest with command error failed: " + e);
+            } finally {
+                errorQueue.clear();
+                retryAfterQueue.clear();
+                subscribeRequestCount.set(0);
+            }
+
+            // Prepare the network response with sip code 200 OK
+            capabilityExchangeImpl.setSubscribeOperation((uris, cb) -> {
+                subscribeRequestCount.incrementAndGet();
+                cb.onNetworkResponse(200, "OK");
+            });
+
+            try {
+                // Request contact uce capabilities again.
+                requestCapabilities(uceAdapter, contacts, callback);
+
+                // Verify that the callback "onError" is called with the error code FORBIDDEN
+                assertEquals(RcsUceAdapter.ERROR_FORBIDDEN, waitForIntResult(errorQueue));
+                // Verify the retryAfter value
+                long retryAfterMillis = waitForLongResult(retryAfterQueue);
+                if (sipCode == sipCodeForbidden) {
+                    assertEquals(0L, retryAfterMillis);
+                } else if (sipCode == sipCodeBadEvent) {
+                    assertTrue(retryAfterMillis > 0L);
+                }
+
+                // Verify that the capabilities won't be send to the ImsService because the
+                // uce request is forbidden.
+                assertEquals(0, subscribeRequestCount.get());
+            } catch (Exception e) {
+                fail("testForbiddenResponseToCapabilitiesRequest with command error failed: " + e);
+            } finally {
+                errorQueue.clear();
+                retryAfterQueue.clear();
+                subscribeRequestCount.set(0);
+            }
+
+            // Reset the device status
+            removeUceRequestDisallowedStatus();
+        });
+
+        overrideCarrierConfig(null);
+    }
+
     private void setupTestImsService(RcsUceAdapter uceAdapter, boolean presencePublishEnabled,
             boolean presenceCapExchangeEnabled, boolean sipOptionsEnabled) throws Exception {
         // Trigger carrier config changed
@@ -1811,6 +1943,14 @@ public class RcsUceAdapterTest {
             sServiceConnector.removeEabContacts(sTestSlot, builder.toString());
         } catch (Exception e) {
             Log.w("RcsUceAdapterTest", "Cannot remove test contacts from eab database: " + e);
+        }
+    }
+
+    private static void removeUceRequestDisallowedStatus() {
+        try {
+            sServiceConnector.removeUceRequestDisallowedStatus(sTestSlot);
+        } catch (Exception e) {
+            Log.w("RcsUceAdapterTest", "Cannot remove request disallowed status: " + e);
         }
     }
 
