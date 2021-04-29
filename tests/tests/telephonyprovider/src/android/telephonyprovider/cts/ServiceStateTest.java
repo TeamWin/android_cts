@@ -70,7 +70,7 @@ public class ServiceStateTest {
     private ContentResolver mContentResolver;
     private TelephonyManager mTelephonyManager;
     private int mSubId;
-    private ServiceState mInitialServiceState;
+    private @Nullable ServiceState mInitialServiceState;
 
     @Before
     public void setUp() {
@@ -90,7 +90,9 @@ public class ServiceStateTest {
         }
 
         // Recover the initial ServiceState to remove the impact of manual ServiceState insertion.
-        insertServiceState(mInitialServiceState);
+        if (mInitialServiceState != null) {
+            insertServiceState(mInitialServiceState);
+        }
     }
 
     /**
