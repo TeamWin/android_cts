@@ -42,6 +42,10 @@ public final class CompatChangesValidConfigTest extends CompatChangeGatingTestCa
         "ALLOW_TEST_API_ACCESS"
     );
 
+    private static final Set<String> OVERRIDABLE_CHANGES = ImmutableSet.of(
+            "CTS_SYSTEM_API_OVERRIDABLE_CHANGEID"
+    );
+
     /**
      * Check that there are no overrides.
      */
@@ -50,6 +54,18 @@ public final class CompatChangesValidConfigTest extends CompatChangeGatingTestCa
             if (!OVERRIDES_ALLOWLIST.contains(c.changeName) && !c.overridable) {
                 assertWithMessage("Change should not have overrides: " + c)
                         .that(c.hasOverrides).isFalse();
+            }
+        }
+    }
+
+    /**
+     * Check that only approved changes are overridable.
+     */
+    public void testOnlyAllowedlistedChangesAreOverridable() throws Exception {
+        for (Change c : getOnDeviceCompatConfig()) {
+            if (c.overridable) {
+                assertWithMessage("Please contact platform-compat-eng@google.com for approval")
+                        .that(OVERRIDABLE_CHANGES).contains(c.changeName);
             }
         }
     }
