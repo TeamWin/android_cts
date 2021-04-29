@@ -21,6 +21,7 @@ java_test_host {
     defaults: ["cts_defaults"],
     srcs: [
         "src/**/alarm/*.java",
+        "src/**/apphibernation/*.java",
         "src/**/appops/*.java",
         "src/**/appstart/*.java",
         "src/**/batterycycle/*.java",
