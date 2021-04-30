@@ -430,9 +430,6 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
                 // won't show an "Ask every time" message
                 !waitFindObject(byTextRes(R.string.deny)).isChecked
             } else {
-                if (isWatch) {
-                    click(By.text("Deny"))
-                }
                 !(waitFindObject(byTextRes(R.string.deny)).isChecked ||
                     (!isLegacyApp && hasAskButton(permission) &&
                         waitFindObject(byTextRes(R.string.ask)).isChecked))
