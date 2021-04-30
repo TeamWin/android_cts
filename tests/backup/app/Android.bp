@@ -18,7 +18,11 @@ package {
 
 android_test_helper_app {
     name: "CtsFullBackupApp",
-    defaults: ["cts_support_defaults"],
+    defaults: [
+        "cts_support_defaults",
+        "mts-target-sdk-version-current",
+    ],
+    min_sdk_version: "30",
     srcs: [
         "src/**/*.java",
     ],
@@ -37,7 +41,11 @@ android_test_helper_app {
 
 android_test_helper_app {
     name: "CtsKeyValueBackupApp",
-    defaults: ["cts_support_defaults"],
+    defaults: [
+        "cts_support_defaults",
+        "mts-target-sdk-version-current",
+    ],
+    min_sdk_version: "30",
     // Tag this module as a cts test artifact
     srcs: [
         "src/**/*.java",
@@ -57,7 +65,11 @@ android_test_helper_app {
 
 android_test_helper_app {
     name: "CtsPermissionBackupApp",
-    defaults: ["cts_support_defaults"],
+    defaults: [
+        "cts_support_defaults",
+        "mts-target-sdk-version-current",
+    ],
+    min_sdk_version: "30",
     // Tag this module as a cts test artifact
     srcs: [
         "src/**/*.java",
@@ -78,7 +90,8 @@ android_test_helper_app {
 android_test_helper_app {
     name: "CtsPermissionBackupApp22",
     defaults: ["cts_support_defaults"],
-    // Tag this module as a cts test artifact
+    min_sdk_version: "22",
+    target_sdk_version: "22",
     srcs: [
         "src/**/*.java",
     ],
@@ -86,6 +99,7 @@ android_test_helper_app {
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
     ],
+    // Tag this module as a cts test artifact
     test_suites: [
         "cts",
         "general-tests",

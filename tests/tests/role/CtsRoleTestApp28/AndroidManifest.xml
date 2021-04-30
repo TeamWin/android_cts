@@ -18,9 +18,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
      package="android.app.role.cts.app28">
 
-    <uses-sdk android:minSdkVersion="28"
-         android:targetSdkVersion="28"/>
-
     <uses-permission android:name="android.permission.SEND_SMS"/>
 
     <application android:label="CtsRoleTestApp28">
