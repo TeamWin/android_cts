@@ -20,11 +20,13 @@ import android.app.Instrumentation
 import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
+import android.os.Build
 import android.provider.DeviceConfig.NAMESPACE_APP_HIBERNATION
 import android.support.test.uiautomator.By
 import android.support.test.uiautomator.BySelector
 import android.support.test.uiautomator.UiObject2
 import androidx.test.InstrumentationRegistry
+import androidx.test.filters.SdkSuppress
 import androidx.test.runner.AndroidJUnit4
 import com.android.compatibility.common.util.SystemUtil.runShellCommandOrThrow
 import org.hamcrest.CoreMatchers
@@ -39,6 +41,7 @@ import org.junit.runner.RunWith
  * Integration test for app hibernation.
  */
 @RunWith(AndroidJUnit4::class)
+@SdkSuppress(minSdkVersion = Build.VERSION_CODES.S, codeName = "S")
 class AppHibernationIntegrationTest {
     companion object {
         const val LOG_TAG = "AppHibernationIntegrationTest"

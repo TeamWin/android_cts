@@ -31,6 +31,8 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.test.InstrumentationRegistry;
 
+import com.android.modules.utils.build.SdkLevel;
+
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -128,9 +130,13 @@ public class SystemUtil {
     }
 
     /**
-     * Like {@link #runShellCommand(String)} but throws if anything was printed to stderr.
+     * Like {@link #runShellCommand(String)} but throws if anything was printed to stderr on S+, and
+     * delegates to {@link #runShellCommand(String)} on older platforms for compatibility.
      */
     public static String runShellCommandOrThrow(String cmd) {
+        if (!SdkLevel.isAtLeastS()) {
+            return runShellCommand(cmd);
+        }
         UiAutomation automation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         try {
             checkCommandBeforeRunning(cmd);
