@@ -24,7 +24,6 @@ java_defaults {
         "compatibility-device-util-axt",
         "CtsDomainVerificationAndroidConstantsLibrary",
         "CtsDomainVerificationJavaConstantsLibrary",
-        "CtsDomainVerificationVerificationsLibrary",
         "junit",
         "truth-prebuilt",
     ],

@@ -47,7 +47,7 @@ class DomainVerificationIntentHostTimedTests : BaseHostJUnit4Test() {
     }
 
     @Test
-    fun multipleVerifiedTakeLastFirstInstall() {
+    fun hostTimed() {
         device.installApkResource(tempFolder, DECLARING_PKG_APK_2)
 
         // Ensure a later install time
@@ -57,7 +57,6 @@ class DomainVerificationIntentHostTimedTests : BaseHostJUnit4Test() {
 
         // Install an update, which should not take precedence
         device.installApkResource(tempFolder, DECLARING_PKG_APK_2, reinstall = true)
-
         runDeviceTests(DeviceTestRunOptions(CALLING_PKG_NAME).apply {
             testClassName = "$CALLING_PKG_NAME.DomainVerificationIntentHostTimedTests"
         })
