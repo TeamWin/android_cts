@@ -343,9 +343,8 @@ public class BuildTest extends TestCase {
 
         assertTrue(
                 "Media Performance Class " + Build.VERSION.MEDIA_PERFORMANCE_CLASS
-                        + " is invalid; must be at least VERSION_CODES.S",
-                // TODO: flip this once VERSION_CODES.S is finalized
-                Build.VERSION.MEDIA_PERFORMANCE_CLASS > Build.VERSION_CODES.R);
+                        + " is invalid; must be at least VERSION_CODES.R",
+                Build.VERSION.MEDIA_PERFORMANCE_CLASS >= Build.VERSION_CODES.R);
         assertTrue(
                 "Media Performance Class " + Build.VERSION.MEDIA_PERFORMANCE_CLASS
                         + " is invalid; must be at most VERSION.SDK_INT",
