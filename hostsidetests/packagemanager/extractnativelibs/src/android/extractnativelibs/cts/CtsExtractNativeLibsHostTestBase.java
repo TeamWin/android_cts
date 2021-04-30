@@ -35,7 +35,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -196,6 +198,11 @@ public class CtsExtractNativeLibsHostTestBase extends BaseHostJUnit4Test {
 
     final String getDeviceAbi() throws Exception {
         return getDevice().getProperty("ro.product.cpu.abi");
+    }
+
+    final Set<String> getDeviceAbis() throws Exception {
+        String[] abiArray = getDevice().getProperty("ro.product.cpu.abilist").split(",");
+        return new HashSet<String>(Arrays.asList(abiArray));
     }
 
     private void installPackageIncremental(String apkName, String abi) throws Exception {
