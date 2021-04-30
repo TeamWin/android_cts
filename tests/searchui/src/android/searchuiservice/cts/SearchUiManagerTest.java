@@ -43,6 +43,7 @@ import android.app.search.SearchTarget;
 import android.app.search.SearchTargetEvent;
 import android.app.search.SearchUiManager;
 import android.content.Context;
+import android.os.Bundle;
 import android.os.Process;
 import android.util.Log;
 
@@ -62,7 +63,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -81,6 +84,9 @@ public class SearchUiManagerTest {
 
     private static final long VERIFY_TIMEOUT_MS = 5_000;
     private static final long SERVICE_LIFECYCLE_TIMEOUT_MS = 20_000;
+    private static final int RESULT_TYPES = RESULT_CORPUS1 | RESULT_CORPUS2 | RESULT_CORPUS3;
+    private static final int TIMEOUT_MS = 150;
+    private static final Bundle EXTRAS = new Bundle();
 
     @Rule
     public final RequiredServiceRule mRequiredServiceRule =
@@ -95,8 +101,7 @@ public class SearchUiManagerTest {
         mWatcher = CtsSearchUiService.setWatcher();
         mManager = getContext().getSystemService(SearchUiManager.class);
         setService(CtsSearchUiService.SERVICE_NAME);
-        SearchContext searchContext = new SearchContext(
-                RESULT_CORPUS1 | RESULT_CORPUS2 | RESULT_CORPUS3, 0);
+        SearchContext searchContext = new SearchContext(RESULT_TYPES, TIMEOUT_MS, EXTRAS);
         mClient = mManager.createSearchSession(searchContext);
         await(mWatcher.created, "Waiting for onCreate()");
         reset(mWatcher.verifier);
@@ -117,6 +122,39 @@ public class SearchUiManagerTest {
     public void testCreateSearchSession() {
         assertNotNull(mClient);
         assertNotNull(mWatcher.verifier);
+        assertEquals(mWatcher.searchContext.getPackageName(), getContext().getPackageName());
+        assertEquals(mWatcher.searchContext.getResultTypes(), RESULT_TYPES);
+        assertEquals(mWatcher.searchContext.getTimeoutMillis(), TIMEOUT_MS);
+        assertTrue(equalBundles(mWatcher.searchContext.getExtras(), EXTRAS));
+    }
+
+    public boolean equalBundles(Bundle one, Bundle two) {
+        if(one.size() != two.size())
+            return false;
+
+        Set<String> setOne = new HashSet<>(one.keySet());
+        setOne.addAll(two.keySet());
+        Object valueOne;
+        Object valueTwo;
+
+        for(String key : setOne) {
+            if (!one.containsKey(key) || !two.containsKey(key))
+                return false;
+
+            valueOne = one.get(key);
+            valueTwo = two.get(key);
+            if(valueOne instanceof Bundle && valueTwo instanceof Bundle &&
+                    !equalBundles((Bundle) valueOne, (Bundle) valueTwo)) {
+                return false;
+            }
+            else if(valueOne == null) {
+                if(valueTwo != null)
+                    return false;
+            }
+            else if(!valueOne.equals(valueTwo))
+                return false;
+        }
+        return true;
     }
 
     @Test
@@ -127,7 +165,7 @@ public class SearchUiManagerTest {
                 .setFlags(SearchTargetEvent.FLAG_IME_SHOWN)
                 .setLaunchLocation("1,0")
                 .build();
-        mClient.notifyEvent(generateQuery(), event);
+        mClient.notifyEvent(generateQuery(new Bundle()), event);
 
         ArgumentCaptor<Query> queryArg = ArgumentCaptor.forClass(Query.class);
         ArgumentCaptor<SearchTargetEvent> eventArg
@@ -144,7 +182,7 @@ public class SearchUiManagerTest {
 
     @Test
     public void testQuery_realCallback() {
-        Query query = SearchUiUtils.generateQuery();
+        Query query = SearchUiUtils.generateQuery(new Bundle());
         List<SearchTarget> targets = SearchUiUtils.generateSearchTargetList(3);
 
         final ConsumerVerifier callbackVerifier = new ConsumerVerifier(targets /* expected */);
@@ -156,7 +194,7 @@ public class SearchUiManagerTest {
     @Ignore
     public void testQuery_mockCallback() {
         List<SearchTarget> targets = SearchUiUtils.generateSearchTargetList(2);
-        Query query = SearchUiUtils.generateQuery();
+        Query query = SearchUiUtils.generateQuery(new Bundle());
 
         final ConsumerVerifier callbackVerifier = new ConsumerVerifier(targets);
         mClient.query(query, Executors.newSingleThreadExecutor(), callbackVerifier);
@@ -172,7 +210,8 @@ public class SearchUiManagerTest {
     @Test
     public void testQuery_params() {
         List<SearchTarget> targets = generateSearchTargetList(2, true, false, false, false);
-        Query query = SearchUiUtils.generateQuery();
+        Bundle extras = new Bundle();
+        Query query = SearchUiUtils.generateQuery(extras);
 
         final ConsumerVerifier callbackVerifier = new ConsumerVerifier(targets);
         mClient.query(query, Executors.newSingleThreadExecutor(), callbackVerifier);
@@ -187,6 +226,7 @@ public class SearchUiManagerTest {
         Query expectedQuery = queryArg.getValue();
         assertTrue(expectedQuery.getInput().equals(QUERY_INPUT));
         assertEquals(expectedQuery.getTimestampMillis(), QUERY_TIMESTAMP);
+        assertTrue(equalBundles(expectedQuery.getExtras(), extras));
 
         Consumer<List<SearchTarget>> expectedCallback = callbackArg.getValue();
         expectedCallback.andThen(callbackVerifier);
