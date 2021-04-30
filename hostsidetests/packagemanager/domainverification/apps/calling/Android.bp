@@ -27,7 +27,6 @@ android_test_helper_app {
         "compatibility-device-util-axt",
         "CtsDomainVerificationAndroidConstantsLibrary",
         "CtsDomainVerificationJavaConstantsLibrary",
-        "CtsDomainVerificationVerificationsLibrary",
         "junit",
         "kotlin-reflect",
         "truth-prebuilt",

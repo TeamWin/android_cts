@@ -16,19 +16,22 @@
 
 package com.android.cts.packagemanager.verify.domain.callingapp
 
+import com.android.compatibility.common.util.ShellUtils
 import com.android.cts.packagemanager.verify.domain.android.DomainUtils.DECLARING_PKG_1_COMPONENT
 import com.android.cts.packagemanager.verify.domain.android.DomainUtils.DECLARING_PKG_2_COMPONENT
 import com.android.cts.packagemanager.verify.domain.android.DomainVerificationIntentTestBase
-import com.android.cts.packagemanager.verify.domain.java.DomainUtils
+import com.android.cts.packagemanager.verify.domain.java.DomainUtils.DECLARING_PKG_NAME_1
 import com.android.cts.packagemanager.verify.domain.java.DomainUtils.DECLARING_PKG_NAME_2
 import com.android.cts.packagemanager.verify.domain.java.DomainUtils.DOMAIN_1
 import com.android.cts.packagemanager.verify.domain.java.DomainUtils.DOMAIN_2
+import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 
 @RunWith(Parameterized::class)
-class DomainVerificationIntentHostTimedTests : DomainVerificationIntentTestBase(DOMAIN_1) {
+class DomainVerificationIntentHostTimedTests :
+    DomainVerificationIntentTestBase(DOMAIN_1, resetEnable = true) {
 
     @Test
     fun multipleVerifiedTakeLastFirstInstall() {
@@ -36,7 +39,7 @@ class DomainVerificationIntentHostTimedTests : DomainVerificationIntentTestBase(
 
         assertResolvesTo(DECLARING_PKG_2_COMPONENT)
 
-        setAppLinks(DomainUtils.DECLARING_PKG_NAME_1, true, DOMAIN_1, DOMAIN_2)
+        setAppLinks(DECLARING_PKG_NAME_1, true, DOMAIN_1, DOMAIN_2)
 
         assertResolvesTo(DECLARING_PKG_1_COMPONENT)
 
@@ -44,5 +47,53 @@ class DomainVerificationIntentHostTimedTests : DomainVerificationIntentTestBase(
         setAppLinks(DECLARING_PKG_NAME_2, true, DOMAIN_1, DOMAIN_2)
 
         assertResolvesTo(DECLARING_PKG_1_COMPONENT)
+    }
+
+    @Test
+    fun multipleVerifiedDisableByComponent() {
+        setAppLinks(DECLARING_PKG_NAME_2, true, DOMAIN_1, DOMAIN_2)
+        setAppLinks(DECLARING_PKG_NAME_1, true, DOMAIN_1, DOMAIN_2)
+
+        assertResolvesTo(DECLARING_PKG_1_COMPONENT)
+
+        assertThat(
+            ShellUtils.runShellCommand(
+                "pm disable --user ${context.userId} " +
+                        DECLARING_PKG_1_COMPONENT.flattenToString()
+            ).trim()
+        ).endsWith("new state: disabled")
+
+        assertResolvesTo(DECLARING_PKG_2_COMPONENT)
+
+        assertThat(
+            ShellUtils.runShellCommand(
+                "pm disable --user ${context.userId} " +
+                        DECLARING_PKG_2_COMPONENT.flattenToString()
+            ).trim()
+        ).endsWith("new state: disabled")
+
+        assertResolvesTo(browsers)
+    }
+
+    @Test
+    fun multipleVerifiedDisableByPackage() {
+        setAppLinks(DECLARING_PKG_NAME_2, true, DOMAIN_1, DOMAIN_2)
+        setAppLinks(DECLARING_PKG_NAME_1, true, DOMAIN_1, DOMAIN_2)
+
+        assertResolvesTo(DECLARING_PKG_1_COMPONENT)
+
+        assertThat(
+            ShellUtils.runShellCommand("pm disable --user ${context.userId} $DECLARING_PKG_NAME_1")
+                .trim()
+        ).endsWith("new state: disabled")
+
+        assertResolvesTo(DECLARING_PKG_2_COMPONENT)
+
+        assertThat(
+            ShellUtils.runShellCommand("pm disable --user ${context.userId} $DECLARING_PKG_NAME_2")
+                .trim()
+        ).endsWith("new state: disabled")
+
+        assertResolvesTo(browsers)
     }
 }
