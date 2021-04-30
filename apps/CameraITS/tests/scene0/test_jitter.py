@@ -27,6 +27,7 @@ import its_session_utils
 
 _NS_TO_MS = 1.0E-6
 _NAME = os.path.basename(__file__).split('.')[0]
+_NUM_FRAMES = 50
 _START_FRAME = 2  # 1 frame delay to allow faster latency to 1st frame
 _TEST_FPS = 30  # frames per second
 # PASS/FAIL thresholds
@@ -53,7 +54,7 @@ class JitterTest(its_base_test.ItsBaseTest):
       req, fmt = capture_request_utils.get_fastest_manual_capture_settings(
           props)
       req['android.control.aeTargetFpsRange'] = [_TEST_FPS, _TEST_FPS]
-      caps = cam.do_capture([req] * 50, [fmt])
+      caps = cam.do_capture([req] * _NUM_FRAMES, [fmt])
 
       # Log the millisecond delta between the start of each exposure
       tstamps = [c['metadata']['android.sensor.timestamp'] for c in caps]
