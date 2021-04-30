@@ -20,6 +20,8 @@ package {
 
 android_test_helper_app {
     name: "CtsUsePermissionAppLocationProvider",
+    defaults: ["mts-target-sdk-version-current"],
+    min_sdk_version: "30",
     srcs: [
         ":CtsUsePermissionAppSrc",
         "src/**/*.kt",

@@ -20,7 +20,6 @@
 
     <uses-permission android:name="android.permission.READ_CALENDAR" />
 
-    <uses-sdk android:minSdkVersion="29" android:targetSdkVersion="29" />
     <application>
         <activity android:name="android.os.cts.autorevokeqapp.MainActivity"
                   android:exported="true"

@@ -18,7 +18,10 @@ package {
 
 android_test {
     name: "CtsOsTestCases",
-    defaults: ["cts_defaults"],
+    defaults: [
+        "cts_defaults",
+        "mts-target-sdk-version-current",
+    ],
     compile_multilib: "both",
     static_libs: [
         "android.hidl.manager-V1.0-java",
