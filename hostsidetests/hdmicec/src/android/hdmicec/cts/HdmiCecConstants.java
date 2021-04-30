@@ -49,6 +49,7 @@ public final class HdmiCecConstants {
     public static final int CEC_DEVICE_TYPE_TUNER = 3;
     public static final int CEC_DEVICE_TYPE_PLAYBACK_DEVICE = 4;
     public static final int CEC_DEVICE_TYPE_AUDIO_SYSTEM = 5;
+    public static final int CEC_DEVICE_TYPE_SWITCH = 6;
 
     /** Feature Abort Reasons */
     public static final int ABORT_UNRECOGNIZED_MODE = 0;
