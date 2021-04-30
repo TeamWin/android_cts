@@ -2839,6 +2839,8 @@ public class MediaCodecTest extends AndroidTestCase {
                             " should be able to describe it.", desc);
                     assertEquals("name differs from the name in the descriptor",
                             name, desc.getName());
+                    assertTrue("type in the descriptor cannot be TYPE_NULL",
+                            MediaFormat.TYPE_NULL != desc.getType());
                     if (VERBOSE) {
                         Log.d(TAG, name + " is of type " + desc.getType());
                     }
