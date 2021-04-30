@@ -29,7 +29,6 @@ import static org.testng.Assert.expectThrows;
 
 import android.annotation.NonNull;
 import android.app.appsearch.AppSearchBatchResult;
-import android.app.appsearch.AppSearchEmail;
 import android.app.appsearch.AppSearchResult;
 import android.app.appsearch.AppSearchSchema;
 import android.app.appsearch.AppSearchSchema.PropertyConfig;
@@ -50,6 +49,8 @@ import android.app.appsearch.exceptions.AppSearchException;
 import android.content.Context;
 
 import androidx.test.core.app.ApplicationProvider;
+
+import com.android.server.appsearch.testing.AppSearchEmail;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -1957,7 +1958,7 @@ public abstract class AppSearchSessionCtsTestBase {
         List<SearchResult> results = searchResults.getNextPage().get();
         assertThat(results).hasSize(1);
 
-        List<SearchResult.MatchInfo> matchInfos = results.get(0).getMatches();
+        List<SearchResult.MatchInfo> matchInfos = results.get(0).getMatchInfos();
         assertThat(matchInfos).isNotNull();
         assertThat(matchInfos).hasSize(1);
         SearchResult.MatchInfo matchInfo = matchInfos.get(0);
@@ -2874,8 +2875,8 @@ public abstract class AppSearchSessionCtsTestBase {
         assertThat(result.getSuccesses()).containsExactly("id1", null);
         assertThat(result.getFailures()).isEmpty();
 
-        // The future returned from maybeFlush will be set as a void or an Exception on error.
-        mDb1.maybeFlush().get();
+        // The future returned from requestFlush will be set as a void or an Exception on error.
+        mDb1.requestFlush().get();
     }
 
     @Test
@@ -3024,7 +3025,7 @@ public abstract class AppSearchSessionCtsTestBase {
         List<SearchResult> page = searchResults.getNextPage().get();
         assertThat(page).hasSize(1);
         assertThat(page.get(0).getGenericDocument()).isEqualTo(yesNestedIndex);
-        List<SearchResult.MatchInfo> matches = page.get(0).getMatches();
+        List<SearchResult.MatchInfo> matches = page.get(0).getMatchInfos();
         assertThat(matches).hasSize(1);
         assertThat(matches.get(0).getPropertyPath()).isEqualTo("prop.subject");
         assertThat(matches.get(0).getFullText()).isEqualTo("This is the body");
