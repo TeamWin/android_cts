@@ -246,7 +246,7 @@ public class WindowManagerState {
         return TYPE_NAVIGATION_BAR == navState.getType();
     }
 
-/**
+    /**
      * For a given WindowContainer, traverse down the hierarchy and add all children of type
      * {@code T} to {@code outChildren}.
      */
@@ -1614,31 +1614,31 @@ public class WindowManagerState {
     static WindowContainer getWindowContainer(WindowContainerChildProto proto,
             WindowContainer parent) {
         if (proto.displayContent != null) {
-           return new DisplayContent(proto.displayContent);
+            return new DisplayContent(proto.displayContent);
         }
 
         if (proto.displayArea != null) {
-           return new DisplayArea(proto.displayArea);
+            return new DisplayArea(proto.displayArea);
         }
 
         if (proto.task != null) {
-           return new ActivityTask(proto.task);
+            return new ActivityTask(proto.task);
         }
 
         if (proto.activity != null) {
-           return new Activity(proto.activity, parent);
+            return new Activity(proto.activity, parent);
         }
 
         if (proto.windowToken != null) {
-           return new WindowToken(proto.windowToken);
+            return new WindowToken(proto.windowToken);
         }
 
         if (proto.window != null) {
-           return new WindowState(proto.window);
+            return new WindowState(proto.window);
         }
 
         if (proto.windowContainer != null) {
-           return new GenericWindowContainer(proto.windowContainer);
+            return new GenericWindowContainer(proto.windowContainer);
         }
         return null;
     }

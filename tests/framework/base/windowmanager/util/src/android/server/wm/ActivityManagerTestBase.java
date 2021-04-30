@@ -1243,9 +1243,9 @@ public abstract class ActivityManagerTestBase {
     }
 
     /** @see ObjectTracker#manage(AutoCloseable) */
-    protected SupportsNonResizableMultiWindowSession
-        createManagedSupportsNonResizableMultiWindowSession() {
-        return mObjectTracker.manage(new SupportsNonResizableMultiWindowSession());
+    protected DevEnableNonResizableMultiWindowSession
+    createManagedDevEnableNonResizableMultiWindowSession() {
+        return mObjectTracker.manage(new DevEnableNonResizableMultiWindowSession());
     }
 
     /** @see ObjectTracker#manage(AutoCloseable) */
@@ -1550,8 +1550,8 @@ public abstract class ActivityManagerTestBase {
         }
     }
 
-    protected class SupportsNonResizableMultiWindowSession extends SettingsSession<Integer> {
-        SupportsNonResizableMultiWindowSession() {
+    protected class DevEnableNonResizableMultiWindowSession extends SettingsSession<Integer> {
+        DevEnableNonResizableMultiWindowSession() {
             super(Settings.Global.getUriFor(
                     Settings.Global.DEVELOPMENT_ENABLE_NON_RESIZABLE_MULTI_WINDOW),
                     (cr, name) -> Settings.Global.getInt(cr, name, 0 /* def */),

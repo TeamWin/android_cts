@@ -83,7 +83,7 @@ public class FreeformWindowingModeTests extends MultiDisplayTestBase {
 
     @Test
     public void testNonResizeableActivityHasFullDisplayBounds() throws Exception {
-        createManagedSupportsNonResizableMultiWindowSession().set(0);
+        createManagedDevEnableNonResizableMultiWindowSession().set(0);
         launchActivity(TEST_ACTIVITY);
 
         mWmState.computeState(TEST_ACTIVITY);
