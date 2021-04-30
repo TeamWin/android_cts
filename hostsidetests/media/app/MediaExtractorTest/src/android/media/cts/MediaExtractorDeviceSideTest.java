@@ -78,8 +78,9 @@ public class MediaExtractorDeviceSideTest {
             mediaExtractor.setDataSource(fileDescriptor);
             assertThat(mediaExtractor.getLogSessionId())
                     .isEqualTo(LogSessionId.LOG_SESSION_ID_NONE);
-            mediaExtractor.setLogSessionId(new LogSessionId("FakePlaybackId"));
-            assertThat(mediaExtractor.getLogSessionId().getStringId()).isEqualTo("FakePlaybackId");
+            mediaExtractor.setLogSessionId(new LogSessionId("FakeLogSessionId"));
+            assertThat(mediaExtractor.getLogSessionId().getStringId())
+                    .isEqualTo("FakeLogSessionId");
         } finally {
             mediaExtractor.release();
         }
