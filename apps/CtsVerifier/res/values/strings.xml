@@ -63,6 +63,7 @@
         android:read_device_identifiers allow\" </string>
     <string name="runtime_permissions_error">Please grant runtime permissions, otherwise, tests might fail.</string>
     <string name="export">Export</string>
+    <string name="report_log_folder_name">ctsv-report-logs</string>
     <string name="no_storage">Cannot save report to external storage, see log for details.</string>
     <string name="no_storage_io_parser_exception">Cannot save report to external
         storage, see log for details. Or try running the following command if
