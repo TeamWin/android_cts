@@ -293,6 +293,9 @@ public class PassFailButtons {
         private final CtsVerifierReportLog mReportLog;
 
         public TestListActivity() {
+            // TODO(b/186555602): temporary hack^H^H^H^H workaround to fix crash
+            if (true) this.mReportLog = new CtsVerifierReportLog(REPORT_LOG_NAME, "42"); else
+
             this.mReportLog = new CtsVerifierReportLog(REPORT_LOG_NAME, getTestId());
         }
 
@@ -520,7 +523,9 @@ public class PassFailButtons {
         }
 
         // Give tests a chance to handle completion
-        ((PassFailButtons.Activity) activity).setTestResultAndFinish(passed);
+        //TODO(b/186561084) Need to investigate why activity might not be a PassFailButtons.Activity here.
+        // Without this line we won't write the ReportLog for CtsVerifier tests.
+        //((PassFailButtons.Activity) activity).setTestResultAndFinish(passed);
 
         setTestResultAndFinishHelper(activity, testId, testDetails, passed, reportLog, historyCollection);
     }

@@ -16,6 +16,8 @@
 
 package android.widget.cts;
 
+import static android.widget.cts.util.StretchEdgeUtil.dragHoldAndRun;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertSame;
@@ -59,6 +61,8 @@ import org.junit.runner.RunWith;
 import org.xmlpull.v1.XmlPullParser;
 
 import java.util.ArrayList;
+
+import kotlin.Unit;
 
 /**
  * Test {@link HorizontalScrollView}.
@@ -868,6 +872,32 @@ public class HorizontalScrollViewTest {
         assertTrue(StretchEdgeUtil.dragLeftTapAndHoldStretches(mActivityRule, mScrollViewStretch));
     }
 
+    @LargeTest
+    @Test
+    public void testRequestDisallowInterceptTouchEventNotCalled() throws Throwable {
+        // Make sure that the scroll view we care about is on screen and at the top:
+        showOnlyStretch();
+
+        InterceptView interceptView = mActivity.findViewById(R.id.wrapped_stretch);
+        dragHoldAndRun(
+                mActivityRule,
+                mScrollViewStretch,
+                mScrollViewStretch.getWidth() / 2,
+                mScrollViewStretch.getHeight() / 2,
+                300,
+                0,
+                () -> {
+                    interceptView.requestDisallowInterceptCalled = false;
+                    return Unit.INSTANCE;
+                },
+                () -> Unit.INSTANCE
+        );
+
+        mActivityRule.runOnUiThread(
+                () -> assertFalse(interceptView.requestDisallowInterceptCalled)
+        );
+    }
+
     private void showOnlyStretch() throws Throwable {
         mActivityRule.runOnUiThread(() -> {
             mScrollViewCustom.setVisibility(View.GONE);
@@ -1013,6 +1043,28 @@ public class HorizontalScrollViewTest {
         @Override
         public int computeVerticalScrollExtent() {
             return super.computeVerticalScrollExtent();
+        }
+    }
+
+    public static class InterceptView extends FrameLayout {
+        public boolean requestDisallowInterceptCalled = false;
+
+        public InterceptView(Context context) {
+            super(context);
+        }
+
+        public InterceptView(Context context, AttributeSet attrs) {
+            super(context, attrs);
+        }
+
+        public InterceptView(Context context, AttributeSet attrs, int defStyle) {
+            super(context, attrs, defStyle);
+        }
+
+        @Override
+        public void requestDisallowInterceptTouchEvent(boolean disallowIntercept) {
+            requestDisallowInterceptCalled = true;
+            super.requestDisallowInterceptTouchEvent(disallowIntercept);
         }
     }
 }
