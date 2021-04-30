@@ -93,6 +93,14 @@ public class TestSipTransport extends SipTransportImplBase {
         }
     }
 
+    public boolean isLatchCountDownFinished(int latchIndex) {
+        CountDownLatch latch;
+        synchronized (mLock) {
+            latch = sLatches[latchIndex];
+        }
+        return latch.getCount() <= 0;
+    }
+
     public boolean waitForLatchCountdownAndReset(int latchIndex) {
         boolean complete = false;
         try {
