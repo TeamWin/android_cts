@@ -97,6 +97,22 @@ public class KeyAgreementTest extends TestCase {
         }
     }
 
+    public void testInit_withNonEcKey_fails() throws Exception {
+        KeyPairGenerator kpg =
+                KeyPairGenerator.getInstance(KeyProperties.KEY_ALGORITHM_RSA, "AndroidKeyStore");
+        kpg.initialize(
+                new KeyGenParameterSpec.Builder("rsakey", KeyProperties.PURPOSE_AGREE_KEY).build());
+        KeyPair rsaKeyPair = kpg.genKeyPair();
+        KeyAgreement ka = getKeyStoreKeyAgreement();
+
+        try {
+            ka.init(rsaKeyPair.getPrivate());
+            fail("Initializing KeyAgreement with non-EC key should fail.");
+        } catch (InvalidKeyException ike) {
+            // Expected
+        }
+    }
+
     public void testDoPhase_withoutInitialization_fails() throws Exception {
         KeyAgreement ka = getKeyStoreKeyAgreement();
         try {
