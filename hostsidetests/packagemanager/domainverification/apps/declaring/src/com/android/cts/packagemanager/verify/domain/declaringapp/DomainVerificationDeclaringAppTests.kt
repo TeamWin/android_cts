@@ -18,7 +18,7 @@ package com.android.cts.packagemanager.verify.domain.declaringapp
 
 import android.app.Instrumentation
 import androidx.test.platform.app.InstrumentationRegistry
-import com.android.cts.packagemanager.verify.domain.SharedVerifications
+import com.android.cts.packagemanager.verify.domain.android.SharedVerifications
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
