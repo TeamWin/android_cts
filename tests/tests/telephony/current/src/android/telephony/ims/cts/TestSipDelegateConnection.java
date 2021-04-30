@@ -102,10 +102,10 @@ public class TestSipDelegateConnection implements DelegateConnectionStateCallbac
         if (ImsUtils.VDBG) Log.d(LOG_TAG, "onMessageReceived");
         mReceivedMessages.offer(message);
         if (mReceivedMessageErrorResponseReason > -1) {
-            connection.notifyMessageReceiveError(ImsUtils.TEST_TRANSACTION_ID,
+            connection.notifyMessageReceiveError(message.getViaBranchParameter(),
                     mReceivedMessageErrorResponseReason);
         } else {
-            connection.notifyMessageReceived(ImsUtils.TEST_TRANSACTION_ID);
+            connection.notifyMessageReceived(message.getViaBranchParameter());
         }
     }
 
@@ -153,8 +153,8 @@ public class TestSipDelegateConnection implements DelegateConnectionStateCallbac
         mLatch.countDown();
     }
 
-    public void sendCloseSession(String callId) {
-        assertNotNull("SipDelegate was null when closing session", connection);
+    public void sendCleanupSession(String callId) {
+        assertNotNull("SipDelegate was null when cleaning up session", connection);
         connection.cleanupSession(callId);
     }
 
@@ -165,7 +165,7 @@ public class TestSipDelegateConnection implements DelegateConnectionStateCallbac
         Pair<String, Integer> ack = mSentMessageAcks.poll(ImsUtils.TEST_TIMEOUT_MS,
                 TimeUnit.MILLISECONDS);
         assertNotNull(ack);
-        assertEquals(ImsUtils.TEST_TRANSACTION_ID, ack.first);
+        assertEquals(messageToSend.getViaBranchParameter(), ack.first);
         assertNotNull(ack.second);
         assertEquals(-1, ack.second.intValue());
     }
@@ -239,6 +239,15 @@ public class TestSipDelegateConnection implements DelegateConnectionStateCallbac
                 regState.getDeregisteredFeatureTags());
     }
 
+    public boolean verifyDeregisteringStateContains(String featureTag, int state) {
+        for (FeatureTagState s : regState.getDeregisteringFeatureTags()) {
+            if (s.getFeatureTag().equals(featureTag) && s.getState() == state) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 
     public void verifyNoneDenied() {
         assertNotNull(deniedTags);
@@ -277,6 +286,7 @@ public class TestSipDelegateConnection implements DelegateConnectionStateCallbac
      * to wait for the operations to occur.
      */
     public void setOperationCountDownLatch(int operationCount) {
+        if (ImsUtils.VDBG) Log.d(LOG_TAG, "setOperationCountDownLatch: " + operationCount);
         mLatch = new CountDownLatch(operationCount);
     }
 
