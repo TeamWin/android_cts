@@ -557,13 +557,13 @@ public class ASurfaceControlTest {
 
                         setSolidBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
                                 PixelColor.RED);
-                        setGeometry(surfaceControl, 0, 0, 100, 100, -32, -24, 50, 50, 0);
+                        setGeometry(surfaceControl, 0, 0, 100, 100, -30, -20, 50, 50, 0);
                     }
                 },
-                new PixelChecker(PixelColor.RED) { //2500
+                new PixelChecker(PixelColor.RED) { //5600 (w = 80, h = 70)
                     @Override
                     public boolean checkPixels(int pixelCount, int width, int height) {
-                        return pixelCount > 2250 && pixelCount < 2750;
+                        return pixelCount > 5000 && pixelCount < 6000;
                     }
                 });
     }
