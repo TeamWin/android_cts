@@ -22,6 +22,7 @@ import android.app.Activity.RESULT_OK
 import android.app.AppOpsManager
 import android.app.AppOpsManager.MODE_ALLOWED
 import android.app.AppOpsManager.OPSTR_ACCESS_ACCESSIBILITY
+import android.app.AppOpsManager.OPSTR_BLUETOOTH_CONNECT
 import android.app.AppOpsManager.OPSTR_CAMERA
 import android.app.AppOpsManager.OPSTR_COARSE_LOCATION
 import android.app.AppOpsManager.OPSTR_FINE_LOCATION
@@ -478,9 +479,7 @@ class AppOpsLoggingTest {
 
     /**
      * Realistic end-to-end test for scanning LE bluetooth
-     * (b/186364104 disabled to unblock submits)
      */
-    @Ignore
     @Test
     fun scanLEBluetooth() {
         assumeTrue("Device does not support LE bluetooth",
@@ -498,7 +497,7 @@ class AppOpsLoggingTest {
             btScanner.startScan(scanCallback)
             try {
                 eventually {
-                    assertThat(noted[0].first.op).isEqualTo(OPSTR_FINE_LOCATION)
+                    assertThat(noted[0].first.op).isEqualTo(OPSTR_BLUETOOTH_CONNECT)
                     assertThat(noted[0].first.attributionTag).isEqualTo(TEST_ATTRIBUTION_TAG)
                     // startScan calls into the system server which then calls back into the app to
                     // start the scan. I.e. the backtrace points back to a callback from the system

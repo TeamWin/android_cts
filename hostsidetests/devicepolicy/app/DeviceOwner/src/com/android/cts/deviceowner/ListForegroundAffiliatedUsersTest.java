@@ -15,27 +15,33 @@
  */
 package com.android.cts.deviceowner;
 
+import static com.android.compatibility.common.util.ShellIdentityUtils.invokeStaticMethodWithShellPermissions;
+
 import static com.google.common.truth.Truth.assertWithMessage;
 
-import android.app.ActivityManager;
 import android.os.UserHandle;
+import android.util.Log;
+
 
 import java.util.List;
 
 public final class ListForegroundAffiliatedUsersTest extends BaseDeviceOwnerTest {
 
+    private static final String TAG = ListForegroundAffiliatedUsersTest.class.getSimpleName();
+
     public void testListForegroundAffiliatedUsers_onlyForegroundUser() throws Exception {
         List<UserHandle> users = mDevicePolicyManager.listForegroundAffiliatedUsers();
 
-        assertWithMessage("foreground users").that(users).hasSize(1);
-        UserHandle currentUser = users.get(0);
-        assertWithMessage("current foreground user").that(currentUser).isNotNull();
-        assertWithMessage("current foreground user id").that(currentUser.getIdentifier())
-                .isEqualTo(ActivityManager.getCurrentUser());
+        UserHandle currentUser = invokeStaticMethodWithShellPermissions(() -> getCurrentUser());
+        Log.d(TAG, "currentUser: " + currentUser + " users: "  + users);
+
+        assertWithMessage("foreground users").that(users).containsExactly(currentUser);
     }
 
     public void testListForegroundAffiliatedUsers_empty() throws Exception {
         List<UserHandle> users = mDevicePolicyManager.listForegroundAffiliatedUsers();
+        Log.d(TAG, "users: "  + users);
+
         assertWithMessage("foreground users").that(users).isEmpty();
     }
 }
