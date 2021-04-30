@@ -23,9 +23,12 @@ import static android.app.ActivityManager.PROCESS_CAPABILITY_NETWORK;
 import static android.app.ActivityManager.PROCESS_CAPABILITY_NONE;
 import static android.app.stubs.LocalForegroundService.ACTION_START_FGS_RESULT;
 import static android.app.stubs.LocalForegroundServiceLocation.ACTION_START_FGSL_RESULT;
-import static android.os.PowerWhitelistManager.REASON_UNKNOWN;
-import static android.os.PowerWhitelistManager.TEMPORARY_ALLOWLIST_TYPE_FOREGROUND_SERVICE_ALLOWED;
-import static android.os.PowerWhitelistManager.TEMPORARY_ALLOWLIST_TYPE_FOREGROUND_SERVICE_NOT_ALLOWED;
+import static android.os.PowerExemptionManager.REASON_PUSH_MESSAGING;
+import static android.os.PowerExemptionManager.REASON_PUSH_MESSAGING_OVER_QUOTA;
+import static android.os.PowerExemptionManager.REASON_UNKNOWN;
+import static android.os.PowerExemptionManager.TEMPORARY_ALLOW_LIST_TYPE_FOREGROUND_SERVICE_ALLOWED;
+import static android.os.PowerExemptionManager.TEMPORARY_ALLOW_LIST_TYPE_FOREGROUND_SERVICE_NOT_ALLOWED;
+import static android.os.PowerExemptionManager.TEMPORARY_ALLOW_LIST_TYPE_NONE;
 
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
@@ -51,6 +54,7 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.ServiceInfo;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.PowerExemptionManager;
 import android.os.SystemClock;
 import android.permission.cts.PermissionUtils;
 import android.provider.DeviceConfig;
@@ -83,6 +87,9 @@ public class ActivityManagerFgsBgStartTest {
     private static final String KEY_FGS_START_FOREGROUND_TIMEOUT =
             "fgs_start_foreground_timeout";
 
+    private static final String KEY_PUSH_MESSAGING_OVER_QUOTA_BEHAVIOR =
+            "push_messaging_over_quota_behavior";
+
     private static final int DEFAULT_FGS_START_FOREGROUND_TIMEOUT_MS = 10 * 1000;
 
     public static final Integer LOCAL_SERVICE_PROCESS_CAPABILITY = new Integer(
@@ -91,6 +98,8 @@ public class ActivityManagerFgsBgStartTest {
             | PROCESS_CAPABILITY_NETWORK);
 
     private static final int WAITFOR_MSEC = 10000;
+
+    private static final int TEMP_ALLOWLIST_DURATION_MS = 2000;
 
     private static final String[] PACKAGE_NAMES = {
             PACKAGE_NAME_APP1, PACKAGE_NAME_APP2, PACKAGE_NAME_APP3
@@ -1093,8 +1102,8 @@ public class ActivityManagerFgsBgStartTest {
      */
     @Test
     public void testTempAllowListType() throws Exception {
-        testTempAllowListTypeInternal(TEMPORARY_ALLOWLIST_TYPE_FOREGROUND_SERVICE_NOT_ALLOWED);
-        testTempAllowListTypeInternal(TEMPORARY_ALLOWLIST_TYPE_FOREGROUND_SERVICE_ALLOWED);
+        testTempAllowListTypeInternal(TEMPORARY_ALLOW_LIST_TYPE_FOREGROUND_SERVICE_NOT_ALLOWED);
+        testTempAllowListTypeInternal(TEMPORARY_ALLOW_LIST_TYPE_FOREGROUND_SERVICE_ALLOWED);
     }
 
     private void testTempAllowListTypeInternal(int type) throws Exception {
@@ -1129,7 +1138,8 @@ public class ActivityManagerFgsBgStartTest {
                 final BroadcastOptions options = BroadcastOptions.makeBasic();
                 // setTemporaryAppAllowlist API requires
                 // START_FOREGROUND_SERVICES_FROM_BACKGROUND permission.
-                options.setTemporaryAppAllowlist(1000, type, REASON_UNKNOWN, "");
+                options.setTemporaryAppAllowlist(TEMP_ALLOWLIST_DURATION_MS, type, REASON_UNKNOWN,
+                        "");
                 // Must use Shell to issue this command because Shell has
                 // START_FOREGROUND_SERVICES_FROM_BACKGROUND permission.
                 CommandReceiver.sendCommandWithBroadcastOptions(mContext,
@@ -1137,7 +1147,7 @@ public class ActivityManagerFgsBgStartTest {
                         PACKAGE_NAME_APP1, PACKAGE_NAME_APP2, 0, null,
                         options.toBundle());
             });
-            if (type == TEMPORARY_ALLOWLIST_TYPE_FOREGROUND_SERVICE_ALLOWED) {
+            if (type == TEMPORARY_ALLOW_LIST_TYPE_FOREGROUND_SERVICE_ALLOWED) {
                 uid2Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE);
                 waiter.doWait(WAITFOR_MSEC);
                 // Stop the FGS.
@@ -1146,7 +1156,7 @@ public class ActivityManagerFgsBgStartTest {
                         PACKAGE_NAME_APP1, PACKAGE_NAME_APP2, 0, null);
                 uid2Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
                         WatchUidRunner.STATE_CACHED_EMPTY);
-            } else if (type == TEMPORARY_ALLOWLIST_TYPE_FOREGROUND_SERVICE_NOT_ALLOWED) {
+            } else if (type == TEMPORARY_ALLOW_LIST_TYPE_FOREGROUND_SERVICE_NOT_ALLOWED) {
                 // APP1 does not enter FGS state
                 try {
                     waiter.doWait(WAITFOR_MSEC);
@@ -1158,7 +1168,7 @@ public class ActivityManagerFgsBgStartTest {
             uid1Watcher.finish();
             uid2Watcher.finish();
             // Sleep 10 seconds to let the temp allowlist expire so it won't affect next test case.
-            SystemClock.sleep(10000);
+            SystemClock.sleep(TEMP_ALLOWLIST_DURATION_MS);
         }
 
     }
@@ -1473,6 +1483,165 @@ public class ActivityManagerFgsBgStartTest {
     }
 
     /**
+     * The default behavior for temp allowlist reasonCode REASON_PUSH_MESSAGING_OVER_QUOTA
+     * is TEMPORARY_ALLOW_LIST_TYPE_FOREGROUND_SERVICE_NOT_ALLOWED (not allowed to start FGS). But
+     * the behavior can be changed by device config command. There are three possible values:
+     * {@link TEMPORARY_ALLOW_LIST_TYPE_NONE} (-1):
+     *      not temp allowlisted.
+     * {@link TEMPORARY_ALLOW_LIST_TYPE_FOREGROUND_SERVICE_ALLOWED} (0):
+     *      temp allowlisted and allow FGS.
+     * {@link TEMPORARY_ALLOW_LIST_TYPE_FOREGROUND_SERVICE_NOT_ALLOWED} (1):
+     *      temp allowlisted, not allow FGS.
+     * @throws Exception
+     */
+    @Test
+    public void testPushMessagingOverQuota() throws Exception {
+        ApplicationInfo app1Info = mContext.getPackageManager().getApplicationInfo(
+                PACKAGE_NAME_APP1, 0);
+        WatchUidRunner uid1Watcher = new WatchUidRunner(mInstrumentation, app1Info.uid,
+                WAITFOR_MSEC);
+        try {
+            // Enable the FGS background startForeground() restriction.
+            enableFgsRestriction(true, true, null);
+            // Default behavior is TEMPORARY_ALLOW_LIST_TYPE_FOREGROUND_SERVICE_NOT_ALLOWED.
+            setPushMessagingOverQuotaBehavior(
+                    TEMPORARY_ALLOW_LIST_TYPE_FOREGROUND_SERVICE_NOT_ALLOWED);
+            // Start FGS in BG state.
+            WaitForBroadcast waiter = new WaitForBroadcast(mInstrumentation.getTargetContext());
+            waiter.prepare(ACTION_START_FGS_RESULT);
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_START_FOREGROUND_SERVICE,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+            // APP1 does not enter FGS state
+            try {
+                waiter.doWait(WAITFOR_MSEC);
+                fail("Service should not enter foreground service state");
+            } catch (Exception e) {
+            }
+
+            setPushMessagingOverQuotaBehavior(TEMPORARY_ALLOW_LIST_TYPE_NONE);
+            waiter = new WaitForBroadcast(mInstrumentation.getTargetContext());
+            waiter.prepare(ACTION_START_FGS_RESULT);
+            runWithShellPermissionIdentity(() -> {
+                mContext.getSystemService(PowerExemptionManager.class).addToTemporaryAllowList(
+                        PACKAGE_NAME_APP1, PowerExemptionManager.REASON_PUSH_MESSAGING_OVER_QUOTA,
+                        "", TEMP_ALLOWLIST_DURATION_MS);
+            });
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_START_FOREGROUND_SERVICE,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+            // APP1 does not enter FGS state
+            try {
+                waiter.doWait(WAITFOR_MSEC);
+                fail("Service should not enter foreground service state");
+            } catch (Exception e) {
+            }
+
+            // Change behavior to TEMPORARY_ALLOW_LIST_TYPE_FOREGROUND_SERVICE_ALLOWED.
+            setPushMessagingOverQuotaBehavior(
+                    TEMPORARY_ALLOW_LIST_TYPE_FOREGROUND_SERVICE_ALLOWED);
+            runWithShellPermissionIdentity(() -> {
+                mContext.getSystemService(PowerExemptionManager.class).addToTemporaryAllowList(
+                        PACKAGE_NAME_APP1, PowerExemptionManager.REASON_PUSH_MESSAGING_OVER_QUOTA,
+                        "", TEMP_ALLOWLIST_DURATION_MS);
+            });
+            waiter = new WaitForBroadcast(mInstrumentation.getTargetContext());
+            waiter.prepare(ACTION_START_FGS_RESULT);
+            // Now it can start FGS.
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_START_FOREGROUND_SERVICE,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+            uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE);
+            waiter.doWait(WAITFOR_MSEC);
+            // Stop the FGS.
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_STOP_FOREGROUND_SERVICE,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+            uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY);
+        } finally {
+            uid1Watcher.finish();
+            // Change back to default behavior.
+            setPushMessagingOverQuotaBehavior(
+                    TEMPORARY_ALLOW_LIST_TYPE_FOREGROUND_SERVICE_NOT_ALLOWED);
+            // allow temp allowlist to expire.
+            SystemClock.sleep(TEMP_ALLOWLIST_DURATION_MS);
+        }
+    }
+
+    /**
+     * Test temp allowlist reasonCode in BroadcastOptions.
+     * When REASON_PUSH_MESSAGING_OVER_QUOTA, DeviceIdleController changes temp allowlist type to
+     * TEMPORARY_ALLOWLIST_TYPE_FOREGROUND_SERVICE_NOT_ALLOWED so FGS start is not allowed.
+     * When REASON_DENIED (-1), DeviceIdleController changes temp allowlist type to
+     * TEMPORARY_ALLOWLIST_TYPE_NONE, the temp allowlist itself is not allowed.
+     * All other reason codes, DeviceIdleController does not change temp allowlist type.
+     */
+    @Test
+    public void testTempAllowListReasonCode() throws Exception {
+        // FGS start is temp allowed.
+        testTempAllowListReasonCodeInternal(REASON_PUSH_MESSAGING);
+        // FGS start is not allowed.
+        testTempAllowListReasonCodeInternal(REASON_PUSH_MESSAGING_OVER_QUOTA);
+        // Temp allowlist itself is not allowed. REASON_DENIED is not exposed in
+        // PowerExemptionManager, just use its value "-1" here.
+        testTempAllowListReasonCodeInternal(-1);
+    }
+
+    private void testTempAllowListReasonCodeInternal(int reasonCode) throws Exception {
+        ApplicationInfo app1Info = mContext.getPackageManager().getApplicationInfo(
+                PACKAGE_NAME_APP1, 0);
+        ApplicationInfo app2Info = mContext.getPackageManager().getApplicationInfo(
+                PACKAGE_NAME_APP2, 0);
+        WatchUidRunner uid1Watcher = new WatchUidRunner(mInstrumentation, app1Info.uid,
+                WAITFOR_MSEC);
+        WatchUidRunner uid2Watcher = new WatchUidRunner(mInstrumentation, app2Info.uid,
+                WAITFOR_MSEC);
+        try {
+            // Enable the FGS background startForeground() restriction.
+            enableFgsRestriction(true, true, null);
+            // Now it can start FGS.
+            WaitForBroadcast waiter = new WaitForBroadcast(mInstrumentation.getTargetContext());
+            waiter.prepare(ACTION_START_FGS_RESULT);
+            runWithShellPermissionIdentity(()-> {
+                final BroadcastOptions options = BroadcastOptions.makeBasic();
+                // setTemporaryAppAllowlist API requires
+                // START_FOREGROUND_SERVICES_FROM_BACKGROUND permission.
+                options.setTemporaryAppAllowlist(TEMP_ALLOWLIST_DURATION_MS,
+                        TEMPORARY_ALLOW_LIST_TYPE_FOREGROUND_SERVICE_ALLOWED, reasonCode,
+                        "");
+                // Must use Shell to issue this command because Shell has
+                // START_FOREGROUND_SERVICES_FROM_BACKGROUND permission.
+                CommandReceiver.sendCommandWithBroadcastOptions(mContext,
+                        CommandReceiver.COMMAND_START_FOREGROUND_SERVICE,
+                        PACKAGE_NAME_APP1, PACKAGE_NAME_APP2, 0, null,
+                        options.toBundle());
+            });
+            if (reasonCode == REASON_PUSH_MESSAGING) {
+                uid2Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE);
+                waiter.doWait(WAITFOR_MSEC);
+                // Stop the FGS.
+                CommandReceiver.sendCommand(mContext,
+                        CommandReceiver.COMMAND_STOP_FOREGROUND_SERVICE,
+                        PACKAGE_NAME_APP1, PACKAGE_NAME_APP2, 0, null);
+                uid2Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
+                        WatchUidRunner.STATE_CACHED_EMPTY);
+            } else if (reasonCode == REASON_PUSH_MESSAGING_OVER_QUOTA) {
+                // APP1 does not enter FGS state
+                try {
+                    waiter.doWait(WAITFOR_MSEC);
+                    fail("Service should not enter foreground service state");
+                } catch (Exception e) {
+                }
+            }
+        } finally {
+            uid1Watcher.finish();
+            uid2Watcher.finish();
+            // Sleep to let the temp allowlist expire so it won't affect next test case.
+            SystemClock.sleep(TEMP_ALLOWLIST_DURATION_MS);
+        }
+    }
+
+    /**
      * Turn on the FGS BG-launch restriction. DeviceConfig can turn on restriction on the whole
      * device (across all apps). AppCompat can turn on restriction on a single app package.
      * @param enable true to turn on restriction, false to turn off.
@@ -1539,5 +1708,15 @@ public class ActivityManagerFgsBgStartTest {
         CtsAppTestUtils.executeShellCmd(mInstrumentation,
                 "appops set " + packageName + " " + opStr + " "
                         + (allow ? "allow" : "deny"));
+    }
+
+    private void setPushMessagingOverQuotaBehavior(
+            /* @PowerExemptionManager.TempAllowListType */ int type) throws Exception {
+        runWithShellPermissionIdentity(() -> {
+                    DeviceConfig.setProperty("activity_manager",
+                            KEY_PUSH_MESSAGING_OVER_QUOTA_BEHAVIOR,
+                            Integer.toString(type), false);
+                }
+        );
     }
 }
