@@ -117,6 +117,65 @@ public class SipDelegateManagerTest {
         }
     }
 
+    /**
+     * Encapsulates the interfaces created during SipDelegateManager testing.
+     */
+    public class TransportInterfaces {
+        public final DelegateRequest request;
+        public final Set<FeatureTagState> deniedTags;
+        public final SipDelegateManager manager;
+        public TestSipTransport transport;
+        public TestImsRegistration reg;
+        public TestSipDelegate delegate;
+        public TestSipDelegateConnection delegateConn;
+        private final int mDelegateIndex;
+
+        public TransportInterfaces(DelegateRequest request, Set<FeatureTagState>  deniedTags,
+                int delegateIndex) {
+            this.request = request;
+            this.deniedTags = deniedTags;
+            manager = getSipDelegateManager();
+            mDelegateIndex = delegateIndex;
+        }
+
+        public void connect() throws Exception {
+            assertTrue(sServiceConnector.setDefaultSmsApp());
+            connectTestImsServiceWithSipTransportAndConfig();
+
+            transport = sServiceConnector.getCarrierService().getSipTransport();
+            reg = sServiceConnector.getCarrierService().getImsRegistration();
+            delegateConn = new TestSipDelegateConnection(request);
+
+            delegate = createSipDelegateConnectionAndVerify(manager, delegateConn,
+                    transport, deniedTags, mDelegateIndex);
+            assertNotNull(delegate);
+            // ensure we got a callback for initial reg state.
+            verifyUpdateRegistrationCalled(reg);
+
+            InetSocketAddress localAddr = new InetSocketAddress(
+                    InetAddresses.parseNumericAddress("1.1.1.1"), 80);
+            InetSocketAddress serverAddr = new InetSocketAddress(
+                    InetAddresses.parseNumericAddress("2.2.2.2"), 81);
+            SipDelegateConfiguration c = new SipDelegateConfiguration.Builder(1,
+                    SipDelegateConfiguration.SIP_TRANSPORT_TCP, localAddr, serverAddr).build();
+            // send first SIP config and verify
+            verifyRegisteredAndSendSipConfig(delegateConn, delegate, request.getFeatureTags(),
+                    deniedTags, c);
+        }
+
+        /**
+         * Create a connection between fake app interface and fake ImsService impl and set up the
+         * framework to accept incoming/outgoing messages. Once done, verify the transport is open.
+         */
+        public void connectAndVerify() throws Exception {
+            connect();
+
+            // Verify message transport is open.
+            verifyOutgoingTransport(delegateConn, delegate);
+            verifyIncomingTransport(delegateConn, delegate);
+        }
+    }
+
     private static int sTestSlot = 0;
     private static int sTestSub = SubscriptionManager.INVALID_SUBSCRIPTION_ID;
     private static ImsServiceConnector sServiceConnector;
@@ -496,7 +555,7 @@ public class SipDelegateManagerTest {
         createSipDelegateConnectionNoDelegateExpected(manager, delegateConn, transportImpl);
 
         // TODO deal with this case better when we can filter messages.
-        delegateConn.sendMessageAndVerifyFailure(ImsUtils.TEST_SIP_MESSAGE,
+        delegateConn.sendMessageAndVerifyFailure(SipMessageUtils.TEST_SIP_MESSAGE,
                 SipDelegateManager.MESSAGE_FAILURE_REASON_DELEGATE_DEAD);
 
         delegateConn.triggerFullNetworkRegistration(manager, 403, "FORBIDDEN");
@@ -513,40 +572,17 @@ public class SipDelegateManagerTest {
         if (!ImsUtils.shouldTestImsService()) {
             return;
         }
-        assertTrue(sServiceConnector.setDefaultSmsApp());
-        connectTestImsServiceWithSipTransportAndConfig();
-
-        TestSipTransport transportImpl = sServiceConnector.getCarrierService().getSipTransport();
-        TestImsRegistration regImpl = sServiceConnector.getCarrierService().getImsRegistration();
-        SipDelegateManager manager = getSipDelegateManager();
-        DelegateRequest request = getDefaultRequest();
-        TestSipDelegateConnection delegateConn = new TestSipDelegateConnection(request);
-
-        TestSipDelegate delegate = createSipDelegateConnectionAndVerify(manager, delegateConn,
-                transportImpl, Collections.emptySet(), 0);
-        assertNotNull(delegate);
-        verifyUpdateRegistrationCalled(regImpl);
-
-        InetSocketAddress localAddr = new InetSocketAddress(
-                InetAddresses.parseNumericAddress("1.1.1.1"), 80);
-        InetSocketAddress serverAddr = new InetSocketAddress(
-                InetAddresses.parseNumericAddress("2.2.2.2"), 81);
-        SipDelegateConfiguration c = new SipDelegateConfiguration.Builder(1,
-                SipDelegateConfiguration.SIP_TRANSPORT_TCP, localAddr, serverAddr).build();
-        verifyRegisteredAndSendSipConfig(delegateConn, delegate, request.getFeatureTags(),
-                Collections.emptySet(), c);
-
-        sendMessageAndVerifyAck(delegateConn, delegate);
-        receiveMessageAndVerifyAck(delegateConn, delegate);
+        TransportInterfaces ifaces = new TransportInterfaces(getDefaultRequest(),
+                Collections.emptySet(), 0);
+        ifaces.connectAndVerify();
 
         // Ensure requests to perform a full network re-registration work properly.
-        verifyFullRegistrationTriggered(manager, regImpl, delegateConn);
+        verifyFullRegistrationTriggered(ifaces);
 
-        destroySipDelegateAndVerify(manager, transportImpl, delegateConn, delegate,
-                request.getFeatureTags());
+        destroySipDelegateAndVerify(ifaces);
         assertEquals("There should be no more delegates", 0,
-                transportImpl.getDelegates().size());
-        verifyUpdateRegistrationCalled(regImpl);
+                ifaces.transport.getDelegates().size());
+        verifyUpdateRegistrationCalled(ifaces.reg);
     }
 
     @Test
@@ -577,8 +613,8 @@ public class SipDelegateManagerTest {
         verifyRegisteredAndSendSipConfig(delegateConn, delegate, request.getFeatureTags(),
                 Collections.emptySet(), c);
 
-        sendMessageAndVerifyAck(delegateConn, delegate);
-        receiveMessageAndVerifyAck(delegateConn, delegate);
+        verifyOutgoingTransport(delegateConn, delegate);
+        verifyIncomingTransport(delegateConn, delegate);
 
         sServiceConnector.disconnectCarrierImsService();
         // unbind ImsService suddenly and wait for on destroyed
@@ -596,39 +632,19 @@ public class SipDelegateManagerTest {
         if (!ImsUtils.shouldTestImsService()) {
             return;
         }
-        assertTrue(sServiceConnector.setDefaultSmsApp());
-        connectTestImsServiceWithSipTransportAndConfig();
-
-        TestSipTransport transportImpl = sServiceConnector.getCarrierService().getSipTransport();
-        TestImsRegistration regImpl = sServiceConnector.getCarrierService().getImsRegistration();
-        SipDelegateManager manager = getSipDelegateManager();
-        DelegateRequest request = getDefaultRequest();
-        TestSipDelegateConnection delegateConn = new TestSipDelegateConnection(request);
-
-        TestSipDelegate delegate = createSipDelegateConnectionAndVerify(manager, delegateConn,
-                transportImpl, Collections.emptySet(), 0);
-        assertNotNull(delegate);
-        verifyUpdateRegistrationCalled(regImpl);
-
-        InetSocketAddress localAddr = new InetSocketAddress(
-                InetAddresses.parseNumericAddress("1.1.1.1"), 80);
-        InetSocketAddress serverAddr = new InetSocketAddress(
-                InetAddresses.parseNumericAddress("2.2.2.2"), 81);
-        SipDelegateConfiguration c = new SipDelegateConfiguration.Builder(1,
-                SipDelegateConfiguration.SIP_TRANSPORT_TCP, localAddr, serverAddr).build();
-        verifyRegisteredAndSendSipConfig(delegateConn, delegate, request.getFeatureTags(),
-                Collections.emptySet(), c);
+        TransportInterfaces ifaces = new TransportInterfaces(getDefaultRequest(),
+                Collections.emptySet(), 0);
+        ifaces.connectAndVerify();
 
         // Verify restricted SIP request methods are not sent to the delegate.
-        sendRestrictedRequestsAndVerifyFailed(delegateConn);
+        sendRestrictedRequestsAndVerifyFailed(ifaces.delegateConn);
         // Verify malformed messages are not sent to the delegate.
-        sendInvalidRequestsAndVerifyFailed(delegateConn);
+        sendInvalidRequestsAndVerifyFailed(ifaces.delegateConn);
 
-        destroySipDelegateAndVerify(manager, transportImpl, delegateConn, delegate,
-                request.getFeatureTags());
+        destroySipDelegateAndVerify(ifaces);
         assertEquals("There should be no more delegates", 0,
-                transportImpl.getDelegates().size());
-        verifyUpdateRegistrationCalled(regImpl);
+                ifaces.transport.getDelegates().size());
+        verifyUpdateRegistrationCalled(ifaces.reg);
     }
 
     @Test
@@ -652,8 +668,7 @@ public class SipDelegateManagerTest {
         verifyRegisteredAndSendOldSipConfig(delegateConn, delegate, request.getFeatureTags(),
                 Collections.emptySet());
 
-        destroySipDelegateAndVerify(manager, transportImpl, delegateConn, delegate,
-                request.getFeatureTags());
+        destroySipDelegateAndVerifyConnDestroyed(manager, transportImpl, delegateConn, delegate);
         assertEquals("There should be no more delegates", 0,
                 transportImpl.getDelegates().size());
         verifyUpdateRegistrationCalled(regImpl);
@@ -664,52 +679,28 @@ public class SipDelegateManagerTest {
         if (!ImsUtils.shouldTestImsService()) {
             return;
         }
-        assertTrue(sServiceConnector.setDefaultSmsApp());
-        connectTestImsServiceWithSipTransportAndConfig();
-
-        TestSipTransport transportImpl = sServiceConnector.getCarrierService().getSipTransport();
-        SipDelegateManager manager = getSipDelegateManager();
-        DelegateRequest request = getDefaultRequest();
-        TestSipDelegateConnection delegateConn = new TestSipDelegateConnection(request);
-
-        // Construct registered tags and denied tags, vendor denied FT tag.
-        Set<String> registeredTags = new ArraySet<>(request.getFeatureTags());
-        registeredTags.remove(FILE_TRANSFER_HTTP_TAG);
-        Set<FeatureTagState> deniedTags = new ArraySet<>(1);
-        deniedTags.add(new FeatureTagState(FILE_TRANSFER_HTTP_TAG,
-                SipDelegateManager.DENIED_REASON_IN_USE_BY_ANOTHER_DELEGATE));
-        TestSipDelegate delegate = createSipDelegateConnectionAndVerify(manager, delegateConn,
-                transportImpl, deniedTags, 0);
-        assertNotNull(delegate);
-
-        InetSocketAddress localAddr = new InetSocketAddress(
-                InetAddresses.parseNumericAddress("1.1.1.1"), 80);
-        InetSocketAddress serverAddr = new InetSocketAddress(
-                InetAddresses.parseNumericAddress("2.2.2.2"), 81);
-        SipDelegateConfiguration c = new SipDelegateConfiguration.Builder(1,
-                SipDelegateConfiguration.SIP_TRANSPORT_TCP, localAddr, serverAddr).build();
-        verifyRegisteredAndSendSipConfig(delegateConn, delegate, registeredTags, deniedTags, c);
-
-        // TODO verify messages can be sent on registered tags, but generate error for denied tags.
+        TransportInterfaces ifaces = new TransportInterfaces(getDefaultRequest(),
+                Collections.emptySet(), 0);
+        ifaces.connectAndVerify();
+        Set<String> registeredTags = new ArraySet<>(ifaces.request.getFeatureTags());
 
         // move reg state to deregistering and then deregistered
-        delegateConn.setOperationCountDownLatch(1);
+        ifaces.delegateConn.setOperationCountDownLatch(1);
         DelegateRegistrationState s = getDeregisteringState(registeredTags,
                 DelegateRegistrationState.DEREGISTERING_REASON_PDN_CHANGE);
-        delegate.notifyImsRegistrationUpdate(s);
-        delegateConn.waitForCountDown(ImsUtils.TEST_TIMEOUT_MS);
-        delegateConn.verifyRegistrationStateEquals(s);
+        ifaces.delegate.notifyImsRegistrationUpdate(s);
+        ifaces.delegateConn.waitForCountDown(ImsUtils.TEST_TIMEOUT_MS);
+        ifaces.delegateConn.verifyRegistrationStateEquals(s);
 
-        delegateConn.setOperationCountDownLatch(1);
+        ifaces.delegateConn.setOperationCountDownLatch(1);
         s = getRegisteredRegistrationState(registeredTags);
-        delegate.notifyImsRegistrationUpdate(s);
-        delegateConn.waitForCountDown(ImsUtils.TEST_TIMEOUT_MS);
-        delegateConn.verifyRegistrationStateEquals(s);
+        ifaces.delegate.notifyImsRegistrationUpdate(s);
+        ifaces.delegateConn.waitForCountDown(ImsUtils.TEST_TIMEOUT_MS);
+        ifaces.delegateConn.verifyRegistrationStateEquals(s);
 
-        destroySipDelegateAndVerify(manager, transportImpl, delegateConn, delegate,
-                registeredTags);
+        destroySipDelegateAndVerify(ifaces);
         assertEquals("There should be no more delegates", 0,
-                transportImpl.getDelegates().size());
+                ifaces.transport.getDelegates().size());
     }
 
     @Test
@@ -755,21 +746,16 @@ public class SipDelegateManagerTest {
                 deniedSet, c);
 
         // Destroying delegate 1 will transfer all feature tags over to delegate 2
-        delegateConn2.setOperationCountDownLatch(1);
-        destroySipDelegateAndVerify(manager, transportImpl, delegateConn1, delegate1,
-                registeredTags1);
-        delegateConn2.waitForCountDown(ImsUtils.TEST_TIMEOUT_MS);
+        destroySipDelegate(manager, transportImpl, delegateConn1, delegate1);
         // This internally triggers the destruction of the internal delegate2 and then recreation
         // of another delegate with the new feature set that it supports.
-        verifySipDelegateDestroyed(transportImpl, delegateConn2, delegate2, registeredTags2,
-                DelegateRegistrationState.DEREGISTERING_REASON_FEATURE_TAGS_CHANGING);
+        verifySipDelegateDestroyed(transportImpl, delegate2);
         delegate2 = getSipDelegate(transportImpl, Collections.emptySet(), 0);
         verifyUpdateRegistrationCalled(regImpl);
         verifyRegisteredAndSendSipConfig(delegateConn2, delegate2, request2.getFeatureTags(),
                 Collections.emptySet(), c);
 
-        destroySipDelegateAndVerify(manager, transportImpl, delegateConn2, delegate2,
-                request2.getFeatureTags());
+        destroySipDelegateAndVerifyConnDestroyed(manager, transportImpl, delegateConn2, delegate2);
         assertEquals("There should be no more delegates", 0,
                 transportImpl.getDelegates().size());
     }
@@ -806,8 +792,7 @@ public class SipDelegateManagerTest {
                 SipDelegateConfiguration.SIP_TRANSPORT_TCP, localAddr, serverAddr).build();
         verifyRegisteredAndSendSipConfig(delegateConn, delegate, request.getFeatureTags(),
                 Collections.emptySet(), c);
-        destroySipDelegateAndVerify(manager, transportImpl, delegateConn, delegate,
-                request.getFeatureTags());
+        destroySipDelegateAndVerifyConnDestroyed(manager, transportImpl, delegateConn, delegate);
         assertEquals("There should be no more delegates", 0,
                 transportImpl.getDelegates().size());
     }
@@ -818,52 +803,30 @@ public class SipDelegateManagerTest {
             return;
         }
         // Make this app the DMA
-        assertTrue(sServiceConnector.setDefaultSmsApp());
-        connectTestImsServiceWithSipTransportAndConfig();
-        TestSipTransport transportImpl = sServiceConnector.getCarrierService().getSipTransport();
-        TestImsRegistration regImpl = sServiceConnector.getCarrierService().getImsRegistration();
-        SipDelegateManager manager = getSipDelegateManager();
-
-        DelegateRequest request = getDefaultRequest();
-        TestSipDelegateConnection delegateConn = new TestSipDelegateConnection(request);
-        TestSipDelegate delegate = createSipDelegateConnectionAndVerify(manager, delegateConn,
-                transportImpl, Collections.emptySet(), 0);
-        assertNotNull(delegate);
-        verifyUpdateRegistrationCalled(regImpl);
-
-        InetSocketAddress localAddr = new InetSocketAddress(
-                InetAddresses.parseNumericAddress("1.1.1.1"), 80);
-        InetSocketAddress serverAddr = new InetSocketAddress(
-                InetAddresses.parseNumericAddress("2.2.2.2"), 81);
-        SipDelegateConfiguration c = new SipDelegateConfiguration.Builder(1,
-                SipDelegateConfiguration.SIP_TRANSPORT_TCP, localAddr, serverAddr).build();
-        verifyRegisteredAndSendSipConfig(delegateConn, delegate, request.getFeatureTags(),
-                Collections.emptySet(), c);
-
+        TransportInterfaces ifaces = new TransportInterfaces(getDefaultRequest(),
+                Collections.emptySet(), 0);
+        ifaces.connectAndVerify();
 
         // Move DMA to another app, we should receive a registration update.
-        delegateConn.setOperationCountDownLatch(1);
-        regImpl.resetLatch(TestImsRegistration.LATCH_TRIGGER_DEREGISTRATION, 1);
+        ifaces.reg.resetLatch(TestImsRegistration.LATCH_TRIGGER_DEREGISTRATION, 1);
         sServiceConnector.restoreDefaultSmsApp();
-        assertTrue(regImpl.waitForLatchCountDown(TestImsRegistration.LATCH_TRIGGER_DEREGISTRATION,
-                ImsUtils.TEST_TIMEOUT_MS));
-        delegateConn.waitForCountDown(ImsUtils.TEST_TIMEOUT_MS);
+        assertTrue(ifaces.reg.waitForLatchCountDown(
+                TestImsRegistration.LATCH_TRIGGER_DEREGISTRATION, ImsUtils.TEST_TIMEOUT_MS));
         // we should get another reg update with all tags denied.
-        delegateConn.setOperationCountDownLatch(1);
-        verifySipDelegateDestroyed(transportImpl, delegateConn, delegate, request.getFeatureTags(),
-                DelegateRegistrationState.DEREGISTERING_REASON_FEATURE_TAGS_CHANGING);
-        delegateConn.waitForCountDown(ImsUtils.TEST_TIMEOUT_MS);
-        delegateConn.verifyRegistrationStateEmpty();
+        ifaces.delegateConn.setOperationCountDownLatch(1);
+        verifySipDelegateDestroyed(ifaces.transport, ifaces.delegate);
+        ifaces.delegateConn.waitForCountDown(ImsUtils.TEST_TIMEOUT_MS);
+        ifaces.delegateConn.verifyRegistrationStateEmpty();
         // All requested features should have been denied due to the app not being the default sms
         // app.
-        delegateConn.verifyAllDenied(SipDelegateManager.DENIED_REASON_NOT_ALLOWED);
+        ifaces.delegateConn.verifyAllDenied(SipDelegateManager.DENIED_REASON_NOT_ALLOWED);
         // There should not be any delegates left, as the only delegate should have been cleaned up.
         assertEquals("SipDelegate should not have any delegates", 0,
-                transportImpl.getDelegates().size());
-        verifyUpdateRegistrationCalled(regImpl);
-
-        destroySipDelegateConnectionNoDelegate(manager, delegateConn);
+                ifaces.transport.getDelegates().size());
+        verifyUpdateRegistrationCalled(ifaces.reg);
+        destroySipDelegateConnectionNoDelegate(ifaces.manager, ifaces.delegateConn);
     }
+
     @Test
     public void testParcelUnparcelDelegateRequest() {
         ArraySet<String> testTags = new ArraySet<>();
@@ -1061,7 +1024,6 @@ public class SipDelegateManagerTest {
         assertTrue(sServiceConnector.setDefaultSmsApp());
         connectTestImsServiceWithSipTransportAndConfig();
         TestSipTransport transportImpl = sServiceConnector.getCarrierService().getSipTransport();
-        TestImsRegistration regImpl = sServiceConnector.getCarrierService().getImsRegistration();
         SipDelegateManager manager = getSipDelegateManager();
         DelegateRequest request = getDefaultRequest();
         TestSipDelegateConnection delegateConn = new TestSipDelegateConnection(request);
@@ -1080,10 +1042,608 @@ public class SipDelegateManagerTest {
         delegate.notifyImsRegistrationUpdate(s);
         delegateConn.waitForCountDown(ImsUtils.TEST_TIMEOUT_MS);
         delegateConn.verifyRegistrationStateEquals(s);
-        destroySipDelegateAndVerify(manager, transportImpl, delegateConn, delegate, registeredTags);
+        destroySipDelegateAndVerifyConnDestroyed(manager, transportImpl, delegateConn, delegate);
         assertEquals("There should be no more delegates", 0,
                 transportImpl.getDelegates().size());
         setFeatureTagsCarrierAllowed(getDefaultRequest().getFeatureTags().toArray(new String[0]));
+    }
+
+    @Test
+    public void testCloseActiveDialog() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+        TransportInterfaces ifaces = new TransportInterfaces(getDefaultRequest(),
+                Collections.emptySet(), 0);
+        ifaces.connect();
+        // Send invite
+        SipDialogAttributes attr = new SipDialogAttributes();
+        sendChatInvite(attr, ifaces);
+        // send close from app
+        ifaces.delegateConn.disconnect(ifaces.manager,
+                SipDelegateManager.SIP_DELEGATE_DESTROY_REASON_REQUESTED_BY_APP);
+        // Registration state will change to deregistering during this time.
+        ifaces.delegateConn.setOperationCountDownLatch(1);
+        ifaces.delegateConn.waitForCountDown(ImsUtils.TEST_TIMEOUT_MS);
+        assertTrue(ifaces.delegateConn.verifyDeregisteringStateContains(ONE_TO_ONE_CHAT_TAG,
+                DelegateRegistrationState.DEREGISTERING_REASON_DESTROY_PENDING));
+        // receive 200 OK
+        receive200OkResponse(attr, ifaces);
+        // Send ACK
+        sendAck(attr, ifaces);
+        // Send BYE
+        sendByeRequest(attr, ifaces);
+        // destroy should not be called until cleanupSession is sent.
+        assertFalse(ifaces.transport.isLatchCountDownFinished(
+                TestSipTransport.LATCH_DESTROY_DELEGATE));
+
+        ifaces.delegateConn.setOperationCountDownLatch(1);
+        // Send the cleanup, which will trigger destroy to complete.
+        ifaces.delegateConn.sendCleanupSession(attr.callId);
+        ifaces.delegate.verifyCleanupSession(attr.callId);
+        ifaces.transport.waitForLatchCountdownAndReset(TestSipTransport.LATCH_DESTROY_DELEGATE);
+        ifaces.delegate.notifyOnDestroyed(
+                SipDelegateManager.SIP_DELEGATE_DESTROY_REASON_REQUESTED_BY_APP);
+        ifaces.delegateConn.waitForCountDown(ImsUtils.TEST_TIMEOUT_MS);
+        ifaces.delegateConn.verifyDestroyed(
+                SipDelegateManager.SIP_DELEGATE_DESTROY_REASON_REQUESTED_BY_APP);
+
+        assertEquals("There should be no more delegates", 0,
+                ifaces.transport.getDelegates().size());
+        verifyUpdateRegistrationCalled(ifaces.reg);
+    }
+
+    @Test
+    public void testReceivedActiveDialogClose() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+        TransportInterfaces ifaces = new TransportInterfaces(getDefaultRequest(),
+                Collections.emptySet(), 0);
+        ifaces.connect();
+        // receive invite
+        SipDialogAttributes attr = new SipDialogAttributes();
+        receiveChatInvite(attr, ifaces);
+        // send close from app
+        ifaces.delegateConn.disconnect(ifaces.manager,
+                SipDelegateManager.SIP_DELEGATE_DESTROY_REASON_REQUESTED_BY_APP);
+        // Registration state will change to deregistering during this time.
+        ifaces.delegateConn.setOperationCountDownLatch(1);
+        ifaces.delegateConn.waitForCountDown(ImsUtils.TEST_TIMEOUT_MS);
+        assertTrue(ifaces.delegateConn.verifyDeregisteringStateContains(ONE_TO_ONE_CHAT_TAG,
+                DelegateRegistrationState.DEREGISTERING_REASON_DESTROY_PENDING));
+        // Send 200 OK
+        send200OkResponse(attr, ifaces);
+        // receive ACK
+        receiveAck(attr, ifaces);
+        // Send BYE
+        receiveByeRequest(attr, ifaces);
+        ifaces.delegateConn.setOperationCountDownLatch(1);
+        // Send the cleanup, which will trigger destroy to complete.
+        ifaces.delegateConn.sendCleanupSession(attr.callId);
+        ifaces.delegate.verifyCleanupSession(attr.callId);
+        ifaces.transport.waitForLatchCountdownAndReset(TestSipTransport.LATCH_DESTROY_DELEGATE);
+        ifaces.delegate.notifyOnDestroyed(
+                SipDelegateManager.SIP_DELEGATE_DESTROY_REASON_REQUESTED_BY_APP);
+        ifaces.delegateConn.waitForCountDown(ImsUtils.TEST_TIMEOUT_MS);
+        ifaces.delegateConn.verifyDestroyed(
+                SipDelegateManager.SIP_DELEGATE_DESTROY_REASON_REQUESTED_BY_APP);
+
+        assertEquals("There should be no more delegates", 0,
+                ifaces.transport.getDelegates().size());
+        verifyUpdateRegistrationCalled(ifaces.reg);
+    }
+
+    @Test
+    public void testActiveDialogPendingNewInvite() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+        TransportInterfaces ifaces = new TransportInterfaces(getDefaultRequest(),
+                Collections.emptySet(), 0);
+        ifaces.connect();
+        // Send invite
+        SipDialogAttributes attr = new SipDialogAttributes();
+        sendChatInvite(attr, ifaces);
+        // send close from app
+        ifaces.delegateConn.disconnect(ifaces.manager,
+                SipDelegateManager.SIP_DELEGATE_DESTROY_REASON_REQUESTED_BY_APP);
+        // Registration state will change to deregistering during this time.
+        ifaces.delegateConn.setOperationCountDownLatch(1);
+        ifaces.delegateConn.waitForCountDown(ImsUtils.TEST_TIMEOUT_MS);
+        assertTrue(ifaces.delegateConn.verifyDeregisteringStateContains(ONE_TO_ONE_CHAT_TAG,
+                DelegateRegistrationState.DEREGISTERING_REASON_DESTROY_PENDING));
+        // receive 200 OK
+        receive200OkResponse(attr, ifaces);
+        // Send ACK
+        sendAck(attr, ifaces);
+        // Send invite
+        SipDialogAttributes attr2 = new SipDialogAttributes();
+        attr2.addAcceptContactTag(ONE_TO_ONE_CHAT_TAG);
+        // Should be denied because the transport is now restricted
+        sendDeniedChatInvite(attr2, ifaces,
+                SipDelegateManager.MESSAGE_FAILURE_REASON_DELEGATE_CLOSED);
+        // Send BYE on original invite
+        sendByeRequest(attr, ifaces);
+        // destroy should not be called until cleanupSession is sent.
+        assertFalse(ifaces.transport.isLatchCountDownFinished(
+                TestSipTransport.LATCH_DESTROY_DELEGATE));
+        ifaces.delegateConn.setOperationCountDownLatch(1);
+        // Send the cleanup, which will trigger destroy to complete.
+        ifaces.delegateConn.sendCleanupSession(attr.callId);
+        ifaces.delegate.verifyCleanupSession(attr.callId);
+        ifaces.transport.waitForLatchCountdownAndReset(TestSipTransport.LATCH_DESTROY_DELEGATE);
+        ifaces.delegate.notifyOnDestroyed(
+                SipDelegateManager.SIP_DELEGATE_DESTROY_REASON_REQUESTED_BY_APP);
+        ifaces.delegateConn.waitForCountDown(ImsUtils.TEST_TIMEOUT_MS);
+        ifaces.delegateConn.verifyDestroyed(
+                SipDelegateManager.SIP_DELEGATE_DESTROY_REASON_REQUESTED_BY_APP);
+
+        assertEquals("There should be no more delegates", 0,
+                ifaces.transport.getDelegates().size());
+        verifyUpdateRegistrationCalled(ifaces.reg);
+    }
+
+    @Test
+    public void testCloseSessionByePendingCleanup() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+        TransportInterfaces ifaces = new TransportInterfaces(getDefaultRequest(),
+                Collections.emptySet(), 0);
+        ifaces.connect();
+        // Send invite
+        SipDialogAttributes attr = new SipDialogAttributes();
+        sendChatInvite(attr, ifaces);
+        // send close from app
+        ifaces.delegateConn.disconnect(ifaces.manager,
+                SipDelegateManager.SIP_DELEGATE_DESTROY_REASON_REQUESTED_BY_APP);
+        // receive 200 OK
+        receive200OkResponse(attr, ifaces);
+        // Send ACK
+        sendAck(attr, ifaces);
+        // Send BYE
+        sendByeRequest(attr, ifaces);
+        assertFalse(ifaces.transport.isLatchCountDownFinished(
+                TestSipTransport.LATCH_DESTROY_DELEGATE));
+        // Registration state will change to deregistering during this time.
+        ifaces.delegateConn.setOperationCountDownLatch(1);
+        ifaces.delegateConn.waitForCountDown(ImsUtils.TEST_TIMEOUT_MS);
+        assertTrue(ifaces.delegateConn.verifyDeregisteringStateContains(ONE_TO_ONE_CHAT_TAG,
+                DelegateRegistrationState.DEREGISTERING_REASON_DESTROY_PENDING));
+        // waiting for delegate connection onDestroy to be called.
+        ifaces.delegateConn.setOperationCountDownLatch(1);
+        // no cleanupSession called, so cleanup session should be called from internal and then
+        // the delegate should be closed.
+        ifaces.delegate.verifyCleanupSession(attr.callId);
+        ifaces.transport.waitForLatchCountdownAndReset(TestSipTransport.LATCH_DESTROY_DELEGATE);
+        ifaces.delegate.notifyOnDestroyed(
+                SipDelegateManager.SIP_DELEGATE_DESTROY_REASON_REQUESTED_BY_APP);
+        ifaces.delegateConn.waitForCountDown(ImsUtils.TEST_TIMEOUT_MS);
+        ifaces.delegateConn.verifyDestroyed(
+                SipDelegateManager.SIP_DELEGATE_DESTROY_REASON_REQUESTED_BY_APP);
+        assertEquals("There should be no more delegates", 0,
+                ifaces.transport.getDelegates().size());
+        verifyUpdateRegistrationCalled(ifaces.reg);
+    }
+
+    @Test
+    public void testCloseSessionPendingBye() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+        TransportInterfaces ifaces = new TransportInterfaces(getDefaultRequest(),
+                Collections.emptySet(), 0);
+        ifaces.connect();
+        // Send invite
+        SipDialogAttributes attr = new SipDialogAttributes();
+        sendChatInvite(attr, ifaces);
+        // send close from app
+        ifaces.delegateConn.disconnect(ifaces.manager,
+                SipDelegateManager.SIP_DELEGATE_DESTROY_REASON_REQUESTED_BY_APP);
+        // receive 200 OK
+        receive200OkResponse(attr, ifaces);
+        // Send ACK
+        sendAck(attr, ifaces);
+        // Don't send BYE or cleanupSession
+        assertFalse(ifaces.transport.isLatchCountDownFinished(
+                TestSipTransport.LATCH_DESTROY_DELEGATE));
+        // Registration state will change to deregistering during this time.
+        ifaces.delegateConn.setOperationCountDownLatch(1);
+        ifaces.delegateConn.waitForCountDown(ImsUtils.TEST_TIMEOUT_MS);
+        assertTrue(ifaces.delegateConn.verifyDeregisteringStateContains(ONE_TO_ONE_CHAT_TAG,
+                DelegateRegistrationState.DEREGISTERING_REASON_DESTROY_PENDING));
+        // waiting for delegate connection onDestroy to be called.
+        ifaces.delegateConn.setOperationCountDownLatch(1);
+        // no cleanupSession called, so cleanup session should be called from internal and then
+        // the delegate should be closed.
+        ifaces.delegate.verifyCleanupSession(attr.callId);
+        ifaces.transport.waitForLatchCountdownAndReset(TestSipTransport.LATCH_DESTROY_DELEGATE);
+        ifaces.delegate.notifyOnDestroyed(
+                SipDelegateManager.SIP_DELEGATE_DESTROY_REASON_REQUESTED_BY_APP);
+        ifaces.delegateConn.waitForCountDown(ImsUtils.TEST_TIMEOUT_MS);
+        ifaces.delegateConn.verifyDestroyed(
+                SipDelegateManager.SIP_DELEGATE_DESTROY_REASON_REQUESTED_BY_APP);
+        assertEquals("There should be no more delegates", 0,
+                ifaces.transport.getDelegates().size());
+        verifyUpdateRegistrationCalled(ifaces.reg);
+    }
+
+    @Test
+    public void testCloseMultipleSessionsPendingBye() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+        TransportInterfaces ifaces = new TransportInterfaces(getDefaultRequest(),
+                Collections.emptySet(), 0);
+        ifaces.connect();
+        // Send invite 1
+        SipDialogAttributes attr = new SipDialogAttributes();
+        sendChatInvite(attr, ifaces);
+        // Send invite 2
+        SipDialogAttributes attr2 = new SipDialogAttributes();
+        sendChatInvite(attr2, ifaces);
+        // send close from app
+        ifaces.delegateConn.disconnect(ifaces.manager,
+                SipDelegateManager.SIP_DELEGATE_DESTROY_REASON_REQUESTED_BY_APP);
+        // receive 200 OK
+        receive200OkResponse(attr, ifaces);
+        receive200OkResponse(attr2, ifaces);
+        // Send ACK
+        sendAck(attr, ifaces);
+        sendAck(attr2, ifaces);
+        // Don't send BYE or cleanupSession
+        assertFalse(ifaces.transport.isLatchCountDownFinished(
+                TestSipTransport.LATCH_DESTROY_DELEGATE));
+        // Registration state will change to deregistering during this time.
+        ifaces.delegateConn.setOperationCountDownLatch(1);
+        ifaces.delegateConn.waitForCountDown(ImsUtils.TEST_TIMEOUT_MS);
+        assertTrue(ifaces.delegateConn.verifyDeregisteringStateContains(ONE_TO_ONE_CHAT_TAG,
+                DelegateRegistrationState.DEREGISTERING_REASON_DESTROY_PENDING));
+        // waiting for delegate connection onDestroy to be called.
+        ifaces.delegateConn.setOperationCountDownLatch(1);
+        // no cleanupSession called, so cleanup session should be called from internal and then
+        // the delegate should be closed.
+        ifaces.delegate.verifyCleanupSession(attr.callId, attr2.callId);
+        ifaces.transport.waitForLatchCountdownAndReset(TestSipTransport.LATCH_DESTROY_DELEGATE);
+        ifaces.delegate.notifyOnDestroyed(
+                SipDelegateManager.SIP_DELEGATE_DESTROY_REASON_REQUESTED_BY_APP);
+        ifaces.delegateConn.waitForCountDown(ImsUtils.TEST_TIMEOUT_MS);
+        ifaces.delegateConn.verifyDestroyed(
+                SipDelegateManager.SIP_DELEGATE_DESTROY_REASON_REQUESTED_BY_APP);
+        assertEquals("There should be no more delegates", 0,
+                ifaces.transport.getDelegates().size());
+        verifyUpdateRegistrationCalled(ifaces.reg);
+    }
+
+    @Test
+    public void testCloseSessionBye() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+        TransportInterfaces ifaces = new TransportInterfaces(getDefaultRequest(),
+                Collections.emptySet(), 0);
+        ifaces.connect();
+        // Send invite
+        SipDialogAttributes attr = new SipDialogAttributes();
+        sendChatInvite(attr, ifaces);
+        // receive 200 OK
+        receive200OkResponse(attr, ifaces);
+        // Send ACK
+        sendAck(attr, ifaces);
+        // send close from app
+        ifaces.delegateConn.disconnect(ifaces.manager,
+                SipDelegateManager.SIP_DELEGATE_DESTROY_REASON_REQUESTED_BY_APP);
+        // Send BYE
+        sendByeRequest(attr, ifaces);
+        assertFalse(ifaces.transport.isLatchCountDownFinished(
+                TestSipTransport.LATCH_DESTROY_DELEGATE));
+        // Registration state will change to deregistering during this time.
+        ifaces.delegateConn.setOperationCountDownLatch(1);
+        ifaces.delegateConn.waitForCountDown(ImsUtils.TEST_TIMEOUT_MS);
+        assertTrue(ifaces.delegateConn.verifyDeregisteringStateContains(ONE_TO_ONE_CHAT_TAG,
+                DelegateRegistrationState.DEREGISTERING_REASON_DESTROY_PENDING));
+        // waiting for delegate connection onDestroy to be called.
+        ifaces.delegateConn.setOperationCountDownLatch(1);
+        // Send the cleanup, which will trigger destroy to complete.
+        ifaces.delegateConn.sendCleanupSession(attr.callId);
+        ifaces.delegate.verifyCleanupSession(attr.callId);
+        ifaces.transport.waitForLatchCountdownAndReset(TestSipTransport.LATCH_DESTROY_DELEGATE);
+        ifaces.delegate.notifyOnDestroyed(
+                SipDelegateManager.SIP_DELEGATE_DESTROY_REASON_REQUESTED_BY_APP);
+        ifaces.delegateConn.waitForCountDown(ImsUtils.TEST_TIMEOUT_MS);
+        ifaces.delegateConn.verifyDestroyed(
+                SipDelegateManager.SIP_DELEGATE_DESTROY_REASON_REQUESTED_BY_APP);
+        assertEquals("There should be no more delegates", 0,
+                ifaces.transport.getDelegates().size());
+        verifyUpdateRegistrationCalled(ifaces.reg);
+    }
+
+    @Test
+    public void testSwitchAppPendingBye() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+        TransportInterfaces ifaces = new TransportInterfaces(getDefaultRequest(),
+                Collections.emptySet(), 0);
+        ifaces.connect();
+        // Send invite
+        SipDialogAttributes attr = new SipDialogAttributes();
+        sendChatInvite(attr, ifaces);
+        // receive 200 OK
+        receive200OkResponse(attr, ifaces);
+        // Restore the default SMS app.
+        sServiceConnector.restoreDefaultSmsApp();
+        // Registration state will change to deregistering during this time.
+        ifaces.delegateConn.setOperationCountDownLatch(1);
+        ifaces.delegateConn.waitForCountDown(ImsUtils.TEST_TIMEOUT_MS);
+        assertTrue(ifaces.delegateConn.verifyDeregisteringStateContains(ONE_TO_ONE_CHAT_TAG,
+                DelegateRegistrationState.DEREGISTERING_REASON_FEATURE_TAGS_CHANGING));
+        // Don't send BYE or cleanup, session should still be cleaned up.
+        assertFalse(ifaces.transport.isLatchCountDownFinished(
+                TestSipTransport.LATCH_DESTROY_DELEGATE));
+        // wait for delegate connection feature tag state to be updated with denied features.
+        ifaces.delegateConn.setOperationCountDownLatch(1);
+        // verify framework internally calls cleanup on the session before destroy.
+        ifaces.delegate.verifyCleanupSession(attr.callId);
+        ifaces.transport.waitForLatchCountdownAndReset(TestSipTransport.LATCH_DESTROY_DELEGATE);
+        ifaces.delegate.notifyOnDestroyed(
+                SipDelegateManager.SIP_DELEGATE_DESTROY_REASON_REQUESTED_BY_APP);
+        assertEquals("There should be no more delegates", 0,
+                ifaces.transport.getDelegates().size());
+        verifyUpdateRegistrationCalled(ifaces.reg);
+        ifaces.delegateConn.waitForCountDown(ImsUtils.TEST_TIMEOUT_MS);
+        ifaces.delegateConn.verifyRegistrationStateEmpty();
+        ifaces.delegateConn.verifyAllDenied(SipDelegateManager.DENIED_REASON_NOT_ALLOWED);
+    }
+
+    @Test
+    public void testSwitchAppActiveSession() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+        TransportInterfaces ifaces = new TransportInterfaces(getDefaultRequest(),
+                Collections.emptySet(), 0);
+        ifaces.connect();
+        // Send invite
+        SipDialogAttributes attr = new SipDialogAttributes();
+        sendChatInvite(attr, ifaces);
+        // receive 200 OK
+        receive200OkResponse(attr, ifaces);
+        // Restore the default SMS app.
+        sServiceConnector.restoreDefaultSmsApp();
+        // Registration state will change to deregistering during this time.
+        ifaces.delegateConn.setOperationCountDownLatch(1);
+        ifaces.delegateConn.waitForCountDown(ImsUtils.TEST_TIMEOUT_MS);
+        assertTrue(ifaces.delegateConn.verifyDeregisteringStateContains(ONE_TO_ONE_CHAT_TAG,
+                DelegateRegistrationState.DEREGISTERING_REASON_FEATURE_TAGS_CHANGING));
+        // BYE should still be able to be sent
+        sendByeRequest(attr, ifaces);
+        assertFalse(ifaces.transport.isLatchCountDownFinished(
+                TestSipTransport.LATCH_DESTROY_DELEGATE));
+        // wait for delegate connection feature tag state to be updated with denied features.
+        ifaces.delegateConn.setOperationCountDownLatch(1);
+        // Send the cleanup, which will trigger delegate destroy to complete.
+        ifaces.delegateConn.sendCleanupSession(attr.callId);
+        ifaces.delegate.verifyCleanupSession(attr.callId);
+        ifaces.transport.waitForLatchCountdownAndReset(TestSipTransport.LATCH_DESTROY_DELEGATE);
+        ifaces.delegate.notifyOnDestroyed(
+                SipDelegateManager.SIP_DELEGATE_DESTROY_REASON_REQUESTED_BY_APP);
+        assertEquals("There should be no more delegates", 0,
+                ifaces.transport.getDelegates().size());
+        verifyUpdateRegistrationCalled(ifaces.reg);
+        ifaces.delegateConn.waitForCountDown(ImsUtils.TEST_TIMEOUT_MS);
+        ifaces.delegateConn.verifyAllDenied(SipDelegateManager.DENIED_REASON_NOT_ALLOWED);
+    }
+
+    @Test
+    public void testActiveSessionDeregistering() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+        TransportInterfaces ifaces = new TransportInterfaces(getDefaultRequest(),
+                Collections.emptySet(), 0);
+        ifaces.connect();
+        // Send invite
+        SipDialogAttributes attr = new SipDialogAttributes();
+        sendChatInvite(attr, ifaces);
+        // move chat to deregistering
+        Set<String> regFeatures = new ArraySet<>(Arrays.asList(DEFAULT_FEATURE_TAGS));
+        regFeatures.remove(ONE_TO_ONE_CHAT_TAG);
+        DelegateRegistrationState state = getDeregisteringState(regFeatures,
+                Collections.singleton(ONE_TO_ONE_CHAT_TAG),
+                DelegateRegistrationState.DEREGISTERING_REASON_PROVISIONING_CHANGE);
+        verifyRegistrationState(ifaces, state);
+        // receive 200 OK
+        receive200OkResponse(attr, ifaces);
+        // Send ACK
+        sendAck(attr, ifaces);
+        // Send BYE and clean up
+        sendByeRequest(attr, ifaces);
+        ifaces.delegateConn.sendCleanupSession(attr.callId);
+        ifaces.delegate.verifyCleanupSession(attr.callId);
+
+        destroySipDelegateAndVerify(ifaces);
+        assertEquals("There should be no more delegates", 0,
+                ifaces.transport.getDelegates().size());
+        verifyUpdateRegistrationCalled(ifaces.reg);
+    }
+
+    @Test
+    public void testActiveSessionDeregisteringNoResponse() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+        TransportInterfaces ifaces = new TransportInterfaces(getDefaultRequest(),
+                Collections.emptySet(), 0);
+        ifaces.connect();
+        // Send invite
+        SipDialogAttributes attr = new SipDialogAttributes();
+        sendChatInvite(attr, ifaces);
+        // move chat to deregistering
+        Set<String> regFeatures = new ArraySet<>(Arrays.asList(DEFAULT_FEATURE_TAGS));
+        regFeatures.remove(ONE_TO_ONE_CHAT_TAG);
+        DelegateRegistrationState state = getDeregisteringState(regFeatures,
+                Collections.singleton(ONE_TO_ONE_CHAT_TAG),
+                DelegateRegistrationState.DEREGISTERING_REASON_PROVISIONING_CHANGE);
+        verifyRegistrationState(ifaces, state);
+        // receive 200 OK
+        receive200OkResponse(attr, ifaces);
+        // Send ACK
+        sendAck(attr, ifaces);
+        // Don't send BYE or cleanup and ensure that we still get call to clean up after timeout.
+        ifaces.delegate.verifyCleanupSession(attr.callId);
+
+        destroySipDelegateAndVerify(ifaces);
+        assertEquals("There should be no more delegates", 0,
+                ifaces.transport.getDelegates().size());
+        verifyUpdateRegistrationCalled(ifaces.reg);
+    }
+
+    @Test
+    public void testMultipleActiveSessionDeregisteringNoResponse() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+        TransportInterfaces ifaces = new TransportInterfaces(getDefaultRequest(),
+                Collections.emptySet(), 0);
+        ifaces.connect();
+        // Send invite 1
+        SipDialogAttributes attr = new SipDialogAttributes();
+        sendChatInvite(attr, ifaces);
+        // Send invite 2
+        SipDialogAttributes attr2 = new SipDialogAttributes();
+        sendChatInvite(attr2, ifaces);
+        // move chat to deregistering
+        Set<String> regFeatures = new ArraySet<>(Arrays.asList(DEFAULT_FEATURE_TAGS));
+        regFeatures.remove(ONE_TO_ONE_CHAT_TAG);
+        DelegateRegistrationState state = getDeregisteringState(regFeatures,
+                Collections.singleton(ONE_TO_ONE_CHAT_TAG),
+                DelegateRegistrationState.DEREGISTERING_REASON_PROVISIONING_CHANGE);
+        verifyRegistrationState(ifaces, state);
+        // receive 200 OK for invite 1
+        receive200OkResponse(attr, ifaces);
+        // Don't send BYE or cleanup and ensure that we still get call to clean up after timeout.
+        ifaces.delegate.verifyCleanupSession(attr.callId, attr2.callId);
+        destroySipDelegateAndVerify(ifaces);
+        assertEquals("There should be no more delegates", 0,
+                ifaces.transport.getDelegates().size());
+        verifyUpdateRegistrationCalled(ifaces.reg);
+    }
+
+    @Test
+    public void testActiveSessionDeregisteringNewInviteDenied() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+        TransportInterfaces ifaces = new TransportInterfaces(getDefaultRequest(),
+                Collections.emptySet(), 0);
+        ifaces.connect();
+        // Send invite
+        SipDialogAttributes attr = new SipDialogAttributes();
+        sendChatInvite(attr, ifaces);
+        // move chat to deregistering
+        Set<String> regFeatures = new ArraySet<>(Arrays.asList(DEFAULT_FEATURE_TAGS));
+        regFeatures.remove(ONE_TO_ONE_CHAT_TAG);
+        DelegateRegistrationState state = getDeregisteringState(regFeatures,
+                Collections.singleton(ONE_TO_ONE_CHAT_TAG),
+                DelegateRegistrationState.DEREGISTERING_REASON_PROVISIONING_CHANGE);
+        verifyRegistrationState(ifaces, state);
+        // receive 200 OK
+        receive200OkResponse(attr, ifaces);
+        // Send ACK
+        sendAck(attr, ifaces);
+        // send a new invite over the same feature tag, which should be denied because the tag
+        // is deregistering
+        SipDialogAttributes attr2 = new SipDialogAttributes();
+        attr2.addAcceptContactTag(ONE_TO_ONE_CHAT_TAG);
+        sendDeniedChatInvite(attr2, ifaces,
+                SipDelegateManager.MESSAGE_FAILURE_REASON_INVALID_FEATURE_TAG);
+        // Send BYE and clean up
+        sendByeRequest(attr, ifaces);
+        ifaces.delegateConn.sendCleanupSession(attr.callId);
+        ifaces.delegate.verifyCleanupSession(attr.callId);
+
+        destroySipDelegateAndVerify(ifaces);
+        assertEquals("There should be no more delegates", 0,
+                ifaces.transport.getDelegates().size());
+        verifyUpdateRegistrationCalled(ifaces.reg);
+    }
+
+    @Test
+    public void testInviteDeniedTag() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+        // Deny ONE_TO_ONE_CHAT access to this delegate
+        TransportInterfaces ifaces = new TransportInterfaces(getDefaultRequest(),
+                Collections.singleton(new FeatureTagState(ONE_TO_ONE_CHAT_TAG,
+                        SipDelegateManager.DENIED_REASON_IN_USE_BY_ANOTHER_DELEGATE)), 0);
+        ifaces.connect();
+        // send a new invite over the chat feature tag, which should be denied because the tag was
+        // denied
+        SipDialogAttributes attr = new SipDialogAttributes();
+        attr.addAcceptContactTag(ONE_TO_ONE_CHAT_TAG);
+        sendDeniedChatInvite(attr, ifaces,
+                SipDelegateManager.MESSAGE_FAILURE_REASON_INVALID_FEATURE_TAG);
+
+        destroySipDelegateAndVerify(ifaces);
+        assertEquals("There should be no more delegates", 0,
+                ifaces.transport.getDelegates().size());
+        verifyUpdateRegistrationCalled(ifaces.reg);
+    }
+
+    @Test
+    public void testInviteAcceptContactNotAssociated() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+        TransportInterfaces ifaces = new TransportInterfaces(getDefaultRequest(),
+                Collections.emptySet(), 0);
+        ifaces.connect();
+        // send a new invite over the MMTEL feature tag, which is not in the set of feature tags
+        // associated with this delegate.
+        SipDialogAttributes attr = new SipDialogAttributes();
+        attr.addAcceptContactTag(MMTEL_TAG);
+        sendDeniedChatInvite(attr, ifaces,
+                SipDelegateManager.MESSAGE_FAILURE_REASON_INVALID_FEATURE_TAG);
+
+        destroySipDelegateAndVerify(ifaces);
+        assertEquals("There should be no more delegates", 0,
+                ifaces.transport.getDelegates().size());
+        verifyUpdateRegistrationCalled(ifaces.reg);
+    }
+
+    @Test
+    public void testIncomingInviteDeregistering() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+        TransportInterfaces ifaces = new TransportInterfaces(getDefaultRequest(),
+                Collections.emptySet(), 0);
+        ifaces.connect();
+        // move chat to deregistering
+        Set<String> regFeatures = new ArraySet<>(Arrays.asList(DEFAULT_FEATURE_TAGS));
+        regFeatures.remove(ONE_TO_ONE_CHAT_TAG);
+        DelegateRegistrationState state = getDeregisteringState(regFeatures,
+                Collections.singleton(ONE_TO_ONE_CHAT_TAG),
+                DelegateRegistrationState.DEREGISTERING_REASON_PROVISIONING_CHANGE);
+        verifyRegistrationState(ifaces, state);
+        // receive invite, which can not be blocked
+        SipDialogAttributes attr = new SipDialogAttributes();
+        receiveChatInvite(attr, ifaces);
+        // ensure delegate connection can still respond to the request, even if in restricted state.
+        send200OkResponse(attr, ifaces);
+        receiveAck(attr, ifaces);
+        // receive BYE and clean up
+        receiveByeRequest(attr, ifaces);
+        ifaces.delegateConn.sendCleanupSession(attr.callId);
+        ifaces.delegate.verifyCleanupSession(attr.callId);
+
+        destroySipDelegateAndVerify(ifaces);
+        assertEquals("There should be no more delegates", 0,
+                ifaces.transport.getDelegates().size());
+        verifyUpdateRegistrationCalled(ifaces.reg);
     }
 
     private SipMessage generateSipMessage(String str) {
@@ -1123,6 +1683,82 @@ public class SipDelegateManagerTest {
         return index;
     }
 
+    private void sendChatInvite(SipDialogAttributes attr,
+            TransportInterfaces ifaces) throws Exception {
+        SipDialogAttributes invAttr = attr.fromExisting().copyWithNewBranch();
+        invAttr.addAcceptContactTag(ONE_TO_ONE_CHAT_TAG);
+        SipMessage invite = SipMessageUtils.generateSipRequest(SipMessageUtils.INVITE_SIP_METHOD,
+                invAttr);
+        sendMessageAndVerifyAck(invite, ifaces);
+    }
+
+    private void sendDeniedChatInvite(SipDialogAttributes attr,
+            TransportInterfaces ifaces, int denyReason) throws Exception {
+        SipDialogAttributes invAttr = attr.fromExisting().copyWithNewBranch();
+        SipMessage invite = SipMessageUtils.generateSipRequest(SipMessageUtils.INVITE_SIP_METHOD,
+                invAttr);
+        ifaces.delegateConn.sendMessageAndVerifyFailure(invite, denyReason);
+    }
+
+    private void receiveChatInvite(SipDialogAttributes attr,
+            TransportInterfaces ifaces) throws Exception {
+        SipDialogAttributes invAttr = attr.fromExisting().copyWithNewBranch();
+        invAttr.addAcceptContactTag(ONE_TO_ONE_CHAT_TAG);
+        SipMessage invite = SipMessageUtils.generateSipRequest(SipMessageUtils.INVITE_SIP_METHOD,
+                invAttr);
+        receiveMessageAndVerifyAck(invite, ifaces);
+    }
+
+    private void send200OkResponse(SipDialogAttributes attr,
+            TransportInterfaces ifaces) throws Exception {
+        attr.setToTag();
+        // do not update branch here, as it is a response to a request.
+        SipMessage resp = SipMessageUtils.generateSipResponse("200", "OK",
+                attr);
+        sendMessageAndVerifyAck(resp, ifaces);
+    }
+
+    private void receive200OkResponse(SipDialogAttributes attr,
+            TransportInterfaces ifaces) throws Exception {
+        attr.setToTag();
+        // do not update branch here, as it is a response to a request.
+        SipMessage resp = SipMessageUtils.generateSipResponse("200", "OK",
+                attr);
+        receiveMessageAndVerifyAck(resp, ifaces);
+    }
+
+    private void sendAck(SipDialogAttributes attr,
+            TransportInterfaces ifaces) throws Exception {
+        attr = attr.copyWithNewBranch();
+        SipMessage invite = SipMessageUtils.generateSipRequest(SipMessageUtils.ACK_SIP_METHOD,
+                attr);
+        sendMessageAndVerifyAck(invite, ifaces);
+    }
+
+    private void receiveAck(SipDialogAttributes attr,
+            TransportInterfaces ifaces) throws Exception {
+        attr = attr.copyWithNewBranch();
+        SipMessage invite = SipMessageUtils.generateSipRequest(SipMessageUtils.ACK_SIP_METHOD,
+                attr);
+        receiveMessageAndVerifyAck(invite, ifaces);
+    }
+
+    private void sendByeRequest(SipDialogAttributes attr,
+            TransportInterfaces ifaces) throws Exception {
+        attr = attr.copyWithNewBranch();
+        SipMessage invite = SipMessageUtils.generateSipRequest(SipMessageUtils.BYE_SIP_METHOD,
+                attr);
+        sendMessageAndVerifyAck(invite, ifaces);
+    }
+
+    private void receiveByeRequest(SipDialogAttributes attr,
+            TransportInterfaces ifaces) throws Exception {
+        attr = attr.copyWithNewBranch();
+        SipMessage invite = SipMessageUtils.generateSipRequest(SipMessageUtils.BYE_SIP_METHOD,
+                attr);
+        receiveMessageAndVerifyAck(invite, ifaces);
+    }
+
     private void createSipDelegateConnectionNoDelegateExpected(SipDelegateManager manager,
             TestSipDelegateConnection conn, TestSipTransport transport) throws Exception {
         // wait for onCreated and reg state changed
@@ -1150,34 +1786,35 @@ public class SipDelegateManagerTest {
                 SipDelegateManager.SIP_DELEGATE_DESTROY_REASON_REQUESTED_BY_APP);
     }
 
-    private void destroySipDelegateAndVerify(SipDelegateManager manager,
+    private void destroySipDelegate(SipDelegateManager manager,
             TestSipTransport transportImpl, TestSipDelegateConnection delegateConn,
-            TestSipDelegate delegate, Set<String> registeredTags) throws Exception {
-        // wait for registration change upon disconnecting state change
-        delegateConn.setOperationCountDownLatch(1);
+            TestSipDelegate delegate) throws Exception {
         delegateConn.disconnect(manager,
                 SipDelegateManager.SIP_DELEGATE_DESTROY_REASON_REQUESTED_BY_APP);
-        delegateConn.waitForCountDown(ImsUtils.TEST_TIMEOUT_MS);
-        // verify we move to deregistering for registered tags.
-        DelegateRegistrationState s = getDeregisteringState(registeredTags,
-                DelegateRegistrationState.DEREGISTERING_REASON_DESTROY_PENDING);
-        delegateConn.verifyRegistrationStateEquals(s);
-        // wait for on destroyed
-        delegateConn.setOperationCountDownLatch(1);
         transportImpl.waitForLatchCountdownAndReset(TestSipTransport.LATCH_DESTROY_DELEGATE);
         delegate.notifyOnDestroyed(
                 SipDelegateManager.SIP_DELEGATE_DESTROY_REASON_REQUESTED_BY_APP);
+
+    }
+
+    private void destroySipDelegateAndVerifyConnDestroyed(SipDelegateManager manager,
+            TestSipTransport transportImpl, TestSipDelegateConnection delegateConn,
+            TestSipDelegate delegate) throws Exception {
+        delegateConn.setOperationCountDownLatch(1);
+        destroySipDelegate(manager, transportImpl, delegateConn, delegate);
         delegateConn.waitForCountDown(ImsUtils.TEST_TIMEOUT_MS);
         delegateConn.verifyDestroyed(
                 SipDelegateManager.SIP_DELEGATE_DESTROY_REASON_REQUESTED_BY_APP);
     }
 
+    private void destroySipDelegateAndVerify(TransportInterfaces ifaces) throws Exception {
+        // wait for on destroyed
+        destroySipDelegateAndVerifyConnDestroyed(ifaces.manager, ifaces.transport,
+                ifaces.delegateConn, ifaces.delegate);
+    }
+
     private void verifySipDelegateDestroyed(TestSipTransport transportImpl,
-            TestSipDelegateConnection delegateConn, TestSipDelegate delegate,
-            Set<String> registeredTags, int deregReason) {
-        // verify we move to deregistering for registered tags.
-        DelegateRegistrationState s = getDeregisteringState(registeredTags, deregReason);
-        delegateConn.verifyRegistrationStateEquals(s);
+            TestSipDelegate delegate) {
         transportImpl.waitForLatchCountdownAndReset(TestSipTransport.LATCH_DESTROY_DELEGATE);
         delegate.notifyOnDestroyed(
                 SipDelegateManager.SIP_DELEGATE_DESTROY_REASON_REQUESTED_BY_APP);
@@ -1255,62 +1892,94 @@ public class SipDelegateManagerTest {
                 ImsUtils.TEST_TIMEOUT_MS));
     }
 
-    private void verifyFullRegistrationTriggered(SipDelegateManager manager,
-            TestImsRegistration regImpl, TestSipDelegateConnection delegateConn) throws Exception {
-        delegateConn.verifyDelegateCreated();
-        delegateConn.triggerFullNetworkRegistration(manager, 403, "FORBIDDEN");
+    private void sendRestrictedRequestsAndVerifyFailed(
+            TestSipDelegateConnection delegateConn) throws Exception {
+        delegateConn.sendMessageAndVerifyFailure(SipMessageUtils.TEST_INVALID_SIP_REGISTER,
+                SipDelegateManager.MESSAGE_FAILURE_REASON_INVALID_START_LINE);
+        delegateConn.sendMessageAndVerifyFailure(SipMessageUtils.TEST_INVALID_SIP_PUBLISH,
+                SipDelegateManager.MESSAGE_FAILURE_REASON_INVALID_START_LINE);
+        delegateConn.sendMessageAndVerifyFailure(SipMessageUtils.TEST_INVALID_SIP_OPTIONS,
+                SipDelegateManager.MESSAGE_FAILURE_REASON_INVALID_START_LINE);
+        delegateConn.sendMessageAndVerifyFailure(
+                SipMessageUtils.TEST_INVALID_SIP_SUBSCRIBE_PRESENCE,
+                SipDelegateManager.MESSAGE_FAILURE_REASON_INVALID_HEADER_FIELDS);
+    }
+
+    private void verifyFullRegistrationTriggered(TransportInterfaces ifaces) throws Exception {
+        ifaces.delegateConn.verifyDelegateCreated();
+        ifaces.delegateConn.triggerFullNetworkRegistration(ifaces.manager, 403, "FORBIDDEN");
         TestImsRegistration.NetworkRegistrationInfo info =
-                regImpl.getNextFullNetworkRegRequest(ImsUtils.TEST_TIMEOUT_MS);
+                ifaces.reg.getNextFullNetworkRegRequest(ImsUtils.TEST_TIMEOUT_MS);
         assertNotNull("full registration requested, but ImsRegistrationImplBase "
                 + "implementation did not receive a request.", info);
         assertEquals(403, info.sipCode);
         assertEquals("FORBIDDEN", info.sipReason);
     }
 
-    private void sendRestrictedRequestsAndVerifyFailed(
-            TestSipDelegateConnection delegateConn) throws Exception {
-        delegateConn.sendMessageAndVerifyFailure(ImsUtils.TEST_SIP_REGISTER,
-                SipDelegateManager.MESSAGE_FAILURE_REASON_INVALID_START_LINE);
-        delegateConn.sendMessageAndVerifyFailure(ImsUtils.TEST_SIP_PUBLISH,
-                SipDelegateManager.MESSAGE_FAILURE_REASON_INVALID_START_LINE);
-        delegateConn.sendMessageAndVerifyFailure(ImsUtils.TEST_SIP_OPTIONS,
-                SipDelegateManager.MESSAGE_FAILURE_REASON_INVALID_START_LINE);
-        delegateConn.sendMessageAndVerifyFailure(ImsUtils.TEST_SIP_SUBSCRIBE_PRESENCE,
-                SipDelegateManager.MESSAGE_FAILURE_REASON_INVALID_HEADER_FIELDS);
-    }
     private void sendInvalidRequestsAndVerifyFailed(
             TestSipDelegateConnection delegateConn) throws Exception {
-        delegateConn.sendMessageAndVerifyFailure(ImsUtils.TEST_SIP_MESSAGE_INVALID_REQUEST,
+        delegateConn.sendMessageAndVerifyFailure(SipMessageUtils.TEST_SIP_MESSAGE_INVALID_REQUEST,
                 SipDelegateManager.MESSAGE_FAILURE_REASON_INVALID_START_LINE);
-        delegateConn.sendMessageAndVerifyFailure(ImsUtils.TEST_SIP_MESSAGE_INVALID_RESPONSE,
+        delegateConn.sendMessageAndVerifyFailure(SipMessageUtils.TEST_SIP_MESSAGE_INVALID_RESPONSE,
                 SipDelegateManager.MESSAGE_FAILURE_REASON_INVALID_START_LINE);
     }
 
-    private void sendMessageAndVerifyAck(TestSipDelegateConnection delegateConn,
+    private void verifyOutgoingTransport(TestSipDelegateConnection delegateConn,
             TestSipDelegate delegate) throws Exception {
         // Send a message and ensure it gets received on the other end as well as acked
-        delegateConn.sendMessageAndVerifyCompletedSuccessfully(ImsUtils.TEST_SIP_MESSAGE);
-        delegate.verifyMessageSend(ImsUtils.TEST_SIP_MESSAGE);
-        delegateConn.sendCloseSession(ImsUtils.TEST_CALL_ID);
-        delegate.verifyCloseSession(ImsUtils.TEST_CALL_ID);
+        delegateConn.sendMessageAndVerifyCompletedSuccessfully(SipMessageUtils.TEST_SIP_MESSAGE);
+        delegate.verifyMessageSend(SipMessageUtils.TEST_SIP_MESSAGE);
+        delegateConn.sendCleanupSession(SipMessageUtils.TEST_SIP_MESSAGE.getCallIdParameter());
+        delegate.verifyCleanupSession(SipMessageUtils.TEST_SIP_MESSAGE.getCallIdParameter());
         // send a message and notify connection that it failed
         delegate.setSendMessageDenyReason(
                 SipDelegateManager.MESSAGE_FAILURE_REASON_NETWORK_NOT_AVAILABLE);
-        delegateConn.sendMessageAndVerifyFailure(ImsUtils.TEST_SIP_MESSAGE,
+        delegateConn.sendMessageAndVerifyFailure(SipMessageUtils.TEST_SIP_MESSAGE,
                 SipDelegateManager.MESSAGE_FAILURE_REASON_NETWORK_NOT_AVAILABLE);
-        delegate.verifyMessageSend(ImsUtils.TEST_SIP_MESSAGE);
+        delegate.verifyMessageSend(SipMessageUtils.TEST_SIP_MESSAGE);
     }
 
-    private void receiveMessageAndVerifyAck(TestSipDelegateConnection delegateConn,
+    private void sendMessageAndVerifyAck(SipMessage message,
+            TransportInterfaces ifaces) throws Exception {
+        // Send a message and ensure it gets received on the other end as well as acked
+        ifaces.delegateConn.sendMessageAndVerifyCompletedSuccessfully(message);
+    }
+
+    private void verifyIncomingTransport(TestSipDelegateConnection delegateConn,
             TestSipDelegate delegate) throws Exception {
         // Receive a message and ensure it gets received on the other end as well as acked
-        delegate.receiveMessageAndVerifyReceivedCalled(ImsUtils.TEST_SIP_MESSAGE);
-        delegateConn.verifyMessageReceived(ImsUtils.TEST_SIP_MESSAGE);
+        delegate.receiveMessageAndVerifyReceivedCalled(SipMessageUtils.TEST_SIP_MESSAGE);
+        delegateConn.verifyMessageReceived(SipMessageUtils.TEST_SIP_MESSAGE);
         // Receive a message and have connection notify that it didn't complete
         delegateConn.setReceivedMessageErrorResponseReason(
                 SipDelegateManager.MESSAGE_FAILURE_REASON_INVALID_BODY_CONTENT);
-        delegate.receiveMessageAndVerifyReceiveErrorCalled(ImsUtils.TEST_SIP_MESSAGE,
+        delegate.receiveMessageAndVerifyReceiveErrorCalled(SipMessageUtils.TEST_SIP_MESSAGE,
                 SipDelegateManager.MESSAGE_FAILURE_REASON_INVALID_BODY_CONTENT);
+    }
+
+    private void receiveMessageAndVerifyAck(SipMessage message,
+            TransportInterfaces ifaces) throws Exception {
+        // Receive a message and ensure it gets received on the other end as well as acked
+        ifaces.delegate.receiveMessageAndVerifyReceivedCalled(message);
+        ifaces.delegateConn.verifyMessageReceived(message);
+    }
+
+    private void verifyRegistrationState(TransportInterfaces ifaces,
+            DelegateRegistrationState state) {
+        ifaces.delegateConn.setOperationCountDownLatch(1);
+        ifaces.delegate.notifyImsRegistrationUpdate(state);
+        ifaces.delegateConn.waitForCountDown(ImsUtils.TEST_TIMEOUT_MS);
+        ifaces.delegateConn.verifyRegistrationStateEquals(state);
+    }
+
+    private DelegateRegistrationState getDeregisteringState(Set<String> registered,
+            Set<String> deregistering, int deregisteringReason) {
+        DelegateRegistrationState.Builder b = new DelegateRegistrationState.Builder();
+        b.addRegisteredFeatureTags(registered);
+        for (String dereg : deregistering) {
+            b.addDeregisteringFeatureTag(dereg, deregisteringReason);
+        }
+        return b.build();
     }
 
     private void sendConfigChange(SipDelegateConfiguration c,
