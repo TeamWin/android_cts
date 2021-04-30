@@ -467,7 +467,7 @@ public class EditTextTest {
     @Test
     public void testCursorDrag() throws Exception {
         AtomicReference<SparseArray<Point>> dragStartEnd = new AtomicReference<>();
-        String text = "Hello world, how are you doing today?";
+        String text = "Hello, how are you today?";
         mInstrumentation.runOnMainSync(() -> {
             mEditText1.setText(text);
             mEditText1.requestFocus();
@@ -497,8 +497,10 @@ public class EditTextTest {
     }
 
     private static Point getScreenCoords(TextView textView, int offset) {
-        // Get the x,y coordinates for the given offset in the text. These are relative to the view.
-        int x = (int) textView.getLayout().getPrimaryHorizontal(offset);
+        // Get the x,y coordinates for the given offset in the text.
+	// These are relative to the view.
+	// Please note that we compensate for rounding error here by adding 1.
+        int x = (int) textView.getLayout().getPrimaryHorizontal(offset) + 1;
         int line = textView.getLayout().getLineForOffset(offset);
         int yTop = textView.getLayout().getLineTop(line);
         int yBottom = textView.getLayout().getLineBottom(line);
