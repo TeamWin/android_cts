@@ -20,6 +20,7 @@ import static com.android.compatibility.common.util.SystemUtil.runWithShellPermi
 
 import android.content.Intent;
 import android.media.AudioFormat;
+import android.os.ParcelFileDescriptor;
 import android.os.PersistableBundle;
 import android.os.SharedMemory;
 import android.service.voice.AlwaysOnHotwordDetector;
@@ -29,9 +30,10 @@ import android.system.ErrnoException;
 import android.util.Log;
 import android.voiceinteraction.common.Utils;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.Locale;
-import java.util.Objects;
 
 /**
  * This service included a basic HotwordDetectionService for testing.
@@ -43,9 +45,12 @@ public class BasicVoiceInteractionService extends VoiceInteractionService {
     public static String KEY_FAKE_DATA = "fakeData";
     public static String VALUE_FAKE_DATA = "fakeData";
     public static byte[] FAKE_BYTE_ARRAY_DATA = new byte[] {1, 2, 3};
+    public static byte[] FAKE_HOTWORD_AUDIO_DATA =
+            new byte[] {'h', 'o', 't', 'w', 'o', 'r', 'd', '!'};
 
     private boolean mReady = false;
     private AlwaysOnHotwordDetector mAlwaysOnHotwordDetector = null;
+    private ParcelFileDescriptor[] mTempParcelFileDescriptor = null;
 
     @Override
     public void onReady() {
@@ -81,9 +86,27 @@ public class BasicVoiceInteractionService extends VoiceInteractionService {
                             createFakeAudioFormat(), new byte[1024]);
                 }
             });
+        } else if (testEvent == Utils.HOTWORD_DETECTION_SERVICE_EXTERNAL_SOURCE_ONDETECT_TEST) {
+            runWithShellPermissionIdentity(() -> {
+                if (mAlwaysOnHotwordDetector != null) {
+                    ParcelFileDescriptor audioStream = createFakeAudioStream();
+                    if (audioStream != null) {
+                        mAlwaysOnHotwordDetector.startRecognition(
+                                audioStream,
+                                createFakeAudioFormat(),
+                                createFakePersistableBundleData());
+                    }
+                }
+            });
         }
 
         return START_NOT_STICKY;
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        closeFakeAudioStream();
     }
 
     private AlwaysOnHotwordDetector callCreateAlwaysOnHotwordDetector() {
@@ -173,6 +196,36 @@ public class BasicVoiceInteractionService extends VoiceInteractionService {
                 .setChannelMask(AudioFormat.CHANNEL_IN_MONO).build();
     }
 
+    private ParcelFileDescriptor createFakeAudioStream() {
+        try {
+            mTempParcelFileDescriptor = ParcelFileDescriptor.createPipe();
+            try (OutputStream fos =
+                         new ParcelFileDescriptor.AutoCloseOutputStream(
+                                 mTempParcelFileDescriptor[1])) {
+                fos.write(FAKE_HOTWORD_AUDIO_DATA, 0, 8);
+            } catch (IOException e) {
+                Log.w(TAG, "Failed to pipe audio data : ", e);
+                return null;
+            }
+            return mTempParcelFileDescriptor[0];
+        } catch (IOException e) {
+            Log.w(TAG, "Failed to create a pipe : " + e);
+        }
+        return null;
+    }
+
+    private void closeFakeAudioStream() {
+        if (mTempParcelFileDescriptor != null) {
+            try {
+                mTempParcelFileDescriptor[0].close();
+                mTempParcelFileDescriptor[1].close();
+            } catch (IOException e) {
+                Log.w(TAG, "Failed closing : " + e);
+            }
+            mTempParcelFileDescriptor = null;
+        }
+    }
+
     private void verifyHotwordDetectionServiceInitializedStatus(int status) {
         if (status == HotwordDetectionService.INITIALIZATION_STATUS_SUCCESS) {
             broadcastIntentWithResult(
@@ -183,7 +236,7 @@ public class BasicVoiceInteractionService extends VoiceInteractionService {
 
     private void broadcastOnDetectedEvent() {
         broadcastIntentWithResult(
-                Utils.BROADCAST_HOTWORD_DETECTION_SERVICE_DSP_ONDETECT_RESULT_INTENT,
+                Utils.BROADCAST_HOTWORD_DETECTION_SERVICE_ONDETECT_RESULT_INTENT,
                 Utils.HOTWORD_DETECTION_SERVICE_ONDETECT_SUCCESS);
     }
 }

@@ -41,22 +41,7 @@ public final class HotwordDetectionServiceBasicTest
     @Test
     public void testHotwordDetectionService_validHotwordDetectionComponentName_triggerSuccess()
             throws Throwable {
-        final BlockingBroadcastReceiver receiver = new BlockingBroadcastReceiver(mContext,
-                Utils.BROADCAST_HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT);
-        receiver.register();
-
-        mActivityTestRule.getScenario().onActivity(activity -> {
-            activity.triggerHotwordDetectionServiceTest(
-                    Utils.HOTWORD_DETECTION_SERVICE_BASIC,
-                    Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_TEST);
-        });
-
-        final Intent intent = receiver.awaitForBroadcast(TIMEOUT_MS);
-        assertThat(intent).isNotNull();
-        assertThat(intent.getIntExtra(Utils.KEY_TEST_RESULT, -1)).isEqualTo(
-                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS);
-
-        receiver.unregisterQuietly();
+        createAndVerifyHotwordDetectionServiceBindSuccess();
     }
 
     @Test
@@ -84,6 +69,24 @@ public final class HotwordDetectionServiceBasicTest
     public void testHotwordDetectionService_onDetectFromDsp_success()
             throws Throwable {
         // Create AlwaysOnHotwordDetector and wait the HotwordDetectionService ready
+        createAndVerifyHotwordDetectionServiceBindSuccess();
+
+        // Use AlwaysOnHotwordDetector to test the onDetect function of HotwordDetectionService
+        testOnDetect(Utils.HOTWORD_DETECTION_SERVICE_DSP_ONDETECT_TEST);
+    }
+
+    @Test
+    public void testHotwordDetectionService_onDetectFromExternalSource_success()
+            throws Throwable {
+        // Create AlwaysOnHotwordDetector and wait the HotwordDetectionService ready
+        createAndVerifyHotwordDetectionServiceBindSuccess();
+
+        // Use AlwaysOnHotwordDetector to test the external source function of
+        // HotwordDetectionService
+        testOnDetect(Utils.HOTWORD_DETECTION_SERVICE_EXTERNAL_SOURCE_ONDETECT_TEST);
+    }
+
+    private void createAndVerifyHotwordDetectionServiceBindSuccess() {
         final BlockingBroadcastReceiver receiver = new BlockingBroadcastReceiver(mContext,
                 Utils.BROADCAST_HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT);
         receiver.register();
@@ -94,18 +97,23 @@ public final class HotwordDetectionServiceBasicTest
                     Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_TEST);
         });
 
-        receiver.awaitForBroadcast(TIMEOUT_MS);
-        receiver.unregisterQuietly();
+        final Intent intent = receiver.awaitForBroadcast(TIMEOUT_MS);
+        assertThat(intent).isNotNull();
+        assertThat(intent.getIntExtra(Utils.KEY_TEST_RESULT, -1)).isEqualTo(
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS);
 
-        // Use AlwaysOnHotwordDetector to test the onDetect function of HotwordDetectionService
+        receiver.unregisterQuietly();
+    }
+
+    private void testOnDetect(int testType) {
         final BlockingBroadcastReceiver onDetectReceiver = new BlockingBroadcastReceiver(mContext,
-                Utils.BROADCAST_HOTWORD_DETECTION_SERVICE_DSP_ONDETECT_RESULT_INTENT);
+                Utils.BROADCAST_HOTWORD_DETECTION_SERVICE_ONDETECT_RESULT_INTENT);
         onDetectReceiver.register();
 
         mActivityTestRule.getScenario().onActivity(activity -> {
             activity.triggerHotwordDetectionServiceTest(
                     Utils.HOTWORD_DETECTION_SERVICE_BASIC,
-                    Utils.HOTWORD_DETECTION_SERVICE_DSP_ONDETECT_TEST);
+                    testType);
         });
 
         final Intent intent = onDetectReceiver.awaitForBroadcast(TIMEOUT_MS);
