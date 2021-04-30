@@ -59,9 +59,12 @@ public class CtsExtractNativeLibsHostTestAbiOverride extends CtsExtractNativeLib
     @Override
     public void setUp() throws Exception {
         final String deviceAbi = getDeviceAbi();
-        // Only run these tests if device supports both 32-bit and 64-bit
-        assumeTrue(AbiUtils.getBitness(deviceAbi).equals("64"));
+        final Set<String> deviceAbis = getDeviceAbis();
         // Only run these tests for supported ABIs
+        assumeTrue(deviceAbis.contains(mFirstAbi));
+        if (!mSecondAbi.equals("-")) {
+            assumeTrue(deviceAbis.contains(mSecondAbi));
+        }
         assumeTrue(AbiUtils.getBaseArchForAbi(deviceAbi).equals(
                 AbiUtils.getBaseArchForAbi(mFirstAbi)));
         if (mIsIncremental) {
