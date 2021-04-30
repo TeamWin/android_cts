@@ -691,7 +691,6 @@ public class PackageManagerShellCommandIncrementalTest {
 
     @LargeTest
     @Test
-    // @Ignore("Pending fix in GMSCore")
     public void testInstallWithIdSigNoDigesting() throws Exception {
         // Overall timeout of 3secs in 100ms intervals.
         final int installIterations = 1;
