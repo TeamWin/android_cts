@@ -524,6 +524,7 @@ public class ToastTest {
     @UiThreadTest
     @Test
     public void testMakeTextFromString() {
+        assumeFalse("Skipping test: Watch does not support new Toast behavior yet", isWatch());
         Toast toast = Toast.makeText(mContext, "android", Toast.LENGTH_SHORT);
         assertNotNull(toast);
         assertEquals(Toast.LENGTH_SHORT, toast.getDuration());
@@ -552,6 +553,7 @@ public class ToastTest {
     @UiThreadTest
     @Test
     public void testMakeTextFromResource() {
+        assumeFalse("Skipping test: Watch does not support new Toast behavior yet", isWatch());
         Toast toast = Toast.makeText(mContext, R.string.hello_world, Toast.LENGTH_LONG);
 
         assertNotNull(toast);
@@ -606,6 +608,7 @@ public class ToastTest {
     @UiThreadTest
     @Test(expected = IllegalStateException.class)
     public void testSetTextFromStringNonNullView() {
+        assumeFalse("Skipping test: Watch does not support new Toast behavior yet", isWatch());
         Toast toast = Toast.makeText(mContext, R.string.text, Toast.LENGTH_LONG);
         toast.setView(new TextView(mContext));
         toast.setText(null);
@@ -701,6 +704,7 @@ public class ToastTest {
 
     @Test
     public void testTextToastAllowed_whenInTheBackground() throws Throwable {
+        assumeFalse("Skipping test: Watch does not support new Toast behavior yet", isWatch());
         // Make it background
         mActivityRule.finishActivity();
         makeToast();
@@ -749,6 +753,7 @@ public class ToastTest {
     @UiThreadTest
     @Test
     public void testGetWindowParams_whenTextToast_returnsNull() {
+          assumeFalse("Skipping test: Watch does not support new Toast behavior yet", isWatch());
         Toast toast = Toast.makeText(mContext, "Text", Toast.LENGTH_LONG);
         assertNull(toast.getWindowParams());
     }
@@ -842,6 +847,11 @@ public class ToastTest {
     private boolean isCar() {
         PackageManager pm = mContext.getPackageManager();
         return pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
+    }
+
+    private boolean isWatch() {
+        PackageManager pm = mContext.getPackageManager();
+        return pm.hasSystemFeature(PackageManager.FEATURE_WATCH);
     }
 
     private static void uncheck(ThrowingRunnable runnable) {
