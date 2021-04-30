@@ -20,7 +20,9 @@ package {
 
 android_test {
     name: "CtsPermission3TestCases",
+    defaults: ["mts-target-sdk-version-current"],
     sdk_version: "test_current",
+    min_sdk_version: "30",
     srcs: [
         "src/**/*.kt",
     ],
