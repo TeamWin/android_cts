@@ -25,7 +25,6 @@ import android.service.carrier.CarrierService;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
-import android.telephony.ims.SipMessage;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -40,7 +39,7 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 public class ImsUtils {
-    public static final boolean VDBG = false;
+    public static final boolean VDBG = true;
 
     // ImsService rebind has an exponential backoff capping at 64 seconds. Wait for 70 seconds to
     // allow for the new poll to happen in the framework.
@@ -50,111 +49,6 @@ public class ImsUtils {
     public static final int ITEM_NON_COMPRESSED = 2000;
     // Id for compressed auto configuration xml.
     public static final int ITEM_COMPRESSED = 2001;
-    // TODO Replace with a real sip message once that logic is in.
-    public static final String TEST_TRANSACTION_ID = "z9hG4bK.TeSt";
-    public static final String TEST_CALL_ID = "a84b4c76e66710@pc33.atlanta.com";
-
-    // Sample messages from RFC 3261 modified for parsing use cases.
-    public static final SipMessage TEST_SIP_MESSAGE = new SipMessage(
-            "INVITE sip:bob@biloxi.com SIP/2.0",
-            // Typical Via
-            "Via: SIP/2.0/UDP pc33.atlanta.com;branch=z9hG4bK.TeSt\n"
-                    + "Max-Forwards: 70\n"
-                    + "To: Bob <sip:bob@biloxi.com>\n"
-                    + "From: Alice <sip:alice@atlanta.com>;tag=1928301774\n"
-                    + "Call-ID: a84b4c76e66710@pc33.atlanta.com\n"
-                    + "CSeq: 314159 INVITE\n"
-                    + "Contact: <sip:alice@pc33.atlanta.com>\n"
-                    + "Content-Type: application/sdp\n"
-                    + "Content-Length: 0",
-            new byte[0]);
-
-    // Example from RFC 3665
-    public static final SipMessage TEST_SIP_REGISTER = new SipMessage(
-            "REGISTER sips:ss2.biloxi.example.com SIP/2.0",
-            "Via: SIP/2.0/TLS client.biloxi.example.com:5061;branch=z9hG4bKnashds7\n"
-                    + "Max-Forwards: 70\n"
-                    + "From: Bob <sips:bob@biloxi.example.com>;tag=a73kszlfl\n"
-                    + "To: Bob <sips:bob@biloxi.example.com>\n"
-                    + "Call-ID: 1j9FpLxk3uxtm8tn@biloxi.example.com\n"
-                    + "CSeq: 1 REGISTER\n"
-                    + "Contact: <sips:bob@client.biloxi.example.com>\n"
-                    + "Content-Length: 0",
-            new byte[0]);
-
-    //Example from RFC3903, but does not include PIDF document.
-    public static final SipMessage TEST_SIP_PUBLISH = new SipMessage(
-            "PUBLISH sip:presentity@example.com SIP/2.0",
-            "Via: SIP/2.0/UDP pua.example.com;branch=z9hG4bKcdad2\n"
-                    + "To: <sip:presentity@example.com>\n"
-                    + "From: <sip:presentity@example.com>;tag=54321mm\n"
-                    + "Call-ID: 5566778@pua.example.com\n"
-                    + "CSeq: 1 PUBLISH\n"
-                    + "Max-Forwards: 70\n"
-                    + "Expires: 3600\n"
-                    + "Event: presence\n"
-                    + "Content-Type: application/pidf+xml",
-            new byte[0]);
-
-    //Example from RFC3856
-    public static final SipMessage TEST_SIP_SUBSCRIBE_PRESENCE = new SipMessage(
-            "SUBSCRIBE sip:resource@example.com SIP/2.0",
-            "Via: SIP/2.0/TCP watcherhost.example.com;branch=z9hG4bKnashds7\n"
-                    + "To: <sip:resource@example.com>\n"
-                    + "From: <sip:user@example.com>;tag=xfg9\n"
-                    + "Call-ID: 2010@watcherhost.example.com\n"
-                    + "CSeq: 17766 SUBSCRIBE\n"
-                    + "Max-Forwards: 70\n"
-                    + "Event: presence\n"
-                    + "Accept: application/pidf+xml\n"
-                    + "Contact: <sip:user@watcherhost.example.com>\n"
-                    + "Expires: 600\n"
-                    + "Content-Length: 0",
-            new byte[0]);
-
-    //Example from RFC3261
-    public static final SipMessage TEST_SIP_OPTIONS = new SipMessage(
-            "OPTIONS sip:carol@chicago.com SIP/2.0",
-            "Via: SIP/2.0/UDP pc33.atlanta.com;branch=z9hG4bKhjhs8ass877\n"
-                    + "Max-Forwards: 70\n"
-                    + "To: <sip:carol@chicago.com>\n"
-                    + "From: Alice <sip:alice@atlanta.com>;tag=1928301774\n"
-                    + "Call-ID: a84b4c76e66710\n"
-                    + "CSeq: 63104 OPTIONS\n"
-                    + "Contact: <sip:alice@pc33.atlanta.com>\n"
-                    + "Accept: application/sdp\n"
-                    + "Content-Length: 0",
-            new byte[0]);
-
-    // Sample message from RFC 3261
-    public static final SipMessage TEST_SIP_MESSAGE_INVALID_REQUEST = new SipMessage(
-            "INVITE sip:bob@biloxi.comSIP/2.0",
-            // Typical Via
-            "Via: SIP/2.0/UDP pc33.atlanta.com;branch=z9hG4bK.TeSt\n"
-                    + "Max-Forwards: 70\n"
-                    + "To: Bob <sip:bob@biloxi.com>\n"
-                    + "From: Alice <sip:alice@atlanta.com>;tag=1928301774\n"
-                    + "Call-ID: a84b4c76e66710@pc33.atlanta.com\n"
-                    + "CSeq: 314159 INVITE\n"
-                    + "Contact: <sip:alice@pc33.atlanta.com>\n"
-                    + "Content-Type: application/sdp\n"
-                    + "Content-Length: 142",
-            new byte[0]);
-
-    // Sample message from RFC 3261
-    public static final SipMessage TEST_SIP_MESSAGE_INVALID_RESPONSE = new SipMessage(
-            "SIP/2.0 200OK",
-            "Via: SIP/2.0/TCP terminal.vancouver.example.com;"
-                    + "branch=z9hG4bKwYb6QREiCL\n"
-                    + "To: <sip:adam-buddies@pres.vancouver.example.com>;tag=zpNctbZq\n"
-                    + "From: <sip:adam@vancouver.example.com>;tag=ie4hbb8t\n"
-                    + "Call-ID: cdB34qLToC@terminal.vancouver.example.com\n"
-                    + "CSeq: 322723822 SUBSCRIBE\n"
-                    + "Contact: <sip:pres.vancouver.example.com>\n"
-                    + "Expires: 7200\n"
-                    + "Require: eventlist\n"
-                    + "Content-Length: 0",
-            new byte[0]);
 
     public static boolean shouldTestTelephony() {
         final PackageManager pm = InstrumentationRegistry.getInstrumentation().getContext()
