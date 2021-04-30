@@ -684,6 +684,23 @@ public class SubscriptionManagerTest {
     }
 
     @Test
+    public void testSetUiccApplicationsEnabled() {
+        if (!isSupported()) return;
+
+        boolean canDisable = ShellIdentityUtils.invokeMethodWithShellPermissions(mSm,
+                (sm) -> sm.canDisablePhysicalSubscription());
+        if (canDisable) {
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mSm,
+                    (sm) -> sm.setUiccApplicationsEnabled(mSubId, false));
+            assertFalse(mSm.getActiveSubscriptionInfo(mSubId).areUiccApplicationsEnabled());
+
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mSm,
+                    (sm) -> sm.setUiccApplicationsEnabled(mSubId, true));
+            assertTrue(mSm.getActiveSubscriptionInfo(mSubId).areUiccApplicationsEnabled());
+        }
+    }
+
+    @Test
     public void testSubscriptionInfoCarrierId() {
         if (!isSupported()) return;
 
