@@ -406,6 +406,16 @@ public class MultiResolutionReprocessCaptureTest extends Camera2AndroidTestCase 
                             TIMEOUT_FOR_RESULT_MS);
                     Map<String, TotalCaptureResult> physicalResults =
                             result.getPhysicalCameraTotalResults();
+                    for (Map.Entry<String, TotalCaptureResult> entry : physicalResults.entrySet()) {
+                        String physicalCameraId = entry.getKey();
+                        TotalCaptureResult physicalResult = entry.getValue();
+                        String activePhysicalId = physicalResult.get(
+                                CaptureResult.LOGICAL_MULTI_CAMERA_ACTIVE_PHYSICAL_ID);
+                        mCollector.expectEquals(String.format(
+                                "Physical camera result metadata must contain activePhysicalId " +
+                                "(%s) matching with physical camera Id (%s).", activePhysicalId,
+                                physicalCameraId), physicalCameraId, activePhysicalId);
+                    }
 
                     String activePhysicalCameraId = result.get(
                             CaptureResult.LOGICAL_MULTI_CAMERA_ACTIVE_PHYSICAL_ID);
