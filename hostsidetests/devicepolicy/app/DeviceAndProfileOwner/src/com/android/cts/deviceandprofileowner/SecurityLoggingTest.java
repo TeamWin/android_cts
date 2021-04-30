@@ -222,10 +222,7 @@ public class SecurityLoggingTest extends BaseDeviceAdminTest {
     public void testVerifyGeneratedLogs() throws Exception {
         final List<SecurityEvent> events = getEvents();
         verifyAutomaticEventsPresent(events);
-
-        // STOPSHIP(b/183201685): re-enable when KeyStore2 logs these events.
-        // verifyKeystoreEventsPresent(events);
-
+        verifyKeystoreEventsPresent(events);
         verifyKeyChainEventsPresent(events);
         verifyAdminEventsPresent(events);
         verifyAdbShellCommand(events); // Event generated from host side logic

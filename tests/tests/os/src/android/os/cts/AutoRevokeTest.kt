@@ -70,6 +70,7 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.regex.Pattern
 
 private const val READ_CALENDAR = "android.permission.READ_CALENDAR"
+private const val BLUETOOTH_CONNECT = "android.permission.BLUETOOTH_CONNECT"
 
 /**
  * Test for auto revoke
@@ -139,6 +140,26 @@ class AutoRevokeTest {
                         .click()
                 waitFindObject(By.text(supportedAppPackageName))
                 waitFindObject(By.text("Calendar permission removed"))
+            }
+        }
+    }
+
+    @AppModeFull(reason = "Uses separate apps for testing")
+    @Test
+    fun testUnusedApp_doesntGetSplitPermissionRevoked() {
+        withUnusedThresholdMs(3L) {
+            withDummyApp {
+                // Setup
+                startApp()
+                assertPermission(PERMISSION_GRANTED, supportedAppPackageName, BLUETOOTH_CONNECT)
+                killDummyApp()
+                Thread.sleep(1000)
+
+                // Run
+                runAppHibernationJob(context, LOG_TAG)
+
+                // Verify
+                assertPermission(PERMISSION_GRANTED, supportedAppPackageName, BLUETOOTH_CONNECT)
             }
         }
     }
@@ -342,8 +363,12 @@ class AutoRevokeTest {
         withApp(apk, packageName, action)
     }
 
-    private fun assertPermission(state: Int, packageName: String = supportedAppPackageName) {
-        assertPermission(packageName, READ_CALENDAR, state)
+    private fun assertPermission(
+        state: Int,
+        packageName: String = supportedAppPackageName,
+        permission: String = READ_CALENDAR
+    ) {
+        assertPermission(packageName, permission, state)
     }
 
     private fun goToPermissions(packageName: String = supportedAppPackageName) {
