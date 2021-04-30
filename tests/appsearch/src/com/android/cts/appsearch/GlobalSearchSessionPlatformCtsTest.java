@@ -19,7 +19,6 @@ import static com.android.server.appsearch.testing.AppSearchTestUtils.checkIsBat
 
 import static com.google.common.truth.Truth.assertThat;
 
-import android.app.appsearch.AppSearchEmail;
 import android.app.appsearch.AppSearchManager;
 import android.app.appsearch.AppSearchSessionShim;
 import android.app.appsearch.GenericDocument;
@@ -43,6 +42,7 @@ import android.util.Log;
 import androidx.test.core.app.ApplicationProvider;
 
 import com.android.cts.appsearch.ICommandReceiver;
+import com.android.server.appsearch.testing.AppSearchEmail;
 import com.android.server.appsearch.testing.AppSearchSessionShimImpl;
 import com.android.server.appsearch.testing.GlobalSearchSessionShimImpl;
 
