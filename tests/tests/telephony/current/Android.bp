@@ -30,7 +30,9 @@ filegroup {
         "src/android/telephony/ims/cts/TestSipDelegate.java",
         "src/android/telephony/ims/cts/TestSipDelegateConnection.java",
         "src/android/telephony/ims/cts/ImsUtils.java",
-	"src/android/telephony/ims/cts/TestAcsClient.java",
+        "src/android/telephony/ims/cts/SipDialogAttributes.java",
+        "src/android/telephony/ims/cts/SipMessageUtils.java",
+	    "src/android/telephony/ims/cts/TestAcsClient.java",
     ],
     path: "src/",
 }

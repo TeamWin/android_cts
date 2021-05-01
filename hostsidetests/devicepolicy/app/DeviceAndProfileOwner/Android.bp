@@ -50,6 +50,8 @@ android_test_helper_app {
     name: "CtsDeviceAndProfileOwnerApp25",
     defaults: ["cts_defaults"],
     platform_apis: true,
+    min_sdk_version: "23",
+    target_sdk_version: "25",
     srcs: ["src/**/*.java"],
     libs: [
         "android.test.runner",
@@ -110,8 +112,12 @@ android_test_helper_app {
 
 android_test_helper_app {
     name: "CtsDeviceAndProfileOwnerApp",
-    defaults: ["cts_defaults"],
+    defaults: [
+        "cts_defaults",
+        "mts-target-sdk-version-current",
+    ],
     platform_apis: true,
+    min_sdk_version: "30",
     srcs: ["src/**/*.java"],
     libs: [
         "android.test.runner",

@@ -19,7 +19,11 @@ package {
 
 android_test {
     name: "CtsPermissionTestCases",
-    defaults: ["cts_defaults"],
+    defaults: [
+        "cts_defaults",
+        "mts-target-sdk-version-current",
+    ],
+    min_sdk_version: "30",
     // Tag this module as a cts test artifact
     test_suites: [
         "cts",

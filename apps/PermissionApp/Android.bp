@@ -18,7 +18,10 @@ package {
 
 android_test_helper_app {
     name: "CtsPermissionApp",
-    defaults: ["cts_defaults"],
+    defaults: [
+        "cts_defaults",
+        "mts-target-sdk-version-current",
+    ],
     srcs: ["src/**/*.java"],
     sdk_version: "current",
     min_sdk_version: "23",

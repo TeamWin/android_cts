@@ -16,17 +16,21 @@
 
 package android.hdmicec.cts.common;
 
-import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
+import android.hdmicec.cts.BaseHdmiCecCtsTest.CecRules;
 import android.hdmicec.cts.HdmiCecConstants;
 
 import com.android.tradefed.config.Option;
 import com.android.tradefed.config.OptionClass;
+import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
@@ -39,6 +43,9 @@ import java.util.Scanner;
 @OptionClass(alias="hdmi-cec-cts-test")
 public final class HdmiCecDeviceTypeTest extends BaseHostJUnit4Test {
 
+    @Rule
+    public RuleChain ruleChain = RuleChain.outerRule(CecRules.requiresLeanback(this));
+
     @Option(name = HdmiCecConstants.PHYSICAL_ADDRESS_NAME,
         description = "HDMI CEC physical address of the DUT",
         mandatory = false)
@@ -48,24 +55,60 @@ public final class HdmiCecDeviceTypeTest extends BaseHostJUnit4Test {
      */
     public static int dutPhysicalAddress = HdmiCecConstants.DEFAULT_PHYSICAL_ADDRESS;
 
-    private static List<String> validTypes = new ArrayList<>(
-        Arrays.asList("", "0", "4", "4,5", "5,4"));
+    int deviceTvOnly = setBit(HdmiCecConstants.CEC_DEVICE_TYPE_TV);
+    int devicePlaybackOnly = setBit(HdmiCecConstants.CEC_DEVICE_TYPE_PLAYBACK_DEVICE);
+    int deviceComboTvSwitch =
+            setBit(HdmiCecConstants.CEC_DEVICE_TYPE_TV)
+                    | setBit(HdmiCecConstants.CEC_DEVICE_TYPE_SWITCH);
+    int deviceComboPlaybackAudioSystem =
+            setBit(HdmiCecConstants.CEC_DEVICE_TYPE_PLAYBACK_DEVICE)
+                    | setBit(HdmiCecConstants.CEC_DEVICE_TYPE_AUDIO_SYSTEM);
+    int deviceComboPlaybackAudioSystemSwitch =
+            setBit(HdmiCecConstants.CEC_DEVICE_TYPE_PLAYBACK_DEVICE)
+                    | setBit(HdmiCecConstants.CEC_DEVICE_TYPE_AUDIO_SYSTEM)
+                    | setBit(HdmiCecConstants.CEC_DEVICE_TYPE_SWITCH);
+
+    private final List<Integer> allowedDeviceCombos =
+            new ArrayList<>(
+                    Arrays.asList(
+                            deviceTvOnly,
+                            devicePlaybackOnly,
+                            deviceComboTvSwitch,
+                            deviceComboPlaybackAudioSystem,
+                            deviceComboPlaybackAudioSystemSwitch));
+
     /**
      * Tests that the device declares a valid HDMI CEC device type.
      */
     @Test
     public void checkHdmiCecDeviceType() throws Exception {
-        ITestDevice device = getDevice();
-        String logs = device.executeShellCommand("cmd package list features");
-        Scanner in = new Scanner(logs);
-        while (in.hasNextLine()) {
-            String line = in.nextLine();
-            if (line.equals("feature:android.software.leanback")) {
-                // Remove "" as valid device type if android.software.leanback feature is supported
-                validTypes.remove("");
+        int deviceTypes = getAllDeviceTypes(getDevice());
+
+        assertWithMessage("Incorrect device combination")
+                .that(deviceTypes)
+                .isIn(allowedDeviceCombos);
+    }
+
+    private int getAllDeviceTypes(ITestDevice device) {
+        int deviceTypes = 0;
+        String deviceType = "";
+        try {
+            deviceType = device.executeShellCommand("getprop ro.hdmi.device_type").trim();
+        } catch (DeviceNotAvailableException dnae) {
+            return 0;
+        }
+
+        String[] cecDevices = deviceType.split(",");
+        for (String cecDevice : cecDevices) {
+            if (!cecDevice.equals("")) {
+                deviceTypes |= setBit(Integer.parseInt(cecDevice));
             }
         }
-        String deviceType = device.executeShellCommand("getprop ro.hdmi.device_type");
-        assertThat(deviceType.trim()).isIn(validTypes);
+
+        return deviceTypes;
+    }
+
+    private int setBit(int value) {
+        return (1 << value);
     }
 }
