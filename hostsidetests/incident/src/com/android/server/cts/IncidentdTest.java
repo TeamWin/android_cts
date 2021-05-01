@@ -39,8 +39,6 @@ public class IncidentdTest extends ProtoDumpTestCase {
 
         SettingsIncidentTest.verifySettingsServiceDumpProto(dump.getSettings(), filterLevel);
 
-        NotificationIncidentTest.verifyNotificationServiceDumpProto(dump.getNotification(), filterLevel);
-
         if (BatteryIncidentTest.hasBattery(getDevice())) {
             BatteryIncidentTest.verifyBatteryServiceDumpProto(dump.getBattery(), filterLevel);
         }
@@ -68,8 +66,6 @@ public class IncidentdTest extends ProtoDumpTestCase {
         // GraphicsStats is expected to be all AUTOMATIC.
 
         WindowManagerIncidentTest.verifyWindowManagerServiceDumpProto(dump.getWindow(), filterLevel);
-
-        JobSchedulerIncidentTest.verifyJobSchedulerServiceDumpProto(dump.getJobscheduler(), filterLevel);
 
         UsbIncidentTest.verifyUsbServiceDumpProto(dump.getUsb(), filterLevel);
     }
