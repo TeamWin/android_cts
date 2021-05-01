@@ -56,6 +56,8 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.zip.CRC32;
 
+import com.android.compatibility.common.util.ApiLevelUtil;
+
 import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface;
 import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible;
 import static org.junit.Assert.assertEquals;
@@ -504,7 +506,9 @@ class OutputManager {
 }
 
 abstract class CodecTestBase {
+    public static final boolean IS_AT_LEAST_R = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.R);
     private static final String LOG_TAG = CodecTestBase.class.getSimpleName();
+
     static final String CODEC_PREFIX_KEY = "codec-prefix";
     static final String MIME_SEL_KEY = "mime-sel";
     static final Map<String, String> codecSelKeyMimeMap = new HashMap<>();
