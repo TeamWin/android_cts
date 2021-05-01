@@ -22,10 +22,13 @@ import static android.carrierapi.cts.IccUtils.hexStringToBytes;
 import static android.telephony.IccOpenLogicalChannelResponse.INVALID_CHANNEL;
 import static android.telephony.IccOpenLogicalChannelResponse.STATUS_NO_ERROR;
 
+import static com.android.compatibility.common.util.UiccUtil.UiccCertificate.CTS_UICC_2021;
+
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import android.content.BroadcastReceiver;
 import android.content.ContentProviderClient;
@@ -60,12 +63,12 @@ import android.util.Log;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.ShellIdentityUtils;
+import com.android.compatibility.common.util.UiccUtil;
 
 import com.google.common.collect.Range;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -1311,8 +1314,10 @@ public class CarrierApiTest extends BaseCarrierApiTest {
     }
 
     @Test
-    @Ignore
     public void testEapSimAuthentication() {
+        assumeTrue(
+                "testEapSimAuthentication requires a 2021 CTS UICC or newer",
+                UiccUtil.uiccHasCertificate(CTS_UICC_2021));
         // K: '000102030405060708090A0B0C0D0E0F', defined by TS 134 108#8.2
         // n: 128 (Bits to use for RES value)
         // Format: [Length][RAND]
@@ -1330,8 +1335,10 @@ public class CarrierApiTest extends BaseCarrierApiTest {
     }
 
     @Test
-    @Ignore
     public void testEapAkaAuthentication() {
+        assumeTrue(
+                "testEapAkaAuthentication requires a 2021 CTS UICC or newer",
+                UiccUtil.uiccHasCertificate(CTS_UICC_2021));
         // K: '000102030405060708090A0B0C0D0E0F', defined by TS 134 108#8.2
         // n: 128 (Bits to use for RES value)
         // Format: [Length][Rand][Length][Autn]
