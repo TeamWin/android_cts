@@ -24,7 +24,6 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.testng.Assert.expectThrows;
 
 import android.annotation.NonNull;
-import android.app.appsearch.AppSearchEmail;
 import android.app.appsearch.AppSearchResult;
 import android.app.appsearch.AppSearchSchema;
 import android.app.appsearch.AppSearchSchema.PropertyConfig;
@@ -41,6 +40,8 @@ import android.app.appsearch.exceptions.AppSearchException;
 import android.content.Context;
 
 import androidx.test.core.app.ApplicationProvider;
+
+import com.android.server.appsearch.testing.AppSearchEmail;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;

@@ -223,6 +223,7 @@ public class AtomTests {
         APP_OPS_ENUM_MAP.put(AppOpsManager.OPSTR_UWB_RANGING, 112);
         APP_OPS_ENUM_MAP.put(AppOpsManager.OPSTR_ACTIVITY_RECOGNITION_SOURCE, 113);
         APP_OPS_ENUM_MAP.put(AppOpsManager.OPSTR_BLUETOOTH_ADVERTISE, 114);
+        APP_OPS_ENUM_MAP.put(AppOpsManager.OPSTR_RECORD_INCOMING_PHONE_AUDIO, 115);
     }
 
     private static boolean sWasVerboseLoggingEnabled;

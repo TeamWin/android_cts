@@ -17,6 +17,7 @@
 package android.view.cts.receivecontent;
 
 import static android.view.ContentInfo.SOURCE_APP;
+import static android.view.ContentInfo.SOURCE_AUTOFILL;
 import static android.view.ContentInfo.SOURCE_CLIPBOARD;
 import static android.view.ContentInfo.SOURCE_DRAG_AND_DROP;
 import static android.view.ContentInfo.SOURCE_INPUT_METHOD;
@@ -27,8 +28,10 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 import android.content.ClipData;
+import android.content.ClipDescription;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Parcel;
 import android.platform.test.annotations.Presubmit;
 import android.util.Pair;
 import android.view.ContentInfo;
@@ -217,5 +220,60 @@ public class ContentInfoTest {
         ContentInfo copy = new ContentInfo.Builder(payload).build();
         copy.releasePermissions();
         verify(dragAndDropPermissions).release();
+    }
+
+    @Test
+    public void testParcel_withMinimalMetadata() throws Exception {
+        ClipData clip = ClipData.newPlainText("", "Hello");
+        ContentInfo original = new ContentInfo.Builder(clip, SOURCE_AUTOFILL).build();
+
+        ContentInfo fromParcel = parcelAndUnparcel(original);
+        assertThat(fromParcel.getClip().getItemAt(0).getText()).isEqualTo("Hello");
+        assertThat(fromParcel.getSource()).isEqualTo(SOURCE_AUTOFILL);
+        assertThat(fromParcel.getFlags()).isEqualTo(0);
+        assertThat(fromParcel.getLinkUri()).isEqualTo(null);
+        assertThat(fromParcel.getExtras()).isEqualTo(null);
+    }
+
+    @Test
+    public void testParcel_withAllMetadata() throws Exception {
+        ClipData clip = ClipData.newPlainText("", "Hello");
+        Bundle extras = new Bundle();
+        extras.putString("one", "sample value");
+        ContentInfo original = new ContentInfo.Builder(clip, SOURCE_CLIPBOARD)
+                .setFlags(ContentInfo.FLAG_CONVERT_TO_PLAIN_TEXT)
+                .setLinkUri(Uri.parse("http://example.com"))
+                .setExtras(extras)
+                .build();
+
+        ContentInfo fromParcel = parcelAndUnparcel(original);
+        assertThat(fromParcel.getClip().getItemAt(0).getText()).isEqualTo("Hello");
+        assertThat(fromParcel.getSource()).isEqualTo(original.getSource());
+        assertThat(fromParcel.getFlags()).isEqualTo(original.getFlags());
+        assertThat(fromParcel.getLinkUri()).isEqualTo(original.getLinkUri());
+        assertThat(fromParcel.getExtras().keySet()).isEqualTo(extras.keySet());
+        assertThat(fromParcel.getExtras().getString("one")).isEqualTo("sample value");
+    }
+
+    @Test
+    public void testParcel_imePermissionsMetadata() throws Exception {
+        ClipData clip = ClipData.newPlainText("", "Hello");
+        InputContentInfo inputContentInfo = new InputContentInfo(Uri.parse("content://example/1"),
+                new ClipDescription("", new String[]{"image/png"}));
+        ContentInfo payload = new ContentInfo.Builder(clip, SOURCE_INPUT_METHOD)
+                .setInputContentInfo(inputContentInfo)
+                .build();
+
+        // Verify that releasePermissions() doesn't throw an exception when IME permissions
+        // metadata is present after going through parceling.
+        ContentInfo fromParcel = parcelAndUnparcel(payload);
+        fromParcel.releasePermissions();
+    }
+
+    private static ContentInfo parcelAndUnparcel(ContentInfo payload) {
+        Parcel parcel = Parcel.obtain();
+        payload.writeToParcel(parcel, 0);
+        parcel.setDataPosition(0);
+        return ContentInfo.CREATOR.createFromParcel(parcel);
     }
 }

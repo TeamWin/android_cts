@@ -17,8 +17,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
      package="com.android.cts.deviceandprofileowner">
 
-    <uses-sdk android:minSdkVersion="23"
-         android:targetSdkVersion="25"/>
     <uses-permission android:name="android.permission.CAMERA"/>
 
     <!-- Add a network security config that trusts user added CAs for tests -->
