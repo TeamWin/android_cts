@@ -16,7 +16,7 @@
  -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="android.telephony.cts.preconditions.app">
+          package="android.telephony.cts.preconditions.preparerApp">
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.READ_PHONE_NUMBERS" />
     <application>
@@ -24,6 +24,6 @@
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
-                     android:targetPackage="android.telephony.cts.preconditions.app"
+                     android:targetPackage="android.telephony.cts.preconditions.preparerApp"
                      android:label="Device-side CTS telephony preparation" />
 </manifest>
