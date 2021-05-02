@@ -624,6 +624,26 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
         super.dequeueOutput(bufferIndex, info);
     }
 
+    private int getAacProfile(MediaFormat format) {
+        int aacProfile = format.getInteger(MediaFormat.KEY_AAC_PROFILE, -1);
+        int profile = format.getInteger(MediaFormat.KEY_PROFILE, -1);
+
+        if (aacProfile != -1 && profile != -1) {
+            // If both aac-profile and profile are present in format, then they must be the same
+            assertTrue("aac-profile " + aacProfile + " and profile " + profile + " are different.",
+                    aacProfile == profile);
+            return aacProfile;
+        } else if (aacProfile != -1) {
+            return aacProfile;
+        } else if (profile != -1) {
+            return profile;
+        } else {
+            Log.e(LOG_TAG,
+                    "format doesn't contain either KEY_AAC_PROFILE or KEY_PROFILE");
+            return -1;
+        }
+    }
+
     @Override
     boolean isFormatSimilar(MediaFormat inpFormat, MediaFormat outFormat) {
         if (!super.isFormatSimilar(inpFormat, outFormat)) {
@@ -636,28 +656,11 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
         if (outMime.startsWith("audio/")) {
             if (outFormat.getString(MediaFormat.KEY_MIME).equals(MediaFormat.MIMETYPE_AUDIO_AAC)) {
                 int inputProfileKey, outputProfileKey;
-                if (outFormat.containsKey(MediaFormat.KEY_AAC_PROFILE)) {
-                    outputProfileKey = outFormat.getInteger(MediaFormat.KEY_AAC_PROFILE);
-                } else if (outFormat.containsKey(MediaFormat.KEY_PROFILE)) {
-                    outputProfileKey = outFormat.getInteger(MediaFormat.KEY_PROFILE);
-                } else {
-                    Log.e(LOG_TAG,
-                            "Output format doesn't contain either KEY_AAC_PROFILE or KEY_PROFILE");
-                    return false;
-                }
-                if (inpFormat.containsKey(MediaFormat.KEY_AAC_PROFILE)) {
-                    inputProfileKey = inpFormat.getInteger(MediaFormat.KEY_AAC_PROFILE);
-                } else if (inpFormat.containsKey(MediaFormat.KEY_PROFILE)) {
-                    inputProfileKey = inpFormat.getInteger(MediaFormat.KEY_PROFILE);
-                } else {
-                    Log.e(LOG_TAG,
-                            "Input format doesn't contain either KEY_AAC_PROFILE or KEY_PROFILE");
-                    return false;
-                }
+                outputProfileKey = getAacProfile(outFormat);
+                inputProfileKey = getAacProfile(inpFormat);
                 if (outputProfileKey != inputProfileKey) {
-                    Log.e(LOG_TAG, "aac-profile in output doesn't match configured input");
-                    //TODO (b/151429829)
-                    if (true) return true;
+                    Log.e(LOG_TAG, "aac-profile in output " + outputProfileKey +
+                            " doesn't match configured input " + inputProfileKey);
                     return false;
                 }
             }
@@ -732,8 +735,12 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
             MediaCodecInfo.CodecCapabilities codecCapabilities =
                     mCodec.getCodecInfo().getCapabilitiesForType(mMime);
             for (int profile : profiles) {
-                format.setInteger(mIsAudio ? MediaFormat.KEY_AAC_PROFILE : MediaFormat.KEY_PROFILE,
-                        profile);
+                format.setInteger(MediaFormat.KEY_PROFILE, profile);
+                // for aac encoder, alongwith setting profile, also set aac-profile as some
+                // encoders may only support one of the two keys
+                if (mMime.equals(MediaFormat.MIMETYPE_AUDIO_AAC)) {
+                    format.setInteger(MediaFormat.KEY_AAC_PROFILE, profile);
+                }
                 int level = mIsAudio ? 0 : getMinLevel(mMime, mWidth, mHeight,
                         format.getInteger(MediaFormat.KEY_FRAME_RATE),
                         format.getInteger(MediaFormat.KEY_BIT_RATE), profile);
@@ -771,7 +778,7 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
                                     (ENABLE_LOGS ? "\n output format:" + outFormat : ""),
                             isFormatSimilar(format, outFormat));
 
-                    // TODO (b/151429829) (b/151398466)
+                    // TODO (b/151398466)
                     if (mMime.equals(MediaFormat.MIMETYPE_AUDIO_AAC)) {
                         Assume.assumeTrue("neither KEY_AAC_PROFILE nor KEY_PROFILE are present",
                                 outFormat.containsKey(MediaFormat.KEY_AAC_PROFILE) ||
