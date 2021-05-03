@@ -32,6 +32,7 @@ import androidx.annotation.NonNull;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 
+import com.android.compatibility.common.util.PollingCheck;
 import com.android.cts.input.HidDevice;
 import com.android.cts.input.HidJsonParser;
 import com.android.cts.input.HidTestData;
@@ -43,6 +44,7 @@ import org.junit.Rule;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -337,22 +339,50 @@ public abstract class InputTestCase {
         }
     }
 
+    protected void requestFocusSync() {
+        mActivityRule.getActivity().runOnUiThread(() -> {
+            mDecorView.setFocusable(true);
+            mDecorView.setFocusableInTouchMode(true);
+            mDecorView.requestFocus();
+        });
+        PollingCheck.waitFor(mDecorView::hasFocus);
+    }
+
     protected class PointerCaptureSession implements AutoCloseable {
         protected PointerCaptureSession() {
-            requestPointerCaptureSync();
+            requestFocusSync();
+            ensurePointerCaptureState(true);
         }
 
         @Override
         public void close() {
-            releasePointerCaptureSync();
+            ensurePointerCaptureState(false);
         }
 
-        private void requestPointerCaptureSync() {
-            mInstrumentation.runOnMainSync(mDecorView::requestPointerCapture);
-        }
-
-        private void releasePointerCaptureSync() {
-            mInstrumentation.runOnMainSync(mDecorView::releasePointerCapture);
+        private void ensurePointerCaptureState(boolean enable) {
+            final CountDownLatch latch = new CountDownLatch(1);
+            mActivityRule.getActivity().setPointerCaptureCallback(hasCapture -> {
+                if (enable == hasCapture) {
+                    latch.countDown();
+                }
+            });
+            mActivityRule.getActivity().runOnUiThread(enable ? mDecorView::requestPointerCapture
+                    : mDecorView::releasePointerCapture);
+            try {
+                if (!latch.await(60, TimeUnit.SECONDS)) {
+                    throw new IllegalStateException(
+                            "Did not receive callback after "
+                                    + (enable ? "enabling" : "disabling")
+                                    + " Pointer Capture.");
+                }
+            } catch (InterruptedException e) {
+                throw new IllegalStateException(
+                        "Interrupted while waiting for Pointer Capture state.");
+            } finally {
+                mActivityRule.getActivity().setPointerCaptureCallback(null);
+            }
+            assertEquals("The view's Pointer Capture state did not match.", enable,
+                    mDecorView.hasPointerCapture());
         }
     }
 }
