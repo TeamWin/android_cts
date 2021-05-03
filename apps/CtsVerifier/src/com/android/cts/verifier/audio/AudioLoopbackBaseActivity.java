@@ -35,6 +35,7 @@ import android.widget.TextView;
 
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
+import com.android.cts.verifier.audio.audiolib.StatUtils;
 import com.android.cts.verifier.CtsVerifierReportLog;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
@@ -345,25 +346,6 @@ public class AudioLoopbackBaseActivity extends PassFailButtons.Activity {
                 ResultUnit.NONE);
     }
 
-    //
-    //  test logic
-    //
-    private double calculateMeanAbsoluteDeviation(double mean, double[] values) {
-        double sum = 0.0;
-        for (double value : values) {
-            sum += Math.abs(value - mean);
-        }
-        return sum / values.length;
-    }
-
-    private double calculateMean(double[] values) {
-        double sum = 0.0;
-        for (double value : values) {
-            sum += value;
-        }
-        return sum / values.length;
-    }
-
     protected void startAudioTest(Handler messageHandler) {
         getPassButton().setEnabled(false);
 
@@ -396,9 +378,9 @@ public class AudioLoopbackBaseActivity extends PassFailButtons.Activity {
     protected void handleTestCompletion() {
         Log.i(TAG, "handleTestCompletion() ...");
 
-        mMeanLatencyMillis = calculateMean(mLatencyMillis);
-        mMeanAbsoluteDeviation = calculateMeanAbsoluteDeviation(mMeanLatencyMillis, mLatencyMillis);
-        mMeanConfidence = calculateMean(mConfidence);
+        mMeanLatencyMillis = StatUtils.calculateMean(mLatencyMillis);
+        mMeanAbsoluteDeviation = StatUtils.calculateMeanAbsoluteDeviation(mMeanLatencyMillis, mLatencyMillis);
+        mMeanConfidence = StatUtils.calculateMean(mConfidence);
 
         String result = String.format(
             "Test Finished\nMean Latency:%.2f ms\nMean Absolute Deviation: %.2f\n" +
