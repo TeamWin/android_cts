@@ -21,10 +21,13 @@ import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 
+import java.util.function.Consumer;
+
 public class InputCtsActivity extends Activity {
     private static final String TAG = "InputCtsActivity";
 
     private InputCallback mInputCallback;
+    private Consumer<Boolean> mPointerCaptureCallback;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -63,7 +66,18 @@ public class InputCtsActivity extends Activity {
         return true;
     }
 
+    @Override
+    public void onPointerCaptureChanged(boolean hasCapture) {
+        if (mPointerCaptureCallback != null) {
+            mPointerCaptureCallback.accept(hasCapture);
+        }
+    }
+
     public void setInputCallback(InputCallback callback) {
         mInputCallback = callback;
+    }
+
+    public void setPointerCaptureCallback(Consumer<Boolean> callback) {
+        mPointerCaptureCallback = callback;
     }
 }
