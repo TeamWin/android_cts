@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.telephony.cts.preconditions.app;
+package android.telephony.cts.preconditions.preparerApp;
 
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
