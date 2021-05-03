@@ -304,4 +304,24 @@ public final class RemoteControlPassthrough {
         userControlPressKeys.put(HdmiCecConstants.CEC_KEYCODE_DATA,"TV_DATA_SERVICE");
         return userControlPressKeys;
     }
+
+    public static void checkUserControlPressAndRelease(
+            HdmiCecClientWrapper hdmiCecClient,
+            ITestDevice device,
+            LogicalAddress sourceDevice,
+            LogicalAddress dutLogicalAddress,
+            int cecKeycode,
+            String androidKeycode)
+            throws Exception {
+        // Clear activity
+        device.executeShellCommand(CLEAR_COMMAND);
+        // Clear logcat.
+        device.executeAdbCommand("logcat", "-c");
+        // Start the APK and wait for it to complete.
+        device.executeShellCommand(START_COMMAND);
+
+        hdmiCecClient.sendUserControlPressAndRelease(
+                sourceDevice, dutLogicalAddress, cecKeycode, false);
+        LogHelper.assertLog(device, CLASS, "Short press KEYCODE_" + androidKeycode);
+    }
 }
