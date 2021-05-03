@@ -678,7 +678,6 @@ class AppOpsLoggingTest {
      * Realistic end-to-end test for recording audio
      */
     @Test
-    @Ignore
     fun recordAudio() {
         val ar = AudioRecord.Builder()
                 .setContext(context.createAttributionContext(TEST_ATTRIBUTION_TAG)).build()
@@ -699,7 +698,6 @@ class AppOpsLoggingTest {
      * Realistic end-to-end test for recording low latency audio
      */
     @Test
-    @Ignore
     fun recordAudioLowLatency() {
         val ar = AudioRecord.Builder()
                 .setAudioAttributes(AudioAttributes.Builder()
@@ -723,7 +721,6 @@ class AppOpsLoggingTest {
      * Realistic end-to-end test for recording using the public native API with shared, low latency
      */
     @Test
-    @Ignore
     fun recordAudioNativeLowLatencyShared() {
         nativeStartStopAudioRecord(isShared = true, isLowLatency = true,
                 packageName = context.packageName, attributionTag = TEST_ATTRIBUTION_TAG)
@@ -739,7 +736,6 @@ class AppOpsLoggingTest {
      * mode
      */
     @Test
-    @Ignore
     fun recordAudioNativeLowLatencyExclusive() {
         nativeStartStopAudioRecord(isShared = false, isLowLatency = true,
                 packageName = context.packageName, attributionTag = TEST_ATTRIBUTION_TAG)
@@ -755,7 +751,6 @@ class AppOpsLoggingTest {
      * mode
      */
     @Test
-    @Ignore
     fun recordAudioNativeShared() {
         nativeStartStopAudioRecord(isShared = true, isLowLatency = false,
                 packageName = context.packageName, attributionTag = TEST_ATTRIBUTION_TAG)
