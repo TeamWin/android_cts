@@ -17,6 +17,7 @@
 package android.server.wm.app;
 
 import static android.server.wm.app.Components.TestStartingWindowKeys.CANCEL_HANDLE_EXIT;
+import static android.server.wm.app.Components.TestStartingWindowKeys.CENTER_VIEW_IS_SURFACE_VIEW;
 import static android.server.wm.app.Components.TestStartingWindowKeys.CONTAINS_CENTER_VIEW;
 import static android.server.wm.app.Components.TestStartingWindowKeys.DELAY_RESUME;
 import static android.server.wm.app.Components.TestStartingWindowKeys.ICON_ANIMATION_DURATION;
@@ -31,6 +32,7 @@ import android.os.Bundle;
 import android.os.SystemClock;
 import android.server.wm.TestJournalProvider;
 import android.util.Log;
+import android.view.SurfaceView;
 import android.view.View;
 import android.window.SplashScreen;
 import android.window.SplashScreenView;
@@ -64,6 +66,7 @@ public class SplashScreenReplaceIconActivity extends Activity {
     private void onSplashScreenExit(SplashScreenView view) {
         final Context baseContext = getBaseContext();
         final View centerView = view.getIconView();
+        final boolean isSurfaceView = view.getIconView() instanceof SurfaceView;
         TestJournalProvider.putExtras(baseContext, REPLACE_ICON_EXIT, bundle -> {
             bundle.putBoolean(RECEIVE_SPLASH_SCREEN_EXIT, true);
             bundle.putBoolean(CONTAINS_CENTER_VIEW, centerView != null);
@@ -71,6 +74,7 @@ public class SplashScreenReplaceIconActivity extends Activity {
                     ? view.getIconAnimationDuration().toMillis() : 0);
             bundle.putLong(ICON_ANIMATION_START, view.getIconAnimationStart() != null
                     ? view.getIconAnimationStart().toEpochMilli() : 0);
+            bundle.putBoolean(CENTER_VIEW_IS_SURFACE_VIEW, isSurfaceView);
         });
         view.remove();
     }
