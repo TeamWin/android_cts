@@ -225,7 +225,7 @@ static void testNullFrameInfo(JNIEnv* env, jobject, jobject jAssets, jstring jFi
         ASSERT_EQ(0, rect.bottom);
     }
 
-    ASSERT_EQ(0, AImageDecoderFrameInfo_getDuration(nullptr));
+    ASSERT_EQ(ANDROID_IMAGE_DECODER_BAD_PARAMETER, AImageDecoderFrameInfo_getDuration(nullptr));
     ASSERT_FALSE(AImageDecoderFrameInfo_hasAlphaWithinBounds(nullptr));
     ASSERT_EQ(ANDROID_IMAGE_DECODER_BAD_PARAMETER, AImageDecoderFrameInfo_getDisposeOp(nullptr));
     ASSERT_EQ(ANDROID_IMAGE_DECODER_BAD_PARAMETER, AImageDecoderFrameInfo_getBlendOp(nullptr));
