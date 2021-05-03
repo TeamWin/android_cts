@@ -1168,6 +1168,11 @@ public class StagefrightTest {
      to prevent merge conflicts, add O tests below this comment,
      before any existing test methods
      ***********************************************************/
+    @Test
+    @SecurityTest(minPatchLevel = "2020-11")
+    public void testStagefright_cve_2020_11184() throws Exception {
+        doStagefrightTest(R.raw.cve_2020_11184);
+    }
 
     @Test
     @SecurityTest(minPatchLevel = "2019-07")
