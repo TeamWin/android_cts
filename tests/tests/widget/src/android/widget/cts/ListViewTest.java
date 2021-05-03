@@ -38,7 +38,6 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import android.app.ActionBar.LayoutParams;
 import android.app.Activity;
 import android.app.Instrumentation;
-import android.app.compat.CompatChanges;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -60,7 +59,6 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
-import android.widget.EdgeEffect;
 import android.widget.FrameLayout;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -1160,23 +1158,6 @@ public class ListViewTest {
         Assert.assertTrue(newItem.hasTransientState());
         Assert.assertEquals(oldText, newText);
         Assert.assertEquals(tag, newItem.getTag());
-    }
-
-    @Test
-    public void testEdgeEffectType() {
-        // Should default to "glow"
-        int expectedStartType = (CompatChanges.isChangeEnabled(USE_STRETCH_EDGE_EFFECT_BY_DEFAULT)
-                || CompatChanges.isChangeEnabled(USE_STRETCH_EDGE_EFFECT_FOR_SUPPORTED))
-                ? EdgeEffect.TYPE_STRETCH : EdgeEffect.TYPE_GLOW;
-        assertEquals(expectedStartType, mListView.getEdgeEffectType());
-
-        // This one has "stretch" attribute
-        assertEquals(EdgeEffect.TYPE_STRETCH, mListViewStretch.getEdgeEffectType());
-
-        mListViewStretch.setEdgeEffectType(EdgeEffect.TYPE_GLOW);
-        assertEquals(EdgeEffect.TYPE_GLOW, mListViewStretch.getEdgeEffectType());
-        mListViewStretch.setEdgeEffectType(EdgeEffect.TYPE_STRETCH);
-        assertEquals(EdgeEffect.TYPE_STRETCH, mListViewStretch.getEdgeEffectType());
     }
 
     @Test
