@@ -19,19 +19,14 @@ package android.server.wm;
 import static android.server.wm.UiDeviceUtils.pressHomeButton;
 import static android.server.wm.UiDeviceUtils.pressUnlockButton;
 import static android.server.wm.UiDeviceUtils.pressWakeupButton;
-import static android.view.SurfaceControlViewHost.*;
+import static android.view.SurfaceControlViewHost.SurfacePackage;
 import static android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
 import static android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-
-import androidx.test.InstrumentationRegistry;
-import androidx.test.filters.FlakyTest;
-import androidx.test.rule.ActivityTestRule;
-import org.junit.Before;
-import org.junit.Test;
 
 import android.app.Activity;
 import android.app.ActivityManager;
@@ -53,11 +48,19 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.FrameLayout;
 
+import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.FlakyTest;
+import androidx.test.rule.ActivityTestRule;
+
 import com.android.compatibility.common.util.CtsTouchUtils;
 import com.android.compatibility.common.util.WidgetTestUtils;
 
+import org.junit.Before;
+import org.junit.Test;
+
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Ensure end-to-end functionality of SurfaceControlViewHost.
@@ -433,4 +436,87 @@ public class SurfaceControlViewHostTests implements SurfaceHolder.Callback {
         CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
         assertTrue(mClicked);
     }
+
+    @Test
+    public void testTransferSurfacePackage() throws Throwable {
+        // Create a surface view and wait for its surface to be created.
+        CountDownLatch surfaceCreated = new CountDownLatch(1);
+        CountDownLatch surface2Created = new CountDownLatch(1);
+        CountDownLatch viewDetached = new CountDownLatch(1);
+        AtomicReference<SurfacePackage> surfacePackageRef = new AtomicReference<>(null);
+        AtomicReference<SurfacePackage> surfacePackageCopyRef = new AtomicReference<>(null);
+        AtomicReference<SurfaceView> secondSurfaceRef = new AtomicReference<>(null);
+
+        mActivityRule.runOnUiThread(() -> {
+            final FrameLayout content = new FrameLayout(mActivity);
+            mSurfaceView = new SurfaceView(mActivity);
+            mSurfaceView.setZOrderOnTop(true);
+            content.addView(mSurfaceView, new FrameLayout.LayoutParams(DEFAULT_SURFACE_VIEW_WIDTH,
+                    DEFAULT_SURFACE_VIEW_HEIGHT, Gravity.LEFT | Gravity.TOP));
+            mActivity.setContentView(content, new ViewGroup.LayoutParams(DEFAULT_SURFACE_VIEW_WIDTH,
+                    DEFAULT_SURFACE_VIEW_HEIGHT));
+            mSurfaceView.getHolder().addCallback(new SurfaceCreatedCallback(surfaceCreated));
+
+            // Create an embedded view.
+            mVr = new SurfaceControlViewHost(mActivity, mActivity.getDisplay(),
+                    mSurfaceView.getHostToken());
+            mEmbeddedView = new Button(mActivity);
+            mEmbeddedView.setOnClickListener((View v) -> mClicked = true);
+            mVr.setView(mEmbeddedView, mEmbeddedViewWidth, mEmbeddedViewHeight);
+
+            SurfacePackage surfacePackage = mVr.getSurfacePackage();
+            surfacePackageRef.set(surfacePackage);
+            surfacePackageCopyRef.set(new SurfacePackage(surfacePackage));
+
+            // Assign the surface package to the first surface
+            mSurfaceView.setChildSurfacePackage(surfacePackage);
+
+
+            // Create the second surface view to which we'll assign the surface package copy
+            SurfaceView secondSurface = new SurfaceView(mActivity);
+            secondSurfaceRef.set(secondSurface);
+
+            mSurfaceView.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
+                @Override
+                public void onViewAttachedToWindow(View v) {
+                }
+
+                @Override
+                public void onViewDetachedFromWindow(View v) {
+                    viewDetached.countDown();
+                }
+            });
+
+            secondSurface.getHolder().addCallback(new SurfaceCreatedCallback(surface2Created));
+
+        });
+        surfaceCreated.await();
+
+        // Add the second surface view and assign it the surface package copy
+        mActivityRule.runOnUiThread(() -> {
+            ViewGroup content = (ViewGroup) mSurfaceView.getParent();
+            content.addView(secondSurfaceRef.get(),
+                    new FrameLayout.LayoutParams(DEFAULT_SURFACE_VIEW_WIDTH,
+                            DEFAULT_SURFACE_VIEW_HEIGHT, Gravity.TOP | Gravity.LEFT));
+            secondSurfaceRef.get().setZOrderOnTop(true);
+            surfacePackageRef.get().release();
+            secondSurfaceRef.get().setChildSurfacePackage(surfacePackageCopyRef.get());
+
+            content.removeView(mSurfaceView);
+        });
+
+        // Wait for the first surface to be removed
+        surface2Created.await();
+        viewDetached.await();
+
+        mInstrumentation.waitForIdleSync();
+        waitUntilEmbeddedViewDrawn();
+
+        // Check if SurfacePackage copy remains valid even though the original package has
+        // been released and the original surface view removed.
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule,
+                secondSurfaceRef.get());
+        assertTrue(mClicked);
+    }
+
 }
