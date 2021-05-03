@@ -55,12 +55,6 @@ if [ -n "${TF_DEBUG}" ]; then
   RDBG_FLAG=-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=${TF_DEBUG_PORT}
 fi
 
-JAVA_BINARY=${CTS_ROOT}/android-cts/jdk/bin/java
-
-if [ ! -f "${JAVA_BINARY}" ]; then
-    JAVA_BINARY=java
-fi
-
 # get OS
 HOST=`uname`
 if [ "$HOST" == "Linux" ]; then
@@ -91,6 +85,14 @@ if [ -z ${CTS_ROOT} ]; then
     # assume we're in an extracted cts install
     CTS_ROOT="$(dirname $(realpath $0))/../.."
 fi;
+
+if [ -z ${JAVA_BINARY} ]; then
+    JAVA_BINARY=${CTS_ROOT}/android-cts/jdk/bin/java
+fi;
+
+if [ ! -f "${JAVA_BINARY}" ]; then
+    JAVA_BINARY=java
+fi
 
 JAR_DIR=${CTS_ROOT}/android-cts/tools
 
