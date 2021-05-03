@@ -50,6 +50,7 @@ import android.telephony.ims.ProvisioningManager;
 import android.telephony.ims.RcsClientConfiguration;
 import android.telephony.ims.RcsUceAdapter;
 import android.telephony.ims.RegistrationManager;
+import android.telephony.ims.RtpHeaderExtensionType;
 import android.telephony.ims.feature.ImsFeature;
 import android.telephony.ims.feature.MmTelFeature;
 import android.telephony.ims.feature.RcsFeature.RcsImsCapabilities;
@@ -76,6 +77,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.Arrays;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -3040,6 +3042,40 @@ public class ImsServiceTest {
 
         sServiceConnector.setDeviceSingleRegistrationEnabled(null);
         overrideCarrierConfig(null);
+    }
+
+    /**
+     * Verifies that the RTP header extensions are set as expected when D2D communication is
+     * available on the device and for the current carrier.
+     * @throws Exception
+     */
+    @Test
+    public void testSetRtpHeaderExtensions() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+        sServiceConnector.setDeviceToDeviceCommunicationEnabled(true);
+        try {
+            PersistableBundle bundle = new PersistableBundle();
+            bundle.putBoolean(
+                    CarrierConfigManager.KEY_SUPPORTS_DEVICE_TO_DEVICE_COMMUNICATION_USING_RTP_BOOL,
+                    true);
+            bundle.putBoolean(CarrierConfigManager
+                    .KEY_SUPPORTS_SDP_NEGOTIATION_OF_D2D_RTP_HEADER_EXTENSIONS_BOOL, true);
+            overrideCarrierConfig(bundle);
+
+            triggerFrameworkConnectToCarrierImsService();
+
+            sServiceConnector.getCarrierService().getMmTelFeature()
+                    .getOfferedRtpHeaderExtensionLatch().await(5000, TimeUnit.MILLISECONDS);
+            Set<RtpHeaderExtensionType> extensions = sServiceConnector.getCarrierService()
+                    .getMmTelFeature().getOfferedRtpHeaderExtensionTypes();
+
+            assertTrue(extensions.size() > 0);
+        } finally {
+            sServiceConnector.setDeviceToDeviceCommunicationEnabled(false);
+            overrideCarrierConfig(null);
+        }
     }
 
     private void verifyIntKey(ProvisioningManager pm,
