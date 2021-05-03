@@ -22,7 +22,7 @@ import android.app.Activity.RESULT_OK
 import android.app.AppOpsManager
 import android.app.AppOpsManager.MODE_ALLOWED
 import android.app.AppOpsManager.OPSTR_ACCESS_ACCESSIBILITY
-import android.app.AppOpsManager.OPSTR_BLUETOOTH_CONNECT
+import android.app.AppOpsManager.OPSTR_BLUETOOTH_SCAN
 import android.app.AppOpsManager.OPSTR_CAMERA
 import android.app.AppOpsManager.OPSTR_COARSE_LOCATION
 import android.app.AppOpsManager.OPSTR_FINE_LOCATION
@@ -490,6 +490,9 @@ class AppOpsLoggingTest {
 
         val wasEnabled = enableBTAdapter(btAdapter, testContext)
         assumeTrue("Need to be able enable BT", wasEnabled)
+
+        clearCollectedNotedOps()
+
         try {
             val btScanner = btAdapter.bluetoothLeScanner
             val scanCallback = object : ScanCallback() {}
@@ -497,7 +500,7 @@ class AppOpsLoggingTest {
             btScanner.startScan(scanCallback)
             try {
                 eventually {
-                    assertThat(noted[0].first.op).isEqualTo(OPSTR_BLUETOOTH_CONNECT)
+                    assertThat(noted[0].first.op).isEqualTo(OPSTR_BLUETOOTH_SCAN)
                     assertThat(noted[0].first.attributionTag).isEqualTo(TEST_ATTRIBUTION_TAG)
                     // startScan calls into the system server which then calls back into the app to
                     // start the scan. I.e. the backtrace points back to a callback from the system
