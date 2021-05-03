@@ -19,34 +19,23 @@ import static android.uirendering.cts.util.MockVsyncHelper.nextFrame;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.anyFloat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 
-import android.app.compat.CompatChanges;
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BlendMode;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.RecordingCanvas;
 import android.graphics.Rect;
 import android.graphics.RenderNode;
-import android.uirendering.cts.R;
 import android.uirendering.cts.bitmapverifiers.ColorVerifier;
 import android.uirendering.cts.bitmapverifiers.PerPixelBitmapVerifier;
 import android.uirendering.cts.bitmapverifiers.RegionVerifier;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
 import android.uirendering.cts.testinfrastructure.Tracer;
-import android.uirendering.cts.util.BitmapAsserter;
 import android.uirendering.cts.util.MockVsyncHelper;
-import android.util.AttributeSet;
 import android.view.ContextThemeWrapper;
-import android.view.LayoutInflater;
-import android.view.View;
 import android.view.animation.AnimationUtils;
 import android.widget.EdgeEffect;
 
@@ -59,22 +48,15 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class EdgeEffectTests extends ActivityTestBase {
-    static final long USE_STRETCH_EDGE_EFFECT_BY_DEFAULT = 171228096L;
-    static final long USE_STRETCH_EDGE_EFFECT_FOR_SUPPORTED = 178807038L;
-
     private static final int WIDTH = 90;
     private static final int HEIGHT = 90;
 
     @Rule
     public Tracer name = new Tracer();
-
-    private BitmapAsserter mBitmapAsserter = new BitmapAsserter(this.getClass().getSimpleName(),
-            name.getMethodName());
 
     private Context mThemeContext;
 
@@ -94,41 +76,48 @@ public class EdgeEffectTests extends ActivityTestBase {
     }
 
     private static class EdgeEffectValidator extends PerPixelBitmapVerifier {
-        public int matchedColorCount;
+        public float stretch; // in pixels, vertically
 
-        private int mInverseColorMask;
-        private int mColorMask;
-
-        public EdgeEffectValidator(int drawColor) {
-            mColorMask = drawColor & 0x00FFFFFF;
-            mInverseColorMask = ~(drawColor & 0x00FFFFFF);
+        EdgeEffectValidator() {
         }
 
         @Override
         protected boolean verifyPixel(int x, int y, int observedColor) {
-            if ((observedColor & mColorMask) != 0) {
-                matchedColorCount++;
+            if (y < HEIGHT / 2) {
+                // Top half should always be the top color
+                return observedColor == Color.WHITE;
             }
-            return (observedColor & mInverseColorMask) == 0xFF000000;
+
+            // This may be either bottom or top color, depending on the stretch
+            stretch += Color.red(observedColor) / 255f / WIDTH;
+            return true;
         }
     }
 
     private void assertEdgeEffect(EdgeEffectInitializer initializer) {
-        Bitmap bitmap = Bitmap.createBitmap(WIDTH, HEIGHT, Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(bitmap);
-        canvas.drawColor(Color.BLACK);
         EdgeEffect edgeEffect = new EdgeEffect(getContext());
         edgeEffect.setSize(WIDTH, HEIGHT);
-        edgeEffect.setColor(Color.RED);
-        edgeEffect.setType(EdgeEffect.TYPE_GLOW);
-        assertEquals(Color.RED, edgeEffect.getColor());
         initializer.initialize(edgeEffect);
-        edgeEffect.draw(canvas);
 
-        EdgeEffectValidator verifier = new EdgeEffectValidator(edgeEffect.getColor());
-        mBitmapAsserter.assertBitmapIsVerified(bitmap, verifier,
-                name.getMethodName(), "EdgeEffect doesn't match expected");
-        assertTrue(verifier.matchedColorCount > 0);
+        RenderNode renderNode = drawEdgeEffect(edgeEffect, 0, 0f);
+
+        float stretchPixelCount = getStretchDownPixelCount(renderNode);
+
+        // at least 1 pixel stretch
+        assertTrue(stretchPixelCount > 1);
+    }
+
+    private float getStretchDownPixelCount(
+            RenderNode renderNode
+    ) {
+        EdgeEffectValidator verifier = new EdgeEffectValidator();
+        createTest()
+                .addCanvasClientWithoutUsingPicture((canvas, width, height) -> {
+                    canvas.drawRenderNode(renderNode);
+                }, true)
+                .runWithVerifier(verifier);
+
+        return verifier.stretch;
     }
 
     @Test
@@ -140,41 +129,16 @@ public class EdgeEffectTests extends ActivityTestBase {
 
     @Test
     public void testSetSize() {
-        assertEdgeEffect(edgeEffect -> {
-            edgeEffect.setSize(70, 70);
-            edgeEffect.onPull(1);
-        });
-    }
+        EdgeEffect edgeEffect = new EdgeEffect(getContext());
+        edgeEffect.setSize(WIDTH, HEIGHT / 2);
 
-    @Test
-    public void testSetColor() {
-        assertEdgeEffect(edgeEffect -> {
-            edgeEffect.setColor(Color.GREEN);
-            assertEquals(Color.GREEN, edgeEffect.getColor());
-            edgeEffect.onPull(1);
-        });
-    }
+        RenderNode renderNode = drawEdgeEffect(edgeEffect, HEIGHT / 2f, 0f);
 
-    @Test
-    public void testSetBlendMode() {
-        assertEdgeEffect(edgeEffect -> {
-            edgeEffect.setBlendMode(null);
-            assertNull(edgeEffect.getBlendMode());
-            edgeEffect.setBlendMode(EdgeEffect.DEFAULT_BLEND_MODE);
-            assertEquals(BlendMode.SRC_ATOP, edgeEffect.getBlendMode());
-            edgeEffect.onPull(1);
-        });
-    }
+        float stretchPixelCount = getStretchDownPixelCount(renderNode);
 
-    @Test
-    public void testOnPullWithDisplacement() {
-        assertEdgeEffect(edgeEffect -> {
-            edgeEffect.onPull(1, 0);
-        });
-
-        assertEdgeEffect(edgeEffect -> {
-            edgeEffect.onPull(1, 1);
-        });
+        // The top half is not in the stretched area, so the only thing being stretched is the
+        // bottom half
+        assertEquals(0f, stretchPixelCount, 0.01f);
     }
 
     @Test
@@ -197,53 +161,16 @@ public class EdgeEffectTests extends ActivityTestBase {
         assertFalse(effect.draw(new Canvas()));
     }
 
-    @Test
-    public void testGetColor() {
-        EdgeEffect effect = new EdgeEffect(getContext());
-        effect.setColor(Color.GREEN);
-        assertEquals(Color.GREEN, effect.getColor());
-    }
-
+    /* Commented out until framework change is put in.
     @Test
     public void testGetMaxHeight() {
         EdgeEffect edgeEffect = new EdgeEffect(getContext());
         edgeEffect.setSize(200, 200);
-        assertTrue(edgeEffect.getMaxHeight() <= 200 * 2 + 1);
+        assertEquals(200, edgeEffect.getMaxHeight());
         edgeEffect.setSize(200, 0);
         assertEquals(0, edgeEffect.getMaxHeight());
     }
-
-    @Test
-    public void testEdgeEffectTypeAccessors() {
-        EdgeEffect effect = new EdgeEffect(getContext());
-
-        int expectedStartType = (CompatChanges.isChangeEnabled(USE_STRETCH_EDGE_EFFECT_BY_DEFAULT)
-                || CompatChanges.isChangeEnabled(USE_STRETCH_EDGE_EFFECT_FOR_SUPPORTED))
-                ? EdgeEffect.TYPE_STRETCH : EdgeEffect.TYPE_GLOW;
-        assertEquals(expectedStartType, effect.getType());
-        effect.setType(EdgeEffect.TYPE_STRETCH);
-        assertEquals(EdgeEffect.TYPE_STRETCH, effect.getType());
-    }
-
-    @Test
-    public void testEdgeEffectTypeAttribute() {
-        final Context targetContext = InstrumentationRegistry.getTargetContext();
-        final Context themeContext =
-                new ContextThemeWrapper(targetContext, R.style.StretchEdgeEffect);
-        EdgeEffect withWarpEffect = new EdgeEffect(themeContext);
-        assertEquals(EdgeEffect.TYPE_STRETCH, withWarpEffect.getType());
-    }
-
-    @Test
-    public void testCustomViewEdgeEffectAttribute() {
-        Context targetContext = InstrumentationRegistry.getTargetContext();
-        LayoutInflater layoutInflater = LayoutInflater.from(targetContext);
-        View view = layoutInflater.inflate(R.layout.stretch_edge_effect_view, null);
-        assertTrue(view instanceof CustomEdgeEffectView);
-        CustomEdgeEffectView customEdgeEffectView = (CustomEdgeEffectView) view;
-        assertEquals(EdgeEffect.TYPE_STRETCH, customEdgeEffectView.edgeEffect.getType());
-    }
-
+*/
     @Test
     public void testDistance() {
         EdgeEffect effect = new EdgeEffect(getContext());
@@ -263,29 +190,31 @@ public class EdgeEffectTests extends ActivityTestBase {
         assertEquals(0f, effect.getDistance(), 0.001f);
     }
 
-    private RenderNode drawStretchEffect(float distance, float displacement, float rotation) {
-        int width = WIDTH;
-        int height = HEIGHT;
+    private RenderNode drawStretchEffect(float rotation) {
         EdgeEffect edgeEffect = new EdgeEffect(getContext());
-        edgeEffect.setSize(width, height);
-        edgeEffect.setType(EdgeEffect.TYPE_STRETCH);
-        edgeEffect.onPullDistance(distance, displacement);
+        edgeEffect.setSize(WIDTH, HEIGHT);
+        edgeEffect.onPullDistance(1f, 0.5f);
 
+        return drawEdgeEffect(edgeEffect, 0, rotation);
+    }
+
+    private RenderNode drawEdgeEffect(EdgeEffect edgeEffect, float verticalOffset, float rotation) {
         RenderNode renderNode = new RenderNode("");
-        renderNode.setPosition(0, 0, width, height);
+        renderNode.setPosition(0, 0, WIDTH, HEIGHT);
         RecordingCanvas recordingCanvas = renderNode.beginRecording();
         Paint paint = new Paint();
-        paint.setColor(Color.GREEN);
-        recordingCanvas.drawRect(0f, 0f, width, height / 2f, paint);
-        paint.setColor(Color.MAGENTA);
-        recordingCanvas.drawRect(0, height / 2f, width, height, paint);
+        paint.setColor(Color.WHITE);
+        recordingCanvas.drawRect(0f, 0f, WIDTH, HEIGHT / 2f, paint);
+        paint.setColor(Color.BLACK);
+        recordingCanvas.drawRect(0, HEIGHT / 2f, WIDTH, HEIGHT, paint);
         renderNode.endRecording();
 
         RenderNode outer = new RenderNode("outer");
-        outer.setPosition(0, 0, width, height);
+        outer.setPosition(0, 0, WIDTH, HEIGHT);
         RecordingCanvas outerRecordingCanvas = outer.beginRecording();
         outerRecordingCanvas.drawRenderNode(renderNode);
-        recordingCanvas.rotate(rotation, width / 2f, height / 2f);
+        recordingCanvas.translate(0f, verticalOffset);
+        recordingCanvas.rotate(rotation, WIDTH / 2f, HEIGHT / 2f);
         edgeEffect.draw(outerRecordingCanvas);
         outer.endRecording();
         return outer;
@@ -293,7 +222,7 @@ public class EdgeEffectTests extends ActivityTestBase {
 
     @Test
     public void testStretchTop() {
-        RenderNode renderNode = drawStretchEffect(1f, 1f, 0f);
+        RenderNode renderNode = drawStretchEffect(0f);
         Rect innerRect = new Rect(0, 0, WIDTH, HEIGHT / 2 + 1);
         Rect outerRect = new Rect(0, HEIGHT / 2 + 10, WIDTH, HEIGHT);
         createTest()
@@ -303,16 +232,16 @@ public class EdgeEffectTests extends ActivityTestBase {
                 .runWithVerifier(
                         new RegionVerifier().addVerifier(
                                 innerRect,
-                                new ColorVerifier(Color.GREEN)
+                                new ColorVerifier(Color.WHITE)
                         ).addVerifier(
                                 outerRect,
-                                new ColorVerifier(Color.MAGENTA)
+                                new ColorVerifier(Color.BLACK)
                         ));
     }
 
     @Test
     public void testStretchBottom() {
-        RenderNode renderNode = drawStretchEffect(1f, 1f, 180f);
+        RenderNode renderNode = drawStretchEffect(180f);
         Rect innerRect = new Rect(0, 0, WIDTH, 1);
         Rect outerRect = new Rect(0, (HEIGHT / 2) - 1, WIDTH, HEIGHT / 2);
         createTest()
@@ -322,17 +251,16 @@ public class EdgeEffectTests extends ActivityTestBase {
                 .runWithVerifier(
                         new RegionVerifier().addVerifier(
                                 innerRect,
-                                new ColorVerifier(Color.GREEN)
+                                new ColorVerifier(Color.WHITE)
                         ).addVerifier(
                                 outerRect,
-                                new ColorVerifier(Color.MAGENTA)
+                                new ColorVerifier(Color.BLACK)
                         ));
     }
 
     @Test
     public void testNoSetSizeCallDoesNotCrash() {
         EdgeEffect edgeEffect = new EdgeEffect(getContext());
-        edgeEffect.setType(EdgeEffect.TYPE_STRETCH);
         edgeEffect.onPullDistance(1f, 1f);
         edgeEffect.onAbsorb(100);
         edgeEffect.onRelease();
@@ -346,7 +274,6 @@ public class EdgeEffectTests extends ActivityTestBase {
     @Test
     public void testInvalidPullDistanceDoesNotCrash() {
         EdgeEffect edgeEffect = new EdgeEffect(getContext());
-        edgeEffect.setType(EdgeEffect.TYPE_STRETCH);
         // Verify that bad inputs to onPull do not crash
         edgeEffect.onPull(Float.NaN, Float.NaN);
 
@@ -363,7 +290,6 @@ public class EdgeEffectTests extends ActivityTestBase {
     public void testAbsorbThenDrawDoesNotCrash() {
         MockVsyncHelper.runOnVsyncThread(() -> {
             EdgeEffect edgeEffect = new EdgeEffect(getContext());
-            edgeEffect.setType(EdgeEffect.TYPE_STRETCH);
             edgeEffect.onPullDistance(1f, 1f);
             edgeEffect.onAbsorb(100);
             edgeEffect.onRelease();
@@ -385,12 +311,12 @@ public class EdgeEffectTests extends ActivityTestBase {
     }
 
     /**
-     * When a TYPE_STRETCH is used, a held pull should not retract.
+     * A held pull should not retract.
      */
     @Test
     @LargeTest
     public void testStretchPullAndHold() throws Exception {
-        EdgeEffect edgeEffect = createEdgeEffectWithPull(EdgeEffect.TYPE_STRETCH);
+        EdgeEffect edgeEffect = createEdgeEffectWithPull();
         assertEquals(0.25f, edgeEffect.getDistance(), 0.001f);
 
         // We must wait until the EdgeEffect would normally start receding (167 ms)
@@ -420,35 +346,12 @@ public class EdgeEffectTests extends ActivityTestBase {
     }
 
     /**
-     * When a TYPE_GLOW is used, a held pull should retract after the timeout.
-     */
-    @Test
-    @LargeTest
-    public void testGlowPullAndHold() throws Exception {
-        EdgeEffect edgeEffect = createEdgeEffectWithPull(EdgeEffect.TYPE_GLOW);
-        assertEquals(0.25f, edgeEffect.getDistance(), 0.001f);
-
-        // We must wait until the EdgeEffect would normally start receding (167 ms)
-        sleepAnimationTime(200);
-
-        // Drawing will cause updates of the distance if it is animating
-        RenderNode renderNode = new RenderNode(null);
-        Canvas canvas = renderNode.beginRecording();
-        edgeEffect.draw(canvas);
-
-        // It should start retracting now:
-        sleepAnimationTime(20);
-        edgeEffect.draw(canvas);
-        assertTrue(edgeEffect.getDistance() < 0.25f);
-    }
-
-    /**
      * It should be possible to catch the stretch effect during an animation.
      */
     @Test
     @LargeTest
     public void testCatchStretchDuringAnimation() throws Exception {
-        EdgeEffect edgeEffect = createEdgeEffectWithPull(EdgeEffect.TYPE_STRETCH);
+        EdgeEffect edgeEffect = createEdgeEffectWithPull();
         assertEquals(0.25f, edgeEffect.getDistance(), 0.001f);
         edgeEffect.onRelease();
 
@@ -477,45 +380,12 @@ public class EdgeEffectTests extends ActivityTestBase {
     }
 
     /**
-     * It should be possible to catch the glow effect during an animation.
-     */
-    @Test
-    @LargeTest
-    public void testCatchGlowDuringAnimation() throws Exception {
-        EdgeEffect edgeEffect = createEdgeEffectWithPull(EdgeEffect.TYPE_GLOW);
-        edgeEffect.onRelease();
-
-        // Wait some time to be sure it is animating away.
-        long startTime = AnimationUtils.currentAnimationTimeMillis();
-        sleepAnimationTime(20);
-
-        // Drawing will cause updates of the distance if it is animating
-        RenderNode renderNode = new RenderNode(null);
-        Canvas canvas = renderNode.beginRecording();
-        edgeEffect.draw(canvas);
-
-        // It should have started retracting. Now catch it.
-        float consumed = edgeEffect.onPullDistance(0f, 0.5f);
-        assertEquals(0f, consumed, 0f);
-
-        float distanceAfterAnimation = edgeEffect.getDistance();
-        assertTrue(distanceAfterAnimation < 0.25f);
-
-
-        sleepAnimationTime(50);
-
-        // There should be no change once it has been caught.
-        edgeEffect.draw(canvas);
-        assertEquals(distanceAfterAnimation, edgeEffect.getDistance(), 0f);
-    }
-
-    /**
-     * When an EdgeEffect with TYPE_STRETCH is drawn on a non-RecordingCanvas, the animation
+     * When an EdgeEffect is drawn on a non-RecordingCanvas, the animation
      * should immediately end.
      */
     @Test
     public void testStretchOnBitmapCanvas() throws Throwable {
-        EdgeEffect edgeEffect = createEdgeEffectWithPull(EdgeEffect.TYPE_STRETCH);
+        EdgeEffect edgeEffect = createEdgeEffectWithPull();
         Bitmap bitmap = Bitmap.createBitmap(WIDTH, HEIGHT, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
         edgeEffect.draw(canvas);
@@ -523,9 +393,8 @@ public class EdgeEffectTests extends ActivityTestBase {
         assertEquals(0f, edgeEffect.getDistance(), 0f);
     }
 
-    private EdgeEffect createEdgeEffectWithPull(int edgeEffectType) {
+    private EdgeEffect createEdgeEffectWithPull() {
         EdgeEffect edgeEffect = new EdgeEffect(getContext());
-        edgeEffect.setType(edgeEffectType);
         edgeEffect.setSize(100, 100);
         edgeEffect.onPullDistance(0.25f, 0.5f);
         return edgeEffect;
@@ -548,76 +417,45 @@ public class EdgeEffectTests extends ActivityTestBase {
         } while (currentTime < endTime);
     }
 
-    private interface AlphaVerifier {
-        void verify(int oldAlpha, int newAlpha);
+    private interface StretchVerifier {
+        void verify(float oldStretch, float newStretch);
     }
 
-    // validates changes to the alpha of draw commands produced by EdgeEffect
-    // over the course of an animation
-    private void verifyAlpha(EdgeEffectInitializer initializer, AlphaVerifier alphaVerifier) {
+    // validates changes to the stretch over the course of an animation
+    private void verifyStretch(EdgeEffectInitializer initializer, StretchVerifier stretchVerifier) {
         MockVsyncHelper.runOnVsyncThread(() -> {
-            Canvas canvas = mock(Canvas.class);
-            ArgumentCaptor<Paint> captor = ArgumentCaptor.forClass(Paint.class);
             EdgeEffect edgeEffect = new EdgeEffect(getContext());
-            edgeEffect.setSize(200, 200);
-            edgeEffect.setType(EdgeEffect.TYPE_GLOW);
+            edgeEffect.setSize(WIDTH, HEIGHT);
             initializer.initialize(edgeEffect);
-            edgeEffect.draw(canvas);
-            verify(canvas).drawCircle(anyFloat(), anyFloat(), anyFloat(), captor.capture());
-            int oldAlpha = captor.getValue().getAlpha();
+            RenderNode renderNode1 = drawEdgeEffect(edgeEffect, 0, 0);
+            float oldStretch = getStretchDownPixelCount(renderNode1);
             for (int i = 0; i < 3; i++) {
                 nextFrame();
-                canvas = mock(Canvas.class);
-                edgeEffect.draw(canvas);
-                verify(canvas).drawCircle(anyFloat(), anyFloat(), anyFloat(), captor.capture());
-                int newAlpha = captor.getValue().getAlpha();
-                alphaVerifier.verify(oldAlpha, newAlpha);
-                oldAlpha = newAlpha;
+                RenderNode renderNode2 = drawEdgeEffect(edgeEffect, 0, 0);
+                float newStretch = getStretchDownPixelCount(renderNode2);
+                stretchVerifier.verify(oldStretch, newStretch);
+                oldStretch = newStretch;
             }
         });
     }
 
     @Test
     public void testOnAbsorb() {
-        verifyAlpha(edgeEffect -> {
-            edgeEffect.onAbsorb(10000);
-        }, ((oldAlpha, newAlpha) -> {
-            assertTrue("Alpha should grow", oldAlpha < newAlpha);
-        }));
+        verifyStretch(
+                edgeEffect -> edgeEffect.onAbsorb(300),
+                (oldStretch, newStretch) -> assertTrue("Stretch should grow",
+                        oldStretch < newStretch)
+        );
     }
 
     @Test
     public void testOnRelease() {
-        verifyAlpha(edgeEffect -> {
-            edgeEffect.onPull(1);
-            edgeEffect.onRelease();
-        }, ((oldAlpha, newAlpha) -> {
-            assertTrue("Alpha should decrease", oldAlpha > newAlpha);
-        }));
-    }
-
-    public static class CustomEdgeEffectView extends View {
-        public EdgeEffect edgeEffect;
-
-        public CustomEdgeEffectView(Context context) {
-            this(context, null);
-        }
-        public CustomEdgeEffectView(Context context, AttributeSet attrs) {
-            this(context, attrs, 0);
-        }
-
-        public CustomEdgeEffectView(Context context, AttributeSet attrs, int defStyleAttr) {
-            this(context, attrs, defStyleAttr, 0);
-        }
-
-        public CustomEdgeEffectView(
-                Context context,
-                AttributeSet attrs,
-                int defStyleAttr,
-                int defStyleRes
-        ) {
-            super(context, attrs, defStyleAttr, defStyleRes);
-            edgeEffect = new EdgeEffect(context, attrs);
-        }
+        verifyStretch(
+                edgeEffect -> {
+                    edgeEffect.onPull(1);
+                    edgeEffect.onRelease();
+                }, (oldStretch, newStretch) ->
+                        assertTrue("Stretch should decrease", oldStretch > newStretch)
+        );
     }
 }
