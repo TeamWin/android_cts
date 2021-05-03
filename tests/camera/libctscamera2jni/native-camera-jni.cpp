@@ -314,6 +314,7 @@ class CaptureResultListener {
     ~CaptureResultListener() {
         std::unique_lock<std::mutex> l(mMutex);
         clearSavedRequestsLocked();
+        mCompletedFrameNumbers.clear();
         clearFailedLostFrameNumbersLocked();
     }
 
@@ -361,7 +362,7 @@ class CaptureResultListener {
             thiz->mCompletedRequests.push_back(ACaptureRequest_copy(request));
         }
 
-        thiz->mLastCompletedFrameNumber = entry.data.i64[0];
+        thiz->mCompletedFrameNumbers.insert(entry.data.i64[0]);
         thiz->mResultCondition.notify_one();
     }
 
@@ -439,7 +440,7 @@ class CaptureResultListener {
             thiz->mCompletedRequests.push_back(ACaptureRequest_copy(request));
         }
 
-        thiz->mLastCompletedFrameNumber = entry.data.i64[0];
+        thiz->mCompletedFrameNumbers.insert(entry.data.i64[0]);
         thiz->mResultCondition.notify_one();
     }
 
@@ -523,7 +524,7 @@ class CaptureResultListener {
         bool ret = false;
         std::unique_lock<std::mutex> l(mMutex);
 
-        while ((mLastCompletedFrameNumber != frameNumber) &&
+        while ((mCompletedFrameNumbers.find(frameNumber) == mCompletedFrameNumbers.end()) &&
                 !checkForFailureOrLossLocked(frameNumber)) {
             auto timeout = std::chrono::system_clock::now() +
                            std::chrono::seconds(timeoutSec);
@@ -532,7 +533,7 @@ class CaptureResultListener {
             }
         }
 
-        if ((mLastCompletedFrameNumber == frameNumber) ||
+        if ((mCompletedFrameNumbers.find(frameNumber) != mCompletedFrameNumbers.end()) ||
                 checkForFailureOrLossLocked(frameNumber)) {
             ret = true;
         }
@@ -571,9 +572,9 @@ class CaptureResultListener {
         std::lock_guard<std::mutex> lock(mMutex);
         mLastSequenceIdCompleted = -1;
         mLastSequenceFrameNumber = -1;
-        mLastCompletedFrameNumber = -1;
         mSaveCompletedRequests = false;
         clearSavedRequestsLocked();
+        mCompletedFrameNumbers.clear();
         clearFailedLostFrameNumbersLocked();
     }
 
@@ -582,7 +583,7 @@ class CaptureResultListener {
     std::condition_variable mResultCondition;
     int mLastSequenceIdCompleted = -1;
     int64_t mLastSequenceFrameNumber = -1;
-    int64_t mLastCompletedFrameNumber = -1;
+    std::set<int64_t> mCompletedFrameNumbers;
     std::set<int64_t> mFailedFrameNumbers, mBufferLostFrameNumbers;
     bool    mSaveCompletedRequests = false;
     std::vector<ACaptureRequest*> mCompletedRequests;
