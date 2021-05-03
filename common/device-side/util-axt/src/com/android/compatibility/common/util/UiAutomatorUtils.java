@@ -25,7 +25,7 @@ import android.support.test.uiautomator.UiObjectNotFoundException;
 import android.support.test.uiautomator.UiScrollable;
 import android.support.test.uiautomator.UiSelector;
 import android.support.test.uiautomator.Until;
-
+import java.lang.RuntimeException;
 import androidx.test.InstrumentationRegistry;
 
 public class UiAutomatorUtils {
@@ -49,6 +49,22 @@ public class UiAutomatorUtils {
         return view;
     }
 
+    public static boolean hasObject(BySelector selector) {
+        return hasObject(selector, 10_000);
+    }
+
+    public static boolean hasObject(BySelector selector, long timeoutMs) {
+        try {
+            return null != waitFindObjectOrNull(selector, timeoutMs);
+        }
+        catch (UiObjectNotFoundException e) {
+            return false;
+        }
+        catch (RuntimeException e) {
+            return false;
+        }
+    }
+
     public static UiObject2 waitFindObjectOrNull(BySelector selector)
             throws UiObjectNotFoundException {
         return waitFindObjectOrNull(selector, 20_000);
@@ -62,10 +78,8 @@ public class UiAutomatorUtils {
         boolean wasScrolledUpAlready = false;
         while (view == null && start + timeoutMs > System.currentTimeMillis()) {
             view = getUiDevice().wait(Until.findObject(selector), 1000);
-
             if (view == null) {
                 UiScrollable scrollable = new UiScrollable(new UiSelector().scrollable(true));
-                scrollable.setSwipeDeadZonePercentage(0.25);
                 if (scrollable.exists()) {
                     if (isAtEnd) {
                         if (wasScrolledUpAlready) {

@@ -117,6 +117,16 @@ abstract class BasePermissionTest {
         }
     }
 
+    protected fun hasObject(selector: BySelector): Boolean {
+        waitForIdle()
+        return UiAutomatorUtils.hasObject(selector)
+    }
+
+    protected fun hasObject(selector: BySelector, timeoutMillis: Long): Boolean {
+        waitForIdle()
+        return UiAutomatorUtils.hasObject(selector, timeoutMillis)
+    }
+
     protected fun waitFindObject(selector: BySelector): UiObject2 {
         waitForIdle()
         return UiAutomatorUtils.waitFindObject(selector)
