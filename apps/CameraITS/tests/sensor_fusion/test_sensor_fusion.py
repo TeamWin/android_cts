@@ -359,7 +359,7 @@ def get_cam_rotations(frames, facing, h):
         if i == 1:
             # Save a debug visualization of the features that are being
             # tracked in the first frame.
-            frame = frames[i]
+            frame = frames[i-1]
             for x, y in p0_filtered[st == 1]:
                 cv2.circle(frame, (x, y), 3, (100, 100, 255), -1)
             its.image.write_image(frame, "%s_features.png" % NAME)
