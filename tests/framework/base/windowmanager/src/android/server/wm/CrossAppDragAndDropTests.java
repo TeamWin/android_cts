@@ -210,18 +210,25 @@ public class CrossAppDragAndDropTests extends ActivityManagerTestBase {
             launchFreeformActivity(targetComponentName, targetMode, mTargetLogTag,
                 displaySize, false /* leftSide */);
         } else {
-            launchActivitiesInSplitScreen
-                    (getLaunchActivityBuilder()
+            // Launch primary activity.
+            getLaunchActivityBuilder()
                     .setTargetActivity(sourceComponentName)
+                    .setUseInstrumentation()
+                    .setWaitForLaunched(true)
                     .setIntentExtra(bundle -> {
                         bundle.putString(EXTRA_MODE, sourceMode);
                         bundle.putString(EXTRA_LOGTAG, mSourceLogTag);
-                    }),
-                    getLaunchActivityBuilder().setTargetActivity(targetComponentName)
+                    }).execute();
+
+            // Launch secondary activity.
+            getLaunchActivityBuilder().setTargetActivity(targetComponentName)
+                    .setUseInstrumentation()
+                    .setWaitForLaunched(true)
                     .setIntentExtra(bundle -> {
                         bundle.putString(EXTRA_MODE, targetMode);
                         bundle.putString(EXTRA_LOGTAG, mTargetLogTag);
-                    }));
+                    }).execute();
+            moveActivitiesToSplitScreen(sourceComponentName, targetComponentName);
         }
 
         Point p1 = getWindowCenter(sourceComponentName);

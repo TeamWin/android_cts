@@ -151,6 +151,11 @@ public class TestTaskOrganizer extends TaskOrganizer {
         }
     }
 
+    private void notifyOnEnd(Runnable r) {
+        r.run();
+        notifyAll();
+    }
+
     private void registerOrganizerIfNeeded() {
         if (mRegistered) return;
 
@@ -329,10 +334,12 @@ public class TestTaskOrganizer extends TaskOrganizer {
     public void onTaskAppeared(@NonNull ActivityManager.RunningTaskInfo taskInfo,
             SurfaceControl leash) {
         synchronized (this) {
-            SurfaceControl.Transaction t = new SurfaceControl.Transaction();
-            t.setVisibility(leash, true /* visible */);
-            NestedShellPermission.run(() -> addTask(taskInfo, leash, t));
-            t.apply();
+            notifyOnEnd(() -> {
+                SurfaceControl.Transaction t = new SurfaceControl.Transaction();
+                t.setVisibility(leash, true /* visible */);
+                addTask(taskInfo, leash, t);
+                t.apply();
+            });
         }
     }
 
@@ -346,7 +353,7 @@ public class TestTaskOrganizer extends TaskOrganizer {
     @Override
     public void onTaskInfoChanged(ActivityManager.RunningTaskInfo taskInfo) {
         synchronized (this) {
-            NestedShellPermission.run(() -> addTask(taskInfo));
+            notifyOnEnd(() -> addTask(taskInfo));
         }
     }
 
@@ -357,7 +364,6 @@ public class TestTaskOrganizer extends TaskOrganizer {
     private void addTask(ActivityManager.RunningTaskInfo taskInfo, SurfaceControl leash,
             SurfaceControl.Transaction t) {
         mKnownTasks.put(taskInfo.taskId, taskInfo);
-        notifyAll();
         if (taskInfo.hasParentTask()){
             if (mRootPrimary != null
                     && mRootPrimary.taskId == taskInfo.getParentTaskId()) {
