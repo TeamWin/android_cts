@@ -148,18 +148,18 @@ class AutoRevokeTest {
     @Test
     fun testUnusedApp_doesntGetSplitPermissionRevoked() {
         withUnusedThresholdMs(3L) {
-            withDummyApp {
+            withDummyApp(APK_PATH_R_APP, APK_PACKAGE_NAME_R_APP) {
                 // Setup
                 startApp()
-                assertPermission(PERMISSION_GRANTED, supportedAppPackageName, BLUETOOTH_CONNECT)
+                assertPermission(PERMISSION_GRANTED, APK_PACKAGE_NAME_R_APP, BLUETOOTH_CONNECT)
                 killDummyApp()
-                Thread.sleep(1000)
+                Thread.sleep(500)
 
                 // Run
                 runAppHibernationJob(context, LOG_TAG)
 
                 // Verify
-                assertPermission(PERMISSION_GRANTED, supportedAppPackageName, BLUETOOTH_CONNECT)
+                assertPermission(PERMISSION_GRANTED, APK_PACKAGE_NAME_R_APP, BLUETOOTH_CONNECT)
             }
         }
     }
