@@ -24,6 +24,8 @@ import static com.android.internal.telephony.testing.TelephonyAssertions.assertT
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assume.assumeThat;
+
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
@@ -33,6 +35,7 @@ import android.net.Uri;
 import android.provider.SimPhonebookContract;
 import android.provider.SimPhonebookContract.ElementaryFiles;
 import android.provider.SimPhonebookContract.SimRecords;
+import android.telephony.TelephonyManager;
 
 import androidx.annotation.NonNull;
 import androidx.test.core.app.ApplicationProvider;
@@ -151,9 +154,14 @@ public class SimPhonebookContract_SimRecordsNoSimTest {
         values.put(SimRecords.NAME, "Name");
         values.put(SimRecords.PHONE_NUMBER, "8005550101");
 
-        assertThrows(UnsupportedOperationException.class,
-                () -> mResolver.insert(
-                        SimRecords.getContentUri(MISSING_SIM_SUBSCRIPTION_ID, EF_FDN), values));
+        // Depending on the context where the test is run the test app may have carrier privileges
+        // e.g. omitting this will cause a failure when running on cuttlefish if it is launched
+        // with --modem_simulator_sim_type=2
+        if (!mContext.getSystemService(TelephonyManager.class).hasCarrierPrivileges()) {
+            assertThrows(UnsupportedOperationException.class,
+                    () -> mResolver.insert(
+                            SimRecords.getContentUri(MISSING_SIM_SUBSCRIPTION_ID, EF_FDN), values));
+        }
         assertThrows(UnsupportedOperationException.class,
                 () -> mResolver.insert(
                         SimRecords.getContentUri(MISSING_SIM_SUBSCRIPTION_ID, EF_SDN), values));
