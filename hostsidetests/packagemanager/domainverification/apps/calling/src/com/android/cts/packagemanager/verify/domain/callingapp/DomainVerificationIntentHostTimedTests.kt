@@ -83,16 +83,18 @@ class DomainVerificationIntentHostTimedTests :
         assertResolvesTo(DECLARING_PKG_1_COMPONENT)
 
         assertThat(
-            ShellUtils.runShellCommand("pm disable --user ${context.userId} $DECLARING_PKG_NAME_1")
-                .trim()
-        ).endsWith("new state: disabled")
+            ShellUtils.runShellCommand(
+                "pm disable-user --user ${context.userId} $DECLARING_PKG_NAME_1"
+            ).trim()
+        ).endsWith("new state: disabled-user")
 
         assertResolvesTo(DECLARING_PKG_2_COMPONENT)
 
         assertThat(
-            ShellUtils.runShellCommand("pm disable --user ${context.userId} $DECLARING_PKG_NAME_2")
-                .trim()
-        ).endsWith("new state: disabled")
+            ShellUtils.runShellCommand(
+                "pm disable-user --user ${context.userId} $DECLARING_PKG_NAME_2"
+            ).trim()
+        ).endsWith("new state: disabled-user")
 
         assertResolvesTo(browsers)
     }
