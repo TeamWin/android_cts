@@ -420,6 +420,7 @@ public class MuxerTest {
      * setOrientationHint are dependent on the mime type and OutputFormat. Legality of these APIs
      * are tested in this class.
      */
+    @NonMediaMainlineTest
     @SmallTest
     @RunWith(Parameterized.class)
     public static class TestApi {
@@ -702,6 +703,7 @@ public class MuxerTest {
     /**
      * Tests muxing multiple Video/Audio Tracks
      */
+    @NonMediaMainlineTest
     @LargeTest
     @RunWith(Parameterized.class)
     public static class TestMultiTrack {
@@ -840,6 +842,7 @@ public class MuxerTest {
      * Add an offset to the presentation time of samples of a track. Mux with the added offset,
      * validate by re-extracting the muxer output file and compare with original.
      */
+    @NonMediaMainlineTest
     @LargeTest
     @RunWith(Parameterized.class)
     public static class TestOffsetPts {
@@ -954,6 +957,7 @@ public class MuxerTest {
      * This test takes the output of a codec and muxes it in to all possible container formats.
      * The results are checked for inconsistencies with the requirements of CDD.
      */
+    @NonMediaMainlineTest
     @LargeTest
     @RunWith(Parameterized.class)
     public static class TestSimpleMux {
@@ -1102,6 +1106,7 @@ public class MuxerTest {
         }
     }
 
+    @NonMediaMainlineTest
     @LargeTest
     @RunWith(Parameterized.class)
     public static class TestAddEmptyTracks {
