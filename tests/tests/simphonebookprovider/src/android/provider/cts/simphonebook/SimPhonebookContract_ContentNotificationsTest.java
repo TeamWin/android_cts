@@ -20,6 +20,7 @@ import static android.provider.SimPhonebookContract.ElementaryFiles.EF_ADN;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.hamcrest.Matchers.oneOf;
 import static org.junit.Assume.assumeThat;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -38,7 +39,6 @@ import android.provider.SimPhonebookContract.ElementaryFiles;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
-import android.util.Log;
 
 import androidx.annotation.Nullable;
 import androidx.test.core.app.ApplicationProvider;
@@ -186,11 +186,16 @@ public class SimPhonebookContract_ContentNotificationsTest {
                 Manifest.permission.MODIFY_PHONE_STATE, Manifest.permission.READ_PHONE_STATE);
 
         int result = resultFuture.get(30, SECONDS);
-        if (result != TelephonyManager.SET_SIM_POWER_STATE_ALREADY_IN_STATE &&
-                result != TelephonyManager.SET_SIM_POWER_STATE_SUCCESS) {
-            Log.w(TAG, "setSimPowerStateForSlot failed for slot=" + slotIndex + " result="
-                    + result);
-        }
+        assumeThat("setSimPowerStateForSlot failed for slot=" + slotIndex,
+                result, oneOf(
+                        TelephonyManager.SET_SIM_POWER_STATE_ALREADY_IN_STATE,
+                        TelephonyManager.SET_SIM_POWER_STATE_SUCCESS));
+        int simState = SystemUtil.runWithShellPermissionIdentity(() ->
+                        telephonyManager.getSimState(slotIndex),
+                Manifest.permission.READ_PHONE_STATE);
+        // This doesn't work on Cuttlefish so confirm the SIM was actually powered off.
+        assumeThat(simState, Matchers.not(oneOf(
+                TelephonyManager.SIM_STATE_PRESENT, TelephonyManager.SIM_STATE_READY)));
     }
 
     private static class RecordingContentObserver extends ContentObserver {
