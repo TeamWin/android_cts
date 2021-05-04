@@ -130,7 +130,6 @@
             android:id="@+id/horizontal_scroll_view_stretch"
             android:layout_width="90px"
             android:layout_height="90px"
-            android:edgeEffectType="stretch"
             android:background="#FFF">
             <LinearLayout
                 android:layout_width="match_parent"

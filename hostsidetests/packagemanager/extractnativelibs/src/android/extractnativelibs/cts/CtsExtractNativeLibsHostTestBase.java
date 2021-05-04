@@ -205,6 +205,14 @@ public class CtsExtractNativeLibsHostTestBase extends BaseHostJUnit4Test {
         return new HashSet<String>(Arrays.asList(abiArray));
     }
 
+    final Set<String> getDeviceAbiSuffixes() throws Exception {
+        HashSet<String> abiSuffixes = new HashSet<String>();
+        for (String abi : getDevice().getProperty("ro.product.cpu.abilist").split(",")) {
+            abiSuffixes.add(AbiUtils.getBitness(abi));
+        }
+        return abiSuffixes;
+    }
+
     private void installPackageIncremental(String apkName, String abi) throws Exception {
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(getBuild());
         final File apk = buildHelper.getTestFile(apkName);

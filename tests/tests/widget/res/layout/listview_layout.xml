@@ -61,8 +61,7 @@
     <ListView
         android:id="@+id/listview_stretch"
         android:layout_width="90px"
-        android:layout_height="90px"
-        android:edgeEffectType="stretch"/>
+        android:layout_height="90px"/>
 
 </FrameLayout>
 
