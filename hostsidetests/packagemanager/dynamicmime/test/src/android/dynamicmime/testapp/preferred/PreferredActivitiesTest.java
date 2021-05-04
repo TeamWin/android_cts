@@ -65,6 +65,8 @@ public class PreferredActivitiesTest extends BaseDynamicMimeTest {
 
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(60L);
 
+    private static final String FEATURE_WEARABLE = "android.hardware.type.watch";
+
     private TestStrategy mTest;
 
     public PreferredActivitiesTest() {
@@ -291,9 +293,15 @@ public class PreferredActivitiesTest extends BaseDynamicMimeTest {
     }
 
     private UiObject2 findActivityInDialog(String label) {
-        getUiDevice()
-            .wait(Until.findObject(RESOLVER_DIALOG), TIMEOUT)
-            .swipe(Direction.UP, 1f);
+        if (!Utils.hasFeature(FEATURE_WEARABLE)) {
+            getUiDevice()
+                .wait(Until.findObject(RESOLVER_DIALOG), TIMEOUT)
+                .swipe(Direction.UP, 1f);
+        } else {
+            getUiDevice()
+                .wait(Until.findObject(BUTTON_ALWAYS), TIMEOUT)
+                .swipe(Direction.RIGHT, 1f);
+        }
 
         return getUiDevice().findObject(By.text(label));
     }
