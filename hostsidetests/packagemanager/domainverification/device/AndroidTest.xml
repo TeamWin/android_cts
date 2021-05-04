@@ -26,6 +26,7 @@
         <option name="test-file-name" value="CtsDomainVerificationDeviceTestCases.apk" />
         <option name="test-file-name" value="CtsDomainVerificationTestDeclaringApp1.apk" />
         <option name="test-file-name" value="CtsDomainVerificationTestDeclaringApp2.apk" />
+        <option name="install-arg" value="-t"/>
     </target_preparer>
 
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
