@@ -161,7 +161,6 @@ public class EdgeEffectTests extends ActivityTestBase {
         assertFalse(effect.draw(new Canvas()));
     }
 
-    /* Commented out until framework change is put in.
     @Test
     public void testGetMaxHeight() {
         EdgeEffect edgeEffect = new EdgeEffect(getContext());
@@ -170,7 +169,7 @@ public class EdgeEffectTests extends ActivityTestBase {
         edgeEffect.setSize(200, 0);
         assertEquals(0, edgeEffect.getMaxHeight());
     }
-*/
+
     @Test
     public void testDistance() {
         EdgeEffect effect = new EdgeEffect(getContext());
