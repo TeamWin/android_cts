@@ -18,6 +18,13 @@ package android.mediav2.cts;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.os.SystemClock;
+import android.util.DisplayMetrics;
+import android.util.Log;
+import android.view.Surface;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 
 public class CodecTestActivity extends Activity {
@@ -25,6 +32,11 @@ public class CodecTestActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        setTurnScreenOn(true);
+        setShowWhenLocked(true);
+
         setContentView(R.layout.media_decoder_surface_layout);
     }
 
