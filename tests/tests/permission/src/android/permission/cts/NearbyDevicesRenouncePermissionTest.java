@@ -17,7 +17,6 @@
 package android.permission.cts;
 
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
-import static android.Manifest.permission.BLUETOOTH_SCAN;
 import static android.app.AppOpsManager.OPSTR_FINE_LOCATION;
 
 import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
@@ -178,7 +177,6 @@ public class NearbyDevicesRenouncePermissionTest {
 
         Set<String> renouncedPermissions = new ArraySet<>();
         renouncedPermissions.add(ACCESS_FINE_LOCATION);
-        renouncedPermissions.add(BLUETOOTH_SCAN);
 
         return SystemUtil.callWithShellPermissionIdentity(() -> {
             if (contextParams == null) {
