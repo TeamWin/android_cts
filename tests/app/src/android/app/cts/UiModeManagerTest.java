@@ -326,7 +326,7 @@ public class UiModeManagerTest extends AndroidTestCase {
         AtomicInteger activeProjectionTypes = new AtomicInteger();
         Set<String> projectingPackages = new ArraySet<>();
         AtomicInteger callbackInvocations = new AtomicInteger();
-        UiModeManager.OnProjectionStateChangeListener listener = (t, pkgs) -> {
+        UiModeManager.OnProjectionStateChangedListener listener = (t, pkgs) -> {
             Log.i(TAG, "onProjectionStateChanged(" + t + "," + pkgs + ")");
             activeProjectionTypes.set(t);
             projectingPackages.clear();
@@ -335,7 +335,7 @@ public class UiModeManagerTest extends AndroidTestCase {
         };
 
         requestAutomotiveProjection();
-        runWithShellPermissionIdentity(() -> mUiModeManager.addOnProjectionStateChangeListener(
+        runWithShellPermissionIdentity(() -> mUiModeManager.addOnProjectionStateChangedListener(
                 UiModeManager.PROJECTION_TYPE_ALL, MoreExecutors.directExecutor(), listener),
                 Manifest.permission.READ_PROJECTION_STATE);
 
@@ -371,7 +371,7 @@ public class UiModeManagerTest extends AndroidTestCase {
         assertTrue(projectingPackages.contains(getContext().getPackageName()));
 
         // Unregister and shouldn't receive further callbacks.
-        runWithShellPermissionIdentity(() -> mUiModeManager.removeOnProjectionStateChangeListener(
+        runWithShellPermissionIdentity(() -> mUiModeManager.removeOnProjectionStateChangedListener(
                 listener), Manifest.permission.READ_PROJECTION_STATE);
 
         releaseAutomotiveProjection();
@@ -501,12 +501,12 @@ public class UiModeManagerTest extends AndroidTestCase {
     }
 
     /**
-     * Attempts to call addOnProjectionStateChangeListener without
+     * Attempts to call addOnProjectionStateChangedListener without
      * READ_PROJECTION_STATE permission.
      */
-    public void testReadProjectionState_addOnProjectionStateChangeListenerDenied() {
+    public void testReadProjectionState_addOnProjectionStateChangedListenerDenied() {
         try {
-            mUiModeManager.addOnProjectionStateChangeListener(UiModeManager.PROJECTION_TYPE_ALL,
+            mUiModeManager.addOnProjectionStateChangedListener(UiModeManager.PROJECTION_TYPE_ALL,
                     getContext().getMainExecutor(), (t, pkgs) -> { });
         } catch (SecurityException se) {
             // Expect exception.
@@ -516,16 +516,16 @@ public class UiModeManagerTest extends AndroidTestCase {
     }
 
     /**
-     * Attempts to call removeOnProjectionStateChangeListener without
+     * Attempts to call removeOnProjectionStateChangedListener without
      * READ_PROJECTION_STATE permission.
      */
-    public void testReadProjectionState_removeOnProjectionStateChangeListenerDenied() {
-        UiModeManager.OnProjectionStateChangeListener listener = (t, pkgs) -> { };
-        runWithShellPermissionIdentity(() -> mUiModeManager.addOnProjectionStateChangeListener(
+    public void testReadProjectionState_removeOnProjectionStateChangedListenerDenied() {
+        UiModeManager.OnProjectionStateChangedListener listener = (t, pkgs) -> { };
+        runWithShellPermissionIdentity(() -> mUiModeManager.addOnProjectionStateChangedListener(
                 UiModeManager.PROJECTION_TYPE_ALL, getContext().getMainExecutor(), listener),
                 Manifest.permission.READ_PROJECTION_STATE);
         try {
-            mUiModeManager.removeOnProjectionStateChangeListener(listener);
+            mUiModeManager.removeOnProjectionStateChangedListener(listener);
         } catch (SecurityException se) {
             // Expect exception.
             return;
