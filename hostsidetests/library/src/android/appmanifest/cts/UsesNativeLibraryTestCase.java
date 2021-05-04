@@ -88,6 +88,19 @@ public class UsesNativeLibraryTestCase extends BaseHostJUnit4Test {
     // Name of a library that actually exists on the device, but is not part of the public libraries
     private String mPrivateLib;
 
+    // Values to enable/disable/reset the compat change gating
+    private enum CompatChangeState {
+        RESET,
+        ENABLE,
+        DISABLE
+    }
+
+    // The package name of apk from the buildTestApp
+    private static final String TEST_APP_PACKAGE_NAME = "com.android.test.usesnativesharedlibrary";
+
+    // The compat change id of the enforce native shared library dependencies
+    private static final long ENFORCE_NATIVE_SHARED_LIBRARY_DEPENDENCIES = 142191088;
+
     @Before
     public void setUp() throws Exception {
         // extract "foo.so" from lines of foo.so ->  (so) foo.so
@@ -133,8 +146,12 @@ public class UsesNativeLibraryTestCase extends BaseHostJUnit4Test {
     }
 
     @After
-    public void cleanUp() {
+    public void cleanUp() throws Exception {
         FileUtil.recursiveDelete(mWorkDir);
+        uninstallPackage(TEST_APP_PACKAGE_NAME);
+        setCompatChange(ENFORCE_NATIVE_SHARED_LIBRARY_DEPENDENCIES, TEST_APP_PACKAGE_NAME,
+                CompatChangeState.RESET);
+
     }
 
     private File getFile(String path) {
@@ -292,7 +309,7 @@ public class UsesNativeLibraryTestCase extends BaseHostJUnit4Test {
     private boolean installTestApp(File testApp) throws Exception {
         // Explicit uninstallation is required because we might downgrade the target API level
         // from 31 to 30
-        uninstallPackage("com.android.test.usesnativesharedlibrary");
+        uninstallPackage(TEST_APP_PACKAGE_NAME);
         try {
             installPackage(testApp.toString());
             return true;
@@ -303,8 +320,32 @@ public class UsesNativeLibraryTestCase extends BaseHostJUnit4Test {
     }
 
     private void runInstalledTestApp() throws Exception {
-        runDeviceTests("com.android.test.usesnativesharedlibrary",
+        runDeviceTests(TEST_APP_PACKAGE_NAME,
                 "com.android.test.usesnativesharedlibrary.LoadTest");
+    }
+
+    private void setCompatChange(long changeId, String packageName, CompatChangeState state)
+            throws DeviceNotAvailableException {
+        final StringBuilder cmd = new StringBuilder("am compat ");
+        switch (state) {
+            case RESET:
+                cmd.append("reset ");
+                break;
+
+            case ENABLE:
+                cmd.append("enable ");
+                break;
+
+            case DISABLE:
+                cmd.append("disable ");
+                break;
+
+            default:
+                throw new IllegalArgumentException("Invalid compat change state:" + state);
+        }
+        cmd.append(changeId).append(" ");
+        cmd.append(packageName);
+        getDevice().executeShellCommand(cmd.toString());
     }
 
     private static String[] add(Set<String> s, String...extra) {
@@ -341,6 +382,34 @@ public class UsesNativeLibraryTestCase extends BaseHostJUnit4Test {
                         requiredLibs, optionalLibs, availableLibs, unavailableLibs)));
 
         // install failed, so can't run the on-device test
+    }
+
+    @Test
+    public void testNewAppDependsOnNonExistingLib_withCompatEnabled_installFail()
+            throws Exception {
+        setCompatChange(ENFORCE_NATIVE_SHARED_LIBRARY_DEPENDENCIES, TEST_APP_PACKAGE_NAME,
+                CompatChangeState.ENABLE);
+        String[] requiredLibs = {mNonExistingLib};
+        String[] optionalLibs = {};
+        String[] availableLibs = {}; // new app doesn't have access to unlisted public libs
+        String[] unavailableLibs = add(mPublicLibraries, mNonExistingLib, mPrivateLib);
+
+        assertFalse(installTestApp(buildTestApp(31,
+                requiredLibs, optionalLibs, availableLibs, unavailableLibs)));
+    }
+
+    @Test
+    public void testNewAppDependsOnNonExistingLib_withCompatDisabled_installSucceed()
+            throws Exception {
+        setCompatChange(ENFORCE_NATIVE_SHARED_LIBRARY_DEPENDENCIES, TEST_APP_PACKAGE_NAME,
+                CompatChangeState.DISABLE);
+        String[] requiredLibs = {mNonExistingLib};
+        String[] optionalLibs = {};
+        String[] availableLibs = {}; // new app doesn't have access to unlisted public libs
+        String[] unavailableLibs = add(mPublicLibraries, mNonExistingLib, mPrivateLib);
+
+        assertTrue(installTestApp(buildTestApp(31,
+                requiredLibs, optionalLibs, availableLibs, unavailableLibs)));
     }
 
     @Test

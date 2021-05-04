@@ -22,7 +22,7 @@ import android.app.Activity.RESULT_OK
 import android.app.AppOpsManager
 import android.app.AppOpsManager.MODE_ALLOWED
 import android.app.AppOpsManager.OPSTR_ACCESS_ACCESSIBILITY
-import android.app.AppOpsManager.OPSTR_BLUETOOTH_CONNECT
+import android.app.AppOpsManager.OPSTR_BLUETOOTH_SCAN
 import android.app.AppOpsManager.OPSTR_CAMERA
 import android.app.AppOpsManager.OPSTR_COARSE_LOCATION
 import android.app.AppOpsManager.OPSTR_FINE_LOCATION
@@ -490,6 +490,9 @@ class AppOpsLoggingTest {
 
         val wasEnabled = enableBTAdapter(btAdapter, testContext)
         assumeTrue("Need to be able enable BT", wasEnabled)
+
+        clearCollectedNotedOps()
+
         try {
             val btScanner = btAdapter.bluetoothLeScanner
             val scanCallback = object : ScanCallback() {}
@@ -497,7 +500,7 @@ class AppOpsLoggingTest {
             btScanner.startScan(scanCallback)
             try {
                 eventually {
-                    assertThat(noted[0].first.op).isEqualTo(OPSTR_BLUETOOTH_CONNECT)
+                    assertThat(noted[0].first.op).isEqualTo(OPSTR_BLUETOOTH_SCAN)
                     assertThat(noted[0].first.attributionTag).isEqualTo(TEST_ATTRIBUTION_TAG)
                     // startScan calls into the system server which then calls back into the app to
                     // start the scan. I.e. the backtrace points back to a callback from the system
@@ -675,7 +678,6 @@ class AppOpsLoggingTest {
      * Realistic end-to-end test for recording audio
      */
     @Test
-    @Ignore
     fun recordAudio() {
         val ar = AudioRecord.Builder()
                 .setContext(context.createAttributionContext(TEST_ATTRIBUTION_TAG)).build()
@@ -696,7 +698,6 @@ class AppOpsLoggingTest {
      * Realistic end-to-end test for recording low latency audio
      */
     @Test
-    @Ignore
     fun recordAudioLowLatency() {
         val ar = AudioRecord.Builder()
                 .setAudioAttributes(AudioAttributes.Builder()
@@ -720,7 +721,6 @@ class AppOpsLoggingTest {
      * Realistic end-to-end test for recording using the public native API with shared, low latency
      */
     @Test
-    @Ignore
     fun recordAudioNativeLowLatencyShared() {
         nativeStartStopAudioRecord(isShared = true, isLowLatency = true,
                 packageName = context.packageName, attributionTag = TEST_ATTRIBUTION_TAG)
@@ -736,7 +736,6 @@ class AppOpsLoggingTest {
      * mode
      */
     @Test
-    @Ignore
     fun recordAudioNativeLowLatencyExclusive() {
         nativeStartStopAudioRecord(isShared = false, isLowLatency = true,
                 packageName = context.packageName, attributionTag = TEST_ATTRIBUTION_TAG)
@@ -752,7 +751,6 @@ class AppOpsLoggingTest {
      * mode
      */
     @Test
-    @Ignore
     fun recordAudioNativeShared() {
         nativeStartStopAudioRecord(isShared = true, isLowLatency = false,
                 packageName = context.packageName, attributionTag = TEST_ATTRIBUTION_TAG)
