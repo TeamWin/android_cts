@@ -24,8 +24,8 @@ public final class PowerPolicyTestResult {
     private final TestResultTable mExpected = new TestResultTable();
     private TestResultTable mStartSnapshot;
     private TestResultTable mEndSnapshot;
-    private int mTestcaseNo;
-    private String mTestcaseName;
+    private final int mTestcaseNo;
+    private final String mTestcaseName;
 
     public PowerPolicyTestResult(int caseNo, PowerPolicyTestAnalyzer testAnalyzer) {
         mTestcaseNo = caseNo;
@@ -61,7 +61,7 @@ public final class PowerPolicyTestResult {
     }
 
     public boolean checkTestStatus() {
-        TestResultTable testResult = null;
+        TestResultTable testResult;
         if (mStartSnapshot == null || mEndSnapshot == null) {
             CLog.e("start snapshot or end snapshot is null");
             return false;
