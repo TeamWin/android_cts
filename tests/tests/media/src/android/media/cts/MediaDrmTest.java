@@ -16,6 +16,8 @@
 
 package android.media.cts;
 
+import android.media.MediaCrypto;
+import android.media.MediaCryptoException;
 import android.media.MediaDrm;
 import android.media.NotProvisionedException;
 import android.media.ResourceBusyException;
@@ -33,6 +35,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import static junit.framework.Assert.assertTrue;
+
+import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertThrows;
 
 @NonMediaMainlineTest
@@ -133,6 +137,47 @@ public class MediaDrmTest {
                 Log.w(TAG, "testPlaybackComponent: skipping scheme " + scheme, e);
             } catch (ResourceBusyException e) {
                 // todo: retry
+            } finally {
+                drm.close();
+            }
+        }
+    }
+
+    private void testRequiresSecureDecoder(UUID scheme, MediaDrm drm)
+            throws ResourceBusyException, NotProvisionedException,
+            MediaCryptoException {
+        int[] levels = {
+                MediaDrm.SECURITY_LEVEL_SW_SECURE_CRYPTO,
+                MediaDrm.SECURITY_LEVEL_HW_SECURE_ALL,
+                MediaDrm.getMaxSecurityLevel()};
+        for (int level : levels) {
+            for (String mime : new String[]{"audio/mp4", "video/mp4"}) {
+                if (!MediaDrm.isCryptoSchemeSupported(scheme, mime, level)) {
+                    continue;
+                }
+                byte[] sid = drm.openSession(level);
+                MediaCrypto crypto = new MediaCrypto(scheme, sid);
+                boolean supported1 = crypto.requiresSecureDecoderComponent(mime);
+                boolean supported2;
+                if (level == MediaDrm.getMaxSecurityLevel()) {
+                    supported2 = drm.requiresSecureDecoder(mime);
+                } else {
+                    supported2 = drm.requiresSecureDecoder(mime, level);
+                }
+                assertEquals(supported1, supported2, "secure decoder requirements inconsistent");
+            }
+        }
+    }
+
+    @Test
+    public void testRequiresSecureDecoder()
+            throws MediaCryptoException, UnsupportedSchemeException, ResourceBusyException {
+        for (UUID scheme: MediaDrm.getSupportedCryptoSchemes()) {
+            MediaDrm drm = new MediaDrm(scheme);
+            try {
+                testRequiresSecureDecoder(scheme, drm);
+            } catch (UnsupportedOperationException | NotProvisionedException e) {
+                Log.w(TAG, "testRequiresSecureDecoder: skipping scheme " + scheme, e);
             } finally {
                 drm.close();
             }
