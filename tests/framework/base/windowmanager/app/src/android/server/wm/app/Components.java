@@ -214,9 +214,6 @@ public class Components extends ComponentsBase {
     public static final ComponentName SINGLE_TASK_INSTANCE_DISPLAY_ACTIVITY3 =
             component("SingleTaskInstanceDisplayActivity3");
 
-    public static final ComponentName INPUT_METHOD_TEST_ACTIVITY =
-            component("InputMethodTestActivity");
-
     public static final ComponentName MPP_ACTIVITY =
             component("MinimalPostProcessingActivity");
 
@@ -259,14 +256,6 @@ public class Components extends ComponentsBase {
 
     public static final ComponentName BAD_BLUR_ACTIVITY =
             component("BadBlurActivity");
-
-    /**
-     * Action and extra key constants for {@link #INPUT_METHOD_TEST_ACTIVITY}.
-     */
-    public static class InputMethodTestActivity {
-        public static final String EXTRA_PRIVATE_IME_OPTIONS = "private_ime_options";
-        public static final String EXTRA_TEST_CURSOR_ANCHOR_INFO = "cursor_anchor_info";
-    }
 
     /**
      * The keys are used for {@link TestJournalProvider} when testing starting window.
