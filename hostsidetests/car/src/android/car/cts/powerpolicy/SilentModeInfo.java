@@ -24,11 +24,15 @@ public final class SilentModeInfo {
     private static final boolean[] EXPECTED_WITHOUT_SILENT_MODE = {false, false, false};
     private static final boolean[] EXPECTED_WITH_SILENT_MODE = {false, true, true};
 
+    public static final String COMMAND = "cmd car_service silent-mode query";
+    public static final SilentModeInfo NO_SILENT =
+            new SilentModeInfo(EXPECTED_WITHOUT_SILENT_MODE);
+    public static final SilentModeInfo FORCED_SILENT =
+            new SilentModeInfo(EXPECTED_WITH_SILENT_MODE);
+
     private final boolean[] mAttrs;
 
     private SilentModeInfo(boolean[] attrs) {
-        // Make it private to enforce all instances are created by the static parse() method and the
-        // method is responsible for exception conditions checking.
         mAttrs = attrs;
     }
 
@@ -65,16 +69,10 @@ public final class SilentModeInfo {
                 throw new IllegalArgumentException(
                         "SilentModeQueryResult.parse(): malformatted attr line: " + lines[idx]);
             }
-            attrs[idx] = Boolean.parseBoolean(tokens[1]);
+            attrs[idx] = Boolean.parseBoolean(tokens[1].trim());
         }
 
         return new SilentModeInfo(attrs);
     }
 
-    public static final class TestDataSets {
-        public static final SilentModeInfo NO_SILENT =
-                new SilentModeInfo(EXPECTED_WITHOUT_SILENT_MODE);
-        public static final SilentModeInfo FORCED_SILENT =
-                new SilentModeInfo(EXPECTED_WITH_SILENT_MODE);
-    }
 }
