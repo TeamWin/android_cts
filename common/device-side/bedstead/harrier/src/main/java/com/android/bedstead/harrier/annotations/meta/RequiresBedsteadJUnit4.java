@@ -24,7 +24,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Indicates that an annotation requires using the {@link BedsteadJUnit4} test runner
+ * Indicates that an annotation requires using the {@link BedsteadJUnit4} test runner.
  */
 @Target(ElementType.ANNOTATION_TYPE)
 @Retention(RetentionPolicy.RUNTIME)
