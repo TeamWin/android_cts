@@ -19,6 +19,7 @@ package android.appsecurity.cts;
 import android.platform.test.annotations.SecurityTest;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
+import com.android.compatibility.common.util.ApiLevelUtil;
 
 import com.android.tradefed.device.DeviceNotAvailableException;
 
@@ -148,19 +149,24 @@ public class DocumentsTest extends DocumentsTestCase {
 
     @SecurityTest
     public void testAfterMoveDocumentInStorage_revokeUriPermission() throws Exception {
-        runDeviceTests(CLIENT_PKG, ".DocumentsClientTest",
+        if (isAtLeastS()) {
+            runDeviceTests(CLIENT_PKG, ".DocumentsClientTest",
                 "testAfterMoveDocumentInStorage_revokeUriPermission");
-
+        }
     }
 
     private boolean isAtLeastR() {
         try {
-            String apiString = getDevice().getProperty("ro.build.version.sdk");
-            if (apiString == null) {
-                return false;
-            }
-            int apiLevel = Integer.parseInt(apiString);
-            return apiLevel > 29;
+            return ApiLevelUtil.isAfter(getDevice(), 29 /* BUILD.VERSION_CODES.Q */);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private boolean isAtLeastS() {
+        try {
+            return ApiLevelUtil.isAfter(getDevice(), 30 /* BUILD.VERSION_CODES.R */)
+                || ApiLevelUtil.codenameEquals(getDevice(), "S");
         } catch (Exception e) {
             return false;
         }
