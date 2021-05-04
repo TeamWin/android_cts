@@ -290,8 +290,6 @@
         <activity android:name=".WallpaperActivity"
              android:exported="true"
              android:theme="@style/WallpaperTheme"/>
-        <activity android:name=".InputMethodTestActivity"
-             android:exported="true"/>
         <activity android:name=".KeyguardLockActivity"
              android:exported="true"/>
         <activity android:name=".LogConfigurationActivity"
