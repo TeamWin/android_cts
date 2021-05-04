@@ -632,12 +632,16 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
         installPackage(MEDIA.apk);
 
         int user = getDevice().getCurrentUser();
+        // revoke all permissions
         updatePermissions(MEDIA.pkg, user, new String[] {
+                PERM_ACCESS_MEDIA_LOCATION,
                 PERM_READ_EXTERNAL_STORAGE,
-        }, true);
-        updatePermissions(MEDIA.pkg, user, new String[] {
                 PERM_WRITE_EXTERNAL_STORAGE,
         }, false);
+
+        // revoke the app ops permission
+        updateAppOp(MEDIA.pkg, user, APP_OPS_MANAGE_MEDIA, false);
+        updateAppOp(MEDIA.pkg, user, APP_OPS_MANAGE_EXTERNAL_STORAGE, false);
 
         runDeviceTests(MEDIA.pkg, MEDIA.clazz, "testMediaEscalation_RequestWriteFilePathSupport",
                 user);
