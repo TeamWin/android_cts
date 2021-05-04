@@ -393,6 +393,15 @@ public class EdgeEffectTests extends ActivityTestBase {
         assertEquals(0f, edgeEffect.getDistance(), 0f);
     }
 
+    @Test
+    public void testOnAborbAfterStretch() throws Throwable {
+        EdgeEffect edgeEffect = new EdgeEffect(getContext());
+        edgeEffect.setSize(100, 100);
+        float distance = edgeEffect.onPullDistance(0.5f, 0.5f);
+        edgeEffect.onAbsorb(100);
+        assertEquals(distance, edgeEffect.getDistance(), 0.01f);
+    }
+
     private EdgeEffect createEdgeEffectWithPull() {
         EdgeEffect edgeEffect = new EdgeEffect(getContext());
         edgeEffect.setSize(100, 100);
