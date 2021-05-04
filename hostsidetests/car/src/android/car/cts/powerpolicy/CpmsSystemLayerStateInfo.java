@@ -19,9 +19,11 @@ package android.car.cts.powerpolicy;
 import java.util.ArrayList;
 import java.util.Objects;
 
-public final class CpmsStateInfo {
+public final class CpmsSystemLayerStateInfo {
     private static final int STRING_BUILDER_BUF_SIZE = 4096;
 
+    public static final String COMMAND = "dumpsys "
+            + "android.frameworks.automotive.powerpolicy.ICarPowerPolicyServer/default";
     public static final String CURRENT_POLICY_ID_HDR = "Current power policy:";
     public static final String PENDING_POLICY_ID_HDR = "Pending power policy ID:";
     public static final String CURRENT_POLICY_GROUP_ID_HDR = "Current power policy group ID:";
@@ -42,9 +44,8 @@ public final class CpmsStateInfo {
     private final String mPendingPolicyId;
     private final String mCurrentPolicyGroupId;
     private final boolean mForcedSilentMode;
-    private final int mCurrentState = PowerPolicyConstants.CarPowerState.ON;
 
-    private CpmsStateInfo(String currentPolicyId, String pendingPolicyId,
+    private CpmsSystemLayerStateInfo(String currentPolicyId, String pendingPolicyId,
             String currentPolicyGroupId, boolean forcedSilentMode, PowerPolicyDef noUserInteract,
             PowerPolicyDef currentComponents, ArrayList<PowerPolicyDef> registeredPolicies) {
         mCurrentPolicyId = currentPolicyId;
@@ -72,10 +73,14 @@ public final class CpmsStateInfo {
         return mRegisteredPolicies.size();
     }
 
+    public ArrayList<PowerPolicyDef> getRegisteredPolicies() {
+        return mRegisteredPolicies;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder(STRING_BUILDER_BUF_SIZE);
-        sb.append("CpmsStateInfo:\n");
+        sb.append("CpmsSystemLayerStateInfo:\n");
         sb.append(CURRENT_POLICY_ID_HDR).append(' ').append(mCurrentPolicyId).append('\n');
         sb.append(PENDING_POLICY_ID_HDR).append(' ').append(mPendingPolicyId).append('\n');
         sb.append(CURRENT_POLICY_GROUP_ID_HDR).append(' ');
@@ -91,9 +96,8 @@ public final class CpmsStateInfo {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        CpmsStateInfo that = (CpmsStateInfo) o;
+        CpmsSystemLayerStateInfo that = (CpmsSystemLayerStateInfo) o;
         return mForcedSilentMode == that.mForcedSilentMode
-                && mCurrentState == that.mCurrentState
                 && mRegisteredPolicies.equals(that.mRegisteredPolicies)
                 && mPolicyGroups.equals(that.mPolicyGroups)
                 && Objects.equals(mNoUserInteractionPolicy, that.mNoUserInteractionPolicy)
@@ -107,12 +111,12 @@ public final class CpmsStateInfo {
     public int hashCode() {
         return Objects.hash(mRegisteredPolicies, mPolicyGroups, mNoUserInteractionPolicy,
                 mCurrentComponentStates, mCurrentPolicyId, mPendingPolicyId, mCurrentPolicyGroupId,
-                mForcedSilentMode, mCurrentState);
+                mForcedSilentMode);
     }
 
-    public static CpmsStateInfo parse(String cmdOutput) throws Exception {
+    public static CpmsSystemLayerStateInfo parse(String cmdOutput) throws Exception {
         String[] lines = cmdOutput.split("\n");
-        CpmsStateInfoData infoData = new CpmsStateInfoData(lines);
+        CpmsSystemLayerStateInfoData infoData = new CpmsSystemLayerStateInfoData(lines);
 
         String currentPolicyId = infoData.getStringData(CURRENT_POLICY_ID_HDR);
         String pendingPolicyId = infoData.getStringData(PENDING_POLICY_ID_HDR);
@@ -125,16 +129,16 @@ public final class CpmsStateInfo {
                 infoData.getComponentStateData(CURRENT_POWER_COMPONENTS_HDR);
         boolean forcedSilentMode = infoData.getBooleanData(FORCED_SILENT_MODE_HDR);
 
-        return new CpmsStateInfo(currentPolicyId, pendingPolicyId, currentPolicyGroupId,
+        return new CpmsSystemLayerStateInfo(currentPolicyId, pendingPolicyId, currentPolicyGroupId,
                 forcedSilentMode, noUserInteractionPolicy, currentComponentStates,
                 registeredPolicies);
     }
 
-    private static final class CpmsStateInfoData {
+    private static final class CpmsSystemLayerStateInfoData {
         private final String[] mLines;
         private int mIdx = 0;
 
-        private CpmsStateInfoData(String[]  lines) {
+        private CpmsSystemLayerStateInfoData(String[]  lines) {
             mLines = lines;
         }
 
@@ -172,8 +176,7 @@ public final class CpmsStateInfo {
 
         private PowerPolicyDef getComponentStateData(String hdr) throws Exception {
             searchHeader(hdr);
-            mIdx++;
-            return PowerPolicyDef.parse(mLines[mIdx], false, 0);
+            return PowerPolicyDef.parse(mLines[++mIdx] + " " + mLines[++mIdx], false, 0);
         }
 
         private void searchHeader(String header) throws Exception {
