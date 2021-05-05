@@ -23,6 +23,7 @@ import android.app.Instrumentation;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.pm.PackageManager;
+import android.net.wifi.WifiManager;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.support.test.uiautomator.UiDevice;
@@ -46,6 +47,7 @@ public abstract class BaseDeviceOwnerTest extends AndroidTestCase {
     private static final String TAG = BaseDeviceOwnerTest.class.getSimpleName();
 
     protected DevicePolicyManager mDevicePolicyManager;
+    protected WifiManager mWifiManager;
     protected Instrumentation mInstrumentation;
     protected UiDevice mDevice;
     protected boolean mHasSecureLockScreen;
@@ -62,6 +64,8 @@ public abstract class BaseDeviceOwnerTest extends AndroidTestCase {
         mDevice = UiDevice.getInstance(mInstrumentation);
         mDevicePolicyManager = TestAppSystemServiceFactory.getDevicePolicyManager(mContext,
                 BasicAdminReceiver.class);
+        mWifiManager = TestAppSystemServiceFactory.getWifiManager(mContext,
+                BasicAdminReceiver.class);
         mHasSecureLockScreen = mContext.getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_SECURE_LOCK_SCREEN);
         mHasTelephonyFeature = mContext.getPackageManager().hasSystemFeature(
@@ -70,7 +74,8 @@ public abstract class BaseDeviceOwnerTest extends AndroidTestCase {
                 PackageManager.FEATURE_AUTOMOTIVE);
         mUserId = mContext.getUserId();
 
-        Log.v(TAG, getClass() + ".setUp(): userId=" + mUserId + ", dpm=" + mDevicePolicyManager);
+        Log.v(TAG, getClass() + ".setUp(): userId=" + mUserId + ", dpm=" + mDevicePolicyManager
+                + ", wifiManager=" + mWifiManager);
 
         assertDeviceOwner();
     }
