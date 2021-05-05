@@ -57,8 +57,6 @@ public final class UserfaultfdTest {
   // using MREMAP_DONTUNMAP flag works.
   @Test
   public void mremapDontUnmap() {
-    // TODO: Change the expected value to 0 once the kernel feature is merged. In meantime, the
-    // expected value is EINVAL(22).
     assertEquals(0, performMremapDontUnmap());
   }
 
