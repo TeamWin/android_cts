@@ -32,6 +32,7 @@ NAME = os.path.splitext(os.path.basename(__file__))[0]
 NUM_FRAMES_PER_FD = 12
 POSITION_RTOL = 0.10  # 10%
 SHARPNESS_RTOL = 0.10  # 10%
+START_FRAME = 1  # start on second frame
 VGA_WIDTH, VGA_HEIGHT = 640, 480
 
 
@@ -68,6 +69,7 @@ def take_caps_and_determine_sharpness(
     reqs.append(capture_request_utils.manual_capture_request(gain, exp))
     reqs[i]['android.lens.focusDistance'] = fd
   caps = cam.do_capture(reqs, fmt)
+  caps = caps[START_FRAME:]
   for i, cap in enumerate(caps):
     data = {'fd': fds[i]}
     data['loc'] = cap['metadata']['android.lens.focusDistance']
@@ -139,9 +141,9 @@ class LensMovementReportingTest(its_base_test.ItsBaseTest):
       # Assert frames are consecutive
       frame_diffs = np.gradient([v['timestamp'] for v in d.values()])
       delta_diffs = np.amax(frame_diffs) - np.amin(frame_diffs)
-      e_msg = 'Timestamp gradient(ms): %.1f, ATOL: %.f' % (
-          delta_diffs, FRAME_ATOL_MS)
-      assert np.isclose(delta_diffs, 0, atol=FRAME_ATOL_MS), e_msg
+      if not np.isclose(delta_diffs, 0, atol=FRAME_ATOL_MS):
+        raise AssertionError(f'Timestamp gradient(ms): {delta_diffs:.1f}, '
+                             f'ATOL: {FRAME_ATOL_MS}')
 
       # Remove data when lens is moving
       for k in sorted(d):
@@ -160,46 +162,46 @@ class LensMovementReportingTest(its_base_test.ItsBaseTest):
       logging.debug('Assert reported locs are close for af_fd captures')
       min_loc = min([v['loc'] for v in d_af_fd.values()])
       max_loc = max([v['loc'] for v in d_af_fd.values()])
-      e_msg = 'af_fd[loc] min: %.3f, max: %.3f, RTOL: %.2f' % (
-          min_loc, max_loc, POSITION_RTOL)
-      assert np.isclose(min_loc, max_loc, rtol=POSITION_RTOL), e_msg
+      if not np.isclose(min_loc, max_loc, rtol=POSITION_RTOL):
+        raise AssertionError(f'af_fd[loc] min: {min_loc:.3f}, max: '
+                             f'{max_loc:.3f}, RTOL: {POSITION_RTOL}')
 
       logging.debug('Assert reported sharpness is close at af_fd')
       min_sharp = min([v['sharpness'] for v in d_af_fd.values()])
       max_sharp = max([v['sharpness'] for v in d_af_fd.values()])
-      e_msg = 'af_fd[sharpness] min: %.3f, max: %.3f, RTOL: %.2f' % (
-          min_sharp, max_sharp, SHARPNESS_RTOL)
-      assert np.isclose(min_sharp, max_sharp, rtol=SHARPNESS_RTOL), e_msg
+      if not np.isclose(min_sharp, max_sharp, rtol=SHARPNESS_RTOL):
+        raise AssertionError(f'af_fd[sharpness] min: {min_sharp:.3f}, '
+                             f'max: {max_sharp:.3f}, RTOL: {SHARPNESS_RTOL}')
 
       logging.debug('Assert reported loc is close to assign loc for af_fd')
       first_key = min(d_af_fd.keys())  # find 1st non-moving frame
       loc = d_af_fd[first_key]['loc']
       fd = d_af_fd[first_key]['fd']
-      e_msg = 'af_fd[loc]: %.3f, af_fd[fd]: %.3f, RTOL: %.2f' % (
-          loc, fd, POSITION_RTOL)
-      assert np.isclose(loc, fd, rtol=POSITION_RTOL), e_msg
+      if not np.isclose(loc, fd, rtol=POSITION_RTOL):
+        raise AssertionError(f'af_fd[loc]: {loc:.3f}, af_fd[fd]: {fd:.3f}, '
+                             f'RTOL: {POSITION_RTOL}')
 
       logging.debug('Assert reported locs are close for min_fd captures')
       min_loc = min([v['loc'] for v in d_min_fd.values()])
       max_loc = max([v['loc'] for v in d_min_fd.values()])
-      e_msg = 'min_fd[loc] min: %.3f, max: %.3f, RTOL: %.2f' % (
-          min_loc, max_loc, POSITION_RTOL)
-      assert np.isclose(min_loc, max_loc, rtol=POSITION_RTOL), e_msg
+      if not np.isclose(min_loc, max_loc, rtol=POSITION_RTOL):
+        raise AssertionError(f'min_fd[loc] min: {min_loc:.3f}, max: '
+                             f'{max_loc:.3f}, RTOL: {POSITION_RTOL}')
 
       logging.debug('Assert reported sharpness is close at min_fd')
       min_sharp = min([v['sharpness'] for v in d_min_fd.values()])
       max_sharp = max([v['sharpness'] for v in d_min_fd.values()])
-      e_msg = 'min_fd[sharpness] min: %.3f, max: %.3f, RTOL: %.2f' % (
-          min_sharp, max_sharp, SHARPNESS_RTOL)
-      assert np.isclose(min_sharp, max_sharp, rtol=SHARPNESS_RTOL), e_msg
+      if not np.isclose(min_sharp, max_sharp, rtol=SHARPNESS_RTOL):
+        raise AssertionError(f'min_fd[sharpness] min: {min_sharp:.3f}, '
+                             f'max: {max_sharp:.3f}, RTOL: {SHARPNESS_RTOL}')
 
       logging.debug('Assert reported loc is close to assigned loc for min_fd')
-      last_key = 2 * NUM_FRAMES_PER_FD - 1
+      last_key = 2 * NUM_FRAMES_PER_FD - (START_FRAME + 1)
       loc = d_min_fd[last_key]['loc']
       fd = d_min_fd[last_key]['fd']
-      e_msg = 'min_fd[loc]: %.3f, min_fd[fd]: %.3f, RTOL: %.2f' % (
-          loc, fd, POSITION_RTOL)
-      assert np.isclose(loc, fd, rtol=POSITION_RTOL), e_msg
+      if not np.isclose(loc, fd, rtol=POSITION_RTOL):
+        raise AssertionError(f'min_fd[loc]: {loc:.3f}, min_fd[fd]: {fd:.3f}, '
+                             f'RTOL: {POSITION_RTOL}')
 
 if __name__ == '__main__':
   test_runner.main()
