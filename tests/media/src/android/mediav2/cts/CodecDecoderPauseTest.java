@@ -81,7 +81,7 @@ public class CodecDecoderPauseTest extends CodecDecoderTestBase {
         ArrayList<MediaFormat> formats = new ArrayList<>();
         formats.add(setUpSource(mTestFile));
         mExtractor.release();
-        checkFormatSupport(mCodecName, mMime, formats, null, mSupportRequirements);
+        checkFormatSupport(mCodecName, mMime, false, formats, null, mSupportRequirements);
         final boolean isAsync = true;
         MediaFormat format = setUpSource(mTestFile);
         {
