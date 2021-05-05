@@ -16,13 +16,16 @@
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="android.scopedstorage.cts.device">
-<uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
-<application android:label="Scoped Storage Device Tests">
-    <uses-library android:name="android.test.runner" />
-</application>
 
-<instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
-                 android:targetPackage="android.scopedstorage.cts.device"
-                 android:label="Device-only scoped storage tests" />
+    <uses-sdk android:minSdkVersion="30" />
+
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
+    <application android:label="Scoped Storage Device Tests">
+        <uses-library android:name="android.test.runner" />
+    </application>
+
+    <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
+                     android:targetPackage="android.scopedstorage.cts.device"
+                     android:label="Device-only scoped storage tests" />
 
 </manifest>
