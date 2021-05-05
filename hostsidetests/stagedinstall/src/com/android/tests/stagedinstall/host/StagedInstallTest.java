@@ -668,6 +668,21 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
         runPhase("testAppStagingDirCannotBeReadByNonPrivApps");
     }
 
+    @Test
+    @LargeTest
+    public void testUpdatedApexFromDataApexActiveCanBePulled() throws Exception {
+        assumeTrue("Device does not support updating APEX", mHostUtils.isApexUpdateSupported());
+
+        installV2Apex();
+
+        final ITestDevice.ApexInfo shimApex = mHostUtils.getShimApex().orElseThrow(
+                () -> new AssertionError("Can't find " + SHIM_APEX_PACKAGE_NAME)
+        );
+
+        assertThat(shimApex.sourceDir).startsWith("/data/apex/active");
+        assertThat(getDevice().pullFile(shimApex.sourceDir)).isNotNull();
+    }
+
     /**
      * Store the component name of the default launcher. This value will be used to reset the
      * default launcher to its correct component upon test completion.
