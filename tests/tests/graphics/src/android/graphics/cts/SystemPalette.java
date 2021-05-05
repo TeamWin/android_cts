@@ -74,7 +74,7 @@ public class SystemPalette {
                 getAllNeutral1Colors(context), getAllNeutral2Colors(context));
 
         for (int[] palette : allPalettes) {
-            for (int i = 2; i < palette.length - 1; i++) {
+            for (int i = 3; i < palette.length - 1; i++) {
                 assertWithMessage("Color " + Integer.toHexString((palette[i - 1]))
                         + " has different chroma compared to " + Integer.toHexString(palette[i])
                         + " for palette: " + Arrays.toString(palette))
@@ -111,7 +111,7 @@ public class SystemPalette {
                 getAllNeutral1Colors(context), getAllNeutral2Colors(context));
 
         final double[] labColor = new double[3];
-        final double[] expectedL = {100, 95, 90, 80, 70, 60, 49, 40, 30, 20, 10, 0};
+        final double[] expectedL = {100, 99, 95, 90, 80, 70, 60, 49, 40, 30, 20, 10, 0};
 
         for (int[] palette : allPalettes) {
             for (int i = 0; i < palette.length; i++) {
@@ -176,10 +176,12 @@ public class SystemPalette {
     private int shadeToArrayIndex(int shade) {
         if (shade == 0) {
             return 0;
-        } else if (shade == 50) {
+        } else if (shade == 10) {
             return 1;
+        } else if (shade == 50) {
+            return 2;
         } else {
-            return shade / 100 + 1;
+            return shade / 100 + 2;
         }
     }
 
@@ -189,87 +191,92 @@ public class SystemPalette {
     }
 
     private int[] getAllAccent1Colors(Context context) {
-        final int[] colors = new int[12];
+        final int[] colors = new int[13];
         colors[0] = context.getColor(R.color.system_accent1_0);
-        colors[1] = context.getColor(R.color.system_accent1_50);
-        colors[2] = context.getColor(R.color.system_accent1_100);
-        colors[3] = context.getColor(R.color.system_accent1_200);
-        colors[4] = context.getColor(R.color.system_accent1_300);
-        colors[5] = context.getColor(R.color.system_accent1_400);
-        colors[6] = context.getColor(R.color.system_accent1_500);
-        colors[7] = context.getColor(R.color.system_accent1_600);
-        colors[8] = context.getColor(R.color.system_accent1_700);
-        colors[9] = context.getColor(R.color.system_accent1_800);
-        colors[10] = context.getColor(R.color.system_accent1_900);
-        colors[11] = context.getColor(R.color.system_accent1_1000);
+        colors[1] = context.getColor(R.color.system_accent1_10);
+        colors[2] = context.getColor(R.color.system_accent1_50);
+        colors[3] = context.getColor(R.color.system_accent1_100);
+        colors[4] = context.getColor(R.color.system_accent1_200);
+        colors[5] = context.getColor(R.color.system_accent1_300);
+        colors[6] = context.getColor(R.color.system_accent1_400);
+        colors[7] = context.getColor(R.color.system_accent1_500);
+        colors[8] = context.getColor(R.color.system_accent1_600);
+        colors[9] = context.getColor(R.color.system_accent1_700);
+        colors[10] = context.getColor(R.color.system_accent1_800);
+        colors[11] = context.getColor(R.color.system_accent1_900);
+        colors[12] = context.getColor(R.color.system_accent1_1000);
         return colors;
     }
 
     private int[] getAllAccent2Colors(Context context) {
-        final int[] colors = new int[12];
+        final int[] colors = new int[13];
         colors[0] = context.getColor(R.color.system_accent2_0);
-        colors[1] = context.getColor(R.color.system_accent2_50);
-        colors[2] = context.getColor(R.color.system_accent2_100);
-        colors[3] = context.getColor(R.color.system_accent2_200);
-        colors[4] = context.getColor(R.color.system_accent2_300);
-        colors[5] = context.getColor(R.color.system_accent2_400);
-        colors[6] = context.getColor(R.color.system_accent2_500);
-        colors[7] = context.getColor(R.color.system_accent2_600);
-        colors[8] = context.getColor(R.color.system_accent2_700);
-        colors[9] = context.getColor(R.color.system_accent2_800);
-        colors[10] = context.getColor(R.color.system_accent2_900);
-        colors[11] = context.getColor(R.color.system_accent2_1000);
+        colors[1] = context.getColor(R.color.system_accent2_10);
+        colors[2] = context.getColor(R.color.system_accent2_50);
+        colors[3] = context.getColor(R.color.system_accent2_100);
+        colors[4] = context.getColor(R.color.system_accent2_200);
+        colors[5] = context.getColor(R.color.system_accent2_300);
+        colors[6] = context.getColor(R.color.system_accent2_400);
+        colors[7] = context.getColor(R.color.system_accent2_500);
+        colors[8] = context.getColor(R.color.system_accent2_600);
+        colors[9] = context.getColor(R.color.system_accent2_700);
+        colors[10] = context.getColor(R.color.system_accent2_800);
+        colors[11] = context.getColor(R.color.system_accent2_900);
+        colors[12] = context.getColor(R.color.system_accent2_1000);
         return colors;
     }
 
     private int[] getAllAccent3Colors(Context context) {
-        final int[] colors = new int[12];
+        final int[] colors = new int[13];
         colors[0] = context.getColor(R.color.system_accent3_0);
-        colors[1] = context.getColor(R.color.system_accent3_50);
-        colors[2] = context.getColor(R.color.system_accent3_100);
-        colors[3] = context.getColor(R.color.system_accent3_200);
-        colors[4] = context.getColor(R.color.system_accent3_300);
-        colors[5] = context.getColor(R.color.system_accent3_400);
-        colors[6] = context.getColor(R.color.system_accent3_500);
-        colors[7] = context.getColor(R.color.system_accent3_600);
-        colors[8] = context.getColor(R.color.system_accent3_700);
-        colors[9] = context.getColor(R.color.system_accent3_800);
-        colors[10] = context.getColor(R.color.system_accent3_900);
-        colors[11] = context.getColor(R.color.system_accent3_1000);
+        colors[1] = context.getColor(R.color.system_accent3_10);
+        colors[2] = context.getColor(R.color.system_accent3_50);
+        colors[3] = context.getColor(R.color.system_accent3_100);
+        colors[4] = context.getColor(R.color.system_accent3_200);
+        colors[5] = context.getColor(R.color.system_accent3_300);
+        colors[6] = context.getColor(R.color.system_accent3_400);
+        colors[7] = context.getColor(R.color.system_accent3_500);
+        colors[8] = context.getColor(R.color.system_accent3_600);
+        colors[9] = context.getColor(R.color.system_accent3_700);
+        colors[10] = context.getColor(R.color.system_accent3_800);
+        colors[11] = context.getColor(R.color.system_accent3_900);
+        colors[12] = context.getColor(R.color.system_accent3_1000);
         return colors;
     }
 
     private int[] getAllNeutral1Colors(Context context) {
-        final int[] colors = new int[12];
+        final int[] colors = new int[13];
         colors[0] = context.getColor(R.color.system_neutral1_0);
-        colors[1] = context.getColor(R.color.system_neutral1_50);
-        colors[2] = context.getColor(R.color.system_neutral1_100);
-        colors[3] = context.getColor(R.color.system_neutral1_200);
-        colors[4] = context.getColor(R.color.system_neutral1_300);
-        colors[5] = context.getColor(R.color.system_neutral1_400);
-        colors[6] = context.getColor(R.color.system_neutral1_500);
-        colors[7] = context.getColor(R.color.system_neutral1_600);
-        colors[8] = context.getColor(R.color.system_neutral1_700);
-        colors[9] = context.getColor(R.color.system_neutral1_800);
-        colors[10] = context.getColor(R.color.system_neutral1_900);
-        colors[11] = context.getColor(R.color.system_neutral1_1000);
+        colors[1] = context.getColor(R.color.system_neutral1_10);
+        colors[2] = context.getColor(R.color.system_neutral1_50);
+        colors[3] = context.getColor(R.color.system_neutral1_100);
+        colors[4] = context.getColor(R.color.system_neutral1_200);
+        colors[5] = context.getColor(R.color.system_neutral1_300);
+        colors[6] = context.getColor(R.color.system_neutral1_400);
+        colors[7] = context.getColor(R.color.system_neutral1_500);
+        colors[8] = context.getColor(R.color.system_neutral1_600);
+        colors[9] = context.getColor(R.color.system_neutral1_700);
+        colors[10] = context.getColor(R.color.system_neutral1_800);
+        colors[11] = context.getColor(R.color.system_neutral1_900);
+        colors[12] = context.getColor(R.color.system_neutral1_1000);
         return colors;
     }
 
     private int[] getAllNeutral2Colors(Context context) {
-        final int[] colors = new int[12];
+        final int[] colors = new int[13];
         colors[0] = context.getColor(R.color.system_neutral2_0);
-        colors[1] = context.getColor(R.color.system_neutral2_50);
-        colors[2] = context.getColor(R.color.system_neutral2_100);
-        colors[3] = context.getColor(R.color.system_neutral2_200);
-        colors[4] = context.getColor(R.color.system_neutral2_300);
-        colors[5] = context.getColor(R.color.system_neutral2_400);
-        colors[6] = context.getColor(R.color.system_neutral2_500);
-        colors[7] = context.getColor(R.color.system_neutral2_600);
-        colors[8] = context.getColor(R.color.system_neutral2_700);
-        colors[9] = context.getColor(R.color.system_neutral2_800);
-        colors[10] = context.getColor(R.color.system_neutral2_900);
-        colors[11] = context.getColor(R.color.system_neutral2_1000);
+        colors[1] = context.getColor(R.color.system_neutral2_10);
+        colors[2] = context.getColor(R.color.system_neutral2_50);
+        colors[3] = context.getColor(R.color.system_neutral2_100);
+        colors[4] = context.getColor(R.color.system_neutral2_200);
+        colors[5] = context.getColor(R.color.system_neutral2_300);
+        colors[6] = context.getColor(R.color.system_neutral2_400);
+        colors[7] = context.getColor(R.color.system_neutral2_500);
+        colors[8] = context.getColor(R.color.system_neutral2_600);
+        colors[9] = context.getColor(R.color.system_neutral2_700);
+        colors[10] = context.getColor(R.color.system_neutral2_800);
+        colors[11] = context.getColor(R.color.system_neutral2_900);
+        colors[12] = context.getColor(R.color.system_neutral2_1000);
         return colors;
     }
 }
