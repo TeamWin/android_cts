@@ -298,9 +298,17 @@ public class TextViewReceiveContentTest {
         ClipData clip = ClipData.newPlainText("test", "ONE");
         clip.addItem(new ClipData.Item("TWO"));
         clip.addItem(new ClipData.Item("THREE"));
-        onReceive(mDefaultReceiver, clip, SOURCE_CLIPBOARD, 0);
 
-        assertTextAndCursorPosition("xONE\nTWO\nTHREEz", 14);
+        // Verify the resulting text when pasting a clip that contains multiple text items.
+        String expectedText = "xONE\nTWO\nTHREEz";
+        onReceive(mDefaultReceiver, clip, SOURCE_CLIPBOARD, 0);
+        assertTextAndCursorPosition(expectedText, 14);
+
+        // Verify the resulting text when inserting the same clip via drag-and-drop. The result
+        // should be the same as when pasting.
+        initTextViewForEditing("xz", 1);
+        onReceive(mDefaultReceiver, clip, SOURCE_DRAG_AND_DROP, 0);
+        assertTextAndCursorPosition(expectedText, 14);
     }
 
     @UiThreadTest
