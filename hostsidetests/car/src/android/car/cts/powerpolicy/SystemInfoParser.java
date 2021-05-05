@@ -18,22 +18,25 @@ package android.car.cts.powerpolicy;
 
 import com.android.tradefed.log.LogUtil.CLog;
 
+import java.lang.reflect.Method;
 import java.util.function.Function;
 
-public final class PowerPolicyTestFilter {
-    public static final class CpmsFrameworkLayerDumpsys
-            implements Function<String, CpmsFrameworkLayerStateInfo> {
-        public static final String COMMAND = "dumpsys car_service --services"
-                + " CarPowerManagementService";
+public final class SystemInfoParser<T> implements Function<String, T> {
+    private final Class<T> mType;
 
-        public CpmsFrameworkLayerStateInfo apply(String cmdOutput) {
-            CpmsFrameworkLayerStateInfo info = null;
-            try {
-                info = CpmsFrameworkLayerStateInfo.parse(cmdOutput);
-            } catch (Exception e) {
-                CLog.e("CpmsFrameworkLayerDumpsys: %s", e.toString());
-            }
-            return info;
+    public SystemInfoParser(Class<T> type) {
+        mType = type;
+    }
+
+    public T apply(String cmdOutput) {
+        T t = null;
+        try {
+            Method m = mType.getMethod("parse", String.class);
+            Object ret = m.invoke(null, cmdOutput);
+            t = mType.cast(ret);
+        } catch (Exception e) {
+            CLog.e("%s: %s", mType.getSimpleName(), e.toString());
         }
+        return t;
     }
 }

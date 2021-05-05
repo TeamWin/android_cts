@@ -27,6 +27,7 @@ import android.content.pm.PackageManager.PERMISSION_DENIED
 import android.content.pm.PackageManager.PERMISSION_GRANTED
 import android.content.res.Resources
 import android.net.Uri
+import android.os.Build
 import android.platform.test.annotations.AppModeFull
 import android.support.test.uiautomator.By
 import android.support.test.uiautomator.BySelector
@@ -38,6 +39,7 @@ import android.view.accessibility.AccessibilityNodeInfo
 import android.view.accessibility.AccessibilityNodeInfo.ACTION_SCROLL_FORWARD
 import android.widget.Switch
 import androidx.test.InstrumentationRegistry
+import androidx.test.filters.SdkSuppress
 import androidx.test.runner.AndroidJUnit4
 import com.android.compatibility.common.util.MatcherUtils.hasTextThat
 import com.android.compatibility.common.util.SystemUtil
@@ -145,21 +147,22 @@ class AutoRevokeTest {
     }
 
     @AppModeFull(reason = "Uses separate apps for testing")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S, codeName = "S")
     @Test
     fun testUnusedApp_doesntGetSplitPermissionRevoked() {
         withUnusedThresholdMs(3L) {
-            withDummyApp {
+            withDummyApp(APK_PATH_R_APP, APK_PACKAGE_NAME_R_APP) {
                 // Setup
                 startApp()
-                assertPermission(PERMISSION_GRANTED, supportedAppPackageName, BLUETOOTH_CONNECT)
+                assertPermission(PERMISSION_GRANTED, APK_PACKAGE_NAME_R_APP, BLUETOOTH_CONNECT)
                 killDummyApp()
-                Thread.sleep(1000)
+                Thread.sleep(500)
 
                 // Run
                 runAppHibernationJob(context, LOG_TAG)
 
                 // Verify
-                assertPermission(PERMISSION_GRANTED, supportedAppPackageName, BLUETOOTH_CONNECT)
+                assertPermission(PERMISSION_GRANTED, APK_PACKAGE_NAME_R_APP, BLUETOOTH_CONNECT)
             }
         }
     }
