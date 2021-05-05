@@ -25,57 +25,76 @@ import java.io.File;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
-public class DecodeExtractedSamplesTestBase extends CodecDecoderTestBase {
-    private static final long EACH_FRAME_TIME_INTERVAL_US = 1000000 / 60;
+import static android.mediapc.cts.FrameDropTestBase.DECODE_31S;
 
-    final String[] mTestFiles;
-    final boolean mIsAsync;
+public class PlaybackFrameDrop extends CodecDecoderTestBase {
+    private final String mDecoderName;
+    private final String[] mTestFiles;
+    private final int mEachFrameTimeIntervalUs;
+    private final boolean mIsAsync;
 
-    long mFrameDropCount;
-    ByteBuffer mBuff;
-    ArrayList<MediaCodec.BufferInfo> mBufferInfos;
+    private int mFrameDropCount;
+    private ByteBuffer mBuffer;
+    private ArrayList<MediaCodec.BufferInfo> mBufferInfos;
 
-    private long mMaxPtsUs;
+    private long mInputMaxPtsUs;
     private long mRenderStartTimeUs;
+    private long mBasePts;
+    private long mMaxPts;
+    private long mDecodeStartTimeMs;
+    private int mSampleIndex;
 
-    DecodeExtractedSamplesTestBase(String mime, String[] testFiles, Surface surface,
-            boolean isAsync) {
+    PlaybackFrameDrop(String mime, String decoderName, String[] testFiles, Surface surface,
+            int frameRate, boolean isAsync) {
         super(mime, null);
+        mDecoderName = decoderName;
         mTestFiles = testFiles;
         mSurface = surface;
+        mEachFrameTimeIntervalUs = 1000000 / frameRate;
         mIsAsync = isAsync;
-        mMaxPtsUs = 0;
+        mInputMaxPtsUs = 0;
+        mBasePts = 0;
+        mMaxPts = 0;
+        mSampleIndex = 0;
         mFrameDropCount = 0;
         mBufferInfos = new ArrayList<>();
     }
 
     private MediaFormat createInputList(MediaFormat format, ByteBuffer buffer,
             ArrayList<MediaCodec.BufferInfo> list, int offset, long ptsOffset) {
+        int csdBuffersSize = 0;
         if (hasCSD(format)) {
-            MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
-            bufferInfo.offset = offset;
-            bufferInfo.size = 0;
-            bufferInfo.presentationTimeUs = 0;
-            bufferInfo.flags = MediaCodec.BUFFER_FLAG_CODEC_CONFIG;
             for (int i = 0; ; i++) {
                 String csdKey = "csd-" + i;
                 if (format.containsKey(csdKey)) {
                     ByteBuffer csdBuffer = format.getByteBuffer(csdKey);
-                    bufferInfo.size += csdBuffer.limit();
+                    csdBuffersSize += csdBuffer.limit();
                     buffer.put(csdBuffer);
                     format.removeKey(csdKey);
-                } else break;
+                } else {
+                    break;
+                }
             }
-            list.add(bufferInfo);
-            offset += bufferInfo.size;
         }
         while (true) {
             MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
-            bufferInfo.size = mExtractor.readSampleData(buffer, offset);
-            if (bufferInfo.size < 0) break;
+            // For the first read sample if csdBuffersSize > 0, the offset to store the bytes
+            // starts from the (offset + csdBuffersSize) as we already stored CSD buffer bytes in
+            // buffer and we consider them as a part of the first sample's data only.
+            // So first sample's size will become (frame buffer size + csdBuffersSize).
+            // Then assigned the csdBuffersSize to 0, so from second sample onwards, the offset
+            // for buffer to read samples will be (offset + 0).
+            bufferInfo.size = mExtractor.readSampleData(buffer, offset + csdBuffersSize);
+            if (bufferInfo.size < 0) {
+                break;
+            }
             bufferInfo.offset = offset;
             bufferInfo.presentationTimeUs = ptsOffset + mExtractor.getSampleTime();
-            mMaxPtsUs = Math.max(mMaxPtsUs, bufferInfo.presentationTimeUs);
+            if (csdBuffersSize > 0) {
+                bufferInfo.size += csdBuffersSize;
+                csdBuffersSize = 0;
+            }
+            mInputMaxPtsUs = Math.max(mInputMaxPtsUs, bufferInfo.presentationTimeUs);
             int flags = mExtractor.getSampleFlags();
             bufferInfo.flags = 0;
             if ((flags & MediaExtractor.SAMPLE_FLAG_SYNC) != 0) {
@@ -104,20 +123,61 @@ public class DecodeExtractedSamplesTestBase extends CodecDecoderTestBase {
         totalSize <<= 1;
         long ptsOffset = 0;
         int buffOffset = 0;
-        mBuff = ByteBuffer.allocate(totalSize);
+        mBuffer = ByteBuffer.allocate(totalSize);
         for (String file : mTestFiles) {
-            formats.add(createInputList(setUpSource(file), mBuff, mBufferInfos, buffOffset,
+            formats.add(createInputList(setUpSource(file), mBuffer, mBufferInfos, buffOffset,
                     ptsOffset));
             mExtractor.release();
-            ptsOffset = mMaxPtsUs + 1000000L;
+            ptsOffset = mInputMaxPtsUs + 1000000L;
             buffOffset = (mBufferInfos.get(mBufferInfos.size() - 1).offset) +
                     (mBufferInfos.get(mBufferInfos.size() - 1).size);
         }
         return formats;
     }
 
+    public int getFrameDropCount() throws Exception {
+        ArrayList<MediaFormat> formats = setUpSourceFiles();
+        mCodec = MediaCodec.createByCodecName(mDecoderName);
+        configureCodec(formats.get(0), mIsAsync, false, false);
+        mCodec.start();
+        mDecodeStartTimeMs = System.currentTimeMillis();
+        doWork(Integer.MAX_VALUE);
+        queueEOS();
+        waitForAllOutputs();
+        mCodec.stop();
+        mCodec.release();
+        return mFrameDropCount;
+    }
+
+    @Override
+    void enqueueInput(int bufferIndex) {
+        if (mSampleIndex >= mBufferInfos.size() ||
+                // Decode for 1800 samples i.e. for 30 sec at 60 fps or for utmost 31 seconds
+                mInputCount >= 1800 ||
+                (System.currentTimeMillis() - mDecodeStartTimeMs > DECODE_31S)) {
+            enqueueEOS(bufferIndex);
+        } else {
+            MediaCodec.BufferInfo info = mBufferInfos.get(mSampleIndex++);
+            if (info.size > 0) {
+                ByteBuffer dstBuf = mCodec.getInputBuffer(bufferIndex);
+                dstBuf.put(mBuffer.array(), info.offset, info.size);
+                mInputCount++;
+            }
+            if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
+                mSawInputEOS = true;
+            }
+            long pts = info.presentationTimeUs;
+            mMaxPts = Math.max(mMaxPts, mBasePts + pts);
+            mCodec.queueInputBuffer(bufferIndex, 0, info.size, mBasePts + pts, info.flags);
+            if (mSampleIndex == mBufferInfos.size()) {
+                mSampleIndex = 0;
+                mBasePts = mMaxPts + 1000000L;
+            }
+        }
+    }
+
     private long getRenderTimeUs(int frameIndex) {
-        return mRenderStartTimeUs + frameIndex * EACH_FRAME_TIME_INTERVAL_US;
+        return mRenderStartTimeUs + frameIndex * mEachFrameTimeIntervalUs;
     }
 
     @Override
@@ -135,10 +195,10 @@ public class DecodeExtractedSamplesTestBase extends CodecDecoderTestBase {
         } else if (nowUs > getRenderTimeUs(mOutputCount)) {
             mCodec.releaseOutputBuffer(bufferIndex, true);
         } else {
-            if ((getRenderTimeUs(mOutputCount) - nowUs) > (EACH_FRAME_TIME_INTERVAL_US / 2)) {
+            if ((getRenderTimeUs(mOutputCount) - nowUs) > (mEachFrameTimeIntervalUs / 2)) {
                 try {
                     Thread.sleep(((getRenderTimeUs(mOutputCount) - nowUs) -
-                            (EACH_FRAME_TIME_INTERVAL_US / 2)) / 1000);
+                            (mEachFrameTimeIntervalUs / 2)) / 1000);
                 } catch (InterruptedException e) {
                     // Do nothing.
                 }
