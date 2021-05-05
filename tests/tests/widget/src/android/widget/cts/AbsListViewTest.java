@@ -1087,6 +1087,7 @@ public class AbsListViewTest {
             return; // watch type devices do not support multichoice action mode
         }
         configureMultiChoiceModalState();
+        mListView.setOverScrollMode(View.OVER_SCROLL_NEVER);
 
         final int firstVisiblePosition = mListView.getFirstVisiblePosition();
         final int lastVisiblePosition = mListView.getLastVisiblePosition();
