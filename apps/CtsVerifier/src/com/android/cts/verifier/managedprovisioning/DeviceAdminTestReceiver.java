@@ -75,7 +75,7 @@ public class DeviceAdminTestReceiver extends DeviceAdminReceiver {
         if (DeviceOwnerHelper.runManagerMethod(this, context, intent)) return;
 
         String action = intent.getAction();
-        Log.d(TAG, "onReceive(): user=" + context.getUserId() + ", action=" + action);
+        Log.d(TAG, "onReceive(): user=" + UserHandle.myUserId() + ", action=" + action);
 
         // Must set affiliation on headless system user, otherwise some operations in the current
         // user (which is PO) won't be allowed (like uininstalling a package)
