@@ -51,6 +51,8 @@ import android.os.Environment;
 import android.os.FileUtils;
 import android.provider.MediaStore;
 
+import androidx.test.filters.SdkSuppress;
+
 import com.android.cts.install.lib.TestApp;
 
 import org.junit.BeforeClass;
@@ -74,6 +76,7 @@ import java.util.List;
  * Device-side test suite to verify redacted URI operations.
  */
 @RunWith(Parameterized.class)
+@SdkSuppress(minSdkVersion = 31, codeName = "S")
 public class RedactUriDeviceTest extends ScopedStorageBaseDeviceTest {
 
     /**

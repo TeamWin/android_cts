@@ -133,6 +133,7 @@ import android.system.StructStat;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
+import androidx.test.filters.SdkSuppress;
 
 import com.android.cts.install.lib.TestApp;
 
@@ -273,7 +274,6 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
         final File moviesDir = getMoviesDir();
         final File musicDir = getMusicDir();
         final File picturesDir = getPicturesDir();
-        final File recordingsDir = getRecordingsDir();
         // Only audio files can be created in Music
         assertThrows(IOException.class, "Operation not permitted",
                 () -> {
@@ -326,19 +326,6 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
                 () -> {
                     new File(dcimDir, SUBTITLE_FILE_NAME).createNewFile();
                 });
-        // Only audio files can be created in Recordings
-        assertThrows(IOException.class, "Operation not permitted",
-                () -> {
-                    new File(recordingsDir, NONMEDIA_FILE_NAME).createNewFile();
-                });
-        assertThrows(IOException.class, "Operation not permitted",
-                () -> {
-                    new File(recordingsDir, VIDEO_FILE_NAME).createNewFile();
-                });
-        assertThrows(IOException.class, "Operation not permitted",
-                () -> {
-                    new File(recordingsDir, IMAGE_FILE_NAME).createNewFile();
-                });
 
         assertCanCreateFile(new File(getAlarmsDir(), AUDIO_FILE_NAME));
         assertCanCreateFile(new File(getAudiobooksDir(), AUDIO_FILE_NAME));
@@ -364,7 +351,6 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
         assertCanCreateFile(new File(picturesDir, IMAGE_FILE_NAME));
         assertCanCreateFile(new File(picturesDir, VIDEO_FILE_NAME));
         assertCanCreateFile(new File(getPodcastsDir(), AUDIO_FILE_NAME));
-        assertCanCreateFile(new File(recordingsDir, AUDIO_FILE_NAME));
         assertCanCreateFile(new File(getRingtonesDir(), AUDIO_FILE_NAME));
 
         // No file whatsoever can be created in the top level directory
@@ -384,6 +370,31 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
                 () -> {
                     new File(getExternalStorageDir(), VIDEO_FILE_NAME).createNewFile();
                 });
+    }
+
+    /**
+     * Test that we enforce certain media types can only be created in certain directories.
+     */
+    @Test
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    public void testTypePathConformity_recordingsDir() throws Exception {
+        final File recordingsDir = getRecordingsDir();
+
+        // Only audio files can be created in Recordings
+        assertThrows(IOException.class, "Operation not permitted",
+                () -> {
+                    new File(recordingsDir, NONMEDIA_FILE_NAME).createNewFile();
+                });
+        assertThrows(IOException.class, "Operation not permitted",
+                () -> {
+                    new File(recordingsDir, VIDEO_FILE_NAME).createNewFile();
+                });
+        assertThrows(IOException.class, "Operation not permitted",
+                () -> {
+                    new File(recordingsDir, IMAGE_FILE_NAME).createNewFile();
+                });
+
+        assertCanCreateFile(new File(recordingsDir, AUDIO_FILE_NAME));
     }
 
     /**
@@ -1361,6 +1372,7 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
     }
 
     @Test
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
     public void testDisableOpResetForSystemGallery() throws Exception {
         final File otherAppImageFile = new File(getDcimDir(), "other_" + IMAGE_FILE_NAME);
         final File otherAppVideoFile = new File(getDcimDir(), "other_" + VIDEO_FILE_NAME);
@@ -2674,6 +2686,7 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
     }
 
     @Test
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
     public void testTransformsDirFileOperations() throws Exception {
         final String path = Environment.getExternalStorageDirectory() + "/" + TRANSFORMS_DIR;
         final File file = new File(path);
@@ -2682,6 +2695,7 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
     }
 
     @Test
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
     public void testTransformsSyntheticDirFileOperations() throws Exception {
         final String path =
                 Environment.getExternalStorageDirectory() + "/" + TRANSFORMS_SYNTHETIC_DIR;
@@ -2691,6 +2705,7 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
     }
 
     @Test
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
     public void testTransformsTranscodeDirFileOperations() throws Exception {
         final String path =
                 Environment.getExternalStorageDirectory() + "/" + TRANSFORMS_TRANSCODE_DIR;
@@ -2704,6 +2719,7 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
      * Test mount modes for a platform signed app with ACCESS_MTP permission.
      */
     @Test
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
     public void testMTPAppWithPlatformSignatureMountMode() throws Exception {
         final String shellPackageName = "com.android.shell";
         final int uid = getContext().getPackageManager().getPackageUid(shellPackageName, 0);
@@ -2714,6 +2730,7 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
      * Test mount modes for ExternalStorageProvider and DownloadsProvider.
      */
     @Test
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
     public void testExternalStorageProviderAndDownloadsProvider() throws Exception {
         assertWritableMountModeForProvider(DocumentsContract.EXTERNAL_STORAGE_PROVIDER_AUTHORITY);
         assertWritableMountModeForProvider(DocumentsContract.DOWNLOADS_PROVIDER_AUTHORITY);
