@@ -17,6 +17,7 @@
 package android.mediapc.cts;
 
 import android.media.MediaFormat;
+import android.util.Log;
 import android.view.Surface;
 
 import androidx.test.rule.ActivityTestRule;
@@ -46,8 +47,10 @@ public class FrameDropTestBase {
     static final String AAC = MediaFormat.MIMETYPE_AUDIO_AAC;
     static final String AAC_LOAD_FILE_NAME = "bbb_1c_128kbps_aac_audio.mp4";
     static final String AVC_LOAD_FILE_NAME = "bbb_1280x720_3mbps_30fps_avc.mp4";
-    static final long DECODE_30S = 30000; // In ms
-    static final long MAX_FRAME_DROP_FOR_30S = 3;
+    static final long DECODE_31S = 31000; // In ms
+    static final int MAX_ADAPTIVE_PLAYBACK_FRAME_DROP = 0;
+    static final int FRAME_RATE = Utils.isSPerfClass() ? 60 : 30;
+    static final int MAX_FRAME_DROP_FOR_30S;
 
     final String mMime;
     final String mDecoderName;
@@ -71,18 +74,36 @@ public class FrameDropTestBase {
         AAC_DECODER_NAME = selectCodecs(AAC, null, null, false).get(0);
     }
     static {
-        m540pTestFiles.put(AVC, "bbb_960x540_3mbps_60fps_avc.mp4");
-        m540pTestFiles.put(HEVC, "bbb_960x540_3mbps_60fps_hevc.mp4");
-        m540pTestFiles.put(VP8, "bbb_960x540_3mbps_60fps_vp8.webm");
-        m540pTestFiles.put(VP9, "bbb_960x540_3mbps_60fps_vp9.webm");
-        m540pTestFiles.put(AV1, "bbb_960x540_3mbps_60fps_av1.mp4");
-    }
-    static {
-        m1080pTestFiles.put(AVC, "bbb_1920x1080_8mbps_60fps_avc.mp4");
-        m1080pTestFiles.put(HEVC, "bbb_1920x1080_8mbps_60fps_hevc.mp4");
-        m1080pTestFiles.put(VP8, "bbb_1920x1080_8mbps_60fps_vp8.webm");
-        m1080pTestFiles.put(VP9, "bbb_1920x1080_8mbps_60fps_vp9.webm");
-        m1080pTestFiles.put(AV1, "bbb_1920x1080_8mbps_60fps_av1.mp4");
+        if (Utils.isSPerfClass()) {
+            MAX_FRAME_DROP_FOR_30S = 6;
+            m540pTestFiles.put(AVC, "bbb_960x540_3mbps_60fps_avc.mp4");
+            m540pTestFiles.put(HEVC, "bbb_960x540_3mbps_60fps_hevc.mp4");
+            m540pTestFiles.put(VP8, "bbb_960x540_3mbps_60fps_vp8.webm");
+            m540pTestFiles.put(VP9, "bbb_960x540_3mbps_60fps_vp9.webm");
+            m540pTestFiles.put(AV1, "bbb_960x540_3mbps_60fps_av1.mp4");
+
+            m1080pTestFiles.put(AVC, "bbb_1920x1080_8mbps_60fps_avc.mp4");
+            m1080pTestFiles.put(HEVC, "bbb_1920x1080_6mbps_60fps_hevc.mp4");
+            m1080pTestFiles.put(VP8, "bbb_1920x1080_8mbps_60fps_vp8.webm");
+            m1080pTestFiles.put(VP9, "bbb_1920x1080_6mbps_60fps_vp9.webm");
+            m1080pTestFiles.put(AV1, "bbb_1920x1080_6mbps_60fps_av1.mp4");
+        } else if (Utils.isRPerfClass()) {
+            MAX_FRAME_DROP_FOR_30S = 3;
+            m540pTestFiles.put(AVC, "bbb_960x540_2mbps_30fps_avc.mp4");
+            m540pTestFiles.put(HEVC, "bbb_960x540_2mbps_30fps_hevc.mp4");
+            m540pTestFiles.put(VP8, "bbb_960x540_2mbps_30fps_vp8.webm");
+            m540pTestFiles.put(VP9, "bbb_960x540_2mbps_30fps_vp9.webm");
+            m540pTestFiles.put(AV1, "bbb_960x540_2mbps_30fps_av1.mp4");
+
+            m1080pTestFiles.put(AVC, "bbb_1920x1080_6mbps_30fps_avc.mp4");
+            m1080pTestFiles.put(HEVC, "bbb_1920x1080_4mbps_30fps_hevc.mp4");
+            m1080pTestFiles.put(VP8, "bbb_1920x1080_6mbps_30fps_vp8.webm");
+            m1080pTestFiles.put(VP9, "bbb_1920x1080_4mbps_30fps_vp9.webm");
+            m1080pTestFiles.put(AV1, "bbb_1920x1080_4mbps_30fps_av1.mp4");
+        } else {
+            MAX_FRAME_DROP_FOR_30S = 0;
+            Log.e(LOG_TAG, "Unknown performance class.");
+        }
     }
 
     @Before
@@ -112,7 +133,12 @@ public class FrameDropTestBase {
         final List<Object[]> argsList = new ArrayList<>();
         final String[] mimesList = new String[] {AVC, HEVC, VP8, VP9, AV1};
         for (String mime : mimesList) {
-            ArrayList<String> listOfDecoders = selectHardwareCodecs(mime, null, features, false);
+            MediaFormat format = MediaFormat.createVideoFormat(mime, 1920, 1080);
+            format.setInteger(MediaFormat.KEY_FRAME_RATE, FRAME_RATE);
+            ArrayList<MediaFormat> formats = new ArrayList<>();
+            formats.add(format);
+            ArrayList<String> listOfDecoders =
+                    selectHardwareCodecs(mime, formats, features, false);
             for (String decoder : listOfDecoders) {
                 for (boolean isAsync : boolStates) {
                     argsList.add(new Object[]{mime, decoder, isAsync});

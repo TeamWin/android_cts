@@ -17,9 +17,12 @@
 package android.mediapc.cts;
 
 import android.util.Pair;
+import android.view.Surface;
 
 import androidx.test.filters.LargeTest;
+import androidx.test.rule.ActivityTestRule;
 
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -37,29 +40,40 @@ import static org.junit.Assert.assertTrue;
 public class MultiTranscoderPerfTest extends MultiCodecPerfTestBase {
     private static final String LOG_TAG = MultiTranscoderPerfTest.class.getSimpleName();
 
-    private final String mDecoderName;
-    private final String mEncoderName;
+    private final Pair<String, String> mDecoderPair;
+    private final Pair<String, String> mEncoderPair;
 
-    public MultiTranscoderPerfTest(String mimeType, String testFile, String decoderName,
-            String encoderName, boolean isAsync) {
-        super(mimeType, testFile,isAsync);
-        mDecoderName = decoderName;
-        mEncoderName = encoderName;
+    @Rule
+    public ActivityTestRule<TestActivity> mActivityRule =
+            new ActivityTestRule<>(TestActivity.class);
+
+    public MultiTranscoderPerfTest(Pair<String, String> decoderPair,
+            Pair<String, String> encoderPair, boolean isAsync) {
+        super(null, null, isAsync);
+        mDecoderPair = decoderPair;
+        mEncoderPair = encoderPair;
     }
 
-    @Parameterized.Parameters(name = "{index}({0}_{2}_{3}_{4})")
+    @Parameterized.Parameters(name = "{index}({0}_{1}_{2})")
     public static Collection<Object[]> inputParams() {
         // Prepares the params list with the supported Hardware decoders/encoders in the device
         final List<Object[]> argsList = new ArrayList<>();
+        ArrayList<Pair<String, String>> mimeTypeDecoderPairs = new ArrayList<>();
+        ArrayList<Pair<String, String>> mimeTypeEncoderPairs = new ArrayList<>();
         for (String mime : mMimeList) {
             ArrayList<String> listOfDecoders = getHardwareCodecsFor720p(mime, false);
-            ArrayList<String> listOfEncoders = getHardwareCodecsFor720p(mime, true);
             for (String decoder : listOfDecoders) {
-                for (String encoder : listOfEncoders) {
-                    for (boolean isAsync : boolStates) {
-                        argsList.add(new Object[]{mime, mTestFiles.get(mime), decoder, encoder,
-                                isAsync});
-                    }
+                mimeTypeDecoderPairs.add(Pair.create(mime, decoder));
+            }
+            ArrayList<String> listOfEncoders = getHardwareCodecsFor720p(mime, true);
+            for (String encoder : listOfEncoders) {
+                mimeTypeEncoderPairs.add(Pair.create(mime, encoder));
+            }
+        }
+        for (Pair<String, String> mimeTypeDecoderPair : mimeTypeDecoderPairs) {
+            for (Pair<String, String> mimeTypeEncoderPair : mimeTypeEncoderPairs) {
+                for (boolean isAsync : boolStates) {
+                    argsList.add(new Object[]{mimeTypeDecoderPair, mimeTypeEncoderPair, isAsync});
                 }
             }
         }
@@ -70,22 +84,41 @@ public class MultiTranscoderPerfTest extends MultiCodecPerfTestBase {
     @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void test720p() throws Exception {
         ArrayList<Pair<String, String>> mimeCodecPairs = new ArrayList<>();
-        mimeCodecPairs.add(Pair.create(mMime, mDecoderName));
-        mimeCodecPairs.add(Pair.create(mMime, mEncoderName));
+        mimeCodecPairs.add(mDecoderPair);
+        mimeCodecPairs.add(mEncoderPair);
         int maxInstances = checkAndGetMaxSupportedInstancesFor720p(mimeCodecPairs);
-        assertTrue("Decoder " + mDecoderName + " ,Encoder " + mEncoderName +
-                " unable to support minimum concurrent instances. act/exp: " + maxInstances + "/" +
+        assertTrue("DecodeMime: " + mDecoderPair.first + ", Decoder " + mDecoderPair.second +
+                ", EncodeMime: " + mEncoderPair.first + ", Encoder: " + mEncoderPair.second +
+                ", unable to support minimum concurrent instances. act/exp: " + maxInstances + "/" +
                 (REQUIRED_MIN_CONCURRENT_INSTANCES / 2),
                 maxInstances >= (REQUIRED_MIN_CONCURRENT_INSTANCES / 2));
-        ExecutorService pool = Executors.newFixedThreadPool(maxInstances / 2);
-        List<Transcode> testList = new ArrayList<>();
-        for (int i = 0; i < maxInstances / 2; i++) {
-            testList.add(new Transcode(mMime, mTestFile, mDecoderName, mEncoderName, mIsAsync));
+        ExecutorService pool = Executors.newFixedThreadPool(maxInstances / 2 + maxInstances % 2);
+        List<Transcode> transcodeList = new ArrayList<>();
+        for (int i = 0; i < maxInstances / 2 ; i++) {
+            transcodeList.add(new Transcode(mEncoderPair.first, mTestFiles.get(mDecoderPair.first),
+                    mDecoderPair.second, mEncoderPair.second, mIsAsync));
         }
-        List<Future<Double>> resultList = pool.invokeAll(testList);
         double achievedFrameRate = 0.0;
-        for (Future<Double> result : resultList) {
+        List<Future<Double>> decodeResultList = null;
+        if (maxInstances % 2 == 1) {
+            List<DecodeToSurface> decodeList = new ArrayList<>();
+            mActivityRule.getActivity().waitTillSurfaceIsCreated();
+            Surface surface = mActivityRule.getActivity().getSurface();
+            assertTrue("Surface created is null.", surface != null);
+            assertTrue("Surface created is invalid.", surface.isValid());
+            mActivityRule.getActivity().setScreenParams(1280, 720, true);
+            decodeList.add(new DecodeToSurface(mDecoderPair.first,
+                    mTestFiles.get(mDecoderPair.first), mDecoderPair.second, surface, mIsAsync));
+            decodeResultList = pool.invokeAll(decodeList);
+        }
+        List<Future<Double>> transcodeResultList = pool.invokeAll(transcodeList);
+        for (Future<Double> result : transcodeResultList) {
             achievedFrameRate += result.get();
+        }
+        if (decodeResultList != null) {
+            for (Future<Double> result : decodeResultList) {
+                achievedFrameRate += result.get();
+            }
         }
         assertTrue("Unable to achieve the maxFrameRate supported. act/exp: " + achievedFrameRate
                 + "/" + mMaxFrameRate / 2, achievedFrameRate >= mMaxFrameRate / 2);

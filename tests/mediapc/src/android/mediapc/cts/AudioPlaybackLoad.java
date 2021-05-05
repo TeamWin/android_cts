@@ -96,7 +96,7 @@ class AudioPlaybackLoad extends CodecDecoderTestBase {
 
     @Override
     void enqueueInput(int bufferIndex) {
-        if (mExtractor.getSampleSize() < 0) {
+        if (mExtractor.getSampleSize() < 0 || mLoadStatus.isLoadFinished()) {
             enqueueEOS(bufferIndex);
         } else {
             ByteBuffer inputBuffer = mCodec.getInputBuffer(bufferIndex);
@@ -112,7 +112,7 @@ class AudioPlaybackLoad extends CodecDecoderTestBase {
             if (size > 0 && (codecFlags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) == 0) {
                 mInputCount++;
             }
-            if (!mExtractor.advance() && !mLoadStatus.isLoadFinished()) {
+            if (!mExtractor.advance()) {
                 mExtractor.seekTo(0, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
                 mBasePts = mMaxPts + 1000000L;
             }
