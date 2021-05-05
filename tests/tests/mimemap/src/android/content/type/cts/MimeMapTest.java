@@ -203,6 +203,11 @@ public class MimeMapTest {
         assertMimeTypeFromExtension("text/xml", "xml");
     }
 
+    @Test public void x509CaCert() {
+        assertMimeTypeFromExtension("application/x-x509-ca-cert", "crt");
+        assertMimeTypeFromExtension("application/x-x509-ca-cert", "der");
+    }
+
     // http://b/122734564
     @Test public void nonLowercaseMimeType() {
         // A mixed-case mimeType that appears in mime.types; we expect guessMimeTypeFromExtension()
