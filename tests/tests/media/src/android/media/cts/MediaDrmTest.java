@@ -79,6 +79,9 @@ public class MediaDrmTest {
             try {
                 logMessages = drm.getLogMessages();
                 Assert.assertFalse("Empty logs", logMessages.isEmpty());
+                for (MediaDrm.LogMessage log : logMessages) {
+                    Assert.assertFalse("Empty log: " + log.toString(), log.getMessage().isEmpty());
+                }
             } catch (UnsupportedOperationException e) {
                 Log.w(TAG, scheme.toString() + ": no LogMessage support", e);
                 continue;
