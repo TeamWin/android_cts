@@ -294,7 +294,7 @@ public class ConfigChangeTests extends ActivityManagerTestBase {
         assertRelaunchOrConfigChanged(TEST_ACTIVITY, 1 /* numRelaunch */,
                 0 /* numConfigChange */);
         final int newAssetSeq = getAssetSeqNumber(TEST_ACTIVITY);
-        assertEquals("Asset sequence number must be incremented.", assetSeq + 1, newAssetSeq);
+        assertTrue("Asset sequence number must be incremented.", assetSeq < newAssetSeq);
     }
 
     private static int getAssetSeqNumber(ComponentName activityName) {
