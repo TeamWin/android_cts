@@ -122,8 +122,9 @@ public class ImsUtils {
         final long token = Binder.clearCallingIdentity();
         List<String> carrierPackages;
         try {
-            carrierPackages = tm.getCarrierPackageNamesForIntent(
-                    new Intent(CarrierService.CARRIER_SERVICE_INTERFACE));
+            carrierPackages = ShellIdentityUtils.invokeMethodWithShellPermissions(tm,
+                    (m) -> m.getCarrierPackageNamesForIntent(
+                            new Intent(CarrierService.CARRIER_SERVICE_INTERFACE)));
         } finally {
             Binder.restoreCallingIdentity(token);
         }

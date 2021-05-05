@@ -68,6 +68,7 @@ abstract class DomainVerificationIntentTestBase(
 
     @Before
     fun findBrowsers() {
+        SharedVerifications.reset(context, resetEnable)
         intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://$domain"))
             .applyIntentVariant(intentVariant)
 
@@ -97,7 +98,6 @@ abstract class DomainVerificationIntentTestBase(
         }
     }
 
-    @Before
     @After
     fun reset() {
         SharedVerifications.reset(context, resetEnable)

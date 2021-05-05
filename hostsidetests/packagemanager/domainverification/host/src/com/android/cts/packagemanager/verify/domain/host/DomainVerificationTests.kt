@@ -49,7 +49,7 @@ class DomainVerificationTests : BaseHostJUnit4Test() {
 
     @Test
     fun declaredDomainSet() {
-        device.installApkResource(tempFolder, DECLARING_PKG_APK_1)
+        device.installApkResource(tempFolder, DECLARING_PKG_APK_1, extraArgs = arrayOf("-t"))
         runDeviceTests(DeviceTestRunOptions(DECLARING_PKG_NAME_1).apply {
             // The base name is used as the code package does not change with
             // the manifest rename that splits the packages into 1 and 2 variants.
@@ -60,8 +60,8 @@ class DomainVerificationTests : BaseHostJUnit4Test() {
 
     @Test
     fun verifyDomains() {
-        device.installApkResource(tempFolder, DECLARING_PKG_APK_1)
-        device.installApkResource(tempFolder, DECLARING_PKG_APK_2)
+        device.installApkResource(tempFolder, DECLARING_PKG_APK_1, extraArgs = arrayOf("-t"))
+        device.installApkResource(tempFolder, DECLARING_PKG_APK_2, extraArgs = arrayOf("-t"))
         runDeviceTests(DeviceTestRunOptions(CALLING_PKG_NAME).apply {
             testClassName = "$CALLING_PKG_NAME.DomainVerificationCallingAppTests"
         })
