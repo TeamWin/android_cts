@@ -23,7 +23,6 @@ import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeTrue;
 
 import android.content.ComponentName;
 import android.content.Intent;
@@ -153,11 +152,6 @@ public final class PackageVisibilityTest extends EndToEndImeTestBase {
     @AppModeInstant
     @Test
     public void testTargetPackageIsVisibleFromImeInstant() throws Exception {
-        // We need to explicitly check this condition in case tests are executed with atest command.
-        // See Bug 158617529 for details.
-        assumeTrue("This test should run when and only under the instant app mode.",
-                InstrumentationRegistry.getInstrumentation().getTargetContext().getPackageManager()
-                        .isInstantApp());
         testTargetPackageIsVisibleFromIme(true /* instant */);
     }
 
