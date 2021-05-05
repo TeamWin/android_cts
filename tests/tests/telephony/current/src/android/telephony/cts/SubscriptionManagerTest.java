@@ -570,6 +570,12 @@ public class SubscriptionManagerTest {
         List<SubscriptionInfo> infoList = mSm.getSubscriptionsInGroup(uuid);
         assertNotNull(infoList);
         assertEquals(1, infoList.size());
+        assertNull(infoList.get(0).getGroupUuid());
+
+        infoList = ShellIdentityUtils.invokeMethodWithShellPermissions(mSm,
+                (sm) -> sm.getSubscriptionsInGroup(uuid));
+        assertNotNull(infoList);
+        assertEquals(1, infoList.size());
         assertEquals(uuid, infoList.get(0).getGroupUuid());
 
         List<SubscriptionInfo> availableInfoList = mSm.getAvailableSubscriptionInfoList();
@@ -612,6 +618,12 @@ public class SubscriptionManagerTest {
 
         // Getting subscriptions in group.
         List<SubscriptionInfo> infoList = mSm.getSubscriptionsInGroup(uuid);
+        assertNotNull(infoList);
+        assertEquals(1, infoList.size());
+        assertNull(infoList.get(0).getGroupUuid());
+
+        infoList = ShellIdentityUtils.invokeMethodWithShellPermissions(mSm,
+                (sm) -> sm.getSubscriptionsInGroup(uuid));
         assertNotNull(infoList);
         assertEquals(1, infoList.size());
         assertEquals(uuid, infoList.get(0).getGroupUuid());
