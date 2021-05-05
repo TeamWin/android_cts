@@ -57,6 +57,7 @@ public class Utils {
     public static final int HOTWORD_DETECTION_SERVICE_TRIGGER_TEST = 1;
     public static final int HOTWORD_DETECTION_SERVICE_TRIGGER_WITHOUT_PERMISSION_TEST = 2;
     public static final int HOTWORD_DETECTION_SERVICE_DSP_ONDETECT_TEST = 3;
+    public static final int HOTWORD_DETECTION_SERVICE_EXTERNAL_SOURCE_ONDETECT_TEST = 4;
 
     public static final int HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS = 1;
     public static final int HOTWORD_DETECTION_SERVICE_TRIGGER_ILLEGAL_STATE_EXCEPTION = 2;
@@ -139,8 +140,8 @@ public class Utils {
 
     public static final String BROADCAST_HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT =
             "android.intent.action.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT";
-    public static final String BROADCAST_HOTWORD_DETECTION_SERVICE_DSP_ONDETECT_RESULT_INTENT =
-            "android.intent.action.HOTWORD_DETECTION_SERVICE_DSP_ONDETECT_RESULT";
+    public static final String BROADCAST_HOTWORD_DETECTION_SERVICE_ONDETECT_RESULT_INTENT =
+            "android.intent.action.HOTWORD_DETECTION_SERVICE_ONDETECT_RESULT";
     public static final String KEY_SERVICE_TYPE = "serviceType";
     public static final String KEY_TEST_EVENT = "testEvent";
     public static final String KEY_TEST_RESULT = "testResult";
