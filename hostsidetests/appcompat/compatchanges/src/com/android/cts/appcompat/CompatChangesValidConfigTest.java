@@ -54,6 +54,8 @@ public final class CompatChangesValidConfigTest extends CompatChangeGatingTestCa
             "DO_NOT_DOWNSCALE_TO_1080P_ON_TV",
             "FORCE_NON_RESIZE_APP",
             "FORCE_RESIZE_APP",
+            "IGNORE_ALLOW_BACKUP_IN_D2D",
+            "IGNORE_FULL_BACKUP_CONTENT_IN_D2D",
             "NEVER_SANDBOX_DISPLAY_APIS",
             "OVERRIDE_MIN_ASPECT_RATIO",
             "OVERRIDE_MIN_ASPECT_RATIO_LARGE",
