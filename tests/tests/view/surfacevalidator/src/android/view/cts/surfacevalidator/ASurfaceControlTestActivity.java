@@ -27,6 +27,7 @@ import android.app.UiAutomation;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -136,8 +137,12 @@ public class ASurfaceControlTestActivity extends Activity {
         assertTrue(success);
     }
 
+    public SurfaceView getSurfaceView() {
+        return mSurfaceView;
+    }
+
     public abstract static class PixelChecker {
-        private final PixelColor mPixelColor;
+        private PixelColor mPixelColor;
 
         public PixelChecker() {
             mPixelColor = new PixelColor();
@@ -149,10 +154,11 @@ public class ASurfaceControlTestActivity extends Activity {
 
         int getNumMatchingPixels(Bitmap bitmap) {
             int numMatchingPixels = 0;
-            for (int x = 0; x < bitmap.getWidth(); x++) {
-                for (int y = 0; y < bitmap.getHeight(); y++) {
+            Rect boundsToCheck = getBoundsToCheck(bitmap);
+            for (int x = boundsToCheck.left; x < boundsToCheck.right; x++) {
+                for (int y = boundsToCheck.top; y < boundsToCheck.bottom; y++) {
                     int color = bitmap.getPixel(x, y);
-                    if (matchesColor(mPixelColor, color)) {
+                    if (matchesColor(getExpectedColor(x, y), color)) {
                         numMatchingPixels++;
                     }
                 }
@@ -177,6 +183,14 @@ public class ASurfaceControlTestActivity extends Activity {
         }
 
         public abstract boolean checkPixels(int matchingPixelCount, int width, int height);
+
+        public Rect getBoundsToCheck(Bitmap bitmap) {
+            return new Rect(0, 0, bitmap.getWidth(), bitmap.getHeight());
+        }
+
+        public PixelColor getExpectedColor(int x, int y) {
+            return mPixelColor;
+        }
     }
 
     public static class SurfaceHolderCallback implements SurfaceHolder.Callback {
@@ -212,5 +226,4 @@ public class ASurfaceControlTestActivity extends Activity {
             }
         }
     }
-
 }
