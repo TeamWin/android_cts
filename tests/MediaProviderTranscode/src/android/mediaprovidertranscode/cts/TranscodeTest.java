@@ -20,6 +20,7 @@ import static androidx.test.InstrumentationRegistry.getContext;
 
 import static android.mediaprovidertranscode.cts.TranscodeTestUtils.assertFileContent;
 import static android.mediaprovidertranscode.cts.TranscodeTestUtils.assertTranscode;
+import static android.mediaprovidertranscode.cts.TranscodeTestUtils.executeShellCommand;
 import static android.mediaprovidertranscode.cts.TranscodeTestUtils.installAppWithStoragePermissions;
 import static android.mediaprovidertranscode.cts.TranscodeTestUtils.isAppIoBlocked;
 import static android.mediaprovidertranscode.cts.TranscodeTestUtils.open;
@@ -889,6 +890,30 @@ public class TranscodeTest {
                     () -> MediaStore.getOriginalMediaFormatFileDescriptor(getContext(), pfd));
         } finally {
             file.delete();
+        }
+    }
+
+    /**
+     * Tests that transcoding cache gets cleared when PackagerManager frees storage.
+     */
+    @Test
+    public void testTranscodingCacheClear() throws Exception {
+        File modernFile = new File(DIR_CAMERA, HEVC_FILE_NAME);
+        try {
+            TranscodeTestUtils.stageHEVCVideoFile(modernFile);
+            TranscodeTestUtils.enableTranscodingForPackage(getContext().getPackageName());
+
+            // Trigger transcoding so that transcoded file gets added to cache.
+            assertTranscode(modernFile, true);
+
+            // Trigger PackageManager to free storage.
+            executeShellCommand("settings put global sys_storage_cache_max_bytes 0");
+            executeShellCommand("pm trim-caches 4096G");
+
+            // Assert that transcoding happens again, i.e., transcoding cache was cleared.
+            assertTranscode(modernFile, true);
+        } finally {
+            modernFile.delete();
         }
     }
 
