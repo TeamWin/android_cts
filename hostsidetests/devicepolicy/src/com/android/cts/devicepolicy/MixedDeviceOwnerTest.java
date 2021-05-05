@@ -28,6 +28,8 @@ import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil.CLog;
 
+import com.google.common.collect.ImmutableMap;
+
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -396,6 +398,23 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
             executeDeviceTestMethod(".SecurityLoggingTest",
                     "testSetDelegateScope_noDelegation");
         }
+    }
+
+    /**
+     * Test for {@link DevicePolicyManager.setStorageEncryption} and
+     * {@link DevicePolicyManager.getStorageEncryption}.
+     *
+     * <p>This test needs to run as as the device owner user ID since
+     * {@link DevicePolicyManager#setStorageEncryption(ComponentName, boolean)}
+     * is only allowed for system user.
+     */
+    @Override
+    @Test
+    public void testSetStorageEncryption() throws Exception {
+        Map<String, String> params =
+                ImmutableMap.of(IS_SYSTEM_USER_PARAM, String.valueOf(/* isSystemUser= */ true));
+        runDeviceTestsAsUser(
+                DEVICE_ADMIN_PKG, STORAGE_ENCRYPTION_TEST_CLASS, null, mDeviceOwnerUserId, params);
     }
 
     private void runSecurityLoggingTests(String packageName, String testClassName)
