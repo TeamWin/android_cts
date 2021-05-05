@@ -25,6 +25,7 @@ import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
@@ -42,6 +43,11 @@ public class CodecTestActivity extends Activity implements SurfaceHolder.Callbac
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        setTurnScreenOn(true);
+        setShowWhenLocked(true);
+
         setContentView(R.layout.media_decoder_surface_layout);
         mSurfaceView = findViewById(R.id.surface);
         mHolder = mSurfaceView.getHolder();
