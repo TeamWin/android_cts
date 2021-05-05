@@ -84,6 +84,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.google.common.truth.Truth.assertThat
 import org.junit.After
 import org.junit.Assert.fail
+import org.junit.Assume.assumeNoException
 import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Ignore
@@ -669,9 +670,12 @@ class AppOpsLoggingTest {
 
         telephonyManager.allCellInfo
 
-        assertThat(noted[0].first.op).isEqualTo(OPSTR_FINE_LOCATION)
-        assertThat(noted[0].first.attributionTag).isEqualTo(TEST_ATTRIBUTION_TAG)
-        assertThat(noted[0].second.map { it.methodName }).contains("getCellInfo")
+        eventually {
+            assertThat(noted.isNotEmpty())
+            assertThat(noted[0].first.op).isEqualTo(OPSTR_FINE_LOCATION)
+            assertThat(noted[0].first.attributionTag).isEqualTo(TEST_ATTRIBUTION_TAG)
+            assertThat(noted[0].second.map { it.methodName }).contains("getCellInfo")
+        }
     }
 
     /**
@@ -862,7 +866,11 @@ class AppOpsLoggingTest {
                 .getSystemService(SmsManager::class.java)
 
         // No need for valid data. The permission is checked before the parameters are validated
-        smsManager.sendTextMessage("dst", null, "text", null, null)
+        try {
+            smsManager.sendTextMessage("dst", null, "text", null, null)
+        } catch (e: UnsupportedOperationException) {
+            assumeNoException(e)
+        }
 
         assertThat(noted[0].first.op).isEqualTo(OPSTR_SEND_SMS)
         assertThat(noted[0].first.attributionTag).isEqualTo(TEST_ATTRIBUTION_TAG)
