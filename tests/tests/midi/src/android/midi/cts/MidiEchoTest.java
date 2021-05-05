@@ -32,6 +32,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.test.AndroidTestCase;
 
+import com.android.midi.CTSMidiEchoTestService;
 import com.android.midi.MidiEchoTestService;
 
 import java.io.IOException;
@@ -190,16 +191,17 @@ public class MidiEchoTest extends AndroidTestCase {
         MidiManager midiManager = (MidiManager) mContext.getSystemService(
                 Context.MIDI_SERVICE);
 
-        MidiDeviceInfo echoInfo = MidiEchoTestService.findEchoDevice(mContext);
+        MidiDeviceInfo echoInfo = CTSMidiEchoTestService.findEchoDevice(mContext);
 
         // Open device.
         MyTestOpenCallback callback = new MyTestOpenCallback();
         midiManager.openDevice(echoInfo, callback, null);
         MidiDevice echoDevice = callback.waitForOpen(TIMEOUT_OPEN_MSEC);
-        assertTrue("could not open " + MidiEchoTestService.getEchoServerName(), echoDevice != null);
+        assertTrue("could not open "
+                + CTSMidiEchoTestService.getEchoServerName(), echoDevice != null);
 
         // Query echo service directly to see if it is getting status updates.
-        MidiEchoTestService echoService = MidiEchoTestService.getInstance();
+        MidiEchoTestService echoService = CTSMidiEchoTestService.getInstance();
         assertEquals("virtual device status, input port before open", false,
                 echoService.inputOpened);
         assertEquals("virtual device status, output port before open", 0,
@@ -238,7 +240,7 @@ public class MidiEchoTest extends AndroidTestCase {
      */
     protected void tearDownEchoServer(MidiTestContext mc) throws IOException {
         // Query echo service directly to see if it is getting status updates.
-        MidiEchoTestService echoService = MidiEchoTestService.getInstance();
+        MidiEchoTestService echoService = CTSMidiEchoTestService.getInstance();
         assertEquals("virtual device status, input port before close", true,
                 echoService.inputOpened);
         assertEquals("virtual device status, output port before close", 1,
@@ -598,13 +600,13 @@ public class MidiEchoTest extends AndroidTestCase {
         MidiManager midiManager = (MidiManager) mContext.getSystemService(
                 Context.MIDI_SERVICE);
 
-        MidiDeviceInfo echoInfo = MidiEchoTestService.findEchoDevice(mContext);
+        MidiDeviceInfo echoInfo = CTSMidiEchoTestService.findEchoDevice(mContext);
 
         // Open device.
         MyTestOpenCallback callback = new MyTestOpenCallback();
         midiManager.openDevice(echoInfo, callback, null);
         MidiDevice echoDevice = callback.waitForOpen(TIMEOUT_OPEN_MSEC);
-        assertTrue("could not open " + MidiEchoTestService.getEchoServerName(), echoDevice != null);
+        assertTrue("could not open " + CTSMidiEchoTestService.getEchoServerName(), echoDevice != null);
         MyDeviceCallback deviceCallback = new MyDeviceCallback(echoInfo);
         try {
 
