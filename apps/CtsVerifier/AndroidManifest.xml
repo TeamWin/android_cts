@@ -4814,8 +4814,8 @@
             <meta-data android:name="display_mode" android:value="multi_display_mode" />
         </activity>
 
-        <service android:name="com.android.midi.MidiEchoTestService"
-                android:exported="true"
+        <service android:name="com.android.midi.VerifierMidiEchoService"
+            android:exported="true"
             android:permission="android.permission.BIND_MIDI_DEVICE_SERVICE">
             <intent-filter>
                 <action android:name="android.media.midi.MidiDeviceService" />
