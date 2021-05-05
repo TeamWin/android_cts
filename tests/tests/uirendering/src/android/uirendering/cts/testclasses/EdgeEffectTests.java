@@ -161,7 +161,6 @@ public class EdgeEffectTests extends ActivityTestBase {
         assertFalse(effect.draw(new Canvas()));
     }
 
-    /* Commented out until framework change is put in.
     @Test
     public void testGetMaxHeight() {
         EdgeEffect edgeEffect = new EdgeEffect(getContext());
@@ -170,7 +169,7 @@ public class EdgeEffectTests extends ActivityTestBase {
         edgeEffect.setSize(200, 0);
         assertEquals(0, edgeEffect.getMaxHeight());
     }
-*/
+
     @Test
     public void testDistance() {
         EdgeEffect effect = new EdgeEffect(getContext());
@@ -391,6 +390,15 @@ public class EdgeEffectTests extends ActivityTestBase {
         edgeEffect.draw(canvas);
         assertTrue(edgeEffect.isFinished());
         assertEquals(0f, edgeEffect.getDistance(), 0f);
+    }
+
+    @Test
+    public void testOnAborbAfterStretch() throws Throwable {
+        EdgeEffect edgeEffect = new EdgeEffect(getContext());
+        edgeEffect.setSize(100, 100);
+        float distance = edgeEffect.onPullDistance(0.5f, 0.5f);
+        edgeEffect.onAbsorb(100);
+        assertEquals(distance, edgeEffect.getDistance(), 0.01f);
     }
 
     private EdgeEffect createEdgeEffectWithPull() {

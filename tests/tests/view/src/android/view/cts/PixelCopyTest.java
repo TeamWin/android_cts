@@ -746,6 +746,22 @@ public class PixelCopyTest {
         assertBitmapQuadColor(bitmap,
                 Color.RED, Color.RED, Color.RED, Color.RED, 30);
 
+        copyResult = mCopyHelper.request(activity.getVideoView(), new Rect(50, 0, 100, 50), bitmap);
+        assertEquals("Scaled copy request failed", PixelCopy.SUCCESS, copyResult);
+        assertBitmapQuadColor(bitmap,
+                Color.GREEN, Color.GREEN, Color.GREEN, Color.GREEN, 30);
+
+        copyResult = mCopyHelper.request(activity.getVideoView(), new Rect(0, 50, 50, 100), bitmap);
+        assertEquals("Scaled copy request failed", PixelCopy.SUCCESS, copyResult);
+        assertBitmapQuadColor(bitmap,
+                Color.BLUE, Color.BLUE, Color.BLUE, Color.BLUE, 30);
+
+        copyResult = mCopyHelper.request(activity.getVideoView(), new Rect(50, 50, 100, 100), bitmap);
+        assertEquals("Scaled copy request failed", PixelCopy.SUCCESS, copyResult);
+        assertBitmapQuadColor(bitmap,
+                Color.BLACK, Color.BLACK, Color.BLACK, Color.BLACK, 30);
+
+
         copyResult = mCopyHelper.request(activity.getVideoView(), new Rect(25, 25, 75, 75), bitmap);
         assertEquals("Scaled copy request failed", PixelCopy.SUCCESS, copyResult);
         assertBitmapQuadColor(bitmap,
@@ -764,6 +780,8 @@ public class PixelCopyTest {
     }
 
     private static int getPixelFloatPos(Bitmap bitmap, float xpos, float ypos) {
+        Log.d(TAG, "getPixelFloatPos(): x=" + ((int) (bitmap.getWidth() * xpos))
+                                + " y=" + ((int) (bitmap.getHeight() * ypos)));
         return bitmap.getPixel((int) (bitmap.getWidth() * xpos), (int) (bitmap.getHeight() * ypos));
     }
 
@@ -776,6 +794,17 @@ public class PixelCopyTest {
         assertEquals("Top right", topRight, getPixelFloatPos(bitmap, .75f, .25f));
         assertEquals("Bottom left", bottomLeft, getPixelFloatPos(bitmap, .25f, .75f));
         assertEquals("Bottom right", bottomRight, getPixelFloatPos(bitmap, .75f, .75f));
+
+        // and some closer to the center point, to ensure that our quadrants are even
+        float below = .45f;
+        float above = .55f;
+        Log.d(TAG, "bitmap w=" + bitmap.getWidth() + " h=" + bitmap.getHeight());
+        assertEquals("Top left II " + Integer.toHexString(topLeft) + ", actual= "
+                + Integer.toHexString(getPixelFloatPos(bitmap, below, below)),
+                topLeft, getPixelFloatPos(bitmap, below, below));
+        assertEquals("Top right II", topRight, getPixelFloatPos(bitmap, above, below));
+        assertEquals("Bottom left II", bottomLeft, getPixelFloatPos(bitmap, below, above));
+        assertEquals("Bottom right II", bottomRight, getPixelFloatPos(bitmap, above, above));
     }
 
     private void assertBitmapQuadColor(Bitmap bitmap, int topLeft, int topRight,
@@ -788,6 +817,17 @@ public class PixelCopyTest {
         assertTrue("Bottom left", pixelsAreSame(bottomLeft, getPixelFloatPos(bitmap, .25f, .75f),
                 threshold));
         assertTrue("Bottom right", pixelsAreSame(bottomRight, getPixelFloatPos(bitmap, .75f, .75f),
+                threshold));
+
+        float below = .45f;
+        float above = .55f;
+        assertTrue("Top left II", pixelsAreSame(topLeft, getPixelFloatPos(bitmap, below, below),
+                threshold));
+        assertTrue("Top right II", pixelsAreSame(topRight, getPixelFloatPos(bitmap, above, below),
+                threshold));
+        assertTrue("Bottom left II", pixelsAreSame(bottomLeft, getPixelFloatPos(bitmap, below, above),
+                threshold));
+        assertTrue("Bottom right II", pixelsAreSame(bottomRight, getPixelFloatPos(bitmap, above, above),
                 threshold));
     }
 
