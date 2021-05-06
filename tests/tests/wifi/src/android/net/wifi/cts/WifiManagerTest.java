@@ -4357,4 +4357,37 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         assertTrue("Passpoint must be supported",
                 packageManager.hasSystemFeature(PackageManager.FEATURE_WIFI_PASSPOINT));
     }
+
+    /**
+     * Validate add and remove SuggestionUserApprovalStatusListener. And verify the listener's
+     * stickiness.
+     */
+    public void testAddRemoveSuggestionUserApprovalStatusListener() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())
+                || !WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(getContext())) {
+            return;
+        }
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+        TestUserApprovalStatusListener listener = new TestUserApprovalStatusListener(
+                countDownLatch);
+        try {
+            mWifiManager.addSuggestionUserApprovalStatusListener(mExecutor, listener);
+            assertTrue(countDownLatch.await(TEST_WAIT_DURATION_MS, TimeUnit.MILLISECONDS));
+        } finally {
+            mWifiManager.removeSuggestionUserApprovalStatusListener(listener);
+        }
+    }
+
+    private static class TestUserApprovalStatusListener implements
+            WifiManager.SuggestionUserApprovalStatusListener {
+        private final CountDownLatch mBlocker;
+
+        public TestUserApprovalStatusListener(CountDownLatch countDownLatch) {
+            mBlocker = countDownLatch;
+        }
+        @Override
+        public void onUserApprovalStatusChange(int status) {
+            mBlocker.countDown();
+        }
+    }
 }
