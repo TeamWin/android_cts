@@ -16,6 +16,8 @@
 
 package com.android.cts.verifier.managedprovisioning;
 
+import static android.os.UserHandle.myUserId;
+
 import static com.android.cts.verifier.managedprovisioning.Utils.createInteractiveTestItem;
 
 import android.app.Activity;
@@ -105,7 +107,7 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                         null, null);
             } else {
                 TestResult.setFailedResult(this, getIntent().getStringExtra(EXTRA_TEST_ID),
-                        getString(R.string.device_owner_incorrect_profile_owner, getUserId()),
+                        getString(R.string.device_owner_incorrect_profile_owner, myUserId()),
                         null);
             }
 
@@ -119,7 +121,7 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                         null, null);
             } else {
                 TestResult.setFailedResult(this, getIntent().getStringExtra(EXTRA_TEST_ID),
-                        getString(R.string.device_owner_incorrect_device_owner, getUserId()), null);
+                        getString(R.string.device_owner_incorrect_device_owner, myUserId()), null);
             }
             finish();
             return;
@@ -131,7 +133,7 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                         null, null);
             } else {
                 TestResult.setFailedResult(this, getIntent().getStringExtra(EXTRA_TEST_ID),
-                        getString(R.string.device_owner_user_not_affiliated, getUserId()), null);
+                        getString(R.string.device_owner_user_not_affiliated, myUserId()), null);
             }
             finish();
             return;

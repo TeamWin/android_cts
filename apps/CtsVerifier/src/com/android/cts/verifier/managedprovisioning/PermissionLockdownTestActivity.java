@@ -16,6 +16,8 @@
 
 package com.android.cts.verifier.managedprovisioning;
 
+import static android.os.UserHandle.myUserId;
+
 import android.app.admin.DevicePolicyManager;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
@@ -76,7 +78,7 @@ public class PermissionLockdownTestActivity extends PassFailButtons.Activity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.permission_lockdown);
 
-        Log.d(TAG, "created on user " + getUserId());
+        Log.d(TAG, "created on user " + myUserId());
 
         mDevicePolicyManager =
                 (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
@@ -210,7 +212,7 @@ public class PermissionLockdownTestActivity extends PassFailButtons.Activity
 
         boolean isDeviceOwner = mDevicePolicyManager.isDeviceOwnerApp(adminPackage);
         boolean isProfileOwner = mDevicePolicyManager.isProfileOwnerApp(adminPackage);
-        Log.d(TAG, "isProfileOrDeviceOwner(): userId=" + getUserId()
+        Log.d(TAG, "isProfileOrDeviceOwner(): userId=" + myUserId()
                 + ", mDeviceOwnerTest=" + mDeviceOwnerTest
                 + ", expectDeviceOwner=" + expectDeviceOwner
                 + ", isDeviceOwner=" + isDeviceOwner
