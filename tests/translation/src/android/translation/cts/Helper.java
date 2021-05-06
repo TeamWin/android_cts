@@ -44,6 +44,10 @@ public final class Helper {
             "android.translation.cts.action.ASSERT_UI_TRANSLATION_CALLBACK_ON_START";
     public static final String ACTION_ASSERT_UI_TRANSLATION_CALLBACK_ON_FINISH =
             "android.translation.cts.action.ASSERT_UI_TRANSLATION_CALLBACK_ON_FINISH";
+    public static final String ACTION_ASSERT_UI_TRANSLATION_CALLBACK_ON_RESUME =
+            "android.translation.cts.action.ASSERT_UI_TRANSLATION_CALLBACK_ON_RESUME";
+    public static final String ACTION_ASSERT_UI_TRANSLATION_CALLBACK_ON_PAUSE =
+            "android.translation.cts.action.ASSERT_UI_TRANSLATION_CALLBACK_ON_PAUSE";
 
     public static final String EXTRA_FINISH_COMMAND = "finish_command";
     public static final String EXTRA_SOURCE_LOCALE = "source_locale";
