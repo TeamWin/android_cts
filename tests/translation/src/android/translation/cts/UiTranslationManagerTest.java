@@ -21,6 +21,8 @@ import static android.content.Context.TRANSLATION_MANAGER_SERVICE;
 import static android.view.translation.TranslationResponseValue.STATUS_SUCCESS;
 import static android.provider.Settings.Secure.ENABLED_INPUT_METHODS;
 import static android.translation.cts.Helper.ACTION_ASSERT_UI_TRANSLATION_CALLBACK_ON_FINISH;
+import static android.translation.cts.Helper.ACTION_ASSERT_UI_TRANSLATION_CALLBACK_ON_PAUSE;
+import static android.translation.cts.Helper.ACTION_ASSERT_UI_TRANSLATION_CALLBACK_ON_RESUME;
 import static android.translation.cts.Helper.ACTION_ASSERT_UI_TRANSLATION_CALLBACK_ON_START;
 import static android.translation.cts.Helper.ACTION_REGISTER_UI_TRANSLATION_CALLBACK;
 import static android.translation.cts.Helper.ACTION_UNREGISTER_UI_TRANSLATION_CALLBACK;
@@ -46,6 +48,7 @@ import android.provider.Settings;
 import android.service.contentcapture.ContentCaptureService;
 import android.service.translation.TranslationService;
 import android.util.Log;
+import android.util.Pair;
 import android.view.autofill.AutofillId;
 import android.view.contentcapture.ContentCaptureContext;
 import android.view.inputmethod.InputMethodManager;
@@ -236,13 +239,13 @@ public class UiTranslationManagerTest {
 
             // Send broadcat to request IME to register callback
             BlockingBroadcastReceiver registerResultReceiver =
-                    sendCommandToIme(ACTION_REGISTER_UI_TRANSLATION_CALLBACK, false, false);
+                    sendCommandToIme(ACTION_REGISTER_UI_TRANSLATION_CALLBACK, false);
             // Get result
             registerResultReceiver.awaitForBroadcast();
             registerResultReceiver.unregisterQuietly();
 
+            // Call startTranslation API
             runWithShellPermissionIdentity(() -> {
-                // Call startTranslation API
                 manager.startTranslation(
                         new TranslationSpec(ULocale.ENGLISH,
                                 TranslationSpec.DATA_FORMAT_TEXT),
@@ -251,18 +254,52 @@ public class UiTranslationManagerTest {
                         views, contentCaptureContext.getActivityId());
                 SystemClock.sleep(UI_WAIT_TIMEOUT);
             });
-            // Send broadcat to request IME to check the callback result
+            // Send broadcat to request IME to check the onStarted() result
             BlockingBroadcastReceiver onStartResultReceiver = sendCommandToIme(
-                    ACTION_ASSERT_UI_TRANSLATION_CALLBACK_ON_START, true, true);
-            // Get result to check the onStart() was called
+                    ACTION_ASSERT_UI_TRANSLATION_CALLBACK_ON_START, true);
+            // Get result to check the onStarted() was called
             Intent onStartIntent = onStartResultReceiver.awaitForBroadcast();
-            boolean onStartVerifyResult = onStartIntent.getBooleanExtra(EXTRA_VERIFY_RESULT, false);
-            assertThat(onStartVerifyResult).isTrue();
+            ULocale receivedSource =
+                    (ULocale) onStartIntent.getSerializableExtra(EXTRA_SOURCE_LOCALE);
+            ULocale receivedTarget =
+                    (ULocale) onStartIntent.getSerializableExtra(EXTRA_TARGET_LOCALE);
+            assertThat(receivedSource).isEqualTo(ULocale.ENGLISH);
+            assertThat(receivedTarget).isEqualTo(ULocale.FRENCH);
             onStartResultReceiver.unregisterQuietly();
+
+            // Call pause Translation API
+            runWithShellPermissionIdentity(() -> {
+                manager.pauseTranslation(contentCaptureContext.getActivityId());
+                SystemClock.sleep(UI_WAIT_TIMEOUT);
+            });
+            // Send broadcat to request IME to check the onPaused() result
+            BlockingBroadcastReceiver onPausedResultReceiver = sendCommandToIme(
+                    ACTION_ASSERT_UI_TRANSLATION_CALLBACK_ON_PAUSE, true);
+            // Get result to check the onPaused() was called
+            Intent onPausedIntent = onPausedResultReceiver.awaitForBroadcast();
+            boolean onPausedVerifyResult =
+                    onPausedIntent.getBooleanExtra(EXTRA_VERIFY_RESULT, false);
+            assertThat(onPausedVerifyResult).isTrue();
+            onPausedResultReceiver.unregisterQuietly();
+
+            // Call resume Translation API
+            runWithShellPermissionIdentity(() -> {
+                manager.resumeTranslation(contentCaptureContext.getActivityId());
+                SystemClock.sleep(UI_WAIT_TIMEOUT);
+            });
+            // Send broadcat to request IME to check the onResumed result
+            BlockingBroadcastReceiver onResumedResultReceiver = sendCommandToIme(
+                    ACTION_ASSERT_UI_TRANSLATION_CALLBACK_ON_RESUME, true);
+            // Get result to check the onResumed was called
+            Intent onResumedIntent = onResumedResultReceiver.awaitForBroadcast();
+            boolean onResumedVerifyResult =
+                    onResumedIntent.getBooleanExtra(EXTRA_VERIFY_RESULT, false);
+            assertThat(onResumedVerifyResult).isTrue();
+            onResumedResultReceiver.unregisterQuietly();
 
             // Send broadcat to request IME to unregister callback
             BlockingBroadcastReceiver unRegisterResultReceiver
-                    = sendCommandToIme(ACTION_UNREGISTER_UI_TRANSLATION_CALLBACK, false, false);
+                    = sendCommandToIme(ACTION_UNREGISTER_UI_TRANSLATION_CALLBACK, false);
             unRegisterResultReceiver.awaitForBroadcast();
             unRegisterResultReceiver.unregisterQuietly();
 
@@ -272,7 +309,7 @@ public class UiTranslationManagerTest {
                 SystemClock.sleep(UI_WAIT_TIMEOUT);
             });
             BlockingBroadcastReceiver onFinishResultReceiver =
-                    sendCommandToIme(ACTION_ASSERT_UI_TRANSLATION_CALLBACK_ON_FINISH, false, true);
+                    sendCommandToIme(ACTION_ASSERT_UI_TRANSLATION_CALLBACK_ON_FINISH, true);
             // Get result to check onFinish() didn't be called.
             Intent onFinishIntent = onFinishResultReceiver.awaitForBroadcast();
             boolean onFinishVerifyResult =
@@ -313,8 +350,7 @@ public class UiTranslationManagerTest {
         });
     }
 
-    private BlockingBroadcastReceiver sendCommandToIme(String action, boolean includeStartAssert,
-            boolean mutable) {
+    private BlockingBroadcastReceiver sendCommandToIme(String action, boolean mutable) {
         final String actionImeServiceCommandDone = action + "_" + SystemClock.uptimeMillis();
         final BlockingBroadcastReceiver receiver = new BlockingBroadcastReceiver(sContext,
                 actionImeServiceCommandDone);
@@ -327,12 +363,7 @@ public class UiTranslationManagerTest {
                         new Intent(actionImeServiceCommandDone),
                         mutable ? PendingIntent.FLAG_MUTABLE : PendingIntent.FLAG_IMMUTABLE);
         commandIntent.putExtra(EXTRA_FINISH_COMMAND, pendingIntent);
-        if (includeStartAssert) {
-            commandIntent.putExtra(EXTRA_SOURCE_LOCALE, ULocale.ENGLISH);
-            commandIntent.putExtra(EXTRA_TARGET_LOCALE, ULocale.FRENCH);
-        }
         sContext.sendBroadcast(commandIntent);
-
         return receiver;
     }
 
@@ -405,6 +436,8 @@ public class UiTranslationManagerTest {
     static class TestTranslationStateCallback implements UiTranslationStateCallback {
         private boolean mStartCalled;
         private boolean mFinishCalled;
+        private boolean mPausedCalled;
+        private boolean mResumedCalled;
         private ULocale mSourceLocale;
         private ULocale mTargetLocale;
 
@@ -415,13 +448,14 @@ public class UiTranslationManagerTest {
         void resetStates() {
             mStartCalled = false;
             mFinishCalled = false;
+            mPausedCalled = false;
+            mResumedCalled = false;
             mSourceLocale = null;
             mTargetLocale = null;
         }
 
-        boolean verifyOnStart(ULocale expectedSourceLocale, ULocale expectedTargetLocale) {
-            return mSourceLocale.equals(expectedSourceLocale) && mTargetLocale.equals(
-                    expectedTargetLocale);
+        Pair<ULocale, ULocale> getStartedLanguagePair() {
+            return new Pair<>(mSourceLocale, mTargetLocale);
         }
 
         boolean isOnStartedCalled() {
@@ -430,6 +464,14 @@ public class UiTranslationManagerTest {
 
         boolean isOnFinishedCalled() {
             return mFinishCalled;
+        }
+
+        boolean isOnPausedCalled() {
+            return mPausedCalled;
+        }
+
+        boolean isOnResumedCalled() {
+            return mResumedCalled;
         }
 
         @Override
@@ -445,8 +487,13 @@ public class UiTranslationManagerTest {
         }
 
         @Override
+        public void onResumed(ULocale sourceLocale, ULocale targetLocale) {
+            mResumedCalled = true;
+        }
+
+        @Override
         public void onPaused() {
-            // do nothing
+            mPausedCalled = true;
         }
 
         @Override
