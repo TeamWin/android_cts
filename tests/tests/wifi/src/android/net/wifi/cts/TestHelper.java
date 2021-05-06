@@ -774,16 +774,16 @@ public class TestHelper {
         TestNetworkCallback testNetworkCallback = createTestNetworkCallback(countDownLatchNr);
         try {
             // File a callback for wifi network.
-            mConnectivityManager.registerNetworkCallback(
-                    new NetworkRequest.Builder()
-                            .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
-                            .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-                            // Needed to ensure that the restricted concurrent connection does not
-                            // match this request.
-                            .addUnwantedCapability(NET_CAPABILITY_OEM_PAID)
-                            .addUnwantedCapability(NET_CAPABILITY_OEM_PRIVATE)
-                            .build(),
-                    testNetworkCallback);
+            NetworkRequest.Builder builder = new NetworkRequest.Builder()
+                    .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
+                    .addCapability(NET_CAPABILITY_INTERNET);
+            if (BuildCompat.isAtLeastS()) {
+                // Needed to ensure that the restricted concurrent connection does not
+                // match this request.
+                builder.addUnwantedCapability(NET_CAPABILITY_OEM_PAID)
+                        .addUnwantedCapability(NET_CAPABILITY_OEM_PRIVATE);
+            }
+            mConnectivityManager.registerNetworkCallback(builder.build(), testNetworkCallback);
             // Wait for connection to complete & ensure we are connected to some network capable
             // of providing internet access.
             assertThat(countDownLatchNr.await(
