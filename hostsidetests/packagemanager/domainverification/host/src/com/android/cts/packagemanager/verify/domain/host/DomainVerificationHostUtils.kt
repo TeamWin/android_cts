@@ -27,8 +27,13 @@ internal object DomainVerificationHostUtils {
     fun ITestDevice.installApkResource(
         tempFolder: TemporaryFolder,
         apkName: DomainUtils.ApkName,
-        reinstall: Boolean = false
-    ) = installPackage(copyResourceToHostFile(apkName.value, tempFolder.newFile()), reinstall)
+        reinstall: Boolean = false,
+        vararg extraArgs: String
+    ) = installPackage(
+        copyResourceToHostFile(apkName.value, tempFolder.newFile()),
+        reinstall,
+        *extraArgs
+    )
 
     fun copyResourceToHostFile(javaResourceName: String, file: File): File {
         javaClass.classLoader!!.getResource(javaResourceName)!!.openStream().use { input ->
