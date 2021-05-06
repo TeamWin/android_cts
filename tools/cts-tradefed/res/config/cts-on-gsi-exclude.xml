@@ -71,4 +71,7 @@
     <!-- b/183659262 Remove CtsPreferenceTestCases from cts-on-gsi -->
     <option name="compatibility:exclude-filter" value="CtsPreferenceTestCases" />
 
+    <!-- b/183636777 Remove CtsShortcutManagerPackage4 from cts-on-gsi -->
+    <option name="compatibility:exclude-filter" value="CtsShortcutManagerPackage4" />
+
 </configuration>
