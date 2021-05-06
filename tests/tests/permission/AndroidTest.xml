@@ -85,4 +85,8 @@
         <option name="package" value="android.permission.cts" />
         <option name="runtime-hint" value="13m" />
     </test>
+
+    <system_checker class="com.android.tradefed.suite.checker.UserChecker" >
+        <option name="user-cleanup" value="true" />
+    </system_checker>
 </configuration>
