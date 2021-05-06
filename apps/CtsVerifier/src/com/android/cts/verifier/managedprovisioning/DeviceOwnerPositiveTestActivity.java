@@ -183,7 +183,7 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
     @Override
     public void finish() {
         String action = getIntent().getAction();
-        switch(action) {
+        switch(action != null ? action : "") {
             case ACTION_CHECK_DEVICE_OWNER:
             case ACTION_CHECK_PROFILE_OWNER:
             case ACTION_CHECK_CURRENT_USER_AFFILIATED:
