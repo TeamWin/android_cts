@@ -37,12 +37,24 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
     static final String TAG = "MainHotwordDetectionService";
 
     @Override
+    public void onDetect(@NonNull AlwaysOnHotwordDetector.EventPayload eventPayload,
+            long timeoutMillis, @NonNull Callback callback) {
+        Log.d(TAG, "onDetect for DSP source");
+
+        // TODO: Check the capture session (needs to be reflectively accessed).
+        if (eventPayload.getTriggerAudio().length == 1024) {
+            callback.onDetected(null);
+        }
+    }
+
+    @Override
     public void onDetect(
             @NonNull ParcelFileDescriptor audioStream,
             @NonNull AudioFormat audioFormat,
-            long timeoutMillis,
+            @Nullable PersistableBundle options,
             @NonNull Callback callback) {
-        Log.d(TAG, "onDetectFromDspSource");
+        Log.d(TAG, "onDetect for external source");
+
         if (callback == null) {
             Log.w(TAG, "callback is null");
             return;
@@ -65,7 +77,7 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
                 } catch (InterruptedException e) {
                     // Nothing
                 }
-                if (System.currentTimeMillis() - startTime > timeoutMillis) {
+                if (System.currentTimeMillis() - startTime > 3000) {
                     Log.w(TAG, "Over timeout");
                     return;
                 }
@@ -73,21 +85,13 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
             Log.d(TAG, "fis.available() = " + fis.available());
             byte[] buffer = new byte[8];
             fis.read(buffer, 0, 8);
-            if(isSame(buffer, new byte[] {'h', 'o', 't', 'w', 'o', 'r', 'd', '!'}, buffer.length)) {
+            if(isSame(buffer, BasicVoiceInteractionService.FAKE_HOTWORD_AUDIO_DATA,
+                    buffer.length)) {
                 Log.d(TAG, "call callback.onDetected");
                 callback.onDetected(null);
             }
         } catch (IOException e) {
             Log.w(TAG, "Failed to read data : ", e);
-        }
-    }
-
-    @Override
-    public void onDetect(@NonNull AlwaysOnHotwordDetector.EventPayload eventPayload,
-            long timeoutMillis, @NonNull Callback callback) {
-        // TODO: Check the capture session (needs to be reflectively accessed).
-        if (eventPayload.getTriggerAudio().length == 1024) {
-            callback.onDetected(null);
         }
     }
 

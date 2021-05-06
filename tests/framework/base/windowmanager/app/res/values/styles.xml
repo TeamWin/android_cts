@@ -46,6 +46,7 @@
     </style>
     <style name="SplashscreenTheme" parent="@android:style/Theme.Material.NoActionBar">
         <item name="android:windowSplashscreenContent">@drawable/red</item>
+        <item name="android:windowSplashScreenBackground">@drawable/blue</item>
     </style>
 
     <style name="BackgroundImage" parent="@android:style/Theme.Translucent.NoTitleBar.Fullscreen">
