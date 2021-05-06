@@ -289,7 +289,8 @@ public class AudioLoopbackBaseActivity extends PassFailButtons.Activity {
     //
     // Subclasses should call this explicitly. SubClasses should call submit() after their logs
     //
-    protected void recordTestResults() {
+    @Override
+    public void recordTestResults() {
         CtsVerifierReportLog reportLog = getReportLog();
         reportLog.addValue(
                 KEY_LATENCY,
