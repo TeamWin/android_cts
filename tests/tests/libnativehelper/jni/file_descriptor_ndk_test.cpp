@@ -23,13 +23,13 @@ TEST_F(LibnativehelperTest, FileDescriptorNdkApiUses) {
     jobject jifd = AFileDescriptor_create(mEnv);
     ASSERT_NE(nullptr, jifd);
     ASSERT_EQ(JNI_FALSE, mEnv->ExceptionCheck());
-    ASSERT_EQ(kInvalidFd, AFileDescriptor_getFD(mEnv, jifd));
+    ASSERT_EQ(kInvalidFd, AFileDescriptor_getFd(mEnv, jifd));
 
     static const int kSubsequentUnixFds[] = { 0, -1, -999, -1, 0, 1812, -1, 1066 };
     for (int unixFd : kSubsequentUnixFds) {
-        AFileDescriptor_setFD(mEnv, jifd, unixFd);
+        AFileDescriptor_setFd(mEnv, jifd, unixFd);
         ASSERT_EQ(JNI_FALSE, mEnv->ExceptionCheck());
-        ASSERT_EQ(unixFd, AFileDescriptor_getFD(mEnv, jifd));
+        ASSERT_EQ(unixFd, AFileDescriptor_getFd(mEnv, jifd));
         ASSERT_EQ(JNI_FALSE, mEnv->ExceptionCheck());
     }
 }
