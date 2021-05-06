@@ -16,17 +16,17 @@
 
 package android.devicepolicy.cts;
 
+import static android.Manifest.permission.INTERACT_ACROSS_USERS;
+import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
+import static android.Manifest.permission.WRITE_SECURE_SETTINGS;
 import static android.app.AppOpsManager.MODE_ALLOWED;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
-import static org.junit.Assume.assumeFalse;
-
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.app.AppOpsManager;
-import android.app.UiAutomation;
 import android.app.admin.DevicePolicyManager;
 import android.app.admin.FullyManagedDeviceProvisioningParams;
 import android.app.admin.ManagedProfileProvisioningParams;
@@ -40,17 +40,19 @@ import android.os.UserManager;
 import android.provider.Settings;
 
 import androidx.test.core.app.ApplicationProvider;
-import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.bedstead.deviceadminapp.DeviceAdminApp;
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
+import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.Postsubmit;
+import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeatures;
 import com.android.bedstead.harrier.annotations.RequireFeatures;
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.packages.Package;
+import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.ClassRule;
@@ -62,7 +64,6 @@ import org.junit.runner.RunWith;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
 @RunWith(BedsteadJUnit4.class)
@@ -70,8 +71,6 @@ public final class DevicePolicyManagerTest {
     private static final Context sContext = ApplicationProvider.getApplicationContext();
     private static final DevicePolicyManager sDevicePolicyManager =
             sContext.getSystemService(DevicePolicyManager.class);
-    private static final UiAutomation sUiAutomation =
-            InstrumentationRegistry.getInstrumentation().getUiAutomation();
     private static final PackageManager sPackageManager = sContext.getPackageManager();
     private static final UserManager sUserManager = sContext.getSystemService(UserManager.class);
     private static final SharedPreferences sSharedPreferences =
@@ -80,6 +79,10 @@ public final class DevicePolicyManagerTest {
 
     private static final ComponentName DEVICE_ADMIN_COMPONENT_NAME =
             DeviceAdminApp.deviceAdminComponentName(sContext);
+
+    private static final String MANAGE_PROFILE_AND_DEVICE_OWNERS =
+            "android.permission.MANAGE_PROFILE_AND_DEVICE_OWNERS";
+    private static final String MANAGE_DEVICE_ADMINS = "android.permission.MANAGE_DEVICE_ADMINS";
 
     private static final String PROFILE_OWNER_NAME = "testDeviceAdmin";
     private static final String DEVICE_OWNER_NAME = "testDeviceAdmin";
@@ -114,21 +117,19 @@ public final class DevicePolicyManagerTest {
     })
     @Test
     @Postsubmit(reason="b/181207615 flaky")
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     public void newlyProvisionedManagedProfile_createsProfile() throws Exception {
         UserHandle profile = null;
         try {
-            sUiAutomation.adoptShellPermissionIdentity();
             ManagedProfileProvisioningParams params =
                     createManagedProfileProvisioningParamsBuilder().build();
             profile = provisionManagedProfile(params);
 
             assertThat(profile).isNotNull();
-
         } finally {
             if (profile != null) {
                 sTestApis.users().find(profile).remove();
             }
-            sUiAutomation.dropShellPermissionIdentity();
         }
     }
 
@@ -140,21 +141,19 @@ public final class DevicePolicyManagerTest {
     })
     @Test
     @Postsubmit(reason="b/181207615 flaky")
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     public void newlyProvisionedManagedProfile_createsManagedProfile() throws Exception {
         UserHandle profile = null;
         try {
-            sUiAutomation.adoptShellPermissionIdentity();
             ManagedProfileProvisioningParams params =
                     createManagedProfileProvisioningParamsBuilder().build();
             profile = provisionManagedProfile(params);
 
             assertThat(sUserManager.isManagedProfile(profile.getIdentifier())).isTrue();
-
         } finally {
             if (profile != null) {
                 sTestApis.users().find(profile).remove();
             }
-            sUiAutomation.dropShellPermissionIdentity();
         }
     }
 
@@ -166,10 +165,10 @@ public final class DevicePolicyManagerTest {
     })
     @Test
     @Postsubmit(reason="b/181207615 flaky")
+    @EnsureHasPermission({MANAGE_PROFILE_AND_DEVICE_OWNERS, INTERACT_ACROSS_USERS_FULL})
     public void newlyProvisionedManagedProfile_setsActiveAdmin() throws Exception {
         UserHandle profile = null;
         try {
-            sUiAutomation.adoptShellPermissionIdentity();
             ManagedProfileProvisioningParams params =
                     createManagedProfileProvisioningParamsBuilder().build();
             profile = provisionManagedProfile(params);
@@ -177,12 +176,10 @@ public final class DevicePolicyManagerTest {
             assertThat(getDpmForUser(profile).getActiveAdmins()).hasSize(1);
             assertThat(getDpmForUser(profile).getActiveAdmins().get(0))
                     .isEqualTo(DEVICE_ADMIN_COMPONENT_NAME);
-
         } finally {
             if (profile != null) {
                 sTestApis.users().find(profile).remove();
             }
-            sUiAutomation.dropShellPermissionIdentity();
         }
     }
 
@@ -194,22 +191,20 @@ public final class DevicePolicyManagerTest {
     })
     @Test
     @Postsubmit(reason="b/181207615 flaky")
+    @EnsureHasPermission({MANAGE_PROFILE_AND_DEVICE_OWNERS, INTERACT_ACROSS_USERS})
     public void newlyProvisionedManagedProfile_setsProfileOwner() throws Exception {
         UserHandle profile = null;
         try {
-            sUiAutomation.adoptShellPermissionIdentity();
             ManagedProfileProvisioningParams params =
                     createManagedProfileProvisioningParamsBuilder().build();
             profile = provisionManagedProfile(params);
 
             DevicePolicyManager profileDpm = getDpmForUser(profile);
             assertThat(profileDpm.isProfileOwnerApp(sContext.getPackageName())).isTrue();
-
         } finally {
             if (profile != null) {
                 sTestApis.users().find(profile).remove();
             }
-            sUiAutomation.dropShellPermissionIdentity();
         }
     }
 
@@ -222,10 +217,10 @@ public final class DevicePolicyManagerTest {
     @Test
     @Postsubmit(reason="new test")
     @Ignore
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     public void newlyProvisionedManagedProfile_copiesAccountToProfile() throws Exception {
         UserHandle profile = null;
         try {
-            sUiAutomation.adoptShellPermissionIdentity();
             // TODO(kholoudm): Add account to account manager once the API is ready in Nene
             ManagedProfileProvisioningParams params =
                     createManagedProfileProvisioningParamsBuilder()
@@ -234,12 +229,10 @@ public final class DevicePolicyManagerTest {
             profile = provisionManagedProfile(params);
 
             assertThat(hasTestAccount(profile)).isTrue();
-
         } finally {
             if (profile != null) {
                 sTestApis.users().find(profile).remove();
             }
-            sUiAutomation.dropShellPermissionIdentity();
         }
     }
 
@@ -251,11 +244,11 @@ public final class DevicePolicyManagerTest {
     })
     @Test
     @Postsubmit(reason="new test")
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     public void newlyProvisionedManagedProfile_removesAccountFromParentByDefault()
             throws Exception {
         UserHandle profile = null;
         try {
-            sUiAutomation.adoptShellPermissionIdentity();
             // TODO(kholoudm): Add account to account manager once the API is ready in Nene
             ManagedProfileProvisioningParams params =
                     createManagedProfileProvisioningParamsBuilder()
@@ -264,12 +257,10 @@ public final class DevicePolicyManagerTest {
             profile = provisionManagedProfile(params);
 
             assertThat(hasTestAccount(sContext.getUser())).isFalse();
-
         } finally {
             if (profile != null) {
                 sTestApis.users().find(profile).remove();
             }
-            sUiAutomation.dropShellPermissionIdentity();
         }
     }
 
@@ -282,10 +273,10 @@ public final class DevicePolicyManagerTest {
     @Test
     @Ignore
     @Postsubmit(reason="new test")
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     public void newlyProvisionedManagedProfile_keepsAccountInParentIfRequested() throws Exception {
         UserHandle profile = null;
         try {
-            sUiAutomation.adoptShellPermissionIdentity();
             // TODO(kholoudm): Add account to account manager once the API is ready in Nene
             ManagedProfileProvisioningParams params =
                     createManagedProfileProvisioningParamsBuilder()
@@ -295,12 +286,10 @@ public final class DevicePolicyManagerTest {
             profile = provisionManagedProfile(params);
 
             assertThat(hasTestAccount(sContext.getUser())).isTrue();
-
         } finally {
             if (profile != null) {
                 sTestApis.users().find(profile).remove();
             }
-            sUiAutomation.dropShellPermissionIdentity();
         }
     }
 
@@ -312,11 +301,11 @@ public final class DevicePolicyManagerTest {
     })
     @Test
     @Postsubmit(reason="new test")
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     public void newlyProvisionedManagedProfile_removesNonRequiredAppsFromProfile()
             throws Exception {
         UserHandle profile = null;
         try {
-            sUiAutomation.adoptShellPermissionIdentity();
             Set<String> nonRequiredApps = sDevicePolicyManager.getDisallowedSystemApps(
                     DEVICE_ADMIN_COMPONENT_NAME,
                     sContext.getUserId(),
@@ -326,12 +315,10 @@ public final class DevicePolicyManagerTest {
             profile = provisionManagedProfile(params);
 
             assertThat(getInstalledPackagesOnUser(nonRequiredApps, profile)).isEmpty();
-
         } finally {
             if (profile != null) {
                 sTestApis.users().find(profile).remove();
             }
-            sUiAutomation.dropShellPermissionIdentity();
         }
     }
 
@@ -343,11 +330,11 @@ public final class DevicePolicyManagerTest {
     })
     @Test
     @Postsubmit(reason="new test")
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     public void newlyProvisionedManagedProfile_setsCrossProfilePackages()
             throws Exception {
         UserHandle profile = null;
         try {
-            sUiAutomation.adoptShellPermissionIdentity();
             ManagedProfileProvisioningParams params =
                     createManagedProfileProvisioningParamsBuilder().build();
             profile = provisionManagedProfile(params);
@@ -356,12 +343,10 @@ public final class DevicePolicyManagerTest {
             for(String crossProfilePackage : crossProfilePackages) {
                 assertIsCrossProfilePackageIfInstalled(crossProfilePackage);
             }
-
         } finally {
             if (profile != null) {
                 sTestApis.users().find(profile).remove();
             }
-            sUiAutomation.dropShellPermissionIdentity();
         }
     }
 
@@ -448,15 +433,18 @@ public final class DevicePolicyManagerTest {
         if (sContext.getUserId() == user.getIdentifier()) {
             return sContext;
         }
-        return sContext.createContextAsUser(user, /* flags= */ 0);
+        try (PermissionContext p =
+                     sTestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
+            return sContext.createContextAsUser(user, /* flags= */ 0);
+        }
     }
 
     @RequireRunOnPrimaryUser
     @RequireFeatures(PackageManager.FEATURE_DEVICE_ADMIN)
     @Test
+    @EnsureHasPermission({MANAGE_PROFILE_AND_DEVICE_OWNERS})
     public void newlyProvisionedFullyManagedDevice_setsDeviceOwner() throws Exception {
         try {
-            sUiAutomation.adoptShellPermissionIdentity();
             FullyManagedDeviceProvisioningParams params =
                     createDefaultManagedDeviceProvisioningParamsBuilder().build();
             resetUserSetupCompletedFlag();
@@ -467,36 +455,33 @@ public final class DevicePolicyManagerTest {
             sDevicePolicyManager.forceRemoveActiveAdmin(
                     DEVICE_ADMIN_COMPONENT_NAME, sContext.getUserId());
             setUserSetupCompletedFlag();
-            sUiAutomation.dropShellPermissionIdentity();
         }
     }
 
     @RequireRunOnPrimaryUser
     @RequireFeatures(PackageManager.FEATURE_DEVICE_ADMIN)
     @Test
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     public void newlyProvisionedFullyManagedDevice_doesNotThrowException() throws Exception {
         try {
-            sUiAutomation.adoptShellPermissionIdentity();
             FullyManagedDeviceProvisioningParams params =
                     createDefaultManagedDeviceProvisioningParamsBuilder().build();
             resetUserSetupCompletedFlag();
             sDevicePolicyManager.provisionFullyManagedDevice(params);
-
         } finally {
             sDevicePolicyManager.forceRemoveActiveAdmin(
                     DEVICE_ADMIN_COMPONENT_NAME, sContext.getUserId());
             setUserSetupCompletedFlag();
-            sUiAutomation.dropShellPermissionIdentity();
         }
     }
 
     @RequireRunOnPrimaryUser
     @RequireFeatures(PackageManager.FEATURE_DEVICE_ADMIN)
     @Test
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     public void newlyProvisionedFullyManagedDevice_canControlSensorPermissionGrantsByDefault()
             throws Exception {
         try {
-            sUiAutomation.adoptShellPermissionIdentity();
             FullyManagedDeviceProvisioningParams params =
                     createDefaultManagedDeviceProvisioningParamsBuilder().build();
             resetUserSetupCompletedFlag();
@@ -507,17 +492,16 @@ public final class DevicePolicyManagerTest {
             sDevicePolicyManager.forceRemoveActiveAdmin(
                     DEVICE_ADMIN_COMPONENT_NAME, sContext.getUserId());
             setUserSetupCompletedFlag();
-            sUiAutomation.dropShellPermissionIdentity();
         }
     }
 
     @RequireRunOnPrimaryUser
     @RequireFeatures(PackageManager.FEATURE_DEVICE_ADMIN)
     @Test
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     public void newlyProvisionedFullyManagedDevice_canOptOutOfControllingSensorPermissionGrants()
             throws Exception {
         try {
-            sUiAutomation.adoptShellPermissionIdentity();
             FullyManagedDeviceProvisioningParams params =
                     createDefaultManagedDeviceProvisioningParamsBuilder()
                             .setDeviceOwnerCanGrantSensorsPermissions(false)
@@ -530,7 +514,6 @@ public final class DevicePolicyManagerTest {
             sDevicePolicyManager.forceRemoveActiveAdmin(
                     DEVICE_ADMIN_COMPONENT_NAME, sContext.getUserId());
             setUserSetupCompletedFlag();
-            sUiAutomation.dropShellPermissionIdentity();
         }
     }
 
@@ -538,10 +521,10 @@ public final class DevicePolicyManagerTest {
     @RequireFeatures(PackageManager.FEATURE_DEVICE_ADMIN)
     @Test
     @Postsubmit(reason="new test")
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     public void newlyProvisionedFullyManagedDevice_leavesAllSystemAppsEnabledWhenRequested()
             throws Exception {
         try {
-            sUiAutomation.adoptShellPermissionIdentity();
             FullyManagedDeviceProvisioningParams params =
                     createDefaultManagedDeviceProvisioningParamsBuilder()
                             .setLeaveAllSystemAppsEnabled(true)
@@ -556,18 +539,16 @@ public final class DevicePolicyManagerTest {
             sDevicePolicyManager.forceRemoveActiveAdmin(
                     DEVICE_ADMIN_COMPONENT_NAME, sContext.getUserId());
             setUserSetupCompletedFlag();
-            sUiAutomation.dropShellPermissionIdentity();
         }
     }
 
     @RequireFeatures(PackageManager.FEATURE_DEVICE_ADMIN)
+    @RequireDoesNotHaveFeatures(PackageManager.FEATURE_AUTOMOTIVE)
+    @EnsureHasPermission(MANAGE_DEVICE_ADMINS)
     @Test
     public void getPolicyExemptAppsCanOnlyBeDefinedOnAutomotiveBuilds() throws Exception {
-        assumeFalse("device has " + PackageManager.FEATURE_AUTOMOTIVE,
-                sPackageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE));
         assertWithMessage("list of policy-exempt apps")
-                .that(invokeWithShellPermissionIdentity(
-                        () -> sDevicePolicyManager.getPolicyExemptApps()))
+                .that(sDevicePolicyManager.getPolicyExemptApps())
                 .isEmpty();
     }
 
@@ -582,12 +563,16 @@ public final class DevicePolicyManagerTest {
     }
 
     private void resetUserSetupCompletedFlag() {
-        Settings.Secure.putInt(sContext.getContentResolver(), USER_SETUP_COMPLETE_KEY, 0);
+        try (PermissionContext p = sTestApis.permissions().withPermission(WRITE_SECURE_SETTINGS)) {
+            Settings.Secure.putInt(sContext.getContentResolver(), USER_SETUP_COMPLETE_KEY, 0);
+        }
         sDevicePolicyManager.forceUpdateUserSetupComplete();
     }
 
     private void setUserSetupCompletedFlag() {
-        Settings.Secure.putInt(sContext.getContentResolver(), USER_SETUP_COMPLETE_KEY, 1);
+        try (PermissionContext p = sTestApis.permissions().withPermission(WRITE_SECURE_SETTINGS)) {
+            Settings.Secure.putInt(sContext.getContentResolver(), USER_SETUP_COMPLETE_KEY, 1);
+        }
         sDevicePolicyManager.forceUpdateUserSetupComplete();
     }
 
@@ -674,14 +659,5 @@ public final class DevicePolicyManagerTest {
                 .map(applicationInfo -> applicationInfo.packageName)
                 .filter(packageName -> !systemApps.contains(packageName))
                 .collect(Collectors.toSet());
-    }
-
-    private static <T> T invokeWithShellPermissionIdentity(Callable<T> callable) throws Exception {
-        try {
-            sUiAutomation.adoptShellPermissionIdentity();
-            return callable.call();
-        } finally {
-            sUiAutomation.dropShellPermissionIdentity();
-        }
     }
 }
