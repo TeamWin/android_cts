@@ -15,16 +15,18 @@
 -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.scopedstorage.cts.testapp.filemanagerbypassdb"
+    package="android.scopedstorage.cts.testapp.C"
     android:versionCode="1"
     android:versionName="1.0" >
 
-    <uses-sdk android:minSdkVersion="30" />
+  <uses-sdk android:minSdkVersion="30" android:targetSdkVersion="30" />
 
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
+  <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+  <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+  <uses-permission android:name="android.permission.ACCESS_MEDIA_LOCATION" />
+  <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
 
-    <application android:label="TestAppFileManagerBypassDB" android:requestRawExternalStorageAccess="true">
+    <application android:label="TestAppC">
         <activity android:name="android.scopedstorage.cts.ScopedStorageTestHelper" android:exported="true" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -35,7 +37,7 @@
 
         <provider
             android:name="androidx.core.content.FileProvider"
-            android:authorities="android.scopedstorage.cts.testapp.filemanagerbypassdb"
+            android:authorities="android.scopedstorage.cts.testapp.C"
             android:exported="false"
             android:grantUriPermissions="true">
           <meta-data
