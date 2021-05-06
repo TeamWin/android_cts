@@ -16,7 +16,7 @@
 
 package com.android.bedstead.harrier.annotations.enterprise;
 
-import static com.android.bedstead.harrier.DeviceState.UserType.SYSTEM_USER;
+import static com.android.bedstead.harrier.DeviceState.UserType.CURRENT_USER;
 
 import com.android.bedstead.harrier.DeviceState;
 
@@ -26,21 +26,17 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Mark that a test requires that a device owner is available on the device.
+ * Mark that a test requires that a profile owner is set.
  *
- * <p>Your test configuration may be configured so that this test is only run on a device which has
- * a device owner. Otherwise, you can use {@link DeviceState} to ensure that the device enters
+ * <p>You can use {@link DeviceState} to ensure that the device enters
  * the correct state for the method. If using {@link DeviceState}, you can use
- * {@link DeviceState#deviceOwner()} to interact with the device owner.
- *
- * <p>If {@link DeviceState} is required to set the device owner (because there isn't one already)
- * then all users and accounts may be removed from the device.
+ * {@link DeviceState#profileOwner()} to interact with the profile owner.
  */
 @Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface EnsureHasDeviceOwner {
-    /** Which user type the device owner should be installed on. */
-    DeviceState.UserType onUser() default SYSTEM_USER;
+public @interface EnsureHasProfileOwner {
+    /** Which user type the work profile should be attached to. */
+    DeviceState.UserType onUser() default CURRENT_USER;
 }
-// TODO(scottjonathan): Is there a feature or something that we need to check to make sure DO is
+// TODO(scottjonathan): Is there a feature or something that we need to check to make sure PO is
 //  supported?
