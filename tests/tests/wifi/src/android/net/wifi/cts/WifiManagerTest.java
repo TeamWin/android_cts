@@ -4247,11 +4247,10 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     /**
      * Tests {@link WifiManager#setCarrierNetworkOffloadEnabled)} and
      * {@link WifiManager#isCarrierNetworkOffloadEnabled} work as expected.
-     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
      */
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
-    public void testSetCarrierNetworkOffloadEnabled() throws Exception {
-        if (!WifiFeature.isWifiSupported(getContext())) {
+    public void testSetCarrierNetworkOffloadEnabled() {
+        if (!WifiFeature.isWifiSupported(getContext())
+                || !WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(getContext())) {
             // skip the test if WiFi is not supported
             return;
         }
@@ -4263,8 +4262,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             uiAutomation.adoptShellPermissionIdentity();
             mWifiManager.setCarrierNetworkOffloadEnabled(TEST_SUB_ID, false, false);
             assertFalse(mWifiManager.isCarrierNetworkOffloadEnabled(TEST_SUB_ID, false));
-            mWifiManager.setCarrierNetworkOffloadEnabled(TEST_SUB_ID, false, true);
         } finally {
+            mWifiManager.setCarrierNetworkOffloadEnabled(TEST_SUB_ID, false, true);
             uiAutomation.dropShellPermissionIdentity();
         }
         assertTrue(mWifiManager.isCarrierNetworkOffloadEnabled(TEST_SUB_ID, false));
