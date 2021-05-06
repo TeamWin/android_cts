@@ -36,6 +36,8 @@ import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.RequireUserSupported;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDeviceOwner;
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoProfileOwner;
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasProfileOwner;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.users.UserType;
@@ -247,5 +249,76 @@ public class DeviceStateTest {
     @EnsureHasDeviceOwner
     public void deviceOwner_deviceOwnerIsSet_returnsDeviceOwner() {
         assertThat(sDeviceState.deviceOwner()).isNotNull();
+    }
+
+    @Test
+    @EnsureHasNoDeviceOwner
+    public void deviceOwner_deviceOwnerIsNotSet_throwsException() {
+        assertThrows(IllegalStateException.class, sDeviceState::deviceOwner);
+    }
+
+    @Test
+    @EnsureHasProfileOwner
+    public void ensureHasProfileOwnerAnnotation_defaultUser_profileOwnerIsSet() {
+        assertThat(sTestApis.devicePolicy().getProfileOwner(sTestApis.users().instrumented()))
+                .isNotNull();
+    }
+
+    @Test
+    @EnsureHasNoProfileOwner
+    public void ensureHasNoProfileOwnerAnnotation_defaultUser_profileOwnerIsNotSet() {
+        assertThat(sTestApis.devicePolicy().getProfileOwner(sTestApis.users().instrumented()))
+                .isNull();
+    }
+
+    @EnsureHasSecondaryUser
+    @EnsureHasProfileOwner(onUser = DeviceState.UserType.SECONDARY_USER)
+    public void ensureHasProfileOwnerAnnotation_otherUser_setsProfileOwner() {
+        assertThat(sTestApis.devicePolicy().getProfileOwner(sDeviceState.secondaryUser()))
+                .isNotNull();
+    }
+
+    @EnsureHasSecondaryUser
+    @EnsureHasNoProfileOwner(onUser = DeviceState.UserType.SECONDARY_USER)
+    public void ensureHasNoProfileOwnerAnnotation_otherUser_profileOwnerIsNotSet() {
+        assertThat(sTestApis.devicePolicy().getProfileOwner(sDeviceState.secondaryUser())).isNull();
+    }
+
+    @Test
+    @EnsureHasNoProfileOwner
+    public void profileOwner_defaultUser_profileOwnerIsNotSet_throwsException() {
+        assertThrows(IllegalStateException.class, sDeviceState::profileOwner);
+    }
+
+    @Test
+    @EnsureHasProfileOwner
+    public void profileOwner_defaultUser_profileOwnerIsSet_returnsProfileOwner() {
+        assertThat(sTestApis.devicePolicy().getProfileOwner(sTestApis.users().instrumented()))
+                .isNotNull();
+    }
+
+    @EnsureHasSecondaryUser
+    @EnsureHasProfileOwner(onUser = DeviceState.UserType.SECONDARY_USER)
+    public void profileOwner_otherUser_profileOwnerIsSet_returnsProfileOwner() {
+        assertThat(sDeviceState.profileOwner(sDeviceState.secondaryUser())).isNotNull();
+    }
+
+    @Test
+    @EnsureHasSecondaryUser
+    @EnsureHasNoProfileOwner(onUser = DeviceState.UserType.SECONDARY_USER)
+    public void profileOwner_otherUser_profileOwnerIsNotSet_throwsException() {
+        assertThrows(IllegalStateException.class, sDeviceState::profileOwner);
+    }
+
+    @Test
+    public void profileOwner_userType_onUserIsNull_throwsException() {
+        assertThrows(NullPointerException.class,
+                () -> sDeviceState.profileOwner((DeviceState.UserType) null));
+    }
+
+    @Test
+    public void profileOwner_userReference_onUserIsNull_throwsException() {
+        assertThrows(NullPointerException.class,
+                () -> sDeviceState.profileOwner((UserReference) null));
     }
 }
