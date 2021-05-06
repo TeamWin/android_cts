@@ -27,7 +27,7 @@ public final class Configuration {
 
     }
 
-    public static final ComponentName DPC_COMPONENT = new ComponentName(
+    public static final ComponentName REMOTE_DPC_COMPONENT_NAME = new ComponentName(
             "com.android.bedstead.remotedpc.dpc",
             "com.android.eventlib.premade.EventLibDeviceAdminReceiver"
     );
