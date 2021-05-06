@@ -44,7 +44,7 @@ import android.widget.TextView;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;  // needed to access resource in CTSVerifier project namespace.
 
-import com.android.midi.MidiEchoTestService;
+import com.android.midi.VerifierMidiEchoService;
 
 /*
  * A note about the USB MIDI device.
@@ -56,7 +56,7 @@ import com.android.midi.MidiEchoTestService;
 
 /*
  *  A note about the "virtual MIDI" device...
- * See file MidiEchoTestService for implementation of the echo server itself.
+ * See file MidiEchoService for implementation of the echo server itself.
  * This service is started by the main manifest file (AndroidManifest.xml).
  */
 
@@ -279,7 +279,7 @@ public class MidiActivity extends PassFailButtons.Activity implements View.OnCli
         // Init MIDI Stuff
         mMidiManager = (MidiManager) getSystemService(Context.MIDI_SERVICE);
 
-        mMidiServiceIntent = new Intent(this, MidiEchoTestService.class);
+        mMidiServiceIntent = new Intent(this, VerifierMidiEchoService.class);
 
         // Initial MIDI Device Scan
         scanMidiDevices();
