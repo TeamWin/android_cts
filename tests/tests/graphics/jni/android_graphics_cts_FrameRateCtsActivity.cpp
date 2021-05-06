@@ -155,13 +155,25 @@ private:
     int mHeight = 0;
 };
 
+struct ANativeWindowRAII {
+    ANativeWindowRAII(ANativeWindow *anw = nullptr) :
+         mNw(anw) {
+    }
+    ~ANativeWindowRAII() {
+        if (mNw != nullptr) {
+            ANativeWindow_release(mNw);
+        }
+    }
+    ANativeWindow* mNw;
+};
+
 jint nativeWindowSetFrameRate(JNIEnv* env, jclass, jobject jSurface, jfloat frameRate,
                               jint compatibility, jint changeFrameRateStrategy) {
-    ANativeWindow* window = nullptr;
+    ANativeWindowRAII window;
     if (jSurface) {
-        window = ANativeWindow_fromSurface(env, jSurface);
+        window.mNw = ANativeWindow_fromSurface(env, jSurface);
     }
-    return ANativeWindow_setFrameRateWithChangeStrategy(window, frameRate, compatibility,
+    return ANativeWindow_setFrameRateWithChangeStrategy(window.mNw, frameRate, compatibility,
             changeFrameRateStrategy);
 }
 
@@ -170,8 +182,8 @@ jlong surfaceControlCreate(JNIEnv* env, jclass, jobject jParentSurface, jstring 
     if (!jParentSurface || !jName) {
         return 0;
     }
-    ANativeWindow* parentWindow = ANativeWindow_fromSurface(env, jParentSurface);
-    if (!parentWindow) {
+    ANativeWindowRAII parentWindow = ANativeWindow_fromSurface(env, jParentSurface);
+    if (!parentWindow.mNw) {
         return 0;
     }
 
@@ -179,7 +191,7 @@ jlong surfaceControlCreate(JNIEnv* env, jclass, jobject jParentSurface, jstring 
     std::string strName = name;
     env->ReleaseStringUTFChars(jName, name);
 
-    Surface* surface = new Surface(parentWindow, strName, left, top, right, bottom);
+    Surface* surface = new Surface(parentWindow.mNw, strName, left, top, right, bottom);
     if (!surface->isValid()) {
         delete surface;
         return 0;
