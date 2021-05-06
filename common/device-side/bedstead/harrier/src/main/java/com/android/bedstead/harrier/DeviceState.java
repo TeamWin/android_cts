@@ -42,6 +42,8 @@ import com.android.bedstead.harrier.annotations.RequireFeatures;
 import com.android.bedstead.harrier.annotations.RequireUserSupported;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDeviceOwner;
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoProfileOwner;
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasProfileOwner;
 import com.android.bedstead.harrier.annotations.meta.EnsureHasNoProfileAnnotation;
 import com.android.bedstead.harrier.annotations.meta.EnsureHasNoUserAnnotation;
 import com.android.bedstead.harrier.annotations.meta.EnsureHasProfileAnnotation;
@@ -53,6 +55,7 @@ import com.android.bedstead.harrier.annotations.meta.RequiresBedsteadJUnit4;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.devicepolicy.DeviceOwner;
 import com.android.bedstead.nene.devicepolicy.DevicePolicyController;
+import com.android.bedstead.nene.devicepolicy.ProfileOwner;
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.permissions.PermissionContextImpl;
@@ -62,6 +65,8 @@ import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.utils.ShellCommand;
 import com.android.bedstead.remotedpc.RemoteDpc;
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
+
+import com.google.common.base.Objects;
 
 import junit.framework.AssertionFailedError;
 
@@ -218,11 +223,23 @@ public final class DeviceState implements TestRule {
 
                     if (annotation instanceof RequireDoesNotHaveFeatures) {
                         RequireDoesNotHaveFeatures requireDoesNotHaveFeaturesAnnotation =
-                            (RequireDoesNotHaveFeatures) annotation;
-                        for (String feature: requireDoesNotHaveFeaturesAnnotation.value()) {
+                                (RequireDoesNotHaveFeatures) annotation;
+                        for (String feature : requireDoesNotHaveFeaturesAnnotation.value()) {
                             requireDoesNotHaveFeature(feature,
-                                requireDoesNotHaveFeaturesAnnotation.failureMode());
+                                    requireDoesNotHaveFeaturesAnnotation.failureMode());
                         }
+                    }
+
+                    if (annotationType.equals(EnsureHasProfileOwner.class)) {
+                        EnsureHasProfileOwner ensureHasProfileOwnerAnnotation =
+                                (EnsureHasProfileOwner) annotation;
+                        ensureHasProfileOwner(ensureHasProfileOwnerAnnotation.onUser());
+                    }
+
+                    if (annotationType.equals(EnsureHasNoProfileOwner.class)) {
+                        EnsureHasNoProfileOwner ensureHasNoProfileOwnerAnnotation =
+                                (EnsureHasNoProfileOwner) annotation;
+                        ensureHasNoProfileOwner(ensureHasNoProfileOwnerAnnotation.onUser());
                     }
                        
                     if (annotation instanceof RequireUserSupported) {
@@ -413,12 +430,14 @@ public final class DeviceState implements TestRule {
     private final Map<com.android.bedstead.nene.users.UserType, Map<UserReference, UserReference>>
             mProfiles = new HashMap<>();
     private DevicePolicyController mDeviceOwner;
+    private Map<UserReference, DevicePolicyController> mProfileOwners = new HashMap<>();
 
     private final List<UserReference> mCreatedUsers = new ArrayList<>();
     private final List<UserBuilder> mRemovedUsers = new ArrayList<>();
     private final List<BlockingBroadcastReceiver> mRegisteredBroadcastReceivers = new ArrayList<>();
     private boolean mHasChangedDeviceOwner = false;
     private DevicePolicyController mOriginalDeviceOwner = null;
+    private Map<UserReference, DevicePolicyController> mChangedProfileOwners = new HashMap<>();
 
     /**
      * Get the {@link UserReference} of the work profile for the current user
@@ -754,6 +773,26 @@ public final class DeviceState implements TestRule {
             mOriginalDeviceOwner = null;
         }
 
+        for (Map.Entry<UserReference, DevicePolicyController> profileOwner :
+                mProfileOwners.entrySet()) {
+
+            ProfileOwner currentProfileOwner =
+                    sTestApis.devicePolicy().getProfileOwner(profileOwner.getKey());
+
+            if (Objects.equal(currentProfileOwner, profileOwner.getValue())) {
+                continue; // No need to restore
+            }
+
+            if (currentProfileOwner != null) {
+                currentProfileOwner.remove();
+            }
+
+            if (profileOwner.getValue() != null) {
+                sTestApis.devicePolicy().setProfileOwner(profileOwner.getKey(),
+                        profileOwner.getValue().componentName());
+            }
+        }
+
         for (UserReference user : mCreatedUsers) {
             user.remove();
         }
@@ -809,7 +848,6 @@ public final class DeviceState implements TestRule {
     private void ensureHasDeviceOwner(UserType onUser) {
         // TODO(scottjonathan): Should support non-remotedpc device owner (default to remotedpc)
         // TODO(scottjonathan): Should allow setting the device owner on a different user
-
         DeviceOwner currentDeviceOwner = sTestApis.devicePolicy().getDeviceOwner();
 
         if (currentDeviceOwner != null
@@ -829,6 +867,7 @@ public final class DeviceState implements TestRule {
         }
 
         // TODO(scottjonathan): Remove accounts
+        ensureHasNoProfileOwner(onUser);
 
         if (!mHasChangedDeviceOwner) {
             mOriginalDeviceOwner = currentDeviceOwner;
@@ -837,6 +876,29 @@ public final class DeviceState implements TestRule {
 
         mDeviceOwner = RemoteDpc.setAsDeviceOwner(resolveUserTypeToUser(onUser))
                 .devicePolicyController();
+    }
+
+    private void ensureHasProfileOwner(UserType onUser) {
+        // TODO(scottjonathan): Should support non-remotedpc profile owner (default to remotedpc)
+        UserReference user = resolveUserTypeToUser(onUser);
+        ProfileOwner currentProfileOwner = sTestApis.devicePolicy().getProfileOwner(user);
+        DeviceOwner currentDeviceOwner = sTestApis.devicePolicy().getDeviceOwner();
+
+        if (currentDeviceOwner != null && currentDeviceOwner.user().equals(user)) {
+            // Can't have DO and PO on the same user
+            ensureHasNoDeviceOwner();
+        }
+
+        if (currentProfileOwner != null
+                && currentProfileOwner.componentName().equals(RemoteDpc.DPC_COMPONENT_NAME)) {
+            return;
+        }
+
+        if (!mChangedProfileOwners.containsKey(user)) {
+            mChangedProfileOwners.put(user, currentProfileOwner);
+        }
+
+        mProfileOwners.put(user, RemoteDpc.setAsProfileOwner(user).devicePolicyController());
     }
 
     private void ensureHasNoDeviceOwner() {
@@ -852,6 +914,22 @@ public final class DeviceState implements TestRule {
         }
 
         deviceOwner.remove();
+    }
+
+    private void ensureHasNoProfileOwner(UserType onUser) {
+        UserReference user = resolveUserTypeToUser(onUser);
+        ProfileOwner currentProfileOwner = sTestApis.devicePolicy().getProfileOwner(user);
+
+        if (currentProfileOwner == null) {
+            return;
+        }
+
+        if (!mChangedProfileOwners.containsKey(user)) {
+            mChangedProfileOwners.put(user, currentProfileOwner);
+        }
+
+        sTestApis.devicePolicy().getProfileOwner(user).remove();
+        mProfileOwners.remove(user);
     }
 
     /**
@@ -872,5 +950,58 @@ public final class DeviceState implements TestRule {
         }
 
         return RemoteDpc.forDevicePolicyController(mDeviceOwner);
+    }
+
+    /**
+     * Get the {@link RemoteDpc} for the profile owner on the current user controlled by Harrier.
+     *
+     * <p>If no Harrier-managed profile owner exists, an exception will be thrown.
+     *
+     * <p>If the profile owner is not a RemoteDPC then an exception will be thrown.
+     */
+    public RemoteDpc profileOwner() {
+        return profileOwner(UserType.CURRENT_USER);
+    }
+
+    /**
+     * Get the {@link RemoteDpc} for the profile owner on the given user controlled by Harrier.
+     *
+     * <p>If no Harrier-managed profile owner exists, an exception will be thrown.
+     *
+     * <p>If the profile owner is not a RemoteDPC then an exception will be thrown.
+     */
+    public RemoteDpc profileOwner(UserType onUser) {
+        if (onUser == null) {
+            throw new NullPointerException();
+        }
+
+        return profileOwner(resolveUserTypeToUser(onUser));
+    }
+
+    /**
+     * Get the {@link RemoteDpc} for the profile owner on the given user controlled by Harrier.
+     *
+     * <p>If no Harrier-managed profile owner exists, an exception will be thrown.
+     *
+     * <p>If the profile owner is not a RemoteDPC then an exception will be thrown.
+     */
+    public RemoteDpc profileOwner(UserReference onUser) {
+        if (onUser == null) {
+            throw new NullPointerException();
+        }
+
+        if (!mProfileOwners.containsKey(onUser)) {
+            throw new IllegalStateException("No Harrier-managed profile owner. This method should "
+                    + "only be used when Harrier was used to set the Profile Owner.");
+        }
+
+        DevicePolicyController profileOwner = mProfileOwners.get(onUser);
+
+        if (!profileOwner.componentName().equals(REMOTE_DPC_COMPONENT_NAME)) {
+            throw new IllegalStateException("The profile owner is not a RemoteDPC."
+                    + " You must use Nene to query for this profile owner.");
+        }
+
+        return RemoteDpc.forDevicePolicyController(profileOwner);
     }
 }
