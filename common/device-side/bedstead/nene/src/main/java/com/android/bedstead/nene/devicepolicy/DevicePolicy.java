@@ -100,10 +100,6 @@ public final class DevicePolicy {
                                 + " as the package " + pkg + " is not installed");
             }
 
-            PackageManager p = mTestApis.context().instrumentedContext().getPackageManager();
-            Intent intent = new Intent("android.app.action.DEVICE_ADMIN_ENABLED");
-            intent.setComponent(profileOwnerComponent);
-
             if (!componentCanBeSetAsDeviceAdmin(profileOwnerComponent, user)) {
                 throw new NeneException("Could not set profile owner for user "
                         + user + " as component " + profileOwnerComponent + " is not valid");
