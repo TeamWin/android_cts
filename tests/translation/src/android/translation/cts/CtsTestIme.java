@@ -17,6 +17,8 @@
 package android.translation.cts;
 
 import static android.translation.cts.Helper.ACTION_ASSERT_UI_TRANSLATION_CALLBACK_ON_FINISH;
+import static android.translation.cts.Helper.ACTION_ASSERT_UI_TRANSLATION_CALLBACK_ON_PAUSE;
+import static android.translation.cts.Helper.ACTION_ASSERT_UI_TRANSLATION_CALLBACK_ON_RESUME;
 import static android.translation.cts.Helper.ACTION_ASSERT_UI_TRANSLATION_CALLBACK_ON_START;
 import static android.translation.cts.Helper.ACTION_REGISTER_UI_TRANSLATION_CALLBACK;
 import static android.translation.cts.Helper.ACTION_UNREGISTER_UI_TRANSLATION_CALLBACK;
@@ -39,7 +41,7 @@ import android.view.translation.UiTranslationManager;
 import android.view.translation.UiTranslationStateCallback;
 import android.widget.LinearLayout;
 import android.util.Log;
-
+import android.util.Pair;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -87,45 +89,68 @@ public final class CtsTestIme extends InputMethodService {
         final Executor executor = Executors.newSingleThreadExecutor();
         manager.registerUiTranslationStateCallback(executor, mCallback);
 
-        notifyCommandDone(intent, /* inCludeResult= */ false, /* assertResult= */ false);
+        notifyCommandDone(intent, /* resultIntent= */ null);
     }
 
     void unregisterUiTranslationStateCallback(Intent intent) {
         final UiTranslationManager manager = mContext.getSystemService(UiTranslationManager.class);
         manager.unregisterUiTranslationStateCallback(mCallback);
 
-        notifyCommandDone(intent, /* inCludeResult= */ false, /* assertResult= */ false);
+        notifyCommandDone(intent, /* resultIntent= */ null);
     }
 
     void assertOnStart(Intent intent) {
-        final ULocale expectedSource = (ULocale) intent.getSerializableExtra(EXTRA_SOURCE_LOCALE);
-        final ULocale expectedTarget = (ULocale) intent.getSerializableExtra(EXTRA_TARGET_LOCALE);
-        final boolean result = mCallback.verifyOnStart(expectedSource, expectedTarget);
-        notifyCommandDone(intent, /* inCludeResult= */ true, result);
+        final Pair<ULocale, ULocale> startedLanguagePair = mCallback.getStartedLanguagePair();
+        final Intent result = new Intent();
+        result.putExtra(EXTRA_SOURCE_LOCALE, startedLanguagePair.first);
+        result.putExtra(EXTRA_TARGET_LOCALE, startedLanguagePair.second);
+        notifyCommandDone(intent, result);
     }
 
     void assertOnFinish(Intent intent) {
-        final boolean result = mCallback.isOnFinishedCalled();
-        notifyCommandDone(intent, /* inCludeResult= */ true, result);
+        final Intent result = new Intent();
+        result.putExtra(EXTRA_VERIFY_RESULT, mCallback.isOnFinishedCalled());
+        notifyCommandDone(intent, result);
     }
 
-    private void notifyCommandDone(Intent intent, boolean inCludeResult, boolean assertResult) {
-        final PendingIntent pendingIntent = intent.getParcelableExtra(EXTRA_FINISH_COMMAND);
+    void assertOnResume(Intent intent) {
+        final Intent result = new Intent();
+        result.putExtra(EXTRA_VERIFY_RESULT, mCallback.isOnResumedCalled());
+        notifyCommandDone(intent, result);
+    }
+
+    void assertOnPause(Intent intent) {
+        final Intent result = new Intent();
+        result.putExtra(EXTRA_VERIFY_RESULT, mCallback.isOnPausedCalled());
+        notifyCommandDone(intent, result);
+    }
+
+    private void notifyCommandDone(Intent sourceIntent, Intent resultIntent) {
+        final PendingIntent pendingIntent = sourceIntent.getParcelableExtra(EXTRA_FINISH_COMMAND);
         if (pendingIntent != null) {
             try {
-                if (inCludeResult) {
-                    // TODO(b/184617863): better to return the values to the test code not return
-                    // the assert result to the test code.
-                    final Intent result = new Intent();
-                    result.putExtra(EXTRA_VERIFY_RESULT, assertResult);
-                    pendingIntent.send(mContext, 0, result);
-                    return;
+                final String action = sourceIntent.getAction();
+                switch(action) {
+                    case ACTION_REGISTER_UI_TRANSLATION_CALLBACK:
+                    case ACTION_UNREGISTER_UI_TRANSLATION_CALLBACK:
+                        pendingIntent.send();
+                        break;
+                    case ACTION_ASSERT_UI_TRANSLATION_CALLBACK_ON_START:
+                    case ACTION_ASSERT_UI_TRANSLATION_CALLBACK_ON_FINISH:
+                    case ACTION_ASSERT_UI_TRANSLATION_CALLBACK_ON_RESUME:
+                    case ACTION_ASSERT_UI_TRANSLATION_CALLBACK_ON_PAUSE:
+                        if (resultIntent != null) {
+                            pendingIntent.send(mContext, 0, resultIntent);
+                        } else {
+                            Log.w(TAG, "Should have resultIntent for " + action);
+                        }
+                        break;
                 }
-                pendingIntent.send();
             } catch (CanceledException e) {
                 Log.w(TAG, "Pending intent " + pendingIntent + " canceled");
             }
         }
+        mCallback.resetStates();
     }
 
     private final class CommandReceiver extends BroadcastReceiver {
@@ -152,6 +177,12 @@ public final class CtsTestIme extends InputMethodService {
                 case ACTION_ASSERT_UI_TRANSLATION_CALLBACK_ON_FINISH:
                     assertOnFinish(intent);
                     break;
+                case ACTION_ASSERT_UI_TRANSLATION_CALLBACK_ON_RESUME:
+                    assertOnResume(intent);
+                    break;
+                case ACTION_ASSERT_UI_TRANSLATION_CALLBACK_ON_PAUSE:
+                    assertOnPause(intent);
+                    break;
             }
         }
 
@@ -161,6 +192,8 @@ public final class CtsTestIme extends InputMethodService {
             filter.addAction(ACTION_UNREGISTER_UI_TRANSLATION_CALLBACK);
             filter.addAction(ACTION_ASSERT_UI_TRANSLATION_CALLBACK_ON_START);
             filter.addAction(ACTION_ASSERT_UI_TRANSLATION_CALLBACK_ON_FINISH);
+            filter.addAction(ACTION_ASSERT_UI_TRANSLATION_CALLBACK_ON_RESUME);
+            filter.addAction(ACTION_ASSERT_UI_TRANSLATION_CALLBACK_ON_PAUSE);
             mContext.registerReceiver(this, filter);
         }
 

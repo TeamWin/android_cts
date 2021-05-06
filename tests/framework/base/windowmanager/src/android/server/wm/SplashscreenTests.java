@@ -82,10 +82,12 @@ import java.util.Collections;
 
 /**
  * Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:SplashscreenTests
+ * atest CtsWindowManagerDeviceTestCases:SplashscreenTests
  */
 @Presubmit
 public class SplashscreenTests extends ActivityManagerTestBase {
+
+    private static final int CENTER_ICON_SIZE = 160;
 
     @Before
     public void setUp() throws Exception {
@@ -101,7 +103,8 @@ public class SplashscreenTests extends ActivityManagerTestBase {
     @Test
     public void testSplashscreenContent() {
         launchActivityNoWait(SPLASHSCREEN_ACTIVITY);
-        testSplashScreenColor(SPLASHSCREEN_ACTIVITY, Color.RED, Color.BLACK);
+        // The windowSplashScreenContent attribute is set to RED. We check that it is ignored.
+        testSplashScreenColor(SPLASHSCREEN_ACTIVITY, Color.BLUE, Color.BLACK);
     }
 
     private void testSplashScreenColor(ComponentName name, int primaryColor, int secondaryColor) {
@@ -113,22 +116,52 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         final Rect stableBounds = new Rect(windowMetrics.getBounds());
         stableBounds.inset(windowMetrics.getWindowInsets().getInsetsIgnoringVisibility(
                 systemBars() & ~captionBar()));
-        final Rect appBounds = new Rect(mWmState.findFirstWindowWithType(
-                WindowManager.LayoutParams.TYPE_APPLICATION_STARTING).getBounds());
+        WindowManagerState.WindowState startingWindow = mWmState.findFirstWindowWithType(
+                WindowManager.LayoutParams.TYPE_APPLICATION_STARTING);
+
+        Rect startingWindowBounds = startingWindow.getBounds();
+        final Rect appBounds;
+        if (startingWindowBounds != null) {
+            appBounds = new Rect(startingWindowBounds);
+        } else {
+            appBounds = new Rect(startingWindow.getFrame());
+        }
+
         appBounds.intersect(stableBounds);
+        if (appBounds.isEmpty()) {
+            fail("Couldn't find splash screen bounds. Impossible to assert the colors");
+        }
+
         // Use ratios to flexibly accommodate circular or not quite rectangular displays
         // Note: Color.BLACK is the pixel color outside of the display region
-        assertColors(image, appBounds, primaryColor, 0.50f, secondaryColor, 0.02f);
+
+        int px = WindowManagerState.dpToPx(CENTER_ICON_SIZE,
+                mContext.getResources().getConfiguration().densityDpi);
+        Rect ignoreRect = new Rect(0, 0, px, px);
+        ignoreRect.offsetTo(
+                appBounds.centerX() - ignoreRect.width() / 2,
+                appBounds.centerY() - ignoreRect.height() / 2);
+
+        assertColors(image, appBounds, primaryColor, 0.50f, secondaryColor, 0.02f, ignoreRect);
     }
 
     private void assertColors(Bitmap img, Rect bounds, int primaryColor,
-        float expectedPrimaryRatio, int secondaryColor, float acceptableWrongRatio) {
+            float expectedPrimaryRatio, int secondaryColor, float acceptableWrongRatio,
+            Rect ignoreRect) {
 
         int primaryPixels = 0;
         int secondaryPixels = 0;
         int wrongPixels = 0;
         for (int x = bounds.left; x < bounds.right; x++) {
+            if (ignoreRect != null && x >= ignoreRect.left && x < ignoreRect.right) {
+                x = ignoreRect.right;
+                continue;
+            }
             for (int y = bounds.top; y < bounds.bottom; y++) {
+                if (ignoreRect != null && y >= ignoreRect.top && y < ignoreRect.bottom) {
+                    y = ignoreRect.bottom;
+                    continue;
+                }
                 assertThat(x, lessThan(img.getWidth()));
                 assertThat(y, lessThan(img.getHeight()));
                 final int color = img.getPixel(x, y);

@@ -86,6 +86,7 @@ import android.system.ErrnoException;
 import android.system.Os;
 import android.util.Log;
 
+import androidx.core.os.BuildCompat;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.cts.install.lib.TestApp;
@@ -161,7 +162,9 @@ public class ScopedStorageTest {
         assertCanAccessPrivateAppAndroidObbDir(true /*canAccess*/, APP_B_NO_PERMS,
                 THIS_PACKAGE_NAME, NONMEDIA_FILE_NAME);
         final int uid = getContext().getPackageManager().getPackageUid(THIS_PACKAGE_NAME, 0);
-        assertMountMode(THIS_PACKAGE_NAME, uid, StorageManager.MOUNT_MODE_EXTERNAL_INSTALLER);
+        if (BuildCompat.isAtLeastS()) {
+            assertMountMode(THIS_PACKAGE_NAME, uid, StorageManager.MOUNT_MODE_EXTERNAL_INSTALLER);
+        }
     }
 
     /**
@@ -172,7 +175,9 @@ public class ScopedStorageTest {
         assertCanAccessPrivateAppAndroidDataDir(false /*canAccess*/, APP_B_NO_PERMS,
                 THIS_PACKAGE_NAME, NONMEDIA_FILE_NAME);
         final int uid = getContext().getPackageManager().getPackageUid(THIS_PACKAGE_NAME, 0);
-        assertMountMode(THIS_PACKAGE_NAME, uid, StorageManager.MOUNT_MODE_EXTERNAL_INSTALLER);
+        if (BuildCompat.isAtLeastS()) {
+            assertMountMode(THIS_PACKAGE_NAME, uid, StorageManager.MOUNT_MODE_EXTERNAL_INSTALLER);
+        }
     }
 
     @Test

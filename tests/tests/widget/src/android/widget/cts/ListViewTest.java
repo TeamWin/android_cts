@@ -16,6 +16,8 @@
 
 package android.widget.cts;
 
+import static android.widget.cts.util.StretchEdgeUtil.fling;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -96,8 +98,6 @@ import java.util.concurrent.TimeUnit;
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class ListViewTest {
-    static final long USE_STRETCH_EDGE_EFFECT_BY_DEFAULT = 171228096L;
-    static final long USE_STRETCH_EDGE_EFFECT_FOR_SUPPORTED = 178807038L;
     private final String[] mCountryList = new String[] {
         "Argentina", "Australia", "China", "France", "Germany", "Italy", "Japan", "United States"
     };
@@ -1206,6 +1206,32 @@ public class ListViewTest {
 
         scrollToBottomOfStretch();
         assertTrue(StretchEdgeUtil.dragUpTapAndHoldStretches(mActivityRule, mListViewStretch));
+    }
+
+    @Test
+    public void testFlingWhileStretchedTop() throws Throwable {
+        // Make sure that the scroll view we care about is on screen and at the top:
+        showOnlyStretch();
+
+        ScrollViewTest.CaptureOnAbsorbEdgeEffect
+                edgeEffect = new ScrollViewTest.CaptureOnAbsorbEdgeEffect(mActivity);
+        mListViewStretch.mEdgeGlowTop = edgeEffect;
+        fling(mActivityRule, mListViewStretch, 0, 300);
+        assertTrue(edgeEffect.onAbsorbVelocity > 0);
+    }
+
+    @Test
+    public void testFlingWhileStretchedBottom() throws Throwable {
+        // Make sure that the scroll view we care about is on screen and at the top:
+        showOnlyStretch();
+
+        scrollToBottomOfStretch();
+
+        ScrollViewTest.CaptureOnAbsorbEdgeEffect
+                edgeEffect = new ScrollViewTest.CaptureOnAbsorbEdgeEffect(mActivity);
+        mListViewStretch.mEdgeGlowBottom = edgeEffect;
+        fling(mActivityRule, mListViewStretch, 0, -300);
+        assertTrue(edgeEffect.onAbsorbVelocity > 0);
     }
 
     private void showOnlyStretch() throws Throwable {

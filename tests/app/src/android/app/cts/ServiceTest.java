@@ -1206,6 +1206,31 @@ public class ServiceTest extends ActivityTestsBase {
         waitForResultOrThrow(DELAY, "service to be destroyed");
     }
 
+    public void testForegroundService_deferredExistingNotification() throws Exception {
+        // First, post the notification outright as not-FGS-related
+        final NotificationManager nm = getNotificationManager();
+        final String channelId = LocalForegroundService.getNotificationChannelId();
+        nm.createNotificationChannel(new NotificationChannel(channelId, channelId,
+                NotificationManager.IMPORTANCE_DEFAULT));
+        Notification.Builder builder =
+                new Notification.Builder(mContext, channelId)
+                        .setContentTitle(LocalForegroundService.getNotificationTitle(1))
+                        .setSmallIcon(R.drawable.black);
+        nm.notify(1, builder.build());
+
+        mExpectedServiceState = STATE_START_1;
+        startForegroundService(COMMAND_START_FOREGROUND_DEFER_NOTIFICATION);
+        waitForResultOrThrow(DELAY, "service to start with existing notification");
+
+        // Normally deferred but should display immediately because the notification
+        // was already showing
+        assertNotification(1, LocalForegroundService.getNotificationTitle(1));
+
+        mExpectedServiceState = STATE_DESTROY;
+        mContext.stopService(mLocalForegroundService);
+        waitForResultOrThrow(DELAY, "service to be destroyed");
+    }
+
     class TestSendCallback implements PendingIntent.OnFinished {
         public volatile int result = -1;
 
