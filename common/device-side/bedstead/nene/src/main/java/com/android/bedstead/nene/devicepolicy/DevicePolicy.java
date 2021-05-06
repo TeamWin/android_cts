@@ -24,6 +24,8 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 
+import androidx.annotation.Nullable;
+
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.exceptions.AdbParseException;
@@ -216,6 +218,7 @@ public final class DevicePolicy {
     /**
      * Get the device owner.
      */
+    @Nullable
     public DeviceOwner getDeviceOwner() {
         fillCache();
         return mCachedDeviceOwner;
