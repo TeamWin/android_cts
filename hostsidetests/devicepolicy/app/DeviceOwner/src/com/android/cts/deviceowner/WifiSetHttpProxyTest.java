@@ -16,6 +16,8 @@
 
 package com.android.cts.deviceowner;
 
+import static com.google.common.truth.Truth.assertWithMessage;
+
 import android.content.pm.PackageManager;
 
 import com.android.compatibility.common.util.WifiConfigCreator;
@@ -43,8 +45,9 @@ public class WifiSetHttpProxyTest extends BaseDeviceOwnerTest {
             return;
         }
         WifiConfigCreator configCreator = new WifiConfigCreator(mContext, mWifiManager);
-        String retreievedPacProxyUrl = configCreator.addHttpProxyNetworkVerifyAndRemove(
+        String retrievedPacProxyUrl = configCreator.addHttpProxyNetworkVerifyAndRemove(
                 TEST_SSID, TEST_PAC_URL);
-        assertEquals(TEST_PAC_URL, retreievedPacProxyUrl);
+        assertWithMessage("pacProxyUrl for SSID %s", TEST_SSID).that(retrievedPacProxyUrl)
+                .isEqualTo(TEST_PAC_URL);
     }
 }
