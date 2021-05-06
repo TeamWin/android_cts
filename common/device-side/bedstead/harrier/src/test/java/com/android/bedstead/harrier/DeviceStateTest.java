@@ -34,6 +34,8 @@ import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasTvProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.RequireUserSupported;
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDeviceOwner;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.users.UserType;
@@ -70,6 +72,7 @@ public class DeviceStateTest {
 
     @Test
     @EnsureHasNoWorkProfile
+    @EnsureHasNoDeviceOwner
     public void workProfile_createdWorkProfile_throwsException() {
         try (UserReference workProfile = sTestApis.users().createUser()
                 .parent(sTestApis.users().instrumented())
@@ -227,7 +230,22 @@ public class DeviceStateTest {
                 .checkSelfPermission(TEST_PERMISSION_1)).isEqualTo(PERMISSION_GRANTED);
         assertThat(sTestApis.context().instrumentedContext()
                 .checkSelfPermission(TEST_PERMISSION_2)).isEqualTo(PERMISSION_DENIED);
+    }
 
+    @EnsureHasDeviceOwner
+    public void ensureHasDeviceOwnerAnnotation_deviceOwnerIsSet() {
+        assertThat(sTestApis.devicePolicy().getDeviceOwner()).isNotNull();
+    }
 
+    @Test
+    @EnsureHasNoDeviceOwner
+    public void ensureHasNoDeviceOwnerAnnotation_deviceOwnerIsNotSet() {
+        assertThat(sTestApis.devicePolicy().getDeviceOwner()).isNull();
+    }
+
+    @Test
+    @EnsureHasDeviceOwner
+    public void deviceOwner_deviceOwnerIsSet_returnsDeviceOwner() {
+        assertThat(sDeviceState.deviceOwner()).isNotNull();
     }
 }
