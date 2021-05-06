@@ -126,5 +126,14 @@ public class AppErrorAtomTests extends DeviceTestCase implements IBuildReceiver 
         assertTrue(atom.getIsIncremental());
         assertFalse((1.0f - atom.getLoadingProgress()) < 0.0000001f);
         assertTrue(atom.getMillisSinceOldestPendingRead() > 0);
+        assertEquals(3 /* HEALTH_STATUS_UNHEALTHY */, atom.getStorageHealthCode());
+        assertEquals(6 /* DATA_LOADER_IMAGE_READY */, atom.getDataLoaderStatusCode());
+        assertFalse(atom.getReadLogsEnabled());
+        assertTrue(atom.getMillisSinceLastDataLoaderBind() > 0);
+        assertEquals(0, atom.getDataLoaderBindDelayMillis());
+        assertTrue(atom.getTotalDelayedReads() > 0);
+        assertTrue(atom.getTotalFailedReads() > 0);
+        assertTrue(atom.getLastReadErrorMillisSince() > 0);
+        assertEquals(-62 /* -ETIME */, atom.getLastReadErrorCode());
     }
 }
