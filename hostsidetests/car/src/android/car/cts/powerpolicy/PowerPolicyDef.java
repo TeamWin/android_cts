@@ -47,8 +47,15 @@ public final class PowerPolicyDef {
     public String toString() {
         String[] enables = Arrays.stream(mEnables).map(c -> c.value).toArray(i -> new String[i]);
         String[] disables = Arrays.stream(mDisables).map(c -> c.value).toArray(i -> new String[i]);
-        return mPolicyId + " --enable " + String.join(",", enables)
-                + " --disable " + String.join(",", disables);
+        StringBuilder str = new StringBuilder();
+        str.append(mPolicyId);
+        if (!enables[0].equals("none")) {
+            str.append(" --enable ").append(String.join(",", enables));
+        }
+        if (!disables[0].equals("none")) {
+            str.append(" --disable ").append(String.join(",", disables));
+        }
+        return str.toString();
     }
 
     @Override
