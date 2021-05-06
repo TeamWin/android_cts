@@ -48,7 +48,6 @@ android_test {
         ":CtsUsePermissionApp30WithBluetooth",
         ":CtsUsePermissionAppLatest",
         ":CtsUsePermissionAppLatestNone",
-        ":CtsUsePermissionAppLocationProvider",
         ":CtsUsePermissionAppWithOverlay",
     ],
     test_suites: [
