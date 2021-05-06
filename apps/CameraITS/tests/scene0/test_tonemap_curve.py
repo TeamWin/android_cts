@@ -71,19 +71,20 @@ def check_raw_pattern(img_raw):
   logging.debug('Checking RAW/PATTERN match')
   color_match = []
   for n in range(N_BARS):
-    logging.debug('patch: %d', n)
     x_norm = get_x_norm(n)
-    logging.debug('x_norm: %.3f', x_norm)
     raw_patch = image_processing_utils.get_image_patch(img_raw, x_norm, Y_NORM,
                                                        W_NORM, H_NORM)
     raw_means = image_processing_utils.compute_image_means(raw_patch)
+    logging.debug('patch: %d, x_norm: %.3f, RAW means: %s',
+                  n, x_norm, str(raw_means))
     for color in COLOR_BARS:
       if np.allclose(COLOR_CHECKER[color], raw_means, atol=RAW_TOL):
         color_match.append(color)
-        logging.debug('%s', color)
+        logging.debug('%s match', color)
+        break
       else:
-        logging.debug('RAW means: %s COLOR: %s, ATOL: %.3f',
-                      str(raw_means), str(COLOR_CHECKER[color]), RAW_TOL)
+        logging.debug('No match w/ %s: %s, ATOL: %.3f',
+                      color, str(COLOR_CHECKER[color]), RAW_TOL)
   if set(color_match) != set(COLOR_BARS):
     raise AssertionError('RAW COLOR_BARS test pattern does not have all colors')
 
