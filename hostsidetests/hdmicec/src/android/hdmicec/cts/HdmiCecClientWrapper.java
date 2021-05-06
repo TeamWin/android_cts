@@ -656,5 +656,5 @@ public final class HdmiCecClientWrapper extends ExternalResource {
         }
     }
 
-    public class CecPortBusyException extends Exception {}
+    public static class CecPortBusyException extends Exception {}
 }
