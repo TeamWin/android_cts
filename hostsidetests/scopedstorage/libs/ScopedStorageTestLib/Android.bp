@@ -20,6 +20,7 @@ java_library {
     name: "cts-scopedstorage-lib",
     srcs: ["src/**/*.java"],
     static_libs: [
+                 "androidx.appcompat_appcompat",
                  "androidx.test.rules",
                   "cts-install-lib",
                   "platform-test-annotations",
