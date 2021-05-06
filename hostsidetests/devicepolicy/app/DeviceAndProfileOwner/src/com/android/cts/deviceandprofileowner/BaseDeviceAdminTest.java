@@ -134,24 +134,31 @@ public abstract class BaseDeviceAdminTest extends InstrumentationTestCase {
         super.setUp();
         mContext = getInstrumentation().getContext();
 
-        mDevicePolicyManager = TestAppSystemServiceFactory.getDevicePolicyManager(mContext,
-                BasicAdminReceiver.class);
-        Log.v(TAG, "setup(): dpm for " + getClass() + " and user " + mContext.getUserId() + ": "
-                + mDevicePolicyManager);
-        assertWithMessage("dpm").that(mDevicePolicyManager).isNotNull();
-
         mUserManager = mContext.getSystemService(UserManager.class);
         assertWithMessage("userManager").that(mUserManager).isNotNull();
 
         mHasSecureLockScreen = mContext.getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_SECURE_LOCK_SCREEN);
 
+        boolean isDeviceOwnerTest = "DeviceOwner"
+                .equals(InstrumentationRegistry.getArguments().getString("admin_type"));
+
+        if (isDeviceOwnerTest) {
+            mDevicePolicyManager = TestAppSystemServiceFactory.getDevicePolicyManager(mContext,
+                    BasicAdminReceiver.class);
+            Log.d(mTag, "mDevicePolicyManager after DPMWrapper call: " + mDevicePolicyManager);
+        } else {
+            mDevicePolicyManager = mContext.getSystemService(DevicePolicyManager.class);
+        }
+
+        Log.v(TAG, "setup(): dpm for " + getClass() + " and user " + mContext.getUserId() + ": "
+                + mDevicePolicyManager);
+        assertWithMessage("dpm").that(mDevicePolicyManager).isNotNull();
 
         boolean isActiveAdmin = mDevicePolicyManager.isAdminActive(ADMIN_RECEIVER_COMPONENT);
         boolean isProfileOwner = mDevicePolicyManager.isProfileOwnerApp(PACKAGE_NAME);
         boolean isDeviceOwner = mDevicePolicyManager.isDeviceOwnerApp(PACKAGE_NAME);
-        boolean isDeviceOwnerTest = "DeviceOwner"
-                .equals(InstrumentationRegistry.getArguments().getString("admin_type"));
+
         Log.d(mTag, "setup() on user " + mContext.getUserId() + ": package=" + PACKAGE_NAME
                 + ", adminReceiverComponent=" + ADMIN_RECEIVER_COMPONENT
                 + ", isActiveAdmin=" + isActiveAdmin + ", isProfileOwner=" + isProfileOwner
@@ -162,12 +169,6 @@ public abstract class BaseDeviceAdminTest extends InstrumentationTestCase {
 
         assertWithMessage("profile owner or device owner for %s", PACKAGE_NAME)
                 .that(isProfileOwner || isDeviceOwner).isTrue();
-
-        if (isDeviceOwnerTest) {
-            mDevicePolicyManager = TestAppSystemServiceFactory.getDevicePolicyManager(mContext,
-                    BasicAdminReceiver.class);
-            Log.d(mTag, "mDevicePolicyManager after DPMWrapper call: " + mDevicePolicyManager);
-        }
     }
 
     protected int getTargetApiLevel() throws Exception {
