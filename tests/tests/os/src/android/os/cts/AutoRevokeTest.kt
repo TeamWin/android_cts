@@ -38,6 +38,7 @@ import android.support.test.uiautomator.UiSelector
 import android.view.accessibility.AccessibilityNodeInfo
 import android.view.accessibility.AccessibilityNodeInfo.ACTION_SCROLL_FORWARD
 import android.widget.Switch
+import androidx.core.os.BuildCompat
 import androidx.test.InstrumentationRegistry
 import androidx.test.filters.SdkSuppress
 import androidx.test.runner.AndroidJUnit4
@@ -338,6 +339,12 @@ class AutoRevokeTest {
     }
 
     private fun killDummyApp(pkg: String = supportedAppPackageName) {
+        if (!BuildCompat.isAtLeastS()) {
+            // Work around a race condition on R that killing the app process too fast after
+            // activity launch would result in a stale process record in LRU process list that
+            // sticks until next reboot.
+            Thread.sleep(5000)
+        }
         assertThat(
                 runShellCommandOrThrow("am force-stop " + pkg),
                 equalTo(""))
