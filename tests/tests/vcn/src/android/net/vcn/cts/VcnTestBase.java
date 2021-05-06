@@ -1,0 +1,65 @@
+/*
+ * Copyright (C) 2021 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.net.vcn.cts;
+
+import static android.net.ipsec.ike.SaProposal.DH_GROUP_2048_BIT_MODP;
+import static android.net.ipsec.ike.SaProposal.ENCRYPTION_ALGORITHM_AES_GCM_12;
+import static android.net.ipsec.ike.SaProposal.PSEUDORANDOM_FUNCTION_AES128_XCBC;
+
+import android.net.ipsec.ike.ChildSaProposal;
+import android.net.ipsec.ike.IkeFqdnIdentification;
+import android.net.ipsec.ike.IkeSaProposal;
+import android.net.ipsec.ike.IkeSessionParams;
+import android.net.ipsec.ike.IkeTunnelConnectionParams;
+import android.net.ipsec.ike.SaProposal;
+import android.net.ipsec.ike.TunnelModeChildSessionParams;
+
+public class VcnTestBase {
+    protected static IkeTunnelConnectionParams buildTunnelConnectionParams() {
+        final IkeSaProposal ikeProposal =
+                new IkeSaProposal.Builder()
+                        .addEncryptionAlgorithm(
+                                ENCRYPTION_ALGORITHM_AES_GCM_12, SaProposal.KEY_LEN_AES_128)
+                        .addDhGroup(DH_GROUP_2048_BIT_MODP)
+                        .addPseudorandomFunction(PSEUDORANDOM_FUNCTION_AES128_XCBC)
+                        .build();
+
+        final String serverHostname = "2001:db8:1::100";
+        final String testLocalId = "test.client.com";
+        final String testRemoteId = "test.server.com";
+        final byte[] psk = "psk".getBytes();
+
+        final IkeSessionParams ikeParams =
+                new IkeSessionParams.Builder()
+                        .setServerHostname(serverHostname)
+                        .addSaProposal(ikeProposal)
+                        .setLocalIdentification(new IkeFqdnIdentification(testLocalId))
+                        .setRemoteIdentification(new IkeFqdnIdentification(testRemoteId))
+                        .setAuthPsk(psk)
+                        .build();
+
+        final ChildSaProposal childProposal =
+                new ChildSaProposal.Builder()
+                        .addEncryptionAlgorithm(
+                                ENCRYPTION_ALGORITHM_AES_GCM_12, SaProposal.KEY_LEN_AES_128)
+                        .build();
+        final TunnelModeChildSessionParams childParams =
+                new TunnelModeChildSessionParams.Builder().addSaProposal(childProposal).build();
+
+        return new IkeTunnelConnectionParams(ikeParams, childParams);
+    }
+}
