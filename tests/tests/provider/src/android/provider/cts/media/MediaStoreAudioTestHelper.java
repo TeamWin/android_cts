@@ -257,6 +257,27 @@ public class MediaStoreAudioTestHelper {
         }
     }
 
+    public static class Audio6 extends Audio1 {
+        private Audio6() {
+        }
+
+        private static Audio6 sInstance = new Audio6();
+
+        public static Audio6 getInstance() {
+            return sInstance;
+        }
+        public static final String ARTIST =
+                "Michael Jackson - Live And Dangerous - National Stadium Bucharest";
+
+        @Override
+        public ContentValues getContentValues(String volumeName) {
+            ContentValues values = super.getContentValues(volumeName);
+            values.put(Media.DATA, values.getAsString(Media.DATA) + ".6.mp3");
+            values.put(Media.ARTIST, ARTIST);
+            return values;
+        }
+    }
+
     @Test
     public void testStub() {
         // No-op test here to keep atest happy
