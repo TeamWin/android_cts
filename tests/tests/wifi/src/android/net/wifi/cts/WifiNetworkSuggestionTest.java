@@ -848,12 +848,13 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
 
     /**
      * Tests {@link android.net.wifi.WifiNetworkSuggestion.Builder} class.
-     *
-     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
      */
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
     @Test
     public void testBuilderWithWpa3EnterpriseWithStandardApi() throws Exception {
+        if (!WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(sContext)) {
+            // Skip the test if wifi module version is older than S.
+            return;
+        }
         WifiEnterpriseConfig enterpriseConfig = createEnterpriseConfig();
         WifiNetworkSuggestion suggestion =
                 createBuilderWithCommonParams()
@@ -938,12 +939,13 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
 
     /**
      * Tests {@link android.net.wifi.WifiNetworkSuggestion.Builder} class.
-     *
-     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
      */
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
     @Test
     public void testBuilderWithWpa3Enterprise192bitWithSuiteBEccCerts() throws Exception {
+        if (!WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(sContext)) {
+            // Skip the test if wifi module version is older than S.
+            return;
+        }
         WifiEnterpriseConfig enterpriseConfig = new WifiEnterpriseConfig();
         enterpriseConfig.setEapMethod(WifiEnterpriseConfig.Eap.TLS);
         enterpriseConfig.setCaCertificate(CA_SUITE_B_ECDSA_CERT);
