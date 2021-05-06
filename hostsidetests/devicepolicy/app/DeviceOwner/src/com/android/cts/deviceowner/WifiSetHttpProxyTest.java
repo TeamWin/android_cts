@@ -37,12 +37,12 @@ public class WifiSetHttpProxyTest extends BaseDeviceOwnerTest {
      * 5. Verifies the added WifiConfiguration has the same proxy
      */
     public void testSetHttpProxy() {
-        PackageManager packageManager = getContext().getPackageManager();
+        PackageManager packageManager = mContext.getPackageManager();
         if (!packageManager.hasSystemFeature(PackageManager.FEATURE_WIFI)) {
             // skip the test if WiFi is not supported
             return;
         }
-        WifiConfigCreator configCreator = new WifiConfigCreator(getContext());
+        WifiConfigCreator configCreator = new WifiConfigCreator(mContext, mWifiManager);
         String retreievedPacProxyUrl = configCreator.addHttpProxyNetworkVerifyAndRemove(
                 TEST_SSID, TEST_PAC_URL);
         assertEquals(TEST_PAC_URL, retreievedPacProxyUrl);
