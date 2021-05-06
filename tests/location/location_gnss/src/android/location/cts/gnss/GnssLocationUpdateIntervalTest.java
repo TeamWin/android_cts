@@ -112,9 +112,7 @@ public class GnssLocationUpdateIntervalTest extends GnssTestCase {
             return;
         }
 
-        for (int fixIntervalMillis : FIX_INTERVALS_MILLIS) {
-            testUtcToElapsedRealtimeDriftAtInterval(fixIntervalMillis);
-        }
+        testUtcToElapsedRealtimeDriftAtInterval(/* fixIntervalMillis= */ 0);
     }
 
     private void testLocationUpdatesAtInterval(int fixIntervalMillis) throws Exception {
@@ -149,10 +147,9 @@ public class GnssLocationUpdateIntervalTest extends GnssTestCase {
     private void testUtcToElapsedRealtimeDriftAtInterval(int fixIntervalMillis) throws Exception {
         Log.i(TAG,
                 "testGpsToElapsedRealtimeDriftAtInterval. fixIntervalMillis: " + fixIntervalMillis);
-
-        TestLocationListener locationListener = new TestLocationListener(
-                LOCATION_TO_COLLECT_COUNT);
-        mTestLocationManager.requestLocationUpdates(locationListener, fixIntervalMillis);
+        // Request 1Hz locations for warm-up
+        TestLocationListener locationListener = new TestLocationListener(LOCATION_TO_COLLECT_COUNT);
+        mTestLocationManager.requestLocationUpdates(locationListener, 1000);
 
         // Warm up the GNSS engine by
         //   if hasBiasUncertainty == true, wait until biasUncertainty < 1ms,
@@ -173,15 +170,15 @@ public class GnssLocationUpdateIntervalTest extends GnssTestCase {
         try {
             if (!success) {
                 // Wait for locations for warm-up.
-                success = locationListener.await(
-                        fixIntervalMillis * LOCATION_TO_COLLECT_COUNT);
+                success = locationListener.await();
                 Assert.assertTrue("Time elapsed without getting enough location fixes for"
                         + " warm-up. Possibly, the test has been run deep indoors."
                         + " Consider retrying test outdoors.", success);
                 Log.i(TAG, "Successfully warmed up GNSS by getting "
-                        + LOCATION_TO_COLLECT_COUNT + " locations.");
+                        + LOCATION_TO_COLLECT_COUNT + " locations at 1Hz.");
             }
-
+            Log.i(TAG, "Waiting for " + LOCATION_TO_COLLECT_COUNT + " locations of interval "
+                    + fixIntervalMillis + " ms to check the time drift.");
             locationListener.clearReceivedLocationsAndResetCounter(LOCATION_TO_COLLECT_COUNT);
             // Wait for locations for time drift check.
             success = locationListener.await(
@@ -189,7 +186,6 @@ public class GnssLocationUpdateIntervalTest extends GnssTestCase {
             Assert.assertTrue("Time elapsed without getting enough location fixes."
                     + " Possibly, the test has been run deep indoors."
                     + " Consider retrying test outdoors.", success);
-
         } finally {
             mTestLocationManager.removeLocationUpdates(locationListener);
         }
