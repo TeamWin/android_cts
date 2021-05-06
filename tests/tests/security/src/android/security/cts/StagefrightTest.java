@@ -114,6 +114,30 @@ public class StagefrightTest {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
     }
 
+    class CodecConfig {
+        boolean isAudio;
+        /* Video Parameters - valid only when isAudio is false */
+        int initWidth;
+        int initHeight;
+        /* Audio Parameters - valid only when isAudio is true */
+        int sampleRate;
+        int channelCount;
+
+        public CodecConfig setVideoParams(int initWidth, int initHeight) {
+            this.isAudio = false;
+            this.initWidth = initWidth;
+            this.initHeight = initHeight;
+            return this;
+        }
+
+        public CodecConfig setAudioParams(int sampleRate, int channelCount) {
+            this.isAudio = true;
+            this.sampleRate = sampleRate;
+            this.channelCount = channelCount;
+            return this;
+        }
+    }
+
     /***********************************************************
      to prevent merge conflicts, add K tests below this comment,
      before any existing test methods
@@ -1743,6 +1767,19 @@ public class StagefrightTest {
      ***********************************************************/
 
     @Test
+    @SecurityTest(minPatchLevel = "2018-11")
+    public void testStagefright_cve_2018_9531() throws Exception {
+        assumeFalse(ModuleDetector.moduleIsPlayManaged(
+                getInstrumentation().getContext().getPackageManager(),
+                MainlineModule.MEDIA_SOFTWARE_CODEC));
+        int[] frameSizes = getFrameSizes(R.raw.cve_2018_9531_framelen);
+        CodecConfig codecConfig = new CodecConfig().setAudioParams(48000, 8);
+        doStagefrightTestRawBlob(R.raw.cve_2018_9531_aac, "audio/mp4a-latm", codecConfig,
+                frameSizes, new CrashUtils.Config().setSignals(CrashUtils.SIGSEGV,
+                        CrashUtils.SIGBUS, CrashUtils.SIGABRT));
+    }
+
+    @Test
     @SecurityTest(minPatchLevel = "2019-12")
     public void testStagefright_cve_2019_2222() throws Exception {
         // TODO(b/170987914): This also skips testing hw_codecs.
@@ -2712,6 +2749,12 @@ public class StagefrightTest {
 
     private void doStagefrightTestRawBlob(int rid, String mime, int initWidth, int initHeight,
             int frameSizes[], CrashUtils.Config config) throws Exception {
+        CodecConfig codecConfig = new CodecConfig().setVideoParams(initWidth, initHeight);
+        doStagefrightTestRawBlob(rid, mime, codecConfig, frameSizes, config);
+    }
+
+    private void doStagefrightTestRawBlob(int rid, String mime, CodecConfig codecConfig,
+            int frameSizes[], CrashUtils.Config config) throws Exception {
 
         final MediaPlayerCrashListener mpcl = new MediaPlayerCrashListener(config);
         final Context context = getInstrumentation().getContext();
@@ -2783,7 +2826,14 @@ public class StagefrightTest {
         for (String codecName: matchingCodecs) {
             Log.i(TAG, "Decoding blob " + rname + " using codec " + codecName);
             MediaCodec codec = MediaCodec.createByCodecName(codecName);
-            MediaFormat format = MediaFormat.createVideoFormat(mime, initWidth, initHeight);
+            MediaFormat format;
+            if (codecConfig.isAudio) {
+                format = MediaFormat.createAudioFormat(mime, codecConfig.sampleRate,
+                        codecConfig.channelCount);
+            } else {
+                format = MediaFormat.createVideoFormat(mime, codecConfig.initWidth,
+                        codecConfig.initHeight);
+            }
             try {
                 codec.configure(format, null, null, 0);
                 codec.start();
@@ -2807,19 +2857,27 @@ public class StagefrightTest {
 
                 int offset = 0;
                 int bytesToFeed = 0;
-                int flags = 0;
                 byte [] tempBlob = new byte[(int)inputBuffers[0].capacity()];
                 for (int j = 0; j < numFrames; j++) {
+                    int flags = 0;
                     int bufidx = codec.dequeueInputBuffer(5000);
                     if (bufidx >= 0) {
                         inputBuffers[bufidx].rewind();
-                        bytesToFeed = Math.min((int)(fd.getLength() - offset),
-                                               inputBuffers[bufidx].capacity());
                         if(j == (numFrames - 1)) {
                             flags = MediaCodec.BUFFER_FLAG_END_OF_STREAM;
                         }
-                        System.arraycopy(blob, offset, tempBlob, 0, bytesToFeed);
-                        inputBuffers[bufidx].put(tempBlob, 0, inputBuffers[bufidx].capacity());
+                        if (codecConfig.isAudio) {
+                            if (j == 0) {
+                                flags = MediaCodec.BUFFER_FLAG_CODEC_CONFIG;
+                            }
+                            inputBuffers[bufidx].put(blob, offset, frameSizes[j]);
+                            bytesToFeed = frameSizes[j];
+                        } else {
+                            bytesToFeed = Math.min((int) (fd.getLength() - offset),
+                                    inputBuffers[bufidx].capacity());
+                            System.arraycopy(blob, offset, tempBlob, 0, bytesToFeed);
+                            inputBuffers[bufidx].put(tempBlob, 0, inputBuffers[bufidx].capacity());
+                        }
                         codec.queueInputBuffer(bufidx, 0, bytesToFeed, 0, flags);
                         offset = offset + frameSizes[j];
                     } else {
