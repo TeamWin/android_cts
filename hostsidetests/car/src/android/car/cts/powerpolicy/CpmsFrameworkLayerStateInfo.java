@@ -94,6 +94,14 @@ public final class CpmsFrameworkLayerStateInfo {
         return mForcedSilentMode;
     }
 
+    public PowerPolicyDef.PowerComponent[] getCurrentEnabledComponents() {
+        return PowerPolicyDef.PowerComponent.asComponentArray(mEnables);
+    }
+
+    public PowerPolicyDef.PowerComponent[] getCurrentDisabledComponents() {
+        return PowerPolicyDef.PowerComponent.asComponentArray(mDisables);
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder(STRING_BUILDER_BUF_SIZE);
