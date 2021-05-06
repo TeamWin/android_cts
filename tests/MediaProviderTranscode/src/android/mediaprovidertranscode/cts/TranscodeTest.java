@@ -20,7 +20,6 @@ import static androidx.test.InstrumentationRegistry.getContext;
 
 import static android.mediaprovidertranscode.cts.TranscodeTestUtils.assertFileContent;
 import static android.mediaprovidertranscode.cts.TranscodeTestUtils.assertTranscode;
-import static android.mediaprovidertranscode.cts.TranscodeTestUtils.executeShellCommand;
 import static android.mediaprovidertranscode.cts.TranscodeTestUtils.installAppWithStoragePermissions;
 import static android.mediaprovidertranscode.cts.TranscodeTestUtils.isAppIoBlocked;
 import static android.mediaprovidertranscode.cts.TranscodeTestUtils.open;
@@ -903,15 +902,24 @@ public class TranscodeTest {
             TranscodeTestUtils.stageHEVCVideoFile(modernFile);
             TranscodeTestUtils.enableTranscodingForPackage(getContext().getPackageName());
 
-            // Trigger transcoding so that transcoded file gets added to cache.
+            // Trigger transcoding so that the transcoded file gets added to cache.
             assertTranscode(modernFile, true);
 
-            // Trigger PackageManager to free storage.
-            executeShellCommand("settings put global sys_storage_cache_max_bytes 0");
-            executeShellCommand("pm trim-caches 4096G");
-
-            // Assert that transcoding happens again, i.e., transcoding cache was cleared.
-            assertTranscode(modernFile, true);
+            // Invoke StorageManager to free maximum allocatable bytes, so that it tries to clear
+            // all available caches.
+            StorageManager storageManager = getContext().getSystemService(StorageManager.class);
+            StorageVolume vol = storageManager.getStorageVolume(modernFile);
+            UUID uuid = vol.getStorageUuid();
+            try {
+                // The storage allocation for requested bytes may succeed or fail, but we don't
+                // care as long as the cache clearing gets invoked. Hence we swallow the exception
+                // for failure case, and allow the test execution to continue.
+                storageManager.allocateBytes(uuid, storageManager.getAllocatableBytes(uuid));
+            } catch (IOException e) {}
+            finally {
+                // Assert that transcoding happens again, i.e., transcoding cache was cleared.
+                assertTranscode(modernFile, true);
+            }
         } finally {
             modernFile.delete();
         }
