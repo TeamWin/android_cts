@@ -42,7 +42,7 @@ import java.util.List;
 /* Sets up the CEC tests by discovering which port the CEC adapter connected to */
 public class CecPortDiscoverer extends BaseTargetPreparer {
 
-    private static final int TIMEOUT_MILLIS = 10000;
+    private static final int TIMEOUT_MILLIS = 15000;
     private static final int MAX_RETRY_COUNT = 3;
 
     private File mCecMapDir = HdmiCecConstants.CEC_MAP_FOLDER;
@@ -131,6 +131,7 @@ public class CecPortDiscoverer extends BaseTargetPreparer {
                      */
                     if (adapterMapping.exists()) {
                         /* Exit the current port's retry loop */
+                        launchCommand.remove(port);
                         break;
                     }
                     mCecClient = RunUtil.getDefault().runCmdInBackground(launchCommand);
@@ -148,8 +149,11 @@ public class CecPortDiscoverer extends BaseTargetPreparer {
                                 writeMapping(port, serialNo);
                                 return;
                             }
+                            /* Since it did not find the required message. Check another port */
+                            portBeingRetried = false;
                         } else {
                             CLog.e("Console did not get ready!");
+                            throw new HdmiCecClientWrapper.CecPortBusyException();
                         }
                     } catch (HdmiCecClientWrapper.CecPortBusyException cpbe) {
                         retryCount++;
@@ -164,9 +168,9 @@ public class CecPortDiscoverer extends BaseTargetPreparer {
                         /* Kill the unwanted cec-client process. */
                         Process killProcess = mCecClient.destroyForcibly();
                         killProcess.waitFor(60, TimeUnit.SECONDS);
-                        launchCommand.remove(port);
                     }
                 } while (portBeingRetried);
+                launchCommand.remove(port);
             }
         } catch (IOException | InterruptedException e) {
             throw new TargetSetupError(
