@@ -394,6 +394,83 @@ public class JobThrottlingTest {
         assertFalse("New job started in RESTRICTED bucket", mTestAppInterface.awaitJobStart(3_000));
     }
 
+    /**
+     * Tests that apps in the RESTRICTED bucket have their parole sessions properly counted even
+     * when charging (but not idle).
+     */
+    @Test
+    public void testJobsInRestrictedBucket_CorrectParoleWhileCharging() throws Exception {
+        assumeTrue("app standby not enabled", mAppStandbyEnabled);
+        assumeFalse("not testable in automotive device", mAutomotiveDevice);
+        assumeFalse("not testable in leanback device", mLeanbackOnly);
+
+        setRestrictedBucketEnabled(true);
+
+        // Disable coalescing
+        mDeviceConfigStateHelper.set("qc_timing_session_coalescing_duration_ms", "0");
+        mDeviceConfigStateHelper.set("qc_max_session_count_restricted", "1");
+
+        setScreenState(true);
+        BatteryUtils.runDumpsysBatterySetPluggedIn(true);
+        BatteryUtils.runDumpsysBatterySetLevel(100);
+
+        setTestPackageStandbyBucket(Bucket.RESTRICTED);
+        Thread.sleep(DEFAULT_WAIT_TIMEOUT);
+        sendScheduleJobBroadcast(false);
+        runJob();
+        assertTrue("Parole job didn't start in RESTRICTED bucket",
+                mTestAppInterface.awaitJobStart(3_000));
+
+        sendScheduleJobBroadcast(false);
+        assertFalse("New job started in RESTRICTED bucket after parole used",
+                mTestAppInterface.awaitJobStart(3_000));
+    }
+
+    /**
+     * Tests that apps in the RESTRICTED bucket that have used their one parole session per day
+     * don't get to run again until the device is charging + idle.
+     */
+    @Test
+    public void testJobsInRestrictedBucket_DeferredUntilFreeResources() throws Exception {
+        assumeTrue("app standby not enabled", mAppStandbyEnabled);
+        assumeFalse("not testable in automotive device", mAutomotiveDevice);
+        assumeFalse("not testable in leanback device", mLeanbackOnly);
+
+        setRestrictedBucketEnabled(true);
+
+        // Disable coalescing
+        mDeviceConfigStateHelper.set("qc_timing_session_coalescing_duration_ms", "0");
+
+        setScreenState(true);
+
+        BatteryUtils.runDumpsysBatteryUnplug();
+        setTestPackageStandbyBucket(Bucket.RESTRICTED);
+        Thread.sleep(DEFAULT_WAIT_TIMEOUT);
+        sendScheduleJobBroadcast(false);
+        runJob();
+        assertTrue("Parole job didn't start in RESTRICTED bucket",
+                mTestAppInterface.awaitJobStart(3_000));
+
+        sendScheduleJobBroadcast(false);
+        assertFalse("New job started in RESTRICTED bucket after parole used",
+                mTestAppInterface.awaitJobStart(3_000));
+
+        BatteryUtils.runDumpsysBatterySetPluggedIn(true);
+        BatteryUtils.runDumpsysBatterySetLevel(100);
+        assertFalse("New job started in RESTRICTED bucket after parole when charging but not idle",
+                mTestAppInterface.awaitJobStart(3_000));
+
+        setScreenState(false);
+        triggerJobIdle();
+        assertTrue("Job didn't start in RESTRICTED bucket when charging + idle",
+                mTestAppInterface.awaitJobStart(3_000));
+
+        // Make sure job can be stopped and started again when charging + idle
+        sendScheduleJobBroadcast(false);
+        assertTrue("Job didn't restart in RESTRICTED bucket when charging + idle",
+                mTestAppInterface.awaitJobStart(3_000));
+    }
+
     @Test
     public void testJobsInRestrictedBucket_NoRequiredNetwork() throws Exception {
         assumeTrue("app standby not enabled", mAppStandbyEnabled);
