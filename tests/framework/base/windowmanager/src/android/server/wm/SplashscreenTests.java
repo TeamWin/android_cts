@@ -153,13 +153,9 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         int secondaryPixels = 0;
         int wrongPixels = 0;
         for (int x = bounds.left; x < bounds.right; x++) {
-            if (ignoreRect != null && x >= ignoreRect.left && x < ignoreRect.right) {
-                x = ignoreRect.right;
-                continue;
-            }
             for (int y = bounds.top; y < bounds.bottom; y++) {
-                if (ignoreRect != null && y >= ignoreRect.top && y < ignoreRect.bottom) {
-                    y = ignoreRect.bottom;
+                if (ignoreRect != null && y >= ignoreRect.top && y < ignoreRect.bottom
+                        && x >= ignoreRect.left && x < ignoreRect.right) {
                     continue;
                 }
                 assertThat(x, lessThan(img.getWidth()));
