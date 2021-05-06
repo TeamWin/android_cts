@@ -775,9 +775,9 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
     /**
      * Tests {@link android.net.wifi.WifiNetworkSuggestion.Builder} class.
      */
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
     @Test
     public void testBuilderWithWpa3SaeH2eOnlyMode() throws Exception {
-        assumeTrue(BuildCompat.isAtLeastS());
         WifiNetworkSuggestion suggestion =
                 createBuilderWithCommonParams()
                         .setWpa3Passphrase(TEST_PASSPHRASE)
