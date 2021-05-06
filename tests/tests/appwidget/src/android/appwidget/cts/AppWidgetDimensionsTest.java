@@ -17,6 +17,8 @@
 package android.appwidget.cts;
 
 import static androidx.test.InstrumentationRegistry.getInstrumentation;
+
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import android.content.res.Resources;
@@ -32,20 +34,30 @@ import org.junit.runner.RunWith;
 public class AppWidgetDimensionsTest {
 
     @Test
-    public void containerRadius_shouldBePositive() {
+    public void backgroundRadius_shouldBePositive() {
         Resources resources = getInstrumentation().getTargetContext().getResources();
         assertTrue(resources.getDimension(android.R.dimen.system_app_widget_background_radius) >= 0);
     }
 
     @Test
-    public void innerRadius_shouldBePositive() {
+    public void backgroundRadius_shouldBeLessThanMaxRadius() {
         Resources resources = getInstrumentation().getTargetContext().getResources();
-        assertTrue(resources.getDimension(android.R.dimen.system_app_widget_inner_radius) >= 0);
+
+        assertTrue(resources.getDimension(android.R.dimen.system_app_widget_background_radius)
+                <= resources.getDimension(R.dimen.appwidget_max_background_radius));
     }
 
     @Test
-    public void internalPadding_shouldBePositive() {
+    public void innerRadius_shouldBeFixedComparedToBackgroundRadius() {
         Resources resources = getInstrumentation().getTargetContext().getResources();
-        assertTrue(resources.getDimension(android.R.dimen.system_app_widget_internal_padding) >= 0);
+        float expectedRadius = resources.getDimension(
+                android.R.dimen.system_app_widget_background_radius) - resources.getDimension(
+                R.dimen.appwidget_radii_difference);
+        if (expectedRadius <= 0) {
+            expectedRadius = 0;
+        }
+        assertEquals(expectedRadius,
+                resources.getDimension(android.R.dimen.system_app_widget_inner_radius), 1e-4);
     }
+
 }
