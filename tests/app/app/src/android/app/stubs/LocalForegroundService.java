@@ -66,7 +66,7 @@ public class LocalForegroundService extends LocalService {
     }
 
     /** Returns the channel id for this service */
-    public static String getNotificationChannelId() {
+    protected String getNotificationChannelId() {
         return NOTIFICATION_CHANNEL_ID;
     }
 
