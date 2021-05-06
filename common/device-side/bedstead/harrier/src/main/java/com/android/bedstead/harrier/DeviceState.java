@@ -36,6 +36,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.FailureMode;
+import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeatures;
 import com.android.bedstead.harrier.annotations.RequireFeatures;
 import com.android.bedstead.harrier.annotations.RequireUserSupported;
 import com.android.bedstead.harrier.annotations.meta.EnsureHasNoProfileAnnotation;
@@ -200,6 +201,15 @@ public final class DeviceState implements TestRule {
                         }
                     }
 
+                    if (annotation instanceof RequireDoesNotHaveFeatures) {
+                        RequireDoesNotHaveFeatures requireDoesNotHaveFeaturesAnnotation =
+                            (RequireDoesNotHaveFeatures) annotation;
+                        for (String feature: requireDoesNotHaveFeaturesAnnotation.value()) {
+                            requireDoesNotHaveFeature(feature,
+                                requireDoesNotHaveFeaturesAnnotation.failureMode());
+                        }
+                    }
+                       
                     if (annotation instanceof RequireUserSupported) {
                         RequireUserSupported requireUserSupportedAnnotation =
                                 (RequireUserSupported) annotation;
@@ -330,6 +340,11 @@ public final class DeviceState implements TestRule {
     private void requireFeature(String feature, FailureMode failureMode) {
         checkFailOrSkip("Device must have feature " + feature,
                 sTestApis.packages().features().contains(feature), failureMode);
+    }
+
+    private void requireDoesNotHaveFeature(String feature, FailureMode failureMode) {
+        checkFailOrSkip("Device must not have feature " + feature,
+                !sTestApis.packages().features().contains(feature), failureMode);
     }
 
     private com.android.bedstead.nene.users.UserType requireUserSupported(
