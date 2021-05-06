@@ -197,14 +197,15 @@ public final class CpmsFrameworkLayerStateInfo {
                     forcedSilentMode = parser.getBooleanData(FORCED_SILENT_MODE_HDR);
                     break;
                 default:
-                    throw new Exception("parser header mismatch: " + header);
+                    throw new IllegalArgumentException("parser header mismatch: " + header);
             }
             headerCounter.add(header);
         }
 
         if (headerCounter.size() != StateInfoParser.HEADERS.length) {
-            throw new IllegalArgumentException("miss headers. only got: "
-                    + headerCounter.toString());
+            String errMsg = "miss headers. got: " + headerCounter + " expected: "
+                    + String.join(",", StateInfoParser.HEADERS);
+            throw new IllegalArgumentException(errMsg);
         }
 
         return new CpmsFrameworkLayerStateInfo(currentPolicyId, pendingPolicyId,
@@ -302,6 +303,7 @@ public final class CpmsFrameworkLayerStateInfo {
                     throw new IllegalArgumentException(errMsg);
                 }
             }
+            mIdx--;
 
             if (mIdx == (mLines.length - 1)) {
                 throw new IllegalArgumentException("reaches the end while parse " + startHdr);
@@ -316,6 +318,7 @@ public final class CpmsFrameworkLayerStateInfo {
             } else {
                 compStr = mLines[mIdx].substring(startHdr.length(), idx);
                 mLines[mIdx] = mLines[mIdx].substring(idx);
+                mIdx--;
             }
             return compStr.split(",\\s*");
         }
@@ -326,9 +329,8 @@ public final class CpmsFrameworkLayerStateInfo {
 
         private String searchHeader() {
             String header = null;
-            while (mIdx < mLines.length) {
+            for (mIdx++; mIdx < mLines.length; mIdx++) {
                 if (mLines[mIdx].trim().isEmpty()) {
-                    mIdx++;
                     continue;
                 }
 
@@ -343,7 +345,6 @@ public final class CpmsFrameworkLayerStateInfo {
                 if (header != null) {
                     break;
                 }
-                mIdx++;
             }
 
             return header;
