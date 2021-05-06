@@ -347,8 +347,6 @@ public class PassFailButtons {
         public TestListActivity() {
             // TODO(b/186555602): temporary hack^H^H^H^H workaround to fix crash
             // This DOES NOT in fact fix that bug.
-            // if (true) this.mReportLog = new CtsVerifierReportLog(b/186555602, "42"); else
-
             this.mReportLog = new CtsVerifierReportLog(getReportFileName(), getReportSectionName());
         }
 
