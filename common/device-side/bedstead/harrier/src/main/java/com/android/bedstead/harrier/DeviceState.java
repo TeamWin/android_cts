@@ -18,6 +18,7 @@ package com.android.bedstead.harrier;
 
 import static com.android.bedstead.nene.users.UserType.MANAGED_PROFILE_TYPE_NAME;
 import static com.android.bedstead.nene.users.UserType.SECONDARY_USER_TYPE_NAME;
+import static com.android.bedstead.remotedpc.Configuration.REMOTE_DPC_COMPONENT_NAME;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
@@ -39,6 +40,8 @@ import com.android.bedstead.harrier.annotations.FailureMode;
 import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeatures;
 import com.android.bedstead.harrier.annotations.RequireFeatures;
 import com.android.bedstead.harrier.annotations.RequireUserSupported;
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDeviceOwner;
 import com.android.bedstead.harrier.annotations.meta.EnsureHasNoProfileAnnotation;
 import com.android.bedstead.harrier.annotations.meta.EnsureHasNoUserAnnotation;
 import com.android.bedstead.harrier.annotations.meta.EnsureHasProfileAnnotation;
@@ -48,6 +51,8 @@ import com.android.bedstead.harrier.annotations.meta.RequireRunOnProfileAnnotati
 import com.android.bedstead.harrier.annotations.meta.RequireRunOnUserAnnotation;
 import com.android.bedstead.harrier.annotations.meta.RequiresBedsteadJUnit4;
 import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.devicepolicy.DeviceOwner;
+import com.android.bedstead.nene.devicepolicy.DevicePolicyController;
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.permissions.PermissionContextImpl;
@@ -55,6 +60,7 @@ import com.android.bedstead.nene.users.User;
 import com.android.bedstead.nene.users.UserBuilder;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.utils.ShellCommand;
+import com.android.bedstead.remotedpc.RemoteDpc;
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
 
 import junit.framework.AssertionFailedError;
@@ -161,7 +167,6 @@ public final class DeviceState implements TestRule {
                                     forUser);
                     }
 
-
                     EnsureHasNoUserAnnotation ensureHasNoUserAnnotation =
                             annotationType.getAnnotation(EnsureHasNoUserAnnotation.class);
                     if (ensureHasNoUserAnnotation != null) {
@@ -192,6 +197,16 @@ public final class DeviceState implements TestRule {
                                         .invoke(annotation);
                         requireRunOnProfile(requireRunOnProfileAnnotation.value(),
                                 installInstrumentedAppInParent);
+                    }
+
+                    if (annotation instanceof EnsureHasDeviceOwner) {
+                        EnsureHasDeviceOwner ensureHasDeviceOwnerAnnotation =
+                                (EnsureHasDeviceOwner) annotation;
+                        ensureHasDeviceOwner(ensureHasDeviceOwnerAnnotation.onUser());
+                    }
+
+                    if (annotation instanceof EnsureHasNoDeviceOwner) {
+                        ensureHasNoDeviceOwner();
                     }
 
                     if (annotation instanceof RequireFeatures) {
@@ -381,6 +396,7 @@ public final class DeviceState implements TestRule {
     }
 
     public enum UserType {
+        SYSTEM_USER,
         CURRENT_USER,
         PRIMARY_USER,
         SECONDARY_USER,
@@ -396,10 +412,13 @@ public final class DeviceState implements TestRule {
             new HashMap<>();
     private final Map<com.android.bedstead.nene.users.UserType, Map<UserReference, UserReference>>
             mProfiles = new HashMap<>();
+    private DevicePolicyController mDeviceOwner;
 
     private final List<UserReference> mCreatedUsers = new ArrayList<>();
     private final List<UserBuilder> mRemovedUsers = new ArrayList<>();
     private final List<BlockingBroadcastReceiver> mRegisteredBroadcastReceivers = new ArrayList<>();
+    private boolean mHasChangedDeviceOwner = false;
+    private DevicePolicyController mOriginalDeviceOwner = null;
 
     /**
      * Get the {@link UserReference} of the work profile for the current user
@@ -603,7 +622,7 @@ public final class DeviceState implements TestRule {
                         resolvedProfileType,
                         forUserReference);
         if (profile != null) {
-            removeAndRecordUser(profile.resolve());
+            removeAndRecordUser(profile);
         }
     }
 
@@ -640,19 +659,23 @@ public final class DeviceState implements TestRule {
         }
 
         for (UserReference secondaryUser : sTestApis.users().findUsersOfType(resolvedUserType)) {
-            removeAndRecordUser(secondaryUser.resolve());
+            removeAndRecordUser(secondaryUser);
         }
     }
 
-    private void removeAndRecordUser(User user) {
-        if (user == null) {
+    private void removeAndRecordUser(UserReference userReference) {
+        if (userReference == null) {
             return; // Nothing to remove
         }
 
-        mRemovedUsers.add(sTestApis.users().createUser()
-                .name(user.name())
-                .type(user.type())
-                .parent(user.parent()));
+        User user = userReference.resolve();
+
+        if (!mCreatedUsers.remove(user)) {
+            mRemovedUsers.add(sTestApis.users().createUser()
+                    .name(user.name())
+                    .type(user.type())
+                    .parent(user.parent()));
+        }
 
         user.remove();
     }
@@ -689,6 +712,8 @@ public final class DeviceState implements TestRule {
 
     private UserReference resolveUserTypeToUser(UserType userType) {
         switch (userType) {
+            case SYSTEM_USER:
+                return sTestApis.users().system();
             case CURRENT_USER:
                 return sTestApis.users().instrumented();
             case PRIMARY_USER:
@@ -715,6 +740,20 @@ public final class DeviceState implements TestRule {
     }
 
     private void teardownShareableState() {
+        if (mHasChangedDeviceOwner) {
+            if (mOriginalDeviceOwner == null) {
+                if (mDeviceOwner != null) {
+                    mDeviceOwner.remove();
+                }
+            } else if (!mOriginalDeviceOwner.equals(mDeviceOwner)) {
+                mDeviceOwner.remove();
+                sTestApis.devicePolicy().setDeviceOwner(
+                        mOriginalDeviceOwner.user(), mOriginalDeviceOwner.componentName());
+            }
+            mHasChangedDeviceOwner = false;
+            mOriginalDeviceOwner = null;
+        }
+
         for (UserReference user : mCreatedUsers) {
             user.remove();
         }
@@ -765,5 +804,73 @@ public final class DeviceState implements TestRule {
         } catch (AdbException e) {
             throw new IllegalStateException("Invalid command output", e);
         }
+    }
+
+    private void ensureHasDeviceOwner(UserType onUser) {
+        // TODO(scottjonathan): Should support non-remotedpc device owner (default to remotedpc)
+        // TODO(scottjonathan): Should allow setting the device owner on a different user
+
+        DeviceOwner currentDeviceOwner = sTestApis.devicePolicy().getDeviceOwner();
+
+        if (currentDeviceOwner != null
+                && currentDeviceOwner.componentName().equals(RemoteDpc.DPC_COMPONENT_NAME)) {
+            return;
+        }
+
+        UserReference instrumentedUser = sTestApis.users().instrumented();
+
+        // TODO(scottjonathan): Consider if we should restore these users
+        for (UserReference u : sTestApis.users().all()) {
+            if (u.equals(instrumentedUser)) {
+                continue;
+            }
+
+            removeAndRecordUser(u);
+        }
+
+        // TODO(scottjonathan): Remove accounts
+
+        if (!mHasChangedDeviceOwner) {
+            mOriginalDeviceOwner = currentDeviceOwner;
+            mHasChangedDeviceOwner = true;
+        }
+
+        mDeviceOwner = RemoteDpc.setAsDeviceOwner(resolveUserTypeToUser(onUser))
+                .devicePolicyController();
+    }
+
+    private void ensureHasNoDeviceOwner() {
+        DeviceOwner deviceOwner = sTestApis.devicePolicy().getDeviceOwner();
+
+        if (deviceOwner == null) {
+            return;
+        }
+
+        if (!mHasChangedDeviceOwner) {
+            mOriginalDeviceOwner = deviceOwner;
+            mHasChangedDeviceOwner = true;
+        }
+
+        deviceOwner.remove();
+    }
+
+    /**
+     * Get the {@link RemoteDpc} for the device owner controlled by Harrier.
+     *
+     * <p>If no Harrier-managed device owner exists, an exception will be thrown.
+     *
+     * <p>If the device owner is not a RemoteDPC then an exception will be thrown
+     */
+    public RemoteDpc deviceOwner() {
+        if (mDeviceOwner == null) {
+            throw new IllegalStateException("No Harrier-managed device owner. This method should "
+                    + "only be used when Harrier was used to set the Device Owner.");
+        }
+        if (!mDeviceOwner.componentName().equals(REMOTE_DPC_COMPONENT_NAME)) {
+            throw new IllegalStateException("The device owner is not a RemoteDPC."
+                    + " You must use Nene to query for this device owner.");
+        }
+
+        return RemoteDpc.forDevicePolicyController(mDeviceOwner);
     }
 }
