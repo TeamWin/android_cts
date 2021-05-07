@@ -95,9 +95,10 @@ class YuvPlusRaw10Test(its_base_test.ItsBaseTest):
 
       rms_diff = image_processing_utils.compute_image_rms_difference(
           rgb_means_yuv, rgb_means_raw)
-      msg = 'RMS diff: %.4f, spec: %.3f' % (rms_diff, THRESHOLD_MAX_RMS_DIFF)
+      msg = f'RMS diff: {rms_diff:.4f}'
       logging.debug('%s', msg)
-      assert rms_diff < THRESHOLD_MAX_RMS_DIFF, msg
+      if rms_diff >= THRESHOLD_MAX_RMS_DIFF:
+        raise AssertionError(msg + f', spec: {THRESHOLD_MAX_RMS_DIFF}')
 
 if __name__ == '__main__':
   test_runner.main()
