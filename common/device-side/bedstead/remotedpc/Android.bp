@@ -67,6 +67,7 @@ android_test {
     static_libs: [
         "RemoteDPC",
         "Nene",
+        "Harrier",
         "TestApp",
         "EventLib",
         "androidx.test.ext.junit",

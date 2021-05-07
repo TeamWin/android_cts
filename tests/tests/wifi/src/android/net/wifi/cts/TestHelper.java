@@ -138,7 +138,7 @@ public class TestHelper {
                         Executors.newSingleThreadExecutor(), scanResultsCallback);
                 wifiManager.startScan(new WorkSource(myUid()));
                 // now wait for callback
-                assertThat(countDownLatch.await(DURATION_MILLIS, TimeUnit.MILLISECONDS)).isTrue();
+                countDownLatch.await(DURATION_MILLIS, TimeUnit.MILLISECONDS);
             } catch (InterruptedException e) {
             } finally {
                 wifiManager.unregisterScanResultsCallback(scanResultsCallback);

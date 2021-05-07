@@ -16,20 +16,10 @@
   ~ limitations under the License.
   -->
 
-<manifest
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.permission3.cts.usepermission">
-
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          package="com.android.bedstead.harrier">
 
     <application>
-        <activity android:name=".AddLocationProviderActivity" android:exported="true" />
-        <activity android:name=".FinishOnCreateActivity" android:exported="true"
-                  android:permission="android.permission.START_VIEW_PERMISSION_USAGE">
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW_PERMISSION_USAGE"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-            </intent-filter>
-        </activity>
     </application>
+    <uses-sdk android:minSdkVersion="27" android:targetSdkVersion="27"/>
 </manifest>
