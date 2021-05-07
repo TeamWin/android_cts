@@ -41,6 +41,7 @@ import android.provider.ContactsContract;
 import android.telecom.PhoneAccount;
 import android.telephony.CarrierConfigManager;
 import android.telephony.SubscriptionManager;
+import android.telephony.TelephonyManager;
 import android.telephony.cts.TelephonyUtils;
 import android.telephony.ims.ImsException;
 import android.telephony.ims.ImsManager;
@@ -55,6 +56,9 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ShellIdentityUtils;
+import com.android.i18n.phonenumbers.NumberParseException;
+import com.android.i18n.phonenumbers.PhoneNumberUtil;
+import com.android.i18n.phonenumbers.Phonenumber;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -83,6 +87,7 @@ public class EabBulkCapabilityUpdaterTest {
     private static CarrierConfigReceiver sReceiver;
     private static String sTestPhoneNumber;
     private static String sUpdatePhoneNumber;
+    private static String sFormattedPhoneNumber;
     private static Uri sTestNumberUri;
     private static boolean mPrevEabSettings = false;
     private static boolean sDeviceUceEnabled;
@@ -136,6 +141,7 @@ public class EabBulkCapabilityUpdaterTest {
         mContentResolver = mContext.getContentResolver();
 
         sTestPhoneNumber = generateRandomPhoneNumber();
+        sFormattedPhoneNumber = formatNumber(mContext, sTestPhoneNumber);
         sTestNumberUri = Uri.fromParts(PhoneAccount.SCHEME_TEL, sTestPhoneNumber, null);
 
         sTestSub = ImsUtils.getPreferredActiveSubId();
@@ -222,10 +228,10 @@ public class EabBulkCapabilityUpdaterTest {
         String contactId = String.valueOf(ContentUris.parseId(insertResult[0].uri));
         String dataId = String.valueOf(ContentUris.parseId(insertResult[2].uri));
         // Waiting eab provider insert
-        waitingEabProviderInsertContact(sTestPhoneNumber, POLLING_RETRY_TIMES);
+        waitingEabProviderInsertContact(sFormattedPhoneNumber, POLLING_RETRY_TIMES);
 
         // Query eab db
-        String contactFromEab = getEabContact(sTestPhoneNumber);
+        String contactFromEab = getEabContact(sFormattedPhoneNumber);
         //[PHONE_NUMBER], [RAW_CONTACT_ID], [CONTACT_ID], [DATA_ID]
         String[] eabContactInfo = contactFromEab.split(",");
         assertTrue(eabContactInfo.length > 0);
@@ -234,7 +240,7 @@ public class EabBulkCapabilityUpdaterTest {
         String eabDataId = eabContactInfo[3];
 
         // Verify the test contact has been inserted into EAB provider
-        assertEquals(sTestPhoneNumber, eabContactPhoneNumber);
+        assertEquals(sFormattedPhoneNumber, eabContactPhoneNumber);
         assertEquals(contactId, eabContactId);
         assertEquals(dataId, eabDataId);
     }
@@ -246,11 +252,11 @@ public class EabBulkCapabilityUpdaterTest {
         }
 
         insertContactToContactProvider();
-        waitingEabProviderInsertContact(sTestPhoneNumber, POLLING_RETRY_TIMES);
+        waitingEabProviderInsertContact(sFormattedPhoneNumber, POLLING_RETRY_TIMES);
 
         // Delete the phone number in contact provider
         deletePhoneNumberOfContact();
-        waitingEabProviderDeleteContact(sTestPhoneNumber, POLLING_RETRY_TIMES);
+        waitingEabProviderDeleteContact(sFormattedPhoneNumber, POLLING_RETRY_TIMES);
 
         // Verify the phone number in EAB provider has been removed
         String contactFromEab = getEabContact(sTestPhoneNumber);
@@ -264,22 +270,22 @@ public class EabBulkCapabilityUpdaterTest {
         }
 
         insertContactToContactProvider();
-        waitingEabProviderInsertContact(sTestPhoneNumber, POLLING_RETRY_TIMES);
+        waitingEabProviderInsertContact(sFormattedPhoneNumber, POLLING_RETRY_TIMES);
         sUpdatePhoneNumber = sTestPhoneNumber + "1";
 
         // Update the phone number in contact provider
         updatePhoneNumber(sUpdatePhoneNumber);
-        waitingEabProviderInsertContact(sUpdatePhoneNumber, POLLING_RETRY_TIMES);
+        waitingEabProviderInsertContact(sFormattedPhoneNumber, POLLING_RETRY_TIMES);
 
         // Query eab db
-        String contactFromEab = getEabContact(sUpdatePhoneNumber);
+        String contactFromEab = getEabContact(sFormattedPhoneNumber);
         //[PHONE_NUMBER], [RAW_CONTACT_ID], [CONTACT_ID], [DATA_ID]
         String[] eabContactInfo = contactFromEab.split(",");
         assertTrue(eabContactInfo.length > 0);
         String eabContactPhoneNumber = eabContactInfo[0];
 
         // Verify the test contact has been updated
-        assertEquals(sUpdatePhoneNumber, eabContactPhoneNumber);
+        assertEquals(sFormattedPhoneNumber, eabContactPhoneNumber);
     }
 
     @Test
@@ -289,10 +295,10 @@ public class EabBulkCapabilityUpdaterTest {
         }
 
         insertContactToContactProvider();
-        waitingEabProviderInsertContact(sTestPhoneNumber, POLLING_RETRY_TIMES);
+        waitingEabProviderInsertContact(sFormattedPhoneNumber, POLLING_RETRY_TIMES);
 
         deleteTestContact();
-        waitingEabProviderDeleteContact(sTestPhoneNumber, POLLING_RETRY_TIMES);
+        waitingEabProviderDeleteContact(sFormattedPhoneNumber, POLLING_RETRY_TIMES);
 
         // Verify the phone number in EAB provider has been removed
         String contactFromEab = getEabContact(sTestPhoneNumber);
@@ -617,5 +623,21 @@ public class EabBulkCapabilityUpdaterTest {
                 + "</tuple>"
                 + "</presence>";
         return pidfBuilder;
+    }
+
+    private static String formatNumber(Context context, String number) {
+        TelephonyManager manager = context.getSystemService(TelephonyManager.class);
+        String simCountryIso = manager.getSimCountryIso();
+        if (simCountryIso != null) {
+            simCountryIso = simCountryIso.toUpperCase();
+            PhoneNumberUtil util = PhoneNumberUtil.getInstance();
+            try {
+                Phonenumber.PhoneNumber phoneNumber = util.parse(number, simCountryIso);
+                return util.format(phoneNumber, PhoneNumberUtil.PhoneNumberFormat.E164);
+            } catch (NumberParseException e) {
+                Log.w(TAG, "formatNumber: could not format " + number + ", error: " + e);
+            }
+        }
+        return number;
     }
 }
