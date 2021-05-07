@@ -171,12 +171,12 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
 
     private static boolean sWasVerboseLoggingEnabled;
     private static boolean sWasScanThrottleEnabled;
+    private static WifiConfiguration sTestNetwork;
 
     private Context mContext;
     private WifiManager mWifiManager;
     private ConnectivityManager mConnectivityManager;
     private UiDevice mUiDevice;
-    private WifiConfiguration mTestNetwork;
     private ConnectivityManager.NetworkCallback mNrNetworkCallback;
     private TestHelper mTestHelper;
 
@@ -213,6 +213,10 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
                 () -> wifiManager.getPrivilegedConfiguredNetworks());
         assertWithMessage("Need at least one saved network")
                 .that(savedNetworks.isEmpty()).isFalse();
+
+        // Pick any network in range.
+        sTestNetwork = TestHelper.findMatchingSavedNetworksWithBssid(wifiManager, savedNetworks)
+                .get(0);
 
         // Disconnect & disable auto-join on the saved network to prevent auto-connect from
         // interfering with the test.
@@ -277,11 +281,6 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
                     () -> mWifiManager.removeAppState(myUid(), mContext.getPackageName()));
         }
 
-        List<WifiConfiguration> savedNetworks = ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.getPrivilegedConfiguredNetworks());
-        // Pick any network in range.
-        mTestNetwork = TestHelper.findMatchingSavedNetworksWithBssid(mWifiManager, savedNetworks)
-                .get(0);
 
         // Wait for Wifi to be disconnected.
         PollingCheck.check(
@@ -307,13 +306,13 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
     private void testSuccessfulConnectionWithSpecifier(WifiNetworkSpecifier specifier)
             throws Exception {
         mNrNetworkCallback = mTestHelper.testConnectionFlowWithSpecifier(
-                mTestNetwork, specifier, false);
+                sTestNetwork, specifier, false);
     }
 
     private void testUserRejectionWithSpecifier(WifiNetworkSpecifier specifier)
             throws Exception {
         mNrNetworkCallback = mTestHelper.testConnectionFlowWithSpecifier(
-                mTestNetwork, specifier, true);
+                sTestNetwork, specifier, true);
     }
 
     /**
@@ -323,7 +322,7 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
     public void testConnectionWithSpecificSsid() throws Exception {
         WifiNetworkSpecifier specifier =
                 TestHelper.createSpecifierBuilderWithCredentialFromSavedNetwork(
-                        mTestNetwork)
+                        sTestNetwork)
                 .build();
         testSuccessfulConnectionWithSpecifier(specifier);
     }
@@ -335,14 +334,14 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
     public void testConnectionWithSsidPattern() throws Exception {
         // Creates a ssid pattern by dropping the last char in the saved network & pass that
         // as a prefix match pattern in the request.
-        String ssidUnquoted = WifiInfo.sanitizeSsid(mTestNetwork.SSID);
+        String ssidUnquoted = WifiInfo.sanitizeSsid(sTestNetwork.SSID);
         assertThat(ssidUnquoted.length()).isAtLeast(2);
         String ssidPrefix = ssidUnquoted.substring(0, ssidUnquoted.length() - 1);
         // Note: The match may return more than 1 network in this case since we use a prefix match,
         // But, we will still ensure that the UI interactions in the test still selects the
         // saved network for connection.
         WifiNetworkSpecifier specifier =
-                TestHelper.createSpecifierBuilderWithCredentialFromSavedNetwork(mTestNetwork)
+                TestHelper.createSpecifierBuilderWithCredentialFromSavedNetwork(sTestNetwork)
                 .setSsidPattern(new PatternMatcher(ssidPrefix, PatternMatcher.PATTERN_PREFIX))
                 .build();
         testSuccessfulConnectionWithSpecifier(specifier);
@@ -355,7 +354,7 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
     public void testConnectionWithSpecificBssid() throws Exception {
         WifiNetworkSpecifier specifier =
                 TestHelper.createSpecifierBuilderWithCredentialFromSavedNetworkWithBssid(
-                        mTestNetwork)
+                        sTestNetwork)
                         .build();
         testSuccessfulConnectionWithSpecifier(specifier);
     }
@@ -370,8 +369,8 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
         // saved network for connection.
         WifiNetworkSpecifier specifier =
                 TestHelper.createSpecifierBuilderWithCredentialFromSavedNetworkWithBssid(
-                        mTestNetwork)
-                        .setBssidPattern(MacAddress.fromString(mTestNetwork.BSSID),
+                        sTestNetwork)
+                        .setBssidPattern(MacAddress.fromString(sTestNetwork.BSSID),
                                 MacAddress.fromString("ff:ff:ff:00:00:00"))
                         .build();
         testSuccessfulConnectionWithSpecifier(specifier);
@@ -384,7 +383,7 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
     public void testUserRejectionWithSpecificSsid() throws Exception {
         WifiNetworkSpecifier specifier =
                 TestHelper.createSpecifierBuilderWithCredentialFromSavedNetwork(
-                        mTestNetwork)
+                        sTestNetwork)
                         .build();
         testUserRejectionWithSpecifier(specifier);
     }
@@ -398,7 +397,7 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
     public void testEnsureAutoConnectToInternetConnectionOnRelease() throws Exception {
         WifiNetworkSpecifier specifier =
                 TestHelper.createSpecifierBuilderWithCredentialFromSavedNetwork(
-                        mTestNetwork)
+                        sTestNetwork)
                         .build();
         testSuccessfulConnectionWithSpecifier(specifier);
 
@@ -428,11 +427,11 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
     @Test
     public void testBuilderForWpa2Enterprise() {
         WifiNetworkSpecifier specifier1 = new WifiNetworkSpecifier.Builder()
-                .setSsid(WifiInfo.sanitizeSsid(mTestNetwork.SSID))
+                .setSsid(WifiInfo.sanitizeSsid(sTestNetwork.SSID))
                 .setWpa2EnterpriseConfig(new WifiEnterpriseConfig())
                 .build();
         WifiNetworkSpecifier specifier2 = new WifiNetworkSpecifier.Builder()
-                .setSsid(WifiInfo.sanitizeSsid(mTestNetwork.SSID))
+                .setSsid(WifiInfo.sanitizeSsid(sTestNetwork.SSID))
                 .setWpa2EnterpriseConfig(new WifiEnterpriseConfig())
                 .build();
         assertThat(specifier1.canBeSatisfiedBy(specifier2)).isTrue();
@@ -445,11 +444,11 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
     @Test
     public void testBuilderForWpa3Enterprise() {
         WifiNetworkSpecifier specifier1 = new WifiNetworkSpecifier.Builder()
-                .setSsid(WifiInfo.sanitizeSsid(mTestNetwork.SSID))
+                .setSsid(WifiInfo.sanitizeSsid(sTestNetwork.SSID))
                 .setWpa3EnterpriseConfig(new WifiEnterpriseConfig())
                 .build();
         WifiNetworkSpecifier specifier2 = new WifiNetworkSpecifier.Builder()
-                .setSsid(WifiInfo.sanitizeSsid(mTestNetwork.SSID))
+                .setSsid(WifiInfo.sanitizeSsid(sTestNetwork.SSID))
                 .setWpa3EnterpriseConfig(new WifiEnterpriseConfig())
                 .build();
         assertThat(specifier1.canBeSatisfiedBy(specifier2)).isTrue();
@@ -462,11 +461,11 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
     @Test
     public void testBuilderForWpa3EnterpriseWithStandardApi() {
         WifiNetworkSpecifier specifier1 = new WifiNetworkSpecifier.Builder()
-                .setSsid(WifiInfo.sanitizeSsid(mTestNetwork.SSID))
+                .setSsid(WifiInfo.sanitizeSsid(sTestNetwork.SSID))
                 .setWpa3EnterpriseStandardModeConfig(new WifiEnterpriseConfig())
                 .build();
         WifiNetworkSpecifier specifier2 = new WifiNetworkSpecifier.Builder()
-                .setSsid(WifiInfo.sanitizeSsid(mTestNetwork.SSID))
+                .setSsid(WifiInfo.sanitizeSsid(sTestNetwork.SSID))
                 .setWpa3EnterpriseConfig(new WifiEnterpriseConfig())
                 .build();
         assertThat(specifier1.canBeSatisfiedBy(specifier2)).isTrue();
@@ -486,11 +485,11 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
         enterpriseConfig.setAltSubjectMatch("domain.com");
 
         WifiNetworkSpecifier specifier1 = new WifiNetworkSpecifier.Builder()
-                .setSsid(WifiInfo.sanitizeSsid(mTestNetwork.SSID))
+                .setSsid(WifiInfo.sanitizeSsid(sTestNetwork.SSID))
                 .setWpa3Enterprise192BitModeConfig(enterpriseConfig)
                 .build();
         WifiNetworkSpecifier specifier2 = new WifiNetworkSpecifier.Builder()
-                .setSsid(WifiInfo.sanitizeSsid(mTestNetwork.SSID))
+                .setSsid(WifiInfo.sanitizeSsid(sTestNetwork.SSID))
                 .setWpa3Enterprise192BitModeConfig(enterpriseConfig)
                 .build();
         assertThat(specifier1.canBeSatisfiedBy(specifier2)).isTrue();

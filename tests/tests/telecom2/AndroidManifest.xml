@@ -23,7 +23,8 @@
                 permissions.
             -->
 
-    <application>
+    <!-- Must be debuggable for compat shell commands to work on user builds -->
+    <application android:debuggable="true">
         <uses-library android:name="android.test.runner"/>
 
         <service android:name="android.telecom.cts.MockConnectionService"

@@ -21,12 +21,11 @@ import static org.mockito.Mockito.mock;
 import android.net.MacAddress;
 import android.net.wifi.ScanResult;
 import android.net.wifi.aware.PeerHandle;
+import android.net.wifi.cts.WifiBuildCompat;
 import android.net.wifi.rtt.RangingRequest;
 import android.net.wifi.rtt.RangingResult;
 import android.net.wifi.rtt.ResponderLocation;
 import android.platform.test.annotations.AppModeFull;
-
-import androidx.core.os.BuildCompat;
 
 import com.android.compatibility.common.util.DeviceReportLog;
 import com.android.compatibility.common.util.ResultType;
@@ -87,7 +86,7 @@ public class WifiRttTest extends TestBase {
         // Perform RTT operations
         RangingRequest.Builder builder = new RangingRequest.Builder();
         builder.addAccessPoint(testAp);
-        if (BuildCompat.isAtLeastS()) {
+        if (WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(getContext())) {
             builder.setRttBurstSize(RangingRequest.getMaxRttBurstSize());
         }
         RangingRequest request = builder.build();
@@ -127,7 +126,7 @@ public class WifiRttTest extends TestBase {
             int status = result.getStatus();
             statuses[i] = status;
             if (status == RangingResult.STATUS_SUCCESS) {
-                if (BuildCompat.isAtLeastS()) {
+                if (WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(getContext())) {
                     assertEquals(
                             "Wi-Fi RTT results: invalid result (wrong rttBurstSize) entry on "
                                     + "iteration "
@@ -232,7 +231,7 @@ public class WifiRttTest extends TestBase {
         builder.addAccessPoints(scanResults);
 
         ScanResult testApNon80211mc = null;
-        if (BuildCompat.isAtLeastS()) {
+        if (WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(getContext())) {
             testApNon80211mc = scanForTestNon11mcCapableAp(NUM_SCANS_SEARCHING_FOR_IEEE80211MC_AP);
         }
         if (testApNon80211mc == null) {
@@ -455,7 +454,8 @@ public class WifiRttTest extends TestBase {
      *   - Result margin < threshold (constant)
      */
     public void testRangingToTestNon11mcAp() throws InterruptedException {
-        if (!shouldTestWifiRtt(getContext()) || !BuildCompat.isAtLeastS()) {
+        if (!shouldTestWifiRtt(getContext())
+                || !WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(getContext())) {
             return;
         }
 

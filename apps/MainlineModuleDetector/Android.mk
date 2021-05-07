@@ -23,6 +23,10 @@ LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 
 LOCAL_STATIC_JAVA_LIBRARIES := compatibility-device-util-axt
 
+# Disable dexpreopt and <uses-library> check for test.
+LOCAL_ENFORCE_USES_LIBRARIES := false
+LOCAL_DEX_PREOPT := false
+
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
 LOCAL_PACKAGE_NAME := MainlineModuleDetector
