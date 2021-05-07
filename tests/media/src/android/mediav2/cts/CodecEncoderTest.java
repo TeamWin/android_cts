@@ -57,8 +57,9 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     private int mNumSyncFramesReceived;
     private ArrayList<Integer> mSyncFramesPos;
 
-    public CodecEncoderTest(String mime, int[] bitrates, int[] encoderInfo1, int[] encoderInfo2) {
-        super(mime, bitrates, encoderInfo1, encoderInfo2);
+    public CodecEncoderTest(String encoder, String mime, int[] bitrates, int[] encoderInfo1,
+            int[] encoderInfo2) {
+        super(encoder, mime, bitrates, encoderInfo1, encoderInfo2);
         mSyncFramesPos = new ArrayList<>();
     }
 
@@ -102,7 +103,7 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
         mCodec.setParameters(bitrateUpdate);
     }
 
-    @Parameterized.Parameters(name = "{index}({0})")
+    @Parameterized.Parameters(name = "{index}({0}_{1})")
     public static Collection<Object[]> input() {
         final boolean isEncoder = true;
         final boolean needAudio = true;
@@ -153,16 +154,14 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testSimpleEncode() throws IOException, InterruptedException {
         setUpParams(Integer.MAX_VALUE);
-        ArrayList<String> listOfEncoders = selectCodecs(mMime, null, null, true);
-        assertFalse("no suitable codecs found for mime: " + mMime, listOfEncoders.isEmpty());
         boolean[] boolStates = {true, false};
         setUpSource(mInputFile);
         OutputManager ref = new OutputManager();
         OutputManager test = new OutputManager();
-        for (String encoder : listOfEncoders) {
-            mCodec = MediaCodec.createByCodecName(encoder);
-            assertTrue("codec name act/got: " + mCodec.getName() + '/' + encoder,
-                    mCodec.getName().equals(encoder));
+        {
+            mCodec = MediaCodec.createByCodecName(mCodecName);
+            assertTrue("codec name act/got: " + mCodec.getName() + '/' + mCodecName,
+                    mCodec.getName().equals(mCodecName));
             assertTrue("error! codec canonical name is null",
                     mCodec.getCanonicalName() != null && !mCodec.getCanonicalName().isEmpty());
             /* TODO(b/149027258) */
@@ -181,18 +180,18 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
                     for (boolean isAsync : boolStates) {
                         String log = String.format(
                                 "format: %s \n codec: %s, file: %s, mode: %s, eos type: %s:: ",
-                                format, encoder, mInputFile, (isAsync ? "async" : "sync"),
+                                format, mCodecName, mInputFile, (isAsync ? "async" : "sync"),
                                 (eosType ? "eos with last frame" : "eos separate"));
                         mOutputBuff = loopCounter == 0 ? ref : test;
                         mOutputBuff.reset();
                         mInfoList.clear();
-                        validateMetrics(encoder);
+                        validateMetrics(mCodecName);
                         configureCodec(format, isAsync, eosType, true);
                         mCodec.start();
                         doWork(Integer.MAX_VALUE);
                         queueEOS();
                         waitForAllOutputs();
-                        validateMetrics(encoder, format);
+                        validateMetrics(mCodecName, format);
                         /* TODO(b/147348711) */
                         if (false) mCodec.stop();
                         else mCodec.reset();
@@ -237,12 +236,10 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     public void testLosslessEncodeDecode() throws IOException, InterruptedException {
         Assume.assumeTrue(isCodecLossless(mMime));
         setUpParams(Integer.MAX_VALUE);
-        ArrayList<String> listOfEncoders = selectCodecs(mMime, null, null, true);
-        assertFalse("no suitable codecs found for mime: " + mMime, listOfEncoders.isEmpty());
         setUpSource(mInputFile);
         mOutputBuff = new OutputManager();
-        for (String encoder : listOfEncoders) {
-            mCodec = MediaCodec.createByCodecName(encoder);
+        {
+            mCodec = MediaCodec.createByCodecName(mCodecName);
             mSaveToMem = true;
             for (MediaFormat format : mFormats) {
                 if (mIsAudio) {
@@ -252,8 +249,8 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
                     mWidth = format.getInteger(MediaFormat.KEY_WIDTH);
                     mHeight = format.getInteger(MediaFormat.KEY_HEIGHT);
                 }
-                String log = String.format("format: %s \n codec: %s, file: %s :: ", format, encoder,
-                        mInputFile);
+                String log = String.format("format: %s \n codec: %s, file: %s :: ", format,
+                        mCodecName, mInputFile);
                 mOutputBuff.reset();
                 mInfoList.clear();
                 configureCodec(format, true, true, true);
@@ -301,15 +298,13 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testSimpleEncodeNative() throws IOException {
-        ArrayList<String> listOfEncoders = selectCodecs(mMime, null, null, true);
-        assertFalse("no suitable codecs found for mime: " + mMime, listOfEncoders.isEmpty());
         int colorFormat = -1;
-        for (String encoder : listOfEncoders) {
+        {
             if (!mIsAudio) {
-                colorFormat = findByteBufferColorFormat(encoder, mMime);
+                colorFormat = findByteBufferColorFormat(mCodecName, mMime);
                 assertTrue("no valid color formats received", colorFormat != -1);
             }
-            assertTrue(nativeTestSimpleEncode(encoder, mInpPrefix + mInputFile, mMime, mBitrates,
+            assertTrue(nativeTestSimpleEncode(mCodecName, mInpPrefix + mInputFile, mMime, mBitrates,
                     mEncParamList1, mEncParamList2, colorFormat));
         }
     }
@@ -323,12 +318,10 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testFlush() throws IOException, InterruptedException {
         setUpParams(1);
-        ArrayList<String> listOfEncoders = selectCodecs(mMime, null, null, true);
-        assertFalse("no suitable codecs found for mime: " + mMime, listOfEncoders.isEmpty());
         setUpSource(mInputFile);
         boolean[] boolStates = {true, false};
         mOutputBuff = new OutputManager();
-        for (String encoder : listOfEncoders) {
+        {
             MediaFormat inpFormat = mFormats.get(0);
             if (mIsAudio) {
                 mSampleRate = inpFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE);
@@ -337,9 +330,9 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
                 mWidth = inpFormat.getInteger(MediaFormat.KEY_WIDTH);
                 mHeight = inpFormat.getInteger(MediaFormat.KEY_HEIGHT);
             }
-            mCodec = MediaCodec.createByCodecName(encoder);
+            mCodec = MediaCodec.createByCodecName(mCodecName);
             for (boolean isAsync : boolStates) {
-                String log = String.format("encoder: %s, input file: %s, mode: %s:: ", encoder,
+                String log = String.format("encoder: %s, input file: %s, mode: %s:: ", mCodecName,
                         mInputFile, (isAsync ? "async" : "sync"));
                 configureCodec(inpFormat, isAsync, true, true);
                 mCodec.start();
@@ -359,7 +352,7 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
                 mOutputBuff.reset();
                 mInfoList.clear();
                 if (mIsCodecInAsyncMode) mCodec.start();
-                if (checkMetrics) validateMetrics(encoder, inpFormat);
+                if (checkMetrics) validateMetrics(mCodecName, inpFormat);
                 doWork(Integer.MAX_VALUE);
                 queueEOS();
                 waitForAllOutputs();
@@ -413,15 +406,13 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testFlushNative() throws IOException {
-        ArrayList<String> listOfEncoders = selectCodecs(mMime, null, null, true);
-        assertFalse("no suitable codecs found for mime: " + mMime, listOfEncoders.isEmpty());
         int colorFormat = -1;
-        for (String encoder : listOfEncoders) {
+        {
             if (!mIsAudio) {
-                colorFormat = findByteBufferColorFormat(encoder, mMime);
+                colorFormat = findByteBufferColorFormat(mCodecName, mMime);
                 assertTrue("no valid color formats received", colorFormat != -1);
             }
-            assertTrue(nativeTestFlush(encoder, mInpPrefix + mInputFile, mMime, mBitrates,
+            assertTrue(nativeTestFlush(mCodecName, mInpPrefix + mInputFile, mMime, mBitrates,
                     mEncParamList1, mEncParamList2, colorFormat));
         }
     }
@@ -436,17 +427,15 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testReconfigure() throws IOException, InterruptedException {
         setUpParams(2);
-        ArrayList<String> listOfEncoders = selectCodecs(mMime, null, null, true);
-        assertFalse("no suitable codecs found for mime: " + mMime, listOfEncoders.isEmpty());
         setUpSource(mInputFile);
         boolean[] boolStates = {true, false};
         OutputManager test = new OutputManager();
-        for (String encoder : listOfEncoders) {
+        {
             boolean saveToMem = false; /* TODO(b/149027258) */
             OutputManager configRef = null;
             if (mFormats.size() > 1) {
                 MediaFormat format = mFormats.get(1);
-                encodeToMemory(mInputFile, encoder, Integer.MAX_VALUE, format, saveToMem);
+                encodeToMemory(mInputFile, mCodecName, Integer.MAX_VALUE, format, saveToMem);
                 configRef = mOutputBuff;
                 if (mIsAudio) {
                     assertTrue("config reference output pts is not strictly increasing",
@@ -457,7 +446,7 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
                 }
             }
             MediaFormat format = mFormats.get(0);
-            encodeToMemory(mInputFile, encoder, Integer.MAX_VALUE, format, saveToMem);
+            encodeToMemory(mInputFile, mCodecName, Integer.MAX_VALUE, format, saveToMem);
             OutputManager ref = mOutputBuff;
             if (mIsAudio) {
                 assertTrue("reference output pts is not strictly increasing",
@@ -467,9 +456,9 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
                         ref.isOutPtsListIdenticalToInpPtsList((mMaxBFrames != 0)));
             }
             mOutputBuff = test;
-            mCodec = MediaCodec.createByCodecName(encoder);
+            mCodec = MediaCodec.createByCodecName(mCodecName);
             for (boolean isAsync : boolStates) {
-                String log = String.format("encoder: %s, input file: %s, mode: %s:: ", encoder,
+                String log = String.format("encoder: %s, input file: %s, mode: %s:: ", mCodecName,
                         mInputFile, (isAsync ? "async" : "sync"));
                 configureCodec(format, isAsync, true, true);
 
@@ -482,7 +471,7 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
                 mCodec.start();
                 doWork(23);
 
-                if (mOutputCount != 0) validateMetrics(encoder, format);
+                if (mOutputCount != 0) validateMetrics(mCodecName, format);
 
                 /* test reconfigure codec in running state */
                 reConfigureCodec(format, isAsync, true, true);
@@ -556,15 +545,13 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testReconfigureNative() throws IOException {
-        ArrayList<String> listOfEncoders = selectCodecs(mMime, null, null, true);
-        assertFalse("no suitable codecs found for mime: " + mMime, listOfEncoders.isEmpty());
         int colorFormat = -1;
-        for (String encoder : listOfEncoders) {
+        {
             if (!mIsAudio) {
-                colorFormat = findByteBufferColorFormat(encoder, mMime);
+                colorFormat = findByteBufferColorFormat(mCodecName, mMime);
                 assertTrue("no valid color formats received", colorFormat != -1);
             }
-            assertTrue(nativeTestReconfigure(encoder, mInpPrefix + mInputFile, mMime, mBitrates,
+            assertTrue(nativeTestReconfigure(mCodecName, mInpPrefix + mInputFile, mMime, mBitrates,
                     mEncParamList1, mEncParamList2, colorFormat));
         }
     }
@@ -576,19 +563,17 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     @Test(timeout = PER_TEST_TIMEOUT_SMALL_TEST_MS)
     public void testOnlyEos() throws IOException, InterruptedException {
         setUpParams(1);
-        ArrayList<String> listOfEncoders = selectCodecs(mMime, null, null, true);
-        assertFalse("no suitable codecs found for mime: " + mMime, listOfEncoders.isEmpty());
         boolean[] boolStates = {true, false};
         OutputManager ref = new OutputManager();
         OutputManager test = new OutputManager();
-        for (String encoder : listOfEncoders) {
-            mCodec = MediaCodec.createByCodecName(encoder);
+        {
+            mCodec = MediaCodec.createByCodecName(mCodecName);
             /* TODO(b/149027258) */
             if (true) mSaveToMem = false;
             else mSaveToMem = true;
             int loopCounter = 0;
             for (boolean isAsync : boolStates) {
-                String log = String.format("encoder: %s, input file: %s, mode: %s:: ", encoder,
+                String log = String.format("encoder: %s, input file: %s, mode: %s:: ", mCodecName,
                         mInputFile, (isAsync ? "async" : "sync"));
                 configureCodec(mFormats.get(0), isAsync, false, true);
                 mOutputBuff = loopCounter == 0 ? ref : test;
@@ -625,16 +610,14 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     @SmallTest
     @Test(timeout = PER_TEST_TIMEOUT_SMALL_TEST_MS)
     public void testOnlyEosNative() throws IOException {
-        ArrayList<String> listOfEncoders = selectCodecs(mMime, null, null, true);
-        assertFalse("no suitable codecs found for mime: " + mMime, listOfEncoders.isEmpty());
         int colorFormat = -1;
-        for (String encoder : listOfEncoders) {
+        {
             if (!mIsAudio) {
-                colorFormat = findByteBufferColorFormat(encoder, mMime);
+                colorFormat = findByteBufferColorFormat(mCodecName, mMime);
                 assertTrue("no valid color formats received", colorFormat != -1);
             }
-            assertTrue(nativeTestOnlyEos(encoder, mMime, mBitrates, mEncParamList1, mEncParamList2,
-                    colorFormat));
+            assertTrue(nativeTestOnlyEos(mCodecName, mMime, mBitrates, mEncParamList1,
+                    mEncParamList2, colorFormat));
         }
     }
 
@@ -648,8 +631,6 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
         // Maximum allowed key frame interval variation from the target value.
         final int MAX_KEYFRAME_INTERVAL_VARIATION = 3;
         setUpParams(1);
-        ArrayList<String> listOfEncoders = selectCodecs(mMime, null, null, true);
-        assertFalse("no suitable codecs found for mime: " + mMime, listOfEncoders.isEmpty());
         boolean[] boolStates = {true, false};
         setUpSource(mInputFile);
         MediaFormat format = mFormats.get(0);
@@ -661,11 +642,11 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
         final int KEY_FRAME_POS = mFrameRate * KEY_FRAME_INTERVAL;
         final int NUM_KEY_FRAME_REQUESTS = 7;
         mOutputBuff = new OutputManager();
-        for (String encoder : listOfEncoders) {
-            mCodec = MediaCodec.createByCodecName(encoder);
+        {
+            mCodec = MediaCodec.createByCodecName(mCodecName);
             for (boolean isAsync : boolStates) {
                 String log = String.format(
-                        "format: %s \n codec: %s, file: %s, mode: %s:: ", format, encoder,
+                        "format: %s \n codec: %s, file: %s, mode: %s:: ", format, mCodecName,
                         mInputFile, (isAsync ? "async" : "sync"));
                 mOutputBuff.reset();
                 mInfoList.clear();
@@ -722,15 +703,13 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testSetForceSyncFrameNative() throws IOException {
         Assume.assumeTrue(!mIsAudio);
-        ArrayList<String> listOfEncoders = selectCodecs(mMime, null, null, true);
-        assertFalse("no suitable codecs found for mime: " + mMime, listOfEncoders.isEmpty());
         int colorFormat = -1;
-        for (String encoder : listOfEncoders) {
+        {
             if (!mIsAudio) {
-                colorFormat = findByteBufferColorFormat(encoder, mMime);
+                colorFormat = findByteBufferColorFormat(mCodecName, mMime);
                 assertTrue("no valid color formats received", colorFormat != -1);
             }
-            assertTrue(nativeTestSetForceSyncFrame(encoder, mInpPrefix + mInputFile, mMime,
+            assertTrue(nativeTestSetForceSyncFrame(mCodecName, mInpPrefix + mInputFile, mMime,
                     mBitrates, mEncParamList1, mEncParamList2, colorFormat));
         }
     }
@@ -743,8 +722,6 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     public void testAdaptiveBitRate() throws IOException, InterruptedException {
         Assume.assumeTrue(!mIsAudio);
         setUpParams(1);
-        ArrayList<String> listOfEncoders = selectCodecs(mMime, null, null, true);
-        assertFalse("no suitable codecs found for mime: " + mMime, listOfEncoders.isEmpty());
         boolean[] boolStates = {true, false};
         setUpSource(mInputFile);
         MediaFormat format = mFormats.get(0);
@@ -755,10 +732,10 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
         final int BR_CHANGE_REQUESTS = 7;
         mOutputBuff = new OutputManager();
         mSaveToMem = true;
-        for (String encoder : listOfEncoders) {
+        {
             /* TODO(b/147574800) */
-            if (encoder.equals("c2.android.hevc.encoder")) continue;
-            mCodec = MediaCodec.createByCodecName(encoder);
+            if (mCodecName.equals("c2.android.hevc.encoder")) return;
+            mCodec = MediaCodec.createByCodecName(mCodecName);
             format.removeKey(MediaFormat.KEY_BITRATE_MODE);
             MediaCodecInfo.EncoderCapabilities cap =
                     mCodec.getCodecInfo().getCapabilitiesForType(mMime).getEncoderCapabilities();
@@ -771,7 +748,7 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
             }
             for (boolean isAsync : boolStates) {
                 String log = String.format(
-                        "format: %s \n codec: %s, file: %s, mode: %s:: ", format, encoder,
+                        "format: %s \n codec: %s, file: %s, mode: %s:: ", format, mCodecName,
                         mInputFile, (isAsync ? "async" : "sync"));
                 mOutputBuff.reset();
                 mInfoList.clear();
@@ -822,18 +799,16 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testAdaptiveBitRateNative() throws IOException {
         Assume.assumeTrue(!mIsAudio);
-        ArrayList<String> listOfEncoders = selectCodecs(mMime, null, null, true);
-        assertFalse("no suitable codecs found for mime: " + mMime, listOfEncoders.isEmpty());
         int colorFormat = -1;
-        for (String encoder : listOfEncoders) {
+        {
             /* TODO(b/147574800) */
-            if (encoder.equals("c2.android.hevc.encoder")) continue;
+            if (mCodecName.equals("c2.android.hevc.encoder")) return;
             if (!mIsAudio) {
-                colorFormat = findByteBufferColorFormat(encoder, mMime);
+                colorFormat = findByteBufferColorFormat(mCodecName, mMime);
                 assertTrue("no valid color formats received", colorFormat != -1);
             }
-            assertTrue(nativeTestAdaptiveBitRate(encoder, mInpPrefix + mInputFile, mMime, mBitrates,
-                    mEncParamList1, mEncParamList2, colorFormat));
+            assertTrue(nativeTestAdaptiveBitRate(mCodecName, mInpPrefix + mInputFile, mMime,
+                    mBitrates, mEncParamList1, mEncParamList2, colorFormat));
         }
     }
 }

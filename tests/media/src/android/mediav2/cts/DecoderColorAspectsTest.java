@@ -42,9 +42,9 @@ public class DecoderColorAspectsTest extends CodecDecoderTestBase {
     private final boolean mCanIgnoreColorBox;
     private ArrayList<String> mCheckESList;
 
-    public DecoderColorAspectsTest(String mime, String testFile, int range, int standard,
-            int transferCurve, boolean canIgnoreColorBox) {
-        super(mime, testFile);
+    public DecoderColorAspectsTest(String decoderName, String mime, String testFile, int range,
+            int standard, int transferCurve, boolean canIgnoreColorBox) {
+        super(decoderName, mime, testFile);
         mColorRange = range;
         mColorStandard = standard;
         mColorTransferCurve = transferCurve;
@@ -58,7 +58,7 @@ public class DecoderColorAspectsTest extends CodecDecoderTestBase {
         mCanIgnoreColorBox = canIgnoreColorBox;
     }
 
-    @Parameterized.Parameters(name = "{index}({0})")
+    @Parameterized.Parameters(name = "{index}({0}_{1}_{3}_{4}_{5})")
     public static Collection<Object[]> input() {
         final boolean isEncoder = false;
         final boolean needAudio = true;
@@ -241,23 +241,21 @@ public class DecoderColorAspectsTest extends CodecDecoderTestBase {
     @SmallTest
     @Test(timeout = PER_TEST_TIMEOUT_SMALL_TEST_MS)
     public void testColorAspects() throws IOException, InterruptedException {
-        CodecTestActivity activity = mActivityRule.getActivity();
-        setUpSurface(activity);
         MediaFormat format = setUpSource(mInpPrefix, mTestFile);
         mExtractor.release();
         ArrayList<MediaFormat> formats = new ArrayList<>();
         formats.add(format);
-        ArrayList<String> listOfDecoders = selectCodecs(mMime, formats, null, false);
-        Assume.assumeFalse("no suitable codecs found for : " + format.toString(),
-                listOfDecoders.isEmpty());
+        Assume.assumeTrue(areFormatsSupported(mCodecName, mMime, formats));
+        CodecTestActivity activity = mActivityRule.getActivity();
+        setUpSurface(activity);
         activity.setScreenParams(getWidth(format), getHeight(format), true);
-        for (String decoder : listOfDecoders) {
-            validateColorAspects(decoder, mInpPrefix, mTestFile, mColorRange, mColorStandard,
+        {
+            validateColorAspects(mCodecName, mInpPrefix, mTestFile, mColorRange, mColorStandard,
                     mColorTransferCurve, false);
             // If color metadata can also be signalled via elementary stream, then verify if the
             // elementary stream contains color aspects as expected
             if (mCanIgnoreColorBox && mCheckESList.contains(mMime)) {
-                validateColorAspects(decoder, mInpPrefix, mTestFile, mColorRange,
+                validateColorAspects(mCodecName, mInpPrefix, mTestFile, mColorRange,
                         mColorStandard, mColorTransferCurve, true);
             }
         }
