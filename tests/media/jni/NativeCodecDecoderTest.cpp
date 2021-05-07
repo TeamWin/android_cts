@@ -388,10 +388,12 @@ bool CodecDecoderTest::testSimpleDecode(const char* decoder, const char* testFil
     }
     if (mSaveToMem && refFile && rmsError >= 0) {
         setUpAudioReference(refFile);
-        float error = ref->getRmsError(mRefData, mRefLength);
-        if (error > rmsError) {
+        float currError = ref->getRmsError(mRefData, mRefLength);
+        float errMargin = rmsError * kRmsErrorTolerance;
+        if (currError > errMargin) {
             isPass = false;
-            ALOGE("rms error too high for file %s, act/exp: %f/%f", testFile, error, rmsError);
+            ALOGE("rms error too high for file %s, ref/exp/got: %f/%f/%f", testFile, rmsError,
+                  errMargin, currError);
         }
     }
     return isPass;
