@@ -23,6 +23,7 @@ import android.content.res.Resources;
 import android.media.AudioDeviceInfo;
 import android.media.AudioFormat;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.TextView;
@@ -176,8 +177,6 @@ public class ProAudioActivity
                 usbOK &&
                 hdmiOK);
 
-        recordTestResults();
-
         getPassButton().setEnabled(hasPassed);
         return hasPassed;
     }
@@ -250,7 +249,12 @@ public class ProAudioActivity
         return setTestNameSuffix(sCurrentDisplayMode, getClass().getName());
     }
 
-    protected void recordTestResults() {
+    //
+    // PassFailButtons Overrides
+    //
+    @Override
+    public void recordTestResults() {
+
         CtsVerifierReportLog reportLog = getReportLog();
         reportLog.addValue(
                 KEY_CLAIMS_PRO,
