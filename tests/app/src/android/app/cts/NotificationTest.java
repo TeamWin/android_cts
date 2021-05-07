@@ -37,6 +37,7 @@ import android.graphics.Color;
 import android.graphics.drawable.Icon;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.os.StrictMode;
@@ -924,6 +925,49 @@ public class NotificationTest extends AndroidTestCase {
                 mNotification.extras.getCharSequence(
                         Notification.EXTRA_PICTURE_CONTENT_DESCRIPTION);
         assertEquals(contentDescription, notificationContentDescription);
+    }
+
+    public void testHasImage_messagingStyle() {
+        Notification.MessagingStyle messagingStyle = new Notification.MessagingStyle("self name")
+                .addMessage(new Message("image", 0, "sender")
+                        .setData("image/png", Uri.parse("http://example.com/image.png")));
+
+        mNotification = new Notification.Builder(mContext, CHANNEL.getId())
+                .setStyle(messagingStyle)
+                .build();
+
+        assertTrue(mNotification.hasImage());
+    }
+
+    public void testHasImage_largeIcon() {
+        Bitmap b = Bitmap.createBitmap(50, 25, Bitmap.Config.ARGB_8888);
+
+        mNotification = new Notification.Builder(mContext, CHANNEL.getId())
+                .setLargeIcon(b)
+                .build();
+
+        assertTrue(mNotification.hasImage());
+    }
+
+    public void testHasImage_backgroundImage() {
+        final Uri backgroundImage = Uri.parse("content://com.example/background");
+
+        Bundle extras = new Bundle();
+        extras.putString(Notification.EXTRA_BACKGROUND_IMAGE_URI, backgroundImage.toString());
+
+        mNotification = new Notification.Builder(mContext, CHANNEL.getId())
+                .addExtras(extras)
+                .build();
+
+        assertTrue(mNotification.hasImage());
+    }
+
+    public void testHasImage_smallIcon() {
+        mNotification = new Notification.Builder(mContext, CHANNEL.getId())
+                    .setSmallIcon(1)
+                    .build();
+
+        assertFalse(mNotification.hasImage());
     }
 
     private static void assertMessageEquals(
