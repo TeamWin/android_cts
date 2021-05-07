@@ -88,9 +88,10 @@ public final class HdmiCecTvPowerToggleTest extends BaseHdmiCecCtsTest {
             hdmiCecClient.checkExpectedOutput(LogicalAddress.TV, CecOperand.GIVE_POWER_STATUS);
             hdmiCecClient.sendCecMessage(LogicalAddress.TV, PLAYBACK_DEVICE,
                     CecOperand.REPORT_POWER_STATUS, CecMessage.formatParams(OFF));
+            TimeUnit.SECONDS.sleep(HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS);
             hdmiCecClient.sendCecMessage(LogicalAddress.TV, LogicalAddress.BROADCAST,
                     CecOperand.ACTIVE_SOURCE, CecMessage.formatParams("0000"));
-            Thread.sleep(TIMEOUT_SAFETY_MS);
+            TimeUnit.SECONDS.sleep(HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS);
             hdmiCecClient.clearClientOutput();
             device.executeShellCommand("input keyevent KEYCODE_TV_POWER");
             hdmiCecClient.checkExpectedOutput(LogicalAddress.TV, CecOperand.GIVE_POWER_STATUS);
@@ -121,6 +122,7 @@ public final class HdmiCecTvPowerToggleTest extends BaseHdmiCecCtsTest {
             hdmiCecClient.checkExpectedOutput(LogicalAddress.TV, CecOperand.GIVE_POWER_STATUS);
             hdmiCecClient.sendCecMessage(LogicalAddress.TV, PLAYBACK_DEVICE,
                     CecOperand.REPORT_POWER_STATUS, CecMessage.formatParams(OFF));
+            TimeUnit.SECONDS.sleep(HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS);
             device.executeShellCommand("input keyevent KEYCODE_HOME");
             TimeUnit.SECONDS.sleep(HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS);
             hdmiCecClient.clearClientOutput();
@@ -153,6 +155,7 @@ public final class HdmiCecTvPowerToggleTest extends BaseHdmiCecCtsTest {
             hdmiCecClient.checkExpectedOutput(LogicalAddress.TV, CecOperand.GIVE_POWER_STATUS);
             hdmiCecClient.sendCecMessage(LogicalAddress.TV, PLAYBACK_DEVICE,
                     CecOperand.REPORT_POWER_STATUS, CecMessage.formatParams(OFF));
+            TimeUnit.SECONDS.sleep(HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS);
             device.executeShellCommand("input keyevent KEYCODE_SLEEP");
             TimeUnit.SECONDS.sleep(HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS);
             hdmiCecClient.clearClientOutput();
@@ -185,6 +188,7 @@ public final class HdmiCecTvPowerToggleTest extends BaseHdmiCecCtsTest {
             hdmiCecClient.checkExpectedOutput(LogicalAddress.TV, CecOperand.GIVE_POWER_STATUS);
             hdmiCecClient.sendCecMessage(LogicalAddress.TV, PLAYBACK_DEVICE,
                     CecOperand.REPORT_POWER_STATUS, CecMessage.formatParams(OFF));
+            TimeUnit.SECONDS.sleep(HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS);
             device.executeShellCommand("input keyevent KEYCODE_SLEEP");
             TimeUnit.SECONDS.sleep(HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS);
             hdmiCecClient.clearClientOutput();
