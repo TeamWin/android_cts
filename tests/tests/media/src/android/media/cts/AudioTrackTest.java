@@ -3166,6 +3166,52 @@ public class AudioTrackTest {
         }
     }
 
+    @Test
+    public void testImmersiveChannelIndex() throws Exception {
+        if (!hasAudioOutput()) {
+            return;
+        }
+
+        final String TEST_NAME = "testImmersiveChannelIndex";
+        final int TEST_FORMAT_ARRAY[] = {
+                AudioFormat.ENCODING_PCM_FLOAT,
+        };
+        final int TEST_SR_ARRAY[] = {
+                48000,  // do not set too high - costly in memory.
+        };
+        final int MAX_CHANNEL_BIT = 1 << (AudioSystem.FCC_24 - 1); // highest allowed channel.
+        final int TEST_CONF_ARRAY[] = {
+                (1 << AudioSystem.OUT_CHANNEL_COUNT_MAX) - 1,
+                MAX_CHANNEL_BIT,      // likely silent - no physical device on top channel.
+                MAX_CHANNEL_BIT | 1,  // first channel will likely have physical device.
+        };
+        final int TEST_WRITE_MODE_ARRAY[] = {
+                AudioTrack.WRITE_BLOCKING,
+                AudioTrack.WRITE_NON_BLOCKING,
+        };
+        final double TEST_SWEEP = 0;
+        final int TEST_TRANSFER_MODE = AudioTrack.MODE_STREAM;
+        final int TEST_STREAM_TYPE = AudioManager.STREAM_MUSIC;
+
+        double frequency = 200; // frequency changes for each test
+        for (int TEST_FORMAT : TEST_FORMAT_ARRAY) {
+            for (int TEST_CONF : TEST_CONF_ARRAY) {
+                for (int TEST_SR : TEST_SR_ARRAY) {
+                    for (int TEST_WRITE_MODE : TEST_WRITE_MODE_ARRAY) {
+                        for (int useDirect = 0; useDirect < 2; ++useDirect) {
+                            playOnceStreamByteBuffer(
+                                    TEST_NAME, frequency, TEST_SWEEP,
+                                    TEST_STREAM_TYPE, TEST_SR, TEST_CONF, TEST_FORMAT,
+                                    TEST_TRANSFER_MODE, TEST_WRITE_MODE,
+                                    true /* useChannelIndex */, useDirect != 0);
+                            frequency += 30; // increment test tone frequency
+                        }
+                    }
+                }
+            }
+        }
+    }
+
 /* Do not run in JB-MR1. will be re-opened in the next platform release.
     public void testResourceLeakage() throws Exception {
         final int BUFFER_SIZE = 600 * 1024;
