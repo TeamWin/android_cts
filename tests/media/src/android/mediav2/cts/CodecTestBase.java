@@ -35,7 +35,7 @@ import androidx.annotation.NonNull;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.Assert;
-import org.junit.Assume;
+import org.junit.Before;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -522,6 +522,7 @@ abstract class CodecTestBase {
     // Maintain Timeouts in sync with their counterpart in NativeMediaCommon.h
     static final long Q_DEQ_TIMEOUT_US = 5000; // block at most 5ms while looking for io buffers
     static final int RETRY_LIMIT = 100; // max poll counter before test aborts and returns error
+    static final String INVALID_CODEC = "unknown.codec_";
     static final String mInpPrefix = WorkDir.getMediaDirString();
     static final PackageManager pm =
             InstrumentationRegistry.getInstrumentation().getContext().getPackageManager();
@@ -543,6 +544,7 @@ abstract class CodecTestBase {
     boolean mSaveToMem;
     OutputManager mOutputBuff;
 
+    String mCodecName;
     MediaCodec mCodec;
     Surface mSurface;
 
@@ -611,14 +613,38 @@ abstract class CodecTestBase {
     }
 
     static boolean hasDecoder(String mime) {
-        return CodecTestBase.selectCodecs(mime, null, null, false, false).size() != 0;
+        return CodecTestBase.selectCodecs(mime, null, null, false).size() != 0;
     }
 
     static boolean hasEncoder(String mime) {
-        return CodecTestBase.selectCodecs(mime, null, null, true, false).size() != 0;
+        return CodecTestBase.selectCodecs(mime, null, null, true).size() != 0;
     }
 
-    static ArrayList<String> prepareRequiredArgsList(boolean isEncoder, boolean needAudio,
+    static boolean isFeatureSupported(String name, String mime, String feature) throws IOException {
+        MediaCodec codec = MediaCodec.createByCodecName(name);
+        MediaCodecInfo.CodecCapabilities codecCapabilities =
+                codec.getCodecInfo().getCapabilitiesForType(mime);
+        boolean isSupported = codecCapabilities.isFeatureSupported(feature);
+        codec.release();
+        return isSupported;
+    }
+
+    static boolean areFormatsSupported(String name, String mime, ArrayList<MediaFormat> formats)
+            throws IOException {
+        MediaCodec codec = MediaCodec.createByCodecName(name);
+        MediaCodecInfo.CodecCapabilities codecCapabilities =
+                codec.getCodecInfo().getCapabilitiesForType(mime);
+        boolean isSupported = true;
+        if (formats != null) {
+            for (int i = 0; i < formats.size() && isSupported; i++) {
+                isSupported = codecCapabilities.isFormatSupported(formats.get(i));
+            }
+        }
+        codec.release();
+        return isSupported;
+    }
+
+    static ArrayList<String> compileRequiredMimeList(boolean isEncoder, boolean needAudio,
             boolean needVideo) {
         Set<String> list = new HashSet<>();
         if (!isEncoder) {
@@ -686,12 +712,12 @@ abstract class CodecTestBase {
         return new ArrayList<>(list);
     }
 
-    static List<Object[]> prepareParamList(List<Object[]> exhaustiveArgsList, boolean isEncoder,
-            boolean needAudio, boolean needVideo, boolean mustTestRequiredArgsList) {
-        ArrayList<String> cddRequiredMimeList =
-                prepareRequiredArgsList(isEncoder, needAudio, needVideo);
+    static ArrayList<String> compileCompleteTestMimeList(boolean isEncoder, boolean needAudio,
+            boolean needVideo) {
         ArrayList<String> mimes = new ArrayList<>();
         if (mimeSelKeys == null) {
+            ArrayList<String> cddRequiredMimeList =
+                    compileRequiredMimeList(isEncoder, needAudio, needVideo);
             MediaCodecList codecList = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
             MediaCodecInfo[] codecInfos = codecList.getCodecInfos();
             for (MediaCodecInfo codecInfo : codecInfos) {
@@ -732,20 +758,56 @@ abstract class CodecTestBase {
                 if (mimeSelKeys.contains(key) && !mimes.contains(value)) mimes.add(value);
             }
         }
+        return mimes;
+    }
+
+    static List<Object[]> prepareParamList(List<Object[]> exhaustiveArgsList, boolean isEncoder,
+            boolean needAudio, boolean needVideo, boolean mustTestAllCodecs) {
+        ArrayList<String> mimes = compileCompleteTestMimeList(isEncoder, needAudio, needVideo);
         final List<Object[]> argsList = new ArrayList<>();
+        int argLength = exhaustiveArgsList.get(0).length;
         for (String mime : mimes) {
+            ArrayList<String> totalListOfCodecs = selectCodecs(mime, null, null, isEncoder);
+            ArrayList<String> listOfCodecs = new ArrayList<>();
+            if (codecPrefix != null) {
+                for (String codec : totalListOfCodecs) {
+                    MediaCodec comp = null;
+                    try {
+                        comp = MediaCodec.createByCodecName(codec);
+                        if (!comp.getCodecInfo().getName().startsWith(codecPrefix)) {
+                            listOfCodecs.add(codec);
+                        }
+                    } catch (IOException ignored) {
+                    } finally {
+                        if (comp != null) comp.release();
+                    }
+                }
+            } else {
+                listOfCodecs = totalListOfCodecs;
+            }
+            if (mustTestAllCodecs && listOfCodecs.size() == 0 && codecPrefix == null) {
+                listOfCodecs.add(INVALID_CODEC + mime);
+            }
             boolean miss = true;
             for (Object[] arg : exhaustiveArgsList) {
                 if (mime.equals(arg[0])) {
-                    argsList.add(arg);
+                    for (String codec : listOfCodecs) {
+                        Object[] arg_ = new Object[argLength + 1];
+                        arg_[0] = codec;
+                        System.arraycopy(arg, 0, arg_, 1, argLength);
+                        argsList.add(arg_);
+                    }
                     miss = false;
                 }
             }
-            if (miss && mustTestRequiredArgsList) {
-                if (cddRequiredMimeList.contains(mime)) {
-                    fail("no test vectors for required mimetype " + mime);
+            if (miss && mustTestAllCodecs) {
+                for (String codec : listOfCodecs) {
+                    Object[] arg_ = new Object[argLength + 1];
+                    arg_[0] = codec;
+                    arg_[1] = mime;
+                    System.arraycopy(exhaustiveArgsList.get(0), 1, arg_, 2, argLength - 1);
+                    argsList.add(arg_);
                 }
-                Log.w(LOG_TAG, "no test vectors available for optional mime type " + mime);
             }
         }
         return argsList;
@@ -911,22 +973,13 @@ abstract class CodecTestBase {
     }
 
     static ArrayList<String> selectCodecs(String mime, ArrayList<MediaFormat> formats,
-                                          String[] features, boolean isEncoder) {
-        return selectCodecs(mime, formats, features, isEncoder, true);
-    }
-
-    static ArrayList<String> selectCodecs(String mime, ArrayList<MediaFormat> formats,
-            String[] features, boolean isEncoder, boolean enableCodecFilter) {
+            String[] features, boolean isEncoder) {
         MediaCodecList codecList = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
         MediaCodecInfo[] codecInfos = codecList.getCodecInfos();
         ArrayList<String> listOfCodecs = new ArrayList<>();
         for (MediaCodecInfo codecInfo : codecInfos) {
             if (codecInfo.isEncoder() != isEncoder) continue;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && codecInfo.isAlias()) continue;
-            if (enableCodecFilter && codecPrefix != null &&
-                    !codecInfo.getName().startsWith(codecPrefix)) {
-                continue;
-            }
             String[] types = codecInfo.getSupportedTypes();
             for (String type : types) {
                 if (type.equalsIgnoreCase(mime)) {
@@ -952,10 +1005,6 @@ abstract class CodecTestBase {
                     if (isOk) listOfCodecs.add(codecInfo.getName());
                 }
             }
-        }
-        if (enableCodecFilter && codecPrefix != null) {
-            Assume.assumeFalse("Skipping test because of --codec-prefix " + codecPrefix,
-                    listOfCodecs.isEmpty());
         }
         return listOfCodecs;
     }
@@ -1047,6 +1096,13 @@ abstract class CodecTestBase {
             mSurface = null;
         }
     }
+
+    @Before
+    public void isCodecNameValid() {
+        if (mCodecName != null && mCodecName.startsWith(INVALID_CODEC)) {
+            fail("no valid component available for current test ");
+        }
+    }
 }
 
 class CodecDecoderTestBase extends CodecTestBase {
@@ -1063,7 +1119,8 @@ class CodecDecoderTestBase extends CodecTestBase {
 
     MediaExtractor mExtractor;
 
-    CodecDecoderTestBase(String mime, String testFile) {
+    CodecDecoderTestBase(String codecName, String mime, String testFile) {
+        mCodecName = codecName;
         mMime = mime;
         mTestFile = testFile;
         mAsyncHandle = new CodecAsyncHandler();
@@ -1346,8 +1403,10 @@ class CodecEncoderTestBase extends CodecTestBase {
     int mChannels;
     int mSampleRate;
 
-    CodecEncoderTestBase(String mime, int[] bitrates, int[] encoderInfo1, int[] encoderInfo2) {
+    CodecEncoderTestBase(String encoder, String mime, int[] bitrates, int[] encoderInfo1,
+            int[] encoderInfo2) {
         mMime = mime;
+        mCodecName = encoder;
         mBitrates = bitrates;
         mEncParamList1 = encoderInfo1;
         mEncParamList2 = encoderInfo2;
@@ -1654,7 +1713,7 @@ class CodecEncoderTestBase extends CodecTestBase {
             ByteBuffer elementaryStream, ArrayList<MediaCodec.BufferInfo> infos)
             throws IOException, InterruptedException {
         String mime = format.getString(MediaFormat.KEY_MIME);
-        CodecDecoderTestBase cdtb = new CodecDecoderTestBase(mime, null);
+        CodecDecoderTestBase cdtb = new CodecDecoderTestBase(decoder, mime, null);
         cdtb.mOutputBuff = new OutputManager();
         cdtb.mSaveToMem = true;
         cdtb.mCodec = MediaCodec.createByCodecName(decoder);

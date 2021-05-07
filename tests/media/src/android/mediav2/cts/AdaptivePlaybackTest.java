@@ -24,6 +24,7 @@ import android.media.MediaFormat;
 import androidx.test.filters.LargeTest;
 import androidx.test.rule.ActivityTestRule;
 
+import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -41,15 +42,13 @@ import static org.junit.Assert.fail;
 
 @RunWith(Parameterized.class)
 public class AdaptivePlaybackTest extends CodecDecoderTestBase {
-    private final String mMime;
     private final String[] mSrcFiles;
     private final int mSupport;
 
     private long mMaxPts = 0;
 
-    public AdaptivePlaybackTest(String mime, String[] srcFiles, int support) {
-        super(mime, null);
-        mMime = mime;
+    public AdaptivePlaybackTest(String decoder, String mime, String[] srcFiles, int support) {
+        super(decoder, mime, null);
         mSrcFiles = srcFiles;
         mSupport = support;
     }
@@ -58,7 +57,7 @@ public class AdaptivePlaybackTest extends CodecDecoderTestBase {
     public ActivityTestRule<CodecTestActivity> mActivityRule =
             new ActivityTestRule<>(CodecTestActivity.class);
 
-    @Parameterized.Parameters(name = "{index}({0})")
+    @Parameterized.Parameters(name = "{index}({0}_{1})")
     public static Collection<Object[]> input() {
         final boolean isEncoder = false;
         final boolean needAudio = false;
@@ -171,24 +170,28 @@ public class AdaptivePlaybackTest extends CodecDecoderTestBase {
     @LargeTest
     @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testAdaptivePlayback() throws IOException, InterruptedException {
-        CodecTestActivity activity = mActivityRule.getActivity();
-        setUpSurface(activity);
+        Assume.assumeTrue(isFeatureSupported(mCodecName, mMime,
+                MediaCodecInfo.CodecCapabilities.FEATURE_AdaptivePlayback));
         ArrayList<MediaFormat> formats = new ArrayList<>();
-        if (mSupport != CODEC_ALL) {
-            formats = new ArrayList<>();
-            for (String file : mSrcFiles) {
-                formats.add(setUpSource(file));
-                mExtractor.release();
-            }
+        for (String file : mSrcFiles) {
+            formats.add(setUpSource(file));
+            mExtractor.release();
         }
-        ArrayList<String> listOfDecoders = selectCodecs(mMime, formats,
-                new String[]{MediaCodecInfo.CodecCapabilities.FEATURE_AdaptivePlayback}, false);
-        if (listOfDecoders.isEmpty()) {
-            tearDownSurface();
-            if (mSupport == CODEC_OPTIONAL) return;
-            else fail("no suitable codecs found for mime: " + mMime);
+        if (!areFormatsSupported(mCodecName, mMime, formats)) {
+            if (mSupport == CODEC_ALL) {
+                fail("format(s) not supported by component: " + mCodecName + " for mime : " +
+                        mMime);
+            }
+            if (mSupport != CODEC_OPTIONAL && selectCodecs(mMime, formats,
+                    new String[]{MediaCodecInfo.CodecCapabilities.FEATURE_AdaptivePlayback}, false)
+                    .isEmpty()) {
+                fail("format(s) not supported by any component for mime : " + mMime);
+            }
+            return;
         }
         formats.clear();
+        CodecTestActivity activity = mActivityRule.getActivity();
+        setUpSurface(activity);
         int totalSize = 0;
         for (String srcFile : mSrcFiles) {
             File file = new File(mInpPrefix + srcFile);
@@ -207,8 +210,8 @@ public class AdaptivePlaybackTest extends CodecDecoderTestBase {
         }
         boolean[] boolStates = {false, true};
         mOutputBuff = new OutputManager();
-        for (String decoder : listOfDecoders) {
-            mCodec = MediaCodec.createByCodecName(decoder);
+        {
+            mCodec = MediaCodec.createByCodecName(mCodecName);
             MediaFormat format = formats.get(0);
             activity.setScreenParams(getWidth(format), getHeight(format), true);
             for (boolean isAsync : boolStates) {
