@@ -992,7 +992,7 @@ public class PackageManagerShellCommandIncrementalTest {
                         atraceDumpDelayMs));
     }
 
-    private boolean isAppInstalled(String packageName) throws IOException {
+    static boolean isAppInstalled(String packageName) throws IOException {
         final String commandResult = executeShellCommand("pm list packages");
         final int prefixLength = "package:".length();
         return Arrays.stream(commandResult.split("\\r?\\n"))
@@ -1092,7 +1092,7 @@ public class PackageManagerShellCommandIncrementalTest {
         return readTime;
     }
 
-    private String uninstallPackageSilently(String packageName) throws IOException {
+    static String uninstallPackageSilently(String packageName) throws IOException {
         return executeShellCommand("pm uninstall " + packageName);
     }
 
@@ -1100,7 +1100,7 @@ public class PackageManagerShellCommandIncrementalTest {
         boolean await() throws Exception;
     }
 
-    private static String executeShellCommand(String command) throws IOException {
+    static String executeShellCommand(String command) throws IOException {
         try (InputStream inputStream = executeShellCommandStream(command)) {
             return readFullStream(inputStream);
         }
@@ -1143,18 +1143,18 @@ public class PackageManagerShellCommandIncrementalTest {
         return new ParcelFileDescriptor.AutoCloseInputStream(stdout);
     }
 
-    private static String readFullStream(InputStream inputStream, long expected)
+    static String readFullStream(InputStream inputStream, long expected)
             throws IOException {
         ByteArrayOutputStream result = new ByteArrayOutputStream();
         writeFullStream(inputStream, result, expected);
         return result.toString("UTF-8");
     }
 
-    private static String readFullStream(InputStream inputStream) throws IOException {
+    static String readFullStream(InputStream inputStream) throws IOException {
         return readFullStream(inputStream, -1);
     }
 
-    private static void writeFullStream(InputStream inputStream, OutputStream outputStream,
+    static void writeFullStream(InputStream inputStream, OutputStream outputStream,
             long expected)
             throws IOException {
         final byte[] buffer = new byte[1024];
