@@ -32,6 +32,7 @@ import android.database.Cursor;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -110,6 +111,18 @@ public class PassFailButtons {
          */
         void setTestResultAndFinish(boolean passed);
 
+        /**
+         * @return A unique name (derived from the test class name) to serve as a section
+         * header in the CtsVerifierReportLog file.
+         */
+        String getReportSectionName();
+
+        /**
+         * Test subclasses can override this to record their CtsVerifierReportLogs.
+         * This is called when the test is exited
+         */
+        void recordTestResults();
+
         /** @return A {@link ReportLog} that is used to record test metric data. */
         CtsVerifierReportLog getReportLog();
 
@@ -117,7 +130,7 @@ public class PassFailButtons {
          * @return A {@link TestResultHistoryCollection} that is used to record test execution time.
          */
         TestResultHistoryCollection getHistoryCollection();
-    }
+    }   /* class PassFailButtons.PassFailActivity */
 
     public static class Activity extends android.app.Activity implements PassFailActivity {
         private WakeLock mWakeLock;
@@ -125,7 +138,7 @@ public class PassFailButtons {
         private final TestResultHistoryCollection mHistoryCollection;
 
         public Activity() {
-            this.mReportLog = new CtsVerifierReportLog(REPORT_LOG_NAME, getTestId());
+            this.mReportLog = new CtsVerifierReportLog(REPORT_LOG_NAME, getReportSectionName());
             this.mHistoryCollection = new TestResultHistoryCollection();
         }
 
@@ -190,6 +203,11 @@ public class PassFailButtons {
         }
 
         @Override
+        public final String getReportSectionName() {
+            return setTestNameSuffix(sCurrentDisplayMode, getClass().getName());
+        }
+
+        @Override
         public TestResultHistoryCollection getHistoryCollection() { return mHistoryCollection; }
 
         @Override
@@ -210,7 +228,11 @@ public class PassFailButtons {
             return super.onOptionsItemSelected(item);
         }
 
-    }
+        @Override
+        public void recordTestResults() {
+            // default - NOP
+        }
+    }   /* class PassFailButtons.Activity */
 
     public static class ListActivity extends android.app.ListActivity implements PassFailActivity {
 
@@ -218,7 +240,7 @@ public class PassFailButtons {
         private final TestResultHistoryCollection mHistoryCollection;
 
         public ListActivity() {
-            this.mReportLog = new CtsVerifierReportLog(REPORT_LOG_NAME, getTestId());
+            this.mReportLog = new CtsVerifierReportLog(REPORT_LOG_NAME, getReportSectionName());
             this.mHistoryCollection = new TestResultHistoryCollection();
         }
 
@@ -265,8 +287,12 @@ public class PassFailButtons {
         }
 
         @Override
-        public TestResultHistoryCollection getHistoryCollection() { return mHistoryCollection; }
+        public final String getReportSectionName() {
+            return setTestNameSuffix(sCurrentDisplayMode, getClass().getName());
+        }
 
+        @Override
+        public TestResultHistoryCollection getHistoryCollection() { return mHistoryCollection; }
 
         @Override
         protected void onCreate(Bundle savedInstanceState) {
@@ -285,7 +311,12 @@ public class PassFailButtons {
             }
             return super.onOptionsItemSelected(item);
         }
-    }
+
+        @Override
+        public void recordTestResults() {
+            // default - NOP
+        }
+    } // class PassFailButtons.ListActivity
 
     public static class TestListActivity extends AbstractTestListActivity
             implements PassFailActivity {
@@ -294,9 +325,10 @@ public class PassFailButtons {
 
         public TestListActivity() {
             // TODO(b/186555602): temporary hack^H^H^H^H workaround to fix crash
-            if (true) this.mReportLog = new CtsVerifierReportLog(REPORT_LOG_NAME, "42"); else
+            // This DOES NOT in fact fix that bug.
+            // if (true) this.mReportLog = new CtsVerifierReportLog(REPORT_LOG_NAME, "42"); else
 
-            this.mReportLog = new CtsVerifierReportLog(REPORT_LOG_NAME, getTestId());
+            this.mReportLog = new CtsVerifierReportLog(REPORT_LOG_NAME, getReportSectionName());
         }
 
         @Override
@@ -341,6 +373,11 @@ public class PassFailButtons {
             return mReportLog;
         }
 
+        @Override
+        public final String getReportSectionName() {
+            return setTestNameSuffix(sCurrentDisplayMode, getClass().getName());
+        }
+
         /**
          * Get existing test history to aggregate.
          */
@@ -359,7 +396,6 @@ public class PassFailButtons {
             getPassButton().setEnabled(mAdapter.allTestsPassed());
         }
 
-
         @Override
         protected void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
@@ -377,7 +413,12 @@ public class PassFailButtons {
             }
             return super.onOptionsItemSelected(item);
         }
-    }
+
+        @Override
+        public void recordTestResults() {
+            // default - NOP
+        }
+    } // class PassFailButtons.TestListActivity
 
     protected static <T extends android.app.Activity & PassFailActivity>
             void setPassFailClickListeners(final T activity) {
@@ -408,7 +449,7 @@ public class PassFailButtons {
                 return true;
             }
         });
-    }
+    } // class PassFailButtons.<T extends android.app.Activity & PassFailActivity>
 
     protected static void setInfo(final android.app.Activity activity, final int titleId,
             final int messageId, final int viewId) {
@@ -513,6 +554,7 @@ public class PassFailButtons {
     protected static void setTestResultAndFinish(android.app.Activity activity, String testId,
             String testDetails, ReportLog reportLog, TestResultHistoryCollection historyCollection,
             View target) {
+
         boolean passed;
         if (target.getId() == R.id.pass_button) {
             passed = true;
@@ -522,10 +564,8 @@ public class PassFailButtons {
             throw new IllegalArgumentException("Unknown id: " + target.getId());
         }
 
-        // Give tests a chance to handle completion
-        //TODO(b/186561084) Need to investigate why activity might not be a PassFailButtons.Activity here.
-        // Without this line we won't write the ReportLog for CtsVerifier tests.
-        //((PassFailButtons.Activity) activity).setTestResultAndFinish(passed);
+        // Let test classes record their CTSVerifierReportLogs
+        ((PassFailActivity) activity).recordTestResults();
 
         setTestResultAndFinishHelper(activity, testId, testDetails, passed, reportLog, historyCollection);
     }
@@ -547,4 +587,4 @@ public class PassFailButtons {
         return (ImageButton) activity.findViewById(R.id.pass_button);
     }
 
-}
+} // class PassFailButtons
