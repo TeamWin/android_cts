@@ -165,11 +165,11 @@ public final class Processor extends AbstractProcessor {
             if (method.getAnnotation(RemoteDpcAutomaticAdmin.class) != null) {
                 // We just redirect to the other method, adding in the component
                 if (parametersString.isEmpty()) {
-                    methodCall = CodeBlock.of("$L($T.DPC_COMPONENT);", method.getSimpleName(),
-                            CONFIGURATION_CLASSNAME);
+                    methodCall = CodeBlock.of("$L($T.REMOTE_DPC_COMPONENT_NAME);",
+                            method.getSimpleName(), CONFIGURATION_CLASSNAME);
                 } else {
-                    methodCall = CodeBlock.of("$L($T.DPC_COMPONENT, $L);", method.getSimpleName(),
-                            CONFIGURATION_CLASSNAME, parametersString);
+                    methodCall = CodeBlock.of("$L($T.REMOTE_DPC_COMPONENT_NAME, $L);",
+                            method.getSimpleName(), CONFIGURATION_CLASSNAME, parametersString);
                 }
             } else {
                 // We call through to the wrapped manager class

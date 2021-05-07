@@ -18,17 +18,23 @@ package android.os.cts
 
 import android.app.Instrumentation
 import android.content.Context
+import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.os.Build
+import android.net.Uri
 import android.provider.DeviceConfig.NAMESPACE_APP_HIBERNATION
+import android.provider.Settings
 import android.support.test.uiautomator.By
 import android.support.test.uiautomator.BySelector
 import android.support.test.uiautomator.UiObject2
+import android.support.test.uiautomator.UiScrollable
+import android.support.test.uiautomator.UiSelector
 import androidx.test.InstrumentationRegistry
 import androidx.test.filters.SdkSuppress
 import androidx.test.runner.AndroidJUnit4
 import com.android.compatibility.common.util.SystemUtil.runShellCommandOrThrow
+import com.android.compatibility.common.util.UiAutomatorUtils
 import org.hamcrest.CoreMatchers
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertThat
@@ -46,6 +52,9 @@ class AppHibernationIntegrationTest {
     companion object {
         const val LOG_TAG = "AppHibernationIntegrationTest"
         const val WAIT_TIME_MS = 1000L
+        const val MAX_SCROLL_ATTEMPTS = 3
+
+        const val SETTINGS_PACKAGE = "com.android.settings"
     }
     private val context: Context = InstrumentationRegistry.getTargetContext()
     private val instrumentation: Instrumentation = InstrumentationRegistry.getInstrumentation()
@@ -120,6 +129,30 @@ class AppHibernationIntegrationTest {
                     packageManager.getApplicationInfo(APK_PACKAGE_NAME_R_APP, 0 /* flags */)
                 val stopped = ((ai.flags and ApplicationInfo.FLAG_STOPPED) != 0)
                 assertFalse(stopped)
+            }
+        }
+    }
+
+    @Test
+    fun testAppInfo_RemovePermissionsAndFreeUpSpaceToggleExists() {
+        withDeviceConfig(NAMESPACE_APP_HIBERNATION, "app_hibernation_enabled", "true") {
+            withApp(APK_PATH_S_APP, APK_PACKAGE_NAME_S_APP) {
+                // Open app info
+                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                val uri = Uri.fromParts("package", APK_PACKAGE_NAME_S_APP, null /* fragment */)
+                intent.data = uri
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                context.startActivity(intent)
+
+                waitForIdle()
+                UiAutomatorUtils.getUiDevice()
+
+                val packageManager = context.packageManager
+                val res = packageManager.getResourcesForApplication(SETTINGS_PACKAGE)
+                val title = res.getString(
+                    res.getIdentifier("unused_apps_switch", "string", SETTINGS_PACKAGE))
+                assertTrue("Remove permissions and free up space toggle not found",
+                    UiScrollable(UiSelector().scrollable(true)).scrollTextIntoView(title))
             }
         }
     }

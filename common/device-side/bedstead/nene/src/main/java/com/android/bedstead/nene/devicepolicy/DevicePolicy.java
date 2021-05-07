@@ -24,6 +24,8 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 
+import androidx.annotation.Nullable;
+
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.exceptions.AdbParseException;
@@ -97,10 +99,6 @@ public final class DevicePolicy {
                         "Could not set profile owner for user " + user
                                 + " as the package " + pkg + " is not installed");
             }
-
-            PackageManager p = mTestApis.context().instrumentedContext().getPackageManager();
-            Intent intent = new Intent("android.app.action.DEVICE_ADMIN_ENABLED");
-            intent.setComponent(profileOwnerComponent);
 
             if (!componentCanBeSetAsDeviceAdmin(profileOwnerComponent, user)) {
                 throw new NeneException("Could not set profile owner for user "
@@ -216,6 +214,7 @@ public final class DevicePolicy {
     /**
      * Get the device owner.
      */
+    @Nullable
     public DeviceOwner getDeviceOwner() {
         fillCache();
         return mCachedDeviceOwner;

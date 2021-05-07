@@ -17,10 +17,6 @@
 package android.net.vcn.cts;
 
 import static android.content.pm.PackageManager.FEATURE_TELEPHONY;
-import static android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET;
-import static android.net.ipsec.ike.SaProposal.DH_GROUP_2048_BIT_MODP;
-import static android.net.ipsec.ike.SaProposal.ENCRYPTION_ALGORITHM_AES_GCM_12;
-import static android.net.ipsec.ike.SaProposal.PSEUDORANDOM_FUNCTION_AES128_XCBC;
 import static android.telephony.SubscriptionManager.INVALID_SUBSCRIPTION_ID;
 
 import static org.junit.Assert.assertEquals;
@@ -34,15 +30,7 @@ import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.LinkProperties;
 import android.net.NetworkCapabilities;
-import android.net.ipsec.ike.ChildSaProposal;
-import android.net.ipsec.ike.IkeFqdnIdentification;
-import android.net.ipsec.ike.IkeSaProposal;
-import android.net.ipsec.ike.IkeSessionParams;
-import android.net.ipsec.ike.IkeTunnelConnectionParams;
-import android.net.ipsec.ike.SaProposal;
-import android.net.ipsec.ike.TunnelModeChildSessionParams;
 import android.net.vcn.VcnConfig;
-import android.net.vcn.VcnGatewayConnectionConfig;
 import android.net.vcn.VcnManager;
 import android.os.ParcelUuid;
 import android.telephony.SubscriptionManager;
@@ -63,14 +51,12 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 @RunWith(AndroidJUnit4.class)
-public class VcnManagerTest {
+public class VcnManagerTest extends VcnTestBase {
     private static final String TAG = VcnManagerTest.class.getSimpleName();
 
     private static final int TIMEOUT_MS = 500;
 
     private static final Executor INLINE_EXECUTOR = Runnable::run;
-
-    private static final String VCN_GATEWAY_CONNECTION_NAME = "test-vcn-gateway-connection";
 
     private final Context mContext;
     private final VcnManager mVcnManager;
@@ -92,54 +78,9 @@ public class VcnManagerTest {
     }
 
     private VcnConfig buildVcnConfig() {
-        final IkeSaProposal ikeProposal =
-                new IkeSaProposal.Builder()
-                        .addEncryptionAlgorithm(
-                                ENCRYPTION_ALGORITHM_AES_GCM_12, SaProposal.KEY_LEN_AES_128)
-                        .addDhGroup(DH_GROUP_2048_BIT_MODP)
-                        .addPseudorandomFunction(PSEUDORANDOM_FUNCTION_AES128_XCBC)
-                        .build();
-
-        final String serverHostname = "2001:db8:1::100";
-        final String testLocalId = "test.client.com";
-        final String testRemoteId = "test.server.com";
-        final byte[] psk = "psk".getBytes();
-
-        final IkeSessionParams ikeParams =
-                new IkeSessionParams.Builder()
-                        .setServerHostname(serverHostname)
-                        .addSaProposal(ikeProposal)
-                        .setLocalIdentification(new IkeFqdnIdentification(testLocalId))
-                        .setRemoteIdentification(new IkeFqdnIdentification(testRemoteId))
-                        .setAuthPsk(psk)
-                        .build();
-
-        final ChildSaProposal childProposal =
-                new ChildSaProposal.Builder()
-                        .addEncryptionAlgorithm(
-                                ENCRYPTION_ALGORITHM_AES_GCM_12, SaProposal.KEY_LEN_AES_128)
-                        .build();
-        final TunnelModeChildSessionParams childParams =
-                new TunnelModeChildSessionParams.Builder().addSaProposal(childProposal).build();
-
-        final IkeTunnelConnectionParams tunnelParams =
-                new IkeTunnelConnectionParams(ikeParams, childParams);
-
-        final VcnGatewayConnectionConfig gatewayConnConfig =
-                new VcnGatewayConnectionConfig.Builder(VCN_GATEWAY_CONNECTION_NAME, tunnelParams)
-                        .addExposedCapability(NET_CAPABILITY_INTERNET)
-                        .addRequiredUnderlyingCapability(NET_CAPABILITY_INTERNET)
-                        .setRetryIntervalsMillis(
-                                new long[] {
-                                    TimeUnit.SECONDS.toMillis(1),
-                                    TimeUnit.MINUTES.toMillis(1),
-                                    TimeUnit.HOURS.toMillis(1)
-                                })
-                        .setMaxMtu(1360)
-                        .build();
-
         return new VcnConfig.Builder(mContext)
-                .addGatewayConnectionConfig(gatewayConnConfig)
+                .addGatewayConnectionConfig(
+                        VcnGatewayConnectionConfigTest.buildVcnGatewayConnectionConfig())
                 .build();
     }
 

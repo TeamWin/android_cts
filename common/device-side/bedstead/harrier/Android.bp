@@ -16,7 +16,7 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-java_library_static {
+android_library {
     name: "Harrier",
     sdk_version: "test_current",
 
@@ -26,9 +26,13 @@ java_library_static {
 
     static_libs: [
         "Nene",
+        "RemoteDPC",
         "compatibility-device-util-axt",
         "androidx.test.ext.junit",
-    ]
+    ],
+
+    manifest: "src/main/AndroidManifest.xml",
+    min_sdk_version: "27"
 }
 
 android_test {

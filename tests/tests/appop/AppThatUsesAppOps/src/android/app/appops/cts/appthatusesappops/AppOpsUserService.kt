@@ -17,8 +17,8 @@
 package android.app.appops.cts.appthatusesappops
 
 import android.app.AppOpsManager
+import android.app.AppOpsManager.OPSTR_ACTIVITY_RECOGNITION
 import android.app.AppOpsManager.OPSTR_COARSE_LOCATION
-import android.app.AppOpsManager.OPSTR_FINE_LOCATION
 import android.app.AppOpsManager.OPSTR_GET_ACCOUNTS
 import android.app.AsyncNotedAppOp
 import android.app.Service
@@ -171,16 +171,16 @@ class AppOpsUserService : Service() {
                 }
             }
 
-            override fun callApiThatCallsBackIntoServiceAndCheckLog(client: IAppOpsUserClient) {
+            override fun callAppToCallBackForUsToBlameItAndSelfBlame(client: IAppOpsUserClient) {
                 forwardThrowableFrom {
-                    // This calls back into the service via callApiThatNotesSyncOpAndClearLog
-                    client.callBackIntoService()
+                    // Call back into the test to blame us and them and we should only see our blame
+                    client.noteAccessForUsAndYourself()
 
-                    // The noteSyncOp called in callApiThatNotesSyncOpAndClearLog should not have
-                    // affected the callBackIntoService call
-                    assertThat(noted.map { it.first.op }).containsExactly(OPSTR_FINE_LOCATION)
+                    // We should see only ops noted for our package
+                    assertThat(noted.map { it.first.op }).containsExactly(
+                            OPSTR_ACTIVITY_RECOGNITION)
                     assertThat(noted[0].second.map { it.methodName })
-                        .contains("callApiThatCallsBackIntoServiceAndCheckLog")
+                            .contains("callAppToCallBackForUsToBlameItAndSelfBlame")
                     assertThat(selfNoted).isEmpty()
                     assertThat(asyncNoted).isEmpty()
                 }

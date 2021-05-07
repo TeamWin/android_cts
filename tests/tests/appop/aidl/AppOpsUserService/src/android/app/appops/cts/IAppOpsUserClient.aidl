@@ -34,4 +34,5 @@ interface IAppOpsUserClient {
     void noteAsyncOpWithCustomMessage();
     void noteAsyncOpNative();
     void noteAsyncOpNativeWithCustomMessage();
+    void noteAccessForUsAndYourself();
 }

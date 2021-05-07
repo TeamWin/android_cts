@@ -23,6 +23,8 @@ import android.app.AppOpsManager
 import android.app.AppOpsManager.MODE_ALLOWED
 import android.app.AppOpsManager.OPSTR_ACCESS_ACCESSIBILITY
 import android.app.AppOpsManager.OPSTR_BLUETOOTH_SCAN
+import android.app.AppOpsManager.OPSTR_BLUETOOTH_CONNECT
+import android.app.AppOpsManager.OPSTR_ACTIVITY_RECOGNITION
 import android.app.AppOpsManager.OPSTR_CAMERA
 import android.app.AppOpsManager.OPSTR_COARSE_LOCATION
 import android.app.AppOpsManager.OPSTR_FINE_LOCATION
@@ -299,11 +301,29 @@ class AppOpsLoggingTest {
     }
 
     @Test
-    fun callsBackIntoServiceAndCheckLog() {
+    fun syncOpsPropagatedAcrossIpcWithEveryUidSeeingOpsAttributedItself() {
+        // Blame ourselves
+        appOpsManager.noteOpNoThrow(OPSTR_ACTIVITY_RECOGNITION, Process.myUid(),
+                    context.packageName, null, null)
+
+        // Make sure our blame was recorded
+        assertThat(noted).isEmpty()
+        assertThat(asyncNoted).isEmpty()
+        assertThat(selfNoted.map { it.first.attributionTag to it.first.op })
+                .containsExactly(null to OPSTR_ACTIVITY_RECOGNITION)
+
+        // Call into another app sync. It will call back to us where we blame them and
+        // ourselves. They should see only the blame on them and we the blame on us.
         rethrowThrowableFrom {
-            testService.callApiThatCallsBackIntoServiceAndCheckLog(
+            testService.callAppToCallBackForUsToBlameItAndSelfBlame(
                 AppOpsUserClient(context, testService))
         }
+
+        // We should see only ops noted for our package
+        assertThat(noted.map { it.first.op }).containsExactly(OPSTR_ACTIVITY_RECOGNITION)
+        assertThat(noted[0].second.map { it.methodName })
+                .contains("callAppToCallBackForUsToBlameItAndSelfBlame")
+        assertThat(asyncNoted).isEmpty()
     }
 
     @Test
@@ -977,7 +997,7 @@ class AppOpsLoggingTest {
      * Calls various noteOp-like methods in binder calls called by
      * {@link android.app.appops.cts.appthatusesappops.AppOpsUserService}
      */
-    private class AppOpsUserClient(
+    private inner class AppOpsUserClient(
         context: Context,
         val testService: IAppOpsUserService? = null
     ) : IAppOpsUserClient.Stub() {
@@ -1002,12 +1022,27 @@ class AppOpsLoggingTest {
         }
 
         override fun callBackIntoService() {
-            runWithShellPermissionIdentity {
-                appOpsManager.noteOpNoThrow(OPSTR_FINE_LOCATION, getCallingUid(),
-                    TEST_SERVICE_PKG, null, null)
-            }
-
+            // Note an op on our UID
+            appOpsManager.noteOpNoThrow(OPSTR_FINE_LOCATION, Process.myUid(),
+                    context.packageName, null, null)
+            // Call back sync in the other app
             testService?.callApiThatNotesSyncOpAndClearLog(this)
+        }
+
+        override fun noteAccessForUsAndYourself() {
+            // Blame the caller
+            val callerSyncOp = SyncNotedAppOp(MODE_ALLOWED, strOpToOp(OPSTR_ACTIVITY_RECOGNITION),
+                    null, TEST_SERVICE_PKG)
+            AppOpsManager.collectNotedOpSync(callerSyncOp);
+
+            // Blame ourselves
+            val selfSyncOp = SyncNotedAppOp(MODE_ALLOWED, strOpToOp(OPSTR_ACTIVITY_RECOGNITION),
+                    null, context.packageName)
+            AppOpsManager.collectNotedOpSync(selfSyncOp);
+
+            // Accesses should be dispatched when the sync IPC returns.
+            assertThat(noted).isEmpty()
+            assertThat(asyncNoted).isEmpty()
         }
 
         override fun noteNonPermissionSyncOp() {

@@ -360,6 +360,12 @@
         authentication with timeout 0 can only be accessed once per reader session.
     </string>
 
+    <string name="sec_unlocked_device_required_test">Unlocked Device Required</string>
+    <string name="sec_unlocked_device_required_test_info">
+        This test ensures that keys created with setUnlockedDeviceRequired are usable when the
+        screen is unlocked but not when it is locked.
+    </string>
+
     <!-- Strings for BluetoothActivity -->
     <string name="bluetooth_test">Bluetooth Test</string>
     <string name="bluetooth_test_info">
@@ -5606,6 +5612,29 @@ Follow the instructions on the screen to measure the frequency response for the 
         \nAlphanumeric, length at least 4</string>
     <string name="set_complexity_low_desc">Any pattern, PIN or password</string>
     <string name="set_complexity_none_desc">No restrictions</string>
+    <!-- Strings for UnlockedDeviceRequiredTest -->
+    <string name="unlock_req_config_lock_screen">Secure lock screen has not been set up. Go to
+        Settings -> Security to set up a lock screen.</string>
+    <string name="unlock_req_config_lock_screen_and_biometrics">Secure lock screen has not been set
+        up. Go to Settings -> Security to set up a lock screen and biometric unlock.</string>
+    <string name="unlock_req_config_biometrics">Biometric unlock has not been set up. Go to Settings
+        -> Security to set up biometric unlock.</string>
+    <string name="unlock_req_biometric_lock">Lock the screen, wait 5 seconds, then unlock with
+        biometrics.</string>
+    <!-- This message should only be displayed briefly immediately after the user has unlocked
+        the device; as soon as key access is verified this message will be updated. -->
+    <string name="unlock_req_unlocked">Verifying the key is accessible after the unlock...</string>
+    <string name="unlock_req_credential_lock">Lock the screen, wait 5 seconds, then unlock with
+        credentials.</string>
+    <string name="unlock_req_successful">Test completed successfully.</string>
+    <string name="unlock_req_failed_key_available_when_locked">Test failed; the key was available
+        when the device was locked.</string>
+    <string name="unlock_req_failed_key_unavailable_when_unlocked">Test failed; the key was not
+        available when the device was unlocked.</string>
+    <!-- While this state should never be reached since all possible states are accounted for
+         it is included just in case. -->
+    <string name="unlock_req_unknown_state">The test is in an unexpected state; please dismiss
+        this dialog and restart the test.</string>
 
     <!-- Notification Bubble Tests-->
     <string name="bubbles_notification_title">Bubble Notification Tests</string>
