@@ -18,11 +18,9 @@ package android.security.cts;
 
 import android.content.pm.PackageManager;
 import android.os.Build;
-import android.platform.test.annotations.SecurityTest;
 import android.test.AndroidTestCase;
 import com.android.compatibility.common.util.PropertyUtil;
 
-@SecurityTest
 public class VerifiedBootTest extends AndroidTestCase {
   private static final String TAG = "VerifiedBootTest";
 
