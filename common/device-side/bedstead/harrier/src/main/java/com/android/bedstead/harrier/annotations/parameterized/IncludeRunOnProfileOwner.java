@@ -16,8 +16,7 @@
 
 package com.android.bedstead.harrier.annotations.parameterized;
 
-import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
-import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
+import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
 import com.android.bedstead.harrier.annotations.meta.ParameterizedAnnotation;
 
 import java.lang.annotation.ElementType;
@@ -26,12 +25,11 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Parameterize a test so that it runs on the same user as the device owner.
+ * Parameterize a test so that it runs on a user with a profile owner.
  */
 @Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @ParameterizedAnnotation
-@RequireRunOnPrimaryUser
-@EnsureHasDeviceOwner
-public @interface IncludeRunOnDeviceOwnerUser {
+@RequireRunOnWorkProfile
+public @interface IncludeRunOnProfileOwner {
 }
