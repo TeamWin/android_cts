@@ -16,6 +16,8 @@
 
 package android.filesystem.cts;
 
+import android.util.Log;
+
 import static androidx.test.InstrumentationRegistry.getContext;
 import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
@@ -29,6 +31,8 @@ import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
 import com.android.compatibility.common.util.Stat;
 
+import static org.junit.Assert.assertTrue;
+
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -39,6 +43,8 @@ import java.io.IOException;
 
 @RunWith(AndroidJUnit4.class)
 public class SequentialRWTest {
+    private static final String TAG = "SequentialRWTest";
+
     private static final String DIR_SEQ_WR = "SEQ_WR";
     private static final String DIR_SEQ_UPDATE = "SEQ_UPDATE";
     private static final String DIR_SEQ_RD = "SEQ_RD";
@@ -81,7 +87,13 @@ public class SequentialRWTest {
         Stat.StatResult stat = Stat.getStat(mbps);
         report.setSummary("write_throughput_average", stat.mAverage, ResultType.HIGHER_BETTER,
                 ResultUnit.MBPS);
+        Log.v(TAG, "sequential write " + stat.mAverage + " MBPS");
         report.submit(getInstrumentation());
+
+        if (MediaPerformanceClassUtils.isSPerfClass()) {
+            assertTrue("measured " + stat.mAverage + " is less than target (150 MBPS)",
+                       stat.mAverage >= 150);
+        }
     }
 
     @Test
@@ -135,6 +147,12 @@ public class SequentialRWTest {
         Stat.StatResult stat = Stat.getStat(mbps);
         report.setSummary("read_throughput_average", stat.mAverage, ResultType.HIGHER_BETTER,
                 ResultUnit.MBPS);
+        Log.v(TAG, "sequential read " + stat.mAverage + " MBPS");
         report.submit(getInstrumentation());
+
+        if (MediaPerformanceClassUtils.isSPerfClass()) {
+            assertTrue("measured " + stat.mAverage + " is less than target (250 MBPS)",
+                       stat.mAverage >= 250);
+        }
     }
 }
