@@ -18,27 +18,42 @@ package com.android.bedstead.nene.devicepolicy;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeTrue;
 import static org.testng.Assert.assertThrows;
 
 import android.content.ComponentName;
+import android.os.Build;
 
+import com.android.bedstead.harrier.BedsteadJUnit4;
+import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
+import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDeviceOwner;
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoProfileOwner;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.users.UserType;
+import com.android.bedstead.nene.utils.Versions;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppProvider;
 import com.android.eventlib.premade.EventLibDeviceAdminReceiver;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
-@RunWith(JUnit4.class)
+@RunWith(BedsteadJUnit4.class)
 public class DevicePolicyTest {
+
+    @ClassRule @Rule
+    public static final DeviceState sDeviceState = new DeviceState();
 
     //  TODO(180478924): We shouldn't need to hardcode this
     private static final String DEVICE_ADMIN_TESTAPP_PACKAGE_NAME = "android.DeviceAdminTestApp";
@@ -70,6 +85,8 @@ public class DevicePolicyTest {
     }
 
     @Test
+    @EnsureHasNoDeviceOwner
+    @EnsureHasNoWorkProfile
     public void setProfileOwner_profileOwnerIsSet() {
         UserReference profile = sTestApis.users().createUser()
                 .parent(sUser)
@@ -88,6 +105,8 @@ public class DevicePolicyTest {
     }
 
     @Test
+    @EnsureHasNoDeviceOwner
+    @EnsureHasNoWorkProfile
     public void setProfileOwner_profileOwnerIsAlreadySet_throwsException() {
         UserReference profile = sTestApis.users().createUser()
                 .parent(sUser)
@@ -106,6 +125,8 @@ public class DevicePolicyTest {
     }
 
     @Test
+    @EnsureHasNoDeviceOwner
+    @EnsureHasNoWorkProfile
     public void setProfileOwner_componentNameNotInstalled_throwsException() {
         UserReference profile = sTestApis.users().createUser()
                 .parent(sUser)
@@ -120,12 +141,16 @@ public class DevicePolicyTest {
     }
 
     @Test
+    @EnsureHasNoDeviceOwner
+    @EnsureHasNoProfileOwner
     public void setProfileOwner_componentNameIsNotDPC_throwsException() {
         assertThrows(NeneException.class,
                 () -> sTestApis.devicePolicy().setProfileOwner(sUser, NOT_DPC_COMPONENT_NAME));
     }
 
     @Test
+    @EnsureHasNoDeviceOwner
+    @EnsureHasNoProfileOwner
     public void setProfileOwner_nullUser_throwsException() {
         assertThrows(NullPointerException.class,
                 () -> sTestApis.devicePolicy().setProfileOwner(
@@ -133,6 +158,8 @@ public class DevicePolicyTest {
     }
 
     @Test
+    @EnsureHasNoDeviceOwner
+    @EnsureHasNoProfileOwner
     public void setProfileOwner_nullComponentName_throwsException() {
         assertThrows(NullPointerException.class,
                 () -> sTestApis.devicePolicy().setProfileOwner(
@@ -140,6 +167,8 @@ public class DevicePolicyTest {
     }
 
     @Test
+    @EnsureHasNoDeviceOwner
+    @EnsureHasNoProfileOwner
     public void setProfileOwner_userDoesNotExist_throwsException() {
         assertThrows(NeneException.class,
                 () -> sTestApis.devicePolicy().setProfileOwner(
@@ -147,6 +176,8 @@ public class DevicePolicyTest {
     }
 
     @Test
+    @EnsureHasNoDeviceOwner
+    @EnsureHasNoWorkProfile
     public void getProfileOwner_returnsProfileOwner() {
         UserReference profile = sTestApis.users().createUser()
                 .parent(sUser)
@@ -165,6 +196,8 @@ public class DevicePolicyTest {
     }
 
     @Test
+    @EnsureHasNoDeviceOwner
+    @EnsureHasNoWorkProfile
     public void getProfileOwner_noProfileOwner_returnsNull() {
         UserReference profile = sTestApis.users().createUser()
                 .parent(sUser)
@@ -186,6 +219,8 @@ public class DevicePolicyTest {
     }
 
     @Test
+    @EnsureHasNoDeviceOwner
+    @EnsureHasNoProfileOwner
     public void setDeviceOwner_deviceOwnerIsSet() {
         DeviceOwner deviceOwner =
                 sTestApis.devicePolicy().setDeviceOwner(sUser, DPC_COMPONENT_NAME);
@@ -198,19 +233,15 @@ public class DevicePolicyTest {
     }
 
     @Test
+    @EnsureHasDeviceOwner
     public void setDeviceOwner_deviceOwnerIsAlreadySet_throwsException() {
-        DeviceOwner deviceOwner =
-                sTestApis.devicePolicy().setDeviceOwner(sUser, DPC_COMPONENT_NAME);
-
-        try {
-            assertThrows(NeneException.class,
-                    () -> sTestApis.devicePolicy().setDeviceOwner(sUser, DPC_COMPONENT_NAME));
-        } finally {
-            deviceOwner.remove();
-        }
+        assertThrows(NeneException.class,
+                () -> sTestApis.devicePolicy().setDeviceOwner(sUser, DPC_COMPONENT_NAME));
     }
 
     @Test
+    @EnsureHasNoDeviceOwner
+    @EnsureHasNoProfileOwner
     public void setDeviceOwner_componentNameNotInstalled_throwsException() {
         sTestApp.reference().uninstall(sUser);
         try {
@@ -222,20 +253,40 @@ public class DevicePolicyTest {
     }
 
     @Test
+    @EnsureHasNoDeviceOwner
+    @EnsureHasNoProfileOwner
     public void setDeviceOwner_componentNameIsNotDPC_throwsException() {
         assertThrows(NeneException.class,
                 () -> sTestApis.devicePolicy().setDeviceOwner(sUser, NOT_DPC_COMPONENT_NAME));
     }
 
     @Test
-    public void setDeviceOwner_userAlreadyOnDevice_throwsException() {
-        UserReference user = sTestApis.users().createUser().create();
+    @EnsureHasNoDeviceOwner
+    @EnsureHasNoProfileOwner
+    @EnsureHasSecondaryUser
+    public void setDeviceOwner_preS_userAlreadyOnDevice_throwsException() {
+        assumeFalse("After S, device owner can be set with users on the device",
+                Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.S));
+
+        assertThrows(NeneException.class,
+                () -> sTestApis.devicePolicy().setDeviceOwner(sUser, DPC_COMPONENT_NAME));
+    }
+
+    @Test
+    @EnsureHasNoDeviceOwner
+    @EnsureHasNoProfileOwner
+    @EnsureHasSecondaryUser
+    public void setDeviceOwner_sPlus_userAlreadyOnDevice_deviceOwnerIsSet() {
+        assumeTrue("After S, device owner can be set with users on the device",
+                Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.S));
+
+        DeviceOwner deviceOwner =
+                sTestApis.devicePolicy().setDeviceOwner(sUser, DPC_COMPONENT_NAME);
 
         try {
-            assertThrows(NeneException.class,
-                    () -> sTestApis.devicePolicy().setDeviceOwner(sUser, DPC_COMPONENT_NAME));
+            assertThat(sTestApis.devicePolicy().getDeviceOwner()).isNotNull();
         } finally {
-            user.remove();
+            deviceOwner.remove();
         }
     }
 
@@ -245,6 +296,8 @@ public class DevicePolicyTest {
     }
 
     @Test
+    @EnsureHasNoDeviceOwner
+    @EnsureHasNoProfileOwner
     public void setDeviceOwner_nullUser_throwsException() {
         assertThrows(NullPointerException.class,
                 () -> sTestApis.devicePolicy().setDeviceOwner(
@@ -252,6 +305,8 @@ public class DevicePolicyTest {
     }
 
     @Test
+    @EnsureHasNoDeviceOwner
+    @EnsureHasNoProfileOwner
     public void setDeviceOwner_nullComponentName_throwsException() {
         assertThrows(NullPointerException.class,
                 () -> sTestApis.devicePolicy().setDeviceOwner(
@@ -259,6 +314,8 @@ public class DevicePolicyTest {
     }
 
     @Test
+    @EnsureHasNoDeviceOwner
+    @EnsureHasNoProfileOwner
     public void setDeviceOwner_userDoesNotExist_throwsException() {
         assertThrows(NeneException.class,
                 () -> sTestApis.devicePolicy().setDeviceOwner(
@@ -266,6 +323,8 @@ public class DevicePolicyTest {
     }
 
     @Test
+    @EnsureHasNoDeviceOwner
+    @EnsureHasNoProfileOwner
     public void getDeviceOwner_returnsDeviceOwner() {
         DeviceOwner deviceOwner =
                 sTestApis.devicePolicy().setDeviceOwner(sUser, DPC_COMPONENT_NAME);
@@ -278,13 +337,14 @@ public class DevicePolicyTest {
     }
 
     @Test
+    @EnsureHasNoDeviceOwner
     public void getDeviceOwner_noDeviceOwner_returnsNull() {
-        // We must assume no device owner entering the test
-        // TODO(scottjonathan): Encode this assumption in the annotations when Harrier supports
         assertThat(sTestApis.devicePolicy().getDeviceOwner()).isNull();
     }
 
     @Test
+    @EnsureHasNoDeviceOwner
+    @EnsureHasNoProfileOwner
     public void profileOwner_autoclose_removesProfileOwner() {
         try (ProfileOwner profileOwner =
                      sTestApis.devicePolicy().setProfileOwner(sUser, DPC_COMPONENT_NAME)) {
@@ -295,6 +355,8 @@ public class DevicePolicyTest {
     }
 
     @Test
+    @EnsureHasNoDeviceOwner
+    @EnsureHasNoProfileOwner
     public void deviceOwner_autoclose_removesDeviceOwner() {
         try (DeviceOwner deviceOwner =
                      sTestApis.devicePolicy().setDeviceOwner(sUser, DPC_COMPONENT_NAME)) {
@@ -302,5 +364,49 @@ public class DevicePolicyTest {
         }
 
         assertThat(sTestApis.devicePolicy().getDeviceOwner()).isNull();
+    }
+
+    @Test
+    @EnsureHasNoDeviceOwner
+    @EnsureHasNoProfileOwner
+    public void setDeviceOwner_recentlyUnsetProfileOwner_sets() {
+        sTestApis.devicePolicy().setProfileOwner(sUser, DPC_COMPONENT_NAME).remove();
+
+        sTestApis.devicePolicy().setDeviceOwner(sUser, DPC_COMPONENT_NAME);
+
+        assertThat(sTestApis.devicePolicy().getDeviceOwner()).isNotNull();
+    }
+
+    @Test
+    @EnsureHasNoDeviceOwner
+    @EnsureHasNoProfileOwner
+    public void setDeviceOwner_recentlyUnsetDeviceOwner_sets() {
+        sTestApis.devicePolicy().setDeviceOwner(sUser, DPC_COMPONENT_NAME).remove();
+
+        sTestApis.devicePolicy().setDeviceOwner(sUser, DPC_COMPONENT_NAME);
+
+        assertThat(sTestApis.devicePolicy().getDeviceOwner()).isNotNull();
+    }
+
+    @Test
+    @EnsureHasNoDeviceOwner
+    @EnsureHasNoProfileOwner
+    public void setProfileOwner_recentlyUnsetProfileOwner_sets() {
+        sTestApis.devicePolicy().setProfileOwner(sUser, DPC_COMPONENT_NAME).remove();
+
+        sTestApis.devicePolicy().setProfileOwner(sUser, DPC_COMPONENT_NAME);
+
+        assertThat(sTestApis.devicePolicy().getProfileOwner(sUser)).isNotNull();
+    }
+
+    @Test
+    @EnsureHasNoDeviceOwner
+    @EnsureHasNoProfileOwner
+    public void setProfileOwner_recentlyUnsetDeviceOwner_sets() {
+        sTestApis.devicePolicy().setDeviceOwner(sUser, DPC_COMPONENT_NAME).remove();
+
+        sTestApis.devicePolicy().setProfileOwner(sUser, DPC_COMPONENT_NAME);
+
+        assertThat(sTestApis.devicePolicy().getProfileOwner(sUser)).isNotNull();
     }
 }
