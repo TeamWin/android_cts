@@ -20,12 +20,16 @@ import android.content.pm.PackageManager;
 import android.media.AudioManager;
 import android.util.Log;
 
+import androidx.test.filters.SdkSuppress;
+
 import com.android.compatibility.common.util.CtsAndroidTestCase;
 import com.android.internal.annotations.GuardedBy;
 
 import java.util.concurrent.Executors;
 
 
+
+@SdkSuppress(minSdkVersion = 31, codeName = "S")
 public class AudioModeListenerTest extends CtsAndroidTestCase {
     private final static String TAG = "AudioModeListenerTest";
 
