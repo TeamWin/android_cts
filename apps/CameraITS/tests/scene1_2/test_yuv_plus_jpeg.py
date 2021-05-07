@@ -95,10 +95,10 @@ class YuvPlusJpegTest(its_base_test.ItsBaseTest):
 
       rms_diff = image_processing_utils.compute_image_rms_difference(
           rgb_means_yuv, rgb_means_jpg)
-      logging.debug('RMS difference: %.3f', rms_diff)
-      e_msg = 'RMS difference: %.3f, spec: %.2f' % (rms_diff,
-                                                    THRESHOLD_MAX_RMS_DIFF)
-      assert rms_diff < THRESHOLD_MAX_RMS_DIFF, e_msg
+      msg = f'RMS diff: {rms_diff:.4f}'
+      logging.debug('%s', msg)
+      if rms_diff >= THRESHOLD_MAX_RMS_DIFF:
+        raise AssertionError(msg + f', spec: {THRESHOLD_MAX_RMS_DIFF}')
 
 if __name__ == '__main__':
   test_runner.main()
