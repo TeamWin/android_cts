@@ -768,7 +768,7 @@ public class ContextTest extends AndroidTestCase {
     }
 
     public void testCreatePackageContext() throws PackageManager.NameNotFoundException {
-        Context actualContext = mContext.createPackageContext(getValidPackageName(),
+        Context actualContext = mContext.createPackageContext("com.android.shell",
                 Context.CONTEXT_IGNORE_SECURITY);
 
         assertNotNull(actualContext);
@@ -780,19 +780,10 @@ public class ContextTest extends AndroidTestCase {
                 UserHandle.ALL, UserHandle.CURRENT, UserHandle.SYSTEM
         }) {
             assertEquals(user, mContext
-                    .createPackageContextAsUser(getValidPackageName(), 0, user).getUser());
-        }
+                    .createPackageContextAsUser("com.android.shell", 0, user).getUser());
+           }
     }
 
-    /**
-     * Helper method to retrieve a valid application package name to use for tests.
-     */
-    protected String getValidPackageName() {
-        List<PackageInfo> packages = mContext.getPackageManager().getInstalledPackages(
-                PackageManager.GET_ACTIVITIES);
-        assertTrue(packages.size() >= 1);
-        return packages.get(0).packageName;
-    }
 
     public void testGetMainLooper() {
         assertNotNull(mContext.getMainLooper());
