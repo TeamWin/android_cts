@@ -16,7 +16,10 @@
 
 package com.android.bedstead.harrier.annotations.parameterized;
 
+import static com.android.bedstead.harrier.DeviceState.UserType.SYSTEM_USER;
+
 import com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser;
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
 import com.android.bedstead.harrier.annotations.meta.ParameterizedAnnotation;
 
 import java.lang.annotation.ElementType;
@@ -31,7 +34,10 @@ import java.lang.annotation.Target;
 @Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @ParameterizedAnnotation
+// TODO(scottjonathan): We can't set the device owner when we're already running on secondary user
+//  so we need to have a different @RequireRunOn annotation for a secondary user when a DO is
+//  already set
 @RequireRunOnSecondaryUser
-// TODO(scottjonathan): Add annotations to ensure Device Owner is set
+@EnsureHasDeviceOwner(onUser = SYSTEM_USER)
 public @interface IncludeRunOnNonAffiliatedDeviceOwnerSecondaryUser {
 }
