@@ -23,7 +23,7 @@ class CustomBuildFileHandler(AbstractBuildFileHandler):
   def __init__(self, build_file):
     super().__init__(build_file)
 
-  def GetFileHash(self, file_names, hash_func=None):
+  def get_file_hash(self, file_names, hash_func=None):
     """See base class."""
     raise NotImplementedError('You need to implement GetFileHash function.')
 
