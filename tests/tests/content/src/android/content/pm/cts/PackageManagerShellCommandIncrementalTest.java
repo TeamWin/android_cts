@@ -49,6 +49,8 @@ import com.android.incfs.install.IBlockTransformer;
 import com.android.incfs.install.IncrementalInstallSession;
 import com.android.incfs.install.PendingBlock;
 
+import com.google.common.truth.Truth;
+
 import libcore.io.IoUtils;
 
 import org.apache.commons.compress.compressors.lz4.BlockLZ4CompressorOutputStream;
@@ -446,18 +448,19 @@ public class PackageManagerShellCommandIncrementalTest {
     @Test
     public void testInstallWithIdSigInvalidLength() throws Exception {
         File file = new File(createApkPath(TEST_APK));
-        assertTrue(
+        Truth.assertThat(
                 executeShellCommand("pm install-incremental -t -g -S " + (file.length() - 1),
-                        new File[]{file}).contains(
-                        "Failure"));
+                        new File[]{file})).contains(
+                        "Failure");
         assertFalse(isAppInstalled(TEST_APP_PACKAGE));
     }
 
     @Test
     public void testInstallWithInvalidIdSig() throws Exception {
         File file = new File(createApkPath(TEST_APK_MALFORMED));
-        String result = executeShellCommand("pm install-incremental -t -g " + file.getPath());
-        assertTrue(result, result.contains("Failure"));
+        Truth.assertThat(
+                executeShellCommand("pm install-incremental -t -g " + file.getPath())).contains(
+                "Failure");
         assertFalse(isAppInstalled(TEST_APP_PACKAGE));
     }
 
@@ -468,12 +471,11 @@ public class PackageManagerShellCommandIncrementalTest {
         long length = file.length();
         // Streaming happens in blocks of 1024 bytes, new length will not stream the last block.
         long newLength = length - (length % 1024 == 0 ? 1024 : length % 1024);
-        assertTrue(
+        Truth.assertThat(
                 executeShellCommand(
                         "pm install-incremental -t -g -S " + length,
-                        new File[] {file},
-                        new long[] {newLength})
-                        .contains("Failure"));
+                        new File[]{file},
+                        new long[]{newLength})).contains("Failure");
         assertFalse(isAppInstalled(TEST_APP_PACKAGE));
     }
 
@@ -873,11 +875,10 @@ public class PackageManagerShellCommandIncrementalTest {
         File[] files = new File[]{apkfile, splitfile};
         String param = Arrays.stream(files).map(
                 file -> file.getName() + ":" + file.length()).collect(Collectors.joining(" "));
-        assertTrue(executeShellCommand(
+        Truth.assertThat(executeShellCommand(
                 String.format("pm install-incremental -t -g -S %s %s",
                         (apkfile.length() + splitfile.length()), param),
-                files, new long[]{apkfile.length(), newSplitLength}).contains(
-                "Failure"));
+                files, new long[]{apkfile.length(), newSplitLength})).contains("Failure");
         assertFalse(isAppInstalled(TEST_APP_PACKAGE));
     }
 
