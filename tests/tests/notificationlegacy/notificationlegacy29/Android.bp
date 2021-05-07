@@ -31,7 +31,6 @@ android_test {
         "cts",
         "vts10",
         "general-tests",
-        "mts-extservices"
     ],
     sdk_version: "test_current",
     target_sdk_version: "29",
