@@ -14,7 +14,6 @@
 """Utility functions to create custom capture requests."""
 
 
-import logging
 import math
 import unittest
 
@@ -88,7 +87,8 @@ def manual_capture_request(sensitivity,
           0
   }
   if linear_tonemap:
-    assert props is not None
+    if props is None:
+      raise AssertionError('props is None.')
     # CONTRAST_CURVE mode
     if 0 in props['android.tonemap.availableToneMapModes']:
       req['android.tonemap.mode'] = 0
@@ -102,8 +102,7 @@ def manual_capture_request(sensitivity,
       req['android.tonemap.mode'] = 3
       req['android.tonemap.gamma'] = 1.0
     else:
-      logging.debug('Linear tonemap is not supported')
-      assert False
+      raise AssertionError('Linear tonemap is not supported')
   return req
 
 
@@ -132,8 +131,8 @@ def get_available_output_sizes(fmt, props, max_size=None, match_ar_size=None):
       'jpeg': 0x100,
       'y8': 0x20203859
   }
-  configs = props['android.scaler.streamConfigurationMap']\
-                   ['availableStreamConfigurations']
+  configs = props[
+      'android.scaler.streamConfigurationMap']['availableStreamConfigurations']
   fmt_configs = [cfg for cfg in configs if cfg['format'] == fmt_codes[fmt]]
   out_configs = [cfg for cfg in fmt_configs if not cfg['input']]
   out_sizes = [(cfg['width'], cfg['height']) for cfg in out_configs]
