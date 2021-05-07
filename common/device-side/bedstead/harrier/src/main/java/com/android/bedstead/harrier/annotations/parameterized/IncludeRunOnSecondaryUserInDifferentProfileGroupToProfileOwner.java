@@ -16,8 +16,9 @@
 
 package com.android.bedstead.harrier.annotations.parameterized;
 
-import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
-import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
+import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
+import com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser;
 import com.android.bedstead.harrier.annotations.meta.ParameterizedAnnotation;
 
 import java.lang.annotation.ElementType;
@@ -26,12 +27,13 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Parameterize a test so that it runs on the same user as the device owner.
+ * Parameterize a test so that it runs on a device which has a primary and work profile, but runs
+ * the test on a secondary user which is in a different profile group.
  */
 @Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @ParameterizedAnnotation
-@RequireRunOnPrimaryUser
-@EnsureHasDeviceOwner
-public @interface IncludeRunOnDeviceOwnerUser {
+@RequireRunOnSecondaryUser
+@EnsureHasWorkProfile(forUser = DeviceState.UserType.PRIMARY_USER)
+public @interface IncludeRunOnSecondaryUserInDifferentProfileGroupToProfileOwner {
 }
