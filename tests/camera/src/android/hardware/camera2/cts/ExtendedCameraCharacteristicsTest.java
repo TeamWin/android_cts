@@ -2456,12 +2456,6 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
             return;
         }
 
-        // H-1-6
-        boolean frontBackAdvertised = mContext.getPackageManager().hasSystemFeature(
-                PackageManager.FEATURE_CAMERA_CONCURRENT);
-        mCollector.expectTrue("Performance class device should support concurrent front-back",
-                frontBackAdvertised);
-
         boolean hasPrimaryRear = false;
         boolean hasPrimaryFront = false;
         for (int i = 0; i < mCameraIdsUnderTest.length; i++) {
@@ -2567,7 +2561,7 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
                     timestampSource != null &&
                     timestampSource.equals(CameraMetadata.SENSOR_INFO_TIMESTAMP_SOURCE_REALTIME));
 
-            // H-1-10
+            // H-1-8
             Size[] jpegSizes = staticInfo.getJpegOutputSizesChecked();
             assertTrue("Primary rear/front cameras must support JPEG formats",
                     jpegSizes != null && jpegSizes.length > 0);
