@@ -46,6 +46,9 @@ const char* TBD_AMEDIACODEC_PARAMETER_KEY_VIDEO_BITRATE = "video-bitrate";
 const char* TBD_AMEDIACODEC_PARAMETER_KEY_MAX_B_FRAMES = "max-bframes";
 const char* TBD_AMEDIAFORMAT_KEY_BIT_RATE_MODE = "bitrate-mode";
 
+// NDK counterpart of RMS_ERROR_TOLERANCE of CodecDecoderTest class
+const float kRmsErrorTolerance = 1.05f;
+
 // NDK counterpart of Q_DEQ_TIMEOUT_US and RETRY_LIMIT of CodecTestBase class
 const long kQDeQTimeOutUs = 5000; // block at most 5ms while looking for io buffers
 const int kRetryLimit = 100; // max poll counter before test aborts and returns error
