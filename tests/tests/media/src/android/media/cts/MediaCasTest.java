@@ -28,6 +28,7 @@ import android.media.cts.R;
 import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.RequiresDevice;
 import android.test.AndroidTestCase;
@@ -51,6 +52,7 @@ import java.util.regex.Pattern;
 @Presubmit
 @SmallTest
 @RequiresDevice
+@AppModeFull(reason = "TODO: evaluate and port to instant")
 public class MediaCasTest extends AndroidTestCase {
     private static final String TAG = "MediaCasTest";
 
