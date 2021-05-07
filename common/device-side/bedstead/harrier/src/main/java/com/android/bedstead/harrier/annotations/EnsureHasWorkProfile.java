@@ -39,7 +39,7 @@ import java.lang.annotation.Target;
  * a work profile. Otherwise, you can use {@link DeviceState} to ensure that the device enters
  * the correct state for the method.
  */
-@Target(ElementType.METHOD)
+@Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @EnsureHasProfileAnnotation("android.os.usertype.profile.MANAGED")
 @EnsureHasNoDeviceOwner // TODO: This should only apply on Android R+
