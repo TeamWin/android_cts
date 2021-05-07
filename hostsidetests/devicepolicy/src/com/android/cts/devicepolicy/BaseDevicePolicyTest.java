@@ -1286,11 +1286,8 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
      * profile owner tests, as on headless system user mode the test side must decide whether to
      * use its "local DPC" or wrap the calls to the system user DPC.
      */
-    protected static Map<String, String> paramsForDeviceOwnerTest() {
-        return addParamsForDeviceOwnerTest(new HashMap<>());
-    }
-
-    protected static Map<String, String> addParamsForDeviceOwnerTest(Map<String, String> params) {
+    protected static Map<String, String> getParamsForDeviceOwnerTest() {
+        Map<String, String> params = new HashMap<>();
         params.put("admin_type", "DeviceOwner");
         return params;
     }
