@@ -32,6 +32,9 @@ LOCAL_STATIC_JAVA_LIBRARIES := cts_signature_query_service androidx.test.core an
 LOCAL_JAVA_LIBRARIES := android.test.runner.stubs android.test.base.stubs
 LOCAL_COMPATIBILITY_SUITE := cts general-tests
 LOCAL_CERTIFICATE := $(cert_dir)/ec-p256
+# Disable dexpreopt and <uses-library> check for test.
+LOCAL_ENFORCE_USES_LIBRARIES := false
+LOCAL_DEX_PREOPT := false
 include $(BUILD_CTS_SUPPORT_PACKAGE)
 
 # This is the instrumentation test package signed with the same signing key and
@@ -48,6 +51,9 @@ LOCAL_COMPATIBILITY_SUITE := cts general-tests
 LOCAL_CERTIFICATE := $(cert_dir)/ec-p256_2
 LOCAL_ADDITIONAL_CERTIFICATES := $(cert_dir)/ec-p256
 LOCAL_CERTIFICATE_LINEAGE := $(cert_dir)/ec-p256-por_1_2-default-caps
+# Disable dexpreopt and <uses-library> check for test.
+LOCAL_ENFORCE_USES_LIBRARIES := false
+LOCAL_DEX_PREOPT := false
 include $(BUILD_CTS_SUPPORT_PACKAGE)
 
 cert_dir :=
