@@ -115,6 +115,26 @@ public class SilentUpdateHostsideTests extends BaseHostJUnit4Test {
         runDeviceTests(TEST_PKG, TEST_CLS, "setRequireUserAction_throwsOnIllegalArgument");
     }
 
+    @Test
+    public void silentInstallRepeatedly_RequiresUserAction() throws Exception {
+        install(CURRENT_APK, TEST_PKG);
+        runDeviceTests(TEST_PKG, TEST_CLS, "silentInstallRepeatedly_RequiresUserAction");
+    }
+
+    @Test
+    public void silentInstallRepeatedly_withUnlimitedSilentUpdates_succeed() throws Exception {
+        install(CURRENT_APK, TEST_PKG);
+        runDeviceTests(TEST_PKG, TEST_CLS,
+                "silentInstallRepeatedly_withUnlimitedSilentUpdates_succeed");
+    }
+
+    @Test
+    public void silentInstallRepeatedly_waitForThrottleTime_succeed() throws Exception {
+        install(CURRENT_APK, TEST_PKG);
+        runDeviceTests(TEST_PKG, TEST_CLS,
+                "silentInstallRepeatedly_waitForThrottleTime_succeed");
+    }
+
     private void waitForPathChange(String packageName, String originalCodePath, long timeout)
             throws DeviceNotAvailableException, InterruptedException {
                 long startTime = System.currentTimeMillis();
