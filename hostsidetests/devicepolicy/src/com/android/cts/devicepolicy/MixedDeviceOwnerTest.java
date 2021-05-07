@@ -63,26 +63,24 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
                 + "mDeviceOwnerUserId=%d", getClass(), mUserId, mPrimaryUserId, mInitialUserId,
                 mDeviceOwnerUserId);
 
-        installAppAsUser(DEVICE_ADMIN_APK, mDeviceOwnerUserId);
+        installDeviceOwnerApp(DEVICE_ADMIN_APK);
         mDeviceOwnerSet = setDeviceOwner(DEVICE_ADMIN_COMPONENT_FLATTENED, mDeviceOwnerUserId,
                 /*expectFailure= */ false);
 
         if (!mDeviceOwnerSet) {
-            removeAdmin(DEVICE_ADMIN_COMPONENT_FLATTENED, mUserId);
+            removeDeviceOwnerAdmin(DEVICE_ADMIN_COMPONENT_FLATTENED);
             getDevice().uninstallPackage(DEVICE_ADMIN_PKG);
             fail("Failed to set device owner on user " + mDeviceOwnerUserId);
         }
         if (isHeadlessSystemUserMode()) {
             affiliateUsers(DEVICE_ADMIN_PKG, mDeviceOwnerUserId, mPrimaryUserId);
-            grantDpmWrapperPermissions(DEVICE_ADMIN_PKG, mPrimaryUserId);
         }
     }
 
     @Override
     public void tearDown() throws Exception {
-        if (mDeviceOwnerSet && !removeAdmin(DEVICE_ADMIN_COMPONENT_FLATTENED, mDeviceOwnerUserId)) {
-            // Don't fail as it could hide the real failure from the test method
-            CLog.e("Failed to remove device owner on user " + mDeviceOwnerUserId);
+        if (mDeviceOwnerSet) {
+            removeDeviceOwnerAdmin(DEVICE_ADMIN_COMPONENT_FLATTENED);
         }
 
         super.tearDown();
