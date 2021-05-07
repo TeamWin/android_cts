@@ -50,10 +50,8 @@ import java.util.logging.Logger;
  */
 class ReportExporter extends AsyncTask<Void, Void, String> {
 
-    public static final String REPORT_DIRECTORY = "verifierReports";
-
-    // Report Logs are stored here
-    public static final String XTSV_REPORTLOG_FOLDERNAME = "R.string.report_log_folder_name";
+    public static final String REPORT_DIRECTORY = "VerifierReports";
+    public static final String LOGS_DIRECTORY = "ReportLogFiles";
 
     private static final Logger LOG = Logger.getLogger(ReportExporter.class.getName());
     private static final String COMMAND_LINE_ARGS = "";
@@ -82,7 +80,7 @@ class ReportExporter extends AsyncTask<Void, Void, String> {
         File reportLogFolder =
                 new File(Environment.getExternalStorageDirectory().getAbsolutePath()
                         + File.separator
-                        + XTSV_REPORTLOG_FOLDERNAME);
+                        + REPORT_DIRECTORY);
         File[] reportLogFiles = reportLogFolder.listFiles();
 
         // if no ReportLog files have been created (i.e. the folder doesn't exist)
