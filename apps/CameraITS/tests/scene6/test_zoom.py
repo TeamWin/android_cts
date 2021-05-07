@@ -111,8 +111,7 @@ def find_center_circle(img, img_name, color, min_area, debug):
       if colour == color and (1 - CIRCLE_TOL <= circlish <= 1 + CIRCLE_TOL):
         circles.append([shape['ctx'], shape['cty'], radius, circlish, area])
 
-  if debug == 'true':
-    circles.sort(key=lambda x: abs(x[3] - 1.0))  # sort for best circles
+  if debug:
     logging.debug('circles [x, y, r, pi*r**2/area, area]: %s', str(circles))
 
   # find circle closest to center
