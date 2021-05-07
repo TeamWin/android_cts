@@ -29,6 +29,8 @@ public class FontFileTestUtil {
     private static final int SFNT_VERSION_OTTO = 0x4F54544F;
     private static final int TTC_TAG = 0x74746366;
     private static final int NAME_TAG = 0x6E616D65;
+    private static final int META_TAG = 0x6D657461;
+    private static final int EMJI_TAG = 0x456D6A69;
 
     public static String getPostScriptName(File file) throws IOException {
         try (FileInputStream fis = new FileInputStream(file)) {
@@ -87,5 +89,51 @@ public class FontFileTestUtil {
             }
         }
         return null;
+    }
+
+    public static boolean containsEmojiCompatMetadata(File file) throws IOException {
+        try (FileInputStream fis = new FileInputStream(file)) {
+            final FileChannel fc = fis.getChannel();
+            long size = fc.size();
+            ByteBuffer buffer = fc.map(FileChannel.MapMode.READ_ONLY, 0, size)
+                    .order(ByteOrder.BIG_ENDIAN);
+
+            int magicNumber = buffer.getInt(0);
+
+            int fontOffset = 0;
+            if (magicNumber == TTC_TAG) {
+                throw new IOException("Emoji font is not expected to be in a font collection.");
+            } else if (magicNumber != SFNT_VERSION_1 && magicNumber != SFNT_VERSION_OTTO) {
+                throw new IOException("Unknown magic number: #" + magicNumber);
+            }
+
+            int numTables = buffer.getShort(fontOffset + 4);  // offset to number of table
+            int metaTableOffset = 0;
+            for (int i = 0; i < numTables; ++i) {
+                int tableEntryOffset = fontOffset + 12 + i * 16;
+                int tableTag = buffer.getInt(tableEntryOffset);
+                if (tableTag == META_TAG) {
+                    metaTableOffset = buffer.getInt(tableEntryOffset + 8);
+                    break;
+                }
+            }
+
+            if (metaTableOffset == 0) {
+                throw new IOException("name table not found.");
+            }
+
+            int dataMapsCount = buffer.getInt(metaTableOffset + 12);
+
+            for (int i = 0; i < dataMapsCount; ++i) {
+                int tag = buffer.getInt(metaTableOffset + 16 + 12 * i);
+                int offset = buffer.getInt(metaTableOffset + 16 + 12 * i + 4);
+                int dataLength = buffer.getInt(metaTableOffset + 16 + 12 * i + 8);
+
+                if (tag == EMJI_TAG && dataLength != 0) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }
