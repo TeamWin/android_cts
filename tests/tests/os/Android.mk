@@ -50,7 +50,7 @@ LOCAL_PACKAGE_NAME := CtsOsTestCases
 LOCAL_TEST_CONFIG := CtsOsTestCases.xml
 
 # Tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests sts
 
 LOCAL_SDK_VERSION := test_current
 LOCAL_JAVA_LIBRARIES += android.test.runner.stubs
