@@ -826,10 +826,55 @@ public class AtomTests {
         BroadcastReceiver receiver =
                 registerReceiver(context, onReceiveLatch, new IntentFilter(name));
         AlarmManager manager = (AlarmManager) (context.getSystemService(AlarmManager.class));
-        PendingIntent pintent = PendingIntent.getBroadcast(context, 0, new Intent(name), PendingIntent.FLAG_IMMUTABLE);
+        PendingIntent pintent = PendingIntent.getBroadcast(context, 0, new Intent(name),
+                PendingIntent.FLAG_IMMUTABLE);
         manager.setExact(AlarmManager.ELAPSED_REALTIME_WAKEUP,
             SystemClock.elapsedRealtime() + 2_000, pintent);
         waitForReceiver(context, 10_000, onReceiveLatch, receiver);
+    }
+
+    @Test
+    public void testAlarmScheduled() {
+        Context context = InstrumentationRegistry.getContext();
+        String name = "android.cts.statsdatom.testAlarmScheduled";
+
+        final AlarmManager am = context.getSystemService(AlarmManager.class);
+        PendingIntent pi1 = PendingIntent.getBroadcast(context, 1, new Intent(name),
+                PendingIntent.FLAG_IMMUTABLE);
+        PendingIntent pi2 = PendingIntent.getBroadcast(context, 2, new Intent(name),
+                PendingIntent.FLAG_IMMUTABLE);
+
+        final long trigger1 = SystemClock.elapsedRealtime() + 5_000;
+        final long trigger2 = System.currentTimeMillis() + 5_200;
+        am.setExact(AlarmManager.ELAPSED_REALTIME_WAKEUP, trigger1, pi1);
+        am.setWindow(AlarmManager.RTC, trigger2, 10_000, pi2);
+    }
+
+    @Test
+    public void testPendingAlarmInfo() {
+        Context context = InstrumentationRegistry.getContext();
+        final AlarmManager am = context.getSystemService(AlarmManager.class);
+
+        // Just schedule esoteric alarms whose counts can be verified in the pulled atom.
+        PendingIntent activity = PendingIntent.getActivity(context, 0,
+                new Intent("com.irrelevant.activity"), PendingIntent.FLAG_IMMUTABLE);
+        PendingIntent fgs1 = PendingIntent.getForegroundService(context, 1,
+                new Intent("com.irrelevant.fgs1"), PendingIntent.FLAG_IMMUTABLE);
+        PendingIntent fgs2 = PendingIntent.getForegroundService(context, 2,
+                new Intent("com.irrelevant.fgs2"), PendingIntent.FLAG_IMMUTABLE);
+        PendingIntent service = PendingIntent.getService(context, 0,
+                new Intent("com.irrelevant.service"), PendingIntent.FLAG_IMMUTABLE);
+
+        final long farTriggerRtc = System.currentTimeMillis() + 600_000;
+        final long farTriggerElapsed = SystemClock.elapsedRealtime() + 600_000;
+        final long neverTriggerElapsed = SystemClock.elapsedRealtime() + 10 * 365 * 86400 * 1000L;
+
+        am.set(AlarmManager.RTC_WAKEUP, farTriggerRtc, "testPendingAlarmInfo",
+                () -> Log.e(TAG, "Should not have fired"), null);
+        am.setAlarmClock(new AlarmManager.AlarmClockInfo(farTriggerRtc, activity), activity);
+        am.setExactAndAllowWhileIdle(AlarmManager.ELAPSED_REALTIME, farTriggerElapsed, fgs1);
+        am.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, farTriggerElapsed, 60_000, fgs2);
+        am.setAndAllowWhileIdle(AlarmManager.ELAPSED_REALTIME, neverTriggerElapsed, service);
     }
 
     @Test

@@ -100,7 +100,9 @@ public class AudioLoopbackLatencyActivity extends AudioLoopbackBaseActivity {
         return setTestNameSuffix(sCurrentDisplayMode, getClass().getName());
     }
 
-    protected void recordTestResults() {
+    @Override
+    public void recordTestResults() {
+        Log.d(TAG, "recordTestResults()");
         super.recordTestResults();
 
         CtsVerifierReportLog reportLog = getReportLog();

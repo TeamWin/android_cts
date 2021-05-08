@@ -22,7 +22,7 @@ class AbstractBuildFileHandler(object):
   def __init__(self, build_file):
     self.build_file = build_file
 
-  def GetFileHash(self, file_names, hash_func=None):
+  def get_file_hash(self, file_names, hash_func=None):
     """Get hash value of file's content.
 
     Args:

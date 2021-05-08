@@ -913,6 +913,7 @@ public final class DeviceState implements TestRule {
             mHasChangedDeviceOwner = true;
         }
 
+        mDeviceOwner = null;
         deviceOwner.remove();
     }
 
