@@ -79,6 +79,7 @@ import android.app.Person;
 import android.app.UiAutomation;
 import android.app.cts.android.app.cts.tools.FutureServiceConnection;
 import android.app.cts.android.app.cts.tools.NotificationHelper;
+import android.app.role.RoleManager;
 import android.app.stubs.AutomaticZenRuleActivity;
 import android.app.stubs.BubbledActivity;
 import android.app.stubs.BubblesTestService;
@@ -137,11 +138,14 @@ import android.util.Log;
 import android.widget.RemoteViews;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.FeatureUtil;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.test.notificationlistener.INotificationUriAccessService;
+
+import com.google.common.base.Preconditions;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -157,7 +161,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -199,6 +205,7 @@ public class NotificationManagerTest extends AndroidTestCase {
 
     private PackageManager mPackageManager;
     private AudioManager mAudioManager;
+    private RoleManager mRoleManager;
     private NotificationManager mNotificationManager;
     private ActivityManager mActivityManager;
     private String mId;
@@ -209,6 +216,9 @@ public class NotificationManagerTest extends AndroidTestCase {
     private INotificationUriAccessService mNotificationUriAccessService;
     private FutureServiceConnection mTrampolineConnection;
     private NotificationHelper mNotificationHelper;
+
+    @Nullable
+    private List<String> mPreviousDefaultBrowser;
 
     @Override
     protected void setUp() throws Exception {
@@ -229,6 +239,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         mActivityManager = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
         mPackageManager = mContext.getPackageManager();
         mAudioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
+        mRoleManager = mContext.getSystemService(RoleManager.class);
         mRuleIds = new ArrayList<>();
 
         // ensure listener access isn't allowed before test runs (other tests could put
@@ -296,6 +307,9 @@ public class NotificationManagerTest extends AndroidTestCase {
         if (mListener != null) {
             mListener.removeTestPackage(TRAMPOLINE_APP_API_30);
             mListener.removeTestPackage(TRAMPOLINE_APP);
+        }
+        if (mPreviousDefaultBrowser != null) {
+            restoreDefaultBrowser();
         }
     }
 
@@ -919,6 +933,35 @@ public class NotificationManagerTest extends AndroidTestCase {
         }
         Messenger service = new Messenger(mTrampolineConnection.get(TIMEOUT_MS));
         service.send(Message.obtain(null, message, notificationId, -1, new Messenger(callback)));
+    }
+
+    private void setDefaultBrowser(String packageName) throws Exception {
+        UserHandle user = android.os.Process.myUserHandle();
+        mPreviousDefaultBrowser = SystemUtil.callWithShellPermissionIdentity(
+                () -> mRoleManager.getRoleHoldersAsUser(RoleManager.ROLE_BROWSER, user));
+        CompletableFuture<Boolean> set = new CompletableFuture<>();
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> mRoleManager.addRoleHolderAsUser(RoleManager.ROLE_BROWSER, packageName, 0,
+                        user, mContext.getMainExecutor(), set::complete));
+        assertTrue("Failed to set " + packageName + " as default browser",
+                set.get(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+    }
+
+    private void restoreDefaultBrowser() throws Exception {
+        Preconditions.checkState(mPreviousDefaultBrowser != null);
+        UserHandle user = android.os.Process.myUserHandle();
+        Executor executor = mContext.getMainExecutor();
+        CompletableFuture<Boolean> restored = new CompletableFuture<>();
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            mRoleManager.clearRoleHoldersAsUser(RoleManager.ROLE_BROWSER, 0, user, executor,
+                    restored::complete);
+            for (String packageName : mPreviousDefaultBrowser) {
+                mRoleManager.addRoleHolderAsUser(RoleManager.ROLE_BROWSER, packageName,
+                        0, user, executor, restored::complete);
+            }
+        });
+        assertTrue("Failed to restore default browser",
+                restored.get(TIMEOUT_MS, TimeUnit.MILLISECONDS));
     }
 
     public void testConsolidatedNotificationPolicy() throws Exception {
@@ -4241,6 +4284,48 @@ public class NotificationManagerTest extends AndroidTestCase {
         // Post notification and fire its pending intent
         sendTrampolineMessage(TRAMPOLINE_SERVICE_API_30, MESSAGE_SERVICE_NOTIFICATION,
                 notificationId, callback);
+        StatusBarNotification statusBarNotification = findPostedNotification(notificationId, true);
+        assertNotNull("Notification not posted on time", statusBarNotification);
+        statusBarNotification.getNotification().contentIntent.send();
+
+        assertTrue("Service not started on time",
+                callback.waitFor(EventCallback.SERVICE_STARTED, TIMEOUT_MS));
+        assertTrue("Activity not started",
+                callback.waitFor(EventCallback.ACTIVITY_STARTED, TIMEOUT_MS));
+    }
+
+    public void testActivityStartOnBroadcastTrampoline_whenDefaultBrowser_isAllowed()
+            throws Exception {
+        setDefaultBrowser(TRAMPOLINE_APP);
+        setUpNotifListener();
+        mListener.addTestPackage(TRAMPOLINE_APP);
+        EventCallback callback = new EventCallback();
+        int notificationId = 6005;
+
+        // Post notification and fire its pending intent
+        sendTrampolineMessage(TRAMPOLINE_SERVICE, MESSAGE_BROADCAST_NOTIFICATION, notificationId,
+                callback);
+        StatusBarNotification statusBarNotification = findPostedNotification(notificationId, true);
+        assertNotNull("Notification not posted on time", statusBarNotification);
+        statusBarNotification.getNotification().contentIntent.send();
+
+        assertTrue("Broadcast not received on time",
+                callback.waitFor(EventCallback.BROADCAST_RECEIVED, TIMEOUT_LONG_MS));
+        assertTrue("Activity not started",
+                callback.waitFor(EventCallback.ACTIVITY_STARTED, TIMEOUT_MS));
+    }
+
+    public void testActivityStartOnServiceTrampoline_whenDefaultBrowser_isAllowed()
+            throws Exception {
+        setDefaultBrowser(TRAMPOLINE_APP);
+        setUpNotifListener();
+        mListener.addTestPackage(TRAMPOLINE_APP);
+        EventCallback callback = new EventCallback();
+        int notificationId = 6006;
+
+        // Post notification and fire its pending intent
+        sendTrampolineMessage(TRAMPOLINE_SERVICE, MESSAGE_SERVICE_NOTIFICATION, notificationId,
+                callback);
         StatusBarNotification statusBarNotification = findPostedNotification(notificationId, true);
         assertNotNull("Notification not posted on time", statusBarNotification);
         statusBarNotification.getNotification().contentIntent.send();

@@ -27,7 +27,7 @@ class BuildFileHandlerTest(unittest.TestCase):
     handler = TargetFileHandler(build_file)
     deqp_deps = ['/system/deqp_dependency_file_a.so', '/vendor/deqp_dependency_file_b.so',
                  '/vendor/file_not_exists.so']
-    hash_dict = handler.GetFileHash(deqp_deps)
+    hash_dict = handler.get_file_hash(deqp_deps)
 
     self.assertEqual(hash_dict['/system/deqp_dependency_file_a.so'],
                      hash(b'placeholder\nplaceholder\n'))

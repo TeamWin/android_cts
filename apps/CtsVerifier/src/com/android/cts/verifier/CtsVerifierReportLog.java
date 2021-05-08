@@ -34,7 +34,8 @@ import java.io.ObjectOutputStream;
 import java.util.List;
 
 public class CtsVerifierReportLog extends ReportLog {
-    private static String TAG = CtsVerifierReportLog.class.getSimpleName();
+    private static final String TAG = CtsVerifierReportLog.class.getSimpleName();
+    private static final boolean DEBUG = false;
 
     private ReportLogDeviceInfoStore mStore;
 
@@ -42,11 +43,17 @@ public class CtsVerifierReportLog extends ReportLog {
 
     public CtsVerifierReportLog(String reportLogName, String streamName) {
         this(reportLogName, streamName, new File(Environment.getExternalStorageDirectory(),
-                ReportExporter.XTSV_REPORTLOG_FOLDERNAME));
+                ReportExporter.LOGS_DIRECTORY));
     }
 
     public CtsVerifierReportLog(String reportLogName, String streamName, File logDirectory) {
         super(reportLogName, streamName);
+        if (DEBUG) {
+            Log.d(TAG, "CtsVerifierReportLog()");
+            Log.d(TAG, "  reportLogName:" + reportLogName);
+            Log.d(TAG, "  streamName:" + streamName);
+            Log.d(TAG, "  logDirectory:" + logDirectory);
+        }
 
         try {
             // dir value must match the src-dir value configured in ReportLogCollector target
@@ -72,6 +79,9 @@ public class CtsVerifierReportLog extends ReportLog {
      * does not appear in the result XML.
      */
     public void submit() {
+        if (DEBUG) {
+            Log.d(TAG, "submit()");
+        }
         try {
             mStore.close();
         } catch (Exception e) {

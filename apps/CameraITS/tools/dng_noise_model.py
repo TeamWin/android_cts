@@ -126,6 +126,7 @@ class DngNoiseModel(its_base_test.ItsBaseTest):
       props = cam.get_camera_properties()
       props = cam.override_with_hidden_physical_camera_props(props)
       log_path = self.log_path
+      name_with_log_path = os.path.join(log_path, _NAME)
       if self.hidden_physical_id:
         camera_name = f'{self.camera_id}.{self.hidden_physical_id}'
       else:
@@ -182,6 +183,12 @@ class DngNoiseModel(its_base_test.ItsBaseTest):
                      'gridWidth': _TILE_SIZE,
                      'gridHeight': _TILE_SIZE}
           cap = cam.do_capture(req, fmt_raw)
+          if self.debug_mode:
+            img = image_processing_utils.convert_capture_to_rgb_image(
+                cap, props=props)
+            image_processing_utils.write_image(
+                img, f'{name_with_log_path}_{iso_int}_{exposure}ns.jpg', True)
+
           mean_img, var_img = image_processing_utils.unpack_rawstats_capture(
               cap)
           idxs = image_processing_utils.get_canonical_cfa_order(props)
@@ -250,8 +257,7 @@ class DngNoiseModel(its_base_test.ItsBaseTest):
           color_plane_plots[iso_int][pidx].legend()
           pylab.tight_layout()
 
-        fig.savefig(
-            '%s_samples_iso%04d.png' % (os.path.join(log_path, _NAME), iso_int))
+        fig.savefig(f'{name_with_log_path}_samples_iso{iso_int:04d}.png')
         plots.append([iso_int, fig])
 
         # Move to the next sensitivity.
@@ -312,7 +318,7 @@ class DngNoiseModel(its_base_test.ItsBaseTest):
                            label='Model')
     plt_slope.legend()
     plt_intercept.legend()
-    fig.savefig('%s.png' % os.path.join(log_path, _NAME))
+    fig.savefig(f'{name_with_log_path}.png')
 
     # Generate individual noise model components
     noise_model_a, noise_model_b, noise_model_c, noise_model_d = zip(
@@ -330,8 +336,7 @@ class DngNoiseModel(its_base_test.ItsBaseTest):
             [intercept, intercept+slope*_MAX_SIGNAL_VALUE],
             'rgkb'[pidx]+'-', label='Model', alpha=0.5)
         color_plane_plots[s][pidx].legend(loc='upper left')
-      fig.savefig(
-          '%s_samples_iso%04d.png' % (os.path.join(log_path, _NAME), s))
+      fig.savefig(f'{name_with_log_path}_samples_iso{s:04d}.png')
 
     # Validity checks on model: read noise > 0, positive slope.
     for i, _ in enumerate(_BAYER_LIST):

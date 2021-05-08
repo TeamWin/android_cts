@@ -75,8 +75,8 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
         mRefCRC = refCRC;
     }
 
-    private short[] setUpAudioReference() throws IOException {
-        File refFile = new File(mInpPrefix + mRefFile);
+    static short[] setUpAudioReference(String file) throws IOException {
+        File refFile = new File(file);
         short[] refData;
         try (FileInputStream refStream = new FileInputStream(refFile)) {
             FileChannel fileChannel = refStream.getChannel();
@@ -184,17 +184,16 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
     private native boolean nativeTestSimpleDecode(String decoder, Surface surface, String mime,
             String testFile, String refFile, float rmsError, long checksum);
 
-    private void verify() throws IOException {
-        if (mRmsError >= 0) {
-            assertTrue(mRefFile != null);
-            short[] refData = setUpAudioReference();
-            float currError = mOutputBuff.getRmsError(refData);
-            float errMargin = mRmsError * RMS_ERROR_TOLERANCE;
-            assertTrue(String.format("%s rms error too high exp/got %f/%f", mTestFile,
-                    errMargin, currError), currError <= errMargin);
-        } else if (mRefCRC >= 0) {
-            assertEquals(String.format("%s checksum mismatch", mTestFile), mRefCRC,
-                    mOutputBuff.getCheckSumImage());
+    static void verify(OutputManager outBuff, String refFile, float rmsError, long refCRC)
+            throws IOException {
+        if (rmsError >= 0) {
+            short[] refData = setUpAudioReference(mInpPrefix + refFile);
+            float currError = outBuff.getRmsError(refData);
+            float errMargin = rmsError * RMS_ERROR_TOLERANCE;
+            assertTrue(String.format("%s rms error too high ref/exp/got %f/%f/%f", refFile,
+                    rmsError, errMargin, currError), currError <= errMargin);
+        } else if (refCRC >= 0) {
+            assertEquals("checksum mismatch", refCRC, outBuff.getCheckSumImage());
         }
     }
 
@@ -281,10 +280,9 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
                 }
             }
             mCodec.release();
-            if (mSaveToMem) verify();
+            if (mSaveToMem) verify(mOutputBuff, mRefFile, mRmsError, mRefCRC);
             assertTrue(nativeTestSimpleDecode(decoder, null, mMime, mInpPrefix + mTestFile,
-                    mInpPrefix + mRefFile, mRmsError * RMS_ERROR_TOLERANCE,
-                    ref.getCheckSumBuffer()));
+                    mInpPrefix + mRefFile, mRmsError, ref.getCheckSumBuffer()));
         }
         mExtractor.release();
     }
@@ -508,7 +506,7 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
                 doWork(Integer.MAX_VALUE);
                 queueEOS();
                 waitForAllOutputs();
-                if (mSaveToMem) verify();
+                if (mSaveToMem) verify(mOutputBuff, mRefFile, mRmsError, mRefCRC);
                 /* TODO(b/147348711) */
                 if (false) mCodec.stop();
                 else mCodec.reset();
@@ -534,7 +532,7 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
                 doWork(Integer.MAX_VALUE);
                 queueEOS();
                 waitForAllOutputs();
-                if (mSaveToMem) verify();
+                if (mSaveToMem) verify(mOutputBuff, mRefFile, mRmsError, mRefCRC);
                 /* TODO(b/147348711) */
                 if (false) mCodec.stop();
                 else mCodec.reset();

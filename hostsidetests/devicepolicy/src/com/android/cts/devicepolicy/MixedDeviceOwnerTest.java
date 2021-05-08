@@ -516,16 +516,17 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
     }
 
     @Override
-    protected void runDeviceTestsAsUser(String pkgName, String testClassName, int userId)
-            throws DeviceNotAvailableException {
-        runDeviceTestsAsUser(pkgName, testClassName, /* testMethodName= */ null, userId,
-                paramsForDeviceOwnerTest());
+    protected void runDeviceTestsAsUser(String pkgName, String testClassName, String testName,
+            int userId, Map<String, String> params) throws DeviceNotAvailableException {
+        Map<String, String> newParams = new HashMap(params);
+        newParams.putAll(getParamsForDeviceOwnerTest());
+        super.runDeviceTestsAsUser(
+                pkgName, testClassName, testName, userId, newParams);
     }
 
     @Override
     protected void executeDeviceTestMethod(String className, String testName,
             Map<String, String> params) throws Exception {
-        addParamsForDeviceOwnerTest(params);
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, className, testName, mUserId, params);
     }
 
