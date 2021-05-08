@@ -41,6 +41,10 @@ LOCAL_STATIC_JAVA_LIBRARIES := androidx.legacy_legacy-support-v4 \
                                compatibility-common-util-devicesidelib \
                                compatibility-device-util-axt
 
+# Disable dexpreopt and <uses-library> check for test.
+LOCAL_ENFORCE_USES_LIBRARIES := false
+LOCAL_DEX_PREOPT := false
+
 include $(BUILD_STATIC_JAVA_LIBRARY)
 
 pre-installed-apps := \

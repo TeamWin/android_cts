@@ -23,7 +23,7 @@ changed. Output a decision if dEQP could be skipped, and a cts-tradefed
 command to be used based on the decision.
 
 python3 incremental_deqp.py -s [device serial] -t [test directory] -b
-[base build target file]
+[base build target file] -c [current build target file]
 
 Usage 2: Generate a file containing a list of dEQP dependencies for the
 build on device.
@@ -91,64 +91,90 @@ class TestResourceError(Exception):
 class BuildHelper(object):
   """Helper class for analyzing build."""
 
-  def __init__(self, base_build_target, deqp_deps, custom_handler=False):
+  def __init__(self, custom_handler=False):
     """Init BuildHelper.
 
     Args:
-      base_build_target: base build's target file name.
-      deqp_deps: a set of dEQP dependency.
       custom_handler: use custom build handler.
     """
-    self._deqp_deps = []
-    for deps in deqp_deps:
-      if self.is_deqp_dependency(deps):
-        self._deqp_deps.append(deps)
-    # Get base build's hash.
-    handler = TargetFileHandler(base_build_target)
+    self._build_file_handler = TargetFileHandler
     if custom_handler:
-      handler = CustomBuildFileHandler(base_build_target)
+      self._build_file_handler = CustomBuildFileHandler
 
-    self.base_hash = handler.GetFileHash(self._deqp_deps)
 
-  def is_deqp_dependency(self, dependency_name):
-    """Check if dependency is related to dEQP."""
-    # dEQP dependency with pattern below will not be used to compare build:
-    # files has /apex/ prefix are not related to dEQP.
-    return not re.search(re.compile('^/apex/'), dependency_name)
-
-  def compare_build(self, adb):
+  def compare_base_build_with_current_build(self, deqp_deps, current_build_file,
+                                            base_build_file):
     """Compare the difference of current build and base build with dEQP dependency.
 
-    If the difference of current build and base build is not part of dEQP dependency,
-    current build could skip dEQP test if base build has passed test.
+    If the difference doesn't involve dEQP dependency, current build could skip dEQP test if
+    base build has passed test.
 
     Args:
+      deqp_deps: a set of dEQP dependency.
+      current_build_file: current build's file name.
+      base_build_file: base build's file name.
+    Returns:
+      True if current build could skip dEQP, otherwise False.
+    """
+    print('Comparing base build and current build...')
+    current_build_handler = self._build_file_handler(current_build_file)
+    current_build_hash = current_build_handler.get_file_hash(deqp_deps)
+
+    base_build_handler = self._build_file_handler(base_build_file)
+    base_build_hash = base_build_handler.get_file_hash(deqp_deps)
+
+    return self._compare_build_hash(current_build_hash, base_build_hash)
+
+
+  def compare_base_build_with_device_files(self, deqp_deps, adb, base_build_file):
+    """Compare the difference of files on device and base build with dEQP dependency.
+
+    If the difference doesn't involve dEQP dependency, current build could skip dEQP test if
+    base build has passed test.
+
+    Args:
+      deqp_deps: a set of dEQP dependency.
       adb: an instance of AdbHelper for current device under test.
+      base_build_file: base build file name.
     Returns:
       True if current build could skip dEQP, otherwise False.
     """
     print('Comparing base build and current build on the device...')
     # Get current build's hash.
-    current_hash = dict()
-    for dep in self._deqp_deps:
-      if not self.is_deqp_dependency(dep):
-        continue
+    current_build_hash = dict()
+    for dep in deqp_deps:
       content = adb.run_shell_command('cat ' + dep)
-      current_hash[dep] = hash(content)
+      current_build_hash[dep] = hash(content)
 
-    if current_hash == self.base_hash:
+    base_build_handler = self._build_file_handler(base_build_file)
+    base_build_hash = base_build_handler.get_file_hash(deqp_deps)
+
+    return self._compare_build_hash(current_build_hash, base_build_hash)
+
+
+  def _compare_build_hash(self, current_build_hash, base_build_hash):
+    """Compare the hash value of current build and base build.
+
+    Args:
+      current_build_hash: map of current build where key is file name, and value is content hash.
+      base_build_hash: map of base build where key is file name and value is content hash.
+    Returns:
+      boolean about if two builds' hash is the same.
+    """
+    if current_build_hash == base_build_hash:
       print('Done!')
       return True
 
-    for key, val in current_hash.items():
-      if key not in self.base_hash:
+    for key, val in current_build_hash.items():
+      if key not in base_build_hash:
         logger.info('File:{build_file} was not found in base build'.format(build_file=key))
-      elif self.base_hash[key] != val:
+      elif base_build_hash[key] != val:
         logger.info('Detected dEQP dependency file difference:{deps}. Base build hash:{base}, '
-                    'current build hash:{current}'.format(deps=key, base=self.base_hash[key],
+                    'current build hash:{current}'.format(deps=key, base=base_build_hash[key],
                                                           current=val))
     print('Done!')
     return False
+
 
 class AdbHelper(object):
   """Helper class for running adb."""
@@ -415,14 +441,27 @@ class DeqpDependencyCollector(object):
     print('Done!')
     return deqp_deps
 
+def _is_deqp_dependency(dependency_name):
+  """Check if dependency is related to dEQP."""
+  # dEQP dependency with pattern below will not be used to compare build:
+  # files has /apex/ prefix are not related to dEQP.
+  return not re.search(re.compile('^/apex/'), dependency_name)
+
 def _get_parser():
   parser = argparse.ArgumentParser(description='Run incremental dEQP on devices.')
   parser.add_argument('-s', '--serial', help='Optional. Use device with given serial.')
   parser.add_argument('-t', '--test', help=('Optional. Directory of incremental deqp test file. '
                                             'This directory should have test resources and dEQP '
                                             'binaries.'))
-  parser.add_argument('-b', '--base', help=('Target file of base build that has passed dEQP test, '
-                                            'e.g. flame-target_files-6935423.zip.'))
+  parser.add_argument('-b', '--base_build', help=('Target file of base build that has passed dEQP '
+                                                  'test, e.g. flame-target_files-6935423.zip.'))
+  parser.add_argument('-c', '--current_build',
+                      help=('Optional. When empty, the script will read files in the build from '
+                            'the device via adb. When set, the script will read build files from '
+                            'the file provided by this argument. And this file should be the '
+                            'current build that is flashed to device, such as a target file '
+                            'like flame-target_files-6935424.zip. This argument can be used when '
+                            'some dependencies files are not accessible via adb.'))
   parser.add_argument('--generate_deps_only', action='store_true',
                       help=('Run test and generate dEQP dependency list only '
                             'without comparing build.'))
@@ -500,8 +539,14 @@ def _local_run(args, work_dir):
     return
 
   # Compare the build difference with dEQP dependency
-  build_helper = BuildHelper(args.base, deqp_deps, args.custom_handler)
-  skip_dEQP = build_helper.compare_build(adb)
+  valid_deqp_deps = [dep for dep in deqp_deps if _is_deqp_dependency(dep)]
+  build_helper = BuildHelper(args.custom_handler)
+  if args.current_build:
+    skip_dEQP = build_helper.compare_base_build_with_current_build(
+        valid_deqp_deps, args.current_build, args.base_build)
+  else:
+    skip_dEQP = build_helper.compare_base_build_with_device_files(
+        valid_deqp_deps, adb, args.base_build)
   if skip_dEQP:
     print('Congratulations, current build could skip dEQP test.\n'
           'If you run CTS through suite, you could pass filter like '
@@ -566,8 +611,8 @@ def _ats_run(args, work_dir):
 def main():
   parser = _get_parser()
   args = parser.parse_args()
-  if not args.generate_deps_only and not args.base and not args.ats_mode:
-    parser.error('Base build argument: \'-b [file] or --base [file]\' '
+  if not args.generate_deps_only and not args.base_build and not args.ats_mode:
+    parser.error('Base build argument: \'-b [file] or --base_build [file]\' '
                  'is required to compare build.')
 
   work_dir = ''

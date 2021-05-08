@@ -176,6 +176,17 @@ public class BasicApiTests {
         }.run();
     }
 
+    @Test
+    public void noBinderOverflowWithListenerSpam() {
+        final long now = SystemClock.elapsedRealtime();
+        for (int i = 0; i < 51_500; i++) {
+            // Need it to be larger than 51200, which is the global reference table size.
+            mAm.setExact(AlarmManager.ELAPSED_REALTIME, now + 10_000 + i * 1000, "spam-test",
+                    mMockAlarmReceiver, null);
+        }
+        // Binder overflow should crash the system, so if we're out of the loop, the test passed.
+    }
+
     /**
      * We run a few trials of an exact alarm that is placed within an inexact alarm's window of
      * opportunity, and mandate that the average observed delivery skew between the two be

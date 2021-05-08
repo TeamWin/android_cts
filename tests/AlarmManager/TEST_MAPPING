@@ -1,7 +1,11 @@
 {
   "presubmit": [
     {
-      "name": "CtsAlarmManagerTestCases"
+      "name": "CtsAlarmManagerTestCases",
+      "options": [
+        {"exclude-annotation": "androidx.test.filters.FlakyTest"},
+        {"exclude-annotation": "androidx.test.filters.LargeTest"}
+      ]
     }
   ]
 }

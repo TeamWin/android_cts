@@ -35,6 +35,8 @@ extern const char* AMEDIA_MIMETYPE_AUDIO_FLAC;
 extern const char* AMEDIA_MIMETYPE_AUDIO_VORBIS;
 extern const char* AMEDIA_MIMETYPE_AUDIO_OPUS;
 
+extern const float kRmsErrorTolerance;
+
 extern const long kQDeQTimeOutUs;
 extern const int kRetryLimit;
 
