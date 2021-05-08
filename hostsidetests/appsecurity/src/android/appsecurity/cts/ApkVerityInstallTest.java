@@ -24,7 +24,7 @@ import android.platform.test.annotations.AppModeFull;
 import com.android.compatibility.common.util.CddTest;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
-import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+import com.android.tradefed.testtype.junit4.DeviceParameterizedRunner;
 import com.android.tradefed.testtype.junit4.DeviceTestRunOptions;
 
 import org.junit.After;
@@ -32,10 +32,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.io.FileNotFoundException;
 import java.util.HashMap;
 
-@RunWith(DeviceJUnit4ClassRunner.class)
+import junitparams.Parameters;
+
+@RunWith(DeviceParameterizedRunner.class)
 @AppModeFull
 public final class ApkVerityInstallTest extends BaseAppSecurityTest {
 
@@ -48,7 +49,14 @@ public final class ApkVerityInstallTest extends BaseAppSecurityTest {
     private static final String BAD_BASE_APK = "CtsApkVerityTestApp2Prebuilt.apk";
     private static final String BAD_BASE_APK_DM = "CtsApkVerityTestApp2Prebuilt.dm";
     private static final String FSV_SIG_SUFFIX = ".fsv_sig";
+    private static final String ID_SIG_SUFFIX = ".idsig";
     private static final String APK_VERITY_STANDARD_MODE = "2";
+
+    private static final boolean INCREMENTAL = true;
+    private static final boolean NON_INCREMENTAL = false;
+
+    private static final boolean SUPPORTED = true;
+    private static final boolean UNSUPPORTED = false;
 
     private static final HashMap<String, String> ORIGINAL_TO_INSTALL_NAME = new HashMap<>() {{
         put(BASE_APK, "base.apk");
@@ -59,6 +67,24 @@ public final class ApkVerityInstallTest extends BaseAppSecurityTest {
 
     private boolean mDmRequireFsVerity;
 
+    private static final Object[] installSingle() {
+        // Non-Incremental and Incremental.
+        return new Boolean[][]{{NON_INCREMENTAL}, {INCREMENTAL}};
+    }
+
+    private static final Object[] installAndUpdate() {
+        // Non-Incremental -> Non-Incremental: supported
+        // Incremental -> Non-Incremental: supported
+        // Incremental -> Incremental: supported
+        // Non-Incremental -> Incremental: unsupported
+        return new Boolean[][]{
+                {NON_INCREMENTAL, NON_INCREMENTAL, SUPPORTED},
+                {INCREMENTAL, NON_INCREMENTAL, SUPPORTED},
+                {INCREMENTAL, INCREMENTAL, SUPPORTED},
+                {NON_INCREMENTAL, INCREMENTAL, UNSUPPORTED}
+        };
+    }
+
     @Before
     public void setUp() throws DeviceNotAvailableException {
         ITestDevice device = getDevice();
@@ -66,6 +92,7 @@ public final class ApkVerityInstallTest extends BaseAppSecurityTest {
         assumeTrue(device.getLaunchApiLevel() >= 30
                 || APK_VERITY_STANDARD_MODE.equals(apkVerityMode));
         mDmRequireFsVerity = "true".equals(device.getProperty("pm.dexopt.dm.require_fsverity"));
+        assumeSecurityModelCompat();
     }
 
     @After
@@ -73,60 +100,66 @@ public final class ApkVerityInstallTest extends BaseAppSecurityTest {
         getDevice().uninstallPackage(PACKAGE_NAME);
     }
 
-    @CddTest(requirement="9.10/C-0-3")
+    @CddTest(requirement = "9.10/C-0-3")
     @Test
-    public void testInstallBase() throws DeviceNotAvailableException, FileNotFoundException {
-        assumeSecurityModelCompat();
-        new InstallMultiple()
+    @Parameters(method = "installSingle")
+    public void testInstallBase(boolean incremental) throws Exception {
+        assumePreconditions(incremental);
+        new InstallMultiple(incremental)
                 .addFile(BASE_APK)
                 .addFile(BASE_APK + FSV_SIG_SUFFIX)
                 .run();
-        verifyFsverityInstall(BASE_APK);
+        verifyFsverityInstall(incremental, BASE_APK);
     }
 
-    @CddTest(requirement="9.10/C-0-3")
+    @CddTest(requirement = "9.10/C-0-3")
     @Test
-    public void testInstallBaseWithWrongSignature()
-            throws DeviceNotAvailableException, FileNotFoundException {
-        assumeSecurityModelCompat();
-        new InstallMultiple()
+    @Parameters(method = "installSingle")
+    public void testInstallBaseWithWrongSignature(boolean incremental) throws Exception {
+        assumePreconditions(incremental);
+        InstallMultiple install = new InstallMultiple(incremental)
                 .addFile(BAD_BASE_APK)
-                .addFile(BAD_BASE_APK + FSV_SIG_SUFFIX)
-                .runExpectingFailure();
+                .addFile(BAD_BASE_APK + FSV_SIG_SUFFIX);
+
+        // S with IncFsV1 silently skips fs-verity signatures.
+        boolean expectingSuccess = incremental && !isIncrementalDeliveryV2Feature();
+        install.run(expectingSuccess);
     }
 
-    @CddTest(requirement="9.10/C-0-3,C-0-5")
+    @CddTest(requirement = "9.10/C-0-3,C-0-5")
     @Test
-    public void testInstallBaseWithSplit()
-            throws DeviceNotAvailableException, FileNotFoundException {
-        assumeSecurityModelCompat();
-        new InstallMultiple()
+    @Parameters(method = "installSingle")
+    public void testInstallBaseWithSplit(boolean incremental) throws Exception {
+        assumePreconditions(incremental);
+        new InstallMultiple(incremental)
                 .addFile(BASE_APK)
                 .addFile(BASE_APK + FSV_SIG_SUFFIX)
                 .addFile(SPLIT_APK)
                 .addFile(SPLIT_APK + FSV_SIG_SUFFIX)
                 .run();
-        verifyFsverityInstall(BASE_APK, SPLIT_APK);
+        verifyFsverityInstall(incremental, BASE_APK, SPLIT_APK);
     }
 
-    @CddTest(requirement="9.10/C-0-3,C-0-5")
+    @CddTest(requirement = "9.10/C-0-3,C-0-5")
     @Test
-    public void testInstallBaseWithDm() throws DeviceNotAvailableException, FileNotFoundException {
-        assumeSecurityModelCompat();
-        new InstallMultiple()
+    @Parameters(method = "installSingle")
+    public void testInstallBaseWithDm(boolean incremental) throws Exception {
+        assumePreconditions(incremental);
+        new InstallMultiple(incremental)
                 .addFile(BASE_APK)
                 .addFile(BASE_APK + FSV_SIG_SUFFIX)
                 .addFile(BASE_APK_DM)
                 .addFile(BASE_APK_DM + FSV_SIG_SUFFIX)
                 .run();
-        verifyFsverityInstall(BASE_APK, BASE_APK_DM);
+        verifyFsverityInstall(incremental, BASE_APK, BASE_APK_DM);
     }
 
-    @CddTest(requirement="9.10/C-0-3,C-0-5")
+    @CddTest(requirement = "9.10/C-0-3,C-0-5")
     @Test
-    public void testInstallEverything() throws DeviceNotAvailableException, FileNotFoundException {
-        assumeSecurityModelCompat();
-        new InstallMultiple()
+    @Parameters(method = "installSingle")
+    public void testInstallEverything(boolean incremental) throws Exception {
+        assumePreconditions(incremental);
+        new InstallMultiple(incremental)
                 .addFile(BASE_APK)
                 .addFile(BASE_APK + FSV_SIG_SUFFIX)
                 .addFile(BASE_APK_DM)
@@ -136,68 +169,121 @@ public final class ApkVerityInstallTest extends BaseAppSecurityTest {
                 .addFile(SPLIT_APK_DM)
                 .addFile(SPLIT_APK_DM + FSV_SIG_SUFFIX)
                 .run();
-        verifyFsverityInstall(BASE_APK, BASE_APK_DM, SPLIT_APK, SPLIT_APK_DM);
+        verifyFsverityInstall(incremental, BASE_APK, BASE_APK_DM, SPLIT_APK, SPLIT_APK_DM);
     }
 
-    @CddTest(requirement="9.10/C-0-3,C-0-5")
+    @CddTest(requirement = "9.10/C-0-3,C-0-5")
     @Test
-    public void testInstallSplitOnly()
-            throws DeviceNotAvailableException, FileNotFoundException {
-        assumeSecurityModelCompat();
-        new InstallMultiple()
+    @Parameters(method = "installAndUpdate")
+    public void testInstallSplitOnly(boolean installIncremental, boolean updateIncremental,
+            boolean isSupported) throws Exception {
+        assumePreconditions(installIncremental || updateIncremental);
+        new InstallMultiple(installIncremental)
                 .addFile(BASE_APK)
                 .addFile(BASE_APK + FSV_SIG_SUFFIX)
                 .run();
-        verifyFsverityInstall(BASE_APK);
+        verifyFsverityInstall(installIncremental, BASE_APK);
 
-        new InstallMultiple()
+        new InstallMultiple(updateIncremental)
                 .inheritFrom(PACKAGE_NAME)
                 .addFile(SPLIT_APK)
                 .addFile(SPLIT_APK + FSV_SIG_SUFFIX)
-                .run();
-        verifyFsverityInstall(BASE_APK, SPLIT_APK);
+                .run(isSupported);
+        if (isSupported) {
+            verifyFsverityInstall(updateIncremental, BASE_APK, SPLIT_APK);
+        }
     }
 
-    @CddTest(requirement="9.10/C-0-3,C-0-5")
+    @CddTest(requirement = "9.10/C-0-3,C-0-5")
     @Test
-    public void testInstallSplitOnlyMissingSignature()
-            throws DeviceNotAvailableException, FileNotFoundException {
-        assumeSecurityModelCompat();
-        new InstallMultiple()
+    @Parameters(method = "installAndUpdate")
+    public void testInstallSplitOnlyMissingSignature(boolean installIncremental,
+            boolean updateIncremental, boolean isSupported) throws Exception {
+        assumePreconditions(installIncremental || updateIncremental);
+        new InstallMultiple(installIncremental)
                 .addFile(BASE_APK)
                 .addFile(BASE_APK + FSV_SIG_SUFFIX)
                 .run();
-        verifyFsverityInstall(BASE_APK);
+        verifyFsverityInstall(installIncremental, BASE_APK);
 
-        new InstallMultiple()
+        InstallMultiple install = new InstallMultiple(updateIncremental)
                 .inheritFrom(PACKAGE_NAME)
-                .addFile(SPLIT_APK)
-                .runExpectingFailure();
+                .addFile(SPLIT_APK);
+
+        // S with IncFsV1 silently skips fs-verity signatures.
+        boolean expectingSuccess =
+                isSupported && installIncremental && !isIncrementalDeliveryV2Feature();
+        install.run(expectingSuccess);
     }
 
-    @CddTest(requirement="9.10/C-0-3,C-0-5")
+    @CddTest(requirement = "9.10/C-0-3,C-0-5")
     @Test
-    public void testInstallSplitOnlyWithoutBaseSignature()
-            throws DeviceNotAvailableException, FileNotFoundException {
-        assumeSecurityModelCompat();
-        new InstallMultiple()
+    @Parameters(method = "installAndUpdate")
+    public void testInstallSplitOnlyWithoutBaseSignature(boolean installIncremental,
+            boolean updateIncremental, boolean isSupported) throws Exception {
+        assumePreconditions(installIncremental || updateIncremental);
+        new InstallMultiple(installIncremental)
                 .addFile(BASE_APK)
                 .run();
 
-        new InstallMultiple()
+        new InstallMultiple(updateIncremental)
                 .inheritFrom(PACKAGE_NAME)
                 .addFile(SPLIT_APK)
                 .addFile(SPLIT_APK + FSV_SIG_SUFFIX)
-                .run();
-        verifyFsverityInstall(SPLIT_APK);
+                .run(isSupported);
+        if (isSupported) {
+            verifyFsverityInstall(updateIncremental, SPLIT_APK);
+        }
     }
 
-    @CddTest(requirement="9.10/C-0-3,C-0-5")
+    @CddTest(requirement = "9.10/C-0-3,C-0-5")
     @Test
-    public void testInstallBaseWithFsvSigAndSplitWithout()
-            throws DeviceNotAvailableException, FileNotFoundException {
-        assumeSecurityModelCompat();
-        new InstallMultiple()
+    @Parameters(method = "installAndUpdate")
+    public void testInstallSplitAndSignatureForBase(boolean installIncremental,
+            boolean updateIncremental, boolean isSupported) throws Exception {
+        assumePreconditions(installIncremental || updateIncremental);
+        new InstallMultiple(installIncremental)
+                .addFile(BASE_APK)
+                .run();
+
+        new InstallMultiple(updateIncremental)
+                .inheritFrom(PACKAGE_NAME)
+                .addFile(BASE_APK)
+                .addFile(BASE_APK + FSV_SIG_SUFFIX)
+                .addFile(SPLIT_APK)
+                .addFile(SPLIT_APK + FSV_SIG_SUFFIX)
+                .run(isSupported);
+        if (isSupported) {
+            verifyFsverityInstall(updateIncremental, BASE_APK);
+        }
+    }
+
+    @CddTest(requirement = "9.10/C-0-3,C-0-5")
+    @Test
+    @Parameters(method = "installAndUpdate")
+    public void testUpdateBaseWithSignature(boolean installIncremental, boolean updateIncremental,
+            boolean isSupported) throws Exception {
+        assumePreconditions(installIncremental || updateIncremental);
+        new InstallMultiple(installIncremental)
+                .addFile(BASE_APK)
+                .addFile(BASE_APK + FSV_SIG_SUFFIX)
+                .run();
+        verifyFsverityInstall(installIncremental, BASE_APK);
+
+        new InstallMultiple(updateIncremental)
+                .inheritFrom(PACKAGE_NAME)
+                .addFile(BASE_APK)
+                .addFile(BASE_APK + FSV_SIG_SUFFIX)
+                .run(isSupported);
+        verifyFsverityInstall(updateIncremental, BASE_APK);
+    }
+
+    @CddTest(requirement = "9.10/C-0-3,C-0-5")
+    @Test
+    @Parameters(method = "installSingle")
+    public void testInstallBaseWithFsvSigAndSplitWithout(boolean incremental) throws Exception {
+        assumePreconditions(incremental);
+        new InstallMultiple(incremental)
                 .addFile(BASE_APK)
                 .addFile(BASE_APK + FSV_SIG_SUFFIX)
                 .addFile(BASE_APK_DM)
@@ -208,12 +294,12 @@ public final class ApkVerityInstallTest extends BaseAppSecurityTest {
                 .runExpectingFailure();
     }
 
-    @CddTest(requirement="9.10/C-0-3,C-0-5")
+    @CddTest(requirement = "9.10/C-0-3,C-0-5")
     @Test
-    public void testInstallDmWithFsvSig()
-            throws DeviceNotAvailableException, FileNotFoundException {
-        assumeSecurityModelCompat();
-        new InstallMultiple()
+    @Parameters(method = "installSingle")
+    public void testInstallDmWithFsvSig(boolean incremental) throws Exception {
+        assumePreconditions(incremental);
+        new InstallMultiple(incremental)
                 .addFile(BASE_APK)
                 .addFile(BASE_APK_DM)
                 .addFile(BASE_APK_DM + FSV_SIG_SUFFIX)
@@ -221,15 +307,15 @@ public final class ApkVerityInstallTest extends BaseAppSecurityTest {
                 .addFile(SPLIT_APK_DM)
                 .addFile(SPLIT_APK_DM + FSV_SIG_SUFFIX)
                 .run();
-        verifyFsverityInstall(BASE_APK_DM, SPLIT_APK_DM);
+        verifyFsverityInstall(incremental, BASE_APK_DM, SPLIT_APK_DM);
     }
 
-    @CddTest(requirement="9.10/C-0-3,C-0-5")
+    @CddTest(requirement = "9.10/C-0-3,C-0-5")
     @Test
-    public void testInstallDmWithMissingFsvSig()
-            throws DeviceNotAvailableException, FileNotFoundException {
-        assumeSecurityModelCompat();
-        InstallMultiple installer = new InstallMultiple()
+    @Parameters(method = "installSingle")
+    public void testInstallDmWithMissingFsvSig(boolean incremental) throws Exception {
+        assumePreconditions(incremental);
+        InstallMultiple installer = new InstallMultiple(incremental)
                 .addFile(BASE_APK)
                 .addFile(BASE_APK_DM)
                 .addFile(BASE_APK_DM + FSV_SIG_SUFFIX)
@@ -239,16 +325,16 @@ public final class ApkVerityInstallTest extends BaseAppSecurityTest {
             installer.runExpectingFailure();
         } else {
             installer.run();
-            verifyFsverityInstall(BASE_APK_DM);
+            verifyFsverityInstall(incremental, BASE_APK_DM);
         }
     }
 
-    @CddTest(requirement="9.10/C-0-3,C-0-5")
+    @CddTest(requirement = "9.10/C-0-3,C-0-5")
     @Test
-    public void testInstallSplitWithFsvSigAndBaseWithout()
-            throws DeviceNotAvailableException, FileNotFoundException {
-        assumeSecurityModelCompat();
-        InstallMultiple installer = new InstallMultiple()
+    @Parameters(method = "installSingle")
+    public void testInstallSplitWithFsvSigAndBaseWithout(boolean incremental) throws Exception {
+        assumePreconditions(incremental);
+        InstallMultiple installer = new InstallMultiple(incremental)
                 .addFile(BASE_APK)
                 .addFile(BASE_APK_DM)
                 .addFile(BASE_APK_DM + FSV_SIG_SUFFIX)
@@ -259,73 +345,49 @@ public final class ApkVerityInstallTest extends BaseAppSecurityTest {
             installer.runExpectingFailure();
         } else {
             installer.run();
-            verifyFsverityInstall(BASE_APK_DM, SPLIT_APK_DM);
+            verifyFsverityInstall(incremental, BASE_APK_DM, SPLIT_APK_DM);
         }
     }
 
-    @CddTest(requirement="9.10/C-0-3,C-0-5")
+    @CddTest(requirement = "9.10/C-0-3,C-0-5")
     @Test
-    public void testInstallBaseWithFsvSigThenSplitWithout()
-            throws DeviceNotAvailableException, FileNotFoundException {
-        assumeSecurityModelCompat();
-        new InstallMultiple()
+    @Parameters(method = "installAndUpdate")
+    public void testInstallBaseWithFsvSigThenSplitWithout(boolean installIncremental,
+            boolean updateIncremental, boolean isSupported) throws Exception {
+        assumePreconditions(installIncremental || updateIncremental);
+        new InstallMultiple(installIncremental)
                 .addFile(BASE_APK)
                 .addFile(BASE_APK + FSV_SIG_SUFFIX)
                 .run();
-        verifyFsverityInstall(BASE_APK);
+        verifyFsverityInstall(installIncremental, BASE_APK);
 
-        new InstallMultiple()
+        new InstallMultiple(updateIncremental)
                 .addFile(SPLIT_APK)
                 .runExpectingFailure();
     }
 
     @Test
     public void testInstallBaseIncrementally() throws Exception {
-        assumeIncrementalDeliveryFeature();
-        new InstallMultiple()
-                .useIncremental()
+        assumeTrue(hasIncrementalDeliveryFeature());
+        new InstallMultiple(/*incremental=*/true)
                 .addFile(BASE_APK)
                 .run();
     }
 
-    @Test
-    public void testInstallBaseWithFsvSigIncrementally() throws Exception {
-        assumeSecurityModelCompat();
-        assumeIncrementalDeliveryFeature();
-        new InstallMultiple()
-                .useIncremental()
-                .addFile(BASE_APK)
-                .addFile(BASE_APK + FSV_SIG_SUFFIX)
-                .run();
-        assumeIncrementalDeliveryV2Feature();
-        verifyFsverityInstall(BASE_APK);
+    private void assumePreconditions(boolean requiresIncremental) throws Exception {
+        if (requiresIncremental) {
+            assumeTrue(hasIncrementalDeliveryFeature());
+        }
     }
 
-    @Test
-    public void testInstallEverythingWithFsvSigIncrementally() throws Exception {
-        assumeSecurityModelCompat();
-        assumeIncrementalDeliveryFeature();
-        new InstallMultiple()
-                .useIncremental()
-                .addFile(BASE_APK)
-                .addFile(BASE_APK_DM)
-                .addFile(BASE_APK_DM + FSV_SIG_SUFFIX)
-                .addFile(SPLIT_APK)
-                .addFile(SPLIT_APK_DM)
-                .addFile(SPLIT_APK_DM + FSV_SIG_SUFFIX)
-                .run();
-        assumeIncrementalDeliveryV2Feature();
-        verifyFsverityInstall(BASE_APK_DM, SPLIT_APK_DM);
+    private boolean hasIncrementalDeliveryFeature() throws Exception {
+        return "true\n".equals(getDevice().executeShellCommand(
+                "pm has-feature android.software.incremental_delivery"));
     }
 
-    private void assumeIncrementalDeliveryFeature() throws Exception {
-        assumeTrue("true\n".equals(getDevice().executeShellCommand(
-                "pm has-feature android.software.incremental_delivery")));
-    }
-
-    private void assumeIncrementalDeliveryV2Feature() throws Exception {
-        assumeTrue("true\n".equals(getDevice().executeShellCommand(
-                "pm has-feature android.software.incremental_delivery 2")));
+    private boolean isIncrementalDeliveryV2Feature() throws Exception {
+        return "true\n".equals(getDevice().executeShellCommand(
+                "pm has-feature android.software.incremental_delivery 2"));
     }
 
     private void assumeSecurityModelCompat() throws DeviceNotAvailableException {
@@ -333,7 +395,11 @@ public final class ApkVerityInstallTest extends BaseAppSecurityTest {
                 getDevice().hasFeature("feature:android.hardware.security.model.compatible"));
     }
 
-    void verifyFsverityInstall(String... files) throws DeviceNotAvailableException {
+    void verifyFsverityInstall(boolean incremental, String... files) throws Exception {
+        if (incremental && !isIncrementalDeliveryV2Feature()) {
+            return;
+        }
+
         DeviceTestRunOptions options = new DeviceTestRunOptions(PACKAGE_NAME);
         options.setTestClassName(PACKAGE_NAME + ".InstalledFilesCheck");
         options.setTestMethodName("testFilesHaveFsverity");
@@ -350,8 +416,11 @@ public final class ApkVerityInstallTest extends BaseAppSecurityTest {
     }
 
     private class InstallMultiple extends BaseInstallMultiple<InstallMultiple> {
-        InstallMultiple() {
+        InstallMultiple(boolean incremental) throws Exception {
             super(getDevice(), getBuild(), getAbi());
+            if (incremental) {
+                useIncremental();
+            }
         }
 
         @Override
