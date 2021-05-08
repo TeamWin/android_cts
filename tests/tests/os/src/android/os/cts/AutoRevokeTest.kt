@@ -138,9 +138,17 @@ class AutoRevokeTest {
 
                 // Verify
                 assertPermission(PERMISSION_DENIED)
-                runShellCommandOrThrow("cmd statusbar expand-notifications")
+                if (hasFeatureWatch()) {
+                    expandNotificationsWatch()
+                } else {
+                    runShellCommandOrThrow("cmd statusbar expand-notifications")
+                }
                 waitFindObject(By.textContains("unused app"))
                         .click()
+                if (hasFeatureWatch()) {
+                    // In wear os, notification has one additional button to open it
+                    waitFindObject(By.text("Open")).click();
+                }
                 waitFindObject(By.text(supportedAppPackageName))
                 waitFindObject(By.text("Calendar permission removed"))
             }
@@ -404,6 +412,15 @@ class AutoRevokeTest {
 
     private fun hasFeatureWatch(): Boolean {
         return context.packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)
+    }
+
+    private fun expandNotificationsWatch() {
+        with(uiDevice) {
+            wakeUp()
+            // Swipe up from bottom to reveal notifications
+            val x = displayWidth / 2
+            swipe(x, displayHeight, x, 0, 1)
+        }
     }
 
     private fun assertAllowlistState(state: Boolean) {
