@@ -761,6 +761,8 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
                     continue;
                 }
                 for (boolean isAsync : boolStates) {
+                    mOutputBuff.reset();
+                    mInfoList.clear();
                     configureCodec(format, isAsync, true, true);
                     mCodec.start();
                     doWork(1);
