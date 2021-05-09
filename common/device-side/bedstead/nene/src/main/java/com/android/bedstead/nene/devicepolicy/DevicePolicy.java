@@ -16,6 +16,7 @@
 
 package com.android.bedstead.nene.devicepolicy;
 
+import static android.Manifest.permission.INTERACT_ACROSS_USERS;
 import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
 import static android.Manifest.permission.WRITE_SECURE_SETTINGS;
 import static android.os.Build.VERSION.SDK_INT;
@@ -161,7 +162,8 @@ public final class DevicePolicy {
 
             try (PermissionContext p =
                          mTestApis.permissions().withPermission(
-                                 MANAGE_PROFILE_AND_DEVICE_OWNERS, MANAGE_DEVICE_ADMINS)) {
+                                 MANAGE_PROFILE_AND_DEVICE_OWNERS, MANAGE_DEVICE_ADMINS,
+                                 INTERACT_ACROSS_USERS_FULL, INTERACT_ACROSS_USERS)) {
                 devicePolicyManager.setActiveAdmin(deviceOwnerComponent,
                         /* refreshing= */ true, user.id());
 
@@ -229,10 +231,12 @@ public final class DevicePolicy {
                 mTestApis.context().instrumentedContext()
                         .getSystemService(DevicePolicyManager.class);
         try (PermissionContext p = mTestApis.permissions().withPermission(
-                WRITE_SECURE_SETTINGS, MANAGE_PROFILE_AND_DEVICE_OWNERS)) {
-            Settings.Secure.putInt(mTestApis.context().instrumentedContext().getContentResolver(),
+                WRITE_SECURE_SETTINGS, MANAGE_PROFILE_AND_DEVICE_OWNERS,
+                INTERACT_ACROSS_USERS_FULL)) {
+            Settings.Secure.putInt(mTestApis.context().androidContextAsUser(
+                    mTestApis.users().system()).getContentResolver(),
                     USER_SETUP_COMPLETE_KEY, complete ? 1 : 0);
-            devicePolicyManager.forceUpdateUserSetupComplete(mTestApis.users().instrumented().id());
+            devicePolicyManager.forceUpdateUserSetupComplete(mTestApis.users().system().id());
         }
     }
 
