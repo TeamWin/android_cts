@@ -74,6 +74,8 @@ class ImsServiceConnector {
     private static final String COMMAND_REMOVE_EAB_CONTACT = "uce remove-eab-contact ";
     private static final String COMMAND_GET_UCE_ENABLED = "uce get-device-enabled";
     private static final String COMMAND_SET_UCE_ENABLED = "uce set-device-enabled ";
+    private static final String COMMAND_REMOVE_UCE_REQUEST_DISALLOWED_STATUS =
+            "uce remove-request-disallowed-status ";
     private static final String COMMAND_SET_TEST_MODE_ENABLED = "src set-test-enabled ";
 
     private class TestCarrierServiceConnection implements ServiceConnection {
@@ -618,5 +620,12 @@ class ImsServiceConnector {
     void setSingleRegistrationTestModeEnabled(boolean enabled) throws Exception {
         TelephonyUtils.executeShellCommand(mInstrumentation, COMMAND_BASE
                 + COMMAND_SET_TEST_MODE_ENABLED  + (enabled ? "true" : "false"));
+    }
+
+    void removeUceRequestDisallowedStatus(int slotId) throws Exception {
+        StringBuilder cmdBuilder = new StringBuilder();
+        cmdBuilder.append(COMMAND_BASE).append(COMMAND_REMOVE_UCE_REQUEST_DISALLOWED_STATUS)
+                .append(COMMAND_SLOT_IDENTIFIER).append(slotId);
+        TelephonyUtils.executeShellCommand(mInstrumentation, cmdBuilder.toString());
     }
 }
