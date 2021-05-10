@@ -111,6 +111,10 @@ def find_center_circle(img, img_name, color, min_area, debug):
       if colour == color and (1 - CIRCLE_TOL <= circlish <= 1 + CIRCLE_TOL):
         circles.append([shape['ctx'], shape['cty'], radius, circlish, area])
 
+  if not circles:
+    raise AssertionError('No circle was detected. Please take pictures '
+                         'according to instructions carefully!')
+
   if debug:
     logging.debug('circles [x, y, r, pi*r**2/area, area]: %s', str(circles))
 
@@ -130,10 +134,6 @@ def find_center_circle(img, img_name, color, min_area, debug):
   radius_i = int(round(circle[2], 0))
   cv2.circle(img, center_i, radius_i, LINE_COLOR, LINE_THICKNESS)
   image_processing_utils.write_image(img / 255.0, img_name)
-
-  if not circles:
-    raise AssertionError('No circle was detected. Please take pictures '
-                         'according to instructions carefully!')
 
   return [circle[0], circle[1], circle[2]]
 
