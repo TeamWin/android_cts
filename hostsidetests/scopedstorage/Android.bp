@@ -21,7 +21,8 @@ android_test_helper_app {
     manifest: "ScopedStorageTestHelper/TestAppA.xml",
     static_libs: ["cts-scopedstorage-lib"],
     sdk_version: "test_current",
-    target_sdk_version: "current",
+    // TODO(b/187502983) Change to "31" once S SDK finalised
+    target_sdk_version: "10000",
     min_sdk_version: "30",
     srcs: ["ScopedStorageTestHelper/src/**/*.java"],
     // Tag as a CTS artifact
@@ -32,7 +33,8 @@ android_test_helper_app {
     manifest: "ScopedStorageTestHelper/TestAppB.xml",
     static_libs: ["cts-scopedstorage-lib"],
     sdk_version: "test_current",
-    target_sdk_version: "current",
+    // TODO(b/187502983) Change to "31" once S SDK finalised
+    target_sdk_version: "10000",
     min_sdk_version: "30",
     srcs: ["ScopedStorageTestHelper/src/**/*.java"],
     // Tag as a CTS artifact
@@ -43,7 +45,8 @@ android_test_helper_app {
     manifest: "ScopedStorageTestHelper/TestAppC.xml",
     static_libs: ["cts-scopedstorage-lib"],
     sdk_version: "test_current",
-    target_sdk_version: "current",
+    // TODO(b/187502983) Change to "31" once S SDK finalised
+    target_sdk_version: "10000",
     min_sdk_version: "30",
     srcs: ["ScopedStorageTestHelper/src/**/*.java"],
     // Tag as a CTS artifact
@@ -88,7 +91,8 @@ android_test_helper_app {
     manifest: "ScopedStorageTestHelper/TestAppFileManager.xml",
     static_libs: ["cts-scopedstorage-lib"],
     sdk_version: "test_current",
-    target_sdk_version: "current",
+    // TODO(b/187502983) Change to "31" once S SDK finalised
+    target_sdk_version: "10000",
     min_sdk_version: "30",
     srcs: ["ScopedStorageTestHelper/src/**/*.java"],
     // Tag as a CTS artifact
@@ -99,7 +103,8 @@ android_test_helper_app {
     manifest: "ScopedStorageTestHelper/TestAppFileManagerBypassDB.xml",
     static_libs: ["cts-scopedstorage-lib"],
     sdk_version: "test_current",
-    target_sdk_version: "current",
+    // TODO(b/187502983) Change to "31" once S SDK finalised
+    target_sdk_version: "10000",
     min_sdk_version: "30",
     srcs: ["ScopedStorageTestHelper/src/**/*.java"],
     // Tag as a CTS artifact
@@ -110,7 +115,8 @@ android_test_helper_app {
     manifest: "ScopedStorageTestHelper/TestAppSystemGalleryBypassDB.xml",
     static_libs: ["cts-scopedstorage-lib"],
     sdk_version: "test_current",
-    target_sdk_version: "current",
+    // TODO(b/187502983) Change to "31" once S SDK finalised
+    target_sdk_version: "10000",
     min_sdk_version: "30",
     srcs: ["ScopedStorageTestHelper/src/**/*.java"],
     // Tag as a CTS artifact
@@ -154,7 +160,8 @@ android_test {
     compile_multilib: "both",
     test_suites: ["general-tests", "mts-mediaprovider", "cts"],
     sdk_version: "test_current",
-    target_sdk_version: "current",
+    // TODO(b/187502983) Change to "31" once S SDK finalised
+    target_sdk_version: "10000",
     min_sdk_version: "30",
     java_resources: [
         ":CtsScopedStorageTestAppA",
@@ -219,7 +226,8 @@ android_test {
     compile_multilib: "both",
     test_suites: ["device-tests", "mts-mediaprovider", "cts"],
     sdk_version: "test_current",
-    target_sdk_version: "current",
+    // TODO(b/187502983) Change to "31" once S SDK finalised
+    target_sdk_version: "10000",
     min_sdk_version: "30",
     libs: ["android.test.base", "android.test.mock", "android.test.runner",],
     java_resources: [
