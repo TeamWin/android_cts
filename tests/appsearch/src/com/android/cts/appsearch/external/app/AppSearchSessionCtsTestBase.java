@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package android.app.appsearch.cts;
+package android.app.appsearch.cts.app;
 
 import static android.app.appsearch.AppSearchResult.RESULT_INVALID_SCHEMA;
+import static android.app.appsearch.AppSearchResult.RESULT_NOT_FOUND;
 
 import static com.android.server.appsearch.testing.AppSearchTestUtils.checkIsBatchResultSuccess;
 import static com.android.server.appsearch.testing.AppSearchTestUtils.convertSearchResultsToDocuments;
@@ -231,6 +232,101 @@ public abstract class AppSearchSessionCtsTestBase {
         getSchemaResponse = mDb2.getSchema().get();
         assertThat(getSchemaResponse.getSchemas()).containsExactly(schema);
         assertThat(getSchemaResponse.getVersion()).isEqualTo(246);
+    }
+
+    @Test
+    public void testGetSchema_allPropertyTypes() throws Exception {
+        AppSearchSchema inSchema =
+                new AppSearchSchema.Builder("Test")
+                        .addProperty(
+                                new StringPropertyConfig.Builder("string")
+                                        .setCardinality(PropertyConfig.CARDINALITY_REQUIRED)
+                                        .setIndexingType(
+                                                StringPropertyConfig.INDEXING_TYPE_EXACT_TERMS)
+                                        .setTokenizerType(StringPropertyConfig.TOKENIZER_TYPE_PLAIN)
+                                        .build())
+                        .addProperty(
+                                new AppSearchSchema.Int64PropertyConfig.Builder("long")
+                                        .setCardinality(PropertyConfig.CARDINALITY_OPTIONAL)
+                                        .build())
+                        .addProperty(
+                                new AppSearchSchema.DoublePropertyConfig.Builder("double")
+                                        .setCardinality(PropertyConfig.CARDINALITY_REPEATED)
+                                        .build())
+                        .addProperty(
+                                new AppSearchSchema.BooleanPropertyConfig.Builder("boolean")
+                                        .setCardinality(PropertyConfig.CARDINALITY_REQUIRED)
+                                        .build())
+                        .addProperty(
+                                new AppSearchSchema.BytesPropertyConfig.Builder("bytes")
+                                        .setCardinality(PropertyConfig.CARDINALITY_OPTIONAL)
+                                        .build())
+                        .addProperty(
+                                new AppSearchSchema.DocumentPropertyConfig.Builder(
+                                                "document", AppSearchEmail.SCHEMA_TYPE)
+                                        .setCardinality(PropertyConfig.CARDINALITY_REPEATED)
+                                        .setShouldIndexNestedProperties(true)
+                                        .build())
+                        .build();
+
+        // Add it to AppSearch and then obtain it again
+        mDb1.setSchema(
+                        new SetSchemaRequest.Builder()
+                                .addSchemas(inSchema, AppSearchEmail.SCHEMA)
+                                .build())
+                .get();
+        GetSchemaResponse response = mDb1.getSchema().get();
+        List<AppSearchSchema> schemas = new ArrayList<>(response.getSchemas());
+        assertThat(schemas).containsExactly(inSchema, AppSearchEmail.SCHEMA);
+        AppSearchSchema outSchema;
+        if (schemas.get(0).getSchemaType().equals("Test")) {
+            outSchema = schemas.get(0);
+        } else {
+            outSchema = schemas.get(1);
+        }
+        assertThat(outSchema.getSchemaType()).isEqualTo("Test");
+        assertThat(outSchema).isNotSameInstanceAs(inSchema);
+
+        List<PropertyConfig> properties = outSchema.getProperties();
+        assertThat(properties).hasSize(6);
+
+        assertThat(properties.get(0).getName()).isEqualTo("string");
+        assertThat(properties.get(0).getCardinality())
+                .isEqualTo(PropertyConfig.CARDINALITY_REQUIRED);
+        assertThat(((StringPropertyConfig) properties.get(0)).getIndexingType())
+                .isEqualTo(StringPropertyConfig.INDEXING_TYPE_EXACT_TERMS);
+        assertThat(((StringPropertyConfig) properties.get(0)).getTokenizerType())
+                .isEqualTo(StringPropertyConfig.TOKENIZER_TYPE_PLAIN);
+
+        assertThat(properties.get(1).getName()).isEqualTo("long");
+        assertThat(properties.get(1).getCardinality())
+                .isEqualTo(PropertyConfig.CARDINALITY_OPTIONAL);
+        assertThat(properties.get(1)).isInstanceOf(AppSearchSchema.Int64PropertyConfig.class);
+
+        assertThat(properties.get(2).getName()).isEqualTo("double");
+        assertThat(properties.get(2).getCardinality())
+                .isEqualTo(PropertyConfig.CARDINALITY_REPEATED);
+        assertThat(properties.get(2)).isInstanceOf(AppSearchSchema.DoublePropertyConfig.class);
+
+        assertThat(properties.get(3).getName()).isEqualTo("boolean");
+        assertThat(properties.get(3).getCardinality())
+                .isEqualTo(PropertyConfig.CARDINALITY_REQUIRED);
+        assertThat(properties.get(3)).isInstanceOf(AppSearchSchema.BooleanPropertyConfig.class);
+
+        assertThat(properties.get(4).getName()).isEqualTo("bytes");
+        assertThat(properties.get(4).getCardinality())
+                .isEqualTo(PropertyConfig.CARDINALITY_OPTIONAL);
+        assertThat(properties.get(4)).isInstanceOf(AppSearchSchema.BytesPropertyConfig.class);
+
+        assertThat(properties.get(5).getName()).isEqualTo("document");
+        assertThat(properties.get(5).getCardinality())
+                .isEqualTo(PropertyConfig.CARDINALITY_REPEATED);
+        assertThat(((AppSearchSchema.DocumentPropertyConfig) properties.get(5)).getSchemaType())
+                .isEqualTo(AppSearchEmail.SCHEMA_TYPE);
+        assertThat(
+                        ((AppSearchSchema.DocumentPropertyConfig) properties.get(5))
+                                .shouldIndexNestedProperties())
+                .isEqualTo(true);
     }
 
     @Test
@@ -2035,6 +2131,58 @@ public abstract class AppSearchSessionCtsTestBase {
     }
 
     @Test
+    public void testRemove_multipleIds() throws Exception {
+        // Schema registration
+        mDb1.setSchema(new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build())
+                .get();
+
+        // Index documents
+        AppSearchEmail email1 =
+                new AppSearchEmail.Builder("namespace", "id1")
+                        .setFrom("from@example.com")
+                        .setTo("to1@example.com", "to2@example.com")
+                        .setSubject("testPut example")
+                        .setBody("This is the body of the testPut email")
+                        .build();
+        AppSearchEmail email2 =
+                new AppSearchEmail.Builder("namespace", "id2")
+                        .setFrom("from@example.com")
+                        .setTo("to1@example.com", "to2@example.com")
+                        .setSubject("testPut example 2")
+                        .setBody("This is the body of the testPut second email")
+                        .build();
+        checkIsBatchResultSuccess(
+                mDb1.put(
+                        new PutDocumentsRequest.Builder()
+                                .addGenericDocuments(email1, email2)
+                                .build()));
+
+        // Check the presence of the documents
+        assertThat(doGet(mDb1, "namespace", "id1")).hasSize(1);
+        assertThat(doGet(mDb1, "namespace", "id2")).hasSize(1);
+
+        // Delete the document
+        checkIsBatchResultSuccess(
+                mDb1.remove(
+                        new RemoveByDocumentIdRequest.Builder("namespace")
+                                .addIds("id1", "id2")
+                                .build()));
+
+        // Make sure it's really gone
+        AppSearchBatchResult<String, GenericDocument> getResult =
+                mDb1.getByDocumentId(
+                                new GetByDocumentIdRequest.Builder("namespace")
+                                        .addIds("id1", "id2")
+                                        .build())
+                        .get();
+        assertThat(getResult.isSuccess()).isFalse();
+        assertThat(getResult.getFailures().get("id1").getResultCode())
+                .isEqualTo(AppSearchResult.RESULT_NOT_FOUND);
+        assertThat(getResult.getFailures().get("id2").getResultCode())
+                .isEqualTo(AppSearchResult.RESULT_NOT_FOUND);
+    }
+
+    @Test
     public void testRemoveByQuery() throws Exception {
         // Schema registration
         mDb1.setSchema(new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build())
@@ -2803,13 +2951,13 @@ public abstract class AppSearchSessionCtsTestBase {
         // Email 1 has three usages and email 2 has two usages.
         assertThat(results).hasSize(2);
         assertThat(results.get(0).getGenericDocument()).isEqualTo(email1);
-        assertThat(results.get(0).getRankingSignal()).isEqualTo(3);
         assertThat(results.get(1).getGenericDocument()).isEqualTo(email2);
+        assertThat(results.get(0).getRankingSignal()).isEqualTo(3);
         assertThat(results.get(1).getRankingSignal()).isEqualTo(2);
 
-        // Query by most recent usag.
-        List<GenericDocument> documents =
-                convertSearchResultsToDocuments(
+        // Query by most recent usage.
+        results =
+                retrieveAllSearchResults(
                         mDb1.search(
                                 "",
                                 new SearchSpec.Builder()
@@ -2818,8 +2966,36 @@ public abstract class AppSearchSessionCtsTestBase {
                                                         .RANKING_STRATEGY_USAGE_LAST_USED_TIMESTAMP)
                                         .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
                                         .build()));
-        // TODO(b/182958600) Check the score for usage timestamp once b/182958600 is fixed.
-        assertThat(documents).containsExactly(email2, email1).inOrder();
+        assertThat(results).hasSize(2);
+        assertThat(results.get(0).getGenericDocument()).isEqualTo(email2);
+        assertThat(results.get(1).getGenericDocument()).isEqualTo(email1);
+        assertThat(results.get(0).getRankingSignal()).isEqualTo(20000);
+        assertThat(results.get(1).getRankingSignal()).isEqualTo(3000);
+    }
+
+    @Test
+    public void testReportUsage_invalidNamespace() throws Exception {
+        mDb1.setSchema(new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build())
+                .get();
+        AppSearchEmail email1 = new AppSearchEmail.Builder("namespace", "id1").build();
+        checkIsBatchResultSuccess(
+                mDb1.put(new PutDocumentsRequest.Builder().addGenericDocuments(email1).build()));
+
+        // Use the correct namespace; it works
+        mDb1.reportUsage(new ReportUsageRequest.Builder("namespace", "id1").build()).get();
+
+        // Use an incorrect namespace; it fails
+        ExecutionException e =
+                expectThrows(
+                        ExecutionException.class,
+                        () ->
+                                mDb1.reportUsage(
+                                                new ReportUsageRequest.Builder("namespace2", "id1")
+                                                        .build())
+                                        .get());
+        assertThat(e).hasCauseThat().isInstanceOf(AppSearchException.class);
+        AppSearchException cause = (AppSearchException) e.getCause();
+        assertThat(cause.getResultCode()).isEqualTo(RESULT_NOT_FOUND);
     }
 
     @Test
@@ -3030,5 +3206,48 @@ public abstract class AppSearchSessionCtsTestBase {
         assertThat(matches.get(0).getPropertyPath()).isEqualTo("prop.subject");
         assertThat(matches.get(0).getFullText()).isEqualTo("This is the body");
         assertThat(matches.get(0).getExactMatch()).isEqualTo("body");
+    }
+
+    @Test
+    public void testCJKTQuery() throws Exception {
+        // Schema registration
+        mDb1.setSchema(new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build())
+                .get();
+
+        // Index a document to instance 1.
+        AppSearchEmail inEmail1 =
+                new AppSearchEmail.Builder("namespace", "uri1").setBody("他是個男孩 is a boy").build();
+        checkIsBatchResultSuccess(
+                mDb1.put(new PutDocumentsRequest.Builder().addGenericDocuments(inEmail1).build()));
+
+        // Query for "他" (He)
+        SearchResultsShim searchResults =
+                mDb1.search(
+                        "他",
+                        new SearchSpec.Builder()
+                                .setTermMatch(SearchSpec.TERM_MATCH_PREFIX)
+                                .build());
+        List<GenericDocument> documents = convertSearchResultsToDocuments(searchResults);
+        assertThat(documents).containsExactly(inEmail1);
+
+        // Query for "男孩" (boy)
+        searchResults =
+                mDb1.search(
+                        "男孩",
+                        new SearchSpec.Builder()
+                                .setTermMatch(SearchSpec.TERM_MATCH_PREFIX)
+                                .build());
+        documents = convertSearchResultsToDocuments(searchResults);
+        assertThat(documents).containsExactly(inEmail1);
+
+        // Query for "boy"
+        searchResults =
+                mDb1.search(
+                        "boy",
+                        new SearchSpec.Builder()
+                                .setTermMatch(SearchSpec.TERM_MATCH_PREFIX)
+                                .build());
+        documents = convertSearchResultsToDocuments(searchResults);
+        assertThat(documents).containsExactly(inEmail1);
     }
 }
