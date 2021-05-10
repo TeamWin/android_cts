@@ -32,6 +32,7 @@ import android.media.AudioManager;
 import android.media.AudioMetadata;
 import android.media.AudioMetadataReadMap;
 import android.media.AudioPresentation;
+import android.media.AudioSystem;
 import android.media.AudioTimestamp;
 import android.media.AudioTrack;
 import android.media.PlaybackParams;
@@ -3144,6 +3145,53 @@ public class AudioTrackTest {
         assertThrows(IllegalStateException.class, () -> {
             track.setStartThresholdInFrames(1 /* setStartThresholdInFrames */);
         });
+    }
+
+    /**
+     * Tests height channel masks and higher channel counts
+     * used in immersive AudioTrack streaming.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testImmersiveStreaming() throws Exception {
+        if (!hasAudioOutput()) {
+            return;
+        }
+
+        final String TEST_NAME = "testImmersiveStreaming";
+        final int TEST_FORMAT_ARRAY[] = {
+            AudioFormat.ENCODING_PCM_16BIT,
+            AudioFormat.ENCODING_PCM_FLOAT,
+        };
+        final int TEST_SR_ARRAY[] = {
+            48000,  // do not set too high - costly in memory.
+        };
+        final int TEST_CONF_ARRAY[] = {
+            AudioFormat.CHANNEL_OUT_5POINT1POINT2, // 8 ch (includes height channels vs 7.1).
+            AudioFormat.CHANNEL_OUT_7POINT1POINT4, // 12 ch
+            AudioFormat.CHANNEL_OUT_22POINT2,      // 24 ch
+        };
+
+        final int TEST_MODE = AudioTrack.MODE_STREAM;
+        final int TEST_STREAM_TYPE = AudioManager.STREAM_MUSIC;
+        final float TEST_SWEEP = 0; // sine wave only
+        final boolean TEST_IS_LOW_RAM_DEVICE = false;
+        for (int TEST_FORMAT : TEST_FORMAT_ARRAY) {
+            double frequency = 400; // Note: frequency changes for each test
+            for (int TEST_SR : TEST_SR_ARRAY) {
+                for (int TEST_CONF : TEST_CONF_ARRAY) {
+                    if (AudioFormat.channelCountFromOutChannelMask(TEST_CONF)
+                            > AudioSystem.OUT_CHANNEL_COUNT_MAX) {
+                        continue; // Skip if the channel count exceeds framework capabilities.
+                    }
+                    playOnceStreamData(TEST_NAME, TEST_MODE, TEST_STREAM_TYPE, TEST_SWEEP,
+                            TEST_IS_LOW_RAM_DEVICE, TEST_FORMAT, frequency, TEST_SR, TEST_CONF,
+                            WAIT_MSEC);
+                    frequency += 50; // increment test tone frequency
+                }
+            }
+        }
     }
 
 /* Do not run in JB-MR1. will be re-opened in the next platform release.
