@@ -206,7 +206,7 @@ public class MultiWindowTests extends ActivityManagerTestBase {
         int displayWindowingMode = mWmState.getDisplay(
                 mWmState.getDisplayByActivity(TEST_ACTIVITY)).getWindowingMode();
         separateTestJournal();
-        mTaskOrganizer.dismissedSplitScreen();
+        mTaskOrganizer.dismissSplitScreen();
         if (displayWindowingMode == WINDOWING_MODE_FULLSCREEN) {
             // Exit split-screen mode and ensure we only get 1 multi-window mode changed callback.
             final ActivityLifecycleCounts lifecycleCounts = waitForOnMultiWindowModeChanged(
@@ -245,9 +245,18 @@ public class MultiWindowTests extends ActivityManagerTestBase {
 
         launchActivity(NO_RELAUNCH_ACTIVITY);
 
-        // Move activities back to fullscreen screen.
         separateTestJournal();
-        mTaskOrganizer.dismissedSplitScreen();
+
+        // Move activities back to fullscreen screen.
+        // TestTaskOrganizer sets windowing modes of tasks to unspecific when putting them to split
+        // screens so we need to explicitly set their windowing modes back to fullscreen to avoid
+        // inheriting freeform windowing mode from the display on freeform first devices.
+        int noRelaunchTaskId = mWmState.getTaskByActivity(NO_RELAUNCH_ACTIVITY).mTaskId;
+        WindowContainerToken noRelaunchTaskToken =
+                mTaskOrganizer.getTaskInfo(noRelaunchTaskId).getToken();
+        WindowContainerTransaction t = new WindowContainerTransaction()
+                .setWindowingMode(noRelaunchTaskToken, WINDOWING_MODE_FULLSCREEN);
+        mTaskOrganizer.dismissSplitScreen(t, false /* primaryOnTop */);
 
         lifecycleCounts = waitForOnMultiWindowModeChanged(NO_RELAUNCH_ACTIVITY);
         assertEquals("mMultiWindowModeChangedCount",

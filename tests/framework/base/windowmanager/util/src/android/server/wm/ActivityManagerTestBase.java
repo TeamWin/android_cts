@@ -917,7 +917,7 @@ public abstract class ActivityManagerTestBase {
 
     protected void dismissSplitScreen(boolean primaryOnTop) {
         if (mTaskOrganizer != null) {
-            mTaskOrganizer.dismissedSplitScreen(primaryOnTop);
+            mTaskOrganizer.dismissSplitScreen(primaryOnTop);
         }
     }
 
