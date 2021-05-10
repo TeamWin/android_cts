@@ -47,8 +47,8 @@ import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.Postsubmit;
-import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeatures;
-import com.android.bedstead.harrier.annotations.RequireFeatures;
+import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature;
+import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.packages.Package;
@@ -111,10 +111,8 @@ public final class DevicePolicyManagerTest {
 
     @RequireRunOnPrimaryUser
     @EnsureHasNoWorkProfile
-    @RequireFeatures({
-            PackageManager.FEATURE_DEVICE_ADMIN,
-            PackageManager.FEATURE_MANAGED_USERS
-    })
+    @RequireFeature(PackageManager.FEATURE_DEVICE_ADMIN)
+    @RequireFeature(PackageManager.FEATURE_MANAGED_USERS)
     @Test
     @Postsubmit(reason="b/181207615 flaky")
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
@@ -135,10 +133,8 @@ public final class DevicePolicyManagerTest {
 
     @RequireRunOnPrimaryUser
     @EnsureHasNoWorkProfile
-    @RequireFeatures({
-            PackageManager.FEATURE_DEVICE_ADMIN,
-            PackageManager.FEATURE_MANAGED_USERS
-    })
+    @RequireFeature(PackageManager.FEATURE_DEVICE_ADMIN)
+    @RequireFeature(PackageManager.FEATURE_MANAGED_USERS)
     @Test
     @Postsubmit(reason="b/181207615 flaky")
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
@@ -159,10 +155,8 @@ public final class DevicePolicyManagerTest {
 
     @RequireRunOnPrimaryUser
     @EnsureHasNoWorkProfile
-    @RequireFeatures({
-            PackageManager.FEATURE_DEVICE_ADMIN,
-            PackageManager.FEATURE_MANAGED_USERS
-    })
+    @RequireFeature(PackageManager.FEATURE_DEVICE_ADMIN)
+    @RequireFeature(PackageManager.FEATURE_MANAGED_USERS)
     @Test
     @Postsubmit(reason="b/181207615 flaky")
     @EnsureHasPermission({MANAGE_PROFILE_AND_DEVICE_OWNERS, INTERACT_ACROSS_USERS_FULL})
@@ -185,10 +179,8 @@ public final class DevicePolicyManagerTest {
 
     @RequireRunOnPrimaryUser
     @EnsureHasNoWorkProfile
-    @RequireFeatures({
-            PackageManager.FEATURE_DEVICE_ADMIN,
-            PackageManager.FEATURE_MANAGED_USERS
-    })
+    @RequireFeature(PackageManager.FEATURE_DEVICE_ADMIN)
+    @RequireFeature(PackageManager.FEATURE_MANAGED_USERS)
     @Test
     @Postsubmit(reason="b/181207615 flaky")
     @EnsureHasPermission({MANAGE_PROFILE_AND_DEVICE_OWNERS, INTERACT_ACROSS_USERS})
@@ -210,10 +202,8 @@ public final class DevicePolicyManagerTest {
 
     @RequireRunOnPrimaryUser
     @EnsureHasNoWorkProfile
-    @RequireFeatures({
-            PackageManager.FEATURE_DEVICE_ADMIN,
-            PackageManager.FEATURE_MANAGED_USERS
-    })
+    @RequireFeature(PackageManager.FEATURE_DEVICE_ADMIN)
+    @RequireFeature(PackageManager.FEATURE_MANAGED_USERS)
     @Test
     @Postsubmit(reason="new test")
     @Ignore
@@ -238,10 +228,8 @@ public final class DevicePolicyManagerTest {
 
     @RequireRunOnPrimaryUser
     @EnsureHasNoWorkProfile
-    @RequireFeatures({
-            PackageManager.FEATURE_DEVICE_ADMIN,
-            PackageManager.FEATURE_MANAGED_USERS
-    })
+    @RequireFeature(PackageManager.FEATURE_DEVICE_ADMIN)
+    @RequireFeature(PackageManager.FEATURE_MANAGED_USERS)
     @Test
     @Postsubmit(reason="new test")
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
@@ -266,10 +254,8 @@ public final class DevicePolicyManagerTest {
 
     @RequireRunOnPrimaryUser
     @EnsureHasNoWorkProfile
-    @RequireFeatures({
-            PackageManager.FEATURE_DEVICE_ADMIN,
-            PackageManager.FEATURE_MANAGED_USERS
-    })
+    @RequireFeature(PackageManager.FEATURE_DEVICE_ADMIN)
+    @RequireFeature(PackageManager.FEATURE_MANAGED_USERS)
     @Test
     @Ignore
     @Postsubmit(reason="new test")
@@ -295,10 +281,8 @@ public final class DevicePolicyManagerTest {
 
     @RequireRunOnPrimaryUser
     @EnsureHasNoWorkProfile
-    @RequireFeatures({
-            PackageManager.FEATURE_DEVICE_ADMIN,
-            PackageManager.FEATURE_MANAGED_USERS
-    })
+    @RequireFeature(PackageManager.FEATURE_DEVICE_ADMIN)
+    @RequireFeature(PackageManager.FEATURE_MANAGED_USERS)
     @Test
     @Postsubmit(reason="new test")
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
@@ -324,10 +308,8 @@ public final class DevicePolicyManagerTest {
 
     @RequireRunOnPrimaryUser
     @EnsureHasNoWorkProfile
-    @RequireFeatures({
-            PackageManager.FEATURE_DEVICE_ADMIN,
-            PackageManager.FEATURE_MANAGED_USERS
-    })
+    @RequireFeature(PackageManager.FEATURE_DEVICE_ADMIN)
+    @RequireFeature(PackageManager.FEATURE_MANAGED_USERS)
     @Test
     @Postsubmit(reason="new test")
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
@@ -440,7 +422,7 @@ public final class DevicePolicyManagerTest {
     }
 
     @RequireRunOnPrimaryUser
-    @RequireFeatures(PackageManager.FEATURE_DEVICE_ADMIN)
+    @RequireFeature(PackageManager.FEATURE_DEVICE_ADMIN)
     @Test
     @EnsureHasPermission({MANAGE_PROFILE_AND_DEVICE_OWNERS})
     public void newlyProvisionedFullyManagedDevice_setsDeviceOwner() throws Exception {
@@ -459,7 +441,7 @@ public final class DevicePolicyManagerTest {
     }
 
     @RequireRunOnPrimaryUser
-    @RequireFeatures(PackageManager.FEATURE_DEVICE_ADMIN)
+    @RequireFeature(PackageManager.FEATURE_DEVICE_ADMIN)
     @Test
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     public void newlyProvisionedFullyManagedDevice_doesNotThrowException() throws Exception {
@@ -476,7 +458,7 @@ public final class DevicePolicyManagerTest {
     }
 
     @RequireRunOnPrimaryUser
-    @RequireFeatures(PackageManager.FEATURE_DEVICE_ADMIN)
+    @RequireFeature(PackageManager.FEATURE_DEVICE_ADMIN)
     @Test
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     public void newlyProvisionedFullyManagedDevice_canControlSensorPermissionGrantsByDefault()
@@ -496,7 +478,7 @@ public final class DevicePolicyManagerTest {
     }
 
     @RequireRunOnPrimaryUser
-    @RequireFeatures(PackageManager.FEATURE_DEVICE_ADMIN)
+    @RequireFeature(PackageManager.FEATURE_DEVICE_ADMIN)
     @Test
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     public void newlyProvisionedFullyManagedDevice_canOptOutOfControllingSensorPermissionGrants()
@@ -518,7 +500,7 @@ public final class DevicePolicyManagerTest {
     }
 
     @RequireRunOnPrimaryUser
-    @RequireFeatures(PackageManager.FEATURE_DEVICE_ADMIN)
+    @RequireFeature(PackageManager.FEATURE_DEVICE_ADMIN)
     @Test
     @Postsubmit(reason="new test")
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
@@ -542,8 +524,8 @@ public final class DevicePolicyManagerTest {
         }
     }
 
-    @RequireFeatures(PackageManager.FEATURE_DEVICE_ADMIN)
-    @RequireDoesNotHaveFeatures(PackageManager.FEATURE_AUTOMOTIVE)
+
+    @RequireDoesNotHaveFeature(PackageManager.FEATURE_AUTOMOTIVE)
     @EnsureHasPermission(MANAGE_DEVICE_ADMINS)
     @Test
     public void getPolicyExemptAppsCanOnlyBeDefinedOnAutomotiveBuilds() throws Exception {

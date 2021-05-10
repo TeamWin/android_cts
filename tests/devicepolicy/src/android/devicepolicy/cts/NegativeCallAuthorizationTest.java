@@ -27,7 +27,7 @@ import androidx.test.filters.SmallTest;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
-import com.android.bedstead.harrier.annotations.RequireFeatures;
+import com.android.bedstead.harrier.annotations.RequireFeature;
 
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -53,13 +53,13 @@ public class NegativeCallAuthorizationTest {
     public static final DeviceState sDeviceState = new DeviceState();
 
     @Test
-    @RequireFeatures(PackageManager.FEATURE_DEVICE_ADMIN)
+    @RequireFeature(PackageManager.FEATURE_DEVICE_ADMIN)
     public void testHasKeyPair_failIfNotOwner() {
         assertThrows(SecurityException.class, () -> sDpm.hasKeyPair(ALIAS));
     }
 
     @Test
-    @RequireFeatures(PackageManager.FEATURE_DEVICE_ADMIN)
+    @RequireFeature(PackageManager.FEATURE_DEVICE_ADMIN)
     public void testGetKeyPairGrants_failIfNotOwner() {
         assertThrows(SecurityException.class, () -> sDpm.getKeyPairGrants(ALIAS));
     }

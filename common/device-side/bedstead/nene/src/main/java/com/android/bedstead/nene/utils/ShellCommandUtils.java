@@ -64,7 +64,7 @@ public final class ShellCommandUtils {
             throws AdbException {
         logCommand(command, allowEmptyOutput, stdInBytes);
 
-        if (!Versions.isRunningOn(S, "S")) {
+        if (!Versions.meetsMinimumSdkVersionRequirement(S)) {
             return executeCommandPreS(command, allowEmptyOutput, stdInBytes);
         }
 

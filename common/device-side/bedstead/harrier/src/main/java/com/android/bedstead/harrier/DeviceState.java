@@ -18,6 +18,7 @@ package com.android.bedstead.harrier;
 
 import static com.android.bedstead.nene.users.UserType.MANAGED_PROFILE_TYPE_NAME;
 import static com.android.bedstead.nene.users.UserType.SECONDARY_USER_TYPE_NAME;
+import static com.android.bedstead.nene.utils.Versions.meetsSdkVersionRequirements;
 import static com.android.bedstead.remotedpc.Configuration.REMOTE_DPC_COMPONENT_NAME;
 
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -36,9 +37,13 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
+import com.android.bedstead.harrier.annotations.EnsurePackageNotInstalled;
 import com.android.bedstead.harrier.annotations.FailureMode;
-import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeatures;
-import com.android.bedstead.harrier.annotations.RequireFeatures;
+import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature;
+import com.android.bedstead.harrier.annotations.RequireFeature;
+import com.android.bedstead.harrier.annotations.RequirePackageInstalled;
+import com.android.bedstead.harrier.annotations.RequirePackageNotInstalled;
+import com.android.bedstead.harrier.annotations.RequireSdkVersion;
 import com.android.bedstead.harrier.annotations.RequireUserSupported;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDeviceOwner;
@@ -58,6 +63,7 @@ import com.android.bedstead.nene.devicepolicy.DevicePolicyController;
 import com.android.bedstead.nene.devicepolicy.ProfileOwner;
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.exceptions.NeneException;
+import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.permissions.PermissionContextImpl;
 import com.android.bedstead.nene.users.User;
 import com.android.bedstead.nene.users.UserBuilder;
@@ -157,6 +163,7 @@ public final class DeviceState implements TestRule {
                         UserType userType = (UserType) annotation.annotationType()
                                 .getMethod("forUser").invoke(annotation);
                         ensureHasNoProfile(ensureHasNoProfileAnnotation.value(), userType);
+                        continue;
                     }
 
                     EnsureHasProfileAnnotation ensureHasProfileAnnotation =
@@ -170,12 +177,14 @@ public final class DeviceState implements TestRule {
                             ensureHasProfile(
                                     ensureHasProfileAnnotation.value(), installInstrumentedApp,
                                     forUser);
+                            continue;
                     }
 
                     EnsureHasNoUserAnnotation ensureHasNoUserAnnotation =
                             annotationType.getAnnotation(EnsureHasNoUserAnnotation.class);
                     if (ensureHasNoUserAnnotation != null) {
                         ensureHasNoUser(ensureHasNoUserAnnotation.value());
+                        continue;
                     }
 
                     EnsureHasUserAnnotation ensureHasUserAnnotation =
@@ -185,12 +194,14 @@ public final class DeviceState implements TestRule {
                                 annotation.getClass()
                                 .getMethod("installInstrumentedApp").invoke(annotation);
                         ensureHasUser(ensureHasUserAnnotation.value(), installInstrumentedApp);
+                        continue;
                     }
 
                     RequireRunOnUserAnnotation requireRunOnUserAnnotation =
                             annotationType.getAnnotation(RequireRunOnUserAnnotation.class);
                     if (requireRunOnUserAnnotation != null) {
                         requireRunOnUser(requireRunOnUserAnnotation.value());
+                        continue;
                     }
 
                     RequireRunOnProfileAnnotation requireRunOnProfileAnnotation =
@@ -214,20 +225,21 @@ public final class DeviceState implements TestRule {
                         ensureHasNoDeviceOwner();
                     }
 
-                    if (annotation instanceof RequireFeatures) {
-                        RequireFeatures requireFeaturesAnnotation = (RequireFeatures) annotation;
-                        for (String feature: requireFeaturesAnnotation.value()) {
-                            requireFeature(feature, requireFeaturesAnnotation.failureMode());
-                        }
+                    if (annotation instanceof RequireFeature) {
+                        RequireFeature requireFeatureAnnotation = (RequireFeature) annotation;
+                        requireFeature(
+                                requireFeatureAnnotation.value(),
+                                requireFeatureAnnotation.failureMode());
+                        continue;
                     }
 
-                    if (annotation instanceof RequireDoesNotHaveFeatures) {
-                        RequireDoesNotHaveFeatures requireDoesNotHaveFeaturesAnnotation =
-                                (RequireDoesNotHaveFeatures) annotation;
-                        for (String feature : requireDoesNotHaveFeaturesAnnotation.value()) {
-                            requireDoesNotHaveFeature(feature,
-                                    requireDoesNotHaveFeaturesAnnotation.failureMode());
-                        }
+                    if (annotation instanceof RequireDoesNotHaveFeature) {
+                        RequireDoesNotHaveFeature requireDoesNotHaveFeatureAnnotation =
+                                (RequireDoesNotHaveFeature) annotation;
+                        requireDoesNotHaveFeature(
+                                requireDoesNotHaveFeatureAnnotation.value(),
+                                requireDoesNotHaveFeatureAnnotation.failureMode());
+                        continue;
                     }
 
                     if (annotationType.equals(EnsureHasProfileOwner.class)) {
@@ -245,10 +257,52 @@ public final class DeviceState implements TestRule {
                     if (annotation instanceof RequireUserSupported) {
                         RequireUserSupported requireUserSupportedAnnotation =
                                 (RequireUserSupported) annotation;
-                        for (String userType: requireUserSupportedAnnotation.value()) {
-                            requireUserSupported(
-                                    userType, requireUserSupportedAnnotation.failureMode());
-                        }
+                        requireUserSupported(
+                                requireUserSupportedAnnotation.value(),
+                                requireUserSupportedAnnotation.failureMode());
+                        continue;
+                    }
+
+                    if (annotation instanceof RequireSdkVersion) {
+                        RequireSdkVersion requireSdkVersionAnnotation =
+                                (RequireSdkVersion) annotation;
+
+                        requireSdkVersion(
+                                requireSdkVersionAnnotation.min(),
+                                requireSdkVersionAnnotation.max(),
+                                requireSdkVersionAnnotation.failureMode());
+                        continue;
+                    }
+
+                    if (annotation instanceof RequirePackageInstalled) {
+                        RequirePackageInstalled requirePackageInstalledAnnotation =
+                                (RequirePackageInstalled) annotation;
+                        requirePackageInstalled(
+                                requirePackageInstalledAnnotation.value(),
+                                requirePackageInstalledAnnotation.onUser(),
+                                requirePackageInstalledAnnotation.failureMode());
+                        continue;
+                    }
+
+                    if (annotation instanceof RequirePackageNotInstalled) {
+                        RequirePackageNotInstalled requirePackageNotInstalledAnnotation =
+                                (RequirePackageNotInstalled) annotation;
+                        requirePackageNotInstalled(
+                                requirePackageNotInstalledAnnotation.value(),
+                                requirePackageNotInstalledAnnotation.onUser(),
+                                requirePackageNotInstalledAnnotation.failureMode()
+                        );
+                        continue;
+                    }
+
+                    if (annotation instanceof EnsurePackageNotInstalled) {
+                        EnsurePackageNotInstalled ensurePackageNotInstalledAnnotation =
+                                (EnsurePackageNotInstalled) annotation;
+                        ensurePackageNotInstalled(
+                                ensurePackageNotInstalledAnnotation.value(),
+                                ensurePackageNotInstalledAnnotation.onUser()
+                        );
+                        continue;
                     }
 
                     if (annotation instanceof EnsureHasPermission) {
@@ -379,6 +433,14 @@ public final class DeviceState implements TestRule {
                 !sTestApis.packages().features().contains(feature), failureMode);
     }
 
+    private void requireSdkVersion(int min, int max, FailureMode failureMode) {
+        checkFailOrSkip(
+                "Sdk version must be between " + min +  " and " + max + " (inclusive)",
+                meetsSdkVersionRequirements(min, max),
+                failureMode
+        );
+    }
+
     private com.android.bedstead.nene.users.UserType requireUserSupported(
             String userType, FailureMode failureMode) {
         com.android.bedstead.nene.users.UserType resolvedUserType =
@@ -413,6 +475,8 @@ public final class DeviceState implements TestRule {
     }
 
     public enum UserType {
+        /** Only to be used with annotations. */
+        ANY,
         SYSTEM_USER,
         CURRENT_USER,
         PRIMARY_USER,
@@ -743,6 +807,8 @@ public final class DeviceState implements TestRule {
                 return workProfile();
             case TV_PROFILE:
                 return tvProfile();
+            case ANY:
+                throw new IllegalStateException("ANY UserType can not be used here");
             default:
                 throw new IllegalArgumentException("Unknown user type " + userType);
         }
@@ -1004,5 +1070,69 @@ public final class DeviceState implements TestRule {
         }
 
         return RemoteDpc.forDevicePolicyController(profileOwner);
+    }
+
+    private void requirePackageInstalled(
+            String packageName, UserType forUser, FailureMode failureMode) {
+
+        Package pkg = sTestApis.packages().find(packageName).resolve();
+        checkFailOrSkip(
+                packageName + " is required to be installed for " + forUser,
+                pkg != null,
+                failureMode);
+
+        if (forUser.equals(UserType.ANY)) {
+            checkFailOrSkip(
+                    packageName + " is required to be installed",
+                    !pkg.installedOnUsers().isEmpty(),
+                    failureMode);
+        } else {
+            checkFailOrSkip(
+                    packageName + " is required to be installed for " + forUser,
+                    pkg.installedOnUsers().contains(resolveUserTypeToUser(forUser)),
+                    failureMode);
+        }
+    }
+
+    private void requirePackageNotInstalled(
+            String packageName, UserType forUser, FailureMode failureMode) {
+        Package pkg = sTestApis.packages().find(packageName).resolve();
+        if (pkg == null) {
+            // Definitely not installed
+            return;
+        }
+
+        if (forUser.equals(UserType.ANY)) {
+            checkFailOrSkip(
+                    packageName + " is required to be not installed",
+                    pkg.installedOnUsers().isEmpty(),
+                    failureMode);
+        } else {
+            checkFailOrSkip(
+                    packageName + " is required to be not installed for " + forUser,
+                    !pkg.installedOnUsers().contains(resolveUserTypeToUser(forUser)),
+                    failureMode);
+        }
+    }
+
+    private void ensurePackageNotInstalled(
+            String packageName, UserType forUser) {
+
+        Package pkg = sTestApis.packages().find(packageName).resolve();
+        if (pkg == null) {
+            // Definitely not installed
+            return;
+        }
+
+        if (forUser.equals(UserType.ANY)) {
+            if (!pkg.installedOnUsers().isEmpty()) {
+                pkg.uninstallFromAllUsers();
+            }
+        } else {
+            UserReference user = resolveUserTypeToUser(forUser);
+            if (pkg.installedOnUsers().contains(user)) {
+                pkg.uninstall(user);
+            }
+        }
     }
 }

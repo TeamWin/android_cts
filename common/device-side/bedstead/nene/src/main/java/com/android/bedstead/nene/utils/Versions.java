@@ -16,30 +16,85 @@
 
 package com.android.bedstead.nene.utils;
 
-import static android.os.Build.VERSION.SDK_INT;
-
 import android.os.Build;
 
-/** Version constants used when VERSION_CODES is not final. */
+import java.lang.reflect.Field;
+
+/** SDK Version checks. */
 public final class Versions {
-    // TODO(scottjonathan): Replace once S version is final
-    public static final int S = 31;
+
+    /** Any version. */
+    public static final int ANY = -1;
+
+    private static final String DEVELOPMENT_CODENAME = "S";
 
     private Versions() {
 
     }
 
-    /** Require that this is running on Android S or above. */
-    public static void requireS() {
-        if (!isRunningOn(S, "S")) {
+    /**
+     * Throw a {@link UnsupportedOperationException} if the minimum version requirement is not met.
+     */
+    public static void requireMinimumVersion(int min) {
+        if (!meetsSdkVersionRequirements(min, ANY)) {
             throw new UnsupportedOperationException(
-                    "keepUninstalledPackages is only available on S+ (currently "
-                            + Build.VERSION.CODENAME + ")");
+                    "Thie feature is only available on "
+                            + versionToLetter(min)
+                            + "+ (currently " + Build.VERSION.CODENAME + ")");
         }
     }
 
-    /** True if the app is running on the given Android version or above. */
-    public static boolean isRunningOn(int version, String codename) {
-        return (SDK_INT >= version || Build.VERSION.CODENAME.equals(codename));
+    private static String versionToLetter(int version) {
+        for (Field field : Build.VERSION_CODES.class.getFields()) {
+            if (!java.lang.reflect.Modifier.isStatic(field.getModifiers())) {
+                continue;
+            }
+            if (!field.getType().equals(int.class)) {
+                continue;
+            }
+            try {
+                int fieldValue = (int) field.get(null);
+
+                if (fieldValue == version) {
+                    return field.getName();
+                }
+            } catch (IllegalAccessException e) {
+                // Couldn't access this variable - ignore
+            }
+        }
+
+        throw new IllegalStateException("Could not find version with code " + version);
+    }
+
+    /**
+     * {@code true} if the minimum version requirement is met.
+     */
+    public static boolean meetsMinimumSdkVersionRequirement(int min) {
+        return meetsSdkVersionRequirements(min, ANY);
+    }
+
+    /**
+     * {@code true} if the minimum and maximum version requirements are met.
+     *
+     * <p>Use {@link #ANY} to accept any version.
+     */
+    public static boolean meetsSdkVersionRequirements(int min, int max) {
+        if (min != ANY) {
+            if (min == Build.VERSION_CODES.CUR_DEVELOPMENT) {
+                if (!Build.VERSION.CODENAME.equals(DEVELOPMENT_CODENAME)) {
+                    return false;
+                }
+            } else if (min > Build.VERSION.SDK_INT) {
+                return false;
+            }
+        }
+
+        if (max != ANY
+                && max != Build.VERSION_CODES.CUR_DEVELOPMENT
+                && max < Build.VERSION.SDK_INT) {
+            return false;
+        }
+
+        return true;
     }
 }
