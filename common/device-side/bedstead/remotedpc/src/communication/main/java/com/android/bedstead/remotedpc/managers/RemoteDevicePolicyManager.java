@@ -62,4 +62,15 @@ public interface RemoteDevicePolicyManager {
     /** See {@link DevicePolicyManager#getLockTaskPackages(ComponentName)}. */
     @RemoteDpcAutomaticAdmin @NonNull String[] getLockTaskPackages();
 
+
+    /** See {@link DevicePolicyManager#setLockTaskFeatures(ComponentName, int)}. */
+    void setLockTaskFeatures(
+            @NonNull ComponentName admin, int flags);
+    /** See {@link DevicePolicyManager#setLockTaskFeatures(ComponentName, int)}. */
+    @RemoteDpcAutomaticAdmin void setLockTaskFeatures(int flags);
+
+    /** See {@link DevicePolicyManager#getLockTaskFeatures(Component)}. */
+    int getLockTaskFeatures(@NonNull ComponentName admin);
+    /** See {@link DevicePolicyManager#getLockTaskFeatures(Component)}. */
+    @RemoteDpcAutomaticAdmin int getLockTaskFeatures();
 }
