@@ -57,6 +57,10 @@
              android:supportsPictureInPicture="true"
              android:screenOrientation="locked"/>
 
+        <activity android:label="@string/non_default_display_activity"
+                  android:name=".activities.NonDefaultDisplayActivity"
+                  android:screenOrientation="locked"/>
+
         <activity android:label="Full screen activity for gesture dispatch testing"
              android:name=".AccessibilityGestureDispatchTest$GestureDispatchActivity"
              android:theme="@style/Theme_NoSwipeDismiss"
@@ -64,15 +68,6 @@
 
         <activity android:label="@string/accessibility_soft_keyboard_modes_activity"
              android:name=".AccessibilitySoftKeyboardModesTest$SoftKeyboardModesActivity"/>
-
-        <activity android:label="@string/accessibility_embedded_display_test_parent_activity"
-             android:name=".AccessibilityEmbeddedDisplayTest$EmbeddedDisplayParentActivity"
-             android:theme="@android:style/Theme.Dialog"
-             android:screenOrientation="locked"/>
-
-        <activity android:label="@string/accessibility_embedded_display_test_activity"
-             android:name=".AccessibilityEmbeddedDisplayTest$EmbeddedDisplayActivity"
-             android:screenOrientation="locked"/>
 
         <activity android:label="@string/accessibility_embedded_hierarchy_test_activity"
              android:name=".AccessibilityEmbeddedHierarchyTest$AccessibilityEmbeddedHierarchyActivity"
