@@ -4248,11 +4248,10 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     /**
      * Tests {@link WifiManager#setCarrierNetworkOffloadEnabled)} and
      * {@link WifiManager#isCarrierNetworkOffloadEnabled} work as expected.
-     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
      */
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
-    public void testSetCarrierNetworkOffloadEnabled() throws Exception {
-        if (!WifiFeature.isWifiSupported(getContext())) {
+    public void testSetCarrierNetworkOffloadEnabled() {
+        if (!WifiFeature.isWifiSupported(getContext())
+                || !WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(getContext())) {
             // skip the test if WiFi is not supported
             return;
         }
@@ -4264,8 +4263,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             uiAutomation.adoptShellPermissionIdentity();
             mWifiManager.setCarrierNetworkOffloadEnabled(TEST_SUB_ID, false, false);
             assertFalse(mWifiManager.isCarrierNetworkOffloadEnabled(TEST_SUB_ID, false));
-            mWifiManager.setCarrierNetworkOffloadEnabled(TEST_SUB_ID, false, true);
         } finally {
+            mWifiManager.setCarrierNetworkOffloadEnabled(TEST_SUB_ID, false, true);
             uiAutomation.dropShellPermissionIdentity();
         }
         assertTrue(mWifiManager.isCarrierNetworkOffloadEnabled(TEST_SUB_ID, false));
@@ -4378,5 +4377,38 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         PackageManager packageManager = mContext.getPackageManager();
         assertTrue("Passpoint must be supported",
                 packageManager.hasSystemFeature(PackageManager.FEATURE_WIFI_PASSPOINT));
+    }
+
+    /**
+     * Validate add and remove SuggestionUserApprovalStatusListener. And verify the listener's
+     * stickiness.
+     */
+    public void testAddRemoveSuggestionUserApprovalStatusListener() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())
+                || !WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(getContext())) {
+            return;
+        }
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+        TestUserApprovalStatusListener listener = new TestUserApprovalStatusListener(
+                countDownLatch);
+        try {
+            mWifiManager.addSuggestionUserApprovalStatusListener(mExecutor, listener);
+            assertTrue(countDownLatch.await(TEST_WAIT_DURATION_MS, TimeUnit.MILLISECONDS));
+        } finally {
+            mWifiManager.removeSuggestionUserApprovalStatusListener(listener);
+        }
+    }
+
+    private static class TestUserApprovalStatusListener implements
+            WifiManager.SuggestionUserApprovalStatusListener {
+        private final CountDownLatch mBlocker;
+
+        public TestUserApprovalStatusListener(CountDownLatch countDownLatch) {
+            mBlocker = countDownLatch;
+        }
+        @Override
+        public void onUserApprovalStatusChange(int status) {
+            mBlocker.countDown();
+        }
     }
 }
