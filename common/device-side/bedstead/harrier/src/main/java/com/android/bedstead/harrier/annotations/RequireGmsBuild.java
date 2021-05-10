@@ -16,25 +16,21 @@
 
 package com.android.bedstead.harrier.annotations;
 
+import static com.android.bedstead.harrier.annotations.RequireAospBuild.GMS_CORE_PACKAGE;
+import static com.android.bedstead.harrier.annotations.RequireAospBuild.GSF_PACKAGE;
+import static com.android.bedstead.harrier.annotations.RequireAospBuild.PLAY_STORE_PACKAGE;
+
 import com.android.bedstead.harrier.DeviceState;
 
 import java.lang.annotation.ElementType;
-import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-/**
- * Mark that a test method should only run if a particular user type is supported
- *
- * <p>Your test configuration may be configured so that this test is only run on a user which
- * supports the user types. Otherwise, you can use {@link DeviceState} to ensure that the test is
- * not run when the user type is not supported.
- */
 @Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-@Repeatable(RequireUsersSupported.class)
-public @interface RequireUserSupported {
-    String value();
-    FailureMode failureMode() default FailureMode.SKIP;
+@RequirePackageInstalled(value = GMS_CORE_PACKAGE, onUser = DeviceState.UserType.ANY)
+@RequirePackageInstalled(value = PLAY_STORE_PACKAGE, onUser = DeviceState.UserType.ANY)
+@RequirePackageInstalled(value = GSF_PACKAGE, onUser = DeviceState.UserType.ANY)
+public @interface RequireGmsBuild {
 }

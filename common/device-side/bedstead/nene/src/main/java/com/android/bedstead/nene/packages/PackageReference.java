@@ -95,6 +95,24 @@ public abstract class PackageReference {
     }
 
     /**
+     * Uninstall the package for all users.
+     *
+     * <p>The package will no longer {@link #resolve()}.
+     */
+    public PackageReference uninstallFromAllUsers() {
+        Package pkg = resolve();
+        if (pkg == null) {
+            return this;
+        }
+
+        for (UserReference user : pkg.installedOnUsers()) {
+            pkg.uninstall(user);
+        }
+
+        return this;
+    }
+
+    /**
      * Uninstall the package for the given user.
      *
      * <p>If this is the last user which has this package installed, then the package will no
