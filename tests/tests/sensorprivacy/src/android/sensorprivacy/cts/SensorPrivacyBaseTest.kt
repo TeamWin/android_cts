@@ -51,6 +51,10 @@ abstract class SensorPrivacyBaseTest(
                 "android.sensorprivacy.cts.usemiccamera.extra.USE_MICROPHONE"
         const val USE_CAM_EXTRA =
                 "android.sensorprivacy.cts.usemiccamera.extra.USE_CAMERA"
+        const val DELAYED_ACTIVITY_EXTRA =
+                "android.sensorprivacy.cts.usemiccamera.extra.DELAYED_ACTIVITY"
+        const val DELAYED_ACTIVITY_NEW_TASK_EXTRA =
+                "android.sensorprivacy.cts.usemiccamera.extra.DELAYED_ACTIVITY_NEW_TASK"
     }
 
     protected val instrumentation = InstrumentationRegistry.getInstrumentation()!!
@@ -79,25 +83,41 @@ abstract class SensorPrivacyBaseTest(
 
     @Test
     fun testDialog() {
-        setSensor(true)
-        val intent = Intent(MIC_CAM_ACTIVITY_ACTION)
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                .addFlags(Intent.FLAG_ACTIVITY_MATCH_EXTERNAL)
-        for (extra in extras) {
-            intent.putExtra(extra, true)
-        }
-        context.startActivity(intent)
-        UiAutomatorUtils.waitFindObject(By.text(
-                Pattern.compile("Unblock", Pattern.CASE_INSENSITIVE))).click()
-        SystemUtil.eventually {
-            assertFalse(isSensorPrivacyEnabled())
-        }
+        testDialog(delayedActivity = false, delayedActivityNewTask = false)
+    }
 
-        // instant apps can't broadcast to other instant apps; use the shell
-        runShellCommandOrThrow("am broadcast" +
-                " --user ${context.userId}" +
-                " -a $FINISH_MIC_CAM_ACTIVITY_ACTION" +
-                " -f ${Intent.FLAG_RECEIVER_VISIBLE_TO_INSTANT_APPS}")
+    @Test
+    fun testDialog_remainsOnTop() {
+        testDialog(delayedActivity = true, delayedActivityNewTask = false)
+    }
+
+    @Test
+    fun testDialog_remainsOnTop_newTask() {
+        testDialog(delayedActivity = true, delayedActivityNewTask = true)
+    }
+
+    fun testDialog(delayedActivity: Boolean = false, delayedActivityNewTask: Boolean = false) {
+        try {
+            setSensor(true)
+            val intent = Intent(MIC_CAM_ACTIVITY_ACTION)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    .addFlags(Intent.FLAG_ACTIVITY_MATCH_EXTERNAL)
+            for (extra in extras) {
+                intent.putExtra(extra, true)
+            }
+            intent.putExtra(DELAYED_ACTIVITY_EXTRA, delayedActivity)
+            intent.putExtra(DELAYED_ACTIVITY_NEW_TASK_EXTRA, delayedActivityNewTask)
+            context.startActivity(intent)
+            if (delayedActivity || delayedActivityNewTask) {
+                Thread.sleep(3000)
+            }
+            unblockSensorWithDialogAndAssert()
+        } finally {
+            runShellCommandOrThrow("am broadcast" +
+                    " --user ${context.userId}" +
+                    " -a $FINISH_MIC_CAM_ACTIVITY_ACTION" +
+                    " -f ${Intent.FLAG_RECEIVER_VISIBLE_TO_INSTANT_APPS}")
+        }
     }
 
     @Test
@@ -127,6 +147,14 @@ abstract class SensorPrivacyBaseTest(
         }
         setSensor(false)
         latchEnabled.await(100, TimeUnit.MILLISECONDS)
+    }
+
+    fun unblockSensorWithDialogAndAssert() {
+        UiAutomatorUtils.waitFindObject(By.text(
+                Pattern.compile("Unblock", Pattern.CASE_INSENSITIVE))).click()
+        SystemUtil.eventually {
+            assertFalse(isSensorPrivacyEnabled())
+        }
     }
 
     fun setSensor(enable: Boolean) {
