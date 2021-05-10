@@ -61,7 +61,7 @@ import java.util.function.Function;
 public class BlockingBroadcastReceiver extends BroadcastReceiver implements AutoCloseable {
     private static final String TAG = "BlockingBroadcast";
 
-    private static final int DEFAULT_TIMEOUT_SECONDS = 60;
+    private static final int DEFAULT_TIMEOUT_SECONDS = 240;
 
     private Intent mReceivedIntent = null;
     private final BlockingQueue<Intent> mBlockingQueue;
@@ -215,7 +215,7 @@ public class BlockingBroadcastReceiver extends BroadcastReceiver implements Auto
     @Override
     public void close() {
         try {
-            awaitForBroadcast();
+            awaitForBroadcastOrFail();
         } finally {
             unregisterQuietly();
         }
