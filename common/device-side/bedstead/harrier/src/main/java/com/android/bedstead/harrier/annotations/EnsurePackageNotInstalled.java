@@ -25,16 +25,19 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Mark that a test method should only run if a particular user type is supported
+ * Mark that a test method should run only when a given package is not installed.
  *
- * <p>Your test configuration may be configured so that this test is only run on a user which
- * supports the user types. Otherwise, you can use {@link DeviceState} to ensure that the test is
- * not run when the user type is not supported.
+ * <p>You can guarantee that these methods do not run on devices with the package by
+ * using {@code DeviceState}.
+ *
+ * <p>Tests annotated with this will attempt to remove the package if it exists, or otherwise fail.
+ * If you'd rather skip or fail tests immediately without attempting to remove see
+ * {@link RequirePackageNotInstalled}.
  */
 @Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-@Repeatable(RequireUsersSupported.class)
-public @interface RequireUserSupported {
+@Repeatable(EnsurePackagesNotInstalled.class)
+public @interface EnsurePackageNotInstalled {
     String value();
-    FailureMode failureMode() default FailureMode.SKIP;
+    DeviceState.UserType onUser() default DeviceState.UserType.CURRENT_USER;
 }
