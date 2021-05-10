@@ -533,15 +533,22 @@ public class MultiWindowTests extends ActivityManagerTestBase {
                 getLaunchActivityBuilder().setTargetActivity(LAUNCHING_ACTIVITY),
                 getLaunchActivityBuilder().setTargetActivity(TEST_ACTIVITY_WITH_SAME_AFFINITY));
 
+        mTaskOrganizer.setLaunchRoot(mTaskOrganizer.getSecondarySplitTaskId());
+
         // Launch two more activities on a different task on top of split-screen-secondary and
         // only the top opaque activity should be visible.
+        // Explicitly launch them into fullscreen mode because the control windowing mode of the
+        // launch root doesn't include freeform mode. Freeform first devices launch apps in freeform
+        // mode by default, which won't trigger the launch root.
         getLaunchActivityBuilder().setTargetActivity(TRANSLUCENT_TEST_ACTIVITY)
                 .setUseInstrumentation()
                 .setWaitForLaunched(true)
+                .setWindowingMode(WINDOWING_MODE_FULLSCREEN)
                 .execute();
         getLaunchActivityBuilder().setTargetActivity(TEST_ACTIVITY)
                 .setUseInstrumentation()
                 .setWaitForLaunched(true)
+                .setWindowingMode(WINDOWING_MODE_FULLSCREEN)
                 .execute();
         mWmState.assertVisibility(TEST_ACTIVITY, true);
         mWmState.waitForActivityState(TRANSLUCENT_TEST_ACTIVITY, STATE_STOPPED);
