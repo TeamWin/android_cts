@@ -127,7 +127,7 @@ public class PermissionsTest {
         assumeTrue("assume shell identity is only available on Q+",
                 Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q);
         assumeFalse("After S, all available permissions are held by shell",
-                Versions.isRunningOn(Versions.S, "S"));
+                Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.S));
 
         try (PermissionContext p =
                     sTestApis.permissions().withoutPermission(
@@ -213,32 +213,9 @@ public class PermissionsTest {
     }
 
     @Test
-    public void withPermissions_androidSAndAbove_restoresPreviousPermissionContext() {
-        assumeTrue("restoring permissions is only available on S+",
-                Versions.isRunningOn(Versions.S, "S"));
-        assumeFalse("After S, all available permissions are held by shell",
-                Versions.isRunningOn(Versions.S, "S"));
-
-        ShellCommandUtils.uiAutomation()
-                .adoptShellPermissionIdentity(DECLARED_PERMISSION_NOT_HELD_BY_SHELL_PRE_S);
-
-        try {
-            PermissionContext p =
-                    sTestApis.permissions()
-                            .withPermission(DECLARED_PERMISSION_NOT_HELD_BY_SHELL_PRE_S);
-            p.close();
-
-            assertThat(sContext.checkSelfPermission(DECLARED_PERMISSION_NOT_HELD_BY_SHELL_PRE_S))
-                    .isEqualTo(PERMISSION_DENIED);
-        } finally {
-            ShellCommandUtils.uiAutomation().dropShellPermissionIdentity();
-        }
-    }
-
-    @Test
     public void withoutPermission_androidSAndAbove_restoresPreviousPermissionContext() {
         assumeTrue("restoring permissions is only available on S+",
-                Versions.isRunningOn(Versions.S, "S"));
+                Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.S));
 
         ShellCommandUtils.uiAutomation().adoptShellPermissionIdentity(PERMISSION_HELD_BY_SHELL);
 

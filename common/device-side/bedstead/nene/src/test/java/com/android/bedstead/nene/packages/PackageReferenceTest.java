@@ -100,6 +100,25 @@ public class PackageReferenceTest {
     }
 
     @Test
+    public void uninstallForAllUsers_isUninstalledForAllUsers() {
+        PackageReference pkg = sTestApis.packages().install(sUser, TEST_APP_APK_FILE);
+        try {
+            sTestApis.packages().install(sOtherUser, TEST_APP_APK_FILE);
+
+            mTestAppReference.uninstallFromAllUsers();
+
+            Package resolvedPackage = mTestAppReference.resolve();
+            // Might be null or might still resolve depending on device timing
+            if (resolvedPackage != null) {
+                assertThat(resolvedPackage.installedOnUsers()).isEmpty();
+            }
+        } finally {
+            pkg.uninstall(sUser);
+            pkg.uninstall(sOtherUser);
+        }
+    }
+
+    @Test
     public void uninstall_packageIsInstalledForDifferentUser_isUninstalledForUser() {
         PackageReference pkg = sTestApis.packages().install(sUser, TEST_APP_APK_FILE);
         try {
