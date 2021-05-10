@@ -29,6 +29,7 @@ import android.media.MediaSyncEvent;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.SdkSuppress;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.SystemUtil;
@@ -41,8 +42,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 
+
 @NonMediaMainlineTest
 @RunWith(AndroidJUnit4.class)
+@SdkSuppress(minSdkVersion = 31, codeName = "S")
 public class AudioRecordSharedAudioTest {
     private static final String TAG = "AudioRecordSharedAudioTest";
     private static final int SAMPLING_RATE_HZ = 16000;
