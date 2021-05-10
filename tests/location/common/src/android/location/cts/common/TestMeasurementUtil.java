@@ -1039,5 +1039,39 @@ public final class TestMeasurementUtil {
                 "X > 0",
                 String.valueOf(satellitePvt.getVelocityEcef().getUreRateMetersPerSecond()),
                 satellitePvt.getVelocityEcef().getUreRateMetersPerSecond() > 0);
+        softAssert.assertTrue("hardware_code_bias_meters : "
+                + "The satellite hardware code bias of the reported code type "
+                + "w.r.t ionosphere-free measurement in meters.",
+                timeInNs,
+                "-17.869 < X < 17.729",
+                String.valueOf(satellitePvt.getClockInfo().getHardwareCodeBiasMeters()),
+                satellitePvt.getClockInfo().getHardwareCodeBiasMeters() > -17.869 &&
+                satellitePvt.getClockInfo().getHardwareCodeBiasMeters() < 17.729);
+        softAssert.assertTrue("time_correction_meters : "
+                + "The satellite time correction for ionospheric-free signal measurement (meters)",
+                timeInNs,
+                "-3e6 < X < 3e6",
+                String.valueOf(satellitePvt.getClockInfo().getTimeCorrectionMeters()),
+                satellitePvt.getClockInfo().getTimeCorrectionMeters() > -3e6 &&
+                satellitePvt.getClockInfo().getTimeCorrectionMeters() < 3e6);
+        softAssert.assertTrue("clock_drift_mps : "
+                + "The satellite clock drift (meters per second)",
+                timeInNs,
+                "-1.117 < X < 1.117",
+                String.valueOf(satellitePvt.getClockInfo().getClockDriftMetersPerSecond()),
+                satellitePvt.getClockInfo().getClockDriftMetersPerSecond() > -1.117 &&
+                satellitePvt.getClockInfo().getClockDriftMetersPerSecond() < 1.117);
+        softAssert.assertTrue("iono_delay_meters : "
+                + "The ionospheric delay in meters",
+                timeInNs,
+                "0 < X < 100",
+                String.valueOf(satellitePvt.getIonoDelayMeters()),
+                satellitePvt.getIonoDelayMeters() > 0 && satellitePvt.getIonoDelayMeters() < 100);
+        softAssert.assertTrue("tropo_delay_meters : "
+                + "The tropospheric delay in meters",
+                timeInNs,
+                "0 < X < 100",
+                String.valueOf(satellitePvt.getTropoDelayMeters()),
+                satellitePvt.getTropoDelayMeters() > 0 && satellitePvt.getTropoDelayMeters() < 100);
     }
 }
