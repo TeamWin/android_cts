@@ -22,7 +22,9 @@ import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
 import com.android.bedstead.harrier.annotations.enterprise.NegativePolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PositivePolicyTest;
 import com.android.bedstead.harrier.annotations.meta.ParameterizedAnnotation;
+import com.android.bedstead.harrier.annotations.meta.RepeatingAnnotation;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeNone;
+import com.android.bedstead.nene.exceptions.NeneException;
 
 import com.google.common.base.Objects;
 
@@ -34,6 +36,7 @@ import org.junit.runners.model.InitializationError;
 import org.junit.runners.model.TestClass;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -150,6 +153,19 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
     private static List<Annotation> getReplacementAnnotations(Annotation annotation,
             @Nullable Class<? extends Annotation> parameterizedAnnotation) {
         List<Annotation> replacementAnnotations = new ArrayList<>();
+
+        if (annotation.annotationType().getAnnotation(RepeatingAnnotation.class) != null) {
+            try {
+                Annotation[] annotations =
+                        (Annotation[]) annotation.annotationType()
+                                .getMethod("value").invoke(annotation);
+                Collections.addAll(replacementAnnotations, annotations);
+                return replacementAnnotations;
+            } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+                throw new NeneException("Error expanding repeated annotations", e);
+            }
+
+        }
 
         if (annotation.annotationType().getAnnotation(ParameterizedAnnotation.class) != null
                 && !annotation.annotationType().equals(parameterizedAnnotation)) {
