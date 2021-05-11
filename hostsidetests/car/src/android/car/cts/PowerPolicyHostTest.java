@@ -56,6 +56,7 @@ public final class PowerPolicyHostTest extends CarHostJUnit4TestCase {
         testHelper.checkCurrentPolicy(PowerPolicyDef.IdSet.NO_USER_INTERACTION);
         testHelper.checkSilentModeStatus(true);
         testHelper.checkSilentModeFull(SilentModeInfo.FORCED_SILENT);
+        testHelper.checkCurrentPowerComponents(PowerPolicyDef.PolicySet.NO_USER_INTERACT);
 
         teststep = "restore to normal mode";
         restoreFromForcedSilentMode();
@@ -64,8 +65,15 @@ public final class PowerPolicyHostTest extends CarHostJUnit4TestCase {
         testHelper.checkCurrentPolicy(PowerPolicyDef.IdSet.DEFAULT_ALL_ON);
         testHelper.checkSilentModeStatus(false);
         testHelper.checkSilentModeFull(SilentModeInfo.NO_SILENT);
+        testHelper.checkCurrentPowerComponents(PowerPolicyDef.PolicySet.DEFAULT_ALL_ON);
     }
 
+    /**
+     * Tests the error conditions for CPMS at the ON state.
+     *
+     * <p>All other VHAL events but {@code SHUTDOWN_PREPARE} shall not have any impact
+     * to CPMS power state.
+     */
     @Test
     public void testDefaultStateMachineAtONState() throws Exception {
         String testcase = "testDefaultStateMachineAtONState:";
@@ -80,8 +88,6 @@ public final class PowerPolicyHostTest extends CarHostJUnit4TestCase {
             PowerPolicyConstants.VhalPowerStateReq.FINISHED
         };
 
-        // CPMS is at the ON state. All other VHAL events but SHUTDOWN_PREPARE
-        // will not have any impact to CPMS
         for (int i = 0; i < stepNames.length; i++) {
             triggerVhalPowerStateReq(vhalReqs[i], PowerPolicyConstants.ShutdownParam.NOT_USED);
             PowerPolicyTestHelper testHelper = getTestHelper(testcase, i + 1, stepNames[i]);
