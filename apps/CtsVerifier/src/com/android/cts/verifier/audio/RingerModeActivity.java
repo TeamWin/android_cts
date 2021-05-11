@@ -1101,7 +1101,7 @@ public class RingerModeActivity extends InteractiveVerifierActivity {
                     if (stream == AudioManager.STREAM_VOICE_CALL) {
                         // Voice call requires MODIFY_PHONE_STATE, so we should not be able to mute
                         mAudioManager.adjustStreamVolume(stream, AudioManager.ADJUST_MUTE, 0);
-                        assertTrue("Voice call stream (" + stream + ") should require MODIFY_PHONE_STATE "
+                        assertFalse("Voice call stream (" + stream + ") should require MODIFY_PHONE_STATE "
                                 + "to mute.", mAudioManager.isStreamMute(stream));
                     } else {
                         mAudioManager.adjustStreamVolume(stream, AudioManager.ADJUST_MUTE, 0);
