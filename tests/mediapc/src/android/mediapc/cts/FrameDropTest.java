@@ -26,6 +26,10 @@ import java.util.Collection;
 
 import static org.junit.Assert.assertTrue;
 
+/**
+ * The following test class validates the frame drops of a playback for the hardware decoders
+ * under the load condition (Transcode + Audio Playback).
+ */
 @RunWith(Parameterized.class)
 public class FrameDropTest extends FrameDropTestBase {
     private static final String LOG_TAG = FrameDropTest.class.getSimpleName();
@@ -34,11 +38,19 @@ public class FrameDropTest extends FrameDropTestBase {
         super(mimeType, decoderName, isAsync);
     }
 
+    // Returns the list of parameters with mimeTypes and their hardware decoders
+    // combining with sync and async modes.
+    // Parameters {0}_{1}_{2} -- Mime_DecoderName_isAsync
     @Parameterized.Parameters(name = "{index}({0}_{1}_{2})")
     public static Collection<Object[]> inputParams() {
         return prepareArgumentsList(null);
     }
 
+    /**
+     * This test validates that the playback of 1920x1080 resolution asset of 3 seconds duration
+     * at 60 fps for S perf class / 30 fps for R perf class, for at least 1800 frames or for
+     * 31 seconds, must not drop more than 6 frames for s perf class / 3 frames for R perf class.
+     */
     @LargeTest
     @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testDecodeToSurface() throws Exception {
