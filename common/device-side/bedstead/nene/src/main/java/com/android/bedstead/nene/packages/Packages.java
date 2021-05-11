@@ -126,8 +126,15 @@ public final class Packages {
             throw new NullPointerException();
         }
 
-        if (Versions.isRunningOn(Versions.S, "S")) {
+        if (Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.S)) {
             return install(user, loadBytes(apkFile));
+        }
+
+        User resolvedUser = user.resolve();
+
+        if (resolvedUser == null || resolvedUser.state() != RUNNING_UNLOCKED) {
+            throw new NeneException("Packages can not be installed in non-started users "
+                    + "(Trying to install into user " + resolvedUser + ")");
         }
 
         BlockingBroadcastReceiver broadcastReceiver = BlockingBroadcastReceiver.create(
@@ -144,12 +151,6 @@ public final class Packages {
 
             return waitForPackageAddedBroadcast(broadcastReceiver);
         } catch (AdbException e) {
-            User resolvedUser = user.resolve();
-
-            if (resolvedUser == null || resolvedUser.state() != RUNNING_UNLOCKED) {
-                throw new NeneException("Packages can not be installed in non-started users "
-                        + "(Trying to install into user " + resolvedUser + ")");
-            }
             throw new NeneException("Could not install " + apkFile + " for user " + user, e);
         } finally {
             broadcastReceiver.unregisterQuietly();
@@ -192,7 +193,7 @@ public final class Packages {
             throw new NullPointerException();
         }
 
-        //        if (!Versions.isRunningOn(Versions.S, "S")) {
+        //        if (!Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.S)) {
         return installPreS(user, apkFile);
 //        }
 
@@ -303,7 +304,7 @@ public final class Packages {
     @RequiresApi(Build.VERSION_CODES.S)
     @CheckResult
     public KeepUninstalledPackagesBuilder keepUninstalledPackages() {
-        Versions.requireS();
+        Versions.requireMinimumVersion(Build.VERSION_CODES.S);
 
         return new KeepUninstalledPackagesBuilder(mTestApis);
     }

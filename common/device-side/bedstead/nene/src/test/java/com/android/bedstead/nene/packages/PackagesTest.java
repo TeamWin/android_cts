@@ -21,6 +21,8 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assume.assumeTrue;
 import static org.testng.Assert.assertThrows;
 
+import android.os.Build;
+
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.users.UserReference;
@@ -215,13 +217,9 @@ public class PackagesTest {
 
     @Test
     public void install_userNotStarted_throwsException() {
-        UserReference user = mTestApis.users().createUser().create().stop();
-
-        try {
+        try (UserReference user = mTestApis.users().createUser().create().stop()) {
             assertThrows(NeneException.class, () -> mTestApis.packages().install(user,
                     TEST_APP_APK_FILE));
-        } finally {
-            user.remove();
         }
     }
 
@@ -311,7 +309,7 @@ public class PackagesTest {
     @Test
     public void keepUninstalledPackages_packageIsUninstalled_packageStillResolves() {
         assumeTrue("keepUninstalledPackages is only supported on S+",
-                Versions.isRunningOn(Versions.S, "S"));
+                Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.S));
 
         mTestApis.packages().install(mUser, TEST_APP_APK_FILE);
         mTestApis.packages().keepUninstalledPackages()
@@ -331,7 +329,7 @@ public class PackagesTest {
     @Ignore("While using adb calls this is not reliable, enable once we use framework calls for uninstall")
     public void keepUninstalledPackages_packageRemovedFromList_packageIsUninstalled_packageDoesNotResolve() {
         assumeTrue("keepUninstalledPackages is only supported on S+",
-                Versions.isRunningOn(Versions.S, "S"));
+                Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.S));
 
         mTestApis.packages().install(mUser, TEST_APP_APK_FILE);
         mTestApis.packages().keepUninstalledPackages()
@@ -354,7 +352,7 @@ public class PackagesTest {
     @Ignore("While using adb calls this is not reliable, enable once we use framework calls for uninstall")
     public void keepUninstalledPackages_cleared_packageIsUninstalled_packageDoesNotResolve() {
         assumeTrue("keepUninstalledPackages is only supported on S+",
-                Versions.isRunningOn(Versions.S, "S"));
+                Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.S));
 
         mTestApis.packages().install(mUser, TEST_APP_APK_FILE);
 
@@ -376,7 +374,7 @@ public class PackagesTest {
     @Ignore("While using adb calls this is not reliable, enable once we use framework calls for uninstall")
     public void keepUninstalledPackages_packageRemovedFromList_packageAlreadyUninstalled_packageDoesNotResolve() {
         assumeTrue("keepUninstalledPackages is only supported on S+",
-                Versions.isRunningOn(Versions.S, "S"));
+                Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.S));
 
         mTestApis.packages().install(mUser, TEST_APP_APK_FILE);
         mTestApis.packages().keepUninstalledPackages().add(mTestAppReference).commit();

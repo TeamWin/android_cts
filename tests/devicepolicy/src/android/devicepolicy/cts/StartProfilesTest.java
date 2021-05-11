@@ -42,7 +42,7 @@ import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasTvProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.Postsubmit;
-import com.android.bedstead.harrier.annotations.RequireFeatures;
+import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.users.UserReference;
@@ -79,7 +79,7 @@ public final class StartProfilesTest {
     }
 
     @Test
-    @RequireFeatures(PackageManager.FEATURE_MANAGED_USERS)
+    @RequireFeature(PackageManager.FEATURE_MANAGED_USERS)
     @RequireRunOnPrimaryUser
     @EnsureHasWorkProfile
     @EnsureHasPermission({INTERACT_ACROSS_USERS_FULL, INTERACT_ACROSS_USERS, CREATE_USERS})
@@ -90,7 +90,7 @@ public final class StartProfilesTest {
     }
 
     @Test
-    @RequireFeatures(PackageManager.FEATURE_MANAGED_USERS)
+    @RequireFeature(PackageManager.FEATURE_MANAGED_USERS)
     @RequireRunOnPrimaryUser
     @EnsureHasWorkProfile
     @EnsureHasPermission({INTERACT_ACROSS_USERS_FULL, INTERACT_ACROSS_USERS, CREATE_USERS})
@@ -107,7 +107,7 @@ public final class StartProfilesTest {
     }
 
     @Test
-    @RequireFeatures(PackageManager.FEATURE_MANAGED_USERS)
+    @RequireFeature(PackageManager.FEATURE_MANAGED_USERS)
     @RequireRunOnPrimaryUser
     @EnsureHasWorkProfile
     @Postsubmit(reason="b/181207615 flaky")
@@ -125,7 +125,7 @@ public final class StartProfilesTest {
     }
 
     @Test
-    @RequireFeatures(PackageManager.FEATURE_MANAGED_USERS)
+    @RequireFeature(PackageManager.FEATURE_MANAGED_USERS)
     @RequireRunOnPrimaryUser
     @EnsureHasWorkProfile
     @Postsubmit(reason="b/181207615 flaky")
@@ -148,7 +148,7 @@ public final class StartProfilesTest {
     }
 
     @Test
-    @RequireFeatures(PackageManager.FEATURE_MANAGED_USERS)
+    @RequireFeature(PackageManager.FEATURE_MANAGED_USERS)
     @RequireRunOnPrimaryUser
     @EnsureHasWorkProfile
     @Postsubmit(reason="b/181207615 flaky")
@@ -180,7 +180,7 @@ public final class StartProfilesTest {
     }
 
     @Test
-    @RequireFeatures(PackageManager.FEATURE_MANAGED_USERS)
+    @RequireFeature(PackageManager.FEATURE_MANAGED_USERS)
     @RequireRunOnPrimaryUser
     @EnsureHasWorkProfile
     @Postsubmit(reason="b/181207615 flaky")
@@ -202,7 +202,7 @@ public final class StartProfilesTest {
     }
 
     @Test
-    @RequireFeatures(PackageManager.FEATURE_MANAGED_USERS)
+    @RequireFeature(PackageManager.FEATURE_MANAGED_USERS)
     @RequireRunOnPrimaryUser
     @EnsureHasWorkProfile
     @Postsubmit(reason="b/181207615 flaky")
@@ -212,7 +212,7 @@ public final class StartProfilesTest {
     }
 
     @Test
-    @RequireFeatures(PackageManager.FEATURE_MANAGED_USERS)
+    @RequireFeature(PackageManager.FEATURE_MANAGED_USERS)
     @RequireRunOnPrimaryUser
     @EnsureHasWorkProfile
     public void stopProfile_withoutPermission_throwsException() {

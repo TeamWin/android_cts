@@ -16,23 +16,16 @@
 
 package com.android.bedstead.harrier.annotations;
 
+import com.android.bedstead.harrier.annotations.meta.RepeatingAnnotation;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-/**
- * Mark that a test method should run only when the device has a given feature.
- *
- * <p>You can guarantee that these methods do not run on devices lacking the feature by
- * using {@code DeviceState}.
- *
- * <p>By default the test will be skipped if the feature is not available. If you'd rather the test
- * fail then use {@code failureMode = FailureMode.FAIL}.
- */
-@Target(ElementType.METHOD)
+@Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE})
 @Retention(RetentionPolicy.RUNTIME)
+@RepeatingAnnotation
 public @interface RequireFeatures {
-    String[] value();
-    FailureMode failureMode() default FailureMode.SKIP;
+    RequireFeature[] value();
 }
