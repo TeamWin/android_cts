@@ -19,6 +19,7 @@ package android.car.cts.powerpolicy;
 import com.android.tradefed.log.LogUtil.CLog;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.StringTokenizer;
 
@@ -43,10 +44,20 @@ public final class PowerPolicyDef {
         return mPolicyId;
     }
 
+    public PowerComponent[] getEnables() {
+        return mEnables;
+    }
+
+    public PowerComponent[] getDisables() {
+        return mDisables;
+    }
+
     @Override
     public String toString() {
-        String[] enables = Arrays.stream(mEnables).map(c -> c.value).toArray(i -> new String[i]);
-        String[] disables = Arrays.stream(mDisables).map(c -> c.value).toArray(i -> new String[i]);
+        String[] enables = Arrays.stream(mEnables).map(PowerComponent::getValue)
+                .toArray(String[]::new);
+        String[] disables = Arrays.stream(mDisables).map(PowerComponent::getValue)
+                .toArray(String[]::new);
         StringBuilder str = new StringBuilder();
         str.append(mPolicyId);
         if (!enables[0].equals("none")) {
@@ -110,12 +121,7 @@ public final class PowerPolicyDef {
             throw new IllegalArgumentException("malformatted disabled headers string: "
                     + policyDefStr);
         }
-        PowerComponent[] enabledComps = null;
-        if (enables != null) {
-            normalizeComponentName(enables);
-            enabledComps = Arrays.stream(enables)
-                    .map(e -> PowerComponent.valueOf(e)).toArray(n -> new PowerComponent[n]);
-        }
+        PowerComponent[] enabledComps = PowerComponent.asComponentArray(enables);
 
         String[] disables = null;
         tmpStr = tokens.nextToken().trim();
@@ -123,32 +129,9 @@ public final class PowerPolicyDef {
         if (!tmpStr.isEmpty()) {
             disables = tmpStr.split(",\\s*");
         }
-        PowerComponent[] disabledComps = null;
-        if (disables != null) {
-            normalizeComponentName(disables);
-            disabledComps = Arrays.stream(disables)
-                    .map(e -> PowerComponent.valueOf(e)).toArray(n -> new PowerComponent[n]);
-        }
+        PowerComponent[] disabledComps = PowerComponent.asComponentArray(disables);
 
         return new PowerPolicyDef(policyId, enabledComps, disabledComps);
-    }
-
-    private static void normalizeComponentName(String[] comps) throws Exception {
-        for (int i = 0; i < comps.length; i++) {
-            try {
-                PowerComponent.valueOf(comps[i]);
-            } catch (Exception e) {
-                if (comps[i] == null || comps[i].isEmpty()) {
-                    throw new IllegalArgumentException("empty PowerComponent name at " + i);
-                }
-
-                if (comps[i].equals("none")) {
-                    comps[i] = "NONE";
-                } else {
-                    throw new IllegalArgumentException("unknown PowerComponent: " + comps[i]);
-                }
-            }
-        }
     }
 
     private static boolean search(String[] strList, String str) {
@@ -186,10 +169,44 @@ public final class PowerPolicyDef {
         MICROPHONE("MICROPHONE"),
         CPU("CPU");
 
-        public final String value;
+        private final String mValue;
 
         PowerComponent(String v) {
-            value = v;
+            mValue = v;
+        }
+
+        public String getValue() {
+            return mValue;
+        }
+
+        public static PowerComponent[] asComponentArray(String[] componentNames) {
+            if (componentNames == null) {
+                return new PowerComponent[0];
+            }
+            normalizeComponentName(componentNames);
+            PowerComponent[] compArray = Arrays.stream(componentNames)
+                    .map(PowerComponent::valueOf).toArray(PowerComponent[]::new);
+            Arrays.sort(compArray);
+            return compArray;
+        }
+
+        public static PowerComponent[] asComponentArray(List<String> nameList) {
+            if (nameList == null) {
+                return new PowerComponent[0];
+            }
+            return asComponentArray(nameList.toArray(new String[0]));
+        }
+
+        private static void normalizeComponentName(String[] comps) {
+            for (int i = 0; i < comps.length; i++) {
+                try {
+                    PowerComponent.valueOf(comps[i]);
+                } catch (Exception e) {
+                    if (comps[i] != null && comps[i].equals("none")) {
+                        comps[i] = "NONE";
+                    }
+                }
+            }
         }
     }
 
