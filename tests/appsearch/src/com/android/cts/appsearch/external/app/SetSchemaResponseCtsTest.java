@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.app.appsearch.cts;
+package android.app.appsearch.cts.app;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -22,6 +22,8 @@ import android.app.appsearch.AppSearchResult;
 import android.app.appsearch.SetSchemaResponse;
 
 import org.junit.Test;
+
+import java.util.Arrays;
 
 public class SetSchemaResponseCtsTest {
     @Test
@@ -41,21 +43,20 @@ public class SetSchemaResponseCtsTest {
                         AppSearchResult.newFailedResult(
                                 AppSearchResult.RESULT_INTERNAL_ERROR, "errorMessage"));
 
-        SetSchemaResponse original =
+        SetSchemaResponse.Builder builder =
                 new SetSchemaResponse.Builder()
                         .addDeletedType("delete1")
                         .addIncompatibleType("incompatible1")
                         .addMigratedType("migrated1")
-                        .addMigrationFailure(failure1)
-                        .build();
+                        .addMigrationFailure(failure1);
+        SetSchemaResponse original = builder.build();
         assertThat(original.getDeletedTypes()).containsExactly("delete1");
         assertThat(original.getIncompatibleTypes()).containsExactly("incompatible1");
         assertThat(original.getMigratedTypes()).containsExactly("migrated1");
         assertThat(original.getMigrationFailures()).containsExactly(failure1);
 
         SetSchemaResponse rebuild =
-                original.toBuilder()
-                        .addDeletedType("delete2")
+                builder.addDeletedType("delete2")
                         .addIncompatibleType("incompatible2")
                         .addMigratedType("migrated2")
                         .addMigrationFailure(failure2)
@@ -72,5 +73,50 @@ public class SetSchemaResponseCtsTest {
                 .containsExactly("incompatible1", "incompatible2");
         assertThat(rebuild.getMigratedTypes()).containsExactly("migrated1", "migrated2");
         assertThat(rebuild.getMigrationFailures()).containsExactly(failure1, failure2);
+    }
+
+    @Test
+    public void testPluralAdds() {
+        SetSchemaResponse.MigrationFailure failure1 =
+                new SetSchemaResponse.MigrationFailure(
+                        "namespace",
+                        "failure1",
+                        "schemaType",
+                        AppSearchResult.newFailedResult(
+                                AppSearchResult.RESULT_INTERNAL_ERROR, "errorMessage"));
+
+        SetSchemaResponse.Builder builder =
+                new SetSchemaResponse.Builder()
+                        .addDeletedTypes(Arrays.asList("delete1"))
+                        .addIncompatibleTypes(Arrays.asList("incompatible1"))
+                        .addMigratedTypes(Arrays.asList("migrated1"))
+                        .addMigrationFailures(Arrays.asList(failure1));
+        SetSchemaResponse singleEntries = builder.build();
+        assertThat(singleEntries.getDeletedTypes()).containsExactly("delete1");
+        assertThat(singleEntries.getIncompatibleTypes()).containsExactly("incompatible1");
+        assertThat(singleEntries.getMigratedTypes()).containsExactly("migrated1");
+        assertThat(singleEntries.getMigrationFailures()).containsExactly(failure1);
+
+        SetSchemaResponse.MigrationFailure failure2 =
+                new SetSchemaResponse.MigrationFailure(
+                        "namespace",
+                        "failure2",
+                        "schemaType",
+                        AppSearchResult.newFailedResult(
+                                AppSearchResult.RESULT_INTERNAL_ERROR, "errorMessage"));
+        SetSchemaResponse multiEntries =
+                builder.addDeletedTypes(Arrays.asList("delete2", "deleted3", "deleted4"))
+                        .addIncompatibleTypes(Arrays.asList("incompatible2"))
+                        .addMigratedTypes(Arrays.asList("migrated2", "migrate3"))
+                        .addMigrationFailures(Arrays.asList(failure2))
+                        .build();
+
+        assertThat(multiEntries.getDeletedTypes())
+                .containsExactly("delete1", "delete2", "deleted3", "deleted4");
+        assertThat(multiEntries.getIncompatibleTypes())
+                .containsExactly("incompatible1", "incompatible2");
+        assertThat(multiEntries.getMigratedTypes())
+                .containsExactly("migrated1", "migrated2", "migrate3");
+        assertThat(multiEntries.getMigrationFailures()).containsExactly(failure1, failure2);
     }
 }
