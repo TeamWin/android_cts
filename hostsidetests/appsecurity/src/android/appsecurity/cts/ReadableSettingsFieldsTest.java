@@ -91,6 +91,13 @@ public class ReadableSettingsFieldsTest extends BaseAppSecurityTest {
     }
 
     @Test
+    public void testGlobalHiddenSettingsKeyNotReadableWithoutPermissions() throws
+            DeviceNotAvailableException {
+        runDeviceTests(TEST_PACKAGE, TEST_CLASS,
+                "testGlobalHiddenSettingsKeyNotReadableWithoutPermissions");
+    }
+
+    @Test
     public void testSecureHiddenSettingsKeysNotReadableWithoutAnnotation()
             throws DeviceNotAvailableException {
         runDeviceTests(TEST_PACKAGE, TEST_CLASS,
