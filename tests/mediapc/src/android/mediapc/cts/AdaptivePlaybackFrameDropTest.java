@@ -28,6 +28,10 @@ import java.util.Collection;
 
 import static org.junit.Assert.assertTrue;
 
+/**
+ * The following test class validates the frame drops of AdaptivePlayback for the hardware decoders
+ * under the load condition (Transcode + Audio Playback).
+ */
 @RunWith(Parameterized.class)
 public class AdaptivePlaybackFrameDropTest extends FrameDropTestBase {
     private static final String LOG_TAG = AdaptivePlaybackFrameDropTest.class.getSimpleName();
@@ -36,12 +40,20 @@ public class AdaptivePlaybackFrameDropTest extends FrameDropTestBase {
         super(mimeType, decoderName, isAsync);
     }
 
+    // Returns the list of parameters with mimeTypes and their hardware decoders supporting the
+    // AdaptivePlayback feature combining with sync and async modes.
+    // Parameters {0}_{1}_{2} -- Mime_DecoderName_isAsync
     @Parameterized.Parameters(name = "{index}({0}_{1}_{2})")
     public static Collection<Object[]> inputParams() {
         return prepareArgumentsList(new String[]{
                 MediaCodecInfo.CodecCapabilities.FEATURE_AdaptivePlayback});
     }
 
+    /**
+     * This test validates that the Adaptive Playback of 1920x1080 and 960x540 resolution
+     * assets of 3 seconds duration each at 60 fps for S perf class / 30 fps for R perf class,
+     * playing alternatively, for at least 1800 frames or for 31 seconds, must not drop any frames.
+     */
     @LargeTest
     @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testAdaptivePlaybackFrameDrop() throws Exception {
