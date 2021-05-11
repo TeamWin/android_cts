@@ -16,18 +16,26 @@
 
 package android.appsearch.cts;
 
-import static com.google.common.truth.Truth.assertThat;
-
-import static org.junit.Assume.assumeTrue;
-
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+/**
+ * Test to cover install and uninstall packages with AppSearch.
+ *
+ * <p>This test is split into two distinct parts: The first part is the test-apps that runs on the
+ * device and interactive with AppSearch. This class is the second part that runs on the host and
+ * triggers tests in the first part for different users.
+ *
+ * <p>To trigger a device test, call runDeviceTestAsUser with a specific the test name and specific
+ * user.
+ *
+ * <p>Unlock your device when test locally.
+ */
 @RunWith(DeviceJUnit4ClassRunner.class)
-public class AppSearchPackageTestBase extends AppSearchHostTestBase {
+public class AppSearchPackageTest extends AppSearchHostTestBase {
 
     private int mPrimaryUserId;
 
