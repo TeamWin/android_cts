@@ -17,8 +17,10 @@ package android.app.appsearch.cts.app;
 
 import android.app.appsearch.AppSearchManager;
 import android.app.appsearch.AppSearchSessionShim;
+import android.content.Context;
 
 import androidx.annotation.NonNull;
+import androidx.test.core.app.ApplicationProvider;
 
 import com.android.server.appsearch.testing.AppSearchSessionShimImpl;
 
@@ -36,7 +38,8 @@ public class AppSearchSessionCtsTest extends AppSearchSessionCtsTestBase {
     @Override
     protected ListenableFuture<AppSearchSessionShim> createSearchSession(
             @NonNull String dbName, @NonNull ExecutorService executor) {
-        return AppSearchSessionShimImpl.createSearchSession(
+        Context context = ApplicationProvider.getApplicationContext();
+        return AppSearchSessionShimImpl.createSearchSession(context,
                 new AppSearchManager.SearchContext.Builder(dbName).build(), executor);
     }
 }
