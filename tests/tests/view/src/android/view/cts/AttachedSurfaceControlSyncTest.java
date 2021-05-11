@@ -61,8 +61,8 @@ import org.junit.runner.RunWith;
 @LargeTest
 @SuppressLint("RtlHardcoded")
 @RequiresDevice
-public class ViewRootSyncTest {
-    private static final String TAG = "ViewRootSyncTests";
+public class AttachedSurfaceControlSyncTest {
+    private static final String TAG = "AttachedSurfaceControlSyncTests";
 
     @Rule
     public ActivityTestRule<CapturedActivityWithResource> mActivityRule =
@@ -92,7 +92,7 @@ public class ViewRootSyncTest {
             t.setGeometry(mSurfaceControl, null, new Rect(mLocation[0], mLocation[1],
                     mLocation[0]+100,
                     mLocation[1]+100), 0);
-            getViewRoot().applyTransactionOnDraw(t);
+            getRootSurfaceControl().applyTransactionOnDraw(t);
             return true;
         };
 
@@ -125,7 +125,8 @@ public class ViewRootSyncTest {
         @Override
         protected void onAttachedToWindow() {
             super.onAttachedToWindow();
-            SurfaceControl.Transaction t = getViewRoot().buildReparentTransaction(mSurfaceControl);
+            SurfaceControl.Transaction t =
+                getRootSurfaceControl().buildReparentTransaction(mSurfaceControl);
             t.setLayer(mSurfaceControl, -1)
                 .setVisibility(mSurfaceControl, true)
                 .apply();
