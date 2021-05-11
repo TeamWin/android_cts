@@ -825,6 +825,11 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
         // Start a process and crash it
         startService(ACTION_NATIVE_CRASH, STUB_SERVICE_NAME, true, false);
 
+        // Native crashes are handled asynchronously from the actual crash, so
+        // it's possible for us to notice that the process crashed before an
+        // actual tombstone exists.
+        Thread.sleep(1000);
+
         long now2 = System.currentTimeMillis();
         List<ApplicationExitInfo> list = ShellIdentityUtils.invokeMethodWithShellPermissions(
                 STUB_PACKAGE_NAME, mStubPackagePid, 1,
