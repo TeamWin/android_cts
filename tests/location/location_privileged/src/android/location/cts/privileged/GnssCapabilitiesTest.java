@@ -18,6 +18,13 @@ import org.junit.runner.RunWith;
 public class GnssCapabilitiesTest {
 
     @Test
+    public void testBuilderWithGnssCapabilities() {
+        GnssCapabilities gnssCapabilities =
+            new GnssCapabilities.Builder(getTestGnssCapabilities()).build();
+        verifyTestValues(gnssCapabilities);
+    }
+
+    @Test
     public void testGetValues() {
         GnssCapabilities gnssCapabilities = getTestGnssCapabilities();
         verifyTestValues(gnssCapabilities);
