@@ -160,6 +160,8 @@ public class PackageManagerTest {
             + "iRKAay19k5VFlSaM7QW9uhvlrLQqsTW01ofFzxNDbp2QfIFHZR6rebKzKBz6byQFM0DYQnYMwFWXjWkMPN"
             + "dqkRLykoFLyBup53G68k2n8w";
     private static final String SHELL_PACKAGE_NAME = "com.android.shell";
+    private static final String HELLO_WORLD_PACKAGE_NAME = "com.example.helloworld";
+    private static final String HELLO_WORLD_APK = SAMPLE_APK_BASE + "HelloWorld5.apk";
 
     @Before
     public void setup() throws Exception {
@@ -171,6 +173,7 @@ public class PackageManagerTest {
     public void tearDown() throws Exception {
         uninstallPackage(EMPTY_APP_PACKAGE_NAME);
         uninstallPackage(EMPTY_APP_MAX_PACKAGE_NAME);
+        uninstallPackage(HELLO_WORLD_PACKAGE_NAME);
     }
 
     @Test
@@ -1308,6 +1311,16 @@ public class PackageManagerTest {
         assertThat(ai.flags & ApplicationInfo.FLAG_SYSTEM).isEqualTo(ApplicationInfo.FLAG_SYSTEM);
         assertThat(ai.flags & ApplicationInfo.FLAG_INSTALLED)
                 .isEqualTo(ApplicationInfo.FLAG_INSTALLED);
+    }
+
+    @Test
+    public void testGetApplicationInfo_icon_MatchesUseRoundIcon() throws Exception {
+        installPackage(HELLO_WORLD_APK);
+        final boolean useRoundIcon = mContext.getResources().getBoolean(
+                mContext.getResources().getIdentifier("config_useRoundIcon", "bool", "android"));
+        final ApplicationInfo info = mPackageManager.getApplicationInfo(HELLO_WORLD_PACKAGE_NAME,
+                0 /*flags*/);
+        assertThat(info.icon).isEqualTo((useRoundIcon ? info.roundIconRes : info.iconRes));
     }
 
     private boolean isUpdatingApexSupported() {
