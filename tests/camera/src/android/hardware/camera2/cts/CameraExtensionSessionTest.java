@@ -26,6 +26,10 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import com.android.compatibility.common.util.DeviceReportLog;
+import com.android.compatibility.common.util.ResultType;
+import com.android.compatibility.common.util.ResultUnit;
+import com.android.compatibility.common.util.Stat;
 import com.android.ex.camera2.blocking.BlockingSessionCallback;
 import com.android.ex.camera2.blocking.BlockingExtensionSessionCallback;
 import com.android.ex.camera2.exceptions.TimeoutRuntimeException;
@@ -47,6 +51,8 @@ import android.hardware.camera2.params.SessionConfiguration;
 import android.media.ExifInterface;
 import android.media.Image;
 import android.media.ImageReader;
+import android.os.SystemClock;
+import android.util.Range;
 import android.util.Size;
 
 import static android.hardware.camera2.cts.CameraTestUtils.*;
@@ -56,6 +62,7 @@ import android.util.Log;
 import android.view.Surface;
 import android.view.TextureView;
 
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 
 import org.junit.Rule;
@@ -78,6 +85,8 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
 
     private SurfaceTexture mSurfaceTexture = null;
     private Camera2AndroidTestRule mTestRule = null;
+
+    private DeviceReportLog mReportLog;
 
     @Override
     public void setUp() throws Exception {
@@ -466,7 +475,8 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
     }
 
     // Test case for multi-frame only capture on all supported extensions and expected state
-    // callbacks. Verify still frame output.
+    // callbacks. Verify still frame output, measure the average capture latency and if possible
+    // ensure that the value is within the reported range.
     @Test
     public void testMultiFrameCapture() throws Exception {
         final int IMAGE_COUNT = 10;
@@ -510,6 +520,12 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                             new ExtensionSessionConfiguration(extension, outputConfigs,
                                     new HandlerExecutor(mTestRule.getHandler()),
                                     sessionListener);
+                    String streamName = "test_extension_capture";
+                    mReportLog = new DeviceReportLog(REPORT_LOG_NAME, streamName);
+                    mReportLog.addValue("camera_id", id, ResultType.NEUTRAL, ResultUnit.NONE);
+                    mReportLog.addValue("extension_id", extension, ResultType.NEUTRAL,
+                            ResultUnit.NONE);
+                    double[] captureTimes = new double[IMAGE_COUNT];
 
                     try {
                         mTestRule.openDevice(id);
@@ -534,11 +550,13 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                                         jpegOrientation);
                             }
                             CaptureRequest request = captureBuilder.build();
+                            long startTimeMs = SystemClock.elapsedRealtime();
                             int sequenceId = extensionSession.capture(request,
                                     new HandlerExecutor(mTestRule.getHandler()), captureCallback);
 
                             Image img =
                                     imageListener.getImage(MULTI_FRAME_CAPTURE_IMAGE_TIMEOUT_MS);
+                            captureTimes[i] = SystemClock.elapsedRealtime() - startTimeMs;
                             if (captureFormat == ImageFormat.JPEG) {
                                 verifyJpegOrientation(img, maxSize, jpegOrientation);
                             } else {
@@ -557,12 +575,32 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                                     .onCaptureSequenceCompleted(extensionSession, sequenceId);
                         }
 
+                        long avgCaptureLatency = (long) Stat.getAverage(captureTimes);
+                        String resultFormat = "avg_latency size: " + maxSize.toString() +
+                                " image format: " + captureFormat;
+                        mReportLog.addValue(resultFormat, avgCaptureLatency,
+                                ResultType.LOWER_BETTER, ResultUnit.MS);
+
                         verify(captureCallback, times(0))
                                 .onCaptureSequenceAborted(any(CameraExtensionSession.class),
                                         anyInt());
                         verify(captureCallback, times(0))
                                 .onCaptureFailed(any(CameraExtensionSession.class),
                                         any(CaptureRequest.class));
+                        Range<Long> latencyRange =
+                                extensionChars.getEstimatedCaptureLatencyRangeMillis(extension,
+                                        maxSize, captureFormat);
+                        if (latencyRange != null) {
+                            String msg = String.format("Camera [%s]: The measured average "
+                                            + "capture latency of %d ms. for extension type %d  "
+                                            + "with image format: %d and size: %dx%d must be "
+                                            + "within the advertised range of [%d, %d] ms.",
+                                    id, avgCaptureLatency, extension, captureFormat,
+                                    maxSize.getWidth(), maxSize.getHeight(),
+                                    latencyRange.getLower(), latencyRange.getUpper());
+                            assertTrue(msg, latencyRange.contains(avgCaptureLatency));
+                        }
+
 
                         extensionSession.close();
 
@@ -572,6 +610,7 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                     } finally {
                         mTestRule.closeDevice(id);
                         extensionImageReader.close();
+                        mReportLog.submit(InstrumentationRegistry.getInstrumentation());
                     }
                 }
             }
