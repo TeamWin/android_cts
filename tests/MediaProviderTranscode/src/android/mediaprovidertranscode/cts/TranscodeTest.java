@@ -20,6 +20,7 @@ import static androidx.test.InstrumentationRegistry.getContext;
 
 import static android.mediaprovidertranscode.cts.TranscodeTestUtils.assertFileContent;
 import static android.mediaprovidertranscode.cts.TranscodeTestUtils.assertTranscode;
+import static android.mediaprovidertranscode.cts.TranscodeTestUtils.executeShellCommand;
 import static android.mediaprovidertranscode.cts.TranscodeTestUtils.installAppWithStoragePermissions;
 import static android.mediaprovidertranscode.cts.TranscodeTestUtils.isAppIoBlocked;
 import static android.mediaprovidertranscode.cts.TranscodeTestUtils.open;
@@ -905,6 +906,8 @@ public class TranscodeTest {
             // Trigger transcoding so that the transcoded file gets added to cache.
             assertTranscode(modernFile, true);
 
+            // To make the cache clearing logic easier to verify, ignore any cache reserved space.
+            executeShellCommand("settings put global sys_storage_cache_max_bytes 0");
             // Invoke StorageManager to free maximum allocatable bytes, so that it tries to clear
             // all available caches.
             StorageManager storageManager = getContext().getSystemService(StorageManager.class);
