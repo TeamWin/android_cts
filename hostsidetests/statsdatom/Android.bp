@@ -23,6 +23,7 @@ java_test_host {
         "src/**/alarm/*.java",
         "src/**/apphibernation/*.java",
         "src/**/appops/*.java",
+        "src/**/appexit/*.java",
         "src/**/appstart/*.java",
         "src/**/batterycycle/*.java",
         "src/**/binderstats/*.java",
