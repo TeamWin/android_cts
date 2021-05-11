@@ -36,6 +36,14 @@ import java.util.concurrent.Future;
 
 import static org.junit.Assert.assertTrue;
 
+/**
+ * The following test class validates the maximum number of concurrent Transcode sessions that
+ * it can support by the (mime, decoder - mime, encoder) pair calculated via the
+ * CodecCapabilities.getMaxSupportedInstances() and
+ * VideoCapabilities.getSupportedPerformancePoints() methods. If maximum instances is odd, create
+ * one additional decoder which decodes to surface and render. Also ensures that all the supported
+ * sessions succeed in transcoding/decoding with meeting the expected frame rate.
+ */
 @RunWith(Parameterized.class)
 public class MultiTranscoderPerfTest extends MultiCodecPerfTestBase {
     private static final String LOG_TAG = MultiTranscoderPerfTest.class.getSimpleName();
@@ -54,6 +62,7 @@ public class MultiTranscoderPerfTest extends MultiCodecPerfTestBase {
         mEncoderPair = encoderPair;
     }
 
+    // Parameters {0}_{1}_{2} -- Pair(Mime DecoderName)_Pair(Mime EncoderName)_isAsync
     @Parameterized.Parameters(name = "{index}({0}_{1}_{2})")
     public static Collection<Object[]> inputParams() {
         // Prepares the params list with the supported Hardware decoders/encoders in the device
@@ -80,6 +89,13 @@ public class MultiTranscoderPerfTest extends MultiCodecPerfTestBase {
         return argsList;
     }
 
+    /**
+     * This test calculates the validates number of concurrent Transcode sessions that
+     * it can support by the (mime, decoder - mime, encoder) pairs. Creates maxInstances / 2
+     * Transcode sessions. If maximum instances is odd, creates one additional decoder which decodes
+     * to surface and render. And ensures that all the supported sessions succeed in
+     * transcoding/decoding with meeting the expected frame rate.
+     */
     @LargeTest
     @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void test720p() throws Exception {

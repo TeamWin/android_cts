@@ -353,6 +353,9 @@ public class CodecTranscoderTestBase {
     }
 }
 
+/**
+ * The following class transcodes the given testFile and returns the achieved fps for transcoding.
+ */
 class Transcode extends CodecTranscoderTestBase implements Callable<Double> {
     private static final String LOG_TAG = Transcode.class.getSimpleName();
 
@@ -400,6 +403,10 @@ class Transcode extends CodecTranscoderTestBase implements Callable<Double> {
     }
 }
 
+/**
+ * The following class transcodes the given testFile until loadStatus is finished.
+ * If input reaches eos, it will rewind the input to start position.
+ */
 class TranscodeLoad extends Transcode {
     private final LoadStatus mLoadStatus;
 
@@ -450,6 +457,7 @@ class TranscodeLoad extends Transcode {
             if (size > 0 && (codecFlags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) == 0) {
                 mDecInputCount++;
             }
+            // If eos is reached, seek to start position.
             if (!mExtractor.advance()) {
                 mExtractor.seekTo(0, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
                 mBasePts = mMaxPts + 1000000L;
@@ -458,6 +466,9 @@ class TranscodeLoad extends Transcode {
     }
 }
 
+/**
+ * The following class tells the status of the load whether it is finished or not.
+ */
 class LoadStatus {
     private boolean mLoadFinished;
 

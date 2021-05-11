@@ -27,6 +27,11 @@ import java.util.ArrayList;
 
 import static android.mediapc.cts.FrameDropTestBase.DECODE_31S;
 
+/**
+ * The following class calculates the frame drops for the given array of testFiles playback.
+ * It will do playback for at least 1800 frames or for utmost 31 seconds. If input reaches eos,
+ * it will rewind the input to start position.
+ */
 public class PlaybackFrameDrop extends CodecDecoderTestBase {
     private final String mDecoderName;
     private final String[] mTestFiles;
@@ -169,6 +174,7 @@ public class PlaybackFrameDrop extends CodecDecoderTestBase {
             long pts = info.presentationTimeUs;
             mMaxPts = Math.max(mMaxPts, mBasePts + pts);
             mCodec.queueInputBuffer(bufferIndex, 0, info.size, mBasePts + pts, info.flags);
+            // If input reaches the end of samples, rewind to start position.
             if (mSampleIndex == mBufferInfos.size()) {
                 mSampleIndex = 0;
                 mBasePts = mMaxPts + 1000000L;
@@ -185,16 +191,25 @@ public class PlaybackFrameDrop extends CodecDecoderTestBase {
         if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
             mSawOutputEOS = true;
         }
+        // We will limit the playback to 60 fps using the system timestamps.
         long nowUs = System.nanoTime() / 1000;
         if (mOutputCount == 0) {
             mRenderStartTimeUs = nowUs;
             mCodec.releaseOutputBuffer(bufferIndex, true);
         } else if (nowUs > getRenderTimeUs(mOutputCount + 1)) {
+            // If the current sample timeStamp is greater than the actual presentation timeStamp
+            // of the next sample, we will consider it as a frame drop and don't render.
             mFrameDropCount++;
             mCodec.releaseOutputBuffer(bufferIndex, false);
         } else if (nowUs > getRenderTimeUs(mOutputCount)) {
+            // If the current sample timeStamp is greater than the actual presentation timeStamp
+            // of the current sample, we can render it.
             mCodec.releaseOutputBuffer(bufferIndex, true);
         } else {
+            // If the current sample timestamp is less than the actual presentation timeStamp,
+            // We are okay with directly rendering the sample if we are less by not more than
+            // half of one sample duration. Otherwise we sleep for how much more we are less
+            // than the half of one sample duration.
             if ((getRenderTimeUs(mOutputCount) - nowUs) > (mEachFrameTimeIntervalUs / 2)) {
                 try {
                     Thread.sleep(((getRenderTimeUs(mOutputCount) - nowUs) -

@@ -31,6 +31,14 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+/**
+ * The following test class calculates the maximum number of concurrent encode sessions that it can
+ * support by the two hardware (mime - encoder) pair calculated via the
+ * CodecCapabilities.getMaxSupportedInstances() and
+ * VideoCapabilities.getSupportedPerformancePoints() methods. Splits the maximum supported instances
+ * between the two pairs and ensures that all the supported sessions succeed in encoding.
+ * Achieved frame rate is not compared as this test runs in byte buffer mode.
+ */
 @RunWith(Parameterized.class)
 public class MultiEncoderPairPerfTest extends MultiCodecPerfTestBase {
     private static final String LOG_TAG = MultiEncoderPairPerfTest.class.getSimpleName();
@@ -45,9 +53,11 @@ public class MultiEncoderPairPerfTest extends MultiCodecPerfTestBase {
         mSecondPair = secondPair;
     }
 
+    // Returns the list of params with two hardware (mime - encoder) pairs in both
+    // sync and async modes.
+    // Parameters {0}_{1}_{2} -- Pair(Mime EncoderName)_Pair(Mime EncoderName)_isAsync
     @Parameterized.Parameters(name = "{index}({0}_{1}_{2})")
     public static Collection<Object[]> inputParams() {
-        // Prepares the params list with the supported Hardware encoders in the device
         final List<Object[]> argsList = new ArrayList<>();
         ArrayList<Pair<String, String>> mimeTypeEncoderPairs = new ArrayList<>();
         for (String mime : mMimeList) {
@@ -68,6 +78,12 @@ public class MultiEncoderPairPerfTest extends MultiCodecPerfTestBase {
         return argsList;
     }
 
+    /**
+     * This test calculates the number of 720p 30 fps encoder instances that the given two
+     * (mime - encoder) pairs can support. Assigns the same number of instances to the two pairs
+     * (if max instances are even), or one more to one pair (if odd) and ensures that all the
+     * concurrent sessions succeed in encoding.
+     */
     @LargeTest
     @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void test720p() throws Exception {

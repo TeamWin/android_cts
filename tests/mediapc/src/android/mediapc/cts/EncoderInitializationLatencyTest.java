@@ -51,6 +51,11 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
+/**
+ * The following test class validates the codec initialization latency (time for codec create +
+ * configure) for the audio encoders and hardware video encoders available in the device, under the
+ * load condition (Transcode + MediaRecorder session Audio(Microphone) and 1080p Video(Camera)).
+ */
 @RunWith(Parameterized.class)
 public class EncoderInitializationLatencyTest {
     private static final String LOG_TAG = EncoderInitializationLatencyTest.class.getSimpleName();
@@ -107,6 +112,7 @@ public class EncoderInitializationLatencyTest {
     public ActivityTestRule<TestActivity> mActivityRule =
             new ActivityTestRule<>(TestActivity.class);
 
+    // Returns the list of all available hardware video encoders in the device.
     static ArrayList<String> getMimesOfAvailableHardwareVideoEncoders() {
         MediaCodecList codecList = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
         MediaCodecInfo[] codecInfos = codecList.getCodecInfos();
@@ -123,6 +129,7 @@ public class EncoderInitializationLatencyTest {
         return listOfMimes;
     }
 
+    // Returns the list of all available audio encoders in the device.
     static ArrayList<String> getMimesOfAvailableAudioEncoders() {
         MediaCodecList codecList = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
         MediaCodecInfo[] codecInfos = codecList.getCodecInfos();
@@ -139,6 +146,9 @@ public class EncoderInitializationLatencyTest {
         return listOfMimes;
     }
 
+    // Returns the list of parameters with mimetype and their encoder(for audio - all encoders,
+    // video - hardware encoders).
+    // Parameters {0}_{1} -- Mime_EncoderName
     @Parameterized.Parameters(name = "{index}({0}_{1})")
     public static Collection<Object[]> inputParams() {
         // Prepares the params list with the required Hardware video encoders and all available
@@ -190,6 +200,7 @@ public class EncoderInitializationLatencyTest {
             }
         });
         // Create MediaRecorder Session - Audio (Microphone) + 1080p Video (Camera)
+        // Create a temp file to dump the MediaRecorder output. Later it will be deleted.
         mTempRecordedFile = new File(WorkDir.getMediaDirString() + "tempOut.mp4");
         mTempRecordedFile.createNewFile();
         mMediaRecorderLoad = createMediaRecorderLoad(mSurface);
@@ -239,6 +250,12 @@ public class EncoderInitializationLatencyTest {
         }
     }
 
+    /**
+     * This test validates that the initialization latency(time for codec create + configure)
+     * for the audio encoders <= 30ms and for video encoders <= 40ms measuring 10 times in
+     * succession(5 times alternating sync and async modes). This also logs the stats min, max, avg
+     * of the encoder initialization latencies.
+     */
     @LargeTest
     @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testInitializationLatency() throws Exception {
@@ -279,6 +296,13 @@ public class EncoderInitializationLatencyTest {
     }
 }
 
+/**
+ * The following class calculates the encoder initialization latency (time for codec create +
+ * configure). And also logs the time taken by the encoder for:
+ * (create + configure + start),
+ * (create + configure + start + first frame to enqueue),
+ * (create + configure + start + first frame to dequeue).
+ */
 class EncoderInitializationLatency extends CodecEncoderTestBase {
     private static final String LOG_TAG = EncoderInitializationLatency.class.getSimpleName();
 
@@ -360,6 +384,7 @@ class EncoderInitializationLatency extends CodecEncoderTestBase {
         mCodec.start();
         long startTimeStamp = System.nanoTime();
         if (mIsAsync) {
+            // We will keep on feeding the input to encoder until we see the first dequeued frame.
             while (!mAsyncHandle.hasSeenError() && !mSawInputEOS) {
                 Pair<Integer, MediaCodec.BufferInfo> element = mAsyncHandle.getWork();
                 if (element != null) {
