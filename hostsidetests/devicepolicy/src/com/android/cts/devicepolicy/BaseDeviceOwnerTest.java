@@ -62,11 +62,21 @@ abstract class BaseDeviceOwnerTest extends BaseDevicePolicyTest {
 
     @Override
     public void tearDown() throws Exception {
-        if (mDeviceOwnerSet && !removeAdmin(DEVICE_OWNER_COMPONENT, mDeviceOwnerUserId)) {
-            // Don't fail as it could hide the real failure from the test method
-            CLog.e("Failed to remove device owner on user " + mDeviceOwnerUserId);
+        // Don't fail as it could hide the real failure from the test method
+        if (mDeviceOwnerSet) {
+            if (!removeAdmin(DEVICE_OWNER_COMPONENT, mDeviceOwnerUserId)) {
+                CLog.e("Failed to remove device owner on user " + mDeviceOwnerUserId);
+            }
+            if (isHeadlessSystemUserMode()
+                    && !removeAdmin(DEVICE_OWNER_COMPONENT, mPrimaryUserId)) {
+                CLog.e("Failed to remove profile owner on user " + mPrimaryUserId);
+            }
         }
-        getDevice().uninstallPackage(DEVICE_OWNER_PKG);
+
+        String status = getDevice().uninstallPackage(DEVICE_OWNER_PKG);
+        if (status != null) {
+            CLog.e("Could not uninstall package %s: %s", DEVICE_OWNER_PKG, status);
+        }
 
         super.tearDown();
     }
