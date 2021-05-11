@@ -19,22 +19,21 @@ package com.android.bedstead.harrier.annotations;
 import com.android.bedstead.harrier.DeviceState;
 
 import java.lang.annotation.ElementType;
-import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Mark that a test method should only run if a particular user type is supported
+ * Mark that a test method should only run on specified sdk versions.
  *
- * <p>Your test configuration may be configured so that this test is only run on a user which
- * supports the user types. Otherwise, you can use {@link DeviceState} to ensure that the test is
- * not run when the user type is not supported.
+ * <p>Your test configuration may be configured so that this test is only run on a device with the
+ * given user. Otherwise, you can use {@link DeviceState} to ensure that the test is
+ * not run when the sdk version is not correct.
  */
 @Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-@Repeatable(RequireUsersSupported.class)
-public @interface RequireUserSupported {
-    String value();
+public @interface RequireSdkVersion {
+    int min() default 1;
+    int max() default Integer.MAX_VALUE;
     FailureMode failureMode() default FailureMode.SKIP;
 }

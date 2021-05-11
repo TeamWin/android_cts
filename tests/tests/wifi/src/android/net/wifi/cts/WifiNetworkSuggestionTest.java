@@ -708,6 +708,8 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
             builder.setOemPaid(false);
             builder.setOemPrivate(false);
             builder.setSubscriptionId(TEST_SUB_ID);
+        }
+        if (WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(sContext)) {
             builder.setPriorityGroup(TEST_PRIORITY_GROUP);
         }
         return builder;
@@ -736,8 +738,10 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
         if (BuildCompat.isAtLeastS()) {
             assertFalse(suggestion.isOemPaid());
             assertFalse(suggestion.isOemPrivate());
-            assertEquals(TEST_PRIORITY_GROUP, suggestion.getPriorityGroup());
             assertEquals(TEST_SUB_ID, suggestion.getSubscriptionId());
+        }
+        if (WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(sContext)) {
+            assertEquals(TEST_PRIORITY_GROUP, suggestion.getPriorityGroup());
             assertEquals(TelephonyManager.UNKNOWN_CARRIER_ID, suggestion.getCarrierId());
         }
     }

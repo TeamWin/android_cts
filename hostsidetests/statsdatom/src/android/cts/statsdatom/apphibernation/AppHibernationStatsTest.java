@@ -123,6 +123,22 @@ public class AppHibernationStatsTest extends DeviceTestCase implements IBuildRec
         fail(String.format("Did not find a matching atom for user %d", userId));
     }
 
+    public void testGlobalHibernatedApps() throws Exception {
+        ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                AtomsProto.Atom.GLOBAL_HIBERNATED_APPS_FIELD_NUMBER);
+        getDevice().executeShellCommand(
+                getHibernationCommand(DeviceUtils.STATSD_ATOM_TEST_PKG,
+                        /* isGlobal */ true, /* isHibernating */ true));
+
+        AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
+        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+
+        final List<AtomsProto.Atom> atoms = ReportUtils.getGaugeMetricAtoms(getDevice());
+        assertThat(atoms.size()).isEqualTo(1);
+        AtomsProto.GlobalHibernatedApps apps = atoms.get(0).getGlobalHibernatedApps();
+        assertThat(apps.getHibernatedAppCount()).isAtLeast(1);
+    }
+
     private static void assertUserLevelHibernationStateChangedEvent(
             List<StatsLog.EventMetricData> data, boolean isHibernating) {
         for (StatsLog.EventMetricData d : data) {
