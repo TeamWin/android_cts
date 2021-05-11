@@ -1,4 +1,4 @@
-// Copyright (C) 2017 The Android Open Source Project
+// Copyright (C) 2016 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,24 +16,14 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-java_test_host {
-    name: "CtsEdiHostTestCases",
-    srcs: ["src/**/*.java"],
-    // tag this module as a cts test artifact
-    test_suites: [
-        "cts",
-        "general-tests",
-    ],
-    libs: [
-        "compatibility-host-util",
-        "cts-tradefed",
-        "dexlib2-no-guava-no-cli",
-        "tradefed",
-    ],
+android_test_helper_app {
+    name: "ClasspathDeviceInfoHelperApp",
+    defaults: ["cts_defaults"],
     static_libs: [
-        "compat-classpaths-testing",
+        "androidx.test.rules",
+        "androidx.test.core",
+        "guava",
     ],
-    data: [
-        ":ClasspathDeviceInfoHelperApp",
-    ],
+    srcs: ["src/**/*.java"],
+    sdk_version: "test_current",
 }
