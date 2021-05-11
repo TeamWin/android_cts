@@ -23,6 +23,9 @@ import java.util.Arrays;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import static org.junit.Assume.*;
+import static org.hamcrest.CoreMatchers.*;
+
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class CVE_2020_0224 extends SecurityTestCase {
 
@@ -33,6 +36,7 @@ public class CVE_2020_0224 extends SecurityTestCase {
     @SecurityTest(minPatchLevel = "2020-07")
     @Test
     public void testPocCVE_2020_0224() throws Exception {
+        assumeThat(getDevice().getProperty("ro.config.low_ram"), is("false"));
         AdbUtils.runProxyAutoConfig("cve_2020_0224", getDevice());
         AdbUtils.assertNoCrashes(getDevice(), new CrashUtils.Config()
                 .setProcessPatterns("pacrunner")
