@@ -30,6 +30,7 @@ public class MainActivity extends Activity {
 
     @Override
     public void onCreate(Bundle savedOnstanceState) {
+        super.onCreate(savedOnstanceState);
         // The native lib should have been loaded already
         Intent intent = new Intent(
                 getApplicationContext().getPackageName() + ".NativeLibLoaded");
