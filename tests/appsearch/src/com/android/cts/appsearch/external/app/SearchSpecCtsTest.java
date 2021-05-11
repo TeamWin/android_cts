@@ -14,13 +14,15 @@
  * limitations under the License.
  */
 
-package android.app.appsearch.cts;
+package android.app.appsearch.cts.app;
 
 import static com.google.common.truth.Truth.assertThat;
 
 import android.app.appsearch.SearchSpec;
 
 import org.junit.Test;
+
+import java.util.Arrays;
 
 public class SearchSpecCtsTest {
     @Test
@@ -35,8 +37,11 @@ public class SearchSpecCtsTest {
                 new SearchSpec.Builder()
                         .setTermMatch(SearchSpec.TERM_MATCH_PREFIX)
                         .addFilterNamespaces("namespace1", "namespace2")
+                        .addFilterNamespaces(Arrays.asList("namespace3"))
                         .addFilterSchemas("schemaTypes1", "schemaTypes2")
+                        .addFilterSchemas(Arrays.asList("schemaTypes3"))
                         .addFilterPackageNames("package1", "package2")
+                        .addFilterPackageNames(Arrays.asList("package3"))
                         .setSnippetCount(5)
                         .setSnippetCountPerProperty(10)
                         .setMaxSnippetSize(15)
@@ -51,13 +56,13 @@ public class SearchSpecCtsTest {
 
         assertThat(searchSpec.getTermMatch()).isEqualTo(SearchSpec.TERM_MATCH_PREFIX);
         assertThat(searchSpec.getFilterNamespaces())
-                .containsExactly("namespace1", "namespace2")
+                .containsExactly("namespace1", "namespace2", "namespace3")
                 .inOrder();
         assertThat(searchSpec.getFilterSchemas())
-                .containsExactly("schemaTypes1", "schemaTypes2")
+                .containsExactly("schemaTypes1", "schemaTypes2", "schemaTypes3")
                 .inOrder();
         assertThat(searchSpec.getFilterPackageNames())
-                .containsExactly("package1", "package2")
+                .containsExactly("package1", "package2", "package3")
                 .inOrder();
         assertThat(searchSpec.getSnippetCount()).isEqualTo(5);
         assertThat(searchSpec.getSnippetCountPerProperty()).isEqualTo(10);

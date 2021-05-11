@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+package android.app.appsearch.cts.app;
+
 import static android.os.storage.StorageManager.UUID_DEFAULT;
 
 import static com.google.common.truth.Truth.assertThat;
