@@ -430,6 +430,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
+    @FlakyTest(bugId = 187862351)
     public void testGrantOfSensorsRelatedPermissions() throws Exception {
         installAppPermissionAppAsUser();
         executeDeviceTestMethod(".PermissionsTest", "testSensorsRelatedPermissionsCannotBeGranted");
@@ -441,6 +442,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
+    @FlakyTest(bugId = 187862351)
     public void testSensorsRelatedPermissionsNotGrantedViaPolicy() throws Exception {
         installAppPermissionAppAsUser();
         executeDeviceTestMethod(".PermissionsTest",
@@ -448,6 +450,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
+    @FlakyTest(bugId = 187862351)
     public void testStateOfSensorsRelatedPermissionsCannotBeRead() throws Exception {
         installAppPermissionAppAsUser();
         executeDeviceTestMethod(".PermissionsTest",
@@ -600,6 +603,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
+    @FlakyTest(bugId = 187862351)
     public void testPermissionPrompts() throws Exception {
         installAppPermissionAppAsUser();
         executeDeviceTestMethod(".PermissionsTest", "testPermissionPrompts");
