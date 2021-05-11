@@ -128,6 +128,7 @@ public class CameraTestUtils extends Assert {
     public static final int MAX_READER_IMAGES = 5;
 
     public static final String OFFLINE_CAMERA_ID = "offline_camera_id";
+    public static final String REPORT_LOG_NAME = "CtsCameraTestCases";
 
     private static final int EXIF_DATETIME_LENGTH = 19;
     private static final int EXIF_DATETIME_ERROR_MARGIN_SEC = 60;
