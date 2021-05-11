@@ -28,6 +28,7 @@ import static com.android.compatibility.common.util.TestUtils.waitUntil;
 import static junit.framework.TestCase.assertEquals;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.accounts.Account;
 import android.app.usage.UsageStatsManager;
@@ -251,6 +252,36 @@ public class CtsSyncManagerTest {
 
         AmUtils.setStandbyBucket(APP1_PACKAGE, UsageStatsManager.STANDBY_BUCKET_RARE);
 
+        Bundle b = makeBundle(ContentResolver.SYNC_EXTRAS_SCHEDULE_AS_EXPEDITED_JOB, true,
+                ContentResolver.SYNC_EXTRAS_IGNORE_SETTINGS, true);
+
+        ContentResolver.requestSync(ACCOUNT_1_A, APP1_AUTHORITY, b);
+
+        waitUntil("Expedited job sync didn't run in Doze", 30, () -> {
+            final Response res = mRpc.invoke(APP1_PACKAGE,
+                    rb -> rb.setGetSyncInvocations(GetSyncInvocations.newBuilder()));
+            final int calls = res.getSyncInvocations().getSyncInvocationsCount();
+            Log.i(TAG, "NumSyncInvocations=" + calls);
+            return calls == 1;
+        });
+    }
+
+    @Test
+    public void testExpeditedJobSync_InDoze() throws Exception {
+        assumeTrue(isDozeFeatureEnabled());
+
+        setDozeState(false);
+        removeAllAccounts();
+
+        // Let the initial sync happen.
+        addAccountAndLetInitialSyncRun(ACCOUNT_1_A, APP1_AUTHORITY);
+
+        writeSyncConfig(2, 1, 2, 3);
+
+        clearSyncInvocations(APP1_PACKAGE);
+
+        AmUtils.setStandbyBucket(APP1_PACKAGE, UsageStatsManager.STANDBY_BUCKET_RARE);
+
         setDozeState(true);
         Bundle b = makeBundle(ContentResolver.SYNC_EXTRAS_SCHEDULE_AS_EXPEDITED_JOB, true,
                 ContentResolver.SYNC_EXTRAS_IGNORE_SETTINGS, true);
@@ -295,6 +326,11 @@ public class CtsSyncManagerTest {
 
         Bundle extras = ParcelUtils.fromBytes(si.getExtras().toByteArray());
         assertTrue(extras.getBoolean(ContentResolver.SYNC_EXTRAS_INITIALIZE));
+    }
+
+    private static boolean isDozeFeatureEnabled() {
+        final String output = ShellUtils.runShellCommand("cmd deviceidle enabled deep").trim();
+        return Integer.parseInt(output) != 0;
     }
 
     private void setDozeState(final boolean on) throws Exception {
