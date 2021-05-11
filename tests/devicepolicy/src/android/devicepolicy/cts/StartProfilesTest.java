@@ -37,6 +37,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasTvProfile;
@@ -57,11 +58,6 @@ import java.util.function.Function;
 
 @RunWith(BedsteadJUnit4.class)
 public final class StartProfilesTest {
-
-    // We set this to 30 seconds because if the total test time goes over 66 seconds then it causes
-    // infrastructure problems
-    private static final long PROFILE_ACCESSIBLE_BROADCAST_TIMEOUT = 30 * 1000;
-
     private static final Context sContext = ApplicationProvider.getApplicationContext();
     private static final UserManager sUserManager = sContext.getSystemService(UserManager.class);
     private static final ActivityManager sActivityManager =
@@ -113,15 +109,7 @@ public final class StartProfilesTest {
     @Postsubmit(reason="b/181207615 flaky")
     @EnsureHasPermission({INTERACT_ACROSS_USERS_FULL, INTERACT_ACROSS_USERS, CREATE_USERS})
     public void stopProfile_returnsTrue() {
-        sDeviceState.workProfile().start();
-
-        try {
-            assertThat(sActivityManager.stopProfile(
-                    sDeviceState.workProfile().userHandle())).isTrue();
-        } finally {
-            // TODO(b/171565394): Remove once teardown is done for us
-            sDeviceState.workProfile().start();
-        }
+        assertThat(sActivityManager.stopProfile(sDeviceState.workProfile().userHandle())).isTrue();
     }
 
     @Test
@@ -131,20 +119,14 @@ public final class StartProfilesTest {
     @Postsubmit(reason="b/181207615 flaky")
     @EnsureHasPermission({INTERACT_ACROSS_USERS_FULL, INTERACT_ACROSS_USERS, CREATE_USERS})
     public void stopProfile_profileIsStopped() {
-        sDeviceState.workProfile().start();
         BlockingBroadcastReceiver broadcastReceiver = sDeviceState.registerBroadcastReceiver(
                 Intent.ACTION_PROFILE_INACCESSIBLE, userIsEqual(sDeviceState.workProfile()));
 
-        try {
-            sActivityManager.stopProfile(sDeviceState.workProfile().userHandle());
-            broadcastReceiver.awaitForBroadcastOrFail();
+        sActivityManager.stopProfile(sDeviceState.workProfile().userHandle());
+        broadcastReceiver.awaitForBroadcastOrFail();
 
-            assertThat(
-                    sUserManager.isUserRunning(sDeviceState.workProfile().userHandle())).isFalse();
-        } finally {
-            // TODO(b/171565394): Remove once teardown is done for us
-            sDeviceState.workProfile().start();
-        }
+        assertThat(
+                sUserManager.isUserRunning(sDeviceState.workProfile().userHandle())).isFalse();
     }
 
     @Test
@@ -154,29 +136,22 @@ public final class StartProfilesTest {
     @Postsubmit(reason="b/181207615 flaky")
     @EnsureHasPermission({INTERACT_ACROSS_USERS_FULL, INTERACT_ACROSS_USERS, CREATE_USERS})
     public void startUser_immediatelyAfterStopped_profileIsStarted() {
-        sDeviceState.workProfile().start();
-        BlockingBroadcastReceiver broadcastReceiver = sDeviceState.registerBroadcastReceiver(
-                Intent.ACTION_PROFILE_INACCESSIBLE, userIsEqual(sDeviceState.workProfile()));
-
-        sActivityManager.stopProfile(sDeviceState.workProfile().userHandle());
-        broadcastReceiver.awaitForBroadcast();
-
-        try {
-            // start profile as soon as ACTION_PROFILE_INACCESSIBLE is received
-            // verify that ACTION_PROFILE_ACCESSIBLE is received if profile is re-started
-            broadcastReceiver = sDeviceState.registerBroadcastReceiver(
-                    Intent.ACTION_PROFILE_ACCESSIBLE, userIsEqual(sDeviceState.workProfile()));
-            sActivityManager.startProfile(sDeviceState.workProfile().userHandle());
-            Intent broadcast = broadcastReceiver.awaitForBroadcast();
-
-            assertWithMessage("Expected to receive ACTION_PROFILE_ACCESSIBLE broadcast").that(
-                    broadcast).isNotNull();
-            assertThat(
-                    sUserManager.isUserRunning(sDeviceState.workProfile().userHandle())).isTrue();
-        } finally {
-            // TODO(b/171565394): Remove once teardown is done for us
-            sDeviceState.workProfile().start();
+        try (BlockingBroadcastReceiver broadcastReceiver = sDeviceState.registerBroadcastReceiver(
+                Intent.ACTION_PROFILE_INACCESSIBLE, userIsEqual(sDeviceState.workProfile()))) {
+            sActivityManager.stopProfile(sDeviceState.workProfile().userHandle());
         }
+
+        // start profile as soon as ACTION_PROFILE_INACCESSIBLE is received
+        // verify that ACTION_PROFILE_ACCESSIBLE is received if profile is re-started
+        BlockingBroadcastReceiver broadcastReceiver = sDeviceState.registerBroadcastReceiver(
+               Intent.ACTION_PROFILE_ACCESSIBLE, userIsEqual(sDeviceState.workProfile()));
+        sActivityManager.startProfile(sDeviceState.workProfile().userHandle());
+        Intent broadcast = broadcastReceiver.awaitForBroadcast();
+
+        assertWithMessage("Expected to receive ACTION_PROFILE_ACCESSIBLE broadcast").that(
+                broadcast).isNotNull();
+        assertThat(
+                sUserManager.isUserRunning(sDeviceState.workProfile().userHandle())).isTrue();
     }
 
     @Test
@@ -190,21 +165,16 @@ public final class StartProfilesTest {
 
         // stop and restart profile without waiting for ACTION_PROFILE_INACCESSIBLE broadcast
         sActivityManager.stopProfile(sDeviceState.workProfile().userHandle());
-        try {
-            sActivityManager.startProfile(sDeviceState.workProfile().userHandle());
+        sActivityManager.startProfile(sDeviceState.workProfile().userHandle());
 
-            assertThat(sUserManager.isUserRunning(
-                    sDeviceState.workProfile().userHandle())).isTrue();
-        } finally {
-            // TODO(b/171565394): Remove once teardown is done for us
-            sDeviceState.workProfile().start();
-        }
+        assertThat(sUserManager.isUserRunning(sDeviceState.workProfile().userHandle())).isTrue();
     }
 
     @Test
     @RequireFeature(PackageManager.FEATURE_MANAGED_USERS)
     @RequireRunOnPrimaryUser
     @EnsureHasWorkProfile
+    @EnsureDoesNotHavePermission({INTERACT_ACROSS_USERS_FULL, INTERACT_ACROSS_USERS, CREATE_USERS})
     @Postsubmit(reason="b/181207615 flaky")
     public void startProfile_withoutPermission_throwsException() {
         assertThrows(SecurityException.class,
@@ -215,14 +185,10 @@ public final class StartProfilesTest {
     @RequireFeature(PackageManager.FEATURE_MANAGED_USERS)
     @RequireRunOnPrimaryUser
     @EnsureHasWorkProfile
+    @EnsureDoesNotHavePermission({INTERACT_ACROSS_USERS_FULL, INTERACT_ACROSS_USERS, CREATE_USERS})
     public void stopProfile_withoutPermission_throwsException() {
-        try {
-            assertThrows(SecurityException.class,
-                    () -> sActivityManager.stopProfile(sDeviceState.workProfile().userHandle()));
-        } finally {
-            // TODO(b/171565394): Remove once teardown is done for us
-            sDeviceState.workProfile().start();
-        }
+        assertThrows(SecurityException.class,
+                () -> sActivityManager.stopProfile(sDeviceState.workProfile().userHandle()));
     }
 
     @Test
@@ -240,13 +206,8 @@ public final class StartProfilesTest {
     @EnsureHasSecondaryUser
     @EnsureHasPermission({INTERACT_ACROSS_USERS_FULL, INTERACT_ACROSS_USERS, CREATE_USERS})
     public void stopProfile_stoppingFullUser_throwsException() {
-        try {
-            assertThrows(IllegalArgumentException.class,
-                    () -> sActivityManager.stopProfile(sDeviceState.secondaryUser().userHandle()));
-        } finally {
-            // TODO(b/171565394): Remove once teardown is done for us
-            sDeviceState.secondaryUser().start();
-        }
+        assertThrows(IllegalArgumentException.class,
+                () -> sActivityManager.stopProfile(sDeviceState.secondaryUser().userHandle()));
     }
 
     @Test
@@ -256,19 +217,14 @@ public final class StartProfilesTest {
     public void startProfile_tvProfile_profileIsStarted() {
         sDeviceState.tvProfile().stop();
 
-        try {
-            BlockingBroadcastReceiver broadcastReceiver = sDeviceState.registerBroadcastReceiver(
-                    Intent.ACTION_PROFILE_ACCESSIBLE, userIsEqual(sDeviceState.tvProfile()));
 
+        try (BlockingBroadcastReceiver broadcastReceiver = sDeviceState.registerBroadcastReceiver(
+                Intent.ACTION_PROFILE_ACCESSIBLE, userIsEqual(sDeviceState.tvProfile()))) {
             assertThat(
                     sActivityManager.startProfile(sDeviceState.tvProfile().userHandle())).isTrue();
-            broadcastReceiver.awaitForBroadcast();
-
-            assertThat(sUserManager.isUserRunning(sDeviceState.tvProfile().userHandle())).isTrue();
-        } finally {
-            // TODO(b/171565394): Remove once teardown is done for us
-            sDeviceState.tvProfile().start();
         }
+
+        assertThat(sUserManager.isUserRunning(sDeviceState.tvProfile().userHandle())).isTrue();
     }
 
     @Test
@@ -276,19 +232,13 @@ public final class StartProfilesTest {
     @EnsureHasTvProfile
     @EnsureHasPermission({INTERACT_ACROSS_USERS_FULL, INTERACT_ACROSS_USERS, CREATE_USERS})
     public void stopProfile_tvProfile_profileIsStopped() {
-        sDeviceState.tvProfile().start();
+        BlockingBroadcastReceiver broadcastReceiver = sDeviceState.registerBroadcastReceiver(
+                Intent.ACTION_PROFILE_INACCESSIBLE, userIsEqual(sDeviceState.tvProfile()));
 
-        try {
-            BlockingBroadcastReceiver broadcastReceiver = sDeviceState.registerBroadcastReceiver(
-                    Intent.ACTION_PROFILE_INACCESSIBLE, userIsEqual(sDeviceState.tvProfile()));
+        assertThat(
+                sActivityManager.stopProfile(sDeviceState.tvProfile().userHandle())).isTrue();
+        broadcastReceiver.awaitForBroadcast();
 
-            assertThat(
-                    sActivityManager.stopProfile(sDeviceState.tvProfile().userHandle())).isTrue();
-            broadcastReceiver.awaitForBroadcast();
-
-            assertThat(sUserManager.isUserRunning(sDeviceState.tvProfile().userHandle())).isFalse();
-        } finally {
-            sDeviceState.tvProfile().start();
-        }
+        assertThat(sUserManager.isUserRunning(sDeviceState.tvProfile().userHandle())).isFalse();
     }
 }
