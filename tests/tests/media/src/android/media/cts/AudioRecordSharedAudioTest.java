@@ -29,6 +29,7 @@ import android.media.MediaSyncEvent;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.SdkSuppress;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.SystemUtil;
@@ -41,8 +42,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 
+
 @NonMediaMainlineTest
 @RunWith(AndroidJUnit4.class)
+@SdkSuppress(minSdkVersion = 31, codeName = "S")
 public class AudioRecordSharedAudioTest {
     private static final String TAG = "AudioRecordSharedAudioTest";
     private static final int SAMPLING_RATE_HZ = 16000;
@@ -226,12 +229,19 @@ public class AudioRecordSharedAudioTest {
             record2.stop();
             record1.stop();
 
+
             // verify that the audio read by 2nd AudioRecord exactly matches the audio read
             // by 1st AudioRecord starting from the expected start time with a certain tolerance.
             final int FIRST_EXPECTED_SAMPLE = RECORD2_START_TIME_MS * SAMPLING_RATE_HZ / 1000;
             // NOTE: START_TIME_TOLERANCE_MS must always be smaller than RECORD2_START_TIME_MS
             final int START_TIME_TOLERANCE_MS = 1;
             final int START_SAMPLE_TOLERANCE = START_TIME_TOLERANCE_MS * SAMPLING_RATE_HZ / 1000;
+            // let time for a resampler to converge by skipping samples at the beginning of the
+            // record2 buffer before comparing to record1 buffer
+            final int RESAMPLER_CONVERGENCE_MS = 5;
+            final int RESAMPLER_CONVERGENCE_SAMPLE =
+                    RESAMPLER_CONVERGENCE_MS * SAMPLING_RATE_HZ / 1000;
+
 
             boolean buffersMatch = false;
             for (int i = -START_SAMPLE_TOLERANCE;
@@ -248,8 +258,8 @@ public class AudioRecordSharedAudioTest {
                 }
 
                 buffersMatch = true;
-                for (int j = 0; j < RECORD2_NUM_SAMPLES; j++) {
-                     if (buffer2[j] != buffer1[j + offset1]) {
+                for (int j = RESAMPLER_CONVERGENCE_SAMPLE; j < RECORD2_NUM_SAMPLES; j++) {
+                    if (buffer2[j] != buffer1[j + offset1]) {
                          buffersMatch = false;
                          break;
                      }
