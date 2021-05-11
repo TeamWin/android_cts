@@ -22,6 +22,9 @@ import org.junit.runner.RunWith;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.device.ITestDevice;
 
+import static org.junit.Assume.*;
+import static org.hamcrest.CoreMatchers.*;
+
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class CVE_2021_0393 extends SecurityTestCase {
 
@@ -32,6 +35,7 @@ public class CVE_2021_0393 extends SecurityTestCase {
     @SecurityTest(minPatchLevel = "2021-03")
     @Test
     public void testPocCVE_2021_0393() throws Exception {
+        assumeThat(getDevice().getProperty("ro.config.low_ram"), is("false"));
         pocPusher.only64();
         AdbUtils.runProxyAutoConfig("cve_2021_0393", getDevice());
     }
