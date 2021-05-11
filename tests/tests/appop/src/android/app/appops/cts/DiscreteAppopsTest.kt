@@ -118,6 +118,8 @@ class DiscreteAppopsTest {
                             "$KEY_BG_STATE_SETTLE_TIME=10")
         }
 
+        enableDiscreteRegistryDebugMode()
+
         val serviceIntent = Intent().setComponent(ComponentName(PACKAGE_NAME,
                 "$PACKAGE_NAME.AppOpsForegroundControlService"))
 
@@ -984,14 +986,19 @@ class DiscreteAppopsTest {
         }
     }
 
-    private fun setQuantization(timeQuantMillis: Long) {
+    private fun enableDiscreteRegistryDebugMode() {
         runWithShellPermissionIdentity {
             appOpsManager.setHistoryParameters(HISTORICAL_MODE_ENABLED_PASSIVE,
                     SNAPSHOT_INTERVAL_MILLIS, INTERVAL_COMPRESSION_MULTIPLIER)
-            DeviceConfig.setProperty(NAMESPACE_PRIVACY, PROPERTY_QUANTIZATION,
-                    timeQuantMillis.toString(), false)
             appOpsManager.setHistoryParameters(HISTORICAL_MODE_ENABLED_ACTIVE,
                     SNAPSHOT_INTERVAL_MILLIS, INTERVAL_COMPRESSION_MULTIPLIER)
+        }
+    }
+
+    private fun setQuantization(timeQuantMillis: Long) {
+        runWithShellPermissionIdentity {
+            DeviceConfig.setProperty(NAMESPACE_PRIVACY, PROPERTY_QUANTIZATION,
+                    timeQuantMillis.toString(), false)
         }
     }
 
