@@ -548,14 +548,14 @@ public final class DevicePolicyManagerTest {
         try (PermissionContext p = sTestApis.permissions().withPermission(WRITE_SECURE_SETTINGS)) {
             Settings.Secure.putInt(sContext.getContentResolver(), USER_SETUP_COMPLETE_KEY, 0);
         }
-        sDevicePolicyManager.forceUpdateUserSetupComplete();
+        sDevicePolicyManager.forceUpdateUserSetupComplete(sContext.getUserId());
     }
 
     private void setUserSetupCompletedFlag() {
         try (PermissionContext p = sTestApis.permissions().withPermission(WRITE_SECURE_SETTINGS)) {
             Settings.Secure.putInt(sContext.getContentResolver(), USER_SETUP_COMPLETE_KEY, 1);
         }
-        sDevicePolicyManager.forceUpdateUserSetupComplete();
+        sDevicePolicyManager.forceUpdateUserSetupComplete(sContext.getUserId());
     }
 
     private Set<String> findSystemApps() {
