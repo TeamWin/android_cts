@@ -16,13 +16,17 @@
 
 package android.app.appsearch.cts.app;
 
+
 import static com.google.common.truth.Truth.assertThat;
 
 import android.app.appsearch.SearchSpec;
 
+import com.google.common.collect.ImmutableList;
+
 import org.junit.Test;
 
-import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 public class SearchSpecCtsTest {
     @Test
@@ -33,25 +37,29 @@ public class SearchSpecCtsTest {
 
     @Test
     public void testBuildSearchSpec() {
+        List<String> expectedPropertyPaths1 = ImmutableList.of("path1", "path2");
+        List<String> expectedPropertyPaths2 = ImmutableList.of("path3", "path4");
         SearchSpec searchSpec =
                 new SearchSpec.Builder()
                         .setTermMatch(SearchSpec.TERM_MATCH_PREFIX)
                         .addFilterNamespaces("namespace1", "namespace2")
-                        .addFilterNamespaces(Arrays.asList("namespace3"))
+                        .addFilterNamespaces(ImmutableList.of("namespace3"))
                         .addFilterSchemas("schemaTypes1", "schemaTypes2")
-                        .addFilterSchemas(Arrays.asList("schemaTypes3"))
+                        .addFilterSchemas(ImmutableList.of("schemaTypes3"))
                         .addFilterPackageNames("package1", "package2")
-                        .addFilterPackageNames(Arrays.asList("package3"))
+                        .addFilterPackageNames(ImmutableList.of("package3"))
                         .setSnippetCount(5)
                         .setSnippetCountPerProperty(10)
                         .setMaxSnippetSize(15)
                         .setResultCountPerPage(42)
                         .setOrder(SearchSpec.ORDER_ASCENDING)
-                        .setRankingStrategy(SearchSpec.RANKING_STRATEGY_DOCUMENT_SCORE)
+                        .setRankingStrategy(SearchSpec.RANKING_STRATEGY_RELEVANCE_SCORE)
                         .setResultGrouping(
                                 SearchSpec.GROUPING_TYPE_PER_NAMESPACE
                                         | SearchSpec.GROUPING_TYPE_PER_PACKAGE,
                                 /*limit=*/ 37)
+                        .addProjection("schemaType1", expectedPropertyPaths1)
+                        .addProjection("schemaType2", expectedPropertyPaths2)
                         .build();
 
         assertThat(searchSpec.getTermMatch()).isEqualTo(SearchSpec.TERM_MATCH_PREFIX);
@@ -70,11 +78,34 @@ public class SearchSpecCtsTest {
         assertThat(searchSpec.getResultCountPerPage()).isEqualTo(42);
         assertThat(searchSpec.getOrder()).isEqualTo(SearchSpec.ORDER_ASCENDING);
         assertThat(searchSpec.getRankingStrategy())
-                .isEqualTo(SearchSpec.RANKING_STRATEGY_DOCUMENT_SCORE);
+                .isEqualTo(SearchSpec.RANKING_STRATEGY_RELEVANCE_SCORE);
         assertThat(searchSpec.getResultGroupingTypeFlags())
                 .isEqualTo(
                         SearchSpec.GROUPING_TYPE_PER_NAMESPACE
                                 | SearchSpec.GROUPING_TYPE_PER_PACKAGE);
+        assertThat(searchSpec.getProjections())
+                .containsExactly(
+                        "schemaType1",
+                        expectedPropertyPaths1,
+                        "schemaType2",
+                        expectedPropertyPaths2);
         assertThat(searchSpec.getResultGroupingLimit()).isEqualTo(37);
+    }
+
+    @Test
+    public void testGetProjectionTypePropertyMasks() {
+        SearchSpec searchSpec =
+                new SearchSpec.Builder()
+                        .setTermMatch(SearchSpec.TERM_MATCH_PREFIX)
+                        .addProjection("TypeA", ImmutableList.of("field1", "field2.subfield2"))
+                        .addProjection("TypeB", ImmutableList.of("field7"))
+                        .addProjection("TypeC", ImmutableList.of())
+                        .build();
+
+        Map<String, List<String>> typePropertyPathMap = searchSpec.getProjections();
+        assertThat(typePropertyPathMap.keySet()).containsExactly("TypeA", "TypeB", "TypeC");
+        assertThat(typePropertyPathMap.get("TypeA")).containsExactly("field1", "field2.subfield2");
+        assertThat(typePropertyPathMap.get("TypeB")).containsExactly("field7");
+        assertThat(typePropertyPathMap.get("TypeC")).isEmpty();
     }
 }
