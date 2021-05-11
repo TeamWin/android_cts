@@ -882,7 +882,7 @@
         Remove the test app from the ignore battery optimizations list to begin the test. (Try going
         to the App Info page and make sure the system is optimizing battery for the app.)
     </string>
-    <string name="ibo_exempt_app">
+    <string name="ibo_exempt_app_request">
         Click Next to have the test request the exemption. Grant the exemption when prompted.
     </string>
     <string name="ibo_next_to_confirm">Press next to confirm.</string>
@@ -892,6 +892,14 @@
         to the App Info page and make sure the system is optimizing battery for the app.)
     </string>
     <string name="ibo_app_is_exempted">The app is exempted from battery optimizations.</string>
+    <string name="ibo_exempt_app_list">
+        Click Next to have the test open the list of apps and their exemption statuses. Find the
+        test app in the list and exempt it.
+    </string>
+    <string name="ibo_unexempt_app_list">
+        Click Next to have the test open the list of apps and their exemption statuses. Find the
+        test app in the list and remove the app\'s exemption.
+    </string>
 
     <!-- Strings for Location tests -->
     <string name="location_gps_test">GPS Test</string>

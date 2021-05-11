@@ -51,13 +51,41 @@ public class IgnoreBatteryOptimizationsTestActivity extends OrderedTestActivity 
                 mConfirmIsExempted,
                 mRemoveExemption,
                 mIntermediate,
+                mConfirmIsNotExempted,
+                mOpenAppExemptionListToExempt,
+                mIntermediate,
+                mConfirmIsExempted,
+                mOpenAppExemptionListToUnexempt,
+                mIntermediate,
                 mConfirmIsNotExempted
         };
     }
 
     private boolean isExempted() {
-        return mUsageStatsManager.getAppStandbyBucket() == UsageStatsManager.STANDBY_BUCKET_EXEMPTED
-                && mPowerManager.isIgnoringBatteryOptimizations(getPackageName());
+        return mPowerManager.isIgnoringBatteryOptimizations(getPackageName())
+                && mUsageStatsManager.getAppStandbyBucket()
+                == UsageStatsManager.STANDBY_BUCKET_EXEMPTED;
+    }
+
+    private boolean isFullyNotExempted() {
+        // Use an OR so we check both values to make sure neither of them say the app is exempted.
+        if (mPowerManager.isIgnoringBatteryOptimizations(getPackageName())
+                || mUsageStatsManager.getAppStandbyBucket()
+                == UsageStatsManager.STANDBY_BUCKET_EXEMPTED) {
+            return false;
+        }
+        return true;
+    }
+
+    private void openAppInfoPage() {
+        Intent appInfoIntent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+        appInfoIntent.setData(Uri.parse("package:" + getPackageName()));
+        startActivity(appInfoIntent);
+    }
+
+    private void openIgnoreBatteryOptimizationsAppList() {
+        Intent intent = new Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS);
+        startActivity(intent);
     }
 
     private final Test mConfirmNotExemptedAtStart = new Test(R.string.ibo_test_start_unexempt_app) {
@@ -65,7 +93,7 @@ public class IgnoreBatteryOptimizationsTestActivity extends OrderedTestActivity 
         protected void run() {
             super.run();
 
-            if (!isExempted()) {
+            if (isFullyNotExempted()) {
                 succeed();
             }
         }
@@ -73,16 +101,14 @@ public class IgnoreBatteryOptimizationsTestActivity extends OrderedTestActivity 
         @Override
         protected void onNextClick() {
             if (isExempted()) {
-                Intent appInfoIntent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-                appInfoIntent.setData(Uri.parse("package:" + getPackageName()));
-                startActivity(appInfoIntent);
+                openAppInfoPage();
             } else {
                 succeed();
             }
         }
     };
 
-    private final Test mRequestExemption = new Test(R.string.ibo_exempt_app) {
+    private final Test mRequestExemption = new Test(R.string.ibo_exempt_app_request) {
         @Override
         protected void onNextClick() {
             Intent request = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
@@ -106,6 +132,8 @@ public class IgnoreBatteryOptimizationsTestActivity extends OrderedTestActivity 
 
             if (isExempted()) {
                 succeed();
+            } else {
+                findViewById(R.id.btn_next).setVisibility(View.GONE);
             }
         }
     };
@@ -115,7 +143,7 @@ public class IgnoreBatteryOptimizationsTestActivity extends OrderedTestActivity 
         protected void run() {
             super.run();
 
-            if (!isExempted()) {
+            if (isFullyNotExempted()) {
                 succeed();
             }
         }
@@ -123,9 +151,7 @@ public class IgnoreBatteryOptimizationsTestActivity extends OrderedTestActivity 
         @Override
         protected void onNextClick() {
             if (isExempted()) {
-                Intent appInfoIntent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-                appInfoIntent.setData(Uri.parse("package:" + getPackageName()));
-                startActivity(appInfoIntent);
+                openAppInfoPage();
             } else {
                 succeed();
             }
@@ -137,11 +163,27 @@ public class IgnoreBatteryOptimizationsTestActivity extends OrderedTestActivity 
         protected void run() {
             super.run();
 
-            if (!isExempted()) {
+            if (isFullyNotExempted()) {
                 succeed();
             } else {
                 findViewById(R.id.btn_next).setVisibility(View.GONE);
             }
+        }
+    };
+
+    private final Test mOpenAppExemptionListToExempt = new Test(R.string.ibo_exempt_app_list) {
+        @Override
+        protected void onNextClick() {
+            openIgnoreBatteryOptimizationsAppList();
+            succeed();
+        }
+    };
+
+    private final Test mOpenAppExemptionListToUnexempt = new Test(R.string.ibo_unexempt_app_list) {
+        @Override
+        protected void onNextClick() {
+            openIgnoreBatteryOptimizationsAppList();
+            succeed();
         }
     };
 }
