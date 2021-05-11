@@ -27,6 +27,7 @@ import static android.server.wm.ComponentNameUtils.getActivityName;
 import static android.server.wm.ProtoExtractors.extract;
 import static android.server.wm.StateLogger.log;
 import static android.server.wm.StateLogger.logE;
+import static android.server.wm.TestTaskOrganizer.INVALID_TASK_ID;
 import static android.util.DisplayMetrics.DENSITY_DEFAULT;
 import static android.view.Display.DEFAULT_DISPLAY;
 
@@ -824,29 +825,30 @@ public class WindowManagerState {
     }
 
     public ActivityTask getTaskByActivity(ComponentName activityName) {
-        return getTaskByActivity(activityName, WINDOWING_MODE_UNDEFINED, -1);
+        return getTaskByActivity(
+                activityName, WINDOWING_MODE_UNDEFINED, new int[]{ INVALID_TASK_ID });
     }
 
-    public ActivityTask getTaskByActivity(ComponentName activityName, int excludeTaskId) {
-        return getTaskByActivity(activityName, WINDOWING_MODE_UNDEFINED, excludeTaskId);
+    public ActivityTask getTaskByActivity(ComponentName activityName, int[] excludeTaskIds) {
+        return getTaskByActivity(activityName, WINDOWING_MODE_UNDEFINED, excludeTaskIds);
     }
 
     private ActivityTask getTaskByActivity(ComponentName activityName, int windowingMode,
-            int excludeTaskId) {
-        Activity activity = getActivity(activityName, windowingMode, excludeTaskId);
+            int[] excludeTaskIds) {
+        Activity activity = getActivity(activityName, windowingMode, excludeTaskIds);
         return activity == null ? null : activity.task;
     }
 
     public Activity getActivity(ComponentName activityName) {
-        return getActivity(activityName, WINDOWING_MODE_UNDEFINED, -1);
+        return getActivity(activityName, WINDOWING_MODE_UNDEFINED, new int[]{ INVALID_TASK_ID });
     }
 
     private Activity getActivity(ComponentName activityName, int windowingMode,
-            int excludeTaskId) {
+            int[] excludeTaskIds) {
         for (ActivityTask stack : mRootTasks) {
             if (windowingMode == WINDOWING_MODE_UNDEFINED
                     || windowingMode == stack.getWindowingMode()) {
-                Activity activity = stack.getActivity(activityName, excludeTaskId);
+                Activity activity = stack.getActivity(activityName, excludeTaskIds);
                 if (activity != null) return activity;
             }
         }
@@ -1404,11 +1406,19 @@ public class WindowManagerState {
             return getActivity((activity) -> activity.name.equals(fullName));
         }
 
-        public Activity getActivity(ComponentName activityName, int excludeTaskId) {
+        public Activity getActivity(ComponentName activityName, int[] excludeTaskIds) {
             final String fullName = getActivityName(activityName);
-            return getActivity((activity) ->
-                    activity.task.mTaskId != excludeTaskId
-                            && activity.name.equals(fullName));
+            return getActivity((activity) -> {
+                if (!activity.name.equals(fullName)) {
+                    return false;
+                }
+                for (int excludeTaskId : excludeTaskIds) {
+                    if (activity.task.mTaskId == excludeTaskId) {
+                        return false;
+                    }
+                }
+                return true;
+            });
         }
 
         boolean containsActivity(ComponentName activityName) {

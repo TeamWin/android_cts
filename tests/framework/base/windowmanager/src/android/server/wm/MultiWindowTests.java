@@ -338,13 +338,19 @@ public class MultiWindowTests extends ActivityManagerTestBase {
         targetActivityLauncher.execute();
         mWmState.computeState(targetActivityName, LAUNCHING_ACTIVITY);
 
+        final int[] excludeTaskIds = new int[] { secondaryTaskId, INVALID_TASK_ID };
+        if (taskCountMustIncrement) {
+            mWmState.waitFor("Waiting for new activity to come up.",
+                    state -> state.getTaskByActivity(targetActivityName, excludeTaskIds) != null);
+        }
         WindowManagerState.ActivityTask task = mWmState.getTaskByActivity(targetActivityName,
-                secondaryTaskId);
-        int secondaryTaskId2 = INVALID_TASK_ID;
+                excludeTaskIds);
+        final int secondaryTaskId2;
         if (task != null) {
-            secondaryTaskId2 = mWmState.getTaskByActivity(targetActivityName,
-                    secondaryTaskId).mTaskId;
+            secondaryTaskId2 = task.mTaskId;
             mTaskOrganizer.putTaskInSplitSecondary(secondaryTaskId2);
+        } else {
+            secondaryTaskId2 = INVALID_TASK_ID;
         }
         final int taskNumberSecondLaunch = mTaskOrganizer.getSecondarySplitTaskCount();
 
@@ -355,6 +361,8 @@ public class MultiWindowTests extends ActivityManagerTestBase {
             assertEquals("Task number must not change.", taskNumberInitial,
                     taskNumberSecondLaunch);
         }
+        mWmState.waitForFocusedActivity("Wait for launched to side activity to be in front.",
+                targetActivityName);
         mWmState.assertFocusedActivity("Launched to side activity must be in front.",
                 targetActivityName);
 
@@ -363,11 +371,16 @@ public class MultiWindowTests extends ActivityManagerTestBase {
         // in order to launch into split screen.
         targetActivityLauncher.execute();
         mWmState.computeState(targetActivityName, LAUNCHING_ACTIVITY);
+
+        excludeTaskIds[1] = secondaryTaskId2;
+        if (taskCountMustIncrement) {
+            mWmState.waitFor("Waiting for the second new activity to come up.",
+                    state -> state.getTaskByActivity(targetActivityName, excludeTaskIds) != null);
+        }
         WindowManagerState.ActivityTask taskFinal =
-                mWmState.getTaskByActivity(targetActivityName, secondaryTaskId2);
+                mWmState.getTaskByActivity(targetActivityName, excludeTaskIds);
         if (taskFinal != null) {
-            int secondaryTaskId3 = mWmState.getTaskByActivity(targetActivityName,
-                    secondaryTaskId2).mTaskId;
+            int secondaryTaskId3 = taskFinal.mTaskId;
             mTaskOrganizer.putTaskInSplitSecondary(secondaryTaskId3);
         }
         final int taskNumberFinal = mTaskOrganizer.getSecondarySplitTaskCount();
