@@ -51,6 +51,8 @@ import android.os.UserManager;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AppModeInstant;
 import android.provider.Settings;
+import android.server.wm.WindowManagerState;
+import android.server.wm.WindowManagerStateHelper;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.Until;
@@ -124,6 +126,8 @@ public class UsageStatsTest {
             "android.app.usage.cts.test2.FinishingTaskRootActivity";
     private static final String TEST_APP2_CLASS_PIP =
             "android.app.usage.cts.test2.PipActivity";
+    private static final ComponentName TEST_APP2_PIP_COMPONENT = new ComponentName(TEST_APP2_PKG,
+            TEST_APP2_CLASS_PIP);
 
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
     private static final long MINUTE = TimeUnit.MINUTES.toMillis(1);
@@ -147,6 +151,7 @@ public class UsageStatsTest {
     private int mOtherUser;
     private Context mOtherUserContext;
     private UsageStatsManager mOtherUsageStats;
+    private WindowManagerStateHelper mWMStateHelper;
 
     @Before
     public void setUp() throws Exception {
@@ -157,6 +162,8 @@ public class UsageStatsTest {
                 Context.USAGE_STATS_SERVICE);
         mKeyguardManager = mContext.getSystemService(KeyguardManager.class);
         mTargetPackage = mContext.getPackageName();
+
+        mWMStateHelper = new WindowManagerStateHelper();
 
         assumeTrue("App Standby not enabled on device", AppStandbyUtils.isAppStandbyEnabled());
         setAppOpsMode("allow");
@@ -174,6 +181,7 @@ public class UsageStatsTest {
         setSetting(Settings.Global.ENABLE_RESTRICTED_BUCKET, mCachedEnableRestrictedBucketSetting);
         // Force stop test package to avoid any running test code from carrying over to the next run
         SystemUtil.runWithShellPermissionIdentity(() -> mAm.forceStopPackage(TEST_APP_PKG));
+        SystemUtil.runWithShellPermissionIdentity(() -> mAm.forceStopPackage(TEST_APP2_PKG));
         mUiDevice.pressHome();
         // Destroy the other user if created
         if (mOtherUser != 0) {
@@ -986,7 +994,7 @@ public class UsageStatsTest {
     private ArrayList<Event> waitForEventCount(int[] whichEvents, long startTime, int count,
             String packageName) {
         final ArrayList<Event> events = new ArrayList<>();
-        final long endTime = SystemClock.uptimeMillis() + 2000;
+        final long endTime = SystemClock.uptimeMillis() + TIMEOUT;
         do {
             events.clear();
             getEvents(whichEvents, startTime, events, packageName);
@@ -1530,6 +1538,9 @@ public class UsageStatsTest {
     @AppModeFull(reason = "No usage events access in instant apps")
     @Test
     public void testPipActivity() throws Exception {
+        assumeTrue("Test cannot run without Picture in Picture support",
+                mContext.getPackageManager().hasSystemFeature(
+                        PackageManager.FEATURE_PICTURE_IN_PICTURE));
         mUiDevice.wakeUp();
         dismissKeyguard(); // also want to start out with the keyguard dismissed.
         mUiDevice.pressHome();
@@ -1542,6 +1553,13 @@ public class UsageStatsTest {
         // TEST_APP_PKG should take focus, pausing the TEST_APP2_CLASS_PIP activity.
         launchTestActivity(TEST_APP_PKG, TEST_APP_CLASS);
         SystemClock.sleep(500);
+
+        mWMStateHelper.waitForActivityState(TEST_APP2_PIP_COMPONENT,
+                WindowManagerState.STATE_PAUSED);
+
+        mWMStateHelper.assertActivityDisplayed(TEST_APP2_PIP_COMPONENT);
+        mWMStateHelper.assertNotFocusedActivity("Pip activity should not be in focus",
+                TEST_APP2_PIP_COMPONENT);
 
         final long endTime = System.currentTimeMillis();
         final UsageEvents events = mUsageStatsManager.queryEvents(startTime, endTime);
@@ -1582,11 +1600,12 @@ public class UsageStatsTest {
     @AppModeFull(reason = "No usage events access in instant apps")
     @Test
     public void testPipActivity_StopToPause() throws Exception {
+        assumeTrue("Test cannot run without Picture in Picture support",
+                mContext.getPackageManager().hasSystemFeature(
+                        PackageManager.FEATURE_PICTURE_IN_PICTURE));
         mUiDevice.wakeUp();
         dismissKeyguard(); // also want to start out with the keyguard dismissed.
         mUiDevice.pressHome();
-
-        final long startTime = System.currentTimeMillis();
 
         launchTestActivity(TEST_APP2_PKG, TEST_APP2_CLASS_PIP);
         SystemClock.sleep(500);
@@ -1595,9 +1614,17 @@ public class UsageStatsTest {
         launchTestActivity(TEST_APP_PKG, TEST_APP_CLASS);
         SystemClock.sleep(500);
 
+        mWMStateHelper.assertActivityDisplayed(TEST_APP2_PIP_COMPONENT);
+        mWMStateHelper.assertNotFocusedActivity("Pip activity should not be in focus",
+                TEST_APP2_PIP_COMPONENT);
+
         // Sleeping the device should cause the Pip activity to stop.
         final long sleepTime = System.currentTimeMillis();
         sleepDevice();
+        mWMStateHelper.waitForActivityState(TEST_APP2_PIP_COMPONENT,
+                WindowManagerState.STATE_STOPPED);
+
+        // Pip activity stop should show up in UsageStats.
         final ArrayList<Event> stoppedEvent = waitForEventCount(STOPPED_EVENT, sleepTime, 1,
                 TEST_APP2_PKG);
         assertEquals(Event.ACTIVITY_STOPPED, stoppedEvent.get(0).getEventType());
@@ -1606,52 +1633,24 @@ public class UsageStatsTest {
         final long wakeTime = System.currentTimeMillis();
         mUiDevice.wakeUp();
         dismissKeyguard();
-        final ArrayList<Event> pausedEvent = waitForEventCount(PAUSED_EVENT, wakeTime, 1,
-                TEST_APP2_PKG);
-        assertEquals(Event.ACTIVITY_PAUSED, pausedEvent.get(0).getEventType());
+        mWMStateHelper.waitForActivityState(TEST_APP2_PIP_COMPONENT,
+                WindowManagerState.STATE_PAUSED);
+
+        mWMStateHelper.assertActivityDisplayed(TEST_APP2_PIP_COMPONENT);
+        mWMStateHelper.assertNotFocusedActivity("Pip activity should not be in focus",
+                TEST_APP2_PIP_COMPONENT);
 
         // Sleeping the device should cause the Pip activity to stop again.
         final long secondSleepTime = System.currentTimeMillis();
         sleepDevice();
+        mWMStateHelper.waitForActivityState(TEST_APP2_PIP_COMPONENT,
+                WindowManagerState.STATE_STOPPED);
+
+        // Pip activity stop should show up in UsageStats again.
         final ArrayList<Event> secondStoppedEvent = waitForEventCount(STOPPED_EVENT,
                 secondSleepTime, 1,
                 TEST_APP2_PKG);
         assertEquals(Event.ACTIVITY_STOPPED, secondStoppedEvent.get(0).getEventType());
-
-        final long endTime = System.currentTimeMillis();
-        final UsageEvents events = mUsageStatsManager.queryEvents(startTime, endTime);
-
-        int resumes = 0;
-        int pauses = 0;
-        int stops = 0;
-
-        while (events.hasNextEvent()) {
-            final UsageEvents.Event event = new UsageEvents.Event();
-            assertTrue(events.getNextEvent(event));
-
-            if(TEST_APP2_PKG.equals(event.getPackageName())) {
-                switch (event.mEventType) {
-                    case Event.ACTIVITY_RESUMED:
-                        assertNotNull("ACTIVITY_RESUMED event Task Root should not be null",
-                                event.getTaskRootPackageName());
-                        resumes++;
-                        break;
-                    case Event.ACTIVITY_PAUSED:
-                        assertNotNull("ACTIVITY_PAUSED event Task Root should not be null",
-                                event.getTaskRootPackageName());
-                        pauses++;
-                        break;
-                    case Event.ACTIVITY_STOPPED:
-                        assertNotNull("ACTIVITY_STOPPED event Task Root should not be null",
-                                event.getTaskRootPackageName());
-                        stops++;
-                        break;
-                }
-            }
-        }
-        assertEquals("Unexpected number of activity resumes", 1, resumes);
-        assertEquals("Unexpected number of activity pauses", 2, pauses);
-        assertEquals("Unexpected number of activity stops", 2, stops);
     }
 
     @AppModeFull(reason = "No usage events access in instant apps")
