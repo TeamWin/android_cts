@@ -229,7 +229,7 @@ public class Permissions {
     }
 
     private void recordExistingPermissions() {
-        if (!Versions.isRunningOn(Versions.S, "S")) {
+        if (!Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.S)) {
             return;
         }
 
@@ -237,7 +237,7 @@ public class Permissions {
     }
 
     private void restoreExistingPermissions() {
-        if (!Versions.isRunningOn(Versions.S, "S")) {
+        if (!Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.S)) {
             return;
         }
 

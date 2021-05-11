@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-package com.android.bedstead.harrier.annotations.meta;
+package android.accessibilityservice.cts.activities;
 
-import com.android.bedstead.harrier.BedsteadJUnit4;
-
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import android.accessibilityservice.cts.R;
+import android.os.Bundle;
 
 /**
- * Indicates that an annotation requires using the {@link BedsteadJUnit4} test runner.
+ * Activity used by AccessibilityWindowQueryTest and AccessibilityWindowReportingTest
  */
-@Target(ElementType.ANNOTATION_TYPE)
-@Retention(RetentionPolicy.RUNTIME)
-public @interface RequiresBedsteadJUnit4 {
+public class NonDefaultDisplayActivity extends AccessibilityTestActivity {
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.non_default_display_activity);
+    }
 }

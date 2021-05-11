@@ -46,6 +46,11 @@ public class Package extends PackageReference {
 
     static final class MutableUserPackage {
         Set<String> mGrantedPermissions;
+
+        @Override
+        public String toString() {
+            return "UserPackage{grantedPermissions=" + mGrantedPermissions + "}";
+        }
     }
 
     private final MutablePackage mMutablePackage;
@@ -102,7 +107,7 @@ public class Package extends PackageReference {
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder("Package{");
         stringBuilder.append("packageName=" + mMutablePackage.mPackageName);
-        stringBuilder.append("installedOnUsers=" + mMutablePackage.mInstalledOnUsers);
+        stringBuilder.append(", installedOnUsers=" + mMutablePackage.mInstalledOnUsers);
         stringBuilder.append("}");
         return stringBuilder.toString();
     }
