@@ -21,7 +21,6 @@ import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUti
 import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.filterWindowsChangTypesAndWindowId;
 import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.filterWindowsChangeTypesAndWindowTitle;
 import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.filterWindowsChangedWithChangeTypes;
-import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.findWindowByTitle;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityAndWaitForItToBeOnscreen;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityOnSpecifiedDisplayAndWaitForItToBeOnscreen;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.supportsMultiDisplay;
@@ -63,11 +62,11 @@ import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.accessibilityservice.cts.activities.AccessibilityWindowQueryActivity;
+import android.accessibilityservice.cts.activities.NonDefaultDisplayActivity;
 import android.app.Activity;
 import android.app.ActivityTaskManager;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
-import android.content.pm.PackageManager;
 import android.graphics.Rect;
 import android.platform.test.annotations.AppModeFull;
 import android.test.suitebuilder.annotation.MediumTest;
@@ -665,7 +664,7 @@ public class AccessibilityWindowQueryTest {
             // Launches an activity on virtual display.
             mActivityOnVirtualDisplay = launchActivityOnSpecifiedDisplayAndWaitForItToBeOnscreen(
                     sInstrumentation, sUiAutomation,
-                    AccessibilityEmbeddedDisplayTest.EmbeddedDisplayActivity.class,
+                    NonDefaultDisplayActivity.class,
                     virtualDisplayId);
             // Adds two app panel windows on activity of virtual display.
             addTwoAppPanelWindows(mActivityOnVirtualDisplay);
