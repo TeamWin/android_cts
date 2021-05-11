@@ -215,7 +215,7 @@ public class BlockingBroadcastReceiver extends BroadcastReceiver implements Auto
     @Override
     public void close() {
         try {
-            awaitForBroadcast();
+            awaitForBroadcastOrFail();
         } finally {
             unregisterQuietly();
         }
