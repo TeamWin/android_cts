@@ -156,6 +156,23 @@ public class ReadSettingsFieldsTest extends AndroidTestCase {
                 publicSettingsKeys, hiddenSettingsKeys);
     }
 
+    // test the cases that hidden keys are marked with readable annotation but access should be
+    // protected by additional permission check.
+    public void testGlobalHiddenSettingsKeyNotReadableWithoutPermissions() {
+        final String[] hiddenSettingsKeysRequiresPermissions = {"multi_sim_data_call"};
+        for (String key : hiddenSettingsKeysRequiresPermissions) {
+            try {
+                // Verify that the hidden keys can't be accessed due to lack of permissions.
+                callGetStringMethod(Settings.Global.class, key);
+            } catch (SecurityException ex) {
+                assertTrue(ex.getMessage().contains("permission"));
+                continue;
+            }
+            fail("Reading hidden " + Settings.Global.class.getSimpleName() + " settings key <" + key
+                    + "> should be protected with permission!");
+        }
+    }
+
     private <T extends Settings.NameValueTable>
     void testHiddenSettingsKeysNotReadableWithoutAnnotation(
             Class<T> settingsClass, ArraySet<String> publicKeys, String[] targetKeys) {
