@@ -161,6 +161,7 @@ public final class RecognitionServiceMicIndicatorTest {
         return componentName != null ? componentName.getPackageName() : "";
     }
 
+    @Ignore("b/184963112")
     @Test
     public void testNonTrustedRecognitionServiceCanBlameCallingApp() throws Throwable {
         // This is a workaound solution for R QPR. We treat trusted if the current voice recognizer
