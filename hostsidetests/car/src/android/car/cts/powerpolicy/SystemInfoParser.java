@@ -35,7 +35,7 @@ public final class SystemInfoParser<T> implements Function<String, T> {
             Object ret = m.invoke(null, cmdOutput);
             t = mType.cast(ret);
         } catch (Exception e) {
-            CLog.e("%s: %s", mType.getSimpleName(), e.toString());
+            CLog.wtf("ERROR: Apply failed with " + cmdOutput, e);
         }
         return t;
     }

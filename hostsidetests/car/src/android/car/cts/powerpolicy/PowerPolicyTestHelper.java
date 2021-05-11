@@ -16,6 +16,7 @@
 
 package android.car.cts.powerpolicy;
 
+import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import com.android.tradefed.log.LogUtil.CLog;
@@ -29,6 +30,7 @@ public final class PowerPolicyTestHelper {
 
     public static final String CURRENT_STATE_ASSERT_MSG = "current state";
     public static final String CURRENT_POLICY_ASSERT_MSG = "current policy";
+    public static final String CURRENT_POWER_COMPONENT_ASSERT_MSG = "current power components";
     public static final String REGISTERED_POLICY_ASSERT_MSG = "registered policy";
     public static final String SILENT_MODE_FULL_ASSERT_MSG = "silent mode in full";
     public static final String SILENT_MODE_STATUS_ASSERT_MSG = "silent mode status";
@@ -117,5 +119,12 @@ public final class PowerPolicyTestHelper {
     public void checkTotalRegisteredPolicies(int totalNum) {
         assertWithMessage(TOTAL_REGISTERED_POLICIES_ASSERT_MSG)
                 .that(mSystemCpms.getRegisteredPolicies().size() == totalNum).isTrue();
+    }
+
+    public void checkCurrentPowerComponents(PowerPolicyDef expected) throws Exception {
+        assertThat(mFrameCpms.getCurrentEnabledComponents()).asList()
+                .containsExactlyElementsIn(expected.getEnables());
+        assertThat(mFrameCpms.getCurrentDisabledComponents()).asList()
+                .containsExactlyElementsIn(expected.getDisables());
     }
 }
