@@ -16,7 +16,7 @@
 
 package android.widget.cts;
 
-import static android.widget.cts.util.StretchEdgeUtil.dragHoldAndRun;
+import static android.widget.cts.util.StretchEdgeUtil.dragAndHoldExecute;
 import static android.widget.cts.util.StretchEdgeUtil.fling;
 
 import static org.junit.Assert.assertEquals;
@@ -42,6 +42,7 @@ import android.widget.EdgeEffect;
 import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
 import android.widget.TextView;
+import android.widget.cts.util.NoReleaseEdgeEffect;
 import android.widget.cts.util.StretchEdgeUtil;
 
 import androidx.test.InstrumentationRegistry;
@@ -62,17 +63,12 @@ import org.xmlpull.v1.XmlPullParser;
 
 import java.util.ArrayList;
 
-import kotlin.Unit;
-
 /**
  * Test {@link HorizontalScrollView}.
  */
 @MediumTest
 @RunWith(AndroidJUnit4.class)
 public class HorizontalScrollViewTest {
-    static final long USE_STRETCH_EDGE_EFFECT_BY_DEFAULT = 171228096L;
-    static final long USE_STRETCH_EDGE_EFFECT_FOR_SUPPORTED = 178807038L;
-
     private static final int ITEM_WIDTH  = 250;
     private static final int ITEM_HEIGHT = 100;
     private static final int ITEM_COUNT  = 15;
@@ -812,18 +808,31 @@ public class HorizontalScrollViewTest {
         // Make sure that the scroll view we care about is on screen and at the left:
         showOnlyStretch();
 
-        assertTrue(StretchEdgeUtil.dragRightStretches(mActivityRule, mScrollViewStretch));
+        NoReleaseEdgeEffect edgeEffect = new NoReleaseEdgeEffect(mActivity);
+        mScrollViewStretch.mEdgeGlowLeft = edgeEffect;
+        assertTrue(StretchEdgeUtil.dragStretches(
+                mActivityRule,
+                mScrollViewStretch,
+                edgeEffect,
+                300,
+                0
+        ));
     }
 
-    // If this test is showing as flaky, it is more likely that it is broken. I've
-    // leaned toward false positive over false negative.
-    @LargeTest
     @Test
     public void testStretchAtLeftAndCatch() throws Throwable {
         // Make sure that the scroll view we care about is on screen and at the top:
         showOnlyStretch();
 
-        assertTrue(StretchEdgeUtil.dragRightTapAndHoldStretches(mActivityRule, mScrollViewStretch));
+        NoReleaseEdgeEffect edgeEffect = new NoReleaseEdgeEffect(mActivity);
+        mScrollViewStretch.mEdgeGlowLeft = edgeEffect;
+        assertTrue(StretchEdgeUtil.dragAndHoldKeepsStretch(
+                mActivityRule,
+                mScrollViewStretch,
+                edgeEffect,
+                300,
+                0
+        ));
     }
 
     @Test
@@ -836,11 +845,17 @@ public class HorizontalScrollViewTest {
             mScrollViewStretch.scrollTo(210, 0);
         });
 
-        assertTrue(StretchEdgeUtil.dragLeftStretches(mActivityRule, mScrollViewStretch));
+        NoReleaseEdgeEffect edgeEffect = new NoReleaseEdgeEffect(mActivity);
+        mScrollViewStretch.mEdgeGlowRight = edgeEffect;
+        assertTrue(StretchEdgeUtil.dragStretches(
+                mActivityRule,
+                mScrollViewStretch,
+                edgeEffect,
+                -300,
+                0
+        ));
     }
 
-    // If this test is showing as flaky, it is more likely that it is broken. I've
-    // leaned toward false positive over false negative.
     @LargeTest
     @Test
     public void testStretchAtRightAndCatch() throws Throwable {
@@ -852,7 +867,15 @@ public class HorizontalScrollViewTest {
             mScrollViewStretch.scrollTo(210, 0);
         });
 
-        assertTrue(StretchEdgeUtil.dragLeftTapAndHoldStretches(mActivityRule, mScrollViewStretch));
+        NoReleaseEdgeEffect edgeEffect = new NoReleaseEdgeEffect(mActivity);
+        mScrollViewStretch.mEdgeGlowRight = edgeEffect;
+        assertTrue(StretchEdgeUtil.dragAndHoldKeepsStretch(
+                mActivityRule,
+                mScrollViewStretch,
+                edgeEffect,
+                -300,
+                0
+        ));
     }
 
     @LargeTest
@@ -862,18 +885,22 @@ public class HorizontalScrollViewTest {
         showOnlyStretch();
 
         InterceptView interceptView = mActivity.findViewById(R.id.wrapped_stretch);
-        dragHoldAndRun(
+
+        NoReleaseEdgeEffect edgeEffect = new NoReleaseEdgeEffect(mActivity);
+        mScrollViewStretch.mEdgeGlowLeft = edgeEffect;
+
+        dragAndHoldExecute(
                 mActivityRule,
                 mScrollViewStretch,
-                mScrollViewStretch.getWidth() / 2,
-                mScrollViewStretch.getHeight() / 2,
+                edgeEffect,
                 300,
                 0,
-                () -> {
-                    interceptView.requestDisallowInterceptCalled = false;
-                    return Unit.INSTANCE;
-                },
-                () -> Unit.INSTANCE
+                () -> interceptView.requestDisallowInterceptCalled = false,
+                null
+        );
+
+        mActivityRule.runOnUiThread(
+                () -> assertFalse(interceptView.requestDisallowInterceptCalled)
         );
 
         mActivityRule.runOnUiThread(
