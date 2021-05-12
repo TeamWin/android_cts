@@ -163,6 +163,9 @@ public final class HdmiCecClientWrapper extends ExternalResource {
             commands.add("x");
             selfDevice = LogicalAddress.TV;
         }
+        /* "-d 15" set the log level to ERROR|WARNING|NOTICE|TRAFFIC */
+        commands.add("-d");
+        commands.add("15");
         commands.addAll(Arrays.asList(clientParams));
         if (Arrays.asList(clientParams).contains("a")) {
             selfDevice = LogicalAddress.AUDIO_SYSTEM;
