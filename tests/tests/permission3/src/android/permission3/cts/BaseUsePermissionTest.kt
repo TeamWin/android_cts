@@ -354,10 +354,10 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
     }
 
     protected fun clickPermissionRequestDenyAndDontAskAgainButton() {
-        if (isAutomotive || isWatch) {
-            click(By.text(getPermissionControllerString(DENY_BUTTON_TEXT)))
-        } else if (isAutomotive) {
+        if (isAutomotive) {
             click(By.text(getPermissionControllerString(DENY_AND_DONT_ASK_AGAIN_BUTTON_TEXT)))
+        } else if (isWatch) {
+            click(By.text(getPermissionControllerString(DENY_BUTTON_TEXT)))
         } else {
             click(By.res(DENY_AND_DONT_ASK_AGAIN_BUTTON))
         }
@@ -368,7 +368,9 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         if (isWatch) {
             click(By.text(getPermissionControllerString(DENY_BUTTON_TEXT)))
         } else {
-            click(By.res("com.android.permissioncontroller:id/permission_deny_dont_ask_again_button"))
+            click(
+                By.res("com.android.permissioncontroller:id/permission_deny_dont_ask_again_button")
+            )
         }
     }
 
@@ -420,11 +422,7 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
                         }
                 )
                 // Open the permissions UI
-                if (isWatch) {
-                    click(byTextRes(R.string.permissions))
-                } else {
-                    click(By.text("Permissions").enabled(true))
-                }
+                click(byTextRes(R.string.permissions).enabled(true))
             } catch (e: Exception) {
                 pressBack()
                 throw e
@@ -437,10 +435,10 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
 
             click(By.text(permissionLabel))
 
-            /* Watch does not show an alert dialog when user turns on
-            *  permission only when the person turns it off. */
-            if (isWatch && hasObject(By.text(permissionLabel),100)) {
-                 continue
+            // Watch does not show an alert dialog when the user turns on permission, only when they
+            // turns it off.
+            if (isWatch && waitFindObjectOrNull(By.text(permissionLabel), 1000) != null) {
+                continue
             }
 
             val wasGranted = if (isAutomotive) {
@@ -448,7 +446,7 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
                 // won't show an "Ask every time" message
                 !waitFindObject(byTextRes(R.string.deny)).isChecked
             } else {
-                if (!isWatch) {
+                if (isWatch) {
                     click(By.text("Deny"))
                 }
                 !(waitFindObject(byTextRes(R.string.deny)).isChecked ||
@@ -581,9 +579,7 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         }
     }
 
-    private fun byTextRes(textRes: Int): BySelector {
-        return By.text(context.getString(textRes))
-    }
+    private fun byTextRes(textRes: Int): BySelector = By.text(context.getString(textRes))
 
     private fun byTextStartsWithCaseInsensitive(prefix: String): BySelector =
         By.text(Pattern.compile("(?i)^${Pattern.quote(prefix)}.*$"))
