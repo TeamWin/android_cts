@@ -38,9 +38,11 @@ import static android.server.wm.app27.Components.SDK_27_TEST_ACTIVITY;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
 import android.content.ComponentName;
+import android.content.res.Resources;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.CommandSession.ActivityCallback;
 import android.window.WindowContainerToken;
@@ -83,31 +85,61 @@ public class MultiWindowTests extends ActivityManagerTestBase {
     /** Resizeable activity should be able to enter multi-window mode.*/
     @Test
     public void testResizeableActivity() {
-        launchActivityInPrimarySplit(TEST_ACTIVITY);
-        mWmState.assertVisibility(TEST_ACTIVITY, true);
-        mWmState.waitForActivityState(TEST_ACTIVITY, STATE_RESUMED);
+        assertActivitySupportedInSplitScreen(TEST_ACTIVITY);
     }
 
     /**
-     * Non-resizeable activity should NOT be able to enter multi-window mode,
-     * but should still be visible.
+     * Depending on the value of
+     * {@link com.android.internal.R.integer.config_supportsNonResizableMultiWindow},
+     * non-resizeable activity may or may not be able to enter multi-window mode.
+     *
+     * Based on the flag value:
+     * -1: not support non-resizable in multi window.
+     *  0: check the screen smallest width, if it is a large screen, support non-resizable in multi
+     *     window. Otherwise, not support.
+     *  1: always support non-resizable in multi window.
      */
     @Test
     public void testNonResizeableActivity() {
-        createManagedSupportsNonResizableMultiWindowSession().set(0);
-
-        boolean gotAssertionError = false;
+        createManagedDevEnableNonResizableMultiWindowSession().set(0);
+        final Resources resources = mContext.getResources();
+        final int configSupportsNonResizableMultiWindow;
         try {
-            launchActivityInPrimarySplit(NON_RESIZEABLE_ACTIVITY);
-        } catch (AssertionError e) {
-            gotAssertionError = true;
+            configSupportsNonResizableMultiWindow = resources.getInteger(resources.getIdentifier(
+                    "config_supportsNonResizableMultiWindow", "integer", "android"));
+        } catch (Resources.NotFoundException e) {
+            fail("Device must define config_supportsNonResizableMultiWindow");
+            return;
         }
-        assertTrue("Trying to put non-resizeable activity in split should throw error.",
-                gotAssertionError);
-        assertTrue(mWmState.containsActivityInWindowingMode(
-                NON_RESIZEABLE_ACTIVITY, WINDOWING_MODE_FULLSCREEN));
-        mWmState.assertVisibility(NON_RESIZEABLE_ACTIVITY, true);
-        mWmState.waitForActivityState(NON_RESIZEABLE_ACTIVITY, STATE_RESUMED);
+        switch (configSupportsNonResizableMultiWindow) {
+            case -1:
+                assertActivityNotSupportedInSplitScreen(NON_RESIZEABLE_ACTIVITY);
+                break;
+            case 1:
+                assertActivitySupportedInSplitScreen(NON_RESIZEABLE_ACTIVITY);
+                break;
+            case 0:
+                final int configLargeScreenSmallestScreenWidthDp;
+                try {
+                    configLargeScreenSmallestScreenWidthDp =
+                            resources.getInteger(resources.getIdentifier(
+                                    "config_largeScreenSmallestScreenWidthDp",
+                                    "integer", "android"));
+                } catch (Resources.NotFoundException e) {
+                    fail("Device must define config_largeScreenSmallestScreenWidthDp");
+                    return;
+                }
+                final int smallestScreenWidthDp = mWmState.getHomeTask()
+                        .mFullConfiguration.smallestScreenWidthDp;
+                if (smallestScreenWidthDp >= configLargeScreenSmallestScreenWidthDp) {
+                    assertActivitySupportedInSplitScreen(NON_RESIZEABLE_ACTIVITY);
+                } else {
+                    assertActivityNotSupportedInSplitScreen(NON_RESIZEABLE_ACTIVITY);
+                }
+                break;
+            default:
+                fail("config_supportsNonResizableMultiWindow must be -1, 0, or 1.");
+        }
     }
 
     /**
@@ -116,15 +148,10 @@ public class MultiWindowTests extends ActivityManagerTestBase {
      * set.
      */
     @Test
-    public void testSupportsNonResizeableMultiWindow_splitScreenPrimary() {
-        createManagedSupportsNonResizableMultiWindowSession().set(1);
+    public void testDevEnableNonResizeableMultiWindow_splitScreenPrimary() {
+        createManagedDevEnableNonResizableMultiWindowSession().set(1);
 
-        launchActivityInPrimarySplit(NON_RESIZEABLE_ACTIVITY);
-
-        mWmState.waitForActivityState(NON_RESIZEABLE_ACTIVITY, STATE_RESUMED);
-        mWmState.assertVisibility(NON_RESIZEABLE_ACTIVITY, true);
-        assertTrue(mWmState.containsActivityInWindowingMode(
-                NON_RESIZEABLE_ACTIVITY, WINDOWING_MODE_MULTI_WINDOW));
+        assertActivitySupportedInSplitScreen(NON_RESIZEABLE_ACTIVITY);
     }
 
     /**
@@ -133,51 +160,8 @@ public class MultiWindowTests extends ActivityManagerTestBase {
      * set.
      */
     @Test
-    public void testSupportsNonResizeableMultiWindow_splitScreenSecondary() {
-        createManagedSupportsNonResizableMultiWindowSession().set(1);
-
-        launchActivityInPrimarySplit(TEST_ACTIVITY);
-
-        mWmState.waitForActivityState(TEST_ACTIVITY, STATE_RESUMED);
-        mWmState.assertVisibility(TEST_ACTIVITY, true);
-        assertTrue(mWmState.containsActivityInWindowingMode(
-                TEST_ACTIVITY, WINDOWING_MODE_MULTI_WINDOW));
-
-        launchActivityInSecondarySplit(NON_RESIZEABLE_ACTIVITY);
-
-        mWmState.waitForActivityState(NON_RESIZEABLE_ACTIVITY, STATE_RESUMED);
-        mWmState.assertVisibility(NON_RESIZEABLE_ACTIVITY, true);
-        assertTrue(mWmState.containsActivityInWindowingMode(
-                NON_RESIZEABLE_ACTIVITY, WINDOWING_MODE_MULTI_WINDOW));
-    }
-
-    /**
-     * Non-resizeable activity can enter split-screen if
-     * {@link android.provider.Settings.Global#DEVELOPMENT_ENABLE_NON_RESIZABLE_MULTI_WINDOW} is
-     * set.
-     */
-    @Test
-    public void testSupportsNonResizeableMultiWindow_SplitScreenPrimary() {
-        createManagedSupportsNonResizableMultiWindowSession().set(1);
-
-        launchActivitiesInSplitScreen(
-                getLaunchActivityBuilder().setTargetActivity(NON_RESIZEABLE_ACTIVITY),
-                getLaunchActivityBuilder().setTargetActivity(TEST_ACTIVITY));
-
-        mWmState.waitForActivityState(NON_RESIZEABLE_ACTIVITY, STATE_RESUMED);
-        mWmState.assertVisibility(NON_RESIZEABLE_ACTIVITY, true);
-        assertTrue(mWmState.containsActivityInWindowingMode(
-                NON_RESIZEABLE_ACTIVITY, WINDOWING_MODE_MULTI_WINDOW));
-    }
-
-    /**
-     * Non-resizeable activity can enter split-screen if
-     * {@link android.provider.Settings.Global#DEVELOPMENT_ENABLE_NON_RESIZABLE_MULTI_WINDOW} is
-     * set.
-     */
-    @Test
-    public void testSupportsNonResizeableMultiWindow_SplitScreenSecondary() {
-        createManagedSupportsNonResizableMultiWindowSession().set(1);
+    public void testDevEnableNonResizeableMultiWindow_splitScreenSecondary() {
+        createManagedDevEnableNonResizableMultiWindowSession().set(1);
 
         launchActivitiesInSplitScreen(
                 getLaunchActivityBuilder().setTargetActivity(TEST_ACTIVITY),
@@ -187,6 +171,29 @@ public class MultiWindowTests extends ActivityManagerTestBase {
         mWmState.assertVisibility(NON_RESIZEABLE_ACTIVITY, true);
         assertTrue(mWmState.containsActivityInWindowingMode(
                 NON_RESIZEABLE_ACTIVITY, WINDOWING_MODE_MULTI_WINDOW));
+    }
+
+    /** Asserts that the give activity can be shown in split screen. */
+    private void assertActivitySupportedInSplitScreen(ComponentName activity) {
+        launchActivityInPrimarySplit(activity);
+        mWmState.waitForActivityState(activity, STATE_RESUMED);
+        mWmState.assertVisibility(activity, true);
+        assertTrue(mWmState.containsActivityInWindowingMode(activity, WINDOWING_MODE_MULTI_WINDOW));
+    }
+
+    /** Asserts that the give activity can NOT be shown in split screen. */
+    private void assertActivityNotSupportedInSplitScreen(ComponentName activity) {
+        boolean gotAssertionError = false;
+        try {
+            launchActivityInPrimarySplit(activity);
+        } catch (AssertionError e) {
+            gotAssertionError = true;
+        }
+        assertTrue("Trying to put non-resizeable activity in split should throw error.",
+                gotAssertionError);
+        mWmState.waitForActivityState(activity, STATE_RESUMED);
+        mWmState.assertVisibility(activity, true);
+        assertTrue(mWmState.containsActivityInWindowingMode(activity, WINDOWING_MODE_FULLSCREEN));
     }
 
     @Test
