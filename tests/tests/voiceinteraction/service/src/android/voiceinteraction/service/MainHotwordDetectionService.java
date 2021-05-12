@@ -21,6 +21,7 @@ import android.os.ParcelFileDescriptor;
 import android.os.PersistableBundle;
 import android.os.SharedMemory;
 import android.service.voice.AlwaysOnHotwordDetector;
+import android.service.voice.HotwordDetectedResult;
 import android.service.voice.HotwordDetectionService;
 import android.system.ErrnoException;
 import android.text.TextUtils;
@@ -43,7 +44,7 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
 
         // TODO: Check the capture session (needs to be reflectively accessed).
         if (eventPayload.getTriggerAudio().length == 1024) {
-            callback.onDetected(null);
+            callback.onDetected(new HotwordDetectedResult.Builder().build());
         }
     }
 
@@ -88,7 +89,7 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
             if(isSame(buffer, BasicVoiceInteractionService.FAKE_HOTWORD_AUDIO_DATA,
                     buffer.length)) {
                 Log.d(TAG, "call callback.onDetected");
-                callback.onDetected(null);
+                callback.onDetected(new HotwordDetectedResult.Builder().build());
             }
         } catch (IOException e) {
             Log.w(TAG, "Failed to read data : ", e);
