@@ -18,23 +18,29 @@ package android.view.accessibility.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.accessibility.cts.common.InstrumentedAccessibilityServiceTestRule;
 import android.app.Activity;
+import android.app.Instrumentation;
+import android.app.UiAutomation;
 import android.content.Context;
 import android.os.Message;
 import android.os.Parcel;
 import android.platform.test.annotations.Presubmit;
+import android.text.SpannableString;
 import android.text.TextUtils;
+import android.text.style.LocaleSpan;
 import android.view.View;
 import android.view.accessibility.AccessibilityEvent;
-import android.view.accessibility.AccessibilityManager;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityRecord;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
+import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
@@ -49,6 +55,8 @@ import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Class for testing {@link AccessibilityEvent}.
@@ -56,11 +64,16 @@ import java.util.List;
 @Presubmit
 @RunWith(AndroidJUnit4.class)
 public class AccessibilityEventTest {
+    private static final long IDLE_TIMEOUT_MS = 500;
+    private static final long DEFAULT_TIMEOUT_MS = 1000;
 
     private EventReportingLinearLayout mParentView;
     private View mChildView;
-    private AccessibilityManager mAccessibilityManager;
+    private TextView mTextView;
+    private String mPackageName;
 
+    private static Instrumentation sInstrumentation;
+    private static UiAutomation sUiAutomation;
     private final ActivityTestRule<DummyActivity> mActivityRule =
             new ActivityTestRule<>(DummyActivity.class, false, false);
     private final AccessibilityDumpOnFailureRule mDumpOnFailureRule =
@@ -78,15 +91,19 @@ public class AccessibilityEventTest {
     @Before
     public void setUp() throws Throwable {
         final Activity activity = mActivityRule.launchActivity(null);
-        mAccessibilityManager = activity.getSystemService(AccessibilityManager.class);
+        mPackageName = activity.getApplicationContext().getPackageName();
+        sInstrumentation = InstrumentationRegistry.getInstrumentation();
+        sUiAutomation = sInstrumentation.getUiAutomation();
         mInstrumentedAccessibilityServiceRule.enableService();
         mActivityRule.runOnUiThread(() -> {
             final LinearLayout grandparent = new LinearLayout(activity);
             activity.setContentView(grandparent);
             mParentView = new EventReportingLinearLayout(activity);
             mChildView = new View(activity);
+            mTextView = new TextView(activity);
             grandparent.addView(mParentView);
             mParentView.addView(mChildView);
+            mParentView.addView(mTextView);
         });
     }
 
@@ -266,6 +283,61 @@ public class AccessibilityEventTest {
         event.setContentChangeTypes(AccessibilityEvent.CONTENT_CHANGE_TYPE_STATE_DESCRIPTION);
         event.getText().add(text);
         view.sendAccessibilityEventUnchecked(event);
+    }
+
+    @Test
+    public void setText_unChanged_doNotReceiveEvent() throws Throwable {
+        sInstrumentation.runOnMainSync(() -> {
+            mTextView.setText("a");
+        });
+        sUiAutomation.waitForIdle(IDLE_TIMEOUT_MS, DEFAULT_TIMEOUT_MS);
+
+        assertThrows(TimeoutException.class, () -> sUiAutomation.executeAndWaitForEvent(() -> {
+                    sInstrumentation.runOnMainSync(() -> {
+                        mTextView.setText("a");
+                    });
+                }, event -> isExpectedTextViewEvent(event),
+                DEFAULT_TIMEOUT_MS));
+    }
+
+    @Test
+    public void setText_textChanged_receivesTextEvent() throws Throwable {
+        sInstrumentation.runOnMainSync(() -> {
+            mTextView.setText("a");
+        });
+        sUiAutomation.waitForIdle(IDLE_TIMEOUT_MS, DEFAULT_TIMEOUT_MS);
+
+        sUiAutomation.executeAndWaitForEvent(() -> {
+            sInstrumentation.runOnMainSync(() -> {
+                mTextView.setText("b");
+            });
+        }, event -> isExpectedTextViewEvent(event)
+                && ((event.getContentChangeTypes() & AccessibilityEvent.CONTENT_CHANGE_TYPE_TEXT)
+                != 0), DEFAULT_TIMEOUT_MS);
+    }
+
+    @Test
+    public void setText_parcelableSpanChanged_receivesUndefinedEvent() throws Throwable {
+        String text = "a";
+        sInstrumentation.runOnMainSync(() -> {
+            mTextView.setText(text);
+        });
+        sUiAutomation.waitForIdle(IDLE_TIMEOUT_MS, DEFAULT_TIMEOUT_MS);
+
+        sUiAutomation.executeAndWaitForEvent(() -> {
+            sInstrumentation.runOnMainSync(() -> {
+                SpannableString spannableString = new SpannableString(text);
+                spannableString.setSpan(new LocaleSpan(Locale.ENGLISH), 0, 1, 0);
+                mTextView.setText(spannableString);
+            });
+        }, event -> isExpectedTextViewEvent(event)
+                && ((event.getContentChangeTypes()
+                == AccessibilityEvent.CONTENT_CHANGE_TYPE_UNDEFINED)), DEFAULT_TIMEOUT_MS);
+    }
+
+    private boolean isExpectedTextViewEvent(AccessibilityEvent event) {
+        return TextUtils.equals(mPackageName, event.getPackageName())
+                && TextUtils.equals(TextView.class.getName(), event.getClassName());
     }
 
     /**
