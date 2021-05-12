@@ -1076,6 +1076,7 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
     }
 
     @Test
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
     public void testDefaultNoIsolatedStorageFlag() throws Exception {
         assertThat(Environment.isExternalStorageLegacy()).isFalse();
     }
