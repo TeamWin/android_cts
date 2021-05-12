@@ -25,7 +25,7 @@
     <!-- Required to test QuickAccessWalletClient feature availability -->
     <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS"/>
 
-    <application>
+    <application android:testOnly="true">
         <uses-library android:name="android.test.runner"/>
         <activity android:name="android.quickaccesswallet.QuickAccessWalletActivity"
              android:exported="true">
