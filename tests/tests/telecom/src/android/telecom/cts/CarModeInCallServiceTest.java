@@ -511,6 +511,7 @@ public class CarModeInCallServiceTest extends BaseTelecomTestWithMockServices {
         verifyCarModeBound(mCarModeIncallServiceControlOne);
 
         disableAndVerifyCarMode(mCarModeIncallServiceControlOne, Configuration.UI_MODE_TYPE_NORMAL);
+        mInCallCallbacks.getService().disconnectAllCalls();
     }
 
 

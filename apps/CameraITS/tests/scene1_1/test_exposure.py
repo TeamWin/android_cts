@@ -90,7 +90,7 @@ def plot_raw_means(title, x, r, gr, gb, b, log_path):
   pylab.figure(title)
   pylab.semilogx(x, r, 'ro-', label='R')
   pylab.semilogx(x, gr, 'go-', label='Gr')
-  pylab.semilogx(x, gb, 'bo-', label='Gb')
+  pylab.semilogx(x, gb, 'ko-', label='Gb')
   pylab.semilogx(x, b, 'bo-', label='B')
   pylab.title(NAME + title)
   pylab.xlabel('Gain Multiplier')
@@ -123,18 +123,20 @@ def check_line_fit(chan, mults, values, thresh_max_level_diff):
   max_diff = max_val - min_val
   logging.debug('Channel %d line fit (y = mx+b): m = %f, b = %f', chan, m, b)
   logging.debug('Channel min %f max %f diff %f', min_val, max_val, max_diff)
-  e_msg = 'max_diff: %.4f, THRESH: %.3f' % (max_diff, thresh_max_level_diff)
-  assert max_diff < thresh_max_level_diff, e_msg
-  e_msg = 'b: %.2f, THRESH_MIN: %.1f, THRESH_MAX: %.1f' % (
-      b, THRESH_MIN_LEVEL, THRESH_MAX_LEVEL)
-  assert THRESH_MAX_LEVEL > b > THRESH_MIN_LEVEL, e_msg
+  if max_diff >= thresh_max_level_diff:
+    raise AssertionError(f'max_diff: {max_diff:.4f}, '
+                         f'THRESH: {thresh_max_level_diff:.3f}')
+  if not THRESH_MAX_LEVEL > b > THRESH_MIN_LEVEL:
+    raise AssertionError(f'b: {b:.2f}, THRESH_MIN: {THRESH_MIN_LEVEL}, '
+                         f'THRESH_MAX: {THRESH_MAX_LEVEL}')
   for v in values:
-    e_msg = 'v: %.2f, THRESH_MIN: %.1f, THRESH_MAX: %.1f' % (
-        v, THRESH_MIN_LEVEL, THRESH_MAX_LEVEL)
-    assert THRESH_MAX_LEVEL > v > THRESH_MIN_LEVEL, e_msg
-    e_msg = 'v: %.2f, b: %.2f, THRESH_MAX_OUTLIER_DIFF: %.1f' % (
-        v, b, THRESH_MAX_OUTLIER_DIFF)
-    assert abs(v - b) < THRESH_MAX_OUTLIER_DIFF, e_msg
+    if not THRESH_MAX_LEVEL > v > THRESH_MIN_LEVEL:
+      raise AssertionError(f'v: {v:.2f}, THRESH_MIN: {THRESH_MIN_LEVEL}, '
+                           f'THRESH_MAX: {THRESH_MAX_LEVEL}')
+
+    if abs(v - b) >= THRESH_MAX_OUTLIER_DIFF:
+      raise AssertionError(f'v: {v:.2f}, b: {b:.2f}, '
+                           f'THRESH_DIFF: {THRESH_MAX_OUTLIER_DIFF}')
 
 
 def get_raw_active_array_size(props):
@@ -216,12 +218,13 @@ class ExposureTest(its_base_test.ItsBaseTest):
               THRESH_ROUND_DOWN_EXP +
               (THRESH_ROUND_DOWN_EXP0 - THRESH_ROUND_DOWN_EXP) *
               (THRESH_EXP_KNEE - e_test) / THRESH_EXP_KNEE)
-        s_msg = 's_write: %d, s_read: %d, TOL=%.f%%' % (
-            s_test, s_res, THRESH_ROUND_DOWN_GAIN*100)
-        assert 0 <= s_test - s_res < s_test * THRESH_ROUND_DOWN_GAIN, s_msg
-        e_msg = 'e_write: %.3fms, e_read: %.3fms, TOL=%.f%%' % (
-            e_test/1.0E6, e_res/1.0E6, thresh_round_down_exp*100)
-        assert 0 <= e_test - e_res < e_test * thresh_round_down_exp, e_msg
+        if not 0 <= s_test - s_res < s_test * THRESH_ROUND_DOWN_GAIN:
+          raise AssertionError(f's_write: {s_test}, s_read: {s_res}, '
+                               f'TOL={THRESH_ROUND_DOWN_GAIN*100:.f%%}')
+        if not 0 <= e_test - e_res < e_test * thresh_round_down_exp:
+          raise AssertionError(f'e_write: {e_test/1.0E6:.3f}ms, '
+                               f'e_read: {e_res/1.0E6:.3f}ms, '
+                               f'TOL={thresh_round_down_exp*100:.f%%}')
         s_e_product_res = s_res * e_res
         req_res_ratio = s_e_product / s_e_product_res
         logging.debug('Capture result s: %d, e: %dns', s_res, e_res)
@@ -259,17 +262,17 @@ class ExposureTest(its_base_test.ItsBaseTest):
         thresh_max_level_diff = THRESH_MAX_LEVEL_DIFF_WIDE_RANGE
 
     # Draw plots and check data
-    plot_rgb_means('RGB data', mults, r_means, g_means, b_means, self.log_path)
-    for ch, _ in enumerate(['r', 'g', 'b']):
-      values = [r_means, g_means, b_means][ch]
-      check_line_fit(ch, mults, values, thresh_max_level_diff)
-
     if raw_avlb and debug:
       plot_raw_means('RAW data', mults, raw_r_means, raw_gr_means, raw_gb_means,
                      raw_b_means, self.log_path)
       for ch, _ in enumerate(['r', 'gr', 'gb', 'b']):
         values = [raw_r_means, raw_gr_means, raw_gb_means, raw_b_means][ch]
         check_line_fit(ch, mults, values, thresh_max_level_diff)
+
+    plot_rgb_means('RGB data', mults, r_means, g_means, b_means, self.log_path)
+    for ch, _ in enumerate(['r', 'g', 'b']):
+      values = [r_means, g_means, b_means][ch]
+      check_line_fit(ch, mults, values, thresh_max_level_diff)
 
 if __name__ == '__main__':
   test_runner.main()
