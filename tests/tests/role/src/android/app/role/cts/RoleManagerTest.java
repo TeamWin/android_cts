@@ -316,14 +316,6 @@ public class RoleManagerTest {
     }
 
     @Test
-    public void requestEmptyRoleThenDeniedAutomatically() throws Exception {
-        requestRole("");
-        Pair<Integer, Intent> result = waitForResult();
-
-        assertThat(result.first).isEqualTo(Activity.RESULT_CANCELED);
-    }
-
-    @Test
     public void requestInvalidRoleThenDeniedAutomatically() throws Exception {
         requestRole("invalid");
         Pair<Integer, Intent> result = waitForResult();
