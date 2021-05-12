@@ -34,7 +34,8 @@ public final class CpmsFrameworkLayerStateInfo {
     public static final String PENDING_POLICY_ID_HDR = "mPendingPowerPolicyId:";
     public static final String CURRENT_POLICY_GROUP_ID_HDR = "mCurrentPowerPolicyGroupId:";
     public static final String COMPONENT_STATE_HDR = "Power components state:";
-    public static final String COMPONENT_CONTROLLED_HDR = "Components controlled by user:";
+    public static final String COMPONENT_CONTROLLED_HDR =
+            "Components powered off by power policy:";
     public static final String COMPONENT_CHANGED_HDR = "Components changed by the last policy:";
     public static final String MONITORING_HW_HDR = "Monitoring HW state signal:";
     public static final String SILENT_MODE_BY_HW_HDR = "Silent mode by HW state signal:";
@@ -92,6 +93,14 @@ public final class CpmsFrameworkLayerStateInfo {
 
     public boolean getForcedSilentMode() {
         return mForcedSilentMode;
+    }
+
+    public PowerPolicyDef.PowerComponent[] getCurrentEnabledComponents() {
+        return PowerPolicyDef.PowerComponent.asComponentArray(mEnables);
+    }
+
+    public PowerPolicyDef.PowerComponent[] getCurrentDisabledComponents() {
+        return PowerPolicyDef.PowerComponent.asComponentArray(mDisables);
     }
 
     @Override
@@ -170,14 +179,16 @@ public final class CpmsFrameworkLayerStateInfo {
                     currentPolicyGroupId = parser.getStringData(CURRENT_POLICY_GROUP_ID_HDR);
                     break;
                 case COMPONENT_STATE_HDR:
-                    parser.parseComponentStates(COMPONENT_STATE_HDR, COMPONENT_CONTROLLED_HDR);
+                    parser.parseComponentStates(COMPONENT_STATE_HDR,
+                            COMPONENT_CONTROLLED_HDR, true);
                     enables = parser.getEnables();
                     disables = parser.getDisables();
                     Collections.sort(enables);
                     Collections.sort(disables);
                     break;
                 case COMPONENT_CONTROLLED_HDR:
-                    parser.parseComponentStates(COMPONENT_CONTROLLED_HDR, COMPONENT_CHANGED_HDR);
+                    parser.parseComponentStates(COMPONENT_CONTROLLED_HDR,
+                            COMPONENT_CHANGED_HDR, false);
                     controlledEnables = parser.getEnables();
                     controlledDisables = parser.getDisables();
                     Collections.sort(controlledEnables);
@@ -269,13 +280,14 @@ public final class CpmsFrameworkLayerStateInfo {
             return val;
         }
 
-        private void parseComponentStates(String startHdr, String endHdr) throws Exception {
+        private void parseComponentStates(String startHdr, String endHdr,
+                boolean hasStateInfo) throws Exception {
             mEnables = new ArrayList<String>();
             mDisables = new ArrayList<String>();
             while (mIdx < (mLines.length - 1) && !mLines[++mIdx].contains(endHdr)) {
                 String stateStr = mLines[mIdx].trim();
                 String[] vals = stateStr.split(":\\s");
-                if (vals.length != 2) {
+                if (hasStateInfo && vals.length != 2) {
                     String errMsg = String.format("wrong format at %d in: %s ", mIdx, stateStr);
                     CLog.e(errMsg);
                     throw new IllegalArgumentException(errMsg);
@@ -292,15 +304,20 @@ public final class CpmsFrameworkLayerStateInfo {
                     throw new IllegalArgumentException(errMsg);
                 }
 
-                if (vals[1].startsWith("on")) {
-                    mEnables.add(vals[0]);
-                } else if (vals[1].startsWith("off")) {
-                    mDisables.add(vals[0]);
+                if (hasStateInfo) {
+                    if (vals[1].startsWith("on")) {
+                        mEnables.add(vals[0]);
+                    } else if (vals[1].startsWith("off")) {
+                        mDisables.add(vals[0]);
+                    } else {
+                        String errMsg =
+                                String.format("wrong state value at %d with (%s, %s) in: %s",
+                                mIdx, vals[0], vals[1], stateStr);
+                        CLog.e(errMsg);
+                        throw new IllegalArgumentException(errMsg);
+                    }
                 } else {
-                    String errMsg = String.format("wrong state value at %d with (%s, %s) in: %s",
-                            mIdx, vals[0], vals[1], stateStr);
-                    CLog.e(errMsg);
-                    throw new IllegalArgumentException(errMsg);
+                    mDisables.add(vals[0]);
                 }
             }
             mIdx--;

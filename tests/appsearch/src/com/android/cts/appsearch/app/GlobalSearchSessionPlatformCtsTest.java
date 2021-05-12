@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.app.appsearch.cts;
+package android.app.appsearch.cts.app;
 
 import static com.android.server.appsearch.testing.AppSearchTestUtils.checkIsBatchResultSuccess;
 
@@ -58,7 +58,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 /**
- * This doesn't extend the {@link android.app.appsearch.cts.GlobalSearchSessionCtsTestBase} since
+ * This doesn't extend {@link android.app.appsearch.cts.app.GlobalSearchSessionCtsTestBase} since
  * these test cases can't be run in a non-platform environment.
  */
 @AppModeFull(reason = "Can't bind to helper apps from instant mode")
