@@ -87,6 +87,7 @@ public class CecPortDiscoverer extends BaseTargetPreparer {
         HdmiCecClientWrapper cecClientWrapper = new HdmiCecClientWrapper();
 
         launchCommand.add("cec-client");
+        String serialNo = "";
 
         try {
             List<String> comPorts = cecClientWrapper.getValidCecClientPorts();
@@ -106,7 +107,7 @@ public class CecPortDiscoverer extends BaseTargetPreparer {
                 launchCommand.add("x");
             }
 
-            String serialNo = device.getProperty("ro.serialno");
+            serialNo = device.getProperty("ro.serialno");
             String serialNoParam = CecMessage.convertStringToHexParams(serialNo);
             /*
              * formatParams prefixes with a ':' that we do not want in the vendorcommand
@@ -177,15 +178,21 @@ public class CecPortDiscoverer extends BaseTargetPreparer {
                     "Caught "
                             + e.getClass().getSimpleName()
                             + ". "
-                            + "Could not get adapter mapping.", e);
+                            + "Could not get adapter mapping for device"
+                            + serialNo
+                            + ".",
+                    e);
         } catch (Exception generic) {
             throw new TargetSetupError(
                     "Caught an exception with message '"
                             + generic.getMessage()
                             + "'. "
-                            + "Could not get adapter mapping.", generic);
+                            + "Could not get adapter mapping for device"
+                            + serialNo
+                            + ".",
+                    generic);
         }
-        throw new TargetSetupError("Device not connected to any adapter!");
+        throw new TargetSetupError("Device " + serialNo + " not connected to any adapter!");
     }
 
     private String getPortFilename(String port) {
