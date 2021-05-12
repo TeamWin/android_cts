@@ -985,93 +985,111 @@ public final class TestMeasurementUtil {
         SoftAssert softAssert, long timeInNs) {
         SatellitePvt satellitePvt = measurement.getSatellitePvt();
         assertNotNull("SatellitePvt cannot be null when HAS_SATELLITE_PVT is true.", satellitePvt);
-        softAssert.assertTrue("x_meters : "
-                + "Satellite position X in WGS84 ECEF (meters)",
-                timeInNs,
-                "-43000000 <= X <= 43000000",
-                String.valueOf(satellitePvt.getPositionEcef().getXMeters()),
-                satellitePvt.getPositionEcef().getXMeters() >= -43000000 &&
-                    satellitePvt.getPositionEcef().getXMeters() <= 43000000);
-        softAssert.assertTrue("y_meters : "
-                + "Satellite position Y in WGS84 ECEF (meters)",
-                timeInNs,
-                "-43000000 <= X <= 43000000",
-                String.valueOf(satellitePvt.getPositionEcef().getYMeters()),
-                satellitePvt.getPositionEcef().getYMeters() >= -43000000 &&
-                    satellitePvt.getPositionEcef().getYMeters() <= 43000000);
-        softAssert.assertTrue("z_meters : "
-                + "Satellite position Z in WGS84 ECEF (meters)",
-                timeInNs,
-                "-43000000 <= X <= 43000000",
-                String.valueOf(satellitePvt.getPositionEcef().getZMeters()),
-                satellitePvt.getPositionEcef().getZMeters() >= -43000000 &&
-                    satellitePvt.getPositionEcef().getZMeters() <= 43000000);
-        softAssert.assertTrue("ure_meters : "
-                + "The Signal in Space User Range Error (URE) (meters)",
-                timeInNs,
-                "X > 0",
-                String.valueOf(satellitePvt.getPositionEcef().getUreMeters()),
-                satellitePvt.getPositionEcef().getUreMeters() > 0);
-        softAssert.assertTrue("x_mps : "
-                + "Satellite velocity X in WGS84 ECEF (meters per second)",
-                timeInNs,
-                "-4000 <= X <= 4000",
-                String.valueOf(satellitePvt.getVelocityEcef().getXMetersPerSecond()),
-                satellitePvt.getVelocityEcef().getXMetersPerSecond() >= -4000 &&
-                    satellitePvt.getVelocityEcef().getXMetersPerSecond() <= 4000);
-        softAssert.assertTrue("y_mps : "
-                + "Satellite velocity Y in WGS84 ECEF (meters per second)",
-                timeInNs,
-                "-4000 <= X <= 4000",
-                String.valueOf(satellitePvt.getVelocityEcef().getYMetersPerSecond()),
-                satellitePvt.getVelocityEcef().getYMetersPerSecond() >= -4000 &&
-                    satellitePvt.getVelocityEcef().getYMetersPerSecond() <= 4000);
-        softAssert.assertTrue("z_mps : "
-                + "Satellite velocity Z in WGS84 ECEF (meters per second)",
-                timeInNs,
-                "-4000 <= X <= 4000",
-                String.valueOf(satellitePvt.getVelocityEcef().getZMetersPerSecond()),
-                satellitePvt.getVelocityEcef().getZMetersPerSecond() >= -4000 &&
-                    satellitePvt.getVelocityEcef().getZMetersPerSecond() <= 4000);
-        softAssert.assertTrue("ure_rate_mps : "
-                + "The Signal in Space User Range Error Rate (URE Rate) (meters per second)",
-                timeInNs,
-                "X > 0",
-                String.valueOf(satellitePvt.getVelocityEcef().getUreRateMetersPerSecond()),
-                satellitePvt.getVelocityEcef().getUreRateMetersPerSecond() > 0);
-        softAssert.assertTrue("hardware_code_bias_meters : "
-                + "The satellite hardware code bias of the reported code type "
-                + "w.r.t ionosphere-free measurement in meters.",
-                timeInNs,
-                "-17.869 < X < 17.729",
-                String.valueOf(satellitePvt.getClockInfo().getHardwareCodeBiasMeters()),
-                satellitePvt.getClockInfo().getHardwareCodeBiasMeters() > -17.869 &&
-                satellitePvt.getClockInfo().getHardwareCodeBiasMeters() < 17.729);
-        softAssert.assertTrue("time_correction_meters : "
-                + "The satellite time correction for ionospheric-free signal measurement (meters)",
-                timeInNs,
-                "-3e6 < X < 3e6",
-                String.valueOf(satellitePvt.getClockInfo().getTimeCorrectionMeters()),
-                satellitePvt.getClockInfo().getTimeCorrectionMeters() > -3e6 &&
-                satellitePvt.getClockInfo().getTimeCorrectionMeters() < 3e6);
-        softAssert.assertTrue("clock_drift_mps : "
-                + "The satellite clock drift (meters per second)",
-                timeInNs,
-                "-1.117 < X < 1.117",
-                String.valueOf(satellitePvt.getClockInfo().getClockDriftMetersPerSecond()),
-                satellitePvt.getClockInfo().getClockDriftMetersPerSecond() > -1.117 &&
-                satellitePvt.getClockInfo().getClockDriftMetersPerSecond() < 1.117);
-        softAssert.assertTrue("iono_delay_meters : "
-                + "The ionospheric delay in meters",
-                timeInNs,
-                "0 < X < 100",
-                String.valueOf(satellitePvt.getIonoDelayMeters()),
-                satellitePvt.getIonoDelayMeters() > 0 && satellitePvt.getIonoDelayMeters() < 100);
-        softAssert.assertTrue("tropo_delay_meters : "
-                + "The tropospheric delay in meters",
-                timeInNs,
-                "0 < X < 100",
-                String.valueOf(satellitePvt.getTropoDelayMeters()),
-                satellitePvt.getTropoDelayMeters() > 0 && satellitePvt.getTropoDelayMeters() < 100);
+
+        if (satellitePvt.hasPositionVelocityClockInfo()){
+            assertNotNull("PositionEcef cannot be null when "
+                    + "HAS_POSITION_VELOCITY_CLOCK_INFO is true.", satellitePvt.getPositionEcef());
+            assertNotNull("VelocityEcef cannot be null when "
+                    + "HAS_POSITION_VELOCITY_CLOCK_INFO is true.", satellitePvt.getVelocityEcef());
+            assertNotNull("ClockInfo cannot be null when "
+                    + "HAS_POSITION_VELOCITY_CLOCK_INFO is true.", satellitePvt.getClockInfo());
+            softAssert.assertTrue("x_meters : "
+                    + "Satellite position X in WGS84 ECEF (meters)",
+                    timeInNs,
+                    "-43000000 <= X <= 43000000",
+                    String.valueOf(satellitePvt.getPositionEcef().getXMeters()),
+                    satellitePvt.getPositionEcef().getXMeters() >= -43000000 &&
+                        satellitePvt.getPositionEcef().getXMeters() <= 43000000);
+            softAssert.assertTrue("y_meters : "
+                    + "Satellite position Y in WGS84 ECEF (meters)",
+                    timeInNs,
+                    "-43000000 <= X <= 43000000",
+                    String.valueOf(satellitePvt.getPositionEcef().getYMeters()),
+                    satellitePvt.getPositionEcef().getYMeters() >= -43000000 &&
+                        satellitePvt.getPositionEcef().getYMeters() <= 43000000);
+            softAssert.assertTrue("z_meters : "
+                    + "Satellite position Z in WGS84 ECEF (meters)",
+                    timeInNs,
+                    "-43000000 <= X <= 43000000",
+                    String.valueOf(satellitePvt.getPositionEcef().getZMeters()),
+                    satellitePvt.getPositionEcef().getZMeters() >= -43000000 &&
+                        satellitePvt.getPositionEcef().getZMeters() <= 43000000);
+            softAssert.assertTrue("ure_meters : "
+                    + "The Signal in Space User Range Error (URE) (meters)",
+                    timeInNs,
+                    "X > 0",
+                    String.valueOf(satellitePvt.getPositionEcef().getUreMeters()),
+                    satellitePvt.getPositionEcef().getUreMeters() > 0);
+            softAssert.assertTrue("x_mps : "
+                    + "Satellite velocity X in WGS84 ECEF (meters per second)",
+                    timeInNs,
+                    "-4000 <= X <= 4000",
+                    String.valueOf(satellitePvt.getVelocityEcef().getXMetersPerSecond()),
+                    satellitePvt.getVelocityEcef().getXMetersPerSecond() >= -4000 &&
+                        satellitePvt.getVelocityEcef().getXMetersPerSecond() <= 4000);
+            softAssert.assertTrue("y_mps : "
+                    + "Satellite velocity Y in WGS84 ECEF (meters per second)",
+                    timeInNs,
+                    "-4000 <= X <= 4000",
+                    String.valueOf(satellitePvt.getVelocityEcef().getYMetersPerSecond()),
+                    satellitePvt.getVelocityEcef().getYMetersPerSecond() >= -4000 &&
+                        satellitePvt.getVelocityEcef().getYMetersPerSecond() <= 4000);
+            softAssert.assertTrue("z_mps : "
+                    + "Satellite velocity Z in WGS84 ECEF (meters per second)",
+                    timeInNs,
+                    "-4000 <= X <= 4000",
+                    String.valueOf(satellitePvt.getVelocityEcef().getZMetersPerSecond()),
+                    satellitePvt.getVelocityEcef().getZMetersPerSecond() >= -4000 &&
+                        satellitePvt.getVelocityEcef().getZMetersPerSecond() <= 4000);
+            softAssert.assertTrue("ure_rate_mps : "
+                    + "The Signal in Space User Range Error Rate (URE Rate) (meters per second)",
+                    timeInNs,
+                    "X > 0",
+                    String.valueOf(satellitePvt.getVelocityEcef().getUreRateMetersPerSecond()),
+                    satellitePvt.getVelocityEcef().getUreRateMetersPerSecond() > 0);
+            softAssert.assertTrue("hardware_code_bias_meters : "
+                    + "The satellite hardware code bias of the reported code type "
+                    + "w.r.t ionosphere-free measurement in meters.",
+                    timeInNs,
+                    "-17.869 < X < 17.729",
+                    String.valueOf(satellitePvt.getClockInfo().getHardwareCodeBiasMeters()),
+                    satellitePvt.getClockInfo().getHardwareCodeBiasMeters() > -17.869 &&
+                    satellitePvt.getClockInfo().getHardwareCodeBiasMeters() < 17.729);
+            softAssert.assertTrue("time_correction_meters : "
+                    + "The satellite time correction for ionospheric-free signal measurement "
+                    + "(meters)",
+                    timeInNs,
+                    "-3e6 < X < 3e6",
+                    String.valueOf(satellitePvt.getClockInfo().getTimeCorrectionMeters()),
+                    satellitePvt.getClockInfo().getTimeCorrectionMeters() > -3e6 &&
+                    satellitePvt.getClockInfo().getTimeCorrectionMeters() < 3e6);
+            softAssert.assertTrue("clock_drift_mps : "
+                    + "The satellite clock drift (meters per second)",
+                    timeInNs,
+                    "-1.117 < X < 1.117",
+                    String.valueOf(satellitePvt.getClockInfo().getClockDriftMetersPerSecond()),
+                    satellitePvt.getClockInfo().getClockDriftMetersPerSecond() > -1.117 &&
+                    satellitePvt.getClockInfo().getClockDriftMetersPerSecond() < 1.117);
+        }
+
+        if (satellitePvt.hasIono()){
+            softAssert.assertTrue("iono_delay_meters : "
+                    + "The ionospheric delay in meters",
+                    timeInNs,
+                    "0 < X < 100",
+                    String.valueOf(satellitePvt.getIonoDelayMeters()),
+                    satellitePvt.getIonoDelayMeters() > 0 &&
+                    satellitePvt.getIonoDelayMeters() < 100);
+        }
+
+        if (satellitePvt.hasTropo()){
+            softAssert.assertTrue("tropo_delay_meters : "
+                    + "The tropospheric delay in meters",
+                    timeInNs,
+                    "0 < X < 100",
+                    String.valueOf(satellitePvt.getTropoDelayMeters()),
+                    satellitePvt.getTropoDelayMeters() > 0 &&
+                    satellitePvt.getTropoDelayMeters() < 100);
+        }
     }
 }
