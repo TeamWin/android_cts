@@ -390,7 +390,7 @@ public class KeyguardLockedTests extends KeyguardTestBase {
 
         lockScreenSession.setLockCredential().gotoKeyguard();
         assertTrue("Keyguard is showing", mWmState.getKeyguardControllerState().keyguardShowing);
-        lockScreenSession.enterAndConfirmLockCredential();
+        lockScreenSession.unlockDevice().enterAndConfirmLockCredential();
         mWmState.waitAndAssertKeyguardGone();
 
         final ImeEventStream stream = mockImeSession.openEventStream();
