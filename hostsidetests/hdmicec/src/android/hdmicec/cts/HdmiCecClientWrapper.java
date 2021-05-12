@@ -75,6 +75,9 @@ public final class HdmiCecClientWrapper extends ExternalResource {
         /* "-t x" starts the client as a TV device */
         commands.add("-t");
         commands.add("x");
+        /* "-d 15" set the log level to ERROR|WARNING|NOTICE|TRAFFIC */
+        commands.add("-d");
+        commands.add("15");
         commands.addAll(Arrays.asList(clientParams));
 
         mCecClient = RunUtil.getDefault().runCmdInBackground(commands);
