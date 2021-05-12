@@ -26,6 +26,8 @@ import androidx.test.runner.AndroidJUnit4;
 import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.DeviceReportLog;
 
+import static org.junit.Assert.assertTrue;
+
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -52,9 +54,13 @@ public class RandomRWTest {
         }
         String streamName = "test_random_read";
         DeviceReportLog report = new DeviceReportLog(REPORT_LOG_NAME, streamName);
-        FileUtil.doRandomReadTest(getContext(), DIR_RANDOM_RD, report, fileSize,
+        double mbps = FileUtil.doRandomReadTest(getContext(), DIR_RANDOM_RD, report, fileSize,
                 READ_BUFFER_SIZE);
         report.submit(getInstrumentation());
+        if (MediaPerformanceClassUtils.isSPerfClass()) {
+            assertTrue("measured " + mbps + " is less than target (40 MBPS)",
+                       mbps >= 40);
+        }
     }
 
     // It is taking too long in some device, and thus cannot run multiple times
@@ -69,10 +75,17 @@ public class RandomRWTest {
         }
         String streamName = "test_random_update";
         DeviceReportLog report = new DeviceReportLog(REPORT_LOG_NAME, streamName);
+        double mbps = -1;
+        // this is in-fact true
         if (fileSize > FileUtil.BUFFER_SIZE) {
-            FileUtil.doRandomWriteTest(getContext(), DIR_RANDOM_WR, report, fileSize,
+            mbps = FileUtil.doRandomWriteTest(getContext(), DIR_RANDOM_WR, report, fileSize,
                 WRITE_BUFFER_SIZE);
         }
         report.submit(getInstrumentation());
+        if (MediaPerformanceClassUtils.isSPerfClass()) {
+            // for performance class devices we must be able to write 256MB
+            assertTrue("measured " + mbps + " is less than target (10 MBPS)",
+                       mbps >= 10);
+        }
     }
 }
