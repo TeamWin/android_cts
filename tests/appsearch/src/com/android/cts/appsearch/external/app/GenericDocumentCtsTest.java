@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.app.appsearch.cts;
+package android.app.appsearch.cts.app;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -37,6 +37,11 @@ public class GenericDocumentCtsTest {
                             "namespace", "sDocumentProperties2", "sDocumentPropertiesSchemaType2")
                     .setCreationTimestampMillis(6789L)
                     .build();
+
+    @Test
+    public void testMaxIndexedProperties() {
+        assertThat(GenericDocument.getMaxIndexedProperties()).isEqualTo(16);
+    }
 
     @Test
     public void testDocumentEquals_identical() {
@@ -166,6 +171,28 @@ public class GenericDocumentCtsTest {
                 .containsExactly((byte) 1, (byte) 2, (byte) 3)
                 .inOrder();
         assertThat(document.getPropertyDocument("documentKey1")).isEqualTo(sDocumentProperties1);
+
+        assertThat(document.getProperty("longKey1")).isInstanceOf(long[].class);
+        assertThat((long[]) document.getProperty("longKey1")).asList().containsExactly(1L);
+        assertThat(document.getProperty("doubleKey1")).isInstanceOf(double[].class);
+        assertThat((double[]) document.getProperty("doubleKey1"))
+                .usingTolerance(0.05)
+                .containsExactly(1.0);
+        assertThat(document.getProperty("booleanKey1")).isInstanceOf(boolean[].class);
+        assertThat((boolean[]) document.getProperty("booleanKey1")).asList().containsExactly(true);
+        assertThat(document.getProperty("stringKey1")).isInstanceOf(String[].class);
+        assertThat((String[]) document.getProperty("stringKey1"))
+                .asList()
+                .containsExactly("test-value1");
+        assertThat(document.getProperty("byteKey1")).isInstanceOf(byte[][].class);
+        assertThat((byte[][]) document.getProperty("byteKey1"))
+                .asList()
+                .containsExactly(sByteArray1)
+                .inOrder();
+        assertThat(document.getProperty("documentKey1")).isInstanceOf(GenericDocument[].class);
+        assertThat((GenericDocument[]) document.getProperty("documentKey1"))
+                .asList()
+                .containsExactly(sDocumentProperties1);
     }
 
     @Test
@@ -213,48 +240,61 @@ public class GenericDocumentCtsTest {
 
     @Test
     public void testDocument_toString() {
-        GenericDocument document =
-                new GenericDocument.Builder<>(/*namespace=*/ "", "id1", "schemaType1")
-                        .setCreationTimestampMillis(5L)
-                        .setPropertyLong("longKey1", 1L, 2L, 3L)
-                        .setPropertyDouble("doubleKey1", 1.0, 2.0, 3.0)
-                        .setPropertyBoolean("booleanKey1", true, false, true)
-                        .setPropertyString("stringKey1", "String1", "String2", "String3")
-                        .setPropertyBytes("byteKey1", sByteArray1, sByteArray2)
-                        .setPropertyDocument(
-                                "documentKey1", sDocumentProperties1, sDocumentProperties2)
+        GenericDocument nestedDocValue =
+                new GenericDocument.Builder<GenericDocument.Builder<?>>(
+                                "namespace", "id2", "schemaType2")
+                        .setCreationTimestampMillis(1L)
+                        .setScore(1)
+                        .setTtlMillis(1L)
+                        .setPropertyString("stringKey1", "val1", "val2")
                         .build();
-        String exceptedString =
-                "{ name: 'creationTimestampMillis' value: 5 } "
-                        + "{ name: 'id' value: id1 } "
-                        + "{ name: 'namespace' value:  } "
-                        + "{ name: 'properties' value: "
-                        + "{ name: 'booleanKey1' value: [ 'true' 'false' 'true' ] } "
-                        + "{ name: 'byteKey1' value: "
-                        + "{ name: 'byteArray' value: [ '1' '2' '3' ] } "
-                        + "{ name: 'byteArray' value: [ '4' '5' '6' '7' ] }  } "
-                        + "{ name: 'documentKey1' value: [ '"
-                        + "{ name: 'creationTimestampMillis' value: 12345 } "
-                        + "{ name: 'id' value: sDocumentProperties1 } "
-                        + "{ name: 'namespace' value: namespace } "
-                        + "{ name: 'properties' value:  } "
-                        + "{ name: 'schemaType' value: sDocumentPropertiesSchemaType1 } "
-                        + "{ name: 'score' value: 0 } "
-                        + "{ name: 'ttlMillis' value: 0 } ' '"
-                        + "{ name: 'creationTimestampMillis' value: 6789 } "
-                        + "{ name: 'id' value: sDocumentProperties2 } "
-                        + "{ name: 'namespace' value: namespace } "
-                        + "{ name: 'properties' value:  } "
-                        + "{ name: 'schemaType' value: sDocumentPropertiesSchemaType2 } "
-                        + "{ name: 'score' value: 0 } "
-                        + "{ name: 'ttlMillis' value: 0 } ' ] } "
-                        + "{ name: 'doubleKey1' value: [ '1.0' '2.0' '3.0' ] } "
-                        + "{ name: 'longKey1' value: [ '1' '2' '3' ] } "
-                        + "{ name: 'stringKey1' value: [ 'String1' 'String2' 'String3' ] }  } "
-                        + "{ name: 'schemaType' value: schemaType1 } "
-                        + "{ name: 'score' value: 0 } "
-                        + "{ name: 'ttlMillis' value: 0 } ";
-        assertThat(document.toString()).isEqualTo(exceptedString);
+        GenericDocument document =
+                new GenericDocument.Builder<GenericDocument.Builder<?>>(
+                                "namespace", "id1", "schemaType1")
+                        .setCreationTimestampMillis(1L)
+                        .setScore(1)
+                        .setTtlMillis(1L)
+                        .setPropertyString("stringKey1", "val1", "val2")
+                        .setPropertyBytes("bytesKey1", new byte[] {(byte) 1, (byte) 2})
+                        .setPropertyLong("longKey1", 1L, 2L)
+                        .setPropertyDouble("doubleKey1", 1.0, 2.0)
+                        .setPropertyBoolean("booleanKey1", true, false)
+                        .setPropertyDocument("documentKey1", nestedDocValue)
+                        .build();
+
+        String documentString = document.toString();
+
+        String expectedString =
+                "{\n"
+                        + "  namespace: \"namespace\",\n"
+                        + "  id: \"id1\",\n"
+                        + "  score: 1,\n"
+                        + "  schemaType: \"schemaType1\",\n"
+                        + "  creationTimestampMillis: 1,\n"
+                        + "  timeToLiveMillis: 1,\n"
+                        + "  properties: {\n"
+                        + "    \"booleanKey1\": [true, false],\n"
+                        + "    \"bytesKey1\": [[1, 2]],\n"
+                        + "    \"documentKey1\": [\n"
+                        + "      {\n"
+                        + "        namespace: \"namespace\",\n"
+                        + "        id: \"id2\",\n"
+                        + "        score: 1,\n"
+                        + "        schemaType: \"schemaType2\",\n"
+                        + "        creationTimestampMillis: 1,\n"
+                        + "        timeToLiveMillis: 1,\n"
+                        + "        properties: {\n"
+                        + "          \"stringKey1\": [\"val1\", \"val2\"]\n"
+                        + "        }\n"
+                        + "      }\n"
+                        + "    ],\n"
+                        + "    \"doubleKey1\": [1.0, 2.0],\n"
+                        + "    \"longKey1\": [1, 2],\n"
+                        + "    \"stringKey1\": [\"val1\", \"val2\"]\n"
+                        + "  }\n"
+                        + "}";
+
+        assertThat(documentString).isEqualTo(expectedString);
     }
 
     @Test
@@ -875,5 +915,54 @@ public class GenericDocumentCtsTest {
         assertThat(doc.getPropertyBoolean("propDocument[1].propBools[0]")).isTrue();
         assertThat(doc.getPropertyBytes("propDocument[0].propBytes[0]"))
                 .isEqualTo(new byte[] {3, 4});
+    }
+
+    @Test
+    public void testDocumentGetPropertyNamesSingleLevel() {
+        GenericDocument document =
+                new GenericDocument.Builder<>("namespace", "id1", "schemaType1")
+                        .setCreationTimestampMillis(5L)
+                        .setScore(1)
+                        .setTtlMillis(1L)
+                        .setPropertyLong("longKey1", 1L)
+                        .setPropertyDouble("doubleKey1", 1.0)
+                        .setPropertyBoolean("booleanKey1", true)
+                        .setPropertyString("stringKey1", "test-value1")
+                        .setPropertyBytes("byteKey1", sByteArray1)
+                        .build();
+        assertThat(document.getPropertyNames())
+                .containsExactly("longKey1", "doubleKey1", "booleanKey1", "stringKey1", "byteKey1");
+    }
+
+    @Test
+    public void testDocumentGetPropertyNamesMultiLevel() {
+        GenericDocument innerDoc0 =
+                new GenericDocument.Builder<>("namespace", "id2", "schema2")
+                        .setPropertyString("propString", "Goodbye", "Hello")
+                        .setPropertyString("propStringTwo", "Fee", "Fi")
+                        .setPropertyLong("propInts", 3, 1, 4)
+                        .build();
+        GenericDocument innerDoc1 =
+                new GenericDocument.Builder<>("namespace", "id3", "schema2")
+                        .setPropertyString("propString", "Aloha")
+                        .setPropertyLong("propInts", 7, 5, 6)
+                        .setPropertyLong("propIntsTwo", 8, 6)
+                        .build();
+        GenericDocument document =
+                new GenericDocument.Builder<>("namespace", "id1", "schemaType1")
+                        .setCreationTimestampMillis(5L)
+                        .setScore(1)
+                        .setTtlMillis(1L)
+                        .setPropertyString("stringKey1", "test-value1")
+                        .setPropertyDocument("docKey1", innerDoc0, innerDoc1)
+                        .build();
+        assertThat(document.getPropertyNames()).containsExactly("stringKey1", "docKey1");
+
+        GenericDocument[] documents = document.getPropertyDocumentArray("docKey1");
+        assertThat(documents).asList().containsExactly(innerDoc0, innerDoc1).inOrder();
+        assertThat(documents[0].getPropertyNames())
+                .containsExactly("propString", "propStringTwo", "propInts");
+        assertThat(documents[1].getPropertyNames())
+                .containsExactly("propString", "propInts", "propIntsTwo");
     }
 }

@@ -437,6 +437,8 @@ public class MediaStorageTest {
 
         try (ParcelFileDescriptor pfd = mContentResolver.openFileDescriptor(red, "w")) {
         }
+        // Wait for MediaStore to be idle to avoid flakiness due to race conditions
+        MediaStore.waitForIdle(mContentResolver);
 
         // Check File API support
         assertAccessFileAPISupport(file);

@@ -16,7 +16,14 @@
 
 package android.appsearch.cts;
 
+import static com.google.common.truth.Truth.assertWithMessage;
+
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
+import com.android.tradefed.testtype.junit4.DeviceTestRunOptions;
+
+import java.util.Map;
+
+import javax.annotation.Nonnull;
 
 public abstract class AppSearchHostTestBase extends BaseHostJUnit4Test {
     protected static final String TARGET_APK_A = "CtsAppSearchHostTestHelperA.apk";
@@ -26,15 +33,35 @@ public abstract class AppSearchHostTestBase extends BaseHostJUnit4Test {
     protected static final String TARGET_PKG_B = "android.appsearch.app.b";
     protected static final String TEST_CLASS_B = TARGET_PKG_B + ".AppSearchDeviceTest";
 
+    protected static final String USER_ID_KEY = "userId";
+
     protected static final long DEFAULT_INSTRUMENTATION_TIMEOUT_MS = 600_000; // 10min
 
-    protected void runDeviceTestAsUserInPkgA(String testMethod, int userId) throws Exception {
-        runDeviceTests(getDevice(), TARGET_PKG_A, TEST_CLASS_A, testMethod, userId,
-                DEFAULT_INSTRUMENTATION_TIMEOUT_MS);
+    protected void runDeviceTestAsUserInPkgA(@Nonnull String testMethod, int userId)
+            throws Exception {
+        assertWithMessage(testMethod + " failed").that(
+                runDeviceTests(getDevice(), TARGET_PKG_A, TEST_CLASS_A, testMethod, userId,
+                        DEFAULT_INSTRUMENTATION_TIMEOUT_MS)).isTrue();
     }
 
-    protected void runDeviceTestAsUserInPkgB(String testMethod, int userId) throws Exception {
-        runDeviceTests(getDevice(), TARGET_PKG_B, TEST_CLASS_B, testMethod, userId,
-                DEFAULT_INSTRUMENTATION_TIMEOUT_MS);
+    protected void runDeviceTestAsUserInPkgA(@Nonnull String testMethod, int userId,
+            @Nonnull Map<String, String> args) throws Exception {
+        DeviceTestRunOptions deviceTestRunOptions = new DeviceTestRunOptions(TARGET_PKG_A)
+                .setTestClassName(TEST_CLASS_A)
+                .setTestMethodName(testMethod)
+                .setMaxInstrumentationTimeoutMs(DEFAULT_INSTRUMENTATION_TIMEOUT_MS)
+                .setUserId(userId);
+        for (Map.Entry<String, String> entry : args.entrySet()) {
+            deviceTestRunOptions.addInstrumentationArg(entry.getKey(), entry.getValue());
+        }
+        assertWithMessage(testMethod + " failed").that(
+                runDeviceTests(deviceTestRunOptions)).isTrue();
+    }
+
+    protected void runDeviceTestAsUserInPkgB(@Nonnull String testMethod, int userId)
+            throws Exception {
+        assertWithMessage(testMethod + " failed").that(
+                runDeviceTests(getDevice(), TARGET_PKG_B, TEST_CLASS_B, testMethod, userId,
+                        DEFAULT_INSTRUMENTATION_TIMEOUT_MS)).isTrue();
     }
 }

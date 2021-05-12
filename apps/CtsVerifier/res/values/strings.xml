@@ -872,6 +872,27 @@
     <string name="hifi_ultrasound_speaker_test_reference_side">
         Please report on the testing device.\n</string>
 
+    <!-- Strings for IgnoreBatteryOptimizationsTestActivity -->
+    <string name="ibo_test">Ignore Battery Optimizations Test</string>
+    <string name="ibo_test_info">
+        This test verifies that the device provides a user affordance to ask the user if the system
+        should disable battery optimizations for an app.
+    </string>
+    <string name="ibo_test_start_unexempt_app">
+        Remove the test app from the ignore battery optimizations list to begin the test. (Try going
+        to the App Info page and make sure the system is optimizing battery for the app.)
+    </string>
+    <string name="ibo_exempt_app">
+        Click Next to have the test request the exemption. Grant the exemption when prompted.
+    </string>
+    <string name="ibo_next_to_confirm">Press next to confirm.</string>
+    <string name="ibo_app_not_exempted">The app is not exempted from battery optimizations.</string>
+    <string name="ibo_unexempt_app">
+        Remove the test app from the ignore battery optimizations list. (Try going
+        to the App Info page and make sure the system is optimizing battery for the app.)
+    </string>
+    <string name="ibo_app_is_exempted">The app is exempted from battery optimizations.</string>
+
     <!-- Strings for Location tests -->
     <string name="location_gps_test">GPS Test</string>
     <string name="location_gps_test_info">This test verifies basic GPS behavior

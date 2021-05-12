@@ -47,13 +47,12 @@ import static org.junit.Assume.assumeTrue;
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.accessibilityservice.cts.activities.AccessibilityWindowReportingActivity;
-import android.accessibilityservice.cts.utils.DisplayUtils;
+import android.accessibilityservice.cts.activities.NonDefaultDisplayActivity;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.graphics.Rect;
 import android.os.SystemClock;
-import android.view.Display;
 import android.view.Gravity;
 import android.view.InputDevice;
 import android.view.MotionEvent;
@@ -265,7 +264,7 @@ public class AccessibilityWindowReportingTest {
             final Activity activityOnVirtualDisplay =
                     launchActivityOnSpecifiedDisplayAndWaitForItToBeOnscreen(sInstrumentation,
                             sUiAutomation,
-                            AccessibilityEmbeddedDisplayTest.EmbeddedDisplayActivity.class,
+                            NonDefaultDisplayActivity.class,
                             virtualDisplayId);
 
             final CharSequence activityTitle = getActivityTitle(sInstrumentation,
