@@ -39,6 +39,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
@@ -365,6 +366,23 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
             uiAutomation.adoptShellPermissionIdentity();
             // update scoring with dummy values.
             mWifiManager.updateWifiUsabilityScore(0, 50, 50);
+        } finally {
+            uiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    /**
+     * Tests the {@link android.net.wifi.WifiManager#setWifiScoringEnabled(boolean)}
+     *
+     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
+     */
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @Test
+    public void testSetWifiScoringEnabled() throws Exception {
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            assertTrue(mWifiManager.setWifiScoringEnabled(true));
         } finally {
             uiAutomation.dropShellPermissionIdentity();
         }
