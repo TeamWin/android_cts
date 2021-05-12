@@ -536,7 +536,9 @@ public class ScopedStorageTest {
     @Test
     public void testAndroidMedia() throws Exception {
         // Check that the app does not have legacy external storage access
-        assertThat(Environment.isExternalStorageLegacy()).isFalse();
+        if (BuildCompat.isAtLeastS()) {
+            assertThat(Environment.isExternalStorageLegacy()).isFalse();
+        }
 
         pollForPermission(Manifest.permission.READ_EXTERNAL_STORAGE, /*granted*/ true);
 
@@ -686,7 +688,9 @@ public class ScopedStorageTest {
 
     @Test
     public void testNoIsolatedStorageCanCreateFilesAnywhere() throws Exception {
-        assertThat(Environment.isExternalStorageLegacy()).isTrue();
+        if (BuildCompat.isAtLeastS()) {
+            assertThat(Environment.isExternalStorageLegacy()).isTrue();
+        }
         final File topLevelPdf = new File(getExternalStorageDir(), NONMEDIA_FILE_NAME);
         final File musicFileInMovies = new File(getMoviesDir(), AUDIO_FILE_NAME);
         final File imageFileInDcim = new File(getDcimDir(), IMAGE_FILE_NAME);
@@ -701,7 +705,9 @@ public class ScopedStorageTest {
 
     @Test
     public void testNoIsolatedStorageCantReadWriteOtherAppExternalDir() throws Exception {
-        assertThat(Environment.isExternalStorageLegacy()).isTrue();
+        if (BuildCompat.isAtLeastS()) {
+            assertThat(Environment.isExternalStorageLegacy()).isTrue();
+        }
         // Let app A create a file in its data dir
         final File otherAppExternalDataDir = new File(getExternalFilesDir().getPath().replace(
                 THIS_PACKAGE_NAME, APP_A_HAS_RES.getPackageName()));
@@ -725,7 +731,9 @@ public class ScopedStorageTest {
 
     @Test
     public void testNoIsolatedStorageStorageReaddir() throws Exception {
-        assertThat(Environment.isExternalStorageLegacy()).isTrue();
+        if (BuildCompat.isAtLeastS()) {
+            assertThat(Environment.isExternalStorageLegacy()).isTrue();
+        }
         final File otherAppPdf = new File(getDownloadDir(), "other" + NONMEDIA_FILE_NAME);
         final File otherAppImg = new File(getDcimDir(), "other" + IMAGE_FILE_NAME);
         final File otherAppMusic = new File(getMusicDir(), "other" + AUDIO_FILE_NAME);
@@ -752,7 +760,9 @@ public class ScopedStorageTest {
 
     @Test
     public void testNoIsolatedStorageQueryOtherAppsFile() throws Exception {
-        assertThat(Environment.isExternalStorageLegacy()).isTrue();
+        if (BuildCompat.isAtLeastS()) {
+            assertThat(Environment.isExternalStorageLegacy()).isTrue();
+        }
         final File otherAppPdf = new File(getDownloadDir(), "other" + NONMEDIA_FILE_NAME);
         final File otherAppImg = new File(getDcimDir(), "other" + IMAGE_FILE_NAME);
         final File otherAppMusic = new File(getMusicDir(), "other" + AUDIO_FILE_NAME);
@@ -816,7 +826,9 @@ public class ScopedStorageTest {
     @Test
     public void testClearPackageData() throws Exception {
         // Check that the app does not have legacy external storage access
-        assertThat(Environment.isExternalStorageLegacy()).isFalse();
+        if (BuildCompat.isAtLeastS()) {
+            assertThat(Environment.isExternalStorageLegacy()).isFalse();
+        }
 
         pollForPermission(Manifest.permission.READ_EXTERNAL_STORAGE, /*granted*/ true);
 
