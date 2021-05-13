@@ -38,7 +38,7 @@ import kotlin.test.assertFailsWith
 class NotificationTemplateTest : NotificationTemplateTestBase() {
 
     fun testWideIcon_inCollapsedState_cappedTo16By9() {
-        val icon = Bitmap.createBitmap(200, 100, Bitmap.Config.ARGB_8888)
+        val icon = createBitmap(200, 100)
         val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_media_play)
                 .setContentTitle("Title")
@@ -53,7 +53,7 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
     }
 
     fun testWideIcon_inCollapsedState_canShowExact4By3() {
-        val icon = Bitmap.createBitmap(400, 300, Bitmap.Config.ARGB_8888)
+        val icon = createBitmap(400, 300)
         val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_media_play)
                 .setContentTitle("Title")
@@ -84,7 +84,7 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
     }
 
     fun testWideIcon_inCollapsedState_neverNarrowerThanSquare() {
-        val icon = Bitmap.createBitmap(200, 300, Bitmap.Config.ARGB_8888)
+        val icon = createBitmap(200, 300)
         val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_media_play)
                 .setContentTitle("Title")
@@ -97,7 +97,7 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
     }
 
     fun testWideIcon_inBigBaseState_cappedTo16By9() {
-        val icon = Bitmap.createBitmap(200, 100, Bitmap.Config.ARGB_8888)
+        val icon = createBitmap(200, 100)
         val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_media_play)
                 .setContentTitle("Title")
@@ -112,7 +112,7 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
     }
 
     fun testWideIcon_inBigBaseState_canShowExact4By3() {
-        val icon = Bitmap.createBitmap(400, 300, Bitmap.Config.ARGB_8888)
+        val icon = createBitmap(400, 300)
         val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_media_play)
                 .setContentTitle("Title")
@@ -127,7 +127,7 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
     }
 
     fun testWideIcon_inBigBaseState_neverNarrowerThanSquare() {
-        val icon = Bitmap.createBitmap(200, 300, Bitmap.Config.ARGB_8888)
+        val icon = createBitmap(200, 300)
         val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_media_play)
                 .setContentTitle("Title")
@@ -140,8 +140,8 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
     }
 
     fun testWideIcon_inBigPicture_cappedTo16By9() {
-        val picture = Bitmap.createBitmap(40, 30, Bitmap.Config.ARGB_8888)
-        val icon = Bitmap.createBitmap(200, 100, Bitmap.Config.ARGB_8888)
+        val picture = createBitmap(40, 30)
+        val icon = createBitmap(200, 100)
         val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_media_play)
                 .setContentTitle("Title")
@@ -157,8 +157,8 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
     }
 
     fun testWideIcon_inBigPicture_canShowExact4By3() {
-        val picture = Bitmap.createBitmap(40, 30, Bitmap.Config.ARGB_8888)
-        val icon = Bitmap.createBitmap(400, 300, Bitmap.Config.ARGB_8888)
+        val picture = createBitmap(40, 30)
+        val icon = createBitmap(400, 300)
         val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_media_play)
                 .setContentTitle("Title")
@@ -174,8 +174,8 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
     }
 
     fun testWideIcon_inBigPicture_neverNarrowerThanSquare() {
-        val picture = Bitmap.createBitmap(40, 30, Bitmap.Config.ARGB_8888)
-        val icon = Bitmap.createBitmap(200, 300, Bitmap.Config.ARGB_8888)
+        val picture = createBitmap(40, 30)
+        val icon = createBitmap(200, 300)
         val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_media_play)
                 .setContentTitle("Title")
@@ -189,7 +189,7 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
     }
 
     fun testWideIcon_inBigText_cappedTo16By9() {
-        val icon = Bitmap.createBitmap(200, 100, Bitmap.Config.ARGB_8888)
+        val icon = createBitmap(200, 100)
         val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_media_play)
                 .setContentTitle("Title")
@@ -205,7 +205,7 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
     }
 
     fun testWideIcon_inBigText_canShowExact4By3() {
-        val icon = Bitmap.createBitmap(400, 300, Bitmap.Config.ARGB_8888)
+        val icon = createBitmap(400, 300)
         val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_media_play)
                 .setContentTitle("Title")
@@ -221,7 +221,7 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
     }
 
     fun testWideIcon_inBigText_neverNarrowerThanSquare() {
-        val icon = Bitmap.createBitmap(200, 300, Bitmap.Config.ARGB_8888)
+        val icon = createBitmap(200, 300)
         val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_media_play)
                 .setContentTitle("Title")
@@ -235,7 +235,7 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
     }
 
     fun testBigPictureStyle_populatesExtrasCompatibly() {
-        val bitmap = Bitmap.createBitmap(40, 30, Bitmap.Config.ARGB_8888)
+        val bitmap = createBitmap(40, 30)
         val uri = Uri.parse("content://android.app.stubs.assets/picture_400_by_300.png")
         val iconWithUri = Icon.createWithContentUri(uri)
         val iconWithBitmap = Icon.createWithBitmap(bitmap)
@@ -303,7 +303,7 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
     }
 
     fun testPromoteBigPicture_withoutLargeIcon() {
-        val picture = Bitmap.createBitmap(40, 30, Bitmap.Config.ARGB_8888)
+        val picture = createBitmap(40, 30)
         val builder = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_media_play)
                 .setContentTitle("Title")
@@ -325,8 +325,8 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
     }
 
     fun testPromoteBigPicture_withLargeIcon() {
-        val picture = Bitmap.createBitmap(40, 30, Bitmap.Config.ARGB_8888)
-        val icon = Bitmap.createBitmap(80, 65, Bitmap.Config.ARGB_8888)
+        val picture = createBitmap(40, 30)
+        val icon = createBitmap(80, 65)
         val builder = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_media_play)
                 .setContentTitle("Title")
@@ -354,8 +354,8 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
     }
 
     fun testPromoteBigPicture_withBigLargeIcon() {
-        val picture = Bitmap.createBitmap(40, 30, Bitmap.Config.ARGB_8888)
-        val bigIcon = Bitmap.createBitmap(80, 75, Bitmap.Config.ARGB_8888)
+        val picture = createBitmap(40, 30)
+        val bigIcon = createBitmap(80, 75)
         val builder = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_media_play)
                 .setContentTitle("Title")
@@ -761,7 +761,7 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
 
     private fun View.bgContainsColor(@ColorInt color: Int): Boolean {
         val background = background ?: return false
-        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val bitmap = createBitmap(width, height)
         val canvas = Canvas(bitmap)
         background.draw(canvas)
         val maskedColor = color and 0x00ffffff
