@@ -37,6 +37,7 @@ import android.os.PatternMatcher;
 import android.platform.test.annotations.AppModeFull;
 import android.support.test.uiautomator.UiDevice;
 
+import androidx.test.filters.SdkSuppress;
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -460,6 +461,10 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
      */
     @Test
     public void testBuilderForWpa3EnterpriseWithStandardApi() {
+        if (!WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(mContext)) {
+            // Skip the test if wifi module version is older than S.
+            return;
+        }
         WifiNetworkSpecifier specifier1 = new WifiNetworkSpecifier.Builder()
                 .setSsid(WifiInfo.sanitizeSsid(sTestNetwork.SSID))
                 .setWpa3EnterpriseStandardModeConfig(new WifiEnterpriseConfig())
@@ -477,6 +482,10 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
      */
     @Test
     public void testBuilderForWpa3Enterprise192bit() {
+        if (!WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(mContext)) {
+            // Skip the test if wifi module version is older than S.
+            return;
+        }
         WifiEnterpriseConfig enterpriseConfig = new WifiEnterpriseConfig();
         enterpriseConfig.setEapMethod(WifiEnterpriseConfig.Eap.TLS);
         enterpriseConfig.setCaCertificate(CA_SUITE_B_ECDSA_CERT);
