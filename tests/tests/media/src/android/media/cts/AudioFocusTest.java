@@ -227,6 +227,10 @@ public class AudioFocusTest extends CtsAndroidTestCase {
         return context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
     }
 
+    /**
+     * Test delayed focus loss after fade out
+     * @throws Exception
+     */
     @AppModeFull(reason = "Instant apps cannot access the SD card")
     public void testAudioFocusRequestMediaGainLossWithPlayer() throws Exception {
         if (hasAutomotiveFeature(getContext())) {
@@ -288,6 +292,134 @@ public class AudioFocusTest extends CtsAndroidTestCase {
                 // TODO refactor FocusListener to use Monitor instead of sleeping here
                 Thread.sleep(fadeDuration);
             }
+            Thread.sleep(TEST_TIMING_TOLERANCE_MS);
+            assertEquals("Focus loss not dispatched", AudioManager.AUDIOFOCUS_LOSS,
+                    focusListeners[FOCUS_UNDER_TEST].getFocusChangeAndReset());
+
+        }
+        finally {
+            handler.getLooper().quit();
+            handlerThread.quitSafely();
+            if (mp != null) {
+                mp.release();
+            }
+            am.abandonAudioFocusForTest(focusRequests[FOCUS_SIMULATED], simFocusClientId);
+            am.abandonAudioFocusRequest(focusRequests[FOCUS_UNDER_TEST]);
+            getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
+        }
+    }
+
+    /**
+     * Test there is no delayed focus loss when focus loser is playing speech
+     * @throws Exception
+     */
+    @AppModeFull(reason = "Instant apps cannot access the SD card")
+    public void testAudioFocusRequestMediaGainLossWithSpeechPlayer() throws Exception {
+        if (hasAutomotiveFeature(getContext())) {
+            Log.i(TAG, "Test testAudioFocusRequestMediaGainLossWithSpeechPlayer "
+                    + "skipped: not required for Auto platform");
+            return;
+        }
+        doTwoFocusOwnerOnePlayerFocusLoss(
+                true /*playSpeech*/,
+                false /*speechFocus*/,
+                false /*pauseOnDuck*/);
+    }
+
+    /**
+     * Test there is no delayed focus loss when focus loser had requested focus with
+     * AudioAttributes with speech content type
+     * @throws Exception
+     */
+    @AppModeFull(reason = "Instant apps cannot access the SD card")
+    public void testAudioFocusRequestMediaGainLossWithSpeechFocusRequest() throws Exception {
+        if (hasAutomotiveFeature(getContext())) {
+            Log.i(TAG, "Test testAudioFocusRequestMediaGainLossWithSpeechPlayer "
+                    + "skipped: not required for Auto platform");
+            return;
+        }
+        doTwoFocusOwnerOnePlayerFocusLoss(
+                false /*playSpeech*/,
+                true /*speechFocus*/,
+                false /*pauseOnDuck*/);
+    }
+
+    /**
+     * Test there is no delayed focus loss when focus loser had requested focus specifying
+     * it pauses on duck
+     * @throws Exception
+     */
+    @AppModeFull(reason = "Instant apps cannot access the SD card")
+    public void testAudioFocusRequestMediaGainLossWithPauseOnDuckFocusRequest() throws Exception {
+        if (hasAutomotiveFeature(getContext())) {
+            Log.i(TAG, "Test testAudioFocusRequestMediaGainLossWithSpeechPlayer "
+                    + "skipped: not required for Auto platform");
+            return;
+        }
+        doTwoFocusOwnerOnePlayerFocusLoss(
+                false /*playSpeech*/,
+                false /*speechFocus*/,
+                true /*pauseOnDuck*/);
+    }
+
+    private void doTwoFocusOwnerOnePlayerFocusLoss(boolean playSpeech, boolean speechFocus,
+            boolean pauseOnDuck) throws Exception {
+        // for query of fade out duration and focus request/abandon test methods
+        getInstrumentation().getUiAutomation().adoptShellPermissionIdentity(
+                Manifest.permission.QUERY_AUDIO_STATE);
+
+        final int NB_FOCUS_OWNERS = 2;
+        final AudioFocusRequest[] focusRequests = new AudioFocusRequest[NB_FOCUS_OWNERS];
+        final FocusChangeListener[] focusListeners = new FocusChangeListener[NB_FOCUS_OWNERS];
+        // index of focus owner to be tested, has an active player
+        final int FOCUS_UNDER_TEST = 0;
+        // index of focus requester used to simulate a request coming from another client
+        // on a different UID than CTS
+        final int FOCUS_SIMULATED = 1;
+
+        final HandlerThread handlerThread = new HandlerThread(TAG);
+        handlerThread.start();
+        final Handler handler = new Handler(handlerThread.getLooper());
+
+        final AudioAttributes focusAttributes = new AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_MEDIA)
+                .setContentType(playSpeech ? AudioAttributes.CONTENT_TYPE_SPEECH
+                        : AudioAttributes.CONTENT_TYPE_MUSIC)
+                .build();
+        final AudioAttributes playerAttributes = new AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_MEDIA)
+                .setContentType(speechFocus ? AudioAttributes.CONTENT_TYPE_SPEECH
+                        : AudioAttributes.CONTENT_TYPE_MUSIC)
+                .build();
+        for (int focusIndex : new int[]{ FOCUS_UNDER_TEST, FOCUS_SIMULATED }) {
+            focusListeners[focusIndex] = new FocusChangeListener();
+            focusRequests[focusIndex] = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+                    .setAudioAttributes(focusIndex == FOCUS_UNDER_TEST ? playerAttributes
+                            : focusAttributes)
+                    .setWillPauseWhenDucked(pauseOnDuck)
+                    .setOnAudioFocusChangeListener(focusListeners[focusIndex], handler)
+                    .build();
+        }
+        final AudioManager am = new AudioManager(getContext());
+
+        MediaPlayer mp = null;
+        final String simFocusClientId = "fakeClientId";
+        try {
+            // set up the test conditions: a focus owner is playing media on a MediaPlayer
+            mp = createPreparedMediaPlayer(
+                    Uri.fromFile(new File(WorkDir.getMediaDirString() + "sine1khzs40dblong.mp3")),
+                    playerAttributes);
+            int res = am.requestAudioFocus(focusRequests[FOCUS_UNDER_TEST]);
+            assertEquals("real focus request failed",
+                    AudioManager.AUDIOFOCUS_REQUEST_GRANTED, res);
+            mp.start();
+            Thread.sleep(TEST_TIMING_TOLERANCE_MS);
+
+            res = am.requestAudioFocusForTest(focusRequests[FOCUS_SIMULATED],
+                    simFocusClientId, Integer.MAX_VALUE /*fakeClientUid*/, Build.VERSION_CODES.S);
+            assertEquals("test focus request failed",
+                    AudioManager.AUDIOFOCUS_REQUEST_GRANTED, res);
+
             Thread.sleep(TEST_TIMING_TOLERANCE_MS);
             assertEquals("Focus loss not dispatched", AudioManager.AUDIOFOCUS_LOSS,
                     focusListeners[FOCUS_UNDER_TEST].getFocusChangeAndReset());
