@@ -127,6 +127,7 @@ _SCENE_REQ = {
 SUB_CAMERA_TESTS = {
     'scene0': [
         'test_burst_capture',
+        'test_jitter',
         'test_metadata',
         'test_read_write',
         'test_sensor_events',
@@ -134,13 +135,15 @@ SUB_CAMERA_TESTS = {
         'test_unified_timestamps',
     ],
     'scene1_1': [
-        'test_exposure',
+        'test_burst_sameness_manual',
         'test_dng_noise_model',
+        'test_exposure',
         'test_linearity',
     ],
     'scene1_2': [
         'test_raw_exposure',
         'test_raw_sensitivity',
+        'test_yuv_plus_raw',
     ],
     'scene2_a': [
         'test_faces',
