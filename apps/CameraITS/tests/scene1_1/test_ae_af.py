@@ -68,13 +68,15 @@ class SingleATest(its_base_test.ItsBaseTest):
                                                      mono_camera=mono_camera)
 
         except error_util.CameraItsError:
-          logging.error('%s did not converge.', k)
+          raise AssertionError(f'{k} did not converge.')
 
         logging.debug('AWB gains: %s, xform: %s', str(awb_gains),
                       str(awb_xform))
         if three_a_req[0]:  # can report None for AF only
-          assert e, 'No valid exposure time returned even though do_ae.'
-          assert s, 'No valid sensitivity returned even though do_ae.'
+          if not e:
+            raise AssertionError('No valid exposure time returned for AE.')
+          if not s:
+            raise AssertionError('No valid sensitivity returned for AE.')
           logging.debug('AE sensitivity: %d, exposure: %dns', s, e)
         else:
           logging.debug('AE sensitivity: None, exposure: None')
@@ -83,22 +85,32 @@ class SingleATest(its_base_test.ItsBaseTest):
         else:
           logging.debug('AF fd: None')
         # check AWB values
-        assert len(awb_gains) == AWB_GAINS_LENGTH
+        if len(awb_gains) != AWB_GAINS_LENGTH:
+          raise AssertionError(f'Problem with AWB gains: {awb_gains}')
         for g in awb_gains:
-          assert not np.isnan(g)
-        assert len(awb_xform) == AWB_XFORM_LENGTH
+          if np.isnan(g):
+            raise AssertionError('Gain in AWB is NaN.')
+        if len(awb_xform) != AWB_XFORM_LENGTH:
+          raise AssertionError(f'Problem with AWB transform: {awb_xform}')
         for x in awb_xform:
-          assert not np.isnan(x)
-        assert np.isclose(awb_gains[G_CHANNEL], G_GAIN, G_GAIN_TOL)
+          if np.isnan(x):
+            raise AssertionError('Value in AWB transform is NaN.')
+        if not np.isclose(awb_gains[G_CHANNEL], G_GAIN, G_GAIN_TOL):
+          raise AssertionError(
+              f'AWB G channel mismatch. AWB(G): {awb_gains[G_CHANNEL]}, '
+              f'REF: {G_GAIN}, TOL: {G_GAIN_TOL}')
 
         # check AE values
         if k == 'full_3a' or k == 'ae':
-          assert s > 0
-          assert e > 0
+          if s < min(props['android.sensor.info.sensitivityRange']):
+            raise AssertionError(f'ISO is < minimum! ISO: {s}')
+          if e < min(props['android.sensor.info.exposureTimeRange']):
+            raise AssertionError(f'Exposure is < minimum! exp: {e}')
 
         # check AF values
         if k == 'full_3a' or k == 'af':
-          assert fd >= 0
+          if fd < 0:
+            raise AssertionError(f'Focal distance is < 0! fd: {fd}')
 
 if __name__ == '__main__':
   test_runner.main()
