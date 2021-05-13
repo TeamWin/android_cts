@@ -27,6 +27,7 @@ java_test_host {
         "platform-test-annotations-host",
         "compatibility-host-util",
         "truth-prebuilt",
+        "device-policy-log-verifier-util",
     ],
     // tag this module as a cts test artifact
     test_suites: [
