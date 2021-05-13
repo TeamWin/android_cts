@@ -882,7 +882,6 @@ public class KeyPairGeneratorTest extends AndroidTestCase {
                 .setCertificateSubject(certSubject)
                 .setCertificateNotBefore(certNotBefore)
                 .setCertificateNotAfter(certNotAfter)
-                .setUnlockedDeviceRequired(true)
                 .build());
         KeyPair keyPair = generator.generateKeyPair();
         assertGeneratedKeyPairAndSelfSignedCertificate(
@@ -952,7 +951,6 @@ public class KeyPairGeneratorTest extends AndroidTestCase {
                 .setCertificateSubject(certSubject)
                 .setCertificateNotBefore(certNotBefore)
                 .setCertificateNotAfter(certNotAfter)
-                .setUnlockedDeviceRequired(true)
                 .setIsStrongBoxBacked(true)
                 .build());
         KeyPair keyPair = generator.generateKeyPair();
@@ -1023,7 +1021,6 @@ public class KeyPairGeneratorTest extends AndroidTestCase {
                 .setCertificateSubject(certSubject)
                 .setCertificateNotBefore(certNotBefore)
                 .setCertificateNotAfter(certNotAfter)
-                .setUnlockedDeviceRequired(true)
                 .build());
         KeyPair keyPair = generator.generateKeyPair();
         assertGeneratedKeyPairAndSelfSignedCertificate(
@@ -1112,7 +1109,6 @@ public class KeyPairGeneratorTest extends AndroidTestCase {
                 .setCertificateSubject(certSubject)
                 .setCertificateNotBefore(certNotBefore)
                 .setCertificateNotAfter(certNotAfter)
-                .setUnlockedDeviceRequired(true)
                 .setIsStrongBoxBacked(true)
                 .build());
         KeyPair keyPair = generator.generateKeyPair();
