@@ -283,7 +283,11 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
         pushUpdateFileToDevice("wrongPayload.zip");
         pushUpdateFileToDevice("wrongHash.zip");
         pushUpdateFileToDevice("wrongSize.zip");
-        executeDeviceTestClass(".systemupdate.InstallUpdateTest");
+
+        // This test will run as user 0 since there will be {@link InstallSystemUpdateCallback}
+        // in the test and it's not necessary to run from secondary user.
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".systemupdate.InstallUpdateTest",
+                mDeviceOwnerUserId);
     }
 
     @Test
