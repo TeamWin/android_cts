@@ -40,7 +40,9 @@ import static android.server.wm.app.Components.ALT_LAUNCHING_ACTIVITY;
 import static android.server.wm.app.Components.BROADCAST_RECEIVER_ACTIVITY;
 import static android.server.wm.app.Components.LAUNCHING_ACTIVITY;
 import static android.server.wm.app.Components.NON_RESIZEABLE_ACTIVITY;
+import static android.server.wm.app.Components.NO_HISTORY_ACTIVITY;
 import static android.server.wm.app.Components.RESIZEABLE_ACTIVITY;
+import static android.server.wm.app.Components.SHOW_WHEN_LOCKED_ACTIVITY;
 import static android.server.wm.app.Components.SINGLE_TOP_ACTIVITY;
 import static android.server.wm.app.Components.TEST_ACTIVITY;
 import static android.server.wm.app.Components.TOP_ACTIVITY;
@@ -997,6 +999,37 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
 
         final int taskId2 = mWmState.getTaskByActivity(SINGLE_TOP_ACTIVITY).getTaskId();
         assertEquals("Activity must be in the same task.", taskId, taskId2);
+        assertEquals("Activity is the only member of its task", 1,
+                mWmState.getActivityCountInTask(taskId2, null));
+    }
+
+    @Test
+    public void testLaunchNoHistoryActivityOnNewDisplay() {
+        launchActivity(NO_HISTORY_ACTIVITY);
+        waitAndAssertTopResumedActivity(NO_HISTORY_ACTIVITY, DEFAULT_DISPLAY,
+                "Activity launched on primary display and on top");
+
+        final int taskId = mWmState.getTaskByActivity(NO_HISTORY_ACTIVITY).getTaskId();
+
+        final PrimaryDisplayStateSession displayStateSession =
+                mObjectTracker.manage(new PrimaryDisplayStateSession());
+
+        // Create new virtual display.
+        final DisplayContent newDisplay = createManagedVirtualDisplaySession()
+                .setSimulateDisplay(true)
+                .createDisplay();
+
+        launchActivityOnDisplay(NO_HISTORY_ACTIVITY, newDisplay.mId);
+
+        // Check that the activity is resumed on the external display
+        waitAndAssertActivityStateOnDisplay(NO_HISTORY_ACTIVITY, STATE_RESUMED, newDisplay.mId,
+                "Activity launched on external display must be resumed");
+        final int taskId2 = mWmState.getTaskByActivity(NO_HISTORY_ACTIVITY).getTaskId();
+
+        displayStateSession.turnScreenOff();
+        launchActivity(SHOW_WHEN_LOCKED_ACTIVITY);
+
+        assertNotEquals("Activity must not be in the same task.", taskId, taskId2);
         assertEquals("Activity is the only member of its task", 1,
                 mWmState.getActivityCountInTask(taskId2, null));
     }
