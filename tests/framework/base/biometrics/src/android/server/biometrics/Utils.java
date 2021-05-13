@@ -31,6 +31,8 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.android.server.biometrics.nano.BiometricServiceStateProto;
+
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -47,6 +49,9 @@ public class Utils {
 
     private static final String TAG = "BiometricTestUtils";
     private static final String KEYSTORE_PROVIDER = "AndroidKeyStore";
+
+    /** adb command for dumping the biometric proto */
+    public static final String DUMPSYS_BIOMETRIC = "dumpsys biometric --proto";
 
     /**
      * Retrieves the current SensorStates.
@@ -97,6 +102,21 @@ public class Utils {
                 .setRetryIntervalMs(500)
                 .setRetryLimit(20)
                 .setOnFailure(onFailure));
+    }
+
+    /**
+     * Retrieves the current states of all biometric sensor services (e.g. FingerprintService,
+     * FaceService, etc).
+     *
+     * Note that the states are retrieved from BiometricService, instead of individual services.
+     * This is because 1) BiometricService is the source of truth for all public API-facing things,
+     * and 2) This to include other information, such as UI states, etc as well.
+     */
+    @NonNull
+    public static BiometricServiceState getBiometricServiceCurrentState() throws Exception {
+        final byte[] dump = Utils.executeShellCommand(DUMPSYS_BIOMETRIC);
+        final BiometricServiceStateProto proto = BiometricServiceStateProto.parseFrom(dump);
+        return BiometricServiceState.parseFrom(proto);
     }
 
     /**
