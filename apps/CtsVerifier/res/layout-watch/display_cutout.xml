@@ -18,17 +18,18 @@
 
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:padding="20dp">
 
         <TextView
             android:id="@+id/enable_buttons_desc"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_centerInParent="true"
+            android:layout_below="@id/top_buttons"
             android:layout_marginLeft="30dp"
             android:layout_marginRight="30dp"
             android:text="@string/display_cutout_test_instruction"
-            android:textSize="20dp" />
+            android:textSize="12dp" />
 
         <include
             android:id="@+id/pass_fail_buttons"
