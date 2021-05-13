@@ -370,7 +370,7 @@ public class RoleManagerTest {
 
     @Nullable
     private UiObject2 findDontAskAgainCheck(boolean expected) throws UiObjectNotFoundException {
-        BySelector selector = By.text("Don\u2019t ask again");
+        BySelector selector = By.res("com.android.permissioncontroller:id/dont_ask_again");
         return expected
                 ? waitFindObject(selector)
                 : waitFindObjectOrNull(selector, UNEXPECTED_TIMEOUT_MILLIS);
