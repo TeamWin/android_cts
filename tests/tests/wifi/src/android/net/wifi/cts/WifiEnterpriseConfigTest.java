@@ -916,12 +916,8 @@ public class WifiEnterpriseConfigTest extends WifiJUnit3TestBase {
         assertThat(copy.getRealm()).isEqualTo(REALM);
     }
 
-    /**
-     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
-     */
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
     public void testIsEnterpriseConfigServerCertNotEnabled() {
-        if (!hasWifi()) {
+        if (!hasWifi() || !WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(getContext())) {
             return;
         }
         WifiEnterpriseConfig baseConfig = new WifiEnterpriseConfig();
@@ -947,34 +943,22 @@ public class WifiEnterpriseConfigTest extends WifiJUnit3TestBase {
         assertFalse(noValidationConfig.isEapMethodServerCertUsed());
     }
 
-    /**
-     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
-     */
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
     public void testIsEnterpriseConfigServerCertEnabledWithPeap() {
-        if (!hasWifi()) {
+        if (!hasWifi() || !WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(getContext())) {
             return;
         }
         testIsEnterpriseConfigServerCertEnabled(Eap.PEAP);
     }
 
-    /**
-     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
-     */
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
     public void testIsEnterpriseConfigServerCertEnabledWithTls() {
-        if (!hasWifi()) {
+        if (!hasWifi() || !WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(getContext())) {
             return;
         }
         testIsEnterpriseConfigServerCertEnabled(Eap.TLS);
     }
 
-    /**
-     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
-     */
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
     public void testIsEnterpriseConfigServerCertEnabledWithTTLS() {
-        if (!hasWifi()) {
+        if (!hasWifi() || !WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(getContext())) {
             return;
         }
         testIsEnterpriseConfigServerCertEnabled(Eap.TTLS);

@@ -23,6 +23,7 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.os.Build
 import android.net.Uri
+import android.platform.test.annotations.AppModeFull
 import android.provider.DeviceConfig.NAMESPACE_APP_HIBERNATION
 import android.provider.Settings
 import android.support.test.uiautomator.By
@@ -133,6 +134,7 @@ class AppHibernationIntegrationTest {
         }
     }
 
+    @AppModeFull(reason = "Uses application details settings")
     @Test
     fun testAppInfo_RemovePermissionsAndFreeUpSpaceToggleExists() {
         withDeviceConfig(NAMESPACE_APP_HIBERNATION, "app_hibernation_enabled", "true") {

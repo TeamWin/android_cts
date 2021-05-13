@@ -21,6 +21,9 @@ import static com.android.server.appsearch.testing.AppSearchTestUtils.doGet;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.testng.Assert.expectThrows;
+
+import android.app.UiAutomation;
 import android.app.appsearch.AppSearchBatchResult;
 import android.app.appsearch.AppSearchManager;
 import android.app.appsearch.AppSearchResult;
@@ -31,8 +34,10 @@ import android.app.appsearch.GetByDocumentIdRequest;
 import android.app.appsearch.PackageIdentifier;
 import android.app.appsearch.PutDocumentsRequest;
 import android.app.appsearch.SetSchemaRequest;
+import android.os.Bundle;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.server.appsearch.testing.AppSearchSessionShimImpl;
 
@@ -43,12 +48,15 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+
 @RunWith(AndroidJUnit4.class)
 public class AppSearchDeviceTest {
 
     private static final String DB_NAME = "";
     private static final String NAMESPACE = "namespace";
     private static final String ID = "id";
+    private static final String USER_ID_KEY = "userId";
     private static final AppSearchSchema SCHEMA = new AppSearchSchema.Builder("testSchema")
             .addProperty(new AppSearchSchema.StringPropertyConfig.Builder("subject")
                     .setCardinality(AppSearchSchema.PropertyConfig.CARDINALITY_OPTIONAL)
@@ -77,11 +85,13 @@ public class AppSearchDeviceTest {
             "3D7A1AAE7AE8B9949BE93E071F3702AA38695B0F99B5FC4B2E8B364AC78FFDB2");
 
     private AppSearchSessionShim mDb;
+    private UiAutomation mUiAutomation;
 
     @Before
     public void setUp() throws Exception {
         mDb = AppSearchSessionShimImpl.createSearchSession(
                 new AppSearchManager.SearchContext.Builder(DB_NAME).build()).get();
+        mUiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
     }
 
     @Test
@@ -121,5 +131,22 @@ public class AppSearchDeviceTest {
     @Test
     public void clearTestData() throws Exception {
         mDb.setSchema(new SetSchemaRequest.Builder().setForceOverride(true).build()).get();
+    }
+
+    @Test
+    public void createSessionInStoppedUser() {
+        mUiAutomation.adoptShellPermissionIdentity(
+                "android.permission.INTERACT_ACROSS_USERS_FULL");
+        try {
+            Bundle args = InstrumentationRegistry.getArguments();
+            int userId = Integer.parseInt(args.getString(USER_ID_KEY));
+            ExecutionException exception = expectThrows(ExecutionException.class, () ->
+                    AppSearchSessionShimImpl.createSearchSession(
+                            new AppSearchManager.SearchContext.Builder(DB_NAME).build(),
+                            userId).get());
+            assertThat(exception.getMessage()).contains("is locked or not running.");
+        } finally {
+            mUiAutomation.dropShellPermissionIdentity();
+        }
     }
 }
