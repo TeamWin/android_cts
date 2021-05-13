@@ -34,6 +34,7 @@ import android.hardware.biometrics.SensorProperties;
 import android.hardware.fingerprint.FingerprintManager;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
+import android.server.biometrics.BiometricServiceState;
 import android.server.biometrics.SensorStates;
 import android.server.biometrics.Utils;
 import android.server.wm.ActivityManagerTestBase;
@@ -47,6 +48,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.android.server.biometrics.nano.SensorServiceStateProto;
+import com.android.server.biometrics.nano.SensorStateProto;
 
 import org.junit.After;
 import org.junit.Before;
@@ -272,16 +274,22 @@ public class FingerprintServiceTest extends ActivityManagerTestBase {
         assertEquals(0, callbackState.mErrorsReceived.size());
 
         // Send an acquire message
-        testSessions.get(0).notifyAcquired(userId, FingerprintManager.FINGERPRINT_ACQUIRED_PARTIAL);
-        mInstrumentation.waitForIdleSync();
-        callbackState = getCallbackState(journal);
-        assertNotNull(callbackState);
-        assertEquals(1, callbackState.mNumAuthRejected);
-        assertEquals(0, callbackState.mNumAuthAccepted);
-        assertEquals(1, callbackState.mAcquiredReceived.size());
-        assertEquals(FingerprintManager.FINGERPRINT_ACQUIRED_PARTIAL,
-                (int) callbackState.mAcquiredReceived.get(0));
-        assertEquals(0, callbackState.mErrorsReceived.size());
+        // skip this check on devices with UDFPS because they prompt to try again
+        // and do not dispatch an acquired event via BiometricPrompt
+        final boolean verifyPartial = !hasUdfps();
+        if (verifyPartial) {
+            testSessions.get(0).notifyAcquired(userId,
+                    FingerprintManager.FINGERPRINT_ACQUIRED_PARTIAL);
+            mInstrumentation.waitForIdleSync();
+            callbackState = getCallbackState(journal);
+            assertNotNull(callbackState);
+            assertEquals(1, callbackState.mNumAuthRejected);
+            assertEquals(0, callbackState.mNumAuthAccepted);
+            assertEquals(1, callbackState.mAcquiredReceived.size());
+            assertEquals(FingerprintManager.FINGERPRINT_ACQUIRED_PARTIAL,
+                    (int) callbackState.mAcquiredReceived.get(0));
+            assertEquals(0, callbackState.mErrorsReceived.size());
+        }
 
         // Send an error
         testSessions.get(0).notifyError(userId,
@@ -291,9 +299,13 @@ public class FingerprintServiceTest extends ActivityManagerTestBase {
         assertNotNull(callbackState);
         assertEquals(1, callbackState.mNumAuthRejected);
         assertEquals(0, callbackState.mNumAuthAccepted);
-        assertEquals(1, callbackState.mAcquiredReceived.size());
-        assertEquals(FingerprintManager.FINGERPRINT_ACQUIRED_PARTIAL,
-                (int) callbackState.mAcquiredReceived.get(0));
+        if (verifyPartial) {
+            assertEquals(1, callbackState.mAcquiredReceived.size());
+            assertEquals(FingerprintManager.FINGERPRINT_ACQUIRED_PARTIAL,
+                    (int) callbackState.mAcquiredReceived.get(0));
+        } else {
+            assertEquals(0, callbackState.mAcquiredReceived.size());
+        }
         assertEquals(1, callbackState.mErrorsReceived.size());
         assertEquals(FingerprintManager.FINGERPRINT_ERROR_CANCELED,
                 (int) callbackState.mErrorsReceived.get(0));
@@ -305,5 +317,10 @@ public class FingerprintServiceTest extends ActivityManagerTestBase {
         for (BiometricTestSession session : testSessions) {
             session.close();
         }
+    }
+
+    private boolean hasUdfps() throws Exception {
+        final BiometricServiceState state = Utils.getBiometricServiceCurrentState();
+        return state.mSensorStates.containsModalityFlag(SensorStateProto.FINGERPRINT_UDFPS);
     }
 }

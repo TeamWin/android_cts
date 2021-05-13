@@ -71,21 +71,24 @@ public class SensorStates {
     public static class SensorState {
         private final SchedulerState mSchedulerState;
         private final int mModality;
+        private final int[] mModalityFlags;
         private final int mCurrentStrength;
         @NonNull private final Map<Integer, UserState> mUserStates;
         private final boolean mResetLockoutRequiresHardwareAuthToken;
         private final boolean mResetLockoutRequiresChallenge;
 
-        public SensorState(@NonNull SchedulerState schedulerState, int modality,
+        public SensorState(@NonNull SchedulerState schedulerState,
+                int modality, int[] modalityFlags,
                 int currentStrength, @NonNull Map<Integer, UserState> userStates,
                 boolean resetLockoutRequiresHardwareAuthToken,
                 boolean resetLockoutRequiresChallenge) {
-            this.mSchedulerState = schedulerState;
-            this.mModality = modality;
-            this.mCurrentStrength = currentStrength;
-            this.mUserStates = userStates;
-            this.mResetLockoutRequiresHardwareAuthToken = resetLockoutRequiresHardwareAuthToken;
-            this.mResetLockoutRequiresChallenge = resetLockoutRequiresChallenge;
+            mSchedulerState = schedulerState;
+            mModality = modality;
+            mModalityFlags = modalityFlags;
+            mCurrentStrength = currentStrength;
+            mUserStates = userStates;
+            mResetLockoutRequiresHardwareAuthToken = resetLockoutRequiresHardwareAuthToken;
+            mResetLockoutRequiresChallenge = resetLockoutRequiresChallenge;
         }
 
         public SchedulerState getSchedulerState() {
@@ -98,6 +101,16 @@ public class SensorStates {
 
         public int getModality() {
             return mModality;
+        }
+
+        public boolean hasModalityFlag(int flag) {
+            for (int f : mModalityFlags) {
+                if (f == flag) {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         public int getCurrentStrength() {
@@ -138,7 +151,8 @@ public class SensorStates {
             final SchedulerState schedulerState =
                     SchedulerState.parseFrom(sensorStateProto.scheduler);
             final SensorState sensorState = new SensorState(schedulerState,
-                    sensorStateProto.modality, sensorStateProto.currentStrength, userStates,
+                    sensorStateProto.modality, sensorStateProto.modalityFlags,
+                    sensorStateProto.currentStrength, userStates,
                     sensorStateProto.resetLockoutRequiresHardwareAuthToken,
                     sensorStateProto.resetLockoutRequiresChallenge);
             sensorStates.put(sensorStateProto.sensorId, sensorState);
@@ -179,6 +193,16 @@ public class SensorStates {
     public boolean containsModality(int modality) {
         for (SensorState state : sensorStates.values()) {
             if (state.getModality() == modality) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public boolean containsModalityFlag(int flag) {
+        for (SensorState state : sensorStates.values()) {
+            if (state.hasModalityFlag(flag)) {
                 return true;
             }
         }
