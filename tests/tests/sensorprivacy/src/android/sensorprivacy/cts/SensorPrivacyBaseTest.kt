@@ -212,6 +212,25 @@ abstract class SensorPrivacyBaseTest(
         finishTestApp()
     }
 
+    @Test
+    fun testOpFinishedWhileToggleOn() {
+        setSensor(false)
+        startTestApp()
+        eventually {
+            assertOpRunning(true)
+        }
+        setSensor(true)
+        Thread.sleep(5000)
+        eventually {
+            assertOpRunning(false)
+        }
+        finishTestApp()
+        Thread.sleep(1000)
+        setSensor(false)
+        Thread.sleep(1000)
+        assertOpRunning(false)
+    }
+
     private fun startTestApp() {
         val intent = Intent(MIC_CAM_ACTIVITY_ACTION)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
