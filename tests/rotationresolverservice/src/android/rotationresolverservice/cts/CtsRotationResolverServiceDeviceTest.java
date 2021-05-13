@@ -61,6 +61,7 @@ public class CtsRotationResolverServiceDeviceTest {
     private static final String FAKE_PACKAGE_NAME = "package_name";
     private static final boolean FAKE_SHOULD_USE_CAMERA = true;
     private static final long FAKE_TIME_OUT = 1000L;
+    private static final long TEMPORARY_SERVICE_DURATION = 5000L;
 
     private final boolean isTestable =
             !TextUtils.isEmpty(getRotationResolverServiceComponent());
@@ -168,11 +169,11 @@ public class CtsRotationResolverServiceDeviceTest {
     }
 
     private void setTestableRotationResolverService(String service) {
-        runShellCommand("cmd resolver set-testing-package " + service);
+        runShellCommand("cmd resolver set-temporary-service %s %s", service, TEMPORARY_SERVICE_DURATION);
     }
 
     private void clearTestableRotationResolverService() {
-        runShellCommand("cmd resolver clear-testing-package");
+        runShellCommand("cmd resolver set-temporary-service");
     }
 
 }
