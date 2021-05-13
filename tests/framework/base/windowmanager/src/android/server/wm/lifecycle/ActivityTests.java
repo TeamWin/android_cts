@@ -36,6 +36,7 @@ import static org.junit.Assert.assertFalse;
 import android.app.Activity;
 import android.platform.test.annotations.Presubmit;
 
+import androidx.test.filters.FlakyTest;
 import androidx.test.filters.MediumTest;
 
 import org.junit.Test;
@@ -120,6 +121,7 @@ public class ActivityTests extends ActivityLifecycleClientTestBase {
      * for root of task. This version verifies lifecycle when top activity is translucent
      */
     @Test
+    @FlakyTest(bugId = 186608789)
     public void testFinishTask_FromRoot_TranslucentOnTop() throws Exception {
         final Class<? extends Activity> rootActivityClass = CallbackTrackingActivity.class;
         final Activity rootActivity = launchActivityAndWait(rootActivityClass);

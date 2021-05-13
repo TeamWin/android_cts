@@ -43,6 +43,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.FlakyTest;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
@@ -59,6 +60,7 @@ import java.util.stream.IntStream;
 
 @Presubmit
 @RunWith(AndroidJUnit4.class)
+@FlakyTest(bugId = 186608789)
 public class DragDropTest extends WindowManagerTestBase {
     static final String TAG = "DragDropTest";
 
