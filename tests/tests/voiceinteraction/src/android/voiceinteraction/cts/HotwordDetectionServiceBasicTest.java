@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.content.Intent;
 import android.platform.test.annotations.AppModeFull;
+import android.service.voice.HotwordDetectionService;
 import android.voiceinteraction.common.Utils;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -37,6 +38,12 @@ import org.junit.runner.RunWith;
 public final class HotwordDetectionServiceBasicTest
         extends AbstractVoiceInteractionBasicTestCase {
     static final String TAG = "HotwordDetectionServiceBasicTest";
+
+    @Test
+    public void testHotwordDetectionService_getMaxCustomInitializationStatus()
+            throws Throwable {
+        assertThat(HotwordDetectionService.getMaxCustomInitializationStatus()).isEqualTo(2);
+    }
 
     @Test
     public void testHotwordDetectionService_validHotwordDetectionComponentName_triggerSuccess()
