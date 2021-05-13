@@ -133,7 +133,8 @@ public class ASurfaceControlTestActivity extends Activity {
                 swBitmap.getHeight());
         swBitmap.recycle();
 
-        assertTrue(success);
+        assertTrue("Actual matched pixels:" + numMatchingPixels
+                + " Bitmap size:" + swBitmap.getWidth() + "x" + swBitmap.getHeight(), success);
     }
 
     public abstract static class PixelChecker {

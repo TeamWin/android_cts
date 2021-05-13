@@ -82,19 +82,10 @@ public class PropertyUtil {
      * Return the first API level for this product. If the read-only property is unset,
      * this means the first API level is the current API level, and the current API level
      * is returned.
-     * If vendor partition has older API level than the first API level, this is a GRF
-     * device and returns the vendor API level, instead.
      */
     public static int getFirstApiLevel() {
         int firstApiLevel = getPropertyInt(FIRST_API_LEVEL);
-        if (firstApiLevel == INT_VALUE_IF_UNSET) {
-            return Build.VERSION.SDK_INT;
-        }
-        int vendorApiLevel = getVendorApiLevel();
-        if (firstApiLevel > vendorApiLevel) {
-            return vendorApiLevel;
-        }
-        return firstApiLevel;
+        return (firstApiLevel == INT_VALUE_IF_UNSET) ? Build.VERSION.SDK_INT : firstApiLevel;
     }
 
     /**

@@ -17,7 +17,6 @@
 package com.android.tests.stagedinstall;
 
 import static com.android.cts.install.lib.InstallUtils.assertStatusSuccess;
-import static com.android.cts.install.lib.InstallUtils.getInstalledVersion;
 import static com.android.cts.install.lib.InstallUtils.getPackageInstaller;
 import static com.android.cts.shim.lib.ShimPackage.DIFFERENT_APEX_PACKAGE_NAME;
 import static com.android.cts.shim.lib.ShimPackage.NOT_PRE_INSTALL_APEX_PACKAGE_NAME;
@@ -162,6 +161,9 @@ public class StagedInstallTest {
     private static final TestApp Apex2UnsignedPayload = new TestApp(
             "StagedInstallTestApexV2_UnsignedPayload", SHIM_APEX_PACKAGE_NAME, 1,
             /*isApex*/true, "com.android.apex.cts.shim.v2_unsigned_payload.apex");
+    private static final TestApp Apex2SignPayloadWithDifferentKey = new TestApp(
+            "StagedInstallTestApexV2_SignPayloadWithDifferentKey", SHIM_APEX_PACKAGE_NAME, 1,
+            /*isApex*/true, "com.android.apex.cts.shim.v2_sign_payload_with_different_key.apex");
 
     @Before
     public void adoptShellPermissions() {
@@ -1188,6 +1190,19 @@ public class StagedInstallTest {
         assertThat(sessionInfo).isStagedSessionFailed();
         assertThat(sessionInfo.getStagedSessionErrorMessage())
                 .contains("AVB footer verification failed");
+    }
+
+    /**
+     * Should fail to verify apex signed payload with a different key
+     */
+    @Test
+    public void testApexSignPayloadWithDifferentKeyFailsVerification() throws Exception {
+        int sessionId = stageSingleApk(
+                Apex2SignPayloadWithDifferentKey).assertSuccessful().getSessionId();
+        PackageInstaller.SessionInfo sessionInfo = waitForBroadcast(sessionId);
+        assertThat(sessionInfo).isStagedSessionFailed();
+        assertThat(sessionInfo.getStagedSessionErrorMessage())
+                .contains("public key doesn't match the pre-installed one");
     }
 
     /**
