@@ -32,6 +32,8 @@ import com.android.tradefed.testtype.IBuildReceiver;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class PackageInstallerV2StatsTests extends DeviceTestCase implements IBuildReceiver {
     private static final String FEATURE_INCREMENTAL_DELIVERY = "android.software.incremental_delivery";
@@ -80,6 +82,8 @@ public class PackageInstallerV2StatsTests extends DeviceTestCase implements IBui
         assertEquals(1, report.getReturnCode());
         assertTrue(report.getDurationMillis() > 0);
         assertEquals(getTestFileSize(TEST_INSTALL_APK), report.getApksSizeBytes());
+        assertTrue(report.getUid() != 0);
+        assertEquals(getAppUid(TEST_INSTALL_PACKAGE), report.getUid());
     }
 
     public void testPackageInstallerV2MetricsReportedForSplits() throws Throwable {
@@ -94,6 +98,8 @@ public class PackageInstallerV2StatsTests extends DeviceTestCase implements IBui
         assertEquals(
                 getTestFileSize(TEST_INSTALL_APK_BASE) + getTestFileSize(TEST_INSTALL_APK_SPLIT),
                 report.getApksSizeBytes());
+        assertTrue(report.getUid() != 0);
+        assertEquals(getAppUid(TEST_INSTALL_PACKAGE), report.getUid());
     }
 
     private long getTestFileSize(String fileName) throws Exception {
@@ -145,6 +151,19 @@ public class PackageInstallerV2StatsTests extends DeviceTestCase implements IBui
         assertTrue(getDevice().pushFile(apk, remoteApkPath));
         assertTrue(getDevice().pushFile(signature, remoteSignaturePath));
         return remoteApkPath;
+    }
+
+    protected int getAppUid(String pkgName) throws Exception {
+        final int currentUser = getDevice().getCurrentUser();
+        final String uidLine = getDevice().executeShellCommand(
+                "cmd package list packages -U --user " + currentUser + " " + pkgName);
+        final Pattern pattern = Pattern.compile("package:" + pkgName + " uid:(\\d+)");
+        final Matcher matcher = pattern.matcher(uidLine);
+        if (matcher.find()) {
+            return Integer.parseInt(matcher.group(1));
+        } else {
+            return -1;
+        }
     }
 
 }
