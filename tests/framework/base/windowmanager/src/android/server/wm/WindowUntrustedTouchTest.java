@@ -67,6 +67,7 @@ import android.widget.Toast;
 
 import androidx.annotation.AnimRes;
 import androidx.annotation.Nullable;
+import androidx.test.filters.FlakyTest;
 import androidx.test.rule.ActivityTestRule;
 
 import com.android.compatibility.common.util.AppOpsUtils;
@@ -520,6 +521,7 @@ public class WindowUntrustedTouchTest {
     }
 
     @Test
+    @FlakyTest(bugId = 186608789)
     public void testWhenTwoActivityWindowsFromDifferentAppsTogetherBelowThreshold_blocksTouch()
             throws Throwable {
         addActivityOverlay(APP_A, /* opacity */ .7f);
