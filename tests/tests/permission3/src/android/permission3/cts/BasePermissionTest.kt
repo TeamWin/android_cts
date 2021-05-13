@@ -117,15 +117,6 @@ abstract class BasePermissionTest {
         }
     }
 
-    protected fun hasObject(selector: BySelector): Boolean {
-        return hasObject(selector, 10_000)
-    }
-
-    protected fun hasObject(selector: BySelector, timeoutMillis: Long): Boolean {
-        waitForIdle()
-        return null != UiAutomatorUtils.waitFindObjectOrNull(selector, timeoutMillis)
-    }
-
     protected fun waitFindObject(selector: BySelector): UiObject2 {
         waitForIdle()
         return UiAutomatorUtils.waitFindObject(selector)
@@ -134,6 +125,11 @@ abstract class BasePermissionTest {
     protected fun waitFindObject(selector: BySelector, timeoutMillis: Long): UiObject2 {
         waitForIdle()
         return UiAutomatorUtils.waitFindObject(selector, timeoutMillis)
+    }
+
+    protected fun waitFindObjectOrNull(selector: BySelector, timeoutMillis: Long): UiObject2? {
+        waitForIdle()
+        return UiAutomatorUtils.waitFindObjectOrNull(selector, timeoutMillis)
     }
 
     protected fun click(selector: BySelector, timeoutMillis: Long = 20_000) {
