@@ -3508,11 +3508,13 @@ public class CameraTestUtils extends Assert {
         return zoomRatios;
     }
 
+    private static final int PERFORMANCE_CLASS_S = Build.VERSION_CODES.R + 1;
+
     /**
      * Check whether this mobile device is S performance class as defined in CDD
      */
     public static boolean isSPerfClass() {
-        return Build.VERSION.MEDIA_PERFORMANCE_CLASS == Build.VERSION_CODES.S;
+        return Build.VERSION.MEDIA_PERFORMANCE_CLASS == PERFORMANCE_CLASS_S;
     }
 
     /**
