@@ -18,10 +18,14 @@ package android.net.vcn.cts;
 
 import static android.net.NetworkCapabilities.NET_CAPABILITY_DUN;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET;
+import static android.net.ipsec.ike.IkeSessionParams.IKE_OPTION_MOBIKE;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
+import android.net.ipsec.ike.IkeSessionParams;
+import android.net.ipsec.ike.IkeTunnelConnectionParams;
 import android.net.vcn.VcnGatewayConnectionConfig;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -75,5 +79,18 @@ public class VcnGatewayConnectionConfigTest extends VcnTestBase {
 
         assertArrayEquals(
                 new int[] {NET_CAPABILITY_INTERNET}, gatewayConnConfig.getExposedCapabilities());
+    }
+
+    @Test
+    public void testBuildWithoutMobikeEnabled() {
+        final IkeSessionParams ikeParams =
+                getIkeSessionParamsBase().removeIkeOption(IKE_OPTION_MOBIKE).build();
+        final IkeTunnelConnectionParams tunnelParams = buildTunnelConnectionParams(ikeParams);
+
+        try {
+            new VcnGatewayConnectionConfig.Builder(VCN_GATEWAY_CONNECTION_NAME, tunnelParams);
+            fail("Expected exception if MOBIKE not configured");
+        } catch (IllegalArgumentException e) {
+        }
     }
 }

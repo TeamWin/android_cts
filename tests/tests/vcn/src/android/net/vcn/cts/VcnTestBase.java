@@ -16,6 +16,7 @@
 
 package android.net.vcn.cts;
 
+import static android.net.ipsec.ike.IkeSessionParams.IKE_OPTION_MOBIKE;
 import static android.net.ipsec.ike.SaProposal.DH_GROUP_2048_BIT_MODP;
 import static android.net.ipsec.ike.SaProposal.ENCRYPTION_ALGORITHM_AES_GCM_12;
 import static android.net.ipsec.ike.SaProposal.PSEUDORANDOM_FUNCTION_AES128_XCBC;
@@ -30,6 +31,24 @@ import android.net.ipsec.ike.TunnelModeChildSessionParams;
 
 public class VcnTestBase {
     protected static IkeTunnelConnectionParams buildTunnelConnectionParams() {
+        final IkeSessionParams ikeParams = getIkeSessionParamsBase().build();
+        return buildTunnelConnectionParams(ikeParams);
+    }
+
+    protected static IkeTunnelConnectionParams buildTunnelConnectionParams(
+            IkeSessionParams ikeParams) {
+        final ChildSaProposal childProposal =
+                new ChildSaProposal.Builder()
+                        .addEncryptionAlgorithm(
+                                ENCRYPTION_ALGORITHM_AES_GCM_12, SaProposal.KEY_LEN_AES_128)
+                        .build();
+        final TunnelModeChildSessionParams childParams =
+                new TunnelModeChildSessionParams.Builder().addSaProposal(childProposal).build();
+
+        return new IkeTunnelConnectionParams(ikeParams, childParams);
+    }
+
+    protected static IkeSessionParams.Builder getIkeSessionParamsBase() {
         final IkeSaProposal ikeProposal =
                 new IkeSaProposal.Builder()
                         .addEncryptionAlgorithm(
@@ -43,23 +62,12 @@ public class VcnTestBase {
         final String testRemoteId = "test.server.com";
         final byte[] psk = "psk".getBytes();
 
-        final IkeSessionParams ikeParams =
-                new IkeSessionParams.Builder()
-                        .setServerHostname(serverHostname)
-                        .addSaProposal(ikeProposal)
-                        .setLocalIdentification(new IkeFqdnIdentification(testLocalId))
-                        .setRemoteIdentification(new IkeFqdnIdentification(testRemoteId))
-                        .setAuthPsk(psk)
-                        .build();
-
-        final ChildSaProposal childProposal =
-                new ChildSaProposal.Builder()
-                        .addEncryptionAlgorithm(
-                                ENCRYPTION_ALGORITHM_AES_GCM_12, SaProposal.KEY_LEN_AES_128)
-                        .build();
-        final TunnelModeChildSessionParams childParams =
-                new TunnelModeChildSessionParams.Builder().addSaProposal(childProposal).build();
-
-        return new IkeTunnelConnectionParams(ikeParams, childParams);
+        return new IkeSessionParams.Builder()
+                .setServerHostname(serverHostname)
+                .addSaProposal(ikeProposal)
+                .setLocalIdentification(new IkeFqdnIdentification(testLocalId))
+                .setRemoteIdentification(new IkeFqdnIdentification(testRemoteId))
+                .setAuthPsk(psk)
+                .addIkeOption(IKE_OPTION_MOBIKE);
     }
 }
