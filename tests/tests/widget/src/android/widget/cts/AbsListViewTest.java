@@ -528,7 +528,7 @@ public class AbsListViewTest {
 
         mListView.setRecyclerListener(mockRecyclerListener);
         List<View> views = new ArrayList<>();
-        mListView.reclaimViews(views);
+        mActivityRule.runOnUiThread(() -> mListView.reclaimViews(views));
 
         assertTrue(views.size() > 0);
 
