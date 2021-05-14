@@ -4284,46 +4284,18 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     }
 
     /**
-     * Test that {@link WifiManager#setOverrideCountryCode()},
-     * {@link WifiManager#clearOverrideCountryCode()} and
-     * {@link WifiManager#setDefaultCountryCode()}
-     * throws UnsupportedOperationException if the release is older than S.
-     */
-    // TODO(b/167575586): Wait for S SDK finalization before changing
-    // to `maxSdkVersion = Build.VERSION_CODES.R`
-    @SdkSuppress(maxSdkVersion = -1, codeName = "REL")
-    public void testManageCountryCodeMethodsOnROrOlder() throws Exception {
-        if (!WifiFeature.isWifiSupported(getContext())) {
-            // skip the test if WiFi is not supported
-            return;
-        }
-        try {
-            mWifiManager.setOverrideCountryCode(TEST_COUNTRY_CODE);
-            fail("setOverrideCountryCode() Expected to fail - UnsupportedOperationException");
-        } catch (UnsupportedOperationException ex) {}
-
-        try {
-            mWifiManager.clearOverrideCountryCode();
-            fail("clearOverrideCountryCode() Expected to fail - UnsupportedOperationException");
-        } catch (UnsupportedOperationException ex) {}
-
-        try {
-            mWifiManager.setDefaultCountryCode(TEST_COUNTRY_CODE);
-            fail("setDefaultCountryCode() Expected to fail - UnsupportedOperationException");
-        } catch (UnsupportedOperationException ex) {}
-    }
-
-    /**
      * Test that call to {@link WifiManager#setOverrideCountryCode()},
      * {@link WifiManager#clearOverrideCountryCode()} and
      * {@link WifiManager#setDefaultCountryCode()} need privileged permission
      * and the permission is not even given to shell user.
      */
-    // TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
     public void testManageCountryCodeMethodsFailWithoutPermissions() throws Exception {
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported
+            return;
+        }
+        if (!WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(mContext)) {
+            // Skip the test if wifi module version is older than S.
             return;
         }
         ShellIdentityUtils.invokeWithShellPermissions(() -> {
