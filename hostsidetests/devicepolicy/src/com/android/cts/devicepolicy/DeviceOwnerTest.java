@@ -551,6 +551,8 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
                 .build());
     }
 
+    @TemporaryIgnoreOnHeadlessSystemUserMode(bugId = "132360087",
+            reason = "need more investigation / decide how to support it")
     @Test
     public void testBluetoothRestriction() throws Exception {
         executeDeviceOwnerTest("BluetoothRestrictionTest");
