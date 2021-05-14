@@ -15,12 +15,15 @@
  */
 package com.android.cts.deviceowner;
 
+import static com.google.common.truth.Truth.assertWithMessage;
+
 import android.app.admin.DevicePolicyManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.location.LocationManager;
+import android.util.Log;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -28,41 +31,88 @@ import java.util.concurrent.TimeUnit;
 /**
  * Test {@link DevicePolicyManager#setLocationEnabled}.
  */
-public class SetLocationEnabledTest extends BaseDeviceOwnerTest {
+public final class SetLocationEnabledTest extends BaseDeviceOwnerTest {
+
+    private static final String TAG = SetLocationEnabledTest.class.getSimpleName();
+
     private static final long TIMEOUT_MS = 5000;
 
-    public void testSetLocationEnabled() throws Exception {
-        LocationManager locationManager = mContext.getSystemService(LocationManager.class);
-        boolean enabled = locationManager.isLocationEnabled();
+    private static final boolean ENABLED = true;
+    private static final boolean DISABLED = false;
 
-        setLocationEnabledAndWaitIfNecessary(!enabled);
+    private LocationManager mLocationManager;
 
-        boolean expected = mIsAutomotive ? enabled : !enabled;
-        assertEquals(expected, locationManager.isLocationEnabled());
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
 
-        setLocationEnabledAndWaitIfNecessary(enabled);
-        assertEquals(enabled, locationManager.isLocationEnabled());
+        mLocationManager = mContext.getSystemService(LocationManager.class);
     }
 
-    private void setLocationEnabledAndWaitIfNecessary(boolean enabled) throws Exception {
-        if (mIsAutomotive) {
+    public void testSetLocationEnabled() throws Exception {
+        boolean enabled = mLocationManager.isLocationEnabled();
+        try {
+            if (enabled) {
+                Log.d(TAG, "location is initially enabled for user " + mUserId);
+                runDisableLocationFirst();
+            } else {
+                Log.d(TAG, "location is initially disabled for user " + mUserId);
+                runEnableLocationFirst();
+            }
+        } finally {
+            // Restore initial state
+            setLocationEnabledAndWaitIfNecessary(enabled, /* wait= */ false);
+        }
+    }
+
+    private void runDisableLocationFirst() throws Exception {
+        Log.v(TAG, "runDisableLocationFirst()");
+
+        setLocationEnabledAndWaitIfNecessary(DISABLED, /* wait= */ !mIsAutomotive);
+        assertWithMessage("isLocationEnabled()").that(mLocationManager.isLocationEnabled())
+                .isEqualTo(DISABLED);
+
+        setLocationEnabledAndWaitIfNecessary(ENABLED, /* wait= */ !mIsAutomotive);
+        assertWithMessage("isLocationEnabled()").that(mLocationManager.isLocationEnabled())
+                .isEqualTo(mIsAutomotive ? DISABLED : ENABLED);
+    }
+
+    private void runEnableLocationFirst() throws Exception {
+        Log.v(TAG, "runEnableLocationFirst()");
+
+        setLocationEnabledAndWaitIfNecessary(ENABLED, /* wait= */ !mIsAutomotive);
+        assertWithMessage("isLocationEnabled()").that(mLocationManager.isLocationEnabled())
+                .isEqualTo(mIsAutomotive ? DISABLED : ENABLED);
+
+        setLocationEnabledAndWaitIfNecessary(DISABLED, /* wait= */ !mIsAutomotive);
+        assertWithMessage("isLocationEnabled()").that(mLocationManager.isLocationEnabled())
+                .isEqualTo(DISABLED);
+    }
+
+    private void setLocationEnabledAndWaitIfNecessary(boolean enabled, boolean wait)
+            throws Exception {
+        if (!wait) {
+            Log.d(TAG, "setting location to " + enabled);
             mDevicePolicyManager.setLocationEnabled(getWho(), enabled);
+            Log.d(TAG, "not waiting for " + LocationManager.MODE_CHANGED_ACTION + " intent");
             return;
         }
 
-        final CountDownLatch latch = new CountDownLatch(1);
-        final BroadcastReceiver receiver = new BroadcastReceiver() {
+        CountDownLatch latch = new CountDownLatch(1);
+        BroadcastReceiver receiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
+                Log.d(TAG, "received intent: " + intent.getAction());
                 latch.countDown();
             }
         };
         mContext.registerReceiver(receiver, new IntentFilter(LocationManager.MODE_CHANGED_ACTION));
-
         try {
+            Log.d(TAG, "setting location to " + enabled);
             mDevicePolicyManager.setLocationEnabled(getWho(), enabled);
-            assertTrue("timed out waiting for location mode change broadcast",
-                    latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+            Log.d(TAG, "Waiting for " + LocationManager.MODE_CHANGED_ACTION + " intent");
+            assertWithMessage("%s intent reveiced in %sms", LocationManager.MODE_CHANGED_ACTION,
+                    TIMEOUT_MS).that(latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
         } finally {
             mContext.unregisterReceiver(receiver);
         }
