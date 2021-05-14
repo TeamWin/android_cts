@@ -338,6 +338,7 @@ public class LockTaskUiTestActivity extends PassFailButtons.TestListActivity {
                 .setContentTitle(getString(R.string.device_owner_lock_task_ui_test))
                 .setSmallIcon(android.R.drawable.sym_def_app_icon)
                 .setOngoing(true)
+                .extend(new Notification.TvExtender())
                 .build();
 
         mNotifyMgr.notify(0, note);
