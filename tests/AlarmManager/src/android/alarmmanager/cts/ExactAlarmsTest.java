@@ -25,6 +25,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
 
 import android.app.AlarmManager;
 import android.app.AppOpsManager;
@@ -45,6 +46,7 @@ import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.AppOpsUtils;
 import com.android.compatibility.common.util.AppStandbyUtils;
+import com.android.compatibility.common.util.FeatureUtil;
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
@@ -363,6 +365,9 @@ public class ExactAlarmsTest {
 
     @Test
     public void alarmClockGrantsWhitelist() throws Exception {
+        // no device idle in auto
+        assumeFalse(FeatureUtil.isAutomotive());
+
         final int id = mIdGenerator.nextInt();
         final AlarmManager.AlarmClockInfo alarmClock = new AlarmManager.AlarmClockInfo(
                 System.currentTimeMillis() + 100, null);
@@ -375,6 +380,9 @@ public class ExactAlarmsTest {
 
     @Test
     public void exactAwiGrantsWhitelist() throws Exception {
+        // no device idle in auto
+        assumeFalse(FeatureUtil.isAutomotive());
+
         reclaimQuota(1);
         final int id = mIdGenerator.nextInt();
         mAlarmManager.setExactAndAllowWhileIdle(AlarmManager.ELAPSED_REALTIME_WAKEUP,
@@ -387,6 +395,9 @@ public class ExactAlarmsTest {
 
     @Test
     public void activityToRequestPermissionExists() {
+        // TODO(b/188070398) Remove this when auto supports the ACTION_REQUEST_SCHEDULE_EXACT_ALARM
+        assumeFalse(FeatureUtil.isAutomotive());
+
         final Intent request = new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM);
         final PackageManager pm = sContext.getPackageManager();
 
