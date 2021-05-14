@@ -21,6 +21,7 @@ import static org.junit.Assert.assertTrue;
 
 import com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.RequiresAdditionalFeatures;
 import com.android.tradefed.device.DeviceNotAvailableException;
+import com.android.tradefed.log.LogUtil.CLog;
 
 import org.junit.Test;
 
@@ -57,10 +58,15 @@ public class UserRestrictionsTest extends BaseDevicePolicyTest {
     @Override
     public void tearDown() throws Exception {
         if (mRemoveOwnerInTearDown) {
-            assertTrue("Failed to clear owner",
-                    removeAdmin(DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS,
-                            mDeviceOwnerUserId));
+            String componentName = DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS;
+            assertTrue("Failed to clear owner", removeAdmin(componentName, mDeviceOwnerUserId));
             runTests("userrestrictions.CheckNoOwnerRestrictionsTest", mDeviceOwnerUserId);
+            if (isHeadlessSystemUserMode()) {
+                boolean removed = removeAdmin(componentName, mPrimaryUserId);
+                if (!removed) {
+                    CLog.e("Failed to remove %s on user %d", componentName, mPrimaryUserId);
+                }
+            }
         }
 
         // DO/PO might have set DISALLOW_REMOVE_USER, so it needs to be done after removing
@@ -275,7 +281,8 @@ public class UserRestrictionsTest extends BaseDevicePolicyTest {
 
     /** Installs admin package and makes it a device owner. */
     private void setDo() throws Exception {
-        installAppAsUser(DEVICE_ADMIN_APK, mDeviceOwnerUserId);
+        installDeviceOwnerApp(DEVICE_ADMIN_APK);
+
         assertTrue("Failed to set device owner",
                 setDeviceOwner(DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS,
                         mDeviceOwnerUserId, /*expectFailure*/ false));
@@ -283,7 +290,6 @@ public class UserRestrictionsTest extends BaseDevicePolicyTest {
 
         if (isHeadlessSystemUserMode()) {
             affiliateUsers(DEVICE_ADMIN_PKG, mDeviceOwnerUserId, mPrimaryUserId);
-            grantDpmWrapperPermissions(DEVICE_ADMIN_PKG, mPrimaryUserId);
         }
     }
 

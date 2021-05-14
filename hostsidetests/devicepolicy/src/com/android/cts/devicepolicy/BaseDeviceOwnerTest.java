@@ -40,7 +40,8 @@ abstract class BaseDeviceOwnerTest extends BaseDevicePolicyTest {
     public void setUp() throws Exception {
         super.setUp();
 
-        installAppAsUser(DEVICE_OWNER_APK, mDeviceOwnerUserId);
+        installDeviceOwnerApp(DEVICE_OWNER_APK);
+
         mDeviceOwnerSet = setDeviceOwner(DEVICE_OWNER_COMPONENT, mDeviceOwnerUserId,
                 /*expectFailure= */ false);
 
@@ -52,7 +53,6 @@ abstract class BaseDeviceOwnerTest extends BaseDevicePolicyTest {
 
         if (isHeadlessSystemUserMode()) {
             affiliateUsers(DEVICE_OWNER_PKG, mDeviceOwnerUserId, mPrimaryUserId);
-            grantDpmWrapperPermissions(DEVICE_OWNER_PKG, mPrimaryUserId);
         }
 
         // Enable the notification listener
@@ -62,15 +62,8 @@ abstract class BaseDeviceOwnerTest extends BaseDevicePolicyTest {
 
     @Override
     public void tearDown() throws Exception {
-        // Don't fail as it could hide the real failure from the test method
         if (mDeviceOwnerSet) {
-            if (!removeAdmin(DEVICE_OWNER_COMPONENT, mDeviceOwnerUserId)) {
-                CLog.e("Failed to remove device owner on user " + mDeviceOwnerUserId);
-            }
-            if (isHeadlessSystemUserMode()
-                    && !removeAdmin(DEVICE_OWNER_COMPONENT, mPrimaryUserId)) {
-                CLog.e("Failed to remove profile owner on user " + mPrimaryUserId);
-            }
+            removeDeviceOwnerAdmin(DEVICE_OWNER_COMPONENT);
         }
 
         String status = getDevice().uninstallPackage(DEVICE_OWNER_PKG);

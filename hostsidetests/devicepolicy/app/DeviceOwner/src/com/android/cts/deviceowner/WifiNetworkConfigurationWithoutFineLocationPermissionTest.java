@@ -16,17 +16,17 @@
 
 package com.android.cts.deviceowner;
 
-
 import static com.android.compatibility.common.util.WifiConfigCreator.SECURITY_TYPE_NONE;
+
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.net.wifi.WifiConfiguration;
-import android.net.wifi.WifiManager;
 import android.os.SystemClock;
+import android.util.Log;
 
 import com.android.compatibility.common.util.SystemUtil;
-import com.android.compatibility.common.util.WifiConfigCreator;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -42,37 +42,39 @@ public class WifiNetworkConfigurationWithoutFineLocationPermissionTest extends B
     private static final long UPDATE_TIMEOUT_MS = TimeUnit.MINUTES.toMillis(5);
     private static final long UPDATE_INTERVAL_MS = TimeUnit.SECONDS.toMillis(1);
 
-    private WifiManager mWifiManager;
-    private WifiConfigCreator mWifiConfigCreator;
-
     @Override
     public void setUp() throws Exception {
         super.setUp();
 
-        mWifiConfigCreator = new WifiConfigCreator(getContext());
-        mWifiManager = getContext().getSystemService(WifiManager.class);
         // WiFi is supposed to be a prerequisite of CTS but sometimes it's not enabled
         // for some unknown reason. Check it here just in case.
         if (!mWifiManager.isWifiEnabled()) {
+            Log.d(TAG, "Enabling wifi using shell");
             SystemUtil.runShellCommand("svc wifi enable");
             awaitWifiEnabled();
+            Log.d(TAG, "Done: " + mWifiManager.isWifiEnabled());
         }
     }
 
     public void testAddAndRetrieveCallerConfiguredNetworks() throws Exception {
-        assertTrue("WiFi is not enabled", mWifiManager.isWifiEnabled());
-        assertEquals(PackageManager.PERMISSION_DENIED,
-                mContext.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION));
+        assertWithMessage("wifi is enabled").that(mWifiManager.isWifiEnabled()).isTrue();
+        assertWithMessage("permission status (denied=%s) for %s on user %s",
+                PackageManager.PERMISSION_DENIED, Manifest.permission.ACCESS_FINE_LOCATION, mUserId)
+                        .that(mContext.checkSelfPermission(
+                                        Manifest.permission.ACCESS_FINE_LOCATION))
+                        .isEqualTo(PackageManager.PERMISSION_DENIED);
 
         int netId = mWifiConfigCreator.addNetwork(NETWORK_SSID, /* hidden */ false,
                 SECURITY_TYPE_NONE, /* password */ null);
-        assertNotSame("Failed to add network", INVALID_NETWORK_ID, netId);
+        assertWithMessage("id of added network").that(netId).isNotEqualTo(INVALID_NETWORK_ID);
 
         try {
             List<WifiConfiguration> configs = mWifiManager.getCallerConfiguredNetworks();
-            assertEquals(1, configs.size());
-            assertEquals('"' + NETWORK_SSID + '"', configs.get(0).SSID);
+            assertWithMessage("configured networks").that(configs).hasSize(1);
+            assertWithMessage("SSID of configured networks").that(configs.get(0).SSID)
+                    .isEqualTo('"' + NETWORK_SSID + '"');
         } finally {
+            Log.d(TAG, "Removing network " + netId);
             mWifiManager.removeNetwork(netId);
         }
     }
