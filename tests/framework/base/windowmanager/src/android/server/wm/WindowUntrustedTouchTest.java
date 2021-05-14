@@ -764,6 +764,7 @@ public class WindowUntrustedTouchTest {
     }
 
     @Test
+    @FlakyTest(bugId = 188207199)
     public void testWhenOneCustomToastWindow_blocksTouch() throws Throwable {
         addToastOverlay(APP_A, /* custom */ true);
 
@@ -782,6 +783,7 @@ public class WindowUntrustedTouchTest {
     }
 
     @Test
+    @FlakyTest(bugId = 188207199)
     public void testWhenOneCustomToastWindowAndOneSelfSawWindow_blocksTouch()
             throws Throwable {
         addSawOverlay(APP_SELF, WINDOW_1, .9f);
@@ -793,6 +795,7 @@ public class WindowUntrustedTouchTest {
     }
 
     @Test
+    @FlakyTest(bugId = 188207199)
     public void testWhenOneCustomToastWindowAndOneSawWindowBelowThreshold_blocksTouch()
             throws Throwable {
         addSawOverlay(APP_A, WINDOW_1, .5f);
@@ -804,6 +807,7 @@ public class WindowUntrustedTouchTest {
     }
 
     @Test
+    @FlakyTest(bugId = 188207199)
     public void testWhenOneCustomToastWindowAndOneSawWindowBelowThresholdFromDifferentApp_blocksTouch()
             throws Throwable {
         addSawOverlay(APP_A, WINDOW_1, .5f);
