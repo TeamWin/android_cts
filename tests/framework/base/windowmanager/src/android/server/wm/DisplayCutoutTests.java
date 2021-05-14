@@ -68,6 +68,7 @@ import android.view.WindowInsets.Type;
 import androidx.test.rule.ActivityTestRule;
 
 import com.android.compatibility.common.util.PollingCheck;
+import com.android.compatibility.common.util.WindowUtil;
 
 import org.hamcrest.CustomTypeSafeMatcher;
 import org.hamcrest.FeatureMatcher;
@@ -526,7 +527,7 @@ public class DisplayCutoutTests {
         final T activity = rule.launchActivity(
                 new Intent().putExtra(EXTRA_CUTOUT_MODE, cutoutMode)
                         .putExtra(EXTRA_ORIENTATION, orientation));
-        PollingCheck.waitFor(activity::hasWindowFocus);
+        WindowUtil.waitForFocus(activity);
         PollingCheck.waitFor(() -> {
             final Rect appBounds = getAppBounds(activity);
             final Point displaySize = new Point();

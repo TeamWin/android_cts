@@ -47,7 +47,7 @@ import android.view.WindowManager.LayoutParams;
 
 import androidx.test.rule.ActivityTestRule;
 
-import com.android.compatibility.common.util.PollingCheck;
+import com.android.compatibility.common.util.WindowUtil;
 
 import org.hamcrest.CustomTypeSafeMatcher;
 import org.hamcrest.Matcher;
@@ -254,7 +254,7 @@ public class WindowInsetsPolicyTest extends ActivityManagerTestBase {
 
     private <T extends Activity> T launchAndWait(ActivityTestRule<T> rule) {
         final T activity = rule.launchActivity(null);
-        PollingCheck.waitFor(activity::hasWindowFocus);
+        WindowUtil.waitForFocus(activity);
         return activity;
     }
 

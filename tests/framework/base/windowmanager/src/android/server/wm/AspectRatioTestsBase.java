@@ -28,7 +28,7 @@ import android.view.WindowManager;
 
 import androidx.test.rule.ActivityTestRule;
 
-import com.android.compatibility.common.util.PollingCheck;
+import com.android.compatibility.common.util.WindowUtil;
 
 import org.hamcrest.Matcher;
 import org.junit.Before;
@@ -45,7 +45,7 @@ class AspectRatioTestsBase {
     void runAspectRatioTest(final ActivityTestRule activityRule,
             final AssertAspectRatioCallback callback) {
         final Activity activity = launchActivity(activityRule);
-        PollingCheck.waitFor(activity::hasWindowFocus);
+        WindowUtil.waitForFocus(activity);
         try {
             callback.assertAspectRatio(getActivityAspectRatio(activity),
                     getDisplay(activity).getDisplayId(),
