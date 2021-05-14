@@ -23,6 +23,7 @@ import static org.junit.Assume.assumeTrue;
 import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.LargeTest;
 
+import com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.RequiresProfileOwnerSupport;
 import com.android.tradefed.log.LogUtil.CLog;
 
 import org.junit.Ignore;
@@ -32,6 +33,7 @@ import org.junit.Test;
  * Set of tests for pure (non-managed) profile owner use cases that also apply to device owners.
  * Tests that should be run identically in both cases are added in DeviceAndProfileOwnerTest.
  */
+@RequiresProfileOwnerSupport
 public final class MixedProfileOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Override
