@@ -384,12 +384,13 @@ public class WifiBackupRestoreTest extends WifiJUnit4TestBase {
     }
 
     /**
-     * Asserts that the 2 lists of WifiConfigurations are equal. This compares all the elements
-     * saved for backup/restore.
+     * Check that expected configrations could be found in restored configurations.
+     * As multi-type configurations would be converted to several single-type configurations,
+     * two list could not be compared directly.
      */
     private void assertConfigurationsEqual(
             List<WifiConfiguration> expected, List<WifiConfiguration> actual) {
-        assertThat(actual.size()).isEqualTo(expected.size());
+        assertThat(actual.size() >= expected.size()).isTrue();
         for (WifiConfiguration expectedConfiguration : expected) {
             String expectedConfigKey = expectedConfiguration.getKey();
             boolean didCompare = false;
