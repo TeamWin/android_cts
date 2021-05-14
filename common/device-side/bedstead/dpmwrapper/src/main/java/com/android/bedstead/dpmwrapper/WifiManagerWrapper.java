@@ -58,7 +58,7 @@ final class WifiManagerWrapper extends ServiceManagerWrapper<WifiManager> {
         try {
             doReturn(spyString).when(spy).toString();
 
-            // Used by WifiConfigCreator (whish is used by CtsVerifier)
+            // Used by WifiConfigCreator
             doAnswer(answer).when(spy).addNetwork(any());
             doAnswer(answer).when(spy).enableNetwork(anyInt(), anyBoolean());
             doAnswer(answer).when(spy).removeNetwork(anyInt());
@@ -67,6 +67,9 @@ final class WifiManagerWrapper extends ServiceManagerWrapper<WifiManager> {
             doAnswer(answer).when(spy).saveConfiguration();
             doAnswer(answer).when(spy).isWifiEnabled();
             doAnswer(answer).when(spy).setWifiEnabled(anyBoolean());
+
+            // Used by WifiNetworkConfigurationWithoutFineLocationPermissionTest
+            doAnswer(answer).when(spy).getCallerConfiguredNetworks();
         } catch (Exception e) {
             // Should never happen, but needs to be catch as some methods declare checked exceptions
             Log.wtf("Exception setting mocks", e);
