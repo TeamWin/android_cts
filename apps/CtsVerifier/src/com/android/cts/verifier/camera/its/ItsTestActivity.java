@@ -100,7 +100,7 @@ public class ItsTestActivity extends DialogTestListActivity {
             add("scene_change");
             add("sensor_fusion");
         }};
-    // This must match scenes of HIDDEN_PHYSICAL_CAMERA_TESTS in run_all_tests.py
+    // This must match scenes of SUB_CAMERA_TESTS in tools/run_all_tests.py
     private static final ArrayList<String> mHiddenPhysicalCameraSceneIds =
             new ArrayList<String> () {{
                     add("scene0");

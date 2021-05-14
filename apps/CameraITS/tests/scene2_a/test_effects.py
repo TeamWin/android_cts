@@ -115,10 +115,10 @@ class EffectsTest(its_base_test.ItsBaseTest):
               (v_max - v_min) > MONO_UV_SPREAD_MAX):
             failed.append({'effect': EFFECTS[effect], 'error': e_msg})
       if failed:
-        logging.error('Failed effects:')
+        logging.debug('Failed effects:')
         for fail in failed:
-          logging.error(' %s: %s', fail['effect'], fail['error'])
-      assert not failed
+          logging.debug(' %s: %s', fail['effect'], fail['error'])
+        raise AssertionError(f'{NAME} failed. See test_log.DEBUG for errors.')
 
 if __name__ == '__main__':
   test_runner.main()

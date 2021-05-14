@@ -126,6 +126,13 @@ public class CtsTranslationService extends TranslationService {
     public void onTranslationRequest(@NonNull TranslationRequest request, int sessionId,
             @NonNull CancellationSignal cancellationSignal,
             @NonNull OnTranslationResultCallback callback) {
+        Log.v(TAG, "deprecated onTranslationRequest(" + request + ")");
+    }
+
+    @Override
+    public void onTranslationRequest(@NonNull TranslationRequest request, int sessionId,
+            @NonNull CancellationSignal cancellationSignal,
+            @NonNull Consumer<TranslationResponse> callback) {
         Log.v(TAG, "onTranslationRequest(" + request + ")");
 
         mHandler.post(() -> sTranslationReplier.handleOnTranslationRequest(getApplicationContext(),
@@ -274,7 +281,7 @@ public class CtsTranslationService extends TranslationService {
         private void handleOnTranslationRequest(@NonNull Context context,
                 @NonNull TranslationRequest request, int sessionId,
                 @NonNull CancellationSignal cancellationSignal,
-                @NonNull OnTranslationResultCallback callback) {
+                @NonNull Consumer<TranslationResponse> callback) {
             Log.d(TAG, "offering " + request);
             offer(mTranslationRequests, request, TRANSLATION_TIMEOUT_MS);
             try {
@@ -295,7 +302,7 @@ public class CtsTranslationService extends TranslationService {
                 }
 
                 Log.v(TAG, "onTranslationRequest(): response = " + response);
-                callback.onTranslationSuccess(response);
+                callback.accept(response);
             } catch (Throwable t) {
                 addException(t);
             }

@@ -18,6 +18,8 @@ package android.app.cts
 import android.R
 import android.app.stubs.shared.NotificationHostActivity
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.Color
 import android.test.AndroidTestCase
 import android.view.View
 import android.view.ViewGroup
@@ -64,6 +66,11 @@ open class NotificationTemplateTestBase : AndroidTestCase() {
             }
         }
     }
+
+    protected fun createBitmap(width: Int, height: Int): Bitmap =
+            Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888).also {
+                it.eraseColor(Color.GRAY)
+            }
 
     protected fun makeCustomContent(): RemoteViews {
         val customContent = RemoteViews(mContext.packageName, R.layout.simple_list_item_1)
