@@ -83,6 +83,7 @@ import com.android.compatibility.common.util.CtsKeyEventUtil;
 import com.android.compatibility.common.util.CtsTouchUtils;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.WidgetTestUtils;
+import com.android.compatibility.common.util.WindowUtil;
 
 import org.hamcrest.MatcherAssert;
 import org.junit.Before;
@@ -137,7 +138,7 @@ public class AbsListViewTest {
         // Always use the activity context
         mContext = activity;
 
-        PollingCheck.waitFor(activity::hasWindowFocus);
+        WindowUtil.waitForFocus(activity);
 
         XmlPullParser parser = mContext.getResources().getXml(R.layout.listview_layout);
         WidgetTestUtils.beginDocument(parser, "FrameLayout");
