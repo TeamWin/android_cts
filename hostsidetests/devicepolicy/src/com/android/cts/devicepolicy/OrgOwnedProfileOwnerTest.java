@@ -266,8 +266,7 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
             // Generate various types of events on device side and check that they are logged.
             runDeviceTestsAsUser(packageName, testClassName,
                     "testGenerateLogs", mUserId);
-            getDevice().executeShellCommand("whoami"); // Generate adb command securty event
-            getDevice().executeShellCommand("dpm force-security-logs");
+            getDevice().executeShellCommand("whoami"); // Generate adb command security event
             runDeviceTestsAsUser(packageName, testClassName,
                     "testVerifyGeneratedLogs", mUserId);
 
