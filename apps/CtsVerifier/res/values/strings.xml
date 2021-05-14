@@ -5822,11 +5822,9 @@ Follow the instructions on the screen to measure the frequency response for the 
 
     <string name="display_cutout_test">DisplayCutout Test</string>
     <string name="display_cutout_test_instruction">\n
-    This test is to make sure that the area inside the safe insets from the DisplayCutout should be
-    fully visible and touchable. \n\n
-    Please check the below items: \n
-    1. All buttons are fully visible \n
-    2. All buttons are clickable. \n
+    This test is to make sure that the area inside the safe insets from the DisplayCutout should be:\n
+    1. Visible\n
+    2. Clickable.\n
     </string>
 
     <!-- TTS Test Resources -->

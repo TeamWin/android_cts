@@ -18,7 +18,6 @@ package android.app.notification.legacy30.cts
 import android.R
 import android.app.Notification
 import android.app.cts.NotificationTemplateTestBase
-import android.graphics.Bitmap
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
@@ -31,7 +30,7 @@ class NotificationTemplateApi30Test : NotificationTemplateTestBase() {
     }
 
     fun testWideIcon_inCollapsedState_isSquareForLegacyApps() {
-        val icon = Bitmap.createBitmap(200, 100, Bitmap.Config.ARGB_8888)
+        val icon = createBitmap(200, 100)
         val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_media_play)
                 .setContentTitle("Title")
@@ -44,7 +43,7 @@ class NotificationTemplateApi30Test : NotificationTemplateTestBase() {
     }
 
     fun testWideIcon_inBigBaseState_isSquareForLegacyApps() {
-        val icon = Bitmap.createBitmap(200, 100, Bitmap.Config.ARGB_8888)
+        val icon = createBitmap(200, 100)
         val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_media_play)
                 .setContentTitle("Title")
@@ -57,8 +56,8 @@ class NotificationTemplateApi30Test : NotificationTemplateTestBase() {
     }
 
     fun testWideIcon_inBigPicture_isSquareForLegacyApps() {
-        val picture = Bitmap.createBitmap(40, 30, Bitmap.Config.ARGB_8888)
-        val icon = Bitmap.createBitmap(200, 100, Bitmap.Config.ARGB_8888)
+        val picture = createBitmap(40, 30)
+        val icon = createBitmap(200, 100)
         val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_media_play)
                 .setContentTitle("Title")
@@ -72,7 +71,7 @@ class NotificationTemplateApi30Test : NotificationTemplateTestBase() {
     }
 
     fun testWideIcon_inBigText_isSquareForLegacyApps() {
-        val bitmap = Bitmap.createBitmap(200, 100, Bitmap.Config.ARGB_8888)
+        val bitmap = createBitmap(200, 100)
         val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_media_play)
                 .setContentTitle("Title")
@@ -86,7 +85,7 @@ class NotificationTemplateApi30Test : NotificationTemplateTestBase() {
     }
 
     fun testPromoteBigPicture_withoutLargeIcon() {
-        val picture = Bitmap.createBitmap(40, 30, Bitmap.Config.ARGB_8888)
+        val picture = createBitmap(40, 30)
         val builder = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_media_play)
                 .setContentTitle("Title")
@@ -110,8 +109,8 @@ class NotificationTemplateApi30Test : NotificationTemplateTestBase() {
     }
 
     fun testPromoteBigPicture_withLargeIcon() {
-        val picture = Bitmap.createBitmap(40, 30, Bitmap.Config.ARGB_8888)
-        val icon = Bitmap.createBitmap(80, 65, Bitmap.Config.ARGB_8888)
+        val picture = createBitmap(40, 30)
+        val icon = createBitmap(80, 65)
         val builder = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_media_play)
                 .setContentTitle("Title")
@@ -139,8 +138,8 @@ class NotificationTemplateApi30Test : NotificationTemplateTestBase() {
     }
 
     fun testPromoteBigPicture_withBigLargeIcon() {
-        val picture = Bitmap.createBitmap(40, 30, Bitmap.Config.ARGB_8888)
-        val bigIcon = Bitmap.createBitmap(80, 75, Bitmap.Config.ARGB_8888)
+        val picture = createBitmap(40, 30)
+        val bigIcon = createBitmap(80, 75)
         val builder = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_media_play)
                 .setContentTitle("Title")

@@ -192,7 +192,7 @@ class PostRawSensitivityBoost(its_base_test.ItsBaseTest):
           if not np.isclose(ratio_per_step, expected_ratio, atol=_RATIO_TOL):
             raise AssertionError(
                 f'step: {step}, ratio: {ratio_per_step}, expected ratio: '
-                f'{expected_ratio}.3f, ATOL: {_RATIO_TOL}')
+                f'{expected_ratio:.3f}, ATOL: {_RATIO_TOL}')
 
       # YUV asserts
       for ch, _ in enumerate(_COLORS):

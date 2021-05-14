@@ -24,6 +24,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.media.AudioManager;
 import android.net.Uri;
+import android.os.Parcel;
 import android.telecom.Call;
 import android.telecom.CallScreeningService;
 import android.telecom.CallScreeningService.CallResponse;
@@ -285,6 +286,25 @@ public class ConnectionServiceTest extends BaseTelecomTestWithMockServices {
                     .dropShellPermissionIdentity();
         }
 
+    }
+
+    public void testCallFilteringCompletionInfoParcelable() {
+        Connection.CallFilteringCompletionInfo info = new Connection.CallFilteringCompletionInfo(
+                false /* isBlocked */,
+                false /* isInContacts */,
+                null /* callResponse */,
+                null /* callScreeningComponent */
+        );
+        Parcel p = Parcel.obtain();
+        info.writeToParcel(p, 0);
+        p.setDataPosition(0);
+        Connection.CallFilteringCompletionInfo info2 =
+                Connection.CallFilteringCompletionInfo.CREATOR.createFromParcel(p);
+
+        assertEquals(info.isBlocked(), info2.isBlocked());
+        assertEquals(info.isInContacts(), info2.isInContacts());
+        assertEquals(info.getCallResponse(), info2.getCallResponse());
+        assertEquals(info.getCallScreeningComponent(), info2.getCallScreeningComponent());
     }
 
     public void testCallFilteringCompleteSignalNotInContacts() throws Exception {

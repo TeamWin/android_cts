@@ -166,6 +166,7 @@ public class TranslationManagerTest {
 
         // unregister listeners
         manager.removeOnDeviceTranslationCapabilityUpdateListener(updateListener);
+        SystemClock.sleep(1_000);
 
         // update text to text TranslationCapability
         service.updateTranslationCapability(updatedText2TextCapability);
