@@ -25,6 +25,7 @@ import static android.net.wifi.WifiManager.COEX_RESTRICTION_WIFI_AWARE;
 import static android.net.wifi.WifiManager.COEX_RESTRICTION_WIFI_DIRECT;
 import static android.net.wifi.WifiScanner.WIFI_BAND_24_GHZ;
 
+import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.assertNotEquals;
@@ -1208,11 +1209,12 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             return;
         }
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        WifiManager.AddNetworkResult result = null;
         try {
             uiAutomation.adoptShellPermissionIdentity();
             WifiConfiguration newOpenNetwork = new WifiConfiguration();
             newOpenNetwork.SSID = "\"" + TEST_SSID_UNQUOTED + "\"";
-            WifiManager.AddNetworkResult result = mWifiManager.addNetworkPrivileged(newOpenNetwork);
+            result = mWifiManager.addNetworkPrivileged(newOpenNetwork);
             assertEquals(WifiManager.AddNetworkResult.STATUS_SUCCESS, result.statusCode);
             assertTrue(result.networkId >= 0);
             List<WifiConfiguration> configuredNetworks = mWifiManager.getConfiguredNetworks();
@@ -1224,9 +1226,145 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                     break;
                 }
             }
-            assertTrue("addNetworkPrivileged returns success but the network is not found", found);
-            mWifiManager.removeNetwork(result.networkId);
+            assertTrue("addNetworkPrivileged returns success"
+                    + "but the network is not found in getConfiguredNetworks", found);
+
+            List<WifiConfiguration> privilegedConfiguredNetworks =
+                    mWifiManager.getPrivilegedConfiguredNetworks();
+            found = false;
+            for (WifiConfiguration config : privilegedConfiguredNetworks) {
+                if (config.networkId == result.networkId
+                        && config.SSID.equals(newOpenNetwork.SSID)) {
+                    found = true;
+                    break;
+                }
+            }
+            assertTrue("addNetworkPrivileged returns success"
+                    + "but the network is not found in getPrivilegedConfiguredNetworks", found);
+
+            List<WifiConfiguration> callerConfiguredNetworks =
+                    mWifiManager.getCallerConfiguredNetworks();
+            found = false;
+            for (WifiConfiguration config : callerConfiguredNetworks) {
+                if (config.networkId == result.networkId
+                        && config.SSID.equals(newOpenNetwork.SSID)) {
+                    found = true;
+                    break;
+                }
+            }
+            assertTrue("addNetworkPrivileged returns success"
+                    + "but the network is not found in getCallerConfiguredNetworks", found);
         } finally {
+            if (null != result) {
+                mWifiManager.removeNetwork(result.networkId);
+            }
+            uiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    private WifiConfiguration createConfig(
+            String ssid, int type) {
+        WifiConfiguration config = new WifiConfiguration();
+        config.SSID = "\"" + ssid + "\"";
+        config.setSecurityParams(type);
+        // set necessary fields for different types.
+        switch (type) {
+            case WifiConfiguration.SECURITY_TYPE_OPEN:
+            case WifiConfiguration.SECURITY_TYPE_OWE:
+                break;
+            case WifiConfiguration.SECURITY_TYPE_PSK:
+            case WifiConfiguration.SECURITY_TYPE_SAE:
+                config.preSharedKey = "\"1qaz@WSX\"";
+                break;
+            case WifiConfiguration.SECURITY_TYPE_EAP:
+            case WifiConfiguration.SECURITY_TYPE_EAP_WPA3_ENTERPRISE:
+            case WifiConfiguration.SECURITY_TYPE_EAP_WPA3_ENTERPRISE_192_BIT:
+                config.enterpriseConfig.setEapMethod(WifiEnterpriseConfig.Eap.SIM);
+                break;
+        }
+        return config;
+    }
+
+    private void assertConfigsAreFound(
+            List<WifiConfiguration> expectedConfigs,
+            List<WifiConfiguration> configs) {
+        for (WifiConfiguration expectedConfig: expectedConfigs) {
+            boolean found = false;
+            for (WifiConfiguration config : configs) {
+                if (config.networkId == expectedConfig.networkId
+                        && config.getKey().equals(expectedConfig.getKey())) {
+                    found = true;
+                    break;
+                }
+            }
+            assertTrue("the network " + expectedConfig.getKey() + " is not found", found);
+        }
+    }
+
+    /**
+     * Verify {@link WifiManager#addNetworkPrivileged(WifiConfiguration)} works
+     * with merging types properly when the calling app has permissions.
+     */
+    public void testAddNetworkPrivilegedMergingTypeSuccess() {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        if (!WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(mContext)) {
+            // Skip the test if wifi module version is older than S.
+            return;
+        }
+        List<WifiConfiguration> testConfigs = new ArrayList<>();
+        testConfigs.add(createConfig("test-open-owe-jdur", WifiConfiguration.SECURITY_TYPE_OPEN));
+        testConfigs.add(createConfig("test-open-owe-jdur", WifiConfiguration.SECURITY_TYPE_OWE));
+        testConfigs.add(createConfig("test-psk-sae-ijfe", WifiConfiguration.SECURITY_TYPE_PSK));
+        testConfigs.add(createConfig("test-psk-sae-ijfe", WifiConfiguration.SECURITY_TYPE_SAE));
+        testConfigs.add(createConfig("test-wpa2e-wpa3e-plki",
+                WifiConfiguration.SECURITY_TYPE_EAP));
+        testConfigs.add(createConfig("test-wpa2e-wpa3e-plki",
+                WifiConfiguration.SECURITY_TYPE_EAP_WPA3_ENTERPRISE));
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            final int originalConfiguredNetworksNumber = mWifiManager.getConfiguredNetworks().size();
+            final int originalPrivilegedConfiguredNetworksNumber =
+                    mWifiManager.getPrivilegedConfiguredNetworks().size();
+            final int originalCallerConfiguredNetworksNumber =
+                mWifiManager.getCallerConfiguredNetworks().size();
+            for (WifiConfiguration c: testConfigs) {
+                WifiManager.AddNetworkResult result = mWifiManager.addNetworkPrivileged(c);
+                assertEquals(WifiManager.AddNetworkResult.STATUS_SUCCESS, result.statusCode);
+                assertTrue(result.networkId >= 0);
+                c.networkId = result.networkId;
+            }
+            // open/owe, psk/sae, and wpa2e/wpa3e should be merged
+            // so they should have the same network ID.
+            assertEquals(testConfigs.get(0).networkId, testConfigs.get(1).networkId);
+            assertEquals(testConfigs.get(2).networkId, testConfigs.get(3).networkId);
+            assertEquals(testConfigs.get(4).networkId, testConfigs.get(5).networkId);
+            List<WifiConfiguration> configuredNetworks = mWifiManager.getConfiguredNetworks();
+            assertEquals(originalConfiguredNetworksNumber + testConfigs.size(),
+                    configuredNetworks.size());
+            assertConfigsAreFound(testConfigs, configuredNetworks);
+
+            List<WifiConfiguration> privilegedConfiguredNetworks =
+                    mWifiManager.getPrivilegedConfiguredNetworks();
+            assertEquals(originalPrivilegedConfiguredNetworksNumber + testConfigs.size(),
+                    privilegedConfiguredNetworks.size());
+            assertConfigsAreFound(testConfigs, privilegedConfiguredNetworks);
+
+            List<WifiConfiguration> callerConfiguredNetworks =
+                    mWifiManager.getCallerConfiguredNetworks();
+            assertEquals(originalCallerConfiguredNetworksNumber + testConfigs.size(),
+                    callerConfiguredNetworks.size());
+            assertConfigsAreFound(testConfigs, callerConfiguredNetworks);
+
+        } finally {
+            for (WifiConfiguration c: testConfigs) {
+                if (c.networkId >= 0) {
+                    mWifiManager.removeNetwork(c.networkId);
+                }
+            }
             uiAutomation.dropShellPermissionIdentity();
         }
     }
@@ -2537,7 +2675,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             newNetworkId = mWifiManager.addNetwork(newOpenNetwork);
             assertNotEquals(INVALID_NETWORK_ID, newNetworkId);
 
-            assertEquals(savedNetworks.size() + 1, mWifiManager.getConfiguredNetworks().size());
+            // Multi-type configurations might be converted to more than 1 configuration.
+            assertThat(savedNetworks.size() < mWifiManager.getConfiguredNetworks().size()).isTrue();
 
             // Need an effectively-final holder because we need to modify inner Intent in callback.
             class IntentHolder {
