@@ -489,6 +489,85 @@ public class ActivityManagerFgsBgStartTest {
         }
     }
 
+    @Test
+    public void testUpdateUidProcState() throws Exception {
+        ApplicationInfo app1Info = mContext.getPackageManager().getApplicationInfo(
+                PACKAGE_NAME_APP1, 0);
+        WatchUidRunner uid1Watcher = new WatchUidRunner(mInstrumentation, app1Info.uid,
+                WAITFOR_MSEC);
+        ApplicationInfo app2Info = mContext.getPackageManager().getApplicationInfo(
+                PACKAGE_NAME_APP2, 0);
+        WatchUidRunner uid2Watcher = new WatchUidRunner(mInstrumentation, app2Info.uid,
+                WAITFOR_MSEC);
+        ApplicationInfo app3Info = mContext.getPackageManager().getApplicationInfo(
+                PACKAGE_NAME_APP3, 0);
+        WatchUidRunner uid3Watcher = new WatchUidRunner(mInstrumentation, app3Info.uid,
+                WAITFOR_MSEC);
+
+        try {
+            WaitForBroadcast waiter = new WaitForBroadcast(mInstrumentation.getTargetContext());
+            waiter.prepare(ACTION_START_FGS_RESULT);
+
+            enableFgsRestriction(false, true, null);
+
+            // START FGS in APP2.
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_START_FOREGROUND_SERVICE,
+                    PACKAGE_NAME_APP2, PACKAGE_NAME_APP2, 0, null);
+            // APP2 proc state is 4.
+            uid2Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
+                    WatchUidRunner.STATE_FG_SERVICE);
+            waiter.doWait(WAITFOR_MSEC);
+
+            // APP2 binds to APP1.
+            CommandReceiver.sendCommand(mContext, CommandReceiver.COMMAND_BIND_SERVICE,
+                    PACKAGE_NAME_APP2, PACKAGE_NAME_APP1, Context.BIND_INCLUDE_CAPABILITIES, null);
+            // APP1 gets proc state 4.
+            uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
+                    WatchUidRunner.STATE_FG_SERVICE);
+
+            // Start activity in APP3, this put APP3 in TOP state.
+            allowBgActivityStart(PACKAGE_NAME_APP3, true);
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_START_ACTIVITY,
+                    PACKAGE_NAME_APP3, PACKAGE_NAME_APP3, 0, null);
+            // APP3 gets proc state 2.
+            uid3Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_TOP);
+
+            // APP3 repeatedly bind/unbind with APP2, observer APP1 proc state change.
+            // Observe updateUidProcState() call latency.
+            for (int i = 0; i < 10; ++i) {
+                // APP3 bind to APP2
+                CommandReceiver.sendCommand(mContext,
+                        CommandReceiver.COMMAND_BIND_SERVICE,
+                        PACKAGE_NAME_APP3, PACKAGE_NAME_APP2, Context.BIND_INCLUDE_CAPABILITIES,
+                        null);
+                uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_BOUND_TOP);
+
+                CommandReceiver.sendCommand(mContext, CommandReceiver.COMMAND_UNBIND_SERVICE,
+                        PACKAGE_NAME_APP3, PACKAGE_NAME_APP2, 0, null);
+                uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE);
+            }
+
+            // unbind service.
+            CommandReceiver.sendCommand(mContext, CommandReceiver.COMMAND_STOP_ACTIVITY,
+                    PACKAGE_NAME_APP3, PACKAGE_NAME_APP3, 0, null);
+            CommandReceiver.sendCommand(mContext, CommandReceiver.COMMAND_UNBIND_SERVICE,
+                    PACKAGE_NAME_APP3, PACKAGE_NAME_APP2, 0, null);
+            CommandReceiver.sendCommand(mContext, CommandReceiver.COMMAND_UNBIND_SERVICE,
+                    PACKAGE_NAME_APP2, PACKAGE_NAME_APP1, 0, null);
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_STOP_FOREGROUND_SERVICE,
+                    PACKAGE_NAME_APP2, PACKAGE_NAME_APP2, 0, null);
+
+        } finally {
+            uid1Watcher.finish();
+            uid2Watcher.finish();
+            uid3Watcher.finish();
+            allowBgActivityStart(PACKAGE_NAME_APP3, false);
+        }
+    }
+
     /**
      * Test FGS background startForeground() restriction, use DeviceConfig to turn on restriction.
      * @throws Exception
