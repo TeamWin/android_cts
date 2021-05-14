@@ -765,7 +765,6 @@ public class ExtractorTest {
 
         @Parameterized.Parameters(name = "{index}({0})")
         public static Collection<Object[]> input() {
-            /* TODO(b/157108639) - add missing test files */
             return Arrays.asList(new Object[][]{
                     {MediaFormat.MIMETYPE_VIDEO_MPEG2, new String[]{
                             "bbb_cif_768kbps_30fps_mpeg2_stereo_48kHz_192kbps_mp3.mp4",
