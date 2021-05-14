@@ -264,10 +264,21 @@ public class WriteExternalStorageTest extends AndroidTestCase {
         }
     }
 
+    private boolean isFuseDataIsolationIsEnabled() throws IOException {
+        return UiDevice.getInstance(getInstrumentation()).executeShellCommand(
+                "getprop persist.sys.vold_app_data_isolation_enabled").trim().equals("true");
+    }
+
     /**
      * Verify that .nomedia is created correctly.
      */
     public void testVerifyNoMediaCreated() throws Exception {
+        boolean expectNoMediaFileExists = true;
+        if (BuildCompat.isAtLeastS() && isFuseDataIsolationIsEnabled()) {
+            // All package specific paths will be in app's mount namespace, and it cannot
+            // access its parent to check .nomedia file.
+            expectNoMediaFileExists = false;
+        }
         for (File file : getAllPackageSpecificPathsExceptMedia(getContext())) {
             deleteContents(file);
         }
@@ -276,14 +287,9 @@ public class WriteExternalStorageTest extends AndroidTestCase {
         for (File path : paths) {
             MediaStore.scanFile(getContext().getContentResolver(), path);
         }
+
         // Require that .nomedia was created somewhere above each dir
         for (File path : paths) {
-            boolean expectNoMediaFileExists = true;
-            if (BuildCompat.isAtLeastS() && Environment.isExternalStorageEmulated(path)) {
-                // All package specific paths will be in app's mount namespace, and it cannot
-                // access its parent to check .nomedia file.
-                expectNoMediaFileExists = false;
-            }
             assertNotNull("Valid media must be inserted during CTS", path);
             assertEquals("Valid media must be inserted during CTS", Environment.MEDIA_MOUNTED,
                     Environment.getExternalStorageState(path));
