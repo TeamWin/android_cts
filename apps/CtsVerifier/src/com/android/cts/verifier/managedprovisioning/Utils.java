@@ -94,6 +94,7 @@ public class Utils {
                         R.string.device_owner_requesting_bugreport_tests))
                 .setContentText(msg)
                 .setStyle(new Notification.BigTextStyle().bigText(msg))
+                .extend(new Notification.TvExtender())
                 .build();
         mNotificationManager.notify(notificationId, notification);
     }
