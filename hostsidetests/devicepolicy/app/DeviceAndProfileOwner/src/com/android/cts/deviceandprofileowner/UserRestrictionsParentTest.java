@@ -54,6 +54,7 @@ public class UserRestrictionsParentTest extends InstrumentationTestCase {
     private CameraManager mCameraManager;
 
     private HandlerThread mBackgroundThread;
+    private static final long GET_UIAUTOMATION_TIMEOUT_NS = TimeUnit.SECONDS.toNanos(60);
 
     /**
      * A {@link Handler} for running tasks in the background.
@@ -65,7 +66,7 @@ public class UserRestrictionsParentTest extends InstrumentationTestCase {
         super.setUp();
         mContext = getInstrumentation().getContext();
         mContentResolver = mContext.getContentResolver();
-        mUiAutomation = getInstrumentation().getUiAutomation();
+        mUiAutomation = getUiAutomation();
 
         mDevicePolicyManager = (DevicePolicyManager)
                 mContext.getSystemService(Context.DEVICE_POLICY_SERVICE);
@@ -85,6 +86,18 @@ public class UserRestrictionsParentTest extends InstrumentationTestCase {
         mUiAutomation.dropShellPermissionIdentity();
         stopBackgroundThread();
         super.tearDown();
+    }
+
+    private UiAutomation getUiAutomation() throws InterruptedException {
+        final long deadline = System.nanoTime() + GET_UIAUTOMATION_TIMEOUT_NS;
+        while (System.nanoTime() < deadline) {
+            UiAutomation ui = getInstrumentation().getUiAutomation();
+            if (ui != null) {
+                 return ui;
+            }
+            Thread.sleep(1000);
+        }
+        throw new AssertionError("Failed to get UiAutomation");
     }
 
     public void testAddUserRestrictionDisallowConfigDateTime_onParent() {
