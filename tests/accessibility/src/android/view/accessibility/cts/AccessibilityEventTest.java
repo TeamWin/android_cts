@@ -33,6 +33,7 @@ import android.platform.test.annotations.Presubmit;
 import android.text.SpannableString;
 import android.text.TextUtils;
 import android.text.style.LocaleSpan;
+import android.view.Display;
 import android.view.View;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
@@ -540,6 +541,7 @@ public class AccessibilityEventTest {
         sentEvent.setScrollable(true);
         sentEvent.setAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS);
         sentEvent.setMovementGranularity(AccessibilityNodeInfo.MOVEMENT_GRANULARITY_LINE);
+        sentEvent.setDisplayId(Display.DEFAULT_DISPLAY);
 
         AccessibilityRecord record = AccessibilityRecord.obtain();
         AccessibilityRecordTest.fullyPopulateAccessibilityRecord(record);
