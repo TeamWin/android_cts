@@ -23,6 +23,7 @@ import android.app.Instrumentation;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.pm.PackageManager;
+import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.os.UserHandle;
 import android.os.UserManager;
@@ -33,6 +34,9 @@ import android.util.Log;
 import androidx.test.InstrumentationRegistry;
 
 import com.android.bedstead.dpmwrapper.TestAppSystemServiceFactory;
+import com.android.compatibility.common.util.WifiConfigCreator;
+
+import java.util.List;
 
 /**
  * Base class for device-owner based tests.
@@ -48,6 +52,7 @@ public abstract class BaseDeviceOwnerTest extends AndroidTestCase {
 
     protected DevicePolicyManager mDevicePolicyManager;
     protected WifiManager mWifiManager;
+    protected WifiConfigCreator mWifiConfigCreator;
     protected Instrumentation mInstrumentation;
     protected UiDevice mDevice;
     protected boolean mHasSecureLockScreen;
@@ -66,6 +71,16 @@ public abstract class BaseDeviceOwnerTest extends AndroidTestCase {
                 BasicAdminReceiver.class);
         mWifiManager = TestAppSystemServiceFactory.getWifiManager(mContext,
                 BasicAdminReceiver.class);
+        WifiManager currentUserWifiManager = mContext.getSystemService(WifiManager.class);
+        mWifiConfigCreator = new WifiConfigCreator(mContext, mWifiManager) {
+            @Override
+            public List<WifiConfiguration> getConfiguredNetworks() {
+                // Must always use the current user's wifi manager, otherwise it would fail on
+                // headless system user (as the device owner is not the current user).
+                return currentUserWifiManager.getConfiguredNetworks();
+            }
+        };
+
         mHasSecureLockScreen = mContext.getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_SECURE_LOCK_SCREEN);
         mHasTelephonyFeature = mContext.getPackageManager().hasSystemFeature(
