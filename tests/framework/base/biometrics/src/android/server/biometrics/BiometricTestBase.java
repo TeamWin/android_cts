@@ -76,7 +76,7 @@ import java.util.concurrent.Executor;
 abstract class BiometricTestBase extends ActivityManagerTestBase {
 
     private static final String TAG = "BiometricTestBase";
-    private static final String DUMPSYS_BIOMETRIC = "dumpsys biometric --proto";
+    private static final String DUMPSYS_BIOMETRIC = Utils.DUMPSYS_BIOMETRIC;
     private static final String FLAG_CLEAR_SCHEDULER_LOG = " --clear-scheduler-buffer";
     private static final String DOWNGRADE_BIOMETRIC_STRENGTH =
             "device_config put biometrics biometric_strengths ";
@@ -112,19 +112,10 @@ abstract class BiometricTestBase extends ActivityManagerTestBase {
         super.launchActivity(componentName);
     }
 
-    /**
-     * Retrieves the current states of all biometric sensor services (e.g. FingerprintService,
-     * FaceService, etc).
-     *
-     * Note that the states are retrieved from BiometricService, instead of individual services.
-     * This is because 1) BiometricService is the source of truth for all public API-facing things,
-     * and 2) This to include other information, such as UI states, etc as well.
-     */
+    /** @see Utils#getBiometricServiceCurrentState() */
     @NonNull
     protected BiometricServiceState getCurrentState() throws Exception {
-        final byte[] dump = Utils.executeShellCommand(DUMPSYS_BIOMETRIC);
-        final BiometricServiceStateProto proto = BiometricServiceStateProto.parseFrom(dump);
-        return BiometricServiceState.parseFrom(proto);
+        return Utils.getBiometricServiceCurrentState();
     }
 
     @NonNull

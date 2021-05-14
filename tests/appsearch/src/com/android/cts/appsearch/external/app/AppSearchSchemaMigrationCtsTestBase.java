@@ -16,6 +16,8 @@
 
 package android.app.appsearch.cts.app;
 
+import static android.app.appsearch.AppSearchResult.RESULT_NOT_FOUND;
+
 import static com.android.server.appsearch.testing.AppSearchTestUtils.checkIsBatchResultSuccess;
 import static com.android.server.appsearch.testing.AppSearchTestUtils.convertSearchResultsToDocuments;
 import static com.android.server.appsearch.testing.AppSearchTestUtils.doGet;
@@ -26,6 +28,7 @@ import static org.testng.Assert.expectThrows;
 
 import android.annotation.NonNull;
 import android.app.appsearch.AppSearchBatchResult;
+import android.app.appsearch.AppSearchResult;
 import android.app.appsearch.AppSearchSchema;
 import android.app.appsearch.AppSearchSessionShim;
 import android.app.appsearch.GenericDocument;
@@ -538,6 +541,12 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
         assertThat(migrationFailure.getNamespace()).isEqualTo("namespace");
         assertThat(migrationFailure.getSchemaType()).isEqualTo("testSchema");
         assertThat(migrationFailure.getDocumentId()).isEqualTo("id2");
+
+        AppSearchResult<Void> actualResult = migrationFailure.getAppSearchResult();
+        assertThat(actualResult.isSuccess()).isFalse();
+        assertThat(actualResult.getResultCode()).isEqualTo(RESULT_NOT_FOUND);
+        assertThat(actualResult.getErrorMessage())
+                .contains("Property config 'to' not found for key");
     }
 
     @Test

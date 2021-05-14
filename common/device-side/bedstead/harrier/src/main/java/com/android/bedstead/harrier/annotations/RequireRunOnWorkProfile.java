@@ -21,7 +21,7 @@ import static com.android.bedstead.harrier.OptionalBoolean.ANY;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.OptionalBoolean;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasProfileOwner;
-import com.android.bedstead.harrier.annotations.meta.RequireRunOnUserAnnotation;
+import com.android.bedstead.harrier.annotations.meta.RequireRunOnProfileAnnotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -42,7 +42,7 @@ import java.lang.annotation.Target;
  */
 @Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-@RequireRunOnUserAnnotation("android.os.usertype.profile.MANAGED")
+@RequireRunOnProfileAnnotation("android.os.usertype.profile.MANAGED")
 @EnsureHasProfileOwner
 public @interface RequireRunOnWorkProfile {
     OptionalBoolean installInstrumentedAppInParent() default ANY;
