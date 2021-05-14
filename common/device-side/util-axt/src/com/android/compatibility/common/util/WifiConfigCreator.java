@@ -146,7 +146,7 @@ public class WifiConfigCreator {
     private WifiConfiguration getWifiConfigurationBySsid(String ssid) {
         WifiConfiguration wifiConfiguration = null;
         String expectedSsid = wrapInQuotes(ssid);
-        List<WifiConfiguration> configuredNetworks = getConfiguredNetworks();
+        List<WifiConfiguration> configuredNetworks = getConfiguredNetworksWithLogging();
         for (WifiConfiguration w : configuredNetworks) {
             if (w.SSID.equals(expectedSsid)) {
                 wifiConfiguration = w;
@@ -198,7 +198,7 @@ public class WifiConfigCreator {
         checkAndEnableWifi();
 
         WifiConfiguration wifiConf = null;
-        List<WifiConfiguration> configs = getConfiguredNetworks();
+        List<WifiConfiguration> configs = getConfiguredNetworksWithLogging();
         for (WifiConfiguration config : configs) {
             if (config.networkId == netId) {
                 wifiConf = config;
@@ -302,12 +302,16 @@ public class WifiConfigCreator {
         return '"' + ssid + '"';
     }
 
-    private List<WifiConfiguration> getConfiguredNetworks() {
-        Log.d(TAG, "calling getConfiguredNetworks() on " + mWifiManager);
-        List<WifiConfiguration> configuredNetworks = mWifiManager.getConfiguredNetworks();
+    private List<WifiConfiguration> getConfiguredNetworksWithLogging() {
+        Log.d(TAG, "calling getConfiguredNetworks()");
+        List<WifiConfiguration> configuredNetworks = getConfiguredNetworks();
         Log.d(TAG, "Got " + configuredNetworks.size() + " networks: "
                 + configuredNetworks.stream().map((c) -> c.SSID).collect(Collectors.toList()));
         return configuredNetworks;
+    }
+
+    public List<WifiConfiguration> getConfiguredNetworks() {
+        return mWifiManager.getConfiguredNetworks();
     }
 }
 
