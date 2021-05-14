@@ -158,12 +158,14 @@ public class WindowContextTests extends WindowContextTestBase {
         final float expectedFontScale = fontScaleSession.get() + 0.3f;
         fontScaleSession.set(expectedFontScale);
 
+        // Wait for TestComponentCallbacks#mConfiguration to be assigned.
+        callbacks.waitForConfigChanged();
+
         // We don't rely on latch to verify the result because we may receive two configuration
         // changes. One may from that WindowContext attaches to a DisplayArea although it is before
         // ComponentCallback registration), the other is from font the scale change, which is what
         // we want to verify.
-        waitForOrFail("Font scale must be " + expectedFontScale + ","
-                + " but was " + callbacks.mConfiguration.fontScale, () ->
+        waitForOrFail("font scale to match " + expectedFontScale, () ->
                 expectedFontScale == callbacks.mConfiguration.fontScale);
 
         windowContext.unregisterComponentCallbacks(callbacks);
@@ -279,6 +281,14 @@ public class WindowContextTests extends WindowContextTestBase {
     private static class TestComponentCallbacks implements ComponentCallbacks {
         private Configuration mConfiguration;
         private CountDownLatch mLatch = new CountDownLatch(1);
+
+        private void waitForConfigChanged() {
+            try {
+                assertThat(mLatch.await(4, TimeUnit.SECONDS)).isTrue();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
 
         @Override
         public void onConfigurationChanged(@NonNull Configuration newConfig) {
