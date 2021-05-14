@@ -18,17 +18,29 @@
     <option name="config-descriptor:metadata" key="component" value="uitoolkit" />
     <option name="config-descriptor:metadata" key="parameter" value="instant_app" />
     <option name="config-descriptor:metadata" key="parameter" value="not_multi_abi" />
+
+    <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
+        <option name="cleanup-apks" value="true" />
+        <option name="force-install-mode" value="FULL"/>
+        <option name="test-file-name" value="DummyIme.apk" />
+    </target_preparer>
+
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
         <option name="test-file-name" value="CtsWidgetTestCases.apk" />
     </target_preparer>
 
-    <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
-        <option name="cleanup-apks" value="true" />
-        <option name="test-file-name" value="DummyIme.apk" />
-    </target_preparer>
-
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
+        <!--
+            Workaround for the possible downtime between [adb install <IME.apk>]
+            and [adb shell ime <IME ID>].  See b/188105339 for detais.
+        -->
+        <option name="run-command" value="am wait-for-broadcast-idle" />
+        <!--
+            One more workaround. Consider increasing this if the test is still unstable.
+            See b/188105339 for detais.
+        -->
+        <option name="run-command" value="sleep 1" />
         <option name="run-command" value="ime enable com.android.cts.dummyime/.DummyIme" />
         <option name="run-command" value="ime set com.android.cts.dummyime/.DummyIme" />
         <option name="teardown-command" value="ime reset" />
