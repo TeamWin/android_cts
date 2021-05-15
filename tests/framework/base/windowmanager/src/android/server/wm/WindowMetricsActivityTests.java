@@ -41,6 +41,8 @@ import android.view.Display;
 import android.view.WindowManager;
 import android.view.WindowMetrics;
 
+import androidx.test.filters.FlakyTest;
+
 import org.junit.Test;
 
 /**
@@ -77,6 +79,7 @@ public class WindowMetricsActivityTests extends WindowManagerTestBase {
     }
 
     @Test
+    @FlakyTest(bugId = 188207199)
     public void testMetricsMatchesActivityBoundsOnNonresizableActivity() {
         final RotationSession rotationSession = createManagedRotationSession();
         final MinAspectRatioActivity activity =
@@ -188,6 +191,7 @@ public class WindowMetricsActivityTests extends WindowManagerTestBase {
     }
 
     @Test
+    @FlakyTest(bugId = 188207199)
     public void testMetricsMatchesActivityBoundsOnNonresizableSplitActivity() {
         assumeTrue(supportsSplitScreenMultiWindow());
 
