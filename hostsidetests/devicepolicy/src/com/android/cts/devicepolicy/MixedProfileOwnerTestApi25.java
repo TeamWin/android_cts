@@ -19,10 +19,13 @@ package com.android.cts.devicepolicy;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.RequiresProfileOwnerSupport;
+
 /**
  * Set of tests for pure (non-managed) profile owner use cases that also apply to device owners.
  * Tests that should be run identically in both cases are added in DeviceAndProfileOwnerTestApi25.
  */
+@RequiresProfileOwnerSupport
 public class MixedProfileOwnerTestApi25 extends DeviceAndProfileOwnerTestApi25 {
 
     @Override

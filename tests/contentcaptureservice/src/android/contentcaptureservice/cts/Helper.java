@@ -57,6 +57,8 @@ public final class Helper {
     public static final String MY_SECOND_PACKAGE = "android.contentcaptureservice.cts2";
     public static final String OTHER_PACKAGE = "NOT.android.contentcaptureservice.cts";
 
+    public static final String EXTRA_VERIFY_RESULT = "verify_result";
+
     public static final Set<String> NO_PACKAGES = null;
     public static final Set<ComponentName> NO_ACTIVITIES = null;
 

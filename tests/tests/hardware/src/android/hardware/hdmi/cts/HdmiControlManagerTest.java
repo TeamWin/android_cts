@@ -55,6 +55,11 @@ import java.util.concurrent.TimeUnit;
 public class HdmiControlManagerTest {
 
     private static final int DEVICE_TYPE_SWITCH = 6;
+    private static final String STRING_DEVICE_TYPE_TV = "tv";
+    private static final String STRING_DEVICE_TYPE_PLAYBACK_DEVICE = "playback_device";
+    private static final String STRING_DEVICE_TYPE_AUDIO_SYSTEM = "audio_system";
+    private static final String STRING_DEVICE_TYPE_PURE_CEC_SWITCH = "pure_cec_switch";
+
     private static final int TIMEOUT_HOTPLUG_EVENT_SEC = 3;
     private static final int TIMEOUT_CONTENT_CHANGE_SEC = 13;
 
@@ -95,25 +100,30 @@ public class HdmiControlManagerTest {
 
         List<String> deviceTypes = Arrays.asList(deviceTypesValue.split(","));
 
-        if (deviceTypes.contains("0")) {
+        if (deviceTypes.contains(String.valueOf(HdmiDeviceInfo.DEVICE_TV))
+                || deviceTypes.contains(STRING_DEVICE_TYPE_TV)) {
             assertThat(mHdmiControlManager.getTvClient()).isInstanceOf(HdmiTvClient.class);
             assertThat(mHdmiControlManager.getClient(HdmiDeviceInfo.DEVICE_TV)).isInstanceOf(
                     HdmiTvClient.class);
         }
-        if (deviceTypes.contains("4")) {
+        if (deviceTypes.contains(String.valueOf(HdmiDeviceInfo.DEVICE_PLAYBACK))
+                || deviceTypes.contains(STRING_DEVICE_TYPE_PLAYBACK_DEVICE)) {
             assertThat(mHdmiControlManager.getPlaybackClient()).isInstanceOf(
                     HdmiPlaybackClient.class);
             assertThat(mHdmiControlManager.getClient(HdmiDeviceInfo.DEVICE_PLAYBACK)).isInstanceOf(
                     HdmiPlaybackClient.class);
         }
-        if (deviceTypes.contains("5")) {
+        if (deviceTypes.contains(String.valueOf(HdmiDeviceInfo.DEVICE_AUDIO_SYSTEM))
+                || deviceTypes.contains(STRING_DEVICE_TYPE_AUDIO_SYSTEM)) {
             assertThat(
                     mHdmiControlManager.getClient(HdmiDeviceInfo.DEVICE_AUDIO_SYSTEM)).isNotNull();
         }
 
         boolean isSwitchDevice = SystemProperties.getBoolean(
                 "ro.hdmi.property_is_device_hdmi_cec_switch", false);
-        if (deviceTypes.contains("6") || isSwitchDevice) {
+        if (deviceTypes.contains(String.valueOf(DEVICE_TYPE_SWITCH))
+                || deviceTypes.contains(STRING_DEVICE_TYPE_PURE_CEC_SWITCH)
+                || isSwitchDevice) {
             assertThat(mHdmiControlManager.getSwitchClient()).isInstanceOf(HdmiSwitchClient.class);
             assertThat(mHdmiControlManager.getClient(6)).isInstanceOf(HdmiSwitchClient.class);
         }
@@ -128,11 +138,13 @@ public class HdmiControlManagerTest {
 
         List<String> deviceTypes = Arrays.asList(deviceTypesValue.split(","));
 
-        if (deviceTypes.contains("0")) {
+        if (deviceTypes.contains(String.valueOf(HdmiDeviceInfo.DEVICE_TV))
+                || deviceTypes.contains(STRING_DEVICE_TYPE_TV)) {
             assertThat(mHdmiControlManager.getTvClient().getDeviceType()).isEqualTo(
                     HdmiDeviceInfo.DEVICE_TV);
         }
-        if (deviceTypes.contains("4")) {
+        if (deviceTypes.contains(String.valueOf(HdmiDeviceInfo.DEVICE_PLAYBACK))
+                || deviceTypes.contains(STRING_DEVICE_TYPE_PLAYBACK_DEVICE)) {
             assertThat(mHdmiControlManager.getPlaybackClient().getDeviceType()).isEqualTo(
                     HdmiDeviceInfo.DEVICE_PLAYBACK);
         }
@@ -140,7 +152,9 @@ public class HdmiControlManagerTest {
         boolean isSwitchDevice = SystemProperties.getBoolean(
                 "ro.hdmi.property_is_device_hdmi_cec_switch", false);
 
-        if (deviceTypes.contains(String.valueOf(DEVICE_TYPE_SWITCH)) || isSwitchDevice) {
+        if (deviceTypes.contains(String.valueOf(DEVICE_TYPE_SWITCH))
+                || deviceTypes.contains(STRING_DEVICE_TYPE_PURE_CEC_SWITCH)
+                || isSwitchDevice) {
             assertThat(mHdmiControlManager.getSwitchClient().getDeviceType()).isEqualTo(
                     DEVICE_TYPE_SWITCH);
         }

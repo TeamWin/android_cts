@@ -65,6 +65,8 @@ import java.util.concurrent.TimeUnit;
 @RunWith(AndroidJUnit4.class)
 public class QuickAccessWalletClientTest {
 
+    private static final String SETTING_KEY = "lockscreen_show_wallet";
+
     private static final GetWalletCardsRequest GET_WALLET_CARDS_REQUEST =
             new GetWalletCardsRequest(700, 440, 64, 5);
 
@@ -116,17 +118,14 @@ public class QuickAccessWalletClientTest {
                 Settings.Secure.POWER_MENU_LOCKED_SHOW_CONTENT);
 
         try {
-            SettingsUtils.syncSet(mContext, Settings.Secure.POWER_MENU_LOCKED_SHOW_CONTENT,
-                    SETTING_ENABLED);
+            SettingsUtils.syncSet(mContext, SETTING_KEY, SETTING_ENABLED);
             assertThat(client.isWalletFeatureAvailableWhenDeviceLocked()).isTrue();
 
-            SettingsUtils.syncSet(mContext, Settings.Secure.POWER_MENU_LOCKED_SHOW_CONTENT,
-                    SETTING_DISABLED);
+            SettingsUtils.syncSet(mContext, SETTING_KEY, SETTING_DISABLED);
             assertThat(client.isWalletFeatureAvailableWhenDeviceLocked()).isFalse();
         } finally {
             // return setting to original value
-            SettingsUtils.syncSet(mContext, Settings.Secure.POWER_MENU_LOCKED_SHOW_CONTENT,
-                    showCardsAndPasses);
+            SettingsUtils.syncSet(mContext, SETTING_KEY, showCardsAndPasses);
         }
     }
 
