@@ -33,8 +33,6 @@ import android.net.wifi.WifiConfiguration;
 import android.provider.Settings;
 import android.util.Log;
 
-import com.android.compatibility.common.util.WifiConfigCreator;
-
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -48,15 +46,13 @@ public final class WifiConfigLockdownTest extends BaseDeviceOwnerTest {
     private static final String ORIGINAL_REGULAR_SSID = "RegularCTSTest";
     private static final String CHANGED_REGULAR_SSID = "RegularChangedCTSTest";
     private static final String ORIGINAL_PASSWORD = "originalpassword";
-    private WifiConfigCreator mConfigCreator;
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        mConfigCreator = new WifiConfigCreator(mContext, mWifiManager);
         mDevicePolicyManager.setGlobalSetting(getWho(),
                 Settings.Global.WIFI_DEVICE_OWNER_CONFIGS_LOCKDOWN, "1");
-        mConfigCreator.addNetwork(ORIGINAL_DEVICE_OWNER_SSID, true, SECURITY_TYPE_WPA,
+        mWifiConfigCreator.addNetwork(ORIGINAL_DEVICE_OWNER_SSID, true, SECURITY_TYPE_WPA,
                 ORIGINAL_PASSWORD);
         startRegularActivity(ACTION_CREATE_WIFI_CONFIG, -1, ORIGINAL_REGULAR_SSID,
                 SECURITY_TYPE_WPA, ORIGINAL_PASSWORD);
@@ -66,7 +62,7 @@ public final class WifiConfigLockdownTest extends BaseDeviceOwnerTest {
     protected void tearDown() throws Exception {
         mDevicePolicyManager.setGlobalSetting(getWho(),
                 Settings.Global.WIFI_DEVICE_OWNER_CONFIGS_LOCKDOWN, "0");
-        List<WifiConfiguration> configs = mWifiManager.getConfiguredNetworks();
+        List<WifiConfiguration> configs = mWifiConfigCreator.getConfiguredNetworks();
         logConfigs("tearDown()", configs);
         for (WifiConfiguration config : configs) {
             if (areMatchingSsids(ORIGINAL_DEVICE_OWNER_SSID, config.SSID) ||
@@ -81,13 +77,13 @@ public final class WifiConfigLockdownTest extends BaseDeviceOwnerTest {
     }
 
     public void testDeviceOwnerCanUpdateConfig() throws Exception {
-        List<WifiConfiguration> configs = mWifiManager.getConfiguredNetworks();
+        List<WifiConfiguration> configs = mWifiConfigCreator.getConfiguredNetworks();
         logConfigs("testDeviceOwnerCanUpdateConfig()", configs);
         int updateCount = 0;
         for (WifiConfiguration config : configs) {
             Log.d(TAG, "testDeviceOwnerCanUpdateConfig(): testing " + config.SSID);
             if (areMatchingSsids(ORIGINAL_DEVICE_OWNER_SSID, config.SSID)) {
-                int netId = mConfigCreator.updateNetwork(config,
+                int netId = mWifiConfigCreator.updateNetwork(config,
                         CHANGED_DEVICE_OWNER_SSID, true, SECURITY_TYPE_NONE, null);
                 Log.d(TAG, "netid after updateNetwork(REGULAR_SSID):" + netId);
                 assertWithMessage("netid after updateNetwork(%s, DO_SSID)", config.SSID)
@@ -95,7 +91,7 @@ public final class WifiConfigLockdownTest extends BaseDeviceOwnerTest {
                 ++updateCount;
             }
             if (areMatchingSsids(ORIGINAL_REGULAR_SSID, config.SSID)) {
-                int netId = mConfigCreator.updateNetwork(config,
+                int netId = mWifiConfigCreator.updateNetwork(config,
                         CHANGED_REGULAR_SSID, true, SECURITY_TYPE_NONE, null);
                 Log.d(TAG, "netid after updateNetwork(REGULAR_SSID):" + netId);
                 assertWithMessage("netid after updateNetwork(%s, REGULAR_SSID)", config.SSID)
@@ -108,7 +104,7 @@ public final class WifiConfigLockdownTest extends BaseDeviceOwnerTest {
     }
 
     public void testRegularAppCannotUpdateDeviceOwnerConfig() throws Exception {
-        List<WifiConfiguration> configs = mWifiManager.getConfiguredNetworks();
+        List<WifiConfiguration> configs = mWifiConfigCreator.getConfiguredNetworks();
         logConfigs("testRegularAppCannotUpdateDeviceOwnerConfig()", configs);
         int updateCount = 0;
         for (WifiConfiguration config : configs) {
@@ -123,7 +119,7 @@ public final class WifiConfigLockdownTest extends BaseDeviceOwnerTest {
                 .that(updateCount).isEqualTo(1);
 
         // Assert nothing has changed
-        configs = mWifiManager.getConfiguredNetworks();
+        configs = mWifiConfigCreator.getConfiguredNetworks();
         int notChangedCount = 0;
         for (WifiConfiguration config : configs) {
             Log.d(TAG, "testRegularAppCannotUpdateDeviceOwnerConfig(): testing " + config.SSID);
@@ -137,7 +133,7 @@ public final class WifiConfigLockdownTest extends BaseDeviceOwnerTest {
     }
 
     public void testRegularAppCannotRemoveDeviceOwnerConfig() throws Exception {
-        List<WifiConfiguration> configs = mWifiManager.getConfiguredNetworks();
+        List<WifiConfiguration> configs = mWifiConfigCreator.getConfiguredNetworks();
         logConfigs("testRegularAppCannotUpdateDeviceOwnerConfig()", configs);
         int removeCount = 0;
         for (WifiConfiguration config : configs) {
@@ -153,7 +149,7 @@ public final class WifiConfigLockdownTest extends BaseDeviceOwnerTest {
                 .that(removeCount).isEqualTo(1);
 
         // Assert nothing has changed
-        configs = mWifiManager.getConfiguredNetworks();
+        configs = mWifiConfigCreator.getConfiguredNetworks();
         int notChangedCount = 0;
         for (WifiConfiguration config : configs) {
             Log.d(TAG, "testRegularAppCannotRemoveDeviceOwnerConfig(): testing " + config.SSID);
