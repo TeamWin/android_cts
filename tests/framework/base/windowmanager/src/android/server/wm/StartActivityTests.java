@@ -45,6 +45,8 @@ import android.platform.test.annotations.Presubmit;
 import android.server.wm.CommandSession.ActivitySession;
 import android.server.wm.intent.Activities;
 
+import androidx.test.filters.FlakyTest;
+
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -82,6 +84,7 @@ public class StartActivityTests extends ActivityManagerTestBase {
      * from an {@link Activity} {@link android.content.Context}.
      */
     @Test
+    @FlakyTest(bugId = 188207199)
     public void testStartActivityContexts() {
         // Note by default LaunchActivityBuilder will use LAUNCHING_ACTIVITY to launch the target.
 
@@ -194,6 +197,7 @@ public class StartActivityTests extends ActivityManagerTestBase {
      * activity because the caller C in different uid cannot launch a non-exported activity.
      */
     @Test
+    @FlakyTest(bugId = 188207199)
     public void testStartActivityByNavigateUpToFromDiffUid() {
         final Intent intent1 = new Intent(mContext, Activities.RegularActivity.class);
         final String regularActivityName = Activities.RegularActivity.class.getName();
