@@ -18,6 +18,8 @@ package android.hdmicec.cts.common;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static org.junit.Assert.fail;
+
 import android.hdmicec.cts.BaseHdmiCecCtsTest.CecRules;
 import android.hdmicec.cts.HdmiCecConstants;
 
@@ -92,8 +94,13 @@ public final class HdmiCecDeviceTypeTest extends BaseHostJUnit4Test {
     private int getAllDeviceTypes(ITestDevice device) {
         int deviceTypes = 0;
         String deviceType = "";
+        boolean usingStringDeviceTypes = true;
         try {
-            deviceType = device.executeShellCommand("getprop ro.hdmi.device_type").trim();
+            deviceType = device.executeShellCommand("getprop ro.hdmi.cec_device_types").trim();
+            if (deviceType.isEmpty()) {
+                usingStringDeviceTypes = false;
+                deviceType = device.executeShellCommand("getprop ro.hdmi.device_type").trim();
+            }
         } catch (DeviceNotAvailableException dnae) {
             return 0;
         }
@@ -101,7 +108,11 @@ public final class HdmiCecDeviceTypeTest extends BaseHostJUnit4Test {
         String[] cecDevices = deviceType.split(",");
         for (String cecDevice : cecDevices) {
             if (!cecDevice.equals("")) {
-                deviceTypes |= setBit(Integer.parseInt(cecDevice));
+                if (usingStringDeviceTypes) {
+                    deviceTypes |= setBit(stringToIntDeviceType(cecDevice));
+                } else {
+                    deviceTypes |= setBit(Integer.parseInt(cecDevice));
+                }
             }
         }
 
@@ -110,5 +121,29 @@ public final class HdmiCecDeviceTypeTest extends BaseHostJUnit4Test {
 
     private int setBit(int value) {
         return (1 << value);
+    }
+
+    private int stringToIntDeviceType(String value) {
+        switch (value) {
+            case "tv":
+                return HdmiCecConstants.CEC_DEVICE_TYPE_TV;
+            case "recording_device":
+                return HdmiCecConstants.CEC_DEVICE_TYPE_RECORDER;
+            case "reserved":
+                return HdmiCecConstants.CEC_DEVICE_TYPE_RESERVED;
+            case "tuner":
+                return HdmiCecConstants.CEC_DEVICE_TYPE_TUNER;
+            case "playback_device":
+                return HdmiCecConstants.CEC_DEVICE_TYPE_PLAYBACK_DEVICE;
+            case "audio_system":
+                return HdmiCecConstants.CEC_DEVICE_TYPE_AUDIO_SYSTEM;
+            case "pure_cec_switch":
+                return HdmiCecConstants.CEC_DEVICE_TYPE_SWITCH;
+            case "video_processor":
+                return HdmiCecConstants.CEC_DEVICE_TYPE_VIDEO_PROCESSOR;
+            default:
+                fail("Unrecognized device type: " + value);
+                return 0; // Prevent compiler error
+        }
     }
 }

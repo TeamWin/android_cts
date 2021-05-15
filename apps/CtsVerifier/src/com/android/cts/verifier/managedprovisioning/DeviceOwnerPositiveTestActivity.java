@@ -379,20 +379,22 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
         }
 
         // setKeyguardDisabled
-        adapter.add(createInteractiveTestItem(this, DISABLE_KEYGUARD_TEST_ID,
-                R.string.device_owner_disable_keyguard_test,
-                R.string.device_owner_disable_keyguard_test_info,
-                new ButtonInfo[] {
-                        new ButtonInfo(
-                                R.string.device_owner_disable_keyguard_button,
-                                createDeviceOwnerIntentWithBooleanParameter(
-                                        CommandReceiverActivity.COMMAND_SET_KEYGUARD_DISABLED,
-                                                true)),
-                        new ButtonInfo(
-                                R.string.device_owner_reenable_keyguard_button,
-                                createDeviceOwnerIntentWithBooleanParameter(
-                                        CommandReceiverActivity.COMMAND_SET_KEYGUARD_DISABLED,
-                                                false))}));
+        if (isKeyguardShownWhenUserDoesntHaveCredentials()) {
+            adapter.add(createInteractiveTestItem(this, DISABLE_KEYGUARD_TEST_ID,
+                    R.string.device_owner_disable_keyguard_test,
+                    R.string.device_owner_disable_keyguard_test_info,
+                    new ButtonInfo[] {
+                            new ButtonInfo(
+                                    R.string.device_owner_disable_keyguard_button,
+                                    createDeviceOwnerIntentWithBooleanParameter(
+                                            CommandReceiverActivity.COMMAND_SET_KEYGUARD_DISABLED,
+                                                    true)),
+                            new ButtonInfo(
+                                    R.string.device_owner_reenable_keyguard_button,
+                                    createDeviceOwnerIntentWithBooleanParameter(
+                                            CommandReceiverActivity.COMMAND_SET_KEYGUARD_DISABLED,
+                                                    false))}));
+        }
 
         // setLockTaskFeatures
         final Intent lockTaskUiTestIntent = new Intent(this, LockTaskUiTestActivity.class);
@@ -658,10 +660,18 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
     }
 
     private boolean isStatusBarEnabled() {
-      // Watches don't support the status bar so this is an ok proxy, but this is not the most
-      // general test for that. TODO: add a test API to do a real check for status bar support.
-      return !getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH) &&
-             !getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
+        // Watches don't support the status bar so this is an ok proxy, but this is not the most
+        // general test for that. TODO: add a test API to do a real check for status bar support.
+        return !getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH)
+                && !isAutomotive();
+    }
+
+    private boolean isKeyguardShownWhenUserDoesntHaveCredentials() {
+        return !isAutomotive();
+    }
+
+    private boolean isAutomotive() {
+        return getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
     }
 
     private boolean canUsbDataSignalingBeDisabled() {

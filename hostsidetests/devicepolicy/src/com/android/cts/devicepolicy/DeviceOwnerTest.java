@@ -553,6 +553,8 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
                 .build());
     }
 
+    @TemporaryIgnoreOnHeadlessSystemUserMode(bugId = "132360087",
+            reason = "need more investigation / decide how to support it")
     @Test
     public void testBluetoothRestriction() throws Exception {
         executeDeviceOwnerTest("BluetoothRestrictionTest");
@@ -938,8 +940,8 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
 
     @Test
     public void testWifiNetworkConfigurationWithoutFineLocationPermission() throws Exception {
-        getDevice().executeShellCommand(String.format(
-                "pm revoke %s android.permission.ACCESS_FINE_LOCATION", DEVICE_OWNER_PKG));
+        executeShellCommand("pm revoke --user %d %s android.permission.ACCESS_FINE_LOCATION",
+                mPrimaryUserId, DEVICE_OWNER_PKG);
 
         executeDeviceOwnerTest("WifiNetworkConfigurationWithoutFineLocationPermissionTest");
     }

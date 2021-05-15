@@ -353,6 +353,28 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
         assertEquals("Success\n", installResult);
     }
 
+    protected void installDeviceOwnerApp(String apk) throws Exception {
+        installAppAsUser(apk, mDeviceOwnerUserId);
+
+        if (isHeadlessSystemUserMode()) {
+            // Need to explicitly install the device owner app for the current user (rather than
+            // relying on DPMS) so it has the same privileges (like INTERACT_ACROSS_USERS) as the
+            // app running on system user, otherwise some tests might fail
+            installAppAsUser(apk, mPrimaryUserId);
+        }
+    }
+
+    protected void removeDeviceOwnerAdmin(String componentName) throws DeviceNotAvailableException {
+        // Don't fail as it could hide the real failure from the test method
+        if (!removeAdmin(componentName, mDeviceOwnerUserId)) {
+            CLog.e("Failed to remove device owner %s on user %d", componentName,
+                    mDeviceOwnerUserId);
+        }
+        if (isHeadlessSystemUserMode() && !removeAdmin(componentName, mPrimaryUserId)) {
+            CLog.e("Failed to remove profile owner %s on user %d", componentName, mPrimaryUserId);
+        }
+    }
+
     protected void forceStopPackageForUser(String packageName, int userId) throws Exception {
         // TODO Move this logic to ITestDevice
         executeShellCommand("am force-stop --user " + userId + " " + packageName);
@@ -1210,17 +1232,16 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
 
     protected void grantDpmWrapperPermissions(String deviceAdminPkg, int userId) throws Exception {
         // TODO(b/176993670): INTERACT_ACROSS_USERS is needed by DevicePolicyManagerWrapper to
-        // get the current user; the permission is available on mDeviceOwnerUserId because it
-        // was installed with -g, but not on mPrimaryUserId as the app is intalled by code
-        // (DPMS.manageUserUnchecked(), which don't grant it (as this is a privileged permission
+        // send ordered broadcasts to the test user. The permission is already available to the
+        // packages installed by the host side test (as they're installed with -g), but need to be
+        // granted for users created by the test, as the package is intalled by code
+        // (DPMS.manageUserUnchecked(), which doesn't grant it (as this is a privileged permission
         // that's not available to 3rd party apps). If we get rid of DevicePolicyManagerWrapper,
         // we won't need to grant it anymore.
         grantPermission(deviceAdminPkg, PERMISSION_INTERACT_ACROSS_USERS, userId, "its PO needs to "
                 + "send ordered broadcasts to user 0");
 
-        grantPermission(deviceAdminPkg, "android.permission.WRITE_SECURE_SETTINGS", userId,
-                "some tests need it");
-
+        // Probably not needed anymore, but it doesn't hurt to keep...
         CLog.i("Granting ALLOW_TEST_API_ACCESS to package %s", deviceAdminPkg);
         executeShellCommand("am compat enable ALLOW_TEST_API_ACCESS %s", deviceAdminPkg);
     }
