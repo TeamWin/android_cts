@@ -41,6 +41,12 @@
         <package android:name="com.android.test.notificationtrampoline.api30" />
     </queries>
 
+    <attribution android:tag="localActivity" android:label="@string/sample_text" />
+    <attribution android:tag="localActivityAlias" android:label="@string/sample_text" />
+    <attribution android:tag="localService" android:label="@string/sample_text" />
+    <attribution android:tag="localProvider" android:label="@string/sample_text" />
+    <attribution android:tag="localReceiver" android:label="@string/sample_text" />
+
     <uses-permission android:name="android.app.stubs.permission.TEST_GRANTED"/>
     <uses-permission android:name="android.permission.READ_CONTACTS"/>
     <uses-permission android:name="android.permission.WRITE_CONTACTS"/>
@@ -143,6 +149,7 @@
         </activity>
 
         <service android:name="android.app.stubs.LocalService"
+             android:attributionTags="localService"
              android:exported="true">
             <intent-filter>
                 <action android:name="android.app.stubs.activity.SERVICE_LOCAL"/>
@@ -245,7 +252,9 @@
         </activity>
 
         <activity android:name="android.app.stubs.LocalActivity"
-             android:multiprocess="true">
+             android:attributionTags="localActivity"
+             android:multiprocess="true"
+             android:exported="true">
             <meta-data android:name="android.app.stubs.string"
                  android:value="foo"/>
             <meta-data android:name="android.app.stubs.boolean"
@@ -259,6 +268,11 @@
             <meta-data android:name="android.app.stubs.reference"
                  android:resource="@xml/metadata"/>
         </activity>
+
+        <activity-alias android:name="android.app.stubs.LocalActivityAlias"
+             android:targetActivity="android.app.stubs.LocalActivity"
+             android:attributionTags="localActivityAlias"
+             android:exported="true" />
 
         <activity android:name="android.app.stubs.TestedActivity"
              android:process=":remoteActivity">
@@ -515,6 +529,15 @@
 
         <service android:name=".CloseSystemDialogsTestService"
             android:exported="true" />
+
+        <receiver android:name="android.app.stubs.LocalReceiver"
+             android:attributionTags="localReceiver"
+             android:exported="true">
+            <intent-filter>
+                <action android:name="android.app.stubs.activity.RECEIVER_LOCAL"/>
+            </intent-filter>
+        </receiver>
+
     </application>
 
 </manifest>
