@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +16,18 @@
 
 package android.app.stubs;
 
-import android.os.Bundle;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-public class LocalActivity extends TestedActivity {
+public class LocalReceiver extends BroadcastReceiver {
     private static final AtomicReference<String> sLastAttributionTag = new AtomicReference<>();
 
-    public LocalActivity() {
-    }
-
-    public void onCreate(Bundle icicle) {
-        super.onCreate(icicle);
-        sLastAttributionTag.set(getAttributionTag());
+    @Override
+    public void onReceive(Context context, Intent intent) {
+        sLastAttributionTag.set(context.getAttributionTag());
     }
 
     public static String getAndClearLastAttributionTag() {

@@ -27,6 +27,15 @@
             android:grantUriPermissions="true"
         />
 
+        <provider android:name="android.app.stubs.LocalProvider"
+             android:attributionTags="localProvider"
+             android:authorities="android.app.stubs.provider"
+             android:exported="true">
+            <intent-filter>
+                <action android:name="android.app.stubs.activity.PROVIDER_LOCAL"/>
+            </intent-filter>
+        </provider>
+
     </application>
 
 </manifest>
