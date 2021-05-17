@@ -131,9 +131,10 @@ def assert_increasing_means(means, exps, sens, black_levels, white_level):
     for ch, color in enumerate(COLORS):
       e_msg = 'ISO=%d, %s, exp %3fms mean: %.2f, %s mean: %.2f, TOL=%.f%%' % (
           sens, color, exps[i-1], mean[ch],
-          'black level' if i == 1 else 'exp_time %3fms'%exps[i-2],
+          'black level' if i == 1 else 'exp_time %.3fms'%exps[i-2],
           prev_mean[ch], IMG_DELTA_THRESH*100)
-      assert mean[ch] > prev_mean[ch] * IMG_DELTA_THRESH, e_msg
+      if mean[ch] <= prev_mean[ch] * IMG_DELTA_THRESH:
+        raise AssertionError(e_msg)
 
 
 class RawExposureTest(its_base_test.ItsBaseTest):
