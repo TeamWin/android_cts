@@ -81,7 +81,6 @@ public class BiometricActivityTests extends BiometricTestBase {
 
         // Nothing happened yet
         BiometricCallbackHelper.State callbackState = getCallbackState(journal);
-        assertNotNull(callbackState);
         assertEquals(callbackState.toString(), 0, callbackState.mNumAuthRejected);
         assertEquals(callbackState.toString(), 0, callbackState.mNumAuthAccepted);
         assertEquals(callbackState.toString(), 0, callbackState.mAcquiredReceived.size());
@@ -92,7 +91,6 @@ public class BiometricActivityTests extends BiometricTestBase {
 
         mInstrumentation.waitForIdleSync();
         callbackState = getCallbackState(journal);
-        assertNotNull(callbackState);
         assertTrue(callbackState.toString(), callbackState.mErrorsReceived.isEmpty());
         assertTrue(callbackState.toString(), callbackState.mAcquiredReceived.isEmpty());
         assertEquals(callbackState.toString(), 1, callbackState.mNumAuthAccepted);
@@ -136,7 +134,6 @@ public class BiometricActivityTests extends BiometricTestBase {
         session.rejectAuthentication(userId);
         mInstrumentation.waitForIdleSync();
         callbackState = getCallbackState(journal);
-        assertNotNull(callbackState);
         assertEquals(callbackState.toString(), 1, callbackState.mNumAuthRejected);
         assertEquals(callbackState.toString(), 0, callbackState.mNumAuthAccepted);
         assertEquals(callbackState.toString(), 0, callbackState.mAcquiredReceived.size());
@@ -154,7 +151,6 @@ public class BiometricActivityTests extends BiometricTestBase {
         session.notifyError(userId, BiometricPrompt.BIOMETRIC_ERROR_CANCELED);
         mInstrumentation.waitForIdleSync();
         callbackState = getCallbackState(journal);
-        assertNotNull(callbackState);
         assertEquals(callbackState.toString(), 1, callbackState.mNumAuthRejected);
         assertEquals(callbackState.toString(), 0, callbackState.mNumAuthAccepted);
         assertEquals(callbackState.toString(), 0, callbackState.mAcquiredReceived.size());
@@ -202,7 +198,6 @@ public class BiometricActivityTests extends BiometricTestBase {
         session.rejectAuthentication(userId);
         mInstrumentation.waitForIdleSync();
         callbackState = getCallbackState(journal);
-        assertNotNull(callbackState);
         assertEquals(callbackState.toString(), 1, callbackState.mNumAuthRejected);
         assertEquals(callbackState.toString(), 0, callbackState.mNumAuthAccepted);
         assertEquals(callbackState.toString(), 0, callbackState.mAcquiredReceived.size());
@@ -221,7 +216,6 @@ public class BiometricActivityTests extends BiometricTestBase {
 
         mInstrumentation.waitForIdleSync();
         callbackState = getCallbackState(journal);
-        assertNotNull(callbackState);
         assertTrue(callbackState.toString(), callbackState.mErrorsReceived.isEmpty());
         assertTrue(callbackState.toString(), callbackState.mAcquiredReceived.isEmpty());
         assertEquals(callbackState.toString(), 1, callbackState.mNumAuthAccepted);

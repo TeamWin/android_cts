@@ -127,6 +127,7 @@ public class Utils {
      * @return The result of the command.
      */
     public static byte[] executeShellCommand(String cmd) {
+        Log.d(TAG, "execute: " + cmd);
         try {
             ParcelFileDescriptor pfd = getInstrumentation().getUiAutomation()
                     .executeShellCommand(cmd);

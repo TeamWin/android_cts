@@ -22,6 +22,7 @@ import static android.server.biometrics.Components.CLASS_3_BIOMETRIC_ACTIVITY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
 import android.content.ComponentName;
@@ -34,6 +35,8 @@ import android.server.wm.TestJournalProvider.TestJournal;
 import android.server.wm.TestJournalProvider.TestJournalContainer;
 import android.util.Log;
 
+import org.junit.After;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.List;
@@ -44,6 +47,19 @@ import java.util.List;
 @Presubmit
 public class BiometricSecurityTests extends BiometricTestBase {
     private static final String TAG = "BiometricTests/Security";
+
+    private static final String DEVICE_CONFIG_NAMESPACE = "biometrics";
+    private static final String DEVICE_CONFIG_BIO_STRENGTH_KEY = "biometric_strengths";
+
+    @BeforeClass
+    public static void ensureReset() throws Exception {
+        revertSensorStrengths();
+    }
+
+    @After
+    public void teardown() throws Exception {
+        revertSensorStrengths();
+    }
 
     /**
      * A strong biometric should be able to perform auth with any requested strength, since it is
@@ -105,7 +121,7 @@ public class BiometricSecurityTests extends BiometricTestBase {
             testBiometricStrength_forSensor_authDisallowed(sensorId,
                     Authenticators.BIOMETRIC_WEAK /* originalStrength */,
                     Authenticators.BIOMETRIC_STRONG /* requestedStrength */,
-                    sensors.size() > 1 /* hasMultiSensors */);
+                    mSensorProperties.size() > 1 /* hasMultiSensors */);
 
             testBiometricStrength_forSensor_authAllowed(sensorId,
                     Authenticators.BIOMETRIC_WEAK /* originalStrength */,
@@ -162,7 +178,7 @@ public class BiometricSecurityTests extends BiometricTestBase {
         final ComponentName componentName = getComponentName(requestedStrength);
 
         // Reset to the original strength in case it's ever changed before the test
-        updateStrength(sensorId, originalStrength);
+        updateStrengthAndVerify(sensorId, originalStrength);
 
         try (BiometricTestSession session = mBiometricManager.createTestSession(sensorId);
              ActivitySession activitySession = new ActivitySession(this, componentName)) {
@@ -209,11 +225,10 @@ public class BiometricSecurityTests extends BiometricTestBase {
         final ComponentName componentName = getComponentName(requestedStrength);
 
         // Reset to the original strength in case it's ever changed before the test
-        updateStrength(sensorId, originalStrength);
+        updateStrengthAndVerify(sensorId, originalStrength);
 
         try (BiometricTestSession session = mBiometricManager.createTestSession(sensorId);
              ActivitySession activitySession = new ActivitySession(this, componentName)) {
-            final int userId = 0;
             waitForAllUnenrolled();
             enrollForSensor(session, sensorId);
             final TestJournal journal =
@@ -291,7 +306,7 @@ public class BiometricSecurityTests extends BiometricTestBase {
                         testCases[i][0] /* originalStrength */,
                         testCases[i][1] /* targetStrength */,
                         testCases[i][2] /* requestedStrength */,
-                        sensors.size() > 1 /* hasMultiSensors */);
+                        mSensorProperties.size() > 1 /* hasMultiSensors */);
             }
         }
     }
@@ -327,7 +342,7 @@ public class BiometricSecurityTests extends BiometricTestBase {
                         testCases[i][0] /* originalStrength */,
                         testCases[i][1] /* targetStrength */,
                         testCases[i][2] /* requestedStrength */,
-                        sensors.size() > 1 /* hasMultiSensors */);
+                        mSensorProperties.size() > 1 /* hasMultiSensors */);
             }
         }
     }
@@ -343,9 +358,6 @@ public class BiometricSecurityTests extends BiometricTestBase {
 
         final ComponentName componentName = getComponentName(requestedStrength);
 
-        // Reset to the original strength in case it's ever changed before the test
-        updateStrength(sensorId, originalStrength);
-
         try (BiometricTestSession session = mBiometricManager.createTestSession(sensorId);
              ActivitySession activitySession = new ActivitySession(this, componentName)) {
             final int userId = 0;
@@ -358,7 +370,7 @@ public class BiometricSecurityTests extends BiometricTestBase {
             BiometricServiceState state;
 
             // Downgrade the biometric strength to the target strength
-            updateStrength(sensorId, targetStrength);
+            updateStrengthAndVerify(sensorId, targetStrength);
 
             // After downgrading, check whether auth works
             // TODO: should check if targetStrength is at least as strong as the requestedStrength,
@@ -412,9 +424,6 @@ public class BiometricSecurityTests extends BiometricTestBase {
                         BiometricManager.BIOMETRIC_ERROR_SECURITY_UPDATE_REQUIRED, hasMultiSensors);
             }
         }
-
-        // Cleanup: reset to the original strength
-        updateStrength(sensorId, originalStrength);
     }
 
     /**
@@ -447,7 +456,7 @@ public class BiometricSecurityTests extends BiometricTestBase {
                         testCases[i][0] /* originalStrength */,
                         testCases[i][1] /* targetStrength */,
                         testCases[i][2] /* requestedStrength */,
-                        sensors.size() > 1 /* hasMultiSensors */);
+                        mSensorProperties.size() > 1 /* hasMultiSensors */);
             }
         }
     }
@@ -513,11 +522,10 @@ public class BiometricSecurityTests extends BiometricTestBase {
         final ComponentName componentName = getComponentName(requestedStrength);
 
         // Reset to the original strength in case it's ever changed before the test
-        updateStrength(sensorId, originalStrength);
+        updateStrengthAndVerify(sensorId, originalStrength);
 
         try (BiometricTestSession session = mBiometricManager.createTestSession(sensorId);
              ActivitySession activitySession = new ActivitySession(this, componentName)) {
-            final int userId = 0;
             waitForAllUnenrolled();
             enrollForSensor(session, sensorId);
             final TestJournal journal =
@@ -525,7 +533,7 @@ public class BiometricSecurityTests extends BiometricTestBase {
 
             // Try to upgrade the biometric strength to the target strength. The upgrading operation
             // is no-op since the biometric can't be upgraded past its original strength.
-            updateStrength(sensorId, targetStrength);
+            updateStrengthAndIdle(sensorId, targetStrength);
             final int currentStrength = getCurrentStrength(sensorId);
             assertTrue("currentStrength: " + currentStrength, currentStrength == originalStrength);
 
@@ -550,9 +558,6 @@ public class BiometricSecurityTests extends BiometricTestBase {
             checkErrCode(callbackState.toString(), (int) callbackState.mErrorsReceived.get(0),
                     BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE, hasMultiSensors);
         }
-
-        // Cleanup: reset to the original strength
-        updateStrength(sensorId, originalStrength);
     }
 
     private void checkErrCode(String msg, int errCode, int expectedErrCode,
@@ -568,16 +573,61 @@ public class BiometricSecurityTests extends BiometricTestBase {
         }
     }
 
-    private ComponentName getComponentName(int requestedStrength) {
+    private static ComponentName getComponentName(int requestedStrength) {
         assertTrue("requestedStrength: " + requestedStrength,
                 requestedStrength == Authenticators.BIOMETRIC_STRONG ||
                         requestedStrength == Authenticators.BIOMETRIC_WEAK);
 
         if (requestedStrength == Authenticators.BIOMETRIC_STRONG) {
             return CLASS_3_BIOMETRIC_ACTIVITY;
-        } else {
-            return CLASS_2_BIOMETRIC_ACTIVITY;
+        }
+        return CLASS_2_BIOMETRIC_ACTIVITY;
+    }
+
+    private static void revertSensorStrengths() throws Exception {
+        Log.d(TAG, "revertSensorStrengths");
+        Utils.executeShellCommand("device_config delete " +
+                DEVICE_CONFIG_NAMESPACE + " " +
+                DEVICE_CONFIG_BIO_STRENGTH_KEY);
+        // this is probably not needed, but there are not too many tests so pause to ensure
+        // the settings have settled
+        Thread.sleep(1000);
+    }
+
+    private void updateStrengthAndVerify(int sensorId, int targetStrength) throws Exception {
+        updateSensorStrength(sensorId, targetStrength, /* verify */ true);
+    }
+
+    private void updateStrengthAndIdle(int sensorId, int targetStrength) throws Exception {
+        updateSensorStrength(sensorId, targetStrength, /* verify */ false);
+    }
+
+    private void updateSensorStrength(int sensorId, int targetStrength, boolean verify)
+            throws Exception {
+        Log.d(TAG, "updateStrength: update sensorId=" + sensorId + " to targetStrength="
+                + targetStrength);
+        Utils.executeShellCommand("device_config put " +
+                DEVICE_CONFIG_NAMESPACE + " " +
+                DEVICE_CONFIG_BIO_STRENGTH_KEY + " " +
+                String.format("%s:%s", sensorId, targetStrength));
+
+        final boolean matchesTarget = waitForSensorToBecomeStrength(sensorId, targetStrength);
+        if (verify && !matchesTarget) {
+            fail("Timed out waiting for sensorId " + sensorId + " to become target strength: "
+                    + targetStrength);
         }
     }
 
+    private boolean waitForSensorToBecomeStrength(int sensorId, int targetStrength)
+            throws Exception {
+        for (int i = 0; i < 20; i++) {
+            final int currentStrength = getCurrentStrength(sensorId);
+            if (currentStrength == targetStrength) {
+                return true;
+            }
+            Log.d(TAG, "Not at target strength yet, current: " + currentStrength);
+            Thread.sleep(300);
+        }
+        return false;
+    }
 }
