@@ -122,7 +122,7 @@ public final class HdmiCecSystemStandbyTest extends BaseHdmiCecCtsTest {
         mLogicalAddresses.add(LogicalAddress.PLAYBACK_1);
         mLogicalAddresses.add(LogicalAddress.AUDIO_SYSTEM);
 
-        if (mDutLogicalAddress.getDeviceType() == HdmiCecConstants.CEC_DEVICE_TYPE_TV) {
+        if (hasDeviceType(HdmiCecConstants.CEC_DEVICE_TYPE_TV)) {
             //Add logical addresses 13, 14 only for TV panel tests.
             mLogicalAddresses.add(LogicalAddress.RESERVED_2);
             mLogicalAddresses.add(LogicalAddress.SPECIFIC_USE);

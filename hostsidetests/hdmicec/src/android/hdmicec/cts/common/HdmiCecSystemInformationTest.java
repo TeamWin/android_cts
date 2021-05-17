@@ -89,7 +89,7 @@ public final class HdmiCecSystemInformationTest extends BaseHdmiCecCtsTest {
             /* Check that the physical address taken is valid. */
             CecMessage.assertPhysicalAddressValid(message, getDumpsysPhysicalAddress());
             int receivedParams = CecMessage.getParams(message);
-            assertThat(receivedParams & 0xFF).isEqualTo(mDutLogicalAddress.getDeviceType());
+            assertThat(hasDeviceType(receivedParams & 0xFF)).isTrue();
         }
     }
 
