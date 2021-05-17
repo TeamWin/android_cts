@@ -140,6 +140,10 @@ public class BaseInstallMultiple<T extends BaseInstallMultiple<?>> {
         run(true, null);
     }
 
+    void run(boolean expectingSuccess) throws DeviceNotAvailableException {
+        run(expectingSuccess, null);
+    }
+
     void runExpectingFailure() throws DeviceNotAvailableException {
         run(false, null);
     }
