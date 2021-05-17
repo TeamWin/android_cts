@@ -74,6 +74,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.BlockedNumberUtil;
 import com.android.compatibility.common.util.ShellIdentityUtils;
+import com.android.internal.os.SomeArgs;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -1688,6 +1689,177 @@ public class RcsUceAdapterTest {
             // Reset the device status
             removeUceRequestDisallowedStatus();
         });
+
+        overrideCarrierConfig(null);
+    }
+
+    @Test
+    public void testTerminatedCallbackWithCapabilitiesRequest() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+
+        ImsManager imsManager = getContext().getSystemService(ImsManager.class);
+        RcsUceAdapter uceAdapter = imsManager.getImsRcsManager(sTestSub).getUceAdapter();
+        assertNotNull("UCE adapter should not be null!", uceAdapter);
+
+        // Remove the test contact capabilities
+        removeTestContactFromEab();
+
+        // Connect to the ImsService
+        setupTestImsService(uceAdapter, true, true /* presence cap */, false /* OPTIONS */);
+
+        ArrayList<String> pidfXmlList = new ArrayList<>(1);
+        pidfXmlList.add(getPidfXmlData(sTestNumberUri, true, true));
+
+        TestRcsCapabilityExchangeImpl capabilityExchangeImpl = sServiceConnector
+                .getCarrierService().getRcsFeature().getRcsCapabilityExchangeImpl();
+
+        BlockingQueue<Integer> errorQueue = new LinkedBlockingQueue<>();
+        BlockingQueue<Long> errorRetryQueue = new LinkedBlockingQueue<>();
+        BlockingQueue<Boolean> completeQueue = new LinkedBlockingQueue<>();
+        BlockingQueue<RcsContactUceCapability> capabilityQueue = new LinkedBlockingQueue<>();
+        RcsUceAdapter.CapabilitiesCallback callback = new RcsUceAdapter.CapabilitiesCallback() {
+            @Override
+            public void onCapabilitiesReceived(List<RcsContactUceCapability> capabilities) {
+                capabilities.forEach(c -> capabilityQueue.offer(c));
+            }
+            @Override
+            public void onComplete() {
+                completeQueue.offer(true);
+            }
+            @Override
+            public void onError(int errorCode, long retryAfterMillis) {
+                errorQueue.offer(errorCode);
+                errorRetryQueue.offer(retryAfterMillis);
+            }
+        };
+
+        // Prepare the test contact and the callback
+        Collection<Uri> numbers = new ArrayList<>(1);
+        numbers.add(sTestNumberUri);
+
+        // Prepare the network response is 200 OK and the capabilities update
+        int networkRespCode = 200;
+        String networkRespReason = "OK";
+
+        Map<SomeArgs, SomeArgs> terminatedMap = new HashMap<>();
+        SomeArgs deactivatedArgs = SomeArgs.obtain();
+        deactivatedArgs.arg1 = "deactivated";
+        deactivatedArgs.arg2 = Long.valueOf(3000L);
+        SomeArgs deactivatedExpectedArgs = SomeArgs.obtain();
+        deactivatedExpectedArgs.argi1 = RcsUceAdapter.ERROR_GENERIC_FAILURE;
+        deactivatedExpectedArgs.arg1 = Long.valueOf(3000L);
+        terminatedMap.put(deactivatedArgs, deactivatedExpectedArgs);
+
+        SomeArgs probationArgs = SomeArgs.obtain();
+        probationArgs.arg1 = "probation";
+        probationArgs.arg2 = Long.valueOf(4000L);
+        SomeArgs probationExpectedArgs = SomeArgs.obtain();
+        probationExpectedArgs.argi1 = RcsUceAdapter.ERROR_GENERIC_FAILURE;
+        probationExpectedArgs.arg1 = Long.valueOf(4000L);
+        terminatedMap.put(probationArgs, probationExpectedArgs);
+
+        SomeArgs rejectedArgs = SomeArgs.obtain();
+        rejectedArgs.arg1 = "rejected";
+        rejectedArgs.arg2 = Long.valueOf(5000L);
+        SomeArgs rejectedExpectedArgs = SomeArgs.obtain();
+        rejectedExpectedArgs.argi1 = RcsUceAdapter.ERROR_NOT_AUTHORIZED;
+        rejectedExpectedArgs.arg1 = Long.valueOf(0L);
+        terminatedMap.put(rejectedArgs, rejectedExpectedArgs);
+
+        SomeArgs timeoutArgs = SomeArgs.obtain();
+        timeoutArgs.arg1 = "timeout";
+        timeoutArgs.arg2 = Long.valueOf(6000L);
+        SomeArgs timeoutExpectedArgs = SomeArgs.obtain();
+        timeoutExpectedArgs.argi1 = RcsUceAdapter.ERROR_REQUEST_TIMEOUT;
+        timeoutExpectedArgs.arg1 = Long.valueOf(6000L);
+        terminatedMap.put(timeoutArgs, timeoutExpectedArgs);
+
+        SomeArgs giveupArgs = SomeArgs.obtain();
+        giveupArgs.arg1 = "giveup";
+        giveupArgs.arg2 = Long.valueOf(7000L);
+        SomeArgs giveupExpectedArgs = SomeArgs.obtain();
+        giveupExpectedArgs.argi1 = RcsUceAdapter.ERROR_NOT_AUTHORIZED;
+        giveupExpectedArgs.arg1 = Long.valueOf(7000L);
+        terminatedMap.put(giveupArgs, giveupExpectedArgs);
+
+        SomeArgs noresourceArgs = SomeArgs.obtain();
+        noresourceArgs.arg1 = "noresource";
+        noresourceArgs.arg2 = Long.valueOf(8000L);
+        SomeArgs noresourceExpectedArgs = SomeArgs.obtain();
+        noresourceExpectedArgs.argi1 = RcsUceAdapter.ERROR_NOT_FOUND;
+        noresourceExpectedArgs.arg1 = Long.valueOf(0L);
+        terminatedMap.put(giveupArgs, giveupExpectedArgs);
+
+        SomeArgs emptyReasonArgs = SomeArgs.obtain();
+        emptyReasonArgs.arg1 = "";
+        emptyReasonArgs.arg2 = Long.valueOf(9000L);
+        SomeArgs emptyReasonExpectedArgs = SomeArgs.obtain();
+        emptyReasonExpectedArgs.argi1 = RcsUceAdapter.ERROR_GENERIC_FAILURE;
+        emptyReasonExpectedArgs.arg1 = Long.valueOf(9000L);
+        terminatedMap.put(emptyReasonArgs, emptyReasonExpectedArgs);
+
+        // Verify each subscription terminated and the expected result
+        terminatedMap.forEach((deactivated, expectedResult) -> {
+            String terminatedReason = (String) deactivated.arg1;
+            Long terminatedRetryAfterMillis = (Long) deactivated.arg2;
+            capabilityExchangeImpl.setSubscribeOperation((uris, cb) -> {
+                cb.onNetworkResponse(networkRespCode, networkRespReason);
+                cb.onNotifyCapabilitiesUpdate(pidfXmlList);
+                cb.onTerminated(terminatedReason, terminatedRetryAfterMillis);
+            });
+
+            requestCapabilities(uceAdapter, numbers, callback);
+
+            try {
+                // Verify that the contact capability is received and the onCompleted is called.
+                RcsContactUceCapability capability = waitForResult(capabilityQueue);
+                assertNotNull("Capabilities were not received for contact: " + sTestNumberUri,
+                        capability);
+                verifyCapabilityResult(capability, sTestNumberUri, REQUEST_RESULT_FOUND, true,
+                        true);
+
+                int expectedErrorCode = expectedResult.argi1;
+                Long expectedRetryAfter = (Long) expectedResult.arg1;
+                assertEquals(expectedErrorCode, waitForIntResult(errorQueue));
+                assertEquals(expectedRetryAfter.longValue(), (waitForLongResult(errorRetryQueue)));
+            } catch (Exception e) {
+                fail("Unexpected exception " + e);
+            }
+
+            deactivated.recycle();
+            expectedResult.recycle();
+            errorQueue.clear();
+            errorRetryQueue.clear();
+            completeQueue.clear();
+            capabilityQueue.clear();
+            removeTestContactFromEab();
+        });
+
+        // Verify the subscribe request is sccessful when the terminated is timeout and the
+        // retryAfter is 0L
+        String terminatedReason = "timemout";
+        long terminatedRetryAfterMillis = 0L;
+        capabilityExchangeImpl.setSubscribeOperation((uris, cb) -> {
+            cb.onNetworkResponse(networkRespCode, networkRespReason);
+            cb.onNotifyCapabilitiesUpdate(pidfXmlList);
+            cb.onTerminated(terminatedReason, terminatedRetryAfterMillis);
+        });
+
+        requestCapabilities(uceAdapter, numbers, callback);
+
+        // Verify that the contact capability is received and the onCompleted is called.
+        RcsContactUceCapability capability = waitForResult(capabilityQueue);
+        assertNotNull("Capabilities were not received for contact: " + sTestNumberUri, capability);
+        verifyCapabilityResult(capability, sTestNumberUri, REQUEST_RESULT_FOUND, true, true);
+        assertTrue(waitForResult(completeQueue));
+
+        errorQueue.clear();
+        errorRetryQueue.clear();
+        completeQueue.clear();
+        capabilityQueue.clear();
+        removeTestContactFromEab();
 
         overrideCarrierConfig(null);
     }
