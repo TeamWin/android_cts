@@ -2390,14 +2390,20 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                         executor.runAll();
                         int sapChannel = ScanResult.convertFrequencyMhzToChannelIfSupported(
                                 callback.getCurrentSoftApInfo().getFrequency());
-                        return WifiManager.WIFI_AP_STATE_ENABLED == callback.getCurrentState()
+                        boolean isInfoCallbackSupported =
+                                callback.getOnSoftapInfoChangedCalledCount() > 1;
+                        if (isInfoCallbackSupported) {
+                            return WifiManager.WIFI_AP_STATE_ENABLED == callback.getCurrentState()
                                 && testBandsAndChannels.valueAt(0) == sapChannel;
+                        }
+                        return WifiManager.WIFI_AP_STATE_ENABLED == callback.getCurrentState();
                     });
-            // After Soft Ap enabled, check SoftAp info
-            if (isSupportCustomizedMac) {
+            // After Soft Ap enabled, check SoftAp info if it supported
+            if (isSupportCustomizedMac && callback.getOnSoftapInfoChangedCalledCount() > 1) {
                 assertEquals(callback.getCurrentSoftApInfo().getBssid(), TEST_MAC);
             }
-            if (PropertyUtil.isVndkApiLevelNewerThan(Build.VERSION_CODES.S)) {
+            if (PropertyUtil.isVndkApiLevelNewerThan(Build.VERSION_CODES.S)
+                    && callback.getOnSoftapInfoChangedCalledCount() > 1) {
                 assertNotEquals(callback.getCurrentSoftApInfo().getWifiStandard(),
                         ScanResult.WIFI_STANDARD_UNKNOWN);
             }
