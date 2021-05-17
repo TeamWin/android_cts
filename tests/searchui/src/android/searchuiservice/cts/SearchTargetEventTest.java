@@ -32,17 +32,21 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import java.util.ArrayList;
+
 @RunWith(JUnit4.class)
 public class SearchTargetEventTest {
     private final String ID = "id";
     private final String LOCATION = "location";
     private final Builder mBuilder = new Builder(ID, ACTION_TAP).setLaunchLocation(LOCATION);
+    private final Builder mBuilderList = new Builder(new ArrayList(), ACTION_TAP);
 
     @Test
     public void testBuilder() {
         SearchTargetEvent event = mBuilder
                 .setLaunchLocation(LOCATION).setFlags(FLAG_IME_SHOWN).build();
         assertEverything(event);
+        mBuilderList.build();
     }
 
     @Test
