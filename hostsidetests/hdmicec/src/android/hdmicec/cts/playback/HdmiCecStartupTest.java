@@ -61,7 +61,7 @@ public final class HdmiCecStartupTest extends BaseHdmiCecCtsTest {
               CecOperand.GET_MENU_LANGUAGE).build();
 
     public HdmiCecStartupTest() {
-        super(LogicalAddress.PLAYBACK_1);
+        super(HdmiCecConstants.CEC_DEVICE_TYPE_PLAYBACK_DEVICE);
     }
 
     @Rule

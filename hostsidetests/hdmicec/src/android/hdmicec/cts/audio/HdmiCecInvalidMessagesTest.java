@@ -60,7 +60,7 @@ public final class HdmiCecInvalidMessagesTest extends BaseHdmiCecCtsTest {
     private static final String CLEAR_COMMAND = String.format("pm clear %s", PACKAGE);
 
     public HdmiCecInvalidMessagesTest() {
-        super(AUDIO_DEVICE);
+        super(HdmiCecConstants.CEC_DEVICE_TYPE_AUDIO_SYSTEM);
     }
 
     @Rule

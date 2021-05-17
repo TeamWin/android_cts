@@ -38,6 +38,10 @@ public class HdmiCecTvStandbyTest extends BaseHdmiCecCtsTest {
 
     private static final LogicalAddress TV_DEVICE = LogicalAddress.TV;
 
+    public HdmiCecTvStandbyTest() {
+        super(HdmiCecConstants.CEC_DEVICE_TYPE_TV);
+    }
+
     @Rule
     public RuleChain ruleChain =
             RuleChain.outerRule(CecRules.requiresCec(this))
