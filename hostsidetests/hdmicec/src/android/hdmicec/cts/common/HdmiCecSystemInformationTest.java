@@ -104,24 +104,26 @@ public final class HdmiCecSystemInformationTest extends BaseHdmiCecCtsTest {
             int receivedParams = CecMessage.getParams(message, 2, 4);
 
             int deviceType = 0;
-            switch (mDutLogicalAddress.getDeviceType()) {
-                case HdmiCecConstants.CEC_DEVICE_TYPE_PLAYBACK_DEVICE:
-                    deviceType = 1 << 4;
-                    break;
-                case HdmiCecConstants.CEC_DEVICE_TYPE_TV:
-                    deviceType = 1 << 7;
-                    break;
-                case HdmiCecConstants.CEC_DEVICE_TYPE_AUDIO_SYSTEM:
-                    deviceType = 1 << 3;
-                    break;
-                case HdmiCecConstants.CEC_DEVICE_TYPE_RECORDER:
-                    deviceType = 1 << 6;
-                    break;
-                case HdmiCecConstants.CEC_DEVICE_TYPE_TUNER:
-                    deviceType = 1 << 5;
-                    break;
-                case HdmiCecConstants.CEC_DEVICE_TYPE_RESERVED:
-                    break;
+            for (LogicalAddress address : mDutLogicalAddresses) {
+                switch (address.getDeviceType()) {
+                    case HdmiCecConstants.CEC_DEVICE_TYPE_PLAYBACK_DEVICE:
+                        deviceType |= 1 << 4;
+                        break;
+                    case HdmiCecConstants.CEC_DEVICE_TYPE_TV:
+                        deviceType |= 1 << 7;
+                        break;
+                    case HdmiCecConstants.CEC_DEVICE_TYPE_AUDIO_SYSTEM:
+                        deviceType |= 1 << 3;
+                        break;
+                    case HdmiCecConstants.CEC_DEVICE_TYPE_RECORDER:
+                        deviceType |= 1 << 6;
+                        break;
+                    case HdmiCecConstants.CEC_DEVICE_TYPE_TUNER:
+                        deviceType |= 1 << 5;
+                        break;
+                    case HdmiCecConstants.CEC_DEVICE_TYPE_RESERVED:
+                        break;
+                }
             }
 
             assertThat(receivedParams & deviceType).isNotEqualTo(1);

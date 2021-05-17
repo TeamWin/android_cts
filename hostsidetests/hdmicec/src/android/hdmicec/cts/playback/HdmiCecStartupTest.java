@@ -89,7 +89,7 @@ public final class HdmiCecStartupTest extends BaseHdmiCecCtsTest {
     device.waitForBootComplete(HdmiCecConstants.REBOOT_TIMEOUT);
     /* Monitor CEC messages for 20s after reboot */
     final List<CecOperand> messagesReceived =
-        hdmiCecClient.getAllMessages(LogicalAddress.PLAYBACK_1, 20);
+            hdmiCecClient.getAllMessages(mDutLogicalAddresses, 20);
 
     /* Predicate to apply on necessaryMessages to ensure that all necessaryMessages are received. */
     final Predicate<CecOperand> notReceived = new Predicate<CecOperand>() {
