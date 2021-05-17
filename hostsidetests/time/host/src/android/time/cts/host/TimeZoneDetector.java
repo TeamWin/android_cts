@@ -43,6 +43,13 @@ interface TimeZoneDetector {
     String SHELL_COMMAND_SET_AUTO_DETECTION_ENABLED = "set_auto_detection_enabled";
 
     /**
+     * A shell command that prints whether the telephony-based time zone detection feature is
+     * supported on the device.
+     * @hide
+     */
+    String SHELL_COMMAND_IS_TELEPHONY_DETECTION_SUPPORTED = "is_telephony_detection_supported";
+
+    /**
      * A shell command that prints whether the geolocation-based time zone detection feature is
      * supported on the device.
      * @hide
