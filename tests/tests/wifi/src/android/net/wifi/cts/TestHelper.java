@@ -794,4 +794,22 @@ public class TestHelper {
         }
     }
 
+    public static int getBandFromFrequency(final int freqMHz) {
+        if (freqMHz < 1000) {
+            return ScanResult.UNSPECIFIED;
+        } else if (freqMHz < 4000) { // getFrequency is in WifiInfo.FREQUENCY_UNITS = MHz
+            return ScanResult.WIFI_BAND_24_GHZ;
+        } else if (freqMHz < 5900) {
+            // 5GHz band stops at 5885MHz, 6GHz band starts at 5955. See android.net.wifi.ScanResult
+            return ScanResult.WIFI_BAND_5_GHZ;
+        } else if (freqMHz < 10_000) {
+            return ScanResult.WIFI_BAND_6_GHZ;
+        } else if (freqMHz < 71_000) {
+            // 60 GHz band stops at 70_200
+            return ScanResult.WIFI_BAND_60_GHZ;
+        } else {
+            return ScanResult.UNSPECIFIED;
+        }
+    }
+
 }

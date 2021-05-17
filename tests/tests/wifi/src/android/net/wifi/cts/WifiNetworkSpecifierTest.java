@@ -26,8 +26,12 @@ import static org.junit.Assume.assumeTrue;
 import android.annotation.NonNull;
 import android.content.Context;
 import android.net.ConnectivityManager;
+import android.net.ConnectivityManager.NetworkCallback;
 import android.net.MacAddress;
+import android.net.Network;
+import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
+import android.net.wifi.ScanResult;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiEnterpriseConfig;
 import android.net.wifi.WifiInfo;
@@ -36,7 +40,9 @@ import android.net.wifi.WifiNetworkSpecifier;
 import android.os.PatternMatcher;
 import android.platform.test.annotations.AppModeFull;
 import android.support.test.uiautomator.UiDevice;
+import android.util.Pair;
 
+import androidx.test.filters.SdkSuppress;
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -62,6 +68,9 @@ import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.List;
+import java.util.ArrayList;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Tests the entire connection flow using {@link WifiNetworkSpecifier} embedded in a
@@ -387,6 +396,63 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
                         mTestNetwork)
                         .build();
         testUserRejectionWithSpecifier(specifier);
+    }
+
+    /**
+     * Tests using the specifier to set a band.
+     */
+    // TODO(b/167575586): Wait for S SDK finalization to change minSdkVersion to
+    //  Build.VERSION_CODES.S
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @Test
+    public void testWifiBandInNetworkCallback() throws Exception {
+        // Enable all networks and wait for Internet connectivity to be restored.
+        // The callbacks in this test will match the existing network as soon as they are filed.
+        enableAllSavedNetworks(mWifiManager);
+        mTestHelper.assertWifiInternetConnectionAvailable();
+
+        final LinkedBlockingQueue<Pair<Integer, Integer>> results = new LinkedBlockingQueue<>();
+        final int[] bands = { ScanResult.WIFI_BAND_24_GHZ, ScanResult.WIFI_BAND_5_GHZ,
+                ScanResult.WIFI_BAND_6_GHZ, ScanResult.WIFI_BAND_60_GHZ };
+        final ArrayList<NetworkCallback> registeredCallbacks = new ArrayList<>();
+        for (final int band : bands) {
+            final NetworkCallback callback = new NetworkCallback() {
+                @Override public void onCapabilitiesChanged(final Network net,
+                        final NetworkCapabilities caps) {
+                    results.offer(new Pair(band, TestHelper.getBandFromFrequency(
+                            ((WifiInfo) caps.getTransportInfo()).getFrequency())));
+                }
+            };
+
+            final WifiNetworkSpecifier specifier =
+                    new WifiNetworkSpecifier.Builder().setBand(band).build();
+            assertThat(specifier.getBand()).isEqualTo(band);
+
+            final NetworkRequest request = new NetworkRequest.Builder()
+                .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
+                .setNetworkSpecifier(specifier)
+                .build();
+            mConnectivityManager.registerNetworkCallback(request, callback);
+            registeredCallbacks.add(callback);
+        }
+
+        try {
+            // There should be at least one network callback about availability of the wifi network
+            // on the right band. If the device is currently connected to multiple WiFi networks,
+            // there will be several. Wait for a relatively long time for any callback, but only
+            // a short time for subsequent ones (as the last timeout will be incurred always).
+            Pair<Integer, Integer> result = results.poll(10, TimeUnit.SECONDS);
+            assertThat(result).isNotNull();
+            while (null != result) {
+                assertThat(result.first).isEqualTo(result.second);
+                result = results.poll(200, TimeUnit.MILLISECONDS);
+            }
+        } finally {
+            for (final NetworkCallback cb : registeredCallbacks) {
+                mConnectivityManager.unregisterNetworkCallback(cb);
+            }
+        }
     }
 
     /**
