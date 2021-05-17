@@ -55,7 +55,7 @@ public final class HdmiCecRemoteControlPassThroughTest extends BaseHdmiCecCtsTes
                     .around(hdmiCecClient);
 
     public HdmiCecRemoteControlPassThroughTest() {
-        super(LogicalAddress.TV, "-t", "r", "-t", "p", "-t", "t", "-t", "a");
+        super(HdmiCecConstants.CEC_DEVICE_TYPE_TV, "-t", "r", "-t", "p", "-t", "t", "-t", "a");
         mapRemoteControlKeys();
     }
 

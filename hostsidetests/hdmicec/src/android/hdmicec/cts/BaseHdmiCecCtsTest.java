@@ -58,43 +58,41 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
     }
 
     public final HdmiCecClientWrapper hdmiCecClient;
-    public LogicalAddress mTargetLogicalAddress;
     public List<LogicalAddress> mDutLogicalAddresses = new ArrayList<>();
+    public int mTestDeviceType = HdmiCecConstants.CEC_DEVICE_TYPE_UNKNOWN;
 
     /**
-     * Constructor for BaseHdmiCecCtsTest. Uses the DUT logical address for the test.
+     * Constructor for BaseHdmiCecCtsTest.
      */
     public BaseHdmiCecCtsTest() {
-        this(LogicalAddress.UNKNOWN);
-    }
-
-    /**
-     * Constructor for BaseHdmiCecCtsTest. Uses the DUT logical address for the test.
-     *
-     * @param clientParams Extra parameters to use when launching cec-client
-     */
-    public BaseHdmiCecCtsTest(String ...clientParams) {
-        this(LogicalAddress.UNKNOWN, clientParams);
+        this(HdmiCecConstants.CEC_DEVICE_TYPE_UNKNOWN);
     }
 
     /**
      * Constructor for BaseHdmiCecCtsTest.
      *
-     * @param dutLogicalAddress The logical address that the DUT will have.
      * @param clientParams Extra parameters to use when launching cec-client
      */
-    public BaseHdmiCecCtsTest(LogicalAddress dutLogicalAddress, String ...clientParams) {
+    public BaseHdmiCecCtsTest(String ...clientParams) {
+        this(HdmiCecConstants.CEC_DEVICE_TYPE_UNKNOWN, clientParams);
+    }
+
+    /**
+     * Constructor for BaseHdmiCecCtsTest.
+     *
+     * @param testDeviceType The primary test device type. This is used to determine to which
+     * logical address of the DUT messages should be sent.
+     * @param clientParams Extra parameters to use when launching cec-client
+     */
+    public BaseHdmiCecCtsTest(int testDeviceType, String... clientParams) {
         this.hdmiCecClient = new HdmiCecClientWrapper(clientParams);
-        mTargetLogicalAddress = dutLogicalAddress;
+        mTestDeviceType = testDeviceType;
     }
 
     @Before
     public void setUp() throws Exception {
         mDutLogicalAddresses = getDumpsysLogicalAddresses();
-        if (mTargetLogicalAddress == LogicalAddress.UNKNOWN) {
-            mTargetLogicalAddress = getTargetLogicalAddress();
-        }
-        hdmiCecClient.setTargetLogicalAddress(mTargetLogicalAddress);
+        hdmiCecClient.setTargetLogicalAddress(getTargetLogicalAddress());
         boolean startAsTv = !hasDeviceType(HdmiCecConstants.CEC_DEVICE_TYPE_TV);
         hdmiCecClient.init(startAsTv, getDevice());
     }
@@ -180,15 +178,32 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
         throw new DumpsysParseException("Could not parse logicalAddress from dumpsys.");
     }
 
-    /** Gets the default logical address of the DUT */
+    /** Gets the DUT's logical address to which messages should be sent */
     public LogicalAddress getTargetLogicalAddress() throws DumpsysParseException {
-        return getTargetLogicalAddress(getDevice());
+        return getTargetLogicalAddress(getDevice(), mTestDeviceType);
     }
 
-    /** Gets the default logical address of the given device */
+    /** Gets the given device's logical address to which messages should be sent */
     public static LogicalAddress getTargetLogicalAddress(ITestDevice device)
             throws DumpsysParseException {
+        return getTargetLogicalAddress(device, HdmiCecConstants.CEC_DEVICE_TYPE_UNKNOWN);
+    }
+
+    /** Gets the given device's logical address to which messages should be sent, based on the test
+     * device type.
+     *
+     * When the test doesn't specify a device type, or the device doesn't have a logical address
+     * that matches the specified device type, use the first logical address.
+     *
+     */
+    public static LogicalAddress getTargetLogicalAddress(ITestDevice device, int testDeviceType)
+            throws DumpsysParseException {
         List<LogicalAddress> logicalAddressList = getDumpsysLogicalAddresses(device);
+        for (LogicalAddress address : logicalAddressList) {
+            if (address.getDeviceType() == testDeviceType) {
+                return address;
+            }
+        }
         return logicalAddressList.get(0);
     }
 

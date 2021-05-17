@@ -21,6 +21,7 @@ import static com.google.common.truth.Truth.assertThat;
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.CecOperand;
+import android.hdmicec.cts.HdmiCecConstants;
 import android.hdmicec.cts.LogicalAddress;
 
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -44,7 +45,7 @@ public final class HdmiCecSystemInformationTest extends BaseHdmiCecCtsTest {
                     .around(hdmiCecClient);
 
     public HdmiCecSystemInformationTest() {
-        super(LogicalAddress.TV);
+        super(HdmiCecConstants.CEC_DEVICE_TYPE_TV);
     }
 
     /**
