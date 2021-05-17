@@ -98,7 +98,8 @@ public class CecPortDiscoverer extends BaseTargetPreparer {
                 throw new TargetSetupError("No adapters connected to host.");
             }
 
-            int targetDevice = BaseHdmiCecCtsTest.getDumpsysLogicalAddress(device);
+            int targetDevice =
+                    BaseHdmiCecCtsTest.getTargetLogicalAddress(device).getLogicalAddressAsInt();
             int toDevice;
             launchCommand.add("-t");
             if (targetDevice == 0) {
