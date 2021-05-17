@@ -20,6 +20,7 @@ import androidx.annotation.CheckResult;
 import androidx.annotation.Nullable;
 
 import com.android.bedstead.nene.exceptions.AdbException;
+import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.users.UserReference;
 
 import java.util.function.Function;
@@ -126,6 +127,18 @@ public final class ShellCommand {
          */
         public String build() {
             return commandBuilder.toString();
+        }
+
+        /**
+         * See {@link #execute()} except that any {@link AdbException} is wrapped in a
+         * {@link NeneException} with the message {@code errorMessage}.
+         */
+        public String executeOrThrowNeneException(String errorMessage) throws NeneException {
+            try {
+                return execute();
+            } catch (AdbException e) {
+                throw new NeneException(errorMessage, e);
+            }
         }
 
         /** See {@link ShellCommandUtils#executeCommand(java.lang.String)}. */
