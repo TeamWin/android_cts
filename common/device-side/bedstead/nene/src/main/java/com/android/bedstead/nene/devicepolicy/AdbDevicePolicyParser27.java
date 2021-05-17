@@ -71,7 +71,7 @@ public class AdbDevicePolicyParser27 implements AdbDevicePolicyParser {
                         "ComponentInfo\\{", 2)[1].split("\\}", 2)[0]);
         int userId = Integer.parseInt(deviceOwnerSection.split(
                 "User ID: ", 2)[1].split("\n", 2)[0]);
-        return new DeviceOwner(mTestApis.users().find(userId),
+        return new DeviceOwner(mTestApis, mTestApis.users().find(userId),
                 mTestApis.packages().find(componentName.getPackageName()), componentName);
     }
 
@@ -114,7 +114,7 @@ public class AdbDevicePolicyParser27 implements AdbDevicePolicyParser {
                         "ComponentInfo\\{", 2)[1].split("\\}", 2)[0]);
         int userId = Integer.parseInt(
                 profileOwnerSection.split("\\(User ", 2)[1].split("\\)", 2)[0]);
-        return new ProfileOwner(mTestApis.users().find(userId),
+        return new ProfileOwner(mTestApis, mTestApis.users().find(userId),
                 mTestApis.packages().find(componentName.getPackageName()), componentName);
     }
 }
