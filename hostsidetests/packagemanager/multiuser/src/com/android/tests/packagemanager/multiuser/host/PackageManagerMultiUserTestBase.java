@@ -54,6 +54,9 @@ public class PackageManagerMultiUserTestBase extends BaseHostJUnit4Test {
     /** Remove created users after tests. */
     @After
     public void tearDown() throws Exception {
+        if (mCreatedUsers == null) {
+            return;
+        }
         for (int userId : mCreatedUsers) {
             removeUser(userId);
         }
