@@ -23,7 +23,6 @@ import android.app.AppOpsManager
 import android.app.AppOpsManager.MODE_ALLOWED
 import android.app.AppOpsManager.OPSTR_ACCESS_ACCESSIBILITY
 import android.app.AppOpsManager.OPSTR_BLUETOOTH_SCAN
-import android.app.AppOpsManager.OPSTR_BLUETOOTH_CONNECT
 import android.app.AppOpsManager.OPSTR_ACTIVITY_RECOGNITION
 import android.app.AppOpsManager.OPSTR_CAMERA
 import android.app.AppOpsManager.OPSTR_COARSE_LOCATION
@@ -484,6 +483,9 @@ class AppOpsLoggingTest {
 
         val wasEnabled = enableBTAdapter(btAdapter, testContext)
         assumeTrue("Need to be able enable BT", wasEnabled)
+
+        clearCollectedNotedOps()
+
         try {
             btAdapter.startDiscovery()
             try {
@@ -1033,12 +1035,12 @@ class AppOpsLoggingTest {
             // Blame the caller
             val callerSyncOp = SyncNotedAppOp(MODE_ALLOWED, strOpToOp(OPSTR_ACTIVITY_RECOGNITION),
                     null, TEST_SERVICE_PKG)
-            AppOpsManager.collectNotedOpSync(callerSyncOp);
+            AppOpsManager.collectNotedOpSync(callerSyncOp)
 
             // Blame ourselves
             val selfSyncOp = SyncNotedAppOp(MODE_ALLOWED, strOpToOp(OPSTR_ACTIVITY_RECOGNITION),
                     null, context.packageName)
-            AppOpsManager.collectNotedOpSync(selfSyncOp);
+            AppOpsManager.collectNotedOpSync(selfSyncOp)
 
             // Accesses should be dispatched when the sync IPC returns.
             assertThat(noted).isEmpty()
