@@ -412,7 +412,7 @@
 
         <activity android:name=".ShowWhenLockedAttrRotationActivity"
              android:showWhenLocked="true"
-             android:configChanges="orientation|screenSize"
+             android:configChanges="orientation|screenSize|screenLayout"
              android:exported="true"/>
 
         <activity android:name=".ToastActivity"
