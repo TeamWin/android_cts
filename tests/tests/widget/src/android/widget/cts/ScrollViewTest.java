@@ -16,7 +16,7 @@
 
 package android.widget.cts;
 
-import static android.widget.cts.util.StretchEdgeUtil.dragHoldAndRun;
+import static android.widget.cts.util.StretchEdgeUtil.dragAndHoldExecute;
 import static android.widget.cts.util.StretchEdgeUtil.fling;
 
 import static org.junit.Assert.assertEquals;
@@ -42,6 +42,7 @@ import android.widget.EdgeEffect;
 import android.widget.FrameLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.cts.util.NoReleaseEdgeEffect;
 import android.widget.cts.util.StretchEdgeUtil;
 import android.widget.cts.util.TestUtils;
 
@@ -60,8 +61,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.xmlpull.v1.XmlPullParser;
 
-import kotlin.Unit;
-
 /**
  * Test {@link ScrollView}.
  */
@@ -75,9 +74,6 @@ public class ScrollViewTest {
     private static final int PAGE_WIDTH_DPI  = 100;
     private static final int PAGE_HEIGHT_DPI = 100;
     private static final int TOLERANCE = 2;
-
-    static final long USE_STRETCH_EDGE_EFFECT_BY_DEFAULT = 171228096L;
-    static final long USE_STRETCH_EDGE_EFFECT_FOR_SUPPORTED = 178807038L;
 
     private int mItemWidth;
     private int mItemHeight;
@@ -856,18 +852,31 @@ public class ScrollViewTest {
         // Make sure that the scroll view we care about is on screen and at the top:
         showOnlyStretch();
 
-        assertTrue(StretchEdgeUtil.dragDownStretches(mActivityRule, mScrollViewStretch));
+        NoReleaseEdgeEffect edgeEffect = new NoReleaseEdgeEffect(mActivity);
+        mScrollViewStretch.mEdgeGlowTop = edgeEffect;
+        assertTrue(StretchEdgeUtil.dragStretches(
+                mActivityRule,
+                mScrollViewStretch,
+                edgeEffect,
+                0,
+                300
+        ));
     }
 
-    // If this test is showing as flaky, it is more likely that it is broken. I've
-    // leaned toward false positive over false negative.
-    @LargeTest
     @Test
     public void testStretchAtTopAndCatch() throws Throwable {
         // Make sure that the scroll view we care about is on screen and at the top:
         showOnlyStretch();
 
-        assertTrue(StretchEdgeUtil.dragDownTapAndHoldStretches(mActivityRule, mScrollViewStretch));
+        NoReleaseEdgeEffect edgeEffect = new NoReleaseEdgeEffect(mActivity);
+        mScrollViewStretch.mEdgeGlowTop = edgeEffect;
+        assertTrue(StretchEdgeUtil.dragAndHoldKeepsStretch(
+                mActivityRule,
+                mScrollViewStretch,
+                edgeEffect,
+                0,
+                3000
+        ));
     }
 
     @LargeTest
@@ -877,18 +886,18 @@ public class ScrollViewTest {
         showOnlyStretch();
 
         InterceptView interceptView = mActivity.findViewById(R.id.wrapped_stretch);
-        Unit result = dragHoldAndRun(
+
+        NoReleaseEdgeEffect edgeEffect = new NoReleaseEdgeEffect(mActivity);
+        mScrollViewStretch.mEdgeGlowTop = edgeEffect;
+
+        dragAndHoldExecute(
                 mActivityRule,
                 mScrollViewStretch,
-                mScrollViewStretch.getWidth() / 2,
-                mScrollViewStretch.getHeight() / 2,
+                edgeEffect,
                 0,
                 300,
-                () -> {
-                    interceptView.requestDisallowInterceptCalled = false;
-                    return Unit.INSTANCE;
-                },
-                () -> Unit.INSTANCE
+                () -> interceptView.requestDisallowInterceptCalled = false,
+                null
         );
 
         mActivityRule.runOnUiThread(
@@ -906,12 +915,17 @@ public class ScrollViewTest {
             mScrollViewStretch.scrollTo(0, 210);
         });
 
-        assertTrue(StretchEdgeUtil.dragUpStretches(mActivityRule, mScrollViewStretch));
+        NoReleaseEdgeEffect edgeEffect = new NoReleaseEdgeEffect(mActivity);
+        mScrollViewStretch.mEdgeGlowBottom = edgeEffect;
+        assertTrue(StretchEdgeUtil.dragStretches(
+                mActivityRule,
+                mScrollViewStretch,
+                edgeEffect,
+                0,
+                -300
+        ));
     }
 
-    // If this test is showing as flaky, it is more likely that it is broken. I've
-    // leaned toward false positive over false negative.
-    @LargeTest
     @Test
     public void testStretchAtBottomAndCatch() throws Throwable {
         // Make sure that the scroll view we care about is on screen and at the top:
@@ -922,7 +936,15 @@ public class ScrollViewTest {
             mScrollViewStretch.scrollTo(0, 210);
         });
 
-        assertTrue(StretchEdgeUtil.dragUpTapAndHoldStretches(mActivityRule, mScrollViewStretch));
+        NoReleaseEdgeEffect edgeEffect = new NoReleaseEdgeEffect(mActivity);
+        mScrollViewStretch.mEdgeGlowBottom = edgeEffect;
+        assertTrue(StretchEdgeUtil.dragAndHoldKeepsStretch(
+                mActivityRule,
+                mScrollViewStretch,
+                edgeEffect,
+                0,
+                -300
+        ));
     }
 
     @Test
