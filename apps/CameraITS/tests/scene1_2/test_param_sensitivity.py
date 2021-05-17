@@ -53,6 +53,7 @@ class ParamSensitivityTest(its_base_test.ItsBaseTest):
       props = cam.get_camera_properties()
       props = cam.override_with_hidden_physical_camera_props(props)
       log_path = self.log_path
+      test_name_with_path = os.path.join(log_path, NAME)
 
       # check SKIP conditions
       camera_properties_utils.skip_unless(
@@ -82,8 +83,8 @@ class ParamSensitivityTest(its_base_test.ItsBaseTest):
         cap = its_session_utils.do_capture_with_latency(
             cam, req, sync_latency, fmt)
         img = image_processing_utils.convert_capture_to_rgb_image(cap)
-        image_processing_utils.write_image(img, '%s_iso=%04d.jpg' % (
-            os.path.join(log_path, NAME), s))
+        image_processing_utils.write_image(
+            img, f'{s}_iso={test_name_with_path:04d}.jpg')
         patch = image_processing_utils.get_image_patch(
             img, PATCH_X, PATCH_Y, PATCH_W, PATCH_H)
         rgb_means = image_processing_utils.compute_image_means(patch)
@@ -104,15 +105,14 @@ class ParamSensitivityTest(its_base_test.ItsBaseTest):
     pylab.title(NAME)
     pylab.xlabel('Gain (ISO)')
     pylab.ylabel('RGB means')
-    matplotlib.pyplot.savefig(
-        '%s_plot_means.png' % os.path.join(log_path, NAME))
+    matplotlib.pyplot.savefig(f'{test_name_with_path}_plot_means.png')
 
     # Test for pass/fail: check that each shot is brighter than previous
     for i, means in enumerate([r_means, g_means, b_means]):
       for j in range(len(means)-1):
-        e_msg = '%s cap %d mean[j+1]: %.3f, means[j]: %3.f' % (
-            COLORS[i], j, means[j+1], means[j])
-        assert means[j+1] > means[j], e_msg
+        if means[j+1] <= means[j]:
+          raise AssertionError(f'{COLORS[i]} cap {j} means[j+1]: '
+                               f'{means[j+1]:.3f}, means[j]: {means[j]:.3f}')
 
 if __name__ == '__main__':
   test_runner.main()
