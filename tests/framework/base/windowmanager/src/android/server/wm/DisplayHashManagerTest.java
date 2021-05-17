@@ -368,8 +368,9 @@ public class DisplayHashManagerTest {
 
         mTestView.generateDisplayHash(mFirstHashAlgorithm, null, mExecutor,
                 mSyncDisplayHashResultCallback);
-        // Generate a second display hash right away.
+        mSyncDisplayHashResultCallback.getDisplayHash();
         mSyncDisplayHashResultCallback.reset();
+        // Generate a second display hash right away.
         mTestView.generateDisplayHash(mFirstHashAlgorithm, null, mExecutor,
                 mSyncDisplayHashResultCallback);
         int errorCode = mSyncDisplayHashResultCallback.getError();
