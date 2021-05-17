@@ -61,6 +61,7 @@ import android.view.WindowInsets;
 import android.view.WindowManager;
 import android.view.WindowMetrics;
 
+import androidx.test.filters.FlakyTest;
 import androidx.test.rule.ActivityTestRule;
 
 import com.android.compatibility.common.util.CtsTouchUtils;
@@ -113,6 +114,7 @@ public class WindowInputTests {
     }
 
     @Test
+    @FlakyTest(bugId = 188207199)
     public void testMoveWindowAndTap() throws Throwable {
         final WindowManager wm = mActivity.getWindowManager();
         final WindowManager.LayoutParams p = new WindowManager.LayoutParams();
