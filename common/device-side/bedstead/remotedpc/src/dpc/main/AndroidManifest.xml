@@ -18,7 +18,7 @@
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="com.android.bedstead.remotedpc.dpc">
-    <uses-sdk android:minSdkVersion="27" />
+    <uses-sdk android:minSdkVersion="27" android:targetSdkVersion="30" />
     <application android:testOnly="true">
         <service android:name="com.google.android.enterprise.connectedapps.CrossProfileConnector_Service" android:exported="true" />
     </application>

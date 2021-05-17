@@ -27,6 +27,7 @@ import android.os.Build;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.EnsureHasNoSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
@@ -325,6 +326,9 @@ public class DevicePolicyTest {
     @Test
     @EnsureHasNoDeviceOwner
     @EnsureHasNoProfileOwner
+    // TODO(scottjonathan): This could be made more generic by requiring no additional users
+    @EnsureHasNoSecondaryUser
+    @EnsureHasNoWorkProfile
     public void getDeviceOwner_returnsDeviceOwner() {
         DeviceOwner deviceOwner =
                 sTestApis.devicePolicy().setDeviceOwner(sUser, DPC_COMPONENT_NAME);
