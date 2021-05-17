@@ -189,7 +189,8 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
                 HdmiCecConstants.CEC_CONTROL_POWER_ON_FUNCTION,
                 HdmiCecConstants.CEC_CONTROL_POWER_TOGGLE_FUNCTION);
 
-        LogicalAddress source = mDutLogicalAddress == LogicalAddress.TV ? LogicalAddress.PLAYBACK_1
+        LogicalAddress source = hasDeviceType(HdmiCecConstants.CEC_DEVICE_TYPE_TV)
+                ? LogicalAddress.PLAYBACK_1
                 : LogicalAddress.TV;
 
         for (Integer operand : powerControlOperands) {
@@ -227,7 +228,8 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
                 HdmiCecConstants.CEC_CONTROL_POWER_OFF_FUNCTION,
                 HdmiCecConstants.CEC_CONTROL_POWER_TOGGLE_FUNCTION);
 
-        LogicalAddress source = mDutLogicalAddress == LogicalAddress.TV ? LogicalAddress.PLAYBACK_1
+        LogicalAddress source = hasDeviceType(HdmiCecConstants.CEC_DEVICE_TYPE_TV)
+                ? LogicalAddress.PLAYBACK_1
                 : LogicalAddress.TV;
 
         for (Integer operand : powerControlOperands) {
