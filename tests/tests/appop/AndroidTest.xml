@@ -40,7 +40,6 @@
         <option name="push-file" key="CtsAppToBlame1.apk" value="/data/local/tmp/cts/appops/CtsAppToBlame1.apk" />
         <option name="push-file" key="CtsAppToBlame2.apk" value="/data/local/tmp/cts/appops/CtsAppToBlame2.apk" />
         <option name="push-file" key="CtsAppToCollect.apk" value="/data/local/tmp/cts/appops/CtsAppToCollect.apk" />
-        <option name="push-file" key="AppForDiscreteTest.apk" value="/data/local/tmp/cts/appops/AppForDiscreteTest.apk" />
         <option name="push-file" key="AppWithDuplicateAttribution.apk" value="/data/local/tmp/cts/appops/AppWithDuplicateAttribution.apk" />
         <option name="push-file" key="AppWithAttributionInheritingFromExisting.apk" value="/data/local/tmp/cts/appops/AppWithAttributionInheritingFromExisting.apk" />
         <option name="push-file" key="AppWithAttributionInheritingFromSameAsOther.apk" value="/data/local/tmp/cts/appops/AppWithAttributionInheritingFromSameAsOther.apk" />
