@@ -1091,7 +1091,7 @@ public class WindowManagerState {
         return mFocusedDisplayId;
     }
 
-    public static class DisplayContent extends ActivityContainer {
+    public static class DisplayContent extends DisplayArea {
         public int mId;
         ArrayList<ActivityTask> mRootTasks = new ArrayList<>();
         int mFocusedRootTaskId;
@@ -1116,7 +1116,7 @@ public class WindowManagerState {
         private int mLastOrientation;
 
         DisplayContent(DisplayContentProto proto) {
-            super(proto.rootDisplayArea.windowContainer);
+            super(proto.rootDisplayArea);
             mId = proto.id;
             mFocusedRootTaskId = proto.focusedRootTaskId;
             mSingleTaskInstance = proto.singleTaskInstance;
@@ -1202,11 +1202,16 @@ public class WindowManagerState {
             return false;
         }
 
-        @Nullable
-        DisplayArea getTaskDisplayArea(ComponentName activityName) {
-            List<DisplayArea> taskDisplayAreas = new ArrayList<>();
+        List<DisplayArea> getAllTaskDisplayAreas() {
+            final List<DisplayArea> taskDisplayAreas = new ArrayList<>();
             collectDescendantsOfTypeIf(DisplayArea.class, DisplayArea::isTaskDisplayArea, this,
                     taskDisplayAreas);
+            return taskDisplayAreas;
+        }
+
+        @Nullable
+        DisplayArea getTaskDisplayArea(ComponentName activityName) {
+            final List<DisplayArea> taskDisplayAreas = getAllTaskDisplayAreas();
             List<DisplayArea> result = taskDisplayAreas.stream().filter(
                     tda -> tda.containsActivity(activityName))
                     .collect(Collectors.toList());
@@ -1215,6 +1220,12 @@ public class WindowManagerState {
                     .that(result.size()).isAtMost(1);
 
             return result.stream().findFirst().orElse(null);
+        }
+
+        List<DisplayArea> getAllChildDisplayAreas() {
+            final List<DisplayArea> displayAreas = new ArrayList<>();
+            collectDescendantsOfType(DisplayArea.class,this, displayAreas);
+            return displayAreas;
         }
 
         @Nullable
@@ -1554,12 +1565,18 @@ public class WindowManagerState {
     }
     public static class DisplayArea extends WindowContainer {
         private final boolean mIsTaskDisplayArea;
+        private final boolean mIsRootDisplayArea;
+        private final int mFeatureId;
+        private final boolean mIsOrganized;
         private ArrayList<Activity> mActivities;
         private final ArrayList<WindowState> mWindows = new ArrayList<>();
 
         DisplayArea(DisplayAreaProto proto) {
             super(proto.windowContainer);
             mIsTaskDisplayArea = proto.isTaskDisplayArea;
+            mIsRootDisplayArea = proto.isRootDisplayArea;
+            mFeatureId = proto.featureId;
+            mIsOrganized = proto.isOrganized;
             if (mIsTaskDisplayArea) {
                 mActivities = new ArrayList<>();
                 collectDescendantsOfType(Activity.class, this, mActivities);
@@ -1569,6 +1586,18 @@ public class WindowManagerState {
 
         boolean isTaskDisplayArea() {
             return mIsTaskDisplayArea;
+        }
+
+        boolean isRootDisplayArea() {
+            return mIsRootDisplayArea;
+        }
+
+        int getFeatureId() {
+            return mFeatureId;
+        }
+
+        boolean isOrganized() {
+            return mIsOrganized;
         }
 
         boolean containsActivity(ComponentName activityName) {
