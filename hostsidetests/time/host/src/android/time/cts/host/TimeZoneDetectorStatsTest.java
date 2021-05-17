@@ -96,11 +96,15 @@ public class TimeZoneDetectorStatsTest extends BaseHostJUnit4Test {
                 assertThat(state.getAutoDetectionSetting())
                         .isEqualTo(autoDetectionEnabledFromShell);
 
+                boolean telephonyDetectionSupportedFromShell =
+                        mTimeZoneDetectorHostHelper.isTelephonyDetectionSupported();
+                boolean noAutoDetectionSupported =
+                        !(telephonyDetectionSupportedFromShell || geoDetectionSupportedFromShell);
                 // The atom reports the functional state for "detection mode", which is derived from
                 // device config and settings. This logic basically repeats the logic used on the
                 // device.
                 DetectionMode expectedDetectionMode;
-                if (!autoDetectionEnabledFromShell) {
+                if (noAutoDetectionSupported || !autoDetectionEnabledFromShell) {
                     expectedDetectionMode = DetectionMode.MANUAL;
                 } else {
                     boolean geoDetectionSettingEnabledFromShell =

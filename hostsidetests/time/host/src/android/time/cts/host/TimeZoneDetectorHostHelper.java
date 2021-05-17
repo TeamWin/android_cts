@@ -101,6 +101,12 @@ final class TimeZoneDetectorHostHelper {
         return parseShellCommandBytesAsBoolean(result);
     }
 
+    boolean isTelephonyDetectionSupported() throws Exception {
+        byte[] result = executeTimeZoneDetectorCommand(
+                TimeZoneDetector.SHELL_COMMAND_IS_TELEPHONY_DETECTION_SUPPORTED);
+        return parseShellCommandBytesAsBoolean(result);
+    }
+
     void clearSystemTimeDeviceConfigKey(String deviceConfigKey) throws Exception {
         executeDeviceConfigCommand("delete %s %s", NAMESPACE, deviceConfigKey);
     }
