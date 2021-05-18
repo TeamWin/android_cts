@@ -64,6 +64,7 @@ import android.widget.BaseAdapter;
 import android.widget.FrameLayout;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.cts.util.NoReleaseEdgeEffect;
 import android.widget.cts.util.StretchEdgeUtil;
 import android.widget.cts.util.TestUtils;
 
@@ -1165,18 +1166,31 @@ public class ListViewTest {
         // Make sure that the view we care about is on screen and at the top:
         showOnlyStretch();
 
-        assertTrue(StretchEdgeUtil.dragDownStretches(mActivityRule, mListViewStretch));
+        NoReleaseEdgeEffect edgeEffect = new NoReleaseEdgeEffect(mActivity);
+        mListViewStretch.mEdgeGlowTop = edgeEffect;
+        assertTrue(StretchEdgeUtil.dragStretches(
+                mActivityRule,
+                mListViewStretch,
+                edgeEffect,
+                0,
+                300
+        ));
     }
 
-    // If this test is showing as flaky, it is more likely that it is broken. I've
-    // leaned toward false positive over false negative.
-    @LargeTest
     @Test
     public void testStretchTopAndCatch() throws Throwable {
         // Make sure that the view we care about is on screen and at the top:
         showOnlyStretch();
 
-        assertTrue(StretchEdgeUtil.dragDownTapAndHoldStretches(mActivityRule, mListViewStretch));
+        NoReleaseEdgeEffect edgeEffect = new NoReleaseEdgeEffect(mActivity);
+        mListViewStretch.mEdgeGlowTop = edgeEffect;
+        assertTrue(StretchEdgeUtil.dragAndHoldKeepsStretch(
+                mActivityRule,
+                mListViewStretch,
+                edgeEffect,
+                0,
+                300
+        ));
     }
 
     private void scrollToBottomOfStretch() throws Throwable {
@@ -1193,19 +1207,32 @@ public class ListViewTest {
         showOnlyStretch();
 
         scrollToBottomOfStretch();
-        assertTrue(StretchEdgeUtil.dragUpStretches(mActivityRule, mListViewStretch));
+        NoReleaseEdgeEffect edgeEffect = new NoReleaseEdgeEffect(mActivity);
+        mListViewStretch.mEdgeGlowBottom = edgeEffect;
+        assertTrue(StretchEdgeUtil.dragStretches(
+                mActivityRule,
+                mListViewStretch,
+                edgeEffect,
+                0,
+                -300
+        ));
     }
 
-    // If this test is showing as flaky, it is more likely that it is broken. I've
-    // leaned toward false positive over false negative.
-    @LargeTest
     @Test
     public void testStretchBottomAndCatch() throws Throwable {
         // Make sure that the view we care about is on screen and at the top:
         showOnlyStretch();
 
         scrollToBottomOfStretch();
-        assertTrue(StretchEdgeUtil.dragUpTapAndHoldStretches(mActivityRule, mListViewStretch));
+        NoReleaseEdgeEffect edgeEffect = new NoReleaseEdgeEffect(mActivity);
+        mListViewStretch.mEdgeGlowBottom = edgeEffect;
+        assertTrue(StretchEdgeUtil.dragAndHoldKeepsStretch(
+                mActivityRule,
+                mListViewStretch,
+                edgeEffect,
+                0,
+                -300
+        ));
     }
 
     @Test

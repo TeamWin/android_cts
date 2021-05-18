@@ -63,6 +63,7 @@ import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoProfileOwn
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasProfileOwner;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnDeviceOwnerUser;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnNonAffiliatedDeviceOwnerSecondaryUser;
+import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnParentOfProfileOwner;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnProfileOwner;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnSecondaryUserInDifferentProfileGroupToProfileOwner;
 import com.android.bedstead.nene.TestApis;
@@ -526,5 +527,11 @@ public class DeviceStateTest {
     public void requireRunOnTvProfileAnnotation_isRunningOnTvProfile() {
         assertThat(sTestApis.users().instrumented().resolve().type().name())
                 .isEqualTo(TV_PROFILE_TYPE_NAME);
+    }
+
+    @Test
+    @IncludeRunOnParentOfProfileOwner
+    public void includeRunOnParentOfProfileOwnerAnnotation_isRunningOnParentOfProfileOwner() {
+        assertThat(sDeviceState.workProfile()).isNotNull();
     }
 }
