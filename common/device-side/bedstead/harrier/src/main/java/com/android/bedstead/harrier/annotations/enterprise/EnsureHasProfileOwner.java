@@ -32,7 +32,7 @@ import java.lang.annotation.Target;
  * the correct state for the method. If using {@link DeviceState}, you can use
  * {@link DeviceState#profileOwner()} to interact with the profile owner.
  */
-@Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE})
+@Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface EnsureHasProfileOwner {
     /** Which user type the work profile should be attached to. */

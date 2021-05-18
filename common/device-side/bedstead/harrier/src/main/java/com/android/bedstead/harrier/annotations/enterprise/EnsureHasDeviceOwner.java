@@ -37,7 +37,7 @@ import java.lang.annotation.Target;
  * <p>If {@link DeviceState} is required to set the device owner (because there isn't one already)
  * then all users and accounts may be removed from the device.
  */
-@Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE})
+@Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface EnsureHasDeviceOwner {
     /** Which user type the device owner should be installed on. */

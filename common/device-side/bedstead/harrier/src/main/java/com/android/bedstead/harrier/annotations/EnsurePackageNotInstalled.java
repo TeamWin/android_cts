@@ -34,7 +34,7 @@ import java.lang.annotation.Target;
  * If you'd rather skip or fail tests immediately without attempting to remove see
  * {@link RequirePackageNotInstalled}.
  */
-@Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE})
+@Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @Repeatable(EnsurePackagesNotInstalled.class)
 public @interface EnsurePackageNotInstalled {
