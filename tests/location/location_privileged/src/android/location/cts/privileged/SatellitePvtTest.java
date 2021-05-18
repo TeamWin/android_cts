@@ -45,9 +45,9 @@ public class SatellitePvtTest {
      */
     @Test
     public void testWriteToParcel() {
-        SatellitePvt satellitePvt1 = createTestSatellitePvt(POSITION_ECEF_M, VELOCITY_ECEF_MPS,
-                                        CLOCK_INFO, /*ionoDelayMeters=*/ 12.0,
-                                        /*tropoDelayMeters=*/ 13.0);
+        SatellitePvt satellitePvt1 = createTestSatellitePvt(/*flags=*/ 7, POSITION_ECEF_M,
+                                        VELOCITY_ECEF_MPS, CLOCK_INFO,
+                                        /*ionoDelayMeters=*/ 12.0, /*tropoDelayMeters=*/ 13.0);
         Parcel parcel = Parcel.obtain();
         satellitePvt1.writeToParcel(parcel, 0);
         parcel.setDataPosition(0);
@@ -57,6 +57,7 @@ public class SatellitePvtTest {
     }
 
     private static void verifyTestValues(SatellitePvt satPvt1, SatellitePvt satPvt2) {
+        assertEquals(satPvt1.getFlags(), satPvt2.getFlags(), DELTA);
         assertEquals(satPvt1.getPositionEcef().getXMeters(),
                      satPvt2.getPositionEcef().getXMeters(), DELTA);
         assertEquals(satPvt1.getPositionEcef().getYMeters(),
@@ -84,9 +85,10 @@ public class SatellitePvtTest {
     }
 
     private static SatellitePvt createTestSatellitePvt (
-            PositionEcef positionEcef, VelocityEcef velocityEcef, ClockInfo clockInfo,
+            int flags, PositionEcef positionEcef, VelocityEcef velocityEcef, ClockInfo clockInfo,
                     double ionoDelayMeters, double tropoDelayMeters) {
         return new SatellitePvt.Builder()
+                .setFlags(flags)
                 .setPositionEcef(positionEcef)
                 .setVelocityEcef(velocityEcef)
                 .setClockInfo(clockInfo)
