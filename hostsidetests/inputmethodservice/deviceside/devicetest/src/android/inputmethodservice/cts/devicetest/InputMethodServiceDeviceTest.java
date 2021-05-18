@@ -71,6 +71,8 @@ import java.util.stream.Collector;
 @RunWith(AndroidJUnit4.class)
 public class InputMethodServiceDeviceTest {
 
+    private static final String FEATURE_WATCH = "android.hardware.type.watch";
+
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(20);
 
     /** Test to check CtsInputMethod1 receives onCreate and onStartInput. */
@@ -323,6 +325,17 @@ public class InputMethodServiceDeviceTest {
                 "-e", EXTRA_ARG_STRING1, Ime2Constants.IME_ID));
 
         InputMethodVisibilityVerifier.assertIme2Visible(TIMEOUT);
+
+        if (helper.shell("pm list features").contains(FEATURE_WATCH)) {
+            // Skip if running on Wear devices because those devices will go through an activity
+            // change during screen off/on cycle due to Ambient mode. Activity change will cause
+            // EditText to retain focus but not show IME.
+            // We also do not use "assumeFalse" because this test is executed as part of
+            // host-side tests, and throwing AssumptionViolatedException would not give us
+            // better understanding about what is happening.
+            // TODO(b/188662291): Remove this while introducing a dedicated test for b/b/160391516.
+            return;
+        }
 
         // Make sure the IME switch UI still works after device screen off / on with focusing
         // same Editor.
