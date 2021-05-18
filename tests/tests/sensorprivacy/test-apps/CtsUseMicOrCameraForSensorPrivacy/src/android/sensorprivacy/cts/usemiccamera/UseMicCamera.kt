@@ -121,7 +121,7 @@ class UseMicCamera : Activity() {
                 cameraDevice.createCaptureSession(sessionConfiguration)
             }
 
-            override fun onDisconnected(cameraDevice: CameraDevice) {}
+            override fun onDisconnected(ameraDevice: CameraDevice) {}
             override fun onError(cameraDevice: CameraDevice, i: Int) {}
         }
 
