@@ -19,6 +19,7 @@ package com.android.bedstead.harrier.annotations.enterprise;
 import static com.android.bedstead.harrier.DeviceState.UserType.SYSTEM_USER;
 
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.FailureMode;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -41,6 +42,9 @@ import java.lang.annotation.Target;
 public @interface EnsureHasDeviceOwner {
     /** Which user type the device owner should be installed on. */
     DeviceState.UserType onUser() default SYSTEM_USER;
+
+    /** Behaviour if the device owner cannot be set. */
+    FailureMode failureMode() default FailureMode.FAIL;
 }
 // TODO(scottjonathan): Is there a feature or something that we need to check to make sure DO is
 //  supported?

@@ -28,6 +28,7 @@ import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -69,6 +70,7 @@ import com.android.bedstead.nene.users.User;
 import com.android.bedstead.nene.users.UserBuilder;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.utils.ShellCommand;
+import com.android.bedstead.nene.utils.Versions;
 import com.android.bedstead.remotedpc.RemoteDpc;
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
 
@@ -218,7 +220,8 @@ public final class DeviceState implements TestRule {
                     if (annotation instanceof EnsureHasDeviceOwner) {
                         EnsureHasDeviceOwner ensureHasDeviceOwnerAnnotation =
                                 (EnsureHasDeviceOwner) annotation;
-                        ensureHasDeviceOwner(ensureHasDeviceOwnerAnnotation.onUser());
+                        ensureHasDeviceOwner(ensureHasDeviceOwnerAnnotation.onUser(),
+                                ensureHasDeviceOwnerAnnotation.failureMode());
                     }
 
                     if (annotation instanceof EnsureHasNoDeviceOwner) {
@@ -911,7 +914,7 @@ public final class DeviceState implements TestRule {
         }
     }
 
-    private void ensureHasDeviceOwner(UserType onUser) {
+    private void ensureHasDeviceOwner(UserType onUser, FailureMode failureMode) {
         // TODO(scottjonathan): Should support non-remotedpc device owner (default to remotedpc)
         // TODO(scottjonathan): Should allow setting the device owner on a different user
         DeviceOwner currentDeviceOwner = sTestApis.devicePolicy().getDeviceOwner();
@@ -923,14 +926,23 @@ public final class DeviceState implements TestRule {
 
         UserReference instrumentedUser = sTestApis.users().instrumented();
 
-        // TODO(scottjonathan): Consider if we should restore these users
-        for (UserReference u : sTestApis.users().all()) {
-            if (u.equals(instrumentedUser)) {
-                continue;
-            }
 
-            removeAndRecordUser(u);
+        if (!Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.S)) {
+            // Prior to S we can't set device owner if there are other users on the device
+            for (UserReference u : sTestApis.users().all()) {
+                if (u.equals(instrumentedUser)) {
+                    continue;
+                }
+                try {
+                    removeAndRecordUser(u);
+                } catch (NeneException e) {
+                    failOrSkip(
+                            "Error removing user to prepare for DeviceOwner: " + e.toString(),
+                            failureMode);
+                }
+            }
         }
+
 
         // TODO(scottjonathan): Remove accounts
         ensureHasNoProfileOwner(onUser);
