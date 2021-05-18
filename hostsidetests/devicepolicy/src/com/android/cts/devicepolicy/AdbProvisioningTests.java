@@ -31,19 +31,19 @@ public class AdbProvisioningTests extends BaseDevicePolicyTest {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        installAppAsUser(DEVICE_ADMIN_APK, mPrimaryUserId);
+        installDeviceOwnerApp(DEVICE_ADMIN_APK);
     }
 
     @Override
     public void tearDown() throws Exception {
         super.tearDown();
-        getDevice().uninstallPackage(DEVICE_ADMIN_PKG);
+        removeDeviceOwnerAdmin(DEVICE_ADMIN_PKG);
     }
 
     @Test
     public void testAdbDeviceOwnerLogged() throws Exception {
         assertMetricsLogged(getDevice(), () -> {
-            setDeviceOwner(DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS, mPrimaryUserId,
+            setDeviceOwner(DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS, mDeviceOwnerUserId,
                     /* expectFailure */ false);
         }, new DevicePolicyEventWrapper.Builder(EventId.PROVISIONING_ENTRY_POINT_ADB_VALUE)
                     .setAdminPackageName(DEVICE_ADMIN_PKG)
