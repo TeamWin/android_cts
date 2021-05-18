@@ -104,8 +104,6 @@ public class UiAutomationTest {
 
         // Access APIs guarded by a platform defined signature permissions
         try {
-            assertSame(packageManager.checkPermission(Manifest.permission.ANSWER_PHONE_CALLS,
-                    context.getPackageName()), PackageManager.PERMISSION_DENIED);
             getInstrumentation().getUiAutomation().adoptShellPermissionIdentity();
             // Access APIs guarded by a platform defined signature permission
             activityManager.getPackageImportance("foo.bar.baz");
@@ -118,10 +116,6 @@ public class UiAutomationTest {
         } finally {
             getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
         }
-        // Make sure the grant worked
-        assertSame(packageManager.checkPermission(Manifest.permission.ANSWER_PHONE_CALLS,
-                context.getPackageName()), PackageManager.PERMISSION_GRANTED);
-
 
         // Try to access APIs guarded by a platform defined signature permissions
         assertThrows(SecurityException.class,
