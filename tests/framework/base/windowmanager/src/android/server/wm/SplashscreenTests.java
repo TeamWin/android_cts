@@ -50,7 +50,8 @@ import static android.view.WindowInsets.Type.captionBar;
 import static android.view.WindowInsets.Type.systemBars;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.lessThan;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -67,6 +68,7 @@ import android.content.pm.ShortcutManager;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.Insets;
 import android.graphics.Rect;
 import android.platform.test.annotations.Presubmit;
 import android.view.WindowManager;
@@ -114,8 +116,9 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         final Bitmap image = takeScreenshot();
         final WindowMetrics windowMetrics = mWm.getMaximumWindowMetrics();
         final Rect stableBounds = new Rect(windowMetrics.getBounds());
-        stableBounds.inset(windowMetrics.getWindowInsets().getInsetsIgnoringVisibility(
-                systemBars() & ~captionBar()));
+        Insets insets = windowMetrics.getWindowInsets().getInsetsIgnoringVisibility(
+                systemBars() & ~captionBar());
+        stableBounds.inset(insets);
         WindowManagerState.WindowState startingWindow = mWmState.findFirstWindowWithType(
                 WindowManager.LayoutParams.TYPE_APPLICATION_STARTING);
 
@@ -127,7 +130,12 @@ public class SplashscreenTests extends ActivityManagerTestBase {
             appBounds = new Rect(startingWindow.getFrame());
         }
 
-        appBounds.intersect(stableBounds);
+        Rect topInsetsBounds = new Rect(insets.left, 0, appBounds.right - insets.right, insets.top);
+        Rect bottomInsetsBounds = new Rect(insets.left, appBounds.bottom - insets.bottom,
+                appBounds.right - insets.right, appBounds.bottom);
+        assertFalse("Top insets bounds rect is empty", topInsetsBounds.isEmpty());
+        assertFalse("Bottom insets bounds rect is empty", bottomInsetsBounds.isEmpty());
+
         if (appBounds.isEmpty()) {
             fail("Couldn't find splash screen bounds. Impossible to assert the colors");
         }
@@ -138,40 +146,51 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         int px = WindowManagerState.dpToPx(CENTER_ICON_SIZE,
                 mContext.getResources().getConfiguration().densityDpi);
         Rect ignoreRect = new Rect(0, 0, px, px);
-        ignoreRect.offsetTo(
-                appBounds.centerX() - ignoreRect.width() / 2,
+        ignoreRect.offsetTo(appBounds.centerX() - ignoreRect.width() / 2,
                 appBounds.centerY() - ignoreRect.height() / 2);
 
-        assertColors(image, appBounds, primaryColor, 0.50f, secondaryColor, 0.02f, ignoreRect);
+        appBounds.intersect(stableBounds);
+        assertColors(image, appBounds, primaryColor, 0.99f, secondaryColor, 0.02f, ignoreRect);
+        assertColors(image, topInsetsBounds, primaryColor, 0.80f, secondaryColor, 0.10f, null);
+        assertColors(image, bottomInsetsBounds, primaryColor, 0.80f, secondaryColor, 0.10f, null);
     }
 
-    private void assertColors(Bitmap img, Rect bounds, int primaryColor,
-            float expectedPrimaryRatio, int secondaryColor, float acceptableWrongRatio,
-            Rect ignoreRect) {
+    private void assertColors(Bitmap img, Rect bounds, int primaryColor, float expectedPrimaryRatio,
+            int secondaryColor, float acceptableWrongRatio, Rect ignoreRect) {
 
         int primaryPixels = 0;
         int secondaryPixels = 0;
         int wrongPixels = 0;
+
+        assertThat(bounds.top, greaterThanOrEqualTo(0));
+        assertThat(bounds.left, greaterThanOrEqualTo(0));
+        assertThat(bounds.right, lessThanOrEqualTo(img.getWidth()));
+        assertThat(bounds.bottom, lessThanOrEqualTo(img.getHeight()));
+
         for (int x = bounds.left; x < bounds.right; x++) {
             for (int y = bounds.top; y < bounds.bottom; y++) {
                 if (ignoreRect != null && y >= ignoreRect.top && y < ignoreRect.bottom
                         && x >= ignoreRect.left && x < ignoreRect.right) {
+                    img.setPixel(x, y, Color.YELLOW);
                     continue;
                 }
-                assertThat(x, lessThan(img.getWidth()));
-                assertThat(y, lessThan(img.getHeight()));
                 final int color = img.getPixel(x, y);
                 if (primaryColor == color) {
                     primaryPixels++;
                 } else if (secondaryColor == color) {
                     secondaryPixels++;
                 } else {
+                    img.setPixel(x, y, Color.MAGENTA);
                     wrongPixels++;
                 }
             }
         }
 
-        final int totalPixels = bounds.width() * bounds.height();
+        int totalPixels = bounds.width() * bounds.height();
+        if (ignoreRect != null) {
+            totalPixels -= ignoreRect.width() * ignoreRect.height();
+        }
+
         final float primaryRatio = (float) primaryPixels / totalPixels;
         if (primaryRatio < expectedPrimaryRatio) {
             fail("Less than " + (expectedPrimaryRatio * 100.0f)
