@@ -64,7 +64,7 @@ public final class HdmiCecSystemInformationTest extends BaseHdmiCecCtsTest {
                         LogicalAddress.AUDIO_SYSTEM,
                         LogicalAddress.BROADCAST);
         for (LogicalAddress testDevice : testDevices) {
-            if (testDevice == mDutLogicalAddress) {
+            if (hasLogicalAddress(testDevice)) {
                 /* Skip the DUT logical address */
                 continue;
             }
@@ -95,7 +95,7 @@ public final class HdmiCecSystemInformationTest extends BaseHdmiCecCtsTest {
                         LogicalAddress.AUDIO_SYSTEM,
                         LogicalAddress.BROADCAST);
         for (LogicalAddress testDevice : testDevices) {
-            if (testDevice == mDutLogicalAddress) {
+            if (hasLogicalAddress(testDevice)) {
                 /* Skip the DUT logical address */
                 continue;
             }

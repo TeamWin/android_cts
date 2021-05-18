@@ -225,6 +225,10 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
         return mDutLogicalAddress.getDeviceType() == deviceType;
     }
 
+    public boolean hasLogicalAddress(LogicalAddress address) {
+        return mDutLogicalAddress.equals(address);
+    }
+
     private static void setCecVersion(ITestDevice device, int cecVersion) throws Exception {
         device.executeShellCommand("cmd hdmi_control cec_setting set hdmi_cec_version " +
                 cecVersion);
