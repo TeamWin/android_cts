@@ -486,8 +486,20 @@
                   android:screenOrientation="portrait"
                   android:exported="true"/>
 
+        <activity android:name="android.server.wm.CompatChangeTests$NonResizeablePortraitActivity"
+                  android:resizeableActivity="false"
+                  android:screenOrientation="portrait"
+                  android:exported="true"/>
+
         <activity android:name="android.server.wm.CompatChangeTests$NonResizeableAspectRatioActivity"
                   android:resizeableActivity="false"
+                  android:screenOrientation="portrait"
+                  android:minAspectRatio="1.6"
+                  android:exported="true"/>
+
+        <activity android:name="android.server.wm.CompatChangeTests$NonResizeableLargeAspectRatioActivity"
+                  android:resizeableActivity="false"
+                  android:screenOrientation="portrait"
                   android:minAspectRatio="3"
                   android:exported="true"/>
 
