@@ -105,51 +105,51 @@ public final class CompatChangesTest {
   }
 
   @Test
-  public void setOverride_securityExceptionForNonOverridableChangeId() {
+  public void putPackageOverrides_securityExceptionForNonOverridableChangeId() {
     SecurityException e = assertThrows(SecurityException.class,
-            () -> CompatChanges.addPackageOverrides(OVERRIDE_PACKAGE,
+            () -> CompatChanges.putPackageOverrides(OVERRIDE_PACKAGE,
                     Collections.singletonMap(CTS_SYSTEM_API_CHANGEID,
                     new PackageOverride.Builder().setEnabled(true).build())));
     assertThat(e).hasMessageThat().contains("marked as Overridable");
   }
 
   @Test
-  public void setOverride_success() {
-    CompatChanges.addPackageOverrides(OVERRIDE_PACKAGE,
+  public void putPackageOverrides_success() {
+    CompatChanges.putPackageOverrides(OVERRIDE_PACKAGE,
             Collections.singletonMap(CTS_SYSTEM_API_OVERRIDABLE_CHANGEID,
                     new PackageOverride.Builder().setEnabled(true).build()));
   }
 
   @Test
-  public void setOverride_fromVersion2() {
-    CompatChanges.addPackageOverrides(OVERRIDE_PACKAGE,
+  public void putPackageOverrides_fromVersion2() {
+    CompatChanges.putPackageOverrides(OVERRIDE_PACKAGE,
             Collections.singletonMap(CTS_SYSTEM_API_OVERRIDABLE_CHANGEID,
                     new PackageOverride.Builder().setMinVersionCode(2).setEnabled(true).build()));
   }
 
   @Test
-  public void setOverride_untilVersion1() {
-    CompatChanges.addPackageOverrides(OVERRIDE_PACKAGE,
+  public void putPackageOverrides_untilVersion1() {
+    CompatChanges.putPackageOverrides(OVERRIDE_PACKAGE,
             Collections.singletonMap(CTS_SYSTEM_API_OVERRIDABLE_CHANGEID,
                     new PackageOverride.Builder().setMaxVersionCode(1).setEnabled(true).build()));
   }
 
   @Test
-  public void setOverride_securityExceptionForNotHoldingPermission() {
+  public void putPackageOverrides_securityExceptionForNotHoldingPermission() {
     // Adopt the normal override permission that doesn't allow to clear overrides on release builds
     InstrumentationRegistry.getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
     InstrumentationRegistry.getInstrumentation().getUiAutomation().adoptShellPermissionIdentity(
             Manifest.permission.OVERRIDE_COMPAT_CHANGE_CONFIG);
 
     SecurityException e = assertThrows(SecurityException.class,
-            () -> CompatChanges.addPackageOverrides(OVERRIDE_PACKAGE,
+            () -> CompatChanges.putPackageOverrides(OVERRIDE_PACKAGE,
                     Collections.singletonMap(CTS_SYSTEM_API_OVERRIDABLE_CHANGEID,
                             new PackageOverride.Builder().setEnabled(true).build())));
     assertThat(e).hasMessageThat().contains("Cannot override compat change");
   }
 
   @Test
-  public void clearOverride_securityExceptionForNonOverridableChangeId() {
+  public void removePackageOverrides_securityExceptionForNonOverridableChangeId() {
     SecurityException e = assertThrows(SecurityException.class,
             () -> CompatChanges.removePackageOverrides(OVERRIDE_PACKAGE,
                     Collections.singleton(CTS_SYSTEM_API_CHANGEID)));
@@ -157,14 +157,14 @@ public final class CompatChangesTest {
   }
 
   @Test
-  public void clearOverride_doesNothingIfOverrideNotPresent() {
+  public void removePackageOverrides_doesNothingIfOverrideNotPresent() {
     CompatChanges.removePackageOverrides(OVERRIDE_PACKAGE,
             Collections.singleton(CTS_SYSTEM_API_OVERRIDABLE_CHANGEID));
   }
 
   @Test
-  public void clearOverride_overridePresentSuccess() {
-    CompatChanges.addPackageOverrides(OVERRIDE_PACKAGE,
+  public void removePackageOverrides_overridePresentSuccess() {
+    CompatChanges.putPackageOverrides(OVERRIDE_PACKAGE,
             Collections.singletonMap(CTS_SYSTEM_API_OVERRIDABLE_CHANGEID,
                     new PackageOverride.Builder().setEnabled(true).build()));
     CompatChanges.removePackageOverrides(OVERRIDE_PACKAGE,
@@ -172,8 +172,8 @@ public final class CompatChangesTest {
   }
 
   @Test
-  public void clearOverride_securityExceptionForNotHoldingPermission() {
-    CompatChanges.addPackageOverrides(OVERRIDE_PACKAGE,
+  public void removePackageOverrides_securityExceptionForNotHoldingPermission() {
+    CompatChanges.putPackageOverrides(OVERRIDE_PACKAGE,
             Collections.singletonMap(CTS_SYSTEM_API_OVERRIDABLE_CHANGEID,
                     new PackageOverride.Builder().setEnabled(true).build()));
 
