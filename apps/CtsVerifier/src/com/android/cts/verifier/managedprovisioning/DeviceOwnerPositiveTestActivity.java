@@ -542,11 +542,13 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                                 createDisableNetworkLoggingIntent())}));
 
         // Customize lock screen message
-        adapter.add(TestListItem.newTest(this,
-                R.string.device_owner_customize_lockscreen_message,
-                LockscreenMessageTestActivity.class.getName(),
-                new Intent(this, LockscreenMessageTestActivity.class),
-                /* requiredFeatures */ null));
+        if (isSwipeToUnlockSupported()) {
+            adapter.add(TestListItem.newTest(this,
+                    R.string.device_owner_customize_lockscreen_message,
+                    LockscreenMessageTestActivity.class.getName(),
+                    new Intent(this, LockscreenMessageTestActivity.class),
+                    /* requiredFeatures */ null));
+        }
 
         // setUsbDataSignalingEnabled
         if (canUsbDataSignalingBeDisabled()) {
@@ -667,6 +669,10 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
     }
 
     private boolean isKeyguardShownWhenUserDoesntHaveCredentials() {
+        return !isAutomotive();
+    }
+
+    private boolean isSwipeToUnlockSupported() {
         return !isAutomotive();
     }
 
