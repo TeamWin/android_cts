@@ -108,7 +108,7 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
 
     protected static final int USER_SYSTEM = 0; // From the UserHandle class.
 
-    protected static final int USER_OWNER = 0;
+    protected static final int USER_OWNER = USER_SYSTEM;
 
     private static final long TIMEOUT_USER_REMOVED_MILLIS = TimeUnit.SECONDS.toMillis(15);
     private static final long WAIT_SAMPLE_INTERVAL_MILLIS = 200;
@@ -672,17 +672,18 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
     protected int createUser(int flags) throws Exception {
         boolean guest = FLAG_GUEST == (flags & FLAG_GUEST);
         boolean ephemeral = FLAG_EPHEMERAL == (flags & FLAG_EPHEMERAL);
+        CLog.i("Creating user with flags %d: guest=%b, ephemeral=%b", flags, guest, ephemeral);
         // TODO Use ITestDevice.createUser() when guest and ephemeral is available
         String command ="pm create-user " + (guest ? "--guest " : "")
                 + (ephemeral ? "--ephemeral " : "") + "TestUser_" + System.currentTimeMillis();
-        CLog.d("Starting command " + command);
+        CLog.d("Starting command %s", command);
         String commandOutput = getDevice().executeShellCommand(command);
-        CLog.d("Output for command " + command + ": " + commandOutput);
+        CLog.d("Output for command %s: %s", command, commandOutput);
 
         // Extract the id of the new user.
         String[] tokens = commandOutput.split("\\s+");
         assertTrue(tokens.length > 0);
-        assertEquals("Success:", tokens[0]);
+        assertEquals("Command '" + command + "' failed: " + commandOutput, "Success:", tokens[0]);
         return Integer.parseInt(tokens[tokens.length-1]);
     }
 
@@ -1339,5 +1340,10 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
             CLog.w("Exception running '" + command + "': " + e);
             return false;
         }
+    }
+
+    void sleep(int timeMs) throws InterruptedException {
+        CLog.d("Sleeping %d ms");
+        Thread.sleep(timeMs);
     }
 }
