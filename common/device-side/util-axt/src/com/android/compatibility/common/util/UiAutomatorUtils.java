@@ -65,7 +65,9 @@ public class UiAutomatorUtils {
 
             if (view == null) {
                 UiScrollable scrollable = new UiScrollable(new UiSelector().scrollable(true));
-                scrollable.setSwipeDeadZonePercentage(0.25);
+                if (!FeatureUtil.isWatch()) {
+                    scrollable.setSwipeDeadZonePercentage(0.25);
+                }
                 if (scrollable.exists()) {
                     if (isAtEnd) {
                         if (wasScrolledUpAlready) {
