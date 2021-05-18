@@ -236,10 +236,6 @@
                   android:finishOnTaskLaunch="true"
                   android:exported="true"/>
 
-        <activity android:name="android.server.wm.ActivityViewTest$ActivityViewTestActivity"
-             android:configChanges="keyboardHidden"
-             android:exported="true"/>
-
         <provider android:name="android.server.wm.TestJournalProvider"
              android:authorities="android.server.wm.testjournalprovider"
              android:exported="true"/>
