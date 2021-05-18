@@ -26,6 +26,7 @@ import android.app.Application;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.icu.util.ULocale;
+import android.os.Bundle;
 import android.os.CancellationSignal;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
@@ -256,7 +257,7 @@ public class TranslationManagerTest {
         assertThat(value.getStatusCode()).isEqualTo(TranslationResponseValue.STATUS_SUCCESS);
         assertThat(value.getText()).isEqualTo("success");
         assertThat(value.getTransliteration()).isNull();
-        assertThat(value.getDictionaryDescription()).isNull();
+        assertThat(value.getExtras()).isEqualTo(Bundle.EMPTY);
     }
 
     @Test
@@ -343,7 +344,7 @@ public class TranslationManagerTest {
         assertThat(value.getStatusCode()).isEqualTo(TranslationResponseValue.STATUS_SUCCESS);
         assertThat(value.getText()).isEqualTo("success");
         assertThat(value.getTransliteration()).isNull();
-        assertThat(value.getDictionaryDescription()).isNull();
+        assertThat(value.getExtras()).isEqualTo(Bundle.EMPTY);
     }
 
     @Test
