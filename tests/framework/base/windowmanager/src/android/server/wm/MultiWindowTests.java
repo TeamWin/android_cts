@@ -206,7 +206,7 @@ public class MultiWindowTests extends ActivityManagerTestBase {
         int displayWindowingMode = mWmState.getDisplay(
                 mWmState.getDisplayByActivity(TEST_ACTIVITY)).getWindowingMode();
         separateTestJournal();
-        mTaskOrganizer.dismissedSplitScreen();
+        mTaskOrganizer.dismissSplitScreen();
         if (displayWindowingMode == WINDOWING_MODE_FULLSCREEN) {
             // Exit split-screen mode and ensure we only get 1 multi-window mode changed callback.
             final ActivityLifecycleCounts lifecycleCounts = waitForOnMultiWindowModeChanged(
@@ -245,9 +245,18 @@ public class MultiWindowTests extends ActivityManagerTestBase {
 
         launchActivity(NO_RELAUNCH_ACTIVITY);
 
-        // Move activities back to fullscreen screen.
         separateTestJournal();
-        mTaskOrganizer.dismissedSplitScreen();
+
+        // Move activities back to fullscreen screen.
+        // TestTaskOrganizer sets windowing modes of tasks to unspecific when putting them to split
+        // screens so we need to explicitly set their windowing modes back to fullscreen to avoid
+        // inheriting freeform windowing mode from the display on freeform first devices.
+        int noRelaunchTaskId = mWmState.getTaskByActivity(NO_RELAUNCH_ACTIVITY).mTaskId;
+        WindowContainerToken noRelaunchTaskToken =
+                mTaskOrganizer.getTaskInfo(noRelaunchTaskId).getToken();
+        WindowContainerTransaction t = new WindowContainerTransaction()
+                .setWindowingMode(noRelaunchTaskToken, WINDOWING_MODE_FULLSCREEN);
+        mTaskOrganizer.dismissSplitScreen(t, false /* primaryOnTop */);
 
         lifecycleCounts = waitForOnMultiWindowModeChanged(NO_RELAUNCH_ACTIVITY);
         assertEquals("mMultiWindowModeChangedCount",
@@ -329,13 +338,19 @@ public class MultiWindowTests extends ActivityManagerTestBase {
         targetActivityLauncher.execute();
         mWmState.computeState(targetActivityName, LAUNCHING_ACTIVITY);
 
+        final int[] excludeTaskIds = new int[] { secondaryTaskId, INVALID_TASK_ID };
+        if (taskCountMustIncrement) {
+            mWmState.waitFor("Waiting for new activity to come up.",
+                    state -> state.getTaskByActivity(targetActivityName, excludeTaskIds) != null);
+        }
         WindowManagerState.ActivityTask task = mWmState.getTaskByActivity(targetActivityName,
-                secondaryTaskId);
-        int secondaryTaskId2 = INVALID_TASK_ID;
+                excludeTaskIds);
+        final int secondaryTaskId2;
         if (task != null) {
-            secondaryTaskId2 = mWmState.getTaskByActivity(targetActivityName,
-                    secondaryTaskId).mTaskId;
+            secondaryTaskId2 = task.mTaskId;
             mTaskOrganizer.putTaskInSplitSecondary(secondaryTaskId2);
+        } else {
+            secondaryTaskId2 = INVALID_TASK_ID;
         }
         final int taskNumberSecondLaunch = mTaskOrganizer.getSecondarySplitTaskCount();
 
@@ -346,6 +361,8 @@ public class MultiWindowTests extends ActivityManagerTestBase {
             assertEquals("Task number must not change.", taskNumberInitial,
                     taskNumberSecondLaunch);
         }
+        mWmState.waitForFocusedActivity("Wait for launched to side activity to be in front.",
+                targetActivityName);
         mWmState.assertFocusedActivity("Launched to side activity must be in front.",
                 targetActivityName);
 
@@ -354,11 +371,16 @@ public class MultiWindowTests extends ActivityManagerTestBase {
         // in order to launch into split screen.
         targetActivityLauncher.execute();
         mWmState.computeState(targetActivityName, LAUNCHING_ACTIVITY);
+
+        excludeTaskIds[1] = secondaryTaskId2;
+        if (taskCountMustIncrement) {
+            mWmState.waitFor("Waiting for the second new activity to come up.",
+                    state -> state.getTaskByActivity(targetActivityName, excludeTaskIds) != null);
+        }
         WindowManagerState.ActivityTask taskFinal =
-                mWmState.getTaskByActivity(targetActivityName, secondaryTaskId2);
+                mWmState.getTaskByActivity(targetActivityName, excludeTaskIds);
         if (taskFinal != null) {
-            int secondaryTaskId3 = mWmState.getTaskByActivity(targetActivityName,
-                    secondaryTaskId2).mTaskId;
+            int secondaryTaskId3 = taskFinal.mTaskId;
             mTaskOrganizer.putTaskInSplitSecondary(secondaryTaskId3);
         }
         final int taskNumberFinal = mTaskOrganizer.getSecondarySplitTaskCount();
@@ -511,15 +533,22 @@ public class MultiWindowTests extends ActivityManagerTestBase {
                 getLaunchActivityBuilder().setTargetActivity(LAUNCHING_ACTIVITY),
                 getLaunchActivityBuilder().setTargetActivity(TEST_ACTIVITY_WITH_SAME_AFFINITY));
 
+        mTaskOrganizer.setLaunchRoot(mTaskOrganizer.getSecondarySplitTaskId());
+
         // Launch two more activities on a different task on top of split-screen-secondary and
         // only the top opaque activity should be visible.
+        // Explicitly launch them into fullscreen mode because the control windowing mode of the
+        // launch root doesn't include freeform mode. Freeform first devices launch apps in freeform
+        // mode by default, which won't trigger the launch root.
         getLaunchActivityBuilder().setTargetActivity(TRANSLUCENT_TEST_ACTIVITY)
                 .setUseInstrumentation()
                 .setWaitForLaunched(true)
+                .setWindowingMode(WINDOWING_MODE_FULLSCREEN)
                 .execute();
         getLaunchActivityBuilder().setTargetActivity(TEST_ACTIVITY)
                 .setUseInstrumentation()
                 .setWaitForLaunched(true)
+                .setWindowingMode(WINDOWING_MODE_FULLSCREEN)
                 .execute();
         mWmState.assertVisibility(TEST_ACTIVITY, true);
         mWmState.waitForActivityState(TRANSLUCENT_TEST_ACTIVITY, STATE_STOPPED);

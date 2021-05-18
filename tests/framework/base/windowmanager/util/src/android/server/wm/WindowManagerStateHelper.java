@@ -318,6 +318,12 @@ public class WindowManagerStateHelper extends WindowManagerState {
         }, message);
     }
 
+    public void waitForFocusedActivity(final String msg, final ComponentName activityName) {
+        final String activityComponentName = getActivityName(activityName);
+        waitFor(msg, wmState -> Objects.equals(activityComponentName, wmState.getFocusedActivity())
+                && Objects.equals(activityComponentName, wmState.getFocusedApp()));
+    }
+
     /** A variant of waitFor with different parameter order for better Kotlin interop. */
     public boolean waitFor(String message, Predicate<WindowManagerState> waitCondition) {
         return waitFor(waitCondition, message);
