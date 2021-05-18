@@ -34,8 +34,6 @@ import android.server.wm.TestJournalProvider.TestJournal;
 import android.server.wm.TestJournalProvider.TestJournalContainer;
 import android.util.Log;
 
-import androidx.annotation.NonNull;
-
 import org.junit.Test;
 
 import java.util.List;
@@ -46,6 +44,203 @@ import java.util.List;
 @Presubmit
 public class BiometricSecurityTests extends BiometricTestBase {
     private static final String TAG = "BiometricTests/Security";
+
+    /**
+     * A strong biometric should be able to perform auth with any requested strength, since it is
+     * the highest biometric class. For example,
+     * +-------------------+--------------------+----------+
+     * | Original Strength | Requested Strength | Result   |
+     * +-------------------+--------------------+----------+
+     * | BIOMETRIC_STRONG  | BIOMETRIC_STRONG   | Accepted |
+     * +-------------------+--------------------+----------+
+     * | BIOMETRIC_STRONG  | BIOMETRIC_WEAK     | Accepted |
+     * +-------------------+--------------------+----------+
+     * Note that since BiometricPrompt does not support Convenience biometrics, currently we don't
+     * have a way to test cases where the requested strength is BIOMETRIC_CONVENIENCE.
+     */
+    @Test
+    public void testBiometricStrength_StrongSensor() throws Exception {
+        final List<Integer> sensors = getSensorsOfTargetStrength(SensorProperties.STRENGTH_STRONG);
+        assumeTrue("testBiometricStrength_StrongSensor: numSensors=" + sensors.size(),
+                sensors.size() > 0);
+
+        // Tuple of originalStrength and requestedStrength
+        final int[][] testCases = {
+                // Request Strong auth
+                {Authenticators.BIOMETRIC_STRONG, Authenticators.BIOMETRIC_STRONG},
+
+                // Request Weak auth
+                {Authenticators.BIOMETRIC_STRONG, Authenticators.BIOMETRIC_WEAK}
+        };
+
+        for (Integer sensorId : sensors) {
+            for (int i = 0; i < testCases.length; i++) {
+                testBiometricStrength_forSensor_authAllowed(sensorId,
+                        testCases[i][0] /* originalStrength */,
+                        testCases[i][1] /* requestedStrength */);
+            }
+        }
+    }
+
+    /**
+     * A weak biometric may or may not be able to perform auth, depending on the requested strength.
+     * For example,
+     * +-------------------+--------------------+----------+
+     * | Original Strength | Requested Strength | Result   |
+     * +-------------------+--------------------+----------+
+     * | BIOMETRIC_WEAK    | BIOMETRIC_STRONG   | Error    |
+     * +-------------------+--------------------+----------+
+     * | BIOMETRIC_WEAK    | BIOMETRIC_WEAK     | Accepted |
+     * +-------------------+--------------------+----------+
+     * Note that since BiometricPrompt does not support Convenience biometrics, currently we don't
+     * have a way to test cases where the requested strength is BIOMETRIC_CONVENIENCE.
+     */
+    @Test
+    public void testBiometricStrength_WeakSensor() throws Exception {
+        final List<Integer> sensors = getSensorsOfTargetStrength(SensorProperties.STRENGTH_WEAK);
+        assumeTrue("testBiometricStrength_WeakSensor: numSensors: " + sensors.size(),
+                sensors.size() > 0);
+
+        for (Integer sensorId : sensors) {
+            testBiometricStrength_forSensor_authDisallowed(sensorId,
+                    Authenticators.BIOMETRIC_WEAK /* originalStrength */,
+                    Authenticators.BIOMETRIC_STRONG /* requestedStrength */,
+                    sensors.size() > 1 /* hasMultiSensors */);
+
+            testBiometricStrength_forSensor_authAllowed(sensorId,
+                    Authenticators.BIOMETRIC_WEAK /* originalStrength */,
+                    Authenticators.BIOMETRIC_WEAK /* requestedStrength */);
+        }
+    }
+
+    /**
+     * A convenience biometric should not be able to perform auth with the following requested
+     * strength, due to insufficient strength.
+     * +-----------------------+--------------------+--------+
+     * | Original Strength     | Requested Strength | Result |
+     * +-----------------------+--------------------+--------+
+     * | BIOMETRIC_CONVENIENCE | BIOMETRIC_STRONG   | Error  |
+     * +-----------------------+--------------------+--------+
+     * | BIOMETRIC_CONVENIENCE | BIOMETRIC_WEAK     | Error  |
+     * +-----------------------+--------------------+--------+
+     * Note that since BiometricPrompt does not support Convenience biometrics, currently we don't
+     * have a way to test cases where the requested strength is BIOMETRIC_CONVENIENCE.
+     */
+    @Test
+    public void testBiometricStrength_ConvenienceSensor() throws Exception {
+        final List<Integer> sensors =
+                getSensorsOfTargetStrength(SensorProperties.STRENGTH_CONVENIENCE);
+        assumeTrue("testBiometricStrength_ConvenienceSensor: numSensors=" + sensors.size(),
+                sensors.size() > 0);
+
+        // Tuple of originalStrength and requestedStrength
+        final int[][] testCases = {
+                // Request Strong auth
+                {Authenticators.BIOMETRIC_CONVENIENCE, Authenticators.BIOMETRIC_STRONG},
+
+                // Request Weak auth
+                {Authenticators.BIOMETRIC_CONVENIENCE, Authenticators.BIOMETRIC_WEAK}
+        };
+
+        for (Integer sensorId : sensors) {
+            for (int i = 0; i < testCases.length; i++) {
+                testBiometricStrength_forSensor_authDisallowed(sensorId,
+                        testCases[i][0] /* originalStrength */,
+                        testCases[i][1] /* requestedStrength */,
+                        sensors.size() > 1 /* hasMultiSensors */);
+            }
+        }
+    }
+
+    private void testBiometricStrength_forSensor_authAllowed(int sensorId, int originalStrength,
+            int requestedStrength) throws Exception {
+        Log.d(TAG, "testBiometricStrength_forSensor_authAllowed: "
+                + ", sensorId=" + sensorId
+                + ", originalStrength=" + originalStrength
+                + ", requestedStrength=" + requestedStrength);
+
+        final ComponentName componentName = getComponentName(requestedStrength);
+
+        // Reset to the original strength in case it's ever changed before the test
+        updateStrength(sensorId, originalStrength);
+
+        try (BiometricTestSession session = mBiometricManager.createTestSession(sensorId);
+             ActivitySession activitySession = new ActivitySession(this, componentName)) {
+            final int userId = 0;
+            waitForAllUnenrolled();
+            enrollForSensor(session, sensorId);
+            final TestJournal journal =
+                    TestJournalContainer.get(activitySession.getComponentName());
+
+            // No error code should be returned for the requested strength
+            int errCode = mBiometricManager.canAuthenticate(requestedStrength);
+            assertEquals("Device should allow auth with the requested biometric",
+                    BiometricManager.BIOMETRIC_SUCCESS, errCode);
+
+            // Launch test activity
+            launchActivityAndWaitForResumed(activitySession);
+
+            BiometricCallbackHelper.State callbackState = getCallbackState(journal);
+            assertNotNull(callbackState);
+
+            BiometricServiceState state = getCurrentState();
+            assertTrue(state.toString(), state.mSensorStates.sensorStates.get(sensorId).isBusy());
+
+            // Auth should work
+            successfullyAuthenticate(session, userId);
+            mInstrumentation.waitForIdleSync();
+            callbackState = getCallbackState(journal);
+            assertNotNull(callbackState);
+            assertEquals(callbackState.toString(), 0, callbackState.mNumAuthRejected);
+            assertEquals(callbackState.toString(), 1, callbackState.mNumAuthAccepted);
+            assertEquals(callbackState.toString(), 0, callbackState.mAcquiredReceived.size());
+            assertEquals(callbackState.toString(), 0, callbackState.mErrorsReceived.size());
+        }
+    }
+
+    private void testBiometricStrength_forSensor_authDisallowed(int sensorId, int originalStrength,
+            int requestedStrength, boolean hasMultiSensors) throws Exception {
+        Log.d(TAG, "testBiometricStrength_forSensor_authDisallowed: "
+                + ", sensorId=" + sensorId
+                + ", originalStrength=" + originalStrength
+                + ", requestedStrength=" + requestedStrength
+                + ", hasMultiSensors=" + hasMultiSensors);
+
+        final ComponentName componentName = getComponentName(requestedStrength);
+
+        // Reset to the original strength in case it's ever changed before the test
+        updateStrength(sensorId, originalStrength);
+
+        try (BiometricTestSession session = mBiometricManager.createTestSession(sensorId);
+             ActivitySession activitySession = new ActivitySession(this, componentName)) {
+            final int userId = 0;
+            waitForAllUnenrolled();
+            enrollForSensor(session, sensorId);
+            final TestJournal journal =
+                    TestJournalContainer.get(activitySession.getComponentName());
+
+            // Error code should be returned for the requested strength due to insufficient strength
+            int errCode = mBiometricManager.canAuthenticate(requestedStrength);
+            checkErrCode("Device shouldn't allow auth with biometrics that have insufficient"
+                            + " strength. errCode: " + errCode,
+                    errCode, BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE,
+                    hasMultiSensors);
+
+            // Launch test activity
+            launchActivityAndWaitForResumed(activitySession);
+
+            // Auth shouldn't work and error code should be returned
+            mInstrumentation.waitForIdleSync();
+            BiometricCallbackHelper.State callbackState = getCallbackState(journal);
+            assertNotNull(callbackState);
+            assertEquals(callbackState.toString(), 0, callbackState.mNumAuthRejected);
+            assertEquals(callbackState.toString(), 0, callbackState.mNumAuthAccepted);
+            assertEquals(callbackState.toString(), 0, callbackState.mAcquiredReceived.size());
+            assertEquals(callbackState.toString(), 1, callbackState.mErrorsReceived.size());
+            checkErrCode(callbackState.toString(), (int) callbackState.mErrorsReceived.get(0),
+                    BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE, hasMultiSensors);
+        }
+    }
 
     /**
      * The strength of a Strong biometric may need to be downgraded to a weaker one if the biometric
@@ -139,39 +334,17 @@ public class BiometricSecurityTests extends BiometricTestBase {
 
     private void testBiometricStrengthDowngraded_forSensor(int sensorId, int originalStrength,
             int targetStrength, int requestedStrength, boolean hasMultiSensors) throws Exception {
-        assertTrue("requestedStrength: " + requestedStrength,
-                requestedStrength == Authenticators.BIOMETRIC_STRONG ||
-                        requestedStrength == Authenticators.BIOMETRIC_WEAK);
-
-        final ComponentName componentName;
-        if (requestedStrength == Authenticators.BIOMETRIC_STRONG) {
-            componentName = CLASS_3_BIOMETRIC_ACTIVITY;
-        } else {
-            componentName = CLASS_2_BIOMETRIC_ACTIVITY;
-        }
-
-        // Reset to the original strength in case it's ever changed before the test
-        updateStrength(sensorId, originalStrength);
-
-        // Test downgrading the biometric strength to the target strength
-        testBiometricStrengthDowngraded_forSensor_afterDowngrading(componentName, sensorId,
-                originalStrength, targetStrength, requestedStrength, hasMultiSensors);
-
-        // Test undo downgrading (ie, reset to the original strength)
-        testBiometricStrengthDowngraded_forSensor_afterUndoDowngrading(componentName, sensorId,
-                originalStrength, targetStrength, requestedStrength);
-    }
-
-    private void testBiometricStrengthDowngraded_forSensor_afterDowngrading(
-            @NonNull ComponentName componentName, int sensorId, int originalStrength,
-            int targetStrength, int requestedStrength, boolean hasMultiSensors) throws Exception {
-        Log.d(TAG, "testBiometricStrengthDowngraded_forSensor_afterDowngrading: "
-                + "componentName=" + componentName
+        Log.d(TAG, "testBiometricStrengthDowngraded_forSensor: "
                 + ", sensorId=" + sensorId
                 + ", originalStrength=" + originalStrength
                 + ", targetStrength=" + targetStrength
                 + ", requestedStrength=" + requestedStrength
                 + ", hasMultiSensors=" + hasMultiSensors);
+
+        final ComponentName componentName = getComponentName(requestedStrength);
+
+        // Reset to the original strength in case it's ever changed before the test
+        updateStrength(sensorId, originalStrength);
 
         try (BiometricTestSession session = mBiometricManager.createTestSession(sensorId);
              ActivitySession activitySession = new ActivitySession(this, componentName)) {
@@ -239,53 +412,9 @@ public class BiometricSecurityTests extends BiometricTestBase {
                         BiometricManager.BIOMETRIC_ERROR_SECURITY_UPDATE_REQUIRED, hasMultiSensors);
             }
         }
-    }
 
-    private void testBiometricStrengthDowngraded_forSensor_afterUndoDowngrading(
-            @NonNull ComponentName componentName, int sensorId, int originalStrength,
-            int targetStrength, int requestedStrength) throws Exception {
-        Log.d(TAG, "testBiometricStrengthDowngraded_forSensor_afterUndoDowngrading: "
-                + "componentName=" + componentName
-                + ", sensorId=" + sensorId
-                + ", originalStrength=" + originalStrength
-                + ", targetStrength=" + targetStrength
-                + ", requestedStrength=" + requestedStrength);
-
-        try (BiometricTestSession session = mBiometricManager.createTestSession(sensorId);
-             ActivitySession activitySession = new ActivitySession(this, componentName)) {
-            final int userId = 0;
-            waitForAllUnenrolled();
-            enrollForSensor(session, sensorId);
-            final TestJournal journal =
-                    TestJournalContainer.get(activitySession.getComponentName());
-
-            // Reset to the original strength
-            updateStrength(sensorId, originalStrength);
-
-            // No error code should be returned for the requested strength
-            int errCode = mBiometricManager.canAuthenticate(requestedStrength);
-            assertEquals("Device should allow auth with the requested biometric",
-                    BiometricManager.BIOMETRIC_SUCCESS, errCode);
-
-            // Launch test activity
-            launchActivityAndWaitForResumed(activitySession);
-
-            BiometricCallbackHelper.State callbackState = getCallbackState(journal);
-            assertNotNull(callbackState);
-
-            BiometricServiceState state = getCurrentState();
-            assertTrue(state.toString(), state.mSensorStates.sensorStates.get(sensorId).isBusy());
-
-            // Auth should work
-            successfullyAuthenticate(session, userId);
-            mInstrumentation.waitForIdleSync();
-            callbackState = getCallbackState(journal);
-            assertNotNull(callbackState);
-            assertEquals(callbackState.toString(), 0, callbackState.mNumAuthRejected);
-            assertEquals(callbackState.toString(), 1, callbackState.mNumAuthAccepted);
-            assertEquals(callbackState.toString(), 0, callbackState.mAcquiredReceived.size());
-            assertEquals(callbackState.toString(), 0, callbackState.mErrorsReceived.size());
-        }
+        // Cleanup: reset to the original strength
+        updateStrength(sensorId, originalStrength);
     }
 
     /**
@@ -381,16 +510,7 @@ public class BiometricSecurityTests extends BiometricTestBase {
                 + ", requestedStrength=" + requestedStrength
                 + ", hasMultiSensors=" + hasMultiSensors);
 
-        assertTrue("requestedStrength: " + requestedStrength,
-                requestedStrength == Authenticators.BIOMETRIC_STRONG ||
-                        requestedStrength == Authenticators.BIOMETRIC_WEAK);
-
-        final ComponentName componentName;
-        if (requestedStrength == Authenticators.BIOMETRIC_STRONG) {
-            componentName = CLASS_3_BIOMETRIC_ACTIVITY;
-        } else {
-            componentName = CLASS_2_BIOMETRIC_ACTIVITY;
-        }
+        final ComponentName componentName = getComponentName(requestedStrength);
 
         // Reset to the original strength in case it's ever changed before the test
         updateStrength(sensorId, originalStrength);
@@ -445,6 +565,18 @@ public class BiometricSecurityTests extends BiometricTestBase {
             assertTrue(msg, errCode == expectedErrCode
                     || errCode == BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED
                     || errCode == BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE);
+        }
+    }
+
+    private ComponentName getComponentName(int requestedStrength) {
+        assertTrue("requestedStrength: " + requestedStrength,
+                requestedStrength == Authenticators.BIOMETRIC_STRONG ||
+                        requestedStrength == Authenticators.BIOMETRIC_WEAK);
+
+        if (requestedStrength == Authenticators.BIOMETRIC_STRONG) {
+            return CLASS_3_BIOMETRIC_ACTIVITY;
+        } else {
+            return CLASS_2_BIOMETRIC_ACTIVITY;
         }
     }
 
