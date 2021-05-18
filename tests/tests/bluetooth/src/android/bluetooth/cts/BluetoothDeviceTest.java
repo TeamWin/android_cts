@@ -17,7 +17,6 @@
 package android.bluetooth.cts;
 
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
-import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -29,6 +28,7 @@ import android.test.AndroidTestCase;
 public class BluetoothDeviceTest extends AndroidTestCase {
 
     private boolean mHasBluetooth;
+    private boolean mHasCompanionDevice;
     private BluetoothAdapter mAdapter;
 
     @Override
@@ -37,7 +37,10 @@ public class BluetoothDeviceTest extends AndroidTestCase {
         mHasBluetooth = getContext().getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_BLUETOOTH);
 
-        if (mHasBluetooth) {
+        mHasCompanionDevice = getContext().getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_COMPANION_DEVICE_SETUP);
+
+        if (mHasBluetooth && mHasCompanionDevice) {
             BluetoothManager manager = getContext().getSystemService(BluetoothManager.class);
             mAdapter = manager.getAdapter();
             assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
@@ -47,15 +50,15 @@ public class BluetoothDeviceTest extends AndroidTestCase {
     @Override
     public void tearDown() throws Exception {
         super.tearDown();
-        if (mHasBluetooth) {
+        if (mHasBluetooth && mHasCompanionDevice) {
             assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
             mAdapter = null;
         }
     }
 
     public void test_setAlias_getAlias() {
-        if (!mHasBluetooth) {
-            // Skip the test if bluetooth is not present.
+        if (!mHasBluetooth || !mHasCompanionDevice) {
+            // Skip the test if bluetooth or companion device are not present.
             return;
         }
 
