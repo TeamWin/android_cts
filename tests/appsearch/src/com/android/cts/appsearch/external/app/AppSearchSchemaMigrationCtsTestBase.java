@@ -1211,7 +1211,7 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
         AppSearchSchema sourceSchema =
                 new AppSearchSchema.Builder("Person")
                         .addProperty(
-                                new AppSearchSchema.Int64PropertyConfig.Builder("Age")
+                                new AppSearchSchema.LongPropertyConfig.Builder("Age")
                                         .setCardinality(
                                                 AppSearchSchema.PropertyConfig.CARDINALITY_REQUIRED)
                                         .build())
@@ -1282,7 +1282,7 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
         AppSearchSchema adultSchema =
                 new AppSearchSchema.Builder("Adult")
                         .addProperty(
-                                new AppSearchSchema.Int64PropertyConfig.Builder("Age")
+                                new AppSearchSchema.LongPropertyConfig.Builder("Age")
                                         .setCardinality(
                                                 AppSearchSchema.PropertyConfig.CARDINALITY_REQUIRED)
                                         .build())
@@ -1290,7 +1290,7 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
         AppSearchSchema childSchema =
                 new AppSearchSchema.Builder("Child")
                         .addProperty(
-                                new AppSearchSchema.Int64PropertyConfig.Builder("Age")
+                                new AppSearchSchema.LongPropertyConfig.Builder("Age")
                                         .setCardinality(
                                                 AppSearchSchema.PropertyConfig.CARDINALITY_REQUIRED)
                                         .build())
@@ -1333,7 +1333,7 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
         AppSearchSchema sourceSchemaA =
                 new AppSearchSchema.Builder("schemaA")
                         .addProperty(
-                                new AppSearchSchema.Int64PropertyConfig.Builder("num")
+                                new AppSearchSchema.LongPropertyConfig.Builder("num")
                                         .setCardinality(
                                                 AppSearchSchema.PropertyConfig.CARDINALITY_REQUIRED)
                                         .build())
@@ -1341,7 +1341,7 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
         AppSearchSchema sourceSchemaB =
                 new AppSearchSchema.Builder("schemaB")
                         .addProperty(
-                                new AppSearchSchema.Int64PropertyConfig.Builder("num")
+                                new AppSearchSchema.LongPropertyConfig.Builder("num")
                                         .setCardinality(
                                                 AppSearchSchema.PropertyConfig.CARDINALITY_REQUIRED)
                                         .build())
@@ -1376,7 +1376,7 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
         AppSearchSchema destinationSchemaB =
                 new AppSearchSchema.Builder("schemaB")
                         .addProperty(
-                                new AppSearchSchema.Int64PropertyConfig.Builder("numNewProperty")
+                                new AppSearchSchema.LongPropertyConfig.Builder("numNewProperty")
                                         .setCardinality(
                                                 AppSearchSchema.PropertyConfig.CARDINALITY_REQUIRED)
                                         .build())
@@ -1384,7 +1384,7 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
         AppSearchSchema destinationSchemaC =
                 new AppSearchSchema.Builder("schemaC")
                         .addProperty(
-                                new AppSearchSchema.Int64PropertyConfig.Builder("num")
+                                new AppSearchSchema.LongPropertyConfig.Builder("num")
                                         .setCardinality(
                                                 AppSearchSchema.PropertyConfig.CARDINALITY_REQUIRED)
                                         .build())
@@ -1392,7 +1392,7 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
         AppSearchSchema destinationSchemaD =
                 new AppSearchSchema.Builder("schemaD")
                         .addProperty(
-                                new AppSearchSchema.Int64PropertyConfig.Builder("num")
+                                new AppSearchSchema.LongPropertyConfig.Builder("num")
                                         .setCardinality(
                                                 AppSearchSchema.PropertyConfig.CARDINALITY_REQUIRED)
                                         .build())
