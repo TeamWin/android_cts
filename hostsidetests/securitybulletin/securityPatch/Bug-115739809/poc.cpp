@@ -125,6 +125,10 @@ static void sanitizeMessage(const InputMessage& msg, InputMessage* outMsg) {
             outMsg->body.motion.xCursorPosition = msg.body.motion.xCursorPosition;
             // float yCursorPosition
             outMsg->body.motion.yCursorPosition = msg.body.motion.yCursorPosition;
+            // int32_t displayW
+            outMsg->body.motion.displayWidth = msg.body.motion.displayWidth;
+            // int32_t displayH
+            outMsg->body.motion.displayHeight = msg.body.motion.displayHeight;
             // uint32_t pointerCount
             outMsg->body.motion.pointerCount = msg.body.motion.pointerCount;
             //struct Pointer pointers[MAX_POINTERS]
