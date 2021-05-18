@@ -30,7 +30,7 @@ import androidx.test.filters.MediumTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 
-import com.android.compatibility.common.util.PollingCheck;
+import com.android.compatibility.common.util.WindowUtil;
 import com.android.cts.input.InputJsonParser;
 import com.android.cts.input.UinputDevice;
 
@@ -95,7 +95,7 @@ public class InputDeviceKeyLayoutMapTest {
     @Before
     public void setup() {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
-        PollingCheck.waitFor(mActivityRule.getActivity()::hasWindowFocus);
+        WindowUtil.waitForFocus(mActivityRule.getActivity());
         mParser = new InputJsonParser(mInstrumentation.getTargetContext());
         mKeyLayout = nativeLoadKeyLayout(mParser.readRegisterCommand(R.raw.Generic));
         mUinputDevice = new UinputDevice(mInstrumentation, DEVICE_ID, GOOGLE_VENDOR_ID,
