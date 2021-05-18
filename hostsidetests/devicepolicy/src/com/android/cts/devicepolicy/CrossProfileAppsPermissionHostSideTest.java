@@ -287,6 +287,32 @@ public class CrossProfileAppsPermissionHostSideTest extends BaseDevicePolicyTest
     }
 
     @Test
+    public void testCanInteractAcrossProfiles_withAppOpDisabledOnCallingProfile_returnsFalse()
+            throws Exception {
+        installAppAsUser(TEST_WITH_REQUESTED_PERMISSION_APK, mPrimaryUserId);
+
+        runDeviceTestsAsUser(
+                TEST_WITH_REQUESTED_PERMISSION_PACKAGE,
+                TEST_WITH_REQUESTED_PERMISSION_CLASS,
+                "testCanInteractAcrossProfiles_withAppOpDisabledOnCallingProfile_returnsFalse",
+                mPrimaryUserId,
+                Collections.EMPTY_MAP);
+    }
+
+    @Test
+    public void testCanInteractAcrossProfiles_withAppOpDisabledOnOtherProfiles_returnsFalse()
+            throws Exception {
+        installAppAsUser(TEST_WITH_REQUESTED_PERMISSION_APK, mPrimaryUserId);
+
+        runDeviceTestsAsUser(
+                TEST_WITH_REQUESTED_PERMISSION_PACKAGE,
+                TEST_WITH_REQUESTED_PERMISSION_CLASS,
+                "testCanInteractAcrossProfiles_withAppOpDisabledOnOtherProfiles_returnsFalse",
+                mPrimaryUserId,
+                Collections.EMPTY_MAP);
+    }
+
+    @Test
     public void testCreateRequestInteractAcrossProfilesIntent_canRequestInteraction_returnsIntent()
             throws Exception {
         installAppAsUser(TEST_WITH_REQUESTED_PERMISSION_APK, mPrimaryUserId);
