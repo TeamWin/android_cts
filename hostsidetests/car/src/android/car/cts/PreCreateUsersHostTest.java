@@ -163,6 +163,8 @@ public final class PreCreateUsersHostTest extends CarHostJUnit4TestCase {
         int referenceUserId = isGuest
                 ? createGuestUser("PreCreatedUsersTest_Reference_Guest")
                 : createFullUser("PreCreatedUsersTest_Reference_User");
+        // Some permissions (e.g. Role permission) are given only after initialization.
+        switchUser(referenceUserId);
         waitUntilUserPermissionsIsReady(referenceUserId);
         Map<String, List<String>> refPkgMap = getPackagesAndPermissionsForUser(referenceUserId);
 
@@ -180,6 +182,8 @@ public final class PreCreateUsersHostTest extends CarHostJUnit4TestCase {
         }
 
         convertPreCreatedUser(isGuest, preCreatedUserId);
+        // Some permissions (e.g. Role permission) are given only after initialization.
+        switchUser(preCreatedUserId);
         waitUntilUserPermissionsIsReady(preCreatedUserId);
         Map<String, List<String>> actualPkgMap = getPackagesAndPermissionsForUser(preCreatedUserId);
 
