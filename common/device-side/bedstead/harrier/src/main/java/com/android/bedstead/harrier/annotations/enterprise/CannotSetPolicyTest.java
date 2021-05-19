@@ -24,15 +24,16 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Mark a test as testing the states where a policy is applied (by a Device Owner or Profile Owner)
- * and it should not apply to the user the test is running on.
+ * Mark a test as testing the states where a policy is not allowed to be applied.
+ *
+ * <p>An example is running with a device owner for a policy only applicable to profile owners.
  *
  * <p>This will generate parameterized runs for all matching states.
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 @RequiresBedsteadJUnit4
-public @interface NegativePolicyTest {
+public @interface CannotSetPolicyTest {
     /**
      * The policy being tested.
      *
