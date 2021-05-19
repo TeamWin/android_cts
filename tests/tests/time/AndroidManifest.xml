@@ -18,8 +18,9 @@
       package="android.time.cts">
 
     <!-- The permissions below would be needed if tests were not using "adopt shell permissions" to
-         obtain the necessary MANAGE_TIME_AND_ZONE_DETECTION privileged permission. -->
+         obtain the necessary privileged permissions. -->
     <!-- uses-permission android:name="android.permission.MANAGE_TIME_AND_ZONE_DETECTION" /-->
+    <!-- uses-permission android:name="android.permission.SUGGEST_EXTERNAL_TIME" /-->
     <!-- Required for LocationManager.setLocationEnabledForUser() -->
     <!-- uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS"/-->
     <eat-comment />
