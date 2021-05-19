@@ -41,7 +41,6 @@ _STEPS_PER_STOP = 3  # How many sensitivities per stop to sample.
 _TILE_SIZE = 32  # Tile size to compute mean/variance. Large tiles may have
                  # their variance corrupted by low freq image changes.
 _TILE_CROP_N = 0  # Number of tiles to crop from edge of image. Usually 0.
-_TILE_CROP = _TILE_CROP_N * _TILE_SIZE
 
 
 def check_auto_exposure_targets(auto_e, sens_min, sens_max, props):
@@ -197,13 +196,15 @@ class DngNoiseModel(its_base_test.ItsBaseTest):
               cap)
           idxs = image_processing_utils.get_canonical_cfa_order(props)
           raw_stats_size = mean_img.shape
-          means = [mean_img[_TILE_CROP:raw_stats_size[0]-_TILE_CROP,
-                            _TILE_CROP:raw_stats_size[1]-_TILE_CROP, i]
+          means = [mean_img[_TILE_CROP_N:raw_stats_size[0]-_TILE_CROP_N,
+                            _TILE_CROP_N:raw_stats_size[1]-_TILE_CROP_N, i]
                    for i in idxs]
-          vars_ = [var_img[_TILE_CROP:raw_stats_size[0]-_TILE_CROP,
-                           _TILE_CROP:raw_stats_size[1]-_TILE_CROP, i]
+          vars_ = [var_img[_TILE_CROP_N:raw_stats_size[0]-_TILE_CROP_N,
+                           _TILE_CROP_N:raw_stats_size[1]-_TILE_CROP_N, i]
                    for i in idxs]
           if self.debug_mode:
+            logging.info('rawStats image size: %s', str(raw_stats_size))
+            logging.info('R planes means image size: %s', str(means[0].shape))
             logging.info('means min: %.3f, median: %.3f, max: %.3f',
                          np.min(means), np.median(means), np.max(means))
             logging.info('vars_ min: %.4f, median: %.4f, max: %.4f',
