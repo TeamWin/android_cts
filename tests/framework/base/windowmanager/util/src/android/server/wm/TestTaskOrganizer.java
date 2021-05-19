@@ -169,7 +169,7 @@ public class TestTaskOrganizer extends TaskOrganizer {
             mRegistered = false;
 
             NestedShellPermission.run(() -> {
-                dismissedSplitScreen();
+                dismissSplitScreen();
 
                 deleteRootTask(mRootPrimary.getToken());
                 mRootPrimary = null;
@@ -240,18 +240,18 @@ public class TestTaskOrganizer extends TaskOrganizer {
         });
     }
 
-    void dismissedSplitScreen() {
-        dismissedSplitScreen(false /* primaryOnTop */);
+    void dismissSplitScreen() {
+        dismissSplitScreen(false /* primaryOnTop */);
     }
 
-    void dismissedSplitScreen(boolean primaryOnTop) {
+    void dismissSplitScreen(boolean primaryOnTop) {
+        dismissSplitScreen(new WindowContainerTransaction(), primaryOnTop);
+    }
+
+    void dismissSplitScreen(WindowContainerTransaction t, boolean primaryOnTop) {
         synchronized (this) {
             NestedShellPermission.run(() -> {
-                final WindowContainerTransaction t = new WindowContainerTransaction()
-                        .setLaunchRoot(
-                                mRootPrimary.getToken(),
-                                null,
-                                null)
+                t.setLaunchRoot(mRootPrimary.getToken(), null, null)
                         .setLaunchRoot(
                                 mRootSecondary.getToken(),
                                 null,
