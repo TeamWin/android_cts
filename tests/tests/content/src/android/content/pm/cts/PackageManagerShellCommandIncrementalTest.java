@@ -81,6 +81,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -179,37 +180,66 @@ public class PackageManagerShellCommandIncrementalTest {
 
     @LargeTest
     @Test
-    @Ignore("Temporary disable to unblock presubmit tests: b/186582141")
     public void testSpaceAllocatedForPackage() throws Exception {
         final String apk = createApkPath(TEST_APK);
         final String idsig = createApkPath(TEST_APK_IDSIG);
+        final long appFileSize = new File(apk).length();
+        final AtomicBoolean firstTime = new AtomicBoolean(true);
+
+        getUiAutomation().adoptShellPermissionIdentity();
+
+        final long blockSize = Os.statvfs("/data/incremental").f_bsize;
+        final long preAllocatedBlocks = Os.statvfs("/data/incremental").f_bfree;
+
         mSession =
                 new IncrementalInstallSession.Builder()
                         .addApk(Paths.get(apk), Paths.get(idsig))
                         .addExtraArgs("-t", "-i", CTS_PACKAGE_NAME)
                         .setLogger(new IncrementalDeviceConnection.Logger())
+                        .setBlockFilter((block -> {
+                            // Skip allocation check after first iteration.
+                            if (!firstTime.getAndSet(false)) {
+                                return true;
+                            }
+
+                            try {
+                                final long postAllocatedBlocks =
+                                        Os.statvfs("/data/incremental").f_bfree;
+                                final long freeSpaceDifference =
+                                        (preAllocatedBlocks - postAllocatedBlocks) * blockSize;
+                                assertTrue(freeSpaceDifference
+                                        >= ((appFileSize * 1.015) + blockSize * 8));
+                            } catch (Exception e) {
+                                Log.i(TAG, "ErrnoException: ", e);
+                                throw new AssertionError(e);
+                            }
+                            return true;
+                        }))
                         .setBlockTransformer(new CompressingBlockTransformer())
                         .build();
-        getUiAutomation().adoptShellPermissionIdentity();
-        long preAllocatedBlocks = Os.statvfs("/data/incremental").f_bfree;
-        long appFileSize = new File(apk).length();
-        long blockSize = Os.statvfs("/data/incremental").f_bsize;
-        //Assign pre-allocated value to fail test if allocation doesn't occur.
-        long postAllocatedBlocks = preAllocatedBlocks;
+
         try {
             mSession.start(Executors.newSingleThreadExecutor(),
                     IncrementalDeviceConnection.Factory.reliable());
-            Thread.sleep(50);
-            postAllocatedBlocks = Os.statvfs("/data/incremental").f_bfree;
             mSession.waitForInstallCompleted(30, TimeUnit.SECONDS);
         } finally {
             getUiAutomation().dropShellPermissionIdentity();
         }
-        long freeSpaceDifference = (preAllocatedBlocks - postAllocatedBlocks) * blockSize;
 
         assertTrue(isAppInstalled(TEST_APP_PACKAGE));
-        //Check difference in free space after install starts is greater than package size.
-        assertTrue(freeSpaceDifference >= appFileSize);
+
+        String installPath = executeShellCommand(String.format("pm path %s", TEST_APP_PACKAGE))
+                                        .replaceFirst("package:", "")
+                                        .trim();
+
+        // Retrieve size of APK.
+        Long apkTrimResult = Os.stat(installPath).st_size;
+
+        // Verify trim was applied. v2+ incfs version required for valid allocation results.
+        if (getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_INCREMENTAL_DELIVERY, 2)) {
+            assertTrue(apkTrimResult <= appFileSize);
+        }
     }
 
     @Test
