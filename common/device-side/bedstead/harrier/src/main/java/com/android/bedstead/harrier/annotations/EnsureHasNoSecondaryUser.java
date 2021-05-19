@@ -32,7 +32,7 @@ import java.lang.annotation.Target;
  * has no secondary user that is not the current user. Otherwise, you can use {@link DeviceState}
  * to ensure that the device enters the correct state for the method.
  */
-@Target(ElementType.METHOD)
+@Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @EnsureHasNoUserAnnotation("android.os.usertype.full.SECONDARY")
 public @interface EnsureHasNoSecondaryUser {
