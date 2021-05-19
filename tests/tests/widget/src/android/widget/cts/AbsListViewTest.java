@@ -225,6 +225,7 @@ public class AbsListViewTest {
     @LargeTest
     @Test
     public void testSetOnScrollListener() throws Throwable {
+        mListView.setOverScrollMode(View.OVER_SCROLL_NEVER);
         AbsListView.OnScrollListener mockScrollListener =
                 mock(AbsListView.OnScrollListener.class);
 
