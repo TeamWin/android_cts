@@ -62,7 +62,7 @@ public class NetworkLoggingDelegateTest extends InstrumentationTestCase {
         mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         mContext = getInstrumentation().getContext();
         mDpm = mContext.getSystemService(DevicePolicyManager.class);
-        DelegateTestUtils.NetworkLogsReceiver.sBatchCountDown = new CountDownLatch(1);
+        DelegateTestUtils.DelegatedLogsReceiver.sBatchCountDown = new CountDownLatch(1);
     }
 
     public void testCanAccessApis() throws Throwable {
@@ -92,7 +92,7 @@ public class NetworkLoggingDelegateTest extends InstrumentationTestCase {
             }
             mDevice.executeShellCommand("dpm force-network-logs");
 
-            DelegateTestUtils.NetworkLogsReceiver.waitForBroadcast();
+            DelegateTestUtils.DelegatedLogsReceiver.waitForBroadcast();
         } finally {
             mDpm.setNetworkLoggingEnabled(null, false);
             assertFalse(mDpm.isNetworkLoggingEnabled(null));

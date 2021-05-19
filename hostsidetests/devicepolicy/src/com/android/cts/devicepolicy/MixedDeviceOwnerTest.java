@@ -435,7 +435,6 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
             runDeviceTestsAsUser(packageName, testClassName,
                     "testGenerateLogs", mUserId);
             getDevice().executeShellCommand("whoami"); // Generate adb command securty event
-            getDevice().executeShellCommand("dpm force-security-logs");
             runDeviceTestsAsUser(packageName, testClassName,
                     "testVerifyGeneratedLogs", mUserId);
 
