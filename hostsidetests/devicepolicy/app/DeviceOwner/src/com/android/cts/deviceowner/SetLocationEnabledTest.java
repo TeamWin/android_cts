@@ -51,17 +51,12 @@ public final class SetLocationEnabledTest extends BaseDeviceOwnerTest {
 
     public void testSetLocationEnabled() throws Exception {
         boolean enabled = mLocationManager.isLocationEnabled();
-        try {
-            if (enabled) {
-                Log.d(TAG, "location is initially enabled for user " + mUserId);
-                runDisableLocationFirst();
-            } else {
-                Log.d(TAG, "location is initially disabled for user " + mUserId);
-                runEnableLocationFirst();
-            }
-        } finally {
-            // Restore initial state
-            setLocationEnabledAndWaitIfNecessary(enabled, /* wait= */ false);
+        if (enabled) {
+            Log.d(TAG, "location is initially enabled for user " + mUserId);
+            runDisableLocationFirst();
+        } else {
+            Log.d(TAG, "location is initially disabled for user " + mUserId);
+            runEnableLocationFirst();
         }
     }
 
@@ -70,23 +65,23 @@ public final class SetLocationEnabledTest extends BaseDeviceOwnerTest {
 
         setLocationEnabledAndWaitIfNecessary(DISABLED, /* wait= */ !mIsAutomotive);
         assertWithMessage("isLocationEnabled()").that(mLocationManager.isLocationEnabled())
-                .isEqualTo(DISABLED);
+                .isEqualTo(mIsAutomotive ? ENABLED : DISABLED);
 
         setLocationEnabledAndWaitIfNecessary(ENABLED, /* wait= */ !mIsAutomotive);
         assertWithMessage("isLocationEnabled()").that(mLocationManager.isLocationEnabled())
-                .isEqualTo(mIsAutomotive ? DISABLED : ENABLED);
+                .isTrue();
     }
 
     private void runEnableLocationFirst() throws Exception {
         Log.v(TAG, "runEnableLocationFirst()");
 
-        setLocationEnabledAndWaitIfNecessary(ENABLED, /* wait= */ !mIsAutomotive);
+        setLocationEnabledAndWaitIfNecessary(ENABLED, /* wait= */ true);
         assertWithMessage("isLocationEnabled()").that(mLocationManager.isLocationEnabled())
-                .isEqualTo(mIsAutomotive ? DISABLED : ENABLED);
+                .isTrue();
 
         setLocationEnabledAndWaitIfNecessary(DISABLED, /* wait= */ !mIsAutomotive);
         assertWithMessage("isLocationEnabled()").that(mLocationManager.isLocationEnabled())
-                .isEqualTo(DISABLED);
+                .isEqualTo(mIsAutomotive ? ENABLED : DISABLED);
     }
 
     private void setLocationEnabledAndWaitIfNecessary(boolean enabled, boolean wait)
@@ -102,7 +97,14 @@ public final class SetLocationEnabledTest extends BaseDeviceOwnerTest {
         BroadcastReceiver receiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                Log.d(TAG, "received intent: " + intent.getAction());
+                boolean actualEnabled = intent
+                        .getBooleanExtra(LocationManager.EXTRA_LOCATION_ENABLED, enabled);
+                Log.d(TAG, "received intent " + intent.getAction() + ": enabled=" + actualEnabled);
+                if (actualEnabled != enabled) {
+                    Log.e(TAG, "Invalid value on extra " + LocationManager.EXTRA_LOCATION_ENABLED
+                            + ": " + actualEnabled);
+                    return;
+                }
                 latch.countDown();
             }
         };
