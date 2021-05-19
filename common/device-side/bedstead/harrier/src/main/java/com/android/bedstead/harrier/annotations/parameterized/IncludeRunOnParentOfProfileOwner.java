@@ -32,6 +32,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @ParameterizedAnnotation
 @RequireRunOnPrimaryUser
-@EnsureHasWorkProfile
+@EnsureHasWorkProfile(dpcIsPrimary = true)
 public @interface IncludeRunOnParentOfProfileOwner {
 }
