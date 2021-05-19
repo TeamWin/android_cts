@@ -77,6 +77,7 @@ import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.WidgetTestUtils;
+import com.android.compatibility.common.util.WindowUtil;
 
 import com.google.common.collect.ImmutableList;
 
@@ -145,7 +146,7 @@ public class AutoCompleteTextViewTest {
     @Before
     public void setup() {
         mActivity = mActivityRule.getActivity();
-        PollingCheck.waitFor(mActivity::hasWindowFocus);
+        WindowUtil.waitForFocus(mActivity);
 
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mAutoCompleteTextView = (AutoCompleteTextView) mActivity
