@@ -22,7 +22,7 @@ import static com.android.compatibility.common.util.SystemUtil.runWithShellPermi
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
-import android.content.Context;
+import android.bluetooth.BluetoothStatusCodes;
 import android.content.pm.PackageManager;
 import android.test.AndroidTestCase;
 
@@ -72,7 +72,7 @@ public class BluetoothDeviceTest extends AndroidTestCase {
         // This should throw a SecurityException because there is no CDM association
         try {
             device.setAlias(testDeviceAlias);
-            fail("BluetoothDevice alias was able to be set without a CDM association without having"
+            fail("BluetoothDevice alias was able to be set without a CDM association or "
                     + "BLUETOOTH_PRIVILEGED permission");
         } catch (SecurityException ex) {
             assertNull(device.getAlias());
@@ -83,6 +83,8 @@ public class BluetoothDeviceTest extends AndroidTestCase {
         String output = runShellCommand("dumpsys companiondevice");
         assertTrue("Package name missing from output", output.contains(packageName));
         assertTrue("Device address missing from output", output.contains(deviceAddress));
+
+        // Takes time to update the CDM cache, so sleep to ensure the association is cached
         try {
             Thread.sleep(1000);
         } catch (Exception e) {
@@ -93,7 +95,7 @@ public class BluetoothDeviceTest extends AndroidTestCase {
          * Device properties don't exist for non-existent BluetoothDevice, so calling setAlias with
          * permissions should return false
          */
-        assertFalse(device.setAlias(testDeviceAlias));
+        assertEquals(BluetoothStatusCodes.ERROR_DEVICE_NOT_BONDED, device.setAlias(testDeviceAlias));
         runShellCommand(String.format(
                 "cmd companiondevice disassociate %d %s %s", userId, packageName, deviceAddress));
     }
