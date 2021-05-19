@@ -23,7 +23,6 @@ import android.app.AppOpsManager
 import android.app.AppOpsManager.MODE_ALLOWED
 import android.app.AppOpsManager.OPSTR_ACCESS_ACCESSIBILITY
 import android.app.AppOpsManager.OPSTR_BLUETOOTH_SCAN
-import android.app.AppOpsManager.OPSTR_BLUETOOTH_CONNECT
 import android.app.AppOpsManager.OPSTR_ACTIVITY_RECOGNITION
 import android.app.AppOpsManager.OPSTR_CAMERA
 import android.app.AppOpsManager.OPSTR_COARSE_LOCATION
@@ -56,6 +55,7 @@ import android.content.ServiceConnection
 import android.content.pm.PackageManager.FEATURE_BLUETOOTH
 import android.content.pm.PackageManager.FEATURE_BLUETOOTH_LE
 import android.content.pm.PackageManager.FEATURE_TELEPHONY
+import android.content.pm.PackageManager.GET_ATTRIBUTIONS
 import android.hardware.camera2.CameraCaptureSession
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraDevice
@@ -983,6 +983,13 @@ class AppOpsLoggingTest {
         }
     }
 
+    @Test
+    fun checkAttributionsAreUserVisible() {
+        val pi = context.packageManager.getPackageInfo(
+                TEST_SERVICE_PKG, GET_ATTRIBUTIONS)
+        assertThat(pi.applicationInfo.areAttributionsUserVisible())
+    }
+
     @After
     fun removeNotedAppOpsCollector() {
         appOpsManager.setOnOpNotedCallback(null, null)
@@ -1033,12 +1040,12 @@ class AppOpsLoggingTest {
             // Blame the caller
             val callerSyncOp = SyncNotedAppOp(MODE_ALLOWED, strOpToOp(OPSTR_ACTIVITY_RECOGNITION),
                     null, TEST_SERVICE_PKG)
-            AppOpsManager.collectNotedOpSync(callerSyncOp);
+            AppOpsManager.collectNotedOpSync(callerSyncOp)
 
             // Blame ourselves
             val selfSyncOp = SyncNotedAppOp(MODE_ALLOWED, strOpToOp(OPSTR_ACTIVITY_RECOGNITION),
                     null, context.packageName)
-            AppOpsManager.collectNotedOpSync(selfSyncOp);
+            AppOpsManager.collectNotedOpSync(selfSyncOp)
 
             // Accesses should be dispatched when the sync IPC returns.
             assertThat(noted).isEmpty()
