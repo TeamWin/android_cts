@@ -52,6 +52,7 @@ EXTRA_RESULTS = 'camera.its.extra.RESULTS'
 TIME_KEY_START = 'start'
 TIME_KEY_END = 'end'
 VALID_CONTROLLERS = ('arduino', 'canakit')
+_INT_STR_DICT = {'11': '1_1', '12': '1_2'}  # recover replaced '_' in scene def
 
 # All possible scenes
 # Notes on scene names:
@@ -395,6 +396,7 @@ def main():
     camera_id_combos = str(test_params_content['camera']).split(',')
   if not scenes:
     scenes = str(test_params_content['scene']).split(',')
+    scenes = [_INT_STR_DICT.get(n, n) for n in scenes]  # recover '1_1' & '1_2'
 
   device_id = get_device_serial_number('dut', config_file_contents)
   # Enable external storage on DUT to send summary report to CtsVerifier.apk
