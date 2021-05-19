@@ -78,7 +78,6 @@ public final class Policy {
                 break;
             case GLOBAL:
                 annotations.add(INCLUDE_RUN_ON_DEVICE_OWNER_USER);
-//                TODO(scottjonathan): Re-add when we can setup this state
                 annotations.add(INCLUDE_RUN_ON_NON_AFFILIATED_DEVICE_OWNER_SECONDARY_USER);
                 break;
             case USER:
@@ -109,6 +108,11 @@ public final class Policy {
                         "Unknown policy control: " + enterprisePolicy.profileOwner());
         }
 
+        if (annotations.isEmpty()) {
+            // Don't run the original test unparameterized
+            annotations.add(INCLUDE_NONE_ANNOTATION);
+        }
+
         return annotations;
     }
 
@@ -126,7 +130,6 @@ public final class Policy {
             case GLOBAL:
                 break;
             case USER:
-                //                TODO(scottjonathan): Re-add when we can setup this state
                 annotations.add(INCLUDE_RUN_ON_NON_AFFILIATED_DEVICE_OWNER_SECONDARY_USER);
                 break;
             default:
@@ -157,6 +160,11 @@ public final class Policy {
             default:
                 throw new IllegalStateException(
                         "Unknown policy control: " + enterprisePolicy.profileOwner());
+        }
+
+        if (annotations.isEmpty()) {
+            // Don't run the original test unparameterized
+            annotations.add(INCLUDE_NONE_ANNOTATION);
         }
 
         return annotations;

@@ -37,6 +37,13 @@ import java.lang.annotation.Target;
 public @interface EnsureHasProfileOwner {
     /** Which user type the work profile should be attached to. */
     DeviceState.UserType onUser() default CURRENT_USER;
+
+    /**
+     * Whether this DPC should be returned by calls to {@link DeviceState#dpc()}.
+     *
+     * <p>Only one device policy controller per test should be marked as primary.
+     */
+    boolean isPrimary() default false;
 }
 // TODO(scottjonathan): Is there a feature or something that we need to check to make sure PO is
 //  supported?

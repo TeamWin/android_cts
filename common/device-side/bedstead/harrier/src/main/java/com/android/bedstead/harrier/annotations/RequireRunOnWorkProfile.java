@@ -46,4 +46,12 @@ import java.lang.annotation.Target;
 @EnsureHasProfileOwner
 public @interface RequireRunOnWorkProfile {
     OptionalBoolean installInstrumentedAppInParent() default ANY;
+
+    /**
+     * Whether the profile owner's DPC should be returned by calls to {@link DeviceState#dpc()}.
+     *
+     * <p>Only one device policy controller per test should be marked as primary.
+     */
+    // TODO(scottjonathan): Enforce dpcIsPrimary
+    boolean dpcIsPrimary() default false;
 }

@@ -26,7 +26,6 @@ import static junit.framework.Assert.assertTrue;
 import static org.testng.Assert.assertThrows;
 
 import android.app.AppOpsManager;
-import android.app.UiAutomation;
 import android.app.admin.DevicePolicyManager;
 import android.content.Context;
 import android.net.Uri;
@@ -67,7 +66,6 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 @RunWith(BedsteadJUnit4.class)
 public class CredentialManagementAppTest {
