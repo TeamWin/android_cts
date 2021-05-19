@@ -35,6 +35,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @ParameterizedAnnotation
 @RequireRunOnSecondaryUser
-@EnsureHasDeviceOwner(onUser = SYSTEM_USER)
+@EnsureHasDeviceOwner(onUser = SYSTEM_USER, isPrimary = true)
 public @interface IncludeRunOnNonAffiliatedDeviceOwnerSecondaryUser {
 }

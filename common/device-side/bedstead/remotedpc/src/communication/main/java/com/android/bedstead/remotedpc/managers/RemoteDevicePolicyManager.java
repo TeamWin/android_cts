@@ -50,4 +50,16 @@ public interface RemoteDevicePolicyManager {
 
     /** See {@link DevicePolicyManager#getCurrentFailedPasswordAttempts()}. */
     int getCurrentFailedPasswordAttempts();
+
+
+    /** See {@link DevicePolicyManager#setLockTaskPackages(ComponentName, String[])}. */
+    void setLockTaskPackages(@NonNull ComponentName admin, @NonNull String[] packages);
+    /** See {@link DevicePolicyManager#setLockTaskPackages(ComponentName, String[])}. */
+    @RemoteDpcAutomaticAdmin void setLockTaskPackages(@NonNull String[] packages);
+
+    /** See {@link DevicePolicyManager#getLockTaskPackages(ComponentName)}. */
+    @NonNull String[] getLockTaskPackages(@NonNull ComponentName admin);
+    /** See {@link DevicePolicyManager#getLockTaskPackages(ComponentName)}. */
+    @RemoteDpcAutomaticAdmin @NonNull String[] getLockTaskPackages();
+
 }
