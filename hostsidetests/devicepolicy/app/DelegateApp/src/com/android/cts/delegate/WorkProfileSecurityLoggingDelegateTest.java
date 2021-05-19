@@ -23,6 +23,7 @@ import static com.google.common.truth.Truth.assertThat;
 import android.app.admin.DevicePolicyManager;
 import android.app.admin.SecurityLog.SecurityEvent;
 import android.content.Context;
+import android.support.test.uiautomator.UiDevice;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -32,6 +33,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 
 @RunWith(AndroidJUnit4.class)
 public class WorkProfileSecurityLoggingDelegateTest {
@@ -42,11 +44,14 @@ public class WorkProfileSecurityLoggingDelegateTest {
 
     private Context mContext;
     private DevicePolicyManager mDpm;
+    private UiDevice mDevice;
 
     @Before
     public void setUp() {
         mContext = InstrumentationRegistry.getContext();
         mDpm = mContext.getSystemService(DevicePolicyManager.class);
+        mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+        DelegateTestUtils.DelegatedLogsReceiver.sBatchCountDown = new CountDownLatch(1);
     }
 
     @Test
@@ -90,7 +95,11 @@ public class WorkProfileSecurityLoggingDelegateTest {
      */
     @Test
     public void testVerifyGeneratedLogs() throws Exception {
-        final List<SecurityEvent> events = DelegateTestUtils.getSecurityEvents(mDpm);
+        mDevice.executeShellCommand("dpm force-security-logs");
+        DelegateTestUtils.DelegatedLogsReceiver.waitForBroadcast();
+
+        final List<SecurityEvent> events =
+                DelegateTestUtils.DelegatedLogsReceiver.getSecurityEvents();
         DelegateTestUtils.verifyKeystoreEventsPresent(GENERATED_KEY_ALIAS, events);
     }
 
