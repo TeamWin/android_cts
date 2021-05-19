@@ -116,10 +116,12 @@ class ParamTonemapModeTest(its_base_test.ItsBaseTest):
         cap = cam.do_capture(req, fmt)
         img_name = '%s_n=%d.jpg' % (os.path.join(log_path, _NAME), n)
         means_1.append(compute_means_and_save(cap, img_name))
+      if 0.0 in means_1[1]:
+        raise AssertionError(f'0.0 value in test 1 means: {means_1[0]}')
       rgb_ratios = [means_1[1][i]/means_1[0][i] for i in range(_NUM_COLORS)]
       logging.debug('Test 1: RGB ratios: %s', str(rgb_ratios))
 
-      # assert proper behavior
+      # Assert proper behavior
       for i in range(_NUM_COLORS-1):
         if rgb_ratios[i+1]-rgb_ratios[i] < _MIN_RGB_RATIO_DIFF:
           raise AssertionError(
