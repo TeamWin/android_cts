@@ -37,7 +37,7 @@ import java.lang.annotation.Target;
  * secondary user on the device, and the device does not support creating additional users, then
  * the test will be skipped.
  */
-@Target(ElementType.METHOD)
+@Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @EnsureHasUserAnnotation("android.os.usertype.full.SECONDARY")
 public @interface EnsureHasSecondaryUser {
