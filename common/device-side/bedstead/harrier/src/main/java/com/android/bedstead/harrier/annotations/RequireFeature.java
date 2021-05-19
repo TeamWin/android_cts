@@ -31,7 +31,7 @@ import java.lang.annotation.Target;
  * <p>By default the test will be skipped if the feature is not available. If you'd rather the test
  * fail then use {@code failureMode = FailureMode.FAIL}.
  */
-@Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE})
+@Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @Repeatable(RequireFeatures.class)
 public @interface RequireFeature {

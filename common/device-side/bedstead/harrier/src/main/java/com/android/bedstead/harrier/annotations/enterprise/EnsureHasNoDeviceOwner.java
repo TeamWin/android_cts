@@ -30,7 +30,7 @@ import java.lang.annotation.Target;
  * no device owner. Otherwise, you can use {@link DeviceState} to ensure that the device enters
  * the correct state for the method.
  */
-@Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE})
+@Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface EnsureHasNoDeviceOwner {
 }
