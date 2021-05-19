@@ -392,6 +392,8 @@ public class MultiWindowTests extends ActivityManagerTestBase {
             assertEquals("Task number must not change.", taskNumberSecondLaunch,
                     taskNumberFinal);
         }
+        mWmState.waitForFocusedActivity("Wait for launched to side activity to be in front.",
+                targetActivityName);
         mWmState.assertFocusedActivity("Launched to side activity must be in front.",
                 targetActivityName);
     }
