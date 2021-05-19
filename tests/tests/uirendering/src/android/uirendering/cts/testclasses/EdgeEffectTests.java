@@ -23,12 +23,16 @@ import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BlendMode;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.ColorFilter;
 import android.graphics.Paint;
+import android.graphics.PixelFormat;
 import android.graphics.RecordingCanvas;
 import android.graphics.Rect;
 import android.graphics.RenderNode;
+import android.graphics.drawable.Drawable;
 import android.uirendering.cts.bitmapverifiers.ColorVerifier;
 import android.uirendering.cts.bitmapverifiers.PerPixelBitmapVerifier;
 import android.uirendering.cts.bitmapverifiers.RegionVerifier;
@@ -307,6 +311,113 @@ public class EdgeEffectTests extends ActivityTestBase {
             edgeEffect.draw(canvas);
             node.endRecording();
         });
+    }
+
+    @Test
+    public void testStretchEffectUsesLayer() {
+        // Verify that any overscroll effect leverages a layer for rendering to ensure
+        // consistent graphics behavior.
+        EdgeEffect effect = new EdgeEffect(getContext());
+        OverscrollDrawable drawable = new OverscrollDrawable(effect, Color.CYAN);
+        drawable.setBounds(0, 0, TEST_WIDTH, TEST_HEIGHT);
+
+        // Verify that the black background is visible when rendering without overscroll
+        createTest()
+                .addCanvasClientWithoutUsingPicture((canvas, width, height) -> {
+                    canvas.drawColor(Color.BLACK);
+                    drawable.setOverscroll(false);
+                    drawable.draw(canvas);
+                }, true)
+                .runWithVerifier(
+                        new RegionVerifier().addVerifier(
+                                new Rect(0, 0, TEST_WIDTH, TEST_HEIGHT),
+                                new ColorVerifier(Color.BLACK)
+                        ));
+
+        // Verify cyan color is visible when rendering with overscroll enabled
+        createTest()
+                .addCanvasClientWithoutUsingPicture((canvas, width, height) -> {
+                    canvas.drawColor(Color.BLACK);
+                    drawable.setOverscroll(true);
+                    drawable.draw(canvas);
+                }, true)
+                .runWithVerifier(
+                        new RegionVerifier().addVerifier(
+                                new Rect(0, 0, TEST_WIDTH, TEST_HEIGHT),
+                                new ColorVerifier(Color.CYAN)
+                        ));
+    }
+
+    /**
+     * Test drawable class that renders content using {@link BlendMode#DST_OVER} which
+     * requires a compositing layer in order to draw pixels, otherwise nothing is drawn.
+     */
+    private static class OverscrollDrawable extends Drawable {
+
+        private final int mChildColor;
+
+        private final EdgeEffect mEdgeEffect;
+
+        private final RenderNode mParentNode = new RenderNode("");
+        private final RenderNode mChildNode = new RenderNode("");
+
+        private boolean mOverscroll = false;
+
+        public OverscrollDrawable(EdgeEffect edgeEffect, int color) {
+            mChildColor = color;
+            mEdgeEffect = edgeEffect;
+        }
+
+        public void setOverscroll(boolean overscroll) {
+            mOverscroll = overscroll;
+            invalidateSelf();
+        }
+
+        protected void onBoundsChange(Rect bounds) {
+            super.onBoundsChange(bounds);
+            mEdgeEffect.setSize(bounds.width(), bounds.height());
+            mParentNode.setPosition(0, 0, bounds.width(), bounds.height());
+            mChildNode.setPosition(0, 0, bounds.width(), bounds.height());
+        }
+
+        @Override
+        public void draw(Canvas canvas) {
+            if (mOverscroll) {
+                mEdgeEffect.onPullDistance(1.0f, 0.5f);
+            } else {
+                mEdgeEffect.finish();
+            }
+
+            RecordingCanvas parentCanvas = mParentNode.beginRecording();
+            {
+                RecordingCanvas childCanvas = mChildNode.beginRecording();
+                {
+                    childCanvas.drawColor(mChildColor, BlendMode.DST_OVER);
+                }
+                mChildNode.endRecording();
+
+                parentCanvas.drawRenderNode(mChildNode);
+                mEdgeEffect.draw(parentCanvas);
+            }
+            mParentNode.endRecording();
+
+            canvas.drawRenderNode(mParentNode);
+        }
+
+        @Override
+        public void setAlpha(int alpha) {
+            // NO-OP
+        }
+
+        @Override
+        public void setColorFilter(ColorFilter colorFilter) {
+            // NO-OP
+        }
+
+        @Override
+        public int getOpacity() {
+            return PixelFormat.TRANSLUCENT;
+        }
     }
 
     /**

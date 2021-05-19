@@ -87,6 +87,8 @@ public class SearchTargetTest {
         assertThat(target.getScore()).isEqualTo(SCORE);
         assertThat(target.getParentId()).isEqualTo(PARENTID);
         assertThat(target.getSearchAction()).isEqualTo(SEARCH_ACTION);
+        assertThat(target.getPackageName()).isEqualTo(PACKAGE_NAME);
+        assertThat(target.getExtras().size()).isEqualTo(EXTRAS.size());
     }
 
     @Test

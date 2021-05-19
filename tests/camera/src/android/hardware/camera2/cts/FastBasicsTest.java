@@ -61,7 +61,7 @@ public class FastBasicsTest extends Camera2SurfaceViewTestCase {
     private static final boolean DEBUG = Log.isLoggable(TAG, Log.DEBUG);
 
     private static final int WAIT_FOR_FRAMES_TIMEOUT_MS = 3000;
-    private static final int WAIT_FOR_PICTURE_TIMEOUT_MS = 5000;
+    private static final int WAIT_FOR_PICTURE_TIMEOUT_MS = 8000;
     private static final int FRAMES_TO_WAIT_FOR_CAPTURE = 100;
 
     @Presubmit

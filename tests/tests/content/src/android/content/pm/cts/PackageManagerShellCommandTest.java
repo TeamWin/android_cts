@@ -225,7 +225,15 @@ public class PackageManagerShellCommandTest {
     public void testAppUpdate() throws Exception {
         installPackage(TEST_HW5);
         assertTrue(isAppInstalled(TEST_APP_PACKAGE));
-        installPackage(TEST_HW7);
+        updatePackage(TEST_APP_PACKAGE, TEST_HW7);
+        assertTrue(isAppInstalled(TEST_APP_PACKAGE));
+    }
+
+    @Test
+    public void testAppUpdateSameApk() throws Exception {
+        installPackage(TEST_HW5);
+        assertTrue(isAppInstalled(TEST_APP_PACKAGE));
+        updatePackage(TEST_APP_PACKAGE, TEST_HW5);
         assertTrue(isAppInstalled(TEST_APP_PACKAGE));
     }
 
@@ -233,7 +241,15 @@ public class PackageManagerShellCommandTest {
     public void testAppUpdateStdIn() throws Exception {
         installPackageStdIn(TEST_HW5);
         assertTrue(isAppInstalled(TEST_APP_PACKAGE));
-        installPackageStdIn(TEST_HW7);
+        updatePackageStdIn(TEST_APP_PACKAGE, TEST_HW7);
+        assertTrue(isAppInstalled(TEST_APP_PACKAGE));
+    }
+
+    @Test
+    public void testAppUpdateStdInSameApk() throws Exception {
+        installPackageStdIn(TEST_HW5);
+        assertTrue(isAppInstalled(TEST_APP_PACKAGE));
+        updatePackageStdIn(TEST_APP_PACKAGE, TEST_HW5);
         assertTrue(isAppInstalled(TEST_APP_PACKAGE));
     }
 
@@ -630,10 +646,22 @@ public class PackageManagerShellCommandTest {
                 "pm " + mInstall + " -t -g " + file.getPath()));
     }
 
+    private void updatePackage(String packageName, String baseName) throws IOException {
+        File file = new File(createApkPath(baseName));
+        assertEquals("Success\n", executeShellCommand(
+                "pm " + mInstall + " -t -p " + packageName + " -g " + file.getPath()));
+    }
+
     private void installPackageStdIn(String baseName) throws IOException {
         File file = new File(createApkPath(baseName));
         assertEquals("Success\n",
                 executeShellCommand("pm " + mInstall + " -t -g -S " + file.length(), file));
+    }
+
+    private void updatePackageStdIn(String packageName, String baseName) throws IOException {
+        File file = new File(createApkPath(baseName));
+        assertEquals("Success\n", executeShellCommand(
+                "pm " + mInstall + " -t -p " + packageName + " -g -S " + file.length(), file));
     }
 
     private void installSplits(String[] baseNames) throws IOException {

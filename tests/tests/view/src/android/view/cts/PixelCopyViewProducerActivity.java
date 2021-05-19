@@ -44,11 +44,14 @@ public class PixelCopyViewProducerActivity extends Activity implements OnDrawLis
             ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT,
             ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE,
     };
+    // TODO: Lower this (or remove it entirely) by leveraging things like
+    //  ViewTreeObserver#registerFrameCommitCallback (and possibly display orientation listeners?)
+    private static final int DRAW_FRAME_COUNT_BEFORE_CAPTURE = 10;
     private int mCurrentOrientation = 0;
     private View mContent;
     private Rect mContentBounds = new Rect();
     private Rect mOutsets = new Rect();
-    private CountDownLatch mFence = new CountDownLatch(3);
+    private CountDownLatch mFence = new CountDownLatch(DRAW_FRAME_COUNT_BEFORE_CAPTURE);
     private boolean mSupportsRotation;
 
     @Override
@@ -121,7 +124,7 @@ public class PixelCopyViewProducerActivity extends Activity implements OnDrawLis
             // Do not rotate the screen if it is not supported.
             return false;
         }
-        mFence = new CountDownLatch(3);
+        mFence = new CountDownLatch(DRAW_FRAME_COUNT_BEFORE_CAPTURE);
         runOnUiThread(() -> {
             mCurrentOrientation = (mCurrentOrientation + 1) % ORIENTATIONS.length;
             setRequestedOrientation(ORIENTATIONS[mCurrentOrientation]);
