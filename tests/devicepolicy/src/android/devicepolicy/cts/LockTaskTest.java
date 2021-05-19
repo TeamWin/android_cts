@@ -18,10 +18,13 @@ package android.devicepolicy.cts;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.testng.Assert.assertThrows;
+
 import android.app.admin.DevicePolicyManager;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.NegativePolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PositivePolicyTest;
 import com.android.bedstead.harrier.annotations.Postsubmit;
@@ -62,6 +65,14 @@ public class LockTaskTest {
         } finally {
             sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(originalLockTaskPackages);
         }
+    }
+
+    @Test
+    @Postsubmit(reason = "New test")
+    @CannotSetPolicyTest(policy = LockTaskPackages.class)
+    public void setLockTaskPackages_policyIsNotAllowedToBeSet_throwsException() {
+        assertThrows(SecurityException.class,
+                () -> sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(new String[]{}));
     }
 
     @Test
