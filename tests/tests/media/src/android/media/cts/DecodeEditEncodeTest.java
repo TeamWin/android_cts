@@ -60,7 +60,13 @@ public class DecodeEditEncodeTest extends AndroidTestCase {
     private static final String KEY_ALLOW_FRAME_DROP = "allow-frame-drop";
 
     // movie length, in frames
-    private static final int NUM_FRAMES = 30;               // two seconds of video
+    private static final int NUM_FRAMES = FRAME_RATE * 3;   // three seconds of video
+
+    // since encoders are lossy, we'll skip the first 2 seconds and
+    // then verify rest of the video for the desired behavior.
+    // Expectation is encoders will drop Qp low enough after some frames to
+    // ensure that there are no significant encoding losses
+    private final int FIRST_FRAME_TO_VALIDATE = FRAME_RATE * 2;
 
     private static final int TEST_R0 = 0;                   // dull green background
     private static final int TEST_G0 = 136;
@@ -733,9 +739,12 @@ public class DecodeEditEncodeTest extends AndroidTestCase {
                                 info.presentationTimeUs);
                         surface.awaitNewImage();
                         surface.drawImage();
-                        if (!checkSurfaceFrame(checkIndex++)) {
+                        // Start checking after FIRST_FRAME_TO_VALIDATE number of frames
+                        if (checkIndex > FIRST_FRAME_TO_VALIDATE &&
+                                !checkSurfaceFrame(checkIndex)) {
                             badFrames++;
                         }
+                        checkIndex++;
                     }
                 }
             }
