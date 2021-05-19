@@ -33,7 +33,7 @@ import java.lang.annotation.Target;
  * no Tv profile. Otherwise, you can use {@link DeviceState} to ensure that the device enters
  * the correct state for the method.
  */
-@Target(ElementType.METHOD)
+@Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @EnsureHasNoProfileAnnotation("com.android.tv.profile")
 public @interface EnsureHasNoTvProfile {

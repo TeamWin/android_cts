@@ -34,7 +34,7 @@ import java.lang.annotation.Target;
  * fail then use {@code failureMode = FailureMode.FAIL}. If you'd like to uninstall the package if
  * it is installed, see {@link EnsurePackageNotInstalled}.
  */
-@Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE})
+@Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @Repeatable(RequirePackagesNotInstalled.class)
 public @interface RequirePackageNotInstalled {
