@@ -28,6 +28,7 @@ import android.test.InstrumentationTestCase;
 import androidx.test.InstrumentationRegistry;
 
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * Tests that a delegate app with DELEGATION_SECURITY_LOGGING is able to control and access
@@ -50,6 +51,7 @@ public class SecurityLoggingDelegateTest extends InstrumentationTestCase {
         mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         mContext = getInstrumentation().getContext();
         mDpm = mContext.getSystemService(DevicePolicyManager.class);
+        DelegateTestUtils.DelegatedLogsReceiver.sBatchCountDown = new CountDownLatch(1);
     }
 
     public void testCannotAccessApis()throws Exception {
@@ -89,7 +91,11 @@ public class SecurityLoggingDelegateTest extends InstrumentationTestCase {
      * side actions and by {@link #testGenerateLogs()} are there.
      */
     public void testVerifyGeneratedLogs() throws Exception {
-        final List<SecurityEvent> events = DelegateTestUtils.getSecurityEvents(mDpm);
+        mDevice.executeShellCommand("dpm force-security-logs");
+        DelegateTestUtils.DelegatedLogsReceiver.waitForBroadcast();
+
+        final List<SecurityEvent> events =
+                DelegateTestUtils.DelegatedLogsReceiver.getSecurityEvents();
         DelegateTestUtils.verifyKeystoreEventsPresent(GENERATED_KEY_ALIAS, events);
     }
 
