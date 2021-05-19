@@ -16,9 +16,12 @@
 
 package android.graphics.cts;
 
-import static androidx.test.InstrumentationRegistry.getInstrumentation;
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
+
+import static org.junit.Assert.assertTrue;
 
 import android.app.UiAutomation;
+import android.content.Context;
 import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceControl;
@@ -26,6 +29,8 @@ import android.view.SurfaceControl;
 import androidx.test.filters.MediumTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
+
+import com.android.compatibility.common.util.DisplayUtil;
 
 import org.junit.After;
 import org.junit.Before;
@@ -50,6 +55,10 @@ public class SetFrameRateTest {
         // necessary permission when surface flinger checks.
         UiAutomation uiAutomation = getInstrumentation().getUiAutomation();
         uiAutomation.adoptShellPermissionIdentity();
+
+        Context context = getInstrumentation().getTargetContext();
+        assertTrue("Physical display is expected.", DisplayUtil.isDisplayConnected(context));
+
         try {
             // Take ownership of the frame rate flexibility token, if we were able
             // to get one - we'll release it in tearDown().
