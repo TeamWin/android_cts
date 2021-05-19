@@ -20,6 +20,7 @@ import android.annotation.NonNull;
 import android.content.Context;
 import android.content.pm.ModuleInfo;
 import android.content.pm.PackageManager;
+import android.util.Log;
 
 import androidx.core.os.BuildCompat;
 
@@ -44,6 +45,8 @@ import androidx.core.os.BuildCompat;
  * of the module from the provided dessert release.
  */
 public class WifiBuildCompat {
+    private static final String TAG = "WifiBuildCompat";
+
     private static final String WIFI_APEX_NAME = "com.android.wifi";
 
     private static final long WIFI_APEX_BASE_VERSION_CODE_FOR_S = 310000000;
@@ -59,7 +62,10 @@ public class WifiBuildCompat {
                 wifiStackVersion = packageManager.getPackageInfo(
                         wifiPackageName, PackageManager.MATCH_APEX).getLongVersionCode();
             }
+            Log.v(TAG, "Wifi Module package name is " + wifiPackageName
+                    + ", version is " + wifiStackVersion);
         } catch (PackageManager.NameNotFoundException e) {
+            Log.e(TAG, "Wifi Module is missing! Exception: " + e.getMessage());
         }
         return wifiStackVersion;
     }
