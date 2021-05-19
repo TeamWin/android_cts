@@ -27,7 +27,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-@Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE})
+@Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @RequirePackageInstalled(value = GMS_CORE_PACKAGE, onUser = DeviceState.UserType.ANY)
 @RequirePackageInstalled(value = PLAY_STORE_PACKAGE, onUser = DeviceState.UserType.ANY)

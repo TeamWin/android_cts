@@ -85,8 +85,9 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
         }
 
         private void calculateAnnotations() {
-            List<Annotation> annotations = new ArrayList<>(
-                    Arrays.asList(getMethod().getAnnotations()));
+            List<Annotation> annotations =
+                    new ArrayList<>(Arrays.asList(getDeclaringClass().getAnnotations()));
+            annotations.addAll(Arrays.asList(getMethod().getAnnotations()));
 
             parseEnterpriseAnnotations(annotations);
 
