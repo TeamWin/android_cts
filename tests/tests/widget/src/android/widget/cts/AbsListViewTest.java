@@ -682,7 +682,9 @@ public class AbsListViewTest {
 
         final AbsListView.OnItemLongClickListener mockOnItemLongClickListener =
                 mock(AbsListView.OnItemLongClickListener.class);
-        listView.setOnItemLongClickListener(mockOnItemLongClickListener);
+        mActivityRule.runOnUiThread(
+                () -> listView.setOnItemLongClickListener(mockOnItemLongClickListener)
+        );
 
         verifyZeroInteractions(mockOnItemLongClickListener);
 
@@ -1227,7 +1229,7 @@ public class AbsListViewTest {
 
         listView.resetIsOnScrollChangedCalled();
         assertFalse(listView.isOnScrollChangedCalled());
-        listView.requestChildRectangleOnScreen(row, r, true);
+        mActivityRule.runOnUiThread(() -> listView.requestChildRectangleOnScreen(row, r, true));
         assertTrue(listView.isOnScrollChangedCalled());
     }
 
