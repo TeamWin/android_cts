@@ -26,7 +26,6 @@ import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_SYSTEM_INF
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
-import static org.junit.Assert.assertArrayEquals;
 import static org.testng.Assert.assertThrows;
 
 import android.app.ActivityManager;
@@ -168,18 +167,6 @@ public class LockTaskTest extends BaseDeviceAdminTest {
     public void tearDown() {
         mDevicePolicyManager.setLockTaskPackages(ADMIN_COMPONENT, new String[0]);
         mContext.unregisterReceiver(mReceiver);
-    }
-
-    // Setting and unsetting the lock task packages.
-    public void testSetLockTaskPackages() {
-        final String[] packages = new String[] { TEST_PACKAGE, "some.other.package" };
-        mDevicePolicyManager.setLockTaskPackages(ADMIN_COMPONENT, packages);
-        assertArrayEquals(packages, mDevicePolicyManager.getLockTaskPackages(ADMIN_COMPONENT));
-        assertTrue(mDevicePolicyManager.isLockTaskPermitted(TEST_PACKAGE));
-
-        mDevicePolicyManager.setLockTaskPackages(ADMIN_COMPONENT, new String[0]);
-        assertEquals(0, mDevicePolicyManager.getLockTaskPackages(ADMIN_COMPONENT).length);
-        assertFalse(mDevicePolicyManager.isLockTaskPermitted(TEST_PACKAGE));
     }
 
     // When OEM defines policy-exempt apps, they are permitted on lock task mode
