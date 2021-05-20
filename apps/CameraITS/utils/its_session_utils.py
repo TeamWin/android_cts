@@ -248,12 +248,12 @@ class ItsSession(object):
     self._device_id = device_id
     self._hidden_physical_id = hidden_physical_id
 
-  def __enter__(self):
     # Initialize device id and adb command.
     self.adb = 'adb -s ' + self._device_id
     self.__wait_for_service()
     self.__init_socket_port()
 
+  def __enter__(self):
     self.__close_camera()
     self.__open_camera()
     return self
@@ -1074,6 +1074,59 @@ class ItsSession(object):
       raise error_util.CameraItsError('Failed to query camera privacy mode'
                                       ' support')
     return data['strValue'] == 'true'
+
+  def is_s_performance_class_primary_camera(self):
+    """Query whether the camera device is a S performance class primary camera.
+
+    A primary rear/front facing camera is a camera device with the lowest
+    camera Id for that facing.
+
+    Returns:
+      Boolean
+    """
+    cmd = {}
+    cmd['cmdName'] = 'isSPerformanceClassPrimaryCamera'
+    cmd['cameraId'] = self._camera_id
+    self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
+
+    data, _ = self.__read_response_from_socket()
+    if data['tag'] != 'sPerformanceClassPrimaryCamera':
+      raise error_util.CameraItsError('Failed to query S performance class '
+                                      'primary camera')
+    return data['strValue'] == 'true'
+
+  def measure_camera_launch_ms(self):
+    """Measure camera launch latency in millisecond, from open to first frame.
+
+    Returns:
+      Camera launch latency from camera open to receipt of first frame
+    """
+    cmd = {}
+    cmd['cmdName'] = 'measureCameraLaunchMs'
+    cmd['cameraId'] = self._camera_id
+    self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
+
+    data, _ = self.__read_response_from_socket()
+    if data['tag'] != 'cameraLaunchMs':
+      raise error_util.CameraItsError('Failed to measure camera launch latency')
+    return float(data['strValue'])
+
+  def measure_camera_1080p_jpeg_capture_ms(self):
+    """Measure camera 1080P jpeg capture latency in milliseconds.
+
+    Returns:
+      Camera jpeg capture latency in milliseconds
+    """
+    cmd = {}
+    cmd['cmdName'] = 'measureCamera1080pJpegCaptureMs'
+    cmd['cameraId'] = self._camera_id
+    self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
+
+    data, _ = self.__read_response_from_socket()
+    if data['tag'] != 'camera1080pJpegCaptureMs':
+      raise error_util.CameraItsError(
+          'Failed to measure camera 1080p jpeg capture latency')
+    return float(data['strValue'])
 
 
 def parse_camera_ids(ids):
