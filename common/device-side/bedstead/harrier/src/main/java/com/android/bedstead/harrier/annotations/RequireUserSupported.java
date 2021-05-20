@@ -31,7 +31,7 @@ import java.lang.annotation.Target;
  * supports the user types. Otherwise, you can use {@link DeviceState} to ensure that the test is
  * not run when the user type is not supported.
  */
-@Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE})
+@Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @Repeatable(RequireUsersSupported.class)
 public @interface RequireUserSupported {

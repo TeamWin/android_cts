@@ -30,6 +30,6 @@ import java.lang.annotation.Target;
 @Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @ParameterizedAnnotation
-@RequireRunOnWorkProfile
+@RequireRunOnWorkProfile(dpcIsPrimary = true)
 public @interface IncludeRunOnProfileOwner {
 }

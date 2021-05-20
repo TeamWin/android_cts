@@ -16,7 +16,10 @@
 
 package com.android.bedstead.harrier.annotations;
 
+import static com.android.bedstead.harrier.OptionalBoolean.ANY;
+
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.OptionalBoolean;
 import com.android.bedstead.harrier.annotations.meta.RequireRunOnProfileAnnotation;
 
 import java.lang.annotation.ElementType;
@@ -33,8 +36,9 @@ import java.lang.annotation.Target;
  * <p>Optionally, you can guarantee that these methods do not run outside of a Tv
  * profile by using {@link DeviceState}.
  */
-@Target(ElementType.METHOD)
+@Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @RequireRunOnProfileAnnotation("com.android.tv.profile")
 public @interface RequireRunOnTvProfile {
+    OptionalBoolean installInstrumentedAppInParent() default ANY;
 }

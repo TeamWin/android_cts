@@ -27,7 +27,7 @@ import java.lang.annotation.Target;
  * Mark a test as testing the states where a policy is applied (by a Device Owner or Profile Owner)
  * and it should not apply to the user the test is running on.
  *
- * <p>This will generated parameterized runs for all matching states.
+ * <p>This will generate parameterized runs for all matching states.
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)

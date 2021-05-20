@@ -64,6 +64,7 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowInsets;
 import android.view.WindowInsetsAnimation;
+import android.view.WindowInsetsController;
 import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -209,14 +210,35 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
         expectEvent(stream, editorMatcher("onStartInput", activity.mEditTextMarker), TIMEOUT);
 
         final View rootView = activity.getWindow().getDecorView();
-        getInstrumentation().runOnMainSync(() -> {
-            rootView.getWindowInsetsController().show(ime());
-        });
+        getInstrumentation().runOnMainSync(() -> rootView.getWindowInsetsController().show(ime()));
         PollingCheck.waitFor(TIMEOUT, () -> rootView.getRootWindowInsets().isVisible(ime()));
-        getInstrumentation().runOnMainSync(() -> {
-            rootView.getWindowInsetsController().hide(ime());
-        });
+        getInstrumentation().runOnMainSync(() -> rootView.getWindowInsetsController().hide(ime()));
         PollingCheck.waitFor(TIMEOUT, () -> !rootView.getRootWindowInsets().isVisible(ime()));
+    }
+
+    @Test
+    public void testImeForceShowingNavigationBar() throws Exception {
+        final Instrumentation instrumentation = getInstrumentation();
+        assumeThat(MockImeSession.getUnavailabilityReason(instrumentation.getContext()),
+                nullValue());
+        final MockImeSession imeSession = MockImeHelper.createManagedMockImeSession(this);
+        final ImeEventStream stream = imeSession.openEventStream();
+        final TestActivity activity = startActivity(TestActivity.class);
+        expectEvent(stream, editorMatcher("onStartInput", activity.mEditTextMarker), TIMEOUT);
+
+        final View rootView = activity.getWindow().getDecorView();
+        assumeTrue(rootView.getRootWindowInsets().isVisible(navigationBars()));
+        getInstrumentation().runOnMainSync(
+                () -> rootView.getWindowInsetsController().hide(navigationBars()));
+        PollingCheck.waitFor(TIMEOUT,
+                () -> !rootView.getRootWindowInsets().isVisible(navigationBars()));
+        getInstrumentation().runOnMainSync(() -> rootView.getWindowInsetsController().show(ime()));
+        PollingCheck.waitFor(TIMEOUT,
+                () -> rootView.getRootWindowInsets().isVisible(ime() | navigationBars()));
+        getInstrumentation().runOnMainSync(() -> rootView.getWindowInsetsController().hide(ime()));
+        PollingCheck.waitFor(TIMEOUT,
+                () -> !rootView.getRootWindowInsets().isVisible(ime())
+                        && !rootView.getRootWindowInsets().isVisible(navigationBars()));
     }
 
     @Test

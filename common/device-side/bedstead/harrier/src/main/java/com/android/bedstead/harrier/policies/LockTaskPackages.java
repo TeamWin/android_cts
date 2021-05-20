@@ -14,18 +14,13 @@
  * limitations under the License.
  */
 
-package com.android.bedstead.harrier.annotations;
+package com.android.bedstead.harrier.policies;
 
-import com.android.bedstead.harrier.annotations.meta.RepeatingAnnotation;
+import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.DeviceOwnerControl.USER;
+import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.ProfileOwnerControl.NO;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
 
-@Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
-@Retention(RetentionPolicy.RUNTIME)
-@RepeatingAnnotation
-public @interface RequirePackagesNotInstalled {
-    RequirePackageNotInstalled[] value();
+@EnterprisePolicy(deviceOwner = USER, profileOwner = NO)
+public class LockTaskPackages {
 }

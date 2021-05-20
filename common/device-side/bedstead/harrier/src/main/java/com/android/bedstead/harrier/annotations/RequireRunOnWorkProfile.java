@@ -40,10 +40,18 @@ import java.lang.annotation.Target;
  * <p>This annotation by default opts a test into multi-user presubmit. New tests should also be
  * annotated {@link Postsubmit} until they are shown to meet the multi-user presubmit requirements.
  */
-@Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE})
+@Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @RequireRunOnProfileAnnotation("android.os.usertype.profile.MANAGED")
 @EnsureHasProfileOwner
 public @interface RequireRunOnWorkProfile {
     OptionalBoolean installInstrumentedAppInParent() default ANY;
+
+    /**
+     * Whether the profile owner's DPC should be returned by calls to {@link DeviceState#dpc()}.
+     *
+     * <p>Only one device policy controller per test should be marked as primary.
+     */
+    // TODO(scottjonathan): Enforce dpcIsPrimary
+    boolean dpcIsPrimary() default false;
 }

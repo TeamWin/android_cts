@@ -121,27 +121,24 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
      * translucent activity is on the top most.
      */
     @Test
-    public void testVisibilityBehindTranslucentActivity() {
-        // launch first activity
+    public void testVisibilityBehindTranslucentActivity_sameTask() {
         launchActivity(TEST_ACTIVITY);
         mWmState.waitForActivityState(TEST_ACTIVITY, STATE_RESUMED);
 
-        // launch second activity
-        launchActivity(BROADCAST_RECEIVER_ACTIVITY);
-        mWmState.waitForActivityState(BROADCAST_RECEIVER_ACTIVITY, STATE_RESUMED);
+        launchAndFinishActivityBehindTranslucentActivity(true /* inSameTask */);
 
-        // launch translucent activity
-        launchActivity(TRANSLUCENT_TEST_ACTIVITY);
-        mWmState.waitForActivityState(TRANSLUCENT_TEST_ACTIVITY, STATE_RESUMED);
+        mWmState.computeState(new WaitForValidActivityState(TEST_ACTIVITY));
+        mWmState.assertVisibility(TEST_ACTIVITY, true);
+    }
 
-        // finish the second activity
-        mBroadcastActionTrigger.finishBroadcastReceiverActivity();
-        mWmState.computeState(BROADCAST_RECEIVER_ACTIVITY);
-        mWmState.waitForActivityRemoved(BROADCAST_RECEIVER_ACTIVITY);
-        mWmState.computeState(
-                new WaitForValidActivityState(TEST_ACTIVITY),
-                new WaitForValidActivityState(TRANSLUCENT_TEST_ACTIVITY));
+    @Test
+    public void testVisibilityBehindTranslucentActivity_diffTask() {
+        launchActivity(TEST_ACTIVITY);
+        mWmState.waitForActivityState(TEST_ACTIVITY, STATE_RESUMED);
 
+        launchAndFinishActivityBehindTranslucentActivity(false /* inSameTask */);
+
+        mWmState.computeState(new WaitForValidActivityState(TEST_ACTIVITY));
         mWmState.assertVisibility(TEST_ACTIVITY, true);
     }
 
@@ -150,28 +147,50 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
      * translucent activity is on the top most.
      */
     @Test
-    public void testHomeVisibilityBehindTranslucentActivity() {
+    public void testHomeVisibilityBehindTranslucentActivity_sameTask() {
         if (!hasHomeScreen()) {
             return;
         }
         launchHomeActivity();
 
-        // launch first activity
-        launchActivity(BROADCAST_RECEIVER_ACTIVITY);
-        mWmState.waitForActivityState(BROADCAST_RECEIVER_ACTIVITY, STATE_RESUMED);
-
-        // launch translucent activity
-        launchActivity(TRANSLUCENT_TEST_ACTIVITY);
-        mWmState.waitForActivityState(TRANSLUCENT_TEST_ACTIVITY, STATE_RESUMED);
-        mWmState.assertVisibility(TRANSLUCENT_TEST_ACTIVITY, true);
-
-        // Finish the first activity
-        mBroadcastActionTrigger.finishBroadcastReceiverActivity();
-        mWmState.computeState(BROADCAST_RECEIVER_ACTIVITY);
-        mWmState.waitForActivityRemoved(BROADCAST_RECEIVER_ACTIVITY);
+        launchAndFinishActivityBehindTranslucentActivity(true /* inSameTask */);
 
         mWmState.waitForHomeActivityVisible();
         mWmState.assertHomeActivityVisible(true);
+    }
+
+    @Test
+    public void testHomeVisibilityBehindTranslucentActivity_diffTask() {
+        if (!hasHomeScreen()) {
+            return;
+        }
+        launchHomeActivity();
+
+        launchAndFinishActivityBehindTranslucentActivity(false /* inSameTask */);
+
+        mWmState.waitForHomeActivityVisible();
+        mWmState.assertHomeActivityVisible(true);
+    }
+
+    private void launchAndFinishActivityBehindTranslucentActivity(boolean inSameTask) {
+        // Launch first activity
+        launchActivity(BROADCAST_RECEIVER_ACTIVITY);
+        mWmState.waitForActivityState(BROADCAST_RECEIVER_ACTIVITY, STATE_RESUMED);
+
+        // Launch translucent activity
+        if (inSameTask) {
+            launchActivity(TRANSLUCENT_TEST_ACTIVITY);
+        } else {
+            launchActivityInNewTask(TRANSLUCENT_TEST_ACTIVITY);
+        }
+        mWmState.waitForActivityState(TRANSLUCENT_TEST_ACTIVITY, STATE_RESUMED);
+        mWmState.assertVisibility(TRANSLUCENT_TEST_ACTIVITY, true);
+
+        // Finish first activity
+        mBroadcastActionTrigger.finishBroadcastReceiverActivity();
+        mWmState.computeState(BROADCAST_RECEIVER_ACTIVITY);
+        mWmState.waitForActivityRemoved(BROADCAST_RECEIVER_ACTIVITY);
+        mWmState.computeState(new WaitForValidActivityState(TRANSLUCENT_TEST_ACTIVITY));
     }
 
     @Test

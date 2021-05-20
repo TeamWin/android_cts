@@ -24,11 +24,12 @@
         <activity android:name="com.android.cts.delegate.DelegatedScopesReceiverActivity"
              android:exported="true">
         </activity>
-        <receiver android:name=".DelegateTestUtils$NetworkLogsReceiver"
+        <receiver android:name=".DelegateTestUtils$DelegatedLogsReceiver"
              android:permission="android.permission.BIND_DEVICE_ADMIN"
              android:exported="true">
             <intent-filter>
                 <action android:name="android.app.action.NETWORK_LOGS_AVAILABLE"/>
+                <action android:name="android.app.action.SECURITY_LOGS_AVAILABLE"/>
             </intent-filter>
         </receiver>
     </application>
