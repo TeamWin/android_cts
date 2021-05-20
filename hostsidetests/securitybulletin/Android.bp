@@ -53,6 +53,7 @@ cc_defaults {
         "cts",
         "vts10",
         "sts",
+        "general-tests",
     ],
     cflags: [
         "-Wall",
