@@ -33,4 +33,7 @@ import java.lang.annotation.Target;
 public @interface EnsureHasProfileAnnotation {
     /** The name of the profile type which should be present. */
     String value();
+
+    /** Whether a profile owner should be set for the profile. */
+    boolean hasProfileOwner() default false;
 }

@@ -85,7 +85,7 @@ public abstract class UserReference implements AutoCloseable {
                     .execute();
             mTestApis.users().waitForUserToNotExistOrMatch(this, User::isRemoving);
         } catch (AdbException e) {
-            throw new NeneException("Could not remove user + " + this, e);
+            throw new NeneException("Could not remove user " + this, e);
         }
     }
 
