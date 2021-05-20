@@ -109,10 +109,11 @@ public final class UinputDevice extends VirtualInputDevice {
      * Inject array of uinput events to the device.  The events array should follow the below
      * format:
      *
-     * String evdevEvents = "[0x01, 0x0a, 0x01, 0x01, 0x0a, 0x00 ]"
-     * The above string represents an event array of [EV_KEY, KEY_9, DOWN,  EV_KEY, KEY_9, UP]
-     *
-     * @param evdevEvents The uinput events to be injected.  (a JSON-formatted array of hex)
+     * String evdevEvents = "[1, 10, 1, 0, 0, 0]"
+     * The above string represents an event array of [EV_KEY, KEY_9, DOWN, EV_SYN, SYN_REPORT, 0]
+     * Hex strings ("0x01") are not supported inside the incoming string.
+     * The number of entries in the provided string has to be a multiple of 3.
+     * @param evdevEvents The uinput events to be injected.  (a JSON-formatted array of numbers)
      */
     public void injectEvents(String evdevEvents) {
         JSONObject json = new JSONObject();

@@ -30,6 +30,7 @@ android_test {
         "androidx.test.core",
         "androidx.test.ext.junit",
         "compatibility-device-util-axt",
+        "cts-input-lib",
     ],
     sdk_version: "test_current",
 }
