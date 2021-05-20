@@ -16,8 +16,8 @@
 
 package android.car.cts;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.fail;
 
 import android.app.PendingIntent;
@@ -54,50 +54,65 @@ public class CarPackageManagerTest extends CarApiTestBase {
 
     @Test
     public void testActivityDistractionOptimized() throws Exception {
-       assertFalse(mCarPm.isActivityDistractionOptimized("com.basic.package", "DummyActivity"));
-       // Real system activity is not allowed as well.
-       assertFalse(mCarPm.isActivityDistractionOptimized("com.android.phone", "CallActivity"));
+        assertThat(mCarPm.isActivityDistractionOptimized("com.basic.package", "DummyActivity"))
+                .isFalse();
 
-       try {
-           mCarPm.isActivityDistractionOptimized("com.android.settings", null);
-           fail();
-       } catch (IllegalArgumentException expected) {
-           // Expected.
-       }
-       try {
-           mCarPm.isActivityDistractionOptimized(null, "Any");
-           fail();
-       } catch (IllegalArgumentException expected) {
-           // Expected.
-       }
-       try {
-           mCarPm.isActivityDistractionOptimized(null, null);
-           fail();
-       } catch (IllegalArgumentException expected) {
-           // Expected.
-       }
+        try {
+            mCarPm.isActivityDistractionOptimized("com.android.settings", null);
+            fail();
+        } catch (IllegalArgumentException expected) {
+            // Expected.
+        }
+        try {
+            mCarPm.isActivityDistractionOptimized(null, "Any");
+            fail();
+        } catch (IllegalArgumentException expected) {
+            // Expected.
+        }
+        try {
+            mCarPm.isActivityDistractionOptimized(null, null);
+            fail();
+        } catch (IllegalArgumentException expected) {
+            // Expected.
+        }
     }
 
     @Test
     public void testDistractionOptimizedActivityIsAllowed() {
-        // This test relies on test activity in installed apk, and AndroidManifest declaration.
+        assertThat(mCarPm.isActivityDistractionOptimized("com.android.car",
+                "com.android.car.DistractionOptimizedActivityForTesting")).isTrue();
         if (Build.TYPE.equalsIgnoreCase("user")) {
-            // Skip this test on user build, which checks the install source for DO activity list.
-            return;
+            // Should be false as not from trusted source.
+            assertThat(mCarPm.isActivityDistractionOptimized("android.car.cts",
+                    "android.car.cts.drivingstate.DistractionOptimizedActivity")).isFalse();
+        } else {
+            assertThat(mCarPm.isActivityDistractionOptimized("android.car.cts",
+                    "android.car.cts.drivingstate.DistractionOptimizedActivity")).isTrue();
         }
-        assertTrue(mCarPm.isActivityDistractionOptimized("android.car.cts",
-                "android.car.cts.drivingstate.DistractionOptimizedActivity"));
     }
 
     @Test
     public void testNonDistractionOptimizedActivityNotAllowed() {
-        // This test relies on test activity in installed apk, and AndroidManifest declaration.
-        if (Build.TYPE.equalsIgnoreCase("user")) {
-            // Skip this test on user build, which checks the install source for DO activity list.
-            return;
-        }
-        assertFalse(mCarPm.isActivityDistractionOptimized("android.car.cts",
-                "android.car.cts.drivingstate.NonDistractionOptimizedActivity"));
+        // Not distraction optimized, but from system app
+        assertThat(mCarPm.isActivityDistractionOptimized("com.android.car",
+                "com.android.car.NonDistractionOptimizedActivityForTesting")).isFalse();
+        // Not distraction optimized, also not from trusted source
+        assertThat(mCarPm.isActivityDistractionOptimized("android.car.cts",
+                "android.car.cts.drivingstate.NonDistractionOptimizedActivity")).isFalse();
+    }
+
+    @Test
+    public void testPendingIntentToDistractionOptimizedActivityIsAllowed() {
+        assertThat(mCarPm.isPendingIntentDistractionOptimized(
+                createIntent("com.android.car", ".DistractionOptimizedActivityForTesting")))
+                        .isTrue();
+    }
+
+    @Test
+    public void testPendingIntentToNonDistractionOptimizedActivityNotAllowed() {
+        assertThat(mCarPm.isPendingIntentDistractionOptimized(
+                createIntent("com.android.car", ".NonDistractionOptimizedActivityForTesting")))
+                        .isFalse();
     }
 
     private PendingIntent createIntent(String packageName, String relativeClassName) {
@@ -106,27 +121,4 @@ public class CarPackageManagerTest extends CarApiTestBase {
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         return PendingIntent.getActivity(mContext, 0, intent, PendingIntent.FLAG_IMMUTABLE);
     }
-
-    @Test
-    public void testPendingIntentToDistractionOptimizedActivityIsAllowed() {
-        // This test relies on test activity in installed apk, and AndroidManifest declaration.
-        if (Build.TYPE.equalsIgnoreCase("user")) {
-            // Skip this test on user build, which checks the install source for DO activity list.
-            return;
-        }
-        assertTrue(mCarPm.isPendingIntentDistractionOptimized(
-                createIntent("android.car.cts", ".drivingstate.DistractionOptimizedActivity")));
-    }
-
-    @Test
-    public void testPendingIntentToNonDistractionOptimizedActivityNotAllowed() {
-        // This test relies on test activity in installed apk, and AndroidManifest declaration.
-        if (Build.TYPE.equalsIgnoreCase("user")) {
-            // Skip this test on user build, which checks the install source for DO activity list.
-            return;
-        }
-        assertFalse(mCarPm.isPendingIntentDistractionOptimized(
-                createIntent("android.car.cts", ".drivingstate.NonDistractionOptimizedActivity")));
-    }
-
 }
