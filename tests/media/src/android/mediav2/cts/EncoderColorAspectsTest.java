@@ -137,14 +137,9 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
         {
             mCodec = MediaCodec.createByCodecName(mCodecName);
             mOutputBuff.reset();
-            mInfoList.clear();
-            /* TODO(b/156571486) */
-            if (mCodecName.equals("c2.android.hevc.encoder") ||
-                    mCodecName.equals("OMX.google.h264.encoder") ||
-                    mCodecName.equals("c2.android.avc.encoder") ||
-                    mCodecName.equals("c2.android.vp8.encoder") ||
-                    mCodecName.equals("c2.android.vp9.encoder")) {
-                Log.d(LOG_TAG, "test skipped due to b/156571486");
+            /* TODO(b/189883530) */
+            if (mCodecName.equals("OMX.google.h264.encoder")) {
+                Log.d(LOG_TAG, "test skipped due to b/189883530");
                 mCodec.release();
                 return;
             }
