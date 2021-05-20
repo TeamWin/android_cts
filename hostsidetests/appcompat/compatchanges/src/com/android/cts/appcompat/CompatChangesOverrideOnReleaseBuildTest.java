@@ -48,11 +48,11 @@ public class CompatChangesOverrideOnReleaseBuildTest extends CompatChangeGatingT
         runCommand("settings put global force_non_debuggable_final_build_for_compat 0");
     }
 
-    public void testSetOverrideSecurityExceptionNonOverridableChangeId() throws Exception {
+    public void testPutPackageOverridesSecurityExceptionNonOverridableChangeId() throws Exception {
         installPackage("appcompat_preinstall_override_versioncode1_release.apk", false);
 
         runDeviceCompatTest(TEST_PKG, ".CompatChangesTest",
-                "setOverride_securityExceptionForNonOverridableChangeId",
+                "putPackageOverrides_securityExceptionForNonOverridableChangeId",
                 /*enabledChanges*/ImmutableSet.of(),
                 /*disabledChanges*/ ImmutableSet.of());
 
@@ -63,11 +63,11 @@ public class CompatChangesOverrideOnReleaseBuildTest extends CompatChangeGatingT
         assertThat(ctsChange.hasOverrides).isFalse();
     }
 
-    public void testSetOverrideSecurityExceptionMissingPermission() throws Exception {
+    public void testPutPackageOverridesSecurityExceptionMissingPermission() throws Exception {
         installPackage("appcompat_preinstall_override_versioncode1_release.apk", false);
 
         runDeviceCompatTest(TEST_PKG, ".CompatChangesTest",
-                "setOverride_securityExceptionForNotHoldingPermission",
+                "putPackageOverrides_securityExceptionForNotHoldingPermission",
                 /*enabledChanges*/ImmutableSet.of(),
                 /*disabledChanges*/ ImmutableSet.of());
 
@@ -78,11 +78,11 @@ public class CompatChangesOverrideOnReleaseBuildTest extends CompatChangeGatingT
         assertThat(ctsChange.hasOverrides).isFalse();
     }
 
-    public void testSetOverrideForAllVersions() throws Exception {
+    public void testPutPackageOverridesForAllVersions() throws Exception {
         installPackage("appcompat_preinstall_override_versioncode1_release.apk", false);
 
         runDeviceCompatTest(TEST_PKG, ".CompatChangesTest",
-                "setOverride_success",
+                "putPackageOverrides_success",
                 /*enabledChanges*/ImmutableSet.of(),
                 /*disabledChanges*/ ImmutableSet.of());
 
@@ -106,11 +106,11 @@ public class CompatChangesOverrideOnReleaseBuildTest extends CompatChangeGatingT
         assertThat(ctsChange.overridesStr).isEqualTo("{" + OVERRIDE_PKG + "=true}");
     }
 
-    public void testSetOverrideForNewerVersion() throws Exception {
+    public void testPutPackageOverridesForNewerVersion() throws Exception {
         installPackage("appcompat_preinstall_override_versioncode1_release.apk", false);
 
         runDeviceCompatTest(TEST_PKG, ".CompatChangesTest",
-                "setOverride_fromVersion2",
+                "putPackageOverrides_fromVersion2",
                 /*enabledChanges*/ImmutableSet.of(),
                 /*disabledChanges*/ ImmutableSet.of());
 
@@ -135,11 +135,11 @@ public class CompatChangesOverrideOnReleaseBuildTest extends CompatChangeGatingT
         assertThat(ctsChange.overridesStr).isEqualTo("{" + OVERRIDE_PKG + "=true}");
     }
 
-    public void testSetOverrideForOlderVersion() throws Exception {
+    public void testPutPackageOverridesForOlderVersion() throws Exception {
         installPackage("appcompat_preinstall_override_versioncode1_release.apk", false);
 
         runDeviceCompatTest(TEST_PKG, ".CompatChangesTest",
-                "setOverride_untilVersion1",
+                "putPackageOverrides_untilVersion1",
                 /*enabledChanges*/ImmutableSet.of(),
                 /*disabledChanges*/ ImmutableSet.of());
 
@@ -163,20 +163,21 @@ public class CompatChangesOverrideOnReleaseBuildTest extends CompatChangeGatingT
         assertThat(ctsChange.hasOverrides).isFalse();
     }
 
-    public void testClearOverrideSecurityExceptionNonOverridableChangeId() throws Exception {
+    public void testRemovePackageOverridesSecurityExceptionNonOverridableChangeId()
+            throws Exception {
         installPackage("appcompat_preinstall_override_versioncode1_release.apk", false);
 
         runDeviceCompatTest(TEST_PKG, ".CompatChangesTest",
-                "clearOverride_securityExceptionForNonOverridableChangeId",
+                "removePackageOverrides_securityExceptionForNonOverridableChangeId",
                 /*enabledChanges*/ImmutableSet.of(),
                 /*disabledChanges*/ ImmutableSet.of());
     }
 
-    public void testClearOverrideSecurityExceptionMissingPermission() throws Exception {
+    public void testRemovePackageOverridesSecurityExceptionMissingPermission() throws Exception {
         installPackage("appcompat_preinstall_override_versioncode1_release.apk", false);
 
         runDeviceCompatTest(TEST_PKG, ".CompatChangesTest",
-                "clearOverride_securityExceptionForNotHoldingPermission",
+                "removePackageOverrides_securityExceptionForNotHoldingPermission",
                 /*enabledChanges*/ImmutableSet.of(),
                 /*disabledChanges*/ ImmutableSet.of());
 
@@ -187,11 +188,11 @@ public class CompatChangesOverrideOnReleaseBuildTest extends CompatChangeGatingT
         assertThat(ctsChange.rawOverrideStr).isEqualTo("{" + OVERRIDE_PKG + "=true}");
     }
 
-    public void testClearOverrideWhenOverrideNotPresent() throws Exception {
+    public void testRemovePackageOverridesWhenOverrideNotPresent() throws Exception {
         installPackage("appcompat_preinstall_override_versioncode1_release.apk", false);
 
         runDeviceCompatTest(TEST_PKG, ".CompatChangesTest",
-                "clearOverride_doesNothingIfOverrideNotPresent",
+                "removePackageOverrides_doesNothingIfOverrideNotPresent",
                 /*enabledChanges*/ImmutableSet.of(),
                 /*disabledChanges*/ ImmutableSet.of());
 
@@ -202,11 +203,11 @@ public class CompatChangesOverrideOnReleaseBuildTest extends CompatChangeGatingT
         assertThat(ctsChange.hasOverrides).isFalse();
     }
 
-    public void testClearOverrideWhenOverridePresent() throws Exception {
+    public void testRemovePackageOverridesWhenOverridePresent() throws Exception {
         installPackage("appcompat_preinstall_override_versioncode1_release.apk", false);
 
         runDeviceCompatTest(TEST_PKG, ".CompatChangesTest",
-                "clearOverride_overridePresentSuccess",
+                "removePackageOverrides_overridePresentSuccess",
                 /*enabledChanges*/ImmutableSet.of(),
                 /*disabledChanges*/ ImmutableSet.of());
 
