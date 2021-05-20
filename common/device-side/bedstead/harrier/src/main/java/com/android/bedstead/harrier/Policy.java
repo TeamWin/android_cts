@@ -20,6 +20,10 @@ import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeNone;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnDeviceOwnerUser;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnNonAffiliatedDeviceOwnerSecondaryUser;
+import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnParentOfCorporateOwnedProfileOwner;
+import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnParentOfProfileOwner;
+import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnProfileOwner;
+import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnSecondaryUserInDifferentProfileGroupToProfileOwner;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
@@ -31,6 +35,10 @@ import java.util.List;
 @IncludeNone
 @IncludeRunOnDeviceOwnerUser
 @IncludeRunOnNonAffiliatedDeviceOwnerSecondaryUser
+@IncludeRunOnProfileOwner
+@IncludeRunOnParentOfCorporateOwnedProfileOwner
+@IncludeRunOnSecondaryUserInDifferentProfileGroupToProfileOwner
+@IncludeRunOnParentOfProfileOwner
 public final class Policy {
 
     private Policy() {
@@ -44,6 +52,18 @@ public final class Policy {
     private static final IncludeRunOnNonAffiliatedDeviceOwnerSecondaryUser
             INCLUDE_RUN_ON_NON_AFFILIATED_DEVICE_OWNER_SECONDARY_USER =
             Policy.class.getAnnotation(IncludeRunOnNonAffiliatedDeviceOwnerSecondaryUser.class);
+    private static final IncludeRunOnProfileOwner
+            INCLUDE_RUN_ON_PROFILE_OWNER =
+            Policy.class.getAnnotation(IncludeRunOnProfileOwner.class);
+    private static final IncludeRunOnSecondaryUserInDifferentProfileGroupToProfileOwner
+            INCLUDE_RUN_ON_SECONDARY_USER_IN_DIFFERENT_PROFILE_GROUP_TO_PROFILE_OWNER =
+            Policy.class.getAnnotation(
+                    IncludeRunOnSecondaryUserInDifferentProfileGroupToProfileOwner.class);
+    private static final IncludeRunOnParentOfProfileOwner INCLUDE_RUN_ON_PARENT_OF_PROFILE_OWNER =
+            Policy.class.getAnnotation(IncludeRunOnParentOfProfileOwner.class);
+    private static final IncludeRunOnParentOfCorporateOwnedProfileOwner
+            INCLUDE_RUN_ON_PARENT_OF_CORPORATE_OWNED_PROFILE_OWNER =
+            Policy.class.getAnnotation(IncludeRunOnParentOfCorporateOwnedProfileOwner.class);
 
     /**
      * Get positive state annotations for the given policy.
@@ -53,8 +73,41 @@ public final class Policy {
     public static List<Annotation> positiveStates(EnterprisePolicy enterprisePolicy) {
         List<Annotation> annotations = new ArrayList<>();
 
-        annotations.add(INCLUDE_RUN_ON_DEVICE_OWNER_USER);
-        annotations.add(INCLUDE_RUN_ON_NON_AFFILIATED_DEVICE_OWNER_SECONDARY_USER);
+        switch (enterprisePolicy.deviceOwner()) {
+            case NO:
+                break;
+            case GLOBAL:
+                annotations.add(INCLUDE_RUN_ON_DEVICE_OWNER_USER);
+//                TODO(scottjonathan): Re-add when we can setup this state
+                annotations.add(INCLUDE_RUN_ON_NON_AFFILIATED_DEVICE_OWNER_SECONDARY_USER);
+                break;
+            case USER:
+                annotations.add(INCLUDE_RUN_ON_DEVICE_OWNER_USER);
+                break;
+            default:
+                throw new IllegalStateException(
+                        "Unknown policy control: " + enterprisePolicy.deviceOwner());
+        }
+
+        switch (enterprisePolicy.profileOwner()) {
+            case NO:
+                break;
+            case PARENT:
+                annotations.add(INCLUDE_RUN_ON_PROFILE_OWNER);
+                annotations.add(INCLUDE_RUN_ON_PARENT_OF_PROFILE_OWNER);
+                break;
+            case COPE_PARENT:
+                annotations.add(INCLUDE_RUN_ON_PROFILE_OWNER);
+                //                TODO(scottjonathan): Re-add when we can setup this state
+//                annotations.add(INCLUDE_RUN_ON_PARENT_OF_CORPORATE_OWNED_PROFILE_OWNER);
+                break;
+            case PROFILE:
+                annotations.add(INCLUDE_RUN_ON_PROFILE_OWNER);
+                break;
+            default:
+                throw new IllegalStateException(
+                        "Unknown policy control: " + enterprisePolicy.profileOwner());
+        }
 
         return annotations;
     }
@@ -67,7 +120,44 @@ public final class Policy {
     public static List<Annotation> negativeStates(EnterprisePolicy enterprisePolicy) {
         List<Annotation> annotations = new ArrayList<>();
 
-        annotations.add(INCLUDE_NONE_ANNOTATION);
+        switch (enterprisePolicy.deviceOwner()) {
+            case NO:
+                break;
+            case GLOBAL:
+                break;
+            case USER:
+                //                TODO(scottjonathan): Re-add when we can setup this state
+                annotations.add(INCLUDE_RUN_ON_NON_AFFILIATED_DEVICE_OWNER_SECONDARY_USER);
+                break;
+            default:
+                throw new IllegalStateException(
+                        "Unknown policy control: " + enterprisePolicy.deviceOwner());
+        }
+
+        switch (enterprisePolicy.profileOwner()) {
+            case NO:
+                break;
+            case PARENT:
+                annotations.add(
+                        INCLUDE_RUN_ON_SECONDARY_USER_IN_DIFFERENT_PROFILE_GROUP_TO_PROFILE_OWNER);
+                break;
+            case COPE_PARENT:
+                annotations.add(
+                        INCLUDE_RUN_ON_SECONDARY_USER_IN_DIFFERENT_PROFILE_GROUP_TO_PROFILE_OWNER);
+                annotations.add(
+                        INCLUDE_RUN_ON_PARENT_OF_PROFILE_OWNER);
+                break;
+            case PROFILE:
+                annotations.add(
+                        INCLUDE_RUN_ON_SECONDARY_USER_IN_DIFFERENT_PROFILE_GROUP_TO_PROFILE_OWNER);
+                //                TODO(scottjonathan): Re-add when we can setup this state
+//                annotations.add(
+//                        INCLUDE_RUN_ON_PARENT_OF_CORPORATE_OWNED_PROFILE_OWNER);
+                break;
+            default:
+                throw new IllegalStateException(
+                        "Unknown policy control: " + enterprisePolicy.profileOwner());
+        }
 
         return annotations;
     }
