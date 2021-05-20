@@ -16,6 +16,7 @@
 
 package android.content.pm.cts;
 
+import static android.content.pm.cts.PackageManagerShellCommandIncrementalTest.checkIncrementalDeliveryFeature;
 import static android.content.pm.cts.PackageManagerShellCommandIncrementalTest.isAppInstalled;
 import static android.content.pm.cts.PackageManagerShellCommandIncrementalTest.uninstallPackageSilently;
 import static android.content.pm.cts.PackageManagerShellCommandIncrementalTest.writeFullStream;
@@ -47,6 +48,7 @@ import com.android.incfs.install.PendingBlock;
 
 import org.hamcrest.Matcher;
 import org.hamcrest.MatcherAssert;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -75,6 +77,11 @@ public class ResourcesHardeningTest {
     private static final int RES_ARRAY = 0x7f051000;
     private static final int RES_STYLE = 0x7f061000;
     private static final int[] RES_STYLEABLE = {0x7f011000, 0x7f011001, 0x7f011002};
+
+    @Before
+    public void onBefore() throws Exception {
+        checkIncrementalDeliveryFeature();
+    }
 
     @Test
     public void checkGetIdentifier() throws Exception {
