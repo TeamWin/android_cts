@@ -19,15 +19,12 @@ package android.car.cts.app;
 import android.car.hardware.power.CarPowerManager;
 import android.car.hardware.power.CarPowerPolicy;
 import android.car.hardware.power.CarPowerPolicyFilter;
-import android.car.hardware.power.PowerComponent;
 import android.os.Bundle;
 import android.util.Log;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import java.io.PrintWriter;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -43,7 +40,9 @@ public final class PowerPolicyTestClient {
     private static final String TEST_CMD_ADD_POLICY_LISTENER = "addlistener";
     private static final String TEST_CMD_REMOVE_POLICY_LISTENER = "removelistener";
     private static final String TEST_CMD_DUMP_POLICY_LISTENER = "dumplistener";
-    private static final int MAX_THREAD_POOL_SIZE = 2;
+    private static final String TEST_CMD_WAIT_POLICY_LISTENERS = "waitlisteners";
+    private static final String TEST_CMD_RESET_POLICY_LISTENERS = "resetlisteners";
+    private static final int MAX_THREAD_POOL_SIZE = 1;
 
     private final HashMap<String, PowerPolicyListenerImpl> mListenerMap = new HashMap<>();
     private final Executor mExecutor = Executors.newFixedThreadPool(MAX_THREAD_POOL_SIZE);
@@ -65,12 +64,12 @@ public final class PowerPolicyTestClient {
         mResultLog.println();
     }
 
-    public void printlnResult(String msg) {
-        if (msg != null) {
-            mResultLog.println(msg);
+    public void printlnResult(@Nullable String msg) {
+        if (msg == null) {
+            mResultLog.println();
             return;
         }
-        mResultLog.println();
+        mResultLog.println(msg);
     }
 
     public void printfResult(String format, Object... args) {
@@ -89,14 +88,10 @@ public final class PowerPolicyTestClient {
             Log.d(TAG, "empty power test command");
             return cmd;
         }
+        Log.d(TAG, "parseCommand with: " + cmdStr);
 
         String[] tokens = cmdStr.split(",");
-        int paramCount = tokens.length;
-        if (paramCount != 1 && paramCount != 2) {
-            throw new IllegalArgumentException("invalid command syntax: " + cmdStr);
-        }
-
-        Log.d(TAG, "parseCommand with: " + cmdStr);
+        assertNumberOfArgs(tokens);
         switch (tokens[0]) {
             case TEST_CMD_SET_TEST:
                 cmd = new PowerPolicyTestCommand.SetTestCommand(this, tokens[1]);
@@ -115,6 +110,12 @@ public final class PowerPolicyTestClient {
                 break;
             case TEST_CMD_DUMP_POLICY_LISTENER:
                 cmd = new PowerPolicyTestCommand.DumpListenerCommand(this, tokens[1]);
+                break;
+            case TEST_CMD_WAIT_POLICY_LISTENERS:
+                cmd = new PowerPolicyTestCommand.WaitListenersCommand(this);
+                break;
+            case TEST_CMD_RESET_POLICY_LISTENERS:
+                cmd = new PowerPolicyTestCommand.ResetListenersCommand(this);
                 break;
             default:
                 throw new IllegalArgumentException("invalid power policy test command: "
@@ -148,11 +149,6 @@ public final class PowerPolicyTestClient {
     }
 
     public void registerPowerPolicyListener(String compName) throws Exception {
-        if (mListenerMap.size() == MAX_THREAD_POOL_SIZE) {
-            throw new IllegalArgumentException("exceed max number of listener: "
-                    + MAX_THREAD_POOL_SIZE);
-        }
-
         int compId = PowerComponentUtil.toPowerComponent(compName);
         if (compId == PowerComponentUtil.INVALID_POWER_COMPONENT) {
             throw new IllegalArgumentException("invalid power component: " + compName);
@@ -188,156 +184,33 @@ public final class PowerPolicyTestClient {
         return listener.getCurrentPolicy();
     }
 
-    public static class PowerComponentUtil {
-        private static final String POWER_COMPONENT_AUDIO = "AUDIO";
-        private static final String POWER_COMPONENT_MEDIA = "MEDIA";
-        private static final String POWER_COMPONENT_DISPLAY = "DISPLAY";
-        private static final String POWER_COMPONENT_BLUETOOTH = "BLUETOOTH";
-        private static final String POWER_COMPONENT_WIFI = "WIFI";
-        private static final String POWER_COMPONENT_CELLULAR = "CELLULAR";
-        private static final String POWER_COMPONENT_ETHERNET = "ETHERNET";
-        private static final String POWER_COMPONENT_PROJECTION = "PROJECTION";
-        private static final String POWER_COMPONENT_NFC = "NFC";
-        private static final String POWER_COMPONENT_INPUT = "INPUT";
-        private static final String POWER_COMPONENT_VOICE_INTERACTION = "VOICE_INTERACTION";
-        private static final String POWER_COMPONENT_VISUAL_INTERACTION = "VISUAL_INTERACTION";
-        private static final String POWER_COMPONENT_TRUSTED_DEVICE_DETECTION =
-                "TRUSTED_DEVICE_DETECTION";
-        private static final String POWER_COMPONENT_LOCATION = "LOCATION";
-        private static final String POWER_COMPONENT_MICROPHONE = "MICROPHONE";
-        private static final String POWER_COMPONENT_CPU = "CPU";
-
-        private static final int INVALID_POWER_COMPONENT = -1;
-
-        public static int toPowerComponent(@Nullable String component) {
-            if (component == null) {
-                return INVALID_POWER_COMPONENT;
-            }
-            switch (component) {
-                case POWER_COMPONENT_AUDIO:
-                    return PowerComponent.AUDIO;
-                case POWER_COMPONENT_MEDIA:
-                    return PowerComponent.MEDIA;
-                case POWER_COMPONENT_DISPLAY:
-                    return PowerComponent.DISPLAY;
-                case POWER_COMPONENT_BLUETOOTH:
-                    return PowerComponent.BLUETOOTH;
-                case POWER_COMPONENT_WIFI:
-                    return PowerComponent.WIFI;
-                case POWER_COMPONENT_CELLULAR:
-                    return PowerComponent.CELLULAR;
-                case POWER_COMPONENT_ETHERNET:
-                    return PowerComponent.ETHERNET;
-                case POWER_COMPONENT_PROJECTION:
-                    return PowerComponent.PROJECTION;
-                case POWER_COMPONENT_NFC:
-                    return PowerComponent.NFC;
-                case POWER_COMPONENT_INPUT:
-                    return PowerComponent.INPUT;
-                case POWER_COMPONENT_VOICE_INTERACTION:
-                    return PowerComponent.VOICE_INTERACTION;
-                case POWER_COMPONENT_VISUAL_INTERACTION:
-                    return PowerComponent.VISUAL_INTERACTION;
-                case POWER_COMPONENT_TRUSTED_DEVICE_DETECTION:
-                    return PowerComponent.TRUSTED_DEVICE_DETECTION;
-                case POWER_COMPONENT_LOCATION:
-                    return PowerComponent.LOCATION;
-                case POWER_COMPONENT_MICROPHONE:
-                    return PowerComponent.MICROPHONE;
-                case POWER_COMPONENT_CPU:
-                    return PowerComponent.CPU;
-                default:
-                    return INVALID_POWER_COMPONENT;
-            }
-        }
-        @NonNull
-        public static String componentToString(int component) {
-            switch (component) {
-                case PowerComponent.AUDIO:
-                    return POWER_COMPONENT_AUDIO;
-                case PowerComponent.MEDIA:
-                    return POWER_COMPONENT_MEDIA;
-                case PowerComponent.DISPLAY:
-                    return POWER_COMPONENT_DISPLAY;
-                case PowerComponent.BLUETOOTH:
-                    return POWER_COMPONENT_BLUETOOTH;
-                case PowerComponent.WIFI:
-                    return POWER_COMPONENT_WIFI;
-                case PowerComponent.CELLULAR:
-                    return POWER_COMPONENT_CELLULAR;
-                case PowerComponent.ETHERNET:
-                    return POWER_COMPONENT_ETHERNET;
-                case PowerComponent.PROJECTION:
-                    return POWER_COMPONENT_PROJECTION;
-                case PowerComponent.NFC:
-                    return POWER_COMPONENT_NFC;
-                case PowerComponent.INPUT:
-                    return POWER_COMPONENT_INPUT;
-                case PowerComponent.VOICE_INTERACTION:
-                    return POWER_COMPONENT_VOICE_INTERACTION;
-                case PowerComponent.VISUAL_INTERACTION:
-                    return POWER_COMPONENT_VISUAL_INTERACTION;
-                case PowerComponent.TRUSTED_DEVICE_DETECTION:
-                    return POWER_COMPONENT_TRUSTED_DEVICE_DETECTION;
-                case PowerComponent.LOCATION:
-                    return POWER_COMPONENT_LOCATION;
-                case PowerComponent.MICROPHONE:
-                    return POWER_COMPONENT_MICROPHONE;
-                case PowerComponent.CPU:
-                    return POWER_COMPONENT_CPU;
-                default:
-                    return "unknown component";
-            }
-        }
+    public void resetPowerPolicyListeners() {
+        mListenerMap.values().stream().forEach(l -> l.reset());
     }
 
-    public static class PowerPolicyListenerImpl implements CarPowerManager.CarPowerPolicyListener {
-        private final PowerPolicyTestClient mTestClient;
-        private final String mComponentName;
-        private CarPowerPolicy mCurrentPolicy;
+    public boolean arePowerPolicyListenersUpdated() {
+        return mListenerMap.values().stream().allMatch(l -> l.getCurrentPolicy() != null);
+    }
 
-        PowerPolicyListenerImpl(PowerPolicyTestClient testClient, String compName) {
-            mTestClient = testClient;
-            mComponentName = compName;
-            mCurrentPolicy = null;
+    private void assertNumberOfArgs(String[] tokens) {
+        if (tokens.length < 1) {
+            throw new IllegalArgumentException("expects at least one token");
         }
 
-        @Override
-        public void onPolicyChanged(@NonNull CarPowerPolicy policy) {
-            Log.d(TAG, "a new policy has been received by component: " + mComponentName);
-            mCurrentPolicy = policy;
-            mTestClient.printResultHeader("PowerPolicyListener " + mComponentName);
-            mTestClient.printlnResult(getPolicyString(policy));
+        int expectedParamCount = 1;
+        switch (tokens[0]) {
+            case TEST_CMD_SET_TEST:
+            case TEST_CMD_ADD_POLICY_LISTENER:
+            case TEST_CMD_REMOVE_POLICY_LISTENER:
+            case TEST_CMD_DUMP_POLICY_LISTENER:
+                expectedParamCount = 2;
+                break;
         }
 
-        @Nullable
-        public CarPowerPolicy getCurrentPolicy() {
-            return mCurrentPolicy;
-        }
-
-        public static String getPolicyString(CarPowerPolicy policy) {
-            String[] enables = Arrays.stream(policy.getEnabledComponents())
-                    .mapToObj(PowerComponentUtil::componentToString).toArray(String[]::new);
-            String[] disables = Arrays.stream(policy.getDisabledComponents())
-                    .mapToObj(PowerComponentUtil::componentToString).toArray(String[]::new);
-
-            StringBuilder policyStr = new StringBuilder();
-            policyStr.append(policy.getPolicyId()).append(" (enabledComponents: ");
-            if (enables.length == 0) {
-                policyStr.append("none");
-            } else {
-                policyStr.append(Arrays.toString(enables));
-            }
-
-            policyStr.append(" disabledComponents: ");
-            if (disables.length == 0) {
-                policyStr.append("none");
-            } else {
-                policyStr.append(Arrays.toString(disables));
-            }
-            policyStr.append(")");
-
-            return policyStr.toString();
+        if (expectedParamCount != tokens.length) {
+            String msg = String.format("%s expects %d params but received %d",
+                    tokens[0], expectedParamCount, tokens.length);
+            throw new IllegalArgumentException(msg);
         }
     }
 }

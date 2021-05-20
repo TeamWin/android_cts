@@ -16,64 +16,82 @@
 
 package android.car.cts.powerpolicy;
 
+import com.android.tradefed.log.LogUtil.CLog;
+
 import java.util.ArrayList;
 
 /**
- * TestResultTable consists of a list of TestResultEntry records
+ * TestResultTable consists of a list of RecordEntry records
  *
  * <p>Each record represents one entry line in the device data file,
  * {@code /storage/emulated/obb/PowerPolicyData.txt}, which records the power
  * state and policy behavior.
  */
 public final class TestResultTable {
-    private final ArrayList<TestResultEntry> mTestResults = new ArrayList<TestResultEntry>();
+    private final ArrayList<RecordEntry> mTestResults = new ArrayList<RecordEntry>();
 
     public int size() {
         return mTestResults.size();
     }
 
-    public TestResultEntry get(int i) throws IndexOutOfBoundsException {
+    public RecordEntry get(int i) throws IndexOutOfBoundsException {
         return mTestResults.get(i);
     }
 
-    public void add(TestResultEntry entry) {
+    public RecordEntry getLastEntry() {
+        if (mTestResults.isEmpty()) {
+            return null;
+        }
+        return mTestResults.get(mTestResults.size() - 1);
+    }
+
+    public void add(RecordEntry entry) {
         mTestResults.add(entry);
     }
 
-    public void add(String testcase, String action, String powerState, String data) {
-        add(new TestResultEntry(testcase, action, powerState, data));
+    public void add(String testcase, String action, String subject, String data)
+            throws Exception {
+        if (testcase == null || action == null || data == null) {
+            throw new IllegalArgumentException("testcase, action or data can not be null");
+        }
+
+        add(new RecordEntry(testcase, action, subject, data));
     }
 
-    static final class TestResultEntry {
+    @Override
+    public String toString() {
+        StringBuilder strBuilder = new StringBuilder();
+        mTestResults.forEach(l -> strBuilder.append(l).append('\n'));
+        return strBuilder.toString();
+    }
+
+    static final class RecordEntry {
         private final String mTestcase;
         private final String mAction;
-        private final String mPowerState;
+        private final String mSubject;
         private final String mData;
 
-        TestResultEntry(String testcase, String action, String powerState, String data) {
+        private RecordEntry(String testcase, String action, String subject, String data) {
             mTestcase = testcase;
             mAction = action;
-            mPowerState = powerState;
+            mSubject = subject;
             mData = data;
         }
 
         @Override
         public boolean equals(Object obj) {
-            TestResultEntry peerEntry;
-            if (!(obj instanceof TestResultEntry)) {
+            RecordEntry peerEntry;
+            if (!(obj instanceof RecordEntry)) {
                 return false;
             }
-            peerEntry = (TestResultEntry) obj;
-            if ((mTestcase != null && !mTestcase.equals(peerEntry.mTestcase))
-                    || (mAction != null && !mAction.equals(peerEntry.mAction))
-                    || (mPowerState != null && !mPowerState.equals(peerEntry.mPowerState))
-                    || (mData != null && !mData.equals(peerEntry.mData))) {
+            peerEntry = (RecordEntry) obj;
+            if ((mSubject == null && null != peerEntry.mSubject)
+                    || (mSubject != null && !mSubject.equals(peerEntry.mSubject))) {
                 return false;
             }
-            if ((mTestcase == null && null != peerEntry.mTestcase)
-                    || (mAction == null && null != peerEntry.mAction)
-                    || (mPowerState == null && null != peerEntry.mPowerState)
-                    || (mData == null && null != peerEntry.mData)) {
+            if (!mTestcase.equals(peerEntry.mTestcase)
+                    || !mAction.equals(peerEntry.mAction)
+                    || !mData.equals(peerEntry.mData)) {
                 return false;
             }
             return true;
@@ -81,11 +99,55 @@ public final class TestResultTable {
 
         @Override
         public int hashCode() {
-            int code = mTestcase != null ? mTestcase.hashCode() : 0;
-            code += mAction != null ? mAction.hashCode() : 0;
-            code += mPowerState != null ? mPowerState.hashCode() : 0;
-            code += mData != null ? mData.hashCode() : 0;
+            int code = mTestcase.hashCode() + mAction.hashCode() + mData.hashCode();
+            code += mSubject != null ? mSubject.hashCode() : 0;
             return code;
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder strBuilder = (new StringBuilder())
+                    .append(mTestcase).append(": ").append(mAction).append(": ");
+            if (mSubject != null) {
+                strBuilder.append(mSubject).append(": ");
+            }
+            return strBuilder.append(mData).toString();
+        }
+
+        public boolean equalsWithPowerPolicyData(RecordEntry peerEntry) {
+            PowerPolicyDef peerPolicy;
+            try {
+                peerPolicy = PowerPolicyDef.parse(/* policyDefStr= */ peerEntry.mData,
+                        /* hasPolicyId= */ true, /* offset= */ 0);
+            } catch (Exception e) {
+                CLog.wtf("failed to parse policy string: " + peerEntry.mData, e);
+                return false;
+            }
+            return equalsWithPowerPolicyData(peerEntry.mTestcase, peerEntry.mAction,
+                    peerEntry.mSubject, peerPolicy);
+        }
+
+        public boolean equalsWithPowerPolicyData(String testcase, String action,
+                String subject, PowerPolicyDef policy) {
+            if ((mSubject == null && null != subject)
+                    || (mSubject != null && !mSubject.equals(subject))
+                    || !mTestcase.equals(testcase)
+                    || !mAction.equals(action)) {
+                return false;
+            }
+
+            try {
+                PowerPolicyDef myPolicy = PowerPolicyDef.parse(/* policyDefStr= */ mData,
+                        /* hasPolicyId= */ true, /* offset= */ 0);
+                if (!myPolicy.equals(policy)) {
+                    return false;
+                }
+            } catch (Exception e) {
+                CLog.wtf("failed to parse policy string: " + mData, e);
+                return false;
+            }
+
+            return true;
         }
     }
 }
