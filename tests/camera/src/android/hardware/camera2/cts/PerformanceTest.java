@@ -321,6 +321,7 @@ public class PerformanceTest {
     private void testSingleCaptureForFormat(int[] formats, String formatDescription,
             boolean addPreviewDelay) throws Exception {
         double[] avgResultTimes = new double[mTestRule.getCameraIdsUnderTest().length];
+        double[] avgCaptureTimes = new double[mTestRule.getCameraIdsUnderTest().length];
 
         int counter = 0;
         for (String id : mTestRule.getCameraIdsUnderTest()) {
@@ -376,11 +377,12 @@ public class PerformanceTest {
                     SimpleImageListener[] imageListeners = new SimpleImageListener[formats.length];
                     Size[] imageSizes = new Size[formats.length];
                     for (int j = 0; j < formats.length; j++) {
+                        Size sizeBound = mTestRule.isPerfClassTest() ? new Size(1920, 1080) : null;
                         imageSizes[j] = CameraTestUtils.getSortedSizesForFormat(
                                 id,
                                 mTestRule.getCameraManager(),
                                 formats[j],
-                                /*bound*/null).get(0);
+                                sizeBound).get(0);
                         imageListeners[j] = new SimpleImageListener();
                     }
 
@@ -454,6 +456,7 @@ public class PerformanceTest {
                         ResultUnit.MS);
 
                 avgResultTimes[counter] = Stat.getAverage(getResultTimes);
+                avgCaptureTimes[counter] = Stat.getAverage(captureTimes);
             }
             finally {
                 CameraTestUtils.closeImageReaders(readers);
@@ -470,10 +473,19 @@ public class PerformanceTest {
             String streamName = appendFormatDescription("test_single_capture_average",
                     formatDescription);
             mReportLog = new DeviceReportLog(REPORT_LOG_NAME, streamName);
-            String message = appendFormatDescription(
-                    "camera_capture_result_average_latency_for_all_cameras", formatDescription);
-            mReportLog.setSummary(message, Stat.getAverage(avgResultTimes),
-                    ResultType.LOWER_BETTER, ResultUnit.MS);
+            // In performance measurement mode, capture the buffer latency rather than result
+            // latency.
+            if (mTestRule.isPerfMeasure()) {
+                String message = appendFormatDescription(
+                        "camera_capture_average_latency_for_all_cameras", formatDescription);
+                mReportLog.setSummary(message, Stat.getAverage(avgCaptureTimes),
+                        ResultType.LOWER_BETTER, ResultUnit.MS);
+            } else {
+                String message = appendFormatDescription(
+                        "camera_capture_result_average_latency_for_all_cameras", formatDescription);
+                mReportLog.setSummary(message, Stat.getAverage(avgResultTimes),
+                        ResultType.LOWER_BETTER, ResultUnit.MS);
+            }
             mReportLog.submit(mInstrumentation);
         }
     }
