@@ -659,6 +659,54 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
         }
     }
 
+    @Test
+    public void testRequestFocusOnWindowFocusChanged() throws Exception {
+        final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+        try (MockImeSession imeSession = MockImeSession.create(
+                instrumentation.getContext(),
+                instrumentation.getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+            final String marker = getTestMarker();
+            final AtomicReference<EditText> editTextRef = new AtomicReference<>();
+
+            // Launch test activity
+            TestActivity.startSync(activity -> {
+                final LinearLayout layout = new LinearLayout(activity);
+                layout.setOrientation(LinearLayout.VERTICAL);
+
+                final EditText editText = new EditText(activity);
+                editText.setPrivateImeOptions(marker);
+                editText.setHint("editText");
+
+                // Request focus when onWindowFocusChanged
+                final ViewTreeObserver observer = editText.getViewTreeObserver();
+                observer.addOnWindowFocusChangeListener(
+                        new ViewTreeObserver.OnWindowFocusChangeListener() {
+                            @Override
+                            public void onWindowFocusChanged(boolean hasFocus) {
+                                editText.requestFocus();
+                            }
+                        });
+                editTextRef.set(editText);
+                layout.addView(editText);
+                return layout;
+            });
+
+            // Emulate tap event
+            final EditText editText = editTextRef.get();
+            CtsTouchUtils.emulateTapOnViewCenter(instrumentation, null, editText);
+
+            // "onStartInput" and "showSoftInput" gets called for the EditText.
+            expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
+            expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()), TIMEOUT);
+
+            // No "hideSoftInput" happened
+            notExpectEvent(stream, event -> "hideSoftInput".equals(event.getEventName()),
+                    NOT_EXPECT_TIMEOUT);
+        }
+    }
+
     private static class ServiceSession implements ServiceConnection, AutoCloseable {
         private final Context mContext;
 
