@@ -24,7 +24,6 @@ import static org.junit.Assert.fail;
 
 import android.platform.test.annotations.Presubmit;
 
-import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
@@ -43,7 +42,6 @@ import java.util.stream.Collectors;
  */
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class PreCreateUsersHostTest extends CarHostJUnit4TestCase {
-    private static final int DEFAULT_TIMEOUT_SEC = 20;
     private static int sNumberCreateadUsers;
 
     /**
@@ -108,7 +106,7 @@ public final class PreCreateUsersHostTest extends CarHostJUnit4TestCase {
         assertAppNotInstalledForUser(APP_PKG, preCreatedUserId);
 
         if (afterReboot) {
-            restartSystemWithOnePreCreatedUserOrGuest(isGuest);
+            restartSystem();
 
             // Checks again
             assertAppInstalledForUser(APP_PKG, initialUserId);
@@ -174,11 +172,10 @@ public final class PreCreateUsersHostTest extends CarHostJUnit4TestCase {
             removeUser(referenceUserId);
         }
 
-        int initialUserId = getCurrentUserId();
         int preCreatedUserId = preCreateUser(isGuest);
 
         if (afterReboot) {
-            restartSystemWithOnePreCreatedUserOrGuest(isGuest);
+            restartSystem();
         }
 
         convertPreCreatedUser(isGuest, preCreatedUserId);
@@ -261,14 +258,6 @@ public final class PreCreateUsersHostTest extends CarHostJUnit4TestCase {
         }
     }
 
-    private void setPreCreatedUsersProperties(int value) throws DeviceNotAvailableException {
-        getDevice().setProperty("android.car.number_pre_created_users", Integer.toString(value));
-    }
-
-    private void setPreCreatedGuestsProperties(int value) throws DeviceNotAvailableException {
-        getDevice().setProperty("android.car.number_pre_created_guests", Integer.toString(value));
-    }
-
     private void convertPreCreatedUser(boolean isGuest, int expectedId) throws Exception {
         assertHasPreCreatedUser(expectedId);
         String type = isGuest ? "guest" : "user";
@@ -284,23 +273,7 @@ public final class PreCreateUsersHostTest extends CarHostJUnit4TestCase {
                 + "id " + expectedId);
     }
 
-    private void restartSystemWithOnePreCreatedUserOrGuest(boolean isGuest) throws Exception {
-        List<Integer> ids = getPreCreatedUsers();
-        CLog.d("Pre-created users before boot: %s", ids);
-        assertWithMessage("Should have just 1 pre-created user before boot").that(ids).hasSize(1);
-        assertUserInitialized(ids.get(0));
-
-        // CarUserService creates / remove pre-created users on boot to keep the pool constant,
-        // based on system properties. We need to tune then so the pre-created users set by this
-        // test are not changed when the system restarts.
-        if (isGuest) {
-            setPreCreatedGuestsProperties(1);
-            setPreCreatedUsersProperties(0);
-        } else {
-            setPreCreatedUsersProperties(1);
-            setPreCreatedGuestsProperties(0);
-        }
-
+    private void restartSystem() throws Exception {
         // Restart the system to make sure PackageManager preserves the installed bit
         restartSystemServer();
     }
