@@ -50,11 +50,11 @@ public class TranslationContextTest {
     public void testContext_validContext() {
         final TranslationContext context =
                 new TranslationContext.Builder(sourceSpec, targetSpec)
-                .setTranslationFlags(TranslationContext.FLAG_DICTIONARY_DESCRIPTION)
+                .setTranslationFlags(TranslationContext.FLAG_DEFINITIONS)
                 .build();
 
         assertThat(context.getTranslationFlags())
-                .isEqualTo(TranslationContext.FLAG_DICTIONARY_DESCRIPTION);
+                .isEqualTo(TranslationContext.FLAG_DEFINITIONS);
 
         assertThat(context.getSourceSpec().getLocale()).isEqualTo(ULocale.ENGLISH);
         assertThat(context.getSourceSpec().getDataFormat())

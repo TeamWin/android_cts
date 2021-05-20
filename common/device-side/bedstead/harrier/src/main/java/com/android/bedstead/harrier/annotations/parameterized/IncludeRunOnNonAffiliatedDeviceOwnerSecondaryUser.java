@@ -34,10 +34,7 @@ import java.lang.annotation.Target;
 @Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @ParameterizedAnnotation
-// TODO(scottjonathan): We can't set the device owner when we're already running on secondary user
-//  so we need to have a different @RequireRunOn annotation for a secondary user when a DO is
-//  already set
 @RequireRunOnSecondaryUser
-@EnsureHasDeviceOwner(onUser = SYSTEM_USER)
+@EnsureHasDeviceOwner(onUser = SYSTEM_USER, isPrimary = true)
 public @interface IncludeRunOnNonAffiliatedDeviceOwnerSecondaryUser {
 }

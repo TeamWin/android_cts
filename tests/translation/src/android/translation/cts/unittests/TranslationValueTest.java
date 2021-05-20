@@ -22,6 +22,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.testng.Assert.assertThrows;
 
+import android.os.Bundle;
 import android.view.translation.TranslationRequestValue;
 import android.view.translation.TranslationResponseValue;
 
@@ -29,6 +30,9 @@ import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.ArrayList;
+import java.util.Arrays;
 
 @RunWith(AndroidJUnit4.class)
 public class TranslationValueTest {
@@ -60,14 +64,32 @@ public class TranslationValueTest {
 
     @Test
     public void testTranslationResponseValue_validDictionary() {
+        final Bundle definitions = new Bundle();
+        definitions.putStringArrayList("noun",
+                new ArrayList<>(Arrays.asList("def1", "def2")));
+        definitions.putStringArrayList("verb",
+                new ArrayList<>(Arrays.asList("def3", "def4")));
+        final Bundle extras = new Bundle();
+        extras.putBundle(TranslationResponseValue.EXTRA_DEFINITIONS, definitions);
+
         final TranslationResponseValue value = new TranslationResponseValue.Builder(STATUS_SUCCESS)
-                .setDictionaryDescription("definition")
+                .setExtras(extras)
                 .build();
 
         assertThat(value.getStatusCode()).isEqualTo(STATUS_SUCCESS);
         assertThat(value.getText()).isNull();
-        assertThat(value.getDictionaryDescription()).isEqualTo("definition");
         assertThat(value.getTransliteration()).isNull();
+        assertThat(value.getExtras()).isNotNull();
+
+        final Bundle e = value.getExtras();
+        assertThat(e).isNotNull();
+        final Bundle defs = e.getBundle(TranslationResponseValue.EXTRA_DEFINITIONS);
+        assertThat(defs).isNotNull();
+        assertThat(defs.keySet()).containsExactly("noun", "verb");
+        assertThat(defs.getStringArrayList("noun"))
+                .containsExactly("def1", "def2");
+        assertThat(defs.getStringArrayList("verb"))
+                .containsExactly("def3", "def4");
     }
 
     @Test
@@ -78,7 +100,7 @@ public class TranslationValueTest {
 
         assertThat(value.getStatusCode()).isEqualTo(STATUS_SUCCESS);
         assertThat(value.getText()).isNull();
-        assertThat(value.getDictionaryDescription()).isNull();
+        assertThat(value.getExtras()).isEqualTo(Bundle.EMPTY);
         assertThat(value.getTransliteration()).isEqualTo("pronunciation");
     }
 }
