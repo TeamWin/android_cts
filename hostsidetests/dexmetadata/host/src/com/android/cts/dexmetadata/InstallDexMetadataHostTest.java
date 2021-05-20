@@ -230,26 +230,114 @@ public class InstallDexMetadataHostTest extends BaseHostJUnit4Test {
         assertTrue(runDeviceTests(TEST_PACKAGE, TEST_CLASS, "testDmForBaseButNoSplit"));
     }
 
-    static class ProfileReader {
-      byte[] data;
+    static class ProfileReaderV10 {
+        byte[] data;
 
-      ProfileReader(byte[] bytes) throws Exception {
-        ByteBuffer bb = ByteBuffer.wrap(bytes);
+        ProfileReaderV10(byte[] bytes) throws Exception {
+            ByteBuffer bb = ByteBuffer.wrap(bytes);
 
-        // Read header.
-        bb.order(ByteOrder.LITTLE_ENDIAN);
-        assertEquals(0x006f7270 /* LE "pro\0" */, bb.getInt());
-        assertEquals(0x00303130 /* LE "010\0" */, bb.getInt());
-        bb.get(); // Skip dex file count.
-        int uncompressed_size = bb.getInt();
-        int compressed_size = bb.getInt();
+            // Read header.
+            bb.order(ByteOrder.LITTLE_ENDIAN);
+            assertEquals(0x006f7270 /* LE "pro\0" */, bb.getInt());
+            assertEquals(0x00303130 /* LE "010\0" */, bb.getInt());
+            bb.get(); // Skip dex file count.
+            int uncompressed_size = bb.getInt();
+            int compressed_size = bb.getInt();
 
-        // Decompress profile.
-        Inflater inflater = new Inflater();
-        inflater.setInput(bb.array(), bb.arrayOffset() + bb.position(), bb.remaining());
-        data = new byte[uncompressed_size];
-        assertEquals(uncompressed_size, inflater.inflate(data));
-      }
+            // Decompress profile.
+            Inflater inflater = new Inflater();
+            inflater.setInput(bb.array(), bb.arrayOffset() + bb.position(), bb.remaining());
+            data = new byte[uncompressed_size];
+            assertEquals(uncompressed_size, inflater.inflate(data));
+        }
+    }
+
+    static class ProfileReaderV13 {
+        byte[] dexFilesData;
+        byte[] extraDescriptorsData;
+        byte[] classesData;
+        byte[] methodsData;
+
+        ProfileReaderV13(byte[] bytes) throws Exception {
+            ByteBuffer bb = ByteBuffer.wrap(bytes);
+
+            // Read header.
+            bb.order(ByteOrder.LITTLE_ENDIAN);
+            assertEquals(0x006f7270 /* LE "pro\0" */, bb.getInt());
+            assertEquals(0x00333130 /* LE "013\0" */, bb.getInt());
+            int section_count = bb.getInt();
+            assertFalse(section_count == 0);
+
+            // Mandatory dex files section.
+            assertEquals(/*kDexFiles*/ 0, bb.getInt());
+            dexFilesData = readSection(bb);
+
+            // Read optional sections. Assume no more than one occurrence of each known section.
+            for (int i = 1; i != section_count; ++i) {
+                int sectionType = bb.getInt();
+                switch (sectionType) {
+                    case 1:  // kExtraDescriptors
+                        assertTrue(extraDescriptorsData == null);
+                        extraDescriptorsData = readSection(bb);
+                        break;
+                    case 2:  // kClasses
+                        assertTrue(classesData == null);
+                        classesData = readSection(bb);
+                        break;
+                    case 3:  // kMethods
+                        assertTrue(methodsData == null);
+                        methodsData = readSection(bb);
+                        break;
+                    default:
+                        // Unknown section. Skip it. New versions of ART are allowed
+                        // to add sections that shall be ignored by old versions.
+                        skipSection(bb);
+                        break;
+                }
+            }
+        }
+
+        private byte[] readSection(ByteBuffer bb) throws Exception {
+            int fileOffset = bb.getInt();
+            int fileSize = bb.getInt();
+            int inflatedSize = bb.getInt();
+            if (inflatedSize != 0) {
+                // Decompress section.
+                byte[] data = new byte[inflatedSize];
+                Inflater inflater = new Inflater();
+                inflater.setInput(bb.array(), fileOffset, fileSize);
+                assertEquals(inflatedSize, inflater.inflate(data));
+                return data;
+            } else {
+                // Copy uncompressed data.
+                byte[] data = new byte[fileSize];
+                System.arraycopy(bb.array(), fileOffset, data, 0, fileSize);
+                return data;
+            }
+        }
+
+        private void skipSection(ByteBuffer bb) {
+            bb.getInt();  // fileOffset
+            bb.getInt();  // fileSize
+            bb.getInt();  // inflatedSize
+        }
+    }
+
+    private static int getProfileVersion(byte[] bytes) {
+        assertEquals(bytes[0], (byte) 'p');
+        assertEquals(bytes[1], (byte) 'r');
+        assertEquals(bytes[2], (byte) 'o');
+        assertEquals(bytes[3], (byte) '\0');
+        assertEquals(bytes[7], (byte) '\0');
+        int version = 0;
+        for (int pos = 4; pos != 7; ++pos) {
+            byte digit = bytes[pos];
+            if (digit < (byte) '0' || digit > (byte) '9') {
+                throw new Error("Non-numeric profile version");
+            }
+            version = version * 10 + (((int) digit) - '0');
+        }
+        return version;
     }
 
     @Test
@@ -265,11 +353,28 @@ public class InstallDexMetadataHostTest extends BaseHostJUnit4Test {
         assertTrue(result.trim().isEmpty());
 
         // Extract the profile bytes from the dex metadata and from the profile snapshot.
-        byte[] snapshotProfileBytes = new ProfileReader(extractProfileSnapshotFromDevice()).data;
-        byte[] expectedProfileBytes =
-                new ProfileReader(extractProfileFromDexMetadata(mDmBaseFile)).data;
+        byte[] rawDeviceProfile = extractProfileSnapshotFromDevice();
+        int deviceProfileVersion = getProfileVersion(rawDeviceProfile);
+        switch (deviceProfileVersion) {
+            case 10: {
+                byte[] snapshotProfileBytes = new ProfileReaderV10(rawDeviceProfile).data;
+                byte[] expectedProfileBytes =
+                        new ProfileReaderV10(extractProfileFromDexMetadata(mDmBaseFile)).data;
 
-        assertArrayEquals(expectedProfileBytes, snapshotProfileBytes);
+                assertArrayEquals(expectedProfileBytes, snapshotProfileBytes);
+                break;
+            }
+            case 13: {
+                ProfileReaderV13 reader = new ProfileReaderV13(rawDeviceProfile);
+                // TODO: Support newer profiles implemented for b/148067697.
+                // Currently the .dm file is still version 10, so we cannot compare against it.
+                System.out.println("TODO: Check profile version 13.");
+                break;
+            }
+            default: {
+                throw new Error("Unsupported profile version: " + deviceProfileVersion);
+            }
+        }
     }
 
     /**
