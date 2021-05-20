@@ -74,7 +74,8 @@ class DiscreteAppopsTest {
 
     private val instrumentation get() = InstrumentationRegistry.getInstrumentation()
     private val context get() = instrumentation.context
-    private val uid = context.packageManager.getPackageUid(PACKAGE_NAME, 0)
+    private val uid by lazy { context.packageManager.getPackageUid(PACKAGE_NAME, 0) }
+
     private val uiAutomation get() = instrumentation.uiAutomation
     private lateinit var foregroundControlService: IAppOpsForegroundControlService
     private lateinit var serviceConnection: ServiceConnection
