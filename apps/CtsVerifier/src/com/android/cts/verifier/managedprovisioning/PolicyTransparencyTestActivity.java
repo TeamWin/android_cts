@@ -138,6 +138,7 @@ public class PolicyTransparencyTestActivity extends PassFailButtons.Activity imp
         R.string.password_quality_complex
     };
 
+    private boolean mForceCurrentUserDpm;
     private String mSettingsIntentAction;
     private String mTestId;
     private String mTitle;
@@ -149,6 +150,9 @@ public class PolicyTransparencyTestActivity extends PassFailButtons.Activity imp
         setContentView(R.layout.policy_transparency_test);
         setPassFailButtonClickListeners();
 
+        mForceCurrentUserDpm =
+                getIntent().getBooleanExtra(
+                        CommandReceiverActivity.EXTRA_USE_CURRENT_USER_DPM, false);
         mTitle = getIntent().getStringExtra(EXTRA_TITLE);
         mTestId = getIntent().getStringExtra(EXTRA_TEST_ID);
         mSettingsIntentAction = getIntent().getStringExtra(EXTRA_SETTINGS_INTENT_ACTION);
@@ -238,8 +242,11 @@ public class PolicyTransparencyTestActivity extends PassFailButtons.Activity imp
         if (TEST_CHECK_USER_RESTRICTION.equals(mTest)) {
             final String userRestriction = getIntent().getStringExtra(
                     CommandReceiverActivity.EXTRA_USER_RESTRICTION);
-            intent = CommandReceiverActivity.createSetCurrentUserRestrictionIntent(
-                    userRestriction, isChecked);
+            intent = mForceCurrentUserDpm
+                    ? CommandReceiverActivity.createSetCurrentUserRestrictionIntent(
+                            userRestriction, isChecked)
+                    : CommandReceiverActivity.createSetDeviceOwnerUserRestrictionIntent(
+                            userRestriction, isChecked);
         } else {
             intent = new Intent(CommandReceiverActivity.ACTION_EXECUTE_COMMAND);
             final PolicyTestItem testItem = POLICY_TEST_ITEMS.get(mTest);

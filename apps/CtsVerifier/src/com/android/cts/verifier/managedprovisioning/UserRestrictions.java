@@ -221,13 +221,20 @@ public class UserRestrictions {
 
     public static Intent getUserRestrictionTestIntent(Context context, String restriction) {
         final UserRestrictionItem item = USER_RESTRICTION_ITEMS.get(restriction);
-        return new Intent(PolicyTransparencyTestActivity.ACTION_SHOW_POLICY_TRANSPARENCY_TEST)
-                .putExtra(PolicyTransparencyTestActivity.EXTRA_TEST,
-                        PolicyTransparencyTestActivity.TEST_CHECK_USER_RESTRICTION)
-                .putExtra(CommandReceiverActivity.EXTRA_USER_RESTRICTION, restriction)
-                .putExtra(PolicyTransparencyTestActivity.EXTRA_TITLE, context.getString(item.label))
-                .putExtra(PolicyTransparencyTestActivity.EXTRA_SETTINGS_INTENT_ACTION,
-                        item.intentAction);
+        final Intent intent =
+                new Intent(PolicyTransparencyTestActivity.ACTION_SHOW_POLICY_TRANSPARENCY_TEST)
+                        .putExtra(PolicyTransparencyTestActivity.EXTRA_TEST,
+                                PolicyTransparencyTestActivity.TEST_CHECK_USER_RESTRICTION)
+                        .putExtra(CommandReceiverActivity.EXTRA_USER_RESTRICTION, restriction)
+                        .putExtra(PolicyTransparencyTestActivity.EXTRA_TITLE,
+                                context.getString(item.label))
+                        .putExtra(PolicyTransparencyTestActivity.EXTRA_SETTINGS_INTENT_ACTION,
+                                item.intentAction);
+        // For DISALLOW_FACTORY_RESET, set on the device owner, not on the current user.
+        if (!UserManager.DISALLOW_FACTORY_RESET.equals(restriction)) {
+            intent.putExtra(CommandReceiverActivity.EXTRA_USE_CURRENT_USER_DPM, true);
+        }
+        return intent;
     }
 
     public static boolean isRestrictionValid(Context context, String restriction) {
