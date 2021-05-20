@@ -17,6 +17,7 @@
 package android.location.cts.fine;
 
 import static android.Manifest.permission.WRITE_SECURE_SETTINGS;
+import static android.location.LocationDeviceConfig.IGNORE_SETTINGS_ALLOWLIST;
 import static android.location.LocationManager.EXTRA_PROVIDER_ENABLED;
 import static android.location.LocationManager.EXTRA_PROVIDER_NAME;
 import static android.location.LocationManager.FUSED_PROVIDER;
@@ -28,14 +29,12 @@ import static android.location.LocationRequest.PASSIVE_INTERVAL;
 import static android.os.PowerManager.LOCATION_MODE_ALL_DISABLED_WHEN_SCREEN_OFF;
 import static android.os.PowerManager.LOCATION_MODE_GPS_DISABLED_WHEN_SCREEN_OFF;
 import static android.os.PowerManager.LOCATION_MODE_THROTTLE_REQUESTS_WHEN_SCREEN_OFF;
-import static android.provider.Settings.Global.LOCATION_IGNORE_SETTINGS_PACKAGE_WHITELIST;
 
 import static androidx.test.ext.truth.content.IntentSubject.assertThat;
 import static androidx.test.ext.truth.location.LocationSubject.assertThat;
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
 import static com.android.compatibility.common.util.LocationUtils.createLocation;
-import static com.android.compatibility.common.util.SettingsUtils.NAMESPACE_GLOBAL;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -89,7 +88,6 @@ import com.android.compatibility.common.util.DeviceConfigStateHelper;
 import com.android.compatibility.common.util.LocationUtils;
 import com.android.compatibility.common.util.ScreenUtils;
 import com.android.compatibility.common.util.ScreenUtils.ScreenResetter;
-import com.android.compatibility.common.util.SettingsUtils.SettingResetter;
 
 import org.junit.After;
 import org.junit.Before;
@@ -798,10 +796,13 @@ public class LocationManagerFineTest {
     public void testRequestLocationUpdates_LocationSettingsIgnored() throws Exception {
         try (LocationListenerCapture capture = new LocationListenerCapture(mContext);
              ScreenResetter ignored1 = new ScreenResetter();
-             SettingResetter ignored2 = new SettingResetter(NAMESPACE_GLOBAL,
-                     LOCATION_IGNORE_SETTINGS_PACKAGE_WHITELIST, mContext.getPackageName());
+             DeviceConfigStateHelper locationDeviceConfigStateHelper =
+                     new DeviceConfigStateHelper(DeviceConfig.NAMESPACE_LOCATION);
              DeviceConfigStateHelper batterySaverDeviceConfigStateHelper =
                      new DeviceConfigStateHelper(DeviceConfig.NAMESPACE_BATTERY_SAVER)) {
+
+            locationDeviceConfigStateHelper.set(IGNORE_SETTINGS_ALLOWLIST,
+                    mContext.getPackageName());
 
             getInstrumentation().getUiAutomation()
                     .adoptShellPermissionIdentity(WRITE_SECURE_SETTINGS);
