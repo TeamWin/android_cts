@@ -62,17 +62,18 @@ public class DelegateTestUtils {
     }
 
     /**
-     * A receiver for listening for network logs.
+     * A receiver for listening for network and security logs.
      *
      * To use this the sBatchCountDown must be assigned before generating logs.
      * The receiver will ignore events until sBatchCountDown is assigned.
      */
-    public static class NetworkLogsReceiver extends DelegatedAdminReceiver {
+    public static class DelegatedLogsReceiver extends DelegatedAdminReceiver {
 
         private static final long TIMEOUT_MIN = 3;
 
         static CountDownLatch sBatchCountDown;
         static ArrayList<NetworkEvent> sNetworkEvents = new ArrayList<>();
+        static ArrayList<SecurityEvent> sSecurityEvents = new ArrayList<>();
 
         @Override
         public void onNetworkLogsAvailable(Context context, Intent intent, long batchToken,
@@ -93,15 +94,37 @@ public class DelegateTestUtils {
             }
         }
 
+        @Override
+        public void onSecurityLogsAvailable(Context context, Intent intent) {
+            if (sBatchCountDown == null) {
+                // If the latch is not set then nothing will be using the receiver to examine
+                // the logs. Leave the logs unread.
+                return;
+            }
+
+            DevicePolicyManager dpm = context.getSystemService(DevicePolicyManager.class);
+            final List<SecurityEvent> events = dpm.retrieveSecurityLogs(null);
+            if (events == null || events.size() == 0) {
+                fail("Failed to retrieve security logs");
+            } else {
+                sSecurityEvents.addAll(events);
+                sBatchCountDown.countDown();
+            }
+        }
+
         public static void waitForBroadcast() throws InterruptedException {
             sBatchCountDown.await(TIMEOUT_MIN, TimeUnit.MINUTES);
             if (sBatchCountDown.getCount() > 0) {
-                fail("Did not get DelegateAdminReceiver#onNetworkLogsAvailable callback");
+                fail("Did not get DelegateAdminReceiver callback");
             }
         }
 
         public static List<NetworkEvent> getNetworkEvents() {
             return sNetworkEvents;
+        }
+
+        public static List<SecurityEvent> getSecurityEvents() {
+            return sSecurityEvents;
         }
     }
 
@@ -139,23 +162,6 @@ public class DelegateTestUtils {
         final KeyStore ks = KeyStore.getInstance("AndroidKeyStore");
         ks.load(null);
         ks.deleteEntry(keyAlias);
-    }
-
-
-    /**
-     * Fetches the available security events
-     */
-    public static List<SecurityEvent> getSecurityEvents(DevicePolicyManager dpm)
-            throws Exception {
-        List<SecurityEvent> events = null;
-        // Retry once after seeping for 1 second, in case "dpm force-security-logs" hasn't taken
-        // effect just yet.
-        for (int i = 0; i < 5 && events == null; i++) {
-            events = dpm.retrieveSecurityLogs(null);
-            if (events == null) Thread.sleep(1000);
-        }
-
-        return events;
     }
 
     /**

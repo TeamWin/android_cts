@@ -32,11 +32,18 @@ import java.lang.annotation.Target;
  * the correct state for the method. If using {@link DeviceState}, you can use
  * {@link DeviceState#profileOwner()} to interact with the profile owner.
  */
-@Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE})
+@Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface EnsureHasProfileOwner {
     /** Which user type the work profile should be attached to. */
     DeviceState.UserType onUser() default CURRENT_USER;
+
+    /**
+     * Whether this DPC should be returned by calls to {@link DeviceState#dpc()}.
+     *
+     * <p>Only one device policy controller per test should be marked as primary.
+     */
+    boolean isPrimary() default false;
 }
 // TODO(scottjonathan): Is there a feature or something that we need to check to make sure PO is
 //  supported?

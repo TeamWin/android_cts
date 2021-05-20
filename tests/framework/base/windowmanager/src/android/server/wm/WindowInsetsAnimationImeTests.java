@@ -19,7 +19,7 @@ package android.server.wm;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.graphics.Insets.NONE;
 import static android.view.WindowInsets.Type.ime;
-import static android.view.WindowInsets.Type.navigationBars;
+import static android.view.WindowInsets.Type.statusBars;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
@@ -76,7 +76,7 @@ public class WindowInsetsAnimationImeTests extends WindowInsetsAnimationTestBase
     @Test
     public void testAnimationCallbacks_overlapping_opposite() {
         initActivity(false /* useFloating */);
-        assumeTrue(hasWindowInsets(mRootView, navigationBars()));
+        assumeTrue(hasWindowInsets(mRootView, statusBars()));
 
         WindowInsets before = mActivity.mLastWindowInsets;
 
@@ -89,7 +89,7 @@ public class WindowInsetsAnimationImeTests extends WindowInsetsAnimationTestBase
         mActivity.mView.setWindowInsetsAnimationCallback(callback);
 
         getInstrumentation().runOnMainSync(
-                () -> mRootView.getWindowInsetsController().hide(navigationBars()));
+                () -> mRootView.getWindowInsetsController().hide(statusBars()));
         getInstrumentation().runOnMainSync(
                 () -> mRootView.getWindowInsetsController().show(ime()));
 
@@ -104,15 +104,15 @@ public class WindowInsetsAnimationImeTests extends WindowInsetsAnimationTestBase
         InOrder inOrderBar = inOrder(callback, mActivity.mListener);
         InOrder inOrderIme = inOrder(callback, mActivity.mListener);
 
-        inOrderBar.verify(callback).onPrepare(eq(callback.navBarAnim));
+        inOrderBar.verify(callback).onPrepare(eq(callback.statusBarAnim));
 
         inOrderIme.verify(mActivity.mListener).onApplyWindowInsets(any(), argThat(
-                argument -> NONE.equals(argument.getInsets(navigationBars()))
+                argument -> NONE.equals(argument.getInsets(statusBars()))
                         && NONE.equals(argument.getInsets(ime()))));
 
-        inOrderBar.verify(callback).onStart(eq(callback.navBarAnim), argThat(
+        inOrderBar.verify(callback).onStart(eq(callback.statusBarAnim), argThat(
                 argument -> argument.getLowerBound().equals(NONE)
-                        && argument.getUpperBound().equals(before.getInsets(navigationBars()))));
+                        && argument.getUpperBound().equals(before.getInsets(statusBars()))));
 
         inOrderIme.verify(callback).onPrepare(eq(callback.imeAnim));
         inOrderIme.verify(mActivity.mListener).onApplyWindowInsets(
@@ -122,17 +122,17 @@ public class WindowInsetsAnimationImeTests extends WindowInsetsAnimationTestBase
                 argument -> argument.getLowerBound().equals(NONE)
                         && !argument.getUpperBound().equals(NONE)));
 
-        inOrderBar.verify(callback).onEnd(eq(callback.navBarAnim));
+        inOrderBar.verify(callback).onEnd(eq(callback.statusBarAnim));
         inOrderIme.verify(callback).onEnd(eq(callback.imeAnim));
 
-        assertAnimationSteps(callback.navAnimSteps, false /* showAnimation */);
+        assertAnimationSteps(callback.statusAnimSteps, false /* showAnimation */);
         assertAnimationSteps(callback.imeAnimSteps, true /* showAnimation */, ime());
 
-        assertEquals(before.getInsets(navigationBars()),
-                callback.navAnimSteps.get(0).insets.getInsets(navigationBars()));
-        assertEquals(after.getInsets(navigationBars()),
-                callback.navAnimSteps.get(callback.navAnimSteps.size() - 1).insets
-                        .getInsets(navigationBars()));
+        assertEquals(before.getInsets(statusBars()),
+                callback.statusAnimSteps.get(0).insets.getInsets(statusBars()));
+        assertEquals(after.getInsets(statusBars()),
+                callback.statusAnimSteps.get(callback.statusAnimSteps.size() - 1).insets
+                        .getInsets(statusBars()));
 
         assertEquals(before.getInsets(ime()),
                 callback.imeAnimSteps.get(0).insets.getInsets(ime()));

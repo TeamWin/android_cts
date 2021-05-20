@@ -34,6 +34,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @ParameterizedAnnotation
 @RequireRunOnSecondaryUser
-@EnsureHasWorkProfile(forUser = DeviceState.UserType.PRIMARY_USER)
+@EnsureHasWorkProfile(forUser = DeviceState.UserType.PRIMARY_USER, dpcIsPrimary = true)
 public @interface IncludeRunOnSecondaryUserInDifferentProfileGroupToProfileOwner {
 }

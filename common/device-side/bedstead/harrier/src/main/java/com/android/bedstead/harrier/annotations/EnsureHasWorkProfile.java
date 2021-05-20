@@ -39,9 +39,10 @@ import java.lang.annotation.Target;
  * a work profile. Otherwise, you can use {@link DeviceState} to ensure that the device enters
  * the correct state for the method.
  */
-@Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE})
+@Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @EnsureHasProfileAnnotation("android.os.usertype.profile.MANAGED")
+@RequireFeature("android.software.managed_users")
 @EnsureHasNoDeviceOwner // TODO: This should only apply on Android R+
 public @interface EnsureHasWorkProfile {
     /** Which user type the work profile should be attached to. */
@@ -49,4 +50,12 @@ public @interface EnsureHasWorkProfile {
 
     /** Whether the instrumented test app should be installed in the work profile. */
     OptionalBoolean installInstrumentedApp() default TRUE;
+
+    /**
+     * Whether the profile owner's DPC should be returned by calls to {@link DeviceState#dpc()}.
+     *
+     * <p>Only one device policy controller per test should be marked as primary.
+     */
+    // TODO(scottjonathan): Enforce dpcIsPrimary
+    boolean dpcIsPrimary() default false;
 }

@@ -30,7 +30,7 @@ import java.lang.annotation.Target;
  * given user. Otherwise, you can use {@link DeviceState} to ensure that the test is
  * not run when the sdk version is not correct.
  */
-@Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE})
+@Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface RequireSdkVersion {
     int min() default 1;

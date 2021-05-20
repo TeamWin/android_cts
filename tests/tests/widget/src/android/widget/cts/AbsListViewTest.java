@@ -225,6 +225,7 @@ public class AbsListViewTest {
     @LargeTest
     @Test
     public void testSetOnScrollListener() throws Throwable {
+        mListView.setOverScrollMode(View.OVER_SCROLL_NEVER);
         AbsListView.OnScrollListener mockScrollListener =
                 mock(AbsListView.OnScrollListener.class);
 
@@ -528,7 +529,7 @@ public class AbsListViewTest {
 
         mListView.setRecyclerListener(mockRecyclerListener);
         List<View> views = new ArrayList<>();
-        mListView.reclaimViews(views);
+        mActivityRule.runOnUiThread(() -> mListView.reclaimViews(views));
 
         assertTrue(views.size() > 0);
 
