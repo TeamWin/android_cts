@@ -1011,6 +1011,28 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
     }
 
     /**
+     * Tests that tracefs files(/sys/kernel/tracing and /d/tracing) are correctly labeled.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testTracefsTypeViolators() throws Exception {
+        assertSepolicyTests("TestTracefsTypeViolations", "/sepolicy_tests",
+                PropertyUtil.isVendorApiLevelNewerThan(mDevice, 30) /* includeVendorSepolicy */);
+    }
+
+    /**
+     * Tests that debugfs files(from /sys/kernel/debug) are correctly labeled.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testDebugfsTypeViolators() throws Exception {
+        assertSepolicyTests("TestDebugfsTypeViolations", "/sepolicy_tests",
+                PropertyUtil.isVendorApiLevelNewerThan(mDevice, 30) /* includeVendorSepolicy */);
+    }
+
+    /**
      * Tests that all domains with entrypoints on /system have the coredomain
      * attribute, and that all domains with entrypoints on /vendor do not have the
      * coredomain attribute.
