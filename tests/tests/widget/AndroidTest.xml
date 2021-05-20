@@ -34,6 +34,11 @@
 
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
         <!--
+            To fail-fast in case test-ime setup somehow failed.  Consider increasing the
+            sleep time below if the following commands fail. See b/188094681 for detais.
+        -->
+        <option name="throw-if-cmd-fail" value="true" />
+        <!--
             Workaround for the possible downtime between [adb install <IME.apk>]
             and [adb shell ime <IME ID>].  See b/188105339 for detais.
         -->
