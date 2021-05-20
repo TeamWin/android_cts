@@ -70,7 +70,9 @@ public abstract class BaseUserRestrictionsTest extends BaseDeviceAdminTest {
             UserManager.DISALLOW_DATA_ROAMING,
             UserManager.DISALLOW_SET_USER_ICON,
             UserManager.DISALLOW_BLUETOOTH,
-            UserManager.DISALLOW_BLUETOOTH_SHARING
+            UserManager.DISALLOW_BLUETOOTH_SHARING,
+            UserManager.DISALLOW_CAMERA_TOGGLE,
+            UserManager.DISALLOW_MICROPHONE_TOGGLE,
     };
 
     /**
