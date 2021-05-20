@@ -118,12 +118,6 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
     }
 
     @Test
-    public void testLockTask_policyExemptApps() throws Exception {
-        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".LockTaskTest",
-                "testSetLockTaskPackagesIgnoresExemptApps", mDeviceOwnerUserId);
-    }
-
-    @Test
     public void testDelegatedCertInstallerDeviceIdAttestation() throws Exception {
         setUpDelegatedCertInstallerAndRunTests(() ->
                 runDeviceTestsAsUser("com.android.cts.certinstaller",
