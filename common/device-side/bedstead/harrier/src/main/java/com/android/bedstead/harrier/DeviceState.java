@@ -85,6 +85,7 @@ import org.junit.runners.model.Statement;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -156,7 +157,7 @@ public final class DeviceState implements TestRule {
 
                 PermissionContextImpl permissionContext = null;
 
-                for (Annotation annotation : description.getAnnotations()) {
+                for (Annotation annotation : getAnnotations(description)) {
                     Class<? extends Annotation> annotationType = annotation.annotationType();
 
                     EnsureHasNoProfileAnnotation ensureHasNoProfileAnnotation =
@@ -373,7 +374,10 @@ public final class DeviceState implements TestRule {
 
         // Otherwise we should build a new collection by recursively gathering annotations
         // if we find any which don't work without the runner we should error and fail the test
-        List<Annotation> annotations = new ArrayList<>(description.getAnnotations());
+        List<Annotation> annotations =
+                new ArrayList<>(Arrays.asList(description.getTestClass().getAnnotations()));
+        annotations.addAll(description.getAnnotations());
+
         checkAnnotations(annotations);
 
         BedsteadJUnit4.resolveRecursiveAnnotations(annotations,
