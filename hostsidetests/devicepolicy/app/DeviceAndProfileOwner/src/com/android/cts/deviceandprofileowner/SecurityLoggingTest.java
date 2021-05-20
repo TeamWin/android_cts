@@ -73,6 +73,7 @@ import android.os.UserManager;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
 import android.security.keystore.KeyProtection;
+import android.support.test.uiautomator.UiDevice;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -220,7 +221,11 @@ public class SecurityLoggingTest extends BaseDeviceAdminTest {
      * side actions and by {@link #testGenerateLogs()} are there.
      */
     public void testVerifyGeneratedLogs() throws Exception {
+        UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
+                .executeShellCommand("dpm force-security-logs");
+
         final List<SecurityEvent> events = getEvents();
+
         verifyAutomaticEventsPresent(events);
         verifyKeystoreEventsPresent(events);
         verifyKeyChainEventsPresent(events);
