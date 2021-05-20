@@ -18,6 +18,7 @@ package com.android.bedstead.nene.devicepolicy;
 
 import android.content.ComponentName;
 
+import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.packages.PackageReference;
@@ -31,10 +32,12 @@ import java.util.Objects;
  * A reference to a Profile Owner.
  */
 public final class ProfileOwner extends DevicePolicyController {
-    ProfileOwner(UserReference user,
+
+    ProfileOwner(TestApis testApis,
+            UserReference user,
             PackageReference pkg,
             ComponentName componentName) {
-        super(user, pkg, componentName);
+        super(testApis, user, pkg, componentName);
     }
 
     @Override
