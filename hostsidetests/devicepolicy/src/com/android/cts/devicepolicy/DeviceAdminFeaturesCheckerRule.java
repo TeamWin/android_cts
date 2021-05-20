@@ -67,10 +67,22 @@ public final class DeviceAdminFeaturesCheckerRule implements TestRule {
 
                 String testName = description.getDisplayName();
 
-                if (description.getAnnotation(TemporaryIgnoreOnHeadlessSystemUserMode.class) != null
+                TemporaryIgnoreOnHeadlessSystemUserMode temporarilyIgnoredAnnotation = description
+                        .getAnnotation(TemporaryIgnoreOnHeadlessSystemUserMode.class);
+                if (temporarilyIgnoredAnnotation != null
                         && BaseDevicePolicyTest.isHeadlessSystemUserMode(testDevice)) {
                     throw new AssumptionViolatedException(
-                            "TEMPORARILY skipping " + testName + " on headless system user mode");
+                            "TEMPORARILY skipping " + testName + " on headless system user mode "
+                                    + "(reason: " + temporarilyIgnoredAnnotation.reason() + ")");
+                }
+
+                IgnoreOnHeadlessSystemUserMode ignoredAnnotation = description
+                        .getAnnotation(IgnoreOnHeadlessSystemUserMode.class);
+                if (ignoredAnnotation != null
+                        && BaseDevicePolicyTest.isHeadlessSystemUserMode(testDevice)) {
+                    throw new AssumptionViolatedException(
+                            "Skipping " + testName + " on headless system user mode (reason: "
+                                    + ignoredAnnotation.reason() + ")");
                 }
 
                 List<String> requiredFeatures = new ArrayList<>();
@@ -199,14 +211,20 @@ public final class DeviceAdminFeaturesCheckerRule implements TestRule {
     /**
      * TODO(b/132260693): STOPSHIP - temporary annotation used on tests that haven't been fixed to
      * run on headless system user yet
-     *
-     * <p><b>NOTE:</b> if a test shouldn't run on headless system user mode in the long term, we'll
-     * need a separate {@code IgnoreOnHeadlessSystemUserMode} annotation
      */
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ElementType.METHOD})
     public static @interface TemporaryIgnoreOnHeadlessSystemUserMode {
         String bugId();
+        String reason();
+    }
+
+    /**
+     * Annotation used on tests that cannot run on devices that use headless system user mode.
+     */
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target({ElementType.METHOD})
+    public static @interface IgnoreOnHeadlessSystemUserMode {
         String reason();
     }
 }
