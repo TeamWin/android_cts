@@ -247,7 +247,7 @@ public final class DeviceState implements TestRule {
                         continue;
                     }
 
-                    if (annotationType.equals(EnsureHasProfileOwner.class)) {
+                    if (annotation instanceof EnsureHasProfileOwner) {
                         EnsureHasProfileOwner ensureHasProfileOwnerAnnotation =
                                 (EnsureHasProfileOwner) annotation;
                         ensureHasProfileOwner(ensureHasProfileOwnerAnnotation.onUser(),
@@ -850,13 +850,13 @@ public final class DeviceState implements TestRule {
             mOriginalDeviceOwner = null;
         }
 
-        for (Map.Entry<UserReference, DevicePolicyController> profileOwner :
-                mProfileOwners.entrySet()) {
+        for (Map.Entry<UserReference, DevicePolicyController> originalProfileOwner :
+                mChangedProfileOwners.entrySet()) {
 
             ProfileOwner currentProfileOwner =
-                    sTestApis.devicePolicy().getProfileOwner(profileOwner.getKey());
+                    sTestApis.devicePolicy().getProfileOwner(originalProfileOwner.getKey());
 
-            if (Objects.equal(currentProfileOwner, profileOwner.getValue())) {
+            if (Objects.equal(currentProfileOwner, originalProfileOwner.getValue())) {
                 continue; // No need to restore
             }
 
@@ -864,11 +864,12 @@ public final class DeviceState implements TestRule {
                 currentProfileOwner.remove();
             }
 
-            if (profileOwner.getValue() != null) {
-                sTestApis.devicePolicy().setProfileOwner(profileOwner.getKey(),
-                        profileOwner.getValue().componentName());
+            if (originalProfileOwner.getValue() != null) {
+                sTestApis.devicePolicy().setProfileOwner(originalProfileOwner.getKey(),
+                        originalProfileOwner.getValue().componentName());
             }
         }
+        mChangedProfileOwners.clear();
 
         for (UserReference user : mCreatedUsers) {
             user.remove();

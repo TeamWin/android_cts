@@ -169,4 +169,48 @@ public final class Policy {
 
         return annotations;
     }
+
+    /**
+     * Get state annotations where the policy cannot be set for the given policy.
+     */
+    public static List<Annotation> cannotSetPolicyStates(EnterprisePolicy enterprisePolicy) {
+        List<Annotation> annotations = new ArrayList<>();
+
+        // TODO(scottjonathan): Always include a state without a dpc
+
+        switch (enterprisePolicy.deviceOwner()) {
+            case NO:
+                annotations.add(INCLUDE_RUN_ON_DEVICE_OWNER_USER);
+                break;
+            case GLOBAL:
+                break;
+            case USER:
+                break;
+            default:
+                throw new IllegalStateException(
+                        "Unknown policy control: " + enterprisePolicy.deviceOwner());
+        }
+
+        switch (enterprisePolicy.profileOwner()) {
+            case NO:
+                annotations.add(INCLUDE_RUN_ON_PROFILE_OWNER);
+                break;
+            case PARENT:
+                break;
+            case COPE_PARENT:
+                break;
+            case PROFILE:
+                break;
+            default:
+                throw new IllegalStateException(
+                        "Unknown policy control: " + enterprisePolicy.profileOwner());
+        }
+
+        if (annotations.isEmpty()) {
+            // Don't run the original test unparameterized
+            annotations.add(INCLUDE_NONE_ANNOTATION);
+        }
+
+        return annotations;
+    }
 }
