@@ -16,6 +16,7 @@
 
 package com.android.tests.stagedinstall;
 
+import static com.android.cts.install.lib.InstallUtils.assertStatusFailure;
 import static com.android.cts.install.lib.InstallUtils.assertStatusSuccess;
 import static com.android.cts.install.lib.InstallUtils.getPackageInstaller;
 import static com.android.cts.shim.lib.ShimPackage.DIFFERENT_APEX_PACKAGE_NAME;
@@ -1140,11 +1141,7 @@ public class StagedInstallTest {
      */
     @Test
     public void testApexTargetingOldDevSdkFailsVerification() throws Exception {
-        int sessionId = stageSingleApk(Apex2SdkTargetP).assertSuccessful().getSessionId();
-        PackageInstaller.SessionInfo sessionInfo = waitForBroadcast(sessionId);
-        assertThat(sessionInfo).isStagedSessionFailed();
-        assertThat(sessionInfo.getStagedSessionErrorMessage())
-                .contains("Failed to parse APEX package");
+        stageSingleApk(Apex2SdkTargetP).assertFailure();
     }
 
     /**
@@ -1396,6 +1393,11 @@ public class StagedInstallTest {
 
         public StageSessionResult assertSuccessful() {
             assertStatusSuccess(result);
+            return this;
+        }
+
+        public StageSessionResult assertFailure() {
+            assertStatusFailure(result);
             return this;
         }
     }
