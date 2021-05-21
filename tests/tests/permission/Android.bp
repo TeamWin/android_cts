@@ -46,6 +46,7 @@ android_test {
         // TODO(b/175251166): remove once Android migrates to JUnit 4.12,
         // which provides assertThrows
         "testng",
+        "bluetooth-test-util-lib",
     ],
     jni_libs: [
         "libctspermission_jni",
