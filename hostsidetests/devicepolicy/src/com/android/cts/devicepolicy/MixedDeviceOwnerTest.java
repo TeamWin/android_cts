@@ -43,7 +43,7 @@ import java.util.Map;
  * Set of tests for device owner use cases that also apply to profile owners.
  * Tests that should be run identically in both cases are added in DeviceAndProfileOwnerTest.
  */
-public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
+public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
 
     private static final String DELEGATION_NETWORK_LOGGING = "delegation-network-logging";
     private static final String LOG_TAG_DEVICE_OWNER = "device-owner";
@@ -115,18 +115,6 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
         switchToUser(userId);
         setUserAsAffiliatedUserToPrimary(userId);
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".LockTaskTest", userId);
-    }
-
-    @Test
-    public void testIsLockTaskPermitted_includesPolicyExemptApps() throws Exception {
-        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".LockTaskTest",
-                "testIsLockTaskPermittedIncludesPolicyExemptApps", mDeviceOwnerUserId);
-    }
-
-    @Test
-    public void testLockTask_policyExemptApps() throws Exception {
-        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".LockTaskTest",
-                "testSetLockTaskPackagesIgnoresExemptApps", mDeviceOwnerUserId);
     }
 
     @Test

@@ -129,6 +129,8 @@ public class ViewUnbufferedTest {
         mMaxReceivedCountPerFrame = 0;
         PollingCheck.waitFor(mActivity::hasWindowFocus);
         mView = mActivity.findViewById(R.id.test_view);
+        // Make sure all window animations are completed.
+        mAutomation.syncInputTransactions(true /* waitForAnimations */);
     }
 
     @After

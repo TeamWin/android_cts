@@ -16,14 +16,19 @@
 
 package android.devicepolicy.cts;
 
-import static com.google.common.truth.Truth.assertThat;
+import static com.android.bedstead.nene.permissions.Permissions.MANAGE_DEVICE_ADMINS;
 
+import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
+
+import static org.junit.Assume.assumeFalse;
 import static org.testng.Assert.assertThrows;
 
 import android.app.admin.DevicePolicyManager;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.NegativePolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PositivePolicyTest;
@@ -35,6 +40,8 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.Set;
 
 @RunWith(BedsteadJUnit4.class)
 public class LockTaskTest {
@@ -62,6 +69,47 @@ public class LockTaskTest {
         try {
             assertThat(sDeviceState.dpc().devicePolicyManager().getLockTaskPackages()).asList()
                     .containsExactly(PACKAGE_NAME);
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(originalLockTaskPackages);
+        }
+    }
+
+    @Test
+    @Postsubmit(reason = "New test")
+    // TODO(scottjonathan): This omits the metrics test
+    @PositivePolicyTest(policy = LockTaskPackages.class)
+    public void setLockTaskPackages_empty_lockTaskPackagesIsSet() {
+        String[] originalLockTaskPackages =
+                sDeviceState.dpc().devicePolicyManager().getLockTaskPackages();
+
+        sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(new String[]{});
+
+        try {
+            assertThat(sDeviceState.dpc().devicePolicyManager().getLockTaskPackages()).asList()
+                    .isEmpty();
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(originalLockTaskPackages);
+        }
+    }
+
+    @Test
+    @Postsubmit(reason = "New test")
+    // TODO(scottjonathan): This omits the metrics test
+    @PositivePolicyTest(policy = LockTaskPackages.class)
+    @EnsureHasPermission(MANAGE_DEVICE_ADMINS) // Used for getPolicyExemptApps
+    public void setLockTaskPackages_includesPolicyExemptApp_lockTaskPackagesIsSet() {
+        Set<String> policyExemptApps = mDevicePolicyManager.getPolicyExemptApps();
+        assumeFalse("OEM does not define any policy-exempt apps",
+                policyExemptApps.isEmpty());
+        String[] originalLockTaskPackages =
+                sDeviceState.dpc().devicePolicyManager().getLockTaskPackages();
+        String policyExemptApp = policyExemptApps.iterator().next();
+
+        sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(new String[]{policyExemptApp});
+
+        try {
+            assertThat(sDeviceState.dpc().devicePolicyManager().getLockTaskPackages()).asList()
+                    .containsExactly(policyExemptApp);
         } finally {
             sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(originalLockTaskPackages);
         }
@@ -121,6 +169,30 @@ public class LockTaskTest {
 
         try {
             assertThat(mDevicePolicyManager.isLockTaskPermitted(PACKAGE_NAME)).isFalse();
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(originalLockTaskPackages);
+        }
+    }
+
+    @Test
+    @Postsubmit(reason = "New test")
+    @PositivePolicyTest(policy = LockTaskPackages.class)
+    @EnsureHasPermission(MANAGE_DEVICE_ADMINS) // Used for getPolicyExemptApps
+    public void isLockTaskPermitted_includesPolicyExemptApps() {
+        Set<String> policyExemptApps = mDevicePolicyManager.getPolicyExemptApps();
+        // TODO(b/188035301): Add a unit test which ensures this actually gets tested
+        assumeFalse("OEM does not define any policy-exempt apps",
+                policyExemptApps.isEmpty());
+        String[] originalLockTaskPackages =
+                sDeviceState.dpc().devicePolicyManager().getLockTaskPackages();
+
+        try {
+            sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(new String[]{});
+
+            for (String app : policyExemptApps) {
+                assertWithMessage("isLockTaskPermitted(%s)", app)
+                        .that(mDevicePolicyManager.isLockTaskPermitted(app)).isTrue();
+            }
         } finally {
             sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(originalLockTaskPackages);
         }
