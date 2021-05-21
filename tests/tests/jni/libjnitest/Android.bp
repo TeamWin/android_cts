@@ -33,11 +33,11 @@ cc_test_library {
         "helper.c",
         "register.c",
     ],
+    header_libs: ["libnativehelper_header_only"],
     static_libs: ["libbase_ndk"],
     shared_libs: [
         "libdl",
         "liblog",
-        "libnativehelper_compat_libc++",
     ],
     sdk_version: "current",
     stl: "c++_static",
