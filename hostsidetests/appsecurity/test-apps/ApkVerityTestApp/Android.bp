@@ -42,6 +42,7 @@ android_test_helper_app {
             "cts",
         ],
     },
+    v4_signature: true,
 }
 
 android_test_helper_app {
