@@ -25,6 +25,7 @@ import static android.appenumeration.cts.Constants.ACTION_GET_NAMES_FOR_UIDS;
 import static android.appenumeration.cts.Constants.ACTION_GET_NAME_FOR_UID;
 import static android.appenumeration.cts.Constants.ACTION_GET_PACKAGES_FOR_UID;
 import static android.appenumeration.cts.Constants.ACTION_GET_PACKAGE_INFO;
+import static android.appenumeration.cts.Constants.ACTION_GET_SHAREDLIBRARY_DEPENDENT_PACKAGES;
 import static android.appenumeration.cts.Constants.ACTION_GET_SYNCADAPTER_PACKAGES_FOR_AUTHORITY;
 import static android.appenumeration.cts.Constants.ACTION_GET_SYNCADAPTER_TYPES;
 import static android.appenumeration.cts.Constants.ACTION_HAS_SIGNING_CERTIFICATE;
@@ -117,6 +118,7 @@ import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.hasItemInArray;
 import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -177,6 +179,9 @@ public class AppEnumerationTests {
     private static boolean sGlobalFeatureEnabled;
 
     private static PackageManager sPm;
+
+    // The shared library for getting dependent packages
+    private static final String TEST_SHARED_LIB_NAME = "android.test.runner";
 
     @Rule
     public TestName name = new TestName();
@@ -1000,6 +1005,28 @@ public class AppEnumerationTests {
                 this::getInstalledAppWidgetProviders);
     }
 
+    @Test
+    public void queriesNothing_cannotSeeSharedLibraryDependentPackages() throws Exception {
+        assertNotVisible(QUERIES_NOTHING, TARGET_NO_API, this::getSharedLibraryDependentPackages);
+        assertNotVisible(QUERIES_NOTHING, TARGET_FILTERS, this::getSharedLibraryDependentPackages);
+        assertNotVisible(QUERIES_NOTHING, TARGET_SHARED_USER,
+                this::getSharedLibraryDependentPackages);
+
+    }
+
+    @Test
+    public void queriesPackage_canSeeSharedLibraryDependentPackages() throws Exception {
+        assertVisible(QUERIES_PACKAGE, TARGET_NO_API, this::getSharedLibraryDependentPackages);
+        assertVisible(QUERIES_PACKAGE, TARGET_SHARED_USER, this::getSharedLibraryDependentPackages);
+    }
+
+    @Test
+    public void queriesNothingSharedUser_canSeeSharedUserInSharedLibraryDependentPackages()
+            throws Exception {
+        assertVisible(QUERIES_NOTHING_SHARED_USER, TARGET_SHARED_USER,
+                this::getSharedLibraryDependentPackages);
+    }
+
     private void assertNotVisible(String sourcePackageName, String targetPackageName)
             throws Exception {
         if (!sGlobalFeatureEnabled) return;
@@ -1063,6 +1090,8 @@ public class AppEnumerationTests {
             ThrowingFunction<String, String[]> commandMethod) throws Exception {
         if (!sGlobalFeatureEnabled) return;
         final String[] packageNames = commandMethod.apply(sourcePackageName);
+        assertThat("The list of package names should not be null",
+                packageNames, notNullValue());
         assertThat(sourcePackageName + " should be able to see " + targetPackageName,
                 packageNames, hasItemInArray(targetPackageName));
     }
@@ -1071,6 +1100,8 @@ public class AppEnumerationTests {
             ThrowingFunction<String, String[]> commandMethod) throws Exception {
         if (!sGlobalFeatureEnabled) return;
         final String[] packageNames = commandMethod.apply(sourcePackageName);
+        assertThat("The list of package names should not be null",
+                packageNames, notNullValue());
         assertThat(sourcePackageName + " should not be able to see " + targetPackageName,
                 packageNames, not(hasItemInArray(targetPackageName)));
     }
@@ -1288,6 +1319,13 @@ public class AppEnumerationTests {
         final Bundle response = sendCommandBlocking(sourcePackageName, /* targetPackageName */ null,
                 extraData, ACTION_LAUNCHER_APPS_IS_ACTIVITY_ENABLED);
         return response.getBoolean(Intent.EXTRA_RETURN_RESULT);
+    }
+
+    private String[] getSharedLibraryDependentPackages(String sourcePackageName) throws Exception {
+        final Bundle extraData = new Bundle();
+        final Bundle response = sendCommandBlocking(sourcePackageName, TEST_SHARED_LIB_NAME,
+                extraData, ACTION_GET_SHAREDLIBRARY_DEPENDENT_PACKAGES);
+        return response.getStringArray(Intent.EXTRA_PACKAGES);
     }
 
     interface Result {
