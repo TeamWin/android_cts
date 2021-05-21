@@ -462,6 +462,7 @@ public class WindowUntrustedTouchTest {
     /** Activity windows */
 
     @Test
+    @FlakyTest(bugId = 186608789)
     public void testWhenOneActivityWindowBelowThreshold_blocksTouch()
             throws Throwable {
         addActivityOverlay(APP_A, /* opacity */ .5f);
@@ -492,6 +493,7 @@ public class WindowUntrustedTouchTest {
     }
 
     @Test
+    @FlakyTest(bugId = 186608789)
     public void testWhenOneActivityWindowWithMinPositiveOpacity_blocksTouch()
             throws Throwable {
         addActivityOverlay(APP_A, /* opacity */ MIN_POSITIVE_OPACITY);
@@ -502,6 +504,7 @@ public class WindowUntrustedTouchTest {
     }
 
     @Test
+    @FlakyTest(bugId = 186608789)
     public void testWhenOneActivityWindowWithSmallOpacity_blocksTouch()
             throws Throwable {
         addActivityOverlay(APP_A, /* opacity */ .01f);
@@ -544,6 +547,7 @@ public class WindowUntrustedTouchTest {
     }
 
     @Test
+    @FlakyTest(bugId = 188904558)
     public void testWhenOneActivityWindowAndOneSelfCustomToastWindow_blocksTouch()
             throws Throwable {
         // Toast has to be before otherwise it would be blocked from background
@@ -556,6 +560,7 @@ public class WindowUntrustedTouchTest {
     }
 
     @Test
+    @FlakyTest(bugId = 188904558)
     public void testWhenOneActivityWindowAndOneSelfSawWindow_blocksTouch()
             throws Throwable {
         addActivityOverlay(APP_A, /* opacity */ .5f);
