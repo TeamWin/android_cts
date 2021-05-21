@@ -840,6 +840,19 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     }
 
     @Test
+    public void testPipFromTaskWithMultipleActivitiesAndFinishOriginalTask() {
+        // Try to enter picture-in-picture from an activity that finished itself and ensure
+        // pinned task is removed when the original task vanishes
+        launchActivity(LAUNCH_ENTER_PIP_ACTIVITY,
+                extraString(EXTRA_FINISH_SELF_ON_RESUME, "true"));
+
+        waitForEnterPip(PIP_ACTIVITY);
+        waitForPinnedStackRemoved();
+
+        assertPinnedStackDoesNotExist();
+    }
+
+    @Test
     public void testPipFromTaskWithMultipleActivitiesAndRemoveOriginalTask() {
         // Try to enter picture-in-picture from an activity that has more than one activity in the
         // task and ensure pinned task is removed when the original task vanishes
