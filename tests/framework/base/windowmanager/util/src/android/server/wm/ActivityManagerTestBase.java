@@ -118,6 +118,7 @@ import android.app.ActivityOptions;
 import android.app.ActivityTaskManager;
 import android.app.Instrumentation;
 import android.app.KeyguardManager;
+import android.app.WindowConfiguration;
 import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -156,6 +157,7 @@ import android.view.WindowManager;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.test.ext.junit.rules.ActivityScenarioRule;
 
 import com.android.compatibility.common.util.AppOpsUtils;
 import com.android.compatibility.common.util.SystemUtil;
@@ -2164,6 +2166,13 @@ public abstract class ActivityManagerTestBase {
 
     protected LaunchActivityBuilder getLaunchActivityBuilder() {
         return new LaunchActivityBuilder(mWmState);
+    }
+
+    public static <T extends Activity>
+    ActivityScenarioRule<T> createFullscreenActivityScenarioRule(Class<T> clazz) {
+        final ActivityOptions options = ActivityOptions.makeBasic();
+        options.setLaunchWindowingMode(WindowConfiguration.WINDOWING_MODE_FULLSCREEN);
+        return new ActivityScenarioRule<>(clazz, options.toBundle());
     }
 
     protected static class LaunchActivityBuilder implements LaunchProxy {
