@@ -16,7 +16,7 @@
 
 package com.android.bedstead.harrier.annotations.enterprise;
 
-import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.meta.RequiresBedsteadJUnit4;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -24,13 +24,20 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Mark that a test requires that there is no device owner on the device.
+ * Mark a test as testing the states where a policy is not allowed to be applied.
  *
- * <p>Your test configuration may be configured so that this test is only run on a device which has
- * no device owner. Otherwise, you can use {@link DeviceState} to ensure that the device enters
- * the correct state for the method.
+ * <p>An example is running with a device owner for a policy only applicable to profile owners.
+ *
+ * <p>This will generate parameterized runs for all matching states.
  */
-@Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
+@Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface EnsureHasNoDeviceOwner {
+@RequiresBedsteadJUnit4
+public @interface CannotSetPolicyTest {
+    /**
+     * The policy being tested.
+     *
+     * <p>This is used to calculate which states are required to be tested.
+     */
+    Class<?> policy();
 }

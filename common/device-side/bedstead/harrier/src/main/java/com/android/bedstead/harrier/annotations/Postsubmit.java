@@ -33,7 +33,7 @@ import java.lang.annotation.Target;
  * <p>It can also be used for tests which don't meet the requirements to be part of multi-user
  * presubmits.
  */
-@Target(ElementType.METHOD)
+@Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Postsubmit {
     String reason();

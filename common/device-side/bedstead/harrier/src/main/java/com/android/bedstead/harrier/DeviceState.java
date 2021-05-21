@@ -85,6 +85,7 @@ import org.junit.runners.model.Statement;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -156,7 +157,7 @@ public final class DeviceState implements TestRule {
 
                 PermissionContextImpl permissionContext = null;
 
-                for (Annotation annotation : description.getAnnotations()) {
+                for (Annotation annotation : getAnnotations(description)) {
                     Class<? extends Annotation> annotationType = annotation.annotationType();
 
                     EnsureHasNoProfileAnnotation ensureHasNoProfileAnnotation =
@@ -246,7 +247,7 @@ public final class DeviceState implements TestRule {
                         continue;
                     }
 
-                    if (annotationType.equals(EnsureHasProfileOwner.class)) {
+                    if (annotation instanceof EnsureHasProfileOwner) {
                         EnsureHasProfileOwner ensureHasProfileOwnerAnnotation =
                                 (EnsureHasProfileOwner) annotation;
                         ensureHasProfileOwner(ensureHasProfileOwnerAnnotation.onUser(),
@@ -373,7 +374,10 @@ public final class DeviceState implements TestRule {
 
         // Otherwise we should build a new collection by recursively gathering annotations
         // if we find any which don't work without the runner we should error and fail the test
-        List<Annotation> annotations = new ArrayList<>(description.getAnnotations());
+        List<Annotation> annotations =
+                new ArrayList<>(Arrays.asList(description.getTestClass().getAnnotations()));
+        annotations.addAll(description.getAnnotations());
+
         checkAnnotations(annotations);
 
         BedsteadJUnit4.resolveRecursiveAnnotations(annotations,
@@ -846,13 +850,13 @@ public final class DeviceState implements TestRule {
             mOriginalDeviceOwner = null;
         }
 
-        for (Map.Entry<UserReference, DevicePolicyController> profileOwner :
-                mProfileOwners.entrySet()) {
+        for (Map.Entry<UserReference, DevicePolicyController> originalProfileOwner :
+                mChangedProfileOwners.entrySet()) {
 
             ProfileOwner currentProfileOwner =
-                    sTestApis.devicePolicy().getProfileOwner(profileOwner.getKey());
+                    sTestApis.devicePolicy().getProfileOwner(originalProfileOwner.getKey());
 
-            if (Objects.equal(currentProfileOwner, profileOwner.getValue())) {
+            if (Objects.equal(currentProfileOwner, originalProfileOwner.getValue())) {
                 continue; // No need to restore
             }
 
@@ -860,11 +864,12 @@ public final class DeviceState implements TestRule {
                 currentProfileOwner.remove();
             }
 
-            if (profileOwner.getValue() != null) {
-                sTestApis.devicePolicy().setProfileOwner(profileOwner.getKey(),
-                        profileOwner.getValue().componentName());
+            if (originalProfileOwner.getValue() != null) {
+                sTestApis.devicePolicy().setProfileOwner(originalProfileOwner.getKey(),
+                        originalProfileOwner.getValue().componentName());
             }
         }
+        mChangedProfileOwners.clear();
 
         for (UserReference user : mCreatedUsers) {
             user.remove();

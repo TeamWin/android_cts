@@ -86,7 +86,7 @@ public class WorkProfileNetworkLoggingDelegateTest {
         mContext = InstrumentationRegistry.getContext();
         mDpm = mContext.getSystemService(DevicePolicyManager.class);
         mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
-        DelegateTestUtils.NetworkLogsReceiver.sBatchCountDown = new CountDownLatch(1);
+        DelegateTestUtils.DelegatedLogsReceiver.sBatchCountDown = new CountDownLatch(1);
     }
 
     @Test
@@ -125,9 +125,9 @@ public class WorkProfileNetworkLoggingDelegateTest {
     @Test
     public void testRetrieveNetworkLogs_forceNetworkLogs_receiveNetworkLogs() throws Exception {
         mDevice.executeShellCommand("dpm force-network-logs");
-        DelegateTestUtils.NetworkLogsReceiver.waitForBroadcast();
+        DelegateTestUtils.DelegatedLogsReceiver.waitForBroadcast();
 
-        verifyNetworkLogs(DelegateTestUtils.NetworkLogsReceiver.getNetworkEvents());
+        verifyNetworkLogs(DelegateTestUtils.DelegatedLogsReceiver.getNetworkEvents());
     }
 
     private void verifyNetworkLogs(List<NetworkEvent> networkEvents) {

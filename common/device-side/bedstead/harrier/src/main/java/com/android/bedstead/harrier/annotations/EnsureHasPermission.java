@@ -24,7 +24,7 @@ import java.lang.annotation.Target;
 /**
  * Ensure that the given permission is granted before running the test.
  */
-@Target(ElementType.METHOD)
+@Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface EnsureHasPermission {
     String[] value();

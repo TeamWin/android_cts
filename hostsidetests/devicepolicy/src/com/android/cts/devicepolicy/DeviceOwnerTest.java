@@ -726,6 +726,11 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     }
 
     @Test
+    public void testSensorToggleRestriction() throws Exception {
+        executeDeviceOwnerTest("SensorToggleRestrictionTest");
+    }
+
+    @Test
     public void testOverrideApn() throws Exception {
         assumeHasTelephonyFeature();
 

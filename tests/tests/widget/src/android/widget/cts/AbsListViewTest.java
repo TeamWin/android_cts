@@ -226,6 +226,7 @@ public class AbsListViewTest {
     @LargeTest
     @Test
     public void testSetOnScrollListener() throws Throwable {
+        mListView.setOverScrollMode(View.OVER_SCROLL_NEVER);
         AbsListView.OnScrollListener mockScrollListener =
                 mock(AbsListView.OnScrollListener.class);
 
@@ -683,7 +684,9 @@ public class AbsListViewTest {
 
         final AbsListView.OnItemLongClickListener mockOnItemLongClickListener =
                 mock(AbsListView.OnItemLongClickListener.class);
-        listView.setOnItemLongClickListener(mockOnItemLongClickListener);
+        mActivityRule.runOnUiThread(
+                () -> listView.setOnItemLongClickListener(mockOnItemLongClickListener)
+        );
 
         verifyZeroInteractions(mockOnItemLongClickListener);
 
@@ -1228,7 +1231,7 @@ public class AbsListViewTest {
 
         listView.resetIsOnScrollChangedCalled();
         assertFalse(listView.isOnScrollChangedCalled());
-        listView.requestChildRectangleOnScreen(row, r, true);
+        mActivityRule.runOnUiThread(() -> listView.requestChildRectangleOnScreen(row, r, true));
         assertTrue(listView.isOnScrollChangedCalled());
     }
 

@@ -135,12 +135,12 @@ public class PackageManagerShellCommandIncrementalTest {
         cleanup();
     }
 
-    private void checkIncrementalDeliveryFeature() throws Exception {
+    static void checkIncrementalDeliveryFeature() {
         Assume.assumeTrue(getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_INCREMENTAL_DELIVERY));
     }
 
-    private void checkIncrementalDeliveryV2Feature() throws Exception {
+    private static void checkIncrementalDeliveryV2Feature() throws Exception {
         checkIncrementalDeliveryFeature();
         Assume.assumeTrue(getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_INCREMENTAL_DELIVERY, 2));
