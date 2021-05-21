@@ -182,7 +182,8 @@ public class RcsContactUceCapabilityTest {
         featureTags.add(FEATURE_TAG_CHAT_SESSION);
         featureTags.add(FEATURE_TAG_FILE_TRANSFER);
 
-        OptionsBuilder optionsBuilder = new OptionsBuilder(TEST_CONTACT);
+        OptionsBuilder optionsBuilder = new OptionsBuilder(TEST_CONTACT,
+                RcsContactUceCapability.SOURCE_TYPE_CACHED);
         optionsBuilder.addFeatureTags(featureTags);
         optionsBuilder.addFeatureTag(FEATURE_TAG_POST_CALL);
         optionsBuilder.setRequestResult(RcsContactUceCapability.REQUEST_RESULT_FOUND);
