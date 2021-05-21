@@ -111,22 +111,9 @@ public class CtsTranslationService extends TranslationService {
     }
 
     @Override
-    public void onCreateTranslationSession(@NonNull TranslationContext translationContext,
-            int sessionId) {
-        Log.v(TAG, "deprecated");
-    }
-
-    @Override
     public void onFinishTranslationSession(int sessionId) {
         Log.v(TAG, "onFinishTranslationSession");
         mSessionDestroyedLatch.countDown();
-    }
-
-    @Override
-    public void onTranslationRequest(@NonNull TranslationRequest request, int sessionId,
-            @NonNull CancellationSignal cancellationSignal,
-            @NonNull OnTranslationResultCallback callback) {
-        Log.v(TAG, "deprecated onTranslationRequest(" + request + ")");
     }
 
     @Override
