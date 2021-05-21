@@ -22,7 +22,7 @@ import static android.content.pm.PackageInstaller.SessionParams.USER_ACTION_NOT_
 import static android.content.pm.PackageInstaller.SessionParams.USER_ACTION_REQUIRED;
 import static android.content.pm.PackageInstaller.SessionParams.USER_ACTION_UNSPECIFIED;
 
-import static com.google.common.truth.Truth.assertWithMessage;
+import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 
 import static org.junit.Assert.fail;
 
@@ -36,10 +36,9 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageInstaller.SessionParams;
 import android.content.pm.PackageManager;
-import android.util.Log;
+import android.os.SystemClock;
 
 import androidx.test.platform.app.InstrumentationRegistry;
-
 
 import org.junit.After;
 import org.junit.Assert;
@@ -55,6 +54,7 @@ import java.io.OutputStream;
 import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 /**
@@ -65,9 +65,16 @@ public class SilentUpdateTests {
     private static final String CURRENT_APK = "SilentInstallCurrent.apk";
     private static final String P_APK = "SilentInstallP.apk";
     private static final String Q_APK = "SilentInstallQ.apk";
+    private static final String INSTALLER_PACKAGE_NAME = "com.android.tests.silentupdate";
+    static final long SILENT_UPDATE_THROTTLE_TIME_MS = TimeUnit.SECONDS.toMillis(30);
 
     private static Context getContext() {
         return InstrumentationRegistry.getInstrumentation().getContext();
+    }
+
+    @After
+    public void tearDown() {
+        setUnlimitedSilentUpdates(null);
     }
 
     @Test
@@ -167,6 +174,39 @@ public class SilentUpdateTests {
         }
     }
 
+    @Test
+    public void silentInstallRepeatedly_RequiresUserAction() throws Exception {
+        Assert.assertEquals("The first silent update should succeed",
+                PackageInstaller.STATUS_SUCCESS,
+                silentInstallResource(CURRENT_APK));
+        Assert.assertEquals("The repeated silent install invoked within the throttle time "
+                        + "should require user action",
+                PackageInstaller.STATUS_PENDING_USER_ACTION,
+                silentInstallResource(CURRENT_APK));
+    }
+
+    @Test
+    public void silentInstallRepeatedly_withUnlimitedSilentUpdates_succeed() throws Exception {
+        setUnlimitedSilentUpdates(INSTALLER_PACKAGE_NAME);
+        Assert.assertEquals("The first silent update should succeed",
+                PackageInstaller.STATUS_SUCCESS,
+                silentInstallResource(CURRENT_APK));
+        Assert.assertEquals("The repeated silent update should succeed",
+                PackageInstaller.STATUS_SUCCESS,
+                silentInstallResource(CURRENT_APK));
+    }
+
+    @Test
+    public void silentInstallRepeatedly_waitForThrottleTime_succeed() throws Exception {
+        Assert.assertEquals("The first silent update should succeed",
+                PackageInstaller.STATUS_SUCCESS,
+                silentInstallResource(CURRENT_APK));
+        SystemClock.sleep(SILENT_UPDATE_THROTTLE_TIME_MS);
+        Assert.assertEquals("The repeated silent update should succeed",
+                PackageInstaller.STATUS_SUCCESS,
+                silentInstallResource(CURRENT_APK));
+    }
+
     private int silentInstallResource(String resourceName) throws Exception {
         return install(resourceSupplier(resourceName), false);
     }
@@ -249,6 +289,16 @@ public class SilentUpdateTests {
                 getContext().getPackageName(), 0);
         final long lastUpdateTime = packageInfo.lastUpdateTime;
         return lastUpdateTime;
+    }
+
+    private void setUnlimitedSilentUpdates(String installerPackageName) {
+        final StringBuilder cmd = new StringBuilder("pm allow-unlimited-silent-updates ");
+        if (installerPackageName == null) {
+            cmd.append("--reset");
+        } else {
+            cmd.append(installerPackageName);
+        }
+        runShellCommand(cmd.toString());
     }
 
     public static class InstallStatusListener extends BroadcastReceiver {

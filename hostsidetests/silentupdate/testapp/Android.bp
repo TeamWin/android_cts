@@ -22,6 +22,7 @@ android_test_helper_app {
     srcs:  ["src/**/*.java", "src/**/*.kt"],
 
     static_libs: [
+        "compatibility-device-util-axt",
         "androidx.annotation_annotation",
         "androidx.core_core",
         "androidx.test.runner",
