@@ -147,10 +147,11 @@ class AutoRevokeTest {
                         .click()
                 if (hasFeatureWatch()) {
                     // In wear os, notification has one additional button to open it
-                    waitFindObject(By.text("Open")).click();
+                    waitFindObject(By.text("Open")).click()
                 }
                 waitFindObject(By.text(supportedAppPackageName))
                 waitFindObject(By.text("Calendar permission removed"))
+                goBack()
             }
         }
     }
