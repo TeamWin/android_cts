@@ -61,6 +61,7 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
     static {
         sIgnoredAnnotationPackages.add("java.lang.annotation");
         sIgnoredAnnotationPackages.add("com.android.bedstead.harrier.annotations.meta");
+        sIgnoredAnnotationPackages.add("kotlin.*");
     }
 
     /**
@@ -175,8 +176,8 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
         }
 
         for (Annotation indirectAnnotation : annotation.annotationType().getAnnotations()) {
-            if (sIgnoredAnnotationPackages.contains(
-                    indirectAnnotation.annotationType().getPackage().getName())) {
+            String annotationPackage = indirectAnnotation.annotationType().getPackage().getName();
+            if (shouldSkipAnnotation(annotationPackage)) {
                 continue;
             }
 
@@ -187,6 +188,21 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
         replacementAnnotations.add(annotation);
 
         return replacementAnnotations;
+    }
+
+    private static boolean shouldSkipAnnotation(String annotationPackage) {
+        for (String ignoredPackage : sIgnoredAnnotationPackages) {
+            if (ignoredPackage.endsWith(".*")) {
+                if (annotationPackage.startsWith(
+                    ignoredPackage.substring(0, ignoredPackage.length() - 2))) {
+                    return true;
+                }
+            } else if (annotationPackage.equals(ignoredPackage)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public BedsteadJUnit4(Class<?> testClass) throws InitializationError {
