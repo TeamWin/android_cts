@@ -32,6 +32,7 @@ android_test {
         "androidx.test.rules",
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
+        "bluetooth-test-util-lib",
     ],
     data: [
         ":CtsPermissionPolicyApp25",
