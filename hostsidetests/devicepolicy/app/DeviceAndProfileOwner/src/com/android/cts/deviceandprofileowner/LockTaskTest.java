@@ -169,20 +169,6 @@ public class LockTaskTest extends BaseDeviceAdminTest {
         mContext.unregisterReceiver(mReceiver);
     }
 
-    // When OEM defines policy-exempt apps, they are permitted on lock task mode
-    public void testIsLockTaskPermittedIncludesPolicyExemptApps() {
-        Set<String> policyExemptApps = mDevicePolicyManager.getPolicyExemptApps();
-        if (policyExemptApps.isEmpty()) {
-            Log.v(TAG, "OEM doesn't define any policy-exempt app");
-            return;
-        }
-
-        for (String app : policyExemptApps) {
-            assertWithMessage("isLockTaskPermitted(%s)", app)
-                    .that(mDevicePolicyManager.isLockTaskPermitted(app)).isTrue();
-        }
-    }
-
     // Setting and unsetting the lock task packages when the OEM defines policy-exempt apps
     public void testSetLockTaskPackagesIgnoresExemptApps() {
         Set<String> policyExemptApps = mDevicePolicyManager.getPolicyExemptApps();
