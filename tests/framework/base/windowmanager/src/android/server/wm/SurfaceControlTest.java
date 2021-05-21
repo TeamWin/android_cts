@@ -15,6 +15,8 @@
  */
 package android.server.wm;
 
+import static android.server.wm.ActivityManagerTestBase.createFullscreenActivityScenarioRule;
+
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -31,7 +33,7 @@ import android.view.cts.surfacevalidator.ASurfaceControlTestActivity;
 import android.view.cts.surfacevalidator.ASurfaceControlTestActivity.PixelChecker;
 
 import androidx.annotation.NonNull;
-import androidx.test.rule.ActivityTestRule;
+import androidx.test.ext.junit.rules.ActivityScenarioRule;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -43,8 +45,8 @@ public class SurfaceControlTest {
     private static final int DEFAULT_SURFACE_SIZE = 100;
 
     @Rule
-    public ActivityTestRule<ASurfaceControlTestActivity> mActivityRule =
-            new ActivityTestRule<>(ASurfaceControlTestActivity.class);
+    public ActivityScenarioRule<ASurfaceControlTestActivity> mActivityRule =
+            createFullscreenActivityScenarioRule(ASurfaceControlTestActivity.class);
 
     @Rule
     public TestName mName = new TestName();
@@ -102,7 +104,7 @@ public class SurfaceControlTest {
 
     @Before
     public void setup() {
-        mActivity = mActivityRule.getActivity();
+        mActivityRule.getScenario().onActivity(activity -> mActivity = activity);
     }
 
     @Test
