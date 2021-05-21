@@ -839,7 +839,7 @@ public class ExtractorTest {
                     {MediaFormat.MIMETYPE_AUDIO_RAW, new String[]{"canon.mid",}},
                     {MediaFormat.MIMETYPE_AUDIO_AC3, new String[]{
                             "testac3mp4.mp4", "testac3ts.ts",}},
-                    {MediaFormat.MIMETYPE_AUDIO_AC4, new String[]{"multi0.mp4", "multi0.ts",}},
+                    {MediaFormat.MIMETYPE_AUDIO_AC4, new String[]{"multi0.mp4",}},
                     {MediaFormat.MIMETYPE_AUDIO_EAC3, new String[]{
                             "testeac3mp4.mp4", "testeac3ts.ts",}},
                     {MediaFormat.MIMETYPE_AUDIO_RAW, new String[]{"bbb_1ch_16kHz.wav",}},
