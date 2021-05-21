@@ -29,6 +29,7 @@ import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CaptureRequest;
+import android.hardware.camera2.params.InputConfiguration;
 import android.hardware.camera2.params.OutputConfiguration;
 import android.hardware.camera2.params.SessionConfiguration;
 import android.util.Size;
@@ -253,6 +254,19 @@ public class Camera2AndroidTestCase extends Camera2ParameterizedTestCase {
         mCameraSessionListener = new BlockingSessionCallback();
         mCameraSession = CameraTestUtils.configureCameraSession(mCamera, outputSurfaces,
                 mCameraSessionListener, mHandler);
+    }
+
+    /**
+     * Create a reprocessable {@link #CameraCaptureSession} using the currently open camera.
+     *
+     * @param inputConfiguration The inputConfiguration for this session
+     * @param outputSurfaces The set of output surfaces to configure for this session
+     */
+    protected void createReprocessableSession(InputConfiguration inputConfig,
+            List<Surface> outputSurfaces) throws Exception {
+        mCameraSessionListener = new BlockingSessionCallback();
+        mCameraSession = CameraTestUtils.configureReprocessableCameraSession(
+                mCamera, inputConfig, outputSurfaces, mCameraSessionListener, mHandler);
     }
 
     /**
