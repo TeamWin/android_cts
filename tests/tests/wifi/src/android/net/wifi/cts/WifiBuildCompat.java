@@ -47,7 +47,7 @@ import androidx.core.os.BuildCompat;
 public class WifiBuildCompat {
     private static final String TAG = "WifiBuildCompat";
 
-    private static final String WIFI_APEX_NAME = "com.android.wifi";
+    private static final String WIFI_PACKAGE_NAME_SUFFIX = ".android.wifi";
 
     private static final long WIFI_APEX_BASE_VERSION_CODE_FOR_S = 310000000;
 
@@ -55,9 +55,13 @@ public class WifiBuildCompat {
         PackageManager packageManager = ctx.getPackageManager();
         long wifiStackVersion = 0;
         try {
-            ModuleInfo wifiModule = packageManager.getModuleInfo(
-                    WIFI_APEX_NAME, PackageManager.MODULE_APEX_NAME);
-            String wifiPackageName = wifiModule.getPackageName();
+            String wifiPackageName = null;
+            for (ModuleInfo moduleInfo : packageManager.getInstalledModules(0)) {
+                if (moduleInfo.getPackageName().endsWith(WIFI_PACKAGE_NAME_SUFFIX)) {
+                    wifiPackageName = moduleInfo.getPackageName();
+                    break;
+                }
+            }
             if (wifiPackageName != null) {
                 wifiStackVersion = packageManager.getPackageInfo(
                         wifiPackageName, PackageManager.MATCH_APEX).getLongVersionCode();
