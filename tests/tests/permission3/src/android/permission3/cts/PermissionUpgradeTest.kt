@@ -16,6 +16,8 @@
 
 package android.permission3.cts
 
+import android.content.pm.PackageManager
+
 import org.junit.Assume
 import org.junit.Test
 
@@ -26,6 +28,8 @@ class PermissionUpgradeTest : BaseUsePermissionTest() {
 
     @Test
     fun testUpgradeKeepsPermissions() {
+        // TODO(b/188729697): Remove FEATURE_WATCH based condition after issue is resolved.
+        Assume.assumeFalse(packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH))
         Assume.assumeFalse(packageManager.arePermissionsIndividuallyControlled())
 
         installPackage(APP_APK_PATH_22)
