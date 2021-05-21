@@ -20,7 +20,6 @@ import android.app.AppOpsManager
 import android.app.AppOpsManager.OPSTR_READ_CONTACTS
 import android.app.AppOpsManager.OPSTR_WIFI_SCAN
 import android.app.AppOpsManager.OP_FLAGS_ALL
-import android.app.AppOpsManager.SECURITY_EXCEPTION_ON_INVALID_ATTRIBUTION_TAG_CHANGE
 import android.content.Intent
 import android.content.ComponentName
 import android.platform.test.annotations.AppModeFull
@@ -151,11 +150,11 @@ class AttributionTest {
         }
     }
 
-    @Test(expected = SecurityException::class)
-    fun cannotUseUndeclaredAttributionTag() {
-        withEnabledCompatChange(SECURITY_EXCEPTION_ON_INVALID_ATTRIBUTION_TAG_CHANGE, APP_PKG) {
-            noteForAttribution("invalid attribution tag")
-        }
+    @Test
+    fun canUseUndeclaredAttributionTagButTreatedAsNull() {
+        noteForAttribution("invalid attribution tag")
+        val opEntry = getOpEntry(appUid, APP_PKG, OPSTR_WIFI_SCAN)!!
+        assertThat(opEntry.attributedOpEntries["invalid attribution tag"]).isNull()
     }
 
     @Test
