@@ -286,8 +286,10 @@ abstract class AbstractRecognitionServiceTest {
             List<CallbackMethod> callbackMethodInstructions,
             List<Boolean> expectedRecognizerServiceMethodsToPropagate,
             List<CallbackMethod> expectedClientCallbackMethods) {
-        setCurrentRecognizer(mActivity.mRecognizer, IN_PACKAGE_RECOGNITION_SERVICE);
         mUiDevice.waitForIdle();
+        SpeechRecognizer speechRecognizer = mActivity.mRecognizer;
+        assertThat(speechRecognizer).isNotNull();
+        setCurrentRecognizer(speechRecognizer, IN_PACKAGE_RECOGNITION_SERVICE);
 
         mActivity.mCallbackMethodsInvoked.clear();
         CtsRecognitionService.sInvokedRecognizerMethods.clear();
