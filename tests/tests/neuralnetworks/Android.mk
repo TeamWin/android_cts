@@ -29,7 +29,7 @@ LOCAL_MODULE_STEM_64 := $(LOCAL_MODULE)64
 
 LOCAL_WHOLE_STATIC_LIBRARIES := CtsNNAPITests_static
 
-LOCAL_SHARED_LIBRARIES := libandroid liblog libneuralnetworks
+LOCAL_SHARED_LIBRARIES := libandroid liblog libneuralnetworks libvulkan
 LOCAL_STATIC_LIBRARIES := libbase_ndk libgtest_ndk_c++ libgmock_ndk
 LOCAL_CTS_TEST_PACKAGE := android.neuralnetworks
 
