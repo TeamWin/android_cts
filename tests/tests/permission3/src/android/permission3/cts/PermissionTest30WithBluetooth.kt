@@ -16,10 +16,17 @@
 
 package android.permission3.cts
 
+import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothManager
+import android.bluetooth.cts.BTAdapterUtils
 import android.content.Intent
+import android.content.pm.PackageManager
 import androidx.core.os.BuildCompat
 import androidx.test.InstrumentationRegistry
+import com.android.compatibility.common.util.SystemUtil.runShellCommandOrThrow
 import junit.framework.Assert.assertEquals
+import junit.framework.Assert.assertTrue
+import org.junit.After
 import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Test
@@ -30,6 +37,8 @@ import org.junit.Test
 class PermissionTest30WithBluetooth : BaseUsePermissionTest() {
 
     val AUTHORITY = "android.permission3.cts.usepermission.AccessBluetoothOnCommand"
+    private lateinit var bluetoothAdapter: BluetoothAdapter
+    private var bluetoothAdapterWasEnabled: Boolean = false
 
     private enum class BluetoothScanResult {
         UNKNOWN, EXCEPTION, EMPTY, FILTERED, FULL
@@ -38,6 +47,25 @@ class PermissionTest30WithBluetooth : BaseUsePermissionTest() {
     @Before
     fun installApp() {
         installPackage(APP_APK_PATH_30_WITH_BLUETOOTH)
+    }
+
+    @Before
+    fun enableBluetooth() {
+        assumeTrue(supportsBluetooth())
+        bluetoothAdapter = context.getSystemService(BluetoothManager::class.java).adapter
+        bluetoothAdapterWasEnabled = bluetoothAdapter.isEnabled()
+        assertTrue(BTAdapterUtils.enableAdapter(bluetoothAdapter, context))
+        runShellCommandOrThrow("dumpsys activity service" +
+                " com.android.bluetooth/.btservice.AdapterService set-test-mode enabled")
+    }
+
+    @After
+    fun disableBluetooth() {
+        assumeTrue(supportsBluetooth())
+        runShellCommandOrThrow("dumpsys activity service" +
+                " com.android.bluetooth/.btservice.AdapterService set-test-mode disabled")
+        if (!bluetoothAdapterWasEnabled)
+            assertTrue(BTAdapterUtils.disableAdapter(bluetoothAdapter, context))
     }
 
     @Test
@@ -52,4 +80,7 @@ class PermissionTest30WithBluetooth : BaseUsePermissionTest() {
         val result = resolver.call(AUTHORITY, "", null, null)
         return BluetoothScanResult.values()[result!!.getInt(Intent.EXTRA_INDEX)]
     }
+
+    private fun supportsBluetooth(): Boolean =
+            context.packageManager.hasSystemFeature(PackageManager.FEATURE_BLUETOOTH)
 }
