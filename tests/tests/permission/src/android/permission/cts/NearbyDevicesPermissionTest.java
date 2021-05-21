@@ -25,12 +25,19 @@ import static android.permission.cts.PermissionUtils.install;
 import static android.permission.cts.PermissionUtils.revokePermission;
 import static android.permission.cts.PermissionUtils.uninstallApp;
 
-import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
+import static com.android.compatibility.common.util.SystemUtil.runShellCommandOrThrow;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothManager;
+import android.bluetooth.cts.BTAdapterUtils;
 import android.content.ContentResolver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
 
@@ -38,8 +45,7 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -68,16 +74,26 @@ public class NearbyDevicesPermissionTest {
         UNKNOWN, EXCEPTION, EMPTY, FILTERED, FULL
     }
 
-    @BeforeClass
-    public static void enableTestMode() {
-        runShellCommand("dumpsys activity service"
-                + " com.android.bluetooth/.btservice.AdapterService set-test-mode enabled");
+    private Context mContext = InstrumentationRegistry.getInstrumentation().getContext();
+    private BluetoothAdapter mBluetoothAdapter;
+    private boolean mBluetoothAdapterWasEnabled;
+
+    @Before
+    public void enableBluetooth() {
+        assumeTrue(supportsBluetooth());
+        mBluetoothAdapter = mContext.getSystemService(BluetoothManager.class).getAdapter();
+        mBluetoothAdapterWasEnabled = mBluetoothAdapter.isEnabled();
+        assertTrue(BTAdapterUtils.enableAdapter(mBluetoothAdapter, mContext));
+        enableTestMode();
     }
 
-    @AfterClass
-    public static void disableTestMode() {
-        runShellCommand("dumpsys activity service"
-                + " com.android.bluetooth/.btservice.AdapterService set-test-mode disabled");
+    @After
+    public void disableBluetooth() {
+        assumeTrue(supportsBluetooth());
+        disableTestMode();
+        if (!mBluetoothAdapterWasEnabled) {
+            assertTrue(BTAdapterUtils.disableAdapter(mBluetoothAdapter, mContext));
+        }
     }
 
     @After
@@ -215,5 +231,19 @@ public class NearbyDevicesPermissionTest {
                 .getContentResolver();
         final Bundle res = resolver.call(TEST_APP_AUTHORITY, METHOD_SCAN_BLUETOOTH, null, null);
         assertEquals(expected, Result.values()[res.getInt(Intent.EXTRA_INDEX)]);
+    }
+
+    private boolean supportsBluetooth() {
+        return mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH);
+    }
+
+    private void enableTestMode() {
+        runShellCommandOrThrow("dumpsys activity service"
+                + " com.android.bluetooth/.btservice.AdapterService set-test-mode enabled");
+    }
+
+    private void disableTestMode() {
+        runShellCommandOrThrow("dumpsys activity service"
+                + " com.android.bluetooth/.btservice.AdapterService set-test-mode disabled");
     }
 }
