@@ -55,6 +55,7 @@ cc_defaults {
     test_suites: [
         "cts",
         "sts",
+        "general-tests",
     ],
     cflags: [
         "-Wall",
