@@ -55,6 +55,7 @@ import android.content.ServiceConnection
 import android.content.pm.PackageManager.FEATURE_BLUETOOTH
 import android.content.pm.PackageManager.FEATURE_BLUETOOTH_LE
 import android.content.pm.PackageManager.FEATURE_TELEPHONY
+import android.content.pm.PackageManager.GET_ATTRIBUTIONS
 import android.hardware.camera2.CameraCaptureSession
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraDevice
@@ -983,6 +984,13 @@ class AppOpsLoggingTest {
             assertThat(asyncNoted[0].op).isEqualTo(OPSTR_READ_CONTACTS)
             assertThat(asyncNoted[0].attributionTag).isEqualTo(TEST_ATTRIBUTION_TAG)
         }
+    }
+
+    @Test
+    fun checkAttributionsAreUserVisible() {
+        val pi = context.packageManager.getPackageInfo(
+                TEST_SERVICE_PKG, GET_ATTRIBUTIONS)
+        assertThat(pi.applicationInfo.areAttributionsUserVisible())
     }
 
     @After
