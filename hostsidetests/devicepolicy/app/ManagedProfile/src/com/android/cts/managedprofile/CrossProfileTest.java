@@ -271,10 +271,9 @@ public class CrossProfileTest extends BaseManagedProfileTest {
                 MANAGE_APP_OPS_MODES_PERMISSION,
                 UPDATE_APP_OPS_STATS_PERMISSION,
                 INTERACT_ACROSS_USERS_PERMISSION);
-        mAppOpsManager.setMode(
+        mAppOpsManager.setUidMode(
                 AppOpsManager.permissionToOp(Manifest.permission.INTERACT_ACROSS_PROFILES),
                 getUidForPackageName(packageName, userHandle),
-                packageName,
                 mode);
         sUiAutomation.dropShellPermissionIdentity();
     }
