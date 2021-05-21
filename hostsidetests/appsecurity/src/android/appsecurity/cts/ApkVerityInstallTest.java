@@ -374,6 +374,47 @@ public final class ApkVerityInstallTest extends BaseAppSecurityTest {
                 .run();
     }
 
+    @Test
+    public void testInstallBaseIncrementallyWithFsvSig() throws Exception {
+        assumeTrue(hasIncrementalDeliveryFeature());
+        new InstallMultiple(/*incremental=*/true)
+                .addFile(BASE_APK)
+                .addFile(BASE_APK + FSV_SIG_SUFFIX)
+                .run();
+        verifyFsverityInstall(true, BASE_APK);
+    }
+
+    @Test
+    public void testInstallBaseIncrementallyWithFsvSigAndIdSig() throws Exception {
+        assumeTrue(hasIncrementalDeliveryFeature());
+        new InstallMultiple(/*incremental=*/true)
+                .addFile(BASE_APK)
+                .pushFile(BASE_APK + ID_SIG_SUFFIX)
+                .addFile(BASE_APK + FSV_SIG_SUFFIX)
+                .run();
+        verifyFsverityInstall(true, BASE_APK);
+    }
+
+    @Test
+    public void testInstallBaseIncrementallyWithIdSigAndWrongFsvSig() throws Exception {
+        assumeTrue(hasIncrementalDeliveryFeature());
+        new InstallMultiple(/*incremental=*/true)
+                .addFile(BASE_APK)
+                .pushFile(BASE_APK + ID_SIG_SUFFIX)
+                .renameAndAddFile(BAD_BASE_APK + FSV_SIG_SUFFIX, BASE_APK + FSV_SIG_SUFFIX)
+                .runExpectingFailure();
+    }
+
+    @Test
+    public void testInstallBaseIncrementallyWithWrongIdSigAndFsvSig() throws Exception {
+        assumeTrue(hasIncrementalDeliveryFeature());
+        new InstallMultiple(/*incremental=*/true)
+                .addFile(BASE_APK)
+                .renameAndPushFile(BAD_BASE_APK + ID_SIG_SUFFIX, BASE_APK + ID_SIG_SUFFIX)
+                .addFile(BASE_APK + FSV_SIG_SUFFIX)
+                .runExpectingFailure();
+    }
+
     private void assumePreconditions(boolean requiresIncremental) throws Exception {
         if (requiresIncremental) {
             assumeTrue(hasIncrementalDeliveryFeature());
