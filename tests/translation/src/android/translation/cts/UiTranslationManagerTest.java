@@ -58,6 +58,7 @@ import android.view.translation.TranslationResponse;
 import android.view.translation.TranslationResponseValue;
 import android.view.translation.TranslationSpec;
 import android.view.translation.UiTranslationManager;
+import android.view.translation.UiTranslationSpec;
 import android.view.translation.UiTranslationStateCallback;
 import android.view.translation.ViewTranslationRequest;
 import android.view.translation.ViewTranslationResponse;
@@ -184,7 +185,8 @@ public class UiTranslationManagerTest {
                             TranslationSpec.DATA_FORMAT_TEXT),
                     new TranslationSpec(ULocale.FRENCH,
                             TranslationSpec.DATA_FORMAT_TEXT),
-                    views, contentCaptureContext.getActivityId());
+                    views, contentCaptureContext.getActivityId(),
+                    new UiTranslationSpec.Builder().setShouldPadContentForCompat(true).build());
 
             // Check request
             final TranslationRequest request = sTranslationReplier.getNextTranslationRequest();
@@ -251,7 +253,8 @@ public class UiTranslationManagerTest {
                                 TranslationSpec.DATA_FORMAT_TEXT),
                         new TranslationSpec(ULocale.FRENCH,
                                 TranslationSpec.DATA_FORMAT_TEXT),
-                        views, contentCaptureContext.getActivityId());
+                        views, contentCaptureContext.getActivityId(),
+                        new UiTranslationSpec.Builder().setShouldPadContentForCompat(true).build());
                 SystemClock.sleep(UI_WAIT_TIMEOUT);
             });
             // Send broadcat to request IME to check the onStarted() result
@@ -343,7 +346,8 @@ public class UiTranslationManagerTest {
                             TranslationSpec.DATA_FORMAT_TEXT),
                     new TranslationSpec(ULocale.FRENCH,
                             TranslationSpec.DATA_FORMAT_TEXT),
-                    views, contentCaptureContext.getActivityId());
+                    views, contentCaptureContext.getActivityId(),
+                    new UiTranslationSpec.Builder().setShouldPadContentForCompat(true).build());
             SystemClock.sleep(UI_WAIT_TIMEOUT);
 
             assertThat(callback.isOnStartedCalled()).isFalse();
@@ -472,11 +476,6 @@ public class UiTranslationManagerTest {
 
         boolean isOnResumedCalled() {
             return mResumedCalled;
-        }
-
-        @Override
-        public void onStarted(String source, String target) {
-            // no-op
         }
 
         @Override
