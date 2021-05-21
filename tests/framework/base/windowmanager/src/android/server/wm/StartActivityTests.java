@@ -16,10 +16,15 @@
 
 package android.server.wm;
 
+import static android.app.WindowConfiguration.ACTIVITY_TYPE_ASSISTANT;
+import static android.app.WindowConfiguration.ACTIVITY_TYPE_DREAM;
+import static android.app.WindowConfiguration.ACTIVITY_TYPE_HOME;
+import static android.app.WindowConfiguration.ACTIVITY_TYPE_RECENTS;
+import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_DOCUMENT;
 import static android.server.wm.WindowManagerState.STATE_INITIALIZING;
 import static android.server.wm.WindowManagerState.STATE_STOPPED;
-import static android.server.wm.app.Components.ALT_LAUNCHING_ACTIVITY;
+import static android.server.wm.app.Components.BROADCAST_RECEIVER_ACTIVITY;
 import static android.server.wm.app.Components.LAUNCHING_ACTIVITY;
 import static android.server.wm.app.Components.NO_RELAUNCH_ACTIVITY;
 import static android.server.wm.app.Components.TEST_ACTIVITY;
@@ -40,7 +45,6 @@ import static org.junit.Assert.assertNotEquals;
 
 import android.app.Activity;
 import android.app.ActivityOptions;
-import android.app.WindowConfiguration;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.os.Bundle;
@@ -73,7 +77,7 @@ public class StartActivityTests extends ActivityManagerTestBase {
         final ComponentName defaultHome = getDefaultHomeComponent();
         final int[] allActivityTypes = Arrays.copyOf(ALL_ACTIVITY_TYPE_BUT_HOME,
                 ALL_ACTIVITY_TYPE_BUT_HOME.length + 1);
-        allActivityTypes[allActivityTypes.length - 1] = WindowConfiguration.ACTIVITY_TYPE_HOME;
+        allActivityTypes[allActivityTypes.length - 1] = ACTIVITY_TYPE_HOME;
         removeRootTasksWithActivityTypes(allActivityTypes);
 
         waitAndAssertResumedActivity(defaultHome,
@@ -259,6 +263,48 @@ public class StartActivityTests extends ActivityManagerTestBase {
                 + " should be in a different task", taskIds[0], taskIds[1]);
         assertEquals("The activity started without flag NEW_TASK should be put in the same task",
                 taskIds[1], taskIds[2]);
+    }
+
+    @Test
+    public void testNormalActivityCanNotSetActivityType() {
+        // Activities should not be started if the launch activity type is set.
+        boolean useShellPermission = false;
+        startingActivityWithType(ACTIVITY_TYPE_STANDARD, useShellPermission);
+        startingActivityWithType(ACTIVITY_TYPE_HOME, useShellPermission);
+        startingActivityWithType(ACTIVITY_TYPE_RECENTS, useShellPermission);
+        startingActivityWithType(ACTIVITY_TYPE_ASSISTANT, useShellPermission);
+        startingActivityWithType(ACTIVITY_TYPE_DREAM, useShellPermission);
+
+        // Activities can be started because they are started with shell permissions.
+        useShellPermission = true;
+        startingActivityWithType(ACTIVITY_TYPE_STANDARD, useShellPermission);
+        startingActivityWithType(ACTIVITY_TYPE_HOME, useShellPermission);
+        startingActivityWithType(ACTIVITY_TYPE_RECENTS, useShellPermission);
+        startingActivityWithType(ACTIVITY_TYPE_ASSISTANT, useShellPermission);
+        startingActivityWithType(ACTIVITY_TYPE_DREAM, useShellPermission);
+    }
+
+    private void startingActivityWithType(int type, boolean useShellPermission) {
+        separateTestJournal();
+        getLaunchActivityBuilder()
+                .setTargetActivity(BROADCAST_RECEIVER_ACTIVITY)
+                .setUseInstrumentation()
+                .setWithShellPermission(useShellPermission)
+                .setActivityType(type)
+                .setWaitForLaunched(false)
+                .setMultipleTask(true)
+                .execute();
+
+        mWmState.computeState();
+        if (useShellPermission) {
+            waitAndAssertResumedActivity(BROADCAST_RECEIVER_ACTIVITY,
+                    "Activity should be started and resumed");
+            mWmState.assertFrontStackActivityType("The activity type should be same as requested.",
+                    type);
+            mBroadcastActionTrigger.finishBroadcastReceiverActivity();
+        } else {
+            assertSecurityExceptionFromActivityLauncher();
+        }
     }
 
     /**
