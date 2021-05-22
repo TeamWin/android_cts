@@ -56,7 +56,7 @@ public final class CtsTestIme extends InputMethodService {
     static String IME_SERVICE_PACKAGE = "android.translation.cts";
 
     private Context mContext;
-    private UiTranslationManagerTest.TestTranslationStateCallback mCallback;
+    private FakeTranslationStateCallback mCallback;
     private CommandReceiver mReceiver;
 
     @Override
@@ -85,7 +85,7 @@ public final class CtsTestIme extends InputMethodService {
 
     void registerUiTranslationStateCallback(Intent intent) {
         final UiTranslationManager manager = mContext.getSystemService(UiTranslationManager.class);
-        mCallback = new UiTranslationManagerTest.TestTranslationStateCallback();
+        mCallback = new FakeTranslationStateCallback();
         final Executor executor = Executors.newSingleThreadExecutor();
         manager.registerUiTranslationStateCallback(executor, mCallback);
 
