@@ -24,6 +24,7 @@ android_library {
     ],
     static_libs: [
         "Nene",
+        "EventLib"
     ],
     manifest: "src/main/library/AndroidManifest.xml",
     min_sdk_version: "28",
