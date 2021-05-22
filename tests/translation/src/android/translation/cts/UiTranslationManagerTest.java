@@ -283,6 +283,59 @@ public class UiTranslationManagerTest {
     }
 
     @Test
+    public void testUiTranslation_ViewTranslationCallback_paddingText() throws Throwable {
+        final Pair<List<AutofillId>, ContentCaptureContext> result =
+                enableServicesAndStartActivityForTranslation();
+        final List<AutofillId> views = result.first;
+        final ContentCaptureContext contentCaptureContext = result.second;
+
+        // Set response
+        final CharSequence originalText = mTextView.getText();
+        final CharSequence translatedText = "Translated World";
+        sTranslationReplier.addResponse(
+                createViewsTranslationResponse(views, translatedText.toString()));
+        final UiTranslationManager manager = sContext.getSystemService(UiTranslationManager.class);
+
+        // Use TextView default ViewTranslationCallback implementation
+        runWithShellPermissionIdentity(() -> {
+            // Call startTranslation API
+            manager.startTranslation(
+                    new TranslationSpec(ULocale.ENGLISH,
+                            TranslationSpec.DATA_FORMAT_TEXT),
+                    new TranslationSpec(ULocale.FRENCH,
+                            TranslationSpec.DATA_FORMAT_TEXT),
+                    views, contentCaptureContext.getActivityId(),
+                    new UiTranslationSpec.Builder().setShouldPadContentForCompat(true).build());
+            SystemClock.sleep(UI_WAIT_TIMEOUT);
+        });
+        CharSequence currentText = mTextView.getText();
+        assertThat(currentText.length()).isNotEqualTo(originalText.length());
+        assertThat(currentText.length()).isEqualTo(translatedText.length());
+
+        runWithShellPermissionIdentity(() -> {
+            // Call finishTranslation API
+            manager.finishTranslation(contentCaptureContext.getActivityId());
+            SystemClock.sleep(UI_WAIT_TIMEOUT);
+        });
+
+        // Set Customized ViewTranslationCallback
+        ViewTranslationCallback mockCallback = Mockito.mock(ViewTranslationCallback.class);
+        mTextView.setViewTranslationCallback(mockCallback);
+        runWithShellPermissionIdentity(() -> {
+            // Call startTranslation API
+            manager.startTranslation(
+                    new TranslationSpec(ULocale.ENGLISH,
+                            TranslationSpec.DATA_FORMAT_TEXT),
+                    new TranslationSpec(ULocale.FRENCH,
+                            TranslationSpec.DATA_FORMAT_TEXT),
+                    views, contentCaptureContext.getActivityId(),
+                    new UiTranslationSpec.Builder().setShouldPadContentForCompat(true).build());
+            SystemClock.sleep(UI_WAIT_TIMEOUT);
+        });
+        assertThat(mTextView.getText().length()).isEqualTo(originalText.length());
+    }
+
+    @Test
     public void testIMEUiTranslationStateCallback() throws Throwable {
         try (ImeSession imeSession = new ImeSession(
                 new ComponentName(CtsTestIme.IME_SERVICE_PACKAGE, CtsTestIme.class.getName()))) {
