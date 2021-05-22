@@ -43,7 +43,7 @@ import org.junit.runner.RunWith;
 public class BadProviderTest {
     private static final String AUTHORITY = "com.android.cts.stubbad.badprovider";
     private static final String TEST_PACKAGE_NAME = "com.android.cts.stubbad";
-    private static final int WAIT_TIME = 2000;
+    private static final int WAIT_TIME = 5000;
 
     private Context mContext;
 

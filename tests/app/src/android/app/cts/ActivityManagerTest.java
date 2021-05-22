@@ -982,6 +982,9 @@ public class ActivityManagerTest extends InstrumentationTestCase {
             SystemUtil.runShellCommand(mInstrumentation,
                     "cmd deviceidle whitelist +" + PACKAGE_NAME_APP1);
 
+            // Keep the device awake
+            toggleScreenOn(true);
+
             // Start an activity
             CommandReceiver.sendCommand(mTargetContext, CommandReceiver.COMMAND_START_ACTIVITY,
                     PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
@@ -1103,6 +1106,9 @@ public class ActivityManagerTest extends InstrumentationTestCase {
                     "cmd deviceidle whitelist +" + PACKAGE_NAME_APP2);
             SystemUtil.runShellCommand(mInstrumentation,
                     "cmd deviceidle whitelist +" + PACKAGE_NAME_APP3);
+
+            // Keep the device awake
+            toggleScreenOn(true);
 
             // Start an activity
             CommandReceiver.sendCommand(mTargetContext, CommandReceiver.COMMAND_START_ACTIVITY,
@@ -1305,6 +1311,12 @@ public class ActivityManagerTest extends InstrumentationTestCase {
             SystemUtil.runShellCommand(mInstrumentation,
                     "cmd deviceidle whitelist +" + PACKAGE_NAME_APP1);
 
+            // Override the memory pressure level, force it staying at normal.
+            SystemUtil.runShellCommand(mInstrumentation, "am memory-factor set NORMAL");
+
+            // Keep the device awake
+            toggleScreenOn(true);
+
             latchHolder[0] = new CountDownLatch(1);
 
             // Start an activity
@@ -1425,6 +1437,9 @@ public class ActivityManagerTest extends InstrumentationTestCase {
             // Kill all background processes
             SystemUtil.runShellCommand(mInstrumentation, "am kill-all");
 
+            // Override the memory pressure level, force it staying at normal.
+            SystemUtil.runShellCommand(mInstrumentation, "am memory-factor set NORMAL");
+
             List<String> lru;
             // Start a new isolated service once a time, and then check the lru list
             do {
@@ -1543,6 +1558,9 @@ public class ActivityManagerTest extends InstrumentationTestCase {
                     "cmd deviceidle whitelist +" + PACKAGE_NAME_APP2);
             SystemUtil.runShellCommand(mInstrumentation,
                     "cmd deviceidle whitelist +" + PACKAGE_NAME_APP3);
+
+            // Keep the device awake
+            toggleScreenOn(true);
 
             // Start a FGS in app1
             final Bundle extras = new Bundle();
