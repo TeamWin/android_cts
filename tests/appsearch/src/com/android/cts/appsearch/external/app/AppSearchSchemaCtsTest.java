@@ -269,4 +269,54 @@ public class AppSearchSchemaCtsTest {
                                 .shouldIndexNestedProperties())
                 .isEqualTo(true);
     }
+
+    @Test
+    public void testInvalidStringPropertyConfigsTokenizerNone() {
+        // Everything should work fine with the defaults.
+        final StringPropertyConfig.Builder builder = new StringPropertyConfig.Builder("property");
+        assertThat(builder.build()).isNotNull();
+
+        // Setting an indexing type other NONE with the default tokenizer type (NONE) should fail.
+        builder.setIndexingType(StringPropertyConfig.INDEXING_TYPE_EXACT_TERMS);
+        expectThrows(IllegalStateException.class, () -> builder.build());
+
+        builder.setIndexingType(StringPropertyConfig.INDEXING_TYPE_PREFIXES);
+        expectThrows(IllegalStateException.class, () -> builder.build());
+
+        // Explicitly setting the default should work fine.
+        builder.setIndexingType(StringPropertyConfig.INDEXING_TYPE_NONE);
+        assertThat(builder.build()).isNotNull();
+
+        // Explicitly setting the default tokenizer type should result in the same behavior.
+        builder.setTokenizerType(StringPropertyConfig.TOKENIZER_TYPE_NONE)
+                .setIndexingType(StringPropertyConfig.INDEXING_TYPE_EXACT_TERMS);
+        expectThrows(IllegalStateException.class, () -> builder.build());
+
+        builder.setIndexingType(StringPropertyConfig.INDEXING_TYPE_PREFIXES);
+        expectThrows(IllegalStateException.class, () -> builder.build());
+
+        builder.setIndexingType(StringPropertyConfig.INDEXING_TYPE_NONE);
+        assertThat(builder.build()).isNotNull();
+    }
+
+    @Test
+    public void testInvalidStringPropertyConfigsTokenizerPlain() {
+        // Setting indexing type to be NONE with tokenizer type PLAIN should fail. Regardless of
+        // whether NONE is set explicitly or just kept as default.
+        final StringPropertyConfig.Builder builder =
+                new StringPropertyConfig.Builder("property")
+                        .setTokenizerType(StringPropertyConfig.TOKENIZER_TYPE_PLAIN);
+        expectThrows(IllegalStateException.class, () -> builder.build());
+
+        builder.setIndexingType(StringPropertyConfig.INDEXING_TYPE_NONE);
+        expectThrows(IllegalStateException.class, () -> builder.build());
+
+        // Setting indexing type to be something other than NONE with tokenizer type PLAIN should
+        // be just fine.
+        builder.setIndexingType(StringPropertyConfig.INDEXING_TYPE_EXACT_TERMS);
+        assertThat(builder.build()).isNotNull();
+
+        builder.setIndexingType(StringPropertyConfig.INDEXING_TYPE_PREFIXES);
+        assertThat(builder.build()).isNotNull();
+    }
 }

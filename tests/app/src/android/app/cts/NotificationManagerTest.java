@@ -131,6 +131,7 @@ import android.service.notification.Condition;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
 import android.service.notification.ZenPolicy;
+import android.support.test.uiautomator.UiDevice;
 import android.test.AndroidTestCase;
 import android.util.ArrayMap;
 import android.util.ArraySet;
@@ -219,6 +220,7 @@ public class NotificationManagerTest extends AndroidTestCase {
 
     @Nullable
     private List<String> mPreviousDefaultBrowser;
+    private Instrumentation mInstrumentation;
 
     @Override
     protected void setUp() throws Exception {
@@ -245,11 +247,10 @@ public class NotificationManagerTest extends AndroidTestCase {
         // ensure listener access isn't allowed before test runs (other tests could put
         // TestListener in an unexpected state)
         toggleListenerAccess(false);
-        toggleNotificationPolicyAccess(mContext.getPackageName(),
-                InstrumentationRegistry.getInstrumentation(), true);
+        mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        toggleNotificationPolicyAccess(mContext.getPackageName(), mInstrumentation, true);
         mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_ALL);
-        toggleNotificationPolicyAccess(mContext.getPackageName(),
-                InstrumentationRegistry.getInstrumentation(), false);
+        toggleNotificationPolicyAccess(mContext.getPackageName(), mInstrumentation, false);
 
         // This setting is forced on / off for certain tests, save it & restore what's on the
         // device after tests are run
@@ -283,12 +284,10 @@ public class NotificationManagerTest extends AndroidTestCase {
         }
 
         // Unsuspend package if it was suspended in the test
-        suspendPackage(mContext.getPackageName(), InstrumentationRegistry.getInstrumentation(),
-                false);
+        suspendPackage(mContext.getPackageName(), mInstrumentation, false);
 
         toggleListenerAccess(false);
-        toggleNotificationPolicyAccess(mContext.getPackageName(),
-                InstrumentationRegistry.getInstrumentation(), false);
+        toggleNotificationPolicyAccess(mContext.getPackageName(), mInstrumentation, false);
 
         List<NotificationChannelGroup> groups = mNotificationManager.getNotificationChannelGroups();
         // Delete all groups.
@@ -962,6 +961,14 @@ public class NotificationManagerTest extends AndroidTestCase {
         });
         assertTrue("Failed to restore default browser",
                 restored.get(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+    }
+
+    /**
+     * Previous tests could have started activities within the grace period, so go home to avoid
+     * allowing background activity starts due to this exemption.
+     */
+    private void deactivateGracePeriod() {
+        UiDevice.getInstance(mInstrumentation).pressHome();
     }
 
     public void testConsolidatedNotificationPolicy() throws Exception {
@@ -4219,6 +4226,7 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testActivityStartOnBroadcastTrampoline_isBlocked() throws Exception {
+        deactivateGracePeriod();
         setUpNotifListener();
         mListener.addTestPackage(TRAMPOLINE_APP);
         EventCallback callback = new EventCallback();
@@ -4238,6 +4246,7 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testActivityStartOnServiceTrampoline_isBlocked() throws Exception {
+        deactivateGracePeriod();
         setUpNotifListener();
         mListener.addTestPackage(TRAMPOLINE_APP);
         EventCallback callback = new EventCallback();
@@ -4257,6 +4266,7 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testActivityStartOnBroadcastTrampoline_whenApi30_isAllowed() throws Exception {
+        deactivateGracePeriod();
         setUpNotifListener();
         mListener.addTestPackage(TRAMPOLINE_APP_API_30);
         EventCallback callback = new EventCallback();
@@ -4276,6 +4286,7 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testActivityStartOnServiceTrampoline_whenApi30_isAllowed() throws Exception {
+        deactivateGracePeriod();
         setUpNotifListener();
         mListener.addTestPackage(TRAMPOLINE_APP_API_30);
         EventCallback callback = new EventCallback();
@@ -4296,6 +4307,7 @@ public class NotificationManagerTest extends AndroidTestCase {
 
     public void testActivityStartOnBroadcastTrampoline_whenDefaultBrowser_isAllowed()
             throws Exception {
+        deactivateGracePeriod();
         setDefaultBrowser(TRAMPOLINE_APP);
         setUpNotifListener();
         mListener.addTestPackage(TRAMPOLINE_APP);
@@ -4317,6 +4329,7 @@ public class NotificationManagerTest extends AndroidTestCase {
 
     public void testActivityStartOnServiceTrampoline_whenDefaultBrowser_isAllowed()
             throws Exception {
+        deactivateGracePeriod();
         setDefaultBrowser(TRAMPOLINE_APP);
         setUpNotifListener();
         mListener.addTestPackage(TRAMPOLINE_APP);
