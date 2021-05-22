@@ -75,7 +75,7 @@ class ParamSensitivityTest(its_base_test.ItsBaseTest):
       sens_range = props['android.sensor.info.sensitivityRange']
       sens_step = (sens_range[1] - sens_range[0]) / float(NUM_STEPS-1)
       sensitivities = [
-          sens_range[0] + i * sens_step for i in range(NUM_STEPS)]
+          int(sens_range[0] + i * sens_step) for i in range(NUM_STEPS)]
 
       for s in sensitivities:
         logging.debug('Capturing with sensitivity: %d', s)
@@ -84,7 +84,7 @@ class ParamSensitivityTest(its_base_test.ItsBaseTest):
             cam, req, sync_latency, fmt)
         img = image_processing_utils.convert_capture_to_rgb_image(cap)
         image_processing_utils.write_image(
-            img, f'{s}_iso={test_name_with_path:04d}.jpg')
+            img, f'{test_name_with_path}_iso={s}.jpg')
         patch = image_processing_utils.get_image_patch(
             img, PATCH_X, PATCH_Y, PATCH_W, PATCH_H)
         rgb_means = image_processing_utils.compute_image_means(patch)

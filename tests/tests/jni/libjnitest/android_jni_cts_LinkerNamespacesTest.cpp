@@ -20,10 +20,12 @@
 
 #include <dirent.h>
 #include <dlfcn.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <jni.h>
 #include <libgen.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -37,9 +39,8 @@
 #include <android-base/file.h>
 #include <android-base/properties.h>
 #include <android-base/strings.h>
-#include <nativehelper/JNIHelp.h>
-#include <nativehelper/ScopedLocalRef.h>
-#include <nativehelper/ScopedUtfChars.h>
+#include <nativehelper/scoped_local_ref.h>
+#include <nativehelper/scoped_utf_chars.h>
 
 #if defined(__LP64__)
 #define LIB_DIR "lib64"

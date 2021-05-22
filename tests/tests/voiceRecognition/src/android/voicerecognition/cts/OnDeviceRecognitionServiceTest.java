@@ -18,13 +18,10 @@ package android.voicerecognition.cts;
 
 import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
-import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
-
 import android.content.ComponentName;
 import android.speech.SpeechRecognizer;
 import android.util.Log;
 
-import androidx.annotation.NonNull;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
@@ -46,8 +43,10 @@ public final class OnDeviceRecognitionServiceTest extends AbstractRecognitionSer
 
     @After
     public void tearDown() {
-        mRecognizer.setTemporaryOnDeviceRecognizer(null);
-        mRecognizer = null;
+        if (mRecognizer != null) {
+            mRecognizer.setTemporaryOnDeviceRecognizer(null);
+            mRecognizer = null;
+        }
 
         getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
     }
