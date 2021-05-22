@@ -530,12 +530,15 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
 
     /**
      * Restart WiFi subsystem - verify that privileged call fails.
-     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
      */
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+
     public void testRestartWifiSubsystemShouldFailNoPermission() throws Exception {
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported
+            return;
+        }
+        if (!WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(getContext())) {
+            // Skip the test if wifi module version is older than S.
             return;
         }
         try {
@@ -548,15 +551,17 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
 
     /**
      * Restart WiFi subsystem and verify transition through states.
-     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
      */
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
     public void testRestartWifiSubsystem() throws Exception {
-        mSubsystemRestartStatus = 0; // 0: uninitialized
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported
             return;
         }
+        if (!WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(getContext())) {
+            // Skip the test if wifi module version is older than S.
+            return;
+        }
+        mSubsystemRestartStatus = 0; // 0: uninitialized
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         try {
             uiAutomation.adoptShellPermissionIdentity();
