@@ -41,6 +41,8 @@ import static org.junit.Assert.assertEquals;
 import android.content.ComponentName;
 import android.platform.test.annotations.Presubmit;
 
+import androidx.test.filters.FlakyTest;
+
 import org.junit.Test;
 
 /**
@@ -84,6 +86,7 @@ public class TransitionSelectionTests extends ActivityManagerTestBase {
     }
 
     @Test
+    @FlakyTest(bugId = 188904549)
     public void testOpenActivity_BothWallpaper() {
         testOpenActivity(true /*bottomWallpaper*/, true /*topWallpaper*/,
                 false /*slowStop*/, TRANSIT_WALLPAPER_INTRA_OPEN);
