@@ -311,12 +311,18 @@ def define_reference_camera(pose_reference, cam_reference):
 
   if pose_reference == REFERENCE_GYRO:
     logging.debug('pose_reference is GYRO')
-    i_ref = list(cam_reference.keys())[0]  # pick first camera as ref
-    i_2nd = list(cam_reference.keys())[1]
+    keys = list(cam_reference.keys())
+    i_ref = keys[0]  # pick first camera as ref
+    i_2nd = keys[1]
   else:
     logging.debug('pose_reference is CAMERA')
-    i_ref = next(k for (k, v) in cam_reference.items() if v)
-    i_2nd = next(k for (k, v) in cam_reference.items() if not v)
+    i_refs = [k for (k, v) in cam_reference.items() if v]
+    if len(i_refs) > 1:
+      raise AssertionError('More than 1 reference camera. Check translation '
+                           f'matrices. cam_reference: {cam_reference}')
+    else:
+      i_ref = i_refs[0]
+      i_2nd = next(k for (k, v) in cam_reference.items() if not v)
   return i_ref, i_2nd
 
 

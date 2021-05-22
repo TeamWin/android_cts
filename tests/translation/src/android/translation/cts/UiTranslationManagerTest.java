@@ -19,7 +19,6 @@ package android.translation.cts;
 import static android.content.Context.CONTENT_CAPTURE_MANAGER_SERVICE;
 import static android.content.Context.TRANSLATION_MANAGER_SERVICE;
 import static android.view.translation.TranslationResponseValue.STATUS_SUCCESS;
-import static android.provider.Settings.Secure.ENABLED_INPUT_METHODS;
 import static android.translation.cts.Helper.ACTION_ASSERT_UI_TRANSLATION_CALLBACK_ON_FINISH;
 import static android.translation.cts.Helper.ACTION_ASSERT_UI_TRANSLATION_CALLBACK_ON_PAUSE;
 import static android.translation.cts.Helper.ACTION_ASSERT_UI_TRANSLATION_CALLBACK_ON_RESUME;
@@ -30,12 +29,13 @@ import static android.translation.cts.Helper.EXTRA_FINISH_COMMAND;
 import static android.translation.cts.Helper.EXTRA_SOURCE_LOCALE;
 import static android.translation.cts.Helper.EXTRA_TARGET_LOCALE;
 import static android.translation.cts.Helper.EXTRA_VERIFY_RESULT;
-import static android.translation.cts.Helper.Triple;
 
 import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
 import static com.google.common.truth.Truth.assertThat;
+
+import static org.mockito.ArgumentMatchers.any;
 
 import android.app.PendingIntent;
 import android.content.ComponentName;
@@ -47,12 +47,13 @@ import android.platform.test.annotations.AppModeFull;
 import android.provider.Settings;
 import android.service.contentcapture.ContentCaptureService;
 import android.service.translation.TranslationService;
+import android.transition.Transition;
 import android.util.Log;
 import android.util.Pair;
+import android.view.View;
 import android.view.autofill.AutofillId;
 import android.view.contentcapture.ContentCaptureContext;
 import android.view.inputmethod.InputMethodManager;
-import android.view.translation.TranslationManager;
 import android.view.translation.TranslationRequest;
 import android.view.translation.TranslationResponse;
 import android.view.translation.TranslationResponseValue;
@@ -60,8 +61,10 @@ import android.view.translation.TranslationSpec;
 import android.view.translation.UiTranslationManager;
 import android.view.translation.UiTranslationSpec;
 import android.view.translation.UiTranslationStateCallback;
+import android.view.translation.ViewTranslationCallback;
 import android.view.translation.ViewTranslationRequest;
 import android.view.translation.ViewTranslationResponse;
+import android.widget.TextView;
 
 import androidx.lifecycle.Lifecycle;
 import androidx.test.core.app.ActivityScenario;
@@ -80,13 +83,15 @@ import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
+import org.mockito.ArgumentCaptor;
+import org.w3c.dom.Text;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.List;
-import java.util.Locale;
+
 
 /**
  * Tests for {@link UiTranslationManager} related APIs.
@@ -114,6 +119,8 @@ public class UiTranslationManagerTest {
     private CtsTranslationService.ServiceWatcher mTranslationServiceServiceWatcher;
     private ActivityScenario<SimpleActivity> mActivityScenario;
 
+    private TextView mTextView;
+
     @Rule
     public final RequiredServiceRule mContentCaptureServiceRule =
             new RequiredServiceRule(CONTENT_CAPTURE_MANAGER_SERVICE);
@@ -139,7 +146,6 @@ public class UiTranslationManagerTest {
 
     @Before
     public void setup() throws Exception {
-        prepareDevice();
         CtsContentCaptureService.resetStaticState();
         CtsTranslationService.resetStaticState();
     }
@@ -152,23 +158,14 @@ public class UiTranslationManagerTest {
         Helper.resetTemporaryTranslationService();
     }
 
-    private void prepareDevice() throws Exception {
-        // Unlock screen.
-        runShellCommand("input keyevent KEYCODE_WAKEUP");
-        // Dismiss keyguard, in case it's set as "Swipe to unlock".
-        runShellCommand("wm dismiss-keyguard");
-        // Collapse notifications.
-        runShellCommand("cmd statusbar collapse");
-    }
-
     @Test
     public void testUiTranslation() throws Throwable {
-        final Triple<CharSequence, List<AutofillId>, ContentCaptureContext> result =
+        final Pair<List<AutofillId>, ContentCaptureContext> result =
                 enableServicesAndStartActivityForTranslation();
 
-        final CharSequence originalText = result.getFirst();
-        final List<AutofillId> views = result.getSecond();
-        final ContentCaptureContext contentCaptureContext = result.getThird();
+        final CharSequence originalText = mTextView.getText();
+        final List<AutofillId> views = result.first;
+        final ContentCaptureContext contentCaptureContext = result.second;
 
         final String translatedText = "success";
         final UiTranslationManager manager = sContext.getSystemService(UiTranslationManager.class);
@@ -186,7 +183,7 @@ public class UiTranslationManagerTest {
                     new TranslationSpec(ULocale.FRENCH,
                             TranslationSpec.DATA_FORMAT_TEXT),
                     views, contentCaptureContext.getActivityId(),
-                    new UiTranslationSpec.Builder().setShouldPadContentForCompat(true).build());
+                    new UiTranslationSpec.Builder().build());
 
             // Check request
             final TranslationRequest request = sTranslationReplier.getNextTranslationRequest();
@@ -227,14 +224,126 @@ public class UiTranslationManagerTest {
     }
 
     @Test
+    public void testUiTranslation_CustomViewTranslationCallback() throws Throwable {
+        final Pair<List<AutofillId>, ContentCaptureContext> result =
+                enableServicesAndStartActivityForTranslation();
+        final List<AutofillId> views = result.first;
+        final ContentCaptureContext contentCaptureContext = result.second;
+
+        // Set ViewTranslationCallback
+        ViewTranslationCallback mockCallback = Mockito.mock(ViewTranslationCallback.class);
+        mTextView.setViewTranslationCallback(mockCallback);
+        // Set response
+        sTranslationReplier.addResponse(createViewsTranslationResponse(views, "success"));
+        final UiTranslationManager manager = sContext.getSystemService(UiTranslationManager.class);
+        runWithShellPermissionIdentity(() -> {
+            // Call startTranslation API
+            manager.startTranslation(
+                    new TranslationSpec(ULocale.ENGLISH,
+                            TranslationSpec.DATA_FORMAT_TEXT),
+                    new TranslationSpec(ULocale.FRENCH,
+                            TranslationSpec.DATA_FORMAT_TEXT),
+                    views, contentCaptureContext.getActivityId(),
+                    new UiTranslationSpec.Builder().build());
+            SystemClock.sleep(UI_WAIT_TIMEOUT);
+        });
+        ArgumentCaptor<View> viewArgumentCaptor = ArgumentCaptor.forClass(View.class);
+        Mockito.verify(mockCallback, Mockito.times(1)).onShowTranslation(viewArgumentCaptor.capture());
+        TextView capturedView = (TextView) viewArgumentCaptor.getValue();
+        assertThat(capturedView.getAutofillId()).isEqualTo(mTextView.getAutofillId());
+
+        runWithShellPermissionIdentity(() -> {
+            // Call pauseTranslation API
+            manager.pauseTranslation(contentCaptureContext.getActivityId());
+            SystemClock.sleep(UI_WAIT_TIMEOUT);
+        });
+        Mockito.verify(mockCallback, Mockito.times(1)).onHideTranslation(viewArgumentCaptor.capture());
+        capturedView = (TextView) viewArgumentCaptor.getValue();
+        assertThat(capturedView.getAutofillId()).isEqualTo(mTextView.getAutofillId());
+
+        runWithShellPermissionIdentity(() -> {
+            // Call resumeTranslation API
+            manager.resumeTranslation(contentCaptureContext.getActivityId());
+            SystemClock.sleep(UI_WAIT_TIMEOUT);
+        });
+        Mockito.verify(mockCallback, Mockito.times(2)).onShowTranslation(viewArgumentCaptor.capture());
+        capturedView = (TextView) viewArgumentCaptor.getValue();
+        assertThat(capturedView.getAutofillId()).isEqualTo(mTextView.getAutofillId());
+
+        // Clear callback
+        mTextView.clearViewTranslationCallback();
+        runWithShellPermissionIdentity(() -> {
+            // Call finishTranslation API
+            manager.finishTranslation(contentCaptureContext.getActivityId());
+            SystemClock.sleep(UI_WAIT_TIMEOUT);
+        });
+        // Verify callback does not be called, keep the latest state
+        Mockito.verify(mockCallback, Mockito.never()).onClearTranslation(any(View.class));
+        Mockito.verifyNoMoreInteractions(mockCallback);
+    }
+
+    @Test
+    public void testUiTranslation_ViewTranslationCallback_paddingText() throws Throwable {
+        final Pair<List<AutofillId>, ContentCaptureContext> result =
+                enableServicesAndStartActivityForTranslation();
+        final List<AutofillId> views = result.first;
+        final ContentCaptureContext contentCaptureContext = result.second;
+
+        // Set response
+        final CharSequence originalText = mTextView.getText();
+        final CharSequence translatedText = "Translated World";
+        sTranslationReplier.addResponse(
+                createViewsTranslationResponse(views, translatedText.toString()));
+        final UiTranslationManager manager = sContext.getSystemService(UiTranslationManager.class);
+
+        // Use TextView default ViewTranslationCallback implementation
+        runWithShellPermissionIdentity(() -> {
+            // Call startTranslation API
+            manager.startTranslation(
+                    new TranslationSpec(ULocale.ENGLISH,
+                            TranslationSpec.DATA_FORMAT_TEXT),
+                    new TranslationSpec(ULocale.FRENCH,
+                            TranslationSpec.DATA_FORMAT_TEXT),
+                    views, contentCaptureContext.getActivityId(),
+                    new UiTranslationSpec.Builder().setShouldPadContentForCompat(true).build());
+            SystemClock.sleep(UI_WAIT_TIMEOUT);
+        });
+        CharSequence currentText = mTextView.getText();
+        assertThat(currentText.length()).isNotEqualTo(originalText.length());
+        assertThat(currentText.length()).isEqualTo(translatedText.length());
+
+        runWithShellPermissionIdentity(() -> {
+            // Call finishTranslation API
+            manager.finishTranslation(contentCaptureContext.getActivityId());
+            SystemClock.sleep(UI_WAIT_TIMEOUT);
+        });
+
+        // Set Customized ViewTranslationCallback
+        ViewTranslationCallback mockCallback = Mockito.mock(ViewTranslationCallback.class);
+        mTextView.setViewTranslationCallback(mockCallback);
+        runWithShellPermissionIdentity(() -> {
+            // Call startTranslation API
+            manager.startTranslation(
+                    new TranslationSpec(ULocale.ENGLISH,
+                            TranslationSpec.DATA_FORMAT_TEXT),
+                    new TranslationSpec(ULocale.FRENCH,
+                            TranslationSpec.DATA_FORMAT_TEXT),
+                    views, contentCaptureContext.getActivityId(),
+                    new UiTranslationSpec.Builder().setShouldPadContentForCompat(true).build());
+            SystemClock.sleep(UI_WAIT_TIMEOUT);
+        });
+        assertThat(mTextView.getText().length()).isEqualTo(originalText.length());
+    }
+
+    @Test
     public void testIMEUiTranslationStateCallback() throws Throwable {
         try (ImeSession imeSession = new ImeSession(
                 new ComponentName(CtsTestIme.IME_SERVICE_PACKAGE, CtsTestIme.class.getName()))) {
 
-            final Triple<CharSequence, List<AutofillId>, ContentCaptureContext> result =
+            final Pair<List<AutofillId>, ContentCaptureContext> result =
                     enableServicesAndStartActivityForTranslation();
-            final List<AutofillId> views = result.getSecond();
-            final ContentCaptureContext contentCaptureContext = result.getThird();
+            final List<AutofillId> views = result.first;
+            final ContentCaptureContext contentCaptureContext = result.second;
             final UiTranslationManager manager =
                     sContext.getSystemService(UiTranslationManager.class);
             sTranslationReplier.addResponse(createViewsTranslationResponse(views, "success"));
@@ -254,7 +363,7 @@ public class UiTranslationManagerTest {
                         new TranslationSpec(ULocale.FRENCH,
                                 TranslationSpec.DATA_FORMAT_TEXT),
                         views, contentCaptureContext.getActivityId(),
-                        new UiTranslationSpec.Builder().setShouldPadContentForCompat(true).build());
+                        new UiTranslationSpec.Builder().build());
                 SystemClock.sleep(UI_WAIT_TIMEOUT);
             });
             // Send broadcat to request IME to check the onStarted() result
@@ -324,11 +433,11 @@ public class UiTranslationManagerTest {
 
     @Test
     public void testNonIMEUiTranslationStateCallback() throws Throwable {
-        final Triple<CharSequence, List<AutofillId>, ContentCaptureContext> result =
+        final Pair<List<AutofillId>, ContentCaptureContext> result =
                 enableServicesAndStartActivityForTranslation();
 
-        final List<AutofillId> views = result.getSecond();
-        final ContentCaptureContext contentCaptureContext = result.getThird();
+        final List<AutofillId> views = result.first;
+        final ContentCaptureContext contentCaptureContext = result.second;
 
         UiTranslationManager manager =
                 sContext.getSystemService(UiTranslationManager.class);
@@ -337,8 +446,8 @@ public class UiTranslationManagerTest {
 
         // Register callback
         final Executor executor = Executors.newSingleThreadExecutor();
-        final TestTranslationStateCallback callback = new TestTranslationStateCallback();
-        manager.registerUiTranslationStateCallback(executor, callback);
+        UiTranslationStateCallback mockCallback = Mockito.mock(UiTranslationStateCallback.class);
+        manager.registerUiTranslationStateCallback(executor, mockCallback);
         runWithShellPermissionIdentity(() -> {
             // Call startTranslation API
             manager.startTranslation(
@@ -347,10 +456,11 @@ public class UiTranslationManagerTest {
                     new TranslationSpec(ULocale.FRENCH,
                             TranslationSpec.DATA_FORMAT_TEXT),
                     views, contentCaptureContext.getActivityId(),
-                    new UiTranslationSpec.Builder().setShouldPadContentForCompat(true).build());
+                    new UiTranslationSpec.Builder().build());
             SystemClock.sleep(UI_WAIT_TIMEOUT);
 
-            assertThat(callback.isOnStartedCalled()).isFalse();
+            Mockito.verify(mockCallback, Mockito.never())
+                    .onStarted(any(ULocale.class), any(ULocale.class));
         });
     }
 
@@ -405,7 +515,7 @@ public class UiTranslationManagerTest {
         return responseBuilder.build();
     }
 
-    private Triple<CharSequence, List<AutofillId>, ContentCaptureContext>
+    private Pair<List<AutofillId>, ContentCaptureContext>
             enableServicesAndStartActivityForTranslation() throws Exception {
         // Enable CTS ContentCaptureService
         CtsContentCaptureService contentcaptureService = enableContentCaptureService();
@@ -418,6 +528,7 @@ public class UiTranslationManagerTest {
 
         mActivityScenario = ActivityScenario.launch(intent);
         mActivityScenario.onActivity(activity -> {
+            mTextView = activity.getHelloText();
             originalTextRef.set(activity.getHelloText().getText());
             viewAutofillIdsRef.set(activity.getViewsForTranslation());
         });
@@ -433,72 +544,8 @@ public class UiTranslationManagerTest {
         mTranslationServiceServiceWatcher = CtsTranslationService.setServiceWatcher();
         Helper.setTemporaryTranslationService(CtsTranslationService.SERVICE_NAME);
 
-        // TODO(b/184617863): use separate methods not use Triple here.
-        return new Triple(originalText, views, contentCaptureContext);
-    }
-
-    static class TestTranslationStateCallback implements UiTranslationStateCallback {
-        private boolean mStartCalled;
-        private boolean mFinishCalled;
-        private boolean mPausedCalled;
-        private boolean mResumedCalled;
-        private ULocale mSourceLocale;
-        private ULocale mTargetLocale;
-
-        TestTranslationStateCallback() {
-            resetStates();
-        }
-
-        void resetStates() {
-            mStartCalled = false;
-            mFinishCalled = false;
-            mPausedCalled = false;
-            mResumedCalled = false;
-            mSourceLocale = null;
-            mTargetLocale = null;
-        }
-
-        Pair<ULocale, ULocale> getStartedLanguagePair() {
-            return new Pair<>(mSourceLocale, mTargetLocale);
-        }
-
-        boolean isOnStartedCalled() {
-            return mStartCalled;
-        }
-
-        boolean isOnFinishedCalled() {
-            return mFinishCalled;
-        }
-
-        boolean isOnPausedCalled() {
-            return mPausedCalled;
-        }
-
-        boolean isOnResumedCalled() {
-            return mResumedCalled;
-        }
-
-        @Override
-        public void onStarted(ULocale sourceLocale, ULocale targetLocale) {
-            mStartCalled = true;
-            mSourceLocale = sourceLocale;
-            mTargetLocale = targetLocale;
-        }
-
-        @Override
-        public void onResumed(ULocale sourceLocale, ULocale targetLocale) {
-            mResumedCalled = true;
-        }
-
-        @Override
-        public void onPaused() {
-            mPausedCalled = true;
-        }
-
-        @Override
-        public void onFinished() {
-            mFinishCalled = true;
-        }
+        // TODO(b/184617863): use separate methods not use Pair here.
+        return new Pair(views, contentCaptureContext);
     }
 
     private static class ImeSession implements AutoCloseable {

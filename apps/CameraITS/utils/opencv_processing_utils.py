@@ -364,7 +364,7 @@ def find_circle(img, img_name, min_area, color):
       colour = img_bw[shape['cty']][shape['ctx']]
       circlish = (math.pi * radius**2) / area
       aspect_ratio = shape['width'] / shape['height']
-      logging.debug('Potential circle found. radius: %.2f, color: %d,'
+      logging.debug('Potential circle found. radius: %.2f, color: %d, '
                     'circlish: %.3f, ar: %.3f, pts: %d', radius, colour,
                     circlish, aspect_ratio, num_pts)
       if (colour == color and
