@@ -17,6 +17,7 @@
 package android.server.wm.app;
 
 import static android.server.wm.app.Components.TestActivity.COMMAND_NAVIGATE_UP_TO;
+import static android.server.wm.app.Components.TestActivity.COMMAND_START_ACTIVITY;
 import static android.server.wm.app.Components.TestActivity.EXTRA_CONFIG_ASSETS_SEQ;
 import static android.server.wm.app.Components.TestActivity.EXTRA_FIXED_ORIENTATION;
 import static android.server.wm.app.Components.TestActivity.EXTRA_INTENTS;
@@ -108,6 +109,14 @@ public class TestActivity extends AbstractLifecycleLogActivity {
     @Override
     public void handleCommand(String command, Bundle data) {
         switch (command) {
+            case COMMAND_START_ACTIVITY:
+                final Intent startIntent = data.getParcelable(EXTRA_INTENT);
+                try {
+                    startActivity(startIntent);
+                } catch (Exception e) {
+                    Log.w(getTag(), "Failed to startActivity: " + startIntent, e);
+                }
+                break;
             case COMMAND_START_ACTIVITIES:
                 final Parcelable[] intents = data.getParcelableArray(EXTRA_INTENTS);
                 startActivities(Arrays.copyOf(intents, intents.length, Intent[].class));
