@@ -142,7 +142,8 @@ public class SilentUpdateTests {
                 .putLong("lastUpdateTime", lastUpdateTime)
                 .commit();
         commit(fileSupplier(
-                "/data/local/tmp/silentupdatetest/CtsSilentUpdateTestCases.apk"), false);
+                "/data/local/tmp/silentupdatetest/CtsSilentUpdateTestCases.apk"),
+                false /* requireUserAction */, true /* dontKillApp */);
     }
 
     @Test
@@ -217,7 +218,8 @@ public class SilentUpdateTests {
 
     private int install(Supplier<InputStream> apkStreamSupplier, Boolean requireUserAction)
             throws Exception {
-        InstallStatusListener isl = commit(apkStreamSupplier, requireUserAction);
+        InstallStatusListener isl = commit(apkStreamSupplier, requireUserAction,
+                false /* dontKillApp */);
         final Intent statusUpdate = isl.getResult();
         final int result =
                 statusUpdate.getIntExtra(PackageInstaller.EXTRA_STATUS, Integer.MIN_VALUE);
@@ -230,7 +232,7 @@ public class SilentUpdateTests {
     }
 
     private InstallStatusListener commit(Supplier<InputStream> apkStreamSupplier,
-            Boolean requireUserAction) throws IOException {
+            Boolean requireUserAction, boolean dontKillApp) throws IOException {
         final Context context = getContext();
         final PackageInstaller installer = context.getPackageManager().getPackageInstaller();
         SessionParams params = new SessionParams(SessionParams.MODE_FULL_INSTALL);
@@ -239,6 +241,7 @@ public class SilentUpdateTests {
                     ? USER_ACTION_REQUIRED
                     : USER_ACTION_NOT_REQUIRED);
         }
+        params.setDontKillApp(dontKillApp);
         int sessionId = installer.createSession(params);
         Assert.assertEquals("SessionInfo.getRequireUserAction and "
                         + "SessionParams.setRequireUserAction are not equal",
