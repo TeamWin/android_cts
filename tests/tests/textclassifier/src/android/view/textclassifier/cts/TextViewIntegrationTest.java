@@ -69,6 +69,7 @@ import org.junit.AfterClass;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -197,6 +198,7 @@ public class TextViewIntegrationTest {
     }
 
     @Test
+    @Ignore  // Enable the test once b/187862341 is fixed.
     public void smartSelection_cancelSelectionDoesNotInvokeClassifyText() throws Exception {
         Assume.assumeTrue(BuildCompat.isAtLeastS());
         smartSelectionInternal();
