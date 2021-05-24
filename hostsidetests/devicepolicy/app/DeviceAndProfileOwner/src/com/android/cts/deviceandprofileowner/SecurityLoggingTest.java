@@ -221,8 +221,7 @@ public class SecurityLoggingTest extends BaseDeviceAdminTest {
      * side actions and by {@link #testGenerateLogs()} are there.
      */
     public void testVerifyGeneratedLogs() throws Exception {
-        UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
-                .executeShellCommand("dpm force-security-logs");
+        forceSecurityLogs();
 
         final List<SecurityEvent> events = getEvents();
 
@@ -234,6 +233,11 @@ public class SecurityLoggingTest extends BaseDeviceAdminTest {
         if (mDevicePolicyManager.isOrganizationOwnedDeviceWithManagedProfile()) {
             verifyEventsRedacted(events);
         }
+    }
+
+    private void forceSecurityLogs() throws Exception {
+        UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
+                .executeShellCommand("dpm force-security-logs");
     }
 
     private void verifyAutomaticEventsPresent(List<SecurityEvent> events) {
@@ -361,6 +365,7 @@ public class SecurityLoggingTest extends BaseDeviceAdminTest {
      * is used to store these numbers between test invocations.
      */
     public void testVerifyLogIds() throws Exception {
+        forceSecurityLogs();
         final String param = InstrumentationRegistry.getArguments().getString(ARG_BATCH_NUMBER);
         final int batchId = param == null ? 0 : Integer.parseInt(param);
         final List<SecurityEvent> events = getEvents();
