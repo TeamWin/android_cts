@@ -341,7 +341,7 @@ public class ToastTest {
          * watch. Unlike the phone, which displays toast centered horizontally at the bottom of the
          * screen, the watch now displays toast in the center of the screen.
          */
-        if (mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH)) {
+        if (Gravity.CENTER == mToast.getGravity()) {
             assertTrue(xy1[0] > xy2[0]);
             assertTrue(xy1[1] > xy2[1]);
         } else {
