@@ -66,7 +66,7 @@ public class BubblesTestService extends Service {
         Notification.Builder nb = new Notification.Builder(context, NOTIFICATION_CHANNEL_ID)
                 .setContentTitle("foofoo")
                 .setContentIntent(pendingIntent)
-                .setShowForegroundImmediately(true)
+                .setForegroundServiceBehavior(Notification.FOREGROUND_SERVICE_IMMEDIATE)
                 .setSmallIcon(android.R.drawable.sym_def_app_icon)
                 .setStyle(new Notification.MessagingStyle(person)
                         .setConversationTitle("Bubble Chat")
