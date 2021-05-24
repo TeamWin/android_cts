@@ -2010,6 +2010,11 @@ public abstract class ActivityManagerTestBase {
                 countSpec(ActivityCallback.ON_CONFIGURATION_CHANGED, CountSpec.EQUALS, 0));
     }
 
+    static void assertSecurityExceptionFromActivityLauncher() {
+        waitForOrFail("SecurityException from " + ActivityLauncher.TAG,
+                ActivityLauncher::hasCaughtSecurityException);
+    }
+
     private static final Pattern sCurrentUiModePattern = Pattern.compile("mCurUiMode=0x(\\d+)");
     private static final Pattern sUiModeLockedPattern =
             Pattern.compile("mUiModeLocked=(true|false)");
