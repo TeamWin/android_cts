@@ -185,7 +185,11 @@ public final class TestAppSystemServiceFactory {
 
         Answer<?> answer = (inv) -> {
             Object[] args = inv.getArguments();
-            Log.d(TAG, "spying " + inv + " method: " + inv.getMethod());
+            if (VERBOSE) {
+                Log.v(TAG, "spying " + inv + " method: " + inv.getMethod());
+            } else {
+                Log.i(TAG, "spying " + inv.getMethod());
+            }
             String methodName = inv.getMethod().getName();
             Intent intent = new Intent(ACTION_WRAPPED_MANAGER_CALL)
                     .setClassName(context, receiverClassName)
