@@ -193,6 +193,31 @@ public class EdgeEffectTests extends ActivityTestBase {
         assertEquals(0f, effect.getDistance(), 0.001f);
     }
 
+    @Test
+    public void testPullToZeroReleases() {
+        EdgeEffect edgeEffect = new EdgeEffect(getContext());
+        edgeEffect.setSize(200, 200);
+        assertEquals(0.5f, edgeEffect.onPullDistance(0.5f, 0.5f), 0f);
+        assertFalse(edgeEffect.isFinished());
+        assertEquals(-0.5f, edgeEffect.onPullDistance(-0.5f, 0.5f), 0f);
+        assertTrue(edgeEffect.isFinished());
+    }
+
+    @Test
+    public void testFlingNegativeReleases() throws Throwable {
+        MockVsyncHelper.runOnVsyncThread(() -> {
+            EdgeEffect edgeEffect = new EdgeEffect(getContext());
+            edgeEffect.setSize(WIDTH, HEIGHT);
+            assertEquals(0.01f, edgeEffect.onPullDistance(0.01f, 0.5f), 0f);
+            assertFalse(edgeEffect.isFinished());
+            edgeEffect.onAbsorb(-10000);
+            nextFrame();
+            drawEdgeEffect(edgeEffect, 0f, 0f);
+            // It should have flung past 0 in one frame
+            assertTrue(edgeEffect.isFinished());
+        });
+    }
+
     private RenderNode drawStretchEffect(float rotation) {
         EdgeEffect edgeEffect = new EdgeEffect(getContext());
         edgeEffect.setSize(WIDTH, HEIGHT);
@@ -426,33 +451,35 @@ public class EdgeEffectTests extends ActivityTestBase {
     @Test
     @LargeTest
     public void testStretchPullAndHold() throws Exception {
-        EdgeEffect edgeEffect = createEdgeEffectWithPull();
-        assertEquals(0.25f, edgeEffect.getDistance(), 0.001f);
+        MockVsyncHelper.runOnVsyncThread(() -> {
+            EdgeEffect edgeEffect = createEdgeEffectWithPull();
+            assertEquals(0.25f, edgeEffect.getDistance(), 0.001f);
 
-        // We must wait until the EdgeEffect would normally start receding (167 ms)
-        sleepAnimationTime(200);
+            // We must wait until the EdgeEffect would normally start receding (167 ms)
+            sleepAnimationTime(200);
 
-        // Drawing will cause updates of the distance if it is animating
-        RenderNode renderNode = new RenderNode(null);
-        Canvas canvas = renderNode.beginRecording();
-        edgeEffect.draw(canvas);
+            // Drawing will cause updates of the distance if it is animating
+            RenderNode renderNode = new RenderNode(null);
+            Canvas canvas = renderNode.beginRecording();
+            edgeEffect.draw(canvas);
 
-        // A glow effect would start receding now, so let's be sure it doesn't:
-        sleepAnimationTime(200);
-        edgeEffect.draw(canvas);
+            // A glow effect would start receding now, so let's be sure it doesn't:
+            sleepAnimationTime(200);
+            edgeEffect.draw(canvas);
 
-        // It should not be updating now
-        assertEquals(0.25f, edgeEffect.getDistance(), 0.001f);
+            // It should not be updating now
+            assertEquals(0.25f, edgeEffect.getDistance(), 0.001f);
 
-        // Now let's release it and it should start animating
-        edgeEffect.onRelease();
+            // Now let's release it and it should start animating
+            edgeEffect.onRelease();
 
-        sleepAnimationTime(20);
+            sleepAnimationTime(20);
 
-        // Now that it should be animating, the draw should update the distance
-        edgeEffect.draw(canvas);
+            // Now that it should be animating, the draw should update the distance
+            edgeEffect.draw(canvas);
 
-        assertTrue(edgeEffect.getDistance() < 0.25f);
+            assertTrue(edgeEffect.getDistance() < 0.25f);
+        });
     }
 
     /**
@@ -461,32 +488,32 @@ public class EdgeEffectTests extends ActivityTestBase {
     @Test
     @LargeTest
     public void testCatchStretchDuringAnimation() throws Exception {
-        EdgeEffect edgeEffect = createEdgeEffectWithPull();
-        assertEquals(0.25f, edgeEffect.getDistance(), 0.001f);
-        edgeEffect.onRelease();
+        MockVsyncHelper.runOnVsyncThread(() -> {
+            EdgeEffect edgeEffect = createEdgeEffectWithPull();
+            assertEquals(0.25f, edgeEffect.getDistance(), 0.001f);
+            edgeEffect.onRelease();
 
-        // Wait some time to be sure it is animating away.
-        long startTime = AnimationUtils.currentAnimationTimeMillis();
-        sleepAnimationTime(20);
+            // Wait some time to be sure it is animating away.
+            sleepAnimationTime(20);
 
-        // Drawing will cause updates of the distance if it is animating
-        RenderNode renderNode = new RenderNode(null);
-        Canvas canvas = renderNode.beginRecording();
-        edgeEffect.draw(canvas);
+            // Drawing will cause updates of the distance if it is animating
+            RenderNode renderNode = new RenderNode(null);
+            Canvas canvas = renderNode.beginRecording();
+            edgeEffect.draw(canvas);
 
-        // It should have started retracting. Now catch it.
-        float consumed = edgeEffect.onPullDistance(0f, 0.5f);
-        assertEquals(0f, consumed, 0f);
+            // It should have started retracting. Now catch it.
+            float consumed = edgeEffect.onPullDistance(0f, 0.5f);
+            assertEquals(0f, consumed, 0f);
 
-        float distanceAfterAnimation = edgeEffect.getDistance();
-        assertTrue(distanceAfterAnimation < 0.25f);
+            float distanceAfterAnimation = edgeEffect.getDistance();
+            assertTrue(distanceAfterAnimation < 0.25f);
 
+            sleepAnimationTime(50);
 
-        sleepAnimationTime(50);
-
-        // There should be no change once it has been caught.
-        edgeEffect.draw(canvas);
-        assertEquals(distanceAfterAnimation, edgeEffect.getDistance(), 0f);
+            // There should be no change once it has been caught.
+            edgeEffect.draw(canvas);
+            assertEquals(distanceAfterAnimation, edgeEffect.getDistance(), 0f);
+        });
     }
 
     /**
@@ -524,16 +551,13 @@ public class EdgeEffectTests extends ActivityTestBase {
      * by at least <code>durationMillis</code> milliseconds. This is useful for EdgeEffect because
      * it uses that mechanism to determine the animation duration.
      *
+     * Must be in a {@link MockVsyncHelper#runOnVsyncThread(MockVsyncHelper.CallableVoid)}
+     *
      * @param durationMillis The time to sleep in milliseconds.
      */
-    private void sleepAnimationTime(long durationMillis) throws Exception {
-        final long startTime = AnimationUtils.currentAnimationTimeMillis();
-        long currentTime = startTime;
-        final long endTime = startTime + durationMillis;
-        do {
-            Thread.sleep(endTime - currentTime);
-            currentTime = AnimationUtils.currentAnimationTimeMillis();
-        } while (currentTime < endTime);
+    private void sleepAnimationTime(long durationMillis) {
+        AnimationUtils.lockAnimationClock(
+                AnimationUtils.currentAnimationTimeMillis() + durationMillis);
     }
 
     private interface StretchVerifier {
@@ -541,7 +565,11 @@ public class EdgeEffectTests extends ActivityTestBase {
     }
 
     // validates changes to the stretch over the course of an animation
-    private void verifyStretch(EdgeEffectInitializer initializer, StretchVerifier stretchVerifier) {
+    private void verifyStretch(
+            long timeBetweenFrames,
+            EdgeEffectInitializer initializer,
+            StretchVerifier stretchVerifier
+    ) {
         MockVsyncHelper.runOnVsyncThread(() -> {
             EdgeEffect edgeEffect = new EdgeEffect(getContext());
             edgeEffect.setSize(WIDTH, HEIGHT);
@@ -549,7 +577,7 @@ public class EdgeEffectTests extends ActivityTestBase {
             RenderNode renderNode1 = drawEdgeEffect(edgeEffect, 0, 0);
             float oldStretch = getStretchDownPixelCount(renderNode1);
             for (int i = 0; i < 3; i++) {
-                nextFrame();
+                sleepAnimationTime(timeBetweenFrames);
                 RenderNode renderNode2 = drawEdgeEffect(edgeEffect, 0, 0);
                 float newStretch = getStretchDownPixelCount(renderNode2);
                 stretchVerifier.verify(oldStretch, newStretch);
@@ -561,15 +589,19 @@ public class EdgeEffectTests extends ActivityTestBase {
     @Test
     public void testOnAbsorb() {
         verifyStretch(
+                8, // The spring will bounce back very quickly
                 edgeEffect -> edgeEffect.onAbsorb(300),
-                (oldStretch, newStretch) -> assertTrue("Stretch should grow",
-                        oldStretch < newStretch)
+                (oldStretch, newStretch) -> {
+                    assertTrue("Stretch should grow",
+                            oldStretch < newStretch);
+                }
         );
     }
 
     @Test
     public void testOnRelease() {
         verifyStretch(
+                16,
                 edgeEffect -> {
                     edgeEffect.onPull(1);
                     edgeEffect.onRelease();
