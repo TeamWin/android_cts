@@ -175,7 +175,6 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
     }
 
     @Test
-    @FlakyTest(bugId = 186608789)
     public void testTopPositionSwitchToTranslucentActivityOnTop() throws Exception {
         final Activity activity = launchActivityAndWait(CallbackTrackingActivity.class);
 
@@ -419,7 +418,6 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
     }
 
     @Test
-    @FlakyTest(bugId = 186608789)
     public void testTopPositionNewIntentForPaused() throws Exception {
         // Launch single top activity
         final Activity singleTopActivity = launchActivityAndWait(SingleTopActivity.class);

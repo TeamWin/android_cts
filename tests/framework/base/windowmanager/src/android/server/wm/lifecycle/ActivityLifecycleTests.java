@@ -948,7 +948,6 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
     }
 
     @Test
-    @FlakyTest(bugId = 186608789)
     public void testFinishBelowDialogActivity() throws Exception {
         verifyFinishAtStage(ResultActivity.class, EXTRA_FINISH_IN_ON_PAUSE, "onPause",
                 TranslucentCallbackTrackingActivity.class);
@@ -973,7 +972,6 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
     }
 
     @Test
-    @FlakyTest(bugId = 186608789)
     public void testFinishBelowTranslucentActivityAfterDelay() throws Exception {
         final Activity bottomActivity = launchActivityAndWait(CallbackTrackingActivity.class);
 
