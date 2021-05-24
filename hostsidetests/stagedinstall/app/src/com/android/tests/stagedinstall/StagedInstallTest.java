@@ -511,17 +511,14 @@ public class StagedInstallTest {
 
     @Test
     public void testsFailsNonStagedApexInstall() throws Exception {
-        PackageInstaller installer = getPackageInstaller();
-        PackageInstaller.SessionParams params = new PackageInstaller.SessionParams(
-                PackageInstaller.SessionParams.MODE_FULL_INSTALL);
-        params.setInstallAsApex();
-        try {
-            installer.createSession(params);
-            fail("IllegalArgumentException expected");
-        } catch (IllegalArgumentException expected) {
-            assertThat(expected.getMessage()).contains(
-                    "APEX files can only be installed as part of a staged session");
-        }
+        assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(1);
+        TestApp apex = new TestApp(
+                "Apex2", SHIM_APEX_PACKAGE_NAME, 2, /*isApex*/true,
+                "com.android.apex.cts.shim.v2.apex");
+        InstallUtils.commitExpectingFailure(AssertionError.class,
+                "does not support non-staged update",
+                Install.single(apex));
+        assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(1);
     }
 
     @Test
