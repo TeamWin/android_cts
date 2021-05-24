@@ -2,11 +2,12 @@
 [
   {
     "id": 1,
-    "lightType": "INPUT_RGB",
-    "lightName": "RGB",
+    "type": "INPUT",
+    "capabilities": "RGB | BRIGHTNESS",
+    "name": "RGB",
     "report": [],
-    "lightColor": 0xff446688,
-    "lightPlayerId": 0,
+    "color": 0xff446688,
+    "playerId": 0,
     "hidEventType": "UHID_OUTPUT",
     "ledsHidOutput":   // RGB leds brightness
         [ { "index": 8, "data": 0x44 },
@@ -17,11 +18,12 @@
 
   {
     "id": 1,
-    "lightType": "INPUT_RGB",
-    "lightName": "RGB",
+    "type": "INPUT",
+    "capabilities": "RGB | BRIGHTNESS",
+    "name": "RGB",
     "report": [],
-    "lightColor": 0x7f446688,
-    "lightPlayerId": 0,
+    "color": 0x7f446688,
+    "playerId": 0,
     "hidEventType": "UHID_OUTPUT",
     "ledsHidOutput":   // RGB leds brightness
         [ { "index": 8, "data": 0x22 },
@@ -32,11 +34,12 @@
 
   {
     "id": 1,
-    "lightType": "INPUT_RGB",
-    "lightName": "RGB",
+    "type": "INPUT",
+    "capabilities": "RGB | BRIGHTNESS",
+    "name": "RGB",
     "report": [],
-    "lightColor": 0x00000000,
-    "lightPlayerId": 0,
+    "color": 0x00000000,
+    "playerId": 0,
     "hidEventType": "UHID_OUTPUT",
     "ledsHidOutput":   // RGB leds brightness
         [ { "index": 8, "data": 0x0 },
