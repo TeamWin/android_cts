@@ -28,6 +28,7 @@
     Bug: 165343131 android.intent.action.CREATE_REMINDER (system in API 30)
     Bug: 187483828 android.intent.action.VIEW_PERMISSION_USAGE_FOR_PERIOD
     Bug: 187483828 android.intent.action.ACTIVITY_RECOGNIZER
+    Bug: 188702477 android.intent.action.DOMAINS_NEED_VERIFICATION
 -->
 <dynamicConfig>
     <entry key ="intent_whitelist">
@@ -44,5 +45,6 @@
       <value>android.intent.action.CREATE_REMINDER</value>
       <value>android.intent.action.VIEW_PERMISSION_USAGE_FOR_PERIOD</value>
       <value>android.intent.action.ACTIVITY_RECOGNIZER</value>
+      <value>android.intent.action.DOMAINS_NEED_VERIFICATION</value>
     </entry>
 </dynamicConfig>
