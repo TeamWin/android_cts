@@ -16,8 +16,13 @@
 
 package com.android.bedstead.testapp;
 
-/** Details about a queryable test app. */
-class TestAppDetails {
-    String mPackageName;
-    int mResourceIdentifier;
+import com.google.android.enterprise.connectedapps.annotations.CrossProfileProvider;
+
+/** Cross Profile provider for TestApp. */
+public class Provider {
+    /** Provide instance of {@link TargetedRemoteActivity} to Connected Apps SDK. */
+    @CrossProfileProvider
+    public TargetedRemoteActivity provideTargetedRemoteActivity() {
+        return new TargetedRemoteActivityImpl();
+    }
 }

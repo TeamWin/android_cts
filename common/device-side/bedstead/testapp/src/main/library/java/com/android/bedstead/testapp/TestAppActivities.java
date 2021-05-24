@@ -24,6 +24,11 @@ public final class TestAppActivities {
         mInstance = instance;
     }
 
+    /**
+     * Return any activity included in the test app Manifest.
+     *
+     * <p>Currently, this will always return the same activity.
+     */
     public TestAppActivityReference any() {
         // TODO(scottjonathan): Currently we only have one pattern for testapps and they all have
         //  exactly one activity - so we will return it here. In future we should expose a query
