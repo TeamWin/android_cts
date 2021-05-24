@@ -133,6 +133,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
 
     protected static AssetFileDescriptor getAssetFileDescriptorFor(final String res)
             throws FileNotFoundException {
+        Preconditions.assertTestFileExists(mInpPrefix + res);
         File inpFile = new File(mInpPrefix + res);
         ParcelFileDescriptor parcelFD =
                 ParcelFileDescriptor.open(inpFile, ParcelFileDescriptor.MODE_READ_ONLY);
@@ -220,6 +221,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         // This is "R.raw.testmp3_2", base64-encoded.
         final String res = "testmp3_3.raw";
 
+        Preconditions.assertTestFileExists(mInpPrefix + res);
         InputStream is = new FileInputStream(mInpPrefix + res);
         BufferedReader reader = new BufferedReader(new InputStreamReader(is));
 
@@ -292,6 +294,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
 
     public void testPlayAudio(final String res,
             int mp3Duration, int tolerance, int seekDuration) throws Exception {
+        Preconditions.assertTestFileExists(mInpPrefix + res);
         MediaPlayer mp = MediaPlayer.create(mContext, Uri.fromFile(new File(mInpPrefix + res)));
         try {
             mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
@@ -344,6 +347,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         final String res = "test1m1s.mp3"; // MP3 longer than 1m are usualy offloaded
         final int tolerance = 70;
 
+        Preconditions.assertTestFileExists(mInpPrefix + res);
         List<MediaPlayer> mps = Stream.generate(
                 () -> MediaPlayer.create(mContext, Uri.fromFile(new File(mInpPrefix + res))))
                                       .limit(5).collect(Collectors.toList());
@@ -380,6 +384,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
     public void testPlayAudioLooping() throws Exception {
         final String res = "testmp3.mp3";
 
+        Preconditions.assertTestFileExists(mInpPrefix + res);
         MediaPlayer mp = MediaPlayer.create(mContext, Uri.fromFile(new File(mInpPrefix + res)));
         try {
             mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
@@ -426,6 +431,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         final int tolerance = 70;
         final int seekDuration = 1000;
 
+        Preconditions.assertTestFileExists(mInpPrefix + res);
         MediaPlayer mp = MediaPlayer.create(mContext, Uri.fromFile(new File(mInpPrefix + res)));
         try {
             mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
@@ -590,6 +596,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
 
         final String res = "camera_click.ogg";
 
+        Preconditions.assertTestFileExists(mInpPrefix + res);
         MediaPlayer mp = MediaPlayer.create(mContext, Uri.fromFile(new File(mInpPrefix + res)));
         try {
             mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
@@ -2470,6 +2477,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         final String res = "video_480x360_mp4_h264_1350kbps_30fps_aac_stereo_192kbps_44100hz.mp4";
         final int duration = 10000;
 
+        Preconditions.assertTestFileExists(mInpPrefix + res);
         if (!MediaUtils.hasCodecsForResource(mInpPrefix + res)) {
             return;
         }
@@ -2526,6 +2534,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
     @Presubmit
     public void testPlaybackFailsIfMediaDataSourceThrows() throws Exception {
         final String res = "video_480x360_mp4_h264_1350kbps_30fps_aac_stereo_192kbps_44100hz.mp4";
+        Preconditions.assertTestFileExists(mInpPrefix + res);
         if (!MediaUtils.hasCodecsForResource(mInpPrefix + res)) {
             return;
         }
@@ -2544,6 +2553,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
     @Presubmit
     public void testPlaybackFailsIfMediaDataSourceReturnsAnError() throws Exception {
         final String res = "video_480x360_mp4_h264_1350kbps_30fps_aac_stereo_192kbps_44100hz.mp4";
+        Preconditions.assertTestFileExists(mInpPrefix + res);
         if (!MediaUtils.hasCodecsForResource(mInpPrefix + res)) {
             return;
         }

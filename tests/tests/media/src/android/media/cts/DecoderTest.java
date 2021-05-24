@@ -102,6 +102,7 @@ public class DecoderTest extends MediaPlayerTestBase {
     protected static AssetFileDescriptor getAssetFileDescriptorFor(final String res)
             throws FileNotFoundException {
         File inpFile = new File(mInpPrefix + res);
+        Preconditions.assertTestFileExists(mInpPrefix + res);
         ParcelFileDescriptor parcelFD =
                 ParcelFileDescriptor.open(inpFile, ParcelFileDescriptor.MODE_READ_ONLY);
         return new AssetFileDescriptor(parcelFD, 0, parcelFD.getStatSize());
@@ -234,9 +235,11 @@ public class DecoderTest extends MediaPlayerTestBase {
     }
 
     public void testDecodeMonoGsm() throws Exception {
-        if (MediaUtils.hasCodecsForResource(mInpPrefix + "monotestgsm.wav")) {
-            monoTest("monotestgsm.wav", 8000);
-            testTimeStampOrdering("monotestgsm.wav");
+        String fileName = "monotestgsm.wav";
+        Preconditions.assertTestFileExists(mInpPrefix + fileName);
+        if (MediaUtils.hasCodecsForResource(mInpPrefix + fileName)) {
+            monoTest(fileName, 8000);
+            testTimeStampOrdering(fileName);
         } else {
             MediaUtils.skipTest("not mandatory");
         }
@@ -415,6 +418,7 @@ public class DecoderTest extends MediaPlayerTestBase {
 
     public int testBFrames(final String res) throws Exception {
         MediaExtractor ex = new MediaExtractor();
+        Preconditions.assertTestFileExists(mInpPrefix + res);
         ex.setDataSource(mInpPrefix + res);
         MediaFormat format = ex.getTrackFormat(0);
         String mime = format.getString(MediaFormat.KEY_MIME);
@@ -595,6 +599,7 @@ public class DecoderTest extends MediaPlayerTestBase {
     private void testColorAspects(
             final String res, int testId, int expectRange, int expectStandard, int expectTransfer,
             Surface surface) throws Exception {
+        Preconditions.assertTestFileExists(mInpPrefix + res);
         MediaFormat format = MediaUtils.getTrackFormatForResource(mInpPrefix + res, "video");
         MediaFormat mimeFormat = new MediaFormat();
         mimeFormat.setString(MediaFormat.KEY_MIME, format.getString(MediaFormat.KEY_MIME));
@@ -612,6 +617,7 @@ public class DecoderTest extends MediaPlayerTestBase {
     private void testColorAspects(
             String decoderName, final String res, int testId, int expectRange,
             int expectStandard, int expectTransfer, Surface surface) throws Exception {
+        Preconditions.assertTestFileExists(mInpPrefix + res);
         MediaExtractor ex = new MediaExtractor();
         ex.setDataSource(mInpPrefix + res);
         MediaFormat format = ex.getTrackFormat(0);
@@ -704,6 +710,7 @@ public class DecoderTest extends MediaPlayerTestBase {
 
     private void testTrackSelection(final String res) throws Exception {
         MediaExtractor ex1 = new MediaExtractor();
+        Preconditions.assertTestFileExists(mInpPrefix + res);
         try {
             ex1.setDataSource(mInpPrefix + res);
 
@@ -990,6 +997,7 @@ public class DecoderTest extends MediaPlayerTestBase {
         MediaExtractor extractor = null;
         final boolean dynamic = dynamicInfo != null;
 
+        Preconditions.assertTestFileExists(mInpPrefix + res);
         try {
             extractor = new MediaExtractor();
             extractor.setDataSource(mInpPrefix + res);
@@ -1237,6 +1245,7 @@ public class DecoderTest extends MediaPlayerTestBase {
         handlerThread.start();
         final boolean dynamic = dynamicInfo != null;
 
+        Preconditions.assertTestFileExists(mInpPrefix + res);
         try {
             extractor = new MediaExtractor();
             extractor.setDataSource(mInpPrefix + res);
@@ -1440,6 +1449,8 @@ public class DecoderTest extends MediaPlayerTestBase {
 
     private void testDecodeFragmented(final String reference, final String teststream)
             throws Exception {
+        Preconditions.assertTestFileExists(mInpPrefix + reference);
+        Preconditions.assertTestFileExists(mInpPrefix + teststream);
         try {
             MediaExtractor ex1 = new MediaExtractor();
             ex1.setDataSource(mInpPrefix + reference);

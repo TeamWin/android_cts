@@ -182,6 +182,7 @@ public class RingtoneManagerTest
         Cursor c = mRingtoneManager.getCursor();
         assertTrue("Must have at least one ring tone available", c.getCount() > 0);
 
+        Preconditions.assertTestFileExists(mInpPrefix + "john_cage.ogg");
         mRingtoneManager.setStopPreviousRingtone(true);
         assertTrue(mRingtoneManager.getStopPreviousRingtone());
         Uri uri = Uri.parse(mInpPrefix + "john_cage.ogg");
