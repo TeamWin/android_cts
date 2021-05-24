@@ -38,6 +38,7 @@
     <!-- Create Place to store apks -->
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
         <option name="run-command" value="mkdir -p /data/local/tmp/cts/os" />
+        <option name="run-command" value="am wait-for-broadcast-idle" />
         <option name="teardown-command" value="rm -rf /data/local/tmp/cts/os" />
     </target_preparer>
     <!-- Load additional APKs onto device -->
