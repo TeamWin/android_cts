@@ -188,8 +188,14 @@ public class PolicyTransparencyTestListActivity extends PassFailButtons.TestList
         switch (test) {
             case PolicyTransparencyTestActivity.TEST_CHECK_PERMITTED_INPUT_METHOD:
                 return pm.hasSystemFeature(PackageManager.FEATURE_INPUT_METHODS);
+            // TODO(b/189282625): replace FEATURE_WATCH with a more specific feature
             case PolicyTransparencyTestActivity.TEST_CHECK_PERMITTED_ACCESSIBILITY_SERVICE:
-                return pm.hasSystemFeature(PackageManager.FEATURE_AUDIO_OUTPUT);
+                return (pm.hasSystemFeature(PackageManager.FEATURE_AUDIO_OUTPUT) &&
+                        !pm.hasSystemFeature(PackageManager.FEATURE_WATCH));
+            // TODO(b/189282625): replace FEATURE_WATCH with a more specific feature
+            case PolicyTransparencyTestActivity.TEST_CHECK_KEYGURAD_UNREDACTED_NOTIFICATION:
+            case PolicyTransparencyTestActivity.TEST_CHECK_MAXIMUM_TIME_TO_LOCK:
+            case PolicyTransparencyTestActivity.TEST_CHECK_PASSWORD_QUALITY:
             case PolicyTransparencyTestActivity.TEST_CHECK_LOCK_SCREEN_INFO:
                 return !pm.hasSystemFeature(PackageManager.FEATURE_WATCH);
             default:
