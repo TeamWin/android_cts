@@ -18,6 +18,7 @@ package android.voiceinteraction.service;
 
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
+import android.Manifest;
 import android.content.Intent;
 import android.media.AudioFormat;
 import android.os.ParcelFileDescriptor;
@@ -73,9 +74,12 @@ public class BasicVoiceInteractionService extends VoiceInteractionService {
         if (testEvent == Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_TEST) {
             runWithShellPermissionIdentity(() -> {
                 mAlwaysOnHotwordDetector = callCreateAlwaysOnHotwordDetector();
-            });
-        } else if (testEvent == Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_WITHOUT_PERMISSION_TEST) {
-            callCreateAlwaysOnHotwordDetector();
+            }, Manifest.permission.MANAGE_HOTWORD_DETECTION);
+        } else if (testEvent == Utils.VIS_WITHOUT_MANAGE_HOTWORD_DETECTION_PERMISSION_TEST) {
+            runWithShellPermissionIdentity(() -> callCreateAlwaysOnHotwordDetector(),
+                    Manifest.permission.BIND_HOTWORD_DETECTION_SERVICE);
+        } else if (testEvent == Utils.VIS_HOLD_BIND_HOTWORD_DETECTION_PERMISSION_TEST) {
+            runWithShellPermissionIdentity(() -> callCreateAlwaysOnHotwordDetector());
         } else if (testEvent == Utils.HOTWORD_DETECTION_SERVICE_DSP_ONDETECT_TEST) {
             runWithShellPermissionIdentity(() -> {
                 if (mAlwaysOnHotwordDetector != null) {

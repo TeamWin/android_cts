@@ -31,7 +31,7 @@ public class VoiceInteractionMain extends Activity {
         super.onCreate(savedInstanceState);
         Intent intent = new Intent();
         intent.setComponent(new ComponentName(this, MainInteractionService.class));
-        intent.putExtra(Utils.KEY_TEST_EVENT, Utils.VOICE_INTERACTION_SERVICE_NORMAL_TEST);
+        intent.putExtra(Utils.KEY_TEST_EVENT, Utils.VIS_NORMAL_TEST);
         final Bundle intentExtras = getIntent().getExtras();
         if (intentExtras != null) {
             intent.putExtras(intentExtras);
