@@ -94,6 +94,8 @@ public abstract class BaseUserRestrictionsTest extends BaseDeviceAdminTest {
             UserManager.DISALLOW_CREATE_WINDOWS,
             UserManager.DISALLOW_BLUETOOTH,
             // UserManager.DISALLOW_DATA_ROAMING, // Not set during CTS
+            UserManager.DISALLOW_CAMERA_TOGGLE,
+            UserManager.DISALLOW_MICROPHONE_TOGGLE,
 
             // PO can set them too, but when DO sets them, they're global.
             UserManager.DISALLOW_ADJUST_VOLUME,
