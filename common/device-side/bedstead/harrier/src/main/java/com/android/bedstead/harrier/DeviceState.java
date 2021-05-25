@@ -69,6 +69,7 @@ import com.android.bedstead.nene.permissions.PermissionContextImpl;
 import com.android.bedstead.nene.users.User;
 import com.android.bedstead.nene.users.UserBuilder;
 import com.android.bedstead.nene.users.UserReference;
+import com.android.bedstead.nene.users.UserType;
 import com.android.bedstead.nene.utils.ShellCommand;
 import com.android.bedstead.nene.utils.Versions;
 import com.android.bedstead.remotedpc.RemoteDpc;
@@ -157,7 +158,9 @@ public final class DeviceState implements TestRule {
 
                 PermissionContextImpl permissionContext = null;
 
-                for (Annotation annotation : getAnnotations(description)) {
+                Collection<Annotation> annotations = getAnnotations(description);
+
+                for (Annotation annotation : annotations) {
                     Class<? extends Annotation> annotationType = annotation.annotationType();
 
                     EnsureHasNoProfileAnnotation ensureHasNoProfileAnnotation =
@@ -177,10 +180,19 @@ public final class DeviceState implements TestRule {
                         OptionalBoolean installInstrumentedApp = (OptionalBoolean)
                                 annotation.annotationType()
                                 .getMethod("installInstrumentedApp").invoke(annotation);
-                            ensureHasProfile(
-                                    ensureHasProfileAnnotation.value(), installInstrumentedApp,
-                                    forUser);
-                            continue;
+
+                        boolean dpcIsPrimary = false;
+                        if (ensureHasProfileAnnotation.hasProfileOwner()) {
+                            dpcIsPrimary = (boolean)
+                                    annotation.annotationType()
+                                            .getMethod("dpcIsPrimary").invoke(annotation);
+                        }
+
+                        ensureHasProfile(
+                                ensureHasProfileAnnotation.value(), installInstrumentedApp,
+                                forUser, ensureHasProfileAnnotation.hasProfileOwner(),
+                                dpcIsPrimary);
+                        continue;
                     }
 
                     EnsureHasNoUserAnnotation ensureHasNoUserAnnotation =
@@ -414,21 +426,33 @@ public final class DeviceState implements TestRule {
     }
 
     private void requireRunOnUser(String userType) {
+        User instrumentedUser = sTestApis.users().instrumented().resolve();
+
         assumeTrue("This test only runs on users of type " + userType,
-                isRunningOnUser(userType));
+                instrumentedUser.type().name().equals(userType));
+
+        mUsers.put(instrumentedUser.type(), instrumentedUser);
     }
 
     private void requireRunOnProfile(String userType,
             OptionalBoolean installInstrumentedAppInParent) {
+        User instrumentedUser = sTestApis.users().instrumented().resolve();
+
         assumeTrue("This test only runs on users of type " + userType,
-                isRunningOnUser(userType));
+                instrumentedUser.type().name().equals(userType));
+
+        if (!mProfiles.containsKey(instrumentedUser.type())) {
+            mProfiles.put(instrumentedUser.type(), new HashMap<>());
+        }
+
+        mProfiles.get(instrumentedUser.type()).put(instrumentedUser.parent(), instrumentedUser);
 
         if (installInstrumentedAppInParent.equals(OptionalBoolean.TRUE)) {
             sTestApis.packages().find(sContext.getPackageName()).install(
-                    sTestApis.users().instrumented().resolve().parent());
+                    instrumentedUser.parent());
         } else if (installInstrumentedAppInParent.equals(OptionalBoolean.FALSE)) {
             sTestApis.packages().find(sContext.getPackageName()).uninstall(
-                    sTestApis.users().instrumented().resolve().parent());
+                    instrumentedUser.parent());
         }
     }
 
@@ -514,7 +538,9 @@ public final class DeviceState implements TestRule {
     private Map<UserReference, DevicePolicyController> mChangedProfileOwners = new HashMap<>();
 
     /**
-     * Get the {@link UserReference} of the work profile for the current user
+     * Get the {@link UserReference} of the work profile for the current user.
+     *
+     * <p>If the current user is a work profile, then the current user will be returned.
      *
      * <p>This should only be used to get work profiles managed by Harrier (using either the
      * annotations or calls to the {@link DeviceState} class.
@@ -549,7 +575,42 @@ public final class DeviceState implements TestRule {
         return profile(MANAGED_PROFILE_TYPE_NAME, forUser);
     }
 
-    private UserReference profile(String profileType, UserReference forUser) {
+    /**
+     * Get the {@link UserReference} of the profile of the given type for the given user.
+     *
+     * <p>This should only be used to get profiles managed by Harrier (using either the
+     * annotations or calls to the {@link DeviceState} class.
+     *
+     * @throws IllegalStateException if there is no harrier-managed profile for the given user
+     */
+    public UserReference profile(String profileType, UserType forUser) {
+        return profile(profileType, resolveUserTypeToUser(forUser));
+    }
+
+    /**
+     * Get the {@link UserReference} of the profile for the current user.
+     *
+     * <p>If the current user is a profile of the correct type, then the current user will be
+     * returned.
+     *
+     * <p>This should only be used to get profiles managed by Harrier (using either the
+     * annotations or calls to the {@link DeviceState} class.
+     *
+     * @throws IllegalStateException if there is no harrier-managed profile
+     */
+    public UserReference profile(String profileType) {
+        return profile(profileType, /* forUser= */ UserType.CURRENT_USER);
+    }
+
+    /**
+     * Get the {@link UserReference} of the profile of the given type for the given user.
+     *
+     * <p>This should only be used to get profiles managed by Harrier (using either the
+     * annotations or calls to the {@link DeviceState} class.
+     *
+     * @throws IllegalStateException if there is no harrier-managed profile for the given user
+     */
+    public UserReference profile(String profileType, UserReference forUser) {
         com.android.bedstead.nene.users.UserType resolvedUserType =
                 sTestApis.users().supportedType(profileType);
 
@@ -561,24 +622,36 @@ public final class DeviceState implements TestRule {
         return profile(resolvedUserType, forUser);
     }
 
-    private UserReference profile(
+    /**
+     * Get the {@link UserReference} of the profile of the given type for the given user.
+     *
+     * <p>This should only be used to get profiles managed by Harrier (using either the
+     * annotations or calls to the {@link DeviceState} class.
+     *
+     * @throws IllegalStateException if there is no harrier-managed profile for the given user
+     */
+    public UserReference profile(
             com.android.bedstead.nene.users.UserType userType, UserReference forUser) {
         if (userType == null || forUser == null) {
             throw new NullPointerException();
         }
 
         if (!mProfiles.containsKey(userType) || !mProfiles.get(userType).containsKey(forUser)) {
+            UserReference parentUser = sTestApis.users().instrumented().resolve().parent();
+
+            if (parentUser != null) {
+                if (mProfiles.containsKey(userType)
+                        && mProfiles.get(userType).containsKey(parentUser)) {
+                    return mProfiles.get(userType).get(parentUser);
+                }
+            }
+
             throw new IllegalStateException(
                     "No harrier-managed profile of type " + userType + ". This method should only"
                             + " be used when Harrier has been used to create the profile.");
         }
 
         return mProfiles.get(userType).get(forUser);
-    }
-
-    private boolean isRunningOnUser(String userType) {
-        return sTestApis.users().instrumented()
-                .resolve().type().name().equals(userType);
     }
 
     /**
@@ -636,12 +709,19 @@ public final class DeviceState implements TestRule {
      *
      * @throws IllegalStateException if there is no harrier-managed secondary user
      */
-    @Nullable
     public UserReference secondaryUser() {
         return user(SECONDARY_USER_TYPE_NAME);
     }
 
-    private UserReference user(String userType) {
+    /**
+     * Get a user of the given type.
+     *
+     * <p>This should only be used to get users managed by Harrier (using either the
+     * annotations or calls to the {@link DeviceState} class.
+     *
+     * @throws IllegalStateException if there is no harrier-managed user of the correct type
+     */
+    public UserReference user(String userType) {
         com.android.bedstead.nene.users.UserType resolvedUserType =
                 sTestApis.users().supportedType(userType);
 
@@ -653,22 +733,34 @@ public final class DeviceState implements TestRule {
         return user(resolvedUserType);
     }
 
-    private UserReference user(com.android.bedstead.nene.users.UserType userType) {
+    /**
+     * Get a user of the given type.
+     *
+     * <p>This should only be used to get users managed by Harrier (using either the
+     * annotations or calls to the {@link DeviceState} class.
+     *
+     * @throws IllegalStateException if there is no harrier-managed user of the correct type
+     */
+    public UserReference user(com.android.bedstead.nene.users.UserType userType) {
         if (userType == null) {
             throw new NullPointerException();
         }
 
         if (!mUsers.containsKey(userType)) {
             throw new IllegalStateException(
-                    "No harrier-managed secondary user. This method should only be used when "
-                            + "Harrier has been used to create the secondary user.");
+                    "No harrier-managed user of type " + userType + ". This method should only be"
+                            + "used when Harrier has been used to create the user.");
         }
 
         return mUsers.get(userType);
     }
 
     private UserReference ensureHasProfile(
-            String profileType, OptionalBoolean installInstrumentedApp, UserType forUser) {
+            String profileType,
+            OptionalBoolean installInstrumentedApp,
+            UserType forUser,
+            boolean hasProfileOwner,
+            boolean profileOwnerIsPrimary) {
         requireFeature("android.software.managed_users", FailureMode.SKIP);
         com.android.bedstead.nene.users.UserType resolvedUserType =
                 requireUserSupported(profileType, FailureMode.SKIP);
@@ -695,6 +787,9 @@ public final class DeviceState implements TestRule {
 
         mProfiles.get(resolvedUserType).put(forUserReference, profile);
 
+        if (hasProfileOwner) {
+            ensureHasProfileOwner(profile, profileOwnerIsPrimary);
+        }
         return profile;
     }
 
@@ -975,11 +1070,15 @@ public final class DeviceState implements TestRule {
 
     private void ensureHasProfileOwner(UserType onUser, boolean isPrimary) {
         // TODO(scottjonathan): Should support non-remotedpc profile owner (default to remotedpc)
+        UserReference user = resolveUserTypeToUser(onUser);
+        ensureHasProfileOwner(user, isPrimary);
+    }
+
+    private void ensureHasProfileOwner(UserReference user, boolean isPrimary) {
         if (isPrimary && mPrimaryDpc != null) {
             throw new IllegalStateException("Only one DPC can be marked as primary per test");
         }
 
-        UserReference user = resolveUserTypeToUser(onUser);
         ProfileOwner currentProfileOwner = sTestApis.devicePolicy().getProfileOwner(user);
         DeviceOwner currentDeviceOwner = sTestApis.devicePolicy().getDeviceOwner();
 
