@@ -906,23 +906,12 @@ public class TranscodeTest {
             // Trigger transcoding so that the transcoded file gets added to cache.
             assertTranscode(modernFile, true);
 
-            // To make the cache clearing logic easier to verify, ignore any cache reserved space.
-            executeShellCommand("settings put global sys_storage_cache_max_bytes 0");
-            // Invoke StorageManager to free maximum allocatable bytes, so that it tries to clear
-            // all available caches.
-            StorageManager storageManager = getContext().getSystemService(StorageManager.class);
-            StorageVolume vol = storageManager.getStorageVolume(modernFile);
-            UUID uuid = vol.getStorageUuid();
-            try {
-                // The storage allocation for requested bytes may succeed or fail, but we don't
-                // care as long as the cache clearing gets invoked. Hence we swallow the exception
-                // for failure case, and allow the test execution to continue.
-                storageManager.allocateBytes(uuid, storageManager.getAllocatableBytes(uuid));
-            } catch (IOException e) {}
-            finally {
-                // Assert that transcoding happens again, i.e., transcoding cache was cleared.
-                assertTranscode(modernFile, true);
-            }
+            // Invoke PackageManager to free a huge amount of storage, so that it tries to clear all
+            // available caches.
+            executeShellCommand("pm trim-caches 4096G");
+
+            // Assert that transcoding happens again, i.e., transcoding cache was cleared.
+            assertTranscode(modernFile, true);
         } finally {
             modernFile.delete();
         }
