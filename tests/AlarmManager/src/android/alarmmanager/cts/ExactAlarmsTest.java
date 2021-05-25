@@ -30,13 +30,16 @@ import static org.junit.Assume.assumeFalse;
 import android.app.AlarmManager;
 import android.app.AppOpsManager;
 import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.PowerWhitelistManager;
 import android.os.Process;
 import android.os.SystemClock;
+import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
 import android.provider.Settings;
 import android.util.Log;
@@ -47,7 +50,9 @@ import androidx.test.runner.AndroidJUnit4;
 import com.android.compatibility.common.util.AppOpsUtils;
 import com.android.compatibility.common.util.AppStandbyUtils;
 import com.android.compatibility.common.util.FeatureUtil;
+import com.android.compatibility.common.util.ShellUtils;
 import com.android.compatibility.common.util.SystemUtil;
+import com.android.compatibility.common.util.TestUtils;
 
 import org.junit.After;
 import org.junit.Before;
@@ -59,6 +64,8 @@ import org.junit.runner.RunWith;
 
 import java.io.IOException;
 import java.util.Random;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 @AppModeFull
 @RunWith(AndroidJUnit4.class)
@@ -410,4 +417,65 @@ public class ExactAlarmsTest {
                 + Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, pm.resolveActivity(request, 0));
     }
 
+    /**
+     * Check if a given UID is in the "can start FGS" allowlist.
+     */
+    private boolean checkThisAppTempAllowListed(int uid) {
+        // The allowlist used internally is ActivityManagerService.mFgsStartTempAllowList. We
+        // don't use the device-idle allowlist directly.
+
+        // Run "dumpsys activity processes", and remove everything until "mFgsStartTempAllowList:".
+        String output = ShellUtils.runShellCommand("dumpsys activity processes");
+        output = output.replaceFirst("^.*? mFgsStartTempAllowList:$", "");
+
+        final String uidStr = UserHandle.formatUid(uid);
+        final String expected = "^\\s*" + uidStr
+                + ":.* reasonCode=REASON_SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED.*";
+        for (String line : output.split("\n")) {
+            if (line.matches(expected)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Test
+    public void testActionScheduleExactAlarmPermissionStateChanged() throws Exception {
+        // Revoke the permission.
+        revokeAppOp();
+
+        final int myUid = Process.myUid();
+
+        // Because prior tests may already put the app on the temp allowlist, wait until
+        // it's removed from it...
+        // TODO(b/188789296) We should use `cmd deviceidle tempwhitelist -r PACKAGE-NAME`, but
+        //  it currently doesn't work.
+        TestUtils.waitUntil("App still on temp-allowlist", 60,
+                () -> !checkThisAppTempAllowListed(myUid));
+
+        final IntentFilter filter = new IntentFilter(
+                AlarmManager.ACTION_SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED);
+        final CountDownLatch latch = new CountDownLatch(1);
+        sContext.registerReceiver(new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                latch.countDown();
+            }
+        }, filter);
+
+        // Grant again.
+        AppOpsUtils.setOpMode(sContext.getOpPackageName(), AppOpsManager.OPSTR_SCHEDULE_EXACT_ALARM,
+                AppOpsManager.MODE_ALLOWED);
+
+        assertTrue("Didn't receive ACTION_SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED",
+                latch.await(30, TimeUnit.SECONDS));
+
+        // We really should try starting a foreground service to make sure the app is
+        // allowed to start an FGS here, but when an app is running on `am instrument`, it's always
+        // exempted anyway, so we can't do that. Instead, we just check the dumpsys output.
+        //
+        // TODO(b/188790230): Use the test app instead, and make sure the app can actually start
+        // the FGS.
+        assertTrue("App should be temp-allowlisted", checkThisAppTempAllowListed(myUid));
+    }
 }
