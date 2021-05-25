@@ -35,7 +35,6 @@ import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_START
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_STOP;
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_TOP_POSITION_GAINED;
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_TOP_POSITION_LOST;
-import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.PRE_ON_CREATE;
 import static android.server.wm.lifecycle.LifecycleVerifier.transition;
 import static android.view.Display.DEFAULT_DISPLAY;
 
@@ -200,10 +199,8 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
 
         waitAndAssertActivityStates(state(baseActivity, ON_STOP));
 
-        final List<ActivityCallback> expectedTopActivitySequence =
-                Arrays.asList(
-                        PRE_ON_CREATE, ON_CREATE, ON_START, ON_POST_CREATE, ON_RESUME,
-                        ON_TOP_POSITION_GAINED);
+        final List<ActivityCallback> expectedTopActivitySequence = Arrays.asList(
+                ON_CREATE, ON_START, ON_POST_CREATE, ON_RESUME, ON_TOP_POSITION_GAINED);
         waitForActivityTransitions(ResultActivity.class, expectedTopActivitySequence);
 
         final List<Pair<String, ActivityCallback>> observedTransitions =
@@ -211,7 +208,6 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
         final List<Pair<String, ActivityCallback>> expectedTransitions = Arrays.asList(
                 transition(CallbackTrackingActivity.class, ON_TOP_POSITION_LOST),
                 transition(CallbackTrackingActivity.class, ON_PAUSE),
-                transition(LaunchForResultActivity.class, PRE_ON_CREATE),
                 transition(LaunchForResultActivity.class, ON_CREATE),
                 transition(LaunchForResultActivity.class, ON_START),
                 transition(LaunchForResultActivity.class, ON_POST_CREATE),
@@ -219,7 +215,6 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
                 transition(LaunchForResultActivity.class, ON_TOP_POSITION_GAINED),
                 transition(LaunchForResultActivity.class, ON_TOP_POSITION_LOST),
                 transition(LaunchForResultActivity.class, ON_PAUSE),
-                transition(ResultActivity.class, PRE_ON_CREATE),
                 transition(ResultActivity.class, ON_CREATE),
                 transition(ResultActivity.class, ON_START),
                 transition(ResultActivity.class, ON_POST_CREATE),
@@ -241,22 +236,18 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
 
         waitAndAssertActivityStates(state(baseActivity, ON_STOP));
         final List<ActivityCallback> expectedLaunchingSequence =
-                Arrays.asList(
-                        PRE_ON_CREATE, ON_CREATE, ON_START, ON_POST_CREATE, ON_RESUME,
+                Arrays.asList(ON_CREATE, ON_START, ON_POST_CREATE, ON_RESUME,
                         ON_TOP_POSITION_GAINED, ON_TOP_POSITION_LOST, ON_PAUSE,
                         ON_ACTIVITY_RESULT, ON_RESUME, ON_TOP_POSITION_GAINED);
         waitForActivityTransitions(LaunchForResultActivity.class, expectedLaunchingSequence);
 
-        final List<ActivityCallback> expectedTopActivitySequence =
-                Arrays.asList(
-                        PRE_ON_CREATE, ON_CREATE, ON_START, ON_POST_CREATE, ON_RESUME,
-                        ON_TOP_POSITION_GAINED);
+        final List<ActivityCallback> expectedTopActivitySequence = Arrays.asList(
+                ON_CREATE, ON_START, ON_POST_CREATE, ON_RESUME, ON_TOP_POSITION_GAINED);
         waitForActivityTransitions(ResultActivity.class, expectedTopActivitySequence);
 
         LifecycleVerifier.assertEntireSequence(Arrays.asList(
                 transition(CallbackTrackingActivity.class, ON_TOP_POSITION_LOST),
                 transition(CallbackTrackingActivity.class, ON_PAUSE),
-                transition(LaunchForResultActivity.class, PRE_ON_CREATE),
                 transition(LaunchForResultActivity.class, ON_CREATE),
                 transition(LaunchForResultActivity.class, ON_START),
                 transition(LaunchForResultActivity.class, ON_POST_CREATE),
@@ -264,7 +255,6 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
                 transition(LaunchForResultActivity.class, ON_TOP_POSITION_GAINED),
                 transition(LaunchForResultActivity.class, ON_TOP_POSITION_LOST),
                 transition(LaunchForResultActivity.class, ON_PAUSE),
-                transition(ResultActivity.class, PRE_ON_CREATE),
                 transition(ResultActivity.class, ON_CREATE),
                 transition(ResultActivity.class, ON_START),
                 transition(ResultActivity.class, ON_POST_CREATE),
@@ -717,8 +707,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
             // TODO(b/123432490): Fix extra pause/resume
             LifecycleVerifier.assertSequence(ShowWhenLockedCallbackTrackingActivity.class,
                     getLifecycleLog(),
-                    Arrays.asList(
-                            PRE_ON_CREATE, ON_CREATE, ON_START, ON_POST_CREATE, ON_RESUME,
+                    Arrays.asList(ON_CREATE, ON_START, ON_POST_CREATE, ON_RESUME,
                             ON_TOP_POSITION_GAINED, ON_TOP_POSITION_LOST, ON_PAUSE, ON_RESUME,
                             ON_TOP_POSITION_GAINED),
                     "launchAboveKeyguard");
