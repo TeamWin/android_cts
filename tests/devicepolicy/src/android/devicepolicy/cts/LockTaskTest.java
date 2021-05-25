@@ -16,7 +16,14 @@
 
 package android.devicepolicy.cts;
 
-import static com.android.bedstead.nene.permissions.Permissions.MANAGE_DEVICE_ADMINS;
+import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_GLOBAL_ACTIONS;
+import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_HOME;
+import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_KEYGUARD;
+import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_NONE;
+import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_NOTIFICATIONS;
+import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_OVERVIEW;
+import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_SYSTEM_INFO;
+
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -33,7 +40,7 @@ import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.NegativePolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PositivePolicyTest;
 import com.android.bedstead.harrier.annotations.Postsubmit;
-import com.android.bedstead.harrier.policies.LockTaskPackages;
+import com.android.bedstead.harrier.policies.LockTask;
 import com.android.bedstead.nene.TestApis;
 
 import org.junit.ClassRule;
@@ -56,10 +63,25 @@ public class LockTaskTest {
     private static final DevicePolicyManager mDevicePolicyManager =
             sTestApis.context().instrumentedContext().getSystemService(DevicePolicyManager.class);
 
+    private static final int[] INDIVIDUALLY_SETTABLE_FLAGS = new int[] {
+            LOCK_TASK_FEATURE_SYSTEM_INFO,
+            LOCK_TASK_FEATURE_HOME,
+            LOCK_TASK_FEATURE_GLOBAL_ACTIONS,
+            LOCK_TASK_FEATURE_KEYGUARD
+    };
+
+    private static final int[] FLAGS_SETTABLE_WITH_HOME = new int[] {
+            LOCK_TASK_FEATURE_SYSTEM_INFO,
+            LOCK_TASK_FEATURE_OVERVIEW,
+            LOCK_TASK_FEATURE_NOTIFICATIONS,
+            LOCK_TASK_FEATURE_GLOBAL_ACTIONS,
+            LOCK_TASK_FEATURE_KEYGUARD
+    };
+
     @Test
     @Postsubmit(reason = "New test")
     // TODO(scottjonathan): This omits the metrics test
-    @PositivePolicyTest(policy = LockTaskPackages.class)
+    @PositivePolicyTest(policy = LockTask.class)
     public void setLockTaskPackages_lockTaskPackagesIsSet() {
         String[] originalLockTaskPackages =
                 sDeviceState.dpc().devicePolicyManager().getLockTaskPackages();
@@ -76,8 +98,16 @@ public class LockTaskTest {
 
     @Test
     @Postsubmit(reason = "New test")
+    @CannotSetPolicyTest(policy = LockTask.class)
+    public void getLockTaskPackages_policyIsNotAllowedToBeFetched_throwsException() {
+        assertThrows(SecurityException.class,
+                () -> sDeviceState.dpc().devicePolicyManager().getLockTaskPackages());
+    }
+
+    @Test
+    @Postsubmit(reason = "New test")
     // TODO(scottjonathan): This omits the metrics test
-    @PositivePolicyTest(policy = LockTaskPackages.class)
+    @PositivePolicyTest(policy = LockTask.class)
     public void setLockTaskPackages_empty_lockTaskPackagesIsSet() {
         String[] originalLockTaskPackages =
                 sDeviceState.dpc().devicePolicyManager().getLockTaskPackages();
@@ -95,10 +125,9 @@ public class LockTaskTest {
     @Test
     @Postsubmit(reason = "New test")
     // TODO(scottjonathan): This omits the metrics test
-    @PositivePolicyTest(policy = LockTaskPackages.class)
-    @EnsureHasPermission(MANAGE_DEVICE_ADMINS) // Used for getPolicyExemptApps
+    @PositivePolicyTest(policy = LockTask.class)
     public void setLockTaskPackages_includesPolicyExemptApp_lockTaskPackagesIsSet() {
-        Set<String> policyExemptApps = mDevicePolicyManager.getPolicyExemptApps();
+        Set<String> policyExemptApps = sTestApis.devicePolicy().getPolicyExemptApps();
         assumeFalse("OEM does not define any policy-exempt apps",
                 policyExemptApps.isEmpty());
         String[] originalLockTaskPackages =
@@ -117,7 +146,7 @@ public class LockTaskTest {
 
     @Test
     @Postsubmit(reason = "New test")
-    @CannotSetPolicyTest(policy = LockTaskPackages.class)
+    @CannotSetPolicyTest(policy = LockTask.class)
     public void setLockTaskPackages_policyIsNotAllowedToBeSet_throwsException() {
         assertThrows(SecurityException.class,
                 () -> sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(new String[]{}));
@@ -126,7 +155,7 @@ public class LockTaskTest {
     @Test
     @Postsubmit(reason = "New test")
     // TODO(scottjonathan): This omits the metrics test
-    @PositivePolicyTest(policy = LockTaskPackages.class)
+    @PositivePolicyTest(policy = LockTask.class)
     public void isLockTaskPermitted_lockTaskPackageIsSet_returnsTrue() {
         String[] originalLockTaskPackages =
                 sDeviceState.dpc().devicePolicyManager().getLockTaskPackages();
@@ -142,7 +171,7 @@ public class LockTaskTest {
 
     @Test
     @Postsubmit(reason = "New test")
-    @NegativePolicyTest(policy = LockTaskPackages.class)
+    @NegativePolicyTest(policy = LockTask.class)
     // TODO(scottjonathan): Confirm expected behaviour here
     public void isLockTaskPermitted_lockTaskPackageIsSet_policyDoesntApply_returnsFalse() {
         String[] originalLockTaskPackages =
@@ -160,7 +189,7 @@ public class LockTaskTest {
     @Test
     @Postsubmit(reason = "New test")
     // TODO(scottjonathan): This omits the metrics test
-    @PositivePolicyTest(policy = LockTaskPackages.class)
+    @PositivePolicyTest(policy = LockTask.class)
     public void isLockTaskPermitted_lockTaskPackageIsNotSet_returnsFalse() {
         String[] originalLockTaskPackages =
                 sDeviceState.dpc().devicePolicyManager().getLockTaskPackages();
@@ -176,10 +205,9 @@ public class LockTaskTest {
 
     @Test
     @Postsubmit(reason = "New test")
-    @PositivePolicyTest(policy = LockTaskPackages.class)
-    @EnsureHasPermission(MANAGE_DEVICE_ADMINS) // Used for getPolicyExemptApps
+    @PositivePolicyTest(policy = LockTask.class)
     public void isLockTaskPermitted_includesPolicyExemptApps() {
-        Set<String> policyExemptApps = mDevicePolicyManager.getPolicyExemptApps();
+        Set<String> policyExemptApps = sTestApis.devicePolicy().getPolicyExemptApps();
         // TODO(b/188035301): Add a unit test which ensures this actually gets tested
         assumeFalse("OEM does not define any policy-exempt apps",
                 policyExemptApps.isEmpty());
@@ -196,5 +224,78 @@ public class LockTaskTest {
         } finally {
             sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(originalLockTaskPackages);
         }
+    }
+
+    @Test
+    @Postsubmit(reason = "New test")
+    @PositivePolicyTest(policy = LockTask.class)
+    public void setLockTaskFeatures_overviewFeature_throwsException() {
+        // Overview can only be used in combination with home
+        int originalLockTaskFeatures =
+                sDeviceState.dpc().devicePolicyManager().getLockTaskFeatures();
+
+        try {
+            assertThrows(IllegalArgumentException.class, () -> {
+                sDeviceState.dpc().devicePolicyManager()
+                        .setLockTaskFeatures(LOCK_TASK_FEATURE_OVERVIEW);
+            });
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setLockTaskFeatures(originalLockTaskFeatures);
+        }
+    }
+
+    @Test
+    @Postsubmit(reason = "New test")
+    @PositivePolicyTest(policy = LockTask.class)
+    public void setLockTaskFeatures_notificationsFeature_throwsException() {
+        // Notifications can only be used in combination with home
+        int originalLockTaskFeatures =
+                sDeviceState.dpc().devicePolicyManager().getLockTaskFeatures();
+
+        try {
+            assertThrows(IllegalArgumentException.class, () -> {
+                sDeviceState.dpc().devicePolicyManager()
+                        .setLockTaskFeatures(LOCK_TASK_FEATURE_NOTIFICATIONS);
+            });
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setLockTaskFeatures(originalLockTaskFeatures);
+        }
+    }
+
+    @Test
+    @Postsubmit(reason = "New test")
+    @PositivePolicyTest(policy = LockTask.class)
+    // TODO(scottjonathan): Support additional parameterization for cases like this
+    public void setLockTaskFeatures_multipleFeatures_setsFeatures() {
+        int originalLockTaskFeatures =
+                sDeviceState.dpc().devicePolicyManager().getLockTaskFeatures();
+
+        try {
+            for (int flag : FLAGS_SETTABLE_WITH_HOME) {
+                sDeviceState.dpc().devicePolicyManager().setLockTaskFeatures(
+                        LOCK_TASK_FEATURE_HOME | flag);
+
+                assertThat(sDeviceState.dpc().devicePolicyManager().getLockTaskFeatures())
+                        .isEqualTo(LOCK_TASK_FEATURE_HOME | flag);
+            }
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setLockTaskFeatures(originalLockTaskFeatures);
+        }
+    }
+
+    @Test
+    @Postsubmit(reason = "New test")
+    @CannotSetPolicyTest(policy = LockTask.class)
+    public void setLockTaskFeatures_policyIsNotAllowedToBeSet_throwsException() {
+        assertThrows(SecurityException.class, () ->
+                sDeviceState.dpc().devicePolicyManager().setLockTaskFeatures(LOCK_TASK_FEATURE_NONE));
+    }
+
+    @Test
+    @Postsubmit(reason = "New test")
+    @CannotSetPolicyTest(policy = LockTask.class)
+    public void getLockTaskFeatures_policyIsNotAllowedToBeFetched_throwsException() {
+        assertThrows(SecurityException.class, () ->
+                sDeviceState.dpc().devicePolicyManager().getLockTaskFeatures());
     }
 }

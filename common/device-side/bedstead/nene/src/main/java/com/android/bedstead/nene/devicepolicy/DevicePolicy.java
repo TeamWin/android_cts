@@ -35,6 +35,7 @@ import android.provider.Settings;
 import androidx.annotation.Nullable;
 
 import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.annotations.Experimental;
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.exceptions.AdbParseException;
 import com.android.bedstead.nene.exceptions.NeneException;
@@ -338,6 +339,17 @@ public final class DevicePolicy {
             mCachedProfileOwners = result.mProfileOwners;
         } catch (AdbException | AdbParseException e) {
             throw new RuntimeException("Error filling cache", e);
+        }
+    }
+
+    /** See {@link android.app.admin.DevicePolicyManager#getPolicyExemptApps()}. */
+    @Experimental
+    public Set<String> getPolicyExemptApps() {
+        try (PermissionContext p = mTestApis.permissions().withPermission(MANAGE_DEVICE_ADMINS)) {
+            return mTestApis.context()
+                    .instrumentedContext()
+                    .getSystemService(DevicePolicyManager.class)
+                    .getPolicyExemptApps();
         }
     }
 }
