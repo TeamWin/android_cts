@@ -32,7 +32,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 
-import androidx.annotation.Nullable;
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -69,7 +68,6 @@ import com.android.bedstead.nene.permissions.PermissionContextImpl;
 import com.android.bedstead.nene.users.User;
 import com.android.bedstead.nene.users.UserBuilder;
 import com.android.bedstead.nene.users.UserReference;
-import com.android.bedstead.nene.users.UserType;
 import com.android.bedstead.nene.utils.ShellCommand;
 import com.android.bedstead.nene.utils.Versions;
 import com.android.bedstead.remotedpc.RemoteDpc;
@@ -724,13 +722,11 @@ public final class DeviceState implements TestRule {
 
     /**
      * Get the user ID of the first human user on the device.
-     *
-     * <p>Returns {@code null} if there is none present.
      */
-    @Nullable
     public UserReference primaryUser() {
         return sTestApis.users().all()
-                .stream().filter(User::isPrimary).findFirst().orElse(null);
+                .stream().filter(User::isPrimary).findFirst()
+                .orElseThrow(IllegalStateException::new);
     }
 
     /**
@@ -1121,14 +1117,14 @@ public final class DeviceState implements TestRule {
 
         if (currentProfileOwner != null
                 && currentProfileOwner.componentName().equals(RemoteDpc.DPC_COMPONENT_NAME)) {
-            return;
-        }
+            mProfileOwners.put(user, currentProfileOwner);
+        } else {
+            if (!mChangedProfileOwners.containsKey(user)) {
+                mChangedProfileOwners.put(user, currentProfileOwner);
+            }
 
-        if (!mChangedProfileOwners.containsKey(user)) {
-            mChangedProfileOwners.put(user, currentProfileOwner);
+            mProfileOwners.put(user, RemoteDpc.setAsProfileOwner(user).devicePolicyController());
         }
-
-        mProfileOwners.put(user, RemoteDpc.setAsProfileOwner(user).devicePolicyController());
 
         if (isPrimary) {
             mPrimaryDpc = mProfileOwners.get(user);
