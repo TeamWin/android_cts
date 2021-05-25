@@ -28,6 +28,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Process;
+import android.os.SystemClock;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.test.InstrumentationTestCase;
@@ -214,5 +215,10 @@ public abstract class BaseDeviceAdminTest extends InstrumentationTestCase {
 
     protected boolean isDeviceOwner() {
         return mDevicePolicyManager.isDeviceOwnerApp(PACKAGE_NAME);
+    }
+
+    void sleep(int timeMs) {
+        Log.d(TAG, "Sleeping " + timeMs + " ms");
+        SystemClock.sleep(timeMs);
     }
 }
