@@ -239,7 +239,6 @@ public class TimeManagerTest {
      * Registers a {@link android.app.time.TimeManager.TimeZoneDetectorListener}, makes changes
      * to the "location enabled" setting and checks that the listener is called.
      */
-    @Ignore("http://b/171953500")
     @Test
     public void testLocationManagerAffectsCapabilities() throws Exception {
         Context context = InstrumentationRegistry.getInstrumentation().getContext();
@@ -256,16 +255,28 @@ public class TimeManagerTest {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         try {
             timeManager.addTimeZoneDetectorListener(executor, listener);
-            waitForListenerCallbackCount(0, listenerTriggerCount);
+
+            // This test does not use waitForListenerCallbackCount() because changing the location
+            // enabled setting triggers more than one callback when there's a work profile, so it's
+            // easier just to sleep and confirm >= 1 callbacks have been received.
+            sleepForAsyncOperation();
+            int newCallbackCount = listenerTriggerCount.get();
+            assertEquals(0, newCallbackCount);
+            int previousCallbackCount = 0;
 
             UserHandle userHandle = android.os.Process.myUserHandle();
             boolean locationEnabled = locationManager.isLocationEnabledForUser(userHandle);
 
             locationManager.setLocationEnabledForUser(!locationEnabled, userHandle);
-            waitForListenerCallbackCount(1, listenerTriggerCount);
+            sleepForAsyncOperation();
+            newCallbackCount = listenerTriggerCount.get();
+            assertTrue(newCallbackCount > previousCallbackCount);
+            previousCallbackCount = newCallbackCount;
 
             locationManager.setLocationEnabledForUser(locationEnabled, userHandle);
-            waitForListenerCallbackCount(2, listenerTriggerCount);
+            sleepForAsyncOperation();
+            newCallbackCount = listenerTriggerCount.get();
+            assertTrue(newCallbackCount > previousCallbackCount);
         } finally {
             // Remove the listener. Required otherwise the fuzzy equality rules of lambdas causes
             // problems for later tests.

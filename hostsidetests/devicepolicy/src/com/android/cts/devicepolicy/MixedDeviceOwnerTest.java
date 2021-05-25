@@ -307,7 +307,6 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
             // Generate various types of events on device side and check that they are logged.
             executeDeviceTestMethod(".SecurityLoggingTest", "testGenerateLogs");
             getDevice().executeShellCommand("whoami"); // Generate adb command securty event
-            getDevice().executeShellCommand("dpm force-security-logs");
             executeDeviceTestMethod(".SecurityLoggingTest", "testVerifyGeneratedLogs");
 
             // Reboot the device, so the security event ids are reset.
@@ -316,7 +315,6 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
             // Verify event ids are consistent across a consecutive batch.
             for (int batchNumber = 0; batchNumber < 3; batchNumber++) {
                 generateTestSecurityLogs();
-                getDevice().executeShellCommand("dpm force-security-logs");
                 executeDeviceTestMethod(".SecurityLoggingTest", "testVerifyLogIds",
                         Collections.singletonMap(ARG_SECURITY_LOGGING_BATCH_NUMBER,
                                 Integer.toString(batchNumber)));
@@ -381,8 +379,7 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
             executeDeviceTestMethod(".SecurityLoggingTest",
                     "testSetDelegateScope_delegationSecurityLogging");
 
-            runSecurityLoggingTests(DELEGATE_APP_PKG,
-                    ".SecurityLoggingDelegateTest");
+            runSecurityLoggingTests(DELEGATE_APP_PKG, ".SecurityLoggingDelegateTest");
         } finally {
             // Remove security logging delegate
             executeDeviceTestMethod(".SecurityLoggingTest",
@@ -409,22 +406,17 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
 
     private void runSecurityLoggingTests(String packageName, String testClassName)
             throws Exception {
-        // Backup stay awake setting because testGenerateLogs() will turn it off.
-        final String stayAwake = getDevice().getSetting("global", "stay_on_while_plugged_in");
         try {
             // Turn logging on.
             runDeviceTestsAsUser(packageName, testClassName,
                     "testEnablingSecurityLogging", mUserId);
-            // Reboot to ensure ro.device_owner is set to true in logd and logging is on.
+            // Reboot to ensure ro.organization_owned is set to true in logd and logging is on.
             rebootAndWaitUntilReady();
             waitForUserUnlock(mUserId);
 
             // Generate various types of events on device side and check that they are logged.
-            runDeviceTestsAsUser(packageName, testClassName,
-                    "testGenerateLogs", mUserId);
-            getDevice().executeShellCommand("whoami"); // Generate adb command securty event
-            runDeviceTestsAsUser(packageName, testClassName,
-                    "testVerifyGeneratedLogs", mUserId);
+            runDeviceTestsAsUser(packageName, testClassName, "testGenerateLogs", mUserId);
+            runDeviceTestsAsUser(packageName, testClassName, "testVerifyGeneratedLogs", mUserId);
 
             // Immediately attempting to fetch events again should fail.
             runDeviceTestsAsUser(packageName, testClassName,
@@ -433,10 +425,6 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
             // Turn logging off.
             runDeviceTestsAsUser(packageName, testClassName,
                     "testDisablingSecurityLogging", mUserId);
-            // Restore stay awake setting.
-            if (stayAwake != null) {
-                getDevice().setSetting("global", "stay_on_while_plugged_in", stayAwake);
-            }
         }
     }
 
