@@ -17,6 +17,7 @@
 
     <include name="cts-on-aosp" />
     <include name="cts-on-gsi-exclude" />
+    <include name="cts-on-gsi-exclude-non-hal" />
 
     <option name="plan" value="cts-on-gsi" />
 
