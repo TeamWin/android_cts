@@ -56,7 +56,8 @@ public class WifiBuildCompat {
         long wifiStackVersion = 0;
         try {
             String wifiPackageName = null;
-            for (ModuleInfo moduleInfo : packageManager.getInstalledModules(0)) {
+            for (ModuleInfo moduleInfo : packageManager
+                    .getInstalledModules(PackageManager.MATCH_APEX)) {
                 if (moduleInfo.getPackageName().endsWith(WIFI_PACKAGE_NAME_SUFFIX)) {
                     wifiPackageName = moduleInfo.getPackageName();
                     break;
