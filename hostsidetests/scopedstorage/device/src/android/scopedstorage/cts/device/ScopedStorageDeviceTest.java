@@ -1259,14 +1259,16 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
             // Revoke A_M_L and verify sensitive data redaction
             revokePermission(
                     APP_C.getPackageName(), Manifest.permission.ACCESS_MEDIA_LOCATION);
-            // Give MediaProvider time to get permission callback and clear cache.
+            // revokePermission waits for permission status to be updated, but MediaProvider still
+            // needs to get permission change callback and clear its permission cache.
             Thread.sleep(500);
             exifFromTestApp = readExifMetadataFromTestApp(APP_C, imgFile.getPath());
             assertExifMetadataMismatch(exifFromTestApp, originalExif);
 
             // Re-grant A_M_L and verify access to sensitive data
             grantPermission(APP_C.getPackageName(), Manifest.permission.ACCESS_MEDIA_LOCATION);
-            // Give MediaProvider time to get permission callback and clear cache.
+            // grantPermission waits for permission status to be updated, but MediaProvider still
+            // needs to get permission change callback and clear its permission cache.
             Thread.sleep(500);
             exifFromTestApp = readExifMetadataFromTestApp(APP_C, imgFile.getPath());
             assertExifMetadataMatch(exifFromTestApp, originalExif);
@@ -1358,7 +1360,8 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
         } else {
             denyAppOpsToUid(uid, opstr);
         }
-        // Give MediaProvider time to get permission callback and clear cache.
+        // revokePermission waits for permission status to be updated, but MediaProvider still
+        // needs to get permission change callback and clear its permission cache.
         Thread.sleep(100);
         assertThat(canOpenFileAs(app, file, forWrite)).isFalse();
 
@@ -1368,7 +1371,8 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
         } else {
             allowAppOpsToUid(uid, opstr);
         }
-        // Give MediaProvider time to get permission callback and clear cache.
+        // grantPermission waits for permission status to be updated, but MediaProvider still
+        // needs to get permission change callback and clear its permission cache.
         Thread.sleep(100);
         assertThat(canOpenFileAs(app, file, forWrite)).isTrue();
 
@@ -1378,7 +1382,8 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
         } else {
             denyAppOpsToUid(uid, opstr);
         }
-        // Give MediaProvider time to get permission callback and clear cache.
+        // revokePermission waits for permission status to be updated, but MediaProvider still
+        // needs to get permission change callback and clear its permission cache.
         Thread.sleep(100);
         assertThat(canOpenFileAs(app, file, forWrite)).isFalse();
     }
