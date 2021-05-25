@@ -331,11 +331,14 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                                                 false))}));
 
         // setLockTaskFeatures
-        final Intent lockTaskUiTestIntent = new Intent(this, LockTaskUiTestActivity.class);
-        lockTaskUiTestIntent.putExtra(LockTaskUiTestActivity.EXTRA_TEST_ID, LOCK_TASK_UI_TEST_ID);
-        adapter.add(createTestItem(this, LOCK_TASK_UI_TEST_ID,
-                R.string.device_owner_lock_task_ui_test,
-                lockTaskUiTestIntent));
+        // TODO(b/189282625): replace FEATURE_WATCH with a more specific feature
+        if (!packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)) {
+          final Intent lockTaskUiTestIntent = new Intent(this, LockTaskUiTestActivity.class);
+          lockTaskUiTestIntent.putExtra(LockTaskUiTestActivity.EXTRA_TEST_ID, LOCK_TASK_UI_TEST_ID);
+          adapter.add(createTestItem(this, LOCK_TASK_UI_TEST_ID,
+                  R.string.device_owner_lock_task_ui_test,
+                  lockTaskUiTestIntent));
+        }
 
         // setUserIcon
         adapter.add(createInteractiveTestItem(this, SET_USER_ICON_TEST_ID,
