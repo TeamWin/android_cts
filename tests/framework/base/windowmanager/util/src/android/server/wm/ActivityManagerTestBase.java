@@ -134,6 +134,7 @@ import android.hardware.display.DisplayManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.PowerManager;
 import android.os.RemoteCallback;
 import android.os.SystemClock;
 import android.os.SystemProperties;
@@ -241,6 +242,7 @@ public abstract class ActivityManagerTestBase {
     protected final ActivityTaskManager mAtm = mContext.getSystemService(ActivityTaskManager.class);
     protected final DisplayManager mDm = mContext.getSystemService(DisplayManager.class);
     protected final WindowManager mWm = mContext.getSystemService(WindowManager.class);
+    protected final KeyguardManager mKm = mContext.getSystemService(KeyguardManager.class);
 
     /** The tracker to manage objects (especially {@link AutoCloseable}) in a test method. */
     protected final ObjectTracker mObjectTracker = new ObjectTracker();
@@ -569,8 +571,11 @@ public abstract class ActivityManagerTestBase {
 
     @Before
     public void setUp() throws Exception {
-        pressWakeupButton();
-        pressUnlockButton();
+        if (isKeyguardLocked() || !Objects.requireNonNull(
+                mContext.getSystemService(PowerManager.class)).isInteractive()) {
+            pressWakeupButton();
+            pressUnlockButton();
+        }
         launchHomeActivityNoWait();
         removeRootTasksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
 
@@ -1022,6 +1027,10 @@ public abstract class ActivityManagerTestBase {
         assertTrue(message, mWmState.hasActivityState(activityName, state));
     }
 
+    protected boolean isKeyguardLocked() {
+        return mKm != null && mKm.isKeyguardLocked();
+    }
+
     protected void waitAndAssertActivityStateOnDisplay(ComponentName activityName, String state,
             int displayId, String message) {
         waitAndAssertActivityState(activityName, state, message);
@@ -1462,7 +1471,10 @@ public abstract class ActivityManagerTestBase {
             }
 
             setLockDisabled(mIsLockDisabled);
+            final boolean wasCredentialSet = mLockCredentialSet;
+            boolean wasDeviceLocked = false;
             if (mLockCredentialSet) {
+                wasDeviceLocked = mKm != null && mKm.isDeviceLocked();
                 removeLockCredential();
                 mLockCredentialSet = false;
             }
@@ -1475,12 +1487,33 @@ public abstract class ActivityManagerTestBase {
             // If Keyguard is occluded, pressing the back key can hide the ShowWhenLocked activity.
             pressBackButton();
 
+            // If the credential wasn't set, the steps for restoring can be simpler.
+            if (!wasCredentialSet) {
+                mWmState.computeState();
+                if (WindowManagerStateHelper.isKeyguardShowingAndNotOccluded(mWmState)) {
+                    // Keyguard is showing and not occluded so only need to unlock.
+                    unlockDevice();
+                    return;
+                }
+
+                final ComponentName home = mWmState.getHomeActivityName();
+                if (home != null && mWmState.hasActivityState(home, STATE_RESUMED)) {
+                    // Home is resumed so nothing to do (e.g. after finishing show-when-locked app).
+                    return;
+                }
+            }
+
             // If device is unlocked, there might have ShowWhenLocked activity runs on,
             // use home key to clear all activity at foreground.
             pressHomeButton();
-            sleepDevice();
-            wakeUpDevice();
-            unlockDevice();
+            if (wasDeviceLocked) {
+                // The removal of credential needs an extra cycle to take effect.
+                sleepDevice();
+                wakeUpDevice();
+            }
+            if (isKeyguardLocked()) {
+                unlockDevice();
+            }
         }
 
         /**
@@ -2547,8 +2580,7 @@ public abstract class ActivityManagerTestBase {
         protected void verify() throws Throwable {
             if (mLastError != null) {
                 // Try to recover the bad state of device to avoid subsequent test failures.
-                final KeyguardManager kgm = mContext.getSystemService(KeyguardManager.class);
-                if (kgm != null && kgm.isKeyguardLocked()) {
+                if (isKeyguardLocked()) {
                     mLastError.addSuppressed(new IllegalStateException("Keyguard is locked"));
                     // To clear the credential immediately, the screen need to be turned on.
                     pressWakeupButton();
