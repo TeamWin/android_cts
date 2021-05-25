@@ -1290,6 +1290,16 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
+    public void testResetPasswordWithTokenLogged() throws Exception {
+        assertMetricsLogged(getDevice(), () -> {
+            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".ResetPasswordWithTokenTest",
+                    "testChangePasswordWithToken", mUserId);
+        }, new DevicePolicyEventWrapper.Builder(EventId.RESET_PASSWORD_WITH_TOKEN_VALUE)
+                    .setAdminPackageName(DEVICE_ADMIN_PKG)
+                    .build());
+    }
+
+    @Test
     public void testPasswordSufficientInitially() throws Exception {
         executeDeviceTestClass(".PasswordSufficientInitiallyTest");
     }
