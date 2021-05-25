@@ -877,6 +877,9 @@ public class DisplayTest {
         // of VESA EDID STANDARD Version 1, Revision 4
         assertTrue(year >= 1990);
 
+        int week = deviceProductInfo.getManufactureWeek();
+        assertTrue(week == -1 || (week >= 1 && week <= 53));
+
         List<Integer> allowedConnectionToSinkValues = List.of(
                 DeviceProductInfo.CONNECTION_TO_SINK_UNKNOWN,
                 DeviceProductInfo.CONNECTION_TO_SINK_BUILT_IN,
