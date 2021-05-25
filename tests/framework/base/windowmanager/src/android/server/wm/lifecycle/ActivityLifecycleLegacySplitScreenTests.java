@@ -31,7 +31,6 @@ import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_STOP;
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_TOP_POSITION_GAINED;
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_TOP_POSITION_LOST;
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_USER_LEAVE_HINT;
-import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.PRE_ON_CREATE;
 import static android.server.wm.lifecycle.LifecycleVerifier.transition;
 
 import static androidx.test.InstrumentationRegistry.getInstrumentation;
@@ -190,7 +189,7 @@ public class ActivityLifecycleLegacySplitScreenTests extends ActivityLifecycleCl
         // Check that activity was restarted and result was delivered
         waitAndAssertActivityStates(state(callbackTrackingActivity, ON_RESUME));
         LifecycleVerifier.assertSequence(CallbackTrackingActivity.class, getLifecycleLog(),
-                Arrays.asList(ON_DESTROY, PRE_ON_CREATE, ON_CREATE, ON_START, ON_POST_CREATE,
+                Arrays.asList(ON_DESTROY, ON_CREATE, ON_START, ON_POST_CREATE,
                         ON_ACTIVITY_RESULT, ON_RESUME), "restart");
     }
 
@@ -283,7 +282,7 @@ public class ActivityLifecycleLegacySplitScreenTests extends ActivityLifecycleCl
 
         // Wait for the activity to relaunch and receive multi-window mode change
         final List<LifecycleLog.ActivityCallback> expectedEnterSequence =
-                Arrays.asList(ON_TOP_POSITION_LOST, ON_PAUSE, ON_STOP, ON_DESTROY, PRE_ON_CREATE,
+                Arrays.asList(ON_TOP_POSITION_LOST, ON_PAUSE, ON_STOP, ON_DESTROY,
                         ON_CREATE, ON_START, ON_POST_CREATE, ON_RESUME, ON_TOP_POSITION_GAINED,
                         ON_TOP_POSITION_LOST, ON_PAUSE);
         waitForActivityTransitions(CallbackTrackingActivity.class, expectedEnterSequence);
@@ -297,7 +296,7 @@ public class ActivityLifecycleLegacySplitScreenTests extends ActivityLifecycleCl
 
         // Wait for the activity to relaunch and receive multi-window mode change
         final List<LifecycleLog.ActivityCallback> expectedExitSequence =
-                Arrays.asList(ON_STOP, ON_DESTROY, PRE_ON_CREATE, ON_CREATE, ON_START,
+                Arrays.asList(ON_STOP, ON_DESTROY, ON_CREATE, ON_START,
                         ON_POST_CREATE, ON_RESUME, ON_PAUSE, ON_RESUME, ON_TOP_POSITION_GAINED);
         waitForActivityTransitions(CallbackTrackingActivity.class, expectedExitSequence);
         LifecycleVerifier.assertOrder(getLifecycleLog(), CallbackTrackingActivity.class,
