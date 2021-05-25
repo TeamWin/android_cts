@@ -62,7 +62,7 @@ public class SearchTargetTest {
             .setUserHandle(UserHandle.CURRENT)
             .setSearchAction(SEARCH_ACTION)
             .setScore(SCORE)
-            .setShouldHide(SHOULD_HIDE)
+            .setHidden(SHOULD_HIDE)
             .setParentId(PARENTID)
             .setExtras(EXTRAS);
 

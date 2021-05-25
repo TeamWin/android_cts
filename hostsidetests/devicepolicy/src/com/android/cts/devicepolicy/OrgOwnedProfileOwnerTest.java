@@ -22,7 +22,6 @@ import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.
 
 import static com.google.common.truth.Truth.assertThat;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import android.platform.test.annotations.FlakyTest;
@@ -236,14 +235,14 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
         installAppAsUser(DELEGATE_APP_APK, mUserId);
         installAppAsUser(DEVICE_ADMIN_APK, mPrimaryUserId);
         try {
-            runDeviceTestsAsUser(DELEGATE_APP_PKG, ".WorkProfileSecurityLoggingDelegateTest",
+            runDeviceTestsAsUser(DELEGATE_APP_PKG, ".SecurityLoggingDelegateTest",
                     "testCannotAccessApis", mUserId);
             // Set security logging delegate
             runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".SecurityLoggingTest",
                     "testSetDelegateScope_delegationSecurityLogging", mUserId);
 
             testSecurityLoggingOnWorkProfile(DELEGATE_APP_PKG,
-                    ".WorkProfileSecurityLoggingDelegateTest");
+                    ".SecurityLoggingDelegateTest");
         } finally {
             // Remove security logging delegate
             runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".SecurityLoggingTest",
@@ -259,16 +258,14 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
             // Turn logging on.
             runDeviceTestsAsUser(packageName, testClassName,
                     "testEnablingSecurityLogging", mUserId);
-            // Reboot to ensure ro.device_owner is set to true in logd and logging is on.
+            // Reboot to ensure ro.organization_owned is set to true in logd and logging is on.
             rebootAndWaitUntilReady();
             waitForUserUnlock(mUserId);
 
             // Generate various types of events on device side and check that they are logged.
-            runDeviceTestsAsUser(packageName, testClassName,
-                    "testGenerateLogs", mUserId);
-            getDevice().executeShellCommand("whoami"); // Generate adb command security event
-            runDeviceTestsAsUser(packageName, testClassName,
-                    "testVerifyGeneratedLogs", mUserId);
+            runDeviceTestsAsUser(packageName, testClassName, "testGenerateLogs", mUserId);
+            getDevice().executeShellCommand("whoami"); // Generate adb command securty event
+            runDeviceTestsAsUser(packageName, testClassName, "testVerifyGeneratedLogs", mUserId);
 
             // Immediately attempting to fetch events again should fail.
             runDeviceTestsAsUser(packageName, testClassName,
@@ -282,15 +279,6 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
                 getDevice().setSetting("global", "stay_on_while_plugged_in", stayAwake);
             }
         }
-    }
-
-    private void failToCreateUser() throws Exception {
-        String command ="pm create-user " + "TestUser_" + System.currentTimeMillis();
-        String commandOutput = getDevice().executeShellCommand(command);
-
-        String[] tokens = commandOutput.split("\\s+");
-        assertTrue(tokens.length > 0);
-        assertEquals("Error:", tokens[0]);
     }
 
     @Test

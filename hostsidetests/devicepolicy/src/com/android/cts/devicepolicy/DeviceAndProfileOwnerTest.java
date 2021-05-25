@@ -28,6 +28,7 @@ import android.platform.test.annotations.LargeTest;
 import android.platform.test.annotations.RequiresDevice;
 import android.stats.devicepolicy.EventId;
 
+import com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.TemporaryIgnoreOnHeadlessSystemUserMode;
 import com.android.cts.devicepolicy.annotations.LockSettingsTest;
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier;
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
@@ -430,19 +431,20 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
-    @FlakyTest(bugId = 187862351)
+    @TemporaryIgnoreOnHeadlessSystemUserMode(bugId = "187862351", reason = "also failing on phones")
     public void testGrantOfSensorsRelatedPermissions() throws Exception {
         installAppPermissionAppAsUser();
         executeDeviceTestMethod(".PermissionsTest", "testSensorsRelatedPermissionsCannotBeGranted");
     }
 
-    @Test public void testDenyOfSensorsRelatedPermissions() throws Exception {
+    @Test
+    public void testDenyOfSensorsRelatedPermissions() throws Exception {
         installAppPermissionAppAsUser();
         executeDeviceTestMethod(".PermissionsTest", "testSensorsRelatedPermissionsCanBeDenied");
     }
 
     @Test
-    @FlakyTest(bugId = 187862351)
+    @TemporaryIgnoreOnHeadlessSystemUserMode(bugId = "187862351", reason = "also failing on phones")
     public void testSensorsRelatedPermissionsNotGrantedViaPolicy() throws Exception {
         installAppPermissionAppAsUser();
         executeDeviceTestMethod(".PermissionsTest",
@@ -450,7 +452,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
-    @FlakyTest(bugId = 187862351)
+    @TemporaryIgnoreOnHeadlessSystemUserMode(bugId = "187862351", reason = "also failing on phones")
     public void testStateOfSensorsRelatedPermissionsCannotBeRead() throws Exception {
         installAppPermissionAppAsUser();
         executeDeviceTestMethod(".PermissionsTest",
@@ -1287,6 +1289,16 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         // MixedManagedProfileOwnerTest overrides this method to execute the same test more strictly
         // without allowing failures.
         executeResetPasswordWithTokenTests(true);
+    }
+
+    @Test
+    public void testResetPasswordWithTokenLogged() throws Exception {
+        assertMetricsLogged(getDevice(), () -> {
+            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".ResetPasswordWithTokenTest",
+                    "testChangePasswordWithToken", mUserId);
+        }, new DevicePolicyEventWrapper.Builder(EventId.RESET_PASSWORD_WITH_TOKEN_VALUE)
+                    .setAdminPackageName(DEVICE_ADMIN_PKG)
+                    .build());
     }
 
     @Test
