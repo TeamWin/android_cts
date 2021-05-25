@@ -20,10 +20,12 @@ import static android.os.Build.VERSION_CODES.S;
 
 import android.app.UiAutomation;
 import android.os.ParcelFileDescriptor;
+import android.provider.Settings;
 import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.compatibility.common.util.FileUtils;
 
@@ -34,6 +36,8 @@ import java.util.function.Function;
 
 /**
  * Utilities for interacting with adb shell commands.
+ *
+ * <p>To enable command logging use the adb command `adb shell settings put global nene_log 1`.
  */
 public final class ShellCommandUtils {
 
@@ -42,6 +46,20 @@ public final class ShellCommandUtils {
     private static final int OUT_DESCRIPTOR_INDEX = 0;
     private static final int IN_DESCRIPTOR_INDEX = 1;
     private static final int ERR_DESCRIPTOR_INDEX = 2;
+
+    private static final TestApis sTestApis = new TestApis();
+
+    private static final boolean SHOULD_LOG = shouldLog();
+
+    private static boolean shouldLog() {
+        try {
+            return Settings.Global.getInt(
+                    sTestApis.context().instrumentedContext().getContentResolver(),
+                    "nene_log") == 1;
+        } catch (Settings.SettingNotFoundException e) {
+            return false;
+        }
+    }
 
     private ShellCommandUtils() { }
 
@@ -85,7 +103,9 @@ public final class ShellCommandUtils {
                 throw new AdbException("Error executing command", command, out, err);
             }
 
-            Log.d(LOG_TAG, "Command result: " + out);
+            if (SHOULD_LOG) {
+                Log.d(LOG_TAG, "Command result: " + out);
+            }
 
             return out;
         } catch (IOException e) {
@@ -94,6 +114,10 @@ public final class ShellCommandUtils {
     }
 
     private static void logCommand(String command, boolean allowEmptyOutput, byte[] stdInBytes) {
+        if (!SHOULD_LOG) {
+            return;
+        }
+
         StringBuilder logBuilder = new StringBuilder("Executing shell command ");
         logBuilder.append(command);
         if (allowEmptyOutput) {
@@ -169,7 +193,9 @@ public final class ShellCommandUtils {
                             command, out);
                 }
 
-                Log.d(LOG_TAG, "Command result: " + out);
+                if (SHOULD_LOG) {
+                    Log.d(LOG_TAG, "Command result: " + out);
+                }
 
                 return out;
             }
