@@ -552,6 +552,15 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
             assertThat(countDownLatchScorer.await(DURATION, TimeUnit.MILLISECONDS)).isTrue();
             assertThat(connectedNetworkScorer.stopSessionId)
                     .isEqualTo(connectedNetworkScorer.startSessionId);
+            // Verify that onStart() and onStop() set internal variables correctly.
+            connectedNetworkScorer.onStart(
+                    new WifiConnectedSessionInfo.Builder(100)
+                            .setUserSelected(false)
+                            .build());
+            assertEquals(100, connectedNetworkScorer.startSessionId.intValue());
+            assertEquals(false, connectedNetworkScorer.isUserSelected);
+            connectedNetworkScorer.onStop(200);
+            assertEquals(200, connectedNetworkScorer.stopSessionId.intValue());
         } finally {
             mWifiManager.removeOnWifiUsabilityStatsListener(usabilityStatsListener);
             mWifiManager.clearWifiConnectedNetworkScorer();
