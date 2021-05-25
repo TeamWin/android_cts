@@ -33,13 +33,14 @@ public class PreferentialNetworkServiceStatusTest extends BaseDeviceAdminTest {
     }
 
     public void testGetSetPreferentialNetworkServiceStatus() throws Exception {
-        // Assert default status is true
+        // Assert default status is false
+        assertFalse(mDevicePolicyManager.isPreferentialNetworkServiceEnabled());
+
+        mDevicePolicyManager.setPreferentialNetworkServiceEnabled(true);
         assertTrue(mDevicePolicyManager.isPreferentialNetworkServiceEnabled());
 
         mDevicePolicyManager.setPreferentialNetworkServiceEnabled(false);
         assertFalse(mDevicePolicyManager.isPreferentialNetworkServiceEnabled());
 
-        mDevicePolicyManager.setPreferentialNetworkServiceEnabled(true);
-        assertTrue(mDevicePolicyManager.isPreferentialNetworkServiceEnabled());
     }
 }
