@@ -320,11 +320,6 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
         });
     }
 
-    void assertSecurityExceptionFromActivityLauncher() {
-        waitForOrFail("SecurityException from " + ActivityLauncher.TAG,
-            ActivityLauncher::hasCaughtSecurityException);
-    }
-
     /** @see ObjectTracker#manage(AutoCloseable) */
     protected VirtualDisplaySession createManagedVirtualDisplaySession() {
         return mObjectTracker.manage(new VirtualDisplaySession());
