@@ -24,16 +24,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Assume.assumeTrue
 
-import android.app.AppOpsManager.MODE_ALLOWED
-import android.app.AppOpsManager.MODE_DEFAULT
-import android.app.AppOpsManager.MODE_ERRORED
-import android.app.AppOpsManager.MODE_IGNORED
-import android.app.AppOpsManager.OPSTR_PICTURE_IN_PICTURE
-import android.app.AppOpsManager.OPSTR_READ_CALENDAR
-import android.app.AppOpsManager.OPSTR_RECORD_AUDIO
-import android.app.AppOpsManager.OPSTR_WIFI_SCAN
-import android.app.AppOpsManager.OPSTR_WRITE_CALENDAR
-
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.timeout
 import org.mockito.Mockito.verify
@@ -41,8 +31,19 @@ import org.mockito.Mockito.verifyZeroInteractions
 
 import android.Manifest.permission
 import android.app.AppOpsManager
-import android.app.AppOpsManager.OPSTR_FINE_LOCATION
+import android.app.AppOpsManager.MODE_ALLOWED
+import android.app.AppOpsManager.MODE_DEFAULT
+import android.app.AppOpsManager.MODE_ERRORED
+import android.app.AppOpsManager.MODE_IGNORED
 import android.app.AppOpsManager.OnOpChangedListener
+import android.app.AppOpsManager.OPSTR_FINE_LOCATION
+import android.app.AppOpsManager.OPSTR_PHONE_CALL_CAMERA
+import android.app.AppOpsManager.OPSTR_PHONE_CALL_MICROPHONE
+import android.app.AppOpsManager.OPSTR_PICTURE_IN_PICTURE
+import android.app.AppOpsManager.OPSTR_READ_CALENDAR
+import android.app.AppOpsManager.OPSTR_RECORD_AUDIO
+import android.app.AppOpsManager.OPSTR_WIFI_SCAN
+import android.app.AppOpsManager.OPSTR_WRITE_CALENDAR
 import android.content.Context
 import android.os.Process
 import android.platform.test.annotations.AppModeFull
@@ -231,7 +232,7 @@ class AppOpsTest {
     }
 
     @Test
-    @AppModeFull(reason="Instant app cannot query for the shell package")
+    @AppModeFull(reason = "Instant app cannot query for the shell package")
     fun overlappingActiveAttributionOps() {
         runWithShellPermissionIdentity {
             val gotActive = CompletableFuture<Unit>()
@@ -292,8 +293,8 @@ class AppOpsTest {
             val receivedActiveState = LinkedBlockingDeque<Boolean>()
             val activeWatcher =
                     AppOpsManager.OnOpActiveChangedListener { _, uid, packageName, active ->
-                        if (packageName == SHELL_PACKAGE_NAME
-                                && uid == Process.SHELL_UID) {
+                        if (packageName == SHELL_PACKAGE_NAME &&
+                                uid == Process.SHELL_UID) {
                             receivedActiveState.push(active)
                         }
                     }
@@ -585,6 +586,16 @@ class AppOpsTest {
                 mAppOps.setUidMode(OPSTR_RECORD_AUDIO, Process.myUid(), defaultMode)
             }
         }
+    }
+    
+    @Test
+    fun ensurePhoneCallOpsRestricted() {
+        val micReturn = mAppOps.noteOp(OPSTR_PHONE_CALL_MICROPHONE, Process.myUid(), mOpPackageName,
+                null, null)
+        assertEquals(MODE_IGNORED, micReturn)
+        val cameraReturn = mAppOps.noteOp(OPSTR_PHONE_CALL_CAMERA, Process.myUid(),
+                mOpPackageName, null, null)
+        assertEquals(MODE_IGNORED, cameraReturn)
     }
 
     private fun runWithShellPermissionIdentity(command: () -> Unit) {
