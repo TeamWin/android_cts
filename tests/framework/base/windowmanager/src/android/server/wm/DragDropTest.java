@@ -60,7 +60,6 @@ import java.util.stream.IntStream;
 
 @Presubmit
 @RunWith(AndroidJUnit4.class)
-@FlakyTest(bugId = 186608789)
 public class DragDropTest extends WindowManagerTestBase {
     static final String TAG = "DragDropTest";
 
