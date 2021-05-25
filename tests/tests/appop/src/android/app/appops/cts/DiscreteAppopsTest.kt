@@ -35,18 +35,17 @@ import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
 import android.os.IBinder
+import android.platform.test.annotations.AppModeFull
 import android.provider.DeviceConfig
 import android.provider.DeviceConfig.NAMESPACE_PRIVACY
 import android.provider.Settings
 import androidx.test.platform.app.InstrumentationRegistry
-import androidx.test.runner.AndroidJUnit4
 import androidx.test.uiautomator.UiDevice
 import com.google.common.truth.Truth.assertThat
 import org.junit.After
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.locks.ReentrantLock
 import java.util.concurrent.TimeUnit
@@ -68,13 +67,13 @@ private const val PROPERTY_OPS_LIST = "discrete_history_ops_cslist"
 private const val INTERVAL_COMPRESSION_MULTIPLIER = 10
 private const val SNAPSHOT_INTERVAL_MILLIS = 1000L
 
-@RunWith(AndroidJUnit4::class)
+@AppModeFull(reason = "This test connects to other test app")
 class DiscreteAppopsTest {
     private var previousAppOpsConstants: String? = null
 
     private val instrumentation get() = InstrumentationRegistry.getInstrumentation()
     private val context get() = instrumentation.context
-    private val uid by lazy { context.packageManager.getPackageUid(PACKAGE_NAME, 0) }
+    private val uid = context.packageManager.getPackageUid(PACKAGE_NAME, 0)
 
     private val uiAutomation get() = instrumentation.uiAutomation
     private lateinit var foregroundControlService: IAppOpsForegroundControlService
