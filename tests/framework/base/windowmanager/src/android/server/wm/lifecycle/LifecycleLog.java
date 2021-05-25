@@ -38,7 +38,6 @@ import java.util.List;
 public class LifecycleLog extends ContentProvider {
 
     public enum ActivityCallback {
-        PRE_ON_CREATE,
         ON_CREATE,
         ON_START,
         ON_RESUME,
