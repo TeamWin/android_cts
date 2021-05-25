@@ -135,7 +135,7 @@ public class ActivityLifecycleFreeformTests extends ActivityLifecycleClientTestB
                 .setOptions(launchOptions)
                 .launch();
 
-        final Activity secondActivity = launchActivityInFullscreenAndWait(SecondActivity.class);
+        final Activity secondActivity = launchActivityAndWait(SecondActivity.class);
 
         new Launcher(ThirdActivity.class)
                 .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK)
@@ -193,8 +193,7 @@ public class ActivityLifecycleFreeformTests extends ActivityLifecycleClientTestB
                 .setOptions(launchOptions)
                 .launch();
 
-        final Activity transparentActivity =
-            launchActivityInFullscreenAndWait(TranslucentActivity.class);
+        final Activity transparentActivity = launchActivityAndWait(TranslucentActivity.class);
 
         new Launcher(ThirdActivity.class)
                 .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK)
