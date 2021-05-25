@@ -52,12 +52,18 @@ public class Utils {
     public static final int HOTWORD_DETECTION_SERVICE_WITHOUT_ISOLATED_PROCESS = 3;
     public static final int HOTWORD_DETECTION_SERVICE_WITHIN_ISOLATED_PROCESS = 4;
 
-    /** Indicate which test event for testing. */
-    public static final int VOICE_INTERACTION_SERVICE_NORMAL_TEST = 0;
-    public static final int HOTWORD_DETECTION_SERVICE_TRIGGER_TEST = 1;
-    public static final int HOTWORD_DETECTION_SERVICE_TRIGGER_WITHOUT_PERMISSION_TEST = 2;
-    public static final int HOTWORD_DETECTION_SERVICE_DSP_ONDETECT_TEST = 3;
-    public static final int HOTWORD_DETECTION_SERVICE_EXTERNAL_SOURCE_ONDETECT_TEST = 4;
+    /**
+     * Indicate which test event for testing.
+     *
+     * Note: The VIS is the abbreviation of VoiceInteractionService
+     */
+    public static final int VIS_NORMAL_TEST = 0;
+    public static final int VIS_WITHOUT_MANAGE_HOTWORD_DETECTION_PERMISSION_TEST = 1;
+    public static final int VIS_HOLD_BIND_HOTWORD_DETECTION_PERMISSION_TEST = 2;
+
+    public static final int HOTWORD_DETECTION_SERVICE_TRIGGER_TEST = 100;
+    public static final int HOTWORD_DETECTION_SERVICE_DSP_ONDETECT_TEST = 101;
+    public static final int HOTWORD_DETECTION_SERVICE_EXTERNAL_SOURCE_ONDETECT_TEST = 102;
 
     public static final int HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS = 1;
     public static final int HOTWORD_DETECTION_SERVICE_TRIGGER_ILLEGAL_STATE_EXCEPTION = 2;
