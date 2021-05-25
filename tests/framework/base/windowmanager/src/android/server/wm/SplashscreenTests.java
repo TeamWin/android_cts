@@ -74,6 +74,8 @@ import android.platform.test.annotations.Presubmit;
 import android.view.WindowManager;
 import android.view.WindowMetrics;
 
+import androidx.test.filters.FlakyTest;
+
 import com.android.compatibility.common.util.TestUtils;
 
 import org.junit.After;
@@ -103,6 +105,7 @@ public class SplashscreenTests extends ActivityManagerTestBase {
     }
 
     @Test
+    @FlakyTest(bugId = 189001160)
     public void testSplashscreenContent() {
         launchActivityNoWait(SPLASHSCREEN_ACTIVITY);
         // The windowSplashScreenContent attribute is set to RED. We check that it is ignored.
@@ -244,6 +247,7 @@ public class SplashscreenTests extends ActivityManagerTestBase {
     }
 
     @Test
+    @FlakyTest(bugId = 189001160)
     public void testSetApplicationNightMode() throws Exception {
         final UiModeManager uiModeManager = mContext.getSystemService(UiModeManager.class);
         assumeTrue(uiModeManager != null);
@@ -270,6 +274,7 @@ public class SplashscreenTests extends ActivityManagerTestBase {
     }
 
     @Test
+    @FlakyTest(bugId = 189001160)
     public void testSetBackgroundColorActivity() {
         launchActivityNoWait(SPLASH_SCREEN_REPLACE_ICON_ACTIVITY, extraBool(DELAY_RESUME, true));
         testSplashScreenColor(SPLASH_SCREEN_REPLACE_ICON_ACTIVITY, Color.BLUE, Color.BLACK);
@@ -311,6 +316,7 @@ public class SplashscreenTests extends ActivityManagerTestBase {
     }
 
     @Test
+    @FlakyTest(bugId = 189001160)
     public void testShortcutChangeTheme() {
         final LauncherApps launcherApps = mContext.getSystemService(LauncherApps.class);
         final ShortcutManager shortcutManager = mContext.getSystemService(ShortcutManager.class);
