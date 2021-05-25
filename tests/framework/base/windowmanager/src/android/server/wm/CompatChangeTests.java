@@ -204,6 +204,8 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     private void runSizeCompatTest(ComponentName activity, boolean inSizeCompatModeAfterResize) {
         runSizeCompatTest(activity, /* resizeRatio= */ 0.5, inSizeCompatModeAfterResize);
         mDisplayMetricsSession.restoreDisplayMetrics();
+        mWmState.waitForWithAmState(state -> !state.getActivity(activity).inSizeCompatMode,
+                "Activity should not be in compat mode");
         runSizeCompatTest(activity, /* resizeRatio= */ 2, inSizeCompatModeAfterResize);
     }
 
@@ -218,7 +220,7 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
      */
     private void runSizeCompatTest(ComponentName activity, double resizeRatio,
             boolean inSizeCompatModeAfterResize) {
-        launchActivityOnDisplay(activity, DEFAULT_DISPLAY);
+        getLaunchActivityBuilder().setUseInstrumentation().setTargetActivity(activity).execute();
 
         assertSizeCompatMode(activity, /* expectedInSizeCompatMode= */ false);
 
@@ -252,6 +254,8 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
         runSizeCompatTest(activity, /* resizeRatio= */ 0.5, /* inSizeCompatModeAfterResize=*/ true);
         assertSandboxed(activity, isSandboxed);
         mDisplayMetricsSession.restoreDisplayMetrics();
+        mWmState.waitForWithAmState(state -> !state.getActivity(activity).inSizeCompatMode,
+                "Activity should not be in compat mode");
         runSizeCompatTest(activity, /* resizeRatio= */ 2, /* inSizeCompatModeAfterResize=*/ true);
         assertSandboxed(activity, isSandboxed);
     }
