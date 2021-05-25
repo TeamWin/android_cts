@@ -19,8 +19,19 @@ package com.android.bedstead.harrier.policies;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.DeviceOwnerControl.USER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.ProfileOwnerControl.NO;
 
+import android.app.admin.DevicePolicyManager;
+import android.content.ComponentName;
+
 import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
 
+/**
+ * Policies around Lock Task mode
+ * (https://developer.android.com/work/dpc/dedicated-devices/lock-task-mode).
+ *
+ * <p>This is used by methods such as
+ * {@link DevicePolicyManager#setLockTaskFeatures(ComponentName, int)} and
+ * {@link DevicePolicyManager#setLockTaskPackages(ComponentName, String[])}.
+ */
 @EnterprisePolicy(deviceOwner = USER, profileOwner = NO)
-public class LockTaskPackages {
+public final class LockTask {
 }
