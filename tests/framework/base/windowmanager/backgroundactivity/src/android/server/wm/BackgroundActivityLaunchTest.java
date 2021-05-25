@@ -270,10 +270,7 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
 
     @Test
     @FlakyTest(bugId = 143522449)
-    public void testActivityNotBlockedWhenForegroundActivityLaunchInDifferentTask()
-            throws Exception {
-        // Start foreground activity, and foreground activity able to launch background activity
-        // successfully
+    public void testActivityBlockedWhenLaunchedAfterHomePress() throws Exception {
         Intent intent = new Intent();
         intent.setComponent(APP_A_FOREGROUND_ACTIVITY);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -286,13 +283,12 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
         assertTrue("Not able to launch background activity", result);
         assertTaskStack(new ComponentName[]{APP_A_FOREGROUND_ACTIVITY}, APP_A_FOREGROUND_ACTIVITY);
 
-        // The foreground activity will be paused but will attempt to restart itself in onPause()
         pressHomeAndResumeAppSwitch();
 
         result = waitForActivityFocused(APP_A_FOREGROUND_ACTIVITY);
-        assertFalse("Previously foreground Activity should not be able to relaunch itself", result);
+        assertFalse("FG activity shouldn't be visible", result);
         result = waitForActivityFocused(APP_A_BACKGROUND_ACTIVITY);
-        assertFalse("Previously foreground Activity should not be able to relaunch itself", result);
+        assertFalse("BG activity shouldn't be visible", result);
         assertTaskStack(new ComponentName[]{APP_A_FOREGROUND_ACTIVITY}, APP_A_FOREGROUND_ACTIVITY);
         assertTaskStack(null, APP_A_BACKGROUND_ACTIVITY);
     }
