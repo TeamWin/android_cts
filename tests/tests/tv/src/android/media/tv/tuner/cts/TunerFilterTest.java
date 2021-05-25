@@ -43,6 +43,7 @@ import androidx.test.runner.AndroidJUnit4;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -72,6 +73,8 @@ public class TunerFilterTest {
     }
 
     @Test
+    @Ignore("b/188004782")
+    // Disable Tuner CTS cases on Android 11.
     public void testAvSettings() throws Exception {
         if (!hasTuner()) return;
         AvSettings settings =
@@ -84,6 +87,8 @@ public class TunerFilterTest {
     }
 
     @Test
+    @Ignore("b/188004782")
+    // Disable Tuner CTS cases on Android 11.
     public void testDownloadSettings() throws Exception {
         if (!hasTuner()) return;
         DownloadSettings settings =
@@ -96,6 +101,8 @@ public class TunerFilterTest {
     }
 
     @Test
+    @Ignore("b/188004782")
+    // Disable Tuner CTS cases on Android 11.
     public void testPesSettings() throws Exception {
         if (!hasTuner()) return;
         PesSettings settings =
@@ -110,6 +117,8 @@ public class TunerFilterTest {
     }
 
     @Test
+    @Ignore("b/188004782")
+    // Disable Tuner CTS cases on Android 11.
     public void testRecordSettings() throws Exception {
         if (!hasTuner()) return;
         RecordSettings settings =
@@ -130,6 +139,8 @@ public class TunerFilterTest {
     }
 
     @Test
+    @Ignore("b/188004782")
+    // Disable Tuner CTS cases on Android 11.
     public void testSectionSettingsWithSectionBits() throws Exception {
         if (!hasTuner()) return;
         SectionSettingsWithSectionBits settings =
@@ -152,6 +163,8 @@ public class TunerFilterTest {
     }
 
     @Test
+    @Ignore("b/188004782")
+    // Disable Tuner CTS cases on Android 11.
     public void testSectionSettingsWithTableInfo() throws Exception {
         if (!hasTuner()) return;
         SectionSettingsWithTableInfo settings =
@@ -172,6 +185,8 @@ public class TunerFilterTest {
     }
 
     @Test
+    @Ignore("b/188004782")
+    // Disable Tuner CTS cases on Android 11.
     public void testAlpFilterConfiguration() throws Exception {
         if (!hasTuner()) return;
         AlpFilterConfiguration config =
@@ -190,6 +205,8 @@ public class TunerFilterTest {
     }
 
     @Test
+    @Ignore("b/188004782")
+    // Disable Tuner CTS cases on Android 11.
     public void testIpFilterConfiguration() throws Exception {
         if (!hasTuner()) return;
         IpFilterConfiguration config =
@@ -215,6 +232,8 @@ public class TunerFilterTest {
     }
 
     @Test
+    @Ignore("b/188004782")
+    // Disable Tuner CTS cases on Android 11.
     public void testMmtpFilterConfiguration() throws Exception {
         if (!hasTuner()) return;
         MmtpFilterConfiguration config =
@@ -230,6 +249,8 @@ public class TunerFilterTest {
     }
 
     @Test
+    @Ignore("b/188004782")
+    // Disable Tuner CTS cases on Android 11.
     public void testTlvFilterConfiguration() throws Exception {
         if (!hasTuner()) return;
         TlvFilterConfiguration config =
@@ -249,6 +270,8 @@ public class TunerFilterTest {
     }
 
     @Test
+    @Ignore("b/188004782")
+    // Disable Tuner CTS cases on Android 11.
     public void testTsFilterConfiguration() throws Exception {
         if (!hasTuner()) return;
 

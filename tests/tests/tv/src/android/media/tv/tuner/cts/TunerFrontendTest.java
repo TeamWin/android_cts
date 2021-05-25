@@ -54,6 +54,7 @@ import java.util.List;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -83,6 +84,8 @@ public class TunerFrontendTest {
     }
 
     @Test
+    @Ignore("b/188004782")
+    // Disable Tuner CTS cases on Android 11.
     public void testAnalogFrontendSettings() throws Exception {
         if (!hasTuner()) return;
         AnalogFrontendSettings settings =
@@ -100,6 +103,8 @@ public class TunerFrontendTest {
     }
 
     @Test
+    @Ignore("b/188004782")
+    // Disable Tuner CTS cases on Android 11.
     public void testAtsc3FrontendSettings() throws Exception {
         if (!hasTuner()) return;
 
@@ -154,6 +159,8 @@ public class TunerFrontendTest {
     }
 
     @Test
+    @Ignore("b/188004782")
+    // Disable Tuner CTS cases on Android 11.
     public void testAtscFrontendSettings() throws Exception {
         if (!hasTuner()) return;
         AtscFrontendSettings settings =
@@ -169,6 +176,8 @@ public class TunerFrontendTest {
     }
 
     @Test
+    @Ignore("b/188004782")
+    // Disable Tuner CTS cases on Android 11.
     public void testDvbcFrontendSettings() throws Exception {
         if (!hasTuner()) return;
         DvbcFrontendSettings settings =
@@ -195,6 +204,8 @@ public class TunerFrontendTest {
     }
 
     @Test
+    @Ignore("b/188004782")
+    // Disable Tuner CTS cases on Android 11.
     public void testDvbsFrontendSettings() throws Exception {
         if (!hasTuner()) return;
 
@@ -240,6 +251,8 @@ public class TunerFrontendTest {
     }
 
     @Test
+    @Ignore("b/188004782")
+    // Disable Tuner CTS cases on Android 11.
     public void testDvbtFrontendSettings() throws Exception {
         if (!hasTuner()) return;
         DvbtFrontendSettings settings =
@@ -279,6 +292,8 @@ public class TunerFrontendTest {
     }
 
     @Test
+    @Ignore("b/188004782")
+    // Disable Tuner CTS cases on Android 11.
     public void testIsdbs3FrontendSettings() throws Exception {
         if (!hasTuner()) return;
         Isdbs3FrontendSettings settings =
@@ -304,6 +319,8 @@ public class TunerFrontendTest {
     }
 
     @Test
+    @Ignore("b/188004782")
+    // Disable Tuner CTS cases on Android 11.
     public void testIsdbsFrontendSettings() throws Exception {
         if (!hasTuner()) return;
         IsdbsFrontendSettings settings =
@@ -330,6 +347,8 @@ public class TunerFrontendTest {
     }
 
     @Test
+    @Ignore("b/188004782")
+    // Disable Tuner CTS cases on Android 11.
     public void testIsdbtFrontendSettings() throws Exception {
         if (!hasTuner()) return;
         IsdbtFrontendSettings settings =
@@ -355,6 +374,8 @@ public class TunerFrontendTest {
     }
 
     @Test
+    @Ignore("b/188004782")
+    // Disable Tuner CTS cases on Android 11.
     public void testFrontendInfo() throws Exception {
         if (!hasTuner()) return;
         List<Integer> ids = mTuner.getFrontendIds();
