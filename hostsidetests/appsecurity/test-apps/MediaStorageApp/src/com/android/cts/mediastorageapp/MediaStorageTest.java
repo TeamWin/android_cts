@@ -36,6 +36,7 @@ import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.net.Uri;
@@ -745,11 +746,13 @@ public class MediaStorageTest {
             // Some dialogs may have granted access automatically, so we're willing
             // to keep rolling forward if we can't find our grant button
             final UiSelector grant = new UiSelector().textMatches("(?i)Allow");
-            UiScrollable uiScrollable = new UiScrollable(new UiSelector().scrollable(true));
-            try {
-                uiScrollable.scrollIntoView(grant);
-            } catch (UiObjectNotFoundException e) {
-                // Scrolling can fail if the UI is not scrollable
+            if (isWatch()) {
+                UiScrollable uiScrollable = new UiScrollable(new UiSelector().scrollable(true));
+                try {
+                    uiScrollable.scrollIntoView(grant);
+                } catch (UiObjectNotFoundException e) {
+                    // Scrolling can fail if the UI is not scrollable
+                }
             }
             final boolean grantExists = new UiObject(grant).waitForExists(timeout);
 
@@ -881,5 +884,13 @@ public class MediaStorageTest {
             }
         }
         throw new TimeoutException("File creation failed due to slow permission update");
+    }
+
+    private boolean isWatch() {
+        return hasFeature(PackageManager.FEATURE_WATCH);
+    }
+
+    private boolean hasFeature(String feature) {
+        return mContext.getPackageManager().hasSystemFeature(feature);
     }
 }
