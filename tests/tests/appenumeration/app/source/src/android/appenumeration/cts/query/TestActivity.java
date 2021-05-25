@@ -71,6 +71,7 @@ import android.content.SyncAdapterType;
 import android.content.pm.LauncherApps;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.SharedLibraryInfo;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -227,6 +228,9 @@ public class TestActivity extends Activity {
                 final int expectedEventCode = intent.getBundleExtra(EXTRA_DATA)
                         .getInt(EXTRA_FLAGS, CALLBACK_EVENT_INVALID);
                 awaitLauncherAppsCallback(remoteCallback, expectedEventCode, TIMEOUT_MS);
+            } else if (Constants.ACTION_GET_SHAREDLIBRARY_DEPENDENT_PACKAGES.equals(action)) {
+                final String sharedLibName = intent.getStringExtra(Intent.EXTRA_PACKAGE_NAME);
+                sendGetSharedLibraryDependentPackages(remoteCallback, sharedLibName);
             } else {
                 sendError(remoteCallback, new Exception("unknown action " + action));
             }
@@ -548,6 +552,22 @@ public class TestActivity extends Activity {
                 .getSyncAdapterPackagesForAuthorityAsUser(authority, userId);
         final Bundle result = new Bundle();
         result.putStringArray(Intent.EXTRA_PACKAGES, syncAdapterPackages);
+        remoteCallback.sendResult(result);
+        finish();
+    }
+
+    private void sendGetSharedLibraryDependentPackages(RemoteCallback remoteCallback,
+            String sharedLibName) {
+        final List<SharedLibraryInfo> sharedLibraryInfos = getPackageManager()
+                .getSharedLibraries(0 /* flags */);
+        SharedLibraryInfo sharedLibraryInfo = sharedLibraryInfos.stream().filter(
+                info -> sharedLibName.equals(info.getName())).findAny().orElse(null);
+        final String[] dependentPackages = sharedLibraryInfo == null ? null
+                : sharedLibraryInfo.getDependentPackages().stream()
+                        .map(versionedPackage -> versionedPackage.getPackageName())
+                        .distinct().collect(Collectors.toList()).toArray(new String[]{});
+        final Bundle result = new Bundle();
+        result.putStringArray(Intent.EXTRA_PACKAGES, dependentPackages);
         remoteCallback.sendResult(result);
         finish();
     }
