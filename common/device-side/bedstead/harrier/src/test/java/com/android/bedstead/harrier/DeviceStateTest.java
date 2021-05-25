@@ -22,6 +22,7 @@ import static android.content.pm.PackageManager.PERMISSION_DENIED;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 
 import static com.android.bedstead.harrier.DeviceState.UserType.ANY;
+import static com.android.bedstead.harrier.DeviceState.UserType.PRIMARY_USER;
 import static com.android.bedstead.harrier.annotations.RequireAospBuild.GMS_CORE_PACKAGE;
 import static com.android.bedstead.harrier.annotations.RequireCnGmsBuild.CHINA_GOOGLE_SERVICES_FEATURE;
 import static com.android.bedstead.nene.users.UserType.MANAGED_PROFILE_TYPE_NAME;
@@ -96,6 +97,18 @@ public class DeviceStateTest {
     }
 
     @Test
+    @EnsureHasWorkProfile
+    public void profile_profileIsProvided_returnsProfile() {
+        assertThat(sDeviceState.profile(MANAGED_PROFILE_TYPE_NAME)).isNotNull();
+    }
+
+    @Test
+    @RequireRunOnWorkProfile
+    public void workProfile_runningOnWorkProfile_returnsCurrentProfile() {
+        assertThat(sDeviceState.workProfile()).isEqualTo(sTestApis.users().instrumented());
+    }
+
+    @Test
     @EnsureHasNoWorkProfile
     public void workProfile_noWorkProfile_throwsException() {
         assertThrows(IllegalStateException.class, sDeviceState::workProfile);
@@ -138,6 +151,12 @@ public class DeviceStateTest {
     @EnsureHasTvProfile
     public void tvProfile_tvProfileProvided_returnsTvProfile() {
         assertThat(sDeviceState.tvProfile()).isNotNull();
+    }
+
+    @Test
+    @RequireRunOnTvProfile
+    public void tvProfile_runningOnTvProfile_returnsCurrentProfile() {
+        assertThat(sDeviceState.tvProfile()).isEqualTo(sTestApis.users().instrumented());
     }
 
     @Test
@@ -184,6 +203,18 @@ public class DeviceStateTest {
     @EnsureHasSecondaryUser
     public void secondaryUser_secondaryUserProvided_returnsSecondaryUser() {
         assertThat(sDeviceState.secondaryUser()).isNotNull();
+    }
+
+    @Test
+    @EnsureHasSecondaryUser
+    public void user_userProvided_returnUser() {
+        assertThat(sDeviceState.user(SECONDARY_USER_TYPE_NAME)).isNotNull();
+    }
+
+    @Test
+    @RequireRunOnSecondaryUser
+    public void secondaryUser_runningOnSecondaryUser_returnsCurrentUser() {
+        assertThat(sDeviceState.secondaryUser()).isEqualTo(sTestApis.users().instrumented());
     }
 
     @Test
@@ -403,8 +434,9 @@ public class DeviceStateTest {
     public void includeRunOnSecondaryUserInDifferentProfileGroupToProfileOwnerAnnotation_isRunningOnSecondaryUserInDifferentProfileGroupToProfileOwner() {
         assertThat(sTestApis.users().instrumented().resolve().type().name())
                 .isEqualTo(SECONDARY_USER_TYPE_NAME);
-        assertThat(sDeviceState.workProfile()).isNotEqualTo(sTestApis.users().instrumented());
-        assertThat(sTestApis.devicePolicy().getProfileOwner(sDeviceState.workProfile()))
+        assertThat(sDeviceState.workProfile(PRIMARY_USER))
+                .isNotEqualTo(sTestApis.users().instrumented());
+        assertThat(sTestApis.devicePolicy().getProfileOwner(sDeviceState.workProfile(PRIMARY_USER)))
                 .isNotNull();
 
         // TODO(scottjonathan): Assert profile groups are different
