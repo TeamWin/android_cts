@@ -18,6 +18,7 @@ package android.net.wifi.cts;
 
 import static android.net.NetworkCapabilities.NET_CAPABILITY_NOT_METERED;
 import static android.net.NetworkCapabilities.TRANSPORT_WIFI;
+import static android.net.wifi.WifiAvailableChannel.OP_MODE_SAP;
 import static android.net.wifi.WifiAvailableChannel.OP_MODE_STA;
 import static android.net.wifi.WifiConfiguration.INVALID_NETWORK_ID;
 import static android.net.wifi.WifiManager.COEX_RESTRICTION_SOFTAP;
@@ -4436,6 +4437,10 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         // for test)
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         try {
+
+            WifiAvailableChannel channel = new WifiAvailableChannel(2412, OP_MODE_SAP);
+            assertEquals(channel.getFrequencyMhz(), 2412);
+            assertEquals(channel.getOperationalModes(), OP_MODE_SAP);
             final List<Integer> valid24GhzFreqs = Arrays.asList(
                 2412, 2417, 2422, 2427, 2432, 2437, 2442,
                 2447, 2452, 2457, 2462, 2467, 2472, 2484);
