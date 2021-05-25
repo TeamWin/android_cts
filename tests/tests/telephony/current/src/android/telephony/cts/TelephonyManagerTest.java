@@ -1161,6 +1161,8 @@ public class TelephonyManagerTest {
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
                 tp -> tp.setSystemSelectionChannels(Collections.emptyList()));
 
+        // TODO (b/189255895): Uncomment once getSystemSelection channels is functional in S QPR
+        /**
         // getSystemSelectionChannels was added in IRadio 1.6, so ensure it returns
         // the value that was set by setSystemSelectionChannels.
         if (mRadioVersion >= RADIO_HAL_VERSION_1_6) {
@@ -1168,6 +1170,7 @@ public class TelephonyManagerTest {
                     ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
                     TelephonyManager::getSystemSelectionChannels));
         }
+         **/
     }
 
     @Test
@@ -1464,7 +1467,7 @@ public class TelephonyManagerTest {
         synchronized (mLock) {
             // reboot takes longer time
             if (!mRadioRebootTriggered) {
-                mLock.wait(10000);
+                mLock.wait(20000);
             }
         }
         assertThat(mTelephonyManager.getRadioPowerState()).isEqualTo(
