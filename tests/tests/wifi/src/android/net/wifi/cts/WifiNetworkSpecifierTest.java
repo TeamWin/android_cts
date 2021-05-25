@@ -31,6 +31,7 @@ import android.net.MacAddress;
 import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
+import android.net.NetworkSpecifier;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiEnterpriseConfig;
@@ -42,6 +43,7 @@ import android.platform.test.annotations.AppModeFull;
 import android.support.test.uiautomator.UiDevice;
 import android.util.Pair;
 
+import androidx.core.os.BuildCompat;
 import androidx.test.filters.SdkSuppress;
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -567,5 +569,30 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
                 .setWpa3Enterprise192BitModeConfig(enterpriseConfig)
                 .build();
         assertThat(specifier1.canBeSatisfiedBy(specifier2)).isTrue();
+    }
+
+    /**
+     * Test WifiNetworkSpecifier redaction.
+     */
+    @Test
+    public void testRedact() {
+        if (!WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(mContext)) {
+            // Skip the test if wifi module version is older than S.
+            return;
+        }
+        WifiNetworkSpecifier specifier = TestHelper
+                .createSpecifierBuilderWithCredentialFromSavedNetworkWithBssid(sTestNetwork)
+                .setBssidPattern(MacAddress.fromString(sTestNetwork.BSSID),
+                        MacAddress.fromString("ff:ff:ff:00:00:00"))
+                .setBand(ScanResult.WIFI_BAND_5_GHZ)
+                .build();
+
+        final NetworkSpecifier redacted = specifier.redact();
+        if (BuildCompat.isAtLeastS()) {
+            assertThat(new WifiNetworkSpecifier.Builder().setBand(ScanResult.WIFI_BAND_5_GHZ)
+                    .build().equals(redacted)).isTrue();
+        } else {
+            assertThat(redacted.equals(specifier)).isTrue();
+        }
     }
 }
