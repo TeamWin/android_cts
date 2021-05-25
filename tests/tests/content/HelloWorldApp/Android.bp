@@ -77,6 +77,42 @@ android_test {
 }
 
 //-----------------------------------------------------------
+android_library {
+    name: "HelloWorldResHardeningLib",
+    defaults: ["cts_defaults"],
+    static_libs: [
+        "compatibility-device-util-axt",
+        "hamcrest-library",
+        "junit",
+        "testng",
+        "truth-prebuilt",
+    ],
+    srcs: ["src_res_hardening_lib/**/*.java"],
+    resource_dirs: [],
+    manifest: "AndroidManifestResHardeningLib.xml",
+    min_sdk_version: "24",
+    platform_apis: true,
+}
+
+//-----------------------------------------------------------
+android_test {
+    name: "HelloWorldResHardening",
+    defaults: ["hello_world_defaults"],
+    srcs: ["src_res_hardening/**/*.java"],
+    manifest: "AndroidManifestResHardening.xml",
+    static_libs: [
+        "HelloWorldResHardeningLib",
+    ],
+    // tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
+    v4_signature: true,
+    platform_apis: true,
+}
+
+//-----------------------------------------------------------
 android_test {
     name: "HelloWorldShell",
     defaults: ["hello_world_defaults"],
