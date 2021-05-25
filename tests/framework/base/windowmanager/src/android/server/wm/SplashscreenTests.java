@@ -29,6 +29,7 @@ import static android.server.wm.app.Components.SPLASHSCREEN_ACTIVITY;
 import static android.server.wm.app.Components.SPLASH_SCREEN_REPLACE_ICON_ACTIVITY;
 import static android.server.wm.app.Components.SPLASH_SCREEN_REPLACE_THEME_ACTIVITY;
 import static android.server.wm.app.Components.TestStartingWindowKeys.CANCEL_HANDLE_EXIT;
+import static android.server.wm.app.Components.TestStartingWindowKeys.CENTER_VIEW_IS_SURFACE_VIEW;
 import static android.server.wm.app.Components.TestStartingWindowKeys.CONTAINS_BRANDING_VIEW;
 import static android.server.wm.app.Components.TestStartingWindowKeys.CONTAINS_CENTER_VIEW;
 import static android.server.wm.app.Components.TestStartingWindowKeys.DELAY_RESUME;
@@ -298,6 +299,7 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         assertTrue(iconAnimationStart != 0);
         assertEquals(iconAnimationDuration, 500);
         assertFalse(journal.extras.getBoolean(CONTAINS_BRANDING_VIEW));
+        assertTrue(journal.extras.getBoolean(CENTER_VIEW_IS_SURFACE_VIEW));
     }
 
     @Test
