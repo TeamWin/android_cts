@@ -29,6 +29,7 @@ import android.support.test.uiautomator.UiDevice
 import android.support.test.uiautomator.UiObject2
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.rule.ActivityTestRule
+import com.android.compatibility.common.util.DisableAnimationRule
 import com.android.compatibility.common.util.SystemUtil.runShellCommand
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
 import com.android.compatibility.common.util.UiAutomatorUtils
@@ -56,6 +57,9 @@ abstract class BasePermissionTest {
     protected val packageManager: PackageManager = context.packageManager
     private val mPermissionControllerResources: Resources = context.createPackageContext(
             context.packageManager.permissionControllerPackageName, 0).resources
+
+    @get:Rule
+    val disableAnimationRule = DisableAnimationRule()
 
     @get:Rule
     val activityRule = ActivityTestRule(StartForFutureActivity::class.java, false, false)
