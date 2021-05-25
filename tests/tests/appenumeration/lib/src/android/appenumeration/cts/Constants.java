@@ -196,6 +196,8 @@ public class Constants {
             PKG_BASE + "cts.action.LAUNCHER_APPS_IS_ACTIVITY_ENABLED";
     public static final String ACTION_AWAIT_LAUNCHER_APPS_CALLBACK =
             PKG_BASE + "cts.action.AWAIT_LAUNCHER_APPS_CALLBACK";
+    public static final String ACTION_GET_SHAREDLIBRARY_DEPENDENT_PACKAGES =
+            PKG_BASE + "cts.action.GET_SHAREDLIBRARY_DEPENDENT_PACKAGES";
 
     public static final String EXTRA_REMOTE_CALLBACK = "remoteCallback";
     public static final String EXTRA_REMOTE_READY_CALLBACK = "remoteReadyCallback";
