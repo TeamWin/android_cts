@@ -2080,9 +2080,9 @@ public class RcsUceAdapterTest {
         terminatedMap.put(emptyReasonArgs, emptyReasonExpectedArgs);
 
         // Verify each subscription terminated and the expected result
-        terminatedMap.forEach((deactivated, expectedResult) -> {
-            String terminatedReason = (String) deactivated.arg1;
-            Long terminatedRetryAfterMillis = (Long) deactivated.arg2;
+        terminatedMap.forEach((reason, expectedResult) -> {
+            String terminatedReason = (String) reason.arg1;
+            Long terminatedRetryAfterMillis = (Long) reason.arg2;
             capabilityExchangeImpl.setSubscribeOperation((uris, cb) -> {
                 cb.onNetworkResponse(networkRespCode, networkRespReason);
                 cb.onNotifyCapabilitiesUpdate(pidfXmlList);
@@ -2107,7 +2107,7 @@ public class RcsUceAdapterTest {
                 fail("Unexpected exception " + e);
             }
 
-            deactivated.recycle();
+            reason.recycle();
             expectedResult.recycle();
             errorQueue.clear();
             errorRetryQueue.clear();
@@ -2116,9 +2116,11 @@ public class RcsUceAdapterTest {
             removeTestContactFromEab();
         });
 
-        // Verify the subscribe request is sccessful when the terminated is timeout and the
-        // retryAfter is 0L
-        String terminatedReason = "timemout";
+        /*
+         * Verify the subscribe request is successful when: A) The terminated is timeout and
+         * B) The retryAfter is 0L and C) All the capabilities have been received.
+         */
+        String terminatedReason = "timeout";
         long terminatedRetryAfterMillis = 0L;
         capabilityExchangeImpl.setSubscribeOperation((uris, cb) -> {
             cb.onNetworkResponse(networkRespCode, networkRespReason);
@@ -2141,6 +2143,28 @@ public class RcsUceAdapterTest {
         capabilityQueue.clear();
         removeTestContactFromEab();
 
+        /*
+         * Set the subscribe request is failed because NOT all of the capabilities have been
+         * received.
+         */
+        capabilityExchangeImpl.setSubscribeOperation((uris, cb) -> {
+            cb.onNetworkResponse(networkRespCode, networkRespReason);
+            cb.onTerminated(terminatedReason, terminatedRetryAfterMillis);
+        });
+
+        requestCapabilities(uceAdapter, numbers, callback);
+
+        /*
+         * Verify the request is failed because NOT all of the capabilities have been received.
+         */
+        assertEquals(RcsUceAdapter.ERROR_REQUEST_TIMEOUT, waitForIntResult(errorQueue));
+        assertEquals(0L, (waitForLongResult(errorRetryQueue)));
+
+        errorQueue.clear();
+        errorRetryQueue.clear();
+        completeQueue.clear();
+        capabilityQueue.clear();
+        removeTestContactFromEab();
         overrideCarrierConfig(null);
     }
 
