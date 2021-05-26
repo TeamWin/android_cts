@@ -156,204 +156,9 @@ public final class DeviceState implements TestRule {
 
                 assumeFalse(mSkipTestsReason, mSkipTests);
 
-                PermissionContextImpl permissionContext = null;
-
                 Collection<Annotation> annotations = getAnnotations(description);
+                PermissionContextImpl permissionContext = applyAnnotations(annotations);
 
-                for (Annotation annotation : annotations) {
-                    Class<? extends Annotation> annotationType = annotation.annotationType();
-
-                    EnsureHasNoProfileAnnotation ensureHasNoProfileAnnotation =
-                            annotationType.getAnnotation(EnsureHasNoProfileAnnotation.class);
-                    if (ensureHasNoProfileAnnotation != null) {
-                        UserType userType = (UserType) annotation.annotationType()
-                                .getMethod("forUser").invoke(annotation);
-                        ensureHasNoProfile(ensureHasNoProfileAnnotation.value(), userType);
-                        continue;
-                    }
-
-                    EnsureHasProfileAnnotation ensureHasProfileAnnotation =
-                            annotationType.getAnnotation(EnsureHasProfileAnnotation.class);
-                    if (ensureHasProfileAnnotation != null) {
-                        UserType forUser = (UserType) annotation.annotationType()
-                                .getMethod("forUser").invoke(annotation);
-                        OptionalBoolean installInstrumentedApp = (OptionalBoolean)
-                                annotation.annotationType()
-                                .getMethod("installInstrumentedApp").invoke(annotation);
-
-                        boolean dpcIsPrimary = false;
-                        if (ensureHasProfileAnnotation.hasProfileOwner()) {
-                            dpcIsPrimary = (boolean)
-                                    annotation.annotationType()
-                                            .getMethod("dpcIsPrimary").invoke(annotation);
-                        }
-
-                        ensureHasProfile(
-                                ensureHasProfileAnnotation.value(), installInstrumentedApp,
-                                forUser, ensureHasProfileAnnotation.hasProfileOwner(),
-                                dpcIsPrimary);
-                        continue;
-                    }
-
-                    EnsureHasNoUserAnnotation ensureHasNoUserAnnotation =
-                            annotationType.getAnnotation(EnsureHasNoUserAnnotation.class);
-                    if (ensureHasNoUserAnnotation != null) {
-                        ensureHasNoUser(ensureHasNoUserAnnotation.value());
-                        continue;
-                    }
-
-                    EnsureHasUserAnnotation ensureHasUserAnnotation =
-                            annotationType.getAnnotation(EnsureHasUserAnnotation.class);
-                    if (ensureHasUserAnnotation != null) {
-                        OptionalBoolean installInstrumentedApp = (OptionalBoolean)
-                                annotation.getClass()
-                                .getMethod("installInstrumentedApp").invoke(annotation);
-                        ensureHasUser(ensureHasUserAnnotation.value(), installInstrumentedApp);
-                        continue;
-                    }
-
-                    RequireRunOnUserAnnotation requireRunOnUserAnnotation =
-                            annotationType.getAnnotation(RequireRunOnUserAnnotation.class);
-                    if (requireRunOnUserAnnotation != null) {
-                        requireRunOnUser(requireRunOnUserAnnotation.value());
-                        continue;
-                    }
-
-                    RequireRunOnProfileAnnotation requireRunOnProfileAnnotation =
-                            annotationType.getAnnotation(RequireRunOnProfileAnnotation.class);
-                    if (requireRunOnProfileAnnotation != null) {
-                        OptionalBoolean installInstrumentedAppInParent = (OptionalBoolean)
-                                annotation.getClass()
-                                        .getMethod("installInstrumentedAppInParent")
-                                        .invoke(annotation);
-                        requireRunOnProfile(requireRunOnProfileAnnotation.value(),
-                                installInstrumentedAppInParent);
-                    }
-
-                    if (annotation instanceof EnsureHasDeviceOwner) {
-                        EnsureHasDeviceOwner ensureHasDeviceOwnerAnnotation =
-                                (EnsureHasDeviceOwner) annotation;
-                        ensureHasDeviceOwner(ensureHasDeviceOwnerAnnotation.onUser(),
-                                ensureHasDeviceOwnerAnnotation.failureMode(),
-                                ensureHasDeviceOwnerAnnotation.isPrimary());
-                    }
-
-                    if (annotation instanceof EnsureHasNoDeviceOwner) {
-                        ensureHasNoDeviceOwner();
-                    }
-
-                    if (annotation instanceof RequireFeature) {
-                        RequireFeature requireFeatureAnnotation = (RequireFeature) annotation;
-                        requireFeature(
-                                requireFeatureAnnotation.value(),
-                                requireFeatureAnnotation.failureMode());
-                        continue;
-                    }
-
-                    if (annotation instanceof RequireDoesNotHaveFeature) {
-                        RequireDoesNotHaveFeature requireDoesNotHaveFeatureAnnotation =
-                                (RequireDoesNotHaveFeature) annotation;
-                        requireDoesNotHaveFeature(
-                                requireDoesNotHaveFeatureAnnotation.value(),
-                                requireDoesNotHaveFeatureAnnotation.failureMode());
-                        continue;
-                    }
-
-                    if (annotation instanceof EnsureHasProfileOwner) {
-                        EnsureHasProfileOwner ensureHasProfileOwnerAnnotation =
-                                (EnsureHasProfileOwner) annotation;
-                        ensureHasProfileOwner(ensureHasProfileOwnerAnnotation.onUser(),
-                                ensureHasProfileOwnerAnnotation.isPrimary());
-                    }
-
-                    if (annotationType.equals(EnsureHasNoProfileOwner.class)) {
-                        EnsureHasNoProfileOwner ensureHasNoProfileOwnerAnnotation =
-                                (EnsureHasNoProfileOwner) annotation;
-                        ensureHasNoProfileOwner(ensureHasNoProfileOwnerAnnotation.onUser());
-                    }
-                       
-                    if (annotation instanceof RequireUserSupported) {
-                        RequireUserSupported requireUserSupportedAnnotation =
-                                (RequireUserSupported) annotation;
-                        requireUserSupported(
-                                requireUserSupportedAnnotation.value(),
-                                requireUserSupportedAnnotation.failureMode());
-                        continue;
-                    }
-
-                    if (annotation instanceof RequireSdkVersion) {
-                        RequireSdkVersion requireSdkVersionAnnotation =
-                                (RequireSdkVersion) annotation;
-
-                        requireSdkVersion(
-                                requireSdkVersionAnnotation.min(),
-                                requireSdkVersionAnnotation.max(),
-                                requireSdkVersionAnnotation.failureMode());
-                        continue;
-                    }
-
-                    if (annotation instanceof RequirePackageInstalled) {
-                        RequirePackageInstalled requirePackageInstalledAnnotation =
-                                (RequirePackageInstalled) annotation;
-                        requirePackageInstalled(
-                                requirePackageInstalledAnnotation.value(),
-                                requirePackageInstalledAnnotation.onUser(),
-                                requirePackageInstalledAnnotation.failureMode());
-                        continue;
-                    }
-
-                    if (annotation instanceof RequirePackageNotInstalled) {
-                        RequirePackageNotInstalled requirePackageNotInstalledAnnotation =
-                                (RequirePackageNotInstalled) annotation;
-                        requirePackageNotInstalled(
-                                requirePackageNotInstalledAnnotation.value(),
-                                requirePackageNotInstalledAnnotation.onUser(),
-                                requirePackageNotInstalledAnnotation.failureMode()
-                        );
-                        continue;
-                    }
-
-                    if (annotation instanceof EnsurePackageNotInstalled) {
-                        EnsurePackageNotInstalled ensurePackageNotInstalledAnnotation =
-                                (EnsurePackageNotInstalled) annotation;
-                        ensurePackageNotInstalled(
-                                ensurePackageNotInstalledAnnotation.value(),
-                                ensurePackageNotInstalledAnnotation.onUser()
-                        );
-                        continue;
-                    }
-
-                    if (annotation instanceof EnsureHasPermission) {
-                        EnsureHasPermission ensureHasPermissionAnnotation =
-                                (EnsureHasPermission) annotation;
-                        try {
-                            permissionContext = sTestApis.permissions().withPermission(
-                                    ensureHasPermissionAnnotation.value());
-                        } catch (NeneException e) {
-                            failOrSkip("Error getting permission: " + e,
-                                    ensureHasPermissionAnnotation.failureMode());
-                        }
-                    }
-
-                    if (annotation instanceof EnsureDoesNotHavePermission) {
-                        EnsureDoesNotHavePermission ensureDoesNotHavePermission =
-                                (EnsureDoesNotHavePermission) annotation;
-
-                        try {
-                            if (permissionContext == null) {
-                                permissionContext = sTestApis.permissions().withoutPermission(
-                                        ensureDoesNotHavePermission.value());
-                            } else {
-                                permissionContext = permissionContext.withoutPermission(
-                                        ensureDoesNotHavePermission.value());
-                            }
-                        } catch (NeneException e) {
-                            failOrSkip("Error denying permission: " + e,
-                                    ensureDoesNotHavePermission.failureMode());
-                        }
-                    }
-
-                }
                 Log.d(LOG_TAG,
                         "Finished preparing state for test " + description.getMethodName());
 
@@ -378,16 +183,231 @@ public final class DeviceState implements TestRule {
             }};
     }
 
+    private PermissionContextImpl applyAnnotations(Collection<Annotation> annotations)
+            throws Throwable {
+        PermissionContextImpl permissionContext = null;
+        for (Annotation annotation : annotations) {
+            Class<? extends Annotation> annotationType = annotation.annotationType();
+
+            EnsureHasNoProfileAnnotation ensureHasNoProfileAnnotation =
+                    annotationType.getAnnotation(EnsureHasNoProfileAnnotation.class);
+            if (ensureHasNoProfileAnnotation != null) {
+                UserType userType = (UserType) annotation.annotationType()
+                        .getMethod("forUser").invoke(annotation);
+                ensureHasNoProfile(ensureHasNoProfileAnnotation.value(), userType);
+                continue;
+            }
+
+            EnsureHasProfileAnnotation ensureHasProfileAnnotation =
+                    annotationType.getAnnotation(EnsureHasProfileAnnotation.class);
+            if (ensureHasProfileAnnotation != null) {
+                UserType forUser = (UserType) annotation.annotationType()
+                        .getMethod("forUser").invoke(annotation);
+                OptionalBoolean installInstrumentedApp = (OptionalBoolean)
+                        annotation.annotationType()
+                                .getMethod("installInstrumentedApp").invoke(annotation);
+
+                boolean dpcIsPrimary = false;
+                if (ensureHasProfileAnnotation.hasProfileOwner()) {
+                    dpcIsPrimary = (boolean)
+                            annotation.annotationType()
+                                    .getMethod("dpcIsPrimary").invoke(annotation);
+                }
+
+                ensureHasProfile(
+                        ensureHasProfileAnnotation.value(), installInstrumentedApp,
+                        forUser, ensureHasProfileAnnotation.hasProfileOwner(),
+                        dpcIsPrimary);
+                continue;
+            }
+
+            EnsureHasNoUserAnnotation ensureHasNoUserAnnotation =
+                    annotationType.getAnnotation(EnsureHasNoUserAnnotation.class);
+            if (ensureHasNoUserAnnotation != null) {
+                ensureHasNoUser(ensureHasNoUserAnnotation.value());
+                continue;
+            }
+
+            EnsureHasUserAnnotation ensureHasUserAnnotation =
+                    annotationType.getAnnotation(EnsureHasUserAnnotation.class);
+            if (ensureHasUserAnnotation != null) {
+                OptionalBoolean installInstrumentedApp = (OptionalBoolean)
+                        annotation.getClass()
+                                .getMethod("installInstrumentedApp").invoke(annotation);
+                ensureHasUser(ensureHasUserAnnotation.value(), installInstrumentedApp);
+                continue;
+            }
+
+            RequireRunOnUserAnnotation requireRunOnUserAnnotation =
+                    annotationType.getAnnotation(RequireRunOnUserAnnotation.class);
+            if (requireRunOnUserAnnotation != null) {
+                requireRunOnUser(requireRunOnUserAnnotation.value());
+                continue;
+            }
+
+            RequireRunOnProfileAnnotation requireRunOnProfileAnnotation =
+                    annotationType.getAnnotation(RequireRunOnProfileAnnotation.class);
+            if (requireRunOnProfileAnnotation != null) {
+                OptionalBoolean installInstrumentedAppInParent = (OptionalBoolean)
+                        annotation.getClass()
+                                .getMethod("installInstrumentedAppInParent")
+                                .invoke(annotation);
+                requireRunOnProfile(requireRunOnProfileAnnotation.value(),
+                        installInstrumentedAppInParent);
+                continue;
+            }
+
+            if (annotation instanceof EnsureHasDeviceOwner) {
+                EnsureHasDeviceOwner ensureHasDeviceOwnerAnnotation =
+                        (EnsureHasDeviceOwner) annotation;
+                ensureHasDeviceOwner(ensureHasDeviceOwnerAnnotation.onUser(),
+                        ensureHasDeviceOwnerAnnotation.failureMode(),
+                        ensureHasDeviceOwnerAnnotation.isPrimary());
+            }
+
+            if (annotation instanceof EnsureHasNoDeviceOwner) {
+                ensureHasNoDeviceOwner();
+            }
+
+            if (annotation instanceof RequireFeature) {
+                RequireFeature requireFeatureAnnotation = (RequireFeature) annotation;
+                requireFeature(
+                        requireFeatureAnnotation.value(),
+                        requireFeatureAnnotation.failureMode());
+                continue;
+            }
+
+            if (annotation instanceof RequireDoesNotHaveFeature) {
+                RequireDoesNotHaveFeature requireDoesNotHaveFeatureAnnotation =
+                        (RequireDoesNotHaveFeature) annotation;
+                requireDoesNotHaveFeature(
+                        requireDoesNotHaveFeatureAnnotation.value(),
+                        requireDoesNotHaveFeatureAnnotation.failureMode());
+                continue;
+            }
+
+            if (annotation instanceof EnsureHasProfileOwner) {
+                EnsureHasProfileOwner ensureHasProfileOwnerAnnotation =
+                        (EnsureHasProfileOwner) annotation;
+                ensureHasProfileOwner(ensureHasProfileOwnerAnnotation.onUser(),
+                        ensureHasProfileOwnerAnnotation.isPrimary());
+                continue;
+            }
+
+            if (annotationType.equals(EnsureHasNoProfileOwner.class)) {
+                EnsureHasNoProfileOwner ensureHasNoProfileOwnerAnnotation =
+                        (EnsureHasNoProfileOwner) annotation;
+                ensureHasNoProfileOwner(ensureHasNoProfileOwnerAnnotation.onUser());
+                continue;
+            }
+
+            if (annotation instanceof RequireUserSupported) {
+                RequireUserSupported requireUserSupportedAnnotation =
+                        (RequireUserSupported) annotation;
+                requireUserSupported(
+                        requireUserSupportedAnnotation.value(),
+                        requireUserSupportedAnnotation.failureMode());
+                continue;
+            }
+
+            if (annotation instanceof RequireSdkVersion) {
+                RequireSdkVersion requireSdkVersionAnnotation =
+                        (RequireSdkVersion) annotation;
+
+                requireSdkVersion(
+                        requireSdkVersionAnnotation.min(),
+                        requireSdkVersionAnnotation.max(),
+                        requireSdkVersionAnnotation.failureMode());
+                continue;
+            }
+
+            if (annotation instanceof RequirePackageInstalled) {
+                RequirePackageInstalled requirePackageInstalledAnnotation =
+                        (RequirePackageInstalled) annotation;
+                requirePackageInstalled(
+                        requirePackageInstalledAnnotation.value(),
+                        requirePackageInstalledAnnotation.onUser(),
+                        requirePackageInstalledAnnotation.failureMode());
+                continue;
+            }
+
+            if (annotation instanceof RequirePackageNotInstalled) {
+                RequirePackageNotInstalled requirePackageNotInstalledAnnotation =
+                        (RequirePackageNotInstalled) annotation;
+                requirePackageNotInstalled(
+                        requirePackageNotInstalledAnnotation.value(),
+                        requirePackageNotInstalledAnnotation.onUser(),
+                        requirePackageNotInstalledAnnotation.failureMode()
+                );
+                continue;
+            }
+
+            if (annotation instanceof EnsurePackageNotInstalled) {
+                EnsurePackageNotInstalled ensurePackageNotInstalledAnnotation =
+                        (EnsurePackageNotInstalled) annotation;
+                ensurePackageNotInstalled(
+                        ensurePackageNotInstalledAnnotation.value(),
+                        ensurePackageNotInstalledAnnotation.onUser()
+                );
+                continue;
+            }
+
+            if (annotation instanceof EnsureHasPermission) {
+                EnsureHasPermission ensureHasPermissionAnnotation =
+                        (EnsureHasPermission) annotation;
+                try {
+                    if (permissionContext == null) {
+                        permissionContext = sTestApis.permissions().withPermission(
+                                ensureHasPermissionAnnotation.value());
+                    } else {
+                        permissionContext = permissionContext.withPermission(
+                                ensureHasPermissionAnnotation.value());
+                    }
+                } catch (NeneException e) {
+                    failOrSkip("Error getting permission: " + e,
+                            ensureHasPermissionAnnotation.failureMode());
+                }
+                continue;
+            }
+
+            if (annotation instanceof EnsureDoesNotHavePermission) {
+                EnsureDoesNotHavePermission ensureDoesNotHavePermission =
+                        (EnsureDoesNotHavePermission) annotation;
+
+                try {
+                    if (permissionContext == null) {
+                        permissionContext = sTestApis.permissions().withoutPermission(
+                                ensureDoesNotHavePermission.value());
+                    } else {
+                        permissionContext = permissionContext.withoutPermission(
+                                ensureDoesNotHavePermission.value());
+                    }
+                } catch (NeneException e) {
+                    failOrSkip("Error denying permission: " + e,
+                            ensureDoesNotHavePermission.failureMode());
+                }
+                continue;
+            }
+        }
+
+        return permissionContext;
+    }
+
     private Collection<Annotation> getAnnotations(Description description) {
-        if (mUsingBedsteadJUnit4) {
+        if (mUsingBedsteadJUnit4 && description.isTest()) {
             // The annotations are already exploded
             return description.getAnnotations();
         }
 
         // Otherwise we should build a new collection by recursively gathering annotations
         // if we find any which don't work without the runner we should error and fail the test
-        List<Annotation> annotations =
-                new ArrayList<>(Arrays.asList(description.getTestClass().getAnnotations()));
+        List<Annotation> annotations = new ArrayList<>();
+
+        if (description.isTest()) {
+            annotations =
+                    new ArrayList<>(Arrays.asList(description.getTestClass().getAnnotations()));
+        }
+
         annotations.addAll(description.getAnnotations());
 
         checkAnnotations(annotations);
@@ -416,7 +436,19 @@ public final class DeviceState implements TestRule {
         return new Statement() {
             @Override
             public void evaluate() throws Throwable {
+                Log.d(LOG_TAG, "Preparing state for suite " + description.getMethodName());
+
+                Collection<Annotation> annotations = getAnnotations(description);
+                PermissionContextImpl permissionContext = applyAnnotations(annotations);
+
+                Log.d(LOG_TAG,
+                        "Finished preparing state for suite " + description.getMethodName());
+
                 base.evaluate();
+
+                if (permissionContext != null) {
+                    permissionContext.close();
+                }
 
                 if (!mSkipClassTeardown) {
                     teardownShareableState();
