@@ -66,8 +66,6 @@ StreamBase::Result OboeRecorder::setupStream(
             builder.setDeviceId(mRouteDeviceId);
         }
 
-        mAudioSink->init(mBufferSizeInFrames, mChannelCount);
-
         if (mSubtype == SUB_TYPE_OBOE_AAUDIO) {
             builder.setAudioApi(AudioApi::AAudio);
         } else if (mSubtype == SUB_TYPE_OBOE_OPENSL_ES) {
@@ -82,6 +80,7 @@ StreamBase::Result OboeRecorder::setupStream(
                     "openStream failed. Error: %s", convertToText(result));
         } else {
             mBufferSizeInFrames = mAudioStream->getFramesPerBurst();
+            mAudioSink->init(mBufferSizeInFrames, mChannelCount);
         }
     }
 

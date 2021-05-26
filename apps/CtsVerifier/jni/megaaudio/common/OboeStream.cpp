@@ -109,3 +109,20 @@ StreamBase::Result OboeStream::stopStream() {
     mStreamStarted = false;
     return errCode;
 }
+
+StreamBase::Result OboeStream::getTimeStamp(oboe::FrameTimestamp* timeStamp) {
+    __android_log_print(ANDROID_LOG_INFO, TAG, "getTimeStamp()");
+    Result errCode = ERROR_UNKNOWN;
+    if (mAudioStream == nullptr) {
+        __android_log_print(ANDROID_LOG_INFO, TAG, "ERROR_INVALID_STATE");
+        errCode = ERROR_INVALID_STATE;
+    } else {
+        ResultWithValue<oboe::FrameTimestamp> result = mAudioStream->getTimestamp(CLOCK_MONOTONIC);
+
+        *timeStamp = result.value();
+
+        errCode = OK;
+    }
+
+    return errCode;
+}
