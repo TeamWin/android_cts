@@ -76,6 +76,8 @@ public class CallLogProviderTest extends InstrumentationTestCase {
         values.put(CallLog.Calls.DATE, Long.valueOf(0 /*start time*/));
         values.put(CallLog.Calls.DURATION, Long.valueOf(5 /*call duration*/));
         Uri uri = mContentResolver.insert(CallLog.Calls.CONTENT_URI, values);
+        // Get last modified prior to modification.
+        long lastModified = getLastModified(uri);
 
         CountDownLatch changeLatch = new CountDownLatch(1);
         mContentResolver.registerContentObserver(
@@ -99,6 +101,21 @@ public class CallLogProviderTest extends InstrumentationTestCase {
             e.printStackTrace();
             fail("Expected update notification.");
         }
+
+        // Verify last modified is > than the original value.
+        long newLastModified = getLastModified(uri);
+        assertTrue(newLastModified > lastModified);
+    }
+
+    public long getLastModified(Uri uri) {
+        // Query the data base to get the last updated.
+        String[] projection = new String[] {
+                Calls.LAST_MODIFIED
+        };
+        Cursor results = mContentResolver.query(uri, projection, null, null, null, null);
+        results.moveToFirst();
+        assertEquals(1, results.getCount());
+        return results.getLong(results.getColumnIndex(Calls.LAST_MODIFIED));
     }
 
     public void testDelete() throws Exception {
