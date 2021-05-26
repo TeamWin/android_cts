@@ -29,6 +29,7 @@ import static android.server.wm.app.Components.SPLASHSCREEN_ACTIVITY;
 import static android.server.wm.app.Components.SPLASH_SCREEN_REPLACE_ICON_ACTIVITY;
 import static android.server.wm.app.Components.SPLASH_SCREEN_REPLACE_THEME_ACTIVITY;
 import static android.server.wm.app.Components.TestStartingWindowKeys.CANCEL_HANDLE_EXIT;
+import static android.server.wm.app.Components.TestStartingWindowKeys.CENTER_VIEW_IS_SURFACE_VIEW;
 import static android.server.wm.app.Components.TestStartingWindowKeys.CONTAINS_BRANDING_VIEW;
 import static android.server.wm.app.Components.TestStartingWindowKeys.CONTAINS_CENTER_VIEW;
 import static android.server.wm.app.Components.TestStartingWindowKeys.DELAY_RESUME;
@@ -74,6 +75,8 @@ import android.platform.test.annotations.Presubmit;
 import android.view.WindowManager;
 import android.view.WindowMetrics;
 
+import androidx.test.filters.FlakyTest;
+
 import com.android.compatibility.common.util.TestUtils;
 
 import org.junit.After;
@@ -103,6 +106,7 @@ public class SplashscreenTests extends ActivityManagerTestBase {
     }
 
     @Test
+    @FlakyTest(bugId = 189001160)
     public void testSplashscreenContent() {
         launchActivityNoWait(SPLASHSCREEN_ACTIVITY);
         // The windowSplashScreenContent attribute is set to RED. We check that it is ignored.
@@ -244,6 +248,7 @@ public class SplashscreenTests extends ActivityManagerTestBase {
     }
 
     @Test
+    @FlakyTest(bugId = 189001160)
     public void testSetApplicationNightMode() throws Exception {
         final UiModeManager uiModeManager = mContext.getSystemService(UiModeManager.class);
         assumeTrue(uiModeManager != null);
@@ -270,6 +275,7 @@ public class SplashscreenTests extends ActivityManagerTestBase {
     }
 
     @Test
+    @FlakyTest(bugId = 189001160)
     public void testSetBackgroundColorActivity() {
         launchActivityNoWait(SPLASH_SCREEN_REPLACE_ICON_ACTIVITY, extraBool(DELAY_RESUME, true));
         testSplashScreenColor(SPLASH_SCREEN_REPLACE_ICON_ACTIVITY, Color.BLUE, Color.BLACK);
@@ -293,6 +299,7 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         assertTrue(iconAnimationStart != 0);
         assertEquals(iconAnimationDuration, 500);
         assertFalse(journal.extras.getBoolean(CONTAINS_BRANDING_VIEW));
+        assertTrue(journal.extras.getBoolean(CENTER_VIEW_IS_SURFACE_VIEW));
     }
 
     @Test
@@ -311,6 +318,7 @@ public class SplashscreenTests extends ActivityManagerTestBase {
     }
 
     @Test
+    @FlakyTest(bugId = 189001160)
     public void testShortcutChangeTheme() {
         final LauncherApps launcherApps = mContext.getSystemService(LauncherApps.class);
         final ShortcutManager shortcutManager = mContext.getSystemService(ShortcutManager.class);

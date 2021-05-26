@@ -41,7 +41,7 @@ import java.lang.annotation.Target;
  */
 @Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-@EnsureHasProfileAnnotation("android.os.usertype.profile.MANAGED")
+@EnsureHasProfileAnnotation(value = "android.os.usertype.profile.MANAGED", hasProfileOwner = true)
 @RequireFeature("android.software.managed_users")
 @EnsureHasNoDeviceOwner // TODO: This should only apply on Android R+
 public @interface EnsureHasWorkProfile {
@@ -56,6 +56,5 @@ public @interface EnsureHasWorkProfile {
      *
      * <p>Only one device policy controller per test should be marked as primary.
      */
-    // TODO(scottjonathan): Enforce dpcIsPrimary
     boolean dpcIsPrimary() default false;
 }

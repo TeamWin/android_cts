@@ -36,7 +36,6 @@ import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_STOP;
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_TOP_POSITION_GAINED;
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_TOP_POSITION_LOST;
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_USER_LEAVE_HINT;
-import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.PRE_ON_CREATE;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
@@ -343,7 +342,6 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
         protected void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
             mLifecycleLogClient = LifecycleLog.LifecycleLogClient.create(this);
-            mLifecycleLogClient.onActivityCallback(PRE_ON_CREATE);
             mLifecycleLogClient.onActivityCallback(ON_CREATE);
 
             final Intent intent = getIntent();
