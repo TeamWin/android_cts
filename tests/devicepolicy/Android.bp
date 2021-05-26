@@ -30,7 +30,8 @@ android_test {
         "EventLib",
         "ActivityContext",
         "Harrier",
-        "DeviceAdminApp"
+        "DeviceAdminApp",
+        "TestApp"
     ],
     srcs: ["src/**/*.java"],
     test_suites: [

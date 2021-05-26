@@ -1044,14 +1044,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         try {
             installAppAsUser(INTENT_RECEIVER_APK, mUserId);
             executeDeviceTestClass(".LockTaskTest");
-            assertMetricsLogged(
-                    getDevice(),
-                    () -> executeDeviceTestMethod(".LockTaskTest", "testStartLockTask"),
-                    new DevicePolicyEventWrapper.Builder(EventId.SET_LOCKTASK_MODE_ENABLED_VALUE)
-                            .setAdminPackageName(DEVICE_ADMIN_PKG)
-                            .setBoolean(true)
-                            .setStrings(DEVICE_ADMIN_PKG)
-                            .build());
         } catch (AssertionError ex) {
             // STOPSHIP(b/32771855), remove this once we fixed the bug.
             executeShellCommand("dumpsys activity activities");
