@@ -759,7 +759,6 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     /**
      * Test set parameters : force key frame
      */
-    @Ignore("TODO(b/151302863)")
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testSetForceSyncFrame() throws IOException, InterruptedException {
@@ -856,7 +855,6 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     /**
      * Test set parameters : change bitrate dynamically
      */
-    @Ignore("TODO(b/151302863)")
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testAdaptiveBitRate() throws IOException, InterruptedException {
