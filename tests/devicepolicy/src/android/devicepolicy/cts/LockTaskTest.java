@@ -47,6 +47,7 @@ import com.android.bedstead.testapp.TestAppInstanceReference;
 import com.android.bedstead.testapp.TestAppProvider;
 
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -338,6 +339,33 @@ public class LockTaskTest {
         String[] originalLockTaskPackages =
                 sDeviceState.dpc().devicePolicyManager().getLockTaskPackages();
         sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(new String[]{});
+        try (TestAppInstanceReference testApp =
+                     sTestApp.install(sTestApis.users().instrumented())) {
+            TestAppActivityReference activity = testApp.activities().any().start();
+
+            activity.remote().startLockTask();
+
+            try {
+                assertThat(sTestApis.activities().foregroundActivity()).isEqualTo(
+                        activity.reference());
+                assertThat(sTestApis.activities().getLockTaskModeState()).isNotEqualTo(
+                        LOCK_TASK_MODE_LOCKED);
+            } finally {
+                activity.remote().stopLockTask();
+            }
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(originalLockTaskPackages);
+        }
+    }
+
+    @Test
+    @NegativePolicyTest(policy = LockTask.class)
+    @Ignore // TODO(189325405): Re-enable once secondary users can start activities
+    public void startLockTask_includedInLockTaskPackages_policyShouldNotApply_taskIsNotLocked() {
+        String[] originalLockTaskPackages =
+                sDeviceState.dpc().devicePolicyManager().getLockTaskPackages();
+        sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(
+                new String[]{sTestApp.packageName()});
         try (TestAppInstanceReference testApp =
                      sTestApp.install(sTestApis.users().instrumented())) {
             TestAppActivityReference activity = testApp.activities().any().start();
