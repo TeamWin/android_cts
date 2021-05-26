@@ -47,7 +47,7 @@ import java.io.IOException;
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class RippleDrawableTest {
-    private static final ColorStateList DEFAULT_EFFECT_COLOR = ColorStateList.valueOf(0x80ffffff);
+    private static final ColorStateList DEFAULT_EFFECT_COLOR = ColorStateList.valueOf(0x8dffffff);
     private Context mContext;
 
     @Before
