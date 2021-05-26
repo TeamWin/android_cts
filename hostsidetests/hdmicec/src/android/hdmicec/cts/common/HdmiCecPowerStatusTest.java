@@ -24,6 +24,7 @@ import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.CecOperand;
 import android.hdmicec.cts.HdmiCecConstants;
 import android.hdmicec.cts.LogicalAddress;
+import android.hdmicec.cts.WakeLockHelper;
 
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -237,6 +238,7 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
                         "dumpsys power | grep mWakefulness=");
                 assertThat(wakeStateBefore.trim()).isEqualTo("mWakefulness=Awake");
 
+                WakeLockHelper.acquirePartialWakeLock(device);
                 hdmiCecClient.sendUserControlPressAndRelease(source, operand, false);
 
                 TimeUnit.SECONDS.sleep(HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS);
