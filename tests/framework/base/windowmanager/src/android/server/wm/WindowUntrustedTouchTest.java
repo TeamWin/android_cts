@@ -53,8 +53,8 @@ import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
 import android.server.wm.overlay.Components;
 import android.server.wm.overlay.R;
-import android.server.wm.shared.IUntrustedTouchTestService;
 import android.server.wm.shared.BlockingResultReceiver;
+import android.server.wm.shared.IUntrustedTouchTestService;
 import android.util.ArrayMap;
 import android.util.ArraySet;
 import android.view.Display;
@@ -769,7 +769,6 @@ public class WindowUntrustedTouchTest {
     }
 
     @Test
-    @FlakyTest(bugId = 188207199)
     public void testWhenOneCustomToastWindow_blocksTouch() throws Throwable {
         addToastOverlay(APP_A, /* custom */ true);
 
@@ -788,7 +787,6 @@ public class WindowUntrustedTouchTest {
     }
 
     @Test
-    @FlakyTest(bugId = 188207199)
     public void testWhenOneCustomToastWindowAndOneSelfSawWindow_blocksTouch()
             throws Throwable {
         addSawOverlay(APP_SELF, WINDOW_1, .9f);
@@ -800,7 +798,6 @@ public class WindowUntrustedTouchTest {
     }
 
     @Test
-    @FlakyTest(bugId = 188207199)
     public void testWhenOneCustomToastWindowAndOneSawWindowBelowThreshold_blocksTouch()
             throws Throwable {
         addSawOverlay(APP_A, WINDOW_1, .5f);
@@ -812,7 +809,6 @@ public class WindowUntrustedTouchTest {
     }
 
     @Test
-    @FlakyTest(bugId = 188207199)
     public void testWhenOneCustomToastWindowAndOneSawWindowBelowThresholdFromDifferentApp_blocksTouch()
             throws Throwable {
         addSawOverlay(APP_A, WINDOW_1, .5f);
