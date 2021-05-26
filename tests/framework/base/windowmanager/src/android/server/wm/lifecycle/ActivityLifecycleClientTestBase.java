@@ -535,6 +535,8 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
         public static final String EXTRA_LAUNCH_ON_RESULT = "LAUNCH_ON_RESULT";
         public static final String EXTRA_LAUNCH_ON_RESUME_AFTER_RESULT =
                 "LAUNCH_ON_RESUME_AFTER_RESULT";
+        public static final String EXTRA_USE_TRANSLUCENT_RESULT =
+                "USE_TRANSLUCENT_RESULT";
 
         boolean mReceivedResultOk;
 
@@ -550,7 +552,14 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
         @Override
         protected void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
-            final Intent intent = new Intent(this, ResultActivity.class);
+
+            final Intent intent;
+            if (getIntent().hasExtra(EXTRA_USE_TRANSLUCENT_RESULT)) {
+                intent = new Intent(this, TranslucentResultActivity.class);
+            } else {
+                intent = new Intent(this, ResultActivity.class);
+            }
+
             final Bundle forwardExtras = getIntent().getBundleExtra(EXTRA_FORWARD_EXTRAS);
             if (forwardExtras != null) {
                 intent.putExtras(forwardExtras);
@@ -575,6 +584,10 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
                 startActivity(new Intent(this, CallbackTrackingActivity.class));
             }
         }
+    }
+
+    /** Translucent activity that is started for result. */
+    public static class TranslucentResultActivity extends ResultActivity {
     }
 
     /** Test activity that is started for result. */
