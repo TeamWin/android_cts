@@ -112,6 +112,9 @@ public class UiTranslationManagerTest {
 
     private static final long UI_WAIT_TIMEOUT = 2000;
 
+    // TODO: Use fw definition when it becomes public or testapi
+    private static final String ID_CONTENT_DESCRIPTION = "android:content_description";
+
     private static Context sContext;
     private static CtsTranslationService.TranslationReplier sTranslationReplier;
 
@@ -336,6 +339,70 @@ public class UiTranslationManagerTest {
     }
 
     @Test
+    public void testUiTranslation_hasContentDescription() throws Throwable {
+        final Pair<List<AutofillId>, ContentCaptureContext> result =
+                enableServicesAndStartActivityForTranslation();
+        final List<AutofillId> views = result.first;
+        final ContentCaptureContext contentCaptureContext = result.second;
+
+        // Set response
+        final CharSequence translatedText = "Translated World";
+        final CharSequence originalDescription = "Hello Description";
+        mActivityScenario.onActivity(activity -> {
+            mTextView.setContentDescription(originalDescription);
+        });
+        sTranslationReplier.addResponse(
+                createViewsTranslationResponse(views, translatedText.toString()));
+        final UiTranslationManager manager = sContext.getSystemService(UiTranslationManager.class);
+
+        // Use TextView default ViewTranslationCallback implementation
+        runWithShellPermissionIdentity(() -> {
+            // Call startTranslation API
+            manager.startTranslation(
+                    new TranslationSpec(ULocale.ENGLISH,
+                            TranslationSpec.DATA_FORMAT_TEXT),
+                    new TranslationSpec(ULocale.FRENCH,
+                            TranslationSpec.DATA_FORMAT_TEXT),
+                    views, contentCaptureContext.getActivityId(),
+                    new UiTranslationSpec.Builder().build());
+            SystemClock.sleep(UI_WAIT_TIMEOUT);
+        });
+        assertThat(mTextView.getContentDescription()).isEqualTo(translatedText);
+
+        // Check request to make sure the content description key doesn't be changed
+        final TranslationRequest request = sTranslationReplier.getNextTranslationRequest();
+        final List<ViewTranslationRequest> requests = request.getViewTranslationRequests();
+        final ViewTranslationRequest viewRequest = requests.get(0);
+        assertThat(viewRequest.getAutofillId()).isEqualTo(views.get(0));
+        assertThat(viewRequest.getKeys().size()).isEqualTo(2);
+        assertThat(viewRequest.getKeys()).containsExactly(ID_CONTENT_DESCRIPTION,
+                ViewTranslationRequest.ID_TEXT);
+        assertThat(viewRequest.getValue(ID_CONTENT_DESCRIPTION).getText())
+                .isEqualTo(originalDescription);
+
+        runWithShellPermissionIdentity(() -> {
+            // Call pauseTranslation API
+            manager.pauseTranslation(contentCaptureContext.getActivityId());
+            SystemClock.sleep(UI_WAIT_TIMEOUT);
+        });
+        assertThat(mTextView.getContentDescription()).isEqualTo(originalDescription);
+
+        runWithShellPermissionIdentity(() -> {
+            // Call resumeTranslation API
+            manager.resumeTranslation(contentCaptureContext.getActivityId());
+            SystemClock.sleep(UI_WAIT_TIMEOUT);
+        });
+        assertThat(mTextView.getContentDescription()).isEqualTo(translatedText);
+
+        runWithShellPermissionIdentity(() -> {
+            // Call finishTranslation API
+            manager.finishTranslation(contentCaptureContext.getActivityId());
+            SystemClock.sleep(UI_WAIT_TIMEOUT);
+        });
+        assertThat(mTextView.getContentDescription()).isEqualTo(originalDescription);
+    }
+
+    @Test
     public void testIMEUiTranslationStateCallback() throws Throwable {
         try (ImeSession imeSession = new ImeSession(
                 new ComponentName(CtsTestIme.IME_SERVICE_PACKAGE, CtsTestIme.class.getName()))) {
@@ -508,6 +575,9 @@ public class UiTranslationManagerTest {
             ViewTranslationResponse.Builder responseDataBuilder =
                     new ViewTranslationResponse.Builder(viewAutofillIds.get(i))
                             .setValue(ViewTranslationRequest.ID_TEXT,
+                                    new TranslationResponseValue.Builder(STATUS_SUCCESS)
+                                            .setText(translatedText).build())
+                            .setValue(ID_CONTENT_DESCRIPTION,
                                     new TranslationResponseValue.Builder(STATUS_SUCCESS)
                                             .setText(translatedText).build());
             responseBuilder.setViewTranslationResponse(i, responseDataBuilder.build());
