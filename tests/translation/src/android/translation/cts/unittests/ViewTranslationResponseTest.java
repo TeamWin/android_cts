@@ -78,7 +78,7 @@ public class ViewTranslationResponseTest {
 
         assertThat(request.getAutofillId()).isEqualTo(new AutofillId(17));
         assertThat(request.getKeys().size()).isEqualTo(1);
-        assertThat(request.getValue("sample id").getText()).isEqualTo("sample text");
+        assertThat(request.getValue("sample id").getText().toString()).isEqualTo("sample text");
 
         assertThrows(IllegalArgumentException.class, () -> request.getValue("something"));
         assertThrows(NullPointerException.class, () -> request.getValue(null));
@@ -100,8 +100,8 @@ public class ViewTranslationResponseTest {
 
         assertThat(request.getAutofillId()).isEqualTo(new AutofillId(17));
         assertThat(request.getKeys().size()).isEqualTo(3);
-        assertThat(request.getValue("sample id").getText()).isEqualTo("sample text");
-        assertThat(request.getValue("id2").getText()).isEqualTo("text2");
+        assertThat(request.getValue("sample id").getText().toString()).isEqualTo("sample text");
+        assertThat(request.getValue("id2").getText().toString()).isEqualTo("text2");
         assertThat(request.getValue("id3").getStatusCode())
                 .isEqualTo(TranslationResponseValue.STATUS_ERROR);
     }
