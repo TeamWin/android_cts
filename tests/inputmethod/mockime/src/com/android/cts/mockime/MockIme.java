@@ -367,6 +367,8 @@ public final class MockIme extends InputMethodService {
                         } catch (UnsupportedOperationException e) {
                             return e;
                         }
+                    case "verifyIsUiContext":
+                        return verifyIsUiContext();
                     case "verifyGetWindowManager": {
                         final WindowManager imsWm = getSystemService(WindowManager.class);
                         final WindowManager configContextWm =
@@ -435,6 +437,19 @@ public final class MockIme extends InputMethodService {
         display = getDisplay();
         configContextDisplay = configContext.getDisplay();
         return display != null && configContextDisplay != null;
+    }
+
+    private boolean verifyIsUiContext() {
+        final Configuration config = new Configuration();
+        config.setToDefaults();
+        final Context configContext = createConfigurationContext(config);
+        // The value must be true because ConfigurationContext is derived from InputMethodService,
+        // which is a UI Context.
+        final boolean imeDerivedConfigContext = configContext.isUiContext();
+        // The value must be false because DisplayContext won't receive any config update from
+        // server.
+        final boolean imeDerivedDisplayContext = createDisplayContext(getDisplay()).isUiContext();
+        return isUiContext() && imeDerivedConfigContext && !imeDerivedDisplayContext;
     }
 
     @Nullable
@@ -524,7 +539,8 @@ public final class MockIme extends InputMethodService {
             } else {
                 registerReceiver(mCommandReceiver, filter, null /* broadcastPermission */, handler);
             }
-            if (mSettings.isVerifyGetDisplayOnCreate()) {
+            if (mSettings.isVerifyContextApisInOnCreate()) {
+                getTracer().onVerify("isUiContext", this::verifyIsUiContext);
                 getTracer().onVerify("getDisplay", this::verifyGetDisplay);
             }
             final int windowFlags = mSettings.getWindowFlags(0);

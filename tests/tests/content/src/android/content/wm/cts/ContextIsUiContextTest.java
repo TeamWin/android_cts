@@ -23,7 +23,6 @@ import android.app.Service;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.cts.ContextTestBase;
-import android.inputmethodservice.InputMethodService;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
 import android.view.Display;
@@ -82,11 +81,6 @@ public class ContextIsUiContextTest extends ContextTestBase {
         final Context windowContext = mApplicationContext.createWindowContext(getDefaultDisplay(),
                 WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY, null /* options */);
         assertThat(windowContext.isUiContext()).isTrue();
-    }
-
-    @Test
-    public void testIsUiContextOnInputMethodService() {
-        assertThat(new InputMethodService().isUiContext()).isTrue();
     }
 
     @Test
