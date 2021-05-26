@@ -60,10 +60,10 @@ public final class PowerPolicyDef {
                 .toArray(String[]::new);
         StringBuilder str = new StringBuilder();
         str.append(mPolicyId);
-        if (!enables[0].equals("none")) {
+        if (enables.length > 0) {
             str.append(" --enable ").append(String.join(",", enables));
         }
-        if (!disables[0].equals("none")) {
+        if (disables.length > 0) {
             str.append(" --disable ").append(String.join(",", disables));
         }
         return str.toString();
@@ -184,8 +184,8 @@ public final class PowerPolicyDef {
                 return new PowerComponent[0];
             }
             normalizeComponentName(componentNames);
-            PowerComponent[] compArray = Arrays.stream(componentNames)
-                    .map(PowerComponent::valueOf).toArray(PowerComponent[]::new);
+            PowerComponent[] compArray = Arrays.stream(componentNames).map(PowerComponent::valueOf)
+                    .filter(e -> e != NONE).toArray(PowerComponent[]::new);
             Arrays.sort(compArray);
             return compArray;
         }
@@ -251,8 +251,8 @@ public final class PowerPolicyDef {
             PowerComponent.MICROPHONE
         };
 
-        static final PowerComponent[] DEFAULT_ALL_ON_ENABLE =  ALL_COMPONENTS;
-        static final PowerComponent[] DEFAULT_ALL_ON_DISABLE = {PowerComponent.NONE};
+        static final PowerComponent[] DEFAULT_ALL_ON_ENABLE = ALL_COMPONENTS;
+        static final PowerComponent[] DEFAULT_ALL_ON_DISABLE = {};
 
         static final PowerComponent[] NO_USER_INTERACT_ENABLE = {
             PowerComponent.WIFI,
@@ -276,9 +276,9 @@ public final class PowerPolicyDef {
         };
 
         static final PowerComponent[] TEST1_ENABLE =  ALL_COMPONENTS;
-        static final PowerComponent[] TEST1_DISABLE = {PowerComponent.NONE};
+        static final PowerComponent[] TEST1_DISABLE = {};
 
-        static final PowerComponent[] TEST2_ENABLE = {PowerComponent.NONE};
+        static final PowerComponent[] TEST2_ENABLE = {};
         static final PowerComponent[] TEST2_DISABLE = ALL_COMPONENTS;
 
         static final PowerComponent[] ERROR_TEST1_ENABLE = ALL_COMPONENTS;
@@ -302,10 +302,10 @@ public final class PowerPolicyDef {
             PowerComponent.MICROPHONE,
             PowerComponent.CPU
         };
-        static final PowerComponent[] ERROR_TEST2_DISABLE = {PowerComponent.NONE};
+        static final PowerComponent[] ERROR_TEST2_DISABLE = {};
 
         static final PowerComponent[] RUNTIME_DEFAULT_ENABLE = ALL_COMPONENTS;
-        static final PowerComponent[] RUNTIME_DEFAULT_DISABLE = {PowerComponent.NONE};
+        static final PowerComponent[] RUNTIME_DEFAULT_DISABLE = {};
 
         static final PowerComponent[] RUNTIME_SILENT_ENABLE = {
             PowerComponent.AUDIO,
@@ -325,7 +325,7 @@ public final class PowerPolicyDef {
             PowerComponent.MICROPHONE,
             PowerComponent.CPU
         };
-        static final PowerComponent[] RUNTIME_SILENT_DISABLE = {PowerComponent.NONE};
+        static final PowerComponent[] RUNTIME_SILENT_DISABLE = {};
     }
 
     public static final class PolicySet {
