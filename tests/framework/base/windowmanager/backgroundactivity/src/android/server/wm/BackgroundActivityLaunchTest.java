@@ -488,7 +488,7 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
             return;
         }
 
-        String cmdResult = runShellCommand("dpm set-device-owner --user cur "
+        String cmdResult = runShellCommand("dpm set-device-owner --user 0 "
                 + APP_A_SIMPLE_ADMIN_RECEIVER.flattenToString());
         assertThat(cmdResult).contains("Success");
         EventReceiver receiver = new EventReceiver(
