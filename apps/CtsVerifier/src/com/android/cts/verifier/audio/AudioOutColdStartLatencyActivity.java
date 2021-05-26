@@ -31,7 +31,7 @@ import com.android.cts.verifier.audio.audiolib.AudioSystemParams;
 import org.hyphonate.megaaudio.player.AudioSourceProvider;
 import org.hyphonate.megaaudio.player.Player;
 import org.hyphonate.megaaudio.player.PlayerBuilder;
-import org.hyphonate.megaaudio.player.sources.SinAudioSourceProvider;
+import org.hyphonate.megaaudio.player.sources.SilenceAudioSourceProvider;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -140,7 +140,7 @@ public class AudioOutColdStartLatencyActivity
         // mNumBufferFrames = audioSystemParams.getSystemBufferFrames();
         mNumBufferFrames = audioSystemParams.getSystemBurstFrames();
 
-        AudioSourceProvider sourceProvider = new SinAudioSourceProvider();
+        AudioSourceProvider sourceProvider = new SilenceAudioSourceProvider();
         try {
             mPreOpenTime = System.nanoTime();
             mPlayer = (new PlayerBuilder())
