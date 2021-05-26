@@ -50,6 +50,7 @@ import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
+import android.view.inputmethod.cts.util.AutoCloseableWrapper;
 import android.view.inputmethod.cts.util.EndToEndImeTestBase;
 import android.view.inputmethod.cts.util.TestActivity;
 import android.view.inputmethod.cts.util.TestUtils;
@@ -296,64 +297,63 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
                     () -> TextUtils.equals(editText.getText(), "test commit"), TIMEOUT);
             instrumentation.runOnMainSync(() -> editText.setText(""));
 
-            // Create a popup window that cannot be the IME target.
-            final PopupWindow popupWindow = TestUtils.getOnMainSync(() -> {
-                final Context context = instrumentation.getTargetContext();
-                final PopupWindow popup = new PopupWindow(context);
-                popup.setFocusable(true);
-                popup.setInputMethodMode(INPUT_METHOD_NOT_NEEDED);
-                final TextView textView = new TextView(context);
-                textView.setText("Test Text");
-                popup.setContentView(textView);
-                return popup;
-            });
+            // Create then show a popup window that cannot be the IME target.
+            try (AutoCloseableWrapper<PopupWindow> popupWindowWrapper = AutoCloseableWrapper.create(
+                TestUtils.getOnMainSync(() -> {
+                    final Context context = instrumentation.getTargetContext();
+                    final PopupWindow popup = new PopupWindow(context);
+                    popup.setFocusable(true);
+                    popup.setInputMethodMode(INPUT_METHOD_NOT_NEEDED);
+                    final TextView textView = new TextView(context);
+                    textView.setText("Test Text");
+                    popup.setContentView(textView);
+                    popup.showAsDropDown(editText);
+                    return popup;
+                }), popupWindow -> runOnMainSync(popupWindow::dismiss))
+            ) {
+                instrumentation.waitForIdleSync();
 
-            // Show the popup window.
-            instrumentation.runOnMainSync(() -> popupWindow.showAsDropDown(editText));
-            instrumentation.waitForIdleSync();
+                // Make sure that the EditText no longer has window-focus
+                TestUtils.waitOnMainUntil(() -> !editText.hasWindowFocus(), TIMEOUT);
 
-            // Make sure that the EditText no longer has window-focus
-            TestUtils.waitOnMainUntil(() -> !editText.hasWindowFocus(), TIMEOUT);
+                // Make sure that InputConnection#commitText() works.
+                final ImeCommand commit2 = imeSession.callCommitText("Hello!", 1);
+                expectCommand(stream, commit2, TIMEOUT);
+                TestUtils.waitOnMainUntil(
+                        () -> TextUtils.equals(editText.getText(), "Hello!"), TIMEOUT);
+                instrumentation.runOnMainSync(() -> editText.setText(""));
 
-            // Make sure that InputConnection#commitText() works.
-            final ImeCommand commit2 = imeSession.callCommitText("Hello!", 1);
-            expectCommand(stream, commit2, TIMEOUT);
-            TestUtils.waitOnMainUntil(
-                    () -> TextUtils.equals(editText.getText(), "Hello!"), TIMEOUT);
-            instrumentation.runOnMainSync(() -> editText.setText(""));
+                stream.skipAll();
 
-            stream.skipAll();
+                final String marker2 = getTestMarker();
+                // Call InputMethodManager#restartInput()
+                instrumentation.runOnMainSync(() -> {
+                    editText.setPrivateImeOptions(marker2);
+                    editText.getContext()
+                            .getSystemService(InputMethodManager.class)
+                            .restartInput(editText);
+                });
 
-            final String marker2 = getTestMarker();
-            // Call InputMethodManager#restartInput()
-            instrumentation.runOnMainSync(() -> {
-                editText.setPrivateImeOptions(marker2);
-                editText.getContext()
-                        .getSystemService(InputMethodManager.class)
-                        .restartInput(editText);
-            });
+                // Make sure that onStartInput() is called with restarting == true.
+                expectEvent(stream, event -> {
+                    if (!TextUtils.equals("onStartInput", event.getEventName())) {
+                        return false;
+                    }
+                    if (!event.getArguments().getBoolean("restarting")) {
+                        return false;
+                    }
+                    final EditorInfo editorInfo = event.getArguments().getParcelable("editorInfo");
+                    return TextUtils.equals(marker2, editorInfo.privateImeOptions);
+                }, TIMEOUT);
 
-            // Make sure that onStartInput() is called with restarting == true.
-            expectEvent(stream, event -> {
-                if (!TextUtils.equals("onStartInput", event.getEventName())) {
-                    return false;
-                }
-                if (!event.getArguments().getBoolean("restarting")) {
-                    return false;
-                }
-                final EditorInfo editorInfo = event.getArguments().getParcelable("editorInfo");
-                return TextUtils.equals(marker2, editorInfo.privateImeOptions);
-            }, TIMEOUT);
+                // Make sure that InputConnection#commitText() works.
+                final ImeCommand commit3 = imeSession.callCommitText("World!", 1);
+                expectCommand(stream, commit3, TIMEOUT);
+                TestUtils.waitOnMainUntil(
+                        () -> TextUtils.equals(editText.getText(), "World!"), TIMEOUT);
+                instrumentation.runOnMainSync(() -> editText.setText(""));
+            }
 
-            // Make sure that InputConnection#commitText() works.
-            final ImeCommand commit3 = imeSession.callCommitText("World!", 1);
-            expectCommand(stream, commit3, TIMEOUT);
-            TestUtils.waitOnMainUntil(
-                    () -> TextUtils.equals(editText.getText(), "World!"), TIMEOUT);
-            instrumentation.runOnMainSync(() -> editText.setText(""));
-
-            // Dismiss the popup window.
-            instrumentation.runOnMainSync(() -> popupWindow.dismiss());
             instrumentation.waitForIdleSync();
 
             // Make sure that the EditText now has window-focus again.
@@ -400,29 +400,31 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
             expectEvent(stream, editorMatcher("onStartInputView", marker), TIMEOUT);
             expectImeVisible(TIMEOUT);
 
-            // Create a non-focusable PopupWindow with INPUT_METHOD_NEEDED.
-            final PopupWindow popupWindow = TestUtils.getOnMainSync(() -> {
-                final Context context = instrumentation.getTargetContext();
-                final PopupWindow popup = new PopupWindow(context);
-                popup.setFocusable(false);
-                popup.setInputMethodMode(INPUT_METHOD_NEEDED);
-                final TextView textView = new TextView(context);
-                textView.setText("Popup");
-                popup.setContentView(textView);
-                return popup;
-            });
+            // Create then show a non-focusable PopupWindow with INPUT_METHOD_NEEDED.
+            try (AutoCloseableWrapper<PopupWindow> popupWindowWrapper = AutoCloseableWrapper.create(
+                TestUtils.getOnMainSync(() -> {
+                    final Context context = instrumentation.getTargetContext();
+                    final PopupWindow popup = new PopupWindow(context);
+                    popup.setFocusable(false);
+                    popup.setInputMethodMode(INPUT_METHOD_NEEDED);
+                    final TextView textView = new TextView(context);
+                    textView.setText("Popup");
+                    popup.setContentView(textView);
+                    // Show the popup window.
+                    popup.showAsDropDown(editText);
+                    return popup;
+                }), popup -> TestUtils.runOnMainSync(popup::dismiss))
+            ) {
+                instrumentation.waitForIdleSync();
 
-            // Show the popup window.
-            runOnMainSync(() -> popupWindow.showAsDropDown(editText));
-            instrumentation.waitForIdleSync();
+                // Make sure that the IME remains to be visible.
+                expectImeVisible(TIMEOUT);
 
-            // Make sure that the IME remains to be visible.
-            expectImeVisible(TIMEOUT);
+                SystemClock.sleep(NOT_EXPECT_TIMEOUT);
 
-            SystemClock.sleep(NOT_EXPECT_TIMEOUT);
-
-            // Make sure that the IME remains to be visible.
-            expectImeVisible(TIMEOUT);
+                // Make sure that the IME remains to be visible.
+                expectImeVisible(TIMEOUT);
+            }
         }
     }
 
