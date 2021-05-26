@@ -29,6 +29,7 @@ cc_test_library {
         "player/NoiseAudioSource.cpp",
         "player/OboePlayer.cpp",
         "player/SinAudioSource.cpp",
+        "player/SilenceAudioSource.cpp",
         "player/WaveTableSource.cpp",
         "recorder/AppCallbackAudioSink.cpp",
         "recorder/DefaultAudioSink.cpp",
