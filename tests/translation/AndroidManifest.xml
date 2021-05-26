@@ -29,6 +29,10 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <activity android:name=".VirtualContainerViewActivity"
+                  android:label="VirtualContainerViewActivity"
+                  android:exported="true">
+        </activity>
 
         <service android:name=".CtsTranslationService"
                  android:label="CtsTranslationService"
