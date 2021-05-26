@@ -2326,6 +2326,12 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                 softApConfigBuilder.setIeee80211axEnabled(true);
                 verifySetGetSoftApConfig(softApConfigBuilder.build());
             }
+
+            if (BuildCompat.isAtLeastS()) {
+                softApConfigBuilder.setBridgedModeOpportunisticShutdownEnabled(false);
+                verifySetGetSoftApConfig(softApConfigBuilder.build());
+            }
+
         } finally {
             mWifiManager.unregisterSoftApCallback(callback);
             uiAutomation.dropShellPermissionIdentity();
@@ -2411,6 +2417,10 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                     && callback.getOnSoftapInfoChangedCalledCount() > 1) {
                 assertNotEquals(callback.getCurrentSoftApInfo().getWifiStandard(),
                         ScanResult.WIFI_STANDARD_UNKNOWN);
+            }
+
+            if (callback.getOnSoftapInfoChangedCalledCount() > 1) {
+                assertTrue(callback.getCurrentSoftApInfo().getAutoShutdownTimeoutMillis() > 0);
             }
         } finally {
             // stop tethering which used to verify stopSoftAp
