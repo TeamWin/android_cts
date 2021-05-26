@@ -70,7 +70,7 @@ public class WifiNetworkConfigurationWithoutFineLocationPermissionTest extends B
 
         try {
             List<WifiConfiguration> configs = mWifiManager.getCallerConfiguredNetworks();
-            assertWithMessage("configured networks").that(configs).hasSize(1);
+            assertWithMessage("configured networks").that(configs).isNotEmpty();
             assertWithMessage("SSID of configured networks").that(configs.get(0).SSID)
                     .isEqualTo('"' + NETWORK_SSID + '"');
         } finally {
