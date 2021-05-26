@@ -17,7 +17,6 @@
 package android.location.cts.fine;
 
 import static android.Manifest.permission.WRITE_SECURE_SETTINGS;
-import static android.location.LocationDeviceConfig.IGNORE_SETTINGS_ALLOWLIST;
 import static android.location.LocationManager.EXTRA_PROVIDER_ENABLED;
 import static android.location.LocationManager.EXTRA_PROVIDER_NAME;
 import static android.location.LocationManager.FUSED_PROVIDER;
@@ -117,6 +116,8 @@ public class LocationManagerFineTest {
             "another_valid_location_attribution_tag";
     private static final String INVALID_LOCATION_ATTRIBUTION_TAG =
             "invalid_location_attribution_tag";
+
+    private static final String IGNORE_SETTINGS_ALLOWLIST = "ignore_settings_allowlist";
 
     private Random mRandom;
     private Context mContext;
