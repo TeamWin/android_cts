@@ -1120,6 +1120,41 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     }
 
     /**
+     * Test the WifiManager APIs that return whether a feature is supported.
+     */
+    public void testGetSupportedFeatures() {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        if (!WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(mContext)) {
+            // Skip the test if wifi module version is older than S.
+            return;
+        }
+        mWifiManager.isMakeBeforeBreakWifiSwitchingSupported();
+        mWifiManager.isStaBridgedApConcurrencySupported();
+    }
+
+    /**
+     * Verify non DO apps cannot call removeNonCallerConfiguredNetworks.
+     */
+    public void testRemoveNonCallerConfiguredNetworksNotAllowed() {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        if (!WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(mContext)) {
+            // Skip the test if wifi module version is older than S.
+            return;
+        }
+        try {
+            mWifiManager.removeNonCallerConfiguredNetworks();
+            fail("Expected security exception for non DO app");
+        } catch (SecurityException e) {
+        }
+    }
+
+    /**
      * Test coverage for the constructor of AddNetworkResult.
      */
     public void testAddNetworkResultCreation() {
