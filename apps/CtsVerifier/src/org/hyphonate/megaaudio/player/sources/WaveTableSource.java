@@ -126,6 +126,7 @@ public class WaveTableSource extends AudioSource {
             float value = ((mWaveTbl[srcIndex] * delta0) + (mWaveTbl[srcIndex + 1] * delta1));
 
             // Put the same value in all channels.
+            // This is inefficient and should be pulled out of this loop
             for (int chanIndex = 0; chanIndex < numChans; chanIndex++) {
                 buffer[outIndex++] = value;
             }
