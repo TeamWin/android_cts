@@ -17,6 +17,7 @@
 package android.server.wm;
 
 import static android.content.pm.PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS;
+import static android.content.res.Configuration.ORIENTATION_LANDSCAPE;
 import static android.provider.Settings.Secure.IMMERSIVE_MODE_CONFIRMATIONS;
 import static android.server.wm.StateLogger.log;
 import static android.server.wm.UiDeviceUtils.pressSleepButton;
@@ -284,6 +285,20 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
             return ReportedDisplayMetrics.getDisplayMetrics(mDisplayId);
         }
 
+        void changeAspectRatio(double aspectRatio, int orientation) {
+            final Size originalSize = mInitialDisplayMetrics.physicalSize;
+            final int smaller = originalSize.getWidth();
+            final int larger = (int) (smaller * aspectRatio);
+            Size overrideSize;
+            if (orientation == ORIENTATION_LANDSCAPE) {
+                overrideSize = new Size(larger, smaller);
+            }
+            else {
+                overrideSize = new Size(smaller, larger);
+            }
+            overrideDisplayMetrics(overrideSize, mInitialDisplayMetrics.physicalDensity);
+        }
+
         void changeDisplayMetrics(double sizeRatio, double densityRatio) {
             final Size originalSize = mInitialDisplayMetrics.physicalSize;
             final int density = mInitialDisplayMetrics.physicalDensity;
@@ -311,6 +326,48 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
     /** @see ObjectTracker#manage(AutoCloseable) */
     protected DisplayMetricsSession createManagedDisplayMetricsSession(int displayId) {
         return mObjectTracker.manage(new DisplayMetricsSession(displayId));
+    }
+
+    public static class LetterboxAspectRatioSession implements AutoCloseable {
+        private static final String WM_SET_IGNORE_ORIENTATION_REQUEST =
+                "wm set-ignore-orientation-request ";
+        private static final String WM_GET_IGNORE_ORIENTATION_REQUEST =
+                "wm get-ignore-orientation-request";
+        private static final Pattern IGNORE_ORIENTATION_REQUEST_PATTERN =
+                Pattern.compile("ignoreOrientationRequest (true|false) for displayId=\\d+");
+
+        private static final String WM_SET_LETTERBOX_STYLE_ASPECT_RATIO =
+                "wm set-letterbox-style --aspectRatio ";
+        private static final String WM_RESET_LETTERBOX_STYLE_ASPECT_RATIO
+                = "wm reset-letterbox-style aspectRatio";
+
+        final int mDisplayId;
+        final boolean mInitialIgnoreOrientationRequest;
+
+        LetterboxAspectRatioSession(int displayId, float aspectRatio) {
+            mDisplayId = displayId;
+            Matcher matcher = IGNORE_ORIENTATION_REQUEST_PATTERN.matcher(
+                    executeShellCommand(WM_GET_IGNORE_ORIENTATION_REQUEST + " -d " + mDisplayId));
+            assertTrue("get-ignore-orientation-request should match pattern", matcher.find());
+            mInitialIgnoreOrientationRequest = Boolean.parseBoolean(matcher.group(1));
+
+            executeShellCommand("wm set-ignore-orientation-request true -d " + mDisplayId);
+            executeShellCommand(WM_SET_LETTERBOX_STYLE_ASPECT_RATIO + aspectRatio);
+        }
+
+        @Override
+        public void close() {
+            executeShellCommand(
+                    WM_SET_IGNORE_ORIENTATION_REQUEST + mInitialIgnoreOrientationRequest + " -d "
+                            + mDisplayId);
+            executeShellCommand(WM_RESET_LETTERBOX_STYLE_ASPECT_RATIO);
+        }
+    }
+
+    /** @see ObjectTracker#manage(AutoCloseable) */
+    protected LetterboxAspectRatioSession createManagedLetterboxAspectRatioSession(int displayId,
+            float aspectRatio) {
+        return mObjectTracker.manage(new LetterboxAspectRatioSession(displayId, aspectRatio));
     }
 
     void waitForDisplayGone(Predicate<DisplayContent> displayPredicate) {
