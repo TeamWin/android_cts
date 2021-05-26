@@ -4823,6 +4823,32 @@
             <meta-data android:name="display_mode" android:value="multi_display_mode" />
         </activity>
 
+        <activity android:name=".audio.AudioOutColdStartLatencyActivity"
+            android:exported="true"
+            android:label="@string/audio_coldstart_out_latency_test">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+            <meta-data android:name="test_category" android:value="@string/test_category_audio" />
+            <meta-data android:name="test_excluded_features"
+                android:value="android.hardware.type.watch:android.hardware.type.television" />
+            <meta-data android:name="display_mode" android:value="multi_display_mode" />
+        </activity>
+
+        <activity android:name=".audio.AudioInColdStartLatencyActivity"
+            android:exported="true"
+            android:label="@string/audio_coldstart_in_latency_test">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+            <meta-data android:name="test_category" android:value="@string/test_category_audio" />
+            <meta-data android:name="test_excluded_features"
+                android:value="android.hardware.type.watch:android.hardware.type.television" />
+            <meta-data android:name="display_mode" android:value="multi_display_mode" />
+        </activity>
+
         <activity android:name=".audio.MidiActivity"
                 android:exported="true"
                   android:label="@string/midi_test">
