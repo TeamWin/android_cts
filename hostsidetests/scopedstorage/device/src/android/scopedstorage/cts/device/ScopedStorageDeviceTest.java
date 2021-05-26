@@ -154,7 +154,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -1239,9 +1238,11 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
                     getExifMetadataFromRawResource(R.raw.img_with_metadata);
             try (InputStream in =
                          getContext().getResources().openRawResource(R.raw.img_with_metadata);
-                 OutputStream out = new FileOutputStream(imgFile)) {
+                FileOutputStream out = new FileOutputStream(imgFile)) {
                 // Dump the image we have to external storage
                 FileUtils.copy(in, out);
+                // Sync file to disk to ensure file is fully written to the lower fs.
+                out.getFD().sync();
             }
             HashMap<String, String> exif = getExifMetadata(imgFile);
             assertExifMetadataMatch(exif, originalExif);
@@ -1258,11 +1259,15 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
             // Revoke A_M_L and verify sensitive data redaction
             revokePermission(
                     APP_C.getPackageName(), Manifest.permission.ACCESS_MEDIA_LOCATION);
+            // Give MediaProvider time to get permission callback and clear cache.
+            Thread.sleep(500);
             exifFromTestApp = readExifMetadataFromTestApp(APP_C, imgFile.getPath());
             assertExifMetadataMismatch(exifFromTestApp, originalExif);
 
             // Re-grant A_M_L and verify access to sensitive data
             grantPermission(APP_C.getPackageName(), Manifest.permission.ACCESS_MEDIA_LOCATION);
+            // Give MediaProvider time to get permission callback and clear cache.
+            Thread.sleep(500);
             exifFromTestApp = readExifMetadataFromTestApp(APP_C, imgFile.getPath());
             assertExifMetadataMatch(exifFromTestApp, originalExif);
         } finally {
@@ -1353,6 +1358,8 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
         } else {
             denyAppOpsToUid(uid, opstr);
         }
+        // Give MediaProvider time to get permission callback and clear cache.
+        Thread.sleep(100);
         assertThat(canOpenFileAs(app, file, forWrite)).isFalse();
 
         // Grant
@@ -1361,6 +1368,8 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
         } else {
             allowAppOpsToUid(uid, opstr);
         }
+        // Give MediaProvider time to get permission callback and clear cache.
+        Thread.sleep(100);
         assertThat(canOpenFileAs(app, file, forWrite)).isTrue();
 
         // Deny
@@ -1369,6 +1378,8 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
         } else {
             denyAppOpsToUid(uid, opstr);
         }
+        // Give MediaProvider time to get permission callback and clear cache.
+        Thread.sleep(100);
         assertThat(canOpenFileAs(app, file, forWrite)).isFalse();
     }
 
