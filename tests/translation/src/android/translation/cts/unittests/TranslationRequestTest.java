@@ -43,8 +43,10 @@ public class TranslationRequestTest {
 
     @Test
     public void testBuilder_validViewTranslationRequest() {
+        final ArrayList<ViewTranslationRequest> requests = new ArrayList<>();
+        requests.add(mRequest);
         final TranslationRequest request = new TranslationRequest.Builder()
-                .addViewTranslationRequest(mRequest)
+                .setViewTranslationRequests(requests)
                 .build();
 
         assertThat(request.getTranslationRequestValues().size()).isEqualTo(0);
@@ -60,8 +62,10 @@ public class TranslationRequestTest {
 
     @Test
     public void testBuilder_validTranslationRequestValue() {
+        final ArrayList<TranslationRequestValue> values = new ArrayList<>();
+        values.add(mValue);
         final TranslationRequest request = new TranslationRequest.Builder()
-                .addTranslationRequestValue(mValue)
+                .setTranslationRequestValues(values)
                 .build();
 
         assertThat(request.getTranslationRequestValues().size()).isEqualTo(1);
@@ -112,9 +116,11 @@ public class TranslationRequestTest {
 
     @Test
     public void testParceledRequest_validTranslationRequestValues() {
+        final ArrayList<TranslationRequestValue> values = new ArrayList<>();
+        values.add(mValue);
+        values.add(TranslationRequestValue.forText("world"));
         final TranslationRequest request = new TranslationRequest.Builder()
-                .addTranslationRequestValue(mValue)
-                .addTranslationRequestValue(TranslationRequestValue.forText("world"))
+                .setTranslationRequestValues(values)
                 .build();
 
         final Parcel parcel = Parcel.obtain();
@@ -137,12 +143,13 @@ public class TranslationRequestTest {
 
     @Test
     public void testBuilder_sameAutofillIdViewTranslationRequests() {
+        final ArrayList<ViewTranslationRequest> requests = new ArrayList<>();
+        requests.add(mRequest);
+        requests.add(new ViewTranslationRequest.Builder(new AutofillId(17))
+                .setValue("id2", TranslationRequestValue.forText("text2"))
+                .build());
         final TranslationRequest request = new TranslationRequest.Builder()
-                .addViewTranslationRequest(mRequest)
-                .addViewTranslationRequest(
-                        new ViewTranslationRequest.Builder(new AutofillId(17))
-                                .setValue("id2", TranslationRequestValue.forText("text2"))
-                                .build())
+                .setViewTranslationRequests(requests)
                 .build();
 
         assertThat(request.getTranslationRequestValues().size()).isEqualTo(0);
@@ -164,34 +171,14 @@ public class TranslationRequestTest {
     }
 
     @Test
-    public void testBuilder_mixingAdders() {
-        final TranslationRequest request = new TranslationRequest.Builder()
-                .addViewTranslationRequest(mRequest)
-                .addTranslationRequestValue(mValue)
-                .build();
-
-        assertThat(request.getTranslationRequestValues().size()).isEqualTo(1);
-        assertThat(request.getViewTranslationRequests().size()).isEqualTo(1);
-
-        final ViewTranslationRequest viewRequest =
-                request.getViewTranslationRequests().get(0);
-        assertThat(viewRequest.getAutofillId()).isEqualTo(new AutofillId(17));
-        assertThat(viewRequest.getKeys().size()).isEqualTo(1);
-        assertThat(viewRequest.getKeys()).containsExactly("sample id");
-        assertThat(viewRequest.getValue("sample id").getText()).isEqualTo("sample text");
-
-        final TranslationRequestValue value =
-                request.getTranslationRequestValues().get(0);
-        assertThat(value.getText()).isEqualTo("hello");
-    }
-
-    @Test
     public void testParceledRequest_validViewTranslationRequests() {
+        final ArrayList<ViewTranslationRequest> requests = new ArrayList<>();
+        requests.add(mRequest);
+        requests.add(new ViewTranslationRequest.Builder(new AutofillId(42))
+                .setValue("id2", TranslationRequestValue.forText("test"))
+                .build());
         final TranslationRequest request = new TranslationRequest.Builder()
-                .addViewTranslationRequest(mRequest)
-                .addViewTranslationRequest(new ViewTranslationRequest.Builder(new AutofillId(42))
-                        .setValue("id2", TranslationRequestValue.forText("test"))
-                        .build())
+                .setViewTranslationRequests(requests)
                 .build();
 
         final Parcel parcel = Parcel.obtain();
