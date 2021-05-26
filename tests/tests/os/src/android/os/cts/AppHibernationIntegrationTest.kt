@@ -34,6 +34,7 @@ import android.support.test.uiautomator.UiSelector
 import androidx.test.InstrumentationRegistry
 import androidx.test.filters.SdkSuppress
 import androidx.test.runner.AndroidJUnit4
+import com.android.compatibility.common.util.DisableAnimationRule
 import com.android.compatibility.common.util.SystemUtil.runShellCommandOrThrow
 import com.android.compatibility.common.util.UiAutomatorUtils
 import org.hamcrest.CoreMatchers
@@ -41,6 +42,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertThat
 import org.junit.Assert.assertTrue
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -61,6 +63,9 @@ class AppHibernationIntegrationTest {
     private val instrumentation: Instrumentation = InstrumentationRegistry.getInstrumentation()
 
     private lateinit var packageManager: PackageManager
+
+    @get:Rule
+    val disableAnimationRule = DisableAnimationRule()
 
     @Before
     fun setup() {

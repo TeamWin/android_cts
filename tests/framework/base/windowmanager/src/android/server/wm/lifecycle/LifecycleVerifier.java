@@ -28,7 +28,6 @@ import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_START
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_STOP;
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_TOP_POSITION_GAINED;
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_TOP_POSITION_LOST;
-import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.PRE_ON_CREATE;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -70,9 +69,9 @@ class LifecycleVerifier {
     public static List<LifecycleLog.ActivityCallback> getLaunchSequence(
             Class<? extends Activity> activityClass) {
         return CALLBACK_TRACKING_CLASS.isAssignableFrom(activityClass)
-                ? Arrays.asList(PRE_ON_CREATE, ON_CREATE, ON_START, ON_POST_CREATE, ON_RESUME,
+                ? Arrays.asList(ON_CREATE, ON_START, ON_POST_CREATE, ON_RESUME,
                 ON_TOP_POSITION_GAINED)
-                : Arrays.asList(PRE_ON_CREATE, ON_CREATE, ON_START, ON_RESUME);
+                : Arrays.asList(ON_CREATE, ON_START, ON_RESUME);
     }
 
     static List<ActivityCallback> getLaunchAndDestroySequence(
@@ -111,7 +110,6 @@ class LifecycleVerifier {
         }
         // Next the existing activity is paused and the next one is launched
         expectedTransitions.add(transition(existingActivity, ON_PAUSE));
-        expectedTransitions.add(transition(launchingActivity, PRE_ON_CREATE));
         expectedTransitions.add(transition(launchingActivity, ON_CREATE));
         expectedTransitions.add(transition(launchingActivity, ON_START));
         if (includingCallbacks) {
@@ -143,8 +141,8 @@ class LifecycleVerifier {
 
         final boolean includeCallbacks = CALLBACK_TRACKING_CLASS.isAssignableFrom(activityClass);
 
-        final List<ActivityCallback> expectedTransitions = new ArrayList<>();
-        expectedTransitions.addAll(Arrays.asList(PRE_ON_CREATE, ON_CREATE, ON_START));
+        final List<ActivityCallback> expectedTransitions = new ArrayList<>(
+                Arrays.asList(ON_CREATE, ON_START));
         if (includeCallbacks) {
             expectedTransitions.add(ON_POST_CREATE);
         }
@@ -164,7 +162,7 @@ class LifecycleVerifier {
         final String errorMessage = errorDuringTransition(activityClass, "launch and pause");
 
         final List<ActivityCallback> expectedTransitions =
-                Arrays.asList(PRE_ON_CREATE, ON_CREATE, ON_START, ON_RESUME, ON_PAUSE);
+                Arrays.asList(ON_CREATE, ON_START, ON_RESUME, ON_PAUSE);
         assertEquals(errorMessage, expectedTransitions, observedTransitions);
     }
 
@@ -200,7 +198,7 @@ class LifecycleVerifier {
         final String errorMessage = errorDuringTransition(activityClass, "recreateA  and pause");
 
         final List<LifecycleLog.ActivityCallback> expectedTransitions =
-                Arrays.asList(ON_DESTROY, PRE_ON_CREATE, ON_CREATE, ON_START, ON_RESUME);
+                Arrays.asList(ON_DESTROY, ON_CREATE, ON_START, ON_RESUME);
         assertEquals(errorMessage, expectedTransitions, observedTransitions);
     }
 
@@ -212,7 +210,7 @@ class LifecycleVerifier {
         final String errorMessage = errorDuringTransition(activityClass, "launch and destroy");
 
         final List<LifecycleLog.ActivityCallback> expectedTransitions = Arrays.asList(
-                PRE_ON_CREATE, ON_CREATE, ON_START, ON_RESUME, ON_PAUSE, ON_STOP, ON_DESTROY);
+                ON_CREATE, ON_START, ON_RESUME, ON_PAUSE, ON_STOP, ON_DESTROY);
         assertEquals(errorMessage, expectedTransitions, observedTransitions);
     }
 
@@ -281,17 +279,17 @@ class LifecycleVerifier {
         final List<LifecycleLog.ActivityCallback> expectedTransitions;
         if (startState == ON_PAUSE) {
             expectedTransitions = Arrays.asList(
-                    ON_STOP, ON_DESTROY, PRE_ON_CREATE, ON_CREATE, ON_START, ON_RESUME, ON_PAUSE);
+                    ON_STOP, ON_DESTROY, ON_CREATE, ON_START, ON_RESUME, ON_PAUSE);
         } else if (startState == ON_STOP) {
             expectedTransitions = Arrays.asList(
-                    ON_DESTROY, PRE_ON_CREATE, ON_CREATE, ON_START, ON_RESUME, ON_PAUSE, ON_STOP);
+                    ON_DESTROY, ON_CREATE, ON_START, ON_RESUME, ON_PAUSE, ON_STOP);
         } else if (startState == ON_RESUME) {
             expectedTransitions = Arrays.asList(
-                    ON_PAUSE, ON_STOP, ON_DESTROY, PRE_ON_CREATE, ON_CREATE, ON_START, ON_RESUME);
+                    ON_PAUSE, ON_STOP, ON_DESTROY, ON_CREATE, ON_START, ON_RESUME);
         } else if (startState == ON_TOP_POSITION_GAINED) {
             // Looks like we're tracking the callbacks here
             expectedTransitions = Arrays.asList(
-                    ON_TOP_POSITION_LOST, ON_PAUSE, ON_STOP, ON_DESTROY, PRE_ON_CREATE, ON_CREATE,
+                    ON_TOP_POSITION_LOST, ON_PAUSE, ON_STOP, ON_DESTROY, ON_CREATE,
                     ON_START, ON_POST_CREATE, ON_RESUME, ON_TOP_POSITION_GAINED);
         } else {
             throw new IllegalArgumentException("Start state not supported: " + startState);
@@ -306,13 +304,10 @@ class LifecycleVerifier {
         return CALLBACK_TRACKING_CLASS.isAssignableFrom(activityClass)
                 ? CONFIG_CHANGE_HANDLING_CLASS.isAssignableFrom(activityClass)
                 ? Arrays.asList(ON_MULTI_WINDOW_MODE_CHANGED, ON_TOP_POSITION_LOST)
-                : Arrays.asList(
-                ON_TOP_POSITION_LOST, ON_PAUSE, ON_STOP, ON_DESTROY, PRE_ON_CREATE,
-                ON_CREATE, ON_START, ON_POST_CREATE, ON_RESUME,
-                ON_TOP_POSITION_GAINED, ON_TOP_POSITION_LOST)
-                : Arrays.asList(
-                        ON_PAUSE, ON_STOP, ON_DESTROY, PRE_ON_CREATE, ON_CREATE, ON_START,
-                ON_RESUME);
+                : Arrays.asList(ON_TOP_POSITION_LOST, ON_PAUSE, ON_STOP, ON_DESTROY,
+                        ON_CREATE, ON_START, ON_POST_CREATE, ON_RESUME,
+                        ON_TOP_POSITION_GAINED, ON_TOP_POSITION_LOST)
+                : Arrays.asList(ON_PAUSE, ON_STOP, ON_DESTROY, ON_CREATE, ON_START, ON_RESUME);
     }
 
     // TODO(b/149338177): Remove this workaround once test passes with TestTaskOrganizer not to

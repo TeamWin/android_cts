@@ -591,6 +591,8 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
             testClassName = pkgName + testClassName;
         }
 
+        CLog.i("runDeviceTestsAsUser(): user=%d, pkg=%s class=%s, test=%s", userId, pkgName,
+                testClassName, testMethodName);
         runDeviceTests(
                 getDevice(),
                 RUNNER,
