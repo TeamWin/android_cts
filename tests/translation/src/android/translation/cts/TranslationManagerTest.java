@@ -271,7 +271,7 @@ public class TranslationManagerTest {
 
         final TranslationResponseValue value = response.getTranslationResponseValues().get(0);
         assertThat(value.getStatusCode()).isEqualTo(TranslationResponseValue.STATUS_SUCCESS);
-        assertThat(value.getText()).isEqualTo("success");
+        assertThat(value.getText().toString()).isEqualTo("success");
         assertThat(value.getTransliteration()).isNull();
         assertThat(value.getExtras()).isEqualTo(Bundle.EMPTY);
     }
