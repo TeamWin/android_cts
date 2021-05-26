@@ -37,7 +37,7 @@ public class BluetoothCallQualityReportTest extends BaseTelecomTestWithMockServi
                 .setSnrDb(snr)
                 .setRetransmittedPacketsCount(retransmissionCount)
                 .setPacketsNotReceivedCount(packetsNotReceiveCount)
-                .setPacketsNotReceivedCount(negativeAcknowledgementCount)
+                .setNegativeAcknowledgementCount(negativeAcknowledgementCount)
                 .build();
 
         assertEquals(timestamp, report.getSentTimestampMillis());
