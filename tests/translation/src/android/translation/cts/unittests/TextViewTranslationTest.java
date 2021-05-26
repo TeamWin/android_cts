@@ -89,8 +89,8 @@ public class TextViewTranslationTest {
 
         assertThat(request).isNotNull();
         assertThat(request.getAutofillId()).isEqualTo(mTestTextView.getAutofillId());
-        assertThat(request.getValue(ViewTranslationRequest.ID_TEXT).getText())
-                .isEqualTo(mTestTextView.getText());
+        assertThat(request.getValue(ViewTranslationRequest.ID_TEXT).getText().toString())
+                .isEqualTo(mTestTextView.getText().toString());
     }
 
     @Test
