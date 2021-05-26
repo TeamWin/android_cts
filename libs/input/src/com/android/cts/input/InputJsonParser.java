@@ -361,10 +361,13 @@ public class InputJsonParser {
             HidLightTestData testData = new HidLightTestData();
             try {
                 JSONObject testcaseEntry = json.getJSONObject(testCaseNumber);
-                testData.lightType = lightTypeFromString(testcaseEntry.getString("lightType"));
-                testData.lightName = testcaseEntry.getString("lightName");
-                testData.lightColor = testcaseEntry.getInt("lightColor");
-                testData.lightPlayerId = testcaseEntry.getInt("lightPlayerId");
+                testData.lightType = lightTypeFromString(
+                    testcaseEntry.getString("type"));
+                testData.lightCapabilities = lightCapabilityFromString(
+                        testcaseEntry.getString("capabilities"));
+                testData.lightName = testcaseEntry.getString("name");
+                testData.lightColor = testcaseEntry.getInt("color");
+                testData.lightPlayerId = testcaseEntry.getInt("playerId");
                 testData.hidEventType = uhidEventFromString(
                         testcaseEntry.getString("hidEventType"));
                 testData.report = testcaseEntry.getString("report");
@@ -718,14 +721,34 @@ public class InputJsonParser {
 
     private static int lightTypeFromString(String typeString) {
         switch (typeString.toUpperCase()) {
-            case "INPUT_SINGLE":
-                return Light.LIGHT_TYPE_INPUT_SINGLE;
-            case "INPUT_PLAYER_ID":
-                return Light.LIGHT_TYPE_INPUT_PLAYER_ID;
-            case "INPUT_RGB":
-                return Light.LIGHT_TYPE_INPUT_RGB;
+            case "INPUT":
+                return Light.LIGHT_TYPE_INPUT;
+            case "PLAYER_ID":
+                return Light.LIGHT_TYPE_PLAYER_ID;
+            default:
+                throw new RuntimeException("Unknown light type specified: " + typeString);
         }
-        throw new RuntimeException("Unknown light type specified: " + typeString);
+    }
+
+    private static int lightCapabilityFromString(String capString) {
+        int capabilities = 0;
+        final String[] entries = capString.split("\\|");
+        for (final String entry : entries) {
+            final String trimmedEntry = entry.trim();
+            switch (trimmedEntry.toUpperCase()) {
+                case "BRIGHTNESS":
+                    capabilities |= Light.LIGHT_CAPABILITY_BRIGHTNESS;
+                    break;
+                case "RGB":
+                    capabilities |= Light.LIGHT_CAPABILITY_RGB;
+                    break;
+                case "NONE":
+                    break;
+                default:
+                    throw new RuntimeException("Unknown capability specified: " + capString);
+            }
+        }
+        return capabilities;
     }
 
     // Return the enum uhid_event_type in kernel linux/uhid.h.

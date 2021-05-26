@@ -25,6 +25,9 @@ public class HidLightTestData {
     // Light type
     public int lightType;
 
+    // Light capabilities
+    public int lightCapabilities;
+
     // Light color
     public int lightColor;
 

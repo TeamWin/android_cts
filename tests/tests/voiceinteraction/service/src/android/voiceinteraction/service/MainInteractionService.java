@@ -55,7 +55,7 @@ public class MainInteractionService extends VoiceInteractionService {
         }
 
         final int testEvent = mIntent.getIntExtra(Utils.KEY_TEST_EVENT, -1);
-        if (testEvent == Utils.VOICE_INTERACTION_SERVICE_NORMAL_TEST) {
+        if (testEvent == Utils.VIS_NORMAL_TEST) {
             maybeStart();
         } else if (testEvent == Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_TEST) {
             runWithShellPermissionIdentity(() -> {

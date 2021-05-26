@@ -26,7 +26,6 @@ import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_RESTA
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_RESUME;
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_START;
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_STOP;
-import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.PRE_ON_CREATE;
 
 import static org.junit.Assume.assumeTrue;
 
@@ -102,8 +101,7 @@ public class ActivityLifecyclePipTests extends ActivityLifecycleClientTestBase {
                 getLifecycleLog(), Arrays.asList(expectedSequence, extraCycleSequence),
                 "activityEnteringPipOnTop");
         LifecycleVerifier.assertSequence(PipActivity.class, getLifecycleLog(),
-                Arrays.asList(PRE_ON_CREATE, ON_CREATE, ON_START, ON_RESUME, ON_PAUSE),
-                "launchAndEnterPip");
+                Arrays.asList(ON_CREATE, ON_START, ON_RESUME, ON_PAUSE), "launchAndEnterPip");
     }
 
     @Test
@@ -275,7 +273,7 @@ public class ActivityLifecyclePipTests extends ActivityLifecycleClientTestBase {
         // Wait for it to launch and pause. Other activities should not be affected.
         waitAndAssertActivityStates(state(secondActivity, ON_RESUME));
         LifecycleVerifier.assertSequence(PipActivity.class, getLifecycleLog(),
-                Arrays.asList(PRE_ON_CREATE, ON_CREATE, ON_START, ON_RESUME, ON_PAUSE),
+                Arrays.asList(ON_CREATE, ON_START, ON_RESUME, ON_PAUSE),
                 "launchAndEnterPip");
         LifecycleVerifier.assertEmptySequence(FirstActivity.class, getLifecycleLog(),
                 "launchPipOnTop");

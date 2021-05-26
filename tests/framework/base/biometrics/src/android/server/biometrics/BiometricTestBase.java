@@ -78,12 +78,9 @@ abstract class BiometricTestBase extends ActivityManagerTestBase {
     private static final String TAG = "BiometricTestBase";
     private static final String DUMPSYS_BIOMETRIC = Utils.DUMPSYS_BIOMETRIC;
     private static final String FLAG_CLEAR_SCHEDULER_LOG = " --clear-scheduler-buffer";
-    private static final String DOWNGRADE_BIOMETRIC_STRENGTH =
-            "device_config put biometrics biometric_strengths ";
 
     // Negative-side (left) buttons
     protected static final String BUTTON_ID_NEGATIVE = "button_negative";
-    protected static final String BUTTON_ID_CANCEL = "button_cancel";
     protected static final String BUTTON_ID_USE_CREDENTIAL = "button_use_credential";
 
     // Positive-side (right) buttons
@@ -169,20 +166,6 @@ abstract class BiometricTestBase extends ActivityManagerTestBase {
             }
         }
         Log.d(TAG, "Timed out waiting for state to not equal: " + state);
-    }
-
-    private void waitForSensorToBecomeStrength(int sensorId, int targetStrength) throws Exception {
-        for (int i = 0; i < 20; i++) {
-            final int currentStrength = getCurrentStrength(sensorId);
-            if (currentStrength != targetStrength) {
-                Log.d(TAG, "Not become target strength yet, current: " + currentStrength);
-                Thread.sleep(300);
-            } else {
-                return;
-            }
-        }
-        Log.d(TAG, "Timed out waiting for sensorId " + sensorId + " to become target strength: "
-                + targetStrength);
     }
 
     private boolean anyEnrollmentsExist() throws Exception {
@@ -451,8 +434,7 @@ abstract class BiometricTestBase extends ActivityManagerTestBase {
                 });
     }
 
-    protected void launchActivityAndWaitForResumed(@NonNull ActivitySession activitySession)
-            throws Exception {
+    protected void launchActivityAndWaitForResumed(@NonNull ActivitySession activitySession) {
         activitySession.start();
         mWmState.waitForActivityState(activitySession.getComponentName(),
                 WindowManagerState.STATE_RESUMED);
@@ -462,15 +444,6 @@ abstract class BiometricTestBase extends ActivityManagerTestBase {
     protected void closeActivity(@NonNull ActivitySession activitySession) throws Exception {
         activitySession.close();
         mInstrumentation.waitForIdleSync();
-    }
-
-    protected void updateStrength(int sensorId, int targetStrength) throws Exception {
-        Log.d(TAG, "updateStrength: update sensorId=" + sensorId + " to targetStrength="
-                + targetStrength);
-        final String shellCommand = DOWNGRADE_BIOMETRIC_STRENGTH +
-                String.format("%s:%s", sensorId, targetStrength);
-        Utils.executeShellCommand(shellCommand);
-        waitForSensorToBecomeStrength(sensorId, targetStrength);
     }
 
     protected int getCurrentStrength(int sensorId) throws Exception {
@@ -492,13 +465,10 @@ abstract class BiometricTestBase extends ActivityManagerTestBase {
     @NonNull
     protected static BiometricCallbackHelper.State getCallbackState(@NonNull TestJournal journal) {
         Utils.waitFor("Waiting for authentication callback",
-                () -> journal.extras.containsKey(BiometricCallbackHelper.KEY));
+                () -> journal.extras.containsKey(BiometricCallbackHelper.KEY),
+                (lastResult) -> fail("authentication callback never received - died waiting"));
 
         final Bundle bundle = journal.extras.getBundle(BiometricCallbackHelper.KEY);
-        if (bundle == null) {
-            return new BiometricCallbackHelper.State();
-        }
-
         final BiometricCallbackHelper.State state =
                 BiometricCallbackHelper.State.fromBundle(bundle);
 

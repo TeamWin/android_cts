@@ -63,6 +63,8 @@ import static com.android.cts.devicepolicy.TestCertificates.TEST_CA_SUBJECT;
 import static com.google.common.collect.ImmutableList.of;
 import static com.google.common.truth.Truth.assertThat;
 
+import android.app.admin.DevicePolicyManager;
+import android.app.admin.SecurityLog;
 import android.app.admin.SecurityLog.SecurityEvent;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -75,6 +77,7 @@ import android.security.keystore.KeyProperties;
 import android.security.keystore.KeyProtection;
 import android.support.test.uiautomator.UiDevice;
 import android.text.TextUtils;
+import android.util.DebugUtils;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
@@ -106,7 +109,7 @@ public class SecurityLoggingTest extends BaseDeviceAdminTest {
     private static final int TAG_LIBLOG_DROPPED = 1006;
     private static final String DELEGATE_APP_PKG = "com.android.cts.delegate";
     private static final String DELEGATION_SECURITY_LOGGING = "delegation-security-logging";
-
+    private static final boolean VERBOSE = false;
 
     // For brevity.
     private static final Class<String> S = String.class;
@@ -221,8 +224,7 @@ public class SecurityLoggingTest extends BaseDeviceAdminTest {
      * side actions and by {@link #testGenerateLogs()} are there.
      */
     public void testVerifyGeneratedLogs() throws Exception {
-        UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
-                .executeShellCommand("dpm force-security-logs");
+        forceSecurityLogs();
 
         final List<SecurityEvent> events = getEvents();
 
@@ -234,6 +236,11 @@ public class SecurityLoggingTest extends BaseDeviceAdminTest {
         if (mDevicePolicyManager.isOrganizationOwnedDeviceWithManagedProfile()) {
             verifyEventsRedacted(events);
         }
+    }
+
+    private void forceSecurityLogs() throws Exception {
+        UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
+                .executeShellCommand("dpm force-security-logs");
     }
 
     private void verifyAutomaticEventsPresent(List<SecurityEvent> events) {
@@ -337,8 +344,14 @@ public class SecurityLoggingTest extends BaseDeviceAdminTest {
         // effect just yet.
         for (int i = 0; i < 2 && events == null; i++) {
             events = mDevicePolicyManager.retrieveSecurityLogs(ADMIN_RECEIVER_COMPONENT);
-            if (events == null) Thread.sleep(1000);
+            Log.v(TAG, "getEvents(), batch #" + i + ": "  + (events == null ? -1 : events.size())
+                    + " events");
+            if (events == null) sleep(1000);
         }
+
+        Log.d(TAG, "getEvents(): received " + events.size() + " events");
+        if (VERBOSE) dumpSecurityLogs(events);
+
         try {
             verifySecurityLogs(events);
         } catch (AssertionFailedError e) {
@@ -349,18 +362,12 @@ public class SecurityLoggingTest extends BaseDeviceAdminTest {
         return events;
     }
 
-    private void dumpSecurityLogs(List<SecurityEvent> events) {
-        Log.d(TAG, "Security events dump:");
-        for (SecurityEvent event : events) {
-            Log.d(TAG, event.toString());
-        }
-    }
-
     /**
      * Test: check that there are no gaps between ids in two consecutive batches. Shared preference
      * is used to store these numbers between test invocations.
      */
     public void testVerifyLogIds() throws Exception {
+        forceSecurityLogs();
         final String param = InstrumentationRegistry.getArguments().getString(ARG_BATCH_NUMBER);
         final int batchId = param == null ? 0 : Integer.parseInt(param);
         final List<SecurityEvent> events = getEvents();
@@ -636,18 +643,22 @@ public class SecurityLoggingTest extends BaseDeviceAdminTest {
     }
 
     private void generatePasswordComplexityEvents() {
-        mDevicePolicyManager.setPasswordQuality(ADMIN_RECEIVER_COMPONENT, PASSWORD_QUALITY_COMPLEX);
-        mDevicePolicyManager.setPasswordMinimumLength(ADMIN_RECEIVER_COMPONENT, TEST_PWD_LENGTH);
-        mDevicePolicyManager.setPasswordMinimumLetters(ADMIN_RECEIVER_COMPONENT, TEST_PWD_CHARS);
-        mDevicePolicyManager.setPasswordMinimumNonLetter(ADMIN_RECEIVER_COMPONENT, TEST_PWD_CHARS);
-        mDevicePolicyManager.setPasswordMinimumUpperCase(ADMIN_RECEIVER_COMPONENT, TEST_PWD_CHARS);
-        mDevicePolicyManager.setPasswordMinimumLowerCase(ADMIN_RECEIVER_COMPONENT, TEST_PWD_CHARS);
-        mDevicePolicyManager.setPasswordMinimumNumeric(ADMIN_RECEIVER_COMPONENT, TEST_PWD_CHARS);
-        mDevicePolicyManager.setPasswordMinimumSymbols(ADMIN_RECEIVER_COMPONENT, TEST_PWD_CHARS);
+        DevicePolicyManager dpm = getDpmToGenerateEvents();
+
+        dpm.setPasswordQuality(ADMIN_RECEIVER_COMPONENT, PASSWORD_QUALITY_COMPLEX);
+        dpm.setPasswordMinimumLength(ADMIN_RECEIVER_COMPONENT, TEST_PWD_LENGTH);
+        dpm.setPasswordMinimumLetters(ADMIN_RECEIVER_COMPONENT, TEST_PWD_CHARS);
+        dpm.setPasswordMinimumNonLetter(ADMIN_RECEIVER_COMPONENT, TEST_PWD_CHARS);
+        dpm.setPasswordMinimumUpperCase(ADMIN_RECEIVER_COMPONENT, TEST_PWD_CHARS);
+        dpm.setPasswordMinimumLowerCase(ADMIN_RECEIVER_COMPONENT, TEST_PWD_CHARS);
+        dpm.setPasswordMinimumNumeric(ADMIN_RECEIVER_COMPONENT, TEST_PWD_CHARS);
+        dpm.setPasswordMinimumSymbols(ADMIN_RECEIVER_COMPONENT, TEST_PWD_CHARS);
     }
 
     private void generateNewStylePasswordComplexityEvents() {
-        mDevicePolicyManager.setRequiredPasswordComplexity(PASSWORD_COMPLEXITY_HIGH);
+        DevicePolicyManager dpm = getDpmToGenerateEvents();
+
+        dpm.setRequiredPasswordComplexity(PASSWORD_COMPLEXITY_HIGH);
     }
 
     private void verifyPasswordComplexityEventsPresent(List<SecurityEvent> events) {
@@ -701,18 +712,17 @@ public class SecurityLoggingTest extends BaseDeviceAdminTest {
     }
 
     private void generateLockingPolicyEvents() {
+        DevicePolicyManager dpm = mContext.getSystemService(DevicePolicyManager.class);
+
         if (mHasSecureLockScreen) {
-            mDevicePolicyManager.setPasswordExpirationTimeout(ADMIN_RECEIVER_COMPONENT,
-                    TEST_PWD_EXPIRATION_TIMEOUT);
-            mDevicePolicyManager.setPasswordHistoryLength(ADMIN_RECEIVER_COMPONENT,
-                    TEST_PWD_HISTORY_LENGTH);
-            mDevicePolicyManager.setMaximumFailedPasswordsForWipe(ADMIN_RECEIVER_COMPONENT,
-                    TEST_PWD_MAX_ATTEMPTS);
+            dpm.setPasswordExpirationTimeout(ADMIN_RECEIVER_COMPONENT, TEST_PWD_EXPIRATION_TIMEOUT);
+            dpm.setPasswordHistoryLength(ADMIN_RECEIVER_COMPONENT, TEST_PWD_HISTORY_LENGTH);
+            dpm.setMaximumFailedPasswordsForWipe(ADMIN_RECEIVER_COMPONENT, TEST_PWD_MAX_ATTEMPTS);
         }
-        mDevicePolicyManager.setKeyguardDisabledFeatures(ADMIN_RECEIVER_COMPONENT,
+        dpm.setKeyguardDisabledFeatures(ADMIN_RECEIVER_COMPONENT,
                 KEYGUARD_DISABLE_FINGERPRINT);
-        mDevicePolicyManager.setMaximumTimeToLock(ADMIN_RECEIVER_COMPONENT, TEST_MAX_TIME_TO_LOCK);
-        mDevicePolicyManager.lockNow();
+        dpm.setMaximumTimeToLock(ADMIN_RECEIVER_COMPONENT, TEST_MAX_TIME_TO_LOCK);
+        dpm.lockNow();
     }
 
     private void verifyLockingPolicyEventsPresent(List<SecurityEvent> events) {
@@ -764,22 +774,42 @@ public class SecurityLoggingTest extends BaseDeviceAdminTest {
     private void findPasswordComplexityEvent(
             String description, List<SecurityEvent> events, Object[] expectedPayload) {
         findEvent(description, events,
-                e -> e.getTag() == TAG_PASSWORD_COMPLEXITY_SET &&
-                        Arrays.equals((Object[]) e.getData(), expectedPayload));
+                byTagAndPayload(TAG_PASSWORD_COMPLEXITY_SET, expectedPayload));
     }
 
     private void findNewStylePasswordComplexityEvent(
             String description, List<SecurityEvent> events, Object[] expectedPayload) {
         findEvent(description, events,
-                e -> e.getTag() == TAG_PASSWORD_COMPLEXITY_REQUIRED &&
-                        Arrays.equals((Object[]) e.getData(), expectedPayload));
+                byTagAndPayload(TAG_PASSWORD_COMPLEXITY_REQUIRED, expectedPayload));
+    }
+
+    private Predicate<SecurityEvent> byTagAndPayload(int expectedTag, Object[] expectedPayload) {
+        return (event) -> {
+            boolean tagMatch = event.getTag() == expectedTag;
+            if (!tagMatch) return false;
+
+            Object[] payload = (Object[]) event.getData();
+            boolean payloadMatch = Arrays.equals(payload, expectedPayload);
+
+            if (!payloadMatch) {
+                Log.w(TAG, "Found event (id=" + event.getId() + ") with tag "
+                        + eventLogtoString(event.getTag()) + ", but invalid payload: "
+                        + "expected=" + Arrays.toString(expectedPayload)
+                        + ", actual=" + Arrays.toString(payload));
+            } else if (VERBOSE) {
+                Log.v(TAG, "Found event (id=" + event.getId() + ") with tag "
+                        + eventLogtoString(event.getTag()) + ", and expected payload ("
+                        + Arrays.toString(payload) + ")");
+            }
+            return payloadMatch;
+        };
     }
 
     private void generateUserRestrictionEvents() {
-        mDevicePolicyManager.addUserRestriction(ADMIN_RECEIVER_COMPONENT,
-                UserManager.DISALLOW_PRINTING);
-        mDevicePolicyManager.clearUserRestriction(ADMIN_RECEIVER_COMPONENT,
-                UserManager.DISALLOW_PRINTING);
+        DevicePolicyManager dpm = getDpmToGenerateEvents();
+
+        dpm.addUserRestriction(ADMIN_RECEIVER_COMPONENT, UserManager.DISALLOW_PRINTING);
+        dpm.clearUserRestriction(ADMIN_RECEIVER_COMPONENT, UserManager.DISALLOW_PRINTING);
     }
 
     private void verifyUserRestrictionEventsPresent(List<SecurityEvent> events) {
@@ -798,8 +828,10 @@ public class SecurityLoggingTest extends BaseDeviceAdminTest {
     }
 
     private void generateCameraPolicyEvents() {
-        mDevicePolicyManager.setCameraDisabled(ADMIN_RECEIVER_COMPONENT, true);
-        mDevicePolicyManager.setCameraDisabled(ADMIN_RECEIVER_COMPONENT, false);
+        DevicePolicyManager dpm = getDpmToGenerateEvents();
+
+        dpm.setCameraDisabled(ADMIN_RECEIVER_COMPONENT, true);
+        dpm.setCameraDisabled(ADMIN_RECEIVER_COMPONENT, false);
     }
 
     private void verifyCameraPolicyEvents(List<SecurityEvent> events) {
@@ -820,5 +852,24 @@ public class SecurityLoggingTest extends BaseDeviceAdminTest {
                         getInt(e, ADMIN_USER_INDEX) == userId &&
                         getInt(e, TARGET_USER_INDEX) == userId &&
                         getInt(e, CAMERA_DISABLED_INDEX) == 0);
+    }
+
+    private DevicePolicyManager getDpmToGenerateEvents() {
+        // It must use the dpm for the current user, as mDevicePolicyManager tunnels the calls to
+        // the device owner user on headless system user, which would cause a mismatch in the events
+        return mContext.getSystemService(DevicePolicyManager.class);
+    }
+
+    private static String eventLogtoString(int log) {
+        return DebugUtils.constantToString(SecurityLog.class, "TAG_", log);
+    }
+
+    private static String toString(SecurityEvent event) {
+        return "Event[id=" + event.getId() + ",tag=" + eventLogtoString(event.getTag()) + "]";
+    }
+
+    private void dumpSecurityLogs(List<SecurityEvent> events) {
+        Log.d(TAG, "Security events dump (" + events.size() + " events):");
+        events.forEach((event) -> Log.d(TAG, toString(event)));
     }
 }

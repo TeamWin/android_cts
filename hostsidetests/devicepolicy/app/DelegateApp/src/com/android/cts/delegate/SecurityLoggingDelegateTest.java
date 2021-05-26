@@ -13,7 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.android.cts.delegate;
+
+import static android.app.admin.SecurityLog.TAG_KEY_DESTRUCTION;
+import static android.app.admin.SecurityLog.TAG_KEY_GENERATED;
 
 import static com.android.cts.delegate.DelegateTestUtils.assertExpectException;
 
@@ -22,11 +26,21 @@ import static com.google.common.truth.Truth.assertThat;
 import android.app.admin.DevicePolicyManager;
 import android.app.admin.SecurityLog.SecurityEvent;
 import android.content.Context;
+import android.os.Process;
+import android.security.keystore.KeyGenParameterSpec;
+import android.security.keystore.KeyProperties;
 import android.support.test.uiautomator.UiDevice;
-import android.test.InstrumentationTestCase;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
 
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.KeyStore;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
@@ -34,27 +48,31 @@ import java.util.concurrent.CountDownLatch;
  * Tests that a delegate app with DELEGATION_SECURITY_LOGGING is able to control and access
  * security logging.
  */
-public class SecurityLoggingDelegateTest extends InstrumentationTestCase {
+@RunWith(AndroidJUnit4.class)
+public class SecurityLoggingDelegateTest {
+    private static final String GENERATED_KEY_ALIAS = "generated_key_alias";
 
-    private static final String TAG = "SecurityLoggingDelegateTest";
+    // Indices of various fields in SecurityEvent payload.
+    private static final int SUCCESS_INDEX = 0;
+    private static final int ALIAS_INDEX = 1;
+    private static final int UID_INDEX = 2;
+    // Value that indicates success in events that have corresponding field in their payload.
+    private static final int SUCCESS_VALUE = 1;
 
     private Context mContext;
     private DevicePolicyManager mDpm;
     private UiDevice mDevice;
 
-    private static final String GENERATED_KEY_ALIAS = "generated_key_alias";
-
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-
+    @Before
+    public void setUp() {
         mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
-        mContext = getInstrumentation().getContext();
+        mContext = InstrumentationRegistry.getContext();
         mDpm = mContext.getSystemService(DevicePolicyManager.class);
         DelegateTestUtils.DelegatedLogsReceiver.sBatchCountDown = new CountDownLatch(1);
     }
 
-    public void testCannotAccessApis()throws Exception {
+    @Test
+    public void testCannotAccessApis() {
         assertExpectException(SecurityException.class, null,
                 () -> mDpm.isSecurityLoggingEnabled(null));
 
@@ -69,6 +87,7 @@ public class SecurityLoggingDelegateTest extends InstrumentationTestCase {
      * Test: Test enabling security logging.
      * This test has a side effect: security logging is enabled after its execution.
      */
+    @Test
     public void testEnablingSecurityLogging() {
         mDpm.setSecurityLoggingEnabled(null, true);
 
@@ -78,11 +97,20 @@ public class SecurityLoggingDelegateTest extends InstrumentationTestCase {
     /**
      * Generates security events related to Keystore
      */
+    @Test
     public void testGenerateLogs() throws Exception {
         try {
-            DelegateTestUtils.testGenerateKey(GENERATED_KEY_ALIAS);
+            final KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA", "AndroidKeyStore");
+            keyGen.initialize(new KeyGenParameterSpec.Builder(
+                    GENERATED_KEY_ALIAS, KeyProperties.PURPOSE_SIGN).build());
+            // Should emit key generation event.
+            final KeyPair keyPair = keyGen.generateKeyPair();
+            assertThat(keyPair).isNotNull();
         } finally {
-            DelegateTestUtils.deleteKey(GENERATED_KEY_ALIAS);
+            final KeyStore ks = KeyStore.getInstance("AndroidKeyStore");
+            ks.load(null);
+            // Should emit key destruction event.
+            ks.deleteEntry(GENERATED_KEY_ALIAS);
         }
     }
 
@@ -90,19 +118,49 @@ public class SecurityLoggingDelegateTest extends InstrumentationTestCase {
      * Test: retrieves security logs and verifies that all events generated as a result of host
      * side actions and by {@link #testGenerateLogs()} are there.
      */
+    @Test
     public void testVerifyGeneratedLogs() throws Exception {
         mDevice.executeShellCommand("dpm force-security-logs");
         DelegateTestUtils.DelegatedLogsReceiver.waitForBroadcast();
 
         final List<SecurityEvent> events =
                 DelegateTestUtils.DelegatedLogsReceiver.getSecurityEvents();
-        DelegateTestUtils.verifyKeystoreEventsPresent(GENERATED_KEY_ALIAS, events);
+
+        int keyGenerationEvents = 0;
+        int keyDeletionEvents = 0;
+
+        final int myUid = Process.myUid();
+
+        for (final SecurityEvent event : events) {
+            if (event.getTag() == TAG_KEY_GENERATED && getInt(event, UID_INDEX) == myUid) {
+                verifyKeyEvent(event);
+                keyGenerationEvents++;
+            }
+
+            if (event.getTag() == TAG_KEY_DESTRUCTION && getInt(event, UID_INDEX) == myUid) {
+                verifyKeyEvent(event);
+                keyDeletionEvents++;
+            }
+        }
+
+        assertThat(keyGenerationEvents).isEqualTo(1);
+        assertThat(keyDeletionEvents).isEqualTo(1);
+    }
+
+    /**
+     * Verifies that a security event represents a successful key modification event for
+     * keyAlias
+     */
+    private static void verifyKeyEvent(SecurityEvent event) {
+        assertThat(getInt(event, SUCCESS_INDEX)).isEqualTo(SUCCESS_VALUE);
+        assertThat(getString(event, ALIAS_INDEX)).isEqualTo(GENERATED_KEY_ALIAS);
     }
 
     /**
      * Test: retrieving security logs should be rate limited - subsequent attempts should return
      * null.
      */
+    @Test
     public void testSecurityLoggingRetrievalRateLimited() {
         final List<SecurityEvent> logs = mDpm.retrieveSecurityLogs(null);
         // if logs is null it means that that attempt was rate limited => test PASS
@@ -113,12 +171,26 @@ public class SecurityLoggingDelegateTest extends InstrumentationTestCase {
     }
 
     /**
-     * Test: Test disaling security logging.
+     * Test: Test disabling security logging.
      * This test has a side effect: security logging is disabled after its execution.
      */
+    @Test
     public void testDisablingSecurityLogging() {
         mDpm.setSecurityLoggingEnabled(null, false);
 
         assertThat(mDpm.isSecurityLoggingEnabled(null)).isFalse();
+    }
+
+    private static Object getDatum(SecurityEvent event, int index) {
+        final Object[] dataArray = (Object[]) event.getData();
+        return dataArray[index];
+    }
+
+    private static String getString(SecurityEvent event, int index) {
+        return (String) getDatum(event, index);
+    }
+
+    private static int getInt(SecurityEvent event, int index) {
+        return (Integer) getDatum(event, index);
     }
 }
