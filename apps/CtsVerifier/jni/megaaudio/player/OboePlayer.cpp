@@ -26,9 +26,16 @@ using namespace oboe;
 
 constexpr int32_t kBufferSizeInBursts = 2; // Use 2 bursts as the buffer size (double buffer)
 
-OboePlayer::OboePlayer(AudioSource* source, int subtype)
+OboePlayer::OboePlayer(JNIEnv *env, AudioSource* source, int subtype)
  : Player(source, subtype)
-{}
+{
+    env->GetJavaVM(&mJvm);
+
+    jclass clsAudioTimestamp = env->FindClass("android/media/AudioTimestamp");
+
+    mFidFramePosition = env->GetFieldID(clsAudioTimestamp, "framePosition", "J");
+    mFidNanoTime = env->GetFieldID(clsAudioTimestamp, "nanoTime", "J");
+}
 
 DataCallbackResult OboePlayer::onAudioReady(AudioStream *oboeStream, void *audioData,
                                             int32_t numFrames) {
@@ -60,7 +67,6 @@ void OboePlayer::onErrorBeforeClose(AudioStream *, oboe::Result error) {
 }
 
 StreamBase::Result OboePlayer::setupStream(int32_t channelCount, int32_t sampleRate, int32_t routeDeviceId) {
-    __android_log_print(ANDROID_LOG_INFO, TAG, "setupStream()");
 
     oboe::Result result = oboe::Result::ErrorInternal;
     if (mAudioStream != nullptr) {
@@ -89,9 +95,6 @@ StreamBase::Result OboePlayer::setupStream(int32_t channelCount, int32_t sampleR
         case SUB_TYPE_OBOE_OPENSL_ES:
             builder.setAudioApi(AudioApi::OpenSLES);
             break;
-
-        default:
-           return ERROR_INVALID_STATE;
         }
 
         if (mRouteDeviceId != ROUTING_DEVICE_NONE) {
@@ -125,6 +128,20 @@ StreamBase::Result OboePlayer::startStream() {
     return result;
 }
 
+bool OboePlayer::getJavaTimestamp(jobject timestampObj) {
+    oboe::FrameTimestamp nativeStamp;
+    StreamBase::Result result = Player::getTimeStamp(&nativeStamp);
+    if (result == OK) {
+        JNIEnv* env;
+        mJvm->AttachCurrentThread(&env, NULL);
+
+        env->SetLongField(timestampObj, mFidFramePosition, nativeStamp.position);
+        env->SetLongField(timestampObj, mFidNanoTime, nativeStamp.timestamp);
+    }
+
+    return result == OK;
+}
+
 //
 // JNI functions
 //
@@ -137,7 +154,7 @@ JNIEXPORT JNICALL jlong
 Java_org_hyphonate_megaaudio_player_OboePlayer_allocNativePlayer(
     JNIEnv *env, jobject thiz, jlong native_audio_source, jint playerSubtype) {
 
-    return (jlong)new OboePlayer((AudioSource*)native_audio_source, playerSubtype);
+    return (jlong)new OboePlayer(env, (AudioSource*)native_audio_source, playerSubtype);
 }
 
 JNIEXPORT jint JNICALL Java_org_hyphonate_megaaudio_player_OboePlayer_setupStreamN(
@@ -174,6 +191,10 @@ Java_org_hyphonate_megaaudio_player_OboePlayer_getBufferFrameCountN(JNIEnv *env,
 
 JNIEXPORT jint JNICALL Java_org_hyphonate_megaaudio_player_OboePlayer_getRoutedDeviceIdN(JNIEnv *env, jobject thiz, jlong native_player) {
     return ((OboePlayer*)(native_player))->getRoutedDeviceId();
+}
+
+JNIEXPORT jboolean JNICALL Java_org_hyphonate_megaaudio_player_OboePlayer_getTimestampN(JNIEnv *env, jobject thiz, jlong native_player, jobject timestamp) {
+    return ((OboePlayer*)native_player)->getJavaTimestamp(timestamp);
 }
 
 } // extern "C"
