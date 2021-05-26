@@ -219,7 +219,4 @@
 
     <!-- b/135533962 -->
     <option name="compatibility:exclude-filter" value="arm64-v8a CtsWrapWrapDebugMallocDebugTestCases" />
-
-    <!-- b/175319005 -->
-    <option name="compatibility:exclude-filter" value="CtsDevicePolicyManagerTestCases com.android.cts.devicepolicy.ManagedProfileTest#testAppLinks_verificationStatus" />
 </configuration>

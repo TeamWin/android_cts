@@ -102,95 +102,6 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
         }
     }
 
-    @LargeTest
-    @Test
-    @Ignore
-    public void testAppLinks_verificationStatus() throws Exception {
-        // Disable all pre-existing browsers in the managed profile so they don't interfere with
-        // intents resolution.
-        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileUtils",
-                "testDisableAllBrowsers", mProfileUserId);
-        installAppAsUser(INTENT_RECEIVER_APK, USER_ALL);
-        installAppAsUser(INTENT_SENDER_APK, USER_ALL);
-
-        changeVerificationStatus(mParentUserId, INTENT_RECEIVER_PKG, "ask");
-        changeVerificationStatus(mProfileUserId, INTENT_RECEIVER_PKG, "ask");
-        // We should have two receivers: IntentReceiverActivity and BrowserActivity in the
-        // managed profile
-        assertAppLinkResult("testTwoReceivers");
-
-        changeUserRestrictionOrFail("allow_parent_profile_app_linking", true, mProfileUserId);
-        // Now we should also have one receiver in the primary user, so three receivers in total.
-        assertAppLinkResult("testThreeReceivers");
-
-        changeVerificationStatus(mParentUserId, INTENT_RECEIVER_PKG, "never");
-        // The primary user one has been set to never: we should only have the managed profile ones.
-        assertAppLinkResult("testTwoReceivers");
-
-        changeVerificationStatus(mProfileUserId, INTENT_RECEIVER_PKG, "never");
-        // Now there's only the browser in the managed profile left
-        assertAppLinkResult("testReceivedByBrowserActivityInManaged");
-
-        changeVerificationStatus(mProfileUserId, INTENT_RECEIVER_PKG, "always");
-        changeVerificationStatus(mParentUserId, INTENT_RECEIVER_PKG, "always");
-        // We have one always in the primary user and one always in the managed profile: the managed
-        // profile one should have precedence.
-        assertAppLinkResult("testReceivedByAppLinkActivityInManaged");
-    }
-
-    @LargeTest
-    @Test
-    @Ignore
-    public void testAppLinks_enabledStatus() throws Exception {
-        // Disable all pre-existing browsers in the managed profile so they don't interfere with
-        // intents resolution.
-        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileUtils",
-                "testDisableAllBrowsers", mProfileUserId);
-        installAppAsUser(INTENT_RECEIVER_APK, USER_ALL);
-        installAppAsUser(INTENT_SENDER_APK, USER_ALL);
-
-        final String APP_HANDLER_COMPONENT = "com.android.cts.intent.receiver/.AppLinkActivity";
-
-        // allow_parent_profile_app_linking is not set, try different enabled state combinations.
-        // We should not have app link handler in parent user no matter whether it is enabled.
-
-        disableComponentOrPackage(mParentUserId, APP_HANDLER_COMPONENT);
-        disableComponentOrPackage(mProfileUserId, APP_HANDLER_COMPONENT);
-        assertAppLinkResult("testReceivedByBrowserActivityInManaged");
-
-        enableComponentOrPackage(mParentUserId, APP_HANDLER_COMPONENT);
-        disableComponentOrPackage(mProfileUserId, APP_HANDLER_COMPONENT);
-        assertAppLinkResult("testReceivedByBrowserActivityInManaged");
-
-        disableComponentOrPackage(mParentUserId, APP_HANDLER_COMPONENT);
-        enableComponentOrPackage(mProfileUserId, APP_HANDLER_COMPONENT);
-        assertAppLinkResult("testTwoReceivers");
-
-        enableComponentOrPackage(mParentUserId, APP_HANDLER_COMPONENT);
-        enableComponentOrPackage(mProfileUserId, APP_HANDLER_COMPONENT);
-        assertAppLinkResult("testTwoReceivers");
-
-        // We now set allow_parent_profile_app_linking, and hence we should have the app handler
-        // in parent user if it is enabled.
-        changeUserRestrictionOrFail("allow_parent_profile_app_linking", true, mProfileUserId);
-
-        disableComponentOrPackage(mParentUserId, APP_HANDLER_COMPONENT);
-        disableComponentOrPackage(mProfileUserId, APP_HANDLER_COMPONENT);
-        assertAppLinkResult("testReceivedByBrowserActivityInManaged");
-
-        enableComponentOrPackage(mParentUserId, APP_HANDLER_COMPONENT);
-        disableComponentOrPackage(mProfileUserId, APP_HANDLER_COMPONENT);
-        assertAppLinkResult("testTwoReceivers");
-
-        disableComponentOrPackage(mParentUserId, APP_HANDLER_COMPONENT);
-        enableComponentOrPackage(mProfileUserId, APP_HANDLER_COMPONENT);
-        assertAppLinkResult("testTwoReceivers");
-
-        enableComponentOrPackage(mParentUserId, APP_HANDLER_COMPONENT);
-        enableComponentOrPackage(mProfileUserId, APP_HANDLER_COMPONENT);
-        assertAppLinkResult("testThreeReceivers");
-    }
-
     @Test
     public void testSettingsIntents() throws Exception {
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".SettingsIntentsTest",
@@ -715,18 +626,5 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
     private String changeUserRestriction(String key, boolean value, int userId)
             throws DeviceNotAvailableException {
         return changeUserRestriction(key, value, userId, MANAGED_PROFILE_PKG);
-    }
-
-    // status should be one of never, undefined, ask, always
-    private void changeVerificationStatus(int userId, String packageName, String status)
-            throws DeviceNotAvailableException {
-        String command = "pm set-app-link --user " + userId + " " + packageName + " " + status;
-        CLog.d("Output for command " + command + ": "
-                + getDevice().executeShellCommand(command));
-    }
-
-    private void assertAppLinkResult(String methodName) throws DeviceNotAvailableException {
-        runDeviceTestsAsUser(INTENT_SENDER_PKG, ".AppLinkTest", methodName,
-                mProfileUserId);
     }
 }

@@ -15,7 +15,7 @@
   -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.android.cts.packagemanager.verify.domain.device">
+    package="com.android.cts.packagemanager.verify.domain.device.multiuser">
 
     <application android:label="Device Test App">
         <uses-library android:name="android.test.runner" />
@@ -23,7 +23,7 @@
 
     <instrumentation
         android:name="androidx.test.runner.AndroidJUnitRunner"
-        android:targetPackage="com.android.cts.packagemanager.verify.domain.device" />
+        android:targetPackage="com.android.cts.packagemanager.verify.domain.device.multiuser" />
 
     <queries>
         <package android:name="com.android.cts.packagemanager.verify.domain.declaringapp1"/>

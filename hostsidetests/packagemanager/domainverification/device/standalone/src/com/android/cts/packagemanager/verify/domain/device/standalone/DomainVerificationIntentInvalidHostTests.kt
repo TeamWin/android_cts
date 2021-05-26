@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.cts.packagemanager.verify.domain.device
+package com.android.cts.packagemanager.verify.domain.device.standalone
 
 import com.android.cts.packagemanager.verify.domain.android.DomainUtils.DECLARING_PKG_1_COMPONENT
 import com.android.cts.packagemanager.verify.domain.android.DomainUtils.DECLARING_PKG_2_COMPONENT
