@@ -49,6 +49,7 @@ import android.service.contentcapture.ContentCaptureService;
 import android.service.translation.TranslationService;
 import android.transition.Transition;
 import android.util.Log;
+import android.util.LongSparseArray;
 import android.util.Pair;
 import android.view.View;
 import android.view.autofill.AutofillId;
@@ -121,6 +122,9 @@ public class UiTranslationManagerTest {
     private CtsContentCaptureService.ServiceWatcher mContentCaptureServiceWatcher;
     private CtsTranslationService.ServiceWatcher mTranslationServiceServiceWatcher;
     private ActivityScenario<SimpleActivity> mActivityScenario;
+    private ActivityScenario<VirtualContainerViewActivity> mVirtualContainerViewActivityScenario;
+
+    private VirtualContainerView mVirtualContainerView;
 
     private TextView mTextView;
 
@@ -155,8 +159,12 @@ public class UiTranslationManagerTest {
 
     @After
     public void cleanup() throws Exception {
-        mActivityScenario.moveToState(Lifecycle.State.DESTROYED);
-
+        if (mActivityScenario != null) {
+            mActivityScenario.moveToState(Lifecycle.State.DESTROYED);
+        }
+        if (mVirtualContainerViewActivityScenario != null) {
+            mVirtualContainerViewActivityScenario.moveToState(Lifecycle.State.DESTROYED);
+        }
         Helper.resetTemporaryContentCaptureService();
         Helper.resetTemporaryTranslationService();
     }
@@ -196,28 +204,28 @@ public class UiTranslationManagerTest {
             assertThat(viewRequest.getKeys().size()).isEqualTo(1);
             assertThat(viewRequest.getKeys()).containsExactly(ViewTranslationRequest.ID_TEXT);
             assertThat(viewRequest.getValue(ViewTranslationRequest.ID_TEXT).getText())
-                    .isEqualTo(originalText);
+                    .isEqualTo(originalText.toString());
 
             SystemClock.sleep(UI_WAIT_TIMEOUT);
-            assertThat(helloText.getText()).isEqualTo(translatedText);
+            assertThat(helloText.getText().toString()).isEqualTo(translatedText);
 
             // Call pauseTranslation API
             manager.pauseTranslation(contentCaptureContext.getActivityId());
 
             SystemClock.sleep(UI_WAIT_TIMEOUT);
-            assertThat(helloText.getText()).isEqualTo(originalText);
+            assertThat(helloText.getText().toString()).isEqualTo(originalText.toString());
 
             // Call resumeTranslation API
             manager.resumeTranslation(contentCaptureContext.getActivityId());
 
             SystemClock.sleep(UI_WAIT_TIMEOUT);
-            assertThat(helloText.getText()).isEqualTo(translatedText);
+            assertThat(helloText.getText().toString()).isEqualTo(translatedText);
 
             // Call finishTranslation API
             manager.finishTranslation(contentCaptureContext.getActivityId());
 
             SystemClock.sleep(UI_WAIT_TIMEOUT);
-            assertThat(helloText.getText()).isEqualTo(originalText);
+            assertThat(helloText.getText().toString()).isEqualTo(originalText.toString());
 
             // Check the Translation session is destroyed after calling finishTranslation()
             CtsTranslationService translationService =
@@ -367,7 +375,8 @@ public class UiTranslationManagerTest {
                     new UiTranslationSpec.Builder().build());
             SystemClock.sleep(UI_WAIT_TIMEOUT);
         });
-        assertThat(mTextView.getContentDescription()).isEqualTo(translatedText);
+        assertThat(mTextView.getContentDescription().toString())
+                .isEqualTo(translatedText.toString());
 
         // Check request to make sure the content description key doesn't be changed
         final TranslationRequest request = sTranslationReplier.getNextTranslationRequest();
@@ -385,21 +394,24 @@ public class UiTranslationManagerTest {
             manager.pauseTranslation(contentCaptureContext.getActivityId());
             SystemClock.sleep(UI_WAIT_TIMEOUT);
         });
-        assertThat(mTextView.getContentDescription()).isEqualTo(originalDescription);
+        assertThat(mTextView.getContentDescription().toString())
+                .isEqualTo(originalDescription.toString());
 
         runWithShellPermissionIdentity(() -> {
             // Call resumeTranslation API
             manager.resumeTranslation(contentCaptureContext.getActivityId());
             SystemClock.sleep(UI_WAIT_TIMEOUT);
         });
-        assertThat(mTextView.getContentDescription()).isEqualTo(translatedText);
+        assertThat(mTextView.getContentDescription().toString())
+                .isEqualTo(translatedText.toString());
 
         runWithShellPermissionIdentity(() -> {
             // Call finishTranslation API
             manager.finishTranslation(contentCaptureContext.getActivityId());
             SystemClock.sleep(UI_WAIT_TIMEOUT);
         });
-        assertThat(mTextView.getContentDescription()).isEqualTo(originalDescription);
+        assertThat(mTextView.getContentDescription().toString())
+                .isEqualTo(originalDescription.toString());
     }
 
     @Test
@@ -529,6 +541,106 @@ public class UiTranslationManagerTest {
             Mockito.verify(mockCallback, Mockito.never())
                     .onStarted(any(ULocale.class), any(ULocale.class));
         });
+    }
+
+    @Test
+    public void testVirtualViewUiTranslation() throws Throwable {
+        // Enable CTS ContentCaptureService
+        CtsContentCaptureService contentcaptureService = enableContentCaptureService();
+
+        // Start Activity and get needed information
+        final List<AutofillId> views = startVirtualContainerViewActivityAndGetViewsForTranslation();
+        ViewTranslationCallback mockCallback = Mockito.mock(ViewTranslationCallback.class);
+        mVirtualContainerView.setViewTranslationCallback(mockCallback);
+
+        // Wait session created and get the ConttCaptureContext from ContentCaptureService
+        final ContentCaptureContext contentCaptureContext =
+                getContentCaptureContextFromContentCaptureService(contentcaptureService);
+
+        // enable CTS TranslationService
+        mTranslationServiceServiceWatcher = CtsTranslationService.setServiceWatcher();
+        Helper.setTemporaryTranslationService(CtsTranslationService.SERVICE_NAME);
+
+        final String translatedText = "success";
+        final UiTranslationManager manager = sContext.getSystemService(UiTranslationManager.class);
+        // Set response
+        final TranslationResponse expectedResponse =
+                createViewsTranslationResponse(views, translatedText);
+        sTranslationReplier.addResponse(expectedResponse);
+
+        runWithShellPermissionIdentity(() -> {
+            // Call startTranslation API
+            manager.startTranslation(
+                    new TranslationSpec(ULocale.ENGLISH,
+                            TranslationSpec.DATA_FORMAT_TEXT),
+                    new TranslationSpec(ULocale.FRENCH,
+                            TranslationSpec.DATA_FORMAT_TEXT),
+                    views, contentCaptureContext.getActivityId(),
+                    new UiTranslationSpec.Builder().build());
+
+            SystemClock.sleep(UI_WAIT_TIMEOUT);
+        });
+        // Check request
+        final TranslationRequest request = sTranslationReplier.getNextTranslationRequest();
+        final List<ViewTranslationRequest> requests = request.getViewTranslationRequests();
+        assertThat(requests.size()).isEqualTo(views.size());
+        // 1st virtual child in container
+        final ViewTranslationRequest viewRequest1 = requests.get(0);
+        assertThat(viewRequest1.getAutofillId()).isEqualTo(views.get(0));
+        assertThat(viewRequest1.getKeys()).containsExactly(ViewTranslationRequest.ID_TEXT);
+        assertThat(viewRequest1.getValue(ViewTranslationRequest.ID_TEXT).getText().toString())
+                .isEqualTo("Hello 0");
+        // 2nd virtual child in container
+        final ViewTranslationRequest viewRequest2 = requests.get(1);
+        assertThat(viewRequest2.getAutofillId()).isEqualTo(views.get(1));
+        assertThat(viewRequest2.getKeys()).containsExactly(ViewTranslationRequest.ID_TEXT);
+        assertThat(viewRequest2.getValue(ViewTranslationRequest.ID_TEXT).getText().toString())
+                .isEqualTo("Hello 1");
+
+        // Check responses
+        final LongSparseArray<ViewTranslationResponse> responses
+                = mVirtualContainerView.getViewTranslationResponseForCustomView();
+        assertThat(responses).isNotNull();
+        assertThat(responses.size()).isEqualTo(2);
+        assertThat(responses.valueAt(0))
+                .isEqualTo(expectedResponse.getViewTranslationResponses().valueAt(0));
+        assertThat(responses.valueAt(1))
+                .isEqualTo(expectedResponse.getViewTranslationResponses().valueAt(1));
+
+        ArgumentCaptor<View> viewArgumentCaptor = ArgumentCaptor.forClass(View.class);
+        Mockito.verify(mockCallback, Mockito.times(1))
+                .onShowTranslation(viewArgumentCaptor.capture());
+        VirtualContainerView capturedView = (VirtualContainerView) viewArgumentCaptor.getValue();
+        assertThat(capturedView.getAutofillId()).isEqualTo(mVirtualContainerView.getAutofillId());
+
+        runWithShellPermissionIdentity(() -> {
+            // Call pauseTranslation API
+            manager.pauseTranslation(contentCaptureContext.getActivityId());
+            SystemClock.sleep(UI_WAIT_TIMEOUT);
+        });
+        Mockito.verify(mockCallback, Mockito.times(1)).onHideTranslation(any(View.class));
+
+        runWithShellPermissionIdentity(() -> {
+            // Call finishTranslation API
+            manager.finishTranslation(contentCaptureContext.getActivityId());
+            SystemClock.sleep(UI_WAIT_TIMEOUT);
+        });
+        Mockito.verify(mockCallback, Mockito.times(1)).onClearTranslation(any(View.class));
+    }
+
+    private List<AutofillId> startVirtualContainerViewActivityAndGetViewsForTranslation() {
+        // Start VirtualContainerViewActivity and get needed information
+        Intent intent = new Intent(sContext, VirtualContainerViewActivity.class)
+                .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        AtomicReference<List<AutofillId>> viewAutofillIdsRef = new AtomicReference<>();
+
+        mVirtualContainerViewActivityScenario = ActivityScenario.launch(intent);
+        mVirtualContainerViewActivityScenario.onActivity(activity -> {
+            mVirtualContainerView = activity.getVirtualContainerView();
+            // Get the views that need to be translated.
+            viewAutofillIdsRef.set(activity.getViewsForTranslation());
+        });
+        return viewAutofillIdsRef.get();
     }
 
     private BlockingBroadcastReceiver sendCommandToIme(String action, boolean mutable) {
