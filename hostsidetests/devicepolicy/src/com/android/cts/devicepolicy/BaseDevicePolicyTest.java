@@ -1221,12 +1221,6 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
         return "true".equalsIgnoreCase(result);
     }
 
-    protected void ignoreOnHeadlessSystemUserMode(String reason)
-            throws DeviceNotAvailableException {
-        assumeFalse("Skipping test on headless system user mode. Reason: " + reason,
-                isHeadlessSystemUserMode());
-    }
-
     protected void assumeHeadlessSystemUserMode(String reason)
             throws DeviceNotAvailableException {
         assumeTrue("Skipping test on non-headless system user mode. Reason: " + reason,
