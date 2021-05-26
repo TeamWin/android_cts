@@ -39,7 +39,6 @@ import org.junit.Test;
  */
 @Presubmit
 @android.server.wm.annotation.Group3
-@FlakyTest(bugId = 186608789)
 public class MultiDisplayKeyguardTests extends MultiDisplayTestBase {
 
     @Before
