@@ -48,6 +48,7 @@ import java.util.concurrent.Executor;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -77,6 +78,8 @@ public class TunerDvrTest {
     }
 
     @Test
+    @Ignore("b/188004782")
+    // Disable Tuner CTS cases on Android 11.
     public void testDvrSettings() throws Exception {
         if (!hasTuner()) return;
         DvrSettings settings = getDvrSettings();
@@ -89,6 +92,8 @@ public class TunerDvrTest {
     }
 
     @Test
+    @Ignore("b/188004782")
+    // Disable Tuner CTS cases on Android 11.
     public void testDvrRecorder() throws Exception {
         if (!hasTuner()) return;
         DvrRecorder d = mTuner.openDvrRecorder(1000, getExecutor(), getRecordListener());
@@ -134,6 +139,8 @@ public class TunerDvrTest {
     }
 
     @Test
+    @Ignore("b/188004782")
+    // Disable Tuner CTS cases on Android 11.
     public void testDvrPlayback() throws Exception {
         if (!hasTuner()) return;
         DvrPlayback d = mTuner.openDvrPlayback(1000, getExecutor(), getPlaybackListener());

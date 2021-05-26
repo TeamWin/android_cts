@@ -92,6 +92,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -124,12 +125,16 @@ public class TunerTest {
     }
 
     @Test
+    @Ignore("b/188004782")
+    // Disable Tuner CTS cases on Android 11.
     public void testTunerConstructor() throws Exception {
         if (!hasTuner()) return;
         assertNotNull(mTuner);
     }
 
     @Test
+    @Ignore("b/188004782")
+    // Disable Tuner CTS cases on Android 11.
     public void testTuning() throws Exception {
         if (!hasTuner()) return;
         List<Integer> ids = mTuner.getFrontendIds();
@@ -144,6 +149,8 @@ public class TunerTest {
     }
 
     @Test
+    @Ignore("b/188004782")
+    // Disable Tuner CTS cases on Android 11.
     public void testScanning() throws Exception {
         if (!hasTuner()) return;
         List<Integer> ids = mTuner.getFrontendIds();
@@ -167,6 +174,8 @@ public class TunerTest {
     }
 
     @Test
+    @Ignore("b/188004782")
+    // Disable Tuner CTS cases on Android 11.
     public void testFrontendStatus() throws Exception {
         if (!hasTuner()) return;
         List<Integer> ids = mTuner.getFrontendIds();
@@ -233,6 +242,8 @@ public class TunerTest {
     }
 
     @Test
+    @Ignore("b/188004782")
+    // Disable Tuner CTS cases on Android 11.
     public void testLnb() throws Exception {
         if (!hasTuner()) return;
         Lnb lnb = mTuner.openLnb(getExecutor(), getLnbCallback());
@@ -246,6 +257,8 @@ public class TunerTest {
     }
 
     @Test
+    @Ignore("b/188004782")
+    // Disable Tuner CTS cases on Android 11.
     public void testOpenLnbByname() throws Exception {
         if (!hasTuner()) return;
         Lnb lnb = mTuner.openLnbByName("default", getExecutor(), getLnbCallback());
@@ -255,6 +268,8 @@ public class TunerTest {
     }
 
     @Test
+    @Ignore("b/188004782")
+    // Disable Tuner CTS cases on Android 11.
     public void testCiCam() throws Exception {
         if (!hasTuner()) return;
         // open filter to get demux resource
@@ -266,6 +281,8 @@ public class TunerTest {
     }
 
     @Test
+    @Ignore("b/188004782")
+    // Disable Tuner CTS cases on Android 11.
     public void testAvSyncId() throws Exception {
         if (!hasTuner()) return;
         // open filter to get demux resource
@@ -278,6 +295,8 @@ public class TunerTest {
     }
 
     @Test
+    @Ignore("b/188004782")
+    // Disable Tuner CTS cases on Android 11.
     public void testReadFilter() throws Exception {
         if (!hasTuner()) return;
         Filter f = mTuner.openFilter(
@@ -307,6 +326,8 @@ public class TunerTest {
     }
 
     @Test
+    @Ignore("b/188004782")
+    // Disable Tuner CTS cases on Android 11.
     public void testTimeFilter() throws Exception {
         if (!hasTuner()) return;
         if (!mTuner.getDemuxCapabilities().isTimeFilterSupported()) return;
@@ -320,6 +341,8 @@ public class TunerTest {
     }
 
     @Test
+    @Ignore("b/188004782")
+    // Disable Tuner CTS cases on Android 11.
     public void testDescrambler() throws Exception {
         if (!hasTuner()) return;
         Descrambler d = mTuner.openDescrambler();
@@ -334,6 +357,8 @@ public class TunerTest {
     }
 
     @Test
+    @Ignore("b/188004782")
+    // Disable Tuner CTS cases on Android 11.
     public void testOpenDvrRecorder() throws Exception {
         if (!hasTuner()) return;
         DvrRecorder d = mTuner.openDvrRecorder(100, getExecutor(), getRecordListener());
@@ -341,6 +366,8 @@ public class TunerTest {
     }
 
     @Test
+    @Ignore("b/188004782")
+    // Disable Tuner CTS cases on Android 11.
     public void testOpenDvPlayback() throws Exception {
         if (!hasTuner()) return;
         DvrPlayback d = mTuner.openDvrPlayback(100, getExecutor(), getPlaybackListener());
@@ -348,6 +375,8 @@ public class TunerTest {
     }
 
     @Test
+    @Ignore("b/188004782")
+    // Disable Tuner CTS cases on Android 11.
     public void testDemuxCapabilities() throws Exception {
         if (!hasTuner()) return;
         DemuxCapabilities d = mTuner.getDemuxCapabilities();
@@ -369,6 +398,8 @@ public class TunerTest {
     }
 
     @Test
+    @Ignore("b/188004782")
+    // Disable Tuner CTS cases on Android 11.
     public void testResourceLostListener() throws Exception {
         if (!hasTuner()) return;
         mTuner.setResourceLostListener(getExecutor(), new Tuner.OnResourceLostListener() {
@@ -379,6 +410,8 @@ public class TunerTest {
     }
 
     @Test
+    @Ignore("b/188004782")
+    // Disable Tuner CTS cases on Android 11.
     public void testOnTuneEventListener() throws Exception {
         if (!hasTuner()) return;
         mTuner.setOnTuneEventListener(getExecutor(), new OnTuneEventListener() {
@@ -389,12 +422,16 @@ public class TunerTest {
     }
 
     @Test
+    @Ignore("b/188004782")
+    // Disable Tuner CTS cases on Android 11.
     public void testUpdateResourcePriority() throws Exception {
         if (!hasTuner()) return;
         mTuner.updateResourcePriority(100, 20);
     }
 
     @Test
+    @Ignore("b/188004782")
+    // Disable Tuner CTS cases on Android 11.
     public void testShareFrontendFromTuner() throws Exception {
         if (!hasTuner()) return;
         Tuner other = new Tuner(mContext, null, 100);
