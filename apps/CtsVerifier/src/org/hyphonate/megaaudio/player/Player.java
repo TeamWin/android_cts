@@ -16,15 +16,20 @@
 package org.hyphonate.megaaudio.player;
 
 import android.media.AudioFormat;
+import android.media.AudioTimestamp;
 import android.media.AudioTrack;
 
 import org.hyphonate.megaaudio.common.StreamBase;
+
+import java.util.ArrayList;
 
 /**
  * An abstract class defining the common operations and attributes for all
  * player (concrete) sub-classes.
  */
 public abstract class Player extends StreamBase {
+    private ArrayList<BufferCallback> mCallbacks = new ArrayList<BufferCallback>();
+
     public Player(AudioSourceProvider sourceProvider) {
         mSourceProvider = sourceProvider;
     }
@@ -96,4 +101,52 @@ public abstract class Player extends StreamBase {
         }
     }
 
+    //
+    // TimeStamp
+    //
+    /**
+     * Gets a timestamp from the audio stream
+     * @param timestamp
+     * @return
+     */
+    public abstract boolean getTimestamp(AudioTimestamp timestamp);
+
+    //
+    // BufferCallback Stuff
+    //
+
+    /**
+     * Defines an interface for buffer callback objects
+     */
+    public interface BufferCallback {
+        /**
+         * Called when player executes a pull() on the associated AudioSource
+         */
+        void onPull();
+    }
+
+    /**
+     * Adds a callback object
+     * @param callback
+     */
+    public void addBufferCallback(BufferCallback callback) {
+        mCallbacks.add(callback);
+    }
+
+    /**
+     * Removes a previously added callback object
+     * @param callback
+     */
+    public void removeBufferCallback(BufferCallback callback) {
+        mCallbacks.remove(callback);
+    }
+
+    /**
+     * Iterates through callback objects and calls their onPull() method.
+     */
+    public void onPull() {
+        for (BufferCallback callback : mCallbacks) {
+            callback.onPull();
+        }
+    }
 }

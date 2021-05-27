@@ -103,6 +103,13 @@ import java.util.stream.Collectors;
  *             <meta-data android:name="test_applicable_features" android:value="android.hardware.sensor.compass" />
  *         </pre>
  *     </li>
+ *     <li>OPTIONAL: Add a meta data attribute to indicate which intent actions are required to run
+ *         the test. If the device does not have activities that handle all those actions, then it
+ *         will not appear in the test list. Use a colon (:) to specify multiple required intent actions.
+ *         <pre>
+ *             <meta-data android:name="test_required_actions" android:value="android.app.action.ADD_DEVICE_ADMIN" />
+ *         </pre>
+ *     </li>
  *
  * </ol>
  */
@@ -120,6 +127,8 @@ public class ManifestTestListAdapter extends TestListAdapter {
     private static final String TEST_APPLICABLE_FEATURES_META_DATA = "test_applicable_features";
 
     private static final String TEST_REQUIRED_CONFIG_META_DATA = "test_required_configs";
+
+    private static final String TEST_REQUIRED_ACTIONS_META_DATA = "test_required_actions";
 
     private static final String TEST_DISPLAY_MODE_META_DATA = "display_mode";
 
@@ -252,11 +261,14 @@ public class ManifestTestListAdapter extends TestListAdapter {
             Intent intent = getActivityIntent(info.activityInfo);
             String[] requiredFeatures = getRequiredFeatures(info.activityInfo.metaData);
             String[] requiredConfigs = getRequiredConfigs(info.activityInfo.metaData);
+            String[] requiredActions = getRequiredActions(info.activityInfo.metaData);
             String[] excludedFeatures = getExcludedFeatures(info.activityInfo.metaData);
             String[] applicableFeatures = getApplicableFeatures(info.activityInfo.metaData);
             String displayMode = getDisplayMode(info.activityInfo.metaData);
+
             TestListItem item = TestListItem.newTest(title, testName, intent, requiredFeatures,
-                     requiredConfigs, excludedFeatures, applicableFeatures, displayMode);
+                     requiredConfigs, requiredActions, excludedFeatures, applicableFeatures,
+                     displayMode);
 
             String testCategory = getTestCategory(mContext, info.activityInfo.metaData);
             addTestToCategory(testsByCategory, testCategory, item);
@@ -286,6 +298,19 @@ public class ManifestTestListAdapter extends TestListAdapter {
             return null;
         } else {
             String value = metaData.getString(TEST_REQUIRED_FEATURES_META_DATA);
+            if (value == null) {
+                return null;
+            } else {
+                return value.split(":");
+            }
+        }
+    }
+
+    static String[] getRequiredActions(Bundle metaData) {
+        if (metaData == null) {
+            return null;
+        } else {
+            String value = metaData.getString(TEST_REQUIRED_ACTIONS_META_DATA);
             if (value == null) {
                 return null;
             } else {
@@ -381,6 +406,7 @@ public class ManifestTestListAdapter extends TestListAdapter {
                     return true;
                 }
             }
+            Log.v(LOG_TAG, "Missing features " + Arrays.toString(features));
         }
         return false;
     }
@@ -390,6 +416,21 @@ public class ManifestTestListAdapter extends TestListAdapter {
             PackageManager packageManager = mContext.getPackageManager();
             for (String feature : features) {
                 if (!packageManager.hasSystemFeature(feature)) {
+                    Log.v(LOG_TAG, "Missing feature " + feature);
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    private boolean hasAllActions(String[] actions) {
+        if (actions != null) {
+            PackageManager packageManager = mContext.getPackageManager();
+            for (String action : actions) {
+                Intent intent = new Intent(action);
+                if (packageManager.queryIntentActivities(intent, /* flags= */ 0).isEmpty()) {
+                    Log.v(LOG_TAG, "Missing action " + action);
                     return false;
                 }
             }
@@ -505,13 +546,18 @@ public class ManifestTestListAdapter extends TestListAdapter {
         List<TestListItem> filteredTests = new ArrayList<>();
         for (TestListItem test : tests) {
             if (!hasAnyFeature(test.excludedFeatures) && hasAllFeatures(test.requiredFeatures)
-                && matchAllConfigs(test.requiredConfigs)
-                && matchDisplayMode(test.displayMode, mode)) {
+                    && hasAllActions(test.requiredActions)
+                    && matchAllConfigs(test.requiredConfigs)
+                    && matchDisplayMode(test.displayMode, mode)) {
                 if (test.applicableFeatures == null || hasAnyFeature(test.applicableFeatures)) {
                     // Add suffix in test name if the test is in the folded mode.
                     test.testName = setTestNameSuffix(mode, test.testName);
                     filteredTests.add(test);
+                } else {
+                    Log.d(LOG_TAG, "Skipping " + test.testName + " due to metadata filtering");
                 }
+            } else {
+                Log.d(LOG_TAG, "Skipping " + test.testName + " due to metadata filtering");
             }
         }
         return filteredTests;

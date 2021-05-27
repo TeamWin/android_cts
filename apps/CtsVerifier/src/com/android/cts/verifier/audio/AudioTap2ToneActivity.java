@@ -140,8 +140,8 @@ public class AudioTap2ToneActivity
         mStopBtn = (Button) findViewById(R.id.tap2tone_stopBtn);
         mStopBtn.setOnClickListener(this);
 
-        ((RadioButton) findViewById(R.id.tap2toneJavaApiBtn)).setOnClickListener(this);
-        RadioButton nativeApiRB = findViewById(R.id.tap2toneNativeApiBtn);
+        ((RadioButton) findViewById(R.id.audioJavaApiBtn)).setOnClickListener(this);
+        RadioButton nativeApiRB = findViewById(R.id.audioNativeApiBtn);
         nativeApiRB.setChecked(true);
         nativeApiRB.setOnClickListener(this);
 
@@ -407,14 +407,14 @@ public class AudioTap2ToneActivity
                 stopAudio();
                 break;
 
-            case R.id.tap2toneJavaApiBtn:
+            case R.id.audioJavaApiBtn:
                 stopAudio();
                 clearResults();
                 mPlayerType = BuilderBase.TYPE_JAVA;
                 mActiveTestAPI = TEST_API_JAVA;
                 break;
 
-            case R.id.tap2toneNativeApiBtn:
+            case R.id.audioNativeApiBtn:
                 stopAudio();
                 clearResults();
                 mPlayerType = BuilderBase.TYPE_OBOE | BuilderBase.SUB_TYPE_OBOE_AAUDIO;
