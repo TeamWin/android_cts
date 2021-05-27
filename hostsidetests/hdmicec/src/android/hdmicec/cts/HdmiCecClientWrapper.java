@@ -185,6 +185,15 @@ public final class HdmiCecClientWrapper extends ExternalResource {
     }
 
     /**
+     * Sends a CEC message from source device to the device passed in the constructor through the
+     * output console of the cec-communication channel with the appended params.
+     */
+    public void sendCecMessage(LogicalAddress source, CecOperand message, String params)
+            throws Exception {
+        sendCecMessage(source, targetDevice, message, params);
+    }
+
+    /**
      * Sends a CEC message from source device to a destination device through the output console of
      * the cec-communication channel.
      */
