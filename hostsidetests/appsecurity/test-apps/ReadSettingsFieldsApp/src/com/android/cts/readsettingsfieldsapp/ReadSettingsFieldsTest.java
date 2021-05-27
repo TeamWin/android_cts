@@ -24,25 +24,28 @@ import android.util.ArraySet;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 
 public class ReadSettingsFieldsTest extends AndroidTestCase {
 
+    private final String[] settingsKeysWithMaxTargetSdk = {"mobile_data"};
+
     /** Test public keys are readable with annotation */
-    public void testSecurePublicSettingsKeysAreReadable() {
-        testPublicSettingsKeysAreReadable(Settings.Secure.class);
+    public void testSecureNonHiddenSettingsKeysAreReadable() {
+        testNonHiddenSettingsKeysAreReadable(Settings.Secure.class);
     }
 
-    public void testSystemPublicSettingsKeysAreReadable() {
-        testPublicSettingsKeysAreReadable(Settings.System.class);
+    public void testSystemNonHiddenSettingsKeysAreReadable() {
+        testNonHiddenSettingsKeysAreReadable(Settings.System.class);
     }
 
-    public void testGlobalPublicSettingsKeysAreReadable() {
-        testPublicSettingsKeysAreReadable(Settings.Global.class);
+    public void testGlobalNonHiddenSettingsKeysAreReadable() {
+        testNonHiddenSettingsKeysAreReadable(Settings.Global.class);
     }
 
-    private <T extends Settings.NameValueTable> void testPublicSettingsKeysAreReadable(
+    private <T extends Settings.NameValueTable> void testNonHiddenSettingsKeysAreReadable(
             Class<T> settingsClass) {
-        for (String key : getPublicSettingsKeys(settingsClass)) {
+        for (String key : getNonHiddenSettingsKeys(settingsClass)) {
             try {
                 callGetStringMethod(settingsClass, key);
             } catch (SecurityException ex) {
@@ -51,6 +54,10 @@ public class ReadSettingsFieldsTest extends AndroidTestCase {
                 }
                 /** b/174151290 skip it due to it's @hide but also @TestApi */
                 if (key.equals(Settings.Secure.NFC_PAYMENT_DEFAULT_COMPONENT)) {
+                    continue;
+                }
+                // Skip checking for keys with maxTargetSdk because they might not be readable
+                if (Arrays.asList(settingsKeysWithMaxTargetSdk).contains(key)) {
                     continue;
                 }
                 fail("Reading public " + settingsClass.getSimpleName() + " settings key <" + key
@@ -73,7 +80,7 @@ public class ReadSettingsFieldsTest extends AndroidTestCase {
         }
     }
 
-    private <T> ArraySet<String> getPublicSettingsKeys(Class<T> settingsClass) {
+    private <T> ArraySet<String> getNonHiddenSettingsKeys(Class<T> settingsClass) {
         final ArraySet<String> publicSettingsKeys = new ArraySet<>();
         final Field[] allFields = settingsClass.getDeclaredFields();
         try {
@@ -97,7 +104,7 @@ public class ReadSettingsFieldsTest extends AndroidTestCase {
 
     /** Test hidden keys are readable with annotation */
     public void testSecureSomeHiddenSettingsKeysAreReadable() {
-        final ArraySet<String> publicSettingsKeys = getPublicSettingsKeys(Settings.Secure.class);
+        final ArraySet<String> publicSettingsKeys = getNonHiddenSettingsKeys(Settings.Secure.class);
         final String[] hiddenSettingsKeys = {"adaptive_sleep", "bugreport_in_power_menu",
                 "input_methods_subtype_history"};
         testHiddenSettingsKeysReadable(Settings.Secure.class, publicSettingsKeys,
@@ -105,7 +112,7 @@ public class ReadSettingsFieldsTest extends AndroidTestCase {
     }
 
     public void testSystemSomeHiddenSettingsKeysAreReadable() {
-        final ArraySet<String> publicSettingsKeys = getPublicSettingsKeys(Settings.System.class);
+        final ArraySet<String> publicSettingsKeys = getNonHiddenSettingsKeys(Settings.System.class);
         final String[] hiddenSettingsKeys = {"advanced_settings", "system_locales",
                 "display_color_mode", "min_refresh_rate"};
         testHiddenSettingsKeysReadable(Settings.System.class, publicSettingsKeys,
@@ -113,7 +120,7 @@ public class ReadSettingsFieldsTest extends AndroidTestCase {
     }
 
     public void testGlobalSomeHiddenSettingsKeysAreReadable() {
-        final ArraySet<String> publicSettingsKeys = getPublicSettingsKeys(Settings.Secure.class);
+        final ArraySet<String> publicSettingsKeys = getNonHiddenSettingsKeys(Settings.Secure.class);
         final String[] hiddenSettingsKeys = {"add_users_when_locked",
                 "enable_accessibility_global_gesture_enabled"};
         testHiddenSettingsKeysReadable(Settings.Global.class, publicSettingsKeys,
@@ -138,7 +145,7 @@ public class ReadSettingsFieldsTest extends AndroidTestCase {
 
     /** Test hidden keys are not readable without annotation */
     public void testSecureHiddenSettingsKeysNotReadableWithoutAnnotation() {
-        final ArraySet<String> publicSettingsKeys = getPublicSettingsKeys(Settings.Secure.class);
+        final ArraySet<String> publicSettingsKeys = getNonHiddenSettingsKeys(Settings.Secure.class);
         final String[] hiddenSettingsKeys = {"camera_autorotate",
                 "location_time_zone_detection_enabled"};
         testHiddenSettingsKeysNotReadableWithoutAnnotation(Settings.Secure.class,
@@ -146,14 +153,14 @@ public class ReadSettingsFieldsTest extends AndroidTestCase {
     }
 
     public void testSystemHiddenSettingsKeysNotReadableWithoutAnnotation() {
-        final ArraySet<String> publicSettingsKeys = getPublicSettingsKeys(Settings.System.class);
+        final ArraySet<String> publicSettingsKeys = getNonHiddenSettingsKeys(Settings.System.class);
         final String[] hiddenSettingsKeys = {"display_color_mode_vendor_hint"};
         testHiddenSettingsKeysNotReadableWithoutAnnotation(Settings.System.class,
                 publicSettingsKeys, hiddenSettingsKeys);
     }
 
     public void testGlobalHiddenSettingsKeysNotReadableWithoutAnnotation() {
-        final ArraySet<String> publicSettingsKeys = getPublicSettingsKeys(Settings.Global.class);
+        final ArraySet<String> publicSettingsKeys = getNonHiddenSettingsKeys(Settings.Global.class);
         final String[] hiddenSettingsKeys = {"restricted_networking_mode",
                 "people_space_conversation_type"};
         testHiddenSettingsKeysNotReadableWithoutAnnotation(Settings.Global.class,
@@ -198,7 +205,7 @@ public class ReadSettingsFieldsTest extends AndroidTestCase {
 
     /** Test hidden keys are readable if the app is test only, even without annotation */
     public void testSecureHiddenSettingsKeysReadableWithoutAnnotation() {
-        final ArraySet<String> publicSettingsKeys = getPublicSettingsKeys(Settings.Secure.class);
+        final ArraySet<String> publicSettingsKeys = getNonHiddenSettingsKeys(Settings.Secure.class);
         final String[] hiddenSettingsKeys = {"camera_autorotate",
                 "location_time_zone_detection_enabled"};
         testHiddenSettingsKeysReadable(Settings.Secure.class, publicSettingsKeys,
@@ -206,18 +213,40 @@ public class ReadSettingsFieldsTest extends AndroidTestCase {
     }
 
     public void testSystemHiddenSettingsKeysReadableWithoutAnnotation() {
-        final ArraySet<String> publicSettingsKeys = getPublicSettingsKeys(Settings.System.class);
+        final ArraySet<String> publicSettingsKeys = getNonHiddenSettingsKeys(Settings.System.class);
         final String[] hiddenSettingsKeys = {"display_color_mode_vendor_hint"};
         testHiddenSettingsKeysReadable(Settings.System.class, publicSettingsKeys,
                 hiddenSettingsKeys);
     }
 
     public void testGlobalHiddenSettingsKeysReadableWithoutAnnotation() {
-        final ArraySet<String> publicSettingsKeys = getPublicSettingsKeys(Settings.Global.class);
+        final ArraySet<String> publicSettingsKeys = getNonHiddenSettingsKeys(Settings.Global.class);
         final String[] hiddenSettingsKeys = {"restricted_networking_mode",
                 "people_space_conversation_type"};
         testHiddenSettingsKeysReadable(Settings.Global.class, publicSettingsKeys,
                 hiddenSettingsKeys);
+    }
+
+    public void testSettingsKeysNotReadableForAfterR() {
+        final String keyWithTargetSdkR = "mobile_data";
+        try {
+            // Verify that the hidden key is not readable because of maxTargetSdk restriction
+            callGetStringMethod(Settings.Global.class, keyWithTargetSdkR);
+            fail("Reading hidden global settings key <" + keyWithTargetSdkR
+                    + "> should raise!");
+        } catch (SecurityException ex) {
+            assertTrue(ex.getMessage().contains("targetSdkVersion"));
+        }
+    }
+
+    public void testSettingsKeysReadableForRMinus() {
+        final String keyWithTargetSdkR = "mobile_data";
+        try {
+            // Verify that the hidden key can still be read
+            callGetStringMethod(Settings.Global.class, keyWithTargetSdkR);
+        } catch (SecurityException ex) {
+            fail("Reading hidden settings key <" + keyWithTargetSdkR + "> should not raise!");
+        }
     }
 }
 

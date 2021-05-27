@@ -57,3 +57,66 @@ android_test_helper_app {
     ],
     manifest: "AndroidManifestTestOnly.xml",
 }
+
+android_test_helper_app {
+    name: "CtsReadSettingsFieldsAppTargetQ",
+    defaults: ["cts_support_defaults"],
+    static_libs: [
+        "androidx.test.rules",
+    ],
+    libs: [
+        "android.test.runner",
+        "android.test.base",
+    ],
+    srcs: [
+        "src/**/*.java",
+    ],
+    // tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
+    manifest: "AndroidManifestTargetQ.xml",
+}
+
+android_test_helper_app {
+    name: "CtsReadSettingsFieldsAppTargetR",
+    defaults: ["cts_support_defaults"],
+    static_libs: [
+        "androidx.test.rules",
+    ],
+    libs: [
+        "android.test.runner",
+        "android.test.base",
+    ],
+    srcs: [
+        "src/**/*.java",
+    ],
+    // tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
+    manifest: "AndroidManifestTargetR.xml",
+}
+
+android_test_helper_app {
+    name: "CtsReadSettingsFieldsAppTargetS",
+    defaults: ["cts_support_defaults"],
+    static_libs: [
+        "androidx.test.rules",
+    ],
+    libs: [
+        "android.test.runner",
+        "android.test.base",
+    ],
+    srcs: [
+        "src/**/*.java",
+    ],
+    // tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
+    manifest: "AndroidManifestTargetS.xml",
+}
