@@ -323,6 +323,18 @@ public final class HdmiCecClientWrapper extends ExternalResource {
         sendUserControlPress(source, destination, secondKeycode, false);
     }
 
+    /** Sends a poll message to the device */
+    public void sendPoll() throws Exception {
+        sendPoll(targetDevice);
+    }
+
+    /** Sends a poll message to the destination */
+    public void sendPoll(LogicalAddress destination) throws Exception {
+        String command = CecClientMessage.POLL + " " + destination;
+        sendConsoleMessage(command);
+    }
+
+
     /** Sends a message to the output console of the cec-client */
     public void sendConsoleMessage(String message) throws Exception {
         checkCecClient();

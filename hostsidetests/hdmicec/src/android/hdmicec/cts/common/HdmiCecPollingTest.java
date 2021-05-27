@@ -17,7 +17,6 @@
 package android.hdmicec.cts.common;
 
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
-import android.hdmicec.cts.CecClientMessage;
 
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -44,9 +43,8 @@ public final class HdmiCecPollingTest extends BaseHdmiCecCtsTest {
      */
     @Test
     public void cect_11_2_6_1_Ack() throws Exception {
-        String command = CecClientMessage.POLL + " " + mDutLogicalAddress;
         String expectedOutput = "POLL sent";
-        hdmiCecClient.sendConsoleMessage(command);
+        hdmiCecClient.sendPoll();
         if (!hdmiCecClient.checkConsoleOutput(expectedOutput)) {
             throw new Exception("Could not find " + expectedOutput);
         }
@@ -65,9 +63,8 @@ public final class HdmiCecPollingTest extends BaseHdmiCecCtsTest {
         ITestDevice device = getDevice();
         device.executeShellCommand("input keyevent KEYCODE_SLEEP");
 
-        String command = CecClientMessage.POLL + " " + mDutLogicalAddress;
         String expectedOutput = "POLL sent";
-        hdmiCecClient.sendConsoleMessage(command);
+        hdmiCecClient.sendPoll();
         if (!hdmiCecClient.checkConsoleOutput(expectedOutput)) {
             throw new Exception("Could not find " + expectedOutput);
         }
