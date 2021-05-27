@@ -201,8 +201,7 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
                         "dumpsys power | grep mWakefulness=");
                 assertThat(wakeStateBefore.trim()).isEqualTo("mWakefulness=Asleep");
 
-                hdmiCecClient.sendUserControlPressAndRelease(source, mDutLogicalAddress, operand,
-                        false);
+                hdmiCecClient.sendUserControlPressAndRelease(source, operand, false);
 
                 TimeUnit.SECONDS.sleep(HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS);
                 String wakeStateAfter = device.executeShellCommand(
@@ -240,8 +239,7 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
                         "dumpsys power | grep mWakefulness=");
                 assertThat(wakeStateBefore.trim()).isEqualTo("mWakefulness=Awake");
 
-                hdmiCecClient.sendUserControlPressAndRelease(source, mDutLogicalAddress, operand,
-                        false);
+                hdmiCecClient.sendUserControlPressAndRelease(source, operand, false);
 
                 TimeUnit.SECONDS.sleep(HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS);
                 String wakeStateAfter = device.executeShellCommand(
