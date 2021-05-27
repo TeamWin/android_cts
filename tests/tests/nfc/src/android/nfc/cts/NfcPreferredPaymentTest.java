@@ -116,4 +116,33 @@ public class NfcPreferredPaymentTest {
         }
     }
 
+    /** Tests getSelectionModeForCategory API
+     *  CardEmulation.CATEGORY_PAYMENT */
+    @Test
+    public void testGetSelectionModeForCategoryPayment() {
+        try {
+            int mode = mCardEmulation.getSelectionModeForCategory(CardEmulation.CATEGORY_PAYMENT);
+            Log.i(mTag, "getSelectionModeForCategory for Payment: " + mode);
+
+            assertTrue("Retrieve incorrect SelectionMode for Payment",
+                    CardEmulation.SELECTION_MODE_PREFER_DEFAULT == mode);
+        } catch (Exception e) {
+            fail("Unexpected Exception " + e);
+        }
+    }
+
+    /** Tests getSelectionModeForCategory API
+     *  CardEmulation.CATEGORY_OTHER */
+    @Test
+    public void testGetSelectionModeForCategoryOther() {
+        try {
+            int mode = mCardEmulation.getSelectionModeForCategory(CardEmulation.CATEGORY_OTHER);
+            Log.i(mTag, "getSelectionModeForCategory for Other: " + mode);
+
+            assertTrue("Retrieve incorrect SelectionMode for Other",
+                    CardEmulation.SELECTION_MODE_ASK_IF_CONFLICT == mode);
+        } catch (Exception e) {
+            fail("Unexpected Exception " + e);
+        }
+    }
 }
