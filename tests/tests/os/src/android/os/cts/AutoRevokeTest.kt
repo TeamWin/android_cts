@@ -429,17 +429,11 @@ class AutoRevokeTest {
 
         waitForIdle()
 
-        if (hasFeatureWatch()) {
-            // WearOS need to scroll down to find the Permission item to click
-            UiScrollable(UiSelector().scrollable(true))
-                    .getChildByText(UiSelector(), "Permissions")
-        }
-
         click("Permissions")
     }
 
     private fun click(label: String) {
-        waitFindNode(hasTextThat(containsStringIgnoringCase(label))).click()
+        waitFindObject(byTextIgnoreCase(label)).click()
         waitForIdle()
     }
 
