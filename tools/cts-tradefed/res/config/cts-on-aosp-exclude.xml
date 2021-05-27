@@ -80,7 +80,6 @@
 
     <!-- b/73727333: CtsSystemUiTestCases failure flaky -->
     <option name="compatibility:exclude-filter" value="CtsSystemUiTestCases android.systemui.cts.LightBarTests#testLightNavigationBar" />
-    <option name="compatibility:exclude-filter" value="CtsSystemUiTestCases android.systemui.cts.LightBarThemeTest#testNavigationBarDivider" />
 
     <!-- b/80388296: CtsDevicePolicyManagerTestCases failure flaky -->
     <option name="compatibility:exclude-filter" value="CtsDevicePolicyManagerTestCases com.android.cts.devicepolicy.MixedManagedProfileOwnerTest#testDisallowAutofill_allowed" />
@@ -91,21 +90,7 @@
     <option name="compatibility:exclude-filter" value="CtsDevicePolicyManagerTestCases com.android.cts.devicepolicy.MixedManagedProfileOwnerTest#testPermissionPolicy" />
     <option name="compatibility:exclude-filter" value="CtsDevicePolicyManagerTestCases com.android.cts.devicepolicy.MixedManagedProfileOwnerTest#testSuspendPackage" />
 
-    <!-- b/80407835: CtsServicesHostTestCases failure flaky -->
-    <option name="compatibility:exclude-filter" value="CtsServicesHostTestCases android.server.cts.KeyguardTests#testDialogShowWhenLockedActivity" />
-    <option name="compatibility:exclude-filter" value="CtsServicesHostTestCases android.server.cts.KeyguardTests#testTranslucentShowWhenLockedActivity" />
-
-    <!-- b/80284482: Flaky tests -->
-    <option name="compatibility:exclude-filter" value="CtsAlarmManagerTestCases android.alarmmanager.cts.AppStandbyTests#testAllowWhileIdleAlarms" />
-    <option name="compatibility:exclude-filter" value="CtsAlarmManagerTestCases android.alarmmanager.cts.AppStandbyTests#testBucketUpgradeToNoDelay" />
-    <option name="compatibility:exclude-filter" value="CtsAlarmManagerTestCases android.alarmmanager.cts.AppStandbyTests#testBucketUpgradeToSmallerDelay" />
-    <option name="compatibility:exclude-filter" value="CtsAlarmManagerTestCases android.alarmmanager.cts.AppStandbyTests#testFrequentDelay" />
-    <option name="compatibility:exclude-filter" value="CtsAlarmManagerTestCases android.alarmmanager.cts.AppStandbyTests#testRareDelay" />
-    <option name="compatibility:exclude-filter" value="CtsAlarmManagerTestCases android.alarmmanager.cts.AppStandbyTests#testWorkingSetDelay" />
-
     <!-- b/110260628: A confirmed GSI incompatibility (waiver) -->
-    <option name="compatibility:exclude-filter" value="CtsDevicePolicyManagerTestCases com.android.cts.devicepolicy.DeviceOwnerTest#testCreateAndManageUser_DontSkipSetupWizard" />
-    <option name="compatibility:exclude-filter" value="CtsDevicePolicyManagerTestCases com.android.cts.devicepolicy.DeviceOwnerTest#testSecurityLoggingWithSingleUser" />
     <option name="compatibility:exclude-filter" value="CtsDevicePolicyManagerTestCases com.android.cts.devicepolicy.MixedDeviceOwnerTest#testKeyManagement" />
     <option name="compatibility:exclude-filter" value="CtsDevicePolicyManagerTestCases com.android.cts.devicepolicy.MixedProfileOwnerTest#testKeyManagement" />
     <option name="compatibility:exclude-filter" value="CtsDevicePolicyManagerTestCases com.android.cts.devicepolicy.MixedManagedProfileOwnerTest#testKeyManagement" />
@@ -127,15 +112,6 @@
     <!-- b/111101428: CtsOsTestCases irrelevant test cases -->
     <option name="compatibility:exclude-filter" value="CtsOsTestCases android.os.cts.BuildTest#testIsSecureUserBuild" />
     <option name="compatibility:exclude-filter" value="CtsOsTestCases android.os.cts.BuildVersionTest#testBuildFingerprint" />
-
-    <!-- b/110405126: CtsPermissionTestCases flaky (due to SIM card setting) -->
-    <option name="compatibility:exclude-filter" value="CtsPermissionTestCases android.permission.cts.TelephonyManagerPermissionTest#testGetDeviceId" />
-    <option name="compatibility:exclude-filter" value="CtsPermissionTestCases android.permission.cts.TelephonyManagerPermissionTest#testGetImei" />
-    <option name="compatibility:exclude-filter" value="CtsPermissionTestCases android.permission.cts.TelephonyManagerPermissionTest#testGetLine1Number" />
-    <option name="compatibility:exclude-filter" value="CtsPermissionTestCases android.permission.cts.TelephonyManagerPermissionTest#testGetSimSerialNumber" />
-    <option name="compatibility:exclude-filter" value="CtsPermissionTestCases android.permission.cts.TelephonyManagerPermissionTest#testGetSubscriberId" />
-    <option name="compatibility:exclude-filter" value="CtsPermissionTestCases android.permission.cts.TelephonyManagerPermissionTest#testSetDataEnabled" />
-    <option name="compatibility:exclude-filter" value="CtsPermissionTestCases android.permission.cts.TelephonyManagerPermissionTest#testVoiceMailNumber" />
 
     <!-- b/111967702: CtsSecurityTestCases irrelevant test cases -->
     <option name="compatibility:exclude-filter" value="CtsSecurityTestCases android.security.cts.BannedFilesTest#testNoSu" />
