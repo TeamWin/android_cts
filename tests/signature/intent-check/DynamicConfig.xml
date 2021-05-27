@@ -38,6 +38,8 @@
     Bug: 129348724 android.intent.action.TRANSLATE (public in API 29)
     Bug: 150153196 android.intent.action.LOAD_DATA (system in API 30)
     Bug: 150153196 android.intent.action.PACKAGE_UNSUSPENDED_MANUALLY (system in API 30)
+    Bug: 187483828 android.intent.action.VIEW_PERMISSION_USAGE_FOR_PERIOD
+    Bug: 187483828 android.intent.action.ACTIVITY_RECOGNIZER
 -->
 <dynamicConfig>
     <entry key ="intent_whitelist">
@@ -57,5 +59,7 @@
       <value>android.intent.action.TRANSLATE</value>
       <value>android.intent.action.LOAD_DATA</value>
       <value>android.intent.action.PACKAGE_UNSUSPENDED_MANUALLY</value>
+      <value>android.intent.action.VIEW_PERMISSION_USAGE_FOR_PERIOD</value>
+      <value>android.intent.action.ACTIVITY_RECOGNIZER</value>
     </entry>
 </dynamicConfig>
