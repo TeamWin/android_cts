@@ -247,6 +247,12 @@ final class DevicePolicyManagerWrapper
             doAnswer(answer).when(spy).setPasswordHistoryLength(any(), anyInt());
             doAnswer(answer).when(spy).setMaximumFailedPasswordsForWipe(any(), anyInt());
 
+            // Used by AccessibilityServicesTest
+            doAnswer(answer).when(spy).getPermittedAccessibilityServices(any());
+
+            // Used by InputMethodsTest
+            doAnswer(answer).when(spy).getPermittedInputMethods(any());
+
             // TODO(b/176993670): add more methods below as tests are converted
         } catch (Exception e) {
             // Should never happen, but needs to be catch as some methods declare checked exceptions
