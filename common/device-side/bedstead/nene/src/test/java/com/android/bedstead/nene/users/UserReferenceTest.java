@@ -30,17 +30,26 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 
+import com.android.bedstead.harrier.BedsteadJUnit4;
+import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.EnsureHasNoSecondaryUser;
+import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
+import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
+import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
+import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.eventlib.EventLogs;
 import com.android.eventlib.events.activities.ActivityCreatedEvent;
 
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-@RunWith(JUnit4.class)
+@RunWith(BedsteadJUnit4.class)
 public class UserReferenceTest {
     private static final int NON_EXISTING_USER_ID = 10000;
     private static final int USER_ID = NON_EXISTING_USER_ID;
@@ -49,6 +58,9 @@ public class UserReferenceTest {
 
     private static final TestApis sTestApis = new TestApis();
     private static final Context sContext = sTestApis.context().instrumentedContext();
+
+    @ClassRule @Rule
+    public static final DeviceState sDeviceState = new DeviceState();
 
     @Test
     public void id_returnsId() {
@@ -66,17 +78,14 @@ public class UserReferenceTest {
     }
 
     @Test
+    @EnsureHasSecondaryUser
     public void resolve_doesExist_returnsUser() {
-        UserReference userReference = sTestApis.users().createUser().create();
-
-        try {
-            assertThat(userReference.resolve()).isNotNull();
-        } finally {
-            userReference.remove();
-        }
+        assertThat(sDeviceState.secondaryUser().resolve()).isNotNull();
     }
 
     @Test
+    @EnsureHasNoSecondaryUser // TODO(scottjonathan): We should specify that we can create a new user
+    @EnsureHasNoWorkProfile
     public void resolve_doesExist_userHasCorrectDetails() {
         UserReference userReference = sTestApis.users().createUser().name(USER_NAME).create();
 
@@ -122,16 +131,14 @@ public class UserReferenceTest {
     }
 
     @Test
+    @EnsureHasSecondaryUser
     public void start_userAlreadyStarted_doesNothing() {
-        UserReference user = sTestApis.users().createUser().createAndStart();
+        sDeviceState.secondaryUser().start();
 
-        user.start();
+        sDeviceState.secondaryUser().start();
 
-        try {
-            assertThat(user.resolve().state()).isEqualTo(User.UserState.RUNNING_UNLOCKED);
-        } finally {
-            user.remove();
-        }
+        assertThat(sDeviceState.secondaryUser().resolve().state())
+                .isEqualTo(User.UserState.RUNNING_UNLOCKED);
     }
 
     @Test
@@ -141,76 +148,59 @@ public class UserReferenceTest {
     }
 
     @Test
+    @EnsureHasSecondaryUser
     public void stop_userStarted_userIsStopped() {
-        UserReference user = sTestApis.users().createUser().createAndStart();
+        sDeviceState.secondaryUser().stop();
 
-        user.stop();
-
-        try {
-            assertThat(user.resolve().state()).isEqualTo(User.UserState.NOT_RUNNING);
-        } finally {
-            user.remove();
-        }
+        assertThat(sDeviceState.secondaryUser().resolve().state()).isEqualTo(User.UserState.NOT_RUNNING);
     }
 
     @Test
+    @EnsureHasSecondaryUser
     public void stop_userNotStarted_doesNothing() {
-        UserReference user = sTestApis.users().createUser().create().stop();
+        sDeviceState.secondaryUser().stop();
 
-        user.stop();
+        sDeviceState.secondaryUser().stop();
 
-        try {
-            assertThat(user.resolve().state()).isEqualTo(User.UserState.NOT_RUNNING);
-        } finally {
-            user.remove();
-        }
+        assertThat(sDeviceState.secondaryUser().resolve().state())
+                .isEqualTo(User.UserState.NOT_RUNNING);
     }
 
     @Test
+    @EnsureHasSecondaryUser
     public void switchTo_userIsSwitched() {
         assumeTrue(
                 "INTERACT_ACROSS_USERS_FULL is only usable by tests on Q+",
                 SDK_INT >= Build.VERSION_CODES.Q);
-        UserReference user = sTestApis.users().createUser().createAndStart();
-
         try (PermissionContext p =
                      sTestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
 
-            sTestApis.packages().find(sContext.getPackageName()).install(user);
-            user.switchTo();
+            sTestApis.packages().find(sContext.getPackageName()).install(sDeviceState.secondaryUser());
+            sDeviceState.secondaryUser().switchTo();
 
             Intent intent = new Intent();
             intent.setPackage(sContext.getPackageName());
             intent.setClassName(sContext.getPackageName(), TEST_ACTIVITY_NAME);
             intent.setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK);
-            sContext.startActivityAsUser(intent, user.userHandle());
+            sContext.startActivityAsUser(intent, sDeviceState.secondaryUser().userHandle());
 
             EventLogs<ActivityCreatedEvent> logs =
                     ActivityCreatedEvent.queryPackage(sContext.getPackageName())
                             .whereActivity().className().isEqualTo(TEST_ACTIVITY_NAME)
-                            .onUser(user.userHandle());
+                            .onUser(sDeviceState.secondaryUser().userHandle());
             assertThat(logs.poll()).isNotNull();
         } finally {
             sTestApis.users().system().switchTo();
-            user.remove();
         }
     }
 
     @Test
+    @RequireRunOnPrimaryUser
+    @EnsureHasWorkProfile
     public void stop_isWorkProfileOfCurrentUser_stops() {
-        UserType managedProfileType =
-                sTestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME);
-        UserReference profileUser = sTestApis.users().createUser()
-                .type(managedProfileType)
-                .parent(sTestApis.users().instrumented())
-                .createAndStart();
+        sDeviceState.workProfile().stop();
 
-        try {
-            profileUser.stop();
-
-            assertThat(profileUser.resolve().state()).isEqualTo(User.UserState.NOT_RUNNING);
-        } finally {
-            profileUser.remove();
-        }
+        assertThat(sDeviceState.workProfile().resolve().state())
+                .isEqualTo(User.UserState.NOT_RUNNING);
     }
 }
