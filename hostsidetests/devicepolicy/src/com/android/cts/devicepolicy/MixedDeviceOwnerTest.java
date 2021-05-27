@@ -166,6 +166,13 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
         executeDeviceTestClass(".AdminConfiguredNetworksTest");
     }
 
+    @Override
+    @Test
+    @IgnoreOnHeadlessSystemUserMode(
+            reason = "Per-user application restriction is not applicable for headless user")
+    public void testApplicationRestrictions() throws Exception {
+        super.testApplicationRestrictions();
+    }
 
     @Test
     public void testSetTime() throws Exception {
@@ -562,11 +569,15 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
             getDevice().executeShellCommand("echo just_testing_" + i);
         }
     }
+
     private int createSecondaryUserAsProfileOwner() throws Exception {
         final int userId = createUserAndWaitStart();
         installAppAsUser(INTENT_RECEIVER_APK, userId);
         installAppAsUser(DEVICE_ADMIN_APK, userId);
-        setProfileOwnerOrFail(DEVICE_ADMIN_COMPONENT_FLATTENED, userId);
+        // For headless system user mode, PO is set on any secondary user created
+        if (!isHeadlessSystemUserMode()) {
+            setProfileOwnerOrFail(DEVICE_ADMIN_COMPONENT_FLATTENED, userId);
+        }
         return userId;
     }
 
