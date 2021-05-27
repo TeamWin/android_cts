@@ -920,6 +920,17 @@ public class SipDelegateManagerTest {
         assertEquals("uri", configInc.getSipAssociatedUriHeader());
         Uri gruuUri = Uri.parse("sip:blah@gruu.net");
         assertEquals(gruuUri, configInc.getPublicGruuUri());
+        SipDelegateConfiguration.IpSecConfiguration ipSecConfig = configInc.getIpSecConfiguration();
+        assertEquals(123, ipSecConfig.getLocalTxPort());
+        assertEquals(124, ipSecConfig.getLocalRxPort());
+        assertEquals(125, ipSecConfig.getLastLocalTxPort());
+        assertEquals(126, ipSecConfig.getRemoteTxPort());
+        assertEquals(127, ipSecConfig.getRemoteRxPort());
+        assertEquals(128, ipSecConfig.getLastRemoteTxPort());
+        assertEquals("secverify", ipSecConfig.getSipSecurityVerifyHeader());
+        InetSocketAddress natAddr = configInc.getNatSocketAddress();
+        assertEquals("3.3.3.3", natAddr.getAddress().getHostAddress());
+        assertEquals(129, natAddr.getPort());
     }
 
     @Test
