@@ -16,56 +16,25 @@
 
 package com.android.bedstead.testapp;
 
-import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK;
-import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
-
-import android.app.Activity;
-import android.content.Intent;
-
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.activities.ActivityReference;
 import com.android.bedstead.nene.packages.ComponentReference;
-import com.android.eventlib.events.activities.ActivityCreatedEvent;
 
 /**
- * A reference to an {@link Activity} in a {@link TestApp}.
+ * A reference to an activity in a test app for which there may or may not be an instance.
  */
-public final class TestAppActivityReference {
+public abstract class TestAppActivityReference {
 
-    private static final TestApis sTestApis = new TestApis();
+    static final TestApis sTestApis = new TestApis();
 
-    private final TestAppInstanceReference mInstance;
-    private final ComponentReference mComponent;
+    final TestAppInstanceReference mInstance;
+    final ComponentReference mComponent;
 
     TestAppActivityReference(
             TestAppInstanceReference instance,
             ComponentReference component) {
         mInstance = instance;
         mComponent = component;
-    }
-
-    /**
-     * Starts the activity.
-     */
-    public TestAppActivityReference start() {
-        Intent intent = new Intent();
-        intent.setComponent(mComponent.componentName());
-        intent.setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK);
-        sTestApis.context().instrumentedContext().startActivity(intent);
-
-        ActivityCreatedEvent
-                .queryPackage(mComponent.packageName().packageName())
-                .whereActivity().className().isEqualTo(mComponent.className()).waitForEvent();
-
-        return this;
-    }
-
-    /**
-     * Makes calls on the remote activity.
-     */
-    public RemoteActivity remote() {
-        return new RemoteActivityImpl(
-                mComponent.className(), new TargetedRemoteActivityWrapper(mInstance.connector()));
     }
 
     /** Gets the {@link TestAppInstanceReference} this activity exists in. */
