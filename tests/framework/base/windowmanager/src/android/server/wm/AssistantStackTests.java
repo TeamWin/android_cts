@@ -54,8 +54,6 @@ import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
 import android.server.wm.settings.SettingsSession;
 
-import androidx.test.filters.FlakyTest;
-
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -238,7 +236,6 @@ public class AssistantStackTests extends ActivityManagerTestBase {
     }
 
     @Test
-    @FlakyTest(bugId = 188207199)
     public void testTranslucentAssistantActivityStackVisibility() throws Exception {
         try (final AssistantSession assistantSession = new AssistantSession()) {
             assistantSession.setVoiceInteractionService(ASSISTANT_VOICE_INTERACTION_SERVICE);

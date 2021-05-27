@@ -111,6 +111,29 @@ public class MusicRecognitionManagerTest {
     }
 
     @Test
+    public void testRecognitionRequest() {
+        AudioRecord record = new AudioRecord(MediaRecorder.AudioSource.MIC, 16_000,
+                AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, 256_000);
+
+        RecognitionRequest request = new RecognitionRequest.Builder()
+                .setAudioAttributes(new AudioAttributes.Builder()
+                        .setInternalCapturePreset(MediaRecorder.AudioSource.MIC)
+                        .build())
+                .setAudioFormat(record.getFormat())
+                .setCaptureSession(record.getAudioSessionId())
+                .setMaxAudioLengthSeconds(8)
+                // Drop the first second of audio.
+                .setIgnoreBeginningFrames(16_000)
+                .build();
+
+        assertThat(request.getAudioFormat()).isEqualTo(record.getFormat());
+        assertThat(request.getMaxAudioLengthSeconds()).isEqualTo(8);
+        assertThat(request.getCaptureSession()).isEqualTo(record.getAudioSessionId());
+        assertThat(request.getIgnoreBeginningFrames()).isEqualTo(16_000);
+        assertThat(request.getAudioAttributes()).isEqualTo(record.getAudioAttributes());
+    }
+
+    @Test
     public void testOnRecognitionFailed() throws Exception {
         mWatcher.failureCode = MusicRecognitionManager.RECOGNITION_FAILED_NO_CONNECTIVITY;
 

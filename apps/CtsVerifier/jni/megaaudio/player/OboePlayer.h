@@ -17,13 +17,15 @@
 #ifndef MEGA_PLAYER_OBOEPLAYER_H
 #define MEGA_PLAYER_OBOEPLAYER_H
 
+#include <jni.h>
+
 #include <oboe/Oboe.h>
 
 #include "Player.h"
 
 class OboePlayer : public Player, oboe::AudioStreamCallback {
 public:
-    OboePlayer(AudioSource* source, int playerSubtype);
+    OboePlayer(JNIEnv *env, AudioSource* source, int playerSubtype);
     virtual ~OboePlayer() {}
 
     // Inherited from oboe::AudioStreamCallback
@@ -34,6 +36,15 @@ public:
 
     virtual Result setupStream(int32_t channelCount, int32_t sampleRate, int32_t routeDeviceId) override;
     virtual Result startStream() override;
+
+    bool getJavaTimestamp(jobject timestampObj);
+
+private:
+    // AudioTimestamp Field IDs
+    JavaVM* mJvm;
+
+    jfieldID    mFidFramePosition;
+    jfieldID    mFidNanoTime;
 };
 
 #endif // MEGA_PLAYER_OBOEPLAYER_H
