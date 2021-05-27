@@ -35,6 +35,7 @@ import android.bluetooth.le.ScanResult;
 import android.content.Context;
 import android.content.ContextParams;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeFull;
 import android.util.ArraySet;
 import android.util.Base64;
 import android.util.Log;
@@ -117,6 +118,7 @@ public class NearbyDevicesRenouncePermissionTest {
         mScanNoteCount = 0;
     }
 
+    @AppModeFull
     @Test
     public void scanWithoutRenouncingNotesBluetoothAndLocation() {
         clearNoteCounts();
@@ -125,6 +127,7 @@ public class NearbyDevicesRenouncePermissionTest {
         assertThat(mScanNoteCount).isGreaterThan(0);
     }
 
+    @AppModeFull
     @Test
     public void scanRenouncingLocationNotesBluetoothButNotLocation() {
         clearNoteCounts();
