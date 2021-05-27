@@ -1478,6 +1478,22 @@ public class WindowManagerState {
         public boolean inSizeCompatMode() {
             return inSizeCompatMode;
         }
+
+        @Override
+        public Rect getBounds() {
+            if (mBounds == null) {
+                return mFullConfiguration.windowConfiguration.getBounds();
+            }
+            return mBounds;
+        }
+
+        public Rect getMaxBounds() {
+            return mFullConfiguration.windowConfiguration.getMaxBounds();
+        }
+
+        public Rect getAppBounds() {
+            return mFullConfiguration.windowConfiguration.getAppBounds();
+        }
     }
 
     static abstract class ActivityContainer extends WindowContainer {
@@ -1608,6 +1624,14 @@ public class WindowManagerState {
 
         boolean isOrganized() {
             return mIsOrganized;
+        }
+
+        @Override
+        public Rect getBounds() {
+            if (mBounds == null) {
+                return mFullConfiguration.windowConfiguration.getBounds();
+            }
+            return mBounds;
         }
 
         boolean containsActivity(ComponentName activityName) {

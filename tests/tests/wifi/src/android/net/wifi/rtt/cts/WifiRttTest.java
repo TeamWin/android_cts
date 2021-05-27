@@ -88,8 +88,15 @@ public class WifiRttTest extends TestBase {
         builder.addAccessPoint(testAp);
         if (WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(getContext())) {
             builder.setRttBurstSize(RangingRequest.getMaxRttBurstSize());
+            assertTrue(RangingRequest.getDefaultRttBurstSize()
+                    >= RangingRequest.getMinRttBurstSize());
+            assertTrue(RangingRequest.getDefaultRttBurstSize()
+                    <= RangingRequest.getMaxRttBurstSize());
         }
         RangingRequest request = builder.build();
+        if (WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(getContext())) {
+            assertEquals(1, request.getRttResponders().size());
+        }
 
         List<RangingResult> allResults = new ArrayList<>();
         int numFailures = 0;
