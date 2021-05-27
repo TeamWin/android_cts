@@ -20,7 +20,6 @@ import static com.google.common.truth.Truth.assertThat;
 
 
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
-import android.hdmicec.cts.CecClientMessage;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.CecOperand;
 import android.hdmicec.cts.LogicalAddress;
@@ -55,9 +54,8 @@ public final class HdmiCecSystemInformationTest extends BaseHdmiCecCtsTest {
      */
     @Test
     public void cect_11_2_6_1_Ack() throws Exception {
-        String command = CecClientMessage.POLL + " " + mDutLogicalAddress;
         String expectedOutput = "POLL sent";
-        hdmiCecClient.sendConsoleMessage(command);
+        hdmiCecClient.sendPoll();
         if (!hdmiCecClient.checkConsoleOutput(expectedOutput)) {
             throw new Exception("Could not find " + expectedOutput);
         }
