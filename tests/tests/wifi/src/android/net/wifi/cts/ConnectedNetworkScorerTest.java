@@ -22,6 +22,7 @@ import static android.Manifest.permission.READ_WIFI_CREDENTIAL;
 import static android.Manifest.permission.WIFI_UPDATE_USABILITY_STATS_SCORE;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_OEM_PAID;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_OEM_PRIVATE;
+import static android.net.wifi.WifiUsabilityStatsEntry.ContentionTimeStats;
 import static android.net.wifi.WifiUsabilityStatsEntry.RadioStats;
 import static android.net.wifi.WifiUsabilityStatsEntry.RateStats;
 import static android.net.wifi.WifiUsabilityStatsEntry.PROBE_STATUS_FAILURE;
@@ -278,6 +279,12 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
                             WME_ACCESS_CATEGORY_VO).getContentionTimeAvgMicros()).isAtLeast(0);
                     assertThat(statsEntry.getContentionTimeStats(
                             WME_ACCESS_CATEGORY_VO).getContentionNumSamples()).isAtLeast(0);
+                    // This is to add CTS test for the constructor function.
+                    ContentionTimeStats contentionStats = new ContentionTimeStats(2, 1, 4, 10);
+                    assertEquals(2, contentionStats.getContentionTimeMinMicros());
+                    assertEquals(1, contentionStats.getContentionTimeMaxMicros());
+                    assertEquals(4, contentionStats.getContentionTimeAvgMicros());
+                    assertEquals(10, contentionStats.getContentionNumSamples());
                     assertThat(statsEntry.getChannelUtilizationRatio()).isIn(Range.closed(0, 255));
                     if (mTelephonyManager != null) {
                         boolean isCellularDataAvailable =
