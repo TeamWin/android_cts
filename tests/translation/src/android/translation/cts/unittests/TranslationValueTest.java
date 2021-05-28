@@ -20,8 +20,6 @@ import static android.view.translation.TranslationResponseValue.STATUS_SUCCESS;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import static org.testng.Assert.assertThrows;
-
 import android.os.Bundle;
 import android.view.translation.TranslationRequestValue;
 import android.view.translation.TranslationResponseValue;
@@ -90,6 +88,40 @@ public class TranslationValueTest {
                 .containsExactly("def1", "def2");
         assertThat(defs.getStringArrayList("verb"))
                 .containsExactly("def3", "def4");
+    }
+
+    @Test
+    public void testTranslationResponseValue_extrasEqualityWhenSameInstance() {
+        final Bundle extras = new Bundle();
+        final TranslationResponseValue extras1 =
+                new TranslationResponseValue.Builder(STATUS_SUCCESS).setExtras(extras).build();
+        final TranslationResponseValue extras2 =
+                new TranslationResponseValue.Builder(STATUS_SUCCESS).setExtras(extras).build();
+
+        assertThat(extras1).isEqualTo(extras2);
+    }
+
+    @Test
+    public void testTranslationResponseValue_extrasEqualityWhenEmpty() {
+        final TranslationResponseValue defaultValue =
+                new TranslationResponseValue.Builder(STATUS_SUCCESS).build();
+        final Bundle extras = new Bundle();
+        final TranslationResponseValue valueWithEmptyExtras =
+                new TranslationResponseValue.Builder(STATUS_SUCCESS).setExtras(extras).build();
+
+        assertThat(defaultValue).isEqualTo(valueWithEmptyExtras);
+    }
+
+    @Test
+    public void testTranslationResponseValue_extrasEqualityWhenUnequal() {
+        final TranslationResponseValue extras1 =
+                new TranslationResponseValue.Builder(STATUS_SUCCESS).build();
+        final Bundle extras = new Bundle();
+        extras.putString("k", "v");
+        final TranslationResponseValue extras2 =
+                new TranslationResponseValue.Builder(STATUS_SUCCESS).setExtras(extras).build();
+
+        assertThat(extras1).isNotEqualTo(extras2);
     }
 
     @Test
