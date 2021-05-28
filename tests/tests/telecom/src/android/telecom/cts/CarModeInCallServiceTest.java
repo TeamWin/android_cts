@@ -22,6 +22,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.res.Configuration;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -48,6 +49,10 @@ public class CarModeInCallServiceTest extends BaseTelecomTestWithMockServices {
             return;
         }
 
+        if (mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH)) {
+            return;
+        }
+
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .adoptShellPermissionIdentity("android.permission.ENTER_CAR_MODE_PRIORITIZED",
                         "android.permission.CONTROL_INCALL_EXPERIENCE");
@@ -66,6 +71,10 @@ public class CarModeInCallServiceTest extends BaseTelecomTestWithMockServices {
     protected void tearDown() throws Exception {
         super.tearDown();
         if (!mShouldTestTelecom) {
+            return;
+        }
+
+        if (mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH)) {
             return;
         }
 
@@ -91,6 +100,10 @@ public class CarModeInCallServiceTest extends BaseTelecomTestWithMockServices {
             return;
         }
 
+        if (mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH)) {
+            return;
+        }
+
         enableAndVerifyCarMode(mCarModeIncallServiceControlOne, 1000);
         disableAndVerifyCarMode(mCarModeIncallServiceControlOne, Configuration.UI_MODE_TYPE_NORMAL);
     }
@@ -101,6 +114,10 @@ public class CarModeInCallServiceTest extends BaseTelecomTestWithMockServices {
      */
     public void testStartCallInCarMode() {
         if (!mShouldTestTelecom) {
+            return;
+        }
+
+        if (mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH)) {
             return;
         }
 
@@ -123,6 +140,10 @@ public class CarModeInCallServiceTest extends BaseTelecomTestWithMockServices {
      */
     public void testStartCallInCarModeTwoServices() {
         if (!mShouldTestTelecom) {
+            return;
+        }
+
+        if (mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH)) {
             return;
         }
 
@@ -152,6 +173,10 @@ public class CarModeInCallServiceTest extends BaseTelecomTestWithMockServices {
             return;
         }
 
+        if (mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH)) {
+            return;
+        }
+
         // Place a call and verify it went to the default dialer
         placeAndVerifyCall();
         verifyConnectionForOutgoingCall();
@@ -170,6 +195,10 @@ public class CarModeInCallServiceTest extends BaseTelecomTestWithMockServices {
      */
     public void testSwitchToCarModeAndBack() {
         if (!mShouldTestTelecom) {
+            return;
+        }
+
+        if (mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH)) {
             return;
         }
 
@@ -206,6 +235,10 @@ public class CarModeInCallServiceTest extends BaseTelecomTestWithMockServices {
      */
     public void testSwitchToCarModeMultiple() {
         if (!mShouldTestTelecom) {
+            return;
+        }
+
+        if (mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH)) {
             return;
         }
 
