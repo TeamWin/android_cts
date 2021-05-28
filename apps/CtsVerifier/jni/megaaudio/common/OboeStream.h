@@ -31,6 +31,8 @@ public:
     virtual Result startStream() override;
     virtual Result stopStream() override;
 
+    StreamBase::Result getTimeStamp(oboe::FrameTimestamp* timeStamp);
+
 protected:
     OboeStream(int32_t subtype) : mSubtype(subtype), mStreamStarted(false) {}
 

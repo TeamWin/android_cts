@@ -36,17 +36,17 @@ public class TranslationRequestTest {
 
     private final TranslationRequestValue mValue = TranslationRequestValue.forText("hello");
 
-    private final ViewTranslationRequest mRequest = new ViewTranslationRequest
+    private final ViewTranslationRequest mViewRequest = new ViewTranslationRequest
             .Builder(new AutofillId(17))
             .setValue("sample id", TranslationRequestValue.forText("sample text"))
             .build();
 
     @Test
     public void testBuilder_validViewTranslationRequest() {
-        final ArrayList<ViewTranslationRequest> requests = new ArrayList<>();
-        requests.add(mRequest);
+        final ArrayList<ViewTranslationRequest> viewRequests = new ArrayList<>();
+        viewRequests.add(mViewRequest);
         final TranslationRequest request = new TranslationRequest.Builder()
-                .setViewTranslationRequests(requests)
+                .setViewTranslationRequests(viewRequests)
                 .build();
 
         assertThat(request.getTranslationRequestValues().size()).isEqualTo(0);
@@ -57,7 +57,7 @@ public class TranslationRequestTest {
         assertThat(viewRequest.getAutofillId()).isEqualTo(new AutofillId(17));
         assertThat(viewRequest.getKeys().size()).isEqualTo(1);
         assertThat(viewRequest.getKeys()).containsExactly("sample id");
-        assertThat(viewRequest.getValue("sample id").getText()).isEqualTo("sample text");
+        assertThat(viewRequest.getValue("sample id").getText().toString()).isEqualTo("sample text");
     }
 
     @Test
@@ -73,7 +73,7 @@ public class TranslationRequestTest {
 
         final TranslationRequestValue value =
                 request.getTranslationRequestValues().get(0);
-        assertThat(value.getText()).isEqualTo("hello");
+        assertThat(value.getText().toString()).isEqualTo("hello");
     }
 
     @Test
@@ -91,12 +91,12 @@ public class TranslationRequestTest {
     public void testBuilder_mixingSetters() {
         final ArrayList<TranslationRequestValue> values = new ArrayList<>();
         values.add(mValue);
-        final ArrayList<ViewTranslationRequest> requests = new ArrayList<>();
-        requests.add(mRequest);
+        final ArrayList<ViewTranslationRequest> viewRequests = new ArrayList<>();
+        viewRequests.add(mViewRequest);
 
         final TranslationRequest request = new TranslationRequest.Builder()
                 .setTranslationRequestValues(values)
-                .setViewTranslationRequests(requests)
+                .setViewTranslationRequests(viewRequests)
                 .build();
 
         assertThat(request.getTranslationRequestValues().size()).isEqualTo(1);
@@ -107,11 +107,11 @@ public class TranslationRequestTest {
         assertThat(viewRequest.getAutofillId()).isEqualTo(new AutofillId(17));
         assertThat(viewRequest.getKeys().size()).isEqualTo(1);
         assertThat(viewRequest.getKeys()).containsExactly("sample id");
-        assertThat(viewRequest.getValue("sample id").getText()).isEqualTo("sample text");
+        assertThat(viewRequest.getValue("sample id").getText().toString()).isEqualTo("sample text");
 
         final TranslationRequestValue value =
                 request.getTranslationRequestValues().get(0);
-        assertThat(value.getText()).isEqualTo("hello");
+        assertThat(value.getText().toString()).isEqualTo("hello");
     }
 
     @Test
@@ -134,22 +134,22 @@ public class TranslationRequestTest {
 
         final TranslationRequestValue value1 =
                 parceledRequest.getTranslationRequestValues().get(0);
-        assertThat(value1.getText()).isEqualTo("hello");
+        assertThat(value1.getText().toString()).isEqualTo("hello");
 
         final TranslationRequestValue value2 =
                 parceledRequest.getTranslationRequestValues().get(1);
-        assertThat(value2.getText()).isEqualTo("world");
+        assertThat(value2.getText().toString()).isEqualTo("world");
     }
 
     @Test
     public void testBuilder_sameAutofillIdViewTranslationRequests() {
-        final ArrayList<ViewTranslationRequest> requests = new ArrayList<>();
-        requests.add(mRequest);
-        requests.add(new ViewTranslationRequest.Builder(new AutofillId(17))
+        final ArrayList<ViewTranslationRequest> viewRequests = new ArrayList<>();
+        viewRequests.add(mViewRequest);
+        viewRequests.add(new ViewTranslationRequest.Builder(new AutofillId(17))
                 .setValue("id2", TranslationRequestValue.forText("text2"))
                 .build());
         final TranslationRequest request = new TranslationRequest.Builder()
-                .setViewTranslationRequests(requests)
+                .setViewTranslationRequests(viewRequests)
                 .build();
 
         assertThat(request.getTranslationRequestValues().size()).isEqualTo(0);
@@ -160,25 +160,25 @@ public class TranslationRequestTest {
         assertThat(viewRequest.getAutofillId()).isEqualTo(new AutofillId(17));
         assertThat(viewRequest.getKeys().size()).isEqualTo(1);
         assertThat(viewRequest.getKeys()).containsExactly("sample id");
-        assertThat(viewRequest.getValue("sample id").getText()).isEqualTo("sample text");
+        assertThat(viewRequest.getValue("sample id").getText().toString()).isEqualTo("sample text");
 
         final ViewTranslationRequest viewRequest2 =
                 request.getViewTranslationRequests().get(1);
         assertThat(viewRequest2.getAutofillId()).isEqualTo(new AutofillId(17));
         assertThat(viewRequest2.getKeys().size()).isEqualTo(1);
         assertThat(viewRequest2.getKeys()).containsExactly("id2");
-        assertThat(viewRequest2.getValue("id2").getText()).isEqualTo("text2");
+        assertThat(viewRequest2.getValue("id2").getText().toString()).isEqualTo("text2");
     }
 
     @Test
     public void testParceledRequest_validViewTranslationRequests() {
-        final ArrayList<ViewTranslationRequest> requests = new ArrayList<>();
-        requests.add(mRequest);
-        requests.add(new ViewTranslationRequest.Builder(new AutofillId(42))
+        final ArrayList<ViewTranslationRequest> viewRequests = new ArrayList<>();
+        viewRequests.add(mViewRequest);
+        viewRequests.add(new ViewTranslationRequest.Builder(new AutofillId(42))
                 .setValue("id2", TranslationRequestValue.forText("test"))
                 .build());
         final TranslationRequest request = new TranslationRequest.Builder()
-                .setViewTranslationRequests(requests)
+                .setViewTranslationRequests(viewRequests)
                 .build();
 
         final Parcel parcel = Parcel.obtain();
@@ -195,13 +195,13 @@ public class TranslationRequestTest {
         assertThat(request1.getAutofillId()).isEqualTo(new AutofillId(17));
         assertThat(request1.getKeys().size()).isEqualTo(1);
         assertThat(request1.getKeys()).containsExactly("sample id");
-        assertThat(request1.getValue("sample id").getText()).isEqualTo("sample text");
+        assertThat(request1.getValue("sample id").getText().toString()).isEqualTo("sample text");
 
         final ViewTranslationRequest request2 =
                 parceledRequest.getViewTranslationRequests().get(1);
         assertThat(request2.getAutofillId()).isEqualTo(new AutofillId(42));
         assertThat(request2.getKeys().size()).isEqualTo(1);
         assertThat(request2.getKeys()).containsExactly("id2");
-        assertThat(request2.getValue("id2").getText()).isEqualTo("test");
+        assertThat(request2.getValue("id2").getText().toString()).isEqualTo("test");
     }
 }

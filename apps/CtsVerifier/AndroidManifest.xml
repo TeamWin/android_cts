@@ -3142,6 +3142,8 @@
             <meta-data android:name="test_excluded_features"
                     android:value="android.hardware.type.watch:android.hardware.type.television:android.software.leanback" />
             <meta-data android:name="test_required_features" android:value="android.software.device_admin" />
+            <meta-data android:name="test_required_actions"
+                       android:value="com.android.settings.TRUSTED_CREDENTIALS_USER" />
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
         </activity>
@@ -3156,6 +3158,8 @@
             <meta-data android:name="test_excluded_features"
                     android:value="android.hardware.type.watch:android.hardware.type.television:android.software.leanback" />
             <meta-data android:name="test_required_features" android:value="android.software.device_admin" />
+            <meta-data android:name="test_required_actions"
+                       android:value="com.android.settings.TRUSTED_CREDENTIALS_USER" />
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
         </activity>
@@ -4809,6 +4813,32 @@
         <activity android:name=".audio.AudioTap2ToneActivity"
             android:exported="true"
             android:label="@string/audio_tap2tone">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+            <meta-data android:name="test_category" android:value="@string/test_category_audio" />
+            <meta-data android:name="test_excluded_features"
+                android:value="android.hardware.type.watch:android.hardware.type.television" />
+            <meta-data android:name="display_mode" android:value="multi_display_mode" />
+        </activity>
+
+        <activity android:name=".audio.AudioOutColdStartLatencyActivity"
+            android:exported="true"
+            android:label="@string/audio_coldstart_out_latency_test">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+            <meta-data android:name="test_category" android:value="@string/test_category_audio" />
+            <meta-data android:name="test_excluded_features"
+                android:value="android.hardware.type.watch:android.hardware.type.television" />
+            <meta-data android:name="display_mode" android:value="multi_display_mode" />
+        </activity>
+
+        <activity android:name=".audio.AudioInColdStartLatencyActivity"
+            android:exported="true"
+            android:label="@string/audio_coldstart_in_latency_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
