@@ -16,6 +16,7 @@
 
 package android.app.stubs;
 
+import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.ForegroundServiceStartNotAllowedException;
 import android.app.PendingIntent;
@@ -59,6 +60,7 @@ public class CommandReceiver extends BroadcastReceiver {
     public static final int COMMAND_STOP_SERVICE = 19;
     public static final int COMMAND_START_FOREGROUND_SERVICE_STICKY = 20;
     public static final int COMMAND_STOP_FOREGROUND_SERVICE_STICKY = 21;
+    public static final int COMMAND_EMPTY = 22;
 
     public static final int RESULT_CHILD_PROCESS_STARTED = IBinder.FIRST_CALL_TRANSACTION;
     public static final int RESULT_CHILD_PROCESS_STOPPED = IBinder.FIRST_CALL_TRANSACTION + 1;
@@ -165,6 +167,8 @@ public class CommandReceiver extends BroadcastReceiver {
                 break;
             case COMMAND_WAIT_FOR_CHILD_PROCESS_GONE:
                 doWaitForChildProcessGone(context, intent);
+                break;
+            case COMMAND_EMPTY:
                 break;
         }
     }
@@ -380,6 +384,15 @@ public class CommandReceiver extends BroadcastReceiver {
         final Intent intent = makeIntent(command, sourcePackage, targetPackage, flags, extras);
         Log.d(TAG, "Sending broadcast " + intent);
         context.sendOrderedBroadcast(intent, null);
+    }
+
+    public static void sendCommandWithResultReceiver(Context context, int command,
+            String sourcePackage, String targetPackage, int flags, Bundle extras,
+            BroadcastReceiver resultReceiver) {
+        final Intent intent = makeIntent(command, sourcePackage, targetPackage, flags, extras);
+        Log.d(TAG, "Sending broadcast with result receiver " + intent);
+        context.sendOrderedBroadcast(intent, null, resultReceiver, null,
+                Activity.RESULT_OK, null, null);
     }
 
     public static void sendCommandWithBroadcastOptions(Context context, int command,
