@@ -179,6 +179,7 @@ android_test_helper_app {
     test_suites: [
         "cts",
         "general-tests",
+        "sts",
     ],
     platform_apis: true,
     target_sdk_version: "30",
