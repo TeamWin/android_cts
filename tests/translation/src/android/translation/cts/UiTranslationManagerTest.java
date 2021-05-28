@@ -18,7 +18,6 @@ package android.translation.cts;
 
 import static android.content.Context.CONTENT_CAPTURE_MANAGER_SERVICE;
 import static android.content.Context.TRANSLATION_MANAGER_SERVICE;
-import static android.view.translation.TranslationResponseValue.STATUS_SUCCESS;
 import static android.translation.cts.Helper.ACTION_ASSERT_UI_TRANSLATION_CALLBACK_ON_FINISH;
 import static android.translation.cts.Helper.ACTION_ASSERT_UI_TRANSLATION_CALLBACK_ON_PAUSE;
 import static android.translation.cts.Helper.ACTION_ASSERT_UI_TRANSLATION_CALLBACK_ON_RESUME;
@@ -29,6 +28,7 @@ import static android.translation.cts.Helper.EXTRA_FINISH_COMMAND;
 import static android.translation.cts.Helper.EXTRA_SOURCE_LOCALE;
 import static android.translation.cts.Helper.EXTRA_TARGET_LOCALE;
 import static android.translation.cts.Helper.EXTRA_VERIFY_RESULT;
+import static android.view.translation.TranslationResponseValue.STATUS_SUCCESS;
 
 import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
@@ -47,7 +47,6 @@ import android.platform.test.annotations.AppModeFull;
 import android.provider.Settings;
 import android.service.contentcapture.ContentCaptureService;
 import android.service.translation.TranslationService;
-import android.transition.Transition;
 import android.util.Log;
 import android.util.LongSparseArray;
 import android.util.Pair;
@@ -84,14 +83,13 @@ import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mockito;
 import org.mockito.ArgumentCaptor;
-import org.w3c.dom.Text;
+import org.mockito.Mockito;
 
+import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.List;
 
 
 /**
@@ -290,7 +288,11 @@ public class UiTranslationManagerTest {
         });
         // Verify callback does not be called, keep the latest state
         Mockito.verify(mockCallback, Mockito.never()).onClearTranslation(any(View.class));
-        Mockito.verifyNoMoreInteractions(mockCallback);
+
+        // Finally, verify that no unexpected interactions occurred. We cannot use
+        // verifyNoMoreInteractions as the callback has some hidden methods.
+        Mockito.verify(mockCallback, Mockito.times(2)).onShowTranslation(any());
+        Mockito.verify(mockCallback, Mockito.times(1)).onHideTranslation(any());
     }
 
     @Test
