@@ -28,10 +28,11 @@ import com.android.os.AtomsProto;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IBuildReceiver;
+import com.android.tradefed.util.Pair;
 
 import java.util.List;
 
-public class SystemMemoryStatsTests extends DeviceTestCase implements IBuildReceiver {
+public class ProcessDmabufMemoryTests extends DeviceTestCase implements IBuildReceiver {
     private IBuildInfo mCtsBuild;
 
     @Override
@@ -57,24 +58,26 @@ public class SystemMemoryStatsTests extends DeviceTestCase implements IBuildRece
         mCtsBuild = buildInfo;
     }
 
-    public void testSystemMemoryAtom() throws Exception {
-        List<AtomsProto.Atom> atoms = pullSystemMemoryAsGaugeMetric();
-        assertThat(atoms).hasSize(1);
-        AtomsProto.SystemMemory systemMemory = atoms.get(0).getSystemMemory();
-        assertThat(systemMemory.getUnreclaimableSlabKb()).isAtLeast(0);
-        assertThat(systemMemory.getVmallocUsedKb()).isAtLeast(0);
-        assertThat(systemMemory.getPageTablesKb()).isAtLeast(0);
-        assertThat(systemMemory.getKernelStackKb()).isAtLeast(0);
-        if (PropertyUtil.getFirstApiLevel(getDevice()) >= 30) {
-            assertThat(systemMemory.getTotalIonKb()).isAtLeast(0);
+    public void testProcessDmabufMemoryAtom() throws Exception {
+        boolean supportsFds = DeviceUtils.isKernelGreaterEqual(getDevice(), Pair.create(5, 4))
+                && PropertyUtil.getFirstApiLevel(getDevice()) > 30;
+
+        List<AtomsProto.Atom> atoms = pullAsGaugeMetric();
+        for (AtomsProto.Atom atom : atoms) {
+            AtomsProto.ProcessDmabufMemory stats = atom.getProcessDmabufMemory();
+            assertThat(stats.getProcessName()).isNotEmpty();
+            assertThat(stats.getMappedDmabufKb()).isAtLeast(0);
+            assertThat(stats.getMappedDmabufCount()).isAtLeast(0);
+            if (supportsFds) {
+                assertThat(stats.getRetainedDmabufKb()).isAtLeast(0);
+                assertThat(stats.getRetainedDmabufCount()).isAtLeast(0);
+            }
         }
     }
 
-    /** Returns SystemMemory atoms pulled as a simple gauge metric while test app is running. */
-    private List<AtomsProto.Atom> pullSystemMemoryAsGaugeMetric() throws Exception {
-        // Get SystemMemory as a simple gauge metric.
+    private List<AtomsProto.Atom> pullAsGaugeMetric() throws Exception {
         ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
-                AtomsProto.Atom.SYSTEM_MEMORY_FIELD_NUMBER);
+                AtomsProto.Atom.PROCESS_DMABUF_MEMORY_FIELD_NUMBER);
         AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
         Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
         return ReportUtils.getGaugeMetricAtoms(getDevice());
