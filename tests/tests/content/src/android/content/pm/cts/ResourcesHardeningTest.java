@@ -19,23 +19,20 @@ package android.content.pm.cts;
 import static android.content.pm.cts.PackageManagerShellCommandIncrementalTest.checkIncrementalDeliveryFeature;
 import static android.content.pm.cts.PackageManagerShellCommandIncrementalTest.isAppInstalled;
 import static android.content.pm.cts.PackageManagerShellCommandIncrementalTest.uninstallPackageSilently;
-import static android.content.pm.cts.PackageManagerShellCommandIncrementalTest.writeFullStream;
 
-import static org.hamcrest.core.IsEqual.equalTo;
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
-import static org.hamcrest.core.IsNot.not;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import android.app.ActivityManager;
 import android.app.UiAutomation;
 import android.content.Context;
-import android.content.cts.util.XmlUtils;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
-import android.content.res.AssetFileDescriptor;
-import android.content.res.AssetManager;
 import android.content.res.Resources;
-import android.content.res.TypedArray;
-import android.content.res.XmlResourceParser;
 import android.platform.test.annotations.AppModeFull;
+import android.util.ArrayMap;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.LargeTest;
@@ -46,220 +43,332 @@ import com.android.incfs.install.IBlockFilter;
 import com.android.incfs.install.IncrementalInstallSession;
 import com.android.incfs.install.PendingBlock;
 
-import org.hamcrest.Matcher;
-import org.hamcrest.MatcherAssert;
+import com.example.helloworld.lib.TestUtils;
+
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.io.ByteArrayOutputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @RunWith(AndroidJUnit4.class)
 @AppModeFull
 @LargeTest
 public class ResourcesHardeningTest {
     private static final String TEST_APK_PATH = "/data/local/tmp/cts/content/";
-    private static final String[] TEST_APKS = {"HelloWorld5.apk", "HelloWorld5_mdpi-v4.apk"};
-    private static final String TEST_APP_PACKAGE = "com.example.helloworld";
+    private static final String[] TEST_APKS = {
+            "HelloWorldResHardening.apk",
+            "HelloWorldResHardening_mdpi-v4.apk",
+            "HelloWorldResHardening_hdpi-v4.apk"
+    };
 
-    private static final String RES_IDENTIFIER = TEST_APP_PACKAGE + ":string/inc_string";
-    private static final String RES_XML_PATH = "res/xml/test_xml.xml";
-    private static final String RES_XML_LARGE_PATH = "res/xml/test_xml_attrs.xml";
-    private static final String RES_DRAWABLE_PATH = "res/drawable-mdpi-v4/background.jpg";
-    private static final int RES_STRING = 0x7f021000;
-    private static final int RES_ARRAY = 0x7f051000;
-    private static final int RES_STYLE = 0x7f061000;
-    private static final int[] RES_STYLEABLE = {0x7f011000, 0x7f011001, 0x7f011002};
+    private static final String RES_TABLE_PATH = "resources.arsc";
+    private static final int INCFS_BLOCK_SIZE = 4096;
+
+    private final Map<String, List<RestrictedBlockRange>> mRestrictedRanges = new ArrayMap<>();
 
     @Before
     public void onBefore() throws Exception {
         checkIncrementalDeliveryFeature();
+
+        // Set up the blocks that need to be restricted in order to test resource hardening.
+        if (!mRestrictedRanges.isEmpty()) {
+            return;
+        }
+        for (final String apk : TEST_APKS) {
+            try (ZipFile zip = new ZipFile(TEST_APK_PATH + apk)) {
+                final List<RestrictedBlockRange> infos = new ArrayList<>();
+                RestrictedBlockRange info;
+                info = restrictZipEntry(zip, RES_TABLE_PATH);
+                if (info != null) {
+                    infos.add(info);
+                }
+                // Restrict only the middle block of the compiled xml to test that the whole
+                // file needs to be present just to open the xml file.
+                info = restrictOnlyMiddleBlock(restrictZipEntry(zip, TestUtils.RES_XML_PATH));
+                if (info != null) {
+                    infos.add(info);
+                }
+                // Restrict only the middle block of this file to test that the whole file does
+                // NOT need to be present just to create an input stream or fd.
+                info = restrictOnlyMiddleBlock(
+                        restrictZipEntry(zip, TestUtils.RES_DRAWABLE_MDPI_PATH));
+                if (info != null) {
+                    infos.add(info);
+                }
+                // Test that FileNotFoundExceptions are thrown when the file is missing.
+                info = restrictZipEntry(zip, TestUtils.RES_DRAWABLE_HDPI_PATH);
+                if (info != null) {
+                    infos.add(info);
+                }
+                assertFalse(infos.isEmpty());
+                mRestrictedRanges.put(apk, infos);
+            }
+        }
     }
 
     @Test
     public void checkGetIdentifier() throws Exception {
-        testReadSuccessAndFailure(
-                (res, filter) -> {
-                    filter.stopSendingBlocks();
-                    return res.getIdentifier(RES_IDENTIFIER, "", "");
-                },
-                not(equalTo(0)), equalTo(0));
+        testIncrementalForeignPackageResources(TestUtils::checkGetIdentifier);
     }
 
     @Test
     public void checkGetResourceName() throws Exception {
-        testReadSuccessAndFailureException(
-                (res, filter) -> {
-                    filter.stopSendingBlocks();
-                    return res.getResourceName(RES_STRING);
-                },
-                equalTo(RES_IDENTIFIER), instanceOf(Resources.NotFoundException.class));
+        testIncrementalForeignPackageResources(TestUtils::checkGetResourceName);
     }
 
     @Test
     public void checkGetString() throws Exception {
-        testReadSuccessAndFailureException(
-                (res, filter) -> {
-                    filter.stopSendingBlocks();
-                    return res.getString(RES_STRING);
-                },
-                equalTo("true"), instanceOf(Resources.NotFoundException.class));
+        testIncrementalForeignPackageResources(TestUtils::checkGetString);
     }
 
     @Test
     public void checkGetStringArray() throws Exception {
-        testReadSuccessAndFailureException(
-                (res, filter) -> {
-                    filter.stopSendingBlocks();
-                    return res.getStringArray(RES_ARRAY);
-                },
-                equalTo(new String[]{"true"}), instanceOf(Resources.NotFoundException.class));
+        testIncrementalForeignPackageResources(TestUtils::checkGetStringArray);
     }
 
     @Test
     public void checkOpenXmlResourceParser() throws Exception {
-        testReadSuccessAndFailureException(
-                (res, filter) -> {
-                    filter.stopSendingBlocks();
-                    final AssetManager assets = res.getAssets();
-                    try (XmlResourceParser p = assets.openXmlResourceParser(RES_XML_PATH)) {
-                        XmlUtils.beginDocument(p, "Test");
-                        return p.nextText();
-                    }
-                },
-                equalTo("true"), instanceOf(FileNotFoundException.class));
+        testIncrementalForeignPackageResources(TestUtils::checkOpenXmlResourceParser);
     }
 
     @Test
     public void checkApplyStyle() throws Exception {
-        testReadSuccessAndFailure(
-                (res, filter) -> {
-                    filter.stopSendingBlocks();
-                    final Resources.Theme theme = res.newTheme();
-                    theme.applyStyle(RES_STYLE, true);
-                    final TypedArray values = theme.obtainStyledAttributes(RES_STYLEABLE);
-                    return new String[]{
-                            values.getString(0),
-                            values.getString(1),
-                            values.getString(2),
-                    };
-                },
-                equalTo(new String[]{"true", "true", "1"}),
-                equalTo(new String[]{null, null, null}));
+        testIncrementalForeignPackageResources(TestUtils::checkApplyStyle);
     }
 
     @Test
     public void checkXmlAttributes() throws Exception {
-        testReadSuccessAndFailure(
-                (res, filter) -> {
-                    final AssetManager assets = res.getAssets();
-                    try (XmlResourceParser p = assets.openXmlResourceParser(RES_XML_LARGE_PATH)) {
-                        XmlUtils.beginDocument(p, "Test");
-                        filter.stopSendingBlocks();
-                        final TypedArray values = res.obtainAttributes(p, RES_STYLEABLE);
-                        return new String[]{
-                                values.getString(0),
-                                values.getString(1),
-                                values.getString(2),
-                        };
-                    }
-                },
-                equalTo(new String[]{"true", "true", "1"}),
-                equalTo(new String[]{null, null, null}));
+        testIncrementalForeignPackageResources(TestUtils::checkXmlAttributes);
+    }
+
+    @Test
+    public void checkOpenMissingFile() throws Exception {
+        testIncrementalForeignPackageResources(TestUtils::checkOpenMissingFile);
+    }
+
+    @Test
+    public void checkOpenMissingFdFile() throws Exception {
+        testIncrementalForeignPackageResources(TestUtils::checkOpenMissingFdFile);
     }
 
     @Test
     public void checkOpen() throws Exception {
-        testReadSuccessAndFailureException(
-                (res, filter) -> {
-                    final AssetManager assets = res.getAssets();
-                    try (InputStream is = assets.openNonAsset(RES_DRAWABLE_PATH)) {
-                        filter.stopSendingBlocks();
-                        ByteArrayOutputStream result = new ByteArrayOutputStream();
-                        writeFullStream(is, result, AssetFileDescriptor.UNKNOWN_LENGTH);
-                        return true;
-                    }
-                }, equalTo(true), instanceOf(IOException.class));
+        testIncrementalForeignPackageResources(TestUtils::checkOpen);
     }
 
     @Test
     public void checkOpenFd() throws Exception {
-        testReadSuccessAndFailureException(
-                (res, filter) -> {
-                    final AssetManager assets = res.getAssets();
-                    try (AssetFileDescriptor fd = assets.openNonAssetFd(RES_DRAWABLE_PATH)) {
-                        filter.stopSendingBlocks();
-                        final ByteArrayOutputStream result = new ByteArrayOutputStream();
-                        writeFullStream(fd.createInputStream(), result,
-                                AssetFileDescriptor.UNKNOWN_LENGTH);
-                        return true;
-                    }
-                }, equalTo(true), instanceOf(IOException.class));
+        testIncrementalForeignPackageResources(TestUtils::checkOpenFd);
     }
 
-    private interface ThrowingFunction<R> {
-        R apply(Resources res, BlockFilterController filter) throws Exception;
+    @Test
+    public void checkGetIdentifierRemote() throws Exception {
+        testIncrementalOwnPackageResources(TestUtils.TEST_GET_IDENTIFIER);
+    }
+
+    @Test
+    public void checkGetResourceNameRemote() throws Exception {
+        testIncrementalOwnPackageResources(TestUtils.TEST_GET_RESOURCE_NAME);
+    }
+
+    @Test
+    public void checkGetStringRemote() throws Exception {
+        testIncrementalOwnPackageResources(TestUtils.TEST_GET_STRING);
+    }
+
+    @Test
+    public void checkGetStringArrayRemote() throws Exception {
+        testIncrementalOwnPackageResources(TestUtils.TEST_GET_STRING_ARRAY);
+    }
+
+    @Test
+    public void checkOpenXmlResourceParserRemote() throws Exception {
+        testIncrementalOwnPackageResources(TestUtils.TEST_OPEN_XML);
+    }
+
+    @Test
+    public void checkApplyStyleRemote() throws Exception {
+        testIncrementalOwnPackageResources(TestUtils.TEST_APPLY_STYLE);
+    }
+
+    @Test
+    public void checkXmlAttributesRemote() throws Exception {
+        testIncrementalOwnPackageResources(TestUtils.TEST_XML_ATTRIBUTES);
+    }
+
+    @Test
+    public void checkOpenMissingFileRemote() throws Exception {
+        // If a zip entry local header is missing, libziparchive hardening causes a
+        // FileNotFoundException to be thrown regardless of whether a process queries its own
+        // resources or the resources of another package.
+        testIncrementalOwnPackageResources(TestUtils.TEST_OPEN_FILE_MISSING,
+                false /* expectCrash */);
+    }
+
+    @Test
+    public void checkOpenMissingFdFileRemote() throws Exception {
+        // If a zip entry local header is missing, libziparchive hardening causes a
+        // FileNotFoundException to be thrown regardless of whether a process queries its own
+        // resources or the resources of another package.
+        testIncrementalOwnPackageResources(TestUtils.TEST_OPEN_FILE_FD_MISSING,
+                false /* expectCrash */);
+    }
+
+    @Test
+    public void checkOpenRemote() throws Exception {
+        testIncrementalOwnPackageResources(TestUtils.TEST_OPEN_FILE);
+    }
+
+    @Test
+    public void checkOpenFdRemote() throws Exception {
+        // Failing to read missing blocks through a file descriptor using read/pread causes an
+        // IOException to be thrown.
+        testIncrementalOwnPackageResources(TestUtils.TEST_OPEN_FILE_FD, false /* expectCrash */);
+    }
+
+    private interface TestFunction {
+        void apply(Resources res, TestUtils.AssertionType type) throws Exception;
     }
 
     /**
-     * Runs the test twice to test resource resolution when all necessary blocks are available and
-     * when some necessary blocks are missing due to incremental installation.
-     *
-     * During the test of the failure path {@link TestBlockFilter#stopSendingBlocks()} will be
-     * invoked when {@link BlockFilterController#stopSendingBlocks()} is invoked; preventing any
-     * blocks that have not been served from being served during the test of the failure path.
-     *
-     * @param getValue executes resource resolution and returns a T object
-     * @param checkSuccess the matcher that represents the value when all pages are available
-     * @param checkFailure the matcher that represents the value when all pages are missing
-     * @param <T> the expected return type of the resource resolution
+     * Installs a package incrementally and tests that retrieval of that package's resources from
+     * within this process does not crash this process and instead falls back to some default
+     * behavior.
      */
-    private <T> void testReadSuccessAndFailure(ThrowingFunction<T> getValue,
-            Matcher<? super T> checkSuccess, Matcher<? super T> checkFailure) throws Exception {
+    private void testIncrementalForeignPackageResources(TestFunction test) throws Exception {
         try (ShellInstallSession session = startInstallSession()) {
-            final T value = getValue.apply(session.getPackageResources(),
-                    BlockFilterController.noop());
-            MatcherAssert.assertThat(value, checkSuccess);
+            test.apply(session.getPackageResources(), TestUtils.AssertionType.ASSERT_SUCCESS);
         }
         try (ShellInstallSession session = startInstallSession()) {
-            final T value = getValue.apply(session.getPackageResources(),
-                    BlockFilterController.allowDisable(session));
-            MatcherAssert.assertThat(value, checkFailure);
+            session.enableBlockRestrictions();
+            test.apply(session.getPackageResources(), TestUtils.AssertionType.ASSERT_READ_FAILURE);
         }
     }
 
     /**
-     * Variant of {@link #testReadSuccessAndFailure(ThrowingFunction, Matcher, Matcher)} that
-     * expects an exception to be thrown during the failure path.
+     * Installs a package incrementally and tests that the package crashes when it fails to retrieve
+     * its own resources due to incremental installation.
      */
-    private <T> void testReadSuccessAndFailureException(ThrowingFunction<T> getValue,
-            Matcher<? super T> checkSuccess, Matcher<Throwable> checkFailure)
+    private void testIncrementalOwnPackageResources(String testName, boolean expectCrash)
             throws Exception {
-        try (ShellInstallSession session = startInstallSession()) {
-            final T value = getValue.apply(session.getPackageResources(),
-                    BlockFilterController.noop());
-            MatcherAssert.assertThat(value, checkSuccess);
+        try (RemoteTest session = new RemoteTest(startInstallSession(), testName)) {
+            session.mSession.getPackageResources();
+            session.start(true /* assertSuccess */);
         }
-        try (ShellInstallSession session = startInstallSession()) {
-            MatcherUtils.assertThrows(checkFailure,
-                    () -> getValue.apply(session.getPackageResources(),
-                            BlockFilterController.allowDisable(session)));
+
+        try (RemoteTest session = new RemoteTest(startInstallSession(), testName)) {
+            session.mSession.getPackageResources();
+            session.mSession.enableBlockRestrictions();
+            if (expectCrash) {
+                MatcherUtils.assertThrows(instanceOf(RemoteProcessCrashedException.class),
+                        () -> session.start(false /* assertSuccess */));
+            } else {
+                session.start(false /* assertSuccess */);
+            }
         }
     }
 
-    private static ShellInstallSession startInstallSession() throws IOException,
+    private void testIncrementalOwnPackageResources(String testName) throws Exception {
+        testIncrementalOwnPackageResources(testName, true /* expectCrash */);
+    }
+
+    private static class RemoteProcessCrashedException extends RuntimeException {
+    }
+
+    private static class RemoteTest implements AutoCloseable {
+        private static final int SPIN_SLEEP_MS = 500;
+        private static final long RESPONSE_TIMEOUT_MS = 60 * 1000;
+
+        private final ShellInstallSession mSession;
+        private final String mTestName;
+
+        RemoteTest(ShellInstallSession session, String testName) {
+            mSession = session;
+            mTestName = testName;
+        }
+
+        public void start(boolean assertSuccess) throws Exception {
+            final AtomicInteger pid = new AtomicInteger();
+            final IntentFilter statusFilter = new IntentFilter(TestUtils.TEST_STATUS_ACTION);
+
+            final TestUtils.BroadcastDetector pidDetector = new TestUtils.BroadcastDetector(
+                    getContext(), statusFilter, (Context context, Intent intent) -> {
+                if (intent.hasExtra(TestUtils.PID_STATUS_PID_KEY)) {
+                    pid.set(intent.getIntExtra(TestUtils.PID_STATUS_PID_KEY, -1));
+                    return true;
+                }
+                return false;
+            });
+
+            final TestUtils.BroadcastDetector finishDetector = new TestUtils.BroadcastDetector(
+                    getContext(), statusFilter, (Context context, Intent intent) -> {
+                if (intent.hasExtra(TestUtils.TEST_STATUS_RESULT_KEY)) {
+                    final String reason = intent.getStringExtra(TestUtils.TEST_STATUS_RESULT_KEY);
+                    if (!reason.equals(TestUtils.TEST_STATUS_RESULT_SUCCESS)) {
+                        throw new IllegalStateException("Remote test failed: " + reason);
+                    }
+                    return true;
+                }
+                return false;
+            });
+
+            // Start the test app and indicate which test to run.
+            try (pidDetector; finishDetector) {
+                final Intent launchIntent = new Intent(Intent.ACTION_VIEW);
+                launchIntent.setClassName(TestUtils.TEST_APP_PACKAGE, TestUtils.TEST_ACTIVITY_NAME);
+                launchIntent.putExtra(TestUtils.TEST_NAME_EXTRA_KEY, mTestName);
+                launchIntent.putExtra(TestUtils.TEST_ASSERT_SUCCESS_EXTRA_KEY, assertSuccess);
+                launchIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                        | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+
+                getContext().startActivity(launchIntent);
+
+                // The test app must respond with a broadcast containing its pid so this test can
+                // check if the test app crashes.
+                assertTrue("Timed out while waiting for pid",
+                        pidDetector.waitForBroadcast(RESPONSE_TIMEOUT_MS, TimeUnit.MILLISECONDS));
+
+                // Wait for the test app to finish testing or crash.
+                final ActivityManager am = getActivityManager();
+                final int remotePid = pid.get();
+                for (int i = 0; i < (RESPONSE_TIMEOUT_MS / SPIN_SLEEP_MS); i++) {
+                    if (am.getRunningAppProcesses().stream().noneMatch(
+                            info -> info.pid == remotePid)) {
+                        throw new RemoteProcessCrashedException();
+                    }
+                    if (finishDetector.waitForBroadcast(SPIN_SLEEP_MS, TimeUnit.MILLISECONDS)) {
+                        return;
+                    }
+                }
+                throw new TimeoutException("Timed out while waiting for remote test to finish");
+            }
+        }
+
+        @Override
+        public void close() throws Exception {
+            mSession.close();
+        }
+    }
+
+    private ShellInstallSession startInstallSession() throws IOException,
             InterruptedException {
-        return startInstallSession(TEST_APKS, TEST_APP_PACKAGE);
+        return startInstallSession(TEST_APKS, TestUtils.TEST_APP_PACKAGE);
     }
 
-    private static ShellInstallSession startInstallSession(String[] apks, String packageName)
+    private ShellInstallSession startInstallSession(String[] apks, String packageName)
             throws IOException, InterruptedException {
         final String v4SignatureSuffix = ".idsig";
         final TestBlockFilter filter = new TestBlockFilter();
@@ -281,24 +390,6 @@ public class ResourcesHardeningTest {
         return session;
     }
 
-    private static class BlockFilterController {
-        private final ShellInstallSession mSession;
-        BlockFilterController(ShellInstallSession session) {
-            mSession = session;
-        }
-        public static BlockFilterController allowDisable(ShellInstallSession session) {
-            return new BlockFilterController(session);
-        }
-        public static BlockFilterController noop() {
-            return new BlockFilterController(null);
-        }
-        public void stopSendingBlocks() {
-            if (mSession != null) {
-                mSession.stopSendingBlocks();
-            }
-        }
-    }
-
     /**
      * A wrapper for {@link IncrementalInstallSession} that uninstalls the installed package when
      * testing is finished.
@@ -307,6 +398,7 @@ public class ResourcesHardeningTest {
         public final IncrementalInstallSession session;
         private final TestBlockFilter mFilter;
         private final String mPackageName;
+
         private ShellInstallSession(IncrementalInstallSession session,
                 TestBlockFilter filter, String packageName) {
             this.session = session;
@@ -315,8 +407,8 @@ public class ResourcesHardeningTest {
             getUiAutomation().adoptShellPermissionIdentity();
         }
 
-        public void stopSendingBlocks() {
-            mFilter.stopSendingBlocks();
+        public void enableBlockRestrictions() {
+            mFilter.enableBlockRestrictions();
         }
 
         public Resources getPackageResources() throws PackageManager.NameNotFoundException {
@@ -331,15 +423,57 @@ public class ResourcesHardeningTest {
         }
     }
 
-    private static class TestBlockFilter implements IBlockFilter {
-        private final AtomicBoolean mDisabled = new AtomicBoolean();
+    private class TestBlockFilter implements IBlockFilter {
+        private final AtomicBoolean mRestrictBlocks = new AtomicBoolean(false);
+
         @Override
         public boolean shouldServeBlock(PendingBlock block) {
-            return !mDisabled.get();
+            if (!mRestrictBlocks.get() || block.getType() == PendingBlock.Type.SIGNATURE_TREE) {
+                // Always send signature blocks and always send blocks when enableBlockRestrictions
+                // has not been called.
+                return true;
+            }
+
+            // Allow the block to be served if it does not reside in a restricted range.
+            final String apkFileName = block.getPath().getFileName().toString();
+            return mRestrictedRanges.get(apkFileName).stream().noneMatch(
+                    info -> info.dataStartBlockIndex <= block.getBlockIndex()
+                            && block.getBlockIndex() <= info.dataEndBlockIndex);
         }
-        public void stopSendingBlocks() {
-            mDisabled.set(true);
+
+        public void enableBlockRestrictions() {
+            mRestrictBlocks.set(true);
         }
+    }
+
+    private static class RestrictedBlockRange {
+        public final String entryName;
+        public final int dataStartBlockIndex;
+        public final int dataEndBlockIndex;
+
+        RestrictedBlockRange(String zipEntryName, int dataStartBlockIndex,
+                int dataEndBlockIndex) {
+            this.entryName = zipEntryName;
+            this.dataStartBlockIndex = dataStartBlockIndex;
+            this.dataEndBlockIndex = dataEndBlockIndex;
+        }
+    }
+
+    private static RestrictedBlockRange restrictZipEntry(ZipFile file, String entryFileName) {
+        final ZipArchiveEntry info = file.getEntry(entryFileName);
+        if (info == null) return null;
+        final long headerSize = entryFileName.getBytes(StandardCharsets.UTF_8).length + 30;
+        final int dataStartBlock = (int) (info.getDataOffset() - headerSize) / INCFS_BLOCK_SIZE;
+        final int dataEndBlock = (int) (info.getDataOffset() + info.getCompressedSize())
+                / INCFS_BLOCK_SIZE;
+        return new RestrictedBlockRange(entryFileName, dataStartBlock, dataEndBlock);
+    }
+
+    private static RestrictedBlockRange restrictOnlyMiddleBlock(RestrictedBlockRange info) {
+        if (info == null) return null;
+        assertTrue(info.dataEndBlockIndex - info.dataStartBlockIndex > 2);
+        final int middleBlock = (info.dataStartBlockIndex + info.dataEndBlockIndex) / 2;
+        return new RestrictedBlockRange(info.entryName, middleBlock, middleBlock);
     }
 
     private static Context getContext() {
@@ -348,5 +482,9 @@ public class ResourcesHardeningTest {
 
     private static UiAutomation getUiAutomation() {
         return InstrumentationRegistry.getInstrumentation().getUiAutomation();
+    }
+
+    private static ActivityManager getActivityManager() {
+        return (ActivityManager) getContext().getSystemService(Context.ACTIVITY_SERVICE);
     }
 }
