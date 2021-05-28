@@ -639,6 +639,13 @@ class ImsServiceConnector {
         TelephonyUtils.executeShellCommand(mInstrumentation, cmdBuilder.toString());
     }
 
+    void setCapabilitiesRequestTimeout(int slotId, long timeoutAfterMs) throws Exception {
+        StringBuilder cmdBuilder = new StringBuilder();
+        cmdBuilder.append(COMMAND_BASE).append(COMMAND_SET_CAPABILITY_REQUEST_TIMEOUT)
+                .append(COMMAND_SLOT_IDENTIFIER).append(slotId).append(" ").append(timeoutAfterMs);
+        TelephonyUtils.executeShellCommand(mInstrumentation, cmdBuilder.toString());
+    }
+
     void setDeviceToDeviceCommunicationEnabled(boolean enabled) throws Exception {
         TelephonyUtils.executeShellCommand(mInstrumentation, COMMAND_BASE
                 + COMMAND_SET_D2D_ENABLED  + (enabled ? "true" : "default"));
