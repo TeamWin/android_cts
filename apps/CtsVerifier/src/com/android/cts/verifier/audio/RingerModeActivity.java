@@ -76,6 +76,8 @@ public class RingerModeActivity extends InteractiveVerifierActivity {
     private boolean mIsTelevision;
     private boolean mIsSingleVolume;
     private boolean mSkipRingerTests;
+    private boolean mIsWatch;
+    private boolean mSkipTouchSoundTests;
 
     @Override
     protected int getTitleResource() {
@@ -101,6 +103,8 @@ public class RingerModeActivity extends InteractiveVerifierActivity {
         mIsSingleVolume = mContext.getResources().getBoolean(
                 Resources.getSystem().getIdentifier("config_single_volume", "bool", "android"));
         mSkipRingerTests = mUseFixedVolume || mIsTelevision || mIsSingleVolume;
+        mIsWatch = packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH);
+        mSkipTouchSoundTests = mIsWatch;
     }
 
     // Test Setup
@@ -246,6 +250,10 @@ public class RingerModeActivity extends InteractiveVerifierActivity {
 
         @Override
         protected void test() {
+            if (mSkipTouchSoundTests) {
+                status = PASS;
+                return;
+            }
             boolean touchSoundEnabled =
                 Settings.System.getInt(mContext.getContentResolver(),
                     Settings.System.SOUND_EFFECTS_ENABLED, 1) == 1;
@@ -276,6 +284,10 @@ public class RingerModeActivity extends InteractiveVerifierActivity {
 
         @Override
         protected void test() {
+            if (mSkipTouchSoundTests) {
+                status = PASS;
+                return;
+            }
             // should hear sound after loadSoundEffects() called.
             mAudioManager.loadSoundEffects();
             try {
