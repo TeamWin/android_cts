@@ -76,6 +76,8 @@ class ImsServiceConnector {
     private static final String COMMAND_SET_UCE_ENABLED = "uce set-device-enabled ";
     private static final String COMMAND_REMOVE_UCE_REQUEST_DISALLOWED_STATUS =
             "uce remove-request-disallowed-status ";
+    private static final String COMMAND_SET_CAPABILITY_REQUEST_TIMEOUT =
+            "uce set-capabilities-request-timeout ";
     private static final String COMMAND_SET_TEST_MODE_ENABLED = "src set-test-enabled ";
     private static final String COMMAND_SET_D2D_ENABLED = "d2d set-device-support ";
 
@@ -627,6 +629,13 @@ class ImsServiceConnector {
         StringBuilder cmdBuilder = new StringBuilder();
         cmdBuilder.append(COMMAND_BASE).append(COMMAND_REMOVE_UCE_REQUEST_DISALLOWED_STATUS)
                 .append(COMMAND_SLOT_IDENTIFIER).append(slotId);
+        TelephonyUtils.executeShellCommand(mInstrumentation, cmdBuilder.toString());
+    }
+
+    void setCapabilitiesRequestTimeout(int slotId, long timeoutAfterMs) throws Exception {
+        StringBuilder cmdBuilder = new StringBuilder();
+        cmdBuilder.append(COMMAND_BASE).append(COMMAND_SET_CAPABILITY_REQUEST_TIMEOUT)
+                .append(COMMAND_SLOT_IDENTIFIER).append(slotId).append(" ").append(timeoutAfterMs);
         TelephonyUtils.executeShellCommand(mInstrumentation, cmdBuilder.toString());
     }
 
