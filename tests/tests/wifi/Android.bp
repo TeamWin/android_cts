@@ -19,7 +19,8 @@ package {
 
 java_defaults {
     name: "CtsWifiLastStableSdkDefaults",
-    target_sdk_version: "30",
+    // TODO(b/167575586): Wait for S SDK finalization to change target sdk to 31.
+    target_sdk_version: "10000",
     min_sdk_version: "30",
 }
 

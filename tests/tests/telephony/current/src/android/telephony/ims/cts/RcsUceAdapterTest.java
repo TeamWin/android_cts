@@ -693,7 +693,7 @@ public class RcsUceAdapterTest {
                 assertEquals(expectedCallbackResult.intValue(), waitForIntResult(errorQueue));
                 assertEquals(0L, waitForLongResult(retryAfterQueue));
             } catch (Exception e) {
-                fail("requestCapabilities with command error failed: " + e);
+                fail("requestAvailability with command error failed: " + e);
             } finally {
                 errorQueue.clear();
                 retryAfterQueue.clear();
@@ -2167,6 +2167,173 @@ public class RcsUceAdapterTest {
         overrideCarrierConfig(null);
     }
 
+    @Test
+    public void testTimeoutToRequestCapabilitiesWithPresenceMechanism() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+        ImsManager imsManager = getContext().getSystemService(ImsManager.class);
+        RcsUceAdapter uceAdapter = imsManager.getImsRcsManager(sTestSub).getUceAdapter();
+        assertNotNull("UCE adapter should not be null!", uceAdapter);
+
+        // Remove the test contact capabilities
+        removeTestContactFromEab();
+
+        // Connect to the ImsService
+        setupTestImsService(uceAdapter, true, true /* presence cap */, false /* OPTIONS */);
+
+        TestRcsCapabilityExchangeImpl capabilityExchangeImpl = sServiceConnector
+                .getCarrierService().getRcsFeature().getRcsCapabilityExchangeImpl();
+
+        BlockingQueue<Integer> errorQueue = new LinkedBlockingQueue<>();
+        BlockingQueue<Long> errorRetryQueue = new LinkedBlockingQueue<>();
+        BlockingQueue<Boolean> completeQueue = new LinkedBlockingQueue<>();
+        BlockingQueue<RcsContactUceCapability> capabilityQueue = new LinkedBlockingQueue<>();
+        RcsUceAdapter.CapabilitiesCallback callback = new RcsUceAdapter.CapabilitiesCallback() {
+            @Override
+            public void onCapabilitiesReceived(List<RcsContactUceCapability> capabilities) {
+                capabilities.forEach(c -> capabilityQueue.offer(c));
+            }
+            @Override
+            public void onComplete() {
+                completeQueue.offer(true);
+            }
+            @Override
+            public void onError(int errorCode, long retryAfterMilliseconds) {
+                errorQueue.offer(errorCode);
+                errorRetryQueue.offer(retryAfterMilliseconds);
+            }
+        };
+
+        // Prepare three contacts
+        final Uri contact1 = sTestNumberUri;
+        final Uri contact2 = sTestContact2Uri;
+        final Uri contact3 = sTestContact3Uri;
+
+        Collection<Uri> contacts = new ArrayList<>(3);
+        contacts.add(contact1);
+        contacts.add(contact2);
+        contacts.add(contact3);
+
+        // Setup the ImsService doesn't trigger any callbacks.
+        capabilityExchangeImpl.setSubscribeOperation((uris, cb) -> {
+            // It won't trigger any callbacks.
+        });
+
+        try {
+            setCapabilitiesRequestTimeout(3000L);
+
+            requestCapabilities(uceAdapter, contacts, callback);
+
+            // Verify that the clients receive the TIMEOUT error code.
+            assertEquals(RcsUceAdapter.ERROR_REQUEST_TIMEOUT, waitForIntResult(errorQueue));
+            assertEquals(0L, (waitForLongResult(errorRetryQueue)));
+        } finally {
+            errorQueue.clear();
+            errorRetryQueue.clear();
+            completeQueue.clear();
+            capabilityQueue.clear();
+            removeTestContactFromEab();
+            setCapabilitiesRequestTimeout(-1L);
+        }
+
+        // Setup the ImsService only trigger the network response callback. However it doesn't
+        // trigger the onTerminated callback
+        int networkRespCode = 200;
+        String networkRespReason = "OK";
+        capabilityExchangeImpl.setSubscribeOperation((uris, cb) -> {
+            cb.onNetworkResponse(networkRespCode, networkRespReason);
+        });
+
+        try {
+            setCapabilitiesRequestTimeout(3000L);
+
+            requestCapabilities(uceAdapter, contacts, callback);
+
+            // Verify that the clients receive the TIMEOUT error code.
+            assertEquals(RcsUceAdapter.ERROR_REQUEST_TIMEOUT, waitForIntResult(errorQueue));
+            assertEquals(0L, (waitForLongResult(errorRetryQueue)));
+        } finally {
+            errorQueue.clear();
+            errorRetryQueue.clear();
+            completeQueue.clear();
+            capabilityQueue.clear();
+            removeTestContactFromEab();
+            setCapabilitiesRequestTimeout(-1L);
+        }
+
+        overrideCarrierConfig(null);
+    }
+
+
+    @Test
+    public void testTimeoutToRequestCapabilitiesWithOptionsMechanism() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+        ImsManager imsManager = getContext().getSystemService(ImsManager.class);
+        RcsUceAdapter uceAdapter = imsManager.getImsRcsManager(sTestSub).getUceAdapter();
+        assertNotNull("UCE adapter should not be null!", uceAdapter);
+
+        // Remove the test contact capabilities
+        removeTestContactFromEab();
+
+        // Connect to the ImsService
+        setupTestImsService(uceAdapter, true, false, true /* OPTIONS enabled */);
+
+        TestRcsCapabilityExchangeImpl capabilityExchangeImpl = sServiceConnector
+                .getCarrierService().getRcsFeature().getRcsCapabilityExchangeImpl();
+
+        // The test contact
+        Collection<Uri> contacts = new ArrayList<>(3);
+        contacts.add(sTestNumberUri);
+
+        // The result callback
+        BlockingQueue<Integer> errorQueue = new LinkedBlockingQueue<>();
+        BlockingQueue<Long> errorRetryQueue = new LinkedBlockingQueue<>();
+        BlockingQueue<Boolean> completeQueue = new LinkedBlockingQueue<>();
+        BlockingQueue<RcsContactUceCapability> capabilityQueue = new LinkedBlockingQueue<>();
+        RcsUceAdapter.CapabilitiesCallback callback = new RcsUceAdapter.CapabilitiesCallback() {
+            @Override
+            public void onCapabilitiesReceived(List<RcsContactUceCapability> capabilities) {
+                capabilities.forEach(c -> capabilityQueue.offer(c));
+            }
+            @Override
+            public void onComplete() {
+                completeQueue.offer(true);
+            }
+            @Override
+            public void onError(int errorCode, long retryAfterMilliseconds) {
+                errorQueue.offer(errorCode);
+                errorRetryQueue.offer(retryAfterMilliseconds);
+            }
+        };
+
+        // Setup the ImsService doesn't trigger any callbacks.
+        capabilityExchangeImpl.setOptionsOperation((contact, myCapabilities, optionsCallback) -> {
+            // It won't trigger any callbacks.
+        });
+
+        try {
+            setCapabilitiesRequestTimeout(3000L);
+
+            requestCapabilities(uceAdapter, contacts, callback);
+
+            // Verify that the clients receive the TIMEOUT error code.
+            assertEquals(RcsUceAdapter.ERROR_REQUEST_TIMEOUT, waitForIntResult(errorQueue));
+            assertEquals(0L, (waitForLongResult(errorRetryQueue)));
+        } finally {
+            errorQueue.clear();
+            errorRetryQueue.clear();
+            completeQueue.clear();
+            capabilityQueue.clear();
+            removeTestContactFromEab();
+            setCapabilitiesRequestTimeout(-1L);
+        }
+
+        overrideCarrierConfig(null);
+    }
+
     private void setupTestImsService(RcsUceAdapter uceAdapter, boolean presencePublishEnabled,
             boolean presenceCapExchangeEnabled, boolean sipOptionsEnabled) throws Exception {
         // Trigger carrier config changed
@@ -2381,6 +2548,14 @@ public class RcsUceAdapterTest {
             sServiceConnector.removeUceRequestDisallowedStatus(sTestSlot);
         } catch (Exception e) {
             Log.w("RcsUceAdapterTest", "Cannot remove request disallowed status: " + e);
+        }
+    }
+
+    private static void setCapabilitiesRequestTimeout(long timeoutAfterMillis) {
+        try {
+            sServiceConnector.setCapabilitiesRequestTimeout(sTestSlot, timeoutAfterMillis);
+        } catch (Exception e) {
+            Log.w("RcsUceAdapterTest", "Cannot set capabilities request timeout: " + e);
         }
     }
 

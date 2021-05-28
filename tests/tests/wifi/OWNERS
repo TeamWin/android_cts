@@ -1,4 +1,2 @@
 # Bug component: 33618
-dysu@google.com
-etancohen@google.com
-satk@google.com
+include platform/packages/modules/Wifi:/WIFI_OWNERS

@@ -19,6 +19,7 @@ package android.net.wifi.cts;
 import android.annotation.NonNull;
 import android.content.Context;
 import android.content.pm.ModuleInfo;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.util.Log;
 
@@ -54,24 +55,17 @@ public class WifiBuildCompat {
     private static long getWifiApexVersionCode(@NonNull Context ctx) {
         PackageManager packageManager = ctx.getPackageManager();
         long wifiStackVersion = 0;
-        try {
-            String wifiPackageName = null;
-            for (ModuleInfo moduleInfo : packageManager
-                    .getInstalledModules(PackageManager.MATCH_APEX)) {
-                if (moduleInfo.getPackageName().endsWith(WIFI_PACKAGE_NAME_SUFFIX)) {
-                    wifiPackageName = moduleInfo.getPackageName();
-                    break;
-                }
+        String wifiPackageName = null;
+        for (PackageInfo packageInfo : packageManager
+                .getInstalledPackages(PackageManager.MATCH_APEX)) {
+            if (packageInfo.packageName.endsWith(WIFI_PACKAGE_NAME_SUFFIX)) {
+                wifiPackageName = packageInfo.packageName;
+                wifiStackVersion = packageInfo.getLongVersionCode();
+                break;
             }
-            if (wifiPackageName != null) {
-                wifiStackVersion = packageManager.getPackageInfo(
-                        wifiPackageName, PackageManager.MATCH_APEX).getLongVersionCode();
-            }
-            Log.v(TAG, "Wifi Module package name is " + wifiPackageName
-                    + ", version is " + wifiStackVersion);
-        } catch (PackageManager.NameNotFoundException e) {
-            Log.e(TAG, "Wifi Module is missing! Exception: " + e.getMessage());
         }
+        Log.v(TAG, "Wifi Module package name is " + wifiPackageName
+                + ", version is " + wifiStackVersion);
         return wifiStackVersion;
     }
 
