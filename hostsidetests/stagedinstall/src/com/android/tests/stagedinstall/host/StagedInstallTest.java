@@ -651,6 +651,16 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     }
 
     /**
+     * Should fail to verify apex signed payload with a different key
+     */
+    @Test
+    public void testApexSignPayloadWithDifferentKeyFailsVerification() throws Exception {
+        assumeTrue("Device does not support updating APEX", mHostUtils.isApexUpdateSupported());
+
+        runPhase("testApexSignPayloadWithDifferentKeyFailsVerification");
+    }
+
+    /**
      * Should fail to verify apex with unsigned payload
      */
     @Test
