@@ -49,6 +49,7 @@ import android.app.stubs.CommandReceiver;
 import android.app.stubs.LocalForegroundServiceLocation;
 import android.app.stubs.LocalForegroundServiceSticky;
 import android.app.stubs.ScreenOnActivity;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -61,6 +62,7 @@ import android.os.IBinder;
 import android.os.Parcel;
 import android.os.RemoteException;
 import android.os.SystemClock;
+import android.os.UserHandle;
 import android.permission.cts.PermissionUtils;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.WindowManagerState;
@@ -80,6 +82,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 @RunWith(AndroidJUnit4.class)
@@ -98,6 +102,7 @@ public class ActivityManagerProcessStateTest {
 
     private static final int WAIT_TIME = 10000;
     private static final int WAITFOR_MSEC = 10000;
+    private static final int WAITFOR_ORDERED_BROADCAST_DRAINED = 60000;
     // A secondary test activity from another APK.
     static final String SIMPLE_PACKAGE_NAME = "com.android.cts.launcherapps.simpleapp";
     static final String SIMPLE_SERVICE = ".SimpleService";
@@ -170,6 +175,7 @@ public class ActivityManagerProcessStateTest {
         CtsAppTestUtils.turnScreenOn(mInstrumentation, mContext);
         removeTestAppFromWhitelists();
         mAppCount = 0;
+        drainOrderedBroadcastQueue();
         // Make sure we are in Home screen before starting the test
         mInstrumentation.getUiAutomation().performGlobalAction(
                 AccessibilityService.GLOBAL_ACTION_HOME);
@@ -181,6 +187,24 @@ public class ActivityManagerProcessStateTest {
                 am.forceStopPackage(pkgName);
             });
         }
+    }
+
+    /**
+     * Drain the ordered broadcast queue, it'll be useful when the test runs in secondary user
+     * which is just created prior to the testing, the ordered broadcast queue could be clogged.
+     */
+    private void drainOrderedBroadcastQueue() throws Exception {
+        final CountDownLatch latch = new CountDownLatch(1);
+        final BroadcastReceiver receiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                latch.countDown();
+            }
+        };
+        CommandReceiver.sendCommandWithResultReceiver(mContext, CommandReceiver.COMMAND_EMPTY,
+                STUB_PACKAGE_NAME, STUB_PACKAGE_NAME, 0, null, receiver);
+        latch.await(WAITFOR_ORDERED_BROADCAST_DRAINED, TimeUnit.MILLISECONDS);
+        Log.i(TAG, "Ordered broadcast queue drained");
     }
 
     /**
@@ -474,6 +498,8 @@ public class ActivityManagerProcessStateTest {
         WatchUidRunner uidWatcher = new WatchUidRunner(mInstrumentation, appInfo.uid,
                 WAIT_TIME);
 
+        final int userId = UserHandle.getUserId(appInfo.uid);
+
         // First kill the process to start out in a stable state.
         mContext.stopService(serviceIntent);
         conn.bind();
@@ -493,7 +519,8 @@ public class ActivityManagerProcessStateTest {
         // And wait for the uid report to be gone.
         uidWatcher.waitFor(WatchUidRunner.CMD_GONE, null);
 
-        String cmd = "appops set " + SIMPLE_PACKAGE_NAME + " RUN_IN_BACKGROUND deny";
+        String cmd = "appops set --user " + userId + " "
+                + SIMPLE_PACKAGE_NAME + " RUN_IN_BACKGROUND deny";
         String result = SystemUtil.runShellCommand(mInstrumentation, cmd);
 
         // This is a side-effect of the app op command.
@@ -501,7 +528,7 @@ public class ActivityManagerProcessStateTest {
         uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, "NONE");
 
         // We don't want to wait for the uid to actually go idle, we can force it now.
-        cmd = "am make-uid-idle " + SIMPLE_PACKAGE_NAME;
+        cmd = "am make-uid-idle --user " + userId + " " + SIMPLE_PACKAGE_NAME;
         result = SystemUtil.runShellCommand(mInstrumentation, cmd);
 
         // Make sure app is not yet on whitelist
@@ -524,8 +551,8 @@ public class ActivityManagerProcessStateTest {
             }
 
             // Put app on temporary whitelist to see if this allows the service start.
-            cmd = String.format("cmd deviceidle tempwhitelist -d %d %s",
-                    TEMP_WHITELIST_DURATION_MS, SIMPLE_PACKAGE_NAME);
+            cmd = String.format("cmd deviceidle tempwhitelist -u %d -d %d %s",
+                    userId, TEMP_WHITELIST_DURATION_MS, SIMPLE_PACKAGE_NAME);
             result = SystemUtil.runShellCommand(mInstrumentation, cmd);
 
             // Try starting the service now that the app is whitelisted...  should work!
@@ -545,14 +572,14 @@ public class ActivityManagerProcessStateTest {
             uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY);
 
             CtsAppTestUtils.executeShellCmd(mInstrumentation,
-                    "cmd deviceidle tempwhitelist -r " + SIMPLE_PACKAGE_NAME);
+                    "cmd deviceidle tempwhitelist -u " + userId + " -r " + SIMPLE_PACKAGE_NAME);
 
             // Going off the temp whitelist causes a spurious proc state report...  that's
             // not ideal, but okay.
             uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY);
 
             // We don't want to wait for the uid to actually go idle, we can force it now.
-            cmd = "am make-uid-idle " + SIMPLE_PACKAGE_NAME;
+            cmd = "am make-uid-idle --user " + userId + " " + SIMPLE_PACKAGE_NAME;
             result = SystemUtil.runShellCommand(mInstrumentation, cmd);
 
             uidWatcher.expect(WatchUidRunner.CMD_IDLE, null);
@@ -593,7 +620,8 @@ public class ActivityManagerProcessStateTest {
 
             uidWatcher.finish();
 
-            cmd = "appops set " + SIMPLE_PACKAGE_NAME + " RUN_IN_BACKGROUND allow";
+            cmd = "appops set --user " + userId + " "
+                    + SIMPLE_PACKAGE_NAME + " RUN_IN_BACKGROUND allow";
             result = SystemUtil.runShellCommand(mInstrumentation, cmd);
             cmd = "cmd deviceidle whitelist -" + SIMPLE_PACKAGE_NAME;
             result = SystemUtil.runShellCommand(mInstrumentation, cmd);
