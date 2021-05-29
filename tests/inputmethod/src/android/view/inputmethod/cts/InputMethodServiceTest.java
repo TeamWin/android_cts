@@ -288,15 +288,13 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
             eraseFontScale();
 
             // Case 2: Activity *doesn't* handle configChanges="fontScale" and restarts.
-            final Activity activity = createTestActivity2(SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+            createTestActivity2(SOFT_INPUT_STATE_ALWAYS_VISIBLE);
             expectEvent(stream, event -> "onStartInput".equals(event.getEventName()), TIMEOUT);
             // MockIme handles fontScale. Make sure changing fontScale doesn't restart IME.
             enableFontScale();
             expectImeVisible(TIMEOUT);
             // Make sure IME was not restarted.
             notExpectEvent(stream, event -> "onCreate".equals(event.getEventName()),
-                    EXPECTED_TIMEOUT);
-            notExpectEvent(stream, event -> "onStartInput".equals(event.getEventName()),
                     EXPECTED_TIMEOUT);
         } finally {
             eraseFontScale();
