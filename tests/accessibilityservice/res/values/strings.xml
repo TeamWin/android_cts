@@ -32,7 +32,7 @@
     <string name="text_input_blah_blah">Blah blah</string>
 
     <!-- String title of the button -->
-    <string name="button_title">Click me</string>
+    <string name="button_title">Click</string>
 
     <string name="button_tooltip">Never press this button</string>
 
