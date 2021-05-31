@@ -598,13 +598,16 @@
         <activity android:name=".HandleSplashScreenExitActivity"
                   android:theme="@style/ShowBrandingTheme"
                   android:configChanges="uiMode"
-                  android:exported="true"/>
+                  android:exported="true"
+                  android:taskAffinity="nobody.but.TestSplashScreenAffinity"/>
         <activity android:name=".SplashScreenReplaceIconActivity"
                   android:exported="true"
-                  android:theme="@style/ReplaceIconTheme"/>
+                  android:theme="@style/ReplaceIconTheme"
+                  android:taskAffinity="nobody.but.TestSplashScreenAffinity"/>
         <activity android:name=".SplashScreenReplaceThemeActivity"
                   android:exported="true"
-                  android:theme="@style/ReplaceIconTheme"/>
+                  android:theme="@style/ReplaceIconTheme"
+                  android:taskAffinity="nobody.but.TestSplashScreenAffinity"/>
 
         <service android:name=".OverlayTestService"
                  android:exported="true" />
