@@ -158,9 +158,13 @@ public class WindowManagerStateHelper extends WindowManagerState {
                 waitForWithAmState(state -> state.getDreamTask() == null, "DreamActivity gone"));
     }
 
+    public static boolean isKeyguardShowingAndNotOccluded(WindowManagerState state) {
+        return state.getKeyguardControllerState().keyguardShowing
+                && !state.getKeyguardControllerState().isKeyguardOccluded(DEFAULT_DISPLAY);
+    }
+
     public void waitForKeyguardShowingAndNotOccluded() {
-        waitForWithAmState(state -> state.getKeyguardControllerState().keyguardShowing
-                        && !state.getKeyguardControllerState().isKeyguardOccluded(DEFAULT_DISPLAY),
+        waitForWithAmState(WindowManagerStateHelper::isKeyguardShowingAndNotOccluded,
                 "Keyguard showing");
     }
 
