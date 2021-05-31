@@ -298,6 +298,7 @@ public class StartActivityTests extends ActivityManagerTestBase {
             mWmState.assertFrontStackActivityType("The activity type should be same as requested.",
                     type);
             mBroadcastActionTrigger.finishBroadcastReceiverActivity();
+            mWmState.waitAndAssertActivityRemoved(BROADCAST_RECEIVER_ACTIVITY);
         } else {
             assertSecurityExceptionFromActivityLauncher();
         }
