@@ -20,14 +20,19 @@ import static android.app.UiModeManager.MODE_NIGHT_AUTO;
 import static android.app.UiModeManager.MODE_NIGHT_CUSTOM;
 import static android.app.UiModeManager.MODE_NIGHT_NO;
 import static android.app.UiModeManager.MODE_NIGHT_YES;
+import static android.content.Intent.ACTION_MAIN;
+import static android.content.Intent.CATEGORY_HOME;
+import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.server.wm.CliIntentExtra.extraBool;
 import static android.server.wm.CliIntentExtra.extraString;
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
-import static android.server.wm.WindowManagerState.STATE_STOPPED;
 import static android.server.wm.app.Components.HANDLE_SPLASH_SCREEN_EXIT_ACTIVITY;
+import static android.server.wm.app.Components.HOME_ACTIVITY;
 import static android.server.wm.app.Components.SPLASHSCREEN_ACTIVITY;
 import static android.server.wm.app.Components.SPLASH_SCREEN_REPLACE_ICON_ACTIVITY;
 import static android.server.wm.app.Components.SPLASH_SCREEN_REPLACE_THEME_ACTIVITY;
+import static android.server.wm.app.Components.TestActivity.COMMAND_START_ACTIVITY;
+import static android.server.wm.app.Components.TestActivity.EXTRA_INTENT;
 import static android.server.wm.app.Components.TestStartingWindowKeys.CANCEL_HANDLE_EXIT;
 import static android.server.wm.app.Components.TestStartingWindowKeys.CENTER_VIEW_IS_SURFACE_VIEW;
 import static android.server.wm.app.Components.TestStartingWindowKeys.CONTAINS_BRANDING_VIEW;
@@ -71,11 +76,10 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Insets;
 import android.graphics.Rect;
+import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
 import android.view.WindowManager;
 import android.view.WindowMetrics;
-
-import androidx.test.filters.FlakyTest;
 
 import com.android.compatibility.common.util.TestUtils;
 
@@ -84,12 +88,14 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Collections;
+import java.util.function.Consumer;
 
 /**
  * Build/Install/Run:
  * atest CtsWindowManagerDeviceTestCases:SplashscreenTests
  */
 @Presubmit
+@android.server.wm.annotation.Group1
 public class SplashscreenTests extends ActivityManagerTestBase {
 
     private static final int CENTER_ICON_SIZE = 160;
@@ -105,8 +111,28 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         mWmState.setSanityCheckWithFocusedWindow(true);
     }
 
+    private CommandSession.ActivitySession prepareTestLauncher() {
+        createManagedHomeActivitySession(HOME_ACTIVITY);
+        return createManagedActivityClientSession()
+                .startActivity(new Intent(ACTION_MAIN)
+                        .addCategory(CATEGORY_HOME)
+                        .addFlags(FLAG_ACTIVITY_NEW_TASK)
+                        .setComponent(HOME_ACTIVITY));
+    }
+
+    private void startActivityFromTestLauncher(CommandSession.ActivitySession homeActivity,
+            ComponentName componentName, Consumer<Intent> fillExtra) {
+
+        final Bundle data = new Bundle();
+        final Intent startIntent = new Intent();
+        startIntent.setComponent(componentName);
+        startIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        fillExtra.accept(startIntent);
+        data.putParcelable(EXTRA_INTENT, startIntent);
+        homeActivity.sendCommand(COMMAND_START_ACTIVITY, data);
+    }
+
     @Test
-    @FlakyTest(bugId = 189001160)
     public void testSplashscreenContent() {
         launchActivityNoWait(SPLASHSCREEN_ACTIVITY);
         // The windowSplashScreenContent attribute is set to RED. We check that it is ignored.
@@ -159,6 +185,18 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         assertColors(image, bottomInsetsBounds, primaryColor, 0.80f, secondaryColor, 0.10f, null);
     }
 
+    // For real devices, gamma correction might be applied on hardware driver, so the colors may
+    // not exactly match.
+    private static boolean isSimilarColor(int a, int b) {
+        if (a == b) {
+            return true;
+        }
+        return Math.abs(Color.alpha(a) - Color.alpha(b)) +
+                Math.abs(Color.red(a) - Color.red(b)) +
+                Math.abs(Color.green(a) - Color.green(b)) +
+                Math.abs(Color.blue(a) - Color.blue(b)) < 10;
+    }
+
     private void assertColors(Bitmap img, Rect bounds, int primaryColor, float expectedPrimaryRatio,
             int secondaryColor, float acceptableWrongRatio, Rect ignoreRect) {
 
@@ -179,9 +217,9 @@ public class SplashscreenTests extends ActivityManagerTestBase {
                     continue;
                 }
                 final int color = img.getPixel(x, y);
-                if (primaryColor == color) {
+                if (isSimilarColor(primaryColor, color)) {
                     primaryPixels++;
-                } else if (secondaryColor == color) {
+                } else if (isSimilarColor(secondaryColor, color)) {
                     secondaryPixels++;
                 } else {
                     img.setPixel(x, y, Color.MAGENTA);
@@ -230,10 +268,12 @@ public class SplashscreenTests extends ActivityManagerTestBase {
     private void launchRuntimeHandleExitAnimationActivity(boolean extraOnCreate,
             boolean extraOnResume, boolean extraCancel, boolean expectResult) throws Exception {
         TestJournalProvider.TestJournalContainer.start();
-        launchActivity(HANDLE_SPLASH_SCREEN_EXIT_ACTIVITY,
-                extraBool(REQUEST_HANDLE_EXIT_ON_CREATE, extraOnCreate),
-                extraBool(REQUEST_HANDLE_EXIT_ON_RESUME, extraOnResume),
-                extraBool(CANCEL_HANDLE_EXIT, extraCancel));
+        final CommandSession.ActivitySession homeActivity = prepareTestLauncher();
+        startActivityFromTestLauncher(homeActivity, HANDLE_SPLASH_SCREEN_EXIT_ACTIVITY, intent -> {
+            intent.putExtra(REQUEST_HANDLE_EXIT_ON_CREATE, extraOnCreate);
+            intent.putExtra(REQUEST_HANDLE_EXIT_ON_RESUME, extraOnResume);
+            intent.putExtra(CANCEL_HANDLE_EXIT, extraCancel);
+        });
 
         mWmState.computeState(HANDLE_SPLASH_SCREEN_EXIT_ACTIVITY);
         mWmState.assertVisibility(HANDLE_SPLASH_SCREEN_EXIT_ACTIVITY, true);
@@ -248,7 +288,6 @@ public class SplashscreenTests extends ActivityManagerTestBase {
     }
 
     @Test
-    @FlakyTest(bugId = 189001160)
     public void testSetApplicationNightMode() throws Exception {
         final UiModeManager uiModeManager = mContext.getSystemService(UiModeManager.class);
         assumeTrue(uiModeManager != null);
@@ -275,7 +314,6 @@ public class SplashscreenTests extends ActivityManagerTestBase {
     }
 
     @Test
-    @FlakyTest(bugId = 189001160)
     public void testSetBackgroundColorActivity() {
         launchActivityNoWait(SPLASH_SCREEN_REPLACE_ICON_ACTIVITY, extraBool(DELAY_RESUME, true));
         testSplashScreenColor(SPLASH_SCREEN_REPLACE_ICON_ACTIVITY, Color.BLUE, Color.BLACK);
@@ -284,9 +322,12 @@ public class SplashscreenTests extends ActivityManagerTestBase {
     @Test
     public void testHandleExitIconAnimatingActivity() throws Exception {
         assumeFalse(isLeanBack());
+        final CommandSession.ActivitySession homeActivity = prepareTestLauncher();
         TestJournalProvider.TestJournalContainer.start();
-        launchActivity(SPLASH_SCREEN_REPLACE_ICON_ACTIVITY,
-                extraBool(REQUEST_HANDLE_EXIT_ON_CREATE, true));
+
+        startActivityFromTestLauncher(homeActivity, SPLASH_SCREEN_REPLACE_ICON_ACTIVITY, intent -> {
+            intent.putExtra(REQUEST_HANDLE_EXIT_ON_CREATE, true);
+        });
         mWmState.computeState(SPLASH_SCREEN_REPLACE_ICON_ACTIVITY);
         mWmState.assertVisibility(SPLASH_SCREEN_REPLACE_ICON_ACTIVITY, true);
         final TestJournalProvider.TestJournal journal =
@@ -305,10 +346,12 @@ public class SplashscreenTests extends ActivityManagerTestBase {
     @Test
     public void testCancelHandleExitIconAnimatingActivity() {
         assumeFalse(isLeanBack());
+        final CommandSession.ActivitySession homeActivity = prepareTestLauncher();
         TestJournalProvider.TestJournalContainer.start();
-        launchActivity(SPLASH_SCREEN_REPLACE_ICON_ACTIVITY,
-                extraBool(REQUEST_HANDLE_EXIT_ON_CREATE, true),
-                extraBool(CANCEL_HANDLE_EXIT, true));
+        startActivityFromTestLauncher(homeActivity, SPLASH_SCREEN_REPLACE_ICON_ACTIVITY, intent -> {
+            intent.putExtra(REQUEST_HANDLE_EXIT_ON_CREATE, true);
+            intent.putExtra(CANCEL_HANDLE_EXIT, true);
+        });
         mWmState.waitForActivityState(SPLASH_SCREEN_REPLACE_ICON_ACTIVITY, STATE_RESUMED);
         mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
 
@@ -318,7 +361,6 @@ public class SplashscreenTests extends ActivityManagerTestBase {
     }
 
     @Test
-    @FlakyTest(bugId = 189001160)
     public void testShortcutChangeTheme() {
         final LauncherApps launcherApps = mContext.getSystemService(LauncherApps.class);
         final ShortcutManager shortcutManager = mContext.getSystemService(ShortcutManager.class);
@@ -327,7 +369,7 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         final String shortCutId = "shortcut1";
         final ShortcutInfo.Builder b = new ShortcutInfo.Builder(
                 mContext, shortCutId);
-        final Intent i = new Intent(Intent.ACTION_MAIN)
+        final Intent i = new Intent(ACTION_MAIN)
                 .setComponent(SPLASHSCREEN_ACTIVITY);
         final ShortcutInfo shortcut = b.setShortLabel("label")
                 .setLongLabel("long label")
@@ -345,32 +387,39 @@ public class SplashscreenTests extends ActivityManagerTestBase {
 
     @Test
     public void testOverrideSplashscreenTheme() {
+        assumeFalse(isLeanBack());
+        final CommandSession.ActivitySession homeActivity = prepareTestLauncher();
+
+        // Pre-launch the activity to ensure status is cleared on the device
+        startActivityFromTestLauncher(homeActivity, SPLASH_SCREEN_REPLACE_THEME_ACTIVITY,
+                intent -> {});
+        mWmState.waitAndAssertActivityRemoved(SPLASH_SCREEN_REPLACE_THEME_ACTIVITY);
+
         // Launch the activity a first time, check that the splashscreen use the default theme,
         // and override the theme for the next launch
-        launchActivity(SPLASH_SCREEN_REPLACE_THEME_ACTIVITY,
-                extraBool(OVERRIDE_THEME_ENABLED, true));
-
-        mWmState.waitForActivityState(SPLASH_SCREEN_REPLACE_THEME_ACTIVITY, STATE_STOPPED);
-
         TestJournalProvider.TestJournal journal = TestJournalProvider.TestJournalContainer.get(
                 OVERRIDE_THEME_COMPONENT);
+
+        startActivityFromTestLauncher(homeActivity, SPLASH_SCREEN_REPLACE_THEME_ACTIVITY,
+                intent -> intent.putExtra(OVERRIDE_THEME_ENABLED, true));
+        mWmState.waitForActivityRemoved(SPLASH_SCREEN_REPLACE_THEME_ACTIVITY);
         assertEquals(Integer.toHexString(Color.BLUE),
                 Integer.toHexString(journal.extras.getInt(OVERRIDE_THEME_COLOR)));
 
         // Launch the activity a second time, check that the theme has been overridden and reset
         // to the default theme
-        launchActivity(SPLASH_SCREEN_REPLACE_THEME_ACTIVITY);
-
-        mWmState.waitForActivityState(SPLASH_SCREEN_REPLACE_THEME_ACTIVITY, STATE_STOPPED);
+        startActivityFromTestLauncher(homeActivity, SPLASH_SCREEN_REPLACE_THEME_ACTIVITY,
+                intent -> {});
+        mWmState.waitForActivityRemoved(SPLASH_SCREEN_REPLACE_THEME_ACTIVITY);
 
         journal = TestJournalProvider.TestJournalContainer.get(OVERRIDE_THEME_COMPONENT);
         assertEquals(Integer.toHexString(Color.RED),
                 Integer.toHexString(journal.extras.getInt(OVERRIDE_THEME_COLOR)));
 
         // Launch the activity a third time just to check that the theme has indeed been reset.
-        launchActivity(SPLASH_SCREEN_REPLACE_THEME_ACTIVITY);
-
-        mWmState.waitForActivityState(SPLASH_SCREEN_REPLACE_THEME_ACTIVITY, STATE_STOPPED);
+        startActivityFromTestLauncher(homeActivity, SPLASH_SCREEN_REPLACE_THEME_ACTIVITY,
+                intent -> {});
+        mWmState.waitForActivityRemoved(SPLASH_SCREEN_REPLACE_THEME_ACTIVITY);
 
         journal = TestJournalProvider.TestJournalContainer.get(OVERRIDE_THEME_COMPONENT);
         assertEquals(Integer.toHexString(Color.BLUE),
