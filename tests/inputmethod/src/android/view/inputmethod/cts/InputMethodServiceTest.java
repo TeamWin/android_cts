@@ -713,6 +713,23 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
         }
     }
 
+    @Test
+    public void testNoConfigurationChangedOnStartInput() throws Exception {
+        try (MockImeSession imeSession = MockImeSession.create(
+                mInstrumentation.getContext(), mInstrumentation.getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            createTestActivity(SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+
+            final ImeEventStream forkedStream = stream.copy();
+            expectEvent(stream, event -> "onStartInput".equals(event.getEventName()), TIMEOUT);
+            // Verify if InputMethodService#isUiContext returns true
+            notExpectEvent(forkedStream, event -> "onConfigurationChanged".equals(
+                    event.getEventName()), EXPECTED_TIMEOUT);
+        }
+    }
+
     /** Test case for committing and setting composing region after cursor. */
     private static UpdateSelectionTest getCommitAndSetComposingRegionTest(
             long timeout, String makerPrefix) throws Exception {

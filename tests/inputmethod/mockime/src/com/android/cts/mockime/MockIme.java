@@ -994,6 +994,11 @@ public final class MockIme extends InputMethodService {
         });
     }
 
+    @Override
+    public void onConfigurationChanged(Configuration configuration) {
+        getTracer().onConfigurationChanged(() -> {}, configuration);
+    }
+
     /**
      * Event tracing helper class for {@link MockIme}.
      */
@@ -1270,6 +1275,12 @@ public final class MockIme extends InputMethodService {
         void onInlineSuggestionLongClickedEvent(@NonNull Runnable runnable) {
             final Bundle arguments = new Bundle();
             recordEventInternal("onInlineSuggestionLongClickedEvent", runnable, arguments);
+        }
+
+        void onConfigurationChanged(@NonNull Runnable runnable, Configuration configuration) {
+            final Bundle arguments = new Bundle();
+            arguments.putParcelable("Configuration", configuration);
+            recordEventInternal("onConfigurationChanged", runnable, arguments);
         }
     }
 }
