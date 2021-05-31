@@ -55,8 +55,7 @@ def test_lens_movement_reporting(cam, props, fmt, gain, exp, af_fd, chart):
     data_set = {}
     white_level = int(props['android.sensor.info.whiteLevel'])
     min_fd = props['android.lens.info.minimumFocusDistance']
-    fds = [af_fd, min_fd]
-    fds = sorted(fds * NUM_IMGS)
+    fds = [af_fd] * NUM_IMGS + [min_fd] * NUM_IMGS
     reqs = []
     for i, fd in enumerate(fds):
         reqs.append(its.objects.manual_capture_request(gain, exp))
@@ -170,8 +169,9 @@ def main():
         assert np.isclose(min_sharp, max_sharp, rtol=SHARPNESS_TOL)
         # assert reported location is close to assign location for min_fd
         print 'Asserting lens location close to assigned fd for min_fd data'
-        assert np.isclose(d_min_fd[NUM_IMGS*2-1]['loc'],
-                          d_min_fd[NUM_IMGS*2-1]['fd'], rtol=POSITION_TOL)
+        last_key = max(d_min_fd.keys())  # find last frame
+        assert np.isclose(d_min_fd[last_key]['loc'], d_min_fd[last_key]['fd'],
+                          rtol=POSITION_TOL)
 
 
 if __name__ == '__main__':
