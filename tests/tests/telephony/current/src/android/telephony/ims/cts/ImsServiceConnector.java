@@ -625,13 +625,6 @@ class ImsServiceConnector {
                 + COMMAND_SET_TEST_MODE_ENABLED  + (enabled ? "true" : "false"));
     }
 
-    void setCapabilitiesRequestTimeout(int slotId, long timeoutAfterMs) throws Exception {
-        StringBuilder cmdBuilder = new StringBuilder();
-        cmdBuilder.append(COMMAND_BASE).append(COMMAND_SET_CAPABILITY_REQUEST_TIMEOUT)
-                .append(COMMAND_SLOT_IDENTIFIER).append(slotId).append(" ").append(timeoutAfterMs);
-        TelephonyUtils.executeShellCommand(mInstrumentation, cmdBuilder.toString());
-    }
-
     void removeUceRequestDisallowedStatus(int slotId) throws Exception {
         StringBuilder cmdBuilder = new StringBuilder();
         cmdBuilder.append(COMMAND_BASE).append(COMMAND_REMOVE_UCE_REQUEST_DISALLOWED_STATUS)
