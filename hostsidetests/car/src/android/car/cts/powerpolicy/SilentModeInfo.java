@@ -21,7 +21,7 @@ import java.util.Arrays;
 public final class SilentModeInfo {
     private static final String[] ATTR_HEADERS = {"Monitoring HW state signal",
             "Silent mode by HW state signal", "Forced silent mode"};
-    private static final boolean[] EXPECTED_WITHOUT_SILENT_MODE = {false, false, false};
+    private static final boolean[] EXPECTED_WITHOUT_SILENT_MODE = {true, false, false};
     private static final boolean[] EXPECTED_WITH_SILENT_MODE = {false, true, true};
 
     public static final String COMMAND = "cmd car_service silent-mode query";
