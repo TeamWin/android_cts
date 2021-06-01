@@ -62,7 +62,6 @@ public interface RemoteDevicePolicyManager {
     /** See {@link DevicePolicyManager#getLockTaskPackages(ComponentName)}. */
     @RemoteDpcAutomaticAdmin @NonNull String[] getLockTaskPackages();
 
-
     /** See {@link DevicePolicyManager#setLockTaskFeatures(ComponentName, int)}. */
     void setLockTaskFeatures(
             @NonNull ComponentName admin, int flags);
@@ -73,4 +72,14 @@ public interface RemoteDevicePolicyManager {
     int getLockTaskFeatures(@NonNull ComponentName admin);
     /** See {@link DevicePolicyManager#getLockTaskFeatures(Component)}. */
     @RemoteDpcAutomaticAdmin int getLockTaskFeatures();
+
+    /** See {@link DevicePolicyManager#addUserRestriction(ComponentName, String)}. */
+    void addUserRestriction(@NonNull ComponentName admin, String key);
+    /** See {@link DevicePolicyManager#addUserRestriction(ComponentName, String)}. */
+    @RemoteDpcAutomaticAdmin void addUserRestriction(String key);
+
+    /** See {@link DevicePolicyManager#clearUserRestriction(ComponentName, String)}. */
+    void clearUserRestriction(@NonNull ComponentName admin, String key);
+    /** See {@link DevicePolicyManager#clearUserRestriction(ComponentName, String)}. */
+    @RemoteDpcAutomaticAdmin void clearUserRestriction(String key);
 }
