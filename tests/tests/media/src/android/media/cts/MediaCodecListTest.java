@@ -20,6 +20,7 @@ import static android.media.MediaCodecInfo.CodecCapabilities.FEATURE_SecurePlayb
 import static android.media.MediaCodecInfo.CodecCapabilities.FEATURE_TunneledPlayback;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
+import com.android.compatibility.common.util.MediaUtils;
 import com.android.compatibility.common.util.PropertyUtil;
 
 import android.content.pm.PackageManager;
@@ -497,7 +498,9 @@ public class MediaCodecListTest extends AndroidTestCase {
     }
 
     public void testInputChannelLimits() throws IOException {
-        // TODO: valid S or later, but the Build.* constants aren't properly defined yet
+        if (!MediaUtils.check(sIsAtLeastS, "testInputChannelLimits invalid before Android 12")) {
+            return;
+        }
         for (MediaCodecInfo info : mAllInfos) {
             boolean isEncoder = info.isEncoder();
             if (!isEncoder) {
