@@ -84,6 +84,10 @@ public final class Processor extends AbstractProcessor {
             ClassName.get(
                     "com.android.bedstead.testapp",
                     "TargetedRemoteActivityImpl");
+    private static final ClassName TEST_APP_CONTROLLER_CLASSNAME =
+            ClassName.get(
+                    "com.android.bedstead.testapp",
+                    "TestAppController");
     private static final ClassName TARGETED_REMOTE_ACTIVITY_WRAPPER_CLASSNAME =
             ClassName.get(
                     "com.android.bedstead.testapp",
@@ -354,15 +358,19 @@ public final class Processor extends AbstractProcessor {
                         "Provider")
                         .addModifiers(Modifier.PUBLIC, Modifier.FINAL);
 
-        MethodSpec.Builder methodBuilder =
-                MethodSpec.methodBuilder("provideTargetedremoteActivity")
+        classBuilder.addMethod(MethodSpec.methodBuilder("provideTargetedRemoteActivity")
                         .returns(TARGETED_REMOTE_ACTIVITY_CLASSNAME)
                         .addModifiers(Modifier.PUBLIC)
-                        .addParameter(CONTEXT_CLASSNAME, "context")
                         .addAnnotation(CrossProfileProvider.class)
-                        .addCode("return new $T();", TARGETED_REMOTE_ACTIVITY_IMPL_CLASSNAME);
+                        .addCode("return new $T();", TARGETED_REMOTE_ACTIVITY_IMPL_CLASSNAME)
+                .build());
 
-        classBuilder.addMethod(methodBuilder.build());
+        classBuilder.addMethod(MethodSpec.methodBuilder("provideTestAppController")
+                .returns(TEST_APP_CONTROLLER_CLASSNAME)
+                .addModifiers(Modifier.PUBLIC)
+                .addAnnotation(CrossProfileProvider.class)
+                .addCode("return new $T();", TEST_APP_CONTROLLER_CLASSNAME)
+                .build());
 
         writeClassToFile(PACKAGE_NAME, classBuilder.build());
     }
