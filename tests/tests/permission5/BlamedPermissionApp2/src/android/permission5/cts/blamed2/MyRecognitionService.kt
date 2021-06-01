@@ -16,58 +16,82 @@
 
 package android.permission5.cts.blamed2
 
+import android.content.ContextParams
 import android.content.Intent
 import android.media.AudioFormat
+import android.media.AudioRecord
 import android.media.AudioRecord.Builder
 import android.media.MediaRecorder
 import android.speech.RecognitionService
 
 class MyRecognitionService : RecognitionService() {
+    var recorder: AudioRecord? = null
+        get() = field
+        set(recorder) { field = recorder }
 
     override fun onStartListening(intent: Intent, callback: Callback) {
         when (intent.extras?.get(OPERATION)!!) {
-            OPERATION_MIC_RECO -> {
-                performOperationMicReco(callback)
+            OPERATION_MIC_RECO_WITH_ATTRIBUTION -> {
+                performOperationMicRecoWithAttribution(callback)
+                return
             }
-            OPERATION_INJECT_RECO -> {
-                performOperationInjectReco(callback)
+            OPERATION_INJECT_RECO_WITHOUT_ATTRIBUTION -> {
+                performOperationInjectRecoWithoutAttribution(callback)
+                return
             }
         }
     }
 
     override fun onStopListening(callback: Callback) {}
 
-    override fun onCancel(callback: Callback) {}
+    override fun onCancel(callback: Callback) {
+        val finalRecorder = recorder
+        if (finalRecorder != null) {
+            finalRecorder.stop()
+        }
+        mainExecutor.execute({
+            callback.bufferReceived(ByteArray(0))
+        })
+    }
 
-    fun performOperationMicReco(callback: Callback) {
+    fun performOperationMicRecoWithAttribution(callback: Callback) {
+        val attributionContext = createContext(ContextParams.Builder()
+                .setNextAttributionSource(callback.callingAttributionSource)
+                .build())
+
         // Setup a recorder
-        val recorder = Builder()
+        val localRecorder = Builder()
+                .setContext(attributionContext)
                 .setAudioSource(MediaRecorder.AudioSource.MIC)
-                .setBufferSizeInBytes(1024)
+                .setBufferSizeInBytes(
+                        AudioRecord.getMinBufferSize(8000,
+                                AudioFormat.CHANNEL_IN_MONO,
+                                AudioFormat.ENCODING_PCM_16BIT) * 10)
                 .setAudioFormat(AudioFormat.Builder()
                         .setSampleRate(8000)
-                        .setChannelMask(AudioFormat.CHANNEL_IN_MONO)
                         .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                        .setChannelMask(AudioFormat.CHANNEL_IN_MONO)
                         .build())
                 .build()
 
         // Start recognition
-        recorder.startRecording()
+        localRecorder.startRecording()
 
         // Pretend we do something...
         callback.bufferReceived(ByteArray(0))
 
-        // Stop recognition
-        recorder.stop()
+        recorder = localRecorder
     }
 
-    fun performOperationInjectReco(callback: Callback) {
-        callback.bufferReceived(ByteArray(0))
+    fun performOperationInjectRecoWithoutAttribution(callback: Callback) {
+        mainExecutor.execute({
+            callback.bufferReceived(ByteArray(0))
+        })
     }
 
     companion object {
         val OPERATION = "operation"
-        val OPERATION_MIC_RECO = "operation:mic_reco"
-        val OPERATION_INJECT_RECO = "operation:inject_reco"
+        val OPERATION_MIC_RECO_WITH_ATTRIBUTION = "operation:mic_reco_with_attribution"
+        val OPERATION_INJECT_RECO_WITHOUT_ATTRIBUTION = "operation:inject_reco_without_attribution"
     }
 }

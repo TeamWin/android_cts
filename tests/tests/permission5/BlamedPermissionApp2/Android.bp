@@ -20,6 +20,7 @@ package {
 
 android_test_helper_app {
     name: "CtsBlamedPermissionApp2",
+    sdk_version: "test_current",
     srcs: [
         "src/**/*.kt",
     ],
