@@ -42,4 +42,9 @@ public class SonyDualSenseBluetoothTest extends InputHidTestCase {
     public void testAllMotions() {
         testInputEvents(R.raw.sony_dualsense_bluetooth_motioneventtests);
     }
+
+    @Test
+    public void testVibrator() throws Exception {
+        testInputVibratorEvents(R.raw.sony_dualsense_bluetooth_vibratortests);
+    }
 }
