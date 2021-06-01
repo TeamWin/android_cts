@@ -5734,6 +5734,30 @@ Follow the instructions on the screen to measure the frequency response for the 
     <string name="bubbles_test_summary">%1$d out of %2$d tests passed</string>
     <string name="bubble_activity_title">Bubble Activity</string>
 
+    <!-- Toast test -->
+    <string name="toast_title">Toast test (may auto pass if CtsVerifier isn\'t targeting
+        S+)</string>
+    <string name="toast_info">This test checks the behavior for toasts for apps targeting
+        sdk S+ (31). Toasts are short messages that appear as popups for a limited amount of time.
+    </string>
+    <string name="toast_instructions_pre_s">No cts requirement for toasts for apps targeting
+        pre-s. Auto pass this test.</string>
+    <string name="toast_instructions_s">Press the button below to post a toast. Pass this
+        test if a toast appears and has:\n
+        \n\t1. a maximum of two lines
+        \n\t2. an application icon
+    </string>
+    <string name="toast_post_button_label">Post toast</string>
+    <string name="toast_long_text">Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+        Nam luctus eros ac interdum tincidunt. Vestibulum dignissim, metus nec tempor mollis,
+        tortor leo aliquam est, eget rutrum mi nisi ut ligula. Quisque enim justo, tempus at
+        ligula ac, porta posuere odio. Proin et tortor tincidunt, tempus ligula id,
+        vestibulum mauris. Vivamus blandit tristique tempus. Integer dignissim purus eu nibh
+        faucibus, eget dignissim eros gravida. Sed sit amet erat quis leo pharetra euismod vel at
+        purus. Duis blandit, diam eu imperdiet pulvinar, erat odio eleifend augue, nec luctus
+        lectus erat ac nibh. Nullam id enim metus.
+    </string>
+
     <!-- Strings for Instant Apps -->
     <string name="ia_instruction_heading_label">Instructions:</string>
     <string name="ia_instruction_text_photo_label">READ BEFORE STARTING TEST</string>
