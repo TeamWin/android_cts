@@ -78,6 +78,7 @@ public class AudioTap2ToneActivity
     private TextView mSpecView;
     private TextView mResultsView;
     private TextView mStatsView;
+    private TextView mPhaseView;
 
     private WaveformView mWaveformView;
 
@@ -150,6 +151,7 @@ public class AudioTap2ToneActivity
         mSpecView = (TextView) findViewById(R.id.tap2tone_specTxt);
         mResultsView = (TextView) findViewById(R.id.tap2tone_resultTxt);
         mStatsView = (TextView) findViewById(R.id.tap2tone_statsTxt);
+        mPhaseView = (TextView) findViewById(R.id.tap2tone_phaseInfo);
 
         mWaveformView = (WaveformView) findViewById(R.id.tap2tone_waveView);
         // Start a blip test when the waveform view is tapped.
@@ -190,7 +192,6 @@ public class AudioTap2ToneActivity
     }
 
     private void startAudio() {
-        Log.i(TAG, "---- startAudio() mIsRecording:" + mIsRecording);
         if (mIsRecording) {
             return;
         }
@@ -206,7 +207,6 @@ public class AudioTap2ToneActivity
         mDuplexAudioManager.start();
 
         mBlipSource = (AudioSource) mDuplexAudioManager.getAudioSource();
-        Log.i(TAG, "---- smBlipSource:" + mBlipSource);
 
         mIsRecording = true;
         enableAudioButtons();
@@ -246,15 +246,21 @@ public class AudioTap2ToneActivity
     }
 
     private void calculateTestPass() {
+        // 80ms is currently STRONGLY RECOMMENDED, so pass the test as long as they have run it.
+        boolean testCompleted = mTestPhase >= NUM_TEST_PHASES;
         boolean pass = mLatencyAve[mActiveTestAPI] != 0
-                && mTestPhase >= NUM_TEST_PHASES
                 && mLatencyAve[mActiveTestAPI] <= MAX_TAP_2_TONE_LATENCY;
 
-        if (pass) {
-            mSpecView.setText("Ave: " + mLatencyAve[mActiveTestAPI] + " ms <= "
-                    + MAX_TAP_2_TONE_LATENCY + " ms -- PASS");
+        if (testCompleted) {
+            if (pass) {
+                mSpecView.setText("Ave: " + mLatencyAve[mActiveTestAPI] + " ms <= "
+                        + MAX_TAP_2_TONE_LATENCY + " ms -- PASS");
+            } else {
+                mSpecView.setText("Ave: " + mLatencyAve[mActiveTestAPI] + " ms > "
+                        + MAX_TAP_2_TONE_LATENCY + " ms -- DOES NOT MEET STRONGLY RECOMMENDED");
+            }
         }
-        getPassButton().setEnabled(pass);
+        getPassButton().setEnabled(testCompleted);
     }
 
     private void recordTestStatus() {
@@ -352,6 +358,8 @@ public class AudioTap2ToneActivity
         mResultsView.setText("Phase: " + mTestPhase + " : " + latencyMillis
                 + " ms, Ave: " + mLatencyAve[mActiveTestAPI] + " ms");
         mStatsView.setText("Deviation: " + String.format("%.2f",meanAbsoluteDeviation));
+
+        mPhaseView.setText("" + mTestPhase + " of " + NUM_TEST_PHASES + " completed.");
     }
 
     private void analyzeCapturedAudio() {
