@@ -2975,6 +2975,18 @@
                        android:value="multi_display_mode" />
         </activity>
 
+        <activity android:name=".notifications.ToastVerifierActivity"
+                  android:exported="true"
+                  android:label="@string/toast_title">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+            <meta-data android:name="test_category" android:value="@string/test_category_notifications" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
+
         <activity android:name=".notifications.BubblesVerifierActivity"
                   android:exported="true"
                   android:label="@string/bubbles_notification_title">
