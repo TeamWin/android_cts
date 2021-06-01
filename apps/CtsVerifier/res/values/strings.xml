@@ -5226,12 +5226,17 @@ Follow the instructions on the screen to measure the frequency response for the 
     <!-- AudioTap2Tone test -->
     <string name="audio_tap2tone">Audio Tap To Tone Test</string>
     <string name="audio_tap2tone_info">This tests the latency from a screen interaction to a
-        resulting tone. This time is a combination of touch screen latency and audio latency\nSelect
+        resulting tone. This time is a combination of touch screen latency and audio latency.\nThis
+        test is best conducted in a quiet room with the device laying on a table. Select
         the Audio API to test and press the \"Start\" button. Use your fingernail to tap on the
-        field below to trigger the test tone. Results will be displayed in the field.</string>
-    <string name="audio_tap2tone_spec">80ms average is required to pass.</string>
+        field below to trigger the test tone. Results will be displayed in the field above the
+        waveform display.\nFive successful tests runs are required to determine if the test
+        as a whole succeeds.
+    </string>
+    <string name="audio_tap2tone_spec">80ms or less average latency is STRONGLY RECOMMENDED to pass.</string>
     <string name="audio_tap2tone_too_few">Not enough edges. Use fingernail.</string>
-    <string name="audio_tap2tone_too_many">Too many edges. Use fingernail.</string>
+    <string name="audio_tap2tone_too_many">Too many edges. Use fingernail. Ensure there is
+    no background noise.</string>
 
     <!-- Strings for 6DoF test -->
     <string name="six_dof_test">6DoF Test</string>
