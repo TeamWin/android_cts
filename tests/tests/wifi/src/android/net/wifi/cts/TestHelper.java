@@ -499,6 +499,17 @@ public class TestHelper {
                 assertThat(testNetworkCallback.onAvailableCalled).isTrue();
                 final WifiInfo wifiInfo = getWifiInfo(testNetworkCallback.networkCapabilities);
                 assertConnectionEquals(network, wifiInfo);
+                if (WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(mContext)) {
+                    assertThat(wifiInfo.isTrusted()).isTrue();
+                    WifiInfo redact = wifiInfo
+                            .makeCopy(NetworkCapabilities.REDACT_FOR_ACCESS_FINE_LOCATION);
+                    assertThat(wifiInfo.getInformationElements()).isNotNull();
+                    assertThat(redact.getInformationElements()).isNull();
+                    assertThat(redact.getApplicableRedactions()).isEqualTo(
+                            NetworkCapabilities.REDACT_FOR_ACCESS_FINE_LOCATION
+                            | NetworkCapabilities.REDACT_FOR_LOCAL_MAC_ADDRESS
+                            | NetworkCapabilities.REDACT_FOR_NETWORK_SETTINGS);
+                }
                 if (BuildCompat.isAtLeastS()) {
                     // If STA concurrency for restricted connection is supported, this should not
                     // be the primary connection.
