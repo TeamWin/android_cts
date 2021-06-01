@@ -391,7 +391,11 @@ public class FrameRateCtsActivity extends Activity {
         }
     }
 
-    private boolean isAlternative(Display.Mode mode, Display.Mode other) {
+    private boolean isSeamless(Display.Mode mode, Display.Mode other) {
+        if (mode.getModeId() == other.getModeId()) {
+            return true;
+        }
+
         if (!hasSameResolution(mode, other)) {
             return false;
         }
@@ -430,7 +434,7 @@ public class FrameRateCtsActivity extends Activity {
         List<Float> seamedRefreshRates = new ArrayList<>();
         Display.Mode[] modes = display.getSupportedModes();
         for (Display.Mode otherMode : modes) {
-            if (hasSameResolution(mode, otherMode) && !isAlternative(mode, otherMode)) {
+            if (!isSeamless(mode, otherMode)) {
                 seamedRefreshRates.add(otherMode.getRefreshRate());
             }
         }
@@ -609,7 +613,7 @@ public class FrameRateCtsActivity extends Activity {
             Display.Mode toMode = mModeChangedEvents.get(eventId);
             assertTrue("Non-seamless mode switch was not expected, but there was a "
                             + "non-seamless switch from from " + fromMode + " to " + toMode + ".",
-                    isAlternative(fromMode, toMode));
+                    isSeamless(fromMode, toMode));
         }
     }
 
