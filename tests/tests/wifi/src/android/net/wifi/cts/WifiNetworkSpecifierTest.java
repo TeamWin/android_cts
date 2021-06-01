@@ -228,10 +228,6 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
         // Pick any network in range.
         sTestNetwork = TestHelper.findMatchingSavedNetworksWithBssid(wifiManager, savedNetworks)
                 .get(0);
-
-        // Disconnect & disable auto-join on the saved network to prevent auto-connect from
-        // interfering with the test.
-        disableAllSavedNetworks(wifiManager);
     }
 
     private static void enableAllSavedNetworks(@NonNull WifiManager wifiManager) {
@@ -292,6 +288,9 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
                     () -> mWifiManager.removeAppState(myUid(), mContext.getPackageName()));
         }
 
+        // Disconnect & disable auto-join on the saved network to prevent auto-connect from
+        // interfering with the test.
+        disableAllSavedNetworks(mWifiManager);
 
         // Wait for Wifi to be disconnected.
         PollingCheck.check(
