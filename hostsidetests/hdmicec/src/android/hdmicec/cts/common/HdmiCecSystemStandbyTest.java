@@ -115,8 +115,12 @@ public final class HdmiCecSystemStandbyTest extends BaseHdmiCecCtsTest {
          * a feature to turn off this standby broadcast and this test tests the same.
          */
         sendDeviceToSleep();
-        hdmiCecClient.checkOutputDoesNotContainMessage(LogicalAddress.BROADCAST,
-                CecOperand.STANDBY);
+        try {
+            hdmiCecClient.checkOutputDoesNotContainMessage(
+                    LogicalAddress.BROADCAST, CecOperand.STANDBY);
+        } finally {
+            wakeUpDevice();
+        }
     }
 
     private void defineLogicalAddressList() throws Exception {

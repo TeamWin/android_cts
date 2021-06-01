@@ -100,6 +100,7 @@ public final class HdmiCecTvPowerToggleTest extends BaseHdmiCecCtsTest {
             assertThat(wakeState.trim()).isEqualTo("mWakefulness=Asleep");
         } finally {
             setPowerControlMode(previousPowerControlMode);
+            wakeUpDevice();
         }
     }
 
@@ -133,6 +134,7 @@ public final class HdmiCecTvPowerToggleTest extends BaseHdmiCecCtsTest {
             assertThat(wakeState.trim()).isEqualTo("mWakefulness=Asleep");
         } finally {
             setPowerControlMode(previousPowerControlMode);
+            wakeUpDevice();
         }
     }
 
@@ -165,6 +167,7 @@ public final class HdmiCecTvPowerToggleTest extends BaseHdmiCecCtsTest {
             assertThat(wakeState.trim()).isEqualTo("mWakefulness=Asleep");
         } finally {
             setPowerControlMode(previousPowerControlMode);
+            wakeUpDevice();
         }
     }
 
@@ -198,6 +201,7 @@ public final class HdmiCecTvPowerToggleTest extends BaseHdmiCecCtsTest {
             assertThat(wakeState.trim()).isEqualTo("mWakefulness=Awake");
         } finally {
             setPowerControlMode(previousPowerControlMode);
+            wakeUpDevice();
         }
     }
 }
