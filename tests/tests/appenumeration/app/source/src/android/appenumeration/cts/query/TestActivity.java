@@ -231,6 +231,8 @@ public class TestActivity extends Activity {
             } else if (Constants.ACTION_GET_SHAREDLIBRARY_DEPENDENT_PACKAGES.equals(action)) {
                 final String sharedLibName = intent.getStringExtra(Intent.EXTRA_PACKAGE_NAME);
                 sendGetSharedLibraryDependentPackages(remoteCallback, sharedLibName);
+            } else if (Constants.ACTION_GET_PREFERRED_ACTIVITIES.equals(action)) {
+                sendGetPreferredActivities(remoteCallback);
             } else {
                 sendError(remoteCallback, new Exception("unknown action " + action));
             }
@@ -568,6 +570,19 @@ public class TestActivity extends Activity {
                         .distinct().collect(Collectors.toList()).toArray(new String[]{});
         final Bundle result = new Bundle();
         result.putStringArray(Intent.EXTRA_PACKAGES, dependentPackages);
+        remoteCallback.sendResult(result);
+        finish();
+    }
+
+    private void sendGetPreferredActivities(RemoteCallback remoteCallback) {
+        final List<IntentFilter> filters = new ArrayList<>();
+        final List<ComponentName> activities = new ArrayList<>();
+        getPackageManager().getPreferredActivities(filters, activities, null /* packageName*/);
+        final String[] packages = activities.stream()
+                .map(componentName -> componentName.getPackageName()).distinct()
+                .collect(Collectors.toList()).toArray(new String[]{});
+        final Bundle result = new Bundle();
+        result.putStringArray(Intent.EXTRA_PACKAGES, packages);
         remoteCallback.sendResult(result);
         finish();
     }
