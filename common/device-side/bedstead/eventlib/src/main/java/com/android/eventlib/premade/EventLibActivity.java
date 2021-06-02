@@ -39,6 +39,19 @@ public class EventLibActivity extends Activity {
         mOverrideActivityClassName = overrideActivityClassName;
     }
 
+    /**
+     * Gets the class name of this activity.
+     *
+     * <p>If the class name has been overridden, that will be returned instead.
+     */
+    public String getClassName() {
+        if (mOverrideActivityClassName != null) {
+            return mOverrideActivityClassName;
+        }
+
+        return EventLibActivity.class.getName();
+    }
+
     /** Log a {@link ActivityCreatedEvent}. */
     @Override
     protected void onCreate(Bundle savedInstanceState) {

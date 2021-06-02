@@ -248,6 +248,8 @@ public final class Processor extends AbstractProcessor {
                     .nextControlFlow("catch ($T e)",
                             PROFILE_RUNTIME_EXCEPTION_CLASSNAME)
                     .addCode("throw ($T) e.getCause();", RuntimeException.class)
+                    .nextControlFlow("finally")
+                    .addCode("mConnector.stopManualConnectionManagement();")
                     .endControlFlow();
 
             classBuilder.addMethod(methodBuilder.build());
