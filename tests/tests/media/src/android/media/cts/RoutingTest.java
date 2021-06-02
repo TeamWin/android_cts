@@ -607,6 +607,7 @@ public class RoutingTest extends AndroidTestCase {
 
     private MediaPlayer allocMediaPlayer(AudioDeviceInfo device, boolean start) {
         final String res = "testmp3_2.mp3";
+        Preconditions.assertTestFileExists(mInpPrefix + res);
         MediaPlayer mediaPlayer = MediaPlayer.create(mContext, Uri
                 .fromFile(new File(mInpPrefix + res)));
         mediaPlayer.setAudioAttributes(

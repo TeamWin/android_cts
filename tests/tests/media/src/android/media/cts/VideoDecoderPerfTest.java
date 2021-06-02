@@ -158,6 +158,7 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
     private double doDecode(String name, final String filename, int w, int h, Surface surface,
             int round, long maxTimeMs) throws Exception {
         final String video = mInpPrefix + filename;
+        Preconditions.assertTestFileExists(video);
         MediaExtractor extractor = new MediaExtractor();
         extractor.setDataSource(video);
         extractor.selectTrack(0);
@@ -330,6 +331,7 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
     private MediaFormat[] getVideoTrackFormats(String... resources) throws Exception {
         MediaFormat[] formats = new MediaFormat[resources.length];
         for (int i = 0; i < resources.length; ++i) {
+            Preconditions.assertTestFileExists(mInpPrefix + resources[i]);
             formats[i] = MediaUtils.getTrackFormatForResource(mInpPrefix + resources[i], "video/");
         }
         return formats;

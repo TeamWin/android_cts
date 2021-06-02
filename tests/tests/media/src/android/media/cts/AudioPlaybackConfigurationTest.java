@@ -95,6 +95,7 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
                 .setContentType(TEST_CONTENT)
                 .setAllowedCapturePolicy(ALLOW_CAPTURE_BY_NONE)
                 .build();
+        Preconditions.assertTestFileExists(mInpPrefix + "sine1khzs40dblong.mp3");
         mMp = createPreparedMediaPlayer(
                 Uri.fromFile(new File(mInpPrefix + "sine1khzs40dblong.mp3")), aa,
                 am.generateAudioSessionId());
@@ -144,6 +145,7 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
         List<AudioPlaybackConfiguration> configs = am.getActivePlaybackConfigurations();
         final int nbActivePlayersBeforeStart = configs.size();
 
+        Preconditions.assertTestFileExists(mInpPrefix + "sine1khzs40dblong.mp3");
         mMp = createPreparedMediaPlayer(
                 Uri.fromFile(new File(mInpPrefix + "sine1khzs40dblong.mp3")), aa,
                 am.generateAudioSessionId());
@@ -212,6 +214,7 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
                 .setContentType(TEST_CONTENT)
                 .build();
 
+        Preconditions.assertTestFileExists(mInpPrefix + "sine1khzs40dblong.mp3");
         try {
             mMp =  createPreparedMediaPlayer(
                     Uri.fromFile(new File(mInpPrefix + "sine1khzs40dblong.mp3")), aa,
@@ -277,6 +280,7 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
                 .setContentType(TEST_CONTENT)
                 .build();
 
+        Preconditions.assertTestFileExists(mInpPrefix + "sine1khzs40dblong.mp3");
         try {
             mMp = createPreparedMediaPlayer(
                     Uri.fromFile(new File(mInpPrefix + "sine1khzs40dblong.mp3")), aa,
@@ -351,6 +355,7 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
                 }
             }
         });
+        Preconditions.assertTestFileExists(mInpPrefix +  "sine1320hz5sec.wav");
         final int loadId = mSp.load(mInpPrefix + "sine1320hz5sec.wav", 1/*priority*/);
         synchronized (loadLock) {
             loadLock.wait(TEST_TIMEOUT_SOUNDPOOL_LOAD_MS);
@@ -393,6 +398,7 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
                 .setContentType(TEST_CONTENT)
                 .build();
 
+        Preconditions.assertTestFileExists(mInpPrefix +  "sine1khzs40dblong.mp3");
         try {
             mMp = createPreparedMediaPlayer(
                     Uri.fromFile(new File(mInpPrefix + "sine1khzs40dblong.mp3")), aa,

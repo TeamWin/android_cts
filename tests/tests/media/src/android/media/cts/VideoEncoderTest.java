@@ -1179,6 +1179,8 @@ public class VideoEncoderTest extends MediaPlayerTestBase {
             Log.i(TAG, "testing " + mMime + " on " + mName + " for " + width + "x" + height
                     + (flexYUV ? " flexYUV" : " surface"));
 
+            Preconditions.assertTestFileExists(SOURCE_URL);
+
             VideoProcessorBase processor =
                 flexYUV ? new VideoProcessor() : new SurfaceVideoProcessor();
 
