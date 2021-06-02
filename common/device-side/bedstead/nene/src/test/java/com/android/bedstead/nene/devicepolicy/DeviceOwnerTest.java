@@ -61,7 +61,7 @@ public class DeviceOwnerTest {
     @AfterClass
     public static void teardownClass() {
         sDeviceOwner.remove();
-        sTestApp.reference().uninstall(sUser);
+        sTestApp.uninstall(sUser);
     }
 
     @Test

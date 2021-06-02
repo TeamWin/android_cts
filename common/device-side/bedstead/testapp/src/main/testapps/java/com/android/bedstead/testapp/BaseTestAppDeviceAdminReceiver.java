@@ -29,7 +29,7 @@ import com.android.eventlib.premade.EventLibDeviceAdminReceiver;
  * Implementation of {@link DeviceAdminReceiver} which logs events in response to callbacks and
  * supports TestApp Features.
  */
-public class TestAppDeviceAdminReceiver extends EventLibDeviceAdminReceiver {
+public class BaseTestAppDeviceAdminReceiver extends EventLibDeviceAdminReceiver {
 
     @Override
     public void onEnabled(Context context, Intent intent) {

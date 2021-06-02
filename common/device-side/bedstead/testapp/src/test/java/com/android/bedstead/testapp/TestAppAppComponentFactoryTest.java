@@ -16,6 +16,9 @@
 
 package com.android.bedstead.testapp;
 
+import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK;
+import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import android.content.ComponentName;
@@ -58,7 +61,7 @@ public class TestAppAppComponentFactoryTest {
         Intent intent = new Intent();
         intent.setComponent(new ComponentName(sContext.getPackageName(),
                 DECLARED_ACTIVITY_WITH_NO_CLASS));
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        intent.setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK);
         sContext.startActivity(intent);
 
         EventLogs<ActivityCreatedEvent> eventLogs =
