@@ -120,6 +120,9 @@ class AutoRevokeTest {
         assumeFalse(
                 "AOSP TV doesn't support visible notifications",
                 context.packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK))
+        assumeFalse(
+                "Watch doesn't provide a unified way to check notifications. it depends on UX",
+                hasFeatureWatch())
 
         withUnusedThresholdMs(3L) {
             withDummyApp {
@@ -152,7 +155,7 @@ class AutoRevokeTest {
 
                 if (hasFeatureWatch()) {
                     // In wear os, notification has one additional button to open it
-                    waitFindObject(By.text("Open")).click();
+                    waitFindObject(By.text("Open")).click()
                 }
 
                 waitFindObject(By.text(APK_PACKAGE_NAME))
