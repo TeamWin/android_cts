@@ -108,6 +108,7 @@ public class DecoderTestAacFormat {
             AudioParameter audioParams, int downmixChannelCount)
             throws IOException
     {
+        Preconditions.assertTestFileExists(mInpPrefix + testInput);
         File inpFile = new File(mInpPrefix + testInput);
         ParcelFileDescriptor parcelFD =
                 ParcelFileDescriptor.open(inpFile, ParcelFileDescriptor.MODE_READ_ONLY);
