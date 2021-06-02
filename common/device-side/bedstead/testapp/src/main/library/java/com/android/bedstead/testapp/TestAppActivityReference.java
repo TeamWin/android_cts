@@ -45,7 +45,7 @@ public final class TestAppActivityReference {
     }
 
     /**
-     * Start the activity.
+     * Starts the activity.
      */
     public TestAppActivityReference start() {
         Intent intent = new Intent();
@@ -60,10 +60,20 @@ public final class TestAppActivityReference {
         return this;
     }
 
+    /**
+     * Makes calls on the remote activity.
+     */
+    public RemoteActivity remote() {
+        return new RemoteActivityImpl(
+                mComponent.className(), new TargetedRemoteActivityWrapper(mInstance.connector()));
+    }
+
+    /** Gets the {@link TestAppInstanceReference} this activity exists in. */
     public TestAppInstanceReference testAppInstance() {
         return mInstance;
     }
 
+    /** Gets the {@link ActivityReference} for this activity. */
     public ActivityReference reference() {
         return new ActivityReference(sTestApis, mComponent);
     }
