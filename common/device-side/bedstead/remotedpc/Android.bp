@@ -76,7 +76,7 @@ android_test {
         "testng" // for assertThrows
     ],
     manifest: "src/library/test/AndroidManifest.xml",
-    min_sdk_version: "27"
+    min_sdk_version: "28"
 }
 
 java_library {
