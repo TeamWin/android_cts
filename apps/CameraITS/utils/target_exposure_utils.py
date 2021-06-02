@@ -24,7 +24,8 @@ import capture_request_utils
 import image_processing_utils
 import its_session_utils
 
-CACHE_FILENAME = 'its.target.cfg'
+_CACHE_FILENAME = 'its.target.cfg'
+_REGION_3A = [[0.45, 0.45, 0.1, 0.1, 1]]
 
 
 def get_target_exposure_combos(output_path, its_session=None):
@@ -51,7 +52,7 @@ def get_target_exposure_combos(output_path, its_session=None):
     'midSensitivity'
     'maxSensitivity'
   """
-  target_config_filename = os.path.join(output_path, CACHE_FILENAME)
+  target_config_filename = os.path.join(output_path, _CACHE_FILENAME)
 
   if its_session is None:
     with its_session_utils.ItsSession() as cam:
@@ -72,6 +73,8 @@ def get_target_exposure_combos(output_path, its_session=None):
     if e1_sens > sens_range[1]:
       e1_sens = sens_range[1]
       e1_expt = exposure / e1_sens
+    e1_logging = (f'e1 exp: {e1_expt}, sens: {e1_sens}')
+    logging.debug('%s', e1_logging)
 
     # Combo 2: largest legal exposure time.
     e2_expt = exp_time_range[1]
@@ -79,6 +82,8 @@ def get_target_exposure_combos(output_path, its_session=None):
     if e2_sens < sens_range[0]:
       e2_sens = sens_range[0]
       e2_expt = exposure / e2_sens
+    e2_logging = (f'e2 exp: {e2_expt}, sens: {e2_sens}')
+    logging.debug('%s', e2_logging)
 
     # Combo 3: smallest legal sensitivity.
     e3_sens = sens_range[0]
@@ -86,6 +91,8 @@ def get_target_exposure_combos(output_path, its_session=None):
     if e3_expt > exp_time_range[1]:
       e3_expt = exp_time_range[1]
       e3_sens = exposure / e3_expt
+    e3_logging = (f'e3 exp: {e3_expt}, sens: {e3_sens}')
+    logging.debug('%s', e3_logging)
 
     # Combo 4: largest legal sensitivity.
     e4_sens = sens_range[1]
@@ -93,6 +100,8 @@ def get_target_exposure_combos(output_path, its_session=None):
     if e4_expt < exp_time_range[0]:
       e4_expt = exp_time_range[0]
       e4_sens = exposure / e4_expt
+    e4_logging = (f'e4 exp: {e4_expt}, sens: {e4_sens}')
+    logging.debug('%s', e4_logging)
 
     # Combo 5: middle exposure time.
     e5_expt = (exp_time_range[0] + exp_time_range[1]) / 2.0
@@ -103,6 +112,8 @@ def get_target_exposure_combos(output_path, its_session=None):
     if e5_sens < sens_range[0]:
       e5_sens = sens_range[0]
       e5_expt = exposure / e5_sens
+    e5_logging = (f'e5 exp: {e5_expt}, sens: {e5_sens}')
+    logging.debug('%s', e5_logging)
 
     # Combo 6: middle sensitivity.
     e6_sens = (sens_range[0] + sens_range[1]) / 2.0
@@ -113,6 +124,8 @@ def get_target_exposure_combos(output_path, its_session=None):
     if e6_expt < exp_time_range[0]:
       e6_expt = exp_time_range[0]
       e6_sens = exposure / e6_expt
+    e6_logging = (f'e6 exp: {e6_expt}, sens: {e6_sens}')
+    logging.debug('%s', e6_logging)
 
     return {
         'minExposureTime': (int(e1_expt), int(e1_sens)),
@@ -221,9 +234,8 @@ def do_target_exposure_measurement(its_session):
 
   # Get AE+AWB lock first, so the auto values in the capture result are
   # populated properly.
-  r = [[0.45, 0.45, 0.1, 0.1, 1]]
-  sens, exp_time, gains, xform, _ \
-          = its_session.do_3a(r, r, r, do_af=False, get_results=True)
+  sens, exp_time, gains, xform, _ = its_session.do_3a(
+      _REGION_3A, _REGION_3A, _REGION_3A, do_af=False, get_results=True)
 
   # Convert the transform to rational.
   xform_rat = [{'numerator': int(100 * x), 'denominator': 100} for x in xform]
