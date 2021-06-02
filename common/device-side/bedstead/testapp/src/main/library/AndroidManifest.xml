@@ -17,9 +17,8 @@
   -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="android.EmptyTestApp2">
-    <application
-        android:appComponentFactory="com.android.bedstead.testapp.TestAppAppComponentFactory">
+          package="com.android.bedstead.testapp.library">
+    <uses-sdk android:minSdkVersion="27" />
+    <application>
     </application>
-    <uses-sdk android:minSdkVersion="27" android:targetSdkVersion="27"/>
 </manifest>
