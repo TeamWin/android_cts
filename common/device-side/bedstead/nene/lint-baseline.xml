@@ -3,7 +3,7 @@
 
     <issue
         id="NewApi"
-        message="Call requires API level 10000 (current min is 27): `AdbUserParser31`"
+        message="Call requires API level 31 (current min is 27): `AdbUserParser31`"
         errorLine1="            return new AdbUserParser31(testApis);"
         errorLine2="                   ~~~~~~~~~~~~~~~~~~~">
         <location
