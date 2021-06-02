@@ -180,6 +180,7 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
 
     protected static AssetFileDescriptor getAssetFileDescriptorFor(final String res)
             throws FileNotFoundException {
+        Preconditions.assertTestFileExists(mInpPrefix + res);
         File inpFile = new File(mInpPrefix + res);
         ParcelFileDescriptor parcelFD =
                 ParcelFileDescriptor.open(inpFile, ParcelFileDescriptor.MODE_READ_ONLY);
@@ -389,6 +390,7 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
 
     private int testDecoder(final String res, boolean wrapFd, boolean useCallback)
             throws Exception {
+        Preconditions.assertTestFileExists(mInpPrefix + res);
         if (!MediaUtils.hasCodecsForResource(mInpPrefix  + res)) {
             return 0; // skip
         }
@@ -594,6 +596,7 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
     }
 
     private int testVideoPlayback(final String res) throws Exception {
+        Preconditions.assertTestFileExists(mInpPrefix + res);
         if (!MediaUtils.checkCodecsForResource(mInpPrefix + res)) {
             return 0; // skip
         }
@@ -655,6 +658,7 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
     }
 
     private void testMuxer(final String res, boolean webm) throws Exception {
+        Preconditions.assertTestFileExists(mInpPrefix + res);
         if (!MediaUtils.checkCodecsForResource(mInpPrefix + res)) {
             return; // skip
         }
@@ -695,6 +699,7 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
         org.release();
         remux.release();
 
+        Preconditions.assertTestFileExists(mInpPrefix + res);
         MediaPlayer player1 =
                 MediaPlayer.create(mContext, Uri.fromFile(new File(mInpPrefix + res)));
         MediaPlayer player2 = MediaPlayer.create(mContext, Uri.parse("file://" + tmpFile));

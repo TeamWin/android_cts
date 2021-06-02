@@ -108,6 +108,7 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
     protected AssetFileDescriptor getAssetFileDescriptorFor(final String res)
             throws FileNotFoundException {
         File inpFile = new File(mInpPrefix + res);
+        Preconditions.assertTestFileExists(mInpPrefix + res);
         ParcelFileDescriptor parcelFD =
                 ParcelFileDescriptor.open(inpFile, ParcelFileDescriptor.MODE_READ_ONLY);
         return new AssetFileDescriptor(parcelFD, 0, parcelFD.getStatSize());
@@ -1109,6 +1110,7 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
         MediaExtractor extractor = null;
         AssetFileDescriptor afd = null;
         InputStream inputStream = null;
+        Preconditions.assertTestFileExists(mInpPrefix + res);
 
         try {
             setDataSourceFd(res);
@@ -1218,6 +1220,7 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
     private void copyMediaFile() {
         InputStream inputStream = null;
         FileOutputStream outputStream = null;
+        Preconditions.assertTestFileExists(mInpPrefix + "testvideo.3gp");
         String outputPath = new File(
             Environment.getExternalStorageDirectory(), TEST_MEDIA_FILE).getAbsolutePath();
         try {
