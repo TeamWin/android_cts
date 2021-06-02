@@ -63,7 +63,7 @@ import java.util.function.Consumer;
 /**
  * Tests for {@link SmartspaceManager}
  *
- * atest CtsSearchUiServiceTestCases
+ * atest CtsSmartspaceServiceTestCases
  */
 @RunWith(AndroidJUnit4.class)
 public class SmartspaceManagerTest {
