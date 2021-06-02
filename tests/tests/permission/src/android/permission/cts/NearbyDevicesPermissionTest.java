@@ -39,6 +39,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 
 import androidx.test.InstrumentationRegistry;
@@ -68,8 +69,6 @@ public class NearbyDevicesPermissionTest {
     private static final String APK_BLUETOOTH_NEVER_FOR_LOCATION_31 = TMP_DIR
             + "CtsAppThatRequestsBluetoothPermissionNeverForLocation31.apk";
 
-    private static final String METHOD_SCAN_BLUETOOTH = "scan_bluetooth";
-
     private enum Result {
         UNKNOWN, EXCEPTION, EMPTY, FILTERED, FULL
     }
@@ -96,6 +95,7 @@ public class NearbyDevicesPermissionTest {
         }
     }
 
+    @Before
     @After
     public void uninstallTestApp() {
         uninstallApp(TEST_APP_PKG);
@@ -227,10 +227,12 @@ public class NearbyDevicesPermissionTest {
     }
 
     private void assertScanBluetoothResult(Result expected) {
+        SystemClock.sleep(1000); // Wait for location permissions to propagate
         final ContentResolver resolver = InstrumentationRegistry.getTargetContext()
                 .getContentResolver();
-        final Bundle res = resolver.call(TEST_APP_AUTHORITY, METHOD_SCAN_BLUETOOTH, null, null);
-        assertEquals(expected, Result.values()[res.getInt(Intent.EXTRA_INDEX)]);
+        final Bundle res = resolver.call(TEST_APP_AUTHORITY, "", null, null);
+        Result actual = Result.values()[res.getInt(Intent.EXTRA_INDEX)];
+        assertEquals(expected, actual);
     }
 
     private boolean supportsBluetooth() {
