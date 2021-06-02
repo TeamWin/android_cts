@@ -28,6 +28,7 @@ import opencv_processing_utils
 
 
 FRAME_ATOL_MS = 10
+MIN_AF_FD_TOL = 1.2  # AF value must < 1.2*min
 NAME = os.path.splitext(os.path.basename(__file__))[0]
 NUM_FRAMES_PER_FD = 12
 POSITION_RTOL = 0.10  # 10%
@@ -62,8 +63,7 @@ def take_caps_and_determine_sharpness(
   data_set = {}
   white_level = int(props['android.sensor.info.whiteLevel'])
   min_fd = props['android.lens.info.minimumFocusDistance']
-  fds = [af_fd, min_fd]
-  fds = sorted(fds * NUM_FRAMES_PER_FD)
+  fds = [af_fd] * NUM_FRAMES_PER_FD + [min_fd] * NUM_FRAMES_PER_FD
   reqs = []
   for i, fd in enumerate(fds):
     reqs.append(capture_request_utils.manual_capture_request(gain, exp))
@@ -125,12 +125,12 @@ class LensMovementReportingTest(its_base_test.ItsBaseTest):
 
       # Get proper sensitivity, exposure time, and focus distance with 3A.
       mono_camera = camera_properties_utils.mono_camera(props)
-      s, e, _, _, fd = cam.do_3a(get_results=True, mono_camera=mono_camera)
+      s, e, _, _, af_fd = cam.do_3a(get_results=True, mono_camera=mono_camera)
 
       # Get sharpness for each focal distance
       fmt = {'format': 'yuv', 'width': VGA_WIDTH, 'height': VGA_HEIGHT}
       d = take_caps_and_determine_sharpness(
-          cam, props, fmt, s, e, fd, chart, self.log_path)
+          cam, props, fmt, s, e, af_fd, chart, self.log_path)
       for k in sorted(d):
         logging.debug(
             'i: %d\tfd: %.3f\tlens location (diopters): %.3f \t'
@@ -156,7 +156,7 @@ class LensMovementReportingTest(its_base_test.ItsBaseTest):
       for k in sorted(d):
         if d[k]['fd'] == props['android.lens.info.minimumFocusDistance']:
           d_min_fd[k] = d[k]
-        if d[k]['fd'] == fd:
+        if d[k]['fd'] == af_fd:
           d_af_fd[k] = d[k]
 
       logging.debug('Assert reported locs are close for af_fd captures')
@@ -196,12 +196,18 @@ class LensMovementReportingTest(its_base_test.ItsBaseTest):
                              f'max: {max_sharp:.3f}, RTOL: {SHARPNESS_RTOL}')
 
       logging.debug('Assert reported loc is close to assigned loc for min_fd')
-      last_key = 2 * NUM_FRAMES_PER_FD - (START_FRAME + 1)
+      last_key = max(d_min_fd.keys())  # find last (non-moving) frame
       loc = d_min_fd[last_key]['loc']
       fd = d_min_fd[last_key]['fd']
       if not np.isclose(loc, fd, rtol=POSITION_RTOL):
         raise AssertionError(f'min_fd[loc]: {loc:.3f}, min_fd[fd]: {fd:.3f}, '
                              f'RTOL: {POSITION_RTOL}')
+
+      logging.debug('Assert AF focus distance > minimum focus distance')
+      min_fd = d_min_fd[last_key]['fd']
+      if af_fd > min_fd * MIN_AF_FD_TOL:
+        raise AssertionError(f'AF focus distance > min focus distance! af: '
+                             f'{af_fd}, min: {min_fd}, TOL: {MIN_AF_FD_TOL}')
 
 if __name__ == '__main__':
   test_runner.main()
