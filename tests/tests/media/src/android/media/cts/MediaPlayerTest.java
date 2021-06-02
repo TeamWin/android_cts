@@ -83,6 +83,7 @@ import java.util.stream.Stream;
  */
 @SmallTest
 @RequiresDevice
+@NonMediaMainlineTest
 @AppModeFull(reason = "TODO: evaluate and port to instant")
 public class MediaPlayerTest extends MediaPlayerTestBase {
 
