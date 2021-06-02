@@ -39,8 +39,7 @@ public class LocalForegroundServiceLocation extends LocalForegroundService {
     private int mNotificationId = 10;
 
     /** Returns the channel id for this service */
-    @Override
-    protected String getNotificationChannelId() {
+    public static String getNotificationChannelId() {
         return NOTIFICATION_CHANNEL_ID;
     }
 

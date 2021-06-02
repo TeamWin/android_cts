@@ -27,6 +27,7 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.timeout;
@@ -104,7 +105,7 @@ public class AlertWindowsAppOpsTests {
         // The app op should start
         verify(listener, timeout(APP_OP_CHANGE_TIMEOUT_MILLIS)
                 .only()).onOpActiveChanged(eq(OPSTR_SYSTEM_ALERT_WINDOW),
-                eq(uid), eq(packageName), eq(true));
+                eq(uid), eq(packageName), isNull(), eq(true), anyInt(), anyInt());
 
         // The app op should be reported as started
         assertTrue(appOpsManager.isOpActive(OPSTR_SYSTEM_ALERT_WINDOW,
@@ -120,7 +121,7 @@ public class AlertWindowsAppOpsTests {
         // The app op should finish
         verify(listener, timeout(APP_OP_CHANGE_TIMEOUT_MILLIS)
                 .only()).onOpActiveChanged(eq(OPSTR_SYSTEM_ALERT_WINDOW),
-                eq(uid), eq(packageName), eq(false));
+                eq(uid), eq(packageName), isNull(), eq(false), anyInt(), anyInt());
 
         // The app op should be reported as finished
         assertFalse(appOpsManager.isOpActive(OPSTR_SYSTEM_ALERT_WINDOW, uid, packageName));

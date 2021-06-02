@@ -1182,14 +1182,8 @@ public class ServiceTest extends ActivityTestsBase {
         waitForResultOrThrow(DELAY, "service to be destroyed");
     }
 
-    public void testForegroundService_deferredNotification() throws Exception {
-        mExpectedServiceState = STATE_START_1;
-        startForegroundService(COMMAND_START_FOREGROUND_DEFER_NOTIFICATION);
-        waitForResultOrThrow(DELAY, "service to start with deferred notification");
-        assertNoNotification(1);
-
-        // Wait ten seconds
-        final long stopTime = SystemClock.uptimeMillis() + 10_000L;
+    private void waitMillis(long timeMillis) {
+        final long stopTime = SystemClock.uptimeMillis() + timeMillis;
         while (SystemClock.uptimeMillis() < stopTime) {
             try {
                 Thread.sleep(1000L);
@@ -1197,9 +1191,103 @@ public class ServiceTest extends ActivityTestsBase {
                 /* ignore */
             }
         }
+    }
 
-        // And verify that the notification is now visible
+    public void testForegroundService_deferredNotification() throws Exception {
+        mExpectedServiceState = STATE_START_1;
+        startForegroundService(COMMAND_START_FOREGROUND_DEFER_NOTIFICATION);
+        waitForResultOrThrow(DELAY, "service to start with deferred notification");
+        assertNoNotification(1);
+
+        // Wait ten seconds and verify that the notification is now visible
+        waitMillis(10_000L);
         assertNotification(1, LocalForegroundService.getNotificationTitle(1));
+
+        mExpectedServiceState = STATE_DESTROY;
+        mContext.stopService(mLocalForegroundService);
+        waitForResultOrThrow(DELAY, "service to be destroyed");
+    }
+
+    public void testForegroundService_deferredExistingNotification() throws Exception {
+        // First, post the notification outright as not-FGS-related
+        final NotificationManager nm = getNotificationManager();
+        final String channelId = LocalForegroundService.getNotificationChannelId();
+        nm.createNotificationChannel(new NotificationChannel(channelId, channelId,
+                NotificationManager.IMPORTANCE_DEFAULT));
+        Notification.Builder builder =
+                new Notification.Builder(mContext, channelId)
+                        .setContentTitle(LocalForegroundService.getNotificationTitle(1))
+                        .setSmallIcon(R.drawable.black);
+        nm.notify(1, builder.build());
+
+        mExpectedServiceState = STATE_START_1;
+        startForegroundService(COMMAND_START_FOREGROUND_DEFER_NOTIFICATION);
+        waitForResultOrThrow(DELAY, "service to start with existing notification");
+
+        // Normally deferred but should display immediately because the notification
+        // was already showing
+        assertNotification(1, LocalForegroundService.getNotificationTitle(1));
+
+        mExpectedServiceState = STATE_DESTROY;
+        mContext.stopService(mLocalForegroundService);
+        waitForResultOrThrow(DELAY, "service to be destroyed");
+    }
+
+    public void testForegroundService_deferThenImmediateNotify() throws Exception {
+        final String notificationTitle = "deferThenImmediateNotify";
+
+        mExpectedServiceState = STATE_START_1;
+        startForegroundService(COMMAND_START_FOREGROUND_DEFER_NOTIFICATION);
+        waitForResultOrThrow(DELAY, "service to start with deferred notification");
+        assertNoNotification(1);
+
+        // Explicitly post a new Notification with the same id, still deferrable
+        final NotificationManager nm = getNotificationManager();
+        final String channelId = LocalForegroundService.getNotificationChannelId();
+        nm.createNotificationChannel(new NotificationChannel(channelId, channelId,
+                NotificationManager.IMPORTANCE_DEFAULT));
+        Notification.Builder builder =
+                new Notification.Builder(mContext, channelId)
+                        .setContentTitle(notificationTitle)
+                        .setSmallIcon(R.drawable.black)
+                        .setForegroundServiceBehavior(Notification.FOREGROUND_SERVICE_IMMEDIATE);
+        nm.notify(1, builder.build());
+
+        // Verify that the notification is immediately shown with the new content
+        assertNotification(1, notificationTitle);
+
+        mExpectedServiceState = STATE_DESTROY;
+        mContext.stopService(mLocalForegroundService);
+        waitForResultOrThrow(DELAY, "service to be destroyed");
+    }
+
+    public void testForegroundService_deferThenDeferrableNotify() throws Exception {
+        final String notificationTitle = "deferThenDeferrableNotify";
+
+        mExpectedServiceState = STATE_START_1;
+        startForegroundService(COMMAND_START_FOREGROUND_DEFER_NOTIFICATION);
+        waitForResultOrThrow(DELAY, "service to start with deferred notification");
+        assertNoNotification(1);
+
+        // Explicitly post a new Notification with the same id, still deferrable
+        final NotificationManager nm = getNotificationManager();
+        final String channelId = LocalForegroundService.getNotificationChannelId();
+        nm.createNotificationChannel(new NotificationChannel(channelId, channelId,
+                NotificationManager.IMPORTANCE_DEFAULT));
+        Notification.Builder builder =
+                new Notification.Builder(mContext, channelId)
+                        .setContentTitle(notificationTitle)
+                        .setSmallIcon(R.drawable.black)
+                        .setForegroundServiceBehavior(Notification.FOREGROUND_SERVICE_DEFERRED);
+        nm.notify(1, builder.build());
+
+        // Normally would have displayed, but should only have been taken as the eventual
+        // deferred notification.  Verify that it isn't shown yet, then re-verify after
+        // the ten second deferral period that it's both visible and has the correct
+        // (updated) title.
+        assertNoNotification(1);
+        waitMillis(10_000L);
+        assertNotification(1, notificationTitle);
 
         mExpectedServiceState = STATE_DESTROY;
         mContext.stopService(mLocalForegroundService);

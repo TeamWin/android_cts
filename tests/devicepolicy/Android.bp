@@ -38,5 +38,5 @@ android_test {
         "vts10",
         "general-tests",
     ],
-    sdk_version: "test_current",
+    platform_apis: true,
 }
