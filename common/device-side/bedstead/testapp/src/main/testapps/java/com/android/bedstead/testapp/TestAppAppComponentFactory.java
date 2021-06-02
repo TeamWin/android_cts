@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.eventlib.premade;
+package com.android.bedstead.testapp;
 
 import android.app.Activity;
 import android.app.AppComponentFactory;
@@ -23,11 +23,11 @@ import android.content.Intent;
 import android.util.Log;
 
 /**
- * An {@link AppComponentFactory} which redirects invalid class names to premade EventLib classes.
+ * An {@link AppComponentFactory} which redirects invalid class names to premade TestApp classes.
  */
-public final class EventLibAppComponentFactory extends AppComponentFactory {
+public final class TestAppAppComponentFactory extends AppComponentFactory {
 
-    private static final String LOG_TAG = "EventLibACF";
+    private static final String LOG_TAG = "TestAppACF";
 
     @Override
     public Activity instantiateActivity(ClassLoader classLoader, String className, Intent intent)
@@ -37,10 +37,10 @@ public final class EventLibAppComponentFactory extends AppComponentFactory {
             return super.instantiateActivity(classLoader, className, intent);
         } catch (ClassNotFoundException e) {
             Log.d(LOG_TAG,
-                    "Activity class (" + className + ") not found, routing to EventLibActivity");
-            EventLibActivity activity =
-                    (EventLibActivity) super.instantiateActivity(
-                            classLoader, EventLibActivity.class.getName(), intent);
+                    "Activity class (" + className + ") not found, routing to TestAppActivity");
+            TestAppActivity activity =
+                    (TestAppActivity) super.instantiateActivity(
+                            classLoader, TestAppActivity.class.getName(), intent);
             activity.setOverrideActivityClassName(className);
             return activity;
         }
@@ -54,11 +54,11 @@ public final class EventLibAppComponentFactory extends AppComponentFactory {
             return super.instantiateReceiver(classLoader, className, intent);
         } catch (ClassNotFoundException e) {
             Log.d(LOG_TAG, "Broadcast Receiver class (" + className
-                    + ") not found, routing to EventLibBroadcastReceiver");
+                    + ") not found, routing to TestAppBroadcastReceiver");
 
-            EventLibBroadcastReceiver receiver = (EventLibBroadcastReceiver)
+            TestAppBroadcastReceiver receiver = (TestAppBroadcastReceiver)
                     super.instantiateReceiver(
-                            classLoader, EventLibBroadcastReceiver.class.getName(), intent);
+                            classLoader, TestAppBroadcastReceiver.class.getName(), intent);
             receiver.setOverrideBroadcastReceiverClassName(className);
             return receiver;
         }
