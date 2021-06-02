@@ -18,6 +18,8 @@ package com.android.bedstead.testapp;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.testng.Assert.assertThrows;
+
 import android.content.Context;
 import android.os.UserHandle;
 
@@ -38,6 +40,8 @@ public class TestAppTest {
     private static final TestApis sTestApis = new TestApis();
     private static final UserReference sUser = sTestApis.users().instrumented();
     private static final UserHandle sUserHandle = sUser.userHandle();
+    private static final UserReference sNonExistingUser = sTestApis.users().find(9999);
+    private static final UserHandle sNonExistingUserHandle = sNonExistingUser.userHandle();
     private static final Context sContext = sTestApis.context().instrumentedContext();
 
     private TestAppProvider mTestAppProvider;
@@ -64,7 +68,7 @@ public class TestAppTest {
 
             assertThat(pkg.packageName()).isEqualTo(testApp.packageName());
         } finally {
-            testApp.reference().uninstall(sUser);
+            testApp.uninstall(sUser);
         }
     }
 
@@ -77,7 +81,21 @@ public class TestAppTest {
         try {
             assertThat(testApp.resolve().installedOnUsers()).contains(sUser);
         } finally {
-            testApp.reference().uninstall(sUser);
+            testApp.uninstall(sUser);
+        }
+    }
+
+    @Test
+    public void install_userReference_returnsReferenceToInstance() {
+        TestApp testApp = mTestAppProvider.any();
+
+        try {
+            TestAppInstanceReference testAppInstance = testApp.install(sUser);
+
+            assertThat(testAppInstance.testApp()).isEqualTo(testApp);
+            assertThat(testAppInstance.user()).isEqualTo(sUser);
+        } finally {
+            testApp.uninstall(sUser);
         }
     }
 
@@ -90,7 +108,159 @@ public class TestAppTest {
         try {
             assertThat(testApp.resolve().installedOnUsers()).contains(sUser);
         } finally {
-            testApp.reference().uninstall(sUser);
+            testApp.uninstall(sUser);
+        }
+    }
+
+    @Test
+    public void install_userHandle_returnsReferenceToInstance() {
+        TestApp testApp = mTestAppProvider.any();
+
+        try {
+            TestAppInstanceReference testAppInstance = testApp.install(sUserHandle);
+
+            assertThat(testAppInstance.testApp()).isEqualTo(testApp);
+            assertThat(testAppInstance.user()).isEqualTo(sUser);
+        } finally {
+            testApp.uninstall(sUser);
+        }
+    }
+
+    @Test
+    public void install_nullUserReference_throwsException() {
+        TestApp testApp = mTestAppProvider.any();
+
+        assertThrows(NullPointerException.class, () -> testApp.install((UserReference) null));
+    }
+
+    @Test
+    public void install_nullUserHandle_throwsException() {
+        TestApp testApp = mTestAppProvider.any();
+
+        assertThrows(NullPointerException.class, () -> testApp.install((UserHandle) null));
+    }
+
+    @Test
+    public void instance_userHandle_instanceIsNotInstalled_stillReturnsInstance() {
+        TestApp testApp = mTestAppProvider.any();
+
+        TestAppInstanceReference testAppInstance = testApp.instance(sUserHandle);
+
+        assertThat(testAppInstance.testApp()).isEqualTo(testApp);
+        assertThat(testAppInstance.user()).isEqualTo(sUser);
+    }
+
+    @Test
+    public void instance_userReference_instanceIsNotInstalled_stillReturnsInstance() {
+        TestApp testApp = mTestAppProvider.any();
+
+        TestAppInstanceReference testAppInstance = testApp.instance(sNonExistingUserHandle);
+
+        assertThat(testAppInstance.testApp()).isEqualTo(testApp);
+        assertThat(testAppInstance.user()).isEqualTo(sNonExistingUser);
+    }
+
+    @Test
+    public void instance_userHandle_nonExistingUser_stillReturnsInstance() {
+        TestApp testApp = mTestAppProvider.any();
+
+        TestAppInstanceReference testAppInstance = testApp.instance(sUserHandle);
+
+        assertThat(testAppInstance.testApp()).isEqualTo(testApp);
+        assertThat(testAppInstance.user()).isEqualTo(sUser);
+    }
+
+    @Test
+    public void instance_nullUserHandle_throwsException() {
+        TestApp testApp = mTestAppProvider.any();
+
+        assertThrows(NullPointerException.class, () -> testApp.instance((UserHandle) null));
+    }
+
+    @Test
+    public void instance_userReference_nonExistingUser_stillReturnsInstance() {
+        TestApp testApp = mTestAppProvider.any();
+
+        TestAppInstanceReference testAppInstance = testApp.instance(sNonExistingUser);
+
+        assertThat(testAppInstance.testApp()).isEqualTo(testApp);
+        assertThat(testAppInstance.user()).isEqualTo(sNonExistingUser);
+    }
+
+    @Test
+    public void instance_nullUserReference_throwsException() {
+        TestApp testApp = mTestAppProvider.any();
+
+        assertThrows(NullPointerException.class, () -> testApp.instance((UserReference) null));
+    }
+
+    @Test
+    public void uninstall_nullUserReference_throwsException() {
+        TestApp testApp = mTestAppProvider.any();
+
+        assertThrows(NullPointerException.class, () -> testApp.uninstall((UserReference) null));
+    }
+
+    @Test
+    public void uninstall_nullUserHandle_throwsException() {
+        TestApp testApp = mTestAppProvider.any();
+
+        assertThrows(NullPointerException.class, () -> testApp.uninstall((UserHandle) null));
+    }
+
+    @Test
+    public void uninstall_userReference_nonExistingUser_doesNothing() {
+        TestApp testApp = mTestAppProvider.any();
+
+        testApp.uninstall(sNonExistingUser);
+    }
+
+    @Test
+    public void uninstall_userHandle_nonExistingUser_doesNothing() {
+        TestApp testApp = mTestAppProvider.any();
+
+        testApp.uninstall(sNonExistingUserHandle);
+    }
+
+    @Test
+    public void uninstall_userReference_notInstalled_doesNothing() {
+        TestApp testApp = mTestAppProvider.any();
+        testApp.uninstall(sUser);
+
+        testApp.uninstall(sUser);
+    }
+
+    @Test
+    public void uninstall_userHandle_notInstalled_doesNothing() {
+        TestApp testApp = mTestAppProvider.any();
+        testApp.uninstall(sUser);
+
+        testApp.uninstall(sUserHandle);
+    }
+
+    @Test
+    public void uninstall_userHandle_uninstalls() {
+        TestApp testApp = mTestAppProvider.any();
+        testApp.install(sUser);
+
+        testApp.uninstall(sUserHandle);
+
+        Package testAppPackage = testApp.reference().resolve();
+        if (testAppPackage != null) {
+            assertThat(testAppPackage.installedOnUsers()).doesNotContain(sUser);
+        }
+    }
+
+    @Test
+    public void uninstall_userReference_uninstalls() {
+        TestApp testApp = mTestAppProvider.any();
+        testApp.install(sUser);
+
+        testApp.uninstall(sUser);
+
+        Package testAppPackage = testApp.reference().resolve();
+        if (testAppPackage != null) {
+            assertThat(testAppPackage.installedOnUsers()).doesNotContain(sUser);
         }
     }
 

@@ -38,9 +38,9 @@ public final class TestAppAppComponentFactory extends AppComponentFactory {
         } catch (ClassNotFoundException e) {
             Log.d(LOG_TAG,
                     "Activity class (" + className + ") not found, routing to TestAppActivity");
-            TestAppActivity activity =
-                    (TestAppActivity) super.instantiateActivity(
-                            classLoader, TestAppActivity.class.getName(), intent);
+            BaseTestAppActivity activity =
+                    (BaseTestAppActivity) super.instantiateActivity(
+                            classLoader, BaseTestAppActivity.class.getName(), intent);
             activity.setOverrideActivityClassName(className);
             return activity;
         }
@@ -56,9 +56,9 @@ public final class TestAppAppComponentFactory extends AppComponentFactory {
             Log.d(LOG_TAG, "Broadcast Receiver class (" + className
                     + ") not found, routing to TestAppBroadcastReceiver");
 
-            TestAppBroadcastReceiver receiver = (TestAppBroadcastReceiver)
+            BaseTestAppBroadcastReceiver receiver = (BaseTestAppBroadcastReceiver)
                     super.instantiateReceiver(
-                            classLoader, TestAppBroadcastReceiver.class.getName(), intent);
+                            classLoader, BaseTestAppBroadcastReceiver.class.getName(), intent);
             receiver.setOverrideBroadcastReceiverClassName(className);
             return receiver;
         }

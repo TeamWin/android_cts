@@ -102,7 +102,7 @@ public abstract class EventLogs<E extends Event> implements Serializable {
      * <p>This will timeout after {@code timeout} and throw an {@link AssertionError} if no
      * matching event is logged.
      */
-    public E pollOrFail(Duration timeout) {
+    public E waitForEvent(Duration timeout) {
         E event = poll(timeout);
         if (event == null) {
             throw new AssertionError("No event was found before timeout");
@@ -117,7 +117,7 @@ public abstract class EventLogs<E extends Event> implements Serializable {
      * <p>This will timeout after {@link #DEFAULT_POLL_TIMEOUT} and throw an {@link AssertionError}
      * if no matching event is logged.
      */
-    public E pollOrFail() {
-        return pollOrFail(DEFAULT_POLL_TIMEOUT);
+    public E waitForEvent() {
+        return waitForEvent(DEFAULT_POLL_TIMEOUT);
     }
 }
