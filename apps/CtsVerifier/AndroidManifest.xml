@@ -4969,6 +4969,8 @@
                 android:value="config_voice_capable"/>
             <meta-data android:name="display_mode"
                        android:value="multi_display_mode" />
+            <meta-data android:name="test_excluded_features"
+                       android:value="android.hardware.type.watch" />
         </activity>
 
         <service
@@ -4999,6 +5001,8 @@
                 android:value="config_voice_capable"/>
             <meta-data android:name="display_mode"
                        android:value="multi_display_mode" />
+            <meta-data android:name="test_excluded_features"
+                       android:value="android.hardware.type.watch" />
         </activity>
 
         <activity
@@ -5020,6 +5024,8 @@
                 android:value="config_voice_capable"/>
             <meta-data android:name="display_mode"
                        android:value="multi_display_mode" />
+            <meta-data android:name="test_excluded_features"
+                       android:value="android.hardware.type.watch" />
             </activity>
 
         <activity
@@ -5062,6 +5068,8 @@
                 android:value="config_voice_capable"/>
             <meta-data android:name="display_mode"
                        android:value="multi_display_mode" />
+            <meta-data android:name="test_excluded_features"
+                       android:value="android.hardware.type.watch" />
         </activity>
 
         <activity android:name=".telecom.TelecomDefaultDialerTestActivity"
