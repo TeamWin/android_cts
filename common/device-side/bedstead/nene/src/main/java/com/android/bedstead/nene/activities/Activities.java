@@ -51,4 +51,19 @@ public final class Activities {
             return new ActivityReference(mTestApis, runningTasks.get(0).topActivity);
         }
     }
+
+    /**
+     * Return the current state of task locking. The three possible outcomes
+     * are {@link ActivityManager#LOCK_TASK_MODE_NONE},
+     * {@link ActivityManager#LOCK_TASK_MODE_LOCKED}
+     * and {@link ActivityManager#LOCK_TASK_MODE_PINNED}.
+     */
+    @Experimental
+    public int getLockTaskModeState() {
+        ActivityManager activityManager =
+                mTestApis.context().instrumentedContext().getSystemService(
+                        ActivityManager.class);
+
+        return activityManager.getLockTaskModeState();
+    }
 }

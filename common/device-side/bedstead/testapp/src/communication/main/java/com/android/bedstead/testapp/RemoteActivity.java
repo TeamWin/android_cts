@@ -16,8 +16,21 @@
 
 package com.android.bedstead.testapp;
 
-/** Details about a queryable test app. */
-class TestAppDetails {
-    String mPackageName;
-    int mResourceIdentifier;
+import android.app.Activity;
+
+/**
+ * Methods callable on remote activities.
+ *
+ * <p>Each method listed in this activity must have a corresponding method in
+ * {@link BaseTestAppActivity}.
+ */
+public interface RemoteActivity {
+    /** See {@link Activity#startLockTask}. */
+    void startLockTask();
+
+    /** See {@link Activity#stopLockTask}. */
+    void stopLockTask();
+
+    /** See {@link Activity#isFinishing}. */
+    boolean isFinishing();
 }

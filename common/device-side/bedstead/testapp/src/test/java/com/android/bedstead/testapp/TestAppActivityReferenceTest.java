@@ -41,12 +41,22 @@ public class TestAppActivityReferenceTest {
 
     @Test
     public void start_activityIsStarted() {
-        TestApp testApp = mTestAppProvider.any();
+        TestApp testApp = mTestAppProvider.any(); // TODO(scottjonathan): specify must have activity
         try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
 
             TestAppActivityReference activity = testAppInstance.activities().any().start();
 
             assertThat(sTestApis.activities().foregroundActivity()).isEqualTo(activity.reference());
+        }
+    }
+
+    @Test
+    public void remote_executes() {
+        TestApp testApp = mTestAppProvider.any(); // TODO(scottjonathan): specify must have activity
+        try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
+            TestAppActivityReference activity = testAppInstance.activities().any().start();
+
+            assertThat(activity.remote().isFinishing()).isFalse();
         }
     }
 }
