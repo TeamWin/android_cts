@@ -226,27 +226,5 @@ public class ReadSettingsFieldsTest extends AndroidTestCase {
         testHiddenSettingsKeysReadable(Settings.Global.class, publicSettingsKeys,
                 hiddenSettingsKeys);
     }
-
-    public void testSettingsKeysNotReadableForAfterR() {
-        final String keyWithTargetSdkR = "mobile_data";
-        try {
-            // Verify that the hidden key is not readable because of maxTargetSdk restriction
-            callGetStringMethod(Settings.Global.class, keyWithTargetSdkR);
-            fail("Reading hidden global settings key <" + keyWithTargetSdkR
-                    + "> should raise!");
-        } catch (SecurityException ex) {
-            assertTrue(ex.getMessage().contains("targetSdkVersion"));
-        }
-    }
-
-    public void testSettingsKeysReadableForRMinus() {
-        final String keyWithTargetSdkR = "mobile_data";
-        try {
-            // Verify that the hidden key can still be read
-            callGetStringMethod(Settings.Global.class, keyWithTargetSdkR);
-        } catch (SecurityException ex) {
-            fail("Reading hidden settings key <" + keyWithTargetSdkR + "> should not raise!");
-        }
-    }
 }
 
