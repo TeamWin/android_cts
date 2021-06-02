@@ -16,8 +16,9 @@
 
 package com.android.bedstead.testapp;
 
-/** Details about a queryable test app. */
-class TestAppDetails {
-    String mPackageName;
-    int mResourceIdentifier;
+import com.google.android.enterprise.connectedapps.annotations.CrossProfileConfiguration;
+
+/** Cross profile configuration for TestApp. */
+@CrossProfileConfiguration(providers = Provider.class)
+public class Configuration {
 }

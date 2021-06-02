@@ -22,18 +22,45 @@ import android.os.PersistableBundle;
 
 import com.android.eventlib.premade.EventLibActivity;
 
+import java.util.Map;
+import java.util.WeakHashMap;
+
+import javax.annotation.Nullable;
+
 /**
  * An {@link Activity} which logs events for all lifecycle events and supports TestApp Features.
  */
 public class BaseTestAppActivity extends EventLibActivity {
 
+    private static Map<String, BaseTestAppActivity> sActivities = new WeakHashMap<>();
+
+    /**
+     * Find an activity for the given class name.
+     *
+     * <p>This will return {@code null} if there is no existing activity for the class name.
+     *
+     * <p>This method is thread-safe
+     */
+    @Nullable
+    public static BaseTestAppActivity findActivity(String activityClassName) {
+        synchronized (BaseTestAppActivity.class) {
+            return sActivities.get(activityClassName);
+        }
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        synchronized (BaseTestAppActivity.class) {
+            sActivities.put(getClassName(), this);
+        }
         super.onCreate(savedInstanceState);
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState, PersistableBundle persistentState) {
+        synchronized (BaseTestAppActivity.class) {
+            sActivities.put(getClassName(), this);
+        }
         super.onCreate(savedInstanceState, persistentState);
     }
 

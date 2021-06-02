@@ -16,8 +16,20 @@
 
 package com.android.bedstead.testapp;
 
-/** Details about a queryable test app. */
-class TestAppDetails {
-    String mPackageName;
-    int mResourceIdentifier;
+/** Internal class which will be generated. */
+public final class TargetedRemoteActivityImpl implements TargetedRemoteActivity {
+    @Override
+    public void startLockTask(String activityClassName) {
+        BaseTestAppActivity.findActivity(activityClassName).startLockTask();
+    }
+
+    @Override
+    public void stopLockTask(String activityClassName) {
+        BaseTestAppActivity.findActivity(activityClassName).stopLockTask();
+    }
+
+    @Override
+    public boolean isFinishing(String activityClassName) {
+        return BaseTestAppActivity.findActivity(activityClassName).isFinishing();
+    }
 }
