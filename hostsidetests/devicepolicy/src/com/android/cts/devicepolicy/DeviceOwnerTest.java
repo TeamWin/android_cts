@@ -102,15 +102,11 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     }
 
     @Test
-    @TemporaryIgnoreOnHeadlessSystemUserMode(bugId = "185498043",
-            reason = "automotive doesn't have IProxyService")
     public void testProxyStaticProxyTest() throws Exception {
         executeDeviceOwnerTest("proxy.StaticProxyTest");
     }
 
     @Test
-    @TemporaryIgnoreOnHeadlessSystemUserMode(bugId = "185498043",
-            reason = "automotive doesn't have IProxyService")
     public void testProxyPacProxyTest() throws Exception {
         assumeFalse("Test does not apply to WearOS", mIsWatch);
         executeDeviceOwnerTest("proxy.PacProxyTest");
