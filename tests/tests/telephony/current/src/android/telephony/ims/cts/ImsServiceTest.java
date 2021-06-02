@@ -31,7 +31,9 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.net.Uri;
 import android.os.PersistableBundle;
+import android.telecom.PhoneAccount;
 import android.telephony.AccessNetworkConstants;
 import android.telephony.CarrierConfigManager;
 import android.telephony.SmsManager;
@@ -76,7 +78,9 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -1365,6 +1369,95 @@ public class ImsServiceTest {
         // Verify the RcsCapabilityExchangeImplBase will be removed.
         assertTrue(sServiceConnector.getCarrierService().waitForLatchCountdown(
                 TestImsService.LATCH_UCE_LISTENER_SET));
+
+        overrideCarrierConfig(null);
+    }
+
+    @Test
+    public void testPublishWithImsAssociatedUri() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+        // Trigger carrier config changed
+        PersistableBundle bundle = new PersistableBundle();
+        bundle.putBoolean(CarrierConfigManager.KEY_CARRIER_VOLTE_PROVISIONED_BOOL, false);
+        bundle.putBoolean(CarrierConfigManager.Ims.KEY_ENABLE_PRESENCE_PUBLISH_BOOL, true);
+        overrideCarrierConfig(bundle);
+
+        ImsManager imsManager = getContext().getSystemService(ImsManager.class);
+        if (imsManager == null) {
+            fail("Cannot find IMS service");
+        }
+
+        ImsRcsManager imsRcsManager = imsManager.getImsRcsManager(sTestSub);
+        RcsUceAdapter uceAdapter = imsRcsManager.getUceAdapter();
+
+        // Connect to device ImsService with MmTel feature and RCS feature
+        triggerFrameworkConnectToImsServiceBindMmTelAndRcsFeature();
+
+        TestRcsCapabilityExchangeImpl capExchangeImpl = sServiceConnector.getCarrierService()
+                .getRcsFeature().getRcsCapabilityExchangeImpl();
+
+        // Setup the operation of the publish request.
+        List<String> receivedPidfXml = new ArrayList<>();
+        capExchangeImpl.setPublishOperator((listener, pidfXml, cb) -> {
+            int networkResp = 200;
+            String reason = "";
+            cb.onNetworkResponse(networkResp, reason);
+            listener.onPublish();
+            receivedPidfXml.add(pidfXml);
+        });
+
+        final Uri imsUri = Uri.fromParts(PhoneAccount.SCHEME_SIP, "test", null);
+        StringBuilder expectedUriBuilder = new StringBuilder();
+        expectedUriBuilder.append("<contact>").append(imsUri.toString()).append("</contact>");
+
+        final String expectedUriString = expectedUriBuilder.toString();
+
+        // IMS registers
+        sServiceConnector.getCarrierService().getImsRegistration().onRegistered(
+                ImsRegistrationImplBase.REGISTRATION_TECH_LTE);
+
+        // Notify framework that the RCS capability status is changed and PRESENCE UCE is enabled.
+        RcsImsCapabilities capabilities =
+                new RcsImsCapabilities(RcsUceAdapter.CAPABILITY_TYPE_PRESENCE_UCE);
+        sServiceConnector.getCarrierService().getRcsFeature()
+                .notifyCapabilitiesStatusChanged(capabilities);
+
+        // ImsService triggers to notify framework publish device's capabilities.
+        CapabilityExchangeEventListener eventListener =
+                sServiceConnector.getCarrierService().getRcsFeature().getEventListener();
+        eventListener.onRequestPublishCapabilities(
+                RcsUceAdapter.CAPABILITY_UPDATE_TRIGGER_MOVE_TO_WLAN);
+
+        // Verify ImsService receive the publish request from framework.
+        assertTrue(sServiceConnector.getCarrierService().waitForLatchCountdown(
+                TestImsService.LATCH_UCE_REQUEST_PUBLISH));
+
+        // Verify that the ImsService has received the publish request and the received PIDF does
+        // not contain the associated URI.
+        assertFalse(receivedPidfXml.isEmpty());
+        assertFalse(receivedPidfXml.get(0).contains(expectedUriString));
+
+        // Reset the received pidf xml data
+        receivedPidfXml.clear();
+
+        // Notify the associated URI has changed.
+        sServiceConnector.getCarrierService().getImsRegistration().onSubscriberAssociatedUriChanged(
+                new Uri[] { imsUri });
+
+        // Trigger a new publish request
+        eventListener.onRequestPublishCapabilities(
+                RcsUceAdapter.CAPABILITY_UPDATE_TRIGGER_MOVE_TO_WLAN);
+
+        // Verify ImsService receive the publish request from framework.
+        assertTrue(sServiceConnector.getCarrierService().waitForLatchCountdown(
+                TestImsService.LATCH_UCE_REQUEST_PUBLISH));
+
+        // Verify that the ImsService has received the publish request and the received PIDF
+        // contains the associated URI.
+        assertFalse(receivedPidfXml.isEmpty());
+        assertTrue(receivedPidfXml.get(0).contains(expectedUriString));
 
         overrideCarrierConfig(null);
     }
