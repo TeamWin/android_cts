@@ -49,8 +49,8 @@ public final class PowerPolicyHostTest extends CarHostJUnit4TestCase {
         String teststep;
         PowerPolicyTestHelper testHelper;
 
-        teststep = "reboot to forced silent";
-        rebootForcedSilent();
+        teststep = "switch to forced silent";
+        enterForcedSilentMode();
         testHelper = getTestHelper(testcase, 1, teststep);
         testHelper.checkCurrentState(PowerPolicyConstants.CarPowerState.ON);
         testHelper.checkCurrentPolicy(PowerPolicyDef.IdSet.NO_USER_INTERACTION);
@@ -59,7 +59,7 @@ public final class PowerPolicyHostTest extends CarHostJUnit4TestCase {
         testHelper.checkCurrentPowerComponents(PowerPolicyDef.PolicySet.NO_USER_INTERACT);
 
         teststep = "restore to normal mode";
-        restoreFromForcedSilentMode();
+        leaveForcedSilentMode();
         testHelper = getTestHelper(testcase, 2, teststep);
         testHelper.checkCurrentState(PowerPolicyConstants.CarPowerState.ON);
         testHelper.checkCurrentPolicy(PowerPolicyDef.IdSet.DEFAULT_ALL_ON);
@@ -176,12 +176,12 @@ public final class PowerPolicyHostTest extends CarHostJUnit4TestCase {
         waitForDeviceAvailable();
     }
 
-    private void rebootForcedSilent() throws Exception {
-        executeCommand("reboot forcedsilent");
-        waitForDeviceAvailable();
+    private void enterForcedSilentMode() throws Exception {
+        executeCommand("cmd car_service silent-mode forced-silent");
     }
 
-    private void restoreFromForcedSilentMode() throws Exception {
+    private void leaveForcedSilentMode() throws Exception {
+        executeCommand("cmd car_service silent-mode forced-non-silent");
         executeCommand("cmd car_service silent-mode non-forced-silent-mode");
     }
 
