@@ -30,8 +30,10 @@ import android.os.SystemClock;
 import android.util.Base64;
 import android.util.Log;
 
-import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class AccessBluetoothOnCommand extends ContentProvider {
     private static final String TAG = "AccessBluetoothOnCommand";
@@ -41,44 +43,78 @@ public class AccessBluetoothOnCommand extends ContentProvider {
     }
 
     @Override
-    public boolean onCreate() {
-        return true;
-    }
-
-    @Override
     public Bundle call(String authority, String method, String arg, Bundle extras) {
         final Bundle res = new Bundle();
-        try {
-            final BluetoothManager bm = getContext().getSystemService(BluetoothManager.class);
-            final BluetoothLeScanner scanner = bm.getAdapter().getBluetoothLeScanner();
 
-            final HashSet<String> observed = new HashSet<>();
-            scanner.startScan(new ScanCallback() {
+        BluetoothLeScanner scanner = null;
+        ScanCallback scanCallback = null;
+
+        try {
+            scanner = getContext().getSystemService(BluetoothManager.class)
+                    .getAdapter().getBluetoothLeScanner();
+
+            final Set<String> observedScans = ConcurrentHashMap.newKeySet();
+            final AtomicInteger observedErrorCode = new AtomicInteger(0);
+
+            scanCallback = new ScanCallback() {
+                @Override
                 public void onScanResult(int callbackType, ScanResult result) {
-                    Log.v(TAG, String.valueOf(result));
-                    observed.add(Base64.encodeToString(result.getScanRecord().getBytes(), 0));
+                    Log.v(TAG, "onScanResult() - result = " + result);
+                    observedScans.add(Base64.encodeToString(result.getScanRecord().getBytes(), 0));
                 }
 
+                @Override
                 public void onBatchScanResults(List<ScanResult> results) {
                     for (ScanResult result : results) {
                         onScanResult(0, result);
                     }
                 }
-            });
+
+                @Override
+                public void onScanFailed(int errorCode) {
+                    Log.v(TAG, "onScanFailed() - errorCode = " + errorCode);
+                    observedErrorCode.set(errorCode);
+                }
+            };
+
+            scanner.startScan(scanCallback);
 
             // Wait a few seconds to figure out what we actually observed
             SystemClock.sleep(3000);
-            switch (observed.size()) {
-                case 0: res.putInt(Intent.EXTRA_INDEX, Result.EMPTY.ordinal()); break;
-                case 1: res.putInt(Intent.EXTRA_INDEX, Result.FILTERED.ordinal()); break;
-                case 5: res.putInt(Intent.EXTRA_INDEX, Result.FULL.ordinal()); break;
-                default: res.putInt(Intent.EXTRA_INDEX, Result.UNKNOWN.ordinal()); break;
+
+            if (observedErrorCode.get() > 0) {
+                throw new RuntimeException("Scan returned error code: " + observedErrorCode.get());
+            }
+
+            switch (observedScans.size()) {
+                case 0:
+                    res.putInt(Intent.EXTRA_INDEX, Result.EMPTY.ordinal());
+                    break;
+                case 1:
+                    res.putInt(Intent.EXTRA_INDEX, Result.FILTERED.ordinal());
+                    break;
+                case 5:
+                    res.putInt(Intent.EXTRA_INDEX, Result.FULL.ordinal());
+                    break;
+                default:
+                    res.putInt(Intent.EXTRA_INDEX, Result.UNKNOWN.ordinal());
+                    break;
             }
         } catch (Throwable t) {
             Log.v(TAG, "Failed to scan", t);
             res.putInt(Intent.EXTRA_INDEX, Result.EXCEPTION.ordinal());
+        } finally {
+            try {
+                scanner.stopScan(scanCallback);
+            } catch (Exception e) {
+            }
         }
         return res;
+    }
+
+    @Override
+    public boolean onCreate() {
+        return true;
     }
 
     @Override

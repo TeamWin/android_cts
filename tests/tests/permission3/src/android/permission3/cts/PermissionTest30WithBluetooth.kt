@@ -36,7 +36,8 @@ import org.junit.Test
  */
 class PermissionTest30WithBluetooth : BaseUsePermissionTest() {
 
-    val AUTHORITY = "android.permission3.cts.usepermission.AccessBluetoothOnCommand"
+    private val TEST_APP_AUTHORITY =
+        "android.permission3.cts.usepermission.AccessBluetoothOnCommand"
     private lateinit var bluetoothAdapter: BluetoothAdapter
     private var bluetoothAdapterWasEnabled: Boolean = false
 
@@ -55,17 +56,16 @@ class PermissionTest30WithBluetooth : BaseUsePermissionTest() {
         bluetoothAdapter = context.getSystemService(BluetoothManager::class.java).adapter
         bluetoothAdapterWasEnabled = bluetoothAdapter.isEnabled()
         assertTrue(BTAdapterUtils.enableAdapter(bluetoothAdapter, context))
-        runShellCommandOrThrow("dumpsys activity service" +
-                " com.android.bluetooth/.btservice.AdapterService set-test-mode enabled")
+        enableTestMode()
     }
 
     @After
     fun disableBluetooth() {
         assumeTrue(supportsBluetooth())
-        runShellCommandOrThrow("dumpsys activity service" +
-                " com.android.bluetooth/.btservice.AdapterService set-test-mode disabled")
-        if (!bluetoothAdapterWasEnabled)
+        disableTestMode()
+        if (!bluetoothAdapterWasEnabled) {
             assertTrue(BTAdapterUtils.disableAdapter(bluetoothAdapter, context))
+        }
     }
 
     @Test
@@ -77,10 +77,16 @@ class PermissionTest30WithBluetooth : BaseUsePermissionTest() {
 
     private fun scanForBluetoothDevices(): BluetoothScanResult {
         val resolver = InstrumentationRegistry.getTargetContext().getContentResolver()
-        val result = resolver.call(AUTHORITY, "", null, null)
+        val result = resolver.call(TEST_APP_AUTHORITY, "", null, null)
         return BluetoothScanResult.values()[result!!.getInt(Intent.EXTRA_INDEX)]
     }
 
     private fun supportsBluetooth(): Boolean =
-            context.packageManager.hasSystemFeature(PackageManager.FEATURE_BLUETOOTH)
+        context.packageManager.hasSystemFeature(PackageManager.FEATURE_BLUETOOTH)
+
+    private fun enableTestMode() = runShellCommandOrThrow("dumpsys activity service" +
+        " com.android.bluetooth/.btservice.AdapterService set-test-mode enabled")
+
+    private fun disableTestMode() = runShellCommandOrThrow("dumpsys activity service" +
+        " com.android.bluetooth/.btservice.AdapterService set-test-mode disabled")
 }
