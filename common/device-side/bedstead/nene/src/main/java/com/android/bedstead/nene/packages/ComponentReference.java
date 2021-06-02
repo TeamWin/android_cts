@@ -29,16 +29,22 @@ import com.android.bedstead.nene.utils.ShellCommand;
  * A representation of a component on device which may or may not exist.
  */
 @Experimental
-public final class ComponentReference {
+public class ComponentReference {
 
-    private final TestApis mTestApis;
-    private final PackageReference mPackage;
-    private final String mClassName;
+    final TestApis mTestApis;
+    final PackageReference mPackage;
+    final String mClassName;
 
-    ComponentReference(TestApis testApis, PackageReference packageName, String className) {
+    public ComponentReference(TestApis testApis, PackageReference packageName, String className) {
         mTestApis = testApis;
         mPackage = packageName;
         mClassName = className;
+    }
+
+    public ComponentReference(TestApis testApis, ComponentName component) {
+        this(testApis,
+                new UnresolvedPackage(testApis, component.getPackageName()),
+                component.getClassName());
     }
 
     /**
