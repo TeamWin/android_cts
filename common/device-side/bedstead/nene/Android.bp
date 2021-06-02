@@ -36,7 +36,7 @@ android_test {
     ],
     data: [":NeneTestApp1"],
     manifest: "src/test/AndroidManifest.xml",
-    min_sdk_version: "27"
+    min_sdk_version: "28"
 }
 
 android_test_helper_app {
