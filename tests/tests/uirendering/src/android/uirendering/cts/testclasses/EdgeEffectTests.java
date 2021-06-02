@@ -21,6 +21,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BlendMode;
@@ -528,6 +529,94 @@ public class EdgeEffectTests extends ActivityTestBase {
         edgeEffect.draw(canvas);
         assertTrue(edgeEffect.isFinished());
         assertEquals(0f, edgeEffect.getDistance(), 0f);
+    }
+
+    @Test
+    public void testEdgeEffectWithAnimationsDisabled() {
+        float previousDuration = ValueAnimator.getDurationScale();
+        ValueAnimator.setDurationScale(0);
+        try {
+            EdgeEffect edgeEffect = createEdgeEffectWithPull();
+            RenderNode renderNode = new RenderNode("");
+            renderNode.setPosition(0, 0, WIDTH, HEIGHT);
+
+            RecordingCanvas recordingCanvas = renderNode.beginRecording();
+            Paint paint = new Paint();
+            paint.setColor(Color.WHITE);
+            recordingCanvas.drawRect(0f, 0f, WIDTH, HEIGHT / 2f, paint);
+            paint.setColor(Color.BLACK);
+            recordingCanvas.drawRect(0, HEIGHT / 2f, WIDTH, HEIGHT, paint);
+            edgeEffect.draw(recordingCanvas);
+
+            renderNode.endRecording();
+
+            assertTrue(edgeEffect.isFinished());
+            assertEquals(0f, edgeEffect.getDistance(), 0f);
+
+            Rect innerRect = new Rect(0, 0, WIDTH, HEIGHT / 2);
+            Rect outerRect = new Rect(0, HEIGHT / 2, WIDTH, HEIGHT);
+            createTest()
+                    .addCanvasClientWithoutUsingPicture((canvas, width, height) -> {
+                        canvas.drawRenderNode(renderNode);
+                    }, true)
+                    .runWithVerifier(
+                            new RegionVerifier().addVerifier(
+                                    innerRect,
+                                    new ColorVerifier(Color.WHITE)
+                            ).addVerifier(
+                                    outerRect,
+                                    new ColorVerifier(Color.BLACK)
+                            ));
+        } finally {
+            ValueAnimator.setDurationScale(previousDuration);
+        }
+    }
+
+    @Test
+    public void testEdgeEffectAnimationDisabledMidAnimation() {
+        float previousDuration = ValueAnimator.getDurationScale();
+        try {
+            EdgeEffect edgeEffect = new EdgeEffect(getContext());
+            edgeEffect.setSize(WIDTH, HEIGHT);
+            edgeEffect.onPullDistance(0.5f, 0.5f);
+            edgeEffect.onAbsorb(100);
+
+            // Explicitly disable animations post stretch
+            ValueAnimator.setDurationScale(0);
+
+            RenderNode renderNode = new RenderNode("");
+            renderNode.setPosition(0, 0, WIDTH, HEIGHT);
+
+            RecordingCanvas recordingCanvas = renderNode.beginRecording();
+            Paint paint = new Paint();
+            paint.setColor(Color.WHITE);
+            recordingCanvas.drawRect(0f, 0f, WIDTH, HEIGHT / 2f, paint);
+            paint.setColor(Color.BLACK);
+            recordingCanvas.drawRect(0, HEIGHT / 2f, WIDTH, HEIGHT, paint);
+            edgeEffect.draw(recordingCanvas);
+
+            renderNode.endRecording();
+
+            assertTrue(edgeEffect.isFinished());
+            assertEquals(0f, edgeEffect.getDistance(), 0f);
+
+            Rect innerRect = new Rect(0, 0, WIDTH, HEIGHT / 2);
+            Rect outerRect = new Rect(0, HEIGHT / 2, WIDTH, HEIGHT);
+            createTest()
+                    .addCanvasClientWithoutUsingPicture((canvas, width, height) -> {
+                        canvas.drawRenderNode(renderNode);
+                    }, true)
+                    .runWithVerifier(
+                            new RegionVerifier().addVerifier(
+                                    innerRect,
+                                    new ColorVerifier(Color.WHITE)
+                            ).addVerifier(
+                                    outerRect,
+                                    new ColorVerifier(Color.BLACK)
+                            ));
+        } finally {
+            ValueAnimator.setDurationScale(previousDuration);
+        }
     }
 
     @Test
