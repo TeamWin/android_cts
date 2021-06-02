@@ -16,7 +16,10 @@
 
 package com.android.bedstead.testapp;
 
+import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.users.UserReference;
+
+import com.google.android.enterprise.connectedapps.CrossProfileConnector;
 
 /**
  * A reference to a specific instance of a {@link TestApp} on a given user.
@@ -25,12 +28,22 @@ import com.android.bedstead.nene.users.UserReference;
  */
 public final class TestAppInstanceReference implements AutoCloseable {
 
+    private static final TestApis sTestApis = new TestApis();
+
     private final TestApp mTestApp;
     private final UserReference mUser;
+    private final CrossProfileConnector mConnector;
 
     TestAppInstanceReference(TestApp testApp, UserReference user) {
         mTestApp = testApp;
         mUser = user;
+        mConnector = CrossProfileConnector.builder(sTestApis.context().instrumentedContext())
+                .setBinder(new TestAppBinder(this))
+                .build();
+    }
+
+    CrossProfileConnector connector() {
+        return mConnector;
     }
 
     /**
