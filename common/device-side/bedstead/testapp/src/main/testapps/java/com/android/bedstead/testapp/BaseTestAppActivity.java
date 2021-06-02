@@ -25,7 +25,7 @@ import com.android.eventlib.premade.EventLibActivity;
 /**
  * An {@link Activity} which logs events for all lifecycle events and supports TestApp Features.
  */
-public class TestAppActivity extends EventLibActivity {
+public class BaseTestAppActivity extends EventLibActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

@@ -16,20 +16,20 @@
 
 package com.android.bedstead.testapp;
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
+public final class TestAppActivities {
 
-import com.android.eventlib.premade.EventLibBroadcastReceiver;
+    private final TestAppInstanceReference mInstance;
 
-/**
- * A {@link BroadcastReceiver} which logs events when receiving broadcasts and supports
- * TestApp Features.
- */
-public class TestAppBroadcastReceiver extends EventLibBroadcastReceiver {
+    TestAppActivities(TestAppInstanceReference instance) {
+        mInstance = instance;
+    }
 
-    @Override
-    public void onReceive(Context context, Intent intent) {
-        super.onReceive(context, intent);
+    public TestAppActivityReference any() {
+        // TODO(scottjonathan): Currently we only have one pattern for testapps and they all have
+        //  exactly one activity - so we will return it here. In future we should expose a query
+        //  interface
+        return new TestAppActivityReference(
+                mInstance,
+                mInstance.testApp().reference().component("android.testapp.activity"));
     }
 }
