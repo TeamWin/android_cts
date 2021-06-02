@@ -1439,6 +1439,23 @@ public class RobustnessTest extends Camera2AndroidTestCase {
     }
 
     @Test
+    public void testConfigureInvalidSensorPixelModes() throws Exception {
+        for (String id : mCameraIdsUnderTest) {
+            // Go through given, stream configuration map, add the incorrect sensor pixel mode
+            // to an OutputConfiguration, make sure the session configuration fails.
+            CameraCharacteristics chars = mCameraManager.getCameraCharacteristics(id);
+            StreamConfigurationMap defaultStreamConfigMap =
+                    chars.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+            StreamConfigurationMap maxStreamConfigMap =
+                    chars.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP_MAXIMUM_RESOLUTION);
+            openDevice(id);
+
+            verifyBasicSensorPixelModes(id, defaultStreamConfigMap, /*maxResolution*/ false);
+            verifyBasicSensorPixelModes(id, maxStreamConfigMap, /*maxResolution*/ true);
+        }
+    }
+
+    @Test
     public void testConfigureAbandonedSurface() throws Exception {
         for (String id : mCameraIdsUnderTest) {
             Log.i(TAG, String.format(
@@ -1687,6 +1704,62 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                 aeState == CaptureResult.CONTROL_AE_STATE_SEARCHING ||
                 aeState == CaptureResult.CONTROL_AE_STATE_CONVERGED ||
                 aeState == CaptureResult.CONTROL_AE_STATE_FLASH_REQUIRED);
+    }
+
+    private void verifyBasicSensorPixelModes(String id, StreamConfigurationMap configs,
+            boolean maxResolution) throws Exception {
+        // Go through StreamConfiguration map, set up OutputConfiguration and add the opposite
+        // sensorPixelMode.
+        final int MIN_RESULT_COUNT = 3;
+        if (!maxResolution) {
+            assertTrue("Default stream config map must be present for id: " + id, configs != null);
+        }
+        if (configs == null) {
+            Log.i(TAG, "camera id " + id + " has no StreamConfigurationMap for max resolution " +
+                ", skipping verifyBasicSensorPixelModes");
+            return;
+        }
+        OutputConfiguration outputConfig = null;
+        for (int format : configs.getOutputFormats()) {
+            Size targetSize = CameraTestUtils.getMaxSize(configs.getOutputSizes(format));
+            // Create outputConfiguration with this size and format
+            SimpleImageReaderListener imageListener = new SimpleImageReaderListener();
+            if (format == ImageFormat.PRIVATE) {
+                SurfaceTexture target = new SurfaceTexture(1);
+                target.setDefaultBufferSize(targetSize.getWidth(), targetSize.getHeight());
+                outputConfig = new OutputConfiguration(new Surface(target));
+            } else {
+                ImageReader target = ImageReader.newInstance(targetSize.getWidth(),
+                        targetSize.getHeight(), format, MIN_RESULT_COUNT);
+                target.setOnImageAvailableListener(imageListener, mHandler);
+                outputConfig = new OutputConfiguration(target.getSurface());
+            }
+            int invalidSensorPixelMode =
+                    maxResolution ? CameraMetadata.SENSOR_PIXEL_MODE_DEFAULT :
+                            CameraMetadata.SENSOR_PIXEL_MODE_MAXIMUM_RESOLUTION;
+
+            outputConfig.addSensorPixelModeUsed(invalidSensorPixelMode);
+            CameraCaptureSession.StateCallback sessionListener =
+                    mock(CameraCaptureSession.StateCallback.class);
+            List<OutputConfiguration> outputs = new ArrayList<>();
+            outputs.add(outputConfig);
+            CameraCaptureSession session =
+                    CameraTestUtils.configureCameraSessionWithConfig(mCamera, outputs,
+                            sessionListener, mHandler);
+
+            verify(sessionListener, timeout(CONFIGURE_TIMEOUT).atLeastOnce()).
+                    onConfigureFailed(any(CameraCaptureSession.class));
+            verify(sessionListener, never()).onConfigured(any(CameraCaptureSession.class));
+
+            // Remove the invalid sensor pixel mode, session configuration should succeed
+            sessionListener = mock(CameraCaptureSession.StateCallback.class);
+            outputConfig.removeSensorPixelModeUsed(invalidSensorPixelMode);
+            CameraTestUtils.configureCameraSessionWithConfig(mCamera, outputs,
+                    sessionListener, mHandler);
+            verify(sessionListener, timeout(CONFIGURE_TIMEOUT).atLeastOnce()).
+                    onConfigured(any(CameraCaptureSession.class));
+            verify(sessionListener, never()).onConfigureFailed(any(CameraCaptureSession.class));
+        }
     }
 
     private void verifyStartingAfState(int afMode, int afState) {
