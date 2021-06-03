@@ -37,6 +37,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
+import android.animation.ValueAnimator;
 import android.app.ActionBar.LayoutParams;
 import android.app.Activity;
 import android.app.Instrumentation;
@@ -84,6 +85,7 @@ import com.android.compatibility.common.util.WidgetTestUtils;
 
 import junit.framework.Assert;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -130,6 +132,7 @@ public class ListViewTest {
     private ArrayAdapter<String> mAdapter_longCountries;
     private ArrayAdapter<String> mAdapter_names;
     private ColorAdapter mAdapterColors;
+    private float mPreviousDurationScale;
 
     @Rule
     public ActivityTestRule<ListViewCtsActivity> mActivityRule =
@@ -137,6 +140,8 @@ public class ListViewTest {
 
     @Before
     public void setup() {
+        mPreviousDurationScale = ValueAnimator.getDurationScale();
+        ValueAnimator.setDurationScale(1.0f);
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mActivity = mActivityRule.getActivity();
         XmlPullParser parser = mActivity.getResources().getXml(R.layout.listview_layout);
@@ -152,6 +157,11 @@ public class ListViewTest {
 
         mListView = (ListView) mActivity.findViewById(R.id.listview_default);
         mListViewStretch = (ListView) mActivity.findViewById(R.id.listview_stretch);
+    }
+
+    @After
+    public void tearDown() {
+        ValueAnimator.setDurationScale(mPreviousDurationScale);
     }
 
     @Test
