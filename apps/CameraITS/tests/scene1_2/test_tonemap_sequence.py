@@ -124,7 +124,7 @@ class TonemapSequenceTest(its_base_test.ItsBaseTest):
 
       # assert frames different with tonemap change
       if deltas[_NUM_FRAMES-1] <= _MIN_DELTA_DIFF:
-        raise AssertionError(f'delta: {deltas[_NUM_FRAMES-1]}.5f, '
+        raise AssertionError(f'delta: {deltas[_NUM_FRAMES-1]:.5f}, '
                              f'THRESH: {_MIN_DELTA_DIFF}')
 
 if __name__ == '__main__':
