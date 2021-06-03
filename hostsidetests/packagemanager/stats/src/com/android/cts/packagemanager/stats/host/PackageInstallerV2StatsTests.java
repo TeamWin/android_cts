@@ -114,7 +114,8 @@ public class PackageInstallerV2StatsTests extends DeviceTestCase implements IBui
                 AtomsProto.Atom.PACKAGE_INSTALLER_V2_REPORTED_FIELD_NUMBER);
         Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
         installPackageUsingIncremental(apkNames, TEST_REMOTE_DIR);
-        assertTrue(getDevice().isPackageInstalled(TEST_INSTALL_PACKAGE));
+        assertTrue(getDevice().isPackageInstalled(TEST_INSTALL_PACKAGE,
+                String.valueOf(getDevice().getCurrentUser())));
         Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
 
         List<AtomsProto.PackageInstallerV2Reported> reports = new ArrayList<>();
@@ -135,7 +136,8 @@ public class PackageInstallerV2StatsTests extends DeviceTestCase implements IBui
             remoteApkPaths[i] = pushApkToRemote(apkNames[i], remoteDirPath);
         }
         String installResult = getDevice().executeShellCommand(
-                "pm install-incremental -t -g " + String.join(" ", remoteApkPaths));
+                "pm install-incremental -t -g " + "--user " + getDevice().getCurrentUser() + " "
+                        + String.join(" ", remoteApkPaths));
         assertEquals("Success\n", installResult);
     }
 
