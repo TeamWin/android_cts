@@ -384,37 +384,40 @@ public class MediaCodecTest extends AndroidTestCase {
             fail("stop should not return MediaCodec.CodecException on wrong state");
         } catch (IllegalStateException e) { // expected
         }
-        try {
-            codec.getSupportedVendorParameters();
-            fail("getSupportedVendorParameters should throw IllegalStateException" +
-                    " when in Uninitialized state");
-        } catch (IllegalStateException e) { // expected
-        } catch (Exception e) {
-            fail("unexpected exception: " + e.toString());
-        }
-        try {
-            codec.getParameterDescriptor("");
-            fail("getParameterDescriptor should throw IllegalStateException" +
-                    " when in Uninitialized state");
-        } catch (IllegalStateException e) { // expected
-        } catch (Exception e) {
-            fail("unexpected exception: " + e.toString());
-        }
-        try {
-            codec.subscribeToVendorParameters(List.of(""));
-            fail("subscribeToVendorParameters should throw IllegalStateException" +
-                    " when in Uninitialized state");
-        } catch (IllegalStateException e) { // expected
-        } catch (Exception e) {
-            fail("unexpected exception: " + e.toString());
-        }
-        try {
-            codec.unsubscribeFromVendorParameters(List.of(""));
-            fail("unsubscribeFromVendorParameters should throw IllegalStateException" +
-                    " when in Uninitialized state");
-        } catch (IllegalStateException e) { // expected
-        } catch (Exception e) {
-            fail("unexpected exception: " + e.toString());
+
+        if (mIsAtLeastS) {
+            try {
+                codec.getSupportedVendorParameters();
+                fail("getSupportedVendorParameters should throw IllegalStateException" +
+                        " when in Uninitialized state");
+            } catch (IllegalStateException e) { // expected
+            } catch (Exception e) {
+                fail("unexpected exception: " + e.toString());
+            }
+            try {
+                codec.getParameterDescriptor("");
+                fail("getParameterDescriptor should throw IllegalStateException" +
+                        " when in Uninitialized state");
+            } catch (IllegalStateException e) { // expected
+            } catch (Exception e) {
+                fail("unexpected exception: " + e.toString());
+            }
+            try {
+                codec.subscribeToVendorParameters(List.of(""));
+                fail("subscribeToVendorParameters should throw IllegalStateException" +
+                        " when in Uninitialized state");
+            } catch (IllegalStateException e) { // expected
+            } catch (Exception e) {
+                fail("unexpected exception: " + e.toString());
+            }
+            try {
+                codec.unsubscribeFromVendorParameters(List.of(""));
+                fail("unsubscribeFromVendorParameters should throw IllegalStateException" +
+                        " when in Uninitialized state");
+            } catch (IllegalStateException e) { // expected
+            } catch (Exception e) {
+                fail("unexpected exception: " + e.toString());
+            }
         }
 
         if (mIsAtLeastR) {
@@ -1665,10 +1668,13 @@ public class MediaCodecTest extends AndroidTestCase {
         assertEquals(4, pattern.getSkipBlocks());
         info.setPattern(pattern);
         // Check that CryptoInfo does not leak access to the underlying pattern.
-        pattern.set(10, 10);
-        info.getPattern().set(10, 10);
-        assertSame(3, info.getPattern().getEncryptBlocks());
-        assertSame(4, info.getPattern().getSkipBlocks());
+        if (mIsAtLeastS) {
+            // getPattern() availability SDK>=S
+            pattern.set(10, 10);
+            info.getPattern().set(10, 10);
+            assertSame(3, info.getPattern().getEncryptBlocks());
+            assertSame(4, info.getPattern().getSkipBlocks());
+        }
     }
 
     private static CodecInfo getAvcSupportedFormatInfo() {
