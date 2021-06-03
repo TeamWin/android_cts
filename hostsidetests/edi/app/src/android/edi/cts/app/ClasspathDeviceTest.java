@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.edi.cts.apps.classpath;
+package android.edi.cts.app;
 
 import android.app.Instrumentation;
 import android.content.Context;
