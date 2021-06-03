@@ -45,7 +45,7 @@ public final class HdmiCecRoutingControlTest extends BaseHdmiCecCtsTest {
             "none";
 
     public HdmiCecRoutingControlTest() {
-        super(LogicalAddress.PLAYBACK_1);
+        super(HdmiCecConstants.CEC_DEVICE_TYPE_PLAYBACK_DEVICE);
     }
 
     @Rule

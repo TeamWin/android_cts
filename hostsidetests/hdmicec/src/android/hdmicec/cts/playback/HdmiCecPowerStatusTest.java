@@ -41,6 +41,10 @@ import java.util.concurrent.TimeUnit;
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
 
+    public HdmiCecPowerStatusTest() {
+        super(HdmiCecConstants.CEC_DEVICE_TYPE_PLAYBACK_DEVICE);
+    }
+
     @Rule
     public RuleChain ruleChain =
             RuleChain
