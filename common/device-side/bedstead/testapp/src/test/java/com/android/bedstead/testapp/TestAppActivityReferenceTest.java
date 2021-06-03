@@ -18,19 +18,28 @@ package com.android.bedstead.testapp;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import com.android.bedstead.harrier.BedsteadJUnit4;
+import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnPrimaryUser;
+import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnSecondaryUser;
+import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnWorkProfile;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.users.UserReference;
 
 import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
-@RunWith(JUnit4.class)
+@RunWith(BedsteadJUnit4.class)
 public class TestAppActivityReferenceTest {
 
     private static final TestApis sTestApis = new TestApis();
     private static final UserReference sUser = sTestApis.users().instrumented();
+
+    @ClassRule @Rule
+    public static final DeviceState sDeviceState = new DeviceState();
 
     private TestAppProvider mTestAppProvider;
 
@@ -40,6 +49,9 @@ public class TestAppActivityReferenceTest {
     }
 
     @Test
+    @IncludeRunOnPrimaryUser
+    @IncludeRunOnSecondaryUser
+    @IncludeRunOnWorkProfile
     public void start_activityIsStarted() {
         TestApp testApp = mTestAppProvider.any(); // TODO(scottjonathan): specify must have activity
         try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
