@@ -18,8 +18,11 @@ package android.hdmicec.cts;
 
 import static org.junit.Assume.assumeTrue;
 
+import android.hdmicec.cts.error.DumpsysParseException;
+
 import com.android.tradefed.config.Option;
 import com.android.tradefed.config.OptionClass;
+import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
@@ -27,6 +30,7 @@ import org.junit.Before;
 import org.junit.rules.TestRule;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.StringReader;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
@@ -132,22 +136,22 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
     public static int dutPhysicalAddress = HdmiCecConstants.DEFAULT_PHYSICAL_ADDRESS;
 
     /** Gets the physical address of the DUT by parsing the dumpsys hdmi_control. */
-    public int getDumpsysPhysicalAddress() throws Exception {
+    public int getDumpsysPhysicalAddress() throws DumpsysParseException {
         return getDumpsysPhysicalAddress(getDevice());
     }
 
     /** Gets the physical address of the specified device by parsing the dumpsys hdmi_control. */
-    public static int getDumpsysPhysicalAddress(ITestDevice device) throws Exception {
+    public static int getDumpsysPhysicalAddress(ITestDevice device) throws DumpsysParseException {
         return parseRequiredAddressFromDumpsys(device, AddressType.DUMPSYS_PHYSICAL_ADDRESS);
     }
 
     /** Gets the logical address of the DUT by parsing the dumpsys hdmi_control. */
-    public int getDumpsysLogicalAddress() throws Exception {
+    public int getDumpsysLogicalAddress() throws DumpsysParseException {
         return getDumpsysLogicalAddress(getDevice());
     }
 
     /** Gets the logical address of the specified device by parsing the dumpsys hdmi_control. */
-    public static int getDumpsysLogicalAddress(ITestDevice device) throws Exception {
+    public static int getDumpsysLogicalAddress(ITestDevice device) throws DumpsysParseException {
         return parseRequiredAddressFromDumpsys(device, AddressType.DUMPSYS_LOGICAL_ADDRESS);
     }
 
@@ -155,7 +159,7 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
      * Parses the dumpsys hdmi_control to get the logical address of the current device registered
      * as active source.
      */
-    public LogicalAddress getDumpsysActiveSourceLogicalAddress() throws Exception {
+    public LogicalAddress getDumpsysActiveSourceLogicalAddress() throws DumpsysParseException {
         ITestDevice device = getDevice();
         int address =
                 parseRequiredAddressFromDumpsys(device, AddressType.DUMPSYS_AS_LOGICAL_ADDRESS);
@@ -163,7 +167,7 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
     }
 
     private static int parseRequiredAddressFromDumpsys(ITestDevice device, AddressType addressType)
-            throws Exception {
+            throws DumpsysParseException {
         Matcher m;
         String line;
         String pattern;
@@ -201,7 +205,8 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
                                 + "(.*?)";
                 break;
             default:
-                throw new IllegalArgumentException("Incorrect parameters");
+                throw new DumpsysParseException(
+                        "Incorrect parameters", new IllegalArgumentException());
         }
 
         try {
@@ -215,11 +220,12 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
                     return address;
                 }
             }
-        } catch (Exception e) {
-            throw new Exception(
-                    "Parsing dumpsys for " + addressType.getAddressType() + " failed.", e);
+        } catch (IOException | DeviceNotAvailableException e) {
+            throw new DumpsysParseException(
+                    "Could not parse " + addressType.getAddressType() + " from dumpsys.", e);
         }
-        throw new Exception("Could not parse " + addressType.getAddressType() + " from dumpsys.");
+        throw new DumpsysParseException(
+                "Could not parse " + addressType.getAddressType() + " from dumpsys.");
     }
 
     private static void setCecVersion(ITestDevice device, int cecVersion) throws Exception {
