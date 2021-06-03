@@ -63,6 +63,7 @@ android_test {
         "Nene",
         "TestApp",
         "TestApp_TestApps",
+        "Harrier",
         "EventLib",
         "androidx.test.ext.junit",
         "truth-prebuilt",
