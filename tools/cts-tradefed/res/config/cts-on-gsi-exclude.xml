@@ -59,6 +59,9 @@
     <!-- No Statsd -->
     <option name="compatibility:exclude-filter" value="CtsStatsdHostTestCases" />
 
+    <!-- b/183654427 Remove CtsTelecomTestCases from cts-on-gsi -->
+    <option name="compatibility:exclude-filter" value="CtsTelecomTestCases" />
+
     <!-- b/183659262 Remove CtsPreferenceTestCases from cts-on-gsi -->
     <option name="compatibility:exclude-filter" value="CtsPreferenceTestCases" />
 
