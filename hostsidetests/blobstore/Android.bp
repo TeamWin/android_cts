@@ -57,7 +57,7 @@ android_test_helper_app {
 }
 
 android_test_helper_app {
-  name: "CtsBlobStoreHostTestHelperPrivA",
+  name: "CtsBlobStoreHostTestHelperDev",
   srcs:  ["test-apps/BlobStoreHostTestHelper/src/**/*.java"],
   static_libs: [
     "compatibility-device-util-axt",
@@ -69,8 +69,8 @@ android_test_helper_app {
   ],
   manifest : "test-apps/BlobStoreHostTestHelper/AndroidManifest_withPrivPerm.xml",
   aaptflags: [
-    "--rename-manifest-package com.android.cts.device.blobA",
-    "--rename-instrumentation-target-package com.android.cts.device.blobA"
+    "--rename-manifest-package com.android.cts.device.blob.dev",
+    "--rename-instrumentation-target-package com.android.cts.device.blob.dev"
   ],
   sdk_version: "test_current",
   // Tag this module as a cts test artifact
@@ -81,7 +81,7 @@ android_test_helper_app {
 }
 
 android_test_helper_app {
-  name: "CtsBlobStoreHostTestHelperPrivB",
+  name: "CtsBlobStoreHostTestHelperAssist",
   srcs:  ["test-apps/BlobStoreHostTestHelper/src/**/*.java"],
   static_libs: [
     "compatibility-device-util-axt",
@@ -89,12 +89,12 @@ android_test_helper_app {
     "androidx.test.rules",
     "BlobStoreTestUtils",
     "truth-prebuilt",
-    "testng",
+    "testng"
   ],
-  manifest : "test-apps/BlobStoreHostTestHelper/AndroidManifest_withPrivPerm.xml",
+  manifest : "test-apps/BlobStoreHostTestHelper/AndroidManifest_withAssistRole.xml",
   aaptflags: [
-    "--rename-manifest-package com.android.cts.device.blobB",
-    "--rename-instrumentation-target-package com.android.cts.device.blobB",
+    "--rename-manifest-package com.android.cts.device.blob.assist",
+    "--rename-instrumentation-target-package com.android.cts.device.blob.assist"
   ],
   sdk_version: "test_current",
   // Tag this module as a cts test artifact
