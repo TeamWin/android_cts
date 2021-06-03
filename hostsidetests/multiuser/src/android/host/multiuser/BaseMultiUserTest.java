@@ -21,9 +21,8 @@ import static org.junit.Assume.assumeTrue;
 
 import com.android.ddmlib.Log;
 import com.android.tradefed.device.DeviceNotAvailableException;
-import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
-import com.android.tradefed.testtype.IDeviceTest;
+import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
 import org.junit.After;
 import org.junit.AssumptionViolatedException;
@@ -46,7 +45,7 @@ import java.util.regex.Pattern;
  * Base class for multi user tests.
  */
 // Must be public because of @Rule
-public abstract class BaseMultiUserTest implements IDeviceTest {
+public abstract class BaseMultiUserTest extends BaseHostJUnit4Test {
 
     /** Guest flag value from android/content/pm/UserInfo.java */
     private static final int FLAG_GUEST = 0x00000004;
@@ -66,8 +65,6 @@ public abstract class BaseMultiUserTest implements IDeviceTest {
 
     /** Users we shouldn't delete in the tests. */
     private ArrayList<Integer> mFixedUsers;
-
-    protected ITestDevice mDevice;
 
     @Rule
     public final TestName mTestNameRule = new TestName();
@@ -91,16 +88,6 @@ public abstract class BaseMultiUserTest implements IDeviceTest {
         }
         // Remove the users created during this test.
         removeTestUsers();
-    }
-
-    @Override
-    public void setDevice(ITestDevice device) {
-        mDevice = device;
-    }
-
-    @Override
-    public ITestDevice getDevice() {
-        return mDevice;
     }
 
     protected String getTestName() {
@@ -134,15 +121,15 @@ public abstract class BaseMultiUserTest implements IDeviceTest {
     }
 
     protected int createGuestUser() throws Exception {
-        return mDevice.createUser(
+        return getDevice().createUser(
                 "TestUser_" + System.currentTimeMillis() /* name */,
                 true /* guest */,
                 false /* ephemeral */);
     }
 
     protected int getGuestUser() throws Exception {
-        for (int userId : mDevice.listUsers()) {
-            if ((mDevice.getUserFlags(userId) & FLAG_GUEST) != 0) {
+        for (int userId : getDevice().listUsers()) {
+            if ((getDevice().getUserFlags(userId) & FLAG_GUEST) != 0) {
                 return userId;
             }
         }
@@ -323,9 +310,9 @@ public abstract class BaseMultiUserTest implements IDeviceTest {
      */
     protected static class SupportsMultiUserRule implements TestRule {
 
-        private final IDeviceTest mDeviceTest;
+        private final BaseHostJUnit4Test mDeviceTest;
 
-        SupportsMultiUserRule(IDeviceTest deviceTest) {
+        SupportsMultiUserRule(BaseHostJUnit4Test deviceTest) {
             mDeviceTest = deviceTest;
         }
 
