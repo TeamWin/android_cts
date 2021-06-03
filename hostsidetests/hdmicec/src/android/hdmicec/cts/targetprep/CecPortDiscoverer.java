@@ -20,6 +20,8 @@ import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.HdmiCecClientWrapper;
 import android.hdmicec.cts.HdmiCecConstants;
+import android.hdmicec.cts.error.CecClientWrapperException;
+import android.hdmicec.cts.error.ErrorCodes;
 
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
@@ -154,10 +156,14 @@ public class CecPortDiscoverer extends BaseTargetPreparer {
                             portBeingRetried = false;
                         } else {
                             CLog.e("Console did not get ready!");
-                            throw new HdmiCecClientWrapper.CecPortBusyException();
+                            throw new CecClientWrapperException(ErrorCodes.CecPortBusy);
                         }
-                    } catch (HdmiCecClientWrapper.CecPortBusyException cpbe) {
-                        retryCount++;
+                    } catch (CecClientWrapperException cwe) {
+                        if (cwe.getErrorCode() != ErrorCodes.CecPortBusy) {
+                            retryCount = MAX_RETRY_COUNT;
+                        } else {
+                            retryCount++;
+                        }
                         if (retryCount >= MAX_RETRY_COUNT) {
                             /* We have retried enough number of times. Check another port */
                             portBeingRetried = false;
