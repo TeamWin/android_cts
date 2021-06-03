@@ -25,7 +25,7 @@ import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.users.UserReference;
 
 /** Test APIs related to Context. */
-public class Context {
+public final class Context {
 
     private static final String ANDROID_PACKAGE = "android";
 
