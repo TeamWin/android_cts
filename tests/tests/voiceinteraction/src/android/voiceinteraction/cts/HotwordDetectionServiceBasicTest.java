@@ -98,11 +98,19 @@ public final class HotwordDetectionServiceBasicTest
                 Utils.HOTWORD_DETECTION_SERVICE_ONDETECT_SUCCESS);
     }
 
-    private static void assertIntentExtraValueAsExpectation(Intent intent, int expectedResult) {
-        assertThat(intent).isNotNull();
+    @Test
+    public void testHotwordDetectionService_onDetectFromMic_success()
+            throws Throwable {
+        // Create SoftwareHotwordDetector and wait the HotwordDetectionService ready
+        testHotwordDetection(Utils.HOTWORD_DETECTION_SERVICE_FROM_SOFTWARE_TRIGGER_TEST,
+                Utils.BROADCAST_HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS);
 
-        int result = intent.getIntExtra(Utils.KEY_TEST_RESULT, -1);
-        assertThat(result).isEqualTo(expectedResult);
+        // Use SoftwareHotwordDetector to test the mic source function of
+        // HotwordDetectionService
+        testHotwordDetection(Utils.HOTWORD_DETECTION_SERVICE_MIC_ONDETECT_TEST,
+                Utils.BROADCAST_HOTWORD_DETECTION_SERVICE_ONDETECT_RESULT_INTENT,
+                Utils.HOTWORD_DETECTION_SERVICE_ONDETECT_SUCCESS);
     }
 
     private void testHotwordDetection(int testType, String expectedIntent, int expectedResult) {
@@ -119,7 +127,8 @@ public final class HotwordDetectionServiceBasicTest
         final Intent intent = receiver.awaitForBroadcast(TIMEOUT_MS);
         receiver.unregisterQuietly();
 
-        assertIntentExtraValueAsExpectation(intent, expectedResult);
+        assertThat(intent).isNotNull();
+        assertThat(intent.getIntExtra(Utils.KEY_TEST_RESULT, -1)).isEqualTo(expectedResult);
     }
 
     @Override
