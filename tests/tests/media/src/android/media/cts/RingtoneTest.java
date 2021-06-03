@@ -24,10 +24,13 @@ import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.media.audiofx.HapticGenerator;
 import android.net.Uri;
+import android.os.Build;
 import android.platform.test.annotations.AppModeFull;
 import android.provider.Settings;
 import android.test.InstrumentationTestCase;
 import android.util.Log;
+
+import com.android.compatibility.common.util.ApiLevelUtil;
 
 @AppModeFull(reason = "TODO: evaluate and port to instant")
 public class RingtoneTest extends InstrumentationTestCase {
@@ -40,6 +43,8 @@ public class RingtoneTest extends InstrumentationTestCase {
     private int mOriginalRingerMode;
     private int mOriginalStreamType;
     private Uri mDefaultRingUri;
+
+    private static boolean sIsAtLeastS = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S);
 
     @Override
     protected void setUp() throws Exception {
@@ -185,11 +190,15 @@ public class RingtoneTest extends InstrumentationTestCase {
         assertEquals(ringtoneAa, mRingtone.getAudioAttributes());
         mRingtone.setLooping(true);
         mRingtone.setVolume(0.5f);
-        assertEquals(HapticGenerator.isAvailable(), mRingtone.setHapticGeneratorEnabled(true));
+        if (sIsAtLeastS) {
+            assertEquals(HapticGenerator.isAvailable(), mRingtone.setHapticGeneratorEnabled(true));
+        }
         mRingtone.play();
         assertTrue("couldn't play ringtone " + uri, mRingtone.isPlaying());
         assertTrue(mRingtone.isLooping());
-        assertEquals(HapticGenerator.isAvailable(), mRingtone.isHapticGeneratorEnabled());
+        if (sIsAtLeastS) {
+            assertEquals(HapticGenerator.isAvailable(), mRingtone.isHapticGeneratorEnabled());
+        }
         assertEquals("invalid ringtone player volume", 0.5f, mRingtone.getVolume());
         mRingtone.stop();
         assertFalse(mRingtone.isPlaying());
