@@ -13,11 +13,12 @@ android_library {
         "ConnectedAppsSDK",
         "ConnectedAppsSDK_Annotations",
         "androidx.annotation_annotation",
-        "TestApp_TestApps"
+        "TestApp_TestApps",
+        "TestApp_Annotations"
     ],
     manifest: "src/communication/main/AndroidManifest.xml",
     min_sdk_version: "28",
-    plugins: ["ConnectedAppsSDK_Processor"],
+    plugins: ["ConnectedAppsSDK_Processor", "TestApp_Processor"],
 }
 
 android_library {
@@ -131,4 +132,28 @@ android_test_helper_app {
     ],
     manifest: "manifests/DeviceAdminManifest.xml",
     min_sdk_version: "28"
+}
+
+java_library {
+    name: "TestApp_Annotations",
+    srcs: [
+        "src/processor/main/java/com/android/bedstead/testapp/processor/annotations/*.java"
+    ],
+    host_supported: true
+}
+
+java_plugin {
+    name: "TestApp_Processor",
+    processor_class: "com.android.bedstead.testapp.processor.Processor",
+    static_libs: [
+        "javapoet",
+        "auto_service_annotations",
+        "TestApp_Annotations",
+        "ConnectedAppsSDK_Annotations"
+    ],
+    srcs: [
+        "src/processor/main/java/com/android/bedstead/testapp/processor/Processor.java"
+    ],
+    plugins: ["auto_service_plugin"],
+    generates_api: true,
 }
