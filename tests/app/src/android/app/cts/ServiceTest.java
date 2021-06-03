@@ -714,6 +714,7 @@ public class ServiceTest extends ActivityTestsBase {
         getNotificationManager().createNotificationChannel(new NotificationChannel(
                 NOTIFICATION_CHANNEL_ID, "name", NotificationManager.IMPORTANCE_DEFAULT));
         mContextMainExecutor = mContext.getMainExecutor();
+        executeShellCommand("cmd activity fgs-notification-rate-limit disable");
     }
 
     private void setupBackgroundThread() {
@@ -732,6 +733,7 @@ public class ServiceTest extends ActivityTestsBase {
     @Override
     protected void tearDown() throws Exception {
         super.tearDown();
+        executeShellCommand("cmd activity fgs-notification-rate-limit enable");
         getNotificationManager().deleteNotificationChannel(NOTIFICATION_CHANNEL_ID);
         mContext.stopService(mLocalService);
         mContext.stopService(mLocalForegroundService);
