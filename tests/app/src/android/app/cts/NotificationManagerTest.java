@@ -110,7 +110,6 @@ import android.media.session.MediaSession;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.ConditionVariable;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
@@ -143,7 +142,9 @@ import androidx.annotation.Nullable;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.FeatureUtil;
+import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.SystemUtil;
+import com.android.compatibility.common.util.ThrowingSupplier;
 import com.android.test.notificationlistener.INotificationUriAccessService;
 
 import com.google.common.base.Preconditions;
@@ -163,10 +164,13 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /* This tests NotificationListenerService together with NotificationManager, as you need to have
  * notifications to manipulate in order to test the listener service. */
@@ -203,6 +207,7 @@ public class NotificationManagerTest extends AndroidTestCase {
     private static final long TIMEOUT_MS = 4000;
     private static final int MESSAGE_BROADCAST_NOTIFICATION = 1;
     private static final int MESSAGE_SERVICE_NOTIFICATION = 2;
+    private static final int MESSAGE_CLICK_NOTIFICATION = 3;
 
     private PackageManager mPackageManager;
     private AudioManager mAudioManager;
@@ -3095,6 +3100,14 @@ public class NotificationManagerTest extends AndroidTestCase {
         return Uri.parse(imageUriString);
     }
 
+    private <T> T uncheck(ThrowingSupplier<T> supplier) {
+        try {
+            return supplier.get();
+        } catch (Exception e) {
+            throw new CompletionException(e);
+        }
+    }
+
     public void testNotificationListener_setNotificationsShown() throws Exception {
         toggleListenerAccess(true);
         Thread.sleep(500); // wait for listener to be allowed
@@ -4225,6 +4238,29 @@ public class NotificationManagerTest extends AndroidTestCase {
 
     }
 
+    /**
+     * This method verifies that an app can't bypass background restrictions by retrieving their own
+     * notification and triggering it.
+     */
+    public void testActivityStartFromRetrievedNotification_isBlocked() throws Exception {
+        deactivateGracePeriod();
+        EventCallback callback = new EventCallback();
+        int notificationId = 6007;
+
+        // Post notification and fire its pending intent
+        sendTrampolineMessage(TRAMPOLINE_SERVICE_API_30, MESSAGE_SERVICE_NOTIFICATION,
+                notificationId, callback);
+        PollingCheck.waitFor(TIMEOUT_MS,  () -> uncheck(() -> {
+            sendTrampolineMessage(TRAMPOLINE_SERVICE, MESSAGE_CLICK_NOTIFICATION, notificationId,
+                    callback);
+            // timeoutMs = 1ms below because surrounding waitFor already handles retry & timeout.
+            return callback.waitFor(EventCallback.NOTIFICATION_CLICKED, /* timeoutMs */ 1);
+        }));
+
+        assertFalse("Activity start should have been blocked",
+                callback.waitFor(EventCallback.ACTIVITY_STARTED, TIMEOUT_MS));
+    }
+
     public void testActivityStartOnBroadcastTrampoline_isBlocked() throws Exception {
         deactivateGracePeriod();
         setUpNotifListener();
@@ -4407,8 +4443,9 @@ public class NotificationManagerTest extends AndroidTestCase {
         private static final int BROADCAST_RECEIVED = 1;
         private static final int SERVICE_STARTED = 2;
         private static final int ACTIVITY_STARTED = 3;
+        private static final int NOTIFICATION_CLICKED = 4;
 
-        private final Map<Integer, ConditionVariable> mEvents =
+        private final Map<Integer, CompletableFuture<Integer>> mEvents =
                 Collections.synchronizedMap(new ArrayMap<>());
 
         private EventCallback() {
@@ -4417,11 +4454,17 @@ public class NotificationManagerTest extends AndroidTestCase {
 
         @Override
         public void handleMessage(Message message) {
-            mEvents.computeIfAbsent(message.what, e -> new ConditionVariable()).open();
+            mEvents.computeIfAbsent(message.what, e -> new CompletableFuture<>()).complete(
+                    message.arg1);
         }
 
         public boolean waitFor(int event, long timeoutMs) {
-            return mEvents.computeIfAbsent(event, e -> new ConditionVariable()).block(timeoutMs);
+            try {
+                return mEvents.computeIfAbsent(event, e -> new CompletableFuture<>()).get(timeoutMs,
+                        TimeUnit.MILLISECONDS) == 0;
+            } catch (InterruptedException | ExecutionException | TimeoutException e) {
+                return false;
+            }
         }
     }
 }

@@ -1383,6 +1383,8 @@ class Media {
 
     public static Media read(final String video, int numFrames)
             throws java.io.IOException {
+
+        Preconditions.assertTestFileExists(video);
         MediaExtractor extractor = new MediaExtractor();
         extractor.setDataSource(video);
 

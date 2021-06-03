@@ -16,6 +16,7 @@
 
 package android.appenumeration.cts;
 
+import static android.Manifest.permission.SET_PREFERRED_APPLICATIONS;
 import static android.appenumeration.cts.Constants.ACTION_AWAIT_LAUNCHER_APPS_CALLBACK;
 import static android.appenumeration.cts.Constants.ACTION_BIND_SERVICE;
 import static android.appenumeration.cts.Constants.ACTION_CHECK_SIGNATURES;
@@ -25,6 +26,7 @@ import static android.appenumeration.cts.Constants.ACTION_GET_NAMES_FOR_UIDS;
 import static android.appenumeration.cts.Constants.ACTION_GET_NAME_FOR_UID;
 import static android.appenumeration.cts.Constants.ACTION_GET_PACKAGES_FOR_UID;
 import static android.appenumeration.cts.Constants.ACTION_GET_PACKAGE_INFO;
+import static android.appenumeration.cts.Constants.ACTION_GET_PREFERRED_ACTIVITIES;
 import static android.appenumeration.cts.Constants.ACTION_GET_SHAREDLIBRARY_DEPENDENT_PACKAGES;
 import static android.appenumeration.cts.Constants.ACTION_GET_SYNCADAPTER_PACKAGES_FOR_AUTHORITY;
 import static android.appenumeration.cts.Constants.ACTION_GET_SYNCADAPTER_TYPES;
@@ -93,6 +95,7 @@ import static android.appenumeration.cts.Constants.TARGET_FILTERS_APK;
 import static android.appenumeration.cts.Constants.TARGET_FORCEQUERYABLE;
 import static android.appenumeration.cts.Constants.TARGET_FORCEQUERYABLE_NORMAL;
 import static android.appenumeration.cts.Constants.TARGET_NO_API;
+import static android.appenumeration.cts.Constants.TARGET_PREFERRED_ACTIVITY;
 import static android.appenumeration.cts.Constants.TARGET_SHARE;
 import static android.appenumeration.cts.Constants.TARGET_SHARED_LIBRARY_PACKAGE;
 import static android.appenumeration.cts.Constants.TARGET_SHARED_USER;
@@ -128,6 +131,7 @@ import android.app.PendingIntent;
 import android.appwidget.AppWidgetProviderInfo;
 import android.content.ComponentName;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SyncAdapterType;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -1027,6 +1031,28 @@ public class AppEnumerationTests {
                 this::getSharedLibraryDependentPackages);
     }
 
+    @Test
+    public void queriesNothing_cannotSeePreferredActivityTarget() throws Exception {
+        addPreferredActivity();
+        try {
+            assertNotVisible(QUERIES_NOTHING, TARGET_PREFERRED_ACTIVITY,
+                    this::getPreferredActivities);
+        } finally {
+            clearPreferredActivity();
+        }
+    }
+
+    @Test
+    public void queriesPackage_canSeePreferredActivityTarget() throws Exception {
+        addPreferredActivity();
+        try {
+            assertVisible(QUERIES_PACKAGE, TARGET_PREFERRED_ACTIVITY,
+                    this::getPreferredActivities);
+        } finally {
+            clearPreferredActivity();
+        }
+    }
+
     private void assertNotVisible(String sourcePackageName, String targetPackageName)
             throws Exception {
         if (!sGlobalFeatureEnabled) return;
@@ -1328,6 +1354,13 @@ public class AppEnumerationTests {
         return response.getStringArray(Intent.EXTRA_PACKAGES);
     }
 
+    private String[] getPreferredActivities(String sourcePackageName) throws Exception {
+        final Bundle extraData = new Bundle();
+        final Bundle response = sendCommandBlocking(sourcePackageName, null /* targetPackageName */,
+                extraData, ACTION_GET_PREFERRED_ACTIVITIES);
+        return response.getStringArray(Intent.EXTRA_PACKAGES);
+    }
+
     interface Result {
         Bundle await() throws Exception;
     }
@@ -1442,5 +1475,22 @@ public class AppEnumerationTests {
             // Expected
         }
         Assert.assertNull(packageName + " shouldn't be installed", info);
+    }
+
+    private void addPreferredActivity() {
+        final IntentFilter filter = new IntentFilter(
+                "android.intent.action.APP_ENUMERATION_PREFERRED_ACTIVITY");
+        final ComponentName[] candidates = {new ComponentName(TARGET_PREFERRED_ACTIVITY,
+                ACTIVITY_CLASS_DUMMY_ACTIVITY)};
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            sPm.addPreferredActivity(filter, IntentFilter.MATCH_ADJUSTMENT_NORMAL,
+                    candidates, candidates[0]);
+        }, SET_PREFERRED_APPLICATIONS);
+    }
+
+    private void clearPreferredActivity() {
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            sPm.clearPackagePreferredActivities(TARGET_PREFERRED_ACTIVITY);
+        }, SET_PREFERRED_APPLICATIONS);
     }
 }

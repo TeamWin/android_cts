@@ -1902,6 +1902,7 @@ public class MediaCodecTest extends AndroidTestCase {
 
     private MediaExtractor getMediaExtractorForMimeType(final String resource,
             String mimeTypePrefix) throws IOException {
+        Preconditions.assertTestFileExists(mInpPrefix + resource);
         MediaExtractor mediaExtractor = new MediaExtractor();
         File inpFile = new File(mInpPrefix + resource);
         ParcelFileDescriptor parcelFD =

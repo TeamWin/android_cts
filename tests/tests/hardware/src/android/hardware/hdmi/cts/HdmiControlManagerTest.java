@@ -387,6 +387,27 @@ public class HdmiControlManagerTest {
     }
 
     @Test
+    public void testHdmiCecConfig_SystemAudioControl() throws Exception {
+        // Save original value
+        int originalValue = mHdmiControlManager.getSystemAudioControl();
+        if (!mHdmiControlManager.getUserCecSettings().contains(
+                HdmiControlManager.CEC_SETTING_NAME_SYSTEM_AUDIO_CONTROL)) {
+            return;
+        }
+        try {
+            for (int value : mHdmiControlManager.getAllowedCecSettingIntValues(
+                    HdmiControlManager.CEC_SETTING_NAME_SYSTEM_AUDIO_CONTROL)) {
+                mHdmiControlManager.setSystemAudioControl(value);
+                assertThat(mHdmiControlManager.getSystemAudioControl()).isEqualTo(value);
+            }
+        } finally {
+            // Restore original value
+            mHdmiControlManager.setSystemAudioControl(originalValue);
+            assertThat(mHdmiControlManager.getSystemAudioControl()).isEqualTo(originalValue);
+        }
+    }
+
+    @Test
     public void testHdmiCecConfig_SystemAudioModeMuting() throws Exception {
         // Save original value
         int originalValue = mHdmiControlManager.getSystemAudioModeMuting();
