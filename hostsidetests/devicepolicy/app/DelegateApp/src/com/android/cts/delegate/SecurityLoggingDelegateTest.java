@@ -23,20 +23,13 @@ import static com.android.cts.delegate.DelegateTestUtils.assertExpectException;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import android.app.admin.DevicePolicyManager;
 import android.app.admin.SecurityLog.SecurityEvent;
-import android.content.Context;
 import android.os.Process;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
-import android.support.test.uiautomator.UiDevice;
-
-import androidx.test.InstrumentationRegistry;
-import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -48,8 +41,7 @@ import java.util.concurrent.CountDownLatch;
  * Tests that a delegate app with DELEGATION_SECURITY_LOGGING is able to control and access
  * security logging.
  */
-@RunWith(AndroidJUnit4.class)
-public class SecurityLoggingDelegateTest {
+public class SecurityLoggingDelegateTest extends BaseTestCase {
     private static final String GENERATED_KEY_ALIAS = "generated_key_alias";
 
     // Indices of various fields in SecurityEvent payload.
@@ -59,15 +51,8 @@ public class SecurityLoggingDelegateTest {
     // Value that indicates success in events that have corresponding field in their payload.
     private static final int SUCCESS_VALUE = 1;
 
-    private Context mContext;
-    private DevicePolicyManager mDpm;
-    private UiDevice mDevice;
-
     @Before
     public void setUp() {
-        mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
-        mContext = InstrumentationRegistry.getContext();
-        mDpm = mContext.getSystemService(DevicePolicyManager.class);
         DelegateTestUtils.DelegatedLogsReceiver.sBatchCountDown = new CountDownLatch(1);
     }
 
