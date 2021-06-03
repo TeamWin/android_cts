@@ -14,11 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.bedstead.testapp;
+package com.android.bedstead.testapp.processor.annotations;
 
-import com.google.android.enterprise.connectedapps.annotations.CrossProfileConfiguration;
-
-/** Cross profile configuration for TestApp. */
-@CrossProfileConfiguration(providers = Provider.class)
-public class Configuration {
+public @interface TestAppCommunication {
 }
