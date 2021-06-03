@@ -16,6 +16,7 @@
 
 package android.devicepolicy.cts;
 
+import static android.app.ActivityManager.LOCK_TASK_MODE_LOCKED;
 import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_GLOBAL_ACTIONS;
 import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_HOME;
 import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_KEYGUARD;
@@ -23,7 +24,6 @@ import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_NONE;
 import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_NOTIFICATIONS;
 import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_OVERVIEW;
 import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_SYSTEM_INFO;
-
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -35,13 +35,16 @@ import android.app.admin.DevicePolicyManager;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
-import com.android.bedstead.harrier.annotations.EnsureHasPermission;
+import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.NegativePolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PositivePolicyTest;
-import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.policies.LockTask;
 import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.testapp.TestApp;
+import com.android.bedstead.testapp.TestAppActivityReference;
+import com.android.bedstead.testapp.TestAppInstanceReference;
+import com.android.bedstead.testapp.TestAppProvider;
 
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -77,6 +80,9 @@ public class LockTaskTest {
             LOCK_TASK_FEATURE_GLOBAL_ACTIONS,
             LOCK_TASK_FEATURE_KEYGUARD
     };
+
+    private static final TestAppProvider sTestAppProvider = new TestAppProvider();
+    private static final TestApp sTestApp = sTestAppProvider.any();
 
     @Test
     @Postsubmit(reason = "New test")
@@ -297,5 +303,57 @@ public class LockTaskTest {
     public void getLockTaskFeatures_policyIsNotAllowedToBeFetched_throwsException() {
         assertThrows(SecurityException.class, () ->
                 sDeviceState.dpc().devicePolicyManager().getLockTaskFeatures());
+    }
+
+    @Test
+    @PositivePolicyTest(policy = LockTask.class)
+    // TODO(scottjonathan): This omits the metrics test
+    public void startLockTask_includedInLockTaskPackages_taskIsLocked() {
+        String[] originalLockTaskPackages =
+                sDeviceState.dpc().devicePolicyManager().getLockTaskPackages();
+        sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(
+                new String[]{sTestApp.packageName()});
+        try (TestAppInstanceReference testApp =
+                     sTestApp.install(sTestApis.users().instrumented())) {
+            TestAppActivityReference activity = testApp.activities().any().start();
+
+            activity.remote().startLockTask();
+
+            try {
+                assertThat(sTestApis.activities().foregroundActivity()).isEqualTo(
+                        activity.reference());
+                assertThat(sTestApis.activities().getLockTaskModeState()).isEqualTo(
+                        LOCK_TASK_MODE_LOCKED);
+            } finally {
+                activity.remote().stopLockTask();
+            }
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(originalLockTaskPackages);
+        }
+    }
+
+    @Test
+    @PositivePolicyTest(policy = LockTask.class)
+    public void startLockTask_notIncludedInLockTaskPackages_taskIsNotLocked() {
+        String[] originalLockTaskPackages =
+                sDeviceState.dpc().devicePolicyManager().getLockTaskPackages();
+        sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(new String[]{});
+        try (TestAppInstanceReference testApp =
+                     sTestApp.install(sTestApis.users().instrumented())) {
+            TestAppActivityReference activity = testApp.activities().any().start();
+
+            activity.remote().startLockTask();
+
+            try {
+                assertThat(sTestApis.activities().foregroundActivity()).isEqualTo(
+                        activity.reference());
+                assertThat(sTestApis.activities().getLockTaskModeState()).isNotEqualTo(
+                        LOCK_TASK_MODE_LOCKED);
+            } finally {
+                activity.remote().stopLockTask();
+            }
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(originalLockTaskPackages);
+        }
     }
 }
