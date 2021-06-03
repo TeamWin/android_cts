@@ -1061,6 +1061,7 @@ public final class DeviceState implements TestRule {
 
         if (currentDeviceOwner != null
                 && currentDeviceOwner.componentName().equals(RemoteDpc.DPC_COMPONENT_NAME)) {
+            mDeviceOwner = currentDeviceOwner;
             return;
         }
 
