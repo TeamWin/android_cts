@@ -16,7 +16,11 @@
 
 package com.android.cts.devicepolicy;
 
+import static com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.FEATURE_MANAGED_USERS;
+
 import android.platform.test.annotations.SecurityTest;
+
+import com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.RequiresAdditionalFeatures;
 
 import org.junit.Test;
 
@@ -24,7 +28,7 @@ import org.junit.Test;
  * Host side tests for separate profile challenge permissions.
  * Run the CtsSeparateProfileChallengeApp device side test.
  */
-
+@RequiresAdditionalFeatures({FEATURE_MANAGED_USERS})
 public class SeparateProfileChallengeTest extends BaseDevicePolicyTest {
     private static final String SEPARATE_PROFILE_PKG = "com.android.cts.separateprofilechallenge";
     private static final String SEPARATE_PROFILE_APK = "CtsSeparateProfileChallengeApp.apk";
