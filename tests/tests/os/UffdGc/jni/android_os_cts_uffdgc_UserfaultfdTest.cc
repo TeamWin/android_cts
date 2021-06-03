@@ -244,9 +244,12 @@ extern "C" JNIEXPORT jint JNICALL Java_android_os_cts_uffdgc_UserfaultfdTest_per
   struct uffdio_api api;
   std::memset(&api, '\0', sizeof api);
   api.api = UFFD_API;
-  // TODO: Uncomment the following line once the userfaultfd minor patches are
-  // merged in the kernel.
-  //  api.features = UFFD_FEATURE_MINOR_SHMEM;
+  // TODO: Remove the following define once its definition is available in
+  // linux/userfaultfd.h header file.
+#ifndef UFFD_FEATURE_MINOR_SHMEM
+#define UFFD_FEATURE_MINOR_SHMEM (1 << 10)
+#endif
+  api.features = UFFD_FEATURE_MINOR_SHMEM;
   if (ioctl(uffd, UFFDIO_API, &api) < 0) {
     ret = errno;
   }
