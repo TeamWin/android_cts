@@ -97,6 +97,12 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
     }
 
     @Override
+    public void onDetect(@NonNull Callback callback) {
+        Log.d(TAG, "onDetect for Mic source");
+        callback.onDetected(new HotwordDetectedResult.Builder().build());
+    }
+
+    @Override
     public void onUpdateState(
             @Nullable PersistableBundle options,
             @Nullable SharedMemory sharedMemory,
