@@ -23,7 +23,6 @@ import static org.junit.Assume.assumeTrue;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Build;
-import android.platform.test.annotations.SecurityTest;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -34,7 +33,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-@SecurityTest
 @RunWith(AndroidJUnit4.class)
 public class VerifiedBootTest {
     private static final String TAG = "VerifiedBootTest";
