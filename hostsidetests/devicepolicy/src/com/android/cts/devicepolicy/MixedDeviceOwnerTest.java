@@ -272,10 +272,7 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
         pushUpdateFileToDevice("wrongHash.zip");
         pushUpdateFileToDevice("wrongSize.zip");
 
-        // This test will run as user 0 since there will be {@link InstallSystemUpdateCallback}
-        // in the test and it's not necessary to run from secondary user.
-        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".systemupdate.InstallUpdateTest",
-                mDeviceOwnerUserId);
+        executeInstallUpdateTest(/* testName= */ null);
     }
 
     @Test
@@ -284,8 +281,7 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
 
         pushUpdateFileToDevice("wrongHash.zip");
         assertMetricsLogged(getDevice(), () -> {
-            executeDeviceTestMethod(".systemupdate.InstallUpdateTest",
-                    "testInstallUpdate_failWrongHash");
+            executeInstallUpdateTest("testInstallUpdate_failWrongHash");
         }, new DevicePolicyEventWrapper.Builder(EventId.INSTALL_SYSTEM_UPDATE_VALUE)
                     .setAdminPackageName(DEVICE_ADMIN_PKG)
                     .setBoolean(/* isDeviceAb */ true)
@@ -293,6 +289,13 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
             new DevicePolicyEventWrapper.Builder(EventId.INSTALL_SYSTEM_UPDATE_ERROR_VALUE)
                     .setInt(UPDATE_ERROR_UPDATE_FILE_INVALID)
                     .build());
+    }
+
+    private void executeInstallUpdateTest(String testName) throws Exception {
+        // This test must run on system user as it calls installSystemUpdate(), which takes a
+        // Runnable callback (InstallSystemUpdateCallback) and hence it cannot be easily passed
+        // around through IPC (on headless system user mode).
+        executeDeviceTestMethodOnDeviceOwnerUser(".systemupdate.InstallUpdateTest", testName);
     }
 
     @Test
@@ -549,6 +552,12 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
     protected void executeDeviceTestMethod(String className, String testName,
             Map<String, String> params) throws Exception {
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, className, testName, mUserId, params);
+    }
+
+    private void executeDeviceTestMethodOnDeviceOwnerUser(String className, String testName)
+            throws Exception {
+        executeDeviceTestMethod(className, testName, mDeviceOwnerUserId,
+                /* params= */ new HashMap<>());
     }
 
     private void configureNotificationListener() throws DeviceNotAvailableException {
