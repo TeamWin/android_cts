@@ -53,6 +53,7 @@ public final class HdmiCecConstants {
 
     public static final int UNRECOGNIZED_OPCODE = 0x0;
 
+    public static final int CEC_DEVICE_TYPE_UNKNOWN = -1;
     public static final int CEC_DEVICE_TYPE_TV = 0;
     public static final int CEC_DEVICE_TYPE_RECORDER = 1;
     public static final int CEC_DEVICE_TYPE_RESERVED = 2;
