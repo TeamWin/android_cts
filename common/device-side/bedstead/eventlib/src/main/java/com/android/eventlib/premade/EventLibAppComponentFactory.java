@@ -25,7 +25,7 @@ import android.util.Log;
 /**
  * An {@link AppComponentFactory} which redirects invalid class names to premade EventLib classes.
  */
-public class EventLibAppComponentFactory extends AppComponentFactory {
+public final class EventLibAppComponentFactory extends AppComponentFactory {
 
     private static final String LOG_TAG = "EventLibACF";
 

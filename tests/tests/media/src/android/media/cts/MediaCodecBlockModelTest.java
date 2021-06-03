@@ -89,6 +89,7 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
     protected static AssetFileDescriptor getAssetFileDescriptorFor(final String res)
             throws FileNotFoundException {
         File inpFile = new File(mInpPrefix + res);
+        Preconditions.assertTestFileExists(mInpPrefix + res);
         ParcelFileDescriptor parcelFD =
                 ParcelFileDescriptor.open(inpFile, ParcelFileDescriptor.MODE_READ_ONLY);
         return new AssetFileDescriptor(parcelFD, 0, parcelFD.getStatSize());

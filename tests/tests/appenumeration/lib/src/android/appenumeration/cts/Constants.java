@@ -119,6 +119,9 @@ public class Constants {
     /** A package that exposes itself as a appwidgetprovider with a shared uid. */
     public static final String TARGET_APPWIDGETPROVIDER_SHARED_USER =
             PKG_BASE + "appwidgetprovider.shareduid";
+    /** A package that offers an activity which handles preferred activity test intent for the
+     *  tests of preferred activity. */
+    public static final String TARGET_PREFERRED_ACTIVITY = PKG_BASE + "preferred.activity";
 
     private static final String BASE_PATH = "/data/local/tmp/cts/appenumeration/";
     public static final String TARGET_NO_API_APK = BASE_PATH + "CtsAppEnumerationNoApi.apk";
@@ -198,6 +201,8 @@ public class Constants {
             PKG_BASE + "cts.action.AWAIT_LAUNCHER_APPS_CALLBACK";
     public static final String ACTION_GET_SHAREDLIBRARY_DEPENDENT_PACKAGES =
             PKG_BASE + "cts.action.GET_SHAREDLIBRARY_DEPENDENT_PACKAGES";
+    public static final String ACTION_GET_PREFERRED_ACTIVITIES =
+            PKG_BASE + "cts.action.GET_PREFERRED_ACTIVITIES";
 
     public static final String EXTRA_REMOTE_CALLBACK = "remoteCallback";
     public static final String EXTRA_REMOTE_READY_CALLBACK = "remoteReadyCallback";

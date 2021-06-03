@@ -30,6 +30,9 @@ import android.provider.Settings;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
+import android.support.test.uiautomator.UiObjectNotFoundException;
+import android.support.test.uiautomator.UiScrollable;
+import android.support.test.uiautomator.UiSelector;
 import android.support.test.uiautomator.Until;
 import android.test.AndroidTestCase;
 
@@ -145,6 +148,13 @@ public class ScanningSettingsTest extends AndroidTestCase {
             throws PackageManager.NameNotFoundException {
         final Resources res = mPackageManager.getResourcesForApplication(SETTINGS_PACKAGE);
         int resId = res.getIdentifier(name, "string", SETTINGS_PACKAGE);
+        UiScrollable uiScrollable = new UiScrollable(new UiSelector().scrollable(true));
+        try {
+            uiScrollable.scrollTextIntoView(res.getString(resId));
+        } catch (UiObjectNotFoundException e) {
+            // Scrolling can fail if the UI is not scrollable
+        }
+
         UiObject2 pref = mDevice.findObject(By.text(res.getString(resId)));
         // Click the preference to show the Scanning fragment
         pref.click();

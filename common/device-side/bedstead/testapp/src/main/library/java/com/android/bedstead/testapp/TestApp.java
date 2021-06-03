@@ -65,15 +65,52 @@ public class TestApp {
     /**
      * Install the {@link TestApp} on the device for the given {@link UserReference}.
      */
-    public void install(UserReference user) {
+    public TestAppInstanceReference install(UserReference user) {
         sTestApis.packages().install(user, apkBytes());
+        return new TestAppInstanceReference(this, user);
     }
 
     /**
      * Install the {@link TestApp} on the device for the given {@link UserHandle}.
      */
-    public void install(UserHandle user) {
+    public TestAppInstanceReference install(UserHandle user) {
         install(sTestApis.users().find(user));
+        return instance(user);
+    }
+
+    /**
+     * Uninstall the {@link TestApp} on the device from the given {@link UserReference}.
+     */
+    public void uninstall(UserReference user) {
+        reference().uninstall(user);
+    }
+
+    /**
+     * Uninstall the {@link TestApp} on the device from the given {@link UserHandle}.
+     */
+    public void uninstall(UserHandle user) {
+        uninstall(sTestApis.users().find(user));
+    }
+
+    /**
+     * Get a reference to the specific instance of this test app on a given user.
+     *
+     * <p>This does not check if the user exists, or if the test app is installed on the user.
+     */
+    public TestAppInstanceReference instance(UserHandle user) {
+        return instance(sTestApis.users().find(user));
+    }
+
+    /**
+     * Get a reference to the specific instance of this test app on a given user.
+     *
+     * <p>This does not check if the user exists, or if the test app is installed on the user.
+     */
+    public TestAppInstanceReference instance(UserReference user) {
+        if (user == null) {
+            throw new NullPointerException();
+        }
+        return new TestAppInstanceReference(this, user);
     }
 
     private byte[] apkBytes() {

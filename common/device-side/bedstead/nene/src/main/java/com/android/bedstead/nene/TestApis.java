@@ -16,6 +16,8 @@
 
 package com.android.bedstead.nene;
 
+import com.android.bedstead.nene.activities.Activities;
+import com.android.bedstead.nene.annotations.Experimental;
 import com.android.bedstead.nene.context.Context;
 import com.android.bedstead.nene.devicepolicy.DevicePolicy;
 import com.android.bedstead.nene.packages.Packages;
@@ -30,6 +32,7 @@ public final class TestApis {
     private final Packages mPackages = new Packages(this);
     private final DevicePolicy mDevicePolicy = new DevicePolicy(this);
     private final Context mContext = new Context(this);
+    private final Activities mActivities = new Activities(this);
 
     /** Access Test APIs related to Users. */
     public Users users() {
@@ -54,5 +57,13 @@ public final class TestApis {
     /** Access Test APIs related to context. */
     public Context context() {
         return mContext;
+    }
+
+    /** Access Test APIs related to activities. */
+    // TODO(scottjonathan): Consider if Activities requires a top-level nene API or if it can go
+    //  inside packages
+    @Experimental
+    public Activities activities() {
+        return mActivities;
     }
 }

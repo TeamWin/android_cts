@@ -397,6 +397,7 @@ public class ExifInterfaceTest extends AndroidTestCase {
         ExpectedValue expectedValue = new ExpectedValue(
                 getContext().getResources().obtainTypedArray(typedArrayResourceId));
 
+        Preconditions.assertTestFileExists(mInpPrefix + fileName);
         File imageFile = new File(mInpPrefix, fileName);
         String verboseTag = imageFile.getName();
 
@@ -417,6 +418,7 @@ public class ExifInterfaceTest extends AndroidTestCase {
     private void testExifInterfaceCommon(String fileName, ExpectedValue expectedValue)
             throws IOException {
         File imageFile = new File(mInpPrefix, fileName);
+        Preconditions.assertTestFileExists(mInpPrefix + fileName);
         String verboseTag = imageFile.getName();
 
         // Creates via path.
@@ -453,6 +455,7 @@ public class ExifInterfaceTest extends AndroidTestCase {
 
     private void testExifInterfaceRange(String fileName, ExpectedValue expectedValue)
             throws IOException {
+        Preconditions.assertTestFileExists(mInpPrefix + fileName);
         File imageFile = new File(mInpPrefix, fileName);
         InputStream in = null;
         try {
@@ -509,6 +512,7 @@ public class ExifInterfaceTest extends AndroidTestCase {
         ExpectedValue expectedValue = new ExpectedValue(
                 getContext().getResources().obtainTypedArray(typedArrayResourceId));
 
+        Preconditions.assertTestFileExists(mInpPrefix + fileName);
         File srcFile = new File(mInpPrefix, fileName);
         File imageFile = clone(srcFile);
         String verboseTag = imageFile.getName();
@@ -592,6 +596,7 @@ public class ExifInterfaceTest extends AndroidTestCase {
 
     private void writeToFilesWithoutExif(String fileName) throws IOException {
         // Test for reading from external data storage.
+        Preconditions.assertTestFileExists(mInpPrefix + fileName);
         File imageFile = clone(new File(mInpPrefix, fileName));
 
         ExifInterface exifInterface = new ExifInterface(imageFile.getAbsolutePath());
@@ -724,6 +729,7 @@ public class ExifInterfaceTest extends AndroidTestCase {
         final String dateTimeValue = "2017:02:02 22:22:22";
         final String dateTimeOriginalValue = "2017:01:01 11:11:11";
 
+        Preconditions.assertTestFileExists(mInpPrefix + JPEG_WITH_DATETIME_TAG);
         File srcFile = new File(mInpPrefix, JPEG_WITH_DATETIME_TAG);
         File imageFile = clone(srcFile);
 
@@ -778,6 +784,7 @@ public class ExifInterfaceTest extends AndroidTestCase {
     }
 
     public void testSetAttribute() throws Throwable {
+        Preconditions.assertTestFileExists(mInpPrefix + JPEG_WITH_EXIF_BYTE_ORDER_MM);
         File srcFile = new File(mInpPrefix, JPEG_WITH_EXIF_BYTE_ORDER_MM);
         File imageFile = clone(srcFile);
 
@@ -899,6 +906,7 @@ public class ExifInterfaceTest extends AndroidTestCase {
 
     public void testGetAttributeForNullAndNonExistentTag() throws Throwable {
         // JPEG_WITH_EXIF_BYTE_ORDER_MM does not have a value for TAG_SUBJECT_AREA tag.
+        Preconditions.assertTestFileExists(mInpPrefix + JPEG_WITH_EXIF_BYTE_ORDER_MM);
         File srcFile = new File(mInpPrefix, JPEG_WITH_EXIF_BYTE_ORDER_MM);
         File imageFile = clone(srcFile);
 

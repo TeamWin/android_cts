@@ -74,7 +74,7 @@ public class RemoteDpcTest {
 
     @AfterClass
     public static void teardownClass() {
-        sNonRemoteDpcTestApp.reference().uninstall(sUser);
+        sNonRemoteDpcTestApp.uninstall(sUser);
     }
 
     @Test

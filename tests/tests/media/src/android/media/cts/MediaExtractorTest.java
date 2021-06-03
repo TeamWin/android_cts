@@ -93,6 +93,7 @@ public class MediaExtractorTest extends AndroidTestCase {
     protected AssetFileDescriptor getAssetFileDescriptorFor(final String res)
             throws FileNotFoundException {
         File inpFile = new File(mInpPrefix + res);
+        Preconditions.assertTestFileExists(mInpPrefix + res);
         ParcelFileDescriptor parcelFD =
                 ParcelFileDescriptor.open(inpFile, ParcelFileDescriptor.MODE_READ_ONLY);
         return new AssetFileDescriptor(parcelFD, 0, parcelFD.getStatSize());
@@ -479,6 +480,7 @@ public class MediaExtractorTest extends AndroidTestCase {
 
     public void testGetDrmInitData() throws Exception {
         if (!MediaUtils.check(mIsAtLeastR, "test needs Android 11")) return;
+        Preconditions.assertTestFileExists(mInpPrefix + "psshtest.mp4");
         setDataSource("psshtest.mp4");
         DrmInitData drmInitData = mExtractor.getDrmInitData();
         assertEquals(drmInitData.getSchemeInitDataCount(), 2);
@@ -540,6 +542,8 @@ public class MediaExtractorTest extends AndroidTestCase {
     }
 
     public void testGetAudioPresentations() throws Exception {
+        Preconditions.assertTestFileExists(mInpPrefix +
+                        "MultiLangPerso_1PID_PC0_Select_AC4_H265_DVB_50fps_Audio_Only.ts");
         setDataSource("MultiLangPerso_1PID_PC0_Select_AC4_H265_DVB_50fps_Audio_Only.ts");
         int ac4TrackIndex = -1;
         for (int i = 0; i < mExtractor.getTrackCount(); i++) {
@@ -1109,6 +1113,7 @@ public class MediaExtractorTest extends AndroidTestCase {
     }
 
     public void testFragmentedRead() throws Exception {
+        Preconditions.assertTestFileExists(mInpPrefix + "psshtest.mp4");
         setDataSource("psshtest.mp4");
         readAllData();
     }
@@ -1116,6 +1121,7 @@ public class MediaExtractorTest extends AndroidTestCase {
     @AppModeFull(reason = "Instant apps cannot bind sockets.")
     public void testFragmentedHttpRead() throws Exception {
         CtsTestServer server = new CtsTestServer(getContext());
+        Preconditions.assertTestFileExists(mInpPrefix + "psshtest.mp4");
         String url = server.getAssetUrl(mInpPrefix + "psshtest.mp4");
         mExtractor.setDataSource(url);
         readAllData();

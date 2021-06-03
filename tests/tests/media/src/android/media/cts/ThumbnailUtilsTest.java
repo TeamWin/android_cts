@@ -196,6 +196,7 @@ public class ThumbnailUtilsTest {
 
     private static File stageFile(final String res, File file) throws IOException {
         final String mInpPrefix = WorkDir.getMediaDirString();
+        Preconditions.assertTestFileExists(mInpPrefix + res);
         try (InputStream source = new FileInputStream(mInpPrefix + res);
                 OutputStream target = new FileOutputStream(file)) {
             android.os.FileUtils.copy(source, target);

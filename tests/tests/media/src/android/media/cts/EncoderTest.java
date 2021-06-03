@@ -337,6 +337,7 @@ public class EncoderTest extends AndroidTestCase {
             }
         }
 
+        Preconditions.assertTestFileExists(mInpPrefix + res);
         InputStream istream = null;
         if ((mode & MODE_RESOURCE) != 0) {
             istream = new FileInputStream(mInpPrefix + res);
