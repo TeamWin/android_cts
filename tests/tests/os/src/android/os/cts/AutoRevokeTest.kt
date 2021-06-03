@@ -33,8 +33,7 @@ import android.support.test.uiautomator.By
 import android.support.test.uiautomator.BySelector
 import android.support.test.uiautomator.UiDevice
 import android.support.test.uiautomator.UiObject2
-import android.support.test.uiautomator.UiScrollable
-import android.support.test.uiautomator.UiSelector
+import android.support.test.uiautomator.UiObjectNotFoundException
 import android.view.accessibility.AccessibilityNodeInfo
 import android.view.accessibility.AccessibilityNodeInfo.ACTION_SCROLL_FORWARD
 import android.widget.Switch
@@ -152,7 +151,7 @@ class AutoRevokeTest {
 
                 if (hasFeatureWatch()) {
                     // In wear os, notification has one additional button to open it
-                    waitFindObject(By.text("Open")).click();
+                    waitFindObject(By.text("Open")).click()
                 }
 
                 waitFindObject(By.text(APK_PACKAGE_NAME))
@@ -433,7 +432,15 @@ class AutoRevokeTest {
     }
 
     private fun click(label: String) {
-        waitFindObject(byTextIgnoreCase(label)).click()
+        try {
+            waitFindObject(byTextIgnoreCase(label)).click()
+        } catch (e: UiObjectNotFoundException) {
+            // waitFindObject sometimes fails to find UI that is present in the view hierarchy
+            // Increasing sleep to 2000 in waitForIdle() might be passed but no guarantee that the
+            // UI is fully displayed So Adding one more check without using the UiAutomator helps
+            // reduce false positives
+            waitFindNode(hasTextThat(containsStringIgnoringCase(label))).click()
+        }
         waitForIdle()
     }
 
