@@ -62,8 +62,10 @@ public final class HdmiCecFeatureAbortTest extends BaseHdmiCecCtsTest {
                 HdmiCecConstants.ABORT_UNABLE_TO_DETERMINE);
 
         for (Integer abortReason : abortReasons) {
-            hdmiCecClient.sendCecMessage(LogicalAddress.RECORDER_1, mDutLogicalAddress,
-                    CecOperand.FEATURE_ABORT, CecMessage.formatParams(abortReason));
+            hdmiCecClient.sendCecMessage(
+                    LogicalAddress.RECORDER_1,
+                    CecOperand.FEATURE_ABORT,
+                    CecMessage.formatParams(abortReason));
 
             hdmiCecClient.checkOutputDoesNotContainMessage(LogicalAddress.RECORDER_1,
                     CecOperand.FEATURE_ABORT, TIMEOUT_SHORT_MILLIS);

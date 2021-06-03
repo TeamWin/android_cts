@@ -60,7 +60,7 @@ public final class HdmiCecTvPowerToggleTest extends BaseHdmiCecCtsTest {
                     .around(hdmiCecClient);
 
     public HdmiCecTvPowerToggleTest() {
-        super(LogicalAddress.PLAYBACK_1);
+        super(HdmiCecConstants.CEC_DEVICE_TYPE_PLAYBACK_DEVICE);
     }
 
     private String setPowerControlMode(String valToSet) throws Exception {
