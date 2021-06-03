@@ -224,19 +224,19 @@ public class InstallDexMetadataHostTest extends BaseHostJUnit4Test {
         }
     }
 
-    static class ProfileReaderV13 {
+    static class ProfileReaderV15 {
         byte[] dexFilesData;
         byte[] extraDescriptorsData;
         byte[] classesData;
         byte[] methodsData;
 
-        ProfileReaderV13(byte[] bytes) throws Exception {
+        ProfileReaderV15(byte[] bytes) throws Exception {
             ByteBuffer bb = ByteBuffer.wrap(bytes);
 
             // Read header.
             bb.order(ByteOrder.LITTLE_ENDIAN);
             assertEquals(0x006f7270 /* LE "pro\0" */, bb.getInt());
-            assertEquals(0x00333130 /* LE "013\0" */, bb.getInt());
+            assertEquals(0x00353130 /* LE "015\0" */, bb.getInt());
             int section_count = bb.getInt();
             assertFalse(section_count == 0);
 
@@ -336,11 +336,11 @@ public class InstallDexMetadataHostTest extends BaseHostJUnit4Test {
                 assertArrayEquals(expectedProfileBytes, snapshotProfileBytes);
                 break;
             }
-            case 13: {
-                ProfileReaderV13 reader = new ProfileReaderV13(rawDeviceProfile);
+            case 15: {
+                ProfileReaderV15 reader = new ProfileReaderV15(rawDeviceProfile);
                 // TODO: Support newer profiles implemented for b/148067697.
                 // Currently the .dm file is still version 10, so we cannot compare against it.
-                System.out.println("TODO: Check profile version 13.");
+                System.out.println("TODO: Check profile version 15.");
                 break;
             }
             default: {
