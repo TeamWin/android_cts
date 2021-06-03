@@ -94,6 +94,10 @@ public class DataCleanupTest extends BaseBlobStoreDeviceTest {
             if (getShouldAllowPublicFromArgs()) {
                 session.allowPublicAccess();
             }
+            if (getShouldAllowSameSignatureFromArgs()) {
+                session.allowSameSignatureAccess();
+            }
+
             final CompletableFuture<Integer> callback = new CompletableFuture<>();
             session.commit(mContext.getMainExecutor(), callback::complete);
             assertThat(callback.get(TIMEOUT_COMMIT_CALLBACK_MS, TimeUnit.MILLISECONDS))
@@ -129,6 +133,9 @@ public class DataCleanupTest extends BaseBlobStoreDeviceTest {
                 Utils.writeToSession(session, pfd);
                 if (getShouldAllowPublicFromArgs()) {
                     session.allowPublicAccess();
+                }
+                if (getShouldAllowSameSignatureFromArgs()) {
+                    session.allowSameSignatureAccess();
                 }
 
                 final CompletableFuture<Integer> callback = new CompletableFuture<>();
@@ -172,5 +179,10 @@ public class DataCleanupTest extends BaseBlobStoreDeviceTest {
     private boolean getShouldAllowPublicFromArgs() {
         final Bundle args = InstrumentationRegistry.getArguments();
         return "1".equals(args.getString(KEY_ALLOW_PUBLIC));
+    }
+
+    private boolean getShouldAllowSameSignatureFromArgs() {
+        final Bundle args = InstrumentationRegistry.getArguments();
+        return "1".equals(args.getString(KEY_ALLOW_SAME_SIGNATURE));
     }
 }
