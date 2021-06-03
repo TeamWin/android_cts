@@ -121,10 +121,8 @@ public class MediaStore_Images_ThumbnailsTest {
         Log.d(TAG, "Using volume " + mVolumeName + " for user " + mContext.getUserId());
         mExternalImages = MediaStore.Images.Media.getContentUri(mVolumeName);
 
-        final Resources res = mContext.getResources();
-        final Configuration config = res.getConfiguration();
-        mLargestDimension = (int) (Math.max(config.screenWidthDp, config.screenHeightDp)
-                * res.getDisplayMetrics().density);
+        final DisplayMetrics metrics = mContext.getResources().getDisplayMetrics();
+        mLargestDimension = Math.max(metrics.widthPixels, metrics.heightPixels);
     }
 
     private void prepareImages() throws Exception {
