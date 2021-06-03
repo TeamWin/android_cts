@@ -262,14 +262,14 @@ public abstract class CarHostJUnit4TestCase extends BaseHostJUnit4Test {
      * Creates a full user with car service shell command.
      */
     protected int createFullUser(String name) throws Exception {
-        return createUser(name, /* flags= */ 0, "android.os.usertype.full.SECONDARY");
+        return createUser(name, /* flags= */ 0, /* isGuest= */ false);
     }
 
     /**
      * Creates a full guest with car service shell command.
      */
     protected int createGuestUser(String name) throws Exception {
-        return createUser(name, /* flags= */ 0, "android.os.usertype.full.GUEST");
+        return createUser(name, /* flags= */ 0, /* isGuest= */ true);
     }
 
     /**
@@ -277,13 +277,14 @@ public abstract class CarHostJUnit4TestCase extends BaseHostJUnit4Test {
      *
      * <p><b>NOTE: </b>it uses User HAL flags, not core Android's.
      */
-    protected int createUser(String name, int flags, String type) throws Exception {
+    protected int createUser(String name, int flags, boolean isGuest) throws Exception {
         waitForCarServiceReady();
         int userId = executeAndParseCommand(CREATE_USER_OUTPUT_PATTERN,
-                "Could not create user with name " + name + ", flags " + flags + ", type" + type,
+                "Could not create user with name " + name
+                        + ", flags " + flags + ", guest " + isGuest,
                 matcher -> Integer.parseInt(matcher.group(1)),
-                "cmd car_service create-user --flags %d --type %s %s",
-                flags, type, name);
+                "cmd car_service create-user --flags %d %s%s",
+                flags, (isGuest ? "--guest " : ""), name);
         markUserForRemovalAfterTest(userId);
         return userId;
     }
