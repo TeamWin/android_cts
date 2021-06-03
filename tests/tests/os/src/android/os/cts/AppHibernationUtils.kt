@@ -146,6 +146,10 @@ fun startApp(packageName: String) {
     waitForIdle()
 }
 
+fun goHome() {
+    runShellCommandOrThrow("input keyevent KEYCODE_HOME")
+}
+
 fun waitFindObject(uiAutomation: UiAutomation, selector: BySelector): UiObject2 {
     try {
         return UiAutomatorUtils.waitFindObject(selector)

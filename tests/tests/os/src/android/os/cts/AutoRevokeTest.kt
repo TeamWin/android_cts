@@ -57,6 +57,7 @@ import org.hamcrest.CoreMatchers.containsString
 import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.Matcher
 import org.hamcrest.Matchers.greaterThan
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertThat
@@ -121,6 +122,11 @@ class AutoRevokeTest {
             preMinVersionApkPath = APK_PATH_Q_APP
             preMinVersionAppPackageName = APK_PACKAGE_NAME_Q_APP
         }
+    }
+
+    @After
+    fun cleanUp() {
+        goHome()
     }
 
     @AppModeFull(reason = "Uses separate apps for testing")
@@ -390,10 +396,6 @@ class AutoRevokeTest {
             // In wear os, notification has one additional button to open it
             waitFindObject(By.text("Open")).click()
         }
-    }
-
-    private fun goHome() {
-        runShellCommandOrThrow("input keyevent KEYCODE_HOME")
     }
 
     private fun goBack() {
