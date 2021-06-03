@@ -21,6 +21,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.CecOperand;
+import android.hdmicec.cts.HdmiCecConstants;
 import android.hdmicec.cts.HdmiControlManagerUtility;
 import android.hdmicec.cts.LogicalAddress;
 
@@ -46,7 +47,7 @@ public final class HdmiCecRoutingControlTest extends BaseHdmiCecCtsTest {
                     .around(hdmiCecClient);
 
     public HdmiCecRoutingControlTest() {
-        super(LogicalAddress.TV, "-t", "r", "-t", "t", "-t", "p");
+        super(HdmiCecConstants.CEC_DEVICE_TYPE_TV, "-t", "r", "-t", "t", "-t", "p");
     }
 
     @Before

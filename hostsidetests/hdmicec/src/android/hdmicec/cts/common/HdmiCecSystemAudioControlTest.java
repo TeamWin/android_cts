@@ -17,7 +17,7 @@
 package android.hdmicec.cts.common;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.Assume.assumeFalse;
 
 import android.hdmicec.cts.AudioManagerHelper;
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
@@ -64,7 +64,7 @@ public final class HdmiCecSystemAudioControlTest extends BaseHdmiCecCtsTest {
          */
         AudioManagerHelper.setDeviceVolume(getDevice(), 20);
         TimeUnit.SECONDS.sleep(5);
-        isDutTv = (mDutLogicalAddress.getDeviceType() == HdmiCecConstants.CEC_DEVICE_TYPE_TV);
+        isDutTv = hasDeviceType(HdmiCecConstants.CEC_DEVICE_TYPE_TV);
         if (isDutTv) {
             int initialDutVolume = AudioManagerHelper.getDutAudioVolume(getDevice());
         }
@@ -81,13 +81,11 @@ public final class HdmiCecSystemAudioControlTest extends BaseHdmiCecCtsTest {
     @Test
     public void cect_VolumeUpDownUserControlPressedWhenSystemAudioControlOn() throws Exception {
         /*
-         * TODO: Remove the assumeTrue below and let test run for playback devices when b/172539380
+         * TODO: Remove the assumeFalse below and let test run for playback devices when b/172539380
          * is fixed.
          */
-        assumeTrue(
-                "Skip for playback devices (b/172539380)",
-                mDutLogicalAddress.getDeviceType()
-                        != HdmiCecConstants.CEC_DEVICE_TYPE_PLAYBACK_DEVICE);
+        assumeFalse("Skip for playback devices (b/172539380)",
+                hasDeviceType(HdmiCecConstants.CEC_DEVICE_TYPE_PLAYBACK_DEVICE));
         ITestDevice device = getDevice();
         hdmiCecClient.sendCecMessage(
                 hdmiCecClient.getSelfDevice(),
@@ -124,13 +122,11 @@ public final class HdmiCecSystemAudioControlTest extends BaseHdmiCecCtsTest {
     @Test
     public void cect_MuteUserControlPressedWhenSystemAudioControlOn() throws Exception {
         /*
-         * TODO: Remove the assumeTrue below and let test run for playback devices when b/172539380
+         * TODO: Remove the assumeFalse below and let test run for playback devices when b/172539380
          * is fixed.
          */
-        assumeTrue(
-                "Skip for playback devices (b/172539380)",
-                mDutLogicalAddress.getDeviceType()
-                        != HdmiCecConstants.CEC_DEVICE_TYPE_PLAYBACK_DEVICE);
+        assumeFalse("Skip for playback devices (b/172539380)",
+                hasDeviceType(HdmiCecConstants.CEC_DEVICE_TYPE_PLAYBACK_DEVICE));
         ITestDevice device = getDevice();
         hdmiCecClient.sendCecMessage(
                 hdmiCecClient.getSelfDevice(),
