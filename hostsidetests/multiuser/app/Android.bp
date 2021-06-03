@@ -1,4 +1,4 @@
-// Copyright (C) 2016 The Android Open Source Project
+// Copyright (C) 2021 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,20 +16,17 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-java_test_host {
-    name: "CtsMultiUserHostTestCases",
+android_test_helper_app {
+    name: "CtsMultiuserApp",
     defaults: ["cts_defaults"],
+    static_libs: [
+        "androidx.test.rules",
+        "truth-prebuilt",],
     srcs: ["src/**/*.java"],
-    libs: [
-        "tools-common-prebuilt",
-        "cts-tradefed",
-        "tradefed",
-        "platform-test-annotations-host",
-        "compatibility-host-util",
-    ],
     // tag this module as a cts test artifact
     test_suites: [
         "cts",
         "general-tests",
     ],
+    sdk_version: "test_current",
 }
