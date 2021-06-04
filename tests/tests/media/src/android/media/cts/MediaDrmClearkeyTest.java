@@ -26,6 +26,7 @@ import android.media.ResourceBusyException;
 import android.media.UnsupportedSchemeException;
 import android.media.cts.TestUtils.Monitor;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Looper;
 import android.platform.test.annotations.Presubmit;
 import android.util.Base64;
@@ -49,6 +50,8 @@ import java.util.UUID;
 import java.util.Vector;
 
 import androidx.annotation.NonNull;
+import androidx.test.filters.SdkSuppress;
+
 
 /**
  * Tests of MediaPlayer streaming capabilities.
@@ -110,6 +113,8 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
     private boolean mEventListenerCalled;
     private boolean mExpirationUpdateReceived;
     private boolean mLostStateReceived;
+
+    private static boolean sIsAtLeastS = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S);
 
     public MediaDrmClearkeyTest() {
         super(MediaStubActivity.class);
@@ -1225,9 +1230,11 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
                 byte[] ignoredInitData = new byte[] { 1 };
                 drm.getKeyRequest(sessionId, ignoredInitData, "cenc", MediaDrm.KEY_TYPE_STREAMING, null);
             } catch (MediaDrm.SessionException e) {
-                if (e.getErrorCode() != MediaDrm.SessionException.ERROR_RESOURCE_CONTENTION ||
-                        !e.isTransient()) {
+                if (e.getErrorCode() != MediaDrm.SessionException.ERROR_RESOURCE_CONTENTION) {
                     throw new Error("Expected transient ERROR_RESOURCE_CONTENTION");
+                }
+                if(sIsAtLeastS && !e.isTransient()) {
+                        throw new Error("Expected transient ERROR_RESOURCE_CONTENTION");
                 }
                 gotException = true;
             }
@@ -1599,6 +1606,7 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
     }
 
     @Presubmit
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     public void testMediaDrmStateExceptionErrorCode()
             throws ResourceBusyException, UnsupportedSchemeException, NotProvisionedException {
         if (watchHasNoClearkeySupport()) {

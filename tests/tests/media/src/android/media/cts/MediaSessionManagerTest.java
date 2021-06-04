@@ -18,6 +18,8 @@ package android.media.cts;
 import static android.Manifest.permission.MEDIA_CONTENT_CONTROL;
 
 import android.platform.test.annotations.AppModeFull;
+import com.android.compatibility.common.util.ApiLevelUtil;
+import com.android.compatibility.common.util.MediaUtils;
 import com.android.compatibility.common.util.SystemUtil;
 
 import android.content.ComponentName;
@@ -32,12 +34,14 @@ import android.media.session.MediaController;
 import android.media.session.MediaSession;
 import android.media.session.MediaSessionManager;
 import android.media.session.PlaybackState;
+import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.Process;
 import android.test.InstrumentationTestCase;
 import android.test.UiThreadTest;
+import android.util.Log;
 import android.view.KeyEvent;
 
 import java.io.IOException;
@@ -55,6 +59,8 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
     private static final int WAIT_MS = 500;
 
     private MediaSessionManager mSessionManager;
+
+    private static boolean sIsAtLeastS = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S);
 
     @Override
     protected void setUp() throws Exception {
@@ -80,6 +86,7 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
     }
 
     public void testGetMediaKeyEventSession() throws Exception {
+        if (!MediaUtils.check(sIsAtLeastS, "test invalid before Android 12")) return;
         try {
             mSessionManager.getMediaKeyEventSession();
             fail("Expected security exception for call to getMediaKeyEventSession");
@@ -399,6 +406,7 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
     }
 
     public void testCustomClassConfigValuesAreValid() throws Exception {
+        if (!MediaUtils.check(sIsAtLeastS, "test invalid before Android 12")) return;
         final Context context = getInstrumentation().getTargetContext();
         String customMediaKeyDispatcher = context.getString(
                 android.R.string.config_customMediaKeyDispatcher);
