@@ -28,6 +28,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
+import android.os.Build;
 import android.platform.test.annotations.AppModeFull;
 
 import androidx.test.filters.SdkSuppress;
@@ -335,20 +336,14 @@ public class WifiLocationInfoTest extends WifiJUnit4TestBase {
         retrieveConnectionInfoBgServiceAndAssertStatusIs(false);
     }
 
-    /**
-     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
-     */
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     @Test
     public void testTransportInfoRetrievalNotAllowedForForegroundActivityWithNoLocationPermission()
             throws Exception {
         retrieveTransportInfoFgActivityAndAssertStatusIs(false);
     }
 
-    /**
-     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
-     */
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     @Test
     public void testTransportInfoRetrievalAllowedForForegroundActivityWithFineLocationPermission()
             throws Exception {
@@ -357,10 +352,7 @@ public class WifiLocationInfoTest extends WifiJUnit4TestBase {
         retrieveTransportInfoFgActivityAndAssertStatusIs(true);
     }
 
-    /**
-     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
-     */
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     @Test
     public void
     testTransportInfoRetrievalAllowedForBackgroundServiceWithBackgroundLocationPermission()
@@ -372,10 +364,7 @@ public class WifiLocationInfoTest extends WifiJUnit4TestBase {
         retrieveTransportInfoBgServiceAndAssertStatusIs(true);
     }
 
-    /**
-     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
-     */
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     @Test
     public void
     testTransportInfoRetrievalNotAllowedForBackgroundServiceWithFineLocationPermission()

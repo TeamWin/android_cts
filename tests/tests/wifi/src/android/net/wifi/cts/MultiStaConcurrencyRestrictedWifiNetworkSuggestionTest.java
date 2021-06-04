@@ -32,6 +32,7 @@ import android.net.ConnectivityManager;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiNetworkSuggestion;
+import android.os.Build;
 import android.platform.test.annotations.AppModeFull;
 import android.support.test.uiautomator.UiDevice;
 
@@ -65,10 +66,8 @@ import java.util.concurrent.ScheduledExecutorService;
  * connection using {@link WifiManager#connect(int, WifiManager.ActionListener)}.
  *
  * Assumes that all the saved networks is either open/WPA1/WPA2/WPA3 authenticated network.
- *
- * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
  */
-@SdkSuppress(minSdkVersion = 31, codeName = "S")
+@SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
 @AppModeFull(reason = "Cannot get WifiManager in instant app mode")
 @SmallTest
 @RunWith(AndroidJUnit4.class)
