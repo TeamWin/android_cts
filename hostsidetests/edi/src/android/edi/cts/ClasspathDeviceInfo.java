@@ -112,6 +112,10 @@ public class ClasspathDeviceInfo extends DeviceInfo {
     }
 
     private void collectClassInfo(HostInfoStore store, String path) throws Exception {
+        // TODO(b/189924891): stop ignoring libhwinfo.jar
+        if (path.equals("/product/framework/libhwinfo.jar")) {
+            return;
+        }
         store.startArray("classes");
         for (ClassDef classDef : Classpaths.getClassDefsFromJar(mDevice, path)) {
             store.startGroup();
