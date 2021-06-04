@@ -16,23 +16,34 @@
 
 package android.security.cts;
 
-import android.content.Context;
+import static org.junit.Assert.*;
+
+import android.app.UiAutomation;
 import android.content.ContentResolver;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.platform.test.annotations.SecurityTest;
 import android.provider.VoicemailContract;
 import android.test.AndroidTestCase;
+
 import androidx.test.InstrumentationRegistry;
-import static org.junit.Assert.*;
+
+import java.io.File;
+import java.io.FileInputStream;
 
 @SecurityTest
 public class SQLiteTest extends AndroidTestCase {
+    private static final String DATABASE_FILE_NAME = "database_test.db";
 
     private ContentResolver mResolver;
     private String mPackageName;
     private Context mContext;
+
+    private SQLiteDatabase mDatabase;
 
     @Override
     protected void setUp() throws Exception {
@@ -40,6 +51,12 @@ public class SQLiteTest extends AndroidTestCase {
         mResolver = getContext().getContentResolver();
         mContext = InstrumentationRegistry.getTargetContext();
         mPackageName = mContext.getPackageName();
+
+        mContext.deleteDatabase(DATABASE_FILE_NAME);
+        File databaseFile = getContext().getDatabasePath(DATABASE_FILE_NAME);
+        databaseFile.getParentFile().mkdirs(); // directory may not exist
+        mDatabase = SQLiteDatabase.openOrCreateDatabase(databaseFile, null);
+        assertNotNull(mDatabase);
     }
 
     /**
@@ -76,6 +93,17 @@ public class SQLiteTest extends AndroidTestCase {
             }
         } catch (NameNotFoundException n) {
             // do nothing
+        }
+    }
+
+    /**
+     * b/153352319
+     */
+    @SecurityTest(minPatchLevel = "2021-06")
+    public void test_android_float_to_text_conversion_overflow() {
+        String create_cmd = "select (printf('%.2147483647G',0.01));";
+        try (Cursor c = mDatabase.rawQuery(create_cmd, null)) {
+            assertEquals(c.getCount(), 1);
         }
     }
 }
