@@ -21,8 +21,9 @@ import android.bluetooth.BluetoothManager
 import android.bluetooth.cts.BTAdapterUtils
 import android.content.Intent
 import android.content.pm.PackageManager
-import androidx.core.os.BuildCompat
+import android.os.Build
 import androidx.test.InstrumentationRegistry
+import androidx.test.filters.SdkSuppress
 import com.android.compatibility.common.util.SystemUtil.runShellCommandOrThrow
 import junit.framework.Assert.assertEquals
 import junit.framework.Assert.assertTrue
@@ -34,6 +35,7 @@ import org.junit.Test
 /**
  * Runtime Bluetooth-permission behavior of apps targeting API 30
  */
+@SdkSuppress(minSdkVersion = Build.VERSION_CODES.S, codeName = "S")
 class PermissionTest30WithBluetooth : BaseUsePermissionTest() {
 
     private val TEST_APP_AUTHORITY =
@@ -70,7 +72,6 @@ class PermissionTest30WithBluetooth : BaseUsePermissionTest() {
 
     @Test
     fun testGivenBluetoothIsDeniedWhenScanIsAttemptedThenThenGetEmptyScanResult() {
-        assumeTrue(BuildCompat.isAtLeastS())
         revokeAppPermissions(android.Manifest.permission.BLUETOOTH_SCAN)
         assertEquals(BluetoothScanResult.EMPTY, scanForBluetoothDevices())
     }
