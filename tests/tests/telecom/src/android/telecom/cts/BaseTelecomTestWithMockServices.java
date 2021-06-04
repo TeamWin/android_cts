@@ -31,6 +31,7 @@ import android.app.UiModeManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.content.pm.PackageManager;
 import android.database.ContentObserver;
 import android.database.Cursor;
 import android.media.AudioManager;
@@ -268,12 +269,17 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
             return;
         }
 
-        // Assume we start in normal mode at the start of all Telecom tests.
-        // A failure to leave car mode in any of the tests would cause subsequent test failures,
-        // but this failure should not affect other tests.
+        // Assume we start in normal mode at the start of all Telecom tests; a failure to leave car
+        // mode in any of the tests would cause subsequent test failures.
+        // For Watch, UI_MODE shouldn't be normal mode.
         mUiModeManager = mContext.getSystemService(UiModeManager.class);
         TestUtils.executeShellCommand(getInstrumentation(), "telecom reset-car-mode");
-        assertUiMode(Configuration.UI_MODE_TYPE_NORMAL);
+
+        if (mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH)) {
+             assertUiMode(Configuration.UI_MODE_TYPE_WATCH);
+        } else {
+             assertUiMode(Configuration.UI_MODE_TYPE_NORMAL);
+        }
 
         AppOpsManager aom = mContext.getSystemService(AppOpsManager.class);
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(aom,

@@ -40,6 +40,7 @@ import androidx.annotation.Nullable;
 
 import java.lang.ref.WeakReference;
 import java.util.Set;
+import java.util.stream.Stream;
 
 /**
  * This is a bound service used in conjunction with trampoline tests in NotificationManagerTest.
@@ -52,9 +53,13 @@ public class NotificationTrampolineTestService extends Service {
     private static final String RECEIVER_ACTION = ".TRAMPOLINE";
     private static final int MESSAGE_BROADCAST_NOTIFICATION = 1;
     private static final int MESSAGE_SERVICE_NOTIFICATION = 2;
+    private static final int MESSAGE_CLICK_NOTIFICATION = 3;
     private static final int TEST_MESSAGE_BROADCAST_RECEIVED = 1;
     private static final int TEST_MESSAGE_SERVICE_STARTED = 2;
     private static final int TEST_MESSAGE_ACTIVITY_STARTED = 3;
+    private static final int TEST_MESSAGE_NOTIFICATION_CLICKED = 4;
+    private static final int PI_FLAGS =
+            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE;
 
     private final Handler mHandler = new ServiceHandler();
     private final ActivityReference mActivityRef = new ActivityReference();
@@ -107,14 +112,14 @@ public class NotificationTrampolineTestService extends Service {
                     mReceiver = new BroadcastReceiver() {
                         @Override
                         public void onReceive(Context context, Intent broadcastIntent) {
-                            sendMessageToTest(mCallback, TEST_MESSAGE_BROADCAST_RECEIVED);
+                            sendMessageToTest(mCallback, TEST_MESSAGE_BROADCAST_RECEIVED, true);
                             startTargetActivity();
                         }
                     };
                     registerReceiver(mReceiver, new IntentFilter(mReceiverAction));
                     Intent intent = new Intent(mReceiverAction);
                     postNotification(notificationId,
-                            PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_MUTABLE_UNAUDITED));
+                            PendingIntent.getBroadcast(context, 0, intent, PI_FLAGS));
                     break;
                 }
                 case MESSAGE_SERVICE_NOTIFICATION: {
@@ -123,7 +128,24 @@ public class NotificationTrampolineTestService extends Service {
                     // trampoline) in this case.
                     Intent intent = new Intent(context, NotificationTrampolineTestService.class);
                     postNotification(notificationId,
-                            PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_MUTABLE_UNAUDITED));
+                            PendingIntent.getService(context, 0, intent, PI_FLAGS));
+                    break;
+                }
+                case MESSAGE_CLICK_NOTIFICATION: {
+                    PendingIntent intent = Stream
+                            .of(mNotificationManager.getActiveNotifications())
+                            .filter(sb -> sb.getId() == notificationId)
+                            .map(sb -> sb.getNotification().contentIntent)
+                            .findFirst()
+                            .orElse(null);
+                    if (intent != null) {
+                        try {
+                            intent.send();
+                        } catch (PendingIntent.CanceledException e) {
+                            throw new IllegalStateException("Notification PI cancelled", e);
+                        }
+                    }
+                    sendMessageToTest(mCallback, TEST_MESSAGE_NOTIFICATION_CLICKED, intent != null);
                     break;
                 }
                 default:
@@ -134,7 +156,7 @@ public class NotificationTrampolineTestService extends Service {
 
     @Override
     public int onStartCommand(Intent serviceIntent, int flags, int startId) {
-        sendMessageToTest(mCallback, TEST_MESSAGE_SERVICE_STARTED);
+        sendMessageToTest(mCallback, TEST_MESSAGE_SERVICE_STARTED, true);
         startTargetActivity();
         stopSelf(startId);
         return START_REDELIVER_INTENT;
@@ -163,9 +185,9 @@ public class NotificationTrampolineTestService extends Service {
         startActivity(intent);
     }
 
-    private static void sendMessageToTest(Messenger callback, int message) {
+    private static void sendMessageToTest(Messenger callback, int message, boolean success) {
         try {
-            callback.send(Message.obtain(null, message));
+            callback.send(Message.obtain(null, message, success ? 0 : 1, 0));
         } catch (RemoteException e) {
             throw new IllegalStateException(
                     "Couldn't send message " + message + " to test process", e);
@@ -185,10 +207,11 @@ public class NotificationTrampolineTestService extends Service {
         protected void onResume() {
             super.onResume();
             Messenger callback = getIntent().getParcelableExtra(EXTRA_CALLBACK);
-            ActivityReference activityRef =
-                    (ActivityReference) getIntent().getExtras().getBinder(EXTRA_ACTIVITY_REF);
-            activityRef.activity = new WeakReference<>(this);
-            sendMessageToTest(callback, TEST_MESSAGE_ACTIVITY_STARTED);
+            IBinder activityRef = getIntent().getExtras().getBinder(EXTRA_ACTIVITY_REF);
+            if (activityRef instanceof ActivityReference) {
+                ((ActivityReference) activityRef).activity = new WeakReference<>(this);
+            }
+            sendMessageToTest(callback, TEST_MESSAGE_ACTIVITY_STARTED, true);
         }
     }
 }

@@ -48,6 +48,9 @@ public class ReadableSettingsFieldsTest extends BaseAppSecurityTest {
     private static final String TEST_CLASS = TEST_PACKAGE + ".ReadSettingsFieldsTest";
     private static final String TEST_APK = "CtsReadSettingsFieldsApp.apk";
     private static final String TEST_APK_TEST_ONLY = "CtsReadSettingsFieldsAppTestOnly.apk";
+    private static final String TEST_APK_TARGET_Q = "CtsReadSettingsFieldsAppTargetQ.apk";
+    private static final String TEST_APK_TARGET_R = "CtsReadSettingsFieldsAppTargetR.apk";
+    private static final String TEST_APK_TARGET_S = "CtsReadSettingsFieldsAppTargetS.apk";
 
     @Before
     public void setUp() throws Exception {
@@ -61,18 +64,18 @@ public class ReadableSettingsFieldsTest extends BaseAppSecurityTest {
     }
 
     @Test
-    public void testSecurePublicSettingsKeysAreReadable() throws DeviceNotAvailableException {
-        runDeviceTests(TEST_PACKAGE, TEST_CLASS, "testSecurePublicSettingsKeysAreReadable");
+    public void testSecureNonHiddenSettingsKeysAreReadable() throws DeviceNotAvailableException {
+        runDeviceTests(TEST_PACKAGE, TEST_CLASS, "testSecureNonHiddenSettingsKeysAreReadable");
     }
 
     @Test
-    public void testSystemPublicSettingsKeysAreReadable() throws DeviceNotAvailableException {
-        runDeviceTests(TEST_PACKAGE, TEST_CLASS, "testSystemPublicSettingsKeysAreReadable");
+    public void testSystemNonHiddenSettingsKeysAreReadable() throws DeviceNotAvailableException {
+        runDeviceTests(TEST_PACKAGE, TEST_CLASS, "testSystemNonHiddenSettingsKeysAreReadable");
     }
 
     @Test
-    public void testGlobalPublicSettingsKeysAreReadable() throws DeviceNotAvailableException {
-        runDeviceTests(TEST_PACKAGE, TEST_CLASS, "testGlobalPublicSettingsKeysAreReadable");
+    public void testGlobalNonHiddenSettingsKeysAreReadable() throws DeviceNotAvailableException {
+        runDeviceTests(TEST_PACKAGE, TEST_CLASS, "testGlobalNonHiddenSettingsKeysAreReadable");
     }
 
     @Test

@@ -580,6 +580,7 @@ public class ExtractDecodeEditEncodeMuxTest
 
     protected AssetFileDescriptor getAssetFileDescriptorFor(final String res)
             throws FileNotFoundException {
+        Preconditions.assertTestFileExists(mInpPrefix + res);
         File inpFile = new File(mInpPrefix + res);
         ParcelFileDescriptor parcelFD =
                 ParcelFileDescriptor.open(inpFile, ParcelFileDescriptor.MODE_READ_ONLY);

@@ -977,7 +977,7 @@ public class EventLogsTest {
     }
 
     @Test
-    public void pollOrFail_hasEvent_returnsEvent() {
+    public void waitForEvent_hasEvent_returnsEvent() {
         CustomEvent.logger(sContext)
                 .setTag(TEST_TAG1)
                 .log();
@@ -985,55 +985,55 @@ public class EventLogsTest {
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(sContext.getPackageName())
                 .whereTag().isEqualTo(TEST_TAG1);
 
-        assertThat(eventLogs.pollOrFail().tag()).isEqualTo(TEST_TAG1);
+        assertThat(eventLogs.waitForEvent().tag()).isEqualTo(TEST_TAG1);
     }
 
     @Test
-    public void pollOrFail_differentPackage_hasEvent_returnsEvent() {
+    public void waitForEvent_differentPackage_hasEvent_returnsEvent() {
         logCustomEventOnTestApp(/* tag= */ TEST_TAG1, /* data= */ null);
 
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME)
                 .whereTag().isEqualTo(TEST_TAG1);
 
-        assertThat(eventLogs.pollOrFail().tag()).isEqualTo(TEST_TAG1);
+        assertThat(eventLogs.waitForEvent().tag()).isEqualTo(TEST_TAG1);
     }
 
     @Test
-    public void pollOrFail_noEvent_throwsException() {
+    public void waitForEvent_noEvent_throwsException() {
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(sContext.getPackageName())
                 .whereTag().isEqualTo(TEST_TAG1);
 
-        assertThrows(AssertionError.class, () -> eventLogs.pollOrFail(VERY_SHORT_POLL_WAIT));
+        assertThrows(AssertionError.class, () -> eventLogs.waitForEvent(VERY_SHORT_POLL_WAIT));
     }
 
     @Test
-    public void pollOrFail_loggedAfter_throwsException() {
+    public void waitForEvent_loggedAfter_throwsException() {
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(sContext.getPackageName())
                 .whereTag().isEqualTo(TEST_TAG1);
         scheduleCustomEventInOneSecond();
 
-        assertThrows(AssertionError.class, () -> eventLogs.pollOrFail(VERY_SHORT_POLL_WAIT));
+        assertThrows(AssertionError.class, () -> eventLogs.waitForEvent(VERY_SHORT_POLL_WAIT));
     }
 
     @Test
-    public void pollOrFail_differentPackage_noEvent_throwsException() {
+    public void waitForEvent_differentPackage_noEvent_throwsException() {
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME)
                 .whereTag().isEqualTo(TEST_TAG1);
 
-        assertThrows(AssertionError.class, () -> eventLogs.pollOrFail(VERY_SHORT_POLL_WAIT));
+        assertThrows(AssertionError.class, () -> eventLogs.waitForEvent(VERY_SHORT_POLL_WAIT));
     }
 
     @Test
-    public void pollOrFail_differentPackage_loggedAfter_throwsException() {
+    public void waitForEvent_differentPackage_loggedAfter_throwsException() {
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME)
                 .whereTag().isEqualTo(TEST_TAG1);
         scheduleCustomEventInOneSecondOnTestApp();
 
-        assertThrows(AssertionError.class, () -> eventLogs.pollOrFail(VERY_SHORT_POLL_WAIT));
+        assertThrows(AssertionError.class, () -> eventLogs.waitForEvent(VERY_SHORT_POLL_WAIT));
     }
 
     @Test
-    public void pollOrFail_loggedAfter_returnsEvent() {
+    public void waitForEvent_loggedAfter_returnsEvent() {
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(sContext.getPackageName())
                 .whereTag().isEqualTo(TEST_TAG1);
 
@@ -1045,11 +1045,11 @@ public class EventLogsTest {
                     .log();
         }, 1, TimeUnit.SECONDS);
 
-        assertThat(eventLogs.pollOrFail()).isNotNull();
+        assertThat(eventLogs.waitForEvent()).isNotNull();
     }
 
     @Test
-    public void pollOrFail_differentPackage_loggedAfter_returnsEvent() {
+    public void waitForEvent_differentPackage_loggedAfter_returnsEvent() {
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME)
                 .whereTag().isEqualTo(TEST_TAG1);
 
@@ -1059,7 +1059,7 @@ public class EventLogsTest {
             logCustomEventOnTestApp(/* tag= */ TEST_TAG1, /* data= */ null);
         }, 1, TimeUnit.SECONDS);
 
-        assertThat(eventLogs.pollOrFail()).isNotNull();
+        assertThat(eventLogs.waitForEvent()).isNotNull();
     }
 
     @Test
@@ -1193,7 +1193,7 @@ public class EventLogsTest {
                 .whereTag().isEqualTo(tag)
                 .whereData().isEqualTo(data)
                 .onUser(user)
-                .pollOrFail();
+                .waitForEvent();
     }
 
     private void logCustomEventOnTestApp(String tag, String data) {

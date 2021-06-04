@@ -82,7 +82,7 @@ public class DevicePolicyTest {
 
     @AfterClass
     public static void teardownClass() {
-        sTestApp.reference().uninstall(sUser);
+        sTestApp.uninstall(sUser);
     }
 
     @Test
@@ -244,7 +244,7 @@ public class DevicePolicyTest {
     @EnsureHasNoDeviceOwner
     @EnsureHasNoProfileOwner
     public void setDeviceOwner_componentNameNotInstalled_throwsException() {
-        sTestApp.reference().uninstall(sUser);
+        sTestApp.uninstall(sUser);
         try {
             assertThrows(NeneException.class,
                     () -> sTestApis.devicePolicy().setDeviceOwner(sUser, DPC_COMPONENT_NAME));

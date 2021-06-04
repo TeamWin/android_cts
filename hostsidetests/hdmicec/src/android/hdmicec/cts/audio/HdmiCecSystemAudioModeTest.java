@@ -49,7 +49,7 @@ public final class HdmiCecSystemAudioModeTest extends BaseHdmiCecCtsTest {
     private static final int OFF = 0x0;
 
     public HdmiCecSystemAudioModeTest() {
-        super(AUDIO_DEVICE, "-t", "t");
+        super(HdmiCecConstants.CEC_DEVICE_TYPE_AUDIO_SYSTEM, "-t", "t");
     }
 
     @Rule

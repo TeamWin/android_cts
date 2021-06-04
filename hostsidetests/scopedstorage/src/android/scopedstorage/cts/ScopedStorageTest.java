@@ -848,7 +848,7 @@ public class ScopedStorageTest {
             createAndCheckFileAsApp(APP_B_NO_PERMS, fileToBeDeleted);
             createAndCheckFileAsApp(APP_B_NO_PERMS, nestedFileToBeDeleted);
 
-            executeShellCommand("pm clear " + testAppPackageName);
+            executeShellCommand("pm clear --user " + getCurrentUser() + " " + testAppPackageName);
 
             // Wait a max of 5 seconds for the cleaning after "pm clear" command to complete.
             int i = 0;

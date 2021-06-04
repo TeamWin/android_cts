@@ -566,14 +566,13 @@ public class NotificationAssistantServiceTest {
         turnScreenOn();
         mUi.adoptShellPermissionIdentity("android.permission.EXPAND_STATUS_BAR");
 
-        mNotificationAssistantService.resetNotificationVisibilityCounts();
+        sendNotification(1, ICON_ID);
+        Thread.sleep(SLEEP_TIME * 2);
 
         // Initialize as closed
         mStatusBarManager.collapsePanels();
-
-        sendNotification(1, ICON_ID);
-        assertEquals(0, mNotificationAssistantService.notificationVisibleCount);
-        assertEquals(0, mNotificationAssistantService.notificationHiddenCount);
+        Thread.sleep(SLEEP_TIME * 2);
+        mNotificationAssistantService.resetNotificationVisibilityCounts();
 
         mStatusBarManager.expandNotificationsPanel();
         Thread.sleep(SLEEP_TIME * 2);

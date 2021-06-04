@@ -26,6 +26,8 @@ import android.os.PersistableBundle;
 import android.os.SharedMemory;
 import android.service.voice.AlwaysOnHotwordDetector;
 import android.service.voice.HotwordDetectionService;
+import android.service.voice.HotwordDetector;
+import android.service.voice.HotwordRejectedResult;
 import android.service.voice.VoiceInteractionService;
 import android.system.ErrnoException;
 import android.util.Log;
@@ -51,6 +53,7 @@ public class BasicVoiceInteractionService extends VoiceInteractionService {
 
     private boolean mReady = false;
     private AlwaysOnHotwordDetector mAlwaysOnHotwordDetector = null;
+    private HotwordDetector mSoftwareHotwordDetector = null;
     private ParcelFileDescriptor[] mTempParcelFileDescriptor = null;
 
     @Override
@@ -100,6 +103,16 @@ public class BasicVoiceInteractionService extends VoiceInteractionService {
                                 createFakeAudioFormat(),
                                 createFakePersistableBundleData());
                     }
+                }
+            });
+        } else if (testEvent == Utils.HOTWORD_DETECTION_SERVICE_FROM_SOFTWARE_TRIGGER_TEST) {
+            runWithShellPermissionIdentity(() -> {
+                mSoftwareHotwordDetector = callCreateSoftwareHotwordDetector();
+            }, Manifest.permission.MANAGE_HOTWORD_DETECTION);
+        } else if (testEvent == Utils.HOTWORD_DETECTION_SERVICE_MIC_ONDETECT_TEST) {
+            runWithShellPermissionIdentity(() -> {
+                if (mSoftwareHotwordDetector != null) {
+                    mSoftwareHotwordDetector.startRecognition();
                 }
             });
         }
@@ -162,6 +175,55 @@ public class BasicVoiceInteractionService extends VoiceInteractionService {
             broadcastIntentWithResult(
                     Utils.BROADCAST_HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
                     Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SECURITY_EXCEPTION);
+        }
+        return null;
+    }
+
+    private HotwordDetector callCreateSoftwareHotwordDetector() {
+        Log.i(TAG, "callCreateSoftwareHotwordDetector()");
+        try {
+            return createHotwordDetector(
+                    createFakePersistableBundleData(),
+                    createFakeSharedMemoryData(),
+                    new HotwordDetector.Callback() {
+                        @Override
+                        public void onDetected(AlwaysOnHotwordDetector.EventPayload eventPayload) {
+                            Log.i(TAG, "onDetected");
+                            broadcastOnDetectedEvent();
+                        }
+
+                        @Override
+                        public void onError() {
+                            Log.i(TAG, "onError");
+                        }
+
+                        @Override
+                        public void onRecognitionPaused() {
+                            Log.i(TAG, "onRecognitionPaused");
+                        }
+
+                        @Override
+                        public void onRecognitionResumed() {
+                            Log.i(TAG, "onRecognitionResumed");
+                        }
+
+                        @Override
+                        public void onRejected(HotwordRejectedResult result) {
+                            Log.i(TAG, "onRejected");
+                        }
+
+                        @Override
+                        public void onHotwordDetectionServiceInitialized(int status) {
+                            verifyHotwordDetectionServiceInitializedStatus(status);
+                        }
+
+                        @Override
+                        public void onHotwordDetectionServiceRestarted() {
+                            Log.i(TAG, "onHotwordDetectionServiceRestarted");
+                        }
+                    });
+        } catch (Exception e) {
+            Log.w(TAG, "callCreateSoftwareHotwordDetector() exception: " + e);
         }
         return null;
     }

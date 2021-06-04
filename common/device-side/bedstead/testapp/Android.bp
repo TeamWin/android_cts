@@ -3,16 +3,51 @@ package {
 }
 
 android_library {
-    name: "TestApp",
+    name: "TestApp_Communication",
     sdk_version: "test_current",
     srcs: [
-        "src/main/java/**/*.java"
+        "src/communication/main/java/**/*.java"
     ],
     static_libs: [
         "Nene",
+        "ConnectedAppsSDK",
+        "ConnectedAppsSDK_Annotations",
+        "androidx.annotation_annotation",
+        "TestApp_TestApps",
+        "TestApp_Annotations"
     ],
-    manifest: "src/main/AndroidManifest.xml",
-    min_sdk_version: "27",
+    manifest: "src/communication/main/AndroidManifest.xml",
+    min_sdk_version: "28",
+    plugins: ["ConnectedAppsSDK_Processor", "TestApp_Processor"],
+}
+
+android_library {
+    name: "TestApp_TestApps",
+    sdk_version: "test_current",
+    srcs: [
+        "src/main/testapps/java/**/*.java"
+    ],
+    static_libs: [
+        "Nene",
+        "EventLib"
+    ],
+    manifest: "src/main/testapps/AndroidManifest.xml",
+    min_sdk_version: "28"
+}
+
+android_library {
+    name: "TestApp",
+    sdk_version: "test_current",
+    srcs: [
+        "src/main/library/java/**/*.java"
+    ],
+    static_libs: [
+        "Nene",
+        "EventLib",
+        "TestApp_Communication"
+    ],
+    manifest: "src/main/library/AndroidManifest.xml",
+    min_sdk_version: "28",
     resource_zips: [":TestApp_Apps"],
 }
 
@@ -27,12 +62,15 @@ android_test {
     static_libs: [
         "Nene",
         "TestApp",
+        "TestApp_TestApps",
+        "Harrier",
+        "EventLib",
         "androidx.test.ext.junit",
         "truth-prebuilt",
         "testng" // for assertThrows
     ],
     manifest: "src/test/AndroidManifest.xml",
-    min_sdk_version: "27"
+    min_sdk_version: "28"
 }
 
 python_binary_host {
@@ -69,27 +107,54 @@ java_genrule {
 android_test_helper_app {
     name: "EmptyTestApp",
     static_libs: [
-        "EventLib"
+        "TestApp_TestApps",
+        "TestApp_Communication"
     ],
     manifest: "manifests/EmptyTestAppManifest.xml",
-    min_sdk_version: "27"
+    min_sdk_version: "28"
 }
 
 android_test_helper_app {
     name: "EmptyTestApp2",
     static_libs: [
-        "EventLib"
+        "TestApp_TestApps",
+        "TestApp_Communication"
     ],
     manifest: "manifests/EmptyTestApp2Manifest.xml",
-    min_sdk_version: "27"
+    min_sdk_version: "28"
 }
 
 android_test_helper_app {
     name: "DeviceAdminTestApp",
     static_libs: [
-        "EventLib",
+        "TestApp_TestApps",
+        "TestApp_Communication",
         "DeviceAdminApp"
     ],
     manifest: "manifests/DeviceAdminManifest.xml",
-    min_sdk_version: "27"
+    min_sdk_version: "28"
+}
+
+java_library {
+    name: "TestApp_Annotations",
+    srcs: [
+        "src/processor/main/java/com/android/bedstead/testapp/processor/annotations/*.java"
+    ],
+    host_supported: true
+}
+
+java_plugin {
+    name: "TestApp_Processor",
+    processor_class: "com.android.bedstead.testapp.processor.Processor",
+    static_libs: [
+        "javapoet",
+        "auto_service_annotations",
+        "TestApp_Annotations",
+        "ConnectedAppsSDK_Annotations"
+    ],
+    srcs: [
+        "src/processor/main/java/com/android/bedstead/testapp/processor/Processor.java"
+    ],
+    plugins: ["auto_service_plugin"],
+    generates_api: true,
 }
