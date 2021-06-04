@@ -16,13 +16,16 @@
 
 package android.sensorprivacy.cts
 
+import android.app.KeyguardManager
 import android.content.Intent
 import android.hardware.SensorPrivacyManager
 import android.hardware.SensorPrivacyManager.OnSensorPrivacyChangedListener
+import android.os.PowerManager
 import android.support.test.uiautomator.By
+import android.view.KeyEvent
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.UiDevice
-import com.android.compatibility.common.util.SystemUtil
+import com.android.compatibility.common.util.SystemUtil.eventually
 import com.android.compatibility.common.util.SystemUtil.runShellCommandOrThrow
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
 import com.android.compatibility.common.util.ThrowingSupplier
@@ -125,34 +128,60 @@ abstract class SensorPrivacyBaseTest(
         val executor = Executors.newSingleThreadExecutor()
         setSensor(false)
         val latchEnabled = CountDownLatch(1)
+        var listener =
+                OnSensorPrivacyChangedListener { _, enabled: Boolean ->
+                    if (enabled) {
+                        latchEnabled.countDown()
+                    }
+                }
         runWithShellPermissionIdentity {
-            spm.addSensorPrivacyListener(sensor, executor,
-                    OnSensorPrivacyChangedListener { _, enabled: Boolean ->
-                        if (enabled) {
-                            latchEnabled.countDown()
-                        }
-            })
+            spm.addSensorPrivacyListener(sensor, executor, listener)
         }
         setSensor(true)
         latchEnabled.await(100, TimeUnit.MILLISECONDS)
+        runWithShellPermissionIdentity {
+            spm.removeSensorPrivacyListener(sensor, listener)
+        }
 
         val latchDisabled = CountDownLatch(1)
+        listener = OnSensorPrivacyChangedListener { _, enabled: Boolean ->
+            if (!enabled) {
+                latchDisabled.countDown()
+            }
+        }
         runWithShellPermissionIdentity {
-            spm.addSensorPrivacyListener(sensor, executor,
-                    OnSensorPrivacyChangedListener { _, enabled: Boolean ->
-                        if (!enabled) {
-                            latchDisabled.countDown()
-                        }
-            })
+            spm.addSensorPrivacyListener(sensor, executor, listener)
         }
         setSensor(false)
         latchEnabled.await(100, TimeUnit.MILLISECONDS)
+        runWithShellPermissionIdentity {
+            spm.removeSensorPrivacyListener(sensor, listener)
+        }
+    }
+
+    @Test
+    fun testCantChangeWhenLocked() {
+        setSensor(false)
+        assertFalse(isSensorPrivacyEnabled())
+        runWhileLocked {
+            setSensor(true)
+            assertFalse("State was changed while device is locked",
+                    isSensorPrivacyEnabled())
+        }
+
+        setSensor(true)
+        assertTrue(isSensorPrivacyEnabled())
+        runWhileLocked {
+            setSensor(false)
+            assertTrue("State was changed while device is locked",
+                    isSensorPrivacyEnabled())
+        }
     }
 
     fun unblockSensorWithDialogAndAssert() {
         UiAutomatorUtils.waitFindObject(By.text(
                 Pattern.compile("Unblock", Pattern.CASE_INSENSITIVE))).click()
-        SystemUtil.eventually {
+        eventually {
             assertFalse(isSensorPrivacyEnabled())
         }
     }
@@ -167,5 +196,47 @@ abstract class SensorPrivacyBaseTest(
         return runWithShellPermissionIdentity(ThrowingSupplier {
             spm.isSensorPrivacyEnabled(sensor)
         })
+    }
+
+    fun runWhileLocked(r: () -> Unit) {
+        val km = context.getSystemService(KeyguardManager::class.java)!!
+        val pm = context.getSystemService(PowerManager::class.java)!!
+        val password = byteArrayOf(1, 2, 3, 4)
+        try {
+            runWithShellPermissionIdentity {
+                km!!.setLock(KeyguardManager.PIN, password, KeyguardManager.PIN, null)
+            }
+            eventually {
+                uiDevice.pressKeyCode(KeyEvent.KEYCODE_SLEEP)
+                assertFalse("Device never slept.", pm.isInteractive)
+            }
+            eventually {
+                uiDevice.pressKeyCode(KeyEvent.KEYCODE_WAKEUP)
+                assertTrue("Device never woke up.", pm.isInteractive)
+            }
+            eventually {
+                assertTrue("Device isn't locked", km.isDeviceLocked)
+            }
+
+            r.invoke()
+        } finally {
+            runWithShellPermissionIdentity {
+                km!!.setLock(KeyguardManager.PIN, null, KeyguardManager.PIN, password)
+            }
+
+            // Recycle the screen power in case the keyguard is stuck open
+            eventually {
+                uiDevice.pressKeyCode(KeyEvent.KEYCODE_SLEEP)
+                assertFalse("Device never slept.", pm.isInteractive)
+            }
+            eventually {
+                uiDevice.pressKeyCode(KeyEvent.KEYCODE_WAKEUP)
+                assertTrue("Device never woke up.", pm.isInteractive)
+            }
+
+            eventually {
+                assertFalse("Device isn't unlocked", km.isDeviceLocked)
+            }
+        }
     }
 }
