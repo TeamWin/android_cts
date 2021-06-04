@@ -55,7 +55,7 @@ public final class HdmiCecRemoteControlPassThroughTest extends BaseHdmiCecCtsTes
     private static final String CLEAR_COMMAND = String.format("pm clear %s", PACKAGE);
 
     public HdmiCecRemoteControlPassThroughTest() {
-        super(LogicalAddress.PLAYBACK_1);
+        super(HdmiCecConstants.CEC_DEVICE_TYPE_PLAYBACK_DEVICE);
     }
 
     @Rule

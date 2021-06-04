@@ -17,6 +17,8 @@ package android.host.multiuser;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static org.junit.Assert.assertTrue;
+
 import android.platform.test.annotations.LargeTest;
 import android.platform.test.annotations.Presubmit;
 
@@ -34,6 +36,9 @@ import org.junit.runner.RunWith;
 @LargeTest
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class EphemeralTest extends BaseMultiUserTest {
+
+    private static final String TEST_APP_PKG_NAME = "com.android.cts.multiuser";
+    private static final String TEST_APP_PKG_APK = "CtsMultiuserApp.apk";
 
     @Rule
     public final SupportsMultiUserRule mSupportsMultiUserRule = new SupportsMultiUserRule(this);
@@ -57,6 +62,32 @@ public class EphemeralTest extends BaseMultiUserTest {
         final int ephemeralUserId = createEphemeralUser();
 
         assertSwitchToNewUser(ephemeralUserId);
+        getDevice().reboot();
+        assertUserNotPresent(ephemeralUserId);
+    }
+
+    /**
+     * Test to verify that an ephemeral user, with an account, is safely removed after rebooting
+     * from it.
+     */
+    @Test
+    public void testRebootAndRemoveEphemeralUser_withAccount() throws Exception {
+        final int ephemeralUserId = createEphemeralUser();
+        assertSwitchToNewUser(ephemeralUserId);
+
+        installPackageAsUser(
+                TEST_APP_PKG_APK, /* grantPermissions= */true, ephemeralUserId, /* options= */"-t");
+        assertTrue(getDevice().isPackageInstalled(TEST_APP_PKG_NAME,
+                String.valueOf(ephemeralUserId)));
+
+        final boolean appResult = runDeviceTests(getDevice(),
+                TEST_APP_PKG_NAME,
+                TEST_APP_PKG_NAME + ".AccountCreator",
+                "addMockAccountForCurrentUser",
+                ephemeralUserId,
+                5 * 60 * 1000L /* ms */);
+        assertTrue("Failed to successfully run app", appResult);
+
         getDevice().reboot();
         assertUserNotPresent(ephemeralUserId);
     }

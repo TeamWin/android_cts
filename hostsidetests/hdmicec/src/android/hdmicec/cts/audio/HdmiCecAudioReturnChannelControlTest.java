@@ -16,16 +16,14 @@
 
 package android.hdmicec.cts.audio;
 
-import static org.junit.Assume.assumeNoException;
 
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.CecOperand;
-import android.hdmicec.cts.HdmiCecClientWrapper;
+import android.hdmicec.cts.error.CecClientWrapperException;
+import android.hdmicec.cts.error.ErrorCodes;
 import android.hdmicec.cts.HdmiCecConstants;
 import android.hdmicec.cts.LogicalAddress;
-import android.hdmicec.cts.RequiredPropertyRule;
-import android.hdmicec.cts.RequiredFeatureRule;
 
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
@@ -43,7 +41,7 @@ public final class HdmiCecAudioReturnChannelControlTest extends BaseHdmiCecCtsTe
     private static final LogicalAddress AUDIO_DEVICE = LogicalAddress.AUDIO_SYSTEM;
 
     public HdmiCecAudioReturnChannelControlTest() {
-        super(AUDIO_DEVICE);
+        super(HdmiCecConstants.CEC_DEVICE_TYPE_AUDIO_SYSTEM);
     }
 
     @Rule
@@ -54,13 +52,15 @@ public final class HdmiCecAudioReturnChannelControlTest extends BaseHdmiCecCtsTe
             .around(CecRules.requiresDeviceType(this, AUDIO_DEVICE))
             .around(hdmiCecClient);
 
-    private void checkArcIsInitiated(){
+    private void checkArcIsInitiated() throws CecClientWrapperException {
         try {
             hdmiCecClient.sendCecMessage(LogicalAddress.TV, AUDIO_DEVICE,
                     CecOperand.REQUEST_ARC_INITIATION);
             hdmiCecClient.checkExpectedOutput(LogicalAddress.TV, CecOperand.INITIATE_ARC);
-        } catch(Exception e) {
-            assumeNoException(e);
+        } catch (CecClientWrapperException e) {
+            if (e.getErrorCode() != ErrorCodes.CecMessageNotFound) {
+                throw e;
+            }
         }
     }
 

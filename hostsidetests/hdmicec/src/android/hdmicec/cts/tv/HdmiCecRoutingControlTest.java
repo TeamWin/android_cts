@@ -21,6 +21,9 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.CecOperand;
+import android.hdmicec.cts.error.CecClientWrapperException;
+import android.hdmicec.cts.error.ErrorCodes;
+import android.hdmicec.cts.HdmiCecConstants;
 import android.hdmicec.cts.HdmiControlManagerUtility;
 import android.hdmicec.cts.LogicalAddress;
 
@@ -46,11 +49,11 @@ public final class HdmiCecRoutingControlTest extends BaseHdmiCecCtsTest {
                     .around(hdmiCecClient);
 
     public HdmiCecRoutingControlTest() {
-        super(LogicalAddress.TV, "-t", "r", "-t", "t", "-t", "p");
+        super(HdmiCecConstants.CEC_DEVICE_TYPE_TV, "-t", "r", "-t", "t", "-t", "p");
     }
 
     @Before
-    public void checkForInitialActiveSourceMessage() throws Exception {
+    public void checkForInitialActiveSourceMessage() throws CecClientWrapperException {
         try {
             /*
              * Check for the broadcasted <ACTIVE_SOURCE> message from Recorder_1, which was sent as
@@ -59,14 +62,18 @@ public final class HdmiCecRoutingControlTest extends BaseHdmiCecCtsTest {
             String message =
                     hdmiCecClient.checkExpectedMessageFromClient(
                             LogicalAddress.RECORDER_1, CecOperand.ACTIVE_SOURCE);
-        } catch (Exception e) {
-            /*
-             * In case the TV does not send <Set Stream Path> to CEC adapter, or the client does
-             * not make recorder active source, broadcast an <Active Source> message from the
-             * adapter.
-             */
-            hdmiCecClient.broadcastActiveSource(
-                    hdmiCecClient.getSelfDevice(), hdmiCecClient.getPhysicalAddress());
+        } catch (CecClientWrapperException e) {
+            if (e.getErrorCode() != ErrorCodes.CecMessageNotFound) {
+                throw e;
+            } else {
+                /*
+                 * In case the TV does not send <Set Stream Path> to CEC adapter, or the client does
+                 * not make recorder active source, broadcast an <Active Source> message from the
+                 * adapter.
+                 */
+                hdmiCecClient.broadcastActiveSource(
+                        hdmiCecClient.getSelfDevice(), hdmiCecClient.getPhysicalAddress());
+            }
         }
     }
 

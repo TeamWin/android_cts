@@ -18,12 +18,15 @@ package com.android.bedstead.testapp;
 
 import android.app.Activity;
 
+import com.android.bedstead.testapp.processor.annotations.TestAppCommunication;
+
 /**
  * Methods callable on remote activities.
  *
  * <p>Each method listed in this activity must have a corresponding method in
  * {@link BaseTestAppActivity}.
  */
+@TestAppCommunication
 public interface RemoteActivity {
     /** See {@link Activity#startLockTask}. */
     void startLockTask();

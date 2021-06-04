@@ -53,7 +53,7 @@ public final class HdmiCecOneTouchPlayTest extends BaseHdmiCecCtsTest {
     private static final String FORCE_STOP_COMMAND = "am force-stop ";
 
     public HdmiCecOneTouchPlayTest() {
-        super(LogicalAddress.PLAYBACK_1);
+        super(HdmiCecConstants.CEC_DEVICE_TYPE_PLAYBACK_DEVICE);
     }
 
     @Rule

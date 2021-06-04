@@ -18,12 +18,17 @@ package android.media.cts;
 
 import android.media.session.MediaSession;
 import android.media.session.PlaybackState;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcel;
 import android.platform.test.annotations.AppModeFull;
 import android.test.AndroidTestCase;
+import android.util.Log;
 
 import java.util.ArrayList;
+
+import com.android.compatibility.common.util.ApiLevelUtil;
+import com.android.compatibility.common.util.MediaUtils;
 
 /**
  * Test {@link android.media.session.PlaybackState}.
@@ -48,6 +53,10 @@ public class PlaybackStateTest extends AndroidTestCase {
 
     private static final String EXTRAS_KEY = "test-key";
     private static final String EXTRAS_VALUE = "test-value";
+
+    private static final String TAG = "PlaybackStateTest";
+
+    private static boolean sIsAtLeastS = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S);
 
     /**
      * Test default values of {@link PlaybackState}.
@@ -284,6 +293,9 @@ public class PlaybackStateTest extends AndroidTestCase {
     }
 
     public void testIsActive() {
+        if (!MediaUtils.check(sIsAtLeastS, "testIsActive() requires Android 12")) {
+            return;
+        }
         int[] activeStates = new int[] {
                 PlaybackState.STATE_FAST_FORWARDING,
                 PlaybackState.STATE_REWINDING,

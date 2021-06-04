@@ -72,7 +72,7 @@ public final class HdmiCecStartupTest extends BaseHdmiCecCtsTest {
         device.waitForBootComplete(HdmiCecConstants.REBOOT_TIMEOUT);
         /* Monitor CEC messages for 20s after reboot */
         final List<CecOperand> messagesReceived =
-                hdmiCecClient.getAllMessages(mDutLogicalAddress, 20);
+                hdmiCecClient.getAllMessages(mDutLogicalAddresses, 20);
 
         List<CecOperand> notPermittedMessages = messagesReceived.stream()
                 .filter(message -> !allowedMessages.contains(message))
@@ -110,7 +110,7 @@ public final class HdmiCecStartupTest extends BaseHdmiCecCtsTest {
         device.waitForBootComplete(HdmiCecConstants.REBOOT_TIMEOUT);
         /* Monitor CEC messages for 20s after reboot */
         final List<CecOperand> messagesReceived =
-                hdmiCecClient.getAllMessages(mDutLogicalAddress, 20);
+                hdmiCecClient.getAllMessages(mDutLogicalAddresses, 20);
 
         List<CecOperand> requiredMessages = messagesReceived.stream()
                 .filter(expectedMessages::contains)
