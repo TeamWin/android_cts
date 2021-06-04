@@ -87,6 +87,7 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
             Color.valueOf(0.64f, 0.64f, 0.0f),
     };
     private boolean mIsAtLeastR = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.R);
+    private boolean mIsAtLeastS = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S);
 
     @Override
     protected void setUp() throws Exception {
@@ -1071,11 +1072,13 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
     }
 
     public void testGetImageAtIndexAvif() throws Exception {
+        if (!MediaUtils.check(mIsAtLeastS, "test needs Android 12")) return;
         testGetImage("sample.avif", 1920, 1080, "image/avif", 0 /*rotation*/,
                 1 /*imageCount*/, 0 /*primary*/, false /*useGrid*/, true /*checkColor*/);
     }
 
     public void testGetImageAtIndexAvifGrid() throws Exception {
+        if (!MediaUtils.check(mIsAtLeastS, "test needs Android 12")) return;
         testGetImage("sample_grid2x4.avif", 1920, 1080, "image/avif", 0 /*rotation*/,
                 1 /*imageCount*/, 0 /*primary*/, true /*useGrid*/, true /*checkColor*/);
     }
@@ -1145,6 +1148,7 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
                 for (int imageIndex = 0; imageIndex < imageCount; imageIndex++) {
                     timer.start();
                     bitmap = mRetriever.getImageAtIndex(imageIndex);
+                    assertNotNull("Failed to retrieve image at index " + imageIndex, bitmap);
                     timer.end();
                     timer.printDuration("getImageAtIndex");
 
