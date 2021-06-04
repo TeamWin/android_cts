@@ -16,6 +16,8 @@
 
 package android.os.cts;
 
+import static org.junit.Assume.assumeFalse;
+
 import android.platform.test.annotations.AppModeFull;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
@@ -63,6 +65,8 @@ public class OsHostTests extends DeviceTestCase implements IBuildReceiver, IAbiR
     // domains that should be validated against given our test apk
     private static final String HOST_EXPLICIT = "explicit.example.com";
     private static final String HOST_WILDCARD = "wildcard.tld";
+
+    private static final String FEATURE_WATCH = "android.hardware.type.watch";
 
     /**
      * A reference to the device under test.
@@ -151,6 +155,7 @@ public class OsHostTests extends DeviceTestCase implements IBuildReceiver, IAbiR
     public void testIntentFilterHostValidation() throws Exception {
         String line = null;
         try {
+            assumeFalse(mDevice.executeShellCommand("pm list features").contains(FEATURE_WATCH));
             // Clean slate in case of earlier aborted run
             mDevice.uninstallPackage(HOST_VERIFICATION_PKG);
 
