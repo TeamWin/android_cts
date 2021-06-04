@@ -28,6 +28,7 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
+import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
@@ -55,6 +56,7 @@ import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.PollingCheck;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -88,6 +90,7 @@ public class ScrollViewTest {
     private ScrollView mScrollViewCustom;
     private MyScrollView mScrollViewCustomEmpty;
     private ScrollView mScrollViewStretch;
+    private float mDurationScale = 1f;
 
     @Rule
     public ActivityTestRule<ScrollViewCtsActivity> mActivityRule =
@@ -95,6 +98,8 @@ public class ScrollViewTest {
 
     @Before
     public void setup() {
+        mDurationScale = ValueAnimator.getDurationScale();
+        ValueAnimator.setDurationScale(1f);
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mActivity = mActivityRule.getActivity();
         mScrollViewRegular = (ScrollView) mActivity.findViewById(R.id.scroll_view_regular);
@@ -111,6 +116,11 @@ public class ScrollViewTest {
 
         mScrollBottom = mItemHeight * ITEM_COUNT - mPageHeight;
         mScrollRight = mItemWidth - mPageWidth;
+    }
+
+    @After
+    public void teardown() {
+        ValueAnimator.setDurationScale(mDurationScale);
     }
 
     @Test
