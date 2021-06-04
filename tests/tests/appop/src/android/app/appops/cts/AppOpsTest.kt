@@ -288,6 +288,7 @@ class AppOpsTest {
     }
 
     @Test
+    @AppModeFull(reason = "Instant app cannot query for the shell package")
     fun startOpTwiceAndVerifyChangeListener() {
         runWithShellPermissionIdentity {
             val receivedActiveState = LinkedBlockingDeque<Boolean>()
@@ -587,7 +588,7 @@ class AppOpsTest {
             }
         }
     }
-    
+
     @Test
     fun ensurePhoneCallOpsRestricted() {
         val micReturn = mAppOps.noteOp(OPSTR_PHONE_CALL_MICROPHONE, Process.myUid(), mOpPackageName,
