@@ -42,6 +42,7 @@ import android.view.WindowMetrics;
 import org.junit.Test;
 
 import java.util.List;
+import android.util.DisplayMetrics;
 
 /**
  * Build/Install/Run:
@@ -117,8 +118,9 @@ public class ManifestLayoutTests extends ActivityManagerTestBase {
         }
         getDisplayAndWindowState(BOTTOM_RIGHT_LAYOUT_ACTIVITY, false);
 
-        final int minWidth = dpToPx(MIN_WIDTH_DP, mDisplay.getDpi());
-        final int minHeight = dpToPx(MIN_HEIGHT_DP, mDisplay.getDpi());
+        // Use default density because ActivityInfo.WindowLayout is initialized by that.
+        final int minWidth = dpToPx(MIN_WIDTH_DP, DisplayMetrics.DENSITY_DEVICE_STABLE);
+        final int minHeight = dpToPx(MIN_HEIGHT_DP, DisplayMetrics.DENSITY_DEVICE_STABLE);
         final Rect containingRect = mWindowState.getContainingFrame();
         final int cutoutSize = getCutoutSizeByHorGravity(GRAVITY_HOR_LEFT);
 
@@ -158,7 +160,7 @@ public class ManifestLayoutTests extends ActivityManagerTestBase {
             expectedWidthPx = (int) (stableBounds.width() * DEFAULT_WIDTH_FRACTION);
             expectedHeightPx = (int) (stableBounds.height() * DEFAULT_HEIGHT_FRACTION);
         } else {
-            final int densityDpi = mDisplay.getDpi();
+            final int densityDpi = DisplayMetrics.DENSITY_DEVICE_STABLE;
             expectedWidthPx = dpToPx(DEFAULT_WIDTH_DP, densityDpi);
             expectedHeightPx = dpToPx(DEFAULT_HEIGHT_DP, densityDpi);
         }
