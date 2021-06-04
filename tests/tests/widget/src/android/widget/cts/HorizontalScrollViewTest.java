@@ -28,6 +28,7 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
+import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
@@ -55,6 +56,7 @@ import androidx.test.runner.AndroidJUnit4;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.WidgetTestUtils;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -82,6 +84,7 @@ public class HorizontalScrollViewTest {
     private HorizontalScrollView mScrollViewCustom;
     private MyHorizontalScrollView mScrollViewCustomEmpty;
     private HorizontalScrollView mScrollViewStretch;
+    private float mDurationScale = 1f;
 
     @Rule
     public ActivityTestRule<HorizontalScrollViewCtsActivity> mActivityRule =
@@ -89,6 +92,8 @@ public class HorizontalScrollViewTest {
 
     @Before
     public void setup() {
+        mDurationScale = ValueAnimator.getDurationScale();
+        ValueAnimator.setDurationScale(1f);
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mActivity = mActivityRule.getActivity();
         mScrollViewRegular = (HorizontalScrollView) mActivity.findViewById(
@@ -99,6 +104,11 @@ public class HorizontalScrollViewTest {
                 R.id.horizontal_scroll_view_custom_empty);
         mScrollViewStretch = (HorizontalScrollView) mActivity.findViewById(
                 R.id.horizontal_scroll_view_stretch);
+    }
+
+    @After
+    public void teardown() {
+        ValueAnimator.setDurationScale(mDurationScale);
     }
 
     @Test
