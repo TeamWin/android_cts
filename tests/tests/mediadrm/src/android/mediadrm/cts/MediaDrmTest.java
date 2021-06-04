@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.media.cts;
+package android.mediadrm.cts;
 
 import android.media.MediaCrypto;
 import android.media.MediaCryptoException;
