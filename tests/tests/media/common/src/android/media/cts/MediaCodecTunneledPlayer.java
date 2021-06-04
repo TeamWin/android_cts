@@ -28,7 +28,6 @@ import android.view.SurfaceHolder;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -207,7 +206,9 @@ public class MediaCodecTunneledPlayer implements MediaTimeProvider {
         }
 
         mAudioExtractor.setDataSource(mContext, mAudioUri, mAudioHeaders);
-        mVideoExtractor.setDataSource(mContext, mVideoUri, mVideoHeaders);
+        if (mVideoUri != null) {
+            mVideoExtractor.setDataSource(mContext, mVideoUri, mVideoHeaders);
+        }
 
         if (null == mVideoCodecStates) {
             mVideoCodecStates = new HashMap<Integer, CodecState>();
@@ -645,11 +646,24 @@ public class MediaCodecTunneledPlayer implements MediaTimeProvider {
             return false;
         }
 
-        for (CodecState state: mVideoCodecStates.values()) {
+        for (CodecState state : mVideoCodecStates.values()) {
             if (state.isFirstTunnelFrameReady()) {
                 return true;
             }
         }
         return false;
+    }
+
+    public int getFramesWritten() {
+        if (mAudioCodecStates == null) {
+            return -1;
+        }
+        return mAudioCodecStates.entrySet().iterator().next().getValue().getFramesWritten();
+    }
+
+    public void stopWritingToAudioTrack(boolean stopWriting) {
+        for (CodecState state : mAudioCodecStates.values()) {
+            state.stopWritingToAudioTrack(stopWriting);
+        }
     }
 }
