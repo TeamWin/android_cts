@@ -182,49 +182,49 @@ class ReprocessNoiseReductionTest(its_base_test.ItsBaseTest):
         for j, _ in enumerate(_COLORS):
           # OFF < FAST + TOL
           if snrs[j][_NR_MODES['OFF']] >= snrs[j][_NR_MODES['FAST']]+_SNR_TOL:
-            raise AssertionError(f'FAST: {snrs[j][_NR_MODES["FAST"]]}.2f, '
-                                 f'OFF: {snrs[j][_NR_MODES["OFF"]]}.2f, '
+            raise AssertionError(f'FAST: {snrs[j][_NR_MODES["FAST"]]:.2f}, '
+                                 f'OFF: {snrs[j][_NR_MODES["OFF"]]:.2f}, '
                                  f'TOL: {_SNR_TOL}')
 
           # FAST < HQ + TOL
           if snrs[j][_NR_MODES['FAST']] >= snrs[j][_NR_MODES['HQ']]+_SNR_TOL:
-            raise AssertionError(f'HQ: {snrs[j][_NR_MODES["HQ"]]}.2f, '
-                                 f'FAST: {snrs[j][_NR_MODES["FAST"]]}.2f, '
+            raise AssertionError(f'HQ: {snrs[j][_NR_MODES["HQ"]]:.2f}, '
+                                 f'FAST: {snrs[j][_NR_MODES["FAST"]]:.2f}, '
                                  f'TOL: {_SNR_TOL}')
 
           # HQ > OFF
           if snrs[j][_NR_MODES['HQ']] <= snrs[j][_NR_MODES['OFF']]:
-            raise AssertionError(f'HQ: {snrs[j][_NR_MODES["HQ"]]}.2f, '
-                                 f'OFF: {snrs[j][_NR_MODES["OFF"]]}.2f')
+            raise AssertionError(f'HQ: {snrs[j][_NR_MODES["HQ"]]:.2f}, '
+                                 f'OFF: {snrs[j][_NR_MODES["OFF"]]:.2f}')
 
           if camera_properties_utils.noise_reduction_mode(
               props, _NR_MODES['MIN']):
             # OFF < MIN + TOL
             if snrs[j][_NR_MODES['OFF']] >= snrs[j][_NR_MODES['MIN']]+_SNR_TOL:
-              raise AssertionError(f'MIN: {snrs[j][_NR_MODES["MIN"]]}.2f, '
-                                   f'OFF: {snrs[j][_NR_MODES["OFF"]]}.2f, '
+              raise AssertionError(f'MIN: {snrs[j][_NR_MODES["MIN"]]:.2f}, '
+                                   f'OFF: {snrs[j][_NR_MODES["OFF"]]:.2f}, '
                                    f'TOL: {_SNR_TOL}')
 
             # MIN < HQ + TOL
             if snrs[j][_NR_MODES['MIN']] >= snrs[j][_NR_MODES['HQ']]+_SNR_TOL:
-              raise AssertionError(f'MIN: {snrs[j][_NR_MODES["MIN"]]}.2f, '
-                                   f'HQ: {snrs[j][_NR_MODES["HQ"]]}.2f, '
+              raise AssertionError(f'MIN: {snrs[j][_NR_MODES["MIN"]]:.2f}, '
+                                   f'HQ: {snrs[j][_NR_MODES["HQ"]]:.2f}, '
                                    f'TOL: {_SNR_TOL}')
 
             # ZSL ~ MIN
             if not np.isclose(
                 snrs[j][_NR_MODES['ZSL']], snrs[j][_NR_MODES['MIN']],
                 atol=_SNR_TOL):
-              raise AssertionError(f'ZSL: {snrs[j][_NR_MODES["ZSL"]]}.2f, '
-                                   f'MIN: {snrs[j][_NR_MODES["MIN"]]}.2f, '
+              raise AssertionError(f'ZSL: {snrs[j][_NR_MODES["ZSL"]]:.2f}, '
+                                   f'MIN: {snrs[j][_NR_MODES["MIN"]]:.2f}, '
                                    f'TOL: {_SNR_TOL}')
           else:
             # ZSL ~ OFF
             if not np.isclose(
                 snrs[j][_NR_MODES['ZSL']], snrs[j][_NR_MODES['OFF']],
                 atol=_SNR_TOL):
-              raise AssertionError(f'ZSL: {snrs[j][_NR_MODES["ZSL"]]}.2f, '
-                                   f'OFF: {snrs[j][_NR_MODES["OFF"]]}.2f, '
+              raise AssertionError(f'ZSL: {snrs[j][_NR_MODES["ZSL"]]:.2f}, '
+                                   f'OFF: {snrs[j][_NR_MODES["OFF"]]:.2f}, '
                                    f'TOL: {_SNR_TOL}')
 
 if __name__ == '__main__':
