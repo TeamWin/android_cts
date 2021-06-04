@@ -2918,8 +2918,11 @@ public class AudioTrackTest {
                             .build())
                     .build();
             audioTrack.setLogSessionId(LogSessionId.LOG_SESSION_ID_NONE); // should not throw.
-            audioTrack.setLogSessionId(
-                    new LogSessionId("0123456789abcdef")); // 16 char Base64Url id.
+            assertEquals(LogSessionId.LOG_SESSION_ID_NONE, audioTrack.getLogSessionId());
+
+            final String ARBITRARY_MAGIC = "0123456789abcdef"; // 16 char Base64Url.
+            audioTrack.setLogSessionId(new LogSessionId(ARBITRARY_MAGIC));
+            assertEquals(new LogSessionId(ARBITRARY_MAGIC), audioTrack.getLogSessionId());
 
             // write some data to generate a log entry.
             short data[] = new short[audioTrack.getSampleRate() / 2];

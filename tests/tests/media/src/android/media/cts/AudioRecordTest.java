@@ -1685,8 +1685,10 @@ public class AudioRecordTest {
                             .build())
                     .build();
             audioRecord.setLogSessionId(LogSessionId.LOG_SESSION_ID_NONE); // should not throw.
-            audioRecord.setLogSessionId(
-                    new LogSessionId("0123456789abcdef")); // 16 char Base64Url id.
+            assertEquals(LogSessionId.LOG_SESSION_ID_NONE, audioRecord.getLogSessionId());
+            final String ARBITRARY_MAGIC = "0123456789abcdef"; // 16 char Base64Url.
+            audioRecord.setLogSessionId(new LogSessionId(ARBITRARY_MAGIC));
+            assertEquals(new LogSessionId(ARBITRARY_MAGIC), audioRecord.getLogSessionId());
 
             // record some data to generate a log entry.
             short data[] = new short[audioRecord.getSampleRate() / 2];
