@@ -156,20 +156,6 @@ public class LockTaskTest extends BaseDeviceAdminTest {
         mContext.unregisterReceiver(mReceiver);
     }
 
-    // Start lock task, verify that ActivityManager knows thats what is going on.
-    public void testStartLockTask() throws Exception {
-        mDevicePolicyManager.setLockTaskPackages(ADMIN_COMPONENT, new String[] { PACKAGE_NAME });
-        startLockTask(UTILITY_ACTIVITY);
-        waitForResume();
-
-        // Verify that activity open and activity manager is in lock task.
-        assertLockTaskModeActive();
-        assertTrue(mIsActivityRunning);
-        assertTrue(mIsActivityResumed);
-
-        stopAndFinish(UTILITY_ACTIVITY);
-    }
-
     // Verifies that the act of finishing is blocked by ActivityManager in lock task.
     // This results in onDestroy not being called until stopLockTask is called before finish.
     public void testCannotFinish() throws Exception {

@@ -189,7 +189,8 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
                 HdmiCecConstants.CEC_CONTROL_POWER_ON_FUNCTION,
                 HdmiCecConstants.CEC_CONTROL_POWER_TOGGLE_FUNCTION);
 
-        LogicalAddress source = mDutLogicalAddress == LogicalAddress.TV ? LogicalAddress.PLAYBACK_1
+        LogicalAddress source = hasDeviceType(HdmiCecConstants.CEC_DEVICE_TYPE_TV)
+                ? LogicalAddress.PLAYBACK_1
                 : LogicalAddress.TV;
 
         for (Integer operand : powerControlOperands) {
@@ -200,8 +201,7 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
                         "dumpsys power | grep mWakefulness=");
                 assertThat(wakeStateBefore.trim()).isEqualTo("mWakefulness=Asleep");
 
-                hdmiCecClient.sendUserControlPressAndRelease(source, mDutLogicalAddress, operand,
-                        false);
+                hdmiCecClient.sendUserControlPressAndRelease(source, operand, false);
 
                 TimeUnit.SECONDS.sleep(HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS);
                 String wakeStateAfter = device.executeShellCommand(
@@ -227,7 +227,8 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
                 HdmiCecConstants.CEC_CONTROL_POWER_OFF_FUNCTION,
                 HdmiCecConstants.CEC_CONTROL_POWER_TOGGLE_FUNCTION);
 
-        LogicalAddress source = mDutLogicalAddress == LogicalAddress.TV ? LogicalAddress.PLAYBACK_1
+        LogicalAddress source = hasDeviceType(HdmiCecConstants.CEC_DEVICE_TYPE_TV)
+                ? LogicalAddress.PLAYBACK_1
                 : LogicalAddress.TV;
 
         for (Integer operand : powerControlOperands) {
@@ -238,8 +239,7 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
                         "dumpsys power | grep mWakefulness=");
                 assertThat(wakeStateBefore.trim()).isEqualTo("mWakefulness=Awake");
 
-                hdmiCecClient.sendUserControlPressAndRelease(source, mDutLogicalAddress, operand,
-                        false);
+                hdmiCecClient.sendUserControlPressAndRelease(source, operand, false);
 
                 TimeUnit.SECONDS.sleep(HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS);
                 String wakeStateAfter = device.executeShellCommand(

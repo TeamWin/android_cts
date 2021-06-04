@@ -18,6 +18,7 @@ package android.hdmicec.cts.tv;
 
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecOperand;
+import android.hdmicec.cts.HdmiCecConstants;
 import android.hdmicec.cts.HdmiControlManagerUtility;
 import android.hdmicec.cts.LogicalAddress;
 
@@ -43,7 +44,7 @@ public class HdmiCecTvOneTouchPlayTest extends BaseHdmiCecCtsTest {
 
     public HdmiCecTvOneTouchPlayTest() {
         /* Start the client as recorder, tuner and playback devices */
-        super(TV_DEVICE, "-t", "r", "-t", "t", "-t", "p");
+        super(HdmiCecConstants.CEC_DEVICE_TYPE_TV, "-t", "r", "-t", "t", "-t", "p");
         testDevices.add(LogicalAddress.RECORDER_1);
         testDevices.add(LogicalAddress.TUNER_1);
         testDevices.add(LogicalAddress.PLAYBACK_1);

@@ -14,15 +14,22 @@
  * limitations under the License.
  */
 
-package com.android.bedstead.testapp;
+package com.android.bedstead.harrier.annotations.parameterized;
 
-import com.google.android.enterprise.connectedapps.annotations.CrossProfileProvider;
+import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
+import com.android.bedstead.harrier.annotations.meta.ParameterizedAnnotation;
 
-/** Cross Profile provider for TestApp. */
-public class Provider {
-    /** Provide instance of {@link TargetedRemoteActivity} to Connected Apps SDK. */
-    @CrossProfileProvider
-    public TargetedRemoteActivity provideTargetedRemoteActivity() {
-        return new TargetedRemoteActivityImpl();
-    }
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+/**
+ * Parameterize a test so that it runs on the primary user
+ */
+@Target({ElementType.METHOD, ElementType.TYPE})
+@Retention(RetentionPolicy.RUNTIME)
+@ParameterizedAnnotation
+@RequireRunOnPrimaryUser
+public @interface IncludeRunOnPrimaryUser {
 }

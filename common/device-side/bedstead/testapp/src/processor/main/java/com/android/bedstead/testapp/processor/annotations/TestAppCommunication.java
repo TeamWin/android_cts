@@ -14,22 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.bedstead.testapp;
+package com.android.bedstead.testapp.processor.annotations;
 
-import com.google.android.enterprise.connectedapps.annotations.CrossProfile;
-
-/** Internal interface which will be generated. */
-public interface TargetedRemoteActivity {
-
-    /** See {@link RemoteActivity#startLockTask()}. */
-    @CrossProfile
-    void startLockTask(String activityClassName);
-
-    /** See {@link RemoteActivity#stopLockTask()}. */
-    @CrossProfile
-    void stopLockTask(String activityClassName);
-
-    /** See {@link RemoteActivity#isFinishing()}. */
-    @CrossProfile
-    boolean isFinishing(String activityClassName);
+public @interface TestAppCommunication {
 }

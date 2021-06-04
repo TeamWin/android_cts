@@ -14,11 +14,22 @@
  * limitations under the License.
  */
 
-package com.android.bedstead.testapp;
+package com.android.bedstead.harrier.annotations.parameterized;
 
-import com.google.android.enterprise.connectedapps.annotations.CrossProfileConfiguration;
+import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
+import com.android.bedstead.harrier.annotations.meta.ParameterizedAnnotation;
 
-/** Cross profile configuration for TestApp. */
-@CrossProfileConfiguration(providers = Provider.class)
-public class Configuration {
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+/**
+ * Parameterize a test so that it runs on a work profile.
+ */
+@Target({ElementType.METHOD, ElementType.TYPE})
+@Retention(RetentionPolicy.RUNTIME)
+@ParameterizedAnnotation
+@RequireRunOnWorkProfile
+public @interface IncludeRunOnWorkProfile {
 }
