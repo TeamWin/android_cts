@@ -218,9 +218,13 @@ public class CarPropertyManagerTest extends CarApiTestBase {
     @CddTest(requirement="2.5.1")
     @Test
     public void testMustSupportPerfVehicleSpeed() throws Exception {
+        CarPropertyConfig perfVehicleSpeedConfig =
+            mCarPropertyManager.getCarPropertyConfig(VehiclePropertyIds.PERF_VEHICLE_SPEED);
         assertWithMessage("Must support PERF_VEHICLE_SPEED")
-                .that(mCarPropertyManager.getCarPropertyConfig(
-                        VehiclePropertyIds.PERF_VEHICLE_SPEED)).isNotNull();
+                .that(perfVehicleSpeedConfig).isNotNull();
+        assertWithMessage("PERF_VEHICLE_SPEED must be READ access")
+                .that(perfVehicleSpeedConfig.getAccess())
+                .isEqualTo(CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ);
     }
 
     @CddTest(requirement = "2.5.1")
