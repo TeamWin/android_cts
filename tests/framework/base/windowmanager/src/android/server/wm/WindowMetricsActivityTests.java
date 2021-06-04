@@ -21,10 +21,12 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.app.WindowConfiguration.WINDOWING_MODE_MULTI_WINDOW;
 import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
 import static android.server.wm.WindowManagerState.STATE_PAUSED;
-import static android.view.Surface.ROTATION_0;
-import static android.view.Surface.ROTATION_90;
+import static android.server.wm.WindowMetricsTestHelper.assertBoundsMatchDisplay;
+import static android.server.wm.WindowMetricsTestHelper.getBoundsExcludingNavigationBarAndCutout;
+import static android.server.wm.WindowMetricsTestHelper.maxWindowBoundsSandboxed;
 import static android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
@@ -32,6 +34,7 @@ import static org.junit.Assume.assumeTrue;
 import android.app.Activity;
 import android.app.PictureInPictureParams;
 import android.content.ComponentName;
+import android.content.Context;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.Bundle;
@@ -81,18 +84,13 @@ public class WindowMetricsActivityTests extends WindowManagerTestBase {
     @Test
     @FlakyTest(bugId = 188207199)
     public void testMetricsMatchesActivityBoundsOnNonresizableActivity() {
-        final RotationSession rotationSession = createManagedRotationSession();
-        final MinAspectRatioActivity activity =
-                startActivityInWindowingMode(MinAspectRatioActivity.class,
-                        WINDOWING_MODE_FULLSCREEN);
-        rotationSession.set(ROTATION_0);
+        assumeTrue("Skipping test: no rotation support", supportsRotation());
 
-        assertMetricsValidity(activity);
+        final MinAspectRatioActivity activity = startActivityInWindowingMode(
+                MinAspectRatioActivity.class, WINDOWING_MODE_FULLSCREEN);
+        mWmState.computeState(activity.getComponentName());
 
-        // Rotating the display might force a non-resizable activity into size compat mode, where
-        // sandboxing might be applied.
-        rotationSession.set(ROTATION_90);
-        assertMetricsValidity(activity);
+        assertMetricsValidityForNonresizableActivity(activity);
     }
 
     @Test
@@ -187,31 +185,6 @@ public class WindowMetricsActivityTests extends WindowManagerTestBase {
         assertTrue(mWmState.getActivity(activity.getComponentName()).getWindowingMode()
                 == WINDOWING_MODE_MULTI_WINDOW);
 
-        assertMetricsValidity(activity);
-    }
-
-    @Test
-    @FlakyTest(bugId = 188207199)
-    public void testMetricsMatchesActivityBoundsOnNonresizableSplitActivity() {
-        assumeTrue(supportsSplitScreenMultiWindow());
-
-        final RotationSession rotationSession = createManagedRotationSession();
-        final MinAspectRatioActivity activity
-                = startActivityInWindowingMode(MinAspectRatioActivity.class,
-                WINDOWING_MODE_FULLSCREEN);
-        rotationSession.set(ROTATION_0);
-
-        assertMetricsValidity(activity);
-
-        putActivityInPrimarySplit(activity.getComponentName());
-
-        mWmState.computeState(activity.getComponentName());
-        assertTrue(mWmState.getActivity(activity.getComponentName()).getWindowingMode()
-                == WINDOWING_MODE_MULTI_WINDOW);
-
-        // Rotating the display might force a non-resizable activity into size compat mode, where
-        // sandboxing might be applied.
-        rotationSession.set(ROTATION_90);
         assertMetricsValidity(activity);
     }
 
@@ -319,6 +292,53 @@ public class WindowMetricsActivityTests extends WindowManagerTestBase {
         mWmState.computeState(activity.getComponentName());
         WindowMetricsTestHelper.assertMetricsValidity(activity,
                 getTaskDisplayAreaBounds(activity.getComponentName()));
+    }
+
+    /**
+     * Verifies two scenarios for a non-resizable {@link Activity}. Similar to
+     * {@link #assertMetricsValidity(Activity)}, verifies the values of window metrics against
+     * Display size. {@link WindowManager#getMaximumWindowMetrics()} must match activity bounds
+     * if the activity is sandboxed.
+     *
+     * App bounds calculation of a nonresizable activity depends on the orientation of the display
+     * and the app, and the display and activity bounds. Directly compare maximum WindowMetrics
+     * against the value used for sandboxing, since other ways of accessing activity bounds may
+     * have different insets applied.
+     *
+     * @param activity the activity under test
+     */
+    private void assertMetricsValidityForNonresizableActivity(Activity activity) {
+        ComponentName activityName = activity.getComponentName();
+        mWmState.computeState(activityName);
+        WindowManagerState.Activity activityContainer = mWmState.getActivity(activityName);
+        final boolean boundsShouldIncludeInsets =
+                activity.getResources().getConfiguration().windowConfiguration
+                        .getWindowingMode() == WINDOWING_MODE_FREEFORM
+                        || activityContainer.inSizeCompatMode();
+        final WindowManager windowManager = activity.getWindowManager();
+        final WindowMetrics currentMetrics = windowManager.getCurrentWindowMetrics();
+        final Rect currentBounds = boundsShouldIncludeInsets ? currentMetrics.getBounds()
+                : getBoundsExcludingNavigationBarAndCutout(currentMetrics);
+        final Rect maxBounds = windowManager.getMaximumWindowMetrics().getBounds();
+        final Display display = activity.getDisplay();
+
+        assertBoundsMatchDisplay(maxBounds, currentBounds, display);
+
+        // Max window bounds should match either DisplayArea bounds, or activity bounds if it is
+        // sandboxed.
+        final Rect displayAreaBounds = getTaskDisplayAreaBounds(activityName);
+        final Rect activityBounds =
+                activityContainer.mFullConfiguration.windowConfiguration.getBounds();
+        if (maxWindowBoundsSandboxed(displayAreaBounds, maxBounds)) {
+            // Max window bounds are sandboxed, so max window bounds should match activity bounds.
+            assertEquals("Maximum window metrics of a non-resizable activity matches "
+                    + "activity bounds, when sandboxed", activityBounds, maxBounds);
+        } else {
+            // Max window bounds are not sandboxed, so max window bounds should match display area
+            // bounds.
+            assertEquals("Display area bounds must match max window size", displayAreaBounds,
+                    maxBounds);
+        }
     }
 
     private Rect getTaskDisplayAreaBounds(ComponentName activityName) {
