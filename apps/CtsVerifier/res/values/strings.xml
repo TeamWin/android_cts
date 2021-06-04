@@ -136,7 +136,7 @@
     <string name="car_garage_mode_test">Garage Mode Test</string>
     <string name="car_garage_mode_test_desc">
         This test verifies that Garage Mode runs at the end of a drive.\n\n
-        Optional: Disable Wi-Fi to minimize other activity during the test.\n\n
+        <b>Important: Please enable Wi-Fi or other connectivity for test to pass.\n\n </b>
         Touch "Enable Garage Mode Monitor" to launch the Garage Mode verifier.\n\n
         Turn the vehicle off and exit the vehicle (or take the proprietary action that
         initiates shut-down of the system).\n\n
