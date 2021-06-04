@@ -32,13 +32,12 @@ abstract class BaseBlobStoreHostTest extends BaseHostJUnit4Test {
     protected static final String TARGET_APK = "CtsBlobStoreHostTestHelper.apk";
     protected static final String TARGET_PKG = "com.android.cts.device.blob";
 
-    protected static final String TARGET_APK_A = "CtsBlobStoreHostTestHelperPrivA.apk";
-    protected static final String TARGET_PKG_A = "com.android.cts.device.blobA";
+    protected static final String TARGET_APK_DEV = "CtsBlobStoreHostTestHelperDev.apk";
+    protected static final String TARGET_PKG_DEV = "com.android.cts.device.blob.dev";
 
-    protected static final String TARGET_APK_B = "CtsBlobStoreHostTestHelperPrivB.apk";
-    protected static final String TARGET_PKG_B = "com.android.cts.device.blobB";
+    protected static final String TARGET_APK_ASSIST = "CtsBlobStoreHostTestHelperAssist.apk";
+    protected static final String TARGET_PKG_ASSIST = "com.android.cts.device.blob.assist";
 
-    private static final long TIMEOUT_BOOT_COMPLETE_MS = 120_000;
     private static final long DEFAULT_INSTRUMENTATION_TIMEOUT_MS = 900_000; // 15min
 
     protected static final String KEY_SESSION_ID = "session";
@@ -49,6 +48,7 @@ abstract class BaseBlobStoreHostTest extends BaseHostJUnit4Test {
     protected static final String KEY_TAG = "tag";
 
     protected static final String KEY_ALLOW_PUBLIC = "public";
+    protected static final String KEY_ALLOW_SAME_SIGNATURE = "same_signature";
 
     protected void runDeviceTest(String testPkg, String testClass, String testMethod)
             throws Exception {
@@ -127,5 +127,17 @@ abstract class BaseBlobStoreHostTest extends BaseHostJUnit4Test {
         assertWithMessage("Pkg not found: " + pkgName).that(matcher.find()).isTrue();
         final int appUid = Integer.parseInt(matcher.group(1));
         return appUid;
+    }
+
+    protected void addAssistRoleHolder(String pkgName, int userId) throws Exception {
+        final String cmd = String.format("cmd role add-role-holder "
+                + "--user %d android.app.role.ASSISTANT %s", userId, pkgName);
+        getDevice().executeShellCommand(cmd).trim();
+    }
+
+    protected void removeAssistRoleHolder(String pkgName, int userId) throws Exception {
+        final String cmd = String.format("cmd role remove-role-holder "
+                + "--user %d android.app.role.ASSISTANT %s", userId, pkgName);
+        getDevice().executeShellCommand(cmd).trim();
     }
 }
