@@ -36,7 +36,7 @@ public class CVE_2020_0224 extends SecurityTestCase {
     @SecurityTest(minPatchLevel = "2020-07")
     @Test
     public void testPocCVE_2020_0224() throws Exception {
-        assumeThat(getDevice().getProperty("ro.config.low_ram"), is("false"));
+        assumeThat(getDevice().getProperty("ro.config.low_ram"), not(is("true")));
         AdbUtils.runProxyAutoConfig("cve_2020_0224", getDevice());
         AdbUtils.assertNoCrashes(getDevice(), new CrashUtils.Config()
                 .setProcessPatterns("pacrunner")
