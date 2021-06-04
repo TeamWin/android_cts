@@ -20,8 +20,10 @@ import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
 import static android.os.Build.VERSION.SDK_INT;
 
 import static com.android.bedstead.nene.users.User.UserState.RUNNING_UNLOCKED;
+import static com.android.compatibility.common.util.FileUtils.readInputStreamFully;
 
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Build;
@@ -42,14 +44,15 @@ import com.android.bedstead.nene.utils.ShellCommand;
 import com.android.bedstead.nene.utils.ShellCommandUtils;
 import com.android.bedstead.nene.utils.Versions;
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
-import com.android.compatibility.common.util.FileUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -57,10 +60,81 @@ import java.util.Set;
  */
 public final class Packages {
 
+    /** Reference to a Java resource. */
+    public static final class JavaResource {
+        private final String mName;
+
+        private JavaResource(String name) {
+            mName = name;
+        }
+
+        /** Reference a Java resource by name. */
+        public static JavaResource javaResource(String name) {
+            if (name == null) {
+                throw new NullPointerException();
+            }
+            return new JavaResource(name);
+        }
+
+        @Override
+        public String toString() {
+            return "JavaResource{name=" + mName + "}";
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof JavaResource)) return false;
+            JavaResource that = (JavaResource) o;
+            return mName.equals(that.mName);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(mName);
+        }
+    }
+
+    /** Reference to an Android resource. */
+    public static final class AndroidResource {
+        private final String mName;
+
+        private AndroidResource(String name) {
+            if (name == null) {
+                throw new NullPointerException();
+            }
+            mName = name;
+        }
+
+        /** Reference an Android resource by name. */
+        public static AndroidResource androidResource(String name) {
+            return new AndroidResource(name);
+        }
+
+        @Override
+        public String toString() {
+            return "AndroidResource{name=" + mName + "}";
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof AndroidResource)) return false;
+            AndroidResource that = (AndroidResource) o;
+            return mName.equals(that.mName);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(mName);
+        }
+    }
+
     private Map<String, Package> mCachedPackages = null;
     private Set<String> mFeatures = null;
     private final AdbPackageParser mParser;
     final TestApis mTestApis;
+    private final Context mInstrumentedContext;
 
     private final IntentFilter mPackageAddedIntentFilter =
             new IntentFilter(Intent.ACTION_PACKAGE_ADDED);
@@ -73,6 +147,7 @@ public final class Packages {
         mPackageAddedIntentFilter.addDataScheme("package");
         mTestApis = testApis;
         mParser = AdbPackageParser.get(mTestApis, SDK_INT);
+        mInstrumentedContext = mTestApis.context().instrumentedContext();
     }
 
 
@@ -173,7 +248,7 @@ public final class Packages {
     // TODO: Move this somewhere reusable (in utils)
     private static byte[] loadBytes(File file) {
         try (FileInputStream fis = new FileInputStream(file)) {
-            return FileUtils.readInputStreamFully(fis);
+            return readInputStreamFully(fis);
         } catch (IOException e) {
             throw new NeneException("Could not read file bytes for file " + file);
         }
@@ -252,7 +327,6 @@ public final class Packages {
 //        }
     }
 
-
     private PackageReference installPreS(UserReference user, byte[] apkFile) {
         User resolvedUser = user.resolve();
 
@@ -278,6 +352,47 @@ public final class Packages {
             throw new NeneException("Could not install from bytes for user " + user, e);
         } finally {
             broadcastReceiver.unregisterQuietly();
+        }
+    }
+
+    /**
+     * Install an APK stored in Android resources to the given {@link UserReference}.
+     *
+     * <p>The user must be started.
+     *
+     * <p>If the package is already installed, this will replace it.
+     *
+     * <p>If the package is marked testOnly, it will still be installed.
+     */
+    @Experimental
+    public PackageReference install(UserReference user, AndroidResource resource) {
+        int indexId = mInstrumentedContext.getResources().getIdentifier(
+                resource.mName, /* defType= */ null, /* defPackage= */ null);
+
+        try (InputStream inputStream =
+                     mInstrumentedContext.getResources().openRawResource(indexId)) {
+            return install(user, readInputStreamFully(inputStream));
+        } catch (IOException e) {
+            throw new NeneException("Error reading resource " + resource, e);
+        }
+    }
+
+    /**
+     * Install an APK stored in Java resources to the given {@link UserReference}.
+     *
+     * <p>The user must be started.
+     *
+     * <p>If the package is already installed, this will replace it.
+     *
+     * <p>If the package is marked testOnly, it will still be installed.
+     */
+    @Experimental
+    public PackageReference install(UserReference user, JavaResource resource) {
+        try (InputStream inputStream =
+                     Packages.class.getClassLoader().getResourceAsStream(resource.mName)) {
+            return install(user, readInputStreamFully(inputStream));
+        } catch (IOException e) {
+            throw new NeneException("Error reading java resource " + resource, e);
         }
     }
 
