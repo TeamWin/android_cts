@@ -923,7 +923,7 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
         public void onFrameRendered(MediaCodec codec, long presentationTimeUs, long nanoTime) {
             final long NSECS_IN_1SEC = 1000000000;
             if (!mRenderedTimeStamps.remove(presentationTimeUs)) {
-                warn("invalid timestamp " + presentationTimeUs + ", queued " +
+                warn("invalid (rendered) timestamp " + presentationTimeUs + ", rendered " +
                         mRenderedTimeStamps);
             }
             assert nanoTime > mLastRenderNanoTime;
@@ -1024,6 +1024,15 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
 
             // we get a nonzero size for valid decoded frames
             boolean doRender = (info.size != 0);
+
+            if (doRender) {
+                mRenderedTimeStamps.add(info.presentationTimeUs);
+                if (!mTimeStamps.remove(info.presentationTimeUs)) {
+                    warn("invalid (decoded) timestamp " + info.presentationTimeUs + ", queued " +
+                            mTimeStamps);
+                }
+            }
+
             if (mSurface.getSurface() == null) {
                 if (mDoChecksum) {
                     sum = checksum(mOutputBuffers[ix], info.size, mCRC);
@@ -1045,19 +1054,11 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
                 mCodec.releaseOutputBuffer(ix, doRender);
             }
 
-            if (doRender) {
-                mRenderedTimeStamps.add(info.presentationTimeUs);
-                if (!mTimeStamps.remove(info.presentationTimeUs)) {
-                    warn("invalid timestamp " + info.presentationTimeUs + ", queued " +
-                            mTimeStamps);
-                }
-            }
-
             if (mOutputFormatChanged) {
                 // Previous dequeue was output format change; format change must
                 // correspond to a new sequence, so it must happen right before
                 // the first frame of one of the sequences.
-                assertTrue("cannot find " + info.presentationTimeUs +
+                assertTrue("cannot find formatchange " + info.presentationTimeUs +
                         " in " + mFirstQueueTimestamps,
                         mFirstQueueTimestamps.remove(info.presentationTimeUs));
                 mOutputFormatChanged = false;
