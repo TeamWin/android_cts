@@ -42,15 +42,16 @@ import java.util.stream.Collectors;
  */
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class PreCreateUsersHostTest extends CarHostJUnit4TestCase {
+
     private static int sNumberCreateadUsers;
 
-    /**
-     * Uninstalls the test app.
-     */
     @Before
-    @After
-    public void uninstallTestApp() throws Exception {
+    public void checkMultiUserSupport() throws Exception {
         assumeSupportsMultipleUsers();
+    }
+
+    @After
+    public void uninstallPackage() throws Exception {
         getDevice().uninstallPackage(APP_PKG);
     }
 
