@@ -18,6 +18,7 @@ package com.android.bedstead.remotedpc.managers;
 
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
+import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 
@@ -51,7 +52,6 @@ public interface RemoteDevicePolicyManager {
     /** See {@link DevicePolicyManager#getCurrentFailedPasswordAttempts()}. */
     int getCurrentFailedPasswordAttempts();
 
-
     /** See {@link DevicePolicyManager#setLockTaskPackages(ComponentName, String[])}. */
     void setLockTaskPackages(@NonNull ComponentName admin, @NonNull String[] packages);
     /** See {@link DevicePolicyManager#setLockTaskPackages(ComponentName, String[])}. */
@@ -68,9 +68,9 @@ public interface RemoteDevicePolicyManager {
     /** See {@link DevicePolicyManager#setLockTaskFeatures(ComponentName, int)}. */
     @RemoteDpcAutomaticAdmin void setLockTaskFeatures(int flags);
 
-    /** See {@link DevicePolicyManager#getLockTaskFeatures(Component)}. */
+    /** See {@link DevicePolicyManager#getLockTaskFeatures(ComponentName)}. */
     int getLockTaskFeatures(@NonNull ComponentName admin);
-    /** See {@link DevicePolicyManager#getLockTaskFeatures(Component)}. */
+    /** See {@link DevicePolicyManager#getLockTaskFeatures(ComponentName)}. */
     @RemoteDpcAutomaticAdmin int getLockTaskFeatures();
 
     /** See {@link DevicePolicyManager#addUserRestriction(ComponentName, String)}. */
@@ -82,4 +82,9 @@ public interface RemoteDevicePolicyManager {
     void clearUserRestriction(@NonNull ComponentName admin, String key);
     /** See {@link DevicePolicyManager#clearUserRestriction(ComponentName, String)}. */
     @RemoteDpcAutomaticAdmin void clearUserRestriction(String key);
+
+    /** See {@link DevicePolicyManager#getUserRestrictions(ComponentName)}. */
+    @NonNull Bundle getUserRestrictions(@NonNull ComponentName admin);
+    /** See {@link DevicePolicyManager#getUserRestrictions(ComponentName)}. */
+    @RemoteDpcAutomaticAdmin @NonNull Bundle getUserRestrictions();
 }
