@@ -80,6 +80,7 @@ import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CtsKeyEventUtil;
+import com.android.compatibility.common.util.CtsTouchUtils;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.WidgetTestUtils;
 
@@ -1271,6 +1272,63 @@ public class ListViewTest {
         assertTrue(edgeEffect.onAbsorbVelocity > 0);
     }
 
+    @Test
+    public void testScrollAfterStretch() throws Throwable {
+        showOnlyStretch();
+        NoReleaseEdgeEffect edgeEffect = new NoReleaseEdgeEffect(mActivity);
+        mActivityRule.runOnUiThread(() -> {
+            mListViewStretch.setAdapter(new ClickColorAdapter(mActivity, mColorList));
+            mListViewStretch.mEdgeGlowTop = edgeEffect;
+        });
+        mActivityRule.runOnUiThread(() -> {});
+
+        int[] locationOnScreen = new int[2];
+        mActivityRule.runOnUiThread(() -> {
+            mListViewStretch.getLocationOnScreen(locationOnScreen);
+        });
+
+        int screenX = locationOnScreen[0];
+        int screenY = locationOnScreen[1];
+
+        int lastVisiblePositionBeforeScroll = mListViewStretch.getLastVisiblePosition();
+        int firstVisiblePositionBeforeScroll = mListViewStretch.getFirstVisiblePosition();
+
+
+        // Cause a stretch
+        CtsTouchUtils.emulateDragGesture(
+                mInstrumentation,
+                mActivityRule,
+                screenX + mListViewStretch.getWidth() / 2,
+                screenY + mListViewStretch.getHeight() / 2,
+                0,
+                300,
+                300,
+                20,
+                false,
+                null
+        );
+
+        // Now scroll the other direction
+        CtsTouchUtils.emulateDragGesture(
+                mInstrumentation,
+                mActivityRule,
+                screenX + mListViewStretch.getWidth() / 2,
+                screenY + mListViewStretch.getHeight() / 2,
+                0,
+                -600,
+                160,
+                20,
+                false,
+                null
+        );
+
+        int lastVisiblePositionAfterScroll = mListViewStretch.getLastVisiblePosition();
+        int firstVisiblePositionAfterScroll = mListViewStretch.getFirstVisiblePosition();
+
+        assertTrue(lastVisiblePositionAfterScroll > lastVisiblePositionBeforeScroll);
+        assertTrue(firstVisiblePositionAfterScroll > firstVisiblePositionBeforeScroll);
+    }
+
     private void showOnlyStretch() throws Throwable {
         mActivityRule.runOnUiThread(() -> {
             ViewGroup parent = (ViewGroup) mListViewStretch.getParent();
@@ -1472,6 +1530,20 @@ public class ListViewTest {
             View view = new View(mContext);
             view.setBackgroundColor(color);
             view.setLayoutParams(new ViewGroup.LayoutParams(90, 50));
+            return view;
+        }
+    }
+
+    private static class ClickColorAdapter extends ColorAdapter {
+        ClickColorAdapter(Context context, int[] colors) {
+            super(context, colors);
+        }
+
+        @NonNull
+        @Override
+        public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
+            View view = super.getView(position, convertView, parent);
+            view.setOnClickListener((v) -> { });
             return view;
         }
     }
