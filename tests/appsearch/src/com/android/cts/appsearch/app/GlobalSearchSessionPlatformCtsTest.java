@@ -15,6 +15,8 @@
  */
 package android.app.appsearch.cts.app;
 
+import static android.Manifest.permission.READ_GLOBAL_APP_SEARCH_DATA;
+
 import static com.android.server.appsearch.testing.AppSearchTestUtils.checkIsBatchResultSuccess;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -41,11 +43,13 @@ import android.util.Log;
 
 import androidx.test.core.app.ApplicationProvider;
 
+import com.android.compatibility.common.util.SystemUtil;
 import com.android.cts.appsearch.ICommandReceiver;
 import com.android.server.appsearch.testing.AppSearchEmail;
 import com.android.server.appsearch.testing.AppSearchSessionShimImpl;
 import com.android.server.appsearch.testing.GlobalSearchSessionShimImpl;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.io.BaseEncoding;
 
 import org.junit.After;
@@ -53,6 +57,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -111,6 +116,7 @@ public class GlobalSearchSessionPlatformCtsTest {
 
     private static final String DB_NAME = "";
 
+    private GlobalSearchSessionShim mGlobalSearchSession;
     private AppSearchSessionShim mDb;
 
     private Context mContext;
@@ -118,8 +124,10 @@ public class GlobalSearchSessionPlatformCtsTest {
     @Before
     public void setUp() throws Exception {
         mContext = ApplicationProvider.getApplicationContext();
-        mDb = AppSearchSessionShimImpl.createSearchSession(
-                new AppSearchManager.SearchContext.Builder(DB_NAME).build()).get();
+        mDb =
+                AppSearchSessionShimImpl.createSearchSession(
+                                new AppSearchManager.SearchContext.Builder(DB_NAME).build())
+                        .get();
         cleanup();
     }
 
@@ -131,6 +139,9 @@ public class GlobalSearchSessionPlatformCtsTest {
 
     private void cleanup() throws Exception {
         mDb.setSchema(new SetSchemaRequest.Builder().setForceOverride(true).build()).get();
+
+        clearData(PKG_A);
+        clearData(PKG_B);
     }
 
     @Test
@@ -289,53 +300,167 @@ public class GlobalSearchSessionPlatformCtsTest {
     }
 
     @Test
+    public void testGlobalSearch_withAccess() throws Exception {
+        indexGloballySearchableDocument(PKG_A);
+        indexGloballySearchableDocument(PKG_B);
+
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> {
+                    mGlobalSearchSession =
+                            GlobalSearchSessionShimImpl.createGlobalSearchSession(mContext).get();
+
+                    SearchResultsShim searchResults =
+                            mGlobalSearchSession.search(
+                                    /*queryExpression=*/ "",
+                                    new SearchSpec.Builder()
+                                            .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
+                                            .addFilterPackageNames(PKG_A, PKG_B)
+                                            .build());
+                    List<SearchResult> page = searchResults.getNextPage().get();
+                    assertThat(page).hasSize(2);
+
+                    Set<String> actualPackageNames =
+                            ImmutableSet.of(
+                                    page.get(0).getPackageName(), page.get(1).getPackageName());
+                    assertThat(actualPackageNames).containsExactly(PKG_A, PKG_B);
+                },
+                READ_GLOBAL_APP_SEARCH_DATA);
+    }
+
+    @Test
+    public void testGlobalSearch_withPartialAccess() throws Exception {
+        indexGloballySearchableDocument(PKG_A);
+        indexNotGloballySearchableDocument(PKG_B);
+
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> {
+                    mGlobalSearchSession =
+                            GlobalSearchSessionShimImpl.createGlobalSearchSession(mContext).get();
+
+                    SearchResultsShim searchResults =
+                            mGlobalSearchSession.search(
+                                    /*queryExpression=*/ "",
+                                    new SearchSpec.Builder()
+                                            .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
+                                            .addFilterPackageNames(PKG_A, PKG_B)
+                                            .build());
+                    List<SearchResult> page = searchResults.getNextPage().get();
+                    assertThat(page).hasSize(1);
+
+                    assertThat(page.get(0).getPackageName()).isEqualTo(PKG_A);
+                },
+                READ_GLOBAL_APP_SEARCH_DATA);
+    }
+
+    @Test
+    public void testGlobalSearch_withPackageFilters() throws Exception {
+        indexGloballySearchableDocument(PKG_A);
+        indexGloballySearchableDocument(PKG_B);
+
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> {
+                    mGlobalSearchSession =
+                            GlobalSearchSessionShimImpl.createGlobalSearchSession(mContext).get();
+
+                    SearchResultsShim searchResults =
+                            mGlobalSearchSession.search(
+                                    /*queryExpression=*/ "",
+                                    new SearchSpec.Builder()
+                                            .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
+                                            .addFilterPackageNames(PKG_B)
+                                            .build());
+                    List<SearchResult> page = searchResults.getNextPage().get();
+                    assertThat(page).hasSize(1);
+
+                    assertThat(page.get(0).getPackageName()).isEqualTo(PKG_B);
+                },
+                READ_GLOBAL_APP_SEARCH_DATA);
+    }
+
+    @Test
+    public void testGlobalSearch_withoutAccess() throws Exception {
+        indexGloballySearchableDocument(PKG_A);
+        indexGloballySearchableDocument(PKG_B);
+
+        mGlobalSearchSession =
+                GlobalSearchSessionShimImpl.createGlobalSearchSession(mContext).get();
+
+        SearchResultsShim searchResults =
+                mGlobalSearchSession.search(
+                        /*queryExpression=*/ "",
+                        new SearchSpec.Builder()
+                                .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
+                                .addFilterPackageNames(PKG_A, PKG_B)
+                                .build());
+        List<SearchResult> page = searchResults.getNextPage().get();
+        assertThat(page).isEmpty();
+    }
+
+    @Test
     public void testReportSystemUsage() throws Exception {
         // Insert schema
         mDb.setSchema(new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build())
                 .get();
 
         // Insert two docs
-        GenericDocument document1 = new GenericDocument.Builder<>(
-                "namespace", "id1", AppSearchEmail.SCHEMA_TYPE).build();
-        GenericDocument document2 = new GenericDocument.Builder<>(
-                "namespace", "id2", AppSearchEmail.SCHEMA_TYPE).build();
-        mDb.put(new PutDocumentsRequest.Builder()
-                .addGenericDocuments(document1, document2).build()).get();
+        GenericDocument document1 =
+                new GenericDocument.Builder<>("namespace", "id1", AppSearchEmail.SCHEMA_TYPE)
+                        .build();
+        GenericDocument document2 =
+                new GenericDocument.Builder<>("namespace", "id2", AppSearchEmail.SCHEMA_TYPE)
+                        .build();
+        mDb.put(new PutDocumentsRequest.Builder().addGenericDocuments(document1, document2).build())
+                .get();
 
         // Report some usages. id1 has 2 app and 1 system usage, id2 has 1 app and 2 system usage.
-        try (GlobalSearchSessionShim globalSearchSession
-                     = GlobalSearchSessionShimImpl.createGlobalSearchSession().get()) {
-            mDb.reportUsage(new ReportUsageRequest.Builder("namespace", "id1")
-                    .setUsageTimestampMillis(10)
-                    .build()).get();
-            mDb.reportUsage(new ReportUsageRequest.Builder("namespace", "id1")
-                    .setUsageTimestampMillis(20)
-                    .build()).get();
-            globalSearchSession.reportSystemUsage(
-                    new ReportSystemUsageRequest.Builder(
-                            mContext.getPackageName(), DB_NAME, "namespace", "id1")
-                            .setUsageTimestampMillis(1000)
-                            .build()).get();
+        try (GlobalSearchSessionShim globalSearchSession =
+                GlobalSearchSessionShimImpl.createGlobalSearchSession().get()) {
+            mDb.reportUsage(
+                            new ReportUsageRequest.Builder("namespace", "id1")
+                                    .setUsageTimestampMillis(10)
+                                    .build())
+                    .get();
+            mDb.reportUsage(
+                            new ReportUsageRequest.Builder("namespace", "id1")
+                                    .setUsageTimestampMillis(20)
+                                    .build())
+                    .get();
+            globalSearchSession
+                    .reportSystemUsage(
+                            new ReportSystemUsageRequest.Builder(
+                                            mContext.getPackageName(), DB_NAME, "namespace", "id1")
+                                    .setUsageTimestampMillis(1000)
+                                    .build())
+                    .get();
 
-            mDb.reportUsage(new ReportUsageRequest.Builder("namespace", "id2")
-                    .setUsageTimestampMillis(100)
-                    .build()).get();
-            globalSearchSession.reportSystemUsage(
-                    new ReportSystemUsageRequest.Builder(
-                            mContext.getPackageName(), DB_NAME, "namespace", "id2")
-                            .setUsageTimestampMillis(200)
-                            .build()).get();
-            globalSearchSession.reportSystemUsage(
-                    new ReportSystemUsageRequest.Builder(
-                            mContext.getPackageName(), DB_NAME, "namespace", "id2")
-                            .setUsageTimestampMillis(150)
-                            .build()).get();
+            mDb.reportUsage(
+                            new ReportUsageRequest.Builder("namespace", "id2")
+                                    .setUsageTimestampMillis(100)
+                                    .build())
+                    .get();
+            globalSearchSession
+                    .reportSystemUsage(
+                            new ReportSystemUsageRequest.Builder(
+                                            mContext.getPackageName(), DB_NAME, "namespace", "id2")
+                                    .setUsageTimestampMillis(200)
+                                    .build())
+                    .get();
+            globalSearchSession
+                    .reportSystemUsage(
+                            new ReportSystemUsageRequest.Builder(
+                                            mContext.getPackageName(), DB_NAME, "namespace", "id2")
+                                    .setUsageTimestampMillis(150)
+                                    .build())
+                    .get();
 
             // Sort by app usage count: id1 should win
-            try (SearchResultsShim results = mDb.search("", new SearchSpec.Builder()
-                    .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
-                    .setRankingStrategy(SearchSpec.RANKING_STRATEGY_USAGE_COUNT)
-                    .build())) {
+            try (SearchResultsShim results =
+                    mDb.search(
+                            "",
+                            new SearchSpec.Builder()
+                                    .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
+                                    .setRankingStrategy(SearchSpec.RANKING_STRATEGY_USAGE_COUNT)
+                                    .build())) {
                 List<SearchResult> page = results.getNextPage().get();
                 assertThat(page).hasSize(2);
                 assertThat(page.get(0).getGenericDocument().getId()).isEqualTo("id1");
@@ -343,10 +468,14 @@ public class GlobalSearchSessionPlatformCtsTest {
             }
 
             // Sort by app usage timestamp: id2 should win
-            try (SearchResultsShim results = mDb.search("", new SearchSpec.Builder()
-                    .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
-                    .setRankingStrategy(SearchSpec.RANKING_STRATEGY_USAGE_LAST_USED_TIMESTAMP)
-                    .build())) {
+            try (SearchResultsShim results =
+                    mDb.search(
+                            "",
+                            new SearchSpec.Builder()
+                                    .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
+                                    .setRankingStrategy(
+                                            SearchSpec.RANKING_STRATEGY_USAGE_LAST_USED_TIMESTAMP)
+                                    .build())) {
                 List<SearchResult> page = results.getNextPage().get();
                 assertThat(page).hasSize(2);
                 assertThat(page.get(0).getGenericDocument().getId()).isEqualTo("id2");
@@ -354,10 +483,14 @@ public class GlobalSearchSessionPlatformCtsTest {
             }
 
             // Sort by system usage count: id2 should win
-            try (SearchResultsShim results = mDb.search("", new SearchSpec.Builder()
-                    .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
-                    .setRankingStrategy(SearchSpec.RANKING_STRATEGY_SYSTEM_USAGE_COUNT)
-                    .build())) {
+            try (SearchResultsShim results =
+                    mDb.search(
+                            "",
+                            new SearchSpec.Builder()
+                                    .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
+                                    .setRankingStrategy(
+                                            SearchSpec.RANKING_STRATEGY_SYSTEM_USAGE_COUNT)
+                                    .build())) {
                 List<SearchResult> page = results.getNextPage().get();
                 assertThat(page).hasSize(2);
                 assertThat(page.get(0).getGenericDocument().getId()).isEqualTo("id2");
@@ -365,11 +498,13 @@ public class GlobalSearchSessionPlatformCtsTest {
             }
 
             // Sort by system usage timestamp: id1 should win
-            try (SearchResultsShim results = mDb.search("", new SearchSpec.Builder()
-                    .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
-                    .setRankingStrategy(
-                            SearchSpec.RANKING_STRATEGY_SYSTEM_USAGE_LAST_USED_TIMESTAMP)
-                    .build())) {
+            SearchSpec searchSpec =
+                    new SearchSpec.Builder()
+                            .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
+                            .setRankingStrategy(
+                                    SearchSpec.RANKING_STRATEGY_SYSTEM_USAGE_LAST_USED_TIMESTAMP)
+                            .build();
+            try (SearchResultsShim results = mDb.search("", searchSpec)) {
                 List<SearchResult> page = results.getNextPage().get();
                 assertThat(page).hasSize(2);
                 assertThat(page.get(0).getGenericDocument().getId()).isEqualTo("id1");
@@ -379,10 +514,10 @@ public class GlobalSearchSessionPlatformCtsTest {
     }
 
     private void assertPackageCannotAccess(String pkg) throws Exception {
-        final GlobalSearchSessionPlatformCtsTest.TestServiceConnection serviceConnection =
+        GlobalSearchSessionPlatformCtsTest.TestServiceConnection serviceConnection =
                 bindToHelperService(pkg);
         try {
-            final ICommandReceiver commandReceiver = serviceConnection.getCommandReceiver();
+            ICommandReceiver commandReceiver = serviceConnection.getCommandReceiver();
             List<String> results = commandReceiver.globalSearch(TEXT);
             assertThat(results).isEmpty();
         } finally {
@@ -392,10 +527,10 @@ public class GlobalSearchSessionPlatformCtsTest {
 
     private void assertPackageCanAccess(GenericDocument expectedDocument, String pkg)
             throws Exception {
-        final GlobalSearchSessionPlatformCtsTest.TestServiceConnection serviceConnection =
+        GlobalSearchSessionPlatformCtsTest.TestServiceConnection serviceConnection =
                 bindToHelperService(pkg);
         try {
-            final ICommandReceiver commandReceiver = serviceConnection.getCommandReceiver();
+            ICommandReceiver commandReceiver = serviceConnection.getCommandReceiver();
             List<String> results = commandReceiver.globalSearch(TEXT);
             assertThat(results).containsExactly(expectedDocument.toString());
         } finally {
@@ -403,11 +538,44 @@ public class GlobalSearchSessionPlatformCtsTest {
         }
     }
 
+    private void indexGloballySearchableDocument(String pkg) throws Exception {
+        GlobalSearchSessionPlatformCtsTest.TestServiceConnection serviceConnection =
+                bindToHelperService(pkg);
+        try {
+            ICommandReceiver commandReceiver = serviceConnection.getCommandReceiver();
+            assertThat(commandReceiver.indexGloballySearchableDocument()).isTrue();
+        } finally {
+            serviceConnection.unbind();
+        }
+    }
+
+    private void indexNotGloballySearchableDocument(String pkg) throws Exception {
+        GlobalSearchSessionPlatformCtsTest.TestServiceConnection serviceConnection =
+                bindToHelperService(pkg);
+        try {
+            ICommandReceiver commandReceiver = serviceConnection.getCommandReceiver();
+            assertThat(commandReceiver.indexNotGloballySearchableDocument()).isTrue();
+        } finally {
+            serviceConnection.unbind();
+        }
+    }
+
+    private void clearData(String pkg) throws Exception {
+        GlobalSearchSessionPlatformCtsTest.TestServiceConnection serviceConnection =
+                bindToHelperService(pkg);
+        try {
+            ICommandReceiver commandReceiver = serviceConnection.getCommandReceiver();
+            assertThat(commandReceiver.clearData()).isTrue();
+        } finally {
+            serviceConnection.unbind();
+        }
+    }
+
     private GlobalSearchSessionPlatformCtsTest.TestServiceConnection bindToHelperService(
             String pkg) {
-        final GlobalSearchSessionPlatformCtsTest.TestServiceConnection serviceConnection =
+        GlobalSearchSessionPlatformCtsTest.TestServiceConnection serviceConnection =
                 new GlobalSearchSessionPlatformCtsTest.TestServiceConnection(mContext);
-        final Intent intent = new Intent().setComponent(new ComponentName(pkg, HELPER_SERVICE));
+        Intent intent = new Intent().setComponent(new ComponentName(pkg, HELPER_SERVICE));
         mContext.bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
         return serviceConnection;
     }
@@ -431,7 +599,7 @@ public class GlobalSearchSessionPlatformCtsTest {
         }
 
         private IBinder getService() throws Exception {
-            final IBinder service = mBlockingQueue.poll(TIMEOUT_BIND_SERVICE_SEC, TimeUnit.SECONDS);
+            IBinder service = mBlockingQueue.poll(TIMEOUT_BIND_SERVICE_SEC, TimeUnit.SECONDS);
             return service;
         }
 
