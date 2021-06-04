@@ -92,19 +92,22 @@ public final class UserManagerTest {
                 "Clone user", UserManager.USER_TYPE_PROFILE_CLONE, disallowedPackages);
         assertThat(userHandle).isNotNull();
 
-        final Context userContext = mContext.createPackageContextAsUser("system", 0,
-                userHandle);
-        assertThat(userContext.getSystemService(
-                UserManager.class).isMediaSharedWithParent()).isTrue();
+        try {
+            final Context userContext = mContext.createPackageContextAsUser("system", 0,
+                    userHandle);
+            final UserManager cloneUserManager = userContext.getSystemService(UserManager.class);
+            assertThat(cloneUserManager.isMediaSharedWithParent()).isTrue();
+            assertThat(cloneUserManager.isCloneProfile()).isTrue();
 
-        List<UserInfo> list = mUserManager.getUsers(true,
-                true, true);
-        List<UserInfo> cloneUsers = list.stream().filter(
-                user -> (user.id == userHandle.getIdentifier()
-                        && user.isCloneProfile()))
-                .collect(Collectors.toList());
-        assertThat(cloneUsers.size()).isEqualTo(1);
-        assertThat(mUserManager.removeUser(userHandle)).isTrue();
-        mInstrumentation.getUiAutomation().dropShellPermissionIdentity();
+            List<UserInfo> list = mUserManager.getUsers(true, true, true);
+            List<UserInfo> cloneUsers = list.stream().filter(
+                    user -> (user.id == userHandle.getIdentifier()
+                            && user.isCloneProfile()))
+                    .collect(Collectors.toList());
+            assertThat(cloneUsers.size()).isEqualTo(1);
+        } finally {
+            assertThat(mUserManager.removeUser(userHandle)).isTrue();
+            mInstrumentation.getUiAutomation().dropShellPermissionIdentity();
+        }
     }
 }
