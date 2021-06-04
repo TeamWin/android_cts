@@ -24,6 +24,7 @@ import static com.android.compatibility.common.util.UiAutomatorUtils.waitFindObj
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
@@ -36,6 +37,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.PermissionInfo;
+import android.os.Build;
 import android.os.Process;
 import android.os.UserHandle;
 import android.provider.Settings;
@@ -49,6 +51,7 @@ import android.util.Pair;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.SdkSuppress;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
@@ -949,6 +952,37 @@ public class RoleManagerTest {
         addRoleHolder(RoleManager.ROLE_SMS, APP_PACKAGE_NAME);
 
         assertThat(Telephony.Sms.getDefaultSmsPackage(sContext)).isEqualTo(APP_PACKAGE_NAME);
+    }
+
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S, codeName = "S")
+    @Test
+    public void cannotBypassRoleQualificationWithoutPermission() throws Exception {
+        assertThrows(SecurityException.class, () ->
+                sRoleManager.setBypassingRoleQualification(true));
+    }
+
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S, codeName = "S")
+    @Test
+    public void bypassRoleQualificationThenCanAddUnqualifiedRoleHolder() throws Exception {
+        assertThat(sRoleManager.isRoleAvailable(RoleManager.ROLE_SYSTEM_ACTIVITY_RECOGNIZER))
+                .isTrue();
+
+        runWithShellPermissionIdentity(() -> sRoleManager.setBypassingRoleQualification(true));
+        try {
+            assertThat(callWithShellPermissionIdentity(() ->
+                    sRoleManager.isBypassingRoleQualification())).isTrue();
+
+            // The System Activity Recognizer role requires a system app, so this won't succeed
+            // without bypassing role qualification.
+            addRoleHolder(RoleManager.ROLE_SYSTEM_ACTIVITY_RECOGNIZER, APP_PACKAGE_NAME);
+
+            assertThat(getRoleHolders(RoleManager.ROLE_SYSTEM_ACTIVITY_RECOGNIZER))
+                    .contains(APP_PACKAGE_NAME);
+        } finally {
+            runWithShellPermissionIdentity(() -> sRoleManager.setBypassingRoleQualification(false));
+        }
+        assertThat(callWithShellPermissionIdentity(() ->
+                sRoleManager.isBypassingRoleQualification())).isFalse();
     }
 
     @NonNull
