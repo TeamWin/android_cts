@@ -48,7 +48,7 @@ public class RingtoneManagerTest
     private Context mContext;
     private RingtoneManager mRingtoneManager;
     private AudioManager mAudioManager;
-    private int mOriginalVolume;
+    private int mOriginalRingerMode;
     private Uri mDefaultUri;
 
     public RingtoneManagerTest() {
@@ -65,17 +65,15 @@ public class RingtoneManagerTest
         mRingtoneManager = new RingtoneManager(mActivity);
         mAudioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
         // backup ringer settings
-        mOriginalVolume = mAudioManager.getStreamVolume(AudioManager.STREAM_RING);
         mDefaultUri = RingtoneManager.getActualDefaultRingtoneUri(mContext,
                 RingtoneManager.TYPE_RINGTONE);
 
-        if (mAudioManager.getRingerMode() == AudioManager.RINGER_MODE_SILENT) {
+        mOriginalRingerMode = mAudioManager.getRingerMode();
+        if (mAudioManager.getRingerMode() != AudioManager.RINGER_MODE_NORMAL) {
             try {
                 Utils.toggleNotificationPolicyAccess(
                         mContext.getPackageName(), getInstrumentation(), true);
-                mAudioManager.adjustStreamVolume(AudioManager.STREAM_RING,
-                        AudioManager.ADJUST_RAISE,
-                        AudioManager.FLAG_ALLOW_RINGER_MODES);
+                mAudioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
             } finally {
                 Utils.toggleNotificationPolicyAccess(
                         mContext.getPackageName(), getInstrumentation(), false);
@@ -90,8 +88,7 @@ public class RingtoneManagerTest
                     mContext.getPackageName(), getInstrumentation(), true);
             // restore original ringer settings
             if (mAudioManager != null) {
-                mAudioManager.setStreamVolume(AudioManager.STREAM_RING, mOriginalVolume,
-                        AudioManager.FLAG_ALLOW_RINGER_MODES);
+                mAudioManager.setRingerMode(mOriginalRingerMode);
             }
         } finally {
             Utils.toggleNotificationPolicyAccess(
