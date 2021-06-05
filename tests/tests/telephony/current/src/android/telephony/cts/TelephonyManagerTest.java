@@ -3281,6 +3281,9 @@ public class TelephonyManagerTest {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             return;
         }
+        if (mPackageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)) {
+            return;
+        }
 
         boolean isEnabled = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
                 tm -> tm.isOpportunisticNetworkEnabled());
