@@ -253,6 +253,10 @@ final class DevicePolicyManagerWrapper
             // Used by InputMethodsTest
             doAnswer(answer).when(spy).getPermittedInputMethods(any());
 
+            // Used by CommonCriteriaModeTest
+            doAnswer(answer).when(spy).setCommonCriteriaModeEnabled(any(), anyBoolean());
+            doAnswer(answer).when(spy).isCommonCriteriaModeEnabled(any());
+
             // TODO(b/176993670): add more methods below as tests are converted
         } catch (Exception e) {
             // Should never happen, but needs to be catch as some methods declare checked exceptions
