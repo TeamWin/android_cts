@@ -218,9 +218,19 @@ public class CarPropertyManagerTest extends CarApiTestBase {
     @CddTest(requirement="2.5.1")
     @Test
     public void testMustSupportPerfVehicleSpeed() throws Exception {
+        CarPropertyConfig perfVehicleSpeedConfig =
+                mCarPropertyManager.getCarPropertyConfig(VehiclePropertyIds.PERF_VEHICLE_SPEED);
         assertWithMessage("Must support PERF_VEHICLE_SPEED")
-                .that(mCarPropertyManager.getCarPropertyConfig(
-                        VehiclePropertyIds.PERF_VEHICLE_SPEED)).isNotNull();
+                .that(perfVehicleSpeedConfig).isNotNull();
+        assertWithMessage("PERF_VEHICLE_SPEED must be READ access")
+                .that(perfVehicleSpeedConfig.getAccess())
+                .isEqualTo(CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ);
+        assertWithMessage("PERF_VEHICLE_SPEED must be Float type property")
+                .that(perfVehicleSpeedConfig.getPropertyType())
+                .isEqualTo(Float.class);
+        assertWithMessage("PERF_VEHICLE_SPEED must return Float type value")
+                .that(mCarPropertyManager.getProperty(VehiclePropertyIds.PERF_VEHICLE_SPEED,
+                VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL).getValue() instanceof Float).isTrue();
     }
 
     @CddTest(requirement = "2.5.1")

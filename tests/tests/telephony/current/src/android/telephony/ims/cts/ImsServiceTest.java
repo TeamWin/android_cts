@@ -1702,6 +1702,140 @@ public class ImsServiceTest {
     }
 
     @Test
+    public void testRcsPublishWithSipOptions() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+
+        // Override the carrier config to support SIP OPTIONS
+        PersistableBundle bundle = new PersistableBundle();
+        bundle.putBoolean(CarrierConfigManager.KEY_CARRIER_VOLTE_PROVISIONED_BOOL, false);
+        bundle.putBoolean(CarrierConfigManager.Ims.KEY_ENABLE_PRESENCE_PUBLISH_BOOL, false);
+        bundle.putBoolean(CarrierConfigManager.KEY_USE_RCS_SIP_OPTIONS_BOOL, true);
+        overrideCarrierConfig(bundle);
+
+        ImsManager imsManager = getContext().getSystemService(ImsManager.class);
+        if (imsManager == null) {
+            fail("Cannot get the ImsManager");
+        }
+        ImsRcsManager imsRcsManager = imsManager.getImsRcsManager(sTestSub);
+        RcsUceAdapter uceAdapter = imsRcsManager.getUceAdapter();
+
+        // Connect to the ImsService
+        triggerFrameworkConnectToImsServiceBindMmTelAndRcsFeature();
+
+        TestRcsCapabilityExchangeImpl capExchangeImpl = sServiceConnector.getCarrierService()
+                .getRcsFeature().getRcsCapabilityExchangeImpl();
+
+        // Setup the response of the publish request. In SIP OPTIONS mechanism, ImsService
+        // should not receive any publish requests.
+        capExchangeImpl.setPublishOperator((listener, pidfXml, cb) -> {
+            fail("ImsService should not receive the PUBLISH request");
+        });
+
+        // Register the callback to listen to the publish state changed
+        LinkedBlockingQueue<Integer> publishStateQueue = new LinkedBlockingQueue<>();
+        RcsUceAdapter.OnPublishStateChangedListener publishStateCallback =
+                new RcsUceAdapter.OnPublishStateChangedListener() {
+                    public void onPublishStateChange(int state) {
+                        publishStateQueue.offer(state);
+                    }
+                };
+
+        final UiAutomation automation = InstrumentationRegistry.getInstrumentation()
+                .getUiAutomation();
+
+        // Verify receiving the publish state callback immediately after registering the callback
+        // and the PUBLISH state is OK because the capability mechanism is SIP OPTIONS.
+        try {
+            automation.adoptShellPermissionIdentity();
+            uceAdapter.addOnPublishStateChangedListener(getContext().getMainExecutor(),
+                    publishStateCallback);
+            assertEquals(RcsUceAdapter.PUBLISH_STATE_OK, waitForIntResult(publishStateQueue));
+        } finally {
+            automation.dropShellPermissionIdentity();
+            publishStateQueue.clear();
+        }
+
+        // IMS registers
+        sServiceConnector.getCarrierService().getImsRegistration().onRegistered(
+                ImsRegistrationImplBase.REGISTRATION_TECH_LTE);
+
+        // Verify the PUBLISH request should not be triggered and the publish state is still
+        // OK even the IMS is registered.
+        if (publishStateQueue.poll() != null) {
+            fail("The PUBLISH request should not be triggered.");
+        }
+        try {
+            automation.adoptShellPermissionIdentity();
+            int publishState = uceAdapter.getUcePublishState();
+            assertEquals(RcsUceAdapter.PUBLISH_STATE_OK, publishState);
+        } finally {
+            automation.dropShellPermissionIdentity();
+        }
+
+        // Override the carrier config from SIP OPTIONS to PRESENCE.
+        bundle = new PersistableBundle();
+        bundle.putBoolean(CarrierConfigManager.KEY_CARRIER_VOLTE_PROVISIONED_BOOL, false);
+        bundle.putBoolean(CarrierConfigManager.Ims.KEY_ENABLE_PRESENCE_PUBLISH_BOOL, true);
+        bundle.putBoolean(CarrierConfigManager.KEY_USE_RCS_SIP_OPTIONS_BOOL, false);
+        overrideCarrierConfig(bundle);
+
+        // When the capability type is changed from SIP OPTIONS to PRESENCE, the publish state
+        // should be re-initialized to NOT_PUBLISHED
+        try {
+            // Verify receiving the callback that the publish state has changed from OK
+            // to NOT_PUBLISH
+            assertEquals(RcsUceAdapter.PUBLISH_STATE_NOT_PUBLISHED,
+                    waitForIntResult(publishStateQueue));
+            // Verify it by calling the API getPucePublishState
+            automation.adoptShellPermissionIdentity();
+            int publishState = uceAdapter.getUcePublishState();
+            assertEquals(RcsUceAdapter.PUBLISH_STATE_NOT_PUBLISHED, publishState);
+        } finally {
+            publishStateQueue.clear();
+            automation.dropShellPermissionIdentity();
+        }
+
+        // Notify framework that the RCS capability status is changed and PRESENCE UCE is enabled.
+        RcsImsCapabilities capabilities =
+                new RcsImsCapabilities(RcsUceAdapter.CAPABILITY_TYPE_PRESENCE_UCE);
+        sServiceConnector.getCarrierService().getRcsFeature()
+                .notifyCapabilitiesStatusChanged(capabilities);
+
+        CapabilityExchangeEventListener eventListener =
+                sServiceConnector.getCarrierService().getRcsFeature().getEventListener();
+
+        // Setup the operation of the publish request.
+        capExchangeImpl.setPublishOperator((listener, pidfXml, cb) -> {
+            int networkResp = 200;
+            String reason = "OK";
+            cb.onNetworkResponse(networkResp, reason);
+            listener.onPublish();
+        });
+
+        // Notify framework to send the PUBLISH request to the ImsService.
+        eventListener.onRequestPublishCapabilities(
+                RcsUceAdapter.CAPABILITY_UPDATE_TRIGGER_MOVE_TO_WLAN);
+
+        // Verify that ImsService received the first PUBLISH
+        assertTrue(sServiceConnector.getCarrierService().waitForLatchCountdown(
+                TestImsService.LATCH_UCE_REQUEST_PUBLISH));
+
+        // Verify that the publish state should be changed from NOT_PUBLISHED to OK
+        try {
+            assertEquals(RcsUceAdapter.PUBLISH_STATE_OK, waitForIntResult(publishStateQueue));
+            automation.adoptShellPermissionIdentity();
+            assertEquals(RcsUceAdapter.PUBLISH_STATE_OK, uceAdapter.getUcePublishState());
+        } finally {
+            publishStateQueue.clear();
+            automation.dropShellPermissionIdentity();
+        }
+
+        overrideCarrierConfig(null);
+    }
+
+    @Test
     public void testRcsManagerRegistrationCallback() throws Exception {
         if (!ImsUtils.shouldTestImsService()) {
             return;

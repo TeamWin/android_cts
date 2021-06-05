@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.edi.cts.apps.classpath;
+package android.edi.cts.app;
 
 import android.app.Instrumentation;
 import android.content.Context;
@@ -71,11 +71,13 @@ public class ClasspathDeviceTest {
 
         ImmutableList.Builder<String> content = ImmutableList.builder();
         for (SharedLibraryInfo sharedLibrary : sharedLibraries) {
-            content.add(String.format(Locale.US, "%s %d %d %s",
-                    sharedLibrary.getName(),
-                    sharedLibrary.getType(),
-                    sharedLibrary.getLongVersion(),
-                    String.join(" ", sharedLibrary.getAllCodePaths())));
+            if (!sharedLibrary.isNative()) {
+                content.add(String.format(Locale.US, "%s %d %d %s",
+                        sharedLibrary.getName(),
+                        sharedLibrary.getType(),
+                        sharedLibrary.getLongVersion(),
+                        String.join(" ", sharedLibrary.getAllCodePaths())));
+            }
         }
 
         Path detailsFilepath = new File("/sdcard/shared-libs.txt").toPath();

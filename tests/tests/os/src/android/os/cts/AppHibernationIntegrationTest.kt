@@ -38,6 +38,7 @@ import com.android.compatibility.common.util.DisableAnimationRule
 import com.android.compatibility.common.util.SystemUtil.runShellCommandOrThrow
 import com.android.compatibility.common.util.UiAutomatorUtils
 import org.hamcrest.CoreMatchers
+import org.junit.After
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertThat
 import org.junit.Assert.assertTrue
@@ -79,6 +80,11 @@ class AppHibernationIntegrationTest {
         // Wake up the device
         runShellCommandOrThrow("input keyevent KEYCODE_WAKEUP")
         runShellCommandOrThrow("input keyevent 82")
+    }
+
+    @After
+    fun cleanUp() {
+        goHome()
     }
 
     @Test

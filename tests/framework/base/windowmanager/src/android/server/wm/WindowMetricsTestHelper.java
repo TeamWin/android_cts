@@ -75,6 +75,8 @@ public class WindowMetricsTestHelper {
      *     either matches DisplayArea bounds which the {@link Context} is attached to, or matches
      *     {@link WindowManager#getCurrentWindowMetrics()} if sandboxing is applied.</li>
      * </ul>
+     * @param context the context under test
+     * @param displayAreaBounds the bounds of the DisplayArea
      */
     public static void assertMetricsValidity(Context context, Rect displayAreaBounds) {
         final boolean isFreeForm = context instanceof Activity
@@ -88,22 +90,7 @@ public class WindowMetricsTestHelper {
                                 windowManager.getCurrentWindowMetrics());
         final Rect maxBounds = windowManager.getMaximumWindowMetrics().getBounds();
         final Display display = context.getDisplay();
-
-        // Check window bounds
-        final Point displaySize = new Point();
-        display.getSize(displaySize);
-        assertEquals("Reported display width must match window width",
-                displaySize.x, currentBounds.width());
-        assertEquals("Reported display height must match window height",
-                displaySize.y, currentBounds.height());
-
-        // Max window bounds should match real display size.
-        final Point realDisplaySize = new Point();
-        display.getRealSize(realDisplaySize);
-        assertEquals("Reported real display width must match max window width",
-                realDisplaySize.x, maxBounds.width());
-        assertEquals("Reported real display height must match max window height",
-                realDisplaySize.y, maxBounds.height());
+        assertBoundsMatchDisplay(maxBounds, currentBounds, display);
 
         // Max window bounds should match either DisplayArea bounds, or current window bounds.
         if (maxWindowBoundsSandboxed(displayAreaBounds, maxBounds)) {
@@ -119,6 +106,36 @@ public class WindowMetricsTestHelper {
         }
     }
 
+    /**
+     * Verifies for the provided bounds and display:
+     * <ul>
+     *     <li>{@link WindowManager#getCurrentWindowMetrics()} matches
+     *     {@link Display#getSize(Point)}</li>
+     *     <li>{@link WindowManager#getMaximumWindowMetrics()} matches
+     *     {@link Display#getRealSize(Point)}
+     * </ul>
+     * @param maxBounds the bounds from {@link WindowManager#getMaximumWindowMetrics()}
+     * @param currentBounds the bounds from {@link WindowManager#getCurrentWindowMetrics()}
+     * @param display the display to compare bounds against
+     */
+    static void assertBoundsMatchDisplay(Rect maxBounds, Rect currentBounds, Display display) {
+        // Check window bounds
+        final Point displaySize = new Point();
+        display.getSize(displaySize);
+        assertEquals("Reported display width must match window width",
+                displaySize.x, currentBounds.width());
+        assertEquals("Reported display height must match window height",
+                displaySize.y, currentBounds.height());
+
+        // Max window bounds should match real display size.
+        final Point realDisplaySize = new Point();
+        display.getRealSize(realDisplaySize);
+        assertEquals("Reported real display width must match max window width",
+                realDisplaySize.x, maxBounds.width());
+        assertEquals("Reported real display height must match max window height",
+                realDisplaySize.y, maxBounds.height());
+    }
+
     public static Rect getBoundsExcludingNavigationBarAndCutout(WindowMetrics windowMetrics) {
         WindowInsets windowInsets = windowMetrics.getWindowInsets();
         final Insets insetsWithCutout =
@@ -132,7 +149,7 @@ public class WindowMetricsTestHelper {
      * Returns {@code true} if the bounds from {@link WindowManager#getMaximumWindowMetrics()} are
      * sandboxed, so are smaller than the DisplayArea.
      */
-    private static boolean maxWindowBoundsSandboxed(Rect displayAreaBounds, Rect maxBounds) {
+    static boolean maxWindowBoundsSandboxed(Rect displayAreaBounds, Rect maxBounds) {
         return maxBounds.width() < displayAreaBounds.width()
                 || maxBounds.height() < displayAreaBounds.height();
     }

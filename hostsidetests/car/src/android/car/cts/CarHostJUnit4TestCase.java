@@ -60,6 +60,8 @@ public abstract class CarHostJUnit4TestCase extends BaseHostJUnit4Test {
 
     private static final Pattern CREATE_USER_OUTPUT_PATTERN = Pattern.compile("id=(\\d+)");
 
+    private static final String USER_PREFIX = "CtsCarHostTestCases";
+
     /**
      * User pattern in the output of "cmd user list --all -v"
      * TEXT id=<id> TEXT name=<name>, TEX flags=<flags> TEXT
@@ -93,6 +95,8 @@ public abstract class CarHostJUnit4TestCase extends BaseHostJUnit4Test {
      */
     @Before
     public void saveUserState() throws Exception {
+        removeUsers(USER_PREFIX);
+
         mInitialUserId = getCurrentUserId();
     }
 
@@ -117,6 +121,9 @@ public abstract class CarHostJUnit4TestCase extends BaseHostJUnit4Test {
             }
         }
 
+        // Should have been removed above, but as the saying goes, better safe than sorry...
+        removeUsers(USER_PREFIX);
+
         if (mInitialMaximumNumberOfUsers != null) {
             CLog.i("Restoring max number of users to %d", mInitialMaximumNumberOfUsers);
             setMaxNumberUsers(mInitialMaximumNumberOfUsers);
@@ -127,7 +134,7 @@ public abstract class CarHostJUnit4TestCase extends BaseHostJUnit4Test {
      * Makes sure the device supports multiple users, throwing {@link AssumptionViolatedException}
      * if it doesn't.
      */
-    protected void assumeSupportsMultipleUsers() throws Exception {
+    protected final void assumeSupportsMultipleUsers() throws Exception {
         assumeTrue("device does not support multi-user",
                 getDevice().getMaxNumberOfUsersSupported() > 1);
     }
@@ -136,7 +143,7 @@ public abstract class CarHostJUnit4TestCase extends BaseHostJUnit4Test {
      * Makes sure the device can add {@code numberOfUsers} new users, increasing limit if needed or
      * failing if not possible.
      */
-    protected void requiresExtraUsers(int numberOfUsers) throws Exception {
+    protected final void requiresExtraUsers(int numberOfUsers) throws Exception {
         assumeSupportsMultipleUsers();
 
         int maxNumber = getDevice().getMaxNumberOfUsersSupported();
@@ -201,7 +208,8 @@ public abstract class CarHostJUnit4TestCase extends BaseHostJUnit4Test {
         String output = executeCommand(command, args);
         Matcher matcher = regex.matcher(output);
         if (!matcher.find()) {
-            fail(matchNotFoundErrorMessage);
+            fail(matchNotFoundErrorMessage + ". Shell command: '" + String.format(command, args)
+                    + "'. Output: " + output.trim() + ". Regex: " + regex);
         }
         return resultParser.apply(matcher);
     }
@@ -278,6 +286,7 @@ public abstract class CarHostJUnit4TestCase extends BaseHostJUnit4Test {
      * <p><b>NOTE: </b>it uses User HAL flags, not core Android's.
      */
     protected int createUser(String name, int flags, boolean isGuest) throws Exception {
+        name = USER_PREFIX + "." + name;
         waitForCarServiceReady();
         int userId = executeAndParseCommand(CREATE_USER_OUTPUT_PATTERN,
                 "Could not create user with name " + name
@@ -369,6 +378,23 @@ public abstract class CarHostJUnit4TestCase extends BaseHostJUnit4Test {
      */
     protected void removeUser(int userId) throws Exception {
         executeCommand("cmd car_service remove-user %d", userId);
+    }
+
+    /**
+     * Removes users whose name start with the given prefix.
+     */
+    protected void removeUsers(String prefix) throws Exception {
+        Pattern pattern = Pattern.compile("^.*id=(\\d+), name=(" + prefix + ".*),.*$");
+        String output = executeCommand("cmd user list --all -v");
+        for (String line : output.split("\\n")) {
+            Matcher matcher = pattern.matcher(line);
+            if (!matcher.find()) continue;
+
+            int userId = Integer.parseInt(matcher.group(1));
+            String name = matcher.group(2);
+            CLog.e("Removing user with %s prefix (id=%d, name='%s')", prefix, userId, name);
+            removeUser(userId);
+        }
     }
 
     /**

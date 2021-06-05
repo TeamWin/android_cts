@@ -39,7 +39,7 @@ import org.jf.dexlib2.iface.ClassDef;
  */
 public class ClasspathDeviceInfo extends DeviceInfo {
 
-    private static final String HELPER_APP_PACKAGE = "android.edi.cts.apps.classpath";
+    private static final String HELPER_APP_PACKAGE = "android.edi.cts.app";
     private static final String HELPER_APP_CLASS = HELPER_APP_PACKAGE + ".ClasspathDeviceTest";
 
     private ITestDevice mDevice;
@@ -49,12 +49,12 @@ public class ClasspathDeviceInfo extends DeviceInfo {
         mDevice = getDevice();
 
         store.startArray("jars");
-        collectBootclasspathJars(store);
+        collectClasspathsJars(store);
         collectSharedLibraryJars(store);
         store.endArray();
     }
 
-    private void collectBootclasspathJars(HostInfoStore store) throws Exception {
+    private void collectClasspathsJars(HostInfoStore store) throws Exception {
         collectClasspathJarInfo(store, BOOTCLASSPATH);
         collectClasspathJarInfo(store, SYSTEMSERVERCLASSPATH);
         collectClasspathJarInfo(store, DEX2OATBOOTCLASSPATH);
@@ -112,6 +112,10 @@ public class ClasspathDeviceInfo extends DeviceInfo {
     }
 
     private void collectClassInfo(HostInfoStore store, String path) throws Exception {
+        // TODO(b/189924891): stop ignoring libhwinfo.jar
+        if (path.equals("/product/framework/libhwinfo.jar")) {
+            return;
+        }
         store.startArray("classes");
         for (ClassDef classDef : Classpaths.getClassDefsFromJar(mDevice, path)) {
             store.startGroup();
