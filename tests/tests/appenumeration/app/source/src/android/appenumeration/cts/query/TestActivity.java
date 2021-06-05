@@ -233,6 +233,12 @@ public class TestActivity extends Activity {
                 sendGetSharedLibraryDependentPackages(remoteCallback, sharedLibName);
             } else if (Constants.ACTION_GET_PREFERRED_ACTIVITIES.equals(action)) {
                 sendGetPreferredActivities(remoteCallback);
+            } else if (Constants.ACTION_SET_INSTALLER_PACKAGE_NAME.equals(action)) {
+                final String targetPackageName = intent.getStringExtra(Intent.EXTRA_PACKAGE_NAME);
+                final String installerPackageName = intent.getBundleExtra(EXTRA_DATA)
+                        .getString(Intent.EXTRA_INSTALLER_PACKAGE_NAME);
+                sendSetInstallerPackageName(remoteCallback, targetPackageName,
+                        installerPackageName);
             } else {
                 sendError(remoteCallback, new Exception("unknown action " + action));
             }
@@ -585,6 +591,17 @@ public class TestActivity extends Activity {
         result.putStringArray(Intent.EXTRA_PACKAGES, packages);
         remoteCallback.sendResult(result);
         finish();
+    }
+
+    private void sendSetInstallerPackageName(RemoteCallback remoteCallback,
+            String targetPackageName, String installerPackageName) {
+        try {
+            getPackageManager().setInstallerPackageName(targetPackageName, installerPackageName);
+            remoteCallback.sendResult(null);
+            finish();
+        } catch (Exception e) {
+            sendError(remoteCallback, e);
+        }
     }
 
     @Override
