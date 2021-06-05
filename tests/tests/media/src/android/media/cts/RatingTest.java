@@ -45,6 +45,7 @@ import org.junit.runner.RunWith;
  * TODO: Tests for applying invalid method (e.g. heartRating.getPercentRating()).
  * TODO: Tests for methods inherited from Parcelable
  */
+@NonMediaMainlineTest
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class RatingTest {
