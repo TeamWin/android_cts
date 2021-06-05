@@ -146,7 +146,7 @@ def extract_dqts(jpeg, debug=False):
     if dqt_size % 2 == 0:  # even payload means luma & chroma
       logging.debug(' both luma & chroma DQT matrices in marker')
       dqt_size = (dqt_size - 2) // 2  # subtact off luma/chroma markers
-      if is_square(dqt_size):
+      if not is_square(dqt_size):
         raise AssertionError(f'DQT size: {dqt_size}')
       luma_start = dqt + 5  # skip header, length, & matrix id
       chroma_start = luma_start + dqt_size + 1  # skip lumen &  matrix_id

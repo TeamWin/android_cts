@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <!--
-  ~ Copyright (C) 2020 The Android Open Source Project
+  ~ Copyright (C) 2021 The Android Open Source Project
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -15,27 +14,24 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          package="com.android.cts.device.blob">
 
-<manifest
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.permission3.cts">
-
-    <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
-    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
+    <uses-permission android:name="android.permission.ACCESS_BLOBS_ACROSS_USERS" />
 
     <application>
-
         <uses-library android:name="android.test.runner" />
 
-        <activity android:name=".StartForFutureActivity" />
+        <activity android:name=".AssistantActivity"
+                android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.ASSIST" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
     </application>
 
     <instrumentation
-        android:name="androidx.test.runner.AndroidJUnitRunner"
-        android:targetPackage="android.permission3.cts"
-        android:label="CTS UI tests for permissions">
-        <meta-data
-            android:name="listener"
-            android:value="com.android.cts.runner.CtsTestRunListener" />
-    </instrumentation>
+            android:name="androidx.test.runner.AndroidJUnitRunner"
+            android:targetPackage="com.android.cts.device.blob"  />
 </manifest>

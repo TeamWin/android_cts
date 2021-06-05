@@ -19,4 +19,10 @@ import java.util.List;
 
 interface ICommandReceiver {
     List<String> globalSearch(String queryExpression);
+
+    boolean indexGloballySearchableDocument();
+
+    boolean indexNotGloballySearchableDocument();
+
+    boolean clearData();
 }

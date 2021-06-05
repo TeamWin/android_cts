@@ -86,6 +86,7 @@ public class CtsTranslationService extends TranslationService {
 
     @Override
     public void onConnected() {
+        super.onConnected();
         Log.v(TAG, "onConnected");
         if (sServiceWatcher != null) {
             sServiceWatcher.mService = this;
@@ -95,6 +96,7 @@ public class CtsTranslationService extends TranslationService {
 
     @Override
     public void onDisconnected() {
+        super.onDisconnected();
         Log.v(TAG, "onDisconnected");
         if (sServiceWatcher != null) {
             sServiceWatcher.mService = null;
