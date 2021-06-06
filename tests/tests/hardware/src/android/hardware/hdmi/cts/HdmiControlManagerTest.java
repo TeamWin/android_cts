@@ -321,6 +321,27 @@ public class HdmiControlManagerTest {
     }
 
     @Test
+    public void testHdmiCecConfig_RoutingControl() throws Exception {
+        // Save original value
+        int originalValue = mHdmiControlManager.getRoutingControl();
+        if (!mHdmiControlManager.getUserCecSettings().contains(
+                HdmiControlManager.CEC_SETTING_NAME_ROUTING_CONTROL)) {
+            return;
+        }
+        try {
+            for (int value : mHdmiControlManager.getAllowedCecSettingIntValues(
+                    HdmiControlManager.CEC_SETTING_NAME_ROUTING_CONTROL)) {
+                mHdmiControlManager.setRoutingControl(value);
+                assertThat(mHdmiControlManager.getRoutingControl()).isEqualTo(value);
+            }
+        } finally {
+            // Restore original value
+            mHdmiControlManager.setRoutingControl(originalValue);
+            assertThat(mHdmiControlManager.getRoutingControl()).isEqualTo(originalValue);
+        }
+    }
+
+    @Test
     public void testHdmiCecConfig_HdmiCecVolumeControlEnabled() throws Exception {
         // Save original value
         int originalValue = mHdmiControlManager.getHdmiCecVolumeControlEnabled();
