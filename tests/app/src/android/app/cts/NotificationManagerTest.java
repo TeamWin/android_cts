@@ -262,6 +262,9 @@ public class NotificationManagerTest extends AndroidTestCase {
         mBubblesEnabledSettingToRestore = Settings.Secure.getInt(mContext.getContentResolver(),
                 Settings.Secure.NOTIFICATION_BUBBLES) == 1;
 
+        // Ensure that the tests are exempt from global service-related rate limits
+        setEnableServiceNotificationRateLimit(false);
+
         // delay between tests so notifications aren't dropped by the rate limiter
         try {
             Thread.sleep(500);
@@ -272,6 +275,9 @@ public class NotificationManagerTest extends AndroidTestCase {
     @Override
     protected void tearDown() throws Exception {
         super.tearDown();
+
+        setEnableServiceNotificationRateLimit(true);
+
         mNotificationManager.cancelAll();
         for (String id : mRuleIds) {
             mNotificationManager.removeAutomaticZenRule(id);
@@ -677,6 +683,13 @@ public class NotificationManagerTest extends AndroidTestCase {
         assertEquals(expected.getConversationId(), actual.getConversationId());
         assertEquals(expected.getParentChannelId(), actual.getParentChannelId());
         assertEquals(expected.isDemoted(), actual.isDemoted());
+    }
+
+    private void setEnableServiceNotificationRateLimit(boolean enable) throws IOException {
+        String command = "cmd activity fgs-notification-rate-limit "
+                + (enable ? "enable" : "disable");
+
+        runCommand(command, InstrumentationRegistry.getInstrumentation());
     }
 
     private void toggleNotificationPolicyAccess(String packageName,
