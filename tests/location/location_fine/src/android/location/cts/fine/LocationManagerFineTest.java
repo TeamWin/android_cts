@@ -1678,8 +1678,10 @@ public class LocationManagerFineTest {
             attributionContextFast
                     .getSystemService(LocationManager.class)
                     .requestLocationUpdates(
-                            TEST_PROVIDER, new LocationRequest.Builder(0).build(),
-                            Runnable::run, fastCapture);
+                            TEST_PROVIDER,
+                            new LocationRequest.Builder(0).build(),
+                            Runnable::run,
+                            fastCapture);
             attributionContextSlow
                     .getSystemService(LocationManager.class)
                     .requestLocationUpdates(
@@ -1689,10 +1691,16 @@ public class LocationManagerFineTest {
                             slowCapture);
 
             // Set initial location.
+            long timeBeforeLocationAccess = System.currentTimeMillis();
             mManager.setTestProviderLocation(TEST_PROVIDER, loc1);
+            assertNotedOpsSinceLastLocationAccess(
+                    timeBeforeLocationAccess,
+                    /* expectedOp */ AppOpsManager.OPSTR_FINE_LOCATION,
+                    /* unexpectedOp */ AppOpsManager.OPSTR_FINE_LOCATION_SOURCE,
+                   VALID_LOCATION_ATTRIBUTION_TAG);
 
             // Verify noteOp for the fast request.
-            long timeBeforeLocationAccess = System.currentTimeMillis();
+            timeBeforeLocationAccess = System.currentTimeMillis();
             mManager.setTestProviderLocation(TEST_PROVIDER, loc2);
             assertNotedOpsSinceLastLocationAccess(
                     timeBeforeLocationAccess,
