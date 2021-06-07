@@ -127,4 +127,17 @@ public final class PowerPolicyTestHelper {
         assertThat(mFrameCpms.getCurrentDisabledComponents()).asList()
                 .containsExactlyElementsIn(expected.getDisables());
     }
+
+    public void checkCurrentPolicyGroupId(String expected) {
+        if (expected == null) {
+            expected = "null";
+        }
+        assertWithMessage("checkCurrentPolicyGroupId")
+                .that(expected.equals(mFrameCpms.getCurrentPolicyGroupId())).isTrue();
+    }
+
+    public void checkPowerPolicyGroups(PowerPolicyGroups expected) {
+        assertWithMessage("checkPowerPolicyGroups")
+                .that(expected.equals(mFrameCpms.getPowerPolicyGroups())).isTrue();
+    }
 }
