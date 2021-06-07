@@ -28,8 +28,10 @@ import android.support.test.uiautomator.By
 import android.support.test.uiautomator.BySelector
 import android.support.test.uiautomator.UiScrollable
 import android.support.test.uiautomator.UiSelector
+import android.support.test.uiautomator.StaleObjectException
 import android.text.Spanned
 import android.text.style.ClickableSpan
+import android.util.Log
 import android.view.View
 import com.android.compatibility.common.util.SystemUtil.eventually
 import org.junit.After
@@ -421,8 +423,16 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
 
             // Watch does not show an alert dialog when the user turns on permission, only when they
             // turns it off.
-            if (isWatch && waitFindObjectOrNull(By.text(permissionLabel), 1000) != null) {
-                continue
+            if (isWatch) {
+                try {
+                    if (waitFindObjectOrNull(By.text(permissionLabel), 1000) != null) {
+                        continue
+                    }
+                } catch (e: StaleObjectException) {
+                    // It sometimes causes StaleObjectException when screen changes due to click
+                    // It should be ignored, because it depends on timing
+                    Log.w("CtsPermission3TestCases", "Caught StaleObjectException")
+                }
             }
 
             val wasGranted = if (isAutomotive) {
