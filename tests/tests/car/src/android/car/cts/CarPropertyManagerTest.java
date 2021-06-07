@@ -19,16 +19,19 @@ package android.car.cts;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static org.junit.Assume.assumeNotNull;
 import static org.testng.Assert.assertThrows;
 
 import android.car.Car;
 import android.car.VehicleAreaSeat;
 import android.car.VehicleAreaType;
 import android.car.VehiclePropertyIds;
+import android.car.VehicleAreaWheel;
 import android.car.hardware.CarPropertyConfig;
 import android.car.hardware.CarPropertyValue;
 import android.car.hardware.property.CarPropertyManager;
 import android.car.hardware.property.CarPropertyManager.CarPropertyEventCallback;
+import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresDevice;
 import android.test.suitebuilder.annotation.SmallTest;
@@ -240,6 +243,153 @@ public class CarPropertyManagerTest extends CarApiTestBase {
                 .that(mCarPropertyManager.getCarPropertyConfig(VehiclePropertyIds.PARKING_BRAKE_ON))
                 .isNotNull();
 
+    }
+
+    @Test
+    public void testWheelTickIfSupported() throws Exception {
+        CarPropertyConfig wheelTickConfig =
+                mCarPropertyManager.getCarPropertyConfig(VehiclePropertyIds.WHEEL_TICK);
+        assumeNotNull(wheelTickConfig);
+
+        assertWithMessage("WHEEL_TICK CarPropertyConfig must have correct property ID")
+                .that(wheelTickConfig.getPropertyId())
+                .isEqualTo(VehiclePropertyIds.WHEEL_TICK);
+        assertWithMessage("WHEEL_TICK must be READ access")
+                .that(wheelTickConfig.getAccess())
+                .isEqualTo(CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ);
+        assertWithMessage("WHEEL_TICK must be GLOBAL area type")
+                .that(wheelTickConfig.getAreaType())
+                .isEqualTo(VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL);
+        assertWithMessage("WHEEL_TICK must be CONTINUOUS change mode type")
+                .that(wheelTickConfig.getChangeMode())
+                .isEqualTo(CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS);
+        assertWithMessage("WHEEL_TICK must define max sample rate since it is CONTINUOUS")
+                .that(wheelTickConfig.getMaxSampleRate())
+                .isGreaterThan(0);
+        assertWithMessage("WHEEL_TICK must define min sample rate since it is CONTINUOUS")
+                .that(wheelTickConfig.getMinSampleRate())
+                .isGreaterThan(0);
+        assertWithMessage("WHEEL_TICK max sample rate must be >= min sample rate")
+                .that(wheelTickConfig.getMaxSampleRate() >= wheelTickConfig.getMinSampleRate())
+                .isTrue();
+        assertWithMessage("WHEEL_TICK must be Long[] type property")
+                .that(wheelTickConfig.getPropertyType())
+                .isEqualTo(Long[].class);
+        List<Integer> wheelTickConfigArray = wheelTickConfig.getConfigArray();
+        assertWithMessage("WHEEL_TICK config array must be size 5")
+                .that(wheelTickConfigArray.size())
+                .isEqualTo(5);
+
+        int supportedWheels = wheelTickConfigArray.get(0);
+        assertWithMessage(
+                "WHEEL_TICK config array first element specifies which wheels are supported")
+                .that(supportedWheels).isGreaterThan(VehicleAreaWheel.WHEEL_UNKNOWN);
+        assertWithMessage(
+                "WHEEL_TICK config array first element specifies which wheels are supported")
+                .that(supportedWheels)
+                .isAtMost(VehicleAreaWheel.WHEEL_LEFT_FRONT | VehicleAreaWheel.WHEEL_RIGHT_FRONT |
+                          VehicleAreaWheel.WHEEL_LEFT_REAR | VehicleAreaWheel.WHEEL_RIGHT_REAR);
+
+        if((supportedWheels & VehicleAreaWheel.WHEEL_LEFT_FRONT) != 0) {
+                assertWithMessage(
+                         "WHEEL_TICK config array second element specifies ticks to micrometers for front left wheel")
+                         .that(wheelTickConfigArray.get(1))
+                         .isGreaterThan(0);
+        } else {
+                assertWithMessage(
+                         "WHEEL_TICK config array second element should be zero since front left wheel is not supported")
+                         .that(wheelTickConfigArray.get(1))
+                         .isEqualTo(0);
+        }
+
+        if((supportedWheels & VehicleAreaWheel.WHEEL_RIGHT_FRONT) != 0) {
+                assertWithMessage(
+                         "WHEEL_TICK config array third element specifies ticks to micrometers for front right wheel")
+                         .that(wheelTickConfigArray.get(2))
+                         .isGreaterThan(0);
+        } else {
+                assertWithMessage(
+                         "WHEEL_TICK config array third element should be zero since front right wheel is not supported")
+                         .that(wheelTickConfigArray.get(2))
+                         .isEqualTo(0);
+        }
+
+        if((supportedWheels & VehicleAreaWheel.WHEEL_RIGHT_REAR) != 0) {
+                assertWithMessage(
+                         "WHEEL_TICK config array fourth element specifies ticks to micrometers for rear right wheel")
+                         .that(wheelTickConfigArray.get(3))
+                         .isGreaterThan(0);
+        } else {
+                assertWithMessage(
+                         "WHEEL_TICK config array fourth element should be zero since rear right wheel is not supported")
+                         .that(wheelTickConfigArray.get(3))
+                         .isEqualTo(0);
+        }
+
+        if((supportedWheels & VehicleAreaWheel.WHEEL_LEFT_REAR) != 0) {
+                assertWithMessage(
+                         "WHEEL_TICK config array fifth element specifies ticks to micrometers for rear left wheel")
+                         .that(wheelTickConfigArray.get(4))
+                         .isGreaterThan(0);
+        } else {
+                assertWithMessage(
+                         "WHEEL_TICK config array fifth element should be zero since rear left wheel is not supported")
+                         .that(wheelTickConfigArray.get(4))
+                         .isEqualTo(0);
+        }
+
+        long beforeElapsedTimestampNanos = SystemClock.elapsedRealtimeNanos();
+        CarPropertyValue<Long[]> wheelTickValue =
+                mCarPropertyManager.getProperty(
+                VehiclePropertyIds.WHEEL_TICK, VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL);
+        long afterElapsedTimestampNanos = SystemClock.elapsedRealtimeNanos();
+        assertWithMessage("WHEEL_TICK value must have correct property ID")
+                .that(wheelTickValue.getPropertyId())
+                .isEqualTo(VehiclePropertyIds.WHEEL_TICK);
+        assertWithMessage("WHEEL_TICK value must have correct area type")
+                .that(wheelTickValue.getAreaId())
+                .isEqualTo(VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL);
+        assertWithMessage("WHEEL_TICK value must be available")
+                .that(wheelTickValue.getStatus())
+                .isEqualTo(CarPropertyValue.STATUS_AVAILABLE);
+        assertWithMessage(
+                "WHEEL_TICK timestamp must use the SystemClock.elapsedRealtimeNanos() time base")
+                .that(wheelTickValue.getTimestamp())
+                .isGreaterThan(beforeElapsedTimestampNanos);
+        assertWithMessage(
+                "WHEEL_TICK timestamp must use the SystemClock.elapsedRealtimeNanos() time base")
+                .that(wheelTickValue.getTimestamp()).isLessThan(afterElapsedTimestampNanos);
+        Long[] wheelTicks = wheelTickValue.getValue();
+        assertWithMessage("WHEEL_TICK Long[] value must be size 5").that(wheelTicks.length)
+                .isEqualTo(5);
+
+        if((supportedWheels & VehicleAreaWheel.WHEEL_LEFT_FRONT) == 0) {
+                assertWithMessage(
+                         "WHEEL_TICK value array second element should be zero since front left wheel is not supported")
+                         .that(wheelTicks[1])
+                         .isEqualTo(0);
+        }
+
+        if((supportedWheels & VehicleAreaWheel.WHEEL_RIGHT_FRONT) == 0) {
+                assertWithMessage(
+                         "WHEEL_TICK value array third element should be zero since front right wheel is not supported")
+                         .that(wheelTicks[2])
+                         .isEqualTo(0);
+        }
+
+        if((supportedWheels & VehicleAreaWheel.WHEEL_RIGHT_REAR) == 0) {
+                assertWithMessage(
+                         "WHEEL_TICK value array fourth element should be zero since rear right wheel is not supported")
+                         .that(wheelTicks[3])
+                         .isEqualTo(0);
+        }
+
+        if((supportedWheels & VehicleAreaWheel.WHEEL_LEFT_REAR) == 0) {
+                assertWithMessage(
+                         "WHEEL_TICK value array fifth element should be zero since rear left wheel is not supported")
+                         .that(wheelTicks[4])
+                         .isEqualTo(0);
+        }
     }
 
     @SuppressWarnings("unchecked")
