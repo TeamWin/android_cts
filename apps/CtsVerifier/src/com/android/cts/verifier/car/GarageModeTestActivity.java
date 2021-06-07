@@ -16,7 +16,6 @@
 
 package com.android.cts.verifier.car;
 
-import android.app.UiModeManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -97,6 +96,11 @@ public final class GarageModeTestActivity extends PassFailButtons.Activity {
             verifyStatus();
             Log.v(TAG, "Scheduled GarageModeChecker to run when idle");
         });
+
+        // Wifi settings
+        Button wifiButton = view.findViewById(R.id.car_wifi_settings);
+        wifiButton.setOnClickListener(
+                v -> startActivity(new Intent(Settings.ACTION_WIRELESS_SETTINGS)));
     }
 
     @Override
