@@ -194,6 +194,33 @@ public class InstallUtils {
     }
 
     /**
+     * Asserts that {@code result} intent has a failure status.
+     */
+    public static void assertStatusFailure(Intent result) {
+        // Pass SUCCESS as default to ensure that this doesn't accidentally pass
+        int status = result.getIntExtra(PackageInstaller.EXTRA_STATUS,
+                PackageInstaller.STATUS_SUCCESS);
+        switch (status) {
+            case -2: // PackageInstaller.STATUS_PENDING_STREAMING
+            case PackageInstaller.STATUS_PENDING_USER_ACTION:
+                throw new AssertionError("PENDING " + status);
+            case PackageInstaller.STATUS_SUCCESS:
+                throw new AssertionError("INCORRECT SUCCESS ");
+            case PackageInstaller.STATUS_FAILURE:
+            case PackageInstaller.STATUS_FAILURE_BLOCKED:
+            case PackageInstaller.STATUS_FAILURE_ABORTED:
+            case PackageInstaller.STATUS_FAILURE_INVALID:
+            case PackageInstaller.STATUS_FAILURE_CONFLICT:
+            case PackageInstaller.STATUS_FAILURE_STORAGE:
+            case PackageInstaller.STATUS_FAILURE_INCOMPATIBLE:
+                break;
+            default:
+                String message = result.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE);
+                throw new AssertionError(message == null ? "UNKNOWN STATUS" : message);
+        }
+    }
+
+    /**
      * Commits {@link Install} but expects to fail.
      *
      * @param expectedThrowableClass class or superclass of the expected throwable.
