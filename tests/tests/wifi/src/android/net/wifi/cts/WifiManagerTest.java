@@ -531,9 +531,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
 
     /**
      * Restart WiFi subsystem - verify that privileged call fails.
-     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
      */
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     public void testRestartWifiSubsystemShouldFailNoPermission() throws Exception {
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported
@@ -549,9 +548,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
 
     /**
      * Restart WiFi subsystem and verify transition through states.
-     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
      */
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     public void testRestartWifiSubsystem() throws Exception {
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported
@@ -2179,7 +2177,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
      * Also verify the callback info update correctly.
      * @throws Exception
      */
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     public void testTetheredBridgedAp() throws Exception {
         // check that softap bridged mode is supported by the device
         if (!mWifiManager.isBridgedApConcurrencySupported()) {
@@ -2236,7 +2234,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
      * Also verify the callback info update correctly.
      * @throws Exception
      */
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     public void testTetheredBridgedApWifiForcedChannel() throws Exception {
         // check that softap bridged mode is supported by the device
         if (!mWifiManager.isBridgedApConcurrencySupported()) {
@@ -3187,9 +3185,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
 
     /**
      * Test {@link WifiManager#setVerboseLoggingLevel(int)} for show key mode.
-     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
      */
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     public void testSetVerboseLoggingShowKeyModeNonUserBuild() throws Exception {
         if (Build.TYPE.equals("user")) return;
         if (!WifiFeature.isWifiSupported(getContext())) {
@@ -3214,9 +3211,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
 
     /**
      * Test {@link WifiManager#setVerboseLoggingLevel(int)} for show key mode.
-     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
      */
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     public void testSetVerboseLoggingShowKeyModeUserBuild() throws Exception {
         if (!Build.TYPE.equals("user")) return;
         if (!WifiFeature.isWifiSupported(getContext())) {
@@ -3286,9 +3282,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
      * auto-connect to non-carrier-merged networks. Then verify that
      * stopRestrictingAutoJoinToSubscriptionId makes the disabled networks clear to connect
      * again.
-     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
      */
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     public void testStartAndStopRestrictingAutoJoinToSubscriptionId() throws Exception {
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported
@@ -3765,9 +3760,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
      * WifiConfiguration with macRandomizationSetting == RANDOMIZATION_NON_PERSISTENT.
      * Then verify by default, a WifiConfiguration created by suggestions should have
      * macRandomizationSetting == RANDOMIZATION_PERSISTENT.
-     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
      */
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     public void testSuggestionBuilderNonPersistentRandomization() throws Exception {
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported
@@ -4025,9 +4019,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
 
     /**
      * Tests {@link WifiManager#isWpa3SaePublicKeySupported()} does not crash.
-     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion?
      */
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     public void testIsWpa3SaePublicKeySupported() throws Exception {
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported
@@ -4038,9 +4031,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
 
     /**
      * Tests {@link WifiManager#isWpa3SaeH2eSupported()} does not crash.
-     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion?
      */
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     public void testIsWpa3SaeH2eSupported() throws Exception {
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported
@@ -4051,9 +4043,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
 
     /**
      * Tests {@link WifiManager#isWifiDisplayR2Supported()} does not crash.
-     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion?
      */
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     public void testIsWifiDisplayR2Supported() throws Exception {
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported
@@ -4082,8 +4073,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
 
     }
 
-    // TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion?
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     public void testIsMultiStaConcurrencySupported() throws Exception {
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported
@@ -4134,8 +4124,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
      * Note that the response depends on device support and hence both true/false
      * are valid responses.
      */
-    // TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     public void testIs60GhzBandSupportedOnSOrNewer() throws Exception {
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported
@@ -4199,8 +4188,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     /**
      * Test that coex-related methods fail without the needed privileged permissions
      */
-    // TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     public void testCoexMethodsShouldFailNoPermission() {
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported
@@ -4232,8 +4220,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
      * Test that coex-related methods succeed in setting the current unsafe channels and notifying
      * the listener. Since the default coex algorithm may be enabled, no-op is also valid behavior.
      */
-    // TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     public void testListenOnCoexUnsafeChannels() {
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported
@@ -4292,9 +4279,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
 
     /**
      * Verify that insecure WPA-Enterprise network configurations are rejected.
-     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
      */
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     public void testInsecureEnterpriseConfigurationsRejected() throws Exception {
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported
@@ -4362,10 +4348,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
      * {@link WifiManager#clearOverrideCountryCode()} and
      * {@link WifiManager#setDefaultCountryCode()} need privileged permission
      * and the permission is not even given to shell user.
-     *
-     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
      */
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     public void testManageCountryCodeMethodsFailWithoutPermissions() throws Exception {
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported
@@ -4484,9 +4468,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
 
     /**
      * Tests {@link WifiManager#getAllowedChannels(int, int))} does not crash
-     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
      */
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     public void testGetAllowedChannels() throws Exception {
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported
@@ -4530,9 +4513,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
 
     /**
      * Tests {@link WifiManager#getUsableChannels(int, int))} does not crash.
-     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
      */
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     public void testGetUsableChannels() throws Exception {
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported
@@ -4558,9 +4540,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
 
     /**
      * Validate that the Passpoint feature is enabled on the device.
-     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
      */
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     public void testPasspointCapability() {
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported
