@@ -45,6 +45,7 @@ import android.net.wifi.WifiNetworkSuggestion;
 import android.net.wifi.hotspot2.PasspointConfiguration;
 import android.net.wifi.hotspot2.pps.Credential;
 import android.net.wifi.hotspot2.pps.HomeSp;
+import android.os.Build;
 import android.platform.test.annotations.AppModeFull;
 import android.support.test.uiautomator.UiDevice;
 import android.telephony.TelephonyManager;
@@ -779,7 +780,7 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
     /**
      * Tests {@link android.net.wifi.WifiNetworkSuggestion.Builder} class.
      */
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     @Test
     public void testBuilderWithWpa3SaeH2eOnlyMode() throws Exception {
         WifiNetworkSuggestion suggestion =
@@ -1031,10 +1032,8 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
 
     /**
      * Tests {@link android.net.wifi.WifiNetworkSuggestion.Builder} class.
-     *
-     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
      */
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     @Test
     public void testBuilderWithCarrierMergedNetwork() throws Exception {
         WifiEnterpriseConfig enterpriseConfig = new WifiEnterpriseConfig();
@@ -1055,10 +1054,8 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
     /**
      * Tests {@link android.net.wifi.WifiNetworkSuggestion.Builder} class with non enterprise
      * network will fail.
-     *
-     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
      */
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     @Test
     public void testBuilderWithCarrierMergedNetworkWithNonEnterpriseNetwork() throws Exception {
         try {
@@ -1076,10 +1073,8 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
     /**
      * Tests {@link android.net.wifi.WifiNetworkSuggestion.Builder} class with unmetered network
      * will fail.
-     *
-     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
      */
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     @Test
     public void testBuilderWithCarrierMergedNetworkWithUnmeteredNetwork() throws Exception {
         WifiEnterpriseConfig enterpriseConfig = new WifiEnterpriseConfig();
@@ -1103,10 +1098,8 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
 
     /**
      * Connect to a network using suggestion API.
-     *
-     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
      */
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     @Test
     public void testConnectToSuggestion() throws Exception {
         assertNotNull(sTestNetwork);
@@ -1121,10 +1114,8 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
 
     /**
      * Connect to a network using restricted suggestion API.
-     *
-     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
      */
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     @Test
     public void testConnectToOemPaidSuggestion() throws Exception {
         assertNotNull(sTestNetwork);
@@ -1139,10 +1130,8 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
 
     /**
      * Connect to a network using restricted suggestion API.
-     *
-     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
      */
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     @Test
     public void testConnectToOemPaidAndOemPrivateSuggestion() throws Exception {
         assertNotNull(sTestNetwork);
@@ -1159,10 +1148,8 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
 
     /**
      * Connect to a network using restricted suggestion API.
-     *
-     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
      */
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     @Test
     public void testConnectToOemPrivateSuggestion() throws Exception {
         assertNotNull(sTestNetwork);
@@ -1178,10 +1165,8 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
     /**
      * Simulate connection failure to a network using restricted suggestion API & different net
      * capability (need corresponding net capability requested for platform to connect).
-     *
-     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
      */
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     @Test
     public void testConnectToOemPaidSuggestionFailure() throws Exception {
         assertNotNull(sTestNetwork);
@@ -1197,10 +1182,8 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
     /**
      * Simulate connection failure to a network using restricted suggestion API & different net
      * capability (need corresponding net capability requested for platform to connect).
-     *
-     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
      */
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     @Test
     public void testConnectToOemPrivateSuggestionFailure() throws Exception {
         assertNotNull(sTestNetwork);
@@ -1216,10 +1199,8 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
     /**
      * Simulate connection failure to a restricted network using suggestion API & restricted net
      * capability (need corresponding restricted bit set in suggestion for platform to connect).
-     *
-     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
      */
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     @Test
     public void testConnectSuggestionFailureWithOemPaidNetCapability() throws Exception {
         assertNotNull(sTestNetwork);
@@ -1234,10 +1215,8 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
     /**
      * Simulate connection failure to a restricted network using suggestion API & restricted net
      * capability (need corresponding restricted bit set in suggestion for platform to connect).
-     *
-     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
      */
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     @Test
     public void testConnectSuggestionFailureWithOemPrivateNetCapability() throws Exception {
         assertNotNull(sTestNetwork);
