@@ -93,6 +93,7 @@ public class PackageManagerShellCommandTest {
     private boolean mStreaming = false;
     private boolean mIncremental = false;
     private String mInstall = "";
+    private String mPackageVerifier = null;
 
     private static PackageInstaller getPackageInstaller() {
         return InstrumentationRegistry.getContext().getPackageManager().getPackageInstaller();
@@ -168,6 +169,10 @@ public class PackageManagerShellCommandTest {
 
         uninstallPackageSilently(TEST_APP_PACKAGE);
         assertFalse(isAppInstalled(TEST_APP_PACKAGE));
+
+        // Disable the package verifier to avoid the dialog when installing an app.
+        mPackageVerifier = executeShellCommand("settings get global verifier_verify_adb_installs");
+        executeShellCommand("settings put global verifier_verify_adb_installs 0");
     }
 
     @After
@@ -175,6 +180,9 @@ public class PackageManagerShellCommandTest {
         uninstallPackageSilently(TEST_APP_PACKAGE);
         assertFalse(isAppInstalled(TEST_APP_PACKAGE));
         assertEquals(null, getSplits(TEST_APP_PACKAGE));
+
+        // Reset the package verifier setting to its original value.
+        executeShellCommand("settings put global verifier_verify_adb_installs " + mPackageVerifier);
     }
 
     private boolean checkIncrementalDeliveryFeature() {
