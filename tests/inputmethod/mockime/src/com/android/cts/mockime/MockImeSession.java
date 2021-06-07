@@ -331,6 +331,39 @@ public class MockImeSession implements AutoCloseable {
     }
 
     /**
+     * Lets {@link MockIme} to call
+     * {@link android.inputmethodservice.InputMethodService#getCurrentInputConnection()} and
+     * memorize  it for later {@link InputConnection}-related operations.
+     *
+     * <p>Only the last one will be memorized if this method gets called multiple times.</p>
+     *
+     * @return {@link ImeCommand} object that can be passed to
+     *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
+     *         wait until this event is handled by {@link MockIme}.
+     * @see #unmemorizeCurrentInputConnection()
+     */
+    @NonNull
+    public ImeCommand memorizeCurrentInputConnection() {
+        final Bundle params = new Bundle();
+        return callCommandInternal("memorizeCurrentInputConnection", params);
+    }
+
+    /**
+     * Lets {@link MockIme} to forget memorized {@link InputConnection} if any. Does nothing
+     * otherwise.
+     *
+     * @return {@link ImeCommand} object that can be passed to
+     *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
+     *         wait until this event is handled by {@link MockIme}.
+     * @see #memorizeCurrentInputConnection()
+     */
+    @NonNull
+    public ImeCommand unmemorizeCurrentInputConnection() {
+        final Bundle params = new Bundle();
+        return callCommandInternal("unmemorizeCurrentInputConnection", params);
+    }
+
+    /**
      * Lets {@link MockIme} to call {@link InputConnection#getTextBeforeCursor(int, int)} with the
      * given parameters.
      *
@@ -339,6 +372,8 @@ public class MockImeSession implements AutoCloseable {
      * <p>Use {@link ImeEvent#getReturnCharSequenceValue()} for {@link ImeEvent} returned from
      * {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to see the
      * value returned from the API.</p>
+     *
+     * <p>This can be affected by {@link #memorizeCurrentInputConnection()}.</p>
      *
      * @param n to be passed as the {@code n} parameter.
      * @param flag to be passed as the {@code flag} parameter.
@@ -364,6 +399,8 @@ public class MockImeSession implements AutoCloseable {
      * {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to see the
      * value returned from the API.</p>
      *
+     * <p>This can be affected by {@link #memorizeCurrentInputConnection()}.</p>
+     *
      * @param n to be passed as the {@code n} parameter.
      * @param flag to be passed as the {@code flag} parameter.
      * @return {@link ImeCommand} object that can be passed to
@@ -388,6 +425,8 @@ public class MockImeSession implements AutoCloseable {
      * {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to see the
      * value returned from the API.</p>
      *
+     * <p>This can be affected by {@link #memorizeCurrentInputConnection()}.</p>
+     *
      * @param flag to be passed as the {@code flag} parameter.
      * @return {@link ImeCommand} object that can be passed to
      *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
@@ -409,6 +448,8 @@ public class MockImeSession implements AutoCloseable {
      * <p>Use {@link ImeEvent#getReturnIntegerValue()} for {@link ImeEvent} returned from
      * {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to see the
      * value returned from the API.</p>
+     *
+     * <p>This can be affected by {@link #memorizeCurrentInputConnection()}.</p>
      *
      * @param reqModes to be passed as the {@code reqModes} parameter.
      * @return {@link ImeCommand} object that can be passed to
@@ -432,6 +473,8 @@ public class MockImeSession implements AutoCloseable {
      * <p>Use {@link ImeEvent#getReturnParcelableValue()} for {@link ImeEvent} returned from
      * {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to see the
      * value returned from the API.</p>
+     *
+     * <p>This can be affected by {@link #memorizeCurrentInputConnection()}.</p>
      *
      * @param request to be passed as the {@code request} parameter
      * @param flags to be passed as the {@code flags} parameter
@@ -457,6 +500,8 @@ public class MockImeSession implements AutoCloseable {
      * <p>Use {@link ImeEvent#getReturnBooleanValue()} for {@link ImeEvent} returned from
      * {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to see the
      * value returned from the API.</p>
+     *
+     * <p>This can be affected by {@link #memorizeCurrentInputConnection()}.</p>
      *
      * @param beforeLength to be passed as the {@code beforeLength} parameter
      * @param afterLength to be passed as the {@code afterLength} parameter
@@ -484,6 +529,8 @@ public class MockImeSession implements AutoCloseable {
      * {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to see the
      * value returned from the API.</p>
      *
+     * <p>This can be affected by {@link #memorizeCurrentInputConnection()}.</p>
+     *
      * @param beforeLength to be passed as the {@code beforeLength} parameter
      * @param afterLength to be passed as the {@code afterLength} parameter
      * @return {@link ImeCommand} object that can be passed to
@@ -509,6 +556,8 @@ public class MockImeSession implements AutoCloseable {
      * {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to see the
      * value returned from the API.</p>
      *
+     * <p>This can be affected by {@link #memorizeCurrentInputConnection()}.</p>
+     *
      * @param text to be passed as the {@code text} parameter
      * @param newCursorPosition to be passed as the {@code newCursorPosition} parameter
      * @return {@link ImeCommand} object that can be passed to
@@ -532,6 +581,8 @@ public class MockImeSession implements AutoCloseable {
      * <p>Use {@link ImeEvent#getReturnBooleanValue()} for {@link ImeEvent} returned from
      * {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to see the
      * value returned from the API.</p>
+     *
+     * <p>This can be affected by {@link #memorizeCurrentInputConnection()}.</p>
      *
      * @param start to be passed as the {@code start} parameter
      * @param end to be passed as the {@code end} parameter
@@ -557,6 +608,8 @@ public class MockImeSession implements AutoCloseable {
      * {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to see the
      * value returned from the API.</p>
      *
+     * <p>This can be affected by {@link #memorizeCurrentInputConnection()}.</p>
+     *
      * @return {@link ImeCommand} object that can be passed to
      *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
      *         wait until this event is handled by {@link MockIme}.
@@ -576,6 +629,8 @@ public class MockImeSession implements AutoCloseable {
      * <p>Use {@link ImeEvent#getReturnBooleanValue()} for {@link ImeEvent} returned from
      * {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to see the
      * value returned from the API.</p>
+     *
+     * <p>This can be affected by {@link #memorizeCurrentInputConnection()}.</p>
      *
      * @param text to be passed as the {@code text} parameter
      * @param newCursorPosition to be passed as the {@code newCursorPosition} parameter
@@ -601,6 +656,8 @@ public class MockImeSession implements AutoCloseable {
      * {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to see the
      * value returned from the API.</p>
      *
+     * <p>This can be affected by {@link #memorizeCurrentInputConnection()}.</p>
+     *
      * @param text to be passed as the {@code text} parameter
      * @return {@link ImeCommand} object that can be passed to
      *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
@@ -623,6 +680,8 @@ public class MockImeSession implements AutoCloseable {
      * {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to see the
      * value returned from the API.</p>
      *
+     * <p>This can be affected by {@link #memorizeCurrentInputConnection()}.</p>
+     *
      * @param correctionInfo to be passed as the {@code correctionInfo} parameter
      * @return {@link ImeCommand} object that can be passed to
      *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
@@ -644,6 +703,8 @@ public class MockImeSession implements AutoCloseable {
      * <p>Use {@link ImeEvent#getReturnBooleanValue()} for {@link ImeEvent} returned from
      * {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to see the
      * value returned from the API.</p>
+     *
+     * <p>This can be affected by {@link #memorizeCurrentInputConnection()}.</p>
      *
      * @param start to be passed as the {@code start} parameter
      * @param end to be passed as the {@code end} parameter
@@ -669,6 +730,8 @@ public class MockImeSession implements AutoCloseable {
      * {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to see the
      * value returned from the API.</p>
      *
+     * <p>This can be affected by {@link #memorizeCurrentInputConnection()}.</p>
+     *
      * @param editorAction to be passed as the {@code editorAction} parameter
      * @return {@link ImeCommand} object that can be passed to
      *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
@@ -690,6 +753,8 @@ public class MockImeSession implements AutoCloseable {
      * <p>Use {@link ImeEvent#getReturnBooleanValue()} for {@link ImeEvent} returned from
      * {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to see the
      * value returned from the API.</p>
+     *
+     * <p>This can be affected by {@link #memorizeCurrentInputConnection()}.</p>
      *
      * @param id to be passed as the {@code id} parameter
      * @return {@link ImeCommand} object that can be passed to
@@ -713,6 +778,8 @@ public class MockImeSession implements AutoCloseable {
      * {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to see the
      * value returned from the API.</p>
      *
+     * <p>This can be affected by {@link #memorizeCurrentInputConnection()}.</p>
+     *
      * @return {@link ImeCommand} object that can be passed to
      *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
      *         wait until this event is handled by {@link MockIme}
@@ -732,6 +799,8 @@ public class MockImeSession implements AutoCloseable {
      * <p>Use {@link ImeEvent#getReturnBooleanValue()} for {@link ImeEvent} returned from
      * {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to see the
      * value returned from the API.</p>
+     *
+     * <p>This can be affected by {@link #memorizeCurrentInputConnection()}.</p>
      *
      * @return {@link ImeCommand} object that can be passed to
      *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
@@ -753,6 +822,8 @@ public class MockImeSession implements AutoCloseable {
      * {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to see the
      * value returned from the API.</p>
      *
+     * <p>This can be affected by {@link #memorizeCurrentInputConnection()}.</p>
+     *
      * @param event to be passed as the {@code event} parameter
      * @return {@link ImeCommand} object that can be passed to
      *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
@@ -770,6 +841,8 @@ public class MockImeSession implements AutoCloseable {
      *
      * <p>This triggers {@code getCurrentInputConnection().performSpellCheck()}.</p>
      *
+     * <p>This can be affected by {@link #memorizeCurrentInputConnection()}.</p>
+
      * @return {@link ImeCommand} object that can be passed to
      *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
      *         wait until this event is handled by {@link MockIme}
@@ -788,6 +861,8 @@ public class MockImeSession implements AutoCloseable {
      * <p>Use {@link ImeEvent#getReturnBooleanValue()} for {@link ImeEvent} returned from
      * {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to see the
      * value returned from the API.</p>
+     *
+     * <p>This can be affected by {@link #memorizeCurrentInputConnection()}.</p>
      *
      * @param states to be passed as the {@code states} parameter
      * @return {@link ImeCommand} object that can be passed to
@@ -811,6 +886,8 @@ public class MockImeSession implements AutoCloseable {
      * {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to see the
      * value returned from the API.</p>
      *
+     * <p>This can be affected by {@link #memorizeCurrentInputConnection()}.</p>
+     *
      * @param enabled to be passed as the {@code enabled} parameter
      * @return {@link ImeCommand} object that can be passed to
      *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
@@ -832,6 +909,8 @@ public class MockImeSession implements AutoCloseable {
      * <p>Use {@link ImeEvent#getReturnBooleanValue()} for {@link ImeEvent} returned from
      * {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to see the
      * value returned from the API.</p>
+     *
+     * <p>This can be affected by {@link #memorizeCurrentInputConnection()}.</p>
      *
      * @param action to be passed as the {@code action} parameter
      * @param data to be passed as the {@code data} parameter
@@ -858,6 +937,8 @@ public class MockImeSession implements AutoCloseable {
      * {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to see the
      * value returned from the API.</p>
      *
+     * <p>This can be affected by {@link #memorizeCurrentInputConnection()}.</p>
+     *
      * @param cursorUpdateMode to be passed as the {@code cursorUpdateMode} parameter
      * @return {@link ImeCommand} object that can be passed to
      *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
@@ -879,6 +960,8 @@ public class MockImeSession implements AutoCloseable {
      * {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to see the
      * value returned from the API was {@code null} or not.</p>
      *
+     * <p>This can be affected by {@link #memorizeCurrentInputConnection()}.</p>
+     *
      * @return {@link ImeCommand} object that can be passed to
      *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
      *         wait until this event is handled by {@link MockIme}
@@ -896,6 +979,8 @@ public class MockImeSession implements AutoCloseable {
      * <p>This triggers {@code getCurrentInputConnection().closeConnection()}.</p>
      *
      * <p>Return value information is not available for this command.</p>
+     *
+     * <p>This can be affected by {@link #memorizeCurrentInputConnection()}.</p>
      *
      * @return {@link ImeCommand} object that can be passed to
      *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
@@ -918,6 +1003,8 @@ public class MockImeSession implements AutoCloseable {
      * <p>Use {@link ImeEvent#getReturnBooleanValue()} for {@link ImeEvent} returned from
      * {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to see the
      * value returned from the API.</p>
+     *
+     * <p>This can be affected by {@link #memorizeCurrentInputConnection()}.</p>
      *
      * @param inputContentInfo to be passed as the {@code inputContentInfo} parameter
      * @param flags to be passed as the {@code flags} parameter
