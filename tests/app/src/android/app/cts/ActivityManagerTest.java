@@ -52,6 +52,7 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.ConfigurationInfo;
+import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.os.Binder;
 import android.os.Bundle;
@@ -136,6 +137,7 @@ public class ActivityManagerTest extends InstrumentationTestCase {
 
     private Context mTargetContext;
     private ActivityManager mActivityManager;
+    private PackageManager mPackageManager;
     private Intent mIntent;
     private List<Activity> mStartedActivityList;
     private int mErrorProcessID;
@@ -148,6 +150,7 @@ public class ActivityManagerTest extends InstrumentationTestCase {
         mTargetContext = mInstrumentation.getTargetContext();
         mActivityManager = (ActivityManager) mInstrumentation.getContext()
                 .getSystemService(Context.ACTIVITY_SERVICE);
+        mPackageManager = mInstrumentation.getContext().getPackageManager();
         mStartedActivityList = new ArrayList<Activity>();
         mErrorProcessID = -1;
         startSubActivity(ScreenOnActivity.class);
@@ -480,6 +483,11 @@ public class ActivityManagerTest extends InstrumentationTestCase {
     }
 
     public void testUpdateMccMncConfiguration() throws Exception {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            Log.i(TAG, "testUpdateMccMncConfiguration skipped: no telephony available");
+            return;
+        }
+
         // Store the original mcc mnc to set back
         String[] mccMncConfigOriginal = new String[2];
         // Store other configs to check they won't be affected
