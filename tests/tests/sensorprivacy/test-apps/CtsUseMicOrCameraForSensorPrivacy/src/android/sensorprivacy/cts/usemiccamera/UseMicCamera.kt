@@ -24,7 +24,6 @@ import android.content.IntentFilter
 import android.hardware.camera2.CameraCaptureSession
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraDevice
-import android.hardware.camera2.CameraDevice.StateCallback
 import android.hardware.camera2.CameraManager
 import android.hardware.camera2.params.OutputConfiguration
 import android.hardware.camera2.params.SessionConfiguration
@@ -41,14 +40,22 @@ private const val CAM = 1 shl 1
 
 private const val SAMPLING_RATE = 8000
 
-private const val finishMicCamActivityAction =
-        "android.sensorprivacy.cts.usemiccamera.action.FINISH_USE_MIC_CAM"
-private const val useMicExtra =
-        "android.sensorprivacy.cts.usemiccamera.extra.USE_MICROPHONE"
-private const val useCamExtra =
-        "android.sensorprivacy.cts.usemiccamera.extra.USE_CAMERA"
-
 class UseMicCamera : Activity() {
+
+    companion object {
+        const val MIC_CAM_ACTIVITY_ACTION =
+                "android.sensorprivacy.cts.usemiccamera.action.USE_MIC_CAM"
+        const val FINISH_MIC_CAM_ACTIVITY_ACTION =
+                "android.sensorprivacy.cts.usemiccamera.action.FINISH_USE_MIC_CAM"
+        const val USE_MIC_EXTRA =
+                "android.sensorprivacy.cts.usemiccamera.extra.USE_MICROPHONE"
+        const val USE_CAM_EXTRA =
+                "android.sensorprivacy.cts.usemiccamera.extra.USE_CAMERA"
+        const val DELAYED_ACTIVITY_EXTRA =
+                "android.sensorprivacy.cts.usemiccamera.extra.DELAYED_ACTIVITY"
+        const val DELAYED_ACTIVITY_NEW_TASK_EXTRA =
+                "android.sensorprivacy.cts.usemiccamera.extra.DELAYED_ACTIVITY_NEW_TASK"
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -58,17 +65,27 @@ class UseMicCamera : Activity() {
         registerReceiver(object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
                 unregisterReceiver(this)
-                finish()
+                finishAndRemoveTask()
             }
-        }, IntentFilter(finishMicCamActivityAction))
+        }, IntentFilter(FINISH_MIC_CAM_ACTIVITY_ACTION))
 
-        val useMic = intent.getBooleanExtra(useMicExtra, false)
-        val useCam = intent.getBooleanExtra(useCamExtra, false)
+        val useMic = intent.getBooleanExtra(USE_MIC_EXTRA, false)
+        val useCam = intent.getBooleanExtra(USE_CAM_EXTRA, false)
         if (useMic) {
             handler.postDelayed({ openMic() }, 1000)
         }
         if (useCam) {
             handler.postDelayed({ openCam() }, 1000)
+        }
+
+        if (intent.getBooleanExtra(DELAYED_ACTIVITY_EXTRA, false)) {
+            handler.postDelayed({
+                val intent = Intent(this, BlankActivity::class.java)
+                if (intent.getBooleanExtra(DELAYED_ACTIVITY_NEW_TASK_EXTRA, false)) {
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                startActivity(intent)
+            }, 2000)
         }
     }
 
