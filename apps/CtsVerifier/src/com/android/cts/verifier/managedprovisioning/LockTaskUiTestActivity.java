@@ -170,7 +170,11 @@ public class LockTaskUiTestActivity extends PassFailButtons.TestListActivity {
                     LOCK_TASK_FEATURE_GLOBAL_ACTIONS,
                     R.string.device_owner_lock_task_ui_global_actions_test,
                     R.string.device_owner_lock_task_ui_global_actions_test_info));
+        }
 
+        if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
+                && getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_SECURE_LOCK_SCREEN)) {
             adapter.add(createSetLockTaskFeaturesTest(
                     TEST_ID_KEYGUARD,
                     LOCK_TASK_FEATURE_KEYGUARD,
