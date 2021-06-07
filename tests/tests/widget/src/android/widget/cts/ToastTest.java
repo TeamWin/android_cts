@@ -936,6 +936,10 @@ public class ToastTest {
         assertTextToastNotShown(toasts.get(MAX_PACKAGE_TOASTS_LIMIT));
     }
 
+    /**
+     * Long running test (~50 seconds) - we need to test toast rate limiting limits, which requires
+     * us to wait a given amount of time to test that the limit has been enforced/lifted.
+     */
     @Test
     public void testRateLimitingToastsWhenInBackground() throws Throwable {
         // enable rate limiting to test it
