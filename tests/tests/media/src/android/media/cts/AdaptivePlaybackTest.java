@@ -46,7 +46,6 @@ import java.util.zip.CRC32;
 
 @MediaHeavyPresubmitTest
 @AppModeFull
-@NonMediaMainlineTest
 public class AdaptivePlaybackTest extends MediaPlayerTestBase {
     private static final String TAG = "AdaptivePlaybackTest";
     private boolean verify = false;
