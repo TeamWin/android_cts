@@ -30,6 +30,7 @@ import static android.net.wifi.WifiConfiguration.SECURITY_TYPE_WAPI_PSK;
 import android.content.Context;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
+import android.os.Build;
 import android.platform.test.annotations.AppModeFull;
 
 import androidx.test.filters.SdkSuppress;
@@ -61,9 +62,7 @@ public class WifiConfigurationTest extends WifiJUnit3TestBase {
         }
     }
 
-    // TODO(b/167575586): Wait for S SDK finalization to change minSdkVersion to
-    // Build.VERSION_CODES.S
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     public void testGetAuthType() throws Exception {
         WifiConfiguration configuration = new WifiConfiguration();
 
@@ -98,9 +97,7 @@ public class WifiConfigurationTest extends WifiJUnit3TestBase {
         assertEquals(WifiConfiguration.KeyMgmt.WAPI_CERT, configuration.getAuthType());
     }
 
-    // TODO(b/167575586): Wait for S SDK finalization to change minSdkVersion to
-    // Build.VERSION_CODES.S
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     public void testGetAuthTypeFailurePsk8021X() throws Exception {
         WifiConfiguration configuration = new WifiConfiguration();
 
@@ -114,9 +111,7 @@ public class WifiConfigurationTest extends WifiJUnit3TestBase {
         }
     }
 
-    // TODO(b/167575586): Wait for S SDK finalization to change minSdkVersion to
-    // Build.VERSION_CODES.S
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     public void testGetAuthTypeFailure8021xEapSae() throws Exception {
         WifiConfiguration configuration = new WifiConfiguration();
 
@@ -131,9 +126,7 @@ public class WifiConfigurationTest extends WifiJUnit3TestBase {
         }
     }
 
-    // TODO(b/167575586): Wait for S SDK finalization to change minSdkVersion to
-    // Build.VERSION_CODES.S
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     public void testSetGetDeletionPriority() throws Exception {
         WifiConfiguration configuration = new WifiConfiguration();
 
