@@ -347,6 +347,46 @@ public class RemoteViewsFixedCollectionAdapterTest {
     }
 
     @Test
+    public void testSetRemoteAdapter_clickFillListener() throws Throwable {
+        String action = "my-action";
+        MockBroadcastReceiver receiver = new MockBroadcastReceiver();
+        mActivity.registerReceiver(receiver, new IntentFilter(action));
+
+        Intent intent = new Intent(action).setPackage(mActivity.getPackageName());
+        PendingIntent pendingIntent =
+                PendingIntent.getBroadcast(
+                        mActivity,
+                        0,
+                        intent,
+                        PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
+        mRemoteViews.setPendingIntentTemplate(R.id.remoteView_list, pendingIntent);
+
+        ListView listView = mView.findViewById(R.id.remoteView_list);
+
+        RemoteViews item0 = new RemoteViews(PACKAGE_NAME, R.layout.listitemfixed_layout);
+        item0.setTextViewText(android.R.id.text1, "Hello");
+        item0.setOnClickFillInIntent(android.R.id.text1, new Intent().putExtra("my-extra", 42));
+
+        RemoteViews item1 = new RemoteViews(PACKAGE_NAME, R.layout.listitemfixed_layout);
+        item1.setTextViewText(android.R.id.text1, "World");
+
+        RemoteCollectionItems items = new RemoteCollectionItems.Builder()
+                .setHasStableIds(true)
+                .addItem(10 /* id= */, item0)
+                .addItem(11 /* id= */, item1)
+                .build();
+
+        mRemoteViews.setRemoteAdapter(R.id.remoteView_list, items);
+        WidgetTestUtils.runOnMainAndLayoutSync(mActivityRule,
+                () -> mRemoteViews.reapply(mActivity, mView), true);
+
+        mActivityRule.runOnUiThread(() -> listView.performItemClick(listView.getChildAt(0), 0, 10));
+        mInstrumentation.waitForIdleSync();
+        assertNotNull(receiver.mIntent);
+        assertEquals(42, receiver.mIntent.getIntExtra("my-extra", 0));
+    }
+
+    @Test
     public void testSetRemoteAdapter_newViewTypeAddedCoveredByViewTypeCount() {
         ListView listView = mView.findViewById(R.id.remoteView_list);
 
