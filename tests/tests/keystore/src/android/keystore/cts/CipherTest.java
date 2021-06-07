@@ -24,6 +24,7 @@ import android.platform.test.annotations.Presubmit;
 import android.security.keystore.KeyProperties;
 import android.security.keystore.KeyProtection;
 import android.server.wm.ActivityManagerTestBase;
+import android.server.wm.UiDeviceUtils;
 import android.test.AndroidTestCase;
 import android.test.MoreAsserts;
 
@@ -293,6 +294,7 @@ public class CipherTest extends AndroidTestCase {
 
         public void performDeviceUnlock() throws Exception {
             mLockCredential.gotoKeyguard();
+            UiDeviceUtils.pressUnlockButton();
             SystemClock.sleep(200);
             mLockCredential.enterAndConfirmLockCredential();
             launchHomeActivity();
