@@ -23,6 +23,7 @@ import android.net.wifi.cts.WifiJUnit3TestBase;
 import android.net.wifi.hotspot2.PasspointConfiguration;
 import android.net.wifi.hotspot2.pps.Credential;
 import android.net.wifi.hotspot2.pps.HomeSp;
+import android.os.Build;
 import android.platform.test.annotations.AppModeFull;
 
 import androidx.test.filters.SmallTest;
@@ -180,7 +181,7 @@ public class PasspointConfigurationTest extends WifiJUnit3TestBase {
     /**
      * Verify that the set and get decorated identity prefix methods work as expected.
      */
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     public void testSetGetDecoratedIdentityPrefix() throws Exception {
         PasspointConfiguration config = createConfig();
         assertNull(config.getDecoratedIdentityPrefix());
