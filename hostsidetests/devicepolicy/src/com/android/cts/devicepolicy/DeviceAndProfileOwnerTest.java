@@ -1968,7 +1968,12 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     protected void executeDeviceTestMethod(String className, String testName,
             Map<String, String> params) throws Exception {
-        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, className, testName, mUserId, params);
+        executeDeviceTestMethod(className, testName, mUserId, params);
+    }
+
+    protected void executeDeviceTestMethod(String className, String testName, int userId,
+            Map<String, String> params) throws Exception {
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, className, testName, userId, params);
     }
 
     protected void installAppPermissionAppAsUser()
