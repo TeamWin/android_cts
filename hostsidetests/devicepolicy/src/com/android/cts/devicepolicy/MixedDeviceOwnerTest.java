@@ -279,10 +279,7 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
         pushUpdateFileToDevice("wrongHash.zip");
         pushUpdateFileToDevice("wrongSize.zip");
 
-        // This test will run as user 0 since there will be {@link InstallSystemUpdateCallback}
-        // in the test and it's not necessary to run from secondary user.
-        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".systemupdate.InstallUpdateTest",
-                mDeviceOwnerUserId);
+        executeInstallUpdateTest(/* testName= */ null);
     }
 
     @Test
@@ -291,8 +288,7 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
 
         pushUpdateFileToDevice("wrongHash.zip");
         assertMetricsLogged(getDevice(), () -> {
-            executeDeviceTestMethod(".systemupdate.InstallUpdateTest",
-                    "testInstallUpdate_failWrongHash");
+            executeInstallUpdateTest("testInstallUpdate_failWrongHash");
         }, new DevicePolicyEventWrapper.Builder(EventId.INSTALL_SYSTEM_UPDATE_VALUE)
                     .setAdminPackageName(DEVICE_ADMIN_PKG)
                     .setBoolean(/* isDeviceAb */ true)
@@ -300,6 +296,13 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
             new DevicePolicyEventWrapper.Builder(EventId.INSTALL_SYSTEM_UPDATE_ERROR_VALUE)
                     .setInt(UPDATE_ERROR_UPDATE_FILE_INVALID)
                     .build());
+    }
+
+    private void executeInstallUpdateTest(String testName) throws Exception {
+        // This test must run on system user as it calls installSystemUpdate(), which takes a
+        // Runnable callback (InstallSystemUpdateCallback) and hence it cannot be easily passed
+        // around through IPC (on headless system user mode).
+        executeDeviceTestMethodOnDeviceOwnerUser(".systemupdate.InstallUpdateTest", testName);
     }
 
     @Test
@@ -378,20 +381,20 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Test
     public void testSecurityLoggingDelegate() throws Exception {
-        installAppAsUser(DELEGATE_APP_APK, mUserId);
+        installAppAsUser(DELEGATE_APP_APK, mDeviceOwnerUserId);
         try {
             // Test that the delegate cannot access the logs already
             runDeviceTestsAsUser(DELEGATE_APP_PKG, ".SecurityLoggingDelegateTest",
-                    "testCannotAccessApis", mUserId);
+                    "testCannotAccessApis", mDeviceOwnerUserId);
 
             // Set security logging delegate
-            executeDeviceTestMethod(".SecurityLoggingTest",
+            executeDeviceTestMethodOnDeviceOwnerUser(".SecurityLoggingTest",
                     "testSetDelegateScope_delegationSecurityLogging");
 
             runSecurityLoggingTests(DELEGATE_APP_PKG, ".SecurityLoggingDelegateTest");
         } finally {
             // Remove security logging delegate
-            executeDeviceTestMethod(".SecurityLoggingTest",
+            executeDeviceTestMethodOnDeviceOwnerUser(".SecurityLoggingTest",
                     "testSetDelegateScope_noDelegation");
         }
     }
@@ -415,25 +418,25 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
 
     private void runSecurityLoggingTests(String packageName, String testClassName)
             throws Exception {
+        int userId = mDeviceOwnerUserId;
         try {
             // Turn logging on.
-            runDeviceTestsAsUser(packageName, testClassName,
-                    "testEnablingSecurityLogging", mUserId);
+            runDeviceTestsAsUser(packageName, testClassName, "testEnablingSecurityLogging", userId);
             // Reboot to ensure ro.organization_owned is set to true in logd and logging is on.
             rebootAndWaitUntilReady();
-            waitForUserUnlock(mUserId);
+            waitForUserUnlock(userId);
 
             // Generate various types of events on device side and check that they are logged.
-            runDeviceTestsAsUser(packageName, testClassName, "testGenerateLogs", mUserId);
-            runDeviceTestsAsUser(packageName, testClassName, "testVerifyGeneratedLogs", mUserId);
+            runDeviceTestsAsUser(packageName, testClassName, "testGenerateLogs", userId);
+            runDeviceTestsAsUser(packageName, testClassName, "testVerifyGeneratedLogs", userId);
 
             // Immediately attempting to fetch events again should fail.
             runDeviceTestsAsUser(packageName, testClassName,
-                    "testSecurityLoggingRetrievalRateLimited", mUserId);
+                    "testSecurityLoggingRetrievalRateLimited", userId);
         } finally {
             // Turn logging off.
             runDeviceTestsAsUser(packageName, testClassName,
-                    "testDisablingSecurityLogging", mUserId);
+                    "testDisablingSecurityLogging", userId);
         }
     }
 
@@ -612,6 +615,12 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
     protected void executeDeviceTestMethod(String className, String testName,
             Map<String, String> params) throws Exception {
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, className, testName, mUserId, params);
+    }
+
+    private void executeDeviceTestMethodOnDeviceOwnerUser(String className, String testName)
+            throws Exception {
+        executeDeviceTestMethod(className, testName, mDeviceOwnerUserId,
+                /* params= */ new HashMap<>());
     }
 
     private void configureNotificationListener() throws DeviceNotAvailableException {

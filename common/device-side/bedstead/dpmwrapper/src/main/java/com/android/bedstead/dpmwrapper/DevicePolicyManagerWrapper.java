@@ -203,9 +203,6 @@ final class DevicePolicyManagerWrapper
             // Used by DevicePolicyLoggingTest
             doAnswer(answer).when(spy).getAutoTimeEnabled(any());
 
-            // Used by InstallUpdateTest
-            doAnswer(answer).when(spy).installSystemUpdate(any(), any(), any(), any());
-
             // Used by FactoryResetProtectionPolicyTest
             doAnswer(answer).when(spy).getFactoryResetProtectionPolicy(any());
 
