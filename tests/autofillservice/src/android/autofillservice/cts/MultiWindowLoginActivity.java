@@ -15,6 +15,8 @@
  */
 package android.autofillservice.cts;
 
+import android.content.res.Configuration;
+
 import com.android.compatibility.common.util.RetryableException;
 
 import java.util.concurrent.CountDownLatch;
@@ -41,6 +43,17 @@ public class MultiWindowLoginActivity extends LoginActivity {
     public void onWindowFocusChanged(boolean hasFocus) {
         if (hasFocus) {
             if (sLastInstanceLatch != null) {
+                sLastInstanceLatch.countDown();
+            }
+        }
+    }
+
+    @Override
+    public void onMultiWindowModeChanged(boolean isInMultiWindowMode, Configuration newConfig) {
+        super.onMultiWindowModeChanged(isInMultiWindowMode, newConfig);
+        if (sLastInstanceLatch != null) {
+            // mWindowingMode is split-screen-primary
+            if (isInMultiWindowMode) {
                 sLastInstanceLatch.countDown();
             }
         }
