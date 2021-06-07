@@ -16,28 +16,9 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-java_test_host {
-    name: "CtsPackageManagerStatsHostTestCases",
+android_test_helper_app {
+    name: "CtsStatsdAtomEmptyApp2",
     defaults: ["cts_defaults"],
-    srcs: ["src/**/*.java"],
-    // tag this module as a cts test artifact
-    test_suites: [
-        "cts",
-        "general-tests",
-    ],
-    libs: [
-        "cts-tradefed",
-        "tradefed",
-        "compatibility-host-util",
-        "cts-host-utils",
-    ],
-    static_libs: [
-        "cts-statsd-atom-host-test-utils",
-    ],
-    data: [
-        ":CtsStatsdAtomEmptyApp",
-        ":CtsStatsdAtomEmptyApp2",
-        ":CtsStatsdAtomEmptySplitApp",
-    ],
-    java_resource_dirs: ["res"],
+    sdk_version: "current",
+    v4_signature: true,
 }
