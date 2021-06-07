@@ -22,6 +22,7 @@ import android.content.pm.PackageManager;
 import android.net.wifi.WifiEnterpriseConfig;
 import android.net.wifi.WifiEnterpriseConfig.Eap;
 import android.net.wifi.WifiEnterpriseConfig.Phase2;
+import android.os.Build;
 import android.platform.test.annotations.AppModeFull;
 
 import androidx.test.filters.SdkSuppress;
@@ -824,10 +825,7 @@ public class WifiEnterpriseConfigTest extends WifiJUnit3TestBase {
         assertThat(config.getClientCertificateAlias()).isEqualTo(CLIENT_CERTIFICATE_ALIAS);
     }
 
-    /**
-     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
-     */
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     public void testGetSetClientKeyPairAlias() {
         if (!hasWifi()) {
             return;
@@ -1000,10 +998,7 @@ public class WifiEnterpriseConfigTest extends WifiJUnit3TestBase {
         return config;
     }
 
-    /*
-     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
-     */
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     public void testSetGetDecoratedIdentityPrefix() {
         if (!hasWifi()) {
             return;
