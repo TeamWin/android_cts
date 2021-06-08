@@ -343,8 +343,8 @@ class AppOpEventCollectionTest {
         runWithShellPermissionIdentity {
             firstAttrManager = context.createAttributionContext(firstTag)!!
                 .getSystemService(AppOpsManager::class.java)!!
-            val start = firstAttrManager.startProxyOp(OPSTR_WIFI_SCAN, otherUid, otherPkg, null,
-                null)
+            val start = firstAttrManager.startProxyOpNoThrow(OPSTR_WIFI_SCAN, otherUid, otherPkg,
+                    null, null)
             assertThat(start).isEqualTo(MODE_ALLOWED)
             sleep(1)
         }
@@ -396,7 +396,7 @@ class AppOpEventCollectionTest {
         // Untrusted proxy op
         val secondAttrManager = context.createAttributionContext(secondTag)!!
             .getSystemService(AppOpsManager::class.java)!!
-        secondAttrManager.startProxyOp(OPSTR_WIFI_SCAN, otherUid, otherPkg, null, null)
+        secondAttrManager.startProxyOpNoThrow(OPSTR_WIFI_SCAN, otherUid, otherPkg, null, null)
         with(getOpEntry(otherUid, otherPkg, OPSTR_WIFI_SCAN)!!) {
             assertThat(attributedOpEntries[null]?.getLastProxyInfo(OP_FLAG_UNTRUSTED_PROXIED)!!
                 .packageName).isEqualTo(myPackage)
@@ -440,8 +440,8 @@ class AppOpEventCollectionTest {
         runWithShellPermissionIdentity {
             firstAttrManager = context.createAttributionContext(firstTag)!!
                 .getSystemService(AppOpsManager::class.java)!!
-            val start = firstAttrManager.startProxyOp(OPSTR_WIFI_SCAN, otherUid, otherPkg, null,
-                null)
+            val start = firstAttrManager.startProxyOpNoThrow(OPSTR_WIFI_SCAN, otherUid, otherPkg,
+                    null, null)
             sleep(1)
         }
 
@@ -451,7 +451,7 @@ class AppOpEventCollectionTest {
         // Untrusted proxy op
         val secondAttrManager = context.createAttributionContext(secondTag)!!
             .getSystemService(AppOpsManager::class.java)!!
-        secondAttrManager.startProxyOp(OPSTR_WIFI_SCAN, otherUid, otherPkg, null, null)
+        secondAttrManager.startProxyOpNoThrow(OPSTR_WIFI_SCAN, otherUid, otherPkg, null, null)
 
         sleep(1)
         secondAttrManager.finishProxyOp(OPSTR_WIFI_SCAN, otherUid, otherPkg, null)
@@ -469,6 +469,23 @@ class AppOpEventCollectionTest {
         // If asked for all op-flags the second attribution overrides the first
         assertThat(attributionOpEntry.getLastProxyInfo(OP_FLAGS_ALL)?.attributionTag)
             .isEqualTo(secondTag)
+    }
+
+    @Test
+    fun startProxyOpThrowsSecurityException() {
+        lateinit var firstAttrManager: AppOpsManager
+        var exception: SecurityException? = null
+        try {
+            runWithShellPermissionIdentity {
+                firstAttrManager = context.createAttributionContext(firstTag)!!
+                        .getSystemService(AppOpsManager::class.java)!!
+                val start = firstAttrManager.startProxyOp(OPSTR_WIFI_SCAN, Process.INVALID_UID,
+                        otherPkg, null, null)
+            }
+        } catch (e: SecurityException) {
+            exception = e
+        }
+        assertThat(exception).isNotNull()
     }
 
     @Test
