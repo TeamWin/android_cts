@@ -57,24 +57,35 @@ public final class TestResultTable {
             mData = data;
         }
 
-        boolean equals(TestResultEntry peerEntry) {
-            if ((mTestcase == null && mTestcase != peerEntry.mTestcase)
-                    && (mTestcase != null && !mTestcase.equals(peerEntry.mTestcase))) {
+        @Override
+        public boolean equals(Object obj) {
+            TestResultEntry peerEntry;
+            if (!(obj instanceof TestResultEntry)) {
                 return false;
             }
-            if ((mAction == null && mAction != peerEntry.mAction)
-                    && (mAction != null && !mAction.equals(peerEntry.mAction))) {
+            peerEntry = (TestResultEntry) obj;
+            if ((mTestcase != null && !mTestcase.equals(peerEntry.mTestcase))
+                    || (mAction != null && !mAction.equals(peerEntry.mAction))
+                    || (mPowerState != null && !mPowerState.equals(peerEntry.mPowerState))
+                    || (mData != null && !mData.equals(peerEntry.mData))) {
                 return false;
             }
-            if ((mPowerState == null && mPowerState != peerEntry.mPowerState)
-                    && (mPowerState != null && !mPowerState.equals(peerEntry.mPowerState))) {
-                return false;
-            }
-            if ((mData == null && mData != peerEntry.mData)
-                    && (mData != null && !mData.equals(peerEntry.mData))) {
+            if ((mTestcase == null && null != peerEntry.mTestcase)
+                    || (mAction == null && null != peerEntry.mAction)
+                    || (mPowerState == null && null != peerEntry.mPowerState)
+                    || (mData == null && null != peerEntry.mData)) {
                 return false;
             }
             return true;
+        }
+
+        @Override
+        public int hashCode() {
+            int code = mTestcase != null ? mTestcase.hashCode() : 0;
+            code += mAction != null ? mAction.hashCode() : 0;
+            code += mPowerState != null ? mPowerState.hashCode() : 0;
+            code += mData != null ? mData.hashCode() : 0;
+            return code;
         }
     }
 }
