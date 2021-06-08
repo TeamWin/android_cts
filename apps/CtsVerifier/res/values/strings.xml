@@ -4108,17 +4108,6 @@ You should be prompted to select credentials; choose the ones you just installed
     </string>
     <string name="set_maximum_time_to_lock_action">Selecting maximum time to lock greater than the set value below</string>
     <string name="set_maximum_time_to_lock_widget_label">Set maximum time to lock (in Sec):</string>
-    <string name="set_password_quality">Set password quality</string>
-    <string name="password_quality_set_step">Set minimum password quality by selecting an option in the spinner below.</string>
-    <string name="set_password_quality_action">Setting a password which does not meet the requirements of the password quality selected</string>
-    <string name="set_password_quality_widget_label">@string/set_password_quality</string>
-    <string name="password_quality_unspecified">Unspecified</string>
-    <string name="password_quality_something">Something</string>
-    <string name="password_quality_numeric">Numeric</string>
-    <string name="password_quality_numeric_complex">Numeric (Complex)</string>
-    <string name="password_quality_alphabetic">Alphabetic</string>
-    <string name="password_quality_alphanumeric">Alphanumeric</string>
-    <string name="password_quality_complex">Complex</string>
     <string name="set_permitted_accessibility_services">Set permitted accessibility services</string>
     <string name="permitted_accessibility_services_set_step">
         Check that \'Test Accessibility service\' is not enabled in Settings and disallow \'Test Accessibility service\' from permitted accessibility services by turning on
