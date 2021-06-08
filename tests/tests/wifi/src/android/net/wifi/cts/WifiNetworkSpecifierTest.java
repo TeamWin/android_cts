@@ -38,6 +38,7 @@ import android.net.wifi.WifiEnterpriseConfig;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiNetworkSpecifier;
+import android.os.Build;
 import android.os.PatternMatcher;
 import android.platform.test.annotations.AppModeFull;
 import android.support.test.uiautomator.UiDevice;
@@ -401,9 +402,7 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
     /**
      * Tests using the specifier to set a band.
      */
-    // TODO(b/167575586): Wait for S SDK finalization to change minSdkVersion to
-    //  Build.VERSION_CODES.S
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     @Test
     public void testWifiBandInNetworkCallback() throws Exception {
         // Enable all networks and wait for Internet connectivity to be restored.

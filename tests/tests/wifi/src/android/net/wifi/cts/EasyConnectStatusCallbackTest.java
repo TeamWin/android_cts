@@ -28,6 +28,7 @@ import android.net.Uri;
 import android.net.wifi.EasyConnectStatusCallback;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
+import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerExecutor;
 import android.os.HandlerThread;
@@ -204,9 +205,8 @@ public class EasyConnectStatusCallbackTest extends WifiJUnit3TestBase {
      *
      * Since Easy Connect requires 2 devices, start Easy Connect responder session and expect a
      * DPP URI
-     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
      */
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     public void testEnrolleeResponderUriGeneration() throws Exception {
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported
@@ -240,9 +240,8 @@ public class EasyConnectStatusCallbackTest extends WifiJUnit3TestBase {
      * Test that {@link WifiManager#startEasyConnectAsEnrolleeResponder(String, int, Executor,
      * EasyConnectStatusCallback)} throws illegal argument exception on passing a wrong device
      * info.
-     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
      */
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     public void
            testStartEasyConnectAsEnrolleeResponderThrowsIllegalArgumentExceptionOnWrongDeviceInfo()
            throws Exception {
