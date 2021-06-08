@@ -135,5 +135,6 @@ public class AppErrorAtomTests extends DeviceTestCase implements IBuildReceiver 
         assertTrue(atom.getTotalFailedReads() > 0);
         assertTrue(atom.getLastReadErrorMillisSince() > 0);
         assertEquals(-62 /* -ETIME */, atom.getLastReadErrorCode());
+        assertTrue(atom.getTotalDelayedReadsDurationMillis() > 0);
     }
 }
