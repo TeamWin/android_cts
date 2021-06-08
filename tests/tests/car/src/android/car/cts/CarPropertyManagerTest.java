@@ -29,6 +29,7 @@ import android.car.hardware.CarPropertyConfig;
 import android.car.hardware.CarPropertyValue;
 import android.car.hardware.property.CarPropertyManager;
 import android.car.hardware.property.CarPropertyManager.CarPropertyEventCallback;
+import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresDevice;
 import android.test.suitebuilder.annotation.SmallTest;
@@ -222,15 +223,58 @@ public class CarPropertyManagerTest extends CarApiTestBase {
                 mCarPropertyManager.getCarPropertyConfig(VehiclePropertyIds.PERF_VEHICLE_SPEED);
         assertWithMessage("Must support PERF_VEHICLE_SPEED")
                 .that(perfVehicleSpeedConfig).isNotNull();
+        assertWithMessage("PERF_VEHICLE_SPEED CarPropertyConfig must have correct property ID")
+                .that(perfVehicleSpeedConfig.getPropertyId())
+                .isEqualTo(VehiclePropertyIds.PERF_VEHICLE_SPEED);
         assertWithMessage("PERF_VEHICLE_SPEED must be READ access")
                 .that(perfVehicleSpeedConfig.getAccess())
                 .isEqualTo(CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ);
+        assertWithMessage("PERF_VEHICLE_SPEED must be GLOBAL area type")
+                .that(perfVehicleSpeedConfig.getAreaType())
+                .isEqualTo(VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL);
+        assertWithMessage("PERF_VEHICLE_SPEED must be CONTINUOUS change mode type")
+                .that(perfVehicleSpeedConfig.getChangeMode())
+                .isEqualTo(CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS);
+        assertWithMessage("PERF_VEHICLE_SPEED must define max sample rate since it is CONTINUOUS")
+                .that(perfVehicleSpeedConfig.getMaxSampleRate())
+                .isGreaterThan(0);
+        assertWithMessage("PERF_VEHICLE_SPEED must define min sample rate since it is CONTINUOUS")
+                .that(perfVehicleSpeedConfig.getMinSampleRate())
+                .isGreaterThan(0);
+        assertWithMessage("PERF_VEHICLE_SPEED max sample rate must be >= min sample rate")
+                .that(perfVehicleSpeedConfig.getMaxSampleRate() >=
+                        perfVehicleSpeedConfig.getMinSampleRate())
+                .isTrue();
+        assertWithMessage("PERF_VEHICLE_SPEED must define min sample rate since it is CONTINUOUS")
+                .that(perfVehicleSpeedConfig.getMinSampleRate())
+                .isNotEqualTo(0);
         assertWithMessage("PERF_VEHICLE_SPEED must be Float type property")
                 .that(perfVehicleSpeedConfig.getPropertyType())
                 .isEqualTo(Float.class);
+
+        long beforeElapsedTimestampNanos = SystemClock.elapsedRealtimeNanos();
+        CarPropertyValue<Float> perfVehicleSpeedValue =
+                mCarPropertyManager.getProperty(
+                VehiclePropertyIds.PERF_VEHICLE_SPEED, VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL);
+        long afterElapsedTimestampNanos = SystemClock.elapsedRealtimeNanos();
+        assertWithMessage("PERF_VEHICLE_SPEED value must have correct property ID")
+                .that(perfVehicleSpeedValue.getPropertyId())
+                .isEqualTo(VehiclePropertyIds.PERF_VEHICLE_SPEED);
+        assertWithMessage("PERF_VEHICLE_SPEED value must have correct area type")
+                .that(perfVehicleSpeedValue.getAreaId())
+                .isEqualTo(VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL);
+        assertWithMessage("PERF_VEHICLE_SPEED value must be available")
+                .that(perfVehicleSpeedValue.getStatus())
+                .isEqualTo(CarPropertyValue.STATUS_AVAILABLE);
+        assertWithMessage(
+                "PERF_VEHICLE_SPEED timestamp must use the SystemClock.elapsedRealtimeNanos() time base")
+                .that(perfVehicleSpeedValue.getTimestamp())
+                .isGreaterThan(beforeElapsedTimestampNanos);
+        assertWithMessage(
+                "PERF_VEHICLE_SPEED timestamp must use the SystemClock.elapsedRealtimeNanos() time base")
+                .that(perfVehicleSpeedValue.getTimestamp()).isLessThan(afterElapsedTimestampNanos);
         assertWithMessage("PERF_VEHICLE_SPEED must return Float type value")
-                .that(mCarPropertyManager.getProperty(VehiclePropertyIds.PERF_VEHICLE_SPEED,
-                VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL).getValue() instanceof Float).isTrue();
+                .that(perfVehicleSpeedValue.getValue() instanceof Float).isTrue();
     }
 
     @CddTest(requirement = "2.5.1")
