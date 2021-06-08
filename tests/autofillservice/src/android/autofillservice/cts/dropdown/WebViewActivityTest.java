@@ -306,6 +306,9 @@ public class WebViewActivityTest extends AbstractWebViewTestCase<WebViewActivity
     @Test
     @AppModeFull(reason = "testAutofillAndSave() is enough")
     public void testAutofillAndSave_withExternalViews_loadWebViewFirst() throws Exception {
+        // TODO(b/187664861): Find better solution for small display device.
+        mUiBot.assumeMinimumResolution(500);
+
         // Set service.
         enableService();
 
