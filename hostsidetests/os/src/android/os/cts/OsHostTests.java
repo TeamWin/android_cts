@@ -153,9 +153,10 @@ public class OsHostTests extends DeviceTestCase implements IBuildReceiver, IAbiR
     }
 
     public void testIntentFilterHostValidation() throws Exception {
+        assumeFalse(mDevice.executeShellCommand("pm list features").contains(FEATURE_WATCH));
+
         String line = null;
         try {
-            assumeFalse(mDevice.executeShellCommand("pm list features").contains(FEATURE_WATCH));
             // Clean slate in case of earlier aborted run
             mDevice.uninstallPackage(HOST_VERIFICATION_PKG);
 
