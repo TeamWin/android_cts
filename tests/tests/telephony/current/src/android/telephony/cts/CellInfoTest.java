@@ -573,7 +573,8 @@ public class CellInfoTest {
         assertTrue("getPci() out of range [0, 1007], pci = " + pci, 0 <= pci && pci <= 1007);
 
         int tac = nr.getTac();
-        assertTrue("getTac() out of range [0, 16777215], tac = " + tac, 0 <= tac && tac <= 16777215);
+        assertTrue("getTac() out of range [0, 16777215], tac = " + tac,
+            (tac == Integer.MAX_VALUE) || (0 <= tac && tac <= 16777215));
 
         int nrArfcn = nr.getNrarfcn();
         assertTrue("getNrarfcn() out of range [0, 3279165], nrarfcn = " + nrArfcn,
