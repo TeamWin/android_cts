@@ -2914,6 +2914,9 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
     @Test
     @AppModeFull(reason = "WRITE_SECURE_SETTING permission can't be grant to instant apps")
     public void testSwitchInputMethod_noNewFillRequest() throws Exception {
+        // TODO(b/187664861): Find better solution for small display device.
+        mUiBot.assumeMinimumResolution(500);
+
         // Set service
         enableService();
 
