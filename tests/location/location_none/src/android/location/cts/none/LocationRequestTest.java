@@ -25,6 +25,8 @@ import android.os.Parcel;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
+import com.google.common.collect.Range;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -96,10 +98,10 @@ public class LocationRequestTest {
     @Test
     public void testBuild_ImplicitMinUpdateInterval() {
         LocationRequest.Builder builder = new LocationRequest.Builder(5000);
-        assertThat(builder.build().getMinUpdateIntervalMillis()).isEqualTo(5000);
+        assertThat(builder.build().getMinUpdateIntervalMillis()).isIn(Range.closed(0L, 5000L));
 
         builder.setIntervalMillis(6000);
-        assertThat(builder.build().getMinUpdateIntervalMillis()).isEqualTo(6000);
+        assertThat(builder.build().getMinUpdateIntervalMillis()).isIn(Range.closed(0L, 6000L));
     }
 
     @Test
@@ -108,7 +110,7 @@ public class LocationRequestTest {
                 .setMinUpdateIntervalMillis(4000)
                 .clearMinUpdateIntervalMillis()
                 .build();
-        assertThat(request.getMinUpdateIntervalMillis()).isEqualTo(5000);
+        assertThat(request.getMinUpdateIntervalMillis()).isIn(Range.closed(0L, 5000L));
     }
 
     @Test
