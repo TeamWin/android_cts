@@ -108,6 +108,9 @@ public class InlineWebViewActivityTest extends AbstractWebViewTestCase<WebViewAc
 
     @Test
     public void testAutofillOneDataset() throws Exception {
+        // TODO(b/187664861): Find better solution for small display device.
+        mUiBot.assumeMinimumResolution(500);
+
         // Set service.
         enableService();
 
