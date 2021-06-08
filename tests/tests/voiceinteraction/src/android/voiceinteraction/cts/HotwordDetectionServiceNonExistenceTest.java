@@ -42,7 +42,7 @@ public final class HotwordDetectionServiceNonExistenceTest
     public void testHotwordDetectionService_noHotwordDetectionComponentName_triggerFailure()
             throws Throwable {
         final BlockingBroadcastReceiver receiver = new BlockingBroadcastReceiver(mContext,
-                Utils.BROADCAST_HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT);
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT);
         receiver.register();
 
         mActivityTestRule.getScenario().onActivity(activity -> {
