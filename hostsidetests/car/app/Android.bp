@@ -20,7 +20,7 @@ android_test_helper_app {
     name: "CtsCarApp",
     defaults: ["cts_defaults"],
     srcs: ["src/**/*.java"],
-    sdk_version: "current",
+    sdk_version: "test_current",
 
     enforce_uses_libs: false,
     static_libs: [
