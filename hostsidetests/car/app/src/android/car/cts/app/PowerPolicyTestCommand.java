@@ -16,158 +16,154 @@
 
 package android.car.cts.app;
 
-import android.car.Car;
 import android.car.hardware.power.CarPowerManager;
 import android.car.hardware.power.CarPowerPolicy;
 import android.util.Log;
 
 import java.io.PrintWriter;
+import java.util.Arrays;
+
 
 public abstract class PowerPolicyTestCommand {
     private static final String TAG = PowerPolicyTestCommand.class.getSimpleName();
+    private static final String TEST_RESULT_HEADER = "PowerPolicyTestResult: ";
 
     private final String mTestcase;
     private final TestCommandType mType;
+    protected final CarPowerManager mPowerManager;
 
-    protected String mPolicyId;
-    protected Car mCar;
-    protected CarPowerManager mCarPowerManager;
-    protected PrintWriter mPrintWriter;
+    protected String mPolicyData;
 
-    PowerPolicyTestCommand(String tc, TestCommandType type) {
+    PowerPolicyTestCommand(String tc, CarPowerManager pm, TestCommandType type) {
         mTestcase = tc;
+        mPowerManager = pm;
         mType = type;
-    }
-
-    void setCar(Car c) {
-        mCar = c;
-        mCarPowerManager = (CarPowerManager) mCar.getCarManager(Car.POWER_SERVICE);
     }
 
     String getTestcase() {
         return mTestcase;
     }
 
-    Car getCar() {
-        return mCar;
-    }
-
     TestCommandType getType() {
         return mType;
     }
 
-    PrintWriter getPrintWriter() {
-        return mPrintWriter;
-    }
-
-    void setPrintWriter(PrintWriter fw) {
-        mPrintWriter = fw;
-    }
-
-    abstract void execute(PowerPolicyTestClient testClient);
+    abstract void execute(PowerPolicyTestClient testClient, PrintWriter resultLog);
 
     enum TestCommandType {
-      START,
-      END,
-      DUMP_STATE,
-      DUMP_POLICY,
-      APPLY_POLICY,
-      CLOSE_DATAFILE
+        START,
+        END,
+        DUMP_STATE,
+        DUMP_POLICY,
+        APPLY_POLICY,
+        SET_POLICY_GROUP
+    }
+
+    protected void printResultHeader(PrintWriter resultLog, String action) {
+        resultLog.printf("%s%s:%s:", TEST_RESULT_HEADER, getTestcase(), action);
     }
 
     static final class StartTestcaseCommand extends PowerPolicyTestCommand {
-        StartTestcaseCommand(String tc) {
-            super(tc, TestCommandType.START);
+        StartTestcaseCommand(String tc, CarPowerManager pm) {
+            super(tc, pm, TestCommandType.START);
         }
 
-        void execute(PowerPolicyTestClient testClient) {
+        @Override
+        void execute(PowerPolicyTestClient testClient, PrintWriter resultLog) {
             testClient.registerAndGo();
+            Log.d(TAG, String.format("%s starts", getTestcase()));
         }
     }
 
     static final class EndTestcaseCommand extends PowerPolicyTestCommand {
-        EndTestcaseCommand(String tc) {
-            super(tc, TestCommandType.END);
+        EndTestcaseCommand(String tc, CarPowerManager pm) {
+            super(tc, pm, TestCommandType.END);
         }
 
         @Override
-        void execute(PowerPolicyTestClient testClient) {
-            mPrintWriter.flush();
+        void execute(PowerPolicyTestClient testClient, PrintWriter resultLog) {
             testClient.cleanup();
+            Log.d(TAG, getTestcase() + "ends");
         }
     }
 
     static final class DumpStateCommand extends PowerPolicyTestCommand {
-        DumpStateCommand(String tc) {
-            super(tc, TestCommandType.DUMP_STATE);
+        DumpStateCommand(String tc, CarPowerManager pm) {
+            super(tc, pm, TestCommandType.DUMP_STATE);
         }
 
         @Override
-        void execute(PowerPolicyTestClient testClient) {
-            int curState = mCarPowerManager.getPowerState();
-            mPrintWriter.printf("%s: Current Power State: %s\n", getTestcase(), curState);
-            Log.d(TAG, "Current Power State: " + curState);
+        void execute(PowerPolicyTestClient testClient, PrintWriter resultLog) {
+            int curState = mPowerManager.getPowerState();
+            printResultHeader(resultLog, "dumpstate");
+            resultLog.println(curState);
+            Log.d(TAG, "current pwer state is " + curState);
         }
     }
 
     static final class DumpPolicyCommand extends PowerPolicyTestCommand {
-        DumpPolicyCommand(String tc) {
-            super(tc, TestCommandType.DUMP_POLICY);
+        DumpPolicyCommand(String tc, CarPowerManager pm) {
+            super(tc, pm, TestCommandType.DUMP_POLICY);
         }
 
         @Override
-        void execute(PowerPolicyTestClient testClient) {
-            CarPowerPolicy cpp = mCarPowerManager.getCurrentPowerPolicy();
+        void execute(PowerPolicyTestClient testClient, PrintWriter resultLog) {
+            String policyId;
+            CarPowerPolicy cpp = mPowerManager.getCurrentPowerPolicy();
             if (cpp == null) {
                 Log.d(TAG, "null current power policy");
                 return;
             }
-            String policyId = cpp.getPolicyId();
+            policyId = cpp.getPolicyId();
             int[] enabledComponents = cpp.getEnabledComponents();
             int[] disabledComponents = cpp.getDisabledComponents();
 
-            mPrintWriter.printf("%s: Current Power Policy: id=%s", getTestcase(), policyId);
-            mPrintWriter.printf(", enabledComponents=[");
-            for (int enabled : enabledComponents) {
-                mPrintWriter.printf("%d ", enabled);
+            if (policyId == null) {
+                policyId = "null";
             }
-            mPrintWriter.printf("], disabledComponents=[");
-            for (int disabled : disabledComponents) {
-                mPrintWriter.printf("%d ", disabled);
+            printResultHeader(resultLog, "dumppolicy");
+            resultLog.printf("policyId=%s, ", policyId);
+            resultLog.printf("enabledComponents=[%s], ", Arrays.toString(enabledComponents));
+            resultLog.printf("disabledComponents=[%s]\n", Arrays.toString(disabledComponents));
+            Log.d(TAG, "dump power policy " + policyId);
+        }
+    }
+
+    static final class SetPolicyGroupCommand extends PowerPolicyTestCommand {
+        SetPolicyGroupCommand(String tc, CarPowerManager pm) {
+            super(tc, pm, TestCommandType.SET_POLICY_GROUP);
+        }
+
+        @Override
+        void execute(PowerPolicyTestClient testClient, PrintWriter resultLog) {
+            if (mPolicyData == null) {
+                Log.e(TAG, "null policy group id");
+                return;
             }
-            mPrintWriter.println("]");
-            Log.d(TAG, "Dumped Policy Id: " + policyId);
+
+            mPowerManager.setPowerPolicyGroup(mPolicyData);
+            printResultHeader(resultLog, "setpolicygroup");
+            resultLog.println(mPolicyData);
+            Log.d(TAG, "set policy group Id: " + mPolicyData);
         }
     }
 
     static final class ApplyPolicyCommand extends PowerPolicyTestCommand {
-        ApplyPolicyCommand(String tc) {
-            super(tc, TestCommandType.APPLY_POLICY);
+        ApplyPolicyCommand(String tc, CarPowerManager pm) {
+            super(tc, pm, TestCommandType.APPLY_POLICY);
         }
 
         @Override
-        void execute(PowerPolicyTestClient testClient) {
-            if (mPolicyId == null) {
+        void execute(PowerPolicyTestClient testClient, PrintWriter resultLog) {
+            if (mPolicyData == null) {
                 Log.w(TAG, "missing policy id for applying policy");
                 return;
             }
 
-            mCarPowerManager.applyPowerPolicy(mPolicyId);
-            mPrintWriter.printf("%s : Apply Power Policy:%s\n", getTestcase(), mPolicyId);
-            Log.d(TAG, "apply policy with Id: " + mPolicyId);
-        }
-    }
-
-    static final class CloseDataFileCommand extends PowerPolicyTestCommand {
-        CloseDataFileCommand(String tc) {
-            super(tc, TestCommandType.CLOSE_DATAFILE);
-        }
-
-        @Override
-        void execute(PowerPolicyTestClient testClient) {
-            mPrintWriter.close();
-            Log.d(TAG, "close the data file");
+            mPowerManager.applyPowerPolicy(mPolicyData);
+            printResultHeader(resultLog, "applypolicy");
+            resultLog.println(mPolicyData);
+            Log.d(TAG, "apply policy with Id: " + mPolicyData);
         }
     }
 }
-

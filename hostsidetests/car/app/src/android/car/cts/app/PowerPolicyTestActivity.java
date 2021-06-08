@@ -19,21 +19,21 @@ package android.car.cts.app;
 import android.app.Activity;
 import android.car.Car;
 import android.car.hardware.power.CarPowerManager;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.FileDescriptor;
 import java.io.PrintWriter;
+import java.io.StringWriter;
 
 import javax.annotation.concurrent.GuardedBy;
 
 /**
  * To test car power policy:
+ *
  *     <pre class="prettyprint">
  *         adb shell am force-stop android.car.cts.app
  *         adb shell am start -n android.car.cts.app/.PowerPolicyTestActivity \
@@ -44,14 +44,21 @@ import javax.annotation.concurrent.GuardedBy;
  *     </pre>
  */
 public final class PowerPolicyTestActivity extends Activity {
+    private static final int RESULT_LOG_SIZE = 4096;
     private static final String TAG = PowerPolicyTestActivity.class.getSimpleName();
-    private static final String SHARED_DATA_FILE = "/storage/emulated/obb/PowerPolicyData.txt";
+
+    private final Object mLock = new Object();
+    private final PowerPolicyTestClient mTestClient = new PowerPolicyTestClient();
+
+    // LocalLog is not available for cts. Use StringWriter instead.
+    // The host side test will kill and restart the app for each test case,
+    // therefore 4KB buffer size is sufficient.
+    private final StringWriter mResultBuf = new StringWriter(RESULT_LOG_SIZE);
+    private final PrintWriter mResultLog = new PrintWriter(mResultBuf);
 
     private Car mCarApi;
-    private final Object mLock = new Object();
     @GuardedBy("mLock")
     private CarPowerManager mPowerManager;
-    private PrintWriter mPrintWriter;
 
     @Nullable
     public CarPowerManager getPowerManager() {
@@ -61,35 +68,33 @@ public final class PowerPolicyTestActivity extends Activity {
     }
 
     @Override
+    public void dump(String prefix, FileDescriptor fd, PrintWriter writer, String[] args) {
+        writer.printf("%s\n", mResultBuf);
+    }
+
+    @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         Log.d(TAG, "onNewIntent");
         Bundle extras = intent.getExtras();
         if (extras == null) {
-            Log.w(TAG, "onNewIntent: empty extras");
+            Log.d(TAG, "onNewIntent(): empty extras");
             return;
         }
-        PowerPolicyTestCommand cmd = PowerPolicyTestClient.parseCommand(extras);
+
+        PowerPolicyTestCommand cmd = mTestClient.parseCommand(extras);
         if (cmd == null) {
-            Log.w(TAG, "onNewIntent: invalid power policy test command");
+            Log.d(TAG, "onNewIntent(): null policy test command");
             return;
         }
-        cmd.setCar(mCarApi);
-        cmd.setPrintWriter(mPrintWriter);
-        PowerPolicyTestClient.handleCommand(cmd);
+        mTestClient.handleCommand(cmd, mResultLog);
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         initCarApi();
-        Context ctx = getApplicationContext();
-        try {
-            mPrintWriter = new PrintWriter(new File(ctx.getFilesDir(), SHARED_DATA_FILE));
-        } catch (IOException e) {
-            Log.e(TAG, "onCreate: failed to open PowerPolicyData.txt");
-            mPrintWriter = null;
-        }
 
         Log.d(TAG, "onCreate");
         onNewIntent(getIntent());
@@ -104,6 +109,7 @@ public final class PowerPolicyTestActivity extends Activity {
                 (Car car, boolean ready) -> {
                     initManagers(car, ready);
                 });
+        mTestClient.setPowerManager(mPowerManager);
     }
 
     @Override
