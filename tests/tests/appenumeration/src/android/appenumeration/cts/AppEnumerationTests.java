@@ -40,6 +40,7 @@ import static android.appenumeration.cts.Constants.ACTION_QUERY_ACTIVITIES;
 import static android.appenumeration.cts.Constants.ACTION_QUERY_PROVIDERS;
 import static android.appenumeration.cts.Constants.ACTION_QUERY_RESOLVER;
 import static android.appenumeration.cts.Constants.ACTION_QUERY_SERVICES;
+import static android.appenumeration.cts.Constants.ACTION_SET_INSTALLER_PACKAGE_NAME;
 import static android.appenumeration.cts.Constants.ACTION_START_DIRECTLY;
 import static android.appenumeration.cts.Constants.ACTION_START_FOR_RESULT;
 import static android.appenumeration.cts.Constants.ACTIVITY_CLASS_DUMMY_ACTIVITY;
@@ -115,6 +116,7 @@ import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContainingInAnyOrder;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.emptyArray;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
@@ -124,6 +126,7 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -1053,6 +1056,20 @@ public class AppEnumerationTests {
         }
     }
 
+    @Test
+    public void queriesNothing_setInstallerPackageName_targetIsNoApi_throwsException() {
+        final Exception ex = assertThrows(IllegalArgumentException.class,
+                () -> setInstallerPackageName(QUERIES_NOTHING, TARGET_NO_API, QUERIES_NOTHING));
+        assertThat(ex.getMessage(), containsString(TARGET_NO_API));
+    }
+
+    @Test
+    public void queriesNothing_setInstallerPackageName_installerIsNoApi_throwsException() {
+        final Exception ex = assertThrows(IllegalArgumentException.class,
+                () -> setInstallerPackageName(QUERIES_NOTHING, QUERIES_NOTHING, TARGET_NO_API));
+        assertThat(ex.getMessage(), containsString(TARGET_NO_API));
+    }
+
     private void assertNotVisible(String sourcePackageName, String targetPackageName)
             throws Exception {
         if (!sGlobalFeatureEnabled) return;
@@ -1359,6 +1376,14 @@ public class AppEnumerationTests {
         final Bundle response = sendCommandBlocking(sourcePackageName, null /* targetPackageName */,
                 extraData, ACTION_GET_PREFERRED_ACTIVITIES);
         return response.getStringArray(Intent.EXTRA_PACKAGES);
+    }
+
+    private void setInstallerPackageName(String sourcePackageName, String targetPackageName,
+            String installerPackageName) throws Exception {
+        final Bundle extraData = new Bundle();
+        extraData.putString(Intent.EXTRA_INSTALLER_PACKAGE_NAME, installerPackageName);
+        sendCommandBlocking(sourcePackageName, targetPackageName,
+                extraData, ACTION_SET_INSTALLER_PACKAGE_NAME);
     }
 
     interface Result {
