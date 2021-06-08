@@ -88,6 +88,8 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
     private static final String DISALLOW_AMBIENT_DISPLAY_ID = "DISALLOW_AMBIENT_DISPLAY";
     private static final String DISALLOW_REMOVE_USER_TEST_ID = "DISALLOW_REMOVE_USER";
     private static final String DISABLE_USB_DATA_SIGNALING_TEST_ID = "DISABLE_USB_DATA_SIGNALING";
+    private static final String SET_REQUIRED_PASSWORD_COMPLEXITY_ID =
+            "SET_REQUIRED_PASSWORD_COMPLEXITY";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -571,6 +573,31 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                     }));
         }
 
+        // setRequiredPasswordComplexity
+        adapter.add(createInteractiveTestItem(this, SET_REQUIRED_PASSWORD_COMPLEXITY_ID,
+                R.string.device_owner_required_password_complexity_test,
+                R.string.device_owner_required_password_complexity_test_info,
+                new ButtonInfo[] {
+                        new ButtonInfo(
+                                R.string.set_low_required_password_complexity,
+                                createSetRequiredPasswordComplexityIntent(
+                                        DevicePolicyManager.PASSWORD_COMPLEXITY_LOW)),
+                        new ButtonInfo(
+                                R.string.set_medium_required_password_complexity,
+                                createSetRequiredPasswordComplexityIntent(
+                                        DevicePolicyManager.PASSWORD_COMPLEXITY_MEDIUM)),
+                        new ButtonInfo(
+                                R.string.set_high_required_password_complexity,
+                                createSetRequiredPasswordComplexityIntent(
+                                        DevicePolicyManager.PASSWORD_COMPLEXITY_HIGH)),
+                        new ButtonInfo(
+                                R.string.remove_required_password_complexity,
+                                createSetRequiredPasswordComplexityIntent(
+                                        DevicePolicyManager.PASSWORD_COMPLEXITY_NONE)),
+                        new ButtonInfo(
+                                R.string.device_owner_settings_go,
+                                new Intent(Settings.ACTION_SECURITY_SETTINGS))}));
+
         // removeDeviceOwner
         adapter.add(createInteractiveTestItem(this, REMOVE_DEVICE_OWNER_TEST_ID,
                 R.string.device_owner_remove_device_owner_test,
@@ -659,6 +686,13 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
         return new Intent(this, CommandReceiverActivity.class)
                 .putExtra(CommandReceiverActivity.EXTRA_COMMAND,
                         CommandReceiverActivity.COMMAND_DISABLE_USB_DATA_SIGNALING);
+    }
+
+    private Intent createSetRequiredPasswordComplexityIntent(int complexity) {
+        return new Intent(this, CommandReceiverActivity.class)
+                .putExtra(CommandReceiverActivity.EXTRA_COMMAND,
+                        CommandReceiverActivity.COMMAND_SET_REQUIRED_PASSWORD_COMPLEXITY)
+                .putExtra(CommandReceiverActivity.EXTRA_VALUE, complexity);
     }
 
     private boolean isStatusBarEnabled() {

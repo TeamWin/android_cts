@@ -4457,6 +4457,32 @@ You should be prompted to select credentials; choose the ones you just installed
     </string>
     <string name="device_owner_enable_usb_data_signaling_test">Enable USB data signaling</string>
 
+    <string name="device_owner_required_password_complexity_test">Set required password complexity</string>
+    <string name="device_owner_required_password_complexity_test_info">
+         This test verifies that required password complexity can be set by the device owner.\n
+         1. Press the \"Set low required password complexity\" button.\n
+         2. Press the \"Go\" button to go to Settings > Security > Screen lock. Verify that
+         you have to set a pattern, PIN or password.\n
+         3. Press the \"Set medium required password complexity\" button.\n
+         4. Press the \"Go\" button to go to Settings > Security > Screen lock. Verify that
+         you have to set a PIN without repeating (4444) or ordered (1234, 4321, 2468) sequences
+         with a length of at least 4; or you have to set an alphabetic or alphanumeric password with
+         a length of at least 4.\n
+         5. Press the \"Set high required password complexity\" button.\n
+         6. Press the \"Go\" button to go to Settings > Security > Screen lock. Verify that
+         you have to set a PIN without repeating (4444) or ordered (1234, 4321, 2468) sequences
+         with a length of at least 8; or you have to set an alphabetic or alphanumeric password with
+         a length of at least 6.\n
+         7. Press the \"Remove required password complexity\" button.\n
+         8. Press the \"Go\" button to go to Settings > Security > Screen lock. Verify that
+         you don\'t have to set a pattern, PIN or password.\n
+         Please mark the test accordingly.
+    </string>
+    <string name="set_low_required_password_complexity">Set low required password complexity</string>
+    <string name="set_medium_required_password_complexity">Set medium required password complexity</string>
+    <string name="set_high_required_password_complexity">Set high required password complexity</string>
+    <string name="remove_required_password_complexity">Remove required password complexity</string>
+
     <string name="managed_user_test">Managed User</string>
     <string name="managed_user_positive_tests">Managed User positive tests</string>
     <string name="managed_user_positive_tests_instructions">
