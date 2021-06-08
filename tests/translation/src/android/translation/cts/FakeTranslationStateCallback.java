@@ -71,6 +71,7 @@ public class FakeTranslationStateCallback implements UiTranslationStateCallback 
 
     @Override
     public void onStarted(ULocale sourceLocale, ULocale targetLocale) {
+        UiTranslationStateCallback.super.onStarted(sourceLocale, targetLocale);
         Log.d(TAG, "onStarted, source=" + sourceLocale.getLanguage() + " targetLocale="
                 + targetLocale.getLanguage());
         mStartCalled = true;
@@ -80,6 +81,7 @@ public class FakeTranslationStateCallback implements UiTranslationStateCallback 
 
     @Override
     public void onResumed(ULocale sourceLocale, ULocale targetLocale) {
+        UiTranslationStateCallback.super.onResumed(sourceLocale, targetLocale);
         Log.d(TAG, "onResumed, source=" + sourceLocale.getLanguage() + " targetLocale="
                 + targetLocale.getLanguage());
         mResumedCalled = true;
