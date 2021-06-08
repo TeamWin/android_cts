@@ -31,6 +31,7 @@ import android.net.NetworkRequest;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiNetworkSpecifier;
+import android.os.Build;
 import android.platform.test.annotations.AppModeFull;
 import android.support.test.uiautomator.UiDevice;
 
@@ -64,10 +65,8 @@ import java.util.List;
  *
  * TODO(b/177591382): Refactor some of the utilities to a separate file that are copied over from
  * WifiManagerTest & WifiNetworkSpecifierTest.
- *
- * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
  */
-@SdkSuppress(minSdkVersion = 31, codeName = "S")
+@SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
 @AppModeFull(reason = "Cannot get WifiManager in instant app mode")
 @SmallTest
 @RunWith(AndroidJUnit4.class)

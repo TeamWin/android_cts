@@ -110,7 +110,8 @@ public class PackageManagerShellCommandIncrementalTest {
 
     private static final long EXPECTED_READ_TIME = 1000L;
 
-    IncrementalInstallSession mSession = null;
+    private IncrementalInstallSession mSession = null;
+    private String mPackageVerifier = null;
 
     private static UiAutomation getUiAutomation() {
         return InstrumentationRegistry.getInstrumentation().getUiAutomation();
@@ -128,11 +129,18 @@ public class PackageManagerShellCommandIncrementalTest {
     public void onBefore() throws Exception {
         checkIncrementalDeliveryFeature();
         cleanup();
+
+        // Disable the package verifier to avoid the dialog when installing an app.
+        mPackageVerifier = executeShellCommand("settings get global verifier_verify_adb_installs");
+        executeShellCommand("settings put global verifier_verify_adb_installs 0");
     }
 
     @After
     public void onAfter() throws Exception {
         cleanup();
+
+        // Reset the package verifier setting to its original value.
+        executeShellCommand("settings put global verifier_verify_adb_installs " + mPackageVerifier);
     }
 
     static void checkIncrementalDeliveryFeature() {

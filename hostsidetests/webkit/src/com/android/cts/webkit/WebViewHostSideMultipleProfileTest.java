@@ -16,6 +16,8 @@
 
 package com.android.cts.webkit;
 
+import android.platform.test.annotations.SystemUserOnly;
+
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil;
@@ -36,7 +38,10 @@ import org.junit.runner.RunWith;
 import java.io.File;
 import java.io.FileNotFoundException;
 
+// TODO(torne): once secondary user testing of CtsWebkitTestCases is fully automated
+//              we can consider deleting this test.
 @RunWith(DeviceJUnit4ClassRunner.class)
+@SystemUserOnly(reason = "This test explicitly manages multiple users itself")
 public class WebViewHostSideMultipleProfileTest extends BaseHostJUnit4Test {
     private static final String DEVICE_PACKAGE = "com.android.cts.webkit";
     private static final String SIMPLE_DEVICE_TEST_CLASS = "WebViewDeviceSideMultipleProfileTest";
