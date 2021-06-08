@@ -66,6 +66,7 @@ public class Utils {
     public static final int HOTWORD_DETECTION_SERVICE_EXTERNAL_SOURCE_ONDETECT_TEST = 102;
     public static final int HOTWORD_DETECTION_SERVICE_FROM_SOFTWARE_TRIGGER_TEST = 103;
     public static final int HOTWORD_DETECTION_SERVICE_MIC_ONDETECT_TEST = 104;
+    public static final int HOTWORD_DETECTION_SERVICE_DSP_ONREJECT_TEST = 105;
 
     public static final int HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS = 1;
     public static final int HOTWORD_DETECTION_SERVICE_TRIGGER_ILLEGAL_STATE_EXCEPTION = 2;
@@ -73,6 +74,7 @@ public class Utils {
     public static final int HOTWORD_DETECTION_SERVICE_TRIGGER_SHARED_MEMORY_NOT_READ_ONLY = 4;
 
     public static final int HOTWORD_DETECTION_SERVICE_ONDETECT_SUCCESS = 1;
+    public static final int HOTWORD_DETECTION_SERVICE_ONDETECT_REJECTION = 2;
 
     public static final String TESTCASE_TYPE = "testcase_type";
     public static final String TESTINFO = "testinfo";
@@ -146,9 +148,9 @@ public class Utils {
     public static final String SERVICE_NAME =
             "android.voiceinteraction.service/.MainInteractionService";
 
-    public static final String BROADCAST_HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT =
+    public static final String HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT =
             "android.intent.action.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT";
-    public static final String BROADCAST_HOTWORD_DETECTION_SERVICE_ONDETECT_RESULT_INTENT =
+    public static final String HOTWORD_DETECTION_SERVICE_ONDETECT_RESULT_INTENT =
             "android.intent.action.HOTWORD_DETECTION_SERVICE_ONDETECT_RESULT";
     public static final String KEY_SERVICE_TYPE = "serviceType";
     public static final String KEY_TEST_EVENT = "testEvent";
