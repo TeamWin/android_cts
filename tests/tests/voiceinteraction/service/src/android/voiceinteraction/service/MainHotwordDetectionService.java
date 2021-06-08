@@ -23,6 +23,7 @@ import android.os.SharedMemory;
 import android.service.voice.AlwaysOnHotwordDetector;
 import android.service.voice.HotwordDetectedResult;
 import android.service.voice.HotwordDetectionService;
+import android.service.voice.HotwordRejectedResult;
 import android.system.ErrnoException;
 import android.text.TextUtils;
 import android.util.Log;
@@ -43,8 +44,11 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
         Log.d(TAG, "onDetect for DSP source");
 
         // TODO: Check the capture session (needs to be reflectively accessed).
-        if (eventPayload.getTriggerAudio().length == 1024) {
+        byte[] data = eventPayload.getTriggerAudio();
+        if (data != null && data.length > 0) {
             callback.onDetected(new HotwordDetectedResult.Builder().build());
+        } else {
+            callback.onRejected(new HotwordRejectedResult.Builder().build());
         }
     }
 
