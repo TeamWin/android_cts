@@ -156,22 +156,6 @@ public class LockTaskTest extends BaseDeviceAdminTest {
         mContext.unregisterReceiver(mReceiver);
     }
 
-    // Verifies that updating the allowlist during lock task mode finishes the locked task.
-    public void testUpdateAllowlist() throws Exception {
-        mDevicePolicyManager.setLockTaskPackages(ADMIN_COMPONENT, new String[] { PACKAGE_NAME });
-        startLockTask(UTILITY_ACTIVITY);
-
-        mDevicePolicyManager.setLockTaskPackages(ADMIN_COMPONENT, new String[0]);
-
-        synchronized (mActivityRunningLock) {
-            mActivityRunningLock.wait(ACTIVITY_DESTROYED_TIMEOUT_MILLIS);
-        }
-
-        assertLockTaskModeInactive();
-        assertFalse(mIsActivityRunning);
-        assertFalse(mIsActivityResumed);
-    }
-
     // Verifies that removing the allowlist authorization immediately finishes the corresponding
     // locked task. The other locked task(s) should remain locked.
     public void testUpdateAllowlist_twoTasks() throws Exception {
