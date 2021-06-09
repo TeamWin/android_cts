@@ -37,14 +37,16 @@ import javax.annotation.concurrent.GuardedBy;
  *     <pre class="prettyprint">
  *         adb shell am force-stop android.car.cts.app
  *         adb shell am start -n android.car.cts.app/.PowerPolicyTestActivity \
- *                --es "powerpolicy" "action[,data]"
- *         actions:
- *            settest testcase_name
+ *                --es "powerpolicy" "action"
+ *         action:
+ *            settest [testcase_name]
  *            cleartest
- *            dumppolicy policyId
- *            addlistener component_name
- *            removelistener component_name
- *            dumplistener component_name
+ *            dumppolicy [policyId]
+ *            addlistener [component_name]
+ *            removelistener [component_name]
+ *            dumplistener [component_name]
+ *            resetlisteners
+ *            waitlisteners
  *     </pre>
  */
 public final class PowerPolicyTestActivity extends Activity {
@@ -86,12 +88,16 @@ public final class PowerPolicyTestActivity extends Activity {
             return;
         }
 
-        PowerPolicyTestCommand cmd = mTestClient.parseCommand(extras);
-        if (cmd == null) {
-            Log.d(TAG, "onNewIntent(): null policy test command");
-            return;
+        try {
+            PowerPolicyTestCommand cmd = mTestClient.parseCommand(extras);
+            if (cmd == null) {
+                Log.d(TAG, "onNewIntent(): null policy test command");
+                return;
+            }
+            cmd.execute();
+        } catch (Exception e) {
+            Log.e(TAG, "onNewIntent(): failed to handle cmd", e);
         }
-        cmd.execute();
     }
 
     @Override
