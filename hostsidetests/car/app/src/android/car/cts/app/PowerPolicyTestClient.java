@@ -16,9 +16,14 @@
 
 package android.car.cts.app;
 
+import android.car.hardware.power.CarPowerManager;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.util.Log;
+
+import androidx.annotation.Nullable;
+
+import java.io.PrintWriter;
 
 public final class PowerPolicyTestClient {
     private static final String TAG = PowerPolicyTestClient.class.getSimpleName();
@@ -28,51 +33,34 @@ public final class PowerPolicyTestClient {
     private static final String TEST_CMD_END = "end";
     private static final String TEST_CMD_DUMP_STATE = "dumpstate";
     private static final String TEST_CMD_DUMP_POLICY = "dumppolicy";
+    private static final String TEST_CMD_SET_POLICY_GROUP = "setpolicygroup";
     private static final String TEST_CMD_APPLY_POLICY = "applypolicy";
     private static final String TEST_CMD_CLOSE_DATAFILE = "closefile";
 
-    private static PowerPolicyTestClient sPowerPolicyTestClient = new PowerPolicyTestClient();
-
+    private CarPowerManager mPowerManager;
     private long mClientStartTime;
 
     // This method is not intended for multi-threaded calls.
-    public static void handleCommand(PowerPolicyTestCommand cmd) {
-        switch (cmd.getType()) {
-            case START:
-                if (sPowerPolicyTestClient != null) {
-                    Log.w(TAG, "can not restart the test without ending the previous test first");
-                    return;
-                }
-                break;
-            default:
-                if (sPowerPolicyTestClient == null) {
-                    Log.w(TAG, "execute test start command first");
-                    return;
-                }
-                break;
-        }
-        cmd.execute(sPowerPolicyTestClient);
-
-        if (cmd.getType() == PowerPolicyTestCommand.TestCommandType.END) {
-            sPowerPolicyTestClient = null;
-        }
+    public void handleCommand(PowerPolicyTestCommand cmd, PrintWriter resultLog) {
+        cmd.execute(this, resultLog);
     }
 
-    public static PowerPolicyTestCommand parseCommand(Bundle intentExtras) {
+    @Nullable
+    public PowerPolicyTestCommand parseCommand(Bundle intentExtras) {
         String testcase;
         String action;
         String data;
         PowerPolicyTestCommand cmd = null;
-        String powertest = intentExtras.getString(POWERPOLICY_TEST_CMD_IDENTIFIER);
-        if (powertest == null) {
+        String cmdStr = intentExtras.getString(POWERPOLICY_TEST_CMD_IDENTIFIER);
+        if (cmdStr == null) {
             Log.d(TAG, "empty power test command");
             return cmd;
         }
 
-        String[] tokens = powertest.split(",");
+        String[] tokens = cmdStr.split(",");
         int paramCount = tokens.length;
         if (paramCount != 2 && paramCount != 3) {
-            throw new IllegalArgumentException("invalid command syntax");
+            throw new IllegalArgumentException("invalid command syntax: " + cmdStr);
         }
 
         testcase = tokens[0];
@@ -83,36 +71,44 @@ public final class PowerPolicyTestClient {
             data = null;
         }
 
-        switch (testcase) {
+        switch (action) {
             case TEST_CMD_START:
-                cmd = new PowerPolicyTestCommand.StartTestcaseCommand(testcase);
+                cmd = new PowerPolicyTestCommand.StartTestcaseCommand(testcase, mPowerManager);
                 break;
             case TEST_CMD_END:
-                cmd = new PowerPolicyTestCommand.EndTestcaseCommand(testcase);
+                cmd = new PowerPolicyTestCommand.EndTestcaseCommand(testcase, mPowerManager);
                 break;
             case TEST_CMD_DUMP_STATE:
-                cmd = new PowerPolicyTestCommand.DumpStateCommand(testcase);
+                cmd = new PowerPolicyTestCommand.DumpStateCommand(testcase, mPowerManager);
                 break;
             case TEST_CMD_DUMP_POLICY:
-                cmd = new PowerPolicyTestCommand.DumpPolicyCommand(testcase);
+                cmd = new PowerPolicyTestCommand.DumpPolicyCommand(testcase, mPowerManager);
+                break;
+            case TEST_CMD_SET_POLICY_GROUP:
+                if (paramCount != 3) {
+                    throw new IllegalArgumentException("invalid cmd syntax: " + cmdStr);
+                }
+                cmd = new PowerPolicyTestCommand.SetPolicyGroupCommand(testcase, mPowerManager);
+                cmd.mPolicyData = data;
                 break;
             case TEST_CMD_APPLY_POLICY:
                 if (paramCount != 3) {
-                    throw new IllegalArgumentException("invalid command syntax");
+                    throw new IllegalArgumentException("invalid cmd syntax: " + cmdStr);
                 }
-                cmd = new PowerPolicyTestCommand.ApplyPolicyCommand(testcase);
-                cmd.mPolicyId = data;
-                break;
-            case TEST_CMD_CLOSE_DATAFILE:
-                cmd = new PowerPolicyTestCommand.CloseDataFileCommand(testcase);
+                cmd = new PowerPolicyTestCommand.ApplyPolicyCommand(testcase, mPowerManager);
+                cmd.mPolicyData = data;
                 break;
             default:
                 throw new IllegalArgumentException("invalid power policy test command: "
-                    + action);
+                    + cmdStr);
         }
 
         Log.i(TAG, "testcase=" + testcase + ", command=" + action);
         return cmd;
+    }
+
+    public void setPowerManager(CarPowerManager pm) {
+        mPowerManager = pm;
     }
 
     public void cleanup() {

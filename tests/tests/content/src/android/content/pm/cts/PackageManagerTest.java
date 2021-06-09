@@ -89,6 +89,7 @@ import android.util.Log;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
@@ -169,6 +170,9 @@ public class PackageManagerTest {
     private static final String SHELL_PACKAGE_NAME = "com.android.shell";
     private static final String HELLO_WORLD_PACKAGE_NAME = "com.example.helloworld";
     private static final String HELLO_WORLD_APK = SAMPLE_APK_BASE + "HelloWorld5.apk";
+    private static final String MOCK_LAUNCHER_PACKAGE_NAME = "android.content.cts.mocklauncherapp";
+    private static final String MOCK_LAUNCHER_APK = SAMPLE_APK_BASE
+            + "CtsContentMockLauncherTestApp.apk";
 
     @Before
     public void setup() throws Exception {
@@ -182,6 +186,7 @@ public class PackageManagerTest {
         uninstallPackage(EMPTY_APP_PACKAGE_NAME);
         uninstallPackage(EMPTY_APP_MAX_PACKAGE_NAME);
         uninstallPackage(HELLO_WORLD_PACKAGE_NAME);
+        uninstallPackage(MOCK_LAUNCHER_PACKAGE_NAME);
     }
 
     @Test
@@ -1528,5 +1533,26 @@ public class PackageManagerTest {
 
         intentSender.sendIntent(mContext, 0 /* code */, null /* intent */,
                 null /* onFinished */, null /* handler */);
+    }
+
+    @Test
+    public void testDefaultHomeActivity_doesntChange_whenInstallAnotherLauncher() throws Exception {
+        final Intent homeIntent = new Intent(Intent.ACTION_MAIN)
+                .addCategory(Intent.CATEGORY_HOME);
+        final String currentHomeActivity =
+                mPackageManager.resolveActivity(homeIntent, 0 /*flags*/).activityInfo.name;
+
+        // Install another launcher app.
+        assertThat(installPackage(MOCK_LAUNCHER_APK)).isTrue();
+
+        // There is an async operation to re-set the default home activity in Role with no way
+        // to listen for completion once a package installed, so poll until the default home
+        // activity is set.
+        PollingCheck.waitFor(() -> currentHomeActivity.equals(
+                mPackageManager.resolveActivity(homeIntent, 0 /*flags*/).activityInfo.name));
+        final List<String> homeApps =
+                mPackageManager.queryIntentActivities(homeIntent, 0 /*flags*/).stream()
+                        .map(i -> i.activityInfo.packageName).collect(Collectors.toList());
+        assertThat(homeApps.contains(MOCK_LAUNCHER_PACKAGE_NAME)).isTrue();
     }
 }

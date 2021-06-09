@@ -16,9 +16,35 @@
 
 package android.sensorprivacy.cts
 
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.hardware.SensorPrivacyManager.Sensors.MICROPHONE
+import android.net.Uri
+import android.telecom.TelecomManager
+import com.android.compatibility.common.util.SystemUtil
+import org.junit.Assume
+import org.junit.Test
 
 class SensorPrivacyMicrophoneTest : SensorPrivacyBaseTest(
         MICROPHONE,
         USE_MIC_EXTRA
-)
+) {
+    @Test
+    fun testMicShownOnPhoneCall() {
+        try {
+            Assume.assumeTrue(packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY))
+            setSensor(true)
+            SystemUtil.runWithShellPermissionIdentity {
+                val intent = Intent(Intent.ACTION_CALL, Uri.parse("tel:" + "555-5555"))
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                context.startActivity(intent)
+            }
+
+            unblockSensorWithDialogAndAssert()
+        } finally {
+            SystemUtil.runWithShellPermissionIdentity {
+                context.getSystemService(TelecomManager::class.java)!!.endCall()
+            }
+        }
+    }
+}

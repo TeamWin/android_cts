@@ -380,10 +380,8 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
 
     /**
      * Tests the {@link android.net.wifi.WifiManager#setWifiScoringEnabled(boolean)}
-     *
-     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
      */
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     @Test
     public void testSetWifiScoringEnabled() throws Exception {
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
@@ -588,9 +586,8 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
      * Tests the {@link android.net.wifi.WifiConnectedNetworkScorer} interface.
      *
      * Verifies that the external scorer works even after wifi restart.
-     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
      */
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     @Test
     public void testSetWifiConnectedNetworkScorerOnSubsystemRestart() throws Exception {
         CountDownLatch countDownLatchScorer = new CountDownLatch(1);
@@ -770,9 +767,8 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
      * Tests the {@link android.net.wifi.WifiConnectedNetworkScorer} interface.
      *
      * Verifies that the external scorer is not notified for oem paid suggestion connections.
-     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
      */
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     @Test
     public void testSetWifiConnectedNetworkScorerForOemPaidSuggestionConnection() throws Exception {
         testSetWifiConnectedNetworkScorerForRestrictedSuggestionConnection(
@@ -783,9 +779,8 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
      * Tests the {@link android.net.wifi.WifiConnectedNetworkScorer} interface.
      *
      * Verifies that the external scorer is not notified for oem private suggestion connections.
-     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
      */
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     @Test
     public void testSetWifiConnectedNetworkScorerForOemPrivateSuggestionConnection()
             throws Exception {

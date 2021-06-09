@@ -45,6 +45,7 @@ import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.SystemUtil;
 import com.android.cts.install.lib.Install;
 import com.android.cts.install.lib.InstallUtils;
 import com.android.cts.install.lib.LocalIntentSender;
@@ -512,14 +513,19 @@ public class StagedInstallTest {
 
     @Test
     public void testsFailsNonStagedApexInstall() throws Exception {
-        assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(1);
-        TestApp apex = new TestApp(
-                "Apex2", SHIM_APEX_PACKAGE_NAME, 2, /*isApex*/true,
-                "com.android.apex.cts.shim.v2.apex");
-        InstallUtils.commitExpectingFailure(AssertionError.class,
-                "does not support non-staged update",
-                Install.single(apex));
-        assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(1);
+        try {
+            SystemUtil.runShellCommandForNoOutput("pm bypass-staged-installer-check true");
+            assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(1);
+            TestApp apex = new TestApp(
+                    "Apex2", SHIM_APEX_PACKAGE_NAME, 2, /*isApex*/true,
+                    "com.android.apex.cts.shim.v2.apex");
+            InstallUtils.commitExpectingFailure(AssertionError.class,
+                    "does not support non-staged update",
+                    Install.single(apex));
+            assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(1);
+        } finally {
+            SystemUtil.runShellCommandForNoOutput("pm bypass-staged-installer-check false");
+        }
     }
 
     @Test

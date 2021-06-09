@@ -24,12 +24,6 @@
 
     <option name="config-descriptor:metadata" key="parameter" value="secondary_user" />
 
-    <target_preparer class="com.android.tradefed.targetprep.DeviceSetup">
-        <!-- Disable package verifier prevents test flakiness. -->
-        <option name="set-global-setting" key="verifier_verify_adb_installs" value="0" />
-        <option name="restore-settings" value="true" />
-    </target_preparer>
-
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
         <option name="run-command" value="mkdir -p /data/local/tmp/cts/content" />
         <option name="teardown-command" value="rm -rf /data/local/tmp/cts"/>
@@ -45,6 +39,7 @@
         <option name="push" value="CtsContentLongSharedUserIdTestApp.apk->/data/local/tmp/cts/content/CtsContentLongSharedUserIdTestApp.apk" />
         <option name="push" value="CtsContentMaxPackageNameTestApp.apk->/data/local/tmp/cts/content/CtsContentMaxPackageNameTestApp.apk" />
         <option name="push" value="CtsContentMaxSharedUserIdTestApp.apk->/data/local/tmp/cts/content/CtsContentMaxSharedUserIdTestApp.apk" />
+        <option name="push" value="CtsContentMockLauncherTestApp.apk->/data/local/tmp/cts/content/CtsContentMockLauncherTestApp.apk" />
     </target_preparer>
 
     <target_preparer class="com.android.tradefed.targetprep.PushFilePreparer">
