@@ -442,7 +442,7 @@ public class LockTaskTest {
 
     @Test
     @PositivePolicyTest(policy = LockTask.class)
-    public void finish_hasStoppedLockTask_doesFinish() throws Exception {
+    public void finish_hasStoppedLockTask_doesFinish() {
         String[] originalLockTaskPackages =
                 sDeviceState.dpc().devicePolicyManager().getLockTaskPackages();
         sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(
@@ -459,6 +459,32 @@ public class LockTaskTest {
             EventLogs<ActivityDestroyedEvent> events =
                     ActivityDestroyedEvent.queryPackage(sTestApp.packageName())
                     .whereActivity().className().isEqualTo(activity.reference().className());
+            assertThat(events.poll()).isNotNull();
+            assertThat(sTestApis.activities().foregroundActivity()).isNotEqualTo(
+                    activity.reference());
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(originalLockTaskPackages);
+        }
+    }
+
+    @Test
+    @PositivePolicyTest(policy = LockTask.class)
+    public void setLockTaskPackages_removingCurrentlyLockedTask_taskFinishes() {
+        String[] originalLockTaskPackages =
+                sDeviceState.dpc().devicePolicyManager().getLockTaskPackages();
+        sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(
+                new String[]{sTestApp.packageName()});
+        try (TestAppInstanceReference testApp =
+                     sTestApp.install(sTestApis.users().instrumented())) {
+            TestAppActivityReference activity = testApp.activities().any().start();
+            startLockTaskAndWait(activity);
+
+            sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(new String[]{});
+
+            // TODO(b/189327037): Replace with more direct integration between TestApp and EventLib
+            EventLogs<ActivityDestroyedEvent> events =
+                    ActivityDestroyedEvent.queryPackage(sTestApp.packageName())
+                            .whereActivity().className().isEqualTo(activity.reference().className());
             assertThat(events.poll()).isNotNull();
             assertThat(sTestApis.activities().foregroundActivity()).isNotEqualTo(
                     activity.reference());
