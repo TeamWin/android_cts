@@ -37,10 +37,14 @@ import javax.annotation.concurrent.GuardedBy;
  *     <pre class="prettyprint">
  *         adb shell am force-stop android.car.cts.app
  *         adb shell am start -n android.car.cts.app/.PowerPolicyTestActivity \
- *              --es "powerpolicy" "testcase,action[,data]"
- *         - testcase: suite | 1 | 2 | 3 | 4 | 5 | 6
- *         - action:   start | end | dumpstate | dumppolicy | applypolicy | closefile
- *         - data:     policyId
+ *                --es "powerpolicy" "action[,data]"
+ *         actions:
+ *            settest testcase_name
+ *            cleartest
+ *            dumppolicy policyId
+ *            addlistener component_name
+ *            removelistener component_name
+ *            dumplistener component_name
  *     </pre>
  */
 public final class PowerPolicyTestActivity extends Activity {
@@ -48,13 +52,13 @@ public final class PowerPolicyTestActivity extends Activity {
     private static final String TAG = PowerPolicyTestActivity.class.getSimpleName();
 
     private final Object mLock = new Object();
-    private final PowerPolicyTestClient mTestClient = new PowerPolicyTestClient();
 
     // LocalLog is not available for cts. Use StringWriter instead.
     // The host side test will kill and restart the app for each test case,
     // therefore 4KB buffer size is sufficient.
     private final StringWriter mResultBuf = new StringWriter(RESULT_LOG_SIZE);
     private final PrintWriter mResultLog = new PrintWriter(mResultBuf);
+    private final PowerPolicyTestClient mTestClient = new PowerPolicyTestClient(mResultLog);
 
     private Car mCarApi;
     @GuardedBy("mLock")
@@ -87,7 +91,7 @@ public final class PowerPolicyTestActivity extends Activity {
             Log.d(TAG, "onNewIntent(): null policy test command");
             return;
         }
-        mTestClient.handleCommand(cmd, mResultLog);
+        cmd.execute();
     }
 
     @Override
