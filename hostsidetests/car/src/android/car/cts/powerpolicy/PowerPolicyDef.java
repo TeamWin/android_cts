@@ -147,6 +147,7 @@ public final class PowerPolicyDef {
         public static final String TEST2 = "test2";
         public static final String ERROR_TEST1 = "error_test1";
         public static final String ERROR_TEST2 = "error_test2";
+        public static final String LISTENER_TEST = "listener_test";
     }
 
     public enum PowerComponent {
@@ -235,6 +236,7 @@ public final class PowerPolicyDef {
             PowerComponent.DISPLAY,
             PowerComponent.CPU
         };
+
         static final PowerComponent[] INIT_ALL_ON_DISABLE = {
             PowerComponent.MEDIA,
             PowerComponent.BLUETOOTH,
@@ -261,6 +263,7 @@ public final class PowerPolicyDef {
             PowerComponent.TRUSTED_DEVICE_DETECTION,
             PowerComponent.CPU
         };
+
         static final PowerComponent[] NO_USER_INTERACT_DISABLE = {
             PowerComponent.AUDIO,
             PowerComponent.MEDIA,
@@ -326,6 +329,28 @@ public final class PowerPolicyDef {
             PowerComponent.CPU
         };
         static final PowerComponent[] RUNTIME_SILENT_DISABLE = {};
+
+        static final PowerComponent[] LISTENER_TEST_ENABLE = {
+            PowerComponent.MEDIA,
+            PowerComponent.DISPLAY,
+            PowerComponent.BLUETOOTH,
+            PowerComponent.WIFI,
+            PowerComponent.CELLULAR,
+            PowerComponent.ETHERNET,
+            PowerComponent.PROJECTION,
+            PowerComponent.NFC,
+            PowerComponent.INPUT,
+            PowerComponent.VOICE_INTERACTION,
+            PowerComponent.VISUAL_INTERACTION,
+            PowerComponent.TRUSTED_DEVICE_DETECTION,
+            PowerComponent.LOCATION,
+            PowerComponent.CPU
+        };
+
+        static final PowerComponent[] LISTENER_TEST_DISABLE = {
+            PowerComponent.AUDIO,
+            PowerComponent.MICROPHONE
+        };
     }
 
     public static final class PolicySet {
@@ -354,6 +379,9 @@ public final class PowerPolicyDef {
 
         public static final PowerPolicyDef ERROR_TEST2 = new PowerPolicyDef(IdSet.ERROR_TEST2,
                 ComponentList.ERROR_TEST2_ENABLE, ComponentList.ERROR_TEST2_DISABLE);
+
+        public static final PowerPolicyDef LISTENER_TEST = new PowerPolicyDef(IdSet.LISTENER_TEST,
+                ComponentList.LISTENER_TEST_ENABLE, ComponentList.LISTENER_TEST_DISABLE);
     }
 
     public static final class ComponentSet {

@@ -19,6 +19,8 @@ package android.car.cts.app;
 import android.car.hardware.power.CarPowerPolicy;
 import android.util.Log;
 
+import com.android.compatibility.common.util.PollingCheck;
+
 import java.util.Arrays;
 
 
@@ -29,10 +31,14 @@ public abstract class PowerPolicyTestCommand {
         DUMP_POLICY,
         ADD_LISTENER,
         REMOVE_LISTENER,
-        DUMP_LISTENER
+        DUMP_LISTENER,
+        RESET_LISTENERS,
+        WAIT_LISTENERS
     }
 
     private static final String TAG = PowerPolicyTestCommand.class.getSimpleName();
+    private static final String NO_POLICY = "null";
+    private static final int TEST_WAIT_DURATION_MS = 5_000;
 
     private final TestCommandType mType;
     protected final PowerPolicyTestClient mTestClient;
@@ -65,35 +71,35 @@ public abstract class PowerPolicyTestCommand {
 
         @Override
         public void execute() {
-            this.mTestClient.printResultHeader(this.getType().name());
-            this.mTestClient.printlnResult(this.mData);
-            this.mTestClient.setTestcase(this.mData);
-            Log.d(TAG, "setTestcase: " + this.mData);
+            mTestClient.printResultHeader(getType().name());
+            mTestClient.printlnResult(mData);
+            mTestClient.setTestcase(mData);
+            Log.d(TAG, "setTestcase: " + mData);
         }
     }
 
     static final class ClearTestCommand extends PowerPolicyTestCommand {
         ClearTestCommand(PowerPolicyTestClient testClient) {
-            super(testClient, null, TestCommandType.CLEAR_TEST);
+            super(testClient, /* data = */ null, TestCommandType.CLEAR_TEST);
         }
 
         @Override
         public void execute() {
-            this.mTestClient.clearTestcase();
-            this.mTestClient.printResultHeader(this.getType().name());
-            this.mTestClient.printlnResult();
-            Log.d(TAG, "clearTestcase: " + this.mTestClient.getTestcase());
+            mTestClient.clearTestcase();
+            mTestClient.printResultHeader(getType().name());
+            mTestClient.printlnResult();
+            Log.d(TAG, "clearTestcase: " + mTestClient.getTestcase());
         }
     }
 
     static final class DumpPolicyCommand extends PowerPolicyTestCommand {
         DumpPolicyCommand(PowerPolicyTestClient testClient) {
-            super(testClient, null, TestCommandType.DUMP_POLICY);
+            super(testClient, /* data = */ null, TestCommandType.DUMP_POLICY);
         }
 
         @Override
         public void execute() {
-            CarPowerPolicy cpp = this.mTestClient.getPowerManager().getCurrentPowerPolicy();
+            CarPowerPolicy cpp = mTestClient.getPowerManager().getCurrentPowerPolicy();
             if (cpp == null) {
                 Log.d(TAG, "null current power policy");
                 return;
@@ -101,18 +107,18 @@ public abstract class PowerPolicyTestCommand {
 
             String policyId = cpp.getPolicyId();
             if (policyId == null) {
-                policyId = "null";
+                policyId = NO_POLICY;
             }
             String[] enables = Arrays.stream(cpp.getEnabledComponents())
-                    .mapToObj(PowerPolicyTestClient.PowerComponentUtil::componentToString)
+                    .mapToObj(PowerComponentUtil::componentToString)
                     .toArray(String[]::new);
             String[] disables = Arrays.stream(cpp.getDisabledComponents())
-                    .mapToObj(PowerPolicyTestClient.PowerComponentUtil::componentToString)
+                    .mapToObj(PowerComponentUtil::componentToString)
                     .toArray(String[]::new);
-            this.mTestClient.printResultHeader(this.getType().name());
-            this.mTestClient.printfResult("%s (", policyId);
-            this.mTestClient.printfResult("enabledComponents:%s ", String.join(",", enables));
-            this.mTestClient.printfResult("disabledComponents:%s)\n", String.join(",", disables));
+            mTestClient.printResultHeader(getType().name());
+            mTestClient.printfResult("%s (", policyId);
+            mTestClient.printfResult("enabledComponents:%s ", String.join(",", enables));
+            mTestClient.printfResult("disabledComponents:%s)\n", String.join(",", disables));
 
             Log.d(TAG, "dump power policy " + policyId);
         }
@@ -125,13 +131,14 @@ public abstract class PowerPolicyTestCommand {
 
         @Override
         public void execute() {
-            Log.d(TAG, "addListener: " + this.mTestClient.getTestcase());
-            this.mTestClient.printResultHeader(this.getType().name());
+            Log.d(TAG, "addListener: " + mTestClient.getTestcase());
+            mTestClient.printResultHeader(getType().name());
             try {
-                this.mTestClient.registerPowerPolicyListener(mData);
-                this.mTestClient.printlnResult("succeed");
+                mTestClient.registerPowerPolicyListener(mData);
+                mTestClient.printlnResult("succeed");
             } catch (Exception e) {
-                this.mTestClient.printlnResult("failed");
+                mTestClient.printlnResult("failed");
+                Log.e(TAG, "failed to addListener", e);
             }
         }
     }
@@ -143,13 +150,14 @@ public abstract class PowerPolicyTestCommand {
 
         @Override
         public void execute() {
-            Log.d(TAG, "removeListener: " + this.mTestClient.getTestcase());
-            this.mTestClient.printResultHeader(this.getType().name());
+            Log.d(TAG, "removeListener: " + mTestClient.getTestcase());
+            mTestClient.printResultHeader(getType().name());
             try {
-                this.mTestClient.unregisterPowerPolicyListener(mData);
-                this.mTestClient.printlnResult("succeed");
+                mTestClient.unregisterPowerPolicyListener(mData);
+                mTestClient.printlnResult("succeed");
             } catch (Exception e) {
-                this.mTestClient.printlnResult("failed");
+                mTestClient.printlnResult("failed");
+                Log.e(TAG, "failed to removeListener", e);
             }
         }
     }
@@ -161,18 +169,58 @@ public abstract class PowerPolicyTestCommand {
 
         @Override
         public void execute() {
-            Log.d(TAG, "dumpListener: " + this.mTestClient.getTestcase());
-            this.mTestClient.printResultHeader(this.getType().name() + ": " + mData);
+            Log.d(TAG, "dumpListener: " + mTestClient.getTestcase());
+            mTestClient.printResultHeader(getType().name() + ": " + mData);
             try {
-                CarPowerPolicy policy = this.mTestClient.getListenerCurrentPolicy(mData);
-                String str = "null";
+                CarPowerPolicy policy = mTestClient.getListenerCurrentPolicy(mData);
+                String policyStr = NO_POLICY;
                 if (policy != null) {
-                    str = PowerPolicyTestClient.PowerPolicyListenerImpl.getPolicyString(policy);
+                    policyStr = PowerPolicyListenerImpl.getPolicyString(policy);
                 }
-                this.mTestClient.printlnResult(str);
+                mTestClient.printlnResult(policyStr);
+                Log.d(TAG, "received power policy: " + policyStr);
             } catch (Exception e) {
-                this.mTestClient.printlnResult("not_registered");
-                Log.d(TAG, e.toString());
+                mTestClient.printlnResult("not_registered");
+                Log.d(TAG, "failed to find registered policy " + mData, e);
+            }
+        }
+    }
+
+    static final class WaitListenersCommand extends PowerPolicyTestCommand {
+        WaitListenersCommand(PowerPolicyTestClient testClient) {
+            super(testClient, /* data = */ null, TestCommandType.WAIT_LISTENERS);
+        }
+
+        @Override
+        public void execute() {
+            Log.d(TAG, "waitListeners: " + mTestClient.getTestcase());
+            mTestClient.printResultHeader(getType().name());
+            try {
+                PollingCheck.check("policy change isn't propagated", TEST_WAIT_DURATION_MS,
+                        () -> mTestClient.arePowerPolicyListenersUpdated());
+                mTestClient.printlnResult("propagated");
+                Log.d(TAG, "policy change is propagated");
+            } catch (Exception e) {
+                mTestClient.printlnResult("not_propagated");
+                Log.d(TAG, "failed propagate power policy", e);
+            }
+        }
+    }
+
+    static final class ResetListenersCommand extends PowerPolicyTestCommand {
+        ResetListenersCommand(PowerPolicyTestClient testClient) {
+            super(testClient, /* data = */ null, TestCommandType.RESET_LISTENERS);
+        }
+
+        @Override
+        public void execute() {
+            Log.d(TAG, "resetListeners: " + mTestClient.getTestcase());
+            mTestClient.printResultHeader(getType().name());
+            try {
+                mTestClient.resetPowerPolicyListeners();
+                mTestClient.printlnResult("succeed");
+            } catch (Exception e) {
+                mTestClient.printlnResult("failed");
             }
         }
     }
