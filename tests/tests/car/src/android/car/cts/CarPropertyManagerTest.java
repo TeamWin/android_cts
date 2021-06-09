@@ -78,6 +78,9 @@ public class CarPropertyManagerTest extends CarApiTestBase {
         @GuardedBy("mLock")
         private SparseArray<Integer> mErrorCounter = new SparseArray<>();
 
+        @GuardedBy("mLock")
+        private SparseArray<Integer> mErrorWithErrorCodeCounter = new SparseArray<>();
+
         public int receivedEvent(int propId) {
             int val;
             synchronized (mLock) {
@@ -90,6 +93,14 @@ public class CarPropertyManagerTest extends CarApiTestBase {
             int val;
             synchronized (mLock) {
                 val = mErrorCounter.get(propId, 0);
+            }
+            return val;
+        }
+
+        public int receivedErrorWithErrorCode(int propId) {
+            int val;
+            synchronized (mLock) {
+                val = mErrorWithErrorCodeCounter.get(propId, 0);
             }
             return val;
         }
@@ -108,6 +119,14 @@ public class CarPropertyManagerTest extends CarApiTestBase {
             synchronized (mLock) {
                 int val = mErrorCounter.get(propId, 0) + 1;
                 mErrorCounter.put(propId, val);
+            }
+        }
+
+        @Override
+        public void onErrorEvent(int propId, int areaId, int errorCode) {
+            synchronized (mLock) {
+                int val = mErrorWithErrorCodeCounter.get(propId, 0) + 1;
+                mErrorWithErrorCodeCounter.put(propId, val);
             }
         }
 
@@ -362,8 +381,10 @@ public class CarPropertyManagerTest extends CarApiTestBase {
 
         assertThat(speedListenerUI.receivedEvent(vehicleSpeed)).isEqualTo(NO_EVENTS);
         assertThat(speedListenerUI.receivedError(vehicleSpeed)).isEqualTo(NO_EVENTS);
+        assertThat(speedListenerUI.receivedErrorWithErrorCode(vehicleSpeed)).isEqualTo(NO_EVENTS);
         assertThat(speedListenerFast.receivedEvent(vehicleSpeed)).isEqualTo(NO_EVENTS);
         assertThat(speedListenerFast.receivedError(vehicleSpeed)).isEqualTo(NO_EVENTS);
+        assertThat(speedListenerFast.receivedErrorWithErrorCode(vehicleSpeed)).isEqualTo(NO_EVENTS);
 
         mCarPropertyManager.registerCallback(speedListenerUI, vehicleSpeed,
                 CarPropertyManager.SENSOR_RATE_UI);
@@ -374,6 +395,9 @@ public class CarPropertyManagerTest extends CarApiTestBase {
         assertThat(speedListenerUI.receivedEvent(vehicleSpeed)).isGreaterThan(NO_EVENTS);
         assertThat(speedListenerFast.receivedEvent(vehicleSpeed)).isGreaterThan(
                 speedListenerUI.receivedEvent(vehicleSpeed));
+        // The test did not change property values, it should not get error with error codes.
+        assertThat(speedListenerUI.receivedErrorWithErrorCode(vehicleSpeed)).isEqualTo(NO_EVENTS);
+        assertThat(speedListenerFast.receivedErrorWithErrorCode(vehicleSpeed)).isEqualTo(NO_EVENTS);
 
         mCarPropertyManager.unregisterCallback(speedListenerFast);
         mCarPropertyManager.unregisterCallback(speedListenerUI);
