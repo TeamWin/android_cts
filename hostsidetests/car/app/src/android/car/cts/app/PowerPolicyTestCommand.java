@@ -16,154 +16,164 @@
 
 package android.car.cts.app;
 
-import android.car.hardware.power.CarPowerManager;
 import android.car.hardware.power.CarPowerPolicy;
 import android.util.Log;
 
-import java.io.PrintWriter;
 import java.util.Arrays;
 
 
 public abstract class PowerPolicyTestCommand {
-    private static final String TAG = PowerPolicyTestCommand.class.getSimpleName();
-    private static final String TEST_RESULT_HEADER = "PowerPolicyTestResult: ";
-
-    private final String mTestcase;
-    private final TestCommandType mType;
-    protected final CarPowerManager mPowerManager;
-
-    protected String mPolicyData;
-
-    PowerPolicyTestCommand(String tc, CarPowerManager pm, TestCommandType type) {
-        mTestcase = tc;
-        mPowerManager = pm;
-        mType = type;
+    enum TestCommandType {
+        SET_TEST,
+        CLEAR_TEST,
+        DUMP_POLICY,
+        ADD_LISTENER,
+        REMOVE_LISTENER,
+        DUMP_LISTENER
     }
 
-    String getTestcase() {
-        return mTestcase;
+    private static final String TAG = PowerPolicyTestCommand.class.getSimpleName();
+
+    private final TestCommandType mType;
+    protected final PowerPolicyTestClient mTestClient;
+    protected final String mData;
+
+    PowerPolicyTestCommand(PowerPolicyTestClient testClient, String data, TestCommandType type) {
+        mTestClient = testClient;
+        mData = data;
+        mType = type;
     }
 
     TestCommandType getType() {
         return mType;
     }
 
-    abstract void execute(PowerPolicyTestClient testClient, PrintWriter resultLog);
+    public abstract void execute();
 
-    enum TestCommandType {
-        START,
-        END,
-        DUMP_STATE,
-        DUMP_POLICY,
-        APPLY_POLICY,
-        SET_POLICY_GROUP
+    public String getData() {
+        return mData;
     }
 
-    protected void printResultHeader(PrintWriter resultLog, String action) {
-        resultLog.printf("%s%s:%s:", TEST_RESULT_HEADER, getTestcase(), action);
+    public PowerPolicyTestClient getTestClient() {
+        return mTestClient;
     }
 
-    static final class StartTestcaseCommand extends PowerPolicyTestCommand {
-        StartTestcaseCommand(String tc, CarPowerManager pm) {
-            super(tc, pm, TestCommandType.START);
+    static final class SetTestCommand extends PowerPolicyTestCommand {
+        SetTestCommand(PowerPolicyTestClient testClient, String data) {
+            super(testClient, data, TestCommandType.SET_TEST);
         }
 
         @Override
-        void execute(PowerPolicyTestClient testClient, PrintWriter resultLog) {
-            testClient.registerAndGo();
-            Log.d(TAG, String.format("%s starts", getTestcase()));
+        public void execute() {
+            this.mTestClient.printResultHeader(this.getType().name());
+            this.mTestClient.printlnResult(this.mData);
+            this.mTestClient.setTestcase(this.mData);
+            Log.d(TAG, "setTestcase: " + this.mData);
         }
     }
 
-    static final class EndTestcaseCommand extends PowerPolicyTestCommand {
-        EndTestcaseCommand(String tc, CarPowerManager pm) {
-            super(tc, pm, TestCommandType.END);
+    static final class ClearTestCommand extends PowerPolicyTestCommand {
+        ClearTestCommand(PowerPolicyTestClient testClient) {
+            super(testClient, null, TestCommandType.CLEAR_TEST);
         }
 
         @Override
-        void execute(PowerPolicyTestClient testClient, PrintWriter resultLog) {
-            testClient.cleanup();
-            Log.d(TAG, getTestcase() + "ends");
-        }
-    }
-
-    static final class DumpStateCommand extends PowerPolicyTestCommand {
-        DumpStateCommand(String tc, CarPowerManager pm) {
-            super(tc, pm, TestCommandType.DUMP_STATE);
-        }
-
-        @Override
-        void execute(PowerPolicyTestClient testClient, PrintWriter resultLog) {
-            int curState = mPowerManager.getPowerState();
-            printResultHeader(resultLog, "dumpstate");
-            resultLog.println(curState);
-            Log.d(TAG, "current pwer state is " + curState);
+        public void execute() {
+            this.mTestClient.clearTestcase();
+            this.mTestClient.printResultHeader(this.getType().name());
+            this.mTestClient.printlnResult();
+            Log.d(TAG, "clearTestcase: " + this.mTestClient.getTestcase());
         }
     }
 
     static final class DumpPolicyCommand extends PowerPolicyTestCommand {
-        DumpPolicyCommand(String tc, CarPowerManager pm) {
-            super(tc, pm, TestCommandType.DUMP_POLICY);
+        DumpPolicyCommand(PowerPolicyTestClient testClient) {
+            super(testClient, null, TestCommandType.DUMP_POLICY);
         }
 
         @Override
-        void execute(PowerPolicyTestClient testClient, PrintWriter resultLog) {
-            String policyId;
-            CarPowerPolicy cpp = mPowerManager.getCurrentPowerPolicy();
+        public void execute() {
+            CarPowerPolicy cpp = this.mTestClient.getPowerManager().getCurrentPowerPolicy();
             if (cpp == null) {
                 Log.d(TAG, "null current power policy");
                 return;
             }
-            policyId = cpp.getPolicyId();
-            int[] enabledComponents = cpp.getEnabledComponents();
-            int[] disabledComponents = cpp.getDisabledComponents();
 
+            String policyId = cpp.getPolicyId();
             if (policyId == null) {
                 policyId = "null";
             }
-            printResultHeader(resultLog, "dumppolicy");
-            resultLog.printf("policyId=%s, ", policyId);
-            resultLog.printf("enabledComponents=[%s], ", Arrays.toString(enabledComponents));
-            resultLog.printf("disabledComponents=[%s]\n", Arrays.toString(disabledComponents));
+            String[] enables = Arrays.stream(cpp.getEnabledComponents())
+                    .mapToObj(PowerPolicyTestClient.PowerComponentUtil::componentToString)
+                    .toArray(String[]::new);
+            String[] disables = Arrays.stream(cpp.getDisabledComponents())
+                    .mapToObj(PowerPolicyTestClient.PowerComponentUtil::componentToString)
+                    .toArray(String[]::new);
+            this.mTestClient.printResultHeader(this.getType().name());
+            this.mTestClient.printfResult("%s (", policyId);
+            this.mTestClient.printfResult("enabledComponents:%s ", String.join(",", enables));
+            this.mTestClient.printfResult("disabledComponents:%s)\n", String.join(",", disables));
+
             Log.d(TAG, "dump power policy " + policyId);
         }
     }
 
-    static final class SetPolicyGroupCommand extends PowerPolicyTestCommand {
-        SetPolicyGroupCommand(String tc, CarPowerManager pm) {
-            super(tc, pm, TestCommandType.SET_POLICY_GROUP);
+    static final class AddListenerCommand extends PowerPolicyTestCommand {
+        AddListenerCommand(PowerPolicyTestClient testClient, String compName) {
+            super(testClient, compName, TestCommandType.ADD_LISTENER);
         }
 
         @Override
-        void execute(PowerPolicyTestClient testClient, PrintWriter resultLog) {
-            if (mPolicyData == null) {
-                Log.e(TAG, "null policy group id");
-                return;
+        public void execute() {
+            Log.d(TAG, "addListener: " + this.mTestClient.getTestcase());
+            this.mTestClient.printResultHeader(this.getType().name());
+            try {
+                this.mTestClient.registerPowerPolicyListener(mData);
+                this.mTestClient.printlnResult("succeed");
+            } catch (Exception e) {
+                this.mTestClient.printlnResult("failed");
             }
-
-            mPowerManager.setPowerPolicyGroup(mPolicyData);
-            printResultHeader(resultLog, "setpolicygroup");
-            resultLog.println(mPolicyData);
-            Log.d(TAG, "set policy group Id: " + mPolicyData);
         }
     }
 
-    static final class ApplyPolicyCommand extends PowerPolicyTestCommand {
-        ApplyPolicyCommand(String tc, CarPowerManager pm) {
-            super(tc, pm, TestCommandType.APPLY_POLICY);
+    static final class RemoveListenerCommand extends PowerPolicyTestCommand {
+        RemoveListenerCommand(PowerPolicyTestClient testClient, String compName) {
+            super(testClient, compName, TestCommandType.REMOVE_LISTENER);
         }
 
         @Override
-        void execute(PowerPolicyTestClient testClient, PrintWriter resultLog) {
-            if (mPolicyData == null) {
-                Log.w(TAG, "missing policy id for applying policy");
-                return;
+        public void execute() {
+            Log.d(TAG, "removeListener: " + this.mTestClient.getTestcase());
+            this.mTestClient.printResultHeader(this.getType().name());
+            try {
+                this.mTestClient.unregisterPowerPolicyListener(mData);
+                this.mTestClient.printlnResult("succeed");
+            } catch (Exception e) {
+                this.mTestClient.printlnResult("failed");
             }
+        }
+    }
 
-            mPowerManager.applyPowerPolicy(mPolicyData);
-            printResultHeader(resultLog, "applypolicy");
-            resultLog.println(mPolicyData);
-            Log.d(TAG, "apply policy with Id: " + mPolicyData);
+    static final class DumpListenerCommand extends PowerPolicyTestCommand {
+        DumpListenerCommand(PowerPolicyTestClient testClient, String compName) {
+            super(testClient, compName, TestCommandType.DUMP_LISTENER);
+        }
+
+        @Override
+        public void execute() {
+            Log.d(TAG, "dumpListener: " + this.mTestClient.getTestcase());
+            this.mTestClient.printResultHeader(this.getType().name() + ": " + mData);
+            try {
+                CarPowerPolicy policy = this.mTestClient.getListenerCurrentPolicy(mData);
+                String str = "null";
+                if (policy != null) {
+                    str = PowerPolicyTestClient.PowerPolicyListenerImpl.getPolicyString(policy);
+                }
+                this.mTestClient.printlnResult(str);
+            } catch (Exception e) {
+                this.mTestClient.printlnResult("not_registered");
+                Log.d(TAG, e.toString());
+            }
         }
     }
 }
