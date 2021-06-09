@@ -127,6 +127,20 @@ public final class HotwordDetectionServiceBasicTest
                 Utils.HOTWORD_DETECTION_SERVICE_ONDETECT_SUCCESS);
     }
 
+    @Test
+    public void testHotwordDetectionService_processDied_triggerOnError()
+            throws Throwable {
+        // Create AlwaysOnHotwordDetector and wait the HotwordDetectionService ready
+        testHotwordDetection(Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_TEST,
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS);
+
+        // Use AlwaysOnHotwordDetector to test process died of HotwordDetectionService
+        testHotwordDetection(Utils.HOTWORD_DETECTION_SERVICE_PROCESS_DIED_TEST,
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
+                Utils.HOTWORD_DETECTION_SERVICE_GET_ERROR);
+    }
+
     private void testHotwordDetection(int testType, String expectedIntent, int expectedResult) {
         final BlockingBroadcastReceiver receiver = new BlockingBroadcastReceiver(mContext,
                 expectedIntent);
