@@ -33,6 +33,7 @@ public final class CpmsFrameworkLayerStateInfo {
     public static final String CURRENT_POLICY_ID_HDR = "mCurrentPowerPolicyId:";
     public static final String PENDING_POLICY_ID_HDR = "mPendingPowerPolicyId:";
     public static final String CURRENT_POLICY_GROUP_ID_HDR = "mCurrentPowerPolicyGroupId:";
+    public static final String NUMBER_POLICY_LISTENERS_HDR = "# of power policy change listener:";
     public static final String POWER_POLICY_GROUPS_HDR = "Power policy groups:";
     public static final String PREEMPTIVE_POWER_POLICY_HDR = "Preemptive power policy:";
     public static final String COMPONENT_STATE_HDR = "Power components state:";
@@ -57,13 +58,14 @@ public final class CpmsFrameworkLayerStateInfo {
     private final String mCurrentPolicyId;
     private final String mPendingPolicyId;
     private final String mCurrentPolicyGroupId;
+    private final int mNumberPolicyListeners;
     private final boolean mMonitoringHw;
     private final boolean mSilentModeByHw;
     private final boolean mForcedSilentMode;
     private final int mCurrentState;
 
     private CpmsFrameworkLayerStateInfo(String currentPolicyId, String pendingPolicyId,
-            String currentPolicyGroupId, String[] changedComponents,
+            String currentPolicyGroupId, int numberPolicyListeners, String[] changedComponents,
             ArrayList<String> enables, ArrayList<String> disables, PowerPolicyGroups policyGroups,
             ArrayList<String> controlledEnables, ArrayList<String> controlledDisables,
             boolean monitoringHw, boolean silentModeByHw, boolean forcedSilentMode,
@@ -77,6 +79,7 @@ public final class CpmsFrameworkLayerStateInfo {
         mCurrentPolicyId = currentPolicyId;
         mPendingPolicyId = pendingPolicyId;
         mCurrentPolicyGroupId = currentPolicyGroupId;
+        mNumberPolicyListeners = numberPolicyListeners;
         mMonitoringHw = monitoringHw;
         mSilentModeByHw = silentModeByHw;
         mForcedSilentMode = forcedSilentMode;
@@ -115,6 +118,10 @@ public final class CpmsFrameworkLayerStateInfo {
         return mPowerPolicyGroups;
     }
 
+    public int getNumberPolicyListeners() {
+        return mNumberPolicyListeners;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder(STRING_BUILDER_BUF_SIZE);
@@ -122,6 +129,7 @@ public final class CpmsFrameworkLayerStateInfo {
         sb.append("mCurrentPolicyId=").append(mCurrentPolicyId).append(' ');
         sb.append("mPendingPolicyId=").append(mPendingPolicyId).append(' ');
         sb.append("mCurrentPolicyGroupId=").append(mCurrentPolicyGroupId).append(' ');
+        sb.append("mNumberPolicyListeners=").append(mNumberPolicyListeners).append(' ');
         sb.append("silentmode=").append(mMonitoringHw).append(',');
         sb.append(mSilentModeByHw).append(',').append(mForcedSilentMode).append(' ');
         sb.append("enables=").append(String.join(",", mEnables)).append(' ');
@@ -141,6 +149,7 @@ public final class CpmsFrameworkLayerStateInfo {
                 && mMonitoringHw == that.mMonitoringHw
                 && mSilentModeByHw == that.mSilentModeByHw
                 && mForcedSilentMode == that.mForcedSilentMode
+                && mNumberPolicyListeners == that.mNumberPolicyListeners
                 && mEnables.equals(that.mEnables)
                 && mDisables.equals(that.mDisables)
                 && mPowerPolicyGroups.equals(that.mPowerPolicyGroups)
@@ -157,7 +166,7 @@ public final class CpmsFrameworkLayerStateInfo {
         return Objects.hash(mEnables, mDisables, mControlledEnables, mControlledDisables,
                 mChangedComponents, mPowerPolicyGroups, mCurrentPolicyId, mPendingPolicyId,
                 mCurrentPolicyGroupId, mCurrentState, mMonitoringHw, mSilentModeByHw,
-                mForcedSilentMode);
+                mForcedSilentMode, mNumberPolicyListeners);
     }
 
     public static CpmsFrameworkLayerStateInfo parse(String cmdOutput) throws Exception {
@@ -174,6 +183,7 @@ public final class CpmsFrameworkLayerStateInfo {
         boolean monitoringHw = false;
         boolean silentModeByHw = false;
         boolean forcedSilentMode = false;
+        int numberPolicyListeners = 0;
 
         String[] lines = cmdOutput.split("\n");
         StateInfoParser parser = new StateInfoParser(lines);
@@ -227,6 +237,9 @@ public final class CpmsFrameworkLayerStateInfo {
                 case FORCED_SILENT_MODE_HDR:
                     forcedSilentMode = parser.getBooleanData(FORCED_SILENT_MODE_HDR);
                     break;
+                case NUMBER_POLICY_LISTENERS_HDR:
+                    numberPolicyListeners = parser.getIntData(NUMBER_POLICY_LISTENERS_HDR);
+                    break;
                 default:
                     throw new IllegalArgumentException("parser header mismatch: " + header);
             }
@@ -240,9 +253,9 @@ public final class CpmsFrameworkLayerStateInfo {
         }
 
         return new CpmsFrameworkLayerStateInfo(currentPolicyId, pendingPolicyId,
-                currentPolicyGroupId, changedComponents, enables, disables, policyGroups,
-                controlledEnables, controlledDisables, monitoringHw, silentModeByHw,
-                forcedSilentMode, currentState);
+                currentPolicyGroupId, numberPolicyListeners, changedComponents, enables,
+                disables, policyGroups, controlledEnables, controlledDisables, monitoringHw,
+                silentModeByHw, forcedSilentMode, currentState);
     }
 
     private static final class StateInfoParser {
@@ -251,6 +264,7 @@ public final class CpmsFrameworkLayerStateInfo {
             CURRENT_POLICY_ID_HDR,
             PENDING_POLICY_ID_HDR,
             CURRENT_POLICY_GROUP_ID_HDR,
+            NUMBER_POLICY_LISTENERS_HDR,
             COMPONENT_STATE_HDR,
             COMPONENT_CONTROLLED_HDR,
             POWER_POLICY_GROUPS_HDR,
@@ -286,6 +300,10 @@ public final class CpmsFrameworkLayerStateInfo {
                                 + mLines[mIdx]);
                     }
                     val = Integer.parseInt(tokens[4].trim().substring(tokens[4].length() - 1));
+                    break;
+                case NUMBER_POLICY_LISTENERS_HDR:
+                    int strLen = mLines[mIdx].length();
+                    val = Integer.parseInt(mLines[mIdx].substring(strLen - 1).trim());
                     break;
                 default:
                     break;
