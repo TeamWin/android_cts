@@ -26,6 +26,7 @@ android_test_helper_app {
     static_libs: [
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
+        "modules-utils-native-coverage-listener",
         "nativetesthelper",
     ],
     libs: [
