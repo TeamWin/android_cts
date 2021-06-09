@@ -32,6 +32,7 @@ import android.content.Intent.ACTION_INSTALL_PACKAGE
 import android.net.Uri
 import android.os.Process
 import android.os.SystemClock
+import android.os.UserHandle
 import android.platform.test.annotations.AppModeFull
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.rule.ActivityTestRule
@@ -53,6 +54,8 @@ class AppOpEventCollectionTest {
     private val appOpsManager = context.getSystemService(AppOpsManager::class.java)
 
     private val myUid = Process.myUid()
+    private val shellUid = UserHandle.getUid(Process.myUserHandle().identifier,
+            UserHandle.getAppId(Process.SHELL_UID))
     private val myPackage = context.packageName
     private val otherPkg: String
     private val otherUid: Int
@@ -237,7 +240,7 @@ class AppOpEventCollectionTest {
 
         val after = System.currentTimeMillis()
 
-        val opEntry = getOpEntry(Process.SHELL_UID, SHELL_PACKAGE_NAME, OPSTR_WIFI_SCAN)!!
+        val opEntry = getOpEntry(shellUid, SHELL_PACKAGE_NAME, OPSTR_WIFI_SCAN)!!
         val attributionOpEntry = opEntry.attributedOpEntries[null]!!
 
         assertThat(attributionOpEntry.getLastAccessTime(OP_FLAG_TRUSTED_PROXY))
@@ -306,9 +309,9 @@ class AppOpEventCollectionTest {
         assertThat(opEntry.getLastProxyInfo(OP_FLAG_TRUSTED_PROXIED)?.packageName)
             .isEqualTo(SHELL_PACKAGE_NAME)
         assertThat(attributionOpEntry.getLastProxyInfo(OP_FLAG_TRUSTED_PROXIED)?.uid)
-            .isEqualTo(Process.SHELL_UID)
+            .isEqualTo(shellUid)
         assertThat(opEntry.getLastProxyInfo(OP_FLAG_TRUSTED_PROXIED)?.uid).isEqualTo(
-                Process.SHELL_UID)
+                shellUid)
 
         assertThat(attributionOpEntry.getLastProxyInfo(OP_FLAG_UNTRUSTED_PROXIED)?.packageName)
             .isEqualTo(myPackage)
@@ -340,8 +343,8 @@ class AppOpEventCollectionTest {
         runWithShellPermissionIdentity {
             firstAttrManager = context.createAttributionContext(firstTag)!!
                 .getSystemService(AppOpsManager::class.java)!!
-            val start = firstAttrManager.startProxyOp(OPSTR_WIFI_SCAN, otherUid, otherPkg, null,
-                null)
+            val start = firstAttrManager.startProxyOpNoThrow(OPSTR_WIFI_SCAN, otherUid, otherPkg,
+                    null, null)
             assertThat(start).isEqualTo(MODE_ALLOWED)
             sleep(1)
         }
@@ -355,7 +358,7 @@ class AppOpEventCollectionTest {
             assertThat(isRunning).isTrue()
         }
 
-        with(getOpEntry(Process.SHELL_UID, SHELL_PACKAGE_NAME, OPSTR_WIFI_SCAN)!!) {
+        with(getOpEntry(shellUid, SHELL_PACKAGE_NAME, OPSTR_WIFI_SCAN)!!) {
             assertThat(attributedOpEntries[firstTag]!!.isRunning).isTrue()
             assertThat(attributedOpEntries[firstTag]!!
                 .getLastProxyInfo(OP_FLAGS_ALL)).isNull()
@@ -376,9 +379,9 @@ class AppOpEventCollectionTest {
         assertThat(opEntry.getLastProxyInfo(OP_FLAG_TRUSTED_PROXIED)?.packageName)
             .isEqualTo(SHELL_PACKAGE_NAME)
         assertThat(attributionOpEntry.getLastProxyInfo(OP_FLAG_TRUSTED_PROXIED)?.uid)
-            .isEqualTo(Process.SHELL_UID)
+            .isEqualTo(shellUid)
         assertThat(opEntry.getLastProxyInfo(OP_FLAG_TRUSTED_PROXIED)?.uid).isEqualTo(
-                Process.SHELL_UID)
+                shellUid)
         assertThat(attributionOpEntry.getLastProxyInfo(OP_FLAG_TRUSTED_PROXIED)?.attributionTag)
             .isEqualTo(firstTag)
     }
@@ -393,7 +396,7 @@ class AppOpEventCollectionTest {
         // Untrusted proxy op
         val secondAttrManager = context.createAttributionContext(secondTag)!!
             .getSystemService(AppOpsManager::class.java)!!
-        secondAttrManager.startProxyOp(OPSTR_WIFI_SCAN, otherUid, otherPkg, null, null)
+        secondAttrManager.startProxyOpNoThrow(OPSTR_WIFI_SCAN, otherUid, otherPkg, null, null)
         with(getOpEntry(otherUid, otherPkg, OPSTR_WIFI_SCAN)!!) {
             assertThat(attributedOpEntries[null]?.getLastProxyInfo(OP_FLAG_UNTRUSTED_PROXIED)!!
                 .packageName).isEqualTo(myPackage)
@@ -437,8 +440,8 @@ class AppOpEventCollectionTest {
         runWithShellPermissionIdentity {
             firstAttrManager = context.createAttributionContext(firstTag)!!
                 .getSystemService(AppOpsManager::class.java)!!
-            val start = firstAttrManager.startProxyOp(OPSTR_WIFI_SCAN, otherUid, otherPkg, null,
-                null)
+            val start = firstAttrManager.startProxyOpNoThrow(OPSTR_WIFI_SCAN, otherUid, otherPkg,
+                    null, null)
             sleep(1)
         }
 
@@ -448,7 +451,7 @@ class AppOpEventCollectionTest {
         // Untrusted proxy op
         val secondAttrManager = context.createAttributionContext(secondTag)!!
             .getSystemService(AppOpsManager::class.java)!!
-        secondAttrManager.startProxyOp(OPSTR_WIFI_SCAN, otherUid, otherPkg, null, null)
+        secondAttrManager.startProxyOpNoThrow(OPSTR_WIFI_SCAN, otherUid, otherPkg, null, null)
 
         sleep(1)
         secondAttrManager.finishProxyOp(OPSTR_WIFI_SCAN, otherUid, otherPkg, null)
@@ -466,6 +469,23 @@ class AppOpEventCollectionTest {
         // If asked for all op-flags the second attribution overrides the first
         assertThat(attributionOpEntry.getLastProxyInfo(OP_FLAGS_ALL)?.attributionTag)
             .isEqualTo(secondTag)
+    }
+
+    @Test
+    fun startProxyOpThrowsSecurityException() {
+        lateinit var firstAttrManager: AppOpsManager
+        var exception: SecurityException? = null
+        try {
+            runWithShellPermissionIdentity {
+                firstAttrManager = context.createAttributionContext(firstTag)!!
+                        .getSystemService(AppOpsManager::class.java)!!
+                val start = firstAttrManager.startProxyOp(OPSTR_WIFI_SCAN, Process.INVALID_UID,
+                        otherPkg, null, null)
+            }
+        } catch (e: SecurityException) {
+            exception = e
+        }
+        assertThat(exception).isNotNull()
     }
 
     @Test

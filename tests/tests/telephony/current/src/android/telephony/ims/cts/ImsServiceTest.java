@@ -50,6 +50,7 @@ import android.telephony.ims.ImsReasonInfo;
 import android.telephony.ims.ImsRegistrationAttributes;
 import android.telephony.ims.ProvisioningManager;
 import android.telephony.ims.RcsClientConfiguration;
+import android.telephony.ims.RcsContactUceCapability;
 import android.telephony.ims.RcsUceAdapter;
 import android.telephony.ims.RegistrationManager;
 import android.telephony.ims.RtpHeaderExtensionType;
@@ -80,6 +81,8 @@ import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
@@ -1446,6 +1449,11 @@ public class ImsServiceTest {
         sServiceConnector.getCarrierService().getImsRegistration().onSubscriberAssociatedUriChanged(
                 new Uri[] { imsUri });
 
+        // Verify the ImsService does not receive the PUBLISH request because we just finish a
+        // publish request a moment ago.
+        assertFalse(sServiceConnector.getCarrierService().waitForLatchCountdown(
+                TestImsService.LATCH_UCE_REQUEST_PUBLISH, 2000 /* 2 seconds */));
+
         // Trigger a new publish request
         eventListener.onRequestPublishCapabilities(
                 RcsUceAdapter.CAPABILITY_UPDATE_TRIGGER_MOVE_TO_WLAN);
@@ -1830,6 +1838,223 @@ public class ImsServiceTest {
         } finally {
             publishStateQueue.clear();
             automation.dropShellPermissionIdentity();
+        }
+
+        overrideCarrierConfig(null);
+    }
+
+    @Test
+    public void testRcsPublishWithAuthorizedErrorResponse() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+
+        // Trigger carrier config change
+        PersistableBundle bundle = new PersistableBundle();
+        bundle.putBoolean(CarrierConfigManager.KEY_CARRIER_VOLTE_PROVISIONED_BOOL, false);
+        bundle.putBoolean(CarrierConfigManager.Ims.KEY_ENABLE_PRESENCE_PUBLISH_BOOL, true);
+        overrideCarrierConfig(bundle);
+
+        ImsManager imsManager = getContext().getSystemService(ImsManager.class);
+        if (imsManager == null) {
+            fail("Cannot get the ImsManager");
+        }
+        ImsRcsManager imsRcsManager = imsManager.getImsRcsManager(sTestSub);
+        RcsUceAdapter uceAdapter = imsRcsManager.getUceAdapter();
+
+        // Connect to the ImsService
+        triggerFrameworkConnectToImsServiceBindMmTelAndRcsFeature();
+
+        // Register the callback to listen to the publish state changed
+        LinkedBlockingQueue<Integer> publishStateQueue = new LinkedBlockingQueue<>();
+        RcsUceAdapter.OnPublishStateChangedListener publishStateCallback =
+                new RcsUceAdapter.OnPublishStateChangedListener() {
+                    public void onPublishStateChange(int state) {
+                        publishStateQueue.offer(state);
+                    }
+                };
+
+        final UiAutomation automation = InstrumentationRegistry.getInstrumentation()
+                .getUiAutomation();
+        try {
+            automation.adoptShellPermissionIdentity();
+            uceAdapter.addOnPublishStateChangedListener(getContext().getMainExecutor(),
+                    publishStateCallback);
+            // Verify receiving the publish state callback after registering the callback.
+            assertEquals(RcsUceAdapter.PUBLISH_STATE_NOT_PUBLISHED,
+                    waitForIntResult(publishStateQueue));
+        } finally {
+            publishStateQueue.clear();
+            automation.dropShellPermissionIdentity();
+        }
+
+        TestRcsCapabilityExchangeImpl capExchangeImpl = sServiceConnector.getCarrierService()
+                .getRcsFeature().getRcsCapabilityExchangeImpl();
+
+        // Setup the response of the publish request.
+        capExchangeImpl.setPublishOperator((listener, pidfXml, cb) -> {
+            int networkResp = 200;
+            String reason = "OK";
+            cb.onNetworkResponse(networkResp, reason);
+            listener.onPublish();
+        });
+
+        // IMS registers
+        sServiceConnector.getCarrierService().getImsRegistration().onRegistered(
+                ImsRegistrationImplBase.REGISTRATION_TECH_LTE);
+
+        // Notify framework that the RCS capability status is changed and PRESENCE UCE is enabled.
+        RcsImsCapabilities capabilities =
+                new RcsImsCapabilities(RcsUceAdapter.CAPABILITY_TYPE_PRESENCE_UCE);
+        sServiceConnector.getCarrierService().getRcsFeature()
+                .notifyCapabilitiesStatusChanged(capabilities);
+
+        CapabilityExchangeEventListener eventListener =
+                sServiceConnector.getCarrierService().getRcsFeature().getEventListener();
+
+        // Notify framework to send the PUBLISH request to the ImsService.
+        eventListener.onRequestPublishCapabilities(
+                RcsUceAdapter.CAPABILITY_UPDATE_TRIGGER_MOVE_TO_WLAN);
+
+        // Verify ImsService receive the publish request from framework.
+        assertTrue(sServiceConnector.getCarrierService().waitForLatchCountdown(
+                TestImsService.LATCH_UCE_REQUEST_PUBLISH));
+
+        try {
+            // Verify the publish state callback is received.
+            assertEquals(RcsUceAdapter.PUBLISH_STATE_OK, waitForIntResult(publishStateQueue));
+            // Verify the value of getting from the API is PUBLISH_STATE_OK
+            automation.adoptShellPermissionIdentity();
+            int publishState = uceAdapter.getUcePublishState();
+            assertEquals(RcsUceAdapter.PUBLISH_STATE_OK, publishState);
+        } finally {
+            publishStateQueue.clear();
+            automation.dropShellPermissionIdentity();
+        }
+
+        // Reply the SIP code 403 FORBIDDEN
+        capExchangeImpl.setPublishOperator((listener, pidfXml, cb) -> {
+            int networkResp = 403;
+            String reason = "FORBIDDEN";
+            cb.onNetworkResponse(networkResp, reason);
+            listener.onPublish();
+        });
+
+        // Notify framework to send the PUBLISH request to the ImsService.
+        eventListener.onRequestPublishCapabilities(
+                RcsUceAdapter.CAPABILITY_UPDATE_TRIGGER_MOVE_TO_WLAN);
+
+        try {
+            // Verify the publish state callback is received.
+            assertEquals(RcsUceAdapter.PUBLISH_STATE_RCS_PROVISION_ERROR,
+                    waitForIntResult(publishStateQueue));
+            // Verify the value of getting from the API is PUBLISH_STATE_RCS_PROVISION_ERROR
+            automation.adoptShellPermissionIdentity();
+            int publishState = uceAdapter.getUcePublishState();
+            assertEquals(RcsUceAdapter.PUBLISH_STATE_RCS_PROVISION_ERROR, publishState);
+        } finally {
+            publishStateQueue.clear();
+            automation.dropShellPermissionIdentity();
+        }
+
+        LinkedBlockingQueue<Integer> errorQueue = new LinkedBlockingQueue<>();
+        LinkedBlockingQueue<Long> errorRetryQueue = new LinkedBlockingQueue<>();
+        LinkedBlockingQueue<Boolean> completeQueue = new LinkedBlockingQueue<>();
+        LinkedBlockingQueue<RcsContactUceCapability> capabilityQueue = new LinkedBlockingQueue<>();
+        RcsUceAdapter.CapabilitiesCallback callback = new RcsUceAdapter.CapabilitiesCallback() {
+            @Override
+            public void onCapabilitiesReceived(List<RcsContactUceCapability> capabilities) {
+                capabilities.forEach(c -> capabilityQueue.offer(c));
+            }
+            @Override
+            public void onComplete() {
+                completeQueue.offer(true);
+            }
+            @Override
+            public void onError(int errorCode, long retryAfterMilliseconds) {
+                errorQueue.offer(errorCode);
+                errorRetryQueue.offer(retryAfterMilliseconds);
+            }
+        };
+
+        capExchangeImpl.setSubscribeOperation((uris, cb) -> {
+            fail("Should not received the SUBSCRIBE request");
+        });
+
+        Collection<Uri> contacts = Collections.singletonList(
+                Uri.fromParts(PhoneAccount.SCHEME_SIP, "test", null));
+
+        try {
+            ShellIdentityUtils.invokeThrowableMethodWithShellPermissionsNoReturn(
+                    uceAdapter,
+                    adapter -> adapter.requestCapabilities(contacts, Runnable::run, callback),
+                    ImsException.class,
+                    "android.permission.ACCESS_RCS_USER_CAPABILITY_EXCHANGE");
+        } catch (SecurityException e) {
+            fail("requestCapabilities should succeed with ACCESS_RCS_USER_CAPABILITY_EXCHANGE. "
+                    + "Exception: " + e);
+        } catch (ImsException e) {
+            fail("requestCapabilities failed " + e);
+        }
+
+        // Verify the capability request should fail
+        try {
+            assertEquals(RcsUceAdapter.ERROR_NOT_AUTHORIZED, waitForIntResult(errorQueue));
+            assertEquals(Long.valueOf(0L), waitForResult(errorRetryQueue));
+        } catch (Exception e) {
+            fail("requestCapabilities with command error failed: " + e);
+        } finally {
+            errorQueue.clear();
+            errorRetryQueue.clear();
+        }
+
+        // Reset the UCE device state
+        try {
+            sServiceConnector.removeUceRequestDisallowedStatus(sTestSlot);
+        } catch (Exception e) {
+            fail("Cannot remove request disallowed status: " + e);
+        }
+
+        // Reply the SIP code 404 NOT FOUND
+        capExchangeImpl.setPublishOperator((listener, pidfXml, cb) -> {
+            int networkResp = 404;
+            String reason = "NOT FOUND";
+            cb.onNetworkResponse(networkResp, reason);
+            listener.onPublish();
+        });
+
+        // Notify framework to send the PUBLISH request to the ImsService.
+        eventListener.onRequestPublishCapabilities(
+                RcsUceAdapter.CAPABILITY_UPDATE_TRIGGER_MOVE_TO_WLAN);
+
+        try {
+            // Verify the value of getting from the API is PUBLISH_STATE_RCS_PROVISION_ERROR
+            automation.adoptShellPermissionIdentity();
+            int publishState = uceAdapter.getUcePublishState();
+            assertEquals(RcsUceAdapter.PUBLISH_STATE_RCS_PROVISION_ERROR, publishState);
+        } finally {
+            publishStateQueue.clear();
+            automation.dropShellPermissionIdentity();
+        }
+
+        try {
+            ShellIdentityUtils.invokeThrowableMethodWithShellPermissionsNoReturn(
+                    uceAdapter,
+                    adapter -> adapter.requestCapabilities(contacts, Runnable::run, callback),
+                    ImsException.class,
+                    "android.permission.ACCESS_RCS_USER_CAPABILITY_EXCHANGE");
+        } catch (SecurityException e) {
+            fail("requestCapabilities should succeed with ACCESS_RCS_USER_CAPABILITY_EXCHANGE. "
+                    + "Exception: " + e);
+        } catch (ImsException e) {
+            fail("requestCapabilities failed " + e);
+        }
+
+        // Reset the UCE device state
+        try {
+            sServiceConnector.removeUceRequestDisallowedStatus(sTestSlot);
+        } catch (Exception e) {
+            fail("Cannot remove request disallowed status: " + e);
         }
 
         overrideCarrierConfig(null);
@@ -3262,7 +3487,7 @@ public class ImsServiceTest {
                     TEST_RCS_CONFIG_SINGLE_REGISTRATION_DISABLED.getBytes(), false);
             int res = waitForIntResult(TestAcsClient.getInstance().getActionQueue());
             assertEquals(res, TestAcsClient.ACTION_CONFIG_CHANGED);
-            assertEquals(provisioningManager.isRcsVolteSingleRegistrationCapable(), false);
+            assertEquals(provisioningManager.isRcsVolteSingleRegistrationCapable(), true);
         } finally {
             automan.dropShellPermissionIdentity();
         }

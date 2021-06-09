@@ -36,6 +36,7 @@ java_test_host {
     ],
     data: [
         ":CtsStatsdAtomEmptyApp",
+        ":CtsStatsdAtomEmptyApp2",
         ":CtsStatsdAtomEmptySplitApp",
     ],
     java_resource_dirs: ["res"],

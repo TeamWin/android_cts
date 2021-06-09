@@ -16,6 +16,7 @@
 
 package com.android.tests.stagedinstall;
 
+import static com.android.cts.install.lib.InstallUtils.assertStatusFailure;
 import static com.android.cts.install.lib.InstallUtils.assertStatusSuccess;
 import static com.android.cts.install.lib.InstallUtils.getPackageInstaller;
 import static com.android.cts.shim.lib.ShimPackage.DIFFERENT_APEX_PACKAGE_NAME;
@@ -44,6 +45,7 @@ import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.SystemUtil;
 import com.android.cts.install.lib.Install;
 import com.android.cts.install.lib.InstallUtils;
 import com.android.cts.install.lib.LocalIntentSender;
@@ -511,14 +513,19 @@ public class StagedInstallTest {
 
     @Test
     public void testsFailsNonStagedApexInstall() throws Exception {
-        assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(1);
-        TestApp apex = new TestApp(
-                "Apex2", SHIM_APEX_PACKAGE_NAME, 2, /*isApex*/true,
-                "com.android.apex.cts.shim.v2.apex");
-        InstallUtils.commitExpectingFailure(AssertionError.class,
-                "does not support non-staged update",
-                Install.single(apex));
-        assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(1);
+        try {
+            SystemUtil.runShellCommandForNoOutput("pm bypass-staged-installer-check true");
+            assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(1);
+            TestApp apex = new TestApp(
+                    "Apex2", SHIM_APEX_PACKAGE_NAME, 2, /*isApex*/true,
+                    "com.android.apex.cts.shim.v2.apex");
+            InstallUtils.commitExpectingFailure(AssertionError.class,
+                    "does not support non-staged update",
+                    Install.single(apex));
+            assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(1);
+        } finally {
+            SystemUtil.runShellCommandForNoOutput("pm bypass-staged-installer-check false");
+        }
     }
 
     @Test
@@ -1137,11 +1144,7 @@ public class StagedInstallTest {
      */
     @Test
     public void testApexTargetingOldDevSdkFailsVerification() throws Exception {
-        int sessionId = stageSingleApk(Apex2SdkTargetP).assertSuccessful().getSessionId();
-        PackageInstaller.SessionInfo sessionInfo = waitForBroadcast(sessionId);
-        assertThat(sessionInfo).isStagedSessionFailed();
-        assertThat(sessionInfo.getStagedSessionErrorMessage())
-                .contains("Failed to parse APEX package");
+        stageSingleApk(Apex2SdkTargetP).assertFailure();
     }
 
     /**
@@ -1393,6 +1396,11 @@ public class StagedInstallTest {
 
         public StageSessionResult assertSuccessful() {
             assertStatusSuccess(result);
+            return this;
+        }
+
+        public StageSessionResult assertFailure() {
+            assertStatusFailure(result);
             return this;
         }
     }

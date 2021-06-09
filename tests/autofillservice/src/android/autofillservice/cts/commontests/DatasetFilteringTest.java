@@ -483,6 +483,9 @@ public abstract class DatasetFilteringTest extends AbstractLoginActivityTestCase
     @Test
     @AppModeFull(reason = "testFilter() is enough")
     public void testFilter_mixPlainAndRegex() throws Exception {
+        // TODO(b/187664861): Find better solution for small display device.
+        mUiBot.assumeMinimumResolution(500);
+
         final String plain = "Plain";
         final String regexPlain = "RegexPlain";
         final String authRegex = "AuthRegex";

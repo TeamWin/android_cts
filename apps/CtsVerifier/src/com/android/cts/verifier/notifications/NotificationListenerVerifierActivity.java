@@ -117,14 +117,18 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
 
     @Override
     protected List<InteractiveTestCase> createTestItems() {
+        boolean isAutomotive = getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_AUTOMOTIVE);
         List<InteractiveTestCase> tests = new ArrayList<>(17);
         tests.add(new IsEnabledTest());
         tests.add(new ServiceStartedTest());
         tests.add(new NotificationReceivedTest());
-        tests.add(new SendUserToChangeFilter());
-        tests.add(new AskIfFilterChanged());
-        tests.add(new NotificationTypeFilterTest());
-        tests.add(new ResetChangeFilter());
+        if (!isAutomotive) {
+            tests.add(new SendUserToChangeFilter());
+            tests.add(new AskIfFilterChanged());
+            tests.add(new NotificationTypeFilterTest());
+            tests.add(new ResetChangeFilter());
+        }
         tests.add(new LongMessageTest());
         tests.add(new DataIntactTest());
         tests.add(new AudiblyAlertedTest());
@@ -136,10 +140,12 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         tests.add(new SnoozeNotificationForTimeCancelTest());
         tests.add(new GetSnoozedNotificationTest());
         tests.add(new EnableHintsTest());
-        tests.add(new LockscreenVisibilityTest());
+        if (!isAutomotive) {
+            tests.add(new LockscreenVisibilityTest());
+        }
         tests.add(new ReceiveAppBlockNoticeTest());
         tests.add(new ReceiveAppUnblockNoticeTest());
-        if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+        if (!isAutomotive) {
             tests.add(new ReceiveChannelBlockNoticeTest());
             tests.add(new ReceiveGroupBlockNoticeTest());
         }
@@ -151,9 +157,11 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         tests.add(new IsDisabledTest());
         tests.add(new ServiceStoppedTest());
         tests.add(new NotificationNotReceivedTest());
-        tests.add(new AddScreenLockTest());
-        tests.add(new SecureActionOnLockScreenTest());
-        tests.add(new RemoveScreenLockTest());
+        if (!isAutomotive) {
+            tests.add(new AddScreenLockTest());
+            tests.add(new SecureActionOnLockScreenTest());
+            tests.add(new RemoveScreenLockTest());
+        }
         return tests;
     }
 

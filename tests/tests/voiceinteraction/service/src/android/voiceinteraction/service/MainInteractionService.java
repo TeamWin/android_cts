@@ -133,7 +133,7 @@ public class MainInteractionService extends VoiceInteractionService {
         } catch (IllegalStateException e) {
             Log.w(TAG, "callCreateAlwaysOnHotwordDetector() exception: " + e);
             broadcastIntentWithResult(
-                    Utils.BROADCAST_HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
+                    Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
                     Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_ILLEGAL_STATE_EXCEPTION);
         }
     }
