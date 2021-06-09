@@ -93,6 +93,7 @@ public class LockTaskTest {
 
     private static final TestAppProvider sTestAppProvider = new TestAppProvider();
     private static final TestApp sTestApp = sTestAppProvider.any();
+    private static final TestApp sSecondTestApp = sTestAppProvider.any();
 
     private static final ComponentReference BLOCKED_ACTIVITY_COMPONENT =
             sTestApis.packages().component(new ComponentName(
@@ -505,15 +506,14 @@ public class LockTaskTest {
     @Test
     @PositivePolicyTest(policy = LockTask.class)
     public void setLockTaskPackages_removingCurrentlyLockedTask_otherLockedTasksRemainLocked() {
-        TestApp secondTestApp = sTestAppProvider.any();
         String[] originalLockTaskPackages =
                 sDeviceState.dpc().devicePolicyManager().getLockTaskPackages();
         sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(
-                new String[]{sTestApp.packageName(), secondTestApp.packageName()});
+                new String[]{sTestApp.packageName(), sSecondTestApp.packageName()});
         try (TestAppInstanceReference testApp =
                      sTestApp.install(sTestApis.users().instrumented());
              TestAppInstanceReference testApp2 =
-                     secondTestApp.install(sTestApis.users().instrumented())) {
+                     sSecondTestApp.install(sTestApis.users().instrumented())) {
             Activity<TestAppActivity> activity = testApp.activities().any().start();
             activity.startLockTask();
             Activity<TestAppActivity> activity2 = testApp2.activities().any().start();
@@ -525,7 +525,7 @@ public class LockTaskTest {
 
                 // TODO(b/189327037): Replace with more direct integration between TestApp and EventLib
                 EventLogs<ActivityDestroyedEvent> events =
-                        ActivityDestroyedEvent.queryPackage(secondTestApp.packageName())
+                        ActivityDestroyedEvent.queryPackage(sSecondTestApp.packageName())
                                 .whereActivity().className().isEqualTo(
                                 activity2.activity().component().className());
                 assertThat(events.poll()).isNotNull();
@@ -544,13 +544,12 @@ public class LockTaskTest {
     @Test
     @PositivePolicyTest(policy = LockTask.class)
     public void startActivity_withinSameTask_startsActivity() {
-        TestApp secondTestApp = sTestAppProvider.any();
         String[] originalLockTaskPackages =
                 sDeviceState.dpc().devicePolicyManager().getLockTaskPackages();
         try (TestAppInstanceReference testApp =
                      sTestApp.install(sTestApis.users().instrumented());
              TestAppInstanceReference testApp2 =
-                     secondTestApp.install(sTestApis.users().instrumented())) {
+                     sSecondTestApp.install(sTestApis.users().instrumented())) {
             sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(
                     new String[]{sTestApp.packageName()});
             Activity<TestAppActivity> firstActivity = testApp.activities().any().start();
@@ -563,7 +562,7 @@ public class LockTaskTest {
             firstActivity.startActivity(secondActivityIntent);
 
             EventLogs<ActivityStartedEvent> events =
-                    ActivityStartedEvent.queryPackage(secondTestApp.packageName())
+                    ActivityStartedEvent.queryPackage(sSecondTestApp.packageName())
                             .whereActivity().className().isEqualTo(secondActivity.component().className());
             assertThat(events.poll()).isNotNull();
             assertThat(sTestApis.activities().foregroundActivity()).isEqualTo(secondActivity.component());
@@ -575,7 +574,6 @@ public class LockTaskTest {
     @Test
     @PositivePolicyTest(policy = LockTask.class)
     public void startActivity_withinSameTask_blockStartInTask_doesNotStart() {
-        TestApp secondTestApp = sTestAppProvider.any();
         String[] originalLockTaskPackages =
                 sDeviceState.dpc().devicePolicyManager().getLockTaskPackages();
         int originalLockTaskFeatures =
@@ -583,7 +581,7 @@ public class LockTaskTest {
         try (TestAppInstanceReference testApp =
                      sTestApp.install(sTestApis.users().instrumented());
              TestAppInstanceReference testApp2 =
-                     secondTestApp.install(sTestApis.users().instrumented())) {
+                     sSecondTestApp.install(sTestApis.users().instrumented())) {
             try {
                 sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(
                         new String[]{sTestApp.packageName()});
@@ -594,6 +592,42 @@ public class LockTaskTest {
                 TestAppActivityReference secondActivity = testApp2.activities().any();
                 Intent secondActivityIntent = new Intent();
                 secondActivityIntent.setComponent(secondActivity.component().componentName());
+
+                firstActivity.activity().startActivity(secondActivityIntent);
+
+                assertThat(sTestApis.activities().foregroundActivity())
+                        .isEqualTo(BLOCKED_ACTIVITY_COMPONENT);
+            } finally {
+                sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(
+                        originalLockTaskPackages);
+                sDeviceState.dpc().devicePolicyManager().setLockTaskFeatures(
+                        originalLockTaskFeatures);
+            }
+        }
+    }
+
+    @Test
+    @PositivePolicyTest(policy = LockTask.class)
+    public void startActivity_inNewTask_blockStartInTask_doesNotStart() {
+        String[] originalLockTaskPackages =
+                sDeviceState.dpc().devicePolicyManager().getLockTaskPackages();
+        int originalLockTaskFeatures =
+                sDeviceState.dpc().devicePolicyManager().getLockTaskFeatures();
+        try (TestAppInstanceReference testApp =
+                     sTestApp.install(sTestApis.users().instrumented());
+             TestAppInstanceReference testApp2 =
+                     sSecondTestApp.install(sTestApis.users().instrumented())) {
+            try {
+                sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(
+                        new String[]{sTestApp.packageName()});
+                sDeviceState.dpc().devicePolicyManager().setLockTaskFeatures(
+                        LOCK_TASK_FEATURE_BLOCK_ACTIVITY_START_IN_TASK);
+                Activity<TestAppActivity> firstActivity = testApp.activities().any().start();
+                firstActivity.startLockTask();
+                TestAppActivityReference secondActivity = testApp2.activities().any();
+                Intent secondActivityIntent = new Intent();
+                secondActivityIntent.setComponent(secondActivity.component().componentName());
+                secondActivityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
                 firstActivity.activity().startActivity(secondActivityIntent);
 
