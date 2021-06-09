@@ -59,6 +59,7 @@ import android.view.inputmethod.InlineSuggestion;
 import android.view.inputmethod.InlineSuggestionsRequest;
 import android.view.inputmethod.InlineSuggestionsResponse;
 import android.view.inputmethod.InputBinding;
+import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputContentInfo;
 import android.view.inputmethod.InputMethod;
 import android.widget.FrameLayout;
@@ -133,6 +134,16 @@ public final class MockIme extends InputMethodService {
         }
     }
 
+    @Nullable
+    private InputConnection mMemorizedInputConnection = null;
+
+    @Nullable
+    @MainThread
+    private InputConnection getMemorizedOrCurrentInputConnection() {
+        return mMemorizedInputConnection != null
+                ? mMemorizedInputConnection : getCurrentInputConnection();
+    }
+
     @WorkerThread
     private void onReceiveCommand(@NonNull ImeCommand command) {
         getTracer().onReceiveCommand(command, () -> {
@@ -153,120 +164,145 @@ public final class MockIme extends InputMethodService {
                             + " should be handled on the main thread");
                 }
                 switch (command.getName()) {
+                    case "memorizeCurrentInputConnection": {
+                        if (!Looper.getMainLooper().isCurrentThread()) {
+                            return new UnsupportedOperationException(
+                                    "memorizeCurrentInputConnection can be requested only for the"
+                                            + " main thread.");
+                        }
+                        mMemorizedInputConnection = getCurrentInputConnection();
+                        return ImeEvent.RETURN_VALUE_UNAVAILABLE;
+                    }
+                    case "unmemorizeCurrentInputConnection": {
+                        if (!Looper.getMainLooper().isCurrentThread()) {
+                            return new UnsupportedOperationException(
+                                    "unmemorizeCurrentInputConnection can be requested only for the"
+                                            + " main thread.");
+                        }
+                        mMemorizedInputConnection = null;
+                        return ImeEvent.RETURN_VALUE_UNAVAILABLE;
+                    }
                     case "getTextBeforeCursor": {
                         final int n = command.getExtras().getInt("n");
                         final int flag = command.getExtras().getInt("flag");
-                        return getCurrentInputConnection().getTextBeforeCursor(n, flag);
+                        return getMemorizedOrCurrentInputConnection().getTextBeforeCursor(n, flag);
                     }
                     case "getTextAfterCursor": {
                         final int n = command.getExtras().getInt("n");
                         final int flag = command.getExtras().getInt("flag");
-                        return getCurrentInputConnection().getTextAfterCursor(n, flag);
+                        return getMemorizedOrCurrentInputConnection().getTextAfterCursor(n, flag);
                     }
                     case "getSelectedText": {
                         final int flag = command.getExtras().getInt("flag");
-                        return getCurrentInputConnection().getSelectedText(flag);
+                        return getMemorizedOrCurrentInputConnection().getSelectedText(flag);
                     }
                     case "getCursorCapsMode": {
                         final int reqModes = command.getExtras().getInt("reqModes");
-                        return getCurrentInputConnection().getCursorCapsMode(reqModes);
+                        return getMemorizedOrCurrentInputConnection().getCursorCapsMode(reqModes);
                     }
                     case "getExtractedText": {
                         final ExtractedTextRequest request =
                                 command.getExtras().getParcelable("request");
                         final int flags = command.getExtras().getInt("flags");
-                        return getCurrentInputConnection().getExtractedText(request, flags);
+                        return getMemorizedOrCurrentInputConnection().getExtractedText(request,
+                                flags);
                     }
                     case "deleteSurroundingText": {
                         final int beforeLength = command.getExtras().getInt("beforeLength");
                         final int afterLength = command.getExtras().getInt("afterLength");
-                        return getCurrentInputConnection().deleteSurroundingText(
+                        return getMemorizedOrCurrentInputConnection().deleteSurroundingText(
                                 beforeLength, afterLength);
                     }
                     case "deleteSurroundingTextInCodePoints": {
                         final int beforeLength = command.getExtras().getInt("beforeLength");
                         final int afterLength = command.getExtras().getInt("afterLength");
-                        return getCurrentInputConnection().deleteSurroundingTextInCodePoints(
-                                beforeLength, afterLength);
+                        return getMemorizedOrCurrentInputConnection()
+                                .deleteSurroundingTextInCodePoints(beforeLength, afterLength);
                     }
                     case "setComposingText": {
                         final CharSequence text = command.getExtras().getCharSequence("text");
                         final int newCursorPosition =
                                 command.getExtras().getInt("newCursorPosition");
-                        return getCurrentInputConnection().setComposingText(
+                        return getMemorizedOrCurrentInputConnection().setComposingText(
                                 text, newCursorPosition);
                     }
                     case "setComposingRegion": {
                         final int start = command.getExtras().getInt("start");
                         final int end = command.getExtras().getInt("end");
-                        return getCurrentInputConnection().setComposingRegion(start, end);
+                        return getMemorizedOrCurrentInputConnection().setComposingRegion(start,
+                                end);
                     }
                     case "finishComposingText":
-                        return getCurrentInputConnection().finishComposingText();
+                        return getMemorizedOrCurrentInputConnection().finishComposingText();
                     case "commitText": {
                         final CharSequence text = command.getExtras().getCharSequence("text");
                         final int newCursorPosition =
                                 command.getExtras().getInt("newCursorPosition");
-                        return getCurrentInputConnection().commitText(text, newCursorPosition);
+                        return getMemorizedOrCurrentInputConnection().commitText(text,
+                                newCursorPosition);
                     }
                     case "commitCompletion": {
                         final CompletionInfo text = command.getExtras().getParcelable("text");
-                        return getCurrentInputConnection().commitCompletion(text);
+                        return getMemorizedOrCurrentInputConnection().commitCompletion(text);
                     }
                     case "commitCorrection": {
                         final CorrectionInfo correctionInfo =
                                 command.getExtras().getParcelable("correctionInfo");
-                        return getCurrentInputConnection().commitCorrection(correctionInfo);
+                        return getMemorizedOrCurrentInputConnection().commitCorrection(
+                                    correctionInfo);
                     }
                     case "setSelection": {
                         final int start = command.getExtras().getInt("start");
                         final int end = command.getExtras().getInt("end");
-                        return getCurrentInputConnection().setSelection(start, end);
+                        return getMemorizedOrCurrentInputConnection().setSelection(start, end);
                     }
                     case "performEditorAction": {
                         final int editorAction = command.getExtras().getInt("editorAction");
-                        return getCurrentInputConnection().performEditorAction(editorAction);
+                        return getMemorizedOrCurrentInputConnection().performEditorAction(
+                                editorAction);
                     }
                     case "performContextMenuAction": {
                         final int id = command.getExtras().getInt("id");
-                        return getCurrentInputConnection().performContextMenuAction(id);
+                        return getMemorizedOrCurrentInputConnection().performContextMenuAction(id);
                     }
                     case "beginBatchEdit":
-                        return getCurrentInputConnection().beginBatchEdit();
+                        return getMemorizedOrCurrentInputConnection().beginBatchEdit();
                     case "endBatchEdit":
-                        return getCurrentInputConnection().endBatchEdit();
+                        return getMemorizedOrCurrentInputConnection().endBatchEdit();
                     case "sendKeyEvent": {
                         final KeyEvent event = command.getExtras().getParcelable("event");
-                        return getCurrentInputConnection().sendKeyEvent(event);
+                        return getMemorizedOrCurrentInputConnection().sendKeyEvent(event);
                     }
                     case "clearMetaKeyStates": {
                         final int states = command.getExtras().getInt("states");
-                        return getCurrentInputConnection().clearMetaKeyStates(states);
+                        return getMemorizedOrCurrentInputConnection().clearMetaKeyStates(states);
                     }
                     case "reportFullscreenMode": {
                         final boolean enabled = command.getExtras().getBoolean("enabled");
-                        return getCurrentInputConnection().reportFullscreenMode(enabled);
+                        return getMemorizedOrCurrentInputConnection().reportFullscreenMode(enabled);
                     }
                     case "performPrivateCommand": {
                         final String action = command.getExtras().getString("action");
                         final Bundle data = command.getExtras().getBundle("data");
-                        return getCurrentInputConnection().performPrivateCommand(action, data);
+                        return getMemorizedOrCurrentInputConnection().performPrivateCommand(action,
+                                data);
                     }
                     case "requestCursorUpdates": {
                         final int cursorUpdateMode = command.getExtras().getInt("cursorUpdateMode");
-                        return getCurrentInputConnection().requestCursorUpdates(cursorUpdateMode);
+                        return getMemorizedOrCurrentInputConnection().requestCursorUpdates(
+                                cursorUpdateMode);
                     }
                     case "getHandler":
-                        return getCurrentInputConnection().getHandler();
+                        return getMemorizedOrCurrentInputConnection().getHandler();
                     case "closeConnection":
-                        getCurrentInputConnection().closeConnection();
+                        getMemorizedOrCurrentInputConnection().closeConnection();
                         return ImeEvent.RETURN_VALUE_UNAVAILABLE;
                     case "commitContent": {
                         final InputContentInfo inputContentInfo =
                                 command.getExtras().getParcelable("inputContentInfo");
                         final int flags = command.getExtras().getInt("flags");
                         final Bundle opts = command.getExtras().getBundle("opts");
-                        return getCurrentInputConnection().commitContent(
+                        return getMemorizedOrCurrentInputConnection().commitContent(
                                 inputContentInfo, flags, opts);
                     }
                     case "setBackDisposition": {
