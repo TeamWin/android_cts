@@ -24,6 +24,7 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import static android.media.MediaFormat.MIMETYPE_VIDEO_HEVC;
 import android.media.ThumbnailUtils;
+import android.os.Build;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Size;
 
@@ -34,6 +35,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.MediaUtils;
 
 import java.io.File;
@@ -49,6 +51,9 @@ import junitparams.Parameters;
 @AppModeFull(reason = "Instant apps cannot access the SD card")
 @RunWith(JUnitParamsRunner.class)
 public class ThumbnailUtilsTest {
+
+    private boolean mIsAtLeastS = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S);
+
     private static final Size[] TEST_SIZES = new Size[] {
             new Size(50, 50),
             new Size(500, 500),
@@ -177,6 +182,7 @@ public class ThumbnailUtilsTest {
 
     @Test
     public void testCreateImageThumbnailAvif() throws Exception {
+        if (!MediaUtils.check(mIsAtLeastS, "test needs Android 12")) return;
         final File file = stageFile("sample.avif", new File(mDir, "cts.avif"));
 
         for (Size size : TEST_SIZES) {

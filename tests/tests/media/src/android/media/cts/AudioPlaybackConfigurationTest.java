@@ -45,6 +45,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @AppModeFull(reason = "Instant apps cannot access the SD card")
+@NonMediaMainlineTest
 public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
     private final static String TAG = "AudioPlaybackConfigurationTest";
 
