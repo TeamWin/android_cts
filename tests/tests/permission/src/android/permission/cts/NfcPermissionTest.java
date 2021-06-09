@@ -16,16 +16,12 @@
 
 package android.permission.cts;
 
-import static android.Manifest.permission.NFC_SET_CONTROLLER_ALWAYS_ON;
-
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
-import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.nfc.NfcAdapter;
 import android.nfc.NfcAdapter.ControllerAlwaysOnListener;
-import android.os.Process;
 import android.platform.test.annotations.AppModeFull;
 
 import androidx.test.InstrumentationRegistry;
@@ -35,10 +31,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.Executor;
-import java.util.stream.Collectors;
 
 @RunWith(JUnit4.class)
 public final class NfcPermissionTest {
@@ -54,36 +47,6 @@ public final class NfcPermissionTest {
     public void setUp() {
         assumeTrue(supportsHardware());
         mNfcAdapter = NfcAdapter.getDefaultAdapter(InstrumentationRegistry.getTargetContext());
-    }
-
-    /**
-     * Verifies that there's only one dedicated app holds the NfcSetControllerAlwaysOnPermission.
-     */
-    @Test
-    public void testNfcSetControllerAlwaysOnPermission() {
-        PackageManager pm = InstrumentationRegistry.getContext().getPackageManager();
-
-        List<Integer> specialUids = Arrays.asList(Process.SYSTEM_UID, Process.NFC_UID);
-
-        List<PackageInfo> holding = pm.getPackagesHoldingPermissions(
-                new String[] { NFC_SET_CONTROLLER_ALWAYS_ON },
-                PackageManager.MATCH_DISABLED_COMPONENTS);
-
-        List<Integer> nonSpecialPackages = holding.stream()
-                .map(pi -> {
-                    try {
-                        return pm.getPackageUid(pi.packageName, 0);
-                    } catch (PackageManager.NameNotFoundException e) {
-                        return Process.INVALID_UID;
-                    }
-                })
-                .filter(uid -> !specialUids.contains(uid))
-                .collect(Collectors.toList());
-
-        if (holding.size() > 1) {
-            fail("Only one app on the device is allowed to hold the "
-                     + "NFC_SET_CONTROLLER_ALWAYS_ON permission.");
-        }
     }
 
     /**
