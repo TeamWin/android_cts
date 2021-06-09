@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.cts.statsdatom.incremental;
+package com.android.cts.packagemanager.stats.host;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -44,7 +44,7 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-public class AppErrorAtomTests extends DeviceTestCase implements IBuildReceiver {
+public class IncrementalAppErrorStatsTests extends DeviceTestCase implements IBuildReceiver {
     private static final String FEATURE_INCREMENTAL_DELIVERY =
             "android.software.incremental_delivery";
     private static final String IDSIG_SUFFIX = ".idsig";
@@ -108,7 +108,7 @@ public class AppErrorAtomTests extends DeviceTestCase implements IBuildReceiver 
 
         DeviceUtils.runActivity(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
                 "StatsdCtsForegroundActivity", "action", "action.crash");
-
+        Thread.sleep(1_000);
         // Sorted list of events in order in which they occurred.
         List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
