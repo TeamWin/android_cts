@@ -4078,6 +4078,7 @@ You should be prompted to select credentials; choose the ones you just installed
         Use the Back button to return to this page.
     </string>
     <string name="device_owner_disallow_remove_user_create_user">Create uninitialized user</string>
+    <string name="device_owner_remove_secondary_user">Remove uninitialized user</string>
     <string name="disallow_remove_managed_profile">Disallow remove managed profile</string>
     <string name="disallow_remove_managed_profile_action">Removing the work profile. It shouldn\'t be possible neither from the Accounts screen nor the Device Administrators screen (after selecting the Device Administrator that corresponds to the badged version of \"CTS Verifier\")</string>
     <string name="disallow_share_location">Disallow share location</string>

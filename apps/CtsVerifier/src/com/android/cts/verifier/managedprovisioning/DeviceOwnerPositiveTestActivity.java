@@ -525,7 +525,10 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                             new ButtonInfo(
                                     R.string.device_owner_user_restriction_unset,
                                     CommandReceiverActivity.createSetCurrentUserRestrictionIntent(
-                                            UserManager.DISALLOW_REMOVE_USER, false))
+                                            UserManager.DISALLOW_REMOVE_USER, false)),
+                            new ButtonInfo(
+                                    R.string.device_owner_remove_secondary_user,
+                                    createRemoveSecondaryUsersIntent())
             }));
         }
 
@@ -647,6 +650,12 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
         return new Intent(this, CommandReceiverActivity.class)
                 .putExtra(CommandReceiverActivity.EXTRA_COMMAND,
                         CommandReceiverActivity.COMMAND_CREATE_MANAGED_USER_WITHOUT_SETUP);
+    }
+
+    private Intent createRemoveSecondaryUsersIntent() {
+        return new Intent(this, CommandReceiverActivity.class)
+                .putExtra(CommandReceiverActivity.EXTRA_COMMAND,
+                        CommandReceiverActivity.COMMAND_REMOVE_SECONDARY_USERS);
     }
 
     private Intent createEnableUsbDataSignalingIntent() {
