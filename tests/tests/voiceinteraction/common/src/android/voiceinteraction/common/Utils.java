@@ -67,14 +67,19 @@ public class Utils {
     public static final int HOTWORD_DETECTION_SERVICE_FROM_SOFTWARE_TRIGGER_TEST = 103;
     public static final int HOTWORD_DETECTION_SERVICE_MIC_ONDETECT_TEST = 104;
     public static final int HOTWORD_DETECTION_SERVICE_DSP_ONREJECT_TEST = 105;
+    public static final int HOTWORD_DETECTION_SERVICE_PROCESS_DIED_TEST = 106;
 
     public static final int HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS = 1;
     public static final int HOTWORD_DETECTION_SERVICE_TRIGGER_ILLEGAL_STATE_EXCEPTION = 2;
     public static final int HOTWORD_DETECTION_SERVICE_TRIGGER_SECURITY_EXCEPTION = 3;
     public static final int HOTWORD_DETECTION_SERVICE_TRIGGER_SHARED_MEMORY_NOT_READ_ONLY = 4;
+    public static final int HOTWORD_DETECTION_SERVICE_GET_ERROR = 5;
 
     public static final int HOTWORD_DETECTION_SERVICE_ONDETECT_SUCCESS = 1;
     public static final int HOTWORD_DETECTION_SERVICE_ONDETECT_REJECTION = 2;
+
+    /** Indicate which test scenario for testing. */
+    public static final int HOTWORD_DETECTION_SERVICE_ON_UPDATE_STATE_CRASH = 1;
 
     public static final String TESTCASE_TYPE = "testcase_type";
     public static final String TESTINFO = "testinfo";
@@ -155,6 +160,7 @@ public class Utils {
     public static final String KEY_SERVICE_TYPE = "serviceType";
     public static final String KEY_TEST_EVENT = "testEvent";
     public static final String KEY_TEST_RESULT = "testResult";
+    public static final String KEY_TEST_SCENARIO = "testScenario";
 
     public static final String toBundleString(Bundle bundle) {
         if (bundle == null) {
