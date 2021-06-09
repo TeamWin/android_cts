@@ -135,6 +135,9 @@ class AutoRevokeTest {
     @AppModeFull(reason = "Uses separate apps for testing")
     @Test
     fun testUnusedApp_getsPermissionRevoked() {
+        assumeFalse(
+                "Watch doesn't provide a unified way to check notifications. it depends on UX",
+                hasFeatureWatch())
         withUnusedThresholdMs(3L) {
             withDummyApp {
                 // Setup
