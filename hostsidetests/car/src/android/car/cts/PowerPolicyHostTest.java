@@ -20,6 +20,7 @@ import android.car.cts.powerpolicy.CpmsFrameworkLayerStateInfo;
 import android.car.cts.powerpolicy.CpmsSystemLayerStateInfo;
 import android.car.cts.powerpolicy.PowerPolicyConstants;
 import android.car.cts.powerpolicy.PowerPolicyDef;
+import android.car.cts.powerpolicy.PowerPolicyGroups;
 import android.car.cts.powerpolicy.PowerPolicyTestHelper;
 import android.car.cts.powerpolicy.SilentModeInfo;
 import android.car.cts.powerpolicy.SystemInfoParser;
@@ -128,9 +129,27 @@ public final class PowerPolicyHostTest extends CarHostJUnit4TestCase {
         testHelper = getTestHelper(testcase, 6, teststep);
         testHelper.checkCurrentPolicy(PowerPolicyDef.IdSet.DEFAULT_ALL_ON);
 
+        // add power policy group test here to utilize added test1 and test2 policies
+        teststep = "check default power policy group";
+        PowerPolicyGroups emptyGroups = new PowerPolicyGroups();
+        testHelper = getTestHelper(testcase, 7, teststep);
+        testHelper.checkCurrentPolicyGroupId(null);
+        testHelper.checkPowerPolicyGroups(emptyGroups);
+
+        teststep = "define power policy group";
+        definePowerPolicyGroup(PowerPolicyGroups.TestSet.POLICY_GROUP_DEF1.toShellCommandString());
+        definePowerPolicyGroup(PowerPolicyGroups.TestSet.POLICY_GROUP_DEF2.toShellCommandString());
+        testHelper = getTestHelper(testcase, 8, teststep);
+        testHelper.checkPowerPolicyGroups(PowerPolicyGroups.TestSet.POLICY_GROUPS1);
+
+        teststep = "set power policy group";
+        setPowerPolicyGroup(PowerPolicyGroups.TestSet.GROUP_ID1);
+        testHelper = getTestHelper(testcase, 9, teststep);
+        testHelper.checkCurrentPolicyGroupId(PowerPolicyGroups.TestSet.GROUP_ID1);
+
         rebootDevice();
         teststep = "reboot to clear added test power policies";
-        testHelper = getTestHelper(testcase, 7, teststep);
+        testHelper = getTestHelper(testcase, 10, teststep);
         expectedTotalPolicies = PowerPolicyDef.PolicySet.TOTAL_DEFAULT_REGISTERED_POLICIES;
         testHelper.checkCurrentState(PowerPolicyConstants.CarPowerState.ON);
         testHelper.checkCurrentPolicy(PowerPolicyDef.IdSet.DEFAULT_ALL_ON);
@@ -192,6 +211,14 @@ public final class PowerPolicyHostTest extends CarHostJUnit4TestCase {
 
     private void applyPowerPolicy(String policyId) throws Exception {
         executeCommand("cmd car_service apply-power-policy %s", policyId);
+    }
+
+    private void definePowerPolicyGroup(String policyGroupStr) throws Exception {
+        executeCommand("cmd car_service define-power-policy-group %s", policyGroupStr);
+    }
+
+    private void setPowerPolicyGroup(String policyGroupId) throws Exception {
+        executeCommand("cmd car_service set-power-policy-group %s", policyGroupId);
     }
 
     private void waitForDeviceAvailable() throws Exception {

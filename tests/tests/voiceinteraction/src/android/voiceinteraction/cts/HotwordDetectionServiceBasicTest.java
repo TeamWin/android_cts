@@ -49,7 +49,7 @@ public final class HotwordDetectionServiceBasicTest
     public void testHotwordDetectionService_validHotwordDetectionComponentName_triggerSuccess()
             throws Throwable {
         testHotwordDetection(Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_TEST,
-                Utils.BROADCAST_HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
                 Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS);
     }
 
@@ -57,7 +57,7 @@ public final class HotwordDetectionServiceBasicTest
     public void testVoiceInteractionService_withoutManageHotwordDetectionPermission_triggerFailure()
             throws Throwable {
         testHotwordDetection(Utils.VIS_WITHOUT_MANAGE_HOTWORD_DETECTION_PERMISSION_TEST,
-                Utils.BROADCAST_HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
                 Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SECURITY_EXCEPTION);
     }
 
@@ -65,7 +65,7 @@ public final class HotwordDetectionServiceBasicTest
     public void testVoiceInteractionService_holdBindHotwordDetectionPermission_triggerFailure()
             throws Throwable {
         testHotwordDetection(Utils.VIS_HOLD_BIND_HOTWORD_DETECTION_PERMISSION_TEST,
-                Utils.BROADCAST_HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
                 Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SECURITY_EXCEPTION);
     }
 
@@ -74,13 +74,27 @@ public final class HotwordDetectionServiceBasicTest
             throws Throwable {
         // Create AlwaysOnHotwordDetector and wait the HotwordDetectionService ready
         testHotwordDetection(Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_TEST,
-                Utils.BROADCAST_HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
                 Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS);
 
         // Use AlwaysOnHotwordDetector to test the onDetect function of HotwordDetectionService
         testHotwordDetection(Utils.HOTWORD_DETECTION_SERVICE_DSP_ONDETECT_TEST,
-                Utils.BROADCAST_HOTWORD_DETECTION_SERVICE_ONDETECT_RESULT_INTENT,
+                Utils.HOTWORD_DETECTION_SERVICE_ONDETECT_RESULT_INTENT,
                 Utils.HOTWORD_DETECTION_SERVICE_ONDETECT_SUCCESS);
+    }
+
+    @Test
+    public void testHotwordDetectionService_onDetectFromDsp_rejection()
+            throws Throwable {
+        // Create AlwaysOnHotwordDetector and wait the HotwordDetectionService ready
+        testHotwordDetection(Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_TEST,
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS);
+
+        // Use AlwaysOnHotwordDetector to test the onReject callback function
+        testHotwordDetection(Utils.HOTWORD_DETECTION_SERVICE_DSP_ONREJECT_TEST,
+                Utils.HOTWORD_DETECTION_SERVICE_ONDETECT_RESULT_INTENT,
+                Utils.HOTWORD_DETECTION_SERVICE_ONDETECT_REJECTION);
     }
 
     @Test
@@ -88,13 +102,13 @@ public final class HotwordDetectionServiceBasicTest
             throws Throwable {
         // Create AlwaysOnHotwordDetector and wait the HotwordDetectionService ready
         testHotwordDetection(Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_TEST,
-                Utils.BROADCAST_HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
                 Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS);
 
         // Use AlwaysOnHotwordDetector to test the external source function of
         // HotwordDetectionService
         testHotwordDetection(Utils.HOTWORD_DETECTION_SERVICE_EXTERNAL_SOURCE_ONDETECT_TEST,
-                Utils.BROADCAST_HOTWORD_DETECTION_SERVICE_ONDETECT_RESULT_INTENT,
+                Utils.HOTWORD_DETECTION_SERVICE_ONDETECT_RESULT_INTENT,
                 Utils.HOTWORD_DETECTION_SERVICE_ONDETECT_SUCCESS);
     }
 
@@ -103,13 +117,13 @@ public final class HotwordDetectionServiceBasicTest
             throws Throwable {
         // Create SoftwareHotwordDetector and wait the HotwordDetectionService ready
         testHotwordDetection(Utils.HOTWORD_DETECTION_SERVICE_FROM_SOFTWARE_TRIGGER_TEST,
-                Utils.BROADCAST_HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
                 Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS);
 
         // Use SoftwareHotwordDetector to test the mic source function of
         // HotwordDetectionService
         testHotwordDetection(Utils.HOTWORD_DETECTION_SERVICE_MIC_ONDETECT_TEST,
-                Utils.BROADCAST_HOTWORD_DETECTION_SERVICE_ONDETECT_RESULT_INTENT,
+                Utils.HOTWORD_DETECTION_SERVICE_ONDETECT_RESULT_INTENT,
                 Utils.HOTWORD_DETECTION_SERVICE_ONDETECT_SUCCESS);
     }
 
