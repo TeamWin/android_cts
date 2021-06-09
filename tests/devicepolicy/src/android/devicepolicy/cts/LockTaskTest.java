@@ -493,6 +493,45 @@ public class LockTaskTest {
         }
     }
 
+    @Test
+    @PositivePolicyTest(policy = LockTask.class)
+    public void setLockTaskPackages_removingCurrentlyLockedTask_otherLockedTasksRemainLocked() {
+        TestApp secondTestApp = sTestAppProvider.any();
+        String[] originalLockTaskPackages =
+                sDeviceState.dpc().devicePolicyManager().getLockTaskPackages();
+        sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(
+                new String[]{sTestApp.packageName(), secondTestApp.packageName()});
+        try (TestAppInstanceReference testApp =
+                     sTestApp.install(sTestApis.users().instrumented());
+             TestAppInstanceReference testApp2 =
+                     secondTestApp.install(sTestApis.users().instrumented())) {
+            TestAppActivityReference activity = testApp.activities().any().start();
+            startLockTaskAndWait(activity);
+            TestAppActivityReference activity2 = testApp2.activities().any().start();
+            startLockTaskAndWait(activity2);
+
+            try {
+                sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(
+                        new String[]{sTestApp.packageName()});
+
+                // TODO(b/189327037): Replace with more direct integration between TestApp and EventLib
+                EventLogs<ActivityDestroyedEvent> events =
+                        ActivityDestroyedEvent.queryPackage(secondTestApp.packageName())
+                                .whereActivity().className().isEqualTo(
+                                activity2.reference().className());
+                assertThat(events.poll()).isNotNull();
+                assertThat(sTestApis.activities().getLockTaskModeState()).isEqualTo(
+                        LOCK_TASK_MODE_LOCKED);
+                assertThat(sTestApis.activities().foregroundActivity()).isEqualTo(
+                        activity.reference());
+            } finally {
+                stopLockTaskAndWait(activity);
+            }
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(originalLockTaskPackages);
+        }
+    }
+
     private void startLockTaskAndWait(TestAppActivityReference activity) {
         activity.remote().startLockTask();
         PollingCheck.waitFor(() -> sTestApis.activities().getLockTaskModeState() != LOCK_TASK_MODE_NONE);
