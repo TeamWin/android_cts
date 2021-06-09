@@ -287,7 +287,7 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
 
         void changeAspectRatio(double aspectRatio, int orientation) {
             final Size originalSize = mInitialDisplayMetrics.physicalSize;
-            final int smaller = originalSize.getWidth();
+            final int smaller = Math.min(originalSize.getWidth(), originalSize.getHeight());
             final int larger = (int) (smaller * aspectRatio);
             Size overrideSize;
             if (orientation == ORIENTATION_LANDSCAPE) {
