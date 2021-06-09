@@ -481,6 +481,8 @@ public abstract class DatasetFilteringTest extends AbstractLoginActivityTestCase
         final String kitchnSync = "KitchenSync";
         final Pattern everything = Pattern.compile(".*");
 
+        mUiBot.assumeMinimumResolution(500);
+
         enableService();
 
         // Set expectations.
@@ -534,6 +536,8 @@ public abstract class DatasetFilteringTest extends AbstractLoginActivityTestCase
         final String authRegex = "AuthRegex";
         final String kitchnSync = "KitchenSync";
         final Pattern everything = Pattern.compile(".*");
+
+        mUiBot.assumeMinimumResolution(500);
 
         enableService();
 
