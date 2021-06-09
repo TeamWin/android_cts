@@ -16,6 +16,7 @@
 
 package android.security.cts;
 
+import android.platform.test.annotations.AsbSecurityTest;
 import android.platform.test.annotations.SecurityTest;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import org.junit.Test;
@@ -28,10 +29,12 @@ public class CVE_2020_0072 extends SecurityTestCase {
      * b/147310271
      * Vulnerability Behaviour: EXIT_VULNERABLE (113)
      */
+    @AsbSecurityTest(cveBugId = 147310271)
     @SecurityTest(minPatchLevel = "2020-04")
     @Test
     public void testPocCVE_2020_0072() throws Exception {
         AdbUtils.assumeHasNfc(getDevice());
+        assumeIsSupportedNfcDevice(getDevice());
         pocPusher.only64();
         AdbUtils.pocConfig testConfig = new AdbUtils.pocConfig("CVE-2020-0072", getDevice());
         testConfig.checkCrash = false;
