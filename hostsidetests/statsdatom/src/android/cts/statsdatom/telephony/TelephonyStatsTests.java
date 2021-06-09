@@ -44,6 +44,14 @@ public class TelephonyStatsTests extends DeviceTestCase implements IBuildReceive
 
     private static final String FEATURE_TELEPHONY = "android.hardware.telephony";
 
+    // Allow retrying dumpsys for up to 30 seconds when it is not ready
+    private static final int DUMPSYS_RETRIES = 30;
+    private static final int DUMPSYS_RETRY_WAIT_MILLIS = 1000;
+
+    // Dumpsys output is usually very long. If it is short, it is very likely that dumpsys wasn't
+    // ready, e.g. "Can't find service: activity", "No services match: TelephonyDebugService"
+    private static final int DUMPSYS_MIN_NUM_LINES = 10;
+
     // Bitmask of radio access technologies that all GSM phones should at least partially support
     protected static final long NETWORK_TYPE_BITMASK_GSM_ALL =
             (1 << (NetworkTypeEnum.NETWORK_TYPE_GSM_VALUE - 1))
@@ -306,9 +314,21 @@ public class TelephonyStatsTests extends DeviceTestCase implements IBuildReceive
     }
 
     private Queue<String> getTelephonyDumpEntries() throws Exception {
-        String response =
-                getDevice().executeShellCommand("dumpsys activity service TelephonyDebugService");
-        return new LinkedList<>(Arrays.asList(response.split("[\\r\\n]+")));
+        String response = "";
+        // Retry if dumpsys wasn't ready (where output is 1 or 2 lines)
+        for (int i = 0; i < DUMPSYS_RETRIES; i++) {
+            response = getDevice()
+                    .executeShellCommand("dumpsys activity service TelephonyDebugService");
+            String[] lines = response.split("[\\r\\n]+");
+            if (lines.length >= DUMPSYS_MIN_NUM_LINES) {
+                return new LinkedList<>(Arrays.asList(lines));
+            }
+            Thread.sleep(DUMPSYS_RETRY_WAIT_MILLIS);
+        }
+        throw new RuntimeException(
+                "dumpsys wasn't ready after "
+                + (DUMPSYS_RETRIES * DUMPSYS_RETRY_WAIT_MILLIS)
+                + " ms, response=" + response);
     }
 
     /**
