@@ -24,6 +24,7 @@ import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioRouting;
 import android.os.Build;
+import android.platform.test.annotations.Presubmit;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.CtsAndroidTestCase;
@@ -39,6 +40,7 @@ public class AudioNativeTest extends CtsAndroidTestCase {
         nativeAppendixBBufferQueue();
     }
 
+    @Presubmit
     public void testAppendixBRecording() {
         // better to detect presence of microphone here.
         if (!hasMicrophone()) {
@@ -47,12 +49,14 @@ public class AudioNativeTest extends CtsAndroidTestCase {
         nativeAppendixBRecording();
     }
 
+    @Presubmit
     public void testStereo16Playback() {
         assertTrue(AudioTrackNative.test(
                 2 /* numChannels */, 48000 /* sampleRate */, false /* useFloat */,
                 20 /* msecPerBuffer */, 8 /* numBuffers */));
     }
 
+    @Presubmit
     public void testStereo16Record() {
         if (!hasMicrophone()) {
             return;
@@ -205,6 +209,7 @@ public class AudioNativeTest extends CtsAndroidTestCase {
         }
     }
 
+    @Presubmit
     public void testRecordAudit() throws Exception {
         if (!hasMicrophone()) {
             return;
@@ -214,6 +219,7 @@ public class AudioNativeTest extends CtsAndroidTestCase {
                 1000 /* segmentDurationMs */, 10 /* numSegments */);
     }
 
+    @Presubmit
     public void testOutputChannelMasks() {
         if (!hasAudioOutput()) {
             return;
@@ -238,6 +244,7 @@ public class AudioNativeTest extends CtsAndroidTestCase {
         }
     }
 
+    @Presubmit
     public void testInputChannelMasks() {
         if (!hasMicrophone()) {
             return;
