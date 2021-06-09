@@ -75,7 +75,6 @@ public class CommandReceiverActivity extends Activity {
     public static final String COMMAND_SET_GLOBAL_SETTING =
             "set-global-setting";
     public static final String COMMAND_SET_MAXIMUM_TO_LOCK = "set-maximum-time-to-lock";
-    public static final String COMMAND_SET_PASSWORD_QUALITY = "set-password-quality";
     public static final String COMMAND_SET_KEYGUARD_DISABLED = "set-keyguard-disabled";
     public static final String COMMAND_SET_LOCK_SCREEN_INFO = "set-lock-screen-info";
     public static final String COMMAND_SET_STATUSBAR_DISABLED = "set-statusbar-disabled";
@@ -238,10 +237,6 @@ public class CommandReceiverActivity extends Activity {
                     final long timeInSeconds = Long.parseLong(intent.getStringExtra(EXTRA_VALUE));
                     mDpm.setMaximumTimeToLock(mAdmin,
                             TimeUnit.SECONDS.toMillis(timeInSeconds) /* in milliseconds */);
-                } break;
-                case COMMAND_SET_PASSWORD_QUALITY: {
-                    int quality = intent.getIntExtra(EXTRA_VALUE, 0);
-                    mDpm.setPasswordQuality(mAdmin, quality);
                 } break;
                 case COMMAND_SET_KEYGUARD_DISABLED: {
                     boolean enforced = intent.getBooleanExtra(EXTRA_ENFORCED, false);
