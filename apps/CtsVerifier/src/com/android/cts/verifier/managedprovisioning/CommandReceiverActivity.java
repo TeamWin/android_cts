@@ -123,6 +123,8 @@ public class CommandReceiverActivity extends Activity {
     public static final String COMMAND_ENABLE_LOGOUT = "enable-logout";
     public static final String COMMAND_DISABLE_USB_DATA_SIGNALING = "disable-usb-data-signaling";
     public static final String COMMAND_ENABLE_USB_DATA_SIGNALING = "enable-usb-data-signaling";
+    public static final String COMMAND_SET_REQUIRED_PASSWORD_COMPLEXITY =
+            "set-required-password-complexity";
 
     public static final String EXTRA_USER_RESTRICTION =
             "com.android.cts.verifier.managedprovisioning.extra.USER_RESTRICTION";
@@ -536,6 +538,11 @@ public class CommandReceiverActivity extends Activity {
                 case COMMAND_ENABLE_USB_DATA_SIGNALING: {
                     mDpm.setUsbDataSignalingEnabled(true);
                     break;
+                }
+                case COMMAND_SET_REQUIRED_PASSWORD_COMPLEXITY: {
+                    int complexity = intent.getIntExtra(EXTRA_VALUE,
+                            DevicePolicyManager.PASSWORD_COMPLEXITY_NONE);
+                    mDpm.setRequiredPasswordComplexity(complexity);
                 }
             }
         } catch (Exception e) {
