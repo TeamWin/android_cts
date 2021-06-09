@@ -16,6 +16,7 @@
 package android.media.cts;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
@@ -26,6 +27,7 @@ import android.media.Session2Token;
 import android.os.Process;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.SdkSuppress;
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
 
@@ -47,6 +49,7 @@ import java.util.concurrent.TimeUnit;
  */
 @RunWith(AndroidJUnit4.class)
 @SmallTest
+@SdkSuppress(minSdkVersion = 31, codeName = "S")
 public class MediaCommunicationManagerTest {
     private static final int TIMEOUT_MS = 5000;
     private static final int WAIT_MS = 500;
@@ -62,6 +65,7 @@ public class MediaCommunicationManagerTest {
 
     @Test
     public void testGetVersion() {
+        assertNotNull("Missing MediaCommunicationManager", mManager);
         assertTrue(mManager.getVersion() > 0);
     }
 
@@ -69,6 +73,7 @@ public class MediaCommunicationManagerTest {
     public void testGetSession2Tokens() throws Exception {
         Executor executor = Executors.newSingleThreadExecutor();
 
+        assertNotNull("Missing MediaCommunicationManager", mManager);
         ManagerSessionCallback managerCallback = new ManagerSessionCallback();
         Session2Callback sessionCallback = new Session2Callback();
         mManager.registerSessionCallback(executor, managerCallback);
@@ -89,6 +94,7 @@ public class MediaCommunicationManagerTest {
     public void testManagerSessionCallback() throws Exception {
         Executor executor = Executors.newSingleThreadExecutor();
 
+        assertNotNull("Missing MediaCommunicationManager", mManager);
         ManagerSessionCallback managerCallback = new ManagerSessionCallback();
         Session2Callback sessionCallback = new Session2Callback();
         mManager.registerSessionCallback(executor, managerCallback);
