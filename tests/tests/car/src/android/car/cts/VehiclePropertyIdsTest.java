@@ -316,7 +316,8 @@ public class VehiclePropertyIdsTest {
      */
     @Test
     public void testAllPropertiesAreMappedInToString() {
-        List<Integer> systemProperties = getIntegersFromDataEnums(VehiclePropertyIds.class);
+        List<Integer> systemProperties = getIntegersFromDataEnums(
+                new VehiclePropertyIds().getClass());
         for (int propertyId : systemProperties) {
             String propertyString = VehiclePropertyIds.toString(propertyId);
             assertThat(propertyString.startsWith("0x")).isFalse();
