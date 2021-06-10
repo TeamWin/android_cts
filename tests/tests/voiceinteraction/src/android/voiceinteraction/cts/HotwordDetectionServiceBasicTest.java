@@ -19,10 +19,14 @@ package android.voiceinteraction.cts;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.content.Intent;
+import android.os.Parcelable;
 import android.platform.test.annotations.AppModeFull;
+import android.service.voice.HotwordDetectedResult;
 import android.service.voice.HotwordDetectionService;
 import android.voiceinteraction.common.Utils;
+import android.voiceinteraction.service.MainHotwordDetectionService;
 
+import androidx.annotation.NonNull;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
@@ -77,10 +81,7 @@ public final class HotwordDetectionServiceBasicTest
                 Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
                 Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS);
 
-        // Use AlwaysOnHotwordDetector to test the onDetect function of HotwordDetectionService
-        testHotwordDetection(Utils.HOTWORD_DETECTION_SERVICE_DSP_ONDETECT_TEST,
-                Utils.HOTWORD_DETECTION_SERVICE_ONDETECT_RESULT_INTENT,
-                Utils.HOTWORD_DETECTION_SERVICE_ONDETECT_SUCCESS);
+        verifyDetectedResult(performOnDetect(Utils.HOTWORD_DETECTION_SERVICE_DSP_ONDETECT_TEST));
     }
 
     @Test
@@ -91,10 +92,8 @@ public final class HotwordDetectionServiceBasicTest
                 Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
                 Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS);
 
-        // Use AlwaysOnHotwordDetector to test the onReject callback function
-        testHotwordDetection(Utils.HOTWORD_DETECTION_SERVICE_DSP_ONREJECT_TEST,
-                Utils.HOTWORD_DETECTION_SERVICE_ONDETECT_RESULT_INTENT,
-                Utils.HOTWORD_DETECTION_SERVICE_ONDETECT_REJECTION);
+        assertThat(performOnDetect(Utils.HOTWORD_DETECTION_SERVICE_DSP_ONREJECT_TEST))
+                .isEqualTo(MainHotwordDetectionService.REJECTED_RESULT);
     }
 
     @Test
@@ -105,11 +104,8 @@ public final class HotwordDetectionServiceBasicTest
                 Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
                 Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS);
 
-        // Use AlwaysOnHotwordDetector to test the external source function of
-        // HotwordDetectionService
-        testHotwordDetection(Utils.HOTWORD_DETECTION_SERVICE_EXTERNAL_SOURCE_ONDETECT_TEST,
-                Utils.HOTWORD_DETECTION_SERVICE_ONDETECT_RESULT_INTENT,
-                Utils.HOTWORD_DETECTION_SERVICE_ONDETECT_SUCCESS);
+        verifyDetectedResult(
+                performOnDetect(Utils.HOTWORD_DETECTION_SERVICE_EXTERNAL_SOURCE_ONDETECT_TEST));
     }
 
     @Test
@@ -120,11 +116,7 @@ public final class HotwordDetectionServiceBasicTest
                 Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
                 Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS);
 
-        // Use SoftwareHotwordDetector to test the mic source function of
-        // HotwordDetectionService
-        testHotwordDetection(Utils.HOTWORD_DETECTION_SERVICE_MIC_ONDETECT_TEST,
-                Utils.HOTWORD_DETECTION_SERVICE_ONDETECT_RESULT_INTENT,
-                Utils.HOTWORD_DETECTION_SERVICE_ONDETECT_SUCCESS);
+        verifyDetectedResult(performOnDetect(Utils.HOTWORD_DETECTION_SERVICE_MIC_ONDETECT_TEST));
     }
 
     @Test
@@ -157,6 +149,35 @@ public final class HotwordDetectionServiceBasicTest
 
         assertThat(intent).isNotNull();
         assertThat(intent.getIntExtra(Utils.KEY_TEST_RESULT, -1)).isEqualTo(expectedResult);
+    }
+
+    @NonNull
+    private Parcelable performOnDetect(int testType) {
+        final BlockingBroadcastReceiver receiver = new BlockingBroadcastReceiver(mContext,
+                Utils.HOTWORD_DETECTION_SERVICE_ONDETECT_RESULT_INTENT);
+        receiver.register();
+
+        mActivityTestRule.getScenario().onActivity(activity -> {
+            activity.triggerHotwordDetectionServiceTest(
+                    Utils.HOTWORD_DETECTION_SERVICE_BASIC,
+                    testType);
+        });
+
+        final Intent intent = receiver.awaitForBroadcast(TIMEOUT_MS);
+        receiver.unregisterQuietly();
+
+        assertThat(intent).isNotNull();
+        final Parcelable result = intent.getParcelableExtra(Utils.KEY_TEST_RESULT);
+        assertThat(result).isNotNull();
+        return result;
+    }
+
+    // TODO: Implement HotwordDetectedResult#equals to override the Bundle equality check; then
+    // simply check that the HotwordDetectedResults are equal.
+    private void verifyDetectedResult(Parcelable result) {
+        assertThat(result).isInstanceOf(HotwordDetectedResult.class);
+        assertThat(((HotwordDetectedResult) result).getConfidenceLevel())
+                .isEqualTo(MainHotwordDetectionService.DETECTED_RESULT.getConfidenceLevel());
     }
 
     @Override
