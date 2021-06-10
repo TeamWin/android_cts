@@ -890,11 +890,14 @@ public class WindowManagerState {
     }
 
     public int getRootTasksCount(int displayId) {
-        int count = 0;
-        for (ActivityTask rootTask : mRootTasks) {
-            if (rootTask.mDisplayId == displayId) ++count;
-        }
-        return count;
+        return getRootTasksCount(t -> t.mDisplayId == displayId);
+    }
+
+    /**
+     * Count root tasks filtered by the predicate passed as argument.
+     */
+    public int getRootTasksCount(Predicate<? super ActivityTask> predicate) {
+        return (int) mRootTasks.stream().filter(predicate).count();
     }
 
     boolean pendingActivityContain(ComponentName activityName) {
@@ -1735,6 +1738,12 @@ public class WindowManagerState {
         @NonNull
         public String getName() {
             return mName;
+        }
+
+        @NonNull
+        public String getPackageName() {
+            int sep = mName.indexOf('/');
+            return sep == -1 ? mName : mName.substring(0, sep);
         }
 
         String getToken() {
