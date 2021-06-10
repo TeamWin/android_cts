@@ -23,12 +23,14 @@ import android.net.Uri
 import android.telecom.TelecomManager
 import com.android.compatibility.common.util.SystemUtil
 import org.junit.Assume
+import org.junit.Ignore
 import org.junit.Test
 
 class SensorPrivacyMicrophoneTest : SensorPrivacyBaseTest(
         MICROPHONE,
         USE_MIC_EXTRA
 ) {
+    @Ignore
     @Test
     fun testMicShownOnPhoneCall() {
         try {
