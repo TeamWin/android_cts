@@ -51,6 +51,7 @@ public class StatsdCtsForegroundActivity extends Activity {
     public static final String ACTION_CREATE_CHANNEL_GROUP = "action.create_channel_group";
     public static final String ACTION_POLL_NETWORK_STATS = "action.poll_network_stats";
     public static final String ACTION_LMK = "action.lmk";
+    public static final String ACTION_DRAIN_POWER = "action.drain_power";
 
     public static final int SLEEP_OF_ACTION_SLEEP_WHILE_TOP = 2_000;
     public static final int SLEEP_OF_ACTION_SHOW_APPLICATION_OVERLAY = 2_000;
@@ -104,6 +105,9 @@ public class StatsdCtsForegroundActivity extends Activity {
                 break;
             case ACTION_LMK:
                 new Thread(this::cmain).start();
+                break;
+            case ACTION_DRAIN_POWER:
+                doBusyWork();
                 break;
             default:
                 Log.e(TAG, "Intent had invalid action " + action);
@@ -215,6 +219,26 @@ public class StatsdCtsForegroundActivity extends Activity {
     private void doNativeCrash() {
         Log.e(TAG, "About to segfault the app");
         segfault();
+    }
+
+    private void doBusyWork() {
+        new AsyncTask<Void, Void, Void>() {
+            @Override
+            protected Void doInBackground(Void... params) {
+                // Put a heavy load on the CPU
+                double sum = 0;
+                for (double t = 0; t < Double.MAX_VALUE; t += 1) {
+                    sum += Math.sin(t);
+                }
+                Log.d(TAG, "Completed summing sines: " + sum);
+                return null;
+            }
+
+            @Override
+            protected void onPostExecute(Void nothing) {
+                finish();
+            }
+        }.execute();
     }
 
     private native void segfault();
