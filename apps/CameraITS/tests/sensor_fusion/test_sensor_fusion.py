@@ -64,6 +64,7 @@ _CV2_LK_PARAMS = dict(winSize=(15, 15),
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
 _NUM_ROTATIONS = 10
 _START_FRAME = 1
+_FRAME_DELTA_TOL = 1.5  # 50% margin over nominal FPS of captures
 
 # Constants to convert between different units (for clarity).
 _SEC_TO_MSEC = 1000.0
@@ -232,10 +233,13 @@ def _get_cam_times(cam_events, fps):
                  exposure of each frame.
   """
   starts = np.array([start for start, exptime, readout in cam_events])
-  max_frame_delta = np.amax(np.subtract(starts[1:], starts[0:-1])*_NSEC_TO_SEC)
-  if max_frame_delta > (1.5 * (1 / fps)):
-    raise AssertionError(
-        f'Frame drop! Max delta: {max_frame_delta:.5f}s, fps: {int(fps)}')
+  max_frame_delta_ms = (np.amax(np.subtract(starts[1:], starts[0:-1])) /
+                        _MSEC_TO_NSEC)
+  logging.debug('Maximum frame delta: %.3f ms', max_frame_delta_ms)
+  frame_delta_tol_ms = _FRAME_DELTA_TOL * (1 / fps) * _SEC_TO_MSEC
+  if max_frame_delta_ms > frame_delta_tol_ms:
+    raise AssertionError(f'Frame drop! Max delta: {max_frame_delta_ms:.3f}ms, '
+                         f'ATOL: {frame_delta_tol_ms}ms')
   exptimes = np.array([exptime for start, exptime, readout in cam_events])
   if not np.all(exptimes == exptimes[0]):
     raise AssertionError(f'Exposure times vary in frames! {exptimes}')
@@ -522,7 +526,7 @@ class SensorFusionTest(its_base_test.ItsBaseTest):
 
     # Compute cam rotation displacement(rads) between pairs of adjacent frames.
     cam_rots = _get_cam_rotations(
-      frames[_START_FRAME:len(frames)], events['facing'], img_h, log_path)
+        frames[_START_FRAME:len(frames)], events['facing'], img_h, log_path)
     logging.debug('cam_rots: %s', str(cam_rots))
     gyro_rots = sensor_fusion_utils.get_gyro_rotations(
         events['gyro'], cam_times)
