@@ -16,6 +16,8 @@
 
 package android.graphics.fonts;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
@@ -88,6 +90,23 @@ public class SystemFontsTest {
                 fail("System font must be read only");
             } catch (ReadOnlyBufferException e) {
                 // pass
+            }
+        }
+    }
+
+    @Test
+    public void testAvailableFonts_FontAttributeGetters() {
+        // Because system fonts are configurable by device, we cannot assert specific values.
+        // Instead, we call attribute getter methods and verify if they returns valid values.
+        for (Font font : availableFonts) {
+            assertNotNull(font.getStyle());
+            assertNotNull(font.getLocaleList());
+            assertThat(font.getTtcIndex()).isAtLeast(0);
+            FontVariationAxis[] axes = font.getAxes();
+            if (axes != null) {
+                for (FontVariationAxis axis : axes) {
+                    assertNotNull(axis);
+                }
             }
         }
     }
