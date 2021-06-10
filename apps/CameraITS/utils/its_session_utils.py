@@ -1075,8 +1075,8 @@ class ItsSession(object):
                                       ' support')
     return data['strValue'] == 'true'
 
-  def is_s_performance_class_primary_camera(self):
-    """Query whether the camera device is a S performance class primary camera.
+  def is_performance_class_primary_camera(self):
+    """Query whether the camera device is an R or S performance class primary camera.
 
     A primary rear/front facing camera is a camera device with the lowest
     camera Id for that facing.
@@ -1085,13 +1085,13 @@ class ItsSession(object):
       Boolean
     """
     cmd = {}
-    cmd['cmdName'] = 'isSPerformanceClassPrimaryCamera'
+    cmd['cmdName'] = 'isPerformanceClassPrimaryCamera'
     cmd['cameraId'] = self._camera_id
     self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
 
     data, _ = self.__read_response_from_socket()
-    if data['tag'] != 'sPerformanceClassPrimaryCamera':
-      raise error_util.CameraItsError('Failed to query S performance class '
+    if data['tag'] != 'performanceClassPrimaryCamera':
+      raise error_util.CameraItsError('Failed to query performance class '
                                       'primary camera')
     return data['strValue'] == 'true'
 
