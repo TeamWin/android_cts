@@ -33,7 +33,7 @@ def main():
     cam_id = ''
     with its.device.ItsSession() as cam:
         its.caps.skip_unless(
-            cam.is_s_performance_class_primary_camera())
+            cam.is_performance_class_primary_camera())
         cam_id = cam._camera_id
 
     # Create an Its session without opening the camera to test camera jpeg

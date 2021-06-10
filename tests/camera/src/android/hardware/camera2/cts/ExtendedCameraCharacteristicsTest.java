@@ -106,8 +106,9 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
     private static final long PREVIEW_RUN_MS = 500;
     private static final long FRAME_DURATION_30FPS_NSEC = (long) 1e9 / 30;
 
-    private static final long MIN_BACK_SENSOR_PERFORMANCE_CLASS_RESOLUTION = 12000000;
-    private static final long MIN_FRONT_SENSOR_PERFORMANCE_CLASS_RESOLUTION = 6000000;
+    private static final long MIN_BACK_SENSOR_PERF_CLASS_RESOLUTION = 12000000;
+    private static final long MIN_FRONT_SENSOR_S_PERF_CLASS_RESOLUTION = 5000000;
+    private static final long MIN_FRONT_SENSOR_R_PERF_CLASS_RESOLUTION = 4000000;
 
     /*
      * HW Levels short hand
@@ -297,6 +298,42 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
                             ImageFormat.HEIC, mAllCameraIds[i]), heicSizes, QVGA);
                 }
 
+            }
+
+           if (activeArrayWidth >= HD.getWidth() &&
+                    activeArrayHeight >= HD.getHeight()) {
+                assertArrayContains(String.format(
+                        "Required HD size not found for format %x for: ID %s",
+                        ImageFormat.JPEG, mAllCameraIds[i]), jpegSizes, HD);
+                if (supportHeic) {
+                    assertArrayContains(String.format(
+                            "Required HD size not found for format %x for: ID %s",
+                            ImageFormat.HEIC, mAllCameraIds[i]), heicSizes, HD);
+                }
+            }
+
+            if (activeArrayWidth >= VGA.getWidth() &&
+                    activeArrayHeight >= VGA.getHeight()) {
+                assertArrayContains(String.format(
+                        "Required VGA size not found for format %x for: ID %s",
+                        ImageFormat.JPEG, mAllCameraIds[i]), jpegSizes, VGA);
+                if (supportHeic) {
+                    assertArrayContains(String.format(
+                            "Required VGA size not found for format %x for: ID %s",
+                            ImageFormat.HEIC, mAllCameraIds[i]), heicSizes, VGA);
+                }
+            }
+
+            if (activeArrayWidth >= QVGA.getWidth() &&
+                    activeArrayHeight >= QVGA.getHeight()) {
+                assertArrayContains(String.format(
+                        "Required QVGA size not found for format %x for: ID %s",
+                        ImageFormat.JPEG, mAllCameraIds[i]), jpegSizes, QVGA);
+                if (supportHeic) {
+                    assertArrayContains(String.format(
+                            "Required QVGA size not found for format %x for: ID %s",
+                            ImageFormat.HEIC, mAllCameraIds[i]), heicSizes, QVGA);
+                }
             }
 
             ArrayList<Size> jpegSizesList = new ArrayList<>(Arrays.asList(jpegSizes));
@@ -2440,19 +2477,20 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
     }
 
     /**
-     * Check camera characteristics for S Performance class requirements as specified
+     * Check camera characteristics for R and S Performance class requirements as specified
      * in CDD camera section 7.5
      */
     @Test
     @CddTest(requirement="7.5")
-    public void testCameraSPerfClassCharacteristics() throws Exception {
+    public void testCameraPerfClassCharacteristics() throws Exception {
         if (mAdoptShellPerm) {
             // Skip test for system camera. Performance class is only applicable for public camera
             // ids.
             return;
         }
+        boolean isRPerfClass = CameraTestUtils.isRPerfClass();
         boolean isSPerfClass = CameraTestUtils.isSPerfClass();
-        if (!isSPerfClass) {
+        if (!isRPerfClass && !isSPerfClass) {
             return;
         }
 
@@ -2484,36 +2522,9 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
             if (isPrimaryRear) {
                 hasPrimaryRear = true;
                 mCollector.expectTrue("Primary rear camera resolution should be at least " +
-                        MIN_BACK_SENSOR_PERFORMANCE_CLASS_RESOLUTION + " pixels, is "+
+                        MIN_BACK_SENSOR_PERF_CLASS_RESOLUTION + " pixels, is "+
                         sensorResolution,
-                        sensorResolution >= MIN_BACK_SENSOR_PERFORMANCE_CLASS_RESOLUTION);
-
-                // 720P @ 240fps
-                boolean supportHighSpeed = staticInfo.isCapabilitySupported(CONSTRAINED_HIGH_SPEED);
-                mCollector.expectTrue("Primary rear camera should support high speed recording",
-                        supportHighSpeed);
-                if (supportHighSpeed) {
-                    boolean supportHD240 = false;
-                    Size[] availableHighSpeedSizes = config.getHighSpeedVideoSizes();
-                    for (Size size : availableHighSpeedSizes) {
-                        if (!size.equals(HD)) {
-                            continue;
-                        }
-                        Range<Integer>[] availableFpsRanges =
-                                config.getHighSpeedVideoFpsRangesFor(size);
-                        for (Range<Integer> fpsRange : availableFpsRanges) {
-                            if (fpsRange.getUpper() == 240) {
-                                supportHD240 = true;
-                                break;
-                            }
-                        }
-                        if (supportHD240) {
-                            break;
-                        }
-                    }
-                    mCollector.expectTrue("Primary rear camera should support HD @ 240fps",
-                            supportHD240);
-                }
+                        sensorResolution >= MIN_BACK_SENSOR_PERF_CLASS_RESOLUTION);
 
                 // 4K @ 30fps
                 boolean supportUHD = videoSizes.contains(UHD);
@@ -2528,10 +2539,17 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
                 }
             } else {
                 hasPrimaryFront = true;
-                mCollector.expectTrue("Primary front camera resolution should be at least " +
-                        MIN_FRONT_SENSOR_PERFORMANCE_CLASS_RESOLUTION + " pixels, is "+
-                        sensorResolution,
-                        sensorResolution >= MIN_FRONT_SENSOR_PERFORMANCE_CLASS_RESOLUTION);
+                if (isSPerfClass) {
+                    mCollector.expectTrue("Primary front camera resolution should be at least " +
+                            MIN_FRONT_SENSOR_S_PERF_CLASS_RESOLUTION + " pixels, is "+
+                            sensorResolution,
+                            sensorResolution >= MIN_FRONT_SENSOR_S_PERF_CLASS_RESOLUTION);
+                } else {
+                    mCollector.expectTrue("Primary front camera resolution should be at least " +
+                            MIN_FRONT_SENSOR_R_PERF_CLASS_RESOLUTION + " pixels, is "+
+                            sensorResolution,
+                            sensorResolution >= MIN_FRONT_SENSOR_R_PERF_CLASS_RESOLUTION);
+                }
                 // 1080P @ 30fps
                 boolean supportFULLHD = videoSizes.contains(FULLHD);
                 mCollector.expectTrue("Primary front camera should support 1080P video recording",
@@ -2544,17 +2562,21 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
                 }
             }
 
+            String facingString = hasPrimaryRear ? "rear" : "front";
             // H-1-3
-            mCollector.expectTrue("Primary rear/front camera should be at least FULL, but is " +
-                   staticInfo.getHardwareLevelChecked(), staticInfo.isHardwareLevelAtLeastFull());
-
-            // H-1-4
-            if (isPrimaryRear) {
-                mCollector.expectTrue("Primary rear camera should support RAW capability",
-                        staticInfo.isCapabilitySupported(RAW));
+            if (isSPerfClass || (isRPerfClass && isPrimaryRear)) {
+                mCollector.expectTrue("Primary " + facingString +
+                        " camera should be at least FULL, but is " +
+                        toStringHardwareLevel(staticInfo.getHardwareLevelChecked()),
+                        staticInfo.isHardwareLevelAtLeastFull());
+            } else {
+                mCollector.expectTrue("Primary " + facingString +
+                        " camera should be at least LIMITED, but is " +
+                        toStringHardwareLevel(staticInfo.getHardwareLevelChecked()),
+                        staticInfo.isHardwareLevelAtLeastLimited());
             }
 
-            // H-1-5
+            // H-1-4
             Integer timestampSource = c.get(CameraCharacteristics.SENSOR_INFO_TIMESTAMP_SOURCE);
             mCollector.expectTrue(
                     "Primary rear/front camera should support real-time timestamp source",
@@ -2562,20 +2584,14 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
                     timestampSource.equals(CameraMetadata.SENSOR_INFO_TIMESTAMP_SOURCE_REALTIME));
 
             // H-1-8
-            Size[] jpegSizes = staticInfo.getJpegOutputSizesChecked();
-            assertTrue("Primary rear/front cameras must support JPEG formats",
-                    jpegSizes != null && jpegSizes.length > 0);
-            for (Size jpegSize : jpegSizes) {
-                mCollector.expectTrue(
-                        "Primary rear/front camera's JPEG size must be at least 1080p, but is " +
-                        jpegSize,
-                        jpegSize.getWidth() >= FULLHD.getWidth() &&
-                        jpegSize.getHeight() >= FULLHD.getHeight());
+            if (isSPerfClass && isPrimaryRear) {
+                mCollector.expectTrue("Primary rear camera should support RAW capability",
+                        staticInfo.isCapabilitySupported(RAW));
             }
         }
-        mCollector.expectTrue("There must be a primary rear camera for S performance class.",
+        mCollector.expectTrue("There must be a primary rear camera for performance class.",
                 hasPrimaryRear);
-        mCollector.expectTrue("There must be a primary front camera for S performance class.",
+        mCollector.expectTrue("There must be a primary front camera for performance class.",
                 hasPrimaryFront);
     }
 
