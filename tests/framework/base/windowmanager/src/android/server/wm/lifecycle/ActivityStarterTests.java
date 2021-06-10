@@ -40,14 +40,21 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
+import android.app.WindowConfiguration;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.ActivityLauncher;
+import android.server.wm.WindowManagerState;
 import android.server.wm.app.Components;
+import android.util.Log;
+import android.view.WindowManager;
 
 import org.junit.Test;
+
+import java.util.List;
+import java.util.function.Predicate;
 
 /**
  * Build/Install/Run:
@@ -392,9 +399,9 @@ public class ActivityStarterTests extends ActivityLifecycleClientTestBase {
         // Launch alias activity.
         getLaunchActivityBuilder().setUseInstrumentation().setTargetActivity(ALIAS_TEST_ACTIVITY)
                 .setIntentFlags(FLAG_ACTIVITY_NEW_TASK).execute();
-        final int stacks = mWmState.getRootTasksCount(DEFAULT_DISPLAY);
-        final int taskId =
-                mWmState.getTaskByActivity(ALIAS_TEST_ACTIVITY).getTaskId();
+
+        final int testStacks = countTestRootTasks();
+        final int taskId = mWmState.getTaskByActivity(ALIAS_TEST_ACTIVITY).getTaskId();
 
         // Return to home and launch the alias activity again.
         launchHomeActivity();
@@ -402,8 +409,8 @@ public class ActivityStarterTests extends ActivityLifecycleClientTestBase {
                 .setIntentFlags(FLAG_ACTIVITY_NEW_TASK).execute();
         assertEquals("Instance of the activity in its task must be only one", 1,
                 mWmState.getActivityCountInTask(taskId, ALIAS_TEST_ACTIVITY));
-        assertEquals("Stacks counts should not be increased.", stacks,
-                mWmState.getRootTasksCount(DEFAULT_DISPLAY));
+        assertEquals("Test stack count should not be increased.", testStacks,
+                countTestRootTasks());
 
         // Return to home and launch the real activity.
         launchHomeActivity();
@@ -411,8 +418,13 @@ public class ActivityStarterTests extends ActivityLifecycleClientTestBase {
                 .setIntentFlags(FLAG_ACTIVITY_NEW_TASK).execute();
         assertEquals("Instance of the activity in its task must be only one", 1,
                 mWmState.getActivityCountInTask(taskId, ALIAS_TEST_ACTIVITY));
-        assertEquals("Stacks counts should not be increased.", stacks,
-                mWmState.getRootTasksCount(DEFAULT_DISPLAY));
+        assertEquals("Test stack count should not be increased.", testStacks,
+                countTestRootTasks());
+    }
+
+    private int countTestRootTasks() {
+        return mWmState.getRootTasksCount(
+                t -> ALIAS_TEST_ACTIVITY.getPackageName().equals(t.getPackageName()));
     }
 
     /**
