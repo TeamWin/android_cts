@@ -14,20 +14,16 @@
  * limitations under the License.
  */
 
-package com.android.bedstead.testapp;
+package com.android.bedstead.nene.activities;
 
 import android.app.Activity;
 
-import com.android.bedstead.testapp.processor.annotations.TestAppCommunication;
-
 /**
- * Methods callable on remote activities.
+ * Interface for use by classes which are able to be used in Nene activity test apis.
  *
- * <p>Each method listed in this activity must have a corresponding method in
- * {@link BaseTestAppActivity}.
+ * <p>Methods on this interface should match exactly methods on {@link Activity}.
  */
-@TestAppCommunication
-public interface RemoteActivity {
+public interface NeneActivity {
     /** See {@link Activity#startLockTask}. */
     void startLockTask();
 

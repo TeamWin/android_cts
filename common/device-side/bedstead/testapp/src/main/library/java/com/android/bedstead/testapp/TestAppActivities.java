@@ -29,11 +29,11 @@ public final class TestAppActivities {
      *
      * <p>Currently, this will always return the same activity.
      */
-    public TestAppActivityReference any() {
+    public UnresolvedTestAppActivity any() {
         // TODO(scottjonathan): Currently we only have one pattern for testapps and they all have
         //  exactly one activity - so we will return it here. In future we should expose a query
         //  interface
-        return new TestAppActivityReference(
+        return new UnresolvedTestAppActivity(
                 mInstance,
                 mInstance.testApp().reference().component("android.testapp.activity"));
     }

@@ -22,9 +22,12 @@ import android.content.BroadcastReceiver;
 import android.content.Intent;
 import android.util.Log;
 
+import com.android.bedstead.testapp.processor.annotations.TestAppReceiver;
+
 /**
  * An {@link AppComponentFactory} which redirects invalid class names to premade TestApp classes.
  */
+@TestAppReceiver
 public final class TestAppAppComponentFactory extends AppComponentFactory {
 
     private static final String LOG_TAG = "TestAppACF";
