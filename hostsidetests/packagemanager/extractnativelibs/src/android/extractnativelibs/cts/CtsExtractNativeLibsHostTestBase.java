@@ -35,7 +35,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -202,12 +201,21 @@ public class CtsExtractNativeLibsHostTestBase extends BaseHostJUnit4Test {
 
     final Set<String> getDeviceAbis() throws Exception {
         String[] abiArray = getDevice().getProperty("ro.product.cpu.abilist").split(",");
-        return new HashSet<String>(Arrays.asList(abiArray));
+        // Ignore native bridge ABIs if they are of different base arch
+        String deviceBaseArch = AbiUtils.getArchForAbi(getDeviceAbi());
+        Set<String> deviceBaseArchSupportedAbis = AbiUtils.getAbisForArch(deviceBaseArch);
+        HashSet<String> deviceSupportedAbis = new HashSet<>();
+        for (String abi : abiArray) {
+            if (deviceBaseArchSupportedAbis.contains(abi)) {
+                deviceSupportedAbis.add(abi);
+            }
+        }
+        return deviceSupportedAbis;
     }
 
     final Set<String> getDeviceAbiSuffixes() throws Exception {
         HashSet<String> abiSuffixes = new HashSet<String>();
-        for (String abi : getDevice().getProperty("ro.product.cpu.abilist").split(",")) {
+        for (String abi : getDeviceAbis()) {
             abiSuffixes.add(AbiUtils.getBitness(abi));
         }
         return abiSuffixes;
