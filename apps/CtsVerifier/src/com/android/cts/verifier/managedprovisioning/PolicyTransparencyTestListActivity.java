@@ -62,7 +62,6 @@ public class PolicyTransparencyTestListActivity extends PassFailButtons.TestList
             PolicyTransparencyTestActivity.TEST_CHECK_KEYGURAD_UNREDACTED_NOTIFICATION,
             PolicyTransparencyTestActivity.TEST_CHECK_LOCK_SCREEN_INFO,
             PolicyTransparencyTestActivity.TEST_CHECK_MAXIMUM_TIME_TO_LOCK,
-            PolicyTransparencyTestActivity.TEST_CHECK_PASSWORD_QUALITY,
             PolicyTransparencyTestActivity.TEST_CHECK_PERMITTED_ACCESSIBILITY_SERVICE,
             PolicyTransparencyTestActivity.TEST_CHECK_PERMITTED_INPUT_METHOD
         };
@@ -71,7 +70,6 @@ public class PolicyTransparencyTestListActivity extends PassFailButtons.TestList
             Settings.ACTION_SETTINGS,
             Settings.ACTION_DISPLAY_SETTINGS,
             Settings.ACTION_DISPLAY_SETTINGS,
-            Settings.ACTION_SETTINGS,
             Settings.ACTION_ACCESSIBILITY_SETTINGS,
             Settings.ACTION_SETTINGS
         };
@@ -80,7 +78,6 @@ public class PolicyTransparencyTestListActivity extends PassFailButtons.TestList
             R.string.disallow_keyguard_unredacted_notifications,
             R.string.set_lock_screen_info,
             R.string.set_maximum_time_to_lock,
-            R.string.set_password_quality,
             R.string.set_permitted_accessibility_services,
             R.string.set_permitted_input_methods
         };
