@@ -734,4 +734,27 @@ public class LockTaskTest {
             }
         }
     }
+
+    @Test
+    @PositivePolicyTest(policy = LockTask.class)
+    public void startActivity_lockTaskEnabledOption_notAllowedPackage_throwsException() {
+        String[] originalLockTaskPackages =
+                sDeviceState.dpc().devicePolicyManager().getLockTaskPackages();
+
+        try (TestAppInstanceReference testApp =
+                     sTestApp.install(sTestApis.users().instrumented())) {
+            try {
+                sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(
+                        new String[]{});
+                Bundle options = ActivityOptions.makeBasic().setLockTaskEnabled(true).toBundle();
+
+                assertThrows(SecurityException.class, () -> {
+                    testApp.activities().any().start(options);
+                });
+            } finally {
+                sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(
+                        originalLockTaskPackages);
+            }
+        }
+    }
 }
