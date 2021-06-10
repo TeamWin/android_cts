@@ -33,6 +33,7 @@ import android.support.test.uiautomator.By
 import android.support.test.uiautomator.BySelector
 import android.support.test.uiautomator.UiDevice
 import android.support.test.uiautomator.UiObject2
+import android.support.test.uiautomator.UiObjectNotFoundException
 import android.view.accessibility.AccessibilityNodeInfo
 import android.view.accessibility.AccessibilityNodeInfo.ACTION_SCROLL_FORWARD
 import android.widget.Switch
@@ -41,6 +42,7 @@ import androidx.test.InstrumentationRegistry
 import androidx.test.filters.SdkSuppress
 import androidx.test.runner.AndroidJUnit4
 import com.android.compatibility.common.util.DisableAnimationRule
+import com.android.compatibility.common.util.MatcherUtils.hasTextThat
 import com.android.compatibility.common.util.SystemUtil
 import com.android.compatibility.common.util.SystemUtil.callWithShellPermissionIdentity
 import com.android.compatibility.common.util.SystemUtil.eventually
@@ -54,6 +56,7 @@ import com.android.compatibility.common.util.lowestCommonAncestor
 import com.android.compatibility.common.util.textAsString
 import com.android.compatibility.common.util.uiDump
 import org.hamcrest.CoreMatchers.containsString
+import org.hamcrest.CoreMatchers.containsStringIgnoringCase
 import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.Matcher
 import org.hamcrest.Matchers.greaterThan
@@ -132,6 +135,9 @@ class AutoRevokeTest {
     @AppModeFull(reason = "Uses separate apps for testing")
     @Test
     fun testUnusedApp_getsPermissionRevoked() {
+        assumeFalse(
+                "Watch doesn't provide a unified way to check notifications. it depends on UX",
+                hasFeatureWatch())
         withUnusedThresholdMs(3L) {
             withDummyApp {
                 // Setup
@@ -481,7 +487,15 @@ class AutoRevokeTest {
     }
 
     private fun click(label: String) {
-        waitFindObject(byTextIgnoreCase(label)).click()
+        try {
+            waitFindObject(byTextIgnoreCase(label)).click()
+        } catch (e: UiObjectNotFoundException) {
+            // waitFindObject sometimes fails to find UI that is present in the view hierarchy
+            // Increasing sleep to 2000 in waitForIdle() might be passed but no guarantee that the
+            // UI is fully displayed So Adding one more check without using the UiAutomator helps
+            // reduce false positives
+            waitFindNode(hasTextThat(containsStringIgnoringCase(label))).click()
+        }
         waitForIdle()
     }
 
