@@ -107,7 +107,8 @@ public final class HdmiCecSystemStandbyTest extends BaseHostJUnit4Test {
         getDevice().waitForBootComplete(HdmiCecConstants.REBOOT_TIMEOUT);
         try {
             for (LogicalAddress source : SOURCE_LOGICAL_ADDRESSES) {
-                if (source.equals(LogicalAddress.BROADCAST)) {
+                if (hdmiCecClient.hasLogicalAddress(source)
+                        || source.equals(LogicalAddress.BROADCAST)) {
                     continue;
                 }
                 checkDeviceAsleepAfterStandbySent(source, LogicalAddress.BROADCAST);
@@ -129,6 +130,9 @@ public final class HdmiCecSystemStandbyTest extends BaseHostJUnit4Test {
         getDevice().executeShellCommand("reboot");
         getDevice().waitForBootComplete(HdmiCecConstants.REBOOT_TIMEOUT);
         for (LogicalAddress source : SOURCE_LOGICAL_ADDRESSES) {
+            if (hdmiCecClient.hasLogicalAddress(source)) {
+                continue;
+            }
             checkDeviceAsleepAfterStandbySent(source, LogicalAddress.PLAYBACK_1);
         }
     }

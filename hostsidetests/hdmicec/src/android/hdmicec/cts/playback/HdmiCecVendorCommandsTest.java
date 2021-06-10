@@ -64,7 +64,7 @@ public final class HdmiCecVendorCommandsTest extends BaseHostJUnit4Test {
     public void cect_11_2_9_1_GiveDeviceVendorId() throws Exception {
         for (LogicalAddress logicalAddress : LogicalAddress.values()) {
             // Skip the logical address of this device
-            if (logicalAddress == PLAYBACK_DEVICE) {
+            if (hdmiCecClient.hasLogicalAddress(logicalAddress)) {
                 continue;
             }
             hdmiCecClient.sendCecMessage(logicalAddress, CecOperand.GIVE_DEVICE_VENDOR_ID);
