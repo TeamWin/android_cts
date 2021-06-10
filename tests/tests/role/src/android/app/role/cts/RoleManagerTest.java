@@ -63,6 +63,7 @@ import com.android.compatibility.common.util.UiAutomatorUtils;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -86,8 +87,8 @@ public class RoleManagerTest {
 
     private static final long UNEXPECTED_TIMEOUT_MILLIS = 1000;
 
-    private static final String ROLE_NAME = RoleManager.ROLE_BROWSER;
-    private static final String ROLE_SHORT_LABEL = "Browser app";
+    private static String ROLE_NAME = RoleManager.ROLE_BROWSER;
+    private static String ROLE_SHORT_LABEL = "Browser app";
 
     private static final String APP_APK_PATH = "/data/local/tmp/cts/role/CtsRoleTestApp.apk";
     private static final String APP_PACKAGE_NAME = "android.app.role.cts.app";
@@ -131,6 +132,14 @@ public class RoleManagerTest {
             new ActivityTestRule<>(WaitForResultActivity.class);
 
     private String mRoleHolder;
+
+    @BeforeClass
+    public static void setUpRoleName() {
+        if (isWatch()) {
+            ROLE_NAME = RoleManager.ROLE_DIALER;
+            ROLE_SHORT_LABEL = "Phone app";
+        }
+    }
 
     @Before
     public void saveRoleHolder() throws Exception {
@@ -1059,5 +1068,9 @@ public class RoleManagerTest {
         public void accept(Boolean successful) {
             complete(successful);
         }
+    }
+
+    private static boolean isWatch() {
+        return sPackageManager.hasSystemFeature(PackageManager.FEATURE_WATCH);
     }
 }
