@@ -35,3 +35,33 @@ filegroup {
     name: "cts-wm-force-relayout-test-base",
     srcs: ["src/android/server/wm/ForceRelayoutTestBase.java"],
 }
+
+android_test {
+    name: "CtsWindowManagerDeviceTestCases",
+    defaults: ["cts_defaults"],
+    srcs: [
+        "src/**/*.java",
+        "alertwindowservice/src/**/*.java",
+        ":cts-wm-components",
+        ":CtsVerifierMockVrListenerServiceFiles",
+    ],
+    resource_dirs: ["res"],
+    asset_dirs: ["intent_tests"],
+    libs: ["android.test.runner.stubs"],
+    static_libs: [
+        "compatibility-device-util-axt",
+        "androidx.test.ext.junit",
+        "androidx.test.rules",
+        "hamcrest-library",
+        "platform-test-annotations",
+        "cts-wm-util",
+        "CtsSurfaceValidatorLib",
+        "CtsMockInputMethodLib",
+        "metrics-helper-lib",
+    ],
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
+    sdk_version: "test_current",
+}
