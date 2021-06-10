@@ -1018,8 +1018,10 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         launchActivity(PIP_ACTIVITY);
         waitForExitPipToFullscreen(PIP_ACTIVITY);
         assertPinnedStackDoesNotExist();
-        mWmState.waitForLastOrientation(ORIENTATION_LANDSCAPE);
-        assertEquals(ORIENTATION_LANDSCAPE, mWmState.getLastOrientation());
+        mWmState.waitForActivityOrientation(PIP_ACTIVITY, ORIENTATION_LANDSCAPE);
+
+        final ActivityTask pipActivityTask = mWmState.getTaskByActivity(PIP_ACTIVITY);
+        assertEquals(ORIENTATION_LANDSCAPE, pipActivityTask.mOverrideConfiguration.orientation);
     }
 
     @Test
