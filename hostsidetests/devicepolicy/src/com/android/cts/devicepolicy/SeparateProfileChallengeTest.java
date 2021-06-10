@@ -16,7 +16,7 @@
 
 package com.android.cts.devicepolicy;
 
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 
 import org.junit.Test;
 
@@ -48,8 +48,8 @@ public class SeparateProfileChallengeTest extends BaseDevicePolicyTest {
         super.tearDown();
     }
 
-    @SecurityTest
     @Test
+    @AsbSecurityTest(cveBugId = 128599668)
     public void testSeparateProfileChallengePermissions() throws Exception {
         if (!mHasFeature || !mSupportsMultiUser) {
             return;

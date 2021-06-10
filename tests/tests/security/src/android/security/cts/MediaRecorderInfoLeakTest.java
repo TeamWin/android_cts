@@ -16,20 +16,19 @@
 
 package android.security.cts;
 
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import android.media.MediaRecorder;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
 import java.io.File;
 
-@SecurityTest
 public class MediaRecorderInfoLeakTest extends AndroidTestCase {
 
    /**
     *  b/27855172
     */
-    @SecurityTest(minPatchLevel = "2016-06")
+    @AsbSecurityTest(cveBugId = 27855172)
     public void test_cve_2016_2499() throws Exception {
         MediaRecorder mediaRecorder = null;
         long end = System.currentTimeMillis() + 600_000; // 10 minutes from now
