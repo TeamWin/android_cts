@@ -5,7 +5,10 @@ package {
 cc_test_library {
     name: "libbionic_app_jni",
     sdk_version: "current",
-    srcs: ["bionic_app_jni.cpp"],
+    srcs: [
+        "bionic_app_jni.cpp",
+        "main.cpp",
+    ],
     cflags: [
         "-Wall",
         "-Werror",
