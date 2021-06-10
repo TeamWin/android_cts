@@ -18,7 +18,6 @@ package android.voiceinteraction.common;
 import android.app.VoiceInteractor.PickOptionRequest.Option;
 import android.content.LocusId;
 import android.os.Bundle;
-import android.os.Parcelable;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -74,9 +73,6 @@ public class Utils {
     public static final int HOTWORD_DETECTION_SERVICE_TRIGGER_SECURITY_EXCEPTION = 3;
     public static final int HOTWORD_DETECTION_SERVICE_TRIGGER_SHARED_MEMORY_NOT_READ_ONLY = 4;
     public static final int HOTWORD_DETECTION_SERVICE_GET_ERROR = 5;
-
-    public static final int HOTWORD_DETECTION_SERVICE_ONDETECT_SUCCESS = 1;
-    public static final int HOTWORD_DETECTION_SERVICE_ONDETECT_REJECTION = 2;
 
     /** Indicate which test scenario for testing. */
     public static final int HOTWORD_DETECTION_SERVICE_ON_UPDATE_STATE_CRASH = 1;
