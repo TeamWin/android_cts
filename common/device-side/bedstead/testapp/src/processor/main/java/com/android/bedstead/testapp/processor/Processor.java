@@ -17,7 +17,8 @@
 package com.android.bedstead.testapp.processor;
 
 
-import com.android.bedstead.testapp.processor.annotations.TestAppCommunication;
+import com.android.bedstead.testapp.processor.annotations.TestAppReceiver;
+import com.android.bedstead.testapp.processor.annotations.TestAppSender;
 
 import com.google.android.enterprise.connectedapps.annotations.CrossProfile;
 import com.google.android.enterprise.connectedapps.annotations.CrossProfileConfiguration;
@@ -51,21 +52,26 @@ import javax.tools.JavaFileObject;
 
 /** Processor for generating TestApp API for remote execution. */
 @SupportedAnnotationTypes({
-        "com.android.bedstead.testapp.processor.annotations.TestAppCommunication",
+        "com.android.bedstead.testapp.processor.annotations.TestAppSender",
+        "com.android.bedstead.testapp.processor.annotations.TestAppReceiver",
 })
 @AutoService(javax.annotation.processing.Processor.class)
 public final class Processor extends AbstractProcessor {
     // TODO(scottjonathan): Add more verification before generating - and add processor tests
     private static final ClassName CONTEXT_CLASSNAME =
             ClassName.get("android.content", "Context");
-    private static final ClassName REMOTE_ACTIVITY_CLASSNAME =
+    private static final ClassName NENE_ACTIVITY_CLASSNAME =
+            ClassName.get(
+                    "com.android.bedstead.nene.activities",
+                    "NeneActivity");
+    private static final ClassName TEST_APP_ACTIVITY_CLASSNAME =
             ClassName.get(
                     "com.android.bedstead.testapp",
-                    "RemoteActivity");
-    private static final ClassName REMOTE_ACTIVITY_IMPL_CLASSNAME =
+                    "TestAppActivity");
+    private static final ClassName TEST_APP_ACTIVITY_IMPL_CLASSNAME =
             ClassName.get(
                     "com.android.bedstead.testapp",
-                    "RemoteActivityImpl");
+                    "TestAppActivityImpl");
     private static final ClassName PROFILE_TARGETED_REMOTE_ACTIVITY_CLASSNAME =
             ClassName.get(
                     "com.android.bedstead.testapp",
@@ -96,6 +102,10 @@ public final class Processor extends AbstractProcessor {
     private static final ClassName NENE_EXCEPTION_CLASSNAME =
             ClassName.get(
                     "com.android.bedstead.nene.exceptions", "NeneException");
+    private static final ClassName TEST_APP_INSTANCE_REFERENCE_CLASSNAME =
+            ClassName.get("com.android.bedstead.testapp", "TestAppInstanceReference");
+    private static final ClassName COMPONENT_REFERENCE_CLASSNAME =
+            ClassName.get("com.android.bedstead.nene.packages", "ComponentReference");
     public static final String PACKAGE_NAME = "com.android.bedstead.testapp";
 
     @Override
@@ -107,32 +117,35 @@ public final class Processor extends AbstractProcessor {
     public boolean process(Set<? extends TypeElement> annotations,
             RoundEnvironment roundEnv) {
 
-        if (roundEnv.getElementsAnnotatedWith(TestAppCommunication.class).isEmpty()) {
-            return true;
+        TypeElement neneActivityInterface =
+                processingEnv.getElementUtils().getTypeElement(
+                        NENE_ACTIVITY_CLASSNAME.canonicalName());
+
+        if (!roundEnv.getElementsAnnotatedWith(TestAppReceiver.class).isEmpty()
+                || !roundEnv.getElementsAnnotatedWith(TestAppSender.class).isEmpty()) {
+            generateTargetedRemoteActivityInterface(neneActivityInterface);
+            generateTargetedRemoteActivityImpl(neneActivityInterface);
+            generateTargetedRemoteActivityWrapper(neneActivityInterface);
+            generateProvider();
+            generateConfiguration();
+
         }
 
-        TypeElement remoteActivityInterface =
-                processingEnv.getElementUtils().getTypeElement(
-                        REMOTE_ACTIVITY_CLASSNAME.canonicalName());
-
-        generateRemoteActivityImpl(remoteActivityInterface);
-        generateTargetedRemoteActivityInterface(remoteActivityInterface);
-        generateTargetedRemoteActivityImpl(remoteActivityInterface);
-        generateTargetedRemoteActivityWrapper(remoteActivityInterface);
-        generateProvider();
-        generateConfiguration();
+        if (!roundEnv.getElementsAnnotatedWith(TestAppSender.class).isEmpty()) {
+            generateRemoteActivityImpl(neneActivityInterface);
+        }
 
         return true;
     }
 
-    private void generateTargetedRemoteActivityImpl(TypeElement remoteActivityInterface) {
+    private void generateTargetedRemoteActivityImpl(TypeElement neneActivityInterface) {
         TypeSpec.Builder classBuilder =
                 TypeSpec.classBuilder(
                         TARGETED_REMOTE_ACTIVITY_IMPL_CLASSNAME)
                         .addSuperinterface(TARGETED_REMOTE_ACTIVITY_CLASSNAME)
                         .addModifiers(Modifier.PUBLIC, Modifier.FINAL);
 
-        for (ExecutableElement method : getMethods(remoteActivityInterface)) {
+        for (ExecutableElement method : getMethods(neneActivityInterface)) {
             MethodSpec.Builder methodBuilder =
                     MethodSpec.methodBuilder(method.getSimpleName().toString())
                             .returns(ClassName.get(method.getReturnType()))
@@ -170,7 +183,7 @@ public final class Processor extends AbstractProcessor {
         writeClassToFile(PACKAGE_NAME, classBuilder.build());
     }
 
-    private void generateTargetedRemoteActivityWrapper(TypeElement remoteActivityInterface) {
+    private void generateTargetedRemoteActivityWrapper(TypeElement neneActivityInterface) {
         TypeSpec.Builder classBuilder =
                 TypeSpec.classBuilder(
                         TARGETED_REMOTE_ACTIVITY_WRAPPER_CLASSNAME)
@@ -195,7 +208,7 @@ public final class Processor extends AbstractProcessor {
                         PROFILE_TARGETED_REMOTE_ACTIVITY_CLASSNAME)
                 .build());
 
-        for (ExecutableElement method : getMethods(remoteActivityInterface)) {
+        for (ExecutableElement method : getMethods(neneActivityInterface)) {
             MethodSpec.Builder methodBuilder =
                     MethodSpec.methodBuilder(method.getSimpleName().toString())
                             .returns(ClassName.get(method.getReturnType()))
@@ -247,11 +260,11 @@ public final class Processor extends AbstractProcessor {
         writeClassToFile(PACKAGE_NAME, classBuilder.build());
     }
 
-    private void generateRemoteActivityImpl(TypeElement remoteActivityInterface) {
+    private void generateRemoteActivityImpl(TypeElement neneActivityInterface) {
         TypeSpec.Builder classBuilder =
                 TypeSpec.classBuilder(
-                        REMOTE_ACTIVITY_IMPL_CLASSNAME)
-                        .addSuperinterface(REMOTE_ACTIVITY_CLASSNAME)
+                        TEST_APP_ACTIVITY_IMPL_CLASSNAME)
+                        .superclass(TEST_APP_ACTIVITY_CLASSNAME)
                         .addModifiers(Modifier.PUBLIC, Modifier.FINAL);
 
         classBuilder.addField(FieldSpec.builder(String.class, "mActivityClassName")
@@ -262,15 +275,17 @@ public final class Processor extends AbstractProcessor {
 
         classBuilder.addMethod(
                 MethodSpec.constructorBuilder()
-                        .addParameter(String.class, "activityClassName")
+                        .addParameter(TEST_APP_INSTANCE_REFERENCE_CLASSNAME, "instance")
                         .addParameter(
-                                TARGETED_REMOTE_ACTIVITY_CLASSNAME, "targetedRemoteActivity")
-                        .addStatement("mActivityClassName = activityClassName")
-                        .addStatement("mTargetedRemoteActivity = targetedRemoteActivity")
+                                COMPONENT_REFERENCE_CLASSNAME, "component")
+                        .addStatement("super(instance, component)")
+                        .addStatement("mActivityClassName = component.className()")
+                        .addStatement("mTargetedRemoteActivity = new $T(mInstance.connector())",
+                                TARGETED_REMOTE_ACTIVITY_WRAPPER_CLASSNAME)
                         .build());
 
 
-        for (ExecutableElement method : getMethods(remoteActivityInterface)) {
+        for (ExecutableElement method : getMethods(neneActivityInterface)) {
             MethodSpec.Builder methodBuilder =
                     MethodSpec.methodBuilder(method.getSimpleName().toString())
                             .returns(ClassName.get(method.getReturnType()))
@@ -303,13 +318,13 @@ public final class Processor extends AbstractProcessor {
         writeClassToFile(PACKAGE_NAME, classBuilder.build());
     }
 
-    private void generateTargetedRemoteActivityInterface(TypeElement remoteActivityInterface) {
+    private void generateTargetedRemoteActivityInterface(TypeElement neneActivityInterface) {
         TypeSpec.Builder classBuilder =
                 TypeSpec.interfaceBuilder(
                         TARGETED_REMOTE_ACTIVITY_CLASSNAME)
                         .addModifiers(Modifier.PUBLIC);
 
-        for (ExecutableElement method : getMethods(remoteActivityInterface)) {
+        for (ExecutableElement method : getMethods(neneActivityInterface)) {
             MethodSpec.Builder methodBuilder =
                     MethodSpec.methodBuilder(method.getSimpleName().toString())
                             .returns(ClassName.get(method.getReturnType()))
