@@ -43,7 +43,7 @@ import com.android.bedstead.harrier.annotations.enterprise.PositivePolicyTest;
 import com.android.bedstead.harrier.policies.LockTask;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.testapp.TestApp;
-import com.android.bedstead.testapp.TestAppActivityReference;
+import com.android.bedstead.testapp.TestAppActivity;
 import com.android.bedstead.testapp.TestAppInstanceReference;
 import com.android.bedstead.testapp.TestAppProvider;
 import com.android.compatibility.common.util.PollingCheck;
@@ -342,7 +342,7 @@ public class LockTaskTest {
                 new String[]{sTestApp.packageName()});
         try (TestAppInstanceReference testApp =
                      sTestApp.install(sTestApis.users().instrumented())) {
-            TestAppActivityReference activity = testApp.activities().any().start();
+            TestAppActivity activity = testApp.activities().any().start();
 
             startLockTaskAndWait(activity);
 
@@ -367,9 +367,9 @@ public class LockTaskTest {
         sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(new String[]{});
         try (TestAppInstanceReference testApp =
                      sTestApp.install(sTestApis.users().instrumented())) {
-            TestAppActivityReference activity = testApp.activities().any().start();
+            TestAppActivity activity = testApp.activities().any().start();
 
-            activity.remote().startLockTask();
+            activity.startLockTask();
 
             try {
                 assertThat(sTestApis.activities().foregroundActivity()).isEqualTo(
@@ -394,7 +394,7 @@ public class LockTaskTest {
                 new String[]{sTestApp.packageName()});
         try (TestAppInstanceReference testApp =
                      sTestApp.install(sTestApis.users().instrumented())) {
-            TestAppActivityReference activity = testApp.activities().any().start();
+            TestAppActivity activity = testApp.activities().any().start();
 
             startLockTaskAndWait(activity);
 
@@ -420,10 +420,10 @@ public class LockTaskTest {
                 new String[]{sTestApp.packageName()});
         try (TestAppInstanceReference testApp =
                      sTestApp.install(sTestApis.users().instrumented())) {
-            TestAppActivityReference activity = testApp.activities().any().start();
+            TestAppActivity activity = testApp.activities().any().start();
             startLockTaskAndWait(activity);
 
-            activity.remote().finish();
+            activity.finish();
 
             try {
                 // We don't actually watch for the Destroyed event because that'd be waiting for a
@@ -449,11 +449,11 @@ public class LockTaskTest {
                 new String[]{sTestApp.packageName()});
         try (TestAppInstanceReference testApp =
                      sTestApp.install(sTestApis.users().instrumented())) {
-            TestAppActivityReference activity = testApp.activities().any().start();
+            TestAppActivity activity = testApp.activities().any().start();
             startLockTaskAndWait(activity);
             stopLockTaskAndWait(activity);
 
-            activity.remote().finish();
+            activity.finish();
 
             // TODO(b/189327037): Replace with more direct integration between TestApp and EventLib
             EventLogs<ActivityDestroyedEvent> events =
@@ -476,7 +476,7 @@ public class LockTaskTest {
                 new String[]{sTestApp.packageName()});
         try (TestAppInstanceReference testApp =
                      sTestApp.install(sTestApis.users().instrumented())) {
-            TestAppActivityReference activity = testApp.activities().any().start();
+            TestAppActivity activity = testApp.activities().any().start();
             startLockTaskAndWait(activity);
 
             sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(new String[]{});
@@ -505,9 +505,9 @@ public class LockTaskTest {
                      sTestApp.install(sTestApis.users().instrumented());
              TestAppInstanceReference testApp2 =
                      secondTestApp.install(sTestApis.users().instrumented())) {
-            TestAppActivityReference activity = testApp.activities().any().start();
+            TestAppActivity activity = testApp.activities().any().start();
             startLockTaskAndWait(activity);
-            TestAppActivityReference activity2 = testApp2.activities().any().start();
+            TestAppActivity activity2 = testApp2.activities().any().start();
             startLockTaskAndWait(activity2);
 
             try {
@@ -532,13 +532,13 @@ public class LockTaskTest {
         }
     }
 
-    private void startLockTaskAndWait(TestAppActivityReference activity) {
-        activity.remote().startLockTask();
+    private void startLockTaskAndWait(TestAppActivity activity) {
+        activity.startLockTask();
         PollingCheck.waitFor(() -> sTestApis.activities().getLockTaskModeState() != LOCK_TASK_MODE_NONE);
     }
 
-    private void stopLockTaskAndWait(TestAppActivityReference activity) {
-        activity.remote().stopLockTask();
+    private void stopLockTaskAndWait(TestAppActivity activity) {
+        activity.stopLockTask();
         PollingCheck.waitFor(() -> sTestApis.activities().getLockTaskModeState() == LOCK_TASK_MODE_NONE);
     }
 }

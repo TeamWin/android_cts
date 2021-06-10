@@ -3,25 +3,6 @@ package {
 }
 
 android_library {
-    name: "TestApp_Communication",
-    sdk_version: "test_current",
-    srcs: [
-        "src/communication/main/java/**/*.java"
-    ],
-    static_libs: [
-        "Nene",
-        "ConnectedAppsSDK",
-        "ConnectedAppsSDK_Annotations",
-        "androidx.annotation_annotation",
-        "TestApp_TestApps",
-        "TestApp_Annotations"
-    ],
-    manifest: "src/communication/main/AndroidManifest.xml",
-    min_sdk_version: "28",
-    plugins: ["ConnectedAppsSDK_Processor", "TestApp_Processor"],
-}
-
-android_library {
     name: "TestApp_TestApps",
     sdk_version: "test_current",
     srcs: [
@@ -29,10 +10,15 @@ android_library {
     ],
     static_libs: [
         "Nene",
-        "EventLib"
+        "EventLib",
+        "TestApp_Annotations",
+        "ConnectedAppsSDK",
+        "ConnectedAppsSDK_Annotations",
+        "androidx.annotation_annotation",
     ],
     manifest: "src/main/testapps/AndroidManifest.xml",
-    min_sdk_version: "28"
+    min_sdk_version: "28",
+    plugins: ["ConnectedAppsSDK_Processor", "TestApp_Processor"],
 }
 
 android_library {
@@ -44,11 +30,16 @@ android_library {
     static_libs: [
         "Nene",
         "EventLib",
-        "TestApp_Communication"
+        "TestApp_Annotations",
+        "ConnectedAppsSDK",
+        "ConnectedAppsSDK_Annotations",
+        "androidx.annotation_annotation",
+        "TestApp_TestApps"
     ],
     manifest: "src/main/library/AndroidManifest.xml",
     min_sdk_version: "28",
     resource_zips: [":TestApp_Apps"],
+    plugins: ["ConnectedAppsSDK_Processor", "TestApp_Processor"],
 }
 
 android_test {
@@ -107,8 +98,7 @@ java_genrule {
 android_test_helper_app {
     name: "EmptyTestApp",
     static_libs: [
-        "TestApp_TestApps",
-        "TestApp_Communication"
+        "TestApp_TestApps"
     ],
     manifest: "manifests/EmptyTestAppManifest.xml",
     min_sdk_version: "28"
@@ -117,8 +107,7 @@ android_test_helper_app {
 android_test_helper_app {
     name: "EmptyTestApp2",
     static_libs: [
-        "TestApp_TestApps",
-        "TestApp_Communication"
+        "TestApp_TestApps"
     ],
     manifest: "manifests/EmptyTestApp2Manifest.xml",
     min_sdk_version: "28"
@@ -128,7 +117,6 @@ android_test_helper_app {
     name: "DeviceAdminTestApp",
     static_libs: [
         "TestApp_TestApps",
-        "TestApp_Communication",
         "DeviceAdminApp"
     ],
     manifest: "manifests/DeviceAdminManifest.xml",
