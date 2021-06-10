@@ -127,6 +127,17 @@ public class BasicVoiceInteractionService extends VoiceInteractionService {
                     mSoftwareHotwordDetector.startRecognition();
                 }
             });
+        } else if (testEvent == Utils.HOTWORD_DETECTION_SERVICE_PROCESS_DIED_TEST) {
+            runWithShellPermissionIdentity(() -> {
+                if (mAlwaysOnHotwordDetector != null) {
+                    PersistableBundle persistableBundle = new PersistableBundle();
+                    persistableBundle.putInt(Utils.KEY_TEST_SCENARIO,
+                            Utils.HOTWORD_DETECTION_SERVICE_ON_UPDATE_STATE_CRASH);
+                    mAlwaysOnHotwordDetector.updateState(
+                            persistableBundle,
+                            createFakeSharedMemoryData());
+                }
+            }, Manifest.permission.MANAGE_HOTWORD_DETECTION);
         }
 
         return START_NOT_STICKY;
@@ -170,6 +181,9 @@ public class BasicVoiceInteractionService extends VoiceInteractionService {
                         @Override
                         public void onError() {
                             Log.i(TAG, "onError");
+                            broadcastIntentWithResult(
+                                    Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
+                                    Utils.HOTWORD_DETECTION_SERVICE_GET_ERROR);
                         }
 
                         @Override
@@ -219,6 +233,9 @@ public class BasicVoiceInteractionService extends VoiceInteractionService {
                         @Override
                         public void onError() {
                             Log.i(TAG, "onError");
+                            broadcastIntentWithResult(
+                                    Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
+                                    Utils.HOTWORD_DETECTION_SERVICE_GET_ERROR);
                         }
 
                         @Override

@@ -34,6 +34,9 @@ public interface RemoteActivity {
     /** See {@link Activity#stopLockTask}. */
     void stopLockTask();
 
+    /** See {@link Activity#finish()}. */
+    void finish();
+
     /** See {@link Activity#isFinishing}. */
     boolean isFinishing();
 }

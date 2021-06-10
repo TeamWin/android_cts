@@ -156,69 +156,6 @@ public class LockTaskTest extends BaseDeviceAdminTest {
         mContext.unregisterReceiver(mReceiver);
     }
 
-    // Verifies that the act of finishing is blocked by ActivityManager in lock task.
-    // This results in onDestroy not being called until stopLockTask is called before finish.
-    public void testCannotFinish() throws Exception {
-        mDevicePolicyManager.setLockTaskPackages(ADMIN_COMPONENT, new String[] { PACKAGE_NAME });
-        startLockTask(UTILITY_ACTIVITY);
-
-        // If lock task has not exited then the activity shouldn't actually receive onDestroy.
-        finishAndWait(UTILITY_ACTIVITY);
-        assertLockTaskModeActive();
-        assertTrue(mIsActivityRunning);
-
-        stopAndFinish(UTILITY_ACTIVITY);
-    }
-
-    // Verifies that updating the allowlist during lock task mode finishes the locked task.
-    public void testUpdateAllowlist() throws Exception {
-        mDevicePolicyManager.setLockTaskPackages(ADMIN_COMPONENT, new String[] { PACKAGE_NAME });
-        startLockTask(UTILITY_ACTIVITY);
-
-        mDevicePolicyManager.setLockTaskPackages(ADMIN_COMPONENT, new String[0]);
-
-        synchronized (mActivityRunningLock) {
-            mActivityRunningLock.wait(ACTIVITY_DESTROYED_TIMEOUT_MILLIS);
-        }
-
-        assertLockTaskModeInactive();
-        assertFalse(mIsActivityRunning);
-        assertFalse(mIsActivityResumed);
-    }
-
-    // Verifies that removing the allowlist authorization immediately finishes the corresponding
-    // locked task. The other locked task(s) should remain locked.
-    public void testUpdateAllowlist_twoTasks() throws Exception {
-        mDevicePolicyManager.setLockTaskPackages(ADMIN_COMPONENT, new String[] { PACKAGE_NAME,
-                RECEIVER_ACTIVITY_PACKAGE_NAME});
-
-        // Start first locked task
-        startLockTask(UTILITY_ACTIVITY);
-        waitForResume();
-
-        // Start the other task from the running activity
-        mIsReceiverActivityRunning = false;
-        Intent launchIntent = createReceiverActivityIntent(true /*newTask*/, true /*shouldWait*/);
-        mContext.startActivity(launchIntent);
-        synchronized (mReceiverActivityRunningLock) {
-            mReceiverActivityRunningLock.wait(ACTIVITY_RESUMED_TIMEOUT_MILLIS);
-            assertTrue(mIsReceiverActivityRunning);
-        }
-
-        // Remove allowlist authorization of the second task
-        mDevicePolicyManager.setLockTaskPackages(ADMIN_COMPONENT, new String[] { PACKAGE_NAME });
-        synchronized (mReceiverActivityRunningLock) {
-            mReceiverActivityRunningLock.wait(ACTIVITY_DESTROYED_TIMEOUT_MILLIS);
-            assertFalse(mIsReceiverActivityRunning);
-        }
-
-        assertLockTaskModeActive();
-        assertTrue(mIsActivityRunning);
-        assertTrue(mIsActivityResumed);
-
-        stopAndFinish(UTILITY_ACTIVITY);
-    }
-
     // This launches an activity that is in the current task.
     // This should always be permitted as a part of lock task (since it isn't a new task).
     public void testStartActivity_withinTask() throws Exception {

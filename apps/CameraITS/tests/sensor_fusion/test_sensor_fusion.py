@@ -63,6 +63,7 @@ _CV2_LK_PARAMS = dict(winSize=(15, 15),
 
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
 _NUM_ROTATIONS = 10
+_START_FRAME = 1
 
 # Constants to convert between different units (for clarity).
 _SEC_TO_MSEC = 1000.0
@@ -215,7 +216,7 @@ def _plot_gyro_events(gyro_events, log_path):
       '%s_gyro_events.png' % (os.path.join(log_path, _NAME)))
 
 
-def _get_cam_times(cam_events):
+def _get_cam_times(cam_events, fps):
   """Get the camera frame times.
 
   Assign a time to each frame. Assumes the image is instantly captured in the
@@ -224,14 +225,23 @@ def _get_cam_times(cam_events):
   Args:
     cam_events: List of (start_exposure, exposure_time, readout_duration)
                 tuples, one per captured frame, with times in nanoseconds.
+    fps: float of frames per second value
 
   Returns:
     frame_times: Array of N times, one corresponding to the 'middle' of the
                  exposure of each frame.
   """
   starts = np.array([start for start, exptime, readout in cam_events])
+  max_frame_delta = np.amax(np.subtract(starts[1:], starts[0:-1])*_NSEC_TO_SEC)
+  if max_frame_delta > (1.5 * (1 / fps)):
+    raise AssertionError(
+        f'Frame drop! Max delta: {max_frame_delta:.5f}s, fps: {int(fps)}')
   exptimes = np.array([exptime for start, exptime, readout in cam_events])
+  if not np.all(exptimes == exptimes[0]):
+    raise AssertionError(f'Exposure times vary in frames! {exptimes}')
   readouts = np.array([readout for start, exptime, readout in cam_events])
+  if not np.all(readouts == readouts[0]):
+    raise AssertionError(f'Rolling shutter not always equal! {readouts}')
   frame_times = starts + (exptimes + readouts) / 2.0
   return frame_times
 
@@ -294,7 +304,8 @@ def _get_cam_rotations(frames, facing, h, log_path):
     logging.debug('Using %s masking method', masking)
     rots = []
     for i in range(1, num_frames):
-      gframe0 = gframes[i-1]
+      j = i - 1
+      gframe0 = gframes[j]
       gframe1 = gframes[i]
       if masking == 'post':
         p0 = cv2.goodFeaturesToTrack(
@@ -308,10 +319,10 @@ def _get_cam_rotations(frames, facing, h, log_path):
       if num_features < _FEATURE_PTS_MIN:
         for pt in p0_filtered:
           x, y = pt[0][0], pt[0][1]
-          cv2.circle(frames[i-1], (x, y), 3, (100, 255, 255), -1)
+          cv2.circle(frames[j], (x, y), 3, (100, 255, 255), -1)
         image_processing_utils.write_image(
-            frames[i-1], f'{file_name_stem}_features{i-1:03d}.png')
-        msg = (f'Not enough features in frame {i-1}. Need at least '
+            frames[j], f'{file_name_stem}_features{j:03d}.png')
+        msg = (f'Not enough features in frame {j}. Need at least '
                f'{_FEATURE_PTS_MIN} features, got {num_features}.')
         if masking == 'pre':
           raise AssertionError(msg)
@@ -320,7 +331,7 @@ def _get_cam_rotations(frames, facing, h, log_path):
           break
       else:
         logging.debug('Number of features in frame %s is %d',
-                      str(i - 1).zfill(3), num_features)
+                      str(j).zfill(3), num_features)
       p1, st, _ = cv2.calcOpticalFlowPyrLK(gframe0, gframe1, p0_filtered, None,
                                            **_CV2_LK_PARAMS)
       tform = _procrustes_rotation(p0_filtered[st == 1], p1[st == 1])
@@ -334,12 +345,12 @@ def _get_cam_rotations(frames, facing, h, log_path):
       if i == 1:
         # Save debug visualization of features that are being
         # tracked in the first frame.
-        frame = frames[i-1]
+        frame = frames[j]
         for x, y in p0_filtered[st == 1]:
           cv2.circle(frame, (x, y), 3, (100, 100, 255), -1)
         image_processing_utils.write_image(
-            frame, f'{file_name_stem}_features000.png')
-    if i == len(rots):
+            frame, f'{file_name_stem}_features{j:03d}.png')
+    if i >= len(rots):
       break  # exit if enough features in all frames
 
   rots = np.array(rots)
@@ -504,12 +515,14 @@ class SensorFusionTest(its_base_test.ItsBaseTest):
     _plot_gyro_events(events['gyro'], log_path)
 
     # Validity check on gyro/camera timestamps
-    cam_times = _get_cam_times(events['cam'])
+    cam_times = _get_cam_times(
+        events['cam'][_START_FRAME:len(events['cam'])], fps)
     gyro_times = [e['time'] for e in events['gyro']]
     self._assert_gyro_encompasses_camera(cam_times, gyro_times)
 
     # Compute cam rotation displacement(rads) between pairs of adjacent frames.
-    cam_rots = _get_cam_rotations(frames, events['facing'], img_h, log_path)
+    cam_rots = _get_cam_rotations(
+      frames[_START_FRAME:len(frames)], events['facing'], img_h, log_path)
     logging.debug('cam_rots: %s', str(cam_rots))
     gyro_rots = sensor_fusion_utils.get_gyro_rotations(
         events['gyro'], cam_times)
