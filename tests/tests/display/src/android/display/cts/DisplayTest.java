@@ -1103,7 +1103,7 @@ public class DisplayTest {
 
     private Point getVendorDisplaySize() {
         String value = PropertyUtil.getProperty("vendor.display-size");
-        if (value.isEmpty()) {
+        if (TextUtils.isEmpty(value)) {
             return null;
         }
 
