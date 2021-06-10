@@ -182,7 +182,8 @@ public class UiTranslationManagerTest {
                 SimpleActivity.HELLO_TEXT_ID);
         assertThat(helloText).isNotNull();
         // Set response
-        sTranslationReplier.addResponse(createViewsTranslationResponse(views, translatedText));
+        final TranslationResponse response = createViewsTranslationResponse(views, translatedText);
+        sTranslationReplier.addResponse(response);
 
         runWithShellPermissionIdentity(() -> {
             // Call startTranslation API
@@ -206,6 +207,8 @@ public class UiTranslationManagerTest {
 
             SystemClock.sleep(UI_WAIT_TIMEOUT);
             assertThat(helloText.getText().toString()).isEqualTo(translatedText);
+            assertThat(mTextView.getViewTranslationResponse())
+                    .isEqualTo(response.getViewTranslationResponses().get(0));
 
             // Call pauseTranslation API
             manager.pauseTranslation(contentCaptureContext.getActivityId());
