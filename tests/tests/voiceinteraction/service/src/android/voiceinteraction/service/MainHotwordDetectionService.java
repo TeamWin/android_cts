@@ -40,6 +40,16 @@ import java.util.function.IntConsumer;
 public class MainHotwordDetectionService extends HotwordDetectionService {
     static final String TAG = "MainHotwordDetectionService";
 
+    // TODO: Fill in the remaining fields.
+    public static final HotwordDetectedResult DETECTED_RESULT =
+            new HotwordDetectedResult.Builder()
+                    .setConfidenceLevel(HotwordDetectedResult.CONFIDENCE_LEVEL_HIGH)
+                    .build();
+    public static final HotwordRejectedResult REJECTED_RESULT =
+            new HotwordRejectedResult.Builder()
+                    .setConfidenceLevel(HotwordRejectedResult.CONFIDENCE_LEVEL_MEDIUM)
+                    .build();
+
     @Override
     public void onDetect(@NonNull AlwaysOnHotwordDetector.EventPayload eventPayload,
             long timeoutMillis, @NonNull Callback callback) {
@@ -48,9 +58,9 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
         // TODO: Check the capture session (needs to be reflectively accessed).
         byte[] data = eventPayload.getTriggerAudio();
         if (data != null && data.length > 0) {
-            callback.onDetected(new HotwordDetectedResult.Builder().build());
+            callback.onDetected(DETECTED_RESULT);
         } else {
-            callback.onRejected(new HotwordRejectedResult.Builder().build());
+            callback.onRejected(REJECTED_RESULT);
         }
     }
 
@@ -95,7 +105,7 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
             if(isSame(buffer, BasicVoiceInteractionService.FAKE_HOTWORD_AUDIO_DATA,
                     buffer.length)) {
                 Log.d(TAG, "call callback.onDetected");
-                callback.onDetected(new HotwordDetectedResult.Builder().build());
+                callback.onDetected(DETECTED_RESULT);
             }
         } catch (IOException e) {
             Log.w(TAG, "Failed to read data : ", e);
@@ -105,7 +115,7 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
     @Override
     public void onDetect(@NonNull Callback callback) {
         Log.d(TAG, "onDetect for Mic source");
-        callback.onDetected(new HotwordDetectedResult.Builder().build());
+        callback.onDetected(DETECTED_RESULT);
     }
 
     @Override
