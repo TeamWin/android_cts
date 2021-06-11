@@ -977,9 +977,29 @@ public class TestUtils {
                     StorageManager.class);
             final int actualMountMode = storageManager.getExternalStorageMountMode(uid,
                     packageName);
-            assertThat(actualMountMode).isEqualTo(expectedMountMode);
+            assertWithMessage("mount mode (%s=%s, %s=%s) for package %s and uid %s",
+                    expectedMountMode, mountModeToString(expectedMountMode),
+                    actualMountMode, mountModeToString(actualMountMode),
+                    packageName, uid).that(actualMountMode).isEqualTo(expectedMountMode);
         } finally {
             dropShellPermissionIdentity();
+        }
+    }
+
+    public static String mountModeToString(int mountMode) {
+        switch (mountMode) {
+            case 0:
+                return "EXTERNAL_NONE";
+            case 1:
+                return "DEFAULT";
+            case 2:
+                return "INSTALLER";
+            case 3:
+                return "PASS_THROUGH";
+            case 4:
+                return "ANDROID_WRITABLE";
+            default:
+                return "INVALID(" + mountMode + ")";
         }
     }
 
