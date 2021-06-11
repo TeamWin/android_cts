@@ -141,6 +141,69 @@ public class MediaMetricsAtomTests extends DeviceTestCase implements IBuildRecei
         assertThat(result.getLanguageRegion()).isEqualTo("US");
     }
 
+    public void testTrackChangeEvent_audio() throws Exception {
+        ConfigUtils.uploadConfigForPushedAtom(getDevice(), TEST_PKG,
+                AtomsProto.Atom.MEDIA_PLAYBACK_TRACK_CHANGED_FIELD_NUMBER);
+        DeviceUtils.runDeviceTests(
+                getDevice(),
+                TEST_PKG,
+                "android.media.metrics.cts.MediaMetricsAtomHostSideTests",
+                "testTrackChangeEvent_audio");
+        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+
+        List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+
+        assertThat(data.size()).isEqualTo(1);
+        assertThat(data.get(0).getAtom().hasMediaPlaybackTrackChanged()).isTrue();
+        AtomsProto.MediaPlaybackTrackChanged result =
+                data.get(0).getAtom().getMediaPlaybackTrackChanged();
+
+        assertThat(result.getTimeSincePlaybackCreatedMillis()).isEqualTo(37278L);
+        assertThat(result.getState().toString()).isEqualTo("OFF");
+        assertThat(result.getReason().toString()).isEqualTo("REASON_INITIAL");
+        assertThat(result.getContainerMimeType()).isEqualTo("audio/foo");
+        assertThat(result.getSampleMimeType()).isEqualTo("audio/avc");
+        assertThat(result.getCodecName()).isEqualTo("codec_2");
+        assertThat(result.getBitrate()).isEqualTo(1025);
+        assertThat(result.getType().toString()).isEqualTo("AUDIO");
+        assertThat(result.getLanguage()).isEqualTo("EN");
+        assertThat(result.getLanguageRegion()).isEqualTo("US");
+        assertThat(result.getSampleRate()).isEqualTo(89);
+        assertThat(result.getChannelCount()).isEqualTo(3);
+    }
+
+    public void testTrackChangeEvent_video() throws Exception {
+        ConfigUtils.uploadConfigForPushedAtom(getDevice(), TEST_PKG,
+                AtomsProto.Atom.MEDIA_PLAYBACK_TRACK_CHANGED_FIELD_NUMBER);
+        DeviceUtils.runDeviceTests(
+                getDevice(),
+                TEST_PKG,
+                "android.media.metrics.cts.MediaMetricsAtomHostSideTests",
+                "testTrackChangeEvent_video");
+        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+
+        List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+
+        assertThat(data.size()).isEqualTo(1);
+        assertThat(data.get(0).getAtom().hasMediaPlaybackTrackChanged()).isTrue();
+        AtomsProto.MediaPlaybackTrackChanged result =
+                data.get(0).getAtom().getMediaPlaybackTrackChanged();
+
+        assertThat(result.getTimeSincePlaybackCreatedMillis()).isEqualTo(37278L);
+        assertThat(result.getState().toString()).isEqualTo("OFF");
+        assertThat(result.getReason().toString()).isEqualTo("REASON_INITIAL");
+        assertThat(result.getContainerMimeType()).isEqualTo("video/foo");
+        assertThat(result.getSampleMimeType()).isEqualTo("video/mpeg");
+        assertThat(result.getCodecName()).isEqualTo("codec_3");
+        assertThat(result.getBitrate()).isEqualTo(1025);
+        assertThat(result.getType().toString()).isEqualTo("VIDEO");
+        assertThat(result.getLanguage()).isEqualTo("EN");
+        assertThat(result.getLanguageRegion()).isEqualTo("US");
+        assertThat(result.getHeight()).isEqualTo(1080);
+        assertThat(result.getWidth()).isEqualTo(1440);
+        assertThat(result.getVideoFrameRate()).isEqualTo(60);
+    }
+
     public void testNetworkEvent() throws Exception {
         ConfigUtils.uploadConfigForPushedAtom(getDevice(), TEST_PKG,
                 AtomsProto.Atom.MEDIA_NETWORK_INFO_CHANGED_FIELD_NUMBER);
@@ -195,6 +258,8 @@ public class MediaMetricsAtomTests extends DeviceTestCase implements IBuildRecei
         assertThat(result.getNetworkBytesRead()).isEqualTo(102400);
         assertThat(result.getLocalBytesRead()).isEqualTo(2000);
         assertThat(result.getNetworkTransferDurationMillis()).isEqualTo(6000);
+        // TODO: fix missing experiment ID impl
+        assertThat(result.getExperimentIds()).isNotEqualTo(null);
         // TODO: needs Base64 decoders to verify the data
         assertThat(result.getDrmSessionId()).isNotEqualTo(null);
     }
