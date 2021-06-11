@@ -91,6 +91,52 @@ public class MediaMetricsAtomHostSideTests {
     }
 
     @Test
+    public void testTrackChangeEvent_audio() throws Exception {
+        Context context = InstrumentationRegistry.getContext();
+        MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
+        PlaybackSession s = manager.createPlaybackSession();
+        TrackChangeEvent e =
+                new TrackChangeEvent.Builder(TrackChangeEvent.TRACK_TYPE_AUDIO)
+                        .setTimeSinceCreatedMillis(37278L)
+                        .setTrackState(TrackChangeEvent.TRACK_STATE_OFF)
+                        .setTrackChangeReason(TrackChangeEvent.TRACK_CHANGE_REASON_INITIAL)
+                        .setContainerMimeType("audio/foo")
+                        .setSampleMimeType("audio/avc")
+                        .setCodecName("codec_2")
+                        .setBitrate(1025)
+                        .setLanguage("EN")
+                        .setLanguageRegion("US")
+                        .setAudioSampleRate(89)
+                        .setChannelCount(3)
+                        .build();
+        s.reportTrackChangeEvent(e);
+    }
+
+    @Test
+    public void testTrackChangeEvent_video() throws Exception {
+        Context context = InstrumentationRegistry.getContext();
+        MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
+        PlaybackSession s = manager.createPlaybackSession();
+        TrackChangeEvent e =
+                new TrackChangeEvent.Builder(TrackChangeEvent.TRACK_TYPE_VIDEO)
+                        .setTimeSinceCreatedMillis(37278L)
+                        .setTrackState(TrackChangeEvent.TRACK_STATE_OFF)
+                        .setTrackChangeReason(TrackChangeEvent.TRACK_CHANGE_REASON_INITIAL)
+                        .setContainerMimeType("video/foo")
+                        .setSampleMimeType("video/mpeg")
+                        .setCodecName("codec_3")
+                        .setBitrate(1025)
+                        .setLanguage("EN")
+                        .setLanguageRegion("US")
+                        .setHeight(1080)
+                        .setWidth(1440)
+                        .setVideoFrameRate(60)
+                        .setMetricsBundle(new Bundle())
+                        .build();
+        s.reportTrackChangeEvent(e);
+    }
+
+    @Test
     public void testNetworkEvent() throws Exception {
         Context context = InstrumentationRegistry.getContext();
         MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
@@ -127,6 +173,7 @@ public class MediaMetricsAtomHostSideTests {
                         .setNetworkTransferDurationMillis(6000)
                         .setDrmSessionId(new byte[] {2, 3, 3, 10})
                         .setMetricsBundle(new Bundle())
+                        .addExperimentId(123)
                         .build();
         s.reportPlaybackMetrics(e);
     }
@@ -135,23 +182,25 @@ public class MediaMetricsAtomHostSideTests {
     public void testSessionId() throws Exception {
         Context context = InstrumentationRegistry.getContext();
         MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
-        PlaybackSession s = manager.createPlaybackSession();
 
-        LogSessionId idObj = s.getSessionId();
-        assertThat(idObj).isNotEqualTo(null);
-        assertThat(idObj.getStringId().length()).isGreaterThan(0);
+        try(PlaybackSession s = manager.createPlaybackSession()) {
+            LogSessionId idObj = s.getSessionId();
+            assertThat(idObj).isNotEqualTo(null);
+            assertThat(idObj.getStringId().length()).isGreaterThan(0);
+        }
     }
 
     @Test
     public void testRecordingSession() throws Exception {
         Context context = InstrumentationRegistry.getContext();
         MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
-        RecordingSession s = manager.createRecordingSession();
 
-        assertThat(s).isNotEqualTo(null);
-        LogSessionId idObj = s.getSessionId();
-        assertThat(idObj).isNotEqualTo(null);
-        assertThat(idObj.getStringId().length()).isGreaterThan(0);
+        try(RecordingSession s = manager.createRecordingSession()) {
+            assertThat(s).isNotEqualTo(null);
+            LogSessionId idObj = s.getSessionId();
+            assertThat(idObj).isNotEqualTo(null);
+            assertThat(idObj.getStringId().length()).isGreaterThan(0);
+        }
     }
 
     /**
