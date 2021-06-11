@@ -216,7 +216,7 @@ public class WindowManagerStateHelper extends WindowManagerState {
      */
     public void waitForActivityOrientation(ComponentName activityName, int orientation) {
         waitForWithAmState(amState -> {
-            final ActivityTask task = amState.getTaskByActivity(activityName);
+            final Task task = amState.getTaskByActivity(activityName);
             if (task == null) {
                 return false;
             }
@@ -247,9 +247,9 @@ public class WindowManagerStateHelper extends WindowManagerState {
     public void waitForFocusedStack(int windowingMode, int activityType) {
         waitForWithAmState(state ->
                         (activityType == ACTIVITY_TYPE_UNDEFINED
-                                || state.getFocusedStackActivityType() == activityType)
+                                || state.getFocusedRootTaskActivityType() == activityType)
                         && (windowingMode == WINDOWING_MODE_UNDEFINED
-                                || state.getFocusedStackWindowingMode() == windowingMode),
+                                || state.getFocusedRootTaskWindowingMode() == windowingMode),
                 "focused stack");
     }
 
@@ -316,9 +316,9 @@ public class WindowManagerStateHelper extends WindowManagerState {
 
     public void waitWindowingModeTopFocus(int windowingMode, boolean topFocus, String message) {
         waitForWithAmState(amState -> {
-            final ActivityTask stack = amState.getStandardStackByWindowingMode(windowingMode);
-            return stack != null
-                    && topFocus == (amState.getFocusedStackId() == stack.getRootTaskId());
+            final Task rootTask = amState.getStandardRootTaskByWindowingMode(windowingMode);
+            return rootTask != null
+                    && topFocus == (amState.getFocusedTaskId() == rootTask.getRootTaskId());
         }, message);
     }
 
@@ -360,7 +360,7 @@ public class WindowManagerStateHelper extends WindowManagerState {
      * @return true if should wait for valid stacks state.
      */
     private boolean shouldWaitForValidStacks() {
-        final int stackCount = getStackCount();
+        final int stackCount = getRootTaskCount();
         if (stackCount == 0) {
             logAlways("***stackCount=" + stackCount);
             return true;
@@ -501,7 +501,7 @@ public class WindowManagerStateHelper extends WindowManagerState {
     }
 
     void assertValidity() {
-        assertThat("Must have stacks", getStackCount(), greaterThan(0));
+        assertThat("Must have root task", getRootTaskCount(), greaterThan(0));
         // TODO: Update when keyguard will be shown on multiple displays
         if (!getKeyguardControllerState().keyguardShowing) {
             assertThat("There should be at least one resumed activity in the system.",
@@ -509,10 +509,11 @@ public class WindowManagerStateHelper extends WindowManagerState {
         }
         assertNotNull("Must have focus activity.", getFocusedActivity());
 
-        for (ActivityTask aStack : getRootTasks()) {
-            final int stackId = aStack.mRootTaskId;
-            for (ActivityTask aTask : aStack.getTasks()) {
-                assertEquals("Stack can only contain its own tasks", stackId, aTask.mRootTaskId);
+        for (Task rootTask : getRootTasks()) {
+            final int taskId = rootTask.mRootTaskId;
+            for (Task task : rootTask.getTasks()) {
+                assertEquals("Root task can only contain its own tasks", taskId,
+                        task.mRootTaskId);
             }
         }
 
@@ -522,11 +523,11 @@ public class WindowManagerStateHelper extends WindowManagerState {
     }
 
     public void assertContainsStack(String msg, int windowingMode, int activityType) {
-        assertTrue(msg, containsStack(windowingMode, activityType));
+        assertTrue(msg, containsRootTasks(windowingMode, activityType));
     }
 
     public void assertDoesNotContainStack(String msg, int windowingMode, int activityType) {
-        assertFalse(msg, containsStack(windowingMode, activityType));
+        assertFalse(msg, containsRootTasks(windowingMode, activityType));
     }
 
     public void assertFrontStack(String msg, int windowingMode, int activityType) {
@@ -536,28 +537,27 @@ public class WindowManagerStateHelper extends WindowManagerState {
     public void assertFrontStackOnDisplay(String msg, int windowingMode, int activityType,
             int displayId) {
         if (windowingMode != WINDOWING_MODE_UNDEFINED) {
-            assertEquals(msg, windowingMode,
-                    getFrontStackWindowingMode(displayId));
+            assertEquals(msg, windowingMode, getFrontRootTaskWindowingMode(displayId));
         }
         if (activityType != ACTIVITY_TYPE_UNDEFINED) {
-            assertEquals(msg, activityType, getFrontStackActivityType(displayId));
+            assertEquals(msg, activityType, getFrontRootTaskActivityType(displayId));
         }
     }
 
     public void assertFrontStackActivityType(String msg, int activityType) {
-        assertEquals(msg, activityType, getFrontStackActivityType(DEFAULT_DISPLAY));
+        assertEquals(msg, activityType, getFrontRootTaskActivityType(DEFAULT_DISPLAY));
     }
 
-    void assertFocusedStack(String msg, int stackId) {
-        assertEquals(msg, stackId, getFocusedStackId());
+    void assertFocusedRootTask(String msg, int taskId) {
+        assertEquals(msg, taskId, getFocusedTaskId());
     }
 
-    void assertFocusedStack(String msg, int windowingMode, int activityType) {
+    void assertFocusedRootTask(String msg, int windowingMode, int activityType) {
         if (windowingMode != WINDOWING_MODE_UNDEFINED) {
-            assertEquals(msg, windowingMode, getFocusedStackWindowingMode());
+            assertEquals(msg, windowingMode, getFocusedRootTaskWindowingMode());
         }
         if (activityType != ACTIVITY_TYPE_UNDEFINED) {
-            assertEquals(msg, activityType, getFocusedStackActivityType());
+            assertEquals(msg, activityType, getFocusedRootTaskActivityType());
         }
     }
 
@@ -713,8 +713,8 @@ public class WindowManagerStateHelper extends WindowManagerState {
 
     public void assertIllegalTaskState() {
         computeState();
-        final List<ActivityTask> tasks = getRootTasks();
-        for (ActivityTask task : tasks) {
+        final List<Task> tasks = getRootTasks();
+        for (Task task : tasks) {
             task.forAllTasks((t) -> assertWithMessage("Empty task was found, id = " + t.mTaskId)
                     .that(t.mTasks.size() + t.mActivities.size()).isGreaterThan(0));
             if (task.isLeafTask()) {

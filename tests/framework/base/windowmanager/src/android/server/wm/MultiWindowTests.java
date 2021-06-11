@@ -343,7 +343,7 @@ public class MultiWindowTests extends ActivityManagerTestBase {
             mWmState.waitFor("Waiting for new activity to come up.",
                     state -> state.getTaskByActivity(targetActivityName, excludeTaskIds) != null);
         }
-        WindowManagerState.ActivityTask task = mWmState.getTaskByActivity(targetActivityName,
+        WindowManagerState.Task task = mWmState.getTaskByActivity(targetActivityName,
                 excludeTaskIds);
         final int secondaryTaskId2;
         if (task != null) {
@@ -377,7 +377,7 @@ public class MultiWindowTests extends ActivityManagerTestBase {
             mWmState.waitFor("Waiting for the second new activity to come up.",
                     state -> state.getTaskByActivity(targetActivityName, excludeTaskIds) != null);
         }
-        WindowManagerState.ActivityTask taskFinal =
+        WindowManagerState.Task taskFinal =
                 mWmState.getTaskByActivity(targetActivityName, excludeTaskIds);
         if (taskFinal != null) {
             int secondaryTaskId3 = taskFinal.mTaskId;
@@ -446,7 +446,7 @@ public class MultiWindowTests extends ActivityManagerTestBase {
     @Test
     public void testDisallowUpdateWindowingModeWhenInLockedTask() {
         launchActivity(TEST_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
-        final WindowManagerState.ActivityTask task =
+        final WindowManagerState.Task task =
                 mWmState.getStandardRootTaskByWindowingMode(
                         WINDOWING_MODE_FULLSCREEN).getTopTask();
 
@@ -482,9 +482,9 @@ public class MultiWindowTests extends ActivityManagerTestBase {
     public void testDisallowHierarchyOperationWhenInLockedTask() {
         launchActivity(TEST_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
         launchActivity(LAUNCHING_ACTIVITY, WINDOWING_MODE_MULTI_WINDOW);
-        final WindowManagerState.ActivityTask task = mWmState
+        final WindowManagerState.Task task = mWmState
                 .getStandardRootTaskByWindowingMode(WINDOWING_MODE_FULLSCREEN).getTopTask();
-        final WindowManagerState.ActivityTask root = mWmState
+        final WindowManagerState.Task root = mWmState
                 .getStandardRootTaskByWindowingMode(WINDOWING_MODE_MULTI_WINDOW).getTopTask();
 
         try {

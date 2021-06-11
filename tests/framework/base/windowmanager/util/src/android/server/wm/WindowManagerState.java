@@ -16,7 +16,6 @@
 
 package android.server.wm;
 
-import static android.app.ActivityTaskManager.INVALID_STACK_ID;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_DREAM;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_HOME;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_RECENTS;
@@ -64,6 +63,7 @@ import com.android.server.wm.nano.IdentifierProto;
 import com.android.server.wm.nano.KeyguardControllerProto;
 import com.android.server.wm.nano.PinnedTaskControllerProto;
 import com.android.server.wm.nano.RootWindowContainerProto;
+import com.android.server.wm.nano.TaskFragmentProto;
 import com.android.server.wm.nano.TaskProto;
 import com.android.server.wm.nano.WindowContainerChildProto;
 import com.android.server.wm.nano.WindowContainerProto;
@@ -132,8 +132,11 @@ public class WindowManagerState {
     private RootWindowContainer mRoot = null;
     // Displays in z-order with the top most at the front of the list, starting with primary.
     private final List<DisplayContent> mDisplays = new ArrayList<>();
-    // Stacks in z-order with the top most at the front of the list, starting with primary display.
-    private final List<ActivityTask> mRootTasks = new ArrayList<>();
+    /**
+     * Root tasks in z-order with the top most at the front of the list, starting with primary
+     * display.
+     */
+    private final List<Task> mRootTasks = new ArrayList<>();
     // Windows in z-order with the top most at the front of the list.
     private final List<WindowState> mWindowStates = new ArrayList<>();
     private KeyguardControllerState mKeyguardControllerState;
@@ -144,7 +147,7 @@ public class WindowManagerState {
     private String mFocusedApp = null;
     private Boolean mIsHomeRecentsComponent;
     private String mTopResumedActivityRecord = null;
-    final List<String> mResumedActivitiesInStacks = new ArrayList<>();
+    final List<String> mResumedActivitiesInRootTasks = new ArrayList<>();
     final List<String> mResumedActivitiesInDisplays = new ArrayList<>();
     private Rect mDefaultPinnedStackBounds = new Rect();
     private Rect mPinnedStackMovementBounds = new Rect();
@@ -321,20 +324,21 @@ public class WindowManagerState {
 
             retry = mRootTasks.isEmpty() || mTopFocusedTaskId == -1 || mWindowStates.isEmpty()
                     || mFocusedApp == null || (mSanityCheckFocusedWindow && mFocusedWindow == null)
-                    || (mTopResumedActivityRecord == null || mResumedActivitiesInStacks.isEmpty())
+                    || (mTopResumedActivityRecord == null
+                    || mResumedActivitiesInRootTasks.isEmpty())
                     && !mKeyguardControllerState.keyguardShowing;
         } while (retry && retriesLeft-- > 0);
 
         if (mRootTasks.isEmpty()) {
-            logE("No stacks found...");
+            logE("No root tasks found...");
         }
         if (mTopFocusedTaskId == -1) {
-            logE("No focused stack found...");
+            logE("No focused task found...");
         }
         if (mTopResumedActivityRecord == null) {
             logE("No focused activity found...");
         }
-        if (mResumedActivitiesInStacks.isEmpty()) {
+        if (mResumedActivitiesInRootTasks.isEmpty()) {
             logE("No resumed activities found...");
         }
         if (mWindowStates.isEmpty()) {
@@ -373,7 +377,7 @@ public class WindowManagerState {
         }
 
         for (int i = 0; i < display.mRootTasks.size(); i++) {
-            ActivityTask task = display.mRootTasks.get(i);
+            Task task = display.mRootTasks.get(i);
             mRootTasks.add(task);
             addResumedActivity(task);
         }
@@ -384,14 +388,14 @@ public class WindowManagerState {
         }
     }
 
-    private void addResumedActivity(ActivityTask task) {
+    private void addResumedActivity(Task task) {
         final int numChildTasks = task.mTasks.size();
         if (numChildTasks > 0) {
             for (int i = numChildTasks - 1; i >=0; i--) {
                 addResumedActivity(task.mTasks.get(i));
             }
         } else if (task.mResumedActivity != null) {
-            mResumedActivitiesInStacks.add(task.mResumedActivity);
+            mResumedActivitiesInRootTasks.add(task.mResumedActivity);
         }
     }
 
@@ -441,7 +445,7 @@ public class WindowManagerState {
         mFocusedWindow = null;
         mFocusedApp = null;
         mTopResumedActivityRecord = null;
-        mResumedActivitiesInStacks.clear();
+        mResumedActivitiesInRootTasks.clear();
         mResumedActivitiesInDisplays.clear();
         mKeyguardControllerState = null;
         mIsHomeRecentsComponent = null;
@@ -511,18 +515,18 @@ public class WindowManagerState {
         return getDisplay(displayId).mRootTasks.get(0).mRootTaskId;
     }
 
-    public int getFrontStackActivityType(int displayId) {
+    public int getFrontRootTaskActivityType(int displayId) {
         return getDisplay(displayId).mRootTasks.get(0).getActivityType();
     }
 
-    public int getFrontStackWindowingMode(int displayId) {
+    public int getFrontRootTaskWindowingMode(int displayId) {
         return getDisplay(displayId).mRootTasks.get(0).getWindowingMode();
     }
 
     public String getTopActivityName(int displayId) {
         if (!getDisplay(displayId).mRootTasks.isEmpty()) {
-            final ActivityTask topStack = getDisplay(displayId).mRootTasks.get(0);
-            final ActivityTask topTask = topStack.getTopTask();
+            final Task topRootTask = getDisplay(displayId).mRootTasks.get(0);
+            final Task topTask = topRootTask.getTopTask();
             if (!topTask.mActivities.isEmpty()) {
                 return topTask.mActivities.get(0).name;
             }
@@ -530,18 +534,18 @@ public class WindowManagerState {
         return null;
     }
 
-    int getFocusedStackId() {
+    int getFocusedTaskId() {
         return mTopFocusedTaskId;
     }
 
-    public int getFocusedStackActivityType() {
-        final ActivityTask stack = getRootTask(mTopFocusedTaskId);
-        return stack != null ? stack.getActivityType() : ACTIVITY_TYPE_UNDEFINED;
+    public int getFocusedRootTaskActivityType() {
+        final Task rootTask = getRootTask(mTopFocusedTaskId);
+        return rootTask != null ? rootTask.getActivityType() : ACTIVITY_TYPE_UNDEFINED;
     }
 
-    public int getFocusedStackWindowingMode() {
-        final ActivityTask stack = getRootTask(mTopFocusedTaskId);
-        return stack != null ? stack.getWindowingMode() : WINDOWING_MODE_UNDEFINED;
+    public int getFocusedRootTaskWindowingMode() {
+        final Task rootTask = getRootTask(mTopFocusedTaskId);
+        return rootTask != null ? rootTask.getWindowingMode() : WINDOWING_MODE_UNDEFINED;
     }
 
     public String getFocusedActivity() {
@@ -549,16 +553,16 @@ public class WindowManagerState {
     }
 
     public int getResumedActivitiesCount() {
-        return mResumedActivitiesInStacks.size();
+        return mResumedActivitiesInRootTasks.size();
     }
 
     public int getResumedActivitiesCountInPackage(String packageName) {
         final String componentPrefix = packageName + "/";
         int count = 0;
         for (int i = mDisplays.size() - 1; i >= 0; --i) {
-            final ArrayList<ActivityTask> mStacks = mDisplays.get(i).getRootTasks();
-            for (int j = mStacks.size() - 1; j >= 0; --j) {
-                final String resumedActivity = mStacks.get(j).mResumedActivity;
+            final ArrayList<Task> rootTasks = mDisplays.get(i).getRootTasks();
+            for (int j = rootTasks.size() - 1; j >= 0; --j) {
+                final String resumedActivity = rootTasks.get(j).mResumedActivity;
                 if (resumedActivity != null && resumedActivity.startsWith(componentPrefix)) {
                     count++;
                 }
@@ -575,19 +579,19 @@ public class WindowManagerState {
         return mKeyguardControllerState;
     }
 
-    public boolean containsStack(int windowingMode, int activityType) {
-        return countStacks(windowingMode, activityType) > 0;
+    public boolean containsRootTasks(int windowingMode, int activityType) {
+        return countRootTasks(windowingMode, activityType) > 0;
     }
 
-    public int countStacks(int windowingMode, int activityType) {
+    public int countRootTasks(int windowingMode, int activityType) {
         int count = 0;
-        for (ActivityTask stack : mRootTasks) {
+        for (Task rootTask : mRootTasks) {
             if (activityType != ACTIVITY_TYPE_UNDEFINED
-                    && activityType != stack.getActivityType()) {
+                    && activityType != rootTask.getActivityType()) {
                 continue;
             }
             if (windowingMode != WINDOWING_MODE_UNDEFINED
-                    && windowingMode != stack.getWindowingMode()) {
+                    && windowingMode != rootTask.getWindowingMode()) {
                 continue;
             }
             ++count;
@@ -595,31 +599,19 @@ public class WindowManagerState {
         return count;
     }
 
-    public ActivityTask getRootTask(int taskId) {
-        for (ActivityTask stack : mRootTasks) {
-            if (taskId == stack.mRootTaskId) {
-                return stack;
+    public Task getRootTask(int taskId) {
+        for (Task rootTask : mRootTasks) {
+            if (taskId == rootTask.mRootTaskId) {
+                return rootTask;
             }
         }
         return null;
     }
 
-    public ActivityTask getStackByActivityType(int activityType) {
-        for (ActivityTask stack : mRootTasks) {
-            if (activityType == stack.getActivityType()) {
-                return stack;
-            }
-        }
-        return null;
-    }
-
-    public ActivityTask getStandardStackByWindowingMode(int windowingMode) {
-        for (ActivityTask stack : mRootTasks) {
-            if (stack.getActivityType() != ACTIVITY_TYPE_STANDARD) {
-                continue;
-            }
-            if (stack.getWindowingMode() == windowingMode) {
-                return stack;
+    public Task getRootTaskByActivityType(int activityType) {
+        for (Task rootTask : mRootTasks) {
+            if (activityType == rootTask.getActivityType()) {
+                return rootTask;
             }
         }
         return null;
@@ -627,19 +619,19 @@ public class WindowManagerState {
 
     public int getStandardTaskCountByWindowingMode(int windowingMode) {
         int count = 0;
-        for (ActivityTask stack : mRootTasks) {
-            if (stack.getActivityType() != ACTIVITY_TYPE_STANDARD) {
+        for (Task rootTask : mRootTasks) {
+            if (rootTask.getActivityType() != ACTIVITY_TYPE_STANDARD) {
                 continue;
             }
-            if (stack.getWindowingMode() == windowingMode) {
-                count += stack.mTasks.isEmpty() ? 1 : stack.mTasks.size();
+            if (rootTask.getWindowingMode() == windowingMode) {
+                count += rootTask.mTasks.isEmpty() ? 1 : rootTask.mTasks.size();
             }
         }
         return count;
     }
 
-    /** Get the stack position on its display. */
-    int getStackIndexByActivityType(int activityType) {
+    /** Gets the position of root task on its display with the given {@code activityType}. */
+    int getRootTaskIndexByActivityType(int activityType) {
         for (DisplayContent display : mDisplays) {
             for (int i = 0; i < display.mRootTasks.size(); i++) {
                 if (activityType == display.mRootTasks.get(i).getActivityType()) {
@@ -650,12 +642,13 @@ public class WindowManagerState {
         return -1;
     }
 
-    /** Get the stack on its display. */
-    ActivityTask getStackByActivity(ComponentName activityName) {
+    /** Gets the root task on its display with the given {@code activityName}. */
+    @Nullable
+    Task getRootTaskByActivity(ComponentName activityName) {
         for (DisplayContent display : mDisplays) {
             for (int i = display.mRootTasks.size() - 1; i >= 0; --i) {
-                final ActivityTask stack = display.mRootTasks.get(i);
-                if (stack.containsActivity(activityName)) return stack;
+                final Task rootTask = display.mRootTasks.get(i);
+                if (rootTask.containsActivity(activityName)) return rootTask;
             }
         }
         return null;
@@ -663,7 +656,7 @@ public class WindowManagerState {
 
     /** Get display id by activity on it. */
     public int getDisplayByActivity(ComponentName activityComponent) {
-        final ActivityTask task = getTaskByActivity(activityComponent);
+        final Task task = getTaskByActivity(activityComponent);
         if (task == null) {
             return -1;
         }
@@ -674,11 +667,11 @@ public class WindowManagerState {
         return new ArrayList<>(mDisplays);
     }
 
-    public List<ActivityTask> getRootTasks() {
+    public List<Task> getRootTasks() {
         return new ArrayList<>(mRootTasks);
     }
 
-    public int getStackCount() {
+    public int getRootTaskCount() {
         return mRootTasks.size();
     }
 
@@ -687,24 +680,24 @@ public class WindowManagerState {
     }
 
     public boolean containsActivity(ComponentName activityName) {
-        for (ActivityTask stack : mRootTasks) {
-            if (stack.containsActivity(activityName)) return true;
+        for (Task rootTask : mRootTasks) {
+            if (rootTask.containsActivity(activityName)) return true;
         }
         return false;
     }
 
     public boolean containsNoneOf(Iterable<ComponentName> activityNames) {
         for (ComponentName activityName : activityNames) {
-            for (ActivityTask stack : mRootTasks) {
-                if (stack.containsActivity(activityName)) return false;
+            for (Task rootTask : mRootTasks) {
+                if (rootTask.containsActivity(activityName)) return false;
             }
         }
         return true;
     }
 
     public boolean containsActivityInWindowingMode(ComponentName activityName, int windowingMode) {
-        for (ActivityTask stack : mRootTasks) {
-            final Activity activity = stack.getActivity(activityName);
+        for (Task rootTask : mRootTasks) {
+            final Activity activity = rootTask.getActivity(activityName);
             if (activity != null && activity.getWindowingMode() == windowingMode) {
                 return true;
             }
@@ -713,16 +706,16 @@ public class WindowManagerState {
     }
 
     public boolean isActivityVisible(ComponentName activityName) {
-        for (ActivityTask stack : mRootTasks) {
-            final Activity activity = stack.getActivity(activityName);
+        for (Task rootTask : mRootTasks) {
+            final Activity activity = rootTask.getActivity(activityName);
             if (activity != null) return activity.visible;
         }
         return false;
     }
 
     public boolean isActivityTranslucent(ComponentName activityName) {
-        for (ActivityTask stack : mRootTasks) {
-            final Activity activity = stack.getActivity(activityName);
+        for (Task rootTask : mRootTasks) {
+            final Activity activity = rootTask.getActivity(activityName);
             if (activity != null) return activity.translucent;
         }
         return false;
@@ -730,9 +723,9 @@ public class WindowManagerState {
 
     public boolean isBehindOpaqueActivities(ComponentName activityName) {
         final String fullName = getActivityName(activityName);
-        for (ActivityTask stack : mRootTasks) {
+        for (Task rootTask : mRootTasks) {
             final Activity activity =
-                    stack.getActivity((a) -> a.name.equals(fullName) || !a.translucent);
+                    rootTask.getActivity((a) -> a.name.equals(fullName) || !a.translucent);
             if (activity != null) {
                 if (activity.name.equals(fullName)) {
                     return false;
@@ -747,8 +740,8 @@ public class WindowManagerState {
     }
 
     public boolean containsStartedActivities() {
-        for (ActivityTask stack : mRootTasks) {
-            final Activity activity = stack.getActivity(
+        for (Task rootTask : mRootTasks) {
+            final Activity activity = rootTask.getActivity(
                     (a) -> !a.state.equals(STATE_STOPPED) && !a.state.equals(STATE_DESTROYED));
             if (activity != null) return true;
         }
@@ -756,16 +749,16 @@ public class WindowManagerState {
     }
 
     boolean hasActivityState(ComponentName activityName, String activityState) {
-        for (ActivityTask stack : mRootTasks) {
-            final Activity activity = stack.getActivity(activityName);
+        for (Task rootTask : mRootTasks) {
+            final Activity activity = rootTask.getActivity(activityName);
             if (activity != null) return activity.state.equals(activityState);
         }
         return false;
     }
 
     int getActivityProcId(ComponentName activityName) {
-        for (ActivityTask stack : mRootTasks) {
-            final Activity activity = stack.getActivity(activityName);
+        for (Task rootTask : mRootTasks) {
+            final Activity activity = rootTask.getActivity(activityName);
             if (activity != null) return activity.procId;
         }
         return -1;
@@ -784,56 +777,56 @@ public class WindowManagerState {
         return ComponentName.unflattenFromString(activity.name);
     }
 
-    ActivityTask getDreamTask() {
-        final ActivityTask dreamStack = getStackByActivityType(ACTIVITY_TYPE_DREAM);
-        if (dreamStack != null) {
-            return dreamStack.getTopTask();
+    Task getDreamTask() {
+        final Task dreamRootTask = getRootTaskByActivityType(ACTIVITY_TYPE_DREAM);
+        if (dreamRootTask != null) {
+            return dreamRootTask.getTopTask();
         }
         return null;
     }
 
-    ActivityTask getHomeTask() {
-        final ActivityTask homeStack = getStackByActivityType(ACTIVITY_TYPE_HOME);
-        if (homeStack != null) {
-            return homeStack.getTopTask();
+    Task getHomeTask() {
+        final Task homeRootTask = getRootTaskByActivityType(ACTIVITY_TYPE_HOME);
+        if (homeRootTask != null) {
+            return homeRootTask.getTopTask();
         }
         return null;
     }
 
-    private ActivityTask getRecentsTask() {
-        final ActivityTask recentsStack = getStackByActivityType(ACTIVITY_TYPE_RECENTS);
-        if (recentsStack != null) {
-            return recentsStack.getTopTask();
+    private Task getRecentsTask() {
+        final Task recentsRootTask = getRootTaskByActivityType(ACTIVITY_TYPE_RECENTS);
+        if (recentsRootTask != null) {
+            return recentsRootTask.getTopTask();
         }
         return null;
     }
 
     private Activity getHomeActivity() {
-        final ActivityTask homeTask = getHomeTask();
+        final Task homeTask = getHomeTask();
         return homeTask != null ? homeTask.mActivities.get(homeTask.mActivities.size() - 1) : null;
     }
 
     private Activity getRecentsActivity() {
-        final ActivityTask recentsTask = getRecentsTask();
+        final Task recentsTask = getRecentsTask();
         return recentsTask != null ? recentsTask.mActivities.get(recentsTask.mActivities.size() - 1)
                 : null;
     }
 
     public int getRootTaskIdByActivity(ComponentName activityName) {
-        final ActivityTask task = getTaskByActivity(activityName);
-        return  (task == null) ? INVALID_STACK_ID : task.mRootTaskId;
+        final Task task = getTaskByActivity(activityName);
+        return  (task == null) ? INVALID_TASK_ID : task.mRootTaskId;
     }
 
-    public ActivityTask getTaskByActivity(ComponentName activityName) {
+    public Task getTaskByActivity(ComponentName activityName) {
         return getTaskByActivity(
                 activityName, WINDOWING_MODE_UNDEFINED, new int[]{ INVALID_TASK_ID });
     }
 
-    public ActivityTask getTaskByActivity(ComponentName activityName, int[] excludeTaskIds) {
+    public Task getTaskByActivity(ComponentName activityName, int[] excludeTaskIds) {
         return getTaskByActivity(activityName, WINDOWING_MODE_UNDEFINED, excludeTaskIds);
     }
 
-    private ActivityTask getTaskByActivity(ComponentName activityName, int windowingMode,
+    private Task getTaskByActivity(ComponentName activityName, int windowingMode,
             int[] excludeTaskIds) {
         Activity activity = getActivity(activityName, windowingMode, excludeTaskIds);
         return activity == null ? null : activity.task;
@@ -845,10 +838,10 @@ public class WindowManagerState {
 
     private Activity getActivity(ComponentName activityName, int windowingMode,
             int[] excludeTaskIds) {
-        for (ActivityTask stack : mRootTasks) {
+        for (Task rootTask : mRootTasks) {
             if (windowingMode == WINDOWING_MODE_UNDEFINED
-                    || windowingMode == stack.getWindowingMode()) {
-                Activity activity = stack.getActivity(activityName, excludeTaskIds);
+                    || windowingMode == rootTask.getWindowingMode()) {
+                Activity activity = rootTask.getActivity(activityName, excludeTaskIds);
                 if (activity != null) return activity;
             }
         }
@@ -866,8 +859,8 @@ public class WindowManagerState {
     public int getActivityCountInTask(int taskId, @Nullable ComponentName activityName) {
         // If activityName is null, count all activities in the task.
         // Otherwise count activities that have specified name.
-        for (ActivityTask stack : mRootTasks) {
-            final ActivityTask task = stack.getTask(taskId);
+        for (Task rootTask : mRootTasks) {
+            final Task task = rootTask.getTask(taskId);
             if (task == null) continue;
 
             if (activityName == null) {
@@ -896,7 +889,7 @@ public class WindowManagerState {
     /**
      * Count root tasks filtered by the predicate passed as argument.
      */
-    public int getRootTasksCount(Predicate<? super ActivityTask> predicate) {
+    public int getRootTasksCount(Predicate<? super Task> predicate) {
         return (int) mRootTasks.stream().filter(predicate).count();
     }
 
@@ -1043,8 +1036,8 @@ public class WindowManagerState {
 
     /** Checks whether the display contains the given activity. */
     boolean hasActivityInDisplay(int displayId, ComponentName activityName) {
-        for (WindowManagerState.ActivityTask stack : getDisplay(displayId).getRootTasks()) {
-            if (stack.containsActivity(activityName)) {
+        for (Task rootTask : getDisplay(displayId).getRootTasks()) {
+            if (rootTask.containsActivity(activityName)) {
                 return true;
             }
         }
@@ -1064,8 +1057,8 @@ public class WindowManagerState {
         return mWindowStates.size() - mWindowStates.indexOf(w);
     }
 
-    ActivityTask getStandardRootTaskByWindowingMode(int windowingMode) {
-        for (ActivityTask task : mRootTasks) {
+    Task getStandardRootTaskByWindowingMode(int windowingMode) {
+        for (Task task : mRootTasks) {
             if (task.getActivityType() != ACTIVITY_TYPE_STANDARD) {
                 continue;
             }
@@ -1098,7 +1091,7 @@ public class WindowManagerState {
 
     public static class DisplayContent extends DisplayArea {
         public int mId;
-        ArrayList<ActivityTask> mRootTasks = new ArrayList<>();
+        ArrayList<Task> mRootTasks = new ArrayList<>();
         int mFocusedRootTaskId;
         String mResumedActivity;
         boolean mSingleTaskInstance;
@@ -1174,12 +1167,12 @@ public class WindowManagerState {
 
         private void addRootTasks() {
             // TODO(b/149338177): figure out how CTS tests deal with organizer. For now,
-            //                    don't treat them as regular stacks
-            collectDescendantsOfTypeIf(ActivityTask.class, t -> t.isRootTask(), this,
+            //                    don't treat them as regular root tasks
+            collectDescendantsOfTypeIf(Task.class, t -> t.isRootTask(), this,
                     mRootTasks);
-            ArrayList<ActivityTask> rootOrganizedTasks = new ArrayList<>();
+            ArrayList<Task> rootOrganizedTasks = new ArrayList<>();
             for (int i = mRootTasks.size() -1; i >= 0; --i) {
-                final ActivityTask task = mRootTasks.get(i);
+                final Task task = mRootTasks.get(i);
                 // Skip tasks created by an organizer
                 if (task.mCreatedByOrganizer) {
                     mRootTasks.remove(task);
@@ -1188,9 +1181,9 @@ public class WindowManagerState {
             }
             // Add root tasks controlled by an organizer
             while (rootOrganizedTasks.size() > 0) {
-                final ActivityTask task = rootOrganizedTasks.remove(0);
+                final Task task = rootOrganizedTasks.remove(0);
                 for (int i = task.mChildren.size() - 1; i >= 0; i--) {
-                    final ActivityTask child = (ActivityTask) task.mChildren.get(i);
+                    final Task child = (Task) task.mChildren.get(i);
                     if (!child.mCreatedByOrganizer) {
                         mRootTasks.add(child);
                     } else {
@@ -1201,7 +1194,7 @@ public class WindowManagerState {
         }
 
         boolean containsActivity(ComponentName activityName) {
-            for (ActivityTask task : mRootTasks) {
+            for (Task task : mRootTasks) {
                 if (task.containsActivity(activityName)) return true;
             }
             return false;
@@ -1252,7 +1245,7 @@ public class WindowManagerState {
             return result.stream().findFirst().orElse(null);
         }
 
-        ArrayList<ActivityTask> getRootTasks() {
+        ArrayList<Task> getRootTasks() {
             return mRootTasks;
         }
 
@@ -1287,15 +1280,16 @@ public class WindowManagerState {
         }
     }
 
-    public static class ActivityTask extends ActivityContainer {
-
+    public static class Task extends ActivityContainer {
         int mTaskId;
         int mRootTaskId;
         public int mDisplayId;
         Rect mLastNonFullscreenBounds;
         String mRealActivity;
         String mOrigActivity;
-        ArrayList<ActivityTask> mTasks = new ArrayList<>();
+        ArrayList<Task> mTasks = new ArrayList<>();
+        /** Contains TaskFragment but not Task children */
+        ArrayList<TaskFragment> mTaskFragments = new ArrayList<>();
         ArrayList<Activity> mActivities = new ArrayList<>();
         int mTaskType;
         private int mResizeMode;
@@ -1307,20 +1301,20 @@ public class WindowManagerState {
         String mAffinity;
         boolean mHasChildPipActivity;
 
-        ActivityTask(TaskProto proto) {
-            super(proto.windowContainer);
+        Task(TaskProto proto) {
+            super(proto.taskFragment.windowContainer);
             mTaskId = proto.id;
             mRootTaskId = proto.rootTaskId;
-            mDisplayId = proto.displayId;
+            mDisplayId = proto.taskFragment.displayId;
             mLastNonFullscreenBounds = extract(proto.lastNonFullscreenBounds);
             mRealActivity = proto.realActivity;
             mOrigActivity = proto.origActivity;
-            mTaskType = proto.activityType;
+            mTaskType = proto.taskFragment.activityType;
             mResizeMode = proto.resizeMode;
             mFullscreen = proto.fillsParent;
             mBounds = extract(proto.bounds);
-            mMinWidth = proto.minWidth;
-            mMinHeight = proto.minHeight;
+            mMinWidth = proto.taskFragment.minWidth;
+            mMinHeight = proto.taskFragment.minHeight;
             mAnimatingBounds = proto.animatingBounds;
             mSurfaceWidth = proto.surfaceWidth;
             mSurfaceHeight = proto.surfaceHeight;
@@ -1332,12 +1326,13 @@ public class WindowManagerState {
                 mResumedActivity = proto.resumedActivity.title;
             }
 
-            collectChildrenOfType(ActivityTask.class, this, mTasks);
+            collectChildrenOfType(Task.class, this, mTasks);
+            collectChildrenOfType(TaskFragment.class, this, mTaskFragments);
             collectChildrenOfType(Activity.class, this, mActivities);
         }
 
         boolean isEmpty() {
-            return mTasks.isEmpty() && mActivities.isEmpty();
+            return mTasks.isEmpty() && mTaskFragments.isEmpty() && mActivities.isEmpty();
         }
 
         public int getResizeMode() {
@@ -1371,8 +1366,8 @@ public class WindowManagerState {
             return mActivities;
         }
 
-        /** @return the top task in the stack. */
-        ActivityTask getTopTask() {
+        /** @return the top task in the root task. */
+        Task getTopTask() {
             // NOTE: Unlike the WindowManager internals, we dump the state from top to bottom,
             //       so the indices are inverted
             return getTask((t) -> true);
@@ -1382,23 +1377,28 @@ public class WindowManagerState {
             return mResumedActivity;
         }
 
-        public List<ActivityTask> getTasks() {
+        public List<Task> getTasks() {
             return new ArrayList<>(mTasks);
         }
 
-        ActivityTask getTask(Predicate<ActivityTask> predicate) {
-            for (ActivityTask task : mTasks) {
+        /** Returns non-Task leaf {@link TaskFragment} list. */
+        public List<TaskFragment> getTaskFragments() {
+            return new ArrayList<>(mTaskFragments);
+        }
+
+        Task getTask(Predicate<Task> predicate) {
+            for (Task task : mTasks) {
                 if (predicate.test(task)) return task;
             }
             return predicate.test(this) ? this : null;
         }
 
-        ActivityTask getTask(int taskId) {
+        Task getTask(int taskId) {
             return getTask((t) -> t.mTaskId == taskId);
         }
 
-        void forAllTasks(Consumer<ActivityTask> consumer) {
-            for (ActivityTask task : mTasks) {
+        void forAllTasks(Consumer<Task> consumer) {
+            for (Task task : mTasks) {
                 consumer.accept(task);
             }
             consumer.accept(this);
@@ -1408,7 +1408,7 @@ public class WindowManagerState {
             for (Activity activity : mActivities) {
                 if (predicate.test(activity)) return activity;
             }
-            for (ActivityTask task : mTasks) {
+            for (Task task : mTasks) {
                 final Activity activity = task.getActivity(predicate);
                 if (activity != null) return activity;
             }
@@ -1445,6 +1445,57 @@ public class WindowManagerState {
         }
     }
 
+    public static class TaskFragment extends ActivityContainer {
+        public int mDisplayId;
+        Task mParentTask;
+        ArrayList<Task> mTasks = new ArrayList<>();
+        ArrayList<TaskFragment> mTaskFragments = new ArrayList<>();
+        ArrayList<Activity> mActivities = new ArrayList<>();
+        int mTaskFragmentType;
+
+        TaskFragment(TaskFragmentProto proto, WindowContainer parent) {
+            super(proto.windowContainer);
+            mParentTask = initializeParentTask(parent);
+            mDisplayId = proto.displayId;
+            mTaskFragmentType = proto.activityType;
+            mMinWidth = proto.minWidth;
+            mMinHeight = proto.minHeight;
+
+            collectChildrenOfType(Task.class, this, mTasks);
+            collectChildrenOfType(TaskFragment.class, this, mTaskFragments);
+            collectChildrenOfType(Activity.class, this, mActivities);
+        }
+
+        private static Task initializeParentTask(WindowContainer parent) {
+            if (parent instanceof Task) {
+                return (Task) parent;
+            }
+            return ((TaskFragment) parent).mParentTask;
+        }
+
+        Task getParentTask() {
+            return mParentTask;
+        }
+
+        public List<Task> getTasks() {
+            return mTasks;
+        }
+
+        /** Returns non-Task TaskFragment children. */
+        public List<TaskFragment> getTaskFragments() {
+            return mTaskFragments;
+        }
+
+        public List<Activity> getActivities() {
+            return mActivities;
+        }
+
+        @Override
+        int getActivityType() {
+            return mTaskFragmentType;
+        }
+    }
+
     public static class Activity extends ActivityContainer {
 
         String name;
@@ -1454,11 +1505,11 @@ public class WindowManagerState {
         boolean inSizeCompatMode;
         int procId = -1;
         public boolean translucent;
-        ActivityTask task;
+        Task task;
 
         Activity(ActivityRecordProto proto, WindowContainer parent) {
             super(proto.windowToken.windowContainer);
-            task = (ActivityTask) parent;
+            task = initializeTask(parent);
             name = proto.name;
             state = proto.state;
             visible = proto.visible;
@@ -1468,6 +1519,14 @@ public class WindowManagerState {
                 procId = proto.procId;
             }
             translucent = proto.translucent;
+        }
+
+        private static Task initializeTask(WindowContainer parent) {
+            if (parent instanceof Task) {
+                return (Task) parent;
+            }
+            // Now we know its parent is TaskFragment
+            return ((TaskFragment) parent).getParentTask();
         }
 
         public String getName() {
@@ -1688,7 +1747,11 @@ public class WindowManagerState {
         }
 
         if (proto.task != null) {
-            return new ActivityTask(proto.task);
+            return new Task(proto.task);
+        }
+
+        if (proto.taskFragment != null) {
+            return new TaskFragment(proto.taskFragment, parent);
         }
 
         if (proto.activity != null) {
