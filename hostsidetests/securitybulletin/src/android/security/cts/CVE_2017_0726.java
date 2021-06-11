@@ -15,7 +15,7 @@
  */
 
 package android.security.cts;
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -27,8 +27,8 @@ public class CVE_2017_0726 extends SecurityTestCase {
      * b/36389123
      * Vulnerability Behaviour: EXIT_VULNERABLE (113)
      */
-    @SecurityTest(minPatchLevel = "2017-08")
     @Test
+    @AsbSecurityTest(cveBugId = 36389123)
     public void testPocCVE_2017_0726() throws Exception {
         pocPusher.only64();
         String inputFiles[] = {"cve_2017_0726.mp4"};

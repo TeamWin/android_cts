@@ -106,7 +106,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.RemoteCallback;
 import android.platform.test.annotations.Presubmit;
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import android.provider.Settings;
 import android.server.wm.CommandSession.ActivityCallback;
 import android.server.wm.CommandSession.SizeInfo;
@@ -286,7 +286,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     }
 
     @Test
-    @SecurityTest(minPatchLevel="2021-03")
+    @AsbSecurityTest(cveBugId = 174302616)
     public void testEnterPipWithTinyMinimalSize() {
         // Launch a PiP activity with minimal size specified and smaller than allowed minimum
         launchActivity(PIP_ACTIVITY_WITH_TINY_MINIMAL_SIZE, extraString(EXTRA_ENTER_PIP, "true"));
