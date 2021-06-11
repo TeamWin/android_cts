@@ -18,7 +18,7 @@ package android.security.cts;
 
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import static org.junit.Assert.assertTrue;
@@ -30,8 +30,8 @@ public class CVE_2021_0396 extends SecurityTestCase {
      * b/160610106
      * Vulnerability Behaviour: SIGSEGV in pacrunner
      */
-    @SecurityTest(minPatchLevel = "2021-03")
     @Test
+    @AsbSecurityTest(cveBugId = 160610106)
     public void testPocCVE_2021_0396() throws Exception {
         AdbUtils.runProxyAutoConfig("cve_2021_0396", getDevice());
     }

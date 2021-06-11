@@ -16,7 +16,7 @@
 
 package android.security.cts;
 
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -28,8 +28,8 @@ public class CVE_2018_9558 extends SecurityTestCase {
      * b/112161557
      * Vulnerability Behaviour: EXIT_VULNERABLE (113)
      */
-    @SecurityTest(minPatchLevel = "2018-12")
     @Test
+    @AsbSecurityTest(cveBugId = 112161557)
     public void testPocCVE_2018_9558() throws Exception {
         AdbUtils.assumeHasNfc(getDevice());
         pocPusher.only64();
