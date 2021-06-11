@@ -17,6 +17,7 @@
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
      xmlns:androidprv="http://schemas.android.com/apk/prv/res/android"
+     xmlns:tools="http://schemas.android.com/tools"
      package="android.server.wm.cts"
      android:targetSandboxVersion="2">
 
@@ -524,6 +525,13 @@
                   android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density|touchscreen"/>
         <activity android:name="android.server.wm.BlurTests$ListenerTestActivity"
                   android:exported="true"/>
+
+        <!-- Overrides the activity declaration in AndroidX test library to remove the starting
+             animation. -->
+        <activity
+            android:name="androidx.test.core.app.InstrumentationActivityInvoker$BootstrapActivity"
+            tools:replace="android:theme"
+            android:theme="@style/WhiteBackgroundTheme" />
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
