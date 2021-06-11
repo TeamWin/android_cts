@@ -133,6 +133,12 @@ public class TestUtils {
     private static File sExternalStorageDirectory = Environment.getExternalStorageDirectory();
     private static String sStorageVolumeName = MediaStore.VOLUME_EXTERNAL;
 
+    /**
+     * Set this to {@code false} if the test is verifying uri grants on testApp. Force stopping the
+     * app will kill the app and it will lose uri grants.
+     */
+    private static boolean sShouldForceStopTestApp = true;
+
     private static final long POLLING_TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(20);
     private static final long POLLING_SLEEP_MILLIS = 100;
 
@@ -880,6 +886,10 @@ public class TestUtils {
         }
     }
 
+    public static void setShouldForceStopTestApp(boolean value) {
+        sShouldForceStopTestApp = value;
+    }
+
     /**
      * A functional interface representing an operation that takes no arguments,
      * returns no arguments and might throw an {@link Exception} of any kind.
@@ -1349,8 +1359,10 @@ public class TestUtils {
      */
     private static void sendIntentToTestApp(TestApp testApp, String dirPath, String actionName,
             BroadcastReceiver broadcastReceiver, CountDownLatch latch) throws Exception {
-        final String packageName = testApp.getPackageName();
-        forceStopApp(packageName);
+        if (sShouldForceStopTestApp) {
+            final String packageName = testApp.getPackageName();
+            forceStopApp(packageName);
+        }
 
         // Launch the test app.
         final Intent intent = new Intent(Intent.ACTION_MAIN);
@@ -1365,6 +1377,10 @@ public class TestUtils {
      */
     private static void sendIntentToTestApp(TestApp testApp, Uri uri, String actionName,
             BroadcastReceiver broadcastReceiver, CountDownLatch latch) throws Exception {
+        if (sShouldForceStopTestApp) {
+            final String packageName = testApp.getPackageName();
+            forceStopApp(packageName);
+        }
 
         final Intent intent = new Intent(Intent.ACTION_MAIN);
         intent.putExtra(INTENT_EXTRA_URI, uri);
