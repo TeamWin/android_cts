@@ -447,6 +447,10 @@ public class AvailableIntentsTest extends AndroidTestCase {
     }
 
     public void testRequestManageMedia() {
+        if (FeatureUtil.isAutomotive()) {
+            // Skip the test for automotive device.
+            return;
+        }
         assertCanBeHandled(new Intent(Settings.ACTION_REQUEST_MANAGE_MEDIA));
     }
 
