@@ -26,6 +26,7 @@ import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.packages.PackageReference;
 import com.android.bedstead.nene.users.UserReference;
+import com.android.bedstead.testapp.processor.annotations.TestAppSender;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -33,6 +34,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /** Represents a single test app which can be installed and interacted with. */
+@TestAppSender
 public class TestApp {
 
     private static final TestApis sTestApis = new TestApis();

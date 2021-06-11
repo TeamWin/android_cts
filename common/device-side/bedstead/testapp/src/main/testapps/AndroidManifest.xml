@@ -20,5 +20,6 @@
           package="com.android.bedstead.testapp.testapps">
     <uses-sdk android:minSdkVersion="28" />
     <application>
+        <service android:name="com.google.android.enterprise.connectedapps.CrossProfileConnector_Service" android:exported="true" />
     </application>
 </manifest>
