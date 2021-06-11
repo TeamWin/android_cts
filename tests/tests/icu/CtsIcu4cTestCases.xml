@@ -48,6 +48,7 @@
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.icu4c.cts" />
         <option name="runtime-hint" value="5s" />
+        <option name="device-listeners" value="com.android.modules.utils.testing.NativeCoverageHackInstrumentationListener" />
     </test>
     <test class="com.android.tradefed.testtype.HostTest" >
         <option name="jar" value="ICU4CTestRunner.jar" />

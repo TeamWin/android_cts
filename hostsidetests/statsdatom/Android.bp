@@ -26,6 +26,7 @@ java_test_host {
         "src/**/appexit/*.java",
         "src/**/appstart/*.java",
         "src/**/batterycycle/*.java",
+        "src/**/batterystats/*.java",
         "src/**/binderstats/*.java",
         "src/**/bluetooth/*.java",
         "src/**/cpu/*.java",

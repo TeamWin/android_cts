@@ -2078,7 +2078,7 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
     }
 
     @Test
-    public void testDeletePendingAndTrashed() throws Exception {
+    public void testDeletePendingAndTrashed_ownerCanDelete() throws Exception {
         final File pendingVideoFile = new File(getDcimDir(), VIDEO_FILE_NAME);
         final File trashedImageFile = new File(getPicturesDir(), IMAGE_FILE_NAME);
         final File pendingPdfFile = new File(getDownloadDir(), NONMEDIA_FILE_NAME);
@@ -2097,7 +2097,25 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
             // App can delete its own pending and trashed file.
             assertCanDeletePaths(pendingVideoFilePath, trashedImageFilePath, pendingPdfFilePath,
                     trashedPdfFilePath);
+        } finally {
+            deletePaths(pendingVideoFilePath, trashedImageFilePath, pendingPdfFilePath,
+                    trashedPdfFilePath);
+            deleteFiles(pendingVideoFile, trashedImageFile, pendingPdfFile, trashedPdfFile);
+        }
+    }
 
+    @Test
+    public void testDeletePendingAndTrashed_otherAppCantDelete() throws Exception {
+        final File pendingVideoFile = new File(getDcimDir(), VIDEO_FILE_NAME);
+        final File trashedImageFile = new File(getPicturesDir(), IMAGE_FILE_NAME);
+        final File pendingPdfFile = new File(getDownloadDir(), NONMEDIA_FILE_NAME);
+        final File trashedPdfFile = new File(getDocumentsDir(), NONMEDIA_FILE_NAME);
+        // Actual path of the file gets rewritten for pending and trashed files.
+        String pendingVideoFilePath = null;
+        String trashedImageFilePath = null;
+        String pendingPdfFilePath = null;
+        String trashedPdfFilePath = null;
+        try {
             pendingVideoFilePath = getFilePathFromUri(createPendingFile(pendingVideoFile));
             trashedImageFilePath = getFilePathFromUri(createTrashedFile(trashedImageFile));
             pendingPdfFilePath = getFilePathFromUri(createPendingFile(pendingPdfFile));
@@ -2106,11 +2124,52 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
             // App can't delete other app's pending and trashed file.
             assertCantDeletePathsAs(APP_A_HAS_RES, pendingVideoFilePath, trashedImageFilePath,
                     pendingPdfFilePath, trashedPdfFilePath);
+        } finally {
+            deletePaths(pendingVideoFilePath, trashedImageFilePath, pendingPdfFilePath,
+                    trashedPdfFilePath);
+            deleteFiles(pendingVideoFile, trashedImageFile, pendingPdfFile, trashedPdfFile);
+        }
+    }
+
+    @Test
+    public void testDeletePendingAndTrashed_fileManagerCanDelete() throws Exception {
+        final File pendingVideoFile = new File(getDcimDir(), VIDEO_FILE_NAME);
+        final File trashedImageFile = new File(getPicturesDir(), IMAGE_FILE_NAME);
+        final File pendingPdfFile = new File(getDownloadDir(), NONMEDIA_FILE_NAME);
+        final File trashedPdfFile = new File(getDocumentsDir(), NONMEDIA_FILE_NAME);
+        // Actual path of the file gets rewritten for pending and trashed files.
+        String pendingVideoFilePath = null;
+        String trashedImageFilePath = null;
+        String pendingPdfFilePath = null;
+        String trashedPdfFilePath = null;
+        try {
+            pendingVideoFilePath = getFilePathFromUri(createPendingFile(pendingVideoFile));
+            trashedImageFilePath = getFilePathFromUri(createTrashedFile(trashedImageFile));
+            pendingPdfFilePath = getFilePathFromUri(createPendingFile(pendingPdfFile));
+            trashedPdfFilePath = getFilePathFromUri(createTrashedFile(trashedPdfFile));
 
             // File Manager can delete any pending and trashed file
             assertCanDeletePathsAs(APP_FM, pendingVideoFilePath, trashedImageFilePath,
                     pendingPdfFilePath, trashedPdfFilePath);
+        } finally {
+            deletePaths(pendingVideoFilePath, trashedImageFilePath, pendingPdfFilePath,
+                    trashedPdfFilePath);
+            deleteFiles(pendingVideoFile, trashedImageFile, pendingPdfFile, trashedPdfFile);
+        }
+    }
 
+    @Test
+    public void testDeletePendingAndTrashed_systemGalleryCanDeleteMedia() throws Exception {
+        final File pendingVideoFile = new File(getDcimDir(), VIDEO_FILE_NAME);
+        final File trashedImageFile = new File(getPicturesDir(), IMAGE_FILE_NAME);
+        final File pendingPdfFile = new File(getDownloadDir(), NONMEDIA_FILE_NAME);
+        final File trashedPdfFile = new File(getDocumentsDir(), NONMEDIA_FILE_NAME);
+        // Actual path of the file gets rewritten for pending and trashed files.
+        String pendingVideoFilePath = null;
+        String trashedImageFilePath = null;
+        String pendingPdfFilePath = null;
+        String trashedPdfFilePath = null;
+        try {
             pendingVideoFilePath = getFilePathFromUri(createPendingFile(pendingVideoFile));
             trashedImageFilePath = getFilePathFromUri(createTrashedFile(trashedImageFile));
             pendingPdfFilePath = getFilePathFromUri(createPendingFile(pendingPdfFile));

@@ -34,7 +34,6 @@ import android.app.Activity;
 import android.compat.testing.PlatformCompatChangeRule;
 import android.content.ComponentName;
 import android.content.pm.ActivityInfo;
-import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Rect;
 import android.platform.test.annotations.Presubmit;
@@ -67,7 +66,7 @@ import org.junit.rules.TestRule;
  * atest CtsWindowManagerDeviceTestCases:CompatChangeTests
  */
 @Presubmit
-@FlakyTest(bugId = 182185145)
+@FlakyTest(bugId = 190609681)
 public final class CompatChangeTests extends MultiDisplayTestBase {
     private static final ComponentName RESIZEABLE_PORTRAIT_ACTIVITY =
             component(ResizeablePortraitActivity.class);
@@ -81,7 +80,7 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
             component(SupportsSizeChangesPortraitActivity.class);
 
     // Device aspect ratio (both portrait and landscape orientations) for min aspect ratio tests
-    private static final float SIZE_COMPAT_DISPLAY_ASPECT_RATIO = 1.2f;
+    private static final float SIZE_COMPAT_DISPLAY_ASPECT_RATIO = 1.4f;
     // Fixed orientation min aspect ratio
     private static final float FIXED_ORIENTATION_MIN_ASPECT_RATIO = 1.03f;
     // The min aspect ratio of NON_RESIZEABLE_ASPECT_RATIO_ACTIVITY.
@@ -539,6 +538,8 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
         // Change the aspect ratio of the display to something that is smaller than all the aspect
         // ratios used throughout those tests but still portrait. This ensures we're using
         // enforcing aspect ratio behaviour within orientation.
+        // NOTE: using a smaller aspect ratio (e.g., 1.2) might cause activities to have a landscape
+        // window because of insets.
         mDisplayMetricsSession.changeAspectRatio(SIZE_COMPAT_DISPLAY_ASPECT_RATIO,
                 ORIENTATION_PORTRAIT);
         launchActivity(activity);
