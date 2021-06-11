@@ -34,9 +34,9 @@ public class TestNotificationAssistant extends NotificationAssistantService {
     boolean isConnected;
     boolean isPanelOpen = false;
     public List<String> currentCapabilities;
-    int notificationVisibleCount = 0;
+    boolean notificationVisible = false;
+    int notificationId = 1357;
     int notificationSeenCount = 0;
-    int notificationHiddenCount = 0;
     int notificationClickCount = 0;
     int notificationRank = -1;
     int notificationFeedback = 0;
@@ -106,17 +106,14 @@ public class TestNotificationAssistant extends NotificationAssistantService {
     }
 
     void resetNotificationVisibilityCounts() {
-        notificationHiddenCount = 0;
-        notificationVisibleCount = 0;
         notificationSeenCount = 0;
     }
 
     @Override
     public void onNotificationVisibilityChanged(String key, boolean isVisible) {
-        if (isVisible) {
-            notificationVisibleCount++;
-        } else {
-            notificationHiddenCount++;
+        if (key.contains(TestNotificationAssistant.class.getPackage().getName()
+                + "|" + notificationId)) {
+            notificationVisible = isVisible;
         }
     }
 
