@@ -101,7 +101,8 @@ public class GnssMeasurementValuesTest {
         mLocationListener = new TestLocationListener(LOCATION_TO_COLLECT_COUNT);
         mTestLocationManager.requestLocationUpdates(mLocationListener);
 
-        mMeasurementListener = new TestGnssMeasurementListener(TAG);
+        mMeasurementListener = new TestGnssMeasurementListener(TAG, /* eventsToCollect= */
+                0, /* filterByEventSize= */ false);
         mTestLocationManager.registerGnssMeasurementCallback(
                 mMeasurementListener,
                 new GnssMeasurementRequest.Builder()
@@ -116,7 +117,25 @@ public class GnssMeasurementValuesTest {
                         + " Consider retrying test outdoors.",
                 success);
 
-        Log.i(TAG, "Location status received = " + mLocationListener.isLocationReceived());
+        Log.i(TAG, "Location received = " + mLocationListener.isLocationReceived());
+
+        if (isSatPvtSupported) {
+            boolean foundSatellitePvt = mMeasurementListener.awaitSatellitePvt();
+            softAssert.assertTrue(
+                    "SatellitPvt is supported. The test must find a measurement with SatellitePvt"
+                            + " within " + TestGnssMeasurementListener.MEAS_TIMEOUT_IN_SEC
+                            + " seconds.",
+                    foundSatellitePvt);
+        }
+        if (isCorrVecSupported) {
+            boolean foundCorrelationVector = mMeasurementListener.awaitCorrelationVector();
+            softAssert.assertTrue(
+                    "CorrelationVector is supported. The test must find a measurement with "
+                            + "CorrelationVector within "
+                            + TestGnssMeasurementListener.CORRELATION_VECTOR_TIMEOUT_IN_SEC
+                            + " seconds.",
+                    foundCorrelationVector);
+        }
 
         List<GnssMeasurementsEvent> events = mMeasurementListener.getEvents();
         int eventCount = events.size();
@@ -131,8 +150,7 @@ public class GnssMeasurementValuesTest {
             assertNotNull("GnssMeasurementEvent cannot be null.", event);
             long timeInNs = event.getClock().getTimeNanos();
             for (GnssMeasurement measurement : event.getMeasurements()) {
-                TestMeasurementUtil.assertAllGnssMeasurementSystemFields(mTestLocationManager,
-                    measurement, softAssert, timeInNs, isCorrVecSupported, isSatPvtSupported);
+                TestMeasurementUtil.assertAllGnssMeasurementSystemFields(measurement, softAssert, timeInNs);
             }
         }
         softAssert.assertAll();
