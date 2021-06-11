@@ -182,6 +182,14 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
                         TunedInfo.APP_TAG_SELF);
                 assertEquals(expectedInfo, returnedInfo);
 
+                assertEquals(expectedInfo.getAppTag(), returnedInfo.getAppTag());
+                assertEquals(expectedInfo.getAppType(), returnedInfo.getAppType());
+                assertEquals(expectedInfo.getChannelUri(), returnedInfo.getChannelUri());
+                assertEquals(expectedInfo.getInputId(), returnedInfo.getInputId());
+                assertEquals(expectedInfo.isMainSession(), returnedInfo.isMainSession());
+                assertEquals(expectedInfo.isRecordingSession(), returnedInfo.isRecordingSession());
+                assertEquals(expectedInfo.isVisible(), returnedInfo.isVisible());
+
                 assertEquals(1, mCallback.mTunedInfos.size());
                 TunedInfo callbackInfo = mCallback.mTunedInfos.get(0);
                 assertEquals(expectedInfo, callbackInfo);
@@ -456,6 +464,7 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
         @Override
         public synchronized void onCurrentTunedInfosUpdated(
                 List<TunedInfo> tunedInfos) {
+            super.onCurrentTunedInfosUpdated(tunedInfos);
             mTunedInfos = tunedInfos;
         }
 
