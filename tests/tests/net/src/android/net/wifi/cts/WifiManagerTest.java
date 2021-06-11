@@ -33,7 +33,7 @@ import android.net.wifi.hotspot2.PasspointConfiguration;
 import android.net.wifi.hotspot2.pps.Credential;
 import android.net.wifi.hotspot2.pps.HomeSp;
 import android.os.SystemClock;
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import android.provider.Settings;
 import android.test.AndroidTestCase;
 import android.util.Log;
@@ -366,7 +366,7 @@ public class WifiManagerTest extends AndroidTestCase {
      * 6.configured Networks
      * 7.save configure;
      */
-    @SecurityTest
+    @AsbSecurityTest(cveBugId = 159373687)
     public void testWifiManagerNetWork() throws Exception {
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported

@@ -20,7 +20,7 @@ import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.compatibility.common.util.CrashUtils;
 
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -51,7 +51,7 @@ public class TestMediaCodec extends SecurityTestCase {
      * b/73965867
      **/
     @Test
-    @SecurityTest(minPatchLevel = "2018-06")
+    @AsbSecurityTest(cveBugId = 73965867)
     public void testPocBug_73965867() throws Exception {
         String inputFiles[] = {"bug_73965867.hevc"};
         runHevcDecodeTest(inputFiles, "-i " + AdbUtils.TMP_PATH + inputFiles[0], getDevice());
@@ -61,7 +61,7 @@ public class TestMediaCodec extends SecurityTestCase {
      * b/64380202
      **/
     @Test
-    @SecurityTest(minPatchLevel = "2018-01")
+    @AsbSecurityTest(cveBugId = 64380202)
     public void testPocBug_64380202() throws Exception {
         String inputFiles[] = {"bug_64380202.hevc"};
         runHevcDecodeTest(inputFiles,
@@ -73,7 +73,7 @@ public class TestMediaCodec extends SecurityTestCase {
      * b/64380403
      **/
     @Test
-    @SecurityTest(minPatchLevel = "2018-01")
+    @AsbSecurityTest(cveBugId = 64380403)
     public void testPocBug_64380403() throws Exception {
         String inputFiles[] = {"bug_64380403.hevc"};
         runHevcDecodeTest(inputFiles,
@@ -91,7 +91,7 @@ public class TestMediaCodec extends SecurityTestCase {
      * Vulnerability Behaviour: EXIT_VULNERABLE (113)
      **/
     @Test
-    @SecurityTest(minPatchLevel = "2018-01")
+    @AsbSecurityTest(cveBugId = 68320413)
     public void testPocCVE_2017_13177() throws Exception {
         pocPusher.only32();
         String inputFiles[] = {"cve_2017_13177.hevc"};
@@ -105,7 +105,7 @@ public class TestMediaCodec extends SecurityTestCase {
      * Vulnerability Behaviour: SIGSEGV in self
      **/
     @Test
-    @SecurityTest(minPatchLevel = "2017-06")
+    @AsbSecurityTest(cveBugId = 34819017)
     public void testPocCVE_2017_0642() throws Exception {
         String inputFiles[] = {"cve_2017_0642.hevc"};
         runHevcDecodeMemTest(inputFiles,
@@ -118,7 +118,7 @@ public class TestMediaCodec extends SecurityTestCase {
      * Vulnerability Behaviour: SIGSEGV in self
      **/
     @Test
-    @SecurityTest(minPatchLevel = "2017-07")
+    @AsbSecurityTest(cveBugId = 34779227)
     public void testPocCVE_2017_0675() throws Exception {
         String inputFiles[] = {"cve_2017_0675.hevc"};
         runHevcDecodeMemTest(inputFiles,
@@ -131,7 +131,7 @@ public class TestMediaCodec extends SecurityTestCase {
      * Vulnerability Behaviour: SIGSEGV in self
      **/
     @Test
-    @SecurityTest(minPatchLevel = "2017-04")
+    @AsbSecurityTest(cveBugId = 65719872)
     public void testPocCVE_2017_13149() throws Exception {
         pocPusher.only32();
         String inputFiles[] = {"cve_2017_13149.hevc"};
@@ -145,7 +145,7 @@ public class TestMediaCodec extends SecurityTestCase {
      * Vulnerability Behaviour: SIGSEGV in self
      **/
     @Test
-    @SecurityTest(minPatchLevel = "2017-07")
+    @AsbSecurityTest(cveBugId = 33966031)
     public void testPocCVE_2017_0540() throws Exception {
         String inputFiles[] = {"cve_2017_0540.hevc"};
         runHevcDecodeMemTest(inputFiles,
@@ -156,7 +156,7 @@ public class TestMediaCodec extends SecurityTestCase {
      * b/65718319
      **/
     @Test
-    @SecurityTest(minPatchLevel = "2018-01")
+    @AsbSecurityTest(cveBugId = 65718319)
     public void testPocCVE_2017_13193() throws Exception {
         String inputFiles[] = {"cve_2017_13193.hevc"};
         runHevcDecodeTest(inputFiles,
@@ -169,7 +169,7 @@ public class TestMediaCodec extends SecurityTestCase {
      * Vulnerability Behaviour: SIGSEGV in self
      **/
     @Test
-    @SecurityTest(minPatchLevel = "2017-07")
+    @AsbSecurityTest(cveBugId = 37094889)
     public void testPocCVE_2017_0695() throws Exception {
         String inputFiles[] = {"cve_2017_0695.hevc"};
         runHevcDecodeTest(inputFiles,
@@ -181,7 +181,7 @@ public class TestMediaCodec extends SecurityTestCase {
      * b/72459887
      **/
     @Test
-    @SecurityTest(minPatchLevel = "2017-05")
+    @AsbSecurityTest(cveBugId = 34897036)
     public void testPocCVE_2017_0589() throws Exception {
         String inputFiles[] = {"cve_2017_0589.hevc"};
         runHevcDecodeMemTest(inputFiles,
@@ -195,7 +195,7 @@ public class TestMediaCodec extends SecurityTestCase {
      ******************************************************************************/
 
     @Test
-    @SecurityTest(minPatchLevel = "2017-03")
+    @AsbSecurityTest(cveBugId = 33139050)
     public void testPocBug_33139050() throws Exception {
         String inputFiles[] = {"bug_33139050.h264"};
         runAvcDecodeMemTest(inputFiles,
@@ -208,7 +208,7 @@ public class TestMediaCodec extends SecurityTestCase {
      * b/33621215
      **/
     @Test
-    @SecurityTest(minPatchLevel = "2017-03")
+    @AsbSecurityTest(cveBugId = 33621215)
     public void testPocBug_33621215() throws Exception {
         String inputFiles[] = {"bug_33621215.h264"};
         runAvcDecodeTest(inputFiles,
@@ -226,7 +226,7 @@ public class TestMediaCodec extends SecurityTestCase {
      * Vulnerability Behaviour: SIGSEGV in self
      **/
     @Test
-    @SecurityTest(minPatchLevel = "2017-07")
+    @AsbSecurityTest(cveBugId = 33450635)
     public void testPocCVE_2017_0469_2() throws Exception {
         String inputFiles[] = {"cve_2017_0469_2.h264"};
         runAvcDecodeMemTest(inputFiles,
@@ -238,7 +238,7 @@ public class TestMediaCodec extends SecurityTestCase {
      * Vulnerability Behaviour: SIGSEGV in self
      **/
     @Test
-    @SecurityTest(minPatchLevel = "2017-07")
+    @AsbSecurityTest(cveBugId = 36035074)
     public void testPocCVE_2017_0677() throws Exception {
         pocPusher.only32();
         String inputFiles[] = {"cve_2017_0677.h264"};
@@ -252,7 +252,7 @@ public class TestMediaCodec extends SecurityTestCase {
      * Vulnerability Behaviour: SIGSEGV in self
      **/
     @Test
-    @SecurityTest(minPatchLevel = "2018-03")
+    @AsbSecurityTest(cveBugId = 70294343)
     public void testPocCVE_2017_13264() throws Exception {
         String inputFiles[] = {"cve_2017_13264.h264"};
         runAvcDecodeTest(inputFiles,
@@ -265,7 +265,7 @@ public class TestMediaCodec extends SecurityTestCase {
      * Vulnerability Behaviour: SIGSEGV in self
      **/
     @Test
-    @SecurityTest(minPatchLevel = "2017-03")
+    @AsbSecurityTest(cveBugId = 33552073)
     public void testPocCVE_2017_0495() throws Exception {
         String inputFiles[] = {"cve_2017_0495.h264"};
         runAvcDecodeMemTest(inputFiles,
@@ -278,7 +278,7 @@ public class TestMediaCodec extends SecurityTestCase {
      * Vulnerability Behaviour: SIGSEGV in self
      **/
     @Test
-    @SecurityTest(minPatchLevel = "2017-03")
+    @AsbSecurityTest(cveBugId = 33450635)
     public void testPocCVE_2017_0469() throws Exception {
         String inputFiles[] = {"cve_2017_0469.h264"};
         runAvcDecodeMemTest(inputFiles,
@@ -291,7 +291,7 @@ public class TestMediaCodec extends SecurityTestCase {
      * Vulnerability Behaviour: SIGSEGV in self
      **/
     @Test
-    @SecurityTest(minPatchLevel = "2017-04")
+    @AsbSecurityTest(cveBugId = 33551775)
     public void testPocCVE_2017_0555() throws Exception {
         String inputFiles[] = {"cve_2017_0555.h264"};
         runAvcDecodeMemTest(inputFiles,
@@ -303,7 +303,7 @@ public class TestMediaCodec extends SecurityTestCase {
      * Vulnerability Behaviour: SIGSEGV in self
      **/
     @Test
-    @SecurityTest(minPatchLevel = "2017-09")
+    @AsbSecurityTest(cveBugId = 38496660)
     public void testPocCVE_2017_0776() throws Exception {
         String inputFiles[] = {"cve_2017_0776.h264"};
         runAvcDecodeMemTest(inputFiles,
@@ -316,7 +316,7 @@ public class TestMediaCodec extends SecurityTestCase {
      * Vulnerability Behaviour: SIGSEGV in self
      **/
     @Test
-    @SecurityTest(minPatchLevel = "2018-13")
+    @AsbSecurityTest(cveBugId = 71375536)
     public void testPocCVE_2017_13250() throws Exception {
         String inputFiles[] = {"cve_2017_13250.h264"};
         runAvcDecodeMemTest(inputFiles,
@@ -330,7 +330,7 @@ public class TestMediaCodec extends SecurityTestCase {
      * Vulnerability Behaviour: SIGSEGV in self
      **/
     @Test
-    @SecurityTest(minPatchLevel = "2017-11")
+    @AsbSecurityTest(cveBugId = 62896384)
     public void testPocCVE_2017_0833() throws Exception {
         pocPusher.only32();
         String inputFiles[] = {"cve_2017_0833.h264"};
@@ -343,7 +343,7 @@ public class TestMediaCodec extends SecurityTestCase {
      * b/63521984
      **/
     @Test
-    @SecurityTest(minPatchLevel = "2018-08")
+    @AsbSecurityTest(cveBugId = 63521984)
     public void testPocCVE_2018_9444() throws Exception {
         String inputFiles[] = {"cve_2018_9444.h264"};
         runAvcDecodeTest(inputFiles,
@@ -360,7 +360,7 @@ public class TestMediaCodec extends SecurityTestCase {
      * Vulnerability Behaviour: SIGSEGV in self
      */
     @Test
-    @SecurityTest(minPatchLevel = "2017-12")
+    @AsbSecurityTest(cveBugId = 38328132)
     public void testPocCVE_2017_13150() throws Exception {
         pocPusher.only32();
         String inputFiles[] = {"cve_2017_13150.m2v"};
@@ -373,7 +373,7 @@ public class TestMediaCodec extends SecurityTestCase {
      * Vulnerability Behaviour: SIGSEGV in self
      **/
     @Test
-    @SecurityTest(minPatchLevel = "2017-08")
+    @AsbSecurityTest(cveBugId = 37273547)
     public void testPocCVE_2017_0718() throws Exception {
         String inputFiles[] = {"cve_2017_0718.m2v"};
         runMpeg2DecodeMemTest(inputFiles, "-i " + AdbUtils.TMP_PATH + inputFiles[0]
@@ -384,7 +384,7 @@ public class TestMediaCodec extends SecurityTestCase {
      * b/34203195
      **/
     @Test
-    @SecurityTest(minPatchLevel = "2017-07")
+    @AsbSecurityTest(cveBugId = 34203195)
     public void testPocBug_34203195() throws Exception {
         String inputFiles[] = {"bug_34203195.m2v"};
         runMpeg2DecodeTest(inputFiles, "--input " + AdbUtils.TMP_PATH + inputFiles[0]
@@ -395,7 +395,7 @@ public class TestMediaCodec extends SecurityTestCase {
      * b/37561455
      **/
     @Test
-    @SecurityTest(minPatchLevel = "2017-08")
+    @AsbSecurityTest(cveBugId = 37561455)
     public void testPocBug_37561455() throws Exception {
         String inputFiles[] = {"bug_37561455.m2v"};
         runMpeg2DecodeTest(inputFiles, "--input " + AdbUtils.TMP_PATH + inputFiles[0]
@@ -406,7 +406,7 @@ public class TestMediaCodec extends SecurityTestCase {
      * b/63316255
      **/
     @Test
-    @SecurityTest(minPatchLevel = "2017-12")
+    @AsbSecurityTest(cveBugId = 63316255)
     public void testPocBug_63316255() throws Exception {
         String inputFiles[] = {"bug_63316255.m2v"};
         runMpeg2DecodeTest(inputFiles,
@@ -422,7 +422,7 @@ public class TestMediaCodec extends SecurityTestCase {
      * b/120644655
      * Vulnerability Behaviour: EXIT_VULNERABLE (113)
      **/
-    @SecurityTest(minPatchLevel = "2019-04")
+    @AsbSecurityTest(cveBugId = 120644655)
     public void testPocCVE_2019_2028() throws Exception {
         pocPusher.only32();
         String inputFiles[] = {"cve_2019_2028.m2v"};
@@ -436,7 +436,7 @@ public class TestMediaCodec extends SecurityTestCase {
      * Vulnerability Behaviour: SIGSEGV in self
      */
     @Test
-    @SecurityTest(minPatchLevel = "2018-10")
+    @AsbSecurityTest(cveBugId = 74078669)
     public void testPocCVE_2018_9497() throws Exception {
         String inputFiles[] = {"cve_2018_9497.m2v"};
         runMpeg2DecodeTest(inputFiles,
@@ -450,7 +450,7 @@ public class TestMediaCodec extends SecurityTestCase {
      * Vulnerability Behaviour: SIGSEGV in self
      **/
     @Test
-    @SecurityTest(minPatchLevel = "2018-06")
+    @AsbSecurityTest(cveBugId = 74016277)
     public void testPocCVE_2018_9341() throws Exception {
         String inputFiles[] = {"cve_2018_9341.m2v"};
         runMpeg2DecodeTest(inputFiles,
@@ -463,7 +463,7 @@ public class TestMediaCodec extends SecurityTestCase {
      * Vulnerability Behaviour: SIGSEGV in self
      */
     @Test
-    @SecurityTest(minPatchLevel = "2017-11")
+    @AsbSecurityTest(cveBugId = 63873837)
     public void testPocCVE_2017_0854() throws Exception {
         String inputFiles[] = {"cve_2017_0854.m2v"};
         runMpeg2DecodeMemTest(inputFiles,
@@ -477,7 +477,7 @@ public class TestMediaCodec extends SecurityTestCase {
      * Vulnerability Behaviour: SIGSEGV in self
      **/
     @Test
-    @SecurityTest(minPatchLevel = "2017-05")
+    @AsbSecurityTest(cveBugId = 35219737)
     public void testPocCVE_2017_0587() throws Exception {
         String inputFiles[] = {"cve_2017_0587.m2v"};
         runMpeg2DecodeMemTest(inputFiles, "--input " + AdbUtils.TMP_PATH + inputFiles[0]
@@ -490,7 +490,7 @@ public class TestMediaCodec extends SecurityTestCase {
      * Vulnerability Behaviour: SIGSEGV in self
      **/
     @Test
-    @SecurityTest(minPatchLevel = "2017-04")
+    @AsbSecurityTest(cveBugId = 34093073)
     public void testPocCVE_2017_0557() throws Exception {
         String inputFiles[] = {"cve_2017_0557.m2v"};
         runMpeg2DecodeTest(inputFiles,
@@ -503,7 +503,7 @@ public class TestMediaCodec extends SecurityTestCase {
      * Vulnerability Behaviour: EXIT_VULNERABLE (113)
      **/
     @Test
-    @SecurityTest(minPatchLevel = "2017-11")
+    @AsbSecurityTest(cveBugId = 62887820)
     public void testPocCVE_2017_0832() throws Exception {
         pocPusher.only32();
         String inputFiles[] = {"cve_2017_0832.m2v"};

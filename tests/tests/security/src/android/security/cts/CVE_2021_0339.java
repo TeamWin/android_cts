@@ -26,7 +26,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.RemoteCallback;
 import android.os.SystemClock;
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.test.InstrumentationRegistry;
 import android.test.AndroidTestCase;
@@ -37,7 +37,6 @@ import org.junit.runner.RunWith;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
-@SecurityTest
 @RunWith(AndroidJUnit4.class)
 public class CVE_2021_0339 {
 
@@ -63,7 +62,7 @@ public class CVE_2021_0339 {
      * start the first activity and get the result from the remote callback
      */
     @Test
-    @SecurityTest
+    @AsbSecurityTest(cveBugId = 145728687)
     public void testPocCVE_2021_0339() throws Exception {
         CompletableFuture<Integer> callbackReturn = new CompletableFuture<>();
         RemoteCallback cb = new RemoteCallback((Bundle result) ->

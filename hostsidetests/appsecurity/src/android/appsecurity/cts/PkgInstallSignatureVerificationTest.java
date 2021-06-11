@@ -21,7 +21,7 @@ import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IBuildReceiver;
 
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -482,7 +482,7 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         assertInstallFailsWithError("v2-only-empty.apk", "Unknown failure");
     }
 
-    @SecurityTest
+    @AsbSecurityTest(cveBugId = 64211847)
     public void testInstallApkWhichDoesNotStartWithZipLocalFileHeaderMagic() throws Exception {
         // The APKs below are competely fine except they don't start with ZIP Local File Header
         // magic. Thus, these APKs will install just fine unless Package Manager requires that APKs

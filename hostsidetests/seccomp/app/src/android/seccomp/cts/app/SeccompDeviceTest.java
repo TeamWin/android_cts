@@ -24,7 +24,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import android.support.test.runner.AndroidJUnit4;
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import com.android.compatibility.common.util.CpuFeatures;
 
 /**
@@ -99,7 +99,7 @@ public class SeccompDeviceTest {
     }
 
     @Test
-    @SecurityTest(minPatchLevel = "2019-05")
+    @AsbSecurityTest(cveBugId = 119769499)
     public void testPtraceSeccomp_CVE_2019_2054() throws Exception {
         Assert.assertTrue(testPtrace_CVE_2019_2054());
     }

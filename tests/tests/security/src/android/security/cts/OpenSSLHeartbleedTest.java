@@ -17,7 +17,7 @@
 package android.security.cts;
 
 import android.content.Context;
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import android.test.InstrumentationTestCase;
 import android.util.Log;
 
@@ -58,7 +58,6 @@ import javax.net.ssl.X509TrustManager;
 /**
  * Tests for the OpenSSL Heartbleed vulnerability.
  */
-@SecurityTest
 public class OpenSSLHeartbleedTest extends InstrumentationTestCase {
 
     // IMPLEMENTATION NOTE: This test spawns an SSLSocket client, SSLServerSocket server, and a
@@ -107,6 +106,7 @@ public class OpenSSLHeartbleedTest extends InstrumentationTestCase {
      * Tests that TLS handshake succeeds when the MiTM simply forwards all data without tampering
      * with it. This is to catch issues unrelated to TLS heartbeats.
      */
+    @AsbSecurityTest(cveBugId = 13906893)
     public void testWithoutHeartbeats() throws Exception {
         handshake(false, false);
     }
@@ -114,6 +114,7 @@ public class OpenSSLHeartbleedTest extends InstrumentationTestCase {
     /**
      * Tests whether client sockets are vulnerable to Heartbleed.
      */
+    @AsbSecurityTest(cveBugId = 13906893)
     public void testClientHeartbleed() throws Exception {
         checkHeartbleed(true);
     }
@@ -121,6 +122,7 @@ public class OpenSSLHeartbleedTest extends InstrumentationTestCase {
     /**
      * Tests whether server sockets are vulnerable to Heartbleed.
      */
+    @AsbSecurityTest(cveBugId = 13906893)
     public void testServerHeartbleed() throws Exception {
         checkHeartbleed(false);
     }

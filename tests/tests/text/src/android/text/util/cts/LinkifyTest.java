@@ -21,7 +21,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.annotation.UiThreadTest;
 import android.support.test.filters.MediumTest;
@@ -935,8 +935,8 @@ public class LinkifyTest {
                 domain.length(), email);
     }
 
-    @SecurityTest(minPatchLevel = "2019-03")
     @Test
+    @AsbSecurityTest(cveBugId = 116321860)
     public void testAddLinks_unsupportedCharacters() {
         String url = "moc.diordna.com";
         verifyAddLinksWithWebUrlSucceeds(url + " should be linkified", url);

@@ -16,7 +16,7 @@
 
 package android.security.cts;
 
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -28,8 +28,8 @@ public class CVE_2017_13205 extends SecurityTestCase {
      * b/64550583
      * Vulnerability Behaviour: SIGSEGV in self
      **/
-    @SecurityTest(minPatchLevel = "2018-01")
     @Test
+    @AsbSecurityTest(cveBugId = 64550583)
     public void testPocCVE_2017_13205() throws Exception {
         pocPusher.only32();
         String inputFiles[] = {"cve_2017_13205.m2v"};

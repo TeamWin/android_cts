@@ -17,7 +17,6 @@
 package android.security.cts;
 
 import android.platform.test.annotations.AsbSecurityTest;
-import android.platform.test.annotations.SecurityTest;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import org.junit.Test;
@@ -30,7 +29,6 @@ public class CVE_2021_0478 extends SecurityTestCase {
      * b/169255797
      */
     @AsbSecurityTest(cveBugId = 169255797)
-    @SecurityTest(minPatchLevel = "2021-06")
     @Test
     public void testPocCVE_2021_0478() throws Exception {
         final int SLEEP_INTERVAL_MILLISEC = 30 * 1000;

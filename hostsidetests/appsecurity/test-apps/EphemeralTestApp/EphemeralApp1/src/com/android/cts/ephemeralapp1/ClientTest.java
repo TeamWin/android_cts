@@ -42,7 +42,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.ServiceManager.ServiceNotFoundException;
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import android.provider.CalendarContract;
 import android.provider.ContactsContract;
 import android.provider.MediaStore;
@@ -945,13 +945,13 @@ public class ClientTest {
     }
 
     @Test
-    @SecurityTest(minPatchLevel = "2020-11")
+    @AsbSecurityTest(cveBugId = 140256621)
     public void testInstallPermissionNotGrantedInPackageInfo() throws Exception {
         assertThat(isPermissionGrantedInPackageInfo(Manifest.permission.SET_ALARM), is(false));
     }
 
     @Test
-    @SecurityTest(minPatchLevel = "2020-11")
+    @AsbSecurityTest(cveBugId = 140256621)
     public void testInstallPermissionGrantedInPackageInfo() throws Exception {
         assertThat(isPermissionGrantedInPackageInfo(Manifest.permission.INTERNET), is(true));
     }

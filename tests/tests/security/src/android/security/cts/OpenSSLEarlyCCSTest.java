@@ -16,7 +16,7 @@
 
 package android.security.cts;
 
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import android.security.cts.OpenSSLHeartbleedTest.AlertMessage;
 import android.security.cts.OpenSSLHeartbleedTest.HandshakeMessage;
 import android.security.cts.OpenSSLHeartbleedTest.HardcodedCertX509KeyManager;
@@ -57,7 +57,6 @@ import javax.net.ssl.TrustManager;
 /**
  * Tests for the OpenSSL early ChangeCipherSpec (CCS) vulnerability (CVE-2014-0224).
  */
-@SecurityTest
 public class OpenSSLEarlyCCSTest extends InstrumentationTestCase {
 
     // IMPLEMENTATION NOTE: This test spawns an SSLSocket client, SSLServerSocket server, and a
@@ -110,7 +109,7 @@ public class OpenSSLEarlyCCSTest extends InstrumentationTestCase {
      * Tests that TLS handshake succeeds when the MiTM simply forwards all data without tampering
      * with it. This is to catch issues unrelated to early CCS.
      */
-    @SecurityTest(minPatchLevel = "2014-09")
+    @AsbSecurityTest(cveBugId = 15442813)
     public void testWithoutEarlyCCS() throws Exception {
         handshake(false, false);
     }
@@ -118,7 +117,7 @@ public class OpenSSLEarlyCCSTest extends InstrumentationTestCase {
     /**
      * Tests whether client sockets are vulnerable to early CCS.
      */
-    @SecurityTest(minPatchLevel = "2014-09")
+    @AsbSecurityTest(cveBugId = 15442813)
     public void testEarlyCCSInjectedIntoClient() throws Exception {
         checkEarlyCCS(true);
     }
@@ -126,7 +125,7 @@ public class OpenSSLEarlyCCSTest extends InstrumentationTestCase {
     /**
      * Tests whether server sockets are vulnerable to early CCS.
      */
-    @SecurityTest(minPatchLevel = "2014-09")
+    @AsbSecurityTest(cveBugId = 15442813)
     public void testEarlyCCSInjectedIntoServer() throws Exception {
         checkEarlyCCS(false);
     }

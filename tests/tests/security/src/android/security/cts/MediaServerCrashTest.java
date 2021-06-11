@@ -23,7 +23,7 @@ import android.media.MediaPlayer;
 import android.os.ConditionVariable;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
@@ -38,7 +38,6 @@ import java.io.RandomAccessFile;
 
 import android.security.cts.R;
 
-@SecurityTest
 public class MediaServerCrashTest extends AndroidTestCase {
     private static final String TAG = "MediaServerCrashTest";
 
@@ -94,6 +93,7 @@ public class MediaServerCrashTest extends AndroidTestCase {
         }
     }
 
+    @AsbSecurityTest(cveBugId = 25070434)
     public void testInvalidMidiNullPointerAccess() throws Exception {
         testIfMediaServerDied(R.raw.midi_crash);
     }
@@ -119,6 +119,7 @@ public class MediaServerCrashTest extends AndroidTestCase {
         }
     }
 
+    @AsbSecurityTest(cveBugId = 25070434)
     public void testDrmManagerClientReset() throws Exception {
         checkIfMediaServerDiedForDrm(R.raw.drm_uaf);
     }

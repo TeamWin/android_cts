@@ -16,7 +16,7 @@
 
 package android.security.cts;
 
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import org.junit.runner.RunWith;
 import org.junit.Test;
@@ -28,8 +28,8 @@ public class CVE_2021_0519 extends SecurityTestCase {
      * b/176533109
      * Vulnerability Behaviour: SIGSEGV in self
      */
-    @SecurityTest(minPatchLevel = "2021-06")
     @Test
+    @AsbSecurityTest(cveBugId = 176533109)
     public void testPocCVE_2021_0519() throws Exception {
         pocPusher.only32();
         AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2021-0519", null, getDevice());

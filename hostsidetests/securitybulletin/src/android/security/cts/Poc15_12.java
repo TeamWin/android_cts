@@ -16,7 +16,7 @@
 
 package android.security.cts;
 
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -29,7 +29,7 @@ public class Poc15_12 extends SecurityTestCase {
      *  b/24310423
      */
     @Test
-    @SecurityTest(minPatchLevel = "2015-12")
+    @AsbSecurityTest(cveBugId = 24310423)
     public void testPocCVE_2015_6626() throws Exception {
         AdbUtils.runCommandLine("logcat -c" , getDevice());
         AdbUtils.runPoc("CVE-2015-6626", getDevice(), 60);

@@ -25,7 +25,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Process;
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import android.support.test.InstrumentationRegistry;
 import android.util.Log;
 import android.view.WindowManager;
@@ -38,7 +38,6 @@ import java.lang.reflect.Method;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-@SecurityTest
 public class ActivityManagerTest extends TestCase {
 
     private static final String SECURITY_CTS_PACKAGE_NAME = "android.security.cts";
@@ -59,7 +58,7 @@ public class ActivityManagerTest extends TestCase {
         sIsAppForeground = false;
     }
 
-    @SecurityTest(minPatchLevel = "2015-03")
+    @AsbSecurityTest(cveBugId = 19394591)
     public void testActivityManager_injectInputEvents() throws ClassNotFoundException {
         try {
             /*
@@ -77,7 +76,7 @@ public class ActivityManagerTest extends TestCase {
     }
 
     // b/144285917
-    @SecurityTest(minPatchLevel = "2020-05")
+    @AsbSecurityTest(cveBugId = 144285917)
     public void testActivityManager_attachNullApplication() {
         SecurityException securityException = null;
         Exception unexpectedException = null;
@@ -104,6 +103,7 @@ public class ActivityManagerTest extends TestCase {
         assertNotNull("Expect SecurityException by attaching null application", securityException);
     }
 
+    @AsbSecurityTest(cveBugId = 115384617)
     public void testIsAppInForegroundNormal() throws Exception {
         /* Verify that isAppForeground can be called by the caller on itself. */
         launchActivity(NormalActivity.class);
@@ -114,6 +114,7 @@ public class ActivityManagerTest extends TestCase {
         assertTrue("isAppForeground failed to query for uid on itself.", sIsAppForeground);
     }
 
+    @AsbSecurityTest(cveBugId = 115384617)
     public void testIsAppInForegroundMalicious() throws Exception {
         /* Verify that isAppForeground cannot be called by another app on a known uid. */
         launchActivity(MaliciousActivity.class);

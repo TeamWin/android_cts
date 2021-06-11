@@ -19,7 +19,6 @@ package android.security.cts;
 import android.os.IBinder;
 import android.os.Parcel;
 import android.platform.test.annotations.AsbSecurityTest;
-import android.platform.test.annotations.SecurityTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 import java.lang.reflect.Field;
@@ -64,7 +63,6 @@ public class CVE_2021_0521 {
      * b/174661955
      */
     @AsbSecurityTest(cveBugId = 174661955)
-    @SecurityTest(minPatchLevel = "2021-06")
     @Test
     public void testPocCVE_2021_0521() {
         IBinder pmsBinder = getIBinderFromServiceManager("package");

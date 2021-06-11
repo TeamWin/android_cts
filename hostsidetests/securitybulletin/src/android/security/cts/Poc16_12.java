@@ -16,7 +16,7 @@
 
 package android.security.cts;
 
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -30,7 +30,7 @@ public class Poc16_12 extends SecurityTestCase {
      *  b/29982686
      */
     @Test
-    @SecurityTest(minPatchLevel = "2016-12")
+    @AsbSecurityTest(cveBugId = 29982686)
     public void testPocCVE_2016_6759() throws Exception {
         AdbUtils.runPocAssertNoCrashes("CVE-2016-6759", getDevice(), "mediaserver");
     }
@@ -40,7 +40,7 @@ public class Poc16_12 extends SecurityTestCase {
      *  b/31796940
      */
     @Test
-    @SecurityTest(minPatchLevel = "2016-12")
+    @AsbSecurityTest(cveBugId = 31796940)
     public void testPocCVE_2016_8406() throws Exception {
         assertNotKernelPointer(() -> {
             String cmd = "ls /sys/kernel/slab 2>/dev/null | grep nf_conntrack";

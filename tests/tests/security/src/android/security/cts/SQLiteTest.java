@@ -26,7 +26,7 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import android.provider.VoicemailContract;
 import android.support.test.InstrumentationRegistry;
 import android.test.AndroidTestCase;
@@ -34,7 +34,6 @@ import android.test.AndroidTestCase;
 import java.io.File;
 import java.io.FileInputStream;
 
-@SecurityTest
 public class SQLiteTest extends AndroidTestCase {
     private static final String DATABASE_FILE_NAME = "database_test.db";
 
@@ -61,7 +60,7 @@ public class SQLiteTest extends AndroidTestCase {
     /**
      * b/139186193
      */
-    @SecurityTest(minPatchLevel = "2019-11")
+    @AsbSecurityTest(cveBugId = 139186193)
     public void test_android_cve_2019_2195() {
         Uri uri = VoicemailContract.Voicemails.CONTENT_URI;
         uri = uri.buildUpon().appendQueryParameter("source_package", mPackageName).build();
@@ -98,7 +97,7 @@ public class SQLiteTest extends AndroidTestCase {
     /**
      * b/153352319
      */
-    @SecurityTest(minPatchLevel = "2021-06")
+    @AsbSecurityTest(cveBugId = 153352319)
     public void test_android_float_to_text_conversion_overflow() {
         String create_cmd = "select (printf('%.2147483647G',0.01));";
         try (Cursor c = mDatabase.rawQuery(create_cmd, null)) {

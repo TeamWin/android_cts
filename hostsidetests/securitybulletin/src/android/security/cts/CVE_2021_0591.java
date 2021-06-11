@@ -19,7 +19,6 @@ package android.security.cts;
 import android.appsecurity.cts.Utils;
 import android.platform.test.annotations.AsbSecurityTest;
 import android.platform.test.annotations.RequiresDevice;
-import android.platform.test.annotations.SecurityTest;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -64,7 +63,6 @@ public class CVE_2021_0591 extends DeviceTestCase implements IAbiReceiver, IBuil
      * b/179386960
      */
     @AsbSecurityTest(cveBugId = 179386960)
-    @SecurityTest(minPatchLevel = "2021-07")
     @Test
     public void testPocCVE_2021_0591() throws Exception {
 

@@ -25,7 +25,7 @@ import static org.junit.Assert.fail;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Typeface;
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.text.Editable;
@@ -1195,8 +1195,8 @@ public class StaticLayoutTest {
     }
 
     // This is for b/140755449
-    @SecurityTest
     @Test
+    @AsbSecurityTest(cveBugId = 140632678)
     public void testBidiVisibleEnd() {
         TextPaint paint = new TextPaint();
         // The default text size is too small and not useful for handling line breaks.
