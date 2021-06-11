@@ -38,4 +38,7 @@ interface ICloseSystemDialogsTestsService {
      * will be called once the intent has been sent.
      */
     void postNotification(int notificationId, in ResultReceiver receiver, boolean usePendingIntent);
+
+    /** Checks that it can call @hide methods. */
+    boolean waitUntilReady(long timeoutMs);
 }

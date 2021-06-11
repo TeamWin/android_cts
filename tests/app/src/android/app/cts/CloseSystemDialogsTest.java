@@ -399,8 +399,11 @@ public class CloseSystemDialogsTest {
     }
 
     private ICloseSystemDialogsTestsService getService(String packageName) throws Exception {
-        return ICloseSystemDialogsTestsService.Stub.asInterface(
-                connect(packageName).get(TIMEOUT_MS));
+        ICloseSystemDialogsTestsService service =
+                ICloseSystemDialogsTestsService.Stub.asInterface(
+                        connect(packageName).get(TIMEOUT_MS));
+        assertTrue("Can't call @hide methods", service.waitUntilReady(TIMEOUT_MS));
+        return service;
     }
 
     private FutureServiceConnection connect(String packageName) {
