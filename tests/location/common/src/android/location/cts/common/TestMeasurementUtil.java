@@ -309,35 +309,17 @@ public final class TestMeasurementUtil {
     /**
      * Assert all SystemApi fields in Gnss Measurement are in expected range.
      *
-     * @param testLocationManager TestLocationManager
      * @param measurement GnssMeasurement
      * @param softAssert  custom SoftAssert
      * @param timeInNs    event time in ns
-     * @param requireCorrVec assert correlation vectors outputs
-     * @param requireSatPvt  assert satellite PVT outputs
      */
-    public static void assertAllGnssMeasurementSystemFields(
-        TestLocationManager testLocationManager, GnssMeasurement measurement,
-        SoftAssert softAssert, long timeInNs, boolean requireCorrVec, boolean requireSatPvt) {
+    public static void assertAllGnssMeasurementSystemFields(GnssMeasurement measurement,
+        SoftAssert softAssert, long timeInNs) {
 
-        if (requireCorrVec) {
-            softAssert.assertTrue("GnssMeasurement must has correlation vectors",
-                timeInNs,
-                "measurement.hasCorrelationVectors() == true",
-                String.valueOf(measurement.hasCorrelationVectors()),
-                measurement.hasCorrelationVectors());
-        }
         if (measurement.hasCorrelationVectors()) {
             verifyCorrelationVectors(measurement, softAssert, timeInNs);
         }
 
-        if (requireSatPvt) {
-            softAssert.assertTrue("GnssMeasurement must has satellite PVT",
-                timeInNs,
-                "measurement.hasSatellitePvt() == true",
-                String.valueOf(measurement.hasSatellitePvt()),
-                measurement.hasSatellitePvt());
-        }
         if (measurement.hasSatellitePvt()) {
             verifySatellitePvt(measurement, softAssert, timeInNs);
         }
