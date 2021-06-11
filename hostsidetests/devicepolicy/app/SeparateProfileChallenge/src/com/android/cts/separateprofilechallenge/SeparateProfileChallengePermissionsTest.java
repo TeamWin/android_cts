@@ -18,7 +18,7 @@ package com.android.cts.separateprofilechallenge;
 
 import android.app.admin.DevicePolicyManager;
 import android.content.Context;
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import android.test.AndroidTestCase;
 
 import androidx.test.runner.AndroidJUnitRunner;

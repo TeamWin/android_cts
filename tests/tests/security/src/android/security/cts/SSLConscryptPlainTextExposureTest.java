@@ -17,7 +17,7 @@ package android.security.cts;
 
 import android.content.res.Resources;
 import android.test.AndroidTestCase;
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import android.test.InstrumentationTestCase;
 import android.content.Context;
 import android.os.AsyncTask;
@@ -64,7 +64,7 @@ public class SSLConscryptPlainTextExposureTest extends InstrumentationTestCase {
   public static String output = "";
   private final String pattern = ".*PLAIN TEXT EXPOSED.*";
 
-  @SecurityTest(minPatchLevel = "2018-05")
+  @AsbSecurityTest(cveBugId = 73251618)
   public void test_android_CVE_2017_13309() {
 
     context = getInstrumentation().getContext();

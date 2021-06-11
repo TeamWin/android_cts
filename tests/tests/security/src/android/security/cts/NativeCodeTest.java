@@ -16,18 +16,17 @@
 
 package android.security.cts;
 
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 
 import junit.framework.TestCase;
 
-@SecurityTest
 public class NativeCodeTest extends TestCase {
 
     static {
         System.loadLibrary("ctssecurity_jni");
     }
 
-    @SecurityTest
+    @AsbSecurityTest(cveBugId = 8962304)
     public void testPerfEvent() throws Exception {
         assertFalse("Device is vulnerable to CVE-2013-2094. Please apply security patch "
                     + "at http://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/"
@@ -35,12 +34,12 @@ public class NativeCodeTest extends TestCase {
                     doPerfEventTest());
     }
 
-    @SecurityTest
+    @AsbSecurityTest(cveBugId = 11260636)
     public void testPerfEvent2() throws Exception {
         assertTrue(doPerfEventTest2());
     }
 
-    @SecurityTest
+    @AsbSecurityTest(cveBugId = 15455425)
     public void testFutex() throws Exception {
         assertTrue("Device is vulnerable to CVE-2014-3153, a vulnerability in the futex() system "
                    + "call. Please apply the security patch at "
@@ -49,7 +48,7 @@ public class NativeCodeTest extends TestCase {
                    doFutexTest());
     }
 
-    @SecurityTest
+    @AsbSecurityTest(cveBugId = 15455425)
     public void testNvmapIocFromId() throws Exception {
         assertTrue("Device is vulnerable to CVE-2014-5332. "
                    + "NVIDIA has released code fixes to upstream repositories and device vendors. "
@@ -58,7 +57,7 @@ public class NativeCodeTest extends TestCase {
                    doNvmapIocFromIdTest());
     }
 
-    @SecurityTest
+    @AsbSecurityTest(cveBugId = 20770158)
     public void testPingPongRoot() throws Exception {
         assertTrue("Device is vulnerable to CVE-2015-3636, a vulnerability in the ping "
                    + "socket implementation. Please apply the security patch at "
@@ -66,7 +65,7 @@ public class NativeCodeTest extends TestCase {
                    doPingPongRootTest());
     }
 
-    @SecurityTest
+    @AsbSecurityTest(cveBugId = {27275324, 27721803})
     public void testPipeReadV() throws Exception {
         assertTrue("Device is vulnerable to CVE-2015-1805 and/or CVE-2016-0774,"
                    + " a vulnerability in the pipe_read() function."
@@ -76,7 +75,7 @@ public class NativeCodeTest extends TestCase {
                    doPipeReadVTest());
     }
 
-    @SecurityTest
+    @AsbSecurityTest(cveBugId = 22300191)
     public void testSysVipc() throws Exception {
         assertTrue("Android does not support Sys V IPC, it must "
                    + "be removed from the kernel. In the kernel config: "
@@ -107,7 +106,7 @@ public class NativeCodeTest extends TestCase {
      */
     private static native boolean doPerfEventTest2();
 
-    @SecurityTest(minPatchLevel = "2017-01")
+    @AsbSecurityTest(cveBugId = 13539903)
     public void testCVE20141710() throws Exception {
         assertTrue("Device is vulnerable to CVE-2014-1710", doCVE20141710Test());
     }

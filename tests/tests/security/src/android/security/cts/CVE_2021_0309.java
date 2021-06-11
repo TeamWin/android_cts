@@ -26,7 +26,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.RemoteException;
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -42,8 +42,8 @@ public class CVE_2021_0309 {
     /**
      * b/159145361
      */
-    @SecurityTest(minPatchLevel = "2021-01")
     @Test
+    @AsbSecurityTest(cveBugId = 158480899)
     public void testPocCVE_2021_0309() {
         /**
          * Output of adb shell pm list packages --user 0 -U com.android.providers.media

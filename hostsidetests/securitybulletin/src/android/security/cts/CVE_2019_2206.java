@@ -16,7 +16,7 @@
 
 package android.security.cts;
 
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import com.android.compatibility.common.util.CrashUtils;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -30,8 +30,8 @@ public class CVE_2019_2206 extends SecurityTestCase {
      * b/139188579
      * Vulnerability Behaviour: SIGSEGV in self
      */
-    @SecurityTest(minPatchLevel = "2019-11")
     @Test
+    @AsbSecurityTest(cveBugId = 139188579)
     public void testPocCVE_2019_2206() throws Exception {
         AdbUtils.assumeHasNfc(getDevice());
         pocPusher.only64();

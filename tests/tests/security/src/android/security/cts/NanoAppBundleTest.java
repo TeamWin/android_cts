@@ -17,7 +17,7 @@
 package android.security.cts;
 
 import android.test.AndroidTestCase;
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import androidx.test.InstrumentationRegistry;
 
 import android.content.pm.ActivityInfo;
@@ -51,7 +51,6 @@ import android.annotation.Nullable;
 import static java.lang.Thread.sleep;
 import static org.junit.Assert.assertTrue;
 
-@SecurityTest
 public class NanoAppBundleTest extends AndroidTestCase {
 
     private static final String TAG = "NanoAppBundleTest";
@@ -91,7 +90,7 @@ public class NanoAppBundleTest extends AndroidTestCase {
     /**
      * b/113527124
      */
-    @SecurityTest(minPatchLevel = "2018-09")
+    @AsbSecurityTest(cveBugId = 77599679)
     public void testPoc_cve_2018_9471() throws Exception {
 
         try {

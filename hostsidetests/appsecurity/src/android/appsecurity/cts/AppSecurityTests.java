@@ -22,7 +22,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import android.platform.test.annotations.AppModeFull;
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.ddmlib.Log;
@@ -262,7 +262,7 @@ public class AppSecurityTests extends BaseHostJUnit4Test {
      */
     @Test
     @AppModeFull // TODO: Needs porting to instant
-    @SecurityTest
+    @AsbSecurityTest(cveBugId = 111934948)
     public void testPermissionDiffCert() throws Exception {
         Log.i(LOG_TAG, "installing app that attempts to use permission of another app");
         try {

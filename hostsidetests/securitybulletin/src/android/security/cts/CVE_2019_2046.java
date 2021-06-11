@@ -16,7 +16,7 @@
 
 package android.security.cts;
 
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -29,8 +29,8 @@ public class CVE_2019_2046 extends SecurityTestCase {
      * b/117556220
      * Vulnerability Behaviour: SIGSEGV in pacrunner
      */
-    @SecurityTest(minPatchLevel = "2019-05")
     @Test
+    @AsbSecurityTest(cveBugId = 117556220)
     public void testPocCVE_2019_2046() throws Exception {
         pocPusher.only64();
         AdbUtils.runProxyAutoConfig("cve_2019_2046", "true", getDevice());

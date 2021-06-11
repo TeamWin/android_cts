@@ -15,7 +15,7 @@
  */
 
 package android.security.cts;
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -27,8 +27,8 @@ public class CVE_2017_0597 extends SecurityTestCase {
      *  b/34749571
      *  Vulnerability Behaviour: SIGSEGV in audioserver
      **/
-    @SecurityTest(minPatchLevel = "2017-05")
     @Test
+    @AsbSecurityTest(cveBugId = 34749571)
     public void testPocCVE_2017_0597() throws Exception {
         String processPatternStrings[] = {"audioserver"};
         AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2017-0597", null, getDevice(),

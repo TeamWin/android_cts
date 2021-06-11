@@ -16,7 +16,7 @@
 
 package android.appsecurity.cts;
 
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
 
@@ -351,7 +351,7 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
                 "testCannotEscalateNonRuntimePermissionsToRuntime");
     }
 
-    @SecurityTest
+    @AsbSecurityTest(cveBugId = {154505240, 168319670})
     public void testNoPermissionEscalationAfterReboot() throws Exception {
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(
                 APK_DECLARE_NON_RUNTIME_PERMISSIONS), false, false));
