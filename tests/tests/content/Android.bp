@@ -51,6 +51,8 @@ android_test {
         "ShortcutManagerTestUtils",
         "libincfs-prebuilt",
         "HelloWorldResHardeningLib",
+        "Nene",
+        "Harrier",
     ],
     // Use multi-dex as the compatibility-common-util-devicesidelib dependency
     // on compatibility-device-util-axt pushes us beyond 64k methods.

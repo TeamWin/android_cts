@@ -16,25 +16,16 @@
 
 package android.car.cts.powerpolicy;
 
-import com.android.tradefed.log.LogUtil.CLog;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 public final class PowerPolicyTestResult {
-    private static final String TESTCASE_NAME_HEADER = "Testcase";
     private final PowerPolicyTestAnalyzer mTestAnalyzer;
     private final TestResultTable mExpected = new TestResultTable();
     private TestResultTable mStartSnapshot;
     private TestResultTable mEndSnapshot;
-    private final int mTestcaseNo;
-    private final String mTestcaseName;
 
-    public PowerPolicyTestResult(int caseNo, PowerPolicyTestAnalyzer testAnalyzer) {
-        mTestcaseNo = caseNo;
-        mTestcaseName = TESTCASE_NAME_HEADER + caseNo;
+    public PowerPolicyTestResult(PowerPolicyTestAnalyzer testAnalyzer) {
         mTestAnalyzer = testAnalyzer;
-    }
-
-    public int getTestcaseNo() {
-        return mTestcaseNo;
     }
 
     /**
@@ -42,8 +33,15 @@ public final class PowerPolicyTestResult {
      *
      * <p> For multiple criteria, the order of adding them into this object matters.
      */
-    public void addCriteria(String action, String powerState, String data) {
-        mExpected.add(mTestcaseName, action, powerState, data);
+    public void addCriteria(String testcase, String action, String subject, String data)
+            throws Exception {
+        if (testcase == null || action == null) {
+            throw new IllegalArgumentException("testcase and action should not be null");
+        }
+        if (data == null) {
+            data = "null";
+        }
+        mExpected.add(testcase, action, subject, data);
     }
 
     public void takeStartSnapshot() throws Exception {
@@ -60,19 +58,35 @@ public final class PowerPolicyTestResult {
         mEndSnapshot = mTestAnalyzer.snapshotTestResult();
     }
 
-    public boolean checkTestStatus() {
+    public void checkFullTestResult() throws Exception {
         TestResultTable testResult;
         if (mStartSnapshot == null || mEndSnapshot == null) {
-            CLog.e("start snapshot or end snapshot is null");
-            return false;
+            throw new IllegalArgumentException("start snapshot or end snapshot is null");
         }
-
         testResult = mTestAnalyzer.getTailDiff(mStartSnapshot, mEndSnapshot);
         if (testResult == null) {
-            CLog.e("empty test result");
-            return false;
+            throw new IllegalArgumentException("empty test result");
         }
+        assertWithMessage("checkFullTestresult")
+                .that(mTestAnalyzer.checkIfTestResultMatch(mExpected, testResult, false))
+                .isTrue();
+    }
 
-        return mTestAnalyzer.checkIfTestResultMatch(mExpected, testResult);
+    public void checkLastTestResultEntry(String testcase, String action,
+            String subject, PowerPolicyDef policy) throws Exception {
+        TestResultTable.RecordEntry lastEntry = mTestAnalyzer.snapshotTestResult().getLastEntry();
+        assertWithMessage("checkLastTestEntry with policy data")
+                .that(lastEntry.equalsWithPowerPolicyData(testcase, action, subject, policy))
+                .isTrue();
+    }
+
+    public void checkLastTestResultEntry(String testcase, String action,
+            String subject, String data) throws Exception {
+        TestResultTable expected = new TestResultTable();
+        expected.add(testcase, action, subject, data);
+        TestResultTable.RecordEntry lastEntry1 = expected.getLastEntry();
+        TestResultTable.RecordEntry lastEntry2 = mTestAnalyzer.snapshotTestResult().getLastEntry();
+        assertWithMessage("checkLastTestEntry with string data")
+                .that(lastEntry1.equals(lastEntry2)).isTrue();
     }
 }
