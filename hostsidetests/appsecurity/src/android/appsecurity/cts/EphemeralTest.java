@@ -21,7 +21,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
 import android.platform.test.annotations.AppModeFull;
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.tradefed.log.LogUtil.CLog;
@@ -373,7 +373,7 @@ public class EphemeralTest extends BaseAppSecurityTest {
     }
 
     @Test
-    @SecurityTest(minPatchLevel = "2020-11")
+    @AsbSecurityTest(cveBugId = 140256621)
     public void testInstallPermissionNotGrantedInPackageInfo() throws Exception {
         if (mIsUnsupportedDevice) {
             return;
@@ -383,7 +383,7 @@ public class EphemeralTest extends BaseAppSecurityTest {
     }
 
     @Test
-    @SecurityTest(minPatchLevel = "2020-11")
+    @AsbSecurityTest(cveBugId = 140256621)
     public void testInstallPermissionGrantedInPackageInfo() throws Exception {
         if (mIsUnsupportedDevice) {
             return;

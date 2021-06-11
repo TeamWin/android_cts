@@ -15,7 +15,7 @@
  */
 package android.security.cts;
 
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -28,7 +28,7 @@ public class Poc16_02 extends SecurityTestCase {
      *  b/25800375
      */
     @Test
-    @SecurityTest(minPatchLevel = "2016-02")
+    @AsbSecurityTest(cveBugId = 25800375)
     public void testPocCVE_2016_0811() throws Exception {
         AdbUtils.runPocAssertNoCrashes("CVE-2016-0811", getDevice(), "mediaserver");
     }

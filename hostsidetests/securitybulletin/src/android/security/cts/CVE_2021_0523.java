@@ -16,7 +16,7 @@
 
 package android.security.cts;
 
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import java.util.regex.Pattern;
@@ -44,8 +44,8 @@ public class CVE_2021_0523 extends SecurityTestCase {
     /**
      * b/174047492
      */
-    @SecurityTest(minPatchLevel = "2021-06")
     @Test
+    @AsbSecurityTest(cveBugId = 174047492)
     public void testPocCVE_2021_0523() throws Exception {
         final int SLEEP_INTERVAL_MILLISEC = 30 * 1000;
         String apkName = "CVE-2021-0523.apk";

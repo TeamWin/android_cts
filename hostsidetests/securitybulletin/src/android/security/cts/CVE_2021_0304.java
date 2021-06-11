@@ -16,7 +16,7 @@
 
 package android.security.cts;
 
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import java.util.regex.Pattern;
@@ -31,8 +31,8 @@ public class CVE_2021_0304 extends SecurityTestCase {
      * b/162738636
      * Vulnerability Behaviour: RuntimeException in android.security.cts.cve_2021_0304
      */
-    @SecurityTest(minPatchLevel = "2021-01")
     @Test
+    @AsbSecurityTest(cveBugId = 162738636)
     public void testPocCVE_2021_0304() throws Exception {
         final int SLEEP_INTERVAL_MILLISEC = 30 * 1000;
         final int USER_ID = 0;

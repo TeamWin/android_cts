@@ -16,7 +16,7 @@
 
 package android.security.cts;
 
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -32,8 +32,8 @@ public class CVE_2021_0393 extends SecurityTestCase {
      * b/168041375
      * Vulnerability Behavior: SIGSEGV in pacrunner
      */
-    @SecurityTest(minPatchLevel = "2021-03")
     @Test
+    @AsbSecurityTest(cveBugId = 168041375)
     public void testPocCVE_2021_0393() throws Exception {
         assumeThat(getDevice().getProperty("ro.config.low_ram"), is("false"));
         pocPusher.only64();
