@@ -42,6 +42,7 @@ import androidx.test.InstrumentationRegistry
 import androidx.test.filters.SdkSuppress
 import androidx.test.runner.AndroidJUnit4
 import com.android.compatibility.common.util.DisableAnimationRule
+import com.android.compatibility.common.util.FreezeRotationRule
 import com.android.compatibility.common.util.MatcherUtils.hasTextThat
 import com.android.compatibility.common.util.SystemUtil
 import com.android.compatibility.common.util.SystemUtil.callWithShellPermissionIdentity
@@ -102,6 +103,9 @@ class AutoRevokeTest {
 
     @get:Rule
     val disableAnimationRule = DisableAnimationRule()
+
+    @get:Rule
+    val freezeRotationRule = FreezeRotationRule()
 
     @Before
     fun setup() {
