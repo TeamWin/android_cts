@@ -19,7 +19,7 @@ package android.security.cts;
 import java.util.Arrays;
 import java.util.concurrent.Callable;
 
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -33,7 +33,7 @@ public class Poc17_05 extends SecurityTestCase {
      * CVE-2016-5862
      */
     @Test
-    @SecurityTest(minPatchLevel = "2017-05")
+    @AsbSecurityTest(cveBugId = 35399803)
     public void testPocCVE_2016_5862() throws Exception {
         if (containsDriver(getDevice(), "/dev/snd/controlC0")) {
             AdbUtils.runPocNoOutput("CVE-2016-5862",getDevice(), 60);
@@ -44,7 +44,7 @@ public class Poc17_05 extends SecurityTestCase {
      * CVE-2016-5867
      */
     @Test
-    @SecurityTest(minPatchLevel = "2017-05")
+    @AsbSecurityTest(cveBugId = 35400602)
     public void testPocCVE_2016_5867() throws Exception {
         if (containsDriver(getDevice(), "/dev/snd/controlC0")) {
             AdbUtils.runPocAssertExitStatusNotVulnerable("CVE-2016-5867", getDevice(), 60);

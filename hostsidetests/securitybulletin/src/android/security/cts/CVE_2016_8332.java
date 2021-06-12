@@ -16,7 +16,7 @@
 
 package android.security.cts;
 
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -28,8 +28,8 @@ public class CVE_2016_8332 extends SecurityTestCase {
      * b/37761553
      * Vulnerability Behaviour: SIGSEGV in self
      */
-    @SecurityTest(minPatchLevel = "2017-06")
     @Test
+    @AsbSecurityTest(cveBugId = 37761553)
     public void testPocCVE_2016_8332() throws Exception {
         AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2016-8332", null, getDevice());
     }
