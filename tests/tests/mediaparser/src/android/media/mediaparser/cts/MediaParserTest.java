@@ -57,11 +57,7 @@ public class MediaParserTest {
 
     @Test
     public void testLogSessionId() {
-        // TODO: Replace with Build.VERSION.SDK_INT >= Build.VERSION_CODES.S once possible.
-        assumeTrue(
-                Build.VERSION.SDK_INT == Build.VERSION_CODES.R
-                        && ("S".equals(Build.VERSION.CODENAME)
-                                || "T".equals(Build.VERSION.CODENAME)));
+        assumeTrue(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S);
         MediaParser mediaParser = MediaParser.create(new MockMediaParserOutputConsumer());
         assertThat(mediaParser.getLogSessionId())
                 .isSameInstanceAs(LogSessionId.LOG_SESSION_ID_NONE);

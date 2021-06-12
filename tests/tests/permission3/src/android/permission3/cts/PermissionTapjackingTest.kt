@@ -19,6 +19,7 @@ package android.permission3.cts
 import android.Manifest.permission.ACCESS_FINE_LOCATION
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Point
 import android.support.test.uiautomator.By
 import com.android.compatibility.common.util.SystemUtil
 import org.junit.Assume.assumeFalse
@@ -36,7 +37,7 @@ class PermissionTapjackingTest : BaseUsePermissionTest() {
     }
 
     @Test
-    fun testTapjackGrantDialog() {
+    fun testTapjackGrantDialog_fullOverlay() {
         // PermissionController for television uses a floating window.
         assumeFalse(isTv)
 
@@ -47,9 +48,41 @@ class PermissionTapjackingTest : BaseUsePermissionTest() {
                 getPermissionControllerString(ALLOW_FOREGROUND_BUTTON_TEXT))).visibleCenter
 
         // Wait for overlay to hide the dialog
-        context.sendBroadcast(Intent(ACTION_SHOW_OVERLAY))
-        waitFindObject(By.res("android.permission3.cts.usepermission:id/overlay_description"))
+        context.sendBroadcast(Intent(ACTION_SHOW_OVERLAY)
+                .putExtra(EXTRA_FULL_OVERLAY, true))
+        waitFindObject(By.res("android.permission3.cts.usepermission:id/overlay"))
 
+        tryClicking(buttonCenter)
+    }
+
+    @Test
+    fun testTapjackGrantDialog_partialOverlay() {
+        // PermissionController for television uses a floating window.
+        assumeFalse(isTv)
+
+        assertAppHasPermission(ACCESS_FINE_LOCATION, false)
+        requestAppPermissionsForNoResult(ACCESS_FINE_LOCATION) {}
+
+        val buttonCenter = waitFindObject(By.text(
+                getPermissionControllerString(ALLOW_FOREGROUND_BUTTON_TEXT))).visibleCenter
+        val dialogBounds = waitFindObject(By.res(
+                "com.android.permissioncontroller", "grant_dialog")).visibleBounds
+        val messageBottom = waitFindObject(By.res(
+                "com.android.permissioncontroller", "permission_message")).visibleBounds.bottom
+
+        // Wait for overlay to hide the dialog
+        context.sendBroadcast(Intent(ACTION_SHOW_OVERLAY)
+                .putExtra(EXTRA_FULL_OVERLAY, false)
+                .putExtra(DIALOG_LEFT, dialogBounds.left)
+                .putExtra(DIALOG_TOP, dialogBounds.top)
+                .putExtra(DIALOG_RIGHT, dialogBounds.right)
+                .putExtra(MESSAGE_BOTTOM, messageBottom))
+        waitFindObject(By.res("android.permission3.cts.usepermission:id/overlay"))
+
+        tryClicking(buttonCenter)
+    }
+
+    private fun tryClicking(buttonCenter: Point) {
         try {
             // Try to grant the permission, this should fail
             SystemUtil.eventually({
@@ -84,5 +117,12 @@ class PermissionTapjackingTest : BaseUsePermissionTest() {
     companion object {
         const val ACTION_SHOW_OVERLAY = "android.permission3.cts.usepermission.ACTION_SHOW_OVERLAY"
         const val ACTION_HIDE_OVERLAY = "android.permission3.cts.usepermission.ACTION_HIDE_OVERLAY"
+
+        const val EXTRA_FULL_OVERLAY = "android.permission3.cts.usepermission.extra.FULL_OVERLAY"
+
+        const val DIALOG_LEFT = "android.permission3.cts.usepermission.extra.DIALOG_LEFT"
+        const val DIALOG_TOP = "android.permission3.cts.usepermission.extra.DIALOG_TOP"
+        const val DIALOG_RIGHT = "android.permission3.cts.usepermission.extra.DIALOG_RIGHT"
+        const val MESSAGE_BOTTOM = "android.permission3.cts.usepermission.extra.MESSAGE_BOTTOM"
     }
 }

@@ -16,5 +16,5 @@
 
 package com.android.bedstead.testapp.processor.annotations;
 
-public @interface TestAppCommunication {
+public @interface TestAppSender {
 }
