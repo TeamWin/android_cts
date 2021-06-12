@@ -154,6 +154,7 @@ public class WindowManagerStateHelper extends WindowManagerState {
 
     void waitForKeyguardShowingAndNotOccluded() {
         waitForWithAmState(state -> state.getKeyguardControllerState().keyguardShowing
+                        && !state.getKeyguardControllerState().aodShowing
                         && !state.getKeyguardControllerState().isKeyguardOccluded(DEFAULT_DISPLAY),
                 "Keyguard showing");
     }
