@@ -63,7 +63,7 @@ class UsesSdkTest : BaseHostJUnit4Test() {
         """
         val result = ApkGenerator.install(device, xml, tempFolder)
         assertThat(result.error).isEmpty()
-        assertSdks(result, min = 0, target = 0)
+        assertSdks(result, min = 1, target = 0)
     }
 
     @Test
