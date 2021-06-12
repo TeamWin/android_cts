@@ -17,9 +17,11 @@
 package com.android.cts.verifier.managedprovisioning;
 
 import android.accessibilityservice.AccessibilityService;
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.inputmethodservice.InputMethodService;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.util.ArrayMap;
 import android.view.View;
 import android.view.accessibility.AccessibilityEvent;
@@ -178,7 +180,12 @@ public class PolicyTransparencyTestActivity extends PassFailButtons.Activity imp
     @Override
     public void onClick(View view) {
         if (view.getId() == R.id.open_settings_button) {
-            startActivity(new Intent(mSettingsIntentAction));
+            try {
+                startActivity(new Intent(mSettingsIntentAction));
+            } catch (ActivityNotFoundException e) {
+                // If the given settings intent is not handled, use the main settings intent
+                startActivity(new Intent(Settings.ACTION_SETTINGS));
+            }
         } else if (view.getId() == R.id.update_button) {
             final PolicyTestItem testItem = POLICY_TEST_ITEMS.get(mTest);
             final Intent intent = new Intent(CommandReceiverActivity.ACTION_EXECUTE_COMMAND);
