@@ -40,6 +40,7 @@ import android.media.MediaRecorder.OnInfoListener;
 import android.media.MicrophoneDirection;
 import android.media.MicrophoneInfo;
 import android.media.cts.AudioRecordingConfigurationTest.MyAudioRecordingCallback;
+import android.media.metrics.LogSessionId;
 import android.opengl.GLES20;
 import android.os.Build;
 import android.os.ConditionVariable;
@@ -1813,6 +1814,17 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
 
         mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.VOICE_COMMUNICATION);
         assertTrue(mMediaRecorder.isPrivacySensitive());
+    }
+
+    public void testSetGetLogSessionId() {
+        MediaRecorder recorder = new MediaRecorder();
+        assertEquals(recorder.getLogSessionId(), LogSessionId.LOG_SESSION_ID_NONE);
+
+        LogSessionId logSessionId = new LogSessionId("0123456789abcdef");
+        recorder.setLogSessionId(logSessionId);
+        assertEquals(recorder.getLogSessionId(), logSessionId);
+
+        recorder.release();
     }
 
 }
