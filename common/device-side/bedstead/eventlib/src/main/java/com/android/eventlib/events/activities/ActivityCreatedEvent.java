@@ -25,13 +25,13 @@ import androidx.annotation.CheckResult;
 import com.android.eventlib.Event;
 import com.android.eventlib.EventLogger;
 import com.android.eventlib.EventLogsQuery;
-import com.android.eventlib.info.ActivityInfo;
-import com.android.eventlib.queryhelpers.ActivityQuery;
-import com.android.eventlib.queryhelpers.ActivityQueryHelper;
-import com.android.eventlib.queryhelpers.BundleQueryHelper;
-import com.android.eventlib.queryhelpers.PersistableBundleQuery;
-import com.android.eventlib.queryhelpers.PersistableBundleQueryHelper;
-import com.android.eventlib.util.SerializableParcelWrapper;
+import com.android.queryable.info.ActivityInfo;
+import com.android.queryable.queries.ActivityQuery;
+import com.android.queryable.queries.ActivityQueryHelper;
+import com.android.queryable.queries.BundleQueryHelper;
+import com.android.queryable.queries.PersistableBundleQuery;
+import com.android.queryable.queries.PersistableBundleQueryHelper;
+import com.android.queryable.util.SerializableParcelWrapper;
 
 /**
  * Event logged when {@link Activity#onCreate(Bundle)} or

@@ -23,10 +23,10 @@ import androidx.annotation.CheckResult;
 import com.android.eventlib.Event;
 import com.android.eventlib.EventLogger;
 import com.android.eventlib.EventLogsQuery;
-import com.android.eventlib.queryhelpers.SerializableQuery;
-import com.android.eventlib.queryhelpers.SerializableQueryHelper;
-import com.android.eventlib.queryhelpers.StringQuery;
-import com.android.eventlib.queryhelpers.StringQueryHelper;
+import com.android.queryable.queries.SerializableQuery;
+import com.android.queryable.queries.SerializableQueryHelper;
+import com.android.queryable.queries.StringQuery;
+import com.android.queryable.queries.StringQueryHelper;
 
 import java.io.Serializable;
 
