@@ -22,9 +22,11 @@ import static org.junit.Assume.assumeFalse;
 
 import android.app.UiAutomation;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.content.res.Resources;
 import android.hardware.cts.R;
 import android.hardware.input.cts.InputAssistantActivity;
 import android.server.wm.WindowManagerStateHelper;
@@ -54,6 +56,7 @@ public class UsbVoiceCommandTest extends InputHidTestCase {
             InstrumentationRegistry.getInstrumentation().getUiAutomation();
     private final PackageManager mPackageManager =
             InstrumentationRegistry.getInstrumentation().getContext().getPackageManager();
+    private final Context mContext = InstrumentationRegistry.getInstrumentation().getContext();
     private final Intent mVoiceIntent;
     private final Intent mWebIntent;
     private final List<String> mExcludedPackages = new ArrayList<String>();
@@ -126,8 +129,8 @@ public class UsbVoiceCommandTest extends InputHidTestCase {
         // {@link PhoneWindowManager} in interceptKeyBeforeDispatching, on TVs platform,
         // volume keys never go to the foreground app.
         // Skip the key test for TV platform.
-        assumeFalse("TV platform doesn't send volume keys to app, test should be skipped",
-                mPackageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK));
+        assumeFalse("TV platform and devices handling key events outside window manager "
+                + "don't send volume keys to app, test should be skipped", shouldSkipVolumeTest());
         testInputEvents(R.raw.google_gamepad_keyevent_volume_tests);
     }
 
@@ -147,5 +150,12 @@ public class UsbVoiceCommandTest extends InputHidTestCase {
                         InputAssistantActivity.class.getName());
         wmStateHelper.waitForValidState(inputAssistant);
         wmStateHelper.assertActivityDisplayed(inputAssistant);
+    }
+
+    private boolean shouldSkipVolumeTest() {
+        return mPackageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
+                || mContext.getResources().getBoolean(Resources.getSystem().getIdentifier(
+                                "config_handleVolumeKeysInWindowManager",
+                                "bool", "android"));
     }
 }
