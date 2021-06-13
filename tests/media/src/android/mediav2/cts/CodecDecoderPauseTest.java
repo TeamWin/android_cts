@@ -59,7 +59,7 @@ public class CodecDecoderPauseTest extends CodecDecoderTestBase {
         final List<Object[]> exhaustiveArgsList = Arrays.asList(new Object[][]{
                 {MediaFormat.MIMETYPE_AUDIO_AAC, "bbb_2ch_48kHz_he_aac.mp4", CODEC_ALL},
                 {MediaFormat.MIMETYPE_VIDEO_AVC, "bbb_cif_avc_delay16.mp4", CODEC_ALL},
-                {MediaFormat.MIMETYPE_VIDEO_H263, "bbb_cif_768kbps_30fps_h263.mp4", CODEC_ALL},
+                {MediaFormat.MIMETYPE_VIDEO_H263, "bbb_176x144_128kbps_15fps_h263.3gp", CODEC_ALL},
                 {MediaFormat.MIMETYPE_VIDEO_HEVC, "bbb_cif_hevc_delay15.mp4", CODEC_ALL},
                 {MediaFormat.MIMETYPE_VIDEO_MPEG2, "bbb_640x360_512kbps_30fps_mpeg2_2b.mp4", CODEC_ALL},
                 {MediaFormat.MIMETYPE_VIDEO_MPEG4, "bbb_176x144_192kbps_15fps_mpeg4.mp4", CODEC_ALL},
