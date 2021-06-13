@@ -19,7 +19,10 @@ package {
 java_test_host {
     name: "CtsStagedInstallHostTestCases",
     defaults: ["cts_defaults"],
-    srcs:  ["src/**/*.java"],
+    srcs:  [
+        "src/**/*.java",
+        ":apex-info-list",
+    ],
     libs: [
         "cts-tradefed",
         "cts-shim-host-lib",
