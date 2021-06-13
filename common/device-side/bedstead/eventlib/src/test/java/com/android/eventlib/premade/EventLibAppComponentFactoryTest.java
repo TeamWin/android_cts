@@ -58,6 +58,7 @@ public class EventLibAppComponentFactoryTest {
         Intent intent = new Intent();
         intent.setComponent(new ComponentName(sContext.getPackageName(),
                 DECLARED_ACTIVITY_WITH_NO_CLASS));
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         sContext.startActivity(intent);
 
         EventLogs<ActivityCreatedEvent> eventLogs =

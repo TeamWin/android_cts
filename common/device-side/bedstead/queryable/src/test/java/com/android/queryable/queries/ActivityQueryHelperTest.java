@@ -33,11 +33,11 @@ public class ActivityQueryHelperTest {
     private final Queryable mQuery = null;
 
     private static final Class<? extends Activity> CLASS_1 = Activity.class;
-    private static final ActivityInfo CLASS_1_ACTIVITY_INFO = new ActivityInfo(CLASS_1);
+    private static final ActivityInfo CLASS_1_ACTIVITY_INFO = ActivityInfo.builder().activityClass(CLASS_1).build();
     private static final String CLASS_1_CLASS_NAME = CLASS_1.getName();
     private static final String CLASS_1_SIMPLE_NAME = CLASS_1.getSimpleName();
     private static final ActivityInfo CLASS_2_ACTIVITY_INFO =
-            new ActivityInfo("differentClassName");
+            ActivityInfo.builder().activityClass("differentClassName").build();
 
     @Test
     public void matches_noRestrictions_returnsTrue() {
