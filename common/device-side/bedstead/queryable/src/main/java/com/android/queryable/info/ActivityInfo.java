@@ -39,6 +39,10 @@ public class ActivityInfo extends ClassInfo {
         //  manifest)
     }
 
+    public ActivityInfo(android.content.pm.ActivityInfo activityInfo) {
+        super(activityInfo.name);
+    }
+
     @Override
     public String toString() {
         return "Activity{"

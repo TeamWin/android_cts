@@ -16,9 +16,7 @@
 
 package com.android.bedstead.testapp;
 
-import com.android.eventlib.events.activities.ActivityCreatedEvent;
 import com.android.queryable.Queryable;
-import com.android.queryable.queries.ActivityQueryHelper;
 import com.android.queryable.queries.StringQuery;
 import com.android.queryable.queries.StringQueryHelper;
 

@@ -48,6 +48,7 @@ public final class TestAppInstanceReference implements AutoCloseable, Connection
     private final Map<IntentFilter, Long> mRegisteredBroadcastReceivers = new HashMap<>();
     private boolean mKeepAliveManually = false;
     private final ProfileTestAppController mTestAppController;
+    private final TestAppActivities mTestAppActivities;
 
     TestAppInstanceReference(TestApp testApp, UserReference user) {
         mTestApp = testApp;
@@ -58,6 +59,7 @@ public final class TestAppInstanceReference implements AutoCloseable, Connection
         mConnector.registerConnectionListener(this);
         mTestAppController =
                 ProfileTestAppController.create(mConnector);
+        mTestAppActivities = TestAppActivities.create(this);
     }
 
     CrossProfileConnector connector() {
@@ -68,7 +70,7 @@ public final class TestAppInstanceReference implements AutoCloseable, Connection
      * Access activities on the test app.
      */
     public TestAppActivities activities() {
-        return new TestAppActivities(this);
+        return mTestAppActivities;
     }
 
     /**
