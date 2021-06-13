@@ -1328,10 +1328,17 @@ class CodecEncoderTestBase extends CodecTestBase {
     private final int INP_FRM_HEIGHT = 288;
 
     final String mMime;
+    final int[] mBitrates;
+    final int[] mEncParamList1;
+    final int[] mEncParamList2;
+
     final String mInputFile;
     byte[] mInputData;
     int mNumBytesSubmitted;
     long mInputOffsetPts;
+
+    ArrayList<MediaFormat> mFormats;
+    ArrayList<MediaCodec.BufferInfo> mInfoList;
 
     int mWidth, mHeight;
     int mFrameRate;
@@ -1339,19 +1346,45 @@ class CodecEncoderTestBase extends CodecTestBase {
     int mChannels;
     int mSampleRate;
 
-    CodecEncoderTestBase(String mime) {
+    CodecEncoderTestBase(String mime, int[] bitrates, int[] encoderInfo1, int[] encoderInfo2) {
         mMime = mime;
+        mBitrates = bitrates;
+        mEncParamList1 = encoderInfo1;
+        mEncParamList2 = encoderInfo2;
+        mFormats = new ArrayList<>();
+        mInfoList = new ArrayList<>();
         mWidth = INP_FRM_WIDTH;
         mHeight = INP_FRM_HEIGHT;
-        mChannels = 1;
-        mSampleRate = 8000;
-        mFrameRate = 30;
-        mMaxBFrames = 0;
         if (mime.equals(MediaFormat.MIMETYPE_VIDEO_MPEG4)) mFrameRate = 12;
         else if (mime.equals(MediaFormat.MIMETYPE_VIDEO_H263)) mFrameRate = 12;
+        else mFrameRate = 30;
+        mMaxBFrames = 0;
+        mChannels = 1;
+        mSampleRate = 8000;
         mAsyncHandle = new CodecAsyncHandler();
         mIsAudio = mMime.startsWith("audio/");
         mInputFile = mIsAudio ? mInputAudioFile : mInputVideoFile;
+    }
+
+    /**
+     * Selects encoder input color format in byte buffer mode. As of now ndk tests support only
+     * 420p, 420sp. COLOR_FormatYUV420Flexible although can represent any form of yuv, it doesn't
+     * work in ndk due to lack of AMediaCodec_GetInputImage()
+     */
+    static int findByteBufferColorFormat(String encoder, String mime) throws IOException {
+        MediaCodec codec = MediaCodec.createByCodecName(encoder);
+        MediaCodecInfo.CodecCapabilities cap = codec.getCodecInfo().getCapabilitiesForType(mime);
+        int colorFormat = -1;
+        for (int c : cap.colorFormats) {
+            if (c == MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar ||
+                    c == MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Planar) {
+                Log.v(LOG_TAG, "selecting color format: " + c);
+                colorFormat = c;
+                break;
+            }
+        }
+        codec.release();
+        return colorFormat;
     }
 
     @Override
@@ -1527,6 +1560,11 @@ class CodecEncoderTestBase extends CodecTestBase {
         }
         if (info.size > 0) {
             if (mSaveToMem) {
+                MediaCodec.BufferInfo copy = new MediaCodec.BufferInfo();
+                copy.set(mOutputBuff.getOutStreamSize(), info.size, info.presentationTimeUs,
+                        info.flags);
+                mInfoList.add(copy);
+
                 ByteBuffer buf = mCodec.getOutputBuffer(bufferIndex);
                 mOutputBuff.saveToMemory(buf, info);
             }
@@ -1544,5 +1582,89 @@ class CodecEncoderTestBase extends CodecTestBase {
         assertTrue(metrics.getString(MediaCodec.MetricsConstants.MIME_TYPE).equals(mMime));
         assertTrue(metrics.getInt(MediaCodec.MetricsConstants.ENCODER) == 1);
         return metrics;
+    }
+
+    void setUpParams(int limit) {
+        int count = 0;
+        for (int bitrate : mBitrates) {
+            if (mIsAudio) {
+                for (int rate : mEncParamList1) {
+                    for (int channels : mEncParamList2) {
+                        MediaFormat format = new MediaFormat();
+                        format.setString(MediaFormat.KEY_MIME, mMime);
+                        if (mMime.equals(MediaFormat.MIMETYPE_AUDIO_FLAC)) {
+                            format.setInteger(MediaFormat.KEY_FLAC_COMPRESSION_LEVEL, bitrate);
+                        } else {
+                            format.setInteger(MediaFormat.KEY_BIT_RATE, bitrate);
+                        }
+                        format.setInteger(MediaFormat.KEY_SAMPLE_RATE, rate);
+                        format.setInteger(MediaFormat.KEY_CHANNEL_COUNT, channels);
+                        mFormats.add(format);
+                        count++;
+                        if (count >= limit) return;
+                    }
+                }
+            } else {
+                assertTrue("Wrong number of height, width parameters",
+                        mEncParamList1.length == mEncParamList2.length);
+                for (int i = 0; i < mEncParamList1.length; i++) {
+                    MediaFormat format = new MediaFormat();
+                    format.setString(MediaFormat.KEY_MIME, mMime);
+                    format.setInteger(MediaFormat.KEY_BIT_RATE, bitrate);
+                    format.setInteger(MediaFormat.KEY_WIDTH, mEncParamList1[i]);
+                    format.setInteger(MediaFormat.KEY_HEIGHT, mEncParamList2[i]);
+                    format.setInteger(MediaFormat.KEY_FRAME_RATE, mFrameRate);
+                    format.setInteger(MediaFormat.KEY_MAX_B_FRAMES, mMaxBFrames);
+                    format.setFloat(MediaFormat.KEY_I_FRAME_INTERVAL, 1.0f);
+                    format.setInteger(MediaFormat.KEY_COLOR_FORMAT,
+                            MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible);
+                    mFormats.add(format);
+                    count++;
+                    if (count >= limit) return;
+                }
+            }
+        }
+    }
+
+    void encodeToMemory(String file, String encoder, int frameLimit, MediaFormat format,
+            boolean saveToMem) throws IOException, InterruptedException {
+        mSaveToMem = saveToMem;
+        mOutputBuff = new OutputManager();
+        mInfoList.clear();
+        mCodec = MediaCodec.createByCodecName(encoder);
+        setUpSource(file);
+        configureCodec(format, false, true, true);
+        if (mIsAudio) {
+            mSampleRate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE);
+            mChannels = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT);
+        } else {
+            mWidth = format.getInteger(MediaFormat.KEY_WIDTH);
+            mHeight = format.getInteger(MediaFormat.KEY_HEIGHT);
+        }
+        mCodec.start();
+        doWork(frameLimit);
+        queueEOS();
+        waitForAllOutputs();
+        mCodec.stop();
+        mCodec.release();
+        mSaveToMem = false;
+    }
+
+    ByteBuffer decodeElementaryStream(String decoder, MediaFormat format,
+            ByteBuffer elementaryStream, ArrayList<MediaCodec.BufferInfo> infos)
+            throws IOException, InterruptedException {
+        String mime = format.getString(MediaFormat.KEY_MIME);
+        CodecDecoderTestBase cdtb = new CodecDecoderTestBase(mime, null);
+        cdtb.mOutputBuff = new OutputManager();
+        cdtb.mSaveToMem = true;
+        cdtb.mCodec = MediaCodec.createByCodecName(decoder);
+        cdtb.mCodec.configure(format, null, null, 0);
+        cdtb.mCodec.start();
+        cdtb.doWork(elementaryStream, infos);
+        cdtb.queueEOS();
+        cdtb.waitForAllOutputs();
+        cdtb.mCodec.stop();
+        cdtb.mCodec.release();
+        return cdtb.mOutputBuff.getBuffer();
     }
 }
