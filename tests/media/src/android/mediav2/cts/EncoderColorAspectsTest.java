@@ -17,7 +17,6 @@
 package android.mediav2.cts;
 
 import android.media.MediaCodec;
-import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
 import android.media.MediaMuxer;
 import android.util.Log;
@@ -57,21 +56,14 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
 
     public EncoderColorAspectsTest(String mime, int width, int height, int range, int standard,
             int transferCurve) {
-        super(mime);
+        super(mime, new int[]{64000}, new int[]{width}, new int[]{height});
         mRange = range;
         mStandard = standard;
         mTransferCurve = transferCurve;
-        mConfigFormat = new MediaFormat();
-        mConfigFormat.setString(MediaFormat.KEY_MIME, mMime);
-        mConfigFormat.setInteger(MediaFormat.KEY_BIT_RATE, 64000);
         mWidth = width;
         mHeight = height;
-        mConfigFormat.setInteger(MediaFormat.KEY_WIDTH, mWidth);
-        mConfigFormat.setInteger(MediaFormat.KEY_HEIGHT, mHeight);
-        mConfigFormat.setInteger(MediaFormat.KEY_FRAME_RATE, mFrameRate);
-        mConfigFormat.setFloat(MediaFormat.KEY_I_FRAME_INTERVAL, 1.0f);
-        mConfigFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT,
-                MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible);
+        setUpParams(1);
+        mConfigFormat = mFormats.get(0);
         if (mRange >= 0) mConfigFormat.setInteger(MediaFormat.KEY_COLOR_RANGE, mRange);
         else mRange = 0;
         if (mStandard >= 0) mConfigFormat.setInteger(MediaFormat.KEY_COLOR_STANDARD, mStandard);
@@ -148,6 +140,7 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
         for (String encoder : listOfEncoders) {
             mCodec = MediaCodec.createByCodecName(encoder);
             mOutputBuff.reset();
+            mInfoList.clear();
             /* TODO(b/156571486) */
             if (encoder.equals("c2.android.hevc.encoder") ||
                     encoder.equals("OMX.google.h264.encoder") ||
