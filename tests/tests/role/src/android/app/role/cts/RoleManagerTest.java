@@ -56,6 +56,7 @@ import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.DisableAnimationRule;
+import com.android.compatibility.common.util.FreezeRotationRule;
 import com.android.compatibility.common.util.TestUtils;
 import com.android.compatibility.common.util.ThrowingRunnable;
 import com.android.compatibility.common.util.UiAutomatorUtils;
@@ -121,6 +122,9 @@ public class RoleManagerTest {
 
     @Rule
     public DisableAnimationRule mDisableAnimationRule = new DisableAnimationRule();
+
+    @Rule
+    public FreezeRotationRule mFreezeRotationRule = new FreezeRotationRule();
 
     @Rule
     public ActivityTestRule<WaitForResultActivity> mActivityRule =
