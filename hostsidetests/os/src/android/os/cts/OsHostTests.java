@@ -16,8 +16,6 @@
 
 package android.os.cts;
 
-import static org.junit.Assume.assumeFalse;
-
 import android.platform.test.annotations.AppModeFull;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
@@ -153,7 +151,9 @@ public class OsHostTests extends DeviceTestCase implements IBuildReceiver, IAbiR
     }
 
     public void testIntentFilterHostValidation() throws Exception {
-        assumeFalse(mDevice.executeShellCommand("pm list features").contains(FEATURE_WATCH));
+        if (mDevice.executeShellCommand("pm list features").contains(FEATURE_WATCH)) {
+            return;
+        }
 
         String line = null;
         try {
