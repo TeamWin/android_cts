@@ -30,6 +30,7 @@ import android.os.Bundle
 import android.os.Process
 import android.os.RemoteCallback
 import android.os.SystemClock
+import android.os.UserHandle
 import android.platform.test.annotations.AppModeFull
 import android.provider.CalendarContract
 import android.provider.CallLog
@@ -335,15 +336,18 @@ class RuntimePermissionsAppOpTrackingTest {
         }
         val endTimeMillis = System.currentTimeMillis()
 
+        // Calculate the shellUid to account for running this from a secondary user.
+        val shellUid = UserHandle.getUid(Process.myUserHandle().identifier,
+            UserHandle.getAppId(Process.SHELL_UID))
         // Since we use adopt the shell permission identity we need to adjust
         // the permission identity to have the shell as the accessor.
         assertNotRunningOpAccess(AppOpsManager.permissionToOp(permission)!!,
-                beginEndMillis, endTimeMillis, AttributionSource(Process.SHELL_UID,
+                beginEndMillis, endTimeMillis, AttributionSource(shellUid,
                 SHELL_PACKAGE_NAME, context.attributionTag, null,
                 context.attributionSource.next),
                 /*accessorForeground*/ false, /*receiverForeground*/ false,
                 /*accessorTrusted*/ true, /*accessorAccessCount*/ 1,
-                /*receiverAccessCount*/ 1,  /*checkAccessor*/ false,
+                /*receiverAccessCount*/ 1, /*checkAccessor*/ false,
                 /*fromDatasource*/ false)
     }
 

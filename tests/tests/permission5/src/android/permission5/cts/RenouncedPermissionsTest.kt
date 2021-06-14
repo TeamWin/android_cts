@@ -23,6 +23,7 @@ import android.content.Context
 import android.content.ContextParams
 import android.content.pm.PackageManager
 import android.os.Process
+import android.os.UserHandle
 import android.permission.PermissionManager
 import android.platform.test.annotations.AppModeFull
 import android.provider.CalendarContract
@@ -122,7 +123,11 @@ class RenouncedPermissionsTest {
             val renouncedPermissionsSet = ArraySet<String>();
             renouncedPermissionsSet.add(Manifest.permission.READ_CONTACTS)
             renouncedPermissionsSet.add(Manifest.permission.READ_CALENDAR)
-            val shellAttributionSource = AttributionSource.Builder(Process.SHELL_UID)
+
+            // Calculate the shellUid to account for running this from a secondary user.
+            val shellUid = UserHandle.getUid(Process.myUserHandle().identifier,
+                UserHandle.getAppId(Process.SHELL_UID))
+            val shellAttributionSource = AttributionSource.Builder(shellUid)
                     .setPackageName("com.android.shell")
                     .setRenouncedPermissions(renouncedPermissionsSet)
                     .build()
