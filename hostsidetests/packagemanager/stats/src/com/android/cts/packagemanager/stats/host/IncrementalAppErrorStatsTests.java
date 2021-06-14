@@ -16,11 +16,11 @@
 
 package com.android.cts.packagemanager.stats.host;
 
+import static com.android.cts.packagemanager.stats.host.Utils.FEATURE_INCREMENTAL_DELIVERY;
+import static com.android.cts.packagemanager.stats.host.Utils.SIGNATURE_FILE_SUFFIX;
+
 import static com.google.common.truth.Truth.assertThat;
 
-import static org.junit.Assume.assumeTrue;
-
-import android.cts.statsdatom.lib.AtomTestUtils;
 import android.cts.statsdatom.lib.ConfigUtils;
 import android.cts.statsdatom.lib.DeviceUtils;
 import android.cts.statsdatom.lib.ReportUtils;
@@ -32,6 +32,7 @@ import com.android.incfs.install.adb.ddmlib.DeviceConnection;
 import com.android.os.AtomsProto;
 import com.android.os.StatsLog;
 import com.android.tradefed.build.IBuildInfo;
+import com.android.tradefed.log.LogUtil;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IBuildReceiver;
 
@@ -40,23 +41,30 @@ import org.junit.Before;
 
 import java.io.File;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-public class IncrementalAppErrorStatsTests extends DeviceTestCase implements IBuildReceiver {
-    private static final String FEATURE_INCREMENTAL_DELIVERY =
-            "android.software.incremental_delivery";
-    private static final String IDSIG_SUFFIX = ".idsig";
-    private static int INSTALL_TIMEOUT_SECONDS = 10;
+public final class IncrementalAppErrorStatsTests extends DeviceTestCase implements IBuildReceiver {
+    private static final String TEST_REMOTE_DIR = "/data/local/tmp/appErrorTest";
+    private static final String HELPER_PACKAGE = "com.android.cts.packagemanager.stats.device";
+    private static final String HELPER_APK = "IncrementalAppErrorStatsTestsHelper.apk";
+    private static final String HELPER_CLASS = ".IncrementalAppErrorStatsTestsHelper";
+    private static final String HELPER_METHOD = "getPageIndexToBlock";
+    private static final String HELPER_ARG = "remoteApkPath";
+    private static final String PAGE_INDEX_TO_BLOCK = "pageIndexToBlock";
+    private static final int INSTALL_TIMEOUT_SECONDS = 10;
+    private static final int METRICS_WAIT_MILLISECONDS = 1_000;
 
     private IBuildInfo mCtsBuild;
+    private IncrementalInstallSession mSession;
 
     @Override
     public void setBuild(IBuildInfo buildInfo) {
         mCtsBuild = buildInfo;
     }
-    private IncrementalInstallSession mSession;
 
     @Before
     public void setUp() throws Exception {
@@ -66,18 +74,35 @@ public class IncrementalAppErrorStatsTests extends DeviceTestCase implements IBu
         super.setUp();
         ConfigUtils.removeConfig(getDevice());
         ReportUtils.clearReports(getDevice());
+
+        DeviceUtils.installTestApp(getDevice(), HELPER_APK, HELPER_PACKAGE, mCtsBuild);
+        assertTrue(getDevice().isPackageInstalled(HELPER_PACKAGE));
+
+        String remoteApkPath = Utils.pushApkToRemote(
+                DeviceUtils.STATSD_ATOM_TEST_APK, TEST_REMOTE_DIR, mCtsBuild, getDevice());
+        final HashMap<String, String> testArgs = new HashMap<>();
+        testArgs.put(HELPER_ARG, remoteApkPath);
+        Map<String, String> testResult = Utils.runDeviceTests(getDevice(), HELPER_PACKAGE,
+                HELPER_CLASS, HELPER_METHOD, testArgs);
+        assertNotNull(testResult);
+        assertEquals(1, testResult.size());
+
+        int blockedPageIndex = Integer.parseInt(testResult.get(PAGE_INDEX_TO_BLOCK));
+        assertTrue(blockedPageIndex > 0);
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
         final File apk = buildHelper.getTestFile(DeviceUtils.STATSD_ATOM_TEST_APK);
         assertNotNull(apk);
-        final File v4Signature = buildHelper.getTestFile(DeviceUtils.STATSD_ATOM_TEST_APK + IDSIG_SUFFIX);
+        final File v4Signature = buildHelper.getTestFile(
+                DeviceUtils.STATSD_ATOM_TEST_APK + SIGNATURE_FILE_SUFFIX);
         assertNotNull(v4Signature);
+        LogUtil.CLog.i("Blocking page at index: " + blockedPageIndex);
         mSession = new IncrementalInstallSession.Builder()
                 .addApk(Paths.get(apk.getAbsolutePath()),
                         Paths.get(v4Signature.getAbsolutePath()))
                 .addExtraArgs("-g") // grant permissions
                 .setBlockFilter(block -> {
                     // block a page from res/raw; does not affect test run
-                    return block.getBlockIndex() != 3152;
+                    return block.getBlockIndex() != blockedPageIndex;
                 })
                 .build();
         mSession.start(Executors.newCachedThreadPool(),
@@ -95,6 +120,8 @@ public class IncrementalAppErrorStatsTests extends DeviceTestCase implements IBu
         }
         getDevice().uninstallPackage(DeviceUtils.STATSD_ATOM_TEST_PKG);
         assertFalse(getDevice().isPackageInstalled(DeviceUtils.STATSD_ATOM_TEST_PKG));
+        getDevice().uninstallPackage(HELPER_PACKAGE);
+        assertFalse(getDevice().isPackageInstalled(HELPER_PACKAGE));
         super.tearDown();
     }
 
@@ -108,7 +135,7 @@ public class IncrementalAppErrorStatsTests extends DeviceTestCase implements IBu
 
         DeviceUtils.runActivity(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
                 "StatsdCtsForegroundActivity", "action", "action.crash");
-        Thread.sleep(1_000);
+        Thread.sleep(METRICS_WAIT_MILLISECONDS);
         // Sorted list of events in order in which they occurred.
         List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 

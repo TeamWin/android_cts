@@ -34,10 +34,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class PackageManagerStatsTestsBase extends DeviceTestCase implements IBuildReceiver {
-    protected static final String FEATURE_INCREMENTAL_DELIVERY =
-            "android.software.incremental_delivery";
+
     protected static final String TEST_REMOTE_DIR = "/data/local/tmp/statsdatom";
-    private static final String SIGNATURE_FILE_SUFFIX = ".idsig";
     protected IBuildInfo mCtsBuild;
 
     @Override
@@ -68,26 +66,13 @@ public class PackageManagerStatsTestsBase extends DeviceTestCase implements IBui
         getDevice().executeShellCommand("mkdir -p " + TEST_REMOTE_DIR);
         String[] remoteApkPaths = new String[apkNames.length];
         for (int i = 0; i < remoteApkPaths.length; i++) {
-            remoteApkPaths[i] = pushApkToRemote(apkNames[i], TEST_REMOTE_DIR);
+            remoteApkPaths[i] = Utils.pushApkToRemote(
+                    apkNames[i], TEST_REMOTE_DIR, mCtsBuild, getDevice());
         }
         String installResult = getDevice().executeShellCommand(
                 "pm install-incremental -t -g " + "--user " + getDevice().getCurrentUser() + " "
                         + String.join(" ", remoteApkPaths));
         assertEquals("Success\n", installResult);
-    }
-
-    protected String pushApkToRemote(String apkName, String remoteDirPath)
-            throws Exception {
-        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
-        final File apk = buildHelper.getTestFile(apkName);
-        final File signature = buildHelper.getTestFile(apkName + SIGNATURE_FILE_SUFFIX);
-        assertNotNull(apk);
-        assertNotNull(signature);
-        final String remoteApkPath = remoteDirPath + "/" + apk.getName();
-        final String remoteSignaturePath = remoteApkPath + SIGNATURE_FILE_SUFFIX;
-        assertTrue(getDevice().pushFile(apk, remoteApkPath));
-        assertTrue(getDevice().pushFile(signature, remoteSignaturePath));
-        return remoteApkPath;
     }
 
     protected int getAppUid(String pkgName) throws Exception {
