@@ -21,6 +21,7 @@ import static com.google.common.truth.Truth.assertThat;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.CecOperand;
 import android.hdmicec.cts.HdmiCecClientWrapper;
+import android.hdmicec.cts.HdmiCecConstants;
 import android.hdmicec.cts.LogicalAddress;
 import android.hdmicec.cts.RequiredPropertyRule;
 import android.hdmicec.cts.RequiredFeatureRule;
@@ -41,7 +42,7 @@ public final class HdmiCecDeviceOsdNameTest extends BaseHostJUnit4Test {
     private static final LogicalAddress PLAYBACK_DEVICE = LogicalAddress.PLAYBACK_1;
 
     public HdmiCecClientWrapper hdmiCecClient =
-            new HdmiCecClientWrapper(this, LogicalAddress.PLAYBACK_1);
+            new HdmiCecClientWrapper(this, HdmiCecConstants.CEC_DEVICE_TYPE_PLAYBACK_DEVICE);
 
     @Rule
     public RuleChain ruleChain =

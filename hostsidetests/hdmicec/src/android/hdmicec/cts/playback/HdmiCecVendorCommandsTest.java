@@ -43,7 +43,7 @@ public final class HdmiCecVendorCommandsTest extends BaseHostJUnit4Test {
     private static final int INCORRECT_VENDOR_ID = 0x0;
 
     public HdmiCecClientWrapper hdmiCecClient =
-            new HdmiCecClientWrapper(this, LogicalAddress.PLAYBACK_1);
+            new HdmiCecClientWrapper(this, HdmiCecConstants.CEC_DEVICE_TYPE_PLAYBACK_DEVICE);
 
     @Rule
     public RuleChain ruleChain =

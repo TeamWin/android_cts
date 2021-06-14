@@ -53,33 +53,32 @@ public final class HdmiCecClientWrapper extends ExternalResource {
     private String clientParams[];
 
     public List<LogicalAddress> mDutLogicalAddresses = new ArrayList<>();
+    public int mTestDeviceType = HdmiCecConstants.CEC_DEVICE_TYPE_UNKNOWN;
 
     /** Constructor for HdmiCecClientWrapper. */
     public HdmiCecClientWrapper(BaseHostJUnit4Test test) {
-        this(test, LogicalAddress.UNKNOWN);
+        this(test, HdmiCecConstants.CEC_DEVICE_TYPE_UNKNOWN);
     }
 
     /**
      * Constructor for HdmiCecClientWrapper.
      *
      * @param test The test object which is used to access the device object.
-     * @param targetDevice The primary logical address of the device. This is used to determine to
-     *     which logical address of the DUT messages should be sent.
+     * @param testDeviceType The primary test device type. This is used to determine to which
+     *     logical address of the DUT messages should be sent.
      * @param clientParams Extra parameters to use when launching cec-client
      */
     public HdmiCecClientWrapper(
-            BaseHostJUnit4Test test, LogicalAddress targetDevice, String... clientParams) {
+            BaseHostJUnit4Test test, int testDeviceType, String... clientParams) {
         this.mTest = test;
-        this.targetDevice = targetDevice;
+        this.mTestDeviceType = testDeviceType;
         this.clientParams = clientParams;
     }
 
     @Override
     protected void before() throws Throwable {
         mDutLogicalAddresses = getDumpsysLogicalAddresses();
-        if (this.targetDevice == LogicalAddress.UNKNOWN) {
-            this.targetDevice = getTargetLogicalAddress();
-        }
+        targetDevice = getTargetLogicalAddress();
 
         this.init();
     };
@@ -421,17 +420,28 @@ public final class HdmiCecClientWrapper extends ExternalResource {
         throw new Exception("Could not parse logicalAddress from dumpsys.");
     }
 
-    /** Gets the default logical address of the DUT */
+    /** Gets the DUT's logical address to which messages should be sent */
     public LogicalAddress getTargetLogicalAddress() throws Exception {
-        return getTargetLogicalAddress(mTest.getDevice());
+        return getTargetLogicalAddress(mTest.getDevice(), mTestDeviceType);
     }
 
-    /** Gets the default logical address of the given device */
-    public static LogicalAddress getTargetLogicalAddress(ITestDevice device) throws Exception {
+    /**
+     * Gets the given device's logical address to which messages should be sent, based on the test
+     * device type.
+     *
+     * <p>When the test doesn't specify a device type, or the device doesn't have a logical address
+     * that matches the specified device type, use the first logical address.
+     */
+    public static LogicalAddress getTargetLogicalAddress(ITestDevice device, int testDeviceType)
+            throws Exception {
         List<LogicalAddress> logicalAddressList = getDumpsysLogicalAddresses(device);
+        for (LogicalAddress address : logicalAddressList) {
+            if (address.getDeviceType().equals(Integer.toString(testDeviceType))) {
+                return address;
+            }
+        }
         return logicalAddressList.get(0);
     }
-
     /**
      * Kills the cec-client process that was created in init().
      */

@@ -60,7 +60,7 @@ public final class HdmiCecStartupTest extends BaseHostJUnit4Test {
               CecOperand.SET_OSD_NAME, CecOperand.GIVE_OSD_NAME).build();
 
   public HdmiCecClientWrapper hdmiCecClient =
-          new HdmiCecClientWrapper(this, LogicalAddress.PLAYBACK_1);
+          new HdmiCecClientWrapper(this, HdmiCecConstants.CEC_DEVICE_TYPE_PLAYBACK_DEVICE);
 
   @Rule
   public RuleChain ruleChain =

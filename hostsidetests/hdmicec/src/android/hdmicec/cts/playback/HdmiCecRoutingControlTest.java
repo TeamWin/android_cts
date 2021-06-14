@@ -44,7 +44,7 @@ public final class HdmiCecRoutingControlTest extends BaseHostJUnit4Test {
     private static final int PHYSICAL_ADDRESS = 0x1000;
 
     public HdmiCecClientWrapper hdmiCecClient =
-            new HdmiCecClientWrapper(this, LogicalAddress.PLAYBACK_1);
+            new HdmiCecClientWrapper(this, HdmiCecConstants.CEC_DEVICE_TYPE_PLAYBACK_DEVICE);
 
     @Rule
     public RuleChain ruleChain =
