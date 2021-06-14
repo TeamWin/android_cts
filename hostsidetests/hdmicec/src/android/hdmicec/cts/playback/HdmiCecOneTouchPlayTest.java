@@ -54,7 +54,8 @@ public final class HdmiCecOneTouchPlayTest extends BaseHostJUnit4Test {
     /** The command to stop an app. */
     private static final String FORCE_STOP_COMMAND = "am force-stop ";
 
-    public HdmiCecClientWrapper hdmiCecClient = new HdmiCecClientWrapper(LogicalAddress.PLAYBACK_1);
+    public HdmiCecClientWrapper hdmiCecClient =
+            new HdmiCecClientWrapper(this, LogicalAddress.PLAYBACK_1);
 
     @Rule
     public RuleChain ruleChain =

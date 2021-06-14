@@ -42,7 +42,7 @@ public final class HdmiCecAudioReturnChannelControlTest extends BaseHostJUnit4Te
 
     private static final LogicalAddress AUDIO_DEVICE = LogicalAddress.AUDIO_SYSTEM;
 
-    public HdmiCecClientWrapper hdmiCecClient = new HdmiCecClientWrapper(AUDIO_DEVICE);
+    public HdmiCecClientWrapper hdmiCecClient = new HdmiCecClientWrapper(this, AUDIO_DEVICE);
 
     @Rule
     public RuleChain ruleChain =

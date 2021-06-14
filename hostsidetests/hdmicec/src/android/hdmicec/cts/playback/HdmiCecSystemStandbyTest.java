@@ -55,7 +55,8 @@ public final class HdmiCecSystemStandbyTest extends BaseHostJUnit4Test {
                     LogicalAddress.AUDIO_SYSTEM,
                     LogicalAddress.BROADCAST);
 
-    public HdmiCecClientWrapper hdmiCecClient = new HdmiCecClientWrapper(LogicalAddress.PLAYBACK_1);
+    public HdmiCecClientWrapper hdmiCecClient =
+            new HdmiCecClientWrapper(this, LogicalAddress.PLAYBACK_1);
 
     @Rule
     public RuleChain ruleChain =

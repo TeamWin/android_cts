@@ -40,7 +40,8 @@ public final class HdmiCecDeviceOsdNameTest extends BaseHostJUnit4Test {
 
     private static final LogicalAddress PLAYBACK_DEVICE = LogicalAddress.PLAYBACK_1;
 
-    public HdmiCecClientWrapper hdmiCecClient = new HdmiCecClientWrapper(LogicalAddress.PLAYBACK_1);
+    public HdmiCecClientWrapper hdmiCecClient =
+            new HdmiCecClientWrapper(this, LogicalAddress.PLAYBACK_1);
 
     @Rule
     public RuleChain ruleChain =
