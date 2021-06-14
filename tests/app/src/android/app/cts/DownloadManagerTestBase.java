@@ -84,6 +84,7 @@ public class DownloadManagerTestBase {
     protected static final int MINIMUM_DOWNLOAD_BYTES = 100 * 1024 * 1024;
 
     protected static final long SHORT_TIMEOUT = 5 * DateUtils.SECOND_IN_MILLIS;
+    protected static final long MEDIUM_TIMEOUT = 30 * DateUtils.SECOND_IN_MILLIS;
     protected static final long LONG_TIMEOUT = 3 * DateUtils.MINUTE_IN_MILLIS;
     private static final String ACTION_CREATE_FILE_WITH_CONTENT =
             "com.android.cts.action.CREATE_FILE_WITH_CONTENT";
@@ -230,11 +231,11 @@ public class DownloadManagerTestBase {
                     android.Manifest.permission.NETWORK_SETTINGS);
             final long startTime = SystemClock.elapsedRealtime();
             while (!hasConnectedNetwork(mCm)
-                && (SystemClock.elapsedRealtime() - startTime) < SHORT_TIMEOUT) {
+                && (SystemClock.elapsedRealtime() - startTime) < MEDIUM_TIMEOUT) {
                 Thread.sleep(500);
             }
             if (!hasConnectedNetwork(mCm)) {
-                Log.d(TAG, "Unable to connect to any network");
+                fail("Unable to connect to any network");
             }
         }
     }
