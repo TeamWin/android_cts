@@ -67,6 +67,7 @@ public class InputHidTestCase extends InputTestCase {
     private HidDevice mHidDevice;
     private int mDeviceId;
     private final int mRegisterResourceId;
+    private boolean mDelayAfterSetup = false;
 
     @Rule
     public MockitoRule rule = MockitoJUnit.rule();
@@ -76,6 +77,22 @@ public class InputHidTestCase extends InputTestCase {
     InputHidTestCase(int registerResourceId) {
         super(registerResourceId);
         mRegisterResourceId = registerResourceId;
+    }
+
+    @Override
+    public void setUp() throws Exception {
+        super.setUp();
+        // Even though we already wait for all possible callbacks such as UHID_START and UHID_OPEN,
+        // and wait for the correct device to appear by specifying expected source type in the
+        // register command, some devices, perhaps due to splitting, do not produce events as soon
+        // as they are created. Adding a small delay resolves this issue.
+        if (mDelayAfterSetup) {
+            SystemClock.sleep(1000);
+        }
+    }
+
+    protected void addDelayAfterSetup() {
+        mDelayAfterSetup = true;
     }
 
     /** Check if input device has specific capability */

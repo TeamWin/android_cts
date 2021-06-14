@@ -33,6 +33,7 @@ public class RazerRaijuMobileBluetoothTest extends InputHidTestCase {
     // Simulates the behavior of Razer Raiju Mobile gamepad.
     public RazerRaijuMobileBluetoothTest() {
         super(R.raw.razer_raiju_mobile_bluetooth_register);
+        addDelayAfterSetup();
     }
 
     @Test
