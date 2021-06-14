@@ -38,7 +38,7 @@ import java.util.List;
 public class GearSelectionTestActivity extends PassFailButtons.Activity {
     private static final String TAG = GearSelectionTestActivity.class.getSimpleName();
     private List<Integer> mSupportedGears;
-    private int mGearsAchievedCount = 0;
+    private Integer mGearsAchievedCount = 0;
     private TextView mExpectedGearSelectionTextView;
     private TextView mCurrentGearSelectionTextView;
 
@@ -95,7 +95,7 @@ public class GearSelectionTestActivity extends PassFailButtons.Activity {
             }
 
             // Check to see if new gear matches the expected gear.
-            if(newGearSelection == mSupportedGears.get(mGearsAchievedCount)) {
+            if (newGearSelection.equals(mSupportedGears.get(mGearsAchievedCount))) {
                 mGearsAchievedCount++;
                 Log.i(TAG, "Matched gear: " + VehicleGear.toString(newGearSelection));
                 // Check to see if the test is finished.
