@@ -45,7 +45,6 @@ import com.android.compatibility.common.util.SettingsStateChangerRule;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -161,7 +160,6 @@ public final class RecognitionServiceMicIndicatorTest {
         return componentName != null ? componentName.getPackageName() : "";
     }
 
-    @Ignore("b/184963112")
     @Test
     public void testNonTrustedRecognitionServiceCanBlameCallingApp() throws Throwable {
         // This is a workaound solution for R QPR. We treat trusted if the current voice recognizer
@@ -172,7 +170,6 @@ public final class RecognitionServiceMicIndicatorTest {
         testVoiceRecognitionServiceBlameCallingApp(/* trustVoiceService */ true);
     }
 
-    @Ignore("b/184963112")
     @Test
     public void testTrustedRecognitionServiceCanBlameCallingApp() throws Throwable {
         // This is a workaround solution for R QPR. We treat trusted if the current voice recognizer
