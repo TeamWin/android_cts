@@ -47,7 +47,6 @@ android_test {
     test_suites: [
         "cts",
         "general-tests",
-        "sts"
     ],
     instrumentation_for: "CtsAppTestStubs",
     sdk_version: "test_current",

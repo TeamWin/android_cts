@@ -57,7 +57,6 @@ import android.os.IBinder;
 import android.os.PowerExemptionManager;
 import android.os.SystemClock;
 import android.permission.cts.PermissionUtils;
-import android.platform.test.annotations.SecurityTest;
 import android.provider.DeviceConfig;
 import android.provider.Settings;
 
@@ -448,7 +447,6 @@ public class ActivityManagerFgsBgStartTest {
      * @throws Exception
      */
     @Test
-    @SecurityTest(minPatchLevel = "2021-03")
     public void testFgsLocationStartFromBGWithBind() throws Exception {
         ApplicationInfo app1Info = mContext.getPackageManager().getApplicationInfo(
                 PACKAGE_NAME_APP1, 0);

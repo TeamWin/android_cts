@@ -45,7 +45,6 @@ android_test_helper_app {
     test_suites: [
         "cts",
         "general-tests",
-        "sts",
     ],
     additional_manifests: ["ProviderAndroidManifest.xml"],
     platform_apis: true,
@@ -78,7 +77,6 @@ android_test_helper_app {
     test_suites: [
         "cts",
         "general-tests",
-        "sts",
     ],
     platform_apis: true,
     aaptflags: [
@@ -113,7 +111,6 @@ android_test {
     test_suites: [
         "cts",
         "general-tests",
-        "sts",
     ],
     platform_apis: true,
     aaptflags: [
@@ -148,7 +145,6 @@ android_test_helper_app {
     test_suites: [
         "cts",
         "general-tests",
-        "sts",
     ],
     platform_apis: true,
     aaptflags: [
