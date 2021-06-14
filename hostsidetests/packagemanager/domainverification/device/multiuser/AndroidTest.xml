@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
   ~ Copyright (C) 2021 The Android Open Source Project
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,23 +13,30 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<configuration description="Config for CTS package manager metrics device test cases">
+<configuration description="Config for CTS domain verification multi user test cases">
     <option name="test-suite-tag" value="cts" />
     <option name="config-descriptor:metadata" key="component" value="framework" />
     <option name="config-descriptor:metadata" key="parameter" value="multi_abi" />
+    <option name="config-descriptor:metadata" key="parameter" value="multiuser" />
+    <!-- Instant apps can never be device admin / profile owner / device owner so positive tests
+         here are not applicable -->
     <option name="config-descriptor:metadata" key="parameter" value="not_instant_app" />
-    <option name="config-descriptor:metadata" key="parameter" value="secondary_user" />
+    <!-- Device admin/owner requires being run in system user -->
+    <option name="config-descriptor:metadata" key="parameter" value="not_secondary_user" />
 
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
-        <option name="test-file-name" value="CtsDomainVerificationDeviceTestCases.apk" />
-        <option name="test-file-name" value="CtsDomainVerificationTestDeclaringApp1.apk" />
-        <option name="test-file-name" value="CtsDomainVerificationTestDeclaringApp2.apk" />
-        <option name="install-arg" value="-t"/>
+        <option name="test-file-name" value="CtsDomainVerificationDeviceMultiUserTestCases.apk" />
+        <option name="install-arg" value="-t" />
     </target_preparer>
 
-    <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
-        <option name="package" value="com.android.cts.packagemanager.verify.domain.device" />
+    <test class="com.android.tradefed.testtype.AndroidJUnitTest">
+        <option name="package"
+            value="com.android.cts.packagemanager.verify.domain.device.multiuser" />
+        <option name="exclude-annotation"
+            value="com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile" />
+        <option name="exclude-annotation"
+            value="com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser" />
     </test>
 </configuration>
 
