@@ -127,6 +127,7 @@ public class ExactAlarmsTest {
                 .with("allow_while_idle_compat_quota", ALLOW_WHILE_IDLE_COMPAT_QUOTA)
                 .with("allow_while_idle_window", ALLOW_WHILE_IDLE_WINDOW)
                 .with("crash_non_clock_apps", true)
+                .with("kill_on_schedule_exact_alarm_revoked", false)
                 .commitAndAwaitPropagation();
     }
 
@@ -440,7 +441,7 @@ public class ExactAlarmsTest {
     }
 
     @Test
-    public void testActionScheduleExactAlarmPermissionStateChanged() throws Exception {
+    public void scheduleExactAlarmPermissionStateChangedSentAppOp() throws Exception {
         // Revoke the permission.
         revokeAppOp();
 
@@ -466,6 +467,46 @@ public class ExactAlarmsTest {
         // Grant again.
         AppOpsUtils.setOpMode(sContext.getOpPackageName(), AppOpsManager.OPSTR_SCHEDULE_EXACT_ALARM,
                 AppOpsManager.MODE_ALLOWED);
+
+        assertTrue("Didn't receive ACTION_SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED",
+                latch.await(30, TimeUnit.SECONDS));
+
+        // We really should try starting a foreground service to make sure the app is
+        // allowed to start an FGS here, but when an app is running on `am instrument`, it's always
+        // exempted anyway, so we can't do that. Instead, we just check the dumpsys output.
+        //
+        // TODO(b/188790230): Use the test app instead, and make sure the app can actually start
+        // the FGS.
+        assertTrue("App should be temp-allowlisted", checkThisAppTempAllowListed(myUid));
+    }
+
+    @Test
+    public void scheduleExactAlarmPermissionStateChangedSentDenyList() throws Exception {
+        mDeviceConfigHelper.with("exact_alarm_deny_list", sContext.getOpPackageName())
+                .commitAndAwaitPropagation();
+        assertFalse(mAlarmManager.canScheduleExactAlarms());
+
+        final int myUid = Process.myUid();
+
+        // Because prior tests may already put the app on the temp allowlist, wait until
+        // it's removed from it...
+        // TODO(b/188789296) We should use `cmd deviceidle tempwhitelist -r PACKAGE-NAME`, but
+        //  it currently doesn't work.
+        TestUtils.waitUntil("App still on temp-allowlist", 60,
+                () -> !checkThisAppTempAllowListed(myUid));
+
+        final IntentFilter filter = new IntentFilter(
+                AlarmManager.ACTION_SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED);
+        final CountDownLatch latch = new CountDownLatch(1);
+        sContext.registerReceiver(new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                latch.countDown();
+            }
+        }, filter);
+
+        mDeviceConfigHelper.without("exact_alarm_deny_list").commitAndAwaitPropagation();
+        assertTrue(mAlarmManager.canScheduleExactAlarms());
 
         assertTrue("Didn't receive ACTION_SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED",
                 latch.await(30, TimeUnit.SECONDS));
