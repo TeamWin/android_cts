@@ -4777,7 +4777,8 @@ You should be prompted to select credentials; choose the ones you just installed
     soundbars which are connected. </string>
     <string name="tv_audio_capabilities_receiver_connected">Connect a receiver or
     soundbar which can play Dolby Atmos. </string>
-    <string name="tv_audio_capabilities_atmos_supported">Does your Android TV device support Dolby Atmos? </string>
+    <string name="tv_audio_capabilities_atmos_supported">Does your Android TV device support Dolby
+    Atmos (either passthrough or decode)?  </string>
 
     <string name="overlay_view_text">Overlay View Dummy Text</string>
     <string name="custom_rating">Example of input app specific custom rating.</string>
