@@ -18,6 +18,7 @@ package com.android.bedstead.remotedpc.managers;
 
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
+import android.content.IntentFilter;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -87,4 +88,23 @@ public interface RemoteDevicePolicyManager {
     @NonNull Bundle getUserRestrictions(@NonNull ComponentName admin);
     /** See {@link DevicePolicyManager#getUserRestrictions(ComponentName)}. */
     @RemoteDpcAutomaticAdmin @NonNull Bundle getUserRestrictions();
+
+    /**
+     * See {@link DevicePolicyManager#addCrossProfileIntentFilter(ComponentName, IntentFilter,
+     * int)}.
+     */
+    void addCrossProfileIntentFilter(@NonNull ComponentName admin, @NonNull IntentFilter filter,
+            int flags);
+    /**
+     * See {@link DevicePolicyManager#addCrossProfileIntentFilter(ComponentName, IntentFilter,
+     * int)}.
+     */
+    @RemoteDpcAutomaticAdmin void addCrossProfileIntentFilter(@NonNull IntentFilter filter,
+            int flags);
+
+    /** See {@link DevicePolicyManager#clearCrossProfileIntentFilters(ComponentName)}. */
+    void clearCrossProfileIntentFilters(@NonNull ComponentName admin);
+    /** See {@link DevicePolicyManager#clearCrossProfileIntentFilters(ComponentName)}. */
+    @RemoteDpcAutomaticAdmin void clearCrossProfileIntentFilters();
+
 }

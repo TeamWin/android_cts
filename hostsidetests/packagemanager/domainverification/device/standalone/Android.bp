@@ -17,7 +17,7 @@ package {
 }
 
 android_test {
-    name: "CtsDomainVerificationDeviceTestCases",
+    name: "CtsDomainVerificationDeviceStandaloneTestCases",
     srcs: [ "src/**/*.kt" ],
     test_suites: [
         "cts",
