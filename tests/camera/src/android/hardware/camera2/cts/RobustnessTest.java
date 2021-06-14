@@ -1449,9 +1449,12 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             StreamConfigurationMap maxStreamConfigMap =
                     chars.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP_MAXIMUM_RESOLUTION);
             openDevice(id);
-
-            verifyBasicSensorPixelModes(id, defaultStreamConfigMap, /*maxResolution*/ false);
-            verifyBasicSensorPixelModes(id, maxStreamConfigMap, /*maxResolution*/ true);
+            try {
+                verifyBasicSensorPixelModes(id, defaultStreamConfigMap, /*maxResolution*/ false);
+                verifyBasicSensorPixelModes(id, maxStreamConfigMap, /*maxResolution*/ true);
+            } finally {
+                closeDevice(id);
+            }
         }
     }
 
