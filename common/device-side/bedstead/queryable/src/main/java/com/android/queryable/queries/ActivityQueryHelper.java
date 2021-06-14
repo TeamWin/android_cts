@@ -24,10 +24,12 @@ public final class ActivityQueryHelper<E extends Queryable> implements ActivityQ
 
     private final E mQuery;
     private final ClassQueryHelper<E> mClassQueryHelper;
+    private final BooleanQueryHelper<E> mExportedQueryHelper;
 
     public ActivityQueryHelper(E query) {
         mQuery = query;
         mClassQueryHelper = new ClassQueryHelper<>(query);
+        mExportedQueryHelper = new BooleanQueryHelper<>(query);
     }
 
     @Override
@@ -45,7 +47,12 @@ public final class ActivityQueryHelper<E extends Queryable> implements ActivityQ
         return mClassQueryHelper.simpleName();
     }
 
+    @Override
+    public BooleanQuery<E> exported() {
+        return mExportedQueryHelper;
+    }
+
     public boolean matches(ActivityInfo value) {
-        return mClassQueryHelper.matches(value);
+        return mClassQueryHelper.matches(value) && mExportedQueryHelper.matches(value.exported());
     }
 }

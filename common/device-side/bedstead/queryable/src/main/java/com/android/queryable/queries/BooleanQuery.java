@@ -16,11 +16,10 @@
 
 package com.android.queryable.queries;
 
-import android.app.Activity;
-
 import com.android.queryable.Queryable;
 
-/** Query for an {@link Activity}. */
-public interface ActivityQuery<E extends Queryable> extends ClassQuery<E>  {
-    BooleanQuery<E> exported();
+public interface BooleanQuery<E extends Queryable> {
+    E isTrue();
+    E isFalse();
+    E equals(boolean value);
 }

@@ -42,6 +42,10 @@ public final class ActivityInfo extends ClassInfo {
         mExported = exported;
     }
 
+    public boolean exported() {
+        return mExported;
+    }
+
     @Override
     public String toString() {
         return "Activity{"

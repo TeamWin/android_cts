@@ -53,7 +53,8 @@ public final class TestAppActivities {
         try {
             PackageInfo packageInfo = p.getPackageInfo(mInstance.testApp().packageName(), /* flags= */ PackageManager.GET_ACTIVITIES);
             for (android.content.pm.ActivityInfo activityInfo : packageInfo.activities) {
-                mActivities.add(new com.android.queryable.info.ActivityInfo(activityInfo));
+                mActivities.add(
+                        com.android.queryable.info.ActivityInfo.builder(activityInfo).build());
             }
         } catch (PackageManager.NameNotFoundException e) {
             throw new IllegalStateException("Cannot query activities if app is not installed");
