@@ -18,7 +18,12 @@ package com.android.queryable.queries;
 
 import com.android.queryable.Queryable;
 
-public interface BooleanQuery<E extends Queryable> {
+public interface BooleanQuery<E extends Queryable> extends Query<Boolean> {
+
+    static BooleanQuery<BooleanQuery<?>> Boolean() {
+        return new BooleanQueryHelper<>();
+    }
+
     E isTrue();
     E isFalse();
     E equals(boolean value);

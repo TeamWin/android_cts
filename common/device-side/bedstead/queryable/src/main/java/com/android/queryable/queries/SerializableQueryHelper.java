@@ -27,6 +27,10 @@ public final class SerializableQueryHelper<E extends Queryable>
     private final E mQuery;
     private Serializable mEqualsValue = null;
 
+    SerializableQueryHelper() {
+        mQuery = (E) this;
+    }
+
     public SerializableQueryHelper(E query) {
         mQuery = query;
     }
@@ -37,6 +41,7 @@ public final class SerializableQueryHelper<E extends Queryable>
         return mQuery;
     }
 
+    @Override
     public boolean matches(Serializable value) {
         if (mEqualsValue != null && !mEqualsValue.equals(value)) {
             return false;

@@ -27,6 +27,10 @@ public final class StringQueryHelper<E extends Queryable>
     private final E mQuery;
     private String mEqualsValue = null;
 
+    StringQueryHelper() {
+        mQuery = (E) this;
+    }
+
     public StringQueryHelper(E query) {
         mQuery = query;
     }
@@ -37,6 +41,7 @@ public final class StringQueryHelper<E extends Queryable>
         return mQuery;
     }
 
+    @Override
     public boolean matches(String value) {
         if (mEqualsValue != null && !mEqualsValue.equals(value)) {
             return false;

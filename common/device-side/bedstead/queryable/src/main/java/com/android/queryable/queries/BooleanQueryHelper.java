@@ -17,12 +17,15 @@
 package com.android.queryable.queries;
 
 import com.android.queryable.Queryable;
-import com.android.queryable.info.ActivityInfo;
 
 public final class BooleanQueryHelper<E extends Queryable> implements BooleanQuery<E> {
 
     private final E mQuery;
     private Boolean mTargetValue = null;
+
+    BooleanQueryHelper() {
+        mQuery = (E) this;
+    }
 
     public BooleanQueryHelper(E query) {
         mQuery = query;
@@ -61,7 +64,8 @@ public final class BooleanQueryHelper<E extends Queryable> implements BooleanQue
         return mQuery;
     }
 
-    public boolean matches(boolean value) {
+    @Override
+    public boolean matches(Boolean value) {
         return (mTargetValue == null) || mTargetValue == value;
     }
 }
