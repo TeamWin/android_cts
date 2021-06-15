@@ -4402,6 +4402,60 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     }
 
     /**
+     * Tests {@link WifiManager#setWifiPasspointEnabled)} raise security exception without
+     * permission.
+     */
+    // TODO(b/139192273): Wait for T SDK finalization before changing
+    // to `@SdkSuppress(minSdkVersion = Build.VERSION_CODES.T)`
+    @SdkSuppress(minSdkVersion = 31)
+    public void testEnablePasspointWithoutPermission() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        try {
+            mWifiManager.setWifiPasspointEnabled(true);
+            fail("setWifiPasspointEnabled() expected to fail - privileged call");
+        } catch (SecurityException e) {
+            // expected
+        }
+    }
+
+    /**
+     * Tests {@link WifiManager#setWifiPasspointEnabled)} does not crash and returns success.
+     */
+    // TODO(b/139192273): Wait for T SDK finalization before changing
+    // to `@SdkSuppress(minSdkVersion = Build.VERSION_CODES.T)`
+    @SdkSuppress(minSdkVersion = 31)
+    public void testEnablePasspoint() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+
+        // The below API only works with privileged permissions (obtained via shell identity
+        // for test)
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            // Check if passpoint is enabled by default.
+            assertTrue(mWifiManager.isWifiPasspointEnabled());
+            // Try to disable passpoint
+            mWifiManager.setWifiPasspointEnabled(false);
+            PollingCheck.check(
+                "Wifi passpoint turn off failed!", 2_000,
+                () -> mWifiManager.isWifiPasspointEnabled() == false);
+            // Try to enable passpoint
+            mWifiManager.setWifiPasspointEnabled(true);
+            PollingCheck.check(
+                "Wifi passpoint turn on failed!", 2_000,
+                () -> mWifiManager.isWifiPasspointEnabled() == true);
+        } finally {
+            uiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    /**
      * Tests {@link WifiManager#isDecoratedIdentitySupported)} does not crash.
      */
     public void testIsDecoratedIdentitySupported() throws Exception {
