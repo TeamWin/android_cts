@@ -43,4 +43,3 @@ LOCAL_MIN_SDK_VERSION := 30
 include $(BUILD_CTS_EXECUTABLE)
 
 include $(nnapi_cts_dir)/benchmark/Android.mk
-include $(nnapi_cts_dir)/tflite_delegate/Android.mk
