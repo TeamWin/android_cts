@@ -85,8 +85,4 @@ public class SELinuxTargetSdkTest extends SELinuxTargetSdkTestBase
     public void testNoNetlinkRouteBind() throws IOException {
         noNetlinkRouteBind();
     }
-
-    public void testNetworkInterface() throws Exception {
-        checkNetworkInterfaceHardwareAddress_returnsNull();
-    }
 }
