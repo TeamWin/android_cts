@@ -477,7 +477,8 @@ public final class CtsTouchUtils {
     public static void injectUpEvent(UiAutomation uiAutomation, long downTime,
             boolean useCurrentEventTime, int xOnScreen, int yOnScreen,
             EventInjectionListener eventInjectionListener) {
-        injectDownEvent(uiAutomation, downTime, xOnScreen, yOnScreen, true, eventInjectionListener);
+        injectUpEvent(uiAutomation, downTime, useCurrentEventTime, xOnScreen, yOnScreen, true,
+                eventInjectionListener);
     }
 
     /**
