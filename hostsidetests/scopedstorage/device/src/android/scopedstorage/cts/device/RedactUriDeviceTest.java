@@ -173,12 +173,12 @@ public class RedactUriDeviceTest extends ScopedStorageBaseDeviceTest {
 
             final String data = getStringFromCursor(redactedUriCursor,
                     MediaStore.MediaColumns.DATA);
-            final String redactedUriId = redactedUri.getLastPathSegment();
-            assertEquals(redactedUriDirAbsolutePath + "/" + redactedUriId, data);
+            final String redactedUriDisplayName = redactedUri.getLastPathSegment() + ".jpg";
+            assertEquals(redactedUriDirAbsolutePath + "/" + redactedUriDisplayName, data);
 
             final String name = getStringFromCursor(redactedUriCursor,
                     MediaStore.MediaColumns.DISPLAY_NAME);
-            assertEquals(redactedUriId, name);
+            assertEquals(redactedUriDisplayName, name);
 
             final String relativePath = getStringFromCursor(redactedUriCursor,
                     MediaStore.MediaColumns.RELATIVE_PATH);
