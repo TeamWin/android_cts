@@ -263,10 +263,11 @@ public class CarPropertyManagerTest extends CarApiTestBase {
     @CddTest(requirement = "2.5.1")
     @Test
     public void testMustSupportParkingBrakeOn() throws Exception {
-        assertWithMessage("Must support PARKING_BRAKE_ON")
-                .that(mCarPropertyManager.getCarPropertyConfig(VehiclePropertyIds.PARKING_BRAKE_ON))
-                .isNotNull();
+        verifyOnchangeCarPropertyConfig(/*requiredProperty=*/true,
+                                        VehiclePropertyIds.PARKING_BRAKE_ON,
+                                        Boolean.class);
 
+        verifyCarPropertyValue(VehiclePropertyIds.PARKING_BRAKE_ON, Boolean.class);
     }
 
     @Test
