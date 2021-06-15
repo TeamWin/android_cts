@@ -24,6 +24,7 @@ cc_library {
         "android_security_cts_NativeCodeTest.cpp",
         "android_security_cts_MMapExecutableTest.cpp",
         "android_security_cts_EncryptionTest.cpp",
+        "android_security_cts_cve_2021_0394.cpp",
     ],
     shared_libs: [
         "libcrypto",

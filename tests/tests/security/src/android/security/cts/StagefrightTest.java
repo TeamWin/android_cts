@@ -1146,91 +1146,6 @@ public class StagefrightTest {
 
     @Test
     @SecurityTest(minPatchLevel = "2018-04")
-    public void testStagefright_cve_2017_13279() throws Exception {
-      Thread server = new Thread() {
-        @Override
-        public void run(){
-          try (ServerSocket serverSocket = new ServerSocket(8080) {
-                  {setSoTimeout(10_000);} // time out after 10 seconds
-              };
-              Socket conn = serverSocket.accept()
-          ) {
-              OutputStream stream = conn.getOutputStream();
-              byte http[] = ("HTTP/1.0 200 OK\r\nContent-Type: application/x-mpegURL\r\n\r\n"
-                           + "#EXTM3U\n#EXT-X-STREAM-INF:\n").getBytes();
-              stream.write(http);
-              while(!conn.isClosed())
-                stream.write(("a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\n").getBytes());
-            }
-          catch(IOException e){
-          }
-        }
-      };
-      server.start();
-      String uri = "http://127.0.0.1:8080/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-                 + "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/"
-                 + "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.m3u8";
-      final MediaPlayerCrashListener mpcl = new MediaPlayerCrashListener();
-
-      LooperThread t = new LooperThread(new Runnable() {
-          @Override
-          public void run() {
-
-              MediaPlayer mp = new MediaPlayer();
-              mp.setOnErrorListener(mpcl);
-              mp.setOnPreparedListener(mpcl);
-              mp.setOnCompletionListener(mpcl);
-              RenderTarget renderTarget = RenderTarget.create();
-              Surface surface = renderTarget.getSurface();
-              mp.setSurface(surface);
-              AssetFileDescriptor fd = null;
-              try {
-                mp.setDataSource(uri);
-                mp.prepareAsync();
-              } catch (IOException e) {
-                Log.e(TAG, e.toString());
-              } finally {
-                  closeQuietly(fd);
-              }
-
-              Looper.loop();
-              mp.release();
-          }
-      });
-      t.start();
-      Thread.sleep(60000); // Poc takes a while to crash mediaserver, waitForError
-                           // doesn't wait long enough
-      assertFalse("Device *IS* vulnerable to CVE-2017-13279",
-                  mpcl.waitForError() == MediaPlayer.MEDIA_ERROR_SERVER_DIED);
-      t.stopLooper();
-      t.join(); // wait for thread to exit so we're sure the player was released
-      server.join();
-    }
-
-    @Test
-    @SecurityTest(minPatchLevel = "2018-04")
     public void testStagefright_cve_2017_13276() throws Exception {
         doStagefrightTest(R.raw.cve_2017_13276);
     }
@@ -1257,6 +1172,95 @@ public class StagefrightTest {
      to prevent merge conflicts, add O tests below this comment,
      before any existing test methods
      ***********************************************************/
+
+    @Test
+    @SecurityTest(minPatchLevel = "2019-07")
+    public void testStagefright_cve_2019_2107() throws Exception {
+        assumeFalse(ModuleDetector.moduleIsPlayManaged(
+            getInstrumentation().getContext().getPackageManager(),
+            MainlineModule.MEDIA_SOFTWARE_CODEC));
+        int[] frameSizes = getFrameSizes(R.raw.cve_2019_2107_framelen);
+        doStagefrightTestRawBlob(R.raw.cve_2019_2107_hevc, "video/hevc", 1920,
+                1080, frameSizes);
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2019-04")
+    public void testStagefright_cve_2019_2245() throws Exception {
+        doStagefrightTest(R.raw.cve_2019_2245);
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2019-04")
+    public void testStagefright_cve_2018_13925() throws Exception {
+        doStagefrightTest(R.raw.cve_2018_13925);
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2020-12")
+    public void testStagefright_cve_2020_11139() throws Exception {
+        doStagefrightTest(R.raw.cve_2020_11139);
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2020-06")
+    public void testStagefright_cve_2020_3663() throws Exception {
+        doStagefrightTest(R.raw.cve_2020_3663);
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2020-08")
+    public void testStagefright_cve_2020_11122() throws Exception {
+        doStagefrightTest(R.raw.cve_2020_11122);
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2020-07")
+    public void testStagefright_cve_2020_3688() throws Exception {
+        doStagefrightTest(R.raw.cve_2020_3688);
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2020-11")
+    public void testStagefright_cve_2020_11168() throws Exception {
+        doStagefrightTest(R.raw.cve_2020_11168);
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2020-06")
+    public void testStagefright_cve_2020_3658() throws Exception {
+        doStagefrightTest(R.raw.cve_2020_3658);
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2020-05")
+    public void testStagefright_cve_2020_3633() throws Exception {
+        doStagefrightTest(R.raw.cve_2020_3633);
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2020-06")
+    public void testStagefright_cve_2020_3660() throws Exception {
+        doStagefrightTest(R.raw.cve_2020_3660);
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2020-06")
+    public void testStagefright_cve_2020_3661() throws Exception {
+        doStagefrightTest(R.raw.cve_2020_3661);
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2020-01")
+    public void testStagefright_cve_2019_14013() throws Exception {
+        doStagefrightTest(R.raw.cve_2019_14013);
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2020-06")
+    public void testStagefright_cve_2020_3662() throws Exception {
+        doStagefrightTest(R.raw.cve_2020_3662);
+    }
 
     @Test
     @SecurityTest(minPatchLevel = "2021-01")
@@ -1868,7 +1872,9 @@ public class StagefrightTest {
             Thread.sleep(CHECK_INTERVAL);
             timeout -= CHECK_INTERVAL;
         }
+
         if (!reportFile.exists() || !reportFile.isFile() || !lockFile.exists()) {
+            Log.e(TAG, "couldn't get the report or lock file");
             return null;
         }
         try (BufferedReader reader = new BufferedReader(new FileReader(reportFile))) {
@@ -1933,7 +1939,9 @@ public class StagefrightTest {
             if (what != MediaPlayer.MEDIA_ERROR_SERVER_DIED) {
                 what = newWhat;
             }
+
             lock.lock();
+            errored = true;
             condition.signal();
             lock.unlock();
 
@@ -1956,17 +1964,19 @@ public class StagefrightTest {
 
         public int waitForError() throws InterruptedException {
             lock.lock();
-            if (condition.awaitNanos(TIMEOUT_NS) <= 0) {
-                Log.d(TAG, "timed out on waiting for error");
+            if (!errored && !completed) {
+                if (condition.awaitNanos(TIMEOUT_NS) <= 0) {
+                    Log.d(TAG, "timed out on waiting for error. " +
+                          "errored: " + errored + ", completed: " + completed);
+                }
             }
             lock.unlock();
-            if (what != 0) {
+            if (what == MediaPlayer.MEDIA_ERROR_SERVER_DIED) {
                 // Sometimes mediaserver signals a decoding error first, and *then* crashes
                 // due to additional in-flight buffers being processed, so wait a little
                 // and see if more errors show up.
+                Log.e(TAG, "couldn't get media crash yet, waiting 1 second");
                 SystemClock.sleep(1000);
-            }
-            if (what == MediaPlayer.MEDIA_ERROR_SERVER_DIED) {
                 JSONArray crashes = getCrashReport(name.getMethodName(), 5000);
                 if (crashes == null) {
                     Log.e(TAG, "Crash results not found for test " + name.getMethodName());
@@ -1979,8 +1989,8 @@ public class StagefrightTest {
                     // 0 is the code for no error.
                     return 0;
                 }
-
             }
+            Log.d(TAG, "waitForError finished with no errors.");
             return what;
         }
 
@@ -1997,6 +2007,7 @@ public class StagefrightTest {
         Condition condition = lock.newCondition();
         int what;
         boolean completed = false;
+        boolean errored = false;
     }
 
     class LooperThread extends Thread {

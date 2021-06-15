@@ -31,8 +31,8 @@ import com.android.compatibility.common.util.IBinderParcelable;
 public class LocalForegroundService extends LocalService {
 
     private static final String TAG = "LocalForegroundService";
-    protected static final String EXTRA_COMMAND = "LocalForegroundService.command";
-    private static final String NOTIFICATION_CHANNEL_ID = "cts/" + TAG;
+    public static final String EXTRA_COMMAND = "LocalForegroundService.command";
+    public static final String NOTIFICATION_CHANNEL_ID = "cts/" + TAG;
     public static String ACTION_START_FGS_RESULT =
             "android.app.stubs.LocalForegroundService.RESULT";
 

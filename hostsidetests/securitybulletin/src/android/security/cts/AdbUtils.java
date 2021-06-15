@@ -23,6 +23,7 @@ import com.android.compatibility.common.util.ResultUnit;
 import com.android.ddmlib.IShellOutputReceiver;
 import com.android.ddmlib.NullOutputReceiver;
 import com.android.ddmlib.CollectingOutputReceiver;
+import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.device.NativeDevice;
 import com.android.tradefed.log.LogUtil.CLog;
@@ -34,6 +35,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.concurrent.TimeoutException;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.concurrent.TimeUnit;
 import java.util.Scanner;
@@ -48,8 +50,9 @@ import org.json.JSONObject;
 
 import java.util.regex.Pattern;
 import java.lang.Thread;
+
 import static org.junit.Assert.*;
-import junit.framework.Assert;
+import static org.junit.Assume.*;
 
 public class AdbUtils {
 
@@ -60,6 +63,7 @@ public class AdbUtils {
     public static class pocConfig {
         String binaryName;
         String arguments;
+        Map<String, String> envVars;
         String inputFilesDestination;
         ITestDevice device;
         CrashUtils.Config config;
@@ -162,8 +166,25 @@ public class AdbUtils {
      */
     public static int runPoc(String pocName, ITestDevice device, int timeout,
             String arguments, IShellOutputReceiver receiver) throws Exception {
+              return runPoc(pocName, device, timeout, arguments, null, receiver);
+    }
+
+    /**
+     * Pushes and runs a binary with arguments to the selected device and
+     * ignores any of its output.
+     *
+     * @param pocName name of the poc binary
+     * @param device device to be ran on
+     * @param timeout time to wait for output in seconds
+     * @param arguments input arguments for the poc
+     * @param envVars run the poc with environment variables
+     * @param receiver the type of receiver to run against
+     */
+    public static int runPoc(String pocName, ITestDevice device, int timeout,
+            String arguments, Map<String, String> envVars,
+            IShellOutputReceiver receiver) throws Exception {
         String remoteFile = String.format("%s%s", TMP_PATH, pocName);
-        SecurityTestCase.getPocPusher(device).pushFile(pocName, remoteFile);
+        SecurityTestCase.getPocPusher(device).pushFile(pocName + "_sts", remoteFile);
 
         assertPocExecutable(pocName, device);
         if (receiver == null) {
@@ -173,11 +194,26 @@ public class AdbUtils {
             arguments = "";
         }
 
+        String env = "";
+        if (envVars != null) {
+            StringBuilder sb = new StringBuilder();
+            for (Map.Entry<String, String> entry : envVars.entrySet()) {
+                sb
+                    .append(entry.getKey().trim())
+                    .append('=')
+                    .append(entry.getValue().trim())
+                    .append(' ');
+            }
+            env = sb.toString();
+            CLog.i("Running poc '%s' with env variables '%s'", pocName, env);
+        }
+
         // since we have to return the exit status AND the poc stdout+stderr we redirect the exit
         // status to a file temporarily
         String exitStatusFilepath = TMP_PATH + "exit_status";
         runCommandLine("rm " + exitStatusFilepath, device); // remove any old exit status
-        device.executeShellCommand(TMP_PATH + pocName + " " + arguments +
+        device.executeShellCommand(
+                env + TMP_PATH + pocName + " " + arguments +
                 "; echo $? > " + exitStatusFilepath, // echo exit status to file
                 receiver, timeout, TimeUnit.SECONDS, 0);
 
@@ -411,7 +447,21 @@ public class AdbUtils {
      */
     public static int runPocGetExitStatus(String pocName, String arguments, ITestDevice device,
             int timeout) throws Exception {
-        return runPoc(pocName, device, timeout, arguments, null);
+              return runPocGetExitStatus(pocName, arguments, null, device, timeout);
+    }
+
+    /**
+     * Pushes and runs a binary to the device and returns the exit status.
+     * @param pocName name of the poc binary
+     * @param arguments input arguments for the poc
+     * @param envVars run the poc with environment variables
+     * @param device device to be run on
+     * @param timeout time to wait for output in seconds
+     */
+    public static int runPocGetExitStatus(
+            String pocName, String arguments, Map<String, String> envVars,
+            ITestDevice device, int timeout) throws Exception {
+        return runPoc(pocName, device, timeout, arguments, envVars, null);
     }
 
     /**
@@ -434,8 +484,22 @@ public class AdbUtils {
      */
     public static void runPocAssertExitStatusNotVulnerable(String pocName, String arguments,
             ITestDevice device, int timeout) throws Exception {
+              runPocGetExitStatus(pocName, arguments, null, device, timeout);
+    }
+
+    /**
+     * Pushes and runs a binary and asserts that the exit status isn't 113: vulnerable.
+     * @param pocName name of the poc binary
+     * @param arguments input arguments for the poc
+     * @param envVars run the poc with environment variables
+     * @param device device to be ran on
+     * @param timeout time to wait for output in seconds
+     */
+    public static void runPocAssertExitStatusNotVulnerable(
+            String pocName, String arguments, Map<String, String> envVars,
+            ITestDevice device, int timeout) throws Exception {
         assertTrue("PoC returned exit status 113: vulnerable",
-                runPocGetExitStatus(pocName, arguments, device, timeout) != 113);
+                runPocGetExitStatus(pocName, arguments, envVars, device, timeout) != 113);
     }
 
     /**
@@ -445,9 +509,24 @@ public class AdbUtils {
      * @param device device to be ran on
      */
     public static int runProxyAutoConfig(String pacName, ITestDevice device) throws Exception {
+        return runProxyAutoConfig(pacName, null, device);
+    }
+
+    /**
+     * Runs the binary against a given proxyautoconfig file, asserting that it doesn't
+     * crash
+     * @param pacName the name of the proxy autoconfig script from the /res folder
+     * @param arguments input arguments for pacrunner
+     * @param device device to be ran on
+     */
+    public static int runProxyAutoConfig(String pacName, String arguments,
+            ITestDevice device) throws Exception {
         pacName += ".pac";
         String targetPath = TMP_PATH + pacName;
         AdbUtils.pushResource("/" + pacName, targetPath, device);
+        if(arguments != null) {
+            targetPath += " " + arguments;
+        }
         runPocAssertNoCrashes(
                 "pacrunner", device, targetPath,
                 new CrashUtils.Config().setProcessPatterns("pacrunner"));
@@ -564,8 +643,33 @@ public class AdbUtils {
     public static void runPocAssertNoCrashesNotVulnerable(String binaryName, String arguments,
             String inputFiles[], String inputFilesDestination, ITestDevice device,
             String processPatternStrings[]) throws Exception {
+        runPocAssertNoCrashesNotVulnerable(binaryName, arguments, null,
+                inputFiles, inputFilesDestination, device, processPatternStrings);
+    }
+
+    /**
+     * Runs the poc binary and asserts following 3 conditions.
+     *  1. There are no security crashes in the binary.
+     *  2. There are no security crashes that match the expected process pattern.
+     *  3. The exit status isn't 113 (Code 113 is used to indicate the vulnerability condition).
+     *
+     * @param binaryName name of the binary
+     * @param arguments arguments for running the binary
+     * @param envVars run the poc with environment variables
+     * @param inputFiles files required as input
+     * @param inputFilesDestination destination directory to which input files are
+     *        pushed
+     * @param device device to be run on
+     * @param processPatternStrings a Pattern string (other than binary name) to match the crash
+     *        tombstone process
+     */
+    public static void runPocAssertNoCrashesNotVulnerable(
+            String binaryName, String arguments, Map<String, String> envVars,
+            String inputFiles[], String inputFilesDestination, ITestDevice device,
+            String... processPatternStrings) throws Exception {
         pocConfig testConfig = new pocConfig(binaryName, device);
         testConfig.arguments = arguments;
+        testConfig.envVars = envVars;
 
         if (inputFiles != null) {
             testConfig.inputFiles = Arrays.asList(inputFiles);
@@ -602,7 +706,7 @@ public class AdbUtils {
         runCommandLine("logcat -c", testConfig.device);
         try {
             runPocAssertExitStatusNotVulnerable(testConfig.binaryName, testConfig.arguments,
-                    testConfig.device, TIMEOUT_SEC);
+                    testConfig.envVars, testConfig.device, TIMEOUT_SEC);
         } catch (IllegalArgumentException e) {
             /*
              * Since 'runPocGetExitStatus' method raises IllegalArgumentException upon
@@ -671,5 +775,9 @@ public class AdbUtils {
             } catch (JSONException e) {}
         }
         fail(error.toString());
-     }
+    }
+
+    public static void assumeHasNfc(ITestDevice device) throws DeviceNotAvailableException {
+        assumeTrue("nfc not available on device", device.hasFeature("android.hardware.nfc"));
+    }
 }

@@ -35,4 +35,26 @@ public class Poc18_07 extends SecurityTestCase {
         AdbUtils.runPocAssertNoCrashes(
             "CVE-2018-9424", getDevice(), "android\\.hardware\\.drm@\\d\\.\\d-service");
     }
+
+    /*
+     * CVE-2017-18275
+     */
+    @Test
+    @SecurityTest(minPatchLevel = "2018-07")
+    public void testPocCVE_2017_18275() throws Exception {
+      String command =
+          "am startservice "
+          + "-n com.qualcomm.simcontacts/com.qualcomm.simcontacts.SimAuthenticateService "
+          + "-a android.accounts.AccountAuthenticator -e account_name cve_2017_18275";
+      String result = AdbUtils.runCommandLine(
+          "pm list packages | grep com.qualcomm.simcontacts", getDevice());
+      if (result.contains("com.qualcomm.simcontacts")) {
+          AdbUtils.runCommandLine("logcat -c", getDevice());
+          AdbUtils.runCommandLine(command, getDevice());
+          String logcat = AdbUtils.runCommandLine("logcat -d", getDevice());
+          assertNotMatchesMultiLine(
+                "Authenticator: Add SIM account.*ContactsProvider: Accounts changed",
+                logcat);
+      }
+    }
 }

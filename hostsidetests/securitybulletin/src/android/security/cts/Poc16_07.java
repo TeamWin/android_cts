@@ -58,7 +58,6 @@ public class Poc16_07 extends SecurityTestCase {
     @Test
     @SecurityTest(minPatchLevel = "2016-07")
     public void testPocCVE_2016_3747() throws Exception {
-        getOomCatcher().setHighMemoryTest();
         AdbUtils.runPocAssertNoCrashes("CVE-2016-3747", getDevice(), "mediaserver");
     }
 }

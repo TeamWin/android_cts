@@ -46,6 +46,19 @@ public class TestMedia extends SecurityTestCase {
      ******************************************************************************/
 
     /**
+     * b/17769851
+     * Vulnerability Behaviour: EXIT_VULNERABLE (113)
+     */
+    @SecurityTest(minPatchLevel = "2015-12")
+    @Test
+    public void testPocCVE_2015_6616() throws Exception {
+        pocPusher.only64();
+        String inputFiles[] = {"cve_2015_6616.mp4"};
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2015-6616",
+                AdbUtils.TMP_PATH + inputFiles[0], inputFiles, AdbUtils.TMP_PATH, getDevice());
+    }
+
+    /**
      * b/37239013
      * Vulnerability Behaviour: EXIT_VULNERABLE (113)
      */
@@ -98,6 +111,7 @@ public class TestMedia extends SecurityTestCase {
     @SecurityTest(minPatchLevel = "2020-11")
     @Test
     public void testPocCVE_2020_0450() throws Exception {
+        AdbUtils.assumeHasNfc(getDevice());
         AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2020-0450", null, getDevice());
     }
 
@@ -138,6 +152,7 @@ public class TestMedia extends SecurityTestCase {
     @SecurityTest(minPatchLevel = "2019-08")
     @Test
     public void testPocCVE_2019_2133() throws Exception {
+        AdbUtils.assumeHasNfc(getDevice());
         AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2019-2133", null, getDevice());
     }
 
@@ -148,6 +163,7 @@ public class TestMedia extends SecurityTestCase {
     @SecurityTest(minPatchLevel = "2019-08")
     @Test
     public void testPocCVE_2019_2134() throws Exception {
+        AdbUtils.assumeHasNfc(getDevice());
         AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2019-2134", null, getDevice());
     }
 
@@ -500,7 +516,11 @@ public class TestMedia extends SecurityTestCase {
         String binaryName = "CVE-2018-9537";
         String signals[] = {CrashUtils.SIGSEGV, CrashUtils.SIGBUS, CrashUtils.SIGABRT};
         AdbUtils.pocConfig testConfig = new AdbUtils.pocConfig(binaryName, getDevice());
-        testConfig.config = new CrashUtils.Config().setProcessPatterns(binaryName);
+        // example of check crash to skip:
+        // Abort message: 'frameworks/av/media/extractors/mkv/MatroskaExtractor.cpp:548 CHECK(mCluster) failed.'
+        testConfig.config = new CrashUtils.Config()
+                .setProcessPatterns(binaryName)
+                .appendAbortMessageExcludes("CHECK\\(.*?\\)");
         testConfig.config.setSignals(signals);
         AdbUtils.runPocAssertNoCrashesNotVulnerable(testConfig);
     }

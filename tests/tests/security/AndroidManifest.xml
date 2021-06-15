@@ -102,6 +102,71 @@
                 <data android:mimeType="application/vnd.android.package-archive" />
             </intent-filter>
         </receiver>
+
+        <activity android:name="android.security.cts.CVE_2021_0339$FirstActivity"
+             android:label="TAT Anim1"
+             android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+
+        <activity android:name="android.security.cts.CVE_2021_0339$SecondActivity"
+             android:label="TAT Anim2"
+             android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+
+        <activity android:name="android.security.cts.CVE_2021_0327.IntroActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity android:name="android.security.cts.CVE_2021_0327.OtherUserActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity android:name="android.security.cts.CVE_2021_0327.TestActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity android:name="android.security.cts.CVE_2021_0327.workprofilesetup.ProvisionedActivity">
+            <intent-filter>
+                <action android:name="android.app.action.PROVISIONING_SUCCESSFUL" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <receiver
+            android:name="android.security.cts.CVE_2021_0327.workprofilesetup.AdminReceiver"
+            android:permission="android.permission.BIND_DEVICE_ADMIN">
+            <meta-data
+                android:name="android.app.device_admin"
+                android:resource="@xml/device_admin" />
+            <intent-filter>
+                <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
+            </intent-filter>
+        </receiver>
+
+        <provider
+            android:name="android.security.cts.CVE_2021_0327.BadProvider"
+            android:authorities="android.security.cts.CVE_2021_0327.BadProvider"
+            android:exported="false"
+            android:grantUriPermissions="true"
+            android:process=":badprovider" />
+
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"

@@ -18,10 +18,8 @@ package android.permission.cts;
 
 import static android.Manifest.permission.ACCESS_BACKGROUND_LOCATION;
 import static android.Manifest.permission.ACCESS_COARSE_LOCATION;
-import static android.Manifest.permission.ACCESS_MEDIA_LOCATION;
 import static android.Manifest.permission.READ_CALL_LOG;
 import static android.Manifest.permission.READ_CONTACTS;
-import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
 import static android.app.AppOpsManager.MODE_FOREGROUND;
 import static android.content.pm.PackageManager.FLAG_PERMISSION_REVIEW_REQUIRED;
 import static android.content.pm.PackageManager.FLAG_PERMISSION_USER_SET;
