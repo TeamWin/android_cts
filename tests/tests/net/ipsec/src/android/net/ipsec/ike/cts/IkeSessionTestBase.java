@@ -50,6 +50,7 @@ import android.net.ipsec.ike.exceptions.IkeException;
 import android.net.ipsec.ike.exceptions.IkeProtocolException;
 import android.os.Binder;
 import android.os.ParcelFileDescriptor;
+import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
 
 import androidx.test.InstrumentationRegistry;
@@ -219,10 +220,11 @@ abstract class IkeSessionTestBase extends IkeTestBase {
         for (String pkg : new String[] {"com.android.shell", sContext.getPackageName()}) {
             String cmd =
                     String.format(
-                            "appops set %s %s %s",
+                            "appops set %s %s %s --user %d",
                             pkg, // Package name
                             opName, // Appop
-                            (allow ? "allow" : "deny")); // Action
+                            (allow ? "allow" : "deny"), // Action
+                            UserHandle.myUserId());
 
             SystemUtil.runShellCommand(cmd);
         }
