@@ -344,7 +344,7 @@
         Keymaster signs a message with a confirmation key only if the message was previously
         confirmed by the user.
     </string>
-    <string name="sec_protected_confirmation_not_supported_title">Android Protected Confirmation not supported</string>
+    <string name="sec_protected_confirmation_not_supported_title">Not Supported</string>
     <string name="sec_protected_confirmation_not_supported_info">
         Android Protected Confirmation is not implemented by this device. This is okay because this
         is an optional feature. Set this test to passed and continue.
