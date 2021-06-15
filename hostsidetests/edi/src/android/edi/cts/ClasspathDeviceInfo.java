@@ -30,6 +30,7 @@ import com.android.compatibility.common.util.HostInfoStore;
 import com.android.tradefed.device.ITestDevice;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 
 import org.jf.dexlib2.iface.ClassDef;
 
@@ -112,12 +113,26 @@ public class ClasspathDeviceInfo extends DeviceInfo {
     }
 
     private void collectClassInfo(HostInfoStore store, String path) throws Exception {
-        // TODO(b/189924891): stop ignoring libhwinfo.jar
-        if (path.equals("/product/framework/libhwinfo.jar")) {
-            return;
+        ImmutableSet<ClassDef> classes;
+        try {
+            classes = Classpaths.getClassDefsFromJar(mDevice, path);
+        } catch (IllegalStateException e) {
+            // Check if this is a known issue where a jar is not present on device.
+            if (e.getMessage().contains("could not pull remote file " + path)) {
+                // TODO(b/189924891): stop ignoring libhwinfo.jar
+                if (path.equals("/product/framework/libhwinfo.jar")) {
+                    return;
+                }
+                // TODO(b/191046702): stop ignoring uimservicelibrary.jar
+                if (path.equals("/system/framework/uimservicelibrary.jar")) {
+                    return;
+                }
+            }
+            throw e;
         }
+
         store.startArray("classes");
-        for (ClassDef classDef : Classpaths.getClassDefsFromJar(mDevice, path)) {
+        for (ClassDef classDef : classes) {
             store.startGroup();
             store.addResult("name", classDef.getType());
             store.endGroup();
