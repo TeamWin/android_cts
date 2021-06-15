@@ -133,8 +133,10 @@ public class MediaDrmTest {
 
                 String logSessionId = "testPlaybackComponent";
                 component.setLogSessionId(new LogSessionId(logSessionId));
+                assertEquals(logSessionId, component.getLogSessionId().getStringId(),
+                        "LogSessionId not set");
                 PersistableBundle metrics = drm.getMetrics();
-                assertTrue("LogSessionId not set",
+                assertTrue("LogSessionId not found in metrics",
                         searchMetricsForValue(metrics, logSessionId));
             } catch (UnsupportedOperationException | NotProvisionedException e) {
                 Log.w(TAG, "testPlaybackComponent: skipping scheme " + scheme, e);

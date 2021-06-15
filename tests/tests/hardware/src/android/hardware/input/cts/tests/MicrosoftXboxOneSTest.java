@@ -31,6 +31,7 @@ public class MicrosoftXboxOneSTest extends InputHidTestCase {
     // Exercises the Bluetooth behavior of the Xbox One S controller
     public MicrosoftXboxOneSTest() {
         super(R.raw.microsoft_xboxones_register);
+        addDelayAfterSetup();
     }
 
     @Test
