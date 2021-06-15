@@ -438,6 +438,10 @@ public class MediaStorageTest {
 
         try (ParcelFileDescriptor pfd = mContentResolver.openFileDescriptor(red, "w")) {
         }
+        // Wait for MediaStore to be idle to avoid flakiness due to race conditions between
+        // MediaStore.scanFile (which is called above in #openFileDescriptor) and rename (which is
+        // called below). This is a known issue: b/158982091
+        MediaStore.waitForIdle(mContentResolver);
 
         // Check File API support
         assertAccessFileAPISupport(file);

@@ -219,6 +219,12 @@ public class TestUtils {
             .setShortDescription(SELF_MANAGED_ACCOUNT_LABEL)
             .addSupportedUriScheme(TEST_URI_SCHEME)
             .build();
+    public static final Bundle SELF_MANAGED_ACCOUNT_1_EXTRAS;
+    static {
+        SELF_MANAGED_ACCOUNT_1_EXTRAS = new Bundle();
+        SELF_MANAGED_ACCOUNT_1_EXTRAS.putBoolean(
+                PhoneAccount.EXTRA_ADD_SELF_MANAGED_CALLS_TO_INCALLSERVICE, false);
+    }
     public static final Bundle SELF_MANAGED_ACCOUNT_2_EXTRAS;
     static {
         SELF_MANAGED_ACCOUNT_2_EXTRAS = new Bundle();
@@ -255,6 +261,7 @@ public class TestUtils {
             .setShortDescription(SELF_MANAGED_ACCOUNT_LABEL)
             .addSupportedUriScheme(PhoneAccount.SCHEME_TEL)
             .addSupportedUriScheme(PhoneAccount.SCHEME_SIP)
+            .setExtras(SELF_MANAGED_ACCOUNT_1_EXTRAS)
             .build();
     public static final PhoneAccount TEST_SELF_MANAGED_PHONE_ACCOUNT_4 = PhoneAccount.builder(
             TEST_SELF_MANAGED_HANDLE_4, SELF_MANAGED_ACCOUNT_LABEL)

@@ -32,6 +32,7 @@ import android.media.AudioManager;
 import android.media.AudioRecord;
 import android.media.AudioRecord.OnRecordPositionUpdateListener;
 import android.media.AudioRecordingConfiguration;
+import android.media.AudioSystem;
 import android.media.AudioTimestamp;
 import android.media.AudioTrack;
 import android.media.MediaRecorder;
@@ -384,6 +385,27 @@ public class AudioRecordTest {
                 false /*useByteBuffer*/, false /*blocking*/,
                 true /*auditRecording*/, true /*isChannelIndex*/, 16000 /*TEST_SR*/,
                 (1 << 0) | (1 << 1) | (1 << 2) | (1 << 3) | (1 << 4)  /* 5 channels */,
+                AudioFormat.ENCODING_PCM_16BIT);
+    }
+
+    // Audit buffers can run out of space with high numbers of channels,
+    // so keep the sample rate low.
+    // This tests the maximum reported Mixed PCM channel capability
+    // for AudioRecord and AudioTrack.
+    @Test
+    public void testAudioRecordAuditChannelIndexMax() throws Exception {
+        // We skip this test for isLowRamDevice(s).
+        // Otherwise if the build reports a high PCM channel count capability,
+        // we expect this CTS test to work at 16kHz.
+        if (isLowRamDevice()) {
+            return; // skip. FIXME: reenable when AF memory allocation is updated.
+        }
+        final int maxChannels = AudioSystem.OUT_CHANNEL_COUNT_MAX; // FCC_LIMIT
+        doTest("audit_channel_index_max", true /*localRecord*/, true /*customHandler*/,
+                2 /*periodsPerSecond*/, 0 /*markerPeriodsPerSecond*/,
+                false /*useByteBuffer*/, false /*blocking*/,
+                true /*auditRecording*/, true /*isChannelIndex*/, 16000 /*TEST_SR*/,
+                (1 << maxChannels) - 1,
                 AudioFormat.ENCODING_PCM_16BIT);
     }
 

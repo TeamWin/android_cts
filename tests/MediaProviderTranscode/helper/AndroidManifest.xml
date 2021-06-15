@@ -21,7 +21,7 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
-    <application android:label="Transcode Test App">
+    <application android:label="Transcode Test App" android:debuggable="true">
       <property android:name="android.media.PROPERTY_MEDIA_CAPABILITIES"
                 android:resource="@xml/media_capabilities" />
 
