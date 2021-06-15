@@ -297,6 +297,7 @@ def _get_cam_rotations(frames, facing, h, log_path):
     frame = (frame * 255.0).astype(np.uint8)  # cv2 uses [0, 255]
     gframes.append(cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY))
   num_frames = len(gframes)
+  logging.debug('num_frames: %d', num_frames)
 
   # create mask
   ymin = int(h * (1 - _FEATURE_MARGIN) / 2)
@@ -325,8 +326,8 @@ def _get_cam_rotations(frames, facing, h, log_path):
           x, y = pt[0][0], pt[0][1]
           cv2.circle(frames[j], (x, y), 3, (100, 255, 255), -1)
         image_processing_utils.write_image(
-            frames[j], f'{file_name_stem}_features{j:03d}.png')
-        msg = (f'Not enough features in frame {j}. Need at least '
+            frames[j], f'{file_name_stem}_features{j+_START_FRAME:03d}.png')
+        msg = (f'Not enough features in frame {j+_START_FRAME}. Need at least '
                f'{_FEATURE_PTS_MIN} features, got {num_features}.')
         if masking == 'pre':
           raise AssertionError(msg)
@@ -335,7 +336,7 @@ def _get_cam_rotations(frames, facing, h, log_path):
           break
       else:
         logging.debug('Number of features in frame %s is %d',
-                      str(j).zfill(3), num_features)
+                      str(j+_START_FRAME).zfill(3), num_features)
       p1, st, _ = cv2.calcOpticalFlowPyrLK(gframe0, gframe1, p0_filtered, None,
                                            **_CV2_LK_PARAMS)
       tform = _procrustes_rotation(p0_filtered[st == 1], p1[st == 1])
@@ -351,11 +352,14 @@ def _get_cam_rotations(frames, facing, h, log_path):
         # tracked in the first frame.
         frame = frames[j]
         for x, y in p0_filtered[st == 1]:
-          cv2.circle(frame, (x, y), 3, (100, 100, 255), -1)
+          cv2.circle(frame, (x, y), 3, (100, 255, 255), -1)
         image_processing_utils.write_image(
-            frame, f'{file_name_stem}_features{j:03d}.png')
-    if i >= len(rots):
+            frame, f'{file_name_stem}_features{j+_START_FRAME:03d}.png')
+    if i == num_frames-1:
+      logging.debug('Correct num of frames found: %d', i)
       break  # exit if enough features in all frames
+  if i != num_frames-1:
+    raise AssertionError('Neither method found enough features in all frames')
 
   rots = np.array(rots)
   rot_per_frame_max = max(abs(rots))
@@ -515,6 +519,7 @@ class SensorFusionTest(its_base_test.ItsBaseTest):
         rot_rig['ch'] = self.rotator_ch
         events, frames = _collect_data(cam, fps, img_w, img_h, test_length,
                                        rot_rig, chart_distance, log_path)
+    logging.debug('Start frame: %d', _START_FRAME)
 
     _plot_gyro_events(events['gyro'], log_path)
 

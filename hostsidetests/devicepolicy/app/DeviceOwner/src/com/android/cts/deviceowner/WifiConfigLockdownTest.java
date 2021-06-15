@@ -99,8 +99,9 @@ public final class WifiConfigLockdownTest extends BaseDeviceOwnerTest {
                 ++updateCount;
             }
         }
+        // There might be auto-upgrade configs returned.
         assertWithMessage("number of updated configs (the DO created one and the regular one)")
-                .that(updateCount).isEqualTo(2);
+                .that(updateCount).isAtLeast(2);
     }
 
     public void testRegularAppCannotUpdateDeviceOwnerConfig() throws Exception {
@@ -115,8 +116,9 @@ public final class WifiConfigLockdownTest extends BaseDeviceOwnerTest {
                 ++updateCount;
             }
         }
+        // There might be auto-upgrade configs returned.
         assertWithMessage("number of updated configs (the DO created one)")
-                .that(updateCount).isEqualTo(1);
+                .that(updateCount).isAtLeast(1);
 
         // Assert nothing has changed
         configs = mWifiConfigCreator.getConfiguredNetworks();
@@ -129,7 +131,8 @@ public final class WifiConfigLockdownTest extends BaseDeviceOwnerTest {
                 ++notChangedCount;
             }
         }
-        assertWithMessage("number of unchanged configs").that(notChangedCount).isEqualTo(1);
+        // There might be auto-upgrade configs returned.
+        assertWithMessage("number of unchanged configs").that(notChangedCount).isAtLeast(1);
     }
 
     public void testRegularAppCannotRemoveDeviceOwnerConfig() throws Exception {
@@ -145,8 +148,9 @@ public final class WifiConfigLockdownTest extends BaseDeviceOwnerTest {
             }
         }
 
+        // There might be auto-upgrade configs returned.
         assertWithMessage("number of removed configs (the DO created one)")
-                .that(removeCount).isEqualTo(1);
+                .that(removeCount).isAtLeast(1);
 
         // Assert nothing has changed
         configs = mWifiConfigCreator.getConfiguredNetworks();
@@ -157,7 +161,8 @@ public final class WifiConfigLockdownTest extends BaseDeviceOwnerTest {
                 ++notChangedCount;
             }
         }
-        assertWithMessage("number of unchanged configs").that(notChangedCount).isEqualTo(1);
+        // There might be auto-upgrade configs returned.
+        assertWithMessage("number of unchanged configs").that(notChangedCount).isAtLeast(1);
     }
 
     private void startRegularActivity(String action, int netId, String ssid, int securityType,

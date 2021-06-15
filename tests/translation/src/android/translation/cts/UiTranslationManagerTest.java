@@ -233,6 +233,25 @@ public class UiTranslationManagerTest {
                     mTranslationServiceServiceWatcher.getService();
             translationService.awaitSessionDestroyed();
         });
+
+        // Test re-translating.
+        sTranslationReplier.addResponse(createViewsTranslationResponse(views, translatedText));
+        runWithShellPermissionIdentity(() -> {
+            manager.startTranslation(
+                    new TranslationSpec(ULocale.ENGLISH,
+                            TranslationSpec.DATA_FORMAT_TEXT),
+                    new TranslationSpec(ULocale.FRENCH,
+                            TranslationSpec.DATA_FORMAT_TEXT),
+                    views, contentCaptureContext.getActivityId(),
+                    new UiTranslationSpec.Builder().build());
+            SystemClock.sleep(UI_WAIT_TIMEOUT);
+            assertThat(helloText.getText()).isEqualTo(translatedText);
+
+            // Also make sure pausing still works.
+            manager.pauseTranslation(contentCaptureContext.getActivityId());
+            SystemClock.sleep(UI_WAIT_TIMEOUT);
+            assertThat(helloText.getText()).isEqualTo(originalText.toString());
+        });
     }
 
     @Test

@@ -31,6 +31,7 @@ public class RazerJunglecatBluetoothTest extends InputHidTestCase {
     // Simulates the behavior of Razer Junglecat gamepad.
     public RazerJunglecatBluetoothTest() {
         super(R.raw.razer_junglecat_register);
+        addDelayAfterSetup();
     }
 
     @Test
