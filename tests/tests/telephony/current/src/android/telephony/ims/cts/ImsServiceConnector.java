@@ -340,6 +340,10 @@ class ImsServiceConnector {
             if (ImsUtils.VDBG) {
                 Log.d(TAG, "getDefaultSmsApp result: " + result);
             }
+            if (result.isEmpty()) {
+                // No default SMS app.
+                return null;
+            }
             // There should only be one default sms app
             return result.get(0);
         }
