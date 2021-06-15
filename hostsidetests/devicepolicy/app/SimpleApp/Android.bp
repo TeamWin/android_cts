@@ -26,6 +26,7 @@ android_test_helper_app {
         "cts",
         "general-tests",
         "mts",
+        "sts",
     ],
     sdk_version: "current",
     // V4 signature required by Incremental installs
