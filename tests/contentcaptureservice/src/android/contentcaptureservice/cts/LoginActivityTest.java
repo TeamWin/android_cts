@@ -59,6 +59,8 @@ import android.view.contentcapture.ContentCaptureSessionId;
 import android.view.contentcapture.DataRemovalRequest;
 import android.view.contentcapture.DataRemovalRequest.LocusIdRequest;
 import android.view.inputmethod.BaseInputConnection;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputConnection;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -601,6 +603,58 @@ public class LoginActivityTest
 
         assertViewTextChanged(events, i, activity.mUsername.getAutofillId(), "Good morning");
         assertViewTextChanged(events, i + 1, activity.mPassword.getAutofillId(), "How are you");
+
+        activity.assertInitialViewsDisappeared(events, additionalEvents);
+    }
+
+    @Test
+    public void testComposingSpan_eventsForSpanChanges() throws Exception {
+        final CtsContentCaptureService service = enableService();
+        final ActivityWatcher watcher = startWatcher();
+
+        LoginActivity.onRootView((activity, rootView) -> ((LoginActivity) activity).mUsername
+                .setText(""));
+
+        final LoginActivity activity = launchActivity();
+        watcher.waitFor(RESUMED);
+
+        activity.syncRunOnUiThread(() -> {
+            activity.mUsername.setText("Android");
+            final InputConnection inputConnection =
+                    activity.mUsername.onCreateInputConnection(new EditorInfo());
+
+            // These 2 should be merged.
+            inputConnection.setComposingRegion(1, 2);
+            inputConnection.setComposingRegion(1, 3);
+
+            inputConnection.finishComposingText();
+            activity.mUsername.setText("end");
+            // TODO: Test setComposingText.
+        });
+
+        activity.finish();
+        watcher.waitFor(DESTROYED);
+
+        final Session session = service.getOnlyFinishedSession();
+        final ContentCaptureSessionId sessionId = session.id;
+
+        assertRightActivity(session, sessionId, activity);
+
+        final int additionalEvents = 5;
+        final List<ContentCaptureEvent> events = activity.assertInitialViewsAppeared(session,
+                additionalEvents);
+
+        final int i = LoginActivity.MIN_EVENTS;
+
+        // TODO: The first two events should probably be merged.
+        assertViewTextChanged(events, i, activity.mUsername.getAutofillId(), "Android");
+        assertNoComposingSpan(events.get(i).getText());
+        assertViewTextChanged(events, i + 1, activity.mUsername.getAutofillId(), "Android");
+        assertComposingSpan(events.get(i + 1).getText(), 1, 3);
+        assertViewTextChanged(events, i + 2, activity.mUsername.getAutofillId(), "Android");
+        assertNoComposingSpan(events.get(i + 2).getText());
+        assertViewTextChanged(events, i + 3, activity.mUsername.getAutofillId(), "end");
+        assertNoComposingSpan(events.get(i + 3).getText());
 
         activity.assertInitialViewsDisappeared(events, additionalEvents);
     }
