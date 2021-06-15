@@ -33,7 +33,7 @@ import static android.accessibilityservice.cts.utils.GestureUtils.isAtPoint;
 import static android.accessibilityservice.cts.utils.GestureUtils.longClick;
 import static android.accessibilityservice.cts.utils.GestureUtils.path;
 import static android.accessibilityservice.cts.utils.GestureUtils.times;
-import static android.view.KeyCharacterMap.VIRTUAL_KEYBOARD;
+import static android.view.InputDevice.ACCESSIBILITY_DEVICE_ID;
 
 import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
@@ -174,7 +174,7 @@ public class AccessibilityGestureDispatchTest {
 
         // Verify other MotionEvent fields in this test to make sure they get initialized.
         assertEquals(0, clickDown.getActionIndex());
-        assertEquals(VIRTUAL_KEYBOARD, clickDown.getDeviceId());
+        assertEquals(ACCESSIBILITY_DEVICE_ID, clickDown.getDeviceId());
         assertEquals(0, clickDown.getEdgeFlags());
         assertEquals(1F, clickDown.getXPrecision(), 0F);
         assertEquals(1F, clickDown.getYPrecision(), 0F);
