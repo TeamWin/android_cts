@@ -37,6 +37,8 @@ import android.os.ResultReceiver;
 import android.os.ServiceManager;
 import android.view.IWindowManager;
 
+import com.android.compatibility.common.util.PollingCheck;
+
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
@@ -80,6 +82,27 @@ public class CloseSystemDialogsTestService extends Service {
 
     private class Binder extends ICloseSystemDialogsTestsService.Stub {
         private final Context mContext = CloseSystemDialogsTestService.this;
+
+        /** Checks that it can call @hide methods. */
+        @Override
+        public boolean waitUntilReady(long timeoutMs) {
+            try {
+                PollingCheck.check("Can't call @hide methods", timeoutMs, () -> {
+                    try {
+                        // Any method suffices since IWindowManager is @hide
+                        mWindowManager.isRotationFrozen();
+                        return true;
+                    } catch (NoSuchMethodError e) {
+                        return false;
+                    }
+                });
+                return true;
+            } catch (AssertionError e) {
+                return false;
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
 
         @Override
         public void sendCloseSystemDialogsBroadcast() {
