@@ -768,9 +768,119 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
             }
         }
 
-        // there's no good way to compare two MediaFormats, so compare their string
-        // representation
-        return f1.toString().equals(f2.toString());
+        // look for f2 (the new) being a superset (>=) of f1 (the original)
+        // ensure that all of our fields in f1 appear in f2 with the same
+        // value. We allow f2 to contain extra fields.
+        Set<String> keys = f1.getKeys();
+        for (String key: keys) {
+            if (key == null) {
+                continue;
+            }
+            if (!f2.containsKey(key)) {
+                return false;
+            }
+            int f1Type = f1.getValueTypeForKey(key);
+            if (f1Type != f2.getValueTypeForKey(key)) {
+                return false;
+            }
+            switch (f1Type) {
+                case MediaFormat.TYPE_INTEGER:
+                    int f1Int = f1.getInteger(key);
+                    int f2Int = f2.getInteger(key);
+                    if (f1Int != f2Int) {
+                        return false;
+                    }
+                    break;
+                case MediaFormat.TYPE_LONG:
+                    long f1Long = f1.getLong(key);
+                    long f2Long = f2.getLong(key);
+                    if (f1Long != f2Long) {
+                        return false;
+                    }
+                    break;
+                case MediaFormat.TYPE_FLOAT:
+                    float f1Float = f1.getFloat(key);
+                    float f2Float = f2.getFloat(key);
+                    if (f1Float != f2Float) {
+                        return false;
+                    }
+                    break;
+                case MediaFormat.TYPE_STRING:
+                    String f1String = f1.getString(key);
+                    String f2String = f2.getString(key);
+                    if (!f1String.equals(f2String)) {
+                        return false;
+                    }
+                    break;
+                case MediaFormat.TYPE_BYTE_BUFFER:
+                    ByteBuffer f1ByteBuffer = f1.getByteBuffer(key);
+                    ByteBuffer f2ByteBuffer = f2.getByteBuffer(key);
+                    if (!f1ByteBuffer.equals(f2ByteBuffer)) {
+                        return false;
+                    }
+                    break;
+                default:
+                    return false;
+            }
+        }
+
+        // repeat for getFeatures
+        // (which we don't use in this test, but include for completeness)
+        Set<String> features = f1.getFeatures();
+        for (String key: features) {
+            if (key == null) {
+                continue;
+            }
+            if (!f2.containsKey(key)) {
+                return false;
+            }
+            int f1Type = f1.getValueTypeForKey(key);
+            if (f1Type != f2.getValueTypeForKey(key)) {
+                return false;
+            }
+            switch (f1Type) {
+                case MediaFormat.TYPE_INTEGER:
+                    int f1Int = f1.getInteger(key);
+                    int f2Int = f2.getInteger(key);
+                    if (f1Int != f2Int) {
+                        return false;
+                    }
+                    break;
+                case MediaFormat.TYPE_LONG:
+                    long f1Long = f1.getLong(key);
+                    long f2Long = f2.getLong(key);
+                    if (f1Long != f2Long) {
+                        return false;
+                    }
+                    break;
+                case MediaFormat.TYPE_FLOAT:
+                    float f1Float = f1.getFloat(key);
+                    float f2Float = f2.getFloat(key);
+                    if (f1Float != f2Float) {
+                        return false;
+                    }
+                    break;
+                case MediaFormat.TYPE_STRING:
+                    String f1String = f1.getString(key);
+                    String f2String = f2.getString(key);
+                    if (!f1String.equals(f2String)) {
+                        return false;
+                    }
+                    break;
+                case MediaFormat.TYPE_BYTE_BUFFER:
+                    ByteBuffer f1ByteBuffer = f1.getByteBuffer(key);
+                    ByteBuffer f2ByteBuffer = f2.getByteBuffer(key);
+                    if (!f1ByteBuffer.equals(f2ByteBuffer)) {
+                        return false;
+                    }
+                    break;
+                default:
+                    return false;
+            }
+        }
+
+        // not otherwise disqualified
+        return true;
     }
 
     private static native boolean testMuxerNative(int in, long inoffset, long insize,
