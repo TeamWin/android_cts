@@ -60,7 +60,7 @@ public class TestAppActivitiesTest {
     @Test
     public void query_matchesActivity_returnsActivity() {
         TestAppActivityReference activity = mTestAppInstance.activities().query()
-                    .whereActivity().className().isEqualTo(EXISTING_ACTIVITY)
+                    .whereActivity().activityClass().className().isEqualTo(EXISTING_ACTIVITY)
                     .get();
 
         assertThat(activity).isNotNull();
@@ -69,12 +69,12 @@ public class TestAppActivitiesTest {
     @Test
     public void query_matchesPreviouslyReturnedActivity_throwsException() {
         mTestAppInstance.activities().query()
-                .whereActivity().className().isEqualTo(EXISTING_ACTIVITY)
+                .whereActivity().activityClass().className().isEqualTo(EXISTING_ACTIVITY)
                 .get();
 
         assertThrows(IllegalStateException.class, () ->
                 mTestAppInstance.activities().query()
-                        .whereActivity().className().isEqualTo(EXISTING_ACTIVITY)
+                        .whereActivity().activityClass().className().isEqualTo(EXISTING_ACTIVITY)
                         .get());
     }
 
@@ -82,7 +82,8 @@ public class TestAppActivitiesTest {
     public void query_doesNotMatchActivity_throwsException() {
         assertThrows(IllegalStateException.class, () ->
                 mTestAppInstance.activities().query()
-                        .whereActivity().className().isEqualTo(NON_EXISTING_ACTIVITY)
+                        .whereActivity().activityClass().className()
+                            .isEqualTo(NON_EXISTING_ACTIVITY)
                         .get());
     }
 
@@ -96,14 +97,14 @@ public class TestAppActivitiesTest {
     @Test
     public void query_matchesActivityPreviouslyReturnedByDifferentInstance_returnsActivity() {
         mTestAppInstance.activities().query()
-                .whereActivity().className().isEqualTo(EXISTING_ACTIVITY)
+                .whereActivity().activityClass().className().isEqualTo(EXISTING_ACTIVITY)
                 .get();
 
         TestAppInstanceReference testAppInstance2 = sTestApp.instance(sUser);
 
         assertThat(
                 testAppInstance2.activities().query()
-                        .whereActivity().className().isEqualTo(EXISTING_ACTIVITY)
+                        .whereActivity().activityClass().className().isEqualTo(EXISTING_ACTIVITY)
                         .get()).isNotNull();
     }
 }

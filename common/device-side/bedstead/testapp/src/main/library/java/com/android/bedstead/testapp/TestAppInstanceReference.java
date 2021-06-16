@@ -20,6 +20,7 @@ import android.content.BroadcastReceiver;
 import android.content.IntentFilter;
 
 import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.packages.ProcessReference;
 import com.android.bedstead.nene.users.UserReference;
 
@@ -203,7 +204,11 @@ public final class TestAppInstanceReference implements AutoCloseable, Connection
 
         ProcessReference process = mTestApp.reference().runningProcess(mUser);
         if (process != null) {
-            process.kill();
+            try {
+                process.kill();
+            } catch (NeneException e) {
+                throw new NeneException("Error killing process... process is " + process(), e);
+            }
         }
 
         return this;

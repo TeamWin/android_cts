@@ -68,7 +68,7 @@ public final class TestAppQueryBuilder implements Queryable {
     }
 
     private boolean matches(TestAppDetails details) {
-        if (!mPackageName.matches(details.mPackageName)) {
+        if (!StringQueryHelper.matches(mPackageName, details.mPackageName)) {
             return false;
         }
 

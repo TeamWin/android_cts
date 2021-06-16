@@ -50,6 +50,11 @@ public final class ActivityQueryHelper<E extends Queryable> implements ActivityQ
 
     @Override
     public boolean matches(ActivityInfo value) {
-        return mActivityClassQueryHelper.matches(value) && mExportedQueryHelper.matches(value.exported());
+        return mActivityClassQueryHelper.matches(value)
+                && mExportedQueryHelper.matches(value.exported());
+    }
+
+    public static boolean matches(ActivityQueryHelper<?> activityQueryHelper, ActivityInfo value) {
+        return activityQueryHelper.matches(value);
     }
 }

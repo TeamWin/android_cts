@@ -49,4 +49,8 @@ public final class StringQueryHelper<E extends Queryable>
 
         return true;
     }
+
+    public static boolean matches(StringQueryHelper<?> stringQueryHelper, String value) {
+        return stringQueryHelper.matches(value);
+    }
 }

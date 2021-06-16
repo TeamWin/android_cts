@@ -470,7 +470,8 @@ public class LockTaskTest {
             // TODO(b/189327037): Replace with more direct integration between TestApp and EventLib
             EventLogs<ActivityDestroyedEvent> events =
                     ActivityDestroyedEvent.queryPackage(sTestApp.packageName())
-                    .whereActivity().className().isEqualTo(activity.activity().component().className());
+                    .whereActivity().activityClass().className().isEqualTo(
+                            activity.activity().component().className());
             assertThat(events.poll()).isNotNull();
             assertThat(sTestApis.activities().foregroundActivity()).isNotEqualTo(
                     activity.activity().component());
@@ -496,7 +497,8 @@ public class LockTaskTest {
             // TODO(b/189327037): Replace with more direct integration between TestApp and EventLib
             EventLogs<ActivityDestroyedEvent> events =
                     ActivityDestroyedEvent.queryPackage(sTestApp.packageName())
-                            .whereActivity().className().isEqualTo(activity.activity().component().className());
+                            .whereActivity().activityClass().className().isEqualTo(
+                                    activity.activity().component().className());
             assertThat(events.poll()).isNotNull();
             assertThat(sTestApis.activities().foregroundActivity()).isNotEqualTo(
                     activity.activity().component());
@@ -528,7 +530,7 @@ public class LockTaskTest {
                 // TODO(b/189327037): Replace with more direct integration between TestApp and EventLib
                 EventLogs<ActivityDestroyedEvent> events =
                         ActivityDestroyedEvent.queryPackage(sSecondTestApp.packageName())
-                                .whereActivity().className().isEqualTo(
+                                .whereActivity().activityClass().className().isEqualTo(
                                 activity2.activity().component().className());
                 assertThat(events.poll()).isNotNull();
                 assertThat(sTestApis.activities().getLockTaskModeState()).isEqualTo(
@@ -565,7 +567,8 @@ public class LockTaskTest {
 
             EventLogs<ActivityStartedEvent> events =
                     ActivityStartedEvent.queryPackage(sSecondTestApp.packageName())
-                            .whereActivity().className().isEqualTo(secondActivity.component().className());
+                            .whereActivity().activityClass().className().isEqualTo(
+                                    secondActivity.component().className());
             assertThat(events.poll()).isNotNull();
             assertThat(sTestApis.activities().foregroundActivity()).isEqualTo(secondActivity.component());
         } finally {

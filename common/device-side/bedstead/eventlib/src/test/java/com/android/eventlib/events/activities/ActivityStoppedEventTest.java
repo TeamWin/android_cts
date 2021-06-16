@@ -55,7 +55,7 @@ public final class ActivityStoppedEventTest {
 
         EventLogs<ActivityStoppedEvent> eventLogs =
                 ActivityStoppedEvent.queryPackage(sContext.getPackageName())
-                        .whereActivity().className().isEqualTo(ACTIVITY_CLASS_NAME);
+                        .whereActivity().activityClass().className().isEqualTo(ACTIVITY_CLASS_NAME);
 
         assertThat(eventLogs.get().activity().className()).isEqualTo(ACTIVITY_CLASS_NAME);
     }
@@ -71,7 +71,7 @@ public final class ActivityStoppedEventTest {
 
         EventLogs<ActivityStoppedEvent> eventLogs =
                 ActivityStoppedEvent.queryPackage(sContext.getPackageName())
-                        .whereActivity().className().isEqualTo(ACTIVITY_CLASS_NAME);
+                        .whereActivity().activityClass().className().isEqualTo(ACTIVITY_CLASS_NAME);
 
         assertThat(eventLogs.get().activity().className()).isEqualTo(ACTIVITY_CLASS_NAME);
     }

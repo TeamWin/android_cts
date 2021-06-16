@@ -18,6 +18,7 @@ package com.android.bedstead.testapp;
 
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.util.Log;
 
 import com.android.bedstead.nene.TestApis;
 import com.android.queryable.info.ActivityInfo;
@@ -33,11 +34,10 @@ public final class TestAppActivities {
     private static final TestApis sTestApis = new TestApis();
 
     final TestAppInstanceReference mInstance;
-    Set<ActivityInfo> mActivities = new HashSet<>();
+    private Set<ActivityInfo> mActivities = null;
 
     static TestAppActivities create(TestAppInstanceReference instance) {
         TestAppActivities activities = new TestAppActivities(instance);
-        activities.initActivities();
         return activities;
     }
 
@@ -46,19 +46,30 @@ public final class TestAppActivities {
         mInstance = instance;
     }
 
-    private void initActivities() {
+    Set<ActivityInfo> activities() {
+        if (mActivities != null) {
+            return mActivities;
+        }
+
         mActivities = new HashSet<>();
 
         PackageManager p = sTestApis.context().instrumentedContext().getPackageManager();
         try {
             PackageInfo packageInfo = p.getPackageInfo(mInstance.testApp().packageName(), /* flags= */ PackageManager.GET_ACTIVITIES);
             for (android.content.pm.ActivityInfo activityInfo : packageInfo.activities) {
-                mActivities.add(
-                        com.android.queryable.info.ActivityInfo.builder(activityInfo).build());
+                if (activityInfo.name.startsWith("androidx")) {
+                    // Special case: androidx adds non-logging activities
+                    continue;
+                }
+
+                mActivities.add(com.android.queryable.info.ActivityInfo.builder(
+                        activityInfo).build());
             }
         } catch (PackageManager.NameNotFoundException e) {
             throw new IllegalStateException("Cannot query activities if app is not installed");
         }
+
+        return mActivities;
     }
 
     /**

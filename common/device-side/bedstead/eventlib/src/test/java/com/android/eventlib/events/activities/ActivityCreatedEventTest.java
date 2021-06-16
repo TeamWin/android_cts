@@ -137,7 +137,7 @@ public final class ActivityCreatedEventTest {
 
         EventLogs<ActivityCreatedEvent> eventLogs =
                 ActivityCreatedEvent.queryPackage(sContext.getPackageName())
-                        .whereActivity().className().isEqualTo(ACTIVITY_CLASS_NAME);
+                        .whereActivity().activityClass().className().isEqualTo(ACTIVITY_CLASS_NAME);
 
         assertThat(eventLogs.get().activity().className()).isEqualTo(ACTIVITY_CLASS_NAME);
     }
@@ -153,7 +153,7 @@ public final class ActivityCreatedEventTest {
 
         EventLogs<ActivityCreatedEvent> eventLogs =
                 ActivityCreatedEvent.queryPackage(sContext.getPackageName())
-                        .whereActivity().className().isEqualTo(ACTIVITY_CLASS_NAME);
+                        .whereActivity().activityClass().className().isEqualTo(ACTIVITY_CLASS_NAME);
 
         assertThat(eventLogs.get().activity().className()).isEqualTo(ACTIVITY_CLASS_NAME);
     }
