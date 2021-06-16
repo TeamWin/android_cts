@@ -56,35 +56,23 @@ def manual_capture_request(sensitivity,
     its_session_utils.device.do_capture function.
   """
   req = {
-      'android.control.captureIntent':
-          6,
-      'android.control.mode':
-          0,
-      'android.control.aeMode':
-          0,
-      'android.control.awbMode':
-          0,
-      'android.control.afMode':
-          0,
-      'android.control.effectMode':
-          0,
-      'android.sensor.sensitivity':
-          sensitivity,
-      'android.sensor.exposureTime':
-          exp_time,
-      'android.colorCorrection.mode':
-          0,
+      'android.control.captureIntent': 6,
+      'android.control.mode': 0,
+      'android.control.aeMode': 0,
+      'android.control.awbMode': 0,
+      'android.control.afMode': 0,
+      'android.control.effectMode': 0,
+      'android.sensor.sensitivity': sensitivity,
+      'android.sensor.exposureTime': exp_time,
+      'android.colorCorrection.mode': 0,
       'android.colorCorrection.transform':
           int_to_rational([1, 0, 0, 0, 1, 0, 0, 0, 1]),
       'android.colorCorrection.gains': [1, 1, 1, 1],
-      'android.lens.focusDistance':
-          f_distance,
-      'android.tonemap.mode':
-          1,
-      'android.shading.mode':
-          1,
-      'android.lens.opticalStabilizationMode':
-          0
+      'android.lens.focusDistance': f_distance,
+      'android.tonemap.mode': 1,
+      'android.shading.mode': 1,
+      'android.lens.opticalStabilizationMode': 0,
+      'android.control.videoStabilizationMode': 0,
   }
   if linear_tonemap:
     if props is None:
