@@ -4100,9 +4100,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
      * Test that {@link WifiManager#is60GHzBandSupported()} throws UnsupportedOperationException
      * if the release is older than S.
      */
-    // TODO(b/167575586): Wait for S SDK finalization before changing
-    // to `maxSdkVersion = Build.VERSION_CODES.R`
-    @SdkSuppress(maxSdkVersion = -1, codeName = "REL")
+    @SdkSuppress(maxSdkVersion = Build.VERSION_CODES.R)
     public void testIs60GhzBandSupportedOnROrOlder() throws Exception {
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported
@@ -4447,9 +4445,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
      * {@link WifiManager#getAllowedChannels(int, int)}
      * throws UnsupportedOperationException if the release is older than S.
      */
-    // TODO(b/167575586): Wait for S SDK finalization before changing
-    // to `maxSdkVersion = Build.VERSION_CODES.R`
-    @SdkSuppress(maxSdkVersion = -1, codeName = "REL")
+    @SdkSuppress(maxSdkVersion = Build.VERSION_CODES.R)
     public void testGetAllowedUsableChannelsOnROrOlder() throws Exception {
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported
