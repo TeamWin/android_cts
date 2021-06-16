@@ -29,7 +29,6 @@ import android.support.test.uiautomator.UiObject2
 import androidx.test.InstrumentationRegistry
 import com.android.compatibility.common.util.LogcatInspector
 import com.android.compatibility.common.util.SystemUtil.eventually
-import com.android.compatibility.common.util.SystemUtil.runShellCommand
 import com.android.compatibility.common.util.SystemUtil.runShellCommandOrThrow
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
 import com.android.compatibility.common.util.ThrowingSupplier
@@ -37,7 +36,6 @@ import com.android.compatibility.common.util.UiAutomatorUtils
 import com.android.compatibility.common.util.click
 import com.android.compatibility.common.util.depthFirstSearch
 import com.android.compatibility.common.util.textAsString
-import org.hamcrest.CoreMatchers
 import org.hamcrest.Matcher
 import org.hamcrest.Matchers
 import org.junit.Assert.assertThat
@@ -139,9 +137,9 @@ fun awaitAppState(pkg: String, stateMatcher: Matcher<Int>) {
 }
 
 fun startApp(packageName: String) {
-    assertThat(
-        runShellCommand("monkey -p $packageName -c android.intent.category.LAUNCHER 1"),
-        CoreMatchers.containsString("Events injected: 1"))
+    val context = InstrumentationRegistry.getTargetContext()
+    val intent = context.packageManager.getLaunchIntentForPackage(packageName)
+    context.startActivity(intent)
     awaitAppState(packageName, Matchers.lessThanOrEqualTo(IMPORTANCE_TOP_SLEEPING))
     waitForIdle()
 }
