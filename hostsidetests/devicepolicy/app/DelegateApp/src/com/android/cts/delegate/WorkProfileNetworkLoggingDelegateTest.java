@@ -23,21 +23,14 @@ import static com.google.common.truth.Truth.assertThat;
 import static junit.framework.Assert.fail;
 
 import android.app.admin.ConnectEvent;
-import android.app.admin.DevicePolicyManager;
 import android.app.admin.DnsEvent;
 import android.app.admin.NetworkEvent;
-import android.content.Context;
-import android.support.test.uiautomator.UiDevice;
 import android.util.Log;
-
-import androidx.test.InstrumentationRegistry;
-import androidx.test.runner.AndroidJUnit4;
 
 import com.google.common.truth.Truth;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -49,8 +42,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
-@RunWith(AndroidJUnit4.class)
-public class WorkProfileNetworkLoggingDelegateTest {
+public class WorkProfileNetworkLoggingDelegateTest extends BaseTestCase{
 
     private static final String TAG = "WorkProfileNetworkLoggingDelegateTest";
     private static final String CTS_APP_PACKAGE_NAME = "com.android.cts.delegate";
@@ -77,15 +69,8 @@ public class WorkProfileNetworkLoggingDelegateTest {
             "google.de"
     };
 
-    private Context mContext;
-    private DevicePolicyManager mDpm;
-    private UiDevice mDevice;
-
     @Before
     public void setUp() {
-        mContext = InstrumentationRegistry.getContext();
-        mDpm = mContext.getSystemService(DevicePolicyManager.class);
-        mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         DelegateTestUtils.DelegatedLogsReceiver.sBatchCountDown = new CountDownLatch(1);
     }
 

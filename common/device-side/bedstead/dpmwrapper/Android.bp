@@ -27,8 +27,8 @@ java_library {
     srcs: [
         "src/main/java/**/*.java"
     ],
-    libs: [
+    static_libs: [
         "androidx.localbroadcastmanager_localbroadcastmanager",
-        "mockito",
+        "mockito-target-minus-junit4",
     ],
 }

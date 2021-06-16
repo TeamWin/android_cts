@@ -14,29 +14,13 @@
  * limitations under the License.
  */
 
-package {
-    default_applicable_licenses: ["Android-Apache-2.0"],
-}
+#include <sys/cdefs.h>
 
-android_test_helper_app {
-    name: "IncrementalAppErrorStatsTestsHelper",
-    defaults: ["cts_defaults"],
-    platform_apis: true,
-    min_sdk_version: "28",
-    srcs: [
-        "src/**/*.java",
-    ],
-    libs: [
-        "android.test.runner",
-        "junit",
-    ],
-    static_libs: [
-        "ctstestrunner-axt",
-        "compatibility-device-util-axt",
-        "androidx.legacy_legacy-support-v4",
-        "androidx.test.rules",
-        "cts-net-utils",
-        "apache-commons-compress",
-    ],
-    compile_multilib: "both",
+// Some apps ship DSOs with a main function, and it works because the main function in app_process
+// isn't exported. Ensure that this keeps working. (http://b/190100879).
+//
+// This function is in a separate C++ file to try to guard against the -fno-semantic-interposition
+// optimization that Clang enables by default.
+extern "C" int main(int argc __unused, char* argv[] __unused) {
+  return 42;
 }

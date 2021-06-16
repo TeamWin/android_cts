@@ -18,6 +18,7 @@ package android.car.cts.powerpolicy;
 
 import com.android.tradefed.log.LogUtil.CLog;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -132,6 +133,23 @@ public final class PowerPolicyDef {
         PowerComponent[] disabledComps = PowerComponent.asComponentArray(disables);
 
         return new PowerPolicyDef(policyId, enabledComps, disabledComps);
+    }
+
+    public static PowerPolicyDef createWithComponentOff(String component)
+            throws Exception {
+        PowerComponent removingComp = PowerComponent.valueOf(component);
+
+        ArrayList<PowerComponent> enableList = new ArrayList<PowerComponent>(
+                Arrays.asList(ComponentList.ALL_COMPONENTS));
+        if (!enableList.remove(removingComp)) {
+            throw new IllegalArgumentException(component + " is not in the all list");
+        }
+
+        PowerComponent[] enables = enableList.toArray(new PowerComponent[0]);
+        PowerComponent[] disables = {removingComp};
+        String policyId = component + "_disable";
+
+        return new PowerPolicyDef(policyId, enables, disables);
     }
 
     private static boolean search(String[] strList, String str) {

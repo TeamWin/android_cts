@@ -350,7 +350,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     /**
      * General instructions to add a new delegation test:
      * 1. Test primary delegation functionalitiy
-     *    Implment the delegate's positive/negate functionaility tests in a new test class
+     *    Implement the delegate's positive/negate functionaility tests in a new test class
      *    in CtsDelegateApp.apk. Main entry point are {@code testCanAccessApis} and
      *    {@code testCannotAccessApis}. Once implemented, add the delegation scope and the test
      *    class name to {@link #getDelegationScopes}, {@link #getDelegationTests} to make the test
@@ -371,9 +371,13 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     @Test
     public void testDelegation() throws Exception {
         // Install relevant apps.
-        installAppAsUser(DELEGATE_APP_APK, mUserId);
+        installDelegateApp();
         installAppAsUser(TEST_APP_APK, mUserId);
         installAppAsUser(APP_RESTRICTIONS_TARGET_APP_APK, mUserId);
+        if (isHeadlessSystemUserMode()) {
+            installAppAsUser(TEST_APP_APK, mDeviceOwnerUserId);
+            installAppAsUser(APP_RESTRICTIONS_TARGET_APP_APK, mDeviceOwnerUserId);
+        }
 
         try {
             final Map<String, DevicePolicyEventWrapper[]> delegationTests = getDelegationTests();
@@ -398,6 +402,10 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             // Remove any remaining delegations.
             setDelegatedScopes(DELEGATE_APP_PKG, null);
         }
+    }
+
+    protected void installDelegateApp() throws Exception {
+        installAppAsUser(DELEGATE_APP_APK, mUserId);
     }
 
     @Test
