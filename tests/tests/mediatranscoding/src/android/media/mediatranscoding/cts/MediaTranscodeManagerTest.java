@@ -395,6 +395,9 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
 
     // Enable this after fixing b/175641397
     public void testHevcTranscoding1080PVideo1FrameWithAudio() throws Exception {
+        if (shouldSkip()) {
+            return;
+        }
         transcodeFile(resourceToUri(mContext, R.raw.Video_HEVC_1Frame_Audio,
                 "Video_HEVC_1Frame_Audio.mp4"), false /* testFileDescriptor */);
     }
