@@ -82,11 +82,13 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
         mSupportsMultiUser = getDevice().getMaxNumberOfUsersSupported() > 1;
 
         removeTestPackages();
+        deviceDisableDeviceConfigSync();
     }
 
     @After
     public void tearDown() throws Exception {
         removeTestPackages();
+        deviceRestoreDeviceConfigSync();
     }
 
     @Test
@@ -426,6 +428,19 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
             }
         }
     }
+
+    private void deviceDisableDeviceConfigSync() throws Exception {
+        getDevice().executeShellCommand("device_config set_sync_disabled_for_tests persistent");
+        String res = getDevice().executeShellCommand("device_config is_sync_disabled_for_tests");
+        if (res == null || !res.contains("true")) {
+            CLog.w(TAG, "Could not disable device config for test");
+        }
+    }
+
+    private void deviceRestoreDeviceConfigSync() throws Exception {
+        getDevice().executeShellCommand("device_config set_sync_disabled_for_tests none");
+    }
+
 
     private void deviceSetupServerBasedParameter() throws Exception {
         getDevice().executeShellCommand("device_config put ota server_based_ror_enabled true");
