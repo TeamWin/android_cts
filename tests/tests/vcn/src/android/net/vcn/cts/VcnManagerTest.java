@@ -17,22 +17,31 @@
 package android.net.vcn.cts;
 
 import static android.content.pm.PackageManager.FEATURE_TELEPHONY;
+import static android.net.NetworkCapabilities.NET_CAPABILITY_NOT_METERED;
+import static android.net.NetworkCapabilities.NET_CAPABILITY_NOT_ROAMING;
+import static android.net.NetworkCapabilities.NET_CAPABILITY_NOT_VCN_MANAGED;
+import static android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED;
 import static android.telephony.SubscriptionManager.INVALID_SUBSCRIPTION_ID;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
 import android.annotation.NonNull;
 import android.annotation.Nullable;
 import android.content.Context;
 import android.net.ConnectivityManager;
+import android.net.InetAddresses;
 import android.net.LinkProperties;
 import android.net.NetworkCapabilities;
 import android.net.vcn.VcnConfig;
 import android.net.vcn.VcnManager;
+import android.net.vcn.cts.TestNetworkWrapper.VcnTestNetworkCallback.CapabilitiesChangedEvent;
 import android.os.ParcelUuid;
+import android.os.SystemClock;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.telephony.cts.util.CarrierPrivilegeUtils;
@@ -41,10 +50,13 @@ import android.telephony.cts.util.SubscriptionGroupUtils;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.net.Inet6Address;
+import java.util.Collections;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -58,11 +70,18 @@ public class VcnManagerTest extends VcnTestBase {
 
     private static final Executor INLINE_EXECUTOR = Runnable::run;
 
+    private static final int TEST_NETWORK_MTU = 1500;
+
+    private static final Inet6Address LOCAL_V6_ADDRESS =
+            (Inet6Address) InetAddresses.parseNumericAddress("2001:db8::2");
+
     private final Context mContext;
     private final VcnManager mVcnManager;
     private final SubscriptionManager mSubscriptionManager;
     private final TelephonyManager mTelephonyManager;
     private final ConnectivityManager mConnectivityManager;
+
+    private TestNetworkWrapper mTestNetworkWrapper;
 
     public VcnManagerTest() {
         mContext = InstrumentationRegistry.getContext();
@@ -75,6 +94,13 @@ public class VcnManagerTest extends VcnTestBase {
     @Before
     public void setUp() throws Exception {
         assumeTrue(mContext.getPackageManager().hasSystemFeature(FEATURE_TELEPHONY));
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        if (mTestNetworkWrapper != null) {
+            mTestNetworkWrapper.close();
+        }
     }
 
     private VcnConfig buildVcnConfig() {
@@ -268,5 +294,71 @@ public class VcnManagerTest extends VcnTestBase {
         final TestVcnStatusCallback callback = new TestVcnStatusCallback();
 
         mVcnManager.unregisterVcnStatusCallback(callback);
+    }
+
+    @Test
+    public void testVcnManagedNetworkLosesNotVcnManagedCapability() throws Exception {
+        final int subId = verifyAndGetValidDataSubId();
+
+        mTestNetworkWrapper =
+                new TestNetworkWrapper(
+                        mContext,
+                        TEST_NETWORK_MTU,
+                        true /* isMetered */,
+                        Collections.singleton(subId),
+                        LOCAL_V6_ADDRESS);
+        assertNotNull("No test network found", mTestNetworkWrapper.tunNetwork);
+
+        // Before the VCN starts, the test network should have NOT_VCN_MANAGED
+        verifyExpectedUnderlyingNetworkCapabilities(
+                true /* expectNotVcnManaged */,
+                false /* expectNotMetered */);
+
+        CarrierPrivilegeUtils.withCarrierPrivileges(mContext, subId, () -> {
+            SubscriptionGroupUtils.withEphemeralSubscriptionGroup(mContext, subId, (subGrp) -> {
+                mVcnManager.setVcnConfig(subGrp, buildVcnConfig());
+
+                // Once VCN starts, the test network should lose NOT_VCN_MANAGED
+                verifyExpectedUnderlyingNetworkCapabilities(
+                        false /* expectNotVcnManaged */,
+                        false /* expectNotMetered */);
+
+                mVcnManager.clearVcnConfig(subGrp);
+
+                // After the VCN tears down, the test network should have
+                // NOT_VCN_MANAGED again
+                verifyExpectedUnderlyingNetworkCapabilities(
+                        true /* expectNotVcnManaged */,
+                        false /* expectNotMetered */);
+            });
+        });
+    }
+
+    private void verifyExpectedUnderlyingNetworkCapabilities(
+            boolean expectNotVcnManaged, boolean expectNotMetered) throws Exception {
+        final long start = SystemClock.elapsedRealtime();
+
+        // Wait for NetworkCapabilities changes until they match the expected capabilities
+        do {
+            final CapabilitiesChangedEvent capabilitiesChangedEvent =
+                    mTestNetworkWrapper.vcnNetworkCallback.waitForOnCapabilitiesChanged();
+            assertNotNull("Failed to receive NetworkCapabilities change", capabilitiesChangedEvent);
+
+            final NetworkCapabilities nc = capabilitiesChangedEvent.networkCapabilities;
+            if (mTestNetworkWrapper.tunNetwork.equals(capabilitiesChangedEvent.network)
+                    && nc.hasCapability(NET_CAPABILITY_VALIDATED)
+                    && expectNotVcnManaged == nc.hasCapability(NET_CAPABILITY_NOT_VCN_MANAGED)
+                    && expectNotMetered == nc.hasCapability(NET_CAPABILITY_NOT_METERED)) {
+                return;
+            }
+        } while (SystemClock.elapsedRealtime() - start < TestNetworkWrapper.NETWORK_CB_TIMEOUT_MS);
+
+        fail(
+                "Expected update for network="
+                        + mTestNetworkWrapper.tunNetwork.getNetId()
+                        + ". Wanted NOT_VCN_MANAGED="
+                        + expectNotVcnManaged
+                        + " NOT_METERED="
+                        + expectNotMetered);
     }
 }
