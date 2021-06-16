@@ -25,6 +25,7 @@ import android.os.Looper;
 import android.util.Log;
 import android.view.Surface;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.LinkedList;
 
 /**
@@ -43,7 +44,7 @@ public class CodecState {
     private ByteBuffer[] mCodecInputBuffers;
     private ByteBuffer[] mCodecOutputBuffers;
     private int mTrackIndex;
-    private LinkedList<Integer> mAvailableInputBufferIndices;
+    private int mAvailableInputBufferIndex;
     private LinkedList<Integer> mAvailableOutputBufferIndices;
     private LinkedList<MediaCodec.BufferInfo> mAvailableOutputBufferInfos;
     private volatile long mPresentationTimeUs;
@@ -55,6 +56,8 @@ public class CodecState {
     private MediaFormat mOutputFormat;
     private NonBlockingAudioTrack mAudioTrack;
     private volatile OnFrameRenderedListener mOnFrameRenderedListener;
+    /** A list of reported rendered video frames' timestamps. */
+    private ArrayList<Long> mRenderedVideoFrameTimestampList;
 
     /**
      * Manages audio and video playback using MediaCodec and AudioTrack.
@@ -80,9 +83,10 @@ public class CodecState {
 
         mCodec = codec;
 
-        mAvailableInputBufferIndices = new LinkedList<Integer>();
+        mAvailableInputBufferIndex = -1;
         mAvailableOutputBufferIndices = new LinkedList<Integer>();
         mAvailableOutputBufferInfos = new LinkedList<MediaCodec.BufferInfo>();
+        mRenderedVideoFrameTimestampList = new ArrayList<Long>();
 
         mPresentationTimeUs = 0;
 
@@ -103,11 +107,10 @@ public class CodecState {
         mCodecOutputBuffers = null;
         mOutputFormat = null;
 
-        mAvailableInputBufferIndices.clear();
         mAvailableOutputBufferIndices.clear();
         mAvailableOutputBufferInfos.clear();
 
-        mAvailableInputBufferIndices = null;
+        mAvailableInputBufferIndex = -1;
         mAvailableOutputBufferIndices = null;
         mAvailableOutputBufferInfos = null;
 
@@ -148,12 +151,12 @@ public class CodecState {
     }
 
     public void flush() {
-        mAvailableInputBufferIndices.clear();
         if (!mTunneled || mIsAudio) {
             mAvailableOutputBufferIndices.clear();
             mAvailableOutputBufferInfos.clear();
         }
 
+        mAvailableInputBufferIndex = -1;
         mSawInputEOS = false;
         mSawOutputEOS = false;
 
@@ -163,6 +166,8 @@ public class CodecState {
         }
 
         mCodec.flush();
+        mPresentationTimeUs = 0;
+        mRenderedVideoFrameTimestampList = new ArrayList<Long>();
     }
 
     public boolean isEnded() {
@@ -174,17 +179,26 @@ public class CodecState {
      * It first reads data from {@link MediaExtractor} and pushes it into {@link MediaCodec};
      * it then dequeues buffer from {@link MediaCodec}, consumes it and pushes back to its own
      * buffer queue for next round reading data from {@link MediaExtractor}.
+     *
+     * Returns the timestamp of the queued frame, if any.
      */
-    public void doSomeWork() {
-        int indexInput = mCodec.dequeueInputBuffer(0 /* timeoutUs */);
-
-        if (indexInput != MediaCodec.INFO_TRY_AGAIN_LATER) {
-            mAvailableInputBufferIndices.add(indexInput);
+    public Long doSomeWork() {
+        // Extract input data, if relevant
+        Long sampleTime = null;
+        if (mAvailableInputBufferIndex == -1) {
+            int indexInput = mCodec.dequeueInputBuffer(0 /* timeoutUs */);
+            if (indexInput != MediaCodec.INFO_TRY_AGAIN_LATER) {
+                mAvailableInputBufferIndex = indexInput;
+            }
+        }
+        if (mAvailableInputBufferIndex != -1) {
+            sampleTime = feedInputBuffer(mAvailableInputBufferIndex);
+            if (sampleTime != null) {
+                mAvailableInputBufferIndex = -1;
+            }
         }
 
-        while (feedInputBuffer()) {
-        }
-
+        // Queue output data, if relevant
         if (mIsAudio || !mTunneled) {
             MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
             int indexOutput = mCodec.dequeueOutputBuffer(info, 0 /* timeoutUs */);
@@ -202,23 +216,30 @@ public class CodecState {
             while (drainOutputBuffer()) {
             }
         }
+
+        return sampleTime;
     }
 
-    /** Returns true if more input data could be fed. */
-    private boolean feedInputBuffer() throws MediaCodec.CryptoException, IllegalStateException {
-        if (mSawInputEOS || mAvailableInputBufferIndices.isEmpty()) {
-            return false;
+    /**
+     * Extracts some data from the configured MediaExtractor and feeds it to the configured
+     * MediaCodec.
+     *
+     * Returns the timestamp of the queued buffer, if any.
+     * Returns null once all data has been extracted and queued.
+     */
+    private Long feedInputBuffer(int inputBufferIndex)
+            throws MediaCodec.CryptoException, IllegalStateException {
+        if (mSawInputEOS || inputBufferIndex == -1) {
+            return null;
         }
 
         // stalls read if audio queue is larger than 2MB full so we will not occupy too much heap
         if (mLimitQueueDepth && mAudioTrack != null &&
                 mAudioTrack.getNumBytesQueued() > 2 * 1024 * 1024) {
-            return false;
+            return null;
         }
 
-        int index = mAvailableInputBufferIndices.peekFirst().intValue();
-
-        ByteBuffer codecData = mCodecInputBuffers[index];
+        ByteBuffer codecData = mCodecInputBuffers[inputBufferIndex];
 
         int trackIndex = mExtractor.getSampleTrackIndex();
 
@@ -234,7 +255,7 @@ public class CodecState {
                 Log.d(TAG, "sampleSize: " + sampleSize + " trackIndex:" + trackIndex +
                         " sampleTime:" + sampleTime + " sampleFlags:" + sampleFlags);
                 mSawInputEOS = true;
-                return false;
+                return null;
             }
 
             if (mTunneled && !mIsAudio) {
@@ -249,29 +270,25 @@ public class CodecState {
                 mExtractor.getSampleCryptoInfo(info);
 
                 mCodec.queueSecureInputBuffer(
-                        index, 0 /* offset */, info, sampleTime, 0 /* flags */);
+                        inputBufferIndex, 0 /* offset */, info, sampleTime, 0 /* flags */);
             } else {
                 mCodec.queueInputBuffer(
-                        index, 0 /* offset */, sampleSize, sampleTime, 0 /* flags */);
+                        inputBufferIndex, 0 /* offset */, sampleSize, sampleTime, 0 /* flags */);
             }
 
-            mAvailableInputBufferIndices.removeFirst();
             mExtractor.advance();
-
-            return true;
+            return sampleTime;
         } else if (trackIndex < 0) {
             Log.d(TAG, "saw input EOS on track " + mTrackIndex);
 
             mSawInputEOS = true;
 
             mCodec.queueInputBuffer(
-                    index, 0 /* offset */, 0 /* sampleSize */,
+                    inputBufferIndex, 0 /* offset */, 0 /* sampleSize */,
                     0 /* sampleTime */, MediaCodec.BUFFER_FLAG_END_OF_STREAM);
-
-            mAvailableInputBufferIndices.removeFirst();
         }
 
-        return false;
+        return null;
     }
 
     private void onOutputFormatChanged() {
@@ -392,6 +409,7 @@ public class CodecState {
             } else {
                  mPresentationTimeUs = presentationTimeUs;
             }
+            mRenderedVideoFrameTimestampList.add(presentationTimeUs);
         }
     }
 
@@ -403,15 +421,32 @@ public class CodecState {
         return mAudioTrack.getAudioTimeUs();
     }
 
-    public void process() {
+    /**
+     * If a video codec, returns the list of rendered frames' timestamps.
+     * Otherwise, returns an empty list.
+     */
+    public ArrayList<Long> getRenderedVideoFrameTimestampList() {
+        return new ArrayList<Long>(mRenderedVideoFrameTimestampList);
+    }
+
+    /** Process the attached {@link AudioTrack}, if any. */
+    public void processAudioTrack() {
         if (mAudioTrack != null) {
             mAudioTrack.process();
         }
     }
 
-    public void stop() {
+    /** Stop the attached {@link AudioTrack}, if any. */
+    public void stopAudioTrack() {
         if (mAudioTrack != null) {
             mAudioTrack.stop();
+        }
+    }
+
+    /** Start associated audio track, if any. */
+    public void playAudioTrack() {
+        if (mAudioTrack != null) {
+            mAudioTrack.play();
         }
     }
 

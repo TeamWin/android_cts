@@ -25,6 +25,7 @@ import android.util.Log;
 import android.view.SurfaceHolder;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -86,7 +87,7 @@ public class MediaCodecTunneledPlayer implements MediaTimeProvider {
                         if (mState == STATE_PLAYING) {
                             doSomeWork();
                             if (mAudioTrackState != null) {
-                                mAudioTrackState.process();
+                                mAudioTrackState.processAudioTrack();
                             }
                         }
                     }
@@ -305,7 +306,7 @@ public class MediaCodecTunneledPlayer implements MediaTimeProvider {
                 mState = STATE_PREPARING;
                 return true;
             } else if (mState != STATE_PAUSED) {
-                throw new IllegalStateException();
+                throw new IllegalStateException("Expected STATE_PAUSED, got " + mState);
             }
 
             for (CodecState state : mVideoCodecStates.values()) {
@@ -380,6 +381,22 @@ public class MediaCodecTunneledPlayer implements MediaTimeProvider {
 
             for (CodecState state : mAudioCodecStates.values()) {
                 state.flush();
+            }
+
+            for (CodecState state : mVideoCodecStates.values()) {
+                state.flush();
+            }
+        }
+    }
+
+    /**
+     * Flushes all the video codecs when the player is in stand-by.
+     */
+    public void videoFlush() {
+        Log.d(TAG, "videoFlush");
+        synchronized (mState) {
+            if (mState == STATE_PLAYING || mState == STATE_PREPARING) {
+                return;
             }
 
             for (CodecState state : mVideoCodecStates.values()) {
@@ -503,7 +520,72 @@ public class MediaCodecTunneledPlayer implements MediaTimeProvider {
         return (int)((positionUs + 500) / 1000);
     }
 
+    /**
+     * Returns the timestamp of the last written audio sample, in microseconds.
+     */
+    public long getAudioTrackPositionUs() {
+        if (mAudioTrackState == null) {
+            return 0;
+        }
+        return mAudioTrackState.getCurrentPositionUs();
+    }
+
+    /**
+     * Returns the ordered list of video frame timestamps rendered in tunnel mode.
+     *
+     * Note: This assumes there is at most one tunneled mode video codec running in the player.
+     */
+    public ArrayList<Long> getRenderedVideoFrameTimestampList() {
+        if (mVideoCodecStates == null) {
+            return new ArrayList<Long>();
+        }
+
+        ArrayList<Long> timestamps = null;
+        for (CodecState state : mVideoCodecStates.values()) {
+            timestamps = state.getRenderedVideoFrameTimestampList();
+            if (!timestamps.isEmpty())
+                break;
+            }
+        return timestamps;
+    }
+
+    /**
+     * When the player is on stand-by, tries to queue one frame worth of video per video codec.
+     *
+     * Returns arbitrarily the timestamp of any frame queued this way by one of the video codecs.
+     * Returns null if no video frame were queued.
+     */
+    public Long queueOneVideoFrame() {
+        Log.d(TAG, "queueOneVideoFrame");
+
+        if (mVideoCodecStates == null || !(mState == STATE_IDLE || mState == STATE_PAUSED)) {
+            return null;
+        }
+
+        Long result = null;
+        for (CodecState state : mVideoCodecStates.values()) {
+            Long timestamp = state.doSomeWork();
+            if (timestamp != null) {
+                result = timestamp;
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Resume playback when paused.
+     */
+    public void resume() {
+        Log.d(TAG, "resume");
+        if (mAudioTrackState == null || mState != STATE_PAUSED) {
+            return;
+        }
+        mAudioTrackState.playAudioTrack();
+        mState = STATE_PLAYING;
+    }
+
     public void setVideoPeek(boolean enable) {
+        Log.d(TAG, "setVideoPeek");
         if (mVideoCodecStates == null || !(mState == STATE_IDLE || mState == STATE_PAUSED)) {
             return;
         }
