@@ -27,6 +27,7 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.BugreportManager;
 import android.os.BugreportParams;
+import android.os.UserManager;
 import android.util.Pair;
 
 import androidx.test.InstrumentationRegistry;
@@ -36,6 +37,7 @@ import androidx.test.runner.AndroidJUnit4;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import static org.junit.Assume.assumeFalse;
 import org.junit.runner.RunWith;
 
 import java.util.concurrent.CountDownLatch;
@@ -65,6 +67,8 @@ public class BugreportManagerTest {
 
     @Before
     public void setup() {
+        assumeFalse("Bugreport cannot run in headless system user mode",
+                          UserManager.isHeadlessSystemUserMode());
         mContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         mBugreportManager = mContext.getSystemService(BugreportManager.class);
         mIsTv = mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK);
