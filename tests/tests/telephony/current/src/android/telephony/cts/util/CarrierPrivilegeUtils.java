@@ -133,7 +133,7 @@ public class CarrierPrivilegeUtils {
         return IccUtils.bytesToHexString(certHash);
     }
 
-    private static void changeCarrierPrivileges(Context c, int subId, boolean gain)
+    private static void changeCarrierPrivileges(Context c, int subId, boolean gain, boolean isShell)
             throws Exception {
         if (hasCarrierPrivileges(c, subId) == gain) {
             Log.w(TAG, "Carrier privileges already " + (gain ? "granted" : "revoked") + "; bug?");
@@ -156,10 +156,17 @@ public class CarrierPrivilegeUtils {
 
         try (CarrierPrivilegeReceiver receiver =
                 new CarrierPrivilegeReceiver(c, subId, certHash, gain)) {
-            runWithShellPermissionIdentity(() -> {
+            // If the caller is the shell, it's dangerous to adopt shell permission identity for
+            // the CarrierConfig override (as it will override the existing shell permissions).
+            if (isShell) {
                 configManager.overrideConfig(subId, carrierConfigs);
                 configManager.notifyConfigChangedForSubId(subId);
-            }, android.Manifest.permission.MODIFY_PHONE_STATE);
+            } else {
+                runWithShellPermissionIdentity(() -> {
+                    configManager.overrideConfig(subId, carrierConfigs);
+                    configManager.notifyConfigChangedForSubId(subId);
+                }, android.Manifest.permission.MODIFY_PHONE_STATE);
+            }
 
             receiver.waitForCarrierPrivilegeChanged();
         }
@@ -168,20 +175,31 @@ public class CarrierPrivilegeUtils {
     public static void withCarrierPrivileges(Context c, int subId, ThrowingRunnable action)
             throws Exception {
         try {
-            changeCarrierPrivileges(c, subId, true /* gain */);
+            changeCarrierPrivileges(c, subId, true /* gain */, false /* isShell */);
             action.runOrThrow();
         } finally {
-            changeCarrierPrivileges(c, subId, false /* lose */);
+            changeCarrierPrivileges(c, subId, false /* lose */, false /* isShell */);
+        }
+    }
+
+    /** Completes the provided action while assuming the caller is the Shell. */
+    public static void withCarrierPrivilegesForShell(Context c, int subId, ThrowingRunnable action)
+            throws Exception {
+        try {
+            changeCarrierPrivileges(c, subId, true /* gain */, true /* isShell */);
+            action.runOrThrow();
+        } finally {
+            changeCarrierPrivileges(c, subId, false /* lose */, true /* isShell */);
         }
     }
 
     public static <R> R withCarrierPrivileges(Context c, int subId, ThrowingSupplier<R> action)
             throws Exception {
         try {
-            changeCarrierPrivileges(c, subId, true /* gain */);
+            changeCarrierPrivileges(c, subId, true /* gain */, false /* isShell */);
             return action.getOrThrow();
         } finally {
-            changeCarrierPrivileges(c, subId, false /* lose */);
+            changeCarrierPrivileges(c, subId, false /* lose */, false /* isShell */);
         }
     }
 }
