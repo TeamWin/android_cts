@@ -99,6 +99,7 @@ public class CtsSyncAccountAccessOtherCertTestCases {
         assumeTrue(hasDataConnection());
         assumeTrue(hasNotificationSupport());
         assumeFalse(isRunningInVR());
+        assumeFalse(isWatch());
 
         // If running in a test harness the Account Manager never denies access to an account. Hence
         // the permission request will not trigger. b/72114924
