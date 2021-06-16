@@ -83,7 +83,7 @@ import com.google.common.io.BaseEncoding;
 @RunWith(BlobStoreTestRunner.class)
 public class BlobStoreManagerTest {
 
-    private static final long TIMEOUT_COMMIT_CALLBACK_SEC = 50;
+    private static final long TIMEOUT_COMMIT_CALLBACK_SEC = 100;
 
     private static final long TIMEOUT_BIND_SERVICE_SEC = 2;
 
