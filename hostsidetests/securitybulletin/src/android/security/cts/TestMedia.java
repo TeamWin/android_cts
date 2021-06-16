@@ -31,6 +31,9 @@ import java.util.regex.Pattern;
 import java.util.Arrays;
 import java.util.ArrayList;
 
+import static org.junit.Assume.*;
+import static org.hamcrest.CoreMatchers.*;
+
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class TestMedia extends SecurityTestCase {
 
@@ -221,6 +224,7 @@ public class TestMedia extends SecurityTestCase {
     @Test
     @SecurityTest(minPatchLevel = "2019-02")
     public void testPocCVE_2019_1988() throws Exception {
+        assumeThat(getDevice().getProperty("ro.config.low_ram"), not(is("true")));
         String inputFiles[] = {"cve_2019_1988.mp4"};
         AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2019-1988",
                 AdbUtils.TMP_PATH + inputFiles[0], inputFiles, AdbUtils.TMP_PATH, getDevice());
