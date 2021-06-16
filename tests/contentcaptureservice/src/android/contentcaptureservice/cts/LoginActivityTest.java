@@ -46,6 +46,7 @@ import android.contentcaptureservice.cts.CtsContentCaptureService.Session;
 import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
 import android.text.Editable;
+import android.text.Spannable;
 import android.util.ArraySet;
 import android.util.Log;
 import android.view.View;
@@ -552,8 +553,13 @@ public class LoginActivityTest
         final int i = LoginActivity.MIN_EVENTS;
 
         assertViewTextChanged(events, i, activity.mUsername.getAutofillId(), "Good");
+        assertComposingSpan(events.get(i).getText(), 0, 4);
         assertViewTextChanged(events, i + 1, activity.mUsername.getAutofillId(), "Good ");
+        assertNoComposingSpan(events.get(i + 1).getText());
         assertViewTextChanged(events, i + 2, activity.mUsername.getAutofillId(), "Good morning");
+        // TODO: Change how the appending works to more realistically test the case where only
+        // "morning" is in the composing state.
+        assertComposingSpan(events.get(i + 2).getText(), 0, 12);
 
         activity.assertInitialViewsDisappeared(events, additionalEvents);
     }
@@ -965,6 +971,19 @@ public class LoginActivityTest
                 .isEqualTo(1);
         assertWithMessage("wrong extras on context %s", context).that(extras.getString("DUDE"))
                 .isEqualTo("SWEET");
+    }
+
+    private void assertComposingSpan(CharSequence text, int start, int end) {
+        assertThat(text).isInstanceOf(Spannable.class);
+        Spannable sp = (Spannable) text;
+        assertThat(BaseInputConnection.getComposingSpanStart(sp)).isEqualTo(start);
+        assertThat(BaseInputConnection.getComposingSpanEnd(sp)).isEqualTo(end);
+    }
+
+    private void assertNoComposingSpan(CharSequence text) {
+        if (text instanceof Spannable) {
+            assertThat(BaseInputConnection.getComposingSpanStart((Spannable) text)).isLessThan(0);
+        }
     }
 
     // TODO(b/123540602): add moar test cases for different sessions:
