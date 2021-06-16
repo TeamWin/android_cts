@@ -15,17 +15,19 @@
  */
 package com.android.cts.delegate;
 
+import static android.app.admin.DeviceAdminReceiver.ACTION_NETWORK_LOGS_AVAILABLE;
+
 import static com.android.cts.delegate.DelegateTestUtils.assertExpectException;
 
 import static com.google.common.truth.Truth.assertThat;
 
 import android.app.admin.DevicePolicyManager;
-import android.content.Context;
-import android.support.test.uiautomator.UiDevice;
-import android.test.InstrumentationTestCase;
+import android.content.IntentFilter;
+import android.os.UserManager;
 import android.util.Log;
 
-import androidx.test.InstrumentationRegistry;
+import com.android.bedstead.dpmwrapper.TestAppHelper;
+import com.android.cts.delegate.DelegateTestUtils.DelegatedLogsReceiver;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -36,13 +38,9 @@ import java.util.concurrent.CountDownLatch;
  * Tests that a delegate app with DELEGATION_NETWORK_LOGGING is able to control and access
  * network logging.
  */
-public class NetworkLoggingDelegateTest extends InstrumentationTestCase {
+public final class NetworkLoggingDelegateTest extends BaseJUnit3TestCase {
 
     private static final String TAG = "NetworkLoggingDelegateTest";
-
-    private Context mContext;
-    private DevicePolicyManager mDpm;
-    private UiDevice mDevice;
 
     private static final String[] URL_LIST = {
             "example.edu",
@@ -55,15 +53,32 @@ public class NetworkLoggingDelegateTest extends InstrumentationTestCase {
             "google.de"
     };
 
+    // TODO(b/176993670): receiver needed to forward intents from device owner user to current user
+    // on headless system user mode. Might be removed once tests are refactor to use proper IPC.
+    private DelegatedLogsReceiver mReceiver;
+
     @Override
     protected void setUp() throws Exception {
         super.setUp();
 
-        mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
-        mContext = getInstrumentation().getContext();
-        mDpm = mContext.getSystemService(DevicePolicyManager.class);
-        DelegateTestUtils.DelegatedLogsReceiver.sBatchCountDown = new CountDownLatch(1);
+        if (UserManager.isHeadlessSystemUserMode()) {
+            mReceiver = new DelegatedLogsReceiver();
+            TestAppHelper.registerTestCaseReceiver(mContext, mReceiver,
+                    new IntentFilter(ACTION_NETWORK_LOGS_AVAILABLE));
+        }
+
+        DelegatedLogsReceiver.sBatchCountDown = new CountDownLatch(1);
     }
+
+    @Override
+    protected void tearDown() throws Exception {
+        super.tearDown();
+
+        if (mReceiver != null) {
+            TestAppHelper.unregisterTestCaseReceiver(mContext, mReceiver);
+        }
+    }
+
 
     public void testCanAccessApis() throws Throwable {
         assertThat(mDpm.getDelegatedScopes(null, mContext.getPackageName())).contains(
