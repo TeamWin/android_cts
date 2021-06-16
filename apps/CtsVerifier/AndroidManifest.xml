@@ -3005,7 +3005,8 @@
         <activity android:name=".notifications.BubbleActivity"
                   android:label="@string/bubble_activity_title"
                   android:exported="true"
-                  android:resizeableActivity="true">
+                  android:resizeableActivity="true"
+                  android:theme="@android:style/Theme.DeviceDefault.DayNight">
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
