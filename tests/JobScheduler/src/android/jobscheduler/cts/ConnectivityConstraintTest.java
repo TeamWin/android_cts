@@ -912,7 +912,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
     }
 
     /**
-     * Set Wifi connection to specific state , and block until we've verified
+     * Set Wifi connection to specific state, and block until we've verified
      * that we are in the state.
      * Taken from {@link android.net.http.cts.ApacheHttpClientTest}.
      */
