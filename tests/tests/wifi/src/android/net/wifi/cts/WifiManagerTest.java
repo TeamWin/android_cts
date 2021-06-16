@@ -87,10 +87,10 @@ import android.util.Log;
 import android.util.SparseArray;
 import android.util.SparseIntArray;
 
-import androidx.core.os.BuildCompat;
 import androidx.test.filters.SdkSuppress;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.FeatureUtil;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.PropertyUtil;
@@ -2070,7 +2070,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         // Bssid set dodesn't support for tethered hotspot
         SoftApConfiguration currentConfig = mWifiManager.getSoftApConfiguration();
         compareSoftApConfiguration(targetConfig, currentConfig);
-        if (BuildCompat.isAtLeastS()) {
+        if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S)) {
             assertTrue(currentConfig.isUserConfiguration());
         }
     }
@@ -2096,7 +2096,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                 testSoftApConfig.getAllowedClientList());
         assertEquals(currentConfig.getBlockedClientList(),
                 testSoftApConfig.getBlockedClientList());
-        if (BuildCompat.isAtLeastS()) {
+        if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S)) {
             assertEquals(currentConfig.getMacRandomizationSetting(),
                     testSoftApConfig.getMacRandomizationSetting());
             assertEquals(currentConfig.getChannels().toString(),
@@ -2158,7 +2158,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         final int[] bands = {SoftApConfiguration.BAND_2GHZ, SoftApConfiguration.BAND_5GHZ,
               SoftApConfiguration.BAND_6GHZ, SoftApConfiguration.BAND_60GHZ};
         SparseIntArray testBandsAndChannels = new SparseIntArray();
-        if (!BuildCompat.isAtLeastS()) {
+        if (!ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S)) {
             testBandsAndChannels.put(SoftApConfiguration.BAND_2GHZ, 1);
             return testBandsAndChannels;
         }
@@ -2376,7 +2376,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                 verifySetGetSoftApConfig(softApConfigBuilder.build());
             }
 
-            if (BuildCompat.isAtLeastS()) {
+            if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S)) {
                 softApConfigBuilder.setBridgedModeOpportunisticShutdownEnabled(false);
                 verifySetGetSoftApConfig(softApConfigBuilder.build());
             }
@@ -2416,7 +2416,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             SparseIntArray testBandsAndChannels = getAvailableBandAndChannelForTesting(
                     callback.getCurrentSoftApCapability());
 
-            if (BuildCompat.isAtLeastS()) {
+            if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S)) {
                 assertNotEquals(0, testBandsAndChannels.size());
             }
             boolean isSupportCustomizedMac = callback.getCurrentSoftApCapability()
@@ -2484,7 +2484,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                                 0 == callback.getCurrentSoftApInfo().getBandwidth() &&
                                 0 == callback.getCurrentSoftApInfo().getFrequency();
                     });
-            if (BuildCompat.isAtLeastS()) {
+            if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S)) {
                 assertEquals(callback.getCurrentSoftApInfo().getBssid(), null);
                 assertEquals(ScanResult.WIFI_STANDARD_UNKNOWN,
                         callback.getCurrentSoftApInfo().getWifiStandard());
@@ -3498,7 +3498,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
      * are valid responses.
      */
     public void testIs60GhzBandSupported() throws Exception {
-        if (!(WifiFeature.isWifiSupported(getContext()) && BuildCompat.isAtLeastS())) {
+        if (!(WifiFeature.isWifiSupported(getContext())
+                && ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S))) {
             // skip the test if WiFi is not supported
             return;
         }
