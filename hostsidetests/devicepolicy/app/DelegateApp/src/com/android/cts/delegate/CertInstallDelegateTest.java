@@ -24,34 +24,23 @@ import static com.android.cts.devicepolicy.TestCertificates.TEST_KEY;
 
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
-import android.content.Context;
-import android.test.InstrumentationTestCase;
 import android.util.Base64;
 import android.util.Base64InputStream;
 
+import com.android.cts.devicepolicy.ParcelablePrivateKey;
+
 import java.io.ByteArrayInputStream;
-import java.security.KeyFactory;
 import java.security.PrivateKey;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
-import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.List;
 
 /**
  * Tests that a package other than the DPC can manage app restrictions if allowed by the DPC
  * via {@link DevicePolicyManager#setApplicationRestrictionsManagingPackage(ComponentName, String)}
  */
-public class CertInstallDelegateTest extends InstrumentationTestCase {
-    private DevicePolicyManager mDpm;
-
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-
-        Context context = getInstrumentation().getContext();
-        mDpm = context.getSystemService(DevicePolicyManager.class);
-    }
+public class CertInstallDelegateTest extends BaseJUnit3TestCase {
 
     public void testCannotAccessApis() {
         assertFalse(amICertInstallDelegate());
@@ -89,10 +78,8 @@ public class CertInstallDelegateTest extends InstrumentationTestCase {
         // Exercise installKeyPair.
         final String alias = "delegated-cert-installer-test-key";
 
-        PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(
+        PrivateKey privatekey = new ParcelablePrivateKey("RSA",
                 Base64.decode(TEST_KEY, Base64.DEFAULT));
-        KeyFactory kf = KeyFactory.getInstance("RSA");
-        PrivateKey privatekey = kf.generatePrivate(keySpec);
 
         Certificate certificate = CertificateFactory.getInstance("X.509").generateCertificate(
                 new Base64InputStream(new ByteArrayInputStream(TEST_CERT.getBytes()),
