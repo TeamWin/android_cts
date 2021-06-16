@@ -18,10 +18,12 @@ package android.net.vcn.cts;
 
 import static android.content.pm.PackageManager.FEATURE_TELEPHONY;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_NOT_METERED;
-import static android.net.NetworkCapabilities.NET_CAPABILITY_NOT_ROAMING;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_NOT_VCN_MANAGED;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED;
+import static android.net.NetworkCapabilities.TRANSPORT_CELLULAR;
 import static android.telephony.SubscriptionManager.INVALID_SUBSCRIPTION_ID;
+
+import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -194,6 +196,24 @@ public class VcnManagerTest extends VcnTestBase {
         final LinkProperties lp = new LinkProperties();
 
         mVcnManager.applyVcnNetworkPolicy(nc, lp);
+    }
+
+    @Test
+    public void testApplyVcnNetworkPolicy_manageTestNetworkRequiresTransportTest()
+            throws Exception {
+        final NetworkCapabilities nc =
+                new NetworkCapabilities.Builder().addTransportType(TRANSPORT_CELLULAR).build();
+        final LinkProperties lp = new LinkProperties();
+
+        runWithShellPermissionIdentity(
+                () -> {
+                    try {
+                        mVcnManager.applyVcnNetworkPolicy(nc, lp);
+                        fail("Expected IllegalStateException for applyVcnNetworkPolicy");
+                    } catch (IllegalStateException e) {
+                    }
+                },
+                android.Manifest.permission.MANAGE_TEST_NETWORKS);
     }
 
     /** Test implementation of VcnStatusCallback for verification purposes. */
