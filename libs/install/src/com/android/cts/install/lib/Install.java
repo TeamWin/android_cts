@@ -198,7 +198,7 @@ public class Install {
      */
     private int createEmptyInstallSession(boolean multiPackage, boolean isApex)
             throws IOException {
-        if (mIsStaged) {
+        if (mIsStaged || isApex) {
             SystemUtil.runShellCommandForNoOutput("pm bypass-staged-installer-check true");
         }
         try {
@@ -220,7 +220,7 @@ public class Install {
             }
             return InstallUtils.getPackageInstaller().createSession(params);
         } finally {
-            if (mIsStaged) {
+            if (mIsStaged || isApex) {
                 SystemUtil.runShellCommandForNoOutput("pm bypass-staged-installer-check false");
             }
         }
