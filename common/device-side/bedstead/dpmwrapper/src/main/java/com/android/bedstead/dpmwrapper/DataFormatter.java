@@ -27,6 +27,8 @@ import android.util.ArraySet;
 import android.util.Log;
 
 import java.io.Serializable;
+import java.security.PrivateKey;
+import java.security.cert.Certificate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -48,9 +50,15 @@ final class DataFormatter {
     private static final String TYPE_SERIALIZABLE = "serializable";
     private static final String TYPE_ARRAY_LIST_STRING = "array_list_string";
     private static final String TYPE_ARRAY_LIST_PARCELABLE = "array_list_parcelable";
+    // NOTE: the value of a TYPE_ARRAY_LIST_BYTE_ARRAY is its length - the individual elements
+    // are contained on separate extras, one per index, whose name is defined by
+    // getExtraNameForArrayListElement()
+    private static final String TYPE_ARRAY_LIST_BYTE_ARRAY = "array_list_byte_array";
     private static final String TYPE_SET_STRING = "set_string";
     // Must handle each array of parcelable subclass , as they need to be explicitly converted
     private static final String TYPE_CPU_USAFE_INFO_ARRAY = "cpu_usage_info_array";
+    private static final String TYPE_CERTIFICATE = "certificate";
+    private static final String TYPE_PRIVATE_KEY = "private_key";
 
     // Used when a method is called passing a null argument - the proper method will have to be
     // infered using findMethod()
@@ -117,11 +125,29 @@ final class DataFormatter {
             intent.putExtra(extraValueName, (CharSequence) value);
             return;
         }
+        if (value instanceof PrivateKey) {
+            if (!(value instanceof Parcelable)) {
+                throw new IllegalArgumentException("PrivateKey is not Parcelable: "  + value);
+            }
+            logMarshalling("Adding PrivateKey", index, extraTypeName, TYPE_PRIVATE_KEY,
+                    extraValueName, value);
+            intent.putExtra(extraTypeName, TYPE_PRIVATE_KEY);
+            intent.putExtra(extraValueName, (Parcelable) value);
+            return;
+        }
         if ((value instanceof Parcelable)) {
             logMarshalling("Adding Parcelable", index, extraTypeName, TYPE_PARCELABLE,
                     extraValueName, value);
             intent.putExtra(extraTypeName, TYPE_PARCELABLE);
             intent.putExtra(extraValueName, (Parcelable) value);
+            return;
+        }
+
+        if (value instanceof Certificate) {
+            logMarshalling("Adding Certificate", index, extraTypeName, TYPE_CERTIFICATE,
+                    extraValueName, value);
+            intent.putExtra(extraTypeName, TYPE_CERTIFICATE);
+            intent.putExtra(extraValueName, (Serializable) value);
             return;
         }
 
@@ -138,6 +164,8 @@ final class DataFormatter {
                     type = TYPE_ARRAY_LIST_STRING;
                 } else if (firstItem instanceof Parcelable) {
                     type = TYPE_ARRAY_LIST_PARCELABLE;
+                } else if (firstItem instanceof byte[]) {
+                    type = TYPE_ARRAY_LIST_BYTE_ARRAY;
                 } else {
                     throw new IllegalArgumentException("Unsupported List type at index " + index
                             + ": " + firstItem);
@@ -160,7 +188,18 @@ final class DataFormatter {
                             ? (ArrayList<Parcelable>) list
                             : new ArrayList<>((List<Parcelable>) list);
                     intent.putParcelableArrayListExtra(extraValueName, arrayListParcelable);
-
+                    break;
+                case TYPE_ARRAY_LIST_BYTE_ARRAY:
+                    @SuppressWarnings("unchecked")
+                    ArrayList<byte[]> arrayListByteArray = (value instanceof ArrayList)
+                            ? (ArrayList<byte[]>) list
+                            : new ArrayList<>((List<byte[]>) list);
+                    int listSize = arrayListByteArray.size();
+                    intent.putExtra(extraValueName, listSize);
+                    for (int i = 0; i < listSize; i++) {
+                        intent.putExtra(getExtraNameForArrayListElement(extraValueName, i),
+                                arrayListByteArray.get(i));
+                    }
                     break;
                 default:
                     // should never happen because type is checked above
@@ -216,6 +255,10 @@ final class DataFormatter {
                 + (value == null ? "null" : value.getClass()));
     }
 
+    private static String getExtraNameForArrayListElement(String baseExtraName, int index) {
+        return baseExtraName + "_" + index;
+    }
+
     static void getArg(Bundle extras, Object[] args, @Nullable Class<?>[] parameterTypes,
             int index) {
         String extraTypeName = getArgExtraTypeName(index);
@@ -247,6 +290,15 @@ final class DataFormatter {
                 logMarshalling("Got CpuUsageInfo[]", index, extraTypeName, type, extraValueName,
                         value);
                 break;
+            case TYPE_ARRAY_LIST_BYTE_ARRAY:
+                int size = extras.getInt(extraValueName);
+                ArrayList<byte[]> array = new ArrayList<>(size);
+                for (int i = 0; i < size; i++) {
+                    String extraName = getExtraNameForArrayListElement(extraValueName, i);
+                    array.add(extras.getByteArray(extraName));
+                }
+                value = array;
+                break;
             case TYPE_ARRAY_LIST_STRING:
             case TYPE_ARRAY_LIST_PARCELABLE:
             case TYPE_BYTE_ARRAY:
@@ -257,6 +309,8 @@ final class DataFormatter {
             case TYPE_STRING_OR_CHAR_SEQUENCE:
             case TYPE_PARCELABLE:
             case TYPE_SERIALIZABLE:
+            case TYPE_CERTIFICATE:
+            case TYPE_PRIVATE_KEY:
                 value = extras.get(extraValueName);
                 logMarshalling("Got generic", index, extraTypeName, type, extraValueName, value);
                 break;
@@ -290,6 +344,12 @@ final class DataFormatter {
                     break;
                 case TYPE_SET_STRING:
                     parameterType = Set.class;
+                    break;
+                case TYPE_PRIVATE_KEY:
+                    parameterType = PrivateKey.class;
+                    break;
+                case TYPE_CERTIFICATE:
+                    parameterType = Certificate.class;
                     break;
                 default:
                     parameterType = value.getClass();

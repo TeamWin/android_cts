@@ -29,4 +29,7 @@ android_test_helper_app {
         "general-tests",
         "mts",
     ],
+    static_libs: [
+        "DpmWrapper",
+    ],
 }
