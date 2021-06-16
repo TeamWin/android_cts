@@ -66,7 +66,7 @@ public class SilentUpdateTests {
     private static final String P_APK = "SilentInstallP.apk";
     private static final String Q_APK = "SilentInstallQ.apk";
     private static final String INSTALLER_PACKAGE_NAME = "com.android.tests.silentupdate";
-    static final long SILENT_UPDATE_THROTTLE_TIME_MS = TimeUnit.SECONDS.toMillis(30);
+    static final long SILENT_UPDATE_THROTTLE_TIME_SECOND = 10;
 
     private static Context getContext() {
         return InstrumentationRegistry.getInstrumentation().getContext();
@@ -74,7 +74,7 @@ public class SilentUpdateTests {
 
     @After
     public void tearDown() {
-        setUnlimitedSilentUpdates(null);
+        resetSilentUpdatesPolicy();
     }
 
     @Test
@@ -199,10 +199,11 @@ public class SilentUpdateTests {
 
     @Test
     public void silentInstallRepeatedly_waitForThrottleTime_succeed() throws Exception {
+        setSilentUpdatesThrottleTime(SILENT_UPDATE_THROTTLE_TIME_SECOND);
         Assert.assertEquals("The first silent update should succeed",
                 PackageInstaller.STATUS_SUCCESS,
                 silentInstallResource(CURRENT_APK));
-        SystemClock.sleep(SILENT_UPDATE_THROTTLE_TIME_MS);
+        SystemClock.sleep(TimeUnit.SECONDS.toMillis(SILENT_UPDATE_THROTTLE_TIME_SECOND));
         Assert.assertEquals("The repeated silent update should succeed",
                 PackageInstaller.STATUS_SUCCESS,
                 silentInstallResource(CURRENT_APK));
@@ -295,12 +296,21 @@ public class SilentUpdateTests {
     }
 
     private void setUnlimitedSilentUpdates(String installerPackageName) {
-        final StringBuilder cmd = new StringBuilder("pm allow-unlimited-silent-updates ");
-        if (installerPackageName == null) {
-            cmd.append("--reset");
-        } else {
-            cmd.append(installerPackageName);
-        }
+        final StringBuilder cmd = new StringBuilder(
+                "pm set-silent-updates-policy --allow-unlimited-silent-updates ");
+        cmd.append(installerPackageName);
+        runShellCommand(cmd.toString());
+    }
+
+    private void setSilentUpdatesThrottleTime(long throttleTimeInSeconds) {
+        final StringBuilder cmd = new StringBuilder(
+                "pm set-silent-updates-policy --throttle-time ");
+        cmd.append(throttleTimeInSeconds);
+        runShellCommand(cmd.toString());
+    }
+
+    private void resetSilentUpdatesPolicy() {
+        final StringBuilder cmd = new StringBuilder("pm set-silent-updates-policy --reset");
         runShellCommand(cmd.toString());
     }
 
