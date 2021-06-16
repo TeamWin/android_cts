@@ -14,8 +14,25 @@
  * limitations under the License.
  */
 
-package com.android.cts.packagemanager.verify.domain.callingapp
-
-import android.app.Activity
-
-class CallingActivity : Activity()
+android_test_helper_app {
+    name: "IncrementalAppErrorStatsTestsHelper",
+    defaults: ["cts_defaults"],
+    platform_apis: true,
+    min_sdk_version: "28",
+    srcs: [
+        "src/**/*.java",
+    ],
+    libs: [
+        "android.test.runner",
+        "junit",
+    ],
+    static_libs: [
+        "ctstestrunner-axt",
+        "compatibility-device-util-axt",
+        "androidx.legacy_legacy-support-v4",
+        "androidx.test.rules",
+        "cts-net-utils",
+        "apache-commons-compress",
+    ],
+    compile_multilib: "both",
+}
