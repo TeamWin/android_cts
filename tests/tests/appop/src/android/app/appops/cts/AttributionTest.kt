@@ -26,6 +26,7 @@ import android.platform.test.annotations.AppModeFull
 import androidx.test.platform.app.InstrumentationRegistry
 import com.google.common.truth.Truth.assertThat
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 import java.lang.Thread.sleep
 
@@ -151,6 +152,7 @@ class AttributionTest {
     }
 
     @Test
+    @Ignore
     fun canUseUndeclaredAttributionTagButTreatedAsNull() {
         noteForAttribution("invalid attribution tag")
         val opEntry = getOpEntry(appUid, APP_PKG, OPSTR_WIFI_SCAN)!!

@@ -344,7 +344,7 @@
         Keymaster signs a message with a confirmation key only if the message was previously
         confirmed by the user.
     </string>
-    <string name="sec_protected_confirmation_not_supported_title">Android Protected Confirmation not supported</string>
+    <string name="sec_protected_confirmation_not_supported_title">Not Supported</string>
     <string name="sec_protected_confirmation_not_supported_info">
         Android Protected Confirmation is not implemented by this device. This is okay because this
         is an optional feature. Set this test to passed and continue.
@@ -4011,8 +4011,12 @@ You should be prompted to select credentials; choose the ones you just installed
         3. Verify that performing the following action will trigger a support dialog:\n
            <xliff:g id="user_action" example="Adding an account">%2$s</xliff:g>.\n
         4. Verify that the support dialog displays the short support message set earlier.\n
-        5. Verify that clicking the "Learn more" link will redirect to Device administrators
-           page in Settings app which displays the long support message set earlier.\n
+        5. Verify that clicking the "Learn more" link will either launch a help web page with more
+           information or redirect to Device administrators page in Settings app which displays the
+           long support message set earlier.\n
+        6. If in step 5. the help web page was launched, navigate to the Device administrators page
+           from Settings -> Security, open the work profile \'CTS Verifier\' enabled admin and
+           verify that the page displays the long support message set earlier.\n
     </string>
     <string name="user_restriction_set_step">
         Set \'%s\' user restriction by turning on the switch below.

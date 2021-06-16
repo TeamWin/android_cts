@@ -32,6 +32,7 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.app.Person;
 import android.app.StatusBarManager;
 import android.app.UiAutomation;
 import android.content.ComponentName;
@@ -40,6 +41,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
+import android.os.SystemClock;
 import android.provider.Telephony;
 import android.service.notification.Adjustment;
 import android.service.notification.NotificationAssistantService;
@@ -566,23 +568,20 @@ public class NotificationAssistantServiceTest {
         turnScreenOn();
         mUi.adoptShellPermissionIdentity("android.permission.EXPAND_STATUS_BAR");
 
-        sendNotification(1, ICON_ID);
+        sendConversationNotification(mNotificationAssistantService.notificationId);
         Thread.sleep(SLEEP_TIME * 2);
 
         // Initialize as closed
         mStatusBarManager.collapsePanels();
         Thread.sleep(SLEEP_TIME * 2);
-        mNotificationAssistantService.resetNotificationVisibilityCounts();
 
         mStatusBarManager.expandNotificationsPanel();
         Thread.sleep(SLEEP_TIME * 2);
-        assertTrue(mNotificationAssistantService.notificationVisibleCount > 0);
-        assertEquals(0, mNotificationAssistantService.notificationHiddenCount);
+        assertTrue(mNotificationAssistantService.notificationVisible);
 
         mStatusBarManager.collapsePanels();
         Thread.sleep(SLEEP_TIME * 2);
-        assertTrue(mNotificationAssistantService.notificationVisibleCount > 0);
-        assertTrue(mNotificationAssistantService.notificationHiddenCount > 0);
+        assertFalse(mNotificationAssistantService.notificationVisible);
 
         mUi.dropShellPermissionIdentity();
     }
@@ -738,6 +737,25 @@ public class NotificationAssistantServiceTest {
                         .setContentIntent(pendingIntent)
                         .setGroup(groupKey)
                         .build();
+        mNotificationManager.notify(id, notification);
+    }
+
+    private void sendConversationNotification(final int id) {
+        Person person = new Person.Builder()
+                .setName("test")
+                .build();
+        final Notification notification = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                .setContentTitle("foo")
+                .setShortcutId("shareShortcut")
+                .setStyle(new Notification.MessagingStyle(person)
+                        .setConversationTitle("Test Chat")
+                        .addMessage("Hello?",
+                                SystemClock.currentThreadTimeMillis() - 300000, person)
+                        .addMessage("Is it me you're looking for?",
+                                SystemClock.currentThreadTimeMillis(), person)
+                )
+                .setSmallIcon(ICON_ID)
+                .build();
         mNotificationManager.notify(id, notification);
     }
 

@@ -17,12 +17,14 @@ package android.media.cts;
 
 import static android.Manifest.permission.MEDIA_CONTENT_CONTROL;
 
+import android.media.AudioManager;
 import android.platform.test.annotations.AppModeFull;
 import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.MediaUtils;
 import com.android.compatibility.common.util.SystemUtil;
 
 import android.content.ComponentName;
+import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -39,10 +41,13 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.Process;
+import android.platform.test.annotations.AppModeFull;
 import android.test.InstrumentationTestCase;
 import android.test.UiThreadTest;
 import android.util.Log;
 import android.view.KeyEvent;
+
+import com.android.compatibility.common.util.SystemUtil;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -58,6 +63,7 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
     private static final int TIMEOUT_MS = 3000;
     private static final int WAIT_MS = 500;
 
+    private AudioManager mAudioManager;
     private MediaSessionManager mSessionManager;
 
     private static boolean sIsAtLeastS = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S);
@@ -65,6 +71,8 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
+        mAudioManager = (AudioManager) getInstrumentation().getTargetContext()
+                .getSystemService(Context.AUDIO_SERVICE);
         mSessionManager = (MediaSessionManager) getInstrumentation().getTargetContext()
                 .getSystemService(Context.MEDIA_SESSION_SERVICE);
     }
@@ -85,7 +93,7 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
         // TODO enable a notification listener, test again, disable, test again
     }
 
-    public void testGetMediaKeyEventSession() throws Exception {
+    public void testGetMediaKeyEventSession_throwsSecurityException() throws Exception {
         if (!MediaUtils.check(sIsAtLeastS, "test invalid before Android 12")) return;
         try {
             mSessionManager.getMediaKeyEventSession();
@@ -93,6 +101,77 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
         } catch (SecurityException ex) {
             // Expected
         }
+    }
+
+    public void testOnMediaKeyEventSessionChangedListener() throws Exception {
+        getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity(Manifest.permission.MEDIA_CONTENT_CONTROL);
+
+        MediaKeyEventSessionListener keyEventSessionListener = new MediaKeyEventSessionListener();
+        mSessionManager.addOnMediaKeyEventSessionChangedListener(
+                Executors.newSingleThreadExecutor(), keyEventSessionListener);
+
+        MediaSession session = new MediaSession(getInstrumentation().getTargetContext(), TAG);
+        session.setFlags(MediaSession.FLAG_HANDLES_MEDIA_BUTTONS
+                | MediaSession.FLAG_HANDLES_TRANSPORT_CONTROLS);
+        PlaybackState state = new PlaybackState.Builder()
+                .setState(PlaybackState.STATE_PLAYING, 0, 1.0f).build();
+        // Fake the media session service so this session can take the media key events.
+        session.setPlaybackState(state);
+        session.setActive(true);
+        Utils.assertMediaPlaybackStarted(getInstrumentation().getTargetContext());
+
+        assertTrue(keyEventSessionListener.mCountDownLatch
+                .await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+
+        assertEquals(session.getSessionToken(), mSessionManager.getMediaKeyEventSession());
+
+        mSessionManager.removeOnMediaKeyEventSessionChangedListener(keyEventSessionListener);
+        keyEventSessionListener.resetCountDownLatch();
+
+        session.release();
+        // This shouldn't be called because the callback is removed
+        assertFalse(keyEventSessionListener.mCountDownLatch.await(WAIT_MS, TimeUnit.MILLISECONDS));
+    }
+
+    public void testOnMediaKeyEventDispatchedListener() throws Exception {
+        getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity(Manifest.permission.MEDIA_CONTENT_CONTROL);
+
+        MediaKeyEventDispatchedListener keyEventDispatchedListener =
+                new MediaKeyEventDispatchedListener();
+        mSessionManager.addOnMediaKeyEventDispatchedListener(Executors.newSingleThreadExecutor(),
+                keyEventDispatchedListener);
+
+        MediaSession session = new MediaSession(getInstrumentation().getTargetContext(), TAG);
+        session.setFlags(MediaSession.FLAG_HANDLES_MEDIA_BUTTONS
+                | MediaSession.FLAG_HANDLES_TRANSPORT_CONTROLS);
+        PlaybackState state = new PlaybackState.Builder()
+                .setState(PlaybackState.STATE_PLAYING, 0, 1.0f).build();
+        // Fake the media session service so this session can take the media key events.
+        session.setPlaybackState(state);
+        session.setActive(true);
+        Utils.assertMediaPlaybackStarted(getInstrumentation().getTargetContext());
+
+        final int keyCode = KeyEvent.KEYCODE_MEDIA_PLAY;
+        simulateMediaKeyInput(keyCode);
+        assertTrue(keyEventDispatchedListener.mCountDownLatch
+                .await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+
+        assertEquals(keyCode, keyEventDispatchedListener.mKeyEvent.getKeyCode());
+        assertEquals(getInstrumentation().getTargetContext().getPackageName(),
+                keyEventDispatchedListener.mPackageName);
+        assertEquals(session.getSessionToken(), keyEventDispatchedListener.mSessionToken);
+
+        mSessionManager.removeOnMediaKeyEventDispatchedListener(keyEventDispatchedListener);
+        keyEventDispatchedListener.resetCountDownLatch();
+
+        simulateMediaKeyInput(keyCode);
+        // This shouldn't be called because the callback is removed
+        assertFalse(keyEventDispatchedListener.mCountDownLatch
+                .await(WAIT_MS, TimeUnit.MILLISECONDS));
+
+        session.release();
     }
 
     @UiThreadTest
@@ -446,6 +525,16 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
         handler.getLooper().quitSafely();
     }
 
+    // This uses public APIs to dispatch key events, so sessions would consider this as
+    // 'media key event from this application'.
+    private void simulateMediaKeyInput(int keyCode) {
+        long downTime = System.currentTimeMillis();
+        mAudioManager.dispatchMediaKeyEvent(
+                new KeyEvent(downTime, downTime, KeyEvent.ACTION_DOWN, keyCode, 0));
+        mAudioManager.dispatchMediaKeyEvent(
+                new KeyEvent(downTime, System.currentTimeMillis(), KeyEvent.ACTION_UP, keyCode, 0));
+    }
+
     private class VolumeKeyLongPressListener
             implements MediaSessionManager.OnVolumeKeyLongPressListener {
         private final List<KeyEvent> mKeyEvents = new ArrayList<>();
@@ -550,18 +639,48 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
 
     private class MediaKeyEventSessionListener
             implements MediaSessionManager.OnMediaKeyEventSessionChangedListener {
-        final CountDownLatch mCountDownLatch;
+        CountDownLatch mCountDownLatch;
         MediaSession.Token mSessionToken;
 
         MediaKeyEventSessionListener() {
             mCountDownLatch = new CountDownLatch(1);
         }
 
+        void resetCountDownLatch() {
+            mCountDownLatch = new CountDownLatch(1);
+        }
+
         @Override
         public void onMediaKeyEventSessionChanged(String packageName,
                 MediaSession.Token sessionToken) {
-            mCountDownLatch.countDown();
             mSessionToken = sessionToken;
+            mCountDownLatch.countDown();
+        }
+    }
+
+    private class MediaKeyEventDispatchedListener
+            implements MediaSessionManager.OnMediaKeyEventDispatchedListener {
+        CountDownLatch mCountDownLatch;
+        KeyEvent mKeyEvent;
+        String mPackageName;
+        MediaSession.Token mSessionToken;
+
+        MediaKeyEventDispatchedListener() {
+            mCountDownLatch = new CountDownLatch(1);
+        }
+
+        void resetCountDownLatch() {
+            mCountDownLatch = new CountDownLatch(1);
+        }
+
+        @Override
+        public void onMediaKeyEventDispatched(KeyEvent event, String packageName,
+                MediaSession.Token sessionToken) {
+            mKeyEvent = event;
+            mPackageName = packageName;
+            mSessionToken = sessionToken;
+
+            mCountDownLatch.countDown();
         }
     }
 

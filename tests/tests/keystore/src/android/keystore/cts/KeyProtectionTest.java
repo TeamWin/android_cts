@@ -53,6 +53,7 @@ public class KeyProtectionTest extends TestCase {
         assertEquals(GateKeeper.INVALID_SECURE_USER_ID, spec.getBoundToSpecificSecureUserId());
         assertFalse(spec.isUnlockedDeviceRequired());
         assertEquals(KeyProperties.UNRESTRICTED_USAGE_COUNT, spec.getMaxUsageCount());
+        assertEquals(spec.isStrongBoxBacked(), false);
     }
 
     public void testSettersReflectedInGetters() {
@@ -81,6 +82,7 @@ public class KeyProtectionTest extends TestCase {
                 .setBoundToSpecificSecureUserId(654321)
                 .setUnlockedDeviceRequired(true)
                 .setMaxUsageCount(maxUsageCount)
+                .setIsStrongBoxBacked(true)
                 .build();
 
         assertEquals(
@@ -105,6 +107,7 @@ public class KeyProtectionTest extends TestCase {
         assertEquals(654321, spec.getBoundToSpecificSecureUserId());
         assertTrue(spec.isUnlockedDeviceRequired());
         assertEquals(spec.getMaxUsageCount(), maxUsageCount);
+        assertEquals(spec.isStrongBoxBacked(), true);
     }
 
     public void testSetKeyValidityEndDateAppliesToBothEndDates() {
