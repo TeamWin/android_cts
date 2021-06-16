@@ -32,7 +32,7 @@ android_test_helper_app {
         "junit",
         "android.test.base",
         "bouncycastle-unbundled",
-	"org.apache.http.legacy",
+        "org.apache.http.legacy",
     ],
     static_libs: [
         "ctstestrunner-axt",

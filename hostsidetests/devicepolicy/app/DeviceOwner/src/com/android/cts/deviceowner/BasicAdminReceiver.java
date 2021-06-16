@@ -91,7 +91,7 @@ public class BasicAdminReceiver extends DeviceAdminReceiver {
         Intent batchIntent = new Intent(ACTION_NETWORK_LOGS_AVAILABLE);
         batchIntent.putExtra(EXTRA_NETWORK_LOGS_BATCH_TOKEN, batchToken);
 
-        DeviceOwnerHelper.sendBroadcastToTestCaseReceiver(context, batchIntent);
+        DeviceOwnerHelper.sendBroadcastToTestAppReceivers(context, batchIntent);
     }
 
     @Override
@@ -101,7 +101,7 @@ public class BasicAdminReceiver extends DeviceAdminReceiver {
 
         Intent intent = OperationSafetyChangedCallback.intentFor(event);
 
-        DeviceOwnerHelper.sendBroadcastToTestCaseReceiver(context, intent);
+        DeviceOwnerHelper.sendBroadcastToTestAppReceivers(context, intent);
     }
 
     private void sendUserBroadcast(Context context, String action, UserHandle userHandle) {
