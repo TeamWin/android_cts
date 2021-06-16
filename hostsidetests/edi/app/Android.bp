@@ -31,5 +31,6 @@ android_test_helper_app {
         "cts",
         "gts",
         "general-tests",
+        "tvts",
     ],
 }

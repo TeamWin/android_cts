@@ -573,6 +573,7 @@ public class RoutingTest extends AndroidTestCase {
     static class AudioRoutingListener implements AudioRouting.OnRoutingChangedListener
     {
         private boolean mCalled;
+        private boolean mCallExpected;
         private CountDownLatch mCountDownLatch;
 
         AudioRoutingListener() {
@@ -591,6 +592,14 @@ public class RoutingTest extends AndroidTestCase {
             }
         }
 
+        void setCallExpected(boolean flag) {
+            mCallExpected = flag;
+        }
+
+        boolean isCallExpected() {
+            return mCallExpected;
+        }
+
         boolean isRoutingListenerCalled() {
             return mCalled;
         }
@@ -598,6 +607,7 @@ public class RoutingTest extends AndroidTestCase {
         void reset() {
             mCountDownLatch = new CountDownLatch(1);
             mCalled = false;
+            mCallExpected = true;
         }
     }
 
@@ -737,10 +747,12 @@ public class RoutingTest extends AndroidTestCase {
                 listener.isRoutingListenerCalled());
         listener.reset();
 
+        listener.setCallExpected(false);
         for (AudioDeviceInfo device : devices) {
             if (routedDevice.getId() != device.getId() &&
                     device.getType() != AudioDeviceInfo.TYPE_TELEPHONY) {
                 mediaPlayer.setPreferredDevice(device);
+                listener.setCallExpected(true);
                 listener.await(WAIT_ROUTING_CHANGE_TIME_MS);
                 break;
             }
@@ -750,8 +762,10 @@ public class RoutingTest extends AndroidTestCase {
         mediaPlayer.stop();
         mediaPlayer.release();
 
-        assertTrue("Routing changed callback has not been called",
-                listener.isRoutingListenerCalled());
+        if (listener.isCallExpected()) {
+            assertTrue("Routing changed callback has not been called",
+                    listener.isRoutingListenerCalled());
+        }
     }
 
     public void test_mediaPlayer_incallMusicRoutingPermissions() {

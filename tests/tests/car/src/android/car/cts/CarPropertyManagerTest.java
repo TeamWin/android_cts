@@ -224,9 +224,22 @@ public class CarPropertyManagerTest extends CarApiTestBase {
     @CddTest(requirement="2.5.1")
     @Test
     public void testMustSupportGearSelection() throws Exception {
-        assertWithMessage("Must support GEAR_SELECTION")
-                .that(mCarPropertyManager.getCarPropertyConfig(VehiclePropertyIds.GEAR_SELECTION))
-                .isNotNull();
+        verifyOnchangeCarPropertyConfig(/*requiredProperty=*/true,
+                                        VehiclePropertyIds.GEAR_SELECTION,
+                                        Integer.class);
+        CarPropertyConfig gearSelectionConfig =
+                mCarPropertyManager.getCarPropertyConfig(VehiclePropertyIds.GEAR_SELECTION);
+        List<Integer> gearSelectionArray = gearSelectionConfig.getConfigArray();
+        assertWithMessage("GEAR_SELECTION config array must specify supported gears")
+                .that(gearSelectionArray.size())
+                .isGreaterThan(0);
+
+        verifyCarPropertyValue(VehiclePropertyIds.GEAR_SELECTION, Integer.class);
+        CarPropertyValue<Integer> gearSelectionValue =
+                mCarPropertyManager.getProperty(
+                VehiclePropertyIds.GEAR_SELECTION, VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL);
+        assertWithMessage("GEAR_SELECTION Integer value must be in configArray")
+                .that(gearSelectionArray.contains(gearSelectionValue.getValue())).isTrue();
     }
 
     @CddTest(requirement="2.5.1")
@@ -240,62 +253,11 @@ public class CarPropertyManagerTest extends CarApiTestBase {
     @CddTest(requirement="2.5.1")
     @Test
     public void testMustSupportPerfVehicleSpeed() throws Exception {
-        CarPropertyConfig perfVehicleSpeedConfig =
-                mCarPropertyManager.getCarPropertyConfig(VehiclePropertyIds.PERF_VEHICLE_SPEED);
-        assertWithMessage("Must support PERF_VEHICLE_SPEED")
-                .that(perfVehicleSpeedConfig).isNotNull();
-        assertWithMessage("PERF_VEHICLE_SPEED CarPropertyConfig must have correct property ID")
-                .that(perfVehicleSpeedConfig.getPropertyId())
-                .isEqualTo(VehiclePropertyIds.PERF_VEHICLE_SPEED);
-        assertWithMessage("PERF_VEHICLE_SPEED must be READ access")
-                .that(perfVehicleSpeedConfig.getAccess())
-                .isEqualTo(CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ);
-        assertWithMessage("PERF_VEHICLE_SPEED must be GLOBAL area type")
-                .that(perfVehicleSpeedConfig.getAreaType())
-                .isEqualTo(VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL);
-        assertWithMessage("PERF_VEHICLE_SPEED must be CONTINUOUS change mode type")
-                .that(perfVehicleSpeedConfig.getChangeMode())
-                .isEqualTo(CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS);
-        assertWithMessage("PERF_VEHICLE_SPEED must define max sample rate since it is CONTINUOUS")
-                .that(perfVehicleSpeedConfig.getMaxSampleRate())
-                .isGreaterThan(0);
-        assertWithMessage("PERF_VEHICLE_SPEED must define min sample rate since it is CONTINUOUS")
-                .that(perfVehicleSpeedConfig.getMinSampleRate())
-                .isGreaterThan(0);
-        assertWithMessage("PERF_VEHICLE_SPEED max sample rate must be >= min sample rate")
-                .that(perfVehicleSpeedConfig.getMaxSampleRate() >=
-                        perfVehicleSpeedConfig.getMinSampleRate())
-                .isTrue();
-        assertWithMessage("PERF_VEHICLE_SPEED must define min sample rate since it is CONTINUOUS")
-                .that(perfVehicleSpeedConfig.getMinSampleRate())
-                .isNotEqualTo(0);
-        assertWithMessage("PERF_VEHICLE_SPEED must be Float type property")
-                .that(perfVehicleSpeedConfig.getPropertyType())
-                .isEqualTo(Float.class);
+        verifyContinuousCarPropertyConfig(/*requiredProperty=*/true,
+                                          VehiclePropertyIds.PERF_VEHICLE_SPEED,
+                                          Float.class);
 
-        long beforeElapsedTimestampNanos = SystemClock.elapsedRealtimeNanos();
-        CarPropertyValue<Float> perfVehicleSpeedValue =
-                mCarPropertyManager.getProperty(
-                VehiclePropertyIds.PERF_VEHICLE_SPEED, VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL);
-        long afterElapsedTimestampNanos = SystemClock.elapsedRealtimeNanos();
-        assertWithMessage("PERF_VEHICLE_SPEED value must have correct property ID")
-                .that(perfVehicleSpeedValue.getPropertyId())
-                .isEqualTo(VehiclePropertyIds.PERF_VEHICLE_SPEED);
-        assertWithMessage("PERF_VEHICLE_SPEED value must have correct area type")
-                .that(perfVehicleSpeedValue.getAreaId())
-                .isEqualTo(VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL);
-        assertWithMessage("PERF_VEHICLE_SPEED value must be available")
-                .that(perfVehicleSpeedValue.getStatus())
-                .isEqualTo(CarPropertyValue.STATUS_AVAILABLE);
-        assertWithMessage(
-                "PERF_VEHICLE_SPEED timestamp must use the SystemClock.elapsedRealtimeNanos() time base")
-                .that(perfVehicleSpeedValue.getTimestamp())
-                .isGreaterThan(beforeElapsedTimestampNanos);
-        assertWithMessage(
-                "PERF_VEHICLE_SPEED timestamp must use the SystemClock.elapsedRealtimeNanos() time base")
-                .that(perfVehicleSpeedValue.getTimestamp()).isLessThan(afterElapsedTimestampNanos);
-        assertWithMessage("PERF_VEHICLE_SPEED must return Float type value")
-                .that(perfVehicleSpeedValue.getValue() instanceof Float).isTrue();
+        verifyCarPropertyValue(VehiclePropertyIds.PERF_VEHICLE_SPEED, Float.class);
     }
 
     @CddTest(requirement = "2.5.1")
@@ -309,34 +271,12 @@ public class CarPropertyManagerTest extends CarApiTestBase {
 
     @Test
     public void testWheelTickIfSupported() throws Exception {
+        verifyContinuousCarPropertyConfig(/*requiredProperty=*/false,
+                                          VehiclePropertyIds.WHEEL_TICK,
+                                          Long[].class);
+
         CarPropertyConfig wheelTickConfig =
                 mCarPropertyManager.getCarPropertyConfig(VehiclePropertyIds.WHEEL_TICK);
-        assumeNotNull(wheelTickConfig);
-
-        assertWithMessage("WHEEL_TICK CarPropertyConfig must have correct property ID")
-                .that(wheelTickConfig.getPropertyId())
-                .isEqualTo(VehiclePropertyIds.WHEEL_TICK);
-        assertWithMessage("WHEEL_TICK must be READ access")
-                .that(wheelTickConfig.getAccess())
-                .isEqualTo(CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ);
-        assertWithMessage("WHEEL_TICK must be GLOBAL area type")
-                .that(wheelTickConfig.getAreaType())
-                .isEqualTo(VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL);
-        assertWithMessage("WHEEL_TICK must be CONTINUOUS change mode type")
-                .that(wheelTickConfig.getChangeMode())
-                .isEqualTo(CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS);
-        assertWithMessage("WHEEL_TICK must define max sample rate since it is CONTINUOUS")
-                .that(wheelTickConfig.getMaxSampleRate())
-                .isGreaterThan(0);
-        assertWithMessage("WHEEL_TICK must define min sample rate since it is CONTINUOUS")
-                .that(wheelTickConfig.getMinSampleRate())
-                .isGreaterThan(0);
-        assertWithMessage("WHEEL_TICK max sample rate must be >= min sample rate")
-                .that(wheelTickConfig.getMaxSampleRate() >= wheelTickConfig.getMinSampleRate())
-                .isTrue();
-        assertWithMessage("WHEEL_TICK must be Long[] type property")
-                .that(wheelTickConfig.getPropertyType())
-                .isEqualTo(Long[].class);
         List<Integer> wheelTickConfigArray = wheelTickConfig.getConfigArray();
         assertWithMessage("WHEEL_TICK config array must be size 5")
                 .that(wheelTickConfigArray.size())
@@ -400,27 +340,10 @@ public class CarPropertyManagerTest extends CarApiTestBase {
                          .isEqualTo(0);
         }
 
-        long beforeElapsedTimestampNanos = SystemClock.elapsedRealtimeNanos();
+        verifyCarPropertyValue(VehiclePropertyIds.WHEEL_TICK, Long[].class);
         CarPropertyValue<Long[]> wheelTickValue =
                 mCarPropertyManager.getProperty(
                 VehiclePropertyIds.WHEEL_TICK, VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL);
-        long afterElapsedTimestampNanos = SystemClock.elapsedRealtimeNanos();
-        assertWithMessage("WHEEL_TICK value must have correct property ID")
-                .that(wheelTickValue.getPropertyId())
-                .isEqualTo(VehiclePropertyIds.WHEEL_TICK);
-        assertWithMessage("WHEEL_TICK value must have correct area type")
-                .that(wheelTickValue.getAreaId())
-                .isEqualTo(VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL);
-        assertWithMessage("WHEEL_TICK value must be available")
-                .that(wheelTickValue.getStatus())
-                .isEqualTo(CarPropertyValue.STATUS_AVAILABLE);
-        assertWithMessage(
-                "WHEEL_TICK timestamp must use the SystemClock.elapsedRealtimeNanos() time base")
-                .that(wheelTickValue.getTimestamp())
-                .isGreaterThan(beforeElapsedTimestampNanos);
-        assertWithMessage(
-                "WHEEL_TICK timestamp must use the SystemClock.elapsedRealtimeNanos() time base")
-                .that(wheelTickValue.getTimestamp()).isLessThan(afterElapsedTimestampNanos);
         Long[] wheelTicks = wheelTickValue.getValue();
         assertWithMessage("WHEEL_TICK Long[] value must be size 5").that(wheelTicks.length)
                 .isEqualTo(5);
@@ -697,5 +620,88 @@ public class CarPropertyManagerTest extends CarApiTestBase {
         } else {
             return config.getAreaIds();
         }
+    }
+
+    private <T> void verifyCarPropertyConfig(boolean requiredProperty,
+                                             int propertyId,
+                                             Class<T> propertyType) {
+        String propertyName = VehiclePropertyIds.toString(propertyId);
+        CarPropertyConfig carPropertyConfig = mCarPropertyManager.getCarPropertyConfig(propertyId);
+        if (requiredProperty) {
+                assertWithMessage("Must support " + propertyName).that(carPropertyConfig)
+                        .isNotNull();
+        } else {
+                assumeNotNull(carPropertyConfig);
+        }
+        assertWithMessage(propertyName + " CarPropertyConfig must have correct property ID")
+                .that(carPropertyConfig.getPropertyId())
+                .isEqualTo(propertyId);
+        assertWithMessage(propertyName + " must be READ access")
+                .that(carPropertyConfig.getAccess())
+                .isEqualTo(CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ);
+        assertWithMessage(propertyName + " must be GLOBAL area type")
+                .that(carPropertyConfig.getAreaType())
+                .isEqualTo(VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL);
+        assertWithMessage(propertyName + " must be " + propertyType + " type property")
+                .that(carPropertyConfig.getPropertyType()).isEqualTo(propertyType);
+    }
+
+    private <T> void verifyContinuousCarPropertyConfig(boolean requiredProperty,
+                                                       int propertyId,
+                                                       Class<T> propertyType) {
+        verifyCarPropertyConfig(requiredProperty, propertyId, propertyType);
+        String propertyName = VehiclePropertyIds.toString(propertyId);
+        CarPropertyConfig carPropertyConfig = mCarPropertyManager.getCarPropertyConfig(propertyId);
+        assertWithMessage(propertyName + " must be CONTINUOUS change mode type")
+               .that(carPropertyConfig.getChangeMode())
+               .isEqualTo(CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS);
+        assertWithMessage(propertyName + " must define max sample rate since it is CONTINUOUS")
+               .that(carPropertyConfig.getMaxSampleRate()).isGreaterThan(0);
+        assertWithMessage(propertyName + " must define min sample rate since it is CONTINUOUS")
+               .that(carPropertyConfig.getMinSampleRate()).isGreaterThan(0);
+        assertWithMessage("PERF_VEHICLE_SPEED max sample rate must be >= min sample rate")
+               .that(carPropertyConfig.getMaxSampleRate() >=
+                       carPropertyConfig.getMinSampleRate())
+               .isTrue();
+    }
+
+    private <T> void verifyOnchangeCarPropertyConfig(boolean requiredProperty,
+                                                     int propertyId,
+                                                     Class<T> propertyType) {
+        verifyCarPropertyConfig(requiredProperty, propertyId, propertyType);
+        String propertyName = VehiclePropertyIds.toString(propertyId);
+        CarPropertyConfig carPropertyConfig = mCarPropertyManager.getCarPropertyConfig(propertyId);
+        assertWithMessage(propertyName + " must be ONCHANGE change mode type")
+               .that(carPropertyConfig.getChangeMode())
+               .isEqualTo(CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE);
+        assertWithMessage(propertyName + " must define max sample rate as 0 since it is ONCHANGE")
+               .that(carPropertyConfig.getMaxSampleRate()).isEqualTo(0);
+        assertWithMessage(propertyName + " must define min sample rate as 0 since it is ONCHANGE")
+               .that(carPropertyConfig.getMinSampleRate()).isEqualTo(0);
+    }
+
+    private <T> void verifyCarPropertyValue(int propertyId, Class<?> propertyClass) {
+        String propertyName = VehiclePropertyIds.toString(propertyId);
+        long beforeElapsedTimestampNanos = SystemClock.elapsedRealtimeNanos();
+        CarPropertyValue<T> carPropertyValue =
+                mCarPropertyManager.getProperty(
+                propertyId, VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL);
+        long afterElapsedTimestampNanos = SystemClock.elapsedRealtimeNanos();
+        assertWithMessage(propertyName + " value must have correct property ID")
+                .that(carPropertyValue.getPropertyId()).isEqualTo(propertyId);
+        assertWithMessage(propertyName + " value must have correct area type")
+                .that(carPropertyValue.getAreaId())
+                .isEqualTo(VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL);
+        assertWithMessage(propertyName + " value must be available")
+                .that(carPropertyValue.getStatus()).isEqualTo(CarPropertyValue.STATUS_AVAILABLE);
+        assertWithMessage(propertyName +
+                " timestamp must use the SystemClock.elapsedRealtimeNanos() time base")
+                .that(carPropertyValue.getTimestamp())
+                .isGreaterThan(beforeElapsedTimestampNanos);
+        assertWithMessage(propertyName +
+                " timestamp must use the SystemClock.elapsedRealtimeNanos() time base")
+                .that(carPropertyValue.getTimestamp()).isLessThan(afterElapsedTimestampNanos);
+        assertWithMessage(propertyName + " must return " + propertyClass + " type value")
+                .that(carPropertyValue.getValue().getClass()).isEqualTo(propertyClass);
     }
 }
