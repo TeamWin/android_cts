@@ -176,6 +176,59 @@ public final class CameraDeviceInfo extends DeviceInfo {
                 }
                 mStore.endArray();
             }
+
+            Size[] highSpeedVideoSizes = map.getHighSpeedVideoSizes();
+            if (highSpeedVideoSizes != null && highSpeedVideoSizes.length > 0) {
+                mStore.startArray("availableHighSpeedVideoConfigurations");
+                for (int i = 0; i < highSpeedVideoSizes.length; i++) {
+                    Range<Integer>[] fpsRanges = map.getHighSpeedVideoFpsRangesFor(
+                            highSpeedVideoSizes[i]);
+                    if (fpsRanges != null && fpsRanges.length > 0) {
+                        for (int j = 0; j < fpsRanges.length; j++) {
+                            mStore.startGroup();
+                            mStore.addResult("width", highSpeedVideoSizes[i].getWidth());
+                            mStore.addResult("height", highSpeedVideoSizes[i].getHeight());
+                            mStore.addResult("minFps", fpsRanges[j].getLower());
+                            mStore.addResult("maxFps", fpsRanges[j].getUpper());
+                            mStore.endGroup();
+                        }
+                    }
+                }
+                mStore.endArray();
+            }
+
+            int inputFmts[] = map.getInputFormats();
+            if (inputFmts != null && inputFmts.length > 0) {
+                mStore.startArray("availableInputConfigurations");
+                for (int i = 0 ; i < inputFmts.length; i++) {
+                    Size[] inputSizes = map.getInputSizes(inputFmts[i]);
+                    if (inputSizes != null && inputSizes.length > 0) {
+                        for (int j = 0; j < inputSizes.length; j++) {
+                            mStore.startGroup();
+                            mStore.addResult("inputFormat", inputFmts[i]);
+                            mStore.addResult("inputWidth", inputSizes[j].getWidth());
+                            mStore.addResult("inputHeight", inputSizes[j].getHeight());
+                            mStore.endGroup();
+                        }
+                    }
+                }
+                mStore.endArray();
+
+                mStore.startArray("availableInputOutputFormatsMap");
+                for (int i = 0 ; i < inputFmts.length; i++) {
+                    int[] outputFmts = map.getValidOutputFormatsForInput(inputFmts[i]);
+                    if (outputFmts != null && outputFmts.length > 0) {
+                        for (int j = 0; j < outputFmts.length; j++) {
+                            mStore.startGroup();
+                            mStore.addResult("inputFormat", inputFmts[i]);
+                            mStore.addResult("outputFormat", outputFmts[j]);
+                            mStore.endGroup();
+                        }
+                    }
+                }
+                mStore.endArray();
+            }
+
             mStore.endGroup();
         }
 
