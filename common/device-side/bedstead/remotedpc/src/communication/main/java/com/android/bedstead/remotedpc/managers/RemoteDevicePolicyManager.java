@@ -26,6 +26,8 @@ import androidx.annotation.NonNull;
 import com.android.bedstead.remotedpc.processor.annotations.RemoteDpcAutomaticAdmin;
 import com.android.bedstead.remotedpc.processor.annotations.RemoteDpcManager;
 
+import java.util.List;
+
 /**
  * Wrapper of {@link DevicePolicyManager} methods for use with Remote DPC
  *
@@ -73,6 +75,19 @@ public interface RemoteDevicePolicyManager {
     int getLockTaskFeatures(@NonNull ComponentName admin);
     /** See {@link DevicePolicyManager#getLockTaskFeatures(ComponentName)}. */
     @RemoteDpcAutomaticAdmin int getLockTaskFeatures();
+
+
+    /** See {@link DevicePolicyManager#setUserControlDisabledPackages(ComponentName, List)}. */
+    void setUserControlDisabledPackages(
+            @NonNull ComponentName admin, @NonNull List<String> packages);
+    /** See {@link DevicePolicyManager#setUserControlDisabledPackages(ComponentName, List)}. */
+    @RemoteDpcAutomaticAdmin void setUserControlDisabledPackages(@NonNull List<String> packages);
+
+    /** See {@link DevicePolicyManager#getUserControlDisabledPackages(ComponentName)}. */
+    @NonNull List<String> getUserControlDisabledPackages(@NonNull ComponentName admin);
+    /** See {@link DevicePolicyManager#getUserControlDisabledPackages(ComponentName)}. */
+    @RemoteDpcAutomaticAdmin @NonNull List<String> getUserControlDisabledPackages();
+
 
     /** See {@link DevicePolicyManager#addUserRestriction(ComponentName, String)}. */
     void addUserRestriction(@NonNull ComponentName admin, String key);
