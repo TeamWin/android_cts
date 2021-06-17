@@ -246,6 +246,20 @@ public final class Users {
         return new UserBuilder(mTestApis);
     }
 
+    /**
+     * Get a {@link UserReference} to a user who does not exist.
+     */
+    public UserReference nonExisting() {
+        fillCache();
+        int id = 0;
+
+        while (mCachedUsers.get(id) != null) {
+            id++;
+        }
+
+        return new UnresolvedUser(mTestApis, id);
+    }
+
     private void fillCache() {
         try {
             // TODO: Replace use of adb on supported versions of Android
