@@ -50,12 +50,12 @@ import android.platform.test.annotations.AppModeFull;
 import android.support.test.uiautomator.UiDevice;
 import android.telephony.TelephonyManager;
 
-import androidx.core.os.BuildCompat;
 import androidx.test.filters.SdkSuppress;
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.ShellIdentityUtils;
 
@@ -705,7 +705,7 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
         builder.setCredentialSharedWithUser(true);
         builder.setIsInitialAutojoinEnabled(true);
         builder.setUntrusted(false);
-        if (BuildCompat.isAtLeastS()) {
+        if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S)) {
             builder.setOemPaid(false);
             builder.setOemPrivate(false);
             builder.setSubscriptionId(TEST_SUB_ID);
@@ -736,7 +736,7 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
         assertTrue(suggestion.isCredentialSharedWithUser());
         assertTrue(suggestion.isInitialAutojoinEnabled());
         assertFalse(suggestion.isUntrusted());
-        if (BuildCompat.isAtLeastS()) {
+        if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S)) {
             assertFalse(suggestion.isOemPaid());
             assertFalse(suggestion.isOemPrivate());
             assertEquals(TEST_SUB_ID, suggestion.getSubscriptionId());

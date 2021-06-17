@@ -47,13 +47,13 @@ import android.net.wifi.aware.WifiAwareNetworkSpecifier;
 import android.net.wifi.aware.WifiAwareSession;
 import android.net.wifi.cts.WifiBuildCompat;
 import android.net.wifi.cts.WifiJUnit3TestBase;
+import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Parcel;
 import android.platform.test.annotations.AppModeFull;
 
-import androidx.core.os.BuildCompat;
-
+import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.SystemUtil;
 
 import java.util.ArrayDeque;
@@ -449,7 +449,7 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
                 characteristics.getMaxServiceSpecificInfoLength(), 255);
         assertEquals("Match Filter Length", characteristics.getMaxMatchFilterLength(), 255);
         assertNotEquals("Cipher suites", characteristics.getSupportedCipherSuites(), 0);
-        if (BuildCompat.isAtLeastS()) {
+        if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S)) {
             mWifiAwareManager.enableInstantCommunicationMode(true);
             assertEquals(mWifiAwareManager.isInstantCommunicationModeEnabled(),
                     characteristics.isInstantCommunicationModeSupported());
@@ -965,7 +965,7 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
 
         WifiAwareSession session = attachCb.getSession();
         assertNotNull("Wi-Fi Aware session", session);
-        if (BuildCompat.isAtLeastS()) {
+        if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S)) {
             assertTrue(mWifiAwareManager.isDeviceAttached());
         }
 
