@@ -19,6 +19,7 @@ package android.usb.cts;
 import static android.Manifest.permission.MANAGE_USB;
 
 import android.app.UiAutomation;
+import android.content.pm.PackageManager;
 import android.hardware.usb.UsbManager;
 import android.util.Log;
 
@@ -26,6 +27,7 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -45,6 +47,12 @@ public class UsbManagerApiTest {
 
     @Before
     public void setUp() {
+        PackageManager pm = InstrumentationRegistry.getContext().getPackageManager();
+
+        boolean hasUsbHost = pm.hasSystemFeature(PackageManager.FEATURE_USB_HOST);
+        boolean hasUsbAccessory =
+            pm.hasSystemFeature(PackageManager.FEATURE_USB_ACCESSORY);
+        Assume.assumeTrue(hasUsbHost || hasUsbAccessory);
         Assert.assertNotNull(mUsbManagerSys);
     }
 
