@@ -43,7 +43,6 @@ import android.provider.MediaStore;
 import android.scopedstorage.cts.lib.TestUtils;
 import android.util.Log;
 
-import androidx.core.os.BuildCompat;
 import androidx.test.filters.SdkSuppress;
 
 import com.android.cts.install.lib.TestApp;
@@ -142,12 +141,9 @@ public class BypassDatabaseOperationsTest extends ScopedStorageBaseDeviceTest {
      * targetSDK=31 or higher will not bypass database operations by default.
      */
     @Test
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
     public void testManageExternalStorage_DoesntBypassDatabase_afterS() throws Exception {
-        if (BuildCompat.isAtLeastS()) {
-            testAppDoesntBypassDatabaseOps(APP_FM_DEFAULT);
-        } else {
-            testAppBypassesDatabaseOps(APP_FM_DEFAULT);
-        }
+        testAppDoesntBypassDatabaseOps(APP_FM_DEFAULT);
     }
 
     /**
