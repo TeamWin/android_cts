@@ -18,12 +18,12 @@ package android.net.wifi.cts;
 
 import android.annotation.NonNull;
 import android.content.Context;
-import android.content.pm.ModuleInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.util.Log;
 
-import androidx.core.os.BuildCompat;
+import com.android.compatibility.common.util.ApiLevelUtil;
 
 /**
  * Wrapper class for checking the wifi module version.
@@ -35,7 +35,7 @@ import androidx.core.os.BuildCompat;
  * <p>
  * This utility tries to help solve that problem by trying to check if the device is running at
  * least
- * <li> The provided dessert release using {@link BuildCompat}, OR</li>
+ * <li> The provided dessert release using {@link ApiLevelUtil}, OR</li>
  * <li> The wifi module from the provided dessert release on an older dessert release device</li>
  *
  * In either case above, we can somewhat safely assume that the wifi API's from the provided dessert
@@ -72,7 +72,7 @@ public class WifiBuildCompat {
     private WifiBuildCompat() { }
 
     public static boolean isPlatformOrWifiModuleAtLeastS(@NonNull Context ctx) {
-        return BuildCompat.isAtLeastS()
+        return ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S)
                 || getWifiApexVersionCode(ctx) >= WIFI_APEX_BASE_VERSION_CODE_FOR_S;
     }
 }
