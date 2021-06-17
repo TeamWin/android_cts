@@ -249,11 +249,13 @@ public final class PowerPolicyHostTest extends CarHostJUnit4TestCase {
 
     private void enterForcedSilentMode() throws Exception {
         executeCommand("cmd car_service silent-mode forced-silent");
+        waitUntilForcedSilentModeChangeTo(true);
     }
 
     private void leaveForcedSilentMode() throws Exception {
         executeCommand("cmd car_service silent-mode forced-non-silent");
         executeCommand("cmd car_service silent-mode non-forced-silent-mode");
+        waitUntilForcedSilentModeChangeTo(false);
     }
 
     private void definePowerPolicy(String policyStr) throws Exception {
@@ -309,6 +311,18 @@ public final class PowerPolicyHostTest extends CarHostJUnit4TestCase {
         CommonTestUtils.waitUntil("timed out (" + DEFAULT_TIMEOUT_SEC
                 + "s) getting number policy listeners", DEFAULT_TIMEOUT_SEC,
                 () -> (getNumberPolicyListeners() == numListeners));
+    }
+
+    private void waitUntilForcedSilentModeChangeTo(boolean expected) throws Exception {
+        String timeoutMsg = String.format("timed out (%ds) waiting for forced silent mode "
+                + "to be %b", DEFAULT_TIMEOUT_SEC, expected);
+        CommonTestUtils.waitUntil(timeoutMsg, DEFAULT_TIMEOUT_SEC,
+                () -> {
+                    SilentModeInfo silentInfo = getSilentModeInfo();
+                    CpmsFrameworkLayerStateInfo cpmsInfo = getCpmsFrameworkLayerStateInfo();
+                    return (silentInfo.getForcedSilentMode() == expected)
+                            && (cpmsInfo.getForcedSilentMode() == expected);
+                });
     }
 
     private void waitForDeviceAvailable() throws Exception {
