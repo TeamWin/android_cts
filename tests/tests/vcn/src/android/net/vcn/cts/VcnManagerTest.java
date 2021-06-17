@@ -23,6 +23,8 @@ import static android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED;
 import static android.net.NetworkCapabilities.TRANSPORT_CELLULAR;
 import static android.telephony.SubscriptionManager.INVALID_SUBSCRIPTION_ID;
 
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
+
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
 import static org.junit.Assert.assertEquals;
@@ -96,12 +98,19 @@ public class VcnManagerTest extends VcnTestBase {
     @Before
     public void setUp() throws Exception {
         assumeTrue(mContext.getPackageManager().hasSystemFeature(FEATURE_TELEPHONY));
+
+        getInstrumentation().getUiAutomation().adoptShellPermissionIdentity();
     }
 
     @After
     public void tearDown() throws Exception {
-        if (mTestNetworkWrapper != null) {
-            mTestNetworkWrapper.close();
+        try {
+            if (mTestNetworkWrapper != null) {
+                mTestNetworkWrapper.close();
+                mTestNetworkWrapper = null;
+            }
+        } finally {
+            getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
         }
     }
 
@@ -172,6 +181,9 @@ public class VcnManagerTest extends VcnTestBase {
     @Test(expected = SecurityException.class)
     public void testAddVcnNetworkPolicyChangeListener_noNetworkFactoryPermission()
             throws Exception {
+        // Drop shell permission identity to test unpermissioned behavior.
+        getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
+
         final TestVcnNetworkPolicyChangeListener listener =
                 new TestVcnNetworkPolicyChangeListener();
 
@@ -192,6 +204,9 @@ public class VcnManagerTest extends VcnTestBase {
 
     @Test(expected = SecurityException.class)
     public void testApplyVcnNetworkPolicy_noNetworkFactoryPermission() throws Exception {
+        // Drop shell permission identity to test unpermissioned behavior.
+        getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
+
         final NetworkCapabilities nc = new NetworkCapabilities.Builder().build();
         final LinkProperties lp = new LinkProperties();
 
@@ -334,7 +349,7 @@ public class VcnManagerTest extends VcnTestBase {
                 true /* expectNotVcnManaged */,
                 false /* expectNotMetered */);
 
-        CarrierPrivilegeUtils.withCarrierPrivileges(mContext, subId, () -> {
+        CarrierPrivilegeUtils.withCarrierPrivilegesForShell(mContext, subId, () -> {
             SubscriptionGroupUtils.withEphemeralSubscriptionGroup(mContext, subId, (subGrp) -> {
                 mVcnManager.setVcnConfig(subGrp, buildVcnConfig());
 
