@@ -195,7 +195,7 @@
         </service>
 
         <service android:name="android.app.stubs.LocalForegroundServiceSticky"
-                 android:foregroundServiceType="camera|microphone"
+                 android:foregroundServiceType="location|camera|microphone"
                  android:exported="true">
             <intent-filter>
                 <action android:name="android.app.stubs.FOREGROUND_SERVICE"/>
