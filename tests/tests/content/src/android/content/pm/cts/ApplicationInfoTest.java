@@ -283,49 +283,58 @@ public class ApplicationInfoTest {
 
     @Test
     public void testIsProduct() throws Exception {
-        final String packageName = getPartitionFirstPackageName(
-                Environment.getProductDirectory().getAbsolutePath());
-        assertNotNull(packageName);
+        final String systemPath = Environment.getRootDirectory().getAbsolutePath();
+        final String productPath = Environment.getProductDirectory().getAbsolutePath();
+        final String packageName = getPartitionFirstPackageName(systemPath, productPath);
+        assertNotNull("Can not find any product packages on " + productPath + " or "
+                + systemPath + productPath, packageName);
 
         final PackageInfo info = getContext().getPackageManager().getPackageInfo(
                 packageName.trim(), 0 /* flags */);
-        assertTrue(info.applicationInfo.isProduct());
+        assertTrue(packageName + " is not product package.", info.applicationInfo.isProduct());
     }
 
     @Test
     public void testIsVendor() throws Exception {
-        final String packageName = getPartitionFirstPackageName(
-                Environment.getVendorDirectory().getAbsolutePath());
-        assertNotNull(packageName);
+        final String systemPath = Environment.getRootDirectory().getAbsolutePath();
+        final String vendorPath = Environment.getVendorDirectory().getAbsolutePath();
+        final String packageName = getPartitionFirstPackageName(systemPath, vendorPath);
+        assertNotNull("Can not find any vendor packages on " + vendorPath + " or "
+                + systemPath + vendorPath, packageName);
 
         final PackageInfo info = getContext().getPackageManager().getPackageInfo(
                 packageName.trim(), 0 /* flags */);
-        assertTrue(info.applicationInfo.isVendor());
+        assertTrue(packageName + " is not vendor package.", info.applicationInfo.isVendor());
     }
 
     @Test
     public void testIsOem() throws Exception {
-        final String packageName = getPartitionFirstPackageName(
-                Environment.getOemDirectory().getAbsolutePath());
+        final String systemPath = Environment.getRootDirectory().getAbsolutePath();
+        final String oemPath = Environment.getOemDirectory().getAbsolutePath();
+        final String packageName = getPartitionFirstPackageName(systemPath, oemPath);
         // Oem package may not exist in every builds like aosp.
         assumeNotNull(packageName);
 
         final PackageInfo info = getContext().getPackageManager().getPackageInfo(
                 packageName.trim(), 0 /* flags */);
-        assertTrue(info.applicationInfo.isOem());
+        assertTrue(packageName + " is not oem package.", info.applicationInfo.isOem());
     }
 
-    private String getPartitionFirstPackageName(final String partition) throws Exception {
+    private String getPartitionFirstPackageName(final String system, final String partition)
+            throws Exception {
         // List package with "-f" option which contains package direction, use that to distinguish
         // package partition and find out target package.
         final String output = SystemUtil.runShellCommand(
                 InstrumentationRegistry.getInstrumentation(), "pm list package -f -s");
         final String[] packages = output.split("package:");
+        assertTrue("No system packages.", packages.length > 0);
+
         for (int i = 0; i < packages.length; i++) {
             // Split package info to direction and name.
             String[] info = packages[i].split("\\.apk=");
             if (info.length != 2) continue; // Package info need include direction and name.
-            if (info[0] != null && info[0].startsWith(partition)) {
+            if (info[0] != null
+                    && (info[0].startsWith(partition) || info[0].startsWith(system + partition))) {
                 return info[1]; // Package name.
             }
         }
