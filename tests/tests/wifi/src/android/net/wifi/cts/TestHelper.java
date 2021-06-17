@@ -43,13 +43,15 @@ import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiNetworkSpecifier;
 import android.net.wifi.WifiNetworkSuggestion;
+import android.os.Build;
 import android.os.WorkSource;
 import android.support.test.uiautomator.UiDevice;
 import android.text.TextUtils;
 import android.util.Log;
 
-import androidx.core.os.BuildCompat;
 import androidx.test.platform.app.InstrumentationRegistry;
+
+import com.android.compatibility.common.util.ApiLevelUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -260,7 +262,7 @@ public class TestHelper {
 
     private static TestNetworkCallback createTestNetworkCallback(
             @NonNull CountDownLatch countDownLatch) {
-        if (BuildCompat.isAtLeastS()) {
+        if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S)) {
             // flags for NetworkCallback only introduced in S.
             return new TestNetworkCallback(countDownLatch, FLAG_INCLUDE_LOCATION_INFO);
         } else {
@@ -270,7 +272,7 @@ public class TestHelper {
 
     @NonNull
     private WifiInfo getWifiInfo(@NonNull NetworkCapabilities networkCapabilities) {
-        if (BuildCompat.isAtLeastS()) {
+        if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S)) {
             // WifiInfo in transport info, only available in S.
             return (WifiInfo) networkCapabilities.getTransportInfo();
         } else {
@@ -349,7 +351,7 @@ public class TestHelper {
             assertThat(testNetworkCallback.onAvailableCalled).isTrue();
             final WifiInfo wifiInfo = getWifiInfo(testNetworkCallback.networkCapabilities);
             assertConnectionEquals(network, wifiInfo);
-            if (BuildCompat.isAtLeastS()) {
+            if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S)) {
                 // User connections should always be primary.
                 assertThat(wifiInfo.isPrimary()).isTrue();
             }
@@ -510,7 +512,7 @@ public class TestHelper {
                             | NetworkCapabilities.REDACT_FOR_LOCAL_MAC_ADDRESS
                             | NetworkCapabilities.REDACT_FOR_NETWORK_SETTINGS);
                 }
-                if (BuildCompat.isAtLeastS()) {
+                if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S)) {
                     // If STA concurrency for restricted connection is supported, this should not
                     // be the primary connection.
                     if (!restrictedNetworkCapabilities.isEmpty()
@@ -709,7 +711,7 @@ public class TestHelper {
                 assertThat(testNetworkCallback.onAvailableCalled).isTrue();
                 final WifiInfo wifiInfo = getWifiInfo(testNetworkCallback.networkCapabilities);
                 assertConnectionEquals(network, wifiInfo);
-                if (BuildCompat.isAtLeastS()) {
+                if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S)) {
                     // If STA concurrency for local only connection is supported, this should not
                     // be the primary connection.
                     if (mWifiManager.isStaConcurrencyForLocalOnlyConnectionsSupported()) {
@@ -788,7 +790,7 @@ public class TestHelper {
             NetworkRequest.Builder builder = new NetworkRequest.Builder()
                     .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
                     .addCapability(NET_CAPABILITY_INTERNET);
-            if (BuildCompat.isAtLeastS()) {
+            if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S)) {
                 // Needed to ensure that the restricted concurrent connection does not
                 // match this request.
                 builder.addForbiddenCapability(NET_CAPABILITY_OEM_PAID)

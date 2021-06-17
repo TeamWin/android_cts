@@ -27,11 +27,11 @@ import android.net.wifi.SupplicantState;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.WifiLock;
+import android.os.Build;
 import android.platform.test.annotations.AppModeFull;
 import android.telephony.SubscriptionManager;
 
-import androidx.core.os.BuildCompat;
-
+import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.SystemUtil;
@@ -232,7 +232,7 @@ public class WifiInfoTest extends WifiJUnit3TestBase {
         assertThat(info1.getBSSID()).isEqualTo(TEST_BSSID);
         assertThat(info1.getRssi()).isEqualTo(TEST_RSSI);
         assertThat(info1.getNetworkId()).isEqualTo(TEST_NETWORK_ID);
-        if (BuildCompat.isAtLeastS()) {
+        if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S)) {
             assertThat(info1.getSubscriptionId())
                     .isEqualTo(SubscriptionManager.INVALID_SUBSCRIPTION_ID);
             assertFalse(info1.isOemPaid());
