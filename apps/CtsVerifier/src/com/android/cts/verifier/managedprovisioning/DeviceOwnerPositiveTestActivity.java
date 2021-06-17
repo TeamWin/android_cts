@@ -230,7 +230,9 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
         }
 
         // DISALLOW_DATA_ROAMING
-        if(packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+        // TODO(b/189282625): replace FEATURE_WATCH with a more specific feature
+        if (!packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH) &&
+          packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             adapter.add(createInteractiveTestItem(this, DISALLOW_DATA_ROAMING_ID,
                     R.string.device_owner_disallow_data_roaming,
                     R.string.device_owner_disallow_data_roaming_info,
@@ -479,11 +481,14 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                                 createDisableNetworkLoggingIntent())}));
 
         // Customize lock screen message
-        adapter.add(TestListItem.newTest(this,
-                R.string.device_owner_customize_lockscreen_message,
-                LockscreenMessageTestActivity.class.getName(),
-                new Intent(this, LockscreenMessageTestActivity.class),
-                /* requiredFeatures */ null));
+        // TODO(b/189282625): replace FEATURE_WATCH with a more specific feature
+        if (!packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)) {
+          adapter.add(TestListItem.newTest(this,
+                  R.string.device_owner_customize_lockscreen_message,
+                  LockscreenMessageTestActivity.class.getName(),
+                  new Intent(this, LockscreenMessageTestActivity.class),
+                  /* requiredFeatures */ null));
+        }
 
         // removeDeviceOwner
         adapter.add(createInteractiveTestItem(this, REMOVE_DEVICE_OWNER_TEST_ID,
