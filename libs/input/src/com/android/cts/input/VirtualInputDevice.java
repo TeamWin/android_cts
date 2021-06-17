@@ -194,6 +194,10 @@ public abstract class VirtualInputDevice implements InputManager.InputDeviceList
         });
     }
 
+    public int getDeviceId() {
+        return mDeviceId;
+    }
+
     private void setupPipes() {
         UiAutomation ui = mInstrumentation.getUiAutomation();
         ParcelFileDescriptor[] pipes = ui.executeShellCommandRw(getShellCommand());

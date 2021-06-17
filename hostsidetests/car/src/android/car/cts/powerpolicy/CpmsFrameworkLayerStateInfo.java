@@ -122,6 +122,14 @@ public final class CpmsFrameworkLayerStateInfo {
         return mNumberPolicyListeners;
     }
 
+    public boolean isComponentOn(String component) {
+        return mEnables.contains(component);
+    }
+
+    public boolean isComponentOff(String component) {
+        return mDisables.contains(component);
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder(STRING_BUILDER_BUF_SIZE);

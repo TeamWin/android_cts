@@ -41,7 +41,7 @@ import java.util.ArrayList;
  * <p>It must be declared in the manifest:
  * <pre><code>
    <receiver android:name="com.android.bedstead.dpmwrapper.TestAppCallbacksReceiver"
-             android:exported="true">
+             android:exported="true"/>
 </code></pre>
  *
  */

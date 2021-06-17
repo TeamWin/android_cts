@@ -27,7 +27,6 @@ import static com.android.bedstead.dpmwrapper.Utils.VERBOSE;
 import static com.android.bedstead.dpmwrapper.Utils.getHandler;
 
 import android.annotation.Nullable;
-import android.app.admin.DeviceAdminReceiver;
 import android.app.admin.DevicePolicyManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -80,7 +79,7 @@ public final class TestAppSystemServiceFactory {
      * Gets the proper {@link DevicePolicyManager} instance to be used by the test.
      */
     public static DevicePolicyManager getDevicePolicyManager(Context context,
-            Class<? extends DeviceAdminReceiver> receiverClass) {
+            Class<? extends BroadcastReceiver> receiverClass) {
         return getSystemService(context, DevicePolicyManager.class, receiverClass);
     }
 
@@ -88,7 +87,7 @@ public final class TestAppSystemServiceFactory {
      * Gets the proper {@link WifiManager} instance to be used by the test.
      */
     public static WifiManager getWifiManager(Context context,
-            Class<? extends DeviceAdminReceiver> receiverClass) {
+            Class<? extends BroadcastReceiver> receiverClass) {
         return getSystemService(context, WifiManager.class, receiverClass);
     }
 
@@ -96,8 +95,16 @@ public final class TestAppSystemServiceFactory {
      * Gets the proper {@link HardwarePropertiesManager} instance to be used by the test.
      */
     public static HardwarePropertiesManager getHardwarePropertiesManager(Context context,
-            Class<? extends DeviceAdminReceiver> receiverClass) {
+            Class<? extends BroadcastReceiver> receiverClass) {
         return getSystemService(context, HardwarePropertiesManager.class, receiverClass);
+    }
+
+    /**
+     * Gets the proper {@link UserManager} instance to be used by the test.
+     */
+    public static UserManager getUserManager(Context context,
+            Class<? extends BroadcastReceiver> receiverClass) {
+        return getSystemService(context, UserManager.class, receiverClass);
     }
 
     private static void assertHasRequiredReceiver(Context context) {
@@ -139,7 +146,7 @@ public final class TestAppSystemServiceFactory {
     }
 
     private static <T> T getSystemService(Context context, Class<T> serviceClass,
-            Class<? extends DeviceAdminReceiver> receiverClass) {
+            Class<? extends BroadcastReceiver> receiverClass) {
         assertHasRequiredReceiver(context);
 
         ServiceManagerWrapper<T> wrapper = null;
@@ -163,6 +170,12 @@ public final class TestAppSystemServiceFactory {
                     (ServiceManagerWrapper<T>) new HardwarePropertiesManagerWrapper();
             wrapper = safeCastWrapper;
             wrappedClass = HardwarePropertiesManager.class;
+        } else if (serviceClass.equals(UserManager.class)) {
+            @SuppressWarnings("unchecked")
+            ServiceManagerWrapper<T> safeCastWrapper =
+                    (ServiceManagerWrapper<T>) new UserManagerWrapper();
+            wrapper = safeCastWrapper;
+            wrappedClass = UserManager.class;
         } else {
             throw new IllegalArgumentException("invalid service class: " + serviceClass);
         }

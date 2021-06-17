@@ -16,34 +16,21 @@
 package com.android.cts.delegate;
 
 import static android.app.admin.DevicePolicyManager.DELEGATION_PACKAGE_ACCESS;
+
 import static com.android.cts.delegate.DelegateTestUtils.assertExpectException;
 
 import android.app.admin.DevicePolicyManager;
-import android.content.Context;
 import android.content.pm.PackageManager.NameNotFoundException;
-import android.test.InstrumentationTestCase;
-import android.test.MoreAsserts;
 
-import java.util.Arrays;
 import java.util.List;
 
 /**
  * Test that an app given the {@link DevicePolicyManager#DELEGATION_PACKAGE_ACCESS} scope via
  * {@link DevicePolicyManager#setDelegatedScopes} can manage package hide and suspend status.
  */
-public class PackageAccessDelegateTest extends InstrumentationTestCase {
+public class PackageAccessDelegateTest extends BaseJUnit3TestCase {
 
     private static final String TEST_APP_PKG = "com.android.cts.launcherapps.simpleapp";
-
-    private DevicePolicyManager mDpm;
-
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-
-        Context context = getInstrumentation().getContext();
-        mDpm = context.getSystemService(DevicePolicyManager.class);
-    }
 
     public void testCannotAccessApis() throws NameNotFoundException {
         assertFalse("DelegateApp should not be a package access delegate",
