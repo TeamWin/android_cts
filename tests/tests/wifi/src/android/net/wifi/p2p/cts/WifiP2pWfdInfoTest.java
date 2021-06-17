@@ -25,8 +25,9 @@ import android.content.Context;
 import android.net.wifi.cts.WifiFeature;
 import android.net.wifi.cts.WifiJUnit4TestBase;
 import android.net.wifi.p2p.WifiP2pWfdInfo;
+import android.os.Build;
 
-import androidx.core.os.BuildCompat;
+import androidx.test.filters.SdkSuppress;
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -73,9 +74,9 @@ public class WifiP2pWfdInfoTest extends WifiJUnit4TestBase {
                 copiedInfo.isContentProtectionSupported());
     }
 
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     @Test
     public void testWifiCoupledSink() {
-        assumeTrue(BuildCompat.isAtLeastS());
         WifiP2pWfdInfo info = new WifiP2pWfdInfo();
 
         assertFalse(info.isCoupledSinkSupportedAtSink());
@@ -87,9 +88,9 @@ public class WifiP2pWfdInfoTest extends WifiJUnit4TestBase {
         assertTrue(info.isCoupledSinkSupportedAtSource());
     }
 
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     @Test
     public void testWifiP2pWfdR2Info() {
-        assumeTrue(BuildCompat.isAtLeastS());
         WifiP2pWfdInfo info = new WifiP2pWfdInfo();
 
         info.setR2DeviceType(WifiP2pWfdInfo.DEVICE_TYPE_WFD_SOURCE);
@@ -99,9 +100,9 @@ public class WifiP2pWfdInfoTest extends WifiJUnit4TestBase {
         assertEquals(WifiP2pWfdInfo.DEVICE_TYPE_WFD_SOURCE, info.getR2DeviceInfo());
     }
 
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     @Test
     public void testWifiP2pWfdDeviceInfo() {
-        assumeTrue(BuildCompat.isAtLeastS());
         WifiP2pWfdInfo info = new WifiP2pWfdInfo();
         info.setDeviceType(WifiP2pWfdInfo.DEVICE_TYPE_WFD_SOURCE);
         assertEquals(WifiP2pWfdInfo.DEVICE_TYPE_WFD_SOURCE, info.getDeviceInfo());
