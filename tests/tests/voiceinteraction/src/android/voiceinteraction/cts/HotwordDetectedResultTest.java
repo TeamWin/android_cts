@@ -18,10 +18,14 @@ package android.voiceinteraction.cts;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.testng.Assert.assertThrows;
+
+import android.media.AudioRecord;
 import android.media.MediaSyncEvent;
 import android.os.Parcel;
 import android.os.PersistableBundle;
 import android.service.voice.HotwordDetectedResult;
+import android.voiceinteraction.common.Utils;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
@@ -33,17 +37,93 @@ public class HotwordDetectedResultTest {
 
     @Test
     public void testHotwordDetectedResult_getMaxBundleSize() throws Exception {
-        assertThat(HotwordDetectedResult.getMaxBundleSize()).isEqualTo(50);
+        assertThat(HotwordDetectedResult.getMaxBundleSize() >= 0).isTrue();
+    }
+
+    @Test
+    public void testHotwordDetectedResult_totalSize() throws Exception {
+        final int bitsForConfidenceLevel = Utils.bitCount(
+                HotwordDetectedResult.CONFIDENCE_LEVEL_VERY_HIGH);
+        final int bitsForHotwordOffsetMillis = Integer.SIZE;
+        final int bitsForHotwordDurationMillis = Integer.SIZE;
+        final int bitsForAudioChannel = Integer.SIZE;
+        final int bitsForHotwordDetectionPersonalized = 1;
+        final int bitsForScore = Utils.bitCount(HotwordDetectedResult.getMaxScore());
+        final int bitsForPersonalizedScore = Utils.bitCount(HotwordDetectedResult.getMaxScore());
+        final int bitsForHotwordPhraseId = Utils.bitCount(
+                HotwordDetectedResult.getMaxHotwordPhraseId());
+
+        final int totalSize =
+                bitsForConfidenceLevel + bitsForHotwordOffsetMillis + bitsForHotwordDurationMillis
+                        + bitsForAudioChannel + bitsForHotwordDetectionPersonalized + bitsForScore
+                        + bitsForPersonalizedScore + bitsForHotwordPhraseId
+                        + HotwordDetectedResult.getMaxBundleSize() * Byte.SIZE;
+
+        assertThat(totalSize <= Utils.MAX_HOTWORD_DETECTED_RESULT_SIZE * Byte.SIZE).isTrue();
+    }
+
+    @Test
+    public void testHotwordDetectedResult_bundleExceedMaxBundleSize() throws Exception {
+        final PersistableBundle persistableBundle = new PersistableBundle();
+        int key = 0;
+        do {
+            persistableBundle.putInt(Integer.toString(key), 0);
+            key++;
+        } while (Utils.getParcelableSize(persistableBundle)
+                <= HotwordDetectedResult.getMaxBundleSize());
+
+        assertThrows(IllegalArgumentException.class,
+                () -> new HotwordDetectedResult.Builder().setExtras(persistableBundle).build());
     }
 
     @Test
     public void testHotwordDetectedResult_getMaxHotwordPhraseId() throws Exception {
-        assertThat(HotwordDetectedResult.getMaxHotwordPhraseId()).isEqualTo(63);
+        assertThat(HotwordDetectedResult.getMaxHotwordPhraseId() >= 63).isTrue();
+    }
+
+    @Test
+    public void testHotwordDetectedResult_setInvalidHotwordPhraseId() throws Exception {
+        assertThrows(IllegalArgumentException.class,
+                () -> new HotwordDetectedResult.Builder().setHotwordPhraseId(-1).build());
+
+        assertThrows(IllegalArgumentException.class,
+                () -> new HotwordDetectedResult.Builder().setHotwordPhraseId(
+                        HotwordDetectedResult.getMaxHotwordPhraseId() + 1).build());
     }
 
     @Test
     public void testHotwordDetectedResult_getMaxScore() throws Exception {
-        assertThat(HotwordDetectedResult.getMaxScore()).isEqualTo(255);
+        assertThat(HotwordDetectedResult.getMaxScore() >= 255).isTrue();
+    }
+
+    @Test
+    public void testHotwordDetectedResult_setInvalidScore() throws Exception {
+        assertThrows(IllegalArgumentException.class,
+                () -> new HotwordDetectedResult.Builder().setScore(-1).build());
+
+        assertThrows(IllegalArgumentException.class,
+                () -> new HotwordDetectedResult.Builder().setScore(
+                        HotwordDetectedResult.getMaxScore() + 1).build());
+    }
+
+    @Test
+    public void testHotwordDetectedResult_setInvalidPersonalizedScore() throws Exception {
+        assertThrows(IllegalArgumentException.class,
+                () -> new HotwordDetectedResult.Builder().setPersonalizedScore(-1).build());
+
+        assertThrows(IllegalArgumentException.class,
+                () -> new HotwordDetectedResult.Builder().setPersonalizedScore(
+                        HotwordDetectedResult.getMaxScore() + 1).build());
+    }
+
+    @Test
+    public void testHotwordDetectedResult_setInvalidHotwordDurationMillis() throws Exception {
+        assertThrows(IllegalArgumentException.class,
+                () -> new HotwordDetectedResult.Builder().setHotwordDurationMillis(-1).build());
+
+        assertThrows(IllegalArgumentException.class,
+                () -> new HotwordDetectedResult.Builder().setHotwordDurationMillis(
+                        (int) AudioRecord.getMaxSharedAudioHistoryMillis() + 1).build());
     }
 
     @Test
