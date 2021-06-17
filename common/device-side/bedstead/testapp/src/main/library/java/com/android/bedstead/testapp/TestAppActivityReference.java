@@ -16,9 +16,15 @@
 
 package com.android.bedstead.testapp;
 
+import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK;
+import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+
+import android.content.Intent;
+
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.activities.ActivityReference;
 import com.android.bedstead.nene.packages.ComponentReference;
+import com.android.eventlib.events.activities.ActivityCreatedEvent;
 
 /**
  * A reference to an activity in a test app for which there may or may not be an instance.
@@ -42,8 +48,25 @@ public abstract class TestAppActivityReference {
         return mInstance;
     }
 
-    /** Gets the {@link ActivityReference} for this activity. */
-    public ActivityReference reference() {
-        return new ActivityReference(sTestApis, mComponent);
+    /** Gets the {@link ComponentReference} for this activity. */
+    public ComponentReference component() {
+        return mComponent;
+    }
+
+    /**
+     * Starts the activity.
+     */
+    public com.android.bedstead.nene.activities.Activity<TestAppActivity> start() {
+        Intent intent = new Intent();
+        intent.setComponent(mComponent.componentName());
+        intent.setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK);
+        sTestApis.context().instrumentedContext().startActivity(intent);
+
+        ActivityCreatedEvent
+                .queryPackage(mComponent.packageName().packageName())
+                .whereActivity().className().isEqualTo(mComponent.className()).waitForEvent();
+
+        return sTestApis.activities().wrap(
+                TestAppActivity.class, new TestAppActivityImpl(mInstance, mComponent));
     }
 }
