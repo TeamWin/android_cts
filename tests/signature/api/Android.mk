@@ -30,7 +30,7 @@ include $(BUILD_SYSTEM)/base_rules.mk
 $$(LOCAL_BUILT_MODULE): $(2) | $(APICHECK)
 	@echo "Convert API file $$< -> $$@"
 	@mkdir -p $$(dir $$@)
-	$(hide) $(APICHECK_COMMAND) --compatible-output=no -convert2xmlnostrip $$< $$@
+	$(hide) $(APICHECK_COMMAND) -convert2xmlnostrip $$< $$@
 endef
 
 $(foreach ver,$(PLATFORM_SYSTEMSDK_VERSIONS),\
