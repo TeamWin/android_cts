@@ -90,7 +90,8 @@ import org.junit.runner.RunWith;
 @AppModeFull
 public class TouchExplorerTest {
     // Constants
-    private static final float GESTURE_LENGTH_MMS = 10.0f;
+    private static final float GESTURE_LENGTH_MM = 15.0f;
+    private static final float MIN_SCREEN_WIDTH_MM = 40.0f;
     private TouchExplorationStubAccessibilityService mService;
     private Instrumentation mInstrumentation;
     private UiAutomation mUiAutomation;
@@ -150,8 +151,8 @@ public class TouchExplorerTest {
                         mInstrumentation.getContext().getSystemService(Context.WINDOW_SERVICE);
         final DisplayMetrics metrics = new DisplayMetrics();
         windowManager.getDefaultDisplay().getRealMetrics(metrics);
-        mScreenBigEnough = mView.getWidth() / 2 >  TypedValue.applyDimension(
-                TypedValue.COMPLEX_UNIT_MM, GESTURE_LENGTH_MMS, metrics);
+        mScreenBigEnough = mView.getWidth() >  TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_MM, MIN_SCREEN_WIDTH_MM, metrics);
         if (!mHasTouchscreen || !mScreenBigEnough) return;
 
         mView.setOnHoverListener(mHoverListener);
@@ -164,8 +165,9 @@ public class TouchExplorerTest {
                     final int midY = mView.getHeight() / 2;
                     mView.getLocationOnScreen(viewLocation);
                     mTapLocation = new PointF(viewLocation[0] + midX, viewLocation[1] + midY);
-                    mSwipeDistance = mView.getWidth() / 4;
-
+                    mSwipeDistance =
+                            TypedValue.applyDimension(
+                                    TypedValue.COMPLEX_UNIT_MM, GESTURE_LENGTH_MM, metrics);
                     // This must be slower than 10mm per 150ms to be detected as touch exploration.
                     final double swipeDistanceMm = mSwipeDistance / metrics.xdpi * 25.4;
                     mSwipeTimeMillis = (long) swipeDistanceMm * 20;
