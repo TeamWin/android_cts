@@ -29,7 +29,7 @@ import static com.android.bedstead.dpmwrapper.Utils.isHeadlessSystemUser;
 
 import android.annotation.Nullable;
 import android.app.admin.DeviceAdminReceiver;
-import android.app.admin.DevicePolicyManager;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -39,7 +39,10 @@ import android.util.Log;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Helper class used by the device owner apps.
@@ -63,7 +66,7 @@ public final class DeviceOwnerHelper {
      *
      * @return whether the {@code intent} represented a method that was executed.
      */
-    public static boolean runManagerMethod(DeviceAdminReceiver receiver, Context context,
+    public static boolean runManagerMethod(BroadcastReceiver receiver, Context context,
             Intent intent) {
         String action = intent.getAction();
         Log.d(TAG, "runManagerMethod(): user=" + context.getUserId() + ", action=" + action);
@@ -101,9 +104,7 @@ public final class DeviceOwnerHelper {
                         "Could not find method " + methodName + " using reflection"));
                 return true;
             }
-            Object manager = managerClass.equals(DevicePolicyManager.class)
-                    ? receiver.getManager(context)
-                    : context.getSystemService(managerClass);
+            Object manager = context.getSystemService(managerClass);
             // Must handle in a separate thread as some APIs will fail when called from main's
             Object result = callOnHandlerThread(() -> method.invoke(manager, args));
 
@@ -122,17 +123,36 @@ public final class DeviceOwnerHelper {
     }
 
     /**
-     * Called by the device owner  {@link DeviceAdminReceiver} to broadcasts an intent back to the
-     * test case app.
+     * Called by the device owner {@link DeviceAdminReceiver} to broadcasts an intent to the
+     * receivers in the test case app.
+     *
+     * <p>It must be used in place of standard APIs (such as
+     * {@code LocalBroadcastManager.sendBroadcast()}) because on headless system user mode the test
+     * app might be running in a different user (and this method will take care of IPC'ing the
+     * intent over).
      */
-    public static void sendBroadcastToTestCaseReceiver(Context context, Intent intent) {
-        if (isHeadlessSystemUser()) {
-            TestAppCallbacksReceiver.sendBroadcast(context, intent);
-            return;
-        }
+    public static void sendBroadcastToTestAppReceivers(Context context, Intent intent) {
+        if (forwardBroadcastToTestApp(context, intent)) return;
+
         Log.d(TAG, "Broadcasting " + intent.getAction() + " locally on user "
                 + context.getUserId());
         LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+    }
+
+    /**
+     * Forwards the intent to the test app.
+     *
+     * <p>This method is needed in cases where the received of DPM callback must to some processing;
+     * it should try to forward it first, as if it's running on headless system user, the processing
+     * should be tone on the test user side.
+     *
+     * @return when {@code true}, the intent was forwarded and should not be processed locally.
+     */
+    public static boolean forwardBroadcastToTestApp(Context context, Intent intent) {
+        if (!isHeadlessSystemUser()) return false;
+
+        TestAppCallbacksReceiver.sendBroadcast(context, intent);
+        return true;
     }
 
     @Nullable
@@ -171,6 +191,9 @@ public final class DeviceOwnerHelper {
             Class<?>[] parameterTypes) {
         if (parameterTypes == null) return null;
 
+        Log.d(TAG, "findMethodWithNullParameterCall(): " + clazz + "." + methodName + "("
+                    + Arrays.toString(parameterTypes) + ")");
+
         boolean hasNullParameter = false;
         for (int i = 0; i < parameterTypes.length; i++) {
             if (parameterTypes[i] == null) {
@@ -183,35 +206,69 @@ public final class DeviceOwnerHelper {
         }
         if (!hasNullParameter) return null;
 
-        Method method = null;
-        for (Method candidate : clazz.getDeclaredMethods()) {
-            if (candidate.getName().equals(methodName)) {
-                if (method != null) {
-                    // TODO: figure out how to solve this scenario if it happen (most likely it will
-                    // need to use the non-null types and/or length of types to infer the right one
-                    Log.e(TAG, "found another method (" + candidate + ") for " + methodName
-                            + ", but will use " + method);
-                } else {
-                    method = candidate;
-                    Log.d(TAG, "using method " + method + " for " + methodName
-                            + " with null arguments");
-                }
+        List<Method> methods = new ArrayList<>();
+        for (Method method : clazz.getDeclaredMethods()) {
+            if (method.getName().equals(methodName)
+                    && method.getParameterCount() == parameterTypes.length) {
+                methods.add(method);
             }
         }
-        return method;
+        if (VERBOSE) Log.v(TAG, "Methods found: " + methods);
+
+        switch (methods.size()) {
+            case 0:
+                return null;
+            case 1:
+                return methods.get(0);
+            default:
+                return findBestMethod(methods, parameterTypes);
+        }
     }
 
-    private static void sendError(DeviceAdminReceiver receiver, Exception e) {
+    @Nullable
+    private static Method findBestMethod(List<Method> methods, Class<?>[] parameterTypes) {
+        if (VERBOSE) {
+            Log.v(TAG, "Found " + methods.size() + " methods: " + methods);
+        }
+        Method bestMethod = null;
+
+        _methods: for (Method method : methods) {
+            Parameter[] methodParameters = method.getParameters();
+            for (int i = 0; i < parameterTypes.length; i++) {
+                Class<?> expectedType = parameterTypes[i];
+                if (expectedType == null) continue;
+
+                Class<?> actualType = methodParameters[i].getType();
+                if (!expectedType.equals(actualType)) {
+                    if (VERBOSE) {
+                        Log.v(TAG, "Parameter at index " + i + " doesn't match (expecting "
+                                + expectedType + ", got " + actualType + "); rejecting " + method);
+                    }
+                    continue _methods;
+                }
+            }
+            // double check there isn't more than one
+            if (bestMethod != null) {
+                Log.e(TAG, "found another method (" + method + "), but will use " + bestMethod);
+            } else {
+                bestMethod = method;
+            }
+        }
+        if (VERBOSE) Log.v(TAG, "Returning " + bestMethod);
+        return bestMethod;
+    }
+
+    private static void sendError(BroadcastReceiver receiver, Exception e) {
         Log.e(TAG, "Exception handling wrapped DPC call" , e);
         sendNoLog(receiver, RESULT_EXCEPTION, e);
     }
 
-    private static void sendResult(DeviceAdminReceiver receiver, Object result) {
+    private static void sendResult(BroadcastReceiver receiver, Object result) {
         sendNoLog(receiver, RESULT_OK, result);
         if (VERBOSE) Log.v(TAG, "Sent");
     }
 
-    private static void sendNoLog(DeviceAdminReceiver receiver, int code, Object result) {
+    private static void sendNoLog(BroadcastReceiver receiver, int code, Object result) {
         if (VERBOSE) {
             Log.v(TAG, "Sending " + TestAppSystemServiceFactory.resultCodeToString(code)
                     + " (result='" + result + "') to " + receiver + " on "

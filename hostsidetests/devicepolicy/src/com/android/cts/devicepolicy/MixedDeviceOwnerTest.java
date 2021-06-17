@@ -603,6 +603,13 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
     }
 
     @Override
+    protected void installDelegateApp() throws Exception {
+        // TODO(b/176993670): must call installDeviceOwnerApp() - even though it's not one - so
+        // the permissions required to use DpmWrapper are set on headless system user mode
+        installDeviceOwnerApp(DELEGATE_APP_APK);
+    }
+
+    @Override
     protected void runDeviceTestsAsUser(String pkgName, String testClassName, String testName,
             int userId, Map<String, String> params) throws DeviceNotAvailableException {
         Map<String, String> newParams = new HashMap(params);

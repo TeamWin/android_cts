@@ -23,8 +23,11 @@ import android.app.admin.NetworkEvent;
 import android.app.admin.SecurityLog.SecurityEvent;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Process;
 import android.test.MoreAsserts;
 import android.util.Log;
+
+import com.android.bedstead.dpmwrapper.DeviceOwnerHelper;
 
 import junit.framework.Assert;
 
@@ -37,6 +40,8 @@ import java.util.concurrent.TimeUnit;
  * Utils class for delegation tests.
  */
 public class DelegateTestUtils {
+
+    private static final String TAG = DelegateTestUtils.class.getSimpleName();
 
     @FunctionalInterface
     public interface ExceptionRunnable {
@@ -60,13 +65,17 @@ public class DelegateTestUtils {
         @Override
         public void onNetworkLogsAvailable(Context context, Intent intent, long batchToken,
                 int networkLogsCount) {
+            if (DeviceOwnerHelper.forwardBroadcastToTestApp(context, intent)) return;
+
+            Log.v(TAG, "onNetworkLogsAvailable() received for user " + Process.myUid() + ": token="
+                    + batchToken + ", count=" + networkLogsCount);
             if (sBatchCountDown == null) {
                 // If the latch is not set then nothing will be using the receiver to examine
                 // the logs. Leave the logs unread.
                 return;
             }
 
-            DevicePolicyManager dpm = context.getSystemService(DevicePolicyManager.class);
+            DevicePolicyManager dpm = BaseTestCase.getDpm(context);
             final List<NetworkEvent> events = dpm.retrieveNetworkLogs(null, batchToken);
             if (events == null || events.size() == 0) {
                 fail("Failed to retrieve batch of network logs with batch token " + batchToken);
@@ -78,17 +87,27 @@ public class DelegateTestUtils {
 
         @Override
         public void onSecurityLogsAvailable(Context context, Intent intent) {
+            if (false) {
+                // TODO(b/191149410): at some point check below should be needed to fix a test on
+                // automotive - if not, than this whole method might not be used anymore...
+                if (DeviceOwnerHelper.forwardBroadcastToTestApp(context, intent)) return;
+            }
+
+            Log.v(TAG, "onSecurityLogsAvailable() received for user " + Process.myUid());
+
             if (sBatchCountDown == null) {
                 // If the latch is not set then nothing will be using the receiver to examine
                 // the logs. Leave the logs unread.
                 return;
             }
 
-            DevicePolicyManager dpm = context.getSystemService(DevicePolicyManager.class);
+            DevicePolicyManager dpm = BaseTestCase.getDpm(context);
             final List<SecurityEvent> events = dpm.retrieveSecurityLogs(null);
             if (events == null || events.size() == 0) {
+                Log.v(TAG, "No events");
                 fail("Failed to retrieve security logs");
             } else {
+                Log.v(TAG, "Received " + events.size() + " events");
                 sSecurityEvents.addAll(events);
                 sBatchCountDown.countDown();
             }

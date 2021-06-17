@@ -35,6 +35,8 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.Process;
+import android.os.UserManager;
 import android.test.MoreAsserts;
 import android.util.Log;
 
@@ -56,6 +58,8 @@ public class DelegationTest extends BaseDeviceAdminTest {
     private static final String DELEGATE_PKG = "com.android.cts.delegate";
     private static final String DELEGATE_ACTIVITY_NAME =
             DELEGATE_PKG + ".DelegatedScopesReceiverActivity";
+    private static final String DELEGATE_SERVICE_NAME =
+            DELEGATE_PKG + ".DelegatedScopesReceiverService";
     private static final String TEST_PKG = "com.android.cts.apprestrictions.targetapp";
 
     // Broadcasts received from the delegate app.
@@ -71,6 +75,7 @@ public class DelegationTest extends BaseDeviceAdminTest {
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
+            Log.v(TAG, "onReceive(): " + intent.getAction() + " on user " + Process.myUserHandle());
             if (ACTION_REPORT_SCOPES.equals(intent.getAction())) {
                 synchronized (DelegationTest.this) {
                     mReceivedScopes = intent.getStringArrayExtra(EXTRA_DELEGATION_SCOPES);
@@ -107,6 +112,21 @@ public class DelegationTest extends BaseDeviceAdminTest {
     }
 
     public void testDelegateReceivesScopeChangedBroadcast() throws InterruptedException {
+        if (UserManager.isHeadlessSystemUserMode()) {
+            // TODO(b/190627898): this test launched an activity to receive the broadcast from DPM,
+            // but headless system user cannot launch activity. To make things worse, the intent
+            // is only sent to registered receivers, so we cannot use the existing receivers from
+            // DpmWrapper, we would need to start a service on user 0 to receive the broadcast,
+            // which would require a lot of changes:
+            // - calling APIs / Shell commands to allow an app in the bg to start a service
+            // - add a "launchIntent()" method on DpmWrapper so the intent is launched by user 0
+            //
+            // It might not be worth to make these changes, but rather wait for the test refactoring
+            Log.i(TAG, "Skipping testDelegateReceivesScopeChangedBroadcast() on headless system "
+                    + "user mode");
+            return;
+        }
+
         // Prepare the scopes to be delegated.
         final List<String> scopes = Arrays.asList(
                 DELEGATION_CERT_INSTALL,
@@ -270,12 +290,17 @@ public class DelegationTest extends BaseDeviceAdminTest {
     }
 
     private List<String> getDelegatePackages(String scope) {
-        return mDevicePolicyManager.getDelegatePackages(ADMIN_RECEIVER_COMPONENT, scope);
+        List<String> packages = mDevicePolicyManager.getDelegatePackages(ADMIN_RECEIVER_COMPONENT,
+                scope);
+        Log.d(TAG, "getDelegatePackages(" + scope + "): " + packages);
+        return packages;
     }
 
     private void startAndWaitDelegateActivity() throws InterruptedException {
+        ComponentName componentName = new ComponentName(DELEGATE_PKG, DELEGATE_ACTIVITY_NAME);
+        Log.d(TAG, "Starting " + componentName + " on user " + Process.myUserHandle());
         mContext.startActivity(new Intent()
-                .setComponent(new ComponentName(DELEGATE_PKG, DELEGATE_ACTIVITY_NAME))
+                .setComponent(componentName)
                 .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_NEW_TASK));
         assertTrue("DelegateApp did not start in time.",
                 mReceivedRunningSemaphore.tryAcquire(10, TimeUnit.SECONDS));

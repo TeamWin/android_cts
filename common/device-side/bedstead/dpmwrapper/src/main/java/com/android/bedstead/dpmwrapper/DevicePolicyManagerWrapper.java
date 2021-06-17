@@ -254,6 +254,29 @@ final class DevicePolicyManagerWrapper
             doAnswer(answer).when(spy).setCommonCriteriaModeEnabled(any(), anyBoolean());
             doAnswer(answer).when(spy).isCommonCriteriaModeEnabled(any());
 
+            // Used by AppRestrictionsDelegateTest
+            doAnswer(answer).when(spy).getApplicationRestrictions(any(), any());
+
+            // Used by PackageAccessDelegateTest
+            doAnswer(answer).when(spy).isApplicationHidden(any(), any());
+            doAnswer(answer).when(spy).isPackageSuspended(any(), any());
+            doAnswer(answer).when(spy).setPackagesSuspended(any(), any(), anyBoolean());
+
+            // Used by PermissionGrantDelegateTest
+            doAnswer(answer).when(spy).getPermissionGrantState(any(), any(), any());
+            doAnswer(answer).when(spy).getPermissionPolicy(any());
+
+            // Used by BlockUninstallDelegateTest
+            doAnswer(answer).when(spy).isUninstallBlocked(any(), any());
+
+            // Used by CertInstallDelegateTest
+            doAnswer(answer).when(spy).hasCaCertInstalled(any(), any());
+            doAnswer(answer).when(spy).getInstalledCaCerts(any());
+            doAnswer(answer).when(spy).installKeyPair(any(), any(), any(), any());
+
+            // Used By DelegationTest
+            doAnswer(answer).when(spy).getDelegatePackages(any(), any());
+
             // TODO(b/176993670): add more methods below as tests are converted
         } catch (Exception e) {
             // Should never happen, but needs to be catch as some methods declare checked exceptions

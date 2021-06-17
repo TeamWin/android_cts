@@ -1003,6 +1003,8 @@ public class SubscriptionManagerTest {
 
     @Test
     public void testSetAndGetD2DSharingContacts() {
+        if (!isSupported()) return;
+
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         uiAutomation.adoptShellPermissionIdentity(MODIFY_PHONE_STATE);
         List<Uri> originalD2DSharingContacts = mSm.getDeviceToDeviceStatusSharingContacts(mSubId);
