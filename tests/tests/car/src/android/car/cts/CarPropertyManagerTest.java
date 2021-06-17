@@ -245,9 +245,11 @@ public class CarPropertyManagerTest extends CarApiTestBase {
     @CddTest(requirement="2.5.1")
     @Test
     public void testMustSupportNightMode() {
-        assertWithMessage("Must support NIGHT_MODE")
-                .that(mCarPropertyManager.getCarPropertyConfig(VehiclePropertyIds.NIGHT_MODE))
-                .isNotNull();
+        verifyOnchangeCarPropertyConfig(/*requiredProperty=*/true,
+                                        VehiclePropertyIds.NIGHT_MODE,
+                                        Boolean.class);
+
+        verifyCarPropertyValue(VehiclePropertyIds.NIGHT_MODE, Boolean.class);
     }
 
     @CddTest(requirement="2.5.1")
