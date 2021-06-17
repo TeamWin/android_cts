@@ -29,7 +29,7 @@ public final class TestAppActivities {
      *
      * <p>Currently, this will always return the same activity.
      */
-    public UnresolvedTestAppActivity any() {
+    public TestAppActivityReference any() {
         // TODO(scottjonathan): Currently we only have one pattern for testapps and they all have
         //  exactly one activity - so we will return it here. In future we should expose a query
         //  interface
