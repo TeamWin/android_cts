@@ -20,6 +20,7 @@ import android.app.job.JobInfo;
 import android.app.job.JobParameters;
 import android.content.ClipData;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.PersistableBundle;
 import android.os.UserHandle;
@@ -120,19 +121,22 @@ public class JobParametersTest extends BaseJobSchedulerTest {
                                 + " " + kJobServiceComponent.getPackageName()
                                 + " " + JOB_ID));
 
-        BatteryUtils.runDumpsysBatterySetLevel(100);
-        BatteryUtils.runDumpsysBatteryUnplug();
-        verifyStopReason(new JobInfo.Builder(JOB_ID, kJobServiceComponent)
-                        .setRequiresBatteryNotLow(true).build(),
-                JobParameters.STOP_REASON_CONSTRAINT_BATTERY_NOT_LOW,
-                () -> BatteryUtils.runDumpsysBatterySetLevel(5));
+        // In automotive device, always-on screen and endless battery charging are assumed.
+        if (!isAutomotiveDevice()) {
+            BatteryUtils.runDumpsysBatterySetLevel(100);
+            BatteryUtils.runDumpsysBatteryUnplug();
+            verifyStopReason(new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                            .setRequiresBatteryNotLow(true).build(),
+                    JobParameters.STOP_REASON_CONSTRAINT_BATTERY_NOT_LOW,
+                    () -> BatteryUtils.runDumpsysBatterySetLevel(5));
 
-        BatteryUtils.runDumpsysBatterySetPluggedIn(true);
-        BatteryUtils.runDumpsysBatterySetLevel(100);
-        verifyStopReason(new JobInfo.Builder(JOB_ID, kJobServiceComponent)
-                        .setRequiresCharging(true).build(),
-                JobParameters.STOP_REASON_CONSTRAINT_CHARGING,
-                BatteryUtils::runDumpsysBatteryUnplug);
+            BatteryUtils.runDumpsysBatterySetPluggedIn(true);
+            BatteryUtils.runDumpsysBatterySetLevel(100);
+            verifyStopReason(new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                            .setRequiresCharging(true).build(),
+                    JobParameters.STOP_REASON_CONSTRAINT_CHARGING,
+                    BatteryUtils::runDumpsysBatteryUnplug);
+        }
 
         setStorageStateLow(false);
         verifyStopReason(new JobInfo.Builder(JOB_ID, kJobServiceComponent)
@@ -181,6 +185,10 @@ public class JobParametersTest extends BaseJobSchedulerTest {
     // JobParameters.getTriggeredContentAuthorities() tested in TriggerContentTest.
     // JobParameters.getTriggeredContentUris() tested in TriggerContentTest.
     // JobParameters.isOverrideDeadlineExpired() tested in TimingConstraintTest.
+
+    private boolean isAutomotiveDevice() {
+        return getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
+    }
 
     private interface ExceptionRunnable {
         void run() throws Exception;
