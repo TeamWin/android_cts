@@ -21,19 +21,27 @@ import java.util.Arrays;
 public final class SilentModeInfo {
     private static final String[] ATTR_HEADERS = {"Monitoring HW state signal",
             "Silent mode by HW state signal", "Forced silent mode"};
-    private static final boolean[] EXPECTED_WITHOUT_SILENT_MODE = {true, false, false};
-    private static final boolean[] EXPECTED_WITH_SILENT_MODE = {false, true, true};
+    private static final int NUMBER_OF_ATTRS = 3;
 
     public static final String COMMAND = "cmd car_service silent-mode query";
-    public static final SilentModeInfo NO_SILENT =
-            new SilentModeInfo(EXPECTED_WITHOUT_SILENT_MODE);
-    public static final SilentModeInfo FORCED_SILENT =
-            new SilentModeInfo(EXPECTED_WITH_SILENT_MODE);
+    public static final SilentModeInfo NO_SILENT = new SilentModeInfo(true, false, false);
+    public static final SilentModeInfo FORCED_SILENT = new SilentModeInfo(false, true, true);
 
     private final boolean[] mAttrs;
 
-    private SilentModeInfo(boolean[] attrs) {
+    private SilentModeInfo(boolean monitoring, boolean byHW, boolean forced) {
+        mAttrs = new boolean[] {monitoring, byHW, forced};
+    }
+
+    private SilentModeInfo(boolean[] attrs) throws Exception {
+        if (attrs.length != NUMBER_OF_ATTRS) {
+            throw new IllegalArgumentException("attrs.length must be 3");
+        }
         mAttrs = attrs;
+    }
+
+    public boolean getForcedSilentMode() {
+        return mAttrs[2];
     }
 
     @Override
