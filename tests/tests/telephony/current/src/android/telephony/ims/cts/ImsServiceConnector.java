@@ -312,18 +312,24 @@ class ImsServiceConnector {
         }
 
         private boolean setDefaultSmsApp(String packageName) throws Exception {
-            if (packageName == null) {
-                return false;
-            }
             RoleManager roleManager = mInstrumentation.getContext()
                     .getSystemService(RoleManager.class);
             Boolean result;
             LinkedBlockingQueue<Boolean> queue = new LinkedBlockingQueue<>(1);
-            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(roleManager,
-                    (m) -> m.addRoleHolderAsUser(RoleManager.ROLE_SMS, packageName, 0,
-                            android.os.Process.myUserHandle(),
-                            // Run on calling binder thread.
-                            Runnable::run, queue::offer));
+            if (TextUtils.isEmpty(packageName)) {
+                ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(roleManager,
+                        (m) -> m.clearRoleHoldersAsUser(RoleManager.ROLE_SMS,
+                                RoleManager.MANAGE_HOLDERS_FLAG_DONT_KILL_APP,
+                                android.os.Process.myUserHandle(),
+                                // Run on calling binder thread.
+                                Runnable::run, queue::offer));
+            } else {
+                ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(roleManager,
+                        (m) -> m.addRoleHolderAsUser(RoleManager.ROLE_SMS, packageName, 0,
+                                android.os.Process.myUserHandle(),
+                                // Run on calling binder thread.
+                                Runnable::run, queue::offer));
+            }
             result = queue.poll(ImsUtils.TEST_TIMEOUT_MS, TimeUnit.MILLISECONDS);
             if (ImsUtils.VDBG) {
                 Log.d(TAG, "setDefaultSmsApp result: " + result);
