@@ -260,6 +260,12 @@ public class UserRestrictions {
                 return isCellBroadcastAppLinkEnabled;
             case UserManager.DISALLOW_FUN:
                 // Easter egg is not available on watch
+            case UserManager.DISALLOW_AIRPLANE_MODE:
+            case UserManager.DISALLOW_CONFIG_LOCATION:
+            case UserManager.DISALLOW_CONFIG_SCREEN_TIMEOUT:
+            case UserManager.DISALLOW_CONFIG_BRIGHTNESS:
+                // TODO(b/189282625): replace FEATURE_WATCH with a more specific feature
+                // in the last 4 cases
                 return !pm.hasSystemFeature(PackageManager.FEATURE_WATCH);
             case UserManager.DISALLOW_CONFIG_MOBILE_NETWORKS:
                 return pm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY);
