@@ -18,10 +18,15 @@ package android.os.cts.uffdgc;
 
 import static org.junit.Assert.assertEquals;
 
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import com.android.compatibility.common.util.ApiLevelUtil;
+import com.android.compatibility.common.util.FeatureUtil;
+
+import android.os.Build.VERSION_CODES;
 import androidx.test.runner.AndroidJUnit4;
 
 @RunWith(AndroidJUnit4.class)
@@ -33,6 +38,9 @@ public final class UserfaultfdTest {
 
   @Before
   public void setUp() {
+      boolean mShouldRunTest = !(FeatureUtil.isAutomotive()
+              && ApiLevelUtil.isAtMost(VERSION_CODES.S));
+      Assume.assumeTrue("Skip userfaultfd tests on Automotive targets till S", mShouldRunTest);
       setUpUserfaultfd();
   }
 
