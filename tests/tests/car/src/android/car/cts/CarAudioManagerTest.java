@@ -30,10 +30,13 @@ import android.app.UiAutomation;
 import android.car.Car;
 import android.car.media.CarAudioManager;
 import android.os.SystemClock;
+import android.util.Pair;
 import android.view.KeyEvent;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
+
+import com.android.compatibility.common.util.ShellUtils;
 
 import org.junit.After;
 import org.junit.Before;
@@ -42,15 +45,21 @@ import org.junit.runner.RunWith;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @RunWith(AndroidJUnit4.class)
 public final class CarAudioManagerTest extends CarApiTestBase {
+
+    private static long WAIT_TIMEOUT_SECS = 5;
 
     private static final UiAutomation UI_AUTOMATION =
             InstrumentationRegistry.getInstrumentation().getUiAutomation();
 
     private CarAudioManager mCarAudioManager;
     private SyncCarVolumeCallback mCallback;
+    private int mZoneId = -1;
+    private int mVolumeGroupId = -1;
 
     @Override
     @Before
@@ -109,7 +118,7 @@ public final class CarAudioManagerTest extends CarApiTestBase {
     }
 
     @Test
-    public void registerCarVolumeCallback_withPermission_receivesCallback() throws Exception {
+    public void registerCarVolumeCallback_onGroupVolumeChanged() throws Exception {
         assumeDynamicRoutingIsEnabled();
         mCallback = new SyncCarVolumeCallback();
 
@@ -118,8 +127,64 @@ public final class CarAudioManagerTest extends CarApiTestBase {
 
         injectVolumeDownKeyEvent();
         assertWithMessage("CarVolumeCallback#onGroupVolumeChanged should be called")
-                .that(mCallback.received())
+                .that(mCallback.receivedGroupVolumeChanged())
                 .isTrue();
+    }
+
+    @Test
+    public void registerCarVolumeCallback_onMasterMuteChanged() throws Exception {
+        assumeDynamicRoutingIsEnabled();
+        mCallback = new SyncCarVolumeCallback();
+
+        runWithCarControlAudioVolumePermission(
+            () -> mCarAudioManager.registerCarVolumeCallback(mCallback));
+
+        injectVolumeMuteKeyEvent();
+        try {
+            assertWithMessage("CarVolumeCallback#onMasterMuteChanged should be called")
+                .that(mCallback.receivedMasterMuteChanged())
+                .isTrue();
+        } finally {
+            injectVolumeMuteKeyEvent();
+        }
+    }
+
+    @Test
+    public void registerCarVolumeCallback_onGroupMuteChanged() throws Exception {
+        assumeDynamicRoutingIsEnabled();
+        assumeVolumeGroupMutingIsEnabled();
+        mCallback = new SyncCarVolumeCallback();
+
+        runWithCarControlAudioVolumePermission(
+            () -> {
+                readFirstZoneAndVolumeGroup();
+                mCarAudioManager.registerCarVolumeCallback(mCallback);
+                setVolumeGroupMute(mZoneId, mVolumeGroupId, true);
+                setVolumeGroupMute(mZoneId, mVolumeGroupId, false);
+            });
+
+        assertWithMessage("CarVolumeCallback#onGroupMuteChanged should be called")
+            .that(mCallback.receivedGroupMuteChanged()).isTrue();
+        assertWithMessage("CarVolumeCallback#onGroupMuteChanged wrong zoneId")
+            .that(mCallback.zoneId).isEqualTo(mZoneId);
+        assertWithMessage("CarVolumeCallback#onGroupMuteChanged wrong groupId")
+            .that(mCallback.groupId).isEqualTo(mVolumeGroupId);
+    }
+
+    private void readFirstZoneAndVolumeGroup() {
+        String dump = ShellUtils.runShellCommand(
+            "dumpsys car_service --services CarAudioService");
+        Matcher matchZone = Pattern.compile("CarAudioZone\\(.*:(\\d?)\\)").matcher(dump);
+        assertWithMessage("No CarAudioZone in dump").that(matchZone.find()).isTrue();
+        mZoneId = Integer.parseInt(matchZone.group(1));
+        Matcher matchGroup = Pattern.compile("CarVolumeGroup\\((\\d?)\\)").matcher(dump);
+        assertWithMessage("No CarVolumeGroup in dump").that(matchGroup.find()).isTrue();
+        mVolumeGroupId = Integer.parseInt(matchGroup.group(1));
+    }
+
+    private void setVolumeGroupMute(int zoneId, int groupId, boolean mute) {
+        ShellUtils.runShellCommand("cmd car_service set-mute-car-volume-group %d %d %s",
+            zoneId, groupId, mute ? "mute" : "unmute");
     }
 
     @Test
@@ -136,7 +201,7 @@ public final class CarAudioManagerTest extends CarApiTestBase {
         mCarAudioManager.unregisterCarVolumeCallback(mCallback);
 
         assertWithMessage("CarVolumeCallback#onGroupVolumeChanged should not be called")
-                .that(mCallback.received())
+                .that(mCallback.receivedGroupVolumeChanged())
                 .isFalse();
     }
 
@@ -164,12 +229,16 @@ public final class CarAudioManagerTest extends CarApiTestBase {
         injectVolumeDownKeyEvent();
 
         assertWithMessage("CarVolumeCallback#onGroupVolumeChanged should not be called")
-                .that(callback.received())
+                .that(callback.receivedGroupVolumeChanged())
                 .isFalse();
     }
 
     private void assumeDynamicRoutingIsEnabled() {
         assumeTrue(mCarAudioManager.isAudioFeatureEnabled(AUDIO_FEATURE_DYNAMIC_ROUTING));
+    }
+
+    private void assumeVolumeGroupMutingIsEnabled() {
+        assumeTrue(mCarAudioManager.isAudioFeatureEnabled(AUDIO_FEATURE_VOLUME_GROUP_MUTING));
     }
 
     private void runWithCarControlAudioVolumePermission(Runnable runnable) {
@@ -181,23 +250,56 @@ public final class CarAudioManagerTest extends CarApiTestBase {
         }
     }
 
-    private void injectVolumeDownKeyEvent() {
+    private void injectKeyEvent(int keyCode) {
         long downTime = SystemClock.uptimeMillis();
         KeyEvent volumeDown = new KeyEvent(downTime, downTime, KeyEvent.ACTION_DOWN,
-                KeyEvent.KEYCODE_VOLUME_DOWN, 0);
+            keyCode, 0);
         UI_AUTOMATION.injectInputEvent(volumeDown, true);
     }
 
-    private static final class SyncCarVolumeCallback extends CarVolumeCallback {
-        private final CountDownLatch mLatch = new CountDownLatch(1);
+    private void injectVolumeDownKeyEvent() {
+        injectKeyEvent(KeyEvent.KEYCODE_VOLUME_DOWN);
+    }
 
-        boolean received() throws InterruptedException {
-            return mLatch.await(1L, TimeUnit.SECONDS);
+    private void injectVolumeMuteKeyEvent() {
+        injectKeyEvent(KeyEvent.KEYCODE_VOLUME_MUTE);
+    }
+
+    private static final class SyncCarVolumeCallback extends CarVolumeCallback {
+        private final CountDownLatch mGroupVolumeChangeLatch = new CountDownLatch(1);
+        private final CountDownLatch mGroupMuteChangeLatch = new CountDownLatch(1);
+        private final CountDownLatch mMasterMuteChangeLatch = new CountDownLatch(1);
+
+        public int zoneId;
+        public int groupId;
+
+        boolean receivedGroupVolumeChanged() throws InterruptedException {
+            return mGroupVolumeChangeLatch.await(WAIT_TIMEOUT_SECS, TimeUnit.SECONDS);
+        }
+
+        boolean receivedGroupMuteChanged() throws InterruptedException {
+            return mGroupMuteChangeLatch.await(WAIT_TIMEOUT_SECS, TimeUnit.SECONDS);
+        }
+
+        boolean receivedMasterMuteChanged() throws InterruptedException {
+            return mMasterMuteChangeLatch.await(WAIT_TIMEOUT_SECS, TimeUnit.SECONDS);
         }
 
         @Override
         public void onGroupVolumeChanged(int zoneId, int groupId, int flags) {
-            mLatch.countDown();
+            mGroupVolumeChangeLatch.countDown();
+        }
+
+        @Override
+        public void onMasterMuteChanged(int zoneId, int flags) {
+            mMasterMuteChangeLatch.countDown();
+        }
+
+        @Override
+        public void onGroupMuteChanged(int zoneId, int groupId, int flags) {
+            this.zoneId = zoneId;
+            this.groupId = groupId;
+            mGroupMuteChangeLatch.countDown();
         }
     }
 }
