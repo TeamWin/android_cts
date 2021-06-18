@@ -36,7 +36,6 @@ import android.support.test.uiautomator.UiObject2
 import android.support.test.uiautomator.UiObjectNotFoundException
 import android.view.accessibility.AccessibilityNodeInfo
 import android.widget.Switch
-import androidx.core.os.BuildCompat
 import androidx.test.InstrumentationRegistry
 import androidx.test.filters.SdkSuppress
 import androidx.test.runner.AndroidJUnit4
@@ -53,6 +52,7 @@ import com.android.compatibility.common.util.UI_ROOT
 import com.android.compatibility.common.util.click
 import com.android.compatibility.common.util.depthFirstSearch
 import com.android.compatibility.common.util.uiDump
+import com.android.modules.utils.build.SdkLevel
 import org.hamcrest.CoreMatchers.containsString
 import org.hamcrest.CoreMatchers.containsStringIgnoringCase
 import org.hamcrest.CoreMatchers.equalTo
@@ -410,7 +410,7 @@ class AutoRevokeTest {
     }
 
     private fun killDummyApp(pkg: String = supportedAppPackageName) {
-        if (!BuildCompat.isAtLeastS()) {
+        if (!SdkLevel.isAtLeastS()) {
             // Work around a race condition on R that killing the app process too fast after
             // activity launch would result in a stale process record in LRU process list that
             // sticks until next reboot.
