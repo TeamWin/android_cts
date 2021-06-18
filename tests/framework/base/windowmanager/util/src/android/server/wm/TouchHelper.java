@@ -118,8 +118,8 @@ public class TouchHelper {
         tapOnDisplay(x, y, view.getDisplay().getDisplayId(), true /* sync */, waitAnimations);
     }
 
-    public void tapOnStackCenter(WindowManagerState.ActivityTask stack) {
-        tapOnCenter(stack.getBounds(), stack.mDisplayId);
+    public void tapOnTaskCenter(WindowManagerState.Task task) {
+        tapOnCenter(task.getBounds(), task.mDisplayId);
     }
 
     public void tapOnDisplayCenter(int displayId) {
