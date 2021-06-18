@@ -128,13 +128,7 @@ public class AdbRootDependentCompilationTest extends DeviceTestCase {
             return;
         }
 
-        // Ensure no profile is initially present.
-        for (ProfileLocation profileLocation : ProfileLocation.values()) {
-            String clientPath = profileLocation.getPath();
-            if (doesFileExist(clientPath)) {
-                executeSuShellAdbCommand(0, "rm", clientPath);
-            }
-        }
+        resetProfileState();
 
         // Copy the profile to the reference location so that the bg-dexopt
         // can actually do work if it's configured to speed-profile.
@@ -227,13 +221,9 @@ public class AdbRootDependentCompilationTest extends DeviceTestCase {
         if (!canRunTest(profileLocations)) {
             return false;
         }
-        // ensure no profiles initially present
-        for (ProfileLocation profileLocation : ProfileLocation.values()) {
-            String clientPath = profileLocation.getPath();
-            if (doesFileExist(clientPath)) {
-                executeSuShellAdbCommand(0, "rm", clientPath);
-            }
-        }
+
+        resetProfileState();
+
         executeCompile("-m", "speed-profile", "-f");
         String odexFilePath = getOdexFilePath();
         byte[] initialOdexFileContents = readFileOnClient(odexFilePath);
@@ -262,6 +252,11 @@ public class AdbRootDependentCompilationTest extends DeviceTestCase {
             fail("odex file should have changed when recompiling with " + profileLocations);
         }
         return true;
+    }
+
+    public void resetProfileState() throws Exception {
+        executeSuShellAdbCommand(0, "rm", "-f", ProfileLocation.REF.getPath());
+        executeSuShellAdbCommand(0, "truncate", "-s", "0", ProfileLocation.CUR.getPath());
     }
 
     /**
