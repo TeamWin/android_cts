@@ -16,6 +16,7 @@
 
 package android.hardware.input.cts.tests;
 
+import android.content.Intent;
 import android.hardware.cts.R;
 import android.server.wm.WindowManagerStateHelper;
 
@@ -54,6 +55,12 @@ public class RazerServalTest extends InputHidTestCase {
     public void testHomeKey() {
         testInputEvents(R.raw.razer_serval_homekey);
         WindowManagerStateHelper wmStateHelper = new WindowManagerStateHelper();
+        // Put DUT on home screen
+        Intent intent = new Intent();
+        intent.addCategory(Intent.CATEGORY_HOME);
+        intent.setAction(Intent.ACTION_MAIN);
+        mActivityRule.getActivity().startActivity(intent);
+
 
         wmStateHelper.waitForHomeActivityVisible();
         wmStateHelper.assertHomeActivityVisible(true);
