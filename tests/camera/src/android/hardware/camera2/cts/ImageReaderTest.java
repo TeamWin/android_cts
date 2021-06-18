@@ -64,6 +64,7 @@ import static android.hardware.camera2.cts.CameraTestUtils.SimpleCaptureCallback
 import static android.hardware.camera2.cts.CameraTestUtils.SimpleImageReaderListener;
 import static android.hardware.camera2.cts.CameraTestUtils.dumpFile;
 import static android.hardware.camera2.cts.CameraTestUtils.getValueNotNull;
+import static com.google.common.truth.Truth.assertWithMessage;
 import static junit.framework.Assert.*;
 
 /**
@@ -761,8 +762,10 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
     /** Tests that usage bits are preserved */
     @Test
     public void testUsageRespected() throws Exception {
+        final long REQUESTED_USAGE_BITS =
+                HardwareBuffer.USAGE_GPU_COLOR_OUTPUT | HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE;
         ImageReader reader = ImageReader.newInstance(1, 1, PixelFormat.RGBA_8888, 1,
-                HardwareBuffer.USAGE_GPU_COLOR_OUTPUT | HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE);
+                REQUESTED_USAGE_BITS);
         Surface surface = reader.getSurface();
         Canvas canvas = surface.lockHardwareCanvas();
         canvas.drawColor(Color.RED);
@@ -778,8 +781,9 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
         assertNotNull(buffer);
         // Mask off the upper vendor bits
         int myBits = (int) (buffer.getUsage() & 0xFFFFFFF);
-        assertEquals(HardwareBuffer.USAGE_GPU_COLOR_OUTPUT | HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE,
-                myBits);
+        assertWithMessage("Usage bits %s did not contain requested usage bits %s", myBits,
+                REQUESTED_USAGE_BITS).that(myBits & REQUESTED_USAGE_BITS)
+                        .isEqualTo(REQUESTED_USAGE_BITS);
     }
 
     /**
