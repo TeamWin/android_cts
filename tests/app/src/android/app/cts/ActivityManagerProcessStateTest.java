@@ -85,6 +85,7 @@ import org.junit.runner.RunWith;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
 @RunWith(AndroidJUnit4.class)
 @Presubmit
@@ -2213,41 +2214,82 @@ public class ActivityManagerProcessStateTest {
     }
 
     /**
-     * Test FGS compatibility with STICKY flag.
+     * Test FGS compatibility with START_STICKY flag.
      * @throws Exception
      */
     @Test
-    public void testFgsSticky() throws Exception {
+    public void testFgsSticky1() throws Exception {
         // For START_STICKY, service is restarted, Service.onStartCommand is called with a null
         // intent.
         testFgsStickyInternal(Service.START_STICKY, ACTION_RESTART_FGS_STICKY_RESULT,
-                waiter -> waiter.doWait(WAITFOR_MSEC));
+                (uidWatcher, waiter) -> {
+                    // After restart, the FGS still has its while-in-use capabilities.
+                    uidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
+                            WatchUidRunner.STATE_FG_SERVICE,
+                            new Integer(PROCESS_CAPABILITY_ALL));
+                    waiter.doWait(WAITFOR_MSEC);
+                });
+    }
+
+    /**
+     * Test FGS compatibility with START_REDELIVER_INTENT flag.
+     * @throws Exception
+     */
+    @Test
+    public void testFgsSticky2() throws Exception {
         // For START_REDELIVER_INTENT, service is restarted, Service.onStartCommand is called with
         // the same intent as previous service start.
         testFgsStickyInternal(Service.START_REDELIVER_INTENT, ACTION_START_FGS_RESULT,
-                waiter -> waiter.doWait(WAITFOR_MSEC));
+                (uidWatcher, waiter) -> {
+                    // After restart, the FGS still has its while-in-use capabilities.
+                    uidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
+                            WatchUidRunner.STATE_FG_SERVICE,
+                            new Integer(PROCESS_CAPABILITY_ALL));
+                    waiter.doWait(WAITFOR_MSEC);
+                });
+    }
+
+    /**
+     * Test FGS compatibility with START_NOT_STICKY flag.
+     * @throws Exception
+     */
+    @Test
+    public void testFgsSticky3() throws Exception {
         // For START_NOT_STICKY, service does not restart and Service.onStartCommand is not called
         // again.
         testFgsStickyInternal(Service.START_NOT_STICKY, ACTION_RESTART_FGS_STICKY_RESULT,
-                waiter -> {
+                (uidWatcher, waiter) -> {
                     try {
-                        waiter.doWait(WAITFOR_MSEC);
+                        uidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
+                                WatchUidRunner.STATE_FG_SERVICE);
                         fail("Not-Sticky service should not restart after kill");
                     } catch (Exception e) {
                     }
-                });
-        testFgsStickyInternal(Service.START_NOT_STICKY, ACTION_START_FGS_RESULT,
-                waiter -> {
                     try {
                         waiter.doWait(WAITFOR_MSEC);
+                        fail("Not-Sticky service should not call onStartCommand after kill");
+                    } catch (Exception e) {
+                    }
+                });
+
+        testFgsStickyInternal(Service.START_NOT_STICKY, ACTION_START_FGS_RESULT,
+                (uidWatcher, waiter) -> {
+                    try {
+                        uidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
+                                WatchUidRunner.STATE_FG_SERVICE);
                         fail("Not-Sticky service should not restart after kill");
+                    } catch (Exception e) {
+                    }
+                    try {
+                        waiter.doWait(WAITFOR_MSEC);
+                        fail("Not-Sticky service should not call onStartCommand after kill");
                     } catch (Exception e) {
                     }
                 });
     }
 
     private void testFgsStickyInternal(int stickyFlag, String waitForBroadcastAction,
-            Consumer<WaitForBroadcast> checkKillResult) throws Exception {
+            BiConsumer<WatchUidRunner, WaitForBroadcast> checkKillResult) throws Exception {
         ApplicationInfo app1Info = mContext.getPackageManager().getApplicationInfo(
                 PACKAGE_NAME_APP1, 0);
         WatchUidRunner uid1Watcher = new WatchUidRunner(mInstrumentation, app1Info.uid,
@@ -2255,6 +2297,15 @@ public class ActivityManagerProcessStateTest {
         AmMonitor monitor = new AmMonitor(mInstrumentation,
                 new String[]{AmMonitor.WAIT_FOR_EARLY_ANR, AmMonitor.WAIT_FOR_ANR});
         try {
+            // Start an activity in app1 to put app1 in TOP state, so the FGS it started can have
+            // while-in-use capabilities.
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_START_ACTIVITY,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+            uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
+                    WatchUidRunner.STATE_TOP,
+                    new Integer(PROCESS_CAPABILITY_ALL));
+
             WaitForBroadcast waiter = new WaitForBroadcast(mInstrumentation.getTargetContext());
             waiter.prepare(ACTION_START_FGS_RESULT);
             Bundle extras = new Bundle();
@@ -2262,23 +2313,29 @@ public class ActivityManagerProcessStateTest {
             CommandReceiver.sendCommand(mContext,
                     CommandReceiver.COMMAND_START_FOREGROUND_SERVICE_STICKY,
                     PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, extras);
-            uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE);
+            // Stop the activity in app1, app1 now only has FGS.
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_STOP_ACTIVITY,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+            // The FGS has all while-in-use capabilities.
+            uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE,
+                    new Integer(PROCESS_CAPABILITY_ALL));
             waiter.doWait(WAITFOR_MSEC);
 
             waiter = new WaitForBroadcast(mInstrumentation.getTargetContext());
             waiter.prepare(waitForBroadcastAction);
-
             CtsAppTestUtils.executeShellCmd(mInstrumentation,
                     "am crash " + PACKAGE_NAME_APP1);
             monitor.waitFor(AmMonitor.WAIT_FOR_CRASHED, WAITFOR_MSEC);
             monitor.sendCommand(AmMonitor.CMD_KILL);
-            checkKillResult.accept(waiter);
+            checkKillResult.accept(uid1Watcher, waiter);
         } finally {
-            uid1Watcher.finish();
             final ActivityManager am = mContext.getSystemService(ActivityManager.class);
             SystemUtil.runWithShellPermissionIdentity(() -> {
                 am.forceStopPackage(PACKAGE_NAME_APP1);
             });
+            uid1Watcher.finish();
+            monitor.finish();
         }
     }
 

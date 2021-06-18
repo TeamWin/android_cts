@@ -245,9 +245,11 @@ public class CarPropertyManagerTest extends CarApiTestBase {
     @CddTest(requirement="2.5.1")
     @Test
     public void testMustSupportNightMode() {
-        assertWithMessage("Must support NIGHT_MODE")
-                .that(mCarPropertyManager.getCarPropertyConfig(VehiclePropertyIds.NIGHT_MODE))
-                .isNotNull();
+        verifyOnchangeCarPropertyConfig(/*requiredProperty=*/true,
+                                        VehiclePropertyIds.NIGHT_MODE,
+                                        Boolean.class);
+
+        verifyCarPropertyValue(VehiclePropertyIds.NIGHT_MODE, Boolean.class);
     }
 
     @CddTest(requirement="2.5.1")
@@ -263,10 +265,11 @@ public class CarPropertyManagerTest extends CarApiTestBase {
     @CddTest(requirement = "2.5.1")
     @Test
     public void testMustSupportParkingBrakeOn() throws Exception {
-        assertWithMessage("Must support PARKING_BRAKE_ON")
-                .that(mCarPropertyManager.getCarPropertyConfig(VehiclePropertyIds.PARKING_BRAKE_ON))
-                .isNotNull();
+        verifyOnchangeCarPropertyConfig(/*requiredProperty=*/true,
+                                        VehiclePropertyIds.PARKING_BRAKE_ON,
+                                        Boolean.class);
 
+        verifyCarPropertyValue(VehiclePropertyIds.PARKING_BRAKE_ON, Boolean.class);
     }
 
     @Test

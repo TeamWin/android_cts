@@ -24,8 +24,11 @@ import android.app.admin.SecurityLog.SecurityEvent;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Process;
+import android.support.test.uiautomator.UiDevice;
 import android.test.MoreAsserts;
 import android.util.Log;
+
+import androidx.test.InstrumentationRegistry;
 
 import com.android.bedstead.dpmwrapper.DeviceOwnerHelper;
 
@@ -114,10 +117,21 @@ public class DelegateTestUtils {
         }
 
         public static void waitForBroadcast() throws InterruptedException {
-            sBatchCountDown.await(TIMEOUT_MIN, TimeUnit.MINUTES);
-            if (sBatchCountDown.getCount() > 0) {
+            if (!sBatchCountDown.await(TIMEOUT_MIN, TimeUnit.MINUTES)) {
                 fail("Did not get DelegateAdminReceiver callback");
             }
+        }
+
+        public static void forceAndWaitForSecurityLogsBroadcast() throws Exception {
+            long deadline = System.nanoTime() + TimeUnit.MINUTES.toNanos(TIMEOUT_MIN);
+            while (System.nanoTime() < deadline) {
+                UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
+                        .executeShellCommand("dpm force-security-logs");
+                if (sBatchCountDown.await(10, TimeUnit.SECONDS)) {
+                    return;
+                }
+            }
+            fail("Did not get DelegateAdminReceiver callback");
         }
 
         public static List<NetworkEvent> getNetworkEvents() {

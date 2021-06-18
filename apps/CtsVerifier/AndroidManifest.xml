@@ -1794,6 +1794,7 @@
 
         <activity android:name=".security.UnlockedDeviceRequiredTest"
                 android:label="@string/sec_unlocked_device_required_test"
+                android:exported="true"
                 android:configChanges="keyboardHidden|orientation|screenSize" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -4546,6 +4547,7 @@
 
         <activity android:name=".tv.audio.AudioCapabilitiesTestActivity"
                   android:label="@string/tv_audio_capabilities_test"
+                  android:exported="true"
                   android:configChanges="orientation|screenSize|density|smallestScreenSize|screenLayout">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -5004,6 +5006,7 @@
             "com.android.cts.verifier.car.GarageModeChecker"
             android:permission="android.permission.BIND_JOB_SERVICE" />
         <activity android:name=".car.GarageModeTestActivity"
+                  android:exported="true"
                 android:label="@string/car_garage_mode_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -5476,6 +5479,7 @@
                        android:value="single_display_mode" />
         </activity>
         <activity android:name=".speech.tts.TtsTestActivity"
+                  android:exported="true"
                   android:label="@string/tts_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

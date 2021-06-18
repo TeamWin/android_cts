@@ -3603,36 +3603,37 @@ You should be prompted to select credentials; choose the ones you just installed
             Press the button below to reset to default LockTask UI.
             Observe the following UI restrictions. Mark the test as \'pass\' only if ALL of the
             requirements below are met.\n\n
-            1) Nothing is shown in the status bar, including notification icons, connectivity icons,
-            battery status, clock, etc.\n
-            2) The status bar can\'t be expanded. That is, the \'swipe-down\' gesture doesn\'t work
-            for the status bar.\n
+            1) If the device under test (DUT) has a status bar: nothing is shown in the status bar,
+            including notification icons, connectivity icons, battery status, clock, etc.\n
+            2) If the device under test (DUT) has a status bar: the status bar can\'t be expanded.
+            That is, the \'swipe-down\' gesture doesn\'t work for the status bar.\n
             3) The software Home button is hidden.\n
-            4) The software Overview button is hidden and the Overview gesture (swipe-up) does not
-            work.\n
+            4) If the device under test (DUT) supports Overview: the software Overview button is
+            hidden and the Overview gesture (swipe-up) does not work.\n
             5) Long-press the power button. The power button menu, which usually shows the power-off
             button, etc., isn\'t shown.\n
             6) Press the power button to turn off the screen, and press it again to turn the screen
             back on. Lock screen shouldn\'t be shown.\n
-            7) The assistant gesture isn\'t available.
+            7) The assistant gesture isn\'t available.\n\n
     </string>
     <string name="device_owner_lock_task_ui_system_info_test">Enable system info</string>
     <string name="device_owner_lock_task_ui_system_info_test_info">
             Press the button below to enable system info. Observe the system info area of the status
             bar is now enabled. This includes the clock, connectivity info, battery info, etc.\n\n
             The rest of the UI restrictions should still apply:\n
-            1) Notification icons are still hidden on the status bar.\n
-            2) The status bar can\'t be expanded. That is, the \'swipe-down\' gesture doesn\'t work
-            for the status bar.\n
+            1) If the device under test (DUT) has a status bar: notification icons are still hidden
+            on the status bar.\n
+            2) If the device under test (DUT) has a status bar: the status bar can\'t be expanded.
+            That is, the \'swipe-down\' gesture doesn\'t work for the status bar.\n
             3) The software Home button is hidden.\n
-            4) The software Overview button is hidden and the Overview gesture (swipe-up) does not
-            work.\n
+            4) If the device under test (DUT) supports Overview: the software Overview button is
+            hidden and the Overview gesture (swipe-up) does not work.\n
             5) Long-press the power button. The power button menu, which usually shows the power-off
             button, etc., isn\'t shown.\n
             6) Press the power button to turn off the screen, and press it again to turn the screen
             back on. Lock screen shouldn\'t be shown.\n
             7) The assistant gesture isn\'t available.\n\n
-            Mark the test as \'pass\' only if ALL of the above requirements are met.
+            Mark the test as \'pass\' only if ALL of the above requirements are met.\n
     </string>
     <string name="device_owner_lock_task_ui_notifications_test">Enable notifications</string>
     <string name="device_owner_lock_task_ui_notifications_test_info">
@@ -3641,38 +3642,41 @@ You should be prompted to select credentials; choose the ones you just installed
             expanded to show the notifications. However, all Settings UI should remain invisible,
             including Quick Settings and any link to the Settings app.\n\n
             The rest of the UI restrictions should still apply:\n
-            1) System info area is still hidden on the status bar.\n
-            2) The software Overview button is hidden and the Overview gesture (swipe-up) does not
-            work.\n
+            1) If the device under test (DUT) has a status bar: system info area is still hidden on
+            the status bar.\n
+            2) If the device under test (DUT) supports Overview: the software Overview button is
+            hidden and the Overview gesture (swipe-up) does not work.\n
             3) Holding the Home button and swiping to the right does not bring up other tasks.\n
             4) Long-press the power button. The power button menu, which usually shows the power-off
             button, etc., isn\'t shown.\n
             5) Press the power button to turn off the screen, and press it again to turn the screen
             back on. Lock screen shouldn\'t be shown.\n
             6) The assistant gesture isn\'t available.\n\n
-            Mark the test as \'pass\' only if ALL of the above requirements are met.
+            Mark the test as \'pass\' only if ALL of the above requirements are met.\n
     </string>
     <string name="device_owner_lock_task_ui_home_test">Enable Home button</string>
     <string name="device_owner_lock_task_ui_home_test_info">
             Press the button below to enable the Home button. Observe the Home button is now
             enabled.\n\n
             The rest of the UI restrictions should still apply:\n
-            1) Nothing is shown in the status bar, including notification icons, connectivity icons,
-            battery status, clock, etc.\n
-            2) The status bar can\'t be expanded. That is, the \'swipe-down\' gesture doesn\'t work
-            for the status bar.\n
-            3) The software Overview button is hidden and the Overview gesture (swipe-up) does not
-            work.\n
+            1) If the device under test (DUT) has a status bar: nothing is shown in the status bar,
+            including notification icons, connectivity icons, battery status, clock, etc.\n
+            2) If the device under test (DUT) has a status bar: the status bar can\'t be expanded.
+            That is, the \'swipe-down\' gesture doesn\'t work for the status bar.\n
+            3) If the device under test (DUT) supports Overview: the software Overview button is
+            hidden and the Overview gesture (swipe-up) does not work.\n
             4) Holding the Home button and swiping to the right does not bring up other tasks.\n
             5) Long-press the power button. The power button menu, which usually shows the power-off
             button, etc., isn\'t shown.\n
             6) Press the power button to turn off the screen, and press it again to turn the screen
             back on. Lock screen shouldn\'t be shown.\n
             7) The assistant gesture isn\'t available.\n\n
-            Mark the test as \'pass\' only if ALL of the above requirements are met.
+            Mark the test as \'pass\' only if ALL of the above requirements are met.\n
     </string>
     <string name="device_owner_lock_task_ui_recents_test">Enable Overview button</string>
     <string name="device_owner_lock_task_ui_recents_test_info">
+            If the device under test (DUT) does not support Overview: mark this test as \'pass\'.\n
+            Otherwise:\n
             Press the button below to enable the Overview button. Observe the Home button is now
             enabled. Press the Overview button or perform the Overview gesture
             (swipe up) and verify the Overview view can be opened.\n\n
@@ -3686,10 +3690,13 @@ You should be prompted to select credentials; choose the ones you just installed
             4) Press the power button to turn off the screen, and press it again to turn the screen
             back on. Lock screen shouldn\'t be shown.\n
             5) The assistant gesture isn\'t available.\n\n
-            Mark the test as \'pass\' only if ALL of the above requirements are met.
+            Mark the test as \'pass\' only if ALL of the above requirements are met.\n
     </string>
     <string name="device_owner_lock_task_ui_global_actions_test">Enable global actions</string>
     <string name="device_owner_lock_task_ui_global_actions_test_info">
+            If the device under test (DUT) does not support global actions: mark this
+            test as \'pass\'.\n
+            Otherwise:\n
             Press the button below to enable global actions (a.k.a. power button menu). Long-press
             the power button and verify a menu containing power-off and restart buttons is shown.
             This menu can\'t contain any UI that allows the user to change system settings (such as
@@ -3705,7 +3712,7 @@ You should be prompted to select credentials; choose the ones you just installed
             5) Press the power button to turn off the screen, and press it again to turn the screen
             back on. Lock screen shouldn\'t be shown.\n
             6) The assistant gesture isn\'t available.\n\n
-            Mark the test as \'pass\' only if ALL of the above requirements are met.
+            Mark the test as \'pass\' only if ALL of the above requirements are met.\n
     </string>
     <string name="device_owner_lock_task_ui_keyguard_test">Enable keyguard</string>
     <string name="device_owner_lock_task_ui_keyguard_test_info">

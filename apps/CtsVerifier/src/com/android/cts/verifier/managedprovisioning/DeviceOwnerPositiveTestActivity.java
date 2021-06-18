@@ -381,7 +381,7 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
         }
 
         // setKeyguardDisabled
-        if (isKeyguardShownWhenUserDoesntHaveCredentials()) {
+        if (isKeyguardShownWhenUserDoesntHaveCredentials() && Utils.isLockscreenSupported(this)) {
             adapter.add(createInteractiveTestItem(this, DISABLE_KEYGUARD_TEST_ID,
                     R.string.device_owner_disable_keyguard_test,
                     R.string.device_owner_disable_keyguard_test_info,
@@ -547,7 +547,7 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                                 createDisableNetworkLoggingIntent())}));
 
         // Customize lock screen message
-        if (isSwipeToUnlockSupported()) {
+        if (isSwipeToUnlockSupported() && Utils.isLockscreenSupported(this)) {
             adapter.add(TestListItem.newTest(this,
                     R.string.device_owner_customize_lockscreen_message,
                     LockscreenMessageTestActivity.class.getName(),
@@ -577,29 +577,31 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
         }
 
         // setRequiredPasswordComplexity
-        adapter.add(createInteractiveTestItem(this, SET_REQUIRED_PASSWORD_COMPLEXITY_ID,
-                R.string.device_owner_required_password_complexity_test,
-                R.string.device_owner_required_password_complexity_test_info,
-                new ButtonInfo[] {
-                        new ButtonInfo(
-                                R.string.set_low_required_password_complexity,
-                                createSetRequiredPasswordComplexityIntent(
-                                        DevicePolicyManager.PASSWORD_COMPLEXITY_LOW)),
-                        new ButtonInfo(
-                                R.string.set_medium_required_password_complexity,
-                                createSetRequiredPasswordComplexityIntent(
-                                        DevicePolicyManager.PASSWORD_COMPLEXITY_MEDIUM)),
-                        new ButtonInfo(
-                                R.string.set_high_required_password_complexity,
-                                createSetRequiredPasswordComplexityIntent(
-                                        DevicePolicyManager.PASSWORD_COMPLEXITY_HIGH)),
-                        new ButtonInfo(
-                                R.string.remove_required_password_complexity,
-                                createSetRequiredPasswordComplexityIntent(
-                                        DevicePolicyManager.PASSWORD_COMPLEXITY_NONE)),
-                        new ButtonInfo(
-                                R.string.device_owner_settings_go,
-                                new Intent(Settings.ACTION_SECURITY_SETTINGS))}));
+        if (Utils.isLockscreenSupported(this)) {
+            adapter.add(createInteractiveTestItem(this, SET_REQUIRED_PASSWORD_COMPLEXITY_ID,
+                    R.string.device_owner_required_password_complexity_test,
+                    R.string.device_owner_required_password_complexity_test_info,
+                    new ButtonInfo[]{
+                            new ButtonInfo(
+                                    R.string.set_low_required_password_complexity,
+                                    createSetRequiredPasswordComplexityIntent(
+                                            DevicePolicyManager.PASSWORD_COMPLEXITY_LOW)),
+                            new ButtonInfo(
+                                    R.string.set_medium_required_password_complexity,
+                                    createSetRequiredPasswordComplexityIntent(
+                                            DevicePolicyManager.PASSWORD_COMPLEXITY_MEDIUM)),
+                            new ButtonInfo(
+                                    R.string.set_high_required_password_complexity,
+                                    createSetRequiredPasswordComplexityIntent(
+                                            DevicePolicyManager.PASSWORD_COMPLEXITY_HIGH)),
+                            new ButtonInfo(
+                                    R.string.remove_required_password_complexity,
+                                    createSetRequiredPasswordComplexityIntent(
+                                            DevicePolicyManager.PASSWORD_COMPLEXITY_NONE)),
+                            new ButtonInfo(
+                                    R.string.device_owner_settings_go,
+                                    new Intent(Settings.ACTION_SECURITY_SETTINGS))}));
+        }
 
         // removeDeviceOwner
         adapter.add(createInteractiveTestItem(this, REMOVE_DEVICE_OWNER_TEST_ID,
@@ -708,7 +710,7 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
         // Watches don't support the status bar so this is an ok proxy, but this is not the most
         // general test for that. TODO: add a test API to do a real check for status bar support.
         return !getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH)
-                && !isAutomotive();
+                && !isAutomotive() && !isTelevision();
     }
 
     private boolean isKeyguardShownWhenUserDoesntHaveCredentials() {
@@ -721,6 +723,10 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
 
     private boolean isAutomotive() {
         return getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
+    }
+
+    private boolean isTelevision() {
+        return getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK);
     }
 
     private boolean canUsbDataSignalingBeDisabled() {

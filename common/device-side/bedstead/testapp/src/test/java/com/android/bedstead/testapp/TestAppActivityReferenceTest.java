@@ -24,6 +24,7 @@ import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnPrimar
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnSecondaryUser;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnWorkProfile;
 import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.activities.Activity;
 import com.android.bedstead.nene.users.UserReference;
 
 import org.junit.Before;
@@ -55,9 +56,10 @@ public class TestAppActivityReferenceTest {
     public void start_activityIsStarted() {
         TestApp testApp = mTestAppProvider.any(); // TODO(scottjonathan): specify must have activity
         try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
-            TestAppActivity activity = testAppInstance.activities().any().start();
+            Activity<TestAppActivity> activity = testAppInstance.activities().any().start();
 
-            assertThat(sTestApis.activities().foregroundActivity()).isEqualTo(activity.reference());
+            assertThat(sTestApis.activities().foregroundActivity()).isEqualTo(
+                    activity.activity().component());
         }
     }
 
@@ -65,9 +67,9 @@ public class TestAppActivityReferenceTest {
     public void remote_executes() {
         TestApp testApp = mTestAppProvider.any(); // TODO(scottjonathan): specify must have activity
         try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
-            TestAppActivity activity = testAppInstance.activities().any().start();
+            Activity<TestAppActivity> activity = testAppInstance.activities().any().start();
 
-            assertThat(activity.isFinishing()).isFalse();
+            assertThat(activity.activity().isFinishing()).isFalse();
         }
     }
 }

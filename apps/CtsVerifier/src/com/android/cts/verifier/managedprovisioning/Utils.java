@@ -27,6 +27,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.util.Log;
 import android.widget.Toast;
 import com.android.cts.verifier.IntentDrivenTestActivity;
@@ -138,5 +139,10 @@ public class Utils {
                 .setPositiveButton(R.string.go_button_text, (DialogInterface dialog, int which) ->
                         activity.startActivity(intent))
                 .show();
+    }
+
+    static boolean isLockscreenSupported(Context context) {
+        return context.getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_SECURE_LOCK_SCREEN);
     }
 }

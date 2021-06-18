@@ -35,6 +35,7 @@ import com.android.bedstead.harrier.annotations.EnsureHasNoSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDeviceOwner;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.NeneException;
 
@@ -246,6 +247,7 @@ public class UsersTest {
     }
 
     @Test
+    @EnsureHasNoDeviceOwner // Device Owners can disable managed profiles
     public void createUser_specifiesManagedProfileUserType_createsUser() {
         UserReference systemUser = mTestApis.users().system();
         UserReference user = mTestApis.users().createUser()
@@ -452,5 +454,12 @@ public class UsersTest {
     public void findProfileOfType_oneMatchingUser_returnsUser() {
         assertThat(mTestApis.users().findProfileOfType(mManagedProfileType, mInstrumentedUser))
                 .isNotNull();
+    }
+
+    @Test
+    public void nonExisting_userDoesNotExist() {
+        UserReference userReference = mTestApis.users().nonExisting();
+
+        assertThat(userReference.resolve()).isNull();
     }
 }

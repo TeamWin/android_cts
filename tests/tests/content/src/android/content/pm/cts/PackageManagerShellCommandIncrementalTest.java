@@ -28,16 +28,13 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
-import android.os.Process;
 import android.os.SystemClock;
 import android.os.SystemProperties;
-import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
 import android.provider.DeviceConfig;
 import android.service.dataloader.DataLoaderService;
 import android.system.Os;
 import android.text.TextUtils;
-import android.util.ArrayMap;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
@@ -82,7 +79,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -717,100 +713,6 @@ public class PackageManagerShellCommandIncrementalTest {
         assertEquals(2764243, extractTimestamp(
                 "<...>-2777  ( 1639) [006] ....  2764.243225: tracing_mark_write: "
                         + "B|1639|missing_page_reads: count=132"));
-    }
-
-    static class AppReads {
-        public final String packageName;
-        public final int reads;
-
-        AppReads(String packageName, int reads) {
-            this.packageName = packageName;
-            this.reads = reads;
-        }
-    }
-
-    @LargeTest
-    @Test
-    public void testInstallWithIdSigNoDigesting() throws Exception {
-        // Overall timeout of 3secs in 100ms intervals.
-        final int installIterations = 1;
-        final int atraceDumpIterations = 30;
-        final int atraceDumpDelayMs = 100;
-        final int blockSize = 4096;
-
-        File apkfile = new File(createApkPath(TEST_APK));
-        int blocks = (int) ((apkfile.length() + blockSize - 1) / blockSize);
-        boolean[] touched = new boolean[blocks];
-
-        final ArrayMap<Integer, Integer> uids = new ArrayMap<>();
-
-        final AtomicInteger totalTouchedBlocks = new AtomicInteger(0);
-        checkSysTrace(
-                installIterations,
-                atraceDumpIterations,
-                atraceDumpDelayMs,
-                () -> installPackage(TEST_APK),
-                (stdout) -> {
-                    try (Scanner scanner = new Scanner(stdout)) {
-                        while (scanner.hasNextLine()) {
-                            final ReadLogEntry readLogEntry = ReadLogEntry.parse(
-                                    scanner.nextLine());
-                            if (readLogEntry == null) {
-                                continue;
-                            }
-                            for (int i = 0, count = readLogEntry.count; i < count; ++i) {
-                                int blockIdx = readLogEntry.blockIdx + i;
-                                if (touched[blockIdx]) {
-                                    continue;
-                                }
-
-                                touched[blockIdx] = true;
-
-                                int uid = UserHandle.getUid(readLogEntry.userId,
-                                        readLogEntry.appId);
-                                Integer touchedByUid = uids.get(uid);
-                                uids.put(uid, touchedByUid == null ? 1 : touchedByUid + 1);
-
-                                if (totalTouchedBlocks.incrementAndGet() >= blocks) {
-                                    return true;
-                                }
-                            }
-                        }
-                        return false;
-                    }
-                });
-
-        if (totalTouchedBlocks.get() < blocks) {
-            return;
-        }
-
-        PackageManager pm = getPackageManager();
-
-        AppReads[] appIdReads = new AppReads[uids.size()];
-        for (int i = 0, size = uids.size(); i < size; ++i) {
-            final int uid = uids.keyAt(i);
-            final int appId = UserHandle.getAppId(uid);
-            final int userId = UserHandle.getUserId(uid);
-
-            final String packageName;
-            if (appId < Process.FIRST_APPLICATION_UID) {
-                packageName = "<system>";
-            } else {
-                String[] packages = pm.getPackagesForUid(uid);
-                if (packages == null || packages.length == 0) {
-                    packageName = "<unknown package, appId=" + appId + ", userId=" + userId + ">";
-                } else {
-                    packageName = "[" + String.join(",", packages) + "]";
-                }
-            }
-            appIdReads[i] = new AppReads(packageName, uids.valueAt(i));
-        }
-        Arrays.sort(appIdReads, (lhs, rhs) -> Integer.compare(rhs.reads, lhs.reads));
-
-        final String packages = String.join("\n", Arrays.stream(appIdReads).map(
-                item -> item.packageName + " : " + item.reads + " blocks").toArray(String[]::new));
-        assertTrue("Digesting detected, list of packages: " + packages,
-                totalTouchedBlocks.get() < blocks);
     }
 
     @LargeTest

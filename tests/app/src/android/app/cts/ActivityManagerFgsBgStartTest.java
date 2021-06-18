@@ -195,11 +195,11 @@ public class ActivityManagerFgsBgStartTest {
 
             waiter = new WaitForBroadcast(mInstrumentation.getTargetContext());
             waiter.prepare(ACTION_START_FGS_RESULT);
-            // APP1 is in FGS state, start FGSL in APP1, it won't get location capability.
+            // APP1 is in FGS state,
             CommandReceiver.sendCommand(mContext,
                     CommandReceiver.COMMAND_START_FOREGROUND_SERVICE,
                     PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, bundle);
-            // start FGSL
+            // start FGSL in app1, it won't get location capability.
             CommandReceiver.sendCommand(mContext,
                     CommandReceiver.COMMAND_START_FOREGROUND_SERVICE_LOCATION,
                     PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, bundle);
@@ -208,6 +208,10 @@ public class ActivityManagerFgsBgStartTest {
                     WatchUidRunner.STATE_FG_SERVICE,
                     new Integer(PROCESS_CAPABILITY_NETWORK));
             waiter.doWait(WAITFOR_MSEC);
+            // stop FGS.
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_STOP_FOREGROUND_SERVICE,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
             // stop FGSL.
             CommandReceiver.sendCommand(mContext,
                     CommandReceiver.COMMAND_STOP_FOREGROUND_SERVICE_LOCATION,
@@ -223,13 +227,25 @@ public class ActivityManagerFgsBgStartTest {
                     WatchUidRunner.STATE_TOP,
                     new Integer(PROCESS_CAPABILITY_ALL));
 
+            waiter = new WaitForBroadcast(mInstrumentation.getTargetContext());
+            waiter.prepare(ACTION_START_FGSL_RESULT);
+            // APP1 is in TOP state, start the FGSL in APP1, it will get location capability.
             CommandReceiver.sendCommand(mContext,
-                    CommandReceiver.COMMAND_STOP_FOREGROUND_SERVICE,
-                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+                    CommandReceiver.COMMAND_START_FOREGROUND_SERVICE_LOCATION,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, bundle);
+            // Stop the activity.
             CommandReceiver.sendCommand(mContext,
                     CommandReceiver.COMMAND_STOP_ACTIVITY,
                     PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
-
+            // The FGSL still has location capability because it is started from TOP.
+            uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
+                    WatchUidRunner.STATE_FG_SERVICE,
+                    new Integer(PROCESS_CAPABILITY_ALL));
+            waiter.doWait(WAITFOR_MSEC);
+            // Stop FGSL.
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_STOP_FOREGROUND_SERVICE_LOCATION,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
             uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
                     WatchUidRunner.STATE_CACHED_EMPTY,
                     new Integer(PROCESS_CAPABILITY_NONE));
