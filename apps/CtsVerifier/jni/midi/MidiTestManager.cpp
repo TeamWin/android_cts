@@ -58,6 +58,10 @@ static void* readThreadRoutine(void * context) {
  */
 #define makeMIDICmd(cmd, channel)  (uint8_t)((cmd << 4) | (channel & 0x0F))
 
+uint8_t warmupMsg[] = {makeMIDICmd(kMIDIChanCmd_Control, 0), 0, 0};
+uint8_t msg0[] = {makeMIDICmd(kMIDIChanCmd_KeyDown, 0), 64, 120};
+uint8_t msg1[] = {makeMIDICmd(kMIDIChanCmd_KeyUp, 0), 64, 35};
+
 class TestMessage {
 public:
     uint8_t*   mMsgBytes;
@@ -87,21 +91,21 @@ public:
  */
 MidiTestManager::MidiTestManager()
     : mTestModuleObj(NULL),
-      mTestStream(NULL), mNumTestStreamBytes(0),
       mReceiveStreamPos(0),
       mMidiSendPort(NULL), mMidiReceivePort(NULL),
-      mTestMsgs(NULL), mNumTestMsgs(0)
+      mTestMsgs(NULL), mNumTestMsgs(0),
+      mThrottleData(false)
 {}
 
-MidiTestManager::~MidiTestManager(){
-    delete[] mTestStream;
+MidiTestManager::~MidiTestManager() {
+    mMatchStream.clear();
 }
 
 void MidiTestManager::jniSetup(JNIEnv* env) {
     env->GetJavaVM(&mJvm);
 
     jclass clsMidiTestModule =
-        env->FindClass("com/android/cts/verifier/audio/NDKMidiActivity$NDKMidiTestModule");
+        env->FindClass("com/android/cts/verifier/audio/MidiNativeTestActivity$NativeMidiTestModule");
     if (DEBUG) {
         ALOGI("gClsMidiTestModule:%p", clsMidiTestModule);
     }
@@ -113,19 +117,14 @@ void MidiTestManager::jniSetup(JNIEnv* env) {
     }
 }
 
-void MidiTestManager::buildTestStream() {
-    // add up the total space
-    mNumTestStreamBytes = 0;
-    for(int msgIndex = 0; msgIndex < mNumTestMsgs; msgIndex++) {
-        mNumTestStreamBytes += mTestMsgs[msgIndex].mNumMsgBytes;
+void MidiTestManager::buildMatchStream() {
+    mMatchStream.clear();
+    for(int byteIndex = 0; byteIndex < sizeof(warmupMsg); byteIndex++) {
+        mMatchStream.push_back(warmupMsg[byteIndex]);
     }
-
-    delete[] mTestStream;
-    mTestStream = new uint8_t[mNumTestStreamBytes];
-    int streamIndex = 0;
     for(int msgIndex = 0; msgIndex < mNumTestMsgs; msgIndex++) {
         for(int byteIndex = 0; byteIndex < mTestMsgs[msgIndex].mNumMsgBytes; byteIndex++) {
-            mTestStream[streamIndex++] = mTestMsgs[msgIndex].mMsgBytes[byteIndex];
+            mMatchStream.push_back(mTestMsgs[msgIndex].mMsgBytes[byteIndex]);
         }
     }
 
@@ -143,12 +142,12 @@ static void logBytes(uint8_t* bytes, int count) {
             sprintf(logBuff + (dataIndex * 6) + 4, ", ");
         }
     }
-    ALOGD("%s", logBuff);
+    ALOGD("logbytes(%d): %s", count, logBuff);
     delete[] logBuff;
 }
 
 /**
- * Compares the supplied bytes against the sent message stream at the current postion
+ * Compares the supplied bytes against the sent message stream at the current position
  * and advances the stream position.
  */
 bool MidiTestManager::matchStream(uint8_t* bytes, int count) {
@@ -168,19 +167,18 @@ bool MidiTestManager::matchStream(uint8_t* bytes, int count) {
     }
 
     bool matches = true;
-
     for (int index = 0; index < count; index++) {
         // Check for buffer overflow
-        if (mReceiveStreamPos >= mNumTestStreamBytes) {
+        if (mReceiveStreamPos >= mMatchStream.size()) {
             ALOGD("matchStream() out-of-bounds @%d", mReceiveStreamPos);
             matches = false;
             break;
         }
 
-        if (bytes[index] != mTestStream[mReceiveStreamPos]) {
+        if (bytes[index] != mMatchStream[mReceiveStreamPos]) {
             matches = false;
-            ALOGD("---- mismatch @%d [%d : %d]",
-                    index, bytes[index], mTestStream[mReceiveStreamPos]);
+            ALOGD("---- mismatch @%d [rec:0x%X : exp:0x%X]",
+                    index, bytes[index], mMatchStream[mReceiveStreamPos]);
         }
         mReceiveStreamPos++;
     }
@@ -193,7 +191,25 @@ bool MidiTestManager::matchStream(uint8_t* bytes, int count) {
         ALOGD("Mismatched Received Data:");
         logBytes(bytes, count);
     }
+
     return matches;
+}
+
+#define THROTTLE_PERIOD_MS 10
+
+int portSend(AMidiInputPort* sendPort, uint8_t* msg, int length, bool throttle) {
+
+    int numSent = 0;
+    if (throttle) {
+        for(int index = 0; index < length; index++) {
+            AMidiInputPort_send(sendPort, msg + index, 1);
+            usleep(THROTTLE_PERIOD_MS * 1000);
+        }
+        numSent = length;
+    } else {
+        numSent = AMidiInputPort_send(sendPort, msg, length);
+    }
+    return numSent;
 }
 
 /**
@@ -205,7 +221,7 @@ int MidiTestManager::sendMessages() {
         ALOGI("---- sendMessages()...");
         for(int msgIndex = 0; msgIndex < mNumTestMsgs; msgIndex++) {
             if (DEBUG_MIDIDATA) {
-            ALOGI("--------");
+                ALOGI("--------");
                 for(int byteIndex = 0; byteIndex < mTestMsgs[msgIndex].mNumMsgBytes; byteIndex++) {
                     ALOGI("  0x%X", mTestMsgs[msgIndex].mMsgBytes[byteIndex]);
                 }
@@ -213,11 +229,14 @@ int MidiTestManager::sendMessages() {
         }
     }
 
+    // Send "Warm-up" message
+    portSend(mMidiSendPort, warmupMsg, sizeof(warmupMsg), mThrottleData);
+
     int totalSent = 0;
     for(int msgIndex = 0; msgIndex < mNumTestMsgs; msgIndex++) {
         ssize_t numSent =
-            AMidiInputPort_send(mMidiSendPort,
-                    mTestMsgs[msgIndex].mMsgBytes, mTestMsgs[msgIndex].mNumMsgBytes);
+            portSend(mMidiSendPort, mTestMsgs[msgIndex].mMsgBytes, mTestMsgs[msgIndex].mNumMsgBytes,
+                mThrottleData);
         totalSent += numSent;
     }
 
@@ -247,6 +266,10 @@ int MidiTestManager::ProcessInput() {
             AMidiOutputPort_receive(mMidiReceivePort, &opCode, readBuffer, 128,
                         &numBytesReceived, &timeStamp);
 
+        if (DEBUG && numBytesReceived > 0) {
+            logBytes(readBuffer, numBytesReceived);
+        }
+
         if (testRunning &&
             numBytesReceived > 0 &&
             opCode == AMIDI_OPCODE_DATA &&
@@ -255,18 +278,37 @@ int MidiTestManager::ProcessInput() {
             if (DEBUG) {
                 ALOGI("---- msgs:%zd, bytes:%zu", numMessagesReceived, numBytesReceived);
             }
-            // Process Here
+
+            // Check first byte for warm-up message
+            if (totalNumReceived == 0 && readBuffer[0] != makeMIDICmd(kMIDIChanCmd_Control, 0)) {
+                // advance stream past the "warm up" message
+                mReceiveStreamPos += sizeof(warmupMsg);
+                if (DEBUG) {
+                    ALOGD("---- No Warm Up Message Detected.");
+                }
+            }
+
             if (!matchStream(readBuffer, numBytesReceived)) {
                 testResult = TESTSTATUS_FAILED_MISMATCH;
+                if (DEBUG) {
+                    ALOGE("---- TESTSTATUS_FAILED_MISMATCH");
+                }
                 testRunning = false;   // bail
             }
             totalNumReceived += numBytesReceived;
-            if (totalNumReceived > mNumTestStreamBytes) {
+
+            if (totalNumReceived > mMatchStream.size()) {
                 testResult = TESTSTATUS_FAILED_OVERRUN;
+                if (DEBUG) {
+                    ALOGE("---- TESTSTATUS_FAILED_OVERRUN");
+                }
                 testRunning = false;   // bail
             }
-            if (totalNumReceived == mNumTestStreamBytes) {
+            if (totalNumReceived == mMatchStream.size()) {
                 testResult = TESTSTATUS_PASSED;
+                if (DEBUG) {
+                    ALOGE("---- TESTSTATUS_PASSED");
+                }
                 testRunning = false;   // done
             }
         }
@@ -276,7 +318,9 @@ int MidiTestManager::ProcessInput() {
 }
 
 bool MidiTestManager::StartReading(AMidiDevice* nativeReadDevice) {
-    ALOGI("StartReading()...");
+    if (DEBUG) {
+        ALOGI("StartReading()...");
+    }
 
     media_status_t m_status =
         AMidiOutputPort_open(nativeReadDevice, 0, &mMidiReceivePort);
@@ -305,15 +349,13 @@ bool MidiTestManager::StartWriting(AMidiDevice* nativeWriteDevice) {
     return true;
 }
 
-uint8_t msg0[] = {makeMIDICmd(kMIDIChanCmd_KeyDown, 0), 64, 120};
-//uint8_t msg0Alt[] = {makeMIDICmd(kMIDIChanCmd_KeyDown, 0), 65, 120};
-uint8_t msg1[] = {makeMIDICmd(kMIDIChanCmd_KeyUp, 0), 64, 35};
-
 bool MidiTestManager::RunTest(jobject testModuleObj, AMidiDevice* sendDevice,
-        AMidiDevice* receiveDevice) {
+        AMidiDevice* receiveDevice, bool throttleData) {
     if (DEBUG) {
         ALOGI("RunTest(%p, %p, %p)", testModuleObj, sendDevice, receiveDevice);
     }
+
+    mThrottleData = throttleData;
 
     JNIEnv* env;
     mJvm->AttachCurrentThread(&env, NULL);
@@ -335,7 +377,7 @@ bool MidiTestManager::RunTest(jobject testModuleObj, AMidiDevice* sendDevice,
     mNumTestMsgs = 3;
     mTestMsgs = new TestMessage[mNumTestMsgs];
 
-    int sysExSize = 8;
+    int sysExSize = 32;
     uint8_t* sysExMsg = new uint8_t[sysExSize];
     sysExMsg[0] = kMIDISysCmd_SysEx;
     for(int index = 1; index < sysExSize-1; index++) {
@@ -350,10 +392,7 @@ bool MidiTestManager::RunTest(jobject testModuleObj, AMidiDevice* sendDevice,
     }
     delete[] sysExMsg;
 
-    buildTestStream();
-
-    // Inject an error
-    // mTestMsgs[0].set(msg0Alt, 3);
+    buildMatchStream();
 
     sendMessages();
     void* threadRetval = (void*)TESTSTATUS_NOTRUN;
