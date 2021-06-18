@@ -25,7 +25,6 @@ android_test {
     compile_multilib: "both",
     static_libs: [
         "android.hidl.manager-V1.0-java",
-        "androidx.core_core",
         "androidx.test.core",
         "androidx.test.ext.junit",
         "androidx.test.rules",
@@ -37,6 +36,7 @@ android_test {
         "junit",
         "CtsMockInputMethodLib",
         "hamcrest-library",
+        "modules-utils-build_system",
     ],
     jni_uses_platform_apis: true,
     jni_libs: [
