@@ -22,6 +22,7 @@ import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import android.app.Activity;
 import android.content.Intent;
 
+import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.packages.ComponentReference;
 import com.android.eventlib.events.activities.ActivityCreatedEvent;
 
@@ -30,24 +31,10 @@ import com.android.eventlib.events.activities.ActivityCreatedEvent;
  */
 public final class UnresolvedTestAppActivity extends TestAppActivityReference {
 
+    private static final TestApis sTestApis = new TestApis();
+
     UnresolvedTestAppActivity(TestAppInstanceReference instance,
             ComponentReference component) {
         super(instance, component);
-    }
-
-    /**
-     * Starts the activity.
-     */
-    public TestAppActivity start() {
-        Intent intent = new Intent();
-        intent.setComponent(mComponent.componentName());
-        intent.setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK);
-        sTestApis.context().instrumentedContext().startActivity(intent);
-
-        ActivityCreatedEvent
-                .queryPackage(mComponent.packageName().packageName())
-                .whereActivity().className().isEqualTo(mComponent.className()).waitForEvent();
-
-        return new TestAppActivityImpl(mInstance, mComponent);
     }
 }
