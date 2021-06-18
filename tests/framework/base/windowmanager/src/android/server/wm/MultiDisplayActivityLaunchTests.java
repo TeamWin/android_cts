@@ -34,6 +34,7 @@ import static android.server.wm.CliIntentExtra.extraBool;
 import static android.server.wm.CliIntentExtra.extraString;
 import static android.server.wm.ComponentNameUtils.getActivityName;
 import static android.server.wm.UiDeviceUtils.pressHomeButton;
+import static android.server.wm.WindowManagerState.STATE_DESTROYED;
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
 import static android.server.wm.WindowManagerState.STATE_STOPPED;
 import static android.server.wm.app.Components.ALT_LAUNCHING_ACTIVITY;
@@ -41,6 +42,7 @@ import static android.server.wm.app.Components.BROADCAST_RECEIVER_ACTIVITY;
 import static android.server.wm.app.Components.LAUNCHING_ACTIVITY;
 import static android.server.wm.app.Components.NON_RESIZEABLE_ACTIVITY;
 import static android.server.wm.app.Components.NO_HISTORY_ACTIVITY;
+import static android.server.wm.app.Components.NO_HISTORY_ACTIVITY2;
 import static android.server.wm.app.Components.RESIZEABLE_ACTIVITY;
 import static android.server.wm.app.Components.SHOW_WHEN_LOCKED_ACTIVITY;
 import static android.server.wm.app.Components.SINGLE_TOP_ACTIVITY;
@@ -56,6 +58,7 @@ import static android.server.wm.third.Components.THIRD_ACTIVITY;
 import static android.view.Display.DEFAULT_DISPLAY;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
@@ -1006,6 +1009,11 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
                 mWmState.getActivityCountInTask(taskId2, null));
     }
 
+    /**
+     * This test case tests the behavior that a fullscreen activity was started on top of the
+     * no-history activity from default display while sleeping. The no-history activity from
+     * the external display should not be finished.
+     */
     @Test
     public void testLaunchNoHistoryActivityOnNewDisplay() {
         launchActivity(NO_HISTORY_ACTIVITY);
@@ -1022,19 +1030,21 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
                 .setSimulateDisplay(true)
                 .createDisplay();
 
-        launchActivityOnDisplay(NO_HISTORY_ACTIVITY, newDisplay.mId);
+        launchActivityOnDisplay(NO_HISTORY_ACTIVITY2, newDisplay.mId);
 
         // Check that the activity is resumed on the external display
-        waitAndAssertActivityStateOnDisplay(NO_HISTORY_ACTIVITY, STATE_RESUMED, newDisplay.mId,
+        waitAndAssertActivityStateOnDisplay(NO_HISTORY_ACTIVITY2, STATE_RESUMED, newDisplay.mId,
                 "Activity launched on external display must be resumed");
-        final int taskId2 = mWmState.getTaskByActivity(NO_HISTORY_ACTIVITY).getTaskId();
+        final int taskId2 = mWmState.getTaskByActivity(NO_HISTORY_ACTIVITY2).getTaskId();
 
         displayStateSession.turnScreenOff();
-        launchActivity(SHOW_WHEN_LOCKED_ACTIVITY);
+        launchActivityOnDisplay(SHOW_WHEN_LOCKED_ACTIVITY, DEFAULT_DISPLAY);
 
         assertNotEquals("Activity must not be in the same task.", taskId, taskId2);
-        assertEquals("Activity is the only member of its task", 1,
-                mWmState.getActivityCountInTask(taskId2, null));
+        assertEquals("No-history activity is the member of its task", 1,
+                mWmState.getActivityCountInTask(taskId2, NO_HISTORY_ACTIVITY2));
+        assertFalse("No-history activity should not be finished.",
+                mWmState.hasActivityState(NO_HISTORY_ACTIVITY2, STATE_DESTROYED));
     }
 
     private void assertBroughtExistingTaskToAnotherDisplay(int flags, ComponentName topActivity) {
