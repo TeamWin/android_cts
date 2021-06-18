@@ -109,7 +109,8 @@ public class CecPortDiscoverer extends BaseTargetPreparer {
             }
 
             serialNo = device.getProperty("ro.serialno");
-            String serialNoParam = CecMessage.convertStringToHexParams(serialNo);
+            String serialNoHashCode = String.valueOf(serialNo.hashCode());
+            String serialNoParam = CecMessage.convertStringToHexParams(serialNoHashCode);
             /*
              * formatParams prefixes with a ':' that we do not want in the vendorcommand
              * command line utility.
