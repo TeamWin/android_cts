@@ -3196,7 +3196,10 @@ public class AudioTrackTest {
         };
         final int TEST_CONF_ARRAY[] = {
             AudioFormat.CHANNEL_OUT_5POINT1POINT2, // 8 ch (includes height channels vs 7.1).
+            AudioFormat.CHANNEL_OUT_7POINT1POINT2, // 10ch
             AudioFormat.CHANNEL_OUT_7POINT1POINT4, // 12 ch
+            AudioFormat.CHANNEL_OUT_9POINT1POINT4, // 14 ch
+            AudioFormat.CHANNEL_OUT_9POINT1POINT6, // 16 ch
             AudioFormat.CHANNEL_OUT_22POINT2,      // 24 ch
         };
 
