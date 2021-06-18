@@ -74,7 +74,7 @@ public class LaunchRunner {
      * The activities that were already present in the system when the test started.
      * So they can be removed form the outputs, otherwise our tests would be system dependent.
      */
-    private List<WindowManagerState.ActivityTask> mBaseTasks;
+    private List<WindowManagerState.Task> mBaseTasks;
 
     public LaunchRunner(IntentTestBase testBase) {
         mTestBase = testBase;
@@ -302,7 +302,7 @@ public class LaunchRunner {
         // lifecycle state. wait an extra 3 seconds for it to settle
         SystemClock.sleep(BEFORE_DUMP_TIMEOUT);
         mTestBase.getWmState().computeState(activity.getComponentName());
-        List<WindowManagerState.ActivityTask> endStateTasks =
+        List<WindowManagerState.Task> endStateTasks =
                 mTestBase.getWmState().getRootTasks();
         return StateDump.fromTasks(endStateTasks, mBaseTasks);
     }
@@ -325,13 +325,13 @@ public class LaunchRunner {
                 "the activity states match up with what we recorded");
         mTestBase.getWmState().computeState(activity.getComponentName());
 
-        List<WindowManagerState.ActivityTask> endStateTasks =
+        List<WindowManagerState.Task> endStateTasks =
                 mTestBase.getWmState().getRootTasks();
 
         return StateDump.fromTasks(endStateTasks, mBaseTasks);
     }
 
-    private List<WindowManagerState.ActivityTask> getBaseTasks() {
+    private List<WindowManagerState.Task> getBaseTasks() {
         WindowManagerStateHelper amWmState = mTestBase.getWmState();
         amWmState.computeState(new ComponentName[]{});
         return amWmState.getRootTasks();

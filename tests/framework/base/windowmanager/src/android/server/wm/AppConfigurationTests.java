@@ -204,7 +204,7 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
             ActivitySessionClient noRelaunchActivityClient, SizeInfo prevSizes) {
         final ActivitySession activitySession = noRelaunchActivityClient.getLastStartedSession();
         final ComponentName activityName = activitySession.getName();
-        final WindowManagerState.ActivityTask task = mWmState.getTaskByActivity(activityName);
+        final WindowManagerState.Task task = mWmState.getTaskByActivity(activityName);
         final int displayId = mWmState.getRootTask(task.mRootTaskId).mDisplayId;
 
         assumeTrue(supportsLockedUserRotation(rotationSession, displayId));
