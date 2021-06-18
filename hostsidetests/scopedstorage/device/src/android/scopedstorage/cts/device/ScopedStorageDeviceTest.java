@@ -37,6 +37,7 @@ import static android.scopedstorage.cts.lib.TestUtils.assertMountMode;
 import static android.scopedstorage.cts.lib.TestUtils.assertThrows;
 import static android.scopedstorage.cts.lib.TestUtils.canOpen;
 import static android.scopedstorage.cts.lib.TestUtils.canOpenFileAs;
+import static android.scopedstorage.cts.lib.TestUtils.canQueryOnUri;
 import static android.scopedstorage.cts.lib.TestUtils.checkPermission;
 import static android.scopedstorage.cts.lib.TestUtils.createFileAs;
 import static android.scopedstorage.cts.lib.TestUtils.deleteFileAs;
@@ -2545,6 +2546,59 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
             deleteWithMediaProviderNoThrow(targetUri);
             deleteAsLegacyApp(nomediaFile);
             deleteAsLegacyApp(cameraDir);
+        }
+    }
+
+    /**
+     * b/182479650: Test that Screenshots directory is not hidden because of .nomedia presence
+     */
+    @Test
+    public void testNoMediaDoesntHideSpecialDirectories() throws Exception {
+        for (File directory : new File [] {
+                getDcimDir(),
+                getDownloadDir(),
+                new File(getDcimDir(), "Camera"),
+                new File(getPicturesDir(), Environment.DIRECTORY_SCREENSHOTS),
+                new File(getMoviesDir(), Environment.DIRECTORY_SCREENSHOTS),
+                new File(getExternalStorageDir(), Environment.DIRECTORY_SCREENSHOTS)
+        }) {
+            assertNoMediaDoesntHideSpecialDirectories(directory);
+        }
+    }
+
+    private void assertNoMediaDoesntHideSpecialDirectories(File directory) throws Exception {
+        final File nomediaFile = new File(directory, ".nomedia");
+        final File videoFile = new File(directory, VIDEO_FILE_NAME);
+        Log.d(TAG, "Directory " + directory);
+
+        try {
+            // Recreate required file and directory
+            if (!directory.exists()) {
+                Log.d(TAG, "mkdir directory " + directory);
+                createDirectoryAsLegacyApp(directory);
+            }
+            assertWithMessage("Exists " + directory).that(directory.exists()).isTrue();
+
+            Log.d(TAG, "CreateFileAs " + nomediaFile);
+            createFileAsLegacyApp(nomediaFile);
+            assertWithMessage("Exists " + nomediaFile).that(nomediaFile.exists()).isTrue();
+
+            createFileAsLegacyApp(videoFile);
+            assertWithMessage("Exists " + videoFile).that(videoFile.exists()).isTrue();
+            final Uri targetUri = MediaStore.scanFile(getContentResolver(), videoFile);
+            assertWithMessage("Scan result for " + videoFile).that(targetUri)
+                    .isNotNull();
+
+            assertWithMessage("Uri path segment for " + targetUri)
+                    .that(targetUri.getPathSegments()).contains("video");
+
+            // Verify that the imageFile is not hidden because of .nomedia presence
+            assertWithMessage("Query as other app ")
+                    .that(canQueryOnUri(APP_A_HAS_RES, targetUri)).isTrue();
+        } finally {
+            deleteAsLegacyApp(videoFile);
+            deleteAsLegacyApp(nomediaFile);
+            deleteAsLegacyApp(directory);
         }
     }
 
