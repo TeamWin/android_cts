@@ -28,6 +28,7 @@ import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.ServiceInfo;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.test.InstrumentationTestCase;
 
 public class ActivityManagerFgsBgStartTest extends InstrumentationTestCase {
@@ -128,7 +129,8 @@ public class ActivityManagerFgsBgStartTest extends InstrumentationTestCase {
             CommandReceiver.sendCommand(mContext,
                     CommandReceiver.COMMAND_STOP_ACTIVITY,
                     PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
-
+            // Sleep 12 second to let BAL grace period expire.
+            SystemClock.sleep(12000);
             uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
                     WatchUidRunner.STATE_CACHED_EMPTY,
                     new Integer(PROCESS_CAPABILITY_NONE));
@@ -183,7 +185,8 @@ public class ActivityManagerFgsBgStartTest extends InstrumentationTestCase {
             uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
                     WatchUidRunner.STATE_TOP,
                     new Integer(PROCESS_CAPABILITY_ALL));
-
+            // Sleep 12 second to let BAL grace period expire.
+            SystemClock.sleep(12000);
             // From package1, start FGSL in package2.
             CommandReceiver.sendCommand(mContext,
                     CommandReceiver.COMMAND_START_FOREGROUND_SERVICE_LOCATION,
@@ -204,7 +207,8 @@ public class ActivityManagerFgsBgStartTest extends InstrumentationTestCase {
             CommandReceiver.sendCommand(mContext,
                     CommandReceiver.COMMAND_STOP_ACTIVITY,
                     PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
-
+            // Sleep 12 second to let BAL grace period expire.
+            SystemClock.sleep(12000);
             uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
                     WatchUidRunner.STATE_CACHED_EMPTY,
                     new Integer(PROCESS_CAPABILITY_NONE));
@@ -287,6 +291,8 @@ public class ActivityManagerFgsBgStartTest extends InstrumentationTestCase {
             uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
                     WatchUidRunner.STATE_TOP,
                     new Integer(PROCESS_CAPABILITY_ALL));
+            // Sleep 12 second to let BAL grace period expire.
+            SystemClock.sleep(12000);
             CommandReceiver.sendCommand(mContext,
                     CommandReceiver.COMMAND_CREATE_FGSL_PENDING_INTENT,
                     PACKAGE_NAME_APP1, PACKAGE_NAME_APP2, 0, null);
@@ -318,7 +324,8 @@ public class ActivityManagerFgsBgStartTest extends InstrumentationTestCase {
             CommandReceiver.sendCommand(mContext,
                     CommandReceiver.COMMAND_STOP_ACTIVITY,
                     PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
-
+            // Sleep 12 second to let BAL grace period expire.
+            SystemClock.sleep(12000);
             uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
                     WatchUidRunner.STATE_CACHED_EMPTY,
                     new Integer(PROCESS_CAPABILITY_NONE));

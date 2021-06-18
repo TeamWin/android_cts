@@ -43,7 +43,8 @@ android_test {
         "cts",
         "general-tests",
         "mts",
-        "sts",
+        "mts-tethering",
+	"sts",
     ],
 
 

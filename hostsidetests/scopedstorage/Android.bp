@@ -79,7 +79,7 @@ java_test_host {
     name: "CtsScopedStorageHostTest",
     srcs: ["host/src/**/*.java"],
     libs: ["tradefed", "testng"],
-    test_suites: ["general-tests", "mts", "cts"],
+    test_suites: ["general-tests", "mts-mediaprovider", "cts"],
     test_config: "AndroidTest.xml",
 }
 

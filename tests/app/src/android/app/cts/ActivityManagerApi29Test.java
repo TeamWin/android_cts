@@ -44,6 +44,7 @@ import android.app.cts.android.app.cts.tools.WatchUidRunner;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.os.SystemClock;
 import android.permission.cts.PermissionUtils;
 import android.provider.DeviceConfig;
 import android.provider.Settings;
@@ -201,6 +202,8 @@ public class ActivityManagerApi29Test {
      */
     @Test
     public void testFgsLocationWithAppOps() throws Exception {
+        // Sleep 12 seconds to let BAL grace period expire.
+        SystemClock.sleep(12000);
         // Start a foreground service with location
         startSimpleService();
         // Wait for state and capability change.

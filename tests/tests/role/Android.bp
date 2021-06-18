@@ -35,7 +35,7 @@ android_test {
     test_suites: [
         "cts",
         "general-tests",
-        "mts",
+        "mts-permission",
     ],
 
     data: [

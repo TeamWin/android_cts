@@ -27,6 +27,7 @@ android_test {
     test_suites: [
         "cts",
         "general-tests",
+        "sts",
     ],
 
     static_libs: ["cts-wm-app-base"],

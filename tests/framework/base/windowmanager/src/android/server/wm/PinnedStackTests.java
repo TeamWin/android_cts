@@ -30,6 +30,7 @@ import static android.server.wm.UiDeviceUtils.pressWindowButton;
 import static android.server.wm.WindowManagerState.STATE_PAUSED;
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
 import static android.server.wm.WindowManagerState.STATE_STOPPED;
+import static android.server.wm.WindowManagerState.dpToPx;
 import static android.server.wm.app.Components.ALWAYS_FOCUSABLE_PIP_ACTIVITY;
 import static android.server.wm.app.Components.LAUNCHING_ACTIVITY;
 import static android.server.wm.app.Components.LAUNCH_ENTER_PIP_ACTIVITY;
@@ -39,6 +40,7 @@ import static android.server.wm.app.Components.PIP_ACTIVITY;
 import static android.server.wm.app.Components.PIP_ACTIVITY2;
 import static android.server.wm.app.Components.PIP_ACTIVITY_WITH_MINIMAL_SIZE;
 import static android.server.wm.app.Components.PIP_ACTIVITY_WITH_SAME_AFFINITY;
+import static android.server.wm.app.Components.PIP_ACTIVITY_WITH_TINY_MINIMAL_SIZE;
 import static android.server.wm.app.Components.PIP_ON_STOP_ACTIVITY;
 import static android.server.wm.app.Components.PipActivity.ACTION_ENTER_PIP;
 import static android.server.wm.app.Components.PipActivity.ACTION_FINISH;
@@ -92,6 +94,7 @@ import android.graphics.Rect;
 import android.os.Handler;
 import android.os.Looper;
 import android.platform.test.annotations.Presubmit;
+import android.platform.test.annotations.SecurityTest;
 import android.provider.Settings;
 import android.server.wm.CommandSession.ActivityCallback;
 import android.server.wm.CommandSession.SizeInfo;
@@ -147,6 +150,8 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     private static final int MAX_ASPECT_RATIO_NUMERATOR = 239;
     private static final int MAX_ASPECT_RATIO_DENOMINATOR = 100;
     private static final int ABOVE_MAX_ASPECT_RATIO_NUMERATOR = MAX_ASPECT_RATIO_NUMERATOR + 1;
+    // Corresponds to com.android.internal.R.dimen.overridable_minimal_size_pip_resizable_task
+    private static final int OVERRIDABLE_MINIMAL_SIZE_PIP_RESIZABLE_TASK = 48;
 
     @Before
     @Override
@@ -253,8 +258,6 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         assertPinnedStackActivityIsInDisplayBounds(PIP_ACTIVITY);
     }
 
-    // TODO: launch/size pip to a size smaller than limitation and verify the minWidth/minHeight
-    // is respected after b/149338177.
     @Test
     public void testEnterPipWithMinimalSize() throws Exception {
         // Launch a PiP activity with minimal size specified
@@ -276,6 +279,30 @@ public class PinnedStackTests extends ActivityManagerTestBase {
                         && pipBounds.height() >= minSize.getHeight())
                         || (pipBounds.height() == minSize.getHeight()
                         && pipBounds.width() >= minSize.getWidth()));
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel="2021-03")
+    public void testEnterPipWithTinyMinimalSize() throws Exception {
+        // Launch a PiP activity with minimal size specified and smaller than allowed minimum
+        launchActivity(PIP_ACTIVITY_WITH_TINY_MINIMAL_SIZE, EXTRA_ENTER_PIP, "true");
+        // Wait for animation complete since we are comparing size
+        waitForEnterPipAnimationComplete(PIP_ACTIVITY_WITH_TINY_MINIMAL_SIZE);
+        assertPinnedStackExists();
+
+        final WindowManagerState.WindowState windowState = getWindowState(
+                PIP_ACTIVITY_WITH_TINY_MINIMAL_SIZE);
+        final WindowManagerState.DisplayContent display = mWmState.getDisplay(
+                windowState.getDisplayId());
+        final int overridableMinSize = dpToPx(
+                OVERRIDABLE_MINIMAL_SIZE_PIP_RESIZABLE_TASK, display.getDpi());
+
+        // compare the bounds to verify that it's no smaller than allowed minimum on both dimensions
+        final Rect pipBounds = getPinnedStackBounds();
+        assertTrue("Pinned task bounds " + pipBounds + " isn't smaller than minimal "
+                        + overridableMinSize + " on both dimensions",
+                pipBounds.width() >= overridableMinSize
+                        && pipBounds.height() >= overridableMinSize);
     }
 
     @Test
