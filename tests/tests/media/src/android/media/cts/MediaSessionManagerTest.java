@@ -176,6 +176,7 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
 
     @UiThreadTest
     public void testAddOnActiveSessionsListener() throws Exception {
+        if (!MediaUtils.check(sIsAtLeastS, "test invalid before Android 12")) return;
         try {
             mSessionManager.addOnActiveSessionsChangedListener(null, null);
             fail("Expected NPE for call to addOnActiveSessionsChangedListener");

@@ -105,9 +105,7 @@ public class SecurityLoggingDelegateTest extends BaseTestCase {
      */
     @Test
     public void testVerifyGeneratedLogs() throws Exception {
-        mDevice.executeShellCommand("dpm force-security-logs");
-        DelegateTestUtils.DelegatedLogsReceiver.waitForBroadcast();
-
+        DelegateTestUtils.DelegatedLogsReceiver.forceAndWaitForSecurityLogsBroadcast();
         final List<SecurityEvent> events =
                 DelegateTestUtils.DelegatedLogsReceiver.getSecurityEvents();
 

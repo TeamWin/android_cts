@@ -59,12 +59,12 @@ import android.platform.test.annotations.AppModeFull;
 import android.support.test.uiautomator.UiDevice;
 import android.telephony.TelephonyManager;
 
-import androidx.core.os.BuildCompat;
 import androidx.test.filters.SdkSuppress;
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.PropertyUtil;
 import com.android.compatibility.common.util.ShellIdentityUtils;
@@ -240,7 +240,7 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
                 assertThat(statsEntry.getProbeElapsedTimeSinceLastUpdateMillis()).isAtLeast(-1);
                 assertThat(statsEntry.getProbeMcsRateSinceLastUpdate()).isAtLeast(-1);
                 assertThat(statsEntry.getRxLinkSpeedMbps()).isAtLeast(-1);
-                if (BuildCompat.isAtLeastS()) {
+                if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S)) {
                     try {
                         assertThat(statsEntry.getTimeSliceDutyCycleInPercent())
                                 .isIn(Range.closed(0, 100));
@@ -536,7 +536,7 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
             // Reset the scorer countdown latch for onStop
             countDownLatchScorer = new CountDownLatch(1);
             connectedNetworkScorer.resetCountDownLatch(countDownLatchScorer);
-            if (BuildCompat.isAtLeastS()) {
+            if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S)) {
                 // Notify status change and request a NUD check
                 scoreUpdateObserver.notifyStatusUpdate(
                         connectedNetworkScorer.startSessionId, false);

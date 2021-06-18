@@ -22,6 +22,7 @@ import android.app.ActivityManager;
 
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.annotations.Experimental;
+import com.android.bedstead.nene.packages.ComponentReference;
 import com.android.bedstead.nene.permissions.PermissionContext;
 
 import java.util.List;
@@ -35,10 +36,31 @@ public final class Activities {
     }
 
     /**
-     * Get the {@link ActivityReference} currently in the foreground.
+     * Wrap the given {@link NeneActivity} to use Nene APIs.
+     */
+    public Activity<NeneActivity> wrap(NeneActivity activity) {
+        return new Activity<>(mTestApis, activity, activity);
+    }
+
+    /**
+     * Wrap the given {@link NeneActivity} subclass to use Nene APIs.
+     */
+    public <E extends NeneActivity> Activity<E> wrap(Class<E> clazz, E activity) {
+        return new Activity<>(mTestApis, activity, activity);
+    }
+
+    /**
+     * Wrap the given {@link android.app.Activity} to use Nene APIs.
+     */
+    public LocalActivity wrap(android.app.Activity activity) {
+        return new LocalActivity(mTestApis, activity);
+    }
+
+    /**
+     * Get the {@link ComponentReference} of the activity currently in the foreground.
      */
     @Experimental
-    public ActivityReference foregroundActivity() {
+    public ComponentReference foregroundActivity() {
         try (PermissionContext p = mTestApis.permissions().withPermission(REAL_GET_TASKS)) {
             ActivityManager activityManager =
                     mTestApis.context().instrumentedContext().getSystemService(
@@ -48,7 +70,7 @@ public final class Activities {
                 return null;
             }
 
-            return new ActivityReference(mTestApis, runningTasks.get(0).topActivity);
+            return new ComponentReference(mTestApis, runningTasks.get(0).topActivity);
         }
     }
 

@@ -44,12 +44,12 @@ import android.platform.test.annotations.AppModeFull;
 import android.support.test.uiautomator.UiDevice;
 import android.util.Pair;
 
-import androidx.core.os.BuildCompat;
 import androidx.test.filters.SdkSuppress;
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.ShellIdentityUtils;
 
@@ -586,7 +586,7 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
                 .build();
 
         final NetworkSpecifier redacted = specifier.redact();
-        if (BuildCompat.isAtLeastS()) {
+        if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S)) {
             assertThat(new WifiNetworkSpecifier.Builder().setBand(ScanResult.WIFI_BAND_5_GHZ)
                     .build().equals(redacted)).isTrue();
         } else {

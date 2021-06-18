@@ -348,9 +348,12 @@ public class ActivityLifecycleLegacySplitScreenTests extends ActivityLifecycleCl
         final List<LifecycleLog.ActivityCallback> expectedSequence =
                 Arrays.asList(ON_TOP_POSITION_GAINED, ON_MULTI_WINDOW_MODE_CHANGED);
         waitForActivityTransitions(ConfigChangeHandlingActivity.class, expectedSequence);
-        LifecycleVerifier.assertTransitionObserved(getLifecycleLog(),
-                transition(ConfigChangeHandlingActivity.class, ON_MULTI_WINDOW_MODE_CHANGED),
-                "exitSplitScreen");
+
+        if (displayWindowingMode == WINDOWING_MODE_FULLSCREEN) {
+                LifecycleVerifier.assertTransitionObserved(getLifecycleLog(),
+                        transition(ConfigChangeHandlingActivity.class,
+                        ON_MULTI_WINDOW_MODE_CHANGED), "exitSplitScreen");
+        }
         LifecycleVerifier.assertTransitionObserved(getLifecycleLog(),
                 transition(ConfigChangeHandlingActivity.class, ON_TOP_POSITION_GAINED),
                 "exitSplitScreen");

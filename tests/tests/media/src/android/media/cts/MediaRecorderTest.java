@@ -136,6 +136,7 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
     private final static String AVC = MediaFormat.MIMETYPE_VIDEO_AVC;
 
     private boolean mIsAtLeastR = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.R);
+    private boolean mIsAtLeastS = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S);
 
     public MediaRecorderTest() {
         super("android.media.cts", MediaStubActivity.class);
@@ -1817,6 +1818,7 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
     }
 
     public void testSetGetLogSessionId() {
+        if (!MediaUtils.check(mIsAtLeastS, "test needs Android 12")) return;
         MediaRecorder recorder = new MediaRecorder();
         assertEquals(recorder.getLogSessionId(), LogSessionId.LOG_SESSION_ID_NONE);
 

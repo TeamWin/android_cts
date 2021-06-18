@@ -63,6 +63,7 @@ import com.android.compatibility.common.util.AppStandbyUtils;
 import com.android.compatibility.common.util.BatteryUtils;
 import com.android.compatibility.common.util.CallbackAsserter;
 import com.android.compatibility.common.util.DeviceConfigStateHelper;
+import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.ThermalUtils;
 
 import junit.framework.AssertionFailedError;
@@ -1042,7 +1043,7 @@ public class JobThrottlingTest {
     }
 
     private void sendScheduleJobBroadcast(boolean allowWhileIdle) throws Exception {
-        mTestAppInterface.scheduleJob(allowWhileIdle, NETWORK_TYPE_ANY, false);
+        mTestAppInterface.scheduleJob(allowWhileIdle, NETWORK_TYPE_NONE, false);
     }
 
     private void toggleDozeState(final boolean idle) throws Exception {
@@ -1145,7 +1146,14 @@ public class JobThrottlingTest {
                 "cmd connectivity airplane-mode " + (on ? "enable" : "disable"));
         airplaneModeBroadcastAsserter.assertCalled("Didn't get airplane mode changed broadcast",
                 15 /* 15 seconds */);
-        waitUntil("Networks didn't change to " + (!on ? " on" : " off"), 60 /* seconds */,
+        if (!on && mHasWifi) {
+            // Force wifi to connect ASAP.
+            mUiDevice.executeShellCommand("svc wifi enable");
+            //noinspection deprecation
+            SystemUtil.runWithShellPermissionIdentity(mWifiManager::reconnect,
+                    android.Manifest.permission.NETWORK_SETTINGS);
+        }
+        waitUntil("Networks didn't change to " + (!on ? "on" : "off"), 60 /* seconds */,
                 () -> {
                     if (on) {
                         return mCm.getActiveNetwork() == null

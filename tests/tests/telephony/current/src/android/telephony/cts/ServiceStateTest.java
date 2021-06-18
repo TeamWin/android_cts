@@ -37,8 +37,10 @@ import android.os.Parcel;
 import android.telephony.AccessNetworkConstants;
 import android.telephony.LteVopsSupportInfo;
 import android.telephony.NetworkRegistrationInfo;
+import android.telephony.NrVopsSupportInfo;
 import android.telephony.ServiceState;
 import android.telephony.TelephonyManager;
+import android.telephony.VopsSupportInfo;
 
 import androidx.test.InstrumentationRegistry;
 
@@ -356,14 +358,14 @@ public class ServiceStateTest {
     }
 
     @Test
-    public void testLteVopsSupportInfo() {
-        LteVopsSupportInfo lteVopsSupportInfo =
+    public void testVopsSupportInfo() {
+        VopsSupportInfo vopsSupportInfo =
                 new LteVopsSupportInfo(LteVopsSupportInfo.LTE_STATUS_NOT_AVAILABLE,
                         LteVopsSupportInfo.LTE_STATUS_NOT_AVAILABLE);
 
         NetworkRegistrationInfo wwanDataRegState = new NetworkRegistrationInfo(
                 NetworkRegistrationInfo.DOMAIN_PS, AccessNetworkConstants.TRANSPORT_TYPE_WWAN,
-                0, 0, 0, true, null, null, "", 0, false, false, false, lteVopsSupportInfo);
+                0, 0, 0, true, null, null, "", 0, false, false, false, vopsSupportInfo);
 
         ServiceState ss = new ServiceState();
 
@@ -372,19 +374,35 @@ public class ServiceStateTest {
         assertEquals(ss.getNetworkRegistrationInfo(NetworkRegistrationInfo.DOMAIN_PS,
                 AccessNetworkConstants.TRANSPORT_TYPE_WWAN), wwanDataRegState);
 
-        lteVopsSupportInfo =
+        vopsSupportInfo =
                 new LteVopsSupportInfo(LteVopsSupportInfo.LTE_STATUS_SUPPORTED,
                         LteVopsSupportInfo.LTE_STATUS_NOT_SUPPORTED);
 
         wwanDataRegState = new NetworkRegistrationInfo(
                 NetworkRegistrationInfo.DOMAIN_PS, AccessNetworkConstants.TRANSPORT_TYPE_WWAN,
-                0, 0, 0, true, null, null, "", 0, false, false, false, lteVopsSupportInfo);
+                0, 0, 0, true, null, null, "", 0, false, false, false, vopsSupportInfo);
         ss.addNetworkRegistrationInfo(wwanDataRegState);
         assertEquals(ss.getNetworkRegistrationInfo(NetworkRegistrationInfo.DOMAIN_PS,
                 AccessNetworkConstants.TRANSPORT_TYPE_WWAN), wwanDataRegState);
         assertEquals(ss.getNetworkRegistrationInfo(NetworkRegistrationInfo.DOMAIN_PS,
-                AccessNetworkConstants.TRANSPORT_TYPE_WWAN).getDataSpecificInfo().getLteVopsSupportInfo(),
-            lteVopsSupportInfo);
+                AccessNetworkConstants.TRANSPORT_TYPE_WWAN).getDataSpecificInfo()
+                .getLteVopsSupportInfo(), (LteVopsSupportInfo) vopsSupportInfo);
+        assertEquals(ss.getNetworkRegistrationInfo(NetworkRegistrationInfo.DOMAIN_PS,
+                AccessNetworkConstants.TRANSPORT_TYPE_WWAN).getDataSpecificInfo()
+                .getVopsSupportInfo(), vopsSupportInfo);
+
+        vopsSupportInfo = new NrVopsSupportInfo(NrVopsSupportInfo.NR_STATUS_VOPS_NOT_SUPPORTED,
+                NrVopsSupportInfo.NR_STATUS_EMC_NOT_SUPPORTED,
+                NrVopsSupportInfo.NR_STATUS_EMF_NOT_SUPPORTED);
+        wwanDataRegState = new NetworkRegistrationInfo(
+                NetworkRegistrationInfo.DOMAIN_PS, AccessNetworkConstants.TRANSPORT_TYPE_WWAN,
+                0, 0, 0, true, null, null, "", 0, false, false, false, vopsSupportInfo);
+        ss.addNetworkRegistrationInfo(wwanDataRegState);
+        assertEquals(ss.getNetworkRegistrationInfo(NetworkRegistrationInfo.DOMAIN_PS,
+                AccessNetworkConstants.TRANSPORT_TYPE_WWAN), wwanDataRegState);
+        assertEquals(ss.getNetworkRegistrationInfo(NetworkRegistrationInfo.DOMAIN_PS,
+                AccessNetworkConstants.TRANSPORT_TYPE_WWAN).getDataSpecificInfo()
+                .getVopsSupportInfo(), vopsSupportInfo);
     }
 
     @Test

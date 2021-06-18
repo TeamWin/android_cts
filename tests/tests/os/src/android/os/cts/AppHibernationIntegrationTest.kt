@@ -35,6 +35,7 @@ import androidx.test.InstrumentationRegistry
 import androidx.test.filters.SdkSuppress
 import androidx.test.runner.AndroidJUnit4
 import com.android.compatibility.common.util.DisableAnimationRule
+import com.android.compatibility.common.util.FreezeRotationRule
 import com.android.compatibility.common.util.SystemUtil.runShellCommandOrThrow
 import com.android.compatibility.common.util.UiAutomatorUtils
 import org.hamcrest.CoreMatchers
@@ -67,6 +68,9 @@ class AppHibernationIntegrationTest {
 
     @get:Rule
     val disableAnimationRule = DisableAnimationRule()
+
+    @get:Rule
+    val freezeRotationRule = FreezeRotationRule()
 
     @Before
     fun setup() {
