@@ -50,11 +50,10 @@ import android.content.Intent;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.WindowManagerState;
-import android.server.wm.WindowManagerState.ActivityTask;
+import android.server.wm.WindowManagerState.Task;
 import android.server.wm.lifecycle.LifecycleLog.ActivityCallback;
 import android.util.Pair;
 
-import androidx.test.filters.FlakyTest;
 import androidx.test.filters.MediumTest;
 
 import org.junit.Before;
@@ -473,8 +472,8 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
 
         // Tap on first activity to switch the focus
         getLifecycleLog().clear();
-        final ActivityTask dockedStack = getStackForTaskId(firstActivity.getTaskId());
-        tapOnStackCenter(dockedStack);
+        final Task dockedTask = getRootTaskForLeafTaskId(firstActivity.getTaskId());
+        tapOnTaskCenter(dockedTask);
 
         // Wait and assert focus switch
         waitAndAssertActivityStates(state(firstActivity, ON_TOP_POSITION_GAINED),
@@ -486,8 +485,8 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
 
         // Tap on second activity to switch the focus again
         getLifecycleLog().clear();
-        final ActivityTask sideStack = getStackForTaskId(secondActivity.getTaskId());
-        tapOnStackCenter(sideStack);
+        final Task sideTask = getRootTaskForLeafTaskId(secondActivity.getTaskId());
+        tapOnTaskCenter(sideTask);
 
         // Wait and assert focus switch
         waitAndAssertActivityStates(state(firstActivity, ON_TOP_POSITION_LOST),
@@ -536,8 +535,8 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
 
         // Tap on first activity to switch the top resumed one
         getLifecycleLog().clear();
-        final ActivityTask dockedStack = getStackForTaskId(firstActivity.getTaskId());
-        tapOnStackCenter(dockedStack);
+        final Task dockedTask = getRootTaskForLeafTaskId(firstActivity.getTaskId());
+        tapOnTaskCenter(dockedTask);
 
         // Wait and assert top resumed position switch
         waitAndAssertActivityStates(state(secondActivityClass, ON_TOP_POSITION_LOST),
@@ -545,14 +544,12 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
         LifecycleVerifier.assertOrder(getLifecycleLog(), Arrays.asList(
                 transition(secondActivityClass, ON_TOP_POSITION_LOST),
                 transition(firstActivityClass, ON_TOP_POSITION_GAINED)),
-                "tapOnStack");
+                "tapOnTask");
 
         // Tap on second activity to switch the top resumed activity again
         getLifecycleLog().clear();
-        final ActivityTask sideTask = mWmState
-                .getTaskByActivity(secondActivityComponent);
-        final ActivityTask sideStack = getStackForTaskId(sideTask.getTaskId());
-        tapOnStackCenter(sideStack);
+        final Task sideTask = mWmState.getTaskByActivity(secondActivityComponent);
+        tapOnTaskCenter(sideTask);
 
         // Wait and assert top resumed position switch
         waitAndAssertActivityStates(state(secondActivityClass, ON_TOP_POSITION_GAINED),
@@ -560,7 +557,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
         LifecycleVerifier.assertOrder(getLifecycleLog(), Arrays.asList(
                 transition(firstActivityClass, ON_TOP_POSITION_LOST),
                 transition(secondActivityClass, ON_TOP_POSITION_GAINED)),
-                "tapOnStack");
+                "tapOnTask");
     }
 
     @Test
@@ -601,8 +598,8 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
 
         // Tap on first activity to switch the top resumed one
         getLifecycleLog().clear();
-        final ActivityTask dockedStack = getStackForTaskId(slowActivity.getTaskId());
-        tapOnStackCenter(dockedStack);
+        final Task dockedTask = getRootTaskForLeafTaskId(slowActivity.getTaskId());
+        tapOnTaskCenter(dockedTask);
 
         // Wait and assert top resumed position switch.
         waitAndAssertActivityStates(state(secondActivityClass, ON_TOP_POSITION_LOST),
@@ -610,14 +607,13 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
         LifecycleVerifier.assertOrder(getLifecycleLog(), Arrays.asList(
                 transition(secondActivityClass, ON_TOP_POSITION_LOST),
                 transition(slowActivityClass, ON_TOP_POSITION_GAINED)),
-                "tapOnStack");
+                "tapOnTask");
 
         // Tap on second activity to switch the top resumed activity again
         getLifecycleLog().clear();
-        final ActivityTask sideTask = mWmState
+        final Task sideTask = mWmState
                 .getTaskByActivity(secondActivityComponent);
-        final ActivityTask sideStack = getStackForTaskId(sideTask.getTaskId());
-        tapOnStackCenter(sideStack);
+        tapOnTaskCenter(sideTask);
 
         // Wait and assert top resumed position switch. Because of timeout the new top position will
         // be reported to the first activity before second will finish handling it.
@@ -626,7 +622,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
         LifecycleVerifier.assertOrder(getLifecycleLog(), Arrays.asList(
                 transition(secondActivityClass, ON_TOP_POSITION_GAINED),
                 transition(slowActivityClass, ON_TOP_POSITION_LOST)),
-                "tapOnStack");
+                "tapOnTask");
 
         // Wait 5 seconds more to make sure that no new messages received after top resumed state
         // released by the slow activity
