@@ -83,6 +83,7 @@ public class YesNoTestStep extends TestStepBase {
     public void enableInteractivity() {
         TvAppVerifierActivity.setButtonEnabled(mPositiveButton, true);
         TvAppVerifierActivity.setButtonEnabled(mNegativeButton, true);
+        mPositiveButton.requestFocus();
     }
 
     @Override

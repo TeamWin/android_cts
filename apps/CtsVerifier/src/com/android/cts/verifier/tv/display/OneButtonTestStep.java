@@ -73,6 +73,7 @@ public abstract class OneButtonTestStep extends TestStepBase {
     @Override
     public void enableInteractivity() {
         TvAppVerifierActivity.setButtonEnabled(mButtonView, true);
+        mButtonView.requestFocus();
     }
 
     @Override
