@@ -15,6 +15,7 @@
  */
 package android.media.cts;
 
+import android.media.AudioTimestamp;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
@@ -29,7 +30,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 /**
  * JB(API 21) introduces {@link MediaCodec} tunneled mode API.  It allows apps
@@ -349,6 +349,7 @@ public class MediaCodecTunneledPlayer implements MediaTimeProvider {
         }
     }
 
+    // Pauses the audio track
     public void pause() {
         Log.d(TAG, "pause");
 
@@ -593,5 +594,18 @@ public class MediaCodecTunneledPlayer implements MediaTimeProvider {
         for (CodecState state: mVideoCodecStates.values()) {
             state.setVideoPeek(enable);
         }
+    }
+
+    public AudioTimestamp getTimestamp() {
+        if (mAudioCodecStates == null) {
+            return null;
+        }
+
+        AudioTimestamp timestamp = new AudioTimestamp();
+        if (mAudioCodecStates.size() != 0) {
+            timestamp =
+                    mAudioCodecStates.entrySet().iterator().next().getValue().getTimestamp();
+        }
+        return timestamp;
     }
 }
