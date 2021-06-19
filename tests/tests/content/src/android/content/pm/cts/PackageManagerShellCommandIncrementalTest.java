@@ -343,7 +343,8 @@ public class PackageManagerShellCommandIncrementalTest {
                 assertTrue(re.toString(), re.getCause() instanceof IOException);
             } catch (IOException e) {
                 Log.i(TAG, "IOException: ", e);
-                throw e;
+                throw new IOException("Skipped block: " + skipBlock + ", randomSeed: " + randomSeed,
+                        e);
             }
         }
     }

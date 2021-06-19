@@ -167,9 +167,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     private static final int WAIT_MSEC = 60;
     private static final int DURATION_SCREEN_TOGGLE = 2000;
     private static final int DURATION_SETTINGS_TOGGLE = 1_000;
-    private static final int WIFI_SCAN_TEST_INTERVAL_MILLIS = 60 * 1000;
     private static final int WIFI_SCAN_TEST_CACHE_DELAY_MILLIS = 3 * 60 * 1000;
-    private static final int WIFI_SCAN_TEST_ITERATIONS = 5;
 
     private static final int ENFORCED_NUM_NETWORK_SUGGESTIONS_PER_APP = 50;
 
@@ -626,32 +624,27 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         if (!mWifiManager.isWifiEnabled()) {
             setWifiEnabled(true);
         }
-        // Scan multiple times to make sure scan timestamps increase with device timestamp.
-        for (int i = 0; i < WIFI_SCAN_TEST_ITERATIONS; ++i) {
-            startScan();
-            // Make sure at least one AP is found.
-            assertTrue("mScanResult should not be null. This may be due to a scan timeout",
-                       mScanResults != null);
-            assertFalse("empty scan results!", mScanResults.isEmpty());
-            long nowMillis = SystemClock.elapsedRealtime();
-            // Keep track of how many APs are fresh in one scan.
-            int numFreshAps = 0;
-            for (ScanResult result : mScanResults) {
-                long scanTimeMillis = TimeUnit.MICROSECONDS.toMillis(result.timestamp);
-                if (Math.abs(nowMillis - scanTimeMillis)  < WIFI_SCAN_TEST_CACHE_DELAY_MILLIS) {
-                    numFreshAps++;
-                }
-            }
-            // At least half of the APs in the scan should be fresh.
-            int numTotalAps = mScanResults.size();
-            String msg = "Stale AP count: " + (numTotalAps - numFreshAps) + ", fresh AP count: "
-                    + numFreshAps;
-            assertTrue(msg, numFreshAps * 2 >= mScanResults.size());
-            if (i < WIFI_SCAN_TEST_ITERATIONS - 1) {
-                // Wait before running next iteration.
-                Thread.sleep(WIFI_SCAN_TEST_INTERVAL_MILLIS);
+        // Make sure the scan timestamps are consistent with the device timestamp within the range
+        // of WIFI_SCAN_TEST_CACHE_DELAY_MILLIS.
+        startScan();
+        // Make sure at least one AP is found.
+        assertTrue("mScanResult should not be null. This may be due to a scan timeout",
+                   mScanResults != null);
+        assertFalse("empty scan results!", mScanResults.isEmpty());
+        long nowMillis = SystemClock.elapsedRealtime();
+        // Keep track of how many APs are fresh in one scan.
+        int numFreshAps = 0;
+        for (ScanResult result : mScanResults) {
+            long scanTimeMillis = TimeUnit.MICROSECONDS.toMillis(result.timestamp);
+            if (Math.abs(nowMillis - scanTimeMillis)  < WIFI_SCAN_TEST_CACHE_DELAY_MILLIS) {
+                numFreshAps++;
             }
         }
+        // At least half of the APs in the scan should be fresh.
+        int numTotalAps = mScanResults.size();
+        String msg = "Stale AP count: " + (numTotalAps - numFreshAps) + ", fresh AP count: "
+                + numFreshAps;
+        assertTrue(msg, numFreshAps * 2 >= mScanResults.size());
     }
 
     public void testConvertBetweenChannelFrequencyMhz() throws Exception {

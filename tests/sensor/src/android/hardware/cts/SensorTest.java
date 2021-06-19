@@ -45,6 +45,8 @@ import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
 import android.util.Log;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 import com.android.compatibility.common.util.PropertyUtil;
 
 import junit.framework.Assert;
@@ -238,10 +240,21 @@ public class SensorTest extends SensorTestCase {
         }
     }
 
+    private void assertAllSensorsNameUniqueness() {
+        Multimap<Integer, String> sensorTypeNameMap = ArrayListMultimap.create();
+
+        for (Sensor sensor : mSensorList) {
+            assertFalse("Duplicate sensor name " + sensor.getName() + " for type " + sensor.getType(),
+                        sensorTypeNameMap.containsEntry(sensor.getType(), sensor.getName()));
+            sensorTypeNameMap.put(sensor.getType(), sensor.getName());
+        }
+    }
+
     public void testValuesForAllSensors() {
         for (Sensor sensor : mSensorList) {
             assertSensorValues(sensor);
         }
+        assertAllSensorsNameUniqueness();
     }
 
     private void hasOnlyOneWakeUpSensorOrEmpty(List<Sensor> sensors) {

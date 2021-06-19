@@ -77,6 +77,7 @@ import static org.junit.Assume.assumeTrue;
 import android.Manifest;
 import android.app.WallpaperManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
 import android.os.storage.StorageManager;
@@ -86,7 +87,6 @@ import android.system.ErrnoException;
 import android.system.Os;
 import android.util.Log;
 
-import androidx.core.os.BuildCompat;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.cts.install.lib.TestApp;
@@ -162,7 +162,7 @@ public class ScopedStorageTest {
         assertCanAccessPrivateAppAndroidObbDir(true /*canAccess*/, APP_B_NO_PERMS,
                 THIS_PACKAGE_NAME, NONMEDIA_FILE_NAME);
         final int uid = getContext().getPackageManager().getPackageUid(THIS_PACKAGE_NAME, 0);
-        if (BuildCompat.isAtLeastS()) {
+        if (isAtLeastS()) {
             assertMountMode(THIS_PACKAGE_NAME, uid, StorageManager.MOUNT_MODE_EXTERNAL_INSTALLER);
         }
     }
@@ -175,7 +175,7 @@ public class ScopedStorageTest {
         assertCanAccessPrivateAppAndroidDataDir(false /*canAccess*/, APP_B_NO_PERMS,
                 THIS_PACKAGE_NAME, NONMEDIA_FILE_NAME);
         final int uid = getContext().getPackageManager().getPackageUid(THIS_PACKAGE_NAME, 0);
-        if (BuildCompat.isAtLeastS()) {
+        if (isAtLeastS()) {
             assertMountMode(THIS_PACKAGE_NAME, uid, StorageManager.MOUNT_MODE_EXTERNAL_INSTALLER);
         }
     }
@@ -536,7 +536,7 @@ public class ScopedStorageTest {
     @Test
     public void testAndroidMedia() throws Exception {
         // Check that the app does not have legacy external storage access
-        if (BuildCompat.isAtLeastS()) {
+        if (isAtLeastS()) {
             assertThat(Environment.isExternalStorageLegacy()).isFalse();
         }
 
@@ -688,7 +688,7 @@ public class ScopedStorageTest {
 
     @Test
     public void testNoIsolatedStorageCanCreateFilesAnywhere() throws Exception {
-        if (BuildCompat.isAtLeastS()) {
+        if (isAtLeastS()) {
             assertThat(Environment.isExternalStorageLegacy()).isTrue();
         }
         final File topLevelPdf = new File(getExternalStorageDir(), NONMEDIA_FILE_NAME);
@@ -705,7 +705,7 @@ public class ScopedStorageTest {
 
     @Test
     public void testNoIsolatedStorageCantReadWriteOtherAppExternalDir() throws Exception {
-        if (BuildCompat.isAtLeastS()) {
+        if (isAtLeastS()) {
             assertThat(Environment.isExternalStorageLegacy()).isTrue();
         }
         // Let app A create a file in its data dir
@@ -731,7 +731,7 @@ public class ScopedStorageTest {
 
     @Test
     public void testNoIsolatedStorageStorageReaddir() throws Exception {
-        if (BuildCompat.isAtLeastS()) {
+        if (isAtLeastS()) {
             assertThat(Environment.isExternalStorageLegacy()).isTrue();
         }
         final File otherAppPdf = new File(getDownloadDir(), "other" + NONMEDIA_FILE_NAME);
@@ -760,7 +760,7 @@ public class ScopedStorageTest {
 
     @Test
     public void testNoIsolatedStorageQueryOtherAppsFile() throws Exception {
-        if (BuildCompat.isAtLeastS()) {
+        if (isAtLeastS()) {
             assertThat(Environment.isExternalStorageLegacy()).isTrue();
         }
         final File otherAppPdf = new File(getDownloadDir(), "other" + NONMEDIA_FILE_NAME);
@@ -826,7 +826,7 @@ public class ScopedStorageTest {
     @Test
     public void testClearPackageData() throws Exception {
         // Check that the app does not have legacy external storage access
-        if (BuildCompat.isAtLeastS()) {
+        if (isAtLeastS()) {
             assertThat(Environment.isExternalStorageLegacy()).isFalse();
         }
 
@@ -913,6 +913,10 @@ public class ScopedStorageTest {
         // Can't read/write app specific dir
         assertThat(getExternalFilesDir().list()).isNull();
         assertThat(getExternalFilesDir().exists()).isFalse();
+    }
+
+    private static boolean isAtLeastS() {
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.S;
     }
 
     private void createAndCheckFileAsApp(TestApp testApp, File newFile) throws Exception {
