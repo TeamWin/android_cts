@@ -15,6 +15,7 @@
  */
 package android.media.cts;
 
+import android.media.AudioTimestamp;
 import android.media.AudioTrack;
 import android.media.MediaCodec;
 import android.media.MediaExtractor;
@@ -435,6 +436,15 @@ public class CodecState {
             mAudioTrack.process();
         }
     }
+
+    public AudioTimestamp getTimestamp() {
+        if (mAudioTrack == null) {
+            return null;
+        }
+
+        return mAudioTrack.getTimestamp();
+    }
+
 
     /** Stop the attached {@link AudioTrack}, if any. */
     public void stopAudioTrack() {

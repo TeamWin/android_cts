@@ -4958,7 +4958,8 @@ You should be prompted to select credentials; choose the ones you just installed
 
     <!--  MIDI Test -->
     <string name="midi_test">MIDI Test</string>
-    <string name="ndk_midi_test">Native MIDI API Test</string>
+    <string name="midi_java_test">Java MIDI Test</string>
+    <string name="midi_native_test">Native MIDI Test</string>
     <string name="midi_info">
        For the USB MIDI interface test it is required that you have connected a supported USB
        Audio Peripheral device with standard MIDI 5-pin, DIN (round) connectors and a standard

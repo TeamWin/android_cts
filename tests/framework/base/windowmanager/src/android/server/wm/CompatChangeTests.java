@@ -585,7 +585,7 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
      */
     private void waitForTaskBoundsChanged(ComponentName activityName, Rect priorTaskBounds) {
         mWmState.waitForWithAmState(wmState -> {
-            WindowManagerState.ActivityTask task = wmState.getTaskByActivity(activityName);
+            WindowManagerState.Task task = wmState.getTaskByActivity(activityName);
             return task != null && !task.getBounds().equals(priorTaskBounds);
         }, "checking task bounds updated");
     }

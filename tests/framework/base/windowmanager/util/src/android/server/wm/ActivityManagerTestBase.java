@@ -147,6 +147,7 @@ import android.server.wm.CommandSession.LaunchInjector;
 import android.server.wm.CommandSession.LaunchProxy;
 import android.server.wm.CommandSession.SizeInfo;
 import android.server.wm.TestJournalProvider.TestJournalContainer;
+import android.server.wm.WindowManagerState.Task;
 import android.server.wm.WindowManagerState.WindowState;
 import android.server.wm.settings.SettingsSession;
 import android.util.DisplayMetrics;
@@ -687,8 +688,8 @@ public abstract class ActivityManagerTestBase {
         mTouchHelper.tapOnViewCenter(view);
     }
 
-    protected void tapOnStackCenter(WindowManagerState.ActivityTask stack) {
-        mTouchHelper.tapOnStackCenter(stack);
+    protected void tapOnTaskCenter(Task task) {
+        mTouchHelper.tapOnTaskCenter(task);
     }
 
     protected void tapOnDisplayCenter(int displayId) {
@@ -765,22 +766,22 @@ public abstract class ActivityManagerTestBase {
                 .setOnFailure(unusedResult -> fail("FAILED because unsatisfied: " + message)));
     }
 
-    /** Returns the stack that contains the provided task. */
-    protected WindowManagerState.ActivityTask getStackForTaskId(int taskId) {
+    /** Returns the root task that contains the provided leaf task id. */
+    protected Task getRootTaskForLeafTaskId(int taskId) {
         mWmState.computeState();
-        final List<WindowManagerState.ActivityTask> stacks = mWmState.getRootTasks();
-        for (WindowManagerState.ActivityTask stack : stacks) {
-            if (stack.getTask(taskId) != null) {
-                return stack;
+        final List<Task> rootTasks = mWmState.getRootTasks();
+        for (Task rootTask : rootTasks) {
+            if (rootTask.getTask(taskId) != null) {
+                return rootTask;
             }
         }
         return null;
     }
 
-    protected WindowManagerState.ActivityTask getRootTask(int taskId) {
+    protected Task getRootTask(int taskId) {
         mWmState.computeState();
-        final List<WindowManagerState.ActivityTask> rootTasks = mWmState.getRootTasks();
-        for (WindowManagerState.ActivityTask rootTask : rootTasks) {
+        final List<Task> rootTasks = mWmState.getRootTasks();
+        for (Task rootTask : rootTasks) {
             if (rootTask.getTaskId() == taskId) {
                 return rootTask;
             }
@@ -934,7 +935,7 @@ public abstract class ActivityManagerTestBase {
      */
     protected void moveActivityToRootTaskOrOnTop(ComponentName activityName, int rootTaskId) {
         mWmState.computeState(activityName);
-        WindowManagerState.ActivityTask rootTask = getRootTask(rootTaskId);
+        Task rootTask = getRootTask(rootTaskId);
         if (rootTask.getActivities().size() != 0) {
             // If the root task is a 1-level task, start the activity on top of given task.
             getLaunchActivityBuilder()
@@ -950,7 +951,7 @@ public abstract class ActivityManagerTestBase {
             runWithShellPermission(() -> mAtm.moveTaskToRootTask(taskId, rootTaskId, true));
         }
         mWmState.waitForValidState(new WaitForValidActivityState.Builder(activityName)
-                .setStackId(rootTaskId)
+                .setRootTaskId(rootTaskId)
                 .build());
     }
 
@@ -1047,14 +1048,14 @@ public abstract class ActivityManagerTestBase {
         mWmState.assertFocusedActivity(message, activityName);
 
         final int frontRootTaskId = mWmState.getFrontRootTaskId(displayId);
-        WindowManagerState.ActivityTask frontRootTaskOnDisplay =
-                mWmState.getRootTask(frontRootTaskId);
+        Task frontRootTaskOnDisplay = mWmState.getRootTask(frontRootTaskId);
         assertEquals(
                 "Resumed activity of front root task of the target display must match. " + message,
                 activityClassName,
                 frontRootTaskOnDisplay.isLeafTask() ? frontRootTaskOnDisplay.mResumedActivity
                         : frontRootTaskOnDisplay.getTopTask().mResumedActivity);
-        mWmState.assertFocusedStack("Top activity's rootTask must also be on top", frontRootTaskId);
+        mWmState.assertFocusedRootTask("Top activity's rootTask must also be on top",
+                frontRootTaskId);
     }
 
     /**

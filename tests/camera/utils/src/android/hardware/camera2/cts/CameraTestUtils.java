@@ -2151,7 +2151,7 @@ public class CameraTestUtils extends Assert {
         }
     }
 
-    private static void validateJpegData(byte[] jpegData, int width, int height, String filePath) {
+    public static void validateJpegData(byte[] jpegData, int width, int height, String filePath) {
         BitmapFactory.Options bmpOptions = new BitmapFactory.Options();
         // DecodeBound mode: only parse the frame header to get width/height.
         // it doesn't decode the pixel.

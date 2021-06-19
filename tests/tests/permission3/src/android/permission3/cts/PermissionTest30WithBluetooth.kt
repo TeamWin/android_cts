@@ -25,6 +25,7 @@ import android.os.Build
 import androidx.test.InstrumentationRegistry
 import androidx.test.filters.SdkSuppress
 import com.android.compatibility.common.util.SystemUtil.runShellCommandOrThrow
+import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
 import junit.framework.Assert.assertEquals
 import junit.framework.Assert.assertTrue
 import org.junit.After
@@ -57,7 +58,9 @@ class PermissionTest30WithBluetooth : BaseUsePermissionTest() {
         assumeTrue(supportsBluetooth())
         bluetoothAdapter = context.getSystemService(BluetoothManager::class.java).adapter
         bluetoothAdapterWasEnabled = bluetoothAdapter.isEnabled()
-        assertTrue(BTAdapterUtils.enableAdapter(bluetoothAdapter, context))
+        runWithShellPermissionIdentity {
+            assertTrue(BTAdapterUtils.enableAdapter(bluetoothAdapter, context))
+        }
         enableTestMode()
     }
 
@@ -66,7 +69,9 @@ class PermissionTest30WithBluetooth : BaseUsePermissionTest() {
         assumeTrue(supportsBluetooth())
         disableTestMode()
         if (!bluetoothAdapterWasEnabled) {
-            assertTrue(BTAdapterUtils.disableAdapter(bluetoothAdapter, context))
+            runWithShellPermissionIdentity {
+                assertTrue(BTAdapterUtils.disableAdapter(bluetoothAdapter, context))
+            }
         }
     }
 

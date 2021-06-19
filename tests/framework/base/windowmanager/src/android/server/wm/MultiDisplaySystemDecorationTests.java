@@ -369,7 +369,7 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
 
         tapOnDisplayCenter(newDisplay.mId);
         assertEquals("Top activity must be home type", ACTIVITY_TYPE_HOME,
-                mWmState.getFrontStackActivityType(newDisplay.mId));
+                mWmState.getFrontRootTaskActivityType(newDisplay.mId));
     }
 
     // IME related tests

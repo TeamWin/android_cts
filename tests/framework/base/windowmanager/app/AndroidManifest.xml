@@ -380,6 +380,10 @@
              android:noHistory="true"
              android:exported="true"/>
 
+        <activity android:name=".NoHistoryActivity2"
+             android:noHistory="true"
+             android:exported="true"/>
+
         <activity android:name=".ShowWhenLockedAttrActivity"
              android:showWhenLocked="true"
              android:exported="true"/>

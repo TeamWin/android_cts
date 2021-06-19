@@ -115,6 +115,11 @@ public class AppSearchDeviceTest {
     }
 
     @Test
+    public void closeAndFlush() {
+        mDb.close();
+    }
+
+    @Test
     public void testGetDocuments_nonexist() throws Exception {
         AppSearchBatchResult<String, GenericDocument> getResult = mDb.getByDocumentId(
                 new GetByDocumentIdRequest.Builder(NAMESPACE).addIds(ID).build()).get();

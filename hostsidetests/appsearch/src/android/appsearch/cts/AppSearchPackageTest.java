@@ -18,6 +18,7 @@ package android.appsearch.cts;
 
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -47,6 +48,12 @@ public class AppSearchPackageTest extends AppSearchHostTestBase {
         runDeviceTestAsUserInPkgA("clearTestData", mPrimaryUserId);
     }
 
+    @After
+    public void tearDown() throws Exception {
+        uninstallPackage(TARGET_PKG_A);
+        uninstallPackage(TARGET_PKG_B);
+    }
+
     @Test
     public void testPackageRemove() throws Exception {
         // package A grants visibility to package B.
@@ -57,5 +64,19 @@ public class AppSearchPackageTest extends AppSearchHostTestBase {
         uninstallPackage(TARGET_PKG_A);
         // query the document from another package, verify the document of package A is removed
         runDeviceTestAsUserInPkgB("testGlobalGetDocuments_nonexist", mPrimaryUserId);
+    }
+
+    @Test
+    public void testPackageUninstall_immediatelyReboot() throws Exception {
+        runDeviceTestAsUserInPkgA("testPutDocuments", mPrimaryUserId);
+        runDeviceTestAsUserInPkgA("closeAndFlush", mPrimaryUserId);
+        runDeviceTestAsUserInPkgA("testGetDocuments_exist", mPrimaryUserId);
+        uninstallPackage(TARGET_PKG_A);
+        // When test locally, if your test device doesn't support rebootUserspace(), you need to
+        // manually unlock your device screen after it got fully rebooted. Or remove your screen
+        // lock pin before the test. Otherwise it will hang.
+        rebootAndWaitUntilReady();
+        installPackageAsUser(TARGET_APK_A, /* grantPermission= */true, mPrimaryUserId);
+        runDeviceTestAsUserInPkgA("testGetDocuments_nonexist", mPrimaryUserId);
     }
 }
