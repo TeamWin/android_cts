@@ -277,6 +277,9 @@ final class DevicePolicyManagerWrapper
             // Used By DelegationTest
             doAnswer(answer).when(spy).getDelegatePackages(any(), any());
 
+            // Used by TrustAgentInfoTest
+            doAnswer(answer).when(spy).getTrustAgentConfiguration(any(), any());
+
             // TODO(b/176993670): add more methods below as tests are converted
         } catch (Exception e) {
             // Should never happen, but needs to be catch as some methods declare checked exceptions
