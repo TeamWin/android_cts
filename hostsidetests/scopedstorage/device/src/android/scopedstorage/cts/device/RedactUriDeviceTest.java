@@ -29,6 +29,7 @@ import static android.scopedstorage.cts.lib.TestUtils.grantPermission;
 import static android.scopedstorage.cts.lib.TestUtils.installAppWithStoragePermissions;
 import static android.scopedstorage.cts.lib.TestUtils.isFileDescriptorRedacted;
 import static android.scopedstorage.cts.lib.TestUtils.isFileOpenRedacted;
+import static android.scopedstorage.cts.lib.TestUtils.setShouldForceStopTestApp;
 import static android.scopedstorage.cts.lib.TestUtils.uninstallAppNoThrow;
 
 import static androidx.test.InstrumentationRegistry.getContext;
@@ -55,6 +56,7 @@ import androidx.test.filters.SdkSuppress;
 
 import com.android.cts.install.lib.TestApp;
 
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -107,10 +109,20 @@ public class RedactUriDeviceTest extends ScopedStorageBaseDeviceTest {
     }
 
     @BeforeClass
-    public static void setupApps() {
+    public static void setup() {
+        setupApps();
+        setShouldForceStopTestApp(false);
+    }
+
+    private static void setupApps() {
         // Installed by target preparer
         assertThat(checkPermission(APP_B_NO_PERMS,
                 Manifest.permission.READ_EXTERNAL_STORAGE)).isFalse();
+    }
+
+    @AfterClass
+    public static void destroy() {
+        setShouldForceStopTestApp(true);
     }
 
     @Test

@@ -293,6 +293,75 @@ public class AugmentedLoginActivityTest
         assertTextAndValue(passwordNode, "malkovich");
     }
 
+    @Test
+    @AppModeFull(reason = "testAutoFill_mainServiceReturnedNull_augmentedAutofillOneField enough")
+    public void testAutoFill_notImportantForAutofill_allowAutofillOnOtherField() throws Exception {
+        // Set services
+        enableService();
+        enableAugmentedService();
+
+        // Set IMPORTANT_FOR_AUTOFILL_NO
+        mActivity.onUsername((v) -> v.setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_NO));
+
+        // Set expectations
+        final EditText username = mActivity.getUsername();
+        final AutofillValue expectedFocusedValue = username.getAutofillValue();
+        final AutofillId expectedFocusedId = username.getAutofillId();
+        sAugmentedReplier.addResponse(NO_AUGMENTED_RESPONSE);
+
+        // Trigger autofill
+        mActivity.onUsername(View::requestFocus);
+        sReplier.assertOnFillRequestNotCalled();
+        final AugmentedFillRequest request = sAugmentedReplier.getNextFillRequest();
+
+        // Assert request
+        assertBasicRequestInfo(request, mActivity, expectedFocusedId, expectedFocusedValue);
+
+        // Make sure standard Autofill UI is not shown.
+        mUiBot.assertNoDatasetsEver();
+
+        // Make sure Augmented Autofill UI is not shown.
+        mAugmentedUiBot.assertUiNeverShown();
+
+        // Try again with reply this time on password
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "dude")
+                        .setField(ID_PASSWORD, "sweet")
+                        .setPresentation(createPresentation("The Dude"))
+                        .build())
+                .build());
+        mActivity.expectAutoFill("dude", "sweet");
+
+        // Trigger autofill on password instead
+        mActivity.onPassword(View::requestFocus);
+        final FillRequest fillRequest = sReplier.getNextFillRequest();
+        mAugmentedUiBot.assertUiNeverShown();
+
+        mUiBot.selectDataset("The Dude");
+        mActivity.assertAutoFilled();
+
+        // Now force save to make sure the values changes are notified
+        mActivity.onUsername((v) -> v.setText("malkovich"));
+        mActivity.onPassword((v) -> v.setText("malkovich"));
+        final String expectedMessage = getWelcomeMessage("malkovich");
+        final String actualMessage = mActivity.tapLogin();
+        assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
+
+        // Assert the snack bar is shown and tap "Save".
+        mUiBot.updateForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
+        final SaveRequest saveRequest = sReplier.getNextSaveRequest();
+        sReplier.assertNoUnhandledSaveRequests();
+        assertThat(saveRequest.datasetIds).isNull();
+
+        // Assert value of expected fields - should not be sanitized.
+        final ViewNode usernameNode = findNodeByResourceId(saveRequest.structure, ID_USERNAME);
+        assertTextAndValue(usernameNode, "malkovich");
+        final ViewNode passwordNode = findNodeByResourceId(saveRequest.structure, ID_PASSWORD);
+        assertTextAndValue(passwordNode, "malkovich");
+    }
+
     @Presubmit
     @Test
     public void testAutoFill_mainServiceReturnedNull_augmentedAutofillOneField() throws Exception {

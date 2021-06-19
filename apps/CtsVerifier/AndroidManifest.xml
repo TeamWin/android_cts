@@ -4835,9 +4835,9 @@
             <meta-data android:name="display_mode" android:value="multi_display_mode" />
         </activity>
 
-        <activity android:name=".audio.MidiActivity"
+        <activity android:name=".audio.MidiJavaTestActivity"
                 android:exported="true"
-                  android:label="@string/midi_test">
+                  android:label="@string/midi_java_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
@@ -4848,9 +4848,9 @@
             <meta-data android:name="display_mode" android:value="multi_display_mode" />
         </activity>
 
-        <activity android:name=".audio.NDKMidiActivity"
+        <activity android:name=".audio.MidiNativeTestActivity"
                 android:exported="true"
-                  android:label="@string/ndk_midi_test">
+                  android:label="@string/midi_native_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />

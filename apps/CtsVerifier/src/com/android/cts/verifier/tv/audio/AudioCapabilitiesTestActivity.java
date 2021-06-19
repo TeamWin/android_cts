@@ -129,13 +129,6 @@ public class AudioCapabilitiesTestActivity extends TvAppVerifierActivity
                     .that(AudioTrack.isDirectPlaybackSupported(
                             makeAudioFormat(ENCODING_PCM_16BIT, 44100, 2), audioAttributes))
                     .isTrue();
-
-            getAsserter()
-                    .withMessage("AudioTrack.isDirectPlaybackSupported is expected to return false "
-                            + "for EAC3 6 channel")
-                    .that(AudioTrack.isDirectPlaybackSupported(
-                            makeAudioFormat(ENCODING_E_AC3, 44100, 6), audioAttributes))
-                    .isFalse();
         }
     }
 

@@ -64,4 +64,14 @@ public abstract class AppSearchHostTestBase extends BaseHostJUnit4Test {
                 runDeviceTests(getDevice(), TARGET_PKG_B, TEST_CLASS_B, testMethod, userId,
                         DEFAULT_INSTRUMENTATION_TIMEOUT_MS)).isTrue();
     }
+
+    protected void rebootAndWaitUntilReady() throws Exception {
+        if (getDevice().getBooleanProperty("init.userspace_reboot.is_supported", false)) {
+            // Soft reboot, reboots only userspace part of device. It waits for device to be
+            // available.
+            getDevice().rebootUserspace();
+        } else {
+            getDevice().reboot(); // reboot() waits for device available
+        }
+    }
 }
