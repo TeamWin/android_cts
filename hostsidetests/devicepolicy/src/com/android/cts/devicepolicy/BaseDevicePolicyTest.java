@@ -1239,6 +1239,10 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
                 + "send ordered broadcasts to user 0");
 
         // Probably not needed anymore, but it doesn't hurt to keep...
+        allowTestApiAccess(deviceAdminPkg);
+    }
+
+    protected void allowTestApiAccess(String deviceAdminPkg) throws Exception {
         CLog.i("Granting ALLOW_TEST_API_ACCESS to package %s", deviceAdminPkg);
         executeShellCommand("am compat enable ALLOW_TEST_API_ACCESS %s", deviceAdminPkg);
     }
