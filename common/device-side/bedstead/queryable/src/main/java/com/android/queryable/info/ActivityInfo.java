@@ -18,6 +18,7 @@ package com.android.queryable.info;
 
 import android.app.Activity;
 
+
 /**
  * Wrapper for information about an {@link Activity}.
  *
@@ -45,6 +46,7 @@ public final class ActivityInfo extends ClassInfo {
     public boolean exported() {
         return mExported;
     }
+
 
     @Override
     public String toString() {

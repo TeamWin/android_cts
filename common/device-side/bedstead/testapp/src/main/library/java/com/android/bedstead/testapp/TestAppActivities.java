@@ -61,7 +61,6 @@ public final class TestAppActivities {
                     // Special case: androidx adds non-logging activities
                     continue;
                 }
-
                 mActivities.add(com.android.queryable.info.ActivityInfo.builder(
                         activityInfo).build());
             }
