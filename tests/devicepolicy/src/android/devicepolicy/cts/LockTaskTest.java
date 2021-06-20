@@ -17,6 +17,7 @@
 package android.devicepolicy.cts;
 
 import static android.app.ActivityManager.LOCK_TASK_MODE_LOCKED;
+import static android.app.ActivityManager.LOCK_TASK_MODE_NONE;
 import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_BLOCK_ACTIVITY_START_IN_TASK;
 import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_GLOBAL_ACTIONS;
 import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_HOME;
@@ -786,6 +787,36 @@ public class LockTaskTest {
                         activity.activity().component());
                 assertThat(sTestApis.activities().getLockTaskModeState()).isEqualTo(
                         LOCK_TASK_MODE_LOCKED);
+            } finally {
+                activity.stopLockTask();
+            }
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(
+                    originalLockTaskPackages);
+        }
+    }
+
+    @Test
+    @PositivePolicyTest(policy = LockTask.class)
+    public void startActivity_ifWhitelistedActivity_notWhitelisted_startsNotInLockTaskMode() {
+        String[] originalLockTaskPackages =
+                sDeviceState.dpc().devicePolicyManager().getLockTaskPackages();
+
+        try (TestAppInstanceReference testApp =
+                     sLockTaskTestApp.install(sTestApis.users().instrumented())) {
+            sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(
+                    new String[]{});
+            Activity<TestAppActivity> activity = testApp.activities().query()
+                    .whereActivity().activityClass().simpleName().isEqualTo("ifwhitelistedactivity")
+                    // TODO(scottjonathan): filter for lock task mode - currently we can't check
+                    //  this so we just get a fixed package which contains a fixed activity
+                    .get().start();
+
+            try {
+                assertThat(sTestApis.activities().foregroundActivity()).isEqualTo(
+                        activity.activity().component());
+                assertThat(sTestApis.activities().getLockTaskModeState()).isEqualTo(
+                        LOCK_TASK_MODE_NONE);
             } finally {
                 activity.stopLockTask();
             }

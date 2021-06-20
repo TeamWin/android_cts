@@ -132,19 +132,6 @@ public class LockTaskTest extends BaseDeviceAdminTest {
     }
 
     // Test the lockTaskMode flag for an activity declaring if_whitelisted.
-    // Don't allow the activity and verify that lock task mode is not started.
-    public void testManifestArgument_notAllowed() throws Exception {
-        startAndWait(getLockTaskUtility(UTILITY_ACTIVITY_IF_ALLOWED));
-        waitForResume();
-
-        assertLockTaskModeInactive();
-        assertTrue(mIsActivityRunning);
-        assertTrue(mIsActivityResumed);
-
-        stopAndFinish(UTILITY_ACTIVITY_IF_ALLOWED);
-    }
-
-    // Test the lockTaskMode flag for an activity declaring if_whitelisted.
     // An activity locked via manifest argument cannot finish without calling stopLockTask.
     public void testManifestArgument_cannotFinish() throws Exception {
         mDevicePolicyManager.setLockTaskPackages(ADMIN_COMPONENT, new String[] { PACKAGE_NAME });
