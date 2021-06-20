@@ -94,7 +94,11 @@ public class LockTaskTest {
     };
 
     private static final TestAppProvider sTestAppProvider = new TestAppProvider();
+    private static final TestApp sLockTaskTestApp = sTestAppProvider.query()
+            .wherePackageName().isEqualTo("android.LockTaskApp")
+            .get(); // TODO(scottjonathan): filter by containing activity not by package name
     private static final TestApp sTestApp = sTestAppProvider.any();
+
     private static final TestApp sSecondTestApp = sTestAppProvider.any();
 
     private static final ComponentReference BLOCKED_ACTIVITY_COMPONENT =
@@ -758,6 +762,36 @@ public class LockTaskTest {
                 sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(
                         originalLockTaskPackages);
             }
+        }
+    }
+
+    @Test
+    @PositivePolicyTest(policy = LockTask.class)
+    public void startActivity_ifWhitelistedActivity_startsInLockTaskMode() {
+        String[] originalLockTaskPackages =
+                sDeviceState.dpc().devicePolicyManager().getLockTaskPackages();
+
+        try (TestAppInstanceReference testApp =
+                     sLockTaskTestApp.install(sTestApis.users().instrumented())) {
+            sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(
+                    new String[]{sLockTaskTestApp.packageName()});
+            Activity<TestAppActivity> activity = testApp.activities().query()
+                    .whereActivity().activityClass().simpleName().isEqualTo("ifwhitelistedactivity")
+                    // TODO(scottjonathan): filter for lock task mode - currently we can't check
+                    //  this so we just get a fixed package which contains a fixed activity
+                    .get().start();
+
+            try {
+                assertThat(sTestApis.activities().foregroundActivity()).isEqualTo(
+                        activity.activity().component());
+                assertThat(sTestApis.activities().getLockTaskModeState()).isEqualTo(
+                        LOCK_TASK_MODE_LOCKED);
+            } finally {
+                activity.stopLockTask();
+            }
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(
+                    originalLockTaskPackages);
         }
     }
 }

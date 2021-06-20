@@ -44,19 +44,9 @@ public class LockTaskTest extends BaseDeviceAdminTest {
     private static final String PACKAGE_NAME = LockTaskTest.class.getPackage().getName();
     private static final ComponentName ADMIN_COMPONENT = ADMIN_RECEIVER_COMPONENT;
 
-    private static final String UTILITY_ACTIVITY
-            = "com.android.cts.deviceandprofileowner.LockTaskUtilityActivity";
     private static final String UTILITY_ACTIVITY_IF_ALLOWED
             = "com.android.cts.deviceandprofileowner.LockTaskUtilityActivityIfAllowed";
 
-    private static final String RECEIVER_ACTIVITY_PACKAGE_NAME =
-            "com.android.cts.intent.receiver";
-    private static final String RECEIVER_ACTIVITY_NAME =
-            "com.android.cts.intent.receiver.IntentReceiverActivity";
-    private static final String ACTION_JUST_CREATE =
-            "com.android.cts.action.JUST_CREATE";
-    private static final String ACTION_CREATE_AND_WAIT =
-            "com.android.cts.action.CREATE_AND_WAIT";
     private static final String RECEIVER_ACTIVITY_CREATED_ACTION =
             "com.android.cts.deviceowner.action.RECEIVER_ACTIVITY_CREATED";
     private static final String RECEIVER_ACTIVITY_DESTROYED_ACTION =
@@ -105,36 +95,22 @@ public class LockTaskTest extends BaseDeviceAdminTest {
                     mIntentHandled = true;
                     LockTaskTest.this.notify();
                 }
-            } else if (RECEIVER_ACTIVITY_CREATED_ACTION.equals(action)) {
-                synchronized(mReceiverActivityRunningLock) {
-                    mIsReceiverActivityRunning = true;
-                    mReceiverActivityRunningLock.notify();
-                }
-            } else if (RECEIVER_ACTIVITY_DESTROYED_ACTION.equals(action)) {
-                synchronized (mReceiverActivityRunningLock) {
-                    mIsReceiverActivityRunning = false;
-                    mReceiverActivityRunningLock.notify();
-                }
             }
         }
     };
 
     private volatile boolean mIsActivityRunning;
     private volatile boolean mIsActivityResumed;
-    private volatile boolean mIsReceiverActivityRunning;
     private volatile boolean mIntentHandled;
     private final Object mActivityRunningLock = new Object();
     private final Object mActivityResumedLock = new Object();
-    private final Object mReceiverActivityRunningLock = new Object();
 
     private Context mContext;
-    private UiDevice mUiDevice;
     private ActivityManager mActivityManager;
     private DevicePolicyManager mDevicePolicyManager;
 
     public void setUp() {
         mContext = InstrumentationRegistry.getContext();
-        mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
 
         mDevicePolicyManager = mContext.getSystemService(DevicePolicyManager.class);
         mDevicePolicyManager.setLockTaskPackages(ADMIN_COMPONENT, new String[0]);
@@ -153,20 +129,6 @@ public class LockTaskTest extends BaseDeviceAdminTest {
     public void tearDown() {
         mDevicePolicyManager.setLockTaskPackages(ADMIN_COMPONENT, new String[0]);
         mContext.unregisterReceiver(mReceiver);
-    }
-
-    // Test the lockTaskMode flag for an activity declaring if_whitelisted.
-    // Allow the activity and verify that lock task mode is started.
-    public void testManifestArgument_allowed() throws Exception {
-        mDevicePolicyManager.setLockTaskPackages(ADMIN_COMPONENT, new String[] { PACKAGE_NAME });
-        startAndWait(getLockTaskUtility(UTILITY_ACTIVITY_IF_ALLOWED));
-        waitForResume();
-
-        assertLockTaskModeActive();
-        assertTrue(mIsActivityRunning);
-        assertTrue(mIsActivityResumed);
-
-        stopAndFinish(UTILITY_ACTIVITY_IF_ALLOWED);
     }
 
     // Test the lockTaskMode flag for an activity declaring if_whitelisted.
