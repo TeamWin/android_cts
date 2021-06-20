@@ -76,6 +76,10 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
     private static final int CONFIG_MODE_NONE = 0;
     private static final int CONFIG_MODE_QUEUE = 1;
 
+    // MediaFormat keys describing the pixel aspect ratio width and height.
+    public static final String KEY_PIXEL_ASPECT_RATIO_HEIGHT = "sar-height";
+    public static final String KEY_PIXEL_ASPECT_RATIO_WIDTH = "sar-width";
+
     private static Resources mResources;
     short[] mMasterBuffer;
 
@@ -743,6 +747,19 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
             } else if (match == false) {
                 return false;
             }
+        }
+
+        // before S, mpeg4 writers jammed a fixed SAR value into the output;
+        // this was fixed in S.
+        if (f1.containsKey(KEY_PIXEL_ASPECT_RATIO_HEIGHT)
+                        && f2.containsKey(KEY_PIXEL_ASPECT_RATIO_HEIGHT)) {
+            f2.setInteger(KEY_PIXEL_ASPECT_RATIO_HEIGHT,
+                            f1.getInteger(KEY_PIXEL_ASPECT_RATIO_HEIGHT));
+        }
+        if (f1.containsKey(KEY_PIXEL_ASPECT_RATIO_WIDTH)
+                        && f2.containsKey(KEY_PIXEL_ASPECT_RATIO_WIDTH)) {
+            f2.setInteger(KEY_PIXEL_ASPECT_RATIO_WIDTH,
+                            f1.getInteger(KEY_PIXEL_ASPECT_RATIO_WIDTH));
         }
 
         // look for f2 (the new) being a superset (>=) of f1 (the original)
