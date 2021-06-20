@@ -595,37 +595,44 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
             int fd, long startOffset, long length);
 
     @Presubmit
+    @NonMediaMainlineTest
     public void testMuxerAvc() throws Exception {
         // IMPORTANT: this file must not have B-frames
         testMuxer(R.raw.video_1280x720_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz, false);
     }
 
+    @NonMediaMainlineTest
     public void testMuxerH263() throws Exception {
         // IMPORTANT: this file must not have B-frames
         testMuxer(R.raw.video_176x144_3gp_h263_300kbps_25fps_aac_stereo_128kbps_11025hz, false);
     }
 
+    @NonMediaMainlineTest
     public void testMuxerHevc() throws Exception {
         // IMPORTANT: this file must not have B-frames
         testMuxer(R.raw.video_640x360_mp4_hevc_450kbps_no_b, false);
     }
 
+    @NonMediaMainlineTest
     public void testMuxerVp8() throws Exception {
         testMuxer(R.raw.bbb_s1_640x360_webm_vp8_2mbps_30fps_vorbis_5ch_320kbps_48000hz, true);
     }
 
+    @NonMediaMainlineTest
     public void testMuxerVp9() throws Exception {
         testMuxer(
                 R.raw.video_1280x720_webm_vp9_csd_309kbps_25fps_vorbis_stereo_128kbps_48000hz,
                 true);
     }
 
+    @NonMediaMainlineTest
     public void testMuxerVp9NoCsd() throws Exception {
         testMuxer(
                 R.raw.bbb_s1_640x360_webm_vp9_0p21_1600kbps_30fps_vorbis_stereo_128kbps_48000hz,
                 true);
     }
 
+    @NonMediaMainlineTest
     public void testMuxerVp9Hdr() throws Exception {
         testMuxer(R.raw.video_256x144_webm_vp9_hdr_83kbps_24fps, true);
     }
@@ -636,6 +643,7 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
         testMuxer(R.raw.video_176x144_mp4_mpeg2_105kbps_25fps_aac_stereo_128kbps_44100hz, false);
     }
 
+    @NonMediaMainlineTest
     public void testMuxerMpeg4() throws Exception {
         // IMPORTANT: this file must not have B-frames
         testMuxer(R.raw.video_176x144_mp4_mpeg4_300kbps_25fps_aac_stereo_128kbps_44100hz, false);
@@ -747,6 +755,19 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
             } else if (match == false) {
                 return false;
             }
+        }
+
+        // before S, mpeg4 writers jammed a fixed SAR value into the output;
+        // this was fixed in S
+        if (f1.containsKey(MediaFormat.KEY_PIXEL_ASPECT_RATIO_HEIGHT)
+                        && f2.containsKey(MediaFormat.KEY_PIXEL_ASPECT_RATIO_HEIGHT)) {
+            f2.setInteger(MediaFormat.KEY_PIXEL_ASPECT_RATIO_HEIGHT,
+                            f1.getInteger(MediaFormat.KEY_PIXEL_ASPECT_RATIO_HEIGHT));
+        }
+        if (f1.containsKey(MediaFormat.KEY_PIXEL_ASPECT_RATIO_WIDTH)
+                        && f2.containsKey(MediaFormat.KEY_PIXEL_ASPECT_RATIO_WIDTH)) {
+            f2.setInteger(MediaFormat.KEY_PIXEL_ASPECT_RATIO_WIDTH,
+                            f1.getInteger(MediaFormat.KEY_PIXEL_ASPECT_RATIO_WIDTH));
         }
 
         // look for f2 (the new) being a superset (>=) of f1 (the original)
