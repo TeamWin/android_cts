@@ -34,6 +34,7 @@ import com.android.eventlib.events.deviceadminreceivers.DeviceAdminEnabledEvent;
 import com.android.eventlib.events.deviceadminreceivers.DeviceAdminPasswordChangedEvent;
 import com.android.eventlib.events.deviceadminreceivers.DeviceAdminPasswordFailedEvent;
 import com.android.eventlib.events.deviceadminreceivers.DeviceAdminPasswordSucceededEvent;
+import com.android.eventlib.events.deviceadminreceivers.DeviceAdminSystemUpdatePendingEvent;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -176,4 +177,15 @@ public class EventLibDeviceAdminReceiverTest {
         assertThat(eventLogs.poll().userHandle()).isEqualTo(sUser.userHandle());
     }
 
+    @Test
+    public void systemUpdatePending_logsSystemUpdatePendingEvent() {
+        EventLibDeviceAdminReceiver receiver = new EventLibDeviceAdminReceiver();
+        long receivedTime = System.currentTimeMillis();
+
+        receiver.onSystemUpdatePending(sContext, sIntent, receivedTime);
+
+        EventLogs<DeviceAdminSystemUpdatePendingEvent> eventLogs =
+                DeviceAdminSystemUpdatePendingEvent.queryPackage(sContext.getPackageName());
+        assertThat(eventLogs.poll().receivedTime()).isEqualTo(receivedTime);
+    }
 }
