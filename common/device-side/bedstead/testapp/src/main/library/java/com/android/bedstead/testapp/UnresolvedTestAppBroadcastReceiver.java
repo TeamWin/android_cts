@@ -16,16 +16,13 @@
 
 package com.android.bedstead.testapp;
 
-import android.app.Activity;
+import android.content.IntentFilter;
 
 import com.android.bedstead.nene.packages.ComponentReference;
 
-/**
- * A reference to an {@link Activity} in a {@link TestApp}.
- */
-public final class UnresolvedTestAppActivity extends TestAppActivityReference {
-    UnresolvedTestAppActivity(TestAppInstanceReference instance,
-            ComponentReference component) {
-        super(instance, component);
+public final class UnresolvedTestAppBroadcastReceiver extends TestAppBroadcastReceiverReference {
+    UnresolvedTestAppBroadcastReceiver(TestAppInstanceReference instance,
+            ComponentReference component, IntentFilter intentFilter) {
+        super(instance, component, intentFilter);
     }
 }
