@@ -30,6 +30,7 @@ import static org.testng.Assert.assertThrows;
 import android.os.Build;
 import android.os.UserHandle;
 
+import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureHasNoSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
@@ -44,9 +45,8 @@ import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
-@RunWith(JUnit4.class)
+@RunWith(BedsteadJUnit4.class)
 public class UsersTest {
 
     private static final int MAX_SYSTEM_USERS = UserType.UNLIMITED;
