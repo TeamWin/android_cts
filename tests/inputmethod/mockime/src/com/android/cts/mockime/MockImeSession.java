@@ -1156,6 +1156,11 @@ public class MockImeSession implements AutoCloseable {
     }
 
     @NonNull
+    public ImeCommand callVerifyIsUiContext() {
+        return callCommandInternal("verifyIsUiContext", new Bundle());
+    }
+
+    @NonNull
     public ImeCommand callVerifyGetWindowManager() {
         return callCommandInternal("verifyGetWindowManager", new Bundle());
     }
