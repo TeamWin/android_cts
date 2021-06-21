@@ -130,6 +130,7 @@ public class UiTranslationManagerTest {
     private ResponseNotSetTextView mResponseNotSetTextView;
     private CustomTextView mCustomTextView;
     private TextView mTextView;
+    private static String sOriginalLogTag;
 
     @Rule
     public final RequiredServiceRule mContentCaptureServiceRule =
@@ -143,6 +144,7 @@ public class UiTranslationManagerTest {
     public static void oneTimeSetup() {
         sContext = ApplicationProvider.getApplicationContext();
         sTranslationReplier = CtsTranslationService.getTranslationReplier();
+        sOriginalLogTag = Helper.enableDebugLog();
 
         Helper.allowSelfForContentCapture(sContext);
         Helper.setDefaultContentCaptureServiceEnabled(/* enabled= */ false);
@@ -152,6 +154,7 @@ public class UiTranslationManagerTest {
     public static void oneTimeReset() {
         Helper.unAllowSelfForContentCapture(sContext);
         Helper.setDefaultContentCaptureServiceEnabled(/* enabled= */ true);
+        Helper.disableDebugLog(sOriginalLogTag);
     }
 
     @Before
