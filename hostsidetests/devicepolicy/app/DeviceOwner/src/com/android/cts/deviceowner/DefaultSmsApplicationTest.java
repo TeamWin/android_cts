@@ -18,11 +18,17 @@ package com.android.cts.deviceowner;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import android.content.Context;
 import android.provider.Telephony;
+import android.telephony.TelephonyManager;
 
 public class DefaultSmsApplicationTest extends BaseDeviceOwnerTest {
 
     public void testSetDefaultSmsApplication() {
+        TelephonyManager telephonyManager = mContext.getSystemService(TelephonyManager.class);
+        if (!telephonyManager.isSmsCapable()) {
+            return;
+        }
         String previousSmsAppName = Telephony.Sms.getDefaultSmsPackage(mContext);
         String newSmsAppName = "android.telephony.cts.sms.simplesmsapp";
 
