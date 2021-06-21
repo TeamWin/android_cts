@@ -184,4 +184,133 @@ public class TestAppInstanceReferenceTest {
             assertThat(testAppInstance.process()).isNotNull();
         }
     }
+
+    @Test
+    public void registerReceiver_receivesBroadcast() {
+        TestApp testApp = mTestAppProvider.any();
+        try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
+            testAppInstance.registerReceiver(INTENT_FILTER);
+
+            sContext.sendBroadcast(INTENT);
+
+            EventLogs<BroadcastReceivedEvent> logs =
+                    BroadcastReceivedEvent.queryPackage(testApp.packageName())
+                    .whereIntent().action().isEqualTo(INTENT_ACTION);
+            assertThat(logs.poll()).isNotNull();
+        }
+    }
+
+    @Test
+    public void registerReceiver_multipleIntentFilters_receivesAllMatchingBroadcasts() {
+        TestApp testApp = mTestAppProvider.any();
+        try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
+            testAppInstance.registerReceiver(INTENT_FILTER);
+            testAppInstance.registerReceiver(INTENT_FILTER_2);
+
+            sContext.sendBroadcast(INTENT);
+            sContext.sendBroadcast(INTENT_2);
+
+            EventLogs<BroadcastReceivedEvent> logs =
+                    BroadcastReceivedEvent.queryPackage(testApp.packageName())
+                            .whereIntent().action().isEqualTo(INTENT_ACTION);
+            EventLogs<BroadcastReceivedEvent> logs2 =
+                    BroadcastReceivedEvent.queryPackage(testApp.packageName())
+                            .whereIntent().action().isEqualTo(INTENT_ACTION_2);
+            assertThat(logs.poll()).isNotNull();
+            assertThat(logs2.poll()).isNotNull();
+        }
+    }
+
+    @Test
+    public void registerReceiver_processIsRunning() {
+        TestApp testApp = mTestAppProvider.any();
+        try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
+
+            testAppInstance.registerReceiver(INTENT_FILTER);
+
+            assertThat(testApp.reference().runningProcess(sUser)).isNotNull();
+        }
+    }
+
+    @Test
+    public void stop_registeredReceiver_doesNotReceiveBroadcast() {
+        TestApp testApp = mTestAppProvider.any();
+        try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
+            testAppInstance.registerReceiver(INTENT_FILTER);
+
+            testAppInstance.stop();
+            sContext.sendBroadcast(INTENT);
+
+            EventLogs<BroadcastReceivedEvent> logs =
+                    BroadcastReceivedEvent.queryPackage(testApp.packageName())
+                            .whereIntent().action().isEqualTo(INTENT_ACTION);
+            assertThat(logs.get()).isNull();
+        }
+    }
+
+    @Test
+    public void unregisterReceiver_registeredReceiver_doesNotReceiveBroadcast() {
+        TestApp testApp = mTestAppProvider.any();
+        try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
+            testAppInstance.registerReceiver(INTENT_FILTER);
+
+            testAppInstance.unregisterReceiver(INTENT_FILTER);
+            sContext.sendBroadcast(INTENT);
+
+            EventLogs<BroadcastReceivedEvent> logs =
+                    BroadcastReceivedEvent.queryPackage(testApp.packageName())
+                            .whereIntent().action().isEqualTo(INTENT_ACTION);
+            assertThat(logs.get()).isNull();
+        }
+    }
+
+    @Test
+    public void unregisterReceiver_doesNotUnregisterOtherReceivers() {
+        TestApp testApp = mTestAppProvider.any();
+        try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
+            testAppInstance.registerReceiver(INTENT_FILTER);
+            testAppInstance.registerReceiver(INTENT_FILTER_2);
+
+            testAppInstance.unregisterReceiver(INTENT_FILTER);
+            sContext.sendBroadcast(INTENT);
+            sContext.sendBroadcast(INTENT_2);
+
+            EventLogs<BroadcastReceivedEvent> logs =
+                    BroadcastReceivedEvent.queryPackage(testApp.packageName())
+                            .whereIntent().action().isEqualTo(INTENT_ACTION);
+            EventLogs<BroadcastReceivedEvent> logs2 =
+                    BroadcastReceivedEvent.queryPackage(testApp.packageName())
+                            .whereIntent().action().isEqualTo(INTENT_ACTION_2);
+            assertThat(logs.get()).isNull();
+            assertThat(logs2.poll()).isNotNull();
+        }
+    }
+
+    @Test
+    public void keepAlive_processIsRunning() {
+        TestApp testApp = mTestAppProvider.any();
+        try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
+
+            testAppInstance.keepAlive();
+
+            assertThat(testApp.reference().runningProcess(sUser)).isNotNull();
+        }
+    }
+
+    @Test
+    public void registerReceiver_appIsKilled_stillReceivesBroadcast() {
+        TestApp testApp = mTestAppProvider.any();
+        try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
+            testAppInstance.registerReceiver(INTENT_FILTER);
+            testApp.reference().runningProcess(sUser).kill();
+            PollingCheck.waitFor(() -> testApp.reference().runningProcess(sUser) != null);
+
+            sContext.sendBroadcast(INTENT);
+
+            EventLogs<BroadcastReceivedEvent> logs =
+                    BroadcastReceivedEvent.queryPackage(testApp.packageName())
+                            .whereIntent().action().isEqualTo(INTENT_ACTION);
+            assertThat(logs.poll()).isNotNull();
+        }
+    }
 }
