@@ -32,6 +32,7 @@ import static org.junit.Assume.assumeFalse;
 import static org.testng.Assert.assertThrows;
 
 import android.app.admin.DevicePolicyManager;
+import android.content.Intent;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
@@ -45,10 +46,12 @@ import com.android.bedstead.nene.activities.Activity;
 import com.android.bedstead.nene.activities.NeneActivity;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppActivity;
+import com.android.bedstead.testapp.TestAppActivityReference;
 import com.android.bedstead.testapp.TestAppInstanceReference;
 import com.android.bedstead.testapp.TestAppProvider;
 import com.android.eventlib.EventLogs;
 import com.android.eventlib.events.activities.ActivityDestroyedEvent;
+import com.android.eventlib.events.activities.ActivityStartedEvent;
 
 import org.junit.ClassRule;
 import org.junit.Ignore;
@@ -527,6 +530,37 @@ public class LockTaskTest {
             } finally {
                 activity.stopLockTask();
             }
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(originalLockTaskPackages);
+        }
+    }
+
+    @Test
+    @PositivePolicyTest(policy = LockTask.class)
+    public void startActivity_withinSameTask_startsActivity() {
+        TestApp secondTestApp = sTestAppProvider.any();
+        String[] originalLockTaskPackages =
+                sDeviceState.dpc().devicePolicyManager().getLockTaskPackages();
+        sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(
+                new String[]{sTestApp.packageName()});
+        try (TestAppInstanceReference testApp =
+                     sTestApp.install(sTestApis.users().instrumented());
+             TestAppInstanceReference testApp2 =
+                     secondTestApp.install(sTestApis.users().instrumented())) {
+            Activity<TestAppActivity> firstActivity = testApp.activities().any().start();
+            TestAppActivityReference secondActivity = testApp2.activities().any();
+            Intent secondActivityIntent = new Intent();
+            // TODO(scottjonathan): Add filter to ensure no taskAffinity or launchMode which would
+            //  stop launching in same task
+            secondActivityIntent.setComponent(secondActivity.component().componentName());
+
+            firstActivity.startActivity(secondActivityIntent);
+
+            EventLogs<ActivityStartedEvent> events =
+                    ActivityStartedEvent.queryPackage(secondTestApp.packageName())
+                            .whereActivity().className().isEqualTo(secondActivity.component().className());
+            assertThat(events.poll()).isNotNull();
+            assertThat(sTestApis.activities().foregroundActivity()).isEqualTo(secondActivity.component());
         } finally {
             sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(originalLockTaskPackages);
         }
