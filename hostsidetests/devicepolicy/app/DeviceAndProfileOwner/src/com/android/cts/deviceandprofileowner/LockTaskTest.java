@@ -155,24 +155,6 @@ public class LockTaskTest extends BaseDeviceAdminTest {
         mContext.unregisterReceiver(mReceiver);
     }
 
-    // This launches an allowed activity that is not part of the current task.
-    // This should be permitted as a part of lock task.
-    public void testStartActivity_outsideTaskAllowed() throws Exception {
-        mDevicePolicyManager.setLockTaskPackages(ADMIN_COMPONENT, new String[] { PACKAGE_NAME,
-                RECEIVER_ACTIVITY_PACKAGE_NAME});
-        startLockTask(UTILITY_ACTIVITY);
-        waitForResume();
-
-        mIsReceiverActivityRunning = false;
-        Intent launchIntent = createReceiverActivityIntent(true /*newTask*/, false /*shouldWait*/);
-        mContext.startActivity(launchIntent);
-        synchronized (mReceiverActivityRunningLock) {
-            mReceiverActivityRunningLock.wait(ACTIVITY_RESUMED_TIMEOUT_MILLIS);
-            assertTrue(mIsReceiverActivityRunning);
-        }
-        stopAndFinish(UTILITY_ACTIVITY);
-    }
-
     // This launches a not-allowed activity that is not part of the current task.
     // This should be blocked.
     public void testStartActivity_outsideTaskNotAllowed() throws Exception {
