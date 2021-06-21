@@ -40,7 +40,8 @@ android_test {
 
     srcs: [
         "src/**/*.java",
-        "app/GalleryTestApp/src/**/*.java"],
+        "app/GalleryTestApp/src/**/*.java",
+        "app/MultiAuthorityApp/src/**/*.java"],
 
     // uncomment when b/140885436 is fixed
     // sdk_version: "test_current",
@@ -48,7 +49,10 @@ android_test {
 
     platform_apis: true,
 
-    data: [":CtsProviderGalleryTestApp"],
+    data: [
+        ":CtsProviderGalleryTestApp",
+        ":CtsProviderMultiAuthorityApp"
+    ],
 }
 
 filegroup {
