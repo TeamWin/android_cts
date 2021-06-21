@@ -20,15 +20,16 @@ import android.content.BroadcastReceiver;
 import android.content.IntentFilter;
 
 import com.android.bedstead.nene.TestApis;
-import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.packages.ProcessReference;
 import com.android.bedstead.nene.users.UserReference;
 
+import com.google.android.enterprise.connectedapps.ConnectionListener;
 import com.google.android.enterprise.connectedapps.CrossProfileConnector;
 import com.google.android.enterprise.connectedapps.exceptions.UnavailableProfileException;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import javax.annotation.Nullable;
 
@@ -37,25 +38,16 @@ import javax.annotation.Nullable;
  *
  * <p>The user may not exist, or the test app may not be installed on the user.
  */
-public final class TestAppInstanceReference implements AutoCloseable {
+public final class TestAppInstanceReference implements AutoCloseable, ConnectionListener {
 
     private static final TestApis sTestApis = new TestApis();
 
     private final TestApp mTestApp;
     private final UserReference mUser;
     private final CrossProfileConnector mConnector;
-    private final Map<IntentFilter, RegisteredBroadcastReceiverInfo> mRegisteredBroadcastReceivers
-            = new HashMap<>();
+    private final Map<IntentFilter, Long> mRegisteredBroadcastReceivers = new HashMap<>();
     private boolean mKeepAliveManually = false;
-
-    private static final class RegisteredBroadcastReceiverInfo {
-        public final TestAppBroadcastReceiverReference mTestAppBroadcastReceiverReference;
-
-        public RegisteredBroadcastReceiverInfo(
-                TestAppBroadcastReceiverReference testAppBroadcastReceiverReference) {
-            mTestAppBroadcastReceiverReference = testAppBroadcastReceiverReference;
-        }
-    }
+    private final ProfileTestAppController mTestAppController;
 
     TestAppInstanceReference(TestApp testApp, UserReference user) {
         mTestApp = testApp;
@@ -63,6 +55,9 @@ public final class TestAppInstanceReference implements AutoCloseable {
         mConnector = CrossProfileConnector.builder(sTestApis.context().instrumentedContext())
                 .setBinder(new TestAppBinder(this))
                 .build();
+        mConnector.registerConnectionListener(this);
+        mTestAppController =
+                ProfileTestAppController.create(mConnector);
     }
 
     CrossProfileConnector connector() {
@@ -101,12 +96,7 @@ public final class TestAppInstanceReference implements AutoCloseable {
     /**
      * Register a {@link BroadcastReceiver} for a given {@link IntentFilter}.
      *
-     * <p>A new {@link BroadcastReceiver} instance will be created for each {@link IntentFilter} and
-     * a reference will be returned from this method.
-     *
-     * <p>This method can be called again with the same {@link IntentFilter} to get the reference to
-     * the receiver. If the filter was previously registered using
-     * {@link #registerReceiverForAllUsers(IntentFilter)} then it must be unregistered first.
+     * <p>A new {@link BroadcastReceiver} instance will be created for each {@link IntentFilter}.
      *
      * <p>Note that {@link IntentFilter} does not override {@code equals} and one broadcast receiver
      * will be registered for each instance of {@link IntentFilter} regardless of the content of the
@@ -115,42 +105,26 @@ public final class TestAppInstanceReference implements AutoCloseable {
      * <p>As registered receivers are only active while the application is open, calling this method
      * will have the same effect as calling {@link #keepAlive()}.
      */
-    public TestAppBroadcastReceiverReference registerReceiver(IntentFilter intentFilter) {
+    public void registerReceiver(IntentFilter intentFilter) {
         if (mRegisteredBroadcastReceivers.containsKey(intentFilter)) {
-            return mRegisteredBroadcastReceivers.get(intentFilter)
-                    .mTestAppBroadcastReceiverReference;
+            return;
         }
 
-        // TODO: Register receiver
-        return null;
+        long receiverId = UUID.randomUUID().getMostSignificantBits();
+        registerReceiver(intentFilter, receiverId);
+        keepAlive(/* manualKeepAlive= */ false);
     }
 
-    /**
-     * Register a {@link BroadcastReceiver} for a given {@link IntentFilter}, receiving intents from
-     * all users.
-     *
-     * <p>A new {@link BroadcastReceiver} instance will be created for each {@link IntentFilter} and
-     * a reference will be returned from this method.
-     *
-     * <p>This method can be called again with the same {@link IntentFilter} to get the reference to
-     * the receiver. If the filter was previously registered using
-     * {@link #registerReceiver(IntentFilter)} then it must be unregistered first.
-     *
-     * <p>Note that {@link IntentFilter} does not override {@code equals} and one broadcast receiver
-     * will be registered for each instance of {@link IntentFilter} regardless of the content of the
-     * {@link IntentFilter}.
-     *
-     * <p>As registered receivers are only active while the application is open, calling this method
-     * will have the same effect as calling {@link #keepAlive()}.
-     */
-    public TestAppBroadcastReceiverReference registerReceiverForAllUsers(IntentFilter intentFilter) {
-        if (mRegisteredBroadcastReceivers.containsKey(intentFilter)) {
-            return mRegisteredBroadcastReceivers.get(intentFilter)
-                    .mTestAppBroadcastReceiverReference;
+    private void registerReceiver(IntentFilter intentFilter, long receiverId) {
+        try {
+            mConnector.connect();
+            mTestAppController.other().registerReceiver(receiverId, intentFilter);
+            mRegisteredBroadcastReceivers.put(intentFilter, receiverId);
+        } catch (UnavailableProfileException e) {
+            throw new IllegalStateException("Could not connect to test app", e);
+        } finally {
+            mConnector.stopManualConnectionManagement();
         }
-
-        // TODO: Register receiver
-        return null;
     }
 
     /**
@@ -162,18 +136,23 @@ public final class TestAppInstanceReference implements AutoCloseable {
             return this;
         }
 
-        mRegisteredBroadcastReceivers.get(intentFilter)
-                .mTestAppBroadcastReceiverReference.unregister();
+        long receiverId = mRegisteredBroadcastReceivers.remove(intentFilter);
 
-        return this;
-    }
-
-    void locallyUnregisterReceiver(IntentFilter intentFilter) {
-        mRegisteredBroadcastReceivers.remove(intentFilter);
+        try {
+            mConnector.connect();
+            mTestAppController.other().unregisterReceiver(receiverId);
+            mRegisteredBroadcastReceivers.put(intentFilter, receiverId);
+        } catch (UnavailableProfileException e) {
+            throw new IllegalStateException("Could not connect to test app", e);
+        } finally {
+            mConnector.stopManualConnectionManagement();
+        }
 
         if (mRegisteredBroadcastReceivers.isEmpty() && !mKeepAliveManually) {
             stopKeepAlive();
         }
+
+        return this;
     }
 
     /**
@@ -240,5 +219,15 @@ public final class TestAppInstanceReference implements AutoCloseable {
     public void close() {
         stopKeepAlive();
         uninstall();
+    }
+
+    @Override
+    public void connectionChanged() {
+        if (mConnector.isConnected()) {
+            // re-register broadcast receivers when re-connected
+            for (Map.Entry<IntentFilter, Long> entry : mRegisteredBroadcastReceivers.entrySet()) {
+                registerReceiver(entry.getKey(), entry.getValue());
+            }
+        }
     }
 }
