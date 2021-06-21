@@ -825,4 +825,38 @@ public class LockTaskTest {
                     originalLockTaskPackages);
         }
     }
+
+    @Test
+    @PositivePolicyTest(policy = LockTask.class)
+    public void finish_ifWhitelistedActivity_doesNotFinish() {
+        String[] originalLockTaskPackages =
+                sDeviceState.dpc().devicePolicyManager().getLockTaskPackages();
+
+        try (TestAppInstanceReference testApp =
+                     sLockTaskTestApp.install(sTestApis.users().instrumented())) {
+            sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(
+                    new String[]{sLockTaskTestApp.packageName()});
+            Activity<TestAppActivity> activity = testApp.activities().query()
+                    .whereActivity().activityClass().simpleName().isEqualTo("ifwhitelistedactivity")
+                    // TODO(scottjonathan): filter for lock task mode - currently we can't check
+                    //  this so we just get a fixed package which contains a fixed activity
+                    .get().start();
+
+            activity.activity().finish();
+
+            try {
+                // We don't actually watch for the Destroyed event because that'd be waiting for a
+                // non occurrence of an event which is slow
+                assertThat(sTestApis.activities().foregroundActivity()).isEqualTo(
+                        activity.activity().component());
+                assertThat(sTestApis.activities().getLockTaskModeState()).isEqualTo(
+                        LOCK_TASK_MODE_LOCKED);
+            } finally {
+                activity.stopLockTask();
+            }
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(
+                    originalLockTaskPackages);
+        }
+    }
 }
