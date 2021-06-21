@@ -39,6 +39,9 @@ import com.android.bedstead.nene.utils.ShellCommand;
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
 
 import java.io.File;
+import java.util.Arrays;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * A representation of a package on device which may or may not exist.
@@ -48,6 +51,8 @@ import java.io.File;
 public abstract class PackageReference {
     private final TestApis mTestApis;
     private final String mPackageName;
+
+    private static final int PIDS_PER_USER_ID = 100000;
 
     private final PackageManager mPackageManager;
 
@@ -322,6 +327,63 @@ public abstract class PackageReference {
     private boolean protectionIsDevelopment(int protectionLevel) {
         return (protectionLevel & PROTECTION_FLAG_DEVELOPMENT) != 0;
     }
+
+    @Experimental
+    public Set<ProcessReference> runningProcesses() {
+        // TODO(scottjonathan): See if this can be remade using
+        //  ActivityManager#getRunningappProcesses
+        try {
+            return ShellCommand.builder("ps")
+                    .addOperand("-A")
+                    .addOperand("-n")
+                    .executeAndParseOutput(o -> parsePsOutput(o).stream()
+                    .filter(p -> p.mPackageName.equals(mPackageName))
+                    .map(p -> new ProcessReference(this, p.mPid, mTestApis.users().find(p.mUserId))))
+                    .collect(Collectors.toSet());
+        } catch (AdbException e) {
+            throw new NeneException("Error getting running processes ", e);
+        }
+    }
+
+    private Set<ProcessInfo> parsePsOutput(String psOutput) {
+        return Arrays.stream(psOutput.split("\n"))
+                .skip(1) // Skip the title line
+                .map(s -> s.split("\\s+"))
+                .map(m -> new ProcessInfo(
+                        m[8], Integer.parseInt(m[1]), Integer.parseInt(m[0]) / PIDS_PER_USER_ID))
+                .collect(Collectors.toSet());
+    }
+
+    private static final class ProcessInfo {
+        public final String mPackageName;
+        public final int mPid;
+        public final int mUserId;
+
+        public ProcessInfo(String packageName, int pid, int userId) {
+            if (packageName == null) {
+                throw new NullPointerException();
+            }
+            mPackageName = packageName;
+            mPid = pid;
+            mUserId = userId;
+        }
+
+        @Override
+        public String toString() {
+            return "ProcessInfo{packageName=" + mPackageName + ", pid="
+                    + mPid + ", userId=" + mUserId + "}";
+        }
+    }
+
+    @Experimental
+    @Nullable
+    public ProcessReference runningProcess(UserReference user) {
+        return runningProcesses().stream().filter(
+                i -> i.user().equals(user))
+                .findAny()
+                .orElse(null);
+    }
+
 
     @Override
     public int hashCode() {
