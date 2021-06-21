@@ -21,6 +21,7 @@ import static android.view.displayhash.DisplayHashResultCallback.DISPLAY_HASH_ER
 import static android.view.displayhash.DisplayHashResultCallback.DISPLAY_HASH_ERROR_INVALID_HASH_ALGORITHM;
 import static android.view.displayhash.DisplayHashResultCallback.DISPLAY_HASH_ERROR_NOT_VISIBLE_ON_SCREEN;
 import static android.view.displayhash.DisplayHashResultCallback.DISPLAY_HASH_ERROR_TOO_MANY_REQUESTS;
+import static android.widget.LinearLayout.VERTICAL;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -44,19 +45,22 @@ import android.view.displayhash.DisplayHash;
 import android.view.displayhash.DisplayHashManager;
 import android.view.displayhash.DisplayHashResultCallback;
 import android.view.displayhash.VerifiedDisplayHash;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 
 import androidx.annotation.NonNull;
-import androidx.test.core.app.ActivityScenario;
 import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.rule.ActivityTestRule;
 
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
@@ -64,6 +68,7 @@ import java.util.concurrent.TimeUnit;
 
 @Presubmit
 public class DisplayHashManagerTest {
+    private static final int MAX_RETRIES = 3;
     private final Point mTestViewSize = new Point(200, 300);
 
     private Instrumentation mInstrumentation;
@@ -73,11 +78,15 @@ public class DisplayHashManagerTest {
     private View mTestView;
 
     private DisplayHashManager mDisplayHashManager;
-    private String mFirstHashAlgorithm;
+    private String mPhashAlgorithm;
 
     private Executor mExecutor;
 
     private SyncDisplayHashResultCallback mSyncDisplayHashResultCallback;
+
+    @Rule
+    public ActivityTestRule<TestActivity> mActivityRule =
+            new ActivityTestRule<>(TestActivity.class);
 
     @Before
     public void setUp() throws Exception {
@@ -85,12 +94,11 @@ public class DisplayHashManagerTest {
         Context context = mInstrumentation.getContext();
         Intent intent = new Intent(Intent.ACTION_MAIN);
         intent.setClass(context, TestActivity.class);
-        ActivityScenario<TestActivity> scenario = ActivityScenario.launch(intent);
+        mActivity = mActivityRule.getActivity();
 
-        scenario.onActivity(activity -> {
-            mActivity = activity;
-            mMainView = new RelativeLayout(activity);
-            activity.setContentView(mMainView);
+        mActivity.runOnUiThread(() -> {
+            mMainView = new RelativeLayout(mActivity);
+            mActivity.setContentView(mMainView);
         });
         mInstrumentation.waitForIdleSync();
         mDisplayHashManager = context.getSystemService(DisplayHashManager.class);
@@ -98,7 +106,14 @@ public class DisplayHashManagerTest {
         Set<String> algorithms = mDisplayHashManager.getSupportedHashAlgorithms();
         assertNotNull(algorithms);
         assertNotEquals(0, algorithms.size());
-        mFirstHashAlgorithm = algorithms.iterator().next();
+        for (String algorithm : algorithms) {
+            if ("pHash".equalsIgnoreCase(algorithm)) {
+                mPhashAlgorithm = algorithm;
+                break;
+            }
+        }
+        assertNotNull(mPhashAlgorithm);
+
         mExecutor = context.getMainExecutor();
         mSyncDisplayHashResultCallback = new SyncDisplayHashResultCallback();
         SystemUtil.runWithShellPermissionIdentity(
@@ -123,13 +138,29 @@ public class DisplayHashManagerTest {
         });
         mInstrumentation.waitForIdleSync();
 
-        DisplayHash displayHash = generateDisplayHash(null);
+        int retryCount = 0;
+        // A solid color image has expected hash of all 0s
+        byte[] expectedImageHash = new byte[8];
+        VerifiedDisplayHash verifiedDisplayHash = null;
 
-        VerifiedDisplayHash verifiedDisplayHash = mDisplayHashManager.verifyDisplayHash(
-                displayHash);
-        assertNotNull(verifiedDisplayHash);
+        // Sometimes the app can still be launching when generating a display hash. This could
+        // result in a different image hash. Give the test a few tries to let the activity settle.
+        while (retryCount < MAX_RETRIES && (verifiedDisplayHash == null ||
+                !Arrays.equals(expectedImageHash, verifiedDisplayHash.getImageHash()))) {
+            DisplayHash displayHash = generateDisplayHash(null);
+
+            verifiedDisplayHash = mDisplayHashManager.verifyDisplayHash(displayHash);
+            assertNotNull(verifiedDisplayHash);
+            retryCount++;
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+            }
+        }
+
         assertEquals(mTestViewSize.x, verifiedDisplayHash.getBoundsInWindow().width());
         assertEquals(mTestViewSize.y, verifiedDisplayHash.getBoundsInWindow().height());
+        assertArrayEquals(expectedImageHash, verifiedDisplayHash.getImageHash());
     }
 
     @Test
@@ -165,7 +196,7 @@ public class DisplayHashManagerTest {
             mMainView.invalidate();
         });
         mInstrumentation.waitForIdleSync();
-        mTestView.generateDisplayHash(mFirstHashAlgorithm, new Rect(), mExecutor,
+        mTestView.generateDisplayHash(mPhashAlgorithm, new Rect(), mExecutor,
                 mSyncDisplayHashResultCallback);
 
         int errorCode = mSyncDisplayHashResultCallback.getError();
@@ -210,7 +241,7 @@ public class DisplayHashManagerTest {
         Rect bounds = new Rect(mTestViewSize.x + 1, mTestViewSize.y + 1, mTestViewSize.x + 100,
                 mTestViewSize.y + 100);
 
-        mTestView.generateDisplayHash(mFirstHashAlgorithm, new Rect(bounds),
+        mTestView.generateDisplayHash(mPhashAlgorithm, new Rect(bounds),
                 mExecutor, mSyncDisplayHashResultCallback);
         int errorCode = mSyncDisplayHashResultCallback.getError();
         assertEquals(DISPLAY_HASH_ERROR_NOT_VISIBLE_ON_SCREEN, errorCode);
@@ -229,7 +260,7 @@ public class DisplayHashManagerTest {
         });
         mInstrumentation.waitForIdleSync();
 
-        mTestView.generateDisplayHash(mFirstHashAlgorithm, null, mExecutor,
+        mTestView.generateDisplayHash(mPhashAlgorithm, null, mExecutor,
                 mSyncDisplayHashResultCallback);
 
         int errorCode = mSyncDisplayHashResultCallback.getError();
@@ -266,7 +297,7 @@ public class DisplayHashManagerTest {
         mInstrumentation.waitForIdleSync();
 
         mSyncDisplayHashResultCallback.reset();
-        mTestView.generateDisplayHash(mFirstHashAlgorithm, null, mExecutor,
+        mTestView.generateDisplayHash(mPhashAlgorithm, null, mExecutor,
                 mSyncDisplayHashResultCallback);
 
         int errorCode = mSyncDisplayHashResultCallback.getError();
@@ -366,24 +397,81 @@ public class DisplayHashManagerTest {
         });
         mInstrumentation.waitForIdleSync();
 
-        mTestView.generateDisplayHash(mFirstHashAlgorithm, null, mExecutor,
+        mTestView.generateDisplayHash(mPhashAlgorithm, null, mExecutor,
                 mSyncDisplayHashResultCallback);
         mSyncDisplayHashResultCallback.getDisplayHash();
         mSyncDisplayHashResultCallback.reset();
         // Generate a second display hash right away.
-        mTestView.generateDisplayHash(mFirstHashAlgorithm, null, mExecutor,
+        mTestView.generateDisplayHash(mPhashAlgorithm, null, mExecutor,
                 mSyncDisplayHashResultCallback);
         int errorCode = mSyncDisplayHashResultCallback.getError();
         assertEquals(DISPLAY_HASH_ERROR_TOO_MANY_REQUESTS, errorCode);
     }
 
+    @Test
+    public void testGenerateAndVerifyDisplayHash_MultiColor() {
+        mInstrumentation.runOnMainSync(() -> {
+            final RelativeLayout.LayoutParams p = new RelativeLayout.LayoutParams(mTestViewSize.x,
+                    mTestViewSize.y);
+            LinearLayout linearLayout = new LinearLayout(mActivity);
+            linearLayout.setOrientation(VERTICAL);
+            LinearLayout.LayoutParams blueParams = new LinearLayout.LayoutParams(mTestViewSize.x,
+                    mTestViewSize.y / 2);
+            View blueView = new View(mActivity);
+            blueView.setBackgroundColor(Color.BLUE);
+            LinearLayout.LayoutParams redParams = new LinearLayout.LayoutParams(mTestViewSize.x,
+                    mTestViewSize.y / 2);
+            View redView = new View(mActivity);
+            redView.setBackgroundColor(Color.RED);
+
+            linearLayout.addView(blueView, blueParams);
+            linearLayout.addView(redView, redParams);
+            mTestView = linearLayout;
+
+            mMainView.addView(mTestView, p);
+            mMainView.invalidate();
+        });
+        mInstrumentation.waitForIdleSync();
+
+        int retryCount = 0;
+        byte[] expectedImageHash = new byte[]{-1, -1, 127, -1, -1, -1, 127, 127};
+        VerifiedDisplayHash verifiedDisplayHash = null;
+
+        // Sometimes the app can still be launching when generating a display hash. This could
+        // result in a different image hash. Give the test a few tries to let the activity settle.
+        while (retryCount < MAX_RETRIES && (verifiedDisplayHash == null ||
+                !Arrays.equals(expectedImageHash, verifiedDisplayHash.getImageHash()))) {
+            DisplayHash displayHash = generateDisplayHash(null);
+
+            verifiedDisplayHash = mDisplayHashManager.verifyDisplayHash(displayHash);
+            assertNotNull(verifiedDisplayHash);
+            retryCount++;
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+            }
+        }
+
+        assertEquals(mTestViewSize.x, verifiedDisplayHash.getBoundsInWindow().width());
+        assertEquals(mTestViewSize.y, verifiedDisplayHash.getBoundsInWindow().height());
+        assertArrayEquals(expectedImageHash, verifiedDisplayHash.getImageHash());
+    }
+
     private DisplayHash generateDisplayHash(Rect bounds) {
-        mTestView.generateDisplayHash(mFirstHashAlgorithm, bounds, mExecutor,
-                mSyncDisplayHashResultCallback);
+        DisplayHash displayHash = null;
+        int retryCount = 0;
+        while (displayHash == null && retryCount < MAX_RETRIES) {
+            mTestView.generateDisplayHash(mPhashAlgorithm, bounds, mExecutor,
+                    mSyncDisplayHashResultCallback);
+            displayHash = mSyncDisplayHashResultCallback.getDisplayHash();
+            retryCount++;
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+            }
+        }
 
-        DisplayHash displayHash = mSyncDisplayHashResultCallback.getDisplayHash();
         assertNotNull(displayHash);
-
         return displayHash;
     }
 
