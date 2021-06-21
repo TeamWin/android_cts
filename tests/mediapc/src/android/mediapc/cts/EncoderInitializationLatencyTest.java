@@ -54,8 +54,8 @@ import static org.junit.Assume.assumeTrue;
 public class EncoderInitializationLatencyTest {
     private static final String LOG_TAG = EncoderInitializationLatencyTest.class.getSimpleName();
     private static final boolean[] boolStates = {false, true};
-    private static final int MAX_AUDIOENC_INITIALIZATION_LATENCY_MS = 30;
-    private static final int MAX_VIDEOENC_INITIALIZATION_LATENCY_MS = 40;
+    private static final int MAX_AUDIOENC_INITIALIZATION_LATENCY_MS;
+    private static final int MAX_VIDEOENC_INITIALIZATION_LATENCY_MS;
     private static final String AVC = MediaFormat.MIMETYPE_VIDEO_AVC;
     private static final String HEVC = MediaFormat.MIMETYPE_VIDEO_HEVC;
     private static final String AVC_TRANSCODE_FILE = "bbb_1280x720_3mbps_30fps_avc.mp4";
@@ -64,6 +64,15 @@ public class EncoderInitializationLatencyTest {
     static {
         AVC_DECODER_NAME = selectHardwareCodecs(AVC, null, null, false).get(0);
         AVC_ENCODER_NAME = selectHardwareCodecs(AVC, null, null, true).get(0);
+
+        if (Utils.isRPerfClass()) {
+            MAX_AUDIOENC_INITIALIZATION_LATENCY_MS = 50;
+            MAX_VIDEOENC_INITIALIZATION_LATENCY_MS = 65;
+        } else {
+            // Performance class Build.VERSION_CODES.S and beyond
+            MAX_AUDIOENC_INITIALIZATION_LATENCY_MS = 40;
+            MAX_VIDEOENC_INITIALIZATION_LATENCY_MS = 50;
+        }
     }
 
     private final String mMime;
