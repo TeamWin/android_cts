@@ -27,6 +27,7 @@ import static android.content.pm.PackageManager.PERMISSION_DENIED;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 
 import android.Manifest.permission;
+import android.app.UiAutomation;
 import android.app.admin.DevicePolicyManager;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
@@ -80,13 +81,17 @@ public class PermissionsTest extends BaseDeviceAdminTest {
             permission.ACCESS_BACKGROUND_LOCATION,
             permission.ACCESS_COARSE_LOCATION);
 
-    // TODO: Augment with more permissions
     private static final Set<String> SENSORS_PERMISSIONS = Sets.newHashSet(
-            permission.ACCESS_FINE_LOCATION);
+            permission.ACCESS_FINE_LOCATION,
+            permission.ACCESS_COARSE_LOCATION,
+            permission.CAMERA,
+            permission.ACTIVITY_RECOGNITION,
+            permission.BODY_SENSORS);
 
 
     private PermissionBroadcastReceiver mReceiver;
     private UiDevice mDevice;
+    private UiAutomation mUiAutomation;
 
     @Override
     protected void setUp() throws Exception {
@@ -94,6 +99,7 @@ public class PermissionsTest extends BaseDeviceAdminTest {
         mReceiver = new PermissionBroadcastReceiver();
         mContext.registerReceiver(mReceiver, new IntentFilter(ACTION_PERMISSION_RESULT));
         mDevice = UiDevice.getInstance(getInstrumentation());
+        mUiAutomation = getInstrumentation().getUiAutomation();
     }
 
     @Override
@@ -433,22 +439,28 @@ public class PermissionsTest extends BaseDeviceAdminTest {
     }
 
     public void testSensorsRelatedPermissionsCannotBeGranted() throws Exception {
-        for (String sensorPermission: SENSORS_PERMISSIONS) {
-            // The permission cannot be granted.
-            assertFailedToSetPermissionGrantState(
-                    sensorPermission, DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED);
-            // But the user can grant it.
-            PermissionUtils.launchActivityAndRequestPermission(mReceiver, mDevice, sensorPermission,
-                    PERMISSION_GRANTED, PERMISSION_APP_PACKAGE_NAME, PERMISSIONS_ACTIVITY_NAME);
+        for (String sensorPermission : SENSORS_PERMISSIONS) {
+            try {
+                // The permission cannot be granted.
+                assertFailedToSetPermissionGrantState(
+                        sensorPermission, DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED);
 
-            // And the package manager should show it as granted.
-            PermissionUtils.checkPermission(sensorPermission, PERMISSION_GRANTED,
-                    PERMISSION_APP_PACKAGE_NAME);
+                // But the user can grant it.
+                PermissionUtils.launchActivityAndRequestPermission(mReceiver, mDevice,
+                        sensorPermission, PERMISSION_GRANTED, PERMISSION_APP_PACKAGE_NAME,
+                        PERMISSIONS_ACTIVITY_NAME);
+
+                // And the package manager should show it as granted.
+                PermissionUtils.checkPermission(sensorPermission, PERMISSION_GRANTED,
+                        PERMISSION_APP_PACKAGE_NAME);
+            } finally {
+                revokePermission(sensorPermission);
+            }
         }
     }
 
     public void testSensorsRelatedPermissionsCanBeDenied() throws Exception {
-        for (String sensorPermission: SENSORS_PERMISSIONS) {
+        for (String sensorPermission : SENSORS_PERMISSIONS) {
             // The permission can be denied
             setPermissionGrantState(sensorPermission, PERMISSION_GRANT_STATE_DENIED);
 
@@ -459,31 +471,52 @@ public class PermissionsTest extends BaseDeviceAdminTest {
 
     public void testSensorsRelatedPermissionsNotGrantedViaPolicy() throws Exception {
         setPermissionPolicy(PERMISSION_POLICY_AUTO_GRANT);
-        for (String sensorPermission: SENSORS_PERMISSIONS) {
-            // The permission is not granted by default.
-            PermissionUtils.checkPermission(sensorPermission, PERMISSION_DENIED,
-                    PERMISSION_APP_PACKAGE_NAME);
-            // But the user can grant it.
-            PermissionUtils.launchActivityAndRequestPermission(mReceiver, mDevice, sensorPermission,
-                    PERMISSION_GRANTED, PERMISSION_APP_PACKAGE_NAME, PERMISSIONS_ACTIVITY_NAME);
+        for (String sensorPermission : SENSORS_PERMISSIONS) {
+            try {
+                // The permission is not granted by default.
+                PermissionUtils.checkPermission(sensorPermission, PERMISSION_DENIED,
+                        PERMISSION_APP_PACKAGE_NAME);
+                // But the user can grant it.
+                PermissionUtils.launchActivityAndRequestPermission(mReceiver, mDevice,
+                        sensorPermission,
+                        PERMISSION_GRANTED, PERMISSION_APP_PACKAGE_NAME, PERMISSIONS_ACTIVITY_NAME);
 
-            // And the package manager should show it as granted.
-            PermissionUtils.checkPermission(sensorPermission, PERMISSION_GRANTED,
-                    PERMISSION_APP_PACKAGE_NAME);
+                // And the package manager should show it as granted.
+                PermissionUtils.checkPermission(sensorPermission, PERMISSION_GRANTED,
+                        PERMISSION_APP_PACKAGE_NAME);
+            } finally {
+                revokePermission(sensorPermission);
+            }
         }
     }
 
     public void testStateOfSensorsRelatedPermissionsCannotBeRead() throws Exception {
-        for (String sensorPermission: SENSORS_PERMISSIONS) {
-            // The admin tries to grant the permission.
-            setPermissionGrantState(sensorPermission, PERMISSION_GRANT_STATE_GRANTED);
+        for (String sensorPermission : SENSORS_PERMISSIONS) {
+            try {
+                // The admin tries to grant the permission.
+                setPermissionGrantState(sensorPermission, PERMISSION_GRANT_STATE_GRANTED);
 
-            // But the user denies it.
-            PermissionUtils.launchActivityAndRequestPermission(mReceiver, mDevice, sensorPermission,
-                    PERMISSION_DENIED, PERMISSION_APP_PACKAGE_NAME, PERMISSIONS_ACTIVITY_NAME);
+                // But the user denies it.
+                PermissionUtils.launchActivityAndRequestPermission(mReceiver, mDevice,
+                        sensorPermission, PERMISSION_DENIED, PERMISSION_APP_PACKAGE_NAME,
+                        PERMISSIONS_ACTIVITY_NAME);
 
-            // And the admin cannot learn of it.
-            assertPermissionGrantState(sensorPermission, PERMISSION_GRANT_STATE_DEFAULT);
+                // And the admin cannot learn of it.
+                assertPermissionGrantState(sensorPermission, PERMISSION_GRANT_STATE_DEFAULT);
+            } finally {
+                revokePermission(sensorPermission);
+            }
+        }
+    }
+
+    private void revokePermission(String sensorPermission) {
+        if (LOCATION_PERMISSIONS.contains(sensorPermission)) {
+            mUiAutomation.revokeRuntimePermission(PERMISSION_APP_PACKAGE_NAME,
+                    permission.ACCESS_FINE_LOCATION);
+            mUiAutomation.revokeRuntimePermission(PERMISSION_APP_PACKAGE_NAME,
+                    permission.ACCESS_COARSE_LOCATION);
+        } else {
+            mUiAutomation.revokeRuntimePermission(PERMISSION_APP_PACKAGE_NAME, sensorPermission);
         }
     }
 
