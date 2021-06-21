@@ -18,6 +18,7 @@ package android.jobscheduler.cts;
 
 import static com.android.compatibility.common.util.TestUtils.waitUntil;
 
+import android.Manifest;
 import android.annotation.TargetApi;
 import android.app.UiModeManager;
 import android.app.job.JobInfo;
@@ -204,11 +205,13 @@ public class IdleConstraintTest extends BaseJobSchedulerTest {
         if (on) {
             assertTrue(SystemUtil.callWithShellPermissionIdentity(
                     () -> uiModeManager.requestProjection(UiModeManager.PROJECTION_TYPE_AUTOMOTIVE),
-                    "android.permission.TOGGLE_AUTOMOTIVE_PROJECTION"));
+                    Manifest.permission.TOGGLE_AUTOMOTIVE_PROJECTION,
+                    Manifest.permission.INTERACT_ACROSS_USERS_FULL));
         } else {
             SystemUtil.callWithShellPermissionIdentity(
                     () -> uiModeManager.releaseProjection(UiModeManager.PROJECTION_TYPE_AUTOMOTIVE),
-            "android.permission.TOGGLE_AUTOMOTIVE_PROJECTION");
+                    Manifest.permission.TOGGLE_AUTOMOTIVE_PROJECTION,
+                    Manifest.permission.INTERACT_ACROSS_USERS_FULL);
         }
         Thread.sleep(2_000);
     }
