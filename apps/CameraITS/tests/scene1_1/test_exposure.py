@@ -220,11 +220,11 @@ class ExposureTest(its_base_test.ItsBaseTest):
               (THRESH_EXP_KNEE - e_test) / THRESH_EXP_KNEE)
         if not 0 <= s_test - s_res < s_test * THRESH_ROUND_DOWN_GAIN:
           raise AssertionError(f's_write: {s_test}, s_read: {s_res}, '
-                               f'TOL={THRESH_ROUND_DOWN_GAIN*100:.f%%}')
+                               f'TOL={THRESH_ROUND_DOWN_GAIN*100}%')
         if not 0 <= e_test - e_res < e_test * thresh_round_down_exp:
           raise AssertionError(f'e_write: {e_test/1.0E6:.3f}ms, '
                                f'e_read: {e_res/1.0E6:.3f}ms, '
-                               f'TOL={thresh_round_down_exp*100:.f%%}')
+                               f'TOL={thresh_round_down_exp*100}%')
         s_e_product_res = s_res * e_res
         req_res_ratio = s_e_product / s_e_product_res
         logging.debug('Capture result s: %d, e: %dns', s_res, e_res)
