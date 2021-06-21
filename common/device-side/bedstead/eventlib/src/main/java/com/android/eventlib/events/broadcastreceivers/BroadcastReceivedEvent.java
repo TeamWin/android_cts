@@ -28,6 +28,7 @@ import com.android.eventlib.EventLogsQuery;
 import com.android.eventlib.info.BroadcastReceiverInfo;
 import com.android.eventlib.queryhelpers.BroadcastReceiverQuery;
 import com.android.eventlib.queryhelpers.BroadcastReceiverQueryHelper;
+import com.android.eventlib.queryhelpers.IntentQuery;
 import com.android.eventlib.queryhelpers.IntentQueryHelper;
 import com.android.eventlib.util.SerializableParcelWrapper;
 
@@ -56,7 +57,7 @@ public final class BroadcastReceivedEvent extends Event {
          * Query {@link Intent} passed into {@link BroadcastReceiver#onReceive(Context, Intent)}.
          */
         @CheckResult
-        public IntentQueryHelper<BroadcastReceivedEventQuery> whereIntent() {
+        public IntentQuery<BroadcastReceivedEventQuery> whereIntent() {
             return mIntent;
         }
 
