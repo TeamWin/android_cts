@@ -34,20 +34,20 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 public class TranslationCapabilityTest {
 
-    private final TranslationSpec sourceSpec =
+    private final TranslationSpec mSourceSpec =
             new TranslationSpec(ULocale.ENGLISH, TranslationSpec.DATA_FORMAT_TEXT);
-    private final TranslationSpec targetSpec =
+    private final TranslationSpec mTargetSpec =
             new TranslationSpec(ULocale.FRENCH, TranslationSpec.DATA_FORMAT_TEXT);
 
     @Test
     public void testCapability_nullSpecs() {
         assertThrows(NullPointerException.class,
                 () -> new TranslationCapability(TranslationCapability.STATE_AVAILABLE_TO_DOWNLOAD,
-                        null, targetSpec, /* uiTranslationEnabled= */ true,
+                        null, mTargetSpec, /* uiTranslationEnabled= */ true,
                         /* supportedTranslationFlags= */ 0));
         assertThrows(NullPointerException.class,
                 () -> new TranslationCapability(TranslationCapability.STATE_AVAILABLE_TO_DOWNLOAD,
-                        sourceSpec, null,/* uiTranslationEnabled= */ true,
+                        mSourceSpec, null,/* uiTranslationEnabled= */ true,
                         /* supportedTranslationFlags= */ 0));
     }
 
@@ -55,7 +55,7 @@ public class TranslationCapabilityTest {
     public void testCapability_validCapability() {
         final TranslationCapability capability =
                 new TranslationCapability(TranslationCapability.STATE_AVAILABLE_TO_DOWNLOAD,
-                        sourceSpec, targetSpec,/* uiTranslationEnabled= */ true,
+                        mSourceSpec, mTargetSpec,/* uiTranslationEnabled= */ true,
                         TranslationContext.FLAG_TRANSLITERATION);
 
         assertThat(capability.getState())
@@ -77,7 +77,7 @@ public class TranslationCapabilityTest {
     public void testParceledCapability() {
         final TranslationCapability capability =
                 new TranslationCapability(TranslationCapability.STATE_AVAILABLE_TO_DOWNLOAD,
-                        sourceSpec, targetSpec,/* uiTranslationEnabled= */ true,
+                        mSourceSpec, mTargetSpec,/* uiTranslationEnabled= */ true,
                         TranslationContext.FLAG_TRANSLITERATION);
 
         assertThat(capability.getState())
@@ -114,5 +114,26 @@ public class TranslationCapabilityTest {
         assertThat(parceledCapability.getTargetSpec().getLocale()).isEqualTo(ULocale.FRENCH);
         assertThat(parceledCapability.getTargetSpec().getDataFormat())
                 .isEqualTo(TranslationSpec.DATA_FORMAT_TEXT);
+    }
+
+    @Test
+    public void testCapability_allModelStates() {
+        new TranslationCapability(TranslationCapability.STATE_AVAILABLE_TO_DOWNLOAD,
+                mSourceSpec, mTargetSpec, /* uiTranslationEnabled= */ true,
+                /* supportedTranslationFlags= */ 0);
+        new TranslationCapability(TranslationCapability.STATE_DOWNLOADING,
+                mSourceSpec, mTargetSpec,/* uiTranslationEnabled= */ true,
+                /* supportedTranslationFlags= */ 0);
+        new TranslationCapability(TranslationCapability.STATE_ON_DEVICE,
+                mSourceSpec, mTargetSpec, /* uiTranslationEnabled= */ true,
+                /* supportedTranslationFlags= */ 0);
+        new TranslationCapability(TranslationCapability.STATE_NOT_AVAILABLE,
+                mSourceSpec, mTargetSpec,/* uiTranslationEnabled= */ true,
+                /* supportedTranslationFlags= */ 0);
+
+        // TODO: Remove magic constant and expose to test api later
+        new TranslationCapability(/* STATE_REMOVED_AND_AVAILABLE= */ 1000,
+                mSourceSpec, mTargetSpec, /* uiTranslationEnabled= */ true,
+                /* supportedTranslationFlags= */ 0);
     }
 }
