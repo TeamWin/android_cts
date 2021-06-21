@@ -27,6 +27,7 @@ import android.compat.testing.Classpaths.ClasspathType;
 import com.android.compatibility.common.util.DeviceInfo;
 import com.android.compatibility.common.util.HostInfoStore;
 import com.android.tradefed.device.ITestDevice;
+import com.android.tradefed.log.LogUtil.CLog;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -96,6 +97,10 @@ public class ClasspathDeviceInfo extends DeviceInfo {
             String libraryVersion = words[2];
             for (int i = 3; i < words.length; i++) {
                 String path = words[i];
+                if (!mDevice.doesFileExist(path)) {
+                    CLog.w("Shared library is not present on device " + path);
+                    continue;
+                }
 
                 store.startGroup();
                 store.startGroup("shared_library");
@@ -112,26 +117,8 @@ public class ClasspathDeviceInfo extends DeviceInfo {
     }
 
     private void collectClassInfo(HostInfoStore store, String path) throws Exception {
-        ImmutableSet<ClassDef> classes;
-        try {
-            classes = Classpaths.getClassDefsFromJar(mDevice, path);
-        } catch (IllegalStateException e) {
-            // Check if this is a known issue where a jar is not present on device.
-            if (e.getMessage().contains("could not pull remote file " + path)) {
-                // TODO(b/189924891): stop ignoring libhwinfo.jar
-                if (path.equals("/product/framework/libhwinfo.jar")) {
-                    return;
-                }
-                // TODO(b/191046702): stop ignoring uimservicelibrary.jar
-                if (path.equals("/system/framework/uimservicelibrary.jar")) {
-                    return;
-                }
-            }
-            throw e;
-        }
-
         store.startArray("classes");
-        for (ClassDef classDef : classes) {
+        for (ClassDef classDef : Classpaths.getClassDefsFromJar(mDevice, path)) {
             store.startGroup();
             store.addResult("name", classDef.getType());
             store.endGroup();
