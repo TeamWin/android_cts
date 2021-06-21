@@ -974,6 +974,10 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
     public void testFinishOnDifferentDisplay_nonFocused() throws Exception {
         assumeTrue(supportsMultiDisplay());
 
+        // In some platforms, Launcher can invoke another embedded Activity and it can affect
+        // the test. We'll place a bottom Activity to eliminate the side effects by that Launcher.
+        final Activity bottomActivity = launchActivityAndWait(SecondActivity.class);
+
         // Launch activity on some display.
         final Activity callbackTrackingActivity =
                 launchActivityAndWait(CallbackTrackingActivity.class);
