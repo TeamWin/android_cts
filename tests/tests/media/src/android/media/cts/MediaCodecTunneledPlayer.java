@@ -409,6 +409,25 @@ public class MediaCodecTunneledPlayer implements MediaTimeProvider {
         }
     }
 
+    /**
+     * Enables or disables looping. Should be called after {@link #prepare()}.
+     */
+    public void setLoopEnabled(boolean enabled) {
+        synchronized (mState) {
+            if (mVideoCodecStates != null) {
+                for (CodecState state : mVideoCodecStates.values()) {
+                    state.setLoopEnabled(enabled);
+                }
+            }
+
+            if (mAudioCodecStates != null) {
+                for (CodecState state : mAudioCodecStates.values()) {
+                    state.setLoopEnabled(enabled);
+                }
+            }
+        }
+    }
+
     public void reset() {
         synchronized (mState) {
             if (mState == STATE_PLAYING) {
