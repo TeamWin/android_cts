@@ -396,6 +396,7 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
         final ImeEventStream stream = mockImeSession.openEventStream();
         imeTestActivitySession.runOnMainSyncAndWait(
                 imeTestActivitySession.getActivity()::showSoftInput);
+        ImeEventStream configChangeVerifyStream = stream.copy();
         waitOrderedImeEventsThenAssertImeShown(stream, newDisplay.mId,
                 editorMatcher("onStartInput",
                         imeTestActivitySession.getActivity().mEditText.getPrivateImeOptions()),
@@ -403,6 +404,8 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
 
         // Assert the configuration of the IME window is the same as the configuration of the
         // virtual display.
+        waitAndAssertImeConfigurationChanged(configChangeVerifyStream);
+        configChangeVerifyStream = clearOnConfigurationChangedFromStream(configChangeVerifyStream);
         assertImeWindowAndDisplayConfiguration(mWmState.getImeWindowState(), newDisplay);
 
         // Launch another activity on the default display.
@@ -419,6 +422,7 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
 
         // Assert the configuration of the IME window is the same as the configuration of the
         // default display.
+        waitAndAssertImeConfigurationChanged(configChangeVerifyStream);
         assertImeWindowAndDisplayConfiguration(mWmState.getImeWindowState(),
                 mWmState.getDisplay(DEFAULT_DISPLAY));
     }
@@ -492,6 +496,7 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
         tapOnDisplayCenter(defDisplay.mId);
         imeTestActivitySession.runOnMainSyncAndWait(
                 imeTestActivitySession.getActivity()::showSoftInput);
+        ImeEventStream configChangeVerifyStream = stream.copy();
         waitOrderedImeEventsThenAssertImeShown(stream, defDisplay.mId,
                 editorMatcher("onStartInput",
                         imeTestActivitySession.getActivity().mEditText.getPrivateImeOptions()),
@@ -507,6 +512,9 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
                         imeTestActivitySession2.getActivity().mEditText.getPrivateImeOptions()),
                 event -> "showSoftInput".equals(event.getEventName()));
 
+        waitAndAssertImeConfigurationChanged(configChangeVerifyStream);
+        configChangeVerifyStream = clearOnConfigurationChangedFromStream(configChangeVerifyStream);
+
         // Tap default display again to make sure the IME window will come back.
         tapOnDisplayCenter(defDisplay.mId);
         imeTestActivitySession.runOnMainSyncAndWait(
@@ -515,6 +523,8 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
                 editorMatcher("onStartInput",
                         imeTestActivitySession.getActivity().mEditText.getPrivateImeOptions()),
                 event -> "showSoftInput".equals(event.getEventName()));
+
+        waitAndAssertImeConfigurationChanged(configChangeVerifyStream);
     }
 
     /**
@@ -744,6 +754,73 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
                 editorMatcher("onStartInput",
                         imeTestActivitySession.getActivity().mEditText.getPrivateImeOptions()),
                 event -> "showSoftInput".equals(event.getEventName()));
+    }
+
+    @Test
+    public void testNoConfigurationChangedWhenSwitchBetweenTwoIdenticalDisplays() throws Exception {
+        // If config_perDisplayFocusEnabled, the focus will not move even if touching on
+        // the Activity in the different display.
+        assumeFalse(perDisplayFocusEnabled());
+        assumeTrue(MSG_NO_MOCK_IME, supportsInstallableIme());
+
+        // Create two displays with the same display metrics
+        final List<DisplayContent> newDisplays = createManagedVirtualDisplaySession()
+                .setShowSystemDecorations(true)
+                .setDisplayImePolicy(DISPLAY_IME_POLICY_LOCAL)
+                .setSimulateDisplay(true)
+                .createDisplays(2);
+        final DisplayContent firstDisplay = newDisplays.get(0);
+        final DisplayContent secondDisplay = newDisplays.get(1);
+
+        // Initialize IME test environment
+        final MockImeSession mockImeSession = createManagedMockImeSession(this);
+        final TestActivitySession<ImeTestActivity> imeTestActivitySession =
+                createManagedTestActivitySession();
+        ImeEventStream stream = mockImeSession.openEventStream();
+
+        // Make firstDisplay the top focus display.
+        tapOnDisplayCenter(firstDisplay.mId);
+        // Filter out onConfigurationChanged events in case that IME is moved from the default
+        // display to the firstDisplay.
+        ImeEventStream configChangeVerifyStream = clearOnConfigurationChangedFromStream(stream);
+        imeTestActivitySession.launchTestActivityOnDisplaySync(ImeTestActivity.class,
+                firstDisplay.mId);
+        imeTestActivitySession.runOnMainSyncAndWait(
+                imeTestActivitySession.getActivity()::showSoftInput);
+
+        waitOrderedImeEventsThenAssertImeShown(stream, firstDisplay.mId,
+                editorMatcher("onStartInput",
+                        imeTestActivitySession.getActivity().mEditText.getPrivateImeOptions()),
+                event -> "showSoftInput".equals(event.getEventName()));
+        // Launch Ime must not lead to configuration changes.
+        waitAndAssertNoImeConfigurationChanged(configChangeVerifyStream);
+
+        // Move ImeTestActivity from firstDisplay to secondDisplay.
+        getLaunchActivityBuilder()
+                .setUseInstrumentation()
+                .setTargetActivity(imeTestActivitySession.getActivity().getComponentName())
+                .setIntentFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                .allowMultipleInstances(false)
+                .setDisplayId(secondDisplay.mId).execute();
+
+        // Make sure ImeTestActivity is move from the firstDisplay to the secondDisplay
+        waitAndAssertTopResumedActivity(imeTestActivitySession.getActivity().getComponentName(),
+                secondDisplay.mId, "ImeTestActivity must be top-resumed on display#"
+                + secondDisplay.mId);
+        assertThat(mWmState.hasActivityInDisplay(firstDisplay.mId,
+                imeTestActivitySession.getActivity().getComponentName())).isFalse();
+
+        // Show soft input again to trigger IME movement.
+        imeTestActivitySession.runOnMainSyncAndWait(
+                imeTestActivitySession.getActivity()::showSoftInput);
+
+        waitOrderedImeEventsThenAssertImeShown(stream, secondDisplay.mId,
+                editorMatcher("onStartInput",
+                        imeTestActivitySession.getActivity().mEditText.getPrivateImeOptions()),
+                event -> "showSoftInput".equals(event.getEventName()));
+        // Moving IME to the display with the same display metrics must not trigger
+        // onConfigurationChanged callback.
+        waitAndAssertNoImeConfigurationChanged(configChangeVerifyStream);
     }
 
     public static class ImeTestActivity extends Activity {
