@@ -16,7 +16,6 @@
 package android.edi.cts;
 
 import static android.compat.testing.Classpaths.ClasspathType.BOOTCLASSPATH;
-import static android.compat.testing.Classpaths.ClasspathType.DEX2OATBOOTCLASSPATH;
 import static android.compat.testing.Classpaths.ClasspathType.SYSTEMSERVERCLASSPATH;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -58,7 +57,7 @@ public class ClasspathDeviceInfo extends DeviceInfo {
     private void collectClasspathsJars(HostInfoStore store) throws Exception {
         collectClasspathJarInfo(store, BOOTCLASSPATH);
         collectClasspathJarInfo(store, SYSTEMSERVERCLASSPATH);
-        collectClasspathJarInfo(store, DEX2OATBOOTCLASSPATH);
+        // No need to collect DEX2OATBOOTCLASSPATH, as it is just a subset of BOOTCLASSPATH
     }
 
     private void collectClasspathJarInfo(HostInfoStore store, ClasspathType classpath)
