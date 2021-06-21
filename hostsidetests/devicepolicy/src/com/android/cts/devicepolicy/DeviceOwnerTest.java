@@ -529,10 +529,35 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
 
     @FlakyTest(bugId = 137096267)
     @Test
-    @TemporaryIgnoreOnHeadlessSystemUserMode(bugId = "132361856", reason = "3 failures such as "
-            + "missing activity handling bugreport intent")
     public void testAdminActionBookkeeping() throws Exception {
-        executeDeviceOwnerTest("AdminActionBookkeepingTest");
+        if (isHeadlessSystemUserMode()) {
+            // TODO(b/176993670):ALLOW_TEST_API_ACCESS is needed by DevicePolicyManagerWrapper to
+            // access test apis
+            allowTestApiAccess(DEVICE_OWNER_PKG);
+            // This test has to run as system user since the test will get KeyStore instance for
+            // current user.
+            executeDeviceOwnerTestMethod(".AdminActionBookkeepingTest",
+                    "testGetPolicyInstalledCaCerts");
+        } else {
+            // This test will be skipped for headless system user mode since headless system user
+            // does not have IME.
+            executeDeviceTestMethod(".AdminActionBookkeepingTest",
+                    "testIsDefaultInputMethodSet");
+            executeDeviceTestMethod(".AdminActionBookkeepingTest",
+                    "testGetPolicyInstalledCaCerts");
+        }
+
+        executeDeviceTestMethod(".AdminActionBookkeepingTest",
+                "testRetrieveSecurityLogs");
+        executeDeviceTestMethod(".AdminActionBookkeepingTest",
+                "testRequestBugreport");
+        executeDeviceTestMethod(".AdminActionBookkeepingTest",
+                "testGetLastNetworkLogRetrievalTime");
+        executeDeviceTestMethod(".AdminActionBookkeepingTest",
+                "testDeviceOwnerOrganizationName");
+        executeDeviceTestMethod(".AdminActionBookkeepingTest",
+                "testIsDeviceManaged");
+
         assertMetricsLogged(getDevice(), () -> {
             executeDeviceTestMethod(".AdminActionBookkeepingTest", "testRetrieveSecurityLogs");
         }, new DevicePolicyEventWrapper.Builder(EventId.RETRIEVE_SECURITY_LOGS_VALUE)
