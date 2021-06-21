@@ -67,15 +67,6 @@ public final class DeviceAdminFeaturesCheckerRule implements TestRule {
 
                 String testName = description.getDisplayName();
 
-                TemporaryIgnoreOnHeadlessSystemUserMode temporarilyIgnoredAnnotation = description
-                        .getAnnotation(TemporaryIgnoreOnHeadlessSystemUserMode.class);
-                if (temporarilyIgnoredAnnotation != null
-                        && BaseDevicePolicyTest.isHeadlessSystemUserMode(testDevice)) {
-                    throw new AssumptionViolatedException(
-                            "TEMPORARILY skipping " + testName + " on headless system user mode "
-                                    + "(reason: " + temporarilyIgnoredAnnotation.reason() + ")");
-                }
-
                 IgnoreOnHeadlessSystemUserMode ignoredAnnotation = description
                         .getAnnotation(IgnoreOnHeadlessSystemUserMode.class);
                 if (ignoredAnnotation != null
@@ -206,17 +197,6 @@ public final class DeviceAdminFeaturesCheckerRule implements TestRule {
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ElementType.TYPE, ElementType.METHOD})
     public static @interface RequiresProfileOwnerSupport {
-    }
-
-    /**
-     * TODO(b/132260693): STOPSHIP - temporary annotation used on tests that haven't been fixed to
-     * run on headless system user yet
-     */
-    @Retention(RetentionPolicy.RUNTIME)
-    @Target({ElementType.METHOD})
-    public static @interface TemporaryIgnoreOnHeadlessSystemUserMode {
-        String bugId();
-        String reason();
     }
 
     /**
