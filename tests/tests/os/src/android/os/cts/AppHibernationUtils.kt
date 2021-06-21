@@ -21,25 +21,45 @@ import android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_TOP_SLEEPING
 import android.app.Instrumentation
 import android.app.UiAutomation
 import android.content.Context
+import android.content.pm.PackageManager
 import android.os.ParcelFileDescriptor
 import android.os.Process
 import android.provider.DeviceConfig
+import android.support.test.uiautomator.By
 import android.support.test.uiautomator.BySelector
+import android.support.test.uiautomator.UiDevice
 import android.support.test.uiautomator.UiObject2
+import android.support.test.uiautomator.UiScrollable
+import android.support.test.uiautomator.UiSelector
+import android.support.test.uiautomator.Until
 import androidx.test.InstrumentationRegistry
+import com.android.compatibility.common.util.ExceptionUtils.wrappingExceptions
 import com.android.compatibility.common.util.LogcatInspector
 import com.android.compatibility.common.util.SystemUtil.eventually
 import com.android.compatibility.common.util.SystemUtil.runShellCommandOrThrow
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
 import com.android.compatibility.common.util.ThrowingSupplier
 import com.android.compatibility.common.util.UiAutomatorUtils
+import com.android.compatibility.common.util.UiDumpUtils
 import com.android.compatibility.common.util.click
 import com.android.compatibility.common.util.depthFirstSearch
 import com.android.compatibility.common.util.textAsString
 import org.hamcrest.Matcher
 import org.hamcrest.Matchers
+import org.junit.Assert
 import org.junit.Assert.assertThat
 import java.io.InputStream
+
+const val SYSUI_PKG_NAME = "com.android.systemui"
+const val NOTIF_LIST_ID = "com.android.systemui:id/notification_stack_scroller"
+const val CLEAR_ALL_BUTTON_ID = "dismiss_text"
+// Time to find a notification. Unlikely, but in cases with a lot of notifications, it may take
+// time to find the notification we're looking for
+const val NOTIF_FIND_TIMEOUT = 20000L
+const val VIEW_WAIT_TIMEOUT = 1000L
+
+const val CMD_EXPAND_NOTIFICATIONS = "cmd statusbar expand-notifications"
+const val CMD_COLLAPSE = "cmd statusbar collapse"
 
 const val APK_PATH_S_APP = "/data/local/tmp/cts/os/CtsAutoRevokeSApp.apk"
 const val APK_PACKAGE_NAME_S_APP = "android.os.cts.autorevokesapp"
@@ -146,6 +166,82 @@ fun startApp(packageName: String) {
 
 fun goHome() {
     runShellCommandOrThrow("input keyevent KEYCODE_HOME")
+}
+
+/**
+ * Open the "unused apps" notification which is sent after the hibernation job.
+ */
+fun openUnusedAppsNotification() {
+    val notifSelector = By.textContains("unused app")
+    if (hasFeatureWatch()) {
+        val uiAutomation = InstrumentationRegistry.getInstrumentation().uiAutomation
+        expandNotificationsWatch(UiAutomatorUtils.getUiDevice())
+        waitFindObject(uiAutomation, notifSelector).click()
+        // In wear os, notification has one additional button to open it
+        waitFindObject(uiAutomation, By.text("Open")).click()
+    } else {
+        runShellCommandOrThrow(CMD_EXPAND_NOTIFICATIONS)
+        waitFindNotification(notifSelector, NOTIF_FIND_TIMEOUT).click()
+    }
+}
+
+fun hasFeatureWatch(): Boolean {
+    return InstrumentationRegistry.getTargetContext().packageManager.hasSystemFeature(
+        PackageManager.FEATURE_WATCH)
+}
+
+private fun expandNotificationsWatch(uiDevice: UiDevice) {
+    with(uiDevice) {
+        wakeUp()
+        // Swipe up from bottom to reveal notifications
+        val x = displayWidth / 2
+        swipe(x, displayHeight, x, 0, 1)
+    }
+}
+
+/**
+ * Reset to the top of the notifications list.
+ */
+private fun resetNotifications(notificationList: UiScrollable) {
+    runShellCommandOrThrow(CMD_COLLAPSE)
+    notificationList.waitUntilGone(VIEW_WAIT_TIMEOUT)
+    runShellCommandOrThrow(CMD_EXPAND_NOTIFICATIONS)
+}
+
+private fun waitFindNotification(selector: BySelector, timeoutMs: Long):
+    UiObject2 {
+    var view: UiObject2? = null
+    val start = System.currentTimeMillis()
+    val uiDevice = UiAutomatorUtils.getUiDevice()
+
+    var isAtEnd = false
+    var wasScrolledUpAlready = false
+    while (view == null && start + timeoutMs > System.currentTimeMillis()) {
+        view = uiDevice.wait(Until.findObject(selector), VIEW_WAIT_TIMEOUT)
+        if (view == null) {
+            val notificationList = UiScrollable(UiSelector().resourceId(NOTIF_LIST_ID))
+            wrappingExceptions({ cause: Throwable? -> UiDumpUtils.wrapWithUiDump(cause) }) {
+                Assert.assertTrue("Notification list view not found",
+                    notificationList.waitForExists(VIEW_WAIT_TIMEOUT))
+            }
+            if (isAtEnd) {
+                if (wasScrolledUpAlready) {
+                    break
+                }
+                resetNotifications(notificationList)
+                isAtEnd = false
+                wasScrolledUpAlready = true
+            } else {
+                notificationList.scrollForward()
+                isAtEnd = uiDevice.hasObject(By.res(SYSUI_PKG_NAME, CLEAR_ALL_BUTTON_ID))
+            }
+        }
+    }
+    wrappingExceptions({ cause: Throwable? -> UiDumpUtils.wrapWithUiDump(cause) }) {
+        Assert.assertNotNull("View not found after waiting for " + timeoutMs + "ms: " + selector,
+            view)
+    }
+    return view!!
 }
 
 fun waitFindObject(uiAutomation: UiAutomation, selector: BySelector): UiObject2 {
