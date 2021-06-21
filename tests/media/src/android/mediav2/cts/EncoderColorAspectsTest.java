@@ -34,7 +34,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -54,9 +53,9 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
 
     private ArrayList<String> mCheckESList = new ArrayList<>();
 
-    public EncoderColorAspectsTest(String mime, int width, int height, int range, int standard,
-            int transferCurve) {
-        super(mime, new int[]{64000}, new int[]{width}, new int[]{height});
+    public EncoderColorAspectsTest(String encoderName, String mime, int width, int height,
+            int range, int standard, int transferCurve) {
+        super(encoderName, mime, new int[]{64000}, new int[]{width}, new int[]{height});
         mRange = range;
         mStandard = standard;
         mTransferCurve = transferCurve;
@@ -89,7 +88,7 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
         super.dequeueOutput(bufferIndex, info);
     }
 
-    @Parameterized.Parameters(name = "{index}({0}{3}{4}{5})")
+    @Parameterized.Parameters(name = "{index}({0}_{1}_{4}_{5}_{6})")
     public static Collection<Object[]> input() {
         final boolean isEncoder = true;
         final boolean needAudio = false;
@@ -133,25 +132,23 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
     @SmallTest
     @Test(timeout = PER_TEST_TIMEOUT_SMALL_TEST_MS)
     public void testColorAspects() throws IOException, InterruptedException {
-        ArrayList<String> listOfEncoders = selectCodecs(mMime, null, null, true);
-        assertFalse("no suitable codecs found for mime: " + mMime, listOfEncoders.isEmpty());
         setUpSource(mInputFile);
         mOutputBuff = new OutputManager();
-        for (String encoder : listOfEncoders) {
-            mCodec = MediaCodec.createByCodecName(encoder);
+        {
+            mCodec = MediaCodec.createByCodecName(mCodecName);
             mOutputBuff.reset();
             mInfoList.clear();
             /* TODO(b/156571486) */
-            if (encoder.equals("c2.android.hevc.encoder") ||
-                    encoder.equals("OMX.google.h264.encoder") ||
-                    encoder.equals("c2.android.avc.encoder") ||
-                    encoder.equals("c2.android.vp8.encoder") ||
-                    encoder.equals("c2.android.vp9.encoder")) {
+            if (mCodecName.equals("c2.android.hevc.encoder") ||
+                    mCodecName.equals("OMX.google.h264.encoder") ||
+                    mCodecName.equals("c2.android.avc.encoder") ||
+                    mCodecName.equals("c2.android.vp8.encoder") ||
+                    mCodecName.equals("c2.android.vp9.encoder")) {
                 Log.d(LOG_TAG, "test skipped due to b/156571486");
                 mCodec.release();
-                continue;
+                return;
             }
-            String log = String.format("format: %s \n codec: %s:: ", mConfigFormat, encoder);
+            String log = String.format("format: %s \n codec: %s:: ", mConfigFormat, mCodecName);
             File tmpFile;
             int muxerFormat;
             if (mMime.equals(MediaFormat.MIMETYPE_VIDEO_VP8) ||
@@ -186,7 +183,7 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
             mCodec.release();
 
             // verify if the muxed file contains color aspects as expected
-            CodecDecoderTestBase cdtb = new CodecDecoderTestBase(mMime, null);
+            CodecDecoderTestBase cdtb = new CodecDecoderTestBase(null, mMime, null);
             String parent = tmpFile.getParent();
             if (parent != null) parent += File.separator;
             else parent = "";
