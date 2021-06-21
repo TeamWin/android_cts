@@ -18,8 +18,11 @@ package com.android.bedstead.nene.activities;
 
 import static android.app.ActivityManager.LOCK_TASK_MODE_NONE;
 
+import android.content.Intent;
+
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.annotations.Experimental;
+import com.android.bedstead.nene.packages.ComponentReference;
 import com.android.compatibility.common.util.PollingCheck;
 
 /**
@@ -73,6 +76,19 @@ public class Activity<E> {
         //  find another thing to poll on
         PollingCheck.waitFor(
                 () -> mTestApis.activities().getLockTaskModeState() == LOCK_TASK_MODE_NONE);
+    }
+
+    /**
+     * Calls {@link android.app.Activity#startActivity(Intent)} and blocks until the activity has
+     * started.
+     */
+    @Experimental
+    public void startActivity(Intent intent) {
+        mActivity.startActivity(intent);
+        ComponentReference component = new ComponentReference(mTestApis, intent.getComponent());
+
+        // TODO(scottjonathan): What if the activity can't start - or the intent isn't valid/etc.
+        PollingCheck.waitFor(() -> component.equals(mTestApis.activities().foregroundActivity()));
     }
 
     /**
