@@ -1045,24 +1045,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                     .build());
     }
 
-    @FlakyTest(bugId = 132226089)
-    @Ignore("Ignored while migrating to new infrastructure b/175377361")
-    @Test
-    public void testLockTask() throws Exception {
-        try {
-            installAppAsUser(INTENT_RECEIVER_APK, mUserId);
-            executeDeviceTestClass(".LockTaskTest");
-        } catch (AssertionError ex) {
-            // STOPSHIP(b/32771855), remove this once we fixed the bug.
-            executeShellCommand("dumpsys activity activities");
-            executeShellCommand("dumpsys window -a");
-            executeShellCommand("dumpsys activity service com.android.systemui");
-            throw ex;
-        } finally {
-            getDevice().uninstallPackage(INTENT_RECEIVER_PKG);
-        }
-    }
-
     @LargeTest
     @Test
     public void testLockTaskAfterReboot() throws Exception {
