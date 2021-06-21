@@ -43,7 +43,6 @@ public class LockTaskTest extends BaseDeviceAdminTest {
 
     private static final String PACKAGE_NAME = LockTaskTest.class.getPackage().getName();
     private static final ComponentName ADMIN_COMPONENT = ADMIN_RECEIVER_COMPONENT;
-    private static final String TEST_PACKAGE = "com.google.android.example.somepackage";
 
     private static final String UTILITY_ACTIVITY
             = "com.android.cts.deviceandprofileowner.LockTaskUtilityActivity";
@@ -154,30 +153,6 @@ public class LockTaskTest extends BaseDeviceAdminTest {
     public void tearDown() {
         mDevicePolicyManager.setLockTaskPackages(ADMIN_COMPONENT, new String[0]);
         mContext.unregisterReceiver(mReceiver);
-    }
-
-    // This launches an activity that is in the current task.
-    // This should always be permitted as a part of lock task (since it isn't a new task).
-    public void testStartActivity_withinTask() throws Exception {
-        mDevicePolicyManager.setLockTaskPackages(ADMIN_COMPONENT, new String[] { PACKAGE_NAME });
-        startLockTask(UTILITY_ACTIVITY);
-        waitForResume();
-
-        mIsReceiverActivityRunning = false;
-        Intent launchIntent = createReceiverActivityIntent(false /*newTask*/, false /*shouldWait*/);
-        Intent lockTaskUtility = getLockTaskUtility(UTILITY_ACTIVITY);
-        lockTaskUtility.putExtra(LockTaskUtilityActivity.START_ACTIVITY, launchIntent);
-        mContext.startActivity(lockTaskUtility);
-
-        synchronized (mReceiverActivityRunningLock) {
-            mReceiverActivityRunningLock.wait(ACTIVITY_RESUMED_TIMEOUT_MILLIS);
-            assertTrue(mIsReceiverActivityRunning);
-        }
-        synchronized (mReceiverActivityRunningLock) {
-            mReceiverActivityRunningLock.wait(ACTIVITY_DESTROYED_TIMEOUT_MILLIS);
-            assertFalse(mIsReceiverActivityRunning);
-        }
-        stopAndFinish(UTILITY_ACTIVITY);
     }
 
     // When LOCK_TASK_FEATURE_BLOCK_ACTIVITY_START_IN_TASK is set, un-allowed apps cannot
