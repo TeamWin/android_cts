@@ -1727,41 +1727,53 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             Size targetSize = CameraTestUtils.getMaxSize(configs.getOutputSizes(format));
             // Create outputConfiguration with this size and format
             SimpleImageReaderListener imageListener = new SimpleImageReaderListener();
+            SurfaceTexture textureTarget = null;
+            ImageReader readerTarget = null;
             if (format == ImageFormat.PRIVATE) {
-                SurfaceTexture target = new SurfaceTexture(1);
-                target.setDefaultBufferSize(targetSize.getWidth(), targetSize.getHeight());
-                outputConfig = new OutputConfiguration(new Surface(target));
+                textureTarget = new SurfaceTexture(1);
+                textureTarget.setDefaultBufferSize(targetSize.getWidth(), targetSize.getHeight());
+                outputConfig = new OutputConfiguration(new Surface(textureTarget));
             } else {
-                ImageReader target = ImageReader.newInstance(targetSize.getWidth(),
+                readerTarget = ImageReader.newInstance(targetSize.getWidth(),
                         targetSize.getHeight(), format, MIN_RESULT_COUNT);
-                target.setOnImageAvailableListener(imageListener, mHandler);
-                outputConfig = new OutputConfiguration(target.getSurface());
+                readerTarget.setOnImageAvailableListener(imageListener, mHandler);
+                outputConfig = new OutputConfiguration(readerTarget.getSurface());
             }
-            int invalidSensorPixelMode =
-                    maxResolution ? CameraMetadata.SENSOR_PIXEL_MODE_DEFAULT :
-                            CameraMetadata.SENSOR_PIXEL_MODE_MAXIMUM_RESOLUTION;
+            try {
+                int invalidSensorPixelMode =
+                        maxResolution ? CameraMetadata.SENSOR_PIXEL_MODE_DEFAULT :
+                                CameraMetadata.SENSOR_PIXEL_MODE_MAXIMUM_RESOLUTION;
 
-            outputConfig.addSensorPixelModeUsed(invalidSensorPixelMode);
-            CameraCaptureSession.StateCallback sessionListener =
-                    mock(CameraCaptureSession.StateCallback.class);
-            List<OutputConfiguration> outputs = new ArrayList<>();
-            outputs.add(outputConfig);
-            CameraCaptureSession session =
-                    CameraTestUtils.configureCameraSessionWithConfig(mCamera, outputs,
-                            sessionListener, mHandler);
+                outputConfig.addSensorPixelModeUsed(invalidSensorPixelMode);
+                CameraCaptureSession.StateCallback sessionListener =
+                        mock(CameraCaptureSession.StateCallback.class);
+                List<OutputConfiguration> outputs = new ArrayList<>();
+                outputs.add(outputConfig);
+                CameraCaptureSession session =
+                        CameraTestUtils.configureCameraSessionWithConfig(mCamera, outputs,
+                                sessionListener, mHandler);
 
-            verify(sessionListener, timeout(CONFIGURE_TIMEOUT).atLeastOnce()).
-                    onConfigureFailed(any(CameraCaptureSession.class));
-            verify(sessionListener, never()).onConfigured(any(CameraCaptureSession.class));
+                verify(sessionListener, timeout(CONFIGURE_TIMEOUT).atLeastOnce()).
+                        onConfigureFailed(any(CameraCaptureSession.class));
+                verify(sessionListener, never()).onConfigured(any(CameraCaptureSession.class));
 
-            // Remove the invalid sensor pixel mode, session configuration should succeed
-            sessionListener = mock(CameraCaptureSession.StateCallback.class);
-            outputConfig.removeSensorPixelModeUsed(invalidSensorPixelMode);
-            CameraTestUtils.configureCameraSessionWithConfig(mCamera, outputs,
-                    sessionListener, mHandler);
-            verify(sessionListener, timeout(CONFIGURE_TIMEOUT).atLeastOnce()).
-                    onConfigured(any(CameraCaptureSession.class));
-            verify(sessionListener, never()).onConfigureFailed(any(CameraCaptureSession.class));
+                // Remove the invalid sensor pixel mode, session configuration should succeed
+                sessionListener = mock(CameraCaptureSession.StateCallback.class);
+                outputConfig.removeSensorPixelModeUsed(invalidSensorPixelMode);
+                CameraTestUtils.configureCameraSessionWithConfig(mCamera, outputs,
+                        sessionListener, mHandler);
+                verify(sessionListener, timeout(CONFIGURE_TIMEOUT).atLeastOnce()).
+                        onConfigured(any(CameraCaptureSession.class));
+                verify(sessionListener, never()).onConfigureFailed(any(CameraCaptureSession.class));
+            } finally {
+                if (textureTarget != null) {
+                    textureTarget.release();
+                }
+
+                if (readerTarget != null) {
+                    readerTarget.close();
+                }
+            }
         }
     }
 
