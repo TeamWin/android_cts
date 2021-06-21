@@ -62,6 +62,7 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
         sIgnoredAnnotationPackages.add("java.lang.annotation");
         sIgnoredAnnotationPackages.add("com.android.bedstead.harrier.annotations.meta");
         sIgnoredAnnotationPackages.add("kotlin.*");
+        sIgnoredAnnotationPackages.add("org.junit");
     }
 
     /**
@@ -271,7 +272,8 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
 
         annotations.removeIf(
                 annotation ->
-                        !annotation.getClass().getCanonicalName().contains(BEDSTEAD_PACKAGE_NAME));
+                        !annotation.annotationType()
+                                .getCanonicalName().contains(BEDSTEAD_PACKAGE_NAME));
 
         annotations.sort(Comparator.comparingInt(annotationCounts::get));
         Collections.reverse(annotations);
