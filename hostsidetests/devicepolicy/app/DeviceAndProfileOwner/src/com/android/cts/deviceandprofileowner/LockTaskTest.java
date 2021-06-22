@@ -215,16 +215,6 @@ public class LockTaskTest extends BaseDeviceAdminTest {
         assertFalse(mIsActivityResumed);
     }
 
-    // Starting a not-allowed activity with ActivityOptions is not allowed
-    public void testActivityOptions_notAllowed() throws Exception {
-        try {
-            startLockTaskWithOptions(UTILITY_ACTIVITY);
-            fail();
-        } catch (SecurityException e) {
-            // pass
-        }
-    }
-
     /**
      * Checks that lock task mode is active and fails the test if it isn't.
      */
@@ -291,15 +281,6 @@ public class LockTaskTest extends BaseDeviceAdminTest {
     }
 
     /**
-     * Starts LockTaskUtilityActivity with {@link ActivityOptions#setLockTaskEnabled(boolean)}
-     */
-    private void startLockTaskWithOptions(String className) throws InterruptedException {
-        Intent intent = getLockTaskUtility(className);
-        Bundle options = ActivityOptions.makeBasic().setLockTaskEnabled(true).toBundle();
-        startAndWait(intent, options);
-    }
-
-    /**
      * Calls stopLockTask on the LockTaskUtilityActivity
      */
     private void stopLockTask(String className) throws InterruptedException {
@@ -348,16 +329,6 @@ public class LockTaskTest extends BaseDeviceAdminTest {
         Intent intent = new Intent();
         intent.setClassName(PACKAGE_NAME, className);
         intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-        return intent;
-    }
-
-    /** Create an intent to launch {@link #RECEIVER_ACTIVITY_NAME}. */
-    private Intent createReceiverActivityIntent(boolean newTask, boolean shouldWait) {
-        final Intent intent = new Intent();
-        intent.setComponent(
-                new ComponentName(RECEIVER_ACTIVITY_PACKAGE_NAME, RECEIVER_ACTIVITY_NAME));
-        intent.setAction(shouldWait ? ACTION_CREATE_AND_WAIT : ACTION_JUST_CREATE);
-        intent.setFlags(newTask ? Intent.FLAG_ACTIVITY_NEW_TASK : 0);
         return intent;
     }
 }
