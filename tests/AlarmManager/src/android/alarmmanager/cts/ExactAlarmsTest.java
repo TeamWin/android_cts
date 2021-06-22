@@ -143,6 +143,11 @@ public class ExactAlarmsTest {
                 + sContext.getOpPackageName(), output -> output.contains("Enabled"));
     }
 
+    private static void disableChange() {
+        SystemUtil.runShellCommand("am compat disable --no-kill REQUIRE_EXACT_ALARM_PERMISSION "
+                + sContext.getOpPackageName(), output -> output.contains("Disabled"));
+    }
+
     @After
     public void resetChanges() {
         // This is needed because compat persists the overrides beyond package uninstall
@@ -225,6 +230,13 @@ public class ExactAlarmsTest {
 
         mDeviceConfigHelper.with("exact_alarm_deny_list", sContext.getOpPackageName())
                 .commitAndAwaitPropagation();
+        assertTrue(mAlarmManager.canScheduleExactAlarms());
+    }
+
+    @Test
+    public void canScheduleExactAlarmWhenChangeDisabled() throws IOException {
+        disableChange();
+        revokeAppOp();
         assertTrue(mAlarmManager.canScheduleExactAlarms());
     }
 
