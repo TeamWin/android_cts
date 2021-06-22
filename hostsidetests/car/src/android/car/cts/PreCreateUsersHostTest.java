@@ -192,9 +192,7 @@ public final class PreCreateUsersHostTest extends CarHostJUnit4TestCase {
                             .that(actualPkgMap.get(pkg))
                             .isEqualTo(refPkgMap.get(pkg)));
         }
-        assertWithMessage("found %s error\n"
-                + "role status %s", errors.size(), executeCommand("dumpsys role")).that(errors)
-                        .isEmpty();
+        assertWithMessage("found %s error", errors.size()).that(errors).isEmpty();
     }
 
     private void addError(List<String> error, Runnable r) {
