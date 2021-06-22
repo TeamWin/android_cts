@@ -78,7 +78,7 @@ public final class HdmiCecSystemStandbyTest extends BaseHdmiCecCtsTest {
         getDevice().reboot();
         TimeUnit.SECONDS.sleep(5);
         for (LogicalAddress source : mLogicalAddresses) {
-            if (!source.equals(mDutLogicalAddress)) {
+            if (!hasLogicalAddress(source)) {
                 checkDeviceAsleepAfterStandbySent(source, LogicalAddress.BROADCAST);
             }
         }
@@ -92,7 +92,7 @@ public final class HdmiCecSystemStandbyTest extends BaseHdmiCecCtsTest {
     public void cect_HandleAddressedStandby() throws Exception {
         getDevice().reboot();
         for (LogicalAddress source : mLogicalAddresses) {
-            if (!source.equals(mDutLogicalAddress)) {
+            if (!hasLogicalAddress(source)) {
                 checkDeviceAsleepAfterStandbySent(source, mDutLogicalAddress);
             }
         }

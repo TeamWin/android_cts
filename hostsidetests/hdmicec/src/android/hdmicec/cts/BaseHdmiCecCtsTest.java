@@ -226,6 +226,10 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
         return mDutLogicalAddress.getDeviceType() == deviceType;
     }
 
+    public boolean hasLogicalAddress(LogicalAddress address) {
+        return mDutLogicalAddress.equals(address);
+    }
+
     public String getSystemLocale() throws Exception {
         ITestDevice device = getDevice();
         return device.executeShellCommand("getprop " + PROPERTY_LOCALE).trim();
