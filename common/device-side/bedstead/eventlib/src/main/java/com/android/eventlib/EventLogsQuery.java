@@ -19,6 +19,7 @@ package com.android.eventlib;
 import android.os.UserHandle;
 
 import com.android.bedstead.nene.users.UserReference;
+import com.android.queryable.Queryable;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -28,7 +29,7 @@ import java.util.function.Function;
  * Interface to provide additional restrictions on an {@link Event} query.
  */
 public abstract class EventLogsQuery<E extends Event, F extends EventLogsQuery>
-        extends EventLogs<E> {
+        extends EventLogs<E> implements Queryable {
 
     /**
      * Default implementation of {@link EventLogsQuery} used when there are no additional query
