@@ -215,20 +215,6 @@ public class LockTaskTest extends BaseDeviceAdminTest {
         assertFalse(mIsActivityResumed);
     }
 
-    // Start lock task with ActivityOptions
-    public void testActivityOptions_allowed() throws Exception {
-        mDevicePolicyManager.setLockTaskPackages(ADMIN_COMPONENT, new String[] { PACKAGE_NAME });
-        startLockTaskWithOptions(UTILITY_ACTIVITY);
-        waitForResume();
-
-        // Verify that activity open and activity manager is in lock task.
-        assertLockTaskModeActive();
-        assertTrue(mIsActivityRunning);
-        assertTrue(mIsActivityResumed);
-
-        stopAndFinish(UTILITY_ACTIVITY);
-    }
-
     // Starting a not-allowed activity with ActivityOptions is not allowed
     public void testActivityOptions_notAllowed() throws Exception {
         try {
@@ -302,15 +288,6 @@ public class LockTaskTest extends BaseDeviceAdminTest {
                 mActivityResumedLock.wait(ACTIVITY_RESUMED_TIMEOUT_MILLIS);
             }
         }
-    }
-
-    /**
-     * Calls startLockTask on the LockTaskUtilityActivity
-     */
-    private void startLockTask(String className) throws InterruptedException {
-        Intent intent = getLockTaskUtility(className);
-        intent.putExtra(LockTaskUtilityActivity.START_LOCK_TASK, true);
-        startAndWait(intent);
     }
 
     /**
