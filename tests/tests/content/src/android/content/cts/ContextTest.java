@@ -79,9 +79,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 @AppModeFull // TODO(Instant) Figure out which APIs should work.
 public class ContextTest extends AndroidTestCase {
@@ -235,6 +233,33 @@ public class ContextTest extends AndroidTestCase {
         assertEquals(1, params.getNextAttributionSource().getUid());
         assertEquals("bar", params.getNextAttributionSource().getPackageName());
         assertEquals("baz", params.getNextAttributionSource().getAttributionTag());
+    }
+
+    public void testAttributionSourceSetNext() throws Exception {
+        final AttributionSource next = new AttributionSource.Builder(2)
+                .setPackageName("nextBar")
+                .setAttributionTag("nextBaz")
+                .build();
+        final ContextParams params = new ContextParams.Builder()
+                .setAttributionTag("foo")
+                .setNextAttributionSource(new AttributionSource.Builder(1)
+                        .setPackageName("bar")
+                        .setAttributionTag("baz")
+                        .setNext(next)
+                        .build())
+                .build();
+
+        // Setting a 'next' should not affect prev.
+        assertEquals("foo", params.getAttributionTag());
+        assertEquals(1, params.getNextAttributionSource().getUid());
+        assertEquals("bar", params.getNextAttributionSource().getPackageName());
+        assertEquals("baz", params.getNextAttributionSource().getAttributionTag());
+
+        final AttributionSource check =
+                params.getNextAttributionSource().getNext();
+        assertEquals(2, check.getUid());
+        assertEquals("nextBar", check.getPackageName());
+        assertEquals("nextBaz", check.getAttributionTag());
     }
 
     public void testContextParams_Inherit() throws Exception {
