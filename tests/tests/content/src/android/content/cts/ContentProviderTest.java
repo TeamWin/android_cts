@@ -40,6 +40,7 @@ import android.net.Uri;
 import android.os.Binder;
 import android.os.ParcelFileDescriptor;
 import android.os.UserHandle;
+import android.platform.test.annotations.AppModeFull;
 import android.provider.MediaStore;
 
 import androidx.test.core.app.ApplicationProvider;
@@ -336,6 +337,7 @@ public class ContentProviderTest {
 
     @Test
     @EnsureHasWorkProfile
+    @AppModeFull
     public void createContentUriForUser_returnsCorrectUri() {
         final ContentResolver profileContentResolver =
                 sTestApis.context().androidContextAsUser(sDeviceState.workProfile())
