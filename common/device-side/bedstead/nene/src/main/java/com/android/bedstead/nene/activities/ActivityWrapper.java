@@ -17,6 +17,7 @@
 package com.android.bedstead.nene.activities;
 
 import android.app.Activity;
+import android.content.Intent;
 
 class ActivityWrapper implements NeneActivity {
 
@@ -44,5 +45,10 @@ class ActivityWrapper implements NeneActivity {
     @Override
     public boolean isFinishing() {
         return mActivity.isFinishing();
+    }
+
+    @Override
+    public void startActivity(Intent intent) {
+        mActivity.startActivity(intent);
     }
 }

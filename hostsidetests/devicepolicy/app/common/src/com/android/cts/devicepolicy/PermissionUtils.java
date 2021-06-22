@@ -16,6 +16,8 @@
 
 package com.android.cts.devicepolicy;
 
+import static android.Manifest.permission.CAMERA;
+import static android.Manifest.permission.RECORD_AUDIO;
 import static android.content.pm.PackageManager.PERMISSION_DENIED;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 
@@ -82,11 +84,14 @@ public class PermissionUtils {
         switch(expected) {
             case PERMISSION_DENIED:
                 resNames.add("permission_deny_button");
+                resNames.add("permission_deny_and_dont_ask_again_button");
                 break;
             case PERMISSION_GRANTED:
                 resNames.add("permission_allow_button");
-                // For the location permission, different buttons may be available.
-                if (LOCATION_PERMISSIONS.contains(permission)) {
+                // For some permissions, different buttons may be available.
+                if (LOCATION_PERMISSIONS.contains(permission)
+                        || RECORD_AUDIO.equals(permission)
+                        || CAMERA.equals(permission)) {
                     resNames.add("permission_allow_foreground_only_button");
                     resNames.add("permission_allow_one_time_button");
                 }

@@ -59,6 +59,7 @@ public final class ShellCommand {
     }
 
     public static final class Builder {
+        private String mLinuxUser;
         private final StringBuilder commandBuilder;
         @Nullable
         private byte[] mStdInBytes = null;
@@ -107,6 +108,7 @@ public final class ShellCommand {
         /**
          * Write the given {@code stdIn} to standard in.
          */
+        @CheckResult
         public Builder writeToStdIn(byte[] stdIn) {
             mStdInBytes = stdIn;
             return this;
@@ -117,15 +119,36 @@ public final class ShellCommand {
          *
          * <p>{@code outputSuccessChecker} should return {@code true} if the output is valid.
          */
+        @CheckResult
         public Builder validate(Function<String, Boolean> outputSuccessChecker) {
             mOutputSuccessChecker = outputSuccessChecker;
             return this;
         }
 
         /**
+         * Run the command as a given linux user.
+         */
+        @CheckResult
+        public Builder asLinuxUser(String user) {
+            mLinuxUser = user;
+            return this;
+        }
+
+        /**
+         * Run the command as the root linux user.
+         */
+        @CheckResult
+        public Builder asRoot() {
+            return asLinuxUser("root");
+        }
+
+        /**
          * Build the full command including all options and operands.
          */
         public String build() {
+            if (mLinuxUser != null) {
+                return "su " + mLinuxUser + " " + commandBuilder.toString();
+            }
             return commandBuilder.toString();
         }
 
@@ -145,14 +168,14 @@ public final class ShellCommand {
         public String execute() throws AdbException {
             if (mOutputSuccessChecker != null) {
                 return ShellCommandUtils.executeCommandAndValidateOutput(
-                        commandBuilder.toString(),
+                        build(),
                         /* allowEmptyOutput= */ mAllowEmptyOutput,
                         mStdInBytes,
                         mOutputSuccessChecker);
             }
 
             return ShellCommandUtils.executeCommand(
-                    commandBuilder.toString(),
+                    build(),
                     /* allowEmptyOutput= */ mAllowEmptyOutput,
                     mStdInBytes);
         }
@@ -193,6 +216,11 @@ public final class ShellCommand {
                 }
             }
             return execute();
+        }
+
+        @Override
+        public String toString() {
+            return "ShellCommand$Builder{cmd=" + build() + "}";
         }
     }
 }
