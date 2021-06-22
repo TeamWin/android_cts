@@ -201,6 +201,9 @@ public class Install {
         if (mIsStaged || isApex) {
             SystemUtil.runShellCommandForNoOutput("pm bypass-staged-installer-check true");
         }
+        if (isApex) {
+            SystemUtil.runShellCommandForNoOutput("pm bypass-allowed-apex-update-check true");
+        }
         try {
             PackageInstaller.SessionParams params =
                     new PackageInstaller.SessionParams(mSessionMode);
@@ -222,6 +225,9 @@ public class Install {
         } finally {
             if (mIsStaged || isApex) {
                 SystemUtil.runShellCommandForNoOutput("pm bypass-staged-installer-check false");
+            }
+            if (isApex) {
+                SystemUtil.runShellCommandForNoOutput("pm bypass-allowed-apex-update-check false");
             }
         }
     }
