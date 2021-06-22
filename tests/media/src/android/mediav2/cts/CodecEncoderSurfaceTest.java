@@ -29,6 +29,7 @@ import android.view.Surface;
 import androidx.test.filters.LargeTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -36,12 +37,10 @@ import org.junit.runners.Parameterized;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -51,6 +50,7 @@ public class CodecEncoderSurfaceTest {
     private static final String mInpPrefix = WorkDir.getMediaDirString();
     private static final boolean ENABLE_LOGS = false;
 
+    private final String mCompName;
     private final String mMime;
     private final String mTestFile;
     private final int mBitrate;
@@ -86,7 +86,9 @@ public class CodecEncoderSurfaceTest {
         CodecTestBase.mimeSelKeys = args.getString(CodecTestBase.MIME_SEL_KEY);
     }
 
-    public CodecEncoderSurfaceTest(String mime, String testFile, int bitrate, int frameRate) {
+    public CodecEncoderSurfaceTest(String encoder, String mime, String testFile, int bitrate,
+            int frameRate) {
+        mCompName = encoder;
         mMime = mime;
         mTestFile = testFile;
         mBitrate = bitrate;
@@ -98,7 +100,14 @@ public class CodecEncoderSurfaceTest {
         mAsyncHandleEncoder = new CodecAsyncHandler();
     }
 
-    @Parameterized.Parameters(name = "{index}({0})")
+    @Before
+    public void isCodecNameValid() {
+        if (mCompName.startsWith(CodecTestBase.INVALID_CODEC)) {
+            fail("no valid component available for current test ");
+        }
+    }
+
+    @Parameterized.Parameters(name = "{index}({0}_{1})")
     public static Collection<Object[]> input() {
         final boolean isEncoder = true;
         final boolean needAudio = false;
@@ -445,11 +454,9 @@ public class CodecEncoderSurfaceTest {
         }
         mDecoder = MediaCodec.createByCodecName(decoder);
         MediaFormat encoderFormat = setUpEncoderFormat(decoderFormat);
-        ArrayList<String> listOfEncoders = CodecTestBase.selectCodecs(mMime, null, null, true);
-        assertFalse("no suitable codecs found for mime: " + mMime, listOfEncoders.isEmpty());
         boolean muxOutput = true;
-        for (String encoder : listOfEncoders) {
-            mEncoder = MediaCodec.createByCodecName(encoder);
+        {
+            mEncoder = MediaCodec.createByCodecName(mCompName);
             /* TODO(b/149027258) */
             mSaveToMem = false;
             OutputManager ref = new OutputManager();
@@ -497,7 +504,7 @@ public class CodecEncoderSurfaceTest {
                 else mEncoder.reset();
                 String log = String.format(
                         "format: %s \n codec: %s, file: %s, mode: %s:: ",
-                        encoderFormat, encoder, mTestFile, (isAsync ? "async" : "sync"));
+                        encoderFormat, mCompName, mTestFile, (isAsync ? "async" : "sync"));
                 assertTrue(log + " unexpected error", !hasSeenError());
                 assertTrue(log + "no input sent", 0 != mDecInputCount);
                 assertTrue(log + "no decoder output received", 0 != mDecOutputCount);
@@ -549,19 +556,16 @@ public class CodecEncoderSurfaceTest {
             mExtractor.release();
             fail("no suitable decoder found for format: " + decoderFormat.toString());
         }
-        ArrayList<String> listOfEncoders = CodecTestBase.selectCodecs(mMime, null, null, true);
-        assertFalse("no suitable codecs found for mime: " + mMime, listOfEncoders.isEmpty());
-        for (String encoder : listOfEncoders) {
-            String tmpPath = null;
+        {
+            String tmpPath;
             if (mMime.equals(MediaFormat.MIMETYPE_VIDEO_VP8) ||
                     mMime.equals(MediaFormat.MIMETYPE_VIDEO_VP9)) {
                 tmpPath = File.createTempFile("tmp", ".webm").getAbsolutePath();
             } else {
                 tmpPath = File.createTempFile("tmp", ".mp4").getAbsolutePath();
             }
-            assertTrue(
-                    nativeTestSimpleEncode(encoder, decoder, mMime, mInpPrefix + mTestFile, tmpPath,
-                            mBitrate, mFrameRate));
+            assertTrue(nativeTestSimpleEncode(mCompName, decoder, mMime, mInpPrefix + mTestFile,
+                    tmpPath, mBitrate, mFrameRate));
         }
     }
 }

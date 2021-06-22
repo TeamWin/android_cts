@@ -32,7 +32,6 @@ import org.junit.runners.Parameterized;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -56,9 +55,9 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
     private MediaFormat mConfigFormat;
     private MediaMuxer mMuxer;
 
-    public EncoderProfileLevelTest(String mime, int bitrate, int encoderInfo1, int encoderInfo2,
-            int frameRate) {
-        super(mime, new int[]{bitrate}, new int[]{encoderInfo1}, new int[]{encoderInfo2});
+    public EncoderProfileLevelTest(String encoder, String mime, int bitrate, int encoderInfo1,
+            int encoderInfo2, int frameRate) {
+        super(encoder, mime, new int[]{bitrate}, new int[]{encoderInfo1}, new int[]{encoderInfo2});
         if (mIsAudio) {
             mSampleRate = encoderInfo1;
             mChannels = encoderInfo2;
@@ -71,7 +70,7 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
         mConfigFormat = mFormats.get(0);
     }
 
-    @Parameterized.Parameters(name = "{index}({0})")
+    @Parameterized.Parameters(name = "{index}({0}_{1})")
     public static Collection<Object[]> input() {
         final boolean isEncoder = true;
         final boolean needAudio = true;
@@ -688,8 +687,6 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
      */
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testValidateProfileLevel() throws IOException, InterruptedException {
-        ArrayList<String> listOfEncoders = selectCodecs(mMime, null, null, true);
-        assertFalse("no suitable codecs found for mime: " + mMime, listOfEncoders.isEmpty());
         int[] profiles = mProfileMap.get(mMime);
         assertTrue("no profile entry found for mime" + mMime, profiles != null);
         // cdd check initialization
@@ -706,9 +703,9 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
         setUpSource(mInputFile);
         mSaveToMem = true;
         String tempMuxedFile = File.createTempFile("tmp", ".out").getAbsolutePath();
-        int supportedCddCount = listOfEncoders.size() * (cddSupportedMime ? profileCdd.length : 1);
-        for (String encoder : listOfEncoders) {
-            mCodec = MediaCodec.createByCodecName(encoder);
+        int supportedCddCount = (cddSupportedMime ? profileCdd.length : 1);
+        {
+            mCodec = MediaCodec.createByCodecName(mCodecName);
             MediaCodecInfo.CodecCapabilities codecCapabilities =
                     mCodec.getCodecInfo().getCapabilitiesForType(mMime);
             for (int profile : profiles) {
@@ -733,7 +730,8 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
                             supportedCddCount--;
                         }
                         Log.w(LOG_TAG,
-                                "Component: " + encoder + " doesn't support cdd format: " + format);
+                                "Component: " + mCodecName + " doesn't support cdd format: " +
+                                        format);
                     }
                     continue;
                 }
@@ -748,8 +746,9 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
                 /* TODO(b/147348711) */
                 if (false) mCodec.stop();
                 else mCodec.reset();
-                String log = String.format("format: %s \n codec: %s, mode: %s:: ", format, encoder,
-                        "sync");
+                String log =
+                        String.format("format: %s \n codec: %s, mode: %s:: ", format, mCodecName,
+                                "sync");
                 assertFalse(log + " unexpected error", mAsyncHandle.hasSeenError());
                 assertTrue(log + "configured format and output format are not similar." +
                                 (ENABLE_LOGS ? "\n output format:" + outFormat : ""),
