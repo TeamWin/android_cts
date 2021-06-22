@@ -84,7 +84,6 @@ public final class HdmiCecInvalidMessagesTest extends BaseHdmiCecCtsTest {
         try {
             hdmiCecClient.sendCecMessage(
                     source,
-                    mDutLogicalAddress,
                     CecOperand.SET_MENU_LANGUAGE,
                     CecMessage.convertStringToHexParams(language));
             assertThat(originalLanguage).isEqualTo(extractLanguage(getSystemLocale()));
