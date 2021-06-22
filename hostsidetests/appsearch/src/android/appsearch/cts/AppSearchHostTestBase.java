@@ -29,6 +29,8 @@ public abstract class AppSearchHostTestBase extends BaseHostJUnit4Test {
     protected static final String TARGET_APK_A = "CtsAppSearchHostTestHelperA.apk";
     protected static final String TARGET_PKG_A = "android.appsearch.app.a";
     protected static final String TEST_CLASS_A = TARGET_PKG_A + ".AppSearchDeviceTest";
+    protected static final String TEST_STORAGE_AUGMENTER_CLASS_A =
+            TARGET_PKG_A + ".AppSearchStorageAugmenterDeviceTest";
     protected static final String TARGET_APK_B = "CtsAppSearchHostTestHelperB.apk";
     protected static final String TARGET_PKG_B = "android.appsearch.app.b";
     protected static final String TEST_CLASS_B = TARGET_PKG_B + ".AppSearchDeviceTest";
@@ -56,6 +58,13 @@ public abstract class AppSearchHostTestBase extends BaseHostJUnit4Test {
         }
         assertWithMessage(testMethod + " failed").that(
                 runDeviceTests(deviceTestRunOptions)).isTrue();
+    }
+
+    protected void runStorageAugmenterDeviceTestAsUserInPkgA(@Nonnull String testMethod, int userId)
+            throws Exception {
+        assertWithMessage(testMethod + " failed").that(
+                runDeviceTests(getDevice(), TARGET_PKG_A, TEST_STORAGE_AUGMENTER_CLASS_A,
+                        testMethod, userId, DEFAULT_INSTRUMENTATION_TIMEOUT_MS)).isTrue();
     }
 
     protected void runDeviceTestAsUserInPkgB(@Nonnull String testMethod, int userId)
