@@ -186,7 +186,7 @@ public class MediaStore_Audio_MediaTest {
         }
     }
 
-    @Test
+    @Test(timeout = 60000)
     public void testCanonicalize() throws Exception {
         // Remove all audio left over from other tests
         ProviderTestUtils.executeShellCommand("content delete"
