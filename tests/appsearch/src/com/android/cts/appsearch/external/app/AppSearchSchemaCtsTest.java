@@ -18,7 +18,7 @@ package android.app.appsearch.cts.app;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import static org.testng.Assert.expectThrows;
+import static org.junit.Assert.assertThrows;
 
 import android.app.appsearch.AppSearchSchema;
 import android.app.appsearch.AppSearchSchema.PropertyConfig;
@@ -35,7 +35,7 @@ public class AppSearchSchemaCtsTest {
     @Test
     public void testInvalidEnums() {
         StringPropertyConfig.Builder builder = new StringPropertyConfig.Builder("test");
-        expectThrows(IllegalArgumentException.class, () -> builder.setCardinality(99));
+        assertThrows(IllegalArgumentException.class, () -> builder.setCardinality(99));
     }
 
     @Test
@@ -58,7 +58,7 @@ public class AppSearchSchemaCtsTest {
                                         .setTokenizerType(StringPropertyConfig.TOKENIZER_TYPE_PLAIN)
                                         .build());
         IllegalSchemaException e =
-                expectThrows(
+                assertThrows(
                         IllegalSchemaException.class,
                         () ->
                                 builder.addProperty(
@@ -278,10 +278,10 @@ public class AppSearchSchemaCtsTest {
 
         // Setting an indexing type other NONE with the default tokenizer type (NONE) should fail.
         builder.setIndexingType(StringPropertyConfig.INDEXING_TYPE_EXACT_TERMS);
-        expectThrows(IllegalStateException.class, () -> builder.build());
+        assertThrows(IllegalStateException.class, () -> builder.build());
 
         builder.setIndexingType(StringPropertyConfig.INDEXING_TYPE_PREFIXES);
-        expectThrows(IllegalStateException.class, () -> builder.build());
+        assertThrows(IllegalStateException.class, () -> builder.build());
 
         // Explicitly setting the default should work fine.
         builder.setIndexingType(StringPropertyConfig.INDEXING_TYPE_NONE);
@@ -290,10 +290,10 @@ public class AppSearchSchemaCtsTest {
         // Explicitly setting the default tokenizer type should result in the same behavior.
         builder.setTokenizerType(StringPropertyConfig.TOKENIZER_TYPE_NONE)
                 .setIndexingType(StringPropertyConfig.INDEXING_TYPE_EXACT_TERMS);
-        expectThrows(IllegalStateException.class, () -> builder.build());
+        assertThrows(IllegalStateException.class, () -> builder.build());
 
         builder.setIndexingType(StringPropertyConfig.INDEXING_TYPE_PREFIXES);
-        expectThrows(IllegalStateException.class, () -> builder.build());
+        assertThrows(IllegalStateException.class, () -> builder.build());
 
         builder.setIndexingType(StringPropertyConfig.INDEXING_TYPE_NONE);
         assertThat(builder.build()).isNotNull();
@@ -306,10 +306,10 @@ public class AppSearchSchemaCtsTest {
         final StringPropertyConfig.Builder builder =
                 new StringPropertyConfig.Builder("property")
                         .setTokenizerType(StringPropertyConfig.TOKENIZER_TYPE_PLAIN);
-        expectThrows(IllegalStateException.class, () -> builder.build());
+        assertThrows(IllegalStateException.class, () -> builder.build());
 
         builder.setIndexingType(StringPropertyConfig.INDEXING_TYPE_NONE);
-        expectThrows(IllegalStateException.class, () -> builder.build());
+        assertThrows(IllegalStateException.class, () -> builder.build());
 
         // Setting indexing type to be something other than NONE with tokenizer type PLAIN should
         // be just fine.

@@ -19,7 +19,7 @@ package android.app.appsearch.cts.app;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import static org.testng.Assert.expectThrows;
+import static org.junit.Assert.assertThrows;
 
 import android.annotation.NonNull;
 import android.app.appsearch.AppSearchSchema;
@@ -189,7 +189,7 @@ public class SetSchemaRequestCtsTest {
     @Test
     public void testInvalidSchemaReferences_fromDisplayedBySystem() {
         IllegalArgumentException expected =
-                expectThrows(
+                assertThrows(
                         IllegalArgumentException.class,
                         () ->
                                 new SetSchemaRequest.Builder()
@@ -201,7 +201,7 @@ public class SetSchemaRequestCtsTest {
     @Test
     public void testInvalidSchemaReferences_fromPackageVisibility() {
         IllegalArgumentException expected =
-                expectThrows(
+                assertThrows(
                         IllegalArgumentException.class,
                         () ->
                                 new SetSchemaRequest.Builder()
@@ -328,7 +328,7 @@ public class SetSchemaRequestCtsTest {
     @Test
     public void testSetVersion() {
         IllegalArgumentException exception =
-                expectThrows(
+                assertThrows(
                         IllegalArgumentException.class,
                         () ->
                                 new SetSchemaRequest.Builder()

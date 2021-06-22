@@ -26,7 +26,7 @@ import static com.android.server.appsearch.testing.AppSearchTestUtils.retrieveAl
 
 import static com.google.common.truth.Truth.assertThat;
 
-import static org.testng.Assert.expectThrows;
+import static org.junit.Assert.assertThrows;
 
 import android.annotation.NonNull;
 import android.app.appsearch.AppSearchBatchResult;
@@ -135,7 +135,7 @@ public abstract class AppSearchSessionCtsTestBase {
                 new AppSearchSchema.Builder(AppSearchEmail.SCHEMA_TYPE).build();
 
         Throwable throwable =
-                expectThrows(
+                assertThrows(
                                 ExecutionException.class,
                                 () ->
                                         mDb1.setSchema(
@@ -151,7 +151,7 @@ public abstract class AppSearchSessionCtsTestBase {
         assertThat(exception).hasMessageThat().contains("Incompatible types: {builtin:Email}");
 
         throwable =
-                expectThrows(
+                assertThrows(
                                 ExecutionException.class,
                                 () -> mDb1.setSchema(new SetSchemaRequest.Builder().build()).get())
                         .getCause();
@@ -546,7 +546,7 @@ public abstract class AppSearchSessionCtsTestBase {
 
         // Try to remove the email schema. This should fail as it's an incompatible change.
         Throwable failResult1 =
-                expectThrows(
+                assertThrows(
                                 ExecutionException.class,
                                 () -> mDb1.setSchema(new SetSchemaRequest.Builder().build()).get())
                         .getCause();
@@ -628,7 +628,7 @@ public abstract class AppSearchSessionCtsTestBase {
         // Try to remove the email schema in database1. This should fail as it's an incompatible
         // change.
         Throwable failResult1 =
-                expectThrows(
+                assertThrows(
                                 ExecutionException.class,
                                 () -> mDb1.setSchema(new SetSchemaRequest.Builder().build()).get())
                         .getCause();
@@ -2070,6 +2070,93 @@ public abstract class AppSearchSessionCtsTestBase {
     }
 
     @Test
+    public void testSetSnippetCount() throws Exception {
+        // Schema registration
+        AppSearchSchema genericSchema =
+                new AppSearchSchema.Builder("Generic")
+                        .addProperty(
+                                new StringPropertyConfig.Builder("subject")
+                                        .setCardinality(PropertyConfig.CARDINALITY_REPEATED)
+                                        .setTokenizerType(StringPropertyConfig.TOKENIZER_TYPE_PLAIN)
+                                        .setIndexingType(
+                                                StringPropertyConfig.INDEXING_TYPE_PREFIXES)
+                                        .build())
+                        .build();
+        mDb1.setSchema(new SetSchemaRequest.Builder().addSchemas(genericSchema).build()).get();
+
+        // Index documents
+        checkIsBatchResultSuccess(
+                mDb1.put(
+                        new PutDocumentsRequest.Builder()
+                                .addGenericDocuments(
+                                        new GenericDocument.Builder<>("namespace", "id1", "Generic")
+                                                .setPropertyString(
+                                                        "subject",
+                                                        "I like cats",
+                                                        "I like dogs",
+                                                        "I like birds",
+                                                        "I like fish")
+                                                .setScore(10)
+                                                .build(),
+                                        new GenericDocument.Builder<>("namespace", "id2", "Generic")
+                                                .setPropertyString(
+                                                        "subject",
+                                                        "I like red",
+                                                        "I like green",
+                                                        "I like blue",
+                                                        "I like yellow")
+                                                .setScore(20)
+                                                .build(),
+                                        new GenericDocument.Builder<>("namespace", "id3", "Generic")
+                                                .setPropertyString(
+                                                        "subject",
+                                                        "I like cupcakes",
+                                                        "I like donuts",
+                                                        "I like eclairs",
+                                                        "I like froyo")
+                                                .setScore(5)
+                                                .build())
+                                .build()));
+
+        // Query for the document
+        SearchResultsShim searchResults =
+                mDb1.search(
+                        "like",
+                        new SearchSpec.Builder()
+                                .addFilterSchemas("Generic")
+                                .setSnippetCount(2)
+                                .setSnippetCountPerProperty(3)
+                                .setMaxSnippetSize(11)
+                                .setRankingStrategy(SearchSpec.RANKING_STRATEGY_DOCUMENT_SCORE)
+                                .setTermMatch(SearchSpec.TERM_MATCH_PREFIX)
+                                .build());
+
+        // Check result 1
+        List<SearchResult> results = searchResults.getNextPage().get();
+        assertThat(results).hasSize(3);
+
+        assertThat(results.get(0).getGenericDocument().getId()).isEqualTo("id2");
+        List<SearchResult.MatchInfo> matchInfos = results.get(0).getMatchInfos();
+        assertThat(matchInfos).hasSize(3);
+        assertThat(matchInfos.get(0).getSnippet()).isEqualTo("I like red");
+        assertThat(matchInfos.get(1).getSnippet()).isEqualTo("I like");
+        assertThat(matchInfos.get(2).getSnippet()).isEqualTo("I like blue");
+
+        // Check result 2
+        assertThat(results.get(1).getGenericDocument().getId()).isEqualTo("id1");
+        matchInfos = results.get(1).getMatchInfos();
+        assertThat(matchInfos).hasSize(3);
+        assertThat(matchInfos.get(0).getSnippet()).isEqualTo("I like cats");
+        assertThat(matchInfos.get(1).getSnippet()).isEqualTo("I like dogs");
+        assertThat(matchInfos.get(2).getSnippet()).isEqualTo("I like");
+
+        // Check result 2
+        assertThat(results.get(2).getGenericDocument().getId()).isEqualTo("id3");
+        matchInfos = results.get(2).getMatchInfos();
+        assertThat(matchInfos).isEmpty();
+    }
+
+    @Test
     public void testCJKSnippet() throws Exception {
         // Schema registration
         AppSearchSchema genericSchema =
@@ -2929,7 +3016,7 @@ public abstract class AppSearchSessionCtsTestBase {
             // Try to query the closed database
             // We are using the same-thread db here to make sure it has been closed.
             IllegalStateException e =
-                    expectThrows(
+                    assertThrows(
                             IllegalStateException.class,
                             () ->
                                     sameThreadDb.search(
@@ -3036,7 +3123,7 @@ public abstract class AppSearchSessionCtsTestBase {
 
         // Use an incorrect namespace; it fails
         ExecutionException e =
-                expectThrows(
+                assertThrows(
                         ExecutionException.class,
                         () ->
                                 mDb1.reportUsage(
