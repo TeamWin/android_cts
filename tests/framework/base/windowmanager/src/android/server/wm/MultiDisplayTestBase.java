@@ -41,7 +41,9 @@ import static android.view.WindowManager.DISPLAY_IME_POLICY_FALLBACK_DISPLAY;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
+import static com.android.cts.mockime.ImeEventStreamTestUtils.clearAllEvents;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
+import static com.android.cts.mockime.ImeEventStreamTestUtils.notExpectEvent;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
@@ -53,6 +55,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.inputmethodservice.InputMethodService;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.server.wm.CommandSession.ActivitySession;
@@ -69,6 +72,7 @@ import androidx.annotation.Nullable;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.cts.mockime.ImeEvent;
 import com.android.cts.mockime.ImeEventStream;
+import com.android.cts.mockime.ImeEventStreamTestUtils;
 
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -491,7 +495,7 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
         @NonNull
         List<DisplayContent> createDisplays(int count) {
             if (mSimulateDisplay) {
-                return simulateDisplay();
+                return simulateDisplays(count);
             } else {
                 return createVirtualDisplays(count);
             }
@@ -525,13 +529,10 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
          * </pre>
          * @return {@link DisplayContent} of newly created display.
          */
-        private List<DisplayContent> simulateDisplay() {
+        private List<DisplayContent> simulateDisplays(int count) {
             mOverlayDisplayDeviceSession = new OverlayDisplayDevicesSession(mContext);
-            mOverlayDisplayDeviceSession.createDisplay(
-                    mSimulationDisplaySize,
-                    mDensityDpi,
-                    mOwnContentOnly,
-                    mShowSystemDecorations);
+            mOverlayDisplayDeviceSession.createDisplays(mSimulationDisplaySize, mDensityDpi,
+                    mOwnContentOnly, mShowSystemDecorations, count);
             mOverlayDisplayDeviceSession.configureDisplays(mDisplayImePolicy /* imePolicy */);
             return mOverlayDisplayDeviceSession.getCreatedDisplays();
         }
@@ -692,16 +693,24 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
         }
 
         /** Creates overlay display with custom density dpi, specified size, and test flags. */
-        void createDisplay(Size displaySize, int densityDpi, boolean ownContentOnly,
-                boolean shouldShowSystemDecorations) {
-            String displaySettingsEntry = displaySize + "/" + densityDpi;
-            if (ownContentOnly) {
-                displaySettingsEntry += OVERLAY_DISPLAY_FLAG_OWN_CONTENT_ONLY;
+        void createDisplays(Size displaySize, int densityDpi, boolean ownContentOnly,
+                boolean shouldShowSystemDecorations, int count) {
+            final StringBuilder builder = new StringBuilder();
+            for (int i = 0; i < count; i++) {
+                String displaySettingsEntry = displaySize + "/" + densityDpi;
+                if (ownContentOnly) {
+                    displaySettingsEntry += OVERLAY_DISPLAY_FLAG_OWN_CONTENT_ONLY;
+                }
+                if (shouldShowSystemDecorations) {
+                    displaySettingsEntry += OVERLAY_DISPLAY_FLAG_SHOULD_SHOW_SYSTEM_DECORATIONS;
+                }
+                builder.append(displaySettingsEntry);
+                // Creating n displays needs (n - 1) ';'.
+                if (i < count - 1) {
+                    builder.append(';');
+                }
             }
-            if (shouldShowSystemDecorations) {
-                displaySettingsEntry += OVERLAY_DISPLAY_FLAG_SHOULD_SHOW_SYSTEM_DECORATIONS;
-            }
-            set(displaySettingsEntry);
+            set(builder.toString());
         }
 
         void configureDisplays(int imePolicy) {
@@ -851,6 +860,26 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
         }
         // Assert the IME is shown on the expected display.
         mWmState.waitAndAssertImeWindowShownOnDisplay(displayId);
+    }
+
+    protected void waitAndAssertImeConfigurationChanged(ImeEventStream stream) throws Exception {
+        expectEvent(stream, event -> "onConfigurationChanged".equals(event.getEventName()),
+                TimeUnit.SECONDS.toMillis(5) /* eventTimeout */);
+    }
+
+    protected void waitAndAssertNoImeConfigurationChanged(ImeEventStream stream) {
+        notExpectEvent(stream, event -> "onConfigurationChanged".equals(event.getEventName()),
+                TimeUnit.SECONDS.toMillis(1) /* eventTimeout */);
+    }
+
+    /**
+     * Clears all {@link InputMethodService#onConfigurationChanged(Configuration)} events from the
+     * given {@code stream} and returns a forked {@link ImeEventStream}.
+     *
+     * @see ImeEventStreamTestUtils#clearAllEvents(ImeEventStream, String)
+     */
+    protected ImeEventStream clearOnConfigurationChangedFromStream(ImeEventStream stream) {
+        return clearAllEvents(stream, "onConfigurationChanged");
     }
 
     /**
