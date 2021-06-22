@@ -3023,7 +3023,7 @@ public class ImsServiceTest {
                     TEST_RCS_CONFIG_SINGLE_REGISTRATION_DISABLED.getBytes(), false);
             int res = waitForIntResult(TestAcsClient.getInstance().getActionQueue());
             assertEquals(res, TestAcsClient.ACTION_CONFIG_CHANGED);
-            assertEquals(provisioningManager.isRcsVolteSingleRegistrationCapable(), false);
+            assertEquals(provisioningManager.isRcsVolteSingleRegistrationCapable(), true);
         } finally {
             automan.dropShellPermissionIdentity();
         }
