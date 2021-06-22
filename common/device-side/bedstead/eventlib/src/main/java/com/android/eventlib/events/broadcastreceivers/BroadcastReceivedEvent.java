@@ -25,12 +25,12 @@ import androidx.annotation.CheckResult;
 import com.android.eventlib.Event;
 import com.android.eventlib.EventLogger;
 import com.android.eventlib.EventLogsQuery;
-import com.android.eventlib.info.BroadcastReceiverInfo;
-import com.android.eventlib.queryhelpers.BroadcastReceiverQuery;
-import com.android.eventlib.queryhelpers.BroadcastReceiverQueryHelper;
-import com.android.eventlib.queryhelpers.IntentQuery;
-import com.android.eventlib.queryhelpers.IntentQueryHelper;
-import com.android.eventlib.util.SerializableParcelWrapper;
+import com.android.queryable.info.BroadcastReceiverInfo;
+import com.android.queryable.queries.BroadcastReceiverQuery;
+import com.android.queryable.queries.BroadcastReceiverQueryHelper;
+import com.android.queryable.queries.IntentQuery;
+import com.android.queryable.queries.IntentQueryHelper;
+import com.android.queryable.util.SerializableParcelWrapper;
 
 /**
  * Event logged when {@link BroadcastReceiver#onReceive(Context, Intent)} is called.
