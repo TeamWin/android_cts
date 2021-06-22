@@ -288,7 +288,7 @@ public class OmapiTest {
             }
 
             if (supportSDReaders()) {
-                assertGreaterOrEqual(eseReaders.size(), 1);
+                assertGreaterOrEqual(sdReaders.size(), 1);
             } else {
                 assertTrue(sdReaders.size() == 0);
             }
