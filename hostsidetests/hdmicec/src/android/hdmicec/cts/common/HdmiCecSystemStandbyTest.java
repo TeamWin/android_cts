@@ -79,7 +79,8 @@ public final class HdmiCecSystemStandbyTest extends BaseHdmiCecCtsTest {
         TimeUnit.SECONDS.sleep(5);
         for (LogicalAddress source : mLogicalAddresses) {
             if (!hasLogicalAddress(source)) {
-                checkDeviceAsleepAfterStandbySent(source, LogicalAddress.BROADCAST);
+                hdmiCecClient.sendCecMessage(source, LogicalAddress.BROADCAST, CecOperand.STANDBY);
+                checkDeviceAsleepAfterStandbySent();
             }
         }
     }
@@ -93,7 +94,8 @@ public final class HdmiCecSystemStandbyTest extends BaseHdmiCecCtsTest {
         getDevice().reboot();
         for (LogicalAddress source : mLogicalAddresses) {
             if (!hasLogicalAddress(source)) {
-                checkDeviceAsleepAfterStandbySent(source, mDutLogicalAddress);
+                hdmiCecClient.sendCecMessage(source, CecOperand.STANDBY);
+                checkDeviceAsleepAfterStandbySent();
             }
         }
     }
@@ -140,10 +142,8 @@ public final class HdmiCecSystemStandbyTest extends BaseHdmiCecCtsTest {
         return val.equals("1");
     }
 
-    private void checkDeviceAsleepAfterStandbySent(LogicalAddress source,
-            LogicalAddress destination) throws Exception {
+    private void checkDeviceAsleepAfterStandbySent() throws Exception {
         ITestDevice device = getDevice();
-        hdmiCecClient.sendCecMessage(source, destination, CecOperand.STANDBY);
         TimeUnit.SECONDS.sleep(5);
         String wakeState = device.executeShellCommand("dumpsys power | grep mWakefulness=");
         assertThat(wakeState.trim()).isEqualTo("mWakefulness=Asleep");

@@ -449,15 +449,17 @@ public final class HdmiCecClientWrapper extends ExternalResource {
         return false;
     }
 
-    /**
-     * Gets all the messages received from the given source device during a period of duration
-     * seconds.
+    /** Gets all the messages received from the given list of source devices during a period of
+     * duration seconds.
      */
-    public List<CecOperand> getAllMessages(LogicalAddress source, int duration)
+    public List<CecOperand> getAllMessages(List<LogicalAddress> sourceList, int duration)
             throws CecClientWrapperException {
         List<CecOperand> receivedOperands = new ArrayList<>();
         long startTime = System.currentTimeMillis();
         long endTime = startTime;
+
+        String source = sourceList.toString().replace(",", "").replace(" ", "");
+
         Pattern pattern = Pattern.compile("(.*>>)(.*?)" +
                 "(" + source + "\\p{XDigit}):(.*)",
             Pattern.CASE_INSENSITIVE);
