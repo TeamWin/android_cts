@@ -49,7 +49,9 @@ public class CodecState {
     private LinkedList<Integer> mAvailableOutputBufferIndices;
     private LinkedList<MediaCodec.BufferInfo> mAvailableOutputBufferInfos;
     private volatile long mPresentationTimeUs;
-    private long mSampleBaseTimeUs;
+    private long mFirstSampleTimeUs;
+    private long mPlaybackStartTimeUs;
+    private long mLastPresentTimeUs;
     private MediaCodec mCodec;
     private MediaTimeProvider mMediaTimeProvider;
     private MediaExtractor mExtractor;
@@ -59,6 +61,9 @@ public class CodecState {
     private volatile OnFrameRenderedListener mOnFrameRenderedListener;
     /** A list of reported rendered video frames' timestamps. */
     private ArrayList<Long> mRenderedVideoFrameTimestampList;
+
+    /** If true the video/audio will start from the beginning when it reaches the end. */
+    private boolean mLoopEnabled = false;
 
     /**
      * Manages audio and video playback using MediaCodec and AudioTrack.
@@ -80,7 +85,9 @@ public class CodecState {
         mLimitQueueDepth = limitQueueDepth;
         mTunneled = tunneled;
         mAudioSessionId = audioSessionId;
-        mSampleBaseTimeUs = -1;
+        mFirstSampleTimeUs = -1;
+        mPlaybackStartTimeUs = 0;
+        mLastPresentTimeUs = 0;
 
         mCodec = codec;
 
@@ -221,6 +228,10 @@ public class CodecState {
         return sampleTime;
     }
 
+    public void setLoopEnabled(boolean enabled) {
+        mLoopEnabled = enabled;
+    }
+
     /**
      * Extracts some data from the configured MediaExtractor and feeds it to the configured
      * MediaCodec.
@@ -260,30 +271,38 @@ public class CodecState {
             }
 
             if (mTunneled && !mIsAudio) {
-                if (mSampleBaseTimeUs == -1) {
-                    mSampleBaseTimeUs = sampleTime;
+                if (mFirstSampleTimeUs == -1) {
+                    mFirstSampleTimeUs = sampleTime;
                 }
-                sampleTime -= mSampleBaseTimeUs;
+                sampleTime -= mFirstSampleTimeUs;
             }
+
+            mLastPresentTimeUs = mPlaybackStartTimeUs + sampleTime;
 
             if ((sampleFlags & MediaExtractor.SAMPLE_FLAG_ENCRYPTED) != 0) {
                 MediaCodec.CryptoInfo info = new MediaCodec.CryptoInfo();
                 mExtractor.getSampleCryptoInfo(info);
 
                 mCodec.queueSecureInputBuffer(
-                        inputBufferIndex, 0 /* offset */, info, sampleTime, 0 /* flags */);
+                        inputBufferIndex, 0 /* offset */, info, mLastPresentTimeUs, 0 /* flags */);
             } else {
                 mCodec.queueInputBuffer(
-                        inputBufferIndex, 0 /* offset */, sampleSize, sampleTime, 0 /* flags */);
+                        inputBufferIndex, 0 /* offset */, sampleSize, mLastPresentTimeUs, 0 /* flags */);
             }
 
             mExtractor.advance();
-            return sampleTime;
+            return mLastPresentTimeUs;
         } else if (trackIndex < 0) {
             Log.d(TAG, "saw input EOS on track " + mTrackIndex);
 
-            mSawInputEOS = true;
+            if (mLoopEnabled) {
+                Log.d(TAG, "looping from the beginning");
+                mExtractor.seekTo(0, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
+                mPlaybackStartTimeUs = mLastPresentTimeUs;
+                return null;
+            }
 
+            mSawInputEOS = true;
             mCodec.queueInputBuffer(
                     inputBufferIndex, 0 /* offset */, 0 /* sampleSize */,
                     0 /* sampleTime */, MediaCodec.BUFFER_FLAG_END_OF_STREAM);
@@ -344,7 +363,7 @@ public class CodecState {
             mSawOutputEOS = true;
 
             // Do not stop audio track here. Video presentation may not finish
-            // yet, stopping the auido track now would result in getAudioTimeUs
+            // yet, stopping the audio track now would result in getAudioTimeUs
             // returning 0 and prevent video samples from being presented.
             // We stop the audio track before the playback thread exits.
             return false;
