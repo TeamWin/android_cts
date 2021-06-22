@@ -55,7 +55,7 @@ public final class HdmiCecVendorCommandsTest extends BaseHdmiCecCtsTest {
     public void cect_11_2_9_1_GiveDeviceVendorId() throws Exception {
         for (LogicalAddress logicalAddress : LogicalAddress.values()) {
             // Skip the logical address of this device
-            if (logicalAddress == mDutLogicalAddress) {
+            if (hasLogicalAddress(logicalAddress)) {
                 continue;
             }
             hdmiCecClient.sendCecMessage(logicalAddress, CecOperand.GIVE_DEVICE_VENDOR_ID);

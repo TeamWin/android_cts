@@ -22,6 +22,7 @@ import android.hdmicec.cts.AudioManagerHelper;
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.CecOperand;
+import android.hdmicec.cts.HdmiCecConstants;
 import android.hdmicec.cts.LogicalAddress;
 
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -47,7 +48,7 @@ public final class HdmiCecSystemAudioControlTest extends BaseHdmiCecCtsTest {
                     .around(hdmiCecClient);
 
     public HdmiCecSystemAudioControlTest() {
-        super(LogicalAddress.TV, "-t", "a", "-t", "r");
+        super(HdmiCecConstants.CEC_DEVICE_TYPE_TV, "-t", "a", "-t", "r");
     }
 
     /**

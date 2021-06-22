@@ -206,6 +206,15 @@ public final class HdmiCecClientWrapper extends ExternalResource {
     }
 
     /**
+     * Sends a CEC message from source device to the device passed in the constructor through the
+     * output console of the cec-communication channel with the appended params.
+     */
+    public void sendCecMessage(LogicalAddress source, CecOperand message, String params)
+            throws CecClientWrapperException {
+        sendCecMessage(source, targetDevice, message, params);
+    }
+
+    /**
      * Sends a CEC message from source device to a destination device through the output console of
      * the cec-communication channel.
      */
@@ -295,6 +304,15 @@ public final class HdmiCecClientWrapper extends ExternalResource {
     }
 
     /**
+     * Sends a <USER_CONTROL_PRESSED> and <USER_CONTROL_RELEASED> from source to device through the
+     * output console of the cec-communication channel with the mentioned keycode.
+     */
+    public void sendUserControlPressAndRelease(LogicalAddress source, int keycode, boolean holdKey)
+            throws CecClientWrapperException {
+        sendUserControlPressAndRelease(source, targetDevice, keycode, holdKey);
+    }
+
+    /**
      * Sends a <USER_CONTROL_PRESSED> and <USER_CONTROL_RELEASED> from source to destination through
      * the output console of the cec-communication channel with the mentioned keycode.
      */
@@ -368,6 +386,18 @@ public final class HdmiCecClientWrapper extends ExternalResource {
         sendUserControlPress(source, destination, secondKeycode, false);
     }
 
+    /** Sends a poll message to the device */
+    public void sendPoll() throws CecClientWrapperException {
+        sendPoll(targetDevice);
+    }
+
+    /** Sends a poll message to the destination */
+    public void sendPoll(LogicalAddress destination) throws CecClientWrapperException {
+        String command = CecClientMessage.POLL + " " + destination;
+        sendConsoleMessage(command);
+    }
+
+
     /** Sends a message to the output console of the cec-client */
     public void sendConsoleMessage(String message) throws CecClientWrapperException {
         checkCecClient();
@@ -419,15 +449,17 @@ public final class HdmiCecClientWrapper extends ExternalResource {
         return false;
     }
 
-    /**
-     * Gets all the messages received from the given source device during a period of duration
-     * seconds.
+    /** Gets all the messages received from the given list of source devices during a period of
+     * duration seconds.
      */
-    public List<CecOperand> getAllMessages(LogicalAddress source, int duration)
+    public List<CecOperand> getAllMessages(List<LogicalAddress> sourceList, int duration)
             throws CecClientWrapperException {
         List<CecOperand> receivedOperands = new ArrayList<>();
         long startTime = System.currentTimeMillis();
         long endTime = startTime;
+
+        String source = sourceList.toString().replace(",", "").replace(" ", "");
+
         Pattern pattern = Pattern.compile("(.*>>)(.*?)" +
                 "(" + source + "\\p{XDigit}):(.*)",
             Pattern.CASE_INSENSITIVE);

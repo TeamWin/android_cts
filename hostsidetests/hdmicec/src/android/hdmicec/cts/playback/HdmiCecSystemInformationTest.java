@@ -23,6 +23,7 @@ import static org.junit.Assume.assumeTrue;
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.CecOperand;
+import android.hdmicec.cts.HdmiCecConstants;
 import android.hdmicec.cts.LogicalAddress;
 
 import com.android.tradefed.device.ITestDevice;
@@ -48,7 +49,7 @@ public final class HdmiCecSystemInformationTest extends BaseHdmiCecCtsTest {
                     .around(hdmiCecClient);
 
     public HdmiCecSystemInformationTest() {
-        super(LogicalAddress.PLAYBACK_1);
+        super(HdmiCecConstants.CEC_DEVICE_TYPE_PLAYBACK_DEVICE);
     }
 
     /**

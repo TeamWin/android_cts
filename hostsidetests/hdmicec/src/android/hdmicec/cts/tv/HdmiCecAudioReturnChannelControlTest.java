@@ -39,7 +39,7 @@ public final class HdmiCecAudioReturnChannelControlTest extends BaseHdmiCecCtsTe
     private static final LogicalAddress TV_DEVICE = LogicalAddress.TV;
 
     public HdmiCecAudioReturnChannelControlTest() {
-        super(TV_DEVICE, "-t", "a");
+        super(HdmiCecConstants.CEC_DEVICE_TYPE_TV, "-t", "a");
     }
 
     @Rule

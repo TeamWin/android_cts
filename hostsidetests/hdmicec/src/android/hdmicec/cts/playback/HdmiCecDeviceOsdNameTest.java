@@ -42,7 +42,7 @@ public final class HdmiCecDeviceOsdNameTest extends BaseHdmiCecCtsTest {
     private static final LogicalAddress PLAYBACK_DEVICE = LogicalAddress.PLAYBACK_1;
 
     public HdmiCecDeviceOsdNameTest() {
-        super(PLAYBACK_DEVICE);
+        super(HdmiCecConstants.CEC_DEVICE_TYPE_PLAYBACK_DEVICE);
     }
 
     @Rule

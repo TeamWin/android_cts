@@ -78,8 +78,9 @@ public final class HdmiCecSystemStandbyTest extends BaseHdmiCecCtsTest {
         getDevice().reboot();
         TimeUnit.SECONDS.sleep(5);
         for (LogicalAddress source : mLogicalAddresses) {
-            if (!source.equals(mDutLogicalAddress)) {
-                checkDeviceAsleepAfterStandbySent(source, LogicalAddress.BROADCAST);
+            if (!hasLogicalAddress(source)) {
+                hdmiCecClient.sendCecMessage(source, LogicalAddress.BROADCAST, CecOperand.STANDBY);
+                checkDeviceAsleepAfterStandbySent();
             }
         }
     }
@@ -92,8 +93,9 @@ public final class HdmiCecSystemStandbyTest extends BaseHdmiCecCtsTest {
     public void cect_HandleAddressedStandby() throws Exception {
         getDevice().reboot();
         for (LogicalAddress source : mLogicalAddresses) {
-            if (!source.equals(mDutLogicalAddress)) {
-                checkDeviceAsleepAfterStandbySent(source, mDutLogicalAddress);
+            if (!hasLogicalAddress(source)) {
+                hdmiCecClient.sendCecMessage(source, CecOperand.STANDBY);
+                checkDeviceAsleepAfterStandbySent();
             }
         }
     }
@@ -122,7 +124,7 @@ public final class HdmiCecSystemStandbyTest extends BaseHdmiCecCtsTest {
         mLogicalAddresses.add(LogicalAddress.PLAYBACK_1);
         mLogicalAddresses.add(LogicalAddress.AUDIO_SYSTEM);
 
-        if (mDutLogicalAddress.getDeviceType() == HdmiCecConstants.CEC_DEVICE_TYPE_TV) {
+        if (hasDeviceType(HdmiCecConstants.CEC_DEVICE_TYPE_TV)) {
             //Add logical addresses 13, 14 only for TV panel tests.
             mLogicalAddresses.add(LogicalAddress.RESERVED_2);
             mLogicalAddresses.add(LogicalAddress.SPECIFIC_USE);
@@ -140,10 +142,8 @@ public final class HdmiCecSystemStandbyTest extends BaseHdmiCecCtsTest {
         return val.equals("1");
     }
 
-    private void checkDeviceAsleepAfterStandbySent(LogicalAddress source,
-            LogicalAddress destination) throws Exception {
+    private void checkDeviceAsleepAfterStandbySent() throws Exception {
         ITestDevice device = getDevice();
-        hdmiCecClient.sendCecMessage(source, destination, CecOperand.STANDBY);
         TimeUnit.SECONDS.sleep(5);
         String wakeState = device.executeShellCommand("dumpsys power | grep mWakefulness=");
         assertThat(wakeState.trim()).isEqualTo("mWakefulness=Asleep");

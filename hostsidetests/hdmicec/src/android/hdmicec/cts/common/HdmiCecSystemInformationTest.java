@@ -20,7 +20,6 @@ import static com.google.common.truth.Truth.assertThat;
 
 
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
-import android.hdmicec.cts.CecClientMessage;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.CecOperand;
 import android.hdmicec.cts.LogicalAddress;
@@ -55,9 +54,8 @@ public final class HdmiCecSystemInformationTest extends BaseHdmiCecCtsTest {
      */
     @Test
     public void cect_11_2_6_1_Ack() throws Exception {
-        String command = CecClientMessage.POLL + " " + mDutLogicalAddress;
         String expectedOutput = "POLL sent";
-        hdmiCecClient.sendConsoleMessage(command);
+        hdmiCecClient.sendPoll();
         if (!hdmiCecClient.checkConsoleOutput(expectedOutput)) {
             throw new Exception("Could not find " + expectedOutput);
         }
@@ -80,7 +78,7 @@ public final class HdmiCecSystemInformationTest extends BaseHdmiCecCtsTest {
                         LogicalAddress.AUDIO_SYSTEM,
                         LogicalAddress.BROADCAST);
         for (LogicalAddress testDevice : testDevices) {
-            if (testDevice == mDutLogicalAddress) {
+            if (hasLogicalAddress(testDevice)) {
                 /* Skip the DUT logical address */
                 continue;
             }
@@ -89,7 +87,7 @@ public final class HdmiCecSystemInformationTest extends BaseHdmiCecCtsTest {
             /* Check that the physical address taken is valid. */
             CecMessage.assertPhysicalAddressValid(message, getDumpsysPhysicalAddress());
             int receivedParams = CecMessage.getParams(message);
-            assertThat(receivedParams & 0xFF).isEqualTo(mDutLogicalAddress.getDeviceType());
+            assertThat(hasDeviceType(receivedParams & 0xFF)).isTrue();
         }
     }
 

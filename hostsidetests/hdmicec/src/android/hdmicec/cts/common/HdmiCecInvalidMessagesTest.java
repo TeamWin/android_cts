@@ -64,10 +64,8 @@ public final class HdmiCecInvalidMessagesTest extends BaseHdmiCecCtsTest {
 
     @Before
     public void setup() {
-        source =
-                (mDutLogicalAddress.equals(LogicalAddress.TV))
-                        ? LogicalAddress.RECORDER_1
-                        : LogicalAddress.TV;
+        source = (hasDeviceType(HdmiCecConstants.CEC_DEVICE_TYPE_TV)) ? LogicalAddress.RECORDER_1
+                                                                      : LogicalAddress.TV;
     }
 
     /**
@@ -86,7 +84,6 @@ public final class HdmiCecInvalidMessagesTest extends BaseHdmiCecCtsTest {
         try {
             hdmiCecClient.sendCecMessage(
                     source,
-                    mDutLogicalAddress,
                     CecOperand.SET_MENU_LANGUAGE,
                     CecMessage.convertStringToHexParams(language));
             assertThat(originalLanguage).isEqualTo(extractLanguage(getSystemLocale()));
