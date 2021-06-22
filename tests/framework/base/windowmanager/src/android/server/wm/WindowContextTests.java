@@ -290,6 +290,17 @@ public class WindowContextTests extends WindowContextTestBase {
                 .isEqualTo(expectedFontScale);
     }
 
+    @Test
+    public void testWindowProviderServiceCallWmBeforeOnCreateNotCrash() {
+        final TestWindowService service =
+                createManagedWindowServiceSession(true /* verifyWmInOnCreate */).getService();
+        if (service.mThrowableFromOnCreate != null) {
+            throw new AssertionError("Calling WindowManager APIs before"
+                    + " WindowProviderService#onCreate must not throw Throwable, but did.",
+                    service.mThrowableFromOnCreate);
+        }
+    }
+
     public static class TestActivity extends WindowManagerTestBase.FocusableActivity {
         final CountDownLatch mLatch = new CountDownLatch(1);
 
@@ -309,16 +320,22 @@ public class WindowContextTests extends WindowContextTestBase {
     }
 
     private TestWindowServiceSession createManagedWindowServiceSession() {
-        return mObjectTracker.manage(new TestWindowServiceSession());
+        return mObjectTracker.manage(new TestWindowServiceSession(false /* verifyWmInOnCreate */));
+    }
+
+    private TestWindowServiceSession createManagedWindowServiceSession(boolean verifyWmInOnCreate) {
+        return mObjectTracker.manage(new TestWindowServiceSession(verifyWmInOnCreate));
     }
 
     private static class TestWindowServiceSession implements AutoCloseable {
         private final ServiceTestRule mServiceRule = new ServiceTestRule();
         private final TestWindowService mService;
+        private static boolean sVerifyWmInOnCreate = false;
 
-        private TestWindowServiceSession() {
+        private TestWindowServiceSession(boolean verifyWmInOnCreate) {
             final Context context = ApplicationProvider.getApplicationContext();
             final Intent intent = new Intent(context, TestWindowService.class);
+            sVerifyWmInOnCreate = verifyWmInOnCreate;
             try {
                 final TestToken token = (TestToken) mServiceRule.bindService(intent);
                 mService = token.getService();
@@ -341,6 +358,7 @@ public class WindowContextTests extends WindowContextTestBase {
         private final IBinder mToken = new TestToken();
         private CountDownLatch mLatch = new CountDownLatch(1);
         private Configuration mConfiguration;
+        private Throwable mThrowableFromOnCreate;
 
         @Override
         public int getWindowType() {
@@ -351,6 +369,19 @@ public class WindowContextTests extends WindowContextTestBase {
         @Override
         public IBinder onBind(Intent intent) {
             return mToken;
+        }
+
+        @Override
+        public void onCreate() {
+            // Verify if call WindowManager before WindowProviderService#onCreate throws Exception.
+            if (TestWindowServiceSession.sVerifyWmInOnCreate) {
+                try {
+                    getSystemService(WindowManager.class).getCurrentWindowMetrics();
+                } catch (Throwable t) {
+                    mThrowableFromOnCreate = t;
+                }
+            }
+            super.onCreate();
         }
 
         @Override
