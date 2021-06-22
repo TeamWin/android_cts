@@ -1,4 +1,4 @@
-// Copyright 2017 The Android Open Source Project
+// Copyright (C) 2021 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,29 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Build the unit tests.
-
 package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-cc_test_library {
-    name: "libctsimagereader_jni",
-    srcs: ["AImageReaderCts.cpp"],
-    shared_libs: [
-        "libandroid",
-        "libcamera2ndk",
-        "libmediandk",
-        "libnativewindow",
-        "liblog",
-    ],
-    cflags: [
-        "-Werror",
-        "-Wall",
-    ],
-    gtest: false,
-    // this test suite will run on sdk 29 as part of MTS, make sure it's compatible
-    // (revisit if/when we add features to this library that require newer sdk.
-    sdk_version: "29",
-    stl: "libc++_static",
+android_test_helper_app {
+    name: "CtsProviderMultiAuthorityApp",
+
+    sdk_version: "current",
+
+    srcs: ["**/*.java"],
+
+    dex_preopt: {
+        enabled: false,
+    },
+    optimize: {
+        enabled: false,
+    },
+    min_sdk_version : "29",
 }
