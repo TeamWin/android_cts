@@ -15,6 +15,7 @@
  */
 package android.media.cts;
 
+import android.content.Context;
 import android.media.AudioTimestamp;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
@@ -64,11 +65,13 @@ public class MediaCodecTunneledPlayer implements MediaTimeProvider {
     private Uri mVideoUri;
     private boolean mTunneled;
     private int mAudioSessionId;
+    private Context mContext;
 
     /*
      * Media player class to playback video using tunneled MediaCodec.
      */
-    public MediaCodecTunneledPlayer(SurfaceHolder holder, boolean tunneled, int AudioSessionId) {
+    public MediaCodecTunneledPlayer(Context context, SurfaceHolder holder, boolean tunneled, int AudioSessionId) {
+        mContext = context;
         mSurfaceHolder = holder;
         mTunneled = tunneled;
         mAudioTrackState = null;
@@ -203,8 +206,8 @@ public class MediaCodecTunneledPlayer implements MediaTimeProvider {
             }
         }
 
-        mAudioExtractor.setDataSource(mAudioUri.toString(), mAudioHeaders);
-        mVideoExtractor.setDataSource(mVideoUri.toString(), mVideoHeaders);
+        mAudioExtractor.setDataSource(mContext, mAudioUri, mAudioHeaders);
+        mVideoExtractor.setDataSource(mContext, mVideoUri, mVideoHeaders);
 
         if (null == mVideoCodecStates) {
             mVideoCodecStates = new HashMap<Integer, CodecState>();
@@ -406,6 +409,25 @@ public class MediaCodecTunneledPlayer implements MediaTimeProvider {
         }
     }
 
+    /**
+     * Enables or disables looping. Should be called after {@link #prepare()}.
+     */
+    public void setLoopEnabled(boolean enabled) {
+        synchronized (mState) {
+            if (mVideoCodecStates != null) {
+                for (CodecState state : mVideoCodecStates.values()) {
+                    state.setLoopEnabled(enabled);
+                }
+            }
+
+            if (mAudioCodecStates != null) {
+                for (CodecState state : mAudioCodecStates.values()) {
+                    state.setLoopEnabled(enabled);
+                }
+            }
+        }
+    }
+
     public void reset() {
         synchronized (mState) {
             if (mState == STATE_PLAYING) {
@@ -444,7 +466,7 @@ public class MediaCodecTunneledPlayer implements MediaTimeProvider {
         try {
             mThread.join();
         } catch (InterruptedException ex) {
-            Log.d(TAG, "mThread.join " + ex);
+            Log.d(TAG, "mThread.join ", ex);
         }
     }
 
@@ -470,7 +492,7 @@ public class MediaCodecTunneledPlayer implements MediaTimeProvider {
                 state.doSomeWork();
             }
         } catch (IllegalStateException e) {
-            throw new Error("Video CodecState.doSomeWork" + e);
+            throw new Error("Video CodecState.doSomeWork", e);
         }
 
         try {
@@ -478,7 +500,7 @@ public class MediaCodecTunneledPlayer implements MediaTimeProvider {
                 state.doSomeWork();
             }
         } catch (IllegalStateException e) {
-            throw new Error("Audio CodecState.doSomeWork" + e);
+            throw new Error("Audio CodecState.doSomeWork", e);
         }
 
     }
