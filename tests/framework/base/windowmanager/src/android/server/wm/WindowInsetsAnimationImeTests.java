@@ -24,6 +24,7 @@ import static android.view.WindowInsets.Type.statusBars;
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -55,6 +56,11 @@ public class WindowInsetsAnimationImeTests extends WindowInsetsAnimationTestBase
     @Before
     public void setup() throws Exception {
         super.setUp();
+        assumeFalse(
+                "Automotive is to skip this test until showing and hiding certain insets "
+                        + "simultaneously in a single request is supported",
+                mInstrumentation.getContext().getPackageManager().hasSystemFeature(
+                        PackageManager.FEATURE_AUTOMOTIVE));
         assumeTrue("MockIme cannot be used for devices that do not support installable IMEs",
                 mInstrumentation.getContext().getPackageManager().hasSystemFeature(
                         PackageManager.FEATURE_INPUT_METHODS));
