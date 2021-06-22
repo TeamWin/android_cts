@@ -278,8 +278,8 @@ public class MultiResolutionImageReaderTest extends Camera2AndroidTestCase {
         StreamCombinationTargets targets = new StreamCombinationTargets();
 
         CameraTestUtils.setupConfigurationTargets(combination.getStreamsInformation(),
-                targets, outputConfigs, outputSurfaces, MIN_RESULT_COUNT, /*substituteY8*/false,
-                /*substituteHeic*/false, /*physicalCameraId*/null, /*ultraHighResolution*/false,
+                targets, outputConfigs, outputSurfaces, MIN_RESULT_COUNT,
+                /*substituteY8*/false, /*substituteHeic*/false, /*physicalCameraId*/null,
                 multiResStreamConfig, mHandler);
 
         boolean haveSession = false;
