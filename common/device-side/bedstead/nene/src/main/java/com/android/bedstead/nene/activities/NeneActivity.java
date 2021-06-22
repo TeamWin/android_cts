@@ -18,6 +18,7 @@ package com.android.bedstead.nene.activities;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.os.Bundle;
 
 /**
  * Interface for use by classes which are able to be used in Nene activity test apis.
@@ -39,4 +40,7 @@ public interface NeneActivity {
 
     /** See {@link Activity#startActivity}. */
     void startActivity(Intent intent);
+
+    /** See {@link Activity#startActivity}. */
+    void startActivity(Intent intent, Bundle options);
 }
