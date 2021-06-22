@@ -4778,6 +4778,7 @@ You should be prompted to select credentials; choose the ones you just installed
 
     <!-- Common strings for the TV Display tests -->
     <string name="tv_start_test">Start Test</string>
+    <string name="tv_done">Done</string>
 
     <!-- Audio Capabilities test -->
     <string name="tv_audio_capabilities_test">Audio Capabilities Test</string>
@@ -4790,6 +4791,16 @@ You should be prompted to select credentials; choose the ones you just installed
     soundbar which can play Dolby Atmos. </string>
     <string name="tv_audio_capabilities_atmos_supported">Does your Android TV device support Dolby
     Atmos (either passthrough or decode)?  </string>
+
+    <!-- Hotplug Test -->
+    <string name="tv_hotplug_test">Hotplug Test</string>
+    <string name="tv_hotplug_test_info">This test checks whether DisplayManager responds correctly
+        to plugging and unplugging the HDMI cable.
+    </string>
+    <string name="tv_hotplug_disconnect_display">
+        Press the "%1$s" button, disconnect the HDMI cable, wait 2 seconds and then connect the HDMI
+        cable again.
+    </string>
 
     <string name="overlay_view_text">Overlay View Dummy Text</string>
     <string name="custom_rating">Example of input app specific custom rating.</string>
