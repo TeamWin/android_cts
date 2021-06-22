@@ -4802,6 +4802,23 @@ You should be prompted to select credentials; choose the ones you just installed
         cable again.
     </string>
 
+    <!-- Mode Switching Test -->
+    <string name="tv_mode_switching_test">Mode switching test</string>
+    <string name="tv_mode_switching_test_step_instruction">
+        Click "Start Test" and then observe the video below. Testing transition from %1$s to %2$s.
+    </string>
+    <string name="tv_mode_switching_test_black_screen_question">
+        Did the video playback experience an interruption, for example, a black or solid color
+        screen?
+    </string>
+    <string name="tv_mode_switching_test_is_video_ok">
+        Does the video look okay? Click "No" if the video is not playing, there was a snow screen,
+        audio static, wrong colors, the video is displaced compared to before running the test or
+        if the video is not playing. Keep in mind that some stutter is expected when the video does
+        not match the refresh rate.
+    </string>
+    <string name="tv_mode_switching_test_mode_switch_step">Mode switch step</string>
+
     <string name="overlay_view_text">Overlay View Dummy Text</string>
     <string name="custom_rating">Example of input app specific custom rating.</string>
 
