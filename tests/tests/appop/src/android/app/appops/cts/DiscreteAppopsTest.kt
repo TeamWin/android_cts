@@ -55,6 +55,7 @@ private const val PACKAGE_NAME = "android.app.appops.cts.appfordiscretetest"
 private const val TIMEOUT_MILLIS = 45000L
 private const val DEFAULT_TIME_QUANT_MILLIS = 60000L
 private const val SHORT_TIME_QUANT_MILLIS = 2000L
+private const val CALLBACK_PROPAGATION_DELAY = 5000L
 private const val SAFETY_MARGIN_MILLIS = 5000L
 private const val TEN_MINUTES_MILLIS = 600000L
 private const val ONE_MINUTE_MILLIS = 60000L
@@ -892,15 +893,28 @@ class DiscreteAppopsTest {
             DeviceConfig.setProperty(NAMESPACE_PRIVACY, PROPERTY_FLAGS, 8.toString(), false)
         }
 
-        waitUntilSafelyInTimeQuant(DEFAULT_TIME_QUANT_MILLIS, SAFETY_MARGIN_MILLIS)
-        runWithShellPermissionIdentity {
-            appOpsManager.noteProxyOp(OPSTR_FINE_LOCATION, PACKAGE_NAME, uid, null, null)
-            appOpsManager.noteOp(OPSTR_FINE_LOCATION, uid, PACKAGE_NAME, null, null)
+        var allOps: HistoricalOps? = null
+
+        for (i in 1..3) {
+            waitUntilSafelyInTimeQuant(DEFAULT_TIME_QUANT_MILLIS, SAFETY_MARGIN_MILLIS)
+            runWithShellPermissionIdentity {
+                appOpsManager.noteProxyOp(OPSTR_FINE_LOCATION, PACKAGE_NAME, uid, null, null)
+                appOpsManager.noteOp(OPSTR_FINE_LOCATION, uid, PACKAGE_NAME, null, null)
+            }
+            allOps = getHistoricalOps(HISTORY_FLAG_DISCRETE)
+            if (allOps!!.getUidOpsAt(0).getPackageOpsAt(0).getOpAt(0).getDiscreteAccessAt(0)
+                            .getLastAccessTime(OP_FLAG_SELF) == -1L) {
+                break
+            }
+            runWithShellPermissionIdentity {
+                appOpsManager.clearHistory()
+            }
+            // maybe device_config callback didn't propagate yet, give it some more time
+            Thread.sleep(CALLBACK_PROPAGATION_DELAY)
         }
 
         val timeStamp = System.currentTimeMillis() /
                 DEFAULT_TIME_QUANT_MILLIS * DEFAULT_TIME_QUANT_MILLIS
-        var allOps = getHistoricalOps(HISTORY_FLAG_DISCRETE)
 
         assertThat(allOps).isNotNull()
         assertThat(allOps!!.uidCount).isEqualTo(1)
@@ -933,13 +947,22 @@ class DiscreteAppopsTest {
         runWithShellPermissionIdentity {
             DeviceConfig.setProperty(NAMESPACE_PRIVACY, PROPERTY_OPS_LIST, "1", false)
         }
-        waitUntilSafelyInTimeQuant(DEFAULT_TIME_QUANT_MILLIS, SAFETY_MARGIN_MILLIS)
-        noteOp(OPSTR_FINE_LOCATION, uid, PACKAGE_NAME, null, null)
-        noteOp(OPSTR_CAMERA, uid, PACKAGE_NAME, null, null)
+        var allOps: HistoricalOps? = null
+        for (i in 1..3) {
+            waitUntilSafelyInTimeQuant(DEFAULT_TIME_QUANT_MILLIS, SAFETY_MARGIN_MILLIS)
+            noteOp(OPSTR_FINE_LOCATION, uid, PACKAGE_NAME, null, null)
+            noteOp(OPSTR_CAMERA, uid, PACKAGE_NAME, null, null)
+            allOps = getHistoricalOps(HISTORY_FLAG_DISCRETE)
+            if (allOps!!.getUidOpsAt(0).getPackageOpsAt(0).opCount == 1) break
+            runWithShellPermissionIdentity {
+                appOpsManager.clearHistory()
+            }
+            // maybe device_config callback didn't propagate yet, give it some more time
+            Thread.sleep(CALLBACK_PROPAGATION_DELAY)
+        }
 
         val timeStamp = System.currentTimeMillis() /
                 DEFAULT_TIME_QUANT_MILLIS * DEFAULT_TIME_QUANT_MILLIS
-        var allOps = getHistoricalOps(HISTORY_FLAG_DISCRETE)
 
         assertThat(allOps).isNotNull()
         assertThat(allOps!!.uidCount).isEqualTo(1)
