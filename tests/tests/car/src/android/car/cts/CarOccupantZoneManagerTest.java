@@ -16,6 +16,8 @@
 
 package android.car.cts;
 
+import static android.view.Display.DEFAULT_DISPLAY;
+
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
@@ -25,6 +27,7 @@ import android.car.Car;
 import android.car.CarOccupantZoneManager;
 import android.car.CarOccupantZoneManager.OccupantZoneConfigChangeListener;
 import android.car.CarOccupantZoneManager.OccupantZoneInfo;
+import android.hardware.display.DisplayManager;
 import android.os.Process;
 import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
@@ -70,6 +73,15 @@ public class CarOccupantZoneManagerTest extends CarApiTestBase {
     }
 
     @Test
+    public void testGetDisplayType_mainDisplay() {
+        DisplayManager displayManager = mContext.getSystemService(DisplayManager.class);
+        Display defaultDisplay = displayManager.getDisplay(DEFAULT_DISPLAY);
+
+        assertThat(mCarOccupantZoneManager.getDisplayType(defaultDisplay)).isEqualTo(
+                CarOccupantZoneManager.DISPLAY_TYPE_MAIN);
+    }
+
+    @Test
     public void testDriverUserIdMustBeCurrentUser() {
         int myUid = Process.myUid();
         assertWithMessage("Driver user id must correspond to current user id (Process.myUid: %s)",
@@ -96,7 +108,7 @@ public class CarOccupantZoneManagerTest extends CarApiTestBase {
 
     @Test
     public void testDriverDisplayIdIsDefaultDisplay() {
-        assertThat(getDriverDisplay().getDisplayId()).isEqualTo(Display.DEFAULT_DISPLAY);
+        assertThat(getDriverDisplay().getDisplayId()).isEqualTo(DEFAULT_DISPLAY);
     }
 
     @Test
@@ -123,7 +135,7 @@ public class CarOccupantZoneManagerTest extends CarApiTestBase {
     }
 
     private OccupantZoneConfigChangeListener createOccupantZoneConfigChangeListener() {
-        return new OccupantZoneConfigChangeListener () {
+        return new OccupantZoneConfigChangeListener() {
             public void onOccupantZoneConfigChanged(int changeFlags) {
                 Log.i(TAG, "Got a confing change, flags: " + changeFlags);
             }
