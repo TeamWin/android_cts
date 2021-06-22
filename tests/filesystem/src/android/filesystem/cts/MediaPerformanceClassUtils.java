@@ -30,6 +30,17 @@ import android.util.Log;
 
     private static final String TAG = "PerformanceClassTestUtils";
 
+    /**
+     * First defined media performance class.
+     */
+    private static final int FIRST_PERFORMANCE_CLASS = Build.VERSION_CODES.R;
+
+    /**
+     * Latest defined media performance class.
+     */
+    /* TODO: make this S */
+    private static final int LAST_PERFORMANCE_CLASS = Build.VERSION_CODES.R + 1;
+
     static {
         if (sPc > 0) {
             Log.d(TAG, "performance class is "  + sPc);
@@ -42,5 +53,14 @@ import android.util.Log;
 
     public static boolean isSPerfClass() {
         return sPc == Build.VERSION_CODES.R + 1; /* TODO: make this S */
+    }
+
+    public static int getPerfClass() {
+        return sPc;
+    }
+
+    public static boolean isPerfClass() {
+        return sPc >= FIRST_PERFORMANCE_CLASS &&
+               sPc <= LAST_PERFORMANCE_CLASS;
     }
 }
