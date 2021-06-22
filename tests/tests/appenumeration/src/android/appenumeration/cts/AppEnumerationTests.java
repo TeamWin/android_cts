@@ -20,6 +20,7 @@ import static android.Manifest.permission.SET_PREFERRED_APPLICATIONS;
 import static android.appenumeration.cts.Constants.ACTION_AWAIT_LAUNCHER_APPS_CALLBACK;
 import static android.appenumeration.cts.Constants.ACTION_BIND_SERVICE;
 import static android.appenumeration.cts.Constants.ACTION_CHECK_SIGNATURES;
+import static android.appenumeration.cts.Constants.ACTION_CHECK_URI_PERMISSION;
 import static android.appenumeration.cts.Constants.ACTION_GET_INSTALLED_ACCESSIBILITYSERVICES_PACKAGES;
 import static android.appenumeration.cts.Constants.ACTION_GET_INSTALLED_APPWIDGET_PROVIDERS;
 import static android.appenumeration.cts.Constants.ACTION_GET_INSTALLED_PACKAGES;
@@ -73,6 +74,7 @@ import static android.appenumeration.cts.Constants.QUERIES_NOTHING_SHARED_USER;
 import static android.appenumeration.cts.Constants.QUERIES_NOTHING_USES_LIBRARY;
 import static android.appenumeration.cts.Constants.QUERIES_NOTHING_USES_OPTIONAL_LIBRARY;
 import static android.appenumeration.cts.Constants.QUERIES_PACKAGE;
+import static android.appenumeration.cts.Constants.QUERIES_PACKAGE_PROVIDER;
 import static android.appenumeration.cts.Constants.QUERIES_PROVIDER_ACTION;
 import static android.appenumeration.cts.Constants.QUERIES_PROVIDER_AUTH;
 import static android.appenumeration.cts.Constants.QUERIES_SERVICE_ACTION;
@@ -1120,6 +1122,18 @@ public class AppEnumerationTests {
         assertThat(ex.getMessage(), containsString(TARGET_NO_API));
     }
 
+    @Test
+    public void queriesPackageHasProvider_checkUriPermission_canSeeNoApi() throws Exception {
+        final int permissionResult = checkUriPermission(QUERIES_PACKAGE_PROVIDER, TARGET_NO_API);
+        assertThat(permissionResult, is(PackageManager.PERMISSION_GRANTED));
+    }
+
+    @Test
+    public void queriesPackageHasProvider_checkUriPermission_cannotSeeFilters() throws Exception {
+        final int permissionResult = checkUriPermission(QUERIES_PACKAGE_PROVIDER, TARGET_FILTERS);
+        assertThat(permissionResult, is(PackageManager.PERMISSION_DENIED));
+    }
+
     private void assertNotVisible(String sourcePackageName, String targetPackageName)
             throws Exception {
         if (!sGlobalFeatureEnabled) return;
@@ -1457,6 +1471,17 @@ public class AppEnumerationTests {
         final Bundle response = sendCommandBlocking(sourcePackageName, targetPackageName, extraData,
                 ACTION_LAUNCHER_APPS_SHOULD_HIDE_FROM_SUGGESTIONS);
         return response.getBoolean(Intent.EXTRA_RETURN_RESULT);
+    }
+
+    private int checkUriPermission(String sourcePackageName, String targetPackageName)
+            throws Exception {
+        final int targetUid = sPm.getPackageUid(targetPackageName, /* flags */ 0);
+        final Bundle extraData = new Bundle();
+        extraData.putString(EXTRA_AUTHORITY, sourcePackageName);
+        final Result result = sendCommand(sourcePackageName, targetPackageName, targetUid,
+                extraData, ACTION_CHECK_URI_PERMISSION, /* waitForReady */ false);
+        final Bundle response = result.await();
+        return response.getInt(Intent.EXTRA_RETURN_RESULT);
     }
 
     interface Result {
