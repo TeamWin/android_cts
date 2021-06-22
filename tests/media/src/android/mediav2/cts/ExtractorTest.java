@@ -1371,7 +1371,8 @@ public class ExtractorTest {
                         CodecTestBase.selectCodecs(mMime, null, null, false);
                 assertTrue("no suitable codecs found for mime: " + mMime,
                         !listOfDecoders.isEmpty());
-                CodecDecoderTestBase cdtb = new CodecDecoderTestBase(mMime, mRefFile);
+                CodecDecoderTestBase cdtb =
+                        new CodecDecoderTestBase(listOfDecoders.get(0), mMime, mRefFile);
                 cdtb.decodeToMemory(mRefFile, listOfDecoders.get(0), 0,
                         MediaExtractor.SEEK_TO_CLOSEST_SYNC, Integer.MAX_VALUE);
                 String log = String.format("test file: %s, ref file: %s:: ", mTestFile, mRefFile);
