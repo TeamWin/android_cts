@@ -11,7 +11,8 @@ android_library {
     ],
     static_libs: [
         "Nene",
-        "androidx.test.ext.junit"],
+        "Queryable"
+    ],
     manifest: "src/main/AndroidManifest.xml",
     min_sdk_version: "27"
 }

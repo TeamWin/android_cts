@@ -23,9 +23,9 @@ import androidx.annotation.CheckResult;
 import com.android.eventlib.Event;
 import com.android.eventlib.EventLogger;
 import com.android.eventlib.EventLogsQuery;
-import com.android.eventlib.info.ActivityInfo;
-import com.android.eventlib.queryhelpers.ActivityQuery;
-import com.android.eventlib.queryhelpers.ActivityQueryHelper;
+import com.android.queryable.info.ActivityInfo;
+import com.android.queryable.queries.ActivityQuery;
+import com.android.queryable.queries.ActivityQueryHelper;
 
 /**
  * Event logged when {@link Activity#onResume()}} is called.
