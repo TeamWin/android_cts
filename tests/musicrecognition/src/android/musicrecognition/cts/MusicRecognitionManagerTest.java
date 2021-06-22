@@ -23,7 +23,6 @@ import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -37,7 +36,6 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
 import android.app.AppOpsManager;
-import android.app.AppOpsManager.OnOpStartedListener;
 
 import android.content.Context;
 import android.media.AudioAttributes;
@@ -226,25 +224,15 @@ public class MusicRecognitionManagerTest {
         appOpsManager.startWatchingActive(new String[] { AppOpsManager.OPSTR_RECORD_AUDIO },
                 context.getMainExecutor(), listener);
 
-        // Started listener used just for verifying attribution tag.
-        final AppOpsManager.OnOpStartedListener startedListener = mock(
-                AppOpsManager.OnOpStartedListener.class);
-
-        appOpsManager.startWatchingStarted(new int[] { AppOpsManager.OP_RECORD_AUDIO },
-                startedListener);
-
         // Invoke API
         RecognitionRequest request = invokeMusicRecognitionApi();
 
         // The app op should start
-        verify(listener, timeout(VERIFY_APPOP_CHANGE_TIMEOUT_MS)
-                .only()).onOpActiveChanged(eq(AppOpsManager.OPSTR_RECORD_AUDIO),
-                eq(uid), eq(packageName), eq(true));
-
         String expectedAttributionTag = "CtsMusicRecognitionAttributionTag";
-        verify(startedListener, timeout(VERIFY_APPOP_CHANGE_TIMEOUT_MS)
-                .only()).onOpStarted(eq(AppOpsManager.OP_RECORD_AUDIO),
-                    eq(uid), eq(packageName), eq(expectedAttributionTag), anyInt(), anyInt());
+        verify(listener, timeout(VERIFY_APPOP_CHANGE_TIMEOUT_MS))
+                .onOpActiveChanged(eq(AppOpsManager.OPSTR_RECORD_AUDIO),
+                eq(uid), eq(packageName), eq(expectedAttributionTag), eq(true),
+                        anyInt(), anyInt());
 
         // Wait for streaming to finish.
         reset(listener);
@@ -255,9 +243,10 @@ public class MusicRecognitionManagerTest {
         }
 
         // The app op should finish
-        verify(listener, timeout(VERIFY_APPOP_CHANGE_TIMEOUT_MS)
-                .only()).onOpActiveChanged(eq(AppOpsManager.OPSTR_RECORD_AUDIO),
-                eq(uid), eq(packageName), eq(false));
+        verify(listener, timeout(VERIFY_APPOP_CHANGE_TIMEOUT_MS))
+                .onOpActiveChanged(eq(AppOpsManager.OPSTR_RECORD_AUDIO),
+                        eq(uid), eq(packageName), eq(expectedAttributionTag), eq(false),
+                        anyInt(), anyInt());
 
 
         // Start with a clean slate
