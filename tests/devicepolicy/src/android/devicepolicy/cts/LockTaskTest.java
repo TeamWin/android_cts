@@ -32,9 +32,11 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import static org.junit.Assume.assumeFalse;
 import static org.testng.Assert.assertThrows;
 
+import android.app.ActivityOptions;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Intent;
+import android.os.Bundle;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
@@ -697,6 +699,35 @@ public class LockTaskTest {
 
                 assertThat(sTestApis.activities().foregroundActivity())
                         .isEqualTo(firstActivity.activity().component());
+            } finally {
+                sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(
+                        originalLockTaskPackages);
+            }
+        }
+    }
+
+    @Test
+    @PositivePolicyTest(policy = LockTask.class)
+    public void startActivity_lockTaskEnabledOption_startsInLockTaskMode() {
+        String[] originalLockTaskPackages =
+                sDeviceState.dpc().devicePolicyManager().getLockTaskPackages();
+
+        try (TestAppInstanceReference testApp =
+                     sTestApp.install(sTestApis.users().instrumented())) {
+            try {
+                sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(
+                        new String[]{sTestApp.packageName()});
+                Bundle options = ActivityOptions.makeBasic().setLockTaskEnabled(true).toBundle();
+                Activity<TestAppActivity> activity = testApp.activities().any().start(options);
+
+                try {
+                    assertThat(sTestApis.activities().foregroundActivity()).isEqualTo(
+                            activity.activity().component());
+                    assertThat(sTestApis.activities().getLockTaskModeState()).isEqualTo(
+                            LOCK_TASK_MODE_LOCKED);
+                } finally {
+                    activity.stopLockTask();
+                }
             } finally {
                 sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(
                         originalLockTaskPackages);
