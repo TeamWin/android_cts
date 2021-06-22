@@ -148,11 +148,15 @@ public class HotplugTestActivity extends TvAppVerifierActivity {
         }
 
         @Override
-        public void createUiElements() {
-            super.createUiElements();
-            mDoneButtonView = mContext.createButtonItem(
+        public List<View> createUiElements() {
+            List<View> list = super.createUiElements();
+            mDoneButtonView = TvAppVerifierActivity.createButtonItem(
+                    mContext.getLayoutInflater(),
+                    null,
                     R.string.tv_done,
                     (View view) -> recordTestStateAndFinish());
+            list.add(mDoneButtonView);
+            return list;
         }
 
         @Override

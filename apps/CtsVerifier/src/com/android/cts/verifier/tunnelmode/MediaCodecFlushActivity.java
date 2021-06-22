@@ -1,7 +1,5 @@
 package com.android.cts.verifier.tunnelmode;
 
-import android.app.Activity;
-import android.content.res.Resources;
 import android.media.AudioManager;
 import android.media.cts.MediaCodecTunneledPlayer;
 import android.net.Uri;
@@ -58,7 +56,7 @@ public class MediaCodecFlushActivity extends PassFailButtons.Activity {
         AudioManager am = (AudioManager) getApplicationContext().getSystemService(AUDIO_SERVICE);
         mAudioSessionId = am.generateAudioSessionId();
 
-        mPlayer = new MediaCodecTunneledPlayer(mHolder, true, mAudioSessionId);
+        mPlayer = new MediaCodecTunneledPlayer(this, mHolder, true, mAudioSessionId);
 
         // TODO: Do not rely on the video being pre-loaded on the device
         Uri mediaUri = Uri.fromFile(new File("/data/local/tmp/video.webm"));
