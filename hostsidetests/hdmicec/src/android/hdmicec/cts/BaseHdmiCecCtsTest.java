@@ -92,8 +92,7 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
             mDutLogicalAddress = LogicalAddress.getLogicalAddress(getDumpsysLogicalAddress());
         }
         hdmiCecClient.setTargetLogicalAddress(mDutLogicalAddress);
-        boolean startAsTv =
-                mDutLogicalAddress.getDeviceType() != HdmiCecConstants.CEC_DEVICE_TYPE_TV;
+        boolean startAsTv = !hasDeviceType(HdmiCecConstants.CEC_DEVICE_TYPE_TV);
         hdmiCecClient.init(startAsTv, getDevice());
     }
 
@@ -221,6 +220,10 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
         }
         throw new DumpsysParseException(
                 "Could not parse " + addressType.getAddressType() + " from dumpsys.");
+    }
+
+    public boolean hasDeviceType(int deviceType) {
+        return mDutLogicalAddress.getDeviceType() == deviceType;
     }
 
     public String getSystemLocale() throws Exception {

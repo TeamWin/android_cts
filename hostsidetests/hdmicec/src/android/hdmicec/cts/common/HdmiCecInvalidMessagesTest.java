@@ -64,10 +64,8 @@ public final class HdmiCecInvalidMessagesTest extends BaseHdmiCecCtsTest {
 
     @Before
     public void setup() {
-        source =
-                (mDutLogicalAddress.equals(LogicalAddress.TV))
-                        ? LogicalAddress.RECORDER_1
-                        : LogicalAddress.TV;
+        source = (hasDeviceType(HdmiCecConstants.CEC_DEVICE_TYPE_TV)) ? LogicalAddress.RECORDER_1
+                                                                      : LogicalAddress.TV;
     }
 
     /**
