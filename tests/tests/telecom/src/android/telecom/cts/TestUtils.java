@@ -283,6 +283,12 @@ public class TestUtils {
     public static final String ENABLE_GET_CALL_STATE_PERMISSION_PROTECTION_STRING =
             "ENABLE_GET_CALL_STATE_PERMISSION_PROTECTION ";
 
+    /**
+     * See {@link TelecomManager#ENABLE_GET_PHONE_ACCOUNT_PERMISSION_PROTECTION}
+     */
+    public static final String ENABLE_GET_PHONE_ACCOUNT_PERMISSION_PROTECTION_STRING =
+            "ENABLE_GET_PHONE_ACCOUNT_PERMISSION_PROTECTION ";
+
     private static final String COMMAND_SET_CALL_DIAGNOSTIC_SERVICE =
             "telecom set-call-diagnostic-service ";
 
