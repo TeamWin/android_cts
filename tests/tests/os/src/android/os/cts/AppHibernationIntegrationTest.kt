@@ -21,8 +21,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
-import android.os.Build
 import android.net.Uri
+import android.os.Build
 import android.platform.test.annotations.AppModeFull
 import android.provider.DeviceConfig.NAMESPACE_APP_HIBERNATION
 import android.provider.Settings
@@ -114,9 +114,8 @@ class AppHibernationIntegrationTest {
                         packageManager.getApplicationInfo(APK_PACKAGE_NAME_S_APP, 0 /* flags */)
                     val stopped = ((ai.flags and ApplicationInfo.FLAG_STOPPED) != 0)
                     assertTrue(stopped)
-                    runShellCommandOrThrow("cmd statusbar expand-notifications")
-                    waitFindObject(By.textContains("unused app"))
-                        .click()
+                    openUnusedAppsNotification()
+
                     waitFindObject(By.text(APK_PACKAGE_NAME_S_APP))
                 }
             }
