@@ -53,6 +53,7 @@ import android.graphics.Insets;
 import android.os.CancellationSignal;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.WindowInsetsAnimationTestBase.TestActivity;
+import android.util.Log;
 import android.view.View;
 import android.view.WindowInsets;
 import android.view.WindowInsetsAnimation;
@@ -172,7 +173,7 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
     @After
     public void tearDown() throws Throwable {
         runOnUiThread(() -> {});  // Fence to make sure we dispatched everything.
-        mCallbacks.forEach(VerifyingCallback::assertNoRunningAnimations);
+        mCallbacks.forEach(VerifyingCallback::assertNoPendingAnimations);
 
         // Unregistering VerifyingCallback as tearing down the MockIme also triggers UI events,
         // which can trigger assertion failures in VerifyingCallback otherwise.
@@ -727,6 +728,7 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
         private final Callback mInner;
         private final Set<WindowInsetsAnimation> mPreparedAnimations = new HashSet<>();
         private final Set<WindowInsetsAnimation> mRunningAnimations = new HashSet<>();
+        private final Set<WindowInsetsAnimation> mEndedAnimations = new HashSet<>();
 
         public VerifyingCallback(Callback callback) {
             super(callback.getDispatchMode());
@@ -735,6 +737,7 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
 
         @Override
         public void onPrepare(@NonNull WindowInsetsAnimation animation) {
+            mErrorCollector.checkThat("onPrepare: animation", animation, notNullValue());
             mErrorCollector.checkThat("onPrepare", mPreparedAnimations, not(hasItem(animation)));
             mPreparedAnimations.add(animation);
             mInner.onPrepare(animation);
@@ -744,6 +747,9 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
         @Override
         public WindowInsetsAnimation.Bounds onStart(@NonNull WindowInsetsAnimation animation,
                 @NonNull WindowInsetsAnimation.Bounds bounds) {
+            mErrorCollector.checkThat("onStart: animation", animation, notNullValue());
+            mErrorCollector.checkThat("onStart: bounds", bounds, notNullValue());
+
             mErrorCollector.checkThat("onStart: mPreparedAnimations",
                     mPreparedAnimations, hasItem(animation));
             mErrorCollector.checkThat("onStart: mRunningAnimations",
@@ -757,6 +763,10 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
         @Override
         public WindowInsets onProgress(@NonNull WindowInsets insets,
                 @NonNull List<WindowInsetsAnimation> runningAnimations) {
+            mErrorCollector.checkThat("onProgress: insets", insets, notNullValue());
+            mErrorCollector.checkThat("onProgress: runningAnimations",
+                    runningAnimations, notNullValue());
+
             mErrorCollector.checkThat("onProgress", new HashSet<>(runningAnimations),
                     is(equalTo(mRunningAnimations)));
             return mInner.onProgress(insets, runningAnimations);
@@ -764,34 +774,54 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
 
         @Override
         public void onEnd(@NonNull WindowInsetsAnimation animation) {
+            mErrorCollector.checkThat("onEnd: animation", animation, notNullValue());
+
+            mErrorCollector.checkThat("onEnd for this animation was already dispatched",
+                    mEndedAnimations, not(hasItem(animation)));
             mErrorCollector.checkThat("onEnd: mRunningAnimations",
                     mRunningAnimations, hasItem(animation));
             mRunningAnimations.remove(animation);
             mPreparedAnimations.remove(animation);
+            mEndedAnimations.add(animation);
             mInner.onEnd(animation);
         }
 
-        public void assertNoRunningAnimations() {
-            mErrorCollector.checkThat(mRunningAnimations, hasSize(0));
+        public void assertNoPendingAnimations() {
+            mErrorCollector.checkThat("Animations with onStart but missing onEnd:",
+                    mRunningAnimations, equalTo(Set.of()));
         }
     }
 
     public static final class LimitedErrorCollector extends ErrorCollector {
-        private static final int LIMIT = 1;
-        private static final boolean REPORT_SUPPRESSED_ERRORS = false;
+        private static final int THROW_LIMIT = 1;
+        private static final int LOG_LIMIT = 10;
+        private static final boolean REPORT_SUPPRESSED_ERRORS_AS_THROWABLE = false;
         private int mCount = 0;
+        private List<Throwable> mSuppressedErrors = new ArrayList<>();
 
         @Override
         public void addError(Throwable error) {
-            if (mCount++ < LIMIT) {
+            if (mCount < THROW_LIMIT) {
                 super.addError(error);
+            } else if (mCount < LOG_LIMIT) {
+                mSuppressedErrors.add(error);
             }
+            mCount++;
         }
 
         @Override
         protected void verify() throws Throwable {
-            if (mCount > LIMIT && REPORT_SUPPRESSED_ERRORS) {
-                super.addError(new AssertionError((mCount - LIMIT) + " errors suppressed."));
+            if (mCount > THROW_LIMIT) {
+                if (REPORT_SUPPRESSED_ERRORS_AS_THROWABLE) {
+                    super.addError(
+                            new AssertionError((mCount - THROW_LIMIT) + " errors suppressed."));
+                } else {
+                    Log.i("LimitedErrorCollector", (mCount - THROW_LIMIT) + " errors suppressed; "
+                            + "additional errors:");
+                    for (Throwable t : mSuppressedErrors) {
+                        Log.e("LimitedErrorCollector", "", t);
+                    }
+                }
             }
             super.verify();
         }
