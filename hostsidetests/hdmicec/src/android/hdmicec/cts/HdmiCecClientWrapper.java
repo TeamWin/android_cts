@@ -295,6 +295,15 @@ public final class HdmiCecClientWrapper extends ExternalResource {
     }
 
     /**
+     * Sends a <USER_CONTROL_PRESSED> and <USER_CONTROL_RELEASED> from source to device through the
+     * output console of the cec-communication channel with the mentioned keycode.
+     */
+    public void sendUserControlPressAndRelease(LogicalAddress source, int keycode, boolean holdKey)
+            throws CecClientWrapperException {
+        sendUserControlPressAndRelease(source, targetDevice, keycode, holdKey);
+    }
+
+    /**
      * Sends a <USER_CONTROL_PRESSED> and <USER_CONTROL_RELEASED> from source to destination through
      * the output console of the cec-communication channel with the mentioned keycode.
      */
