@@ -26,13 +26,13 @@ import androidx.annotation.CheckResult;
 import com.android.eventlib.Event;
 import com.android.eventlib.EventLogger;
 import com.android.eventlib.EventLogsQuery;
-import com.android.eventlib.info.DeviceAdminReceiverInfo;
-import com.android.eventlib.queryhelpers.DeviceAdminReceiverQuery;
-import com.android.eventlib.queryhelpers.DeviceAdminReceiverQueryHelper;
-import com.android.eventlib.queryhelpers.IntentQueryHelper;
-import com.android.eventlib.queryhelpers.UserHandleQuery;
-import com.android.eventlib.queryhelpers.UserHandleQueryHelper;
-import com.android.eventlib.util.SerializableParcelWrapper;
+import com.android.queryable.info.DeviceAdminReceiverInfo;
+import com.android.queryable.queries.DeviceAdminReceiverQuery;
+import com.android.queryable.queries.DeviceAdminReceiverQueryHelper;
+import com.android.queryable.queries.IntentQueryHelper;
+import com.android.queryable.queries.UserHandleQuery;
+import com.android.queryable.queries.UserHandleQueryHelper;
+import com.android.queryable.util.SerializableParcelWrapper;
 
 /**
  * Event logged when {@link DeviceAdminReceiver#onPasswordChanged(Context, Intent)} or
