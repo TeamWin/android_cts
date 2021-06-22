@@ -672,4 +672,35 @@ public class LockTaskTest {
             }
         }
     }
+
+    @Test
+    @PositivePolicyTest(policy = LockTask.class)
+    public void startActivity_fromNonPermittedPackage_newTask_doesNotStart() {
+        String[] originalLockTaskPackages =
+                sDeviceState.dpc().devicePolicyManager().getLockTaskPackages();
+
+        try (TestAppInstanceReference testApp =
+                     sTestApp.install(sTestApis.users().instrumented());
+             TestAppInstanceReference testApp2 =
+                     sSecondTestApp.install(sTestApis.users().instrumented())) {
+            try {
+                sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(
+                        new String[]{sTestApp.packageName()});
+                Activity<TestAppActivity> firstActivity = testApp.activities().any().start();
+                firstActivity.startLockTask();
+                TestAppActivityReference secondActivity = testApp2.activities().any();
+                Intent secondActivityIntent = new Intent();
+                secondActivityIntent.setComponent(secondActivity.component().componentName());
+                secondActivityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+                firstActivity.activity().startActivity(secondActivityIntent);
+
+                assertThat(sTestApis.activities().foregroundActivity())
+                        .isEqualTo(firstActivity.activity().component());
+            } finally {
+                sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(
+                        originalLockTaskPackages);
+            }
+        }
+    }
 }
