@@ -148,6 +148,8 @@ public class ItsService extends Service implements SensorEventListener {
     // Supports at most RAW+YUV+JPEG, one surface each, plus optional background stream
     private static final int MAX_NUM_OUTPUT_SURFACES = 4;
 
+    // Performance class R version number
+    private static final int PERFORMANCE_CLASS_R = Build.VERSION_CODES.R;
     // Performance class S version number
     private static final int PERFORMANCE_CLASS_S = Build.VERSION_CODES.R + 1;
 
@@ -735,9 +737,9 @@ public class ItsService extends Service implements SensorEventListener {
                     doCheckStreamCombination(cmdObj);
                 } else if ("isCameraPrivacyModeSupported".equals(cmdObj.getString("cmdName"))) {
                     doCheckCameraPrivacyModeSupport();
-                } else if ("isSPerformanceClassPrimaryCamera".equals(cmdObj.getString("cmdName"))) {
+                } else if ("isPerformanceClassPrimaryCamera".equals(cmdObj.getString("cmdName"))) {
                     String cameraId = cmdObj.getString("cameraId");
-                    doCheckSPerformanceClassPrimaryCamera(cameraId);
+                    doCheckPerformanceClassPrimaryCamera(cameraId);
                 } else if ("measureCameraLaunchMs".equals(cmdObj.getString("cmdName"))) {
                     String cameraId = cmdObj.getString("cameraId");
                     doMeasureCameraLaunchMs(cameraId);
@@ -1080,8 +1082,9 @@ public class ItsService extends Service implements SensorEventListener {
                 hasPrivacySupport ? "true" : "false");
     }
 
-    private void doCheckSPerformanceClassPrimaryCamera(String cameraId) throws ItsException {
-        boolean  isSPerfClass = (Build.VERSION.MEDIA_PERFORMANCE_CLASS == PERFORMANCE_CLASS_S);
+    private void doCheckPerformanceClassPrimaryCamera(String cameraId) throws ItsException {
+        boolean  isPerfClass = (Build.VERSION.MEDIA_PERFORMANCE_CLASS == PERFORMANCE_CLASS_S
+                || Build.VERSION.MEDIA_PERFORMANCE_CLASS == PERFORMANCE_CLASS_R);
 
         if (mItsCameraIdList == null) {
             mItsCameraIdList = ItsUtils.getItsCompatibleCameraIds(mCameraManager);
@@ -1113,8 +1116,8 @@ public class ItsService extends Service implements SensorEventListener {
             throw new ItsException("Failed to get camera characteristics", e);
         }
 
-        mSocketRunnableObj.sendResponse("sPerformanceClassPrimaryCamera",
-                (isSPerfClass && isPrimaryCamera) ? "true" : "false");
+        mSocketRunnableObj.sendResponse("performanceClassPrimaryCamera",
+                (isPerfClass && isPrimaryCamera) ? "true" : "false");
     }
 
     private double invokeCameraPerformanceTest(Class testClass, String testName,

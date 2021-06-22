@@ -41,7 +41,7 @@ class CameraLaunchSPerfClassTest(its_base_test.ItsBaseTest):
         camera_id=self.camera_id) as cam:
 
       camera_properties_utils.skip_unless(
-          cam.is_s_performance_class_primary_camera())
+          cam.is_performance_class_primary_camera())
 
       # Load chart for scene.
       props = cam.get_camera_properties()
