@@ -42,7 +42,7 @@ public final class HdmiCecRoutingControlTest extends BaseHdmiCecCtsTest {
     private static final int PHYSICAL_ADDRESS = 0x1000;
 
     public HdmiCecRoutingControlTest() {
-        super(LogicalAddress.PLAYBACK_1);
+        super(HdmiCecConstants.CEC_DEVICE_TYPE_PLAYBACK_DEVICE);
     }
 
     @Rule

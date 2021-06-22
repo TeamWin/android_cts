@@ -41,7 +41,7 @@ public final class HdmiCecAudioReturnChannelControlTest extends BaseHdmiCecCtsTe
     private static final LogicalAddress AUDIO_DEVICE = LogicalAddress.AUDIO_SYSTEM;
 
     public HdmiCecAudioReturnChannelControlTest() {
-        super(AUDIO_DEVICE);
+        super(HdmiCecConstants.CEC_DEVICE_TYPE_AUDIO_SYSTEM);
     }
 
     @Rule

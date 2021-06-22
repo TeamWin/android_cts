@@ -20,6 +20,7 @@ package android.hdmicec.cts.audio;
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.CecOperand;
+import android.hdmicec.cts.HdmiCecConstants;
 import android.hdmicec.cts.error.CecClientWrapperException;
 import android.hdmicec.cts.error.ErrorCodes;
 import android.hdmicec.cts.LogicalAddress;
@@ -53,7 +54,7 @@ public final class HdmiCecInvalidMessagesTest extends BaseHdmiCecCtsTest {
     private static final String CLEAR_COMMAND = String.format("pm clear %s", PACKAGE);
 
     public HdmiCecInvalidMessagesTest() {
-        super(AUDIO_DEVICE);
+        super(HdmiCecConstants.CEC_DEVICE_TYPE_AUDIO_SYSTEM);
     }
 
     @Rule
