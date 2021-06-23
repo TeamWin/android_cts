@@ -1757,6 +1757,26 @@
     <!-- Strings for MediaCodecFlushActivity -->
     <string name="media_codec_flush">Video codec flushing in Tunnel Mode</string>
 
+    <!-- Strings for VolumeLevelChangesActivity -->
+    <string name="volume_level_changes">Volume level changes</string>
+    <string name="volume_level_changes_title">This test is for verifying that the Volume level
+        changes are reflected when playback occurs with and without tunnel mode playback for
+        PCM audio.</string>
+    <string name="increase_volume_level"> Increase the volume until you can clearly recognize the
+        audio, and then press OK button.</string>
+    <string name="ok_button_volume_level">OK</string>
+    <string name="decrease_volume_level"> Decrease the volume until you can no longer recognize the
+        audio, and then press OK button.</string>
+    <string name="yes_button_volume_level">Yes</string>
+    <string name="no_button_volume_level">No</string>
+    <string name="is_same_volume"> "Is the volume still the same as what you had set?"</string>
+    <string name="volume_level_changes_failure_tunnel_to_non_tunnel">
+        "The volume change was not maintained when switching from tunnel mode to non-tunnel mode."
+    </string>
+    <string name="volume_level_changes_failure_non_tunnel_to_tunnel">
+        "The volume change was not maintained when switching from non-tunnel mode to tunnel mode."
+    </string>
+
     <!-- Strings for the Camera Bokeh mode test activity -->
     <string name="camera_bokeh_test">Camera Bokeh</string>
     <string name="camera_bokeh_test_info">
