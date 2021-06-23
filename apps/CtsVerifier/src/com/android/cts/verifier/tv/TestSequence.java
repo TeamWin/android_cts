@@ -1,8 +1,6 @@
 package com.android.cts.verifier.tv;
 
 
-import com.android.cts.verifier.tv.TvAppVerifierActivity;
-
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -35,7 +33,9 @@ public class TestSequence {
         }
 
         // Initialize all containing test steps.
-        steps.stream().forEach(step -> step.createUiElements());
+        steps.stream()
+                .flatMap(step -> step.createUiElements().stream())
+                .forEach(view -> context.addItem(view));
 
         // After a step is completed we enable the button of the next step.
         for (int i = 0; i < steps.size() - 1; i++) {

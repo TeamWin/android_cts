@@ -21,7 +21,7 @@ import static com.android.server.appsearch.testing.AppSearchTestUtils.convertSea
 
 import static com.google.common.truth.Truth.assertThat;
 
-import static org.testng.Assert.expectThrows;
+import static org.junit.Assert.assertThrows;
 
 import android.annotation.NonNull;
 import android.app.appsearch.AppSearchResult;
@@ -744,7 +744,7 @@ public abstract class GlobalSearchSessionCtsTestBase {
         SearchResult firstResult = page.get(0);
 
         ExecutionException exception =
-                expectThrows(
+                assertThrows(
                         ExecutionException.class,
                         () ->
                                 mGlobalAppSearchManager

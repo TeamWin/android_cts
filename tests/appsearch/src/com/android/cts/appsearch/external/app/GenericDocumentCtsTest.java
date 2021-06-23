@@ -18,7 +18,7 @@ package android.app.appsearch.cts.app;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import static org.testng.Assert.expectThrows;
+import static org.junit.Assert.assertThrows;
 
 import android.app.appsearch.GenericDocument;
 
@@ -343,7 +343,7 @@ public class GenericDocumentCtsTest {
                 new GenericDocument.Builder<>("namespace", "id1", "schemaType1");
         String nullString = null;
 
-        expectThrows(
+        assertThrows(
                 IllegalArgumentException.class,
                 () -> builder.setPropertyString("testKey", "string1", nullString));
     }
@@ -689,19 +689,19 @@ public class GenericDocumentCtsTest {
 
         // Some paths are invalid because they are malformed. These throw an exception --- the
         // querier shouldn't provide such paths.
-        expectThrows(
+        assertThrows(
                 IllegalArgumentException.class,
                 () -> doc.getPropertyStringArray("propDocs.[0]propInts"));
-        expectThrows(
+        assertThrows(
                 IllegalArgumentException.class, () -> doc.getPropertyStringArray("propString[0"));
-        expectThrows(
+        assertThrows(
                 IllegalArgumentException.class, () -> doc.getPropertyStringArray("propString[0.]"));
-        expectThrows(
+        assertThrows(
                 IllegalArgumentException.class,
                 () -> doc.getPropertyStringArray("propString[banana]"));
-        expectThrows(
+        assertThrows(
                 IllegalArgumentException.class, () -> doc.getPropertyStringArray("propString[-1]"));
-        expectThrows(
+        assertThrows(
                 IllegalArgumentException.class, () -> doc.getPropertyStringArray("propDocs[0]cat"));
     }
 
