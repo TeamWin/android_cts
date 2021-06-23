@@ -217,6 +217,17 @@ java_test_host {
     test_config: "PublicVolumeTest.xml",
 }
 
+java_test_host {
+    name: "CtsAppCloningHostTest",
+    srcs:  [
+        "host/src/android/scopedstorage/cts/host/AppCloningHostTest.java",
+        "host/src/android/scopedstorage/cts/host/BaseHostTestCase.java"
+    ],
+    libs: ["cts-tradefed", "tradefed", "testng"],
+    test_suites: ["general-tests", "mts-mediaprovider", "cts"],
+    test_config: "AndroidTestAppCloning.xml",
+}
+
 android_test {
     name: "CtsScopedStorageDeviceOnlyTest",
     manifest: "device/AndroidManifest.xml",
