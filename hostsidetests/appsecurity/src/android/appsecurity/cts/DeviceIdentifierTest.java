@@ -16,6 +16,7 @@
 
 package android.appsecurity.cts;
 
+import android.platform.test.annotations.SecurityTest;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -57,6 +58,7 @@ public class DeviceIdentifierTest extends DeviceTestCase implements IBuildReceiv
         getDevice().uninstallPackage(DEVICE_IDENTIFIER_PKG);
     }
 
+    @SecurityTest(minPatchLevel = "2021-04")
     public void testDeviceIdentifierAccessWithAppOpGranted() throws Exception {
         setDeviceIdentifierAccessAppOp(DEVICE_IDENTIFIER_PKG, true);
         Utils.runDeviceTestsAsCurrentUser(getDevice(), DEVICE_IDENTIFIER_PKG,
