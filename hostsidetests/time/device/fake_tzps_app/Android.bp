@@ -1,4 +1,5 @@
-// Copyright (C) 2020 The Android Open Source Project
+//
+// Copyright (C) 2021 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,22 +12,20 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+//
 
 package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-java_test_host {
-    name: "CtsLocationTimeZoneManagerHostTest",
-    srcs:  ["host/src/**/*.java"],
-    libs: ["cts-tradefed", "tradefed"],
+// An app that hosts fake TimeZoneProviderService implementations that can be used by tests to query
+// the fake providers' state and inject test events into the fake providers.
+android_test_helper_app {
+    name: "CtsFakeTimeZoneProvidersApp",
+    defaults: ["cts_support_defaults"],
+    sdk_version: "test_current",
     static_libs: [
-        "cts-statsd-atom-host-test-utils",
-        "host_time_shell_utils",
+        "device_time_shell_utils",
     ],
-    data: [
-        ":CtsFakeTimeZoneProvidersApp",
-    ],
-    test_suites: ["general-tests", "cts"],
-    test_config: "host/AndroidTest.xml",
+    srcs: ["src/**/*.java"],
 }
