@@ -67,8 +67,8 @@ _START_FRAME = 1
 _FRAME_DELTA_TOL = 1.5  # 50% margin over nominal FPS of captures
 
 # Constants to convert between different units (for clarity).
-_SEC_TO_MSEC = 1000.0
-_MSEC_TO_NSEC = 1000*1000.0
+_SEC_TO_MSEC = 1000
+_MSEC_TO_NSEC = 1000*1000
 _NSEC_TO_SEC = 1.0E-9
 _CM_TO_M = 1E-2
 _RADS_TO_DEGS = 180/math.pi
@@ -79,6 +79,11 @@ _OFFSET_MS_THRESH_MAX = 1  # mseconds
 _ROTATION_PER_FRAME_MIN = 0.001  # rads/s
 
 # PARAMs from S refactor.
+
+# Set maximum exposure time to reduce motion blur
+# blur = velocity * exp_time * N_pixels / FOV
+# blur: 3 pixels, v: chart R (17.7cm) / rot_time (1.5s), N: 640, FOV: 30cm
+_EXP_MAX = 4*_MSEC_TO_NSEC  # 4 ms
 _GYRO_INIT_WAIT_TIME = 0.5  # Seconds to wait for gyro to stabilize.
 _GYRO_POST_WAIT_TIME = 0.2  # Seconds to wait to capture some extra gyro data.
 _IMG_SIZE_MAX = 640 * 480  # Maximum image size.
@@ -131,15 +136,28 @@ def _collect_data(cam, fps, w, h, test_length, rot_rig, chart_dist, log_path):
 
   fmt = {'format': 'yuv', 'width': w, 'height': h}
   s, e, _, _, _ = cam.do_3a(get_results=True, do_af=False)
+  logging.debug('3A ISO: %d, exp: %.3fms', s, e/_MSEC_TO_NSEC)
+  if e > _EXP_MAX:
+    logging.debug('Re-assigning exposure time')
+    s *= int(round(e / _EXP_MAX))
+    e = _EXP_MAX
+    s_max = props['android.sensor.info.sensitivityRange'][1]
+    if s > s_max:
+      logging.debug('Calculated ISO too large! ISO: %d, MAX: %d '
+                    'Setting ISO to max analog gain value.', s, s_max)
+      s = s_max
   req = capture_request_utils.manual_capture_request(s, e)
   capture_request_utils.turn_slow_filters_off(props, req)
   fd_min = props['android.lens.info.minimumFocusDistance']
   fd_chart = 1 / chart_dist
-  req['android.lens.focusDistance'] = min(fd_min, fd_chart)
+  fd_meas = min(fd_min, fd_chart)
+  logging.debug('fd_min: %.3f, fd_chart: %.3f, fd_meas: %.3f',
+                fd_min, fd_chart, fd_meas)
+  req['android.lens.focusDistance'] = fd_meas
   req['android.control.aeTargetFpsRange'] = [fps, fps]
   req['android.sensor.frameDuration'] = int(1 / _NSEC_TO_SEC / fps)
-  logging.debug('Capturing %dx%d with sens. %d, exp. time %.1fms at %dfps',
-                w, h, s, e / _MSEC_TO_NSEC, fps)
+  logging.debug('Capturing %dx%d with ISO %d, exp %.3fms at %dfps',
+                w, h, s, e/_MSEC_TO_NSEC, fps)
   caps = cam.do_capture([req] * int(fps * test_length), fmt)
 
   # Capture a bit more gyro samples for use in get_best_alignment_offset
