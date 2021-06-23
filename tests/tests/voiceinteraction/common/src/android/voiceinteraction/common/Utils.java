@@ -18,6 +18,8 @@ package android.voiceinteraction.common;
 import android.app.VoiceInteractor.PickOptionRequest.Option;
 import android.content.LocusId;
 import android.os.Bundle;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -43,6 +45,9 @@ public class Utils {
     private static final String TAG = Utils.class.getSimpleName();
 
     public static final long OPERATION_TIMEOUT_MS = 5000;
+
+    /** CDD restricts the max size of each successful hotword result is 100 bytes. */
+    public static final int MAX_HOTWORD_DETECTED_RESULT_SIZE = 100;
 
     /** Decide which VoiceInteractionService should be started for testing. */
     public static final int HOTWORD_DETECTION_SERVICE_NONE = 0;
@@ -226,5 +231,23 @@ public class Utils {
             Log.e(TAG, "Interrupted", e);
         }
         return false;
+    }
+
+    public static int getParcelableSize(Parcelable parcelable) {
+        final Parcel p = Parcel.obtain();
+        parcelable.writeToParcel(p, 0);
+        p.setDataPosition(0);
+        final int size = p.dataSize();
+        p.recycle();
+        return size;
+    }
+
+    public static int bitCount(int value) {
+        int bits = 0;
+        while (value > 0) {
+            bits++;
+            value = value >> 1;
+        }
+        return bits;
     }
 }
