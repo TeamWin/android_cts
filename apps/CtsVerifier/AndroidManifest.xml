@@ -4457,10 +4457,22 @@
                  android:permission="android.permission.BIND_DEVICE_ADMIN">
         </service>
 
+
         <!-- Used by the SensorTestScreenManipulator to reset the screen timeout after turn off. -->
         <activity android:name=".os.TimeoutResetActivity">
             <meta-data android:name="display_mode"
                        android:value="multi_display_mode" />
+        </activity>
+
+        <activity android:name=".tunnelmode.VolumeLevelChangesActivity"
+                  android:label="@string/volume_level_changes"
+                  android:exported="true"
+                  android:configChanges="keyboardHidden|orientation|screenSize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+            <meta-data android:name="test_category" android:value="@string/test_category_tunnel" />
         </activity>
 
         <activity android:name=".tv.TvInputDiscoveryTestActivity"
