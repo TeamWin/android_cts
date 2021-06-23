@@ -41,6 +41,7 @@ import android.view.inputmethod.ExtractedTextRequest;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputConnectionWrapper;
 import android.view.inputmethod.InputContentInfo;
+import android.view.inputmethod.SurroundingText;
 import android.view.inputmethod.cts.util.EndToEndImeTestBase;
 import android.view.inputmethod.cts.util.TestActivity;
 import android.widget.EditText;
@@ -537,6 +538,124 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
             assertTrue("Once unbindInput() happened, IC#getSelectedText() returns null",
                     result.isNullReturnValue());
             assertFalse("Once unbindInput() happened, IC#getSelectedText() fails fast.",
+                    methodCalled.get());
+            expectElapseTimeLessThan(result, IMMEDIATE_TIMEOUT_NANO);
+        });
+    }
+
+    /**
+     * Test {@link InputConnection#getSurroundingText(int, int, int)} works as expected.
+     */
+    @Test
+    public void testGetSurroundingText() throws Exception {
+        final int expectedBeforeLength = 3;
+        final int expectedAfterLength = 4;
+        final int expectedFlags = InputConnection.GET_TEXT_WITH_STYLES;
+        final SurroundingText expectedResult = new SurroundingText("012345", 1, 2, 0);
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public SurroundingText getSurroundingText(int beforeLength, int afterLength,
+                    int flags) {
+                assertEquals(expectedBeforeLength, beforeLength);
+                assertEquals(expectedAfterLength, afterLength);
+                assertEquals(expectedFlags, flags);
+                return expectedResult;
+            }
+        }
+
+        testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
+            final ImeCommand command = session.callGetSurroundingText(expectedBeforeLength,
+                    expectedAfterLength, expectedFlags);
+            final SurroundingText result =
+                    expectCommand(stream, command, TIMEOUT).getReturnParcelableValue();
+            assertEquals(expectedResult.getText(), result.getText());
+            assertEquals(expectedResult.getSelectionStart(), result.getSelectionStart());
+            assertEquals(expectedResult.getSelectionEnd(), result.getSelectionEnd());
+            assertEquals(expectedResult.getOffset(), result.getOffset());
+        });
+    }
+
+    /**
+     * Test {@link InputConnection#getSurroundingText(int, int, int)} fails after a system-defined
+     * time-out even if the target app does not respond.
+     */
+    @Test
+    public void testGetSurroundingTextFailWithTimeout() throws Exception {
+        final int beforeLength = 3;
+        final int afterLength = 4;
+        final int flags = InputConnection.GET_TEXT_WITH_STYLES;
+        final SurroundingText unexpectedResult = new SurroundingText("012345", 1, 2, 0);
+
+        final BlockingMethodVerifier blocker = new BlockingMethodVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public SurroundingText getSurroundingText(int beforeLength, int afterLength,
+                    int flags) {
+                blocker.onMethodCalled();
+                return unexpectedResult;
+            }
+        }
+
+        testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
+            final ImeCommand command = session.callGetSurroundingText(beforeLength, afterLength,
+                    flags);
+            blocker.expectMethodCalled("IC#getSurroundingText() must be called back", TIMEOUT);
+            final ImeEvent result = expectCommand(stream, command, LONG_TIMEOUT);
+            assertTrue("When timeout happens, IC#getSurroundingText() returns null",
+                    result.isNullReturnValue());
+        }, blocker);
+    }
+
+    /**
+     * Test {@link InputConnection#getSurroundingText(int, int, int)} fail-fasts once unbindInput()
+     * is issued.
+     */
+    @Test
+    public void testGetSurroundingTextFailFastAfterUnbindInput() throws Exception {
+        final int beforeLength = 3;
+        final int afterLength = 4;
+        final int flags = InputConnection.GET_TEXT_WITH_STYLES;
+        final SurroundingText unexpectedResult = new SurroundingText("012345", 1, 2, 0);
+
+        final AtomicBoolean methodCalled = new AtomicBoolean(false);
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public SurroundingText getSurroundingText(int beforeLength, int afterLength,
+                    int flags) {
+                methodCalled.set(true);
+                return unexpectedResult;
+            }
+        }
+
+        testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
+            // Memorize the current InputConnection.
+            expectCommand(stream, session.memorizeCurrentInputConnection(), TIMEOUT);
+
+            // Let unbindInput happen.
+            triggerUnbindInput();
+            expectEvent(stream, event -> "unbindInput".equals(event.getEventName()), TIMEOUT);
+
+            // Now IC#getTextBeforeCursor() for the memorized IC should fail fast.
+            final ImeEvent result = expectCommand(stream, session.callGetSurroundingText(
+                    beforeLength, afterLength, flags), TIMEOUT);
+            assertTrue("Once unbindInput() happened, IC#getSurroundingText() returns null",
+                    result.isNullReturnValue());
+            assertFalse("Once unbindInput() happened, IC#getSurroundingText() fails fast.",
                     methodCalled.get());
             expectElapseTimeLessThan(result, IMMEDIATE_TIMEOUT_NANO);
         });

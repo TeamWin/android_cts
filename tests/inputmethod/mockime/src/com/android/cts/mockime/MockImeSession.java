@@ -47,6 +47,7 @@ import android.view.inputmethod.InputContentInfo;
 import android.view.inputmethod.InputMethodManager;
 
 import androidx.annotation.GuardedBy;
+import androidx.annotation.IntRange;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -437,6 +438,36 @@ public class MockImeSession implements AutoCloseable {
         final Bundle params = new Bundle();
         params.putInt("flag", flag);
         return callCommandInternal("getSelectedText", params);
+    }
+
+    /**
+     * Lets {@link MockIme} to call {@link InputConnection#getSurroundingText(int, int, int)} with
+     * the given parameters.
+     *
+     * <p>This triggers {@code getCurrentInputConnection().getSurroundingText(int, int, int)}.</p>
+     *
+     * <p>Use {@link ImeEvent#getReturnParcelableValue()} for {@link ImeEvent} returned from
+     * {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to see the
+     * value returned from the API.</p>
+     *
+     * <p>This can be affected by {@link #memorizeCurrentInputConnection()}.</p>
+     *
+     * @param beforeLength The expected length of the text before the cursor.
+     * @param afterLength The expected length of the text after the cursor.
+     * @param flags Supplies additional options controlling how the text is returned. May be either
+     *              {@code 0} or {@link InputConnection#GET_TEXT_WITH_STYLES}.
+     * @return {@link ImeCommand} object that can be passed to
+     *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
+     *         wait until this event is handled by {@link MockIme}.
+     */
+    @NonNull
+    public ImeCommand callGetSurroundingText(@IntRange(from = 0) int beforeLength,
+            @IntRange(from = 0) int afterLength, int flags) {
+        final Bundle params = new Bundle();
+        params.putInt("beforeLength", beforeLength);
+        params.putInt("afterLength", afterLength);
+        params.putInt("flags", flags);
+        return callCommandInternal("getSurroundingText", params);
     }
 
     /**
