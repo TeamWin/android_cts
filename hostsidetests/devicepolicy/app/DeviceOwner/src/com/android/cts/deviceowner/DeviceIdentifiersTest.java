@@ -15,6 +15,7 @@
  */
 package com.android.cts.deviceowner;
 
+import android.platform.test.annotations.SecurityTest;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -33,6 +34,7 @@ public class DeviceIdentifiersTest extends BaseDeviceOwnerTest {
             "An unexpected value was received by the device owner with the READ_PHONE_STATE "
                     + "permission when invoking %s";
 
+    @SecurityTest(minPatchLevel = "2021-04")
     public void testDeviceOwnerCanGetDeviceIdentifiersWithPermission() {
         // The device owner with the READ_PHONE_STATE permission should have access to all device
         // identifiers. However since the TelephonyManager methods can return null this method
