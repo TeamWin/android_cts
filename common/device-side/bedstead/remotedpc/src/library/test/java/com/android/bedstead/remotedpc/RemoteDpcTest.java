@@ -66,7 +66,8 @@ public class RemoteDpcTest {
     @BeforeClass
     public static void setupClass() {
         sNonRemoteDpcTestApp = new TestAppProvider().query()
-                .withPackageName(DEVICE_ADMIN_TESTAPP_PACKAGE_NAME)
+                // TODO(scottjonathan): Query by feature not package name
+                .wherePackageName().isEqualTo(DEVICE_ADMIN_TESTAPP_PACKAGE_NAME)
                 .get();
 
         sNonRemoteDpcTestApp.install(sUser);

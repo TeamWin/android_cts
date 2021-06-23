@@ -16,12 +16,17 @@
 
 package com.android.bedstead.testapp;
 
+import com.android.eventlib.events.activities.ActivityCreatedEvent;
+import com.android.queryable.Queryable;
+import com.android.queryable.queries.ActivityQueryHelper;
+import com.android.queryable.queries.StringQuery;
+import com.android.queryable.queries.StringQueryHelper;
+
 /** Builder for progressively building {@link TestApp} queries. */
-public final class TestAppQueryBuilder {
-    // TODO(scottjonathan): Consider how specific we can make this query builder - perhaps pull out
-    //  the queries from EventLib and use them here too
+public final class TestAppQueryBuilder implements Queryable {
     private final TestAppProvider mProvider;
-    private String mPackageName = null;
+
+    StringQueryHelper<TestAppQueryBuilder> mPackageName = new StringQueryHelper<>(this);
 
     TestAppQueryBuilder(TestAppProvider provider) {
         if (provider == null) {
@@ -37,12 +42,8 @@ public final class TestAppQueryBuilder {
      * are relying on features you know the {@link TestApp} with that package name has, query for
      * those features directly.
      */
-    public TestAppQueryBuilder withPackageName(String packageName) {
-        if (packageName == null) {
-            throw new NullPointerException();
-        }
-        mPackageName = packageName;
-        return this;
+    public StringQuery<TestAppQueryBuilder> wherePackageName() {
+        return mPackageName;
     }
 
     /**
@@ -57,7 +58,7 @@ public final class TestAppQueryBuilder {
 
     private TestAppDetails resolveQuery() {
         for (TestAppDetails details : mProvider.testApps()) {
-            if (mPackageName != null && !mPackageName.equals(details.mPackageName)) {
+            if (!matches(details)) {
                 continue;
             }
 
@@ -66,5 +67,13 @@ public final class TestAppQueryBuilder {
         }
 
         throw new NotFoundException(this);
+    }
+
+    private boolean matches(TestAppDetails details) {
+        if (!mPackageName.matches(details.mPackageName)) {
+            return false;
+        }
+
+        return true;
     }
 }
