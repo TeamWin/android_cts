@@ -32,7 +32,6 @@ public class LocalForegroundServiceLocation extends LocalForegroundService {
     private static final String TAG = "LocalForegroundServiceLocation";
     private static final String NOTIFICATION_CHANNEL_ID = "cts/" + TAG;
     public static final String EXTRA_FOREGROUND_SERVICE_TYPE = "ForegroundService.type";
-    public static final int COMMAND_START_FOREGROUND_WITH_TYPE = 1;
     public static String ACTION_START_FGSL_RESULT =
             "android.app.stubs.LocalForegroundServiceLocation.RESULT";
     private int mNotificationId = 10;
@@ -65,6 +64,22 @@ public class LocalForegroundServiceLocation extends LocalForegroundService {
                         .build();
                 startForeground(mNotificationId, notification);
                 //assertEquals(type, getForegroundServiceType());
+                break;
+            case COMMAND_START_FOREGROUND:
+                mNotificationId ++;
+                final Notification notification2 =
+                        new Notification.Builder(context, NOTIFICATION_CHANNEL_ID)
+                                .setContentTitle(getNotificationTitle(mNotificationId))
+                                .setSmallIcon(R.drawable.black)
+                                .build();
+                startForeground(mNotificationId, notification2);
+                break;
+            case COMMAND_STOP_FOREGROUND_REMOVE_NOTIFICATION:
+                Log.d(TAG, "Stopping foreground removing notification");
+                stopForeground(true);
+                break;
+            case COMMAND_START_NO_FOREGROUND:
+                Log.d(TAG, "Starting without calling startForeground()");
                 break;
             default:
                 Log.e(TAG, "Unknown command: " + command);
