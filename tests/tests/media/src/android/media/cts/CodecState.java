@@ -61,9 +61,6 @@ public class CodecState {
     private volatile OnFrameRenderedListener mOnFrameRenderedListener;
     /** A list of reported rendered video frames' timestamps. */
     private ArrayList<Long> mRenderedVideoFrameTimestampList;
-    private boolean mFirstTunnelFrameReady;
-    private volatile OnFirstTunnelFrameReadyListener mOnFirstTunnelFrameReadyListener;
-
 
     /** If true the video/audio will start from the beginning when it reaches the end. */
     private boolean mLoopEnabled = false;
@@ -101,8 +98,6 @@ public class CodecState {
 
         mPresentationTimeUs = 0;
 
-        mFirstTunnelFrameReady = false;
-
         String mime = mFormat.getString(MediaFormat.KEY_MIME);
         Log.d(TAG, "CodecState::CodecState " + mime);
         mIsAudio = mime.startsWith("audio/");
@@ -111,9 +106,6 @@ public class CodecState {
             mOnFrameRenderedListener = new OnFrameRenderedListener();
             codec.setOnFrameRenderedListener(mOnFrameRenderedListener,
                                              new Handler(Looper.getMainLooper()));
-            mOnFirstTunnelFrameReadyListener = new OnFirstTunnelFrameReadyListener();
-            codec.setOnFirstTunnelFrameReadyListener(new Handler(Looper.getMainLooper()),
-                    mOnFirstTunnelFrameReadyListener);
         }
     }
 
@@ -133,10 +125,6 @@ public class CodecState {
         if (mOnFrameRenderedListener != null) {
             mCodec.setOnFrameRenderedListener(null, null);
             mOnFrameRenderedListener = null;
-        }
-        if (mOnFirstTunnelFrameReadyListener != null) {
-            mCodec.setOnFirstTunnelFrameReadyListener(null, null);
-            mOnFirstTunnelFrameReadyListener = null;
         }
 
         mCodec.release();
@@ -188,7 +176,6 @@ public class CodecState {
         mCodec.flush();
         mPresentationTimeUs = 0;
         mRenderedVideoFrameTimestampList = new ArrayList<Long>();
-        mFirstTunnelFrameReady = false;
     }
 
     public boolean isEnded() {
@@ -454,19 +441,6 @@ public class CodecState {
         return mAudioTrack.getAudioTimeUs();
     }
 
-    /** Callback called in tunnel mode when video peek is ready */
-    private class OnFirstTunnelFrameReadyListener
-        implements MediaCodec.OnFirstTunnelFrameReadyListener {
-
-        @Override
-        public void onFirstTunnelFrameReady(MediaCodec codec) {
-            if (this != mOnFirstTunnelFrameReadyListener) {
-                return; // stale event
-            }
-            mFirstTunnelFrameReady = true;
-        }
-    }
-
     /**
      * If a video codec, returns the list of rendered frames' timestamps.
      * Otherwise, returns an empty list.
@@ -512,15 +486,9 @@ public class CodecState {
         mCodec.setOutputSurface(surface);
     }
 
-    /** Configure video peek. */
     public void setVideoPeek(boolean enable) {
         Bundle parameters = new Bundle();
         parameters.putInt(MediaCodec.PARAMETER_KEY_TUNNEL_PEEK, enable ? 1 : 0);
         mCodec.setParameters(parameters);
-    }
-
-    /** In tunnel mode, queries whether the first video frame is ready for video peek. */
-    public boolean isFirstTunnelFrameReady() {
-        return mFirstTunnelFrameReady;
     }
 }
