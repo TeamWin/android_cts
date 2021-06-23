@@ -92,6 +92,20 @@ public class CarPackageManagerTest extends CarApiTestBase {
     }
 
     @Test
+    public void testIsServiceDistractionOptimized() {
+        assertThat(mCarPm.isServiceDistractionOptimized("com.android.car",
+                "anything.anything")).isTrue();
+        if (Build.TYPE.equalsIgnoreCase("user")) {
+            // Should be false as not from trusted source.
+            assertThat(mCarPm.isServiceDistractionOptimized("android.car.cts",
+                    "anything.anything")).isFalse();
+        } else {
+            assertThat(mCarPm.isServiceDistractionOptimized("android.car.cts",
+                    "anything.anything")).isTrue();
+        }
+    }
+
+    @Test
     public void testNonDistractionOptimizedActivityNotAllowed() {
         // Not distraction optimized, but from system app
         assertThat(mCarPm.isActivityDistractionOptimized("com.android.car",
