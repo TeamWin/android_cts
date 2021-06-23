@@ -546,7 +546,7 @@ public class LoginActivityTest
 
         assertRightActivity(session, sessionId, activity);
 
-        final int additionalEvents = 5;
+        final int additionalEvents = 4;
         final List<ContentCaptureEvent> events = activity.assertInitialViewsAppeared(session,
                 additionalEvents);
 
