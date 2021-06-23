@@ -164,12 +164,13 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
         super.tearDown();
     }
 
-    // Skip the test for TV, Car and Watch devices.
+    // Skip the test for TV, Car, Watch devices, and low ram devices.
     private boolean shouldSkip() {
         PackageManager pm =
                 InstrumentationRegistry.getInstrumentation().getTargetContext().getPackageManager();
         return pm.hasSystemFeature(pm.FEATURE_LEANBACK) || pm.hasSystemFeature(pm.FEATURE_WATCH)
-                || pm.hasSystemFeature(pm.FEATURE_AUTOMOTIVE);
+                || pm.hasSystemFeature(pm.FEATURE_AUTOMOTIVE)
+                || pm.hasSystemFeature(pm.FEATURE_RAM_LOW);
     }
 
     /**
