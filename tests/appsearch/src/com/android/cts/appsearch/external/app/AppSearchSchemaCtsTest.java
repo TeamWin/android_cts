@@ -23,7 +23,6 @@ import static org.junit.Assert.assertThrows;
 import android.app.appsearch.AppSearchSchema;
 import android.app.appsearch.AppSearchSchema.PropertyConfig;
 import android.app.appsearch.AppSearchSchema.StringPropertyConfig;
-import android.app.appsearch.exceptions.IllegalSchemaException;
 
 import com.android.server.appsearch.testing.AppSearchEmail;
 
@@ -57,9 +56,9 @@ public class AppSearchSchemaCtsTest {
                                                 StringPropertyConfig.INDEXING_TYPE_PREFIXES)
                                         .setTokenizerType(StringPropertyConfig.TOKENIZER_TYPE_PLAIN)
                                         .build());
-        IllegalSchemaException e =
+        IllegalArgumentException e =
                 assertThrows(
-                        IllegalSchemaException.class,
+                        IllegalArgumentException.class,
                         () ->
                                 builder.addProperty(
                                         new StringPropertyConfig.Builder("subject")
