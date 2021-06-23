@@ -413,20 +413,6 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
             val permissionLabel = getPermissionLabel(permission)
             click(By.text(permissionLabel))
 
-            // Watch does not show an alert dialog when the user turns on permission, only when they
-            // turns it off.
-            if (isWatch) {
-                try {
-                    if (waitFindObjectOrNull(By.text(permissionLabel), 1000) != null) {
-                        continue
-                    }
-                } catch (e: StaleObjectException) {
-                    // It sometimes causes StaleObjectException when screen changes due to click
-                    // It should be ignored, because it depends on timing
-                    Log.w("CtsPermission3TestCases", "Caught StaleObjectException")
-                }
-            }
-
             val wasGranted = if (isAutomotive) {
                 // Automotive doesn't support one time permissions, and thus
                 // won't show an "Ask every time" message
@@ -517,7 +503,7 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         }
 
     private fun isMediaStorageButton(permission: String, targetSdk: Int): Boolean =
-            if (isTv) {
+            if (isTv || isWatch) {
                 false
             } else {
                 when (permission) {
@@ -531,7 +517,7 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
             }
 
     private fun isAllStorageButton(permission: String, targetSdk: Int): Boolean =
-            if (isTv) {
+            if (isTv || isWatch) {
                 false
             } else {
                 when (permission) {
