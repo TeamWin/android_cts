@@ -74,5 +74,16 @@
                 <action android:name="android.appenumeration.action.BROADCAST_UNEXPORTED"/>
             </intent-filter>
         </receiver>
+        <service android:name="android.appenumeration.testapp.StubAccessibilityService"
+                 android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+                 android:exported="true">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService"/>
+                <category android:name="android.accessibilityservice.category.FEEDBACK_GENERIC"/>
+            </intent-filter>
+
+            <meta-data android:name="android.accessibilityservice"
+                       android:resource="@xml/stub_accessibility_service"/>
+        </service>
     </application>
 </manifest>

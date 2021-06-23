@@ -205,7 +205,8 @@ public class Constants {
             PKG_BASE + "cts.action.GET_PREFERRED_ACTIVITIES";
     public static final String ACTION_SET_INSTALLER_PACKAGE_NAME =
             PKG_BASE + "cts.action.SET_INSTALLER_PACKAGE_NAME";
-
+    public static final String ACTION_GET_INSTALLED_ACCESSIBILITYSERVICES_PACKAGES =
+            PKG_BASE + "cts.action.GET_INSTALLED_ACCESSIBILITYSERVICES_PACKAGES";
     public static final String EXTRA_REMOTE_CALLBACK = "remoteCallback";
     public static final String EXTRA_REMOTE_READY_CALLBACK = "remoteReadyCallback";
     public static final String EXTRA_ERROR = "error";
