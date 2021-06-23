@@ -94,6 +94,9 @@
          removed once tests are refactored to use the proper IPC between theses users.  -->
     <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS" />
 
+    <!-- Needed for sensor tests -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+
     <application>
 
         <meta-data android:name="SuiteName" android:value="CTS_VERIFIER" />
