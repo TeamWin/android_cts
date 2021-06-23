@@ -5713,69 +5713,179 @@ Follow the instructions on the screen to measure the frequency response for the 
 
     <!-- Notification Bubble Tests-->
     <string name="bubbles_notification_title">Bubble Notification Tests</string>
-    <string name="bubbles_notification_description">This test checks the behaviour of bubble
-        notifications, ensuring that notifications appear or disappear appropriately based on how
-        BubbleMetadata is configured on the notification and user actions. Bubbles are special
-        notifications that appear as a floating button on the screen, in addition to the notification
-        in the notification shade.</string>
-    <string name="bubbles_notification_test_enable_bubbles_title">Enable Bubbles for CTS Verifier</string>
-    <string name="bubbles_notification_test_enable_bubbles_verify">Click the button below and enable
-        bubbles for the verifier app on the resulting screen, if they aren\'t enabled already.</string>
-    <string name="bubbles_notification_enable_bubbles_button">Enable bubbles for CTS Verifier</string>
-    <string name="bubbles_notification_test_title_1">Step 1: send a bubble with notification</string>
-    <string name="bubbles_notification_test_verify_1">Click the button below and verify that there is a
+    <string name="bubbles_test_title">Bubble Tests</string>
+    <string name="bubbles_test_info">This set of tests checks the settings, UI, and behaviour of
+        bubble notifications. Bubbles are special notifications that can appear as a floating button
+        on the screen along with a notification in the notification shade. When the floating button
+        is tapped an activity is opened in a contained view and the notification is hidden from the
+        shade.</string>
+    <!-- Default settings -->
+    <string name="bubbles_test_check_defaults_title">Check Default Settings</string>
+    <string name="bubbles_test_check_defaults_verify">This step verifies the default bubble
+        settings on the device. \n\n
+        Bubbles are enabled at a feature level and at a per-app level.\n\n
+        By default, bubbles are enabled at a feature level, but off for apps until the user opts in.
+        \n\nIf the default settings are correct, the test will indicate that the state is correct.
+    </string>
+    <!-- Bubble button -->
+    <string name="bubbles_test_bubble_button_title">Bubble Button</string>
+    <string name="bubbles_test_bubble_button_verify">1. Click the button below to send a bubble
+        notification.\n\n
+        2. Pull down the notification shade and press the bubble button on the bottom right of the
+        notification.\n\n
+        3. Pass this test if tapping the bubble button opens the bubble.</string>
+    <string name="bubbles_test_bubble_button_button">Send notification</string>
+    <!-- Bubble preference selected -->
+    <string name="bubbles_test_app_selected_title">Check Settings After Bubble Button</string>
+    <string name="bubbles_test_app_selected_verify">When a notification is turned into a bubble
+        via the bubble button, the app setting for bubbles will change to allow selected
+        notifications to bubble. If the settings are right, the test will indicate that the state
+        is correct.</string>
+    <!-- Disable at feature level -->
+    <string name="bubbles_test_disable_title">Disable Bubbles Feature</string>
+    <string name="bubbles_test_disable_verify">Click the button to open notification settings,
+        find Bubbles and turn the feature off. When the setting is off, the test will indicate that
+        the state is correct.</string>
+    <string name="bubbles_test_disable_button">Open settings</string>
+    <!-- App settings available when disabled -->
+    <string name="bubbles_test_enable_title">Enable Bubbles for CTS Verifier</string>
+    <string name="bubbles_test_enable_verify">1. Click the button below and enable bubbles for the
+        verifier app on the resulting screen, select "All conversations can bubble".\n\n
+        2. You will be prompted to turn on bubbles for the device, turn them on.\n\n
+        Once this is done, the test will indicate that the state is correct.</string>
+    <string name="bubbles_test_enable_button">Open bubble settings</string>
+    <!-- Send bubble -->
+    <string name="bubbles_test_send_bubble_title">Send bubble notification</string>
+    <string name="bubbles_test_send_bubble_verify">Click the button below and verify that there is a
         bubble on the screen and a notification in the notification shade.
     </string>
-    <string name="bubbles_notification_test_button_1">Send bubble notification</string>
-    <string name="bubbles_notification_test_title_2">Step 2: hide notification</string>
-    <string name="bubbles_notification_test_verify_2">Click the button below and verify that the bubble
-        is still on the screen, but the notification is now hidden from the notification shade.
+    <string name="bubbles_test_send_bubble_button">Send bubble notification</string>
+    <!-- Suppress notification -->
+    <string name="bubbles_test_suppress_notif_title">Hide notification</string>
+    <string name="bubbles_test_suppress_notif_verify">Click the button below and verify that the
+        bubble is still on the screen, but the notification is now hidden from the notification
+        shade.
     </string>
-    <string name="bubbles_notification_test_button_2">Update bubble to hide notification</string>
-    <string name="bubbles_notification_test_title_3">Step 3: show notification</string>
-    <string name="bubbles_notification_test_verify_3">Click the button below and verify that the bubble
-        is still on the screen, and the notification is now visible in the notification shade.
+    <string name="bubbles_test_suppress_notif_button">Update bubble to hide notification</string>
+    <!-- Add notification -->
+    <string name="bubbles_test_add_notif_title">Show notification</string>
+    <string name="bubbles_test_add_notif_verify">Click the button below and verify that the bubble
+        is still on the screen, the notification is now visible in the notification shade, and the
+        bubble has a dot indicating the new message.
     </string>
-    <string name="bubbles_notification_test_button_3">Update bubble to show notification</string>
-    <string name="bubbles_notification_test_title_4">Step 4: remove bubble</string>
-    <string name="bubbles_notification_test_verify_4">Click the button below and verify that the
+    <string name="bubbles_test_add_notif_button">Update bubble to show notification</string>
+    <!-- Remove bubble metadata -->
+    <string name="bubbles_test_remove_metadata_title">Remove bubble</string>
+    <string name="bubbles_test_remove_metadata_verify">Click the button below and verify that the
         bubble is removed from the screen, and the notification is still visible in the notification
         shade.</string>
-    <string name="bubbles_notification_test_button_4">Remove bubble</string>
-    <string name="bubbles_notification_test_title_5">Step 5: add bubble</string>
-    <string name="bubbles_notification_test_verify_5">Click the button below and verify that the
+    <string name="bubbles_test_remove_metadata_button">Remove bubble</string>
+    <!-- Add bubble metadata -->
+    <string name="bubbles_test_add_metadata_title">Add bubble</string>
+    <string name="bubbles_test_add_metadata_verify">Click the button below and verify that the
         bubble appears on the screen, and the notification is still visible in the notification
         shade.</string>
-    <string name="bubbles_notification_test_button_5">Add bubble</string>
-    <string name="bubbles_notification_test_title_6">Step 6: open bubble</string>
-    <string name="bubbles_notification_test_verify_6">Tap on the bubble to open it, then tap on the
+    <string name="bubbles_test_add_metadata_button">Add bubble</string>
+    <!-- Expand bubble -->
+    <string name="bubbles_test_expand_bubble_title">Open bubble</string>
+    <string name="bubbles_test_expand_bubble_verify">Tap on the bubble to open it, then tap on the
         bubble again to collapse it and return to this screen. Verify that after opening the bubble,
         there is no longer a notification for it visible in the notification shade.</string>
-    <string name="bubbles_notification_test_title_7">Step 7: drag and dismiss bubble</string>
-    <string name="bubbles_notification_test_verify_7">Click the button below and verify that the bubble
+    <!-- Dismiss bubble -->
+    <string name="bubbles_test_dismiss_title">Drag and dismiss bubble</string>
+    <string name="bubbles_test_dismiss_verify">Click the button below and verify that the bubble
         is still on screen, and the notification is visible in the notification shade.\n\n
         Drag the bubble, while dragging a UI affordance should show. Verify that: \n\n
         1. Dragging and dropping the bubble on that UI affordance removes it from the screen.\n\n
         2. The notification should remain in the notification shade.</string>
-    <string name="bubbles_notification_test_button_7">Update bubble to show notification</string>
-    <string name="bubbles_notification_test_title_8">Step 8: dismiss notification</string>
-    <string name="bubbles_notification_test_verify_8">Click the button below and verify that a bubble
+    <string name="bubbles_test_dismiss_button">Update bubble to show notification</string>
+    <!-- Dismiss notification -->
+    <string name="bubbles_test_dismiss_notif_title">Dismiss notification</string>
+    <string name="bubbles_test_dismiss_notif_verify">Click the button below and verify that a bubble
         appears on screen, and the notification is visible in the notification shade.\n\n
         Dismiss the notification from the notification shade and verify that the bubble remains on
         screen.</string>
-    <string name="bubbles_notification_test_button_8">Send bubble notification</string>
-    <string name="bubbles_notification_test_title_9">Step 9: auto expand bubble</string>
-    <string name="bubbles_notification_test_verify_9">Click the button below and verify that a bubble
+    <string name="bubbles_test_dismiss_notif_button">Send bubble notification</string>
+    <!-- Auto expand bubble -->
+    <string name="bubbles_test_autoexpand_title">Auto expand bubble</string>
+    <string name="bubbles_test_autoexpand_verify">Click the button below and verify that a bubble
         appears on screen, auto-expanded.</string>
-    <string name="bubbles_notification_test_button_9">Send auto-expanded bubble notification</string>
-    <string name="bubbles_notification_test_title_10">No bubbles on low memory device</string>
-    <string name="bubbles_notification_test_verify_10">Click the button below and verify that a
+    <string name="bubbles_test_autoexpand_button">Send auto-expanded bubble notification</string>
+    <!--Overflow exists -->
+    <string name="bubbles_test_overflow_title">Bubble overflow (empty)</string>
+    <string name="bubbles_test_overflow_verify">Tap the bubble to expand it and verify there is an
+        affordance to see previous bubbles. It should be empty right now and show an empty state
+        message.</string>
+    <!-- Bubbles appear in overflow -->
+    <string name="bubbles_test_bubbles_in_overflow_title">Bubble overflow (with bubbles)</string>
+    <string name="bubbles_test_bubbles_in_overflow_verify">1. Press the button below to create
+        several bubbles.\n\n
+        2. Expand the stack and drag down two of the bubbles to dismiss them.\n\n
+        3. Tap on the bubble overflow, pass this test if the two bubbles you dismissed are in
+        the overflow. </string>
+    <string name="bubbles_test_bubbles_in_overflow_button">Send several bubbles</string>
+    <!-- Add bubble from overflow -->
+    <string name="bubbles_test_add_from_overflow_title">Add bubble from overflow</string>
+    <string name="bubbles_test_add_from_overflow_verify">1. Expand the stack and open the bubble
+        overflow.\n\n 2. Tap on a bubble in the overflow, pass this test if that bubble is opened
+        and removed from the overflow.</string>
+    <!-- Cancel removes bubbles in overflow -->
+    <string name="bubbles_test_cancel_overflow_title">Cancel removes overflowed bubbles</string>
+    <string name="bubbles_test_cancel_overflow_verify">1. Press the button below, it will cancel all
+        previous bubble notifications and post one more.\n\n
+        2. Expand that bubble, navigate to the overflow and ensure that it is empty.</string>
+    <string name="bubbles_test_cancel_overflow_button">Cancel previous bubbles and post a
+        single bubble</string>
+    <!-- Tap on notification with bubble in the overflow -->
+    <string name="bubbles_test_tap_notif_with_overflow_title">Tap on notification opens bubble
+    </string>
+    <string name="bubbles_test_tap_notif_with_overflow_verify">1. Press the button to create a
+        bubble.\n\n
+        2. Dismiss the bubble without opening it.\n\n
+        3. Tap on the notification. Pass this test if the notification opened as a bubble.</string>
+    <string name="bubbles_test_tap_notif_with_overflow_button">Send bubble</string>
+    <!-- Portrait & landscape positioning -->
+    <string name ="bubbles_test_expanded_position_title">Portrait and landscape positioning</string>
+    <string name="bubbles_test_expanded_position_phone_verify">1. While in portrait orientation,
+        tap on the bubble to open it.\n\n
+        2. Verify that the bubbles show at the top of the screen.\n\n
+        3. Rotate the device to landscape orientation.\n\n
+        3. Verify that the bubbles are aligned to the left or right edge of the screen.</string>
+    <string name="bubbles_test_expanded_position_largescreen_verify">
+        1. Tap the bubble to open it.\n\n
+        2. Verify that the bubbles are aligned to the left or right edge of the screen.\n\n
+        3. Rotate the device.\n\n
+        4. Verify that the bubbles are aligned to the left or right edge of the screen.</string>
+    <!-- Expanded view scrim -->
+    <string name="bubbles_test_expanded_scrim_title">Expanded state has scrim</string>
+    <string name="bubbles_test_expanded_scrim_verify">Expand the bubble and pass this test if the
+        area below the bubble is dimmed (like when a dialog is opened).</string>
+    <!-- IME insets -->
+    <string name="bubbles_test_ime_title">IME behavior</string>
+    <string name="bubbles_test_ime_verify">1. Tap on the bubble to open it.\n\n
+        2. Tap the edit text in the bubble to bring up the IME.\n\n
+        3. Pass this test if the IME appears and the edit text is still visible.</string>
+    <!-- Expanded view min height -->
+    <string name="bubbles_test_min_height_title">Expanded view min height</string>
+    <string name="bubbles_test_min_height_verify">1. Press the button below to update the bubble to
+        have the smallest height.\n\n
+    2. Open the bubble, it will tell you if the height is correct.</string>
+    <string name="bubbles_test_min_height_button">Send small height bubble</string>
+    <!-- Low ram -->
+    <string name="bubbles_test_lowram_title">No bubbles on low memory device</string>
+    <string name="bubbles_test_lowram_verify">Click the button below and verify that a
         bubble does NOT appear on screen. Verify that there is a notification in the notification
         shade.</string>
-    <string name="bubbles_notification_test_button_10">Add bubble</string>
+    <string name="bubbles_test_lowram_button">Add bubble</string>
+    <!-- Bubbles end of test summary -->
     <string name="bubbles_test_summary_title">Test Complete</string>
     <string name="bubbles_test_summary">%1$d out of %2$d tests passed</string>
     <string name="bubble_activity_title">Bubble Activity</string>
+    <string name="bubble_test_state_correct">State is correct, pass the test.</string>
+    <string name="bubble_test_state_waiting">State is not correct, waiting for the correct state.
+    </string>
+    <string name="bubble_test_ime_hint">Tap for IME</string>
+    <string name="bubble_test_expanded_view">Bubble expanded view</string>
 
     <!-- Toast test -->
     <string name="toast_title">Toast test (may auto pass if CtsVerifier isn\'t targeting
