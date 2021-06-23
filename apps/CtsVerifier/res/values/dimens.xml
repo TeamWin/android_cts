@@ -47,4 +47,8 @@
     <!-- WaveformView -->
     <dimen name="waveform_stroke_width">2.0dp</dimen>
 
+    <!-- Should be the same as base/libs/WindowManager/Shell/res/values
+        R.dimen.bubble_expanded_default_height -->
+    <dimen name="bubble_expanded_view_min_height">180dp</dimen>
+
 </resources>
