@@ -3733,72 +3733,144 @@ public class DecoderTest extends MediaPlayerTestBase {
     }
 
     /**
-     * Test tunneled video peek if supported
+     * Test tunneled video peek is on by default if supported
      *
      * TODO(b/182915887): Test all the codecs advertised by the DUT for the provided test content
      */
-    private void testTunneledVideoPeek(String mimeType, String videoName) throws Exception {
-        if (!isVideoFeatureSupported(mimeType,
-                CodecCapabilities.FEATURE_TunneledPlayback)) {
-            MediaUtils.skipTest(
-                    TAG,
-                    "No tunneled video playback codec found for MIME " + mimeType);
+    private void testTunneledVideoPeekDefault(String mimeType, String videoName) throws Exception {
+        if (!MediaUtils.check(mIsAtLeastS, "testTunneledVideoPeekDefault requires Android 12")) {
             return;
         }
 
-        AudioManager am = (AudioManager)mContext.getSystemService(Context.AUDIO_SERVICE);
+        if (!MediaUtils.check(isVideoFeatureSupported(mimeType,
+                                CodecCapabilities.FEATURE_TunneledPlayback),
+                        "No tunneled video playback codec found for MIME " + mimeType)){
+            return;
+        }
+
+        // Setup tunnel mode test media player
+        AudioManager am = mContext.getSystemService(AudioManager.class);
         mMediaCodecPlayer = new MediaCodecTunneledPlayer(
                 mContext, getActivity().getSurfaceHolder(), true, am.generateAudioSessionId());
 
         Uri mediaUri = Uri.fromFile(new File(mInpPrefix, videoName));
         mMediaCodecPlayer.setAudioDataSource(mediaUri, null);
         mMediaCodecPlayer.setVideoDataSource(mediaUri, null);
-        mMediaCodecPlayer.setVideoPeek(true);
         assertTrue("MediaCodecPlayer.start() failed!", mMediaCodecPlayer.start());
         assertTrue("MediaCodecPlayer.prepare() failed!", mMediaCodecPlayer.prepare());
+        mMediaCodecPlayer.start();
 
-        // starts video playback
-        mMediaCodecPlayer.startThread();
+        // Assert that onFirstTunnelFrameReady is called
+        mMediaCodecPlayer.queueOneVideoFrame();
+        final int waitTimeMs = 150;
+        Thread.sleep(waitTimeMs);
+        assertTrue(String.format("onFirstTunnelFrameReady not called within %d milliseconds",
+                        waitTimeMs),
+                mMediaCodecPlayer.isFirstTunnelFrameReady());
+        // Assert that video peek is enabled and working
+        assertTrue(String.format("First frame not rendered within %d milliseconds", waitTimeMs),
+                mMediaCodecPlayer.getCurrentPosition() != 0);
 
-        final long durationMs = mMediaCodecPlayer.getDuration();
-        final long timeOutMs = System.currentTimeMillis() + durationMs + 5 * 1000; // add 5 sec
-        while (!mMediaCodecPlayer.isEnded()) {
-            // Log.d(TAG, "currentPosition: " + mMediaCodecPlayer.getCurrentPosition()
-            //         + "  duration: " + mMediaCodecPlayer.getDuration());
-            assertTrue("Tunneled video playback timeout exceeded",
-                    timeOutMs > System.currentTimeMillis());
-            Thread.sleep(SLEEP_TIME_MS);
-            if (mMediaCodecPlayer.getCurrentPosition() >= mMediaCodecPlayer.getDuration()) {
-                Log.d(TAG, "testTunneledVideoPeek -- current pos = " +
-                        mMediaCodecPlayer.getCurrentPosition() +
-                        ">= duration = " + mMediaCodecPlayer.getDuration());
-                break;
-            }
-        }
         // mMediaCodecPlayer.reset() handled in TearDown();
     }
 
     /**
-     * Test tunneled video peek with HEVC if supported
+     * Test default tunneled video peek with HEVC if supported
      */
-    public void testTunneledVideoPeekHevc() throws Exception {
-        testTunneledVideoPeek(MediaFormat.MIMETYPE_VIDEO_HEVC,
+    public void testTunneledVideoPeekDefaultHevc() throws Exception {
+        testTunneledVideoPeekDefault(MediaFormat.MIMETYPE_VIDEO_HEVC,
                 "video_1280x720_mkv_h265_500kbps_25fps_aac_stereo_128kbps_44100hz.mkv");
     }
 
     /**
-     * Test tunneled video peek with AVC if supported
+     * Test default tunneled video peek with AVC if supported
      */
-    public void testTunneledVideoPeekAvc() throws Exception {
-        testTunneledVideoPeek(MediaFormat.MIMETYPE_VIDEO_AVC,
+    public void testTunneledVideoPeekDefaultAvc() throws Exception {
+        testTunneledVideoPeekDefault(MediaFormat.MIMETYPE_VIDEO_AVC,
                 "video_480x360_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz.mp4");
     }
 
     /**
-     * Test tunneled video peek with VP9 if supported
+     * Test default tunneled video peek with VP9 if supported
      */
-    public void testTunneledVideoPeekVp9() throws Exception {
-        testTunneledVideoPeek(MediaFormat.MIMETYPE_VIDEO_VP9,
+    public void testTunneledVideoPeekDefaultVp9() throws Exception {
+        testTunneledVideoPeekDefault(MediaFormat.MIMETYPE_VIDEO_VP9,
+                "bbb_s1_640x360_webm_vp9_0p21_1600kbps_30fps_vorbis_stereo_128kbps_48000hz.webm");
+    }
+
+
+    /**
+     * Test tunneled video peek can be turned off then on.
+     *
+     * TODO(b/182915887): Test all the codecs advertised by the DUT for the provided test content
+     */
+    private void testTunneledVideoPeekOff(String mimeType, String videoName) throws Exception {
+        if (!MediaUtils.check(mIsAtLeastS, "testTunneledVideoPeekOff requires Android 12")) {
+            return;
+        }
+
+        if (!MediaUtils.check(isVideoFeatureSupported(mimeType,
+                                CodecCapabilities.FEATURE_TunneledPlayback),
+                        "No tunneled video playback codec found for MIME " + mimeType)){
+            return;
+        }
+
+        // Setup tunnel mode test media player
+        AudioManager am = mContext.getSystemService(AudioManager.class);
+        mMediaCodecPlayer = new MediaCodecTunneledPlayer(
+                getActivity().getSurfaceHolder(), true, am.generateAudioSessionId());
+
+        Uri mediaUri = Uri.fromFile(new File(mInpPrefix, videoName));
+        mMediaCodecPlayer.setAudioDataSource(mediaUri, null);
+        mMediaCodecPlayer.setVideoDataSource(mediaUri, null);
+        assertTrue("MediaCodecPlayer.start() failed!", mMediaCodecPlayer.start());
+        assertTrue("MediaCodecPlayer.prepare() failed!", mMediaCodecPlayer.prepare());
+        mMediaCodecPlayer.start();
+        mMediaCodecPlayer.setVideoPeek(false); // Disable video peek
+
+        // Assert that onFirstTunnelFrameReady is called
+        mMediaCodecPlayer.queueOneVideoFrame();
+        final int waitTimeMsStep1 = 150;
+        Thread.sleep(waitTimeMsStep1);
+        assertTrue(String.format("onFirstTunnelFrameReady not called within %d milliseconds",
+                        waitTimeMsStep1),
+                mMediaCodecPlayer.isFirstTunnelFrameReady());
+        // Assert that video peek is disabled
+        assertEquals("First frame rendered while peek disabled",
+                mMediaCodecPlayer.getCurrentPosition(), 0);
+        mMediaCodecPlayer.setVideoPeek(true); // Reenable video peek
+        final int waitTimeMsStep2 = 150;
+        Thread.sleep(waitTimeMsStep2);
+        // Assert that video peek is enabled
+        assertTrue(String.format(
+                        "First frame not rendered within %d milliseconds while peek enabled",
+                        waitTimeMsStep2),
+                mMediaCodecPlayer.getCurrentPosition() != 0);
+
+        // mMediaCodecPlayer.reset() handled in TearDown();
+    }
+
+    /**
+     * Test tunneled video peek can be turned off then on with HEVC if supported
+     */
+    public void testTunneledVideoPeekOffHevc() throws Exception {
+        testTunneledVideoPeekOff(MediaFormat.MIMETYPE_VIDEO_HEVC,
+                "video_1280x720_mkv_h265_500kbps_25fps_aac_stereo_128kbps_44100hz.mkv");
+    }
+
+    /**
+     * Test tunneled video peek can be turned off then on with AVC if supported
+     */
+    public void testTunneledVideoPeekOffAvc() throws Exception {
+        testTunneledVideoPeekOff(MediaFormat.MIMETYPE_VIDEO_AVC,
+                "video_480x360_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz.mp4");
+    }
+
+    /**
+     * Test tunneled video peek can be turned off then on with VP9 if supported
+     */
+    public void testTunneledVideoPeekOffVp9() throws Exception {
+        testTunneledVideoPeekOff(MediaFormat.MIMETYPE_VIDEO_VP9,
                 "bbb_s1_640x360_webm_vp9_0p21_1600kbps_30fps_vorbis_stereo_128kbps_48000hz.webm");
     }
 
