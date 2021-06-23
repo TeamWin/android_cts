@@ -122,4 +122,6 @@ public interface RemoteDevicePolicyManager {
     /** See {@link DevicePolicyManager#clearCrossProfileIntentFilters(ComponentName)}. */
     @RemoteDpcAutomaticAdmin void clearCrossProfileIntentFilters();
 
+    /** See {@link DevicePolicyManager#setPreferentialNetworkServiceEnabled(boolean)}. */
+    void setPreferentialNetworkServiceEnabled(boolean enabled);
 }
