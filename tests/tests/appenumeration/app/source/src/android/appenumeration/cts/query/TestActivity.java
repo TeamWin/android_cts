@@ -84,6 +84,7 @@ import android.os.Process;
 import android.os.RemoteCallback;
 import android.os.UserHandle;
 import android.util.SparseArray;
+import android.view.accessibility.AccessibilityManager;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -239,12 +240,25 @@ public class TestActivity extends Activity {
                         .getString(Intent.EXTRA_INSTALLER_PACKAGE_NAME);
                 sendSetInstallerPackageName(remoteCallback, targetPackageName,
                         installerPackageName);
+            } else if (Constants.ACTION_GET_INSTALLED_ACCESSIBILITYSERVICES_PACKAGES.equals(
+                    action)) {
+                sendGetInstalledAccessibilityServicePackages(remoteCallback);
             } else {
                 sendError(remoteCallback, new Exception("unknown action " + action));
             }
         } catch (Exception e) {
             sendError(remoteCallback, e);
         }
+    }
+
+    private void sendGetInstalledAccessibilityServicePackages(RemoteCallback remoteCallback) {
+        final String[] packages = getSystemService(
+                AccessibilityManager.class).getInstalledAccessibilityServiceList().stream().map(
+                p -> p.getComponentName().getPackageName()).distinct().toArray(String[]::new);
+        final Bundle result = new Bundle();
+        result.putStringArray(EXTRA_RETURN_RESULT, packages);
+        remoteCallback.sendResult(result);
+        finish();
     }
 
     private void onCommandReady(Intent intent) {

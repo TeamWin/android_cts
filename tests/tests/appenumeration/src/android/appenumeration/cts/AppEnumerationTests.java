@@ -20,6 +20,7 @@ import static android.Manifest.permission.SET_PREFERRED_APPLICATIONS;
 import static android.appenumeration.cts.Constants.ACTION_AWAIT_LAUNCHER_APPS_CALLBACK;
 import static android.appenumeration.cts.Constants.ACTION_BIND_SERVICE;
 import static android.appenumeration.cts.Constants.ACTION_CHECK_SIGNATURES;
+import static android.appenumeration.cts.Constants.ACTION_GET_INSTALLED_ACCESSIBILITYSERVICES_PACKAGES;
 import static android.appenumeration.cts.Constants.ACTION_GET_INSTALLED_APPWIDGET_PROVIDERS;
 import static android.appenumeration.cts.Constants.ACTION_GET_INSTALLED_PACKAGES;
 import static android.appenumeration.cts.Constants.ACTION_GET_NAMES_FOR_UIDS;
@@ -649,6 +650,21 @@ public class AppEnumerationTests {
         assertVisible(QUERIES_WILDCARD_SHARE, TARGET_SHARE);
     }
 
+    @Test
+    public void queriesNothing_cannotSeeA11yService() throws Exception {
+        if (!sGlobalFeatureEnabled) return;
+        final String[] result = getInstalledAccessibilityServices(QUERIES_NOTHING);
+        assertThat(result, not(hasItemInArray(TARGET_FILTERS)));
+    }
+
+    @Test
+    public void queriesNothingHasPermission_canSeeA11yService() throws Exception {
+        if (!sGlobalFeatureEnabled) return;
+        final String[] result = getInstalledAccessibilityServices(QUERIES_NOTHING_PERM);
+        assertThat(QUERIES_NOTHING_PERM + " should be able to see " + TARGET_FILTERS,
+                result, hasItemInArray(TARGET_FILTERS));
+    }
+
     private void assertVisible(String sourcePackageName, String targetPackageName)
             throws Exception {
         if (!sGlobalFeatureEnabled) return;
@@ -1181,6 +1197,13 @@ public class AppEnumerationTests {
         } finally {
             setPackagesSuspended(false, packagesToSuspend);
         }
+    }
+
+    private String[] getInstalledAccessibilityServices (String sourcePackageName)
+            throws Exception {
+        final Bundle response = sendCommandBlocking(sourcePackageName, null /*targetPackageName*/,
+                null /*queryIntent*/, ACTION_GET_INSTALLED_ACCESSIBILITYSERVICES_PACKAGES);
+        return response.getStringArray(Intent.EXTRA_RETURN_RESULT);
     }
 
     private PackageInfo getPackageInfo(String sourcePackageName, String targetPackageName)
