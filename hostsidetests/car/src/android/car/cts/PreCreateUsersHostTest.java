@@ -247,7 +247,7 @@ public final class PreCreateUsersHostTest extends CarHostJUnit4TestCase {
 
     // TODO(b/170263003): update this method after core framewokr's refactoring for proto
     private void waitUntilUserPermissionsIsReady(int userId) throws InterruptedException {
-        int napTimeSec = 10;
+        int napTimeSec = 20;
         CLog.i("Sleeping %ds to make permissions for user %d is ready", napTimeSec, userId);
         sleep(napTimeSec * 1_000);
     }
