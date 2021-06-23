@@ -28,6 +28,7 @@ import android.telephony.cts.externalimsservice.ITestExternalImsService;
 import android.telephony.cts.externalimsservice.TestExternalImsService;
 import android.telephony.ims.feature.ImsFeature;
 import android.telephony.ims.stub.ImsFeatureConfiguration;
+import android.text.TextUtils;
 import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -247,11 +248,20 @@ class ImsServiceConnector {
                     .getSystemService(RoleManager.class);
             Boolean result;
             LinkedBlockingQueue<Boolean> queue = new LinkedBlockingQueue<>(1);
-            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(roleManager,
-                    (m) -> m.addRoleHolderAsUser(RoleManager.ROLE_SMS, packageName, 0,
-                            android.os.Process.myUserHandle(),
-                            // Run on calling binder thread.
-                            Runnable::run, queue::offer));
+            if (TextUtils.isEmpty(packageName)) {
+                ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(roleManager,
+                        (m) -> m.clearRoleHoldersAsUser(RoleManager.ROLE_SMS,
+                                RoleManager.MANAGE_HOLDERS_FLAG_DONT_KILL_APP,
+                                android.os.Process.myUserHandle(),
+                                // Run on calling binder thread.
+                                Runnable::run, queue::offer));
+            } else {
+                ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(roleManager,
+                        (m) -> m.addRoleHolderAsUser(RoleManager.ROLE_SMS, packageName, 0,
+                                android.os.Process.myUserHandle(),
+                                // Run on calling binder thread.
+                                Runnable::run, queue::offer));
+            }
             result = queue.poll(ImsUtils.TEST_TIMEOUT_MS, TimeUnit.MILLISECONDS);
             if (ImsUtils.VDBG) {
                 Log.d(TAG, "setDefaultSmsApp result: " + result);
