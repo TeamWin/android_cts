@@ -28,6 +28,7 @@ import static org.junit.Assume.assumeFalse;
 
 import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.LargeTest;
+import android.platform.test.annotations.SecurityTest;
 import android.stats.devicepolicy.EventId;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
@@ -635,6 +636,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     }
 
     @Test
+    @SecurityTest(minPatchLevel = "2021-04")
     public void testDeviceOwnerCanGetDeviceIdentifiers() throws Exception {
         // The Device Owner should have access to all device identifiers.
 
