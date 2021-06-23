@@ -58,7 +58,27 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
         // TODO: Check the capture session (needs to be reflectively accessed).
         byte[] data = eventPayload.getTriggerAudio();
         if (data != null && data.length > 0) {
-            callback.onDetected(DETECTED_RESULT);
+            // Create the unaccepted HotwordDetectedResult first to test the protection in the
+            // onDetected callback function of HotwordDetectionService. When the bundle data of
+            // HotwordDetectedResult is larger than max bundle size, it will throw the
+            // IllegalArgumentException.
+            PersistableBundle persistableBundle = new PersistableBundle();
+            HotwordDetectedResult hotwordDetectedResult =
+                    new HotwordDetectedResult.Builder()
+                            .setExtras(persistableBundle)
+                            .build();
+            int key = 0;
+            do {
+                persistableBundle.putInt(Integer.toString(key), 0);
+                key++;
+            } while (Utils.getParcelableSize(persistableBundle)
+                    <= HotwordDetectedResult.getMaxBundleSize());
+
+            try {
+                callback.onDetected(hotwordDetectedResult);
+            } catch (IllegalArgumentException e) {
+                callback.onDetected(DETECTED_RESULT);
+            }
         } else {
             callback.onRejected(REJECTED_RESULT);
         }
