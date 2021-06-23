@@ -585,12 +585,9 @@ public class MediaCodecTunneledPlayer implements MediaTimeProvider {
         mState = STATE_PLAYING;
     }
 
-    /**
-     * Configure video peek for the video codecs attached to the player.
-     */
     public void setVideoPeek(boolean enable) {
         Log.d(TAG, "setVideoPeek");
-        if (mVideoCodecStates == null) {
+        if (mVideoCodecStates == null || !(mState == STATE_IDLE || mState == STATE_PAUSED)) {
             return;
         }
 
@@ -610,24 +607,5 @@ public class MediaCodecTunneledPlayer implements MediaTimeProvider {
                     mAudioCodecStates.entrySet().iterator().next().getValue().getTimestamp();
         }
         return timestamp;
-    }
-
-    /** Queries the attached video codecs for video peek ready signals.
-     *
-     * Returns true if any of the video codecs have video peek ready.
-     * Returns false otherwise.
-     */
-    public boolean isFirstTunnelFrameReady() {
-        Log.d(TAG, "firstTunnelFrameReady");
-        if (mVideoCodecStates == null) {
-            return false;
-        }
-
-        for (CodecState state: mVideoCodecStates.values()) {
-            if (state.isFirstTunnelFrameReady()) {
-                return true;
-            }
-        }
-        return false;
     }
 }
