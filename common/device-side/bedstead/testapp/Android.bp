@@ -30,6 +30,7 @@ android_library {
     static_libs: [
         "Nene",
         "EventLib",
+        "Queryable",
         "TestApp_Annotations",
         "ConnectedAppsSDK",
         "ConnectedAppsSDK_Annotations",

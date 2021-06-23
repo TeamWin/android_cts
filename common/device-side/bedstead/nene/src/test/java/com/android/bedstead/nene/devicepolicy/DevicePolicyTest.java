@@ -74,7 +74,7 @@ public class DevicePolicyTest {
     @BeforeClass
     public static void setupClass() {
         sTestApp = new TestAppProvider().query()
-                .withPackageName(DEVICE_ADMIN_TESTAPP_PACKAGE_NAME)
+                .wherePackageName().isEqualTo(DEVICE_ADMIN_TESTAPP_PACKAGE_NAME)
                 .get();
 
         sTestApp.install(sUser);
