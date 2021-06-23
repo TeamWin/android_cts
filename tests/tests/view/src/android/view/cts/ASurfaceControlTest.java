@@ -16,6 +16,7 @@
 
 package android.view.cts;
 
+import static android.server.wm.ActivityManagerTestBase.createFullscreenActivityScenarioRule;
 import static android.view.cts.util.ASurfaceControlTestUtils.applyAndDeleteSurfaceTransaction;
 import static android.view.cts.util.ASurfaceControlTestUtils.createSurfaceTransaction;
 import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceControl_acquire;
@@ -66,7 +67,7 @@ import android.view.cts.surfacevalidator.ASurfaceControlTestActivity.PixelChecke
 import android.view.cts.surfacevalidator.PixelColor;
 import android.view.cts.util.ASurfaceControlTestUtils;
 
-import androidx.test.rule.ActivityTestRule;
+import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Before;
@@ -94,8 +95,8 @@ public class ASurfaceControlTest {
     private static final int DEFAULT_LAYOUT_HEIGHT = 100;
 
     @Rule
-    public ActivityTestRule<ASurfaceControlTestActivity> mActivityRule =
-            new ActivityTestRule<>(ASurfaceControlTestActivity.class);
+    public ActivityScenarioRule<ASurfaceControlTestActivity> mActivityRule =
+            createFullscreenActivityScenarioRule(ASurfaceControlTestActivity.class);
 
     @Rule
     public TestName mName = new TestName();
@@ -104,7 +105,7 @@ public class ASurfaceControlTest {
 
     @Before
     public void setup() {
-        mActivity = mActivityRule.getActivity();
+        mActivityRule.getScenario().onActivity(activity -> mActivity = activity);
     }
 
     ///////////////////////////////////////////////////////////////////////////

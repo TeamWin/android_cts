@@ -3623,7 +3623,7 @@ public class DecoderTest extends MediaPlayerTestBase {
 
         AudioManager am = (AudioManager)mContext.getSystemService(Context.AUDIO_SERVICE);
         mMediaCodecPlayer = new MediaCodecTunneledPlayer(
-                getActivity().getSurfaceHolder(), true, am.generateAudioSessionId());
+                mContext, getActivity().getSurfaceHolder(), true, am.generateAudioSessionId());
 
         Uri mediaUri = Uri.fromFile(new File(mInpPrefix, videoName));
         mMediaCodecPlayer.setAudioDataSource(mediaUri, null);
@@ -3692,7 +3692,7 @@ public class DecoderTest extends MediaPlayerTestBase {
 
         AudioManager am = (AudioManager)mContext.getSystemService(Context.AUDIO_SERVICE);
         mMediaCodecPlayer = new MediaCodecTunneledPlayer(
-                getActivity().getSurfaceHolder(), true, am.generateAudioSessionId());
+                mContext, getActivity().getSurfaceHolder(), true, am.generateAudioSessionId());
 
         Uri mediaUri = Uri.fromFile(new File(mInpPrefix, videoName));
         mMediaCodecPlayer.setAudioDataSource(mediaUri, null);
@@ -3748,7 +3748,7 @@ public class DecoderTest extends MediaPlayerTestBase {
 
         AudioManager am = (AudioManager)mContext.getSystemService(Context.AUDIO_SERVICE);
         mMediaCodecPlayer = new MediaCodecTunneledPlayer(
-                getActivity().getSurfaceHolder(), true, am.generateAudioSessionId());
+                mContext, getActivity().getSurfaceHolder(), true, am.generateAudioSessionId());
 
         Uri mediaUri = Uri.fromFile(new File(mInpPrefix, videoName));
         mMediaCodecPlayer.setAudioDataSource(mediaUri, null);
@@ -3826,7 +3826,7 @@ public class DecoderTest extends MediaPlayerTestBase {
         // Setup tunnel mode test media player
         AudioManager am = mContext.getSystemService(AudioManager.class);
         mMediaCodecPlayer = new MediaCodecTunneledPlayer(
-                getActivity().getSurfaceHolder(), true, am.generateAudioSessionId());
+                mContext, getActivity().getSurfaceHolder(), true, am.generateAudioSessionId());
 
         Uri mediaUri = Uri.fromFile(new File(mInpPrefix, videoName));
         mMediaCodecPlayer.setAudioDataSource(mediaUri, null);
@@ -3922,7 +3922,7 @@ public class DecoderTest extends MediaPlayerTestBase {
 
         AudioManager am = mContext.getSystemService(AudioManager.class);
         mMediaCodecPlayer = new MediaCodecTunneledPlayer(
-                getActivity().getSurfaceHolder(), true, am.generateAudioSessionId());
+                mContext, getActivity().getSurfaceHolder(), true, am.generateAudioSessionId());
 
         Uri mediaUri = Uri.fromFile(new File(mInpPrefix, videoName));
         mMediaCodecPlayer.setAudioDataSource(mediaUri, null);

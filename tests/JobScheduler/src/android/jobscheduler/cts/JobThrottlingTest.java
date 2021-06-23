@@ -193,6 +193,10 @@ public class JobThrottlingTest {
             // TODO(b/159176758): make sure that initial power supply is on.
             BatteryUtils.runDumpsysBatterySetPluggedIn(true);
         }
+
+        // Kill as many things in the background as possible so we avoid LMK interfering with the
+        // test.
+        mUiDevice.executeShellCommand("am kill-all");
     }
 
     @Test

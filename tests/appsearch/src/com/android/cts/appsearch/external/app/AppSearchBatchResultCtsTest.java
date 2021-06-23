@@ -18,7 +18,7 @@ package android.app.appsearch.cts.app;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import static org.testng.Assert.expectThrows;
+import static org.junit.Assert.assertThrows;
 
 import android.app.appsearch.AppSearchBatchResult;
 import android.app.appsearch.AppSearchResult;
@@ -58,8 +58,8 @@ public class AppSearchBatchResultCtsTest {
 
         assertThat(result1.isSuccess()).isFalse();
         assertThat(result2.isSuccess()).isFalse();
-        expectThrows(IllegalStateException.class, result1::checkSuccess);
-        expectThrows(IllegalStateException.class, result2::checkSuccess);
+        assertThrows(IllegalStateException.class, result1::checkSuccess);
+        assertThrows(IllegalStateException.class, result2::checkSuccess);
     }
 
     @Test
@@ -77,7 +77,7 @@ public class AppSearchBatchResultCtsTest {
                         .build();
 
         assertThat(result1.isSuccess()).isFalse();
-        expectThrows(IllegalStateException.class, result1::checkSuccess);
+        assertThrows(IllegalStateException.class, result1::checkSuccess);
         assertThat(result2.isSuccess()).isTrue();
         result2.checkSuccess();
     }
