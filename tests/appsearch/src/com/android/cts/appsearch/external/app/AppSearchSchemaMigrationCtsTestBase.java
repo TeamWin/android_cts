@@ -973,6 +973,10 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
                         () ->
                                 mDb.setSchema(
                                                 new SetSchemaRequest.Builder()
+                                                        .addSchemas(
+                                                                new AppSearchSchema.Builder(
+                                                                                "emptySchema")
+                                                                        .build())
                                                         .setMigrator(
                                                                 "sourceSchema",
                                                                 migrator_sourceToNowhere)
@@ -993,6 +997,10 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
                         () ->
                                 mDb.setSchema(
                                                 new SetSchemaRequest.Builder()
+                                                        .addSchemas(
+                                                                new AppSearchSchema.Builder(
+                                                                                "emptySchema")
+                                                                        .build())
                                                         .setMigrator(
                                                                 "sourceSchema",
                                                                 migrator_sourceToNowhere)
@@ -1052,6 +1060,8 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
                 mDb.setSchema(
                                 new SetSchemaRequest.Builder()
                                         .addSchemas(destinationSchema)
+                                        .addSchemas(
+                                                new AppSearchSchema.Builder("emptySchema").build())
                                         .setMigrator(
                                                 "nonExistSchema", migrator_nowhereToDestination)
                                         .setVersion(2) //  upgrade version
@@ -1064,6 +1074,8 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
                 mDb.setSchema(
                                 new SetSchemaRequest.Builder()
                                         .addSchemas(destinationSchema)
+                                        .addSchemas(
+                                                new AppSearchSchema.Builder("emptySchema").build())
                                         .setMigrator(
                                                 "nonExistSchema", migrator_nowhereToDestination)
                                         .setVersion(2) //  upgrade version
@@ -1109,6 +1121,8 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
         SetSchemaResponse setSchemaResponse =
                 mDb.setSchema(
                                 new SetSchemaRequest.Builder()
+                                        .addSchemas(
+                                                new AppSearchSchema.Builder("emptySchema").build())
                                         .setMigrator("nonExistSchema", migrator_nowhereToNowhere)
                                         .setVersion(2) //  upgrade version
                                         .build())
@@ -1119,6 +1133,8 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
         setSchemaResponse =
                 mDb.setSchema(
                                 new SetSchemaRequest.Builder()
+                                        .addSchemas(
+                                                new AppSearchSchema.Builder("emptySchema").build())
                                         .setMigrator("nonExistSchema", migrator_nowhereToNowhere)
                                         .setVersion(2) //  upgrade version
                                         .setForceOverride(true)
