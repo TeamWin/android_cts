@@ -18,15 +18,17 @@ package android.net.vcn.cts;
 
 import static android.net.ipsec.ike.IkeSessionParams.IKE_OPTION_MOBIKE;
 import static android.net.ipsec.ike.SaProposal.DH_GROUP_2048_BIT_MODP;
-import static android.net.ipsec.ike.SaProposal.ENCRYPTION_ALGORITHM_AES_GCM_12;
-import static android.net.ipsec.ike.SaProposal.PSEUDORANDOM_FUNCTION_AES128_XCBC;
+import static android.net.ipsec.ike.SaProposal.ENCRYPTION_ALGORITHM_AES_CBC;
+import static android.net.ipsec.ike.SaProposal.INTEGRITY_ALGORITHM_AES_CMAC_96;
+import static android.net.ipsec.ike.SaProposal.INTEGRITY_ALGORITHM_HMAC_SHA2_256_128;
+import static android.net.ipsec.ike.SaProposal.KEY_LEN_AES_128;
+import static android.net.ipsec.ike.SaProposal.PSEUDORANDOM_FUNCTION_AES128_CMAC;
 
 import android.net.ipsec.ike.ChildSaProposal;
 import android.net.ipsec.ike.IkeFqdnIdentification;
 import android.net.ipsec.ike.IkeSaProposal;
 import android.net.ipsec.ike.IkeSessionParams;
 import android.net.ipsec.ike.IkeTunnelConnectionParams;
-import android.net.ipsec.ike.SaProposal;
 import android.net.ipsec.ike.TunnelModeChildSessionParams;
 
 public class VcnTestBase {
@@ -39,9 +41,10 @@ public class VcnTestBase {
             IkeSessionParams ikeParams) {
         final ChildSaProposal childProposal =
                 new ChildSaProposal.Builder()
-                        .addEncryptionAlgorithm(
-                                ENCRYPTION_ALGORITHM_AES_GCM_12, SaProposal.KEY_LEN_AES_128)
+                        .addEncryptionAlgorithm(ENCRYPTION_ALGORITHM_AES_CBC, KEY_LEN_AES_128)
+                        .addIntegrityAlgorithm(INTEGRITY_ALGORITHM_HMAC_SHA2_256_128)
                         .build();
+
         final TunnelModeChildSessionParams childParams =
                 new TunnelModeChildSessionParams.Builder().addSaProposal(childProposal).build();
 
@@ -51,16 +54,16 @@ public class VcnTestBase {
     protected static IkeSessionParams.Builder getIkeSessionParamsBase() {
         final IkeSaProposal ikeProposal =
                 new IkeSaProposal.Builder()
-                        .addEncryptionAlgorithm(
-                                ENCRYPTION_ALGORITHM_AES_GCM_12, SaProposal.KEY_LEN_AES_128)
+                        .addEncryptionAlgorithm(ENCRYPTION_ALGORITHM_AES_CBC, KEY_LEN_AES_128)
+                        .addIntegrityAlgorithm(INTEGRITY_ALGORITHM_AES_CMAC_96)
+                        .addPseudorandomFunction(PSEUDORANDOM_FUNCTION_AES128_CMAC)
                         .addDhGroup(DH_GROUP_2048_BIT_MODP)
-                        .addPseudorandomFunction(PSEUDORANDOM_FUNCTION_AES128_XCBC)
                         .build();
 
         final String serverHostname = "2001:db8:1::100";
-        final String testLocalId = "test.client.com";
-        final String testRemoteId = "test.server.com";
-        final byte[] psk = "psk".getBytes();
+        final String testLocalId = "client.test.ike.android.net";
+        final String testRemoteId = "server.test.ike.android.net";
+        final byte[] psk = "ikeAndroidPsk".getBytes();
 
         return new IkeSessionParams.Builder()
                 .setServerHostname(serverHostname)
