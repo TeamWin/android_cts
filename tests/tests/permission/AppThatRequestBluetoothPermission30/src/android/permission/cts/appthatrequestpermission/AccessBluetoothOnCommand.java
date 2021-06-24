@@ -20,9 +20,13 @@ import android.bluetooth.BluetoothManager;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanResult;
+import android.content.AttributionSource;
 import android.content.ContentProvider;
 import android.content.ContentValues;
+import android.content.Context;
+import android.content.ContextParams;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -37,6 +41,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class AccessBluetoothOnCommand extends ContentProvider {
     private static final String TAG = "AccessBluetoothOnCommand";
+    private static final String DISAVOWAL_APP_PKG = "android.permission.cts.appneverforlocation";
 
     private enum Result {
         UNKNOWN, EXCEPTION, EMPTY, FILTERED, FULL
@@ -50,7 +55,8 @@ public class AccessBluetoothOnCommand extends ContentProvider {
         ScanCallback scanCallback = null;
 
         try {
-            scanner = getContext().getSystemService(BluetoothManager.class)
+            Context context = ("PROXY".equals(arg)) ? createProxyingContext() : getContext();
+            scanner = context.getSystemService(BluetoothManager.class)
                     .getAdapter().getBluetoothLeScanner();
 
             final Set<String> observedScans = ConcurrentHashMap.newKeySet();
@@ -110,6 +116,16 @@ public class AccessBluetoothOnCommand extends ContentProvider {
             }
         }
         return res;
+    }
+
+    private Context createProxyingContext() throws PackageManager.NameNotFoundException {
+        int disavowingAppUid =
+                getContext().getPackageManager().getPackageUid(DISAVOWAL_APP_PKG, 0);
+        AttributionSource attrib = new AttributionSource.Builder(disavowingAppUid)
+                .setPackageName(DISAVOWAL_APP_PKG)
+                .build();
+        return getContext().createContext(
+                new ContextParams.Builder().setNextAttributionSource(attrib).build());
     }
 
     @Override
