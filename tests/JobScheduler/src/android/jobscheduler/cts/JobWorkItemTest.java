@@ -50,6 +50,21 @@ public class JobWorkItemTest extends BaseJobSchedulerTest {
         assertEquals(0, jwi.getDeliveryCount());
     }
 
+    public void testItemWithNegativeEstimatedBytes() {
+        try {
+            new JobWorkItem(TEST_INTENT, -10, 20);
+            fail("Successfully created item with negative download bytes");
+        } catch (IllegalArgumentException expected) {
+            // Success
+        }
+        try {
+            new JobWorkItem(TEST_INTENT, 10, -20);
+            fail("Successfully created item with negative upload bytes");
+        } catch (IllegalArgumentException expected) {
+            // Success
+        }
+    }
+
     public void testDeliveryCountBumped() throws Exception {
         JobInfo jobInfo = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                 .setOverrideDeadline(0)
