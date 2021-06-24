@@ -14,23 +14,21 @@
  * limitations under the License.
  */
 
-package android.translation.cts;
+package android.translation.cts.views;
 
 import android.content.Context;
-import android.icu.util.ULocale;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.util.LongSparseArray;
 import android.view.View;
 import android.view.autofill.AutofillId;
 import android.view.translation.TranslationRequestValue;
-import android.view.translation.TranslationSpec;
-import android.view.translation.ViewTranslationCallback;
 import android.view.translation.ViewTranslationRequest;
 import android.view.translation.ViewTranslationResponse;
-import android.view.translation.TranslationResponseValue;
 import java.util.function.Consumer;
 
+/**
+ * A custom view that contains virtual child.
+ */
 public class VirtualContainerView extends View {
 
     private static final String TAG = "VirtualContainerView";
@@ -61,7 +59,7 @@ public class VirtualContainerView extends View {
         mResponse = response;
     }
 
-    LongSparseArray<ViewTranslationResponse> getViewTranslationResponseForCustomView() {
+    public LongSparseArray<ViewTranslationResponse> getViewTranslationResponseForCustomView() {
         return mResponse;
     }
 }
