@@ -46,7 +46,7 @@ public class VcnGatewayConnectionConfigTest extends VcnTestBase {
             };
     private static final int MAX_MTU = 1360;
 
-    private static VcnGatewayConnectionConfig.Builder buildVcnGatewayConnectionConfigBase() {
+    public static VcnGatewayConnectionConfig.Builder buildVcnGatewayConnectionConfigBase() {
         return new VcnGatewayConnectionConfig.Builder(
                         VCN_GATEWAY_CONNECTION_NAME, buildTunnelConnectionParams())
                 .addExposedCapability(NET_CAPABILITY_INTERNET)
@@ -54,7 +54,7 @@ public class VcnGatewayConnectionConfigTest extends VcnTestBase {
                 .setMaxMtu(MAX_MTU);
     }
 
-    public static VcnGatewayConnectionConfig buildVcnGatewayConnectionConfig() {
+    private static VcnGatewayConnectionConfig buildVcnGatewayConnectionConfig() {
         return buildVcnGatewayConnectionConfigBase().build();
     }
 
