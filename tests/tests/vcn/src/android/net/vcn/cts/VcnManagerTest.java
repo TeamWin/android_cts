@@ -82,6 +82,8 @@ public class VcnManagerTest extends VcnTestBase {
 
     private static final Inet6Address LOCAL_V6_ADDRESS =
             (Inet6Address) InetAddresses.parseNumericAddress("2001:db8::2");
+    private static final Inet6Address SECONDARY_LOCAL_V6_ADDRESS =
+            (Inet6Address) InetAddresses.parseNumericAddress("2001:db8::3");
 
     private static final long IKE_DETERMINISTIC_INITIATOR_SPI =
             Long.parseLong("46B8ECA1E0D72A18", 16);
@@ -439,27 +441,33 @@ public class VcnManagerTest extends VcnTestBase {
 
         CarrierPrivilegeUtils.withCarrierPrivilegesForShell(mContext, subId, () -> {
             SubscriptionGroupUtils.withEphemeralSubscriptionGroup(mContext, subId, (subGrp) -> {
-                mVcnManager.setVcnConfig(subGrp, buildTestModeVcnConfig());
+                final Network vcnNetwork =
+                        setupAndGetVcnNetwork(subGrp, cellNetwork, cellNetworkCb);
 
-                // Wait until the cell Network is lost (due to losing NOT_VCN_MANAGED) to wait for
-                // VCN network
-                final Network lostCellNetwork = cellNetworkCb.waitForLost();
-                assertEquals(cellNetwork, lostCellNetwork);
-
-                injectAndVerifyIkeSessionNegotiationPackets(mTestNetworkWrapper.ikeTunUtils);
-
-                final Network vcnNetwork = cellNetworkCb.waitForAvailable();
-                assertNotNull("VCN network did not come up", vcnNetwork);
-
-                mVcnManager.clearVcnConfig(subGrp);
-
-                // Expect VCN Network to disappear after VcnConfig is cleared
-                final Network lostVcnNetwork = cellNetworkCb.waitForLost();
-                assertEquals(vcnNetwork, lostVcnNetwork);
+                clearVcnConfigsAndVerifyNetworkTeardown(subGrp, cellNetworkCb, vcnNetwork);
             });
         });
 
         mConnectivityManager.unregisterNetworkCallback(cellNetworkCb);
+    }
+
+    private Network setupAndGetVcnNetwork(
+            @NonNull ParcelUuid subGrp,
+            @NonNull Network cellNetwork,
+            @NonNull VcnTestNetworkCallback cellNetworkCb)
+            throws Exception {
+        mVcnManager.setVcnConfig(subGrp, buildTestModeVcnConfig());
+
+        // Wait until the cell Network is lost (due to losing NOT_VCN_MANAGED) to wait for
+        // VCN network
+        final Network lostCellNetwork = cellNetworkCb.waitForLost();
+        assertEquals(cellNetwork, lostCellNetwork);
+
+        injectAndVerifyIkeSessionNegotiationPackets(mTestNetworkWrapper.ikeTunUtils);
+
+        final Network vcnNetwork = cellNetworkCb.waitForAvailable();
+        assertNotNull("VCN network did not come up", vcnNetwork);
+        return vcnNetwork;
     }
 
     private void injectAndVerifyIkeSessionNegotiationPackets(@NonNull IkeTunUtils ikeTunUtils)
@@ -503,5 +511,112 @@ public class VcnManagerTest extends VcnTestBase {
                 1 /* expectedMsgId */,
                 true /* expectedUseEncap */,
                 ikeAuthResp);
+    }
+
+    private void clearVcnConfigsAndVerifyNetworkTeardown(
+            @NonNull ParcelUuid subGrp,
+            @NonNull VcnTestNetworkCallback cellNetworkCb,
+            @NonNull Network vcnNetwork)
+            throws Exception {
+        mVcnManager.clearVcnConfig(subGrp);
+
+        // Expect VCN Network to disappear after VcnConfig is cleared
+        final Network lostVcnNetwork = cellNetworkCb.waitForLost();
+        assertEquals(vcnNetwork, lostVcnNetwork);
+    }
+
+    @Test
+    public void testVcnMigrationAfterNetworkDies() throws Exception {
+        final int subId = verifyAndGetValidDataSubId();
+
+        mTestNetworkWrapper =
+                new TestNetworkWrapper(
+                        mContext,
+                        TEST_NETWORK_MTU,
+                        true /* isMetered */,
+                        Collections.singleton(subId),
+                        LOCAL_V6_ADDRESS);
+        assertNotNull("No test network found", mTestNetworkWrapper.tunNetwork);
+
+        // Get current cell Network then wait for it to drop (due to losing NOT_VCN_MANAGED) before
+        // waiting for VCN Network.
+        final NetworkRequest cellNetworkReq =
+                new NetworkRequest.Builder().addTransportType(TRANSPORT_CELLULAR).build();
+        final VcnTestNetworkCallback cellNetworkCb = new VcnTestNetworkCallback();
+        mConnectivityManager.requestNetwork(cellNetworkReq, cellNetworkCb);
+        final Network cellNetwork = cellNetworkCb.waitForAvailable();
+        assertNotNull("No cell network found", cellNetwork);
+
+        CarrierPrivilegeUtils.withCarrierPrivilegesForShell(mContext, subId, () -> {
+            SubscriptionGroupUtils.withEphemeralSubscriptionGroup(mContext, subId, (subGrp) -> {
+                final Network vcnNetwork =
+                        setupAndGetVcnNetwork(subGrp, cellNetwork, cellNetworkCb);
+
+                mTestNetworkWrapper.close();
+                mTestNetworkWrapper.vcnNetworkCallback.waitForLost();
+
+                final TestNetworkWrapper secondaryTestNetworkWrapper =
+                        new TestNetworkWrapper(
+                                mContext,
+                                TEST_NETWORK_MTU,
+                                true /* isMetered */,
+                                Collections.singleton(subId),
+                                SECONDARY_LOCAL_V6_ADDRESS);
+
+                try {
+                    assertNotNull("No test network found", secondaryTestNetworkWrapper.tunNetwork);
+
+                    injectAndVerifyIkeMobikePackets(secondaryTestNetworkWrapper.ikeTunUtils);
+
+                    clearVcnConfigsAndVerifyNetworkTeardown(subGrp, cellNetworkCb, vcnNetwork);
+                } finally {
+                    secondaryTestNetworkWrapper.close();
+                }
+            });
+        });
+
+        mConnectivityManager.unregisterNetworkCallback(cellNetworkCb);
+    }
+
+    private void injectAndVerifyIkeMobikePackets(@NonNull IkeTunUtils ikeTunUtils)
+            throws Exception {
+        // Generated by forcing IKE to use Test Mode (RandomnessFactory#mIsTestModeEnabled) and
+        // capturing IKE packets with a live server. To force the mobility event, use
+        // IkeSession#setNetwork with the new desired Network.
+        final String ikeUpdateSaResp =
+                "46b8eca1e0d72a189b9f8e0158e1c0a52e202520000000020000007c29000060"
+                        + "a1fd35f112d92d1df19ce734f6edf56ccda1bfd44ef6de428a097e04d5b40b28"
+                        + "3897e42f23dd53e444dc6c676cf9a7d9d73bb3975d663ec351fb5ae4e56a55d8"
+                        + "cbcf376a3b99cc6fd858621cc78b3017d895e4309f09a444028dba85";
+        final String ikeCreateChildResp =
+                "46b8eca1e0d72a189b9f8e0158e1c0a52e20242000000003000000cc210000b0"
+                        + "e6bb78203dbe2189806c5cecef5040b8c4c0253895c7c0acea6483a1f0f72425"
+                        + "77ab46e18d553329d4ae1bd31cf57eec6ec31ceb1f2ed6b1195cac98b4b97a25"
+                        + "115d14c414e44dba8ebbdaf502e43f98a09036bee0ea2a621176300874a3eae8"
+                        + "c988357255b4e5923928d335b0ef62a565333fae6a64c85ac30e7da34ceeade4"
+                        + "1a161bcad0b51f8209ee1fdaf53d50359ad6b986ecd4290c9f69a34c64ddc0eb"
+                        + "73b8f3231f3f4e057404c18d";
+        final String ikeDeleteChildResp =
+                "46b8eca1e0d72a189b9f8e0158e1c0a52e202520000000040000004c2a000030"
+                        + "53d97806d48ce44e0d4e1adf1de36778f77c3823bfaf8186cc71d4dc73497099"
+                        + "a9049e7be8a2013affd56ab7";
+
+        ikeTunUtils.awaitReqAndInjectResp(
+                IKE_DETERMINISTIC_INITIATOR_SPI,
+                2 /* expectedMsgId */,
+                true /* expectedUseEncap */,
+                ikeUpdateSaResp);
+
+        ikeTunUtils.awaitReqAndInjectResp(
+                IKE_DETERMINISTIC_INITIATOR_SPI,
+                3 /* expectedMsgId */,
+                true /* expectedUseEncap */,
+                ikeCreateChildResp);
+
+        ikeTunUtils.awaitReqAndInjectResp(
+                IKE_DETERMINISTIC_INITIATOR_SPI,
+                4 /* expectedMsgId */,
+                true /* expectedUseEncap */,
+                ikeDeleteChildResp);
     }
 }
