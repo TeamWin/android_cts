@@ -30,6 +30,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assume.assumeTrue;
 
+
 import android.Manifest;
 import android.content.ContentResolver;
 import android.content.ContentValues;
@@ -53,6 +54,7 @@ import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -321,6 +323,29 @@ public class ServiceStateTest {
     }
 
     /**
+     * Verifies that when query location protected fields without permissions, those fields are not
+     * available to apps with targetSdkVersion S+.
+     */
+    @Test
+    public void testLocationProtectedFields_noPermission() {
+        try (Cursor cursor = mContentResolver.query(Telephony.ServiceStateTable.CONTENT_URI,
+                null, null, null)) {
+            assertThat(cursor.getCount()).isEqualTo(1);
+            cursor.moveToNext();
+
+            assertThat(cursor.getColumnIndex("network_id")).isEqualTo(-1);
+            assertThat(cursor.getColumnIndex("system_id")).isEqualTo(-1);
+
+            assertThrows(IllegalArgumentException.class,
+                    () -> mContentResolver.query(Telephony.ServiceStateTable.CONTENT_URI,
+                            new String[]{"network_id"}, null, null));
+            assertThrows(IllegalArgumentException.class,
+                    () -> mContentResolver.query(Telephony.ServiceStateTable.CONTENT_URI,
+                            new String[]{"system_id"}, null, null));
+        }
+    }
+
+    /**
      * Insert new ServiceState over the old ServiceState and expect the observer receiving the
      * notification over the observed field change.
      */
@@ -394,5 +419,15 @@ public class ServiceStateTest {
     private static boolean hasTelephonyFeature() {
         return getInstrumentation().getContext().getPackageManager().hasSystemFeature(
                 FEATURE_TELEPHONY);
+    }
+
+    // org.junit.Assume.assertThrows is not available until JUnit 4.13
+    private static void assertThrows(Class<? extends Exception> exceptionClass, Runnable r) {
+        try {
+            r.run();
+            Assert.fail("Expected " + exceptionClass + " to be thrown.");
+        } catch (Exception exception) {
+            assertThat(exception).isInstanceOf(exceptionClass);
+        }
     }
 }
