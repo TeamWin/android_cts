@@ -115,6 +115,8 @@ public class UsageStatsTest {
 
     private static final String DELETE_SHELL_COMMAND = "settings delete global ";
 
+    private static final String JOBSCHEDULER_RUN_SHELL_COMMAND = "cmd jobscheduler run";
+
     private static final String TEST_APP_PKG = "android.app.usage.cts.test1";
     private static final String TEST_APP_CLASS = "android.app.usage.cts.test1.SomeActivity";
     private static final String TEST_APP_CLASS_LOCUS
@@ -248,7 +250,7 @@ public class UsageStatsTest {
 
     @AppModeFull(reason = "No usage events access in instant apps")
     @Test
-    public void testLastAnyTimeComponentUsed_launchActivity() throws Exception {
+    public void testLastTimeAnyComponentUsed_launchActivityShouldBeDetected() throws Exception {
         mUiDevice.wakeUp();
         dismissKeyguard(); // also want to start out with the keyguard dismissed.
 
@@ -256,33 +258,62 @@ public class UsageStatsTest {
         launchSubActivity(Activities.ActivityOne.class);
         final long endTime = System.currentTimeMillis();
 
-        final Map<String, UsageStats> map = mUsageStatsManager.queryAndAggregateUsageStats(
-                startTime, endTime);
-        final UsageStats stats = map.get(mTargetPackage);
-        assertNotNull(stats);
-        final long lastTimeComponentUsed = stats.getLastTimeAnyComponentUsed();
-        assertLessThan(startTime, lastTimeComponentUsed);
-        assertLessThan(lastTimeComponentUsed, endTime);
+        verifyLastTimeAnyComponentUsedWithinRange(startTime, endTime, mTargetPackage);
     }
 
     @AppModeFull(reason = "No usage events access in instant apps")
     @Test
-    public void testLastTimeAnyComponentUsedGlobal_launchActivity() throws Exception {
+    public void testLastTimeAnyComponentUsed_bindServiceShouldBeDetected() throws Exception {
         mUiDevice.wakeUp();
-        dismissKeyguard();
+        dismissKeyguard(); // also want to start out with the keyguard dismissed.
 
-        final long startDay = System.currentTimeMillis() / TimeUnit.DAYS.toMillis(1)
-                * TimeUnit.DAYS.toMillis(1);
-        launchSubActivity(Activities.ActivityOne.class);
-        final long endDay = System.currentTimeMillis() / TimeUnit.DAYS.toMillis(1)
-                * TimeUnit.DAYS.toMillis(1);
+        final long startTime = System.currentTimeMillis();
+        bindToTestService();
+        final long endTime = System.currentTimeMillis();
 
-        final long lastTimeAnyComponentUsed =
-                mUsageStatsManager.getLastTimeAnyComponentUsed(mTargetPackage);
-        assertLessThanOrEqual(startDay, lastTimeAnyComponentUsed);
-        assertLessThanOrEqual(lastTimeAnyComponentUsed, endDay);
+        verifyLastTimeAnyComponentUsedWithinRange(startTime, endTime, TEST_APP_PKG);
     }
 
+    private void verifyLastTimeAnyComponentUsedWithinRange(
+            long startTime, long endTime, String targetPackage) {
+        final Map<String, UsageStats> map = mUsageStatsManager.queryAndAggregateUsageStats(
+                startTime, endTime);
+        final UsageStats stats = map.get(targetPackage);
+        assertNotNull(stats);
+        final long lastTimeAnyComponentUsed = stats.getLastTimeAnyComponentUsed();
+        assertLessThan(startTime, lastTimeAnyComponentUsed);
+        assertLessThan(lastTimeAnyComponentUsed, endTime);
+
+        final long lastDayAnyComponentUsedGlobal =
+                mUsageStatsManager.getLastTimeAnyComponentUsed(targetPackage) / DAY;
+        assertLessThanOrEqual(startTime / DAY, lastDayAnyComponentUsedGlobal);
+        assertLessThanOrEqual(lastDayAnyComponentUsedGlobal, endTime / DAY);
+    }
+
+    @AppModeFull(reason = "No usage events access in instant apps")
+    @Test
+    public void testLastTimeAnyComponentUsed_JobServiceShouldBeIngnored() throws Exception {
+        mUiDevice.wakeUp();
+        dismissKeyguard(); // also want to start out with the keyguard dismissed.
+
+        final long startTime = System.currentTimeMillis();
+        runJobImmediately();
+        waitUntil(TestJob.hasJobStarted, /* expected */ true);
+
+        final Map<String, UsageStats> map = mUsageStatsManager.queryAndAggregateUsageStats(
+                startTime, System.currentTimeMillis());
+        final UsageStats stats = map.get(mTargetPackage);
+        if (stats != null) {
+            final long lastTimeAnyComponentUsed = stats.getLastTimeAnyComponentUsed();
+            // Check that the usage is NOT detected.
+            assertLessThanOrEqual(lastTimeAnyComponentUsed, startTime);
+        }
+
+        final long lastDayAnyComponentUsedGlobal =
+                mUsageStatsManager.getLastTimeAnyComponentUsed(mTargetPackage) / DAY;
+        // Check that the usage is NOT detected.
+        assertLessThanOrEqual(lastDayAnyComponentUsedGlobal, startTime / DAY);
+    }
 
     @AppModeFull(reason = "No usage events access in instant apps")
     @Test
@@ -1767,6 +1798,13 @@ public class UsageStatsTest {
                     TimeUnit.SECONDS);
             return service;
         }
+    }
+
+    private void runJobImmediately() throws Exception {
+        TestJob.schedule(mContext);
+        executeShellCmd(JOBSCHEDULER_RUN_SHELL_COMMAND
+                + " " + mContext.getPackageName()
+                + " " + TestJob.TEST_JOB_ID);
     }
 
     private boolean isAppInactiveAsPermissionlessApp(String pkg) throws Exception {

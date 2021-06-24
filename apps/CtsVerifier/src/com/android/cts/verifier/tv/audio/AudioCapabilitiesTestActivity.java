@@ -99,10 +99,10 @@ public class AudioCapabilitiesTestActivity extends TvAppVerifierActivity
     @Override
     protected void createTestItems() {
         mSupportDolbyAtmosYesItem =
-                createUserItem(
+                createAndAttachUserItem(
                         R.string.tv_audio_capabilities_atmos_supported, R.string.tv_yes, this);
         setButtonEnabled(mSupportDolbyAtmosYesItem, true);
-        mSupportDolbyAtmosNoItem = createButtonItem(R.string.tv_no, this);
+        mSupportDolbyAtmosNoItem = createAndAttachButtonItem(R.string.tv_no, this);
         setButtonEnabled(mSupportDolbyAtmosNoItem, true);
     }
 

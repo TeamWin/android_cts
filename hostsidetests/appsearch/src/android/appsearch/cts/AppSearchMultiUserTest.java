@@ -111,4 +111,21 @@ public class AppSearchMultiUserTest extends AppSearchHostTestBase {
         getDevice().startUser(mSecondaryUserId, /*waitFlag=*/true);
         runDeviceTestAsUserInPkgB("testGlobalGetDocuments_nonexist", mSecondaryUserId);
     }
+
+    @Test
+    public void testReadStorageInfoFromFile() throws Exception {
+        runDeviceTestAsUserInPkgA("testPutDocuments", mSecondaryUserId);
+
+        getDevice().stopUser(mSecondaryUserId, /*waitFlag=*/true, /*forceFlag=*/true);
+        getDevice().startUser(mSecondaryUserId, /*waitFlag=*/true);
+        // Write user's storage info into file while initializing AppSearchImpl.
+        runStorageAugmenterDeviceTestAsUserInPkgA("connectToAppSearch", mSecondaryUserId);
+
+        // Disconnect user from AppSearch. While AppSearchImpl doesn't exist for the user, user's
+        // storage info would be read from file.
+        getDevice().stopUser(mSecondaryUserId, /*waitFlag=*/true, /*forceFlag=*/true);
+        getDevice().startUser(mSecondaryUserId, /*waitFlag=*/true);
+
+        runStorageAugmenterDeviceTestAsUserInPkgA("testReadStorageInfo", mSecondaryUserId);
+    }
 }

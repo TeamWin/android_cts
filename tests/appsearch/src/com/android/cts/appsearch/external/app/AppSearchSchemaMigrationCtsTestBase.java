@@ -24,7 +24,7 @@ import static com.android.server.appsearch.testing.AppSearchTestUtils.doGet;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import static org.testng.Assert.expectThrows;
+import static org.junit.Assert.assertThrows;
 
 import android.annotation.NonNull;
 import android.app.appsearch.AppSearchBatchResult;
@@ -72,7 +72,6 @@ import java.util.concurrent.ExecutionException;
  * FALSE  FALSE   FALSE   TRUE    Impossible case, migrators are inactivity
  * FALSE  FALSE   FALSE   FALSE                             fail             throw error
  */
-// TODO(b/178060626) add a platform version of this test
 public abstract class AppSearchSchemaMigrationCtsTestBase {
 
     private static final String DB_NAME = "";
@@ -359,7 +358,7 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
         AppSearchSchema $B_C_Schema = new AppSearchSchema.Builder("testSchema").build();
 
         ExecutionException exception =
-                expectThrows(
+                assertThrows(
                         ExecutionException.class,
                         () ->
                                 mDb.setSchema(
@@ -380,7 +379,7 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
         AppSearchSchema $B_$C_Schema = new AppSearchSchema.Builder("testSchema").build();
 
         ExecutionException exception =
-                expectThrows(
+                assertThrows(
                         ExecutionException.class,
                         () ->
                                 mDb.setSchema(
@@ -772,7 +771,7 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
 
         // SetSchema with forceOverride=false
         ExecutionException exception =
-                expectThrows(
+                assertThrows(
                         ExecutionException.class,
                         () ->
                                 mDb.setSchema(
@@ -900,7 +899,7 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
 
         // SetSchema with forceOverride=false
         ExecutionException exception =
-                expectThrows(
+                assertThrows(
                         ExecutionException.class,
                         () ->
                                 mDb.setSchema(
@@ -969,11 +968,15 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
         // SetSchema with forceOverride=false
         // Source type exist, destination type doesn't exist.
         ExecutionException exception =
-                expectThrows(
+                assertThrows(
                         ExecutionException.class,
                         () ->
                                 mDb.setSchema(
                                                 new SetSchemaRequest.Builder()
+                                                        .addSchemas(
+                                                                new AppSearchSchema.Builder(
+                                                                                "emptySchema")
+                                                                        .build())
                                                         .setMigrator(
                                                                 "sourceSchema",
                                                                 migrator_sourceToNowhere)
@@ -989,11 +992,15 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
         // SetSchema with forceOverride=true
         // Source type exist, destination type doesn't exist.
         exception =
-                expectThrows(
+                assertThrows(
                         ExecutionException.class,
                         () ->
                                 mDb.setSchema(
                                                 new SetSchemaRequest.Builder()
+                                                        .addSchemas(
+                                                                new AppSearchSchema.Builder(
+                                                                                "emptySchema")
+                                                                        .build())
                                                         .setMigrator(
                                                                 "sourceSchema",
                                                                 migrator_sourceToNowhere)
@@ -1053,6 +1060,8 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
                 mDb.setSchema(
                                 new SetSchemaRequest.Builder()
                                         .addSchemas(destinationSchema)
+                                        .addSchemas(
+                                                new AppSearchSchema.Builder("emptySchema").build())
                                         .setMigrator(
                                                 "nonExistSchema", migrator_nowhereToDestination)
                                         .setVersion(2) //  upgrade version
@@ -1065,6 +1074,8 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
                 mDb.setSchema(
                                 new SetSchemaRequest.Builder()
                                         .addSchemas(destinationSchema)
+                                        .addSchemas(
+                                                new AppSearchSchema.Builder("emptySchema").build())
                                         .setMigrator(
                                                 "nonExistSchema", migrator_nowhereToDestination)
                                         .setVersion(2) //  upgrade version
@@ -1110,6 +1121,8 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
         SetSchemaResponse setSchemaResponse =
                 mDb.setSchema(
                                 new SetSchemaRequest.Builder()
+                                        .addSchemas(
+                                                new AppSearchSchema.Builder("emptySchema").build())
                                         .setMigrator("nonExistSchema", migrator_nowhereToNowhere)
                                         .setVersion(2) //  upgrade version
                                         .build())
@@ -1120,6 +1133,8 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
         setSchemaResponse =
                 mDb.setSchema(
                                 new SetSchemaRequest.Builder()
+                                        .addSchemas(
+                                                new AppSearchSchema.Builder("emptySchema").build())
                                         .setMigrator("nonExistSchema", migrator_nowhereToNowhere)
                                         .setVersion(2) //  upgrade version
                                         .setForceOverride(true)
