@@ -56,6 +56,11 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
             "persist.wm.disable_custom_task_animation";
     static final boolean DISABLE_CUSTOM_TASK_ANIMATION_DEFAULT = true;
 
+    // Duration of the default wallpaper close animation
+    static final long DEFAULT_ANIMATION_DURATION = 275L;
+    // Duration of the R.anim.alpha animation
+    static final long CUSTOM_ANIMATION_DURATION = 2000L;
+
     private static boolean customTaskAnimationDisabled() {
         try {
             return Integer.parseInt(executeShellCommand(
@@ -67,7 +72,7 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
 
     @Test
     public void testActivityTransitionDurationNoShortenAsExpected() throws Exception {
-        final long expectedDurationMs = 500L - 100L;    // custom animation
+        final long expectedDurationMs = CUSTOM_ANIMATION_DURATION - 100L;
         final long minDurationMs = expectedDurationMs;
         final long maxDurationMs = expectedDurationMs + 300L;
         final Range<Long> durationRange = new Range<>(minDurationMs, maxDurationMs);
@@ -110,7 +115,7 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
     public void testTaskTransitionDurationNoShortenAsExpected() throws Exception {
         assumeFalse(customTaskAnimationDisabled());
 
-        final long expectedDurationMs = 500L - 100L;    // custom animation
+        final long expectedDurationMs = CUSTOM_ANIMATION_DURATION - 100L;
         final long minDurationMs = expectedDurationMs;
         final long maxDurationMs = expectedDurationMs + 300L;
         final Range<Long> durationRange = new Range<>(minDurationMs, maxDurationMs);
@@ -149,9 +154,9 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
     public void testTaskTransitionOverrideDisabled() throws Exception {
         assumeTrue(customTaskAnimationDisabled());
 
-        final long expectedDurationMs = 275L - 100L;   // wallpaper close animation
+        final long expectedDurationMs = DEFAULT_ANIMATION_DURATION - 100L;
         final long minDurationMs = expectedDurationMs;
-        final long maxDurationMs = expectedDurationMs + 300L;
+        final long maxDurationMs = expectedDurationMs + 1000L;
         final Range<Long> durationRange = new Range<>(minDurationMs, maxDurationMs);
 
         final CountDownLatch latch = new CountDownLatch(1);
@@ -190,9 +195,9 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
     public void testTaskTransitionOverride() throws Exception {
         assumeTrue(customTaskAnimationDisabled());
 
-        final long expectedDurationMs = 500L - 100L;    // custom animation
+        final long expectedDurationMs = CUSTOM_ANIMATION_DURATION - 100L;
         final long minDurationMs = expectedDurationMs;
-        final long maxDurationMs = expectedDurationMs + 300L;
+        final long maxDurationMs = expectedDurationMs + 1000L;
         final Range<Long> durationRange = new Range<>(minDurationMs, maxDurationMs);
 
         final CountDownLatch latch = new CountDownLatch(1);
