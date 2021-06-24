@@ -113,6 +113,11 @@ public final class IncrementalAppErrorStatsTests extends DeviceTestCase implemen
         DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testLoadingApks");
     }
 
+    private boolean hasIncrementalDeliveryV2Feature() throws Exception {
+        return "true\n".equals(getDevice().executeShellCommand(
+                "pm has-feature android.software.incremental_delivery 2"));
+    }
+
     @After
     public void tearDown() throws Exception {
         if (mSession != null) {
@@ -158,6 +163,10 @@ public final class IncrementalAppErrorStatsTests extends DeviceTestCase implemen
         assertFalse(atom.getReadLogsEnabled());
         assertTrue(atom.getMillisSinceLastDataLoaderBind() > 0);
         assertEquals(0, atom.getDataLoaderBindDelayMillis());
+        if (!hasIncrementalDeliveryV2Feature()) {
+            // Skip kernel stats check if it's not supported
+            return;
+        }
         assertTrue(atom.getTotalDelayedReads() > 0);
         assertTrue(atom.getTotalFailedReads() > 0);
         assertTrue(atom.getLastReadErrorMillisSince() > 0);
