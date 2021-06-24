@@ -48,6 +48,7 @@
         <option name="push" value="CtsAppThatRequestsBluetoothPermission30.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestsBluetoothPermission30.apk" />
         <option name="push" value="CtsAppThatRequestsBluetoothPermission31.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestsBluetoothPermission31.apk" />
         <option name="push" value="CtsAppThatRequestsBluetoothPermissionNeverForLocation31.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestsBluetoothPermissionNeverForLocation31.apk" />
+        <option name="push" value="CtsAppThatRequestsBluetoothPermissionNeverForLocationNoProvider.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestsBluetoothPermissionNeverForLocationNoProvider.apk" />
         <option name="push" value="CtsAppThatRequestsContactsPermission16.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestsContactsPermission16.apk" />
         <option name="push" value="CtsAppThatRequestsContactsPermission15.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestsContactsPermission15.apk" />
         <option name="push" value="CtsAppThatRequestsContactsAndCallLogPermission16.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestsContactsAndCallLogPermission16.apk" />
