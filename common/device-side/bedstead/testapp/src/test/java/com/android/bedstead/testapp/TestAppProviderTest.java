@@ -44,7 +44,7 @@ public class TestAppProviderTest {
     @Test
     public void get_queryMatches_returnsTestApp() {
         TestAppQueryBuilder query = mTestAppProvider.query()
-                .withPackageName(EXISTING_PACKAGENAME);
+                .wherePackageName().isEqualTo(EXISTING_PACKAGENAME);
 
         assertThat(query.get()).isNotNull();
     }
@@ -52,7 +52,7 @@ public class TestAppProviderTest {
     @Test
     public void get_queryMatches_packageNameIsSet() {
         TestAppQueryBuilder query = mTestAppProvider.query()
-                .withPackageName(EXISTING_PACKAGENAME);
+                .wherePackageName().isEqualTo(EXISTING_PACKAGENAME);
 
         assertThat(query.get().packageName()).isEqualTo(EXISTING_PACKAGENAME);
     }
@@ -60,7 +60,7 @@ public class TestAppProviderTest {
     @Test
     public void get_queryDoesNotMatch_throwsException() {
         TestAppQueryBuilder query = mTestAppProvider.query()
-                .withPackageName(NOT_EXISTING_PACKAGENAME);
+                .wherePackageName().isEqualTo(NOT_EXISTING_PACKAGENAME);
 
         assertThrows(NotFoundException.class, query::get);
     }
@@ -77,9 +77,9 @@ public class TestAppProviderTest {
 
     @Test
     public void query_onlyReturnsTestAppOnce() {
-        mTestAppProvider.query().withPackageName(EXISTING_PACKAGENAME).get();
+        mTestAppProvider.query().wherePackageName().isEqualTo(EXISTING_PACKAGENAME).get();
 
-        TestAppQueryBuilder query = mTestAppProvider.query().withPackageName(EXISTING_PACKAGENAME);
+        TestAppQueryBuilder query = mTestAppProvider.query().wherePackageName().isEqualTo(EXISTING_PACKAGENAME);
 
         assertThrows(NotFoundException.class, query::get);
     }

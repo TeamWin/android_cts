@@ -49,7 +49,7 @@ public class SettingsHandlerTest {
         Uri uri = DocumentsContract.buildRootUri(MEDIA_PROVIDER_AUTHORITY, "videos_root");
         intent.setDataAndType(uri, DocumentsContract.Root.MIME_TYPE_ITEM);
 
-        assertThat(hasDefaultHandlerForIntent(intent)).isTrue();
+        assertThat(hasAtMostOneDefaultHandlerForIntent(intent)).isTrue();
     }
 
     @Test
@@ -58,7 +58,7 @@ public class SettingsHandlerTest {
         Uri uri = DocumentsContract.buildRootUri(MEDIA_PROVIDER_AUTHORITY, "images_root");
         intent.setDataAndType(uri, DocumentsContract.Root.MIME_TYPE_ITEM);
 
-        assertThat(hasDefaultHandlerForIntent(intent)).isTrue();
+        assertThat(hasAtMostOneDefaultHandlerForIntent(intent)).isTrue();
     }
 
     @Test
@@ -67,7 +67,7 @@ public class SettingsHandlerTest {
         Uri uri = DocumentsContract.buildRootUri(MEDIA_PROVIDER_AUTHORITY, "audio_root");
         intent.setDataAndType(uri, DocumentsContract.Root.MIME_TYPE_ITEM);
 
-        assertThat(hasDefaultHandlerForIntent(intent)).isTrue();
+        assertThat(hasAtMostOneDefaultHandlerForIntent(intent)).isTrue();
     }
 
     @Test
@@ -76,18 +76,25 @@ public class SettingsHandlerTest {
         Uri uri = DocumentsContract.buildRootUri(MEDIA_PROVIDER_AUTHORITY, "documents_root");
         intent.setDataAndType(uri, DocumentsContract.Root.MIME_TYPE_ITEM);
 
-        assertThat(hasDefaultHandlerForIntent(intent)).isTrue();
+        assertThat(hasAtMostOneDefaultHandlerForIntent(intent)).isTrue();
     }
 
     @Test
     public void oneDefaultHandlerForManageStorage() throws Exception {
         Intent intent = new Intent(StorageManager.ACTION_MANAGE_STORAGE);
 
-        assertThat(hasDefaultHandlerForIntent(intent)).isTrue();
+        assertThat(hasAtMostOneDefaultHandlerForIntent(intent)).isTrue();
     }
 
-    private boolean hasDefaultHandlerForIntent(Intent intent) {
+    private boolean hasAtMostOneDefaultHandlerForIntent(Intent intent) {
         ResolveInfo resolveInfo = mPackageManager.resolveActivity(intent, /* flags= */ 0);
+
+        if (resolveInfo == null) {
+            // Return true if no handlers can handle the intent, meaning that the specific platform
+            // does need to handle the intent.
+            return true;
+        }
+
         String packageName = resolveInfo.activityInfo.packageName;
         String activityName = resolveInfo.activityInfo.name;
         // If there are more than one handlers with no preferences set, the intent will resolve

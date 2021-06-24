@@ -48,9 +48,11 @@ import android.service.autofill.FillEventHistory;
 import android.service.autofill.FillEventHistory.Event;
 import android.service.autofill.FillResponse;
 import android.service.autofill.SaveCallback;
+import android.service.autofill.SavedDatasetsInfoCallback;
 import android.util.Log;
 import android.view.inputmethod.InlineSuggestionsRequest;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.android.compatibility.common.util.RetryableException;
@@ -68,6 +70,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 /**
  * Implementation of {@link AutofillService} used in the tests.
@@ -92,6 +95,8 @@ public class InstrumentedAutoFillService extends AutofillService {
     protected static final AtomicReference<InstrumentedAutoFillService> sInstance =
             new AtomicReference<>();
     private static final Replier sReplier = new Replier();
+    @Nullable
+    private static Consumer<SavedDatasetsInfoCallback> sSavedDatasetsInfoReplier;
 
     private static AtomicBoolean sConnected = new AtomicBoolean(false);
 
@@ -273,6 +278,20 @@ public class InstrumentedAutoFillService extends AutofillService {
                 request.getDatasetIds()));
     }
 
+    @Override
+    public void onSavedDatasetsInfoRequest(@NonNull SavedDatasetsInfoCallback callback) {
+        if (sSavedDatasetsInfoReplier == null) {
+            super.onSavedDatasetsInfoRequest(callback);
+        } else {
+            sSavedDatasetsInfoReplier.accept(callback);
+        }
+    }
+
+    public static void setSavedDatasetsInfoReplier(
+            @Nullable Consumer<SavedDatasetsInfoCallback> savedDatasetsInfoReplier) {
+        sSavedDatasetsInfoReplier = savedDatasetsInfoReplier;
+    }
+
     public static boolean isConnected() {
         return sConnected.get();
     }
@@ -352,6 +371,7 @@ public class InstrumentedAutoFillService extends AutofillService {
         sInstance.set(null);
         sConnected.set(false);
         sServiceLabel = SERVICE_CLASS;
+        sSavedDatasetsInfoReplier = null;
     }
 
     /**

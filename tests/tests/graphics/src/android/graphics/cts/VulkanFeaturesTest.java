@@ -40,8 +40,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.io.UnsupportedEncodingException;
-
 /**
  * Test that the Vulkan loader is present, supports the required extensions, and that system
  * features accurately indicate the capabilities of the Vulkan driver if one exists.
@@ -62,7 +60,6 @@ public class VulkanFeaturesTest {
     private static final int VULKAN_1_0 = 0x00400003; // 1.0.3
     private static final int VULKAN_1_1 = 0x00401000; // 1.1.0
 
-    private static final String VK_KHR_PERFORMANCE_QUERY = "VK_KHR_performance_query";
     private static final String VK_ANDROID_EXTERNAL_MEMORY_ANDROID_HARDWARE_BUFFER_EXTENSION_NAME =
             "VK_ANDROID_external_memory_android_hardware_buffer";
     private static final int VK_ANDROID_EXTERNAL_MEMORY_ANDROID_HARDWARE_BUFFER_SPEC_VERSION = 2;
@@ -238,14 +235,13 @@ public class VulkanFeaturesTest {
             mVulkanHardwareLevel != null && mVulkanHardwareLevel.version >= 0);
     }
 
+    @CddTest(requirement = "7.1.4.2/C-1-11")
     @Test
     public void testVulkanBlockedExtensions() throws JSONException {
-        for (JSONObject device : mVulkanDevices) {
-            assertTrue("Device - " + device.getJSONObject("properties").getString("deviceName")
-                            + " supports extension " + VK_KHR_PERFORMANCE_QUERY
-                            + ". It is blocked and hence should not be supported",
-                    !hasDeviceExtension(device, VK_KHR_PERFORMANCE_QUERY, 0));
-        }
+        assertNoVulkanDeviceExtension("VK_KHR_performance_query");
+        assertNoVulkanDeviceExtension("VK_KHR_video_queue");
+        assertNoVulkanDeviceExtension("VK_KHR_video_decode_queue");
+        assertNoVulkanDeviceExtension("VK_KHR_video_encode_queue");
     }
 
     private JSONObject getBestDevice() throws JSONException {
@@ -386,6 +382,15 @@ public class VulkanFeaturesTest {
                         name,
                         minVersion),
                 hasDeviceExtension(mBestDevice, name, minVersion));
+    }
+
+    private void assertNoVulkanDeviceExtension(final String name)
+            throws JSONException {
+        for (JSONObject device : mVulkanDevices) {
+            assertTrue(
+                    String.format("Devices must not support Vulkan device extension %s", name),
+                    !hasDeviceExtension(device, name, 0));
+        }
     }
 
     private void assertVulkanInstanceExtension(final String name, final int minVersion)
