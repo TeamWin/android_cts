@@ -52,7 +52,7 @@ public class FrameDropTestBase {
     static final String AV1 = MediaFormat.MIMETYPE_VIDEO_AV1;
     static final String AAC = MediaFormat.MIMETYPE_AUDIO_AAC;
     static final String AAC_LOAD_FILE_NAME = "bbb_1c_128kbps_aac_audio.mp4";
-    static final String AVC_LOAD_FILE_NAME = "bbb_1280x720_3mbps_30fps_avc.mp4";
+    static final String AVC_LOAD_FILE_NAME = "bbb_1920x1080_8mbps_60fps_avc.mp4";
     static final long DECODE_31S = 31000; // In ms
     static final int MAX_FRAME_DROP_FOR_30S;
     // For perf class R, one frame drop per 10 seconds at 30 fps i.e. 3 drops per 30 seconds
@@ -247,8 +247,7 @@ public class FrameDropTestBase {
     }
 
     private void startLoad() {
-        // TODO: b/183671436
-        // Start Transcode load (Decoder(720p) + Encoder(720p))
+        // Start Transcode load (Decoder(1080p) + Encoder(720p))
         mLoadStatus = new LoadStatus();
         mTranscodeLoadThread = createTranscodeLoad();
         mTranscodeLoadThread.start();
