@@ -26,6 +26,8 @@ import android.platform.test.annotations.AppModeFull;
 import android.provider.Settings.Global;
 import android.test.AndroidTestCase;
 
+import androidx.test.filters.LargeTest;
+
 import com.android.compatibility.common.util.BatteryUtils;
 import com.android.compatibility.common.util.CallbackAsserter;
 import com.android.compatibility.common.util.SystemUtil;
@@ -135,6 +137,7 @@ public class PowerManagerTest extends AndroidTestCase {
         });
     }
 
+    @LargeTest
     public void testPowerManager_batteryDischargePrediction() throws Exception {
         final PowerManager manager = BatteryUtils.getPowerManager();
 

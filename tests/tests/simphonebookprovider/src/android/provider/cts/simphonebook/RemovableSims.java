@@ -91,7 +91,8 @@ class RemovableSims {
     }
 
     public List<SubscriptionInfo> getSubscriptionInfoForRemovableSims() {
-        if (mRemovableSubscriptionInfos == null) {
+        if (mRemovableSubscriptionInfos == null ||
+                mRemovableSubscriptionInfos.size() < mRemovableSimSlotCount) {
             initialize();
         }
         return mRemovableSubscriptionInfos;

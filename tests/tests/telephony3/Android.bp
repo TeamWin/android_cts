@@ -28,6 +28,7 @@ android_test {
     test_suites: [
         "cts",
         "general-tests",
+        "sts",
     ],
     libs: ["android.test.runner"] + ["android.test.base"],
 }
