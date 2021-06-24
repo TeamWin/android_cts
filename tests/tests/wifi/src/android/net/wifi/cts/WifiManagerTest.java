@@ -1719,7 +1719,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
 
             // Verify clean up
             PollingCheck.check(
-                    "Stop Softap failed", 2_000,
+                    "Stop Softap failed", 3_000,
                     () -> {
                         executor.runAll();
                         return WifiManager.WIFI_AP_STATE_DISABLED == callback.getCurrentState() &&
