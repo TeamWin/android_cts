@@ -183,12 +183,17 @@ public class PolicyTransparencyTestListActivity extends PassFailButtons.TestList
     private boolean isPolicyValid(String test) {
         final PackageManager pm = getPackageManager();
         switch (test) {
+            case PolicyTransparencyTestActivity.TEST_CHECK_KEYGURAD_UNREDACTED_NOTIFICATION:
+                return pm.hasSystemFeature(PackageManager.FEATURE_SECURE_LOCK_SCREEN);
             case PolicyTransparencyTestActivity.TEST_CHECK_PERMITTED_INPUT_METHOD:
                 return pm.hasSystemFeature(PackageManager.FEATURE_INPUT_METHODS);
             case PolicyTransparencyTestActivity.TEST_CHECK_PERMITTED_ACCESSIBILITY_SERVICE:
                 return pm.hasSystemFeature(PackageManager.FEATURE_AUDIO_OUTPUT);
             case PolicyTransparencyTestActivity.TEST_CHECK_LOCK_SCREEN_INFO:
-                return !pm.hasSystemFeature(PackageManager.FEATURE_WATCH);
+                return !pm.hasSystemFeature(PackageManager.FEATURE_WATCH)
+                    && pm.hasSystemFeature(PackageManager.FEATURE_SECURE_LOCK_SCREEN);
+            case PolicyTransparencyTestActivity.TEST_CHECK_MAXIMUM_TIME_TO_LOCK:
+                return pm.hasSystemFeature(PackageManager.FEATURE_SECURE_LOCK_SCREEN);
             default:
                 return true;
         }
