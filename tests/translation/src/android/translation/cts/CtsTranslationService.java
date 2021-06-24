@@ -274,24 +274,27 @@ public class CtsTranslationService extends TranslationService {
             Log.d(TAG, "offering " + request);
             offer(mTranslationRequests, request, TRANSLATION_TIMEOUT_MS);
             try {
-                final TranslationResponse response;
-                try {
-                    response = mResponses.poll(TRANSLATION_TIMEOUT_MS, TimeUnit.MILLISECONDS);
-                } catch (InterruptedException e) {
-                    Log.w(TAG, "Interrupted getting TranslationResponse: " + e);
-                    Thread.currentThread().interrupt();
-                    addException(e);
-                    return;
-                }
+                TranslationResponse response;
+                while (mResponses.peek() != null) {
+                    try {
+                        response = mResponses.poll(TRANSLATION_TIMEOUT_MS,
+                                TimeUnit.MILLISECONDS);
+                    } catch (InterruptedException e) {
+                        Log.w(TAG, "Interrupted getting TranslationResponse: " + e);
+                        Thread.currentThread().interrupt();
+                        addException(e);
+                        return;
+                    }
 
-                if (response == null) {
-                    Log.w(TAG, "onTranslationRequest() for " + request
-                            + " received when no response was set.");
-                    return;
-                }
+                    if (response == null) {
+                        Log.w(TAG, "onTranslationRequest() for " + request
+                                + " received when no response was set.");
+                        return;
+                    }
 
-                Log.v(TAG, "onTranslationRequest(): response = " + response);
-                callback.accept(response);
+                    Log.v(TAG, "onTranslationRequest(): response = " + response);
+                    callback.accept(response);
+                }
             } catch (Throwable t) {
                 addException(t);
             }
