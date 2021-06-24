@@ -29,7 +29,6 @@ import java.util.List;
  */
 public class SimpleActivity extends Activity {
 
-    public static final String ACTIVITY_PACKAGE = "android.translation.cts";
     public static final String HELLO_TEXT_ID = "hello";
 
     private static final String TAG = "SimpleActivity";

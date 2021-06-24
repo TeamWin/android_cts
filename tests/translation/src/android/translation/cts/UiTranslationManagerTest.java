@@ -47,6 +47,9 @@ import android.platform.test.annotations.AppModeFull;
 import android.provider.Settings;
 import android.service.contentcapture.ContentCaptureService;
 import android.service.translation.TranslationService;
+import android.translation.cts.views.CustomTextView;
+import android.translation.cts.views.ResponseNotSetTextView;
+import android.translation.cts.views.VirtualContainerView;
 import android.util.Log;
 import android.util.LongSparseArray;
 import android.util.Pair;
@@ -121,9 +124,11 @@ public class UiTranslationManagerTest {
     private CtsTranslationService.ServiceWatcher mTranslationServiceServiceWatcher;
     private ActivityScenario<SimpleActivity> mActivityScenario;
     private ActivityScenario<VirtualContainerViewActivity> mVirtualContainerViewActivityScenario;
+    private ActivityScenario<CustomTextViewActivity> mCustomTextViewActivityScenario;
 
     private VirtualContainerView mVirtualContainerView;
-
+    private ResponseNotSetTextView mResponseNotSetTextView;
+    private CustomTextView mCustomTextView;
     private TextView mTextView;
 
     @Rule
@@ -177,81 +182,57 @@ public class UiTranslationManagerTest {
         final ContentCaptureContext contentCaptureContext = result.second;
 
         final String translatedText = "success";
-        final UiTranslationManager manager = sContext.getSystemService(UiTranslationManager.class);
-        final UiObject2 helloText = Helper.findObjectByResId(SimpleActivity.ACTIVITY_PACKAGE,
+        final UiObject2 helloText = Helper.findObjectByResId(Helper.ACTIVITY_PACKAGE,
                 SimpleActivity.HELLO_TEXT_ID);
         assertThat(helloText).isNotNull();
         // Set response
         final TranslationResponse response = createViewsTranslationResponse(views, translatedText);
         sTranslationReplier.addResponse(response);
 
-        runWithShellPermissionIdentity(() -> {
-            // Call startTranslation API
-            manager.startTranslation(
-                    new TranslationSpec(ULocale.ENGLISH,
-                            TranslationSpec.DATA_FORMAT_TEXT),
-                    new TranslationSpec(ULocale.FRENCH,
-                            TranslationSpec.DATA_FORMAT_TEXT),
-                    views, contentCaptureContext.getActivityId(),
-                    new UiTranslationSpec.Builder().build());
+        startUiTranslation(/* shouldPadContent */ false, views, contentCaptureContext);
 
-            // Check request
-            final TranslationRequest request = sTranslationReplier.getNextTranslationRequest();
-            final List<ViewTranslationRequest> requests = request.getViewTranslationRequests();
-            final ViewTranslationRequest viewRequest = requests.get(0);
-            assertThat(viewRequest.getAutofillId()).isEqualTo(views.get(0));
-            assertThat(viewRequest.getKeys().size()).isEqualTo(1);
-            assertThat(viewRequest.getKeys()).containsExactly(ViewTranslationRequest.ID_TEXT);
-            assertThat(viewRequest.getValue(ViewTranslationRequest.ID_TEXT).getText())
-                    .isEqualTo(originalText.toString());
+        // Check request
+        final TranslationRequest request = sTranslationReplier.getNextTranslationRequest();
+        final List<ViewTranslationRequest> requests = request.getViewTranslationRequests();
+        final ViewTranslationRequest viewRequest = requests.get(0);
+        assertThat(viewRequest.getAutofillId()).isEqualTo(views.get(0));
+        assertThat(viewRequest.getKeys().size()).isEqualTo(1);
+        assertThat(viewRequest.getKeys()).containsExactly(ViewTranslationRequest.ID_TEXT);
+        assertThat(viewRequest.getValue(ViewTranslationRequest.ID_TEXT).getText())
+                .isEqualTo(originalText.toString());
 
-            SystemClock.sleep(UI_WAIT_TIMEOUT);
-            assertThat(helloText.getText().toString()).isEqualTo(translatedText);
-            assertThat(mTextView.getViewTranslationResponse())
-                    .isEqualTo(response.getViewTranslationResponses().get(0));
+        assertThat(helloText.getText()).isEqualTo(translatedText);
+        assertThat(mTextView.getViewTranslationResponse())
+                .isEqualTo(response.getViewTranslationResponses().get(0));
 
-            // Call pauseTranslation API
-            manager.pauseTranslation(contentCaptureContext.getActivityId());
+        pauseUiTranslation(contentCaptureContext);
 
-            SystemClock.sleep(UI_WAIT_TIMEOUT);
-            assertThat(helloText.getText().toString()).isEqualTo(originalText.toString());
+        assertThat(helloText.getText()).isEqualTo(originalText.toString());
 
-            // Call resumeTranslation API
-            manager.resumeTranslation(contentCaptureContext.getActivityId());
+        resumeUiTranslation(contentCaptureContext);
 
-            SystemClock.sleep(UI_WAIT_TIMEOUT);
-            assertThat(helloText.getText().toString()).isEqualTo(translatedText);
+        assertThat(helloText.getText()).isEqualTo(translatedText);
 
-            // Call finishTranslation API
-            manager.finishTranslation(contentCaptureContext.getActivityId());
+        finishUiTranslation(contentCaptureContext);
 
-            SystemClock.sleep(UI_WAIT_TIMEOUT);
-            assertThat(helloText.getText().toString()).isEqualTo(originalText.toString());
+        assertThat(helloText.getText()).isEqualTo(originalText.toString());
 
-            // Check the Translation session is destroyed after calling finishTranslation()
-            CtsTranslationService translationService =
-                    mTranslationServiceServiceWatcher.getService();
-            translationService.awaitSessionDestroyed();
-        });
+        // Check the Translation session is destroyed after calling finishTranslation()
+        CtsTranslationService translationService =
+                mTranslationServiceServiceWatcher.getService();
+        translationService.awaitSessionDestroyed();
 
         // Test re-translating.
         sTranslationReplier.addResponse(createViewsTranslationResponse(views, translatedText));
-        runWithShellPermissionIdentity(() -> {
-            manager.startTranslation(
-                    new TranslationSpec(ULocale.ENGLISH,
-                            TranslationSpec.DATA_FORMAT_TEXT),
-                    new TranslationSpec(ULocale.FRENCH,
-                            TranslationSpec.DATA_FORMAT_TEXT),
-                    views, contentCaptureContext.getActivityId(),
-                    new UiTranslationSpec.Builder().build());
-            SystemClock.sleep(UI_WAIT_TIMEOUT);
-            assertThat(helloText.getText()).isEqualTo(translatedText);
 
-            // Also make sure pausing still works.
-            manager.pauseTranslation(contentCaptureContext.getActivityId());
-            SystemClock.sleep(UI_WAIT_TIMEOUT);
-            assertThat(helloText.getText()).isEqualTo(originalText.toString());
-        });
+        startUiTranslation(/* shouldPadContent */ false, views, contentCaptureContext);
+
+        assertThat(helloText.getText()).isEqualTo(translatedText);
+
+        // Also make sure pausing still works.
+        pauseUiTranslation(contentCaptureContext);
+
+        assertThat(helloText.getText()).isEqualTo(originalText.toString());
     }
 
     @Test
@@ -266,48 +247,31 @@ public class UiTranslationManagerTest {
         mTextView.setViewTranslationCallback(mockCallback);
         // Set response
         sTranslationReplier.addResponse(createViewsTranslationResponse(views, "success"));
-        final UiTranslationManager manager = sContext.getSystemService(UiTranslationManager.class);
-        runWithShellPermissionIdentity(() -> {
-            // Call startTranslation API
-            manager.startTranslation(
-                    new TranslationSpec(ULocale.ENGLISH,
-                            TranslationSpec.DATA_FORMAT_TEXT),
-                    new TranslationSpec(ULocale.FRENCH,
-                            TranslationSpec.DATA_FORMAT_TEXT),
-                    views, contentCaptureContext.getActivityId(),
-                    new UiTranslationSpec.Builder().build());
-            SystemClock.sleep(UI_WAIT_TIMEOUT);
-        });
+
+        startUiTranslation(/* shouldPadContent */ false, views, contentCaptureContext);
+
         ArgumentCaptor<View> viewArgumentCaptor = ArgumentCaptor.forClass(View.class);
         Mockito.verify(mockCallback, Mockito.times(1)).onShowTranslation(viewArgumentCaptor.capture());
         TextView capturedView = (TextView) viewArgumentCaptor.getValue();
         assertThat(capturedView.getAutofillId()).isEqualTo(mTextView.getAutofillId());
 
-        runWithShellPermissionIdentity(() -> {
-            // Call pauseTranslation API
-            manager.pauseTranslation(contentCaptureContext.getActivityId());
-            SystemClock.sleep(UI_WAIT_TIMEOUT);
-        });
+        pauseUiTranslation(contentCaptureContext);
+
         Mockito.verify(mockCallback, Mockito.times(1)).onHideTranslation(viewArgumentCaptor.capture());
         capturedView = (TextView) viewArgumentCaptor.getValue();
         assertThat(capturedView.getAutofillId()).isEqualTo(mTextView.getAutofillId());
 
-        runWithShellPermissionIdentity(() -> {
-            // Call resumeTranslation API
-            manager.resumeTranslation(contentCaptureContext.getActivityId());
-            SystemClock.sleep(UI_WAIT_TIMEOUT);
-        });
+        resumeUiTranslation(contentCaptureContext);
+
         Mockito.verify(mockCallback, Mockito.times(2)).onShowTranslation(viewArgumentCaptor.capture());
         capturedView = (TextView) viewArgumentCaptor.getValue();
         assertThat(capturedView.getAutofillId()).isEqualTo(mTextView.getAutofillId());
 
         // Clear callback
         mTextView.clearViewTranslationCallback();
-        runWithShellPermissionIdentity(() -> {
-            // Call finishTranslation API
-            manager.finishTranslation(contentCaptureContext.getActivityId());
-            SystemClock.sleep(UI_WAIT_TIMEOUT);
-        });
+
+        finishUiTranslation(contentCaptureContext);
+
         // Verify callback does not be called, keep the latest state
         Mockito.verify(mockCallback, Mockito.never()).onClearTranslation(any(View.class));
 
@@ -329,44 +293,22 @@ public class UiTranslationManagerTest {
         final CharSequence translatedText = "Translated World";
         sTranslationReplier.addResponse(
                 createViewsTranslationResponse(views, translatedText.toString()));
-        final UiTranslationManager manager = sContext.getSystemService(UiTranslationManager.class);
 
         // Use TextView default ViewTranslationCallback implementation
-        runWithShellPermissionIdentity(() -> {
-            // Call startTranslation API
-            manager.startTranslation(
-                    new TranslationSpec(ULocale.ENGLISH,
-                            TranslationSpec.DATA_FORMAT_TEXT),
-                    new TranslationSpec(ULocale.FRENCH,
-                            TranslationSpec.DATA_FORMAT_TEXT),
-                    views, contentCaptureContext.getActivityId(),
-                    new UiTranslationSpec.Builder().setShouldPadContentForCompat(true).build());
-            SystemClock.sleep(UI_WAIT_TIMEOUT);
-        });
+        startUiTranslation(/* shouldPadContent */ true, views, contentCaptureContext);
+
         CharSequence currentText = mTextView.getText();
         assertThat(currentText.length()).isNotEqualTo(originalText.length());
         assertThat(currentText.length()).isEqualTo(translatedText.length());
 
-        runWithShellPermissionIdentity(() -> {
-            // Call finishTranslation API
-            manager.finishTranslation(contentCaptureContext.getActivityId());
-            SystemClock.sleep(UI_WAIT_TIMEOUT);
-        });
+        finishUiTranslation(contentCaptureContext);
 
         // Set Customized ViewTranslationCallback
         ViewTranslationCallback mockCallback = Mockito.mock(ViewTranslationCallback.class);
         mTextView.setViewTranslationCallback(mockCallback);
-        runWithShellPermissionIdentity(() -> {
-            // Call startTranslation API
-            manager.startTranslation(
-                    new TranslationSpec(ULocale.ENGLISH,
-                            TranslationSpec.DATA_FORMAT_TEXT),
-                    new TranslationSpec(ULocale.FRENCH,
-                            TranslationSpec.DATA_FORMAT_TEXT),
-                    views, contentCaptureContext.getActivityId(),
-                    new UiTranslationSpec.Builder().setShouldPadContentForCompat(true).build());
-            SystemClock.sleep(UI_WAIT_TIMEOUT);
-        });
+
+        startUiTranslation(/* shouldPadContent */ true, views, contentCaptureContext);
+
         assertThat(mTextView.getText().length()).isEqualTo(originalText.length());
     }
 
@@ -385,20 +327,10 @@ public class UiTranslationManagerTest {
         });
         sTranslationReplier.addResponse(
                 createViewsTranslationResponse(views, translatedText.toString()));
-        final UiTranslationManager manager = sContext.getSystemService(UiTranslationManager.class);
 
         // Use TextView default ViewTranslationCallback implementation
-        runWithShellPermissionIdentity(() -> {
-            // Call startTranslation API
-            manager.startTranslation(
-                    new TranslationSpec(ULocale.ENGLISH,
-                            TranslationSpec.DATA_FORMAT_TEXT),
-                    new TranslationSpec(ULocale.FRENCH,
-                            TranslationSpec.DATA_FORMAT_TEXT),
-                    views, contentCaptureContext.getActivityId(),
-                    new UiTranslationSpec.Builder().build());
-            SystemClock.sleep(UI_WAIT_TIMEOUT);
-        });
+        startUiTranslation(/* shouldPadContent */ false, views, contentCaptureContext);
+
         assertThat(mTextView.getContentDescription().toString())
                 .isEqualTo(translatedText.toString());
 
@@ -413,27 +345,18 @@ public class UiTranslationManagerTest {
         assertThat(viewRequest.getValue(ID_CONTENT_DESCRIPTION).getText())
                 .isEqualTo(originalDescription);
 
-        runWithShellPermissionIdentity(() -> {
-            // Call pauseTranslation API
-            manager.pauseTranslation(contentCaptureContext.getActivityId());
-            SystemClock.sleep(UI_WAIT_TIMEOUT);
-        });
+        pauseUiTranslation(contentCaptureContext);
+
         assertThat(mTextView.getContentDescription().toString())
                 .isEqualTo(originalDescription.toString());
 
-        runWithShellPermissionIdentity(() -> {
-            // Call resumeTranslation API
-            manager.resumeTranslation(contentCaptureContext.getActivityId());
-            SystemClock.sleep(UI_WAIT_TIMEOUT);
-        });
+        resumeUiTranslation(contentCaptureContext);
+
         assertThat(mTextView.getContentDescription().toString())
                 .isEqualTo(translatedText.toString());
 
-        runWithShellPermissionIdentity(() -> {
-            // Call finishTranslation API
-            manager.finishTranslation(contentCaptureContext.getActivityId());
-            SystemClock.sleep(UI_WAIT_TIMEOUT);
-        });
+        finishUiTranslation(contentCaptureContext);
+
         assertThat(mTextView.getContentDescription().toString())
                 .isEqualTo(originalDescription.toString());
     }
@@ -447,29 +370,18 @@ public class UiTranslationManagerTest {
                     enableServicesAndStartActivityForTranslation();
             final List<AutofillId> views = result.first;
             final ContentCaptureContext contentCaptureContext = result.second;
-            final UiTranslationManager manager =
-                    sContext.getSystemService(UiTranslationManager.class);
             sTranslationReplier.addResponse(createViewsTranslationResponse(views, "success"));
 
-            // Send broadcat to request IME to register callback
+            // Send broadcast to request IME to register callback
             BlockingBroadcastReceiver registerResultReceiver =
                     sendCommandToIme(ACTION_REGISTER_UI_TRANSLATION_CALLBACK, false);
             // Get result
             registerResultReceiver.awaitForBroadcast();
             registerResultReceiver.unregisterQuietly();
 
-            // Call startTranslation API
-            runWithShellPermissionIdentity(() -> {
-                manager.startTranslation(
-                        new TranslationSpec(ULocale.ENGLISH,
-                                TranslationSpec.DATA_FORMAT_TEXT),
-                        new TranslationSpec(ULocale.FRENCH,
-                                TranslationSpec.DATA_FORMAT_TEXT),
-                        views, contentCaptureContext.getActivityId(),
-                        new UiTranslationSpec.Builder().build());
-                SystemClock.sleep(UI_WAIT_TIMEOUT);
-            });
-            // Send broadcat to request IME to check the onStarted() result
+            startUiTranslation(/* shouldPadContent */ false, views, contentCaptureContext);
+
+            // Send broadcast to request IME to check the onStarted() result
             BlockingBroadcastReceiver onStartResultReceiver = sendCommandToIme(
                     ACTION_ASSERT_UI_TRANSLATION_CALLBACK_ON_START, true);
             // Get result to check the onStarted() was called
@@ -482,12 +394,9 @@ public class UiTranslationManagerTest {
             assertThat(receivedTarget).isEqualTo(ULocale.FRENCH);
             onStartResultReceiver.unregisterQuietly();
 
-            // Call pause Translation API
-            runWithShellPermissionIdentity(() -> {
-                manager.pauseTranslation(contentCaptureContext.getActivityId());
-                SystemClock.sleep(UI_WAIT_TIMEOUT);
-            });
-            // Send broadcat to request IME to check the onPaused() result
+            pauseUiTranslation(contentCaptureContext);
+
+            // Send broadcast to request IME to check the onPaused() result
             BlockingBroadcastReceiver onPausedResultReceiver = sendCommandToIme(
                     ACTION_ASSERT_UI_TRANSLATION_CALLBACK_ON_PAUSE, true);
             // Get result to check the onPaused() was called
@@ -497,12 +406,9 @@ public class UiTranslationManagerTest {
             assertThat(onPausedVerifyResult).isTrue();
             onPausedResultReceiver.unregisterQuietly();
 
-            // Call resume Translation API
-            runWithShellPermissionIdentity(() -> {
-                manager.resumeTranslation(contentCaptureContext.getActivityId());
-                SystemClock.sleep(UI_WAIT_TIMEOUT);
-            });
-            // Send broadcat to request IME to check the onResumed result
+            resumeUiTranslation(contentCaptureContext);
+
+            // Send broadcast to request IME to check the onResumed result
             BlockingBroadcastReceiver onResumedResultReceiver = sendCommandToIme(
                     ACTION_ASSERT_UI_TRANSLATION_CALLBACK_ON_RESUME, true);
             // Get result to check the onResumed was called
@@ -512,17 +418,14 @@ public class UiTranslationManagerTest {
             assertThat(onResumedVerifyResult).isTrue();
             onResumedResultReceiver.unregisterQuietly();
 
-            // Send broadcat to request IME to unregister callback
+            // Send broadcast to request IME to unregister callback
             BlockingBroadcastReceiver unRegisterResultReceiver
                     = sendCommandToIme(ACTION_UNREGISTER_UI_TRANSLATION_CALLBACK, false);
             unRegisterResultReceiver.awaitForBroadcast();
             unRegisterResultReceiver.unregisterQuietly();
 
-            // Call finishTranslation API
-            runWithShellPermissionIdentity(() -> {
-                manager.finishTranslation(contentCaptureContext.getActivityId());
-                SystemClock.sleep(UI_WAIT_TIMEOUT);
-            });
+            finishUiTranslation(contentCaptureContext);
+
             BlockingBroadcastReceiver onFinishResultReceiver =
                     sendCommandToIme(ACTION_ASSERT_UI_TRANSLATION_CALLBACK_ON_FINISH, true);
             // Get result to check onFinish() didn't be called.
@@ -551,20 +454,11 @@ public class UiTranslationManagerTest {
         final Executor executor = Executors.newSingleThreadExecutor();
         UiTranslationStateCallback mockCallback = Mockito.mock(UiTranslationStateCallback.class);
         manager.registerUiTranslationStateCallback(executor, mockCallback);
-        runWithShellPermissionIdentity(() -> {
-            // Call startTranslation API
-            manager.startTranslation(
-                    new TranslationSpec(ULocale.ENGLISH,
-                            TranslationSpec.DATA_FORMAT_TEXT),
-                    new TranslationSpec(ULocale.FRENCH,
-                            TranslationSpec.DATA_FORMAT_TEXT),
-                    views, contentCaptureContext.getActivityId(),
-                    new UiTranslationSpec.Builder().build());
-            SystemClock.sleep(UI_WAIT_TIMEOUT);
 
-            Mockito.verify(mockCallback, Mockito.never())
-                    .onStarted(any(ULocale.class), any(ULocale.class));
-        });
+        startUiTranslation(/* shouldPadContent */ false, views, contentCaptureContext);
+
+        Mockito.verify(mockCallback, Mockito.never())
+                .onStarted(any(ULocale.class), any(ULocale.class));
     }
 
     @Test
@@ -577,7 +471,7 @@ public class UiTranslationManagerTest {
         ViewTranslationCallback mockCallback = Mockito.mock(ViewTranslationCallback.class);
         mVirtualContainerView.setViewTranslationCallback(mockCallback);
 
-        // Wait session created and get the ConttCaptureContext from ContentCaptureService
+        // Wait session created and get the ContentCaptureContext from ContentCaptureService
         final ContentCaptureContext contentCaptureContext =
                 getContentCaptureContextFromContentCaptureService(contentcaptureService);
 
@@ -592,18 +486,8 @@ public class UiTranslationManagerTest {
                 createViewsTranslationResponse(views, translatedText);
         sTranslationReplier.addResponse(expectedResponse);
 
-        runWithShellPermissionIdentity(() -> {
-            // Call startTranslation API
-            manager.startTranslation(
-                    new TranslationSpec(ULocale.ENGLISH,
-                            TranslationSpec.DATA_FORMAT_TEXT),
-                    new TranslationSpec(ULocale.FRENCH,
-                            TranslationSpec.DATA_FORMAT_TEXT),
-                    views, contentCaptureContext.getActivityId(),
-                    new UiTranslationSpec.Builder().build());
+        startUiTranslation(/* shouldPadContent */ false, views, contentCaptureContext);
 
-            SystemClock.sleep(UI_WAIT_TIMEOUT);
-        });
         // Check request
         final TranslationRequest request = sTranslationReplier.getNextTranslationRequest();
         final List<ViewTranslationRequest> requests = request.getViewTranslationRequests();
@@ -637,19 +521,138 @@ public class UiTranslationManagerTest {
         VirtualContainerView capturedView = (VirtualContainerView) viewArgumentCaptor.getValue();
         assertThat(capturedView.getAutofillId()).isEqualTo(mVirtualContainerView.getAutofillId());
 
+        pauseUiTranslation(contentCaptureContext);
+
+        Mockito.verify(mockCallback, Mockito.times(1)).onHideTranslation(any(View.class));
+
+        finishUiTranslation(contentCaptureContext);
+
+        Mockito.verify(mockCallback, Mockito.times(1)).onClearTranslation(any(View.class));
+    }
+
+    @Test
+    public void testUiTranslation_translationResponseNotSetForCustomTextView() throws Throwable {
+        // Enable CTS ContentCaptureService
+        CtsContentCaptureService contentcaptureService = enableContentCaptureService();
+        // Start Activity and get needed information
+        final List<AutofillId> views = startCustomTextViewActivityAndGetViewsForTranslation();
+
+        // Wait session created and get the ConttCaptureContext from ContentCaptureService
+        final ContentCaptureContext contentCaptureContext =
+                getContentCaptureContextFromContentCaptureService(contentcaptureService);
+
+        // enable CTS TranslationService
+        mTranslationServiceServiceWatcher = CtsTranslationService.setServiceWatcher();
+        Helper.setTemporaryTranslationService(CtsTranslationService.SERVICE_NAME);
+
+        // Set response
+        final TranslationResponse expectedResponse =
+                createViewsTranslationResponse(views, "success");
+        sTranslationReplier.addResponse(expectedResponse);
+
+        startUiTranslation(/* shouldPadContent */ false, views, contentCaptureContext);
+
+        // Verify result. Translation response doesn't set, it should show original text
+        assertThat(mResponseNotSetTextView.getSavedResponse()).isNotNull();
+        final UiObject2 responseNotSetText = Helper.findObjectByResId(Helper.ACTIVITY_PACKAGE,
+                CustomTextViewActivity.ID_RESPONSE_NOT_SET_TEXT);
+        assertThat(responseNotSetText).isNotNull();
+        assertThat(responseNotSetText.getText()).isEqualTo("Hello World 1");
+    }
+
+    @Test
+    public void testUiTranslation_customTextView() throws Throwable {
+        // Enable CTS ContentCaptureService
+        CtsContentCaptureService contentcaptureService = enableContentCaptureService();
+        // Start Activity and get needed information
+        final List<AutofillId> views = startCustomTextViewActivityAndGetViewsForTranslation();
+
+        // Wait session created and get the ConttCaptureContext from ContentCaptureService
+        final ContentCaptureContext contentCaptureContext =
+                getContentCaptureContextFromContentCaptureService(contentcaptureService);
+
+        // enable CTS TranslationService
+        mTranslationServiceServiceWatcher = CtsTranslationService.setServiceWatcher();
+        Helper.setTemporaryTranslationService(CtsTranslationService.SERVICE_NAME);
+
+        final String translatedText = "success";
+        // Set response
+        final TranslationResponse expectedResponse =
+                createViewsTranslationResponse(views, translatedText);
+        sTranslationReplier.addResponse(expectedResponse);
+
+        startUiTranslation(/* shouldPadContent */ false, views, contentCaptureContext);
+
+        // Verify result.
+        assertThat(mCustomTextView.isMyTagTranslationSupported()).isTrue();
+        final UiObject2 customText = Helper.findObjectByResId(Helper.ACTIVITY_PACKAGE,
+                CustomTextViewActivity.ID_CUSTOM_TEXT);
+        assertThat(customText).isNotNull();
+        assertThat(customText.getText()).isEqualTo(translatedText);
+
+        finishUiTranslation(contentCaptureContext);
+
+        assertThat(customText.getText()).isEqualTo("Hello World 2");
+    }
+
+    private void startUiTranslation(boolean shouldPadContent, List<AutofillId> views,
+            ContentCaptureContext contentCaptureContext) {
+        final UiTranslationManager manager = sContext.getSystemService(UiTranslationManager.class);
+        runWithShellPermissionIdentity(() -> {
+            // Call startTranslation API
+            manager.startTranslation(
+                    new TranslationSpec(ULocale.ENGLISH,
+                            TranslationSpec.DATA_FORMAT_TEXT),
+                    new TranslationSpec(ULocale.FRENCH,
+                            TranslationSpec.DATA_FORMAT_TEXT),
+                    views, contentCaptureContext.getActivityId(),
+                    shouldPadContent ? new UiTranslationSpec.Builder().setShouldPadContentForCompat(
+                            true).build() : new UiTranslationSpec.Builder().build());
+            SystemClock.sleep(UI_WAIT_TIMEOUT);
+        });
+    }
+
+    private void pauseUiTranslation(ContentCaptureContext contentCaptureContext) {
+        final UiTranslationManager manager = sContext.getSystemService(UiTranslationManager.class);
         runWithShellPermissionIdentity(() -> {
             // Call pauseTranslation API
             manager.pauseTranslation(contentCaptureContext.getActivityId());
             SystemClock.sleep(UI_WAIT_TIMEOUT);
         });
-        Mockito.verify(mockCallback, Mockito.times(1)).onHideTranslation(any(View.class));
+    }
 
+    private void resumeUiTranslation(ContentCaptureContext contentCaptureContext) {
+        final UiTranslationManager manager = sContext.getSystemService(UiTranslationManager.class);
+        // Call resume Translation API
+        runWithShellPermissionIdentity(() -> {
+            manager.resumeTranslation(contentCaptureContext.getActivityId());
+            SystemClock.sleep(UI_WAIT_TIMEOUT);
+        });
+    }
+
+    private void finishUiTranslation(ContentCaptureContext contentCaptureContext) {
+        final UiTranslationManager manager = sContext.getSystemService(UiTranslationManager.class);
         runWithShellPermissionIdentity(() -> {
             // Call finishTranslation API
             manager.finishTranslation(contentCaptureContext.getActivityId());
             SystemClock.sleep(UI_WAIT_TIMEOUT);
         });
-        Mockito.verify(mockCallback, Mockito.times(1)).onClearTranslation(any(View.class));
+    }
+
+    private List<AutofillId> startCustomTextViewActivityAndGetViewsForTranslation() {
+        // Start CustomTextViewActivity and get needed information
+        Intent intent = new Intent(sContext, CustomTextViewActivity.class)
+                .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        AtomicReference<List<AutofillId>> viewAutofillIdsRef = new AtomicReference<>();
+
+        mCustomTextViewActivityScenario = ActivityScenario.launch(intent);
+        mCustomTextViewActivityScenario.onActivity(activity -> {
+            mResponseNotSetTextView = activity.getResponseNotSetText();
+            mCustomTextView = activity.getCustomText();
+           // Get the views that need to be translated.
+            viewAutofillIdsRef.set(activity.getViewsForTranslation());
+        });
+        return viewAutofillIdsRef.get();
     }
 
     private List<AutofillId> startVirtualContainerViewActivityAndGetViewsForTranslation() {
@@ -713,6 +716,9 @@ public class UiTranslationManagerTest {
                             .setValue(ViewTranslationRequest.ID_TEXT,
                                     new TranslationResponseValue.Builder(STATUS_SUCCESS)
                                             .setText(translatedText).build())
+                            .setValue(Helper.CUSTOM_TRANSLATION_ID_MY_TAG,
+                                    new TranslationResponseValue.Builder(STATUS_SUCCESS)
+                                            .setText(translatedText).build())
                             .setValue(ID_CONTENT_DESCRIPTION,
                                     new TranslationResponseValue.Builder(STATUS_SUCCESS)
                                             .setText(translatedText).build());
@@ -742,7 +748,7 @@ public class UiTranslationManagerTest {
         // Get the views that need to be translated.
         List<AutofillId> views = viewAutofillIdsRef.get();
 
-        // Wait session created and get the ConttCaptureContext from ContentCaptureService
+        // Wait session created and get the ContentCaptureContext from ContentCaptureService
         ContentCaptureContext contentCaptureContext =
                 getContentCaptureContextFromContentCaptureService(contentcaptureService);
 
