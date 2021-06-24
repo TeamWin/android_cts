@@ -131,9 +131,8 @@ public class IncrementalLoadingProgressTest extends BaseHostJUnit4Test {
                 "testOnPackageLoadingProgressChangedCalledWithFullyLoaded"));
     }
 
-    @LargeTest
     @Test
-    public void testLoadingProgressPersistsAfterReboot() throws Exception {
+    public void testLoadingProgressInDumpsysWhenPartiallyLoaded() throws Exception {
         // Wait for loading progress to update
         RunUtil.getDefault().sleep(WAIT_FOR_LOADING_PROGRESS_UPDATE_MS);
         // Check that "loadingProgress" is shown in the dumpsys of on a partially loaded app
@@ -141,18 +140,11 @@ public class IncrementalLoadingProgressTest extends BaseHostJUnit4Test {
         assertNotNull(loadingPercentageString);
         final int loadingPercentage = Integer.parseInt(loadingPercentageString);
         assertTrue(loadingPercentage > 0 && loadingPercentage < 100);
-        getDevice().reboot();
-        final String loadingPercentageStringAfterReboot = getLoadingProgressFromDumpsys();
-        assertNotNull(loadingPercentageStringAfterReboot);
-        final int loadingPercentageAfterReboot =
-                Integer.parseInt(loadingPercentageStringAfterReboot);
-        // Can't guarantee that the values are the same, but should still be partially loaded
-        assertTrue(loadingPercentageAfterReboot > 0 && loadingPercentageAfterReboot < 100);
     }
 
     @LargeTest
     @Test
-    public void testLoadingProgressNotShownWhenFullyLoaded() throws Exception {
+    public void testLoadingProgressNotInDumpsysWhenFullyLoaded() throws Exception {
         // Trigger full download
         assertTrue(runDeviceTests(DEVICE_TEST_PACKAGE_NAME, TEST_CLASS_NAME,
                 "testReadAllBytes"));
