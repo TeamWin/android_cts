@@ -52,8 +52,8 @@ public class CarUxRestrictionsManagerTest extends CarApiTestBase {
     @Test
     public void testCarUxRestrictionsBuilder() {
         int maxContentDepth = 1;
-        int maxCumulativeContentItems = 1;
-        int maxStringLength = 1;
+        int maxCumulativeContentItems = 2;
+        int maxStringLength = 3;
         CarUxRestrictions.Builder builder = new CarUxRestrictions.Builder(
                 true, CarUxRestrictions.UX_RESTRICTIONS_FULLY_RESTRICTED, 0L);
         builder.setMaxContentDepth(maxContentDepth);
@@ -73,6 +73,33 @@ public class CarUxRestrictionsManagerTest extends CarApiTestBase {
                 restrictions.getMaxCumulativeContentItems(), maxCumulativeContentItems);
         assertEquals(restrictions.toString(),
                 restrictions.getMaxRestrictedStringLength(), maxStringLength);
+    }
+
+    @Test
+    public void testCarUxRestrictions_CopyConstructor() {
+        int maxContentDepth = 1;
+        int maxCumulativeContentItems = 2;
+        int maxStringLength = 3;
+        CarUxRestrictions.Builder builder = new CarUxRestrictions.Builder(
+                true, CarUxRestrictions.UX_RESTRICTIONS_FULLY_RESTRICTED, 1L);
+        builder.setMaxContentDepth(maxContentDepth);
+        builder.setMaxCumulativeContentItems(maxCumulativeContentItems);
+        builder.setMaxStringLength(maxStringLength);
+
+        CarUxRestrictions restrictions = builder.build();
+        CarUxRestrictions copyOfRestrictions = new CarUxRestrictions(restrictions);
+
+        assertTrue(copyOfRestrictions.toString(),
+                copyOfRestrictions.isRequiresDistractionOptimization());
+        assertEquals(copyOfRestrictions.toString(),
+                copyOfRestrictions.getActiveRestrictions(),
+                CarUxRestrictions.UX_RESTRICTIONS_FULLY_RESTRICTED);
+        assertEquals(copyOfRestrictions.toString(),
+                copyOfRestrictions.getMaxContentDepth(), maxContentDepth);
+        assertEquals(copyOfRestrictions.toString(),
+                copyOfRestrictions.getMaxCumulativeContentItems(), maxCumulativeContentItems);
+        assertEquals(copyOfRestrictions.toString(),
+                copyOfRestrictions.getMaxRestrictedStringLength(), maxStringLength);
     }
 
     @Test
