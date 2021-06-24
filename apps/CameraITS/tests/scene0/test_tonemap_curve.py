@@ -150,45 +150,41 @@ def test_tonemap_curve_impl(name, cam, props):
   sens_min, _ = props['android.sensor.info.sensitivityRange']
   min_exposure = min(props['android.sensor.info.exposureTimeRange'])
 
-  if COLOR_BAR_PATTERN in avail_patterns:
-    # RAW image
-    req_raw = capture_request_utils.manual_capture_request(
-        int(sens_min), min_exposure)
-    req_raw['android.sensor.testPatternMode'] = COLOR_BAR_PATTERN
-    fmt_raw = {'format': 'raw'}
-    cap_raw = cam.do_capture(req_raw, fmt_raw)
-    img_raw = image_processing_utils.convert_capture_to_rgb_image(
-        cap_raw, props=props)
+  # RAW image
+  req_raw = capture_request_utils.manual_capture_request(
+      int(sens_min), min_exposure)
+  req_raw['android.sensor.testPatternMode'] = COLOR_BAR_PATTERN
+  fmt_raw = {'format': 'raw'}
+  cap_raw = cam.do_capture(req_raw, fmt_raw)
+  img_raw = image_processing_utils.convert_capture_to_rgb_image(
+      cap_raw, props=props)
 
-    # Save RAW pattern
-    image_processing_utils.write_image(
-        img_raw, '%s_raw_%d.jpg' % (name, COLOR_BAR_PATTERN), True)
-    check_raw_pattern(img_raw)
+  # Save RAW pattern
+  image_processing_utils.write_image(
+      img_raw, '%s_raw_%d.jpg' % (name, COLOR_BAR_PATTERN), True)
+  check_raw_pattern(img_raw)
 
-    # YUV image
-    req_yuv = capture_request_utils.manual_capture_request(
-        int(sens_min), min_exposure)
-    req_yuv['android.sensor.testPatternMode'] = COLOR_BAR_PATTERN
-    req_yuv['android.distortionCorrection.mode'] = 0
-    req_yuv['android.tonemap.mode'] = 0
-    req_yuv['android.tonemap.curve'] = {
-        'red': LINEAR_TONEMAP,
-        'green': LINEAR_TONEMAP,
-        'blue': LINEAR_TONEMAP
-    }
-    fmt_yuv = {'format': 'yuv', 'width': YUV_W, 'height': YUV_H}
-    cap_yuv = cam.do_capture(req_yuv, fmt_yuv)
-    img_yuv = image_processing_utils.convert_capture_to_rgb_image(cap_yuv, True)
+  # YUV image
+  req_yuv = capture_request_utils.manual_capture_request(
+      int(sens_min), min_exposure)
+  req_yuv['android.sensor.testPatternMode'] = COLOR_BAR_PATTERN
+  req_yuv['android.distortionCorrection.mode'] = 0
+  req_yuv['android.tonemap.mode'] = 0
+  req_yuv['android.tonemap.curve'] = {
+      'red': LINEAR_TONEMAP,
+      'green': LINEAR_TONEMAP,
+      'blue': LINEAR_TONEMAP
+  }
+  fmt_yuv = {'format': 'yuv', 'width': YUV_W, 'height': YUV_H}
+  cap_yuv = cam.do_capture(req_yuv, fmt_yuv)
+  img_yuv = image_processing_utils.convert_capture_to_rgb_image(cap_yuv, True)
 
-    # Save YUV pattern
-    image_processing_utils.write_image(
-        img_yuv, '%s_yuv_%d.jpg' % (name, COLOR_BAR_PATTERN), True)
+  # Save YUV pattern
+  image_processing_utils.write_image(
+      img_yuv, '%s_yuv_%d.jpg' % (name, COLOR_BAR_PATTERN), True)
 
-    # Check pattern for correctness
-    check_yuv_vs_raw(img_raw, img_yuv)
-  else:
-    raise AssertionError(
-        'Pattern not in android.sensor.availableTestPatternModes.')
+  # Check pattern for correctness
+  check_yuv_vs_raw(img_raw, img_yuv)
 
 
 class TonemapCurveTest(its_base_test.ItsBaseTest):
@@ -209,7 +205,8 @@ class TonemapCurveTest(its_base_test.ItsBaseTest):
           camera_properties_utils.raw16(props) and
           camera_properties_utils.manual_sensor(props) and
           camera_properties_utils.per_frame_control(props) and
-          camera_properties_utils.manual_post_proc(props))
+          camera_properties_utils.manual_post_proc(props) and
+          camera_properties_utils.color_bars_test_pattern(props))
 
       test_tonemap_curve_impl(name, cam, props)
 
