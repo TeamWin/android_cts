@@ -168,15 +168,22 @@ public class ValidateTestsAbi {
                 List<String> supportedAbiApk = result.getNativeCode();
                 Set<String> buildTarget = AbiUtils.getAbisForArch(
                         TestSuiteInfo.getInstance().getTargetArchs().get(0));
-                // first check, all the abis are supported
-                for (String abi : supportedAbiApk) {
-                    if (!buildTarget.contains(abi)) {
+                // first check, all the abis in the buildTarget are supported
+                for (String abiBT : buildTarget) {
+                    Boolean findMatch = false;
+                    for (String abiApk : supportedAbiApk) {
+                        if (abiApk.equals(abiBT)) {
+                            findMatch = true;
+                            break;
+                        }
+                    }
+                    if (!findMatch) {
                         fail(String.format("apk %s %s does not support our abis [%s]",
                                 testApk.getName(), supportedAbiApk, buildTarget));
                     }
                 }
                 apkToAbi.put(testApk.getName(), supportedAbiApk.size());
-                maxAbi = Math.max(maxAbi, supportedAbiApk.size());
+                maxAbi = Math.max(maxAbi, buildTarget.size());
             }
         }
 
