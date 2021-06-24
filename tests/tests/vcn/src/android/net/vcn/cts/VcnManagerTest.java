@@ -75,6 +75,7 @@ public class VcnManagerTest extends VcnTestBase {
     private static final String TAG = VcnManagerTest.class.getSimpleName();
 
     private static final int TIMEOUT_MS = 500;
+    private static final long SAFEMODE_TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(35);
 
     private static final Executor INLINE_EXECUTOR = Runnable::run;
 
@@ -391,12 +392,20 @@ public class VcnManagerTest extends VcnTestBase {
 
     private void verifyExpectedUnderlyingNetworkCapabilities(
             boolean expectNotVcnManaged, boolean expectNotMetered) throws Exception {
+        verifyExpectedUnderlyingNetworkCapabilities(
+                expectNotVcnManaged, expectNotMetered, TestNetworkWrapper.NETWORK_CB_TIMEOUT_MS);
+    }
+
+    private void verifyExpectedUnderlyingNetworkCapabilities(
+            boolean expectNotVcnManaged, boolean expectNotMetered, long timeoutMillis)
+            throws Exception {
         final long start = SystemClock.elapsedRealtime();
 
         // Wait for NetworkCapabilities changes until they match the expected capabilities
         do {
             final CapabilitiesChangedEvent capabilitiesChangedEvent =
-                    mTestNetworkWrapper.vcnNetworkCallback.waitForOnCapabilitiesChanged();
+                    mTestNetworkWrapper.vcnNetworkCallback.waitForOnCapabilitiesChanged(
+                            timeoutMillis);
             assertNotNull("Failed to receive NetworkCapabilities change", capabilitiesChangedEvent);
 
             final NetworkCapabilities nc = capabilitiesChangedEvent.networkCapabilities;
@@ -406,7 +415,7 @@ public class VcnManagerTest extends VcnTestBase {
                     && expectNotMetered == nc.hasCapability(NET_CAPABILITY_NOT_METERED)) {
                 return;
             }
-        } while (SystemClock.elapsedRealtime() - start < TestNetworkWrapper.NETWORK_CB_TIMEOUT_MS);
+        } while (SystemClock.elapsedRealtime() - start < timeoutMillis);
 
         fail(
                 "Expected update for network="
@@ -618,5 +627,61 @@ public class VcnManagerTest extends VcnTestBase {
                 4 /* expectedMsgId */,
                 true /* expectedUseEncap */,
                 ikeDeleteChildResp);
+    }
+
+    @Test
+    public void testVcnSafemodeOnTestNetwork() throws Exception {
+        final int subId = verifyAndGetValidDataSubId();
+
+        mTestNetworkWrapper =
+                new TestNetworkWrapper(
+                        mContext,
+                        TEST_NETWORK_MTU,
+                        true /* isMetered */,
+                        Collections.singleton(subId),
+                        LOCAL_V6_ADDRESS);
+        assertNotNull("No test network found", mTestNetworkWrapper.tunNetwork);
+
+        // Before the VCN starts, the test network should have NOT_VCN_MANAGED
+        verifyExpectedUnderlyingNetworkCapabilities(
+                true /* expectNotVcnManaged */, false /* expectNotMetered */);
+
+        // Get current cell Network then wait for it to drop (due to losing NOT_VCN_MANAGED) before
+        // waiting for VCN Network.
+        final NetworkRequest cellNetworkReq =
+                new NetworkRequest.Builder().addTransportType(TRANSPORT_CELLULAR).build();
+        final VcnTestNetworkCallback cellNetworkCb = new VcnTestNetworkCallback();
+        mConnectivityManager.requestNetwork(cellNetworkReq, cellNetworkCb);
+        final Network cellNetwork = cellNetworkCb.waitForAvailable();
+        assertNotNull("No cell network found", cellNetwork);
+
+        CarrierPrivilegeUtils.withCarrierPrivilegesForShell(mContext, subId, () -> {
+            SubscriptionGroupUtils.withEphemeralSubscriptionGroup(mContext, subId, (subGrp) -> {
+                final Network vcnNetwork =
+                        setupAndGetVcnNetwork(subGrp, cellNetwork, cellNetworkCb);
+
+                // TODO(b/191801185): use VcnStatusCallbacks to verify safemode
+
+                // Once VCN starts, the test network should lose NOT_VCN_MANAGED
+                verifyExpectedUnderlyingNetworkCapabilities(
+                        false /* expectNotVcnManaged */,
+                        false /* expectNotMetered */);
+
+                // After VCN has started up, wait for safemode to kick in and expect the underlying
+                // Test Network to regain NOT_VCN_MANAGED.
+                verifyExpectedUnderlyingNetworkCapabilities(
+                        true /* expectNotVcnManaged */,
+                        false /* expectNotMetered */,
+                        SAFEMODE_TIMEOUT_MILLIS);
+
+                // Verify that VCN Network is also lost in safemode
+                final Network lostVcnNetwork = cellNetworkCb.waitForLost();
+                assertEquals(vcnNetwork, lostVcnNetwork);
+
+                mVcnManager.clearVcnConfig(subGrp);
+            });
+        });
+
+        mConnectivityManager.unregisterNetworkCallback(cellNetworkCb);
     }
 }
