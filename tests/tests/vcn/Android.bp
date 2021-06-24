@@ -36,6 +36,7 @@ android_test {
         "compatibility-device-util-axt",
         "cts-net-utils",
         "ctstestrunner-axt",
+        "ike-tun-utils",
         "net-tests-utils",
         "telephony-cts-utils",
     ],
