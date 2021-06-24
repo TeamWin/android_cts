@@ -369,7 +369,12 @@ public class TestNetworkWrapper implements AutoCloseable {
         }
 
         public CapabilitiesChangedEvent waitForOnCapabilitiesChanged() throws Exception {
-            return mCapabilitiesChangedHistory.poll(NETWORK_CB_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+            return waitForOnCapabilitiesChanged(NETWORK_CB_TIMEOUT_MS);
+        }
+
+        public CapabilitiesChangedEvent waitForOnCapabilitiesChanged(long timeoutMillis)
+                throws Exception {
+            return mCapabilitiesChangedHistory.poll(timeoutMillis, TimeUnit.MILLISECONDS);
         }
 
         @Override
