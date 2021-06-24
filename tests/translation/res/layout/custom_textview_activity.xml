@@ -23,10 +23,17 @@
               android:focusableInTouchMode="true"
               android:orientation="vertical" >
 
-    <!-- Custom View -->
-    <android.translation.cts.views.VirtualContainerView
-        android:id="@+id/virtual_container_view"
+    <!-- A custom TextView that ViewTranslationResponse not set when override -->
+    <android.translation.cts.views.ResponseNotSetTextView
+        android:id="@+id/response_not_set_textview"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical" />
+        android:layout_height="wrap_content"
+        android:text="Hello World 1"/>
+
+    <!-- A custom TextView that overrides translation methods and ViewTranslationResponse is set -->
+    <android.translation.cts.views.CustomTextView
+        android:id="@+id/custom_textview"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Hello World 2"/>
 </LinearLayout>

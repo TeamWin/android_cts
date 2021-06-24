@@ -33,6 +33,10 @@
                   android:label="VirtualContainerViewActivity"
                   android:exported="true">
         </activity>
+        <activity android:name=".CustomTextViewActivity"
+                  android:label="CustomTextViewActivity"
+                  android:exported="true">
+        </activity>
 
         <service android:name=".CtsTranslationService"
                  android:label="CtsTranslationService"
