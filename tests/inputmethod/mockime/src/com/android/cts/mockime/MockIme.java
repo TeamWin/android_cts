@@ -208,6 +208,13 @@ public final class MockIme extends InputMethodService {
                         final int flag = command.getExtras().getInt("flag");
                         return getMemorizedOrCurrentInputConnection().getSelectedText(flag);
                     }
+                    case "getSurroundingText": {
+                        final int beforeLength = command.getExtras().getInt("beforeLength");
+                        final int afterLength = command.getExtras().getInt("afterLength");
+                        final int flags = command.getExtras().getInt("flags");
+                        return getMemorizedOrCurrentInputConnection().getSurroundingText(
+                                beforeLength, afterLength, flags);
+                    }
                     case "getCursorCapsMode": {
                         final int reqModes = command.getExtras().getInt("reqModes");
                         return getMemorizedOrCurrentInputConnection().getCursorCapsMode(reqModes);
