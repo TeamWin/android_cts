@@ -20,6 +20,7 @@ import static android.net.cts.util.CtsNetUtils.TestNetworkCallback;
 
 import android.annotation.NonNull;
 import android.content.Context;
+import android.ipsec.ike.cts.IkeTunUtils;
 import android.net.ConnectivityManager;
 import android.net.IpPrefix;
 import android.net.LinkAddress;
@@ -92,6 +93,7 @@ public class TestNetworkWrapper implements AutoCloseable {
 
     public final VcnTestNetworkCallback vcnNetworkCallback;
     public final ParcelFileDescriptor tunFd;
+    public final IkeTunUtils ikeTunUtils;
     public final Network tunNetwork;
 
     public TestNetworkWrapper(
@@ -138,8 +140,10 @@ public class TestNetworkWrapper implements AutoCloseable {
             mTestNetworkAgent.markConnected();
 
             tunNetwork = vcnNetworkCallback.waitForAvailable();
+            ikeTunUtils = new IkeTunUtils(tunFd);
             mCloseGuard.open(TAG);
         } catch (Exception e) {
+            Log.e(TAG, "Failed to bring up TestNetworkWrapper", e);
             close();
             throw e;
         }
@@ -153,6 +157,9 @@ public class TestNetworkWrapper implements AutoCloseable {
                         .addCapability(NetworkCapabilities.NET_CAPABILITY_NOT_SUSPENDED)
                         .addCapability(NetworkCapabilities.NET_CAPABILITY_NOT_RESTRICTED)
                         .addCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VCN_MANAGED)
+                        .addCapability(NetworkCapabilities.NET_CAPABILITY_MMS)
+                        .addCapability(NetworkCapabilities.NET_CAPABILITY_DUN)
+                        .addCapability(NetworkCapabilities.NET_CAPABILITY_FOTA)
                         .setNetworkSpecifier(new TestNetworkSpecifier(iface))
                         .setSubscriptionIds(subIds);
         if (!isMetered) {
@@ -346,11 +353,33 @@ public class TestNetworkWrapper implements AutoCloseable {
     /** NetworkCallback to used for tracking test network events. */
     // TODO(b/187231331): remove once TestNetworkCallback supports tracking NetworkCapabilities
     public static class VcnTestNetworkCallback extends TestNetworkCallback {
+        private final BlockingQueue<Network> mAvailableHistory = new LinkedBlockingQueue<>();
+        private final BlockingQueue<Network> mLostHistory = new LinkedBlockingQueue<>();
         private final BlockingQueue<CapabilitiesChangedEvent> mCapabilitiesChangedHistory =
                 new LinkedBlockingQueue<>();
 
+        @Override
+        public Network waitForAvailable() throws InterruptedException {
+            return mAvailableHistory.poll(NETWORK_CB_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+        }
+
+        @Override
+        public Network waitForLost() throws InterruptedException {
+            return mLostHistory.poll(NETWORK_CB_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+        }
+
         public CapabilitiesChangedEvent waitForOnCapabilitiesChanged() throws Exception {
             return mCapabilitiesChangedHistory.poll(NETWORK_CB_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+        }
+
+        @Override
+        public void onAvailable(@NonNull Network network) {
+            mAvailableHistory.offer(network);
+        }
+
+        @Override
+        public void onLost(@NonNull Network network) {
+            mLostHistory.offer(network);
         }
 
         @Override
