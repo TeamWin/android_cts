@@ -18,6 +18,7 @@ package android.translation.cts;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.translation.cts.views.VirtualContainerView;
 import android.view.autofill.AutofillId;
 
 import java.util.ArrayList;
