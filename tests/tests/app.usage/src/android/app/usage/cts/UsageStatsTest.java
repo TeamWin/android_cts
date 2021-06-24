@@ -284,15 +284,17 @@ public class UsageStatsTest {
         assertLessThan(startTime, lastTimeAnyComponentUsed);
         assertLessThan(lastTimeAnyComponentUsed, endTime);
 
-        final long lastDayAnyComponentUsedGlobal =
-                mUsageStatsManager.getLastTimeAnyComponentUsed(targetPackage) / DAY;
-        assertLessThanOrEqual(startTime / DAY, lastDayAnyComponentUsedGlobal);
-        assertLessThanOrEqual(lastDayAnyComponentUsedGlobal, endTime / DAY);
+        SystemUtil.runWithShellPermissionIdentity(()-> {
+            final long lastDayAnyComponentUsedGlobal =
+                    mUsageStatsManager.getLastTimeAnyComponentUsed(targetPackage) / DAY;
+            assertLessThanOrEqual(startTime / DAY, lastDayAnyComponentUsedGlobal);
+            assertLessThanOrEqual(lastDayAnyComponentUsedGlobal, endTime / DAY);
+        });
     }
 
     @AppModeFull(reason = "No usage events access in instant apps")
     @Test
-    public void testLastTimeAnyComponentUsed_JobServiceShouldBeIngnored() throws Exception {
+    public void testLastTimeAnyComponentUsed_JobServiceShouldBeIgnored() throws Exception {
         mUiDevice.wakeUp();
         dismissKeyguard(); // also want to start out with the keyguard dismissed.
 
@@ -309,10 +311,23 @@ public class UsageStatsTest {
             assertLessThanOrEqual(lastTimeAnyComponentUsed, startTime);
         }
 
-        final long lastDayAnyComponentUsedGlobal =
-                mUsageStatsManager.getLastTimeAnyComponentUsed(mTargetPackage) / DAY;
-        // Check that the usage is NOT detected.
-        assertLessThanOrEqual(lastDayAnyComponentUsedGlobal, startTime / DAY);
+        SystemUtil.runWithShellPermissionIdentity(()-> {
+            final long lastDayAnyComponentUsedGlobal =
+                    mUsageStatsManager.getLastTimeAnyComponentUsed(mTargetPackage) / DAY;
+            // Check that the usage is NOT detected.
+            assertLessThanOrEqual(lastDayAnyComponentUsedGlobal, startTime / DAY);
+        });
+    }
+
+    @AppModeFull(reason = "No usage events access in instant apps")
+    @Test
+    public void testLastTimeAnyComponentUsedGlobal_withoutPermission() throws Exception {
+        try{
+            mUsageStatsManager.getLastTimeAnyComponentUsed(mTargetPackage);
+            fail("Query across users should require INTERACT_ACROSS_USERS permission");
+        } catch (SecurityException se) {
+            // Expected
+        }
     }
 
     @AppModeFull(reason = "No usage events access in instant apps")
