@@ -24,10 +24,13 @@ import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+import com.android.tradefed.util.FileUtil;
 
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.io.File;
 
 /**
  * Test verifying backup eligibility rules are respected.
@@ -60,6 +63,7 @@ public class BackupEligibilityHostSideTest extends BaseBackupHostSideTest {
             ADB_BACKUP_APP_NAME + ".AdbBackupApp";
     private static final String BACKUP_RESTORE_CONFIRMATION_PACKAGE = "com.android.backupconfirm";
     private static final String ADB_BACKUP_FILE = "adb_backup_file.ab";
+    private static final String TEMP_DIR = "backup_eligibility_test_tmp";
 
     /** The name of the APK of the app that has allowBackup=false in the manifest */
     private static final String ALLOWBACKUP_FALSE_APP_APK = "BackupNotAllowedApp.apk";
@@ -173,13 +177,22 @@ public class BackupEligibilityHostSideTest extends BaseBackupHostSideTest {
     private void runAdbBackupAndRestore() throws Exception {
         installPackage(ADB_BACKUP_APP_APK, "-d", "-r");
 
+        File tempDir = null;
         try {
             // Generate the files that are going to be backed up.
             checkBackupEligibilityDeviceTest("createFiles");
-            runAdbCommand("backup", "-f", ADB_BACKUP_FILE, BACKUP_ELIGIBILITY_APP_NAME);
+
+            // Create a temp dir on the host for adb backup output.
+            tempDir = FileUtil.createTempDir(TEMP_DIR);
+            String backupFileName = new File(tempDir, ADB_BACKUP_FILE).getAbsolutePath();
+            runAdbCommand("backup", "-f", backupFileName, BACKUP_ELIGIBILITY_APP_NAME);
+
             checkBackupEligibilityDeviceTest("deleteFilesAndAssertNoneExist");
             runAdbCommand("restore", ADB_BACKUP_FILE);
         } finally {
+            if (tempDir != null) {
+                FileUtil.recursiveDelete(tempDir);
+            }
             assertNull(uninstallPackage(ADB_BACKUP_APP_NAME));
         }
     }
