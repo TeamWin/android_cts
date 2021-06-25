@@ -25,6 +25,8 @@ import static android.view.Display.DEFAULT_DISPLAY;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -40,6 +42,7 @@ import android.platform.test.annotations.Presubmit;
 import android.provider.DeviceConfig;
 import android.provider.DeviceConfig.Properties;
 import android.server.wm.WindowManagerTestBase.FocusableActivity;
+import android.util.Size;
 
 import androidx.annotation.Nullable;
 import androidx.test.filters.FlakyTest;
@@ -83,8 +86,12 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     private static final float SIZE_COMPAT_DISPLAY_ASPECT_RATIO = 1.4f;
     // Fixed orientation min aspect ratio
     private static final float FIXED_ORIENTATION_MIN_ASPECT_RATIO = 1.03f;
-    // The min aspect ratio of NON_RESIZEABLE_ASPECT_RATIO_ACTIVITY.
+    // The min aspect ratio of NON_RESIZEABLE_ASPECT_RATIO_ACTIVITY (as defined in the manifest).
     private static final float ACTIVITY_MIN_ASPECT_RATIO = 1.6f;
+    // The min aspect ratio of NON_RESIZEABLE_LARGE_ASPECT_RATIO_ACTIVITY (as defined in the
+    // manifest). This needs to be higher than the aspect ratio of any device, which according to
+    // CDD is at most 21:9.
+    private static final float ACTIVITY_LARGE_MIN_ASPECT_RATIO = 3f;
 
     private static final float FLOAT_EQUALITY_DELTA = 0.01f;
 
@@ -434,6 +441,7 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
      *                    DisplayArea bounds
      */
     private void runSandboxTest(boolean isSandboxed) {
+        assertThat(getInitialDisplayAspectRatio()).isLessThan(ACTIVITY_LARGE_MIN_ASPECT_RATIO);
         ComponentName activity = NON_RESIZEABLE_LARGE_ASPECT_RATIO_ACTIVITY;
         runSizeCompatTest(activity, /* resizeRatio= */ 0.5, /* inSizeCompatModeAfterResize=*/ true);
         assertSandboxed(activity, isSandboxed);
@@ -593,6 +601,12 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
         assertNotNull(bounds);
         return Math.max(bounds.height(), bounds.width())
                 / (float) (Math.min(bounds.height(), bounds.width()));
+    }
+
+    private float getInitialDisplayAspectRatio() {
+        Size size = mDisplayMetricsSession.getInitialDisplayMetrics().getSize();
+        return Math.max(size.getHeight(), size.getWidth())
+                / (float) (Math.min(size.getHeight(), size.getWidth()));
     }
 
     private void launchActivity(ComponentName activity) {
