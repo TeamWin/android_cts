@@ -134,16 +134,6 @@ public class JobInfoTest extends BaseJobSchedulerTest {
                         + " requesting network",
                 new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                         .setEstimatedNetworkBytes(500, 1000));
-        assertBuildFails(
-                "Successfully built a JobInfo specifying negative estimated network bytes",
-                new JobInfo.Builder(JOB_ID, kJobServiceComponent)
-                        .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
-                        .setEstimatedNetworkBytes(-5, 1000));
-        assertBuildFails(
-                "Successfully built a JobInfo specifying negative estimated network bytes",
-                new JobInfo.Builder(JOB_ID, kJobServiceComponent)
-                        .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
-                        .setEstimatedNetworkBytes(-500, -1000));
 
         JobInfo ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
