@@ -22,6 +22,7 @@ import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Binder;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
@@ -42,6 +43,7 @@ public class LocalForegroundService extends LocalService {
     public static final int COMMAND_STOP_FOREGROUND_DETACH_NOTIFICATION = 4;
     public static final int COMMAND_STOP_FOREGROUND_REMOVE_NOTIFICATION_USING_FLAGS = 5;
     public static final int COMMAND_START_NO_FOREGROUND = 6;
+    public static final int COMMAND_START_FOREGROUND_WITH_TYPE = 7;
 
     private int mNotificationId = 0;
 
@@ -120,6 +122,13 @@ public class LocalForegroundService extends LocalService {
     public static Bundle newCommand(IBinder stateReceiver, int command) {
         Bundle bundle = new Bundle();
         bundle.putParcelable(LocalService.REPORT_OBJ_NAME, new IBinderParcelable(stateReceiver));
+        bundle.putInt(EXTRA_COMMAND, command);
+        return bundle;
+    }
+
+    public static Bundle newCommand(int command) {
+        Bundle bundle = new Bundle();
+        bundle.putParcelable(LocalService.REPORT_OBJ_NAME, new IBinderParcelable(new Binder()));
         bundle.putInt(EXTRA_COMMAND, command);
         return bundle;
     }
