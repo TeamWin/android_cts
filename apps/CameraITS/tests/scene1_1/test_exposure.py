@@ -222,8 +222,7 @@ class ExposureTest(its_base_test.ItsBaseTest):
           raise AssertionError(f's_write: {s_test}, s_read: {s_res}, '
                                f'TOL={THRESH_ROUND_DOWN_GAIN*100}%')
         if not 0 <= e_test - e_res < e_test * thresh_round_down_exp:
-          raise AssertionError(f'e_write: {e_test/1.0E6:.3f}ms, '
-                               f'e_read: {e_res/1.0E6:.3f}ms, '
+          raise AssertionError(f'e_write: {e_test}ns, e_read: {e_res}ns, '
                                f'TOL={thresh_round_down_exp*100}%')
         s_e_product_res = s_res * e_res
         req_res_ratio = s_e_product / s_e_product_res

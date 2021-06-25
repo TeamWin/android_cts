@@ -72,6 +72,7 @@ public class Utils {
     public static final int HOTWORD_DETECTION_SERVICE_MIC_ONDETECT_TEST = 104;
     public static final int HOTWORD_DETECTION_SERVICE_DSP_ONREJECT_TEST = 105;
     public static final int HOTWORD_DETECTION_SERVICE_PROCESS_DIED_TEST = 106;
+    public static final int HOTWORD_DETECTION_SERVICE_CALL_STOP_RECOGNITION = 107;
 
     public static final int HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS = 1;
     public static final int HOTWORD_DETECTION_SERVICE_TRIGGER_ILLEGAL_STATE_EXCEPTION = 2;

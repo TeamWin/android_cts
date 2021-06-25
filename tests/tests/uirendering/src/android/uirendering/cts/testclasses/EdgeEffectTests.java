@@ -49,6 +49,7 @@ import androidx.test.filters.LargeTest;
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -64,6 +65,7 @@ public class EdgeEffectTests extends ActivityTestBase {
     public Tracer name = new Tracer();
 
     private Context mThemeContext;
+    private float mPreviousDurationScale;
 
     interface EdgeEffectInitializer {
         void initialize(EdgeEffect edgeEffect);
@@ -78,6 +80,13 @@ public class EdgeEffectTests extends ActivityTestBase {
         final Context targetContext = InstrumentationRegistry.getTargetContext();
         mThemeContext = new ContextThemeWrapper(targetContext,
                 android.R.style.Theme_Material_Light);
+        mPreviousDurationScale = ValueAnimator.getDurationScale();
+        ValueAnimator.setDurationScale(1.0f);
+    }
+
+    @After
+    public void tearDown() {
+        ValueAnimator.setDurationScale(mPreviousDurationScale);
     }
 
     private static class EdgeEffectValidator extends PerPixelBitmapVerifier {

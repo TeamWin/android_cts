@@ -208,6 +208,7 @@ public class WindowContextTests extends WindowContextTestBase {
             TestToken token = (TestToken) serviceRule.bindService(intent);
             final TestWindowService service = token.getService();
 
+            mWmState.computeState(activityName);
             final WindowManagerState.DisplayArea da = mWmState.getTaskDisplayArea(activityName);
             final Rect daBounds = da.mFullConfiguration.windowConfiguration.getBounds();
             final Rect maxDaBounds = da.mFullConfiguration.windowConfiguration.getMaxBounds();
