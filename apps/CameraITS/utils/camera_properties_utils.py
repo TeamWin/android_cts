@@ -30,6 +30,7 @@ NUM_POSE_ROTATION_PARAMS = 4  # number of terms in poseRotation
 NUM_POSE_TRANSLATION_PARAMS = 3  # number of terms in poseTranslation
 SKIP_RET_MSG = 'Test skipped'
 SOLID_COLOR_TEST_PATTERN = 1
+COLOR_BARS_TEST_PATTERN = 2
 
 
 def legacy(props):
@@ -804,6 +805,20 @@ def solid_color_test_pattern(props):
              SOLID_COLOR_TEST_PATTERN.
   """
   return SOLID_COLOR_TEST_PATTERN in props.get(
+      'android.sensor.availableTestPatternModes')
+
+
+def color_bars_test_pattern(props):
+  """Determines if camera supports color bars test pattern.
+
+  Args:
+    props: Camera properties object.
+
+  Returns:
+    Boolean. True if android.sensor.availableTestPatternModes has
+             COLOR_BARS_TEST_PATTERN.
+  """
+  return COLOR_BARS_TEST_PATTERN in props.get(
       'android.sensor.availableTestPatternModes')
 
 
