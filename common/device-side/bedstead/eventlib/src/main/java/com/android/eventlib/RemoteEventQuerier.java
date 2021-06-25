@@ -95,7 +95,7 @@ public class
             }
             return e;
         } catch (RemoteException e) {
-            throw new AssertionError("Error making cross-process call", e);
+            throw new IllegalStateException("Error making cross-process call", e);
         }
     }
 
@@ -112,7 +112,7 @@ public class
             }
             return e;
         } catch (RemoteException e) {
-            throw new AssertionError("Error making cross-process call", e);
+            throw new IllegalStateException("Error making cross-process call", e);
         }
     }
 
@@ -134,7 +134,7 @@ public class
             }
             return e;
         } catch (RemoteException e) {
-            throw new AssertionError("Error making cross-process call", e);
+            throw new IllegalStateException("Error making cross-process call", e);
         }
     }
 
@@ -164,7 +164,7 @@ public class
             try {
                 Thread.sleep(INITIALISATION_ATTEMPT_DELAY_MS);
             } catch (InterruptedException e) {
-                throw new AssertionError("Interrupted while initialising", e);
+                throw new IllegalStateException("Interrupted while initialising", e);
             }
         }
 
@@ -184,7 +184,7 @@ public class
             mQuery.get().init(id, data);
         } catch (RemoteException e) {
             mQuery.set(null);
-            throw new AssertionError("Error making cross-process call", e);
+            throw new IllegalStateException("Error making cross-process call", e);
         }
     }
 
@@ -210,7 +210,7 @@ public class
             try {
                 mConnectionCountdown.await(CONNECTION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
-                throw new AssertionError("Interrupted while binding to service", e);
+                throw new IllegalStateException("Interrupted while binding to service", e);
             }
         } else {
             User user = (mEventLogsQuery.getUserHandle() == null) ? sTestApis.users().instrumented().resolve() : sTestApis.users().find(mEventLogsQuery.getUserHandle()).resolve();
@@ -228,12 +228,12 @@ public class
                 throw new AssertionError("Tried to bind to package " + mPackageName + " but it is not installed on target user " + user);
             }
 
-            throw new AssertionError("Tried to bind but call returned false (intent is "
+            throw new IllegalStateException("Tried to bind but call returned false (intent is "
                     + intent + ", user is  " + mEventLogsQuery.getUserHandle() + ")");
         }
 
         if (mQuery.get() == null) {
-            throw new AssertionError("Tried to bind but failed");
+            throw new IllegalStateException("Tried to bind but failed");
         }
     }
 }

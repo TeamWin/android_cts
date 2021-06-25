@@ -166,55 +166,6 @@ public class LockTaskHostDrivenTest extends BaseDeviceAdminTest {
         assertEquals(ActivityManager.LOCK_TASK_MODE_NONE, mActivityManager.getLockTaskModeState());
     }
 
-    public void testLockTaskCanLaunchEmergencyDialer() throws Exception {
-        if (!hasTelephonyFeature()) {
-            Log.d(TAG, "testLockTaskCanLaunchEmergencyDialer skipped");
-            return;
-        }
-
-        // Find dialer package
-        String dialerPackage = getEmergencyDialerPackageName();
-        if (dialerPackage == null || dialerPackage.isEmpty()) {
-            Log.d(TAG, "testLockTaskCanLaunchEmergencyDialer skipped since no emergency dialer");
-            return;
-        }
-
-        Log.d(TAG, "testLockTaskCanLaunchEmergencyDialer on host-driven test");
-
-        // Emergency dialer should be usable as long as keyguard feature is enabled
-        // regardless of the package allowlist
-        mDevicePolicyManager.setLockTaskFeatures(
-                ADMIN_RECEIVER_COMPONENT, DevicePolicyManager.LOCK_TASK_FEATURE_KEYGUARD);
-        setLockTaskPackages(mContext.getPackageName());
-
-        // Launch lock task root activity
-        setDefaultHomeIntentReceiver();
-        launchLockTaskActivity();
-        waitAndCheckLockedActivityIsResumed();
-        assertEquals(
-                ActivityManager.LOCK_TASK_MODE_LOCKED, mActivityManager.getLockTaskModeState());
-
-        // Launch dialer
-        launchEmergencyDialer();
-
-        // Wait until dialer package starts
-        mUiDevice.wait(
-                Until.hasObject(By.pkg(dialerPackage).depth(0)),
-                ACTIVITY_RESUMED_TIMEOUT_MILLIS);
-        mUiDevice.waitForIdle();
-        waitAndCheckLockedActivityIsPaused();
-
-        // But still in LockTask mode
-        assertEquals(
-                ActivityManager.LOCK_TASK_MODE_LOCKED,
-                mActivityManager.getLockTaskModeState());
-    }
-
-    private boolean hasTelephonyFeature() {
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP &&
-                mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY);
-    }
-
     private void checkLockedActivityIsRunning() {
         String activityName =
                 mActivityManager.getAppTasks().get(0).getTaskInfo().topActivity.getClassName();
@@ -247,18 +198,6 @@ public class LockTaskHostDrivenTest extends BaseDeviceAdminTest {
         mUiDevice.waitForIdle();
         assertTrue(
                 LockTaskUtilityActivity.waitUntilActivityPaused(ACTIVITY_RESUMED_TIMEOUT_MILLIS));
-    }
-
-    private void launchEmergencyDialer() {
-        Intent intent = new Intent(ACTION_EMERGENCY_DIAL).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        mContext.startActivity(intent);
-    }
-
-    private String getEmergencyDialerPackageName() {
-        Intent intent = new Intent(ACTION_EMERGENCY_DIAL).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        ResolveInfo dialerInfo =
-                mPackageManager.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY);
-        return (dialerInfo != null) ? dialerInfo.activityInfo.packageName : null;
     }
 
     private void launchLockTaskActivity() {
