@@ -1010,16 +1010,34 @@ class ItsSession(object):
         chart_distance, camera_fov)
     if numpy.isclose(
         chart_scaling,
+        opencv_processing_utils.SCALE_RFOV_IN_WFOV_BOX,
+        atol=0.01):
+      file_name = '%s_%sx_scaled.pdf' % (
+          scene, str(opencv_processing_utils.SCALE_RFOV_IN_WFOV_BOX))
+    elif numpy.isclose(
+        chart_scaling,
         opencv_processing_utils.SCALE_TELE_IN_WFOV_BOX,
         atol=0.01):
       file_name = '%s_%sx_scaled.pdf' % (
           scene, str(opencv_processing_utils.SCALE_TELE_IN_WFOV_BOX))
     elif numpy.isclose(
         chart_scaling,
-        opencv_processing_utils.SCALE_RFOV_IN_WFOV_BOX,
+        opencv_processing_utils.SCALE_TELE25_IN_RFOV_BOX,
         atol=0.01):
       file_name = '%s_%sx_scaled.pdf' % (
-          scene, str(opencv_processing_utils.SCALE_RFOV_IN_WFOV_BOX))
+          scene, str(opencv_processing_utils.SCALE_TELE25_IN_RFOV_BOX))
+    elif numpy.isclose(
+        chart_scaling,
+        opencv_processing_utils.SCALE_TELE40_IN_RFOV_BOX,
+        atol=0.01):
+      file_name = '%s_%sx_scaled.pdf' % (
+          scene, str(opencv_processing_utils.SCALE_TELE40_IN_RFOV_BOX))
+    elif numpy.isclose(
+        chart_scaling,
+        opencv_processing_utils.SCALE_TELE_IN_RFOV_BOX,
+        atol=0.01):
+      file_name = '%s_%sx_scaled.pdf' % (
+          scene, str(opencv_processing_utils.SCALE_TELE_IN_RFOV_BOX))
     else:
       file_name = '%s.pdf' % scene
     logging.debug('Scene to load: %s', file_name)
