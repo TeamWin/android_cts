@@ -779,7 +779,8 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
             mErrorCollector.checkThat("onEnd for this animation was already dispatched",
                     mEndedAnimations, not(hasItem(animation)));
             mErrorCollector.checkThat("onEnd: animation must be either running or prepared",
-                    mRunningAnimations.contains(animation) || mEndedAnimations.contains(animation),
+                    mRunningAnimations.contains(animation)
+                            || mPreparedAnimations.contains(animation),
                     is(true));
             mRunningAnimations.remove(animation);
             mPreparedAnimations.remove(animation);
