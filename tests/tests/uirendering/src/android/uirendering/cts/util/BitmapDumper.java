@@ -133,6 +133,21 @@ public final class BitmapDumper {
         sInstrumentation.sendStatus(INST_STATUS_IN_PROGRESS, report);
     }
 
+    public static void dumpBitmaps(Bitmap testedBitmap, Bitmap visualizerBitmap, String testName,
+            String className) {
+
+        File testedFile = getFile(className, testName, TYPE_TESTED_RENDERING);
+        File visualizerFile = getFile(className, testName, TYPE_VISUALIZER_RENDERING);
+        saveBitmap(testedBitmap, testedFile);
+        saveBitmap(visualizerBitmap, visualizerFile);
+
+        Bundle report = new Bundle();
+        report.putString(KEY_PREFIX + TYPE_TESTED_RENDERING, bypassContentProvider(testedFile));
+        report.putString(KEY_PREFIX + TYPE_VISUALIZER_RENDERING,
+                bypassContentProvider(visualizerFile));
+        sInstrumentation.sendStatus(INST_STATUS_IN_PROGRESS, report);
+    }
+
     public static void dumpBitmap(Bitmap bitmap, String testName, String className) {
         if (bitmap == null) {
             Log.d(TAG, "File not saved, bitmap was null for test : " + testName);
