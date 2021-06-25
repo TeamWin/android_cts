@@ -24,7 +24,7 @@
               android:orientation="vertical" >
 
     <!-- Custom View -->
-    <android.translation.cts.VirtualContainerView
+    <android.translation.cts.views.VirtualContainerView
         android:id="@+id/virtual_container_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"

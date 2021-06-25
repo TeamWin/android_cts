@@ -57,10 +57,18 @@ public class CompatScaleTests extends ActivityManagerTestBase {
     @Parameterized.Parameters(name = "{0}")
     public static Iterable<Object[]> data() {
         return Arrays.asList(new Object[][] {
+                { "DOWNSCALE_30", 0.3f },
+                { "DOWNSCALE_35", 0.35f },
+                { "DOWNSCALE_40", 0.4f },
+                { "DOWNSCALE_45", 0.45f },
                 { "DOWNSCALE_50", 0.5f },
+                { "DOWNSCALE_55", 0.55f },
                 { "DOWNSCALE_60", 0.6f },
+                { "DOWNSCALE_65", 0.65f },
                 { "DOWNSCALE_70", 0.7f },
+                { "DOWNSCALE_75", 0.75f },
                 { "DOWNSCALE_80", 0.8f },
+                { "DOWNSCALE_85", 0.85f },
                 { "DOWNSCALE_90", 0.9f },
         });
     }

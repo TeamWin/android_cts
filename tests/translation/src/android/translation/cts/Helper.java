@@ -36,6 +36,9 @@ import androidx.test.uiautomator.Until;
 public final class Helper {
 
     private static final String TAG = "Helper";
+
+    public static final String ACTIVITY_PACKAGE = "android.translation.cts";
+
     public static final String ACTION_REGISTER_UI_TRANSLATION_CALLBACK =
             "android.translation.cts.action.REGISTER_UI_TRANSLATION_CALLBACK";
     public static final String ACTION_UNREGISTER_UI_TRANSLATION_CALLBACK =
@@ -53,6 +56,8 @@ public final class Helper {
     public static final String EXTRA_SOURCE_LOCALE = "source_locale";
     public static final String EXTRA_TARGET_LOCALE = "target_locale";
     public static final String EXTRA_VERIFY_RESULT = "verify_result";
+
+    public static final String CUSTOM_TRANSLATION_ID_MY_TAG = "myTag";
 
     /**
      * Sets the translation service temporarily.
