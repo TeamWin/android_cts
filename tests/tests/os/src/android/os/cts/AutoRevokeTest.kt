@@ -273,9 +273,7 @@ class AutoRevokeTest {
                 // Setup
                 goToPermissions()
                 click("Calendar")
-                if (!hasFeatureWatch()) {
-                    click("Allow")
-                }
+                click("Allow")
                 eventually {
                     assertPermission(PERMISSION_GRANTED)
                 }
