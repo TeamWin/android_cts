@@ -21,11 +21,11 @@ import static com.android.compatibility.common.util.WidgetTestUtils.runOnMainAnd
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.app.Activity;
 import android.app.Instrumentation;
@@ -62,6 +62,9 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 @MediumTest
 @RunWith(AndroidJUnit4.class)
@@ -340,10 +343,9 @@ public class RemoteViewsFixedCollectionAdapterTest {
         // View being checked to false should launch the intent.
         mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mActivity, mView));
         mActivityRule.runOnUiThread(() -> checkBox2.setChecked(false));
-        mInstrumentation.waitForIdleSync();
-        assertNotNull(receiver.mIntent);
-        assertFalse(receiver.mIntent.getBooleanExtra(RemoteViews.EXTRA_CHECKED, true));
-        assertEquals(42, receiver.mIntent.getIntExtra("my-extra", 0));
+        Intent checkChangeIntent = receiver.awaitIntent();
+        assertFalse(checkChangeIntent.getBooleanExtra(RemoteViews.EXTRA_CHECKED, true));
+        assertEquals(42, checkChangeIntent.getIntExtra("my-extra", 0));
     }
 
     @Test
@@ -381,9 +383,8 @@ public class RemoteViewsFixedCollectionAdapterTest {
                 () -> mRemoteViews.reapply(mActivity, mView), true);
 
         mActivityRule.runOnUiThread(() -> listView.performItemClick(listView.getChildAt(0), 0, 10));
-        mInstrumentation.waitForIdleSync();
-        assertNotNull(receiver.mIntent);
-        assertEquals(42, receiver.mIntent.getIntExtra("my-extra", 0));
+        Intent itemClickIntent = receiver.awaitIntent();
+        assertEquals(42, itemClickIntent.getIntExtra("my-extra", 0));
     }
 
     @Test
@@ -626,10 +627,42 @@ public class RemoteViewsFixedCollectionAdapterTest {
     private static final class MockBroadcastReceiver extends BroadcastReceiver {
 
         Intent mIntent;
+        private CountDownLatch mCountDownLatch;
 
         @Override
-        public void onReceive(Context context, Intent intent) {
+        public synchronized void onReceive(Context context, Intent intent) {
             mIntent = intent;
+            if (mCountDownLatch != null) {
+                mCountDownLatch.countDown();
+                mCountDownLatch = null;
+            }
+        }
+
+        /** Waits for an intent to be received and returns it. */
+        public Intent awaitIntent() {
+            CountDownLatch countDownLatch;
+            synchronized (this) {
+                // If we already have an intent, don't wait and just return it now.
+                if (mIntent != null) return mIntent;
+
+                countDownLatch = new CountDownLatch(1);
+                mCountDownLatch = countDownLatch;
+            }
+
+            try {
+                // Note: if the latch already counted down, this will return true immediately.
+                countDownLatch.await(20, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+
+            synchronized (this) {
+                if (mIntent == null) {
+                    fail("Expected to receive a broadcast within 20 seconds");
+                }
+
+                return mIntent;
+            }
         }
     }
 
