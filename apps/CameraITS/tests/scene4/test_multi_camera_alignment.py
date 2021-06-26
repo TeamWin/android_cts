@@ -112,7 +112,7 @@ def select_ids_to_test(ids, props, chart_distance):
     if (opencv_processing_utils.FOV_THRESH_TELE < fov <
         opencv_processing_utils.FOV_THRESH_WFOV):
       test_ids.append(i)  # RFoV camera
-    elif fov < opencv_processing_utils.FOV_THRESH_SUPER_TELE:
+    elif fov < opencv_processing_utils.FOV_THRESH_TELE40:
       logging.debug('Skipping camera. Not appropriate multi-camera testing.')
       continue  # super-TELE camera
     elif (fov <= opencv_processing_utils.FOV_THRESH_TELE and
