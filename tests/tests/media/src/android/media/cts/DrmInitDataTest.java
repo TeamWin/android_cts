@@ -17,10 +17,16 @@
 package android.media.cts;
 
 import android.media.DrmInitData;
+import android.os.Build;
 import android.test.AndroidTestCase;
+
+import androidx.test.filters.SdkSuppress;
 
 import java.util.UUID;
 
+@NonMediaMainlineTest
+// methods introduced as hidden in R; first exposed in S
+@SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
 public class DrmInitDataTest extends AndroidTestCase {
 
     public void testSchemeInitDataConstructor() {
