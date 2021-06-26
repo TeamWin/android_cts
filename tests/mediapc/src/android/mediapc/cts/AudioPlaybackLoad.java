@@ -25,6 +25,10 @@ import android.media.MediaFormat;
 
 import java.nio.ByteBuffer;
 
+/**
+ * The following class decode and render the audio (will be audible), until loadStatus is finished.
+ * If input reaches eos, it will rewind the input to start position.
+ */
 class AudioPlaybackLoad extends CodecDecoderTestBase {
     private final String mDecoderName;
     private final LoadStatus mLoadStatus;
@@ -94,9 +98,10 @@ class AudioPlaybackLoad extends CodecDecoderTestBase {
         return -1;
     }
 
+    // Enqueue input to decoder until loadStatus is finished or unexpected eos is seen.
     @Override
     void enqueueInput(int bufferIndex) {
-        if (mExtractor.getSampleSize() < 0) {
+        if (mExtractor.getSampleSize() < 0 || mLoadStatus.isLoadFinished()) {
             enqueueEOS(bufferIndex);
         } else {
             ByteBuffer inputBuffer = mCodec.getInputBuffer(bufferIndex);
@@ -112,7 +117,8 @@ class AudioPlaybackLoad extends CodecDecoderTestBase {
             if (size > 0 && (codecFlags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) == 0) {
                 mInputCount++;
             }
-            if (!mExtractor.advance() && !mLoadStatus.isLoadFinished()) {
+            // If eos is reached, seek to start position.
+            if (!mExtractor.advance()) {
                 mExtractor.seekTo(0, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
                 mBasePts = mMaxPts + 1000000L;
             }
