@@ -83,10 +83,9 @@ public class CodecTranscoderTestBase {
             String mime = format.getString(MediaFormat.KEY_MIME);
             if (mime.startsWith("video/")) {
                 mExtractor.selectTrack(trackID);
-                // COLOR_FormatYUV420Flexible by default should be supported by all components
-                // This call shouldn't effect configure() call for any codec
                 format.setInteger(MediaFormat.KEY_COLOR_FORMAT,
-                        MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible);
+                        MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
+                format.setInteger(MediaFormat.KEY_PRIORITY, 1); // Best effort
                 return format;
             }
         }
@@ -173,10 +172,8 @@ public class CodecTranscoderTestBase {
         if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
             mSawEncOutputEOS = true;
         }
-        if (info.size > 0) {
-            if ((info.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) == 0) {
-                mEncOutputCount++;
-            }
+        if (info.size > 0 && (info.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) == 0) {
+            mEncOutputCount++;
         }
         mEncoder.releaseOutputBuffer(bufferIndex, false);
     }
@@ -350,10 +347,15 @@ public class CodecTranscoderTestBase {
         encoderFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT,
                 MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
         encoderFormat.setInteger(MediaFormat.KEY_MAX_B_FRAMES, mMaxBFrames);
+        encoderFormat.setInteger(MediaFormat.KEY_PRIORITY,
+                decoderFormat.getInteger(MediaFormat.KEY_PRIORITY));
         return encoderFormat;
     }
 }
 
+/**
+ * The following class transcodes the given testFile and returns the achieved fps for transcoding.
+ */
 class Transcode extends CodecTranscoderTestBase implements Callable<Double> {
     private static final String LOG_TAG = Transcode.class.getSimpleName();
 
@@ -401,6 +403,10 @@ class Transcode extends CodecTranscoderTestBase implements Callable<Double> {
     }
 }
 
+/**
+ * The following class transcodes the given testFile until loadStatus is finished.
+ * If input reaches eos, it will rewind the input to start position.
+ */
 class TranscodeLoad extends Transcode {
     private final LoadStatus mLoadStatus;
 
@@ -435,7 +441,7 @@ class TranscodeLoad extends Transcode {
 
     @Override
     void enqueueDecoderInput(int bufferIndex) {
-        if (mExtractor.getSampleSize() < 0) {
+        if (mExtractor.getSampleSize() < 0 || mLoadStatus.isLoadFinished()) {
             enqueueDecoderEOS(bufferIndex);
         } else {
             ByteBuffer inputBuffer = mDecoder.getInputBuffer(bufferIndex);
@@ -451,7 +457,8 @@ class TranscodeLoad extends Transcode {
             if (size > 0 && (codecFlags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) == 0) {
                 mDecInputCount++;
             }
-            if (!mExtractor.advance() && !mLoadStatus.isLoadFinished()) {
+            // If eos is reached, seek to start position.
+            if (!mExtractor.advance()) {
                 mExtractor.seekTo(0, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
                 mBasePts = mMaxPts + 1000000L;
             }
@@ -459,6 +466,9 @@ class TranscodeLoad extends Transcode {
     }
 }
 
+/**
+ * The following class tells the status of the load whether it is finished or not.
+ */
 class LoadStatus {
     private boolean mLoadFinished;
 
