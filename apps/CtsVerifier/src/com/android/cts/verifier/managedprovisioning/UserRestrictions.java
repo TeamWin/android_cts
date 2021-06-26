@@ -182,6 +182,8 @@ public class UserRestrictions {
                     UserManager.DISALLOW_CONFIG_SCREEN_TIMEOUT,
                     UserManager.DISALLOW_CONFIG_BRIGHTNESS);
 
+    private static final String ACTION_CREDENTIALS_INSTALL = "com.android.credentials.INSTALL";
+
     public static String getRestrictionLabel(Context context, String restriction) {
         final UserRestrictionItem item = findRestrictionItem(restriction);
         return context.getString(item.label);
@@ -244,6 +246,10 @@ public class UserRestrictions {
                 return UserManager.supportsMultipleUsers();
             case UserManager.DISALLOW_ADJUST_VOLUME:
                 return pm.hasSystemFeature(PackageManager.FEATURE_AUDIO_OUTPUT);
+            case UserManager.DISALLOW_AIRPLANE_MODE:
+                return hasSettingsActivity(context, Settings.ACTION_AIRPLANE_MODE_SETTINGS);
+            case UserManager.DISALLOW_CONFIG_BRIGHTNESS:
+                return hasSettingsActivity(context, Settings.ACTION_DISPLAY_SETTINGS);
             case UserManager.DISALLOW_CONFIG_CELL_BROADCASTS:
                 final TelephonyManager tm =
                     context.getSystemService(TelephonyManager.class);
@@ -284,7 +290,8 @@ public class UserRestrictions {
             case UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES:
                 return !pm.hasSystemFeature(PackageManager.FEATURE_WATCH);
             case UserManager.DISALLOW_CONFIG_CREDENTIALS:
-                return !pm.hasSystemFeature(PackageManager.FEATURE_WATCH);
+                return !pm.hasSystemFeature(PackageManager.FEATURE_WATCH)
+                        && hasSettingsActivity(context, ACTION_CREDENTIALS_INSTALL);
             default:
                 return true;
         }
@@ -314,6 +321,22 @@ public class UserRestrictions {
         }
 
         return packageName;
+    }
+
+    /**
+     * Utility to check if the Settings app handles an intent action
+     */
+    private static boolean hasSettingsActivity(Context context, String intentAction) {
+        PackageManager packageManager = context.getPackageManager();
+        ResolveInfo resolveInfo = packageManager.resolveActivity(
+                new Intent(intentAction),
+                PackageManager.MATCH_SYSTEM_ONLY);
+
+        if (resolveInfo == null) {
+            return false;
+        }
+
+        return !TextUtils.isEmpty(resolveInfo.activityInfo.applicationInfo.packageName);
     }
 
     private static class UserRestrictionItem {

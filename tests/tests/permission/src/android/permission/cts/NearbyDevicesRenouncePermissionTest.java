@@ -32,8 +32,10 @@ import android.bluetooth.BluetoothManager;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanResult;
+import android.content.AttributionSource;
 import android.content.Context;
 import android.content.ContextParams;
+import android.os.Process;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.util.ArraySet;
@@ -66,6 +68,10 @@ public class NearbyDevicesRenouncePermissionTest {
 
     private enum Result {
         UNKNOWN, EXCEPTION, EMPTY, FILTERED, FULL
+    }
+
+    private enum Scenario {
+        DEFAULT, RENOUNCE, RENOUNCE_MIDDLE, RENOUNCE_END
     }
 
     @BeforeClass
@@ -122,7 +128,7 @@ public class NearbyDevicesRenouncePermissionTest {
     @Test
     public void scanWithoutRenouncingNotesBluetoothAndLocation() {
         clearNoteCounts();
-        assertThat(performScan(false)).isEqualTo(Result.FULL);
+        assertThat(performScan(Scenario.DEFAULT)).isEqualTo(Result.FULL);
         assertThat(mLocationNoteCount).isGreaterThan(0);
         assertThat(mScanNoteCount).isGreaterThan(0);
     }
@@ -131,15 +137,32 @@ public class NearbyDevicesRenouncePermissionTest {
     @Test
     public void scanRenouncingLocationNotesBluetoothButNotLocation() {
         clearNoteCounts();
-        assertThat(performScan(true)).isEqualTo(Result.FILTERED);
+        assertThat(performScan(Scenario.RENOUNCE)).isEqualTo(Result.FILTERED);
         assertThat(mLocationNoteCount).isEqualTo(0);
         assertThat(mScanNoteCount).isGreaterThan(0);
     }
 
-    private Result performScan(boolean renounce) {
+    @AppModeFull
+    @Test
+    public void scanRenouncingInMiddleOfChainNotesBluetoothButNotLocation() {
+        clearNoteCounts();
+        assertThat(performScan(Scenario.RENOUNCE_MIDDLE)).isEqualTo(Result.FILTERED);
+        assertThat(mLocationNoteCount).isEqualTo(0);
+        assertThat(mScanNoteCount).isGreaterThan(0);
+    }
+
+    @AppModeFull
+    @Test
+    public void scanRenouncingAtEndOfChainNotesBluetoothButNotLocation() {
+        clearNoteCounts();
+        assertThat(performScan(Scenario.RENOUNCE_END)).isEqualTo(Result.FILTERED);
+        assertThat(mLocationNoteCount).isEqualTo(0);
+        assertThat(mScanNoteCount).isGreaterThan(0);
+    }
+
+    private Result performScan(Scenario scenario) {
         try {
-            Context context = renounce ? createRenouncingContext(getApplicationContext())
-                    : getApplicationContext();
+            Context context = createContext(scenario, getApplicationContext());
 
             final BluetoothManager bm = context.getSystemService(BluetoothManager.class);
             final BluetoothLeScanner scanner = bm.getAdapter().getBluetoothLeScanner();
@@ -175,26 +198,47 @@ public class NearbyDevicesRenouncePermissionTest {
         }
     }
 
-    private Context createRenouncingContext(Context context) throws Exception {
-        ContextParams contextParams = context.getParams();
+    private Context createContext(Scenario scenario, Context context) throws Exception {
+        if (scenario == Scenario.DEFAULT) {
+            return context;
+        }
 
         Set<String> renouncedPermissions = new ArraySet<>();
         renouncedPermissions.add(ACCESS_FINE_LOCATION);
 
-        return SystemUtil.callWithShellPermissionIdentity(() -> {
-            if (contextParams == null) {
-                return context.createContext(
-                        new ContextParams.Builder()
-                                .setRenouncedPermissions(renouncedPermissions)
-                                .setAttributionTag(context.getAttributionTag())
-                                .build());
-            } else {
-                return context.createContext(
-                        new ContextParams.Builder(contextParams)
-                                .setRenouncedPermissions(renouncedPermissions)
-                                .build());
-            }
-        });
+        switch (scenario) {
+            case RENOUNCE:
+                return SystemUtil.callWithShellPermissionIdentity(() ->
+                        context.createContext(
+                                new ContextParams.Builder()
+                                        .setRenouncedPermissions(renouncedPermissions)
+                                        .setAttributionTag(context.getAttributionTag())
+                                        .build())
+                );
+            case RENOUNCE_MIDDLE:
+                AttributionSource nextAttrib = new AttributionSource(
+                        Process.SHELL_UID, "com.android.shell", null, (Set<String>) null, null);
+                return SystemUtil.callWithShellPermissionIdentity(() ->
+                        context.createContext(
+                                new ContextParams.Builder()
+                                        .setRenouncedPermissions(renouncedPermissions)
+                                        .setAttributionTag(context.getAttributionTag())
+                                        .setNextAttributionSource(nextAttrib)
+                                        .build())
+                );
+            case RENOUNCE_END:
+                nextAttrib = new AttributionSource(
+                        Process.SHELL_UID, "com.android.shell", null, renouncedPermissions, null);
+                return SystemUtil.callWithShellPermissionIdentity(() ->
+                        context.createContext(
+                                new ContextParams.Builder()
+                                        .setAttributionTag(context.getAttributionTag())
+                                        .setNextAttributionSource(nextAttrib)
+                                        .build())
+                );
+            default:
+                throw new IllegalStateException();
+        }
     }
 
 }

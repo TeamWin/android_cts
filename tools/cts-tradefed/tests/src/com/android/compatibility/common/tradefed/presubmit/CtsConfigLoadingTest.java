@@ -30,6 +30,7 @@ import com.android.tradefed.config.IConfiguration;
 import com.android.tradefed.invoker.ExecutionFiles.FilesKey;
 import com.android.tradefed.invoker.TestInformation;
 import com.android.tradefed.invoker.shard.token.TokenProperty;
+import com.android.tradefed.targetprep.DeviceSetup;
 import com.android.tradefed.targetprep.ITargetPreparer;
 import com.android.tradefed.testtype.AndroidJUnitTest;
 import com.android.tradefed.testtype.HostTest;
@@ -82,6 +83,7 @@ public class CtsConfigLoadingTest {
                             "hdmi",
                             "inputmethod",
                             "libcore",
+                            "libnativehelper",
                             "location",
                             "media",
                             "metrics",
@@ -226,6 +228,16 @@ public class CtsConfigLoadingTest {
                                     "%s: includes a PreconditionPreparer (%s) which is not allowed"
                                             + " in modules.",
                                     config.getName(), prep.getClass()));
+                }
+                if (prep.getClass().isAssignableFrom(DeviceSetup.class)) {
+                   DeviceSetup deviceSetup = (DeviceSetup) prep;
+                   if (!deviceSetup.isForceSkipSystemProps()) {
+                       throw new ConfigurationException(
+                               String.format("%s: %s needs to be configured with "
+                                       + "<option name=\"force-skip-system-props\" "
+                                       + "value=\"true\" /> in CTS.",
+                                             config.getName(), prep.getClass()));
+                   }
                 }
             }
             // We can ensure that Host side tests are not empty.

@@ -17,6 +17,8 @@
 package android.voiceinteraction.service;
 
 import android.media.AudioFormat;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.ParcelFileDescriptor;
 import android.os.PersistableBundle;
 import android.os.Process;
@@ -37,6 +39,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.function.IntConsumer;
 
+import javax.annotation.concurrent.GuardedBy;
+
 public class MainHotwordDetectionService extends HotwordDetectionService {
     static final String TAG = "MainHotwordDetectionService";
 
@@ -45,10 +49,31 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
             new HotwordDetectedResult.Builder()
                     .setConfidenceLevel(HotwordDetectedResult.CONFIDENCE_LEVEL_HIGH)
                     .build();
+    public static final HotwordDetectedResult DETECTED_RESULT_AFTER_STOP_DETECTION =
+            new HotwordDetectedResult.Builder()
+                    .setScore(57)
+                    .build();
     public static final HotwordRejectedResult REJECTED_RESULT =
             new HotwordRejectedResult.Builder()
                     .setConfidenceLevel(HotwordRejectedResult.CONFIDENCE_LEVEL_MEDIUM)
                     .build();
+
+    private Handler mHandler;
+    @NonNull
+    private final Object mLock = new Object();
+
+    @GuardedBy("mLock")
+    private boolean mStopDetectionCalled;
+
+    @GuardedBy("mLock")
+    @Nullable
+    private Runnable mDetectionJob;
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        mHandler = Handler.createAsync(Looper.getMainLooper());
+    }
 
     @Override
     public void onDetect(@NonNull AlwaysOnHotwordDetector.EventPayload eventPayload,
@@ -135,7 +160,34 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
     @Override
     public void onDetect(@NonNull Callback callback) {
         Log.d(TAG, "onDetect for Mic source");
-        callback.onDetected(DETECTED_RESULT);
+        synchronized (mLock) {
+            if (mDetectionJob != null) {
+                throw new IllegalStateException("onDetect called while already detecting");
+            }
+            if (!mStopDetectionCalled) {
+                // Delaying this allows us to test other flows, such as stopping detection. It's
+                // also more realistic to schedule it onto another thread.
+                mDetectionJob = () -> {
+                    Log.d(TAG, "Sending detected result");
+                    callback.onDetected(DETECTED_RESULT);
+                };
+                mHandler.postDelayed(mDetectionJob, 1500);
+            } else {
+                Log.d(TAG, "Sending detected result after stop detection");
+                // We can't store and use this callback in onStopDetection (not valid anymore there), so
+                // instead we trigger detection again to report the event.
+                callback.onDetected(DETECTED_RESULT_AFTER_STOP_DETECTION);
+            }
+        }
+    }
+
+    @Override
+    public void onStopDetection() {
+        synchronized (mLock) {
+            mHandler.removeCallbacks(mDetectionJob);
+            mDetectionJob = null;
+            mStopDetectionCalled = true;
+        }
     }
 
     @Override

@@ -63,6 +63,7 @@ import org.junit.runner.RunWith;
 public class NearbyDevicesPermissionTest {
     private static final String TEST_APP_PKG = "android.permission.cts.appthatrequestpermission";
     private static final String TEST_APP_AUTHORITY = "appthatrequestpermission";
+    private static final String DISAVOWAL_APP_PKG = "android.permission.cts.appneverforlocation";
 
     private static final String TMP_DIR = "/data/local/tmp/cts/permissions/";
     private static final String APK_BLUETOOTH_30 = TMP_DIR
@@ -71,6 +72,8 @@ public class NearbyDevicesPermissionTest {
             + "CtsAppThatRequestsBluetoothPermission31.apk";
     private static final String APK_BLUETOOTH_NEVER_FOR_LOCATION_31 = TMP_DIR
             + "CtsAppThatRequestsBluetoothPermissionNeverForLocation31.apk";
+    private static final String APK_BLUETOOTH_NEVER_FOR_LOCATION_NO_PROVIDER = TMP_DIR
+            + "CtsAppThatRequestsBluetoothPermissionNeverForLocationNoProvider.apk";
 
     private enum Result {
         UNKNOWN, EXCEPTION, EMPTY, FILTERED, FULL
@@ -183,6 +186,17 @@ public class NearbyDevicesPermissionTest {
         assertScanBluetoothResult(Result.FILTERED);
     }
 
+    @Test
+    public void testRequestBluetoothPermission31_OnBehalfOfDisavowingApp() throws Throwable {
+        install(APK_BLUETOOTH_31);
+        install(APK_BLUETOOTH_NEVER_FOR_LOCATION_NO_PROVIDER);
+        grantPermission(TEST_APP_PKG, BLUETOOTH_CONNECT);
+        grantPermission(TEST_APP_PKG, BLUETOOTH_SCAN);
+        grantPermission(DISAVOWAL_APP_PKG, BLUETOOTH_CONNECT);
+        grantPermission(DISAVOWAL_APP_PKG, BLUETOOTH_SCAN);
+        assertScanBluetoothResult("PROXY", Result.FILTERED);
+    }
+
     /**
      * Verify that upgrading an app doesn't gain them any access to Bluetooth
      * scan results; they'd always need to involve the user to gain permissions.
@@ -230,10 +244,14 @@ public class NearbyDevicesPermissionTest {
     }
 
     private void assertScanBluetoothResult(Result expected) {
+        assertScanBluetoothResult(null, expected);
+    }
+
+    private void assertScanBluetoothResult(String arg, Result expected) {
         SystemClock.sleep(1000); // Wait for location permissions to propagate
         final ContentResolver resolver = InstrumentationRegistry.getTargetContext()
                 .getContentResolver();
-        final Bundle res = resolver.call(TEST_APP_AUTHORITY, "", null, null);
+        final Bundle res = resolver.call(TEST_APP_AUTHORITY, "", arg, null);
         Result actual = Result.values()[res.getInt(Intent.EXTRA_INDEX)];
         assertEquals(expected, actual);
     }

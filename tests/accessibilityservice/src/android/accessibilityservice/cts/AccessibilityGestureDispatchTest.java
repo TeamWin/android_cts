@@ -55,6 +55,7 @@ import android.accessibilityservice.GestureDescription;
 import android.accessibilityservice.GestureDescription.StrokeDescription;
 import android.accessibilityservice.cts.activities.AccessibilityTestActivity;
 import android.app.Instrumentation;
+import android.app.UiAutomation;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Matrix;
@@ -75,7 +76,9 @@ import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.hamcrest.Matcher;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
@@ -95,6 +98,9 @@ public class AccessibilityGestureDispatchTest {
 
     private static final int GESTURE_COMPLETION_TIMEOUT = 5000; // millis
     private static final int MOTION_EVENT_TIMEOUT = 1000; // millis
+
+    private static Instrumentation sInstrumentation;
+    private static UiAutomation sUiAutomation;
 
     private ActivityTestRule<GestureDispatchActivity> mActivityRule =
             new ActivityTestRule<>(GestureDispatchActivity.class, false, false);
@@ -125,24 +131,37 @@ public class AccessibilityGestureDispatchTest {
 
     private GestureDispatchActivity mActivity;
 
+    @BeforeClass
+    public static void oneTimeSetup() {
+        sInstrumentation = getInstrumentation();
+        sUiAutomation = sInstrumentation.getUiAutomation(
+                UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
+    }
+
+    @AfterClass
+    public static void postTestTearDown() {
+        sUiAutomation.destroy();
+    }
+
     @Before
     public void setUp() throws Exception {
-        Instrumentation instrumentation = getInstrumentation();
-        PackageManager pm = instrumentation.getContext().getPackageManager();
+        PackageManager pm = sInstrumentation.getContext().getPackageManager();
         mHasTouchScreen = pm.hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN)
                 || pm.hasSystemFeature(PackageManager.FEATURE_FAKETOUCH);
         if (!mHasTouchScreen) {
             return;
         }
 
-        mActivity = launchActivityAndWaitForItToBeOnscreen(instrumentation,
-                instrumentation.getUiAutomation(), mActivityRule);
+        mActivity = launchActivityAndWaitForItToBeOnscreen(sInstrumentation,
+                sUiAutomation, mActivityRule);
+        // Wait for window animation completed to ensure the input window is at the final position.
+        sUiAutomation.syncInputTransactions();
 
         mHasMultiTouch = pm.hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN_MULTITOUCH)
                 || pm.hasSystemFeature(PackageManager.FEATURE_FAKETOUCH_MULTITOUCH_DISTINCT);
 
         mFullScreenTextView = mActivity.findViewById(R.id.full_screen_text_view);
-        getInstrumentation().runOnMainSync(() -> {
+        sInstrumentation.runOnMainSync(() -> {
             final int midX = mFullScreenTextView.getWidth() / 2;
             final int midY = mFullScreenTextView.getHeight() / 2;
             mFullScreenTextView.getLocationOnScreen(mViewLocation);

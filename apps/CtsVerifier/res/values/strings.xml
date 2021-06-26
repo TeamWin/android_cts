@@ -4051,7 +4051,8 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="disallow_add_user">Disallow add user</string>
     <string name="disallow_add_user_action">Adding a new user</string>
     <string name="disallow_adjust_volume">Disallow adjust volume</string>
-    <string name="disallow_adjust_volume_action">Adjusting the volume</string>
+    <string name="disallow_adjust_volume_action">Adjusting the volume\n
+        NOTE: If the device does not support volume adjustment in Settings app please skip this test and mark it as passing.\n</string>
     <string name="disallow_config_date_time">Disallow config date time</string>
     <string name="disallow_config_date_time_action">Configuring auto time, time, auto date or date</string>
     <string name="disallow_config_location">Disallow config location</string>
@@ -4090,7 +4091,8 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="disallow_modify_accounts">Disallow modify accounts</string>
     <string name="disallow_modify_accounts_action">Adding an account, and also removing an account (after you have previously added one)</string>
     <string name="disallow_network_reset">Disallow network reset</string>
-    <string name="disallow_network_reset_action">Resetting network settings</string>
+    <string name="disallow_network_reset_action">Resetting network settings\n
+        NOTE: If the device does not support network reset please skip this test and mark it as passing.\n</string>
     <string name="disallow_outgoing_beam">Disallow outgoing beam</string>
     <string name="disallow_outgoing_beam_action">Switching on android beam</string>
     <string name="disallow_remove_user">Disallow remove user</string>

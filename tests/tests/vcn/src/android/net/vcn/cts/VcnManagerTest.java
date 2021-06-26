@@ -366,37 +366,34 @@ public class VcnManagerTest extends VcnTestBase {
         assertNotNull("No test network found", mTestNetworkWrapper.tunNetwork);
 
         // Before the VCN starts, the test network should have NOT_VCN_MANAGED
-        verifyExpectedUnderlyingNetworkCapabilities(
+        waitForExpectedUnderlyingNetworkWithCapabilities(
                 true /* expectNotVcnManaged */,
-                false /* expectNotMetered */);
+                false /* expectNotMetered */,
+                TestNetworkWrapper.NETWORK_CB_TIMEOUT_MS);
 
         CarrierPrivilegeUtils.withCarrierPrivilegesForShell(mContext, subId, () -> {
             SubscriptionGroupUtils.withEphemeralSubscriptionGroup(mContext, subId, (subGrp) -> {
                 mVcnManager.setVcnConfig(subGrp, buildVcnConfig());
 
                 // Once VCN starts, the test network should lose NOT_VCN_MANAGED
-                verifyExpectedUnderlyingNetworkCapabilities(
+                waitForExpectedUnderlyingNetworkWithCapabilities(
                         false /* expectNotVcnManaged */,
-                        false /* expectNotMetered */);
+                        false /* expectNotMetered */,
+                        TestNetworkWrapper.NETWORK_CB_TIMEOUT_MS);
 
                 mVcnManager.clearVcnConfig(subGrp);
 
                 // After the VCN tears down, the test network should have
                 // NOT_VCN_MANAGED again
-                verifyExpectedUnderlyingNetworkCapabilities(
+                waitForExpectedUnderlyingNetworkWithCapabilities(
                         true /* expectNotVcnManaged */,
-                        false /* expectNotMetered */);
+                        false /* expectNotMetered */,
+                        TestNetworkWrapper.NETWORK_CB_TIMEOUT_MS);
             });
         });
     }
 
-    private void verifyExpectedUnderlyingNetworkCapabilities(
-            boolean expectNotVcnManaged, boolean expectNotMetered) throws Exception {
-        verifyExpectedUnderlyingNetworkCapabilities(
-                expectNotVcnManaged, expectNotMetered, TestNetworkWrapper.NETWORK_CB_TIMEOUT_MS);
-    }
-
-    private void verifyExpectedUnderlyingNetworkCapabilities(
+    private void waitForExpectedUnderlyingNetworkWithCapabilities(
             boolean expectNotVcnManaged, boolean expectNotMetered, long timeoutMillis)
             throws Exception {
         final long start = SystemClock.elapsedRealtime();
@@ -643,8 +640,10 @@ public class VcnManagerTest extends VcnTestBase {
         assertNotNull("No test network found", mTestNetworkWrapper.tunNetwork);
 
         // Before the VCN starts, the test network should have NOT_VCN_MANAGED
-        verifyExpectedUnderlyingNetworkCapabilities(
-                true /* expectNotVcnManaged */, false /* expectNotMetered */);
+        waitForExpectedUnderlyingNetworkWithCapabilities(
+                true /* expectNotVcnManaged */,
+                false /* expectNotMetered */,
+                TestNetworkWrapper.NETWORK_CB_TIMEOUT_MS);
 
         // Get current cell Network then wait for it to drop (due to losing NOT_VCN_MANAGED) before
         // waiting for VCN Network.
@@ -663,13 +662,14 @@ public class VcnManagerTest extends VcnTestBase {
                 // TODO(b/191801185): use VcnStatusCallbacks to verify safemode
 
                 // Once VCN starts, the test network should lose NOT_VCN_MANAGED
-                verifyExpectedUnderlyingNetworkCapabilities(
+                waitForExpectedUnderlyingNetworkWithCapabilities(
                         false /* expectNotVcnManaged */,
-                        false /* expectNotMetered */);
+                        false /* expectNotMetered */,
+                        TestNetworkWrapper.NETWORK_CB_TIMEOUT_MS);
 
                 // After VCN has started up, wait for safemode to kick in and expect the underlying
                 // Test Network to regain NOT_VCN_MANAGED.
-                verifyExpectedUnderlyingNetworkCapabilities(
+                waitForExpectedUnderlyingNetworkWithCapabilities(
                         true /* expectNotVcnManaged */,
                         false /* expectNotMetered */,
                         SAFEMODE_TIMEOUT_MILLIS);

@@ -27,9 +27,12 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
 
+import android.alarmmanager.alarmtestapp.cts.sdk30.TestReceiver;
+import android.app.Activity;
 import android.app.AlarmManager;
 import android.app.AppOpsManager;
 import android.app.PendingIntent;
+import android.app.compat.CompatChanges;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -66,6 +69,8 @@ import java.io.IOException;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @AppModeFull
 @RunWith(AndroidJUnit4.class)
@@ -139,20 +144,17 @@ public class ExactAlarmsTest {
 
     @Before
     public void enableChange() {
-        SystemUtil.runShellCommand("am compat enable --no-kill REQUIRE_EXACT_ALARM_PERMISSION "
-                + sContext.getOpPackageName(), output -> output.contains("Enabled"));
-    }
-
-    private static void disableChange() {
-        SystemUtil.runShellCommand("am compat disable --no-kill REQUIRE_EXACT_ALARM_PERMISSION "
-                + sContext.getOpPackageName(), output -> output.contains("Disabled"));
+        if (!CompatChanges.isChangeEnabled(AlarmManager.REQUIRE_EXACT_ALARM_PERMISSION)) {
+            SystemUtil.runShellCommand("am compat enable --no-kill REQUIRE_EXACT_ALARM_PERMISSION "
+                    + sContext.getOpPackageName(), output -> output.contains("Enabled"));
+        }
     }
 
     @After
     public void resetChanges() {
         // This is needed because compat persists the overrides beyond package uninstall
         SystemUtil.runShellCommand("am compat reset --no-kill REQUIRE_EXACT_ALARM_PERMISSION "
-                + sContext.getOpPackageName(), output -> output.contains("Reset"));
+                + sContext.getOpPackageName());
     }
 
     @After
@@ -234,10 +236,29 @@ public class ExactAlarmsTest {
     }
 
     @Test
-    public void canScheduleExactAlarmWhenChangeDisabled() throws IOException {
-        disableChange();
-        revokeAppOp();
-        assertTrue(mAlarmManager.canScheduleExactAlarms());
+    public void canScheduleExactAlarmWhenChangeDisabled() throws Exception {
+        final CountDownLatch resultLatch = new CountDownLatch(1);
+        final AtomicBoolean apiResult = new AtomicBoolean(false);
+        final AtomicInteger result = new AtomicInteger(-1);
+
+        // Test app Targets sdk 30, so the change should be disabled.
+        final Intent requestToTestApp = new Intent(TestReceiver.ACTION_GET_CAN_SCHEDULE_EXACT_ALARM)
+                .setClassName(TestReceiver.PACKAGE_NAME, TestReceiver.class.getName())
+                .addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
+        sContext.sendOrderedBroadcast(requestToTestApp, null, new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                result.set(getResultCode());
+                final String resultStr = getResultData();
+                apiResult.set(Boolean.parseBoolean(resultStr));
+                resultLatch.countDown();
+            }
+        }, null, Activity.RESULT_CANCELED, null, null);
+        // TODO (b/192043206): revoke app op for helper app once ag/15001282 is merged.
+        assertTrue("Timed out waiting for response from helper app",
+                resultLatch.await(10, TimeUnit.SECONDS));
+        assertEquals(Activity.RESULT_OK, result.get());
+        assertTrue("canScheduleExactAlarm returned false", apiResult.get());
     }
 
     @Test(expected = SecurityException.class)
