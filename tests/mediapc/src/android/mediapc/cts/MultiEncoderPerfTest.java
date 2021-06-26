@@ -33,6 +33,13 @@ import java.util.concurrent.Future;
 
 import static org.junit.Assert.assertTrue;
 
+/**
+ * The following test class validates the maximum number of concurrent encode sessions that it can
+ * support by the hardware encoders calculated via the CodecCapabilities.getMaxSupportedInstances()
+ * and VideoCapabilities.getSupportedPerformancePoints() methods. And also ensures that the maximum
+ * supported sessions succeed in encoding.
+ * Achieved frame rate is not compared as this test runs in byte buffer mode.
+ */
 @RunWith(Parameterized.class)
 public class MultiEncoderPerfTest extends MultiCodecPerfTestBase {
     private static final String LOG_TAG = MultiEncoderPerfTest.class.getSimpleName();
@@ -44,9 +51,11 @@ public class MultiEncoderPerfTest extends MultiCodecPerfTestBase {
         mEncoderName = encoderName;
     }
 
+    // Returns the params list with the mime and their hardware encoders in
+    // both sync and async modes.
+    // Parameters {0}_{2}_{3} -- Mime_EncoderName_isAsync
     @Parameterized.Parameters(name = "{index}({0}_{1}_{2})")
     public static Collection<Object[]> inputParams() {
-        // Prepares the params list with the supported Hardware encoders in the device
         final List<Object[]> argsList = new ArrayList<>();
         for (String mime : mMimeList) {
             ArrayList<String> listOfEncoders = getHardwareCodecsFor720p(mime, true);
@@ -59,6 +68,10 @@ public class MultiEncoderPerfTest extends MultiCodecPerfTestBase {
         return argsList;
     }
 
+    /**
+     * This test validates that the encoder can support at least 6 concurrent 720p 30fps
+     * encoder instances. Also ensures that all the concurrent sessions succeed in encoding.
+     */
     @LargeTest
     @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void test720p() throws Exception {
