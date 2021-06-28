@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2020 The Android Open Source Project
+// Copyright (C) 2021 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,19 +18,39 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-android_test {
-    name: "CtsTimeTestCases",
+// A library for interacting with time-related shell "cmd" commands from host
+// tests.
+java_library_host {
+    name: "host_time_shell_utils",
     defaults: ["cts_defaults"],
-    test_suites: [
-        "cts",
-        "general-tests",
+    libs: [
+        "androidx.annotation_annotation",
+        "junit",
     ],
     static_libs: [
-        "androidx.test.rules",
+        "tradefed",
+    ],
+    srcs: [
+        "common/**/*.java",
+        "host/**/*.java",
+    ],
+}
+
+// A library for interacting with time-related shell "cmd" commands from
+// instrumentation/device tests.
+java_library {
+    name: "device_time_shell_utils",
+    defaults: ["cts_defaults"],
+    libs: [
+        "androidx.annotation_annotation",
+        "junit",
+    ],
+    static_libs: [
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
-        "device_time_shell_utils",
     ],
-    srcs: ["src/**/*.java"],
-    sdk_version: "system_current",
+    srcs: [
+        "common/**/*.java",
+        "device/**/*.java",
+    ],
 }
