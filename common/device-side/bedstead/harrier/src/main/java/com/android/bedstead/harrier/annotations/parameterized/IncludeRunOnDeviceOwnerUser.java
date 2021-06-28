@@ -16,6 +16,7 @@
 
 package com.android.bedstead.harrier.annotations.parameterized;
 
+import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
 import com.android.bedstead.harrier.annotations.meta.ParameterizedAnnotation;
@@ -32,6 +33,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @ParameterizedAnnotation
 @RequireRunOnPrimaryUser
+@EnsureHasNoWorkProfile
 @EnsureHasDeviceOwner(isPrimary = true)
 public @interface IncludeRunOnDeviceOwnerUser {
 }
