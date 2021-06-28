@@ -19,8 +19,14 @@ package com.android.queryable.queries;
 import android.content.BroadcastReceiver;
 
 import com.android.queryable.Queryable;
+import com.android.queryable.info.BroadcastReceiverInfo;
 
 /** Query for an {@link BroadcastReceiver}. */
-public interface BroadcastReceiverQuery<E extends Queryable> extends ClassQuery<E>  {
+public interface BroadcastReceiverQuery<E extends Queryable> extends Query<BroadcastReceiverInfo>  {
 
+    static BroadcastReceiverQuery<BroadcastReceiverQuery<?>> broadcastReceiver() {
+        return new BroadcastReceiverQueryHelper<>();
+    }
+
+    ClassQuery<E> receiverClass();
 }

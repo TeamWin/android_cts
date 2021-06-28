@@ -93,7 +93,7 @@ public final class BroadcastReceivedEventTest {
 
         EventLogs<BroadcastReceivedEvent> eventLogs =
                 BroadcastReceivedEvent.queryPackage(sContext.getPackageName())
-                        .whereBroadcastReceiver().className().isEqualTo(
+                        .whereBroadcastReceiver().receiverClass().className().isEqualTo(
                         CUSTOM_BROADCAST_RECEIVER_CLASS_NAME);
 
         assertThat(eventLogs.get().broadcastReceiver().className()).isEqualTo(
@@ -111,7 +111,7 @@ public final class BroadcastReceivedEventTest {
 
         EventLogs<BroadcastReceivedEvent> eventLogs =
                 BroadcastReceivedEvent.queryPackage(sContext.getPackageName())
-                        .whereBroadcastReceiver().className().isEqualTo(
+                        .whereBroadcastReceiver().receiverClass().className().isEqualTo(
                         CUSTOM_BROADCAST_RECEIVER_CLASS_NAME);
 
         assertThat(eventLogs.get().broadcastReceiver().className()).isEqualTo(
@@ -124,7 +124,7 @@ public final class BroadcastReceivedEventTest {
 
         EventLogs<BroadcastReceivedEvent> eventLogs =
                 BroadcastReceivedEvent.queryPackage(sContext.getPackageName())
-                        .whereBroadcastReceiver().className()
+                        .whereBroadcastReceiver().receiverClass().className()
                         .isEqualTo(DEFAULT_BROADCAST_RECEIVER_CLASS_NAME);
 
         assertThat(eventLogs.get().broadcastReceiver().className())
@@ -141,7 +141,7 @@ public final class BroadcastReceivedEventTest {
 
         EventLogs<BroadcastReceivedEvent> eventLogs =
                 BroadcastReceivedEvent.queryPackage(sContext.getPackageName())
-                        .whereBroadcastReceiver().className()
+                        .whereBroadcastReceiver().receiverClass().className()
                         .isEqualTo(DEFAULT_BROADCAST_RECEIVER_CLASS_NAME);
 
         assertThat(eventLogs.get().broadcastReceiver().className())

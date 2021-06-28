@@ -58,11 +58,12 @@ public class EventLibAppComponentFactoryTest {
         Intent intent = new Intent();
         intent.setComponent(new ComponentName(sContext.getPackageName(),
                 DECLARED_ACTIVITY_WITH_NO_CLASS));
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         sContext.startActivity(intent);
 
         EventLogs<ActivityCreatedEvent> eventLogs =
                 ActivityCreatedEvent.queryPackage(sContext.getPackageName())
-                .whereActivity().className().isEqualTo(DECLARED_ACTIVITY_WITH_NO_CLASS);
+                .whereActivity().activityClass().className().isEqualTo(DECLARED_ACTIVITY_WITH_NO_CLASS);
         assertThat(eventLogs.poll()).isNotNull();
     }
 
@@ -75,7 +76,7 @@ public class EventLibAppComponentFactoryTest {
 
         EventLogs<BroadcastReceivedEvent> eventLogs = BroadcastReceivedEvent
                 .queryPackage(sContext.getPackageName())
-                .whereBroadcastReceiver().className().isEqualTo(GENERATED_RECEIVER_CLASS_NAME);
+                .whereBroadcastReceiver().receiverClass().className().isEqualTo(GENERATED_RECEIVER_CLASS_NAME);
         assertThat(eventLogs.poll()).isNotNull();
     }
 
