@@ -14,23 +14,30 @@
  * limitations under the License.
  */
 
-package android.content.cts;
+package android.content.wm.cts;
 
 import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY;
 import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
 
+import static org.junit.Assert.fail;
+
 import android.app.Activity;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.cts.ContextTest;
+import android.content.cts.MockActivity;
+import android.content.cts.MockService;
 import android.graphics.PixelFormat;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.media.ImageReader;
+import android.os.Binder;
 import android.os.IBinder;
 import android.view.Display;
+import android.window.WindowProviderService;
 
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.rule.ActivityTestRule;
@@ -100,5 +107,37 @@ public class ContextTestBase {
         IBinder serviceToken;
         serviceToken = serviceRule.bindService(intent);
         return ((MockService.MockBinder) serviceToken).getService();
+    }
+
+    public Service createWindowTestService() {
+        final Intent intent = new Intent(mApplicationContext, TestWindowService.class);
+        final ServiceTestRule serviceRule = new ServiceTestRule();
+        try {
+            IBinder serviceToken = serviceRule.bindService(intent);
+            return ((TestWindowService.TestToken) serviceToken).getService();
+        } catch (TimeoutException e) {
+            fail("Test fail because of " + e);
+            return null;
+        }
+    }
+
+    public static class TestWindowService extends WindowProviderService {
+        private final IBinder mToken = new TestToken();
+
+        @Override
+        public IBinder onBind(Intent intent) {
+            return mToken;
+        }
+
+        @Override
+        public int getWindowType() {
+            return TYPE_APPLICATION_OVERLAY;
+        }
+
+        public class TestToken extends Binder {
+            private TestWindowService getService() {
+                return TestWindowService.this;
+            }
+        }
     }
 }
