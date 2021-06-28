@@ -18,31 +18,71 @@ package com.android.queryable.info;
 
 import android.app.Activity;
 
+
 /**
  * Wrapper for information about an {@link Activity}.
  *
  * <p>This is used instead of {@link Activity} so that it can be easily serialized.
  */
-public class ActivityInfo extends ClassInfo {
+public final class ActivityInfo extends ClassInfo {
 
-    public ActivityInfo(Activity activity) {
-        this(activity.getClass());
+    private final boolean mExported;
+
+    public static Builder builder() {
+        return new Builder();
     }
 
-    public ActivityInfo(Class<? extends Activity> activityClass) {
-        this(activityClass.getName());
+    public static Builder builder(android.content.pm.ActivityInfo activityInfo) {
+        return builder()
+                .activityClass(activityInfo.name)
+                .exported(activityInfo.exported);
     }
 
-    public ActivityInfo(String activityClassName) {
-        super(activityClassName);
-        // TODO(scottjonathan): Add more information about the activity (e.g. parse the
-        //  manifest)
+    private ActivityInfo(String activityClass, boolean exported) {
+        super(activityClass);
+        mExported = exported;
     }
+
+    public boolean exported() {
+        return mExported;
+    }
+
 
     @Override
     public String toString() {
         return "Activity{"
                 + "class=" + super.toString()
+                + ", exported=" + mExported
                 + "}";
+    }
+
+    public static final class Builder {
+        String mActivityClass;
+        boolean mExported;
+
+        public Builder activityClass(String activityClassName) {
+            mActivityClass = activityClassName;
+            return this;
+        }
+
+        public Builder activityClass(Activity activity) {
+            return activityClass(activity.getClass());
+        }
+
+        public Builder activityClass(Class<? extends Activity> activityClass) {
+            return activityClass(activityClass.getName());
+        }
+
+        public Builder exported(boolean exported) {
+            mExported = exported;
+            return this;
+        }
+
+        public ActivityInfo build() {
+            return new ActivityInfo(
+                    mActivityClass,
+                    mExported
+            );
+        }
     }
 }

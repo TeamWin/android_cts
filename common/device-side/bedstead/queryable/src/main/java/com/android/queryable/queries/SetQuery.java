@@ -16,25 +16,19 @@
 
 package com.android.queryable.queries;
 
-import android.os.UserHandle;
-
-import androidx.annotation.CheckResult;
-
 import com.android.queryable.Queryable;
 
-import java.io.Serializable;
+import java.util.Set;
 
-/** Query for a {@link UserHandle}. */
-public interface UserHandleQuery<E extends Queryable> extends Query<UserHandle> {
+/** Query for a {@link java.util.Set}. */
+public interface SetQuery<E extends Queryable, F, G extends Query<F>> extends Query<Set<F>> {
 
-    static UserHandleQuery<UserHandleQuery<?>> userHandle() {
-        return new UserHandleQueryHelper<>();
+    static SetQuery<SetQuery<?, ?, ?>, ?, ?> set() {
+        return new SetQueryHelper<>();
     }
 
-    /** Require the {@link UserHandle} is equal to {@code userHandle}. */
-    E isEqualTo(UserHandle userHandle);
+    IntegerQuery<E> size();
 
-    /** Query the user handle's ID. */
-    @CheckResult
-    IntegerQuery<E> id();
+    E containsAtLeast(G... objects);
+    E doesNotContain(G... objects);
 }
