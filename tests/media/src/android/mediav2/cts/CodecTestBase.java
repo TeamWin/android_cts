@@ -771,15 +771,8 @@ abstract class CodecTestBase {
             ArrayList<String> listOfCodecs = new ArrayList<>();
             if (codecPrefix != null) {
                 for (String codec : totalListOfCodecs) {
-                    MediaCodec comp = null;
-                    try {
-                        comp = MediaCodec.createByCodecName(codec);
-                        if (!comp.getCodecInfo().getName().startsWith(codecPrefix)) {
-                            listOfCodecs.add(codec);
-                        }
-                    } catch (IOException ignored) {
-                    } finally {
-                        if (comp != null) comp.release();
+                    if (codec.startsWith(codecPrefix)) {
+                        listOfCodecs.add(codec);
                     }
                 }
             } else {
