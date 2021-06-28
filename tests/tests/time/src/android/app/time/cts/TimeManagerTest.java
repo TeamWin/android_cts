@@ -43,7 +43,6 @@ import com.google.common.io.ByteStreams;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -65,29 +64,24 @@ public class TimeManagerTest {
     @Rule
     public final AdoptShellPermissionsRule shellPermRule = new AdoptShellPermissionsRule();
 
-    private boolean mWasDeviceConfigSyncDisabled;
+    private String mOldDeviceConfigSyncDisabledMode;
 
     @Before
     public void before() throws Exception {
         // This anticipates a future state where a generally applied target preparer may disable
         // device_config sync for all CTS tests: only suspend syncing if it isn't already suspended,
         // and only resume it if this test suspended it.
-        mWasDeviceConfigSyncDisabled = DeviceConfigShellCommand.isSyncDisabled();
-        if (!mWasDeviceConfigSyncDisabled) {
-            DeviceConfigShellCommand.setSyncDisabled(
-                    DeviceConfigShellCommand.SYNC_DISABLED_MODE_UNTIL_REBOOT);
-        }
+        mOldDeviceConfigSyncDisabledMode = DeviceConfigShellCommand.getSyncDisabled();
+        DeviceConfigShellCommand.setSyncDisabled(
+                DeviceConfigShellCommand.SYNC_DISABLED_MODE_UNTIL_REBOOT);
     }
 
     @After
     public void after() throws Exception {
         DeviceConfigShellCommand.resetToDefaults(
                 DeviceConfigShellCommand.RESET_MODE_TRUSTED_DEFAULTS, NAMESPACE_SYSTEM_TIME);
-        if (!mWasDeviceConfigSyncDisabled) {
-            // Turn syncing back on if this test disabled it.
-            DeviceConfigShellCommand.setSyncDisabled(
-                    DeviceConfigShellCommand.SYNC_DISABLED_MODE_NONE);
-        }
+        // Turn syncing back on if this test disabled it.
+        DeviceConfigShellCommand.setSyncDisabled(mOldDeviceConfigSyncDisabledMode);
     }
 
     /**
@@ -314,10 +308,10 @@ public class TimeManagerTest {
 
         private DeviceConfigShellCommand() {}
 
-        static boolean isSyncDisabled() throws Exception {
-            String cmd = SHELL_CMD_PREFIX + "is_sync_disabled_for_tests";
-            String result = executeShellCommandInternal(cmd);
-            return Boolean.parseBoolean(result);
+        static String getSyncDisabled() throws Exception {
+            String cmd = SHELL_CMD_PREFIX + "get_sync_disabled_for_tests";
+            String result = executeShellCommandInternal(cmd).trim();
+            return result;
         }
 
         static void setSyncDisabled(String syncDisabledMode) throws Exception {
