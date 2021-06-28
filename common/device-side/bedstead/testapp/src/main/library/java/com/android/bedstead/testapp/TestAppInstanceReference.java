@@ -20,6 +20,7 @@ import android.content.BroadcastReceiver;
 import android.content.IntentFilter;
 
 import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.packages.ProcessReference;
 import com.android.bedstead.nene.users.UserReference;
 
@@ -48,6 +49,7 @@ public final class TestAppInstanceReference implements AutoCloseable, Connection
     private final Map<IntentFilter, Long> mRegisteredBroadcastReceivers = new HashMap<>();
     private boolean mKeepAliveManually = false;
     private final ProfileTestAppController mTestAppController;
+    private final TestAppActivities mTestAppActivities;
 
     TestAppInstanceReference(TestApp testApp, UserReference user) {
         mTestApp = testApp;
@@ -58,6 +60,7 @@ public final class TestAppInstanceReference implements AutoCloseable, Connection
         mConnector.registerConnectionListener(this);
         mTestAppController =
                 ProfileTestAppController.create(mConnector);
+        mTestAppActivities = TestAppActivities.create(this);
     }
 
     CrossProfileConnector connector() {
@@ -68,7 +71,7 @@ public final class TestAppInstanceReference implements AutoCloseable, Connection
      * Access activities on the test app.
      */
     public TestAppActivities activities() {
-        return new TestAppActivities(this);
+        return mTestAppActivities;
     }
 
     /**
@@ -201,7 +204,11 @@ public final class TestAppInstanceReference implements AutoCloseable, Connection
 
         ProcessReference process = mTestApp.reference().runningProcess(mUser);
         if (process != null) {
-            process.kill();
+            try {
+                process.kill();
+            } catch (NeneException e) {
+                throw new NeneException("Error killing process... process is " + process(), e);
+            }
         }
 
         return this;

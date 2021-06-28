@@ -19,8 +19,15 @@ package com.android.queryable.queries;
 import android.app.Activity;
 
 import com.android.queryable.Queryable;
+import com.android.queryable.info.ActivityInfo;
 
 /** Query for an {@link Activity}. */
-public interface ActivityQuery<E extends Queryable> extends ClassQuery<E>  {
+public interface ActivityQuery<E extends Queryable> extends Query<ActivityInfo>  {
 
+    static ActivityQuery<ActivityQuery<?>> activity() {
+        return new ActivityQueryHelper<>();
+    }
+
+    ClassQuery<E> activityClass();
+    BooleanQuery<E> exported();
 }
