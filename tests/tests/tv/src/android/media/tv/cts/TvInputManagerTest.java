@@ -113,6 +113,9 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
         }
         assertNotNull(mStubTunerTvInputInfo);
         mTvView.setCallback(mMockCallback);
+
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity();
     }
 
     @Override
@@ -135,6 +138,10 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
             throw new RuntimeException(t);
         }
         mInstrumentation.waitForIdleSync();
+
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .dropShellPermissionIdentity();
+
         super.tearDown();
     }
 
@@ -201,8 +208,6 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
         if (!Utils.hasTvInputFramework(getActivity())) {
             return;
         }
-        InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                .adoptShellPermissionIdentity("android.permission.ACCESS_TUNED_INFO");
         mActivity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -216,8 +221,6 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
                 mManager.unregisterCallback(mCallback);
             }
         });
-        InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                .dropShellPermissionIdentity();
     }
 
     public void testGetInputState() throws Exception {
@@ -391,9 +394,6 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
     }
 
     public void testAcquireTvInputHardware() {
-        InstrumentationRegistry.getInstrumentation().getUiAutomation()
-            .adoptShellPermissionIdentity("android.permission.TV_INPUT_HARDWARE",
-                    "android.permission.TUNER_RESOURCE_ACCESS");
         if (mManager == null) {
             return;
         }
@@ -436,8 +436,6 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
         if (hardwareDeviceAdded) {
             mManager.removeHardwareDevice(deviceId);
         }
-        InstrumentationRegistry.getInstrumentation().getUiAutomation()
-            .dropShellPermissionIdentity();
     }
 
     private static class LoggingCallback extends TvInputManager.TvInputCallback {
