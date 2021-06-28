@@ -29,19 +29,62 @@ import android.media.metrics.PlaybackStateEvent;
 import android.media.metrics.RecordingSession;
 import android.media.metrics.TrackChangeEvent;
 import android.os.Bundle;
+import android.provider.DeviceConfig;
 
 import androidx.test.InstrumentationRegistry;
+
+import com.android.compatibility.common.util.SystemUtil;
+
+import java.lang.InterruptedException;
 
 import org.junit.Test;
 
 public class MediaMetricsAtomHostSideTests {
+    private static final String MEDIA_METRICS_MODE = "media_metrics_mode";
+    private static final String PLAYER_METRICS_APP_ALLOWLIST = "player_metrics_app_allowlist";
+    private static final String PLAYER_METRICS_APP_BLOCKLIST = "player_metrics_app_blocklist";
+    private static final String PLAYER_METRICS_PER_APP_ATTRIBUTION_ALLOWLIST =
+            "player_metrics_per_app_attribution_allowlist";
+    private static final String PLAYER_METRICS_PER_APP_ATTRIBUTION_BLOCKLIST =
+            "player_metrics_per_app_attribution_blocklist";
+    private static final String MEDIA_METRICS_MODE_ON = "1";
+    private static final String MEDIA_METRICS_MODE_BLOCKLIST = "2";
+    private static final String MEDIA_METRICS_MODE_ALLOWLIST = "3";
+    private static final String TEST_PKG = "android.media.metrics.cts";
+    private static final int DEVICE_PROPERTY_PROPAGATION_DELAY_MICROSECONDS = 1000;
 
     static {
         System.loadLibrary("CtsMediaMetricsHostTestAppJni");
     }
 
+    private static void resetProperties() throws InterruptedException {
+        // ensure the event/metric is sent.
+        Thread.sleep(1000);
+        // see DeviceConfig#resetToDefaults(int, String).
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            DeviceConfig.setProperties(
+                    new DeviceConfig.Properties.Builder(DeviceConfig.NAMESPACE_MEDIA).build());
+        });
+        // ensure the property is set.
+        Thread.sleep(DEVICE_PROPERTY_PROPAGATION_DELAY_MICROSECONDS);
+    }
+
+    private static void turnOnForTesting() throws InterruptedException {
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            DeviceConfig.setProperty(
+                    DeviceConfig.NAMESPACE_MEDIA,
+                    MEDIA_METRICS_MODE,
+                    MEDIA_METRICS_MODE_ON,
+                    /*makeDefault=*/ false);
+        });
+        // ensure the property is set.
+        Thread.sleep(DEVICE_PROPERTY_PROPAGATION_DELAY_MICROSECONDS);
+    }
+
+
     @Test
     public void testPlaybackStateEvent() throws Exception {
+        turnOnForTesting();
         Context context = InstrumentationRegistry.getContext();
         MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
         PlaybackSession s = manager.createPlaybackSession();
@@ -52,10 +95,12 @@ public class MediaMetricsAtomHostSideTests {
                         .setMetricsBundle(new Bundle())
                         .build();
         s.reportPlaybackStateEvent(e);
+        resetProperties();
     }
 
     @Test
     public void testPlaybackErrorEvent() throws Exception {
+        turnOnForTesting();
         Context context = InstrumentationRegistry.getContext();
         MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
         PlaybackSession s = manager.createPlaybackSession();
@@ -68,10 +113,12 @@ public class MediaMetricsAtomHostSideTests {
                         .setMetricsBundle(new Bundle())
                         .build();
         s.reportPlaybackErrorEvent(e);
+        resetProperties();
     }
 
     @Test
     public void testTrackChangeEvent_text() throws Exception {
+        turnOnForTesting();
         Context context = InstrumentationRegistry.getContext();
         MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
         PlaybackSession s = manager.createPlaybackSession();
@@ -88,10 +135,12 @@ public class MediaMetricsAtomHostSideTests {
                         .setLanguageRegion("US")
                         .build();
         s.reportTrackChangeEvent(e);
+        resetProperties();
     }
 
     @Test
     public void testTrackChangeEvent_audio() throws Exception {
+        turnOnForTesting();
         Context context = InstrumentationRegistry.getContext();
         MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
         PlaybackSession s = manager.createPlaybackSession();
@@ -110,10 +159,12 @@ public class MediaMetricsAtomHostSideTests {
                         .setChannelCount(3)
                         .build();
         s.reportTrackChangeEvent(e);
+        resetProperties();
     }
 
     @Test
     public void testTrackChangeEvent_video() throws Exception {
+        turnOnForTesting();
         Context context = InstrumentationRegistry.getContext();
         MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
         PlaybackSession s = manager.createPlaybackSession();
@@ -134,10 +185,12 @@ public class MediaMetricsAtomHostSideTests {
                         .setMetricsBundle(new Bundle())
                         .build();
         s.reportTrackChangeEvent(e);
+        resetProperties();
     }
 
     @Test
     public void testNetworkEvent() throws Exception {
+        turnOnForTesting();
         Context context = InstrumentationRegistry.getContext();
         MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
         PlaybackSession s = manager.createPlaybackSession();
@@ -148,10 +201,12 @@ public class MediaMetricsAtomHostSideTests {
                         .setMetricsBundle(new Bundle())
                         .build();
         s.reportNetworkEvent(e);
+        resetProperties();
     }
 
     @Test
     public void testPlaybackMetrics() throws Exception {
+        turnOnForTesting();
         Context context = InstrumentationRegistry.getContext();
         MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
         PlaybackSession s = manager.createPlaybackSession();
@@ -176,6 +231,7 @@ public class MediaMetricsAtomHostSideTests {
                         .addExperimentId(123)
                         .build();
         s.reportPlaybackMetrics(e);
+        resetProperties();
     }
 
     @Test
@@ -201,6 +257,130 @@ public class MediaMetricsAtomHostSideTests {
             assertThat(idObj).isNotEqualTo(null);
             assertThat(idObj.getStringId().length()).isGreaterThan(0);
         }
+    }
+
+    @Test
+    public void testAppBlocklist() throws Exception {
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            DeviceConfig.setProperties(
+                    new DeviceConfig.Properties.Builder(DeviceConfig.NAMESPACE_MEDIA)
+                            .setString(MEDIA_METRICS_MODE, MEDIA_METRICS_MODE_BLOCKLIST)
+                            .setString(PLAYER_METRICS_PER_APP_ATTRIBUTION_BLOCKLIST, "")
+                            .setString(PLAYER_METRICS_APP_BLOCKLIST, TEST_PKG)
+                            .build());
+        });
+        Thread.sleep(DEVICE_PROPERTY_PROPAGATION_DELAY_MICROSECONDS);
+        Context context = InstrumentationRegistry.getContext();
+        MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
+        PlaybackSession s = manager.createPlaybackSession();
+        PlaybackStateEvent e =
+                new PlaybackStateEvent.Builder()
+                        .setTimeSinceCreatedMillis(1763L)
+                        .setState(PlaybackStateEvent.STATE_JOINING_FOREGROUND)
+                        .setMetricsBundle(new Bundle())
+                        .build();
+        s.reportPlaybackStateEvent(e);
+        resetProperties();
+    }
+
+    @Test
+    public void testAttributionBlocklist() throws Exception {
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            DeviceConfig.setProperties(
+                    new DeviceConfig.Properties.Builder(DeviceConfig.NAMESPACE_MEDIA)
+                            .setString(MEDIA_METRICS_MODE, MEDIA_METRICS_MODE_BLOCKLIST)
+                            .setString(PLAYER_METRICS_PER_APP_ATTRIBUTION_BLOCKLIST, TEST_PKG)
+                            .setString(PLAYER_METRICS_APP_BLOCKLIST, "")
+                            .build());
+        });
+        Thread.sleep(DEVICE_PROPERTY_PROPAGATION_DELAY_MICROSECONDS);
+        Context context = InstrumentationRegistry.getContext();
+        MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
+        PlaybackSession s = manager.createPlaybackSession();
+        PlaybackMetrics e =
+                new PlaybackMetrics.Builder()
+                        .setMediaDurationMillis(233L)
+                        .setStreamSource(PlaybackMetrics.STREAM_SOURCE_NETWORK)
+                        .setStreamType(PlaybackMetrics.STREAM_TYPE_OTHER)
+                        .setPlaybackType(PlaybackMetrics.PLAYBACK_TYPE_LIVE)
+                        .setDrmType(PlaybackMetrics.DRM_TYPE_WIDEVINE_L1)
+                        .setContentType(PlaybackMetrics.CONTENT_TYPE_MAIN)
+                        .setPlayerName("ExoPlayer")
+                        .setPlayerVersion("1.01x")
+                        .setVideoFramesPlayed(1024)
+                        .setVideoFramesDropped(32)
+                        .setAudioUnderrunCount(22)
+                        .setNetworkBytesRead(102400)
+                        .setLocalBytesRead(2000)
+                        .setNetworkTransferDurationMillis(6000)
+                        .setDrmSessionId(new byte[] {2, 3, 3, 10})
+                        .setMetricsBundle(new Bundle())
+                        .addExperimentId(123)
+                        .build();
+        s.reportPlaybackMetrics(e);
+        resetProperties();
+    }
+
+    @Test
+    public void testAppAllowlist() throws Exception {
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            DeviceConfig.setProperties(
+                    new DeviceConfig.Properties.Builder(DeviceConfig.NAMESPACE_MEDIA)
+                            .setString(MEDIA_METRICS_MODE, MEDIA_METRICS_MODE_ALLOWLIST)
+                            .setString(PLAYER_METRICS_PER_APP_ATTRIBUTION_ALLOWLIST, "")
+                            .setString(PLAYER_METRICS_APP_ALLOWLIST, TEST_PKG)
+                            .build());
+        });
+        Thread.sleep(DEVICE_PROPERTY_PROPAGATION_DELAY_MICROSECONDS);
+        Context context = InstrumentationRegistry.getContext();
+        MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
+        PlaybackSession s = manager.createPlaybackSession();
+        PlaybackStateEvent e =
+                new PlaybackStateEvent.Builder()
+                        .setTimeSinceCreatedMillis(1763L)
+                        .setState(PlaybackStateEvent.STATE_JOINING_FOREGROUND)
+                        .setMetricsBundle(new Bundle())
+                        .build();
+        s.reportPlaybackStateEvent(e);
+        resetProperties();
+    }
+
+    @Test
+    public void testAttributionAllowlist() throws Exception {
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            DeviceConfig.setProperties(
+                    new DeviceConfig.Properties.Builder(DeviceConfig.NAMESPACE_MEDIA)
+                            .setString(MEDIA_METRICS_MODE, MEDIA_METRICS_MODE_ALLOWLIST)
+                            .setString(PLAYER_METRICS_PER_APP_ATTRIBUTION_ALLOWLIST, TEST_PKG)
+                            .setString(PLAYER_METRICS_APP_ALLOWLIST, "")
+                            .build());
+        });
+        Thread.sleep(DEVICE_PROPERTY_PROPAGATION_DELAY_MICROSECONDS);
+        Context context = InstrumentationRegistry.getContext();
+        MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
+        PlaybackSession s = manager.createPlaybackSession();
+        PlaybackMetrics e =
+                new PlaybackMetrics.Builder()
+                        .setMediaDurationMillis(233L)
+                        .setStreamSource(PlaybackMetrics.STREAM_SOURCE_NETWORK)
+                        .setStreamType(PlaybackMetrics.STREAM_TYPE_OTHER)
+                        .setPlaybackType(PlaybackMetrics.PLAYBACK_TYPE_LIVE)
+                        .setDrmType(PlaybackMetrics.DRM_TYPE_WIDEVINE_L1)
+                        .setContentType(PlaybackMetrics.CONTENT_TYPE_MAIN)
+                        .setPlayerName("ExoPlayer")
+                        .setPlayerVersion("1.01x")
+                        .setVideoFramesPlayed(1024)
+                        .setVideoFramesDropped(32)
+                        .setAudioUnderrunCount(22)
+                        .setNetworkBytesRead(102400)
+                        .setLocalBytesRead(2000)
+                        .setNetworkTransferDurationMillis(6000)
+                        .setDrmSessionId(new byte[] {2, 3, 3, 10})
+                        .setMetricsBundle(new Bundle())
+                        .addExperimentId(123)
+                        .build();
+        s.reportPlaybackMetrics(e);
+        resetProperties();
     }
 
     /**
