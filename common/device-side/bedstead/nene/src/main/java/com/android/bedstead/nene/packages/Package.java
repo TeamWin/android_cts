@@ -69,7 +69,8 @@ public class Package extends PackageReference {
                 mRequestedPermissions.addAll(Arrays.asList(packageInfo.requestedPermissions));
             }
         } catch (PackageManager.NameNotFoundException e) {
-            Log.d(LOG_TAG, "NameNotFound when resolving package", e);
+            // This happens frequently and is not useful to log
+            // TODO(scottjonathan): Figure out why we get this for packages which should exist
         }
     }
 

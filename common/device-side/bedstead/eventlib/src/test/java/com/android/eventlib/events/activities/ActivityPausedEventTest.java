@@ -57,7 +57,7 @@ public final class ActivityPausedEventTest {
                 ActivityPausedEvent.queryPackage(sContext.getPackageName())
                         .whereActivity().activityClass().className().isEqualTo(ACTIVITY_CLASS_NAME);
 
-        assertThat(eventLogs.get().activity().className()).isEqualTo(ACTIVITY_CLASS_NAME);
+        assertThat(eventLogs.poll().activity().className()).isEqualTo(ACTIVITY_CLASS_NAME);
     }
 
     @Test
@@ -73,7 +73,7 @@ public final class ActivityPausedEventTest {
                 ActivityPausedEvent.queryPackage(sContext.getPackageName())
                         .whereActivity().activityClass().className().isEqualTo(ACTIVITY_CLASS_NAME);
 
-        assertThat(eventLogs.get().activity().className()).isEqualTo(ACTIVITY_CLASS_NAME);
+        assertThat(eventLogs.poll().activity().className()).isEqualTo(ACTIVITY_CLASS_NAME);
     }
 
 }
