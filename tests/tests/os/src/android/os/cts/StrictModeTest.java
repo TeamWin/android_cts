@@ -22,6 +22,7 @@ import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
+import static com.google.common.truth.TruthJUnit.assume;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -937,6 +938,9 @@ public class StrictModeTest {
      * running in instant mode.
      */
     private boolean isWallpaperManagerAccessible() {
+        assume().withMessage("walpaper supported")
+                .that(getContext().getSystemService(WallpaperManager.class).isWallpaperSupported())
+                .isTrue();
         final ApplicationInfo appInfo = getContext().getApplicationInfo();
         return appInfo.targetSdkVersion < Build.VERSION_CODES.P || !appInfo.isInstantApp();
     }
