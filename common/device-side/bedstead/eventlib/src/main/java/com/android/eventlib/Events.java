@@ -31,6 +31,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.WeakHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /** Event store for the current package. */
 class Events {
@@ -39,6 +42,8 @@ class Events {
     private static final String EVENT_LOG_FILE_NAME = "Events";
     private static final Duration MAX_LOG_AGE = Duration.ofMinutes(5);
     private static final int BYTES_PER_INT = 4;
+
+    private static final ExecutorService sExecutor = Executors.newSingleThreadExecutor();
 
     /** Interface used to be informed when new events are logged. */
     interface EventListener {
@@ -67,15 +72,17 @@ class Events {
     }
 
     private void initialiseFiles() {
-        loadEventsFromFile();
-        try {
-            mOutputStream = mContext.openFileOutput(EVENT_LOG_FILE_NAME, Context.MODE_PRIVATE);
-            // We clear the file and write the logs again so we can exclude old logs
-            // This avoids the file growing without limit
-            writeAllEventsToFile();
-        } catch (FileNotFoundException e) {
-            throw new IllegalStateException("Could not write event log", e);
-        }
+//        sExecutor.execute(() -> {
+//            loadEventsFromFile();
+//            try {
+//                mOutputStream = mContext.openFileOutput(EVENT_LOG_FILE_NAME, Context.MODE_PRIVATE);
+//                // We clear the file and write the logs again so we can exclude old logs
+//                // This avoids the file growing without limit
+//                writeAllEventsToFile();
+//            } catch (FileNotFoundException e) {
+//                throw new IllegalStateException("Could not write event log", e);
+//            }
+//        });
     }
 
     private void loadEventsFromFile() {
@@ -120,11 +127,13 @@ class Events {
 
     /** Saves the event so it can be queried. */
     void log(Event event) {
-        Log.d(TAG, event.toString());
-
-        mEventList.add(event); // TODO: This should be made immutable before adding
-        writeEventToFile(event);
-        triggerEventListeners(event);
+        sExecutor.execute(() -> {
+            Log.d(TAG, event.toString());
+            synchronized (mEventList) {
+                mEventList.add(event); // TODO: This should be made immutable before adding
+            }
+            triggerEventListeners(event);
+        });
     }
 
     private void writeEventToFile(Event event) {
@@ -145,7 +154,9 @@ class Events {
 
     /** Get all logged events. */
     public List<Event> getEvents() {
-        return mEventList;
+        synchronized (mEventList) {
+            return mEventList;
+        }
     }
 
     /** Register an {@link EventListener} to be called when a new {@link Event} is logged. */
