@@ -764,6 +764,8 @@ abstract class CodecTestBase {
     static List<Object[]> prepareParamList(List<Object[]> exhaustiveArgsList, boolean isEncoder,
             boolean needAudio, boolean needVideo, boolean mustTestAllCodecs) {
         ArrayList<String> mimes = compileCompleteTestMimeList(isEncoder, needAudio, needVideo);
+        ArrayList<String> cddRequiredMimeList =
+                compileRequiredMimeList(isEncoder, needAudio, needVideo);
         final List<Object[]> argsList = new ArrayList<>();
         int argLength = exhaustiveArgsList.get(0).length;
         for (String mime : mimes) {
@@ -794,6 +796,10 @@ abstract class CodecTestBase {
                 }
             }
             if (miss && mustTestAllCodecs) {
+                if (!cddRequiredMimeList.contains(mime)) {
+                    Log.w(LOG_TAG, "no test vectors available for optional mime type " + mime);
+                    continue;
+                }
                 for (String codec : listOfCodecs) {
                     Object[] arg_ = new Object[argLength + 1];
                     arg_[0] = codec;
