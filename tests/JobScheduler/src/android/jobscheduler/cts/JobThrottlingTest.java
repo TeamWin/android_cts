@@ -1052,6 +1052,10 @@ public class JobThrottlingTest {
 
     private void toggleDozeState(final boolean idle) throws Exception {
         mUiDevice.executeShellCommand("cmd deviceidle " + (idle ? "force-idle" : "unforce"));
+        if (!idle) {
+            // Make sure the device doesn't stay idle, even after unforcing.
+            mUiDevice.executeShellCommand("cmd deviceidle motion");
+        }
         assertTrue("Could not change device idle state to " + idle,
                 waitUntilTrue(SHELL_TIMEOUT, () -> {
                     synchronized (JobThrottlingTest.this) {
