@@ -96,7 +96,7 @@ public class EventLibDeviceAdminReceiverTest {
 
         EventLogs<DeviceAdminDisableRequestedEvent> eventLogs =
                 DeviceAdminDisableRequestedEvent.queryPackage(sContext.getPackageName());
-        assertThat(eventLogs.get()).isNotNull();
+        assertThat(eventLogs.poll()).isNotNull();
     }
 
     @Test
@@ -107,7 +107,7 @@ public class EventLibDeviceAdminReceiverTest {
 
         EventLogs<DeviceAdminDisabledEvent> eventLogs =
                 DeviceAdminDisabledEvent.queryPackage(sContext.getPackageName());
-        assertThat(eventLogs.get()).isNotNull();
+        assertThat(eventLogs.poll()).isNotNull();
     }
 
     @Test
@@ -118,7 +118,7 @@ public class EventLibDeviceAdminReceiverTest {
 
         EventLogs<DeviceAdminPasswordChangedEvent> eventLogs =
                 DeviceAdminPasswordChangedEvent.queryPackage(sContext.getPackageName());
-        assertThat(eventLogs.get()).isNotNull();
+        assertThat(eventLogs.poll()).isNotNull();
     }
 
     @Test
@@ -129,8 +129,7 @@ public class EventLibDeviceAdminReceiverTest {
 
         EventLogs<DeviceAdminPasswordChangedEvent> eventLogs =
                 DeviceAdminPasswordChangedEvent.queryPackage(sContext.getPackageName());
-        assertThat(eventLogs.get()).isNotNull();
-        assertThat(eventLogs.get().userHandle()).isEqualTo(sUser.userHandle());
+        assertThat(eventLogs.poll().userHandle()).isEqualTo(sUser.userHandle());
     }
 
     @Test
@@ -141,7 +140,7 @@ public class EventLibDeviceAdminReceiverTest {
 
         EventLogs<DeviceAdminPasswordFailedEvent> eventLogs =
                 DeviceAdminPasswordFailedEvent.queryPackage(sContext.getPackageName());
-        assertThat(eventLogs.get()).isNotNull();
+        assertThat(eventLogs.poll()).isNotNull();
     }
 
     @Test
@@ -152,8 +151,7 @@ public class EventLibDeviceAdminReceiverTest {
 
         EventLogs<DeviceAdminPasswordFailedEvent> eventLogs =
                 DeviceAdminPasswordFailedEvent.queryPackage(sContext.getPackageName());
-        assertThat(eventLogs.get()).isNotNull();
-        assertThat(eventLogs.get().userHandle()).isEqualTo(sUser.userHandle());
+        assertThat(eventLogs.poll().userHandle()).isEqualTo(sUser.userHandle());
     }
 
     @Test
@@ -164,7 +162,7 @@ public class EventLibDeviceAdminReceiverTest {
 
         EventLogs<DeviceAdminPasswordSucceededEvent> eventLogs =
                 DeviceAdminPasswordSucceededEvent.queryPackage(sContext.getPackageName());
-        assertThat(eventLogs.get()).isNotNull();
+        assertThat(eventLogs.poll()).isNotNull();
     }
 
     @Test
@@ -175,8 +173,7 @@ public class EventLibDeviceAdminReceiverTest {
 
         EventLogs<DeviceAdminPasswordSucceededEvent> eventLogs =
                 DeviceAdminPasswordSucceededEvent.queryPackage(sContext.getPackageName());
-        assertThat(eventLogs.get()).isNotNull();
-        assertThat(eventLogs.get().userHandle()).isEqualTo(sUser.userHandle());
+        assertThat(eventLogs.poll().userHandle()).isEqualTo(sUser.userHandle());
     }
 
 }
