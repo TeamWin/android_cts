@@ -67,7 +67,7 @@ public final class ActivityCreatedEventTest {
                         .whereSavedInstanceState()
                             .key(STRING_KEY).stringValue().isEqualTo(STRING_VALUE);
 
-        assertThat(eventLogs.get().savedInstanceState()).isEqualTo(mSavedInstanceState);
+        assertThat(eventLogs.poll().savedInstanceState()).isEqualTo(mSavedInstanceState);
     }
 
     @Test
@@ -88,7 +88,7 @@ public final class ActivityCreatedEventTest {
                         .whereSavedInstanceState()
                             .key(STRING_KEY).stringValue().isEqualTo(STRING_VALUE);
 
-        assertThat(eventLogs.get().savedInstanceState()).isEqualTo(mSavedInstanceState);
+        assertThat(eventLogs.poll().savedInstanceState()).isEqualTo(mSavedInstanceState);
     }
 
     @Test
@@ -104,7 +104,7 @@ public final class ActivityCreatedEventTest {
                         .wherePersistentState()
                             .key(STRING_KEY).stringValue().isEqualTo(STRING_VALUE);
 
-        assertThat(eventLogs.get().persistentState()).isEqualTo(mPersistentState);
+        assertThat(eventLogs.poll().persistentState()).isEqualTo(mPersistentState);
     }
 
     @Test
@@ -126,7 +126,7 @@ public final class ActivityCreatedEventTest {
                         .wherePersistentState()
                             .key(STRING_KEY).stringValue().isEqualTo(STRING_VALUE);
 
-        assertThat(eventLogs.get().persistentState()).isEqualTo(mPersistentState);
+        assertThat(eventLogs.poll().persistentState()).isEqualTo(mPersistentState);
     }
 
     @Test
@@ -139,7 +139,7 @@ public final class ActivityCreatedEventTest {
                 ActivityCreatedEvent.queryPackage(sContext.getPackageName())
                         .whereActivity().activityClass().className().isEqualTo(ACTIVITY_CLASS_NAME);
 
-        assertThat(eventLogs.get().activity().className()).isEqualTo(ACTIVITY_CLASS_NAME);
+        assertThat(eventLogs.poll().activity().className()).isEqualTo(ACTIVITY_CLASS_NAME);
     }
 
     @Test
@@ -155,7 +155,7 @@ public final class ActivityCreatedEventTest {
                 ActivityCreatedEvent.queryPackage(sContext.getPackageName())
                         .whereActivity().activityClass().className().isEqualTo(ACTIVITY_CLASS_NAME);
 
-        assertThat(eventLogs.get().activity().className()).isEqualTo(ACTIVITY_CLASS_NAME);
+        assertThat(eventLogs.poll().activity().className()).isEqualTo(ACTIVITY_CLASS_NAME);
     }
 
 }
