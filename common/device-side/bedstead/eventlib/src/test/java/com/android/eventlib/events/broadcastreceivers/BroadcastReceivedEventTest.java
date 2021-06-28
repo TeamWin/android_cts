@@ -66,7 +66,7 @@ public final class BroadcastReceivedEventTest {
                 BroadcastReceivedEvent.queryPackage(sContext.getPackageName())
                         .whereIntent().action().isEqualTo(STRING_VALUE);
 
-        assertThat(eventLogs.get().intent()).isEqualTo(intent);
+        assertThat(eventLogs.poll().intent()).isEqualTo(intent);
     }
 
     @Test
@@ -82,7 +82,7 @@ public final class BroadcastReceivedEventTest {
                 BroadcastReceivedEvent.queryPackage(sContext.getPackageName())
                         .whereIntent().action().isEqualTo(STRING_VALUE);
 
-        assertThat(eventLogs.get().intent()).isEqualTo(intent);
+        assertThat(eventLogs.poll().intent()).isEqualTo(intent);
     }
 
     @Test
@@ -96,7 +96,7 @@ public final class BroadcastReceivedEventTest {
                         .whereBroadcastReceiver().receiverClass().className().isEqualTo(
                         CUSTOM_BROADCAST_RECEIVER_CLASS_NAME);
 
-        assertThat(eventLogs.get().broadcastReceiver().className()).isEqualTo(
+        assertThat(eventLogs.poll().broadcastReceiver().className()).isEqualTo(
                 CUSTOM_BROADCAST_RECEIVER_CLASS_NAME);
     }
 
@@ -114,7 +114,7 @@ public final class BroadcastReceivedEventTest {
                         .whereBroadcastReceiver().receiverClass().className().isEqualTo(
                         CUSTOM_BROADCAST_RECEIVER_CLASS_NAME);
 
-        assertThat(eventLogs.get().broadcastReceiver().className()).isEqualTo(
+        assertThat(eventLogs.poll().broadcastReceiver().className()).isEqualTo(
                 CUSTOM_BROADCAST_RECEIVER_CLASS_NAME);
     }
 
@@ -127,7 +127,7 @@ public final class BroadcastReceivedEventTest {
                         .whereBroadcastReceiver().receiverClass().className()
                         .isEqualTo(DEFAULT_BROADCAST_RECEIVER_CLASS_NAME);
 
-        assertThat(eventLogs.get().broadcastReceiver().className())
+        assertThat(eventLogs.poll().broadcastReceiver().className())
                 .isEqualTo(DEFAULT_BROADCAST_RECEIVER_CLASS_NAME);
     }
 
@@ -144,7 +144,7 @@ public final class BroadcastReceivedEventTest {
                         .whereBroadcastReceiver().receiverClass().className()
                         .isEqualTo(DEFAULT_BROADCAST_RECEIVER_CLASS_NAME);
 
-        assertThat(eventLogs.get().broadcastReceiver().className())
+        assertThat(eventLogs.poll().broadcastReceiver().className())
                 .isEqualTo(DEFAULT_BROADCAST_RECEIVER_CLASS_NAME);
     }
 
