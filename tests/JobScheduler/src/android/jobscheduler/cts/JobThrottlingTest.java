@@ -27,12 +27,15 @@ import static android.os.PowerManager.ACTION_LIGHT_DEVICE_IDLE_MODE_CHANGED;
 
 import static com.android.compatibility.common.util.TestUtils.waitUntil;
 
+import static junit.framework.Assert.fail;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
+import android.Manifest;
 import android.app.AppOpsManager;
 import android.app.job.JobInfo;
 import android.app.job.JobParameters;
@@ -74,6 +77,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Tests related to job throttling -- device idle, app standby and battery saver.
@@ -560,6 +566,7 @@ public class JobThrottlingTest {
         // Add network
         setAirplaneMode(false);
         setWifiState(true, mCm, mWifiManager);
+        setWifiMeteredState(false);
         runJob();
         assertTrue("New job didn't start in RESTRICTED bucket",
                 mTestAppInterface.awaitJobStart(5_000));
@@ -875,6 +882,7 @@ public class JobThrottlingTest {
         // Satisfy all additional constraints.
         setAirplaneMode(false);
         setWifiState(true, mCm, mWifiManager);
+        setWifiMeteredState(false);
         BatteryUtils.runDumpsysBatterySetPluggedIn(true);
         BatteryUtils.runDumpsysBatterySetLevel(100);
         setScreenState(false);
@@ -1171,6 +1179,61 @@ public class JobThrottlingTest {
         // airplane mode status even though the network changes haven't propagated all the way to
         // JobScheduler.
         Thread.sleep(5000);
+    }
+
+    private static String unquoteSSID(String ssid) {
+        // SSID is returned surrounded by quotes if it can be decoded as UTF-8.
+        // Otherwise it's guaranteed not to start with a quote.
+        if (ssid.charAt(0) == '"') {
+            return ssid.substring(1, ssid.length() - 1);
+        } else {
+            return ssid;
+        }
+    }
+
+    private String getWifiSSID() {
+        final AtomicReference<String> ssid = new AtomicReference<>();
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            ssid.set(mWifiManager.getConnectionInfo().getSSID());
+        }, Manifest.permission.ACCESS_FINE_LOCATION);
+        return unquoteSSID(ssid.get());
+    }
+
+    // Returns "true", "false" or "none"
+    private String getWifiMeteredStatus(String ssid) {
+        // Interestingly giving the SSID as an argument to list wifi-networks
+        // only works iff the network in question has the "false" policy.
+        // Also unfortunately runShellCommand does not pass the command to the interpreter
+        // so it's not possible to | grep the ssid.
+        final String command = "cmd netpolicy list wifi-networks";
+        final String policyString = SystemUtil.runShellCommand(command);
+
+        final Matcher m = Pattern.compile("^" + ssid + ";(true|false|none)$",
+                Pattern.MULTILINE | Pattern.UNIX_LINES).matcher(policyString);
+        if (!m.find()) {
+            fail("Unexpected format from cmd netpolicy (when looking for " + ssid + "): "
+                    + policyString);
+        }
+        return m.group(1);
+    }
+
+    private void setWifiMeteredState(boolean metered) throws Exception {
+        if (metered) {
+            // Make sure unmetered cellular networks don't interfere.
+            setAirplaneMode(true);
+            setWifiState(true, mCm, mWifiManager);
+        }
+        final String ssid = getWifiSSID();
+        setWifiMeteredState(ssid, metered ? "true" : "false");
+    }
+
+    // metered should be "true", "false" or "none"
+    private void setWifiMeteredState(String ssid, String metered) {
+        if (metered.equals(getWifiMeteredStatus(ssid))) {
+            return;
+        }
+        SystemUtil.runShellCommand("cmd netpolicy set metered-network " + ssid + " " + metered);
+        assertEquals(getWifiMeteredStatus(ssid), metered);
     }
 
     private String getJobState() throws Exception {
