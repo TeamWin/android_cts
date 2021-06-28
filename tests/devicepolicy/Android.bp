@@ -31,7 +31,9 @@ android_test {
         "ActivityContext",
         "Harrier",
         "DeviceAdminApp",
-        "TestApp"
+        "TestApp",
+        "MetricsRecorder",
+        "statsdprotolite"
     ],
     srcs: ["src/**/*.java"],
     test_suites: [
