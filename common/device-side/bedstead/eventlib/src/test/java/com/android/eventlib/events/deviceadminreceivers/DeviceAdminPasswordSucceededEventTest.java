@@ -68,7 +68,7 @@ public final class DeviceAdminPasswordSucceededEventTest {
                 DeviceAdminPasswordSucceededEvent.queryPackage(sContext.getPackageName())
                         .whereIntent().action().isEqualTo(STRING_VALUE);
 
-        assertThat(eventLogs.get().intent()).isEqualTo(intent);
+        assertThat(eventLogs.poll().intent()).isEqualTo(intent);
     }
 
     @Test
@@ -85,7 +85,7 @@ public final class DeviceAdminPasswordSucceededEventTest {
                 DeviceAdminPasswordSucceededEvent.queryPackage(sContext.getPackageName())
                         .whereIntent().action().isEqualTo(STRING_VALUE);
 
-        assertThat(eventLogs.get().intent()).isEqualTo(intent);
+        assertThat(eventLogs.poll().intent()).isEqualTo(intent);
     }
 
     @Test
@@ -99,7 +99,7 @@ public final class DeviceAdminPasswordSucceededEventTest {
                         .whereDeviceAdminReceiver().broadcastReceiver().receiverClass().className().isEqualTo(
                         CUSTOM_DEVICE_ADMIN_RECEIVER_CLASS_NAME);
 
-        assertThat(eventLogs.get().deviceAdminReceiver().className()).isEqualTo(
+        assertThat(eventLogs.poll().deviceAdminReceiver().className()).isEqualTo(
                 CUSTOM_DEVICE_ADMIN_RECEIVER_CLASS_NAME);
     }
 
@@ -117,7 +117,7 @@ public final class DeviceAdminPasswordSucceededEventTest {
                         .whereDeviceAdminReceiver().broadcastReceiver().receiverClass().className().isEqualTo(
                         CUSTOM_DEVICE_ADMIN_RECEIVER_CLASS_NAME);
 
-        assertThat(eventLogs.get().deviceAdminReceiver().className()).isEqualTo(
+        assertThat(eventLogs.poll().deviceAdminReceiver().className()).isEqualTo(
                 CUSTOM_DEVICE_ADMIN_RECEIVER_CLASS_NAME);
     }
 
@@ -130,7 +130,7 @@ public final class DeviceAdminPasswordSucceededEventTest {
                         .whereDeviceAdminReceiver().broadcastReceiver().receiverClass().className()
                         .isEqualTo(DEFAULT_DEVICE_ADMIN_RECEIVER_CLASS_NAME);
 
-        assertThat(eventLogs.get().deviceAdminReceiver().className())
+        assertThat(eventLogs.poll().deviceAdminReceiver().className())
                 .isEqualTo(DEFAULT_DEVICE_ADMIN_RECEIVER_CLASS_NAME);
     }
 
@@ -147,7 +147,7 @@ public final class DeviceAdminPasswordSucceededEventTest {
                         .whereDeviceAdminReceiver().broadcastReceiver().receiverClass().className()
                         .isEqualTo(DEFAULT_DEVICE_ADMIN_RECEIVER_CLASS_NAME);
 
-        assertThat(eventLogs.get().deviceAdminReceiver().className())
+        assertThat(eventLogs.poll().deviceAdminReceiver().className())
                 .isEqualTo(DEFAULT_DEVICE_ADMIN_RECEIVER_CLASS_NAME);
     }
 
@@ -161,7 +161,7 @@ public final class DeviceAdminPasswordSucceededEventTest {
                 DeviceAdminPasswordSucceededEvent.queryPackage(sContext.getPackageName())
                         .whereUserHandle().isEqualTo(USER_HANDLE);
 
-        assertThat(eventLogs.get().userHandle()).isEqualTo(USER_HANDLE);
+        assertThat(eventLogs.poll().userHandle()).isEqualTo(USER_HANDLE);
     }
 
     @Test
@@ -177,6 +177,6 @@ public final class DeviceAdminPasswordSucceededEventTest {
                 DeviceAdminPasswordSucceededEvent.queryPackage(sContext.getPackageName())
                         .whereUserHandle().isEqualTo(USER_HANDLE);
 
-        assertThat(eventLogs.get().userHandle()).isEqualTo(USER_HANDLE);
+        assertThat(eventLogs.poll().userHandle()).isEqualTo(USER_HANDLE);
     }
 }
