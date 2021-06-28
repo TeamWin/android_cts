@@ -64,12 +64,6 @@ public final class VintfDeviceInfo extends DeviceInfo {
             store.endGroup();
         }
         store.endArray();
-        // getPlatformSepolicyVersion is available Android S onward.
-        // TODO(b/188778135): change to only check BUILD.VERSION.SDK_INT once it is finalized
-        if (("REL".equals(Build.VERSION.CODENAME) && Build.VERSION.SDK_INT > Build.VERSION_CODES.R)
-                || "S".compareTo(Build.VERSION.CODENAME) <= 0) {
-            store.addResult("platform_sepolicy_version", VintfObject.getPlatformSepolicyVersion());
-        }
 
         // getTargetFrameworkCompatibilityMatrixVersion is available Android P onward.
         // (Use O_MR1 until P is released.)
@@ -79,6 +73,11 @@ public final class VintfDeviceInfo extends DeviceInfo {
         Long version = VintfObject.getTargetFrameworkCompatibilityMatrixVersion();
         if (version != null) {
             store.addResult("target_fcm_version", version);
+        }
+
+        // getPlatformSepolicyVersion is available Android S onward.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            store.addResult("platform_sepolicy_version", VintfObject.getPlatformSepolicyVersion());
         }
     }
 }
