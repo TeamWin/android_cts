@@ -127,6 +127,9 @@ public class CameraTestUtils extends Assert {
 
     public static final int MAX_READER_IMAGES = 5;
 
+    // Compensate for the loss of "sensitivity" and "sensitivityBoost"
+    public static final int MAX_ISO_MISMATCH = 3;
+
     public static final String OFFLINE_CAMERA_ID = "offline_camera_id";
     public static final String REPORT_LOG_NAME = "CtsCameraTestCases";
 
@@ -3096,7 +3099,7 @@ public class CameraTestUtils extends Assert {
                     expectedIso *= 100;
                 }
                 collector.expectInRange("Exif TAG_ISO is incorrect", iso,
-                        expectedIso/100, (expectedIso+50)/100);
+                        expectedIso/100,((expectedIso+50)/100)+MAX_ISO_MISMATCH);
             }
         } else {
             // External camera specific checks
