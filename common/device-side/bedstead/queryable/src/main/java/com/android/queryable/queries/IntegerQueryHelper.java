@@ -32,6 +32,10 @@ public final class IntegerQueryHelper<E extends Queryable> implements IntegerQue
 
     private final E mQuery;
 
+    IntegerQueryHelper() {
+        mQuery = (E) this;
+    }
+
     public IntegerQueryHelper(E query) {
         mQuery = query;
     }
@@ -84,7 +88,8 @@ public final class IntegerQueryHelper<E extends Queryable> implements IntegerQue
     }
 
     /** {@code true} if all filters are met by {@code value}. */
-    public boolean matches(int value) {
+    @Override
+    public boolean matches(Integer value) {
         if (mEqualToValue != null && mEqualToValue != value) {
             return false;
         }

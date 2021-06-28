@@ -16,25 +16,10 @@
 
 package com.android.queryable.queries;
 
-import android.os.UserHandle;
-
-import androidx.annotation.CheckResult;
-
 import com.android.queryable.Queryable;
 
 import java.io.Serializable;
 
-/** Query for a {@link UserHandle}. */
-public interface UserHandleQuery<E extends Queryable> extends Query<UserHandle> {
-
-    static UserHandleQuery<UserHandleQuery<?>> userHandle() {
-        return new UserHandleQueryHelper<>();
-    }
-
-    /** Require the {@link UserHandle} is equal to {@code userHandle}. */
-    E isEqualTo(UserHandle userHandle);
-
-    /** Query the user handle's ID. */
-    @CheckResult
-    IntegerQuery<E> id();
+public interface Query<E> extends Serializable, Queryable {
+    boolean matches(E value);
 }

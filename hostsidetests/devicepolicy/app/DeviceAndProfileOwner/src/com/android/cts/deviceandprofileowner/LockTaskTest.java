@@ -44,19 +44,9 @@ public class LockTaskTest extends BaseDeviceAdminTest {
     private static final String PACKAGE_NAME = LockTaskTest.class.getPackage().getName();
     private static final ComponentName ADMIN_COMPONENT = ADMIN_RECEIVER_COMPONENT;
 
-    private static final String UTILITY_ACTIVITY
-            = "com.android.cts.deviceandprofileowner.LockTaskUtilityActivity";
     private static final String UTILITY_ACTIVITY_IF_ALLOWED
             = "com.android.cts.deviceandprofileowner.LockTaskUtilityActivityIfAllowed";
 
-    private static final String RECEIVER_ACTIVITY_PACKAGE_NAME =
-            "com.android.cts.intent.receiver";
-    private static final String RECEIVER_ACTIVITY_NAME =
-            "com.android.cts.intent.receiver.IntentReceiverActivity";
-    private static final String ACTION_JUST_CREATE =
-            "com.android.cts.action.JUST_CREATE";
-    private static final String ACTION_CREATE_AND_WAIT =
-            "com.android.cts.action.CREATE_AND_WAIT";
     private static final String RECEIVER_ACTIVITY_CREATED_ACTION =
             "com.android.cts.deviceowner.action.RECEIVER_ACTIVITY_CREATED";
     private static final String RECEIVER_ACTIVITY_DESTROYED_ACTION =
@@ -105,36 +95,22 @@ public class LockTaskTest extends BaseDeviceAdminTest {
                     mIntentHandled = true;
                     LockTaskTest.this.notify();
                 }
-            } else if (RECEIVER_ACTIVITY_CREATED_ACTION.equals(action)) {
-                synchronized(mReceiverActivityRunningLock) {
-                    mIsReceiverActivityRunning = true;
-                    mReceiverActivityRunningLock.notify();
-                }
-            } else if (RECEIVER_ACTIVITY_DESTROYED_ACTION.equals(action)) {
-                synchronized (mReceiverActivityRunningLock) {
-                    mIsReceiverActivityRunning = false;
-                    mReceiverActivityRunningLock.notify();
-                }
             }
         }
     };
 
     private volatile boolean mIsActivityRunning;
     private volatile boolean mIsActivityResumed;
-    private volatile boolean mIsReceiverActivityRunning;
     private volatile boolean mIntentHandled;
     private final Object mActivityRunningLock = new Object();
     private final Object mActivityResumedLock = new Object();
-    private final Object mReceiverActivityRunningLock = new Object();
 
     private Context mContext;
-    private UiDevice mUiDevice;
     private ActivityManager mActivityManager;
     private DevicePolicyManager mDevicePolicyManager;
 
     public void setUp() {
         mContext = InstrumentationRegistry.getContext();
-        mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
 
         mDevicePolicyManager = mContext.getSystemService(DevicePolicyManager.class);
         mDevicePolicyManager.setLockTaskPackages(ADMIN_COMPONENT, new String[0]);
@@ -156,48 +132,6 @@ public class LockTaskTest extends BaseDeviceAdminTest {
     }
 
     // Test the lockTaskMode flag for an activity declaring if_whitelisted.
-    // Allow the activity and verify that lock task mode is started.
-    public void testManifestArgument_allowed() throws Exception {
-        mDevicePolicyManager.setLockTaskPackages(ADMIN_COMPONENT, new String[] { PACKAGE_NAME });
-        startAndWait(getLockTaskUtility(UTILITY_ACTIVITY_IF_ALLOWED));
-        waitForResume();
-
-        assertLockTaskModeActive();
-        assertTrue(mIsActivityRunning);
-        assertTrue(mIsActivityResumed);
-
-        stopAndFinish(UTILITY_ACTIVITY_IF_ALLOWED);
-    }
-
-    // Test the lockTaskMode flag for an activity declaring if_whitelisted.
-    // Don't allow the activity and verify that lock task mode is not started.
-    public void testManifestArgument_notAllowed() throws Exception {
-        startAndWait(getLockTaskUtility(UTILITY_ACTIVITY_IF_ALLOWED));
-        waitForResume();
-
-        assertLockTaskModeInactive();
-        assertTrue(mIsActivityRunning);
-        assertTrue(mIsActivityResumed);
-
-        stopAndFinish(UTILITY_ACTIVITY_IF_ALLOWED);
-    }
-
-    // Test the lockTaskMode flag for an activity declaring if_whitelisted.
-    // An activity locked via manifest argument cannot finish without calling stopLockTask.
-    public void testManifestArgument_cannotFinish() throws Exception {
-        mDevicePolicyManager.setLockTaskPackages(ADMIN_COMPONENT, new String[] { PACKAGE_NAME });
-        startAndWait(getLockTaskUtility(UTILITY_ACTIVITY_IF_ALLOWED));
-        waitForResume();
-
-        // If lock task has not exited then the activity shouldn't actually receive onDestroy.
-        finishAndWait(UTILITY_ACTIVITY_IF_ALLOWED);
-        assertLockTaskModeActive();
-        assertTrue(mIsActivityRunning);
-
-        stopAndFinish(UTILITY_ACTIVITY_IF_ALLOWED);
-    }
-
-    // Test the lockTaskMode flag for an activity declaring if_whitelisted.
     // Verifies that updating the allowlist during lock task mode finishes the locked task.
     public void testManifestArgument_updateAllowlist() throws Exception {
         mDevicePolicyManager.setLockTaskPackages(ADMIN_COMPONENT, new String[] { PACKAGE_NAME });
@@ -216,19 +150,6 @@ public class LockTaskTest extends BaseDeviceAdminTest {
     }
 
     /**
-     * Checks that lock task mode is active and fails the test if it isn't.
-     */
-    private void assertLockTaskModeActive() throws Exception {
-        Utils.tryWaitForSuccess(() -> ActivityManager.LOCK_TASK_MODE_LOCKED
-                        == mActivityManager.getLockTaskModeState(),
-                Duration.ofSeconds(2).toMillis()
-        );
-        assertTrue(mActivityManager.isInLockTaskMode());
-        assertEquals(ActivityManager.LOCK_TASK_MODE_LOCKED,
-                mActivityManager.getLockTaskModeState());
-    }
-
-    /**
      * Checks that lock task mode is not active and fails the test if it is.
      */
     private void assertLockTaskModeInactive() throws Exception {
@@ -241,34 +162,6 @@ public class LockTaskTest extends BaseDeviceAdminTest {
     }
 
     /**
-     * Call stopLockTask and finish on the LockTaskUtilityActivity.
-     *
-     * Verify that the activity is no longer running.
-     *
-     * If activityManager is not null then verify that the ActivityManager
-     * is no longer in lock task mode.
-     */
-    private void stopAndFinish(String className) throws Exception {
-        stopLockTask(className);
-        finishAndWait(className);
-        assertLockTaskModeInactive();
-        assertFalse(mIsActivityRunning);
-    }
-
-    /**
-     * Call finish on the LockTaskUtilityActivity and wait for
-     * onDestroy to be called.
-     */
-    private void finishAndWait(String className) throws InterruptedException {
-        synchronized (mActivityRunningLock) {
-            finish(className);
-            if (mIsActivityRunning) {
-                mActivityRunningLock.wait(ACTIVITY_DESTROYED_TIMEOUT_MILLIS);
-            }
-        }
-    }
-
-    /**
      * Wait for onResume to be called on the LockTaskUtilityActivity.
      */
     private void waitForResume() throws InterruptedException {
@@ -278,24 +171,6 @@ public class LockTaskTest extends BaseDeviceAdminTest {
                 mActivityResumedLock.wait(ACTIVITY_RESUMED_TIMEOUT_MILLIS);
             }
         }
-    }
-
-    /**
-     * Calls stopLockTask on the LockTaskUtilityActivity
-     */
-    private void stopLockTask(String className) throws InterruptedException {
-        Intent intent = getLockTaskUtility(className);
-        intent.putExtra(LockTaskUtilityActivity.STOP_LOCK_TASK, true);
-        startAndWait(intent);
-    }
-
-    /**
-     * Calls finish on the LockTaskUtilityActivity
-     */
-    private void finish(String className) throws InterruptedException {
-        Intent intent = getLockTaskUtility(className);
-        intent.putExtra(LockTaskUtilityActivity.FINISH, true);
-        startAndWait(intent);
     }
 
     /**

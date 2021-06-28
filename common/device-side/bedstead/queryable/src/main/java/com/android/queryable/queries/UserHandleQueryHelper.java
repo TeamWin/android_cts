@@ -31,6 +31,10 @@ public final class UserHandleQueryHelper<E extends Queryable>
     private UserHandle mEqualsValue = null;
     private IntegerQueryHelper<E> mIdQuery = null;
 
+    UserHandleQueryHelper() {
+        mQuery = (E) this;
+    }
+
     public UserHandleQueryHelper(E query) {
         mQuery = query;
     }
@@ -52,6 +56,7 @@ public final class UserHandleQueryHelper<E extends Queryable>
     /**
      * {@code true} if all filters are met by the {@link UserHandle}.
      */
+    @Override
     public boolean matches(UserHandle value) {
         if (mEqualsValue != null && !mEqualsValue.equals(value)) {
             return false;

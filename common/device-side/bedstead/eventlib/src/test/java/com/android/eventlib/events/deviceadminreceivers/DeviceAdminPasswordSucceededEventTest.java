@@ -96,7 +96,7 @@ public final class DeviceAdminPasswordSucceededEventTest {
 
         EventLogs<DeviceAdminPasswordSucceededEvent> eventLogs =
                 DeviceAdminPasswordSucceededEvent.queryPackage(sContext.getPackageName())
-                        .whereDeviceAdminReceiver().className().isEqualTo(
+                        .whereDeviceAdminReceiver().broadcastReceiver().receiverClass().className().isEqualTo(
                         CUSTOM_DEVICE_ADMIN_RECEIVER_CLASS_NAME);
 
         assertThat(eventLogs.get().deviceAdminReceiver().className()).isEqualTo(
@@ -114,7 +114,7 @@ public final class DeviceAdminPasswordSucceededEventTest {
 
         EventLogs<DeviceAdminPasswordSucceededEvent> eventLogs =
                 DeviceAdminPasswordSucceededEvent.queryPackage(sContext.getPackageName())
-                        .whereDeviceAdminReceiver().className().isEqualTo(
+                        .whereDeviceAdminReceiver().broadcastReceiver().receiverClass().className().isEqualTo(
                         CUSTOM_DEVICE_ADMIN_RECEIVER_CLASS_NAME);
 
         assertThat(eventLogs.get().deviceAdminReceiver().className()).isEqualTo(
@@ -127,7 +127,7 @@ public final class DeviceAdminPasswordSucceededEventTest {
 
         EventLogs<DeviceAdminPasswordSucceededEvent> eventLogs =
                 DeviceAdminPasswordSucceededEvent.queryPackage(sContext.getPackageName())
-                        .whereDeviceAdminReceiver().className()
+                        .whereDeviceAdminReceiver().broadcastReceiver().receiverClass().className()
                         .isEqualTo(DEFAULT_DEVICE_ADMIN_RECEIVER_CLASS_NAME);
 
         assertThat(eventLogs.get().deviceAdminReceiver().className())
@@ -144,7 +144,7 @@ public final class DeviceAdminPasswordSucceededEventTest {
 
         EventLogs<DeviceAdminPasswordSucceededEvent> eventLogs =
                 DeviceAdminPasswordSucceededEvent.queryPackage(sContext.getPackageName())
-                        .whereDeviceAdminReceiver().className()
+                        .whereDeviceAdminReceiver().broadcastReceiver().receiverClass().className()
                         .isEqualTo(DEFAULT_DEVICE_ADMIN_RECEIVER_CLASS_NAME);
 
         assertThat(eventLogs.get().deviceAdminReceiver().className())
