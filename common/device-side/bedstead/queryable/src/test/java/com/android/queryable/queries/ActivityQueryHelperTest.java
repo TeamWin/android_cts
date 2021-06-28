@@ -33,78 +33,70 @@ public class ActivityQueryHelperTest {
     private final Queryable mQuery = null;
 
     private static final Class<? extends Activity> CLASS_1 = Activity.class;
-    private static final ActivityInfo CLASS_1_ACTIVITY_INFO = new ActivityInfo(CLASS_1);
+
     private static final String CLASS_1_CLASS_NAME = CLASS_1.getName();
-    private static final String CLASS_1_SIMPLE_NAME = CLASS_1.getSimpleName();
-    private static final ActivityInfo CLASS_2_ACTIVITY_INFO =
-            new ActivityInfo("differentClassName");
+
+    private static final android.content.pm.ActivityInfo FRAMEWORK_ACTIVITY_INFO_1 =
+            createActivityInfo(CLASS_1_CLASS_NAME, /* exported= */ false);
+    private static final android.content.pm.ActivityInfo FRAMEWORK_ACTIVITY_INFO_2 =
+            createActivityInfo("different.class.name", /* exported= */ false);
+    private static final android.content.pm.ActivityInfo EXPORTED_FRAMEWORK_ACTIVITY_INFO =
+            createActivityInfo(CLASS_1_CLASS_NAME, /* exported= */ true);
+
+    private static android.content.pm.ActivityInfo createActivityInfo(String name, boolean exported) {
+        android.content.pm.ActivityInfo activityInfo = new android.content.pm.ActivityInfo();
+        activityInfo.name = name;
+        activityInfo.exported = exported;
+
+        return activityInfo;
+    }
+
+    private static final ActivityInfo CLASS_1_ACTIVITY_INFO = ActivityInfo.builder(FRAMEWORK_ACTIVITY_INFO_1).build();
+    private static final ActivityInfo EXPORTED_ACTIVITY_INFO = ActivityInfo.builder(EXPORTED_FRAMEWORK_ACTIVITY_INFO).build();
+    private static final ActivityInfo CLASS_2_ACTIVITY_INFO = ActivityInfo.builder(FRAMEWORK_ACTIVITY_INFO_2).build();
 
     @Test
     public void matches_noRestrictions_returnsTrue() {
-        ActivityQueryHelper<Queryable> activityQueryHelper =
-                new ActivityQueryHelper<>(mQuery);
+        ActivityQueryHelper<Queryable> activityQueryHelper = new ActivityQueryHelper<>(mQuery);
 
         assertThat(activityQueryHelper.matches(CLASS_1_ACTIVITY_INFO)).isTrue();
     }
 
     @Test
-    public void matches_isSameClassAs_doesMatch_returnsTrue() {
-        ActivityQueryHelper<Queryable> activityQueryHelper =
-                new ActivityQueryHelper<>(mQuery);
+    public void matches_activityClass_doesMatch_returnsTrue() {
+        ActivityQueryHelper<Queryable> activityQueryHelper = new ActivityQueryHelper<>(mQuery);
 
-        activityQueryHelper.isSameClassAs(CLASS_1);
+        activityQueryHelper.activityClass().isSameClassAs(CLASS_1);
 
         assertThat(activityQueryHelper.matches(CLASS_1_ACTIVITY_INFO)).isTrue();
     }
 
     @Test
-    public void matches_isSameClassAs_doesNotMatch_returnsFalse() {
-        ActivityQueryHelper<Queryable> activityQueryHelper =
-                new ActivityQueryHelper<>(mQuery);
+    public void matches_activityClass_doesNotMatch_returnsFalse() {
+        ActivityQueryHelper<Queryable> activityQueryHelper = new ActivityQueryHelper<>(mQuery);
 
-        activityQueryHelper.isSameClassAs(CLASS_1);
+        activityQueryHelper.activityClass().isSameClassAs(CLASS_1);
 
         assertThat(activityQueryHelper.matches(CLASS_2_ACTIVITY_INFO)).isFalse();
     }
 
     @Test
-    public void matches_className_doesMatch_returnsTrue() {
+    public void matches_exported_matches_returnsTrue() {
         ActivityQueryHelper<Queryable> activityQueryHelper =
                 new ActivityQueryHelper<>(mQuery);
 
-        activityQueryHelper.className().isEqualTo(CLASS_1_CLASS_NAME);
+        activityQueryHelper.exported().isTrue();
 
-        assertThat(activityQueryHelper.matches(CLASS_1_ACTIVITY_INFO)).isTrue();
+        assertThat(activityQueryHelper.matches(EXPORTED_ACTIVITY_INFO)).isTrue();
     }
 
     @Test
-    public void matches_className_doesNotMatch_returnsFalse() {
-        ActivityQueryHelper<Queryable> activityQueryHelper =
-                new ActivityQueryHelper<>(mQuery);
+    public void matches_exported_doesNotMatch_returnsFalse() {
+        ActivityQueryHelper<Queryable> activityQueryHelper = new ActivityQueryHelper<>(mQuery);
 
-        activityQueryHelper.className().isEqualTo(CLASS_1_CLASS_NAME);
+        activityQueryHelper.exported().isFalse();
 
-        assertThat(activityQueryHelper.matches(CLASS_2_ACTIVITY_INFO)).isFalse();
-    }
-
-    @Test
-    public void matches_simpleName_doesMatch_returnsTrue() {
-        ActivityQueryHelper<Queryable> activityQueryHelper =
-                new ActivityQueryHelper<>(mQuery);
-
-        activityQueryHelper.simpleName().isEqualTo(CLASS_1_SIMPLE_NAME);
-
-        assertThat(activityQueryHelper.matches(CLASS_1_ACTIVITY_INFO)).isTrue();
-    }
-
-    @Test
-    public void matches_simpleName_doesNotMatch_returnsFalse() {
-        ActivityQueryHelper<Queryable> activityQueryHelper =
-                new ActivityQueryHelper<>(mQuery);
-
-        activityQueryHelper.simpleName().isEqualTo(CLASS_1_SIMPLE_NAME);
-
-        assertThat(activityQueryHelper.matches(CLASS_2_ACTIVITY_INFO)).isFalse();
+        assertThat(activityQueryHelper.matches(EXPORTED_ACTIVITY_INFO)).isFalse();
     }
 
 }

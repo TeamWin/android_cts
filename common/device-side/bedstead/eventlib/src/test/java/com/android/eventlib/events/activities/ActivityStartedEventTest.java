@@ -19,6 +19,7 @@ package com.android.eventlib.events.activities;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.content.Context;
+import android.content.pm.ActivityInfo;
 
 import com.android.activitycontext.ActivityContext;
 import com.android.bedstead.nene.TestApis;
@@ -35,9 +36,11 @@ public final class ActivityStartedEventTest {
     private static final TestApis sTestApis = new TestApis();
     private static final Context sContext = sTestApis.context().instrumentedContext();
 
-    private static final String DEFAULT_ACTIVITY_CLASS_NAME = ActivityContext.class.getName();
-    private static final String CUSTOM_ACTIVITY_CLASS_NAME = "customActivityName";
-    private static final String DIFFERENT_CUSTOM_ACTIVITY_CLASS_NAME = "customActivityName2";
+    private static final String ACTIVITY_CLASS_NAME = ActivityContext.class.getName();
+    private static final ActivityInfo ACTIVITY_INFO = new ActivityInfo();
+    {
+        ACTIVITY_INFO.name = ACTIVITY_CLASS_NAME;
+    }
 
     @Before
     public void setUp() {
@@ -45,65 +48,32 @@ public final class ActivityStartedEventTest {
     }
 
     @Test
-    public void whereActivity_customValueOnLogger_works() throws Exception {
+    public void whereActivity_works() throws Exception {
         ActivityContext.runWithContext((activity) ->
-                ActivityStartedEvent.logger(activity)
-                        .setActivity(CUSTOM_ACTIVITY_CLASS_NAME)
+                ActivityStartedEvent.logger(activity, ACTIVITY_INFO)
                         .log());
 
         EventLogs<ActivityStartedEvent> eventLogs =
                 ActivityStartedEvent.queryPackage(sContext.getPackageName())
-                        .whereActivity().className().isEqualTo(CUSTOM_ACTIVITY_CLASS_NAME);
+                        .whereActivity().activityClass().className().isEqualTo(ACTIVITY_CLASS_NAME);
 
-        assertThat(eventLogs.get().activity().className()).isEqualTo(CUSTOM_ACTIVITY_CLASS_NAME);
+        assertThat(eventLogs.get().activity().className()).isEqualTo(ACTIVITY_CLASS_NAME);
     }
 
     @Test
-    public void whereActivity_customValueOnLogger_skipsNonMatching() throws Exception {
+    public void whereActivity_skipsNonMatching() throws Exception {
         ActivityContext.runWithContext((activity) -> {
-            ActivityStartedEvent.logger(activity)
-                    .setActivity(DIFFERENT_CUSTOM_ACTIVITY_CLASS_NAME)
+            ActivityStartedEvent.logger(activity, ACTIVITY_INFO)
                     .log();
-            ActivityStartedEvent.logger(activity)
-                    .setActivity(CUSTOM_ACTIVITY_CLASS_NAME)
+            ActivityStartedEvent.logger(activity, ACTIVITY_INFO)
                     .log();
         });
 
         EventLogs<ActivityStartedEvent> eventLogs =
                 ActivityStartedEvent.queryPackage(sContext.getPackageName())
-                        .whereActivity().className().isEqualTo(CUSTOM_ACTIVITY_CLASS_NAME);
+                        .whereActivity().activityClass().className().isEqualTo(ACTIVITY_CLASS_NAME);
 
-        assertThat(eventLogs.get().activity().className()).isEqualTo(CUSTOM_ACTIVITY_CLASS_NAME);
-    }
-
-    @Test
-    public void whereActivity_defaultValue_works() throws Exception {
-        ActivityContext.runWithContext((activity) ->
-                ActivityStartedEvent.logger(activity)
-                        .log());
-
-        EventLogs<ActivityStartedEvent> eventLogs =
-                ActivityStartedEvent.queryPackage(sContext.getPackageName())
-                        .whereActivity().className().isEqualTo(DEFAULT_ACTIVITY_CLASS_NAME);
-
-        assertThat(eventLogs.get().activity().className()).isEqualTo(DEFAULT_ACTIVITY_CLASS_NAME);
-    }
-
-    @Test
-    public void whereActivity_defaultValue_skipsNonMatching() throws Exception {
-        ActivityContext.runWithContext((activity) -> {
-            ActivityStartedEvent.logger(activity)
-                    .setActivity(CUSTOM_ACTIVITY_CLASS_NAME)
-                    .log();
-            ActivityStartedEvent.logger(activity)
-                    .log();
-        });
-
-        EventLogs<ActivityStartedEvent> eventLogs =
-                ActivityStartedEvent.queryPackage(sContext.getPackageName())
-                        .whereActivity().className().isEqualTo(DEFAULT_ACTIVITY_CLASS_NAME);
-
-        assertThat(eventLogs.get().activity().className()).isEqualTo(DEFAULT_ACTIVITY_CLASS_NAME);
+        assertThat(eventLogs.get().activity().className()).isEqualTo(ACTIVITY_CLASS_NAME);
     }
 
 }

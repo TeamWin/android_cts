@@ -25,7 +25,7 @@ import com.android.queryable.Queryable;
 import java.io.Serializable;
 
 /** Query for a single key in a {@link PersistableBundle}. */
-public interface PersistableBundleKeyQuery<E extends Queryable>  extends Serializable {
+public interface PersistableBundleKeyQuery<E extends Queryable> {
     /** Require that the key exists. */
     E exists();
     /** Require that the key does not exist. */
