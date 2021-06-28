@@ -21,7 +21,12 @@ import com.android.queryable.Queryable;
 import java.io.Serializable;
 
 /** Query for a {@link Integer}. */
-public interface IntegerQuery<E extends Queryable> extends Serializable {
+public interface IntegerQuery<E extends Queryable> extends Query<Integer> {
+
+    static IntegerQuery<IntegerQuery<?>> integer() {
+        return new IntegerQueryHelper<>();
+    }
+
     /** Require the {@link Integer} is equal to {@code i}. */
     E isEqualTo(int i);
 

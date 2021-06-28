@@ -16,25 +16,15 @@
 
 package com.android.queryable.queries;
 
-import android.os.UserHandle;
-
-import androidx.annotation.CheckResult;
-
 import com.android.queryable.Queryable;
 
-import java.io.Serializable;
+public interface BooleanQuery<E extends Queryable> extends Query<Boolean> {
 
-/** Query for a {@link UserHandle}. */
-public interface UserHandleQuery<E extends Queryable> extends Query<UserHandle> {
-
-    static UserHandleQuery<UserHandleQuery<?>> userHandle() {
-        return new UserHandleQueryHelper<>();
+    static BooleanQuery<BooleanQuery<?>> Boolean() {
+        return new BooleanQueryHelper<>();
     }
 
-    /** Require the {@link UserHandle} is equal to {@code userHandle}. */
-    E isEqualTo(UserHandle userHandle);
-
-    /** Query the user handle's ID. */
-    @CheckResult
-    IntegerQuery<E> id();
+    E isTrue();
+    E isFalse();
+    E equals(boolean value);
 }

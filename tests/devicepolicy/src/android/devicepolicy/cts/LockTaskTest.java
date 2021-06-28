@@ -17,6 +17,7 @@
 package android.devicepolicy.cts;
 
 import static android.app.ActivityManager.LOCK_TASK_MODE_LOCKED;
+import static android.app.ActivityManager.LOCK_TASK_MODE_NONE;
 import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_BLOCK_ACTIVITY_START_IN_TASK;
 import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_GLOBAL_ACTIONS;
 import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_HOME;
@@ -94,7 +95,11 @@ public class LockTaskTest {
     };
 
     private static final TestAppProvider sTestAppProvider = new TestAppProvider();
+    private static final TestApp sLockTaskTestApp = sTestAppProvider.query()
+            .wherePackageName().isEqualTo("android.LockTaskApp")
+            .get(); // TODO(scottjonathan): filter by containing activity not by package name
     private static final TestApp sTestApp = sTestAppProvider.any();
+
     private static final TestApp sSecondTestApp = sTestAppProvider.any();
 
     private static final ComponentReference BLOCKED_ACTIVITY_COMPONENT =
@@ -470,7 +475,8 @@ public class LockTaskTest {
             // TODO(b/189327037): Replace with more direct integration between TestApp and EventLib
             EventLogs<ActivityDestroyedEvent> events =
                     ActivityDestroyedEvent.queryPackage(sTestApp.packageName())
-                    .whereActivity().className().isEqualTo(activity.activity().component().className());
+                    .whereActivity().activityClass().className().isEqualTo(
+                            activity.activity().component().className());
             assertThat(events.poll()).isNotNull();
             assertThat(sTestApis.activities().foregroundActivity()).isNotEqualTo(
                     activity.activity().component());
@@ -496,7 +502,8 @@ public class LockTaskTest {
             // TODO(b/189327037): Replace with more direct integration between TestApp and EventLib
             EventLogs<ActivityDestroyedEvent> events =
                     ActivityDestroyedEvent.queryPackage(sTestApp.packageName())
-                            .whereActivity().className().isEqualTo(activity.activity().component().className());
+                            .whereActivity().activityClass().className().isEqualTo(
+                                    activity.activity().component().className());
             assertThat(events.poll()).isNotNull();
             assertThat(sTestApis.activities().foregroundActivity()).isNotEqualTo(
                     activity.activity().component());
@@ -528,7 +535,7 @@ public class LockTaskTest {
                 // TODO(b/189327037): Replace with more direct integration between TestApp and EventLib
                 EventLogs<ActivityDestroyedEvent> events =
                         ActivityDestroyedEvent.queryPackage(sSecondTestApp.packageName())
-                                .whereActivity().className().isEqualTo(
+                                .whereActivity().activityClass().className().isEqualTo(
                                 activity2.activity().component().className());
                 assertThat(events.poll()).isNotNull();
                 assertThat(sTestApis.activities().getLockTaskModeState()).isEqualTo(
@@ -565,7 +572,8 @@ public class LockTaskTest {
 
             EventLogs<ActivityStartedEvent> events =
                     ActivityStartedEvent.queryPackage(sSecondTestApp.packageName())
-                            .whereActivity().className().isEqualTo(secondActivity.component().className());
+                            .whereActivity().activityClass().className().isEqualTo(
+                                    secondActivity.component().className());
             assertThat(events.poll()).isNotNull();
             assertThat(sTestApis.activities().foregroundActivity()).isEqualTo(secondActivity.component());
         } finally {
@@ -755,6 +763,100 @@ public class LockTaskTest {
                 sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(
                         originalLockTaskPackages);
             }
+        }
+    }
+
+    @Test
+    @PositivePolicyTest(policy = LockTask.class)
+    public void startActivity_ifWhitelistedActivity_startsInLockTaskMode() {
+        String[] originalLockTaskPackages =
+                sDeviceState.dpc().devicePolicyManager().getLockTaskPackages();
+
+        try (TestAppInstanceReference testApp =
+                     sLockTaskTestApp.install(sTestApis.users().instrumented())) {
+            sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(
+                    new String[]{sLockTaskTestApp.packageName()});
+            Activity<TestAppActivity> activity = testApp.activities().query()
+                    .whereActivity().activityClass().simpleName().isEqualTo("ifwhitelistedactivity")
+                    // TODO(scottjonathan): filter for lock task mode - currently we can't check
+                    //  this so we just get a fixed package which contains a fixed activity
+                    .get().start();
+
+            try {
+                assertThat(sTestApis.activities().foregroundActivity()).isEqualTo(
+                        activity.activity().component());
+                assertThat(sTestApis.activities().getLockTaskModeState()).isEqualTo(
+                        LOCK_TASK_MODE_LOCKED);
+            } finally {
+                activity.stopLockTask();
+            }
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(
+                    originalLockTaskPackages);
+        }
+    }
+
+    @Test
+    @PositivePolicyTest(policy = LockTask.class)
+    public void startActivity_ifWhitelistedActivity_notWhitelisted_startsNotInLockTaskMode() {
+        String[] originalLockTaskPackages =
+                sDeviceState.dpc().devicePolicyManager().getLockTaskPackages();
+
+        try (TestAppInstanceReference testApp =
+                     sLockTaskTestApp.install(sTestApis.users().instrumented())) {
+            sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(
+                    new String[]{});
+            Activity<TestAppActivity> activity = testApp.activities().query()
+                    .whereActivity().activityClass().simpleName().isEqualTo("ifwhitelistedactivity")
+                    // TODO(scottjonathan): filter for lock task mode - currently we can't check
+                    //  this so we just get a fixed package which contains a fixed activity
+                    .get().start();
+
+            try {
+                assertThat(sTestApis.activities().foregroundActivity()).isEqualTo(
+                        activity.activity().component());
+                assertThat(sTestApis.activities().getLockTaskModeState()).isEqualTo(
+                        LOCK_TASK_MODE_NONE);
+            } finally {
+                activity.stopLockTask();
+            }
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(
+                    originalLockTaskPackages);
+        }
+    }
+
+    @Test
+    @PositivePolicyTest(policy = LockTask.class)
+    public void finish_ifWhitelistedActivity_doesNotFinish() {
+        String[] originalLockTaskPackages =
+                sDeviceState.dpc().devicePolicyManager().getLockTaskPackages();
+
+        try (TestAppInstanceReference testApp =
+                     sLockTaskTestApp.install(sTestApis.users().instrumented())) {
+            sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(
+                    new String[]{sLockTaskTestApp.packageName()});
+            Activity<TestAppActivity> activity = testApp.activities().query()
+                    .whereActivity().activityClass().simpleName().isEqualTo("ifwhitelistedactivity")
+                    // TODO(scottjonathan): filter for lock task mode - currently we can't check
+                    //  this so we just get a fixed package which contains a fixed activity
+                    .get().start();
+
+            activity.activity().finish();
+
+            try {
+                // We don't actually watch for the Destroyed event because that'd be waiting for a
+                // non occurrence of an event which is slow
+                assertThat(sTestApis.activities().foregroundActivity()).isEqualTo(
+                        activity.activity().component());
+                assertThat(sTestApis.activities().getLockTaskModeState()).isEqualTo(
+                        LOCK_TASK_MODE_LOCKED);
+            } finally {
+                activity.stopLockTask();
+            }
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(
+                    originalLockTaskPackages);
         }
     }
 }
