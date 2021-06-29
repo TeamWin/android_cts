@@ -17,6 +17,7 @@
 package com.android.bedstead.remotedpc.managers;
 
 import android.app.admin.DevicePolicyManager;
+import android.app.admin.SystemUpdateInfo;
 import android.content.ComponentName;
 import android.content.IntentFilter;
 import android.os.Bundle;
@@ -124,4 +125,15 @@ public interface RemoteDevicePolicyManager {
 
     /** See {@link DevicePolicyManager#setPreferentialNetworkServiceEnabled(boolean)}. */
     void setPreferentialNetworkServiceEnabled(boolean enabled);
+
+    /** See {@link DevicePolicyManager#notifyPendingSystemUpdate(long)}. */
+    void notifyPendingSystemUpdate(long updateReceivedTime);
+
+    /** See {@link DevicePolicyManager#notifyPendingSystemUpdate(long, boolean)}. */
+    void notifyPendingSystemUpdate(long updateReceivedTime, boolean isSecurityPatch);
+
+    /** See {@link DevicePolicyManager#getPendingSystemUpdate(ComponentName}). */
+    SystemUpdateInfo getPendingSystemUpdate(ComponentName admin);
+    /** See {@link DevicePolicyManager#getPendingSystemUpdate(ComponentName}). */
+    @RemoteDpcAutomaticAdmin SystemUpdateInfo getPendingSystemUpdate();
 }
