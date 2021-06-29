@@ -14,21 +14,16 @@
  * limitations under the License.
  */
 
-package com.android.queryable.queries;
+package com.android.bedstead.metricsrecorder;
 
 import com.android.queryable.Queryable;
+import com.android.queryable.queries.BooleanQuery;
+import com.android.queryable.queries.Query;
+import com.android.queryable.queries.StringQuery;
 
-import java.util.Set;
-
-/** Query for a {@link java.util.Set}. */
-public interface SetQuery<E extends Queryable, F, G extends Query<F>> extends Query<Set<F>> {
-
-    static SetQuery<SetQuery<?, ?, ?>, ?, ?> set() {
-        return new SetQueryHelper<>();
-    }
-
-    IntegerQuery<E> size();
-
-    E contains(G... objects);
-    E doesNotContain(G... objects);
+public interface MetricQuery<E extends Queryable> extends Query<EnterpriseMetricInfo> {
+    StringQuery<E> type();
+    StringQuery<E> adminPackageName();
+    BooleanQuery<E> Boolean();
+    StringQuery<E> strings();
 }
