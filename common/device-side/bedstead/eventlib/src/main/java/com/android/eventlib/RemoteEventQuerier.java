@@ -34,7 +34,9 @@ import android.os.RemoteException;
 import android.util.Log;
 
 import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.permissions.PermissionContext;
+import com.android.bedstead.nene.users.User;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -75,6 +77,7 @@ public class
 
                 @Override
                 public void onServiceDisconnected(ComponentName className) {
+                    mQuery.set(null);
                     Log.i(LOG_TAG, "Service disconnected from " + className);
                 }
             };
@@ -144,7 +147,7 @@ public class
     private AtomicReference<IQueryService> mQuery = new AtomicReference<>();
     private CountDownLatch mConnectionCountdown;
 
-    private static final int MAX_INITIALISATION_ATTEMPTS = 10;
+    private static final int MAX_INITIALISATION_ATTEMPTS = 100;
     private static final long INITIALISATION_ATTEMPT_DELAY_MS = 100;
 
     private void ensureInitialised() {
@@ -155,7 +158,7 @@ public class
             try {
                 ensureInitialisedOrThrow();
                 return;
-            } catch (Exception e) {
+            } catch (Exception | Error e) {
                 // Ignore, we will retry
             }
             try {
@@ -180,6 +183,7 @@ public class
         try {
             mQuery.get().init(id, data);
         } catch (RemoteException e) {
+            mQuery.set(null);
             throw new AssertionError("Error making cross-process call", e);
         }
     }
@@ -209,6 +213,21 @@ public class
                 throw new AssertionError("Interrupted while binding to service", e);
             }
         } else {
+            User user = (mEventLogsQuery.getUserHandle() == null) ? sTestApis.users().instrumented().resolve() : sTestApis.users().find(mEventLogsQuery.getUserHandle()).resolve();
+            if (user == null) {
+                throw new AssertionError("Tried to bind to user " + mEventLogsQuery.getUserHandle() + " but does not exist");
+            }
+            if (user.state() != User.UserState.RUNNING_UNLOCKED) {
+                throw new AssertionError("Tried to bind to user " + user + " but they are not RUNNING_UNLOCKED");
+            }
+            Package pkg = sTestApis.packages().find(mPackageName).resolve();
+            if (pkg == null) {
+                throw new AssertionError("Tried to bind to package " + mPackageName + " but it is not installed on any user.");
+            }
+            if (!pkg.installedOnUsers().contains(user)) {
+                throw new AssertionError("Tried to bind to package " + mPackageName + " but it is not installed on target user " + user);
+            }
+
             throw new AssertionError("Tried to bind but call returned false (intent is "
                     + intent + ", user is  " + mEventLogsQuery.getUserHandle() + ")");
         }
