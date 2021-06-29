@@ -52,9 +52,9 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
     private final long mRefCRC;
     private final int mSupport;
 
-    public CodecDecoderValidationTest(String mime, String[] srcFiles, String refFile,
-            float rmsError, long refCRC, int support) {
-        super(mime, null);
+    public CodecDecoderValidationTest(String decoder, String mime, String[] srcFiles,
+            String refFile, float rmsError, long refCRC, int support) {
+        super(decoder, mime, null);
         mSrcFiles = srcFiles;
         mRefFile = refFile;
         mRmsError = rmsError;
@@ -62,7 +62,7 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
         mSupport = support;
     }
 
-    @Parameterized.Parameters(name = "{index}({0})")
+    @Parameterized.Parameters(name = "{index}({0}_{1})")
     public static Collection<Object[]> input() {
         final boolean isEncoder = false;
         final boolean needAudio = true;
@@ -466,25 +466,27 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testDecodeAndValidate() throws IOException, InterruptedException {
-        ArrayList<MediaFormat> formats = null;
-        if (mSupport != CODEC_ALL) {
-            formats = new ArrayList<>();
-            for (String file : mSrcFiles) {
-                formats.add(setUpSource(file));
-                mExtractor.release();
-            }
+        ArrayList<MediaFormat> formats = new ArrayList<>();
+        for (String file : mSrcFiles) {
+            formats.add(setUpSource(file));
+            mExtractor.release();
         }
-        ArrayList<String> listOfDecoders = selectCodecs(mMime, formats, null, false);
-        if (listOfDecoders.isEmpty()) {
-            if (mSupport == CODEC_OPTIONAL) return;
-            else fail("no suitable codecs found for mime: " + mMime);
+        if (!areFormatsSupported(mCodecName, mMime, formats)) {
+            if (mSupport == CODEC_ALL) {
+                fail("format(s) not supported by component: " + mCodecName + " for mime : " +
+                        mMime);
+            }
+            if (mSupport != CODEC_OPTIONAL && selectCodecs(mMime, formats, null, false).isEmpty()) {
+                fail("format(s) not supported by any component for mime : " + mMime);
+            }
+            return;
         }
         final int mode = MediaExtractor.SEEK_TO_CLOSEST_SYNC;
-        for (String decoder : listOfDecoders) {
+        {
             OutputManager ref = null;
             for (String file : mSrcFiles) {
-                decodeToMemory(file, decoder, 0, mode, Integer.MAX_VALUE);
-                String log = String.format("codec: %s, test file: %s:: ", decoder, file);
+                decodeToMemory(file, mCodecName, 0, mode, Integer.MAX_VALUE);
+                String log = String.format("codec: %s, test file: %s:: ", mCodecName, file);
                 assertTrue(log + " unexpected error", !mAsyncHandle.hasSeenError());
                 assertTrue(log + "no input sent", 0 != mInputCount);
                 assertTrue(log + "output received", 0 != mOutputCount);

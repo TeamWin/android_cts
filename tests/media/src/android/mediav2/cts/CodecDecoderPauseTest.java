@@ -45,12 +45,12 @@ public class CodecDecoderPauseTest extends CodecDecoderTestBase {
     private final int NUM_FRAMES = 8;
     private final int mSupport;
 
-    public CodecDecoderPauseTest(String mime, String srcFile, int support) {
-        super(mime, srcFile);
+    public CodecDecoderPauseTest(String decoder, String mime, String srcFile, int support) {
+        super(decoder, mime, srcFile);
         mSupport = support;
     }
 
-    @Parameterized.Parameters(name = "{index}({0})")
+    @Parameterized.Parameters(name = "{index}({0}_{1})")
     public static Collection<Object[]> input() {
         final boolean isEncoder = false;
         final boolean needAudio = true;
@@ -75,27 +75,29 @@ public class CodecDecoderPauseTest extends CodecDecoderTestBase {
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testPause() throws IOException, InterruptedException {
-        ArrayList<MediaFormat> formats = null;
-        if (mSupport != CODEC_ALL) {
-            formats = new ArrayList<>();
-            formats.add(setUpSource(mTestFile));
-            mExtractor.release();
-        }
-        ArrayList<String> listOfDecoders = selectCodecs(mMime, formats, null, false);
-        if (listOfDecoders.isEmpty()) {
-            if (mSupport == CODEC_OPTIONAL) return;
-            else fail("no suitable codecs found for mime: " + mMime);
+        ArrayList<MediaFormat> formats = new ArrayList<>();
+        formats.add(setUpSource(mTestFile));
+        mExtractor.release();
+        if (!areFormatsSupported(mCodecName, mMime, formats)) {
+            if (mSupport == CODEC_ALL) {
+                fail("format(s) not supported by component: " + mCodecName + " for mime : " +
+                        mMime);
+            }
+            if (mSupport != CODEC_OPTIONAL && selectCodecs(mMime, formats, null, false).isEmpty()) {
+                fail("format(s) not supported by any component for mime : " + mMime);
+            }
+            return;
         }
         final boolean isAsync = true;
         MediaFormat format = setUpSource(mTestFile);
-        for (String decoder : listOfDecoders) {
-            mCodec = MediaCodec.createByCodecName(decoder);
+        {
+            mCodec = MediaCodec.createByCodecName(mCodecName);
             int loopCounter = 0;
             boolean[] boolStates = {true, false};
             OutputManager ref = new OutputManager();
             OutputManager test = new OutputManager();
             for (boolean enablePause : boolStates) {
-                String log = String.format("decoder: %s, input file: %s, mode: %s:: ", decoder,
+                String log = String.format("decoder: %s, input file: %s, mode: %s:: ", mCodecName,
                         mTestFile, (isAsync ? "async" : "sync"));
                 mExtractor.seekTo(0, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
                 configureCodec(format, isAsync, false, false);

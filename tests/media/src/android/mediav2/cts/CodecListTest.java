@@ -44,7 +44,7 @@ public class CodecListTest {
         boolean[] modes = {true, false};
         for (boolean isEncoder : modes) {
             ArrayList<String> cddRequiredMimeList =
-                    CodecTestBase.prepareRequiredArgsList(isEncoder, needAudio, needVideo);
+                    CodecTestBase.compileRequiredMimeList(isEncoder, needAudio, needVideo);
             for (String mime : cddRequiredMimeList) {
                 String log = String.format("no %s found for mime %s as required by cdd ",
                         isEncoder ? "encoder" : "decoder", mime);
