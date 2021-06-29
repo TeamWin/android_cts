@@ -22,6 +22,7 @@ import android.media.MediaCodecList;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.os.Build;
+import android.view.Surface;
 
 import java.io.File;
 import java.io.IOException;
@@ -63,6 +64,7 @@ class CodecPerformanceTestBase {
 
     MediaCodec mDecoder;
     MediaFormat mDecoderFormat;
+    Surface mSurface;
     double mOperatingRateExpected;
 
     static final float[] SCALING_FACTORS_LIST = new float[]{2.0f, 1.25f, 1.0f, 0.75f, 0.0f};
@@ -152,7 +154,7 @@ class CodecPerformanceTestBase {
             if (format.getString(MediaFormat.KEY_MIME).startsWith("video/")) {
                 extractor.selectTrack(trackID);
                 File file = new File(input);
-                int bufferSize = ((int) file.length()) << 1;
+                int bufferSize = (int) file.length();
                 mBuff = ByteBuffer.allocate(bufferSize);
                 int offset = 0;
                 long maxPTS = 0;
@@ -187,6 +189,7 @@ class CodecPerformanceTestBase {
                                 tmpBufferInfo.flags);
                         maxPTS = Math.max(maxPTS, bufferInfo.presentationTimeUs);
                         mBufferInfos.add(bufferInfo);
+                        if (mBufferInfos.size() >= MIN_FRAME_COUNT) break;
                     }
                 }
                 MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
@@ -205,7 +208,7 @@ class CodecPerformanceTestBase {
         return null;
     }
 
-    int getMaxOperatingRate(String codecName, String mime) throws Exception {
+    int getMaxOperatingRate(String codecName, String mime) throws IOException {
         MediaCodec codec = MediaCodec.createByCodecName(codecName);
         MediaCodecInfo mediaCodecInfo = codec.getCodecInfo();
         List<MediaCodecInfo.VideoCapabilities.PerformancePoint> pps = mediaCodecInfo
