@@ -28,10 +28,11 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import java.util.List;
 import java.util.Set;
 
 @RunWith(JUnit4.class)
-public class SetQueryHelperTest {
+public class ListQueryHelperTest {
 
     private final Queryable mQuery = null;
     private static final String BUNDLE_KEY = "key";
@@ -43,64 +44,72 @@ public class SetQueryHelperTest {
 
     @Test
     public void matches_size_matches_returnsTrue() {
-        SetQueryHelper<Queryable, Bundle, BundleQuery<Queryable>> setQueryHelper = new SetQueryHelper<>(mQuery);
+        ListQueryHelper<Queryable, Bundle, BundleQuery<Queryable>> listQueryHelper =
+                new ListQueryHelper<>(mQuery);
 
-        setQueryHelper.size().isEqualTo(1);
+        listQueryHelper.size().isEqualTo(1);
 
-        assertThat(setQueryHelper.matches(Set.of(new Bundle()))).isTrue();
+        assertThat(listQueryHelper.matches(List.of(new Bundle()))).isTrue();
     }
 
     @Test
     public void matches_size_doesNotMatch_returnsFalse() {
-        SetQueryHelper<Queryable, Bundle, BundleQuery<Queryable>> setQueryHelper = new SetQueryHelper<>(mQuery);
+        ListQueryHelper<Queryable, Bundle, BundleQuery<Queryable>> listQueryHelper =
+                new ListQueryHelper<>(mQuery);
 
-        setQueryHelper.size().isEqualTo(1);
+        listQueryHelper.size().isEqualTo(1);
 
-        assertThat(setQueryHelper.matches(Set.of())).isFalse();
+        assertThat(listQueryHelper.matches(List.of())).isFalse();
     }
 
     @Test
     public void matches_contains_doesContain_returnsTrue() {
-        SetQueryHelper<Queryable, Bundle, BundleQuery<Queryable>> setQueryHelper = new SetQueryHelper<>(mQuery);
+        ListQueryHelper<Queryable, Bundle, BundleQuery<Queryable>> listQueryHelper =
+                new ListQueryHelper<>(mQuery);
 
-        setQueryHelper.contains(
+        listQueryHelper.contains(
                 bundle().key(BUNDLE_KEY).exists()
         );
 
-        assertThat(setQueryHelper.matches(Set.of(BUNDLE_CONTAINING_KEY, BUNDLE_NOT_CONTAINING_KEY))).isTrue();
+        assertThat(listQueryHelper.matches(
+                List.of(BUNDLE_CONTAINING_KEY, BUNDLE_NOT_CONTAINING_KEY))).isTrue();
     }
 
     @Test
     public void matches_contains_doesNotContain_returnsFalse() {
-        SetQueryHelper<Queryable, Bundle, BundleQuery<Queryable>> setQueryHelper = new SetQueryHelper<>(mQuery);
+        ListQueryHelper<Queryable, Bundle, BundleQuery<Queryable>> listQueryHelper =
+                new ListQueryHelper<>(mQuery);
 
-        setQueryHelper.contains(
+        listQueryHelper.contains(
                 bundle().key(BUNDLE_KEY).exists()
         );
 
-        assertThat(setQueryHelper.matches(Set.of(BUNDLE_NOT_CONTAINING_KEY))).isFalse();
+        assertThat(listQueryHelper.matches(List.of(BUNDLE_NOT_CONTAINING_KEY))).isFalse();
     }
 
     @Test
     public void matches_doesNotContain_doesContain_returnsFalse() {
-        SetQueryHelper<Queryable, Bundle, BundleQuery<Queryable>> setQueryHelper = new SetQueryHelper<>(mQuery);
+        ListQueryHelper<Queryable, Bundle, BundleQuery<Queryable>> listQueryHelper =
+                new ListQueryHelper<>(mQuery);
 
-        setQueryHelper.doesNotContain(
+        listQueryHelper.doesNotContain(
                 bundle().key(BUNDLE_KEY).exists()
         );
 
-        assertThat(setQueryHelper.matches(Set.of(BUNDLE_CONTAINING_KEY, BUNDLE_NOT_CONTAINING_KEY))).isFalse();
+        assertThat(listQueryHelper.matches(
+                List.of(BUNDLE_CONTAINING_KEY, BUNDLE_NOT_CONTAINING_KEY))).isFalse();
     }
 
     @Test
     public void matches_doesNotContain_doesNotContain_returnsTrue() {
-        SetQueryHelper<Queryable, Bundle, BundleQuery<Queryable>> setQueryHelper = new SetQueryHelper<>(mQuery);
+        ListQueryHelper<Queryable, Bundle, BundleQuery<Queryable>> listQueryHelper =
+                new ListQueryHelper<>(mQuery);
 
-        setQueryHelper.doesNotContain(
+        listQueryHelper.doesNotContain(
                 bundle().key(BUNDLE_KEY).exists()
         );
 
-        assertThat(setQueryHelper.matches(Set.of(BUNDLE_NOT_CONTAINING_KEY))).isTrue();
+        assertThat(listQueryHelper.matches(List.of(BUNDLE_NOT_CONTAINING_KEY))).isTrue();
     }
 
 }
