@@ -18,13 +18,14 @@ package com.android.queryable.queries;
 
 import com.android.queryable.Queryable;
 
+import java.util.List;
 import java.util.Set;
 
-/** Query for a {@link java.util.Set}. */
-public interface SetQuery<E extends Queryable, F, G extends Query<F>> extends Query<Set<F>> {
+/** Query for a {@link java.util.List}. */
+public interface ListQuery<E extends Queryable, F, G extends Query<F>> extends Query<List<F>> {
 
-    static SetQuery<SetQuery<?, ?, ?>, ?, ?> set() {
-        return new SetQueryHelper<>();
+    static ListQuery<ListQuery<?, ?, ?>, ?, ?> list() {
+        return new ListQueryHelper<>();
     }
 
     IntegerQuery<E> size();
