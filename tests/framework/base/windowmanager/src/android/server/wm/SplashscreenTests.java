@@ -81,11 +81,15 @@ import android.platform.test.annotations.Presubmit;
 import android.view.WindowManager;
 import android.view.WindowMetrics;
 
+import androidx.core.graphics.ColorUtils;
+
 import com.android.compatibility.common.util.TestUtils;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.RuleChain;
 
 import java.util.Collections;
 import java.util.function.Consumer;
@@ -98,7 +102,12 @@ import java.util.function.Consumer;
 @android.server.wm.annotation.Group1
 public class SplashscreenTests extends ActivityManagerTestBase {
 
-    private static final int CENTER_ICON_SIZE = 160;
+    private static final int CENTER_ICON_SIZE = 192;
+
+    public DumpOnFailure dumpOnFailure = new DumpOnFailure();
+
+    @Rule
+    public RuleChain chain = RuleChain.outerRule(dumpOnFailure).around(mBaseRule);
 
     @Before
     public void setUp() throws Exception {
@@ -211,9 +220,7 @@ public class SplashscreenTests extends ActivityManagerTestBase {
 
         for (int x = bounds.left; x < bounds.right; x++) {
             for (int y = bounds.top; y < bounds.bottom; y++) {
-                if (ignoreRect != null && y >= ignoreRect.top && y < ignoreRect.bottom
-                        && x >= ignoreRect.left && x < ignoreRect.right) {
-                    img.setPixel(x, y, Color.YELLOW);
+                if (ignoreRect != null && ignoreRect.contains(x, y)) {
                     continue;
                 }
                 final int color = img.getPixel(x, y);
@@ -222,7 +229,6 @@ public class SplashscreenTests extends ActivityManagerTestBase {
                 } else if (isSimilarColor(secondaryColor, color)) {
                     secondaryPixels++;
                 } else {
-                    img.setPixel(x, y, Color.MAGENTA);
                     wrongPixels++;
                 }
             }
@@ -235,6 +241,7 @@ public class SplashscreenTests extends ActivityManagerTestBase {
 
         final float primaryRatio = (float) primaryPixels / totalPixels;
         if (primaryRatio < expectedPrimaryRatio) {
+            generateFailureImage(img, bounds, primaryColor, secondaryColor, ignoreRect);
             fail("Less than " + (expectedPrimaryRatio * 100.0f)
                     + "% of pixels have non-primary color primaryPixels=" + primaryPixels
                     + " secondaryPixels=" + secondaryPixels + " wrongPixels=" + wrongPixels);
@@ -243,10 +250,61 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         // On circular displays, there is an antialiased edge.
         final float wrongRatio = (float) wrongPixels / totalPixels;
         if (wrongRatio > acceptableWrongRatio) {
+            generateFailureImage(img, bounds, primaryColor, secondaryColor, ignoreRect);
             fail("More than " + (acceptableWrongRatio * 100.0f)
                     + "% of pixels have wrong color primaryPixels=" + primaryPixels
-                    + " secondaryPixels=" + secondaryPixels + " wrongPixels=" + wrongPixels);
+                    + " secondaryPixels=" + secondaryPixels + " wrongPixels="
+                    + wrongPixels);
         }
+    }
+
+    private void generateFailureImage(Bitmap img, Rect bounds, int primaryColor,
+            int secondaryColor, Rect ignoreRect) {
+
+        // Create a bitmap with on the left the original image and on the right the result of the
+        // test. The pixel marked in green have the right color, the transparent black one are
+        // ignored and the wrong pixels have the original color.
+        final int ignoredDebugColor = 0xEE000000;
+        final int validDebugColor = 0x6600FF00;
+        Bitmap result = Bitmap.createBitmap(img.getWidth() * 2, img.getHeight(),
+                Bitmap.Config.ARGB_8888);
+
+        // Execute the exact same logic applied in assertColor() to avoid bugs between the assertion
+        // method and the failure method
+        for (int x = bounds.left; x < bounds.right; x++) {
+            for (int y = bounds.top; y < bounds.bottom; y++) {
+                final int pixel = img.getPixel(x, y);
+                if (ignoreRect != null && ignoreRect.contains(x, y)) {
+                    markDebugPixel(pixel, result, x, y, ignoredDebugColor, 0.95f);
+                    continue;
+                }
+                if (isSimilarColor(primaryColor, pixel)) {
+                    markDebugPixel(pixel, result, x, y, validDebugColor, 0.8f);
+                } else if (isSimilarColor(secondaryColor, pixel)) {
+                    markDebugPixel(pixel, result, x, y, validDebugColor, 0.8f);
+                } else {
+                    markDebugPixel(pixel, result, x, y, Color.TRANSPARENT, 0.0f);
+                }
+            }
+        }
+
+        // Mark the pixels outside the bounds as ignored
+        for (int x = 0; x < img.getWidth(); x++) {
+            for (int y = 0; y < img.getHeight(); y++) {
+                if (bounds.contains(x, y)) {
+                    continue;
+                }
+                markDebugPixel(img.getPixel(x, y), result, x, y, ignoredDebugColor, 0.95f);
+            }
+        }
+        dumpOnFailure.dumpOnFailure("splashscreen-color-check", result);
+    }
+
+    private void markDebugPixel(int pixel, Bitmap result, int x, int y, int color, float ratio) {
+        int debugPixel = ColorUtils.blendARGB(pixel, color, ratio);
+        result.setPixel(x, y, pixel);
+        int debugOffsetX = result.getWidth() / 2;
+        result.setPixel(x + debugOffsetX, y, debugPixel);
     }
 
     @Test
@@ -254,6 +312,7 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         assumeFalse(isLeanBack());
         launchRuntimeHandleExitAnimationActivity(true, false, false, true);
     }
+
     @Test
     public void testHandleExitAnimationOnResume() throws Exception {
         assumeFalse(isLeanBack());
