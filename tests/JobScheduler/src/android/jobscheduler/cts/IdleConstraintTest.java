@@ -60,7 +60,9 @@ public class IdleConstraintTest extends BaseJobSchedulerTest {
         mJobScheduler.cancel(STATE_JOB_ID);
         // Put device back in to normal operation.
         toggleScreenOn(true);
-        setAutomotiveProjection(false);
+        if (isAutomotiveProjectionSupported()) {
+            setAutomotiveProjection(false);
+        }
 
         mUiDevice.executeShellCommand(
                 "settings put system screen_off_timeout " + mInitialDisplayTimeout);
@@ -150,17 +152,29 @@ public class IdleConstraintTest extends BaseJobSchedulerTest {
     }
 
     /**
+     * Check if the device is an auto.
+     */
+    private boolean isAutomotive() {
+        return getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
+    }
+
+    /**
+     * Check if automotive projection is supported.
+     */
+    private boolean isAutomotiveProjectionSupported() {
+        // Auto doesn't support automotive projection.
+        return !isAutomotive();
+    }
+
+    /**
      * Check if dock state is supported.
      */
     private boolean isDockStateSupported() {
-        final boolean isCar = getContext().getPackageManager().hasSystemFeature(
-                PackageManager.FEATURE_AUTOMOTIVE);
-
         final boolean isLeanback = getContext().getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_LEANBACK_ONLY);
 
-        // Car and Leanback do not support dock state.
-        return !isCar && !isLeanback;
+        // Auto and Leanback do not support dock state.
+        return !isAutomotive() && !isLeanback;
     }
 
     /**
@@ -205,13 +219,11 @@ public class IdleConstraintTest extends BaseJobSchedulerTest {
         if (on) {
             assertTrue(SystemUtil.callWithShellPermissionIdentity(
                     () -> uiModeManager.requestProjection(UiModeManager.PROJECTION_TYPE_AUTOMOTIVE),
-                    Manifest.permission.TOGGLE_AUTOMOTIVE_PROJECTION,
-                    Manifest.permission.INTERACT_ACROSS_USERS_FULL));
+                    Manifest.permission.TOGGLE_AUTOMOTIVE_PROJECTION));
         } else {
             SystemUtil.callWithShellPermissionIdentity(
                     () -> uiModeManager.releaseProjection(UiModeManager.PROJECTION_TYPE_AUTOMOTIVE),
-                    Manifest.permission.TOGGLE_AUTOMOTIVE_PROJECTION,
-                    Manifest.permission.INTERACT_ACROSS_USERS_FULL);
+                    Manifest.permission.TOGGLE_AUTOMOTIVE_PROJECTION);
         }
         Thread.sleep(2_000);
     }
@@ -220,6 +232,10 @@ public class IdleConstraintTest extends BaseJobSchedulerTest {
      * Ensure automotive projection is considered active.
      */
     public void testAutomotiveProjectionPreventsIdle() throws Exception {
+        if (!isAutomotiveProjectionSupported()) {
+            return;
+        }
+
         toggleScreenOn(false);
 
         setAutomotiveProjection(true);
@@ -244,31 +260,50 @@ public class IdleConstraintTest extends BaseJobSchedulerTest {
         runSatisfiedJob();
         assertFalse("Job fired when the device was active.", kTestEnvironment.awaitExecution(500));
 
-        kTestEnvironment.setExpectedExecutions(0);
-        kTestEnvironment.setExpectedWaitForRun();
-        setAutomotiveProjection(true);
-        toggleScreenOn(false);
-        triggerIdleMaintenance();
-        assertJobWaiting();
-        assertJobNotReady();
-        kTestEnvironment.readyToRun();
-        runSatisfiedJob();
-        assertFalse("Job fired when the device was active.", kTestEnvironment.awaitExecution(500));
+        if (isAutomotiveProjectionSupported()) {
+            kTestEnvironment.setExpectedExecutions(0);
+            kTestEnvironment.setExpectedWaitForRun();
+            setAutomotiveProjection(true);
+            toggleScreenOn(false);
+            triggerIdleMaintenance();
+            assertJobWaiting();
+            assertJobNotReady();
+            kTestEnvironment.readyToRun();
+            runSatisfiedJob();
+            assertFalse("Job fired when the device was active.",
+                    kTestEnvironment.awaitExecution(500));
 
-        kTestEnvironment.setExpectedExecutions(1);
-        kTestEnvironment.setExpectedWaitForRun();
-        kTestEnvironment.setContinueAfterStart();
-        kTestEnvironment.setExpectedStopped();
-        setAutomotiveProjection(false);
-        triggerIdleMaintenance();
-        assertJobReady();
-        kTestEnvironment.readyToRun();
-        runSatisfiedJob();
-        assertTrue("Job didn't fire when the device became idle.",
-                kTestEnvironment.awaitExecution());
+            kTestEnvironment.setExpectedExecutions(1);
+            kTestEnvironment.setExpectedWaitForRun();
+            kTestEnvironment.setContinueAfterStart();
+            kTestEnvironment.setExpectedStopped();
+            setAutomotiveProjection(false);
+            triggerIdleMaintenance();
+            assertJobReady();
+            kTestEnvironment.readyToRun();
+            runSatisfiedJob();
+            assertTrue("Job didn't fire when the device became idle.",
+                    kTestEnvironment.awaitExecution());
+        } else {
+            kTestEnvironment.setExpectedExecutions(1);
+            kTestEnvironment.setExpectedWaitForRun();
+            kTestEnvironment.setContinueAfterStart();
+            kTestEnvironment.setExpectedStopped();
+            toggleScreenOn(false);
+            triggerIdleMaintenance();
+            assertJobReady();
+            kTestEnvironment.readyToRun();
+            runSatisfiedJob();
+            assertTrue("Job didn't fire when the device became idle.",
+                    kTestEnvironment.awaitExecution());
+        }
     }
 
     public void testIdleJobStartsOnlyWhenIdle_settingProjectionEndsIdle() throws Exception {
+        if (!isAutomotiveProjectionSupported()) {
+            return;
+        }
+
         runIdleJobStartsOnlyWhenIdle();
 
         setAutomotiveProjection(true);
