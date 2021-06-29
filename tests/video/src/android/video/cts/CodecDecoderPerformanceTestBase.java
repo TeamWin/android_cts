@@ -55,6 +55,8 @@ class CodecDecoderPerformanceTestBase extends CodecPerformanceTestBase {
                 mOperatingRateExpected = operatingRateToSet;
             }
             mDecoderFormat.setInteger(MediaFormat.KEY_OPERATING_RATE, operatingRateToSet);
+        } else if (mMaxOpRateScalingFactor < 0.0f) {
+            mDecoderFormat.setInteger(MediaFormat.KEY_OPERATING_RATE, -1);
         }
     }
 

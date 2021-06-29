@@ -67,7 +67,7 @@ class CodecPerformanceTestBase {
     Surface mSurface;
     double mOperatingRateExpected;
 
-    static final float[] SCALING_FACTORS_LIST = new float[]{2.0f, 1.25f, 1.0f, 0.75f, 0.0f};
+    static final float[] SCALING_FACTORS_LIST = new float[]{2.0f, 1.25f, 1.0f, 0.75f, 0.0f, -1.0f};
     static final int[] KEY_PRIORITIES_LIST = new int[]{1, 0};
 
     public CodecPerformanceTestBase(String decoderName, String testFile, int keyPriority,
