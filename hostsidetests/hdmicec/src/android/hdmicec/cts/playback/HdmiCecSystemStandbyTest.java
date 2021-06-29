@@ -34,6 +34,7 @@ import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 import org.junit.Test;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /** HDMI CEC test to verify the device handles standby correctly (Section 11.2.3) */
@@ -44,6 +45,15 @@ public final class HdmiCecSystemStandbyTest extends BaseHostJUnit4Test {
 
     private static final String HDMI_CONTROL_DEVICE_AUTO_OFF =
             "hdmi_control_auto_device_off_enabled";
+
+    private static final List<LogicalAddress> SOURCE_LOGICAL_ADDRESSES =
+            List.of(
+                    LogicalAddress.TV,
+                    LogicalAddress.RECORDER_1,
+                    LogicalAddress.TUNER_1,
+                    LogicalAddress.PLAYBACK_2,
+                    LogicalAddress.AUDIO_SYSTEM,
+                    LogicalAddress.BROADCAST);
 
     public HdmiCecClientWrapper hdmiCecClient = new HdmiCecClientWrapper(LogicalAddress.PLAYBACK_1);
 
@@ -82,6 +92,8 @@ public final class HdmiCecSystemStandbyTest extends BaseHostJUnit4Test {
         } finally {
             /* Wake up the device */
             device.executeShellCommand("input keyevent KEYCODE_WAKEUP");
+            // Wait for the device to become ready.
+            TimeUnit.SECONDS.sleep(5);
         }
     }
 
@@ -94,17 +106,14 @@ public final class HdmiCecSystemStandbyTest extends BaseHostJUnit4Test {
         getDevice().executeShellCommand("reboot");
         getDevice().waitForBootComplete(HdmiCecConstants.REBOOT_TIMEOUT);
         try {
-            TimeUnit.SECONDS.sleep(5);
-            checkDeviceAsleepAfterStandbySent(LogicalAddress.TV, LogicalAddress.BROADCAST);
-            /* Wake up the TV */
-            hdmiCecClient.sendConsoleMessage("on " + LogicalAddress.TV);
-            checkDeviceAsleepAfterStandbySent(LogicalAddress.RECORDER_1, LogicalAddress.BROADCAST);
-            /* Wake up the TV */
-            hdmiCecClient.sendConsoleMessage("on " + LogicalAddress.TV);
-            checkDeviceAsleepAfterStandbySent(LogicalAddress.AUDIO_SYSTEM, LogicalAddress.BROADCAST);
-            /* Wake up the TV */
-            hdmiCecClient.sendConsoleMessage("on " + LogicalAddress.TV);
-            checkDeviceAsleepAfterStandbySent(LogicalAddress.PLAYBACK_2, LogicalAddress.BROADCAST);
+            for (LogicalAddress source : SOURCE_LOGICAL_ADDRESSES) {
+                if (source.equals(LogicalAddress.BROADCAST)) {
+                    continue;
+                }
+                checkDeviceAsleepAfterStandbySent(source, LogicalAddress.BROADCAST);
+                /* Wake up the TV */
+                hdmiCecClient.sendConsoleMessage("on " + LogicalAddress.TV);
+            }
         } finally {
             /* Wake up the TV */
             hdmiCecClient.sendConsoleMessage("on " + LogicalAddress.TV);
@@ -119,11 +128,9 @@ public final class HdmiCecSystemStandbyTest extends BaseHostJUnit4Test {
     public void cect_11_2_3_3_HandleAddressedStandby() throws Exception {
         getDevice().executeShellCommand("reboot");
         getDevice().waitForBootComplete(HdmiCecConstants.REBOOT_TIMEOUT);
-        checkDeviceAsleepAfterStandbySent(LogicalAddress.TV, LogicalAddress.PLAYBACK_1);
-        checkDeviceAsleepAfterStandbySent(LogicalAddress.RECORDER_1, LogicalAddress.PLAYBACK_1);
-        checkDeviceAsleepAfterStandbySent(LogicalAddress.AUDIO_SYSTEM, LogicalAddress.PLAYBACK_1);
-        checkDeviceAsleepAfterStandbySent(LogicalAddress.PLAYBACK_2, LogicalAddress.PLAYBACK_1);
-        checkDeviceAsleepAfterStandbySent(LogicalAddress.BROADCAST, LogicalAddress.PLAYBACK_1);
+        for (LogicalAddress source : SOURCE_LOGICAL_ADDRESSES) {
+            checkDeviceAsleepAfterStandbySent(source, LogicalAddress.PLAYBACK_1);
+        }
     }
 
     /**
@@ -138,6 +145,8 @@ public final class HdmiCecSystemStandbyTest extends BaseHostJUnit4Test {
             device.executeShellCommand("input keyevent KEYCODE_SLEEP");
             hdmiCecClient.checkOutputDoesNotContainMessage(LogicalAddress.BROADCAST, CecOperand.STANDBY);
             device.executeShellCommand("input keyevent KEYCODE_WAKEUP");
+            // Wait for the device to become ready.
+            TimeUnit.SECONDS.sleep(5);
         } finally {
             setHdmiControlDeviceAutoOff(wasOn);
         }
