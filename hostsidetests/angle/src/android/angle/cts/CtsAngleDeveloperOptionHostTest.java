@@ -62,8 +62,6 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test {
 
         setAndValidateAngleDevOptionPkgDriver(pkgName, sDriverGlobalSettingMap.get(driver));
 
-        startActivity(getDevice(), ANGLE_MAIN_ACTIVTY);
-
         CLog.logAndDisplay(LogLevel.INFO, "Validating driver selection (" +
                 driver + ") with method '" + sDriverTestMethodMap.get(driver) + "'");
 
@@ -288,8 +286,6 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test {
                         sDriverGlobalSettingMap.get(OpenGlDriverChoice.ANGLE) + "," +
                                 sDriverGlobalSettingMap.get(firstDriver));
 
-                startActivity(getDevice(), ANGLE_MAIN_ACTIVTY);
-
                 CLog.logAndDisplay(LogLevel.INFO, "Validating driver selection (" +
                         firstDriver + ") with method '" + sDriverTestMethodMap.get(firstDriver) + "'");
 
@@ -302,17 +298,12 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test {
                         sDriverGlobalSettingMap.get(OpenGlDriverChoice.ANGLE) + "," +
                                 sDriverGlobalSettingMap.get(secondDriver));
 
-                startActivity(getDevice(), ANGLE_MAIN_ACTIVTY);
-
                 CLog.logAndDisplay(LogLevel.INFO, "Validating driver selection (" +
                         secondDriver + ") with method '" + sDriverTestMethodMap.get(secondDriver) + "'");
 
                 runDeviceTests(ANGLE_DRIVER_TEST_SEC_PKG,
                         ANGLE_DRIVER_TEST_SEC_PKG + "." + ANGLE_DRIVER_TEST_CLASS,
                         sDriverTestMethodMap.get(secondDriver));
-
-                // Make sure the first PKG's driver value was not modified
-                startActivity(getDevice(), ANGLE_MAIN_ACTIVTY);
 
                 String devOptionPkg = getGlobalSetting(getDevice(), SETTINGS_GLOBAL_DRIVER_PKGS);
                 String devOptionValue = getGlobalSetting(getDevice(), SETTINGS_GLOBAL_DRIVER_VALUES);
@@ -324,129 +315,6 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test {
                         ANGLE_DRIVER_TEST_ANGLE_METHOD);
             }
         }
-    }
-
-    /**
-     * Test setting a driver to 'default' does not keep the value in the settings when the ANGLE
-     * activity runs and cleans things up.
-     */
-    @Test
-    public void testDefaultNotInSettings() throws Exception {
-        Assume.assumeTrue(isAngleLoadable(getDevice()));
-
-        // Install the package so the setting isn't removed because the package isn't present.
-        installApp(ANGLE_DRIVER_TEST_APP);
-
-        setAndValidateAngleDevOptionPkgDriver(ANGLE_DRIVER_TEST_PKG,
-                sDriverGlobalSettingMap.get(OpenGlDriverChoice.DEFAULT));
-
-        // Run the ANGLE activity so it'll clear up any 'default' settings.
-        startActivity(getDevice(), ANGLE_MAIN_ACTIVTY);
-
-        String devOptionPkg = getGlobalSetting(getDevice(), SETTINGS_GLOBAL_DRIVER_PKGS);
-        String devOptionValue = getGlobalSetting(getDevice(), SETTINGS_GLOBAL_DRIVER_VALUES);
-        CLog.logAndDisplay(LogLevel.INFO, "Validating: PKG name = '" +
-                devOptionPkg + "', driver value = '" + devOptionValue + "'");
-
-        Assert.assertEquals(
-                "Invalid developer option: " + SETTINGS_GLOBAL_DRIVER_PKGS + " = '" + devOptionPkg + "'",
-                "", devOptionPkg);
-        Assert.assertEquals(
-                "Invalid developer option: " + SETTINGS_GLOBAL_DRIVER_VALUES + " = '" + devOptionValue + "'",
-                "", devOptionValue);
-    }
-
-    /**
-     * Test uninstalled PKGs have their settings removed.
-     */
-    @Test
-    public void testUninstalledPkgsNotInSettings() throws Exception {
-        Assume.assumeTrue(isAngleLoadable(getDevice()));
-
-        uninstallPackage(getDevice(), ANGLE_DRIVER_TEST_PKG);
-
-        setAndValidateAngleDevOptionPkgDriver(ANGLE_DRIVER_TEST_PKG,
-                sDriverGlobalSettingMap.get(OpenGlDriverChoice.NATIVE));
-
-        // Run the ANGLE activity so it'll clear up any 'default' settings.
-        startActivity(getDevice(), ANGLE_MAIN_ACTIVTY);
-
-        String devOptionPkg = getGlobalSetting(getDevice(), SETTINGS_GLOBAL_DRIVER_PKGS);
-        String devOptionValue = getGlobalSetting(getDevice(), SETTINGS_GLOBAL_DRIVER_VALUES);
-        CLog.logAndDisplay(LogLevel.INFO, "Validating: PKG name = '" +
-                devOptionPkg + "', driver value = '" + devOptionValue + "'");
-
-        Assert.assertEquals(
-                "Invalid developer option: " + SETTINGS_GLOBAL_DRIVER_PKGS + " = '" + devOptionPkg + "'",
-                "", devOptionPkg);
-        Assert.assertEquals(
-                "Invalid developer option: " + SETTINGS_GLOBAL_DRIVER_VALUES + " = '" + devOptionValue + "'",
-                "", devOptionValue);
-    }
-
-    /**
-     * Test different PKGs can have different developer option values.
-     * Primary: ANGLE
-     * Secondary: Default
-     *
-     * Verify the PKG set to 'default' is removed from the settings.
-     */
-    @Test
-    public void testMultipleDevOptionsAngleDefault() throws Exception {
-        Assume.assumeTrue(isAngleLoadable(getDevice()));
-
-        installApp(ANGLE_DRIVER_TEST_APP);
-        installApp(ANGLE_DRIVER_TEST_SEC_APP);
-
-        setAndValidateAngleDevOptionPkgDriver(ANGLE_DRIVER_TEST_PKG + "," + ANGLE_DRIVER_TEST_SEC_PKG,
-                sDriverGlobalSettingMap.get(OpenGlDriverChoice.ANGLE) + "," +
-                        sDriverGlobalSettingMap.get(OpenGlDriverChoice.DEFAULT));
-
-        // Run the ANGLE activity so it'll clear up any 'default' settings.
-        startActivity(getDevice(), ANGLE_MAIN_ACTIVTY);
-
-        String devOption = getGlobalSetting(getDevice(), SETTINGS_GLOBAL_DRIVER_PKGS);
-        Assert.assertEquals(
-                "Invalid developer option: " + SETTINGS_GLOBAL_DRIVER_PKGS + " = '" + devOption + "'",
-                ANGLE_DRIVER_TEST_PKG, devOption);
-
-        devOption = getGlobalSetting(getDevice(), SETTINGS_GLOBAL_DRIVER_VALUES);
-        Assert.assertEquals(
-                "Invalid developer option: " + SETTINGS_GLOBAL_DRIVER_VALUES + " = '" + devOption + "'",
-                sDriverGlobalSettingMap.get(OpenGlDriverChoice.ANGLE), devOption);
-    }
-
-    /**
-     * Test different PKGs can have different developer option values.
-     * Primary: ANGLE
-     * Secondary: Default
-     *
-     * Verify the uninstalled PKG is removed from the settings.
-     */
-    @Test
-    public void testMultipleDevOptionsAngleNativeUninstall() throws Exception {
-        Assume.assumeTrue(isAngleLoadable(getDevice()));
-
-        installApp(ANGLE_DRIVER_TEST_SEC_APP);
-
-        setAndValidateAngleDevOptionPkgDriver(ANGLE_DRIVER_TEST_PKG + "," + ANGLE_DRIVER_TEST_SEC_PKG,
-                sDriverGlobalSettingMap.get(OpenGlDriverChoice.ANGLE) + "," +
-                        sDriverGlobalSettingMap.get(OpenGlDriverChoice.NATIVE));
-
-        // Run the ANGLE activity so it'll clear up any 'default' settings.
-        startActivity(getDevice(), ANGLE_MAIN_ACTIVTY);
-
-        String devOptionPkg = getGlobalSetting(getDevice(), SETTINGS_GLOBAL_DRIVER_PKGS);
-        String devOptionValue = getGlobalSetting(getDevice(), SETTINGS_GLOBAL_DRIVER_VALUES);
-        CLog.logAndDisplay(LogLevel.INFO, "Validating: PKG name = '" +
-                devOptionPkg + "', driver value = '" + devOptionValue + "'");
-
-        Assert.assertEquals(
-                "Invalid developer option: " + SETTINGS_GLOBAL_DRIVER_PKGS + " = '" + devOptionPkg + "'",
-                ANGLE_DRIVER_TEST_SEC_PKG, devOptionPkg);
-        Assert.assertEquals(
-                "Invalid developer option: " + SETTINGS_GLOBAL_DRIVER_VALUES + " = '" + devOptionValue + "'",
-                sDriverGlobalSettingMap.get(OpenGlDriverChoice.NATIVE), devOptionValue);
     }
 
     /**
