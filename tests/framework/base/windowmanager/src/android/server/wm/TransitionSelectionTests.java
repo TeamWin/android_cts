@@ -86,7 +86,6 @@ public class TransitionSelectionTests extends ActivityManagerTestBase {
     }
 
     @Test
-    @FlakyTest(bugId = 188904549)
     public void testOpenActivity_BothWallpaper() {
         testOpenActivity(true /*bottomWallpaper*/, true /*topWallpaper*/,
                 false /*slowStop*/, TRANSIT_WALLPAPER_INTRA_OPEN);
