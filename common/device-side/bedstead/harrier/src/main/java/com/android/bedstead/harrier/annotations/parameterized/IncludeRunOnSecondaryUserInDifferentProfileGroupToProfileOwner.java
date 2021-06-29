@@ -16,8 +16,11 @@
 
 package com.android.bedstead.harrier.annotations.parameterized;
 
+import static android.content.pm.PackageManager.FEATURE_DEVICE_ADMIN;
+
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
+import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser;
 import com.android.bedstead.harrier.annotations.meta.ParameterizedAnnotation;
 
@@ -34,6 +37,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @ParameterizedAnnotation
 @RequireRunOnSecondaryUser
+@RequireFeature(FEATURE_DEVICE_ADMIN)
 @EnsureHasWorkProfile(forUser = DeviceState.UserType.PRIMARY_USER, dpcIsPrimary = true)
 public @interface IncludeRunOnSecondaryUserInDifferentProfileGroupToProfileOwner {
 }
