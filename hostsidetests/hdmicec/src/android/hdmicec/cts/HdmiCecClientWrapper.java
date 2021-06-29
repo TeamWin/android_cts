@@ -105,6 +105,10 @@ public final class HdmiCecClientWrapper extends ExternalResource {
         }
     }
 
+    public boolean hasLogicalAddress(LogicalAddress address) {
+        return targetDevice.equals(address);
+    }
+
     /**
      * Sends a CEC message with source marked as broadcast to the device passed in the constructor
      * through the output console of the cec-communication channel.
