@@ -71,6 +71,23 @@ abstract class SELinuxTargetSdkTestBase extends AndroidTestCase
                 checkNetlinkRouteGetlink());
     }
 
+    protected static void checkNetlinkRouteGetneigh(boolean expectAllowed) throws IOException {
+        if (!expectAllowed) {
+            assertEquals(
+                    "RTM_GETNEIGH is not allowed on netlink route sockets. Verify that the"
+                        + " following patch has been applied to your kernel: "
+                        + "https://r.android.com/1690896",
+                    3,
+                    checkNetlinkRouteGetneigh());
+        } else {
+            assertEquals(
+                    "RTM_GETNEIGH should be allowed on netlink route sockets for apps with "
+                            + "targetSdkVersion <= S",
+                    0,
+                    checkNetlinkRouteGetneigh());
+        }
+    }
+
     protected static void noNetlinkRouteBind() throws IOException {
         assertEquals(
                 "bind() is not allowed on netlink route sockets",
@@ -188,6 +205,7 @@ abstract class SELinuxTargetSdkTestBase extends AndroidTestCase
     }
 
     private static final native int checkNetlinkRouteGetlink();
+    private static final native int checkNetlinkRouteGetneigh();
     private static final native int checkNetlinkRouteBind();
     private static final native String getFileContext(String path);
 }
