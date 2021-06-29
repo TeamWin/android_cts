@@ -416,13 +416,14 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
             UiObject downloadDoc = findDocument("Download");
             Rect downloadDocBounds = downloadDoc.getVisibleBounds();
             while (downloadDocBounds.bottom > saveButtonBounds.top) {
-                mDevice.swipe(mDevice.getDisplayWidth() / 2, mDevice.getDisplayHeight() / 2,
-                        mDevice.getDisplayWidth() / 2, mDevice.getDisplayHeight() / 2 - downloadDocBounds.height(), 40);
+                final Rect bounds =
+                        mActivity.getWindowManager().getCurrentWindowMetrics().getBounds();
+                mDevice.swipe(bounds.centerX(), bounds.centerY(), bounds.centerX(),
+                        bounds.height() / 2 - downloadDocBounds.height(), 40);
                 downloadDocBounds = downloadDoc.getVisibleBounds();
             }
             downloadDoc.click();
             mDevice.waitForIdle();
-
             // save button is enabled for Download folder
             assertTrue(findSaveButton().isEnabled());
         } catch (UiObjectNotFoundException e) {
