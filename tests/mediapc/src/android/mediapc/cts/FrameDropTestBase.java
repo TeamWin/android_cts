@@ -75,6 +75,7 @@ public class FrameDropTestBase {
     }
     static {
         if (Utils.isSPerfClass()) {
+            // Two frame drops per 10 seconds at 60 fps is 6 drops per 30 seconds
             MAX_FRAME_DROP_FOR_30S = 6;
             m540pTestFiles.put(AVC, "bbb_960x540_3mbps_60fps_avc.mp4");
             m540pTestFiles.put(HEVC, "bbb_960x540_3mbps_60fps_hevc.mp4");
@@ -88,6 +89,7 @@ public class FrameDropTestBase {
             m1080pTestFiles.put(VP9, "bbb_1920x1080_6mbps_60fps_vp9.webm");
             m1080pTestFiles.put(AV1, "bbb_1920x1080_6mbps_60fps_av1.mp4");
         } else if (Utils.isRPerfClass()) {
+            // One frame drops per 10 seconds at 30 fps is 3 drops per 30 seconds
             MAX_FRAME_DROP_FOR_30S = 3;
             m540pTestFiles.put(AVC, "bbb_960x540_2mbps_30fps_avc.mp4");
             m540pTestFiles.put(HEVC, "bbb_960x540_2mbps_30fps_hevc.mp4");

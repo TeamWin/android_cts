@@ -52,7 +52,8 @@ public class AdaptivePlaybackFrameDropTest extends FrameDropTestBase {
     /**
      * This test validates that the Adaptive Playback of 1920x1080 and 960x540 resolution
      * assets of 3 seconds duration each at 60 fps for S perf class / 30 fps for R perf class,
-     * playing alternatively, for at least 1800 frames or for 31 seconds, must not drop any frames.
+     * playing alternatively, for at least 30 seconds worth of frames or for 31 seconds of elapsed
+     * time, must not drop more than 6 frames for S perf class / 3 frames for R perf class.
      */
     @LargeTest
     @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
@@ -63,7 +64,7 @@ public class AdaptivePlaybackFrameDropTest extends FrameDropTestBase {
         int frameDropCount = playbackFrameDrop.getFrameDropCount();
         assertTrue("Adaptive Playback FrameDrop count for mime: " + mMime + ", decoder: " +
                 mDecoderName + ", FrameRate: " + FRAME_RATE + ", is not as expected. act/exp: " +
-                frameDropCount + "/" + MAX_ADAPTIVE_PLAYBACK_FRAME_DROP,
-                frameDropCount <= MAX_ADAPTIVE_PLAYBACK_FRAME_DROP);
+                frameDropCount + "/" + MAX_FRAME_DROP_FOR_30S,
+                frameDropCount <= MAX_FRAME_DROP_FOR_30S);
     }
 }
