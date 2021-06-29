@@ -239,6 +239,55 @@ public class JobInfoTest extends BaseJobSchedulerTest {
         mJobScheduler.schedule(ji);
     }
 
+    public void testMinimumChunkSizeBytes() {
+        assertBuildFails(
+                "Successfully built a JobInfo specifying minimum chunk bytes without"
+                        + " requesting network",
+                new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                        .setMinimumNetworkChunkBytes(500));
+        try {
+            assertBuildFails(
+                    "Successfully built a JobInfo specifying minimum chunk bytes a negative value",
+                    new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                            .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+                            .setMinimumNetworkChunkBytes(-500));
+        } catch (IllegalArgumentException expected) {
+            // Success. setMinimumNetworkChunkBytes() should throw the exception.
+        }
+
+        assertBuildFails(
+                "Successfully built a JobInfo with a higher minimum chunk size than total"
+                        + " transfer size",
+                new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                        .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+                        .setMinimumNetworkChunkBytes(500)
+                        .setEstimatedNetworkBytes(5, 5));
+        assertBuildFails(
+                "Successfully built a JobInfo with a higher minimum chunk size than total"
+                        + " transfer size",
+                new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                        .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+                        .setMinimumNetworkChunkBytes(500)
+                        .setEstimatedNetworkBytes(JobInfo.NETWORK_BYTES_UNKNOWN, 5));
+        assertBuildFails(
+                "Successfully built a JobInfo with a higher minimum chunk size than total"
+                        + " transfer size",
+                new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                        .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+                        .setMinimumNetworkChunkBytes(500)
+                        .setEstimatedNetworkBytes(5, JobInfo.NETWORK_BYTES_UNKNOWN));
+
+        JobInfo ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+                .setMinimumNetworkChunkBytes(500)
+                .setEstimatedNetworkBytes(
+                        JobInfo.NETWORK_BYTES_UNKNOWN, JobInfo.NETWORK_BYTES_UNKNOWN)
+                .build();
+        assertEquals(500, ji.getMinimumNetworkChunkBytes());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
+    }
+
     public void testMinimumLatency() {
         JobInfo ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                 .setMinimumLatency(1337)
