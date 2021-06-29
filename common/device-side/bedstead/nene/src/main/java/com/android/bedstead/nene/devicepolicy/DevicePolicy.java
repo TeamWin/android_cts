@@ -31,6 +31,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.os.Build;
 import android.provider.Settings;
+import android.util.Log;
 
 import androidx.annotation.Nullable;
 
@@ -60,6 +61,8 @@ import java.util.Set;
  * Test APIs related to device policy.
  */
 public final class DevicePolicy {
+
+    private static final String LOG_TAG = "DevicePolicy";
 
     private static final String USER_SETUP_COMPLETE_KEY = "user_setup_complete";
 
@@ -329,16 +332,27 @@ public final class DevicePolicy {
     }
 
     private void fillCache() {
-        try {
-            // TODO: Replace use of adb on supported versions of Android
-            String devicePolicyDumpsysOutput =
-                    ShellCommand.builder("dumpsys device_policy").execute();
-            AdbDevicePolicyParser.ParseResult result = mParser.parse(devicePolicyDumpsysOutput);
+        int retries = 5;
+        while (true) {
+            try {
+                // TODO: Replace use of adb on supported versions of Android
+                String devicePolicyDumpsysOutput =
+                        ShellCommand.builder("dumpsys device_policy").execute();
+                AdbDevicePolicyParser.ParseResult result = mParser.parse(devicePolicyDumpsysOutput);
 
-            mCachedDeviceOwner = result.mDeviceOwner;
-            mCachedProfileOwners = result.mProfileOwners;
-        } catch (AdbException | AdbParseException e) {
-            throw new RuntimeException("Error filling cache", e);
+                mCachedDeviceOwner = result.mDeviceOwner;
+                mCachedProfileOwners = result.mProfileOwners;
+                return;
+            } catch (AdbParseException e) {
+                if (e.adbOutput().contains("DUMP TIMEOUT") && retries-- > 0) {
+                    // Sometimes this call times out - just retry
+                    Log.e(LOG_TAG, "Dump timeout when filling cache, retrying", e);
+                } else {
+                    throw new NeneException("Error filling cache", e);
+                }
+            } catch (AdbException e) {
+                throw new NeneException("Error filling cache", e);
+            }
         }
     }
 

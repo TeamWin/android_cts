@@ -63,33 +63,21 @@ public final class ActivityDestroyedEvent extends Event {
     }
 
     /** Begin logging a {@link ActivityDestroyedEvent}. */
-    public static ActivityDestroyedEventLogger logger(Activity activity) {
-        return new ActivityDestroyedEventLogger(activity);
+    public static ActivityDestroyedEventLogger logger(Activity activity, android.content.pm.ActivityInfo activityInfo) {
+        return new ActivityDestroyedEventLogger(activity, activityInfo);
     }
 
     /** {@link EventLogger} for {@link ActivityDestroyedEvent}. */
     public static final class ActivityDestroyedEventLogger
             extends EventLogger<ActivityDestroyedEvent> {
-        private ActivityDestroyedEventLogger(Activity activity) {
+        private ActivityDestroyedEventLogger(Activity activity, android.content.pm.ActivityInfo activityInfo) {
             super(activity, new ActivityDestroyedEvent());
-            setActivity(activity);
+            setActivity(activityInfo);
         }
 
         /** Set the {@link Activity} being destroyed. */
-        public ActivityDestroyedEventLogger setActivity(Activity activity) {
-            mEvent.mActivity = new ActivityInfo(activity);
-            return this;
-        }
-
-        /** Set the {@link Activity} class being destroyed. */
-        public ActivityDestroyedEventLogger setActivity(Class<? extends Activity> activityClass) {
-            mEvent.mActivity = new ActivityInfo(activityClass);
-            return this;
-        }
-
-        /** Set the {@link Activity} class name being destroyed. */
-        public ActivityDestroyedEventLogger setActivity(String activityClassName) {
-            mEvent.mActivity = new ActivityInfo(activityClassName);
+        public ActivityDestroyedEventLogger setActivity(android.content.pm.ActivityInfo activity) {
+            mEvent.mActivity = ActivityInfo.builder(activity).build();
             return this;
         }
     }

@@ -70,7 +70,7 @@ public class EventLibActivityTest {
 
         EventLogs<ActivityCreatedEvent> eventLogs = ActivityCreatedEvent
                 .queryPackage(sContext.getPackageName())
-                .whereActivity().isSameClassAs(EventLibActivity.class);
+                .whereActivity().activityClass().isSameClassAs(EventLibActivity.class);
         assertThat(eventLogs.poll()).isNotNull();
     }
 
@@ -84,7 +84,7 @@ public class EventLibActivityTest {
 
         EventLogs<ActivityCreatedEvent> eventLogs = ActivityCreatedEvent
                 .queryPackage(sContext.getPackageName())
-                .whereActivity().className().isEqualTo(GENERATED_ACTIVITY_CLASS_NAME);
+                .whereActivity().activityClass().className().isEqualTo(GENERATED_ACTIVITY_CLASS_NAME);
         assertThat(eventLogs.poll()).isNotNull();
     }
 
@@ -101,7 +101,7 @@ public class EventLibActivityTest {
 
         EventLogs<ActivityStartedEvent> eventLogs = ActivityStartedEvent
                 .queryPackage(sContext.getPackageName())
-                .whereActivity().isSameClassAs(EventLibActivity.class);
+                .whereActivity().activityClass().isSameClassAs(EventLibActivity.class);
         assertThat(eventLogs.poll()).isNotNull();
     }
 
@@ -118,7 +118,7 @@ public class EventLibActivityTest {
 
         EventLogs<ActivityStartedEvent> eventLogs = ActivityStartedEvent
                 .queryPackage(sContext.getPackageName())
-                .whereActivity().className().isEqualTo(GENERATED_ACTIVITY_CLASS_NAME);
+                .whereActivity().activityClass().className().isEqualTo(GENERATED_ACTIVITY_CLASS_NAME);
         assertThat(eventLogs.poll()).isNotNull();
     }
 
@@ -135,7 +135,7 @@ public class EventLibActivityTest {
 
         EventLogs<ActivityStoppedEvent> eventLogs = ActivityStoppedEvent
                 .queryPackage(sContext.getPackageName())
-                .whereActivity().isSameClassAs(EventLibActivity.class);
+                .whereActivity().activityClass().isSameClassAs(EventLibActivity.class);
         assertThat(eventLogs.poll()).isNotNull();
     }
 
@@ -152,7 +152,7 @@ public class EventLibActivityTest {
 
         EventLogs<ActivityStoppedEvent> eventLogs = ActivityStoppedEvent
                 .queryPackage(sContext.getPackageName())
-                .whereActivity().className().isEqualTo(GENERATED_ACTIVITY_CLASS_NAME);
+                .whereActivity().activityClass().className().isEqualTo(GENERATED_ACTIVITY_CLASS_NAME);
         assertThat(eventLogs.poll()).isNotNull();
     }
 
@@ -169,7 +169,7 @@ public class EventLibActivityTest {
 
         EventLogs<ActivityDestroyedEvent> eventLogs = ActivityDestroyedEvent
                 .queryPackage(sContext.getPackageName())
-                .whereActivity().isSameClassAs(EventLibActivity.class);
+                .whereActivity().activityClass().isSameClassAs(EventLibActivity.class);
         assertThat(eventLogs.poll()).isNotNull();
     }
 
@@ -186,7 +186,7 @@ public class EventLibActivityTest {
 
         EventLogs<ActivityDestroyedEvent> eventLogs = ActivityDestroyedEvent
                 .queryPackage(sContext.getPackageName())
-                .whereActivity().className().isEqualTo(GENERATED_ACTIVITY_CLASS_NAME);
+                .whereActivity().activityClass().className().isEqualTo(GENERATED_ACTIVITY_CLASS_NAME);
         assertThat(eventLogs.poll()).isNotNull();
     }
 
@@ -205,7 +205,7 @@ public class EventLibActivityTest {
 
         EventLogs<ActivityPausedEvent> eventLogs = ActivityPausedEvent
                 .queryPackage(sContext.getPackageName())
-                .whereActivity().isSameClassAs(EventLibActivity.class);
+                .whereActivity().activityClass().isSameClassAs(EventLibActivity.class);
         assertThat(eventLogs.poll()).isNotNull();
     }
 
@@ -224,7 +224,7 @@ public class EventLibActivityTest {
 
         EventLogs<ActivityPausedEvent> eventLogs = ActivityPausedEvent
                 .queryPackage(sContext.getPackageName())
-                .whereActivity().className().isEqualTo(GENERATED_ACTIVITY_CLASS_NAME);
+                .whereActivity().activityClass().className().isEqualTo(GENERATED_ACTIVITY_CLASS_NAME);
         assertThat(eventLogs.poll()).isNotNull();
     }
 
@@ -241,7 +241,7 @@ public class EventLibActivityTest {
 
         EventLogs<ActivityResumedEvent> eventLogs = ActivityResumedEvent
                 .queryPackage(sContext.getPackageName())
-                .whereActivity().isSameClassAs(EventLibActivity.class);
+                .whereActivity().activityClass().isSameClassAs(EventLibActivity.class);
         assertThat(eventLogs.poll()).isNotNull();
     }
 
@@ -258,7 +258,7 @@ public class EventLibActivityTest {
 
         EventLogs<ActivityResumedEvent> eventLogs = ActivityResumedEvent
                 .queryPackage(sContext.getPackageName())
-                .whereActivity().className().isEqualTo(GENERATED_ACTIVITY_CLASS_NAME);
+                .whereActivity().activityClass().className().isEqualTo(GENERATED_ACTIVITY_CLASS_NAME);
         assertThat(eventLogs.poll()).isNotNull();
     }
 
@@ -275,7 +275,7 @@ public class EventLibActivityTest {
 
         EventLogs<ActivityRestartedEvent> eventLogs = ActivityRestartedEvent
                 .queryPackage(sContext.getPackageName())
-                .whereActivity().isSameClassAs(EventLibActivity.class);
+                .whereActivity().activityClass().isSameClassAs(EventLibActivity.class);
         assertThat(eventLogs.poll()).isNotNull();
     }
 
@@ -292,7 +292,7 @@ public class EventLibActivityTest {
 
         EventLogs<ActivityRestartedEvent> eventLogs = ActivityRestartedEvent
                 .queryPackage(sContext.getPackageName())
-                .whereActivity().className().isEqualTo(GENERATED_ACTIVITY_CLASS_NAME);
+                .whereActivity().activityClass().className().isEqualTo(GENERATED_ACTIVITY_CLASS_NAME);
         assertThat(eventLogs.poll()).isNotNull();
     }
 }

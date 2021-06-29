@@ -17,6 +17,9 @@
 package com.android.eventlib.premade;
 
 import android.app.Activity;
+import android.content.ComponentName;
+import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.PersistableBundle;
 
@@ -32,7 +35,6 @@ import com.android.eventlib.events.activities.ActivityStoppedEvent;
  * An {@link Activity} which logs events for all lifecycle events.
  */
 public class EventLibActivity extends Activity {
-
     private String mOverrideActivityClassName;
 
     public void setOverrideActivityClassName(String overrideActivityClassName) {
@@ -52,6 +54,10 @@ public class EventLibActivity extends Activity {
         return EventLibActivity.class.getName();
     }
 
+    public ComponentName getComponentName() {
+        return new ComponentName(getApplication().getPackageName(), getClassName());
+    }
+
     /** Log a {@link ActivityCreatedEvent}. */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,99 +72,69 @@ public class EventLibActivity extends Activity {
         logOnCreate(savedInstanceState, persistentState);
     }
 
-    private void logOnCreate(Bundle savedInstanceState, PersistableBundle persistentState) {
-        ActivityCreatedEvent.ActivityCreatedEventLogger logger =
-                ActivityCreatedEvent.logger(this, savedInstanceState)
-                        .setPersistentState(persistentState);
+    private ActivityInfo mActivityInfo = null;
 
-        if (mOverrideActivityClassName != null) {
-            logger.setActivity(mOverrideActivityClassName);
+    private ActivityInfo activityInfo() {
+        if (mActivityInfo != null) {
+            return mActivityInfo;
         }
 
-        logger.log();
+        PackageManager packageManager = getPackageManager();
+        try {
+            mActivityInfo = packageManager.getActivityInfo(getComponentName(), /* flags= */ 0);
+        } catch (PackageManager.NameNotFoundException e) {
+            throw new AssertionError("Cannot find activity", e);
+        }
+
+        return mActivityInfo;
+    }
+
+    private void logOnCreate(Bundle savedInstanceState, PersistableBundle persistentState) {
+        ActivityCreatedEvent.logger(this, activityInfo(), savedInstanceState)
+                .setPersistentState(persistentState)
+                .log();
     }
 
     /** Log a {@link ActivityStartedEvent}. */
     @Override
     protected void onStart() {
         super.onStart();
-        ActivityStartedEvent.ActivityStartedEventLogger logger =
-                ActivityStartedEvent.logger(this);
-
-        if (mOverrideActivityClassName != null) {
-            logger.setActivity(mOverrideActivityClassName);
-        }
-
-        logger.log();
+        ActivityStartedEvent.logger(this, activityInfo()).log();
     }
 
     /** Log a {@link ActivityRestartedEvent}. */
     @Override
     protected void onRestart() {
         super.onRestart();
-        ActivityRestartedEvent.ActivityRestartedEventLogger logger =
-                ActivityRestartedEvent.logger(this);
-
-        if (mOverrideActivityClassName != null) {
-            logger.setActivity(mOverrideActivityClassName);
-        }
-
-        logger.log();
+        ActivityRestartedEvent.logger(this, activityInfo()).log();
     }
 
     /** Log a {@link ActivityResumedEvent}. */
     @Override
     protected void onResume() {
         super.onResume();
-        ActivityResumedEvent.ActivityResumedEventLogger logger =
-                ActivityResumedEvent.logger(this);
-
-        if (mOverrideActivityClassName != null) {
-            logger.setActivity(mOverrideActivityClassName);
-        }
-
-        logger.log();
+        ActivityResumedEvent.logger(this, activityInfo()).log();
     }
 
     /** Log a {@link ActivityPausedEvent}. */
     @Override
     protected void onPause() {
         super.onPause();
-        ActivityPausedEvent.ActivityPausedEventLogger logger =
-                ActivityPausedEvent.logger(this);
-
-        if (mOverrideActivityClassName != null) {
-            logger.setActivity(mOverrideActivityClassName);
-        }
-
-        logger.log();
+        ActivityPausedEvent.logger(this, activityInfo()).log();
     }
 
     /** Log a {@link ActivityStoppedEvent}. */
     @Override
     protected void onStop() {
         super.onStop();
-        ActivityStoppedEvent.ActivityStoppedEventLogger logger =
-                ActivityStoppedEvent.logger(this);
-
-        if (mOverrideActivityClassName != null) {
-            logger.setActivity(mOverrideActivityClassName);
-        }
-
-        logger.log();
+        ActivityStoppedEvent.logger(this, activityInfo()).log();
     }
 
     /** Log a {@link ActivityDestroyedEvent}. */
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        ActivityDestroyedEvent.ActivityDestroyedEventLogger logger =
-                ActivityDestroyedEvent.logger(this);
-
-        if (mOverrideActivityClassName != null) {
-            logger.setActivity(mOverrideActivityClassName);
-        }
-
-        logger.log();
+        ActivityDestroyedEvent.logger(this, activityInfo())
+                .log();
     }
 }
