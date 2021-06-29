@@ -66,7 +66,8 @@ public class TestAppAppComponentFactoryTest {
 
         EventLogs<ActivityCreatedEvent> eventLogs =
                 ActivityCreatedEvent.queryPackage(sContext.getPackageName())
-                        .whereActivity().className().isEqualTo(DECLARED_ACTIVITY_WITH_NO_CLASS);
+                        .whereActivity().activityClass().className()
+                            .isEqualTo(DECLARED_ACTIVITY_WITH_NO_CLASS);
         assertThat(eventLogs.poll()).isNotNull();
     }
 
@@ -79,7 +80,8 @@ public class TestAppAppComponentFactoryTest {
 
         EventLogs<BroadcastReceivedEvent> eventLogs = BroadcastReceivedEvent
                 .queryPackage(sContext.getPackageName())
-                .whereBroadcastReceiver().className().isEqualTo(GENERATED_RECEIVER_CLASS_NAME);
+                .whereBroadcastReceiver().receiverClass().className()
+                    .isEqualTo(GENERATED_RECEIVER_CLASS_NAME);
         assertThat(eventLogs.poll()).isNotNull();
     }
 }

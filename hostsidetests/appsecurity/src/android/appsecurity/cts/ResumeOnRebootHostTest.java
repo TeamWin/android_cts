@@ -419,8 +419,8 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
 
     private void deviceDisableDeviceConfigSync() throws Exception {
         getDevice().executeShellCommand("device_config set_sync_disabled_for_tests persistent");
-        String res = getDevice().executeShellCommand("device_config is_sync_disabled_for_tests");
-        if (res == null || !res.contains("true")) {
+        String res = getDevice().executeShellCommand("device_config get_sync_disabled_for_tests");
+        if (res == null || !res.contains("persistent")) {
             CLog.w(TAG, "Could not disable device config for test");
         }
     }

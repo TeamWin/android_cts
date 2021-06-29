@@ -19,11 +19,17 @@ package com.android.queryable.queries;
 import androidx.annotation.CheckResult;
 
 import com.android.queryable.Queryable;
+import com.android.queryable.info.ClassInfo;
 
 import java.io.Serializable;
 
 /** Query for a {@link Class}. */
-public interface ClassQuery<E extends Queryable> extends Serializable {
+public interface ClassQuery<E extends Queryable> extends Query<ClassInfo> {
+
+    static ClassQuery<ClassQuery<?>> Class() {
+        return new ClassQueryHelper<>();
+    }
+
     /** Require that the class is the same as {@code clazz}. */
     E isSameClassAs(Class<?> clazz);
 

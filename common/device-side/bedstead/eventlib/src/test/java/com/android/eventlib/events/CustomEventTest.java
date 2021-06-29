@@ -55,7 +55,7 @@ public final class CustomEventTest {
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(sContext.getPackageName())
                 .whereTag().isEqualTo(TAG_1);
 
-        assertThat(eventLogs.get().tag()).isEqualTo(TAG_1);
+        assertThat(eventLogs.poll().tag()).isEqualTo(TAG_1);
     }
 
     @Test
@@ -70,7 +70,7 @@ public final class CustomEventTest {
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(sContext.getPackageName())
                 .whereTag().isEqualTo(TAG_2);
 
-        assertThat(eventLogs.get().tag()).isEqualTo(TAG_2);
+        assertThat(eventLogs.poll().tag()).isEqualTo(TAG_2);
     }
 
     @Test
@@ -82,7 +82,7 @@ public final class CustomEventTest {
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(sContext.getPackageName())
                 .whereData().isEqualTo(DATA_1);
 
-        assertThat(eventLogs.get().data()).isEqualTo(DATA_1);
+        assertThat(eventLogs.poll().data()).isEqualTo(DATA_1);
     }
 
     @Test
@@ -97,6 +97,6 @@ public final class CustomEventTest {
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(sContext.getPackageName())
                 .whereData().isEqualTo(DATA_2);
 
-        assertThat(eventLogs.get().data()).isEqualTo(DATA_2);
+        assertThat(eventLogs.poll().data()).isEqualTo(DATA_2);
     }
 }

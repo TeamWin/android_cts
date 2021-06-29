@@ -63,6 +63,10 @@ public class AdbException extends Exception {
         return mOutput;
     }
 
+    public String error() {
+        return mErr;
+    }
+
     @Override
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder(super.toString());

@@ -62,10 +62,10 @@ import org.junit.runner.RunWith
 class AppHibernationIntegrationTest {
     companion object {
         const val LOG_TAG = "AppHibernationIntegrationTest"
+        const val WAIT_TIME_MS = 1000L
         const val MAX_SCROLL_ATTEMPTS = 3
         const val TEST_UNUSED_THRESHOLD = 1L
 
-        const val SETTINGS_PACKAGE = "com.android.settings"
         const val CMD_KILL = "am kill %s"
     }
     private val context: Context = InstrumentationRegistry.getTargetContext()
@@ -167,11 +167,22 @@ class AppHibernationIntegrationTest {
                 UiAutomatorUtils.getUiDevice()
 
                 val packageManager = context.packageManager
-                val res = packageManager.getResourcesForApplication(SETTINGS_PACKAGE)
+                val settingsPackage = intent.resolveActivity(packageManager).packageName
+                val res = packageManager.getResourcesForApplication(settingsPackage)
                 val title = res.getString(
-                    res.getIdentifier("unused_apps_switch", "string", SETTINGS_PACKAGE))
-                assertTrue("Remove permissions and free up space toggle not found",
-                    UiScrollable(UiSelector().scrollable(true)).scrollTextIntoView(title))
+                    res.getIdentifier("unused_apps_switch", "string", settingsPackage))
+
+                // Settings can have multiple scrollable containers so all of them should be
+                // searched.
+                var toggleFound = false
+                var i = 0
+                var scrollableObject = UiScrollable(UiSelector().scrollable(true).instance(i))
+                while (!toggleFound && scrollableObject.waitForExists(WAIT_TIME_MS)) {
+                    toggleFound = scrollableObject.scrollTextIntoView(title)
+                    scrollableObject = UiScrollable(UiSelector().scrollable(true).instance(++i))
+                }
+
+                assertTrue("Remove permissions and free up space toggle not found", toggleFound)
             }
         }
     }
