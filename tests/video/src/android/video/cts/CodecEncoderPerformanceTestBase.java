@@ -120,6 +120,9 @@ class CodecEncoderPerformanceTestBase extends CodecPerformanceTestBase {
             }
             mDecoderFormat.setInteger(MediaFormat.KEY_OPERATING_RATE, operatingRateToSet);
             mEncoderFormat.setInteger(MediaFormat.KEY_OPERATING_RATE, operatingRateToSet);
+        } else if (mMaxOpRateScalingFactor < 0.0f) {
+            mDecoderFormat.setInteger(MediaFormat.KEY_OPERATING_RATE, -1);
+            mEncoderFormat.setInteger(MediaFormat.KEY_OPERATING_RATE, -1);
         }
         mOperatingRateExpected /= 2.0;
     }
