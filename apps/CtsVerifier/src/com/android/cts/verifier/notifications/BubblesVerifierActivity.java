@@ -25,6 +25,7 @@ import static android.view.View.INVISIBLE;
 import static android.view.View.VISIBLE;
 
 import static com.android.cts.verifier.notifications.BubbleActivity.EXTRA_TEST_NAME;
+import static com.android.cts.verifier.notifications.BubbleActivity.TEST_MAX_HEIGHT;
 import static com.android.cts.verifier.notifications.BubbleActivity.TEST_MIN_HEIGHT;
 
 import android.annotation.NonNull;
@@ -180,7 +181,9 @@ public class BubblesVerifierActivity extends PassFailButtons.Activity {
             mTests.add(new PortraitAndLandscape());
             mTests.add(new ScrimBehindExpandedView());
             mTests.add(new ImeInsetsExpandedView());
-            mTests.add(new MinHeightExpandedView());
+            // (b/190560927) Enable this in scv2.
+            //mTests.add(new MinHeightExpandedView());
+            mTests.add(new MaxHeightExpandedView());
         }
 
         setPassFailButtonClickListeners();
@@ -874,6 +877,42 @@ public class BubblesVerifierActivity extends PassFailButtons.Activity {
                     pendingIntent,
                     Icon.createWithResource(getApplicationContext(), R.drawable.ic_android));
             b.setDesiredHeight(0);
+
+            Notification.Builder builder = getConversationNotif(getTestTitle());
+            builder.setBubbleMetadata(b.build());
+            mNotificationManager.notify(NOTIFICATION_ID, builder.build());
+        }
+    }
+
+    private class MaxHeightExpandedView extends BubblesTestStep {
+
+        @Override
+        public int getTestTitle() {
+            return R.string.bubbles_test_max_height_title;
+        }
+
+        @Override
+        public int getTestDescription() {
+            return R.string.bubbles_test_max_height_verify;
+        }
+
+        @Override
+        public int getButtonText() {
+            return R.string.bubbles_test_max_height_button;
+        }
+
+        @Override
+        public void performTestAction() {
+            mNotificationManager.cancelAll();
+            Context context = getApplicationContext();
+            Intent intent = new Intent(context, BubbleActivity.class);
+            intent.putExtra(EXTRA_TEST_NAME, TEST_MAX_HEIGHT);
+            final PendingIntent pendingIntent = PendingIntent.getActivity(context, 2, intent,
+                    PendingIntent.FLAG_MUTABLE);
+            Notification.BubbleMetadata.Builder b = new Notification.BubbleMetadata.Builder(
+                    pendingIntent,
+                    Icon.createWithResource(getApplicationContext(), R.drawable.ic_android));
+            b.setDesiredHeight(Short.MAX_VALUE);
 
             Notification.Builder builder = getConversationNotif(getTestTitle());
             builder.setBubbleMetadata(b.build());
