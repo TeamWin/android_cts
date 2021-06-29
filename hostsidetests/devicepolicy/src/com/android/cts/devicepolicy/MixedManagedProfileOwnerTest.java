@@ -366,12 +366,6 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Override
     @Test
-    public void testLockTask() {
-        // Managed profiles are not allowed to use lock task
-    }
-
-    @Override
-    @Test
     public void testLockTaskAfterReboot() {
         // Managed profiles are not allowed to use lock task
     }
