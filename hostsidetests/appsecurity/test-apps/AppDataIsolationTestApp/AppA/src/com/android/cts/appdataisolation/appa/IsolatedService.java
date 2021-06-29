@@ -37,8 +37,6 @@ public class IsolatedService extends Service {
             try {
                 ApplicationInfo applicationInfo = getApplicationInfo();
 
-                assertDirIsNotAccessible("/data/misc/profiles/ref");
-
                 assertDirDoesNotExist(applicationInfo.dataDir);
                 assertDirDoesNotExist(applicationInfo.deviceProtectedDataDir);
                 assertDirDoesNotExist("/data/data/" + getPackageName());
@@ -55,6 +53,7 @@ public class IsolatedService extends Service {
                 assertDirDoesNotExist("/data/data/" + FileUtils.APPB_PKG);
                 assertDirDoesNotExist("/data/misc/profiles/cur/" + currentUserId + "/"
                         + FileUtils.APPB_PKG);
+                assertDirDoesNotExist("/data/misc/profiles/ref/" + FileUtils.APPB_PKG);
 
                 assertDirDoesNotExist(FileUtils.replacePackageAWithNotInstalledPkg(
                         applicationInfo.dataDir));
@@ -62,6 +61,8 @@ public class IsolatedService extends Service {
                         applicationInfo.deviceProtectedDataDir));
                 assertDirDoesNotExist("/data/data/" + FileUtils.NOT_INSTALLED_PKG);
                 assertDirDoesNotExist("/data/misc/profiles/cur/" + currentUserId + "/"
+                        + FileUtils.NOT_INSTALLED_PKG);
+                assertDirDoesNotExist("/data/misc/profiles/ref/"
                         + FileUtils.NOT_INSTALLED_PKG);
             } catch (Throwable e) {
                 throw new IllegalStateException(e.getMessage());
