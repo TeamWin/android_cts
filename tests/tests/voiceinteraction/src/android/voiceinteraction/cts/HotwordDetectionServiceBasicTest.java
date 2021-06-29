@@ -19,11 +19,13 @@ package android.voiceinteraction.cts;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.content.Intent;
+import android.os.ParcelFileDescriptor;
 import android.os.Parcelable;
 import android.platform.test.annotations.AppModeFull;
 import android.service.voice.HotwordDetectedResult;
 import android.service.voice.HotwordDetectionService;
 import android.voiceinteraction.common.Utils;
+import android.voiceinteraction.service.EventPayloadParcelable;
 import android.voiceinteraction.service.MainHotwordDetectionService;
 
 import androidx.annotation.NonNull;
@@ -137,8 +139,8 @@ public final class HotwordDetectionServiceBasicTest
         // restart it after stopping; then the service can report a special result.
         perform(Utils.HOTWORD_DETECTION_SERVICE_MIC_ONDETECT_TEST);
         perform(Utils.HOTWORD_DETECTION_SERVICE_CALL_STOP_RECOGNITION);
-        HotwordDetectedResult result =
-                (HotwordDetectedResult) performAndGetDetectionResult(
+        EventPayloadParcelable result =
+                (EventPayloadParcelable) performAndGetDetectionResult(
                         Utils.HOTWORD_DETECTION_SERVICE_MIC_ONDETECT_TEST);
 
         verifyDetectedResult(
@@ -195,10 +197,15 @@ public final class HotwordDetectionServiceBasicTest
     // TODO: Implement HotwordDetectedResult#equals to override the Bundle equality check; then
     // simply check that the HotwordDetectedResults are equal.
     private void verifyDetectedResult(Parcelable result, HotwordDetectedResult expected) {
-        assertThat(result).isInstanceOf(HotwordDetectedResult.class);
-        assertThat(((HotwordDetectedResult) result).getConfidenceLevel())
-                .isEqualTo(expected.getConfidenceLevel());
-        assertThat(((HotwordDetectedResult) result).getScore()).isEqualTo(expected.getScore());
+        assertThat(result).isInstanceOf(EventPayloadParcelable.class);
+        HotwordDetectedResult hotwordDetectedResult =
+                ((EventPayloadParcelable) result).mHotwordDetectedResult;
+        ParcelFileDescriptor audioStream = ((EventPayloadParcelable) result).mAudioStream;
+        assertThat(hotwordDetectedResult).isNotNull();
+        assertThat(hotwordDetectedResult.getConfidenceLevel()).isEqualTo(
+                expected.getConfidenceLevel());
+        assertThat(hotwordDetectedResult.getScore()).isEqualTo(expected.getScore());
+        assertThat(audioStream).isNull();
     }
 
     @Override
