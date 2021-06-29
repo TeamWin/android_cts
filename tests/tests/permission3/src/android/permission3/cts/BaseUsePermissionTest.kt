@@ -573,7 +573,11 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
 
     private fun scrollToBottom() {
         val scrollable = UiScrollable(UiSelector().scrollable(true)).apply {
-            swipeDeadZonePercentage = 0.25
+            if (isWatch) {
+                swipeDeadZonePercentage = 0.1
+            } else {
+                swipeDeadZonePercentage = 0.25
+            }
         }
         waitForIdle()
         if (scrollable.exists()) {
