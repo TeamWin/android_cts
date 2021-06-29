@@ -457,7 +457,9 @@ public class UiTranslationManagerTest {
 
         startUiTranslation(/* shouldPadContent */ false, views, contentCaptureContext);
 
-        Mockito.verify(mockCallback, Mockito.never())
+        // TODO(b/191417938): add tests for the Activity isn't the same package of the
+        //  registered callback app
+        Mockito.verify(mockCallback, Mockito.times(1))
                 .onStarted(any(ULocale.class), any(ULocale.class));
     }
 
