@@ -19,23 +19,23 @@ package com.android.queryable.queries;
 import com.android.queryable.Queryable;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 
-public final class SetQueryHelper<E extends Queryable, F, G extends Query<F>> implements SetQuery<E, F, G>, Serializable {
+public final class ListQueryHelper<E extends Queryable, F, G extends Query<F>> implements ListQuery<E, F, G>, Serializable {
 
     private E mQuery;
     private final IntegerQueryHelper<E> mSizeQuery;
-    private final Set<G> mContains = new HashSet<>();
-    private final Set<G> mDoesNotContain = new HashSet<>();
+    private final List<G> mContains = new ArrayList<>();
+    private final List<G> mDoesNotContain = new ArrayList<>();
 
-    SetQueryHelper() {
+    ListQueryHelper() {
         mQuery = (E) this;
         mSizeQuery = new IntegerQueryHelper<>(mQuery);
     }
 
-    public SetQueryHelper(E query) {
+    public ListQueryHelper(E query) {
         mQuery = query;
         mSizeQuery = new IntegerQueryHelper<>(mQuery);
     }
@@ -58,7 +58,7 @@ public final class SetQueryHelper<E extends Queryable, F, G extends Query<F>> im
     }
 
     @Override
-    public boolean matches(Set<F> value) {
+    public boolean matches(List<F> value) {
         if (!mSizeQuery.matches(value.size())) {
             return false;
         }
@@ -74,8 +74,8 @@ public final class SetQueryHelper<E extends Queryable, F, G extends Query<F>> im
         return true;
     }
 
-    private boolean checkContainsAtLeast(Set<F> value) {
-        Set<F> v = new HashSet<>(value);
+    private boolean checkContainsAtLeast(List<F> value) {
+        List<F> v = new ArrayList<>(value);
 
         for (G containsAtLeast : mContains) {
             F match = findMatch(containsAtLeast, v);
@@ -89,7 +89,7 @@ public final class SetQueryHelper<E extends Queryable, F, G extends Query<F>> im
         return true;
     }
 
-    private boolean checkDoesNotContain(Set<F> value) {
+    private boolean checkDoesNotContain(List<F> value) {
         for (G doesNotContain : mDoesNotContain) {
             if (findMatch(doesNotContain, value) != null) {
                 return false;
@@ -99,7 +99,7 @@ public final class SetQueryHelper<E extends Queryable, F, G extends Query<F>> im
         return true;
     }
 
-    private F findMatch(G query, Set<F> values) {
+    private F findMatch(G query, List<F> values) {
         for (F value : values) {
             if (query.matches(value)) {
                 return value;

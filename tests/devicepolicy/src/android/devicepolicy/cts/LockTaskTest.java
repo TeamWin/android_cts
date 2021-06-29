@@ -27,6 +27,8 @@ import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_NOTIFICATI
 import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_OVERVIEW;
 import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_SYSTEM_INFO;
 
+import static com.android.queryable.queries.StringQuery.string;
+
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
@@ -38,6 +40,7 @@ import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.os.Bundle;
+import android.stats.devicepolicy.EventId;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
@@ -46,9 +49,11 @@ import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.NegativePolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PositivePolicyTest;
 import com.android.bedstead.harrier.policies.LockTask;
+import com.android.bedstead.metricsrecorder.EnterpriseMetricsRecorder;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.activities.Activity;
 import com.android.bedstead.nene.packages.ComponentReference;
+import com.android.bedstead.remotedpc.RemoteDpc;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppActivity;
 import com.android.bedstead.testapp.TestAppActivityReference;
@@ -108,7 +113,6 @@ public class LockTaskTest {
 
     @Test
     @Postsubmit(reason = "New test")
-    // TODO(scottjonathan): This omits the metrics test
     @PositivePolicyTest(policy = LockTask.class)
     public void setLockTaskPackages_lockTaskPackagesIsSet() {
         String[] originalLockTaskPackages =
@@ -126,6 +130,39 @@ public class LockTaskTest {
 
     @Test
     @Postsubmit(reason = "New test")
+    @PositivePolicyTest(policy = LockTask.class)
+    public void startLockTask_recordsMetric() {
+        String[] originalLockTaskPackages =
+                sDeviceState.dpc().devicePolicyManager().getLockTaskPackages();
+
+        try (EnterpriseMetricsRecorder metrics = EnterpriseMetricsRecorder.create();
+             TestAppInstanceReference testApp = sTestApp.install(sTestApis.users().instrumented())){
+            sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(new String[]{sTestApp.packageName()});
+            Activity<TestAppActivity> activity = testApp.activities().any().start();
+
+            try {
+                activity.startLockTask();
+
+                // TODO(b/191745956): Improve metrics query interface
+                assertThat(metrics.query()
+                        .whereType().isEqualTo(EventId.SET_LOCKTASK_MODE_ENABLED_VALUE)
+                        .whereAdminPackageName().isEqualTo(
+                                RemoteDpc.DPC_COMPONENT_NAME.getPackageName())
+                        .whereBoolean().isTrue()
+                        .whereStrings().contains(
+                                string().isEqualTo(sTestApp.packageName())
+                        )
+                        .poll()).isNotNull();
+            } finally {
+                activity.stopLockTask();
+            }
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(originalLockTaskPackages);
+        }
+    }
+
+    @Test
+    @Postsubmit(reason = "New test")
     @CannotSetPolicyTest(policy = LockTask.class)
     public void getLockTaskPackages_policyIsNotAllowedToBeFetched_throwsException() {
         assertThrows(SecurityException.class,
@@ -134,7 +171,6 @@ public class LockTaskTest {
 
     @Test
     @Postsubmit(reason = "New test")
-    // TODO(scottjonathan): This omits the metrics test
     @PositivePolicyTest(policy = LockTask.class)
     public void setLockTaskPackages_empty_lockTaskPackagesIsSet() {
         String[] originalLockTaskPackages =
@@ -152,7 +188,6 @@ public class LockTaskTest {
 
     @Test
     @Postsubmit(reason = "New test")
-    // TODO(scottjonathan): This omits the metrics test
     @PositivePolicyTest(policy = LockTask.class)
     public void setLockTaskPackages_includesPolicyExemptApp_lockTaskPackagesIsSet() {
         Set<String> policyExemptApps = sTestApis.devicePolicy().getPolicyExemptApps();
@@ -182,7 +217,6 @@ public class LockTaskTest {
 
     @Test
     @Postsubmit(reason = "New test")
-    // TODO(scottjonathan): This omits the metrics test
     @PositivePolicyTest(policy = LockTask.class)
     public void isLockTaskPermitted_lockTaskPackageIsSet_returnsTrue() {
         String[] originalLockTaskPackages =
@@ -216,7 +250,6 @@ public class LockTaskTest {
 
     @Test
     @Postsubmit(reason = "New test")
-    // TODO(scottjonathan): This omits the metrics test
     @PositivePolicyTest(policy = LockTask.class)
     public void isLockTaskPermitted_lockTaskPackageIsNotSet_returnsFalse() {
         String[] originalLockTaskPackages =
@@ -350,8 +383,8 @@ public class LockTaskTest {
     }
 
     @Test
+    @Postsubmit(reason = "New test")
     @PositivePolicyTest(policy = LockTask.class)
-    // TODO(scottjonathan): This omits the metrics test
     public void startLockTask_includedInLockTaskPackages_taskIsLocked() {
         String[] originalLockTaskPackages =
                 sDeviceState.dpc().devicePolicyManager().getLockTaskPackages();
@@ -377,6 +410,7 @@ public class LockTaskTest {
     }
 
     @Test
+    @Postsubmit(reason = "New test")
     @PositivePolicyTest(policy = LockTask.class)
     public void startLockTask_notIncludedInLockTaskPackages_taskIsNotLocked() {
         String[] originalLockTaskPackages =
@@ -402,6 +436,7 @@ public class LockTaskTest {
     }
 
     @Test
+    @Postsubmit(reason = "New test")
     @NegativePolicyTest(policy = LockTask.class)
     @Ignore // TODO(189325405): Re-enable once secondary users can start activities
     public void startLockTask_includedInLockTaskPackages_policyShouldNotApply_taskIsNotLocked() {
@@ -429,6 +464,7 @@ public class LockTaskTest {
     }
 
     @Test
+    @Postsubmit(reason = "New test")
     @PositivePolicyTest(policy = LockTask.class)
     public void finish_isLocked_doesNotFinish() {
         String[] originalLockTaskPackages =
@@ -458,6 +494,7 @@ public class LockTaskTest {
     }
 
     @Test
+    @Postsubmit(reason = "New test")
     @PositivePolicyTest(policy = LockTask.class)
     public void finish_hasStoppedLockTask_doesFinish() {
         String[] originalLockTaskPackages =
@@ -486,6 +523,7 @@ public class LockTaskTest {
     }
 
     @Test
+    @Postsubmit(reason = "New test")
     @PositivePolicyTest(policy = LockTask.class)
     public void setLockTaskPackages_removingCurrentlyLockedTask_taskFinishes() {
         String[] originalLockTaskPackages =
@@ -513,6 +551,7 @@ public class LockTaskTest {
     }
 
     @Test
+    @Postsubmit(reason = "New test")
     @PositivePolicyTest(policy = LockTask.class)
     public void setLockTaskPackages_removingCurrentlyLockedTask_otherLockedTasksRemainLocked() {
         String[] originalLockTaskPackages =
@@ -551,6 +590,7 @@ public class LockTaskTest {
     }
 
     @Test
+    @Postsubmit(reason = "New test")
     @PositivePolicyTest(policy = LockTask.class)
     public void startActivity_withinSameTask_startsActivity() {
         String[] originalLockTaskPackages =
@@ -582,6 +622,7 @@ public class LockTaskTest {
     }
 
     @Test
+    @Postsubmit(reason = "New test")
     @PositivePolicyTest(policy = LockTask.class)
     public void startActivity_withinSameTask_blockStartInTask_doesNotStart() {
         String[] originalLockTaskPackages =
@@ -617,6 +658,7 @@ public class LockTaskTest {
     }
 
     @Test
+    @Postsubmit(reason = "New test")
     @PositivePolicyTest(policy = LockTask.class)
     public void startActivity_inNewTask_blockStartInTask_doesNotStart() {
         String[] originalLockTaskPackages =
@@ -653,6 +695,7 @@ public class LockTaskTest {
     }
 
     @Test
+    @Postsubmit(reason = "New test")
     @PositivePolicyTest(policy = LockTask.class)
     public void startActivity_fromPermittedPackage_newTask_starts() {
         String[] originalLockTaskPackages =
@@ -684,6 +727,7 @@ public class LockTaskTest {
     }
 
     @Test
+    @Postsubmit(reason = "New test")
     @PositivePolicyTest(policy = LockTask.class)
     public void startActivity_fromNonPermittedPackage_newTask_doesNotStart() {
         String[] originalLockTaskPackages =
@@ -715,6 +759,7 @@ public class LockTaskTest {
     }
 
     @Test
+    @Postsubmit(reason = "New test")
     @PositivePolicyTest(policy = LockTask.class)
     public void startActivity_lockTaskEnabledOption_startsInLockTaskMode() {
         String[] originalLockTaskPackages =
@@ -744,6 +789,7 @@ public class LockTaskTest {
     }
 
     @Test
+    @Postsubmit(reason = "New test")
     @PositivePolicyTest(policy = LockTask.class)
     public void startActivity_lockTaskEnabledOption_notAllowedPackage_throwsException() {
         String[] originalLockTaskPackages =
@@ -767,6 +813,7 @@ public class LockTaskTest {
     }
 
     @Test
+    @Postsubmit(reason = "New test")
     @PositivePolicyTest(policy = LockTask.class)
     public void startActivity_ifWhitelistedActivity_startsInLockTaskMode() {
         String[] originalLockTaskPackages =
@@ -797,6 +844,7 @@ public class LockTaskTest {
     }
 
     @Test
+    @Postsubmit(reason = "New test")
     @PositivePolicyTest(policy = LockTask.class)
     public void startActivity_ifWhitelistedActivity_notWhitelisted_startsNotInLockTaskMode() {
         String[] originalLockTaskPackages =
@@ -827,6 +875,7 @@ public class LockTaskTest {
     }
 
     @Test
+    @Postsubmit(reason = "New test")
     @PositivePolicyTest(policy = LockTask.class)
     public void finish_ifWhitelistedActivity_doesNotFinish() {
         String[] originalLockTaskPackages =
@@ -854,6 +903,38 @@ public class LockTaskTest {
             } finally {
                 activity.stopLockTask();
             }
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(
+                    originalLockTaskPackages);
+        }
+    }
+
+    @Test
+    @Postsubmit(reason = "New test")
+    @PositivePolicyTest(policy = LockTask.class)
+    public void setLockTaskPackages_removingExistingIfWhitelistedActivity_stopsTask() {
+        String[] originalLockTaskPackages =
+                sDeviceState.dpc().devicePolicyManager().getLockTaskPackages();
+
+        try (TestAppInstanceReference testApp =
+                     sLockTaskTestApp.install(sTestApis.users().instrumented())) {
+            sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(
+                    new String[]{sLockTaskTestApp.packageName()});
+            Activity<TestAppActivity> activity = testApp.activities().query()
+                    .whereActivity().activityClass().simpleName().isEqualTo("ifwhitelistedactivity")
+                    // TODO(scottjonathan): filter for lock task mode - currently we can't check
+                    //  this so we just get a fixed package which contains a fixed activity
+                    .get().start();
+
+            sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(new String[]{});
+
+            EventLogs<ActivityDestroyedEvent> events =
+                    ActivityDestroyedEvent.queryPackage(sLockTaskTestApp.packageName())
+                            .whereActivity().activityClass().className().isEqualTo(
+                            activity.activity().component().className());
+            assertThat(events.poll()).isNotNull();
+            assertThat(sTestApis.activities().foregroundActivity()).isNotEqualTo(
+                    activity.activity().component());
         } finally {
             sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(
                     originalLockTaskPackages);
