@@ -1161,6 +1161,8 @@ public class StagedInstallTest {
     public void testApexFailsToInstallIfApkInApexFailsToScan_VerifyPostReboot() throws Exception {
         int sessionId = retrieveLastSessionId();
         assertSessionFailed(sessionId);
+        assertSessionFailedWithMessage(sessionId, "Failed to parse "
+                + "/apex/com.android.apex.cts.shim/app/CtsShimTargetPSdk");
         assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(1);
     }
 
