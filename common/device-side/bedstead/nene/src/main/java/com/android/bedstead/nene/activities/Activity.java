@@ -25,6 +25,8 @@ import com.android.bedstead.nene.annotations.Experimental;
 import com.android.bedstead.nene.packages.ComponentReference;
 import com.android.compatibility.common.util.PollingCheck;
 
+import java.util.Objects;
+
 /**
  * A wrapper around a specific Activity instance.
  */
@@ -81,14 +83,22 @@ public class Activity<E> {
     /**
      * Calls {@link android.app.Activity#startActivity(Intent)} and blocks until the activity has
      * started.
+     *
+     * <p>If a specific component is specified, this will block until that component is in the
+     * foreground. Otherwise, it will block only until the foreground activity has changed.
      */
     @Experimental
     public void startActivity(Intent intent) {
-        mActivity.startActivity(intent);
-        ComponentReference component = new ComponentReference(mTestApis, intent.getComponent());
-
-        // TODO(scottjonathan): What if the activity can't start - or the intent isn't valid/etc.
-        PollingCheck.waitFor(() -> component.equals(mTestApis.activities().foregroundActivity()));
+        if (intent.getComponent() == null) {
+            ComponentReference startActivity = mTestApis.activities().foregroundActivity();
+            mActivity.startActivity(intent);
+            PollingCheck.waitFor(() -> !Objects.equals(startActivity,
+                    mTestApis.activities().foregroundActivity()));
+        } else {
+            mActivity.startActivity(intent);
+            ComponentReference component = new ComponentReference(mTestApis, intent.getComponent());
+            PollingCheck.waitFor(() -> component.equals(mTestApis.activities().foregroundActivity()));
+        }
     }
 
     /**
