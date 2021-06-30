@@ -24,6 +24,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
+import android.alarmmanager.util.AlarmManagerDeviceConfigHelper;
 import android.app.AlarmManager;
 import android.app.AlarmManager.AlarmClockInfo;
 import android.app.PendingIntent;
@@ -123,7 +124,7 @@ public class BasicApiTests {
 
     @After
     public void tearDown() throws Exception {
-        mDeviceConfigHelper.deleteAll();
+        mDeviceConfigHelper.restoreAll();
         mContext.unregisterReceiver(mMockAlarmReceiver);
         mContext.unregisterReceiver(mMockAlarmReceiver2);
         toggleIdleMode(false);
