@@ -193,7 +193,6 @@ public class RoleManagerTest {
 
     @Test
     public void requestRoleAndDenyThenIsNotRoleHolder() throws Exception {
-        assumeTrue(!isWatch());
         requestRole(ROLE_NAME);
         respondToRoleRequest(false);
 
@@ -202,7 +201,6 @@ public class RoleManagerTest {
 
     @Test
     public void requestRoleAndAllowThenIsRoleHolder() throws Exception {
-        assumeTrue(!isWatch());
         requestRole(ROLE_NAME);
         respondToRoleRequest(true);
 
@@ -211,7 +209,6 @@ public class RoleManagerTest {
 
     @Test
     public void requestRoleFirstTimeNoDontAskAgain() throws Exception {
-        assumeTrue(!isWatch());
         requestRole(ROLE_NAME);
         UiObject2 dontAskAgainCheck = findDontAskAgainCheck(false);
 
@@ -222,7 +219,6 @@ public class RoleManagerTest {
 
     @Test
     public void requestRoleAndDenyThenHasDontAskAgain() throws Exception {
-        assumeTrue(!isWatch());
         requestRole(ROLE_NAME);
         respondToRoleRequest(false);
 
@@ -236,7 +232,6 @@ public class RoleManagerTest {
 
     @Test
     public void requestRoleAndDenyWithDontAskAgainReturnsCanceled() throws Exception {
-        assumeTrue(!isWatch());
         requestRole(ROLE_NAME);
         respondToRoleRequest(false);
 
@@ -249,7 +244,6 @@ public class RoleManagerTest {
 
     @Test
     public void requestRoleAndDenyWithDontAskAgainThenDeniedAutomatically() throws Exception {
-        assumeTrue(!isWatch());
         requestRole(ROLE_NAME);
         respondToRoleRequest(false);
 
@@ -266,7 +260,6 @@ public class RoleManagerTest {
     @Test
     public void requestRoleAndDenyWithDontAskAgainAndClearDataThenShowsUiWithoutDontAskAgain()
             throws Exception {
-        assumeTrue(!isWatch());
         requestRole(ROLE_NAME);
         respondToRoleRequest(false);
 
@@ -301,7 +294,6 @@ public class RoleManagerTest {
     @Test
     public void requestRoleAndDenyWithDontAskAgainAndReinstallThenShowsUiWithoutDontAskAgain()
             throws Exception {
-        assumeTrue(!isWatch());
         requestRole(ROLE_NAME);
         respondToRoleRequest(false);
 
@@ -360,7 +352,6 @@ public class RoleManagerTest {
 
     @Test
     public void requestHoldingRoleThenAllowedAutomatically() throws Exception {
-        assumeTrue(!isWatch());
         requestRole(ROLE_NAME);
         respondToRoleRequest(true);
 
@@ -566,7 +557,6 @@ public class RoleManagerTest {
 
     @Test
     public void openDefaultAppDetailsThenIsNotDefaultApp() throws Exception {
-        assumeTrue(!isWatch());
         runWithShellPermissionIdentity(() -> sContext.startActivity(new Intent(
                 Intent.ACTION_MANAGE_DEFAULT_APP)
                 .addCategory(Intent.CATEGORY_DEFAULT)
@@ -582,7 +572,6 @@ public class RoleManagerTest {
 
     @Test
     public void openDefaultAppDetailsAndSetDefaultAppThenIsDefaultApp() throws Exception {
-        assumeTrue(!isWatch());
         runWithShellPermissionIdentity(() -> sContext.startActivity(new Intent(
                 Intent.ACTION_MANAGE_DEFAULT_APP)
                 .addCategory(Intent.CATEGORY_DEFAULT)
@@ -603,7 +592,6 @@ public class RoleManagerTest {
     @Test
     public void openDefaultAppDetailsAndSetDefaultAppAndSetAnotherThenIsNotDefaultApp()
             throws Exception {
-        assumeTrue(!isWatch());
         runWithShellPermissionIdentity(() -> sContext.startActivity(new Intent(
                 Intent.ACTION_MANAGE_DEFAULT_APP)
                 .addCategory(Intent.CATEGORY_DEFAULT)
@@ -627,7 +615,6 @@ public class RoleManagerTest {
 
     @Test
     public void openDefaultAppListThenHasDefaultApp() throws Exception {
-        assumeTrue(!isWatch());
         sContext.startActivity(new Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)
                 .addCategory(Intent.CATEGORY_DEFAULT)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK));
@@ -651,7 +638,6 @@ public class RoleManagerTest {
 
     @Test
     public void openDefaultAppListAndSetDefaultAppThenIsDefaultApp() throws Exception {
-        assumeTrue(!isWatch());
         sContext.startActivity(new Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)
                 .addCategory(Intent.CATEGORY_DEFAULT)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK));
@@ -671,7 +657,6 @@ public class RoleManagerTest {
 
     @Test
     public void openDefaultAppListAndSetDefaultAppThenIsDefaultAppInList() throws Exception {
-        assumeTrue(!isWatch());
         sContext.startActivity(new Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)
                 .addCategory(Intent.CATEGORY_DEFAULT)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK));
@@ -1074,9 +1059,5 @@ public class RoleManagerTest {
         public void accept(Boolean successful) {
             complete(successful);
         }
-    }
-
-    private boolean isWatch() {
-        return sPackageManager.hasSystemFeature(PackageManager.FEATURE_WATCH);
     }
 }
