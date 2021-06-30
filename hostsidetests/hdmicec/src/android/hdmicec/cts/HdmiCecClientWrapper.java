@@ -76,13 +76,21 @@ public final class HdmiCecClientWrapper extends ExternalResource {
     public List<String> getValidCecClientPorts() throws CecClientWrapperException {
 
         List<String> listPortsCommand = new ArrayList();
+        Process cecClient;
 
         listPortsCommand.add("cec-client");
         listPortsCommand.add("-l");
 
         List<String> comPorts = new ArrayList();
         try {
-            Process cecClient = RunUtil.getDefault().runCmdInBackground(listPortsCommand);
+            cecClient = RunUtil.getDefault().runCmdInBackground(listPortsCommand);
+        } catch (IOException ioe) {
+            throw new CecClientWrapperException(
+                    ErrorCodes.CecClientStart,
+                    "as cec-client may not be installed. Please refer to README for"
+                        + " setup/installation instructions.");
+        }
+        try {
             BufferedReader inputConsole =
                     new BufferedReader(new InputStreamReader(cecClient.getInputStream()));
             while (cecClient.isAlive()) {
