@@ -214,6 +214,29 @@ public final class Processor extends AbstractProcessor {
                         .build()
         );
 
+        classBuilder.addMethod(
+                MethodSpec.methodBuilder("tryConnect")
+                        .addModifiers(Modifier.PRIVATE)
+                        .addException(UNAVAILABLE_PROFILE_EXCEPTION_CLASSNAME)
+                        .addCode("$T retries = 50;", int.class)
+                        .beginControlFlow("while (true)")
+                            .beginControlFlow("try")
+                                .addCode("mConnector.connect();")
+                                .addCode("return;")
+                            .nextControlFlow("catch ($T e)", UNAVAILABLE_PROFILE_EXCEPTION_CLASSNAME)
+                                .addCode("retries -= 1;")
+                                .beginControlFlow("if (retries <= 0)")
+                                    .addCode("throw e;")
+                                .endControlFlow()
+                                .beginControlFlow("try")
+                                    .addCode("$T.sleep(100);", Thread.class)
+                                 .nextControlFlow("catch ($T e2)", InterruptedException.class)
+                                .endControlFlow()
+                            .endControlFlow()
+                        .endControlFlow()
+                        .build()
+        );
+
         for (ExecutableElement method : getMethods(interfaceClass)) {
             MethodSpec.Builder methodBuilder =
                     MethodSpec.methodBuilder(method.getSimpleName().toString())
@@ -240,7 +263,7 @@ public final class Processor extends AbstractProcessor {
             }
 
             methodBuilder.beginControlFlow("try")
-                    .addCode("mConnector.connect();")
+                    .addCode("tryConnect();")
                     .addCode(methodCall)
                     .nextControlFlow("catch ($T e)",
                             UNAVAILABLE_PROFILE_EXCEPTION_CLASSNAME)
