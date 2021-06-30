@@ -23,6 +23,9 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <uses-permission android:name="android.permission.CAMERA"/>
 
+    <uses-feature android:name="android.hardware.camera" />
+    <uses-feature android:name="android.hardware.microphone" />
+
     <application android:label="CtsUseMicOrCameraForSensorPrivacy">
         <activity android:name=".UseMicCamera"
                   android:exported="true"

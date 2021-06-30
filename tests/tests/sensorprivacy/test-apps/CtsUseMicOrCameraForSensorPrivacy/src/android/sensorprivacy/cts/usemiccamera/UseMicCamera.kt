@@ -17,6 +17,7 @@
 package android.sensorprivacy.cts.usemiccamera
 
 import android.app.Activity
+import android.app.AppOpsManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -33,6 +34,7 @@ import android.media.ImageReader
 import android.media.MediaRecorder
 import android.os.Bundle
 import android.os.Handler
+import android.os.Process
 import android.util.Size
 
 private const val MIC = 1 shl 0
@@ -41,6 +43,9 @@ private const val CAM = 1 shl 1
 private const val SAMPLING_RATE = 8000
 
 class UseMicCamera : Activity() {
+    private var audioRecord: AudioRecord? = null
+    private var cameraDevice: CameraDevice? = null
+    private lateinit var appOpsManager: AppOpsManager
 
     companion object {
         const val MIC_CAM_ACTIVITY_ACTION =
@@ -61,10 +66,15 @@ class UseMicCamera : Activity() {
         super.onCreate(savedInstanceState)
 
         val handler = Handler(mainLooper)
+        appOpsManager = applicationContext.getSystemService(AppOpsManager::class.java)!!
 
         registerReceiver(object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
                 unregisterReceiver(this)
+                audioRecord?.stop()
+                cameraDevice?.close()
+                appOpsManager.finishOp(AppOpsManager.OPSTR_CAMERA,
+                        Process.myUid(), applicationContext.packageName)
                 finishAndRemoveTask()
             }
         }, IntentFilter(FINISH_MIC_CAM_ACTIVITY_ACTION))
@@ -90,7 +100,7 @@ class UseMicCamera : Activity() {
     }
 
     private fun openMic() {
-        val audioRecord = AudioRecord.Builder()
+        audioRecord = AudioRecord.Builder()
                 .setAudioFormat(AudioFormat.Builder()
                         .setSampleRate(SAMPLING_RATE)
                         .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
@@ -102,7 +112,7 @@ class UseMicCamera : Activity() {
                                 AudioFormat.ENCODING_PCM_16BIT) * 10)
                 .build()
 
-        audioRecord.startRecording()
+        audioRecord?.startRecording()
     }
 
     private fun openCam() {
@@ -116,11 +126,11 @@ class UseMicCamera : Activity() {
         val handler = Handler(mainLooper)
 
         val cameraDeviceCallback = object : CameraDevice.StateCallback() {
-            override fun onOpened(cameraDevice: CameraDevice) {
+            override fun onOpened(cD: CameraDevice) {
                 val imageReader = ImageReader.newInstance(
                         outputSize.width, outputSize.height, outputFormat, 2)
 
-                val builder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
+                val builder = cD.createCaptureRequest(CameraDevice.TEMPLATE_RECORD)
                 builder.addTarget(imageReader.surface)
                 val captureRequest = builder.build()
                 val sessionConfiguration = SessionConfiguration(
@@ -130,16 +140,21 @@ class UseMicCamera : Activity() {
                         object : CameraCaptureSession.StateCallback() {
                             override fun onConfigured(session: CameraCaptureSession) {
                                 session.capture(captureRequest, null, handler)
+                                appOpsManager.startOpNoThrow(AppOpsManager.OPSTR_CAMERA,
+                                        Process.myUid(), applicationContext.packageName)
                             }
 
                             override fun onConfigureFailed(session: CameraCaptureSession) {}
                         })
 
-                cameraDevice.createCaptureSession(sessionConfiguration)
+                cD.createCaptureSession(sessionConfiguration)
+                cameraDevice = cD
             }
 
-            override fun onDisconnected(ameraDevice: CameraDevice) {}
-            override fun onError(cameraDevice: CameraDevice, i: Int) {}
+            override fun onDisconnected(cameraDevice: CameraDevice) {
+            }
+            override fun onError(cameraDevice: CameraDevice, i: Int) {
+            }
         }
 
         cameraManager!!.openCamera(cameraId, mainExecutor, cameraDeviceCallback)
