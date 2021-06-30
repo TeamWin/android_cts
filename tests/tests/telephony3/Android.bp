@@ -25,6 +25,7 @@ android_test {
         "cts",
         "vts10",
         "general-tests",
+        "sts",
     ],
     libs: ["android.test.runner.stubs"] + ["android.test.base.stubs"],
 }
