@@ -142,4 +142,12 @@ public interface RemoteDevicePolicyManager {
     void setAffiliationIds(ComponentName admin, Set<String> ids);
     /** See {@link DevicePolicyManager#setAffiliationIds(ComponentName, Set)}. */
     @RemoteDpcAutomaticAdmin void setAffiliationIds(Set<String> ids);
+
+    /** See {@link android.app.admin.DevicePolicyManager#addPersistentPreferredActivity(ComponentName, IntentFilter, ComponentName)}. */
+    void addPersistentPreferredActivity(
+            ComponentName admin, IntentFilter filter, ComponentName activity);
+
+    /** See {@link android.app.admin.DevicePolicyManager#addPersistentPreferredActivity(ComponentName, IntentFilter, ComponentName)}. */
+    @RemoteDpcAutomaticAdmin void addPersistentPreferredActivity(
+            IntentFilter filter, ComponentName activity);
 }
