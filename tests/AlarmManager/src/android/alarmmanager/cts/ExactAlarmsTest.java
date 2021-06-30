@@ -28,6 +28,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
 
 import android.alarmmanager.alarmtestapp.cts.sdk30.TestReceiver;
+import android.alarmmanager.util.AlarmManagerDeviceConfigHelper;
 import android.app.Activity;
 import android.app.AlarmManager;
 import android.app.AppOpsManager;
@@ -173,7 +174,7 @@ public class ExactAlarmsTest {
 
     @After
     public void restoreAlarmManagerConstants() {
-        mDeviceConfigHelper.deleteAll();
+        mDeviceConfigHelper.restoreAll();
     }
 
     private static void revokeAppOp() throws IOException {
