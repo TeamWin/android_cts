@@ -1089,16 +1089,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         }
     }
 
-    @Test
-    public void testLockTask_exitIfNoLongerAllowed() throws Exception {
-        try {
-            executeDeviceTestMethod(".LockTaskHostDrivenTest",
-                    "testLockTaskIsExitedIfNotAllowed");
-        } finally {
-            executeDeviceTestMethod(".LockTaskHostDrivenTest", "testCleanupLockTask_noAsserts");
-        }
-    }
-
     @FlakyTest(bugId = 141314026)
     @Test
     public void testSuspendPackage() throws Exception {

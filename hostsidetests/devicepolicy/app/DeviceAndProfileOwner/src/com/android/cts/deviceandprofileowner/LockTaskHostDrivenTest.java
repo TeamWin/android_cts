@@ -121,52 +121,6 @@ public class LockTaskHostDrivenTest extends BaseDeviceAdminTest {
         mUiDevice.waitForIdle();
     }
 
-    /**
-      * Poll for {@link ActivityManager#getLockTaskModeState()} to equal
-      * {@link ActivityManager#LOCK_TASK_MODE_NONE}
-      *
-      * <p>This will check every 500 milliseconds for a maximum of
-     * {@link #LOCK_TASK_STATE_CHANGE_TIMEOUT_MILLIS} milliseconds.
-      */
-    private void waitForLockTaskModeStateNone() {
-        long delayed = 0;
-        long delay = 500;
-        while (delayed <= LOCK_TASK_STATE_CHANGE_TIMEOUT_MILLIS) {
-            if (mActivityManager.getLockTaskModeState() == ActivityManager.LOCK_TASK_MODE_NONE) {
-                break;
-            }
-            SystemClock.sleep(delay);
-            delayed += delay;
-        }
-    }
-
-    public void testLockTaskIsExitedIfNotAllowed() throws Exception {
-        Log.d(TAG, "testLockTaskIsExitedIfNotAllowed on host-driven test");
-
-        // Allow this package
-        setLockTaskPackages(mContext.getPackageName());
-
-        // Launch lock task root activity
-        setDefaultHomeIntentReceiver();
-        launchLockTaskActivity();
-        waitAndCheckLockedActivityIsResumed();
-        assertEquals(
-                ActivityManager.LOCK_TASK_MODE_LOCKED, mActivityManager.getLockTaskModeState());
-
-        // Remove it from allowlist
-        setLockTaskPackages();
-        waitForLockTaskModeStateNone();
-        mUiDevice.waitForIdle();
-
-        // The activity should be finished and exit lock task mode
-        waitAndCheckLockedActivityIsPaused();
-        Utils.tryWaitForSuccess(() -> ActivityManager.LOCK_TASK_MODE_NONE
-                        == mActivityManager.getLockTaskModeState(),
-                Duration.ofSeconds(5).toMillis()
-        );
-        assertEquals(ActivityManager.LOCK_TASK_MODE_NONE, mActivityManager.getLockTaskModeState());
-    }
-
     private void checkLockedActivityIsRunning() {
         String activityName =
                 mActivityManager.getAppTasks().get(0).getTaskInfo().topActivity.getClassName();
@@ -195,12 +149,6 @@ public class LockTaskHostDrivenTest extends BaseDeviceAdminTest {
         mUiDevice.waitForIdle();
         assertTrue(
                 LockTaskUtilityActivity.waitUntilActivityResumed(ACTIVITY_RESUMED_TIMEOUT_MILLIS));
-    }
-
-    private void waitAndCheckLockedActivityIsPaused() throws Exception {
-        mUiDevice.waitForIdle();
-        assertTrue(
-                LockTaskUtilityActivity.waitUntilActivityPaused(ACTIVITY_RESUMED_TIMEOUT_MILLIS));
     }
 
     private void launchLockTaskActivity() {
