@@ -58,7 +58,6 @@ public class LockTaskHostDrivenTest extends BaseDeviceAdminTest {
     private Context mContext;
     private PackageManager mPackageManager;
     private ActivityManager mActivityManager;
-    private TelecomManager mTelcomManager;
     private DevicePolicyManager mDevicePolicyManager;
 
     public void setUp() {
@@ -66,7 +65,6 @@ public class LockTaskHostDrivenTest extends BaseDeviceAdminTest {
         mContext = InstrumentationRegistry.getContext();
         mPackageManager = mContext.getPackageManager();
         mActivityManager = mContext.getSystemService(ActivityManager.class);
-        mTelcomManager = mContext.getSystemService(TelecomManager.class);
         mDevicePolicyManager = mContext.getSystemService(DevicePolicyManager.class);
     }
 
@@ -169,42 +167,6 @@ public class LockTaskHostDrivenTest extends BaseDeviceAdminTest {
         assertEquals(ActivityManager.LOCK_TASK_MODE_NONE, mActivityManager.getLockTaskModeState());
     }
 
-    public void testLockTaskCanLaunchDefaultDialer() throws Exception {
-        if (!hasTelephonyFeature()) {
-            Log.d(TAG, "testLockTaskCanLaunchDefaultDialer skipped");
-            return;
-        }
-
-        Log.d(TAG, "testLockTaskCanLaunchDefaultDialer on host-driven test");
-
-        // Allow dialer package
-        String dialerPackage = mTelcomManager.getSystemDialerPackage();
-        assertNotNull(dialerPackage);
-        setLockTaskPackages(mContext.getPackageName(), dialerPackage);
-
-        // Launch lock task root activity
-        setDefaultHomeIntentReceiver();
-        launchLockTaskActivity();
-        waitAndCheckLockedActivityIsResumed();
-        assertEquals(
-                ActivityManager.LOCK_TASK_MODE_LOCKED, mActivityManager.getLockTaskModeState());
-
-        // Launch dialer
-        launchDialerIntoLockTaskMode(dialerPackage);
-
-        // Wait until dialer package starts
-        mUiDevice.wait(
-                Until.hasObject(By.pkg(dialerPackage).depth(0)),
-                ACTIVITY_RESUMED_TIMEOUT_MILLIS);
-        mUiDevice.waitForIdle();
-        waitAndCheckLockedActivityIsPaused();
-
-        // But still in LockTask mode
-        assertEquals(
-                ActivityManager.LOCK_TASK_MODE_LOCKED,
-                mActivityManager.getLockTaskModeState());
-    }
-
     public void testLockTaskCanLaunchEmergencyDialer() throws Exception {
         if (!hasTelephonyFeature()) {
             Log.d(TAG, "testLockTaskCanLaunchEmergencyDialer skipped");
@@ -288,14 +250,6 @@ public class LockTaskHostDrivenTest extends BaseDeviceAdminTest {
         mUiDevice.waitForIdle();
         assertTrue(
                 LockTaskUtilityActivity.waitUntilActivityPaused(ACTIVITY_RESUMED_TIMEOUT_MILLIS));
-    }
-
-    private void launchDialerIntoLockTaskMode(String dialerPackage) {
-        Intent intent = new Intent(Intent.ACTION_DIAL)
-                .setPackage(dialerPackage)
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        Bundle options = ActivityOptions.makeBasic().setLockTaskEnabled(true).toBundle();
-        mContext.startActivity(intent, options);
     }
 
     private void launchEmergencyDialer() {
