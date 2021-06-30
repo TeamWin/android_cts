@@ -36,7 +36,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @ParameterizedAnnotation
 @RequireRunOnPrimaryUser
-@RequireFeature(FEATURE_DEVICE_ADMIN)
 @EnsureHasNoWorkProfile
 @EnsureHasDeviceOwner(isPrimary = true)
 public @interface IncludeRunOnDeviceOwnerUser {
