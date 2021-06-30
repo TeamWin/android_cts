@@ -25,6 +25,7 @@ android_test_helper_app {
     static_libs: [
         "androidx.test.rules",
         "androidx.test.core",
+        "modules-utils-build",
         "guava",
     ],
     sdk_version: "test_current",
