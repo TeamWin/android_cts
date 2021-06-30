@@ -28,6 +28,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresDevice;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.util.Log;
@@ -56,6 +57,7 @@ import java.util.concurrent.locks.ReentrantLock;
 @SmallTest
 @RequiresDevice
 @RunWith(AndroidJUnit4.class)
+@AppModeFull(reason = "Instant Apps cannot get Bluetooth related permissions")
 public class CarBluetoothTest {
     @ClassRule
     public static final RequiredFeatureRule sRequiredFeatureRule = new RequiredFeatureRule(
