@@ -1,4 +1,4 @@
-// Copyright (C) 2017 The Android Open Source Project
+// Copyright (C) 2021 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,24 +16,7 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-android_test {
-    name: "CtsAlarmManagerTestCases",
-    defaults: ["cts_defaults"],
-    static_libs: [
-        "ub-uiautomator",
-        "androidx.test.rules",
-        "compatibility-device-util-axt",
-    ],
-    srcs: [
-        "src/**/*.java",
-        "app/src/**/*.java",
-        "app30/src/**/*.java",
-        ":CtsAlarmUtils",
-    ],
-    test_suites: [
-        "cts",
-        "general-tests",
-        "mts-scheduling",
-    ],
-    platform_apis: true,
+filegroup {
+    name: "CtsAlarmUtils",
+    srcs: ["src/**/*.java"],
 }
