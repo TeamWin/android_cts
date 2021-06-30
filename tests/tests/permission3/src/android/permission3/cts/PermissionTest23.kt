@@ -233,6 +233,10 @@ class PermissionTest23 : BaseUsePermissionTest() {
     @Test(timeout = 120000)
     @FlakyTest
     fun testNoResidualPermissionsOnUninstall() {
+        // Skip on Watch due to UI dependency
+        // TODO(b/191628895): Re-enable this test for wear
+        Assume.assumeFalse(isWatch)
+
         Assume.assumeFalse(packageManager.arePermissionsIndividuallyControlled())
 
         // Grant all permissions
