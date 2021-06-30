@@ -104,6 +104,9 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
     }
 
     public void testOnMediaKeyEventSessionChangedListener() throws Exception {
+        // The permission can be held only on S+
+        if (!MediaUtils.check(sIsAtLeastS, "test invalid before Android 12")) return;
+
         getInstrumentation().getUiAutomation()
                 .adoptShellPermissionIdentity(Manifest.permission.MEDIA_CONTENT_CONTROL);
 
@@ -135,6 +138,9 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
     }
 
     public void testOnMediaKeyEventDispatchedListener() throws Exception {
+        // The permission can be held only on S+
+        if (!MediaUtils.check(sIsAtLeastS, "test invalid before Android 12")) return;
+
         getInstrumentation().getUiAutomation()
                 .adoptShellPermissionIdentity(Manifest.permission.MEDIA_CONTENT_CONTROL);
 
