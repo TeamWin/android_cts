@@ -446,7 +446,8 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
             val wasGranted = if (isAutomotive) {
                 // Automotive doesn't support one time permissions, and thus
                 // won't show an "Ask every time" message
-                !waitFindObject(By.res(DENY_RADIO_BUTTON)).isChecked
+                !waitFindObject(By.text(
+                        getPermissionControllerString("app_permission_button_deny"))).isChecked
             } else {
                 if (isWatch) {
                     click(By.text("Deny"))
@@ -463,12 +464,16 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
                     when (state) {
                         PermissionState.ALLOWED ->
                             if (showsForegroundOnlyButton(permission)) {
-                                By.res(ALLOW_FOREGROUND_RADIO_BUTTON)
+                                By.text(getPermissionControllerString(
+                                        "app_permission_button_allow_foreground"))
                             } else {
-                                By.res(ALLOW_RADIO_BUTTON)
+                                By.text(getPermissionControllerString(
+                                                "app_permission_button_allow"))
                             }
-                        PermissionState.DENIED -> By.res(DENY_RADIO_BUTTON)
-                        PermissionState.DENIED_WITH_PREJUDICE -> By.res(DENY_RADIO_BUTTON)
+                        PermissionState.DENIED -> By.text(
+                                getPermissionControllerString("app_permission_button_deny"))
+                        PermissionState.DENIED_WITH_PREJUDICE -> By.text(
+                                getPermissionControllerString("app_permission_button_deny"))
                     }
                 } else {
                     when (state) {
@@ -573,7 +578,11 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
 
     private fun scrollToBottom() {
         val scrollable = UiScrollable(UiSelector().scrollable(true)).apply {
-            swipeDeadZonePercentage = 0.25
+            if (isWatch) {
+                swipeDeadZonePercentage = 0.1
+            } else {
+                swipeDeadZonePercentage = 0.25
+            }
         }
         waitForIdle()
         if (scrollable.exists()) {

@@ -474,7 +474,10 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
                             mDecoder.flush();
                             // First run will trigger output format change exactly once,
                             // and subsequent runs should not trigger format change.
-                            assertEquals(1, mDecoder.getOutputFormatChangeCount());
+                            // this part of test is new for Android12
+                            if (sIsAtLeastS) {
+                                assertEquals(1, mDecoder.getOutputFormatChangeCount());
+                            }
                         }
                     });
                 if (verify) {

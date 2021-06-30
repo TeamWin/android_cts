@@ -60,10 +60,10 @@ public class SetQueryHelperTest {
     }
 
     @Test
-    public void matches_containsAtLeast_doesContain_returnsTrue() {
+    public void matches_contains_doesContain_returnsTrue() {
         SetQueryHelper<Queryable, Bundle, BundleQuery<Queryable>> setQueryHelper = new SetQueryHelper<>(mQuery);
 
-        setQueryHelper.containsAtLeast(
+        setQueryHelper.contains(
                 bundle().key(BUNDLE_KEY).exists()
         );
 
@@ -71,10 +71,10 @@ public class SetQueryHelperTest {
     }
 
     @Test
-    public void matches_containsAtLeast_doesNotContain_returnsFalse() {
+    public void matches_contains_doesNotContain_returnsFalse() {
         SetQueryHelper<Queryable, Bundle, BundleQuery<Queryable>> setQueryHelper = new SetQueryHelper<>(mQuery);
 
-        setQueryHelper.containsAtLeast(
+        setQueryHelper.contains(
                 bundle().key(BUNDLE_KEY).exists()
         );
 

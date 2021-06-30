@@ -272,25 +272,28 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
         //                         new Intent(Settings.ACTION_DISPLAY_SETTINGS))}));
 
         // DISALLOW_CONFIG_VPN
-        adapter.add(createInteractiveTestItem(this, DISALLOW_CONFIG_VPN_ID,
-                R.string.device_owner_disallow_config_vpn,
-                R.string.device_owner_disallow_config_vpn_info,
-                new ButtonInfo[] {
-                        new ButtonInfo(
-                                R.string.device_owner_user_vpn_restriction_set,
-                                CommandReceiverActivity.createSetCurrentUserRestrictionIntent(
-                                        UserManager.DISALLOW_CONFIG_VPN, true)),
-                        new ButtonInfo(
-                                R.string.device_owner_settings_go,
-                                new Intent(Settings.ACTION_VPN_SETTINGS)),
-                        new ButtonInfo(
-                                R.string.device_owner_vpn_test,
-                                new Intent(this, VpnTestActivity.class)),
-                        new ButtonInfo(
-                                R.string.device_owner_user_restriction_unset,
-                                CommandReceiverActivity.createSetCurrentUserRestrictionIntent(
-                                        UserManager.DISALLOW_CONFIG_VPN, false))
-        }));
+        // TODO(b/189282625): replace FEATURE_WATCH with a more specific feature
+        if (!packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)) {
+            adapter.add(createInteractiveTestItem(this, DISALLOW_CONFIG_VPN_ID,
+                    R.string.device_owner_disallow_config_vpn,
+                    R.string.device_owner_disallow_config_vpn_info,
+                    new ButtonInfo[] {
+                            new ButtonInfo(
+                                    R.string.device_owner_user_vpn_restriction_set,
+                                    CommandReceiverActivity.createSetCurrentUserRestrictionIntent(
+                                            UserManager.DISALLOW_CONFIG_VPN, true)),
+                            new ButtonInfo(
+                                    R.string.device_owner_settings_go,
+                                    new Intent(Settings.ACTION_VPN_SETTINGS)),
+                            new ButtonInfo(
+                                    R.string.device_owner_vpn_test,
+                                    new Intent(this, VpnTestActivity.class)),
+                            new ButtonInfo(
+                                    R.string.device_owner_user_restriction_unset,
+                                    CommandReceiverActivity.createSetCurrentUserRestrictionIntent(
+                                            UserManager.DISALLOW_CONFIG_VPN, false))
+                    }));
+        }
 
         // DISALLOW_DATA_ROAMING
         if(packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
@@ -348,19 +351,22 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
         }
 
         // DISALLOW_USB_FILE_TRANSFER
-        adapter.add(createInteractiveTestItem(this, DISALLOW_USB_FILE_TRANSFER_ID,
-                R.string.device_owner_disallow_usb_file_transfer_test,
-                R.string.device_owner_disallow_usb_file_transfer_test_info,
-                new ButtonInfo[] {
-                        new ButtonInfo(
-                                R.string.device_owner_user_restriction_set,
-                                CommandReceiverActivity.createSetCurrentUserRestrictionIntent(
-                                        UserManager.DISALLOW_USB_FILE_TRANSFER, true)),
-                        new ButtonInfo(
-                                R.string.device_owner_user_restriction_unset,
-                                CommandReceiverActivity.createSetCurrentUserRestrictionIntent(
-                                        UserManager.DISALLOW_USB_FILE_TRANSFER, false))
-        }));
+        // TODO(b/189282625): replace FEATURE_WATCH with a more specific feature
+        if (!packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)) {
+            adapter.add(createInteractiveTestItem(this, DISALLOW_USB_FILE_TRANSFER_ID,
+                    R.string.device_owner_disallow_usb_file_transfer_test,
+                    R.string.device_owner_disallow_usb_file_transfer_test_info,
+                    new ButtonInfo[] {
+                            new ButtonInfo(
+                                    R.string.device_owner_user_restriction_set,
+                                    CommandReceiverActivity.createSetCurrentUserRestrictionIntent(
+                                            UserManager.DISALLOW_USB_FILE_TRANSFER, true)),
+                            new ButtonInfo(
+                                    R.string.device_owner_user_restriction_unset,
+                                    CommandReceiverActivity.createSetCurrentUserRestrictionIntent(
+                                            UserManager.DISALLOW_USB_FILE_TRANSFER, false))
+                    }));
+        }
 
         // DISABLE_STATUS_BAR_TEST
         if (isStatusBarEnabled()) {
@@ -399,11 +405,15 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
         }
 
         // setLockTaskFeatures
-        final Intent lockTaskUiTestIntent = new Intent(this, LockTaskUiTestActivity.class);
-        lockTaskUiTestIntent.putExtra(LockTaskUiTestActivity.EXTRA_TEST_ID, LOCK_TASK_UI_TEST_ID);
-        adapter.add(createTestItem(this, LOCK_TASK_UI_TEST_ID,
-                R.string.device_owner_lock_task_ui_test,
-                lockTaskUiTestIntent));
+        // TODO(b/189282625): replace FEATURE_WATCH with a more specific feature
+        if (!packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)) {
+            final Intent lockTaskUiTestIntent = new Intent(this, LockTaskUiTestActivity.class);
+            lockTaskUiTestIntent.putExtra(LockTaskUiTestActivity.EXTRA_TEST_ID,
+                    LOCK_TASK_UI_TEST_ID);
+            adapter.add(createTestItem(this, LOCK_TASK_UI_TEST_ID,
+                    R.string.device_owner_lock_task_ui_test,
+                    lockTaskUiTestIntent));
+        }
 
         // setUserIcon
         adapter.add(createInteractiveTestItem(this, SET_USER_ICON_TEST_ID,

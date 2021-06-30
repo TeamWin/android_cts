@@ -1080,7 +1080,8 @@ public class CarrierApiTest extends BaseCarrierApiTest {
         // Set subscription group with current sub Id.
         int subId = SubscriptionManager.getDefaultDataSubscriptionId();
         if (subId == SubscriptionManager.INVALID_SUBSCRIPTION_ID) return;
-        ParcelUuid uuid = mSubscriptionManager.createSubscriptionGroup(Arrays.asList(subId));
+        ParcelUuid uuid = ShellIdentityUtils.invokeMethodWithShellPermissions(mSubscriptionManager,
+                (sm) -> sm.createSubscriptionGroup(Arrays.asList(subId)));
 
         try {
             // Get all active subscriptions.
@@ -1090,10 +1091,13 @@ public class CarrierApiTest extends BaseCarrierApiTest {
             List<Integer> activeSubGroup = getSubscriptionIdList(activeSubInfos);
             activeSubGroup.removeIf(id -> id == subId);
 
-            mSubscriptionManager.addSubscriptionsIntoGroup(activeSubGroup, uuid);
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mSubscriptionManager,
+                    (sm) -> sm.addSubscriptionsIntoGroup(activeSubGroup, uuid));
 
-            List<Integer> infoList =
-                    getSubscriptionIdList(mSubscriptionManager.getSubscriptionsInGroup(uuid));
+            List<Integer> infoList = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                    mSubscriptionManager,
+                    (sm) -> getSubscriptionIdList(sm.getSubscriptionsInGroup(uuid)));
+
             activeSubGroup.add(subId);
             assertThat(infoList).hasSize(activeSubGroup.size());
             assertThat(infoList).containsExactly(activeSubGroup);
@@ -1262,8 +1266,9 @@ public class CarrierApiTest extends BaseCarrierApiTest {
     private void removeSubscriptionsFromGroup(ParcelUuid uuid) {
         List<SubscriptionInfo> infoList = mSubscriptionManager.getSubscriptionsInGroup(uuid);
         if (!infoList.isEmpty()) {
-            mSubscriptionManager.removeSubscriptionsFromGroup(
-                    getSubscriptionIdList(infoList), uuid);
+            List<Integer> subscriptionIdList = getSubscriptionIdList(infoList);
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mSubscriptionManager,
+                    (sm) -> sm.removeSubscriptionsFromGroup(subscriptionIdList, uuid));
         }
         infoList = mSubscriptionManager.getSubscriptionsInGroup(uuid);
         assertThat(infoList).isEmpty();

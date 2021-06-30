@@ -144,4 +144,23 @@ public class ReadableSettingsFieldsTest extends BaseAppSecurityTest {
         runDeviceTests(TEST_PACKAGE, TEST_CLASS,
                 "testGlobalHiddenSettingsKeysReadableWithoutAnnotation");
     }
+
+    @Test
+    public void testSettingsKeysNotReadableForAfterR()
+            throws DeviceNotAvailableException, FileNotFoundException {
+        new InstallMultiple().addFile(TEST_APK_TARGET_S).run();
+        runDeviceTests(TEST_PACKAGE, TEST_CLASS,
+                "testSettingsKeysNotReadableForAfterR");
+    }
+
+    @Test
+    public void testSettingsKeysReadableForRMinus()
+            throws DeviceNotAvailableException, FileNotFoundException {
+        new InstallMultiple().addFile(TEST_APK_TARGET_R).run();
+        runDeviceTests(TEST_PACKAGE, TEST_CLASS,
+                "testSettingsKeysReadableForRMinus");
+        new InstallMultiple().addFile(TEST_APK_TARGET_Q).run();
+        runDeviceTests(TEST_PACKAGE, TEST_CLASS,
+                "testSettingsKeysReadableForRMinus");
+    }
 }
