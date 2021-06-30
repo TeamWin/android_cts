@@ -5873,6 +5873,12 @@ Follow the instructions on the screen to measure the frequency response for the 
         have the smallest height.\n\n
     2. Open the bubble, it will tell you if the height is correct.</string>
     <string name="bubbles_test_min_height_button">Send small height bubble</string>
+    <!-- Expanded view max height -->
+    <string name="bubbles_test_max_height_title">Expanded view max height</string>
+    <string name="bubbles_test_max_height_verify">1. Press the button below to update the bubble to
+        have the maximum height.\n\n
+        2. Open the bubble, it will tell you if the height is correct.</string>
+    <string name="bubbles_test_max_height_button">Send max height bubble</string>
     <!-- Low ram -->
     <string name="bubbles_test_lowram_title">No bubbles on low memory device</string>
     <string name="bubbles_test_lowram_verify">Click the button below and verify that a

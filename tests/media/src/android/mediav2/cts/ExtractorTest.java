@@ -839,7 +839,7 @@ public class ExtractorTest {
                     {MediaFormat.MIMETYPE_AUDIO_RAW, new String[]{"canon.mid",}},
                     {MediaFormat.MIMETYPE_AUDIO_AC3, new String[]{
                             "testac3mp4.mp4", "testac3ts.ts",}},
-                    {MediaFormat.MIMETYPE_AUDIO_AC4, new String[]{"multi0.mp4", "multi0.ts",}},
+                    {MediaFormat.MIMETYPE_AUDIO_AC4, new String[]{"multi0.mp4",}},
                     {MediaFormat.MIMETYPE_AUDIO_EAC3, new String[]{
                             "testeac3mp4.mp4", "testeac3ts.ts",}},
                     {MediaFormat.MIMETYPE_AUDIO_RAW, new String[]{"bbb_1ch_16kHz.wav",}},
@@ -1371,7 +1371,8 @@ public class ExtractorTest {
                         CodecTestBase.selectCodecs(mMime, null, null, false);
                 assertTrue("no suitable codecs found for mime: " + mMime,
                         !listOfDecoders.isEmpty());
-                CodecDecoderTestBase cdtb = new CodecDecoderTestBase(mMime, mRefFile);
+                CodecDecoderTestBase cdtb =
+                        new CodecDecoderTestBase(listOfDecoders.get(0), mMime, mRefFile);
                 cdtb.decodeToMemory(mRefFile, listOfDecoders.get(0), 0,
                         MediaExtractor.SEEK_TO_CLOSEST_SYNC, Integer.MAX_VALUE);
                 String log = String.format("test file: %s, ref file: %s:: ", mTestFile, mRefFile);

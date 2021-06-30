@@ -106,18 +106,6 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
                 userId);
     }
 
-    @FlakyTest(bugId = 127270520)
-    @Ignore("Ignored while migrating to new infrastructure b/175377361")
-    @Test
-    public void testLockTask_affiliatedSecondaryUser() throws Exception {
-        assumeCanCreateAdditionalUsers(1);
-
-        final int userId = createSecondaryUserAsProfileOwner();
-        switchToUser(userId);
-        setUserAsAffiliatedUserToPrimary(userId);
-        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".LockTaskTest", userId);
-    }
-
     @Test
     public void testDelegatedCertInstallerDeviceIdAttestation() throws Exception {
         setUpDelegatedCertInstallerAndRunTests(() ->

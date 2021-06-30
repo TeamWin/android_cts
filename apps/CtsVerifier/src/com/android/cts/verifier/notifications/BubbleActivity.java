@@ -4,10 +4,14 @@ import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
 
 import android.app.Activity;
+import android.graphics.Insets;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewTreeObserver;
+import android.view.WindowInsets;
+import android.view.WindowManager;
+import android.view.WindowMetrics;
 import android.widget.EditText;
 import android.widget.TextView;
 
@@ -19,6 +23,7 @@ import com.android.cts.verifier.R;
 public class BubbleActivity extends Activity {
     public static final String EXTRA_TEST_NAME = "test_id";
     public static final String TEST_MIN_HEIGHT = "minHeight";
+    public static final String TEST_MAX_HEIGHT = "maxHeight";
 
     private View mRoot;
     private TextView mTitle;
@@ -27,6 +32,8 @@ public class BubbleActivity extends Activity {
 
     private String mTestName = null;
     private Rect mBounds = new Rect();
+    private boolean mIsLargeScreen;
+
     private ViewTreeObserver.OnGlobalLayoutListener mListener =
             new ViewTreeObserver.OnGlobalLayoutListener() {
                 @Override
@@ -46,6 +53,8 @@ public class BubbleActivity extends Activity {
         mTestMessage = findViewById(R.id.test_message);
         mEditText = findViewById(R.id.edit_text);
 
+        mIsLargeScreen = getResources().getConfiguration().smallestScreenWidthDp >= 600;
+
         getActionBar().hide();
         setUpTestForExtras();
     }
@@ -56,7 +65,8 @@ public class BubbleActivity extends Activity {
             mTestMessage.setVisibility(GONE);
             return;
         }
-        if (TEST_MIN_HEIGHT.equals(mTestName)) {
+        if (TEST_MIN_HEIGHT.equals(mTestName)
+                || TEST_MAX_HEIGHT.equals(mTestName)) {
             mTestMessage.setVisibility(VISIBLE);
             mTitle.setVisibility(GONE);
             mEditText.setVisibility(GONE);
@@ -75,6 +85,37 @@ public class BubbleActivity extends Activity {
                         + mRoot.getHeight() + " vs desired minimum height:" + minHeight);
             } else {
                 mTestMessage.setText("Test Passed!");
+            }
+        } else if (TEST_MAX_HEIGHT.equals(mTestName)) {
+            WindowMetrics windowMetrics =
+                    getSystemService(WindowManager.class).getMaximumWindowMetrics();
+            WindowInsets metricInsets = windowMetrics.getWindowInsets();
+            Insets insets = metricInsets.getInsetsIgnoringVisibility(
+                    WindowInsets.Type.navigationBars()
+                            | WindowInsets.Type.statusBars()
+                            | WindowInsets.Type.displayCutout());
+            if (mIsLargeScreen) {
+                final float percentOfScreen = windowMetrics.getBounds().height() * 0.70f;
+                if (mBounds.height() < percentOfScreen) {
+                    mTestMessage.setText("Test failed --"
+                            + " the bubble expanded view is too small, it is: " + mBounds.height()
+                            + " and minimum is: " + percentOfScreen);
+                } else {
+                    mTestMessage.setText("Test Passed!");
+                }
+            } else {
+                // Bottom of bubble view should be close to the bottom inset. There needs to be some
+                // padding for the manage button so we allow some flux (200dp).
+                int maxHeightBuffer = getResources().getDimensionPixelSize(
+                        R.dimen.bubble_expanded_view_max_height_buffer);
+                int bottomInset = windowMetrics.getBounds().bottom - insets.bottom;
+                int diff = bottomInset - mBounds.bottom;
+                if (diff > maxHeightBuffer) {
+                    mTestMessage.setText("Test failed -- bottom of the bubble expanded view "
+                            + "isn't close enough to the bottom inset: " + diff);
+                } else {
+                    mTestMessage.setText("Test Passed!");
+                }
             }
         }
     }
