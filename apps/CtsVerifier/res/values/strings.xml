@@ -2277,6 +2277,8 @@
     <string name="action_test_title">Action</string>
     <string name="nls_visibility">Please change the lock screen setting to hide sensitive content
         on the lockscreen</string>
+    <string name="nls_restore_visibility">Please change the lock screen setting to show all
+        content on the lockscreen</string>
     <string name="add_screen_lock">Add a secure screen lock of any type</string>
     <string name="remove_screen_lock">Remove the added screen lock</string>
     <string name="secure_action_lockscreen">Lock the screen and find the SecureActionOnLockScreenTest
