@@ -158,6 +158,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.SystemUtil;
+import com.android.compatibility.common.util.AmUtils;
 
 import org.hamcrest.core.IsNull;
 import org.junit.AfterClass;
@@ -1474,6 +1475,7 @@ public class AppEnumerationTests {
                 sResponseHandler);
         intent.putExtra(EXTRA_REMOTE_CALLBACK, callback);
         if (waitForReady) {
+            AmUtils.waitForBroadcastIdle();
             startAndWaitForCommandReady(intent);
         } else {
             InstrumentationRegistry.getInstrumentation().getContext().startActivity(intent);
