@@ -43,6 +43,7 @@ import com.android.compatibility.common.util.UiAutomatorUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -126,6 +127,7 @@ public class OneTimePermissionTest {
         assertExpectedLifespan(exitTime, ONE_TIME_TIMEOUT_MILLIS);
     }
 
+    @Ignore
     @Test
     public void testForegroundServiceMaintainsPermission() throws Throwable {
         startApp();
