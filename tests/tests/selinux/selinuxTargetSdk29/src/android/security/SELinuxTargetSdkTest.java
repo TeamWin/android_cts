@@ -50,10 +50,6 @@ public class SELinuxTargetSdkTest extends SELinuxTargetSdkTestBase
         noNetlinkRouteBind();
     }
 
-    public void testNetlinkRouteGetneigh() throws IOException {
-        checkNetlinkRouteGetneigh(true);
-    }
-
     public void testCanNotExecuteFromHomeDir() throws Exception {
         assertFalse(canExecuteFromHomeDir());
     }

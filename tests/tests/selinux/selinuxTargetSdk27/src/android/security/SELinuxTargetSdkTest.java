@@ -76,8 +76,4 @@ public class SELinuxTargetSdkTest extends SELinuxTargetSdkTestBase
     public void testNoNetlinkRouteBind() throws IOException {
         noNetlinkRouteBind();
     }
-
-    public void testNetlinkRouteGetneigh() throws IOException {
-        checkNetlinkRouteGetneigh(true);
-    }
 }
