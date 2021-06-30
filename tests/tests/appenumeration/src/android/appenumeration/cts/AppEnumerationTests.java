@@ -763,6 +763,66 @@ public class AppEnumerationTests {
     }
 
     @Test
+    public void uninstallTarget_broadcastFullyRemoved_notVisibleDoesNotReceive() throws Exception {
+        ensurePackageIsInstalled(TARGET_STUB, TARGET_STUB_APK);
+        final Result result = sendCommand(QUERIES_NOTHING, TARGET_STUB,
+                /* targetUid */ INVALID_UID, /* intentExtra */ null,
+                Constants.ACTION_AWAIT_PACKAGE_FULLY_REMOVED, /* waitForReady */ true);
+        runShellCommand("pm uninstall " + TARGET_STUB);
+        try {
+            result.await();
+            fail();
+        } catch (MissingBroadcastException e) {
+            // hooray
+        }
+    }
+
+    @Test
+    public void uninstallTarget_broadcastFullyRemoved_visibleReceives() throws Exception {
+        ensurePackageIsInstalled(TARGET_STUB, TARGET_STUB_APK);
+        final Result result = sendCommand(QUERIES_NOTHING_PERM, TARGET_STUB,
+                /* targetUid */ INVALID_UID, /* intentExtra */ null,
+                Constants.ACTION_AWAIT_PACKAGE_FULLY_REMOVED, /* waitForReady */ true);
+        runShellCommand("pm uninstall " + TARGET_STUB);
+        try {
+            Assert.assertEquals(TARGET_STUB,
+                    Uri.parse(result.await().getString(EXTRA_DATA)).getSchemeSpecificPart());
+        } catch (MissingBroadcastException e) {
+            fail();
+        }
+    }
+
+    @Test
+    public void clearTargetData_broadcastDataCleared_notVisibleDoesNotReceive() throws Exception {
+        ensurePackageIsInstalled(TARGET_STUB, TARGET_STUB_APK);
+        final Result result = sendCommand(QUERIES_NOTHING, TARGET_STUB,
+                /* targetUid */ INVALID_UID, /* intentExtra */ null,
+                Constants.ACTION_AWAIT_PACKAGE_DATA_CLEARED, /* waitForReady */ true);
+        runShellCommand("pm clear " + TARGET_STUB);
+        try {
+            result.await();
+            fail();
+        } catch (MissingBroadcastException e) {
+            // hooray
+        }
+    }
+
+    @Test
+    public void clearTargetData_broadcastDataCleared_visibleReceives() throws Exception {
+        ensurePackageIsInstalled(TARGET_STUB, TARGET_STUB_APK);
+        final Result result = sendCommand(QUERIES_NOTHING_PERM, TARGET_STUB,
+                /* targetUid */ INVALID_UID, /* intentExtra */ null,
+                Constants.ACTION_AWAIT_PACKAGE_DATA_CLEARED, /* waitForReady */ true);
+        runShellCommand("pm clear " + TARGET_STUB);
+        try {
+            Assert.assertEquals(TARGET_STUB,
+                    Uri.parse(result.await().getString(EXTRA_DATA)).getSchemeSpecificPart());
+        } catch (MissingBroadcastException e) {
+            fail();
+        }
+    }
+
+    @Test
     public void broadcastSuspended_visibleReceives() throws Exception {
         assertBroadcastSuspendedVisible(QUERIES_PACKAGE,
                 Arrays.asList(TARGET_NO_API, TARGET_SYNCADAPTER),

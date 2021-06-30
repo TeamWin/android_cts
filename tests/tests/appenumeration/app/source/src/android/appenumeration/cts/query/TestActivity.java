@@ -206,6 +206,14 @@ public class TestActivity extends Activity {
                 final String packageName = intent.getStringExtra(Intent.EXTRA_PACKAGE_NAME);
                 awaitPackageBroadcast(
                         remoteCallback, packageName, Intent.ACTION_PACKAGE_ADDED, TIMEOUT_MS);
+            } else if (Constants.ACTION_AWAIT_PACKAGE_FULLY_REMOVED.equals(action)) {
+                final String packageName = intent.getStringExtra(Intent.EXTRA_PACKAGE_NAME);
+                awaitPackageBroadcast(remoteCallback, packageName,
+                        Intent.ACTION_PACKAGE_FULLY_REMOVED, TIMEOUT_MS);
+            } else if (Constants.ACTION_AWAIT_PACKAGE_DATA_CLEARED.equals(action)) {
+                final String packageName = intent.getStringExtra(Intent.EXTRA_PACKAGE_NAME);
+                awaitPackageBroadcast(remoteCallback, packageName,
+                        Intent.ACTION_PACKAGE_DATA_CLEARED, TIMEOUT_MS);
             } else if (Constants.ACTION_QUERY_RESOLVER.equals(action)) {
                 final String authority = intent.getStringExtra(Intent.EXTRA_PACKAGE_NAME);
                 queryResolverForVisiblePackages(remoteCallback, authority);
