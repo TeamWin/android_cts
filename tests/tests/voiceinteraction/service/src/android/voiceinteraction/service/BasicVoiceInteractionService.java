@@ -174,7 +174,7 @@ public class BasicVoiceInteractionService extends VoiceInteractionService {
                             Log.i(TAG, "onDetected");
                             broadcastIntentWithResult(
                                     Utils.HOTWORD_DETECTION_SERVICE_ONDETECT_RESULT_INTENT,
-                                    eventPayload.getHotwordDetectedResult());
+                                    new EventPayloadParcelable(eventPayload));
                         }
 
                         @Override
@@ -234,7 +234,7 @@ public class BasicVoiceInteractionService extends VoiceInteractionService {
                             Log.i(TAG, "onDetected");
                             broadcastIntentWithResult(
                                     Utils.HOTWORD_DETECTION_SERVICE_ONDETECT_RESULT_INTENT,
-                                    eventPayload.getHotwordDetectedResult());
+                                    new EventPayloadParcelable(eventPayload));
                         }
 
                         @Override

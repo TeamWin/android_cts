@@ -27,7 +27,7 @@ public final class SetQueryHelper<E extends Queryable, F, G extends Query<F>> im
 
     private E mQuery;
     private final IntegerQueryHelper<E> mSizeQuery;
-    private final Set<G> mContainsAtLeast = new HashSet<>();
+    private final Set<G> mContains = new HashSet<>();
     private final Set<G> mDoesNotContain = new HashSet<>();
 
     SetQueryHelper() {
@@ -46,8 +46,8 @@ public final class SetQueryHelper<E extends Queryable, F, G extends Query<F>> im
     }
 
     @Override
-    public E containsAtLeast(G... objects) {
-        mContainsAtLeast.addAll(Arrays.asList(objects));
+    public E contains(G... objects) {
+        mContains.addAll(Arrays.asList(objects));
         return mQuery;
     }
 
@@ -77,7 +77,7 @@ public final class SetQueryHelper<E extends Queryable, F, G extends Query<F>> im
     private boolean checkContainsAtLeast(Set<F> value) {
         Set<F> v = new HashSet<>(value);
 
-        for (G containsAtLeast : mContainsAtLeast) {
+        for (G containsAtLeast : mContains) {
             F match = findMatch(containsAtLeast, v);
 
             if (match == null) {

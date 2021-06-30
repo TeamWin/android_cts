@@ -42,6 +42,8 @@ public class Permissions {
     public static final String MANAGE_PROFILE_AND_DEVICE_OWNERS =
             "android.permission.MANAGE_PROFILE_AND_DEVICE_OWNERS";
     public static final String MANAGE_DEVICE_ADMINS = "android.permission.MANAGE_DEVICE_ADMINS";
+    public static final String NOTIFY_PENDING_SYSTEM_UPDATE =
+            "android.permission.NOTIFY_PENDING_SYSTEM_UPDATE";
 
     private static final String LOG_TAG = "Permissions";
 
