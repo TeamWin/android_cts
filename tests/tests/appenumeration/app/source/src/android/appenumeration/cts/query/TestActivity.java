@@ -250,13 +250,6 @@ public class TestActivity extends Activity {
             } else if (Constants.ACTION_GET_INSTALLED_ACCESSIBILITYSERVICES_PACKAGES.equals(
                     action)) {
                 sendGetInstalledAccessibilityServicePackages(remoteCallback);
-            } else if (Constants.ACTION_CHECK_URI_PERMISSION.equals(action)) {
-                final String targetPackageName = intent.getStringExtra(Intent.EXTRA_PACKAGE_NAME);
-                final int targetUid = intent.getIntExtra(Intent.EXTRA_UID, INVALID_UID);
-                final String sourceAuthority = intent.getBundleExtra(EXTRA_DATA)
-                        .getString(EXTRA_AUTHORITY);
-                sendCheckUriPermission(remoteCallback, sourceAuthority, targetPackageName,
-                        targetUid);
             } else {
                 sendError(remoteCallback, new Exception("unknown action " + action));
             }
@@ -630,19 +623,6 @@ public class TestActivity extends Activity {
         } catch (Exception e) {
             sendError(remoteCallback, e);
         }
-    }
-
-    private void sendCheckUriPermission(RemoteCallback remoteCallback, String sourceAuthority,
-            String targetPackageName, int targetUid) {
-        final Uri uri = Uri.parse("content://" + sourceAuthority);
-        grantUriPermission(targetPackageName, uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        final int permissionResult = checkUriPermission(uri, 0 /* pid */, targetUid,
-                Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        revokeUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        final Bundle result = new Bundle();
-        result.putInt(EXTRA_RETURN_RESULT, permissionResult);
-        remoteCallback.sendResult(result);
-        finish();
     }
 
     @Override
