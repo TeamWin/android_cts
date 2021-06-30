@@ -68,6 +68,15 @@ public class MediaControllerTest extends AndroidTestCase {
                 getContext().getPackageName(), Process.myPid(), Process.myUid());
     }
 
+    @Override
+    protected void tearDown() throws Exception {
+        super.tearDown();
+        if (mSession != null) {
+            mSession.release();
+            mSession = null;
+        }
+    }
+
     public void testGetPackageName() {
         assertEquals(getContext().getPackageName(), mController.getPackageName());
     }

@@ -88,7 +88,10 @@ public class MediaSessionTest extends AndroidTestCase {
     @Override
     protected void tearDown() throws Exception {
         // It is OK to call release() twice.
-        mSession.release();
+        if (mSession != null) {
+            mSession.release();
+            mSession = null;
+        }
         super.tearDown();
     }
 
@@ -568,15 +571,23 @@ public class MediaSessionTest extends AndroidTestCase {
         // Start a media playback for this app to receive media key events.
         Utils.assertMediaPlaybackStarted(getContext());
 
-        MediaSession anotherSession = new MediaSession(getContext(), TEST_SESSION_TAG);
-        mSession.release();
-        anotherSession.release();
+        MediaSession anotherSession = null;
+        try {
+            anotherSession = new MediaSession(getContext(), TEST_SESSION_TAG);
+            mSession.release();
+            anotherSession.release();
 
-        // Try release with the different order.
-        mSession = new MediaSession(getContext(), TEST_SESSION_TAG);
-        anotherSession = new MediaSession(getContext(), TEST_SESSION_TAG);
-        anotherSession.release();
-        mSession.release();
+            // Try release with the different order.
+            mSession = new MediaSession(getContext(), TEST_SESSION_TAG);
+            anotherSession = new MediaSession(getContext(), TEST_SESSION_TAG);
+            anotherSession.release();
+            mSession.release();
+        } finally {
+            if (anotherSession != null) {
+                anotherSession.release();
+                anotherSession = null;
+            }
+        }
     }
 
     // This uses public APIs to dispatch key events, so sessions would consider this as
@@ -652,12 +663,17 @@ public class MediaSessionTest extends AndroidTestCase {
         Bundle sessionInfo = new Bundle();
         sessionInfo.putParcelable(testKey, customParcelable);
 
+        MediaSession session = null;
         try {
-            MediaSession session = new MediaSession(
+            session = new MediaSession(
                     mContext, "testSessionInfoWithCustomParcelable", sessionInfo);
             fail("Custom Parcelable shouldn't be accepted!");
         } catch (IllegalArgumentException e) {
             // Expected
+        } finally {
+            if (session != null) {
+                session.release();
+            }
         }
     }
 
@@ -686,10 +702,11 @@ public class MediaSessionTest extends AndroidTestCase {
      * does not decrement current session count multiple times.
      */
     public void testSessionCreationLimitWithMediaSessionRelease() {
-        MediaSession sessionToReleaseMultipleTimes = new MediaSession(
-                mContext, "testSessionCreationLimitWithMediaSessionRelease");
         List<MediaSession> sessions = new ArrayList<>();
+        MediaSession sessionToReleaseMultipleTimes = null;
         try {
+            sessionToReleaseMultipleTimes = new MediaSession(
+                    mContext, "testSessionCreationLimitWithMediaSessionRelease");
             for (int i = 0; i < TEST_TOO_MANY_SESSION_COUNT; i++) {
                 sessions.add(new MediaSession(
                         mContext, "testSessionCreationLimitWithMediaSessionRelease"));
@@ -702,6 +719,9 @@ public class MediaSessionTest extends AndroidTestCase {
         } finally {
             for (MediaSession session : sessions) {
                 session.release();
+            }
+            if (sessionToReleaseMultipleTimes != null) {
+                sessionToReleaseMultipleTimes.release();
             }
         }
     }
@@ -716,8 +736,9 @@ public class MediaSessionTest extends AndroidTestCase {
                 sessions.add(new MediaSession(
                         mContext, "testSessionCreationLimitWithMediaSession2Release"));
 
-                MediaSession2 session2 = new MediaSession2.Builder(mContext).build();
-                session2.close();
+                try (MediaSession2 session2 = new MediaSession2.Builder(mContext).build()) {
+                    // Do nothing
+                }
             }
             fail("The number of session should be limited!");
         } catch (RuntimeException e) {
