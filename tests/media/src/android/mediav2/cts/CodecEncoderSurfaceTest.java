@@ -496,9 +496,7 @@ public class CodecEncoderSurfaceTest {
                         mMuxer = null;
                     }
                 }
-                /* TODO(b/147348711) */
-                if (false) mDecoder.stop();
-                else mDecoder.reset();
+                mDecoder.stop();
                 /* TODO(b/147348711) */
                 if (false) mEncoder.stop();
                 else mEncoder.reset();
