@@ -20,6 +20,7 @@ import android.app.assist.AssistContent;
 import android.app.assist.AssistStructure;
 import android.assist.common.Utils;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -153,10 +154,20 @@ public class MainInteractionSession extends VoiceInteractionSession {
         Bundle data = state.getAssistData();
         AssistStructure structure = state.getAssistStructure();
         AssistContent content = state.getAssistContent();
+        ComponentName activity = structure == null ? null : structure.getActivityComponent();
+        Log.i(TAG, "onHandleAssist()");
+        Log.i(TAG, String.format("Bundle: %s, Activity: %s, Structure: %s, Content: %s",
+                data, activity, structure, content));
 
-        Log.i(TAG, "onHandleAssist");
-        Log.i(TAG,
-                String.format("Bundle: %s, Structure: %s, Content: %s", data, structure, content));
+        if (activity != null && Utils.isAutomotive(mContext)
+                && !activity.getPackageName().equals("android.assist.testapp")) {
+            // TODO: automotive has multiple activities / displays, so the test might fail if it
+            // receives one of them (like the cluster activity) instead of what's expecting. This is
+            // a quick fix for the issue; a better solution would be refactoring the infra to
+            // either send all events, or let the test specifify which activity it's waiting for
+            Log.i(TAG, "Ignoring " + activity.flattenToShortString() + " on automotive");
+            return;
+        }
 
         // send to test to verify that this is accurate.
         mAssistData.putBoolean(Utils.ASSIST_IS_ACTIVITY_ID_NULL, state.getActivityId() == null);
