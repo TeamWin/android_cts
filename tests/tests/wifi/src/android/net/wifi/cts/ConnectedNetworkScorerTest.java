@@ -101,7 +101,8 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
     private boolean mWasVerboseLoggingEnabled;
 
     private static final int WIFI_CONNECT_TIMEOUT_MILLIS = 30_000;
-    private static final int DURATION = 10_000;
+    private static final int TIMEOUT = 12_000;
+    private static final int WAIT_DURATION = 5_000;
 
     @Before
     public void setUp() throws Exception {
@@ -125,7 +126,7 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
         if (!mWifiManager.isWifiEnabled()) {
             ShellIdentityUtils.invokeWithShellPermissions(() -> mWifiManager.setWifiEnabled(true));
         }
-        PollingCheck.check("Wifi not enabled", DURATION, () -> mWifiManager.isWifiEnabled());
+        PollingCheck.check("Wifi not enabled", TIMEOUT, () -> mWifiManager.isWifiEnabled());
 
         // turn screen on
         mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
@@ -205,7 +206,7 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
                     Executors.newSingleThreadExecutor(), usabilityStatsListener);
             // Wait for new usability stats (while connected & screen on this is triggered
             // by platform periodically).
-            assertThat(countDownLatch.await(DURATION, TimeUnit.MILLISECONDS)).isTrue();
+            assertThat(countDownLatch.await(TIMEOUT, TimeUnit.MILLISECONDS)).isTrue();
 
             assertThat(usabilityStatsListener.statsEntry).isNotNull();
             WifiUsabilityStatsEntry statsEntry = usabilityStatsListener.statsEntry;
@@ -511,7 +512,7 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
             mWifiManager.setWifiConnectedNetworkScorer(
                     Executors.newSingleThreadExecutor(), connectedNetworkScorer);
             // Since we're already connected, wait for onStart to be invoked.
-            assertThat(countDownLatchScorer.await(DURATION, TimeUnit.MILLISECONDS)).isTrue();
+            assertThat(countDownLatchScorer.await(TIMEOUT, TimeUnit.MILLISECONDS)).isTrue();
 
             assertThat(connectedNetworkScorer.startSessionId).isAtLeast(0);
             assertThat(connectedNetworkScorer.isUserSelected).isEqualTo(false);
@@ -529,7 +530,7 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
             scoreUpdateObserver.triggerUpdateOfWifiUsabilityStats(
                     connectedNetworkScorer.startSessionId);
             // Ensure that we got the stats update callback.
-            assertThat(countDownLatchUsabilityStats.await(DURATION, TimeUnit.MILLISECONDS))
+            assertThat(countDownLatchUsabilityStats.await(TIMEOUT, TimeUnit.MILLISECONDS))
                     .isTrue();
             assertThat(usabilityStatsListener.seqNum).isAtLeast(0);
 
@@ -549,12 +550,12 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
             // Wait for it to be disconnected.
             PollingCheck.check(
                     "Wifi not disconnected",
-                    DURATION,
+                    TIMEOUT,
                     () -> mWifiManager.getConnectionInfo().getNetworkId() == -1);
             disconnected = true;
 
             // Wait for stop to be invoked and ensure that the session id matches.
-            assertThat(countDownLatchScorer.await(DURATION, TimeUnit.MILLISECONDS)).isTrue();
+            assertThat(countDownLatchScorer.await(TIMEOUT, TimeUnit.MILLISECONDS)).isTrue();
             assertThat(connectedNetworkScorer.stopSessionId)
                     .isEqualTo(connectedNetworkScorer.startSessionId);
             // Verify that onStart() and onStop() set internal variables correctly.
@@ -603,7 +604,7 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
             mWifiManager.setWifiConnectedNetworkScorer(
                     Executors.newSingleThreadExecutor(), connectedNetworkScorer);
             // Since we're already connected, wait for onStart to be invoked.
-            assertThat(countDownLatchScorer.await(DURATION, TimeUnit.MILLISECONDS)).isTrue();
+            assertThat(countDownLatchScorer.await(TIMEOUT, TimeUnit.MILLISECONDS)).isTrue();
 
             int prevSessionId = connectedNetworkScorer.startSessionId;
             WifiManager.ScoreUpdateObserver prevScoreUpdateObserver =
@@ -623,7 +624,7 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
                     WIFI_CONNECT_TIMEOUT_MILLIS * 2,
                     () -> mWifiManager.getConnectionInfo().getNetworkId() != -1);
 
-            assertThat(countDownLatchScorer.await(DURATION, TimeUnit.MILLISECONDS)).isTrue();
+            assertThat(countDownLatchScorer.await(TIMEOUT, TimeUnit.MILLISECONDS)).isTrue();
             assertThat(connectedNetworkScorer.stopSessionId).isEqualTo(prevSessionId);
 
             // Followed by a new onStart() after the connection.
@@ -631,7 +632,7 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
             // invoked, so this should not be racy.
             countDownLatchScorer = new CountDownLatch(1);
             connectedNetworkScorer.resetCountDownLatch(countDownLatchScorer);
-            assertThat(countDownLatchScorer.await(DURATION, TimeUnit.MILLISECONDS)).isTrue();
+            assertThat(countDownLatchScorer.await(TIMEOUT, TimeUnit.MILLISECONDS)).isTrue();
             assertThat(connectedNetworkScorer.startSessionId).isNotEqualTo(prevSessionId);
 
             // Ensure that we did not get a new score update observer.
@@ -694,7 +695,7 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
             networkCallback = connectionInitiator.initiateConnection(testNetwork, executorService);
 
             // We should not receive the start
-            assertThat(countDownLatchScorer.await(DURATION / 2, TimeUnit.MILLISECONDS)).isFalse();
+            assertThat(countDownLatchScorer.await(WAIT_DURATION, TimeUnit.MILLISECONDS)).isFalse();
             assertThat(connectedNetworkScorer.startSessionId).isNull();
 
             // Now disconnect from the network.
@@ -704,7 +705,7 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
             // We should not receive the stop either
             countDownLatchScorer = new CountDownLatch(1);
             connectedNetworkScorer.resetCountDownLatch(countDownLatchScorer);
-            assertThat(countDownLatchScorer.await(DURATION / 2, TimeUnit.MILLISECONDS)).isFalse();
+            assertThat(countDownLatchScorer.await(WAIT_DURATION, TimeUnit.MILLISECONDS)).isFalse();
             assertThat(connectedNetworkScorer.stopSessionId).isNull();
         } finally {
             executorService.shutdownNow();
