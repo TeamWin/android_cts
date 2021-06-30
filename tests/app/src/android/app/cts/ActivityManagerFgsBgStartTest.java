@@ -1747,6 +1747,61 @@ public class ActivityManagerFgsBgStartTest {
     }
 
     /**
+     * Test default_input_method is exempted from BG-FGS-start restriction.
+     * @throws Exception
+     */
+    @Test
+    public void testFgsStartInputMethod() throws Exception {
+        ApplicationInfo app1Info = mContext.getPackageManager().getApplicationInfo(
+                PACKAGE_NAME_APP1, 0);
+        WatchUidRunner uid1Watcher = new WatchUidRunner(mInstrumentation, app1Info.uid,
+                WAITFOR_MSEC);
+        final String defaultInputMethod = CtsAppTestUtils.executeShellCmd(mInstrumentation,
+                "settings get --user current secure default_input_method");
+        try {
+            // Enable the FGS background startForeground() restriction.
+            enableFgsRestriction(true, true, null);
+            // Start FGS in BG state.
+            WaitForBroadcast waiter = new WaitForBroadcast(mInstrumentation.getTargetContext());
+            waiter.prepare(ACTION_START_FGS_RESULT);
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_START_FOREGROUND_SERVICE,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+            // APP1 does not enter FGS state
+            try {
+                waiter.doWait(WAITFOR_MSEC);
+                fail("Service should not enter foreground service state");
+            } catch (Exception e) {
+            }
+
+            // Change default_input_method to PACKAGE_NAME_APP1.
+            final ComponentName cn = new ComponentName(PACKAGE_NAME_APP1, "xxx");
+            CtsAppTestUtils.executeShellCmd(mInstrumentation,
+                    "settings put --user current secure default_input_method "
+                            + cn.flattenToShortString());
+
+            waiter = new WaitForBroadcast(mInstrumentation.getTargetContext());
+            waiter.prepare(ACTION_START_FGS_RESULT);
+            // Now it can start FGS.
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_START_FOREGROUND_SERVICE,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+            uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE);
+            waiter.doWait(WAITFOR_MSEC);
+            // Stop the FGS.
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_STOP_FOREGROUND_SERVICE,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+            uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY);
+        } finally {
+            uid1Watcher.finish();
+            CtsAppTestUtils.executeShellCmd(mInstrumentation,
+                    "settings put --user current secure default_input_method "
+                            + defaultInputMethod);
+        }
+    }
+
+    /**
      * Turn on the FGS BG-launch restriction. DeviceConfig can turn on restriction on the whole
      * device (across all apps). AppCompat can turn on restriction on a single app package.
      * @param enable true to turn on restriction, false to turn off.
