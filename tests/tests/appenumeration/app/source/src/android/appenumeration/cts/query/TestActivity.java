@@ -95,6 +95,13 @@ public class TestActivity extends Activity {
 
     private final static long TIMEOUT_MS = 3000;
 
+    /**
+     * Extending the timeout time of non broadcast receivers, avoid not
+     * receiving callbacks in time on some common low-end platforms and
+     * do not affect the situation that callback can be received in advance.
+     */
+    private final static long EXTENDED_TIMEOUT_MS = 5000;
+
     SparseArray<RemoteCallback> callbacks = new SparseArray<>();
 
     private Handler mainHandler;
@@ -228,7 +235,7 @@ public class TestActivity extends Activity {
             } else if (Constants.ACTION_AWAIT_LAUNCHER_APPS_CALLBACK.equals(action)) {
                 final int expectedEventCode = intent.getBundleExtra(EXTRA_DATA)
                         .getInt(EXTRA_FLAGS, CALLBACK_EVENT_INVALID);
-                awaitLauncherAppsCallback(remoteCallback, expectedEventCode, TIMEOUT_MS);
+                awaitLauncherAppsCallback(remoteCallback, expectedEventCode, EXTENDED_TIMEOUT_MS);
             } else if (Constants.ACTION_GET_SHAREDLIBRARY_DEPENDENT_PACKAGES.equals(action)) {
                 final String sharedLibName = intent.getStringExtra(Intent.EXTRA_PACKAGE_NAME);
                 sendGetSharedLibraryDependentPackages(remoteCallback, sharedLibName);
