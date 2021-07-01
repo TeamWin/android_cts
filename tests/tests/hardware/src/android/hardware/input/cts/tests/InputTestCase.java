@@ -22,10 +22,8 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.app.Instrumentation;
-import android.app.UiAutomation;
 import android.hardware.input.cts.InputCallback;
 import android.hardware.input.cts.InputCtsActivity;
-import android.os.ParcelFileDescriptor;
 import android.util.Log;
 import android.view.InputDevice;
 import android.view.InputEvent;
@@ -44,12 +42,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -445,32 +437,6 @@ public abstract class InputTestCase {
             }
             assertEquals("The view's Pointer Capture state did not match.", enable,
                     mDecorView.hasPointerCapture());
-        }
-    }
-
-    public String executeShellCommand(String command) throws IOException {
-        return executeShellCommand(command,
-            mInstrumentation.getUiAutomation());
-    }
-
-    public String executeShellCommand(String command, UiAutomation uiAutomation)
-            throws IOException {
-        Log.v(TAG, "$ " + command);
-        ParcelFileDescriptor pfd = uiAutomation.executeShellCommand(command.toString());
-        BufferedReader br = null;
-        try (InputStream in = new FileInputStream(pfd.getFileDescriptor());) {
-            br = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
-            String str = null;
-            StringBuilder out = new StringBuilder();
-            while ((str = br.readLine()) != null) {
-                Log.v(TAG, "> " + str);
-                out.append(str);
-            }
-            return out.toString();
-        } finally {
-            if (br != null) {
-                br.close();
-            }
         }
     }
 }
