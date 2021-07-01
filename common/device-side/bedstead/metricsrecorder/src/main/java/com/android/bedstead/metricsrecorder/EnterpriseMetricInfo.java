@@ -18,6 +18,7 @@ package com.android.bedstead.metricsrecorder;
 
 import com.android.os.nano.AtomsProto;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -29,7 +30,8 @@ public final class EnterpriseMetricInfo {
     EnterpriseMetricInfo(AtomsProto.DevicePolicyEvent event) {
         mAdminPackageName = event.adminPackageName;
         mBoolean = event.booleanValue;
-        mStrings = Arrays.asList(event.stringListValue.stringValue);
+        mStrings = (event.stringListValue == null) ? new ArrayList<>() : Arrays.asList(
+                event.stringListValue.stringValue);
     }
 
     public String adminPackageName() {
