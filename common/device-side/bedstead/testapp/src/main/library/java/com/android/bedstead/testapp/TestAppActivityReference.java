@@ -65,7 +65,6 @@ public abstract class TestAppActivityReference {
         intent.setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK);
         sTestApis.context().instrumentedContext().startActivity(intent);
 
-        Log.e("jonathan", "Starting with intent " + intent);
         ActivityStartedEvent
                 .queryPackage(mComponent.packageName().packageName())
                 .whereActivity().activityClass().className().isEqualTo(mComponent.className()).waitForEvent();

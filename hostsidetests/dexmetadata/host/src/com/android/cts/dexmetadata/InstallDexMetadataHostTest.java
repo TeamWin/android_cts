@@ -66,6 +66,7 @@ public class InstallDexMetadataHostTest extends BaseHostJUnit4Test {
             = "CtsDexMetadataSplitAppFeatureAWithVdex.apk";
 
     private static final String DM_BASE = "CtsDexMetadataSplitApp.dm";
+    private static final String DM_S_BASE = "CtsDexMetadataSplitApp-S.dm";
     private static final String DM_FEATURE_A = "CtsDexMetadataSplitAppFeatureA.dm";
     private static final String DM_BASE_WITH_VDEX = "CtsDexMetadataSplitAppWithVdex.dm";
     private static final String DM_FEATURE_A_WITH_VDEX
@@ -81,6 +82,8 @@ public class InstallDexMetadataHostTest extends BaseHostJUnit4Test {
     private File mApkFeatureAFileWithVdex = null;
     private File mDmBaseFile = null;
     private File mDmBaseFsvSigFile = null;
+    private File mDmBaseFileForS = null;
+    private File mDmBaseFsvSigFileForS = null;
     private File mDmFeatureAFile = null;
     private File mDmFeatureAFsvSigFile = null;
     private File mDmBaseFileWithVdex = null;
@@ -117,6 +120,8 @@ public class InstallDexMetadataHostTest extends BaseHostJUnit4Test {
             mApkFeatureAFileWithVdex = extractResource(APK_FEATURE_A_WITH_VDEX, mTmpDir);
             mDmBaseFile = extractResource(DM_BASE, mTmpDir);
             mDmBaseFsvSigFile = extractResource(DM_BASE + FSV_SIG_SUFFIX , mTmpDir);
+            mDmBaseFileForS = extractResource(DM_S_BASE, mTmpDir);
+            mDmBaseFsvSigFileForS = extractResource(DM_S_BASE + FSV_SIG_SUFFIX , mTmpDir);
             mDmFeatureAFile = extractResource(DM_FEATURE_A, mTmpDir);
             mDmFeatureAFsvSigFile = extractResource(DM_FEATURE_A + FSV_SIG_SUFFIX, mTmpDir);
             mDmBaseFileWithVdex = extractResource(DM_BASE_WITH_VDEX, mTmpDir);
@@ -211,20 +216,15 @@ public class InstallDexMetadataHostTest extends BaseHostJUnit4Test {
     }
 
     /**
-     * Verify .dm installation for base but not for splits and with a .dm file that doesn't match
-     * an apk.
+     * Verify .dm installation for base but not for splits and with a .dm name
+     * that doesn't match the apk name.
      */
     @Test
     public void testInstallDmForBaseButNoSplitWithNoMatchingDm() throws Exception {
-        File nonMatchingDm = new File(mDmFeatureAFile.getAbsoluteFile().getAbsolutePath()
-                .replace(".dm", ".not.there.dm"));
-        FileUtil.copyFile(mDmFeatureAFile, nonMatchingDm);
-        File nonMatchingDmFsvSig = new File(mDmFeatureAFsvSigFile.getAbsoluteFile()
-                .getAbsolutePath()
-                .replace(".dm" + FSV_SIG_SUFFIX, ".not.there.dm" + FSV_SIG_SUFFIX));
-        FileUtil.copyFile(mDmFeatureAFsvSigFile, nonMatchingDmFsvSig);
+        String nonMatchingDmName = mDmFeatureAFile.getName().replace(".dm", ".not.there.dm");
         new InstallMultiple().addApk(mApkBaseFile).addDm(mDmBaseFile, mDmBaseFsvSigFile)
-                .addApk(mApkFeatureAFile).addDm(nonMatchingDm, nonMatchingDmFsvSig).run();
+                .addApk(mApkFeatureAFile).addDm(
+                        mDmFeatureAFile, mDmFeatureAFsvSigFile, nonMatchingDmName).run();
         assertNotNull(getDevice().getAppPackageInfo(INSTALL_PACKAGE));
 
         assertTrue(runDeviceTests(TEST_PACKAGE, TEST_CLASS, "testDmForBaseButNoSplit"));
@@ -323,29 +323,19 @@ public class InstallDexMetadataHostTest extends BaseHostJUnit4Test {
         }
     }
 
-    private static int getProfileVersion(byte[] bytes) {
-        assertEquals(bytes[0], (byte) 'p');
-        assertEquals(bytes[1], (byte) 'r');
-        assertEquals(bytes[2], (byte) 'o');
-        assertEquals(bytes[3], (byte) '\0');
-        assertEquals(bytes[7], (byte) '\0');
-        int version = 0;
-        for (int pos = 4; pos != 7; ++pos) {
-            byte digit = bytes[pos];
-            if (digit < (byte) '0' || digit > (byte) '9') {
-                throw new Error("Non-numeric profile version");
-            }
-            version = version * 10 + (((int) digit) - '0');
-        }
-        return version;
-    }
-
     @Test
     public void testProfileSnapshotAfterInstall() throws Exception {
         assumeProfilesAreEnabled();
 
+        // Determine which profile to use.
+        boolean useProfileForS = ApiLevelUtil.isAtLeast(getDevice(), "S");
+
         // Install the app.
-        new InstallMultiple().addApk(mApkBaseFile).addDm(mDmBaseFile, mDmBaseFsvSigFile).run();
+        File dmBaseFile = useProfileForS ? mDmBaseFileForS : mDmBaseFile;
+        File dmBaseFsvSigFile = useProfileForS ? mDmBaseFsvSigFileForS : mDmBaseFsvSigFile;
+        String dmName = mDmBaseFile.getName();  // APK name with ".apk" replaced by ".dm".
+        new InstallMultiple()
+                .addApk(mApkBaseFile).addDm(dmBaseFile, dmBaseFsvSigFile, dmName).run();
 
         // Take a snapshot of the installed profile.
         String snapshotCmd = "cmd package snapshot-profile " + INSTALL_PACKAGE;
@@ -354,27 +344,22 @@ public class InstallDexMetadataHostTest extends BaseHostJUnit4Test {
 
         // Extract the profile bytes from the dex metadata and from the profile snapshot.
         byte[] rawDeviceProfile = extractProfileSnapshotFromDevice();
-        int deviceProfileVersion = getProfileVersion(rawDeviceProfile);
-        switch (deviceProfileVersion) {
-            case 10: {
-                byte[] snapshotProfileBytes = new ProfileReaderV10(rawDeviceProfile).data;
-                byte[] expectedProfileBytes =
-                        new ProfileReaderV10(extractProfileFromDexMetadata(mDmBaseFile)).data;
+        byte[] rawMetadataProfile = extractProfileFromDexMetadata(dmBaseFile);
+        if (useProfileForS) {
+            ProfileReaderV15 snapshotReader = new ProfileReaderV15(rawDeviceProfile);
+            ProfileReaderV15 expectedReader = new ProfileReaderV15(rawMetadataProfile);
 
-                assertArrayEquals(expectedProfileBytes, snapshotProfileBytes);
-                break;
-            }
-            case 15: {
-                ProfileReaderV15 reader = new ProfileReaderV15(rawDeviceProfile);
-                // TODO: Support newer profiles implemented for b/148067697.
-                // Currently the .dm file is still version 10, so we cannot compare against it.
-                System.out.println("TODO: Check profile version 15.");
-                break;
-            }
-            default: {
-                throw new Error("Unsupported profile version: " + deviceProfileVersion);
-            }
-        }
+            assertArrayEquals(expectedReader.dexFilesData, snapshotReader.dexFilesData);
+            assertArrayEquals(expectedReader.extraDescriptorsData,
+                              snapshotReader.extraDescriptorsData);
+            assertArrayEquals(expectedReader.classesData, snapshotReader.classesData);
+            assertArrayEquals(expectedReader.methodsData, snapshotReader.methodsData);
+         } else {
+            byte[] snapshotProfileBytes = new ProfileReaderV10(rawDeviceProfile).data;
+            byte[] expectedProfileBytes = new ProfileReaderV10(rawMetadataProfile).data;
+
+            assertArrayEquals(expectedProfileBytes, snapshotProfileBytes);
+         }
     }
 
     /**

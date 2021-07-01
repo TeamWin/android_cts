@@ -21,6 +21,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.alarmmanager.alarmtestapp.cts.TestAlarmReceiver;
 import android.alarmmanager.alarmtestapp.cts.TestAlarmScheduler;
+import android.alarmmanager.util.AlarmManagerDeviceConfigHelper;
 import android.app.AlarmManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -170,7 +171,7 @@ public class BackgroundRestrictedAlarmsTest {
     }
 
     private void deleteAlarmManagerConstants() {
-        mConfigHelper.deleteAll();
+        mConfigHelper.restoreAll();
     }
 
     private void setAppStandbyBucket(String bucket) throws IOException {

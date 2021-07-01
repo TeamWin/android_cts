@@ -28,6 +28,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
 
 import android.alarmmanager.alarmtestapp.cts.sdk30.TestReceiver;
+import android.alarmmanager.util.AlarmManagerDeviceConfigHelper;
 import android.app.Activity;
 import android.app.AlarmManager;
 import android.app.AppOpsManager;
@@ -173,7 +174,7 @@ public class ExactAlarmsTest {
 
     @After
     public void restoreAlarmManagerConstants() {
-        mDeviceConfigHelper.deleteAll();
+        mDeviceConfigHelper.restoreAll();
     }
 
     private static void revokeAppOp() throws IOException {
@@ -273,12 +274,20 @@ public class ExactAlarmsTest {
                 () -> mWhitelistManager.addToWhitelist(sContext.getOpPackageName()));
     }
 
-    @Test(expected = SecurityException.class)
-    public void setAlarmClockWithoutPermissionWithWhitelist() throws IOException {
+    @Test
+    public void setAlarmClockWithoutPermissionWithWhitelist() throws Exception {
         revokeAppOp();
         whitelistTestApp();
-        mAlarmManager.setAlarmClock(new AlarmManager.AlarmClockInfo(0, null), getAlarmSender(0,
-                false));
+        final long now = System.currentTimeMillis();
+        final int numAlarms = 100;   // Number much higher than any quota.
+        for (int i = 0; i < numAlarms; i++) {
+            final int id = mIdGenerator.nextInt();
+            final AlarmManager.AlarmClockInfo alarmClock = new AlarmManager.AlarmClockInfo(now,
+                    null);
+            mAlarmManager.setAlarmClock(alarmClock, getAlarmSender(id, false));
+            assertTrue("Alarm " + id + " not received",
+                    AlarmReceiver.waitForAlarm(id, DEFAULT_WAIT_FOR_SUCCESS));
+        }
     }
 
     @Test
