@@ -48,8 +48,9 @@ public class FrameDropTest extends FrameDropTestBase {
 
     /**
      * This test validates that the playback of 1920x1080 resolution asset of 3 seconds duration
-     * at 60 fps for S perf class / 30 fps for R perf class, for at least 1800 frames or for
-     * 31 seconds, must not drop more than 6 frames for s perf class / 3 frames for R perf class.
+     * at 60 fps for S perf class / 30 fps for R perf class, for at least 30 seconds worth of
+     * frames or for 31 seconds of elapsed time. must not drop more than 6 frames for S perf
+     * class / 3 frames for R perf class.
      */
     @LargeTest
     @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
