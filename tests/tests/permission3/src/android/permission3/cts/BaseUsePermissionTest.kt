@@ -419,7 +419,11 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
             // Find the permission screen
             val permissionLabel = getPermissionLabel(permission)
 
-            click(By.text(permissionLabel))
+            if (isWatch) {
+                click(By.text(permissionLabel), 40_000)
+            } else {
+                click(By.text(permissionLabel))
+            }
 
             val wasGranted = if (isAutomotive) {
                 // Automotive doesn't support one time permissions, and thus
