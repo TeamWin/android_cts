@@ -376,12 +376,6 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
         // Managed profiles are not allowed to use lock task
     }
 
-    @Override
-    @Test
-    public void testLockTask_exitIfNoLongerAllowed() {
-        // Managed profiles are not allowed to use lock task
-    }
-
     @Test
     public void testWifiMacAddress() throws Exception {
         assumeHasWifiFeature();
