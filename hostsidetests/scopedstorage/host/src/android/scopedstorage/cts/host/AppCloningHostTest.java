@@ -19,6 +19,7 @@ package android.scopedstorage.cts.host;
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeTrue;
 
 import android.platform.test.annotations.AppModeFull;
 
@@ -51,6 +52,7 @@ public class AppCloningHostTest extends BaseHostTestCase {
     @Before
     public void setup() throws Exception {
         assumeFalse("Device is in headless system user mode", isHeadlessSystemUserMode());
+        assumeTrue(isAtLeastS());
 
         String output = executeShellCommand(
                 "pm create-user --profileOf 0 --user-type android.os.usertype.profile.CLONE "
