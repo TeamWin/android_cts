@@ -18,6 +18,7 @@ package com.android.bedstead.harrier;
 
 import androidx.annotation.Nullable;
 
+import com.android.bedstead.harrier.annotations.CalledByHostDrivenTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
 import com.android.bedstead.harrier.annotations.enterprise.NegativePolicyTest;
@@ -214,7 +215,10 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
     protected List<FrameworkMethod> computeTestMethods() {
         TestClass testClass = getTestClass();
 
-        List<FrameworkMethod> basicTests = testClass.getAnnotatedMethods(Test.class);
+        List<FrameworkMethod> basicTests = new ArrayList<>();
+        basicTests.addAll(testClass.getAnnotatedMethods(Test.class));
+        basicTests.addAll(testClass.getAnnotatedMethods(CalledByHostDrivenTest.class));
+
         List<FrameworkMethod> modifiedTests = new ArrayList<>();
 
         for (FrameworkMethod m : basicTests) {

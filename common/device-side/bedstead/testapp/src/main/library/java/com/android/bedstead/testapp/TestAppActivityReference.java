@@ -89,4 +89,15 @@ public abstract class TestAppActivityReference {
         return sTestApis.activities().wrap(
                 TestAppActivity.class, new TestAppActivityImpl(mInstance, mComponent));
     }
+
+    /**
+     * Get a reference to an already running activity.
+     *
+     * <p>If the activity is not running then this will still return a reference but calls will
+     * fail.
+     */
+    public com.android.bedstead.nene.activities.Activity<TestAppActivity> instance() {
+        return sTestApis.activities().wrap(
+                TestAppActivity.class, new TestAppActivityImpl(mInstance, mComponent));
+    }
 }
