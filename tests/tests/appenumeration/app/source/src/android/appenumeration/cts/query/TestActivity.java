@@ -250,6 +250,11 @@ public class TestActivity extends Activity {
             } else if (Constants.ACTION_GET_INSTALLED_ACCESSIBILITYSERVICES_PACKAGES.equals(
                     action)) {
                 sendGetInstalledAccessibilityServicePackages(remoteCallback);
+            } else if (Constants.ACTION_LAUNCHER_APPS_SHOULD_HIDE_FROM_SUGGESTIONS.equals(action)) {
+                final String targetPackageName = intent.getStringExtra(Intent.EXTRA_PACKAGE_NAME);
+                final int userId = intent.getBundleExtra(EXTRA_DATA).getInt(Intent.EXTRA_USER);
+                sendLauncherAppsShouldHideFromSuggestions(remoteCallback, targetPackageName,
+                        userId);
             } else {
                 sendError(remoteCallback, new Exception("unknown action " + action));
             }
@@ -623,6 +628,17 @@ public class TestActivity extends Activity {
         } catch (Exception e) {
             sendError(remoteCallback, e);
         }
+    }
+
+    private void sendLauncherAppsShouldHideFromSuggestions(RemoteCallback remoteCallback,
+            String targetPackageName, int userId) {
+        final LauncherApps launcherApps = getSystemService(LauncherApps.class);
+        final boolean hideFromSuggestions = launcherApps.shouldHideFromSuggestions(
+                targetPackageName, UserHandle.of(userId));
+        final Bundle result = new Bundle();
+        result.putBoolean(EXTRA_RETURN_RESULT, hideFromSuggestions);
+        remoteCallback.sendResult(result);
+        finish();
     }
 
     @Override

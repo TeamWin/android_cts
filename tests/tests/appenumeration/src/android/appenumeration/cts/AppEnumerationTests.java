@@ -34,6 +34,7 @@ import static android.appenumeration.cts.Constants.ACTION_GET_SYNCADAPTER_TYPES;
 import static android.appenumeration.cts.Constants.ACTION_HAS_SIGNING_CERTIFICATE;
 import static android.appenumeration.cts.Constants.ACTION_JUST_FINISH;
 import static android.appenumeration.cts.Constants.ACTION_LAUNCHER_APPS_IS_ACTIVITY_ENABLED;
+import static android.appenumeration.cts.Constants.ACTION_LAUNCHER_APPS_SHOULD_HIDE_FROM_SUGGESTIONS;
 import static android.appenumeration.cts.Constants.ACTION_MANIFEST_ACTIVITY;
 import static android.appenumeration.cts.Constants.ACTION_MANIFEST_PROVIDER;
 import static android.appenumeration.cts.Constants.ACTION_MANIFEST_SERVICE;
@@ -1009,6 +1010,38 @@ public class AppEnumerationTests {
     }
 
     @Test
+    public void launcherAppsShouldHideFromSuggestions_queriesPackage_canSeeNoApi()
+            throws Exception {
+        setDistractingPackageRestrictions(new String[]{TARGET_NO_API},
+                PackageManager.RESTRICTION_HIDE_FROM_SUGGESTIONS);
+
+        try {
+            final boolean hideFromSuggestions = shouldHideFromSuggestions(
+                    QUERIES_PACKAGE, TARGET_NO_API);
+            assertThat(hideFromSuggestions, is(true));
+        } finally {
+            setDistractingPackageRestrictions(new String[]{TARGET_NO_API},
+                    PackageManager.RESTRICTION_NONE);
+        }
+    }
+
+    @Test
+    public void launcherAppsShouldHideFromSuggestions_queriesNothing_cannotSeeNoApi()
+            throws Exception {
+        setDistractingPackageRestrictions(new String[]{TARGET_NO_API},
+                PackageManager.RESTRICTION_HIDE_FROM_SUGGESTIONS);
+
+        try {
+            final boolean hideFromSuggestions = shouldHideFromSuggestions(
+                    QUERIES_NOTHING, TARGET_NO_API);
+            assertThat(hideFromSuggestions, is(false));
+        } finally {
+            setDistractingPackageRestrictions(new String[]{TARGET_NO_API},
+                    PackageManager.RESTRICTION_NONE);
+        }
+    }
+
+    @Test
     public void queriesPackage_canSeeAppWidgetProviderTarget() throws Exception {
         assertVisible(QUERIES_PACKAGE, TARGET_APPWIDGETPROVIDER,
                 this::getInstalledAppWidgetProviders);
@@ -1408,6 +1441,22 @@ public class AppEnumerationTests {
         extraData.putString(Intent.EXTRA_INSTALLER_PACKAGE_NAME, installerPackageName);
         sendCommandBlocking(sourcePackageName, targetPackageName,
                 extraData, ACTION_SET_INSTALLER_PACKAGE_NAME);
+    }
+
+    private void setDistractingPackageRestrictions(String[] packagesToRestrict,
+            int distractionFlags) throws Exception {
+        final String[] failed = SystemUtil.callWithShellPermissionIdentity(
+                () -> sPm.setDistractingPackageRestrictions(packagesToRestrict, distractionFlags));
+        assertThat(failed, emptyArray());
+    }
+
+    private boolean shouldHideFromSuggestions(String sourcePackageName, String targetPackageName)
+            throws Exception {
+        final Bundle extraData = new Bundle();
+        extraData.putInt(Intent.EXTRA_USER, Process.myUserHandle().getIdentifier());
+        final Bundle response = sendCommandBlocking(sourcePackageName, targetPackageName, extraData,
+                ACTION_LAUNCHER_APPS_SHOULD_HIDE_FROM_SUGGESTIONS);
+        return response.getBoolean(Intent.EXTRA_RETURN_RESULT);
     }
 
     interface Result {
