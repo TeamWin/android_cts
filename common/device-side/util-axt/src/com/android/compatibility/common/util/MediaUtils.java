@@ -1409,6 +1409,36 @@ public class MediaUtils {
         return result.toString();
     }
 
+    /*
+     *  ------------------- HELPER METHODS FOR DETECTING NON-PRODUCTION DEVICES -------------------
+     */
+
+    /*
+     *  Some parts of media CTS verifies device characterization that does not make sense for
+     *  non-production devices (such as GSI). We call these devices 'frankenDevices'. We may
+     *  also limit test duration on these devices.
+     */
+    public static boolean onFrankenDevice() throws IOException {
+        String systemBrand = PropertyUtil.getProperty("ro.product.system.brand");
+        String systemModel = PropertyUtil.getProperty("ro.product.system.model");
+        String systemProduct = PropertyUtil.getProperty("ro.product.system.name");
+
+        // not all devices may have system_ext partition, but if they do use that
+        {
+            String systemExtProduct = PropertyUtil.getProperty("ro.product.system_ext.name");
+            if (systemExtProduct != null) {
+                systemProduct = systemExtProduct;
+            }
+        }
+
+        if (("Android".equals(systemBrand) || "generic".equals(systemBrand) ||
+                "mainline".equals(systemBrand)) &&
+            (systemModel.startsWith("AOSP on ") || systemProduct.startsWith("aosp_") ||
+                systemModel.startsWith("GSI on ") || systemProduct.startsWith("gsi_"))) {
+            return true;
+        }
+        return false;
+    }
 
     /*
      *  -------------------------------------- END --------------------------------------

@@ -87,37 +87,6 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
         super.tearDown();
     }
 
-    // Performance numbers only make sense on real devices, so skip on non-real devices
-    public static boolean frankenDevice() throws IOException {
-        String systemBrand = getProperty("ro.product.system.brand");
-        String systemModel = getProperty("ro.product.system.model");
-        String systemProduct = getProperty("ro.product.system.name");
-        // not all devices may have a system_ext partition
-        String systemExtProduct = getProperty("ro.product.system_ext.name");
-        if (("Android".equals(systemBrand) || "generic".equals(systemBrand) ||
-                "mainline".equals(systemBrand)) &&
-            (systemModel.startsWith("AOSP on ") || systemProduct.startsWith("aosp_")
-                || systemExtProduct.startsWith("aosp_"))) {
-            return true;
-        }
-        return false;
-    }
-
-    private static String getProperty(String property) throws IOException {
-        Process process = new ProcessBuilder("getprop", property).start();
-        Scanner scanner = null;
-        String line = "";
-        try {
-            scanner = new Scanner(process.getInputStream());
-            line = scanner.nextLine();
-        } finally {
-            if (scanner != null) {
-                scanner.close();
-            }
-        }
-        return line;
-    }
-
     private void decode(String name, final String resource, MediaFormat format) throws Exception {
         int width = format.getInteger(MediaFormat.KEY_WIDTH);
         int height = format.getInteger(MediaFormat.KEY_HEIGHT);
@@ -127,7 +96,7 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
         long maxTimeMs = Math.min(
                 MAX_TEST_TIMEOUT_MS * 4 / 5 / NUMBER_OF_REPEATS, MAX_TIME_MS);
         // reduce test run on non-real device
-        if (frankenDevice()) {
+        if (MediaUtils.onFrankenDevice()) {
             maxTimeMs /= 10;
         }
         double measuredFps[] = new double[NUMBER_OF_REPEATS];
@@ -146,7 +115,8 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
 
         String error =
             MediaPerfUtils.verifyAchievableFrameRates(name, mime, width, height, measuredFps);
-        if ((frankenDevice() || mSkipRateChecking) && error != null) {
+        // Performance numbers only make sense on real devices, so skip on non-real devices
+        if ((MediaUtils.onFrankenDevice() || mSkipRateChecking) && error != null) {
             // ensure there is data, but don't insist that it is correct
             assertFalse(error, error.startsWith("Failed to get "));
         } else {
@@ -692,4 +662,3 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
     public void testVp9Other2Perf3840x2160() throws Exception { perf(sVp9Media3840x2160, OTHER, 2); }
     public void testVp9Other3Perf3840x2160() throws Exception { perf(sVp9Media3840x2160, OTHER, 3); }
 }
-
