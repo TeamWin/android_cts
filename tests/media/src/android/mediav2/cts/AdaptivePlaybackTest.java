@@ -197,7 +197,6 @@ public class AdaptivePlaybackTest extends CodecDecoderTestBase {
             File file = new File(mInpPrefix + srcFile);
             totalSize += (int) file.length();
         }
-        totalSize <<= 1;
         long ptsOffset = 0;
         int buffOffset = 0;
         ArrayList<MediaCodec.BufferInfo> list = new ArrayList<>();
@@ -208,21 +207,18 @@ public class AdaptivePlaybackTest extends CodecDecoderTestBase {
             ptsOffset = mMaxPts + 1000000L;
             buffOffset = (list.get(list.size() - 1).offset) + (list.get(list.size() - 1).size);
         }
-        boolean[] boolStates = {false, true};
         mOutputBuff = new OutputManager();
         {
             mCodec = MediaCodec.createByCodecName(mCodecName);
             MediaFormat format = formats.get(0);
             activity.setScreenParams(getWidth(format), getHeight(format), true);
-            for (boolean isAsync : boolStates) {
-                mOutputBuff.reset();
-                configureCodec(format, isAsync, false, false);
-                mCodec.start();
-                doWork(buffer, list);
-                queueEOS();
-                waitForAllOutputs();
-                mCodec.reset();
-            }
+            mOutputBuff.reset();
+            configureCodec(format, true, false, false);
+            mCodec.start();
+            doWork(buffer, list);
+            queueEOS();
+            waitForAllOutputs();
+            mCodec.reset();
         }
         tearDownSurface();
     }
