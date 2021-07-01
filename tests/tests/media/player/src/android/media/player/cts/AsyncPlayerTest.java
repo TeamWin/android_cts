@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package android.media.cts;
+package android.media.player.cts;
 
 import android.content.Context;
 import android.media.AsyncPlayer;
 import android.media.AudioAttributes;
 import android.media.AudioManager;
+import android.media.cts.NonMediaMainlineTest;
 import android.net.Uri;
 import android.provider.Settings;
 import android.test.AndroidTestCase;
