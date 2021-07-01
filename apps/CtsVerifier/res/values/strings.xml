@@ -5099,7 +5099,9 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="audio_loopback_test_btn">Test</string>
     <string name="audio_loopback_results_text">Results...</string>
 
-    <!-- Audio Loopback Latency Test -->
+    <string name="audio_loopback_failure">FAILURE - Could not allocate analyzer thread.</string>
+
+    <!-- Audio Cold-Start Latency Test -->
     <string name="audio_coldstart_out_latency_test">Audio Cold Start Output Latency Test</string>
     <string name="audio_coldstart_in_latency_test">Audio Cold Start Input Latency Test</string>
 
