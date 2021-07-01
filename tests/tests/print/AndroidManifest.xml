@@ -27,7 +27,8 @@
 
         <activity android:name="android.print.test.PrintDocumentActivity"
              android:configChanges="mnc|mnc|touchscreen|navigation|screenLayout|screenSize|smallestScreenSize|orientation|locale|keyboard|keyboardHidden|fontScale|uiMode|layoutDirection|density"
-             android:theme="@style/NoAnimation"/>
+             android:theme="@style/NoAnimation"
+             android:screenOrientation="sensor"/>
 
         <service android:name="android.print.test.services.FirstPrintService"
              android:permission="android.permission.BIND_PRINT_SERVICE"
