@@ -1089,41 +1089,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         }
     }
 
-    @Test
-    @Ignore("Ignored while migrating to new infrastructure b/175377361")
-    public void testLockTask_defaultDialer() throws Exception {
-        assumeHasTelephonyAndConnectionServiceFeatures();
-
-        try {
-            executeDeviceTestMethod(".LockTaskHostDrivenTest",
-                    "testLockTaskCanLaunchDefaultDialer");
-        } finally {
-            executeDeviceTestMethod(".LockTaskHostDrivenTest", "testCleanupLockTask_noAsserts");
-        }
-    }
-
-    @Test
-    public void testLockTask_emergencyDialer() throws Exception {
-        assumeHasTelephonyFeature();
-
-        try {
-            executeDeviceTestMethod(".LockTaskHostDrivenTest",
-                    "testLockTaskCanLaunchEmergencyDialer");
-        } finally {
-            executeDeviceTestMethod(".LockTaskHostDrivenTest", "testCleanupLockTask_noAsserts");
-        }
-    }
-
-    @Test
-    public void testLockTask_exitIfNoLongerAllowed() throws Exception {
-        try {
-            executeDeviceTestMethod(".LockTaskHostDrivenTest",
-                    "testLockTaskIsExitedIfNotAllowed");
-        } finally {
-            executeDeviceTestMethod(".LockTaskHostDrivenTest", "testCleanupLockTask_noAsserts");
-        }
-    }
-
     @FlakyTest(bugId = 141314026)
     @Test
     public void testSuspendPackage() throws Exception {

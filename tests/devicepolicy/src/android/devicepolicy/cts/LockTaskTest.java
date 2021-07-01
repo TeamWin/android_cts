@@ -26,6 +26,10 @@ import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_NONE;
 import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_NOTIFICATIONS;
 import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_OVERVIEW;
 import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_SYSTEM_INFO;
+import static android.content.Intent.ACTION_DIAL;
+import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK;
+import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+import static android.content.pm.PackageManager.FEATURE_TELEPHONY;
 
 import static com.android.queryable.queries.StringQuery.string;
 
@@ -39,12 +43,16 @@ import android.app.ActivityOptions;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.os.Bundle;
 import android.stats.devicepolicy.EventId;
+import android.telecom.TelecomManager;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.Postsubmit;
+import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.NegativePolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PositivePolicyTest;
@@ -53,13 +61,16 @@ import com.android.bedstead.metricsrecorder.EnterpriseMetricsRecorder;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.activities.Activity;
 import com.android.bedstead.nene.packages.ComponentReference;
+import com.android.bedstead.nene.packages.PackageReference;
 import com.android.bedstead.remotedpc.RemoteDpc;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppActivity;
 import com.android.bedstead.testapp.TestAppActivityReference;
 import com.android.bedstead.testapp.TestAppInstanceReference;
 import com.android.bedstead.testapp.TestAppProvider;
+import com.android.compatibility.common.util.PollingCheck;
 import com.android.eventlib.EventLogs;
+import com.android.eventlib.events.activities.ActivityCreatedEvent;
 import com.android.eventlib.events.activities.ActivityDestroyedEvent;
 import com.android.eventlib.events.activities.ActivityStartedEvent;
 
@@ -110,6 +121,8 @@ public class LockTaskTest {
     private static final ComponentReference BLOCKED_ACTIVITY_COMPONENT =
             sTestApis.packages().component(new ComponentName(
                     "android", "com.android.internal.app.BlockedAppActivity"));
+
+    private static final String ACTION_EMERGENCY_DIAL = "com.android.phone.EmergencyDialer.DIAL";
 
     @Test
     @Postsubmit(reason = "New test")
@@ -292,7 +305,6 @@ public class LockTaskTest {
     @PositivePolicyTest(policy = LockTask.class)
     // TODO(scottjonathan): Support additional parameterization for cases like this
     public void setLockTaskFeatures_overviewFeature_setsFeature() {
-
         int originalLockTaskFeatures =
                 sDeviceState.dpc().devicePolicyManager().getLockTaskFeatures();
 
@@ -939,5 +951,127 @@ public class LockTaskTest {
             sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(
                     originalLockTaskPackages);
         }
+    }
+
+    @Test
+    @Postsubmit(reason = "New test")
+    @PositivePolicyTest(policy = LockTask.class)
+    @RequireFeature(FEATURE_TELEPHONY)
+    // Tests that the default dialer doesn't crash or otherwise misbehave in lock task mode
+    public void launchDefaultDialerInLockTaskMode_launches() {
+        String[] originalLockTaskPackages =
+                sDeviceState.dpc().devicePolicyManager().getLockTaskPackages();
+        TelecomManager telecomManager =
+                sTestApis.context().instrumentedContext().getSystemService(TelecomManager.class);
+        String dialerPackage = telecomManager.getSystemDialerPackage();
+        try {
+            sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(
+                    new String[]{dialerPackage});
+            Bundle options = ActivityOptions.makeBasic().setLockTaskEnabled(true).toBundle();
+            Intent intent = new Intent(ACTION_DIAL);
+            intent.setPackage(dialerPackage);
+            intent.setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK);
+
+            sTestApis.context().instrumentedContext().startActivity(intent, options);
+            PollingCheck.waitFor(() -> {
+                PackageReference pkg = sTestApis.activities().foregroundActivity().packageName();
+                if (pkg == null) {
+                    return false;
+                }
+                return pkg.packageName().equals(dialerPackage);
+            });
+
+            assertThat(sTestApis.activities().getLockTaskModeState()).isEqualTo(
+                    LOCK_TASK_MODE_LOCKED);
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(
+                    originalLockTaskPackages);
+        }
+    }
+
+    @Test
+    @Postsubmit(reason = "New test")
+    @PositivePolicyTest(policy = LockTask.class)
+    @RequireFeature(FEATURE_TELEPHONY)
+    public void launchEmergencyDialerInLockTaskMode_notWhitelisted_noKeyguardFeature_doesNotLaunch() {
+        String[] originalLockTaskPackages =
+                sDeviceState.dpc().devicePolicyManager().getLockTaskPackages();
+        int originalLockTaskFeatures =
+                sDeviceState.dpc().devicePolicyManager().getLockTaskFeatures();
+        String emergencyDialerPackageName = getEmergencyDialerPackageName();
+        assumeFalse(emergencyDialerPackageName == null);
+        try (TestAppInstanceReference testApp =
+                     sLockTaskTestApp.install(sTestApis.users().instrumented())) {
+            sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(
+                    new String[]{sLockTaskTestApp.packageName()});
+            sDeviceState.dpc().devicePolicyManager().setLockTaskFeatures(0);
+            Activity<TestAppActivity> activity = testApp.activities().any().start();
+
+            try {
+                activity.startLockTask();
+                Intent intent = new Intent(ACTION_EMERGENCY_DIAL);
+                intent.setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK);
+
+                activity.activity().startActivity(intent);
+
+                if (sTestApis.activities().foregroundActivity() != null) {
+                    assertThat(sTestApis.activities().foregroundActivity().packageName()).isNotEqualTo(
+                            emergencyDialerPackageName);
+                }
+            } finally {
+                activity.stopLockTask();
+            }
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(
+                    originalLockTaskPackages);
+            sDeviceState.dpc().devicePolicyManager().setLockTaskFeatures(originalLockTaskFeatures);
+        }
+    }
+
+    @Test
+    @Postsubmit(reason = "New test")
+    @PositivePolicyTest(policy = LockTask.class)
+    @RequireFeature(FEATURE_TELEPHONY)
+    public void launchEmergencyDialerInLockTaskMode_notWhitelisted_keyguardFeature_launches() {
+        String[] originalLockTaskPackages =
+                sDeviceState.dpc().devicePolicyManager().getLockTaskPackages();
+        int originalLockTaskFeatures =
+                sDeviceState.dpc().devicePolicyManager().getLockTaskFeatures();
+        String emergencyDialerPackageName = getEmergencyDialerPackageName();
+        assumeFalse(emergencyDialerPackageName == null);
+        try (TestAppInstanceReference testApp =
+                     sLockTaskTestApp.install(sTestApis.users().instrumented())) {
+            sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(
+                    new String[]{sLockTaskTestApp.packageName()});
+            sDeviceState.dpc().devicePolicyManager().setLockTaskFeatures(LOCK_TASK_FEATURE_KEYGUARD);
+            Activity<TestAppActivity> activity = testApp.activities().any().start();
+            try {
+                activity.startLockTask();
+                Intent intent = new Intent(ACTION_EMERGENCY_DIAL);
+                intent.setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK);
+
+                activity.startActivity(intent);
+
+                assertThat(sTestApis.activities().foregroundActivity().packageName())
+                        .isEqualTo(sTestApis.packages().find(emergencyDialerPackageName));
+                assertThat(sTestApis.activities().getLockTaskModeState()).isEqualTo(
+                        LOCK_TASK_MODE_LOCKED);
+            } finally {
+                activity.stopLockTask();
+            }
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(
+                    originalLockTaskPackages);
+            sDeviceState.dpc().devicePolicyManager().setLockTaskFeatures(originalLockTaskFeatures);
+        }
+    }
+
+    private String getEmergencyDialerPackageName() {
+        PackageManager packageManager =
+                sTestApis.context().instrumentedContext().getPackageManager();
+        Intent intent = new Intent(ACTION_EMERGENCY_DIAL).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        ResolveInfo dialerInfo =
+                packageManager.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY);
+        return (dialerInfo != null) ? dialerInfo.activityInfo.packageName : null;
     }
 }
