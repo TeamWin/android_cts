@@ -2493,7 +2493,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
             public void onSafeBrowsingHit(WebView view, WebResourceRequest request, int threatType,
                     SafeBrowsingResponse callback) {
                 pageFinishedFuture.setException(new IllegalStateException(
-                        "Should not invoke onSafeBrowsingHit"));
+                        "Should not invoke onSafeBrowsingHit for " + request.getUrl()));
             }
         });
 
