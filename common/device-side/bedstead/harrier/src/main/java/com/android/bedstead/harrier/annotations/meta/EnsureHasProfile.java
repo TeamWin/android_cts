@@ -33,4 +33,12 @@ public @interface EnsureHasProfile {
 
     /** Whether the test app should be installed in the profile. */
     boolean installTestApp() default true;
+
+    /**
+     * Whether the profile owner's DPC should be returned by calls to {@link DeviceState#dpc()}.
+     *
+     * <p>Only one device policy controller per test should be marked as primary.
+     */
+    // NOTE: This field is only required if hasProfileOwner=true
+    boolean dpcIsPrimary() default false;
 }

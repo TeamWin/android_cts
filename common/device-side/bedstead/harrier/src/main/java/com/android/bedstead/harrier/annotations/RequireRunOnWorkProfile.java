@@ -16,6 +16,8 @@
 
 package com.android.bedstead.harrier.annotations;
 
+import static android.content.pm.PackageManager.FEATURE_DEVICE_ADMIN;
+
 import static com.android.bedstead.harrier.OptionalBoolean.ANY;
 
 import com.android.bedstead.harrier.DeviceState;
@@ -42,8 +44,9 @@ import java.lang.annotation.Target;
  */
 @Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-@RequireRunOnProfileAnnotation("android.os.usertype.profile.MANAGED")
+@RequireRunOnProfileAnnotation(value = "android.os.usertype.profile.MANAGED", hasProfileOwner = true)
 @EnsureHasProfileOwner
+@RequireFeature(FEATURE_DEVICE_ADMIN)
 public @interface RequireRunOnWorkProfile {
     OptionalBoolean installInstrumentedAppInParent() default ANY;
 
@@ -52,6 +55,10 @@ public @interface RequireRunOnWorkProfile {
      *
      * <p>Only one device policy controller per test should be marked as primary.
      */
-    // TODO(scottjonathan): Enforce dpcIsPrimary
     boolean dpcIsPrimary() default false;
+
+    /**
+     * Affiliation ids to be set for the profile owner.
+     */
+    String[] affiliationIds() default {};
 }
