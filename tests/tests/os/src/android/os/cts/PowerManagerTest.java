@@ -16,6 +16,8 @@
 
 package android.os.cts;
 
+import static com.android.compatibility.common.util.TestUtils.waitUntil;
+
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
@@ -155,7 +157,10 @@ public class PowerManagerTest extends AndroidTestCase {
         BatteryUtils.runDumpsysBatterySetPluggedIn(true);
         pluggedBroadcastAsserter.assertCalled("Didn't get power connected broadcast",
                 BROADCAST_TIMEOUT_SECONDS);
-        assertNull(manager.getBatteryDischargePrediction());
+        // PowerManagerService may get the BATTERY_CHANGED broadcast after we get our broadcast,
+        // so we have to have a little wait.
+        waitUntil("PowerManager doesn't think the device has connected power",
+                () -> manager.getBatteryDischargePrediction() == null);
 
         // Not plugged in. At the very least, the basic discharge estimation should be returned.
         final CallbackAsserter unpluggedBroadcastAsserter = CallbackAsserter.forBroadcast(
@@ -163,7 +168,10 @@ public class PowerManagerTest extends AndroidTestCase {
         BatteryUtils.runDumpsysBatteryUnplug();
         unpluggedBroadcastAsserter.assertCalled("Didn't get power disconnected broadcast",
                 BROADCAST_TIMEOUT_SECONDS);
-        assertNotNull(manager.getBatteryDischargePrediction());
+        // PowerManagerService may get the BATTERY_CHANGED broadcast after we get our broadcast,
+        // so we have to have a little wait.
+        waitUntil("PowerManager still thinks the device has connected power",
+                () -> manager.getBatteryDischargePrediction() != null);
 
         CallbackAsserter predictionChangedBroadcastAsserter = CallbackAsserter.forBroadcast(
                 new IntentFilter(PowerManager.ACTION_ENHANCED_DISCHARGE_PREDICTION_CHANGED));
