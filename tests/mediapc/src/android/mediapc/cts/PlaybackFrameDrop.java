@@ -29,8 +29,8 @@ import static android.mediapc.cts.FrameDropTestBase.DECODE_31S;
 
 /**
  * The following class calculates the frame drops for the given array of testFiles playback.
- * It will do playback for at least 1800 frames or for utmost 31 seconds. If input reaches eos,
- * it will rewind the input to start position.
+ * It will do playback for at least 30 seconds worth of input data or for utmost 31 seconds.
+ * If input reaches eos, it will rewind the input to start position.
  */
 public class PlaybackFrameDrop extends CodecDecoderTestBase {
     private final String mDecoderName;
@@ -48,6 +48,7 @@ public class PlaybackFrameDrop extends CodecDecoderTestBase {
     private long mMaxPts;
     private long mDecodeStartTimeMs;
     private int mSampleIndex;
+    private int mMaxNumFrames;
 
     PlaybackFrameDrop(String mime, String decoderName, String[] testFiles, Surface surface,
             int frameRate, boolean isAsync) {
@@ -62,6 +63,8 @@ public class PlaybackFrameDrop extends CodecDecoderTestBase {
         mMaxPts = 0;
         mSampleIndex = 0;
         mFrameDropCount = 0;
+        // Decode for 30 seconds
+        mMaxNumFrames = frameRate * 30;
         mBufferInfos = new ArrayList<>();
     }
 
@@ -157,8 +160,8 @@ public class PlaybackFrameDrop extends CodecDecoderTestBase {
     @Override
     void enqueueInput(int bufferIndex) {
         if (mSampleIndex >= mBufferInfos.size() ||
-                // Decode for 1800 samples i.e. for 30 sec at 60 fps or for utmost 31 seconds
-                mInputCount >= 1800 ||
+                // Decode for mMaxNumFrames samples or for utmost 31 seconds
+                mInputCount >= mMaxNumFrames ||
                 (System.currentTimeMillis() - mDecodeStartTimeMs > DECODE_31S)) {
             enqueueEOS(bufferIndex);
         } else {
