@@ -120,8 +120,10 @@ class GamepadWithAccessibilityTest {
         assertNotNull(lastInputEvent)
         assertTrue(lastInputEvent is KeyEvent)
         val keyEvent = lastInputEvent as KeyEvent
+        // The event was not modified by accessibility in any way, so it should not have
+        // KeyEvent.FLAG_IS_ACCESSIBILITY_EVENT in getFlags()
+        assertEquals(KeyEvent.FLAG_FROM_SYSTEM, keyEvent.getFlags())
         assertNotEquals(keyEvent.getDeviceId(), VIRTUAL_KEYBOARD)
-        assertNotEquals(keyEvent.getDeviceId(), InputDevice.ACCESSIBILITY_DEVICE_ID)
         assertEquals(keyEvent.getDeviceId(), uInputDevice.getDeviceId())
     }
 }
