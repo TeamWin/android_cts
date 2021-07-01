@@ -450,7 +450,6 @@ public class LockTaskTest {
     @Test
     @Postsubmit(reason = "New test")
     @NegativePolicyTest(policy = LockTask.class)
-    @Ignore // TODO(189325405): Re-enable once secondary users can start activities
     public void startLockTask_includedInLockTaskPackages_policyShouldNotApply_taskIsNotLocked() {
         String[] originalLockTaskPackages =
                 sDeviceState.dpc().devicePolicyManager().getLockTaskPackages();
@@ -460,7 +459,7 @@ public class LockTaskTest {
                      sTestApp.install(sTestApis.users().instrumented())) {
             Activity<TestAppActivity> activity = testApp.activities().any().start();
 
-            activity.startLockTask();
+            activity.activity().startLockTask();
 
             try {
                 assertThat(sTestApis.activities().foregroundActivity()).isEqualTo(
