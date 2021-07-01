@@ -38,6 +38,7 @@ import android.app.usage.UsageEvents;
 import android.app.usage.UsageEvents.Event;
 import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -83,6 +84,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BooleanSupplier;
@@ -123,6 +125,8 @@ public class UsageStatsTest {
             = "android.app.usage.cts.test1.SomeActivityWithLocus";
     private static final String TEST_APP_CLASS_SERVICE
             = "android.app.usage.cts.test1.TestService";
+    private static final String TEST_APP_CLASS_BROADCAST_RECEIVER
+            = "android.app.usage.cts.test1.TestBroadcastReceiver";
     private static final String TEST_APP2_PKG = "android.app.usage.cts.test2";
     private static final String TEST_APP2_CLASS_FINISHING_TASK_ROOT =
             "android.app.usage.cts.test2.FinishingTaskRootActivity";
@@ -269,6 +273,20 @@ public class UsageStatsTest {
 
         final long startTime = System.currentTimeMillis();
         bindToTestService();
+        final long endTime = System.currentTimeMillis();
+
+        verifyLastTimeAnyComponentUsedWithinRange(startTime, endTime, TEST_APP_PKG);
+    }
+
+    @AppModeFull(reason = "No usage events access in instant apps")
+    @Test
+    public void testLastTimeAnyComponentUsed_bindExplicitBroadcastReceiverShouldBeDetected()
+            throws Exception {
+        mUiDevice.wakeUp();
+        dismissKeyguard(); // also want to start out with the keyguard dismissed.
+
+        final long startTime = System.currentTimeMillis();
+        bindToTestBroadcastReceiver();
         final long endTime = System.currentTimeMillis();
 
         verifyLastTimeAnyComponentUsedWithinRange(startTime, endTime, TEST_APP_PKG);
@@ -1800,6 +1818,33 @@ public class UsageStatsTest {
                 new ComponentName(TEST_APP_PKG, TEST_APP_CLASS_SERVICE));
         mContext.bindService(intent, connection, Context.BIND_AUTO_CREATE);
         return ITestReceiver.Stub.asInterface(connection.getService());
+    }
+
+    /**
+     * Send broadcast to test app's receiver and wait for it to be received.
+     */
+    private void bindToTestBroadcastReceiver() {
+        final Intent intent = new Intent().setComponent(
+                new ComponentName(TEST_APP_PKG, TEST_APP_CLASS_BROADCAST_RECEIVER));
+        CountDownLatch latch = new CountDownLatch(1);
+        mContext.sendOrderedBroadcast(
+                intent,
+                null /* receiverPermission */,
+                new BroadcastReceiver() {
+                    @Override public void onReceive(Context context, Intent intent) {
+                        latch.countDown();
+                    }
+                },
+                null /* scheduler */,
+                Activity.RESULT_OK,
+                null /* initialData */,
+                null /* initialExtras */);
+        try {
+            assertTrue("Timed out waiting for test broadcast to be received",
+                    latch.await(TIMEOUT, TimeUnit.MILLISECONDS));
+        } catch (InterruptedException e) {
+            throw new IllegalStateException("Interrupted", e);
+        }
     }
 
     private class TestServiceConnection implements ServiceConnection {
