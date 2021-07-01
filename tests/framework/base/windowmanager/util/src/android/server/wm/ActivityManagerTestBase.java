@@ -2618,6 +2618,7 @@ public abstract class ActivityManagerTestBase {
         @Override
         public void addError(Throwable error) {
             super.addError(error);
+            logE("addError: " + error);
             mLastError = error;
         }
     }
