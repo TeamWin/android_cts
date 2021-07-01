@@ -89,6 +89,7 @@ public class SearchTargetTest {
         assertThat(target.getSearchAction()).isEqualTo(SEARCH_ACTION);
         assertThat(target.getPackageName()).isEqualTo(PACKAGE_NAME);
         assertThat(target.getExtras().size()).isEqualTo(EXTRAS.size());
+        assertThat(target.isHidden()).isEqualTo(SHOULD_HIDE);
     }
 
     @Test
