@@ -45,6 +45,7 @@ import android.app.AppOpsManager.OPSTR_RECORD_AUDIO
 import android.app.AppOpsManager.OPSTR_WIFI_SCAN
 import android.app.AppOpsManager.OPSTR_WRITE_CALENDAR
 import android.content.Context
+import android.content.pm.PackageManager
 import android.os.Process
 import android.platform.test.annotations.AppModeFull
 import androidx.test.runner.AndroidJUnit4
@@ -591,6 +592,7 @@ class AppOpsTest {
 
     @Test
     fun ensurePhoneCallOpsRestricted() {
+        assumeTrue(mContext.packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY))
         val micReturn = mAppOps.noteOp(OPSTR_PHONE_CALL_MICROPHONE, Process.myUid(), mOpPackageName,
                 null, null)
         assertEquals(MODE_IGNORED, micReturn)
