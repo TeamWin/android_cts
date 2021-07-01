@@ -173,6 +173,7 @@ public class PackageManagerTest {
     private static final String MOCK_LAUNCHER_PACKAGE_NAME = "android.content.cts.mocklauncherapp";
     private static final String MOCK_LAUNCHER_APK = SAMPLE_APK_BASE
             + "CtsContentMockLauncherTestApp.apk";
+    private static final String NON_EXISTENT_PACKAGE_NAME = "android.content.cts.nonexistent.pkg";
 
     @Before
     public void setup() throws Exception {
@@ -1554,5 +1555,29 @@ public class PackageManagerTest {
                 mPackageManager.queryIntentActivities(homeIntent, 0 /*flags*/).stream()
                         .map(i -> i.activityInfo.packageName).collect(Collectors.toList());
         assertThat(homeApps.contains(MOCK_LAUNCHER_PACKAGE_NAME)).isTrue();
+    }
+
+    @Test
+    public void setComponentEnabledSetting_nonExistentPackage_withoutPermission() {
+        final ComponentName componentName = ComponentName.createRelative(
+                NON_EXISTENT_PACKAGE_NAME, "ClassName");
+        assertThrows(SecurityException.class, () -> mPackageManager.setComponentEnabledSetting(
+                componentName, PackageManager.COMPONENT_ENABLED_STATE_ENABLED, 0 /* flags */));
+    }
+
+    @Test
+    public void setComponentEnabledSetting_nonExistentPackage_hasPermission() {
+        final ComponentName componentName = ComponentName.createRelative(
+                NON_EXISTENT_PACKAGE_NAME, "ClassName");
+        mInstrumentation.getUiAutomation().adoptShellPermissionIdentity(
+                android.Manifest.permission.CHANGE_COMPONENT_ENABLED_STATE);
+
+        try {
+            assertThrows(IllegalArgumentException.class,
+                    () -> mPackageManager.setComponentEnabledSetting(componentName,
+                            PackageManager.COMPONENT_ENABLED_STATE_ENABLED, 0 /* flags */));
+        } finally {
+            mInstrumentation.getUiAutomation().dropShellPermissionIdentity();
+        }
     }
 }
