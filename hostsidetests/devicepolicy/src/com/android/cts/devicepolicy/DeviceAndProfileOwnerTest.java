@@ -1090,18 +1090,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
-    public void testLockTask_emergencyDialer() throws Exception {
-        assumeHasTelephonyFeature();
-
-        try {
-            executeDeviceTestMethod(".LockTaskHostDrivenTest",
-                    "testLockTaskCanLaunchEmergencyDialer");
-        } finally {
-            executeDeviceTestMethod(".LockTaskHostDrivenTest", "testCleanupLockTask_noAsserts");
-        }
-    }
-
-    @Test
     public void testLockTask_exitIfNoLongerAllowed() throws Exception {
         try {
             executeDeviceTestMethod(".LockTaskHostDrivenTest",
