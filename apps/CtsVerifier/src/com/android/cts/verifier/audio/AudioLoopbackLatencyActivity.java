@@ -82,6 +82,8 @@ public class AudioLoopbackLatencyActivity extends AudioLoopbackBaseActivity {
     protected void handleTestCompletion() {
         super.handleTestCompletion();
 
+        // We are not enforcing the latency target (PROAUDIO_LATENCY_MS_LIMIT)
+        // test is allowed to pass as long as an analysis is done.
         boolean resultValid = mMeanConfidence >= CONFIDENCE_THRESHOLD
                 && mMeanLatencyMillis > 1.0;
         getPassButton().setEnabled(resultValid);
