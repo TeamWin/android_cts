@@ -17,9 +17,11 @@
 package com.android.cts.verifier.notifications;
 
 import static android.app.Notification.VISIBILITY_PRIVATE;
+import static android.app.Notification.VISIBILITY_PUBLIC;
 import static android.app.NotificationManager.IMPORTANCE_LOW;
 import static android.app.NotificationManager.IMPORTANCE_MAX;
 import static android.app.NotificationManager.IMPORTANCE_NONE;
+import static android.app.NotificationManager.VISIBILITY_NO_OVERRIDE;
 import static android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS;
 import static android.provider.Settings.EXTRA_APP_PACKAGE;
 import static android.provider.Settings.EXTRA_CHANNEL_ID;
@@ -158,6 +160,7 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         tests.add(new ServiceStoppedTest());
         tests.add(new NotificationNotReceivedTest());
         if (!isAutomotive) {
+            tests.add(new RestoreLockscreenVisibilityTest());
             tests.add(new AddScreenLockTest());
             tests.add(new SecureActionOnLockScreenTest());
             tests.add(new RemoveScreenLockTest());
@@ -567,7 +570,7 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
                         logFail("Notification wasn't posted");
                         status = FAIL;
                     }
-                 }
+                }
 
             } else {
                 // user hasn't jumped to settings  yet
@@ -1703,6 +1706,59 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         protected void test() {
             status = WAIT_FOR_USER;
             next();
+        }
+    }
+
+    /**
+     * Creates a notification channel. Sends the user to settings to re-allow the channel to
+     * show content on the lockscreen.
+     * This asks the user to undo what they did for {@link LockscreenVisibilityTest}
+     */
+    protected class RestoreLockscreenVisibilityTest extends InteractiveTestCase {
+        private View mView;
+        @Override
+        protected View inflate(ViewGroup parent) {
+            mView = createNlsSettingsItem(parent, R.string.nls_restore_visibility);
+            Button button = mView.findViewById(R.id.nls_action_button);
+            button.setEnabled(false);
+            return mView;
+        }
+
+        @Override
+        protected void setUp() {
+            createChannels();
+            status = READY;
+            Button button = mView.findViewById(R.id.nls_action_button);
+            button.setEnabled(true);
+        }
+
+        @Override
+        boolean autoStart() {
+            return true;
+        }
+
+        @Override
+        protected void test() {
+            NotificationChannel channel = mNm.getNotificationChannel(NOTIFICATION_CHANNEL_ID);
+            int visibility = channel.getLockscreenVisibility();
+            if (visibility == VISIBILITY_PUBLIC || visibility == VISIBILITY_NO_OVERRIDE) {
+                status = PASS;
+            } else {
+                status = WAIT_FOR_USER;
+            }
+
+            next();
+        }
+
+        protected void tearDown() {
+            deleteChannels();
+        }
+
+        @Override
+        protected Intent getIntent() {
+            return new Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
+                    .putExtra(EXTRA_APP_PACKAGE, mContext.getPackageName())
+                    .putExtra(EXTRA_CHANNEL_ID, NOTIFICATION_CHANNEL_ID);
         }
     }
 

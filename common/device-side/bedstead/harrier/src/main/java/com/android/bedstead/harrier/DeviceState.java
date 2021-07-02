@@ -87,8 +87,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 
 
@@ -250,8 +252,23 @@ public final class DeviceState implements TestRule {
                         annotation.getClass()
                                 .getMethod("installInstrumentedAppInParent")
                                 .invoke(annotation);
+
+
+                boolean dpcIsPrimary = false;
+                Set<String> affiliationIds = null;
+                if (requireRunOnProfileAnnotation.hasProfileOwner()) {
+                    dpcIsPrimary = (boolean)
+                            annotation.annotationType()
+                                    .getMethod("dpcIsPrimary").invoke(annotation);
+                    affiliationIds = new HashSet<>(Arrays.asList((String[])
+                            annotation.annotationType()
+                                    .getMethod("affiliationIds").invoke(annotation)));
+                }
+
                 requireRunOnProfile(requireRunOnProfileAnnotation.value(),
-                        installInstrumentedAppInParent);
+                        installInstrumentedAppInParent,
+                        requireRunOnProfileAnnotation.hasProfileOwner(),
+                        dpcIsPrimary, affiliationIds);
                 continue;
             }
 
@@ -260,11 +277,14 @@ public final class DeviceState implements TestRule {
                         (EnsureHasDeviceOwner) annotation;
                 ensureHasDeviceOwner(ensureHasDeviceOwnerAnnotation.onUser(),
                         ensureHasDeviceOwnerAnnotation.failureMode(),
-                        ensureHasDeviceOwnerAnnotation.isPrimary());
+                        ensureHasDeviceOwnerAnnotation.isPrimary(),
+                        new HashSet<>(Arrays.asList(ensureHasDeviceOwnerAnnotation.affiliationIds())));
+                continue;
             }
 
             if (annotation instanceof EnsureHasNoDeviceOwner) {
                 ensureHasNoDeviceOwner();
+                continue;
             }
 
             if (annotation instanceof RequireFeature) {
@@ -288,7 +308,8 @@ public final class DeviceState implements TestRule {
                 EnsureHasProfileOwner ensureHasProfileOwnerAnnotation =
                         (EnsureHasProfileOwner) annotation;
                 ensureHasProfileOwner(ensureHasProfileOwnerAnnotation.onUser(),
-                        ensureHasProfileOwnerAnnotation.isPrimary());
+                        ensureHasProfileOwnerAnnotation.isPrimary(),
+                        new HashSet<>(Arrays.asList(ensureHasProfileOwnerAnnotation.affiliationIds())));
                 continue;
             }
 
@@ -465,7 +486,8 @@ public final class DeviceState implements TestRule {
     }
 
     private void requireRunOnProfile(String userType,
-            OptionalBoolean installInstrumentedAppInParent) {
+            OptionalBoolean installInstrumentedAppInParent,
+            boolean hasProfileOwner, boolean dpcIsPrimary, Set<String> affiliationIds) {
         User instrumentedUser = sTestApis.users().instrumented().resolve();
 
         assumeTrue("This test only runs on users of type " + userType,
@@ -483,6 +505,12 @@ public final class DeviceState implements TestRule {
         } else if (installInstrumentedAppInParent.equals(OptionalBoolean.FALSE)) {
             sTestApis.packages().find(sContext.getPackageName()).uninstall(
                     instrumentedUser.parent());
+        }
+
+        if (hasProfileOwner) {
+            ensureHasProfileOwner(instrumentedUser, dpcIsPrimary, affiliationIds);
+        } else {
+            ensureHasNoProfileOwner(instrumentedUser);
         }
     }
 
@@ -816,7 +844,7 @@ public final class DeviceState implements TestRule {
         mProfiles.get(resolvedUserType).put(forUserReference, profile);
 
         if (hasProfileOwner) {
-            ensureHasProfileOwner(profile, profileOwnerIsPrimary);
+            ensureHasProfileOwner(profile, profileOwnerIsPrimary, /* affiliationIds= */ null);
         }
         return profile;
     }
@@ -1046,11 +1074,11 @@ public final class DeviceState implements TestRule {
         }
     }
 
-    private void ensureHasDeviceOwner(UserType onUser, FailureMode failureMode, boolean isPrimary) {
+    private void ensureHasDeviceOwner(UserType onUser, FailureMode failureMode, boolean isPrimary, Set<String> affiliationIds) {
         // TODO(scottjonathan): Should support non-remotedpc device owner (default to remotedpc)
         // TODO(scottjonathan): Should allow setting the device owner on a different user
         if (isPrimary && mPrimaryDpc != null) {
-            throw new IllegalStateException("Only one DPC can be marked as primary per test");
+            throw new IllegalStateException("Only one DPC can be marked as primary per test (current primary is " + mPrimaryDpc + ")");
         }
 
         DeviceOwner currentDeviceOwner = sTestApis.devicePolicy().getDeviceOwner();
@@ -1058,52 +1086,53 @@ public final class DeviceState implements TestRule {
         if (currentDeviceOwner != null
                 && currentDeviceOwner.componentName().equals(RemoteDpc.DPC_COMPONENT_NAME)) {
             mDeviceOwner = currentDeviceOwner;
-            return;
-        }
+        } else {
+            UserReference instrumentedUser = sTestApis.users().instrumented();
 
-        UserReference instrumentedUser = sTestApis.users().instrumented();
-
-
-        if (!Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.S)) {
-            // Prior to S we can't set device owner if there are other users on the device
-            for (UserReference u : sTestApis.users().all()) {
-                if (u.equals(instrumentedUser)) {
-                    continue;
+            if (!Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.S)) {
+                // Prior to S we can't set device owner if there are other users on the device
+                for (UserReference u : sTestApis.users().all()) {
+                    if (u.equals(instrumentedUser)) {
+                        continue;
+                    }
+                    try {
+                        removeAndRecordUser(u);
+                    } catch (NeneException e) {
+                        failOrSkip(
+                                "Error removing user to prepare for DeviceOwner: " + e.toString(),
+                                failureMode);
+                    }
                 }
-                try {
-                    removeAndRecordUser(u);
-                } catch (NeneException e) {
-                    failOrSkip(
-                            "Error removing user to prepare for DeviceOwner: " + e.toString(),
-                            failureMode);
-                }
+            }
+
+            // TODO(scottjonathan): Remove accounts
+            ensureHasNoProfileOwner(onUser);
+
+            if (!mHasChangedDeviceOwner) {
+                mOriginalDeviceOwner = currentDeviceOwner;
+                mHasChangedDeviceOwner = true;
+            }
+
+            mDeviceOwner = RemoteDpc.setAsDeviceOwner(resolveUserTypeToUser(onUser))
+                    .devicePolicyController();
+
+            if (isPrimary) {
+                mPrimaryDpc = mDeviceOwner;
             }
         }
 
-
-        // TODO(scottjonathan): Remove accounts
-        ensureHasNoProfileOwner(onUser);
-
-        if (!mHasChangedDeviceOwner) {
-            mOriginalDeviceOwner = currentDeviceOwner;
-            mHasChangedDeviceOwner = true;
-        }
-
-        mDeviceOwner = RemoteDpc.setAsDeviceOwner(resolveUserTypeToUser(onUser))
-                .devicePolicyController();
-
-        if (isPrimary) {
-            mPrimaryDpc = mDeviceOwner;
-        }
+        RemoteDpc.forDevicePolicyController(mDeviceOwner).devicePolicyManager()
+                .setAffiliationIds(affiliationIds);
     }
 
-    private void ensureHasProfileOwner(UserType onUser, boolean isPrimary) {
+    private void ensureHasProfileOwner(UserType onUser, boolean isPrimary, Set<String> affiliationIds) {
         // TODO(scottjonathan): Should support non-remotedpc profile owner (default to remotedpc)
         UserReference user = resolveUserTypeToUser(onUser);
-        ensureHasProfileOwner(user, isPrimary);
+        ensureHasProfileOwner(user, isPrimary, affiliationIds);
     }
 
-    private void ensureHasProfileOwner(UserReference user, boolean isPrimary) {
+    private void ensureHasProfileOwner(
+            UserReference user, boolean isPrimary, Set<String> affiliationIds) {
         if (isPrimary && mPrimaryDpc != null) {
             throw new IllegalStateException("Only one DPC can be marked as primary per test");
         }
@@ -1130,6 +1159,10 @@ public final class DeviceState implements TestRule {
         if (isPrimary) {
             mPrimaryDpc = mProfileOwners.get(user);
         }
+
+        if (affiliationIds != null) {
+            profileOwner(user).devicePolicyManager().setAffiliationIds(affiliationIds);
+        }
     }
 
     private void ensureHasNoDeviceOwner() {
@@ -1150,6 +1183,12 @@ public final class DeviceState implements TestRule {
 
     private void ensureHasNoProfileOwner(UserType onUser) {
         UserReference user = resolveUserTypeToUser(onUser);
+
+        ensureHasNoProfileOwner(user);
+    }
+
+    private void ensureHasNoProfileOwner(UserReference user) {
+
         ProfileOwner currentProfileOwner = sTestApis.devicePolicy().getProfileOwner(user);
 
         if (currentProfileOwner == null) {

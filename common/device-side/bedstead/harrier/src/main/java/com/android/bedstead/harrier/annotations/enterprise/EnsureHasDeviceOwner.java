@@ -16,10 +16,13 @@
 
 package com.android.bedstead.harrier.annotations.enterprise;
 
+import static android.content.pm.PackageManager.FEATURE_DEVICE_ADMIN;
+
 import static com.android.bedstead.harrier.DeviceState.UserType.SYSTEM_USER;
 
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.FailureMode;
+import com.android.bedstead.harrier.annotations.RequireFeature;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -39,6 +42,7 @@ import java.lang.annotation.Target;
  */
 @Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
+@RequireFeature(FEATURE_DEVICE_ADMIN)
 public @interface EnsureHasDeviceOwner {
     /** Which user type the device owner should be installed on. */
     DeviceState.UserType onUser() default SYSTEM_USER;
@@ -52,6 +56,9 @@ public @interface EnsureHasDeviceOwner {
      * <p>Only one device policy controller per test should be marked as primary.
      */
     boolean isPrimary() default false;
+
+    /**
+     * Affiliation ids to be set for the device owner.
+     */
+    String[] affiliationIds() default {};
 }
-// TODO(scottjonathan): Is there a feature or something that we need to check to make sure DO is
-//  supported?

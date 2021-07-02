@@ -22,6 +22,7 @@ import static android.app.AlarmManager.RTC_WAKEUP;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
+import android.alarmmanager.util.AlarmManagerDeviceConfigHelper;
 import android.app.AlarmManager;
 import android.content.Context;
 import android.os.SystemClock;
@@ -92,6 +93,6 @@ public class InstantAppsTests {
 
     @After
     public void deleteAlarmManagerSettings() {
-        mConfigHelper.deleteAll();
+        mConfigHelper.restoreAll();
     }
 }

@@ -14,13 +14,11 @@
  * limitations under the License.
  */
 
-package com.android.bedstead.harrier.annotations.parameterized;
+package com.android.bedstead.harrier.annotations;
 
-import static android.content.pm.PackageManager.FEATURE_DEVICE_ADMIN;
+import com.android.bedstead.harrier.BedsteadJUnit4;
 
-import com.android.bedstead.harrier.annotations.RequireFeature;
-import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
-import com.android.bedstead.harrier.annotations.meta.ParameterizedAnnotation;
+import org.junit.Test;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -28,12 +26,11 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Parameterize a test so that it runs on a user with a profile owner.
+ * Mark that a method is to be called by a host-driven test.
+ *
+ * <p>When used with {@link BedsteadJUnit4}, this acts as equivalent to {@link Test}.
  */
-@Target({ElementType.METHOD, ElementType.TYPE})
+@Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-@ParameterizedAnnotation
-@RequireFeature(FEATURE_DEVICE_ADMIN)
-@RequireRunOnWorkProfile(dpcIsPrimary = true)
-public @interface IncludeRunOnProfileOwner {
+public @interface CalledByHostDrivenTest {
 }

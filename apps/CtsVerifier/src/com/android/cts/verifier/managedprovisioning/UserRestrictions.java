@@ -247,9 +247,11 @@ public class UserRestrictions {
             case UserManager.DISALLOW_ADJUST_VOLUME:
                 return pm.hasSystemFeature(PackageManager.FEATURE_AUDIO_OUTPUT);
             case UserManager.DISALLOW_AIRPLANE_MODE:
-                return hasSettingsActivity(context, Settings.ACTION_AIRPLANE_MODE_SETTINGS);
+                return (!pm.hasSystemFeature(PackageManager.FEATURE_WATCH)
+                    && hasSettingsActivity(context, Settings.ACTION_AIRPLANE_MODE_SETTINGS));
             case UserManager.DISALLOW_CONFIG_BRIGHTNESS:
-                return hasSettingsActivity(context, Settings.ACTION_DISPLAY_SETTINGS);
+                return (hasSettingsActivity(context, Settings.ACTION_DISPLAY_SETTINGS)
+                    && !pm.hasSystemFeature(PackageManager.FEATURE_WATCH));
             case UserManager.DISALLOW_CONFIG_CELL_BROADCASTS:
                 final TelephonyManager tm =
                     context.getSystemService(TelephonyManager.class);
@@ -292,6 +294,10 @@ public class UserRestrictions {
             case UserManager.DISALLOW_CONFIG_CREDENTIALS:
                 return !pm.hasSystemFeature(PackageManager.FEATURE_WATCH)
                         && hasSettingsActivity(context, ACTION_CREDENTIALS_INSTALL);
+            case UserManager.DISALLOW_CONFIG_LOCATION:
+            case UserManager.DISALLOW_CONFIG_SCREEN_TIMEOUT:
+                // TODO(b/189282625): replace FEATURE_WATCH with a more specific feature
+                return !pm.hasSystemFeature(PackageManager.FEATURE_WATCH);
             default:
                 return true;
         }

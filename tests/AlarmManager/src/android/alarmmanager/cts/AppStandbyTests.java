@@ -24,6 +24,7 @@ import static org.junit.Assume.assumeTrue;
 
 import android.alarmmanager.alarmtestapp.cts.TestAlarmReceiver;
 import android.alarmmanager.alarmtestapp.cts.TestAlarmScheduler;
+import android.alarmmanager.util.AlarmManagerDeviceConfigHelper;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -244,7 +245,7 @@ public class AppStandbyTests {
         setPowerWhitelisted(false);
         setBatteryCharging(true);
         resetBackgroundSettleTime();
-        mConfigHelper.deleteAll();
+        mConfigHelper.restoreAll();
         final Intent cancelAlarmsIntent = new Intent(TestAlarmScheduler.ACTION_CANCEL_ALL_ALARMS);
         cancelAlarmsIntent.setComponent(mAlarmScheduler);
         sContext.sendBroadcast(cancelAlarmsIntent);

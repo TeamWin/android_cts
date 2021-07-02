@@ -28,6 +28,7 @@ import com.android.bedstead.remotedpc.processor.annotations.RemoteDpcAutomaticAd
 import com.android.bedstead.remotedpc.processor.annotations.RemoteDpcManager;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Wrapper of {@link DevicePolicyManager} methods for use with Remote DPC
@@ -136,4 +137,17 @@ public interface RemoteDevicePolicyManager {
     SystemUpdateInfo getPendingSystemUpdate(ComponentName admin);
     /** See {@link DevicePolicyManager#getPendingSystemUpdate(ComponentName}). */
     @RemoteDpcAutomaticAdmin SystemUpdateInfo getPendingSystemUpdate();
+
+    /** See {@link DevicePolicyManager#setAffiliationIds(ComponentName, Set)}. */
+    void setAffiliationIds(ComponentName admin, Set<String> ids);
+    /** See {@link DevicePolicyManager#setAffiliationIds(ComponentName, Set)}. */
+    @RemoteDpcAutomaticAdmin void setAffiliationIds(Set<String> ids);
+
+    /** See {@link android.app.admin.DevicePolicyManager#addPersistentPreferredActivity(ComponentName, IntentFilter, ComponentName)}. */
+    void addPersistentPreferredActivity(
+            ComponentName admin, IntentFilter filter, ComponentName activity);
+
+    /** See {@link android.app.admin.DevicePolicyManager#addPersistentPreferredActivity(ComponentName, IntentFilter, ComponentName)}. */
+    @RemoteDpcAutomaticAdmin void addPersistentPreferredActivity(
+            IntentFilter filter, ComponentName activity);
 }
