@@ -48,15 +48,19 @@ import com.android.cts.input.HidResultData;
 import com.android.cts.input.HidTestData;
 import com.android.cts.input.HidVibratorTestData;
 
+import org.junit.Assert;
 import org.junit.Rule;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class InputHidTestCase extends InputTestCase {
     private static final String TAG = "InputHidTestCase";
@@ -68,6 +72,7 @@ public class InputHidTestCase extends InputTestCase {
     private int mDeviceId;
     private final int mRegisterResourceId;
     private boolean mDelayAfterSetup = false;
+    protected static boolean sIsKernel419;
 
     @Rule
     public MockitoRule rule = MockitoJUnit.rule();
@@ -162,6 +167,17 @@ public class InputHidTestCase extends InputTestCase {
         mHidDevice = new HidDevice(mInstrumentation, id, vendorId, productId, sources,
                 registerCommand);
         assertNotNull(mHidDevice);
+
+        try {
+            String output = executeShellCommand("uname -r");
+            Pattern p = Pattern.compile("^(\\d+)\\.(\\d+)");
+            Matcher m1 = p.matcher(output);
+            Assert.assertTrue(m1.find());
+            sIsKernel419 = (Integer.parseInt(m1.group(1)) == 4
+                    && Integer.parseInt(m1.group(2)) == 19);
+        } catch (IOException e) {
+            Assert.fail("Failed to get the kernel version.");
+        }
     }
 
     @Override
