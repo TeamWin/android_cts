@@ -435,17 +435,6 @@ class CodecDecoderTestBase extends CodecTestBase {
         return null;
     }
 
-    void enqueueInput(int bufferIndex, ByteBuffer buffer, MediaCodec.BufferInfo info) {
-        ByteBuffer inputBuffer = mCodec.getInputBuffer(bufferIndex);
-        inputBuffer.put(buffer.array(), info.offset, info.size);
-        mCodec.queueInputBuffer(bufferIndex, 0, info.size, info.presentationTimeUs,
-                info.flags);
-        if (info.size > 0 && ((info.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) == 0) &&
-                ((info.flags & MediaCodec.BUFFER_FLAG_PARTIAL_FRAME) == 0)) {
-            mInputCount++;
-        }
-    }
-
     void enqueueInput(int bufferIndex) {
         if (mExtractor.getSampleSize() < 0) {
             enqueueEOS(bufferIndex);
@@ -477,44 +466,6 @@ class CodecDecoderTestBase extends CodecTestBase {
             mOutputCount++;
         }
         mCodec.releaseOutputBuffer(bufferIndex, false);
-    }
-
-    void doWork(ByteBuffer buffer, ArrayList<MediaCodec.BufferInfo> list)
-            throws InterruptedException {
-        int frameCount = 0;
-        if (mIsCodecInAsyncMode) {
-            // output processing after queuing EOS is done in waitForAllOutputs()
-            while (!mAsyncHandle.hasSeenError() && !mSawInputEOS && frameCount < list.size()) {
-                Pair<Integer, MediaCodec.BufferInfo> element = mAsyncHandle.getWork();
-                if (element != null) {
-                    int bufferID = element.first;
-                    MediaCodec.BufferInfo info = element.second;
-                    if (info != null) {
-                        dequeueOutput(bufferID, info);
-                    } else {
-                        enqueueInput(bufferID, buffer, list.get(frameCount));
-                        frameCount++;
-                    }
-                }
-            }
-        } else {
-            MediaCodec.BufferInfo outInfo = new MediaCodec.BufferInfo();
-            // output processing after queuing EOS is done in waitForAllOutputs()
-            while (!mSawInputEOS && frameCount < list.size()) {
-                int outputBufferId = mCodec.dequeueOutputBuffer(outInfo, Q_DEQ_TIMEOUT_US);
-                if (outputBufferId >= 0) {
-                    dequeueOutput(outputBufferId, outInfo);
-                } else if (outputBufferId == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
-                    mOutFormat = mCodec.getOutputFormat();
-                    mSignalledOutFormatChanged = true;
-                }
-                int inputBufferId = mCodec.dequeueInputBuffer(Q_DEQ_TIMEOUT_US);
-                if (inputBufferId != -1) {
-                    enqueueInput(inputBufferId, buffer, list.get(frameCount));
-                    frameCount++;
-                }
-            }
-        }
     }
 }
 
