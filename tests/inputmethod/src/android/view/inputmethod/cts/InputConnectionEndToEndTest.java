@@ -84,19 +84,19 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
- * Ensures that blocking APIs in {@link InputConnection} are working as expected.
+ * Provides basic tests for APIs defined in {@link InputConnection}.
  *
  * <p>TODO(b/129012881): Reduce boilerplate code.</p>
  */
 @LargeTest
 @RunWith(AndroidJUnit4.class)
-public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
+public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
     private static final long LONG_TIMEOUT = TimeUnit.SECONDS.toMillis(30);
     private static final long IMMEDIATE_TIMEOUT_NANO = TimeUnit.MILLISECONDS.toNanos(200);
 
     private static final String TEST_MARKER_PREFIX =
-            "android.view.inputmethod.cts.InputConnectionBlockingMethodTest";
+            "android.view.inputmethod.cts.InputConnectionEndToEndTest";
 
     private static String getTestMarker() {
         return TEST_MARKER_PREFIX + "/"  + SystemClock.elapsedRealtimeNanos();
@@ -1364,6 +1364,92 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
             expectElapseTimeLessThan(result, IMMEDIATE_TIMEOUT_NANO);
             methodCallVerifier.assertNotCalled(
                     "Once unbindInput() happened, IC#commitContent() fails fast.");
+        });
+    }
+
+    /**
+     * Test {@link InputConnection#commitText(CharSequence, int)} works as expected.
+     */
+    @Test
+    public void testCommitText() throws Exception {
+        final Annotation expectedSpan = new Annotation("expectedKey", "expectedValue");
+        final CharSequence expectedText = createTestCharSequence("expectedText", expectedSpan);
+        final int expectedNewCursorPosition = 123;
+        // Intentionally let the app return "false" to confirm that IME still receives "true".
+        final boolean returnedResult = false;
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public boolean commitText(CharSequence text, int newCursorPosition) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putCharSequence("text", text);
+                    args.putInt("newCursorPosition", newCursorPosition);
+                });
+
+                return returnedResult;
+            }
+        }
+
+        testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
+            final ImeCommand command =
+                    session.callCommitText(expectedText, expectedNewCursorPosition);
+            assertTrue("commitText() always returns true unless RemoteException is thrown",
+                    expectCommand(stream, command, TIMEOUT).getReturnBooleanValue());
+            methodCallVerifier.assertCalledOnce(args -> {
+                assertEqualsForTestCharSequence(expectedText, args.getCharSequence("text"));
+                assertEquals(expectedNewCursorPosition, args.getInt("newCursorPosition"));
+            });
+        });
+    }
+
+    /**
+     * Test {@link InputConnection#commitText(CharSequence, int)} fails fast once
+     * {@link android.view.inputmethod.InputMethod#unbindInput()} is issued.
+     */
+    @Test
+    public void testCommitTextAfterUnbindInput() throws Exception {
+        final boolean returnedResult = true;
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public boolean commitText(CharSequence text, int newCursorPosition) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putCharSequence("text", text);
+                    args.putInt("newCursorPosition", newCursorPosition);
+                });
+                return returnedResult;
+            }
+        }
+
+        testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
+            // Memorize the current InputConnection.
+            expectCommand(stream, session.memorizeCurrentInputConnection(), TIMEOUT);
+
+            // Let unbindInput happen.
+            triggerUnbindInput();
+            expectEvent(stream, event -> "unbindInput".equals(event.getEventName()), TIMEOUT);
+
+            // Now IC#getTextAfterCursor() for the memorized IC should fail fast.
+            final ImeEvent result = expectCommand(stream,
+                    session.callCommitText("text", 1), TIMEOUT);
+            // CAVEAT: this behavior is a bit questionable and may change in a future version.
+            assertTrue("Currently IC#commitText() still returns true even after unbindInput().",
+                    result.getReturnBooleanValue());
+            methodCallVerifier.assertNotCalled(
+                    "Once unbindInput() happened, IC#commitText() fails fast.");
+            expectElapseTimeLessThan(result, IMMEDIATE_TIMEOUT_NANO);
         });
     }
 }
