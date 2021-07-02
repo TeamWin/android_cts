@@ -661,6 +661,10 @@ class CodecEncoderTestBase extends CodecTestBase {
     }
 }
 
+/**
+ * The following class decodes the given testFile using decoder created by the given decoderName
+ * in surface mode(uses PersistentInputSurface) and returns the achieved fps for decoding.
+ */
 class Decode extends CodecDecoderTestBase implements Callable<Double> {
     private static final String LOG_TAG = Decode.class.getSimpleName();
 
@@ -700,6 +704,10 @@ class Decode extends CodecDecoderTestBase implements Callable<Double> {
     }
 }
 
+/**
+ * The following class decodes the given testFile using decoder created by the given decoderName
+ * in surface mode(uses given valid surface) and render the output to surface.
+ */
 class DecodeToSurface extends Decode {
 
     DecodeToSurface(String mime, String testFile, String decoderName, Surface surface,
@@ -719,6 +727,10 @@ class DecodeToSurface extends Decode {
     }
 }
 
+/**
+ * The following class encodes a YUV video file to a given mimeType using encoder created by the
+ * given encoderName and configuring to 720p 30fps format.
+ */
 class Encode extends CodecEncoderTestBase implements Callable<Double> {
     private static final String LOG_TAG = Encode.class.getSimpleName();
 
