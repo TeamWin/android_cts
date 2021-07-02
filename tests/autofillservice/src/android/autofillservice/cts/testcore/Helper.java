@@ -801,16 +801,36 @@ public final class Helper {
      * Creates an array of {@link AutofillId} mapped from the {@code structure} nodes with the given
      * {@code resourceIds}.
      */
-    public static AutofillId[] getAutofillIds(Function<String, AutofillId> autofillIdResolver,
+    public static AutofillId[] getAutofillIds(Function<String, ViewNode> nodeResolver,
             String[] resourceIds) {
         if (resourceIds == null) return null;
 
         final AutofillId[] requiredIds = new AutofillId[resourceIds.length];
         for (int i = 0; i < resourceIds.length; i++) {
             final String resourceId = resourceIds[i];
-            requiredIds[i] = autofillIdResolver.apply(resourceId);
+            final ViewNode node = nodeResolver.apply(resourceId);
+            if (node == null) {
+                throw new AssertionError("No node with resourceId " + resourceId);
+            }
+            requiredIds[i] = node.getAutofillId();
+
         }
         return requiredIds;
+    }
+
+    /**
+     * Get an {@link AutofillId} mapped from the {@code structure} node with the given
+     * {@code resourceId}.
+     */
+    public static AutofillId getAutofillId(Function<String, ViewNode> nodeResolver,
+            String resourceId) {
+        if (resourceId == null) return null;
+
+        final ViewNode node = nodeResolver.apply(resourceId);
+        if (node == null) {
+            throw new AssertionError("No node with resourceId " + resourceId);
+        }
+        return node.getAutofillId();
     }
 
     /**
