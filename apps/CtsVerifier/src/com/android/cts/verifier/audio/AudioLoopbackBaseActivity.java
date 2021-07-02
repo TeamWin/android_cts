@@ -292,6 +292,10 @@ public class AudioLoopbackBaseActivity extends PassFailButtons.Activity {
     //
     @Override
     public void recordTestResults() {
+        if (mNativeAnalyzerThread == null) {
+            return; // no results to report
+        }
+
         CtsVerifierReportLog reportLog = getReportLog();
         reportLog.addValue(
                 KEY_LATENCY,
@@ -360,6 +364,9 @@ public class AudioLoopbackBaseActivity extends PassFailButtons.Activity {
             // This value matches AAUDIO_INPUT_PRESET_VOICE_RECOGNITION
             mNativeAnalyzerThread.setInputPreset(MediaRecorder.AudioSource.VOICE_RECOGNITION);
             startTestPhase();
+        } else {
+            Log.e(TAG, "Couldn't allocate native analyzer thread");
+            mResultText.setText(getResources().getString(R.string.audio_loopback_failure));
         }
     }
 
