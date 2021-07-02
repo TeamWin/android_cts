@@ -42,6 +42,7 @@ import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeThat;
 import static org.junit.Assume.assumeTrue;
 
@@ -140,6 +141,11 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
 
     @Before
     public void setUpWindowInsetsAnimationControllerTests() throws Throwable {
+        assumeFalse(
+                "In Automotive, auxiliary inset changes can happen when IME inset changes, so "
+                        + "allow Automotive skip IME inset animation tests.",
+                isCar() && mType == ime());
+
         final ImeEventStream mockImeEventStream;
         if (mType == ime()) {
             final Instrumentation instrumentation = getInstrumentation();
