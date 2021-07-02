@@ -152,6 +152,11 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
     }
 
     public void testUidForegroundDuration() throws Exception {
+        // It needs to check time about foreground duration
+        // But there are some cases occur flakiness due to time on getting locat.
+        // So, we need to clear logcat buffer before start the test
+        getDevice().executeShellCommand("logcat -c");
+
         batteryOnScreenOff();
         installPackage(DEVICE_SIDE_TEST_APK, true);
         // No foreground time before test
