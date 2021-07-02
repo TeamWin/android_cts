@@ -26,6 +26,7 @@ import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -65,6 +66,9 @@ import org.junit.runner.RunWith;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
@@ -125,6 +129,52 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
         @Override
         public void close() throws Exception {
             mWaitUntilTestFinished.countDown();
+        }
+    }
+
+    /**
+     * A utility method to verify that a method is called with a certain set of parameters.
+     */
+    private static final class MethodCallVerifier {
+        private final AtomicReference<Bundle> mArgs = new AtomicReference<>();
+        private final AtomicInteger mCallCount = new AtomicInteger(0);
+
+        /**
+         * Used to record when a method to be tested is called.
+         *
+         * @param argumentsRecorder a {@link Consumer} to capture method parameters.
+         */
+        void onMethodCalled(@NonNull Consumer<Bundle> argumentsRecorder) {
+            final Bundle bundle = new Bundle();
+            argumentsRecorder.accept(bundle);
+            mArgs.set(bundle);
+            mCallCount.incrementAndGet();
+        }
+
+        /**
+         * Used to assert captured parameters later.
+         *
+         * @param argumentsVerifier a {@link Consumer} to verify method arguments.
+         * @throws AssertionError when {@link #onMethodCalled(Consumer)} was not called only once.
+         */
+        void assertCalledOnce(@NonNull Consumer<Bundle> argumentsVerifier) {
+            assertEquals(1, mCallCount.get());
+            final Bundle bundle = mArgs.get();
+            assertNotNull(bundle);
+            argumentsVerifier.accept(bundle);
+        }
+
+        /**
+         * Used to assert that {@link #onMethodCalled(Consumer)} was never called.
+         *
+         * @param callCountVerificationMessage A message to be used when the assertion fails.
+         */
+        void assertNotCalled(@Nullable String callCountVerificationMessage) {
+            if (callCountVerificationMessage != null) {
+                assertEquals(callCountVerificationMessage, 0, mCallCount.get());
+            } else {
+                assertEquals(0, mCallCount.get());
+            }
         }
     }
 
@@ -252,6 +302,8 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
         final int expectedFlags = InputConnection.GET_TEXT_WITH_STYLES;
         final String expectedResult = "89";
 
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
         final class Wrapper extends InputConnectionWrapper {
             private Wrapper(InputConnection target) {
                 super(target, false);
@@ -259,8 +311,10 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
 
             @Override
             public CharSequence getTextAfterCursor(int n, int flags) {
-                assertEquals(expectedN, n);
-                assertEquals(expectedFlags, flags);
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putInt("n", n);
+                    args.putInt("flags", flags);
+                });
                 return expectedResult;
             }
         }
@@ -270,6 +324,10 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
             final CharSequence result =
                     expectCommand(stream, command, TIMEOUT).getReturnCharSequenceValue();
             assertEquals(expectedResult, result);
+            methodCallVerifier.assertCalledOnce(args -> {
+                assertEquals(expectedN, args.get("n"));
+                assertEquals(expectedFlags, args.get("flags"));
+            });
         });
     }
 
@@ -279,8 +337,12 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
      */
     @Test
     public void testGetTextAfterCursorFailWithTimeout() throws Exception {
+        final int expectedN = 3;
+        final int expectedFlags = InputConnection.GET_TEXT_WITH_STYLES;
         final String unexpectedResult = "89";
         final BlockingMethodVerifier blocker = new BlockingMethodVerifier();
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
 
         final class Wrapper extends InputConnectionWrapper {
             private Wrapper(InputConnection target) {
@@ -289,18 +351,25 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
 
             @Override
             public CharSequence getTextAfterCursor(int n, int flags) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putInt("n", n);
+                    args.putInt("flags", flags);
+                });
                 blocker.onMethodCalled();
                 return unexpectedResult;
             }
         }
 
         testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
-            final ImeCommand command = session.callGetTextAfterCursor(
-                    unexpectedResult.length(), InputConnection.GET_TEXT_WITH_STYLES);
+            final ImeCommand command = session.callGetTextAfterCursor(expectedN, expectedFlags);
             blocker.expectMethodCalled("IC#getTextAfterCursor() must be called back", TIMEOUT);
             final ImeEvent result = expectCommand(stream, command, LONG_TIMEOUT);
             assertTrue("When timeout happens, IC#getTextAfterCursor() returns null",
                     result.isNullReturnValue());
+            methodCallVerifier.assertCalledOnce(args -> {
+                assertEquals(expectedN, args.get("n"));
+                assertEquals(expectedFlags, args.get("flags"));
+            });
         }, blocker);
     }
 
@@ -311,7 +380,8 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
     @Test
     public void testGetTextAfterCursorFailFastAfterUnbindInput() throws Exception {
         final String unexpectedResult = "89";
-        final AtomicBoolean methodCalled = new AtomicBoolean(false);
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
 
         final class Wrapper extends InputConnectionWrapper {
             private Wrapper(InputConnection target) {
@@ -320,7 +390,10 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
 
             @Override
             public CharSequence getTextAfterCursor(int n, int flags) {
-                methodCalled.set(true);
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putInt("n", n);
+                    args.putInt("flags", flags);
+                });
                 return unexpectedResult;
             }
         }
@@ -338,9 +411,9 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
                     unexpectedResult.length(), InputConnection.GET_TEXT_WITH_STYLES), TIMEOUT);
             assertTrue("Once unbindInput() happened, IC#getTextAfterCursor() returns null",
                     result.isNullReturnValue());
-            assertFalse("Once unbindInput() happened, IC#getTextAfterCursor() fails fast.",
-                    methodCalled.get());
             expectElapseTimeLessThan(result, IMMEDIATE_TIMEOUT_NANO);
+            methodCallVerifier.assertNotCalled(
+                    "Once unbindInput() happened, IC#getTextAfterCursor() fails fast.");
         });
     }
 
@@ -353,6 +426,8 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
         final int expectedFlags = InputConnection.GET_TEXT_WITH_STYLES;
         final String expectedResult = "123";
 
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
         final class Wrapper extends InputConnectionWrapper {
             private Wrapper(InputConnection target) {
                 super(target, false);
@@ -360,8 +435,10 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
 
             @Override
             public CharSequence getTextBeforeCursor(int n, int flags) {
-                assertEquals(expectedN, n);
-                assertEquals(expectedFlags, flags);
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putInt("n", n);
+                    args.putInt("flags", flags);
+                });
                 return expectedResult;
             }
         }
@@ -371,6 +448,10 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
             final CharSequence result =
                     expectCommand(stream, command, TIMEOUT).getReturnCharSequenceValue();
             assertEquals(expectedResult, result);
+            methodCallVerifier.assertCalledOnce(args -> {
+                assertEquals(expectedN, args.get("n"));
+                assertEquals(expectedFlags, args.get("flags"));
+            });
         });
     }
 
@@ -380,8 +461,12 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
      */
     @Test
     public void testGetTextBeforeCursorFailWithTimeout() throws Exception {
+        final int expectedN = 3;
+        final int expectedFlags = InputConnection.GET_TEXT_WITH_STYLES;
         final String unexpectedResult = "123";
         final BlockingMethodVerifier blocker = new BlockingMethodVerifier();
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
 
         final class Wrapper extends InputConnectionWrapper {
             private Wrapper(InputConnection target) {
@@ -390,18 +475,25 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
 
             @Override
             public CharSequence getTextBeforeCursor(int n, int flags) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putInt("n", n);
+                    args.putInt("flags", flags);
+                });
                 blocker.onMethodCalled();
                 return unexpectedResult;
             }
         }
 
         testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
-            final ImeCommand command = session.callGetTextBeforeCursor(
-                    unexpectedResult.length(), InputConnection.GET_TEXT_WITH_STYLES);
+            final ImeCommand command = session.callGetTextBeforeCursor(expectedN, expectedFlags);
             blocker.expectMethodCalled("IC#getTextBeforeCursor() must be called back", TIMEOUT);
             final ImeEvent result = expectCommand(stream, command, LONG_TIMEOUT);
             assertTrue("When timeout happens, IC#getTextBeforeCursor() returns null",
                     result.isNullReturnValue());
+            methodCallVerifier.assertCalledOnce(args -> {
+                assertEquals(expectedN, args.get("n"));
+                assertEquals(expectedFlags, args.get("flags"));
+            });
         }, blocker);
     }
 
@@ -412,7 +504,8 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
     @Test
     public void testGetTextBeforeCursorFailFastAfterUnbindInput() throws Exception {
         final String unexpectedResult = "123";
-        final AtomicBoolean methodCalled = new AtomicBoolean(false);
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
 
         final class Wrapper extends InputConnectionWrapper {
             private Wrapper(InputConnection target) {
@@ -421,7 +514,10 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
 
             @Override
             public CharSequence getTextBeforeCursor(int n, int flags) {
-                methodCalled.set(true);
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putInt("n", n);
+                    args.putInt("flags", flags);
+                });
                 return unexpectedResult;
             }
         }
@@ -439,9 +535,9 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
                     unexpectedResult.length(), InputConnection.GET_TEXT_WITH_STYLES), TIMEOUT);
             assertTrue("Once unbindInput() happened, IC#getTextBeforeCursor() returns null",
                     result.isNullReturnValue());
-            assertFalse("Once unbindInput() happened, IC#getTextBeforeCursor() fails fast.",
-                    methodCalled.get());
             expectElapseTimeLessThan(result, IMMEDIATE_TIMEOUT_NANO);
+            methodCallVerifier.assertNotCalled(
+                    "Once unbindInput() happened, IC#getTextBeforeCursor() fails fast.");
         });
     }
 
@@ -453,6 +549,8 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
         final int expectedFlags = InputConnection.GET_TEXT_WITH_STYLES;
         final String expectedResult = "4567";
 
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
         final class Wrapper extends InputConnectionWrapper {
             private Wrapper(InputConnection target) {
                 super(target, false);
@@ -460,6 +558,9 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
 
             @Override
             public CharSequence getSelectedText(int flags) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putInt("flags", flags);
+                });
                 assertEquals(expectedFlags, flags);
                 return expectedResult;
             }
@@ -470,6 +571,9 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
             final CharSequence result =
                     expectCommand(stream, command, TIMEOUT).getReturnCharSequenceValue();
             assertEquals(expectedResult, result);
+            methodCallVerifier.assertCalledOnce(args -> {
+                assertEquals(expectedFlags, args.get("flags"));
+            });
         });
     }
 
@@ -479,8 +583,11 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
      */
     @Test
     public void testGetSelectedTextFailWithTimeout() throws Exception {
+        final int expectedFlags = InputConnection.GET_TEXT_WITH_STYLES;
         final String unexpectedResult = "4567";
         final BlockingMethodVerifier blocker = new BlockingMethodVerifier();
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
 
         final class Wrapper extends InputConnectionWrapper {
             private Wrapper(InputConnection target) {
@@ -489,6 +596,9 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
 
             @Override
             public CharSequence getSelectedText(int flags) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putInt("flags", flags);
+                });
                 blocker.onMethodCalled();
                 return unexpectedResult;
             }
@@ -501,6 +611,9 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
             final ImeEvent result = expectCommand(stream, command, LONG_TIMEOUT);
             assertTrue("When timeout happens, IC#getSelectedText() returns null",
                     result.isNullReturnValue());
+            methodCallVerifier.assertCalledOnce(args -> {
+                assertEquals(expectedFlags, args.get("flags"));
+            });
         }, blocker);
     }
 
@@ -510,7 +623,8 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
     @Test
     public void testGetSelectedTextFailFastAfterUnbindInput() throws Exception {
         final String unexpectedResult = "4567";
-        final AtomicBoolean methodCalled = new AtomicBoolean(false);
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
 
         final class Wrapper extends InputConnectionWrapper {
             private Wrapper(InputConnection target) {
@@ -519,7 +633,9 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
 
             @Override
             public CharSequence getSelectedText(int flags) {
-                methodCalled.set(true);
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putInt("flags", flags);
+                });
                 return unexpectedResult;
             }
         }
@@ -537,9 +653,9 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
                     InputConnection.GET_TEXT_WITH_STYLES), TIMEOUT);
             assertTrue("Once unbindInput() happened, IC#getSelectedText() returns null",
                     result.isNullReturnValue());
-            assertFalse("Once unbindInput() happened, IC#getSelectedText() fails fast.",
-                    methodCalled.get());
             expectElapseTimeLessThan(result, IMMEDIATE_TIMEOUT_NANO);
+            methodCallVerifier.assertNotCalled(
+                    "Once unbindInput() happened, IC#getSelectedText() fails fast.");
         });
     }
 
@@ -553,6 +669,8 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
         final int expectedFlags = InputConnection.GET_TEXT_WITH_STYLES;
         final SurroundingText expectedResult = new SurroundingText("012345", 1, 2, 0);
 
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
         final class Wrapper extends InputConnectionWrapper {
             private Wrapper(InputConnection target) {
                 super(target, false);
@@ -561,9 +679,11 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
             @Override
             public SurroundingText getSurroundingText(int beforeLength, int afterLength,
                     int flags) {
-                assertEquals(expectedBeforeLength, beforeLength);
-                assertEquals(expectedAfterLength, afterLength);
-                assertEquals(expectedFlags, flags);
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putInt("beforeLength", beforeLength);
+                    args.putInt("afterLength", afterLength);
+                    args.putInt("flags", flags);
+                });
                 return expectedResult;
             }
         }
@@ -577,6 +697,11 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
             assertEquals(expectedResult.getSelectionStart(), result.getSelectionStart());
             assertEquals(expectedResult.getSelectionEnd(), result.getSelectionEnd());
             assertEquals(expectedResult.getOffset(), result.getOffset());
+            methodCallVerifier.assertCalledOnce(args -> {
+                assertEquals(expectedBeforeLength, args.get("beforeLength"));
+                assertEquals(expectedAfterLength, args.get("afterLength"));
+                assertEquals(expectedFlags, args.get("flags"));
+            });
         });
     }
 
@@ -586,12 +711,14 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
      */
     @Test
     public void testGetSurroundingTextFailWithTimeout() throws Exception {
-        final int beforeLength = 3;
-        final int afterLength = 4;
-        final int flags = InputConnection.GET_TEXT_WITH_STYLES;
+        final int expectedBeforeLength = 3;
+        final int expectedAfterLength = 4;
+        final int expectedFlags = InputConnection.GET_TEXT_WITH_STYLES;
         final SurroundingText unexpectedResult = new SurroundingText("012345", 1, 2, 0);
 
         final BlockingMethodVerifier blocker = new BlockingMethodVerifier();
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
 
         final class Wrapper extends InputConnectionWrapper {
             private Wrapper(InputConnection target) {
@@ -601,18 +728,28 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
             @Override
             public SurroundingText getSurroundingText(int beforeLength, int afterLength,
                     int flags) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putInt("beforeLength", beforeLength);
+                    args.putInt("afterLength", afterLength);
+                    args.putInt("flags", flags);
+                });
                 blocker.onMethodCalled();
                 return unexpectedResult;
             }
         }
 
         testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
-            final ImeCommand command = session.callGetSurroundingText(beforeLength, afterLength,
-                    flags);
+            final ImeCommand command = session.callGetSurroundingText(expectedBeforeLength,
+                    expectedAfterLength, expectedFlags);
             blocker.expectMethodCalled("IC#getSurroundingText() must be called back", TIMEOUT);
             final ImeEvent result = expectCommand(stream, command, LONG_TIMEOUT);
             assertTrue("When timeout happens, IC#getSurroundingText() returns null",
                     result.isNullReturnValue());
+            methodCallVerifier.assertCalledOnce(args -> {
+                assertEquals(expectedBeforeLength, args.get("beforeLength"));
+                assertEquals(expectedAfterLength, args.get("afterLength"));
+                assertEquals(expectedFlags, args.get("flags"));
+            });
         }, blocker);
     }
 
@@ -627,7 +764,7 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
         final int flags = InputConnection.GET_TEXT_WITH_STYLES;
         final SurroundingText unexpectedResult = new SurroundingText("012345", 1, 2, 0);
 
-        final AtomicBoolean methodCalled = new AtomicBoolean(false);
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
 
         final class Wrapper extends InputConnectionWrapper {
             private Wrapper(InputConnection target) {
@@ -637,7 +774,11 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
             @Override
             public SurroundingText getSurroundingText(int beforeLength, int afterLength,
                     int flags) {
-                methodCalled.set(true);
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putInt("beforeLength", beforeLength);
+                    args.putInt("afterLength", afterLength);
+                    args.putInt("flags", flags);
+                });
                 return unexpectedResult;
             }
         }
@@ -655,9 +796,9 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
                     beforeLength, afterLength, flags), TIMEOUT);
             assertTrue("Once unbindInput() happened, IC#getSurroundingText() returns null",
                     result.isNullReturnValue());
-            assertFalse("Once unbindInput() happened, IC#getSurroundingText() fails fast.",
-                    methodCalled.get());
             expectElapseTimeLessThan(result, IMMEDIATE_TIMEOUT_NANO);
+            methodCallVerifier.assertNotCalled(
+                    "Once unbindInput() happened, IC#getSurroundingText() fails fast.");
         });
     }
 
@@ -666,9 +807,11 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
      */
     @Test
     public void testGetCursorCapsMode() throws Exception {
-        final int expectedResult = EditorInfo.TYPE_TEXT_FLAG_CAP_SENTENCES;
         final int expectedReqMode = TextUtils.CAP_MODE_SENTENCES | TextUtils.CAP_MODE_CHARACTERS
                 | TextUtils.CAP_MODE_WORDS;
+        final int expectedResult = EditorInfo.TYPE_TEXT_FLAG_CAP_SENTENCES;
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
 
         final class Wrapper extends InputConnectionWrapper {
             private Wrapper(InputConnection target) {
@@ -677,7 +820,9 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
 
             @Override
             public int getCursorCapsMode(int reqModes) {
-                assertEquals(expectedReqMode, reqModes);
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putInt("reqModes", reqModes);
+                });
                 return expectedResult;
             }
         }
@@ -686,6 +831,9 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
             final ImeCommand command = session.callGetCursorCapsMode(expectedReqMode);
             final int result = expectCommand(stream, command, TIMEOUT).getReturnIntegerValue();
             assertEquals(expectedResult, result);
+            methodCallVerifier.assertCalledOnce(args -> {
+                assertEquals(expectedReqMode, args.getInt("reqModes"));
+            });
         });
     }
 
@@ -695,8 +843,12 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
      */
     @Test
     public void testGetCursorCapsModeFailWithTimeout() throws Exception {
+        final int expectedReqMode = TextUtils.CAP_MODE_SENTENCES | TextUtils.CAP_MODE_CHARACTERS
+                | TextUtils.CAP_MODE_WORDS;
         final int unexpectedResult = EditorInfo.TYPE_TEXT_FLAG_CAP_WORDS;
         final BlockingMethodVerifier blocker = new BlockingMethodVerifier();
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
 
         final class Wrapper extends InputConnectionWrapper {
             private Wrapper(InputConnection target) {
@@ -705,17 +857,23 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
 
             @Override
             public int getCursorCapsMode(int reqModes) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putInt("reqModes", reqModes);
+                });
                 blocker.onMethodCalled();
                 return unexpectedResult;
             }
         }
 
         testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
-            final ImeCommand command = session.callGetCursorCapsMode(TextUtils.CAP_MODE_WORDS);
+            final ImeCommand command = session.callGetCursorCapsMode(expectedReqMode);
             blocker.expectMethodCalled("IC#getCursorCapsMode() must be called back", TIMEOUT);
             final ImeEvent result = expectCommand(stream, command, LONG_TIMEOUT);
             assertEquals("When timeout happens, IC#getCursorCapsMode() returns 0",
                     0, result.getReturnIntegerValue());
+            methodCallVerifier.assertCalledOnce(args -> {
+                assertEquals(expectedReqMode, args.getInt("reqModes"));
+            });
         }, blocker);
     }
 
@@ -725,7 +883,8 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
     @Test
     public void testGetCursorCapsModeFailFastAfterUnbindInput() throws Exception {
         final int unexpectedResult = EditorInfo.TYPE_TEXT_FLAG_CAP_WORDS;
-        final AtomicBoolean methodCalled = new AtomicBoolean(false);
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
 
         final class Wrapper extends InputConnectionWrapper {
             private Wrapper(InputConnection target) {
@@ -734,7 +893,9 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
 
             @Override
             public int getCursorCapsMode(int reqModes) {
-                methodCalled.set(true);
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putInt("reqModes", reqModes);
+                });
                 return unexpectedResult;
             }
         }
@@ -752,9 +913,9 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
                     session.callGetCursorCapsMode(TextUtils.CAP_MODE_WORDS), TIMEOUT);
             assertEquals("Once unbindInput() happened, IC#getCursorCapsMode() returns 0",
                     0, result.getReturnIntegerValue());
-            assertFalse("Once unbindInput() happened, IC#getCursorCapsMode() fails fast.",
-                    methodCalled.get());
             expectElapseTimeLessThan(result, IMMEDIATE_TIMEOUT_NANO);
+            methodCallVerifier.assertNotCalled(
+                    "Once unbindInput() happened, IC#getCursorCapsMode() fails fast.");
         });
     }
 
@@ -767,6 +928,8 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
         final int expectedFlags = InputConnection.GET_EXTRACTED_TEXT_MONITOR;
         final ExtractedText expectedResult = ExtractedTextTest.createForTest();
 
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
         final class Wrapper extends InputConnectionWrapper {
             private Wrapper(InputConnection target) {
                 super(target, false);
@@ -774,8 +937,10 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
 
             @Override
             public ExtractedText getExtractedText(ExtractedTextRequest request, int flags) {
-                assertEquals(expectedFlags, flags);
-                ExtractedTextRequestTest.assertTestInstance(request);
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putParcelable("request", request);
+                    args.putInt("flags", flags);
+                });
                 return expectedResult;
             }
         }
@@ -785,6 +950,10 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
             final ExtractedText result =
                     expectCommand(stream, command, TIMEOUT).getReturnParcelableValue();
             ExtractedTextTest.assertTestInstance(result);
+            methodCallVerifier.assertCalledOnce(args -> {
+                ExtractedTextRequestTest.assertTestInstance(args.getParcelable("request"));
+                assertEquals(expectedFlags, args.getInt("flags"));
+            });
         });
     }
 
@@ -794,8 +963,12 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
      */
     @Test
     public void testGetExtractedTextFailWithTimeout() throws Exception {
+        final ExtractedTextRequest expectedRequest = ExtractedTextRequestTest.createForTest();
+        final int expectedFlags = InputConnection.GET_EXTRACTED_TEXT_MONITOR;
         final ExtractedText unexpectedResult = ExtractedTextTest.createForTest();
         final BlockingMethodVerifier blocker = new BlockingMethodVerifier();
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
 
         final class Wrapper extends InputConnectionWrapper {
             private Wrapper(InputConnection target) {
@@ -804,19 +977,25 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
 
             @Override
             public ExtractedText getExtractedText(ExtractedTextRequest request, int flags) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putParcelable("request", request);
+                    args.putInt("flags", flags);
+                });
                 blocker.onMethodCalled();
                 return unexpectedResult;
             }
         }
 
         testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
-            final ImeCommand command = session.callGetExtractedText(
-                    ExtractedTextRequestTest.createForTest(),
-                    InputConnection.GET_EXTRACTED_TEXT_MONITOR);
+            final ImeCommand command = session.callGetExtractedText(expectedRequest, expectedFlags);
             blocker.expectMethodCalled("IC#getExtractedText() must be called back", TIMEOUT);
             final ImeEvent result = expectCommand(stream, command, LONG_TIMEOUT);
             assertTrue("When timeout happens, IC#getExtractedText() returns null",
                     result.isNullReturnValue());
+            methodCallVerifier.assertCalledOnce(args -> {
+                ExtractedTextRequestTest.assertTestInstance(args.getParcelable("request"));
+                assertEquals(expectedFlags, args.getInt("flags"));
+            });
         }, blocker);
     }
 
@@ -827,7 +1006,8 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
     @Test
     public void testGetExtractedTextFailFastAfterUnbindInput() throws Exception {
         final ExtractedText unexpectedResult = ExtractedTextTest.createForTest();
-        final AtomicBoolean methodCalled = new AtomicBoolean(false);
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
 
         final class Wrapper extends InputConnectionWrapper {
             private Wrapper(InputConnection target) {
@@ -836,7 +1016,10 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
 
             @Override
             public ExtractedText getExtractedText(ExtractedTextRequest request, int flags) {
-                methodCalled.set(true);
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putParcelable("request", request);
+                    args.putInt("flags", flags);
+                });
                 return unexpectedResult;
             }
         }
@@ -855,9 +1038,9 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
                     InputConnection.GET_EXTRACTED_TEXT_MONITOR), TIMEOUT);
             assertTrue("Once unbindInput() happened, IC#getExtractedText() returns null",
                     result.isNullReturnValue());
-            assertFalse("Once unbindInput() happened, IC#getExtractedText() fails fast.",
-                    methodCalled.get());
             expectElapseTimeLessThan(result, IMMEDIATE_TIMEOUT_NANO);
+            methodCallVerifier.assertNotCalled(
+                    "Once unbindInput() happened, IC#getExtractedText() fails fast.");
         });
     }
 
@@ -869,6 +1052,8 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
         final int expectedFlags = InputConnection.CURSOR_UPDATE_IMMEDIATE;
         final boolean expectedResult = true;
 
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
         final class Wrapper extends InputConnectionWrapper {
             private Wrapper(InputConnection target) {
                 super(target, false);
@@ -876,6 +1061,9 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
 
             @Override
             public boolean requestCursorUpdates(int cursorUpdateMode) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putInt("cursorUpdateMode", cursorUpdateMode);
+                });
                 assertEquals(expectedFlags, cursorUpdateMode);
                 return expectedResult;
             }
@@ -884,6 +1072,9 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
         testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
             final ImeCommand command = session.callRequestCursorUpdates(expectedFlags);
             assertTrue(expectCommand(stream, command, TIMEOUT).getReturnBooleanValue());
+            methodCallVerifier.assertCalledOnce(args -> {
+                assertEquals(expectedFlags, args.getInt("cursorUpdateMode"));
+            });
         });
     }
 
@@ -893,8 +1084,11 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
      */
     @Test
     public void testRequestCursorUpdatesFailWithTimeout() throws Exception {
+        final int expectedFlags = InputConnection.CURSOR_UPDATE_IMMEDIATE;
         final boolean unexpectedResult = true;
         final BlockingMethodVerifier blocker = new BlockingMethodVerifier();
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
 
         final class Wrapper extends InputConnectionWrapper {
             private Wrapper(InputConnection target) {
@@ -903,6 +1097,9 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
 
             @Override
             public boolean requestCursorUpdates(int cursorUpdateMode) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putInt("cursorUpdateMode", cursorUpdateMode);
+                });
                 blocker.onMethodCalled();
                 return unexpectedResult;
             }
@@ -915,6 +1112,9 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
             final ImeEvent result = expectCommand(stream, command, LONG_TIMEOUT);
             assertFalse("When timeout happens, IC#requestCursorUpdates() returns false",
                     result.getReturnBooleanValue());
+            methodCallVerifier.assertCalledOnce(args -> {
+                assertEquals(expectedFlags, args.getInt("cursorUpdateMode"));
+            });
         }, blocker);
     }
 
@@ -925,7 +1125,8 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
     @Test
     public void testRequestCursorUpdatesFailFastAfterUnbindInput() throws Exception {
         final boolean unexpectedResult = true;
-        final AtomicBoolean methodCalled = new AtomicBoolean(false);
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
 
         final class Wrapper extends InputConnectionWrapper {
             private Wrapper(InputConnection target) {
@@ -934,7 +1135,9 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
 
             @Override
             public boolean requestCursorUpdates(int cursorUpdateMode) {
-                methodCalled.set(true);
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putInt("cursorUpdateMode", cursorUpdateMode);
+                });
                 return unexpectedResult;
             }
         }
@@ -952,9 +1155,9 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
                     InputConnection.CURSOR_UPDATE_IMMEDIATE), TIMEOUT);
             assertFalse("Once unbindInput() happened, IC#requestCursorUpdates() returns false",
                     result.getReturnBooleanValue());
-            assertFalse("Once unbindInput() happened, IC#requestCursorUpdates() fails fast.",
-                    methodCalled.get());
             expectElapseTimeLessThan(result, IMMEDIATE_TIMEOUT_NANO);
+            methodCallVerifier.assertNotCalled(
+                    "Once unbindInput() happened, IC#requestCursorUpdates() fails fast.");
         });
     }
 
@@ -974,6 +1177,8 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
         final int expectedFlags = InputConnection.INPUT_CONTENT_GRANT_READ_URI_PERMISSION;
         final boolean expectedResult = true;
 
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
         final class Wrapper extends InputConnectionWrapper {
             private Wrapper(InputConnection target) {
                 super(target, false);
@@ -982,10 +1187,11 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
             @Override
             public boolean commitContent(InputContentInfo inputContentInfo, int flags,
                     Bundle opts) {
-                assertEquals(expectedInputContentInfo.getContentUri(),
-                        inputContentInfo.getContentUri());
-                assertEquals(expectedFlags, flags);
-                assertEquals(expectedOpt.getInt(expectedOptKey), opts.getInt(expectedOptKey));
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putParcelable("inputContentInfo", inputContentInfo);
+                    args.putInt("flags", flags);
+                    args.putBundle("opts", opts);
+                });
                 return expectedResult;
             }
         }
@@ -994,6 +1200,16 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
             final ImeCommand command =
                     session.callCommitContent(expectedInputContentInfo, expectedFlags, expectedOpt);
             assertTrue(expectCommand(stream, command, TIMEOUT).getReturnBooleanValue());
+            methodCallVerifier.assertCalledOnce(args -> {
+                final InputContentInfo inputContentInfo = args.getParcelable("inputContentInfo");
+                final Bundle opts = args.getBundle("opts");
+                assertNotNull(inputContentInfo);
+                assertEquals(expectedInputContentInfo.getContentUri(),
+                        inputContentInfo.getContentUri());
+                assertEquals(expectedFlags, args.getInt("flags"));
+                assertNotNull(opts);
+                assertEquals(expectedOpt.getInt(expectedOptKey), opts.getInt(expectedOptKey));
+            });
         });
     }
 
@@ -1003,8 +1219,19 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
      */
     @Test
     public void testCommitContentFailWithTimeout() throws Exception {
+        final InputContentInfo expectedInputContentInfo = new InputContentInfo(
+                Uri.parse("content://com.example/path"),
+                new ClipDescription("sample content", new String[]{"image/png"}),
+                Uri.parse("https://example.com"));
+        final Bundle expectedOpt = new Bundle();
+        final String expectedOptKey = "testKey";
+        final int expectedOptValue = 42;
+        expectedOpt.putInt(expectedOptKey, expectedOptValue);
+        final int expectedFlags = InputConnection.INPUT_CONTENT_GRANT_READ_URI_PERMISSION;
         final boolean unexpectedResult = true;
         final BlockingMethodVerifier blocker = new BlockingMethodVerifier();
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
 
         final class Wrapper extends InputConnectionWrapper {
             private Wrapper(InputConnection target) {
@@ -1014,20 +1241,33 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
             @Override
             public boolean commitContent(InputContentInfo inputContentInfo, int flags,
                     Bundle opts) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putParcelable("inputContentInfo", inputContentInfo);
+                    args.putInt("flags", flags);
+                    args.putBundle("opts", opts);
+                });
                 blocker.onMethodCalled();
                 return unexpectedResult;
             }
         }
 
         testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
-            final ImeCommand command = session.callCommitContent(
-                    new InputContentInfo(Uri.parse("content://com.example/path"),
-                            new ClipDescription("sample content", new String[]{"image/png"}),
-                            Uri.parse("https://example.com")), 0, null);
+            final ImeCommand command =
+                    session.callCommitContent(expectedInputContentInfo, expectedFlags, expectedOpt);
             blocker.expectMethodCalled("IC#commitContent() must be called back", TIMEOUT);
             final ImeEvent result = expectCommand(stream, command, LONG_TIMEOUT);
             assertFalse("When timeout happens, IC#commitContent() returns false",
                     result.getReturnBooleanValue());
+            methodCallVerifier.assertCalledOnce(args -> {
+                final InputContentInfo inputContentInfo = args.getParcelable("inputContentInfo");
+                final Bundle opts = args.getBundle("opts");
+                assertNotNull(inputContentInfo);
+                assertEquals(expectedInputContentInfo.getContentUri(),
+                        inputContentInfo.getContentUri());
+                assertEquals(expectedFlags, args.getInt("flags"));
+                assertNotNull(opts);
+                assertEquals(expectedOpt.getInt(expectedOptKey), opts.getInt(expectedOptKey));
+            });
         }, blocker);
     }
 
@@ -1038,7 +1278,8 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
     @Test
     public void testCommitContentFailFastAfterUnbindInput() throws Exception {
         final boolean unexpectedResult = true;
-        final AtomicBoolean methodCalled = new AtomicBoolean(false);
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
 
         final class Wrapper extends InputConnectionWrapper {
             private Wrapper(InputConnection target) {
@@ -1048,7 +1289,11 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
             @Override
             public boolean commitContent(InputContentInfo inputContentInfo, int flags,
                     Bundle opts) {
-                methodCalled.set(true);
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putParcelable("inputContentInfo", inputContentInfo);
+                    args.putInt("flags", flags);
+                    args.putBundle("opts", opts);
+                });
                 return unexpectedResult;
             }
         }
@@ -1068,9 +1313,9 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
                             Uri.parse("https://example.com")), 0, null), TIMEOUT);
             assertFalse("Once unbindInput() happened, IC#commitContent() returns false",
                     result.getReturnBooleanValue());
-            assertFalse("Once unbindInput() happened, IC#commitContent() fails fast.",
-                    methodCalled.get());
             expectElapseTimeLessThan(result, IMMEDIATE_TIMEOUT_NANO);
+            methodCallVerifier.assertNotCalled(
+                    "Once unbindInput() happened, IC#commitContent() fails fast.");
         });
     }
 }
