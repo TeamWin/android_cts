@@ -49,7 +49,8 @@ public final class HdmiCecPowerStatusTest extends BaseHostJUnit4Test {
     private static final int WAIT_TIME = 5;
     private static final int MAX_SLEEP_TIME = 8;
 
-    public HdmiCecClientWrapper hdmiCecClient = new HdmiCecClientWrapper(LogicalAddress.PLAYBACK_1);
+    public HdmiCecClientWrapper hdmiCecClient =
+            new HdmiCecClientWrapper(this, HdmiCecConstants.CEC_DEVICE_TYPE_PLAYBACK_DEVICE);
 
     @Rule
     public RuleChain ruleChain =

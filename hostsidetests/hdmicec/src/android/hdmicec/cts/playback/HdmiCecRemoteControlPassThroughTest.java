@@ -54,7 +54,8 @@ public final class HdmiCecRemoteControlPassThroughTest extends BaseHostJUnit4Tes
      */
     private static final String CLEAR_COMMAND = String.format("pm clear %s", PACKAGE);
 
-    public HdmiCecClientWrapper hdmiCecClient = new HdmiCecClientWrapper(LogicalAddress.PLAYBACK_1);
+    public HdmiCecClientWrapper hdmiCecClient =
+            new HdmiCecClientWrapper(this, HdmiCecConstants.CEC_DEVICE_TYPE_PLAYBACK_DEVICE);
 
     @Rule
     public RuleChain ruleChain =

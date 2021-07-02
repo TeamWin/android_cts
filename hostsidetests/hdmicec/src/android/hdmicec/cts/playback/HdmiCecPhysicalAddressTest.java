@@ -39,7 +39,8 @@ import org.junit.Test;
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class HdmiCecPhysicalAddressTest extends BaseHostJUnit4Test {
 
-    public HdmiCecClientWrapper hdmiCecClient = new HdmiCecClientWrapper(LogicalAddress.PLAYBACK_1);
+    public HdmiCecClientWrapper hdmiCecClient =
+            new HdmiCecClientWrapper(this, HdmiCecConstants.CEC_DEVICE_TYPE_PLAYBACK_DEVICE);
 
     @Rule
     public RuleChain ruleChain =

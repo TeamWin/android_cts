@@ -43,7 +43,8 @@ public final class HdmiCecLogicalAddressTest extends BaseHostJUnit4Test {
 
     private static final LogicalAddress AUDIO_DEVICE = LogicalAddress.AUDIO_SYSTEM;
 
-    public HdmiCecClientWrapper hdmiCecClient = new HdmiCecClientWrapper(AUDIO_DEVICE);
+    public HdmiCecClientWrapper hdmiCecClient =
+            new HdmiCecClientWrapper(this, HdmiCecConstants.CEC_DEVICE_TYPE_AUDIO_SYSTEM);
 
     @Rule
     public RuleChain ruleChain =

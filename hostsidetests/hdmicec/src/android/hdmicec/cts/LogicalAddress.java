@@ -35,7 +35,8 @@ public enum LogicalAddress {
     RESERVED_1(0xc),
     RESERVED_2(0xd),
     SPECIFIC_USE(0xe),
-    BROADCAST(0xf);
+    BROADCAST(0xf),
+    UNKNOWN(0xf);
 
     private final int address;
     private static Map deviceMap = new HashMap<>();

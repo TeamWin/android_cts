@@ -60,7 +60,8 @@ public final class HdmiCecInvalidMessagesTest extends BaseHostJUnit4Test {
     /** The command to clear the main activity. */
     private static final String CLEAR_COMMAND = String.format("pm clear %s", PACKAGE);
 
-    public HdmiCecClientWrapper hdmiCecClient = new HdmiCecClientWrapper(AUDIO_DEVICE);
+    public HdmiCecClientWrapper hdmiCecClient =
+            new HdmiCecClientWrapper(this, HdmiCecConstants.CEC_DEVICE_TYPE_AUDIO_SYSTEM);
 
     @Rule
     public RuleChain ruleChain =

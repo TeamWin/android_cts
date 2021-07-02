@@ -43,7 +43,8 @@ public final class HdmiCecSystemAudioControlTest extends BaseHostJUnit4Test {
     private static final LogicalAddress PLAYBACK_DEVICE = LogicalAddress.PLAYBACK_1;
 
     public HdmiCecClientWrapper hdmiCecClient =
-        new HdmiCecClientWrapper(LogicalAddress.PLAYBACK_1, "-t", "a");
+            new HdmiCecClientWrapper(
+                    this, HdmiCecConstants.CEC_DEVICE_TYPE_PLAYBACK_DEVICE, "-t", "a");
 
     @Rule
     public RuleChain ruleChain =

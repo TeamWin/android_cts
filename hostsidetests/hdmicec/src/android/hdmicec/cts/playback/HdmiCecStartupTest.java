@@ -59,7 +59,8 @@ public final class HdmiCecStartupTest extends BaseHostJUnit4Test {
           .add(CecOperand.VENDOR_COMMAND, CecOperand.GIVE_DEVICE_VENDOR_ID,
               CecOperand.SET_OSD_NAME, CecOperand.GIVE_OSD_NAME).build();
 
-  public HdmiCecClientWrapper hdmiCecClient = new HdmiCecClientWrapper(LogicalAddress.PLAYBACK_1);
+  public HdmiCecClientWrapper hdmiCecClient =
+          new HdmiCecClientWrapper(this, HdmiCecConstants.CEC_DEVICE_TYPE_PLAYBACK_DEVICE);
 
   @Rule
   public RuleChain ruleChain =
@@ -88,7 +89,7 @@ public final class HdmiCecStartupTest extends BaseHostJUnit4Test {
     device.waitForBootComplete(HdmiCecConstants.REBOOT_TIMEOUT);
     /* Monitor CEC messages for 20s after reboot */
     final List<CecOperand> messagesReceived =
-        hdmiCecClient.getAllMessages(LogicalAddress.PLAYBACK_1, 20);
+            hdmiCecClient.getAllMessages(hdmiCecClient.mDutLogicalAddresses, 20);
 
     /* Predicate to apply on necessaryMessages to ensure that all necessaryMessages are received. */
     final Predicate<CecOperand> notReceived = new Predicate<CecOperand>() {

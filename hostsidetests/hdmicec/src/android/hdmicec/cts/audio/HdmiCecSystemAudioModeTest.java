@@ -72,7 +72,9 @@ public final class HdmiCecSystemAudioModeTest extends BaseHostJUnit4Test {
 
     private List<Integer> mSupportedAudioFormats = null;
 
-    public HdmiCecClientWrapper hdmiCecClient = new HdmiCecClientWrapper(AUDIO_DEVICE, "-t", "t");
+    public HdmiCecClientWrapper hdmiCecClient =
+            new HdmiCecClientWrapper(
+                    this, HdmiCecConstants.CEC_DEVICE_TYPE_AUDIO_SYSTEM, "-t", "t");
 
     @Rule
     public RuleChain ruleChain =
