@@ -908,7 +908,6 @@
         Make sure the device has line of sight to GPS satellites
         (for example, outside, or near a window)
         and then press OK to run the automated tests.</string>
-    <string name="location_listener_activity">Location listener</string>
 
     <!-- Strings for Location GNSS tests -->
     <string name="location_gnss_constellation_type_test">GNSS Measurement Constellation Test</string>
@@ -3229,6 +3228,15 @@ You should be prompted to select credentials; choose the ones you just installed
         \n
         Then use the Back button (or navigate back to this app using Recents) to return to this test and mark accordingly.
     </string>
+    <string name="provisioning_byod_location_failed">Failed to obtain location from any provider</string>
+    <string name="provisioning_byod_location_no_provider">Cannot obtain location: no providers available.</string>
+    <string name="provisioning_byod_location_trying">Trying to obtain location using providers: %1$s</string>
+    <string name="provisioning_byod_location_obtained">Location has been obtained.</string>
+    <string name="provisioning_byod_pass_message">PASS: %1$s</string>
+    <string name="provisioning_byod_fail_message">FAIL: %1$s</string>
+    <string name="provisioning_byod_location_test_activity">Location listener</string>
+    <string name="provisioning_byod_location_checker_activity">Location checker</string>
+
 
     <string name="provisioning_byod_wifi_data_usage_settings">Profile-aware data usage settings (Wi-Fi)</string>
     <string name="provisioning_byod_wifi_data_usage_settings_instruction">
@@ -3312,46 +3320,40 @@ You should be prompted to select credentials; choose the ones you just installed
 
     <string name="provisioning_byod_no_gps_location_feature">No GPS feature present. Skip test.</string>
     <string name="provisioning_byod_location_mode_enable">Enable location</string>
-    <string name="provisioning_byod_location_mode_enable_toast_location_change">Location changed</string>
     <string name="provisioning_byod_location_mode_enable_missing_permission">Permission missing</string>
     <string name="provisioning_byod_location_mode_enable_instruction">
-        This test verifies that the location updates can be enabled for the managed profile apps.\n
-        If prompted, accept the location permission after pressing go.\n
-        1. Press the go button to go to the location settings page, set both the main location switch and the work profile location switch enabled.\n
-        2. Press home to go to the launcher.\n
-        3. Move your position a little bit, verify that location updates toast comes up.\n
-        Please wait until the location updates or timeout toast message shows up before going back to the cts-verifier tests.\n
-        4. Go back to the cts-verifier tests using the back button, then mark the test accordingly.\n
+        This test verifies that the location can be enabled for the managed profile apps.\n
+        1. Press the \"Prepare Test\" button to go to the location settings page, set both the main location switch and the work profile location switch enabled.\n
+        2. Return using back button and press Go button to check if location is available. If prompted, accept the location permission.\n
+        3. Check the result message below and mark the test accordingly.\n
+        \n
+        If the test fails to obtain location, try to enable as many location services as possible and move outside to make GPS work.
     </string>
 
     <string name="provisioning_byod_location_mode_disable">Disable location</string>
     <string name="provisioning_byod_location_mode_time_out_toast">Timeout waiting for gps location change</string>
     <string name="provisioning_byod_location_mode_disable_instruction">
-        This test verifies that the location updates can be disabled for the managed profile apps through the main location switch.\n
-        1. Press the go button to go to the location settings page, set the main location switch disabled.\n
-        2. Press home to go to the launcher.\n
-        3. Move your position a little bit, verify that no location updates toast come up and that the timeout message show up after around 15 seconds.
-        Please wait until the timeout or location updates toast message shows up before going back to the cts-verifier tests.\n
-        4. Go back to the cts-verifier tests using the back button, then mark the test accordingly.\n
+        This test verifies that the location can be disabled for the managed profile apps through the main location switch.\n
+        1. Press the \"Prepare Test\" button to go to the location settings page, set the main location switch disabled.\n
+        2. Return using back button and press Go button to check if location is available.  If prompted, accept the location permission.\n
+        3. Check the result message below and mark the test accordingly.\n
     </string>
 
     <string name="provisioning_byod_work_location_mode_disable">Disable location for work profile</string>
     <string name="provisioning_byod_work_location_mode_disable_instruction">
-        This test verifies that the location updates can be disabled for the managed profile apps through work profile location switch.\n
-        1. Press the go button to go to the location settings page, set the work location switch disabled while the main location switch is still enabled.\n
-        2. Press home to go to the launcher.\n
-        3. Move your position a little bit, verify that no location updates toast come up and that the timeout message show up after around 15 seconds.
-        Please wait until the timeout or location updates toast message shows up before going back to the cts-verifier tests.\n
-        4. Go back to the cts-verifier tests using the back button, then mark the test accordingly.\n
+        This test verifies that the location can be disabled for the managed profile apps through work profile location switch.\n
+        1. Press the \"Prepare Test\" button to go to the location settings page, set the work location switch disabled while the main location switch is still enabled.\n
+        2. Return using back button and press Go button to check if location is available. If prompted, accept the location permission.\n
+        3. Check the result message below and mark the test accordingly.\n
     </string>
     <string name="provisioning_byod_primary_location_when_work_disabled">Primary receives updates while work location is disabled</string>
     <string name="provisioning_byod_primary_location_when_work_disabled_instruction">
-        This test verifies that location updates are still received by primary profile when location updates are disabled for managed profile apps through work profile location switch.\n
-        1. Press the go button to go to the location settings page, set the work location switch disabled while the main location switch is still enabled.\n
-        2. Press home to go to the launcher.\n
-        3. Move your position a little bit, verify that location updates toast comes up.\n
-        Please wait until the location updates or timeout toast message shows up before going back to the cts-verifier tests.\n
-        4. Go back to the cts-verifier tests using the back button, then mark the test accordingly.\n
+        This test verifies that location is still available by primary profile when location updates are disabled for managed profile apps through work profile location switch.\n
+        1. Press the \"Prepare Test\" button to go to the location settings page, set the work location switch disabled while the main location switch is still enabled.\n
+        2. Return using back button and press Go button to check if location is available. If prompted, accept the location permission.\n
+        3. Check the result message below and mark the test accordingly.\n
+        \n
+        If the test fails to obtain location, try to enable as many location services as possible and move outside to make GPS work.
     </string>
 
     <string name="provisioning_byod_personal_ringtones">Personal ringtones</string>

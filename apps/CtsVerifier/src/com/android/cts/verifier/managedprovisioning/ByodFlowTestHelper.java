@@ -73,7 +73,8 @@ public class ByodFlowTestHelper {
                 CommandReceiverActivity.class.getName(),
                 SetSupportMessageActivity.class.getName(),
                 KeyChainTestActivity.class.getName(),
-                WorkProfileWidgetActivity.class.getName()
+                WorkProfileWidgetActivity.class.getName(),
+                LocationCheckerActivity.WORK_ACTIVITY_ALIAS
         };
         for (String component : components) {
             mPackageManager.setComponentEnabledSetting(new ComponentName(mContext, component),
