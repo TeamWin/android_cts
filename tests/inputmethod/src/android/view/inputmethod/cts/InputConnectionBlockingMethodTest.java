@@ -24,6 +24,8 @@ import static com.android.cts.mockime.ImeEventStreamTestUtils.expectBindInput;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectCommand;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -35,7 +37,11 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Process;
 import android.os.SystemClock;
+import android.text.Annotation;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
 import android.text.TextUtils;
+import android.util.Pair;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.ExtractedText;
 import android.view.inputmethod.ExtractedTextRequest;
@@ -60,9 +66,15 @@ import com.android.cts.mockime.ImeEventStream;
 import com.android.cts.mockime.ImeSettings;
 import com.android.cts.mockime.MockImeSession;
 
+import com.google.common.truth.Correspondence;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -293,6 +305,36 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
         }
     }
 
+    @Nullable
+    private static CharSequence createTestCharSequence(@Nullable String text,
+            @Nullable Annotation annotation) {
+        if (text == null) {
+            return null;
+        }
+        final SpannableStringBuilder sb = new SpannableStringBuilder(text);
+        if (annotation != null) {
+            sb.setSpan(annotation, 0, sb.length(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
+        }
+        return sb;
+    }
+
+    private static void assertEqualsForTestCharSequence(@Nullable CharSequence expected,
+            @Nullable CharSequence actual) {
+        assertEquals(Objects.toString(expected), Objects.toString(actual));
+        final Function<CharSequence, List<Annotation>> toAnnotations = cs -> {
+            if (cs instanceof Spanned) {
+                final Spanned spanned = (Spanned) cs;
+                return Arrays.asList(spanned.getSpans(0, cs.length(), Annotation.class));
+            }
+            return Collections.emptyList();
+        };
+        assertThat(toAnnotations.apply(actual)).comparingElementsUsing(Correspondence.transforming(
+                (Annotation annotation) -> Pair.create(annotation.getKey(), annotation.getValue()),
+                (Annotation annotation) -> Pair.create(annotation.getKey(), annotation.getValue()),
+                "has the same Key/Value as"))
+                .containsExactlyElementsIn(toAnnotations.apply(expected));
+    }
+
     /**
      * Test {@link InputConnection#getTextAfterCursor(int, int)} works as expected.
      */
@@ -300,7 +342,8 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
     public void testGetTextAfterCursor() throws Exception {
         final int expectedN = 3;
         final int expectedFlags = InputConnection.GET_TEXT_WITH_STYLES;
-        final String expectedResult = "89";
+        final CharSequence expectedResult =
+                createTestCharSequence("89", new Annotation("command", "getTextAfterCursor"));
 
         final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
 
@@ -323,7 +366,7 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
             final ImeCommand command = session.callGetTextAfterCursor(expectedN, expectedFlags);
             final CharSequence result =
                     expectCommand(stream, command, TIMEOUT).getReturnCharSequenceValue();
-            assertEquals(expectedResult, result);
+            assertEqualsForTestCharSequence(expectedResult, result);
             methodCallVerifier.assertCalledOnce(args -> {
                 assertEquals(expectedN, args.get("n"));
                 assertEquals(expectedFlags, args.get("flags"));
@@ -424,7 +467,9 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
     public void testGetTextBeforeCursor() throws Exception {
         final int expectedN = 3;
         final int expectedFlags = InputConnection.GET_TEXT_WITH_STYLES;
-        final String expectedResult = "123";
+        final CharSequence expectedResult =
+                createTestCharSequence("123", new Annotation("command", "getTextBeforeCursor"));
+
 
         final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
 
@@ -447,7 +492,7 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
             final ImeCommand command = session.callGetTextBeforeCursor(expectedN, expectedFlags);
             final CharSequence result =
                     expectCommand(stream, command, TIMEOUT).getReturnCharSequenceValue();
-            assertEquals(expectedResult, result);
+            assertEqualsForTestCharSequence(expectedResult, result);
             methodCallVerifier.assertCalledOnce(args -> {
                 assertEquals(expectedN, args.get("n"));
                 assertEquals(expectedFlags, args.get("flags"));
@@ -547,7 +592,8 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
     @Test
     public void testGetSelectedText() throws Exception {
         final int expectedFlags = InputConnection.GET_TEXT_WITH_STYLES;
-        final String expectedResult = "4567";
+        final CharSequence expectedResult =
+                createTestCharSequence("4567", new Annotation("command", "getSelectedText"));
 
         final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
 
@@ -570,7 +616,7 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
             final ImeCommand command = session.callGetSelectedText(expectedFlags);
             final CharSequence result =
                     expectCommand(stream, command, TIMEOUT).getReturnCharSequenceValue();
-            assertEquals(expectedResult, result);
+            assertEqualsForTestCharSequence(expectedResult, result);
             methodCallVerifier.assertCalledOnce(args -> {
                 assertEquals(expectedFlags, args.get("flags"));
             });
@@ -667,7 +713,9 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
         final int expectedBeforeLength = 3;
         final int expectedAfterLength = 4;
         final int expectedFlags = InputConnection.GET_TEXT_WITH_STYLES;
-        final SurroundingText expectedResult = new SurroundingText("012345", 1, 2, 0);
+        final CharSequence expectedText =
+                createTestCharSequence("012345", new Annotation("command", "getSurroundingText"));
+        final SurroundingText expectedResult = new SurroundingText(expectedText, 1, 2, 0);
 
         final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
 
@@ -693,7 +741,7 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
                     expectedAfterLength, expectedFlags);
             final SurroundingText result =
                     expectCommand(stream, command, TIMEOUT).getReturnParcelableValue();
-            assertEquals(expectedResult.getText(), result.getText());
+            assertEqualsForTestCharSequence(expectedResult.getText(), result.getText());
             assertEquals(expectedResult.getSelectionStart(), result.getSelectionStart());
             assertEquals(expectedResult.getSelectionEnd(), result.getSelectionEnd());
             assertEquals(expectedResult.getOffset(), result.getOffset());
