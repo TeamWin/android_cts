@@ -183,6 +183,7 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
 
     @Override
     public void onStopDetection() {
+        super.onStopDetection();
         synchronized (mLock) {
             mHandler.removeCallbacks(mDetectionJob);
             mDetectionJob = null;
@@ -196,6 +197,7 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
             @Nullable SharedMemory sharedMemory,
             long callbackTimeoutMillis,
             @Nullable IntConsumer statusCallback) {
+        super.onUpdateState(options, sharedMemory, callbackTimeoutMillis, statusCallback);
         Log.d(TAG, "onUpdateState");
 
         if (options != null) {
