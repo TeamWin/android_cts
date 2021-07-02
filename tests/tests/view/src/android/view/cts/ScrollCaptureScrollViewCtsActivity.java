@@ -17,26 +17,27 @@
 package android.view.cts;
 
 import android.app.Activity;
+import android.app.Dialog;
 import android.os.Bundle;
-import android.util.TypedValue;
-import android.widget.LinearLayout;
-import android.widget.ScrollView;
-import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 
 public class ScrollCaptureScrollViewCtsActivity extends Activity {
+    private Dialog mDialog;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        ScrollView scrollView = new ScrollView(this);
-        LinearLayout linearLayout = new LinearLayout(this);
-        linearLayout.setOrientation(LinearLayout.VERTICAL);
-        TextView text = new TextView(this);
-        text.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 40);
-        text.setText(R.string.long_text);
-        linearLayout.addView(text);
-        scrollView.addView(linearLayout);
-        setContentView(scrollView);
+        mDialog = new Dialog(this, android.R.style.Theme_DeviceDefault_Dialog_NoActionBar);
+        mDialog.setContentView(R.layout.scrollview_layout);
+        mDialog.show();
+        // Prevent any decorations or dialog frame, rounded corners, etc
+        mDialog.getWindow().setBackgroundDrawableResource(android.R.color.white);
     }
+
+    public Dialog getDialog() {
+        return mDialog;
+    }
+
+
 }
