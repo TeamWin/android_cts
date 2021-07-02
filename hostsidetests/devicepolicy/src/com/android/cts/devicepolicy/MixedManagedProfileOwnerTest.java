@@ -364,18 +364,6 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
         super.testPermissionGrantOfDisallowedPermissionWhileOtherPermIsGranted();
     }
 
-    @Override
-    @Test
-    public void testLockTaskAfterReboot() {
-        // Managed profiles are not allowed to use lock task
-    }
-
-    @Override
-    @Test
-    public void testLockTaskAfterReboot_tryOpeningSettings() {
-        // Managed profiles are not allowed to use lock task
-    }
-
     @Test
     public void testWifiMacAddress() throws Exception {
         assumeHasWifiFeature();

@@ -1042,54 +1042,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                     .build());
     }
 
-    @LargeTest
-    @Test
-    public void testLockTaskAfterReboot() throws Exception {
-        try {
-            // Just start kiosk mode
-            executeDeviceTestMethod(
-                    ".LockTaskHostDrivenTest", "testStartLockTask_noAsserts");
-
-            // Reboot while in kiosk mode and then unlock the device
-            rebootAndWaitUntilReady();
-
-            // Check that kiosk mode is working and can't be interrupted
-            executeDeviceTestMethod(".LockTaskHostDrivenTest",
-                    "testLockTaskIsActiveAndCantBeInterrupted");
-        } finally {
-            executeDeviceTestMethod(".LockTaskHostDrivenTest", "testCleanupLockTask_noAsserts");
-        }
-    }
-
-    @LargeTest
-    @Test
-    @Ignore("Ignored while migrating to new infrastructure b/175377361")
-    public void testLockTaskAfterReboot_tryOpeningSettings() throws Exception {
-        try {
-            // Just start kiosk mode
-            executeDeviceTestMethod(
-                    ".LockTaskHostDrivenTest", "testStartLockTask_noAsserts");
-
-            // Reboot while in kiosk mode and then unlock the device
-            rebootAndWaitUntilReady();
-
-            // Wait for the LockTask starting
-            waitForBroadcastIdle();
-
-            // Make sure that the LockTaskUtilityActivityIfWhitelisted was started.
-            executeDeviceTestMethod(".LockTaskHostDrivenTest", "testLockTaskIsActive");
-
-            // Try to open settings via adb
-            executeShellCommand("am start -a android.settings.SETTINGS");
-
-            // Check again
-            executeDeviceTestMethod(".LockTaskHostDrivenTest",
-                    "testLockTaskIsActiveAndCantBeInterrupted");
-        } finally {
-            executeDeviceTestMethod(".LockTaskHostDrivenTest", "testCleanupLockTask_noAsserts");
-        }
-    }
-
     @FlakyTest(bugId = 141314026)
     @Test
     public void testSuspendPackage() throws Exception {
