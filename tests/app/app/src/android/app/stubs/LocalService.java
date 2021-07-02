@@ -98,7 +98,9 @@ public class LocalService extends Service {
                     reply.writeBoolean(ZygotePreload.preloadCalled());
                     return true;
                 case STOP_SELF_RESULT_CODE:
-                    mIsStoppedSelfSuccess = stopSelfResult(mStartId);
+                    synchronized (LocalService.this) {
+                        mIsStoppedSelfSuccess = stopSelfResult(mStartId);
+                    }
                     return true;
                 case STOP_SELF_CODE:
                     stopSelf(mStartId);
@@ -156,10 +158,12 @@ public class LocalService extends Service {
     @Override
     public boolean onUnbind(Intent intent) {
         if (mReportObject != null) {
-            if (mIsStoppedSelfSuccess) {
-                bindAction(STOP_SELF_SUCCESS_UNBIND_CODE);
-            } else {
-                bindAction(UNBIND_CODE);
+            synchronized (this) {
+                if (mIsStoppedSelfSuccess) {
+                    bindAction(STOP_SELF_SUCCESS_UNBIND_CODE);
+                } else {
+                    bindAction(UNBIND_CODE);
+                }
             }
         }
         return true;
