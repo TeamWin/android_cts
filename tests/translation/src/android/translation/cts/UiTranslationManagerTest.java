@@ -286,6 +286,7 @@ public class UiTranslationManagerTest {
     }
 
     @Test
+    @FlakyTest(bugId = 192418800)
     public void testUiTranslation_ViewTranslationCallback_paddingText() throws Throwable {
         final Pair<List<AutofillId>, ContentCaptureContext> result =
                 enableServicesAndStartActivityForTranslation();
