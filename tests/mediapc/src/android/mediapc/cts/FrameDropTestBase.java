@@ -129,6 +129,8 @@ public class FrameDropTestBase {
         mIsAsync = isAsync;
     }
 
+    // Returns the list of objects with mimeTypes and their hardware decoders supporting the
+    // given features combining with sync and async modes.
     static List<Object[]> prepareArgumentsList(String[] features) {
         final List<Object[]> argsList = new ArrayList<>();
         final String[] mimesList = new String[] {AVC, HEVC, VP8, VP9, AV1};
