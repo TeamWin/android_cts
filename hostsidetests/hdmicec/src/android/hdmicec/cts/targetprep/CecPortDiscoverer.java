@@ -51,6 +51,15 @@ public class CecPortDiscoverer extends BaseTargetPreparer {
     private File mDeviceEntry = null;
     private File mPortEntry = null;
 
+    private String instructionsOnError =
+            "\nIn case the setup is valid according to the README and "
+                    + "the test should have run, please verify that\n"
+                    + "1. cec-client is not running already on the port the DUT is connected to\n"
+                    + "2. "
+                    + HdmiCecConstants.CEC_MAP_FOLDER
+                    + " has been cleared of stale mappings (in case a"
+                    + " test was interrupted)\n";
+
     /** {@inheritDoc} */
     @Override
     public void setUp(TestInformation testInfo)
@@ -188,7 +197,8 @@ public class CecPortDiscoverer extends BaseTargetPreparer {
                             + ". "
                             + "Could not get adapter mapping for device"
                             + serialNo
-                            + ".",
+                            + "."
+                            + instructionsOnError,
                     e);
         } catch (Exception generic) {
             throw new TargetSetupError(
@@ -197,10 +207,12 @@ public class CecPortDiscoverer extends BaseTargetPreparer {
                             + "'. "
                             + "Could not get adapter mapping for device"
                             + serialNo
-                            + ".",
+                            + "."
+                            + instructionsOnError,
                     generic);
         }
-        throw new TargetSetupError("Device " + serialNo + " not connected to any adapter!");
+        throw new TargetSetupError(
+                "Device " + serialNo + " not connected to any adapter!" + instructionsOnError);
     }
 
     private String getPortFilename(String port) {
