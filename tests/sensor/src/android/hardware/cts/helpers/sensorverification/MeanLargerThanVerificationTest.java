@@ -27,7 +27,7 @@ import java.util.Collection;
 
 /** Tests for {@link MeanLargerThanVerification}. */
 public class MeanLargerThanVerificationTest extends TestCase {
-  private static final float[] MEANS = {2.0f, 1.5f, 3.0f};
+  private static final float[] MEANS = {2.0f, 1.7f, 3.0f};
 
   /** Test {@link MeanLargerThanVerification#verify(TestSensorEnvironment, SensorStats)}. */
   public void testVerify() {
@@ -39,28 +39,23 @@ public class MeanLargerThanVerificationTest extends TestCase {
         {2, 2.5f, 5},
     };
 
-    float[] expected = {2.0f, 1.5f, 3.0f};
+    // Test the means all equal and larger than the expected + thresholds.
+    float[] expected = {2.0f, 1.7f, 2.5f};
     float[] thresholds = {0.0f, 0.0f, 0.0f};
     SensorStats stats = new SensorStats();
     MeanLargerThanVerification verification = getVerification(expected, thresholds, values);
     verification.verify(stats);
     verifyStats(stats, true, MEANS);
 
-    // Test the threshold lower than any means.
-    expected = new float[] {1.5f, 1.5f, 1.5f};
-    thresholds = new float[] {0.0f, 0.0f, 0.0f};
+    // Test only one means is equal than the expected + thresholds.
+    expected = new float[] {2.5f, 1.5f, 3.5f};
+    thresholds = new float[] {0.0f, 0.2f, 0.0f};
     stats = new SensorStats();
     verification = getVerification(expected, thresholds, values);
     verification.verify(stats);
     verifyStats(stats, true, MEANS);
 
-    expected = new float[] {2.0f, 2.0f, 2.0f};
-    thresholds = new float[] {0.0f, 0.0f, 0.0f};
-    stats = new SensorStats();
-    verification = getVerification(expected, thresholds, values);
-    verification.verify(stats);
-    verifyStats(stats, true, MEANS);
-
+    // Test only one means is equal than expected, thresholds is 0f.
     expected = new float[] {2.5f, 2.0f, 3.0f};
     thresholds = new float[] {0.0f, 0.0f, 0.0f};
     stats = new SensorStats();
@@ -68,7 +63,8 @@ public class MeanLargerThanVerificationTest extends TestCase {
     verification.verify(stats);
     verifyStats(stats, true, MEANS);
 
-    thresholds = new float[] {1.5f, 0.5f, 2.0f};
+    // Test all means is smaller than the expected + thresholds.
+    thresholds = new float[] {2.5f, 2.0f, 3.5f};
     stats = new SensorStats();
     verification = getVerification(expected, thresholds, values);
     try {
