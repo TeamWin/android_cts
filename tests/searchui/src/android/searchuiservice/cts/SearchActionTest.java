@@ -104,6 +104,7 @@ public class SearchActionTest {
                 .setContentDescription(CONTENTDESCRIPTION)
                 .build();
         assertEverything(originalSearchAction);
+        assertNotNull(originalSearchAction.getIcon());
         final SearchAction clone = cloneThroughParcel(originalSearchAction);
         assertEverything(clone);
     }
