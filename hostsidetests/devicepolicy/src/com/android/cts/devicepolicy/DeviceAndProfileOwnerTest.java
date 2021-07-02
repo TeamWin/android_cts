@@ -158,6 +158,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             ASSIST_APP_PKG + "/.MyInteractionService";
 
     private static final String ARG_ALLOW_FAILURE = "allowFailure";
+    private static final String ARG_LOGGING_TEST = "loggingTest";
 
     private static final String RESTRICT_BACKGROUND_GET_CMD =
         "cmd netpolicy get restrict-background";
@@ -1231,17 +1232,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         // This is the default test for MixedDeviceOwnerTest and MixedProfileOwnerTest,
         // MixedManagedProfileOwnerTest overrides this method to execute the same test more strictly
         // without allowing failures.
-        executeResetPasswordWithTokenTests(true);
-    }
-
-    @Test
-    public void testResetPasswordWithTokenLogged() throws Exception {
-        assertMetricsLogged(getDevice(), () -> {
-            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".ResetPasswordWithTokenTest",
-                    "testChangePasswordWithToken", mUserId);
-        }, new DevicePolicyEventWrapper.Builder(EventId.RESET_PASSWORD_WITH_TOKEN_VALUE)
-                    .setAdminPackageName(DEVICE_ADMIN_PKG)
-                    .build());
+        executeResetPasswordWithTokenTests(/* allowFailures */ true);
     }
 
     @Test
@@ -1328,9 +1319,10 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         executeDeviceTestClass(".SetSystemSettingTest");
     }
 
-    protected void executeResetPasswordWithTokenTests(Boolean allowFailures) throws Exception {
+    protected void executeResetPasswordWithTokenTests(boolean allowFailures)
+            throws Exception {
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".ResetPasswordWithTokenTest", null, mUserId,
-                Collections.singletonMap(ARG_ALLOW_FAILURE, Boolean.toString(allowFailures)));
+                Collections.singletonMap(ARG_ALLOW_FAILURE, String.valueOf(allowFailures)));
     }
 
     @Test

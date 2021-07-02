@@ -23,10 +23,9 @@ import android.content.IntentFilter;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.LargeTest;
 import android.provider.Settings.Global;
 import android.test.AndroidTestCase;
-
-import androidx.test.filters.LargeTest;
 
 import com.android.compatibility.common.util.BatteryUtils;
 import com.android.compatibility.common.util.CallbackAsserter;

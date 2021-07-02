@@ -18,6 +18,7 @@ package com.android.bedstead.harrier.annotations.meta;
 
 import static com.android.bedstead.harrier.OptionalBoolean.ANY;
 
+import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.OptionalBoolean;
 
 import java.lang.annotation.Target;
@@ -29,4 +30,18 @@ import java.lang.annotation.Target;
 @Target({})
 public @interface RequireRunOnProfile {
     OptionalBoolean installInstrumentedAppInParent() default ANY;
+
+    /**
+     * Whether the profile owner's DPC should be returned by calls to {@link DeviceState#dpc()}.
+     *
+     * <p>Only one device policy controller per test should be marked as primary.
+     */
+    // NOTE: This field is only required if hasProfileOwner=true
+    boolean dpcIsPrimary() default false;
+
+    /**
+     * Affiliation ids to be set for the profile owner.
+     */
+    // NOTE: This field is only required if hasProfileOwner=true
+    String[] affiliationIds() default {};
 }

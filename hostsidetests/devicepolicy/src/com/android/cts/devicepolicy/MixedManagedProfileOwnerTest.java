@@ -211,7 +211,7 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
         // Execute the test method that's guaranteed to succeed. See also test in base class
         // which are tolerant to failure and executed by MixedDeviceOwnerTest and
         // MixedProfileOwnerTest
-        executeResetPasswordWithTokenTests(false);
+        executeResetPasswordWithTokenTests(/* allowFailures */ false);
     }
 
     @Override

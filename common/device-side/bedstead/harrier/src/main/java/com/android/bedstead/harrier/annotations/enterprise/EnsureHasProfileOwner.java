@@ -16,9 +16,12 @@
 
 package com.android.bedstead.harrier.annotations.enterprise;
 
+import static android.content.pm.PackageManager.FEATURE_DEVICE_ADMIN;
+
 import static com.android.bedstead.harrier.DeviceState.UserType.CURRENT_USER;
 
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.RequireFeature;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -34,6 +37,7 @@ import java.lang.annotation.Target;
  */
 @Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
+@RequireFeature(FEATURE_DEVICE_ADMIN)
 public @interface EnsureHasProfileOwner {
     /** Which user type the work profile should be attached to. */
     DeviceState.UserType onUser() default CURRENT_USER;
@@ -44,6 +48,9 @@ public @interface EnsureHasProfileOwner {
      * <p>Only one device policy controller per test should be marked as primary.
      */
     boolean isPrimary() default false;
+
+    /**
+     * Affiliation ids to be set for the profile owner.
+     */
+    String[] affiliationIds() default {};
 }
-// TODO(scottjonathan): Is there a feature or something that we need to check to make sure PO is
-//  supported?

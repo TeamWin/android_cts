@@ -131,6 +131,7 @@ public class UiTranslationManagerTest {
     private ResponseNotSetTextView mResponseNotSetTextView;
     private CustomTextView mCustomTextView;
     private TextView mTextView;
+    private static String sOriginalLogTag;
 
     @Rule
     public final RequiredServiceRule mContentCaptureServiceRule =
@@ -144,6 +145,7 @@ public class UiTranslationManagerTest {
     public static void oneTimeSetup() {
         sContext = ApplicationProvider.getApplicationContext();
         sTranslationReplier = CtsTranslationService.getTranslationReplier();
+        sOriginalLogTag = Helper.enableDebugLog();
 
         Helper.allowSelfForContentCapture(sContext);
         Helper.setDefaultContentCaptureServiceEnabled(/* enabled= */ false);
@@ -153,6 +155,7 @@ public class UiTranslationManagerTest {
     public static void oneTimeReset() {
         Helper.unAllowSelfForContentCapture(sContext);
         Helper.setDefaultContentCaptureServiceEnabled(/* enabled= */ true);
+        Helper.disableDebugLog(sOriginalLogTag);
     }
 
     @Before
@@ -435,6 +438,8 @@ public class UiTranslationManagerTest {
                     onFinishIntent.getBooleanExtra(EXTRA_VERIFY_RESULT, true);
             assertThat(onFinishVerifyResult).isFalse();
             onFinishResultReceiver.unregisterQuietly();
+
+            // TODO(b/191417938): add tests for the Activity destroyed for IME package callback
         }
     }
 
@@ -462,6 +467,19 @@ public class UiTranslationManagerTest {
         //  registered callback app
         Mockito.verify(mockCallback, Mockito.times(1))
                 .onStarted(any(ULocale.class), any(ULocale.class));
+
+        finishUiTranslation(contentCaptureContext);
+
+        Mockito.verify(mockCallback, Mockito.times(1))
+                .onFinished();
+
+        // Make sure onFinished will not be called twice.
+        mActivityScenario.moveToState(Lifecycle.State.DESTROYED);
+        mActivityScenario = null;
+        Mockito.verify(mockCallback, Mockito.times(1))
+                .onFinished();
+
+        // TODO(b/191417938): add a test to verify startUiTranslation + Activity destroyed.
     }
 
     @Test

@@ -2277,6 +2277,8 @@
     <string name="action_test_title">Action</string>
     <string name="nls_visibility">Please change the lock screen setting to hide sensitive content
         on the lockscreen</string>
+    <string name="nls_restore_visibility">Please change the lock screen setting to show all
+        content on the lockscreen</string>
     <string name="add_screen_lock">Add a secure screen lock of any type</string>
     <string name="remove_screen_lock">Remove the added screen lock</string>
     <string name="secure_action_lockscreen">Lock the screen and find the SecureActionOnLockScreenTest
@@ -5545,16 +5547,8 @@ Follow the instructions on the screen to measure the frequency response for the 
     <!-- Pro Audio Test -->
     <string name="proaudio_test">Pro Audio Test</string>
     <string name="proaudio_info">
-       This test requires that you have connected a supported USB Audio Peripheral device
-       (not a headset) and that peripheral\'s audio outputs are connected to the peripherals\'s
-       audio inputs. Alternatively, for devices with an analog audio jack or USB-C Digital
-       to Analog dongle, a <a href="https://source.android.com/devices/audio/latency/loopback">Loopback Plug</a>
-       can be used. Also, if there is an input level
-       control on the peripheral, it must be set to a non-zero value. When the test has
-       verified support for a valid audio peripheral, press the \"Round-Trip Test\" button
-       to complete the test.
-       The latency measurement is generally accurate even when the volume is low. But you may
-       need to increase the volume to bring the confidence number above the threshold.
+        This test will check for validity of the \"Pro Audio\" and subsidiary flags. Note
+        that this test no longer requires a loopback audio device.
     </string>
     <string name="proaudio_hdmi_infotitle">HDMI Support</string>
     <string name="proaudio_hdmi_message">Please connect an HDMI peripheral to validate

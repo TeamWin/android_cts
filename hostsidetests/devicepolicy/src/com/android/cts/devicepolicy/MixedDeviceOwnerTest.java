@@ -512,13 +512,6 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Override
     @Test
-    @IgnoreOnHeadlessSystemUserMode(reason = "Headless system user doesn't have credentials")
-    public void testResetPasswordWithTokenLogged() throws Exception {
-        super.testResetPasswordWithTokenLogged();
-    }
-
-    @Override
-    @Test
     @IgnoreOnHeadlessSystemUserMode(reason = "Headless system user doesn't launch activities")
     public void testCreateAdminSupportIntent() throws Exception {
         super.testCreateAdminSupportIntent();
