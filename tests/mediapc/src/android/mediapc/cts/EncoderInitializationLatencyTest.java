@@ -40,6 +40,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -209,8 +210,9 @@ public class EncoderInitializationLatencyTest {
         if (mMediaRecorderLoad != null) {
             // Note that a RuntimeException is intentionally thrown to the application, if no valid
             // audio/video data has been received when stop() is called. This happens if stop() is
-            // called immediately after start(). So Sleep for 300ms.
-            Thread.sleep(300);
+            // called immediately after start(). So sleep for 1000ms inorder to make sure some
+            // data has been received between start() and stop().
+            Thread.sleep(1000);
             mMediaRecorderLoad.stop();
             mMediaRecorderLoad.release();
             mMediaRecorderLoad = null;
@@ -240,22 +242,40 @@ public class EncoderInitializationLatencyTest {
     @LargeTest
     @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testInitializationLatency() throws Exception {
-        int maxCodecInitializationLatencyMs = mMime.startsWith("audio/") ?
+        final int NUM_MEASUREMENTS = 5;
+        long expectedMaxCodecInitializationLatencyMs = mMime.startsWith("audio/") ?
                 MAX_AUDIOENC_INITIALIZATION_LATENCY_MS : MAX_VIDEOENC_INITIALIZATION_LATENCY_MS;
-        for (int i = 0; i < 5; i++) {
+        long minEncoderInitializationLatencyMs = Integer.MAX_VALUE;
+        long maxEncoderInitializationLatencyMs = 0;
+        long sumOfEncoderInitializationLatencyMs = 0;
+        int count = 0;
+        for (int i = 0; i < NUM_MEASUREMENTS; i++) {
             for (boolean isAsync : boolStates) {
                 EncoderInitializationLatency encoderInitializationLatency =
                         new EncoderInitializationLatency(mMime, mEncoderName, isAsync);
                 long encoderInitializationLatencyMs = encoderInitializationLatency
                         .calculateEncoderInitializationLatency();
                 String errorLog = String.format("CodecInitialization latency for mime: %s, " +
-                        "Encoder: %s, Iteration: %d, mode: %s  is not as expected. act/exp: " +
-                        " %d/%d", mMime, mEncoderName, i, (isAsync ? "async" : "sync"),
-                        encoderInitializationLatencyMs, maxCodecInitializationLatencyMs);
+                        "Encoder: %s, Iteration: %d, mode: %s, is not as expected. act/exp " +
+                        " in Ms :: %d/%d", mMime, mEncoderName, i, (isAsync ? "async" : "sync"),
+                        encoderInitializationLatencyMs, expectedMaxCodecInitializationLatencyMs);
                 assertTrue(errorLog,
-                        encoderInitializationLatencyMs <= maxCodecInitializationLatencyMs);
+                        encoderInitializationLatencyMs <= expectedMaxCodecInitializationLatencyMs);
+                if (encoderInitializationLatencyMs < minEncoderInitializationLatencyMs) {
+                    minEncoderInitializationLatencyMs = encoderInitializationLatencyMs;
+                }
+                if (encoderInitializationLatencyMs > maxEncoderInitializationLatencyMs) {
+                    maxEncoderInitializationLatencyMs = encoderInitializationLatencyMs;
+                }
+                sumOfEncoderInitializationLatencyMs += encoderInitializationLatencyMs;
+                count++;
             }
         }
+        String statsLog = String.format("CodecInitialization latency for mime: %s, " +
+                "Encoder: %s, in Ms :: ", mMime, mEncoderName);
+        Log.i(LOG_TAG, "Min " + statsLog + minEncoderInitializationLatencyMs);
+        Log.i(LOG_TAG, "Max " + statsLog + maxEncoderInitializationLatencyMs);
+        Log.i(LOG_TAG, "Avg " + statsLog + (sumOfEncoderInitializationLatencyMs / count));
     }
 }
 
@@ -273,7 +293,7 @@ class EncoderInitializationLatency extends CodecEncoderTestBase {
         mFrameRate = 60;
     }
 
-    private MediaFormat setUpFormat() {
+    private MediaFormat setUpFormat() throws IOException {
         MediaFormat format = new MediaFormat();
         format.setString(MediaFormat.KEY_MIME, mMime);
         if (mIsAudio) {
@@ -285,10 +305,32 @@ class EncoderInitializationLatency extends CodecEncoderTestBase {
             format.setInteger(MediaFormat.KEY_SAMPLE_RATE, mSampleRate);
             format.setInteger(MediaFormat.KEY_CHANNEL_COUNT, 1);
         } else {
-            format.setInteger(MediaFormat.KEY_WIDTH, 1920);
-            format.setInteger(MediaFormat.KEY_HEIGHT, 1080);
+            MediaCodec codec = MediaCodec.createByCodecName(mEncoderName);
+            MediaCodecInfo.CodecCapabilities codecCapabilities =
+                    codec.getCodecInfo().getCapabilitiesForType(mMime);
+            if (codecCapabilities.getVideoCapabilities().isSizeSupported(1920, 1080)) {
+                format.setInteger(MediaFormat.KEY_WIDTH, 1920);
+                format.setInteger(MediaFormat.KEY_HEIGHT, 1080);
+                format.setInteger(MediaFormat.KEY_BIT_RATE, 8000000);
+            } else if (codecCapabilities.getVideoCapabilities().isSizeSupported(1280, 720)) {
+                format.setInteger(MediaFormat.KEY_WIDTH, 1280);
+                format.setInteger(MediaFormat.KEY_HEIGHT, 720);
+                format.setInteger(MediaFormat.KEY_BIT_RATE, 5000000);
+            } else if (codecCapabilities.getVideoCapabilities().isSizeSupported(640, 480)) {
+                format.setInteger(MediaFormat.KEY_WIDTH, 640);
+                format.setInteger(MediaFormat.KEY_HEIGHT, 480);
+                format.setInteger(MediaFormat.KEY_BIT_RATE, 2000000);
+            } else if (codecCapabilities.getVideoCapabilities().isSizeSupported(352, 288)) {
+                format.setInteger(MediaFormat.KEY_WIDTH, 352);
+                format.setInteger(MediaFormat.KEY_HEIGHT, 288);
+                format.setInteger(MediaFormat.KEY_BIT_RATE, 512000);
+            } else {
+                format.setInteger(MediaFormat.KEY_WIDTH, 176);
+                format.setInteger(MediaFormat.KEY_HEIGHT, 144);
+                format.setInteger(MediaFormat.KEY_BIT_RATE, 128000);
+            }
+            codec.release();
             format.setInteger(MediaFormat.KEY_FRAME_RATE, mFrameRate);
-            format.setInteger(MediaFormat.KEY_BIT_RATE, 8000000);
             format.setFloat(MediaFormat.KEY_I_FRAME_INTERVAL, 1.0f);
             format.setInteger(MediaFormat.KEY_COLOR_FORMAT,
                     MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible);
@@ -307,18 +349,16 @@ class EncoderInitializationLatency extends CodecEncoderTestBase {
         }
         setUpSource(mInputFile);
         MediaCodec.BufferInfo outInfo = new MediaCodec.BufferInfo();
-        long step1TimeMs; // Time of (create + configure)
-        long step2TimeMs; // Time of (create + configure + start)
-        long step3TimeMs = 0; // Time of (create + configure + start + first frame to enqueue)
-        long step4TimeMs = 0; // Time of (create + configure + start + first frame to dequeue)
-        long start = System.currentTimeMillis();
+        long enqueueTimeStamp = 0;
+        long dequeueTimeStamp = 0;
+        long baseTimeStamp = System.nanoTime();
         mCodec = MediaCodec.createByCodecName(mEncoderName);
         resetContext(mIsAsync, false);
         mAsyncHandle.setCallBack(mCodec, mIsAsync);
         mCodec.configure(format, null, MediaCodec.CONFIGURE_FLAG_ENCODE, null);
-        step1TimeMs = System.currentTimeMillis() - start;
+        long configureTimeStamp = System.nanoTime();
         mCodec.start();
-        step2TimeMs = System.currentTimeMillis() - start;
+        long startTimeStamp = System.nanoTime();
         if (mIsAsync) {
             while (!mAsyncHandle.hasSeenError() && !mSawInputEOS) {
                 Pair<Integer, MediaCodec.BufferInfo> element = mAsyncHandle.getWork();
@@ -326,11 +366,13 @@ class EncoderInitializationLatency extends CodecEncoderTestBase {
                     int bufferID = element.first;
                     MediaCodec.BufferInfo info = element.second;
                     if (info != null) {
-                        step4TimeMs = System.currentTimeMillis() - start;
+                        dequeueTimeStamp = System.nanoTime();
                         dequeueOutput(bufferID, info);
                         break;
                     } else {
-                        if (step3TimeMs == 0) step3TimeMs = System.currentTimeMillis() - start;
+                        if (enqueueTimeStamp == 0) {
+                            enqueueTimeStamp = System.nanoTime();
+                        }
                         enqueueInput(bufferID);
                     }
                 }
@@ -340,13 +382,15 @@ class EncoderInitializationLatency extends CodecEncoderTestBase {
                 if (!mSawInputEOS) {
                     int inputBufferId = mCodec.dequeueInputBuffer(Q_DEQ_TIMEOUT_US);
                     if (inputBufferId > 0) {
-                        if (step3TimeMs == 0) step3TimeMs = System.currentTimeMillis() - start;
+                        if (enqueueTimeStamp == 0) {
+                            enqueueTimeStamp = System.nanoTime();
+                        }
                         enqueueInput(inputBufferId);
                     }
                 }
                 int outputBufferId = mCodec.dequeueOutputBuffer(outInfo, Q_DEQ_TIMEOUT_US);
                 if (outputBufferId >= 0) {
-                    step4TimeMs = System.currentTimeMillis() - start;
+                    dequeueTimeStamp = System.nanoTime();
                     dequeueOutput(outputBufferId, outInfo);
                     break;
                 }
@@ -357,13 +401,17 @@ class EncoderInitializationLatency extends CodecEncoderTestBase {
         mCodec.stop();
         mCodec.release();
         Log.d(LOG_TAG, "Encode mMime: " + mMime + " Encoder: " + mEncoderName +
-                " Time for (create + configure): " + step1TimeMs);
+                " Time for (create + configure) in ns: " + (configureTimeStamp - baseTimeStamp));
         Log.d(LOG_TAG, "Encode mMime: " + mMime + " Encoder: " + mEncoderName +
-                " Time for (create + configure + start): " + step2TimeMs);
+                " Time for (create + configure + start) in ns: " +
+                (startTimeStamp - baseTimeStamp));
         Log.d(LOG_TAG, "Encode mMime: " + mMime + " Encoder: " + mEncoderName +
-                " Time for (create + configure + start + first frame to enqueue): " + step3TimeMs);
+                " Time for (create + configure + start + first frame to enqueue) in ns: " +
+                (enqueueTimeStamp - baseTimeStamp));
         Log.d(LOG_TAG, "Encode mMime: " + mMime + " Encoder: " + mEncoderName +
-                " Time for (create + configure + start + first frame to dequeue): " + step4TimeMs);
-        return step1TimeMs;
+                " Time for (create + configure + start + first frame to dequeue) in ns: " +
+                (dequeueTimeStamp - baseTimeStamp));
+        long timeToConfigureMs = (configureTimeStamp - baseTimeStamp) / 1000000;
+        return timeToConfigureMs;
     }
 }
