@@ -28,6 +28,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import android.incrementalinstall.common.Consts;
+import android.platform.test.annotations.LargeTest;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.ddmlib.Log;
@@ -231,6 +232,33 @@ public class IncrementalInstallTest extends BaseHostJUnit4Test {
                 deviceLocalPath + TEST_APP_DYNAMIC_CODE_NAME));
         // Verify IFS->NonIFS migration.
         verifyInstallationTypeAndVersion(TEST_APP_PACKAGE_NAME, /* isIncfs= */ false,
+                TEST_APP_V1_VERSION);
+        validateAppLaunch(TEST_APP_PACKAGE_NAME, ON_CREATE_COMPONENT, DYNAMIC_CODE_COMPONENT);
+    }
+
+    @LargeTest
+    @Test
+    public void testAddSplitToExistingInstallAfterReboot() throws Exception {
+        verifyInstallCommandSuccess(installWithAdbInstaller(TEST_APP_BASE_APK_NAME));
+        verifyPackageInstalled(TEST_APP_PACKAGE_NAME);
+        verifyInstallationTypeAndVersion(TEST_APP_PACKAGE_NAME, /* isIncfs= */ true,
+                TEST_APP_V1_VERSION);
+        validateAppLaunch(TEST_APP_PACKAGE_NAME, ON_CREATE_COMPONENT);
+        // Reboot!
+        getDevice().reboot();
+        // Adb cannot add a split to an existing install, so we'll use pm to install just the
+        // dynamic code split.
+        String deviceLocalPath = "/data/local/tmp/";
+        getDevice().executeAdbCommand("push", getFilePathFromBuildInfo(TEST_APP_DYNAMIC_CODE_NAME),
+                deviceLocalPath);
+        getDevice().executeAdbCommand("push",
+                getFilePathFromBuildInfo(TEST_APP_DYNAMIC_CODE_NAME + SIG_SUFFIX),
+                deviceLocalPath);
+        getDevice().executeShellCommand(
+                String.format("pm install-incremental -p %s %s", TEST_APP_PACKAGE_NAME,
+                        deviceLocalPath + TEST_APP_DYNAMIC_CODE_NAME));
+        // Verify still on Incremental.
+        verifyInstallationTypeAndVersion(TEST_APP_PACKAGE_NAME, /* isIncfs= */ true,
                 TEST_APP_V1_VERSION);
         validateAppLaunch(TEST_APP_PACKAGE_NAME, ON_CREATE_COMPONENT, DYNAMIC_CODE_COMPONENT);
     }

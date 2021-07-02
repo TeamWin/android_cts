@@ -20,6 +20,9 @@ import static android.content.pm.PackageManager.FEATURE_DEVICE_ADMIN;
 
 import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDeviceOwner;
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasProfileOwner;
 import com.android.bedstead.harrier.annotations.meta.ParameterizedAnnotation;
 
 import java.lang.annotation.ElementType;
@@ -28,12 +31,12 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Parameterize a test so that it runs on a user with a profile owner.
+ * Parameterize a test so that it runs on a work profile.
  */
 @Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @ParameterizedAnnotation
-@RequireFeature(FEATURE_DEVICE_ADMIN)
 @RequireRunOnWorkProfile(dpcIsPrimary = true)
-public @interface IncludeRunOnProfileOwner {
+@EnsureHasNoDeviceOwner
+public @interface IncludeRunOnProfileOwnerProfile {
 }

@@ -19,6 +19,7 @@ package android.alarmmanager.cts;
 
 import static org.junit.Assert.fail;
 
+import android.alarmmanager.util.AlarmManagerDeviceConfigHelper;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -116,6 +117,6 @@ public class UidCapTests {
 
     @After
     public void deleteAlarmManagerConstants() {
-        mConfigHelper.deleteAll();
+        mConfigHelper.restoreAll();
     }
 }

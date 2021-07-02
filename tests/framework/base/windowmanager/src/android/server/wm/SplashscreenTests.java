@@ -89,7 +89,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.RuleChain;
 
 import java.util.Collections;
 import java.util.function.Consumer;
@@ -104,10 +103,8 @@ public class SplashscreenTests extends ActivityManagerTestBase {
 
     private static final int CENTER_ICON_SIZE = 192;
 
-    public DumpOnFailure dumpOnFailure = new DumpOnFailure();
-
     @Rule
-    public RuleChain chain = RuleChain.outerRule(dumpOnFailure).around(mBaseRule);
+    public final DumpOnFailure dumpOnFailure = new DumpOnFailure();
 
     @Before
     public void setUp() throws Exception {
@@ -143,6 +140,10 @@ public class SplashscreenTests extends ActivityManagerTestBase {
 
     @Test
     public void testSplashscreenContent() {
+        // TODO(b/192431448): Allow Automotive to skip this test until Splash Screen is properly
+        // applied insets by system bars in AAOS.
+        assumeFalse(isCar());
+
         launchActivityNoWait(SPLASHSCREEN_ACTIVITY);
         // The windowSplashScreenContent attribute is set to RED. We check that it is ignored.
         testSplashScreenColor(SPLASHSCREEN_ACTIVITY, Color.BLUE, Color.BLACK);
@@ -374,6 +375,10 @@ public class SplashscreenTests extends ActivityManagerTestBase {
 
     @Test
     public void testSetBackgroundColorActivity() {
+        // TODO(b/192431448): Allow Automotive to skip this test until Splash Screen is properly
+        // applied insets by system bars in AAOS.
+        assumeFalse(isCar());
+
         launchActivityNoWait(SPLASH_SCREEN_REPLACE_ICON_ACTIVITY, extraBool(DELAY_RESUME, true));
         testSplashScreenColor(SPLASH_SCREEN_REPLACE_ICON_ACTIVITY, Color.BLUE, Color.BLACK);
     }
@@ -421,6 +426,10 @@ public class SplashscreenTests extends ActivityManagerTestBase {
 
     @Test
     public void testShortcutChangeTheme() {
+        // TODO(b/192431448): Allow Automotive to skip this test until Splash Screen is properly
+        // applied insets by system bars in AAOS.
+        assumeFalse(isCar());
+
         final LauncherApps launcherApps = mContext.getSystemService(LauncherApps.class);
         final ShortcutManager shortcutManager = mContext.getSystemService(ShortcutManager.class);
         assumeTrue(launcherApps != null && shortcutManager != null);

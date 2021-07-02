@@ -5103,10 +5103,18 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="audio_coldstart_out_latency_test">Audio Cold Start Output Latency Test</string>
     <string name="audio_coldstart_in_latency_test">Audio Cold Start Input Latency Test</string>
 
-    <string name="audio_coldstart_output_info">Info Here</string>
+    <string name="audio_coldstart_output_info">
+        This test measures the time required to output audio from a suspended \"cold\" audio system.
+        It requires that touch-sounds be disabled in the device \"Sound &amp; Vibration\" settings
+        panel.
+    </string>
     <string name="audio_coldstart_input_info">Info Here</string>
     <string name="audio_coldstart_outputlbl">Output Cold Start Latency</string>
     <string name="audio_coldstart_inputlbl">Input Cold Start Latency</string>
+    <string name="audio_coldstart_touchsounds_message">
+        Touch sounds are ENABLED. Please DISABLE touch sounds in the \"Sound &amp; Vibration\" settings panel.
+    </string>
+    <string name="audio_coldstart_notouchsounds_message">Touch sound are DISABLED.</string>
 
     <!-- Audio Frequency Line Test -->
     <string name="audio_frequency_line_test">Audio Frequency Line Test</string>
