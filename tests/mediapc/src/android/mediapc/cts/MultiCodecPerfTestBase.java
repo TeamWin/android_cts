@@ -72,6 +72,7 @@ public class MultiCodecPerfTestBase {
         mIsAsync = isAsync;
     }
 
+    // Returns the list of hardware codecs supporting the 720p 30fps format.
     public static ArrayList<String> getHardwareCodecsFor720p(String mime, boolean isEncoder) {
         MediaFormat fmt = MediaFormat.createVideoFormat(mime, 1280, 720);
         fmt.setInteger(MediaFormat.KEY_FRAME_RATE, 30);
@@ -80,6 +81,8 @@ public class MultiCodecPerfTestBase {
         return selectHardwareCodecs(mime, formatsList, null, isEncoder);
     }
 
+    // Returns the max number of 720p 30 fps instances that the given list of mimeCodecPairs
+    // supports. It also checks that the each codec supports 720p 180 fps PerformancePoint.
     public int checkAndGetMaxSupportedInstancesFor720p(
             ArrayList<Pair<String, String>> mimeCodecPairs) throws IOException {
         int[] maxInstances = new int[mimeCodecPairs.size()];
