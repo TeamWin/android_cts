@@ -413,7 +413,7 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
         }
 
         mServer = new CtsTestServer(mContext);
-        Preconditions.assertTestFileExists(mInpPrefix + "prog_index_m3u8");
+        Preconditions.assertTestFileExists(mInpPrefix + "prog_index.m3u8");
         try {
             // counter must be final if we want to access it inside onTimedMetaData;
             // use AtomicInteger so we can have a final counter object with mutable integer value.
