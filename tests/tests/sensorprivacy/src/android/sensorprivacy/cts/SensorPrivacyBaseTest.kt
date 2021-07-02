@@ -95,6 +95,7 @@ abstract class SensorPrivacyBaseTest(
     @After
     fun tearDown() {
         finishTestApp()
+        Thread.sleep(3000)
         setSensor(oldState)
     }
 
@@ -214,6 +215,7 @@ abstract class SensorPrivacyBaseTest(
     }
 
     @Test
+    @AppModeFull(reason = "Uses secondary app, instant apps have no visibility")
     fun testOpNotRunningWhileSensorPrivacyEnabled() {
         setSensor(false)
         val before = System.currentTimeMillis()
@@ -231,6 +233,7 @@ abstract class SensorPrivacyBaseTest(
     }
 
     @Test
+    @AppModeFull(reason = "Uses secondary app, instant apps have no visibility")
     fun testOpStartsRunningAfterStartedWithSensoryPrivacyEnabled() {
         setSensor(true)
         startTestApp()
@@ -244,6 +247,7 @@ abstract class SensorPrivacyBaseTest(
     }
 
     @Test
+    @AppModeFull(reason = "Uses secondary app, instant apps have no visibility")
     fun testOpGetsRecordedAfterStartedWithSensorPrivacyEnabled() {
         setSensor(true)
         startTestApp()
@@ -262,6 +266,7 @@ abstract class SensorPrivacyBaseTest(
     }
 
     @Test
+    @AppModeFull(reason = "Uses secondary app, instant apps have no visibility")
     fun testOpLastAccessUpdatesAfterToggleSensorPrivacy() {
         setSensor(false)
         val before = System.currentTimeMillis()
@@ -292,6 +297,7 @@ abstract class SensorPrivacyBaseTest(
     }
 
     @Test
+    @AppModeFull(reason = "Uses secondary app, instant apps have no visibility")
     fun testOpFinishedWhileToggleOn() {
         setSensor(false)
         startTestApp()
