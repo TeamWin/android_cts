@@ -22,7 +22,6 @@ import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
-import static com.google.common.truth.TruthJUnit.assume;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -35,13 +34,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
-import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.hardware.display.DisplayManager;
 import android.net.TrafficStats;
 import android.net.Uri;
-import android.os.Build;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.os.StrictMode;
@@ -668,7 +665,7 @@ public class StrictModeTest {
             }
         });
 
-        if (isWallpaperManagerAccessible()) {
+        if (isWallpaperSupported()) {
             assertViolation("Tried to access UI related API:", () ->
                     applicationContext.getSystemService(WallpaperManager.class)
                             .getDesiredMinimumWidth());
@@ -704,7 +701,7 @@ public class StrictModeTest {
             }
         });
 
-        if (isWallpaperManagerAccessible()) {
+        if (isWallpaperSupported()) {
             assertViolation("Tried to access UI related API:", () ->
                     displayContext.getSystemService(WallpaperManager.class)
                             .getDesiredMinimumWidth());
@@ -734,7 +731,7 @@ public class StrictModeTest {
             }
         });
 
-        if (isWallpaperManagerAccessible()) {
+        if (isWallpaperSupported()) {
             assertNoViolation(() -> windowContext.getSystemService(WallpaperManager.class)
                     .getDesiredMinimumWidth());
         }
@@ -765,7 +762,7 @@ public class StrictModeTest {
             }
         });
 
-        if (isWallpaperManagerAccessible()) {
+        if (isWallpaperSupported()) {
             assertNoViolation(() -> activity.getSystemService(WallpaperManager.class)
                     .getDesiredMinimumWidth());
         }
@@ -798,7 +795,7 @@ public class StrictModeTest {
             }
         });
 
-        if (isWallpaperManagerAccessible()) {
+        if (isWallpaperSupported()) {
             assertNoViolation(() -> uiDerivedConfigContext.getSystemService(WallpaperManager.class)
                     .getDesiredMinimumWidth());
         }
@@ -819,7 +816,7 @@ public class StrictModeTest {
             }
         });
 
-        if (isWallpaperManagerAccessible()) {
+        if (isWallpaperSupported()) {
             assertNoViolation(() -> uiDerivedAttrContext.getSystemService(WallpaperManager.class)
                     .getDesiredMinimumWidth());
         }
@@ -854,7 +851,7 @@ public class StrictModeTest {
             }
         });
 
-        if (isWallpaperManagerAccessible()) {
+        if (isWallpaperSupported()) {
             assertViolation("Tried to access UI related API:", () ->
                     uiDerivedDisplayContext.getSystemService(WallpaperManager.class)
                             .getDesiredMinimumWidth());
@@ -887,7 +884,7 @@ public class StrictModeTest {
             }
         });
 
-        if (isWallpaperManagerAccessible()) {
+        if (isWallpaperSupported()) {
             assertViolation("Tried to access UI related API:", () ->
                     configContext.getSystemService(WallpaperManager.class)
                             .getDesiredMinimumWidth());
@@ -926,7 +923,7 @@ public class StrictModeTest {
             }
         });
 
-        if (isWallpaperManagerAccessible()) {
+        if (isWallpaperSupported()) {
             assertViolation("Tried to access UI related API:", () ->
                     configDerivedDisplayContext.getSystemService(WallpaperManager.class)
                             .getDesiredMinimumWidth());
@@ -934,15 +931,15 @@ public class StrictModeTest {
     }
 
     /**
-     * Returns {@code false} if the test is targeted at least {@link Build.VERSION_CODES#P} and
-     * running in instant mode.
+     * Returns {@code true} to indicate that wallpaper is supported.
+     * <p>
+     * Note that we check the nullity of {@link WallpaperManager} because it may not be obtainable
+     * if the test is targeting at least {@link android.os.Build.VERSION_CODES#P} and running in
+     * instant mode.
      */
-    private boolean isWallpaperManagerAccessible() {
-        assume().withMessage("walpaper supported")
-                .that(getContext().getSystemService(WallpaperManager.class).isWallpaperSupported())
-                .isTrue();
-        final ApplicationInfo appInfo = getContext().getApplicationInfo();
-        return appInfo.targetSdkVersion < Build.VERSION_CODES.P || !appInfo.isInstantApp();
+    private boolean isWallpaperSupported() {
+        final WallpaperManager wallpaperManager = WallpaperManager.getInstance(getContext());
+        return wallpaperManager != null && wallpaperManager.isWallpaperSupported();
     }
 
     @Test
