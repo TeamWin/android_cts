@@ -20,7 +20,7 @@ package {
 
 android_test {
     name: "CtsPermission4TestCases",
-    sdk_version: "system_current",
+    sdk_version: "test_current",
     defaults: ["cts_defaults"],
     platform_apis: true,
     srcs: [
