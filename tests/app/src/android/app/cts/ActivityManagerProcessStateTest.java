@@ -84,7 +84,6 @@ import org.junit.runner.RunWith;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 import java.util.function.BiConsumer;
 
 @RunWith(AndroidJUnit4.class)
@@ -2313,10 +2312,16 @@ public class ActivityManagerProcessStateTest {
             CommandReceiver.sendCommand(mContext,
                     CommandReceiver.COMMAND_START_FOREGROUND_SERVICE_STICKY,
                     PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, extras);
-            // Stop the activity in app1, app1 now only has FGS.
-            CommandReceiver.sendCommand(mContext,
-                    CommandReceiver.COMMAND_STOP_ACTIVITY,
-                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+
+            // Launch home activity, so the activity in app1 will be stopped, app1 now only has FGS,
+            // we're not "finishing" the activity because removing a task could result in service
+            // restart.
+            final Intent homeIntent = new Intent();
+            homeIntent.setAction(Intent.ACTION_MAIN);
+            homeIntent.addCategory(Intent.CATEGORY_HOME);
+            homeIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            mTargetContext.startActivity(homeIntent);
+
             // The FGS has all while-in-use capabilities.
             uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE,
                     new Integer(PROCESS_CAPABILITY_ALL));
