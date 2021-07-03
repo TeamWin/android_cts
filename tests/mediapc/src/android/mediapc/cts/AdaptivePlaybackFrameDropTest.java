@@ -16,10 +16,7 @@
 
 package android.mediapc.cts;
 
-import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
-import android.media.MediaFormat;
-import android.view.Surface;
 
 import androidx.test.filters.LargeTest;
 
@@ -27,11 +24,14 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.util.ArrayList;
 import java.util.Collection;
 
 import static org.junit.Assert.assertTrue;
 
+/**
+ * The following test class validates the frame drops of AdaptivePlayback for the hardware decoders
+ * under the load condition (Transcode + Audio Playback).
+ */
 @RunWith(Parameterized.class)
 public class AdaptivePlaybackFrameDropTest extends FrameDropTestBase {
     private static final String LOG_TAG = AdaptivePlaybackFrameDropTest.class.getSimpleName();
@@ -40,45 +40,30 @@ public class AdaptivePlaybackFrameDropTest extends FrameDropTestBase {
         super(mimeType, decoderName, isAsync);
     }
 
+    // Returns the list of parameters with mimeTypes and their hardware decoders supporting the
+    // AdaptivePlayback feature combining with sync and async modes.
+    // Parameters {0}_{1}_{2} -- Mime_DecoderName_isAsync
     @Parameterized.Parameters(name = "{index}({0}_{1}_{2})")
     public static Collection<Object[]> inputParams() {
         return prepareArgumentsList(new String[]{
                 MediaCodecInfo.CodecCapabilities.FEATURE_AdaptivePlayback});
     }
 
+    /**
+     * This test validates that the Adaptive Playback of 1920x1080 and 960x540 resolution
+     * assets of 3 seconds duration each at 60 fps for S perf class / 30 fps for R perf class,
+     * playing alternatively, for at least 1800 frames or for 31 seconds, must not drop any frames.
+     */
     @LargeTest
     @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testAdaptivePlaybackFrameDrop() throws Exception {
-        for (int i = 0; i < 5; i++) {
-            AdaptivePlayback adaptivePlayback = new AdaptivePlayback(mMime,
-                    new String[]{m1080pTestFiles.get(mMime), m540pTestFiles.get(mMime),
-                            m1080pTestFiles.get(mMime)},
-                    mDecoderName, mSurface, mIsAsync);
-            adaptivePlayback.doAdaptivePlaybackAndCalculateFrameDrop();
-        }
-    }
-}
-
-class AdaptivePlayback extends DecodeExtractedSamplesTestBase {
-    private final String mDecoderName;
-
-    AdaptivePlayback(String mime, String[] testFiles, String decoderName, Surface surface,
-            boolean isAsync) {
-        super(mime, testFiles, surface, isAsync);
-        mDecoderName = decoderName;
-    }
-
-    public void doAdaptivePlaybackAndCalculateFrameDrop() throws Exception {
-        ArrayList<MediaFormat> formats = setUpSourceFiles();
-        mCodec = MediaCodec.createByCodecName(mDecoderName);
-        configureCodec(formats.get(0), mIsAsync, false, false);
-        mCodec.start();
-        doWork(mBuff, mBufferInfos);
-        queueEOS();
-        waitForAllOutputs();
-        mCodec.stop();
-        mCodec.release();
-        assertTrue("FrameDrop count for mime: " + mMime + " decoder: " + mDecoderName +
-                " is not as expected. act/exp: " + mFrameDropCount + "/0", mFrameDropCount == 0);
+        PlaybackFrameDrop playbackFrameDrop = new PlaybackFrameDrop(mMime, mDecoderName,
+                new String[]{m1080pTestFiles.get(mMime), m540pTestFiles.get(mMime)},
+                mSurface, FRAME_RATE, mIsAsync);
+        int frameDropCount = playbackFrameDrop.getFrameDropCount();
+        assertTrue("Adaptive Playback FrameDrop count for mime: " + mMime + ", decoder: " +
+                mDecoderName + ", FrameRate: " + FRAME_RATE + ", is not as expected. act/exp: " +
+                frameDropCount + "/" + MAX_ADAPTIVE_PLAYBACK_FRAME_DROP,
+                frameDropCount <= MAX_ADAPTIVE_PLAYBACK_FRAME_DROP);
     }
 }

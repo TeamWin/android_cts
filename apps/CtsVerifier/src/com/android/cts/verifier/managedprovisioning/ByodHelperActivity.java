@@ -20,6 +20,7 @@ import static android.os.UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES;
 import static android.os.UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY;
 
 import android.Manifest;
+import android.app.Activity;
 import android.app.KeyguardManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -35,6 +36,7 @@ import android.os.Handler;
 import android.os.UserManager;
 import android.provider.MediaStore;
 import android.util.Log;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
@@ -57,7 +59,7 @@ import java.util.ArrayList;
  *
  * Note: We have to use a test activity because cross-profile intents only work for activities.
  */
-public class ByodHelperActivity extends LocationListenerActivity
+public class ByodHelperActivity extends Activity
         implements DialogCallback, ActivityCompat.OnRequestPermissionsResultCallback {
 
     static final String TAG = "ByodHelperActivity";
@@ -122,9 +124,6 @@ public class ByodHelperActivity extends LocationListenerActivity
     public static final String ACTION_TEST_APP_LINKING_DIALOG =
             "com.android.cts.verifier.managedprovisioning.action.TEST_APP_LINKING_DIALOG";
 
-    // Primary -> managed intent: request to goto the location settings page and listen to updates.
-    public static final String ACTION_BYOD_SET_LOCATION_AND_CHECK_UPDATES =
-            "com.android.cts.verifier.managedprovisioning.BYOD_SET_LOCATION_AND_CHECK";
     public static final String ACTION_NOTIFICATION =
             "com.android.cts.verifier.managedprovisioning.NOTIFICATION";
     public static final String ACTION_NOTIFICATION_ON_LOCKSCREEN =
@@ -175,7 +174,6 @@ public class ByodHelperActivity extends LocationListenerActivity
     private static final int EXECUTE_IMAGE_CAPTURE_TEST = 1;
     private static final int EXECUTE_VIDEO_CAPTURE_WITH_EXTRA_TEST = 2;
     private static final int EXECUTE_VIDEO_CAPTURE_WITHOUT_EXTRA_TEST = 3;
-    private static final int EXECUTE_LOCATION_UPDATE_TEST = 4;
 
     private NotificationManager mNotificationManager;
     private Bundle mOriginalRestrictions;
@@ -350,13 +348,6 @@ public class ByodHelperActivity extends LocationListenerActivity
                 mDevicePolicyManager.clearUserRestriction(
                         DeviceAdminTestReceiver.getReceiverComponentName(), restriction);
             }
-        } else if (action.equals(ACTION_BYOD_SET_LOCATION_AND_CHECK_UPDATES)) {
-            if (hasLocationPermission()) {
-                handleLocationAction();
-            } else {
-                requestLocationPermission(EXECUTE_LOCATION_UPDATE_TEST);
-            }
-            return;
         } else if (action.equals(ACTION_NOTIFICATION)) {
             showNotification(Notification.VISIBILITY_PUBLIC);
         } else if (ACTION_NOTIFICATION_ON_LOCKSCREEN.equals(action)) {
@@ -625,15 +616,6 @@ public class ByodHelperActivity extends LocationListenerActivity
                     return;
                 }
                 break;
-            case EXECUTE_LOCATION_UPDATE_TEST:
-                if (!permissions[0].equals(Manifest.permission.ACCESS_FINE_LOCATION)
-                        || grants[0] != PackageManager.PERMISSION_GRANTED) {
-                    Log.e(TAG, "The test needs location permission.");
-                    showToast(R.string.provisioning_byod_location_mode_enable_missing_permission);
-                    finish();
-                    return;
-                }
-                break;
         }
 
         // Execute the right test.
@@ -644,9 +626,6 @@ public class ByodHelperActivity extends LocationListenerActivity
             case EXECUTE_VIDEO_CAPTURE_WITH_EXTRA_TEST:
             case EXECUTE_VIDEO_CAPTURE_WITHOUT_EXTRA_TEST:
                 startCaptureVideoActivity(requestCode);
-                break;
-            case EXECUTE_LOCATION_UPDATE_TEST:
-                handleLocationAction();
                 break;
             default:
                 Log.e(TAG, "Unknown action.");
@@ -666,8 +645,8 @@ public class ByodHelperActivity extends LocationListenerActivity
         finish();
     }
 
-    @Override
-    protected String getLogTag() {
-        return TAG;
+    private void showToast(int messageId) {
+        String message = getString(messageId);
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
 }

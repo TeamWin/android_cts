@@ -16,7 +16,9 @@
 package android.assist.common;
 
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.LocaleList;
 import android.os.Process;
@@ -270,5 +272,9 @@ public class Utils {
         Bundle bundle = new Bundle();
         bundle.putString(Utils.EXTRA_REMOTE_CALLBACK_ACTION, action);
         return bundle;
+    }
+
+    public static boolean isAutomotive(Context context) {
+        return context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
     }
 }

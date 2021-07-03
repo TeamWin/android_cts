@@ -26,6 +26,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import android.app.UiAutomation;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -35,8 +36,11 @@ import android.os.PersistableBundle;
 import android.telecom.PhoneAccount;
 import android.telephony.CarrierConfigManager;
 import android.telephony.SubscriptionManager;
+import android.telephony.TelephonyManager;
+import android.telephony.cts.TelephonyUtils;
 import android.telephony.ims.ImsException;
 import android.telephony.ims.ImsManager;
+import android.telephony.ims.ProvisioningManager;
 import android.telephony.ims.RcsContactPresenceTuple;
 import android.telephony.ims.RcsContactUceCapability;
 import android.telephony.ims.RcsUceAdapter;
@@ -47,6 +51,9 @@ import android.util.Log;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ShellIdentityUtils;
+import com.android.i18n.phonenumbers.NumberParseException;
+import com.android.i18n.phonenumbers.PhoneNumberUtil;
+import com.android.i18n.phonenumbers.Phonenumber;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -55,8 +62,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Random;
@@ -68,6 +75,8 @@ import java.util.concurrent.TimeUnit;
 public class EabControllerTest {
 
     private static final String TAG = "EabControllerTest";
+    private static final String COMMAND_BASE = "cmd phone ";
+    private static final String COMMAND_GET_EAB_CONTACT = "uce get-eab-capability ";
 
     private static int sTestSlot = SubscriptionManager.INVALID_SIM_SLOT_INDEX;
     private static int sTestSub = SubscriptionManager.INVALID_SUBSCRIPTION_ID;
@@ -78,6 +87,9 @@ public class EabControllerTest {
     private static boolean sDeviceUceEnabled;
 
     private static final String TEST_SERVICE_DESCRIPTION = "description_test1";
+    private static final int EXPIRATION_TIME_IN_SEC = 1;
+    private static final int WAITING_IN_MILLI_SEC = 1000;
+    private static final int POLLING_RETRY_TIMES = 3;
 
     BlockingQueue<Long> mErrorQueue = new LinkedBlockingQueue<>();
     BlockingQueue<Boolean> mCompleteQueue = new LinkedBlockingQueue<>();
@@ -223,8 +235,7 @@ public class EabControllerTest {
                 false,
                 true,
                 DUPLEX_MODE_RECEIVE_ONLY,
-                DUPLEX_MODE_SEND_ONLY,
-                false));
+                DUPLEX_MODE_SEND_ONLY));
         // Request capabilities for saving capability to EAB provider
         requestCapabilities(contacts);
         mErrorQueue.clear();
@@ -262,8 +273,7 @@ public class EabControllerTest {
                 false,
                 true,
                 DUPLEX_MODE_RECEIVE_ONLY,
-                DUPLEX_MODE_SEND_ONLY,
-                false));
+                DUPLEX_MODE_SEND_ONLY));
         // Request capabilities for saving capability to EAB provider
         requestAvailability(sTestNumberUri);
         mErrorQueue.clear();
@@ -294,6 +304,11 @@ public class EabControllerTest {
         if (!ImsUtils.shouldTestImsService()) {
             return;
         }
+
+        // Set capabilities expiration time
+        setProvisioningIntValue(ProvisioningManager.KEY_RCS_CAPABILITIES_CACHE_EXPIRATION_SEC,
+                EXPIRATION_TIME_IN_SEC);
+
         ArrayList<Uri> contacts = new ArrayList<>(1);
         contacts.add(sTestNumberUri);
         fakeNetworkResult(getPidfXmlData(
@@ -303,13 +318,14 @@ public class EabControllerTest {
                 false,
                 true,
                 DUPLEX_MODE_RECEIVE_ONLY,
-                DUPLEX_MODE_SEND_ONLY,
-                true));
+                DUPLEX_MODE_SEND_ONLY));
         // Request capabilities for saving expired capability to EAB provider
         requestCapabilities(contacts);
         mErrorQueue.clear();
         mCompleteQueue.clear();
         mCapabilityQueue.clear();
+
+        waitingEabCapabilityExpire();
 
         // Request capabilities again
         RcsContactUceCapability capability = requestCapabilities(contacts);
@@ -335,6 +351,11 @@ public class EabControllerTest {
         if (!ImsUtils.shouldTestImsService()) {
             return;
         }
+
+        // Set availability expiration time
+        setProvisioningIntValue(ProvisioningManager.KEY_RCS_AVAILABILITY_CACHE_EXPIRATION_SEC,
+                EXPIRATION_TIME_IN_SEC);
+
         fakeNetworkResult(getPidfXmlData(
                 sTestNumberUri,
                 TEST_SERVICE_DESCRIPTION,
@@ -342,13 +363,15 @@ public class EabControllerTest {
                 true,
                 false,
                 DUPLEX_MODE_RECEIVE_ONLY,
-                DUPLEX_MODE_SEND_ONLY,
-                true));
+                DUPLEX_MODE_SEND_ONLY));
         // Request availabilities for saving availabilities to EAB provider
         requestAvailability(sTestNumberUri);
         mErrorQueue.clear();
         mCompleteQueue.clear();
         mCapabilityQueue.clear();
+
+        // Waiting availabilities expire
+        waitingEabCapabilityExpire();
 
         // Request availabilities again
         RcsContactUceCapability capability = requestAvailability(sTestNumberUri);
@@ -451,14 +474,8 @@ public class EabControllerTest {
             boolean audioSupported,
             boolean videoSupported,
             String supportedDuplexMode,
-            String unSupportedDuplexMode,
-            boolean isExpired) {
+            String unSupportedDuplexMode) {
         GregorianCalendar date = new GregorianCalendar();
-        if (isExpired) {
-            date.add(Calendar.DATE, -120);
-        } else {
-            date.add(Calendar.DATE, 120);
-        }
         String timeStamp = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX")
                 .format(date.getTime());
 
@@ -575,6 +592,7 @@ public class EabControllerTest {
     private static void connectTestImsService() throws Exception {
         assertTrue(sServiceConnector.connectCarrierImsService(new ImsFeatureConfiguration.Builder()
                 .addFeature(sTestSlot, ImsFeature.FEATURE_RCS)
+                .addFeature(sTestSlot, ImsFeature.FEATURE_MMTEL)
                 .build()));
 
         // The RcsFeature is created when the ImsService is bound. If it wasn't created, then the
@@ -610,5 +628,54 @@ public class EabControllerTest {
         } catch (Exception e) {
             Log.w("RcsUceAdapterTest", "Cannot remove test contacts from eab database: " + e);
         }
+    }
+
+    private static String formatNumber(Context context, String number) {
+        TelephonyManager manager = context.getSystemService(TelephonyManager.class);
+        String simCountryIso = manager.getSimCountryIso();
+        if (simCountryIso != null) {
+            simCountryIso = simCountryIso.toUpperCase();
+            PhoneNumberUtil util = PhoneNumberUtil.getInstance();
+            try {
+                Phonenumber.PhoneNumber phoneNumber = util.parse(number, simCountryIso);
+                return util.format(phoneNumber, PhoneNumberUtil.PhoneNumberFormat.E164);
+            } catch (NumberParseException e) {
+                Log.w(TAG, "formatNumber: could not format " + number + ", error: " + e);
+            }
+        }
+        return number;
+    }
+
+    private String getEabCapabilities(String phoneNum) throws Exception {
+        StringBuilder cmdBuilder = new StringBuilder();
+        cmdBuilder.append(COMMAND_BASE).append(COMMAND_GET_EAB_CONTACT)
+                .append(" ").append(phoneNum);
+        return TelephonyUtils.executeShellCommand(InstrumentationRegistry.getInstrumentation(),
+                cmdBuilder.toString());
+    }
+
+    private void setProvisioningIntValue(int key, int value) {
+        final UiAutomation automan = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            automan.adoptShellPermissionIdentity();
+            ProvisioningManager provisioningManager =
+                    ProvisioningManager.createForSubscriptionId(sTestSub);
+            provisioningManager.setProvisioningIntValue(key, value);
+        } finally {
+            automan.dropShellPermissionIdentity();
+        }
+    }
+
+    private void waitingEabCapabilityExpire() throws Exception {
+        int retryTimes = POLLING_RETRY_TIMES;
+        long expirationTime;
+        do {
+            String capabilities = getEabCapabilities(formatNumber(getContext(), sTestPhoneNumber));
+            String[] capabilityInfo = capabilities.split(",");
+            assertTrue(capabilityInfo.length > 4);
+            Thread.sleep(WAITING_IN_MILLI_SEC);
+            expirationTime = Long.parseLong(capabilityInfo[2]);
+            retryTimes--;
+        } while (retryTimes > 0 && Instant.now().getEpochSecond() < expirationTime);
     }
 }

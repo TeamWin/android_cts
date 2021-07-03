@@ -23,6 +23,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import android.R;
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.cts.utils.Cam;
 import android.util.Pair;
 
 import androidx.annotation.ColorInt;
@@ -31,7 +32,6 @@ import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -65,7 +65,6 @@ public class SystemPalette {
         }
     }
 
-    @Ignore
     @Test
     public void testAllColorsBelongToSameFamily() {
         final Context context = getInstrumentation().getTargetContext();
@@ -76,7 +75,7 @@ public class SystemPalette {
         for (int[] palette : allPalettes) {
             for (int i = 3; i < palette.length - 1; i++) {
                 assertWithMessage("Color " + Integer.toHexString((palette[i - 1]))
-                        + " has different chroma compared to " + Integer.toHexString(palette[i])
+                        + " has different hue compared to " + Integer.toHexString(palette[i])
                         + " for palette: " + Arrays.toString(palette))
                         .that(similarHue(palette[i - 1], palette[i])).isTrue();
             }
@@ -84,27 +83,25 @@ public class SystemPalette {
     }
 
     /**
-     * Compare if color A and B have similar hue, in HSL space.
+     * Compare if color A and B have similar hue, in gCAM space.
      *
      * @param colorA Color 1
      * @param colorB Color 2
-     * @return True when colors have similar chroma.
+     * @return True when colors have similar hue.
      */
     private boolean similarHue(@ColorInt int colorA, @ColorInt int colorB) {
-        final float[] hslColor1 = new float[3];
-        final float[] hslColor2 = new float[3];
+        final Cam camA = Cam.fromInt(colorA);
+        final Cam camB = Cam.fromInt(colorB);
 
-        ColorUtils.RGBToHSL(Color.red(colorA), Color.green(colorA), Color.blue(colorA), hslColor1);
-        ColorUtils.RGBToHSL(Color.red(colorB), Color.green(colorB), Color.blue(colorB), hslColor2);
+        float hue1 = Math.max(camA.getHue(), camB.getHue());
+        float hue2 = Math.min(camA.getHue(), camB.getHue());
 
-        float hue1 = Math.max(hslColor1[0], hslColor2[0]);
-        float hue2 = Math.min(hslColor1[0], hslColor2[0]);
-
-        return hue1 - hue2 < MAX_HUE_DISTANCE;
+        float diffDegrees = 180.0f - Math.abs(Math.abs(hue1 - hue2) - 180.0f);
+        return diffDegrees < MAX_HUE_DISTANCE;
     }
 
     @Test
-    public void testColorsMatchExpectedLuminosity() {
+    public void testColorsMatchExpectedLuminance() {
         final Context context = getInstrumentation().getTargetContext();
         List<int[]> allPalettes = Arrays.asList(getAllAccent1Colors(context),
                 getAllAccent2Colors(context), getAllAccent3Colors(context),

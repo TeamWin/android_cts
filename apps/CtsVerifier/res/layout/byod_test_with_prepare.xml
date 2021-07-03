@@ -23,16 +23,15 @@
             android:layout_height="320dip"
             android:layout_weight="2">
         <TextView
-                android:id="@+id/provisioning_byod_keychain_instructions"
+                android:id="@+id/instructions_text"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:padding="10dip"
-                android:text="@string/provisioning_byod_keychain_info_start"
                 android:textSize="18dip" />
     </ScrollView>
 
     <TextView
-          android:id="@+id/provisioning_byod_keychain_test_log"
+          android:id="@+id/test_log"
           android:layout_width="match_parent"
           android:layout_height="wrap_content"
           android:padding="10dip"
