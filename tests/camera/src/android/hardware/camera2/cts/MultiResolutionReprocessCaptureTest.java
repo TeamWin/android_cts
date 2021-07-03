@@ -345,7 +345,7 @@ public class MultiResolutionReprocessCaptureTest extends Camera2AndroidTestCase 
         CameraTestUtils.setupConfigurationTargets(streamInfo.subList(2, streamInfo.size()),
                 targets, outputConfigs, outputSurfaces, NUM_REPROCESS_CAPTURES_PER_CONFIG,
                 /*substituteY8*/false, /*substituteHeic*/false, /*physicalCameraId*/null,
-                /*ultraHighResolution*/false, multiResStreamConfig, mHandler);
+                multiResStreamConfig, mHandler);
 
         Collection<MultiResolutionStreamInfo> multiResInputs =
                 multiResStreamConfig.getInputInfo(inputFormat);
