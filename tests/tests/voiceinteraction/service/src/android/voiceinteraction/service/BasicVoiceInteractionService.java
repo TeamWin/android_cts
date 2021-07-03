@@ -179,6 +179,7 @@ public class BasicVoiceInteractionService extends VoiceInteractionService {
 
                         @Override
                         public void onRejected(@NonNull HotwordRejectedResult result) {
+                            super.onRejected(result);
                             Log.i(TAG, "onRejected");
                             broadcastIntentWithResult(
                                     Utils.HOTWORD_DETECTION_SERVICE_ONDETECT_RESULT_INTENT,
@@ -205,7 +206,15 @@ public class BasicVoiceInteractionService extends VoiceInteractionService {
 
                         @Override
                         public void onHotwordDetectionServiceInitialized(int status) {
+                            super.onHotwordDetectionServiceInitialized(status);
+                            Log.i(TAG, "onHotwordDetectionServiceInitialized");
                             verifyHotwordDetectionServiceInitializedStatus(status);
+                        }
+
+                        @Override
+                        public void onHotwordDetectionServiceRestarted() {
+                            super.onHotwordDetectionServiceRestarted();
+                            Log.i(TAG, "onHotwordDetectionServiceRestarted");
                         }
                     });
         } catch (IllegalStateException e) {
