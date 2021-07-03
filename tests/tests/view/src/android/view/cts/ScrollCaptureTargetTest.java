@@ -41,8 +41,9 @@ import android.platform.test.annotations.Presubmit;
 import android.view.ScrollCaptureTarget;
 import android.view.View;
 
-import androidx.test.filters.SmallTest;
-import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.annotation.UiThreadTest;
+import androidx.test.filters.MediumTest;
+import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Before;
@@ -55,18 +56,23 @@ import org.junit.runner.RunWith;
  * Tests of {@link ScrollCaptureTarget}.
  */
 @Presubmit
-@SmallTest
+@MediumTest
 @RunWith(AndroidJUnit4.class)
 public class ScrollCaptureTargetTest {
     @Rule
     public ExpectedException mExpectedException = ExpectedException.none();
 
-    MockView mTargetView;
-    MockScrollCaptureCallback mCallback;
+    @Rule
+    public ActivityTestRule<ScrollCaptureScrollViewCtsActivity> mActivityRule =
+            new ActivityTestRule<>(ScrollCaptureScrollViewCtsActivity.class);
+
+    private MockScrollCaptureCallback mCallback;
+    private View mTargetView;
 
     @Before
     public void setUp() {
-        mTargetView = new MockView(InstrumentationRegistry.getInstrumentation().getTargetContext());
+        ScrollCaptureScrollViewCtsActivity activity = mActivityRule.getActivity();
+        mTargetView = activity.getDialog().getWindow().findViewById(R.id.scroll_view);
         mCallback = new MockScrollCaptureCallback();
     }
 
@@ -137,18 +143,26 @@ public class ScrollCaptureTargetTest {
         assertEquals(new Rect(1, 2, 3, 4), target.getLocalVisibleRect());
     }
 
+    @UiThreadTest
     @Test
     public void testPositionInWindow() {
-        mTargetView.setLeftTopRightBottom(1, 2, 3, 4);
-
+        // Before calling updatePositionInWindow():
+        mTargetView.setLeftTopRightBottom(0, 0, 2, 2);
         ScrollCaptureTarget target = new ScrollCaptureTarget(mTargetView,
-                new Rect(1, 2, 3, 4), new Point(5, 6), mCallback);
+                new Rect(0, 0, 2, 2), new Point(0, 0), mCallback);
+        assertEquals(new Point(0, 0), target.getPositionInWindow());
+
+        // Verify the correct window offset is provided, and is unaffected by
+        // the position on the screen.
+        mTargetView.setLeftTopRightBottom(5, 6, 7, 8);
+        target.updatePositionInWindow();
         assertEquals(new Point(5, 6), target.getPositionInWindow());
 
-        mTargetView.setLeftTopRightBottom(100, 100, 200, 200);
-
-        target.updatePositionInWindow();
-        assertEquals(new Point(100, 100), target.getPositionInWindow());
+        // Verify the position in window is independent from the location on screen.
+        int[] onScreen = new int[2];
+        mTargetView.getLocationOnScreen(onScreen);
+        assertTrue("X position on screen expected to be > 5px", onScreen[0] > 5);
+        assertTrue("Y position on screen expected to be > 6px", onScreen[1] > 6);
     }
 
     @Test
