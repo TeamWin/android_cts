@@ -146,7 +146,7 @@ public class SplashscreenTests extends ActivityManagerTestBase {
 
         launchActivityNoWait(SPLASHSCREEN_ACTIVITY);
         // The windowSplashScreenContent attribute is set to RED. We check that it is ignored.
-        testSplashScreenColor(SPLASHSCREEN_ACTIVITY, Color.BLUE, Color.BLACK);
+        testSplashScreenColor(SPLASHSCREEN_ACTIVITY, Color.BLUE, Color.WHITE);
     }
 
     private void testSplashScreenColor(ComponentName name, int primaryColor, int secondaryColor) {
@@ -380,7 +380,7 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         assumeFalse(isCar());
 
         launchActivityNoWait(SPLASH_SCREEN_REPLACE_ICON_ACTIVITY, extraBool(DELAY_RESUME, true));
-        testSplashScreenColor(SPLASH_SCREEN_REPLACE_ICON_ACTIVITY, Color.BLUE, Color.BLACK);
+        testSplashScreenColor(SPLASH_SCREEN_REPLACE_ICON_ACTIVITY, Color.BLUE, Color.WHITE);
     }
 
     @Test
@@ -447,7 +447,7 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         try {
             shortcutManager.addDynamicShortcuts(Collections.singletonList(shortcut));
             runWithShellPermission(() -> launcherApps.startShortcut(shortcut, null, null));
-            testSplashScreenColor(SPLASHSCREEN_ACTIVITY, Color.BLACK, Color.BLACK);
+            testSplashScreenColor(SPLASHSCREEN_ACTIVITY, Color.BLACK, Color.WHITE);
         } finally {
             shortcutManager.removeDynamicShortcuts(Collections.singletonList(shortCutId));
         }

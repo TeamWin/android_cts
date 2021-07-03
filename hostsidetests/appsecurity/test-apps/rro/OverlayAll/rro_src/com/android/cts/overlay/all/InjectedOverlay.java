@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.autofillservice.cts.client;
 
-import android.autofillservice.cts.commontests.ClientSuggestionsCommonTestCase;
+package com.android.cts.overlay.all;
 
 /**
- * Tests client suggestions behaviors for the dropdown mode.
- */
-public class ClientSuggestionsTest extends ClientSuggestionsCommonTestCase {
-
+ * Used in {@link com.android.cts.overlay.app.OverlayableTest} to ensure overlay code cannot be
+ * loaded within the application targeted by the overlay.
+ **/
+public class InjectedOverlay {
 }

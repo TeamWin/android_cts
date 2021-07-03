@@ -311,10 +311,7 @@ class AutoRevokeTest {
                 // Setup
                 goToPermissions()
                 click("Calendar")
-                // Wear OS uses a switch and does not display a dialog
-                if (!hasFeatureWatch()) {
-                    click("Allow")
-                }
+                click("Allow")
                 goBack()
                 goBack()
                 goBack()
