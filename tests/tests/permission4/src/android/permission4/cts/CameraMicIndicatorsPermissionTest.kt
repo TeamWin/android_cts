@@ -122,6 +122,7 @@ class CameraMicIndicatorsPermissionTest {
         pressBack()
         pressHome()
         pressHome()
+        Thread.sleep(3000)
     }
 
     private fun openApp(useMic: Boolean, useCamera: Boolean) {
