@@ -332,6 +332,19 @@ public final class DeviceUtils {
         device.executeShellCommand("input keyevent KEYCODE_SLEEP");
     }
 
+    public static void turnBatteryStatsAutoResetOn(ITestDevice device) throws Exception {
+        device.executeShellCommand("dumpsys batterystats enable no-auto-reset");
+    }
+
+    public static void turnBatteryStatsAutoResetOff(ITestDevice device) throws Exception {
+        device.executeShellCommand("dumpsys batterystats enable no-auto-reset");
+    }
+
+    public static void flushBatteryStatsHandlers(ITestDevice device) throws Exception {
+        // Dumping batterystats will flush everything in the batterystats handler threads.
+        device.executeShellCommand("dumpsys batterystats");
+    }
+
     public static boolean hasBattery(ITestDevice device) throws Exception {
         try {
             BatteryServiceDumpProto batteryProto = getShellCommandOutput(device, BatteryServiceDumpProto.parser(),
