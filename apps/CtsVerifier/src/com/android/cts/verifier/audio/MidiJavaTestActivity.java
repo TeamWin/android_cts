@@ -462,8 +462,6 @@ public class MidiJavaTestActivity extends MidiTestActivityBase {
                         enableTestButtons(true);
                         updateTestStateUI();
                     }
-
-
                 }
             }
         } /* class MidiMatchingReceiver */
@@ -503,6 +501,11 @@ public class MidiJavaTestActivity extends MidiTestActivityBase {
             if (numInputs != 0) {
                 mUSBLoopbackDevice.mSendPort = device.openInputPort(0);
             }
+        }
+
+        protected void closePorts() {
+            super.closePorts();
+            mUSBLoopbackDevice.closePorts();
         }
 
         @Override
