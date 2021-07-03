@@ -35,6 +35,8 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.app.Activity;
+import android.content.Context;
+import android.content.pm.PackageManager;
 import android.server.wm.lifecycle.ActivityLifecycleClientTestBase.CallbackTrackingActivity;
 import android.server.wm.lifecycle.ActivityLifecycleClientTestBase.ConfigChangeHandlingActivity;
 import android.server.wm.lifecycle.LifecycleLog.ActivityCallback;
@@ -190,6 +192,24 @@ class LifecycleVerifier {
         assertEquals(errorMessage, expectedTransitions, observedTransitions);
     }
 
+    /**
+     * TODO(b/192274045): In Automotive, we tolerate superfluous lifecycle events between the first
+     * lifecycle events and the last one until any discrepancy between ActivityManager and Keyguard
+     * state is resolved.
+     */
+    static void assertRestartAndResumeSubSequence(Class<? extends Activity> activityClass,
+            LifecycleLog lifecycleLog) {
+        final List<LifecycleLog.ActivityCallback> observedTransitions =
+                lifecycleLog.getActivityLog(activityClass);
+        log("Observed sequence: " + observedTransitions);
+
+        final List<Pair<String, ActivityCallback>> expectedTransitions =
+                Arrays.asList(transition(activityClass, ON_RESTART),
+                        transition(activityClass, ON_START), transition(activityClass, ON_RESUME));
+
+        assertOrder(lifecycleLog, expectedTransitions, "restart and resume");
+    }
+
     static void assertRecreateAndResumeSequence(Class<? extends Activity> activityClass,
             LifecycleLog lifecycleLog) {
         final List<LifecycleLog.ActivityCallback> observedTransitions =
@@ -266,6 +286,28 @@ class LifecycleVerifier {
         }
 
         assertEquals(errorMessage, expectedTransitions, observedTransitions);
+    }
+
+    /**
+     * TODO(b/192274045): In Automotive, we tolerate superfluous lifecycle events between the first
+     * lifecycle events and the last one until any discrepancy between ActivityManager and Keyguard
+     * state is resolved.
+     */
+    static void assertStopToResumeSubSequence(Class<? extends Activity> activityClass,
+            LifecycleLog lifecycleLog) {
+        final List<LifecycleLog.ActivityCallback> observedTransitions =
+                lifecycleLog.getActivityLog(activityClass);
+        log("Observed sequence: " + observedTransitions);
+        final boolean includeCallbacks = CALLBACK_TRACKING_CLASS.isAssignableFrom(activityClass);
+
+        final List<Pair<String, ActivityCallback>> expectedTransitions = new ArrayList<>(
+                Arrays.asList(transition(activityClass, ON_RESTART),
+                        transition(activityClass, ON_START), transition(activityClass, ON_RESUME)));
+        if (includeCallbacks) {
+            expectedTransitions.add(transition(activityClass, ON_TOP_POSITION_GAINED));
+        }
+
+        assertOrder(lifecycleLog, expectedTransitions, "stop and resume");
     }
 
     static void assertRelaunchSequence(Class<? extends Activity> activityClass,
