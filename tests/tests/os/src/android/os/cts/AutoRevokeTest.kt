@@ -495,7 +495,7 @@ class AutoRevokeTest {
         waitForIdle()
         val parent = waitFindObject(
             By.clickable(true)
-                .hasDescendant(By.text("Remove permissions if app isn’t used"))
+                .hasDescendant(By.textStartsWith("Remove permissions"))
                 .hasDescendant(By.clazz(Switch::class.java.name))
         )
         return parent.findObject(By.clazz(Switch::class.java.name))
