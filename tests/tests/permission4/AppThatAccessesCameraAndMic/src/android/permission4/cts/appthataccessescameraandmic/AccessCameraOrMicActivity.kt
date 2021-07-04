@@ -17,6 +17,7 @@
 package android.permission4.cts.appthataccessescameraandmic
 
 import android.app.Activity
+import android.app.AppOpsManager
 import android.hardware.camera2.CameraAccessException
 import android.hardware.camera2.CameraCaptureSession
 import android.hardware.camera2.CameraCharacteristics
@@ -30,6 +31,8 @@ import android.media.AudioRecord
 import android.media.ImageReader
 import android.media.MediaRecorder.AudioSource.MIC
 import android.os.Handler
+import android.os.Process
+import android.util.Log
 import android.util.Size
 import androidx.annotation.NonNull
 import kotlinx.coroutines.GlobalScope
@@ -38,6 +41,7 @@ import kotlinx.coroutines.launch
 
 private const val USE_CAMERA = "use_camera"
 private const val USE_MICROPHONE = "use_microphone"
+private const val USE_HOTWORD = "use_hotword"
 private const val USE_DURATION_MS = 10000L
 private const val SAMPLE_RATE_HZ = 44100
 
@@ -50,15 +54,20 @@ class AccessCameraOrMicActivity : Activity() {
     private lateinit var cameraId: String
     private var cameraDevice: CameraDevice? = null
     private var recorder: AudioRecord? = null
+    private var appOpsManager: AppOpsManager? = null
     private var cameraFinished = false
     private var runCamera = false
+    private var backupCameraOpRunning = true
     private var micFinished = false
     private var runMic = false
+    private var hotwordFinished = false
+    private var runHotword = false
 
     override fun onStart() {
         super.onStart()
         runCamera = intent.getBooleanExtra(USE_CAMERA, false)
         runMic = intent.getBooleanExtra(USE_MICROPHONE, false)
+        runHotword = intent.getBooleanExtra(USE_HOTWORD, false)
 
         if (runMic) {
             useMic()
@@ -67,12 +76,30 @@ class AccessCameraOrMicActivity : Activity() {
         if (runCamera) {
             useCamera()
         }
+
+        if (runHotword) {
+            useHotword()
+        }
+    }
+
+    override fun finish() {
+        cameraDevice?.close()
+        cameraDevice = null
+        recorder?.stop()
+        recorder = null
+        if (runCamera) {
+            appOpsManager?.finishOp(AppOpsManager.OPSTR_CAMERA, Process.myUid(), packageName)
+        }
+        if (runHotword) {
+            appOpsManager?.finishOp(AppOpsManager.OPSTR_RECORD_AUDIO_HOTWORD, Process.myUid(),
+                    packageName)
+        }
+        appOpsManager = null
+        super.finish()
     }
 
     override fun onStop() {
         super.onStop()
-        cameraDevice?.close()
-        recorder?.stop()
         finish()
     }
 
@@ -108,9 +135,11 @@ class AccessCameraOrMicActivity : Activity() {
             imageReader.setOnImageAvailableListener({
                 GlobalScope.launch {
                     delay(USE_DURATION_MS)
-                    cameraFinished = true
-                    if (!runMic || micFinished) {
-                        finish()
+                    if (!backupCameraOpRunning) {
+                        cameraFinished = true
+                        if (!runMic || micFinished) {
+                            finish()
+                        }
                     }
                 }
             }, handler)
@@ -118,21 +147,45 @@ class AccessCameraOrMicActivity : Activity() {
         }
 
         override fun onDisconnected(@NonNull camDevice: CameraDevice) {
-            camDevice.close()
-            throw RuntimeException("Camera was disconnected")
+            Log.e("CameraMicIndicatorsPermissionTest", "camera disconnected")
+            startBackupCamera(camDevice)
         }
 
         override fun onError(@NonNull camDevice: CameraDevice, error: Int) {
-            camDevice.close()
-            throw RuntimeException("Camera error")
+            Log.e("CameraMicIndicatorsPermissionTest", "camera error $error")
+            startBackupCamera(camDevice)
+        }
+    }
+
+    private fun startBackupCamera(camDevice: CameraDevice?) {
+        // Something went wrong with the camera. Fallback to direct app op usage
+        if (runCamera && !cameraFinished) {
+            backupCameraOpRunning = true
+            appOpsManager = getSystemService(AppOpsManager::class.java)
+            appOpsManager?.startOpNoThrow(AppOpsManager.OPSTR_CAMERA, Process.myUid(), packageName)
+
+            GlobalScope.launch {
+                delay(USE_DURATION_MS)
+                cameraFinished = true
+                backupCameraOpRunning = false
+                finishIfAllDone()
+            }
+        }
+        camDevice?.close()
+        if (camDevice == cameraDevice) {
+            cameraDevice = null
         }
     }
 
     @Throws(CameraAccessException::class)
     private fun useCamera() {
+        // TODO 192690992: determine why the camera manager code is flaky
+        startBackupCamera(null)
+        /*
         cameraManager = getSystemService(CameraManager::class.java)!!
         cameraId = cameraManager.cameraIdList[0]
         cameraManager.openCamera(cameraId, mainExecutor, stateCallback)
+         */
     }
 
     private fun useMic() {
@@ -143,9 +196,26 @@ class AccessCameraOrMicActivity : Activity() {
         GlobalScope.launch {
             delay(USE_DURATION_MS)
             micFinished = true
-            if (!runCamera || cameraFinished) {
-                finish()
-            }
+            finishIfAllDone()
+        }
+    }
+
+    private fun useHotword() {
+        appOpsManager = getSystemService(AppOpsManager::class.java)
+        appOpsManager?.startOpNoThrow(AppOpsManager.OPSTR_RECORD_AUDIO_HOTWORD, Process.myUid(),
+                packageName)
+
+        GlobalScope.launch {
+            delay(USE_DURATION_MS)
+            hotwordFinished = true
+            finishIfAllDone()
+        }
+    }
+
+    private fun finishIfAllDone() {
+        if ((!runMic || micFinished) && (!runCamera || cameraFinished) &&
+            (!runHotword || hotwordFinished)) {
+            finish()
         }
     }
 }

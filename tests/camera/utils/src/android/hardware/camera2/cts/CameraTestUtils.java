@@ -277,7 +277,6 @@ public class CameraTestUtils extends Assert {
             List<OutputConfiguration> outputConfigs, List<Surface> outputSurfaces,
             int format, Size targetSize, int numBuffers, String overridePhysicalCameraId,
             MultiResolutionStreamConfigurationMap multiResStreamConfig,
-            boolean isUltraHighResolution, boolean isCompatibleTarget,
             boolean createMultiResiStreamConfig, ImageDropperListener listener, Handler handler) {
         if (createMultiResiStreamConfig) {
             Collection<MultiResolutionStreamInfo> multiResolutionStreams =
@@ -314,9 +313,7 @@ public class CameraTestUtils extends Assert {
                     config.setPhysicalCameraId(overridePhysicalCameraId);
                 }
                 outputConfigs.add(config);
-                if (isCompatibleTarget) {
-                    outputSurfaces.add(config.getSurface());
-                }
+                outputSurfaces.add(config.getSurface());
                 targets.mPrivTargets.add(target);
             } else {
                 ImageReader target = ImageReader.newInstance(targetSize.getWidth(),
@@ -327,9 +324,8 @@ public class CameraTestUtils extends Assert {
                     config.setPhysicalCameraId(overridePhysicalCameraId);
                 }
                 outputConfigs.add(config);
-                if (isCompatibleTarget) {
-                    outputSurfaces.add(config.getSurface());
-                }
+                outputSurfaces.add(config.getSurface());
+
                 switch (format) {
                     case ImageFormat.JPEG:
                       targets.mJpegTargets.add(target);
@@ -359,15 +355,31 @@ public class CameraTestUtils extends Assert {
     public static void setupConfigurationTargets(List<MandatoryStreamInformation> streamsInfo,
             StreamCombinationTargets targets,
             List<OutputConfiguration> outputConfigs,
-            List<Surface> outputSurfaces, int numBuffers, boolean substituteY8,
-            boolean substituteHeic, String overridePhysicalCameraId, boolean ultraHighResolution,
+            List<Surface> outputSurfaces, int numBuffers,
+            boolean substituteY8, boolean substituteHeic, String overridenPhysicalCameraId,
+            MultiResolutionStreamConfigurationMap multiResStreamConfig, Handler handler) {
+            List<Surface> uhSurfaces = new ArrayList<Surface>();
+        setupConfigurationTargets(streamsInfo, targets, outputConfigs, outputSurfaces, uhSurfaces,
+            numBuffers, substituteY8, substituteHeic, overridenPhysicalCameraId,
+            multiResStreamConfig, handler);
+    }
+
+    public static void setupConfigurationTargets(List<MandatoryStreamInformation> streamsInfo,
+            StreamCombinationTargets targets,
+            List<OutputConfiguration> outputConfigs,
+            List<Surface> outputSurfaces, List<Surface> uhSurfaces, int numBuffers,
+            boolean substituteY8, boolean substituteHeic, String overridePhysicalCameraId,
             MultiResolutionStreamConfigurationMap multiResStreamConfig, Handler handler) {
 
         ImageDropperListener imageDropperListener = new ImageDropperListener();
-
+        List<Surface> chosenSurfaces;
         for (MandatoryStreamInformation streamInfo : streamsInfo) {
             if (streamInfo.isInput()) {
                 continue;
+            }
+            chosenSurfaces = outputSurfaces;
+            if (streamInfo.isUltraHighResolution()) {
+                chosenSurfaces = uhSurfaces;
             }
             int format = streamInfo.getFormat();
             if (substituteY8 && (format == ImageFormat.YUV_420_888)) {
@@ -377,8 +389,6 @@ public class CameraTestUtils extends Assert {
             }
             Size[] availableSizes = new Size[streamInfo.getAvailableSizes().size()];
             availableSizes = streamInfo.getAvailableSizes().toArray(availableSizes);
-            boolean isUltraHighResolution = streamInfo.isUltraHighResolution();
-            boolean isCompatibleTarget = (isUltraHighResolution == ultraHighResolution);
             Size targetSize = CameraTestUtils.getMaxSize(availableSizes);
             boolean createMultiResReader =
                     (multiResStreamConfig != null &&
@@ -392,20 +402,19 @@ public class CameraTestUtils extends Assert {
                 case ImageFormat.HEIC:
                 case ImageFormat.DEPTH16:
                 {
-                    configureTarget(targets, outputConfigs, outputSurfaces, format,
+                    configureTarget(targets, outputConfigs, chosenSurfaces, format,
                             targetSize, numBuffers, overridePhysicalCameraId, multiResStreamConfig,
-                            isUltraHighResolution, isCompatibleTarget, createMultiResReader,
-                            imageDropperListener, handler);
+                            createMultiResReader, imageDropperListener, handler);
                     break;
                 }
                 case ImageFormat.RAW_SENSOR: {
                     // targetSize could be null in the logical camera case where only
                     // physical camera supports RAW stream.
                     if (targetSize != null) {
-                        configureTarget(targets, outputConfigs, outputSurfaces, format,
+                        configureTarget(targets, outputConfigs, chosenSurfaces, format,
                                 targetSize, numBuffers, overridePhysicalCameraId,
-                                multiResStreamConfig, isUltraHighResolution, isCompatibleTarget,
-                                createMultiResReader, imageDropperListener, handler);
+                                multiResStreamConfig, createMultiResReader, imageDropperListener,
+                                handler);
                     }
                     break;
                 }
