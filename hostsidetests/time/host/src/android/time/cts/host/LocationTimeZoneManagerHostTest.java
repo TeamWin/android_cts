@@ -23,6 +23,8 @@ import static android.app.time.cts.shell.LocationTimeZoneManagerShellHelper.PROV
 import static android.app.time.cts.shell.LocationTimeZoneManagerShellHelper.SECONDARY_PROVIDER_INDEX;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import android.app.time.LocationTimeZoneManagerServiceStateProto;
 import android.app.time.TimeZoneProviderStateEnum;
@@ -127,8 +129,31 @@ public class LocationTimeZoneManagerHostTest extends BaseHostJUnit4Test {
         mDeviceConfigShellHelper.restoreSyncModeForTest(mDeviceConfigPreTestState);
     }
 
+    /** Tests what happens when there's only a primary provider and it makes a suggestion. */
     @Test
-    public void testSecondarySuggestion() throws Exception {
+    public void testOnlyPrimary_suggestionMade() throws Exception {
+        mLocationTimeZoneManagerShellHelper.setProviderModeOverride(
+                PRIMARY_PROVIDER_INDEX, PROVIDER_MODE_SIMULATED);
+        mLocationTimeZoneManagerShellHelper.setProviderModeOverride(
+                SECONDARY_PROVIDER_INDEX, PROVIDER_MODE_DISABLED);
+
+        mLocationTimeZoneManagerShellHelper.start();
+        mLocationTimeZoneManagerShellHelper.recordProviderStates(true);
+
+        mLocationTimeZoneManagerShellHelper.simulateProviderBind(PRIMARY_PROVIDER_INDEX);
+        mLocationTimeZoneManagerShellHelper.simulateProviderSuggestion(
+                PRIMARY_PROVIDER_INDEX, "Europe/London");
+
+        LocationTimeZoneManagerServiceStateProto serviceState = dumpServiceState();
+        assertLastSuggestion(serviceState, "Europe/London");
+        assertProviderStates(serviceState.getPrimaryProviderStatesList(),
+                TimeZoneProviderStateEnum.TIME_ZONE_PROVIDER_STATE_CERTAIN);
+        assertProviderStates(serviceState.getSecondaryProviderStatesList());
+    }
+
+    /** Tests what happens when there's only a secondary provider and it makes a suggestion. */
+    @Test
+    public void testOnlySecondary_suggestionMade() throws Exception {
         mLocationTimeZoneManagerShellHelper.setProviderModeOverride(
                 PRIMARY_PROVIDER_INDEX, PROVIDER_MODE_DISABLED);
         mLocationTimeZoneManagerShellHelper.setProviderModeOverride(
@@ -142,14 +167,99 @@ public class LocationTimeZoneManagerHostTest extends BaseHostJUnit4Test {
                 SECONDARY_PROVIDER_INDEX, "Europe/London");
 
         LocationTimeZoneManagerServiceStateProto serviceState = dumpServiceState();
-        assertEquals(Arrays.asList("Europe/London"),
-                serviceState.getLastSuggestion().getZoneIdsList());
+        assertLastSuggestion(serviceState, "Europe/London");
+        assertProviderStates(serviceState.getPrimaryProviderStatesList());
+        assertProviderStates(serviceState.getSecondaryProviderStatesList(),
+                TimeZoneProviderStateEnum.TIME_ZONE_PROVIDER_STATE_CERTAIN);
+    }
 
-        List<TimeZoneProviderStateProto> secondaryStates =
-                serviceState.getSecondaryProviderStatesList();
-        assertEquals(1, secondaryStates.size());
-        assertEquals(TimeZoneProviderStateEnum.TIME_ZONE_PROVIDER_STATE_CERTAIN,
-                secondaryStates.get(0).getState());
+    /**
+     * Tests what happens when there's both a primary and a secondary provider, the primary starts
+     * by being uncertain, the secondary makes a suggestion, then the primary makes a suggestion.
+     */
+    @Test
+    public void testPrimaryAndSecondary() throws Exception {
+        mLocationTimeZoneManagerShellHelper.setProviderModeOverride(
+                PRIMARY_PROVIDER_INDEX, PROVIDER_MODE_SIMULATED);
+        mLocationTimeZoneManagerShellHelper.setProviderModeOverride(
+                SECONDARY_PROVIDER_INDEX, PROVIDER_MODE_SIMULATED);
+
+        mLocationTimeZoneManagerShellHelper.start();
+        mLocationTimeZoneManagerShellHelper.recordProviderStates(true);
+
+        mLocationTimeZoneManagerShellHelper.simulateProviderBind(PRIMARY_PROVIDER_INDEX);
+
+        // Simulate the primary being uncertain. This should cause the secondary to be started.
+        mLocationTimeZoneManagerShellHelper.simulateProviderUncertain(PRIMARY_PROVIDER_INDEX);
+
+        // Assert the last suggestion / recorded state transitions match expectations.
+        {
+            LocationTimeZoneManagerServiceStateProto serviceState = dumpServiceState();
+            assertNoLastSuggestion(serviceState);
+            assertProviderStates(serviceState.getPrimaryProviderStatesList(),
+                    TimeZoneProviderStateEnum.TIME_ZONE_PROVIDER_STATE_UNCERTAIN);
+            assertProviderStates(serviceState.getSecondaryProviderStatesList(),
+                    TimeZoneProviderStateEnum.TIME_ZONE_PROVIDER_STATE_INITIALIZING);
+        }
+
+        // Clear recorded states before generating new states.
+        mLocationTimeZoneManagerShellHelper.recordProviderStates(true);
+
+        // Simulate the secondary provider binding and becoming certain.
+        mLocationTimeZoneManagerShellHelper.simulateProviderBind(SECONDARY_PROVIDER_INDEX);
+        mLocationTimeZoneManagerShellHelper.simulateProviderSuggestion(
+                SECONDARY_PROVIDER_INDEX, "Europe/London");
+
+        // Assert the last suggestion / recorded state transitions match expectations.
+        {
+            LocationTimeZoneManagerServiceStateProto serviceState = dumpServiceState();
+            assertLastSuggestion(serviceState, "Europe/London");
+            assertProviderStates(serviceState.getPrimaryProviderStatesList());
+            assertProviderStates(serviceState.getSecondaryProviderStatesList(),
+                    TimeZoneProviderStateEnum.TIME_ZONE_PROVIDER_STATE_CERTAIN);
+        }
+
+        // Clear recorded states before generating new states.
+        mLocationTimeZoneManagerShellHelper.recordProviderStates(true);
+
+        // Simulate the primary provider becoming certain.
+        mLocationTimeZoneManagerShellHelper.simulateProviderSuggestion(
+                PRIMARY_PROVIDER_INDEX, "Europe/Paris");
+
+        // Assert the last suggestion / recorded state transitions match expectations.
+        {
+            LocationTimeZoneManagerServiceStateProto serviceState = dumpServiceState();
+            assertLastSuggestion(serviceState, "Europe/Paris");
+            assertProviderStates(serviceState.getPrimaryProviderStatesList(),
+                    TimeZoneProviderStateEnum.TIME_ZONE_PROVIDER_STATE_CERTAIN);
+            assertProviderStates(serviceState.getSecondaryProviderStatesList(),
+                    TimeZoneProviderStateEnum.TIME_ZONE_PROVIDER_STATE_DISABLED);
+        }
+    }
+
+    private static void assertNoLastSuggestion(
+            LocationTimeZoneManagerServiceStateProto serviceState) {
+        assertFalse(serviceState.hasLastSuggestion());
+    }
+
+    private static void assertLastSuggestion(LocationTimeZoneManagerServiceStateProto serviceState,
+            String... expectedTimeZones) {
+        assertFalse(expectedTimeZones == null || expectedTimeZones.length == 0);
+        assertTrue(serviceState.hasLastSuggestion());
+        List<String> expectedTimeZonesList = Arrays.asList(expectedTimeZones);
+        List<String> actualTimeZonesList = serviceState.getLastSuggestion().getZoneIdsList();
+        assertEquals(expectedTimeZonesList, actualTimeZonesList);
+    }
+
+    private static void assertProviderStates(List<TimeZoneProviderStateProto> actualStates,
+            TimeZoneProviderStateEnum... expectedStates) {
+        List<TimeZoneProviderStateEnum> expectedStatesList = Arrays.asList(expectedStates);
+        assertEquals("Expected states: " + expectedStatesList + ", but was " + actualStates,
+                expectedStatesList.size(), actualStates.size());
+        for (int i = 0; i < expectedStatesList.size(); i++) {
+            assertEquals("Expected states: " + expectedStatesList + ", but was " + actualStates,
+                    expectedStates[i], actualStates.get(i).getState());
+        }
     }
 
     private LocationTimeZoneManagerServiceStateProto dumpServiceState() throws Exception {
