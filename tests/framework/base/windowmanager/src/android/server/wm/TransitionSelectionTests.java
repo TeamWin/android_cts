@@ -31,17 +31,17 @@ import static android.server.wm.app.Components.BottomActivity.EXTRA_BOTTOM_WALLP
 import static android.server.wm.app.Components.BottomActivity.EXTRA_STOP_DELAY;
 import static android.server.wm.app.Components.TOP_ACTIVITY;
 import static android.server.wm.app.Components.TOP_NON_RESIZABLE_ACTIVITY;
+import static android.server.wm.app.Components.TOP_NON_RESIZABLE_WALLPAPER_ACTIVITY;
+import static android.server.wm.app.Components.TOP_WALLPAPER_ACTIVITY;
 import static android.server.wm.app.Components.TRANSLUCENT_TOP_ACTIVITY;
 import static android.server.wm.app.Components.TRANSLUCENT_TOP_NON_RESIZABLE_ACTIVITY;
+import static android.server.wm.app.Components.TRANSLUCENT_TOP_WALLPAPER_ACTIVITY;
 import static android.server.wm.app.Components.TopActivity.EXTRA_FINISH_DELAY;
-import static android.server.wm.app.Components.TopActivity.EXTRA_TOP_WALLPAPER;
 
 import static org.junit.Assert.assertEquals;
 
 import android.content.ComponentName;
 import android.platform.test.annotations.Presubmit;
-
-import androidx.test.filters.FlakyTest;
 
 import org.junit.Test;
 
@@ -86,7 +86,6 @@ public class TransitionSelectionTests extends ActivityManagerTestBase {
     }
 
     @Test
-    @FlakyTest(bugId = 188904549)
     public void testOpenActivity_BothWallpaper() {
         testOpenActivity(true /*bottomWallpaper*/, true /*topWallpaper*/,
                 false /*slowStop*/, TRANSIT_WALLPAPER_INTRA_OPEN);
@@ -288,19 +287,22 @@ public class TransitionSelectionTests extends ActivityManagerTestBase {
         final ComponentName topActivity;
         if (topTranslucent && !topResizable) {
             topActivity = TRANSLUCENT_TOP_NON_RESIZABLE_ACTIVITY;
+        } else if (topTranslucent && topWallpaper) {
+            topActivity = TRANSLUCENT_TOP_WALLPAPER_ACTIVITY;
         } else if (topTranslucent) {
             topActivity = TRANSLUCENT_TOP_ACTIVITY;
+        } else if (!topResizable && topWallpaper) {
+            topActivity = TOP_NON_RESIZABLE_WALLPAPER_ACTIVITY;
         } else if (!topResizable) {
             topActivity = TOP_NON_RESIZABLE_ACTIVITY;
+        } else if (topWallpaper) {
+            topActivity = TOP_WALLPAPER_ACTIVITY;
         } else {
             topActivity = TOP_ACTIVITY;
         }
         String topStartCmd = getAmStartCmd(topActivity);
         if (testNewTask) {
             topStartCmd += " -f 0x18000000";
-        }
-        if (topWallpaper) {
-            topStartCmd += " --ez " + EXTRA_TOP_WALLPAPER + " true";
         }
         if (!testOpen) {
             topStartCmd += " --ei " + EXTRA_FINISH_DELAY + " 1000";
