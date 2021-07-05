@@ -148,6 +148,8 @@ public class Components extends ComponentsBase {
     public static final ComponentName TOAST_ACTIVITY = component("ToastActivity");
     public static final ComponentName TOP_ACTIVITY = component("TopActivity");
     public static final ComponentName TOP_NON_RESIZABLE_ACTIVITY = component("TopNonResizableActivity");
+    public static final ComponentName TOP_NON_RESIZABLE_WALLPAPER_ACTIVITY = component("TopNonResizableWallpaperActivity");
+    public static final ComponentName TOP_WALLPAPER_ACTIVITY = component("TopWallpaperActivity");
     public static final ComponentName TEST_ACTIVITY_WITH_SAME_AFFINITY =
             component("TestActivityWithSameAffinity");
     public static final ComponentName TEST_LIVE_WALLPAPER_SERVICE = component("LiveWallpaper");
@@ -159,6 +161,8 @@ public class Components extends ComponentsBase {
             component("TranslucentAssistantActivity");
     public static final ComponentName TRANSLUCENT_TOP_ACTIVITY =
             component("TranslucentTopActivity");
+    public static final ComponentName TRANSLUCENT_TOP_WALLPAPER_ACTIVITY =
+            component("TranslucentTopWallpaperActivity");
     public static final ComponentName TRANSLUCENT_TOP_NON_RESIZABLE_ACTIVITY =
         component("TranslucentTopNonResizableActivity");
     public static final ComponentName TRANSLUCENT_TEST_ACTIVITY =
@@ -545,7 +549,6 @@ public class Components extends ComponentsBase {
     public static class TopActivity {
         public static final String EXTRA_FINISH_DELAY = "FINISH_DELAY";
         public static final String EXTRA_FINISH_IN_ON_CREATE = "FINISH_IN_ON_CREATE";
-        public static final String EXTRA_TOP_WALLPAPER = "USE_WALLPAPER";
         public static final String ACTION_CONVERT_TO_TRANSLUCENT = "convert_to_translucent";
         public static final String ACTION_CONVERT_FROM_TRANSLUCENT = "convert_from_translucent";
     }
