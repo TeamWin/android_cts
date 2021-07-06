@@ -16,5 +16,5 @@
 
 package android.server.wm.app;
 
-public class TranslucentTopActivity extends TopActivity {
+public class TranslucentTopWallpaperActivity extends TopActivity {
 }
