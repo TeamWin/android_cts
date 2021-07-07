@@ -86,6 +86,7 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
                     "Landroid/annotation/CurrentTimeSecondsLong;",
                     "Landroid/annotation/DimenRes;",
                     "Landroid/annotation/Dimension;",
+                    "Landroid/annotation/Discouraged;",
                     "Landroid/annotation/DrawableRes;",
                     "Landroid/annotation/DurationMillisLong;",
                     "Landroid/annotation/ElapsedRealtimeLong;",
