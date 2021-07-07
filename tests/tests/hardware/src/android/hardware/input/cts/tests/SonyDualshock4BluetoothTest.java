@@ -16,12 +16,13 @@
 
 package android.hardware.input.cts.tests;
 
+import static org.junit.Assume.assumeTrue;
+
 import android.hardware.cts.R;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
 
-import org.junit.Assume;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -46,8 +47,7 @@ public class SonyDualshock4BluetoothTest extends InputHidTestCase {
 
     @Test
     public void testVibrator() throws Exception {
-        Assume.assumeFalse("Skipping test for kernel 4.19", sIsKernel419);
-
+        assumeTrue("Requires kernel > 4.19", isKernelVersionGreaterThan("4.19"));
         testInputVibratorEvents(R.raw.sony_dualshock4_bluetooth_vibratortests);
     }
 
