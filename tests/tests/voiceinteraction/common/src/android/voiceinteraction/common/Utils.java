@@ -49,6 +49,22 @@ public class Utils {
     /** CDD restricts the max size of each successful hotword result is 100 bytes. */
     public static final int MAX_HOTWORD_DETECTED_RESULT_SIZE = 100;
 
+    /**
+     * Limits the max value for the hotword offset.
+     *
+     * Note: Must match the definition in
+     * frameworks/base/core/java/android/service/voice/HotwordDetectedResult.java.
+     */
+    public static final int LIMIT_HOTWORD_OFFSET_MAX_VALUE = 60 * 60 * 1000; // 1 hour
+
+    /**
+     * Limits the max value for the triggered audio channel.
+     *
+     * Note: Must match the definition in
+     * frameworks/base/core/java/android/service/voice/HotwordDetectedResult.java.
+     */
+    public static final int LIMIT_AUDIO_CHANNEL_MAX_VALUE = 63;
+
     /** Decide which VoiceInteractionService should be started for testing. */
     public static final int HOTWORD_DETECTION_SERVICE_NONE = 0;
     public static final int HOTWORD_DETECTION_SERVICE_BASIC = 1;
@@ -243,7 +259,7 @@ public class Utils {
         return size;
     }
 
-    public static int bitCount(int value) {
+    public static int bitCount(long value) {
         int bits = 0;
         while (value > 0) {
             bits++;
