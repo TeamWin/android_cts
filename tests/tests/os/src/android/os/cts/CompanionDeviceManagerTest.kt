@@ -185,6 +185,42 @@ class CompanionDeviceManagerTest : InstrumentationTestCase() {
         assertPermission(packageName, "android.permission.CALL_PHONE", PERMISSION_GRANTED)
     }
 
+    @AppModeFull(reason = "Companion API for non-instant apps only")
+    @Test
+    fun testRequestNotifications() {
+        val packageName = "android.os.cts.companiontestapp"
+        installApk("/data/local/tmp/cts/os/CtsCompanionTestApp.apk")
+        startApp(packageName)
+
+        waitFindNode(hasClassThat(`is`(equalTo(EditText::class.java.name))))
+                .performAction(ACTION_SET_TEXT,
+                        bundleOf(ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE to ""))
+        waitForIdle()
+
+        val deviceForAssociation = getEventually({
+            click("Associate")
+            waitFindNode(hasIdThat(containsString("device_list")),
+                    failMsg = "Test requires a discoverable bluetooth device nearby",
+                    timeoutMs = 5_000)
+                    .children
+                    .find { it.className == TextView::class.java.name }
+                    .assertNotNull { "Empty device list" }
+        }, 60_000)
+
+        deviceForAssociation!!.click()
+        waitForIdle()
+
+        val deviceForNotifications = getEventually({
+            click("Request Notifications")
+            waitFindNode(hasIdThat(containsString("button1")),
+                    failMsg = "The Request Notifications dialog is not showing up",
+                    timeoutMs = 5_000)
+                    .assertNotNull { "Request Notifications is not implemented" }
+        }, 60_000)
+
+        deviceForNotifications!!.click()
+    }
+
     private fun getAssociatedDevices(
         pkg: String,
         user: UserHandle = android.os.Process.myUserHandle()
