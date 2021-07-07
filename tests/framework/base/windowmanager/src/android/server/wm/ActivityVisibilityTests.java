@@ -24,6 +24,7 @@ import static android.content.Intent.FLAG_ACTIVITY_TASK_ON_HOME;
 import static android.server.wm.CliIntentExtra.extraString;
 import static android.server.wm.UiDeviceUtils.pressBackButton;
 import static android.server.wm.UiDeviceUtils.pressHomeButton;
+import static android.server.wm.UiDeviceUtils.pressSleepButton;
 import static android.server.wm.VirtualDisplayHelper.waitForDefaultDisplayState;
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
 import static android.server.wm.WindowManagerState.STATE_STOPPED;
@@ -198,11 +199,20 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
         assumeTrue(supportsLockScreen());
 
         final LockScreenSession lockScreenSession = createManagedLockScreenSession();
+        final boolean notSupportsInsecureLock = !supportsInsecureLock();
+        if (notSupportsInsecureLock) {
+            lockScreenSession.setLockCredential();
+        }
         final ActivitySessionClient activityClient = createManagedActivityClientSession();
         testTurnScreenOnActivity(lockScreenSession, activityClient,
                 true /* useWindowFlags */, true /* showWhenLocked */);
         testTurnScreenOnActivity(lockScreenSession, activityClient,
                 false /* useWindowFlags */, true /* showWhenLocked */);
+        if (notSupportsInsecureLock) {
+            // In the platform without InsecureLock, we just test if the display is on with
+            // TurnScreenOnActivity.
+            mObjectTracker.close(lockScreenSession);
+        }
         testTurnScreenOnActivity(lockScreenSession, activityClient,
                 true /* useWindowFlags */, false /* showWhenLocked */);
         testTurnScreenOnActivity(lockScreenSession, activityClient,
