@@ -32,6 +32,8 @@ import android.app.AppOpsManager.OPSTR_FINE_LOCATION
 import android.app.AppOpsManager.OP_FLAGS_ALL
 import android.app.AppOpsManager.OP_FLAG_SELF
 import android.app.AppOpsManager.OP_FLAG_TRUSTED_PROXIED
+import android.app.AppOpsManager.UID_STATE_CACHED
+import android.app.AppOpsManager.UID_STATE_PERSISTENT
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -700,6 +702,22 @@ class DiscreteAppopsTest {
         discrete = op.getDiscreteAccessAt(2)
         assertThat(discrete.getLastAccessForegroundTime(OP_FLAGS_ALL)).isEqualTo(-1)
         assertThat(discrete.getLastAccessBackgroundTime(OP_FLAGS_ALL)).isEqualTo(timestamp4)
+
+        // Test the same result using alternative accessors.
+        var accesses = op.getBackgroundDiscreteAccesses(OP_FLAGS_ALL)
+        assertThat(accesses.size).isEqualTo(2)
+        assertThat(accesses[0].getLastAccessTime(OP_FLAGS_ALL)).isEqualTo(timestamp)
+        assertThat(accesses[1].getLastAccessTime(OP_FLAGS_ALL)).isEqualTo(timestamp4)
+
+        accesses = op.getForegroundDiscreteAccesses(OP_FLAGS_ALL)
+        assertThat(accesses.size).isEqualTo(1)
+        assertThat(accesses[0].getLastAccessTime(OP_FLAGS_ALL)).isEqualTo(timestamp2)
+
+        accesses = op.getDiscreteAccesses(UID_STATE_PERSISTENT, UID_STATE_CACHED, OP_FLAGS_ALL)
+        assertThat(accesses.size).isEqualTo(3)
+        assertThat(accesses[0].getLastAccessTime(OP_FLAGS_ALL)).isEqualTo(timestamp)
+        assertThat(accesses[1].getLastAccessTime(OP_FLAGS_ALL)).isEqualTo(timestamp2)
+        assertThat(accesses[2].getLastAccessTime(OP_FLAGS_ALL)).isEqualTo(timestamp4)
     }
 
     @Test
@@ -895,6 +913,13 @@ class DiscreteAppopsTest {
         assertThat(discrete.getLastAccessTime(OP_FLAGS_ALL)).isEqualTo(timeStamp)
         assertThat(discrete.getLastAccessTime(OP_FLAG_TRUSTED_PROXIED)).isEqualTo(timeStamp)
         assertThat(discrete.getLastAccessTime(OP_FLAG_SELF)).isEqualTo(-1)
+
+        // test alternative accessor
+        var accesses = op.getDiscreteAccesses(UID_STATE_CACHED, UID_STATE_PERSISTENT, OP_FLAG_SELF)
+        assertThat(accesses.size).isEqualTo(0)
+        accesses = op.getDiscreteAccesses(
+                UID_STATE_PERSISTENT, UID_STATE_CACHED, OP_FLAG_TRUSTED_PROXIED)
+        assertThat(accesses.size).isEqualTo(1)
     }
 
     @Test
