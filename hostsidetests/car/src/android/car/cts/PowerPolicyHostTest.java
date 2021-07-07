@@ -34,6 +34,7 @@ import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -67,6 +68,10 @@ public final class PowerPolicyHostTest extends CarHostJUnit4TestCase {
         String testcase = "testPowerPolicySilentModeFull:";
         String teststep;
         PowerPolicyTestHelper testHelper;
+
+        SilentModeInfo smInfo = getSilentModeInfo();
+        Assume.assumeTrue("HW does not support silent mode. Skip the test",
+                smInfo.getMonitoringHWStateSignal());
 
         teststep = "switch to forced silent";
         enterForcedSilentMode();
