@@ -99,7 +99,7 @@ class CameraMicIndicatorsPermissionTest {
         var currentlyEnabled = false
         runWithShellPermissionIdentity {
             currentlyEnabled = DeviceConfig.getBoolean(DeviceConfig.NAMESPACE_PRIVACY,
-                INDICATORS_FLAG, false)
+                INDICATORS_FLAG, true)
             if (currentlyEnabled != shouldBeEnabled) {
                 DeviceConfig.setProperty(DeviceConfig.NAMESPACE_PRIVACY, INDICATORS_FLAG,
                     shouldBeEnabled.toString(), false)
