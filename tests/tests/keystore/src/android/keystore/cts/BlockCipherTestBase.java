@@ -60,6 +60,10 @@ abstract class BlockCipherTestBase extends AndroidTestCase {
 
     @Override
     protected void setUp() throws Exception {
+        if (isStrongbox()) {
+            TestUtils.assumeStrongBox();
+        }
+
         super.setUp();
         mAndroidKeyStore = KeyStore.getInstance("AndroidKeyStore");
         mAndroidKeyStore.load(null);
@@ -93,6 +97,8 @@ abstract class BlockCipherTestBase extends AndroidTestCase {
 
     protected abstract byte[] getIv(AlgorithmParameters params)
             throws InvalidParameterSpecException;
+
+    protected abstract boolean isStrongbox();
 
     private byte[] getKatInput(int opmode) {
         switch (opmode) {
@@ -1322,6 +1328,7 @@ abstract class BlockCipherTestBase extends AndroidTestCase {
                             .setBlockModes(getBlockMode())
                             .setEncryptionPaddings(getPadding())
                             .setRandomizedEncryptionRequired(false)
+                            .setIsStrongBoxBacked(isStrongbox())
                             .build());
             return (SecretKey) mAndroidKeyStore.getKey(keyAlias, null);
         } catch (Exception e) {
