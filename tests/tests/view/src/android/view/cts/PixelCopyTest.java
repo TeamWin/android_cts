@@ -35,6 +35,7 @@ import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
+import android.hardware.HardwareBuffer;
 import android.media.Image;
 import android.media.ImageReader;
 import android.media.ImageWriter;
@@ -817,7 +818,9 @@ public class PixelCopyTest {
 
     @Test
     public void testBufferQueueCrop() throws InterruptedException {
-        ImageReader reader = ImageReader.newInstance(100, 100, PixelFormat.RGBA_8888, 1);
+        ImageReader reader = ImageReader.newInstance(100, 100, PixelFormat.RGBA_8888, 1,
+                HardwareBuffer.USAGE_CPU_WRITE_OFTEN | HardwareBuffer.USAGE_CPU_READ_OFTEN
+                        | HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE);
         ImageWriter writer = ImageWriter.newInstance(reader.getSurface(), 1);
         Image image = writer.dequeueInputImage();
         Image.Plane plane = image.getPlanes()[0];
