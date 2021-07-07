@@ -70,7 +70,7 @@ public final class HdmiCecSystemInformationTest extends BaseHostJUnit4Test {
     @Test
     public void cect_11_2_6_1_Ack() throws Exception {
         String command = CecClientMessage.POLL + " " + LogicalAddress.PLAYBACK_1;
-        String expectedOutput = "POLL sent";
+        String expectedOutput = "POLL message sent";
         hdmiCecClient.sendConsoleMessage(command);
         if (!hdmiCecClient.checkConsoleOutput(expectedOutput)) {
             throw new Exception("Could not find " + expectedOutput);
