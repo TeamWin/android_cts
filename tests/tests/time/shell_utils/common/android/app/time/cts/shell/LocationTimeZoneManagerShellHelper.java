@@ -58,6 +58,11 @@ public class LocationTimeZoneManagerShellHelper {
     public static final String SIMULATED_PROVIDER_TEST_COMMAND_ON_BIND = "on_bind";
 
     /**
+     * Simulated provider test command that simulates the provider reporting uncertainty.
+     */
+    public static final String SIMULATED_PROVIDER_TEST_COMMAND_UNCERTAIN = "uncertain";
+
+    /**
      * Simulated provider test command that simulates a successful time zone detection.
      */
     public static final String SIMULATED_PROVIDER_TEST_COMMAND_SUCCESS = "success";
@@ -180,6 +185,21 @@ public class LocationTimeZoneManagerShellHelper {
     }
 
     /**
+     * Simulates a provider successfully binding using the "send_provider_test_command" command.
+     */
+    public void simulateProviderBind(int providerIndex) throws Exception {
+        sendProviderTestCommand(providerIndex, SIMULATED_PROVIDER_TEST_COMMAND_ON_BIND);
+    }
+
+    /**
+     * Simulates a provider generating an uncertain report using the "send_provider_test_command"
+     * command.
+     */
+    public void simulateProviderUncertain(int providerIndex) throws Exception {
+        sendProviderTestCommand(providerIndex, SIMULATED_PROVIDER_TEST_COMMAND_UNCERTAIN);
+    }
+
+    /**
      * Simulates a provider generating a suggestion using the "send_provider_test_command" command.
      */
     public void simulateProviderSuggestion(int providerIndex, String... zoneIds)
@@ -190,13 +210,6 @@ public class LocationTimeZoneManagerShellHelper {
                 SIMULATED_PROVIDER_TEST_COMMAND_SUCCESS_ARG_KEY_TZ,
                 timeZoneIds);
         sendProviderTestCommand(providerIndex, testCommand);
-    }
-
-    /**
-     * Simulates a provider successfully binding using the "send_provider_test_command" command.
-     */
-    public void simulateProviderBind(int providerIndex) throws Exception {
-        sendProviderTestCommand(providerIndex, SIMULATED_PROVIDER_TEST_COMMAND_ON_BIND);
     }
 
     /** Executes "send_provider_test_command". */
