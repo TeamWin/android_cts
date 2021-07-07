@@ -79,26 +79,6 @@ _GROUPED_SCENES = {
 # Scenes that have to be run manually regardless of configuration
 _MANUAL_SCENES = ['scene5']
 
-# Tests run in more than 1 scene.
-# List is created of type ['scene_source', 'test_to_be_repeated']
-# for the test run in current scene.
-_REPEATED_TESTS = {
-    'scene0': [],
-    'scene1_1': [],
-    'scene1_2': [],
-    'scene2_a': [],
-    'scene2_b': [['scene2_a', 'test_num_faces']],
-    'scene2_c': [['scene2_a', 'test_num_faces']],
-    'scene2_d': [['scene2_a', 'test_num_faces']],
-    'scene2_e': [['scene2_a', 'test_num_faces']],
-    'scene3': [],
-    'scene4': [],
-    'scene5': [],
-    'scene6': [],
-    'sensor_fusion': [],
-    'scene_change': []
-}
-
 # Scene requirements for manual testing.
 _SCENE_REQ = {
     'scene0': None,
@@ -506,9 +486,6 @@ def main():
         for file_name in scene_dir:
           if file_name.endswith('.py') and 'test' in file_name:
             scene_test_list.append(file_name)
-        if _REPEATED_TESTS[s]:
-          for t in _REPEATED_TESTS[s]:
-            scene_test_list.append((os.path.join('tests', t[0], t[1] + '.py')))
       else:  # sub-camera
         if SUB_CAMERA_TESTS.get(s):
           scene_test_list = [f'{test}.py' for test in SUB_CAMERA_TESTS[s]]
