@@ -19,7 +19,6 @@ package android.voicerecognition.cts;
 import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 
 import static com.google.common.truth.Truth.assertThat;
-
 import static org.junit.Assert.assertThrows;
 
 import android.content.Context;
