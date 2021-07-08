@@ -41,6 +41,8 @@ import android.media.MicrophoneDirection;
 import android.media.MicrophoneInfo;
 import android.media.cts.AudioRecordingConfigurationTest.MyAudioRecordingCallback;
 import android.media.metrics.LogSessionId;
+import android.media.metrics.MediaMetricsManager;
+import android.media.metrics.RecordingSession;
 import android.opengl.GLES20;
 import android.os.Build;
 import android.os.ConditionVariable;
@@ -54,6 +56,7 @@ import android.test.UiThreadTest;
 import android.util.Log;
 import android.view.Surface;
 
+import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
@@ -1822,9 +1825,12 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         MediaRecorder recorder = new MediaRecorder();
         assertEquals(recorder.getLogSessionId(), LogSessionId.LOG_SESSION_ID_NONE);
 
-        LogSessionId logSessionId = new LogSessionId("0123456789abcdef");
-        recorder.setLogSessionId(logSessionId);
-        assertEquals(recorder.getLogSessionId(), logSessionId);
+        final MediaMetricsManager mediaMetricsManager =
+                InstrumentationRegistry.getTargetContext()
+                        .getSystemService(MediaMetricsManager.class);
+        final RecordingSession recordingSession = mediaMetricsManager.createRecordingSession();
+        recorder.setLogSessionId(recordingSession.getSessionId());
+        assertEquals(recordingSession.getSessionId(), recorder.getLogSessionId());
 
         recorder.release();
     }
