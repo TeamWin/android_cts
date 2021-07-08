@@ -50,6 +50,7 @@
         <item>Baylough</item>
         <item>Beauvoorde</item>
         <item>Beemster 2% Milk</item>
+        <item>Imsil</item>
     </string-array>
 
     <string name="uiautomation_a11y_service_description">com.android.app.uiautomation.cts.UiAutomationTestAccessibilityService</string>
