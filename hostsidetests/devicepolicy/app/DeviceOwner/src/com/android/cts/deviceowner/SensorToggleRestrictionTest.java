@@ -16,6 +16,8 @@
 
 package com.android.cts.deviceowner;
 
+import static android.hardware.SensorPrivacyManager.Sources.OTHER;
+
 import android.hardware.SensorPrivacyManager;
 import android.os.UserManager;
 
@@ -56,7 +58,7 @@ public class SensorToggleRestrictionTest extends BaseDeviceOwnerTest {
 
         mDevicePolicyManager.addUserRestriction(getWho(), UserManager.DISALLOW_CAMERA_TOGGLE);
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mSensorPrivacyManager,
-                m -> m.setSensorPrivacy(SensorPrivacyManager.Sensors.CAMERA, true));
+                m -> m.setSensorPrivacy(OTHER, SensorPrivacyManager.Sensors.CAMERA, true));
 
         assertFalse("Camera sensor privacy should not be enabled given admin restriction",
                 ShellIdentityUtils.invokeMethodWithShellPermissions(mSensorPrivacyManager,
@@ -73,7 +75,7 @@ public class SensorToggleRestrictionTest extends BaseDeviceOwnerTest {
 
         mDevicePolicyManager.addUserRestriction(getWho(), UserManager.DISALLOW_MICROPHONE_TOGGLE);
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mSensorPrivacyManager,
-                m -> m.setSensorPrivacy(SensorPrivacyManager.Sensors.MICROPHONE, true));
+                m -> m.setSensorPrivacy(OTHER, SensorPrivacyManager.Sensors.MICROPHONE, true));
 
         assertFalse("Microphone sensor privacy should not be enabled given admin restriction",
                 ShellIdentityUtils.invokeMethodWithShellPermissions(mSensorPrivacyManager,
@@ -85,7 +87,7 @@ public class SensorToggleRestrictionTest extends BaseDeviceOwnerTest {
             return;
         }
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mSensorPrivacyManager,
-                m -> m.setSensorPrivacy(SensorPrivacyManager.Sensors.CAMERA, true));
+                m -> m.setSensorPrivacy(OTHER, SensorPrivacyManager.Sensors.CAMERA, true));
 
         mDevicePolicyManager.addUserRestriction(getWho(), UserManager.DISALLOW_CAMERA_TOGGLE);
 
@@ -104,7 +106,7 @@ public class SensorToggleRestrictionTest extends BaseDeviceOwnerTest {
             return;
         }
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mSensorPrivacyManager,
-                m -> m.setSensorPrivacy(SensorPrivacyManager.Sensors.MICROPHONE, true));
+                m -> m.setSensorPrivacy(OTHER, SensorPrivacyManager.Sensors.MICROPHONE, true));
 
         mDevicePolicyManager.addUserRestriction(getWho(), UserManager.DISALLOW_MICROPHONE_TOGGLE);
 
