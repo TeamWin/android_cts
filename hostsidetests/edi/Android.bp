@@ -33,6 +33,7 @@ java_test_host {
     ],
     static_libs: [
         "compat-classpaths-testing",
+        "modules-utils-build-testing",
         "hamcrest-library",
     ],
 }
