@@ -20,9 +20,12 @@ android_test_helper_app {
     name: "CtsDeviceInfoTestApp",
     srcs: ["src/**/*.java"],
     defaults: ["cts_defaults"],
+    min_sdk_version: "26",
+    target_sdk_version: "31",
     static_libs: [
         "androidx.test.rules",
         "androidx.test.core",
+        "modules-utils-build",
         "guava",
     ],
     sdk_version: "test_current",
