@@ -188,7 +188,7 @@ public class BackupEligibilityHostSideTest extends BaseBackupHostSideTest {
             runAdbCommand("backup", "-f", backupFileName, BACKUP_ELIGIBILITY_APP_NAME);
 
             checkBackupEligibilityDeviceTest("deleteFilesAndAssertNoneExist");
-            runAdbCommand("restore", ADB_BACKUP_FILE);
+            runAdbCommand("restore", backupFileName);
         } finally {
             if (tempDir != null) {
                 FileUtil.recursiveDelete(tempDir);
