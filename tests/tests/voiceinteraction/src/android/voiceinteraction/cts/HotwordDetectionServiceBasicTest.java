@@ -16,6 +16,8 @@
 
 package android.voiceinteraction.cts;
 
+import static android.content.pm.PackageManager.FEATURE_MICROPHONE;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertEquals;
@@ -40,13 +42,16 @@ import android.voiceinteraction.service.MainHotwordDetectionService;
 
 import androidx.annotation.NonNull;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.RequiresDevice;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
+import com.android.compatibility.common.util.RequiredFeatureRule;
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -58,6 +63,10 @@ import org.junit.runner.RunWith;
 public final class HotwordDetectionServiceBasicTest
         extends AbstractVoiceInteractionBasicTestCase {
     static final String TAG = "HotwordDetectionServiceBasicTest";
+
+    @Rule
+    public RequiredFeatureRule REQUIRES_MIC_RULE = new RequiredFeatureRule(FEATURE_MICROPHONE);
+
     private static final String INDICATORS_FLAG = "camera_mic_icons_enabled";
     private static final String PRIVACY_CHIP_PKG = "com.android.systemui";
     private static final String PRIVACY_CHIP_ID = "privacy_chip";
@@ -126,6 +135,7 @@ public final class HotwordDetectionServiceBasicTest
     }
 
     @Test
+    @RequiresDevice
     public void testHotwordDetectionService_onDetectFromDsp_success()
             throws Throwable {
         // Create AlwaysOnHotwordDetector and wait the HotwordDetectionService ready
@@ -139,6 +149,7 @@ public final class HotwordDetectionServiceBasicTest
     }
 
     @Test
+    @RequiresDevice
     public void testHotwordDetectionService_onDetectFromDsp_rejection()
             throws Throwable {
         Thread.sleep(CLEAR_CHIP_MS);
@@ -173,6 +184,7 @@ public final class HotwordDetectionServiceBasicTest
     }
 
     @Test
+    @RequiresDevice
     public void testHotwordDetectionService_onDetectFromMic_success()
             throws Throwable {
         // Create SoftwareHotwordDetector and wait the HotwordDetectionService ready
@@ -186,6 +198,7 @@ public final class HotwordDetectionServiceBasicTest
     }
 
     @Test
+    @RequiresDevice
     public void testHotwordDetectionService_onStopDetection()
             throws Throwable {
         // Create SoftwareHotwordDetector and wait the HotwordDetectionService ready
