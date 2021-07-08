@@ -302,13 +302,15 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
         {
             decodeAndSavePts(mTestFile, mCodecName, pts, mode, Integer.MAX_VALUE);
             OutputManager ref = mOutputBuff;
+            if (!mIsInterlaced) {
+                assertTrue("input pts list and reference pts list are not identical",
+                        ref.isOutPtsListIdenticalToInpPtsList(false));
+            }
             decodeAndSavePts(mReconfigFile, mCodecName, pts, mode, Integer.MAX_VALUE);
             OutputManager configRef = mOutputBuff;
             // TODO: Timestamps for deinterlaced content are under review. (E.g. can decoders
             // produce multiple progressive frames?) For now, do not verify timestamps.
             if (!mIsInterlaced) {
-                assertTrue("input pts list and reference pts list are not identical",
-                        ref.isOutPtsListIdenticalToInpPtsList(false));
                 assertTrue("input pts list and reconfig ref output pts list are not identical",
                         configRef.isOutPtsListIdenticalToInpPtsList(false));
             }
