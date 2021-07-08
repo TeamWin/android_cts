@@ -38,8 +38,13 @@ import android.os.SystemClock;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.os.Vibrator.OnVibratorStateChangedListener;
+import android.os.VintfRuntimeInfo;
+import android.text.TextUtils;
 import android.util.Log;
+import android.util.Pair;
 import android.view.InputDevice;
+
+import androidx.annotation.CallSuper;
 
 import com.android.cts.input.HidBatteryTestData;
 import com.android.cts.input.HidDevice;
@@ -48,13 +53,11 @@ import com.android.cts.input.HidResultData;
 import com.android.cts.input.HidTestData;
 import com.android.cts.input.HidVibratorTestData;
 
-import org.junit.Assert;
 import org.junit.Rule;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -72,7 +75,6 @@ public class InputHidTestCase extends InputTestCase {
     private int mDeviceId;
     private final int mRegisterResourceId;
     private boolean mDelayAfterSetup = false;
-    protected static boolean sIsKernel419;
 
     @Rule
     public MockitoRule rule = MockitoJUnit.rule();
@@ -84,6 +86,7 @@ public class InputHidTestCase extends InputTestCase {
         mRegisterResourceId = registerResourceId;
     }
 
+    @CallSuper
     @Override
     public void setUp() throws Exception {
         super.setUp();
@@ -103,6 +106,38 @@ public class InputHidTestCase extends InputTestCase {
     /** Check if input device has specific capability */
     interface Capability {
         boolean check(InputDevice inputDevice);
+    }
+
+    private static Pair<Integer, Integer> getVersionFromString(String version) {
+        // Only gets major and minor number of the version string.
+        final Pattern versionPattern = Pattern.compile("^(\\d+)(\\.(\\d+))?.*");
+        final Matcher m = versionPattern.matcher(version);
+        if (m.matches()) {
+            final int major = Integer.parseInt(m.group(1));
+            final int minor = TextUtils.isEmpty(m.group(3)) ? 0 : Integer.parseInt(m.group(3));
+
+            return new Pair<>(major, minor);
+
+        } else {
+            fail("Cannot parse kernel version: " + version);
+            return new Pair<>(0, 0);
+        }
+    }
+
+    private static int compareMajorMinorVersion(final String s1, final String s2) throws Exception {
+        final Pair<Integer, Integer> v1 = getVersionFromString(s1);
+        final Pair<Integer, Integer> v2 = getVersionFromString(s2);
+
+        if (v1.first == v2.first) {
+            return Integer.compare(v1.second, v2.second);
+        } else {
+            return Integer.compare(v1.first, v2.first);
+        }
+    }
+
+    protected static boolean isKernelVersionGreaterThan(String version) throws Exception {
+        final String actualVersion = VintfRuntimeInfo.getKernelVersion();
+        return compareMajorMinorVersion(actualVersion, version) > 0;
     }
 
     /** Gets an input device with specific capability */
@@ -167,17 +202,6 @@ public class InputHidTestCase extends InputTestCase {
         mHidDevice = new HidDevice(mInstrumentation, id, vendorId, productId, sources,
                 registerCommand);
         assertNotNull(mHidDevice);
-
-        try {
-            String output = executeShellCommand("uname -r");
-            Pattern p = Pattern.compile("^(\\d+)\\.(\\d+)");
-            Matcher m1 = p.matcher(output);
-            Assert.assertTrue(m1.find());
-            sIsKernel419 = (Integer.parseInt(m1.group(1)) == 4
-                    && Integer.parseInt(m1.group(2)) == 19);
-        } catch (IOException e) {
-            Assert.fail("Failed to get the kernel version.");
-        }
     }
 
     @Override

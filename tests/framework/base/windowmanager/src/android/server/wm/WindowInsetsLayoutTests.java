@@ -27,15 +27,15 @@ import static androidx.test.InstrumentationRegistry.getInstrumentation;
 import static org.junit.Assert.assertEquals;
 
 import android.graphics.Insets;
-import android.graphics.Point;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
-import android.view.Display;
 import android.view.View;
 import android.view.WindowInsets;
 import android.view.WindowInsets.Side;
 import android.view.WindowInsets.Type;
 import android.view.WindowManager;
+import android.view.WindowMetrics;
 
 import androidx.annotation.Nullable;
 import androidx.test.filters.FlakyTest;
@@ -68,7 +68,7 @@ public class WindowInsetsLayoutTests extends WindowManagerTestBase {
         PollingCheck.waitFor(TIMEOUT, () -> mainWindowRoot.getWidth() > 0);
 
         getInstrumentation().runOnMainSync(() -> {
-            activity.assertMatchDisplay();
+            activity.assertMatchesWindowBounds();
         });
 
         testSetFitInsetsTypesInner(Type.statusBars(), activity, mainWindowRoot);
@@ -112,7 +112,7 @@ public class WindowInsetsLayoutTests extends WindowManagerTestBase {
         PollingCheck.waitFor(TIMEOUT, () -> mainWindowRoot.getWidth() > 0);
 
         getInstrumentation().runOnMainSync(() -> {
-            activity.assertMatchDisplay();
+            activity.assertMatchesWindowBounds();
         });
 
         testSetFitInsetsSidesInner(Side.LEFT, activity, mainWindowRoot);
@@ -163,7 +163,7 @@ public class WindowInsetsLayoutTests extends WindowManagerTestBase {
         final int[] locationAndSize2 = new int[4];
 
         getInstrumentation().runOnMainSync(() -> {
-            activity.assertMatchDisplay();
+            activity.assertMatchesWindowBounds();
             activity.addChildWindow(types, sides, false);
         });
 
@@ -232,17 +232,16 @@ public class WindowInsetsLayoutTests extends WindowManagerTestBase {
             return mChildWindowRoot;
         }
 
-        void assertMatchDisplay() {
+        void assertMatchesWindowBounds() {
             final View rootView = getWindow().getDecorView();
-            final Display display = rootView.getDisplay();
-            final Point size = new Point();
-            display.getRealSize(size);
-            assertEquals(size.x, rootView.getWidth());
-            assertEquals(size.y, rootView.getHeight());
+            final Rect windowMetricsBounds =
+                    getWindowManager().getCurrentWindowMetrics().getBounds();
+            assertEquals(windowMetricsBounds.width(), rootView.getWidth());
+            assertEquals(windowMetricsBounds.height(), rootView.getHeight());
             final int[] locationOnScreen = new int[2];
             rootView.getLocationOnScreen(locationOnScreen);
-            assertEquals(0 /* expected x */, locationOnScreen[0]);
-            assertEquals(0 /* expected y */, locationOnScreen[1]);
+            assertEquals(locationOnScreen[0] /* expected x */, windowMetricsBounds.left);
+            assertEquals(locationOnScreen[1] /* expected y */, windowMetricsBounds.top);
         }
     }
 }
