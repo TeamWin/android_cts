@@ -143,7 +143,6 @@ import com.google.common.io.Files;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -1231,7 +1230,6 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
     }
 
     @Test
-    @Ignore("Re-enable the test once b/191724755 is fixed")
     public void testAccessMediaLocationInvalidation() throws Exception {
         File imgFile = new File(getDcimDir(), "access_media_location.jpg");
 
@@ -1362,10 +1360,9 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
             revokePermission(packageName, permission);
         } else {
             denyAppOpsToUid(uid, opstr);
+            // TODO(191724755): Poll for AppOp state change instead
+            Thread.sleep(200);
         }
-        // revokePermission waits for permission status to be updated, but MediaProvider still
-        // needs to get permission change callback and clear its permission cache.
-        Thread.sleep(100);
         assertThat(canOpenFileAs(app, file, forWrite)).isFalse();
 
         // Grant
@@ -1373,10 +1370,9 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
             grantPermission(packageName, permission);
         } else {
             allowAppOpsToUid(uid, opstr);
+            // TODO(191724755): Poll for AppOp state change instead
+            Thread.sleep(200);
         }
-        // grantPermission waits for permission status to be updated, but MediaProvider still
-        // needs to get permission change callback and clear its permission cache.
-        Thread.sleep(100);
         assertThat(canOpenFileAs(app, file, forWrite)).isTrue();
 
         // Deny
@@ -1384,10 +1380,9 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
             revokePermission(packageName, permission);
         } else {
             denyAppOpsToUid(uid, opstr);
+            // TODO(191724755): Poll for AppOp state change instead
+            Thread.sleep(200);
         }
-        // revokePermission waits for permission status to be updated, but MediaProvider still
-        // needs to get permission change callback and clear its permission cache.
-        Thread.sleep(100);
         assertThat(canOpenFileAs(app, file, forWrite)).isFalse();
     }
 
