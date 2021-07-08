@@ -92,6 +92,7 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
 
     private static final double FRAME_DURATION_THRESHOLD = 0.03;
     private static final double FOV_THRESHOLD = 0.03;
+    private static final double ZOOM_RATIO_THRESHOLD = 0.01;
     private static final long MAX_TIMESTAMP_DIFFERENCE_THRESHOLD = 10000000; // 10ms
 
     private StateWaiter mSessionWaiter;
@@ -1025,6 +1026,10 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
             Rect physicalActiveArraySize = physicalStaticInfo.getActiveArraySizeChecked();
             SizeF physicalSensorSize = mStaticInfo.getValueFromKeyNonNull(
                     CameraCharacteristics.SENSOR_INFO_PHYSICAL_SIZE);
+
+            // Physical result metadata's ZOOM_RATIO is 1.0f.
+            assertTrue("Physical result metadata ZOOM_RATIO should be 1.0f, but is " +
+                    physicalZoomRatio, Math.abs(physicalZoomRatio - 1.0f) < ZOOM_RATIO_THRESHOLD);
 
             double physicalFov = 2 * Math.toDegrees(Math.atan2(
                     physicalSensorSize.getWidth() * physicalCropRegion.width() /
