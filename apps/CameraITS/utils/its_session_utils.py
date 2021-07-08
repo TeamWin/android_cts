@@ -1012,34 +1012,34 @@ class ItsSession(object):
         chart_scaling,
         opencv_processing_utils.SCALE_RFOV_IN_WFOV_BOX,
         atol=0.01):
-      file_name = '%s_%sx_scaled.pdf' % (
+      file_name = '%s_%sx_scaled.png' % (
           scene, str(opencv_processing_utils.SCALE_RFOV_IN_WFOV_BOX))
     elif numpy.isclose(
         chart_scaling,
         opencv_processing_utils.SCALE_TELE_IN_WFOV_BOX,
         atol=0.01):
-      file_name = '%s_%sx_scaled.pdf' % (
+      file_name = '%s_%sx_scaled.png' % (
           scene, str(opencv_processing_utils.SCALE_TELE_IN_WFOV_BOX))
     elif numpy.isclose(
         chart_scaling,
         opencv_processing_utils.SCALE_TELE25_IN_RFOV_BOX,
         atol=0.01):
-      file_name = '%s_%sx_scaled.pdf' % (
+      file_name = '%s_%sx_scaled.png' % (
           scene, str(opencv_processing_utils.SCALE_TELE25_IN_RFOV_BOX))
     elif numpy.isclose(
         chart_scaling,
         opencv_processing_utils.SCALE_TELE40_IN_RFOV_BOX,
         atol=0.01):
-      file_name = '%s_%sx_scaled.pdf' % (
+      file_name = '%s_%sx_scaled.png' % (
           scene, str(opencv_processing_utils.SCALE_TELE40_IN_RFOV_BOX))
     elif numpy.isclose(
         chart_scaling,
         opencv_processing_utils.SCALE_TELE_IN_RFOV_BOX,
         atol=0.01):
-      file_name = '%s_%sx_scaled.pdf' % (
+      file_name = '%s_%sx_scaled.png' % (
           scene, str(opencv_processing_utils.SCALE_TELE_IN_RFOV_BOX))
     else:
-      file_name = '%s.pdf' % scene
+      file_name = '%s.png' % scene
     logging.debug('Scene to load: %s', file_name)
     return file_name
 
@@ -1214,7 +1214,7 @@ def load_scene(cam, props, scene, tablet, chart_distance):
   logging.debug('Displaying %s on the tablet', file_name)
   # Display the scene on the tablet depending on camera_fov
   tablet.adb.shell(
-      'am start -a android.intent.action.VIEW -t application/pdf '
+      'am start -a android.intent.action.VIEW -t image/png '
       f'-d file://mnt/sdcard/Download/{file_name}')
   time.sleep(LOAD_SCENE_DELAY_SEC)
   rfov_camera_in_rfov_box = (
