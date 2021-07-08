@@ -16,6 +16,8 @@
 
 package android.voiceinteraction.service;
 
+import static android.media.AudioFormat.CHANNEL_IN_FRONT;
+
 import android.media.AudioAttributes;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
@@ -47,10 +49,16 @@ import javax.annotation.concurrent.GuardedBy;
 public class MainHotwordDetectionService extends HotwordDetectionService {
     static final String TAG = "MainHotwordDetectionService";
 
-    // TODO: Fill in the remaining fields.
     public static final HotwordDetectedResult DETECTED_RESULT =
             new HotwordDetectedResult.Builder()
+                    .setAudioChannel(CHANNEL_IN_FRONT)
                     .setConfidenceLevel(HotwordDetectedResult.CONFIDENCE_LEVEL_HIGH)
+                    .setHotwordDetectionPersonalized(true)
+                    .setHotwordDurationMillis(1000)
+                    .setHotwordOffsetMillis(500)
+                    .setHotwordPhraseId(5)
+                    .setPersonalizedScore(10)
+                    .setScore(15)
                     .build();
     public static final HotwordDetectedResult DETECTED_RESULT_AFTER_STOP_DETECTION =
             new HotwordDetectedResult.Builder()
