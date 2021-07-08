@@ -273,8 +273,20 @@ public final class HotwordDetectionServiceBasicTest
                 ((EventPayloadParcelable) result).mHotwordDetectedResult;
         ParcelFileDescriptor audioStream = ((EventPayloadParcelable) result).mAudioStream;
         assertThat(hotwordDetectedResult).isNotNull();
+        assertThat(hotwordDetectedResult.getAudioChannel()).isEqualTo(
+                expected.getAudioChannel());
         assertThat(hotwordDetectedResult.getConfidenceLevel()).isEqualTo(
                 expected.getConfidenceLevel());
+        assertThat(hotwordDetectedResult.isHotwordDetectionPersonalized()).isEqualTo(
+                expected.isHotwordDetectionPersonalized());
+        assertThat(hotwordDetectedResult.getHotwordDurationMillis()).isEqualTo(
+                expected.getHotwordDurationMillis());
+        assertThat(hotwordDetectedResult.getHotwordOffsetMillis()).isEqualTo(
+                expected.getHotwordOffsetMillis());
+        assertThat(hotwordDetectedResult.getHotwordPhraseId()).isEqualTo(
+                expected.getHotwordPhraseId());
+        assertThat(hotwordDetectedResult.getPersonalizedScore()).isEqualTo(
+                expected.getPersonalizedScore());
         assertThat(hotwordDetectedResult.getScore()).isEqualTo(expected.getScore());
         assertThat(audioStream).isNull();
     }
