@@ -106,6 +106,7 @@ public class AccessibilityEventTest {
             mParentView.addView(mChildView);
             mParentView.addView(mTextView);
         });
+        sUiAutomation.waitForIdle(IDLE_TIMEOUT_MS, DEFAULT_TIMEOUT_MS);
     }
 
     private static class EventReportingLinearLayout extends LinearLayout {
