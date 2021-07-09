@@ -1805,8 +1805,12 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             assertTrue(actionListener.onSuccessCalled);
             // Wait for connection to complete & ensure we are connected to the saved network.
             waitForConnection();
-            assertEquals(savedNetworkToConnect.networkId,
-                    mWifiManager.getConnectionInfo().getNetworkId());
+            // In R, auto-upgraded network IDs may be different from the original saved network.
+            // Since we may end up selecting the auto-upgraded network ID for connection and end
+            // up connected to the original saved network with a different network ID, we should
+            // instead match by SSID.
+            assertEquals(savedNetworkToConnect.SSID,
+                    mWifiManager.getConnectionInfo().getSSID());
         } finally {
             // Re-enable all saved networks before exiting.
             if (savedNetworks != null) {
