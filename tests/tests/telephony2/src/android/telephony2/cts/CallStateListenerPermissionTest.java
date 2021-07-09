@@ -124,25 +124,6 @@ public class CallStateListenerPermissionTest {
             } catch (SecurityException e) {
                 // Expected
             }
-
-            TelephonyUtils.disableCompatCommand(InstrumentationRegistry.getInstrumentation(),
-                    TelephonyUtils.CTS_APP_PACKAGE2,
-                    TelephonyUtils.ENABLE_GET_CALL_STATE_PERMISSION_PROTECTION_STRING);
-            try {
-                telephonyManager.registerTelephonyCallback(mSimpleExecutor, callback);
-            } catch (SecurityException e) {
-                fail("TelephonyCallback.CallStateListener must not require READ_PHONE_STATE when "
-                        + "TelecomManager#ENABLE_GET_CALL_STATE_PERMISSION_PROTECTION is "
-                        + "disabled.");
-            }
-            try {
-                telephonyManager.listen(new PhoneStateListener(Runnable::run),
-                        PhoneStateListener.LISTEN_CALL_STATE);
-            } catch (SecurityException e) {
-                fail("PhoneStateListener#onCallStateChanged must not require READ_PHONE_STATE when "
-                        + "TelecomManager#ENABLE_GET_CALL_STATE_PERMISSION_PROTECTION is "
-                        + "disabled.");
-            }
         } finally {
             TelephonyUtils.resetCompatCommand(InstrumentationRegistry.getInstrumentation(),
                     TelephonyUtils.CTS_APP_PACKAGE2,
