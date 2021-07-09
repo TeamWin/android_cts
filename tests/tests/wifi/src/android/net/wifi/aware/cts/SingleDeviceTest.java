@@ -54,6 +54,7 @@ import android.os.Parcel;
 import android.platform.test.annotations.AppModeFull;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
+import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.SystemUtil;
 
 import java.util.ArrayDeque;
@@ -87,6 +88,8 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
     private final Object mLock = new Object();
     private final HandlerThread mHandlerThread = new HandlerThread("SingleDeviceTest");
     private final Handler mHandler;
+    private Boolean mWasVerboseLoggingEnabled;
+
     {
         mHandlerThread.start();
         mHandler = new Handler(mHandlerThread.getLooper());
@@ -391,6 +394,14 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
 
         mWifiManager = (WifiManager) getContext().getSystemService(Context.WIFI_SERVICE);
         assertNotNull("Wi-Fi Manager", mWifiManager);
+
+        // turn on verbose logging for tests
+        mWasVerboseLoggingEnabled = ShellIdentityUtils.invokeWithShellPermissions(
+                () -> mWifiManager.isVerboseLoggingEnabled());
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> mWifiManager.setVerboseLoggingEnabled(true));
+
+        // Turn on Wi-Fi
         mWifiLock = mWifiManager.createWifiLock(TAG);
         mWifiLock.acquire();
         if (!mWifiManager.isWifiEnabled()) {
@@ -426,6 +437,9 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
             }
             mSessions.clear();
         }
+
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> mWifiManager.setVerboseLoggingEnabled(mWasVerboseLoggingEnabled));
 
         super.tearDown();
         Thread.sleep(INTERVAL_BETWEEN_TESTS_SECS * 1000);

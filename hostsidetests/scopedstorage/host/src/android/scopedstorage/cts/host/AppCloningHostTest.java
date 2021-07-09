@@ -42,7 +42,6 @@ import org.junit.runner.RunWith;
 public class AppCloningHostTest extends BaseHostTestCase {
     private static final String APP_A = "CtsScopedStorageTestAppA.apk";
     private static final String APP_A_PACKAGE = "android.scopedstorage.cts.testapp.A.withres";
-    private static final String APP_FOR_PVT_PACKAGE = "com.google.android.gms";
     private static final String CONTENT_PROVIDER_URL = "content://android.tradefed.contentprovider";
     private static final int CLONE_PROFILE_DIRECTORY_CREATION_TIMEOUT_MS = 20000;
     private String mCloneUserId;
@@ -67,7 +66,7 @@ public class AppCloningHostTest extends BaseHostTestCase {
 
     @After
     public void tearDown() throws Exception {
-        if (isHeadlessSystemUserMode()) return;
+        if (isHeadlessSystemUserMode() || !isAtLeastS()) return;
         mContentProviderHandler.tearDown();
         executeShellCommand("pm remove-user %s", mCloneUserId);
     }
@@ -111,8 +110,10 @@ public class AppCloningHostTest extends BaseHostTestCase {
 
     @Test
     public void testPrivateAppDataDirectoryForCloneUser() throws Exception {
+        installAppAsUser(APP_A, Integer.valueOf(mCloneUserId));
         eventually(() -> {
-            assertThat(isPackageInstalled(APP_FOR_PVT_PACKAGE, mCloneUserId)).isTrue();
+            // Wait for finish.
+            assertThat(isPackageInstalled(APP_A_PACKAGE, mCloneUserId)).isTrue();
         }, CLONE_PROFILE_DIRECTORY_CREATION_TIMEOUT_MS);
     }
 
