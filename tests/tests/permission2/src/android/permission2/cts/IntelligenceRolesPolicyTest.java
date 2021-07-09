@@ -72,11 +72,19 @@ public class IntelligenceRolesPolicyTest {
         String packageName = sContext.getResources().getString(mConfigKey);
         assumeTrue(!Strings.isNullOrEmpty(packageName));
 
-        List<String> requestedPermissions = getRequestedPermissions(sContext, packageName);
+        List<String> requestedPermissions;
+
+        try {
+            requestedPermissions = getRequestedPermissions(sContext, packageName);
+        } catch (PackageManager.NameNotFoundException e) {
+            // A package is not found, despite overlay config pointing to it. Strictly speaking that
+            // means that the policy for being an intelligence role is fulfilled.
+            return;
+        }
 
         assertWithMessage("Package " + packageName + "MUST NOT request INTERNET permission. "
-                + "Instead it’s required to model internet connection through well-defined APIs in "
-                + "an open source project.")
+                + "Instead packages MUST access the internet through well-defined APIs in an open "
+                + "source project.")
                 .that(requestedPermissions)
                 .doesNotContain(android.Manifest.permission.INTERNET);
     }
