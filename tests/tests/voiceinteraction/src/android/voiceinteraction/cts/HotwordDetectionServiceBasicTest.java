@@ -16,23 +16,42 @@
 
 package android.voiceinteraction.cts;
 
+import static android.content.pm.PackageManager.FEATURE_MICROPHONE;
+
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assert.assertEquals;
+
+import android.app.Instrumentation;
+import android.app.compat.CompatChanges;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.ParcelFileDescriptor;
 import android.os.Parcelable;
+import android.os.Process;
 import android.platform.test.annotations.AppModeFull;
+import android.provider.DeviceConfig;
 import android.service.voice.HotwordDetectedResult;
 import android.service.voice.HotwordDetectionService;
+import android.support.test.uiautomator.By;
+import android.support.test.uiautomator.UiDevice;
+import android.support.test.uiautomator.Until;
 import android.voiceinteraction.common.Utils;
 import android.voiceinteraction.service.EventPayloadParcelable;
 import android.voiceinteraction.service.MainHotwordDetectionService;
 
 import androidx.annotation.NonNull;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.RequiresDevice;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
+import com.android.compatibility.common.util.RequiredFeatureRule;
+import com.android.compatibility.common.util.SystemUtil;
 
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -44,6 +63,46 @@ import org.junit.runner.RunWith;
 public final class HotwordDetectionServiceBasicTest
         extends AbstractVoiceInteractionBasicTestCase {
     static final String TAG = "HotwordDetectionServiceBasicTest";
+
+    @Rule
+    public RequiredFeatureRule REQUIRES_MIC_RULE = new RequiredFeatureRule(FEATURE_MICROPHONE);
+
+    private static final String INDICATORS_FLAG = "camera_mic_icons_enabled";
+    private static final String PRIVACY_CHIP_PKG = "com.android.systemui";
+    private static final String PRIVACY_CHIP_ID = "privacy_chip";
+    private static final Long PERMISSION_INDICATORS_NOT_PRESENT = 162547999L;
+    private static final Long CLEAR_CHIP_MS = 3000L;
+
+    private static Instrumentation sInstrumentation = InstrumentationRegistry.getInstrumentation();
+    private static UiDevice sUiDevice = UiDevice.getInstance(sInstrumentation);
+    private static PackageManager sPkgMgr = sInstrumentation.getContext().getPackageManager();
+    private static boolean wasIndicatorEnabled = false;
+
+    @BeforeClass
+    public static void enableIndicators() {
+        wasIndicatorEnabled = setIndicatorEnabledStateIfNeeded(true);
+    }
+
+    @AfterClass
+    public static void resetIndicators() {
+        if (!wasIndicatorEnabled) {
+            setIndicatorEnabledStateIfNeeded(false);
+        }
+    }
+
+    // Checks if the privacy indicators are enabled on this device. Sets the state to the parameter,
+    // And returns the original enable state (to allow this state to be reset after the test)
+    private static boolean setIndicatorEnabledStateIfNeeded(boolean shouldEnable) {
+        return SystemUtil.runWithShellPermissionIdentity(() -> {
+            boolean currentlyEnabled = DeviceConfig.getBoolean(DeviceConfig.NAMESPACE_PRIVACY,
+                    INDICATORS_FLAG, shouldEnable);
+            if (currentlyEnabled != shouldEnable) {
+                DeviceConfig.setProperty(DeviceConfig.NAMESPACE_PRIVACY, INDICATORS_FLAG,
+                        Boolean.toString(shouldEnable), false);
+            }
+            return currentlyEnabled;
+        });
+    }
 
     @Test
     public void testHotwordDetectionService_getMaxCustomInitializationStatus()
@@ -76,6 +135,7 @@ public final class HotwordDetectionServiceBasicTest
     }
 
     @Test
+    @RequiresDevice
     public void testHotwordDetectionService_onDetectFromDsp_success()
             throws Throwable {
         // Create AlwaysOnHotwordDetector and wait the HotwordDetectionService ready
@@ -89,8 +149,10 @@ public final class HotwordDetectionServiceBasicTest
     }
 
     @Test
+    @RequiresDevice
     public void testHotwordDetectionService_onDetectFromDsp_rejection()
             throws Throwable {
+        Thread.sleep(CLEAR_CHIP_MS);
         // Create AlwaysOnHotwordDetector and wait the HotwordDetectionService ready
         testHotwordDetection(Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_TEST,
                 Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
@@ -98,6 +160,13 @@ public final class HotwordDetectionServiceBasicTest
 
         assertThat(performAndGetDetectionResult(Utils.HOTWORD_DETECTION_SERVICE_DSP_ONREJECT_TEST))
                 .isEqualTo(MainHotwordDetectionService.REJECTED_RESULT);
+        if (sPkgMgr.hasSystemFeature(PackageManager.FEATURE_LEANBACK)) {
+            // TODO ntmyren: test TV indicator
+        } else if (sPkgMgr.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+            // TODO ntmyren: test Auto indicator
+        } else {
+            verifyMicrophoneChipHandheld(false);
+        }
     }
 
     @Test
@@ -115,6 +184,7 @@ public final class HotwordDetectionServiceBasicTest
     }
 
     @Test
+    @RequiresDevice
     public void testHotwordDetectionService_onDetectFromMic_success()
             throws Throwable {
         // Create SoftwareHotwordDetector and wait the HotwordDetectionService ready
@@ -128,6 +198,7 @@ public final class HotwordDetectionServiceBasicTest
     }
 
     @Test
+    @RequiresDevice
     public void testHotwordDetectionService_onStopDetection()
             throws Throwable {
         // Create SoftwareHotwordDetector and wait the HotwordDetectionService ready
@@ -206,6 +277,19 @@ public final class HotwordDetectionServiceBasicTest
                 expected.getConfidenceLevel());
         assertThat(hotwordDetectedResult.getScore()).isEqualTo(expected.getScore());
         assertThat(audioStream).isNull();
+    }
+
+    private void verifyMicrophoneChipHandheld(boolean shouldBePresent) throws Exception {
+        // If the change Id is not present, then isChangeEnabled will return true. To bypass this,
+        // the change is set to "false" if present.
+        if (SystemUtil.callWithShellPermissionIdentity(() -> CompatChanges.isChangeEnabled(
+                PERMISSION_INDICATORS_NOT_PRESENT, Process.SYSTEM_UID))) {
+            return;
+        }
+        // Ensure the privacy chip is present (or not)
+        final boolean chipFound = sUiDevice.wait(Until.hasObject(
+                By.res(PRIVACY_CHIP_PKG, PRIVACY_CHIP_ID)), CLEAR_CHIP_MS) == true;
+        assertEquals("chip display state", shouldBePresent, chipFound);
     }
 
     @Override
