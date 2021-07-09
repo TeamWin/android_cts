@@ -68,16 +68,6 @@ public class TelephonyManagerNoPermissionTest {
         } catch (SecurityException e) {
             // expected
         }
-        TelephonyUtils.disableCompatCommand(InstrumentationRegistry.getInstrumentation(),
-                TelephonyUtils.CTS_APP_PACKAGE2,
-                TelephonyUtils.ENABLE_GET_CALL_STATE_PERMISSION_PROTECTION_STRING);
-        try {
-            mTelephonyManager.getCallState();
-        } catch (SecurityException e) {
-            fail("TelephonyManager#getCallState must not require READ_PHONE_STATE if "
-                    + "TelecomManager#ENABLE_GET_CALL_STATE_PERMISSION_PROTECTION is "
-                    + "disabled.");
-        }
     }
 
     @Test
@@ -96,17 +86,6 @@ public class TelephonyManagerNoPermissionTest {
                     + "enabled.");
         } catch (SecurityException e) {
             // expected
-        }
-        TelephonyUtils.disableCompatCommand(InstrumentationRegistry.getInstrumentation(),
-                TelephonyUtils.CTS_APP_PACKAGE2,
-                TelephonyUtils.ENABLE_GET_CALL_STATE_PERMISSION_PROTECTION_STRING);
-        try {
-            mTelephonyManager.getCallStateForSubscription();
-        } catch (SecurityException e) {
-            fail("TelephonyManager#getCallStateForSubscription must not require "
-                    + "READ_PHONE_STATE if "
-                    + "TelecomManager#ENABLE_GET_CALL_STATE_PERMISSION_PROTECTION is "
-                    + "disabled.");
         }
     }
 }
