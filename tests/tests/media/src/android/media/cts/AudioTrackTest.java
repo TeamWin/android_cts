@@ -37,6 +37,8 @@ import android.media.AudioTimestamp;
 import android.media.AudioTrack;
 import android.media.PlaybackParams;
 import android.media.metrics.LogSessionId;
+import android.media.metrics.MediaMetricsManager;
+import android.media.metrics.PlaybackSession;
 import android.os.PersistableBundle;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
@@ -2923,6 +2925,12 @@ public class AudioTrackTest {
             final String ARBITRARY_MAGIC = "0123456789abcdef"; // 16 char Base64Url.
             audioTrack.setLogSessionId(new LogSessionId(ARBITRARY_MAGIC));
             assertEquals(new LogSessionId(ARBITRARY_MAGIC), audioTrack.getLogSessionId());
+
+            final MediaMetricsManager mediaMetricsManager =
+                    getContext().getSystemService(MediaMetricsManager.class);
+            final PlaybackSession playbackSession = mediaMetricsManager.createPlaybackSession();
+            audioTrack.setLogSessionId(playbackSession.getSessionId());
+            assertEquals(playbackSession.getSessionId(), audioTrack.getLogSessionId());
 
             // write some data to generate a log entry.
             short data[] = new short[audioTrack.getSampleRate() / 2];
