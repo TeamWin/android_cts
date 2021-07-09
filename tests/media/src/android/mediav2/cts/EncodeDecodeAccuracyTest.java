@@ -410,7 +410,13 @@ public class EncodeDecodeAccuracyTest extends CodecDecoderTestBase {
         mEGLWindowOutSurface = new OutputSurface(mWidth, mHeight);
         mSurface = mEGLWindowOutSurface.getSurface();
         ArrayList<MediaFormat> formats = new ArrayList<>();
-        formats.add(format);
+
+        // TODO (b/193191868) Some decoders do not advertise profile and levels for vp8
+        // so do not filter codecs based on format for vp8
+        if (!mMime.equals(MediaFormat.MIMETYPE_VIDEO_VP8)) {
+            formats.add(format);
+        }
+
         ArrayList<String> listOfDecoders =
                 CodecDecoderTestBase.selectCodecs(mMime, formats, null, false);
         assertTrue("no suitable codecs found for : " + format.toString(),
