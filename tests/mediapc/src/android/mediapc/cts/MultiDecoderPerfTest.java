@@ -15,7 +15,7 @@
  */
 
 package android.mediapc.cts;
-
+import android.media.MediaFormat;
 import android.util.Pair;
 
 import androidx.test.filters.LargeTest;
@@ -79,9 +79,13 @@ public class MultiDecoderPerfTest extends MultiCodecPerfTestBase {
         ArrayList<Pair<String, String>> mimeDecoderPairs = new ArrayList<>();
         mimeDecoderPairs.add(Pair.create(mMime, mDecoderName));
         int maxInstances = checkAndGetMaxSupportedInstancesFor720p(mimeDecoderPairs);
+        int requiredMinInstances = REQUIRED_MIN_CONCURRENT_INSTANCES;
+        if (mMime.equals(MediaFormat.MIMETYPE_VIDEO_VP9)) {
+            requiredMinInstances = REQUIRED_MIN_CONCURRENT_INSTANCES_FOR_VP9;
+        }
         assertTrue("Decoder " + mDecoderName + " unable to support minimum concurrent " +
-                "instances. act/exp: " + maxInstances + "/" + REQUIRED_MIN_CONCURRENT_INSTANCES,
-                maxInstances >= REQUIRED_MIN_CONCURRENT_INSTANCES);
+                "instances. act/exp: " + maxInstances + "/" + requiredMinInstances,
+                maxInstances >= requiredMinInstances);
         ExecutorService pool = Executors.newFixedThreadPool(maxInstances);
         List<Decode> testList = new ArrayList<>();
         for (int i = 0; i < maxInstances; i++) {
@@ -93,6 +97,7 @@ public class MultiDecoderPerfTest extends MultiCodecPerfTestBase {
             achievedFrameRate += result.get();
         }
         assertTrue("Unable to achieve the maxFrameRate supported. act/exp: " + achievedFrameRate
-                + "/" + mMaxFrameRate, achievedFrameRate >= mMaxFrameRate);
+                + "/" + mMaxFrameRate + " for " + maxInstances + " instances.",
+                achievedFrameRate >= mMaxFrameRate);
     }
 }
