@@ -32,6 +32,7 @@ import org.junit.runners.Parameterized;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -703,7 +704,6 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
         setUpSource(mInputFile);
         mSaveToMem = true;
         String tempMuxedFile = File.createTempFile("tmp", ".out").getAbsolutePath();
-        int supportedCddCount = (cddSupportedMime ? profileCdd.length : 1);
         {
             mCodec = MediaCodec.createByCodecName(mCodecName);
             MediaCodecInfo.CodecCapabilities codecCapabilities =
@@ -722,12 +722,26 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
                 if (!mIsAudio) format.setInteger(MediaFormat.KEY_LEVEL, level);
                 if (!codecCapabilities.isFormatSupported(format)) {
                     if (cddSupportedMime) {
+                        boolean shallSupportProfileLevel = false;
                         if (mIsAudio) {
                             for (int cddProfile : profileCdd) {
-                                if (profile == cddProfile) supportedCddCount--;
+                                if (profile == cddProfile) {
+                                    shallSupportProfileLevel = true;
+                                }
                             }
                         } else if (profile == profileCdd[0] && level == levelCdd) {
-                            supportedCddCount--;
+                            shallSupportProfileLevel = true;
+                        }
+
+                        // TODO (b/193173880) Check if there is at least one component that
+                        // supports this profile and level combination
+                        if (shallSupportProfileLevel) {
+                            ArrayList<MediaFormat> formats = new ArrayList<>();
+                            formats.add(format);
+                            assertFalse(
+                                    "No components support cdd requirement profile level with \n "
+                                            + "format :" + format + " for mime: " + mMime,
+                                    selectCodecs(mMime, formats, null, false).isEmpty());
                         }
                         Log.w(LOG_TAG,
                                 "Component: " + mCodecName + " doesn't support cdd format: " +
@@ -822,7 +836,5 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
             mCodec.release();
         }
         new File(tempMuxedFile).delete();
-        assertFalse("No components support cdd requirement profile level for mime: " + mMime,
-                supportedCddCount == 0);
     }
 }
