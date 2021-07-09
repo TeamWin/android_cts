@@ -17,7 +17,6 @@
 package android.widget.cts;
 
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
-import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -734,12 +733,11 @@ public class ToastTest {
                 ACTION_TRANSLUCENT_ACTIVITY_RESUMED);
         Intent intent = new Intent();
         intent.setComponent(COMPONENT_TRANSLUCENT_ACTIVITY);
-        intent.setFlags(FLAG_ACTIVITY_NEW_TASK);
         // Launch the translucent activity in fullscreen to ensure the test activity won't resume
         // even on the freeform-first multi-window device.
         final ActivityOptions options = ActivityOptions.makeBasic();
         options.setLaunchWindowingMode(WINDOWING_MODE_FULLSCREEN);
-        mContext.startActivity(intent, options.toBundle());
+        mActivityRule.getActivity().startActivity(intent, options.toBundle());
         activityStarted.block();
         makeCustomToast();
         View view = mToast.getView();
