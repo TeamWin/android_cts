@@ -349,10 +349,6 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
         assertEquals(WifiManager.WIFI_STATE_ENABLED, mMySync.expectedWifiState);
         assertEquals(WifiP2pManager.WIFI_P2P_STATE_ENABLED, mMySync.expectedP2pState);
 
-        assertTrue(waitForBroadcasts(MySync.NETWORK_INFO));
-        // wait for changing to EnabledState
-        assertNotNull(mMySync.expectedNetworkInfo);
-
         return true;
     }
 
@@ -462,8 +458,19 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
         mWifiP2pManager.createGroup(mWifiP2pChannel, mActionListener);
         assertTrue(waitForServiceResponse(mMyResponse));
         assertTrue(mMyResponse.success);
-        assertTrue(waitForBroadcasts(MySync.NETWORK_INFO));
-        assertNotNull(mMySync.expectedNetworkInfo);
+
+        // The first network state might be IDLE due to
+        // lazy initialization, but not CONNECTED.
+        for (int i = 0; i < 2; i++) {
+            assertTrue(waitForBroadcasts(MySync.NETWORK_INFO));
+            assertNotNull(mMySync.expectedNetworkInfo);
+            if (NetworkInfo.DetailedState.CONNECTED ==
+                    mMySync.expectedNetworkInfo.getDetailedState()) {
+                break;
+            }
+            assertEquals(NetworkInfo.DetailedState.IDLE,
+                    mMySync.expectedNetworkInfo.getDetailedState());
+        }
         assertEquals(NetworkInfo.DetailedState.CONNECTED,
                 mMySync.expectedNetworkInfo.getDetailedState());
 
@@ -603,8 +610,19 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
         mWifiP2pManager.createGroup(mWifiP2pChannel, mActionListener);
         assertTrue(waitForServiceResponse(mMyResponse));
         assertTrue(mMyResponse.success);
-        assertTrue(waitForBroadcasts(MySync.NETWORK_INFO));
-        assertNotNull(mMySync.expectedNetworkInfo);
+
+        // The first network state might be IDLE due to
+        // lazy initialization, but not CONNECTED.
+        for (int i = 0; i < 2; i++) {
+            assertTrue(waitForBroadcasts(MySync.NETWORK_INFO));
+            assertNotNull(mMySync.expectedNetworkInfo);
+            if (NetworkInfo.DetailedState.CONNECTED ==
+                    mMySync.expectedNetworkInfo.getDetailedState()) {
+                break;
+            }
+            assertEquals(NetworkInfo.DetailedState.IDLE,
+                    mMySync.expectedNetworkInfo.getDetailedState());
+        }
         assertEquals(NetworkInfo.DetailedState.CONNECTED,
                 mMySync.expectedNetworkInfo.getDetailedState());
 
