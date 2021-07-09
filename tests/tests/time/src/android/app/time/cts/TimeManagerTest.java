@@ -17,7 +17,6 @@
 package android.app.time.cts;
 
 import static android.app.time.cts.shell.DeviceConfigKeys.NAMESPACE_SYSTEM_TIME;
-import static android.app.time.cts.shell.DeviceConfigShellHelper.RESET_MODE_TRUSTED_DEFAULTS;
 import static android.app.time.cts.shell.DeviceConfigShellHelper.SYNC_DISABLED_MODE_UNTIL_REBOOT;
 
 import static org.junit.Assert.assertEquals;
@@ -79,15 +78,13 @@ public class TimeManagerTest {
         // This anticipates a future state where a generally applied target preparer may disable
         // device_config sync for all CTS tests: only suspend syncing if it isn't already suspended,
         // and only resume it if this test suspended it.
-        mDeviceConfigPreTestState =
-                mDeviceConfigShellHelper.setSyncModeForTest(SYNC_DISABLED_MODE_UNTIL_REBOOT);
+        mDeviceConfigPreTestState = mDeviceConfigShellHelper.setSyncModeForTest(
+                SYNC_DISABLED_MODE_UNTIL_REBOOT, NAMESPACE_SYSTEM_TIME);
     }
 
     @After
     public void after() throws Exception {
-        mDeviceConfigShellHelper.reset(
-                RESET_MODE_TRUSTED_DEFAULTS, NAMESPACE_SYSTEM_TIME);
-        mDeviceConfigShellHelper.restoreSyncModeForTest(mDeviceConfigPreTestState);
+        mDeviceConfigShellHelper.restoreDeviceConfigStateForTest(mDeviceConfigPreTestState);
     }
 
     /**
@@ -228,9 +225,6 @@ public class TimeManagerTest {
         timeManager.suggestExternalTime(
                 originalTimeSuggestion);
         sleepForAsyncOperation();
-
-        mDeviceConfigShellHelper.reset(
-                RESET_MODE_TRUSTED_DEFAULTS, NAMESPACE_SYSTEM_TIME);
     }
 
     /**
