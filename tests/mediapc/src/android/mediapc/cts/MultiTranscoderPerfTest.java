@@ -15,7 +15,7 @@
  */
 
 package android.mediapc.cts;
-
+import android.media.MediaFormat;
 import android.util.Pair;
 import android.view.Surface;
 
@@ -103,11 +103,15 @@ public class MultiTranscoderPerfTest extends MultiCodecPerfTestBase {
         mimeCodecPairs.add(mDecoderPair);
         mimeCodecPairs.add(mEncoderPair);
         int maxInstances = checkAndGetMaxSupportedInstancesFor720p(mimeCodecPairs);
+        int requiredMinInstances = REQUIRED_MIN_CONCURRENT_INSTANCES / 2;
+        if (mDecoderPair.first.equals(MediaFormat.MIMETYPE_VIDEO_VP9)
+                || mEncoderPair.first.equals(MediaFormat.MIMETYPE_VIDEO_VP9)) {
+            requiredMinInstances = REQUIRED_MIN_CONCURRENT_INSTANCES_FOR_VP9 / 2;
+        }
         assertTrue("DecodeMime: " + mDecoderPair.first + ", Decoder " + mDecoderPair.second +
                 ", EncodeMime: " + mEncoderPair.first + ", Encoder: " + mEncoderPair.second +
-                ", unable to support minimum concurrent instances. act/exp: " + maxInstances + "/" +
-                (REQUIRED_MIN_CONCURRENT_INSTANCES / 2),
-                maxInstances >= (REQUIRED_MIN_CONCURRENT_INSTANCES / 2));
+                ", unable to support minimum concurrent instances. act/exp: " + maxInstances +
+                "/" + requiredMinInstances, maxInstances >= requiredMinInstances);
         ExecutorService pool = Executors.newFixedThreadPool(maxInstances / 2 + maxInstances % 2);
         List<Transcode> transcodeList = new ArrayList<>();
         for (int i = 0; i < maxInstances / 2 ; i++) {
@@ -137,6 +141,7 @@ public class MultiTranscoderPerfTest extends MultiCodecPerfTestBase {
             }
         }
         assertTrue("Unable to achieve the maxFrameRate supported. act/exp: " + achievedFrameRate
-                + "/" + mMaxFrameRate / 2, achievedFrameRate >= mMaxFrameRate / 2);
+                + "/" + mMaxFrameRate / 2 + " for " + maxInstances + " instances.",
+                achievedFrameRate >= mMaxFrameRate / 2);
     }
 }
