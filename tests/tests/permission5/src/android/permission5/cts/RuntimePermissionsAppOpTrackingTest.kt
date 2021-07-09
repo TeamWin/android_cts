@@ -1154,7 +1154,13 @@ class RuntimePermissionsAppOpTrackingTest {
                 if (receiverAttributionTag != null) {
                     attributionSourceBuilder.setAttributionTag(receiverAttributionTag)
                 }
-                attributionParamsBuilder.setNextAttributionSource(attributionSourceBuilder.build())
+                var receiverAttributionSource = attributionSourceBuilder.build()
+                SystemUtil.runWithShellPermissionIdentity {
+                    receiverAttributionSource = context.getSystemService(
+                            PermissionManager::class.java)!!.registerAttributionSource(
+                            receiverAttributionSource)
+                }
+                attributionParamsBuilder.setNextAttributionSource(receiverAttributionSource)
             }
             return context.createContext(attributionParamsBuilder.build())
         }
