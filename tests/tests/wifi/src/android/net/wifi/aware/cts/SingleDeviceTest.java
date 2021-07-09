@@ -104,17 +104,31 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
     private List<WifiAwareSession> mSessions = new ArrayList<>();
 
     private class WifiAwareBroadcastReceiver extends BroadcastReceiver {
+        private final Object mLock = new Object();
         private CountDownLatch mBlocker = new CountDownLatch(1);
+        private int mCountNumber = 0;
 
         @Override
         public void onReceive(Context context, Intent intent) {
             if (WifiAwareManager.ACTION_WIFI_AWARE_STATE_CHANGED.equals(intent.getAction())) {
-                mBlocker.countDown();
+                synchronized(mLock) {
+                    mCountNumber += 1;
+                    mBlocker.countDown();
+                    mBlocker = new CountDownLatch(1);
+                }
             }
         }
 
         boolean waitForStateChange() throws InterruptedException {
-            return mBlocker.await(WAIT_FOR_AWARE_CHANGE_SECS, TimeUnit.SECONDS);
+            CountDownLatch blocker;
+            synchronized (mLock) {
+                if (mCountNumber > 0) {
+                    mCountNumber--;
+                    return true;
+                }
+                blocker = mBlocker;
+            }
+            return blocker.await(WAIT_FOR_AWARE_CHANGE_SECS, TimeUnit.SECONDS);
         }
     }
 
@@ -508,6 +522,12 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
 
         assertTrue("Timeout waiting for Wi-Fi Aware to change status",
                 receiver1.waitForStateChange());
+        // Interface down event may happen before Wifi State change. In that case, Aware available
+        // state will keep true for a short time.
+        if (mWifiAwareManager.isAvailable()) {
+            assertTrue("Timeout waiting for Wi-Fi Aware to change status",
+                    receiver1.waitForStateChange());
+        }
         assertFalse("Wi-Fi Aware is available (should not be)", mWifiAwareManager.isAvailable());
 
         // 2. Enable Wi-Fi
