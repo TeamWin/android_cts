@@ -16,7 +16,12 @@
 
 package android.voiceinteraction.service;
 
+import static android.media.AudioFormat.CHANNEL_IN_FRONT;
+
+import android.media.AudioAttributes;
 import android.media.AudioFormat;
+import android.media.AudioRecord;
+import android.media.MediaRecorder;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.ParcelFileDescriptor;
@@ -44,14 +49,24 @@ import javax.annotation.concurrent.GuardedBy;
 public class MainHotwordDetectionService extends HotwordDetectionService {
     static final String TAG = "MainHotwordDetectionService";
 
-    // TODO: Fill in the remaining fields.
     public static final HotwordDetectedResult DETECTED_RESULT =
             new HotwordDetectedResult.Builder()
+                    .setAudioChannel(CHANNEL_IN_FRONT)
                     .setConfidenceLevel(HotwordDetectedResult.CONFIDENCE_LEVEL_HIGH)
+                    .setHotwordDetectionPersonalized(true)
+                    .setHotwordDurationMillis(1000)
+                    .setHotwordOffsetMillis(500)
+                    .setHotwordPhraseId(5)
+                    .setPersonalizedScore(10)
+                    .setScore(15)
                     .build();
     public static final HotwordDetectedResult DETECTED_RESULT_AFTER_STOP_DETECTION =
             new HotwordDetectedResult.Builder()
                     .setScore(57)
+                    .build();
+    public static final HotwordDetectedResult DETECTED_RESULT_FOR_MIC_FAILURE =
+            new HotwordDetectedResult.Builder()
+                    .setScore(58)
                     .build();
     public static final HotwordRejectedResult REJECTED_RESULT =
             new HotwordRejectedResult.Builder()
@@ -79,6 +94,11 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
     public void onDetect(@NonNull AlwaysOnHotwordDetector.EventPayload eventPayload,
             long timeoutMillis, @NonNull Callback callback) {
         Log.d(TAG, "onDetect for DSP source");
+
+        if (!canReadAudio()) {
+            callback.onDetected(DETECTED_RESULT_FOR_MIC_FAILURE);
+            return;
+        }
 
         // TODO: Check the capture session (needs to be reflectively accessed).
         byte[] data = eventPayload.getTriggerAudio();
@@ -169,7 +189,12 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
                 // also more realistic to schedule it onto another thread.
                 mDetectionJob = () -> {
                     Log.d(TAG, "Sending detected result");
-                    callback.onDetected(DETECTED_RESULT);
+
+                    if (canReadAudio()) {
+                        callback.onDetected(DETECTED_RESULT);
+                    } else {
+                        callback.onDetected(DETECTED_RESULT_FOR_MIC_FAILURE);
+                    }
                 };
                 mHandler.postDelayed(mDetectionJob, 1500);
             } else {
@@ -246,5 +271,54 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
             }
         }
         return true;
+    }
+
+    private boolean canReadAudio() {
+        int bytesPerSample = 2; // for ENCODING_PCM_16BIT
+        int sampleRate = 16000;
+        int bytesPerSecond = bytesPerSample * sampleRate; // for single channel
+        AudioRecord record =
+                new AudioRecord.Builder()
+                        .setAudioAttributes(
+                                new AudioAttributes.Builder()
+                                        .setInternalCapturePreset(MediaRecorder.AudioSource.HOTWORD)
+                                        .build())
+                        .setAudioFormat(
+                                new AudioFormat.Builder()
+                                        .setChannelMask(AudioFormat.CHANNEL_IN_MONO)
+                                        .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                                        .setSampleRate(sampleRate)
+                                        .build())
+                        .setBufferSizeInBytes(bytesPerSecond)
+                        .build();
+        if (record.getState() != AudioRecord.STATE_INITIALIZED) {
+            Log.e(TAG, "Failed to initialize AudioRecord");
+            record.release();
+            return false;
+        }
+
+        record.startRecording();
+        try {
+            byte[] buffer = new byte[bytesPerSecond]; // read 1 second of audio
+            int numBytes = 0;
+            while (numBytes < buffer.length) {
+                int bytesRead =
+                        record.read(buffer, numBytes, Math.min(1024, buffer.length - numBytes));
+                if (bytesRead < 0) {
+                    Log.e(TAG, "Error reading from mic: " + bytesRead);
+                    return false;
+                }
+                numBytes += bytesRead;
+            }
+            for (byte b : buffer) {
+                // TODO: Maybe check that some portion of the bytes are non-zero.
+                if (b != 0) {
+                    return true;
+                }
+            }
+            return false;
+        } finally {
+            record.release();
+        }
     }
 }

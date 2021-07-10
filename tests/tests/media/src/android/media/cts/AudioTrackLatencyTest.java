@@ -16,23 +16,15 @@
 
 package android.media.cts;
 
-import android.app.ActivityManager;
-import android.content.Context;
-import android.content.pm.PackageManager;
 import android.media.AudioAttributes;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTimestamp;
 import android.media.AudioTrack;
-import android.media.PlaybackParams;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 
 import com.android.compatibility.common.util.CtsAndroidTestCase;
-
-import java.nio.ByteBuffer;
-import java.nio.FloatBuffer;
-import java.nio.ShortBuffer;
 
 // Test the Java AudioTrack low latency related features:
 //
@@ -70,54 +62,109 @@ public class AudioTrackLatencyTest extends CtsAndroidTestCase {
     }
 
     public void testSetBufferSize() throws Exception {
-        // constants for test
-        final String TEST_NAME = "testSetBufferSize";
-        final int TEST_SR = 44100;
-        final int TEST_CONF = AudioFormat.CHANNEL_OUT_STEREO;
-        final int TEST_FORMAT = AudioFormat.ENCODING_PCM_16BIT;
-        final int TEST_MODE = AudioTrack.MODE_STREAM;
-        final int TEST_STREAM_TYPE = AudioManager.STREAM_MUSIC;
+        // constants for PCM track test
+        final String TEST_PCM_NAME = "testSetBufferSizeTrackPcm";
+        final int TEST_PCM_SAMPLE_RATE = 44100;
+        final int TEST_PCM_CHANNEL_CONFIG = AudioFormat.CHANNEL_OUT_STEREO;
+        final int TEST_PCM_ENCODING = AudioFormat.ENCODING_PCM_16BIT;
 
-        // -------- initialization --------------
-        int minBuffSize = AudioTrack.getMinBufferSize(TEST_SR, TEST_CONF, TEST_FORMAT);
-        AudioTrack track = new AudioTrack(TEST_STREAM_TYPE, TEST_SR, TEST_CONF, TEST_FORMAT,
-                minBuffSize, TEST_MODE);
+        // constants for AC3 track test
+        final String TEST_AC3_NAME = "testSetBufferSizeTrackAc3";
+        final int TEST_AC3_SAMPLE_RATE = 48000;
+        final int TEST_AC3_CHANNEL_CONFIG = AudioFormat.CHANNEL_OUT_STEREO;
+        final int TEST_AC3_ENCODING = AudioFormat.ENCODING_AC3;
 
-        // -------- test --------------
+        // -------- PCM track test --------------
+        AudioTrack trackPcm = null;
+        try {
+            trackPcm = createStreamAudioTrack(
+                    TEST_PCM_SAMPLE_RATE,
+                    TEST_PCM_CHANNEL_CONFIG,
+                    TEST_PCM_ENCODING);
+            testSetBufferSizeOnTrack(trackPcm, TEST_PCM_NAME);
+        } catch (Exception exception) {
+            // this is unexpected, PCM should be supported on all devices
+            fail("Couldn't create PCM audio track!");
+        } finally {
+            if (trackPcm != null) {
+                trackPcm.release();
+            }
+        }
+
+
+        // -------- AC3 track test --------------
+        AudioTrack trackAc3 = null;
+        try {
+            trackAc3 = createStreamAudioTrack(
+                    TEST_AC3_SAMPLE_RATE,
+                    TEST_AC3_CHANNEL_CONFIG,
+                    TEST_AC3_ENCODING);
+            testSetBufferSizeOnTrack(trackAc3, TEST_AC3_NAME);
+        } catch (UnsupportedOperationException exception) {
+            // this is expected, not all devices can create AC3 tracks
+            // for the devices that can create AC3 tracks (like HDMI connected ATV devices),
+            // they should allow for setBufferSize
+            log(TEST_AC3_NAME, "Couldn't create AC3 audio track for testSetBufferSize");
+        } finally {
+            if (trackAc3 != null) {
+                trackAc3.release();
+            }
+        }
+    }
+
+    private AudioTrack createStreamAudioTrack(int sampleRate, int channelConfig, int encoding) {
+        // Start with buffer twice as large as needed.
+        int bufferSizeBytes = 2 * AudioTrack.getMinBufferSize(sampleRate, channelConfig, encoding);
+        AudioAttributes attributes = new AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_MEDIA)
+                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                .build();
+        AudioFormat format = new AudioFormat.Builder()
+                .setSampleRate(sampleRate)
+                .setChannelMask(channelConfig)
+                .setEncoding(encoding)
+                .build();
+        AudioTrack track = new AudioTrack.Builder()
+                .setAudioAttributes(attributes)
+                .setAudioFormat(format)
+                .setTransferMode(AudioTrack.MODE_STREAM)
+                .setBufferSizeInBytes(bufferSizeBytes)
+                .build();
+        return track;
+    }
+
+    private void testSetBufferSizeOnTrack(AudioTrack track, String testName) {
         // Initial values
         int bufferCapacity = track.getBufferCapacityInFrames();
         int initialBufferSize = track.getBufferSizeInFrames();
-        assertTrue(TEST_NAME, bufferCapacity > 0);
-        assertTrue(TEST_NAME, initialBufferSize > 0);
-        assertTrue(TEST_NAME, initialBufferSize <= bufferCapacity);
+        assertTrue(testName, bufferCapacity > 0);
+        assertTrue(testName, initialBufferSize > 0);
+        assertTrue(testName, initialBufferSize <= bufferCapacity);
 
         // set to various values
         int resultNegative = track.setBufferSizeInFrames(-1);
-        assertEquals(TEST_NAME + ": negative size", AudioTrack.ERROR_BAD_VALUE, resultNegative);
-        assertEquals(TEST_NAME + ": should be unchanged",
+        assertEquals(testName + ": negative size", AudioTrack.ERROR_BAD_VALUE, resultNegative);
+        assertEquals(testName + ": should be unchanged",
                 initialBufferSize, track.getBufferSizeInFrames());
 
         int resultZero = track.setBufferSizeInFrames(0);
-        assertTrue(TEST_NAME + ": should be >0, but got " + resultZero, resultZero > 0);
-        assertTrue(TEST_NAME + ": zero size < original, but got " + resultZero,
+        assertTrue(testName + ": should be >0, but got " + resultZero, resultZero > 0);
+        assertTrue(testName + ": zero size < original, but got " + resultZero,
                 resultZero < initialBufferSize);
-        assertEquals(TEST_NAME + ": should match resultZero",
+        assertEquals(testName + ": should match resultZero",
                 resultZero, track.getBufferSizeInFrames());
 
         int resultMax = track.setBufferSizeInFrames(Integer.MAX_VALUE);
-        assertTrue(TEST_NAME + ": set MAX_VALUE, >", resultMax > resultZero);
-        assertTrue(TEST_NAME + ": set MAX_VALUE, <=", resultMax <= bufferCapacity);
-        assertEquals(TEST_NAME + ": should match resultMax",
+        assertTrue(testName + ": set MAX_VALUE, >", resultMax > resultZero);
+        assertTrue(testName + ": set MAX_VALUE, <=", resultMax <= bufferCapacity);
+        assertEquals(testName + ": should match resultMax",
                 resultMax, track.getBufferSizeInFrames());
 
         int resultMiddle = track.setBufferSizeInFrames(bufferCapacity / 2);
-        assertTrue(TEST_NAME + ": set middle, >", resultMiddle > resultZero);
-        assertTrue(TEST_NAME + ": set middle, <=", resultMiddle < resultMax);
-        assertEquals(TEST_NAME + ": should match resultMiddle",
+        assertTrue(testName + ": set middle, >", resultMiddle > resultZero);
+        assertTrue(testName + ": set middle, <=", resultMiddle < resultMax);
+        assertEquals(testName + ": should match resultMiddle",
                 resultMiddle, track.getBufferSizeInFrames());
-
-        // -------- tear down --------------
-        track.release();
     }
 
     // Helper class for tests

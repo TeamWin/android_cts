@@ -17,6 +17,7 @@
 package android.time.cts.host;
 
 
+import static android.app.time.cts.shell.DeviceConfigKeys.NAMESPACE_SYSTEM_TIME;
 import static android.app.time.cts.shell.LocationTimeZoneManagerShellHelper.PRIMARY_PROVIDER_INDEX;
 import static android.app.time.cts.shell.LocationTimeZoneManagerShellHelper.PROVIDER_MODE_DISABLED;
 import static android.app.time.cts.shell.LocationTimeZoneManagerShellHelper.PROVIDER_MODE_SIMULATED;
@@ -29,7 +30,6 @@ import static org.junit.Assert.assertTrue;
 import android.app.time.LocationTimeZoneManagerServiceStateProto;
 import android.app.time.TimeZoneProviderStateEnum;
 import android.app.time.TimeZoneProviderStateProto;
-import android.app.time.cts.shell.DeviceConfigKeys;
 import android.app.time.cts.shell.DeviceConfigShellHelper;
 import android.app.time.cts.shell.DeviceShellCommandExecutor;
 import android.app.time.cts.shell.LocationShellHelper;
@@ -76,7 +76,7 @@ public class LocationTimeZoneManagerHostTest extends BaseHostJUnit4Test {
         mDeviceConfigShellHelper = new DeviceConfigShellHelper(shellCommandExecutor);
 
         mDeviceConfigPreTestState = mDeviceConfigShellHelper.setSyncModeForTest(
-                DeviceConfigShellHelper.SYNC_DISABLED_MODE_UNTIL_REBOOT);
+                DeviceConfigShellHelper.SYNC_DISABLED_MODE_UNTIL_REBOOT, NAMESPACE_SYSTEM_TIME);
 
         // All tests start with the location_time_zone_manager disabled so that providers can be
         // configured.
@@ -118,15 +118,13 @@ public class LocationTimeZoneManagerHostTest extends BaseHostJUnit4Test {
         mTimeZoneDetectorShellHelper.setGeoDetectionEnabled(mOriginalGeoDetectionEnabled);
         mTimeZoneDetectorShellHelper.setAutoDetectionEnabled(mOriginalAutoDetectionEnabled);
         mLocationShellHelper.setLocationEnabledForCurrentUser(mOriginalLocationEnabled);
-        mDeviceConfigShellHelper.reset(DeviceConfigShellHelper.RESET_MODE_TRUSTED_DEFAULTS,
-                DeviceConfigKeys.NAMESPACE_SYSTEM_TIME);
         mLocationTimeZoneManagerShellHelper.recordProviderStates(false);
+
+        mDeviceConfigShellHelper.restoreDeviceConfigStateForTest(mDeviceConfigPreTestState);
 
         // Attempt to start the service. It may not start if there are no providers configured,
         // but that is ok.
         mLocationTimeZoneManagerShellHelper.start();
-
-        mDeviceConfigShellHelper.restoreSyncModeForTest(mDeviceConfigPreTestState);
     }
 
     /** Tests what happens when there's only a primary provider and it makes a suggestion. */

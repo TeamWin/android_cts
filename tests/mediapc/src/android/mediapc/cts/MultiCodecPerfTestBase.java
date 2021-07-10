@@ -39,6 +39,7 @@ public class MultiCodecPerfTestBase {
     private static final String LOG_TAG = MultiCodecPerfTestBase.class.getSimpleName();
     static final boolean[] boolStates = {true, false};
     static final int REQUIRED_MIN_CONCURRENT_INSTANCES = 6;
+    static final int REQUIRED_MIN_CONCURRENT_INSTANCES_FOR_VP9 = 2;
     static ArrayList<String> mMimeList = new ArrayList<String>();
     static Map<String, String> mTestFiles = new HashMap<>();
     static {
@@ -100,13 +101,21 @@ public class MultiCodecPerfTestBase {
                     .getCapabilitiesForType(mimeCodecPair.first);
             List<PerformancePoint> pps = cap.getVideoCapabilities().getSupportedPerformancePoints();
             assertTrue(pps.size() > 0);
+
+            int requiredFrameRate = 180;
+            // VP9 requires 60 fps at 720p and minimum of 2 instances
+            if (mimeCodecPair.first.equals(MediaFormat.MIMETYPE_VIDEO_VP9)) {
+                requiredFrameRate = 60;
+            }
+
             maxInstances[loopCount] = cap.getMaxSupportedInstances();
-            PerformancePoint PP720p = new PerformancePoint(1280, 720, 180);
+            PerformancePoint PP720p = new PerformancePoint(1280, 720, requiredFrameRate);
+
             maxMacroBlockRates[loopCount] = 0;
-            boolean supports720p180Performance = false;
+            boolean supports720pPerformance = false;
             for (PerformancePoint pp : pps) {
-                if(pp.covers(PP720p)) {
-                    supports720p180Performance = true;
+                if (pp.covers(PP720p)) {
+                    supports720pPerformance = true;
                     if (pp.getMaxMacroBlockRate() > maxMacroBlockRates[loopCount]) {
                         maxMacroBlockRates[loopCount] = (int) pp.getMaxMacroBlockRate();
                         maxFrameRates[loopCount] = pp.getMaxFrameRate();
@@ -114,8 +123,8 @@ public class MultiCodecPerfTestBase {
                 }
             }
             codec.release();
-            assertTrue("Codec " + mimeCodecPair.second + " doesn't support 720p 180 " +
-                    "performance point", supports720p180Performance);
+            assertTrue("Codec " + mimeCodecPair.second + " doesn't support 720p " +
+                    requiredFrameRate + " performance point", supports720pPerformance);
             loopCount++;
         }
         Arrays.sort(maxInstances);
