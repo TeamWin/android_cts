@@ -127,14 +127,15 @@ class RenouncedPermissionsTest {
             // Calculate the shellUid to account for running this from a secondary user.
             val shellUid = UserHandle.getUid(Process.myUserHandle().identifier,
                 UserHandle.getAppId(Process.SHELL_UID))
-            val shellAttributionSource = AttributionSource.Builder(shellUid)
+            var shellAttributionSource = AttributionSource.Builder(shellUid)
                     .setPackageName("com.android.shell")
                     .setRenouncedPermissions(renouncedPermissionsSet)
                     .build()
 
             SystemUtil.runWithShellPermissionIdentity {
                 val permissionManager = context.getSystemService(PermissionManager::class.java)!!
-                permissionManager.registerAttributionSource(shellAttributionSource);
+                shellAttributionSource = permissionManager.registerAttributionSource(
+                        shellAttributionSource)
             }
 
             return shellAttributionSource
