@@ -63,7 +63,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.net.Inet6Address;
+import java.net.InetAddress;
 import java.util.Collections;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -81,10 +81,10 @@ public class VcnManagerTest extends VcnTestBase {
 
     private static final int TEST_NETWORK_MTU = 1500;
 
-    private static final Inet6Address LOCAL_V6_ADDRESS =
-            (Inet6Address) InetAddresses.parseNumericAddress("2001:db8::2");
-    private static final Inet6Address SECONDARY_LOCAL_V6_ADDRESS =
-            (Inet6Address) InetAddresses.parseNumericAddress("2001:db8::3");
+    private static final InetAddress LOCAL_ADDRESS =
+            InetAddresses.parseNumericAddress("198.51.100.1");
+    private static final InetAddress SECONDARY_LOCAL_ADDRESS =
+            InetAddresses.parseNumericAddress("198.51.100.2");
 
     private static final long IKE_DETERMINISTIC_INITIATOR_SPI =
             Long.parseLong("46B8ECA1E0D72A18", 16);
@@ -362,7 +362,7 @@ public class VcnManagerTest extends VcnTestBase {
                         TEST_NETWORK_MTU,
                         true /* isMetered */,
                         Collections.singleton(subId),
-                        LOCAL_V6_ADDRESS);
+                        LOCAL_ADDRESS);
         assertNotNull("No test network found", mTestNetworkWrapper.tunNetwork);
 
         // Before the VCN starts, the test network should have NOT_VCN_MANAGED
@@ -436,7 +436,7 @@ public class VcnManagerTest extends VcnTestBase {
                         TEST_NETWORK_MTU,
                         true /* isMetered */,
                         Collections.singleton(subId),
-                        LOCAL_V6_ADDRESS);
+                        LOCAL_ADDRESS);
         assertNotNull("No test network found", mTestNetworkWrapper.tunNetwork);
 
         // Get current cell Network then wait for it to drop (due to losing NOT_VCN_MANAGED) before
@@ -544,7 +544,7 @@ public class VcnManagerTest extends VcnTestBase {
                         TEST_NETWORK_MTU,
                         true /* isMetered */,
                         Collections.singleton(subId),
-                        LOCAL_V6_ADDRESS);
+                        LOCAL_ADDRESS);
         assertNotNull("No test network found", mTestNetworkWrapper.tunNetwork);
 
         // Get current cell Network then wait for it to drop (due to losing NOT_VCN_MANAGED) before
@@ -570,7 +570,7 @@ public class VcnManagerTest extends VcnTestBase {
                                 TEST_NETWORK_MTU,
                                 true /* isMetered */,
                                 Collections.singleton(subId),
-                                SECONDARY_LOCAL_V6_ADDRESS);
+                                SECONDARY_LOCAL_ADDRESS);
 
                 try {
                     assertNotNull("No test network found", secondaryTestNetworkWrapper.tunNetwork);
@@ -639,7 +639,7 @@ public class VcnManagerTest extends VcnTestBase {
                         TEST_NETWORK_MTU,
                         true /* isMetered */,
                         Collections.singleton(subId),
-                        LOCAL_V6_ADDRESS);
+                        LOCAL_ADDRESS);
         assertNotNull("No test network found", mTestNetworkWrapper.tunNetwork);
 
         // Before the VCN starts, the test network should have NOT_VCN_MANAGED

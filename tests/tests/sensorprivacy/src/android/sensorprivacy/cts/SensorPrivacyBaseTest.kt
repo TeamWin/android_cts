@@ -26,6 +26,7 @@ import android.os.PowerManager
 import android.platform.test.annotations.AppModeFull
 import android.hardware.SensorPrivacyManager.Sensors.CAMERA
 import android.hardware.SensorPrivacyManager.Sensors.MICROPHONE
+import android.hardware.SensorPrivacyManager.Sources.OTHER
 import android.support.test.uiautomator.By
 import android.view.KeyEvent
 import androidx.test.platform.app.InstrumentationRegistry
@@ -335,7 +336,7 @@ abstract class SensorPrivacyBaseTest(
 
     protected fun setSensor(enable: Boolean) {
         runWithShellPermissionIdentity {
-            spm.setSensorPrivacy(sensor, enable)
+            spm.setSensorPrivacy(OTHER, sensor, enable)
         }
     }
 
