@@ -218,10 +218,8 @@ public class WindowContextTests extends WindowContextTestBase {
         final Rect daBounds = da.mFullConfiguration.windowConfiguration.getBounds();
         final Rect maxDaBounds = da.mFullConfiguration.windowConfiguration.getMaxBounds();
 
-        waitAndAssertBoundsMatches(service, daBounds, maxDaBounds,
+        assertBoundsMatches(service, daBounds, maxDaBounds,
                 "WindowProviderService bounds must match DisplayArea bounds.");
-
-        service.resetLatch();
 
         // Obtain the Activity's token and attach it to TestWindowService.
         final IBinder windowToken = activity.getWindow().getAttributes().token;
@@ -231,10 +229,11 @@ public class WindowContextTests extends WindowContextTestBase {
         final Rect currentBounds = wm.getCurrentWindowMetrics().getBounds();
         final Rect maxBounds = wm.getMaximumWindowMetrics().getBounds();
 
+        service.waitAndAssertConfigurationChanged();
         // After TestWindowService attaches the Activity's token, which is also a WindowToken,
         // it is expected to receive a config update which matches the WindowMetrics of
         // the Activity.
-        waitAndAssertBoundsMatches(service, currentBounds, maxBounds,
+        assertBoundsMatches(service, currentBounds, maxBounds,
                 "WindowProviderService bounds must match WindowToken bounds.");
     }
 
@@ -246,16 +245,13 @@ public class WindowContextTests extends WindowContextTestBase {
      *     callback matches provided bounds.</li>
      * </ul>
      */
-    private void waitAndAssertBoundsMatches(TestWindowService service, Rect currentBounds,
+    private void assertBoundsMatches(TestWindowService service, Rect currentBounds,
             Rect maxBounds, String message) {
-        service.waitAndAssertConfigurationChanged();
         final WindowConfiguration winConfig = service.mConfiguration.windowConfiguration;
-        assertWithMessage(message + " WindowConfiguration#getBounds from onConfigurationChanged"
-                + " callback not matched.")
+        assertWithMessage(message + " WindowConfiguration#getBounds not matched.")
                 .that(winConfig.getBounds()).isEqualTo(currentBounds);
-        assertWithMessage(message +  " WindowConfiguration#getMaxBounds from "
-                + "onConfigurationChanged callback not matched."
-                ).that(winConfig.getMaxBounds()).isEqualTo(maxBounds);
+        assertWithMessage(message +  " WindowConfiguration#getMaxBounds not "
+                + "matched.").that(winConfig.getMaxBounds()).isEqualTo(maxBounds);
 
         final WindowManager wm = service.getSystemService(WindowManager.class);
         final Rect currentWindowBounds = wm.getCurrentWindowMetrics().getBounds();
@@ -382,6 +378,7 @@ public class WindowContextTests extends WindowContextTestBase {
                 }
             }
             super.onCreate();
+            mConfiguration = getResources().getConfiguration();
         }
 
         @Override
