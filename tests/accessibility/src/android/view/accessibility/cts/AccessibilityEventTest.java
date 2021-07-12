@@ -289,57 +289,62 @@ public class AccessibilityEventTest {
 
     @Test
     public void setText_unChanged_doNotReceiveEvent() throws Throwable {
-        sInstrumentation.runOnMainSync(() -> {
-            mTextView.setText("a");
-        });
-        sUiAutomation.waitForIdle(IDLE_TIMEOUT_MS, DEFAULT_TIMEOUT_MS);
+        sUiAutomation.executeAndWaitForEvent(() -> sInstrumentation.runOnMainSync(() ->
+                        mTextView.setText("a")),
+                event -> isExpectedChangeType(event, AccessibilityEvent.CONTENT_CHANGE_TYPE_TEXT),
+                DEFAULT_TIMEOUT_MS);
 
         assertThrows(TimeoutException.class, () -> sUiAutomation.executeAndWaitForEvent(() -> {
                     sInstrumentation.runOnMainSync(() -> {
                         mTextView.setText("a");
                     });
-                }, event -> isExpectedTextViewEvent(event),
+                }, event -> isExpectedSource(event, mTextView),
                 DEFAULT_TIMEOUT_MS));
     }
 
     @Test
     public void setText_textChanged_receivesTextEvent() throws Throwable {
-        sInstrumentation.runOnMainSync(() -> {
-            mTextView.setText("a");
-        });
-        sUiAutomation.waitForIdle(IDLE_TIMEOUT_MS, DEFAULT_TIMEOUT_MS);
+        sUiAutomation.executeAndWaitForEvent(() -> sInstrumentation.runOnMainSync(() ->
+                        mTextView.setText("a")),
+                event -> isExpectedChangeType(event, AccessibilityEvent.CONTENT_CHANGE_TYPE_TEXT),
+                DEFAULT_TIMEOUT_MS);
 
         sUiAutomation.executeAndWaitForEvent(() -> {
-            sInstrumentation.runOnMainSync(() -> {
-                mTextView.setText("b");
-            });
-        }, event -> isExpectedTextViewEvent(event)
-                && ((event.getContentChangeTypes() & AccessibilityEvent.CONTENT_CHANGE_TYPE_TEXT)
-                != 0), DEFAULT_TIMEOUT_MS);
+                    sInstrumentation.runOnMainSync(() -> {
+                        mTextView.setText("b");
+                    });
+                }, event -> isExpectedSource(event, mTextView)
+                        && isExpectedChangeType(event, AccessibilityEvent.CONTENT_CHANGE_TYPE_TEXT),
+                DEFAULT_TIMEOUT_MS);
     }
 
     @Test
     public void setText_parcelableSpanChanged_receivesUndefinedEvent() throws Throwable {
         String text = "a";
-        sInstrumentation.runOnMainSync(() -> {
-            mTextView.setText(text);
-        });
-        sUiAutomation.waitForIdle(IDLE_TIMEOUT_MS, DEFAULT_TIMEOUT_MS);
+        sUiAutomation.executeAndWaitForEvent(() -> sInstrumentation.runOnMainSync(() ->
+                        mTextView.setText(text)),
+                event -> isExpectedChangeType(event, AccessibilityEvent.CONTENT_CHANGE_TYPE_TEXT),
+                DEFAULT_TIMEOUT_MS);
 
         sUiAutomation.executeAndWaitForEvent(() -> {
-            sInstrumentation.runOnMainSync(() -> {
-                SpannableString spannableString = new SpannableString(text);
-                spannableString.setSpan(new LocaleSpan(Locale.ENGLISH), 0, 1, 0);
-                mTextView.setText(spannableString);
-            });
-        }, event -> isExpectedTextViewEvent(event)
-                && ((event.getContentChangeTypes()
-                == AccessibilityEvent.CONTENT_CHANGE_TYPE_UNDEFINED)), DEFAULT_TIMEOUT_MS);
+                    sInstrumentation.runOnMainSync(() -> {
+                        SpannableString spannableString = new SpannableString(text);
+                        spannableString.setSpan(new LocaleSpan(Locale.ENGLISH), 0, 1, 0);
+                        mTextView.setText(spannableString);
+                    });
+                }, event -> isExpectedSource(event, mTextView)
+                        && isExpectedChangeType(event,
+                AccessibilityEvent.CONTENT_CHANGE_TYPE_UNDEFINED),
+                DEFAULT_TIMEOUT_MS);
     }
 
-    private boolean isExpectedTextViewEvent(AccessibilityEvent event) {
-        return TextUtils.equals(mPackageName, event.getPackageName())
-                && TextUtils.equals(TextView.class.getName(), event.getClassName());
+    private static boolean isExpectedSource(AccessibilityEvent event, View view) {
+        return TextUtils.equals(view.getContext().getPackageName(), event.getPackageName())
+                && TextUtils.equals(view.getAccessibilityClassName(), event.getClassName());
+    }
+
+    private static boolean isExpectedChangeType(AccessibilityEvent event, int changeType) {
+        return (event.getContentChangeTypes() & changeType) == changeType;
     }
 
     /**
