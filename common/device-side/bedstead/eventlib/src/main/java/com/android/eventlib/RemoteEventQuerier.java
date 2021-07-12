@@ -147,7 +147,7 @@ public class
     private AtomicReference<IQueryService> mQuery = new AtomicReference<>();
     private CountDownLatch mConnectionCountdown;
 
-    private static final int MAX_INITIALISATION_ATTEMPTS = 100;
+    private static final int MAX_INITIALISATION_ATTEMPTS = 300;
     private static final long INITIALISATION_ATTEMPT_DELAY_MS = 100;
 
     private void ensureInitialised() {
@@ -195,7 +195,9 @@ public class
         intent.setClassName(mPackageName, "com.android.eventlib.QueryService");
 
         AtomicBoolean didBind = new AtomicBoolean(false);
-        if (mEventLogsQuery.getUserHandle() != null) {
+        if (mEventLogsQuery.getUserHandle() != null
+                && mEventLogsQuery.getUserHandle().getIdentifier()
+                != sTestApis.users().instrumented().id()) {
             try (PermissionContext p =
                          sTestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
                 didBind.set(sContext.bindServiceAsUser(
