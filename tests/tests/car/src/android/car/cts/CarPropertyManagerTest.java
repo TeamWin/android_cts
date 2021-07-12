@@ -494,6 +494,15 @@ public class CarPropertyManagerTest extends CarApiTestBase {
                 }).build().verify(mCarPropertyManager);
     }
 
+    @Test
+    public void testEnvOutsideTemperatureIfSupported() {
+        VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.ENV_OUTSIDE_TEMPERATURE,
+                CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS,
+                Float.class).build().verify(mCarPropertyManager);
+    }
+
     @SuppressWarnings("unchecked")
     @Test
     public void testGetProperty() {
