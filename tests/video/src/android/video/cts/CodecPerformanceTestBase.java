@@ -41,6 +41,10 @@ class CodecPerformanceTestBase {
     static final int SELECT_ALL = 0; // Select all codecs
     static final int SELECT_HARDWARE = 1; // Select Hardware codecs only
     static final int SELECT_SOFTWARE = 2; // Select Software codecs only
+    // allowed tolerance in measured fps vs expected fps, i.e. codecs achieving fps
+    // that is greater than (FPS_TOLERANCE_FACTOR * expectedFps) will be considered as
+    // passing the test
+    static final double FPS_TOLERANCE_FACTOR = 0.95;
     static final String mInputPrefix = WorkDir.getMediaDirString();
 
     ArrayList<MediaCodec.BufferInfo> mBufferInfos;
