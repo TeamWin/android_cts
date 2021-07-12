@@ -40,6 +40,10 @@ public class MultiCodecPerfTestBase {
     static final boolean[] boolStates = {true, false};
     static final int REQUIRED_MIN_CONCURRENT_INSTANCES = 6;
     static final int REQUIRED_MIN_CONCURRENT_INSTANCES_FOR_VP9 = 2;
+    // allowed tolerance in measured fps vs expected fps in percentage, i.e. codecs achieving fps
+    // that is greater than (FPS_TOLERANCE_FACTOR * expectedFps) will be considered as
+    // passing the test
+    static final double FPS_TOLERANCE_FACTOR = 0.95;
     static ArrayList<String> mMimeList = new ArrayList<String>();
     static Map<String, String> mTestFiles = new HashMap<>();
     static {
@@ -133,7 +137,10 @@ public class MultiCodecPerfTestBase {
         int minOfMaxInstances = maxInstances[0];
         int minOfMaxFrameRates = maxFrameRates[0];
         int minOfMaxMacroBlockRates = maxMacroBlockRates[0];
-        mMaxFrameRate = minOfMaxFrameRates;
+
+        // Allow a tolerance in expected frame rate
+        mMaxFrameRate = minOfMaxFrameRates * FPS_TOLERANCE_FACTOR;
+
         // Calculate how many 720p 30fps max instances it can support from it's mMaxFrameRate
         // amd maxMacroBlockRate. (720p is 3,600 macro blocks assuming 16x16 macroblocks)
         return Math.min(minOfMaxInstances, Math.min((int) (minOfMaxFrameRates / 30.0),
