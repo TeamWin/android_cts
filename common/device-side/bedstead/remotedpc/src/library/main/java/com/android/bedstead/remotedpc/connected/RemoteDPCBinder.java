@@ -60,16 +60,28 @@ public final class RemoteDPCBinder implements ConnectionBinder {
 
         Log.i(LOG_TAG, "Attempting to bind to " + bindIntent);
 
-        try (PermissionContext p =
-                     sTestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
-            return context.bindServiceAsUser(bindIntent,
-                    connection, /* flags= */ BIND_AUTO_CREATE,
-                    mRemoteDpc.devicePolicyController().user().userHandle());
-        } catch (Exception e) {
-            // TODO(scottjonathan): This should actually be communicated back...
-            //  (catch the exception outside of the tryBind call)
-            Log.e(LOG_TAG, "Error binding", e);
-            return false;
+        if (mRemoteDpc.devicePolicyController().user().equals(sTestApis.users().instrumented())) {
+            try {
+                return context.bindService(bindIntent,
+                        connection, /* flags= */ BIND_AUTO_CREATE);
+            } catch (Exception e) {
+                // TODO(scottjonathan): This should actually be communicated back...
+                //  (catch the exception outside of the tryBind call)
+                Log.e(LOG_TAG, "Error binding", e);
+                return false;
+            }
+        } else {
+            try (PermissionContext p =
+                         sTestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
+                return context.bindServiceAsUser(bindIntent,
+                        connection, /* flags= */ BIND_AUTO_CREATE,
+                        mRemoteDpc.devicePolicyController().user().userHandle());
+            } catch (Exception e) {
+                // TODO(scottjonathan): This should actually be communicated back...
+                //  (catch the exception outside of the tryBind call)
+                Log.e(LOG_TAG, "Error binding", e);
+                return false;
+            }
         }
     }
 

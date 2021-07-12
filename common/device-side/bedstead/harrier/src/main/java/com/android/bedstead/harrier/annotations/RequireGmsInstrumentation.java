@@ -24,16 +24,22 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Mark that a test method should only run on specified sdk versions.
+ * Mark that a test method should be run using GMS Instrumentation for certain versions.
+ *
+ * <p>This will apply {@link RequireSdkVersion} to ensure that on the given versions, this test
+ * only runs when the instrumented package is `com.google.android.gms`. It will also skip the test
+ * if it is run with gms instrumentation on a version which does not require it.
+ *
+ * <p>This allows for two test configurations to be set up, one which instruments GMS and one
+ * which does not - and both pointed at the same test sources.
  *
  * <p>Your test configuration may be configured so that this test is only run on a device with the
- * given version. Otherwise, you can use {@link DeviceState} to ensure that the test is
+ * given state. Otherwise, you can use {@link DeviceState} to ensure that the test is
  * not run when the sdk version is not correct.
  */
 @Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface RequireSdkVersion {
+public @interface RequireGmsInstrumentation {
     int min() default 1;
     int max() default Integer.MAX_VALUE;
-    FailureMode failureMode() default FailureMode.SKIP;
 }
