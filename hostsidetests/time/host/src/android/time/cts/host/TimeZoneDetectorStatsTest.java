@@ -16,9 +16,16 @@
 
 package android.time.cts.host;
 
+import static android.app.time.cts.shell.DeviceConfigKeys.NAMESPACE_SYSTEM_TIME;
+
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import android.app.time.cts.shell.DeviceConfigShellHelper;
+import android.app.time.cts.shell.DeviceShellCommandExecutor;
+import android.app.time.cts.shell.LocationShellHelper;
+import android.app.time.cts.shell.host.HostShellCommandExecutor;
+import android.app.time.cts.shell.TimeZoneDetectorShellHelper;
 import android.cts.statsdatom.lib.AtomTestUtils;
 import android.cts.statsdatom.lib.ConfigUtils;
 import android.cts.statsdatom.lib.DeviceUtils;
@@ -40,11 +47,20 @@ import java.util.List;
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class TimeZoneDetectorStatsTest extends BaseHostJUnit4Test {
 
-    protected TimeZoneDetectorHostHelper mTimeZoneDetectorHostHelper;
+    private TimeZoneDetectorShellHelper mTimeZoneDetectorShellHelper;
+    private LocationShellHelper mLocationShellHelper;
+    private DeviceConfigShellHelper mDeviceConfigShellHelper;
+    private DeviceConfigShellHelper.PreTestState mDeviceConfigPreTestState;
 
     @Before
     public void setUp() throws Exception {
-        mTimeZoneDetectorHostHelper = new TimeZoneDetectorHostHelper(getDevice());
+        DeviceShellCommandExecutor shellCommandExecutor = new HostShellCommandExecutor(getDevice());
+        mTimeZoneDetectorShellHelper = new TimeZoneDetectorShellHelper(shellCommandExecutor);
+        mLocationShellHelper = new LocationShellHelper(shellCommandExecutor);
+        mDeviceConfigShellHelper = new DeviceConfigShellHelper(shellCommandExecutor);
+        mDeviceConfigPreTestState = mDeviceConfigShellHelper.setSyncModeForTest(
+                DeviceConfigShellHelper.SYNC_DISABLED_MODE_UNTIL_REBOOT, NAMESPACE_SYSTEM_TIME);
+
         ConfigUtils.removeConfig(getDevice());
         ReportUtils.clearReports(getDevice());
     }
@@ -53,6 +69,7 @@ public class TimeZoneDetectorStatsTest extends BaseHostJUnit4Test {
     public void tearDown() throws Exception {
         ConfigUtils.removeConfig(getDevice());
         ReportUtils.clearReports(getDevice());
+        mDeviceConfigShellHelper.restoreDeviceConfigStateForTest(mDeviceConfigPreTestState);
     }
 
     @Test
@@ -81,23 +98,23 @@ public class TimeZoneDetectorStatsTest extends BaseHostJUnit4Test {
 
                 // The shell reports the same info the atom does for geo detection supported.
                 boolean geoDetectionSupportedFromShell =
-                        mTimeZoneDetectorHostHelper.isGeoDetectionSupported();
+                        mTimeZoneDetectorShellHelper.isGeoDetectionSupported();
                 assertThat(state.getGeoSupported()).isEqualTo(geoDetectionSupportedFromShell);
 
                 // The shell reports the same info the atom does for location enabled.
                 boolean locationEnabledForCurrentUserFromShell =
-                        mTimeZoneDetectorHostHelper.isLocationEnabledForCurrentUser();
+                        mLocationShellHelper.isLocationEnabledForCurrentUser();
                 assertThat(state.getLocationEnabled())
                         .isEqualTo(locationEnabledForCurrentUserFromShell);
 
                 // The shell reports the user's setting for auto detection.
                 boolean autoDetectionEnabledFromShell =
-                        mTimeZoneDetectorHostHelper.isAutoDetectionEnabled();
+                        mTimeZoneDetectorShellHelper.isAutoDetectionEnabled();
                 assertThat(state.getAutoDetectionSetting())
                         .isEqualTo(autoDetectionEnabledFromShell);
 
                 boolean telephonyDetectionSupportedFromShell =
-                        mTimeZoneDetectorHostHelper.isTelephonyDetectionSupported();
+                        mTimeZoneDetectorShellHelper.isTelephonyDetectionSupported();
                 boolean noAutoDetectionSupported =
                         !(telephonyDetectionSupportedFromShell || geoDetectionSupportedFromShell);
                 // The atom reports the functional state for "detection mode", which is derived from
@@ -108,7 +125,7 @@ public class TimeZoneDetectorStatsTest extends BaseHostJUnit4Test {
                     expectedDetectionMode = DetectionMode.MANUAL;
                 } else {
                     boolean geoDetectionSettingEnabledFromShell =
-                            mTimeZoneDetectorHostHelper.isGeoDetectionEnabled();
+                            mTimeZoneDetectorShellHelper.isGeoDetectionEnabled();
                     boolean expectedGeoDetectionEnabled =
                             geoDetectionSupportedFromShell
                                     && locationEnabledForCurrentUserFromShell
