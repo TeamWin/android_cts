@@ -243,7 +243,9 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
                     queueEOS();
                     waitForAllOutputs();
                     validateMetrics(mCodecName, format);
-                    mCodec.stop();
+                    /* TODO(b/147348711) */
+                    if (false) mCodec.stop();
+                    else mCodec.reset();
                     assertTrue(log + " unexpected error", !mAsyncHandle.hasSeenError());
                     assertTrue(log + "no input sent", 0 != mInputCount);
                     assertTrue(log + "output received", 0 != mOutputCount);
@@ -369,7 +371,9 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
                 doWork(Integer.MAX_VALUE);
                 queueEOS();
                 waitForAllOutputs();
-                mCodec.stop();
+                /* TODO(b/147348711) */
+                if (false) mCodec.stop();
+                else mCodec.reset();
                 assertTrue(log + " unexpected error", !mAsyncHandle.hasSeenError());
                 assertTrue(log + "no input sent", 0 != mInputCount);
                 assertTrue(log + "output received", 0 != mOutputCount);
@@ -485,7 +489,9 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
                 queueEOS();
                 waitForAllOutputs();
                 if (mSaveToMem) verify(mOutputBuff, mRefFile, mRmsError, mRefCRC);
-                mCodec.stop();
+                /* TODO(b/147348711) */
+                if (false) mCodec.stop();
+                else mCodec.reset();
                 assertTrue(log + " unexpected error", !mAsyncHandle.hasSeenError());
                 assertTrue(log + "no input sent", 0 != mInputCount);
                 assertTrue(log + "output received", 0 != mOutputCount);
@@ -509,7 +515,9 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
                 queueEOS();
                 waitForAllOutputs();
                 if (mSaveToMem) verify(mOutputBuff, mRefFile, mRmsError, mRefCRC);
-                mCodec.stop();
+                /* TODO(b/147348711) */
+                if (false) mCodec.stop();
+                else mCodec.reset();
                 assertTrue(log + " unexpected error", !mAsyncHandle.hasSeenError());
                 assertTrue(log + "no input sent", 0 != mInputCount);
                 assertTrue(log + "output received", 0 != mOutputCount);
@@ -543,7 +551,9 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
                 queueEOS();
                 waitForAllOutputs();
                 validateMetrics(mCodecName, newFormat);
-                mCodec.stop();
+                /* TODO(b/147348711) */
+                if (false) mCodec.stop();
+                else mCodec.reset();
                 assertTrue(log + " unexpected error", !mAsyncHandle.hasSeenError());
                 assertTrue(log + "no input sent", 0 != mInputCount);
                 assertTrue(log + "output received", 0 != mOutputCount);
@@ -672,7 +682,9 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
                         queueEOS();
                         waitForAllOutputs();
                         validateMetrics(mCodecName);
-                        mCodec.stop();
+                        /* TODO(b/147348711) */
+                        if (false) mCodec.stop();
+                        else mCodec.reset();
                         assertTrue(log + " unexpected error", !mAsyncHandle.hasSeenError());
                         assertTrue(log + "no input sent", 0 != mInputCount);
                         assertTrue(log + "output received", 0 != mOutputCount);
@@ -764,7 +776,9 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
                 doWork(buffer, list);
                 queueEOS();
                 waitForAllOutputs();
-                mCodec.stop();
+                /* TODO(b/147348711) */
+                if (false) mCodec.stop();
+                else mCodec.reset();
                 assertTrue(log + " unexpected error", !mAsyncHandle.hasSeenError());
                 assertTrue(log + "no input sent", 0 != mInputCount);
                 assertTrue(log + "output received", 0 != mOutputCount);
