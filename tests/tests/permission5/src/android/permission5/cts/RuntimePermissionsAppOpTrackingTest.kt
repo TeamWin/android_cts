@@ -1143,10 +1143,11 @@ class RuntimePermissionsAppOpTrackingTest {
                 if (receiverAttributionTag != null) {
                     attributionSourceBuilder.setAttributionTag(receiverAttributionTag)
                 }
-                val receiverAttributionSource = attributionSourceBuilder.build()
+                var receiverAttributionSource = attributionSourceBuilder.build()
                 SystemUtil.runWithShellPermissionIdentity {
-                    context.getSystemService(PermissionManager::class.java)!!
-                            .registerAttributionSource(receiverAttributionSource)
+                    receiverAttributionSource = context.getSystemService(
+                            PermissionManager::class.java)!!.registerAttributionSource(
+                            receiverAttributionSource)
                 }
                 attributionParamsBuilder.setNextAttributionSource(receiverAttributionSource)
             }
