@@ -119,8 +119,9 @@ public class CodecDecoderPerformanceTest extends CodecDecoderPerformanceTestBase
         decode();
         String log = String.format("DecodeMime: %s, Decoder: %s, resolution: %dp, Key-priority: " +
                 "%d :: ", mDecoderMime, mDecoderName, mHeight, mKeyPriority);
-        Log.d(LOG_TAG, log + "act/exp fps: " + mAchievedFps + "/" + mOperatingRateExpected);
+        double expectedFps = mOperatingRateExpected * FPS_TOLERANCE_FACTOR;
+        Log.d(LOG_TAG, log + "act/exp fps: " + mAchievedFps + "/" + expectedFps);
         assertTrue("Unable to achieve the expected rate. " + log + "act/exp fps: " + mAchievedFps
-                + "/" + mOperatingRateExpected, mAchievedFps >= mOperatingRateExpected);
+                + "/" + expectedFps, mAchievedFps >= expectedFps);
     }
 }
