@@ -10,7 +10,8 @@ android_library {
     ],
     manifest: "src/main/AndroidManifest.xml",
     static_libs: [
-        "compatibility-device-util-axt"
+        "compatibility-device-util-axt",
+        "guava"
     ],
     min_sdk_version: "27"
 }

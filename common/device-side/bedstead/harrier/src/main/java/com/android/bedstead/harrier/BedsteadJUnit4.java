@@ -16,6 +16,8 @@
 
 package com.android.bedstead.harrier;
 
+import android.util.Log;
+
 import androidx.annotation.Nullable;
 
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
@@ -168,7 +170,6 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
             } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
                 throw new NeneException("Error expanding repeated annotations", e);
             }
-
         }
 
         if (annotation.annotationType().getAnnotation(ParameterizedAnnotation.class) != null
