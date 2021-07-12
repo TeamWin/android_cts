@@ -45,6 +45,8 @@ import com.android.bedstead.nene.utils.ShellCommandUtils;
 import com.android.bedstead.nene.utils.Versions;
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
 
+import com.google.common.io.Files;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -212,14 +214,14 @@ public final class Packages {
                     + "(Trying to install into user " + resolvedUser + ")");
         }
 
-        BlockingBroadcastReceiver broadcastReceiver = BlockingBroadcastReceiver.create(
-                mTestApis.context().instrumentedContext(), mPackageAddedIntentFilter);
-        broadcastReceiver.register();
+        BlockingBroadcastReceiver broadcastReceiver =
+                registerPackageInstalledBroadcastReceiver(user);
 
         try {
             // Expected output "Success"
             ShellCommand.builderForUser(user, "pm install")
                     .addOperand("-r") // Reinstall automatically
+                    .addOperand("-t") // Allow test-only install
                     .addOperand(apkFile.getAbsolutePath())
                     .validate(ShellCommandUtils::startsWithSuccess)
                     .execute();
@@ -242,6 +244,7 @@ public final class Packages {
         // TODO(scottjonathan): Could this be flaky? what if something is added elsewhere at
         //  the same time...
         String installedPackageName = intent.getDataString().split(":", 2)[1];
+
         return mTestApis.packages().find(installedPackageName);
     }
 
@@ -268,9 +271,35 @@ public final class Packages {
             throw new NullPointerException();
         }
 
-        //        if (!Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.S)) {
-        return installPreS(user, apkFile);
-//        }
+        if (!Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.S)) {
+            return installPreS(user, apkFile);
+        }
+
+        User resolvedUser = user.resolve();
+
+        if (resolvedUser == null || resolvedUser.state() != RUNNING_UNLOCKED) {
+            throw new NeneException("Packages can not be installed in non-started users "
+                    + "(Trying to install into user " + resolvedUser + ")");
+        }
+
+        BlockingBroadcastReceiver broadcastReceiver =
+                registerPackageInstalledBroadcastReceiver(user);
+        try {
+            // Expected output "Success"
+            ShellCommand.builderForUser(user, "pm install")
+                    .addOption("-S", apkFile.length)
+                    .addOperand("-r")
+                    .addOperand("-t")
+                    .writeToStdIn(apkFile)
+                    .validate(ShellCommandUtils::startsWithSuccess)
+                    .execute();
+
+            return waitForPackageAddedBroadcast(broadcastReceiver);
+        } catch (AdbException e) {
+            throw new NeneException("Could not install from bytes for user " + user, e);
+        } finally {
+            broadcastReceiver.unregisterQuietly();
+        }
 
         // TODO(scottjonathan): Re-enable this after we have a TestAPI which allows us to install
         //   testOnly apks
@@ -328,30 +357,20 @@ public final class Packages {
     }
 
     private PackageReference installPreS(UserReference user, byte[] apkFile) {
-        User resolvedUser = user.resolve();
-
-        if (resolvedUser == null || resolvedUser.state() != RUNNING_UNLOCKED) {
-            throw new NeneException("Packages can not be installed in non-started users "
-                    + "(Trying to install into user " + resolvedUser + ")");
-        }
-
-        BlockingBroadcastReceiver broadcastReceiver =
-                registerPackageInstalledBroadcastReceiver(user);
+        // Prior to S we cannot pass bytes to stdin so we write it to a temp file first
+        File outputDir = mTestApis.context().instrumentedContext().getCacheDir();
+        File outputFile = null;
         try {
-            // Expected output "Success"
-            ShellCommand.builderForUser(user, "pm install")
-                    .addOption("-S", apkFile.length)
-                    .addOperand("-r")
-                    .addOperand("-t")
-                    .writeToStdIn(apkFile)
-                    .validate(ShellCommandUtils::startsWithSuccess)
-                    .execute();
-
-            return waitForPackageAddedBroadcast(broadcastReceiver);
-        } catch (AdbException e) {
-            throw new NeneException("Could not install from bytes for user " + user, e);
+            outputFile = File.createTempFile("tmp", ".apk", outputDir);
+            Files.write(apkFile, outputFile);
+            outputFile.setReadable(true, false);
+            return install(user, outputFile);
+        } catch (IOException e) {
+            throw new NeneException("Error when writing bytes to temp file", e);
         } finally {
-            broadcastReceiver.unregisterQuietly();
+            if (outputFile != null) {
+                outputFile.delete();
+            }
         }
     }
 
@@ -402,9 +421,15 @@ public final class Packages {
                 mTestApis.context().androidContextAsUser(user),
                 mPackageAddedIntentFilter);
 
-        try (PermissionContext p =
-                    mTestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
+        if (user.equals(mTestApis.users().instrumented())) {
             broadcastReceiver.register();
+        } else {
+            // TODO(scottjonathan): If this is cross-user then it needs _FULL, but older versions
+            //  cannot get full - so we'll need to poll
+            try (PermissionContext p =
+                         mTestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
+                broadcastReceiver.register();
+            }
         }
 
         return broadcastReceiver;
