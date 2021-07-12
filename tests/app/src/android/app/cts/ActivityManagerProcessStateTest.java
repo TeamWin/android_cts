@@ -2287,6 +2287,49 @@ public class ActivityManagerProcessStateTest {
                 });
     }
 
+    @Test
+    public void testForegroundService_malformedNotificationExtras() throws Exception {
+        PermissionUtils.grantPermission(
+                STUB_PACKAGE_NAME, android.Manifest.permission.PACKAGE_USAGE_STATS);
+        // Use default timeout value 5000
+        final ServiceProcessController controller = new ServiceProcessController(mContext,
+                mInstrumentation, STUB_PACKAGE_NAME, mAllProcesses);
+
+        ApplicationInfo appInfo = mContext.getPackageManager().getApplicationInfo(
+                SIMPLE_PACKAGE_NAME, 0);
+        UidImportanceListener uidGoneListener = new UidImportanceListener(mContext,
+                appInfo.uid, IMPORTANCE_CACHED, WAIT_TIME);
+        uidGoneListener.register();
+
+        ActivityManager am = mContext.getSystemService(ActivityManager.class);
+
+        try {
+            controller.ensureProcessGone();
+
+            // Do initial setup.
+            controller.makeUidIdle();
+            controller.removeFromWhitelist();
+            controller.setAppOpMode(AppOpsManager.OPSTR_START_FOREGROUND, "allow");
+
+            // Put app on whitelist, to allow service to run.
+            controller.addToWhitelist();
+
+            // Add a bad extra to the FGS notification and try to start the service
+            // keep key in sync with com.android.cts.launcherapps.simpleapp.SimpleService
+            mServiceStartForegroundIntent.putExtra("NotifExtras", true);
+            mContext.startService(mServiceStartForegroundIntent);
+
+            // Make sure we crashed the process
+            uidGoneListener.waitForValue(IMPORTANCE_GONE, IMPORTANCE_GONE);
+            assertEquals(IMPORTANCE_GONE, am.getPackageImportance(SIMPLE_PACKAGE_NAME));
+        } finally {
+            mContext.stopService(mServiceStartForegroundIntent);
+            controller.cleanup();
+            controller.setAppOpMode(AppOpsManager.OPSTR_START_FOREGROUND, "ignore");
+            controller.removeFromWhitelist();
+        }
+    }
+
     private void testFgsStickyInternal(int stickyFlag, String waitForBroadcastAction,
             BiConsumer<WatchUidRunner, WaitForBroadcast> checkKillResult) throws Exception {
         ApplicationInfo app1Info = mContext.getPackageManager().getApplicationInfo(
