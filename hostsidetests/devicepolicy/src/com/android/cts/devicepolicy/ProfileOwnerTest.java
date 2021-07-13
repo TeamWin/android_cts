@@ -22,7 +22,7 @@ import static org.junit.Assert.fail;
 
 import com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.RequiresAdditionalFeatures;
 import com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.RequiresProfileOwnerSupport;
-import com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.TemporaryIgnoreOnHeadlessSystemUserMode;
+import com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.TemporarilyIgnoreOnHeadlessSystemUserMode;
 
 import org.junit.Test;
 
@@ -57,21 +57,21 @@ public class ProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
-    @TemporaryIgnoreOnHeadlessSystemUserMode(bugId = "183020176",
+    @TemporarilyIgnoreOnHeadlessSystemUserMode(bugId = "183020176",
             reason = "decide if it's needed or fix it")
     public void testManagement() throws Exception {
         executeProfileOwnerTest("ManagementTest");
     }
 
     @Test
-    @TemporaryIgnoreOnHeadlessSystemUserMode(bugId = "183020176",
+    @TemporarilyIgnoreOnHeadlessSystemUserMode(bugId = "183020176",
             reason = "decide if it's needed or fix it")
     public void testAdminActionBookkeeping() throws Exception {
         executeProfileOwnerTest("AdminActionBookkeepingTest");
     }
 
     @Test
-    @TemporaryIgnoreOnHeadlessSystemUserMode(bugId = "183020176",
+    @TemporarilyIgnoreOnHeadlessSystemUserMode(bugId = "183020176",
             reason = "decide if it's needed or fix it")
     public void testAppUsageObserver() throws Exception {
         executeProfileOwnerTest("AppUsageObserverTest");
