@@ -121,7 +121,7 @@ public class LocationAccessCheckTest {
             "location_access_check_enabled";
 
     private static final long UNEXPECTED_TIMEOUT_MILLIS = 10000;
-    private static final long EXPECTED_TIMEOUT_MILLIS = 1000;
+    private static final long EXPECTED_TIMEOUT_MILLIS = 5000;
     private static final long LOCATION_ACCESS_TIMEOUT_MILLIS = 15000;
 
     private static final Context sContext = InstrumentationRegistry.getTargetContext();
