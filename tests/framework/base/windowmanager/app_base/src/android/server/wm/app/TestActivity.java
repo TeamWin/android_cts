@@ -143,6 +143,14 @@ public class TestActivity extends AbstractLifecycleLogActivity {
         dumpConfigInfo();
     }
 
+    @Override
+    public void onMultiWindowModeChanged(boolean isInMultiWindowMode, Configuration newConfig) {
+        super.onMultiWindowModeChanged(isInMultiWindowMode, newConfig);
+        dumpConfiguration(newConfig);
+        dumpAssetSeqNumber(newConfig);
+        dumpConfigInfo();
+    }
+
     private void dumpAssetSeqNumber(Configuration newConfig) {
         withTestJournalClient(client -> {
             final Bundle extras = new Bundle();
