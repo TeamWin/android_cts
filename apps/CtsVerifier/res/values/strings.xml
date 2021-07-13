@@ -5080,14 +5080,15 @@ You should be prompted to select credentials; choose the ones you just installed
     <!-- Audio Loopback Latency Test -->
     <string name="audio_loopback_latency_test">Audio Loopback Latency Test</string>
     <string name="audio_loopback_info">
-          This test requires some form of audio loopback. This can be either:\n
+        This test verifies that the device can achieve the required or recommended loopback latency.
+        To pass the test, the device need only achieve this on one of the following audio paths:\n
           - a <a href="https://source.android.com/devices/audio/latency/loopback">Loopback Plug</a>  connected to a 3.5mm headset jack.\n
           - a <a href="https://source.android.com/devices/audio/latency/loopback">Loopback Plug</a>  connected to a USB audio adapter.\n
-          - a USB interface with patch cords connecting the input and output jaccks.
+          - a USB interface with patch cords connecting the input and output jacks.\n
           Please connect one of these Loopback mechanisms, and proceed with the instructions
-          on the screen.
-          The system will measure the input-output audio latency by injecting a pulse on the output,
-          and computing the distance between replicas of the pulse.
+          on the screen. The required &amp; recommended latencies will be displayed.
+          The system will measure the input-output audio latency by injecting an audio signal to
+          the output and compute the time between generating the signal and recording it back.
           You can vary the Audio Level slider to ensure the pulse will feed back at adequate levels.
           Repeat until a confidence level >= 0.6 is achieved.
     </string>
@@ -6015,12 +6016,6 @@ Follow the instructions on the screen to measure the frequency response for the 
 
     <string name="loopback_test_question">Does this device allow for the connection of a loopback audio peripheral?</string>
     <string name="loopback_dlg_caption">Loopback Peripheral Required</string>
-    <string name="loopback_dlg_text">This test requires an Audio Loopback Peripheral to be connected to the device.\n
-        This can be done in one of three ways:\n
-        1. Connect a <a href="https://source.android.com/devices/audio/latency/loopback">Loopback Plug</a> to the 3.5mm headset jack.\n
-        2. Connect a <a href="https://source.android.com/devices/audio/latency/loopback">Loopback Plug</a> to a USB-C headset adapter.\n
-        3. Connect a USB audio interface peripheral and connect the outputs to the inputs with audio patch cables.
-    </string>
 
     <string name="display_cutout_test">DisplayCutout Test</string>
     <string name="display_cutout_test_instruction">\n
