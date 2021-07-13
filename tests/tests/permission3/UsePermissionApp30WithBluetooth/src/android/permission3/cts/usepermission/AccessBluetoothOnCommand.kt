@@ -36,7 +36,7 @@ private const val TAG = "AccessBluetoothOnCommand"
 class AccessBluetoothOnCommand : ContentProvider() {
 
     private enum class Result {
-        UNKNOWN, EXCEPTION, EMPTY, FILTERED, FULL
+        UNKNOWN, ERROR, EXCEPTION, EMPTY, FILTERED, FULL
     }
 
     override fun call(authority: String, method: String, arg: String?, extras: Bundle?): Bundle? {
@@ -77,7 +77,8 @@ class AccessBluetoothOnCommand : ContentProvider() {
             SystemClock.sleep(3000)
 
             if (observedErrorCode.get() > 0) {
-                throw RuntimeException("Scan returned error code: " + observedErrorCode.get())
+                res.putInt(Intent.EXTRA_INDEX, Result.ERROR.ordinal)
+                return res
             }
 
             when (observedScans.size) {
