@@ -46,6 +46,8 @@ class CodecPerformanceTestBase {
     // that is greater than (FPS_TOLERANCE_FACTOR * expectedFps) will be considered as
     // passing the test
     static final double FPS_TOLERANCE_FACTOR = 0.95;
+    // TODO (b/193458026) Limit max expected fps to 240
+    static final int MAX_EXPECTED_FPS = 240;
     static final String mInputPrefix = WorkDir.getMediaDirString();
 
     ArrayList<MediaCodec.BufferInfo> mBufferInfos;
