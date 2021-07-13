@@ -16,6 +16,8 @@
 
 package com.android.bedstead.nene.permissions;
 
+import static android.content.pm.PackageManager.PERMISSION_GRANTED;
+
 import android.app.UiAutomation;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -164,7 +166,11 @@ public class Permissions {
             Log.d(LOG_TAG , "Trying to grant " + permission);
             if (resolvedInstrumentedPackage.grantedPermissions(sUser).contains(permission)) {
                 // Already granted, can skip
-                Log.d(LOG_TAG, permission + " already granted");
+                Log.d(LOG_TAG, permission + " already granted at runtime");
+            } else if (resolvedInstrumentedPackage.requestedPermissions().contains(permission)
+                    && sContext.checkSelfPermission(permission) == PERMISSION_GRANTED) {
+                // Already granted, can skip
+                Log.d(LOG_TAG, permission + " already granted from manifest");
             } else if (SUPPORTS_ADOPT_SHELL_PERMISSIONS
                     && sShellPackage.requestedPermissions().contains(permission)) {
                 adoptedShellPermissions.add(permission);

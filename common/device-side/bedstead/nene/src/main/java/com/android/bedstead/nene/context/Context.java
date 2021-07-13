@@ -29,7 +29,9 @@ public final class Context {
 
     private static final String ANDROID_PACKAGE = "android";
 
-    private static final android.content.Context sContext =
+    private static final android.content.Context sInstrumentedContext =
+            InstrumentationRegistry.getInstrumentation().getTargetContext();
+    private static final android.content.Context sInstrumentationContext =
             InstrumentationRegistry.getInstrumentation().getContext();
     private final TestApis mTestApis;
 
@@ -41,14 +43,28 @@ public final class Context {
      * Get the {@link android.content.Context} for the instrumented test app.
      */
     public android.content.Context instrumentedContext() {
-        return sContext;
+        return sInstrumentedContext;
     }
 
     /**
      * Get the {@link android.content.Context} for the instrumented test app in another user.
      */
     public android.content.Context instrumentedContextAsUser(UserReference user) {
-        return sContext.createContextAsUser(user.userHandle(), /* flags= */ 0);
+        return sInstrumentedContext.createContextAsUser(user.userHandle(), /* flags= */ 0);
+    }
+
+    /**
+     * Get the {@link android.content.Context} for the instrumentation app.
+     */
+    public android.content.Context instrumentationContext() {
+        return sInstrumentationContext;
+    }
+
+    /**
+     * Get the {@link android.content.Context} for the instrumentation app in another user.
+     */
+    public android.content.Context instrumentationContextAsUser(UserReference user) {
+        return sInstrumentationContext.createContextAsUser(user.userHandle(), /* flags= */ 0);
     }
 
     /**
@@ -56,7 +72,7 @@ public final class Context {
      */
     public android.content.Context androidContextAsUser(UserReference user) {
         try {
-            return sContext.createPackageContextAsUser(
+            return sInstrumentedContext.createPackageContextAsUser(
                     ANDROID_PACKAGE, /* flags= */ 0, user.userHandle());
         } catch (PackageManager.NameNotFoundException e) {
             throw new NeneException("Could not find android installed in user " + user, e);
