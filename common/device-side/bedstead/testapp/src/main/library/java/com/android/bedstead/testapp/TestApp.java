@@ -136,4 +136,9 @@ public class TestApp {
     public String packageName() {
         return mDetails.mPackageName;
     }
+
+    @Override
+    public String toString() {
+        return "TestApp[" + packageName() + "]";
+    }
 }
