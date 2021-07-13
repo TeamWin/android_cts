@@ -406,10 +406,9 @@ public class BlurTests extends WindowManagerTestBase {
 
         // Adjust the test to check a smaller part of the blurred area in order to accept various
         // blur algorithm approximations used in RenderEngine
-        final int kawaseOffset = (int) (blurRadius * 0.7f);
-        final int blurAreaStartX = width / 2 - blurRadius + kawaseOffset;
-        final int blurAreaEndX = width / 2 + blurRadius - kawaseOffset;
-        final int stepSize = kawaseOffset / 4;
+        final int stepSize = blurRadius / 4;
+        final int blurAreaStartX = width / 2 - blurRadius + stepSize;
+        final int blurAreaEndX = width / 2 + blurRadius;
 
         Color previousColor;
         Color currentColor;
