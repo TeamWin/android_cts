@@ -31,7 +31,8 @@ import java.util.Set;
 public final class TestAppProvider {
 
     private static final TestApis sTestApis = new TestApis();
-    private static final Context sContext = sTestApis.context().instrumentedContext();
+    // Must be instrumentation context to access resources
+    private static final Context sContext = sTestApis.context().instrumentationContext();
 
     private boolean mTestAppsInitialised = false;
     private final Set<TestAppDetails> mTestApps = new HashSet<>();
