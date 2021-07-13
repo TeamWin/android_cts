@@ -111,6 +111,7 @@ public class MultiDecoderPairPerfTest extends MultiCodecPerfTestBase {
             achievedFrameRate += result.get();
         }
         assertTrue("Unable to achieve the maxFrameRate supported. act/exp: " + achievedFrameRate
-                + "/" + mMaxFrameRate, achievedFrameRate >= mMaxFrameRate);
+                + "/" + mMaxFrameRate + " for " + maxInstances + " instances.",
+                achievedFrameRate >= mMaxFrameRate);
     }
 }

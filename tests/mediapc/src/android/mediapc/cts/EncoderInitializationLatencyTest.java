@@ -42,6 +42,7 @@ import org.junit.runners.Parameterized;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -269,39 +270,43 @@ public class EncoderInitializationLatencyTest {
     @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testInitializationLatency() throws Exception {
         final int NUM_MEASUREMENTS = 5;
+        // Test gathers initialization latency for a number of iterations and
+        // percentile is a variable used to control how many of these iterations
+        // need to meet the pass criteria. For NUM_MEASUREMENTS at 5, sync and Async
+        // modes which is a total of 10 iterations, this translates to index 7.
+        final int percentile = 70;
         long expectedMaxCodecInitializationLatencyMs = mMime.startsWith("audio/") ?
                 MAX_AUDIOENC_INITIALIZATION_LATENCY_MS : MAX_VIDEOENC_INITIALIZATION_LATENCY_MS;
-        long minEncoderInitializationLatencyMs = Integer.MAX_VALUE;
-        long maxEncoderInitializationLatencyMs = 0;
         long sumOfEncoderInitializationLatencyMs = 0;
         int count = 0;
+        long[] encoderInitializationLatencyMs = new long[NUM_MEASUREMENTS * boolStates.length];
         for (int i = 0; i < NUM_MEASUREMENTS; i++) {
             for (boolean isAsync : boolStates) {
                 EncoderInitializationLatency encoderInitializationLatency =
                         new EncoderInitializationLatency(mMime, mEncoderName, isAsync);
-                long encoderInitializationLatencyMs = encoderInitializationLatency
-                        .calculateEncoderInitializationLatency();
-                String errorLog = String.format("CodecInitialization latency for mime: %s, " +
-                        "Encoder: %s, Iteration: %d, mode: %s, is not as expected. act/exp " +
-                        " in Ms :: %d/%d", mMime, mEncoderName, i, (isAsync ? "async" : "sync"),
-                        encoderInitializationLatencyMs, expectedMaxCodecInitializationLatencyMs);
-                assertTrue(errorLog,
-                        encoderInitializationLatencyMs <= expectedMaxCodecInitializationLatencyMs);
-                if (encoderInitializationLatencyMs < minEncoderInitializationLatencyMs) {
-                    minEncoderInitializationLatencyMs = encoderInitializationLatencyMs;
-                }
-                if (encoderInitializationLatencyMs > maxEncoderInitializationLatencyMs) {
-                    maxEncoderInitializationLatencyMs = encoderInitializationLatencyMs;
-                }
-                sumOfEncoderInitializationLatencyMs += encoderInitializationLatencyMs;
+                long latency = encoderInitializationLatency.calculateEncoderInitializationLatency();
+                encoderInitializationLatencyMs[count] = latency;
+                sumOfEncoderInitializationLatencyMs += latency;
                 count++;
             }
         }
+        Arrays.sort(encoderInitializationLatencyMs);
+
         String statsLog = String.format("CodecInitialization latency for mime: %s, " +
                 "Encoder: %s, in Ms :: ", mMime, mEncoderName);
-        Log.i(LOG_TAG, "Min " + statsLog + minEncoderInitializationLatencyMs);
-        Log.i(LOG_TAG, "Max " + statsLog + maxEncoderInitializationLatencyMs);
+        Log.i(LOG_TAG, "Min " + statsLog + encoderInitializationLatencyMs[0]);
+        Log.i(LOG_TAG, "Max " + statsLog + encoderInitializationLatencyMs[count - 1]);
         Log.i(LOG_TAG, "Avg " + statsLog + (sumOfEncoderInitializationLatencyMs / count));
+
+        String errorLog = String.format(
+                "CodecInitialization latency for mime: %s, Encoder: %s is not as expected. "
+                        + "act/exp in Ms :: %d/%d",
+                mMime, mEncoderName, encoderInitializationLatencyMs[percentile * count / 100],
+                expectedMaxCodecInitializationLatencyMs);
+        assertTrue(errorLog,
+                encoderInitializationLatencyMs[percentile * count / 100]
+                        <= expectedMaxCodecInitializationLatencyMs);
+
     }
 }
 

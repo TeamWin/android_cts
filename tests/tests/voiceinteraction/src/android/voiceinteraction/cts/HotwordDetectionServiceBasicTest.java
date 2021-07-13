@@ -71,7 +71,7 @@ public final class HotwordDetectionServiceBasicTest
     private static final String PRIVACY_CHIP_PKG = "com.android.systemui";
     private static final String PRIVACY_CHIP_ID = "privacy_chip";
     private static final Long PERMISSION_INDICATORS_NOT_PRESENT = 162547999L;
-    private static final Long CLEAR_CHIP_MS = 3000L;
+    private static final Long CLEAR_CHIP_MS = 5000L;
 
     private static Instrumentation sInstrumentation = InstrumentationRegistry.getInstrumentation();
     private static UiDevice sUiDevice = UiDevice.getInstance(sInstrumentation);
@@ -138,6 +138,7 @@ public final class HotwordDetectionServiceBasicTest
     @RequiresDevice
     public void testHotwordDetectionService_onDetectFromDsp_success()
             throws Throwable {
+        Thread.sleep(CLEAR_CHIP_MS);
         // Create AlwaysOnHotwordDetector and wait the HotwordDetectionService ready
         testHotwordDetection(Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_TEST,
                 Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
@@ -146,6 +147,7 @@ public final class HotwordDetectionServiceBasicTest
         verifyDetectedResult(
                 performAndGetDetectionResult(Utils.HOTWORD_DETECTION_SERVICE_DSP_ONDETECT_TEST),
                 MainHotwordDetectionService.DETECTED_RESULT);
+        verifyMicrophoneChip(true);
     }
 
     @Test
@@ -160,18 +162,13 @@ public final class HotwordDetectionServiceBasicTest
 
         assertThat(performAndGetDetectionResult(Utils.HOTWORD_DETECTION_SERVICE_DSP_ONREJECT_TEST))
                 .isEqualTo(MainHotwordDetectionService.REJECTED_RESULT);
-        if (sPkgMgr.hasSystemFeature(PackageManager.FEATURE_LEANBACK)) {
-            // TODO ntmyren: test TV indicator
-        } else if (sPkgMgr.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
-            // TODO ntmyren: test Auto indicator
-        } else {
-            verifyMicrophoneChipHandheld(false);
-        }
+        verifyMicrophoneChip(false);
     }
 
     @Test
     public void testHotwordDetectionService_onDetectFromExternalSource_success()
             throws Throwable {
+        Thread.sleep(CLEAR_CHIP_MS);
         // Create AlwaysOnHotwordDetector and wait the HotwordDetectionService ready
         testHotwordDetection(Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_TEST,
                 Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
@@ -181,12 +178,14 @@ public final class HotwordDetectionServiceBasicTest
                 performAndGetDetectionResult(
                         Utils.HOTWORD_DETECTION_SERVICE_EXTERNAL_SOURCE_ONDETECT_TEST),
                 MainHotwordDetectionService.DETECTED_RESULT);
+        verifyMicrophoneChip(true);
     }
 
     @Test
     @RequiresDevice
     public void testHotwordDetectionService_onDetectFromMic_success()
             throws Throwable {
+        Thread.sleep(CLEAR_CHIP_MS);
         // Create SoftwareHotwordDetector and wait the HotwordDetectionService ready
         testHotwordDetection(Utils.HOTWORD_DETECTION_SERVICE_FROM_SOFTWARE_TRIGGER_TEST,
                 Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
@@ -195,6 +194,7 @@ public final class HotwordDetectionServiceBasicTest
         verifyDetectedResult(
                 performAndGetDetectionResult(Utils.HOTWORD_DETECTION_SERVICE_MIC_ONDETECT_TEST),
                 MainHotwordDetectionService.DETECTED_RESULT);
+        verifyMicrophoneChip(true);
     }
 
     @Test
@@ -289,6 +289,16 @@ public final class HotwordDetectionServiceBasicTest
                 expected.getPersonalizedScore());
         assertThat(hotwordDetectedResult.getScore()).isEqualTo(expected.getScore());
         assertThat(audioStream).isNull();
+    }
+
+    private void verifyMicrophoneChip(boolean shouldBePresent) throws Exception {
+        if (sPkgMgr.hasSystemFeature(PackageManager.FEATURE_LEANBACK)) {
+            // TODO ntmyren: test TV indicator
+        } else if (sPkgMgr.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+            // TODO ntmyren: test Auto indicator
+        } else {
+            verifyMicrophoneChipHandheld(shouldBePresent);
+        }
     }
 
     private void verifyMicrophoneChipHandheld(boolean shouldBePresent) throws Exception {

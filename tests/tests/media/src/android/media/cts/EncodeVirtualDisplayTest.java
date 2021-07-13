@@ -27,6 +27,7 @@ import android.media.MediaCodecList;
 import android.media.MediaFormat;
 import android.media.MediaMuxer;
 import android.opengl.GLES20;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -42,6 +43,9 @@ import android.view.WindowManager;
 import android.widget.ImageView;
 
 import androidx.test.filters.SmallTest;
+
+import com.android.compatibility.common.util.ApiLevelUtil;
+import com.android.compatibility.common.util.MediaUtils;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -121,6 +125,9 @@ public class EncodeVirtualDisplayTest extends AndroidTestCase {
         return 0xff << 24 | (red & 0xff) << 16 | (green & 0xff) << 8 | (blue & 0xff);
     }
 
+    private static boolean sIsAtLeastR = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.R);
+    private static boolean sIsAtLeastS = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S);
+
     @Override
     protected void setUp() throws Exception {
         super.setUp();
@@ -136,6 +143,9 @@ public class EncodeVirtualDisplayTest extends AndroidTestCase {
      * @throws Exception
      */
     public void testEncodeVirtualDisplay() throws Throwable {
+
+        if (!MediaUtils.check(sIsAtLeastR, "test needs Android 11")) return;
+
         EncodeVirtualWrapper.runTest(this);
     }
 
