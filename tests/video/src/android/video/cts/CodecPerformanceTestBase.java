@@ -22,6 +22,7 @@ import android.media.MediaCodecList;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.os.Build;
+import android.util.Range;
 import android.view.Surface;
 
 import java.io.File;
@@ -232,6 +233,20 @@ class CodecPerformanceTestBase {
         codec.release();
         assertTrue(maxOperatingRate != -1);
         return maxOperatingRate;
+    }
+
+    int getEncoderMinComplexity(String codecName, String mime) throws IOException {
+        MediaCodec codec = MediaCodec.createByCodecName(codecName);
+        MediaCodecInfo mediaCodecInfo = codec.getCodecInfo();
+        int minComplexity = -1;
+        if (mediaCodecInfo.isEncoder()) {
+            Range<Integer> complexityRange = mediaCodecInfo
+                    .getCapabilitiesForType(mime).getEncoderCapabilities()
+                    .getComplexityRange();
+            minComplexity = complexityRange.getLower();
+        }
+        codec.release();
+        return minComplexity;
     }
 
     void enqueueDecoderInput(int bufferIndex) {
