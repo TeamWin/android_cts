@@ -1086,7 +1086,8 @@ public class CarrierApiTest extends BaseCarrierApiTest {
         try {
             // Get all active subscriptions.
             List<SubscriptionInfo> activeSubInfos =
-                    mSubscriptionManager.getActiveSubscriptionInfoList();
+                    ShellIdentityUtils.invokeMethodWithShellPermissions(mSubscriptionManager,
+                    (sm) -> sm.getActiveSubscriptionInfoList());
 
             List<Integer> activeSubGroup = getSubscriptionIdList(activeSubInfos);
             activeSubGroup.removeIf(id -> id == subId);
@@ -1262,13 +1263,17 @@ public class CarrierApiTest extends BaseCarrierApiTest {
     }
 
     private void removeSubscriptionsFromGroup(ParcelUuid uuid) {
-        List<SubscriptionInfo> infoList = mSubscriptionManager.getSubscriptionsInGroup(uuid);
+        List<SubscriptionInfo> infoList = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mSubscriptionManager,
+                (sm) -> (sm.getSubscriptionsInGroup(uuid)));
         if (!infoList.isEmpty()) {
             List<Integer> subscriptionIdList = getSubscriptionIdList(infoList);
             ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mSubscriptionManager,
                     (sm) -> sm.removeSubscriptionsFromGroup(subscriptionIdList, uuid));
         }
-        infoList = mSubscriptionManager.getSubscriptionsInGroup(uuid);
+        infoList = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mSubscriptionManager,
+                (sm) -> (sm.getSubscriptionsInGroup(uuid)));
         assertThat(infoList).isEmpty();
     }
 
