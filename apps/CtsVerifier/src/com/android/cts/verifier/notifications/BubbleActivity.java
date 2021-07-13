@@ -4,12 +4,11 @@ import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.graphics.Insets;
-import android.graphics.Rect;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewTreeObserver;
-import android.view.WindowInsets;
 import android.view.WindowManager;
 import android.view.WindowMetrics;
 import android.widget.EditText;
@@ -24,6 +23,7 @@ public class BubbleActivity extends Activity {
     public static final String EXTRA_TEST_NAME = "test_id";
     public static final String TEST_MIN_HEIGHT = "minHeight";
     public static final String TEST_MAX_HEIGHT = "maxHeight";
+    public static final String EXTRA_INSETS = "insets";
 
     private View mRoot;
     private TextView mTitle;
@@ -31,14 +31,13 @@ public class BubbleActivity extends Activity {
     private EditText mEditText;
 
     private String mTestName = null;
-    private Rect mBounds = new Rect();
+    private Insets mInsets;
     private boolean mIsLargeScreen;
 
     private ViewTreeObserver.OnGlobalLayoutListener mListener =
             new ViewTreeObserver.OnGlobalLayoutListener() {
                 @Override
                 public void onGlobalLayout() {
-                    mRoot.getBoundsOnScreen(mBounds);
                     checkHeight();
                     mRoot.getViewTreeObserver().removeOnGlobalLayoutListener(this);
                 }
@@ -60,7 +59,9 @@ public class BubbleActivity extends Activity {
     }
 
     private void setUpTestForExtras() {
-        mTestName = getIntent().getStringExtra(EXTRA_TEST_NAME);
+        Intent i = getIntent();
+        mTestName = i.getStringExtra(EXTRA_TEST_NAME);
+        mInsets = i.getParcelableExtra(EXTRA_INSETS);
         if (mTestName == null) {
             mTestMessage.setVisibility(GONE);
             return;
@@ -87,18 +88,18 @@ public class BubbleActivity extends Activity {
                 mTestMessage.setText("Test Passed!");
             }
         } else if (TEST_MAX_HEIGHT.equals(mTestName)) {
-            WindowMetrics windowMetrics =
+            // These are max size which won't include insets.
+            WindowMetrics windowMetricsMax =
                     getSystemService(WindowManager.class).getMaximumWindowMetrics();
-            WindowInsets metricInsets = windowMetrics.getWindowInsets();
-            Insets insets = metricInsets.getInsetsIgnoringVisibility(
-                    WindowInsets.Type.navigationBars()
-                            | WindowInsets.Type.statusBars()
-                            | WindowInsets.Type.displayCutout());
+            // These show the metrics for the bubble activity / the bounds will be that of TaskView
+            WindowMetrics bubbleWindowMetrics =
+                    getSystemService(WindowManager.class).getCurrentWindowMetrics();
             if (mIsLargeScreen) {
-                final float percentOfScreen = windowMetrics.getBounds().height() * 0.70f;
-                if (mBounds.height() < percentOfScreen) {
+                final float percentOfScreen = windowMetricsMax.getBounds().height() * 0.70f;
+                if (bubbleWindowMetrics.getBounds().height() < percentOfScreen) {
                     mTestMessage.setText("Test failed --"
-                            + " the bubble expanded view is too small, it is: " + mBounds.height()
+                            + " the bubble expanded view is too small, it is: "
+                            + bubbleWindowMetrics.getBounds().height()
                             + " and minimum is: " + percentOfScreen);
                 } else {
                     mTestMessage.setText("Test Passed!");
@@ -108,8 +109,8 @@ public class BubbleActivity extends Activity {
                 // padding for the manage button so we allow some flux (200dp).
                 int maxHeightBuffer = getResources().getDimensionPixelSize(
                         R.dimen.bubble_expanded_view_max_height_buffer);
-                int bottomInset = windowMetrics.getBounds().bottom - insets.bottom;
-                int diff = bottomInset - mBounds.bottom;
+                int bottomInset = windowMetricsMax.getBounds().bottom - mInsets.bottom;
+                int diff = bottomInset - bubbleWindowMetrics.getBounds().bottom;
                 if (diff > maxHeightBuffer) {
                     mTestMessage.setText("Test failed -- bottom of the bubble expanded view "
                             + "isn't close enough to the bottom inset: " + diff);
