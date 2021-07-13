@@ -164,17 +164,21 @@ public class KeyguardTests extends KeyguardTestBase {
                         .setTargetActivity(SHOW_WHEN_LOCKED_ATTR_ROTATION_ACTIVITY));
 
         mWmState.computeState(SHOW_WHEN_LOCKED_ACTIVITY, SHOW_WHEN_LOCKED_ATTR_ROTATION_ACTIVITY);
-        mWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, false);
         mWmState.assertVisibility(SHOW_WHEN_LOCKED_ATTR_ROTATION_ACTIVITY, true);
+        mWmState.assertFocusedActivity("Launching Activity must be focused",
+                SHOW_WHEN_LOCKED_ATTR_ROTATION_ACTIVITY);
         lockScreenSession.gotoKeyguard(SHOW_WHEN_LOCKED_ATTR_ROTATION_ACTIVITY);
 
-        mWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, false);
         mWmState.assertVisibility(SHOW_WHEN_LOCKED_ATTR_ROTATION_ACTIVITY, true);
+        mWmState.assertFocusedActivity("Top activity stay un-change",
+                SHOW_WHEN_LOCKED_ATTR_ROTATION_ACTIVITY);
         mWmState.assertKeyguardShowingAndOccluded();
 
         showWhenLockedActivitySession.finish();
         mWmState.computeState(SHOW_WHEN_LOCKED_ACTIVITY);
         mWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);
+        mWmState.assertFocusedActivity("ShowWhenLocked activity must occludes keyguard",
+                SHOW_WHEN_LOCKED_ACTIVITY);
         mWmState.assertKeyguardShowingAndOccluded();
     }
 
