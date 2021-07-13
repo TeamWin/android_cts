@@ -18,6 +18,7 @@ package android.sensorprivacy.cts
 
 import android.app.KeyguardManager
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.hardware.SensorPrivacyManager
 import android.hardware.SensorPrivacyManager.OnSensorPrivacyChangedListener
 import android.os.PowerManager
@@ -161,6 +162,9 @@ abstract class SensorPrivacyBaseTest(
 
     @Test
     fun testCantChangeWhenLocked() {
+        Assume.assumeTrue(packageManager
+                .hasSystemFeature(PackageManager.FEATURE_SECURE_LOCK_SCREEN))
+
         setSensor(false)
         assertFalse(isSensorPrivacyEnabled())
         runWhileLocked {
