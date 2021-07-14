@@ -41,6 +41,7 @@ android_test {
         "general-tests",
     ],
     certificate: ":ec-p256",
+    v4_signature: true,
 }
 
 // This is the second version of the test app signed with the rotated signing
@@ -59,6 +60,7 @@ android_test {
     certificate: ":ec-p256_2",
     additional_certificates: [":ec-p256"],
     lineage: ":ec-p256-por_1_2-default-caps",
+    v4_signature: true,
 }
 
 // This is the third version of the test app signed with the same rotated
@@ -77,4 +79,5 @@ android_test {
     certificate: ":ec-p256_2",
     additional_certificates: [":ec-p256"],
     lineage: ":ec-p256-por_1_2-default-caps",
+    v4_signature: true,
 }
