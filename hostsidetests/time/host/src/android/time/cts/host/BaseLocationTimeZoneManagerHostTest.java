@@ -15,22 +15,18 @@
  */
 package android.time.cts.host;
 
-import static android.time.cts.host.LocationTimeZoneManager.DUMP_STATE_OPTION_PROTO;
-import static android.time.cts.host.LocationTimeZoneManager.DeviceConfig.KEY_PRIMARY_LOCATION_TIME_ZONE_PROVIDER_MODE_OVERRIDE;
-import static android.time.cts.host.LocationTimeZoneManager.DeviceConfig.KEY_SECONDARY_LOCATION_TIME_ZONE_PROVIDER_MODE_OVERRIDE;
-import static android.time.cts.host.LocationTimeZoneManager.DeviceConfig.PROVIDER_MODE_SIMULATED;
-import static android.time.cts.host.LocationTimeZoneManager.PRIMARY_PROVIDER_INDEX;
-import static android.time.cts.host.LocationTimeZoneManager.SECONDARY_PROVIDER_INDEX;
-import static android.time.cts.host.LocationTimeZoneManager.SHELL_COMMAND_DUMP_STATE;
-import static android.time.cts.host.LocationTimeZoneManager.SHELL_COMMAND_RECORD_PROVIDER_STATES;
-import static android.time.cts.host.LocationTimeZoneManager.SHELL_COMMAND_SEND_PROVIDER_TEST_COMMAND;
-import static android.time.cts.host.LocationTimeZoneManager.SHELL_COMMAND_START;
-import static android.time.cts.host.LocationTimeZoneManager.SHELL_COMMAND_STOP;
-import static android.time.cts.host.LocationTimeZoneManager.SIMULATED_PROVIDER_TEST_COMMAND_ON_BIND;
-import static android.time.cts.host.LocationTimeZoneManager.SIMULATED_PROVIDER_TEST_COMMAND_SUCCESS;
-import static android.time.cts.host.LocationTimeZoneManager.SIMULATED_PROVIDER_TEST_COMMAND_SUCCESS_ARG_KEY_TZ;
+import static android.app.time.cts.shell.DeviceConfigKeys.NAMESPACE_SYSTEM_TIME;
+import static android.app.time.cts.shell.LocationTimeZoneManagerShellHelper.PRIMARY_PROVIDER_INDEX;
+import static android.app.time.cts.shell.LocationTimeZoneManagerShellHelper.PROVIDER_MODE_SIMULATED;
+import static android.app.time.cts.shell.LocationTimeZoneManagerShellHelper.SECONDARY_PROVIDER_INDEX;
 
 import android.app.time.LocationTimeZoneManagerServiceStateProto;
+import android.app.time.cts.shell.DeviceConfigShellHelper;
+import android.app.time.cts.shell.DeviceShellCommandExecutor;
+import android.app.time.cts.shell.LocationShellHelper;
+import android.app.time.cts.shell.LocationTimeZoneManagerShellHelper;
+import android.app.time.cts.shell.TimeZoneDetectorShellHelper;
+import android.app.time.cts.shell.host.HostShellCommandExecutor;
 
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.google.protobuf.Parser;
@@ -47,24 +43,31 @@ public abstract class BaseLocationTimeZoneManagerHostTest extends BaseHostJUnit4
 
     private boolean mOriginalGeoDetectionEnabled;
 
-    protected TimeZoneDetectorHostHelper mTimeZoneDetectorHostHelper;
+    protected TimeZoneDetectorShellHelper mTimeZoneDetectorShellHelper;
+    private LocationTimeZoneManagerShellHelper mLocationTimeZoneManagerShellHelper;
+    private LocationShellHelper mLocationShellHelper;
+    private DeviceConfigShellHelper mDeviceConfigShellHelper;
+    private DeviceConfigShellHelper.PreTestState mDeviceConfigPreTestState;
 
     @Before
     public void setUp() throws Exception {
-        TimeZoneDetectorHostHelper timeZoneDetectorHostHelper =
-                new TimeZoneDetectorHostHelper(getDevice());
+        DeviceShellCommandExecutor shellCommandExecutor = new HostShellCommandExecutor(getDevice());
+        mTimeZoneDetectorShellHelper = new TimeZoneDetectorShellHelper(shellCommandExecutor);
+        mLocationTimeZoneManagerShellHelper =
+                new LocationTimeZoneManagerShellHelper(shellCommandExecutor);
+        mLocationShellHelper = new LocationShellHelper(shellCommandExecutor);
+        mDeviceConfigShellHelper = new DeviceConfigShellHelper(shellCommandExecutor);
 
         // Confirm the service being tested is present. It can be turned off, in which case there's
         // nothing to test.
-        timeZoneDetectorHostHelper.assumeLocationTimeZoneManagerIsPresent();
-
-        // Only set this if the device meets requirements. It is used to work out if there is
-        // tearDown work required.
-        mTimeZoneDetectorHostHelper = timeZoneDetectorHostHelper;
+        mLocationTimeZoneManagerShellHelper.assumeLocationTimeZoneManagerIsPresent();
 
         // All tests start with the location_time_zone_manager disabled so that providers can be
         // configured.
         stopLocationTimeZoneManagerService();
+
+        mDeviceConfigPreTestState = mDeviceConfigShellHelper.setSyncModeForTest(
+                DeviceConfigShellHelper.SYNC_DISABLED_MODE_UNTIL_REBOOT, NAMESPACE_SYSTEM_TIME);
 
         // Configure two simulated providers. At least one is needed to be able to turn on
         // geo detection below. Tests may override these values for their own use.
@@ -73,28 +76,28 @@ public abstract class BaseLocationTimeZoneManagerHostTest extends BaseHostJUnit4
 
         // Make sure locations is enabled, otherwise the geo detection feature will be disabled
         // whatever the geolocation detection setting is set to.
-        mOriginalLocationEnabled = mTimeZoneDetectorHostHelper.isLocationEnabledForCurrentUser();
+        mOriginalLocationEnabled = mLocationShellHelper.isLocationEnabledForCurrentUser();
         if (!mOriginalLocationEnabled) {
-            mTimeZoneDetectorHostHelper.setLocationEnabledForCurrentUser(true);
+            mLocationShellHelper.setLocationEnabledForCurrentUser(true);
         }
 
         // Make sure automatic time zone detection is enabled, otherwise the geo detection feature
         // will be disabled whatever the geolocation detection setting is set to
-        mOriginalAutoDetectionEnabled = mTimeZoneDetectorHostHelper.isAutoDetectionEnabled();
+        mOriginalAutoDetectionEnabled = mTimeZoneDetectorShellHelper.isAutoDetectionEnabled();
         if (!mOriginalAutoDetectionEnabled) {
-            mTimeZoneDetectorHostHelper.setAutoDetectionEnabled(true);
+            mTimeZoneDetectorShellHelper.setAutoDetectionEnabled(true);
         }
 
         // Make sure geolocation time zone detection is enabled.
-        mOriginalGeoDetectionEnabled = mTimeZoneDetectorHostHelper.isGeoDetectionEnabled();
+        mOriginalGeoDetectionEnabled = mTimeZoneDetectorShellHelper.isGeoDetectionEnabled();
         if (!mOriginalGeoDetectionEnabled) {
-            mTimeZoneDetectorHostHelper.setGeoDetectionEnabled(true);
+            mTimeZoneDetectorShellHelper.setGeoDetectionEnabled(true);
         }
     }
 
     @After
     public void tearDown() throws Exception {
-        if (mTimeZoneDetectorHostHelper == null) {
+        if (!mLocationTimeZoneManagerShellHelper.isLocationTimeZoneManagerPresent()) {
             // Setup didn't do anything, no need to tearDown.
             return;
         }
@@ -103,11 +106,12 @@ public abstract class BaseLocationTimeZoneManagerHostTest extends BaseHostJUnit4
         stopLocationTimeZoneManagerService();
 
         // Reset settings and server flags as best we can.
-        mTimeZoneDetectorHostHelper.setGeoDetectionEnabled(mOriginalGeoDetectionEnabled);
-        mTimeZoneDetectorHostHelper.setAutoDetectionEnabled(mOriginalAutoDetectionEnabled);
-        mTimeZoneDetectorHostHelper.setLocationEnabledForCurrentUser(mOriginalLocationEnabled);
-        mTimeZoneDetectorHostHelper.resetSystemTimeDeviceConfigKeys();
+        mTimeZoneDetectorShellHelper.setGeoDetectionEnabled(mOriginalGeoDetectionEnabled);
+        mTimeZoneDetectorShellHelper.setAutoDetectionEnabled(mOriginalAutoDetectionEnabled);
+        mLocationShellHelper.setLocationEnabledForCurrentUser(mOriginalLocationEnabled);
         setLocationTimeZoneManagerStateRecordingMode(false);
+
+        mDeviceConfigShellHelper.restoreDeviceConfigStateForTest(mDeviceConfigPreTestState);
 
         // Attempt to start the service. It may not start if there are no providers configured,
         // but that is ok.
@@ -116,65 +120,34 @@ public abstract class BaseLocationTimeZoneManagerHostTest extends BaseHostJUnit4
 
     protected LocationTimeZoneManagerServiceStateProto dumpLocationTimeZoneManagerServiceState()
             throws Exception {
-        byte[] protoBytes = executeLocationTimeZoneManagerCommand(
-                "%s --%s", SHELL_COMMAND_DUMP_STATE, DUMP_STATE_OPTION_PROTO);
+        byte[] protoBytes = mLocationTimeZoneManagerShellHelper.dumpState();
         Parser<LocationTimeZoneManagerServiceStateProto> parser =
                 LocationTimeZoneManagerServiceStateProto.parser();
         return parser.parseFrom(protoBytes);
     }
 
     protected void setLocationTimeZoneManagerStateRecordingMode(boolean enabled) throws Exception {
-        String command = String.format("%s %s", SHELL_COMMAND_RECORD_PROVIDER_STATES, enabled);
-        executeLocationTimeZoneManagerCommand(command);
+        mLocationTimeZoneManagerShellHelper.recordProviderStates(enabled);
     }
 
     protected void startLocationTimeZoneManagerService() throws Exception {
-        executeLocationTimeZoneManagerCommand(SHELL_COMMAND_START);
+        mLocationTimeZoneManagerShellHelper.start();
     }
 
     protected void stopLocationTimeZoneManagerService() throws Exception {
-        executeLocationTimeZoneManagerCommand(SHELL_COMMAND_STOP);
+        mLocationTimeZoneManagerShellHelper.stop();
     }
 
     protected void setProviderModeOverride(int providerIndex, String mode) throws Exception {
-        String deviceConfigKey;
-        if (providerIndex == PRIMARY_PROVIDER_INDEX) {
-            deviceConfigKey = KEY_PRIMARY_LOCATION_TIME_ZONE_PROVIDER_MODE_OVERRIDE;
-        } else {
-            deviceConfigKey = KEY_SECONDARY_LOCATION_TIME_ZONE_PROVIDER_MODE_OVERRIDE;
-        }
-
-        if (mode == null) {
-            mTimeZoneDetectorHostHelper.clearSystemTimeDeviceConfigKey(deviceConfigKey);
-        } else {
-            mTimeZoneDetectorHostHelper.setSystemTimeDeviceConfigKey(deviceConfigKey, mode);
-        }
+        mLocationTimeZoneManagerShellHelper.setProviderModeOverride(providerIndex, mode);
     }
 
     protected void simulateProviderSuggestion(int providerIndex, String... zoneIds)
             throws Exception {
-        String timeZoneIds = String.join("&", zoneIds);
-        String testCommand = String.format("%s %s=string_array:%s",
-                SIMULATED_PROVIDER_TEST_COMMAND_SUCCESS,
-                SIMULATED_PROVIDER_TEST_COMMAND_SUCCESS_ARG_KEY_TZ,
-                timeZoneIds);
-        executeProviderTestCommand(providerIndex, testCommand);
+        mLocationTimeZoneManagerShellHelper.simulateProviderSuggestion(providerIndex, zoneIds);
     }
 
     protected void simulateProviderBind(int providerIndex) throws Exception {
-        executeProviderTestCommand(providerIndex, SIMULATED_PROVIDER_TEST_COMMAND_ON_BIND);
-    }
-
-    private void executeProviderTestCommand(int providerIndex, String testCommand)
-            throws Exception {
-        executeLocationTimeZoneManagerCommand("%s %s %s",
-                SHELL_COMMAND_SEND_PROVIDER_TEST_COMMAND, providerIndex, testCommand);
-    }
-
-    private byte[] executeLocationTimeZoneManagerCommand(String cmd, Object... args)
-            throws Exception {
-        String command = String.format(cmd, args);
-        return mTimeZoneDetectorHostHelper.executeShellCommandReturnBytes("cmd %s %s",
-                LocationTimeZoneManager.SHELL_COMMAND_SERVICE_NAME, command);
+        mLocationTimeZoneManagerShellHelper.simulateProviderBind(providerIndex);
     }
 }
