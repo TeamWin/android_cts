@@ -39,6 +39,7 @@ import org.junit.After
 import org.junit.Assert.assertNotEquals
 import org.junit.Assume.assumeTrue
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 
 /**
@@ -90,6 +91,7 @@ class PermissionTest30WithBluetooth : BaseUsePermissionTest() {
     }
 
     @Test
+    @Ignore
     fun testGivenBluetoothIsDeniedWhenScanIsAttemptedThenThenGetEmptyScanResult() {
         assertBluetoothRevokedCompatState(revoked = false)
         // Should return empty while the app does not have location
@@ -113,6 +115,7 @@ class PermissionTest30WithBluetooth : BaseUsePermissionTest() {
     }
 
     @Test
+    @Ignore
     fun testRevokedCompatPersistsOnReinstall() {
         assertBluetoothRevokedCompatState(revoked = false)
         revokeAppPermissions(BLUETOOTH_SCAN, isLegacyApp = true)
