@@ -25,6 +25,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import java.util.HashSet;
+import java.util.Set;
+
 @RunWith(JUnit4.class)
 public class TestAppProviderTest {
 
@@ -33,6 +36,8 @@ public class TestAppProviderTest {
 
     // Expects that this package name does not match an actual test app
     private static final String NOT_EXISTING_PACKAGENAME = "not.existing.test.app";
+
+    private static final String QUERY_ONLY_TEST_APP_PACKAGE_NAME = "android.RemoteDPCTestApp";
 
     private TestAppProvider mTestAppProvider;
 
@@ -82,6 +87,30 @@ public class TestAppProviderTest {
         TestAppQueryBuilder query = mTestAppProvider.query().wherePackageName().isEqualTo(EXISTING_PACKAGENAME);
 
         assertThrows(NotFoundException.class, query::get);
+    }
+
+    @Test
+    public void any_doesNotReturnPackageQueryOnlyTestApps() {
+        Set<String> testAppPackageNames = new HashSet<>();
+
+        while (true) {
+            try {
+                testAppPackageNames.add(mTestAppProvider.any().packageName());
+            } catch (NotFoundException e) {
+                // Expected when we run out of test apps
+                break;
+            }
+        }
+
+        assertThat(testAppPackageNames).doesNotContain(QUERY_ONLY_TEST_APP_PACKAGE_NAME);
+    }
+
+    @Test
+    public void query_queryByPackageName_doesReturnPackageQueryOnlyTestApps() {
+        assertThat(
+                mTestAppProvider.query()
+                        .wherePackageName().isEqualTo(QUERY_ONLY_TEST_APP_PACKAGE_NAME)
+                        .get()).isNotNull();
     }
 
     // TODO(scottjonathan): Once we support features other than package name, test that we can get
