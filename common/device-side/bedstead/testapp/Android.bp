@@ -6,7 +6,7 @@ android_library {
     name: "TestApp_TestApps",
     sdk_version: "test_current",
     srcs: [
-        "src/main/testapps/java/**/*.java"
+        "src/testapps/main/java/**/*.java"
     ],
     static_libs: [
         "Nene",
@@ -15,8 +15,9 @@ android_library {
         "ConnectedAppsSDK",
         "ConnectedAppsSDK_Annotations",
         "androidx.annotation_annotation",
+        "RemoteFrameworkClasses"
     ],
-    manifest: "src/main/testapps/AndroidManifest.xml",
+    manifest: "src/testapps/main/AndroidManifest.xml",
     min_sdk_version: "28",
     plugins: ["ConnectedAppsSDK_Processor", "TestApp_Processor"],
 }
@@ -25,7 +26,7 @@ android_library {
     name: "TestApp",
     sdk_version: "test_current",
     srcs: [
-        "src/main/library/java/**/*.java"
+        "src/library/main/java/**/*.java"
     ],
     static_libs: [
         "Nene",
@@ -37,7 +38,7 @@ android_library {
         "androidx.annotation_annotation",
         "TestApp_TestApps"
     ],
-    manifest: "src/main/library/AndroidManifest.xml",
+    manifest: "src/library/main/AndroidManifest.xml",
     min_sdk_version: "28",
     resource_zips: [":TestApp_Apps"],
     plugins: ["ConnectedAppsSDK_Processor", "TestApp_Processor"],
