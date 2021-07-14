@@ -16,7 +16,7 @@
 
 package com.android.bedstead.harrier.policies;
 
-import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.DeviceOwnerControl.AFFILIATED;
+import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.DeviceOwnerControl.USER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.ProfileOwnerControl.AFFILIATED_OR_NO_DO;
 
 import android.app.admin.DevicePolicyManager;
@@ -32,6 +32,6 @@ import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
  * {@link DevicePolicyManager#setLockTaskFeatures(ComponentName, int)} and
  * {@link DevicePolicyManager#setLockTaskPackages(ComponentName, String[])}.
  */
-@EnterprisePolicy(deviceOwner = AFFILIATED, profileOwner = AFFILIATED_OR_NO_DO)
+@EnterprisePolicy(deviceOwner = USER, profileOwner = AFFILIATED_OR_NO_DO)
 public final class LockTask {
 }
