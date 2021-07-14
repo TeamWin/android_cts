@@ -16,39 +16,39 @@
 
 package android.app.time.cts;
 
-import static android.provider.DeviceConfig.NAMESPACE_SYSTEM_TIME;
+import static android.app.time.cts.shell.DeviceConfigKeys.NAMESPACE_SYSTEM_TIME;
+import static android.app.time.cts.shell.DeviceConfigShellHelper.SYNC_DISABLED_MODE_UNTIL_REBOOT;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import android.app.UiAutomation;
+import android.app.Instrumentation;
 import android.app.time.Capabilities;
 import android.app.time.ExternalTimeSuggestion;
 import android.app.time.TimeManager;
 import android.app.time.TimeZoneCapabilities;
 import android.app.time.TimeZoneCapabilitiesAndConfig;
 import android.app.time.TimeZoneConfiguration;
+import android.app.time.cts.shell.DeviceConfigKeys;
+import android.app.time.cts.shell.DeviceConfigShellHelper;
+import android.app.time.cts.shell.DeviceShellCommandExecutor;
+import android.app.time.cts.shell.device.InstrumentationShellCommandExecutor;
 import android.content.Context;
 import android.location.LocationManager;
 import android.os.SystemClock;
 import android.os.UserHandle;
-import android.provider.DeviceConfig;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.AdoptShellPermissionsRule;
-import com.google.common.io.ByteStreams;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.concurrent.ExecutorService;
@@ -65,29 +65,26 @@ public class TimeManagerTest {
     @Rule
     public final AdoptShellPermissionsRule shellPermRule = new AdoptShellPermissionsRule();
 
-    private boolean mWasDeviceConfigSyncDisabled;
+    private DeviceConfigShellHelper mDeviceConfigShellHelper;
+    private DeviceConfigShellHelper.PreTestState mDeviceConfigPreTestState;
 
     @Before
     public void before() throws Exception {
+        Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+        DeviceShellCommandExecutor shellCommandExecutor = new InstrumentationShellCommandExecutor(
+                instrumentation.getUiAutomation());
+        mDeviceConfigShellHelper = new DeviceConfigShellHelper(shellCommandExecutor);
+
         // This anticipates a future state where a generally applied target preparer may disable
         // device_config sync for all CTS tests: only suspend syncing if it isn't already suspended,
         // and only resume it if this test suspended it.
-        mWasDeviceConfigSyncDisabled = DeviceConfigShellCommand.isSyncDisabled();
-        if (!mWasDeviceConfigSyncDisabled) {
-            DeviceConfigShellCommand.setSyncDisabled(
-                    DeviceConfigShellCommand.SYNC_DISABLED_MODE_UNTIL_REBOOT);
-        }
+        mDeviceConfigPreTestState = mDeviceConfigShellHelper.setSyncModeForTest(
+                SYNC_DISABLED_MODE_UNTIL_REBOOT, NAMESPACE_SYSTEM_TIME);
     }
 
     @After
     public void after() throws Exception {
-        DeviceConfigShellCommand.resetToDefaults(
-                DeviceConfigShellCommand.RESET_MODE_TRUSTED_DEFAULTS, NAMESPACE_SYSTEM_TIME);
-        if (!mWasDeviceConfigSyncDisabled) {
-            // Turn syncing back on if this test disabled it.
-            DeviceConfigShellCommand.setSyncDisabled(
-                    DeviceConfigShellCommand.SYNC_DISABLED_MODE_NONE);
-        }
+        mDeviceConfigShellHelper.restoreDeviceConfigStateForTest(mDeviceConfigPreTestState);
     }
 
     /**
@@ -188,10 +185,9 @@ public class TimeManagerTest {
 
         // Set the time detector to only use ORIGIN_NETWORK. The important aspect is that it isn't
         // ORIGIN_EXTERNAL, and so suggestions from external should be ignored.
-        DeviceConfig.setProperty(NAMESPACE_SYSTEM_TIME,
-                TimeDetectorServerFlags.KEY_TIME_DETECTOR_ORIGIN_PRIORITIES_OVERRIDE,
-                TimeDetectorServerFlags.ORIGIN_NETWORK,
-                /*makeDefault=*/false);
+        mDeviceConfigShellHelper.put(NAMESPACE_SYSTEM_TIME,
+                DeviceConfigKeys.TimeDetector.KEY_TIME_DETECTOR_ORIGIN_PRIORITIES_OVERRIDE,
+                DeviceConfigKeys.TimeDetector.ORIGIN_NETWORK);
         sleepForAsyncOperation();
 
         long suggestion1Millis =
@@ -212,10 +208,9 @@ public class TimeManagerTest {
 
         // Set the time detector to only use ORIGIN_EXTERNAL.
         // The suggestion should have been stored and acted upon when the origin list changes.
-        DeviceConfig.setProperty(NAMESPACE_SYSTEM_TIME,
-                TimeDetectorServerFlags.KEY_TIME_DETECTOR_ORIGIN_PRIORITIES_OVERRIDE,
-                TimeDetectorServerFlags.ORIGIN_EXTERNAL,
-                /*makeDefault=*/false);
+        mDeviceConfigShellHelper.put(NAMESPACE_SYSTEM_TIME,
+                DeviceConfigKeys.TimeDetector.KEY_TIME_DETECTOR_ORIGIN_PRIORITIES_OVERRIDE,
+                DeviceConfigKeys.TimeDetector.ORIGIN_EXTERNAL);
         sleepForAsyncOperation();
         assertTrue(System.currentTimeMillis() >= suggestion1Millis);
 
@@ -230,9 +225,6 @@ public class TimeManagerTest {
         timeManager.suggestExternalTime(
                 originalTimeSuggestion);
         sleepForAsyncOperation();
-
-        DeviceConfigShellCommand.resetToDefaults(
-                DeviceConfigShellCommand.RESET_MODE_TRUSTED_DEFAULTS, NAMESPACE_SYSTEM_TIME);
     }
 
     /**
@@ -296,71 +288,6 @@ public class TimeManagerTest {
             Thread.sleep(250);
         }
         assertEquals(expectedValue, actualValue.get());
-    }
-
-    /**
-     * A class for interacting with the {@link DeviceConfig} service via the command line. Some
-     * behavior it supports is not available via the Android @SystemApi.
-     * See {@link com.android.providers.settings.DeviceConfigService} for the shell command
-     * implementation details.
-     */
-    private static class DeviceConfigShellCommand {
-
-        static final String RESET_MODE_TRUSTED_DEFAULTS = "trusted_defaults";
-        static final String SYNC_DISABLED_MODE_NONE = "none";
-        static final String SYNC_DISABLED_MODE_UNTIL_REBOOT = "until_reboot";
-
-        private static final String SHELL_CMD_PREFIX = "cmd device_config ";
-
-        private DeviceConfigShellCommand() {}
-
-        static boolean isSyncDisabled() throws Exception {
-            String cmd = SHELL_CMD_PREFIX + "is_sync_disabled_for_tests";
-            String result = executeShellCommandInternal(cmd);
-            return Boolean.parseBoolean(result);
-        }
-
-        static void setSyncDisabled(String syncDisabledMode) throws Exception {
-            String cmd = String.format(
-                    SHELL_CMD_PREFIX + "set_sync_disabled_for_tests %s", syncDisabledMode);
-            executeShellCommandInternal(cmd);
-        }
-
-        static void resetToDefaults(String resetMode, String namespace) throws Exception {
-            String cmd = String.format(SHELL_CMD_PREFIX + "reset %s %s", resetMode, namespace);
-            executeShellCommandInternal(cmd);
-        }
-
-        private static String executeShellCommandInternal(String cmd) throws IOException {
-            UiAutomation uiAutomation =
-                    InstrumentationRegistry.getInstrumentation().getUiAutomation();
-            try (FileInputStream output = new FileInputStream(
-                    uiAutomation.executeShellCommand(cmd).getFileDescriptor())) {
-                return new String(ByteStreams.toByteArray(output));
-            }
-        }
-    }
-
-    /**
-     * device_config service flags and values for controlling the time_detector service.
-     */
-    private interface TimeDetectorServerFlags {
-        /**
-         * See {@link
-         * com.android.server.timedetector.ServerFlags#KEY_TIME_DETECTOR_ORIGIN_PRIORITIES_OVERRIDE}
-         */
-        String KEY_TIME_DETECTOR_ORIGIN_PRIORITIES_OVERRIDE =
-                "time_detector_origin_priorities_override";
-
-        /**
-         * See {@link com.android.server.timedetector.TimeDetectorStrategy#ORIGIN_NETWORK}.
-         */
-        String ORIGIN_NETWORK = "network";
-
-        /**
-         * See {@link com.android.server.timedetector.TimeDetectorStrategy#ORIGIN_EXTERNAL}.
-         */
-        String ORIGIN_EXTERNAL = "external";
     }
 
     /**
