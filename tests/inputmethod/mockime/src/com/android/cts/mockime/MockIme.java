@@ -327,6 +327,12 @@ public final class MockIme extends InputMethodService {
                         return getMemorizedOrCurrentInputConnection().commitContent(
                                 inputContentInfo, flags, opts);
                     }
+                    case "setImeConsumesInput": {
+                        final boolean imeConsumesInput =
+                                command.getExtras().getBoolean("imeConsumesInput");
+                        return getMemorizedOrCurrentInputConnection().setImeConsumesInput(
+                                imeConsumesInput);
+                    }
                     case "setBackDisposition": {
                         final int backDisposition =
                                 command.getExtras().getInt("backDisposition");
