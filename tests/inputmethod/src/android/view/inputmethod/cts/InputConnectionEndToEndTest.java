@@ -95,7 +95,9 @@ import java.util.function.Function;
 @LargeTest
 @RunWith(AndroidJUnit4.class)
 public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
+    private static final long TIME_SLICE = TimeUnit.MILLISECONDS.toMillis(125);
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
+    private static final long EXPECTED_NOT_CALLED_TIMEOUT = TimeUnit.SECONDS.toMillis(1);
     private static final long LONG_TIMEOUT = TimeUnit.SECONDS.toMillis(30);
     private static final long IMMEDIATE_TIMEOUT_NANO = TimeUnit.MILLISECONDS.toNanos(200);
 
@@ -187,11 +189,62 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
         }
 
         /**
+         * Ensures that the method to be tested is called within {@param timeout}.
+         *
+         * @param argumentsVerifier a {@link Consumer} to verify method arguments.
+         * @param timeout timeout in millisecond
+         * @throws AssertionError when {@link #onMethodCalled(Consumer)} was not called only once.
+         */
+        void expectCalledOnce(@NonNull Consumer<Bundle> argumentsVerifier, long timeout) {
+            // Currently using busy-wait because CountDownLatch is not compatible with reset().
+            // TODO: Consider using other more efficient operation.
+            long remainingTime = timeout;
+            while (mCallCount.get() == 0) {
+                if (remainingTime < 0) {
+                    fail("The method must be called, but was not within" + timeout + " msec.");
+                }
+                SystemClock.sleep(TIME_SLICE);
+                remainingTime -= TIME_SLICE;
+            }
+            assertEquals(1, mCallCount.get());
+            final Bundle bundle = mArgs.get();
+            assertNotNull(bundle);
+            argumentsVerifier.accept(bundle);
+        }
+
+        /**
          * Used to assert that {@link #onMethodCalled(Consumer)} was never called.
          *
          * @param callCountVerificationMessage A message to be used when the assertion fails.
          */
         void assertNotCalled(@Nullable String callCountVerificationMessage) {
+            if (callCountVerificationMessage != null) {
+                assertEquals(callCountVerificationMessage, 0, mCallCount.get());
+            } else {
+                assertEquals(0, mCallCount.get());
+            }
+        }
+
+        /**
+         * Ensures that the method to be tested is not called within {@param timeout}.
+         *
+         * @param callCountVerificationMessage A message to be used when the assertion fails.
+         * @param timeout timeout in millisecond
+         */
+        void expectNotCalled(@Nullable String callCountVerificationMessage, long timeout) {
+            // Currently using busy-wait because CountDownLatch is not compatible with reset().
+            // TODO: Consider using other more efficient operation.
+            long remainingTime = timeout;
+            while (true) {
+                if (mCallCount.get() != 0) {
+                    fail("The method must not be called.");
+                }
+                if (remainingTime < 0) {
+                    break;  // This is indeed an expected scenario, not an error.
+                }
+                SystemClock.sleep(TIME_SLICE);
+                remainingTime -= TIME_SLICE;
+            }
             if (callCountVerificationMessage != null) {
                 assertEquals(callCountVerificationMessage, 0, mCallCount.get());
             } else {
@@ -1411,10 +1464,10 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
                     session.callCommitText(expectedText, expectedNewCursorPosition);
             assertTrue("commitText() always returns true unless RemoteException is thrown",
                     expectCommand(stream, command, TIMEOUT).getReturnBooleanValue());
-            methodCallVerifier.assertCalledOnce(args -> {
+            methodCallVerifier.expectCalledOnce(args -> {
                 assertEqualsForTestCharSequence(expectedText, args.getCharSequence("text"));
                 assertEquals(expectedNewCursorPosition, args.getInt("newCursorPosition"));
-            });
+            }, TIMEOUT);
         });
     }
 
@@ -1457,9 +1510,12 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
             // CAVEAT: this behavior is a bit questionable and may change in a future version.
             assertTrue("Currently IC#commitText() still returns true even after unbindInput().",
                     result.getReturnBooleanValue());
-            methodCallVerifier.assertNotCalled(
-                    "Once unbindInput() happened, IC#commitText() fails fast.");
             expectElapseTimeLessThan(result, IMMEDIATE_TIMEOUT_NANO);
+
+            // Make sure that the app does not receive the call (for a while).
+            methodCallVerifier.expectNotCalled(
+                    "Once unbindInput() happened, IC#commitText() fails fast.",
+                    EXPECTED_NOT_CALLED_TIMEOUT);
         });
     }
 
@@ -1496,10 +1552,10 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
                     session.callSetComposingText(expectedText, expectedNewCursorPosition);
             assertTrue("setComposingText() always returns true unless RemoteException is thrown",
                     expectCommand(stream, command, TIMEOUT).getReturnBooleanValue());
-            methodCallVerifier.assertCalledOnce(args -> {
+            methodCallVerifier.expectCalledOnce(args -> {
                 assertEqualsForTestCharSequence(expectedText, args.getCharSequence("text"));
                 assertEquals(expectedNewCursorPosition, args.getInt("newCursorPosition"));
-            });
+            }, TIMEOUT);
         });
     }
 
@@ -1542,9 +1598,12 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
             // CAVEAT: this behavior is a bit questionable and may change in a future version.
             assertTrue("Currently IC#setComposingText() still returns true even after "
                     + "unbindInput().", result.getReturnBooleanValue());
-            methodCallVerifier.assertNotCalled(
-                    "Once unbindInput() happened, IC#setComposingText() fails fast.");
             expectElapseTimeLessThan(result, IMMEDIATE_TIMEOUT_NANO);
+
+            // Make sure that the app does not receive the call (for a while).
+            methodCallVerifier.expectNotCalled(
+                    "Once unbindInput() happened, IC#setComposingText() fails fast.",
+                    EXPECTED_NOT_CALLED_TIMEOUT);
         });
     }
 
@@ -1579,10 +1638,10 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
             final ImeCommand command = session.callSetComposingRegion(expectedStart, expectedEnd);
             assertTrue("setComposingRegion() always returns true unless RemoteException is thrown",
                     expectCommand(stream, command, TIMEOUT).getReturnBooleanValue());
-            methodCallVerifier.assertCalledOnce(args -> {
+            methodCallVerifier.expectCalledOnce(args -> {
                 assertEquals(expectedStart, args.getInt("start"));
                 assertEquals(expectedEnd, args.getInt("end"));
-            });
+            }, TIMEOUT);
         });
     }
 
@@ -1625,9 +1684,12 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
             // CAVEAT: this behavior is a bit questionable and may change in a future version.
             assertTrue("Currently IC#setComposingRegion() still returns true even after"
                     + " unbindInput().", result.getReturnBooleanValue());
-            methodCallVerifier.assertNotCalled(
-                    "Once unbindInput() happened, IC#setComposingRegion() fails fast.");
             expectElapseTimeLessThan(result, IMMEDIATE_TIMEOUT_NANO);
+
+            // Make sure that the app does not receive the call (for a while).
+            methodCallVerifier.expectNotCalled(
+                    "Once unbindInput() happened, IC#setComposingRegion() fails fast.",
+                    EXPECTED_NOT_CALLED_TIMEOUT);
         });
     }
 
@@ -1657,7 +1719,7 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
             final ImeCommand command = session.callFinishComposingText();
             assertTrue("finishComposingText() always returns true unless RemoteException is thrown",
                     expectCommand(stream, command, TIMEOUT).getReturnBooleanValue());
-            methodCallVerifier.assertCalledOnce(args -> { });
+            methodCallVerifier.expectCalledOnce(args -> { }, TIMEOUT);
         });
     }
 
@@ -1702,9 +1764,12 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
             // CAVEAT: this behavior is a bit questionable and may change in a future version.
             assertTrue("Currently IC#finishComposingText() still returns true even after"
                     + " unbindInput().", result.getReturnBooleanValue());
-            methodCallVerifier.assertNotCalled(
-                    "Once unbindInput() happened, IC#finishComposingText() fails fast.");
             expectElapseTimeLessThan(result, IMMEDIATE_TIMEOUT_NANO);
+
+            // Make sure that the app does not receive the call (for a while).
+            methodCallVerifier.expectNotCalled(
+                    "Once unbindInput() happened, IC#finishComposingText() fails fast.",
+                    EXPECTED_NOT_CALLED_TIMEOUT);
         });
     }
 
@@ -1739,7 +1804,7 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
             final ImeCommand command = session.callCommitCompletion(expectedCompletionInfo);
             assertTrue("commitCompletion() always returns true unless RemoteException is thrown",
                     expectCommand(stream, command, TIMEOUT).getReturnBooleanValue());
-            methodCallVerifier.assertCalledOnce(args -> {
+            methodCallVerifier.expectCalledOnce(args -> {
                 final CompletionInfo actualCompletionInfo = args.getParcelable("text");
                 assertNotNull(actualCompletionInfo);
                 assertEquals(expectedCompletionInfo.getId(), actualCompletionInfo.getId());
@@ -1749,7 +1814,7 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
                         actualCompletionInfo.getText());
                 assertEqualsForTestCharSequence(expectedCompletionInfo.getLabel(),
                         actualCompletionInfo.getLabel());
-            });
+            }, TIMEOUT);
         });
     }
 
@@ -1794,9 +1859,12 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
             // CAVEAT: this behavior is a bit questionable and may change in a future version.
             assertTrue("Currently IC#commitCompletion() still returns true even after"
                     + " unbindInput().", result.getReturnBooleanValue());
-            methodCallVerifier.assertNotCalled(
-                    "Once unbindInput() happened, IC#commitCompletion() fails fast.");
             expectElapseTimeLessThan(result, IMMEDIATE_TIMEOUT_NANO);
+
+            // Make sure that the app does not receive the call (for a while).
+            methodCallVerifier.expectNotCalled(
+                    "Once unbindInput() happened, IC#commitCompletion() fails fast.",
+                    EXPECTED_NOT_CALLED_TIMEOUT);
         });
     }
 
@@ -1831,7 +1899,7 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
             final ImeCommand command = session.callCommitCorrection(expectedCorrectionInfo);
             assertTrue("commitCorrection() always returns true unless RemoteException is thrown",
                     expectCommand(stream, command, TIMEOUT).getReturnBooleanValue());
-            methodCallVerifier.assertCalledOnce(args -> {
+            methodCallVerifier.expectCalledOnce(args -> {
                 final CorrectionInfo actualCorrectionInfo = args.getParcelable("correctionInfo");
                 assertNotNull(actualCorrectionInfo);
                 assertEquals(expectedCorrectionInfo.getOffset(),
@@ -1840,7 +1908,7 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
                         actualCorrectionInfo.getOldText());
                 assertEqualsForTestCharSequence(expectedCorrectionInfo.getNewText(),
                         actualCorrectionInfo.getNewText());
-            });
+            }, TIMEOUT);
         });
     }
 
@@ -1884,9 +1952,12 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
             // CAVEAT: this behavior is a bit questionable and may change in a future version.
             assertTrue("Currently IC#commitCorrection() still returns true even after"
                     + " unbindInput().", result.getReturnBooleanValue());
-            methodCallVerifier.assertNotCalled(
-                    "Once unbindInput() happened, IC#commitCorrection() fails fast.");
             expectElapseTimeLessThan(result, IMMEDIATE_TIMEOUT_NANO);
+
+            // Make sure that the app does not receive the call (for a while).
+            methodCallVerifier.expectNotCalled(
+                    "Once unbindInput() happened, IC#commitCorrection() fails fast.",
+                    EXPECTED_NOT_CALLED_TIMEOUT);
         });
     }
 
@@ -1921,10 +1992,10 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
             final ImeCommand command = session.callSetSelection(expectedStart, expectedEnd);
             assertTrue("setSelection() always returns true unless RemoteException is thrown",
                     expectCommand(stream, command, TIMEOUT).getReturnBooleanValue());
-            methodCallVerifier.assertCalledOnce(args -> {
+            methodCallVerifier.expectCalledOnce(args -> {
                 assertEquals(expectedStart, args.getInt("start"));
                 assertEquals(expectedEnd, args.getInt("end"));
-            });
+            }, TIMEOUT);
         });
     }
 
@@ -1967,9 +2038,12 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
             // CAVEAT: this behavior is a bit questionable and may change in a future version.
             assertTrue("Currently IC#setSelection() still returns true even after unbindInput().",
                     result.getReturnBooleanValue());
-            methodCallVerifier.assertNotCalled(
-                    "Once unbindInput() happened, IC#setSelection() fails fast.");
             expectElapseTimeLessThan(result, IMMEDIATE_TIMEOUT_NANO);
+
+            // Make sure that the app does not receive the call (for a while).
+            methodCallVerifier.expectNotCalled(
+                    "Once unbindInput() happened, IC#setSelection() fails fast.",
+                    EXPECTED_NOT_CALLED_TIMEOUT);
         });
     }
 
@@ -2002,9 +2076,9 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
             final ImeCommand command = session.callPerformEditorAction(expectedEditorAction);
             assertTrue("performEditorAction() always returns true unless RemoteException is thrown",
                     expectCommand(stream, command, TIMEOUT).getReturnBooleanValue());
-            methodCallVerifier.assertCalledOnce(args -> {
+            methodCallVerifier.expectCalledOnce(args -> {
                 assertEquals(expectedEditorAction, args.getInt("editorAction"));
-            });
+            }, TIMEOUT);
         });
     }
 
@@ -2046,9 +2120,12 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
             // CAVEAT: this behavior is a bit questionable and may change in a future version.
             assertTrue("Currently IC#performEditorAction() still returns true even after "
                     + "unbindInput().", result.getReturnBooleanValue());
-            methodCallVerifier.assertNotCalled(
-                    "Once unbindInput() happened, IC#performEditorAction() fails fast.");
             expectElapseTimeLessThan(result, IMMEDIATE_TIMEOUT_NANO);
+
+            // Make sure that the app does not receive the call (for a while).
+            methodCallVerifier.expectNotCalled(
+                    "Once unbindInput() happened, IC#performEditorAction() fails fast.",
+                    EXPECTED_NOT_CALLED_TIMEOUT);
         });
     }
 
@@ -2082,9 +2159,9 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
             assertTrue("performContextMenuAction() always returns true unless RemoteException is "
                             + "thrown",
                     expectCommand(stream, command, TIMEOUT).getReturnBooleanValue());
-            methodCallVerifier.assertCalledOnce(args -> {
+            methodCallVerifier.expectCalledOnce(args -> {
                 assertEquals(expectedId, args.getInt("id"));
-            });
+            }, TIMEOUT);
         });
     }
 
@@ -2126,9 +2203,12 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
             // CAVEAT: this behavior is a bit questionable and may change in a future version.
             assertTrue("Currently IC#performContextMenuAction() still returns true even after "
                     + "unbindInput().", result.getReturnBooleanValue());
-            methodCallVerifier.assertNotCalled(
-                    "Once unbindInput() happened, IC#performContextMenuAction() fails fast.");
             expectElapseTimeLessThan(result, IMMEDIATE_TIMEOUT_NANO);
+
+            // Make sure that the app does not receive the call (for a while).
+            methodCallVerifier.expectNotCalled(
+                    "Once unbindInput() happened, IC#performContextMenuAction() fails fast.",
+                    EXPECTED_NOT_CALLED_TIMEOUT);
         });
     }
 
@@ -2158,7 +2238,7 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
             final ImeCommand command = session.callBeginBatchEdit();
             assertTrue("beginBatchEdit() always returns true unless RemoteException is thrown",
                     expectCommand(stream, command, TIMEOUT).getReturnBooleanValue());
-            methodCallVerifier.assertCalledOnce(args -> { });
+            methodCallVerifier.expectCalledOnce(args -> { }, TIMEOUT);
         });
     }
 
@@ -2198,9 +2278,12 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
             // CAVEAT: this behavior is a bit questionable and may change in a future version.
             assertTrue("Currently IC#beginBatchEdit() still returns true even after unbindInput().",
                     result.getReturnBooleanValue());
-            methodCallVerifier.assertNotCalled(
-                    "Once unbindInput() happened, IC#beginBatchEdit() fails fast.");
             expectElapseTimeLessThan(result, IMMEDIATE_TIMEOUT_NANO);
+
+            // Make sure that the app does not receive the call (for a while).
+            methodCallVerifier.expectNotCalled(
+                    "Once unbindInput() happened, IC#beginBatchEdit() fails fast.",
+                    EXPECTED_NOT_CALLED_TIMEOUT);
         });
     }
 
@@ -2230,7 +2313,7 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
             final ImeCommand command = session.callEndBatchEdit();
             assertTrue("endBatchEdit() always returns true unless RemoteException is thrown",
                     expectCommand(stream, command, TIMEOUT).getReturnBooleanValue());
-            methodCallVerifier.assertCalledOnce(args -> { });
+            methodCallVerifier.expectCalledOnce(args -> { }, TIMEOUT);
         });
     }
 
@@ -2270,9 +2353,12 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
             // CAVEAT: this behavior is a bit questionable and may change in a future version.
             assertTrue("Currently IC#endBatchEdit() still returns true even after unbindInput().",
                     result.getReturnBooleanValue());
-            methodCallVerifier.assertNotCalled(
-                    "Once unbindInput() happened, IC#endBatchEdit() fails fast.");
             expectElapseTimeLessThan(result, IMMEDIATE_TIMEOUT_NANO);
+
+            // Make sure that the app does not receive the call (for a while).
+            methodCallVerifier.expectNotCalled(
+                    "Once unbindInput() happened, IC#endBatchEdit() fails fast.",
+                    EXPECTED_NOT_CALLED_TIMEOUT);
         });
     }
 
@@ -2305,12 +2391,12 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
             final ImeCommand command = session.callSendKeyEvent(expectedKeyEvent);
             assertTrue("sendKeyEvent() always returns true unless RemoteException is thrown",
                     expectCommand(stream, command, TIMEOUT).getReturnBooleanValue());
-            methodCallVerifier.assertCalledOnce(args -> {
+            methodCallVerifier.expectCalledOnce(args -> {
                 final KeyEvent actualKeyEvent = args.getParcelable("event");
                 assertNotNull(actualKeyEvent);
                 assertEquals(expectedKeyEvent.getAction(), actualKeyEvent.getAction());
                 assertEquals(expectedKeyEvent.getKeyCode(), actualKeyEvent.getKeyCode());
-            });
+            }, TIMEOUT);
         });
     }
 
@@ -2353,9 +2439,12 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
             // CAVEAT: this behavior is a bit questionable and may change in a future version.
             assertTrue("Currently IC#sendKeyEvent() still returns true even after unbindInput().",
                     result.getReturnBooleanValue());
-            methodCallVerifier.assertNotCalled(
-                    "Once unbindInput() happened, IC#sendKeyEvent() fails fast.");
             expectElapseTimeLessThan(result, IMMEDIATE_TIMEOUT_NANO);
+
+            // Make sure that the app does not receive the call (for a while).
+            methodCallVerifier.expectNotCalled(
+                    "Once unbindInput() happened, IC#sendKeyEvent() fails fast.",
+                    EXPECTED_NOT_CALLED_TIMEOUT);
         });
     }
 
@@ -2388,10 +2477,10 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
             final ImeCommand command = session.callClearMetaKeyStates(expectedStates);
             assertTrue("clearMetaKeyStates() always returns true unless RemoteException is thrown",
                     expectCommand(stream, command, TIMEOUT).getReturnBooleanValue());
-            methodCallVerifier.assertCalledOnce(args -> {
+            methodCallVerifier.expectCalledOnce(args -> {
                 final int actualStates = args.getInt("states");
                 assertEquals(expectedStates, actualStates);
-            });
+            }, TIMEOUT);
         });
     }
 
@@ -2433,9 +2522,12 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
             // CAVEAT: this behavior is a bit questionable and may change in a future version.
             assertTrue("Currently IC#clearMetaKeyStates() still returns true even after "
                     + "unbindInput().", result.getReturnBooleanValue());
-            methodCallVerifier.assertNotCalled(
-                    "Once unbindInput() happened, IC#clearMetaKeyStates() fails fast.");
             expectElapseTimeLessThan(result, IMMEDIATE_TIMEOUT_NANO);
+
+            // Make sure that the app does not receive the call (for a while).
+            methodCallVerifier.expectNotCalled(
+                    "Once unbindInput() happened, IC#clearMetaKeyStates() fails fast.",
+                    EXPECTED_NOT_CALLED_TIMEOUT);
         });
     }
 
@@ -2465,7 +2557,7 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
             final ImeCommand command = session.callPerformSpellCheck();
             assertTrue("performSpellCheck() always returns true unless RemoteException is thrown",
                     expectCommand(stream, command, TIMEOUT).getReturnBooleanValue());
-            methodCallVerifier.assertCalledOnce(args -> { });
+            methodCallVerifier.expectCalledOnce(args -> { }, TIMEOUT);
         });
     }
 
@@ -2505,9 +2597,12 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
             // CAVEAT: this behavior is a bit questionable and may change in a future version.
             assertTrue("Currently IC#performSpellCheck() still returns true even after "
                     + "unbindInput().", result.getReturnBooleanValue());
-            methodCallVerifier.assertNotCalled(
-                    "Once unbindInput() happened, IC#performSpellCheck() fails fast.");
             expectElapseTimeLessThan(result, IMMEDIATE_TIMEOUT_NANO);
+
+            // Make sure that the app does not receive the call (for a while).
+            methodCallVerifier.expectNotCalled(
+                    "Once unbindInput() happened, IC#performSpellCheck() fails fast.",
+                    EXPECTED_NOT_CALLED_TIMEOUT);
         });
     }
 
@@ -2546,13 +2641,13 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
                     session.callPerformPrivateCommand(expectedAction, expectedData);
             assertTrue("performPrivateCommand() always returns true unless RemoteException is "
                     + "thrown", expectCommand(stream, command, TIMEOUT).getReturnBooleanValue());
-            methodCallVerifier.assertCalledOnce(args -> {
+            methodCallVerifier.expectCalledOnce(args -> {
                 final String actualAction = args.getString("action");
                 final Bundle actualData = args.getBundle("data");
                 assertEquals(expectedAction, actualAction);
                 assertNotNull(actualData);
                 assertEquals(expectedData.get(expectedDataKey), actualData.getInt(expectedDataKey));
-            });
+            }, TIMEOUT);
         });
     }
 
@@ -2595,9 +2690,12 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
             // CAVEAT: this behavior is a bit questionable and may change in a future version.
             assertTrue("Currently IC#performPrivateCommand() still returns true even after "
                     + "unbindInput().", result.getReturnBooleanValue());
-            methodCallVerifier.assertNotCalled(
-                    "Once unbindInput() happened, IC#performPrivateCommand() fails fast.");
             expectElapseTimeLessThan(result, IMMEDIATE_TIMEOUT_NANO);
+
+            // Make sure that the app does not receive the call (for a while).
+            methodCallVerifier.expectNotCalled(
+                    "Once unbindInput() happened, IC#performPrivateCommand() fails fast.",
+                    EXPECTED_NOT_CALLED_TIMEOUT);
         });
     }
 
@@ -2630,10 +2728,10 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
             final ImeCommand command = session.callSetImeConsumesInput(expectedImeConsumesInput);
             assertTrue("setImeConsumesInput() always returns true unless RemoteException is thrown",
                     expectCommand(stream, command, TIMEOUT).getReturnBooleanValue());
-            methodCallVerifier.assertCalledOnce(args -> {
+            methodCallVerifier.expectCalledOnce(args -> {
                 final boolean actualImeConsumesInput = args.getBoolean("imeConsumesInput");
                 assertEquals(expectedImeConsumesInput, actualImeConsumesInput);
-            });
+            }, TIMEOUT);
         });
     }
 
@@ -2675,9 +2773,12 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
             // CAVEAT: this behavior is a bit questionable and may change in a future version.
             assertTrue("Currently IC#setImeConsumesInput() still returns true even after "
                     + "unbindInput().", result.getReturnBooleanValue());
-            methodCallVerifier.assertNotCalled(
-                    "Once unbindInput() happened, IC#setImeConsumesInput() fails fast.");
             expectElapseTimeLessThan(result, IMMEDIATE_TIMEOUT_NANO);
+
+            // Make sure that the app does not receive the call (for a while).
+            methodCallVerifier.expectNotCalled(
+                    "Once unbindInput() happened, IC#setImeConsumesInput() fails fast.",
+                    EXPECTED_NOT_CALLED_TIMEOUT);
         });
     }
 }
