@@ -354,29 +354,94 @@ public class JobThrottlingTest {
                 mTestAppInterface.getLastParams().getStopReason());
     }
 
-    @RequiresDevice // Emulators don't always have access to wifi/network
     @Test
-    public void testBackgroundConnectivityJobsThrottled() throws Exception {
-        if (!mHasWifi) {
-            Log.d(TAG, "Skipping test that requires the device be WiFi enabled.");
-            return;
-        }
-        ensureSavedWifiNetwork(mWifiManager);
-        setAirplaneMode(false);
-        setWifiState(true, mCm, mWifiManager);
-        assumeTrue("device idle not enabled", mDeviceIdleEnabled);
-        mTestAppInterface.scheduleJob(false, NETWORK_TYPE_ANY, false);
+    public void testBackgroundRegJobsThermal() throws Exception {
+        mTestAppInterface.scheduleJob(false, NETWORK_TYPE_NONE, false);
         runJob();
         assertTrue("Job did not start after scheduling",
                 mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
-        ThermalUtils.overrideThermalStatus(Temperature.THROTTLING_CRITICAL);
+
+        ThermalUtils.overrideThermalStatus(Temperature.THROTTLING_MODERATE);
+        assertFalse("Job stopped below thermal throttling threshold",
+                mTestAppInterface.awaitJobStop(DEFAULT_WAIT_TIMEOUT));
+
+        ThermalUtils.overrideThermalStatus(Temperature.THROTTLING_SEVERE);
         assertTrue("Job did not stop on thermal throttling",
                 mTestAppInterface.awaitJobStop(DEFAULT_WAIT_TIMEOUT));
-        Thread.sleep(TestJobSchedulerReceiver.JOB_INITIAL_BACKOFF);
+        final long jobStopTime = System.currentTimeMillis();
+
+        ThermalUtils.overrideThermalStatus(Temperature.THROTTLING_CRITICAL);
+        runJob();
+        assertFalse("Job started above thermal throttling threshold",
+                mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+
+        ThermalUtils.overrideThermalStatus(Temperature.THROTTLING_EMERGENCY);
+        runJob();
+        assertFalse("Job started above thermal throttling threshold",
+                mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+
+        Thread.sleep(TestJobSchedulerReceiver.JOB_INITIAL_BACKOFF
+                - (System.currentTimeMillis() - jobStopTime));
         ThermalUtils.overrideThermalNotThrottling();
         runJob();
         assertTrue("Job did not start back from throttling",
                 mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+    }
+
+    @Test
+    public void testBackgroundEJsThermal() throws Exception {
+        mTestAppInterface.scheduleJob(false, NETWORK_TYPE_NONE, true);
+        runJob();
+        assertTrue("Job did not start after scheduling",
+                mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+
+        ThermalUtils.overrideThermalStatus(Temperature.THROTTLING_MODERATE);
+        assertFalse("Job stopped below thermal throttling threshold",
+                mTestAppInterface.awaitJobStop(DEFAULT_WAIT_TIMEOUT));
+
+        ThermalUtils.overrideThermalStatus(Temperature.THROTTLING_SEVERE);
+        assertFalse("Job stopped below thermal throttling threshold",
+                mTestAppInterface.awaitJobStop(DEFAULT_WAIT_TIMEOUT));
+
+        ThermalUtils.overrideThermalStatus(Temperature.THROTTLING_CRITICAL);
+        assertTrue("Job did not stop on thermal throttling",
+                mTestAppInterface.awaitJobStop(DEFAULT_WAIT_TIMEOUT));
+        final long jobStopTime = System.currentTimeMillis();
+
+        ThermalUtils.overrideThermalStatus(Temperature.THROTTLING_EMERGENCY);
+        runJob();
+        assertFalse("Job started above thermal throttling threshold",
+                mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+
+        Thread.sleep(TestJobSchedulerReceiver.JOB_INITIAL_BACKOFF
+                - (System.currentTimeMillis() - jobStopTime));
+        ThermalUtils.overrideThermalNotThrottling();
+        runJob();
+        assertTrue("Job did not start back from throttling",
+                mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+    }
+
+    @Test
+    public void testForegroundJobsThermal() throws Exception {
+        // Turn the screen on to ensure the app gets into the TOP state.
+        setScreenState(true);
+        mTestAppInterface.startAndKeepTestActivity(true);
+        mTestAppInterface.scheduleJob(false, NETWORK_TYPE_NONE, false);
+        runJob();
+        assertTrue("Job did not start after scheduling",
+                mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+
+        ThermalUtils.overrideThermalStatus(Temperature.THROTTLING_MODERATE);
+        assertFalse("Job stopped below thermal throttling threshold",
+                mTestAppInterface.awaitJobStop(DEFAULT_WAIT_TIMEOUT));
+
+        ThermalUtils.overrideThermalStatus(Temperature.THROTTLING_SEVERE);
+        assertFalse("Job stopped despite being TOP app",
+                mTestAppInterface.awaitJobStop(DEFAULT_WAIT_TIMEOUT));
+
+        ThermalUtils.overrideThermalStatus(Temperature.THROTTLING_CRITICAL);
+        assertFalse("Job stopped despite being TOP app",
+                mTestAppInterface.awaitJobStop(DEFAULT_WAIT_TIMEOUT));
     }
 
     /** Tests that apps in the RESTRICTED bucket still get their one parole session per day. */
