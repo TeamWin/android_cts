@@ -776,13 +776,15 @@ public class BubblesVerifierActivity extends PassFailButtons.Activity {
 
         @Override
         public void performTestAction() {
-            mNotificationManager.cancelAll();
-
-            // but post one more so the tester can actually access the overflow
+            // Make sure one is a bubble
             Notification.Builder builder = getConversationNotif(getTestTitle());
             Notification.BubbleMetadata metadata = getBubbleBuilder().build();
             builder.setBubbleMetadata(metadata);
             mNotificationManager.notify(NOTIFICATION_ID, builder.build());
+
+            // Cancel the others
+            mNotificationManager.cancel(NOTIFICATION_ID + 1);
+            mNotificationManager.cancel(NOTIFICATION_ID + 2);
         }
     }
 
