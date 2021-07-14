@@ -29,8 +29,13 @@ import android.os.SystemClock;
 
 import com.google.common.collect.ImmutableSet;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 public class VehiclePropertyVerifier<T> {
     private final int mPropertyId;
@@ -122,7 +127,37 @@ public class VehiclePropertyVerifier<T> {
         }
 
         verifyCarPropertyConfig(carPropertyConfig);
-        verifyCarPropertyValue(carPropertyConfig, carPropertyManager);
+        verifyCarPropertyValueGetter(carPropertyConfig, carPropertyManager);
+        verifyCarPropertyValueCallback(carPropertyConfig, carPropertyManager);
+    }
+
+    private void verifyCarPropertyValueCallback(CarPropertyConfig<?> carPropertyConfig,
+            CarPropertyManager carPropertyManager) {
+        if (mChangeMode == CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC
+                || mChangeMode == CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE) {
+            NonContinuousCarPropertyValueCallback nonContinuousCarPropertyValueCallback =
+                    new NonContinuousCarPropertyValueCallback(mPropertyName,
+                            carPropertyConfig.getAreaIds().length);
+            assertWithMessage("Failed to register callback for " + mPropertyName).that(
+                    carPropertyManager.registerCallback(nonContinuousCarPropertyValueCallback,
+                            mPropertyId, CarPropertyManager.SENSOR_RATE_ONCHANGE)).isTrue();
+            List<CarPropertyValue<?>> carPropertyValues =
+                    nonContinuousCarPropertyValueCallback.getCarPropertyValues();
+            carPropertyManager.unregisterCallback(nonContinuousCarPropertyValueCallback,
+                    mPropertyId);
+
+            for (CarPropertyValue<?> carPropertyValue : carPropertyValues) {
+                verifyCarPropertyValue(carPropertyConfig, carPropertyValue,
+                        carPropertyValue.getAreaId(), "Callback");
+            }
+            assertWithMessage(mPropertyName
+                    + " callback values did not cover all the property's area IDs").that(
+                    carPropertyValues.stream().map(CarPropertyValue::getAreaId).collect(
+                            Collectors.toList())
+            ).containsExactlyElementsIn(
+                    Arrays.stream(carPropertyConfig.getAreaIds()).boxed().collect(
+                            Collectors.toList()));
+        }
     }
 
     private void verifyCarPropertyConfig(CarPropertyConfig<?> carPropertyConfig) {
@@ -186,41 +221,53 @@ public class VehiclePropertyVerifier<T> {
                 .that(carPropertyConfig.getMinSampleRate()).isEqualTo(0);
     }
 
-    private void verifyCarPropertyValue(CarPropertyConfig<?> carPropertyConfig,
+    private void verifyCarPropertyValueGetter(CarPropertyConfig<?> carPropertyConfig,
             CarPropertyManager carPropertyManager) {
         for (int areaId : carPropertyConfig.getAreaIds()) {
             CarPropertyValue<?> carPropertyValue =
                     carPropertyManager.getProperty(
                             mPropertyId, areaId);
-            long afterElapsedTimestampNanos = SystemClock.elapsedRealtimeNanos();
-            assertWithMessage(
-                    mPropertyName + " - areaId: " + areaId + " value must have correct property ID")
-                    .that(carPropertyValue.getPropertyId()).isEqualTo(mPropertyId);
-            assertWithMessage(
-                    mPropertyName + " - areaId: " + areaId + " value must have correct area id: "
-                            + areaId)
-                    .that(carPropertyValue.getAreaId())
-                    .isEqualTo(areaId);
-            assertWithMessage(
-                    mPropertyName + " - areaId: " + areaId + " value's status must be valid")
-                    .that(carPropertyValue.getStatus()).isIn(
-                    ImmutableSet.of(CarPropertyValue.STATUS_AVAILABLE,
-                            CarPropertyValue.STATUS_UNAVAILABLE, CarPropertyValue.STATUS_ERROR));
-            assertWithMessage(mPropertyName + " - areaId: " + areaId +
-                    " timestamp must use the SystemClock.elapsedRealtimeNanos() time base")
-                    .that(carPropertyValue.getTimestamp()).isAtLeast(0);
-            assertWithMessage(mPropertyName + " - areaId: " + areaId +
-                    " timestamp must use the SystemClock.elapsedRealtimeNanos() time base")
-                    .that(carPropertyValue.getTimestamp()).isLessThan(afterElapsedTimestampNanos);
-            assertWithMessage(
-                    mPropertyName + " - areaId: " + areaId + " must return " + mPropertyType
-                            + " type value")
-                    .that(carPropertyValue.getValue().getClass()).isEqualTo(mPropertyType);
 
-            mCarPropertyValueVerifier.ifPresent(
-                    propertyValueVerifier -> propertyValueVerifier.verify(carPropertyConfig,
-                            carPropertyValue));
+            verifyCarPropertyValue(carPropertyConfig, carPropertyValue, areaId, "Getter");
         }
+    }
+
+    private void verifyCarPropertyValue(CarPropertyConfig<?> carPropertyConfig,
+            CarPropertyValue<?> carPropertyValue, int areaId, String source) {
+        assertWithMessage(
+                mPropertyName + " - areaId: " + areaId + " - source: " + source
+                        + " value must have correct property ID")
+                .that(carPropertyValue.getPropertyId()).isEqualTo(mPropertyId);
+        assertWithMessage(
+                mPropertyName + " - areaId: " + areaId + " - source: " + source
+                        + " value must have correct area id: "
+                        + areaId)
+                .that(carPropertyValue.getAreaId())
+                .isEqualTo(areaId);
+        assertWithMessage(
+                mPropertyName + " - areaId: " + areaId + " - source: " + source
+                        + " value's status must be valid")
+                .that(carPropertyValue.getStatus()).isIn(
+                ImmutableSet.of(CarPropertyValue.STATUS_AVAILABLE,
+                        CarPropertyValue.STATUS_UNAVAILABLE, CarPropertyValue.STATUS_ERROR));
+        assertWithMessage(mPropertyName + " - areaId: " + areaId +
+                " - source: " + source
+                + " timestamp must use the SystemClock.elapsedRealtimeNanos() time base")
+                .that(carPropertyValue.getTimestamp()).isAtLeast(0);
+        assertWithMessage(mPropertyName + " - areaId: " + areaId +
+                " - source: " + source
+                + " timestamp must use the SystemClock.elapsedRealtimeNanos() time base")
+                .that(carPropertyValue.getTimestamp()).isLessThan(
+                SystemClock.elapsedRealtimeNanos());
+        assertWithMessage(
+                mPropertyName + " - areaId: " + areaId + " - source: " + source + " must return "
+                        + mPropertyType
+                        + " type value")
+                .that(carPropertyValue.getValue().getClass()).isEqualTo(mPropertyType);
+
+        mCarPropertyValueVerifier.ifPresent(
+                propertyValueVerifier -> propertyValueVerifier.verify(carPropertyConfig,
+                        carPropertyValue));
     }
 
     public interface ConfigArrayVerifier {
@@ -270,6 +317,47 @@ public class VehiclePropertyVerifier<T> {
             return new VehiclePropertyVerifier<>(mPropertyId, mAccess, mAreaType, mChangeMode,
                     mPropertyType,
                     mRequiredProperty, mConfigArrayVerifier, mCarPropertyValueVerifier);
+        }
+    }
+
+    private static class NonContinuousCarPropertyValueCallback implements
+            CarPropertyManager.CarPropertyEventCallback {
+        private final String mPropertyName;
+        private final int mTotalAreaIds;
+        private final CountDownLatch mCountDownLatch;
+        private final List<CarPropertyValue<?>> mCarPropertyValues = new ArrayList<>();
+
+        public NonContinuousCarPropertyValueCallback(String propertyName, int totalAreaIds) {
+            mPropertyName = propertyName;
+            mTotalAreaIds = totalAreaIds;
+            mCountDownLatch = new CountDownLatch(totalAreaIds);
+        }
+
+        public List<CarPropertyValue<?>> getCarPropertyValues() {
+            try {
+                assertWithMessage("Never received " + mTotalAreaIds + "  onChangeEvent(s) for "
+                        + mPropertyName
+                        + " callback before 1500ms timeout").that(
+                        mCountDownLatch.await(1500, TimeUnit.MILLISECONDS)).isTrue();
+            } catch (InterruptedException e) {
+                assertWithMessage("Waiting for onChangeEvent callback(s) for " + mPropertyName
+                        + " threw an exception: " + e).fail();
+            }
+            return mCarPropertyValues;
+        }
+
+        @Override
+        public void onChangeEvent(CarPropertyValue value) {
+            mCarPropertyValues.add(value);
+            mCountDownLatch.countDown();
+        }
+
+        @Override
+        public void onErrorEvent(int propId, int zone) {
+        }
+
+        @Override
+        public void onErrorEvent(int propId, int areaId, int errorCode) {
         }
     }
 }
