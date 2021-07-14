@@ -822,6 +822,20 @@ def color_bars_test_pattern(props):
       'android.sensor.availableTestPatternModes')
 
 
+def linear_tonemap(props):
+  """Determines if camera supports CONTRAST_CURVE or GAMMA_VALUE in tonemap.
+
+  Args:
+    props: Camera properties object.
+
+  Returns:
+    Boolean. True if android.tonemap.availableToneMapModes has
+             CONTRAST_CURVE (0) or GAMMA_VALUE (3).
+  """
+  return (0 in props.get('android.tonemap.availableToneMapModes') or
+          3 in props.get('android.tonemap.availableToneMapModes'))
+
+
 if __name__ == '__main__':
   unittest.main()
 
