@@ -38,7 +38,8 @@ import java.io.InputStream;
 public class TestApp {
 
     private static final TestApis sTestApis = new TestApis();
-    private static final Context sContext = sTestApis.context().instrumentedContext();
+    // Must be instrumentation context to access resources
+    private static final Context sContext = sTestApis.context().instrumentationContext();
     private final TestAppDetails mDetails;
 
     TestApp(TestAppDetails details) {
