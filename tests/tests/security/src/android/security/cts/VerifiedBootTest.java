@@ -18,6 +18,7 @@ package android.security.cts;
 
 import android.content.pm.PackageManager;
 import android.os.Build;
+import android.platform.test.annotations.AppModeFull;
 import android.test.AndroidTestCase;
 import com.android.compatibility.common.util.PropertyUtil;
 
@@ -40,6 +41,7 @@ public class VerifiedBootTest extends AndroidTestCase {
    * A device without the feature flag android.hardware.ram.normal is exempt if
    * it launched on a pre-P level.
    */
+  @AppModeFull(reason = "Instant apps cannot query first API level")
   public void testVerifiedBootSupport() throws Exception {
     if (PropertyUtil.getFirstApiLevel() < Build.VERSION_CODES.O_MR1) {
       return;
