@@ -25,7 +25,7 @@ public final class SerializableQueryHelper<E extends Queryable>
         implements SerializableQuery<E>, Serializable {
 
     private final E mQuery;
-    private Serializable mEqualsValue = null;
+    private Serializable mEqualsValue;
 
     SerializableQueryHelper() {
         mQuery = (E) this;

@@ -60,8 +60,7 @@ public final class DeviceAdminPasswordChangedEventTest {
 
     @Test
     public void whereIntent_works() {
-        Intent intent = new Intent();
-        intent.setAction(STRING_VALUE);
+        Intent intent = new Intent(STRING_VALUE);
         DeviceAdminPasswordChangedEvent.logger(DEVICE_ADMIN_RECEIVER, sContext, intent).log();
 
         EventLogs<DeviceAdminPasswordChangedEvent> eventLogs =
@@ -73,8 +72,7 @@ public final class DeviceAdminPasswordChangedEventTest {
 
     @Test
     public void whereIntent_skipsNonMatching() {
-        Intent intent = new Intent();
-        intent.setAction(STRING_VALUE);
+        Intent intent = new Intent(STRING_VALUE);
         Intent differentIntent = new Intent();
         differentIntent.setAction(DIFFERENT_STRING_VALUE);
         DeviceAdminPasswordChangedEvent.logger(

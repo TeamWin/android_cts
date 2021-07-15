@@ -54,7 +54,7 @@ public final class BooleanQueryHelper<E extends Queryable> implements BooleanQue
     }
 
     @Override
-    public E equals(boolean value) {
+    public E isEqualTo(boolean value) {
         if (mTargetValue != null) {
             throw new IllegalStateException("Cannot set multiple boolean filters");
         }

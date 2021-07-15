@@ -32,7 +32,7 @@ import com.android.queryable.queries.ActivityQueryHelper;
  */
 public final class ActivityStoppedEvent extends Event {
 
-    /** Begin a query for {@link ActivityStoppedEvent} events. */
+    /** Begins a query for {@link ActivityStoppedEvent} events. */
     public static ActivityStoppedEventQuery queryPackage(String packageName) {
         return new ActivityStoppedEventQuery(packageName);
     }
@@ -61,7 +61,7 @@ public final class ActivityStoppedEvent extends Event {
         }
     }
 
-    /** Begin logging a {@link ActivityStoppedEvent}. */
+    /** Begins logging a {@link ActivityStoppedEvent}. */
     public static ActivityStoppedEventLogger logger(Activity activity, android.content.pm.ActivityInfo activityInfo) {
         return new ActivityStoppedEventLogger(activity, activityInfo);
     }
@@ -73,7 +73,7 @@ public final class ActivityStoppedEvent extends Event {
             setActivity(activityInfo);
         }
 
-        /** Set the {@link Activity} being stopped. */
+        /** Sets the {@link Activity} being stopped. */
         public ActivityStoppedEventLogger setActivity(android.content.pm.ActivityInfo activity) {
             mEvent.mActivity = ActivityInfo.builder(activity).build();
             return this;

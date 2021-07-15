@@ -32,7 +32,7 @@ import com.android.queryable.queries.ActivityQueryHelper;
  */
 public final class ActivityStartedEvent extends Event {
 
-    /** Begin a query for {@link ActivityStartedEvent} events. */
+    /** Begins a query for {@link ActivityStartedEvent} events. */
     public static ActivityStartedEventQuery queryPackage(String packageName) {
         return new ActivityStartedEventQuery(packageName);
     }
@@ -61,7 +61,7 @@ public final class ActivityStartedEvent extends Event {
         }
     }
 
-    /** Begin logging a {@link ActivityStartedEvent}. */
+    /** Begins logging a {@link ActivityStartedEvent}. */
     public static ActivityStartedEventLogger logger(Activity activity, android.content.pm.ActivityInfo activityInfo) {
         return new ActivityStartedEventLogger(activity, activityInfo);
     }
@@ -73,7 +73,7 @@ public final class ActivityStartedEvent extends Event {
             setActivity(activityInfo);
         }
 
-        /** Set the {@link Activity} being started. */
+        /** Sets the {@link Activity} being started. */
         public ActivityStartedEventLogger setActivity(
                 android.content.pm.ActivityInfo activity) {
             mEvent.mActivity = ActivityInfo.builder(activity).build();

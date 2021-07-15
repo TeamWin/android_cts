@@ -84,7 +84,7 @@ public class TestAppInstanceReferenceTest {
 
     @Test
     public void activities_any_returnsActivity() {
-        TestApp testApp = mTestAppProvider.any();
+        TestApp testApp = mTestAppProvider.query().whereActivities().isNotEmpty().get();
         try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
             assertThat(testAppInstance.activities().any()).isNotNull();
         }
@@ -174,7 +174,7 @@ public class TestAppInstanceReferenceTest {
 
     @Test
     public void process_isRunning_isNotNull() {
-        TestApp testApp = mTestAppProvider.any();
+        TestApp testApp = mTestAppProvider.query().whereActivities().isNotEmpty().get();
         try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
             testAppInstance.activities().any().start();
 

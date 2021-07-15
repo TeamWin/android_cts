@@ -57,8 +57,7 @@ public final class DeviceAdminDisableRequestedEventTest {
 
     @Test
     public void whereIntent_works() {
-        Intent intent = new Intent();
-        intent.setAction(STRING_VALUE);
+        Intent intent = new Intent(STRING_VALUE);
         DeviceAdminDisableRequestedEvent.logger(DEVICE_ADMIN_RECEIVER, sContext, intent).log();
 
         EventLogs<DeviceAdminDisableRequestedEvent> eventLogs =
@@ -70,8 +69,7 @@ public final class DeviceAdminDisableRequestedEventTest {
 
     @Test
     public void whereIntent_skipsNonMatching() {
-        Intent intent = new Intent();
-        intent.setAction(STRING_VALUE);
+        Intent intent = new Intent(STRING_VALUE);
         Intent differentIntent = new Intent();
         differentIntent.setAction(DIFFERENT_STRING_VALUE);
         DeviceAdminDisableRequestedEvent.logger(DEVICE_ADMIN_RECEIVER,

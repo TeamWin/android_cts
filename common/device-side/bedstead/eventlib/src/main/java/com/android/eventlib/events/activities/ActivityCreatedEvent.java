@@ -39,7 +39,7 @@ import com.android.queryable.util.SerializableParcelWrapper;
  */
 public final class ActivityCreatedEvent extends Event {
 
-    /** Begin a query for {@link ActivityCreatedEvent} events. */
+    /** Begins a query for {@link ActivityCreatedEvent} events. */
     public static ActivityCreatedEventQuery queryPackage(String packageName) {
         return new ActivityCreatedEventQuery(packageName);
     }
@@ -97,7 +97,7 @@ public final class ActivityCreatedEvent extends Event {
         }
     }
 
-    /** Begin logging a {@link ActivityCreatedEvent}. */
+    /** Begins logging a {@link ActivityCreatedEvent}. */
     public static ActivityCreatedEventLogger logger(Activity activity, android.content.pm.ActivityInfo activityInfo, Bundle savedInstanceState) {
         return new ActivityCreatedEventLogger(activity, activityInfo, savedInstanceState);
     }
