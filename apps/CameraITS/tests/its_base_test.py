@@ -132,6 +132,7 @@ class ItsBaseTest(base_test.BaseTestClass):
   def setup_dut(self, device):
     self.dut.adb.shell(
         'am start -n com.android.cts.verifier/.CtsVerifierActivity')
+    logging.debug('Setting up device: %s', str(device))
     # Wait for the app screen to appear.
     time.sleep(WAIT_TIME_SEC)
 
@@ -170,17 +171,18 @@ class ItsBaseTest(base_test.BaseTestClass):
     logging.debug('dumpsys window output: %s', output.decode('utf-8').strip())
     output_list = str(output.decode('utf-8')).strip().split(' ')
     for val in output_list:
-        if 'LandscapeRotation' in val:
-            landscape_val = str(val.split('=')[-1])
-            # For some tablets the values are in constant forms such as ROTATION_90
-            if 'ROTATION_90' in landscape_val:
-                landscape_val = '1'
-            logging.debug('Changing the orientation to landscape mode.')
-            self.tablet.adb.shell(['settings', 'put', 'system', 'user_rotation',
-                                   landscape_val])
-            break
-    logging.debug('Reported tablet orientation is: %d',
-                  int(self.tablet.adb.shell('settings get system user_rotation')))
+      if 'LandscapeRotation' in val:
+        landscape_val = str(val.split('=')[-1])
+        # For some tablets the values are in constant forms such as ROTATION_90
+        if 'ROTATION_90' in landscape_val:
+          landscape_val = '1'
+        logging.debug('Changing the orientation to landscape mode.')
+        self.tablet.adb.shell(['settings', 'put', 'system', 'user_rotation',
+                               landscape_val])
+        break
+    logging.debug(
+        'Reported tablet orientation is: %d',
+        int(self.tablet.adb.shell('settings get system user_rotation')))
 
   def parse_hidden_camera_id(self):
     """Parse the string of camera ID into an array.
