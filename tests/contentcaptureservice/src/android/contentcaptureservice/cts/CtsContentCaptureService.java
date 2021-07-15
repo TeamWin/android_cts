@@ -39,6 +39,7 @@ import android.view.contentcapture.DataRemovalRequest;
 import android.view.contentcapture.DataShareRequest;
 import android.view.contentcapture.ViewNode;
 
+import androidx.annotation.GuardedBy;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -71,6 +72,9 @@ public class CtsContentCaptureService extends ContentCaptureService {
 
     private static int sIdCounter;
 
+    private static Object sLock = new Object();
+
+    @GuardedBy("sLock")
     private static ServiceWatcher sServiceWatcher;
 
     private final int mId = ++sIdCounter;
@@ -157,11 +161,13 @@ public class CtsContentCaptureService extends ContentCaptureService {
 
     @NonNull
     public static ServiceWatcher setServiceWatcher() {
-        if (sServiceWatcher != null) {
-            throw new IllegalStateException("There Can Be Only One!");
+        synchronized (sLock) {
+            if (sServiceWatcher != null) {
+                throw new IllegalStateException("There Can Be Only One!");
+            }
+            sServiceWatcher = new ServiceWatcher();
+            return sServiceWatcher;
         }
-        sServiceWatcher = new ServiceWatcher();
-        return sServiceWatcher;
     }
 
     public static void resetStaticState() {
@@ -172,20 +178,29 @@ public class CtsContentCaptureService extends ContentCaptureService {
         // TODO(b/123540602): each test should use a different service instance, but we need
         // to provide onConnected() / onDisconnected() methods first and then change the infra so
         // we can wait for those
+        synchronized (sLock) {
+            if (sServiceWatcher != null) {
+                Log.wtf(TAG, "resetStaticState(): should not have sServiceWatcher");
+                sServiceWatcher = null;
+            }
+        }
+    }
 
-        if (sServiceWatcher != null) {
-            Log.wtf(TAG, "resetStaticState(): should not have sServiceWatcher");
-            sServiceWatcher = null;
+    private static ServiceWatcher getServiceWatcher() {
+        synchronized (sLock) {
+            return sServiceWatcher;
         }
     }
 
     public static void clearServiceWatcher() {
-        if (sServiceWatcher != null) {
-            if (sServiceWatcher.mReadyToClear) {
-                sServiceWatcher.mService = null;
-                sServiceWatcher = null;
-            } else {
-                sServiceWatcher.mReadyToClear = true;
+        synchronized (sLock) {
+            if (sServiceWatcher != null) {
+                if (sServiceWatcher.mReadyToClear) {
+                    sServiceWatcher.mService = null;
+                    sServiceWatcher = null;
+                } else {
+                    sServiceWatcher.mReadyToClear = true;
+                }
             }
         }
     }
@@ -203,21 +218,22 @@ public class CtsContentCaptureService extends ContentCaptureService {
 
     @Override
     public void onConnected() {
-        Log.i(TAG, "onConnected(id=" + mId + "): sServiceWatcher=" + sServiceWatcher);
+        final ServiceWatcher sw = getServiceWatcher();
+        Log.i(TAG, "onConnected(id=" + mId + "): sServiceWatcher=" + sw);
 
-        if (sServiceWatcher == null) {
+        if (sw == null) {
             addException("onConnected() without a watcher");
             return;
         }
 
-        if (!sServiceWatcher.mReadyToClear && sServiceWatcher.mService != null) {
-            addException("onConnected(): already created: %s", sServiceWatcher);
+        if (!sw.mReadyToClear && sw.mService != null) {
+            addException("onConnected(): already created: %s", sw);
             return;
         }
 
-        sServiceWatcher.mService = this;
-        sServiceWatcher.mCreated.countDown();
-        sServiceWatcher.mReadyToClear = false;
+        sw.mService = this;
+        sw.mCreated.countDown();
+        sw.mReadyToClear = false;
 
         if (mConnectedLatch.getCount() == 0) {
             addException("already connected: %s", mConnectedLatch);
@@ -227,19 +243,20 @@ public class CtsContentCaptureService extends ContentCaptureService {
 
     @Override
     public void onDisconnected() {
-        Log.i(TAG, "onDisconnected(id=" + mId + "): sServiceWatcher=" + sServiceWatcher);
+        final ServiceWatcher sw = getServiceWatcher();
+        Log.i(TAG, "onDisconnected(id=" + mId + "): sServiceWatcher=" + sw);
 
         if (mDisconnectedLatch.getCount() == 0) {
             addException("already disconnected: %s", mConnectedLatch);
         }
         mDisconnectedLatch.countDown();
 
-        if (sServiceWatcher == null) {
+        if (sw == null) {
             addException("onDisconnected() without a watcher");
             return;
         }
-        if (sServiceWatcher.mService == null) {
-            addException("onDisconnected(): no service on %s", sServiceWatcher);
+        if (sw.mService == null) {
+            addException("onDisconnected(): no service on %s", sw);
             return;
         }
         // Notify test case as well
@@ -248,7 +265,7 @@ public class CtsContentCaptureService extends ContentCaptureService {
             mOnDisconnectListener = null;
             latch.countDown();
         }
-        sServiceWatcher.mDestroyed.countDown();
+        sw.mDestroyed.countDown();
         clearServiceWatcher();
     }
 
@@ -448,7 +465,7 @@ public class CtsContentCaptureService extends ContentCaptureService {
     protected void dump(FileDescriptor fd, PrintWriter pw, String[] args) {
         super.dump(fd, pw, args);
 
-        pw.print("sServiceWatcher: "); pw.println(sServiceWatcher);
+        pw.print("sServiceWatcher: "); pw.println(getServiceWatcher());
         pw.print("sExceptions: "); pw.println(sExceptions);
         pw.print("sIdCounter: "); pw.println(sIdCounter);
         pw.print("mId: "); pw.println(mId);
