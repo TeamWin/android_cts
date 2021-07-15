@@ -43,10 +43,4 @@ public interface NeneActivity {
 
     /** See {@link Activity#startActivity}. */
     void startActivity(Intent intent, Bundle options);
-
-    /**
-     * Calls {@link android.os.UserManager#getApplicationRestrictions(String)} using the activity's
-     * package name.
-     */
-    Bundle getApplicationRestrictions();
 }

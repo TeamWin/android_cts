@@ -19,7 +19,6 @@ package com.android.bedstead.nene.activities;
 import static android.app.ActivityManager.LOCK_TASK_MODE_NONE;
 
 import android.content.Intent;
-import android.os.Bundle;
 import android.util.Log;
 
 import com.android.bedstead.nene.TestApis;
@@ -84,21 +83,6 @@ public class Activity<E> {
         //  find another thing to poll on
         PollingCheck.waitFor(
                 () -> mTestApis.activities().getLockTaskModeState() == LOCK_TASK_MODE_NONE);
-    }
-
-    // TODO(b/193563511): remove once test can call:
-    // testApp.systemServices().userManager().getApplicationRestrictions(pkg)
-    /**
-     * Calls {@link android.os.UserManager#getApplicationRestrictions(String)} using the activity's
-     * package name.
-     */
-    @Experimental
-    public Bundle getApplicationRestrictions() {
-        Bundle restrictions = mActivity.getApplicationRestrictions();
-        // TODO: use helper method to print bundle key / values
-        Log.d(TAG, "getApplicationRestrictions() on " + mActivity + ": " + restrictions);
-
-        return restrictions;
     }
 
     /**
