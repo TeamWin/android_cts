@@ -145,14 +145,14 @@ public class TaggingTest {
     @Test
     public void testHeapZeroInitActivity() throws Exception {
       TestActivity activity = mTestActivityRule.getActivity();
-      boolean result = activity.callActivity(HeapZeroInitActivity.class);
-      assertTrue(result);
+      activity.callActivity(HeapZeroInitActivity.class);
+      assertFalse(activity.failed());
     }
 
     @Test
     public void testHeapZeroInitMemtagAsyncActivity() throws Exception {
       TestActivity activity = mTestActivityRule.getActivity();
-      boolean result = activity.callActivity(HeapZeroInitMemtagAsyncActivity.class);
-      assertTrue(result);
+      activity.callActivity(HeapZeroInitMemtagAsyncActivity.class);
+      assertFalse(activity.failed());
     }
 }
