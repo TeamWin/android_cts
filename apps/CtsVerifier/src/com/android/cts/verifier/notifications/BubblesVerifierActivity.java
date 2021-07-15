@@ -24,6 +24,7 @@ import static android.view.View.GONE;
 import static android.view.View.INVISIBLE;
 import static android.view.View.VISIBLE;
 
+import static com.android.cts.verifier.notifications.BubbleActivity.EXTRA_INSETS;
 import static com.android.cts.verifier.notifications.BubbleActivity.EXTRA_TEST_NAME;
 import static com.android.cts.verifier.notifications.BubbleActivity.TEST_MAX_HEIGHT;
 import static com.android.cts.verifier.notifications.BubbleActivity.TEST_MIN_HEIGHT;
@@ -42,6 +43,7 @@ import android.content.Intent;
 import android.content.pm.ShortcutInfo;
 import android.content.pm.ShortcutManager;
 import android.graphics.Color;
+import android.graphics.Insets;
 import android.graphics.drawable.Icon;
 import android.os.Bundle;
 import android.os.Handler;
@@ -49,6 +51,9 @@ import android.os.SystemClock;
 import android.provider.Settings;
 import android.util.ArraySet;
 import android.view.ViewGroup;
+import android.view.WindowInsets;
+import android.view.WindowManager;
+import android.view.WindowMetrics;
 import android.widget.Button;
 import android.widget.TextView;
 
@@ -771,13 +776,15 @@ public class BubblesVerifierActivity extends PassFailButtons.Activity {
 
         @Override
         public void performTestAction() {
-            mNotificationManager.cancelAll();
-
-            // but post one more so the tester can actually access the overflow
+            // Make sure one is a bubble
             Notification.Builder builder = getConversationNotif(getTestTitle());
             Notification.BubbleMetadata metadata = getBubbleBuilder().build();
             builder.setBubbleMetadata(metadata);
             mNotificationManager.notify(NOTIFICATION_ID, builder.build());
+
+            // Cancel the others
+            mNotificationManager.cancel(NOTIFICATION_ID + 1);
+            mNotificationManager.cancel(NOTIFICATION_ID + 2);
         }
     }
 
@@ -903,12 +910,24 @@ public class BubblesVerifierActivity extends PassFailButtons.Activity {
 
         @Override
         public void performTestAction() {
+            WindowMetrics windowMetrics =
+                    getSystemService(WindowManager.class).getCurrentWindowMetrics();
+            WindowInsets metricInsets = windowMetrics.getWindowInsets();
+            Insets insets = metricInsets.getInsetsIgnoringVisibility(
+                    WindowInsets.Type.navigationBars()
+                            | WindowInsets.Type.statusBars()
+                            | WindowInsets.Type.displayCutout());
+
             mNotificationManager.cancelAll();
             Context context = getApplicationContext();
             Intent intent = new Intent(context, BubbleActivity.class);
-            intent.putExtra(EXTRA_TEST_NAME, TEST_MAX_HEIGHT);
+            Bundle extras = new Bundle();
+            extras.putString(EXTRA_TEST_NAME, TEST_MAX_HEIGHT);
+            // Pass the insets because the bubble'd activity window won't have them.
+            extras.putParcelable(EXTRA_INSETS, insets);
+            intent.putExtras(extras);
             final PendingIntent pendingIntent = PendingIntent.getActivity(context, 2, intent,
-                    PendingIntent.FLAG_MUTABLE);
+                    PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
             Notification.BubbleMetadata.Builder b = new Notification.BubbleMetadata.Builder(
                     pendingIntent,
                     Icon.createWithResource(getApplicationContext(), R.drawable.ic_android));

@@ -17,10 +17,10 @@
 package android.time.cts.host;
 
 
-import static android.time.cts.host.LocationTimeZoneManager.DeviceConfig.PROVIDER_MODE_DISABLED;
-import static android.time.cts.host.LocationTimeZoneManager.DeviceConfig.PROVIDER_MODE_SIMULATED;
-import static android.time.cts.host.LocationTimeZoneManager.PRIMARY_PROVIDER_INDEX;
-import static android.time.cts.host.LocationTimeZoneManager.SECONDARY_PROVIDER_INDEX;
+import static android.app.time.cts.shell.LocationTimeZoneManagerShellHelper.PROVIDER_MODE_DISABLED;
+import static android.app.time.cts.shell.LocationTimeZoneManagerShellHelper.PROVIDER_MODE_SIMULATED;
+import static android.app.time.cts.shell.LocationTimeZoneManagerShellHelper.PRIMARY_PROVIDER_INDEX;
+import static android.app.time.cts.shell.LocationTimeZoneManagerShellHelper.SECONDARY_PROVIDER_INDEX;
 
 import static org.junit.Assert.assertEquals;
 

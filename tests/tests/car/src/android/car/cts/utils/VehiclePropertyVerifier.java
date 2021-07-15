@@ -1,0 +1,275 @@
+/*
+ * Copyright (C) 2021 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.car.cts.utils;
+
+import static com.google.common.truth.Truth.assertWithMessage;
+
+import static org.junit.Assume.assumeNotNull;
+
+import android.car.VehicleAreaType;
+import android.car.VehiclePropertyIds;
+import android.car.hardware.CarPropertyConfig;
+import android.car.hardware.CarPropertyValue;
+import android.car.hardware.property.CarPropertyManager;
+import android.os.SystemClock;
+
+import com.google.common.collect.ImmutableSet;
+
+import java.util.List;
+import java.util.Optional;
+
+public class VehiclePropertyVerifier<T> {
+    private final int mPropertyId;
+    private final String mPropertyName;
+    private final int mAccess;
+    private final int mAreaType;
+    private final int mChangeMode;
+    private final Class<T> mPropertyType;
+    private final boolean mRequiredProperty;
+    private final Optional<ConfigArrayVerifier> mConfigArrayVerifier;
+    private final Optional<CarPropertyValueVerifier> mCarPropertyValueVerifier;
+
+    private VehiclePropertyVerifier(int propertyId, int access, int areaType, int changeMode,
+            Class<T> propertyType, boolean requiredProperty,
+            Optional<ConfigArrayVerifier> configArrayVerifier,
+            Optional<CarPropertyValueVerifier> carPropertyValueVerifier) {
+        mPropertyId = propertyId;
+        mPropertyName = VehiclePropertyIds.toString(propertyId);
+        mAccess = access;
+        mAreaType = areaType;
+        mChangeMode = changeMode;
+        mPropertyType = propertyType;
+        mRequiredProperty = requiredProperty;
+        mConfigArrayVerifier = configArrayVerifier;
+        mCarPropertyValueVerifier = carPropertyValueVerifier;
+    }
+
+    public static <T> Builder<T> newBuilder(int propertyId, int access, int areaType,
+            int changeMode,
+            Class<T> propertyType) {
+        return new Builder<>(propertyId, access, areaType, changeMode, propertyType);
+    }
+
+    private static String accessToString(int access) {
+        switch (access) {
+            case CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_NONE:
+                return "VEHICLE_PROPERTY_ACCESS_NONE";
+            case CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ:
+                return "VEHICLE_PROPERTY_ACCESS_READ";
+            case CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_WRITE:
+                return "VEHICLE_PROPERTY_ACCESS_WRITE";
+            case CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE:
+                return "VEHICLE_PROPERTY_ACCESS_READ_WRITE";
+            default:
+                return Integer.toString(access);
+        }
+    }
+
+    private static String areaTypeToString(int areaType) {
+        switch (areaType) {
+            case VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL:
+                return "VEHICLE_AREA_TYPE_GLOBAL";
+            case VehicleAreaType.VEHICLE_AREA_TYPE_WINDOW:
+                return "VEHICLE_AREA_TYPE_WINDOW";
+            case VehicleAreaType.VEHICLE_AREA_TYPE_DOOR:
+                return "VEHICLE_AREA_TYPE_DOOR";
+            case VehicleAreaType.VEHICLE_AREA_TYPE_MIRROR:
+                return "VEHICLE_AREA_TYPE_MIRROR";
+            case VehicleAreaType.VEHICLE_AREA_TYPE_SEAT:
+                return "VEHICLE_AREA_TYPE_SEAT";
+            case VehicleAreaType.VEHICLE_AREA_TYPE_WHEEL:
+                return "VEHICLE_AREA_TYPE_WHEEL";
+            default:
+                return Integer.toString(areaType);
+        }
+    }
+
+    private static String changeModeToString(int changeMode) {
+        switch (changeMode) {
+            case CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC:
+                return "VEHICLE_PROPERTY_CHANGE_MODE_STATIC";
+            case CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE:
+                return "VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE";
+            case CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS:
+                return "VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS";
+            default:
+                return Integer.toString(changeMode);
+        }
+    }
+
+    public void verify(CarPropertyManager carPropertyManager) {
+        CarPropertyConfig<?> carPropertyConfig = carPropertyManager.getCarPropertyConfig(
+                mPropertyId);
+        if (mRequiredProperty) {
+            assertWithMessage("Must support " + mPropertyName).that(carPropertyConfig)
+                    .isNotNull();
+        } else {
+            assumeNotNull(carPropertyConfig);
+        }
+
+        verifyCarPropertyConfig(carPropertyConfig);
+        verifyCarPropertyValue(carPropertyConfig, carPropertyManager);
+    }
+
+    private void verifyCarPropertyConfig(CarPropertyConfig<?> carPropertyConfig) {
+        assertWithMessage(mPropertyName + " CarPropertyConfig must have correct property ID")
+                .that(carPropertyConfig.getPropertyId())
+                .isEqualTo(mPropertyId);
+        assertWithMessage(mPropertyName + " must be " + accessToString(mAccess))
+                .that(carPropertyConfig.getAccess())
+                .isEqualTo(mAccess);
+        assertWithMessage(mPropertyName + " must be " + areaTypeToString(mAreaType))
+                .that(carPropertyConfig.getAreaType())
+                .isEqualTo(mAreaType);
+        assertWithMessage(mPropertyName + " must be " + changeModeToString(mChangeMode))
+                .that(carPropertyConfig.getChangeMode())
+                .isEqualTo(mChangeMode);
+        assertWithMessage(mPropertyName + " must be " + mPropertyType + " type property")
+                .that(carPropertyConfig.getPropertyType()).isEqualTo(mPropertyType);
+
+        if (mAreaType == VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL) {
+            assertWithMessage(
+                    mPropertyName + "'s AreaIds must contain a single 0 since it is "
+                            + areaTypeToString(mAreaType))
+                    .that(carPropertyConfig.getAreaIds()).isEqualTo(new int[]{0});
+        }
+
+        if (mChangeMode == CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS) {
+            verifyContinuousCarPropertyConfig(carPropertyConfig);
+        } else {
+            verifyNonContinuousCarPropertyConfig(carPropertyConfig);
+        }
+
+        if (mConfigArrayVerifier.isPresent()) {
+            mConfigArrayVerifier.get().verify(carPropertyConfig.getConfigArray());
+        } else {
+            assertWithMessage(mPropertyName + " configArray is undefined, so it must be empty")
+                    .that(carPropertyConfig.getConfigArray().size()).isEqualTo(0);
+        }
+    }
+
+    private void verifyContinuousCarPropertyConfig(CarPropertyConfig<?> carPropertyConfig) {
+        assertWithMessage(
+                mPropertyName + " must define max sample rate since change mode is "
+                        + changeModeToString(mChangeMode))
+                .that(carPropertyConfig.getMaxSampleRate()).isGreaterThan(0);
+        assertWithMessage(
+                mPropertyName + " must define min sample rate since change mode is "
+                        + changeModeToString(mChangeMode))
+                .that(carPropertyConfig.getMinSampleRate()).isGreaterThan(0);
+        assertWithMessage(mPropertyName + " max sample rate must be >= min sample rate")
+                .that(carPropertyConfig.getMaxSampleRate() >=
+                        carPropertyConfig.getMinSampleRate())
+                .isTrue();
+    }
+
+    private void verifyNonContinuousCarPropertyConfig(CarPropertyConfig<?> carPropertyConfig) {
+        assertWithMessage(mPropertyName + " must define max sample rate as 0 since change mode is "
+                + changeModeToString(mChangeMode))
+                .that(carPropertyConfig.getMaxSampleRate()).isEqualTo(0);
+        assertWithMessage(mPropertyName + " must define min sample rate as 0 since change mode is "
+                + changeModeToString(mChangeMode))
+                .that(carPropertyConfig.getMinSampleRate()).isEqualTo(0);
+    }
+
+    private void verifyCarPropertyValue(CarPropertyConfig<?> carPropertyConfig,
+            CarPropertyManager carPropertyManager) {
+        for (int areaId : carPropertyConfig.getAreaIds()) {
+            CarPropertyValue<?> carPropertyValue =
+                    carPropertyManager.getProperty(
+                            mPropertyId, areaId);
+            long afterElapsedTimestampNanos = SystemClock.elapsedRealtimeNanos();
+            assertWithMessage(
+                    mPropertyName + " - areaId: " + areaId + " value must have correct property ID")
+                    .that(carPropertyValue.getPropertyId()).isEqualTo(mPropertyId);
+            assertWithMessage(
+                    mPropertyName + " - areaId: " + areaId + " value must have correct area id: "
+                            + areaId)
+                    .that(carPropertyValue.getAreaId())
+                    .isEqualTo(areaId);
+            assertWithMessage(
+                    mPropertyName + " - areaId: " + areaId + " value's status must be valid")
+                    .that(carPropertyValue.getStatus()).isIn(
+                    ImmutableSet.of(CarPropertyValue.STATUS_AVAILABLE,
+                            CarPropertyValue.STATUS_UNAVAILABLE, CarPropertyValue.STATUS_ERROR));
+            assertWithMessage(mPropertyName + " - areaId: " + areaId +
+                    " timestamp must use the SystemClock.elapsedRealtimeNanos() time base")
+                    .that(carPropertyValue.getTimestamp()).isAtLeast(0);
+            assertWithMessage(mPropertyName + " - areaId: " + areaId +
+                    " timestamp must use the SystemClock.elapsedRealtimeNanos() time base")
+                    .that(carPropertyValue.getTimestamp()).isLessThan(afterElapsedTimestampNanos);
+            assertWithMessage(
+                    mPropertyName + " - areaId: " + areaId + " must return " + mPropertyType
+                            + " type value")
+                    .that(carPropertyValue.getValue().getClass()).isEqualTo(mPropertyType);
+
+            mCarPropertyValueVerifier.ifPresent(
+                    propertyValueVerifier -> propertyValueVerifier.verify(carPropertyConfig,
+                            carPropertyValue));
+        }
+    }
+
+    public interface ConfigArrayVerifier {
+        void verify(List<Integer> configArray);
+    }
+
+    public interface CarPropertyValueVerifier {
+        void verify(CarPropertyConfig<?> carPropertyConfig, CarPropertyValue<?> carPropertyValue);
+    }
+
+    public static class Builder<T> {
+        private final int mPropertyId;
+        private final int mAccess;
+        private final int mAreaType;
+        private final int mChangeMode;
+        private final Class<T> mPropertyType;
+        private boolean mRequiredProperty = false;
+        private Optional<ConfigArrayVerifier> mConfigArrayVerifier = Optional.empty();
+        private Optional<CarPropertyValueVerifier> mCarPropertyValueVerifier = Optional.empty();
+
+        private Builder(int propertyId, int access, int areaType, int changeMode,
+                Class<T> propertyType) {
+            mPropertyId = propertyId;
+            mAccess = access;
+            mAreaType = areaType;
+            mChangeMode = changeMode;
+            mPropertyType = propertyType;
+        }
+
+        public Builder<T> requireProperty() {
+            mRequiredProperty = true;
+            return this;
+        }
+
+        public Builder<T> setConfigArrayVerifier(ConfigArrayVerifier configArrayVerifier) {
+            mConfigArrayVerifier = Optional.of(configArrayVerifier);
+            return this;
+        }
+
+        public Builder<T> setCarPropertyValueVerifier(
+                CarPropertyValueVerifier carPropertyValueVerifier) {
+            mCarPropertyValueVerifier = Optional.of(carPropertyValueVerifier);
+            return this;
+        }
+
+        public VehiclePropertyVerifier<T> build() {
+            return new VehiclePropertyVerifier<>(mPropertyId, mAccess, mAreaType, mChangeMode,
+                    mPropertyType,
+                    mRequiredProperty, mConfigArrayVerifier, mCarPropertyValueVerifier);
+        }
+    }
+}
