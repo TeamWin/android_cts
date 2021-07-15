@@ -228,6 +228,40 @@ public class EdgeEffectTests extends ActivityTestBase {
         });
     }
 
+    /**
+     * Can't stretch past 1.0
+     */
+    @Test
+    public void testMaxStretch() throws Throwable {
+        EdgeEffect edgeEffect = new EdgeEffect(getContext());
+        edgeEffect.setSize(WIDTH, HEIGHT);
+        float pulled = edgeEffect.onPullDistance(1f, 0.5f);
+        assertEquals(1f, pulled, 0.001f);
+        assertEquals(1f, edgeEffect.getDistance(), 0.001f);
+        pulled = edgeEffect.onPullDistance(0.1f, 0.5f);
+        assertEquals(0.1f, pulled, 0.001f);
+        assertEquals(1f, edgeEffect.getDistance(), 0.001f);
+    }
+
+    /**
+     * A fling past 1.0 results in stopping at 1 and then retracting.
+     */
+    @Test
+    public void testMaxFling() throws Throwable {
+        MockVsyncHelper.runOnVsyncThread(() -> {
+            EdgeEffect edgeEffect = new EdgeEffect(getContext());
+            edgeEffect.setSize(WIDTH, HEIGHT);
+            assertEquals(0.99f, edgeEffect.onPullDistance(0.99f, 0.5f), 0.001f);
+            edgeEffect.onAbsorb(10000);
+            nextFrame();
+            drawEdgeEffect(edgeEffect, 0f, 0f);
+            assertEquals(1f, edgeEffect.getDistance(), 0.001f);
+            nextFrame();
+            drawEdgeEffect(edgeEffect, 0f, 0f);
+            assertTrue(edgeEffect.getDistance() < 1f);
+        });
+    }
+
     private RenderNode drawStretchEffect(float rotation) {
         EdgeEffect edgeEffect = new EdgeEffect(getContext());
         edgeEffect.setSize(WIDTH, HEIGHT);
