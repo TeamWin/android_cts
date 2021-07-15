@@ -18,8 +18,8 @@ package com.android.queryable.queries;
 
 import android.os.UserHandle;
 
-import com.android.queryable.util.SerializableParcelWrapper;
 import com.android.queryable.Queryable;
+import com.android.queryable.util.SerializableParcelWrapper;
 
 import java.io.Serializable;
 
@@ -28,8 +28,8 @@ public final class UserHandleQueryHelper<E extends Queryable>
         implements UserHandleQuery<E>, Serializable {
 
     private final E mQuery;
-    private UserHandle mEqualsValue = null;
-    private IntegerQueryHelper<E> mIdQuery = null;
+    private UserHandle mEqualsValue;
+    private IntegerQueryHelper<E> mIdQuery;
 
     UserHandleQueryHelper() {
         mQuery = (E) this;
