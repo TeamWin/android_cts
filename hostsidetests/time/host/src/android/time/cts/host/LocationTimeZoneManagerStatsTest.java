@@ -16,10 +16,10 @@
 
 package android.time.cts.host;
 
-import static android.time.cts.host.LocationTimeZoneManager.DeviceConfig.PROVIDER_MODE_DISABLED;
-import static android.time.cts.host.LocationTimeZoneManager.DeviceConfig.PROVIDER_MODE_SIMULATED;
-import static android.time.cts.host.LocationTimeZoneManager.PRIMARY_PROVIDER_INDEX;
-import static android.time.cts.host.LocationTimeZoneManager.SECONDARY_PROVIDER_INDEX;
+import static android.app.time.cts.shell.LocationTimeZoneManagerShellHelper.PRIMARY_PROVIDER_INDEX;
+import static android.app.time.cts.shell.LocationTimeZoneManagerShellHelper.PROVIDER_MODE_DISABLED;
+import static android.app.time.cts.shell.LocationTimeZoneManagerShellHelper.PROVIDER_MODE_SIMULATED;
+import static android.app.time.cts.shell.LocationTimeZoneManagerShellHelper.SECONDARY_PROVIDER_INDEX;
 
 import static java.util.stream.Collectors.toList;
 
@@ -71,7 +71,7 @@ public class LocationTimeZoneManagerStatsTest extends BaseLocationTimeZoneManage
     public void testAtom_locationTimeZoneProviderStateChanged() throws Exception {
         setProviderModeOverride(PRIMARY_PROVIDER_INDEX, PROVIDER_MODE_DISABLED);
         setProviderModeOverride(SECONDARY_PROVIDER_INDEX, PROVIDER_MODE_SIMULATED);
-        mTimeZoneDetectorHostHelper.setGeoDetectionEnabled(false);
+        mTimeZoneDetectorShellHelper.setGeoDetectionEnabled(false);
 
         startLocationTimeZoneManagerService();
 
@@ -80,9 +80,9 @@ public class LocationTimeZoneManagerStatsTest extends BaseLocationTimeZoneManage
 
         // Turn geo detection on and off, twice.
         for (int i = 0; i < 2; i++) {
-            mTimeZoneDetectorHostHelper.setGeoDetectionEnabled(true);
+            mTimeZoneDetectorShellHelper.setGeoDetectionEnabled(true);
             Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
-            mTimeZoneDetectorHostHelper.setGeoDetectionEnabled(false);
+            mTimeZoneDetectorShellHelper.setGeoDetectionEnabled(false);
             Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
         }
 
@@ -130,7 +130,7 @@ public class LocationTimeZoneManagerStatsTest extends BaseLocationTimeZoneManage
         return Collections.singleton(stateId(providerIndex, state));
     }
 
-    private List<StatsLog.EventMetricData> extractEventsForProviderIndex(
+    private static List<StatsLog.EventMetricData> extractEventsForProviderIndex(
             List<StatsLog.EventMetricData> data, int providerIndex) {
         return data.stream().filter(event -> {
             if (!event.getAtom().hasLocationTimeZoneProviderStateChanged()) {
