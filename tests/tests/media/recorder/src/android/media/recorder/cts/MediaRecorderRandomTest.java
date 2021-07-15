@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.media.cts;
+package android.media.recorder.cts;
 
 import android.media.MediaRecorder;
 import android.media.cts.MediaHeavyPresubmitTest;
@@ -82,7 +82,7 @@ public class MediaRecorderRandomTest extends ActivityInstrumentationTestCase2<Me
     }
 
     public MediaRecorderRandomTest() {
-        super("android.media.cts", MediaStubActivity.class);
+        super("android.media.recorder.cts", MediaStubActivity.class);
     }
 
     public void testRecorderRandomAction() throws Exception {
