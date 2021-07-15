@@ -1055,6 +1055,30 @@ public class MockImeSession implements AutoCloseable {
     }
 
     /**
+     * Lets {@link MockIme} to call {@link InputConnection#setImeConsumesInput(boolean)} with the
+     * given parameters.
+     *
+     * <p>This triggers {@code getCurrentInputConnection().setImeConsumesInput(boolean)}.</p>
+     *
+     * <p>Use {@link ImeEvent#getReturnBooleanValue()} for {@link ImeEvent} returned from
+     * {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to see the
+     * value returned from the API.</p>
+     *
+     * <p>This can be affected by {@link #memorizeCurrentInputConnection()}.</p>
+     *
+     * @param imeConsumesInput to be passed as the {@code imeConsumesInput} parameter
+     * @return {@link ImeCommand} object that can be passed to
+     *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
+     *         wait until this event is handled by {@link MockIme}
+     */
+    @NonNull
+    public ImeCommand callSetImeConsumesInput(boolean imeConsumesInput) {
+        final Bundle params = new Bundle();
+        params.putBoolean("imeConsumesInput", imeConsumesInput);
+        return callCommandInternal("setImeConsumesInput", params);
+    }
+
+    /**
      * Lets {@link MockIme} to call
      * {@link android.inputmethodservice.InputMethodService#setBackDisposition(int)} with the given
      * parameters.

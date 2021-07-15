@@ -42,6 +42,9 @@ import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextUtils;
 import android.util.Pair;
+import android.view.KeyEvent;
+import android.view.inputmethod.CompletionInfo;
+import android.view.inputmethod.CorrectionInfo;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.ExtractedText;
 import android.view.inputmethod.ExtractedTextRequest;
@@ -54,6 +57,7 @@ import android.view.inputmethod.cts.util.TestActivity;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 
+import androidx.annotation.AnyThread;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.test.filters.LargeTest;
@@ -86,12 +90,14 @@ import java.util.function.Function;
 /**
  * Provides basic tests for APIs defined in {@link InputConnection}.
  *
- * <p>TODO(b/129012881): Reduce boilerplate code.</p>
+ * <p>TODO(b/193535269): Clean up boilerplate code around mocking InputConnection.</p>
  */
 @LargeTest
 @RunWith(AndroidJUnit4.class)
 public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
+    private static final long TIME_SLICE = TimeUnit.MILLISECONDS.toMillis(125);
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
+    private static final long EXPECTED_NOT_CALLED_TIMEOUT = TimeUnit.SECONDS.toMillis(1);
     private static final long LONG_TIMEOUT = TimeUnit.SECONDS.toMillis(30);
     private static final long IMMEDIATE_TIMEOUT_NANO = TimeUnit.MILLISECONDS.toNanos(200);
 
@@ -151,6 +157,12 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
         private final AtomicReference<Bundle> mArgs = new AtomicReference<>();
         private final AtomicInteger mCallCount = new AtomicInteger(0);
 
+        @AnyThread
+        void reset() {
+            mArgs.set(null);
+            mCallCount.set(0);
+        }
+
         /**
          * Used to record when a method to be tested is called.
          *
@@ -177,11 +189,62 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
         }
 
         /**
+         * Ensures that the method to be tested is called within {@param timeout}.
+         *
+         * @param argumentsVerifier a {@link Consumer} to verify method arguments.
+         * @param timeout timeout in millisecond
+         * @throws AssertionError when {@link #onMethodCalled(Consumer)} was not called only once.
+         */
+        void expectCalledOnce(@NonNull Consumer<Bundle> argumentsVerifier, long timeout) {
+            // Currently using busy-wait because CountDownLatch is not compatible with reset().
+            // TODO: Consider using other more efficient operation.
+            long remainingTime = timeout;
+            while (mCallCount.get() == 0) {
+                if (remainingTime < 0) {
+                    fail("The method must be called, but was not within" + timeout + " msec.");
+                }
+                SystemClock.sleep(TIME_SLICE);
+                remainingTime -= TIME_SLICE;
+            }
+            assertEquals(1, mCallCount.get());
+            final Bundle bundle = mArgs.get();
+            assertNotNull(bundle);
+            argumentsVerifier.accept(bundle);
+        }
+
+        /**
          * Used to assert that {@link #onMethodCalled(Consumer)} was never called.
          *
          * @param callCountVerificationMessage A message to be used when the assertion fails.
          */
         void assertNotCalled(@Nullable String callCountVerificationMessage) {
+            if (callCountVerificationMessage != null) {
+                assertEquals(callCountVerificationMessage, 0, mCallCount.get());
+            } else {
+                assertEquals(0, mCallCount.get());
+            }
+        }
+
+        /**
+         * Ensures that the method to be tested is not called within {@param timeout}.
+         *
+         * @param callCountVerificationMessage A message to be used when the assertion fails.
+         * @param timeout timeout in millisecond
+         */
+        void expectNotCalled(@Nullable String callCountVerificationMessage, long timeout) {
+            // Currently using busy-wait because CountDownLatch is not compatible with reset().
+            // TODO: Consider using other more efficient operation.
+            long remainingTime = timeout;
+            while (true) {
+                if (mCallCount.get() != 0) {
+                    fail("The method must not be called.");
+                }
+                if (remainingTime < 0) {
+                    break;  // This is indeed an expected scenario, not an error.
+                }
+                SystemClock.sleep(TIME_SLICE);
+                remainingTime -= TIME_SLICE;
+            }
             if (callCountVerificationMessage != null) {
                 assertEquals(callCountVerificationMessage, 0, mCallCount.get());
             } else {
@@ -1401,10 +1464,10 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
                     session.callCommitText(expectedText, expectedNewCursorPosition);
             assertTrue("commitText() always returns true unless RemoteException is thrown",
                     expectCommand(stream, command, TIMEOUT).getReturnBooleanValue());
-            methodCallVerifier.assertCalledOnce(args -> {
+            methodCallVerifier.expectCalledOnce(args -> {
                 assertEqualsForTestCharSequence(expectedText, args.getCharSequence("text"));
                 assertEquals(expectedNewCursorPosition, args.getInt("newCursorPosition"));
-            });
+            }, TIMEOUT);
         });
     }
 
@@ -1447,9 +1510,1275 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
             // CAVEAT: this behavior is a bit questionable and may change in a future version.
             assertTrue("Currently IC#commitText() still returns true even after unbindInput().",
                     result.getReturnBooleanValue());
-            methodCallVerifier.assertNotCalled(
-                    "Once unbindInput() happened, IC#commitText() fails fast.");
             expectElapseTimeLessThan(result, IMMEDIATE_TIMEOUT_NANO);
+
+            // Make sure that the app does not receive the call (for a while).
+            methodCallVerifier.expectNotCalled(
+                    "Once unbindInput() happened, IC#commitText() fails fast.",
+                    EXPECTED_NOT_CALLED_TIMEOUT);
+        });
+    }
+
+    /**
+     * Test {@link InputConnection#setComposingText(CharSequence, int)} works as expected.
+     */
+    @Test
+    public void testSetComposingText() throws Exception {
+        final Annotation expectedSpan = new Annotation("expectedKey", "expectedValue");
+        final CharSequence expectedText = createTestCharSequence("expectedText", expectedSpan);
+        final int expectedNewCursorPosition = 123;
+        // Intentionally let the app return "false" to confirm that IME still receives "true".
+        final boolean returnedResult = false;
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public boolean setComposingText(CharSequence text, int newCursorPosition) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putCharSequence("text", text);
+                    args.putInt("newCursorPosition", newCursorPosition);
+                });
+                return returnedResult;
+            }
+        }
+
+        testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
+            final ImeCommand command =
+                    session.callSetComposingText(expectedText, expectedNewCursorPosition);
+            assertTrue("setComposingText() always returns true unless RemoteException is thrown",
+                    expectCommand(stream, command, TIMEOUT).getReturnBooleanValue());
+            methodCallVerifier.expectCalledOnce(args -> {
+                assertEqualsForTestCharSequence(expectedText, args.getCharSequence("text"));
+                assertEquals(expectedNewCursorPosition, args.getInt("newCursorPosition"));
+            }, TIMEOUT);
+        });
+    }
+
+    /**
+     * Test {@link InputConnection#setComposingText(CharSequence, int)} fails fast once
+     * {@link android.view.inputmethod.InputMethod#unbindInput()} is issued.
+     */
+    @Test
+    public void testSetComposingTextAfterUnbindInput() throws Exception {
+        final boolean returnedResult = true;
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public boolean setComposingText(CharSequence text, int newCursorPosition) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putCharSequence("text", text);
+                    args.putInt("newCursorPosition", newCursorPosition);
+                });
+                return returnedResult;
+            }
+        }
+
+        testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
+            // Memorize the current InputConnection.
+            expectCommand(stream, session.memorizeCurrentInputConnection(), TIMEOUT);
+
+            // Let unbindInput happen.
+            triggerUnbindInput();
+            expectEvent(stream, event -> "unbindInput".equals(event.getEventName()), TIMEOUT);
+
+            // Now this API call on the memorized IC should fail fast.
+            final ImeCommand command = session.callSetComposingText("text", 1);
+            final ImeEvent result = expectCommand(stream, command, TIMEOUT);
+            // CAVEAT: this behavior is a bit questionable and may change in a future version.
+            assertTrue("Currently IC#setComposingText() still returns true even after "
+                    + "unbindInput().", result.getReturnBooleanValue());
+            expectElapseTimeLessThan(result, IMMEDIATE_TIMEOUT_NANO);
+
+            // Make sure that the app does not receive the call (for a while).
+            methodCallVerifier.expectNotCalled(
+                    "Once unbindInput() happened, IC#setComposingText() fails fast.",
+                    EXPECTED_NOT_CALLED_TIMEOUT);
+        });
+    }
+
+    /**
+     * Test {@link InputConnection#setComposingRegion(int, int)} works as expected.
+     */
+    @Test
+    public void testSetComposingRegion() throws Exception {
+        final int expectedStart = 3;
+        final int expectedEnd = 17;
+        // Intentionally let the app return "false" to confirm that IME still receives "true".
+        final boolean returnedResult = false;
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public boolean setComposingRegion(int start, int end) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putInt("start", start);
+                    args.putInt("end", end);
+                });
+                return returnedResult;
+            }
+        }
+
+        testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
+            final ImeCommand command = session.callSetComposingRegion(expectedStart, expectedEnd);
+            assertTrue("setComposingRegion() always returns true unless RemoteException is thrown",
+                    expectCommand(stream, command, TIMEOUT).getReturnBooleanValue());
+            methodCallVerifier.expectCalledOnce(args -> {
+                assertEquals(expectedStart, args.getInt("start"));
+                assertEquals(expectedEnd, args.getInt("end"));
+            }, TIMEOUT);
+        });
+    }
+
+    /**
+     * Test {@link InputConnection#setComposingRegion(int, int)} fails fast once
+     * {@link android.view.inputmethod.InputMethod#unbindInput()} is issued.
+     */
+    @Test
+    public void testSetComposingRegionTextAfterUnbindInput() throws Exception {
+        final boolean returnedResult = true;
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public boolean setComposingRegion(int start, int end) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putInt("start", start);
+                    args.putInt("end", end);
+                });
+                return returnedResult;
+            }
+        }
+
+        testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
+            // Memorize the current InputConnection.
+            expectCommand(stream, session.memorizeCurrentInputConnection(), TIMEOUT);
+
+            // Let unbindInput happen.
+            triggerUnbindInput();
+            expectEvent(stream, event -> "unbindInput".equals(event.getEventName()), TIMEOUT);
+
+            // Now this API call on the memorized IC should fail fast.
+            final ImeCommand command = session.callSetComposingRegion(1, 23);
+            final ImeEvent result = expectCommand(stream, command, TIMEOUT);
+            // CAVEAT: this behavior is a bit questionable and may change in a future version.
+            assertTrue("Currently IC#setComposingRegion() still returns true even after"
+                    + " unbindInput().", result.getReturnBooleanValue());
+            expectElapseTimeLessThan(result, IMMEDIATE_TIMEOUT_NANO);
+
+            // Make sure that the app does not receive the call (for a while).
+            methodCallVerifier.expectNotCalled(
+                    "Once unbindInput() happened, IC#setComposingRegion() fails fast.",
+                    EXPECTED_NOT_CALLED_TIMEOUT);
+        });
+    }
+
+    /**
+     * Test {@link InputConnection#finishComposingText()} works as expected.
+     */
+    @Test
+    public void testFinishComposingText() throws Exception {
+        // Intentionally let the app return "false" to confirm that IME still receives "true".
+        final boolean returnedResult = false;
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public boolean finishComposingText() {
+                methodCallVerifier.onMethodCalled(bundle -> { });
+                return returnedResult;
+            }
+        }
+
+        testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
+            final ImeCommand command = session.callFinishComposingText();
+            assertTrue("finishComposingText() always returns true unless RemoteException is thrown",
+                    expectCommand(stream, command, TIMEOUT).getReturnBooleanValue());
+            methodCallVerifier.expectCalledOnce(args -> { }, TIMEOUT);
+        });
+    }
+
+    /**
+     * Test {@link InputConnection#finishComposingText()} fails fast once
+     * {@link android.view.inputmethod.InputMethod#unbindInput()} is issued.
+     */
+    @Test
+    public void testFinishComposingTextAfterUnbindInput() throws Exception {
+        final boolean returnedResult = true;
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public boolean finishComposingText() {
+                methodCallVerifier.onMethodCalled(bundle -> { });
+                return returnedResult;
+            }
+        }
+
+        testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
+            // Memorize the current InputConnection.
+            expectCommand(stream, session.memorizeCurrentInputConnection(), TIMEOUT);
+
+            // Let unbindInput happen.
+            triggerUnbindInput();
+            expectEvent(stream, event -> "unbindInput".equals(event.getEventName()), TIMEOUT);
+
+            // The system internally calls "finishComposingText". So wait for a while then reset
+            // the verifier before our calling "finishComposingText".
+            SystemClock.sleep(TIMEOUT);
+            methodCallVerifier.reset();
+
+            // Now this API call on the memorized IC should fail fast.
+            final ImeCommand command = session.callFinishComposingText();
+            final ImeEvent result = expectCommand(stream, command, TIMEOUT);
+            // CAVEAT: this behavior is a bit questionable and may change in a future version.
+            assertTrue("Currently IC#finishComposingText() still returns true even after"
+                    + " unbindInput().", result.getReturnBooleanValue());
+            expectElapseTimeLessThan(result, IMMEDIATE_TIMEOUT_NANO);
+
+            // Make sure that the app does not receive the call (for a while).
+            methodCallVerifier.expectNotCalled(
+                    "Once unbindInput() happened, IC#finishComposingText() fails fast.",
+                    EXPECTED_NOT_CALLED_TIMEOUT);
+        });
+    }
+
+    /**
+     * Test {@link InputConnection#commitCompletion(CompletionInfo)} works as expected.
+     */
+    @Test
+    public void testCommitCompletion() throws Exception {
+        final CompletionInfo expectedCompletionInfo = new CompletionInfo(0x12345678, 0x87654321,
+                createTestCharSequence("testText", new Annotation("param", "text")),
+                createTestCharSequence("testLabel", new Annotation("param", "label")));
+        // Intentionally let the app return "false" to confirm that IME still receives "true".
+        final boolean returnedResult = false;
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public boolean commitCompletion(CompletionInfo text) {
+                methodCallVerifier.onMethodCalled(bundle -> {
+                    bundle.putParcelable("text", text);
+                });
+                return returnedResult;
+            }
+        }
+
+        testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
+            final ImeCommand command = session.callCommitCompletion(expectedCompletionInfo);
+            assertTrue("commitCompletion() always returns true unless RemoteException is thrown",
+                    expectCommand(stream, command, TIMEOUT).getReturnBooleanValue());
+            methodCallVerifier.expectCalledOnce(args -> {
+                final CompletionInfo actualCompletionInfo = args.getParcelable("text");
+                assertNotNull(actualCompletionInfo);
+                assertEquals(expectedCompletionInfo.getId(), actualCompletionInfo.getId());
+                assertEquals(expectedCompletionInfo.getPosition(),
+                        actualCompletionInfo.getPosition());
+                assertEqualsForTestCharSequence(expectedCompletionInfo.getText(),
+                        actualCompletionInfo.getText());
+                assertEqualsForTestCharSequence(expectedCompletionInfo.getLabel(),
+                        actualCompletionInfo.getLabel());
+            }, TIMEOUT);
+        });
+    }
+
+    /**
+     * Test {@link InputConnection#commitCompletion(CompletionInfo)} fails fast once
+     * {@link android.view.inputmethod.InputMethod#unbindInput()} is issued.
+     */
+    @Test
+    public void testCommitCompletionAfterUnbindInput() throws Exception {
+        final boolean returnedResult = true;
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public boolean commitCompletion(CompletionInfo text) {
+                methodCallVerifier.onMethodCalled(bundle -> {
+                    bundle.putParcelable("text", text);
+                });
+                return returnedResult;
+            }
+        }
+
+        testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
+            // Memorize the current InputConnection.
+            expectCommand(stream, session.memorizeCurrentInputConnection(), TIMEOUT);
+
+            // Let unbindInput happen.
+            triggerUnbindInput();
+            expectEvent(stream, event -> "unbindInput".equals(event.getEventName()), TIMEOUT);
+
+            // Now this API call on the memorized IC should fail fast.
+            final ImeCommand command = session.callCommitCompletion(new CompletionInfo(
+                    0x12345678, 0x87654321,
+                    createTestCharSequence("testText", new Annotation("param", "text")),
+                    createTestCharSequence("testLabel", new Annotation("param", "label"))));
+            final ImeEvent result = expectCommand(stream, command, TIMEOUT);
+            // CAVEAT: this behavior is a bit questionable and may change in a future version.
+            assertTrue("Currently IC#commitCompletion() still returns true even after"
+                    + " unbindInput().", result.getReturnBooleanValue());
+            expectElapseTimeLessThan(result, IMMEDIATE_TIMEOUT_NANO);
+
+            // Make sure that the app does not receive the call (for a while).
+            methodCallVerifier.expectNotCalled(
+                    "Once unbindInput() happened, IC#commitCompletion() fails fast.",
+                    EXPECTED_NOT_CALLED_TIMEOUT);
+        });
+    }
+
+    /**
+     * Test {@link InputConnection#commitCorrection(CorrectionInfo)} works as expected.
+     */
+    @Test
+    public void testCommitCorrection() throws Exception {
+        final CorrectionInfo expectedCorrectionInfo = new CorrectionInfo(0x11111111,
+                createTestCharSequence("testOldText", new Annotation("param", "oldText")),
+                createTestCharSequence("testNewText", new Annotation("param", "newText")));
+        // Intentionally let the app return "false" to confirm that IME still receives "true".
+        final boolean returnedResult = false;
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public boolean commitCorrection(CorrectionInfo correctionInfo) {
+                methodCallVerifier.onMethodCalled(bundle -> {
+                    bundle.putParcelable("correctionInfo", correctionInfo);
+                });
+                return returnedResult;
+            }
+        }
+
+        testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
+            final ImeCommand command = session.callCommitCorrection(expectedCorrectionInfo);
+            assertTrue("commitCorrection() always returns true unless RemoteException is thrown",
+                    expectCommand(stream, command, TIMEOUT).getReturnBooleanValue());
+            methodCallVerifier.expectCalledOnce(args -> {
+                final CorrectionInfo actualCorrectionInfo = args.getParcelable("correctionInfo");
+                assertNotNull(actualCorrectionInfo);
+                assertEquals(expectedCorrectionInfo.getOffset(),
+                        actualCorrectionInfo.getOffset());
+                assertEqualsForTestCharSequence(expectedCorrectionInfo.getOldText(),
+                        actualCorrectionInfo.getOldText());
+                assertEqualsForTestCharSequence(expectedCorrectionInfo.getNewText(),
+                        actualCorrectionInfo.getNewText());
+            }, TIMEOUT);
+        });
+    }
+
+    /**
+     * Test {@link InputConnection#commitCorrection(CorrectionInfo)} fails fast once
+     * {@link android.view.inputmethod.InputMethod#unbindInput()} is issued.
+     */
+    @Test
+    public void testCommitCorrectionAfterUnbindInput() throws Exception {
+        final boolean returnedResult = true;
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public boolean commitCorrection(CorrectionInfo correctionInfo) {
+                methodCallVerifier.onMethodCalled(bundle -> {
+                    bundle.putParcelable("correctionInfo", correctionInfo);
+                });
+                return returnedResult;
+            }
+        }
+
+        testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
+            // Memorize the current InputConnection.
+            expectCommand(stream, session.memorizeCurrentInputConnection(), TIMEOUT);
+
+            // Let unbindInput happen.
+            triggerUnbindInput();
+            expectEvent(stream, event -> "unbindInput".equals(event.getEventName()), TIMEOUT);
+
+            // Now this API call on the memorized IC should fail fast.
+            final ImeCommand command = session.callCommitCorrection(new CorrectionInfo(0x11111111,
+                    createTestCharSequence("testOldText", new Annotation("param", "oldText")),
+                    createTestCharSequence("testNewText", new Annotation("param", "newText"))));
+            final ImeEvent result = expectCommand(stream, command, TIMEOUT);
+            // CAVEAT: this behavior is a bit questionable and may change in a future version.
+            assertTrue("Currently IC#commitCorrection() still returns true even after"
+                    + " unbindInput().", result.getReturnBooleanValue());
+            expectElapseTimeLessThan(result, IMMEDIATE_TIMEOUT_NANO);
+
+            // Make sure that the app does not receive the call (for a while).
+            methodCallVerifier.expectNotCalled(
+                    "Once unbindInput() happened, IC#commitCorrection() fails fast.",
+                    EXPECTED_NOT_CALLED_TIMEOUT);
+        });
+    }
+
+    /**
+     * Test {@link InputConnection#setSelection(int, int)} works as expected.
+     */
+    @Test
+    public void testSetSelection() throws Exception {
+        final int expectedStart = 123;
+        final int expectedEnd = 456;
+        // Intentionally let the app return "false" to confirm that IME still receives "true".
+        final boolean returnedResult = false;
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public boolean setSelection(int start, int end) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putInt("start", start);
+                    args.putInt("end", end);
+                });
+                return returnedResult;
+            }
+        }
+
+        testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
+            final ImeCommand command = session.callSetSelection(expectedStart, expectedEnd);
+            assertTrue("setSelection() always returns true unless RemoteException is thrown",
+                    expectCommand(stream, command, TIMEOUT).getReturnBooleanValue());
+            methodCallVerifier.expectCalledOnce(args -> {
+                assertEquals(expectedStart, args.getInt("start"));
+                assertEquals(expectedEnd, args.getInt("end"));
+            }, TIMEOUT);
+        });
+    }
+
+    /**
+     * Test {@link InputConnection#setSelection(int, int)} fails fast once
+     * {@link android.view.inputmethod.InputMethod#unbindInput()} is issued.
+     */
+    @Test
+    public void testSetSelectionTextAfterUnbindInput() throws Exception {
+        final boolean returnedResult = true;
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public boolean setSelection(int start, int end) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putInt("start", start);
+                    args.putInt("end", end);
+                });
+                return returnedResult;
+            }
+        }
+
+        testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
+            // Memorize the current InputConnection.
+            expectCommand(stream, session.memorizeCurrentInputConnection(), TIMEOUT);
+
+            // Let unbindInput happen.
+            triggerUnbindInput();
+            expectEvent(stream, event -> "unbindInput".equals(event.getEventName()), TIMEOUT);
+
+            // Now this API call on the memorized IC should fail fast.
+            final ImeCommand command = session.callSetSelection(123, 456);
+            final ImeEvent result = expectCommand(stream, command, TIMEOUT);
+            // CAVEAT: this behavior is a bit questionable and may change in a future version.
+            assertTrue("Currently IC#setSelection() still returns true even after unbindInput().",
+                    result.getReturnBooleanValue());
+            expectElapseTimeLessThan(result, IMMEDIATE_TIMEOUT_NANO);
+
+            // Make sure that the app does not receive the call (for a while).
+            methodCallVerifier.expectNotCalled(
+                    "Once unbindInput() happened, IC#setSelection() fails fast.",
+                    EXPECTED_NOT_CALLED_TIMEOUT);
+        });
+    }
+
+    /**
+     * Test {@link InputConnection#performEditorAction(int)} works as expected.
+     */
+    @Test
+    public void testPerformEditorAction() throws Exception {
+        final int expectedEditorAction = EditorInfo.IME_ACTION_GO;
+        // Intentionally let the app return "false" to confirm that IME still receives "true".
+        final boolean returnedResult = false;
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public boolean performEditorAction(int editorAction) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putInt("editorAction", editorAction);
+                });
+                return returnedResult;
+            }
+        }
+
+        testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
+            final ImeCommand command = session.callPerformEditorAction(expectedEditorAction);
+            assertTrue("performEditorAction() always returns true unless RemoteException is thrown",
+                    expectCommand(stream, command, TIMEOUT).getReturnBooleanValue());
+            methodCallVerifier.expectCalledOnce(args -> {
+                assertEquals(expectedEditorAction, args.getInt("editorAction"));
+            }, TIMEOUT);
+        });
+    }
+
+    /**
+     * Test {@link InputConnection#performEditorAction(int)} fails fast once
+     * {@link android.view.inputmethod.InputMethod#unbindInput()} is issued.
+     */
+    @Test
+    public void testPerformEditorActionAfterUnbindInput() throws Exception {
+        final boolean returnedResult = true;
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public boolean performEditorAction(int editorAction) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putInt("editorAction", editorAction);
+                });
+                return returnedResult;
+            }
+        }
+
+        testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
+            // Memorize the current InputConnection.
+            expectCommand(stream, session.memorizeCurrentInputConnection(), TIMEOUT);
+
+            // Let unbindInput happen.
+            triggerUnbindInput();
+            expectEvent(stream, event -> "unbindInput".equals(event.getEventName()), TIMEOUT);
+
+            // Now this API call on the memorized IC should fail fast.
+            final ImeCommand command = session.callPerformEditorAction(EditorInfo.IME_ACTION_GO);
+            final ImeEvent result = expectCommand(stream, command, TIMEOUT);
+            // CAVEAT: this behavior is a bit questionable and may change in a future version.
+            assertTrue("Currently IC#performEditorAction() still returns true even after "
+                    + "unbindInput().", result.getReturnBooleanValue());
+            expectElapseTimeLessThan(result, IMMEDIATE_TIMEOUT_NANO);
+
+            // Make sure that the app does not receive the call (for a while).
+            methodCallVerifier.expectNotCalled(
+                    "Once unbindInput() happened, IC#performEditorAction() fails fast.",
+                    EXPECTED_NOT_CALLED_TIMEOUT);
+        });
+    }
+
+    /**
+     * Test {@link InputConnection#performContextMenuAction(int)} works as expected.
+     */
+    @Test
+    public void testPerformContextMenuAction() throws Exception {
+        final int expectedId = android.R.id.selectAll;
+        // Intentionally let the app return "false" to confirm that IME still receives "true".
+        final boolean returnedResult = false;
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public boolean performContextMenuAction(int id) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putInt("id", id);
+                });
+                return returnedResult;
+            }
+        }
+
+        testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
+            final ImeCommand command = session.callPerformContextMenuAction(expectedId);
+            assertTrue("performContextMenuAction() always returns true unless RemoteException is "
+                            + "thrown",
+                    expectCommand(stream, command, TIMEOUT).getReturnBooleanValue());
+            methodCallVerifier.expectCalledOnce(args -> {
+                assertEquals(expectedId, args.getInt("id"));
+            }, TIMEOUT);
+        });
+    }
+
+    /**
+     * Test {@link InputConnection#performContextMenuAction(int)} fails fast once
+     * {@link android.view.inputmethod.InputMethod#unbindInput()} is issued.
+     */
+    @Test
+    public void testPerformContextMenuActionAfterUnbindInput() throws Exception {
+        final boolean returnedResult = true;
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public boolean performContextMenuAction(int id) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putInt("id", id);
+                });
+                return returnedResult;
+            }
+        }
+
+        testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
+            // Memorize the current InputConnection.
+            expectCommand(stream, session.memorizeCurrentInputConnection(), TIMEOUT);
+
+            // Let unbindInput happen.
+            triggerUnbindInput();
+            expectEvent(stream, event -> "unbindInput".equals(event.getEventName()), TIMEOUT);
+
+            // Now this API call on the memorized IC should fail fast.
+            final ImeCommand command = session.callPerformEditorAction(EditorInfo.IME_ACTION_GO);
+            final ImeEvent result = expectCommand(stream, command, TIMEOUT);
+            // CAVEAT: this behavior is a bit questionable and may change in a future version.
+            assertTrue("Currently IC#performContextMenuAction() still returns true even after "
+                    + "unbindInput().", result.getReturnBooleanValue());
+            expectElapseTimeLessThan(result, IMMEDIATE_TIMEOUT_NANO);
+
+            // Make sure that the app does not receive the call (for a while).
+            methodCallVerifier.expectNotCalled(
+                    "Once unbindInput() happened, IC#performContextMenuAction() fails fast.",
+                    EXPECTED_NOT_CALLED_TIMEOUT);
+        });
+    }
+
+    /**
+     * Test {@link InputConnection#beginBatchEdit()} works as expected.
+     */
+    @Test
+    public void testBeginBatchEdit() throws Exception {
+        // Intentionally let the app return "false" to confirm that IME still receives "true".
+        final boolean returnedResult = false;
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public boolean beginBatchEdit() {
+                methodCallVerifier.onMethodCalled(args -> { });
+                return returnedResult;
+            }
+        }
+
+        testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
+            final ImeCommand command = session.callBeginBatchEdit();
+            assertTrue("beginBatchEdit() always returns true unless RemoteException is thrown",
+                    expectCommand(stream, command, TIMEOUT).getReturnBooleanValue());
+            methodCallVerifier.expectCalledOnce(args -> { }, TIMEOUT);
+        });
+    }
+
+    /**
+     * Test {@link InputConnection#beginBatchEdit()} fails fast once
+     * {@link android.view.inputmethod.InputMethod#unbindInput()} is issued.
+     */
+    @Test
+    public void testBeginBatchEditAfterUnbindInput() throws Exception {
+        final boolean returnedResult = true;
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public boolean beginBatchEdit() {
+                methodCallVerifier.onMethodCalled(args -> { });
+                return returnedResult;
+            }
+        }
+
+        testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
+            // Memorize the current InputConnection.
+            expectCommand(stream, session.memorizeCurrentInputConnection(), TIMEOUT);
+
+            // Let unbindInput happen.
+            triggerUnbindInput();
+            expectEvent(stream, event -> "unbindInput".equals(event.getEventName()), TIMEOUT);
+
+            // Now this API call on the memorized IC should fail fast.
+            final ImeCommand command = session.callBeginBatchEdit();
+            final ImeEvent result = expectCommand(stream, command, TIMEOUT);
+            // CAVEAT: this behavior is a bit questionable and may change in a future version.
+            assertTrue("Currently IC#beginBatchEdit() still returns true even after unbindInput().",
+                    result.getReturnBooleanValue());
+            expectElapseTimeLessThan(result, IMMEDIATE_TIMEOUT_NANO);
+
+            // Make sure that the app does not receive the call (for a while).
+            methodCallVerifier.expectNotCalled(
+                    "Once unbindInput() happened, IC#beginBatchEdit() fails fast.",
+                    EXPECTED_NOT_CALLED_TIMEOUT);
+        });
+    }
+
+    /**
+     * Test {@link InputConnection#endBatchEdit()} works as expected.
+     */
+    @Test
+    public void testEndBatchEdit() throws Exception {
+        // Intentionally let the app return "false" to confirm that IME still receives "true".
+        final boolean returnedResult = false;
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public boolean endBatchEdit() {
+                methodCallVerifier.onMethodCalled(args -> { });
+                return returnedResult;
+            }
+        }
+
+        testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
+            final ImeCommand command = session.callEndBatchEdit();
+            assertTrue("endBatchEdit() always returns true unless RemoteException is thrown",
+                    expectCommand(stream, command, TIMEOUT).getReturnBooleanValue());
+            methodCallVerifier.expectCalledOnce(args -> { }, TIMEOUT);
+        });
+    }
+
+    /**
+     * Test {@link InputConnection#endBatchEdit()} fails fast once
+     * {@link android.view.inputmethod.InputMethod#unbindInput()} is issued.
+     */
+    @Test
+    public void testEndBatchEditAfterUnbindInput() throws Exception {
+        final boolean returnedResult = true;
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public boolean endBatchEdit() {
+                methodCallVerifier.onMethodCalled(args -> { });
+                return returnedResult;
+            }
+        }
+
+        testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
+            // Memorize the current InputConnection.
+            expectCommand(stream, session.memorizeCurrentInputConnection(), TIMEOUT);
+
+            // Let unbindInput happen.
+            triggerUnbindInput();
+            expectEvent(stream, event -> "unbindInput".equals(event.getEventName()), TIMEOUT);
+
+            // Now this API call on the memorized IC should fail fast.
+            final ImeCommand command = session.callEndBatchEdit();
+            final ImeEvent result = expectCommand(stream, command, TIMEOUT);
+            // CAVEAT: this behavior is a bit questionable and may change in a future version.
+            assertTrue("Currently IC#endBatchEdit() still returns true even after unbindInput().",
+                    result.getReturnBooleanValue());
+            expectElapseTimeLessThan(result, IMMEDIATE_TIMEOUT_NANO);
+
+            // Make sure that the app does not receive the call (for a while).
+            methodCallVerifier.expectNotCalled(
+                    "Once unbindInput() happened, IC#endBatchEdit() fails fast.",
+                    EXPECTED_NOT_CALLED_TIMEOUT);
+        });
+    }
+
+    /**
+     * Test {@link InputConnection#sendKeyEvent(KeyEvent)} works as expected.
+     */
+    @Test
+    public void testSendKeyEvent() throws Exception {
+        final KeyEvent expectedKeyEvent = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_X);
+        // Intentionally let the app return "false" to confirm that IME still receives "true".
+        final boolean returnedResult = false;
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public boolean sendKeyEvent(KeyEvent event) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putParcelable("event", event);
+                });
+                return returnedResult;
+            }
+        }
+
+        testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
+            final ImeCommand command = session.callSendKeyEvent(expectedKeyEvent);
+            assertTrue("sendKeyEvent() always returns true unless RemoteException is thrown",
+                    expectCommand(stream, command, TIMEOUT).getReturnBooleanValue());
+            methodCallVerifier.expectCalledOnce(args -> {
+                final KeyEvent actualKeyEvent = args.getParcelable("event");
+                assertNotNull(actualKeyEvent);
+                assertEquals(expectedKeyEvent.getAction(), actualKeyEvent.getAction());
+                assertEquals(expectedKeyEvent.getKeyCode(), actualKeyEvent.getKeyCode());
+            }, TIMEOUT);
+        });
+    }
+
+    /**
+     * Test {@link InputConnection#sendKeyEvent(KeyEvent)} fails fast once
+     * {@link android.view.inputmethod.InputMethod#unbindInput()} is issued.
+     */
+    @Test
+    public void testSendKeyEventAfterUnbindInput() throws Exception {
+        final boolean returnedResult = true;
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public boolean sendKeyEvent(KeyEvent event) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putParcelable("event", event);
+                });
+                return returnedResult;
+            }
+        }
+
+        testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
+            // Memorize the current InputConnection.
+            expectCommand(stream, session.memorizeCurrentInputConnection(), TIMEOUT);
+
+            // Let unbindInput happen.
+            triggerUnbindInput();
+            expectEvent(stream, event -> "unbindInput".equals(event.getEventName()), TIMEOUT);
+
+            // Now this API call on the memorized IC should fail fast.
+            final ImeCommand command = session.callSendKeyEvent(
+                    new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_X));
+            final ImeEvent result = expectCommand(stream, command, TIMEOUT);
+            // CAVEAT: this behavior is a bit questionable and may change in a future version.
+            assertTrue("Currently IC#sendKeyEvent() still returns true even after unbindInput().",
+                    result.getReturnBooleanValue());
+            expectElapseTimeLessThan(result, IMMEDIATE_TIMEOUT_NANO);
+
+            // Make sure that the app does not receive the call (for a while).
+            methodCallVerifier.expectNotCalled(
+                    "Once unbindInput() happened, IC#sendKeyEvent() fails fast.",
+                    EXPECTED_NOT_CALLED_TIMEOUT);
+        });
+    }
+
+    /**
+     * Test {@link InputConnection#clearMetaKeyStates(int)} works as expected.
+     */
+    @Test
+    public void testClearMetaKeyStates() throws Exception {
+        final int expectedStates = KeyEvent.META_ALT_MASK;
+        // Intentionally let the app return "false" to confirm that IME still receives "true".
+        final boolean returnedResult = false;
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public boolean clearMetaKeyStates(int states) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putInt("states", states);
+                });
+                return returnedResult;
+            }
+        }
+
+        testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
+            final ImeCommand command = session.callClearMetaKeyStates(expectedStates);
+            assertTrue("clearMetaKeyStates() always returns true unless RemoteException is thrown",
+                    expectCommand(stream, command, TIMEOUT).getReturnBooleanValue());
+            methodCallVerifier.expectCalledOnce(args -> {
+                final int actualStates = args.getInt("states");
+                assertEquals(expectedStates, actualStates);
+            }, TIMEOUT);
+        });
+    }
+
+    /**
+     * Test {@link InputConnection#clearMetaKeyStates(int)} fails fast once
+     * {@link android.view.inputmethod.InputMethod#unbindInput()} is issued.
+     */
+    @Test
+    public void testClearMetaKeyStatesAfterUnbindInput() throws Exception {
+        final boolean returnedResult = true;
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public boolean clearMetaKeyStates(int states) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putInt("states", states);
+                });
+                return returnedResult;
+            }
+        }
+
+        testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
+            // Memorize the current InputConnection.
+            expectCommand(stream, session.memorizeCurrentInputConnection(), TIMEOUT);
+
+            // Let unbindInput happen.
+            triggerUnbindInput();
+            expectEvent(stream, event -> "unbindInput".equals(event.getEventName()), TIMEOUT);
+
+            // Now this API call on the memorized IC should fail fast.
+            final ImeCommand command = session.callClearMetaKeyStates(KeyEvent.META_ALT_MASK);
+            final ImeEvent result = expectCommand(stream, command, TIMEOUT);
+            // CAVEAT: this behavior is a bit questionable and may change in a future version.
+            assertTrue("Currently IC#clearMetaKeyStates() still returns true even after "
+                    + "unbindInput().", result.getReturnBooleanValue());
+            expectElapseTimeLessThan(result, IMMEDIATE_TIMEOUT_NANO);
+
+            // Make sure that the app does not receive the call (for a while).
+            methodCallVerifier.expectNotCalled(
+                    "Once unbindInput() happened, IC#clearMetaKeyStates() fails fast.",
+                    EXPECTED_NOT_CALLED_TIMEOUT);
+        });
+    }
+
+    /**
+     * Test {@link InputConnection#performSpellCheck()} works as expected.
+     */
+    @Test
+    public void testPerformSpellCheck() throws Exception {
+        // Intentionally let the app return "false" to confirm that IME still receives "true".
+        final boolean returnedResult = false;
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public boolean performSpellCheck() {
+                methodCallVerifier.onMethodCalled(args -> { });
+                return returnedResult;
+            }
+        }
+
+        testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
+            final ImeCommand command = session.callPerformSpellCheck();
+            assertTrue("performSpellCheck() always returns true unless RemoteException is thrown",
+                    expectCommand(stream, command, TIMEOUT).getReturnBooleanValue());
+            methodCallVerifier.expectCalledOnce(args -> { }, TIMEOUT);
+        });
+    }
+
+    /**
+     * Test {@link InputConnection#performSpellCheck()} fails fast once
+     * {@link android.view.inputmethod.InputMethod#unbindInput()} is issued.
+     */
+    @Test
+    public void testPerformSpellCheckAfterUnbindInput() throws Exception {
+        final boolean returnedResult = true;
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public boolean performSpellCheck() {
+                methodCallVerifier.onMethodCalled(args -> { });
+                return returnedResult;
+            }
+        }
+
+        testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
+            // Memorize the current InputConnection.
+            expectCommand(stream, session.memorizeCurrentInputConnection(), TIMEOUT);
+
+            // Let unbindInput happen.
+            triggerUnbindInput();
+            expectEvent(stream, event -> "unbindInput".equals(event.getEventName()), TIMEOUT);
+
+            // Now this API call on the memorized IC should fail fast.
+            final ImeCommand command = session.callPerformSpellCheck();
+            final ImeEvent result = expectCommand(stream, command, TIMEOUT);
+            // CAVEAT: this behavior is a bit questionable and may change in a future version.
+            assertTrue("Currently IC#performSpellCheck() still returns true even after "
+                    + "unbindInput().", result.getReturnBooleanValue());
+            expectElapseTimeLessThan(result, IMMEDIATE_TIMEOUT_NANO);
+
+            // Make sure that the app does not receive the call (for a while).
+            methodCallVerifier.expectNotCalled(
+                    "Once unbindInput() happened, IC#performSpellCheck() fails fast.",
+                    EXPECTED_NOT_CALLED_TIMEOUT);
+        });
+    }
+
+    /**
+     * Test {@link InputConnection#performPrivateCommand(String, Bundle)} works as expected.
+     */
+    @Test
+    public void testPerformPrivateCommand() throws Exception {
+        final String expectedAction = "myAction";
+        final Bundle expectedData = new Bundle();
+        final String expectedDataKey = "testKey";
+        final int expectedDataValue = 42;
+        expectedData.putInt(expectedDataKey, expectedDataValue);
+        // Intentionally let the app return "false" to confirm that IME still receives "true".
+        final boolean returnedResult = false;
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public boolean performPrivateCommand(String action, Bundle data) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putString("action", action);
+                    args.putBundle("data", data);
+                });
+                return returnedResult;
+            }
+        }
+
+        testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
+            final ImeCommand command =
+                    session.callPerformPrivateCommand(expectedAction, expectedData);
+            assertTrue("performPrivateCommand() always returns true unless RemoteException is "
+                    + "thrown", expectCommand(stream, command, TIMEOUT).getReturnBooleanValue());
+            methodCallVerifier.expectCalledOnce(args -> {
+                final String actualAction = args.getString("action");
+                final Bundle actualData = args.getBundle("data");
+                assertEquals(expectedAction, actualAction);
+                assertNotNull(actualData);
+                assertEquals(expectedData.get(expectedDataKey), actualData.getInt(expectedDataKey));
+            }, TIMEOUT);
+        });
+    }
+
+    /**
+     * Test {@link InputConnection#performPrivateCommand(String, Bundle)} fails fast once
+     * {@link android.view.inputmethod.InputMethod#unbindInput()} is issued.
+     */
+    @Test
+    public void testPerformPrivateCommandAfterUnbindInput() throws Exception {
+        final boolean returnedResult = true;
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public boolean performPrivateCommand(String action, Bundle data) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putString("action", action);
+                    args.putBundle("data", data);
+                });
+                return returnedResult;
+            }
+        }
+
+        testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
+            // Memorize the current InputConnection.
+            expectCommand(stream, session.memorizeCurrentInputConnection(), TIMEOUT);
+
+            // Let unbindInput happen.
+            triggerUnbindInput();
+            expectEvent(stream, event -> "unbindInput".equals(event.getEventName()), TIMEOUT);
+
+            // Now this API call on the memorized IC should fail fast.
+            final ImeCommand command = session.callPerformPrivateCommand("myAction", null);
+            final ImeEvent result = expectCommand(stream, command, TIMEOUT);
+            // CAVEAT: this behavior is a bit questionable and may change in a future version.
+            assertTrue("Currently IC#performPrivateCommand() still returns true even after "
+                    + "unbindInput().", result.getReturnBooleanValue());
+            expectElapseTimeLessThan(result, IMMEDIATE_TIMEOUT_NANO);
+
+            // Make sure that the app does not receive the call (for a while).
+            methodCallVerifier.expectNotCalled(
+                    "Once unbindInput() happened, IC#performPrivateCommand() fails fast.",
+                    EXPECTED_NOT_CALLED_TIMEOUT);
+        });
+    }
+
+    /**
+     * Test {@link InputConnection#setImeConsumesInput(boolean)} works as expected.
+     */
+    @Test
+    public void testSetImeConsumesInput() throws Exception {
+        final boolean expectedImeConsumesInput = true;
+        // Intentionally let the app return "false" to confirm that IME still receives "true".
+        final boolean returnedResult = false;
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public boolean setImeConsumesInput(boolean imeConsumesInput) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putBoolean("imeConsumesInput", imeConsumesInput);
+                });
+                return returnedResult;
+            }
+        }
+
+        testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
+            final ImeCommand command = session.callSetImeConsumesInput(expectedImeConsumesInput);
+            assertTrue("setImeConsumesInput() always returns true unless RemoteException is thrown",
+                    expectCommand(stream, command, TIMEOUT).getReturnBooleanValue());
+            methodCallVerifier.expectCalledOnce(args -> {
+                final boolean actualImeConsumesInput = args.getBoolean("imeConsumesInput");
+                assertEquals(expectedImeConsumesInput, actualImeConsumesInput);
+            }, TIMEOUT);
+        });
+    }
+
+    /**
+     * Test {@link InputConnection#setImeConsumesInput(boolean)} fails fast once
+     * {@link android.view.inputmethod.InputMethod#unbindInput()} is issued.
+     */
+    @Test
+    public void testSetImeConsumesInputAfterUnbindInput() throws Exception {
+        final boolean returnedResult = true;
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public boolean setImeConsumesInput(boolean imeConsumesInput) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putBoolean("imeConsumesInput", imeConsumesInput);
+                });
+                return returnedResult;
+            }
+        }
+
+        testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
+            // Memorize the current InputConnection.
+            expectCommand(stream, session.memorizeCurrentInputConnection(), TIMEOUT);
+
+            // Let unbindInput happen.
+            triggerUnbindInput();
+            expectEvent(stream, event -> "unbindInput".equals(event.getEventName()), TIMEOUT);
+
+            // Now this API call on the memorized IC should fail fast.
+            final ImeCommand command = session.callSetImeConsumesInput(true);
+            final ImeEvent result = expectCommand(stream, command, TIMEOUT);
+            // CAVEAT: this behavior is a bit questionable and may change in a future version.
+            assertTrue("Currently IC#setImeConsumesInput() still returns true even after "
+                    + "unbindInput().", result.getReturnBooleanValue());
+            expectElapseTimeLessThan(result, IMMEDIATE_TIMEOUT_NANO);
+
+            // Make sure that the app does not receive the call (for a while).
+            methodCallVerifier.expectNotCalled(
+                    "Once unbindInput() happened, IC#setImeConsumesInput() fails fast.",
+                    EXPECTED_NOT_CALLED_TIMEOUT);
         });
     }
 }
