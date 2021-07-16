@@ -165,7 +165,8 @@ class CompanionDeviceManagerTest : InstrumentationTestCase() {
     @Test
     fun testProfiles() {
         val packageName = "android.os.cts.companiontestapp"
-        installApk("/data/local/tmp/cts/os/CtsCompanionTestApp.apk")
+        installApk(
+                "--user ${UserHandle.myUserId()} /data/local/tmp/cts/os/CtsCompanionTestApp.apk")
         startApp(packageName)
 
         waitFindNode(hasClassThat(`is`(equalTo(EditText::class.java.name))))
@@ -201,7 +202,8 @@ class CompanionDeviceManagerTest : InstrumentationTestCase() {
     @Test
     fun testRequestNotifications() {
         val packageName = "android.os.cts.companiontestapp"
-        installApk("/data/local/tmp/cts/os/CtsCompanionTestApp.apk")
+        installApk(
+                "--user ${UserHandle.myUserId()} /data/local/tmp/cts/os/CtsCompanionTestApp.apk")
         startApp(packageName)
 
         waitFindNode(hasClassThat(`is`(equalTo(EditText::class.java.name))))
