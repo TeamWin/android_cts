@@ -475,6 +475,129 @@ public class ActivityManagerTest extends InstrumentationTestCase {
     public void testGetProcessInErrorState() throws Exception {
         List<ActivityManager.ProcessErrorStateInfo> errList = null;
         errList = mActivityManager.getProcessesInErrorState();
+        assertNull(errList);
+
+        // Setup the ANR monitor.
+        final AmMonitor monitor = new AmMonitor(mInstrumentation, null);
+        final ApplicationInfo app1Info = mTargetContext.getPackageManager().getApplicationInfo(
+                PACKAGE_NAME_APP1, 0);
+        final ApplicationInfo stubInfo = mTargetContext.getPackageManager().getApplicationInfo(
+                STUB_PACKAGE_NAME, 0);
+        final WatchUidRunner uid1Watcher = new WatchUidRunner(mInstrumentation, app1Info.uid,
+                WAITFOR_MSEC);
+        final String crashActivityName = "ActivityManagerStubCrashActivity";
+
+        final SettingsSession<Integer> showOnFirstCrash = new SettingsSession<>(
+                Settings.Global.getUriFor(Settings.Global.SHOW_FIRST_CRASH_DIALOG),
+                Settings.Global::getInt, Settings.Global::putInt);
+        try {
+            showOnFirstCrash.set(1);
+
+            CommandReceiver.sendCommand(mTargetContext,
+                    CommandReceiver.COMMAND_START_ACTIVITY,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+            uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
+                    WatchUidRunner.STATE_TOP,
+                    new Integer(ActivityManager.PROCESS_CAPABILITY_ALL));
+
+            // Sleep a while to let things go through.
+            Thread.sleep(WAIT_TIME);
+
+            // Now tell it goto ANR.
+            CommandReceiver.sendCommand(mTargetContext, CommandReceiver.COMMAND_SELF_INDUCED_ANR,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+
+            // Verify we got the ANR.
+            assertTrue(monitor.waitFor(AmMonitor.WAIT_FOR_EARLY_ANR, WAITFOR_MSEC));
+
+            // Let it continue.
+            monitor.sendCommand(AmMonitor.CMD_CONTINUE);
+
+            // Now it should've reached the normal ANR process.
+            assertTrue(monitor.waitFor(AmMonitor.WAIT_FOR_ANR, WAITFOR_MSEC));
+
+            // Continue again, we need to see the ANR dialog in order to get the error report.
+            monitor.sendCommand(AmMonitor.CMD_CONTINUE);
+
+            // Sleep a while to let things go through.
+            Thread.sleep(WAIT_TIME);
+
+            // We shouldn't be able to read the error state info of that.
+            errList = mActivityManager.getProcessesInErrorState();
+            assertNull(errList);
+
+            // Shell should have the access.
+            final List<ActivityManager.ProcessErrorStateInfo>[] holder = new List[1];
+            SystemUtil.runWithShellPermissionIdentity(() -> {
+                holder[0] = mActivityManager.getProcessesInErrorState();
+            });
+            assertNotNull(holder[0]);
+            assertEquals(1, holder[0].size());
+            verifyProcessErrorStateInfo(holder[0].get(0),
+                    ActivityManager.ProcessErrorStateInfo.NOT_RESPONDING,
+                    app1Info.uid,
+                    PACKAGE_NAME_APP1);
+
+            // Start a crashing activity in remote process with the same UID.
+            final Intent intent = new Intent(Intent.ACTION_MAIN);
+            intent.setClassName(STUB_PACKAGE_NAME, STUB_PACKAGE_NAME + "." + crashActivityName);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            mTargetContext.startActivity(intent);
+
+            // Wait for the crash.
+            assertTrue(monitor.waitFor(AmMonitor.WAIT_FOR_CRASHED, WAITFOR_MSEC));
+
+            // Let it continue, we need to see the crash dialog in order to get the error report.
+            monitor.sendCommand(AmMonitor.CMD_CONTINUE);
+
+            // Sleep a while to let things go through.
+            Thread.sleep(WAIT_TIME);
+
+            // We should be able to see this crash info.
+            errList = mActivityManager.getProcessesInErrorState();
+            assertNotNull(errList);
+            assertEquals(1, errList.size());
+
+            verifyProcessErrorStateInfo(errList.get(0),
+                    ActivityManager.ProcessErrorStateInfo.CRASHED,
+                    stubInfo.uid,
+                    STUB_PACKAGE_NAME + ":" + crashActivityName);
+
+            // Shell should have the access to all of the crash info here.
+            SystemUtil.runWithShellPermissionIdentity(() -> {
+                holder[0] = mActivityManager.getProcessesInErrorState();
+            });
+            assertNotNull(holder[0]);
+            assertEquals(2, holder[0].size());
+            // The return result is not sorted.
+            final ActivityManager.ProcessErrorStateInfo t0 = holder[0].get(0);
+            final ActivityManager.ProcessErrorStateInfo t1 = holder[0].get(1);
+            final ActivityManager.ProcessErrorStateInfo info0 = t0.uid == stubInfo.uid ? t0 : t1;
+            final ActivityManager.ProcessErrorStateInfo info1 = t1.uid == app1Info.uid ? t1 : t0;
+
+            verifyProcessErrorStateInfo(info0,
+                    ActivityManager.ProcessErrorStateInfo.CRASHED,
+                    stubInfo.uid,
+                    STUB_PACKAGE_NAME + ":" + crashActivityName);
+            verifyProcessErrorStateInfo(info1,
+                    ActivityManager.ProcessErrorStateInfo.NOT_RESPONDING,
+                    app1Info.uid,
+                    PACKAGE_NAME_APP1);
+        } finally {
+            showOnFirstCrash.close();
+            monitor.finish();
+            uid1Watcher.finish();
+            SystemUtil.runWithShellPermissionIdentity(() -> {
+                mActivityManager.forceStopPackage(PACKAGE_NAME_APP1);
+            });
+        }
+    }
+
+    private void verifyProcessErrorStateInfo(ActivityManager.ProcessErrorStateInfo info,
+            int condition, int uid, String processName) throws Exception {
+        assertEquals(condition, info.condition);
+        assertEquals(uid, info.uid);
+        assertEquals(processName, info.processName);
     }
 
     public void testGetDeviceConfigurationInfo() {
