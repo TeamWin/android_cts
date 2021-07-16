@@ -319,6 +319,7 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         assumeFalse(isLeanBack());
         launchRuntimeHandleExitAnimationActivity(false, true, false, true);
     }
+
     @Test
     public void testHandleExitAnimationCancel() throws Exception {
         assumeFalse(isLeanBack());
@@ -339,12 +340,17 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         mWmState.assertVisibility(HANDLE_SPLASH_SCREEN_EXIT_ACTIVITY, true);
         final TestJournalProvider.TestJournal journal =
                 TestJournalProvider.TestJournalContainer.get(HANDLE_SPLASH_SCREEN_EXIT);
-        TestUtils.waitUntil("Waiting for runtime onSplashScreenExit", 5 /* timeoutSecond */,
-                () -> expectResult == journal.extras.getBoolean(RECEIVE_SPLASH_SCREEN_EXIT));
-        assertEquals(expectResult, journal.extras.getBoolean(CONTAINS_CENTER_VIEW));
-        assertEquals(expectResult, journal.extras.getBoolean(CONTAINS_BRANDING_VIEW));
-        assertEquals(expectResult ? Color.BLUE : Color.TRANSPARENT,
-                journal.extras.getInt(ICON_BACKGROUND_COLOR));
+        if (expectResult) {
+            TestUtils.waitUntil("Waiting for runtime onSplashScreenExit", 5 /* timeoutSecond */,
+                    () -> journal.extras.getBoolean(RECEIVE_SPLASH_SCREEN_EXIT));
+            assertTrue("No entry for CONTAINS_CENTER_VIEW",
+                    journal.extras.containsKey(CONTAINS_CENTER_VIEW));
+            assertTrue("No entry for CONTAINS_BRANDING_VIEW",
+                    journal.extras.containsKey(CONTAINS_BRANDING_VIEW));
+            assertTrue("Center View shouldn't be null", journal.extras.getBoolean(CONTAINS_CENTER_VIEW));
+            assertTrue(journal.extras.getBoolean(CONTAINS_BRANDING_VIEW));
+            assertEquals(Color.BLUE, journal.extras.getInt(ICON_BACKGROUND_COLOR, Color.YELLOW));
+        }
     }
 
     @Test
