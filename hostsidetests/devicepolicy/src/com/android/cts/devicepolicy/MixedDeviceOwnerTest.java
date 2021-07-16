@@ -551,6 +551,14 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
     }
 
     @Override
+    protected int getUserIdForAlwaysOnVpnTests() {
+        // Running on current user on headless system user would require too many hacky changes on
+        // DpmWrapper / VpnTestHelper such as providing a ConnectivityManager and properly waiting
+        // for broadcasts
+        return mDeviceOwnerUserId;
+    }
+
+    @Override
     protected void executeDeviceTestMethod(String className, String testName,
             Map<String, String> params) throws Exception {
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, className, testName, mUserId, params);
