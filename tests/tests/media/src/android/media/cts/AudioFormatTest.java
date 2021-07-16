@@ -233,16 +233,19 @@ public class AudioFormatTest extends CtsAndroidTestCase {
                 {AudioFormat.CHANNEL_OUT_5POINT1, 6},
                 {AudioFormat.CHANNEL_OUT_5POINT1POINT2, 8},
                 {AudioFormat.CHANNEL_OUT_7POINT1_SURROUND, 8},
+                {AudioFormat.CHANNEL_OUT_7POINT1POINT2, 10},
                 {AudioFormat.CHANNEL_OUT_5POINT1POINT4, 10},
                 {AudioFormat.CHANNEL_OUT_7POINT1POINT2, 10},
                 {AudioFormat.CHANNEL_OUT_7POINT1POINT4, 12},
+                {AudioFormat.CHANNEL_OUT_9POINT1POINT4, 14},
                 {AudioFormat.CHANNEL_OUT_13POINT_360RA, 13},
+                {AudioFormat.CHANNEL_OUT_9POINT1POINT6, 16},
                 {AudioFormat.CHANNEL_OUT_22POINT2, 24},
         };
         for (int[] pair : maskCount) {
             assertEquals("Mask " + Integer.toHexString(pair[0])
-                    + " should have " + pair[1] + " bits set",
-                    Integer.bitCount(pair[0]), pair[1]);
+                    + " should have " + pair[1] + " bits set#",
+                    /*expected*/ pair[1], /*actual*/ Integer.bitCount(pair[0]));
         }
 
         // Check channel position masks that are a subset of other masks.
@@ -268,6 +271,10 @@ public class AudioFormatTest extends CtsAndroidTestCase {
                 AudioFormat.CHANNEL_OUT_7POINT1POINT4));
         assertTrue(subsetOf(AudioFormat.CHANNEL_OUT_7POINT1POINT4,
                 AudioFormat.CHANNEL_OUT_22POINT2));
+        assertTrue(subsetOf(AudioFormat.CHANNEL_OUT_7POINT1POINT4,
+                AudioFormat.CHANNEL_OUT_9POINT1POINT4));
+        assertTrue(subsetOf(AudioFormat.CHANNEL_OUT_9POINT1POINT4,
+                AudioFormat.CHANNEL_OUT_9POINT1POINT6));
         assertTrue(subsetOf(AudioFormat.CHANNEL_OUT_13POINT_360RA,
                 AudioFormat.CHANNEL_OUT_22POINT2));
     }
