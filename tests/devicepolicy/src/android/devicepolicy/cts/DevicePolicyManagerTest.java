@@ -20,6 +20,16 @@ import static android.Manifest.permission.INTERACT_ACROSS_USERS;
 import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
 import static android.Manifest.permission.WRITE_SECURE_SETTINGS;
 import static android.app.AppOpsManager.MODE_ALLOWED;
+import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME;
+import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_PACKAGE_NAME;
+import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_LOCALE;
+import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_TIME_ZONE;
+import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_WIFI_PASSWORD;
+import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_WIFI_SECURITY_TYPE;
+import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_WIFI_SSID;
+import static android.app.admin.DevicePolicyManager.MIME_TYPE_PROVISIONING_NFC;
+import static android.nfc.NfcAdapter.ACTION_NDEF_DISCOVERED;
+import static android.nfc.NfcAdapter.EXTRA_NDEF_MESSAGES;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -32,9 +42,14 @@ import android.app.admin.FullyManagedDeviceProvisioningParams;
 import android.app.admin.ManagedProfileProvisioningParams;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.CrossProfileApps;
 import android.content.pm.PackageManager;
+import android.nfc.NdefMessage;
+import android.nfc.NdefRecord;
+import android.os.Bundle;
+import android.os.Parcelable;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.provider.Settings;
@@ -46,10 +61,10 @@ import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
+import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature;
 import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
-import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.permissions.PermissionContext;
@@ -61,8 +76,13 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -103,6 +123,26 @@ public final class DevicePolicyManagerTest {
             "dpm set-device-owner --user cur " + DEVICE_ADMIN_COMPONENT_NAME.flattenToString();
     private static final String REMOVE_ACTIVE_ADMIN_COMMAND =
             "dpm remove-active-admin --user cur " + DEVICE_ADMIN_COMPONENT_NAME.flattenToString();
+
+    private static final String NFC_INTENT_COMPONENT_NAME =
+            "com.test.dpc/com.test.dpc.DeviceAdminReceiver";
+    private static final String NFC_INTENT_PACKAGE_NAME =
+            "com.test.dpc.DeviceAdminReceiver";
+    private static final String NFC_INTENT_LOCALE = "en_US";
+    private static final String NFC_INTENT_TIMEZONE = "America/New_York";
+    private static final String NFC_INTENT_WIFI_SSID = "\"" + "TestWifiSsid" + "\"";
+    private static final String NFC_INTENT_WIFI_SECURITY_TYPE = "";
+    private static final String NFC_INTENT_WIFI_PASSWORD = "";
+    private static final String NFC_INTENT_BAD_ACTION = "badAction";
+    private static final String NFC_INTENT_BAD_MIME = "badMime";
+    private static final String NFC_INTENT_PROVISIONING_SAMPLE = "NFC provisioning sample";
+    private static final Intent NFC_INTENT_NO_NDEF_RECORD = new Intent(ACTION_NDEF_DISCOVERED);
+    private static final HashMap<String, String> NFC_DATA_VALID = createNfcIntentData();
+    private static final HashMap<String, String> NFC_DATA_EMPTY = new HashMap();
+    private static final Map<String, String> NFC_DATA_WITH_COMPONENT_NAME =
+            Map.of(EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME, NFC_INTENT_COMPONENT_NAME);
+    private static final Map<String, String> NFC_DATA_WITH_ADMIN_PACKAGE_NAME =
+            Map.of(EXTRA_PROVISIONING_DEVICE_ADMIN_PACKAGE_NAME, NFC_INTENT_PACKAGE_NAME);
 
     @ClassRule
     @Rule
@@ -641,5 +681,156 @@ public final class DevicePolicyManagerTest {
                 .map(applicationInfo -> applicationInfo.packageName)
                 .filter(packageName -> !systemApps.contains(packageName))
                 .collect(Collectors.toSet());
+    }
+
+    @Test
+    public void createProvisioningIntentFromNfcIntent_validNfcIntent_returnsValidIntent()
+            throws IOException {
+        Intent nfcIntent = createNfcIntentFromMap(NFC_DATA_VALID);
+
+        Intent provisioningIntent =
+                sDevicePolicyManager.createProvisioningIntentFromNfcIntent(nfcIntent);
+
+        assertThat(provisioningIntent).isNotNull();
+        assertThat(provisioningBundleToMap(provisioningIntent.getExtras()))
+                .containsAtLeastEntriesIn(NFC_DATA_VALID);
+    }
+
+    @Test
+    public void createProvisioningIntentFromNfcIntent_noComponentNorPackage_returnsNull()
+            throws IOException {
+        Intent nfcIntent = createNfcIntentFromMap(NFC_DATA_EMPTY);
+
+        Intent provisioningIntent =
+                sDevicePolicyManager.createProvisioningIntentFromNfcIntent(nfcIntent);
+
+        assertThat(provisioningIntent).isNull();
+    }
+
+    @Test
+    public void createProvisioningIntentFromNfcIntent_withComponent_returnsValidIntent()
+            throws IOException {
+        Intent nfcIntent = createNfcIntentFromMap(NFC_DATA_WITH_COMPONENT_NAME);
+
+        Intent provisioningIntent =
+                sDevicePolicyManager.createProvisioningIntentFromNfcIntent(nfcIntent);
+
+        assertThat(provisioningIntent).isNotNull();
+        assertThat(provisioningBundleToMap(provisioningIntent.getExtras()))
+                .containsAtLeastEntriesIn(NFC_DATA_WITH_COMPONENT_NAME);
+    }
+
+    @Test
+    public void createProvisioningIntentFromNfcIntent_withPackage_returnsValidIntent()
+            throws IOException {
+        Intent nfcIntent = createNfcIntentFromMap(NFC_DATA_WITH_ADMIN_PACKAGE_NAME);
+
+        Intent provisioningIntent =
+                sDevicePolicyManager.createProvisioningIntentFromNfcIntent(nfcIntent);
+
+        assertThat(provisioningIntent).isNotNull();
+        assertThat(provisioningBundleToMap(provisioningIntent.getExtras()))
+                .containsAtLeastEntriesIn(NFC_DATA_WITH_ADMIN_PACKAGE_NAME);
+    }
+
+    @Test
+    public void createProvisioningIntentFromNfcIntent_badIntentAction_returnsNull()
+            throws IOException {
+        Intent nfcIntent = createNfcIntentWithAction(NFC_INTENT_BAD_ACTION);
+
+        Intent provisioningIntent =
+                sDevicePolicyManager.createProvisioningIntentFromNfcIntent(nfcIntent);
+
+        assertThat(provisioningIntent).isNull();
+    }
+
+    @Test
+    public void createProvisioningIntentFromNfcIntent_badMimeType_returnsNull()
+            throws IOException {
+        Intent nfcIntent = createNfcIntentWithMimeType(NFC_INTENT_BAD_MIME);
+
+        Intent provisioningIntent =
+                sDevicePolicyManager.createProvisioningIntentFromNfcIntent(nfcIntent);
+
+        assertThat(provisioningIntent).isNull();
+    }
+
+    @Test
+    public void createProvisioningIntentFromNfcIntent_doesNotIncludeNdefRecord_returnsNull() {
+        Intent provisioningIntent = sDevicePolicyManager
+                .createProvisioningIntentFromNfcIntent(NFC_INTENT_NO_NDEF_RECORD);
+
+        assertThat(provisioningIntent).isNull();
+    }
+
+    private static HashMap<String, String> createNfcIntentData() {
+        HashMap<String, String> nfcIntentInput = new HashMap<String, String>();
+        nfcIntentInput.putAll(
+                Map.of(EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME, NFC_INTENT_COMPONENT_NAME,
+                EXTRA_PROVISIONING_DEVICE_ADMIN_PACKAGE_NAME, NFC_INTENT_PACKAGE_NAME,
+                EXTRA_PROVISIONING_LOCALE, NFC_INTENT_LOCALE,
+                EXTRA_PROVISIONING_TIME_ZONE, NFC_INTENT_TIMEZONE,
+                EXTRA_PROVISIONING_WIFI_SSID, NFC_INTENT_WIFI_SSID,
+                EXTRA_PROVISIONING_WIFI_SECURITY_TYPE, NFC_INTENT_WIFI_SECURITY_TYPE,
+                EXTRA_PROVISIONING_WIFI_PASSWORD, NFC_INTENT_WIFI_PASSWORD)
+        );
+
+        return nfcIntentInput;
+    }
+
+    private Intent createNfcIntentWithAction(String action)
+            throws IOException {
+        return createNfcIntent(NFC_DATA_VALID, action, MIME_TYPE_PROVISIONING_NFC);
+    }
+
+    private Intent createNfcIntentWithMimeType(String mime)
+            throws IOException {
+        return createNfcIntent(NFC_DATA_VALID, ACTION_NDEF_DISCOVERED, mime);
+    }
+
+    private Intent createNfcIntentFromMap(Map<String, String> input)
+            throws IOException {
+        return createNfcIntent(input, ACTION_NDEF_DISCOVERED, MIME_TYPE_PROVISIONING_NFC);
+    }
+
+    private Intent createNfcIntent(Map<String, String> input, String action, String mime)
+            throws IOException {
+        Intent nfcIntent = new Intent(action);
+        Parcelable[] nfcMessages =
+                new Parcelable[]{createNdefMessage(input, mime)};
+        nfcIntent.putExtra(EXTRA_NDEF_MESSAGES, nfcMessages);
+
+        return nfcIntent;
+    }
+
+    private Map<String, String> provisioningBundleToMap(Bundle bundle) {
+        Map<String, String> map = new HashMap();
+
+        for (String key : bundle.keySet()) {
+            if(EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME.equals(key)) {
+                ComponentName componentName = bundle.getParcelable(key);
+                map.put(key, componentName.getPackageName() + "/" + componentName.getClassName());
+            }
+            else {
+                map.put(key, bundle.getString(key));
+            }
+        }
+
+        return map;
+    }
+
+    private NdefMessage createNdefMessage(Map<String, String> provisioningValues, String mime)
+            throws IOException {
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        Properties properties = new Properties();
+        // Store all the values into the Properties object
+        for (Map.Entry<String, String> e : provisioningValues.entrySet()) {
+            properties.put(e.getKey(), e.getValue());
+        }
+
+        properties.store(stream, NFC_INTENT_PROVISIONING_SAMPLE);
+        NdefRecord record = NdefRecord.createMime(mime, stream.toByteArray());
+
+        return new NdefMessage(new NdefRecord[]{record});
     }
 }
