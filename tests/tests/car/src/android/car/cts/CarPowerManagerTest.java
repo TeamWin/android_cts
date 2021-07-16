@@ -23,6 +23,7 @@ import android.car.hardware.power.CarPowerManager;
 import android.car.hardware.power.CarPowerPolicy;
 import android.car.hardware.power.CarPowerPolicyFilter;
 import android.car.hardware.power.PowerComponent;
+import android.platform.test.annotations.AppModeFull;
 import android.test.suitebuilder.annotation.SmallTest;
 
 import androidx.annotation.Nullable;
@@ -40,6 +41,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 @SmallTest
+@AppModeFull(reason = "Instant Apps cannot get car related permissions")
 public final class CarPowerManagerTest extends CarApiTestBase {
     private static String TAG = CarPowerManagerTest.class.getSimpleName();
     private static final int LISTENER_WAIT_TIME_MS = 1000;
