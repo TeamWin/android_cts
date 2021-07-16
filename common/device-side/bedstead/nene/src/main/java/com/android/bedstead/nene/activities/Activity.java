@@ -19,6 +19,8 @@ package com.android.bedstead.nene.activities;
 import static android.app.ActivityManager.LOCK_TASK_MODE_NONE;
 
 import android.content.Intent;
+import android.os.Bundle;
+import android.util.Log;
 
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.annotations.Experimental;
@@ -32,6 +34,8 @@ import java.util.Objects;
  */
 @Experimental
 public class Activity<E> {
+
+    private static final String TAG =  "BedsteadActivityWrapper";
 
     /*
      * Note that methods in this class must not rely on the activity existing within the current
@@ -58,6 +62,7 @@ public class Activity<E> {
      */
     @Experimental
     public void startLockTask() {
+        Log.d(TAG, "startLockTask() on " + mActivity);
         mActivity.startLockTask();
 
         // TODO(scottjonathan): What if we're already in lock task mode when we start it here?
@@ -72,12 +77,28 @@ public class Activity<E> {
      */
     @Experimental
     public void stopLockTask() {
+        Log.d(TAG, "stopLockTask() on " + mActivity);
         mActivity.stopLockTask();
 
         // TODO(scottjonathan): What if we're already in lock task mode when we start it here?
         //  find another thing to poll on
         PollingCheck.waitFor(
                 () -> mTestApis.activities().getLockTaskModeState() == LOCK_TASK_MODE_NONE);
+    }
+
+    // TODO(b/193563511): remove once test can call:
+    // testApp.systemServices().userManager().getApplicationRestrictions(pkg)
+    /**
+     * Calls {@link android.os.UserManager#getApplicationRestrictions(String)} using the activity's
+     * package name.
+     */
+    @Experimental
+    public Bundle getApplicationRestrictions() {
+        Bundle restrictions = mActivity.getApplicationRestrictions();
+        // TODO: use helper method to print bundle key / values
+        Log.d(TAG, "getApplicationRestrictions() on " + mActivity + ": " + restrictions);
+
+        return restrictions;
     }
 
     /**
@@ -89,6 +110,7 @@ public class Activity<E> {
      */
     @Experimental
     public void startActivity(Intent intent) {
+        Log.d(TAG, "startActivity(): " + intent);
         if (intent.getComponent() == null) {
             ComponentReference startActivity = mTestApis.activities().foregroundActivity();
             mActivity.startActivity(intent);

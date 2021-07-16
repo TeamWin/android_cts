@@ -153,14 +153,6 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
         executeDeviceTestClass(".AdminConfiguredNetworksTest");
     }
 
-    @Override
-    @Test
-    @IgnoreOnHeadlessSystemUserMode(
-            reason = "Per-user application restriction is not applicable for headless user")
-    public void testApplicationRestrictions() throws Exception {
-        super.testApplicationRestrictions();
-    }
-
     @Test
     public void testSetTime() throws Exception {
         assertMetricsLogged(getDevice(), () -> {
