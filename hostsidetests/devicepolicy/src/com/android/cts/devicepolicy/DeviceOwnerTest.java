@@ -32,6 +32,7 @@ import android.stats.devicepolicy.EventId;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.RequiresAdditionalFeatures;
+import com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.TemporaryIgnoreOnHeadlessSystemUserMode;
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 import com.android.tradefed.log.LogUtil.CLog;
 
@@ -529,6 +530,8 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
 
     @FlakyTest(bugId = 137096267)
     @Test
+    @TemporaryIgnoreOnHeadlessSystemUserMode(bugId = "132361856", reason = "3 failures such as "
+            + "missing activity handling bugreport intent")
     public void testAdminActionBookkeeping() throws Exception {
         if (isHeadlessSystemUserMode()) {
             // TODO(b/176993670):ALLOW_TEST_API_ACCESS is needed by DevicePolicyManagerWrapper to
@@ -573,6 +576,8 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
                 .build());
     }
 
+    @TemporaryIgnoreOnHeadlessSystemUserMode(bugId = "132360087",
+            reason = "need more investigation / decide how to support it")
     @Test
     public void testBluetoothRestriction() throws Exception {
         executeDeviceOwnerTest("BluetoothRestrictionTest");
@@ -784,6 +789,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
                     .build());
     }
 
+    @TemporaryIgnoreOnHeadlessSystemUserMode(bugId = "185486201", reason = "need to change DPMS")
     @Test
     public void testDefaultSmsApplication() throws Exception {
         assumeHasTelephonyFeature();
