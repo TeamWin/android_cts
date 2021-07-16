@@ -62,6 +62,9 @@ import javax.crypto.spec.OAEPParameterSpec;
 import javax.crypto.spec.PSource;
 import javax.crypto.spec.SecretKeySpec;
 
+import static android.content.pm.PackageManager.FEATURE_LEANBACK_ONLY;
+import static android.content.pm.PackageManager.FEATURE_AUTOMOTIVE;
+
 /**
  * Tests for algorithm-agnostic functionality of {@code Cipher} implementations backed by Android
  * Keystore.
@@ -451,13 +454,18 @@ public class CipherTest extends AndroidTestCase {
 
     private boolean isLeanbackOnly() {
         PackageManager pm = getContext().getPackageManager();
-        return (pm != null && pm.hasSystemFeature("android.software.leanback_only"));
+        return (pm != null && pm.hasSystemFeature(FEATURE_LEANBACK_ONLY));
+    }
+
+    private boolean isAutomotive() {
+        PackageManager pm = getContext().getPackageManager();
+        return (pm != null && pm.hasSystemFeature(FEATURE_AUTOMOTIVE));
     }
 
     @Presubmit
     public void testKeyguardLockAndUnlock()
             throws Exception {
-        if (isLeanbackOnly()) {
+        if (isLeanbackOnly() || isAutomotive()) {
             return;
         }
 
@@ -478,7 +486,7 @@ public class CipherTest extends AndroidTestCase {
         final boolean isUnlockedDeviceRequired = true;
         final boolean isUserAuthRequired = false;
 
-        if (isLeanbackOnly()) {
+        if (isLeanbackOnly() || isAutomotive()) {
             return;
         }
 
@@ -970,7 +978,7 @@ public class CipherTest extends AndroidTestCase {
         final boolean isUnlockedDeviceRequired = false;
         final boolean isUserAuthRequired = true;
 
-        if (isLeanbackOnly()) {
+        if (isLeanbackOnly() || isAutomotive()) {
             return;
         }
 
@@ -997,7 +1005,7 @@ public class CipherTest extends AndroidTestCase {
         final boolean isUserAuthRequired = true;
         final boolean isUnlockedDeviceRequired = false;
 
-        if (isLeanbackOnly()) {
+        if (isLeanbackOnly() || isAutomotive()) {
             return;
         }
 
