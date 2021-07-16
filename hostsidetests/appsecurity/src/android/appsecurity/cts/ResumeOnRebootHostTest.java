@@ -40,6 +40,8 @@ import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Set of tests that verify behavior of Resume on Reboot, if supported.
@@ -68,6 +70,7 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
 
     private static final int USER_SWITCH_TIMEOUT_SECONDS = 10;
     private static final long USER_SWITCH_WAIT = TimeUnit.SECONDS.toMillis(10);
+    private static final int UNLOCK_BROADCAST_WAIT_SECONDS = 10;
 
     private boolean mSupportsMultiUser;
 
@@ -527,11 +530,32 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
         runDeviceTestsAsUser("testUnlockScreen", userId);
     }
 
+    private void verifyLskfCaptured(String clientName) throws Exception {
+        HostSideTestUtils.waitUntil("Lskf isn't captured after "
+                        + UNLOCK_BROADCAST_WAIT_SECONDS + " seconds for " + clientName,
+                UNLOCK_BROADCAST_WAIT_SECONDS, () -> isLskfCapturedForClient(clientName));
+    }
+
+    private boolean isLskfCapturedForClient(String clientName) throws Exception {
+        Pattern pattern = Pattern.compile(".*LSKF capture status: (\\w+)");
+        String status = getDevice().executeShellCommand(
+                "cmd recovery is-lskf-captured " + clientName);
+        Matcher matcher = pattern.matcher(status);
+        if (!matcher.find()) {
+            CLog.i(TAG, "is-lskf-captured isn't implemented on build, assuming captured");
+            return true;
+        }
+
+        return "true".equalsIgnoreCase(matcher.group(1));
+    }
+
     private void deviceRebootAndApply() throws Exception {
         deviceRebootAndApply(PKG);
     }
 
     private void deviceRebootAndApply(String clientName) throws Exception {
+        verifyLskfCaptured(clientName);
+
         String res = getDevice().executeShellCommand("cmd recovery reboot-and-apply " + clientName
                 + " cts-test");
         if (res != null && res.contains("Reboot and apply status: failure")) {
