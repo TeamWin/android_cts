@@ -1797,7 +1797,7 @@ class BitmapCompare {
         }
         return new Difference(greatestDifference, Pair.create(
             greatestDifferenceIndex % bitmap1.getWidth(),
-            greatestDifferenceIndex / bitmap1.getHeight()));
+            greatestDifferenceIndex / bitmap1.getWidth()));
     }
 
     @SuppressLint("UseSparseArrays")
