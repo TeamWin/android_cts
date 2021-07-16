@@ -148,7 +148,6 @@ public class RestoreSessionTest {
      * Restore packages added to mRestorePackages and verify only those packages are restored. Use
      * {@link RestoreSession#restorePackage(String, RestoreObserver)}
      */
-
     @Test
     public void testRestorePackage() throws InterruptedException {
         initPackagesToRestore(/* packagesCount */ 1);
