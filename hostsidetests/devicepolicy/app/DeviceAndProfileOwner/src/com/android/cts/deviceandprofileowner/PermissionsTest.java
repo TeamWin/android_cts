@@ -26,6 +26,11 @@ import static android.app.admin.DevicePolicyManager.PERMISSION_POLICY_PROMPT;
 import static android.content.pm.PackageManager.PERMISSION_DENIED;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 
+import static com.android.cts.devicepolicy.PermissionUtils.permissionGrantStateToString;
+import static com.android.cts.devicepolicy.PermissionUtils.permissionPolicyToString;
+
+import static com.google.common.truth.Truth.assertWithMessage;
+
 import android.Manifest.permission;
 import android.app.UiAutomation;
 import android.app.admin.DevicePolicyManager;
@@ -554,17 +559,33 @@ public class PermissionsTest extends BaseDeviceAdminTest {
     }
 
     private void unableToSetPermissionGrantState(String permission, int grantState) {
-        assertFalse(setPermissionGrantState(permission, grantState));
+        boolean granted = setPermissionGrantState(permission, grantState);
+
+        assertWithMessage("%s.setPermissionGrantState(%s, %s, %s, %s)",
+                mDevicePolicyManager, ADMIN_RECEIVER_COMPONENT, PERMISSION_APP_PACKAGE_NAME,
+                permission, permissionGrantStateToString(grantState)).that(granted).isFalse();
     }
 
-    private void assertPermissionGrantState(String permission, int grantState) {
-        assertEquals(mDevicePolicyManager.getPermissionGrantState(ADMIN_RECEIVER_COMPONENT,
-                PERMISSION_APP_PACKAGE_NAME, permission), grantState);
+    private void assertPermissionGrantState(String permission, int expectedState) {
+        int actualState = mDevicePolicyManager.getPermissionGrantState(ADMIN_RECEIVER_COMPONENT,
+                PERMISSION_APP_PACKAGE_NAME, permission);
+
+        assertWithMessage("%s.getPermissionGrantState(%s, %s, %s) (where %s=%s and %s=%s)",
+                mDevicePolicyManager, ADMIN_RECEIVER_COMPONENT, PERMISSION_APP_PACKAGE_NAME,
+                permission, expectedState, permissionGrantStateToString(expectedState),
+                actualState, permissionGrantStateToString(actualState))
+                        .that(actualState)
+                        .isEqualTo(expectedState);
     }
 
-    private void assertPermissionPolicy(int permissionPolicy) {
-        assertEquals(mDevicePolicyManager.getPermissionPolicy(ADMIN_RECEIVER_COMPONENT),
-                permissionPolicy);
+    private void assertPermissionPolicy(int expectedPolicy) {
+        int actualPolicy = mDevicePolicyManager.getPermissionPolicy(ADMIN_RECEIVER_COMPONENT);
+        assertWithMessage("%s.getPermissionPolicy(%s) (where %s=%s and %s=%s)",
+                mDevicePolicyManager, ADMIN_RECEIVER_COMPONENT,
+                expectedPolicy, permissionPolicyToString(expectedPolicy),
+                actualPolicy, permissionPolicyToString(actualPolicy))
+                        .that(actualPolicy)
+                        .isEqualTo(expectedPolicy);
     }
 
     private void assertCanRequestPermissionFromActivity(String permission) throws Exception {
