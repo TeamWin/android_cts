@@ -2532,6 +2532,87 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
     }
 
     /**
+     * Test {@link InputConnection#reportFullscreenMode(boolean)} is ignored as expected.
+     */
+    @Test
+    public void testReportFullscreenMode() throws Exception {
+        // Intentionally let the app return "false" to confirm that IME still receives "true".
+        final boolean returnedResult = false;
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public boolean reportFullscreenMode(boolean enabled) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putBoolean("enabled", enabled);
+                });
+                return returnedResult;
+            }
+        }
+
+        testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
+            final ImeCommand command = session.callReportFullscreenMode(true);
+            assertFalse("reportFullscreenMode() always returns false on API 26+",
+                    expectCommand(stream, command, TIMEOUT).getReturnBooleanValue());
+
+            // Make sure that the app does not receive the call (for a while).
+            methodCallVerifier.expectNotCalled(
+                    "IC#reportFullscreenMode() must be ignored on API 26+",
+                    EXPECTED_NOT_CALLED_TIMEOUT);
+        });
+    }
+
+    /**
+     * Test {@link InputConnection#reportFullscreenMode(boolean)} is ignored as expected even after
+     * {@link android.view.inputmethod.InputMethod#unbindInput()} is issued.
+     */
+    @Test
+    public void testReportFullscreenModeAfterUnbindInput() throws Exception {
+        final boolean returnedResult = true;
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public boolean reportFullscreenMode(boolean enabled) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putBoolean("enabled", enabled);
+                });
+                return returnedResult;
+            }
+        }
+
+        testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
+            // Memorize the current InputConnection.
+            expectCommand(stream, session.memorizeCurrentInputConnection(), TIMEOUT);
+
+            // Let unbindInput happen.
+            triggerUnbindInput();
+            expectEvent(stream, event -> "unbindInput".equals(event.getEventName()), TIMEOUT);
+
+            // Now this API call on the memorized IC should fail fast.
+            final ImeCommand command = session.callReportFullscreenMode(true);
+            final ImeEvent result = expectCommand(stream, command, TIMEOUT);
+            assertFalse("reportFullscreenMode() always returns false on API 26+",
+                    result.getReturnBooleanValue());
+            expectElapseTimeLessThan(result, IMMEDIATE_TIMEOUT_NANO);
+
+            // Make sure that the app does not receive the call (for a while).
+            methodCallVerifier.expectNotCalled("IC#reportFullscreenMode() must be ignored on "
+                    + "API 26+ even after unbindInput().", EXPECTED_NOT_CALLED_TIMEOUT);
+        });
+    }
+
+    /**
      * Test {@link InputConnection#performSpellCheck()} works as expected.
      */
     @Test
