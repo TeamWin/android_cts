@@ -280,7 +280,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                         "testCannotAccessApis", parentUserId);
             }
 
-            // Revoking the permission for DELEGAYE_APP_PKG to manage restrictions.
+            // Revoking the permission for DELEGATE_APP_PKG to manage restrictions.
             changeApplicationRestrictionsManagingPackage(null);
             executeAppRestrictionsManagingPackageTest("testCannotAccessApis");
 
