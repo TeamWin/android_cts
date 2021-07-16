@@ -824,6 +824,15 @@ public class AutoCompleteTextViewTest {
         assertFalse(mAutoCompleteTextView.isPopupShowing());
 
         WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mAutoCompleteTextView, () -> {
+            mAutoCompleteTextView.showDropDown();
+        });
+        assertTrue(mAutoCompleteTextView.isPopupShowing());
+
+        mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_ESCAPE);
+        // KeyEscape will also close the popup.
+        assertFalse(mAutoCompleteTextView.isPopupShowing());
+
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mAutoCompleteTextView, () -> {
             mAutoCompleteTextView.dismissDropDown();
             mAutoCompleteTextView.setText(STRING_TEST);
         });
