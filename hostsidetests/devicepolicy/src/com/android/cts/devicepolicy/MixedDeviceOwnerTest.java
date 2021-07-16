@@ -565,6 +565,13 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
     }
 
     @Override
+    @Test
+    @IgnoreOnHeadlessSystemUserMode(reason = "Headless system user doesn't have UI / credentials")
+    public void testSetKeyguardDisabledFeatures() throws Exception {
+        super.testSetKeyguardDisabledFeatures();
+    }
+
+    @Override
     public void testApplicationHidden() throws Exception {
         if (isHeadlessSystemUserMode()) {
             // Must run on user 0 because the test has a broadcast receiver that listen to packages
