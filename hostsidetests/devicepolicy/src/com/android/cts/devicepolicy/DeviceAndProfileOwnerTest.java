@@ -28,7 +28,7 @@ import android.platform.test.annotations.LargeTest;
 import android.platform.test.annotations.RequiresDevice;
 import android.stats.devicepolicy.EventId;
 
-import com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.TemporaryIgnoreOnHeadlessSystemUserMode;
+import com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.TemporarilyIgnoreOnHeadlessSystemUserMode;
 import com.android.cts.devicepolicy.annotations.LockSettingsTest;
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier;
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
@@ -440,7 +440,8 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
-    @TemporaryIgnoreOnHeadlessSystemUserMode(bugId = "187862351", reason = "also failing on phones")
+    @TemporarilyIgnoreOnHeadlessSystemUserMode(bugId = "187862351",
+            reason = "also failing on phones")
     public void testGrantOfSensorsRelatedPermissions() throws Exception {
         installAppPermissionAppAsUser();
         executeDeviceTestMethod(".PermissionsTest", "testSensorsRelatedPermissionsCannotBeGranted");
@@ -453,7 +454,8 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
-    @TemporaryIgnoreOnHeadlessSystemUserMode(bugId = "187862351", reason = "also failing on phones")
+    @TemporarilyIgnoreOnHeadlessSystemUserMode(bugId = "187862351",
+            reason = "also failing on phones")
     public void testSensorsRelatedPermissionsNotGrantedViaPolicy() throws Exception {
         installAppPermissionAppAsUser();
         executeDeviceTestMethod(".PermissionsTest",
@@ -461,7 +463,8 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
-    @TemporaryIgnoreOnHeadlessSystemUserMode(bugId = "187862351", reason = "also failing on phones")
+    @TemporarilyIgnoreOnHeadlessSystemUserMode(bugId = "187862351",
+            reason = "also failing on phones")
     public void testStateOfSensorsRelatedPermissionsCannotBeRead() throws Exception {
         installAppPermissionAppAsUser();
         executeDeviceTestMethod(".PermissionsTest",

@@ -67,8 +67,8 @@ public final class DeviceAdminFeaturesCheckerRule implements TestRule {
 
                 String testName = description.getDisplayName();
 
-                TemporaryIgnoreOnHeadlessSystemUserMode temporarilyIgnoredAnnotation = description
-                        .getAnnotation(TemporaryIgnoreOnHeadlessSystemUserMode.class);
+                TemporarilyIgnoreOnHeadlessSystemUserMode temporarilyIgnoredAnnotation = description
+                        .getAnnotation(TemporarilyIgnoreOnHeadlessSystemUserMode.class);
                 if (temporarilyIgnoredAnnotation != null
                         && BaseDevicePolicyTest.isHeadlessSystemUserMode(testDevice)) {
                     throw new AssumptionViolatedException(
@@ -214,7 +214,7 @@ public final class DeviceAdminFeaturesCheckerRule implements TestRule {
      */
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ElementType.METHOD})
-    public static @interface TemporaryIgnoreOnHeadlessSystemUserMode {
+    public static @interface TemporarilyIgnoreOnHeadlessSystemUserMode {
         String bugId();
         String reason();
     }
