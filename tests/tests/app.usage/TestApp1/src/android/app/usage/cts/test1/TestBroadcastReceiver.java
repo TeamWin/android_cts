@@ -14,27 +14,13 @@
  * limitations under the License.
  */
 
-package com.android.bedstead.nene.activities;
+package android.app.usage.cts.test1;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.os.Bundle;
-import android.os.UserManager;
+import android.content.Intent;
 
-import com.android.bedstead.nene.TestApis;
-
-public class LocalActivity extends Activity<android.app.Activity> {
-
-    private final Context mContext;
-
-    LocalActivity(TestApis testApis, android.app.Activity activity) {
-        super(testApis, activity, new ActivityWrapper(activity));
-
-        mContext = activity;
-    }
-
+final class TestBroadcastReceiver extends BroadcastReceiver {
     @Override
-    public Bundle getApplicationRestrictions() {
-        String packageName = mContext.getPackageName();
-        return mContext.getSystemService(UserManager.class).getApplicationRestrictions(packageName);
-    }
+    public void onReceive(Context context, Intent intent) {}
 }

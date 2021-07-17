@@ -30,6 +30,7 @@ import android.car.watchdog.ResourceOveruseStats;
 import android.content.Context;
 import android.os.Process;
 import android.os.UserHandle;
+import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -45,7 +46,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.util.concurrent.atomic.AtomicReference;
-
+@AppModeFull(reason = "Instant Apps cannot get car related permissions")
 public class CarWatchdogManagerTest extends CarApiTestBase {
     private static final String TAG = CarWatchdogManagerTest.class.getSimpleName();
     private static final String CAR_WATCHDOG_SERVICE_NAME

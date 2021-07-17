@@ -35,6 +35,7 @@ import static org.junit.Assert.fail;
 import android.content.ClipDescription;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.Process;
 import android.os.SystemClock;
 import android.text.Annotation;
@@ -1431,6 +1432,180 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
     }
 
     /**
+     * Test {@link InputConnection#deleteSurroundingText(int, int)} works as expected.
+     */
+    @Test
+    public void testDeleteSurroundingText() throws Exception {
+        final int expectedBeforeLength = 5;
+        final int expectedAfterLength = 4;
+        // Intentionally let the app return "false" to confirm that IME still receives "true".
+        final boolean returnedResult = false;
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public boolean deleteSurroundingText(int beforeLength, int afterLength) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putInt("beforeLength", beforeLength);
+                    args.putInt("afterLength", afterLength);
+                });
+                return returnedResult;
+            }
+        }
+
+        testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
+            final ImeCommand command =
+                    session.callDeleteSurroundingText(expectedBeforeLength, expectedAfterLength);
+            assertTrue("deleteSurroundingText() always returns true unless RemoteException is"
+                    + " thrown", expectCommand(stream, command, TIMEOUT).getReturnBooleanValue());
+            methodCallVerifier.expectCalledOnce(args -> {
+                assertEquals(expectedBeforeLength, args.getInt("beforeLength"));
+                assertEquals(expectedAfterLength, args.getInt("afterLength"));
+            }, TIMEOUT);
+        });
+    }
+
+    /**
+     * Test {@link InputConnection#deleteSurroundingText(int, int)} fails fast once
+     * {@link android.view.inputmethod.InputMethod#unbindInput()} is issued.
+     */
+    @Test
+    public void testDeleteSurroundingTextAfterUnbindInput() throws Exception {
+        final boolean returnedResult = true;
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public boolean deleteSurroundingText(int beforeLength, int afterLength) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putInt("beforeLength", beforeLength);
+                    args.putInt("afterLength", afterLength);
+                });
+                return returnedResult;
+            }
+        }
+
+        testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
+            // Memorize the current InputConnection.
+            expectCommand(stream, session.memorizeCurrentInputConnection(), TIMEOUT);
+
+            // Let unbindInput happen.
+            triggerUnbindInput();
+            expectEvent(stream, event -> "unbindInput".equals(event.getEventName()), TIMEOUT);
+
+            // Now IC#deleteSurroundingText() for the memorized IC should fail fast.
+            final ImeCommand command = session.callDeleteSurroundingText(3, 4);
+            final ImeEvent result = expectCommand(stream, command, TIMEOUT);
+            // CAVEAT: this behavior is a bit questionable and may change in a future version.
+            assertTrue("Currently IC#deleteSurroundingText() still returns true even after"
+                    + " unbindInput().", result.getReturnBooleanValue());
+            expectElapseTimeLessThan(result, IMMEDIATE_TIMEOUT_NANO);
+
+            // Make sure that the app does not receive the call (for a while).
+            methodCallVerifier.expectNotCalled(
+                    "Once unbindInput() happened, IC#deleteSurroundingText() fails fast.",
+                    EXPECTED_NOT_CALLED_TIMEOUT);
+        });
+    }
+
+    /**
+     * Test {@link InputConnection#deleteSurroundingTextInCodePoints(int, int)} works as expected.
+     */
+    @Test
+    public void testDeleteSurroundingTextInCodePoints() throws Exception {
+        final int expectedBeforeLength = 5;
+        final int expectedAfterLength = 4;
+        // Intentionally let the app return "false" to confirm that IME still receives "true".
+        final boolean returnedResult = false;
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public boolean deleteSurroundingTextInCodePoints(int beforeLength, int afterLength) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putInt("beforeLength", beforeLength);
+                    args.putInt("afterLength", afterLength);
+                });
+                return returnedResult;
+            }
+        }
+
+        testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
+            final ImeCommand command = session.callDeleteSurroundingTextInCodePoints(
+                    expectedBeforeLength, expectedAfterLength);
+            assertTrue("deleteSurroundingText() always returns true unless RemoteException is"
+                    + " thrown", expectCommand(stream, command, TIMEOUT).getReturnBooleanValue());
+            methodCallVerifier.expectCalledOnce(args -> {
+                assertEquals(expectedBeforeLength, args.getInt("beforeLength"));
+                assertEquals(expectedAfterLength, args.getInt("afterLength"));
+            }, TIMEOUT);
+        });
+    }
+
+    /**
+     * Test {@link InputConnection#deleteSurroundingTextInCodePoints(int, int)} fails fast once
+     * {@link android.view.inputmethod.InputMethod#unbindInput()} is issued.
+     */
+    @Test
+    public void testDeleteSurroundingTextInCodePointsAfterUnbindInput() throws Exception {
+        final boolean returnedResult = true;
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public boolean deleteSurroundingTextInCodePoints(int beforeLength, int afterLength) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putInt("beforeLength", beforeLength);
+                    args.putInt("afterLength", afterLength);
+                });
+                return returnedResult;
+            }
+        }
+
+        testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
+            // Memorize the current InputConnection.
+            expectCommand(stream, session.memorizeCurrentInputConnection(), TIMEOUT);
+
+            // Let unbindInput happen.
+            triggerUnbindInput();
+            expectEvent(stream, event -> "unbindInput".equals(event.getEventName()), TIMEOUT);
+
+            // Now IC#deleteSurroundingTextInCodePoints() for the memorized IC should fail fast.
+            final ImeCommand command = session.callDeleteSurroundingTextInCodePoints(3, 4);
+            final ImeEvent result = expectCommand(stream, command, TIMEOUT);
+            // CAVEAT: this behavior is a bit questionable and may change in a future version.
+            assertTrue("Currently IC#deleteSurroundingTextInCodePoints() still returns true even"
+                    + " after unbindInput().", result.getReturnBooleanValue());
+            expectElapseTimeLessThan(result, IMMEDIATE_TIMEOUT_NANO);
+
+            // Make sure that the app does not receive the call (for a while).
+            methodCallVerifier.expectNotCalled(
+                    "Once unbindInput() happened, IC#deleteSurroundingTextInCodePoints() fails"
+                    + " fast.", EXPECTED_NOT_CALLED_TIMEOUT);
+        });
+    }
+
+    /**
      * Test {@link InputConnection#commitText(CharSequence, int)} works as expected.
      */
     @Test
@@ -2776,6 +2951,162 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
             // Make sure that the app does not receive the call (for a while).
             methodCallVerifier.expectNotCalled(
                     "Once unbindInput() happened, IC#performPrivateCommand() fails fast.",
+                    EXPECTED_NOT_CALLED_TIMEOUT);
+        });
+    }
+
+    /**
+     * Test {@link InputConnection#getHandler()} is ignored as expected.
+     */
+    @Test
+    public void testGetHandler() throws Exception {
+        final Handler returnedResult = null;
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public Handler getHandler() {
+                methodCallVerifier.onMethodCalled(args -> { });
+                return returnedResult;
+            }
+        }
+
+        testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
+            // The system internally calls "getHandler". So reset the verifier before our calling
+            // "callGetHandler".
+            methodCallVerifier.reset();
+            final ImeCommand command = session.callGetHandler();
+            assertTrue("getHandler() always returns null",
+                    expectCommand(stream, command, TIMEOUT).isNullReturnValue());
+
+            // Make sure that the app does not receive the call (for a while).
+            methodCallVerifier.expectNotCalled("IC#getHandler() must be ignored.",
+                    EXPECTED_NOT_CALLED_TIMEOUT);
+        });
+    }
+
+    /**
+     * Test {@link InputConnection#getHandler()} is ignored as expected even after
+     * {@link android.view.inputmethod.InputMethod#unbindInput()} is issued.
+     */
+    @Test
+    public void testGetHandlerAfterUnbindInput() throws Exception {
+        final Handler returnedResult = null;
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public Handler getHandler() {
+                methodCallVerifier.onMethodCalled(args -> { });
+                return returnedResult;
+            }
+        }
+
+        testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
+            // Memorize the current InputConnection.
+            expectCommand(stream, session.memorizeCurrentInputConnection(), TIMEOUT);
+
+            // Let unbindInput happen.
+            triggerUnbindInput();
+            expectEvent(stream, event -> "unbindInput".equals(event.getEventName()), TIMEOUT);
+
+            // The system internally calls "getHandler". So reset the verifier before our calling
+            // "callGetHandler".
+            methodCallVerifier.reset();
+            // Now this API call on the memorized IC should fail fast.
+            final ImeCommand command = session.callGetHandler();
+            final ImeEvent result = expectCommand(stream, command, TIMEOUT);
+            assertTrue("getHandler() always returns null", result.isNullReturnValue());
+            expectElapseTimeLessThan(result, IMMEDIATE_TIMEOUT_NANO);
+
+            // Make sure that the app does not receive the call (for a while).
+            methodCallVerifier.expectNotCalled(
+                    "IC#getHandler() must be ignored even after unbindInput().",
+                    EXPECTED_NOT_CALLED_TIMEOUT);
+        });
+    }
+
+    /**
+     * Test {@link InputConnection#closeConnection()} is ignored as expected.
+     */
+    @Test
+    public void testCloseConnection() throws Exception {
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public void closeConnection() {
+                methodCallVerifier.onMethodCalled(args -> { });
+            }
+        }
+
+        testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
+            final ImeCommand command = session.callCloseConnection();
+            expectCommand(stream, command, TIMEOUT);
+
+            // Make sure that the app does not receive the call (for a while).
+            methodCallVerifier.expectNotCalled("IC#getHandler() must be ignored.",
+                    EXPECTED_NOT_CALLED_TIMEOUT);
+        });
+    }
+
+    /**
+     * Test {@link InputConnection#closeConnection()} is ignored as expected even after
+     * {@link android.view.inputmethod.InputMethod#unbindInput()} is issued.
+     */
+    @Test
+    public void testCloseConnectionAfterUnbindInput() throws Exception {
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+        final CountDownLatch latch = new CountDownLatch(1);
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public void closeConnection() {
+                methodCallVerifier.onMethodCalled(args -> { });
+                latch.countDown();
+            }
+        }
+
+        testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
+            // Memorize the current InputConnection.
+            expectCommand(stream, session.memorizeCurrentInputConnection(), TIMEOUT);
+
+            // Let unbindInput happen.
+            triggerUnbindInput();
+            expectEvent(stream, event -> "unbindInput".equals(event.getEventName()), TIMEOUT);
+
+            // The system internally calls "closeConnection". So wait for it to happen then reset
+            // the verifier before our calling "closeConnection".
+            assertTrue("closeConnection() must be called by the system.",
+                    latch.await(TIMEOUT, TimeUnit.MILLISECONDS));
+            methodCallVerifier.reset();
+
+            // Now this API call on the memorized IC should fail fast.
+            final ImeCommand command = session.callCloseConnection();
+            final ImeEvent result = expectCommand(stream, command, TIMEOUT);
+            expectElapseTimeLessThan(result, IMMEDIATE_TIMEOUT_NANO);
+
+            // Make sure that the app does not receive the call (for a while).
+            methodCallVerifier.expectNotCalled(
+                    "IC#closeConnection() must be ignored even after unbindInput().",
                     EXPECTED_NOT_CALLED_TIMEOUT);
         });
     }

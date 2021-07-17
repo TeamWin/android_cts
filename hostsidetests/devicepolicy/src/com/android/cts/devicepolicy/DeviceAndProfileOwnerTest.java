@@ -28,6 +28,7 @@ import android.platform.test.annotations.LargeTest;
 import android.platform.test.annotations.RequiresDevice;
 import android.stats.devicepolicy.EventId;
 
+import com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.TemporarilyIgnoreOnHeadlessSystemUserMode;
 import com.android.cts.devicepolicy.annotations.LockSettingsTest;
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier;
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
@@ -280,7 +281,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                         "testCannotAccessApis", parentUserId);
             }
 
-            // Revoking the permission for DELEGAYE_APP_PKG to manage restrictions.
+            // Revoking the permission for DELEGATE_APP_PKG to manage restrictions.
             changeApplicationRestrictionsManagingPackage(null);
             executeAppRestrictionsManagingPackageTest("testCannotAccessApis");
 
@@ -439,6 +440,8 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
+    @TemporarilyIgnoreOnHeadlessSystemUserMode(bugId = "187862351",
+            reason = "also failing on phones")
     public void testGrantOfSensorsRelatedPermissions() throws Exception {
         installAppPermissionAppAsUser();
         executeDeviceTestMethod(".PermissionsTest", "testSensorsRelatedPermissionsCannotBeGranted");
@@ -451,6 +454,8 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
+    @TemporarilyIgnoreOnHeadlessSystemUserMode(bugId = "187862351",
+            reason = "also failing on phones")
     public void testSensorsRelatedPermissionsNotGrantedViaPolicy() throws Exception {
         installAppPermissionAppAsUser();
         executeDeviceTestMethod(".PermissionsTest",
@@ -458,6 +463,8 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
+    @TemporarilyIgnoreOnHeadlessSystemUserMode(bugId = "187862351",
+            reason = "also failing on phones")
     public void testStateOfSensorsRelatedPermissionsCannotBeRead() throws Exception {
         installAppPermissionAppAsUser();
         executeDeviceTestMethod(".PermissionsTest",
@@ -475,89 +482,109 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     @RequiresDevice
     @Test
     public void testAlwaysOnVpn() throws Exception {
-        installAppAsUser(VPN_APP_APK, mUserId);
-        executeDeviceTestClassNoRestrictBackground(".AlwaysOnVpnTest");
+        int userId = getUserIdForAlwaysOnVpnTests();
+        installAppAsUser(VPN_APP_APK, userId);
+        executeDeviceTestClassNoRestrictBackground(".AlwaysOnVpnTest", userId);
+    }
+
+    protected int getUserIdForAlwaysOnVpnTests() {
+        return mUserId;
     }
 
     @RequiresDevice
     @Test
     public void testAlwaysOnVpnLockDown() throws Exception {
-        installAppAsUser(VPN_APP_APK, mUserId);
+        int userId = getUserIdForAlwaysOnVpnTests();
+        installAppAsUser(VPN_APP_APK, userId);
         try {
-            executeDeviceTestMethod(".AlwaysOnVpnMultiStageTest", "testAlwaysOnSet");
-            forceStopPackageForUser(VPN_APP_PKG, mUserId);
-            executeDeviceTestMethod(".AlwaysOnVpnMultiStageTest", "testNetworkBlocked");
+            executeDeviceTestMethod(".AlwaysOnVpnMultiStageTest", "testAlwaysOnSet", userId);
+            forceStopPackageForUser(VPN_APP_PKG, userId);
+            executeDeviceTestMethod(".AlwaysOnVpnMultiStageTest", "testNetworkBlocked", userId);
         } finally {
-            executeDeviceTestMethod(".AlwaysOnVpnMultiStageTest", "testCleanup");
+            executeDeviceTestMethod(".AlwaysOnVpnMultiStageTest", "testCleanup", userId);
         }
     }
 
     @RequiresDevice
     @Test
     public void testAlwaysOnVpnAcrossReboot() throws Exception {
+        int userId = getUserIdForAlwaysOnVpnTests();
         try {
-            installAppAsUser(VPN_APP_APK, mUserId);
+            installAppAsUser(VPN_APP_APK, userId);
             waitForBroadcastIdle();
-            executeDeviceTestMethod(".AlwaysOnVpnMultiStageTest", "testAlwaysOnSetWithAllowlist");
+            executeDeviceTestMethod(".AlwaysOnVpnMultiStageTest", "testAlwaysOnSetWithAllowlist",
+                    userId);
             rebootAndWaitUntilReady();
             // Make sure profile user initialization is complete before proceeding.
             waitForBroadcastIdle();
-            executeDeviceTestMethod(".AlwaysOnVpnMultiStageTest", "testAlwaysOnSetAfterReboot");
+            executeDeviceTestMethod(".AlwaysOnVpnMultiStageTest", "testAlwaysOnSetAfterReboot",
+                    userId);
         } finally {
-            executeDeviceTestMethod(".AlwaysOnVpnMultiStageTest", "testCleanup");
+            executeDeviceTestMethod(".AlwaysOnVpnMultiStageTest", "testCleanup", userId);
         }
     }
 
     @RequiresDevice
     @Test
     public void testAlwaysOnVpnPackageUninstalled() throws Exception {
-        installAppAsUser(VPN_APP_APK, mUserId);
+        int userId = getUserIdForAlwaysOnVpnTests();
+        installAppAsUser(VPN_APP_APK, userId);
         try {
-            executeDeviceTestMethod(".AlwaysOnVpnMultiStageTest", "testAlwaysOnSet");
+            executeDeviceTestMethod(".AlwaysOnVpnMultiStageTest", "testAlwaysOnSet", userId);
             getDevice().uninstallPackage(VPN_APP_PKG);
-            executeDeviceTestMethod(".AlwaysOnVpnMultiStageTest", "testAlwaysOnVpnDisabled");
-            executeDeviceTestMethod(".AlwaysOnVpnMultiStageTest", "testSetNonExistingPackage");
+            executeDeviceTestMethod(".AlwaysOnVpnMultiStageTest", "testAlwaysOnVpnDisabled",
+                    userId);
+            executeDeviceTestMethod(".AlwaysOnVpnMultiStageTest", "testSetNonExistingPackage",
+                    userId);
         } finally {
-            executeDeviceTestMethod(".AlwaysOnVpnMultiStageTest", "testCleanup");
+            executeDeviceTestMethod(".AlwaysOnVpnMultiStageTest", "testCleanup", userId);
         }
     }
 
     @RequiresDevice
     @Test
     public void testAlwaysOnVpnUnsupportedPackage() throws Exception {
+        int userId = getUserIdForAlwaysOnVpnTests();
         try {
             // Target SDK = 23: unsupported
-            installAppAsUser(VPN_APP_API23_APK, mUserId);
-            executeDeviceTestMethod(".AlwaysOnVpnUnsupportedTest", "testSetUnsupportedVpnAlwaysOn");
+            installAppAsUser(VPN_APP_API23_APK, userId);
+            executeDeviceTestMethod(".AlwaysOnVpnUnsupportedTest", "testSetUnsupportedVpnAlwaysOn",
+                    userId);
 
             // Target SDK = 24: supported
-            installAppAsUser(VPN_APP_API24_APK, mUserId);
-            executeDeviceTestMethod(".AlwaysOnVpnUnsupportedTest", "testSetSupportedVpnAlwaysOn");
-            executeDeviceTestMethod(".AlwaysOnVpnUnsupportedTest", "testClearAlwaysOnVpn");
+            installAppAsUser(VPN_APP_API24_APK, userId);
+            executeDeviceTestMethod(".AlwaysOnVpnUnsupportedTest", "testSetSupportedVpnAlwaysOn",
+                    userId);
+            executeDeviceTestMethod(".AlwaysOnVpnUnsupportedTest", "testClearAlwaysOnVpn", userId);
 
             // Explicit opt-out: unsupported
-            installAppAsUser(VPN_APP_NOT_ALWAYS_ON_APK, mUserId);
-            executeDeviceTestMethod(".AlwaysOnVpnUnsupportedTest", "testSetUnsupportedVpnAlwaysOn");
+            installAppAsUser(VPN_APP_NOT_ALWAYS_ON_APK, userId);
+            executeDeviceTestMethod(".AlwaysOnVpnUnsupportedTest", "testSetUnsupportedVpnAlwaysOn",
+                    userId);
         } finally {
-            executeDeviceTestMethod(".AlwaysOnVpnUnsupportedTest", "testClearAlwaysOnVpn");
+            executeDeviceTestMethod(".AlwaysOnVpnUnsupportedTest", "testClearAlwaysOnVpn", userId);
         }
     }
 
     @RequiresDevice
     @Test
     public void testAlwaysOnVpnUnsupportedPackageReplaced() throws Exception {
+        int userId = getUserIdForAlwaysOnVpnTests();
         try {
             // Target SDK = 24: supported
-            executeDeviceTestMethod(".AlwaysOnVpnUnsupportedTest", "testAssertNoAlwaysOnVpn");
-            installAppAsUser(VPN_APP_API24_APK, mUserId);
-            executeDeviceTestMethod(".AlwaysOnVpnUnsupportedTest", "testSetSupportedVpnAlwaysOn");
+            executeDeviceTestMethod(".AlwaysOnVpnUnsupportedTest", "testAssertNoAlwaysOnVpn",
+                    userId);
+            installAppAsUser(VPN_APP_API24_APK, userId);
+            executeDeviceTestMethod(".AlwaysOnVpnUnsupportedTest", "testSetSupportedVpnAlwaysOn",
+                    userId);
             // Update the app to target higher API level, but with manifest opt-out
-            installAppAsUser(VPN_APP_NOT_ALWAYS_ON_APK, mUserId);
+            installAppAsUser(VPN_APP_NOT_ALWAYS_ON_APK, userId);
             // wait for the app update install completed, ready to be tested
             waitForBroadcastIdle();
-            executeDeviceTestMethod(".AlwaysOnVpnUnsupportedTest", "testAssertNoAlwaysOnVpn");
+            executeDeviceTestMethod(".AlwaysOnVpnUnsupportedTest", "testAssertNoAlwaysOnVpn",
+                    userId);
         } finally {
-            executeDeviceTestMethod(".AlwaysOnVpnUnsupportedTest", "testClearAlwaysOnVpn");
+            executeDeviceTestMethod(".AlwaysOnVpnUnsupportedTest", "testClearAlwaysOnVpn", userId);
         }
     }
 
@@ -1889,12 +1916,11 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
      * Executes a test class on device. Prior to running, turn off background data usage
      * restrictions, and restore the original restrictions after the test.
      */
-    private void executeDeviceTestClassNoRestrictBackground(String className) throws Exception {
+    private void executeDeviceTestClassNoRestrictBackground(String className, int userId)
+            throws Exception {
         boolean originalRestriction = ensureRestrictBackgroundPolicyOff();
         try {
-            executeDeviceTestClass(className);
-        } catch (Exception e) {
-            throw e;
+            executeDeviceTestClass(className, userId);
         } finally {
             // if the test throws exception, still restore the policy
             restoreRestrictBackgroundPolicyTo(originalRestriction);
@@ -1905,8 +1931,17 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         executeDeviceTestMethod(className, /* testName= */ null);
     }
 
+    protected void executeDeviceTestClass(String className, int userId) throws Exception {
+        executeDeviceTestMethod(className, /* testName= */ null, userId);
+    }
+
     protected void executeDeviceTestMethod(String className, String testName) throws Exception {
         executeDeviceTestMethod(className, testName, /* params= */ new HashMap<>());
+    }
+
+    protected void executeDeviceTestMethod(String className, String testName, int userId)
+            throws Exception {
+        executeDeviceTestMethod(className, testName, userId, /* params= */ new HashMap<>());
     }
 
     protected void executeDeviceTestMethod(String className, String testName,

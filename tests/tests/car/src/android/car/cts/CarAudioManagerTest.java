@@ -30,6 +30,7 @@ import android.app.UiAutomation;
 import android.car.Car;
 import android.car.media.CarAudioManager;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeFull;
 import android.util.Pair;
 import android.view.KeyEvent;
 
@@ -49,6 +50,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @RunWith(AndroidJUnit4.class)
+@AppModeFull(reason = "Instant Apps cannot get car related permissions")
 public final class CarAudioManagerTest extends CarApiTestBase {
 
     private static long WAIT_TIMEOUT_SECS = 5;

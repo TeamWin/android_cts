@@ -22,6 +22,7 @@ import static org.junit.Assert.fail;
 
 import com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.RequiresAdditionalFeatures;
 import com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.RequiresProfileOwnerSupport;
+import com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.TemporarilyIgnoreOnHeadlessSystemUserMode;
 
 import org.junit.Test;
 
@@ -56,16 +57,22 @@ public class ProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
+    @TemporarilyIgnoreOnHeadlessSystemUserMode(bugId = "183020176",
+            reason = "decide if it's needed or fix it")
     public void testManagement() throws Exception {
         executeProfileOwnerTest("ManagementTest");
     }
 
     @Test
+    @TemporarilyIgnoreOnHeadlessSystemUserMode(bugId = "183020176",
+            reason = "decide if it's needed or fix it")
     public void testAdminActionBookkeeping() throws Exception {
         executeProfileOwnerTest("AdminActionBookkeepingTest");
     }
 
     @Test
+    @TemporarilyIgnoreOnHeadlessSystemUserMode(bugId = "183020176",
+            reason = "decide if it's needed or fix it")
     public void testAppUsageObserver() throws Exception {
         executeProfileOwnerTest("AppUsageObserverTest");
     }

@@ -142,4 +142,22 @@ public interface RemoteDevicePolicyManager {
     void setAffiliationIds(ComponentName admin, Set<String> ids);
     /** See {@link DevicePolicyManager#setAffiliationIds(ComponentName, Set)}. */
     @RemoteDpcAutomaticAdmin void setAffiliationIds(Set<String> ids);
+
+    /**
+     * See {@link DevicePolicyManager#setApplicationRestrictions(ComponentName, String,
+     * Bundle)}.
+     */
+    void setApplicationRestrictions(ComponentName admin, String packageName, Bundle settings);
+
+    /**
+     * See {@link DevicePolicyManager#setApplicationRestrictions(ComponentName, String,
+     * Bundle)}.
+     */
+    @RemoteDpcAutomaticAdmin void setApplicationRestrictions(String packageName, Bundle settings);
+
+    /** See {@link DevicePolicyManager#getApplicationRestrictions(ComponentName, String)}. */
+    Bundle getApplicationRestrictions(ComponentName admin, String packageName);
+
+    /** See {@link DevicePolicyManager#getApplicationRestrictions(ComponentName, String)}. */
+    @RemoteDpcAutomaticAdmin Bundle getApplicationRestrictions(String packageName);
 }
