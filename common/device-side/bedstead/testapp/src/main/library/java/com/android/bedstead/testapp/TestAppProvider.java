@@ -17,6 +17,7 @@
 package com.android.bedstead.testapp;
 
 import android.content.Context;
+import android.util.Log;
 
 import com.android.bedstead.nene.TestApis;
 
@@ -29,6 +30,8 @@ import java.util.Set;
 
 /** Entry point to Test App. Used for querying for {@link TestApp} instances. */
 public final class TestAppProvider {
+
+    private static final String TAG = TestAppProvider.class.getSimpleName();
 
     private static final TestApis sTestApis = new TestApis();
     // Must be instrumentation context to access resources
@@ -44,11 +47,14 @@ public final class TestAppProvider {
 
     /** Get any {@link TestApp}. */
     public TestApp any() {
-        return query().get();
+        TestApp testApp = query().get();
+        Log.d(TAG, "any(): returning " + testApp);
+        return testApp;
     }
 
     Set<TestAppDetails> testApps() {
         initTestApps();
+        Log.d(TAG, "testApps(): returning " + mTestApps.size() + " apps (" + mTestApps + ")");
         return mTestApps;
     }
 
@@ -69,11 +75,12 @@ public final class TestAppProvider {
                 loadApk(apkName);
             }
         } catch (IOException e) {
-            throw new RuntimeException("TODO");
+            throw new RuntimeException("TODO", e);
         }
     }
 
     private void loadApk(String apkName) {
+        Log.v(TAG, "loadApk(" + apkName + ")");
         TestAppDetails details = new TestAppDetails();
         details.mPackageName = "android." + apkName; // TODO: Actually index the package name
         details.mResourceIdentifier = sContext.getResources().getIdentifier(

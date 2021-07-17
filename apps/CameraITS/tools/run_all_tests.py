@@ -603,5 +603,9 @@ def main():
 
   logging.info('Test execution completed.')
 
+  # Power down tablet
+  cmd = f'adb -s {tablet_id} shell input keyevent KEYCODE_POWER'
+  subprocess.Popen(cmd.split())
+
 if __name__ == '__main__':
   main()
