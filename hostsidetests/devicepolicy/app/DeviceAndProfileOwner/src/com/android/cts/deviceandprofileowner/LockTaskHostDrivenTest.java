@@ -191,7 +191,6 @@ public class LockTaskHostDrivenTest extends BaseDeviceAdminTest {
                 Until.hasObject(By.pkg(dialerPackage).depth(0)),
                 ACTIVITY_RESUMED_TIMEOUT_MILLIS);
         mUiDevice.waitForIdle();
-        waitAndCheckLockedActivityIsPaused();
 
         // But still in LockTask mode
         assertEquals(
@@ -235,7 +234,6 @@ public class LockTaskHostDrivenTest extends BaseDeviceAdminTest {
                 Until.hasObject(By.pkg(dialerPackage).depth(0)),
                 ACTIVITY_RESUMED_TIMEOUT_MILLIS);
         mUiDevice.waitForIdle();
-        waitAndCheckLockedActivityIsPaused();
 
         // But still in LockTask mode
         assertEquals(
