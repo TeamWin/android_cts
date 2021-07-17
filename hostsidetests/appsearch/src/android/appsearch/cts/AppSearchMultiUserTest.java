@@ -83,14 +83,6 @@ public class AppSearchMultiUserTest extends AppSearchHostTestBase {
     }
 
     @Test
-    public void testCreateSessionInStoppedUser() throws Exception {
-        Map<String, String> args =
-                Collections.singletonMap(USER_ID_KEY, String.valueOf(mSecondaryUserId));
-        getDevice().stopUser(mSecondaryUserId, /*waitFlag=*/true, /*forceFlag=*/true);
-        runDeviceTestAsUserInPkgA("createSessionInStoppedUser", mInitialUserId, args);
-    }
-
-    @Test
     public void testStopUser_persistData() throws Exception {
         runDeviceTestAsUserInPkgA("testPutDocuments", mSecondaryUserId);
         runDeviceTestAsUserInPkgA("testGetDocuments_exist", mSecondaryUserId);
