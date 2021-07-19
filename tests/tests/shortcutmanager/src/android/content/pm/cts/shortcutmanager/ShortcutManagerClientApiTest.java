@@ -2200,7 +2200,7 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
             final PendingIntent intent = getLauncherApps().getShortcutIntent(
                     mPackageContext1.getPackageName(), "s1", null, getUserHandle());
             assertNotNull(intent);
-            assertFalse(intent.isImmutable());
+            assertTrue(intent.isImmutable());
             assertEquals(mPackageContext1.getPackageName(), intent.getCreatorPackage());
             assertEquals(getUserHandle(), intent.getCreatorUserHandle());
         });
