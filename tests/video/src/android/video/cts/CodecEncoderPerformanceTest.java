@@ -111,8 +111,9 @@ public class CodecEncoderPerformanceTest extends CodecEncoderPerformanceTestBase
         String log = String.format("DecodeMime: %s, Decoder: %s, resolution: %dp, EncodeMime: %s," +
                 " Encoder: %s, Key-priority: %d :: ", mDecoderMime, mDecoderName, mHeight,
                 mEncoderMime, mEncoderName, mKeyPriority);
+        int maxExpectedFps = getMaxExpectedFps(mWidth, mHeight);
         double expectedFps =
-                Math.min(mOperatingRateExpected, MAX_EXPECTED_FPS) * FPS_TOLERANCE_FACTOR;
+                Math.min(mOperatingRateExpected * FPS_TOLERANCE_FACTOR, maxExpectedFps);
         Log.d(LOG_TAG, log + "act/exp fps: " + mAchievedFps + "/" + expectedFps);
         assertTrue("Unable to achieve the expected rate. " + log + "act/exp fps: " + mAchievedFps
                 + "/" + expectedFps, mAchievedFps >= expectedFps);
