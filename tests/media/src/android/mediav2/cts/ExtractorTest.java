@@ -834,8 +834,6 @@ public class ExtractorTest {
                     {MediaFormat.MIMETYPE_AUDIO_FLAC, new String[]{
                             "bbb_cif_768kbps_30fps_mpeg4_stereo_48kHz_192kbps_flac.mp4",
                             "bbb_cif_768kbps_30fps_h263_stereo_48kHz_192kbps_flac.mkv",}},
-                    {MediaFormat.MIMETYPE_AUDIO_RAW, new String[]{
-                            "bbb_stereo_48kHz_192kbps_flac.flac",}},
                     {MediaFormat.MIMETYPE_AUDIO_RAW, new String[]{"canon.mid",}},
                     {MediaFormat.MIMETYPE_AUDIO_AC3, new String[]{
                             "testac3mp4.mp4", "testac3ts.ts",}},
