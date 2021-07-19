@@ -366,7 +366,6 @@
 
         <activity android:name="android.app.stubs.ActivityManagerStubCrashActivity"
              android:label="ActivityManagerStubCrashActivity"
-             android:multiprocess="true"
              android:process=":ActivityManagerStubCrashActivity"
              android:exported="true">
             <intent-filter>
