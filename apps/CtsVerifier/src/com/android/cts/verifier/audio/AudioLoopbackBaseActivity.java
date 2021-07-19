@@ -26,7 +26,6 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ProgressBar;
@@ -35,6 +34,7 @@ import android.widget.TextView;
 
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
+import com.android.cts.verifier.audio.audiolib.AudioSystemFlags;
 import com.android.cts.verifier.audio.audiolib.StatUtils;
 import com.android.cts.verifier.CtsVerifierReportLog;
 import com.android.cts.verifier.PassFailButtons;
@@ -52,25 +52,33 @@ public class AudioLoopbackBaseActivity extends PassFailButtons.Activity {
     protected AudioManager mAudioManager;
 
     // UI
-    OnBtnClickListener mBtnClickListener = new OnBtnClickListener();
-
-    Button mLoopbackPortYesBtn;
-    Button mLoopbackPortNoBtn;
-
     TextView mInputDeviceTxt;
     TextView mOutputDeviceTxt;
 
     TextView mAudioLevelText;
     SeekBar mAudioLevelSeekbar;
 
+    TextView mTestPathTxt;
+
     TextView mResultText;
     ProgressBar mProgressBar;
     int mMaxLevel;
+
+    // These flags determine the maximum allowed latency
+    private boolean mClaimsProAudio;
+    private boolean mClaimsOutput;
+    private boolean mClaimsInput;
 
     // Peripheral(s)
     boolean mIsPeripheralAttached;  // CDD ProAudio section C-1-3
     AudioDeviceInfo mOutputDevInfo;
     AudioDeviceInfo mInputDevInfo;
+
+    protected static final int TESTPERIPHERAL_NONE          = 0;
+    protected static final int TESTPERIPHERAL_ANALOG_JACK   = 1;
+    protected static final int TESTPERIPHERAL_USB           = 2;
+    protected static final int TESTPERIPHERAL_DEVICE        = 3; // device speaker + mic
+    protected int mTestPeripheral = TESTPERIPHERAL_NONE;
 
     // Loopback Logic
     NativeAnalyzerThread mNativeAnalyzerThread = null;
@@ -86,7 +94,15 @@ public class AudioLoopbackBaseActivity extends PassFailButtons.Activity {
     protected double mMeanConfidence;
 
     protected static final double CONFIDENCE_THRESHOLD = 0.6;
-    protected static final double PROAUDIO_LATENCY_MS_LIMIT = 20.0;
+    // impossibly low latencies (indicating something in the test went wrong).
+    protected static final float EPSILON = 1.0f;
+    protected static final double PROAUDIO_RECOMMENDED_LATENCY_MS = 20.0;
+    protected static final double PROAUDIO_RECOMMENDED_USB_LATENCY_MS = 25.0;
+    protected static final double PROAUDIO_MUST_LATENCY_MS = 20.0;
+    protected static final double BASIC_RECOMMENDED_LATENCY_MS = 50.0;
+    protected static final double BASIC_MUST_LATENCY_MS = 800.0;
+    protected double mMustLatency;
+    protected double mRecommendedLatency;
 
     // The audio stream callback threads should stop and close
     // in less than a few hundred msec. This is a generous timeout value.
@@ -95,28 +111,10 @@ public class AudioLoopbackBaseActivity extends PassFailButtons.Activity {
     //
     // Common UI Handling
     //
-    void enableLayout(int layoutId, boolean enable) {
-        ViewGroup group = (ViewGroup)findViewById(layoutId);
-        for (int i = 0; i < group.getChildCount(); i++) {
-            group.getChildAt(i).setEnabled(enable);
-        }
-    }
-
     private void connectLoopbackUI() {
-        // Has Loopback - Yes
-        mLoopbackPortYesBtn = (Button)findViewById(R.id.loopback_tests_yes_btn);
-        mLoopbackPortYesBtn.setOnClickListener(mBtnClickListener);
-
-        // Has Looback - No
-        mLoopbackPortNoBtn = (Button)findViewById(R.id.loopback_tests_no_btn);
-        mLoopbackPortNoBtn.setOnClickListener(mBtnClickListener);
-
         // Connected Device
         mInputDeviceTxt = ((TextView)findViewById(R.id.audioLoopbackInputLbl));
         mOutputDeviceTxt = ((TextView)findViewById(R.id.audioLoopbackOutputLbl));
-
-        // Loopback Info
-        findViewById(R.id.loopback_tests_info_btn).setOnClickListener(mBtnClickListener);
 
         mAudioLevelText = (TextView)findViewById(R.id.audio_loopback_level_text);
         mAudioLevelSeekbar = (SeekBar)findViewById(R.id.audio_loopback_level_seekbar);
@@ -136,16 +134,14 @@ public class AudioLoopbackBaseActivity extends PassFailButtons.Activity {
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC,
                         progress, 0);
+                Log.i(TAG,"Level set to: " + progress);
                 refreshLevel();
-                Log.i(TAG,"Changed stream volume to: " + progress);
             }
         });
 
         mResultText = (TextView)findViewById(R.id.audio_loopback_results_text);
         mProgressBar = (ProgressBar)findViewById(R.id.audio_loopback_progress_bar);
         showWait(false);
-
-        enableTestUI(false);
     }
 
     //
@@ -162,8 +158,8 @@ public class AudioLoopbackBaseActivity extends PassFailButtons.Activity {
         // Any valid peripherals
         // Do we leave in the Headset test to support a USB-Dongle?
         for (AudioDeviceInfo devInfo : devices) {
-            if (devInfo.getType() == AudioDeviceInfo.TYPE_USB_DEVICE ||     // USB Peripheral
-                    devInfo.getType() == AudioDeviceInfo.TYPE_USB_HEADSET ||    // USB dongle+LBPlug
+            if (devInfo.getType() == AudioDeviceInfo.TYPE_USB_DEVICE || // USB Peripheral
+                    devInfo.getType() == AudioDeviceInfo.TYPE_USB_HEADSET || // USB dongle+LBPlug
                     devInfo.getType() == AudioDeviceInfo.TYPE_WIRED_HEADSET || // Loopback Plug?
                     devInfo.getType() == AudioDeviceInfo.TYPE_AUX_LINE) { // Aux-cable loopback?
                 if (devInfo.isSink()) {
@@ -178,7 +174,10 @@ public class AudioLoopbackBaseActivity extends PassFailButtons.Activity {
         }
 
         mIsPeripheralAttached = mOutputDevInfo != null || mInputDevInfo != null;
+        calculateTestPeripheral();
         showConnectedAudioPeripheral();
+        calculateLatencyThresholds();
+        displayLatencyThresholds();
     }
 
     protected void handleDeviceConnection(AudioDeviceInfo deviceInfo) {
@@ -202,6 +201,22 @@ public class AudioLoopbackBaseActivity extends PassFailButtons.Activity {
         }
     }
 
+    protected void calculateTestPeripheral() {
+        if (!mIsPeripheralAttached) {
+            mTestPeripheral = TESTPERIPHERAL_DEVICE;
+        } else if (mInputDevInfo.getType() == AudioDeviceInfo.TYPE_USB_DEVICE ||
+                mInputDevInfo.getType() == AudioDeviceInfo.TYPE_USB_HEADSET) {
+            mTestPeripheral = TESTPERIPHERAL_USB;
+        } else if (mInputDevInfo.getType() == AudioDeviceInfo.TYPE_WIRED_HEADSET ||
+                mInputDevInfo.getType() == AudioDeviceInfo.TYPE_AUX_LINE) {
+            mTestPeripheral = TESTPERIPHERAL_ANALOG_JACK;
+        } else {
+            // Huh?
+            Log.e(TAG, "No valid peripheral found!?");
+            mTestPeripheral = TESTPERIPHERAL_NONE;
+        }
+    }
+
     protected void showConnectedAudioPeripheral() {
         mInputDeviceTxt.setText(
                 mInputDevInfo != null ? mInputDevInfo.getProductName().toString()
@@ -209,6 +224,65 @@ public class AudioLoopbackBaseActivity extends PassFailButtons.Activity {
         mOutputDeviceTxt.setText(
                 mOutputDevInfo != null ? mOutputDevInfo.getProductName().toString()
                         : "");
+
+        String pathName;
+        switch (mTestPeripheral) {
+            case TESTPERIPHERAL_ANALOG_JACK:
+                pathName = "Headset Jack";
+                break;
+
+            case TESTPERIPHERAL_USB:
+                pathName = "USB";
+                break;
+
+            case TESTPERIPHERAL_DEVICE:
+                pathName = "Device Speaker + Microphone";
+                break;
+
+            case TESTPERIPHERAL_NONE:
+            default:
+                pathName = "Error. Unknown Test Path";
+                break;
+        }
+        mTestPathTxt.setText(pathName);
+    }
+
+    private void calculateLatencyThresholds() {
+        switch (mTestPeripheral) {
+            case TESTPERIPHERAL_ANALOG_JACK:
+                mRecommendedLatency = mClaimsProAudio
+                        ? PROAUDIO_RECOMMENDED_LATENCY_MS : BASIC_RECOMMENDED_LATENCY_MS;
+                mMustLatency =  mClaimsProAudio
+                        ? PROAUDIO_RECOMMENDED_LATENCY_MS : BASIC_MUST_LATENCY_MS;
+                break;
+
+            case TESTPERIPHERAL_USB:
+                mRecommendedLatency = mClaimsProAudio
+                        ? PROAUDIO_RECOMMENDED_USB_LATENCY_MS : BASIC_RECOMMENDED_LATENCY_MS;
+                mMustLatency = mClaimsProAudio
+                        ? PROAUDIO_RECOMMENDED_USB_LATENCY_MS : BASIC_MUST_LATENCY_MS;
+                break;
+
+            case TESTPERIPHERAL_DEVICE:
+                // This isn't a valid case so we won't pass it, but it can be run
+                mRecommendedLatency = mClaimsProAudio
+                        ? PROAUDIO_RECOMMENDED_LATENCY_MS : BASIC_RECOMMENDED_LATENCY_MS;
+                mMustLatency = mClaimsProAudio
+                        ? PROAUDIO_RECOMMENDED_LATENCY_MS :BASIC_MUST_LATENCY_MS;
+                break;
+
+            case TESTPERIPHERAL_NONE:
+            default:
+                mRecommendedLatency = BASIC_RECOMMENDED_LATENCY_MS;
+                mMustLatency = BASIC_MUST_LATENCY_MS;
+                break;
+        }
+    }
+
+    private void displayLatencyThresholds() {
+        ((TextView)findViewById(R.id.audio_loopback_must_latency)).setText("" + mMustLatency);
+        ((TextView)findViewById(R.id.audio_loopback_recommended_latency)).setText(
+                "" + mRecommendedLatency);
     }
 
     /**
@@ -224,50 +298,11 @@ public class AudioLoopbackBaseActivity extends PassFailButtons.Activity {
         mAudioLevelText.setText(levelText);
     }
 
-    private void showLoopbackInfoDialog() {
-        new AlertDialog.Builder(this)
-                .setTitle(R.string.loopback_dlg_caption)
-                .setMessage(R.string.loopback_dlg_text)
-                .setPositiveButton(R.string.audio_general_ok, null)
-                .show();
-    }
-
     //
     // show active progress bar
     //
     protected void showWait(boolean show) {
-        if (show) {
-            mProgressBar.setVisibility(View.VISIBLE) ;
-        } else {
-            mProgressBar.setVisibility(View.INVISIBLE) ;
-        }
-    }
-
-
-    private class OnBtnClickListener implements OnClickListener {
-        @Override
-        public void onClick(View v) {
-            switch (v.getId()) {
-                case R.id.loopback_tests_yes_btn:
-                    Log.i(TAG, "User confirms Headset Port existence");
-                    recordLoopbackStatus(true);
-                    mLoopbackPortYesBtn.setEnabled(false);
-                    mLoopbackPortNoBtn.setEnabled(false);
-                    break;
-
-                case R.id.loopback_tests_no_btn:
-                    Log.i(TAG, "User denies Headset Port existence");
-                    recordLoopbackStatus(false);
-                    getPassButton().setEnabled(true);
-                    mLoopbackPortYesBtn.setEnabled(false);
-                    mLoopbackPortNoBtn.setEnabled(false);
-                    break;
-
-                case R.id.loopback_tests_info_btn:
-                    showLoopbackInfoDialog();
-                    break;
-            }
-        }
+        mProgressBar.setVisibility(show ? View.VISIBLE : View.INVISIBLE);
     }
 
     //
@@ -277,10 +312,12 @@ public class AudioLoopbackBaseActivity extends PassFailButtons.Activity {
     private static final String KEY_LATENCY = "latency";
     private static final String KEY_CONFIDENCE = "confidence";
     private static final String KEY_SAMPLE_RATE = "sample_rate";
+    private static final String KEY_IS_PRO_AUDIO = "is_pro_audio";
     private static final String KEY_IS_LOW_LATENCY = "is_low_latency";
     private static final String KEY_IS_PERIPHERAL_ATTACHED = "is_peripheral_attached";
     private static final String KEY_INPUT_PERIPHERAL_NAME = "input_peripheral";
     private static final String KEY_OUTPUT_PERIPHERAL_NAME = "output_peripheral";
+    private static final String KEY_TEST_PERIPHERAL = "test_peripheral";
 
     @Override
     public String getTestId() {
@@ -324,6 +361,18 @@ public class AudioLoopbackBaseActivity extends PassFailButtons.Activity {
         reportLog.addValue(
                 KEY_IS_PERIPHERAL_ATTACHED,
                 mIsPeripheralAttached,
+                ResultType.NEUTRAL,
+                ResultUnit.NONE);
+
+        reportLog.addValue(
+                KEY_IS_PRO_AUDIO,
+                mClaimsProAudio,
+                ResultType.NEUTRAL,
+                ResultUnit.NONE);
+
+        reportLog.addValue(
+                KEY_TEST_PERIPHERAL,
+                mTestPeripheral,
                 ResultType.NEUTRAL,
                 ResultUnit.NONE);
 
@@ -384,20 +433,29 @@ public class AudioLoopbackBaseActivity extends PassFailButtons.Activity {
     }
 
     protected void handleTestCompletion() {
-        Log.i(TAG, "handleTestCompletion() ...");
-
         mMeanLatencyMillis = StatUtils.calculateMean(mLatencyMillis);
-        mMeanAbsoluteDeviation = StatUtils.calculateMeanAbsoluteDeviation(mMeanLatencyMillis, mLatencyMillis);
+        mMeanAbsoluteDeviation =
+                StatUtils.calculateMeanAbsoluteDeviation(mMeanLatencyMillis, mLatencyMillis);
         mMeanConfidence = StatUtils.calculateMean(mConfidence);
 
-        String result = String.format(
-            "Test Finished\nMean Latency:%.2f ms\nMean Absolute Deviation: %.2f\n" +
-                " Confidence: %.2f\n" +
-                " Low Latency Path: %s",
-            mMeanLatencyMillis,
-            mMeanAbsoluteDeviation,
-            mMeanConfidence,
-            (mNativeAnalyzerThread.isLowLatencyStream() ? "yes" : "no"));
+
+        String result;
+        if (mMeanConfidence < CONFIDENCE_THRESHOLD) {
+            result = String.format(
+                    "Test Finished\nInsufficient Confidence (%.2f < %.2f). No Results.",
+                    mMeanConfidence, CONFIDENCE_THRESHOLD);
+        } else {
+            result = String.format(
+                    "Test Finished\nMean Latency:%.2f ms (required:%.2f)\n" +
+                            "Mean Absolute Deviation: %.2f\n" +
+                            " Confidence: %.2f\n" +
+                            " Low Latency Path: %s",
+                    mMeanLatencyMillis,
+                    mMustLatency,
+                    mMeanAbsoluteDeviation,
+                    mMeanConfidence,
+                    (mNativeAnalyzerThread.isLowLatencyStream() ? "yes" : "no"));
+        }
 
         // Make sure the test thread is finished. It should already be done.
         if (mNativeAnalyzerThread != null) {
@@ -407,11 +465,7 @@ public class AudioLoopbackBaseActivity extends PassFailButtons.Activity {
                 e.printStackTrace();
             }
         }
-        Log.i(TAG, result);
-
         mResultText.setText(result);
-
-        Log.i(TAG, "... Done");
     }
 
     protected void handleTestPhaseCompletion() {
@@ -424,7 +478,6 @@ public class AudioLoopbackBaseActivity extends PassFailButtons.Activity {
                     mTestPhase,
                     mLatencyMillis[mTestPhase],
                     mConfidence[mTestPhase]);
-            Log.i(TAG, result);
 
             mResultText.setText(result);
             try {
@@ -453,9 +506,8 @@ public class AudioLoopbackBaseActivity extends PassFailButtons.Activity {
                 case NativeAnalyzerThread.NATIVE_AUDIO_THREAD_MESSAGE_REC_STARTED:
                     Log.v(TAG,"got message native rec started!!");
                     showWait(true);
-                    mResultText.setText(String.format("Test Running (phase: %d, low-latency: %s)...",
-                            (mTestPhase + 1),
-                            (mNativeAnalyzerThread.isLowLatencyStream() ? "yes" : "no")));
+                    mResultText.setText(String.format("[phase: %d] - Test Running...",
+                            (mTestPhase + 1)));
                     break;
                 case NativeAnalyzerThread.NATIVE_AUDIO_THREAD_MESSAGE_OPEN_ERROR:
                     Log.v(TAG,"got message native rec can't start!!");
@@ -473,9 +525,8 @@ public class AudioLoopbackBaseActivity extends PassFailButtons.Activity {
                     break;
                 case NativeAnalyzerThread.NATIVE_AUDIO_THREAD_MESSAGE_ANALYZING:
                     Log.i(TAG, "NATIVE_AUDIO_THREAD_MESSAGE_ANALYZING");
-                    mResultText.setText(String.format("Analyzing (phase: %d, low-latency: %s)...",
-                            mTestPhase + 1,
-                            (mNativeAnalyzerThread.isLowLatencyStream() ? "yes" : "no")));
+                    mResultText.setText(String.format("[phase: %d] - Analyzing ...",
+                            mTestPhase + 1));
                     break;
                 case NativeAnalyzerThread.NATIVE_AUDIO_THREAD_MESSAGE_REC_COMPLETE:
                     Log.i(TAG, "NATIVE_AUDIO_THREAD_MESSAGE_REC_COMPLETE");
@@ -491,17 +542,24 @@ public class AudioLoopbackBaseActivity extends PassFailButtons.Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        mClaimsOutput = AudioSystemFlags.claimsOutput(this);
+        mClaimsInput = AudioSystemFlags.claimsInput(this);
+        mClaimsProAudio = AudioSystemFlags.claimsProAudio(this);
+
+        ((TextView)findViewById(R.id.audio_loopback_low_latency)).setText(
+                "" + AudioSystemFlags.claimsLowLatencyAudio(this));
+        ((TextView)findViewById(R.id.audio_loopback_pro_audio)).setText(
+                "" + (mClaimsProAudio ? "Yes" : "No"));
+
+        mTestPathTxt = ((TextView)findViewById(R.id.audio_loopback_testpath));
+
         mAudioManager = (AudioManager)getSystemService(AUDIO_SERVICE);
 
         mAudioManager.registerAudioDeviceCallback(new ConnectListener(), new Handler());
 
         connectLoopbackUI();
-    }
 
-    //
-    // Overrides
-    //
-    void enableTestUI(boolean enable) {
-
+        calculateLatencyThresholds();
+        displayLatencyThresholds();
     }
 }
