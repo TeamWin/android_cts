@@ -33,6 +33,7 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 
+import com.android.compatibility.common.util.DisplayUtil;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.tv.TestStepBase;
@@ -75,7 +76,7 @@ public class ModeSwitchingTestActivity extends PassFailButtons.Activity {
         Display.Mode lastMode = display.getMode();
         mSteps = new ArrayList<>();
         for (Display.Mode mode : modeList) {
-            boolean isSeamlessSwitch = isSeamlessSwitch(lastMode, mode);
+            boolean isSeamlessSwitch = DisplayUtil.isModeSwitchSeamless(lastMode, mode);
             mSteps.addAll(createTestStepsForTransition(lastMode, mode, isSeamlessSwitch));
             lastMode = mode;
         }
@@ -134,11 +135,11 @@ public class ModeSwitchingTestActivity extends PassFailButtons.Activity {
                 .ifPresent(modeList::add);
 
         // Find a mode to test seamless mode switch.
-        if (modeList.size() > 0 && !isSeamlessSwitch(activeMode, modeList.get(0))
+        if (modeList.size() > 0 && !DisplayUtil.isModeSwitchSeamless(activeMode, modeList.get(0))
                 && activeMode.getAlternativeRefreshRates().length > 0) {
             Arrays.stream(display.getSupportedModes())
                     .filter(mode -> !mode.equals(activeMode))
-                    .filter(mode -> isSeamlessSwitch(activeMode, mode))
+                    .filter(mode -> DisplayUtil.isModeSwitchSeamless(activeMode, mode))
                     .findFirst()
                     .ifPresent(modeList::add);
         }
@@ -209,19 +210,6 @@ public class ModeSwitchingTestActivity extends PassFailButtons.Activity {
 
     }
 
-    private boolean isSeamlessSwitch(Display.Mode from, Display.Mode to) {
-        if (!isResolutionEqual(from, to)) {
-            return false;
-        }
-
-        for (float refreshRate : from.getAlternativeRefreshRates()) {
-            if (Math.abs(refreshRate - to.getRefreshRate()) < REFRESH_RATE_TOLERANCE) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     private boolean isResolutionEqual(Display.Mode left, Display.Mode right) {
         return left.getPhysicalHeight() == right.getPhysicalHeight()
                 && left.getPhysicalWidth() == right.getPhysicalWidth();
@@ -230,7 +218,6 @@ public class ModeSwitchingTestActivity extends PassFailButtons.Activity {
     private boolean is16to9(Display.Mode mode) {
         return mode.getPhysicalHeight() * 16 == mode.getPhysicalWidth() * 9;
     }
-
 
     private void playVideo() {
         try {

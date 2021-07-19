@@ -18,16 +18,14 @@ package com.android.compatibility.common.util;
 
 import android.content.Context;
 import android.hardware.hdmi.HdmiControlManager;
-import android.hardware.hdmi.HdmiDeviceInfo;
+import android.view.Display;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 public class DisplayUtil {
+
+    private static final float REFRESH_RATE_TOLERANCE = 0.01f;
 
     /**
      * Returns if a physical display is connected to DUT. The method may return a false positive,
@@ -59,5 +57,24 @@ public class DisplayUtil {
         });
 
         return notifyLatch.await(3, TimeUnit.SECONDS);
+    }
+
+    public static boolean isModeSwitchSeamless(Display.Mode from, Display.Mode to) {
+        if (from.getModeId() == to.getModeId()) {
+            return true;
+        }
+
+        if (from.getPhysicalHeight() != to.getPhysicalHeight()
+                || from.getPhysicalWidth() != to.getPhysicalWidth()) {
+            return false;
+        }
+
+        for (float alternativeRefreshRate : from.getAlternativeRefreshRates()) {
+            if (Math.abs(alternativeRefreshRate - to.getRefreshRate()) <  REFRESH_RATE_TOLERANCE) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
