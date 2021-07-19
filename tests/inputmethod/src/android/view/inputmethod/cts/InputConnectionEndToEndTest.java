@@ -65,6 +65,7 @@ import androidx.test.filters.LargeTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.cts.inputmethod.LegacyImeClientTestUtils;
 import com.android.cts.mockime.ImeCommand;
 import com.android.cts.mockime.ImeEvent;
 import com.android.cts.mockime.ImeEventStream;
@@ -294,6 +295,23 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
             Function<InputConnection, InputConnection> inputConnectionWrapperProvider,
             TestProcedure testProcedure) throws Exception {
         testInputConnection(inputConnectionWrapperProvider, testProcedure, null);
+    }
+
+    /**
+     * A utility method to run a unit test for {@link InputConnection} that is as-if built with
+     * {@link android.os.Build.VERSION_CODES#CUPCAKE} SDK.
+     *
+     * <p>This helps you to test the situation where IMEs' calling newly added
+     * {@link InputConnection} APIs would be fallen back to its default interface method or could be
+     * causing {@link java.lang.AbstractMethodError} unless specially handled.
+     *
+     * @param testProcedure Test body.
+     */
+    private void testMinimallyImplementedInputConnection(TestProcedure testProcedure)
+            throws Exception {
+        testInputConnection(
+                ic -> LegacyImeClientTestUtils.createMinimallyImplementedNoOpInputConnection(),
+                testProcedure, null);
     }
 
     /**
@@ -770,6 +788,21 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
     }
 
     /**
+     * Verify that {@link InputConnection#getSelectedText(int)} returns {@code null} when the target
+     * app does not implement it.  This can happen if the app was built before
+     * {@link android.os.Build.VERSION_CODES#GINGERBREAD}.
+     */
+    @Test
+    public void testGetSelectedTextFailWithMethodMissing() throws Exception {
+        testMinimallyImplementedInputConnection((MockImeSession session, ImeEventStream stream) -> {
+            final ImeCommand command = session.callGetSelectedText(0);
+            final ImeEvent result = expectCommand(stream, command, TIMEOUT);
+            assertTrue("Currently getSelectedText() returns null when the target app does not"
+                    + " implement it.", result.isNullReturnValue());
+        });
+    }
+
+    /**
      * Test {@link InputConnection#getSurroundingText(int, int, int)} works as expected.
      */
     @Test
@@ -911,6 +944,21 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
             expectElapseTimeLessThan(result, IMMEDIATE_TIMEOUT_NANO);
             methodCallVerifier.assertNotCalled(
                     "Once unbindInput() happened, IC#getSurroundingText() fails fast.");
+        });
+    }
+
+    /**
+     * Verify that the default implementation of
+     * {@link InputConnection#getSurroundingText(int, int, int)} returns {@code null} without any
+     * crash even when the target app does not override it .
+     */
+    @Test
+    public void testGetSurroundingTextDefaultMethod() throws Exception {
+        testMinimallyImplementedInputConnection((MockImeSession session, ImeEventStream stream) -> {
+            final ImeCommand command = session.callGetSurroundingText(1, 2, 0);
+            final ImeEvent result = expectCommand(stream, command, TIMEOUT);
+            assertTrue("Default IC#getSurroundingText() returns null.",
+                    result.isNullReturnValue());
         });
     }
 
@@ -1274,6 +1322,22 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
     }
 
     /**
+     * Verify that {@link InputConnection#requestCursorUpdates(int)} fails when the target app does
+     * not implement it. This can happen if the app was built before
+     * {@link android.os.Build.VERSION_CODES#LOLLIPOP}.
+     */
+    @Test
+    public void testRequestCursorUpdatesFailWithMethodMissing() throws Exception {
+        testMinimallyImplementedInputConnection((MockImeSession session, ImeEventStream stream) -> {
+            final ImeCommand command = session.callRequestCursorUpdates(
+                    InputConnection.CURSOR_UPDATE_IMMEDIATE);
+            final ImeEvent result = expectCommand(stream, command, TIMEOUT);
+            assertFalse("IC#requestCursorUpdates() returns false when the target app does not "
+                    + " implement it.", result.getReturnBooleanValue());
+        });
+    }
+
+    /**
      * Test {@link InputConnection#commitContent(InputContentInfo, int, Bundle)} works as expected.
      */
     @Test
@@ -1428,6 +1492,25 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
             expectElapseTimeLessThan(result, IMMEDIATE_TIMEOUT_NANO);
             methodCallVerifier.assertNotCalled(
                     "Once unbindInput() happened, IC#commitContent() fails fast.");
+        });
+    }
+
+    /**
+     * Verify that {@link InputConnection#commitContent(InputContentInfo, int, Bundle)} fails when
+     * the target app does not implement it. This can happen if the app was built before
+     * {@link android.os.Build.VERSION_CODES#N_MR1}.
+     */
+    @Test
+    public void testCommitContentFailWithMethodMissing() throws Exception {
+        testMinimallyImplementedInputConnection((MockImeSession session, ImeEventStream stream) -> {
+            final ImeCommand command = session.callCommitContent(
+                    new InputContentInfo(Uri.parse("content://com.example/path"),
+                            new ClipDescription("sample content", new String[]{"image/png"}),
+                            Uri.parse("https://example.com")), 0, null);
+            final ImeEvent result = expectCommand(stream, command, TIMEOUT);
+            // CAVEAT: this behavior is a bit questionable and may change in a future version.
+            assertFalse("Currently IC#commitContent() returns false when the target app does not"
+                    + " implement it.", result.getReturnBooleanValue());
         });
     }
 
@@ -1602,6 +1685,21 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
             methodCallVerifier.expectNotCalled(
                     "Once unbindInput() happened, IC#deleteSurroundingTextInCodePoints() fails"
                     + " fast.", EXPECTED_NOT_CALLED_TIMEOUT);
+        });
+    }
+
+    /**
+     * Verify that {@link InputConnection#deleteSurroundingTextInCodePoints(int, int)} fails when
+     * the target app does not implement it. This can happen if the app was built before
+     * {@link android.os.Build.VERSION_CODES#N}.
+     */
+    @Test
+    public void testDeleteSurroundingTextInCodePointsFailWithMethodMissing() throws Exception {
+        testMinimallyImplementedInputConnection((MockImeSession session, ImeEventStream stream) -> {
+            final ImeCommand command = session.callDeleteSurroundingTextInCodePoints(1, 2);
+            final ImeEvent result = expectCommand(stream, command, TIMEOUT);
+            assertFalse("IC#deleteSurroundingTextInCodePoints() returns false when the target app"
+                    + " does not implement it.", result.getReturnBooleanValue());
         });
     }
 
@@ -1865,6 +1963,22 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
             methodCallVerifier.expectNotCalled(
                     "Once unbindInput() happened, IC#setComposingRegion() fails fast.",
                     EXPECTED_NOT_CALLED_TIMEOUT);
+        });
+    }
+
+    /**
+     * Verify that {@link InputConnection#setComposingRegion(int, int)} fails when the target app
+     * does not implement it. This can happen if the app was built before
+     * {@link android.os.Build.VERSION_CODES#GINGERBREAD}.
+     */
+    @Test
+    public void testSetComposingRegionFailWithMethodMissing() throws Exception {
+        testMinimallyImplementedInputConnection((MockImeSession session, ImeEventStream stream) -> {
+            final ImeCommand command = session.callSetComposingRegion(1, 23);
+            final ImeEvent result = expectCommand(stream, command, TIMEOUT);
+            // CAVEAT: this behavior is a bit questionable and may change in a future version.
+            assertFalse("Currently IC#setComposingRegion() returns false when the target app does"
+                    + " not implement it.", result.getReturnBooleanValue());
         });
     }
 
@@ -2133,6 +2247,24 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
             methodCallVerifier.expectNotCalled(
                     "Once unbindInput() happened, IC#commitCorrection() fails fast.",
                     EXPECTED_NOT_CALLED_TIMEOUT);
+        });
+    }
+
+    /**
+     * Verify that {@link InputConnection#commitCorrection(CorrectionInfo)} fails when the target
+     * app does not implement it. This can happen if the app was built before
+     * {@link android.os.Build.VERSION_CODES#HONEYCOMB}.
+     */
+    @Test
+    public void testCommitCorrectionFailWithMethodMissing() throws Exception {
+        testMinimallyImplementedInputConnection((MockImeSession session, ImeEventStream stream) -> {
+            final ImeCommand command = session.callCommitCorrection(new CorrectionInfo(0x11111111,
+                    createTestCharSequence("testOldText", new Annotation("param", "oldText")),
+                    createTestCharSequence("testNewText", new Annotation("param", "newText"))));
+            final ImeEvent result = expectCommand(stream, command, TIMEOUT);
+            // CAVEAT: this behavior is a bit questionable and may change in a future version.
+            assertFalse("Currently IC#commitCorrection() returns false when the target app does"
+                    + " not implement it.", result.getReturnBooleanValue());
         });
     }
 
@@ -2863,6 +2995,20 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
     }
 
     /**
+     * Verify that the default implementation of {@link InputConnection#performSpellCheck()}
+     * returns {@code true} without any crash even when the target app does not override it.
+     */
+    @Test
+    public void testPerformSpellCheckDefaultMethod() throws Exception {
+        testMinimallyImplementedInputConnection((MockImeSession session, ImeEventStream stream) -> {
+            final ImeCommand command = session.callPerformSpellCheck();
+            final ImeEvent result = expectCommand(stream, command, TIMEOUT);
+            assertTrue("IC#performSpellCheck() still returns true even when the target "
+                    + "application does not implement it.", result.getReturnBooleanValue());
+        });
+    }
+
+    /**
      * Test {@link InputConnection#performPrivateCommand(String, Bundle)} works as expected.
      */
     @Test
@@ -3037,6 +3183,20 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
     }
 
     /**
+     * Verify that applications that do not implement {@link InputConnection#getHandler()} will not
+     * crash.  This can happen if the app was built before {@link android.os.Build.VERSION_CODES#N}.
+     */
+    @Test
+    public void testGetHandlerWithMethodMissing() throws Exception {
+        testMinimallyImplementedInputConnection((MockImeSession session, ImeEventStream stream) -> {
+            final ImeCommand command = session.callGetHandler();
+            final ImeEvent result = expectCommand(stream, command, TIMEOUT);
+            assertTrue("IC#getHandler() still returns null even when the target app does not"
+                    + " implement it.", result.isNullReturnValue());
+        });
+    }
+
+    /**
      * Test {@link InputConnection#closeConnection()} is ignored as expected.
      */
     @Test
@@ -3108,6 +3268,19 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
             methodCallVerifier.expectNotCalled(
                     "IC#closeConnection() must be ignored even after unbindInput().",
                     EXPECTED_NOT_CALLED_TIMEOUT);
+        });
+    }
+
+    /**
+     * Verify that applications that do not implement {@link InputConnection#closeConnection()}
+     * will not crash. This can happen if the app was built before
+     * {@link android.os.Build.VERSION_CODES#N}.
+     */
+    @Test
+    public void testCloseConnectionWithMethodMissing() throws Exception {
+        testMinimallyImplementedInputConnection((MockImeSession session, ImeEventStream stream) -> {
+            final ImeCommand command = session.callCloseConnection();
+            expectCommand(stream, command, TIMEOUT);
         });
     }
 
@@ -3191,6 +3364,21 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
             methodCallVerifier.expectNotCalled(
                     "Once unbindInput() happened, IC#setImeConsumesInput() fails fast.",
                     EXPECTED_NOT_CALLED_TIMEOUT);
+        });
+    }
+
+    /**
+     * Verify that the default implementation of
+     * {@link InputConnection#setImeConsumesInput(boolean)} returns {@code true} without any crash
+     * even when the target app does not override it.
+     */
+    @Test
+    public void testSetImeConsumesInputDefaultMethod() throws Exception {
+        testMinimallyImplementedInputConnection((MockImeSession session, ImeEventStream stream) -> {
+            final ImeCommand command = session.callSetImeConsumesInput(true);
+            final ImeEvent result = expectCommand(stream, command, TIMEOUT);
+            assertTrue("IC#setImeConsumesInput() still returns true even when the target "
+                    + "application does not implement it.", result.getReturnBooleanValue());
         });
     }
 }
