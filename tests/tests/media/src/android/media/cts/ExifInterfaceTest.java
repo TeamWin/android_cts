@@ -643,6 +643,7 @@ public class ExifInterfaceTest extends AndroidTestCase {
 
     public void testReadExifDataFromLgG4Iso800Dng() throws Throwable {
         readFromFilesWithExif(DNG_WITH_EXIF_WITH_XMP, R.array.dng_with_exif_with_xmp);
+        writeToFilesWithExif(DNG_WITH_EXIF_WITH_XMP, R.array.dng_with_exif_with_xmp);
     }
 
     public void testReadExifDataFromLgG4Iso800Jpg() throws Throwable {
