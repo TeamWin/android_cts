@@ -46,25 +46,6 @@ all_shared_libs_zip_file := $(LOCAL_BUILT_MODULE)
 
 include $(CLEAR_VARS)
 
-LOCAL_MODULE_TAGS := optional
-
-LOCAL_SRC_FILES := $(call all-java-files-under, src)
-
-LOCAL_MODULE := cts-api-signature-multilib-test
-LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
-LOCAL_LICENSE_CONDITIONS := notice
-
-LOCAL_SDK_VERSION := test_current
-
-LOCAL_STATIC_JAVA_LIBRARIES := \
-        cts-api-signature-test \
-        compatibility-device-util-axt
-
-include $(BUILD_STATIC_JAVA_LIBRARY)
-
-
-include $(CLEAR_VARS)
-
 LOCAL_PACKAGE_NAME := CtsSharedLibsApiSignatureTestCases
 
 LOCAL_JAVA_RESOURCE_FILES := $(all_shared_libs_zip_file)
