@@ -33,6 +33,7 @@ android_test {
         "ctstestrunner-axt",
         "CtsMockInputMethodLib",
         "CtsMockSpellCheckerLib",
+        "CtsLegacyImeClientTestLib",
         "testng",
         "kotlin-test",
     ],
