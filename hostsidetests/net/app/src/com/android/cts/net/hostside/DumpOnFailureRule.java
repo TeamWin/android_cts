@@ -38,6 +38,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.uiautomator.UiDevice;
 
 public class DumpOnFailureRule extends OnFailureRule {
     private File mDumpDir = new File(Environment.getExternalStorageDirectory(),
@@ -68,6 +69,16 @@ public class DumpOnFailureRule extends OnFailureRule {
             Log.e(TAG, "Error opening file: " + dumpFile, e);
         } catch (IOException e) {
             Log.e(TAG, "Error closing file: " + dumpFile, e);
+        }
+        final UiDevice uiDevice = UiDevice.getInstance(
+                InstrumentationRegistry.getInstrumentation());
+        final File screenshotFile = new File(mDumpDir, "sc-" + testName + ".png");
+        uiDevice.takeScreenshot(screenshotFile);
+        final File windowHierarchyFile = new File(mDumpDir, "wh-" + testName + ".xml");
+        try {
+            uiDevice.dumpWindowHierarchy(windowHierarchyFile);
+        } catch (IOException e) {
+            Log.e(TAG, "Error dumping window hierarchy", e);
         }
     }
 
