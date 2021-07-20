@@ -738,6 +738,10 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
         assumeHasDeviceFeature(FEATURE_TELEPHONY);
     }
 
+    protected final void assumeSupportsSms() throws Exception {
+        assumeTrue("device doesn't support SMS", isSmsCapable());
+    }
+
     protected final void assumeHasNfcFeatures() throws DeviceNotAvailableException {
         assumeHasDeviceFeature(FEATURE_NFC);
         assumeHasDeviceFeature(FEATURE_NFC_BEAM);
@@ -1345,5 +1349,15 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
     void sleep(int timeMs) throws InterruptedException {
         CLog.d("Sleeping %d ms");
         Thread.sleep(timeMs);
+    }
+
+    private boolean isSmsCapable() throws Exception {
+        String output = getDevice().executeShellCommand("dumpsys phone");
+        if (output.contains("isSmsCapable=true")) {
+            CLog.d("Device is SMS capable");
+            return true;
+        }
+        CLog.d("Device is not SMS capable");
+        return false;
     }
 }
