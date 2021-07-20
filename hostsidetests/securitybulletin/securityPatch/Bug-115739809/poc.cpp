@@ -178,6 +178,10 @@ static void sanitizeMessage(const InputMessage& msg, InputMessage* outMsg) {
             outMsg->body.timeline.graphicsTimeline = msg.body.timeline.graphicsTimeline;
             break;
         }
+        case InputMessage::Type::TOUCH_MODE: {
+            outMsg->body.touchMode.eventId = msg.body.timeline.eventId;
+            outMsg->body.touchMode.isInTouchMode = msg.body.touchMode.isInTouchMode;
+        }
     }
 }
 
@@ -251,9 +255,10 @@ int main() {
     }
 
     InputMessage::Type types[] = {
-            InputMessage::Type::KEY,      InputMessage::Type::MOTION,  InputMessage::Type::FINISHED,
-            InputMessage::Type::FOCUS,    InputMessage::Type::CAPTURE, InputMessage::Type::DRAG,
-            InputMessage::Type::TIMELINE,
+            InputMessage::Type::KEY,      InputMessage::Type::MOTION,
+            InputMessage::Type::FINISHED, InputMessage::Type::FOCUS,
+            InputMessage::Type::CAPTURE,  InputMessage::Type::DRAG,
+            InputMessage::Type::TIMELINE, InputMessage::Type::TOUCH_MODE,
     };
     for (InputMessage::Type type : types) {
         bool success = checkMessage(*server, *client, type);
