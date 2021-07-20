@@ -29,7 +29,6 @@ import android.content.pm.PackageManager;
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
-import android.os.SystemProperties;
 import android.platform.test.annotations.AppModeFull;
 import android.provider.DeviceConfig;
 import android.service.dataloader.DataLoaderService;
@@ -41,6 +40,7 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.LargeTest;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.PropertyUtil;
 import com.android.incfs.install.IBlockFilter;
 import com.android.incfs.install.IBlockTransformer;
 import com.android.incfs.install.IncrementalInstallSession;
@@ -153,7 +153,9 @@ public class PackageManagerShellCommandIncrementalTest {
 
     @Test
     public void testAndroid12RequiresIncFsV2() throws Exception {
-        final boolean v2Required = (SystemProperties.getInt("ro.product.first_api_level", 0) > 30);
+        // IncFS is a kernel feature, which is a subject to vendor freeze. That's why
+        // the test verifies the vendor API level here, not the system's one.
+        final boolean v2Required = PropertyUtil.isVendorApiLevelNewerThan(30);
         if (v2Required) {
             Assert.assertTrue(getPackageManager().hasSystemFeature(
                     PackageManager.FEATURE_INCREMENTAL_DELIVERY, 2));

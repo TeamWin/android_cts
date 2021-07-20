@@ -27,6 +27,8 @@ android_test_helper_app {
     optimize: {
         enabled: false,
     },
+    min_sdk_version: "31",
+    target_sdk_version: "31",
     // Tag this module as a cts test artifact
     test_suites: [
         "cts",

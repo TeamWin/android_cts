@@ -1,4 +1,4 @@
-// Copyright (C) 2018 The Android Open Source Project
+// Copyright (C) 2019 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,25 +13,16 @@
 // limitations under the License.
 
 package {
+    // See: http://go/android-license-faq
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-android_test {
-    name: "CtsLibcoreApiEvolutionTestCases",
-    defaults: ["cts_defaults"],
-    static_libs: [
-        "ctstestrunner-axt",
-        "junit",
-    ],
-    libs: ["android.test.base"],
+java_library {
+    name: "cts-api-signature-multilib-test",
     srcs: ["src/**/*.java"],
-    sdk_version: "current",
-    min_sdk_version: "31",
-    target_sdk_version: "31",
-    // Tag this module as a cts test artifact
-    test_suites: [
-        "cts",
-        "general-tests",
-        "mts",
+    sdk_version: "test_current",
+    static_libs: [
+        "cts-api-signature-test",
+        "compatibility-device-util-axt",
     ],
 }
