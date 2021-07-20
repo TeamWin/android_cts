@@ -48,6 +48,7 @@ public final class CarPowerManagerTest extends CarApiTestBase {
     private static final int NO_WAIT = 0;
 
     private CarPowerManager mCarPowerManager;
+    private String mInitialPowerPolicyId;
     private final Executor mExecutor = mContext.getMainExecutor();
 
     @Override
@@ -55,6 +56,15 @@ public final class CarPowerManagerTest extends CarApiTestBase {
     public void setUp() throws Exception {
         super.setUp();
         mCarPowerManager = (CarPowerManager) getCar().getCarManager(Car.POWER_SERVICE);
+        mInitialPowerPolicyId = mCarPowerManager.getCurrentPowerPolicy().getPolicyId();
+    }
+
+    @After
+    public void teardown() throws Exception {
+        CarPowerPolicy policy = mCarPowerManager.getCurrentPowerPolicy();
+        if (!mInitialPowerPolicyId.equals(policy.getPolicyId())) {
+            applyPowerPolicy(mInitialPowerPolicyId);
+        }
     }
 
     /**
@@ -98,6 +108,8 @@ public final class CarPowerManagerTest extends CarApiTestBase {
         makeSureExecutorReady();
         assertWithMessage("Added location listener's current policy")
                 .that(listenerLocation.getCurrentPolicyId(NO_WAIT)).isNull();
+
+        applyPowerPolicy(mInitialPowerPolicyId);
     }
 
     private void makeSureExecutorReady() throws Exception {
