@@ -195,6 +195,8 @@ public class Constants {
             PKG_BASE + "cts.action.GET_SYNCADAPTER_PACKAGES_FOR_AUTHORITY";
     public static final String ACTION_GET_INSTALLED_APPWIDGET_PROVIDERS =
             PKG_BASE + "cts.action.GET_INSTALLED_APPWIDGET_PROVIDERS";
+    public static final String ACTION_REQUEST_SYNC_AND_AWAIT_STATUS =
+            PKG_BASE + "cts.action.REQUEST_SYNC_AND_AWAIT_STATUS";
     public static final String ACTION_AWAIT_PACKAGES_SUSPENDED =
             PKG_BASE + "cts.action.AWAIT_PACKAGES_SUSPENDED";
     public static final String ACTION_LAUNCHER_APPS_IS_ACTIVITY_ENABLED =
@@ -221,6 +223,7 @@ public class Constants {
     public static final String EXTRA_DATA = "data";
     public static final String EXTRA_CERT = "cert";
     public static final String EXTRA_AUTHORITY = "authority";
+    public static final String EXTRA_ACCOUNT = "account";
 
     public static final int CALLBACK_EVENT_INVALID = -1;
     public static final int CALLBACK_EVENT_PACKAGE_ADDED = 0;

@@ -43,6 +43,7 @@ import static android.appenumeration.cts.Constants.ACTION_QUERY_ACTIVITIES;
 import static android.appenumeration.cts.Constants.ACTION_QUERY_PROVIDERS;
 import static android.appenumeration.cts.Constants.ACTION_QUERY_RESOLVER;
 import static android.appenumeration.cts.Constants.ACTION_QUERY_SERVICES;
+import static android.appenumeration.cts.Constants.ACTION_REQUEST_SYNC_AND_AWAIT_STATUS;
 import static android.appenumeration.cts.Constants.ACTION_SET_INSTALLER_PACKAGE_NAME;
 import static android.appenumeration.cts.Constants.ACTION_START_DIRECTLY;
 import static android.appenumeration.cts.Constants.ACTION_START_FOR_RESULT;
@@ -54,6 +55,7 @@ import static android.appenumeration.cts.Constants.CALLBACK_EVENT_PACKAGES_UNSUS
 import static android.appenumeration.cts.Constants.CALLBACK_EVENT_PACKAGE_ADDED;
 import static android.appenumeration.cts.Constants.CALLBACK_EVENT_PACKAGE_CHANGED;
 import static android.appenumeration.cts.Constants.CALLBACK_EVENT_PACKAGE_REMOVED;
+import static android.appenumeration.cts.Constants.EXTRA_ACCOUNT;
 import static android.appenumeration.cts.Constants.EXTRA_AUTHORITY;
 import static android.appenumeration.cts.Constants.EXTRA_CERT;
 import static android.appenumeration.cts.Constants.EXTRA_DATA;
@@ -134,6 +136,8 @@ import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import android.accounts.Account;
+import android.accounts.AccountManager;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetProviderInfo;
 import android.content.ComponentName;
@@ -191,9 +195,15 @@ public class AppEnumerationTests {
     private static boolean sGlobalFeatureEnabled;
 
     private static PackageManager sPm;
+    private static AccountManager sAccountManager;
 
     // The shared library for getting dependent packages
     private static final String TEST_SHARED_LIB_NAME = "android.test.runner";
+
+    private static final Account ACCOUNT_SYNCADAPTER = new Account(
+            TARGET_SYNCADAPTER, "android.appenumeration.account.type");
+    private static final Account ACCOUNT_SYNCADAPTER_SHARED_USER = new Account(
+            TARGET_SYNCADAPTER_SHARED_USER, "android.appenumeration.shareduid.account.type");
 
     @Rule
     public TestName name = new TestName();
@@ -218,12 +228,24 @@ public class AppEnumerationTests {
         sResponseHandler = new Handler(sResponseThread.getLooper());
 
         sPm = InstrumentationRegistry.getInstrumentation().getContext().getPackageManager();
+        sAccountManager = AccountManager.get(
+                InstrumentationRegistry.getInstrumentation().getContext());
+
+        assertThat(sAccountManager.addAccountExplicitly(ACCOUNT_SYNCADAPTER,
+                null /* password */, null /* userdata */), is(true));
+        assertThat(sAccountManager.addAccountExplicitly(ACCOUNT_SYNCADAPTER_SHARED_USER,
+                null /* password */, null /* userdata */), is(true));
     }
 
     @AfterClass
     public static void tearDown() {
         if (!sGlobalFeatureEnabled) return;
         sResponseThread.quit();
+
+        assertThat(sAccountManager.removeAccountExplicitly(ACCOUNT_SYNCADAPTER),
+                is(true));
+        assertThat(sAccountManager.removeAccountExplicitly(ACCOUNT_SYNCADAPTER_SHARED_USER),
+                is(true));
     }
 
     @Test
@@ -985,6 +1007,32 @@ public class AppEnumerationTests {
     }
 
     @Test
+    public void queriesPackage_requestSync_canSeeSyncadapterTarget()
+            throws Exception {
+        assertThat(requestSyncAndAwaitStatus(QUERIES_PACKAGE,
+                        ACCOUNT_SYNCADAPTER, TARGET_SYNCADAPTER),
+                is(true));
+    }
+
+    @Test
+    public void queriesNothingSharedUser_requestSync_canSeeSyncadapterSharedUserTarget()
+            throws Exception {
+        assertThat(requestSyncAndAwaitStatus(QUERIES_NOTHING_SHARED_USER,
+                        ACCOUNT_SYNCADAPTER_SHARED_USER, TARGET_SYNCADAPTER_SHARED_USER),
+                is(true));
+    }
+
+    @Test
+    public void queriesNothing_requestSync_cannotSeeSyncadapterTarget() {
+        assertThrows(MissingCallbackException.class,
+                () -> requestSyncAndAwaitStatus(QUERIES_NOTHING,
+                        ACCOUNT_SYNCADAPTER, TARGET_SYNCADAPTER));
+        assertThrows(MissingCallbackException.class,
+                () -> requestSyncAndAwaitStatus(QUERIES_NOTHING,
+                        ACCOUNT_SYNCADAPTER_SHARED_USER, TARGET_SYNCADAPTER_SHARED_USER));
+    }
+
+    @Test
     public void queriesNothingSharedUser_getSyncAdapterPackages_canSeeSyncadapterSharedUserTarget()
             throws Exception {
         assertVisible(QUERIES_NOTHING_SHARED_USER, TARGET_SYNCADAPTER_SHARED_USER,
@@ -1412,6 +1460,16 @@ public class AppEnumerationTests {
         final Bundle response = sendCommandBlocking(sourcePackageName, /* targetPackageName */ null,
                 extraData, ACTION_GET_SYNCADAPTER_PACKAGES_FOR_AUTHORITY);
         return response.getStringArray(Intent.EXTRA_PACKAGES);
+    }
+
+    private boolean requestSyncAndAwaitStatus(String sourcePackageName, Account account,
+            String targetPackageName) throws Exception {
+        final Bundle extraData = new Bundle();
+        extraData.putParcelable(EXTRA_ACCOUNT, account);
+        extraData.putString(EXTRA_AUTHORITY, targetPackageName + ".authority");
+        final Bundle response = sendCommandBlocking(sourcePackageName, /* targetPackageName */ null,
+                extraData, ACTION_REQUEST_SYNC_AND_AWAIT_STATUS);
+        return response.getBoolean(Intent.EXTRA_RETURN_RESULT);
     }
 
     private void setPackagesSuspended(boolean suspend, List<String> packages) {
