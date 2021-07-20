@@ -55,7 +55,6 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -169,7 +168,6 @@ public class PackageManagerShellCommandIncrementalTest {
     }
 
     @Test
-    @Ignore("Wait until the kernel change lands in RVC branch for the mixed vendor image tests")
     public void testBug183952694Fixed() throws Exception {
         // first ensure the IncFS is up and running, e.g. if it's a module
         installPackage(TEST_APK);
