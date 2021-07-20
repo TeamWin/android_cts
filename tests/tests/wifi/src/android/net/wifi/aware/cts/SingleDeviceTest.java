@@ -122,8 +122,8 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
         boolean waitForStateChange() throws InterruptedException {
             CountDownLatch blocker;
             synchronized (mLock) {
-                if (mCountNumber > 0) {
-                    mCountNumber--;
+                mCountNumber--;
+                if (mCountNumber >= 0) {
                     return true;
                 }
                 blocker = mBlocker;
