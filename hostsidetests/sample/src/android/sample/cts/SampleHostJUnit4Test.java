@@ -72,7 +72,7 @@ public class SampleHostJUnit4Test implements IDeviceTest {
     /**
      * A rule annotation that allows to log metrics in test cases.
      */
-    @Rule TestMetrics mMetrics = new TestMetrics();
+    @Rule public TestMetrics mMetrics = new TestMetrics();
 
     private ITestDevice mDevice;
 
