@@ -75,6 +75,10 @@ abstract class AbstractRestrictBackgroundNetworkTestCase extends Instrumentation
     private static final String MANIFEST_RECEIVER = "ManifestReceiver";
     private static final String DYNAMIC_RECEIVER = "DynamicReceiver";
 
+    // Copied from com.android.server.net.NetworkPolicyManagerService class
+    private static final String ACTION_SNOOZE_WARNING =
+            "com.android.server.net.action.SNOOZE_WARNING";
+
     private static final String ACTION_RECEIVER_READY =
             "com.android.cts.net.hostside.app2.action.RECEIVER_READY";
     static final String ACTION_SHOW_TOAST =
@@ -117,6 +121,8 @@ abstract class AbstractRestrictBackgroundNetworkTestCase extends Instrumentation
     private static final String APP_NOT_FOREGROUND_ERROR = "app_not_fg";
 
     protected static final long TEMP_POWERSAVE_WHITELIST_DURATION_MS = 5_000; // 5 sec
+
+    private static final long BROADCAST_TIMEOUT_MS = 15_000;
 
     protected Context mContext;
     protected Instrumentation mInstrumentation;
@@ -214,6 +220,12 @@ abstract class AbstractRestrictBackgroundNetworkTestCase extends Instrumentation
         } while (attempts <= maxAttempts);
         assertEquals("Number of expected broadcasts for " + receiverName + " not reached after "
                 + maxAttempts * SLEEP_TIME_SEC + " seconds", expectedCount, count);
+    }
+
+    protected void assertSnoozeWarningNotReceived() throws Exception {
+        // Wait for a while to take broadcast queue delays into account
+        SystemClock.sleep(BROADCAST_TIMEOUT_MS);
+        assertEquals(0, getNumberBroadcastsReceived(DYNAMIC_RECEIVER, ACTION_SNOOZE_WARNING));
     }
 
     protected String sendOrderedBroadcast(Intent intent) throws Exception {

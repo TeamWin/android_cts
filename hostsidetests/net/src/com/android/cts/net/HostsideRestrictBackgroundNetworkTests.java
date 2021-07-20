@@ -16,6 +16,8 @@
 
 package com.android.cts.net;
 
+import android.platform.test.annotations.SecurityTest;
+
 import com.android.ddmlib.Log;
 import com.android.tradefed.device.DeviceNotAvailableException;
 
@@ -34,6 +36,12 @@ public class HostsideRestrictBackgroundNetworkTests extends HostsideNetworkTestC
         super.tearDown();
 
         uninstallPackage(TEST_APP2_PKG, true);
+    }
+
+    @SecurityTest
+    public void testDataWarningReceiver() throws Exception {
+        runDeviceTests(TEST_PKG, TEST_PKG + ".DataWarningReceiverTest",
+                "testSnoozeWarningNotReceived");
     }
 
     /**************************
