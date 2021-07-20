@@ -1159,7 +1159,7 @@ def parse_camera_ids(ids):
   camera_id_combo = collections.namedtuple('CameraIdCombo', ['id', 'sub_id'])
   id_combos = []
   for one_id in ids:
-    one_combo = one_id.split(':')
+    one_combo = one_id.split(SUB_CAMERA_SEPARATOR)
     if len(one_combo) == 1:
       id_combos.append(camera_id_combo(one_combo[0], None))
     elif len(one_combo) == 2:
