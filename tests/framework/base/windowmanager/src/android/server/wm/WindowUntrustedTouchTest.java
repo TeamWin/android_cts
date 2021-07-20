@@ -36,6 +36,7 @@ import android.app.ActivityManager;
 import android.app.ActivityOptions;
 import android.app.Instrumentation;
 import android.app.NotificationManager;
+import android.app.WindowConfiguration;
 import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -67,7 +68,7 @@ import android.widget.Toast;
 
 import androidx.annotation.AnimRes;
 import androidx.annotation.Nullable;
-import androidx.test.rule.ActivityTestRule;
+import androidx.test.ext.junit.rules.ActivityScenarioRule;
 
 import com.android.compatibility.common.util.AppOpsUtils;
 import com.android.compatibility.common.util.SystemUtil;
@@ -153,13 +154,19 @@ public class WindowUntrustedTouchTest {
     public TestName testNameRule = new TestName();
 
     @Rule
-    public ActivityTestRule<TestActivity> activityRule = new ActivityTestRule<>(TestActivity.class);
+    public ActivityScenarioRule<TestActivity> activityRule =
+            new ActivityScenarioRule<>(TestActivity.class);
 
     @Before
     public void setUp() throws Exception {
-        mActivity = activityRule.getActivity();
-        mContainer = mActivity.view;
-        mContainer.setOnTouchListener(this::onTouchEvent);
+        ActivityOptions options = ActivityOptions.makeBasic();
+        options.setLaunchWindowingMode(WindowConfiguration.WINDOWING_MODE_FULLSCREEN);
+        activityRule.getScenario().launch(TestActivity.class, options.toBundle())
+                .onActivity(activity -> {
+            mActivity = activity;
+            mContainer = mActivity.view;
+            mContainer.setOnTouchListener(this::onTouchEvent);
+        });
         mInstrumentation = getInstrumentation();
         mContext = mInstrumentation.getContext();
         mResources = mContext.getResources();
