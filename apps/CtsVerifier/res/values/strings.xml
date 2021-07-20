@@ -143,7 +143,31 @@
         Do not enter or disturb the vehicle for at least 15 minutes.\n\n
         Enter the vehicle. Re-launch the CTS-Verifier app if it is not running.\n\n
         If Garage Mode ran as required, the pass button will be enabled.</string>
+    <string name="car_component_power_on_policy_check">Verify Component Power On Policy</string>
+    <string name="car_component_power_off_policy_check">Verify Component Power Off Policy</string>
+    <string name="car_power_policy_test">Car Power Policy Test</string>
+    <string name="car_power_policy_test_desc">
+        This test verifies that Wi-Fi, Bluetooth and Location settings UI behaviors with respect
+        to their power policy. If the policy sets components power off, the component settings UI
+        shall be disabled. Otherwise, the settings UI shall be enabled as default.\n\n
+        First execute the\n
+        "  adb shell cmd car_service apply-cts-verifier-power-off-policy"\n
+        adb shell command first and then sequentialy click first 4 buttons to check each component
+        settings UI are disabled.\n\n
+        Then, execute the\n
+        "  adb shell cmd car_service apply-cts-verifier-power-on-policy"\n
+        shell command and sequential click the remaining 4 buttons to check if each component
+        settings UI is enabled.\n\n
+        For the detailed instructions, please refer to\n
+        "  https://source.android.com/compatibility/cts/power-policy".
+        </string>
     <string name="car_wifi_settings">Go to Wi-Fi settings</string>
+    <string name="car_wifi_settings_disable">Check Wi-Fi Settings Disabled</string>
+    <string name="car_bluetooth_settings_disable">Check Bluetooth Settings Disabled</string>
+    <string name="car_location_settings_disable">Check Location Settings Disabled</string>
+    <string name="car_wifi_settings_enable">Check Wi-Fi Settings Enabled</string>
+    <string name="car_bluetooth_settings_enable">Check Bluetooth Settings Enabled</string>
+    <string name="car_location_settings_enable">Check Location Settings Enabled</string>
     <string name="car_dock_test">Car Dock Test</string>
     <string name="car_dock_test_desc">This test ensures that car mode opens the app associated with
         car dock when going into car mode.\n\n
