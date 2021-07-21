@@ -20,6 +20,10 @@ import static android.Manifest.permission.INSTALL_TEST_ONLY_PACKAGE;
 import static android.content.pm.ApplicationInfo.FLAG_HAS_CODE;
 import static android.content.pm.ApplicationInfo.FLAG_INSTALLED;
 import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
+import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DEFAULT;
+import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
+import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
+import static android.content.pm.PackageManager.DONT_KILL_APP;
 import static android.content.pm.PackageManager.GET_ACTIVITIES;
 import static android.content.pm.PackageManager.GET_META_DATA;
 import static android.content.pm.PackageManager.GET_PERMISSIONS;
@@ -50,11 +54,13 @@ import static org.testng.Assert.assertThrows;
 import android.annotation.NonNull;
 import android.app.Activity;
 import android.app.Instrumentation;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.IntentSender;
+import android.content.ServiceConnection;
 import android.content.cts.MockActivity;
 import android.content.cts.MockContentProvider;
 import android.content.cts.MockReceiver;
@@ -67,6 +73,7 @@ import android.content.pm.InstrumentationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageItemInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.ComponentEnabledSetting;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.PermissionGroupInfo;
 import android.content.pm.PermissionInfo;
@@ -80,6 +87,7 @@ import android.content.res.TypedArray;
 import android.content.res.XmlResourceParser;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.os.SystemClock;
 import android.os.SystemProperties;
 import android.os.UserHandle;
@@ -88,10 +96,12 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.rule.ServiceTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.SystemUtil;
+import com.android.compatibility.common.util.TestUtils;
 
 import org.junit.After;
 import org.junit.Before;
@@ -107,6 +117,10 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -124,7 +138,7 @@ public class PackageManagerTest {
     private PackageManager mPackageManager;
     private Instrumentation mInstrumentation;
     private static final String PACKAGE_NAME = "android.content.cts";
-    private static final String CONTENT_PKG_NAME = "android.content.cts";
+    private static final String STUB_PACKAGE_NAME = "com.android.cts.stub";
     private static final String APPLICATION_NAME = "android.content.cts.MockApplication";
     private static final String ACTIVITY_ACTION_NAME = "android.intent.action.PMTEST";
     private static final String MAIN_ACTION_NAME = "android.intent.action.MAIN";
@@ -146,7 +160,7 @@ public class PackageManagerTest {
             "android.content.cts.permission.TEST_DYNAMIC";
     // Number of activities/activity-alias in AndroidManifest
     private static final int NUM_OF_ACTIVITIES_IN_MANIFEST = 12;
-    public static final int TIMEOUT = 5000;
+    public static final long TIMEOUT_MS = TimeUnit.SECONDS.toMillis(10);
 
     private static final String SHIM_APEX_PACKAGE_NAME = "com.android.apex.cts.shim";
 
@@ -189,6 +203,17 @@ public class PackageManagerTest {
     private static final String RESOLUTION_TEST_ACTION_NAME =
             "android.intent.action.RESOLUTION_TEST";
     private static final String SELECTOR_ACTION_NAME = "android.intent.action.SELECTORTEST";
+
+    private static final ComponentName ACTIVITY_COMPONENT = new ComponentName(
+            PACKAGE_NAME, ACTIVITY_NAME);
+    private static final ComponentName SERVICE_COMPONENT = new ComponentName(
+            PACKAGE_NAME, SERVICE_NAME);
+    private static final ComponentName STUB_ACTIVITY_COMPONENT = ComponentName.createRelative(
+            STUB_PACKAGE_NAME, ".StubActivity");
+    private static final ComponentName STUB_SERVICE_COMPONENT = ComponentName.createRelative(
+            STUB_PACKAGE_NAME, ".StubService");
+
+    private final ServiceTestRule mServiceTestRule = new ServiceTestRule();
 
     @Before
     public void setup() throws Exception {
@@ -683,14 +708,14 @@ public class PackageManagerTest {
     @Test
     public void testAccessEnabledSetting() {
         mPackageManager.setApplicationEnabledSetting(PACKAGE_NAME,
-                PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP);
-        assertEquals(PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+                COMPONENT_ENABLED_STATE_ENABLED, DONT_KILL_APP);
+        assertEquals(COMPONENT_ENABLED_STATE_ENABLED,
                 mPackageManager.getApplicationEnabledSetting(PACKAGE_NAME));
 
         ComponentName componentName = new ComponentName(PACKAGE_NAME, ACTIVITY_NAME);
         mPackageManager.setComponentEnabledSetting(componentName,
-                PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP);
-        assertEquals(PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+                COMPONENT_ENABLED_STATE_ENABLED, DONT_KILL_APP);
+        assertEquals(COMPONENT_ENABLED_STATE_ENABLED,
                 mPackageManager.getComponentEnabledSetting(componentName));
     }
 
@@ -1658,7 +1683,7 @@ public class PackageManagerTest {
 
             intentSender.sendIntent(mContext, 0 /* code */, null /* intent */,
                     null /* onFinished */, null /* handler */);
-            final Activity activity = monitor.waitForActivityWithTimeout(TIMEOUT);
+            final Activity activity = monitor.waitForActivityWithTimeout(TIMEOUT_MS);
             assertThat(activity).isNotNull();
             activity.finish();
         } finally {
@@ -1727,7 +1752,7 @@ public class PackageManagerTest {
         final ComponentName componentName = ComponentName.createRelative(
                 NON_EXISTENT_PACKAGE_NAME, "ClassName");
         assertThrows(SecurityException.class, () -> mPackageManager.setComponentEnabledSetting(
-                componentName, PackageManager.COMPONENT_ENABLED_STATE_ENABLED, 0 /* flags */));
+                componentName, COMPONENT_ENABLED_STATE_ENABLED, 0 /* flags */));
     }
 
     @Test
@@ -1740,7 +1765,7 @@ public class PackageManagerTest {
         try {
             assertThrows(IllegalArgumentException.class,
                     () -> mPackageManager.setComponentEnabledSetting(componentName,
-                            PackageManager.COMPONENT_ENABLED_STATE_ENABLED, 0 /* flags */));
+                            COMPONENT_ENABLED_STATE_ENABLED, 0 /* flags */));
         } finally {
             mInstrumentation.getUiAutomation().dropShellPermissionIdentity();
         }
@@ -1773,5 +1798,165 @@ public class PackageManagerTest {
         assertThat(resLabel.length()).isGreaterThan(MAX_SAFE_LABEL_LENGTH);
         assertThat(activityInfo.loadLabel(mPackageManager).length())
                 .isEqualTo(MAX_SAFE_LABEL_LENGTH);
+    }
+
+    @Test
+    public void setComponentEnabledSettings_withDuplicatedComponent() {
+        final List<ComponentEnabledSetting> enabledSettings = List.of(
+                new ComponentEnabledSetting(
+                        ACTIVITY_COMPONENT, COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP),
+                new ComponentEnabledSetting(
+                        ACTIVITY_COMPONENT, COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> mPackageManager.setComponentEnabledSettings(enabledSettings));
+    }
+
+    @Test
+    public void setComponentEnabledSettings_flagDontKillAppConflict() {
+        final List<ComponentEnabledSetting> enabledSettings = List.of(
+                new ComponentEnabledSetting(
+                        ACTIVITY_COMPONENT, COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP),
+                new ComponentEnabledSetting(
+                        SERVICE_COMPONENT, COMPONENT_ENABLED_STATE_DISABLED, 0));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> mPackageManager.setComponentEnabledSettings(enabledSettings));
+    }
+
+    @Test
+    public void setComponentEnabledSettings_disableSelfAndStubApp_withoutPermission() {
+        final List<ComponentEnabledSetting> enabledSettings = List.of(
+                new ComponentEnabledSetting(
+                        ACTIVITY_COMPONENT, COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP),
+                new ComponentEnabledSetting(
+                        STUB_ACTIVITY_COMPONENT, COMPONENT_ENABLED_STATE_DISABLED, 0));
+
+        assertThrows(SecurityException.class,
+                () -> mPackageManager.setComponentEnabledSettings(enabledSettings));
+    }
+
+    @Test
+    public void setComponentEnabledSettings_disableSelf() throws Exception {
+        final int activityState = mPackageManager.getComponentEnabledSetting(ACTIVITY_COMPONENT);
+        final int serviceState = mPackageManager.getComponentEnabledSetting(SERVICE_COMPONENT);
+        assertThat(activityState).isAnyOf(
+                COMPONENT_ENABLED_STATE_DEFAULT, COMPONENT_ENABLED_STATE_ENABLED);
+        assertThat(serviceState).isAnyOf(
+                COMPONENT_ENABLED_STATE_DEFAULT, COMPONENT_ENABLED_STATE_ENABLED);
+
+        try {
+            final List<ComponentEnabledSetting> enabledSettings = List.of(
+                    new ComponentEnabledSetting(
+                            ACTIVITY_COMPONENT, COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP),
+                    new ComponentEnabledSetting(
+                            SERVICE_COMPONENT, COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP));
+            setComponentEnabledSettingsAndWaitForBroadcasts(enabledSettings);
+        } finally {
+            final List<ComponentEnabledSetting> enabledSettings = List.of(
+                    new ComponentEnabledSetting(ACTIVITY_COMPONENT, activityState, DONT_KILL_APP),
+                    new ComponentEnabledSetting(SERVICE_COMPONENT, serviceState, DONT_KILL_APP));
+            mPackageManager.setComponentEnabledSettings(enabledSettings);
+        }
+    }
+
+    @Test
+    public void setComponentEnabledSettings_disableSelfAndStubApp_killStubApp()
+            throws Exception {
+        final int activityState = mPackageManager.getComponentEnabledSetting(ACTIVITY_COMPONENT);
+        final int stubState = mPackageManager.getComponentEnabledSetting(STUB_ACTIVITY_COMPONENT);
+        assertThat(activityState).isAnyOf(
+                COMPONENT_ENABLED_STATE_DEFAULT, COMPONENT_ENABLED_STATE_ENABLED);
+        assertThat(stubState).isAnyOf(
+                COMPONENT_ENABLED_STATE_DEFAULT, COMPONENT_ENABLED_STATE_ENABLED);
+
+        final Intent intent = new Intent();
+        intent.setComponent(STUB_SERVICE_COMPONENT);
+        final AtomicBoolean killed = new AtomicBoolean();
+        mServiceTestRule.bindService(intent, new ServiceConnection() {
+            @Override
+            public void onServiceConnected(ComponentName name, IBinder service) {
+            }
+            @Override
+            public void onServiceDisconnected(ComponentName name) {
+                killed.set(true);
+            }
+        }, Context.BIND_AUTO_CREATE);
+        mInstrumentation.getUiAutomation().adoptShellPermissionIdentity(
+                android.Manifest.permission.CHANGE_COMPONENT_ENABLED_STATE);
+
+        try {
+            final List<ComponentEnabledSetting> enabledSettings = List.of(
+                    new ComponentEnabledSetting(
+                            ACTIVITY_COMPONENT, COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP),
+                    new ComponentEnabledSetting(
+                            STUB_ACTIVITY_COMPONENT, COMPONENT_ENABLED_STATE_DISABLED, 0));
+            setComponentEnabledSettingsAndWaitForBroadcasts(enabledSettings);
+            TestUtils.waitUntil("Waiting for the process " + STUB_PACKAGE_NAME
+                    + " to die", () -> killed.get());
+        } finally {
+            final List<ComponentEnabledSetting> enabledSettings = List.of(
+                    new ComponentEnabledSetting(ACTIVITY_COMPONENT, activityState, DONT_KILL_APP),
+                    new ComponentEnabledSetting(STUB_ACTIVITY_COMPONENT, stubState, 0));
+            mPackageManager.setComponentEnabledSettings(enabledSettings);
+            mInstrumentation.getUiAutomation().dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
+    public void setComponentEnabledSettings_noStateChanged_noBroadcastReceived() {
+        final int activityState = mPackageManager.getComponentEnabledSetting(ACTIVITY_COMPONENT);
+        final int serviceState = mPackageManager.getComponentEnabledSetting(SERVICE_COMPONENT);
+        final List<ComponentEnabledSetting> enabledSettings = List.of(
+                new ComponentEnabledSetting(ACTIVITY_COMPONENT, activityState, DONT_KILL_APP),
+                new ComponentEnabledSetting(SERVICE_COMPONENT, serviceState, DONT_KILL_APP));
+
+        assertThrows(TimeoutException.class,
+                () -> setComponentEnabledSettingsAndWaitForBroadcasts(enabledSettings));
+    }
+
+    private void setComponentEnabledSettingsAndWaitForBroadcasts(
+            List<ComponentEnabledSetting> enabledSettings)
+            throws InterruptedException, TimeoutException {
+        final List<ComponentName> componentsToWait = enabledSettings.stream()
+                .map(enabledSetting -> enabledSetting.getComponentName())
+                .collect(Collectors.toList());
+        final IntentFilter filter = new IntentFilter();
+        filter.addAction(Intent.ACTION_PACKAGE_CHANGED);
+        filter.addDataScheme("package");
+        final CountDownLatch latch = new CountDownLatch(1 /* count */);
+        final BroadcastReceiver br = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                final String packageName = intent.getData() != null
+                        ? intent.getData().getSchemeSpecificPart() : null;
+                final String[] receivedComponents = intent.getStringArrayExtra(
+                        Intent.EXTRA_CHANGED_COMPONENT_NAME_LIST);
+                if (packageName == null || receivedComponents == null) {
+                    return;
+                }
+                for (String componentString : receivedComponents) {
+                    componentsToWait.remove(new ComponentName(packageName, componentString));
+                }
+                if (componentsToWait.isEmpty()) {
+                    latch.countDown();
+                }
+            }
+        };
+        mContext.registerReceiver(br, filter);
+        try {
+            mPackageManager.setComponentEnabledSettings(enabledSettings);
+            if (!latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+                throw new TimeoutException("Package changed broadcasts for " + componentsToWait
+                        + " not received in " + TIMEOUT_MS + "ms");
+            }
+            for (ComponentEnabledSetting enabledSetting : enabledSettings) {
+                assertThat(mPackageManager.getComponentEnabledSetting(
+                        enabledSetting.getComponentName()))
+                        .isEqualTo(enabledSetting.getEnabledState());
+            }
+        } finally {
+            mContext.unregisterReceiver(br);
+        }
     }
 }
