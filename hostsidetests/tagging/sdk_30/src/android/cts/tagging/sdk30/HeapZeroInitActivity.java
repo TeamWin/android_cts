@@ -19,14 +19,21 @@ package android.cts.tagging.sdk30;
 import android.app.Activity;
 import android.cts.tagging.Utils;
 import android.os.Bundle;
-import android.util.Log;
 
 public class HeapZeroInitActivity extends Activity {
     @Override
     public void onCreate(Bundle bundle) {
         super.onCreate(bundle);
-        boolean result = Utils.heapIsZeroInitialized();
-        setResult(RESULT_FIRST_USER + (result ? 1 : 0));
+
+        if (!Utils.allocatorIsScudo()) {
+            // jemalloc doesn't support heap zero initialization. Skip this test.
+            setResult(TestActivity.RESULT_TEST_IGNORED);
+        } else if (Utils.heapIsZeroInitialized()) {
+            setResult(TestActivity.RESULT_TEST_SUCCESS);
+        } else {
+            setResult(TestActivity.RESULT_TEST_FAILED);
+        }
+
         finish();
     }
 }
