@@ -3280,6 +3280,13 @@ public class TelephonyManagerTest {
     }
 
     private void disableNrDualConnectivity() {
+        if (!ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, (tm) -> tm.isRadioInterfaceCapabilitySupported(
+                        TelephonyManager
+                                .CAPABILITY_NR_DUAL_CONNECTIVITY_CONFIGURATION_AVAILABLE))) {
+            return;
+        }
+
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
                 mTelephonyManager,
                 (tm) -> tm.setNrDualConnectivityState(
@@ -3297,6 +3304,13 @@ public class TelephonyManagerTest {
     @Test
     public void testNrDualConnectivityEnable() {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+
+        if (!ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, (tm) -> tm.isRadioInterfaceCapabilitySupported(
+                        TelephonyManager
+                                .CAPABILITY_NR_DUAL_CONNECTIVITY_CONFIGURATION_AVAILABLE))) {
             return;
         }
 
