@@ -34,6 +34,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.platform.test.annotations.LargeTest;
+import android.platform.test.annotations.Presubmit;
 import android.provider.SimPhonebookContract.ElementaryFiles;
 import android.provider.SimPhonebookContract.SimRecords;
 import android.telephony.PhoneNumberUtils;
@@ -109,6 +110,7 @@ public class SimPhonebookContract_SimRecordsTest {
     }
 
     @Test
+    @Presubmit
     public void queryAdn_nullProjection_returnsCursorWithAllSupportedColumns() {
         Uri uri = SimRecords.getContentUri(mDefaultSubscriptionId, EF_ADN);
         String[] projection = null;
@@ -124,6 +126,7 @@ public class SimPhonebookContract_SimRecordsTest {
     }
 
     @Test
+    @Presubmit
     public void queryAdn_nonNullProjection_returnsCursorWithProvidedProjection() {
         Uri adnUri = SimRecords.getContentUri(mDefaultSubscriptionId, EF_ADN);
 
@@ -148,6 +151,7 @@ public class SimPhonebookContract_SimRecordsTest {
     }
 
     @Test
+    @Presubmit
     public void queryAdn_noAdnRecords_returnsEmptyCursor() {
         try (Cursor cursor = query(SimRecords.getContentUri(mDefaultSubscriptionId, EF_ADN),
                 null)) {
@@ -156,6 +160,7 @@ public class SimPhonebookContract_SimRecordsTest {
     }
 
     @Test
+    @Presubmit
     public void queryFdn_noFdnRecords_returnsEmptyCursor() {
         try (Cursor cursor =
                      query(ElementaryFiles.getItemUri(mDefaultSubscriptionId, EF_FDN), null)) {
@@ -180,6 +185,7 @@ public class SimPhonebookContract_SimRecordsTest {
     }
 
     @Test
+    @Presubmit
     public void queryAdn_nonEmpty_returnsAdnRecordsFromSim() {
         insertAdn(mDefaultSubscriptionId, "Name1", "5550101");
         insertAdn(mDefaultSubscriptionId, "Name2", "5550102");
@@ -235,6 +241,7 @@ public class SimPhonebookContract_SimRecordsTest {
     }
 
     @Test
+    @Presubmit
     public void query_itemUri_returnsCursorWithCorrectItem() {
         Uri insert1 = insertAdn(mDefaultSubscriptionId, "Name1", "18005550101");
         Uri insert2 = insertAdn(mDefaultSubscriptionId, "Name2", "18005550102");
@@ -273,6 +280,7 @@ public class SimPhonebookContract_SimRecordsTest {
     }
 
     @Test
+    @Presubmit
     public void query_indexOutOfBounds_returnsEmptyCursor() {
         int maxRecords;
         try (Cursor cursor = query(
@@ -289,6 +297,7 @@ public class SimPhonebookContract_SimRecordsTest {
     }
 
     @Test
+    @Presubmit
     public void insertAdn_addsRecordAndReturnsValidUri() {
         ContentValues values = new ContentValues();
         values.put(SimRecords.NAME, "Name");
@@ -312,6 +321,7 @@ public class SimPhonebookContract_SimRecordsTest {
     }
 
     @Test
+    @Presubmit
     public void updateAdn_existingRecord_updatesRecordAndReturns1() {
         Uri uri = insertAdn(mDefaultSubscriptionId, "Initial", "8005550101");
 
@@ -331,6 +341,7 @@ public class SimPhonebookContract_SimRecordsTest {
     }
 
     @Test
+    @Presubmit
     public void updateAdn_unusedIndex_updatesRecordAndReturns1() {
         Uri uri = SimRecords.getItemUri(mDefaultSubscriptionId, EF_ADN, 1);
         // Assert for clarity that there is no data stored for record number 1
@@ -355,6 +366,7 @@ public class SimPhonebookContract_SimRecordsTest {
     }
 
     @Test
+    @Presubmit
     public void deleteAdn_existingRecord_removesRecordAndReturns1() {
         Uri uri = insertAdn(mDefaultSubscriptionId, "Initial", "8005550101");
 
@@ -368,6 +380,7 @@ public class SimPhonebookContract_SimRecordsTest {
     }
 
     @Test
+    @Presubmit
     public void insertThenDeleteAdn_urisRemainValid() {
         Uri uri1 = insertAdn(mDefaultSubscriptionId, "Name1", "5550101");
         Uri uri2 = insertAdn(mDefaultSubscriptionId, "Name2", "5550102");
@@ -396,6 +409,7 @@ public class SimPhonebookContract_SimRecordsTest {
     }
 
     @Test
+    @Presubmit
     public void insertAdn_phoneNumberWithDialableNonDigits_addsRecord() {
         ContentValues values = new ContentValues();
         values.put(SimRecords.NAME, "Name");
@@ -413,6 +427,7 @@ public class SimPhonebookContract_SimRecordsTest {
     }
 
     @Test
+    @Presubmit
     public void insertAdn_valueLengthLimits() {
         String name;
         String phoneNumber;
@@ -460,6 +475,7 @@ public class SimPhonebookContract_SimRecordsTest {
     }
 
     @Test
+    @Presubmit
     public void insertAdn_phoneNumberOnly_addsRecord() {
         ContentValues values = new ContentValues();
         values.put(SimRecords.PHONE_NUMBER, "18005550101");
@@ -485,6 +501,7 @@ public class SimPhonebookContract_SimRecordsTest {
 
 
     @Test
+    @Presubmit
     public void insertAdn_nameWithNonGsmAlphabetCharacters_addsRecord() {
         String name1 = "日本";
 
@@ -509,6 +526,7 @@ public class SimPhonebookContract_SimRecordsTest {
     }
 
     @Test
+    @Presubmit
     public void insertAdn_nameOnly_throwsCorrectException() {
         ContentValues values = new ContentValues();
         values.put(SimRecords.NAME, "Name");
@@ -534,6 +552,7 @@ public class SimPhonebookContract_SimRecordsTest {
     }
 
     @Test
+    @Presubmit
     public void update_nameOnly_throwsCorrectException() {
         ContentValues values = new ContentValues();
         values.put(SimRecords.NAME, "Name");
@@ -562,6 +581,7 @@ public class SimPhonebookContract_SimRecordsTest {
     }
 
     @Test
+    @Presubmit
     public void insertAdn_phoneNumberContainingNonDialable_throwsCorrectException() {
         ContentValues values = new ContentValues();
         values.put(SimRecords.NAME, "Name");
@@ -575,6 +595,7 @@ public class SimPhonebookContract_SimRecordsTest {
     }
 
     @Test
+    @Presubmit
     public void updateAdn_phoneNumberContainingNonDialable_throwsCorrectException() {
         ContentValues values = new ContentValues();
         values.put(SimRecords.NAME, "Name");
@@ -598,6 +619,7 @@ public class SimPhonebookContract_SimRecordsTest {
     }
 
     @Test
+    @Presubmit
     public void updateAdn_duplicateRecord_updatesCorrectRecord() {
         ContentValues values = new ContentValues();
         values.put(SimRecords.NAME, "Initial");
@@ -626,6 +648,7 @@ public class SimPhonebookContract_SimRecordsTest {
     }
 
     @Test
+    @Presubmit
     public void deleteAdn_duplicateRecord_deletesCorrectRecord() {
         ContentValues values = new ContentValues();
         values.put(SimRecords.NAME, "Initial");
@@ -649,6 +672,7 @@ public class SimPhonebookContract_SimRecordsTest {
     }
 
     @Test
+    @Presubmit
     public void delete_unusedIndex_returnsZero() {
         ContentValues values = new ContentValues();
         values.put(SimRecords.NAME, "Name");
