@@ -20,6 +20,7 @@ import static com.android.bedstead.harrier.DeviceState.UserType.SYSTEM_USER;
 
 import com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasProfileOwner;
 import com.android.bedstead.harrier.annotations.meta.ParameterizedAnnotation;
 
 import java.lang.annotation.ElementType;
@@ -28,13 +29,14 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Parameterize a test so that it runs on a non-affiliated secondary user on a device with a
- * Device Owner.
+ * Parameterize a test so that it runs on a affiliated secondary user on a device with a
+ * Device Owner - with the profile owner set as primary.
  */
 @Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @ParameterizedAnnotation
 @RequireRunOnSecondaryUser
-@EnsureHasDeviceOwner(onUser = SYSTEM_USER, isPrimary = true, affiliationIds = {})
-public @interface IncludeRunOnNonAffiliatedDeviceOwnerSecondaryUser {
+@EnsureHasDeviceOwner(onUser = SYSTEM_USER, affiliationIds = "affiliated")
+@EnsureHasProfileOwner(affiliationIds = "affiliated", isPrimary = true)
+public @interface IncludeRunOnAffiliatedProfileOwnerSecondaryUser {
 }
