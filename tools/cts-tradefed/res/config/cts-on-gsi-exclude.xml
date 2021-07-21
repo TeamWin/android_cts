@@ -59,6 +59,9 @@
     <!-- No Statsd -->
     <option name="compatibility:exclude-filter" value="CtsStatsdHostTestCases" />
 
+    <!-- No AppOps -->
+    <option name="compatibility:exclude-filter" value="CtsStatsdAtomHostTestCases android.cts.statsdatom.appops.AppOpsTests" />
+
     <!-- b/183654427 Remove CtsTelecomTestCases from cts-on-gsi -->
     <option name="compatibility:exclude-filter" value="CtsTelecomTestCases" />
 

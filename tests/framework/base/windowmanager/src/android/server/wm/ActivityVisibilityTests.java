@@ -89,7 +89,7 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
         }
 
         launchHomeActivity();
-        launchActivity(TRANSLUCENT_ACTIVITY);
+        launchActivity(TRANSLUCENT_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
 
         mWmState.assertFrontStack("Fullscreen stack must be the front stack.",
                 WINDOWING_MODE_FULLSCREEN, ACTIVITY_TYPE_STANDARD);
