@@ -80,6 +80,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -891,17 +892,18 @@ public class WindowManagerState {
                 .collect(Collectors.toList());
     }
 
-    WindowState getAndAssertSingleNavBarWindowOnDisplay(int displayId) {
-        List<WindowState> navWindow = getMatchingWindows(ws ->
+    @Nullable
+    List<WindowState> getAndAssertNavBarWindowsOnDisplay(int displayId, int expectedNavBarCount) {
+        List<WindowState> navWindows = getMatchingWindows(ws ->
                 WindowManagerState.isValidNavBarType(ws) && ws.getDisplayId() == displayId)
                 .collect(Collectors.toList());
-
         // We may need some time to wait for nav bar showing.
-        // It's Ok to get 0 nav bar here.
-        assertTrue("There should be at most one navigation bar on a display",
-                navWindow.size() <= 1);
+        // It's Ok to get less that expected nav bars here.
+        assertTrue("There should be at most expectedNavBarCount navigation bar on a display",
+                navWindows.size() <= expectedNavBarCount);
 
-        return navWindow.isEmpty() ? null : navWindow.get(0);
+        return (navWindows.size() == expectedNavBarCount)
+                && navWindows.stream().noneMatch(Objects::isNull) ? navWindows : null;
     }
 
     WindowState getWindowStateForAppToken(String appToken) {

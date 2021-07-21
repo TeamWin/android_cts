@@ -257,9 +257,13 @@ public class WindowManagerStateHelper extends WindowManagerState {
     }
 
     void waitAndAssertNavBarShownOnDisplay(int displayId) {
+        waitAndAssertNavBarShownOnDisplay(displayId, 1 /* expectedNavBarCount */);
+    }
+
+    void waitAndAssertNavBarShownOnDisplay(int displayId, int expectedNavBarCount) {
         assertTrue(waitForWithAmState(
-                state -> state.getAndAssertSingleNavBarWindowOnDisplay(displayId) != null,
-                "navigation bar #" + displayId + " show"));
+                state -> state.getAndAssertNavBarWindowsOnDisplay(displayId,
+                        expectedNavBarCount) != null, "navigation bar #" + displayId + " show"));
     }
 
     void waitAndAssertKeyguardShownOnSecondaryDisplay(int displayId) {
