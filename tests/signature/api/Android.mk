@@ -25,7 +25,7 @@ LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
 LOCAL_LICENSE_CONDITIONS := notice
 LOCAL_MODULE_STEM := $(1)
 LOCAL_MODULE_CLASS := ETC
-LOCAL_COMPATIBILITY_SUITE := arcts cts vts general-tests sts
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests sts
 include $(BUILD_SYSTEM)/base_rules.mk
 $$(LOCAL_BUILT_MODULE): $(2) | $(APICHECK)
 	@echo "Convert API file $$< -> $$@"
