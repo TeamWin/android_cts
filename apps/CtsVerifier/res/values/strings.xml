@@ -4479,7 +4479,8 @@ You should be prompted to select credentials; choose the ones you just installed
          the device. When disabled, all USB data connections (except from charging functions)
          are prohibited.\n
          3. Press the \"Go\" button to go to Settings and confirm that the following preferences
-         cannot be selected:\n
+         cannot be selected (except from \"Connected devices\", the \"USB\" option will disappear
+         in \"Connected devices\") :\n
               - Connected devices > USB\n
               - System > Developer Options > USB debugging\n
               - System > Developer Options > Default USB configuration\n
@@ -4487,7 +4488,8 @@ You should be prompted to select credentials; choose the ones you just installed
          4. Verify that you cannot mount the device as a USB drive on your desktop computer and
          cannot access files from your phone through USB.\n
          5. Press the \"Enable USB data signaling\" button to re-enable USB data signaling on
-         the device.\n
+         the device (except from \"Connected devices\", the \"USB\" option will appear in
+         \"Connected devices\" when replug USB cable) .\n
          Please mark the test accordingly.
     </string>
     <string name="device_owner_enable_usb_data_signaling_test">Enable USB data signaling</string>
