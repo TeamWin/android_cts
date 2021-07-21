@@ -137,21 +137,4 @@ public class AppSearchDeviceTest {
     public void clearTestData() throws Exception {
         mDb.setSchema(new SetSchemaRequest.Builder().setForceOverride(true).build()).get();
     }
-
-    @Test
-    public void createSessionInStoppedUser() {
-        mUiAutomation.adoptShellPermissionIdentity(
-                "android.permission.INTERACT_ACROSS_USERS_FULL");
-        try {
-            Bundle args = InstrumentationRegistry.getArguments();
-            int userId = Integer.parseInt(args.getString(USER_ID_KEY));
-            ExecutionException exception = expectThrows(ExecutionException.class, () ->
-                    AppSearchSessionShimImpl.createSearchSession(
-                            new AppSearchManager.SearchContext.Builder(DB_NAME).build(),
-                            userId).get());
-            assertThat(exception.getMessage()).contains("is locked or not running.");
-        } finally {
-            mUiAutomation.dropShellPermissionIdentity();
-        }
-    }
 }
