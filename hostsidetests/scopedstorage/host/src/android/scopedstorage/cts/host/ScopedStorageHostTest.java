@@ -486,16 +486,23 @@ public class ScopedStorageHostTest extends BaseHostTestCase {
 
     @Test
     public void testNoIsolatedStorageInstrumentationFlag() throws Exception {
-        runDeviceTestWithDisabledIsolatedStorage("testNoIsolatedStorageCanCreateFilesAnywhere");
-        runDeviceTestWithDisabledIsolatedStorage(
-                "testNoIsolatedStorageCantReadWriteOtherAppExternalDir");
-        runDeviceTestWithDisabledIsolatedStorage("testNoIsolatedStorageStorageReaddir");
-        runDeviceTestWithDisabledIsolatedStorage("testNoIsolatedStorageQueryOtherAppsFile");
+        grantPermissions("android.permission.READ_EXTERNAL_STORAGE",
+                "android.permission.WRITE_EXTERNAL_STORAGE");
+        try {
+            runDeviceTestWithDisabledIsolatedStorage("testNoIsolatedStorageCanCreateFilesAnywhere");
+            runDeviceTestWithDisabledIsolatedStorage(
+                    "testNoIsolatedStorageCantReadWriteOtherAppExternalDir");
+            runDeviceTestWithDisabledIsolatedStorage("testNoIsolatedStorageStorageReaddir");
+            runDeviceTestWithDisabledIsolatedStorage("testNoIsolatedStorageQueryOtherAppsFile");
 
-        // Check that appop is revoked after instrumentation is over.
-        runDeviceTest("testCreateFileInAppExternalDir");
-        runDeviceTest("testCreateFileInOtherAppExternalDir");
-        runDeviceTest("testReadWriteFilesInOtherAppExternalDir");
+            // Check that appop is revoked after instrumentation is over.
+            runDeviceTest("testCreateFileInAppExternalDir");
+            runDeviceTest("testCreateFileInOtherAppExternalDir");
+            runDeviceTest("testReadWriteFilesInOtherAppExternalDir");
+        } finally {
+            revokePermissions("android.permission.READ_EXTERNAL_STORAGE",
+                    "android.permission.WRITE_EXTERNAL_STORAGE");
+        }
     }
 
     @Test
