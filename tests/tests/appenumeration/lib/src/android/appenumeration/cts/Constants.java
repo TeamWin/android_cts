@@ -22,6 +22,8 @@ public class Constants {
 
     /** A package that queries for {@link #TARGET_NO_API} package */
     public static final String QUERIES_PACKAGE = PKG_BASE + "queries.pkg";
+    /** A package has a provider that queries for {@link #TARGET_NO_API} package */
+    public static final String QUERIES_PACKAGE_PROVIDER = PKG_BASE + "queries.pkg.hasprovider";
     /** Queries for the unexported authority in {@link #TARGET_FILTERS} provider */
     public static final String QUERIES_UNEXPORTED_PROVIDER_AUTH =
             PKG_BASE + "queries.provider.authority.unexported";
@@ -193,6 +195,8 @@ public class Constants {
             PKG_BASE + "cts.action.GET_SYNCADAPTER_PACKAGES_FOR_AUTHORITY";
     public static final String ACTION_GET_INSTALLED_APPWIDGET_PROVIDERS =
             PKG_BASE + "cts.action.GET_INSTALLED_APPWIDGET_PROVIDERS";
+    public static final String ACTION_REQUEST_SYNC_AND_AWAIT_STATUS =
+            PKG_BASE + "cts.action.REQUEST_SYNC_AND_AWAIT_STATUS";
     public static final String ACTION_AWAIT_PACKAGES_SUSPENDED =
             PKG_BASE + "cts.action.AWAIT_PACKAGES_SUSPENDED";
     public static final String ACTION_LAUNCHER_APPS_IS_ACTIVITY_ENABLED =
@@ -209,6 +213,8 @@ public class Constants {
             PKG_BASE + "cts.action.GET_INSTALLED_ACCESSIBILITYSERVICES_PACKAGES";
     public static final String ACTION_LAUNCHER_APPS_SHOULD_HIDE_FROM_SUGGESTIONS =
             PKG_BASE + "cts.action.LAUNCHER_APPS_SHOULD_HIDE_FROM_SUGGESTIONS";
+    public static final String ACTION_CHECK_URI_PERMISSION =
+            PKG_BASE + "cts.action.CHECK_URI_PERMISSION";
 
     public static final String EXTRA_REMOTE_CALLBACK = "remoteCallback";
     public static final String EXTRA_REMOTE_READY_CALLBACK = "remoteReadyCallback";
@@ -217,6 +223,7 @@ public class Constants {
     public static final String EXTRA_DATA = "data";
     public static final String EXTRA_CERT = "cert";
     public static final String EXTRA_AUTHORITY = "authority";
+    public static final String EXTRA_ACCOUNT = "account";
 
     public static final int CALLBACK_EVENT_INVALID = -1;
     public static final int CALLBACK_EVENT_PACKAGE_ADDED = 0;

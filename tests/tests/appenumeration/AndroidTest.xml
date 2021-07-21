@@ -51,6 +51,7 @@
         <option name="test-file-name" value="CtsAppEnumerationQueriesUnexportedProviderViaAuthority.apk" />
         <option name="test-file-name" value="CtsAppEnumerationQueriesUnexportedProviderViaAction.apk" />
         <option name="test-file-name" value="CtsAppEnumerationQueriesPackage.apk" />
+        <option name="test-file-name" value="CtsAppEnumerationQueriesPackageHasProvider.apk" />
         <option name="test-file-name" value="CtsAppEnumerationQueriesNothingTargetsQ.apk" />
         <option name="test-file-name" value="CtsAppEnumerationQueriesNothingHasPermission.apk" />
         <option name="test-file-name" value="CtsAppEnumerationQueriesNothingUsesLibrary.apk" />

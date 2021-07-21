@@ -229,7 +229,7 @@
         <item>337</item>
         <item>600</item>
         <item>800</item>
-        <item>1</item>
+        <item>0</item>
         <item>0</item>
         <item>true</item>
         <item>826</item>
@@ -493,7 +493,7 @@
         <item>3072</item>
         <item>4608</item>
         <item>200</item>
-        <item>8</item>
+        <item>0</item>
         <item>0</item>
         <item>true</item>
         <item>472</item>
@@ -537,7 +537,7 @@
         <item>3000</item>
         <item>4000</item>
         <item>3200</item>
-        <item>8</item>
+        <item>0</item>
         <item>0</item>
         <item>false</item>
         <item />

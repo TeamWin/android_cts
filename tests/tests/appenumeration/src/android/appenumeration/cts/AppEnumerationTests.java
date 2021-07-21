@@ -20,6 +20,7 @@ import static android.Manifest.permission.SET_PREFERRED_APPLICATIONS;
 import static android.appenumeration.cts.Constants.ACTION_AWAIT_LAUNCHER_APPS_CALLBACK;
 import static android.appenumeration.cts.Constants.ACTION_BIND_SERVICE;
 import static android.appenumeration.cts.Constants.ACTION_CHECK_SIGNATURES;
+import static android.appenumeration.cts.Constants.ACTION_CHECK_URI_PERMISSION;
 import static android.appenumeration.cts.Constants.ACTION_GET_INSTALLED_ACCESSIBILITYSERVICES_PACKAGES;
 import static android.appenumeration.cts.Constants.ACTION_GET_INSTALLED_APPWIDGET_PROVIDERS;
 import static android.appenumeration.cts.Constants.ACTION_GET_INSTALLED_PACKAGES;
@@ -42,6 +43,7 @@ import static android.appenumeration.cts.Constants.ACTION_QUERY_ACTIVITIES;
 import static android.appenumeration.cts.Constants.ACTION_QUERY_PROVIDERS;
 import static android.appenumeration.cts.Constants.ACTION_QUERY_RESOLVER;
 import static android.appenumeration.cts.Constants.ACTION_QUERY_SERVICES;
+import static android.appenumeration.cts.Constants.ACTION_REQUEST_SYNC_AND_AWAIT_STATUS;
 import static android.appenumeration.cts.Constants.ACTION_SET_INSTALLER_PACKAGE_NAME;
 import static android.appenumeration.cts.Constants.ACTION_START_DIRECTLY;
 import static android.appenumeration.cts.Constants.ACTION_START_FOR_RESULT;
@@ -53,6 +55,7 @@ import static android.appenumeration.cts.Constants.CALLBACK_EVENT_PACKAGES_UNSUS
 import static android.appenumeration.cts.Constants.CALLBACK_EVENT_PACKAGE_ADDED;
 import static android.appenumeration.cts.Constants.CALLBACK_EVENT_PACKAGE_CHANGED;
 import static android.appenumeration.cts.Constants.CALLBACK_EVENT_PACKAGE_REMOVED;
+import static android.appenumeration.cts.Constants.EXTRA_ACCOUNT;
 import static android.appenumeration.cts.Constants.EXTRA_AUTHORITY;
 import static android.appenumeration.cts.Constants.EXTRA_CERT;
 import static android.appenumeration.cts.Constants.EXTRA_DATA;
@@ -73,6 +76,7 @@ import static android.appenumeration.cts.Constants.QUERIES_NOTHING_SHARED_USER;
 import static android.appenumeration.cts.Constants.QUERIES_NOTHING_USES_LIBRARY;
 import static android.appenumeration.cts.Constants.QUERIES_NOTHING_USES_OPTIONAL_LIBRARY;
 import static android.appenumeration.cts.Constants.QUERIES_PACKAGE;
+import static android.appenumeration.cts.Constants.QUERIES_PACKAGE_PROVIDER;
 import static android.appenumeration.cts.Constants.QUERIES_PROVIDER_ACTION;
 import static android.appenumeration.cts.Constants.QUERIES_PROVIDER_AUTH;
 import static android.appenumeration.cts.Constants.QUERIES_SERVICE_ACTION;
@@ -132,6 +136,8 @@ import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import android.accounts.Account;
+import android.accounts.AccountManager;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetProviderInfo;
 import android.content.ComponentName;
@@ -189,9 +195,15 @@ public class AppEnumerationTests {
     private static boolean sGlobalFeatureEnabled;
 
     private static PackageManager sPm;
+    private static AccountManager sAccountManager;
 
     // The shared library for getting dependent packages
     private static final String TEST_SHARED_LIB_NAME = "android.test.runner";
+
+    private static final Account ACCOUNT_SYNCADAPTER = new Account(
+            TARGET_SYNCADAPTER, "android.appenumeration.account.type");
+    private static final Account ACCOUNT_SYNCADAPTER_SHARED_USER = new Account(
+            TARGET_SYNCADAPTER_SHARED_USER, "android.appenumeration.shareduid.account.type");
 
     @Rule
     public TestName name = new TestName();
@@ -216,12 +228,24 @@ public class AppEnumerationTests {
         sResponseHandler = new Handler(sResponseThread.getLooper());
 
         sPm = InstrumentationRegistry.getInstrumentation().getContext().getPackageManager();
+        sAccountManager = AccountManager.get(
+                InstrumentationRegistry.getInstrumentation().getContext());
+
+        assertThat(sAccountManager.addAccountExplicitly(ACCOUNT_SYNCADAPTER,
+                null /* password */, null /* userdata */), is(true));
+        assertThat(sAccountManager.addAccountExplicitly(ACCOUNT_SYNCADAPTER_SHARED_USER,
+                null /* password */, null /* userdata */), is(true));
     }
 
     @AfterClass
     public static void tearDown() {
         if (!sGlobalFeatureEnabled) return;
         sResponseThread.quit();
+
+        assertThat(sAccountManager.removeAccountExplicitly(ACCOUNT_SYNCADAPTER),
+                is(true));
+        assertThat(sAccountManager.removeAccountExplicitly(ACCOUNT_SYNCADAPTER_SHARED_USER),
+                is(true));
     }
 
     @Test
@@ -983,6 +1007,32 @@ public class AppEnumerationTests {
     }
 
     @Test
+    public void queriesPackage_requestSync_canSeeSyncadapterTarget()
+            throws Exception {
+        assertThat(requestSyncAndAwaitStatus(QUERIES_PACKAGE,
+                        ACCOUNT_SYNCADAPTER, TARGET_SYNCADAPTER),
+                is(true));
+    }
+
+    @Test
+    public void queriesNothingSharedUser_requestSync_canSeeSyncadapterSharedUserTarget()
+            throws Exception {
+        assertThat(requestSyncAndAwaitStatus(QUERIES_NOTHING_SHARED_USER,
+                        ACCOUNT_SYNCADAPTER_SHARED_USER, TARGET_SYNCADAPTER_SHARED_USER),
+                is(true));
+    }
+
+    @Test
+    public void queriesNothing_requestSync_cannotSeeSyncadapterTarget() {
+        assertThrows(MissingCallbackException.class,
+                () -> requestSyncAndAwaitStatus(QUERIES_NOTHING,
+                        ACCOUNT_SYNCADAPTER, TARGET_SYNCADAPTER));
+        assertThrows(MissingCallbackException.class,
+                () -> requestSyncAndAwaitStatus(QUERIES_NOTHING,
+                        ACCOUNT_SYNCADAPTER_SHARED_USER, TARGET_SYNCADAPTER_SHARED_USER));
+    }
+
+    @Test
     public void queriesNothingSharedUser_getSyncAdapterPackages_canSeeSyncadapterSharedUserTarget()
             throws Exception {
         assertVisible(QUERIES_NOTHING_SHARED_USER, TARGET_SYNCADAPTER_SHARED_USER,
@@ -1118,6 +1168,18 @@ public class AppEnumerationTests {
         final Exception ex = assertThrows(IllegalArgumentException.class,
                 () -> setInstallerPackageName(QUERIES_NOTHING, QUERIES_NOTHING, TARGET_NO_API));
         assertThat(ex.getMessage(), containsString(TARGET_NO_API));
+    }
+
+    @Test
+    public void queriesPackageHasProvider_checkUriPermission_canSeeNoApi() throws Exception {
+        final int permissionResult = checkUriPermission(QUERIES_PACKAGE_PROVIDER, TARGET_NO_API);
+        assertThat(permissionResult, is(PackageManager.PERMISSION_GRANTED));
+    }
+
+    @Test
+    public void queriesPackageHasProvider_checkUriPermission_cannotSeeFilters() throws Exception {
+        final int permissionResult = checkUriPermission(QUERIES_PACKAGE_PROVIDER, TARGET_FILTERS);
+        assertThat(permissionResult, is(PackageManager.PERMISSION_DENIED));
     }
 
     private void assertNotVisible(String sourcePackageName, String targetPackageName)
@@ -1400,6 +1462,16 @@ public class AppEnumerationTests {
         return response.getStringArray(Intent.EXTRA_PACKAGES);
     }
 
+    private boolean requestSyncAndAwaitStatus(String sourcePackageName, Account account,
+            String targetPackageName) throws Exception {
+        final Bundle extraData = new Bundle();
+        extraData.putParcelable(EXTRA_ACCOUNT, account);
+        extraData.putString(EXTRA_AUTHORITY, targetPackageName + ".authority");
+        final Bundle response = sendCommandBlocking(sourcePackageName, /* targetPackageName */ null,
+                extraData, ACTION_REQUEST_SYNC_AND_AWAIT_STATUS);
+        return response.getBoolean(Intent.EXTRA_RETURN_RESULT);
+    }
+
     private void setPackagesSuspended(boolean suspend, List<String> packages) {
         final StringBuilder cmd = new StringBuilder("pm ");
         if (suspend) {
@@ -1457,6 +1529,17 @@ public class AppEnumerationTests {
         final Bundle response = sendCommandBlocking(sourcePackageName, targetPackageName, extraData,
                 ACTION_LAUNCHER_APPS_SHOULD_HIDE_FROM_SUGGESTIONS);
         return response.getBoolean(Intent.EXTRA_RETURN_RESULT);
+    }
+
+    private int checkUriPermission(String sourcePackageName, String targetPackageName)
+            throws Exception {
+        final int targetUid = sPm.getPackageUid(targetPackageName, /* flags */ 0);
+        final Bundle extraData = new Bundle();
+        extraData.putString(EXTRA_AUTHORITY, sourcePackageName);
+        final Result result = sendCommand(sourcePackageName, targetPackageName, targetUid,
+                extraData, ACTION_CHECK_URI_PERMISSION, /* waitForReady */ false);
+        final Bundle response = result.await();
+        return response.getInt(Intent.EXTRA_RETURN_RESULT);
     }
 
     interface Result {

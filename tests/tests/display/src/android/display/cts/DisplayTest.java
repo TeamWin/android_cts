@@ -19,6 +19,8 @@ package android.display.cts;
 import static android.content.pm.PackageManager.FEATURE_LEANBACK;
 import static android.view.Display.DEFAULT_DISPLAY;
 
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
+
 import static org.junit.Assert.*;
 import static org.junit.Assume.*;
 
@@ -62,6 +64,7 @@ import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.AdoptShellPermissionsRule;
+import com.android.compatibility.common.util.DisplayUtil;
 import com.android.compatibility.common.util.PropertyUtil;
 
 import org.junit.After;
@@ -189,12 +192,15 @@ public class DisplayTest {
             InstrumentationRegistry.getInstrumentation().getUiAutomation(),
             Manifest.permission.OVERRIDE_DISPLAY_MODE_REQUESTS,
             Manifest.permission.ACCESS_SURFACE_FLINGER,
-            Manifest.permission.WRITE_SECURE_SETTINGS);
+            Manifest.permission.WRITE_SECURE_SETTINGS,
+            Manifest.permission.HDMI_CEC);
 
     @Before
     public void setUp() throws Exception {
         mScreenOnActivity = launchScreenOnActivity();
-        mContext = InstrumentationRegistry.getInstrumentation().getContext();
+        mContext = getInstrumentation().getTargetContext();
+        assertTrue("Physical display is expected.", DisplayUtil.isDisplayConnected(mContext));
+
         mDisplayManager = mContext.getSystemService(DisplayManager.class);
         mWindowManager = mContext.getSystemService(WindowManager.class);
         mUiModeManager = mContext.getSystemService(UiModeManager.class);
@@ -429,10 +435,12 @@ public class DisplayTest {
     private void restoreOriginalHdrSettings() {
         final IBinder displayToken = SurfaceControl.getInternalDisplayToken();
         SurfaceControl.overrideHdrTypes(displayToken, new int[]{});
-        mDisplayManager.setUserDisabledHdrTypes(
-                mOriginalHdrSettings.userDisabledHdrTypes);
-        mDisplayManager.setAreUserDisabledHdrTypesAllowed(
-                mOriginalHdrSettings.areUserDisabledHdrTypesAllowed);
+        if (mDisplayManager != null) {
+            mDisplayManager.setUserDisabledHdrTypes(
+                    mOriginalHdrSettings.userDisabledHdrTypes);
+            mDisplayManager.setAreUserDisabledHdrTypesAllowed(
+                    mOriginalHdrSettings.areUserDisabledHdrTypesAllowed);
+        }
     }
 
     private void waitUntil(Display display, Predicate<Display> pred, Duration maxWait)

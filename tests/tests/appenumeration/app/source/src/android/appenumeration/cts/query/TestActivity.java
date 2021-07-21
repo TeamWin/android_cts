@@ -39,6 +39,7 @@ import static android.appenumeration.cts.Constants.CALLBACK_EVENT_PACKAGES_UNSUS
 import static android.appenumeration.cts.Constants.CALLBACK_EVENT_PACKAGE_ADDED;
 import static android.appenumeration.cts.Constants.CALLBACK_EVENT_PACKAGE_CHANGED;
 import static android.appenumeration.cts.Constants.CALLBACK_EVENT_PACKAGE_REMOVED;
+import static android.appenumeration.cts.Constants.EXTRA_ACCOUNT;
 import static android.appenumeration.cts.Constants.EXTRA_AUTHORITY;
 import static android.appenumeration.cts.Constants.EXTRA_CERT;
 import static android.appenumeration.cts.Constants.EXTRA_DATA;
@@ -52,10 +53,12 @@ import static android.content.Intent.EXTRA_RETURN_RESULT;
 import static android.content.pm.PackageManager.CERT_INPUT_RAW_X509;
 import static android.os.Process.INVALID_UID;
 
+import android.accounts.Account;
 import android.app.Activity;
 import android.app.PendingIntent;
 import android.appenumeration.cts.Constants;
 import android.appenumeration.cts.MissingBroadcastException;
+import android.appenumeration.cts.MissingCallbackException;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProviderInfo;
 import android.content.ActivityNotFoundException;
@@ -68,6 +71,7 @@ import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.content.ServiceConnection;
 import android.content.SyncAdapterType;
+import android.content.SyncStatusObserver;
 import android.content.pm.LauncherApps;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -107,6 +111,7 @@ public class TestActivity extends Activity {
     private Handler mainHandler;
     private Handler backgroundHandler;
     private HandlerThread backgroundThread;
+    private Object syncStatusHandle;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -121,6 +126,9 @@ public class TestActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        if (syncStatusHandle != null) {
+            ContentResolver.removeStatusChangeListener(syncStatusHandle);
+        }
         backgroundThread.quitSafely();
         super.onDestroy();
     }
@@ -232,6 +240,13 @@ public class TestActivity extends Activity {
                 final int userId = intent.getBundleExtra(EXTRA_DATA)
                         .getInt(Intent.EXTRA_USER);
                 sendSyncAdapterPackagesForAuthorityAsUser(remoteCallback, authority, userId);
+            } else if (Constants.ACTION_REQUEST_SYNC_AND_AWAIT_STATUS.equals(action)) {
+                final String authority = intent.getBundleExtra(EXTRA_DATA)
+                        .getString(EXTRA_AUTHORITY);
+                final Account account = intent.getBundleExtra(EXTRA_DATA)
+                        .getParcelable(EXTRA_ACCOUNT);
+                awaitRequestSyncStatus(remoteCallback, action, account, authority,
+                        EXTENDED_TIMEOUT_MS);
             } else if (Constants.ACTION_AWAIT_LAUNCHER_APPS_CALLBACK.equals(action)) {
                 final int expectedEventCode = intent.getBundleExtra(EXTRA_DATA)
                         .getInt(EXTRA_FLAGS, CALLBACK_EVENT_INVALID);
@@ -255,6 +270,13 @@ public class TestActivity extends Activity {
                 final int userId = intent.getBundleExtra(EXTRA_DATA).getInt(Intent.EXTRA_USER);
                 sendLauncherAppsShouldHideFromSuggestions(remoteCallback, targetPackageName,
                         userId);
+            } else if (Constants.ACTION_CHECK_URI_PERMISSION.equals(action)) {
+                final String targetPackageName = intent.getStringExtra(Intent.EXTRA_PACKAGE_NAME);
+                final int targetUid = intent.getIntExtra(Intent.EXTRA_UID, INVALID_UID);
+                final String sourceAuthority = intent.getBundleExtra(EXTRA_DATA)
+                        .getString(EXTRA_AUTHORITY);
+                sendCheckUriPermission(remoteCallback, sourceAuthority, targetPackageName,
+                        targetUid);
             } else {
                 sendError(remoteCallback, new Exception("unknown action " + action));
             }
@@ -590,6 +612,28 @@ public class TestActivity extends Activity {
         finish();
     }
 
+    private void awaitRequestSyncStatus(RemoteCallback remoteCallback, String action,
+            Account account, String authority, long timeoutMs) {
+        ContentResolver.cancelSync(account, authority);
+        final Object token = new Object();
+        final SyncStatusObserver observer = which -> {
+            final Bundle result = new Bundle();
+            result.putBoolean(EXTRA_RETURN_RESULT, true);
+            remoteCallback.sendResult(result);
+            mainHandler.removeCallbacksAndMessages(token);
+            finish();
+        };
+        syncStatusHandle = ContentResolver.addStatusChangeListener(
+                ContentResolver.SYNC_OBSERVER_TYPE_ACTIVE
+                        | ContentResolver.SYNC_OBSERVER_TYPE_SETTINGS
+                        | ContentResolver.SYNC_OBSERVER_TYPE_PENDING, observer);
+
+        ContentResolver.requestSync(account, authority, new Bundle());
+        mainHandler.postDelayed(
+                () -> sendError(remoteCallback, new MissingCallbackException(action, timeoutMs)),
+                token, timeoutMs);
+    }
+
     private void sendGetSharedLibraryDependentPackages(RemoteCallback remoteCallback,
             String sharedLibName) {
         final List<SharedLibraryInfo> sharedLibraryInfos = getPackageManager()
@@ -637,6 +681,19 @@ public class TestActivity extends Activity {
                 targetPackageName, UserHandle.of(userId));
         final Bundle result = new Bundle();
         result.putBoolean(EXTRA_RETURN_RESULT, hideFromSuggestions);
+        remoteCallback.sendResult(result);
+        finish();
+    }
+
+    private void sendCheckUriPermission(RemoteCallback remoteCallback, String sourceAuthority,
+            String targetPackageName, int targetUid) {
+        final Uri uri = Uri.parse("content://" + sourceAuthority);
+        grantUriPermission(targetPackageName, uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        final int permissionResult = checkUriPermission(uri, 0 /* pid */, targetUid,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        revokeUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        final Bundle result = new Bundle();
+        result.putInt(EXTRA_RETURN_RESULT, permissionResult);
         remoteCallback.sendResult(result);
         finish();
     }
