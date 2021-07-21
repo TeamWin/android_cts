@@ -175,6 +175,10 @@ public class Constants {
             PKG_BASE + "cts.action.AWAIT_PACKAGE_REMOVED";
     public static final String ACTION_AWAIT_PACKAGE_ADDED =
             PKG_BASE + "cts.action.AWAIT_PACKAGE_ADDED";
+    public static final String ACTION_AWAIT_PACKAGE_FULLY_REMOVED =
+            PKG_BASE + "cts.action.AWAIT_PACKAGE_FULLY_REMOVED";
+    public static final String ACTION_AWAIT_PACKAGE_DATA_CLEARED =
+            PKG_BASE + "cts.action.AWAIT_PACKAGE_DATA_CLEARED";
 
     public static final String ACTION_QUERY_ACTIVITIES =
             PKG_BASE + "cts.action.QUERY_INTENT_ACTIVITIES";
