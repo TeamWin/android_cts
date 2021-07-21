@@ -68,3 +68,8 @@ filegroup {
     name: "CtsHostsideTestsAppSecurityUtil",
     srcs: ["src/android/appsecurity/cts/Utils.java"],
 }
+
+filegroup {
+    name: "cts-ec-p256-por_1_2-default-caps.lineage",
+    srcs: ["certs/pkgsigverify/ec-p256-por_1_2-default-caps"],
+}
