@@ -317,11 +317,12 @@ def define_reference_camera(pose_reference, cam_reference):
   else:
     logging.debug('pose_reference is CAMERA')
     i_refs = [k for (k, v) in cam_reference.items() if v]
+    i_ref = i_refs[0]
     if len(i_refs) > 1:
-      raise AssertionError('More than 1 reference camera. Check translation '
-                           f'matrices. cam_reference: {cam_reference}')
+      logging.debug('Warning: more than 1 reference camera. Check translation '
+                    f'matrices. cam_reference: {cam_reference}')
+      i_2nd = i_refs[1]  # use second camera since both at same location
     else:
-      i_ref = i_refs[0]
       i_2nd = next(k for (k, v) in cam_reference.items() if not v)
   return i_ref, i_2nd
 
