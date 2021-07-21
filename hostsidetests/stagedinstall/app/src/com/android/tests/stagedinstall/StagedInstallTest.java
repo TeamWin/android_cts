@@ -1415,7 +1415,7 @@ public class StagedInstallTest {
 
         InstallUtils.commitExpectingFailure(
                 AssertionError.class,
-                "Failed collecting certificates for",
+                "Failed to collect certificates from",
                 Install.single(Apex2NoApkSignature));
         assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(1);
     }
