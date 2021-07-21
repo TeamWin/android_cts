@@ -172,6 +172,9 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
     protected boolean mHasTelephony;
     protected boolean mHasConnectionService;
 
+    /** Whether the device supports sms. */
+    protected boolean mHasSms;
+
     /** Users we shouldn't delete in the tests */
     private ArrayList<Integer> mFixedUsers;
 
@@ -189,6 +192,7 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
         mHasManagedUserFeature = hasDeviceFeature("android.software.managed_users");
         mSupportsFbe = hasDeviceFeature("android.software.file_based_encryption");
         mHasTelephony = hasDeviceFeature("android.hardware.telephony");
+        mHasSms = isSmsCapable();
         mHasConnectionService = hasDeviceFeature("android.software.connectionservice");
         mIsWatch = hasDeviceFeature("android.hardware.type.watch");
         mFixedPackages = getDevice().getInstalledPackageNames();
@@ -1045,5 +1049,15 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
             CLog.w("Exception running '" + command + "': " + e);
             return false;
         }
+    }
+
+    private boolean isSmsCapable() throws Exception {
+        String output = getDevice().executeShellCommand("dumpsys phone");
+        if (output.contains("isSmsCapable=true")) {
+            CLog.d("Device is SMS capable");
+            return true;
+        }
+        CLog.d("Device is not SMS capable");
+        return false;
     }
 }
