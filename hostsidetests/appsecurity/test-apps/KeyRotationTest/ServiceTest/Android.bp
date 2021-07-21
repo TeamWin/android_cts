@@ -43,6 +43,7 @@ android_test {
         "general-tests",
     ],
     certificate: ":ec-p256",
+    v4_signature: true,
     // Disable dexpreopt and <uses-library> check for test
     enforce_uses_libs: false,
     dex_preopt: {
@@ -73,6 +74,7 @@ android_test {
     certificate: ":ec-p256_2",
     additional_certificates: [":ec-p256"],
     lineage : ":ec-p256-por_1_2-default-caps",
+    v4_signature: true,
     // Disable dexpreopt and <uses-library> check for test
     enforce_uses_libs: false,
     dex_preopt: {
