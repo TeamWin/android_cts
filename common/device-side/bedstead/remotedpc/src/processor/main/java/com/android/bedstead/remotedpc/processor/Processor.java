@@ -218,7 +218,7 @@ public final class Processor extends AbstractProcessor {
                 MethodSpec.methodBuilder("tryConnect")
                         .addModifiers(Modifier.PRIVATE)
                         .addException(UNAVAILABLE_PROFILE_EXCEPTION_CLASSNAME)
-                        .addCode("$T retries = 50;", int.class)
+                        .addCode("$T retries = 300;", int.class)
                         .beginControlFlow("while (true)")
                             .beginControlFlow("try")
                                 .addCode("mConnector.connect();")
