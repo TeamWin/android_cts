@@ -70,12 +70,10 @@ import com.android.bedstead.testapp.TestAppInstanceReference;
 import com.android.bedstead.testapp.TestAppProvider;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.eventlib.EventLogs;
-import com.android.eventlib.events.activities.ActivityCreatedEvent;
 import com.android.eventlib.events.activities.ActivityDestroyedEvent;
 import com.android.eventlib.events.activities.ActivityStartedEvent;
 
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -92,7 +90,7 @@ public class LockTaskTest {
 
     private static final TestApis sTestApis = new TestApis();
 
-    private static final DevicePolicyManager mDevicePolicyManager =
+    private static final DevicePolicyManager sLocalDevicePolicyManager =
             sTestApis.context().instrumentedContext().getSystemService(DevicePolicyManager.class);
 
     private static final int[] INDIVIDUALLY_SETTABLE_FLAGS = new int[] {
@@ -238,7 +236,7 @@ public class LockTaskTest {
         sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(new String[]{PACKAGE_NAME});
 
         try {
-            assertThat(mDevicePolicyManager.isLockTaskPermitted(PACKAGE_NAME)).isTrue();
+            assertThat(sLocalDevicePolicyManager.isLockTaskPermitted(PACKAGE_NAME)).isTrue();
         } finally {
             sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(originalLockTaskPackages);
         }
@@ -255,7 +253,7 @@ public class LockTaskTest {
         sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(new String[]{PACKAGE_NAME});
 
         try {
-            assertThat(mDevicePolicyManager.isLockTaskPermitted(PACKAGE_NAME)).isFalse();
+            assertThat(sLocalDevicePolicyManager.isLockTaskPermitted(PACKAGE_NAME)).isFalse();
         } finally {
             sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(originalLockTaskPackages);
         }
@@ -271,7 +269,7 @@ public class LockTaskTest {
         sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(new String[]{});
 
         try {
-            assertThat(mDevicePolicyManager.isLockTaskPermitted(PACKAGE_NAME)).isFalse();
+            assertThat(sLocalDevicePolicyManager.isLockTaskPermitted(PACKAGE_NAME)).isFalse();
         } finally {
             sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(originalLockTaskPackages);
         }
@@ -293,7 +291,7 @@ public class LockTaskTest {
 
             for (String app : policyExemptApps) {
                 assertWithMessage("isLockTaskPermitted(%s)", app)
-                        .that(mDevicePolicyManager.isLockTaskPermitted(app)).isTrue();
+                        .that(sLocalDevicePolicyManager.isLockTaskPermitted(app)).isTrue();
             }
         } finally {
             sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(originalLockTaskPackages);
@@ -966,6 +964,7 @@ public class LockTaskTest {
         try {
             sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(
                     new String[]{dialerPackage});
+
             Bundle options = ActivityOptions.makeBasic().setLockTaskEnabled(true).toBundle();
             Intent intent = new Intent(ACTION_DIAL);
             intent.setPackage(dialerPackage);
