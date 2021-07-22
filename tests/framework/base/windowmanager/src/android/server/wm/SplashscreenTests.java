@@ -453,6 +453,25 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         }
     }
 
+    private void waitAndAssertOverrideThemeColor(int expectedColor) {
+        final ComponentName activity = SPLASH_SCREEN_REPLACE_THEME_ACTIVITY;
+        final Bundle resultExtras = Condition.waitForResult(
+                new Condition<Bundle>("splash screen theme color of " + activity)
+                        .setResultSupplier(() -> TestJournalProvider.TestJournalContainer.get(
+                                OVERRIDE_THEME_COMPONENT).extras)
+                        .setResultValidator(extras -> extras.containsKey(OVERRIDE_THEME_COLOR)));
+        if (resultExtras == null) {
+            fail("No reported override theme color from " + activity);
+        }
+        if (expectedColor > 0) {
+            assertEquals("Override theme color must match",
+                    Integer.toHexString(expectedColor),
+                    Integer.toHexString(resultExtras.getInt(OVERRIDE_THEME_COLOR)));
+        }
+        mWmState.waitForActivityRemoved(activity);
+        separateTestJournal();
+    }
+
     @Test
     public void testOverrideSplashscreenTheme() {
         assumeFalse(isLeanBack());
@@ -461,36 +480,23 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         // Pre-launch the activity to ensure status is cleared on the device
         startActivityFromTestLauncher(homeActivity, SPLASH_SCREEN_REPLACE_THEME_ACTIVITY,
                 intent -> {});
-        mWmState.waitAndAssertActivityRemoved(SPLASH_SCREEN_REPLACE_THEME_ACTIVITY);
+        waitAndAssertOverrideThemeColor(0 /* ignore */);
 
         // Launch the activity a first time, check that the splashscreen use the default theme,
         // and override the theme for the next launch
-        TestJournalProvider.TestJournal journal = TestJournalProvider.TestJournalContainer.get(
-                OVERRIDE_THEME_COMPONENT);
-
         startActivityFromTestLauncher(homeActivity, SPLASH_SCREEN_REPLACE_THEME_ACTIVITY,
                 intent -> intent.putExtra(OVERRIDE_THEME_ENABLED, true));
-        mWmState.waitForActivityRemoved(SPLASH_SCREEN_REPLACE_THEME_ACTIVITY);
-        assertEquals(Integer.toHexString(Color.BLUE),
-                Integer.toHexString(journal.extras.getInt(OVERRIDE_THEME_COLOR)));
+        waitAndAssertOverrideThemeColor(Color.BLUE);
 
         // Launch the activity a second time, check that the theme has been overridden and reset
         // to the default theme
         startActivityFromTestLauncher(homeActivity, SPLASH_SCREEN_REPLACE_THEME_ACTIVITY,
                 intent -> {});
-        mWmState.waitForActivityRemoved(SPLASH_SCREEN_REPLACE_THEME_ACTIVITY);
-
-        journal = TestJournalProvider.TestJournalContainer.get(OVERRIDE_THEME_COMPONENT);
-        assertEquals(Integer.toHexString(Color.RED),
-                Integer.toHexString(journal.extras.getInt(OVERRIDE_THEME_COLOR)));
+        waitAndAssertOverrideThemeColor(Color.RED);
 
         // Launch the activity a third time just to check that the theme has indeed been reset.
         startActivityFromTestLauncher(homeActivity, SPLASH_SCREEN_REPLACE_THEME_ACTIVITY,
                 intent -> {});
-        mWmState.waitForActivityRemoved(SPLASH_SCREEN_REPLACE_THEME_ACTIVITY);
-
-        journal = TestJournalProvider.TestJournalContainer.get(OVERRIDE_THEME_COMPONENT);
-        assertEquals(Integer.toHexString(Color.BLUE),
-                Integer.toHexString(journal.extras.getInt(OVERRIDE_THEME_COLOR)));
+        waitAndAssertOverrideThemeColor(Color.BLUE);
     }
 }
