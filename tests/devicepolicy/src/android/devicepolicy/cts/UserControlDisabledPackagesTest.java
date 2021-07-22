@@ -31,19 +31,16 @@ import android.util.Log;
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
-import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PositivePolicyTest;
 import com.android.bedstead.harrier.policies.UserControlDisabledPackages;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.testapp.TestApp;
-import com.android.bedstead.testapp.TestAppActivityReference;
 import com.android.bedstead.testapp.TestAppInstanceReference;
 import com.android.bedstead.testapp.TestAppProvider;
 
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -72,7 +69,6 @@ public class UserControlDisabledPackagesTest {
     public static final DeviceState sDeviceState = new DeviceState();
 
     @Test
-    @Postsubmit(reason = "New test")
     @PositivePolicyTest(policy = UserControlDisabledPackages.class)
     public void setUserControlDisabledPackages_toOneProtectedPackage() {
         List<String> originalDisabledPackages =
@@ -90,7 +86,6 @@ public class UserControlDisabledPackagesTest {
     }
 
     @Test
-    @Postsubmit(reason = "New test")
     @PositivePolicyTest(policy = UserControlDisabledPackages.class)
     public void setUserControlDisabledPackages_toEmptyProtectedPackages() {
         List<String> originalDisabledPackages =
@@ -108,7 +103,6 @@ public class UserControlDisabledPackagesTest {
     }
 
     @Test
-    @Postsubmit(reason = "New test")
     @CannotSetPolicyTest(policy = UserControlDisabledPackages.class)
     public void setUserControlDisabledPackages_notAllowedToSetProtectedPackages_throwsException() {
         assertThrows(SecurityException.class,
@@ -117,7 +111,6 @@ public class UserControlDisabledPackagesTest {
     }
 
     @Test
-    @Postsubmit(reason = "New test")
     @PositivePolicyTest(policy = UserControlDisabledPackages.class)
     public void
     getUserControlDisabledPackages_noProtectedPackagesSet_returnsEmptyProtectedPackages() {
@@ -128,7 +121,6 @@ public class UserControlDisabledPackagesTest {
     }
 
     @Test
-    @Postsubmit(reason = "New test")
     @CannotSetPolicyTest(policy = UserControlDisabledPackages.class)
     public void
     getUserControlDisabledPackages_notAllowedToRetrieveProtectedPackages_throwsException() {
@@ -137,10 +129,8 @@ public class UserControlDisabledPackagesTest {
     }
 
     @Test
-    @Postsubmit(reason = "New test")
     @EnsureHasPermission(value = permission.FORCE_STOP_PACKAGES)
     @PositivePolicyTest(policy = UserControlDisabledPackages.class)
-    @Ignore // TODO(b/189325405): Re-enable once secondary users can start activities
     public void setUserControlDisabledPackages_launchActivity_verifyPackageNotStopped()
             throws Exception {
         List<String> originalDisabledPackages =

@@ -49,7 +49,6 @@ import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature;
 import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
-import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.permissions.PermissionContext;
@@ -114,7 +113,6 @@ public final class DevicePolicyManagerTest {
     @RequireFeature(PackageManager.FEATURE_DEVICE_ADMIN)
     @RequireFeature(PackageManager.FEATURE_MANAGED_USERS)
     @Test
-    @Postsubmit(reason="b/181207615 flaky")
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     public void newlyProvisionedManagedProfile_createsProfile() throws Exception {
         UserHandle profile = null;
@@ -136,7 +134,6 @@ public final class DevicePolicyManagerTest {
     @RequireFeature(PackageManager.FEATURE_DEVICE_ADMIN)
     @RequireFeature(PackageManager.FEATURE_MANAGED_USERS)
     @Test
-    @Postsubmit(reason="b/181207615 flaky")
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     public void newlyProvisionedManagedProfile_createsManagedProfile() throws Exception {
         UserHandle profile = null;
@@ -158,7 +155,6 @@ public final class DevicePolicyManagerTest {
     @RequireFeature(PackageManager.FEATURE_DEVICE_ADMIN)
     @RequireFeature(PackageManager.FEATURE_MANAGED_USERS)
     @Test
-    @Postsubmit(reason="b/181207615 flaky")
     @EnsureHasPermission({MANAGE_PROFILE_AND_DEVICE_OWNERS, INTERACT_ACROSS_USERS_FULL})
     public void newlyProvisionedManagedProfile_setsActiveAdmin() throws Exception {
         UserHandle profile = null;
@@ -182,7 +178,6 @@ public final class DevicePolicyManagerTest {
     @RequireFeature(PackageManager.FEATURE_DEVICE_ADMIN)
     @RequireFeature(PackageManager.FEATURE_MANAGED_USERS)
     @Test
-    @Postsubmit(reason="b/181207615 flaky")
     @EnsureHasPermission({MANAGE_PROFILE_AND_DEVICE_OWNERS, INTERACT_ACROSS_USERS})
     public void newlyProvisionedManagedProfile_setsProfileOwner() throws Exception {
         UserHandle profile = null;
@@ -205,7 +200,6 @@ public final class DevicePolicyManagerTest {
     @RequireFeature(PackageManager.FEATURE_DEVICE_ADMIN)
     @RequireFeature(PackageManager.FEATURE_MANAGED_USERS)
     @Test
-    @Postsubmit(reason="new test")
     @Ignore
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     public void newlyProvisionedManagedProfile_copiesAccountToProfile() throws Exception {
@@ -231,7 +225,6 @@ public final class DevicePolicyManagerTest {
     @RequireFeature(PackageManager.FEATURE_DEVICE_ADMIN)
     @RequireFeature(PackageManager.FEATURE_MANAGED_USERS)
     @Test
-    @Postsubmit(reason="new test")
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     public void newlyProvisionedManagedProfile_removesAccountFromParentByDefault()
             throws Exception {
@@ -258,7 +251,6 @@ public final class DevicePolicyManagerTest {
     @RequireFeature(PackageManager.FEATURE_MANAGED_USERS)
     @Test
     @Ignore
-    @Postsubmit(reason="new test")
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     public void newlyProvisionedManagedProfile_keepsAccountInParentIfRequested() throws Exception {
         UserHandle profile = null;
@@ -284,7 +276,6 @@ public final class DevicePolicyManagerTest {
     @RequireFeature(PackageManager.FEATURE_DEVICE_ADMIN)
     @RequireFeature(PackageManager.FEATURE_MANAGED_USERS)
     @Test
-    @Postsubmit(reason="new test")
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     public void newlyProvisionedManagedProfile_removesNonRequiredAppsFromProfile()
             throws Exception {
@@ -311,7 +302,6 @@ public final class DevicePolicyManagerTest {
     @RequireFeature(PackageManager.FEATURE_DEVICE_ADMIN)
     @RequireFeature(PackageManager.FEATURE_MANAGED_USERS)
     @Test
-    @Postsubmit(reason="new test")
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     public void newlyProvisionedManagedProfile_setsCrossProfilePackages()
             throws Exception {
@@ -502,7 +492,6 @@ public final class DevicePolicyManagerTest {
     @RequireRunOnPrimaryUser
     @RequireFeature(PackageManager.FEATURE_DEVICE_ADMIN)
     @Test
-    @Postsubmit(reason="new test")
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     public void newlyProvisionedFullyManagedDevice_leavesAllSystemAppsEnabledWhenRequested()
             throws Exception {

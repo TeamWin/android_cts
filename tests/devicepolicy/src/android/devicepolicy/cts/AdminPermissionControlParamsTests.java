@@ -24,7 +24,6 @@ import android.os.Parcel;
 import android.permission.AdminPermissionControlParams;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
-import com.android.bedstead.harrier.annotations.Postsubmit;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -36,7 +35,6 @@ public class AdminPermissionControlParamsTests {
     private static final int GRANT_STATE = DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED;
     private static final boolean CAN_ADMIN_GRANT = true;
 
-    @Postsubmit(reason="new test")
     @Test
     public void gettersReturnConstructorValue() {
         AdminPermissionControlParams params = createViaParcel(
@@ -48,7 +46,6 @@ public class AdminPermissionControlParamsTests {
         assertThat(params.canAdminGrantSensorsPermissions()).isEqualTo(CAN_ADMIN_GRANT);
     }
 
-    @Postsubmit(reason="new test")
     @Test
     public void correctParcelingAndUnparceling() {
         AdminPermissionControlParams params = createViaParcel();
