@@ -65,17 +65,18 @@ class PermissionTapjackingTest : BaseUsePermissionTest() {
 
         val buttonCenter = waitFindObject(By.text(
                 getPermissionControllerString(ALLOW_FOREGROUND_BUTTON_TEXT))).visibleCenter
-        val messageBounds = waitFindObject(By.text(
-                getPermissionControllerString(REQUEST_LOCATION_MESSAGE, APP_PACKAGE_NAME)))
-                        .visibleBounds
+        val dialogBounds = waitFindObject(By.res(
+                "com.android.permissioncontroller", "grant_dialog")).visibleBounds
+        val messageBottom = waitFindObject(By.res(
+                "com.android.permissioncontroller", "permission_message")).visibleBounds.bottom
 
         // Wait for overlay to hide the dialog
         context.sendBroadcast(Intent(ACTION_SHOW_OVERLAY)
                 .putExtra(EXTRA_FULL_OVERLAY, false)
-                .putExtra(OVERLAY_LEFT, messageBounds.left)
-                .putExtra(OVERLAY_TOP, messageBounds.top)
-                .putExtra(OVERLAY_RIGHT, messageBounds.right)
-                .putExtra(OVERLAY_BOTTOM, messageBounds.bottom))
+                .putExtra(DIALOG_LEFT, dialogBounds.left)
+                .putExtra(DIALOG_TOP, dialogBounds.top)
+                .putExtra(DIALOG_RIGHT, dialogBounds.right)
+                .putExtra(MESSAGE_BOTTOM, messageBottom))
         waitFindObject(By.res("android.permission3.cts.usepermission:id/overlay"))
 
         tryClicking(buttonCenter)
@@ -98,16 +99,19 @@ class PermissionTapjackingTest : BaseUsePermissionTest() {
         // Permission should not be granted
         assertAppHasPermission(ACCESS_FINE_LOCATION, false)
 
-        // Verify that clicking the dialog without the overlay still works
-        context.sendBroadcast(Intent(ACTION_HIDE_OVERLAY))
-        SystemUtil.eventually({
-            if (packageManager.checkPermission(ACCESS_FINE_LOCATION, APP_PACKAGE_NAME) ==
-                    PackageManager.PERMISSION_DENIED) {
-                uiDevice.click(buttonCenter.x, buttonCenter.y)
-                Thread.sleep(100)
-            }
-            assertAppHasPermission(ACCESS_FINE_LOCATION, true)
-        }, 10000)
+        // On Automotive the dialog gets closed by the tapjacking activity popping up
+        if (!isAutomotive) {
+            // Verify that clicking the dialog without the overlay still works
+            context.sendBroadcast(Intent(ACTION_HIDE_OVERLAY))
+            SystemUtil.eventually({
+                if (packageManager.checkPermission(ACCESS_FINE_LOCATION, APP_PACKAGE_NAME) ==
+                        PackageManager.PERMISSION_DENIED) {
+                    uiDevice.click(buttonCenter.x, buttonCenter.y)
+                    Thread.sleep(100)
+                }
+                assertAppHasPermission(ACCESS_FINE_LOCATION, true)
+            }, 10000)
+        }
     }
 
     companion object {
@@ -116,9 +120,9 @@ class PermissionTapjackingTest : BaseUsePermissionTest() {
 
         const val EXTRA_FULL_OVERLAY = "android.permission3.cts.usepermission.extra.FULL_OVERLAY"
 
-        const val OVERLAY_LEFT = "android.permission3.cts.usepermission.extra.OVERLAY_LEFT"
-        const val OVERLAY_TOP = "android.permission3.cts.usepermission.extra.OVERLAY_TOP"
-        const val OVERLAY_RIGHT = "android.permission3.cts.usepermission.extra.OVERLAY_RIGHT"
-        const val OVERLAY_BOTTOM = "android.permission3.cts.usepermission.extra.OVERLAY_BOTTOM"
+        const val DIALOG_LEFT = "android.permission3.cts.usepermission.extra.DIALOG_LEFT"
+        const val DIALOG_TOP = "android.permission3.cts.usepermission.extra.DIALOG_TOP"
+        const val DIALOG_RIGHT = "android.permission3.cts.usepermission.extra.DIALOG_RIGHT"
+        const val MESSAGE_BOTTOM = "android.permission3.cts.usepermission.extra.MESSAGE_BOTTOM"
     }
 }
