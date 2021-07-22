@@ -16,6 +16,7 @@
 
 package com.android.bedstead.nene.devicepolicy;
 
+import static android.Manifest.permission.CREATE_USERS;
 import static android.Manifest.permission.INTERACT_ACROSS_USERS;
 import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
 import static android.Manifest.permission.WRITE_SECURE_SETTINGS;
@@ -167,7 +168,7 @@ public final class DevicePolicy {
             try (PermissionContext p =
                          mTestApis.permissions().withPermission(
                                  MANAGE_PROFILE_AND_DEVICE_OWNERS, MANAGE_DEVICE_ADMINS,
-                                 INTERACT_ACROSS_USERS_FULL, INTERACT_ACROSS_USERS)) {
+                                 INTERACT_ACROSS_USERS_FULL, INTERACT_ACROSS_USERS, CREATE_USERS)) {
                 devicePolicyManager.setActiveAdmin(deviceOwnerComponent,
                         /* refreshing= */ true, user.id());
 
