@@ -1202,10 +1202,10 @@ public final class DeviceState implements TestRule {
 
             mDeviceOwner = RemoteDpc.setAsDeviceOwner(userReference)
                     .devicePolicyController();
+        }
 
-            if (isPrimary) {
-                mPrimaryDpc = mDeviceOwner;
-            }
+        if (isPrimary) {
+            mPrimaryDpc = mDeviceOwner;
         }
         
         RemoteDpc.forDevicePolicyController(mDeviceOwner).devicePolicyManager()

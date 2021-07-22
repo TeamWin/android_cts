@@ -19,6 +19,7 @@ package com.android.bedstead.harrier;
 import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeNone;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnAffiliatedDeviceOwnerSecondaryUser;
+import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnAffiliatedProfileOwnerSecondaryUser;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnDeviceOwnerUser;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnNonAffiliatedDeviceOwnerSecondaryUser;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnParentOfCorporateOwnedProfileOwner;
@@ -37,6 +38,7 @@ import java.util.List;
 @IncludeNone
 @IncludeRunOnDeviceOwnerUser
 @IncludeRunOnAffiliatedDeviceOwnerSecondaryUser
+@IncludeRunOnAffiliatedProfileOwnerSecondaryUser
 @IncludeRunOnNonAffiliatedDeviceOwnerSecondaryUser
 @IncludeRunOnProfileOwnerProfile
 @IncludeRunOnParentOfCorporateOwnedProfileOwner
@@ -59,6 +61,9 @@ public final class Policy {
     private static final IncludeRunOnAffiliatedDeviceOwnerSecondaryUser
             INCLUDE_RUN_ON_AFFILIATED_DEVICE_OWNER_SECONDARY_USER =
             Policy.class.getAnnotation(IncludeRunOnAffiliatedDeviceOwnerSecondaryUser.class);
+    private static final IncludeRunOnAffiliatedProfileOwnerSecondaryUser
+            INCLUDE_RUN_ON_AFFILIATED_PROFILE_OWNER_SECONDARY_USER =
+            Policy.class.getAnnotation(IncludeRunOnAffiliatedProfileOwnerSecondaryUser.class);
     private static final IncludeRunOnProfileOwnerProfile
             INCLUDE_RUN_ON_PROFILE_OWNER_PROFILE =
             Policy.class.getAnnotation(IncludeRunOnProfileOwnerProfile.class);
@@ -105,11 +110,11 @@ public final class Policy {
             case NO:
                 break;
             case AFFILIATED:
-                annotations.add(INCLUDE_RUN_ON_AFFILIATED_DEVICE_OWNER_SECONDARY_USER);
+                annotations.add(INCLUDE_RUN_ON_AFFILIATED_PROFILE_OWNER_SECONDARY_USER);
                 break;
             case AFFILIATED_OR_NO_DO:
                 annotations.add(INCLUDE_RUN_ON_PROFILE_OWNER_PRIMARY_USER);
-                annotations.add(INCLUDE_RUN_ON_AFFILIATED_DEVICE_OWNER_SECONDARY_USER);
+                annotations.add(INCLUDE_RUN_ON_AFFILIATED_PROFILE_OWNER_SECONDARY_USER);
                 break;
             case PARENT:
                 annotations.add(INCLUDE_RUN_ON_PROFILE_OWNER_PROFILE);
