@@ -232,7 +232,7 @@ NativeImage *getNativeImage(JNIEnv *env, jobject image, jobject area = NULL) {
         img->plane[ix].cropWidth =
             ((img->crop.right + (1 << xDecim) - 1) >> xDecim) - (img->crop.left >> xDecim);
 
-        // sanity check on increments
+        // validate increments
         ssize_t widthOffs =
             (((img->width + (1 << xDecim) - 1) >> xDecim) - 1) * img->plane[ix].colInc;
         ssize_t heightOffs =
