@@ -86,8 +86,7 @@ public class AudioLoopbackLatencyActivity extends AudioLoopbackBaseActivity {
         // We are not enforcing the latency target (PROAUDIO_LATENCY_MS_LIMIT)
         // test is allowed to pass as long as an analysis is done.
         boolean resultValid =
-                (mTestPeripheral == TESTPERIPHERAL_ANALOG_JACK
-                        || mTestPeripheral == TESTPERIPHERAL_USB)
+                isPeripheralValidForTest()
                 && mMeanConfidence >= CONFIDENCE_THRESHOLD
                 && mMeanLatencyMillis > EPSILON
                 && mMeanLatencyMillis < mMustLatency;
