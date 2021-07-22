@@ -16,7 +16,7 @@
 
 package com.android.bedstead.harrier.policies;
 
-import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.DeviceOwnerControl.GLOBAL;
+import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.DeviceOwnerControl.USER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.ProfileOwnerControl.PROFILE;
 
 import android.app.admin.DevicePolicyManager;
@@ -31,7 +31,7 @@ import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
  * {@link DevicePolicyManager#setApplicationRestrictions(ComponentName, String, Bundle)} and
  * {@link DevicePolicyManager#getApplicationRestrictions(ComponentName, String)}.
  */
-@EnterprisePolicy(deviceOwner = GLOBAL, profileOwner = PROFILE)
+@EnterprisePolicy(deviceOwner = USER, profileOwner = PROFILE)
 // TODO(b/193563511): need a way to indicate that this test can run on device owner user when system
 // users headless system user mode
 public final class ApplicationRestrictions {

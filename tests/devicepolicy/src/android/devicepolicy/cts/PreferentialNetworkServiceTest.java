@@ -23,7 +23,6 @@ import static android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_NOT_RESTRICTED;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_NOT_VCN_MANAGED;
 
-import android.app.Instrumentation;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.Network;
@@ -35,12 +34,9 @@ import android.os.HandlerThread;
 import android.os.Process;
 import android.util.Range;
 
-import androidx.test.platform.app.InstrumentationRegistry;
-
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
-import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.PositivePolicyTest;
 import com.android.bedstead.harrier.policies.PreferentialNetworkService;
 import com.android.bedstead.nene.TestApis;
@@ -97,7 +93,6 @@ public class PreferentialNetworkServiceTest {
      * see the enterprise slice requests.
      */
     @Test
-    @Postsubmit(reason = "New test")
     @EnsureHasPermission({ACCESS_NETWORK_STATE, NETWORK_SETTINGS})
     @PositivePolicyTest(policy = PreferentialNetworkService.class)
     public void setPreferentialNetworkServiceEnabled_enableService_issueRequest() {
@@ -136,7 +131,6 @@ public class PreferentialNetworkServiceTest {
      * see the enterprise slice requests.
      */
     @Test
-    @Postsubmit(reason = "New test")
     @EnsureHasPermission({ACCESS_NETWORK_STATE, NETWORK_SETTINGS})
     @PositivePolicyTest(policy = PreferentialNetworkService.class)
     public void setPreferentialNetworkServiceEnabled_disableService_noIssueRequest() {

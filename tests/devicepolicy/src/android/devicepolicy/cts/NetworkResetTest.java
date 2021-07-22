@@ -32,7 +32,6 @@ import android.provider.Settings;
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
-import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.PositivePolicyTest;
 import com.android.bedstead.harrier.policies.DisallowNetworkReset;
 import com.android.bedstead.harrier.policies.DisallowPrivateDnsConfig;
@@ -73,7 +72,6 @@ public class NetworkResetTest {
     }
 
     @Test
-    @Postsubmit(reason = "New test")
     @PositivePolicyTest(policy = DisallowNetworkReset.class)
     @EnsureHasPermission({NETWORK_SETTINGS, WRITE_SECURE_SETTINGS})
     public void factoryReset_disallowedByNetworkResetPolicy_doesNotFactoryReset() throws Exception {
@@ -95,7 +93,6 @@ public class NetworkResetTest {
 
 
     @Test
-    @Postsubmit(reason = "New test")
     @PositivePolicyTest(policy = DisallowPrivateDnsConfig.class)
     @EnsureHasPermission({NETWORK_SETTINGS, WRITE_SECURE_SETTINGS})
     public void factoryReset_disallowedByConfigPrivateDnsPolicy_doesPartialFactoryReset()
@@ -120,7 +117,6 @@ public class NetworkResetTest {
     }
 
     @Test
-    @Postsubmit(reason = "New test")
     @PositivePolicyTest(policy = DisallowNetworkReset.class)
     @EnsureHasPermission({NETWORK_SETTINGS, WRITE_SECURE_SETTINGS})
     public void factoryReset_noPolicyRestrictions_resetsToDefault() throws Exception {

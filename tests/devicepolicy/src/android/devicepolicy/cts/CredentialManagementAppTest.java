@@ -42,7 +42,6 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.activitycontext.ActivityContext;
 import com.android.bedstead.harrier.BedsteadJUnit4;
-import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.compatibility.common.util.BlockingCallback;
@@ -95,7 +94,6 @@ public class CredentialManagementAppTest {
     private final DevicePolicyManager mDpm = CONTEXT.getSystemService(DevicePolicyManager.class);
     private final int mUserId = Process.myUserHandle().getIdentifier();
 
-    @Postsubmit(reason="new")
     @Test
     public void installKeyPair_withoutManageCredentialAppOp_throwsException() throws Exception {
         setManageCredentialsAppOps(PACKAGE_NAME, /* allowed = */ false, mUserId);
@@ -104,7 +102,6 @@ public class CredentialManagementAppTest {
                         ALIAS, /* flags = */ 0));
     }
 
-    @Postsubmit(reason="new")
     @Test
     public void removeKeyPair_withoutManageCredentialAppOp_throwsException() throws Exception {
         setManageCredentialsAppOps(PACKAGE_NAME, /* allowed = */ false, mUserId);
@@ -112,7 +109,6 @@ public class CredentialManagementAppTest {
                 () -> mDpm.removeKeyPair(/* admin = */ null, ALIAS));
     }
 
-    @Postsubmit(reason="new")
     @Test
     public void generateKeyPair_withoutManageCredentialAppOp_throwsException() throws Exception {
         setManageCredentialsAppOps(PACKAGE_NAME, /* allowed = */ false, mUserId);
@@ -122,7 +118,6 @@ public class CredentialManagementAppTest {
                         /* idAttestationFlags = */ 0));
     }
 
-    @Postsubmit(reason="new")
     @Test
     public void setKeyPairCertificate_withoutManageCredentialAppOp_throwsException()
             throws Exception {
@@ -132,7 +127,6 @@ public class CredentialManagementAppTest {
                         Arrays.asList(CERTIFICATE), /* isUserSelectable = */ false));
     }
 
-    @Postsubmit(reason="new")
     @Test
     public void installKeyPair_isUserSelectableFlagSet_throwsException() throws Exception {
         setCredentialManagementApp();
@@ -141,7 +135,6 @@ public class CredentialManagementAppTest {
                         ALIAS, /* flags = */ INSTALLKEY_SET_USER_SELECTABLE));
     }
 
-    @Postsubmit(reason="new")
     @Test
     public void installKeyPair_aliasIsNotInAuthenticationPolicy_throwsException() throws Exception {
         setCredentialManagementApp();
@@ -150,7 +143,6 @@ public class CredentialManagementAppTest {
                         NOT_IN_USER_POLICY_ALIAS, /* flags = */ 0));
     }
 
-    @Postsubmit(reason="new")
     @Test
     public void installKeyPair_isCredentialManagementApp_success() throws Exception {
         setCredentialManagementApp();
@@ -165,7 +157,6 @@ public class CredentialManagementAppTest {
         }
     }
 
-    @Postsubmit(reason="new")
     @Test
     public void hasKeyPair_aliasIsNotInAuthenticationPolicy_throwsException() throws Exception {
         setCredentialManagementApp();
@@ -177,7 +168,6 @@ public class CredentialManagementAppTest {
         }
     }
 
-    @Postsubmit(reason="new")
     @Test
     public void hasKeyPair_isCredentialManagementApp_success() throws Exception {
         setCredentialManagementApp();
@@ -192,7 +182,6 @@ public class CredentialManagementAppTest {
         }
     }
 
-    @Postsubmit(reason="new")
     @Test
     public void removeKeyPair_isCredentialManagementApp_success() throws Exception {
         setCredentialManagementApp();
@@ -206,7 +195,6 @@ public class CredentialManagementAppTest {
         }
     }
 
-    @Postsubmit(reason="new")
     @Test
     public void generateKeyPair_isCredentialManagementApp_success() throws Exception {
         setCredentialManagementApp();
@@ -225,7 +213,6 @@ public class CredentialManagementAppTest {
         }
     }
 
-    @Postsubmit(reason="new")
     @Test
     public void setKeyPairCertificate_isCredentialManagementApp_success() throws Exception {
         setCredentialManagementApp();
@@ -252,7 +239,6 @@ public class CredentialManagementAppTest {
         }
     }
 
-    @Postsubmit(reason="b/181207615 flaky")
     @Test
     public void choosePrivateKeyAlias_isCredentialManagementApp_aliasSelected() throws Exception {
         setCredentialManagementApp();
@@ -274,7 +260,6 @@ public class CredentialManagementAppTest {
         }
     }
 
-    @Postsubmit(reason="new")
     @Test
     public void isCredentialManagementApp_isNotCredentialManagementApp_returnFalse()
             throws Exception {
@@ -282,7 +267,6 @@ public class CredentialManagementAppTest {
         assertFalse(KeyChain.isCredentialManagementApp(CONTEXT));
     }
 
-    @Postsubmit(reason="new")
     @Test
     public void isCredentialManagementApp_isCredentialManagementApp_returnTrue() throws Exception {
         setCredentialManagementApp();
@@ -293,7 +277,6 @@ public class CredentialManagementAppTest {
         }
     }
 
-    @Postsubmit(reason="new")
     @Test
     public void getCredentialManagementAppPolicy_isNotCredentialManagementApp_throwException()
             throws Exception {
@@ -302,7 +285,6 @@ public class CredentialManagementAppTest {
                 () -> KeyChain.getCredentialManagementAppPolicy(CONTEXT));
     }
 
-    @Postsubmit(reason="new")
     @Test
     public void getCredentialManagementAppPolicy_isCredentialManagementApp_returnPolicy()
             throws Exception {
@@ -315,7 +297,6 @@ public class CredentialManagementAppTest {
         }
     }
 
-    @Postsubmit(reason="new")
     @Test
     public void unregisterAsCredentialManagementApp_returnTrue()
             throws Exception {
