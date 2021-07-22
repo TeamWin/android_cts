@@ -16,10 +16,14 @@
 
 package android.telephony.cts;
 
+import static android.telephony.PhoneCapability.DEVICE_NR_CAPABILITY_NSA;
+import static android.telephony.PhoneCapability.DEVICE_NR_CAPABILITY_SA;
+
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -64,6 +68,7 @@ import android.telephony.CellInfo;
 import android.telephony.CellLocation;
 import android.telephony.DataThrottlingRequest;
 import android.telephony.NetworkRegistrationInfo;
+import android.telephony.PhoneCapability;
 import android.telephony.PhoneStateListener;
 import android.telephony.PinResult;
 import android.telephony.PreciseCallState;
@@ -135,6 +140,8 @@ public class TelephonyManagerTest {
     private boolean mRadioRebootTriggered = false;
     private boolean mHasRadioPowerOff = false;
     private ServiceState mServiceState;
+    private PhoneCapability mPhoneCapability;
+    private boolean mOnPhoneCapabilityChanged = false;
     private final Object mLock = new Object();
 
     private CarrierConfigManager mCarrierConfigManager;
@@ -1276,6 +1283,44 @@ public class TelephonyManagerTest {
         }
 
         assertEquals(mServiceState, mTelephonyManager.getServiceState());
+    }
+
+    private MockPhoneCapabilityListener mMockPhoneCapabilityListener;
+
+    private class MockPhoneCapabilityListener extends TelephonyCallback
+            implements TelephonyCallback.PhoneCapabilityListener {
+        @Override
+        public void onPhoneCapabilityChanged(PhoneCapability capability) {
+            synchronized (mLock) {
+                mPhoneCapability = capability;
+                mOnPhoneCapabilityChanged = true;
+                mLock.notify();
+            }
+        }
+    }
+
+    @Test
+    public void testGetPhoneCapabilityAndVerify() {
+        boolean is5gStandalone = getContext().getResources().getBoolean(
+                com.android.internal.R.bool.config_telephony5gStandalone);
+        boolean is5gNonStandalone = getContext().getResources().getBoolean(
+                com.android.internal.R.bool.config_telephony5gNonStandalone);
+        int[] deviceNrCapabilities = new int[0];
+        if (is5gStandalone || is5gNonStandalone) {
+            List<Integer> list = new ArrayList<>();
+            if (is5gNonStandalone) {
+                list.add(DEVICE_NR_CAPABILITY_NSA);
+            }
+            if (is5gStandalone) {
+                list.add(DEVICE_NR_CAPABILITY_SA);
+            }
+            deviceNrCapabilities = list.stream().mapToInt(Integer::valueOf).toArray();
+        }
+
+        PhoneCapability phoneCapability = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, (tm) -> tm.getPhoneCapability());
+
+        assertArrayEquals(deviceNrCapabilities, phoneCapability.getDeviceNrCapabilities());
     }
 
     @Test
