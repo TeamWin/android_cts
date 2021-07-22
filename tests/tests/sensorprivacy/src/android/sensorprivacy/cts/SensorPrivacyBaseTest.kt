@@ -22,6 +22,7 @@ import android.content.pm.PackageManager
 import android.hardware.SensorPrivacyManager
 import android.hardware.SensorPrivacyManager.OnSensorPrivacyChangedListener
 import android.os.PowerManager
+import android.platform.test.annotations.AppModeFull
 import android.support.test.uiautomator.By
 import android.view.KeyEvent
 import androidx.test.platform.app.InstrumentationRegistry
@@ -161,6 +162,7 @@ abstract class SensorPrivacyBaseTest(
     }
 
     @Test
+    @AppModeFull(reason = "Instant apps can't manage keyguard")
     fun testCantChangeWhenLocked() {
         Assume.assumeTrue(packageManager
                 .hasSystemFeature(PackageManager.FEATURE_SECURE_LOCK_SCREEN))
