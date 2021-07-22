@@ -22,6 +22,9 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import static org.testng.Assert.assertThrows;
 
 import android.car.Car;
+import android.car.EvConnectorType;
+import android.car.FuelType;
+import android.car.PortLocationType;
 import android.car.VehicleAreaSeat;
 import android.car.VehicleAreaType;
 import android.car.VehicleAreaWheel;
@@ -41,6 +44,8 @@ import androidx.annotation.GuardedBy;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CddTest;
+
+import com.google.common.collect.ImmutableSet;
 
 import org.junit.Assert;
 import org.junit.Assume;
@@ -63,6 +68,11 @@ public class CarPropertyManagerTest extends CarApiTestBase {
     private static final int ONCHANGE_RATE_EVENT_COUNTER = 1;
     private static final int UI_RATE_EVENT_COUNTER = 5;
     private static final int FAST_OR_FASTEST_EVENT_COUNTER = 10;
+    private static final ImmutableSet<Integer> PORT_LOCATION_TYPES =
+            ImmutableSet.<Integer>builder().add(PortLocationType.UNKNOWN,
+                    PortLocationType.FRONT_LEFT, PortLocationType.FRONT_RIGHT,
+                    PortLocationType.REAR_RIGHT, PortLocationType.REAR_LEFT,
+                    PortLocationType.FRONT, PortLocationType.REAR).build();
     /** contains property Ids for the properties required by CDD */
     private final ArraySet<Integer> mPropertyIds = new ArraySet<>();
     private CarPropertyManager mCarPropertyManager;
@@ -283,6 +293,205 @@ public class CarPropertyManagerTest extends CarApiTestBase {
                             wheelTicks[4]);
                 }).build().verify(mCarPropertyManager);
 
+    }
+
+    @Test
+    public void testInfoMakeIfSupported() {
+        VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.INFO_MAKE,
+                CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
+                String.class).build().verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testInfoModelIfSupported() {
+        VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.INFO_MODEL,
+                CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
+                String.class).build().verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testInfoModelYearIfSupported() {
+        VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.INFO_MODEL_YEAR,
+                CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
+                Integer.class).build().verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testInfoFuelCapacityIfSupported() {
+        VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.INFO_FUEL_CAPACITY,
+                CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
+                Float.class).setCarPropertyValueVerifier(
+                (carPropertyConfig, carPropertyValue) -> assertWithMessage(
+                        "INFO_FUEL_CAPACITY Float value must be greater than or equal 0").that(
+                        (Float) carPropertyValue.getValue()).isAtLeast(0)).build().verify(
+                mCarPropertyManager);
+    }
+
+    @Test
+    public void testInfoFuelTypeIfSupported() {
+        VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.INFO_FUEL_TYPE,
+                CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
+                Integer[].class).setCarPropertyValueVerifier(
+                (carPropertyConfig, carPropertyValue) -> {
+                    Integer[] fuelTypes = (Integer[]) carPropertyValue.getValue();
+                    assertWithMessage("INFO_FUEL_TYPE must specify at least 1 fuel type").that(
+                            fuelTypes.length).isGreaterThan(0);
+                    for (Integer fuelType : fuelTypes) {
+                        assertWithMessage(
+                                "INFO_FUEL_TYPE must be a defined fuel type: " + fuelType).that(
+                                fuelType).isIn(
+                                ImmutableSet.builder().add(FuelType.UNKNOWN, FuelType.UNLEADED,
+                                        FuelType.LEADED, FuelType.DIESEL_1, FuelType.DIESEL_2,
+                                        FuelType.BIODIESEL, FuelType.E85, FuelType.LPG,
+                                        FuelType.CNG, FuelType.LNG, FuelType.ELECTRIC,
+                                        FuelType.HYDROGEN, FuelType.OTHER).build());
+                    }
+                }).build().verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testInfoEvBatteryCapacityIfSupported() {
+        VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.INFO_EV_BATTERY_CAPACITY,
+                CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
+                Float.class).setCarPropertyValueVerifier(
+                (carPropertyConfig, carPropertyValue) -> assertWithMessage(
+                        "INFO_EV_BATTERY_CAPACITY Float value must be greater than or equal to 0")
+                        .that((Float) carPropertyValue.getValue()).isAtLeast(0)).build().verify(
+                mCarPropertyManager);
+    }
+
+    @Test
+    public void testInfoEvConnectorTypeIfSupported() {
+        VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.INFO_EV_CONNECTOR_TYPE,
+                CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
+                Integer[].class).setCarPropertyValueVerifier(
+                (carPropertyConfig, carPropertyValue) -> {
+                    Integer[] evConnectorTypes = (Integer[]) carPropertyValue.getValue();
+                    assertWithMessage(
+                            "INFO_EV_CONNECTOR_TYPE must specify at least 1 connection type").that(
+                            evConnectorTypes.length).isGreaterThan(0);
+                    for (Integer evConnectorType : evConnectorTypes) {
+                        assertWithMessage(
+                                "INFO_EV_CONNECTOR_TYPE must be a defined connection type: "
+                                        + evConnectorType).that(
+                                evConnectorType).isIn(
+                                ImmutableSet.builder().add(EvConnectorType.UNKNOWN,
+                                        EvConnectorType.J1772, EvConnectorType.MENNEKES,
+                                        EvConnectorType.CHADEMO, EvConnectorType.COMBO_1,
+                                        EvConnectorType.COMBO_2, EvConnectorType.TESLA_ROADSTER,
+                                        EvConnectorType.TESLA_HPWC,
+                                        EvConnectorType.TESLA_SUPERCHARGER, EvConnectorType.GBT,
+                                        EvConnectorType.GBT_DC, EvConnectorType.SCAME,
+                                        EvConnectorType.OTHER).build());
+                    }
+                }).build().verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testInfoFuelDoorLocationIfSupported() {
+        VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.INFO_FUEL_DOOR_LOCATION,
+                CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
+                Integer.class).setCarPropertyValueVerifier(
+                (carPropertyConfig, carPropertyValue) -> {
+                    Integer fuelDoorLocation = (Integer) carPropertyValue.getValue();
+                    assertWithMessage(
+                            "INFO_FUEL_DOOR_LOCATION must be a defined port location: "
+                                    + fuelDoorLocation).that(
+                            fuelDoorLocation).isIn(PORT_LOCATION_TYPES);
+                }).build().verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testInfoEvPortLocationIfSupported() {
+        VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.INFO_EV_PORT_LOCATION,
+                CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
+                Integer.class).setCarPropertyValueVerifier(
+                (carPropertyConfig, carPropertyValue) -> {
+                    Integer evPortLocation = (Integer) carPropertyValue.getValue();
+                    assertWithMessage(
+                            "INFO_EV_PORT_LOCATION must be a defined port location: "
+                                    + evPortLocation).that(
+                            evPortLocation).isIn(PORT_LOCATION_TYPES);
+                }).build().verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testInfoMultiEvPortLocationsIfSupported() {
+        VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.INFO_MULTI_EV_PORT_LOCATIONS,
+                CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
+                Integer[].class).setCarPropertyValueVerifier(
+                (carPropertyConfig, carPropertyValue) -> {
+                    Integer[] evPortLocations = (Integer[]) carPropertyValue.getValue();
+                    assertWithMessage(
+                            "INFO_MULTI_EV_PORT_LOCATIONS must specify at least 1 port location")
+                            .that(evPortLocations.length).isGreaterThan(0);
+                    for (Integer evPortLocation : evPortLocations) {
+                        assertWithMessage(
+                                "INFO_MULTI_EV_PORT_LOCATIONS must be a defined port location: "
+                                        + evPortLocation).that(
+                                evPortLocation).isIn(PORT_LOCATION_TYPES);
+                    }
+                }).build().verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testInfoDriverSeatIfSupported() {
+        VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.INFO_DRIVER_SEAT,
+                CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
+                Integer.class).setCarPropertyValueVerifier(
+                (carPropertyConfig, carPropertyValue) -> {
+                    Integer driverSeat = (Integer) carPropertyValue.getValue();
+                    assertWithMessage(
+                            "INFO_DRIVER_SEAT must be a defined front seat location: "
+                                    + driverSeat).that(
+                            driverSeat).isIn(
+                            ImmutableSet.builder().add(VehicleAreaSeat.SEAT_UNKNOWN,
+                                    VehicleAreaSeat.SEAT_ROW_1_LEFT,
+                                    VehicleAreaSeat.SEAT_ROW_1_CENTER,
+                                    VehicleAreaSeat.SEAT_ROW_1_RIGHT).build());
+                }).build().verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testInfoExteriorDimensionsIfSupported() {
+        VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.INFO_EXTERIOR_DIMENSIONS,
+                CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
+                Integer[].class).setCarPropertyValueVerifier(
+                (carPropertyConfig, carPropertyValue) -> {
+                    Integer[] exteriorDimensions = (Integer[]) carPropertyValue.getValue();
+                    assertWithMessage(
+                            "INFO_EXTERIOR_DIMENSIONS must specify all 8 dimension measurements")
+                            .that(exteriorDimensions.length).isEqualTo(8);
+                    for (Integer exteriorDimension : exteriorDimensions) {
+                        assertWithMessage(
+                                "INFO_EXTERIOR_DIMENSIONS measurement must be greater than 0").that(
+                                exteriorDimension).isGreaterThan(0);
+                    }
+                }).build().verify(mCarPropertyManager);
     }
 
     @SuppressWarnings("unchecked")
