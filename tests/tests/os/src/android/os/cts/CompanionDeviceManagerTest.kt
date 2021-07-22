@@ -17,6 +17,7 @@
 package android.os.cts
 
 import android.companion.CompanionDeviceManager
+import android.content.pm.PackageManager.FEATURE_AUTOMOTIVE
 import android.content.pm.PackageManager.FEATURE_COMPANION_DEVICE_SETUP
 import android.content.pm.PackageManager.PERMISSION_GRANTED
 import android.net.MacAddress
@@ -54,6 +55,7 @@ import org.hamcrest.Matcher
 import org.hamcrest.Matchers.empty
 import org.hamcrest.Matchers.not
 import org.junit.Assert.assertThat
+import org.junit.Assume.assumeFalse
 import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.After
@@ -101,6 +103,8 @@ class CompanionDeviceManagerTest : InstrumentationTestCase() {
     @Before
     fun assumeHasFeature() {
         assumeTrue(context.packageManager.hasSystemFeature(FEATURE_COMPANION_DEVICE_SETUP))
+        // TODO(b/191699828) test does not work in automotive due to accessibility issue
+        assumeFalse(context.packageManager.hasSystemFeature(FEATURE_AUTOMOTIVE))
     }
 
     @After

@@ -21,7 +21,6 @@ java_test_host {
     srcs: ["src/**/*.java"],
     // tag this module as a cts test artifact
     test_suites: [
-        "arcts",
         "cts",
         "general-tests",
         "mts",
