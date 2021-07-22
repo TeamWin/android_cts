@@ -201,6 +201,9 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
             super.tearDown();
             return;
         }
+        if (null != mWifiP2pManager) {
+            removeAllPersistentGroups();
+        }
         mContext.unregisterReceiver(mReceiver);
 
         ShellIdentityUtils.invokeWithShellPermissions(
@@ -304,6 +307,24 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
         cm.unregisterNetworkCallback(networkCallback);
     }
 
+    private void removeAllPersistentGroups() {
+        WifiP2pGroupList persistentGroups = getPersistentGroups();
+        assertNotNull(persistentGroups);
+        for (WifiP2pGroup group: persistentGroups.getGroupList()) {
+            resetResponse(mMyResponse);
+            ShellIdentityUtils.invokeWithShellPermissions(() -> {
+                mWifiP2pManager.deletePersistentGroup(mWifiP2pChannel,
+                        group.getNetworkId(),
+                        mActionListener);
+                assertTrue(waitForServiceResponse(mMyResponse));
+                assertTrue(mMyResponse.success);
+            });
+        }
+        persistentGroups = getPersistentGroups();
+        assertNotNull(persistentGroups);
+        assertEquals(0, persistentGroups.getGroupList().size());
+    }
+
     private boolean setupWifiP2p() {
         // Cannot support p2p alone
         if (!WifiFeature.isWifiSupported(getContext())) {
@@ -348,6 +369,7 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
 
         assertEquals(WifiManager.WIFI_STATE_ENABLED, mMySync.expectedWifiState);
         assertEquals(WifiP2pManager.WIFI_P2P_STATE_ENABLED, mMySync.expectedP2pState);
+        removeAllPersistentGroups();
 
         return true;
     }
