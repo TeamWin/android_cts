@@ -36,6 +36,7 @@ import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
 import com.android.cts.verifier.audio.audiolib.AudioSystemFlags;
 import com.android.cts.verifier.audio.audiolib.StatUtils;
+import com.android.cts.verifier.audio.audiolib.AudioUtils;
 import com.android.cts.verifier.CtsVerifierReportLog;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
@@ -49,6 +50,18 @@ import static com.android.cts.verifier.TestListAdapter.setTestNameSuffix;
 public class AudioLoopbackBaseActivity extends PassFailButtons.Activity {
     private static final String TAG = "AudioLoopbackBaseActivity";
 
+    // JNI load
+    static {
+        try {
+            System.loadLibrary("audioloopback_jni");
+        } catch (UnsatisfiedLinkError e) {
+            Log.e(TAG, "Error loading Audio Loopback JNI library");
+            Log.e(TAG, "e: " + e);
+            e.printStackTrace();
+        }
+
+        /* TODO: gracefully fail/notify if the library can't be loaded */
+    }
     protected AudioManager mAudioManager;
 
     // UI
@@ -64,10 +77,17 @@ public class AudioLoopbackBaseActivity extends PassFailButtons.Activity {
     ProgressBar mProgressBar;
     int mMaxLevel;
 
+    String mYesString;
+    String mNoString;
+
     // These flags determine the maximum allowed latency
     private boolean mClaimsProAudio;
     private boolean mClaimsOutput;
     private boolean mClaimsInput;
+
+    // Useful info
+    private boolean mSupportsMMAP = AudioUtils.isMMapSupported();
+    private boolean mSupportsMMAPExclusive = AudioUtils.isMMapExclusiveSupported();
 
     // Peripheral(s)
     boolean mIsPeripheralAttached;  // CDD ProAudio section C-1-3
@@ -217,6 +237,11 @@ public class AudioLoopbackBaseActivity extends PassFailButtons.Activity {
         }
     }
 
+    protected boolean isPeripheralValidForTest() {
+        return mTestPeripheral == TESTPERIPHERAL_ANALOG_JACK
+                || mTestPeripheral == TESTPERIPHERAL_USB;
+
+    }
     protected void showConnectedAudioPeripheral() {
         mInputDeviceTxt.setText(
                 mInputDevInfo != null ? mInputDevInfo.getProductName().toString()
@@ -280,9 +305,15 @@ public class AudioLoopbackBaseActivity extends PassFailButtons.Activity {
     }
 
     private void displayLatencyThresholds() {
-        ((TextView)findViewById(R.id.audio_loopback_must_latency)).setText("" + mMustLatency);
-        ((TextView)findViewById(R.id.audio_loopback_recommended_latency)).setText(
-                "" + mRecommendedLatency);
+        if (isPeripheralValidForTest()) {
+            ((TextView) findViewById(R.id.audio_loopback_must_latency)).setText("" + mMustLatency);
+            ((TextView) findViewById(R.id.audio_loopback_recommended_latency)).setText(
+                    "" + mRecommendedLatency);
+        } else {
+            String naStr = getResources().getString(R.string.audio_proaudio_NA);
+            ((TextView) findViewById(R.id.audio_loopback_must_latency)).setText(naStr);
+            ((TextView) findViewById(R.id.audio_loopback_recommended_latency)).setText(naStr);
+        }
     }
 
     /**
@@ -318,6 +349,8 @@ public class AudioLoopbackBaseActivity extends PassFailButtons.Activity {
     private static final String KEY_INPUT_PERIPHERAL_NAME = "input_peripheral";
     private static final String KEY_OUTPUT_PERIPHERAL_NAME = "output_peripheral";
     private static final String KEY_TEST_PERIPHERAL = "test_peripheral";
+    private static final String KEY_TEST_MMAP = "supports_mmap";
+    private static final String KEY_TEST_MMAPEXCLUSIVE = "supports_mmap_exclusive";
 
     @Override
     public String getTestId() {
@@ -373,6 +406,18 @@ public class AudioLoopbackBaseActivity extends PassFailButtons.Activity {
         reportLog.addValue(
                 KEY_TEST_PERIPHERAL,
                 mTestPeripheral,
+                ResultType.NEUTRAL,
+                ResultUnit.NONE);
+
+        reportLog.addValue(
+                KEY_TEST_MMAP,
+                mSupportsMMAP,
+                ResultType.NEUTRAL,
+                ResultUnit.NONE);
+
+        reportLog.addValue(
+                KEY_TEST_MMAPEXCLUSIVE ,
+                mSupportsMMAPExclusive,
                 ResultType.NEUTRAL,
                 ResultUnit.NONE);
 
@@ -454,7 +499,7 @@ public class AudioLoopbackBaseActivity extends PassFailButtons.Activity {
                     mMustLatency,
                     mMeanAbsoluteDeviation,
                     mMeanConfidence,
-                    (mNativeAnalyzerThread.isLowLatencyStream() ? "yes" : "no"));
+                    mNativeAnalyzerThread.isLowLatencyStream() ? mYesString : mNoString);
         }
 
         // Make sure the test thread is finished. It should already be done.
@@ -546,10 +591,22 @@ public class AudioLoopbackBaseActivity extends PassFailButtons.Activity {
         mClaimsInput = AudioSystemFlags.claimsInput(this);
         mClaimsProAudio = AudioSystemFlags.claimsProAudio(this);
 
-        ((TextView)findViewById(R.id.audio_loopback_low_latency)).setText(
-                "" + AudioSystemFlags.claimsLowLatencyAudio(this));
+        mYesString = getResources().getString(R.string.audio_general_yes);
+        mNoString = getResources().getString(R.string.audio_general_no);
+
+        // Pro Audio
         ((TextView)findViewById(R.id.audio_loopback_pro_audio)).setText(
-                "" + (mClaimsProAudio ? "Yes" : "No"));
+                "" + (mClaimsProAudio ? mYesString : mNoString));
+
+        // MMAP
+        ((TextView)findViewById(R.id.audio_loopback_mmap)).setText(
+                "" + (mSupportsMMAP ? mYesString : mNoString));
+        ((TextView)findViewById(R.id.audio_loopback_mmap_exclusive)).setText(
+                "" + (mSupportsMMAPExclusive ? mYesString : mNoString));
+
+        // Low Latency
+        ((TextView)findViewById(R.id.audio_loopback_low_latency)).setText(
+                "" + (AudioSystemFlags.claimsLowLatencyAudio(this) ? mYesString : mNoString));
 
         mTestPathTxt = ((TextView)findViewById(R.id.audio_loopback_testpath));
 

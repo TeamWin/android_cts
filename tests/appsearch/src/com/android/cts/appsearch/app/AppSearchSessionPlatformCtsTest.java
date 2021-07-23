@@ -95,7 +95,7 @@ public class AppSearchSessionPlatformCtsTest {
         for (int i = 0; i < 30; i++) {
             emails.add(email);
         }
-        mDb.put(new PutDocumentsRequest.Builder().addGenericDocuments(emails).build());
+        mDb.put(new PutDocumentsRequest.Builder().addGenericDocuments(emails).build()).get();
 
         StorageStats afterStatsForPkg =
                 storageStatsManager.queryStatsForPackage(UUID_DEFAULT, packageName, user);
