@@ -42,6 +42,7 @@ import android.content.ComponentName;
 import android.content.res.Configuration;
 import android.graphics.Point;
 import android.graphics.Rect;
+import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
 import android.util.SparseArray;
@@ -830,7 +831,12 @@ public class WindowManagerState {
     private Task getTaskByActivity(ComponentName activityName, int windowingMode,
             int[] excludeTaskIds) {
         Activity activity = getActivity(activityName, windowingMode, excludeTaskIds);
-        return activity == null ? null : activity.task;
+        return activity == null ? null : activity.getTask();
+    }
+
+    @Nullable
+    public TaskFragment getTaskFragmentByActivity(ComponentName activityName) {
+        return getActivity(activityName).getTaskFragment();
     }
 
     public Activity getActivity(ComponentName activityName) {
@@ -1302,11 +1308,13 @@ public class WindowManagerState {
         boolean mCreatedByOrganizer;
         String mAffinity;
         boolean mHasChildPipActivity;
+        WindowContainer mParent;
 
-        Task(TaskProto proto) {
+        Task(TaskProto proto, WindowContainer parent) {
             super(proto.taskFragment.windowContainer);
             mTaskId = proto.id;
             mRootTaskId = proto.rootTaskId;
+            mParent = parent;
             mDisplayId = proto.taskFragment.displayId;
             mLastNonFullscreenBounds = extract(proto.lastNonFullscreenBounds);
             mRealActivity = proto.realActivity;
@@ -1335,6 +1343,19 @@ public class WindowManagerState {
 
         boolean isEmpty() {
             return mTasks.isEmpty() && mTaskFragments.isEmpty() && mActivities.isEmpty();
+        }
+
+        /** Gets the pure parent TaskFragment if exist. */
+        public TaskFragment getParentTaskFragment() {
+            if (mParent instanceof TaskFragment) {
+                return (TaskFragment) mParent;
+            }
+            if (mParent instanceof Task) {
+                return ((Task) mParent).getParentTaskFragment();
+            }
+            // If the parent is a TaskDisplayArea, it means this Task doesn't have TaskFragment
+            // parent.
+            return null;
         }
 
         public int getResizeMode() {
@@ -1410,6 +1431,10 @@ public class WindowManagerState {
             for (Activity activity : mActivities) {
                 if (predicate.test(activity)) return activity;
             }
+            for (TaskFragment taskFragment : mTaskFragments) {
+                final Activity activity = taskFragment.getActivity(predicate);
+                if (activity != null) return activity;
+            }
             for (Task task : mTasks) {
                 final Activity activity = task.getActivity(predicate);
                 if (activity != null) return activity;
@@ -1429,7 +1454,7 @@ public class WindowManagerState {
                     return false;
                 }
                 for (int excludeTaskId : excludeTaskIds) {
-                    if (activity.task.mTaskId == excludeTaskId) {
+                    if (activity.getTask().mTaskId == excludeTaskId) {
                         return false;
                     }
                 }
@@ -1457,7 +1482,7 @@ public class WindowManagerState {
 
         TaskFragment(TaskFragmentProto proto, WindowContainer parent) {
             super(proto.windowContainer);
-            mParentTask = initializeParentTask(parent);
+            mParentTask = (Task) parent;
             mDisplayId = proto.displayId;
             mTaskFragmentType = proto.activityType;
             mMinWidth = proto.minWidth;
@@ -1466,17 +1491,6 @@ public class WindowManagerState {
             collectChildrenOfType(Task.class, this, mTasks);
             collectChildrenOfType(TaskFragment.class, this, mTaskFragments);
             collectChildrenOfType(Activity.class, this, mActivities);
-        }
-
-        private static Task initializeParentTask(WindowContainer parent) {
-            if (parent instanceof Task) {
-                return (Task) parent;
-            }
-            return ((TaskFragment) parent).mParentTask;
-        }
-
-        Task getParentTask() {
-            return mParentTask;
         }
 
         public List<Task> getTasks() {
@@ -1490,6 +1504,27 @@ public class WindowManagerState {
 
         public List<Activity> getActivities() {
             return mActivities;
+        }
+
+        Activity getActivity(Predicate<Activity> predicate) {
+            for (Activity activity : mActivities) {
+                if (predicate.test(activity)) {
+                    return activity;
+                }
+            }
+            for (TaskFragment taskFragment : mTaskFragments) {
+                final Activity activity = taskFragment.getActivity(predicate);
+                if (activity != null) {
+                    return activity;
+                }
+            }
+            for (Task task : mTasks) {
+                final Activity activity = task.getActivity(predicate);
+                if (activity != null) {
+                    return activity;
+                }
+            }
+            return null;
         }
 
         @Override
@@ -1507,11 +1542,10 @@ public class WindowManagerState {
         boolean inSizeCompatMode;
         int procId = -1;
         public boolean translucent;
-        Task task;
+        private WindowContainer mParent;
 
         Activity(ActivityRecordProto proto, WindowContainer parent) {
             super(proto.windowToken.windowContainer);
-            task = initializeTask(parent);
             name = proto.name;
             state = proto.state;
             visible = proto.visible;
@@ -1521,14 +1555,23 @@ public class WindowManagerState {
                 procId = proto.procId;
             }
             translucent = proto.translucent;
+            mParent = parent;
         }
 
-        private static Task initializeTask(WindowContainer parent) {
-            if (parent instanceof Task) {
-                return (Task) parent;
+        @NonNull
+        public Task getTask() {
+            if (mParent instanceof Task) {
+                return (Task) mParent;
             }
-            // Now we know its parent is TaskFragment
-            return ((TaskFragment) parent).getParentTask();
+            return ((TaskFragment) mParent).mParentTask;
+        }
+
+        @Nullable
+        public TaskFragment getTaskFragment() {
+            if (mParent instanceof TaskFragment) {
+                return (TaskFragment) mParent;
+            }
+            return ((Task) mParent).getParentTaskFragment();
         }
 
         public String getName() {
@@ -1749,7 +1792,7 @@ public class WindowManagerState {
         }
 
         if (proto.task != null) {
-            return new Task(proto.task);
+            return new Task(proto.task, parent);
         }
 
         if (proto.taskFragment != null) {
