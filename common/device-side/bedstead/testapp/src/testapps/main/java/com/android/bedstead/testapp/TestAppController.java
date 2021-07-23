@@ -18,7 +18,6 @@ package com.android.bedstead.testapp;
 
 import android.content.Context;
 import android.content.IntentFilter;
-import android.util.Log;
 
 import com.google.android.enterprise.connectedapps.annotations.CrossUser;
 
@@ -33,15 +32,22 @@ public final class TestAppController {
     private static final Map<Long, BaseTestAppBroadcastReceiver> sBroadcastReceivers =
             new HashMap<>();
 
+    /**
+     * Register a broadcast receiver.
+     *
+     * <p>Received broadcasts can be queried using EventLib.
+     */
     @CrossUser
     public void registerReceiver(Context context, long receiverId, IntentFilter intentFilter) {
-        // TODO: We must persist this somehow so it can be restored after killing
         BaseTestAppBroadcastReceiver broadcastReceiver = new BaseTestAppBroadcastReceiver();
         sBroadcastReceivers.put(receiverId, broadcastReceiver);
 
         context.registerReceiver(broadcastReceiver, intentFilter);
     }
 
+    /**
+     * Unregister a previously registered broadcast receiver.
+     */
     @CrossUser
     public void unregisterReceiver(Context context, long receiverId) {
         BaseTestAppBroadcastReceiver receiver = sBroadcastReceivers.remove(receiverId);

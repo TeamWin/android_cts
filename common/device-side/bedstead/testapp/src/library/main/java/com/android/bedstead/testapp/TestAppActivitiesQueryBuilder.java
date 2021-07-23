@@ -40,18 +40,25 @@ public final class TestAppActivitiesQueryBuilder implements Queryable {
         mTestAppActivities = testAppActivities;
     }
 
+    /** Query by activity. */
     public ActivityQuery<TestAppActivitiesQueryBuilder> whereActivity() {
         return mActivity;
     }
 
+    /** Get the activity which matches the query. */
     public TestAppActivityReference get() {
-        Iterator<com.android.queryable.info.ActivityInfo> activityIterator = mTestAppActivities.activities().iterator();
+        Iterator<com.android.queryable.info.ActivityInfo> activityIterator =
+                mTestAppActivities.activities().iterator();
 
         while (activityIterator.hasNext()) {
             com.android.queryable.info.ActivityInfo activity = activityIterator.next();
             if (ActivityQueryHelper.matches(mActivity, activity)) {
                 activityIterator.remove();
-                return new UnresolvedTestAppActivity(mTestAppActivities.mInstance, sTestApis.packages().component(new ComponentName(mTestAppActivities.mInstance.testApp().packageName(), activity.className())));
+                return new UnresolvedTestAppActivity(mTestAppActivities.mInstance,
+                        sTestApis.packages().component(
+                                new ComponentName(
+                                        mTestAppActivities.mInstance.testApp().packageName(),
+                                        activity.className())));
             }
         }
 
