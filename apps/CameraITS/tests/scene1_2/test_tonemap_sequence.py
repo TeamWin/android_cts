@@ -29,7 +29,7 @@ _MAX_DELTA_SAME = 0.03  # match number in test_burst_sameness_manual
 _MIN_DELTA_DIFF = 0.10
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
 _NUM_CAPTURES = 3
-_NUM_FRAMES_PER_CAPTURE = 4
+_NUM_FRAMES_PER_CAPTURE = 8
 _PATCH_H = 0.1  # center 10%
 _PATCH_W = 0.1
 _PATCH_X = 0.5 - _PATCH_W/2
@@ -90,10 +90,6 @@ class TonemapSequenceTest(its_base_test.ItsBaseTest):
       camera_properties_utils.skip_unless(
           not camera_properties_utils.mono_camera(props) and
           camera_properties_utils.linear_tonemap(props))
-      if camera_properties_utils.per_frame_control(props):
-        num_frames_per_cap = 1
-      else:
-        num_frames_per_cape = _NUM_FRAMES_PER_CAPTURE
       log_path = self.log_path
 
       # Load chart for scene
@@ -107,18 +103,36 @@ class TonemapSequenceTest(its_base_test.ItsBaseTest):
           props, match_ar=match_ar)
       means = []
 
-      # linear tonemap req & captures
-      cam.do_3a()
-      req = capture_request_utils.auto_capture_request(
-          linear_tonemap=True, props=props)
-      means.extend(do_captures_and_extract_means(
-          cam, req, fmt, num_frames_per_cap, 'linear', log_path))
+      # set params based on per_frame_control & read_3a
+      manual_and_per_frame_control = (
+          camera_properties_utils.per_frame_control(props) and
+          camera_properties_utils.read_3a(props))
+      if manual_and_per_frame_control:
+        logging.debug('PER_FRAME_CONTROL supported.')
+        num_frames_per_cap = 1
+        sens, exp, _, _, f_dist = cam.do_3a(do_af=True, get_results=True)
+      else:
+        logging.debug('PER_FRAME_CONTROL not supported.')
+        num_frames_per_cap = _NUM_FRAMES_PER_CAPTURE
+        cam.do_3a()
 
-      # default tonemap req & captures
-      cam.do_3a()
-      req = capture_request_utils.auto_capture_request()
-      means.extend(do_captures_and_extract_means(
-          cam, req, fmt, num_frames_per_cap, 'default', log_path))
+      for tonemap in ['linear', 'default']:
+        if tonemap == 'linear':
+          if manual_and_per_frame_control:
+            req = capture_request_utils.manual_capture_request(
+                sens, exp, f_dist, True, props)
+          else:
+            req = capture_request_utils.auto_capture_request(
+                linear_tonemap=True, props=props)
+        else:
+          if manual_and_per_frame_control:
+            req = capture_request_utils.manual_capture_request(
+                sens, exp, f_dist, False)
+          else:
+            req = capture_request_utils.auto_capture_request()
+
+        means.extend(do_captures_and_extract_means(
+            cam, req, fmt, num_frames_per_cap, tonemap, log_path))
 
       # Compute the delta between each consecutive frame pair
       deltas = [np.fabs(means[i+1]-means[i]) for i in range(2*_NUM_CAPTURES-1)]
@@ -127,7 +141,7 @@ class TonemapSequenceTest(its_base_test.ItsBaseTest):
       # assert frames similar with same tonemap
       if not all([deltas[i] < _MAX_DELTA_SAME for i in _TMAP_NO_DELTA_FRAMES]):
         raise AssertionError('Captures too different with same tonemap! '
-                             f'deltas: {deltas}, MAX_DELTA: {_MAX_DELTA_SAME}')
+                             f'deltas: {deltas}, ATOL: {_MAX_DELTA_SAME}')
 
       # assert frames different with tonemap change
       if deltas[_NUM_CAPTURES-1] <= _MIN_DELTA_DIFF:
