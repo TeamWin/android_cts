@@ -37,7 +37,8 @@ def auto_capture_request(linear_tonemap=False, props=None):
       'android.control.afMode': 1,
       'android.colorCorrection.mode': 1,
       'android.tonemap.mode': 1,
-      'android.lens.opticalStabilizationMode': 0
+      'android.lens.opticalStabilizationMode': 0,
+      'android.control.videoStabilizationMode': 0
   }
   if linear_tonemap:
     if props is None:
