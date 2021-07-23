@@ -81,7 +81,7 @@ public class AppStartStatsTests extends DeviceTestCase implements IBuildReceiver
         assertThat(atom.getActivityName())
                 .isEqualTo("com.android.server.cts.device.statsdatom.StatsdCtsForegroundActivity");
         assertThat(atom.getIsInstantApp()).isFalse();
-        assertThat(atom.getActivityStartMillis()).isGreaterThan(0L);
+        assertThat(atom.getActivityStartTimestampMillis()).isGreaterThan(0L);
         assertThat(atom.getTransitionDelayMillis()).isGreaterThan(0);
         assertThat(atom.getIsHibernating()).isFalse();
     }
