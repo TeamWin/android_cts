@@ -462,6 +462,7 @@ public class VcnManagerTest extends VcnTestBase {
             @NonNull Network cellNetwork,
             @NonNull VcnTestNetworkCallback cellNetworkCb)
             throws Exception {
+        cellNetworkCb.waitForAvailable();
         mVcnManager.setVcnConfig(subGrp, buildTestModeVcnConfig());
 
         // Wait until the cell Network is lost (due to losing NOT_VCN_MANAGED) to wait for
