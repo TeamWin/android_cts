@@ -34,6 +34,8 @@ import android.car.hardware.CarPropertyConfig;
 import android.car.hardware.CarPropertyValue;
 import android.car.hardware.property.CarPropertyManager;
 import android.car.hardware.property.CarPropertyManager.CarPropertyEventCallback;
+import android.car.hardware.property.VehicleElectronicTollCollectionCardStatus;
+import android.car.hardware.property.VehicleElectronicTollCollectionCardType;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresDevice;
 import android.test.suitebuilder.annotation.SmallTest;
@@ -491,6 +493,54 @@ public class CarPropertyManagerTest extends CarApiTestBase {
                                 "INFO_EXTERIOR_DIMENSIONS measurement must be greater than 0").that(
                                 exteriorDimension).isGreaterThan(0);
                     }
+                }).build().verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testElectronicTollCollectionCardTypeIfSupported() {
+        VehiclePropertyVerifier.newBuilder(
+                VehiclePropertyIds.ELECTRONIC_TOLL_COLLECTION_CARD_TYPE,
+                CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                Integer.class).setCarPropertyValueVerifier(
+                (carPropertyConfig, carPropertyValue) -> {
+                    Integer electronicTollCollectionCardType =
+                            (Integer) carPropertyValue.getValue();
+                    assertWithMessage(
+                            "ELECTRONIC_TOLL_COLLECTION_CARD_TYPE value must be a valid "
+                                    + "VehicleElectronicTollCollectionCardType").that(
+                            electronicTollCollectionCardType).isIn(ImmutableSet.builder().add(
+                            VehicleElectronicTollCollectionCardType.UNKNOWN,
+                            VehicleElectronicTollCollectionCardType.
+                                    JP_ELECTRONIC_TOLL_COLLECTION_CARD,
+                            VehicleElectronicTollCollectionCardType.
+                                    JP_ELECTRONIC_TOLL_COLLECTION_CARD_V2).build());
+                }).build().verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testElectronicTollCollectionCardStatusIfSupported() {
+        VehiclePropertyVerifier.newBuilder(
+                VehiclePropertyIds.ELECTRONIC_TOLL_COLLECTION_CARD_STATUS,
+                CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                Integer.class).setCarPropertyValueVerifier(
+                (carPropertyConfig, carPropertyValue) -> {
+                    Integer electronicTollCollectionCardStatus =
+                            (Integer) carPropertyValue.getValue();
+                    assertWithMessage(
+                            "ELECTRONIC_TOLL_COLLECTION_CARD_STATUS value must be a valid "
+                                    + "VehicleElectronicTollCollectionCardStatus").that(
+                            electronicTollCollectionCardStatus).isIn(ImmutableSet.builder().add(
+                            VehicleElectronicTollCollectionCardStatus.UNKNOWN,
+                            VehicleElectronicTollCollectionCardStatus.
+                                    ELECTRONIC_TOLL_COLLECTION_CARD_VALID,
+                            VehicleElectronicTollCollectionCardStatus.
+                                    ELECTRONIC_TOLL_COLLECTION_CARD_INVALID,
+                            VehicleElectronicTollCollectionCardStatus.
+                                    ELECTRONIC_TOLL_COLLECTION_CARD_NOT_INSERTED).build());
                 }).build().verify(mCarPropertyManager);
     }
 
