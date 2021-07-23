@@ -549,7 +549,7 @@ public class StagedInstallTest {
         int sessionId = stageSingleApk(Apex2DifferentPackageName).assertSuccessful().getSessionId();
         PackageInstaller.SessionInfo sessionInfo = waitForBroadcast(sessionId);
         assertThat(sessionInfo.getStagedSessionErrorMessage()).contains(
-                "INSTALL_FAILED_WRONG_INSTALLED_VERSION: Package Verification Result");
+                "Attempting to install new APEX package");
     }
 
     @Test
@@ -1370,7 +1370,7 @@ public class StagedInstallTest {
 
         InstallUtils.commitExpectingFailure(
                 AssertionError.class,
-                "INSTALL_FAILED_WRONG_INSTALLED_VERSION",
+                "Attempting to install new APEX package",
                 Install.single(Apex2DifferentPackageName));
         assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(1);
     }
@@ -1415,7 +1415,7 @@ public class StagedInstallTest {
 
         InstallUtils.commitExpectingFailure(
                 AssertionError.class,
-                "Failed collecting certificates for",
+                "Failed to collect certificates from",
                 Install.single(Apex2NoApkSignature));
         assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(1);
     }

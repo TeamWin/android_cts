@@ -16,6 +16,8 @@
 
 package android.keystore.cts;
 
+import static org.junit.Assume.assumeTrue;
+
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.pm.FeatureInfo;
@@ -25,6 +27,8 @@ import android.security.keystore.KeyInfo;
 import android.security.keystore.KeyProperties;
 import android.security.keystore.KeyProtection;
 import android.test.MoreAsserts;
+
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.internal.util.HexDump;
 
@@ -82,6 +86,13 @@ abstract class TestUtils extends Assert {
     static final long DAY_IN_MILLIS = 1000 * 60 * 60 * 24;
 
     private TestUtils() {}
+
+    static void assumeStrongBox() {
+        PackageManager packageManager =
+                InstrumentationRegistry.getInstrumentation().getTargetContext().getPackageManager();
+        assumeTrue("Can only test if we have StrongBox",
+                packageManager.hasSystemFeature(PackageManager.FEATURE_STRONGBOX_KEYSTORE));
+    }
 
     // Returns 0 if not implemented. Otherwise returns the feature version.
     //
