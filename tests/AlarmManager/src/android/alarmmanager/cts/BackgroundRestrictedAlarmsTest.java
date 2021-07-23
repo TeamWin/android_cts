@@ -86,7 +86,6 @@ public class BackgroundRestrictedAlarmsTest {
         mAlarmScheduler = new ComponentName(TEST_APP_PACKAGE, TEST_APP_RECEIVER);
         mAlarmCount = 0;
         updateAlarmManagerConstants();
-        updateBackgroundSettleTime();
         setAppOpsMode(APP_OP_MODE_IGNORED);
         makeUidIdle();
         final IntentFilter intentFilter = new IntentFilter();
@@ -152,7 +151,6 @@ public class BackgroundRestrictedAlarmsTest {
     @After
     public void tearDown() throws Exception {
         deleteAlarmManagerConstants();
-        resetBackgroundSettleTime();
         setAppOpsMode(APP_OP_MODE_ALLOWED);
         // Cancel any leftover alarms
         final Intent cancelAlarmsIntent = new Intent(TestAlarmScheduler.ACTION_CANCEL_ALL_ALARMS);
@@ -186,15 +184,6 @@ public class BackgroundRestrictedAlarmsTest {
                 .append(" ")
                 .append(mode);
         mUiDevice.executeShellCommand(commandBuilder.toString());
-    }
-
-    private void updateBackgroundSettleTime() throws IOException {
-        mUiDevice.executeShellCommand(
-                "settings put global activity_manager_constants background_settle_time=0");
-    }
-
-    private void resetBackgroundSettleTime() throws IOException {
-        mUiDevice.executeShellCommand("settings delete global activity_manager_constants");
     }
 
     private void makeUidIdle() throws IOException {
