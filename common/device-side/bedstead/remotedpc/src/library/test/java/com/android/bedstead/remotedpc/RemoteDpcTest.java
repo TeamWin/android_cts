@@ -25,6 +25,8 @@ import android.os.UserHandle;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.AfterClass;
+import com.android.bedstead.harrier.annotations.BeforeClass;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDeviceOwner;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.devicepolicy.DeviceOwner;
@@ -36,8 +38,6 @@ import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppProvider;
 import com.android.eventlib.premade.EventLibDeviceAdminReceiver;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
