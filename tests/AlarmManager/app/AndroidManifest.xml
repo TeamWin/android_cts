@@ -25,7 +25,10 @@
                   android:exported="true" />
         <receiver android:name=".TestAlarmReceiver" />
         <receiver android:name=".PermissionStateChangedReceiver"
-                  android:exported="true" >
+                  android:exported="true"
+                  android:enabled="false" >
+            <!-- Disabled by default so it doesn't cause resource churn or race in tests
+             where this is not required -->
             <intent-filter>
                 <action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED" />
             </intent-filter>
