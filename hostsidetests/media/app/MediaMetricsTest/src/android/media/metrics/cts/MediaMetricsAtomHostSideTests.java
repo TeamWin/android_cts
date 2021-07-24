@@ -83,6 +83,19 @@ public class MediaMetricsAtomHostSideTests {
 
 
     @Test
+    public void testPlaybackStateEvent_default() throws Exception {
+        turnOnForTesting();
+        Context context = InstrumentationRegistry.getContext();
+        MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
+        PlaybackSession s = manager.createPlaybackSession();
+        PlaybackStateEvent e =
+                new PlaybackStateEvent.Builder().build();
+        s.reportPlaybackStateEvent(e);
+        resetProperties();
+    }
+
+
+    @Test
     public void testPlaybackStateEvent() throws Exception {
         turnOnForTesting();
         Context context = InstrumentationRegistry.getContext();
@@ -95,6 +108,20 @@ public class MediaMetricsAtomHostSideTests {
                         .setMetricsBundle(new Bundle())
                         .build();
         s.reportPlaybackStateEvent(e);
+        resetProperties();
+    }
+
+    @Test
+    public void testPlaybackErrorEvent_default() throws Exception {
+        turnOnForTesting();
+        Context context = InstrumentationRegistry.getContext();
+        MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
+        PlaybackSession s = manager.createPlaybackSession();
+        PlaybackErrorEvent e =
+                new PlaybackErrorEvent.Builder()
+                        .setException(new Exception(""))
+                        .build();
+        s.reportPlaybackErrorEvent(e);
         resetProperties();
     }
 
@@ -113,6 +140,18 @@ public class MediaMetricsAtomHostSideTests {
                         .setMetricsBundle(new Bundle())
                         .build();
         s.reportPlaybackErrorEvent(e);
+        resetProperties();
+    }
+
+    @Test
+    public void testTrackChangeEvent_default() throws Exception {
+        turnOnForTesting();
+        Context context = InstrumentationRegistry.getContext();
+        MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
+        PlaybackSession s = manager.createPlaybackSession();
+        TrackChangeEvent e =
+                new TrackChangeEvent.Builder(TrackChangeEvent.TRACK_TYPE_AUDIO).build();
+        s.reportTrackChangeEvent(e);
         resetProperties();
     }
 
@@ -189,6 +228,18 @@ public class MediaMetricsAtomHostSideTests {
     }
 
     @Test
+    public void testNetworkEvent_default() throws Exception {
+        turnOnForTesting();
+        Context context = InstrumentationRegistry.getContext();
+        MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
+        PlaybackSession s = manager.createPlaybackSession();
+        NetworkEvent e =
+                new NetworkEvent.Builder().build();
+        s.reportNetworkEvent(e);
+        resetProperties();
+    }
+
+    @Test
     public void testNetworkEvent() throws Exception {
         turnOnForTesting();
         Context context = InstrumentationRegistry.getContext();
@@ -201,6 +252,18 @@ public class MediaMetricsAtomHostSideTests {
                         .setMetricsBundle(new Bundle())
                         .build();
         s.reportNetworkEvent(e);
+        resetProperties();
+    }
+
+    @Test
+    public void testPlaybackMetrics_default() throws Exception {
+        turnOnForTesting();
+        Context context = InstrumentationRegistry.getContext();
+        MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
+        PlaybackSession s = manager.createPlaybackSession();
+        PlaybackMetrics e =
+                new PlaybackMetrics.Builder().build();
+        s.reportPlaybackMetrics(e);
         resetProperties();
     }
 
