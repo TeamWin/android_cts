@@ -28,6 +28,11 @@
         <option name="test-file-name" value="AlarmTestApp30.apk" />
     </target_preparer>
 
+    <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
+        <option name="run-command" value="settings put global activity_manager_constants background_settle_time=0" />
+        <option name="teardown-command" value="settings delete global activity_manager_constants" />
+    </target_preparer>
+
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.alarmmanager.cts" />
         <option name="runtime-hint" value="1m" />
