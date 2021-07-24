@@ -31,6 +31,7 @@ import static android.server.wm.app.Components.TestLiveWallpaperKeys.ENGINE_DISP
 import static android.server.wm.BarTestUtils.assumeHasBars;
 import static android.server.wm.MockImeHelper.createManagedMockImeSession;
 import static android.view.Display.DEFAULT_DISPLAY;
+import static android.view.WindowInsets.Type.ime;
 import static android.view.WindowManager.DISPLAY_IME_POLICY_FALLBACK_DISPLAY;
 import static android.view.WindowManager.DISPLAY_IME_POLICY_HIDE;
 import static android.view.WindowManager.DISPLAY_IME_POLICY_LOCAL;
@@ -75,7 +76,6 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 
-import com.android.compatibility.common.util.ImeAwareEditText;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.TestUtils;
 import com.android.cts.mockime.ImeCommand;
@@ -831,12 +831,12 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
     }
 
     public static class ImeTestActivity extends Activity {
-        ImeAwareEditText mEditText;
+        EditText mEditText;
 
         @Override
         protected void onCreate(Bundle icicle) {
             super.onCreate(icicle);
-            mEditText = new ImeAwareEditText(this);
+            mEditText = new EditText(this);
             // Set private IME option for editorMatcher to identify which TextView received
             // onStartInput event.
             resetPrivateImeOptionsIdentifier();
@@ -848,7 +848,7 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
         }
 
         void showSoftInput() {
-            mEditText.scheduleShowSoftInput();
+            mEditText.getWindowInsetsController().show(ime());
         }
 
         void resetPrivateImeOptionsIdentifier() {
