@@ -41,7 +41,9 @@ public class TestAppActivitiesTest {
     private static final UserReference sUser = sTestApis.users().instrumented();
 
     private static final TestAppProvider sTestAppProvider = new TestAppProvider();
-    private static final TestApp sTestApp = sTestAppProvider.any(); // TODO(scottjonathan): specify must have activity
+    private static final TestApp sTestApp = sTestAppProvider.query()
+            .wherePackageName().isEqualTo("android.EmptyTestApp")
+            .get(); // TODO(scottjonathan): specify must have activity rather than package name
     private static TestAppInstanceReference mTestAppInstance;
 
     private static final String EXISTING_ACTIVITY = "android.testapp.activity";

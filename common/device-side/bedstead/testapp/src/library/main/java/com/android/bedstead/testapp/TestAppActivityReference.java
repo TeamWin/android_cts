@@ -22,10 +22,8 @@ import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 
 import com.android.bedstead.nene.TestApis;
-import com.android.bedstead.nene.activities.ActivityReference;
 import com.android.bedstead.nene.packages.ComponentReference;
 import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.eventlib.events.activities.ActivityCreatedEvent;
@@ -74,7 +72,8 @@ public abstract class TestAppActivityReference {
 
         ActivityStartedEvent
                 .queryPackage(mComponent.packageName().packageName())
-                .whereActivity().activityClass().className().isEqualTo(mComponent.className()).waitForEvent();
+                .whereActivity().activityClass().className().isEqualTo(
+                        mComponent.className()).waitForEvent();
 
         return sTestApis.activities().wrap(
                 TestAppActivity.class, new TestAppActivityImpl(mInstance, mComponent));
@@ -95,7 +94,8 @@ public abstract class TestAppActivityReference {
 
         ActivityCreatedEvent
                 .queryPackage(mComponent.packageName().packageName())
-                .whereActivity().activityClass().className().isEqualTo(mComponent.className()).waitForEvent();
+                .whereActivity().activityClass().className().isEqualTo(
+                        mComponent.className()).waitForEvent();
 
         return sTestApis.activities().wrap(
                 TestAppActivity.class, new TestAppActivityImpl(mInstance, mComponent));

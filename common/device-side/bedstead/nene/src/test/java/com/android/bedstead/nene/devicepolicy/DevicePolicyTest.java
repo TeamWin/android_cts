@@ -27,6 +27,8 @@ import android.os.Build;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.AfterClass;
+import com.android.bedstead.harrier.annotations.BeforeClass;
 import com.android.bedstead.harrier.annotations.EnsureHasNoSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
@@ -42,8 +44,6 @@ import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppProvider;
 import com.android.eventlib.premade.EventLibDeviceAdminReceiver;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -58,6 +58,8 @@ public class DevicePolicyTest {
 
     //  TODO(180478924): We shouldn't need to hardcode this
     private static final String DEVICE_ADMIN_TESTAPP_PACKAGE_NAME = "android.DeviceAdminTestApp";
+    private static final ComponentName NON_EXISTING_DPC_COMPONENT_NAME =
+            new ComponentName("com.a.package", "com.a.package.Receiver");
     private static final ComponentName DPC_COMPONENT_NAME =
             new ComponentName(DEVICE_ADMIN_TESTAPP_PACKAGE_NAME,
                     EventLibDeviceAdminReceiver.class.getName());
@@ -135,7 +137,8 @@ public class DevicePolicyTest {
                 .createAndStart();
         try {
             assertThrows(NeneException.class,
-                    () -> sTestApis.devicePolicy().setProfileOwner(profile, DPC_COMPONENT_NAME));
+                    () -> sTestApis.devicePolicy().setProfileOwner(
+                            profile, NON_EXISTING_DPC_COMPONENT_NAME));
         } finally {
             profile.remove();
         }
@@ -244,10 +247,10 @@ public class DevicePolicyTest {
     @EnsureHasNoDeviceOwner
     @EnsureHasNoProfileOwner
     public void setDeviceOwner_componentNameNotInstalled_throwsException() {
-        sTestApp.uninstall(sUser);
         try {
             assertThrows(NeneException.class,
-                    () -> sTestApis.devicePolicy().setDeviceOwner(sUser, DPC_COMPONENT_NAME));
+                    () -> sTestApis.devicePolicy().setDeviceOwner(
+                            sUser, NON_EXISTING_DPC_COMPONENT_NAME));
         } finally {
             sTestApp.install(sUser);
         }

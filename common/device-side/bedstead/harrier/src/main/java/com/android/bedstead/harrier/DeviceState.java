@@ -39,6 +39,8 @@ import android.util.Log;
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.bedstead.harrier.annotations.AfterClass;
+import com.android.bedstead.harrier.annotations.BeforeClass;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.EnsurePackageNotInstalled;
@@ -85,12 +87,18 @@ import junit.framework.AssertionFailedError;
 import org.junit.AssumptionViolatedException;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
+import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.Statement;
+import org.junit.runners.model.TestClass;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -488,24 +496,43 @@ public final class DeviceState implements TestRule {
         return new Statement() {
             @Override
             public void evaluate() throws Throwable {
-                Log.d(LOG_TAG, "Preparing state for suite " + description.getMethodName());
+                checkValidAnnotations(description);
 
+                TestClass testClass = new TestClass(description.getTestClass());
+
+                boolean skipAfterClass = true;
                 PermissionContextImpl permissionContext = null;
-                try {
-                    List<Annotation> annotations = getAnnotations(description);
-                    permissionContext = applyAnnotations(annotations);
-                } catch (AssumptionViolatedException e) {
-                    mSkipTests = true;
-                    mSkipTestsReason = e.getMessage();
-                } catch (AssertionError e) {
-                    mFailTests = true;
-                    mFailTestsReason = e.getMessage();
+
+                if (!mSkipTests && !mFailTests) {
+                    skipAfterClass = false;
+                    Log.d(LOG_TAG, "Preparing state for suite " + description.getClassName());
+
+                    try {
+                        List<Annotation> annotations =
+                                new ArrayList<>(getAnnotations(description));
+                        permissionContext = applyAnnotations(annotations);
+                    } catch (AssumptionViolatedException e) {
+                        mSkipTests = true;
+                        mSkipTestsReason = e.getMessage();
+                    } catch (AssertionError e) {
+                        mFailTests = true;
+                        mFailTestsReason = e.getMessage();
+                    }
+
+                    Log.d(LOG_TAG,
+                            "Finished preparing state for suite "
+                                    + description.getClassName());
                 }
 
-                Log.d(LOG_TAG,
-                        "Finished preparing state for suite " + description.getMethodName());
+                if (!mSkipTests && !mFailTests) {
+                    runAnnotatedMethods(testClass, BeforeClass.class);
+                }
 
                 base.evaluate();
+
+                if (!skipAfterClass) {
+                    runAnnotatedMethods(testClass, AfterClass.class);
+                }
 
                 if (permissionContext != null) {
                     permissionContext.close();
@@ -516,6 +543,70 @@ public final class DeviceState implements TestRule {
                 }
             }
         };
+    }
+
+    private static final Map<Class<? extends Annotation>, Class<? extends Annotation>>
+            BANNED_ANNOTATIONS_TO_REPLACEMENTS = getBannedAnnotationsToReplacements();
+    private static Map<
+            Class<? extends Annotation>,
+            Class<? extends Annotation>> getBannedAnnotationsToReplacements() {
+        Map<
+                Class<? extends Annotation>,
+                Class<? extends Annotation>> bannedAnnotationsToReplacements = new HashMap<>();
+        bannedAnnotationsToReplacements.put(org.junit.BeforeClass.class, BeforeClass.class);
+        bannedAnnotationsToReplacements.put(org.junit.AfterClass.class, AfterClass.class);
+        return bannedAnnotationsToReplacements;
+    }
+
+    private void checkValidAnnotations(Description classDescription) {
+        for (Method method : classDescription.getTestClass().getMethods()) {
+            for (Map.Entry<
+                    Class<? extends Annotation>,
+                    Class<? extends Annotation>> bannedAnnotation
+                    : BANNED_ANNOTATIONS_TO_REPLACEMENTS.entrySet()) {
+                if (method.isAnnotationPresent(bannedAnnotation.getKey())) {
+                    throw new IllegalStateException("Do not use "
+                            + bannedAnnotation.getKey().getCanonicalName()
+                            + " when using DeviceState, replace with "
+                            + bannedAnnotation.getValue().getCanonicalName());
+                }
+            }
+
+            if (method.getAnnotation(BeforeClass.class) != null
+                    || method.getAnnotation(AfterClass.class) != null) {
+                checkPublicStaticVoidNoArgs(method);
+            }
+        }
+    }
+
+    private void checkPublicStaticVoidNoArgs(Method method) {
+        if (method.getParameterTypes().length > 0) {
+            throw new IllegalStateException(
+                    "Method " + method.getName() + " should have no parameters");
+        }
+        if (method.getReturnType() != Void.TYPE) {
+            throw new IllegalStateException("Method " + method.getName() + "() should be void");
+        }
+        if (!Modifier.isStatic(method.getModifiers())) {
+            throw new IllegalStateException("Method " + method.getName() + "() should be static");
+        }
+        if (!Modifier.isPublic(method.getModifiers())) {
+            throw new IllegalStateException("Method " + method.getName() + "() should be public");
+        }
+    }
+
+    private void runAnnotatedMethods(
+            TestClass testClass, Class<? extends Annotation> annotation) throws Throwable {
+
+        List<FrameworkMethod> methods = new ArrayList<>(testClass.getAnnotatedMethods(annotation));
+        Collections.reverse(methods);
+        for (FrameworkMethod method : methods) {
+            try {
+                method.invokeExplosively(testClass.getJavaClass());
+            } catch (InvocationTargetException e) {
+                throw e.getCause();
+            }
+        }
     }
 
     private void requireRunOnUser(String userType) {
