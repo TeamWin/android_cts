@@ -494,6 +494,43 @@ public class CarPropertyManagerTest extends CarApiTestBase {
                 }).build().verify(mCarPropertyManager);
     }
 
+    @Test
+    public void testEnvOutsideTemperatureIfSupported() {
+        VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.ENV_OUTSIDE_TEMPERATURE,
+                CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS,
+                Float.class).build().verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testCurrentGearIfSupported() {
+        VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.CURRENT_GEAR,
+                CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                Integer.class).setConfigArrayVerifier(
+                configArray -> assertWithMessage(
+                        "CURRENT_GEAR config array must specify supported gears")
+                        .that(configArray.size())
+                        .isGreaterThan(0)).setCarPropertyValueVerifier(
+                (carPropertyConfig, carPropertyValue) -> assertWithMessage(
+                        "CURRENT_GEAR Integer value must be listed as supported gear in "
+                                + "configArray")
+                        .that(carPropertyConfig.getConfigArray().contains(
+                                carPropertyValue.getValue())).isTrue())
+                .build().verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testParkingBrakeAutoApplyIfSupported() {
+        VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.PARKING_BRAKE_AUTO_APPLY,
+                CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                Boolean.class).build().verify(mCarPropertyManager);
+    }
+
     @SuppressWarnings("unchecked")
     @Test
     public void testGetProperty() {
