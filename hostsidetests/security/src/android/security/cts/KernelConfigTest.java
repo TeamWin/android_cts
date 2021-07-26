@@ -59,11 +59,11 @@ public class KernelConfigTest extends BaseHostJUnit4Test {
 
     @Before
     public void setUp() throws Exception {
-        // Assumes every test in this file asserts a requirement of CDD section 9.
-        assumeSecurityModelCompat();
         mDevice = getDevice();
         mBuild = getBuild();
         configSet = getDeviceConfig(mDevice, cachedConfigGzSet);
+        // Assumes every test in this file asserts a requirement of CDD section 9.
+        assumeSecurityModelCompat();
     }
 
     /*
@@ -406,7 +406,11 @@ public class KernelConfigTest extends BaseHostJUnit4Test {
     }
 
     private void assumeSecurityModelCompat() throws Exception {
-        assumeTrue("Skipping test: FEATURE_SECURITY_MODEL_COMPATIBLE missing.",
-                getDevice().hasFeature("feature:android.hardware.security.model.compatible"));
+        // This feature name check only applies to devices that first shipped with
+        // SC or later.
+        if (PropertyUtil.getFirstApiLevel(mDevice) >= 31) {
+            assumeTrue("Skipping test: FEATURE_SECURITY_MODEL_COMPATIBLE missing.",
+                    getDevice().hasFeature("feature:android.hardware.security.model.compatible"));
+        }
     }
 }

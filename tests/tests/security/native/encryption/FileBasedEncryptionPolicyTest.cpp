@@ -35,6 +35,7 @@
 // The relevant Android API levels
 #define Q_API_LEVEL 29
 #define R_API_LEVEL 30
+#define S_API_LEVEL 31
 
 static int getFirstApiLevel(void) {
     int level = property_get_int32("ro.product.first_api_level", 0);
@@ -201,11 +202,6 @@ static void validateEncryptionFlags(int flags) {
 // fstab has the correct fileencryption= option for the userdata partition.  See
 // https://source.android.com/security/encryption/file-based.html
 TEST(FileBasedEncryptionPolicyTest, allowedPolicy) {
-    if(!deviceSupportsFeature("android.hardware.security.model.compatible")) {
-        GTEST_SKIP()
-            << "Skipping test: FEATURE_SECURITY_MODEL_COMPATIBLE missing.";
-        return;
-    }
     int first_api_level = getFirstApiLevel();
     struct fscrypt_get_policy_ex_arg arg;
     int res;
@@ -220,6 +216,15 @@ TEST(FileBasedEncryptionPolicyTest, allowedPolicy) {
     }
 
     GTEST_LOG_(INFO) << "First API level is " << first_api_level;
+
+    // This feature name check only applies to devices that first shipped with
+    // SC or later.
+    if(first_api_level >= S_API_LEVEL &&
+       !deviceSupportsFeature("android.hardware.security.model.compatible")) {
+        GTEST_SKIP()
+            << "Skipping test: FEATURE_SECURITY_MODEL_COMPATIBLE missing.";
+        return;
+    }
 
     // Note: SELinux policy allows the shell domain to use these ioctls, but not
     // apps.  Therefore this test needs to be a real native test that's run

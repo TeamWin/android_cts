@@ -155,11 +155,11 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
 
     @Before
     public void setUp() throws Exception {
+        mDevice = getDevice();
+        mBuild = getBuild();
         // Assumes every test in this file asserts a requirement of CDD section 9.
         assumeSecurityModelCompat();
 
-        mDevice = getDevice();
-        mBuild = getBuild();
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mBuild);
         sepolicyAnalyze = copyResourceToTempFile("/sepolicy-analyze");
         sepolicyAnalyze.setExecutable(true);
@@ -187,8 +187,12 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
     }
 
     private void assumeSecurityModelCompat() throws Exception {
-        assumeTrue("Skipping test: FEATURE_SECURITY_MODEL_COMPATIBLE missing.",
-                getDevice().hasFeature("feature:android.hardware.security.model.compatible"));
+        // This feature name check only applies to devices that first shipped with
+        // SC or later.
+        if (PropertyUtil.getFirstApiLevel(mDevice) >= 31) {
+            assumeTrue("Skipping test: FEATURE_SECURITY_MODEL_COMPATIBLE missing.",
+                    getDevice().hasFeature("feature:android.hardware.security.model.compatible"));
+        }
     }
 
     /*
