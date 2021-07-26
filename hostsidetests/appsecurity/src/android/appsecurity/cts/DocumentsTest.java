@@ -16,7 +16,7 @@
 
 package android.appsecurity.cts;
 
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.util.ApiLevelUtil;
@@ -152,7 +152,7 @@ public class DocumentsTest extends DocumentsTestCase {
         }
     }
 
-    @SecurityTest
+    @AsbSecurityTest(cveBugId = 157474195)
     public void testAfterMoveDocumentInStorage_revokeUriPermission() throws Exception {
         if (isAtLeastS()) {
             runDeviceTests(CLIENT_PKG, ".DocumentsClientTest",

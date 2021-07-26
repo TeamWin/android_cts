@@ -16,7 +16,7 @@
 
 package android.security.cts;
 
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -28,8 +28,8 @@ public class CVE_2019_2007 extends SecurityTestCase {
      *  b/120789744
      *  Vulnerability Behaviour: EXIT_VULNERABLE (113)
      */
-    @SecurityTest(minPatchLevel = "2019-03")
     @Test
+    @AsbSecurityTest(cveBugId = 120789744)
     public void testPocCVE_2019_2007() throws Exception {
         AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2019-2007", null, getDevice());
     }
