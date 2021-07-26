@@ -58,6 +58,11 @@ java_test_host {
         "CtsCorruptApkTests_Compressed_R",
         "CtsCorruptApkTests_Unaligned_Q",
         "CtsCorruptApkTests_Unaligned_R",
+        "CtsSignatureQueryService",
+        "CtsSignatureQueryService_v2",
+        "CtsSignatureQueryService_v3",
+        "CtsSignatureQueryServiceTest",
+        "CtsSignatureQueryServiceTest_v2",
     ],
 
     // Prebuilts of all ABIs.
