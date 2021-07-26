@@ -63,7 +63,7 @@ public final class Versions {
             }
         }
 
-        throw new IllegalStateException("Could not find version with code " + version);
+        return Integer.toString(version);
     }
 
     /**
