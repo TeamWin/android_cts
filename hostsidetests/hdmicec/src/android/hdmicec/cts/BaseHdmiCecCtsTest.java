@@ -157,10 +157,10 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
         String line;
         String pattern =
                 "(.*?)"
-                        + "(mAddress: )"
+                        + "(mDeviceInfo:)(.*)(logical_address: )"
                         + "(?<"
                         + "logicalAddress"
-                        + ">\\p{Digit}{1,2})"
+                        + ">0x\\p{XDigit}{2})"
                         + "(.*?)";
         Pattern p = Pattern.compile(pattern);
         try {
