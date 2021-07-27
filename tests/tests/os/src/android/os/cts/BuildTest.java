@@ -285,6 +285,8 @@ public class BuildTest extends TestCase {
         // CUR_DEVELOPMENT must be larger than any released version.
         Field[] fields = Build.VERSION_CODES.class.getDeclaredFields();
         List<String> codenames = Arrays.asList(ACTIVE_CODENAMES);
+        // Make the codenames uppercase to match the field names.
+        codenames.replaceAll(String::toUpperCase);
         for (Field field : fields) {
             if (field.getType().equals(int.class) && Modifier.isStatic(field.getModifiers())) {
                 String fieldName = field.getName();
