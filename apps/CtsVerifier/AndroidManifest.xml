@@ -2830,7 +2830,6 @@
                        android:value="multi_display_mode" />
         </activity>
 
-<!-- Temporary disabled b/c of incorrect assumptions in part of the test: b/160938927
         <activity android:name=".usb.device.UsbDeviceTestActivity"
                 android:label="@string/usb_device_test"
                 android:exported="true"
@@ -2847,7 +2846,6 @@
             <meta-data android:name="display_mode"
                        android:value="multi_display_mode" />
         </activity>
-        -->
 
         <activity android:name=".usb.mtp.MtpHostTestActivity" android:label="@string/mtp_host_test"
             android:exported="true">
