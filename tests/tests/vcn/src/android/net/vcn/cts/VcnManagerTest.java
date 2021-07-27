@@ -31,6 +31,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
@@ -527,9 +528,21 @@ public class VcnManagerTest extends VcnTestBase {
             throws Exception {
         mVcnManager.clearVcnConfig(subGrp);
 
-        // Expect VCN Network to disappear after VcnConfig is cleared
-        final Network lostVcnNetwork = cellNetworkCb.waitForLost();
-        assertEquals(vcnNetwork, lostVcnNetwork);
+        // Expect VCN Network to disappear after VcnConfig is cleared.
+        if (mConnectivityManager.getNetworkCapabilities(vcnNetwork) != null) {
+
+            // If not already torn down, wait for teardown. In the event that the underlying network
+            // has already regained the NOT_VCN_MANAGED bit (before the VCN's NetworkAgent teardown)
+            // the VCN network MAY be immediately replaced with the underlying Cell, which only
+            // fires an onAvailable for the new network, as opposed to an onLost() for the VCN
+            // network. In that case, check that the VCN network has been unregistered.
+            final Network lostVcnNetwork = cellNetworkCb.waitForLost();
+            if (lostVcnNetwork != null) {
+                assertEquals(vcnNetwork, lostVcnNetwork);
+            } else {
+                assertNull(mConnectivityManager.getNetworkCapabilities(vcnNetwork));
+            }
+        } // Else already torn down, pass.
     }
 
     @Test
