@@ -34,6 +34,7 @@ java_library {
 android_test {
     name: "CtsSignatureQueryService",
     defaults: ["cts_support_defaults"],
+    compile_multilib: "both",
     sdk_version: "current",
     static_libs: ["cts_signature_query_service"],
     test_suites: [
@@ -51,6 +52,7 @@ android_test {
     name: "CtsSignatureQueryService_v2",
     defaults: ["cts_support_defaults"],
     manifest: "AndroidManifest_v2.xml",
+    compile_multilib: "both",
     sdk_version: "current",
     static_libs: ["cts_signature_query_service"],
     test_suites: [
@@ -70,6 +72,7 @@ android_test {
     name: "CtsSignatureQueryService_v3",
     defaults: ["cts_support_defaults"],
     manifest: "AndroidManifest_v3.xml",
+    compile_multilib: "both",
     sdk_version: "current",
     static_libs: ["cts_signature_query_service"],
     test_suites: [
