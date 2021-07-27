@@ -136,6 +136,7 @@
 
     <!-- b/192313064 , b/192984235 -->
     <option name="compatibility:exclude-filter" value="CtsNativeMediaAAudioTestCases android.nativemedia.aaudio.AAudioTests#test_aaudio_mmap_testBasicMmapOutput" />
+    <option name="compatibility:exclude-filter" value="CtsNativeMediaAAudioTestCases[instant] android.nativemedia.aaudio.AAudioTests#test_aaudio_mmap_testBasicMmapOutput" />
 
     <!-- b/134654621 -->
     <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.AppConfigurationTests#testTaskCloseRestoreFreeOrientation" />
