@@ -458,7 +458,7 @@ public class CarPropertyManagerTest extends CarApiTestBase {
     public void testInfoDriverSeatIfSupported() {
         VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.INFO_DRIVER_SEAT,
                 CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
-                VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                 CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
                 Integer.class).setCarPropertyValueVerifier(
                 (carPropertyConfig, carPropertyValue) -> {
