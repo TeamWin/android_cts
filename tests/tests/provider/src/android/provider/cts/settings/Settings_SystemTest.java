@@ -27,7 +27,7 @@ import android.content.res.Configuration;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.SystemClock;
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import android.provider.Settings;
 import android.provider.Settings.SettingNotFoundException;
 import android.provider.Settings.System;
@@ -143,8 +143,8 @@ public class Settings_SystemTest {
     /**
      * Verifies that the invalid values for the font scale setting are rejected.
      */
-    @SecurityTest(minPatchLevel = "2021-02")
     @Test
+    @AsbSecurityTest(cveBugId = 156260178)
     public void testSystemSettingsRejectInvalidFontSizeScale() throws SettingNotFoundException {
         final ContentResolver cr = InstrumentationRegistry.getTargetContext().getContentResolver();
         // First put in a valid value
