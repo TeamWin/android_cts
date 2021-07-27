@@ -12,30 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# This make file can be removed after all the .mk files in the subdirectories are converted.
+
 LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
-
-# don't include this package in any target
-LOCAL_MODULE_TAGS := tests
-# and when built explicitly put it in the data partition
-LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
-
-# Include both the 32 and 64 bit versions
-LOCAL_MULTILIB := both
-
-LOCAL_JNI_SHARED_LIBRARIES := libgltest
-#LOCAL_SHARED_LIBRARIES := libc++
-#LOCAL_STATIC_LIBRARIES := libc++_static
-LOCAL_SRC_FILES := $(call all-java-files-under, src)
-LOCAL_PACKAGE_NAME := CtsSustainedPerformanceTestCases
-LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
-LOCAL_LICENSE_CONDITIONS := notice
-
-LOCAL_SDK_VERSION := current
-LOCAL_MIN_SDK_VERSION := 5
-
-# Tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts general-tests
-include $(BUILD_PACKAGE)
 include $(call all-makefiles-under,$(LOCAL_PATH))
