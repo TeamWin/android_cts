@@ -120,8 +120,11 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
 
         separateTestJournal();
         launchActivitiesInSplitScreen(
-                getLaunchActivityBuilder().setTargetActivity(RESIZEABLE_ACTIVITY),
-                getLaunchActivityBuilder().setTargetActivity(TEST_ACTIVITY));
+                getLaunchActivityBuilder().setTargetActivity(RESIZEABLE_ACTIVITY)
+                                        .setWindowingMode(WINDOWING_MODE_FULLSCREEN),
+                getLaunchActivityBuilder().setTargetActivity(TEST_ACTIVITY)
+                                        .setWindowingMode(WINDOWING_MODE_FULLSCREEN));
+
         final SizeInfo dockedSizes = getLastReportedSizesForActivity(RESIZEABLE_ACTIVITY);
 
         separateTestJournal();
