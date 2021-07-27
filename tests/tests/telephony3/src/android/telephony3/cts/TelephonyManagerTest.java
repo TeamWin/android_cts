@@ -23,7 +23,7 @@ import static org.junit.Assert.fail;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Build;
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
@@ -53,7 +53,7 @@ public class TelephonyManagerTest {
     }
 
     @Test
-    @SecurityTest(minPatchLevel = "2021-04")
+    @AsbSecurityTest(cveBugId = 173421434)
     public void testDeviceIdentifiersAreNotAccessible() throws Exception {
         // Apps with the READ_PHONE_STATE permission should no longer have access to device
         // identifiers. If an app's target SDK is less than Q and it has been granted the
