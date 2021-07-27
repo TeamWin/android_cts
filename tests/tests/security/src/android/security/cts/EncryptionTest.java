@@ -23,7 +23,6 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.platform.test.annotations.AppModeFull;
-import android.platform.test.annotations.SecurityTest;
 import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -37,7 +36,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-@SecurityTest
 @RunWith(AndroidJUnit4.class)
 public class EncryptionTest {
     static {

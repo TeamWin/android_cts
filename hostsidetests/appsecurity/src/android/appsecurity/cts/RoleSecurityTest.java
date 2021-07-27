@@ -17,7 +17,7 @@
 package android.appsecurity.cts;
 
 import android.platform.test.annotations.AppModeFull;
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -43,7 +43,7 @@ public class RoleSecurityTest extends BaseHostJUnit4Test {
 
     @Test
     @AppModeFull(reason = "Instant apps cannot access role manager")
-    @SecurityTest(minPatchLevel = "unknown")
+    @AsbSecurityTest(cveBugId = 177927831)
     public void cannotGetSmsRoleHolderForAnotherUser() throws Exception {
         final int[] userIds = Utils.prepareMultipleUsers(getDevice(), 2);
         assumeTrue(userIds.length == 2);

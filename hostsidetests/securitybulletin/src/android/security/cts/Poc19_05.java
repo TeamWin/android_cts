@@ -16,7 +16,7 @@
 
 package android.security.cts;
 
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -29,7 +29,7 @@ public class Poc19_05 extends SecurityTestCase {
      * CVE-2019-2257
      */
     @Test
-    @SecurityTest(minPatchLevel = "2019-05")
+    @AsbSecurityTest(cveBugId = 112303441)
     public void testPocCVE_2019_2257() throws Exception {
         String result = AdbUtils.runCommandLine(
                                 "dumpsys package com.qualcomm.qti.telephonyservice", getDevice());

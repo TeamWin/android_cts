@@ -16,7 +16,7 @@
 
 package android.security.cts;
 
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -31,8 +31,8 @@ public class CVE_2020_0381 extends SecurityTestCase {
      * b/150159669
      * Vulnerability Behaviour: SIGSEGV in self
      */
-    @SecurityTest(minPatchLevel = "2020-09")
     @Test
+    @AsbSecurityTest(cveBugId = 150159669)
     public void testPocCVE_2020_0381() throws Exception {
         assumeFalse(moduleIsPlayManaged("com.google.android.media"));
         String inputFiles[] = {"cve_2020_0381.xmf", "cve_2020_0381.info"};
