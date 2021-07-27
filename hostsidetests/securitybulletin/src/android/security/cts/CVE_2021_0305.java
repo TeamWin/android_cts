@@ -19,7 +19,7 @@ package android.security.cts;
 import android.platform.test.annotations.AppModeInstant;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
@@ -49,8 +49,8 @@ public class CVE_2021_0305 extends BaseHostJUnit4Test {
     }
 
     @Test
-    @SecurityTest(minPatchLevel = "2020-09")
     @AppModeFull
+    @AsbSecurityTest(cveBugId = 154015447)
     public void testRunDeviceTestsPassesFull() throws Exception {
         installPackage();
         Assert.assertTrue(runDeviceTests(TEST_PKG, TEST_CLASS, "testClick"));
