@@ -85,6 +85,7 @@
     </style>
     <style name="ShowBrandingTheme" parent="@android:style/Theme.Material.NoActionBar">
         <item name="android:windowSplashScreenBrandingImage">@drawable/branding</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/start</item>
         <item name="android:windowSplashScreenIconBackgroundColor">@drawable/blue</item>
     </style>
 
