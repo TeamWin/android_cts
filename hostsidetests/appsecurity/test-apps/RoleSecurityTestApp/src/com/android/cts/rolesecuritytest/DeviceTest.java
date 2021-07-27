@@ -18,25 +18,42 @@ package com.android.cts.rolesecuritytest;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assume.*;
 
+import android.app.Instrumentation;
 import android.app.role.RoleManager;
 import android.content.Context;
 import android.os.Build;
 import android.os.UserHandle;
 
 import androidx.test.core.app.ApplicationProvider;
+import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
+
+import com.android.compatibility.common.util.mainline.MainlineModule;
+import com.android.compatibility.common.util.mainline.ModuleDetector;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
+import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.junit.Test;
 
 @RunWith(AndroidJUnit4.class)
 public class DeviceTest {
+    private Instrumentation mInstrumentation;
+
+    @Before
+    public void setup() {
+        mInstrumentation = InstrumentationRegistry.getInstrumentation();
+    }
+
     @Test
     public void cannotGetSmsRoleHolderForAnotherUser() throws Exception {
+        assumeFalse(ModuleDetector
+                .moduleIsPlayManaged(getInstrumentation().getContext().getPackageManager(),
+                    MainlineModule.PERMISSION_CONTROLLER));
         assertNotEquals("This test should be run in a secondary user", UserHandle.USER_SYSTEM,
                 UserHandle.myUserId());
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
@@ -59,5 +76,9 @@ public class DeviceTest {
             e.printStackTrace();
         }
         assertFalse("Exploit succeeded", exploitSuccessful);
+    }
+
+    private Instrumentation getInstrumentation() {
+        return mInstrumentation;
     }
 }
