@@ -599,7 +599,6 @@ public class KeyguardTests extends KeyguardTestBase {
         mWmState.waitForKeyguardGone();
         mWmState.assertVisibility(TURN_SCREEN_ON_ATTR_DISMISS_KEYGUARD_ACTIVITY, true);
         assertFalse(mWmState.getKeyguardControllerState().keyguardShowing);
-        assertOnDismissSucceeded(TURN_SCREEN_ON_ATTR_DISMISS_KEYGUARD_ACTIVITY);
         assertTrue(isDisplayOn(DEFAULT_DISPLAY));
     }
 
