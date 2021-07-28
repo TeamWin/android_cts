@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.media.cts;
+package android.mediadrm.cts;
 
 import android.app.DownloadManager;
 import android.app.DownloadManager.Request;
@@ -30,6 +30,7 @@ import android.media.MediaPlayer;
 import android.media.MediaPlayer.DrmInfo;
 import android.media.ResourceBusyException;
 import android.media.UnsupportedSchemeException;
+import android.media.cts.MediaStubActivity;
 import android.media.cts.TestUtils.Monitor;
 import android.net.Uri;
 import android.os.Handler;

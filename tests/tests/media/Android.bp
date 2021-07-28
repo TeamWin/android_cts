@@ -34,7 +34,13 @@ java_library {
         "src/android/media/cts/MediaTimeProvider.java",
         "src/android/media/cts/NonBlockingAudioTrack.java",
     ],
-    sdk_version: "current",
+    static_libs: [
+        "compatibility-device-util-axt",
+        "platform-test-annotations",
+    ],
+    platform_apis: true,
+    min_sdk_version: "29",
+    target_sdk_version: "31",
 }
 
 // Build the res and asset library to
@@ -43,6 +49,53 @@ android_library {
     name: "cts-media-res-lib",
     asset_dirs: ["assets"],
     resource_dirs: ["res"],
+    min_sdk_version: "29",
+    target_sdk_version: "31",
+}
+
+android_library {
+    name: "cts-media-drm-common",
+    srcs: [
+        "src/android/media/cts/AudioHelper.java",
+        "src/android/media/cts/AudioManagerStub.java",
+        "src/android/media/cts/AudioManagerStubHelper.java",
+        "src/android/media/cts/AudioRecordNative.java",
+        "src/android/media/cts/AudioTrackNative.java",
+        "src/android/media/cts/CodecState.java",
+        "src/android/media/cts/ConnectionStatus.java",
+        "src/android/media/cts/IConnectionStatus.java",
+        "src/android/media/cts/InputSurface.java",
+        "src/android/media/cts/InputSurfaceInterface.java",
+        "src/android/media/cts/MediaCodecBlockModelHelper.java",
+        "src/android/media/cts/MediaCodecClearKeyPlayer.java",
+        "src/android/media/cts/MediaCodecPlayerTestBase.java",
+        "src/android/media/cts/MediaCodecWrapper.java",
+        "src/android/media/cts/MediaTimeProvider.java",
+        "src/android/media/cts/MediaStubActivity.java",
+        "src/android/media/cts/NdkInputSurface.java",
+        "src/android/media/cts/NdkMediaCodec.java",
+        "src/android/media/cts/NonBlockingAudioTrack.java",
+        "src/android/media/cts/NonMediaMainlineTest.java",
+        "src/android/media/cts/OutputSurface.java",
+        "src/android/media/cts/Preconditions.java",
+        "src/android/media/cts/TestMediaDataSource.java",
+        "src/android/media/cts/TestUtils.java",
+        "src/android/media/cts/TextureRender.java",
+    ],
+    static_libs: [
+        "androidx.heifwriter_heifwriter",
+        "androidx.test.core",
+        "androidx.test.ext.junit",
+        "compatibility-device-util-axt",
+        "junit",
+        "platform-test-annotations",
+    ],
+    platform_apis: true,
+    libs: [
+        "org.apache.http.legacy",
+        "android.test.base",
+        "android.test.runner",
+    ],
     min_sdk_version: "29",
     target_sdk_version: "31",
 }
@@ -61,6 +114,7 @@ android_test {
         "ctstestrunner-axt",
         "hamcrest-library",
         "ctstestserver",
+        "cts-media-drm-common",
         "cts-media-res-lib",
         "junit",
         "junit-params",
@@ -100,7 +154,6 @@ android_test {
         "aidl/**/*.aidl",
     ],
     // This test uses private APIs
-    //sdk_version: "current",
     platform_apis: true,
     jni_uses_sdk_apis: true,
     libs: [

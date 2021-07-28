@@ -20,9 +20,13 @@ import android.media.MediaCodec;
 import android.media.MediaCodec.BufferInfo;
 import android.media.MediaCodec.Callback;
 import android.media.MediaFormat;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Surface;
+
+import com.android.compatibility.common.util.ApiLevelUtil;
+
 import java.nio.ByteBuffer;
 
 public class NdkMediaCodec implements MediaCodecWrapper {
@@ -122,7 +126,8 @@ public class NdkMediaCodec implements MediaCodecWrapper {
         int bitRate = format.getInteger(MediaFormat.KEY_BIT_RATE, -1);
         int frameRate = format.getInteger(MediaFormat.KEY_FRAME_RATE, -1);
         int iFrameInterval = format.getInteger(MediaFormat.KEY_I_FRAME_INTERVAL, -1);
-        int lowLatency = format.getInteger(MediaFormat.KEY_LOW_LATENCY, -1);
+        int lowLatency = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.R) ?
+                format.getInteger(MediaFormat.KEY_LOW_LATENCY, -1) : -1;
         int range = format.getInteger(MediaFormat.KEY_COLOR_RANGE, -1);
         int standard = format.getInteger(MediaFormat.KEY_COLOR_STANDARD, -1);
         int transfer = format.getInteger(MediaFormat.KEY_COLOR_TRANSFER, -1);

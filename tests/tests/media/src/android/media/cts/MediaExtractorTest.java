@@ -16,15 +16,12 @@
 
 package android.media.cts;
 
-import static org.junit.Assert.assertNotEquals;
-
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;
 import android.hardware.display.DisplayManager;
 import android.icu.util.ULocale;
 import android.media.AudioFormat;
 import android.media.AudioPresentation;
-import android.media.DrmInitData;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaDataSource;
@@ -70,9 +67,6 @@ import java.util.UUID;
 @AppModeFull(reason = "Instant apps cannot access the SD card")
 public class MediaExtractorTest extends AndroidTestCase {
     private static final String TAG = "MediaExtractorTest";
-    private static final UUID UUID_WIDEVINE = new UUID(0xEDEF8BA979D64ACEL, 0xA3C827DCD51D21EDL);
-    private static final UUID UUID_PLAYREADY = new UUID(0x9A04F07998404286L, 0xAB92E65BE0885F95L);
-    private static boolean mIsAtLeastR = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.R);
     private static final boolean IS_AT_LEAST_S = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S);
 
     static final String mInpPrefix = WorkDir.getMediaDirString();
@@ -476,18 +470,6 @@ public class MediaExtractorTest extends AndroidTestCase {
 
         final ByteBuffer hcos = trackFormat.getByteBuffer(MediaFormat.KEY_MPEGH_COMPATIBLE_SETS);
         assertEquals(0x12, hcos.get());
-    }
-
-    public void testGetDrmInitData() throws Exception {
-        if (!MediaUtils.check(mIsAtLeastR, "test needs Android 11")) return;
-        Preconditions.assertTestFileExists(mInpPrefix + "psshtest.mp4");
-        setDataSource("psshtest.mp4");
-        DrmInitData drmInitData = mExtractor.getDrmInitData();
-        assertEquals(drmInitData.getSchemeInitDataCount(), 2);
-        assertEquals(drmInitData.getSchemeInitDataAt(0).uuid, UUID_WIDEVINE);
-        assertEquals(drmInitData.get(UUID_WIDEVINE), drmInitData.getSchemeInitDataAt(0));
-        assertEquals(drmInitData.getSchemeInitDataAt(1).uuid, UUID_PLAYREADY);
-        assertEquals(drmInitData.get(UUID_PLAYREADY), drmInitData.getSchemeInitDataAt(1));
     }
 
     private void checkExtractorSamplesAndMetrics() {
@@ -1002,11 +984,11 @@ public class MediaExtractorTest extends AndroidTestCase {
             if (lastAdvanceResult) {
                 // previous advance() was successful, so readSampleData() should succeed
                 assertTrue("readSampleData() failed after successful advance()", n >= 0);
-                assertTrue("getSampleTime() failed after succesful advance()",
+                assertTrue("getSampleTime() failed after successful advance()",
                         extractor.getSampleTime() >= 0);
-                assertTrue("getSampleSize() failed after succesful advance()",
+                assertTrue("getSampleSize() failed after successful advance()",
                         extractor.getSampleSize() >= 0);
-                assertTrue("getSampleTrackIndex() failed after succesful advance()",
+                assertTrue("getSampleTrackIndex() failed after successful advance()",
                         extractor.getSampleTrackIndex() >= 0);
             } else {
                 // previous advance() failed, so readSampleData() should fail too

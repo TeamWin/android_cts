@@ -13,10 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.media.cts;
+package android.mediadrm.cts;
 
 import android.content.pm.PackageManager;
 import android.media.MediaDrm;
+import android.media.cts.ConnectionStatus;
+import android.media.cts.IConnectionStatus;
+import android.media.cts.MediaCodecBlockModelHelper;
 import android.net.Uri;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
@@ -59,11 +62,10 @@ public class NativeMediaDrmClearkeyTest extends MediaPlayerTestBase {
             new UUID(0xe2719d58a985b3c9L, 0x781ab030af78d30eL);
     private static final UUID BAD_SCHEME_UUID =
             new UUID(0xffffffffffffffffL, 0xffffffffffffffffL);
-    private MediaCodecClearKeyPlayer mMediaCodecPlayer;
 
     static {
         try {
-            System.loadLibrary("ctsmediadrm_jni");
+            System.loadLibrary("mediadrm_jni");
         } catch (UnsatisfiedLinkError e) {
             Log.e(TAG, "NativeMediaDrmClearkeyTest: Error loading JNI library");
             e.printStackTrace();
@@ -83,7 +85,6 @@ public class NativeMediaDrmClearkeyTest extends MediaPlayerTestBase {
         public String videoUrl;
     }
 
-    @Override
     protected void setUp() throws Exception {
         super.setUp();
         if (false == deviceHasMediaDrm()) {
@@ -91,7 +92,6 @@ public class NativeMediaDrmClearkeyTest extends MediaPlayerTestBase {
         }
     }
 
-    @Override
     protected void tearDown() throws Exception {
         super.tearDown();
     }

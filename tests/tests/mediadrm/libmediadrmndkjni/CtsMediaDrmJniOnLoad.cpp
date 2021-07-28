@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,21 @@
  * limitations under the License.
  */
 
-package android.mediadrm.cts;
+#include <jni.h>
+#include <stdio.h>
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+extern int register_android_mediadrm_cts_NativeMediaDrmClearkeyTest(JNIEnv*);
 
-/**
- * Annotation for tests that are not related to media mainline.
- */
-@Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD, ElementType.TYPE})
-public @interface NonMediaMainlineTest {
+jint JNI_OnLoad(JavaVM *vm, void */*reserved*/) {
+    JNIEnv *env = NULL;
+
+    if (vm->GetEnv((void **) &env, JNI_VERSION_1_4) != JNI_OK) {
+        return JNI_ERR;
+    }
+
+    if (register_android_mediadrm_cts_NativeMediaDrmClearkeyTest(env)) {
+        return JNI_ERR;
+    }
+
+    return JNI_VERSION_1_4;
 }

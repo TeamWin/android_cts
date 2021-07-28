@@ -16,7 +16,6 @@
 
 package android.media.cts;
 
-
 import android.media.MediaCodec;
 import android.opengl.EGL14;
 import android.opengl.EGLConfig;
@@ -36,7 +35,7 @@ import android.view.Surface;
  * to create an EGL window surface.  Calls to eglSwapBuffers() cause a frame of data to be sent
  * to the video encoder.
  */
-class InputSurface implements InputSurfaceInterface {
+public class InputSurface implements InputSurfaceInterface {
     private static final String TAG = "InputSurface";
 
     private EGLDisplay mEGLDisplay = EGL14.EGL_NO_DISPLAY;

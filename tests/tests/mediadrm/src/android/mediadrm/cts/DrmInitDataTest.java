@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package android.media.cts;
+package android.mediadrm.cts;
 
 import android.media.DrmInitData;
+import android.media.cts.NonMediaMainlineTest;
 import android.os.Build;
 import android.test.AndroidTestCase;
 

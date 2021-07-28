@@ -22,6 +22,7 @@ import android.media.MediaDrm;
 import android.media.NotProvisionedException;
 import android.media.ResourceBusyException;
 import android.media.UnsupportedSchemeException;
+import android.media.cts.NonMediaMainlineTest;
 import android.media.metrics.LogSessionId;
 import android.media.metrics.MediaMetricsManager;
 import android.media.metrics.PlaybackSession;
