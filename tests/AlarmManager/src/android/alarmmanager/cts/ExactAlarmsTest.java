@@ -111,6 +111,9 @@ public class ExactAlarmsTest {
     private final AppOpsManager mAppOpsManager = sContext.getSystemService(AppOpsManager.class);
     private final PowerWhitelistManager mWhitelistManager = sContext.getSystemService(
             PowerWhitelistManager.class);
+    private final PackageManager mPackageManager = sContext.getPackageManager();
+    private final ComponentName mPermissionChangeReceiver = new ComponentName(TEST_APP_PACKAGE,
+            PermissionStateChangedReceiver.class.getName());
 
     private final AlarmManagerDeviceConfigHelper mDeviceConfigHelper =
             new AlarmManagerDeviceConfigHelper();
@@ -179,6 +182,14 @@ public class ExactAlarmsTest {
     public void restoreBatteryState() {
         SystemUtil.runShellCommand("cmd deviceidle unforce");
         SystemUtil.runShellCommandForNoOutput("dumpsys battery reset");
+    }
+
+    @After
+    public void restorePermissionReceiverState() {
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> mPackageManager.setComponentEnabledSetting(mPermissionChangeReceiver,
+                        PackageManager.COMPONENT_ENABLED_STATE_DEFAULT,
+                        PackageManager.DONT_KILL_APP));
     }
 
     @After
@@ -511,13 +522,16 @@ public class ExactAlarmsTest {
         return false;
     }
 
-    private void unForceStopTestApp() {
+    private void prepareTestAppForBroadcast() {
         // Just send an explicit foreground broadcast to the test app to make sure
         // the app is out of force-stop.
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> mPackageManager.setComponentEnabledSetting(mPermissionChangeReceiver,
+                        PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+                        PackageManager.DONT_KILL_APP));
         Log.d(TAG, "Un-force-stoppping the test app");
         Intent i = new Intent("ACTION_PING"); // any action
-        i.setComponent(new ComponentName(TEST_APP_PACKAGE,
-                PermissionStateChangedReceiver.class.getName()));
+        i.setComponent(mPermissionChangeReceiver);
         i.setFlags(Intent.FLAG_RECEIVER_FOREGROUND);
         sContext.sendBroadcast(i);
     }
@@ -525,7 +539,7 @@ public class ExactAlarmsTest {
     @Test
     public void scheduleExactAlarmPermissionStateChangedSentAppOp() throws Exception {
         // Revoke the permission, and remove it from the temp-allowlist.
-        unForceStopTestApp();
+        prepareTestAppForBroadcast();
         Log.d(TAG, "Revoking the appop");
         revokeAppOp(TEST_APP_PACKAGE);
         removeFromWhitelists(TEST_APP_PACKAGE);
@@ -564,7 +578,7 @@ public class ExactAlarmsTest {
 
     @Test
     public void scheduleExactAlarmPermissionStateChangedSentDenyList() throws Exception {
-        unForceStopTestApp();
+        prepareTestAppForBroadcast();
         Log.d(TAG, "Putting in deny list");
         mDeviceConfigHelper.with("exact_alarm_deny_list", TEST_APP_PACKAGE)
                 .commitAndAwaitPropagation();
