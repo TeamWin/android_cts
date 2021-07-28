@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.media.cts;
+package android.mediadrm.cts;
 
 import android.media.MediaCodecInfo.CodecCapabilities;
 import android.media.MediaDrm;
@@ -24,6 +24,20 @@ import android.media.MediaFormat;
 import android.media.NotProvisionedException;
 import android.media.ResourceBusyException;
 import android.media.UnsupportedSchemeException;
+import android.media.cts.AudioManagerStub;
+import android.media.cts.AudioManagerStubHelper;
+import android.media.cts.CodecState;
+import android.media.cts.ConnectionStatus;
+import android.media.cts.IConnectionStatus;
+import android.media.cts.InputSurface;
+import android.media.cts.InputSurfaceInterface;
+import android.media.cts.MediaCodecClearKeyPlayer;
+import android.media.cts.MediaCodecPlayerTestBase;
+import android.media.cts.MediaCodecWrapper;
+import android.media.cts.MediaTimeProvider;
+import android.media.cts.MediaStubActivity;
+import android.media.cts.NdkInputSurface;
+import android.media.cts.NdkMediaCodec;
 import android.media.cts.TestUtils.Monitor;
 import android.net.Uri;
 import android.os.Build;
@@ -92,11 +106,11 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
     private static final String CENC_AUDIO_PATH = "/clear/h264/llama/llama_aac_audio.mp4";
     private static final String CENC_VIDEO_PATH = "/clearkey/llama_h264_main_720p_8000.mp4";
     private static final Uri WEBM_URL = Uri.parse(
-            "android.resource://android.media.cts/" + R.raw.video_320x240_webm_vp8_800kbps_30fps_vorbis_stereo_128kbps_44100hz_crypt);
+            "android.resource://android.mediadrm.cts/" + R.raw.video_320x240_webm_vp8_800kbps_30fps_vorbis_stereo_128kbps_44100hz_crypt);
     private static final Uri MPEG2TS_SCRAMBLED_URL = Uri.parse(
-            "android.resource://android.media.cts/" + R.raw.segment000001_scrambled);
+            "android.resource://android.mediadrm.cts/" + R.raw.segment000001_scrambled);
     private static final Uri MPEG2TS_CLEAR_URL = Uri.parse(
-            "android.resource://android.media.cts/" + R.raw.segment000001);
+            "android.resource://android.mediadrm.cts/" + R.raw.segment000001);
 
     private static final UUID COMMON_PSSH_SCHEME_UUID =
             new UUID(0x1077efecc0b24d02L, 0xace33c1e52e2fb4bL);
@@ -199,7 +213,7 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
      *
      * @return key set ID
      */
-    static byte[] retrieveKeys(MediaDrm drm, String initDataType,
+    public static byte[] retrieveKeys(MediaDrm drm, String initDataType,
             byte[] sessionId, byte[] drmInitData, int keyType, byte[][] clearKeyIds) {
         MediaDrm.KeyRequest drmRequest = null;
         try {

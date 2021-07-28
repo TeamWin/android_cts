@@ -20,11 +20,18 @@ import android.media.AudioTrack;
 import android.media.MediaCodec;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 import android.view.Surface;
+
+import com.android.compatibility.common.util.ApiLevelUtil;
+import com.android.compatibility.common.util.MediaUtils;
+
+import androidx.test.filters.SdkSuppress;
+
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -64,6 +71,7 @@ public class CodecState {
     private boolean mFirstTunnelFrameReady;
     private volatile OnFirstTunnelFrameReadyListener mOnFirstTunnelFrameReadyListener;
 
+    private static boolean mIsAtLeastS = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S);
 
     /** If true the video/audio will start from the beginning when it reaches the end. */
     private boolean mLoopEnabled = false;
@@ -108,12 +116,7 @@ public class CodecState {
         mIsAudio = mime.startsWith("audio/");
 
         if (mTunneled && !mIsAudio) {
-            mOnFrameRenderedListener = new OnFrameRenderedListener();
-            codec.setOnFrameRenderedListener(mOnFrameRenderedListener,
-                                             new Handler(Looper.getMainLooper()));
-            mOnFirstTunnelFrameReadyListener = new OnFirstTunnelFrameReadyListener();
-            codec.setOnFirstTunnelFrameReadyListener(new Handler(Looper.getMainLooper()),
-                    mOnFirstTunnelFrameReadyListener);
+            setFrameListeners(mCodec);
         }
     }
 
@@ -130,14 +133,7 @@ public class CodecState {
         mAvailableOutputBufferIndices = null;
         mAvailableOutputBufferInfos = null;
 
-        if (mOnFrameRenderedListener != null) {
-            mCodec.setOnFrameRenderedListener(null, null);
-            mOnFrameRenderedListener = null;
-        }
-        if (mOnFirstTunnelFrameReadyListener != null) {
-            mCodec.setOnFirstTunnelFrameReadyListener(null, null);
-            mOnFirstTunnelFrameReadyListener = null;
-        }
+        releaseFrameListeners();
 
         mCodec.release();
         mCodec = null;
@@ -250,6 +246,28 @@ public class CodecState {
 
     public void setLoopEnabled(boolean enabled) {
         mLoopEnabled = enabled;
+    }
+
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
+    private void setFrameListeners(MediaCodec codec) {
+        mOnFrameRenderedListener = new OnFrameRenderedListener();
+        codec.setOnFrameRenderedListener(mOnFrameRenderedListener,
+                new Handler(Looper.getMainLooper()));
+        mOnFirstTunnelFrameReadyListener = new OnFirstTunnelFrameReadyListener();
+        codec.setOnFirstTunnelFrameReadyListener(new Handler(Looper.getMainLooper()),
+                mOnFirstTunnelFrameReadyListener);
+    }
+
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
+    private void releaseFrameListeners() {
+        if (mOnFrameRenderedListener != null) {
+            mCodec.setOnFrameRenderedListener(null, null);
+            mOnFrameRenderedListener = null;
+        }
+        if (mOnFirstTunnelFrameReadyListener != null) {
+            mCodec.setOnFirstTunnelFrameReadyListener(null, null);
+            mOnFirstTunnelFrameReadyListener = null;
+        }
     }
 
     /**
@@ -462,6 +480,7 @@ public class CodecState {
     }
 
     /** Callback called in tunnel mode when video peek is ready */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     private class OnFirstTunnelFrameReadyListener
         implements MediaCodec.OnFirstTunnelFrameReadyListener {
 
@@ -521,9 +540,11 @@ public class CodecState {
 
     /** Configure video peek. */
     public void setVideoPeek(boolean enable) {
-        Bundle parameters = new Bundle();
-        parameters.putInt(MediaCodec.PARAMETER_KEY_TUNNEL_PEEK, enable ? 1 : 0);
-        mCodec.setParameters(parameters);
+        if (MediaUtils.check(mIsAtLeastS, "setVideoPeek requires Android S")) {
+            Bundle parameters = new Bundle();
+            parameters.putInt(MediaCodec.PARAMETER_KEY_TUNNEL_PEEK, enable ? 1 : 0);
+            mCodec.setParameters(parameters);
+        }
     }
 
     /** In tunnel mode, queries whether the first video frame is ready for video peek. */
