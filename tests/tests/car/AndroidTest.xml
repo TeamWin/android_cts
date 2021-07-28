@@ -26,8 +26,9 @@
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true"/>
         <option name="test-file-name" value="CtsCarTestCases.apk"/>
-        <option name="test-file-name" value="CtsCarPermissionCarInfoTest.apk"/>
         <option name="test-file-name" value="CtsCarNoPropertyPermissionsTest.apk"/>
+        <option name="test-file-name" value="CtsCarPermissionCarInfoTest.apk"/>
+        <option name="test-file-name" value="CtsCarPermissionCarEnergyTest.apk"/>
     </target_preparer>
 
     <test class="com.android.tradefed.testtype.AndroidJUnitTest">
@@ -42,5 +43,10 @@
         <option name="package" value="android.car.cts.permissioncarinfo"/>
         <option name="class"
                 value="android.car.cts.permissioncarinfo.PermissionCarInfoTest"/>
+    </test>
+    <test class="com.android.tradefed.testtype.AndroidJUnitTest">
+        <option name="package" value="android.car.cts.permissioncarenergy"/>
+        <option name="class"
+                value="android.car.cts.permissioncarenergy.PermissionCarEnergyTest"/>
     </test>
 </configuration>
