@@ -60,6 +60,7 @@ import android.permission.cts.PermissionUtils;
 import android.platform.test.annotations.AsbSecurityTest;
 import android.provider.DeviceConfig;
 import android.provider.Settings;
+import android.support.test.uiautomator.UiDevice;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -127,6 +128,9 @@ public class ActivityManagerFgsBgStartTest {
         CtsAppTestUtils.turnScreenOn(mInstrumentation, mContext);
         cleanupResiduals();
         enableFgsRestriction(true, true, null);
+        // Press home key to ensure stopAppSwitches is called so the grace period of
+        // the background start will be ignored if there's any.
+        UiDevice.getInstance(mInstrumentation).pressHome();
     }
 
     @After
