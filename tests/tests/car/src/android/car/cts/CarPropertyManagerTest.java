@@ -248,6 +248,15 @@ public class CarPropertyManagerTest extends CarApiTestBase {
                 Float.class).requireProperty().build().verify(mCarPropertyManager);
     }
 
+    @Test
+    public void testPerfVehicleSpeedDisplayIfSupported() {
+        VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.PERF_VEHICLE_SPEED_DISPLAY,
+                CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS,
+                Float.class).build().verify(mCarPropertyManager);
+    }
+
     @CddTest(requirement = "2.5.1")
     @Test
     public void testMustSupportParkingBrakeOn() {
