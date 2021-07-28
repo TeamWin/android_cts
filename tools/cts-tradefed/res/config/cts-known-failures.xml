@@ -136,6 +136,7 @@
 
     <!-- b/192313064 , b/192984235 -->
     <option name="compatibility:exclude-filter" value="CtsNativeMediaAAudioTestCases android.nativemedia.aaudio.AAudioTests#test_aaudio_mmap_testBasicMmapOutput" />
+    <option name="compatibility:exclude-filter" value="CtsNativeMediaAAudioTestCases[instant] android.nativemedia.aaudio.AAudioTests#test_aaudio_mmap_testBasicMmapOutput" />
 
     <!-- b/134654621 -->
     <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.AppConfigurationTests#testTaskCloseRestoreFreeOrientation" />
@@ -222,4 +223,7 @@
 
     <!-- b/135533962 -->
     <option name="compatibility:exclude-filter" value="arm64-v8a CtsWrapWrapDebugMallocDebugTestCases" />
+
+    <!-- b/192916298, b/192013761, b/193544088  CtsAppCloningHostTest from cts-on-gsi -->
+    <option name="compatibility:exclude-filter" value="CtsAppCloningHostTest android.scopedstorage.cts.host.AppCloningHostTest#testCreateCloneUserFile" />
 </configuration>
