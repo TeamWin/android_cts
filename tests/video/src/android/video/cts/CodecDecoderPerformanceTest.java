@@ -55,7 +55,8 @@ public class CodecDecoderPerformanceTest extends CodecDecoderPerformanceTestBase
                 "crowd_run_1280x720_30fps_hevc.mp4",
                 "crowd_run_1920x1080_30fps_hevc.mp4",
                 "crowd_run_3840x2160_30fps_hevc.mp4",
-                "crowd_run_7680x4320_30fps_hevc.mp4",
+                // TODO (b/194721211) Enable 8k tests
+                //"crowd_run_7680x4320_30fps_hevc.mp4",
                 // VP8
                 "crowd_run_720x480_30fps_vp8.webm",
                 "crowd_run_1280x720_30fps_vp8.webm",
@@ -66,19 +67,22 @@ public class CodecDecoderPerformanceTest extends CodecDecoderPerformanceTestBase
                 "crowd_run_1280x720_30fps_vp9.webm",
                 "crowd_run_1920x1080_30fps_vp9.webm",
                 "crowd_run_3840x2160_30fps_vp9.webm",
-                "crowd_run_7680x4320_30fps_vp9.webm",
+                // TODO (b/194721211) Enable 8k tests
+                //"crowd_run_7680x4320_30fps_vp9.webm",
                 // AV1
                 "crowd_run_720x480_30fps_av1.mp4",
                 "crowd_run_1280x720_30fps_av1.mp4",
                 "crowd_run_1920x1080_30fps_av1.mp4",
                 "crowd_run_3840x2160_30fps_av1.mp4",
-                "crowd_run_7680x4320_30fps_av1.mp4",
+                // TODO (b/194721211) Enable 8k tests
+                //"crowd_run_7680x4320_30fps_av1.mp4",
                 // MPEG-2
                 "crowd_run_720x480_30fps_mpeg2.mp4",
                 "crowd_run_1280x720_30fps_mpeg2.mp4",
                 "crowd_run_1920x1080_30fps_mpeg2.mp4",
                 "crowd_run_3840x2160_30fps_mpeg2.mp4",
-                "crowd_run_7680x4320_30fps_mpeg2.mp4",
+                // TODO (b/194721211) Enable 8k tests
+                //"crowd_run_7680x4320_30fps_mpeg2.mp4",
         };
         // Prepares the params list combining with supported Hardware decoders, key priority
         // and scaling factor.
