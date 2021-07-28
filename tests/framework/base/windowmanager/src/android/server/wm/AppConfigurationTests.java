@@ -838,7 +838,7 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
         // Launch activities in split screen.
         launchActivitiesInSplitScreen(
                 getLaunchActivityBuilder().setTargetActivity(LAUNCHING_ACTIVITY),
-                getLaunchActivityBuilder().setTargetActivity(activity).setMultipleTask(true));
+                getLaunchActivityBuilder().setTargetActivity(activity));
         mWmState.assertVisibility(activity, true /* visible */);
 
         // Rotate the device and it should always rotate regardless orientation app requested.
@@ -846,6 +846,8 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
         assertEquals("Split-screen apps shouldn't influence device orientation",
                 rotation, mWmState.getRotation());
 
+        // Launch target activity during split-screen again and check orientation still not change.
+        mTaskOrganizer.setLaunchRoot(mTaskOrganizer.getSecondarySplitTaskId());
         getLaunchActivityBuilder().setMultipleTask(true).setTargetActivity(activity).execute();
         mWmState.computeState(activity);
         mWmState.assertVisibility(activity, true /* visible */);
