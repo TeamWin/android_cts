@@ -18,8 +18,12 @@ package com.android.bedstead.testapp;
 
 import android.app.Activity;
 import android.app.AppComponentFactory;
+import android.app.admin.DevicePolicyManager;
 import android.content.BroadcastReceiver;
 import android.content.Intent;
+import android.net.wifi.WifiManager;
+import android.os.HardwarePropertiesManager;
+import android.os.UserManager;
 import android.util.Log;
 
 import com.android.bedstead.testapp.processor.annotations.TestAppReceiver;
@@ -27,8 +31,14 @@ import com.android.bedstead.testapp.processor.annotations.TestAppReceiver;
 /**
  * An {@link AppComponentFactory} which redirects invalid class names to premade TestApp classes.
  */
-@TestAppReceiver
-public final class TestAppAppComponentFactory extends AppComponentFactory {
+@TestAppReceiver(
+        systemServiceClasses = {
+                DevicePolicyManager.class,
+                HardwarePropertiesManager.class,
+                UserManager.class,
+                WifiManager.class
+        }
+)public final class TestAppAppComponentFactory extends AppComponentFactory {
 
     private static final String LOG_TAG = "TestAppACF";
 
