@@ -612,6 +612,7 @@
              android:exported="true"
              android:theme="@style/BadBlurryDialog"/>
 
+        <!-- Splash Screen Test Activities -->
         <activity android:name=".HandleSplashScreenExitActivity"
                   android:theme="@style/ShowBrandingTheme"
                   android:configChanges="uiMode"
