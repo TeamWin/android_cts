@@ -30,5 +30,5 @@ android_test_helper_app {
         "compatibility-device-util-axt",
     ],
 
-    libs: ["android.car"],
+    libs: ["android.car-test-stubs"],
 }
