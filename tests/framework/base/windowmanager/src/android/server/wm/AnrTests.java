@@ -125,9 +125,12 @@ public class AnrTests extends ActivityManagerTestBase {
 
         // TODO(b/143566069) investigate why we need multiple taps on display to trigger anr.
         mWmState.computeState();
-        tapOnDisplayCenterAsync(DEFAULT_DISPLAY);
+        // Tap on the UnresponsiveActivity
+        final WindowManagerState.ActivityTask unresponsiveActivityTask =
+                mWmState.getTaskByActivity(UNRESPONSIVE_ACTIVITY);
+        tapOnStackCenterAsync(unresponsiveActivityTask);
         SystemClock.sleep(1000);
-        tapOnDisplayCenterAsync(DEFAULT_DISPLAY);
+        tapOnStackCenterAsync(unresponsiveActivityTask);
 
         clickCloseAppOnAnrDialog();
         assertEventLogsContainsAnr(UnresponsiveActivity.PROCESS_NAME);
@@ -143,9 +146,12 @@ public class AnrTests extends ActivityManagerTestBase {
 
         // TODO(b/143566069) investigate why we need multiple taps on display to trigger anr.
         mWmState.computeState();
-        tapOnDisplayCenterAsync(DEFAULT_DISPLAY);
+        // Tap on the HostActivity
+        final WindowManagerState.ActivityTask hostActivityTask =
+                mWmState.getTaskByActivity(HOST_ACTIVITY);
+        tapOnStackCenterAsync(hostActivityTask);
         SystemClock.sleep(1000);
-        tapOnDisplayCenterAsync(DEFAULT_DISPLAY);
+        tapOnStackCenterAsync(hostActivityTask);
 
         clickCloseAppOnAnrDialog();
         assertEventLogsContainsAnr(RenderService.PROCESS_NAME);

@@ -687,8 +687,18 @@ public abstract class ActivityManagerTestBase {
         mTouchHelper.tapOnViewCenter(view);
     }
 
+    protected void tapOnCenterAsync(Rect bounds, int displayId) {
+        final int tapX = bounds.left + bounds.width() / 2;
+        final int tapY = bounds.top + bounds.height() / 2;
+        tapOnDisplay(tapX, tapY, displayId, false /* sync*/);
+    }
+
     protected void tapOnStackCenter(WindowManagerState.ActivityTask stack) {
         mTouchHelper.tapOnStackCenter(stack);
+    }
+
+    protected  void tapOnStackCenterAsync(WindowManagerState.ActivityTask stack) {
+        tapOnCenterAsync(stack.getBounds(), stack.mDisplayId);
     }
 
     protected void tapOnDisplayCenter(int displayId) {
