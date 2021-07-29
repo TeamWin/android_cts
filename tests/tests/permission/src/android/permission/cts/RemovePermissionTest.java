@@ -29,7 +29,7 @@ import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.platform.test.annotations.AppModeFull;
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 
 import androidx.test.InstrumentationRegistry;
 
@@ -150,8 +150,8 @@ public class RemovePermissionTest {
                 pkg, permission);
     }
 
-    @SecurityTest(minPatchLevel = "2020-02")
     @Test
+    @AsbSecurityTest(cveBugId = 67319274)
     public void runtimePermissionShouldBeRevokedIfRemoved() throws Throwable {
         installApp(ADVERSARIAL_PERMISSION_DEFINER_APK_NAME);
         installApp(ADVERSARIAL_PERMISSION_USER_APK_NAME);
@@ -199,8 +199,8 @@ public class RemovePermissionTest {
         assertFalse(permissionGranted(ADVERSARIAL_PERMISSION_USER_PKG_NAME, TEST_PERMISSION));
     }
 
-    @SecurityTest(minPatchLevel = "2021-01")
     @Test
+    @AsbSecurityTest(cveBugId = 155648771)
     public void installPermissionShouldBeRevokedIfRemoved() throws Throwable {
         installApp(INSTALL_PERMISSION_DEFINER_APK_NAME);
         installApp(INSTALL_PERMISSION_USER_APK_NAME);

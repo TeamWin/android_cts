@@ -38,7 +38,7 @@ import android.os.Environment;
 import android.os.FileUtils;
 import android.os.ParcelFileDescriptor;
 import android.os.storage.StorageManager;
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import android.provider.MediaStore;
 import android.provider.MediaStore.Files.FileColumns;
 import android.provider.MediaStore.Video.Media;
@@ -258,8 +258,8 @@ public class MediaStore_Video_MediaTest {
         }
     }
 
-    @SecurityTest
     @Test
+    @AsbSecurityTest(cveBugId = 134155286)
     public void testIsoLocationRedaction() throws Exception {
         // These videos have all had their ISO location metadata (in the (c)xyz box) artificially
         // modified to +58.0000+011.0000 (middle of Skagerrak).
