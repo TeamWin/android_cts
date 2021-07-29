@@ -50,6 +50,19 @@ public class SequentialRWTest {
     private static final String DIR_SEQ_RD = "SEQ_RD";
     private static final String REPORT_LOG_NAME = "CtsFileSystemTestCases";
     private static final int BUFFER_SIZE = 10 * 1024 * 1024;
+    private static final double MIN_READ_MBPS;
+    private static final double MIN_WRITE_MBPS;
+
+    static {
+        if (MediaPerformanceClassUtils.isRPerfClass()) {
+            MIN_READ_MBPS = 200;
+            MIN_WRITE_MBPS = 100;
+        } else {
+            // Performance class Build.VERSION_CODES.S and beyond
+            MIN_READ_MBPS = 250;
+            MIN_WRITE_MBPS = 125;
+        }
+    }
 
     @After
     public void tearDown() throws Exception {
@@ -90,9 +103,9 @@ public class SequentialRWTest {
         Log.v(TAG, "sequential write " + stat.mAverage + " MBPS");
         report.submit(getInstrumentation());
 
-        if (MediaPerformanceClassUtils.isSPerfClass()) {
-            assertTrue("measured " + stat.mAverage + " is less than target (150 MBPS)",
-                       stat.mAverage >= 150);
+        if (MediaPerformanceClassUtils.isPerfClass()) {
+            assertTrue("measured " + stat.mAverage + " is less than target (" + MIN_WRITE_MBPS +
+                       " MBPS)", stat.mAverage >= MIN_WRITE_MBPS);
         }
     }
 
@@ -150,9 +163,9 @@ public class SequentialRWTest {
         Log.v(TAG, "sequential read " + stat.mAverage + " MBPS");
         report.submit(getInstrumentation());
 
-        if (MediaPerformanceClassUtils.isSPerfClass()) {
-            assertTrue("measured " + stat.mAverage + " is less than target (250 MBPS)",
-                       stat.mAverage >= 250);
+        if (MediaPerformanceClassUtils.isPerfClass()) {
+            assertTrue("measured " + stat.mAverage + " is less than target (" + MIN_READ_MBPS +
+                       " MBPS)", stat.mAverage >= MIN_READ_MBPS);
         }
     }
 }

@@ -33,6 +33,14 @@ import java.util.concurrent.Future;
 
 import static org.junit.Assert.assertTrue;
 
+/**
+ * The following test class calculates the maximum number of concurrent decode sessions that it can
+ * support by the two hardware (mime - decoder) pair calculated via the
+ * CodecCapabilities.getMaxSupportedInstances() and
+ * VideoCapabilities.getSupportedPerformancePoints() methods. Splits the maximum supported instances
+ * between the two pairs and ensures that all the supported sessions succeed in decoding
+ * with meeting the expected frame rate.
+ */
 @RunWith(Parameterized.class)
 public class MultiDecoderPairPerfTest extends MultiCodecPerfTestBase {
     private static final String LOG_TAG = MultiDecoderPairPerfTest.class.getSimpleName();
@@ -47,9 +55,11 @@ public class MultiDecoderPairPerfTest extends MultiCodecPerfTestBase {
         mSecondPair = secondPair;
     }
 
+    // Returns the list of params with two hardware (mime - decoder) pairs in both
+    // sync and async modes.
+    // Parameters {0}_{1}_{2} -- Pair(Mime DecoderName)_Pair(Mime DecoderName)_isAsync
     @Parameterized.Parameters(name = "{index}({0}_{1}_{2})")
     public static Collection<Object[]> inputParams() {
-        // Prepares the params list with the supported Hardware decoders in the device
         final List<Object[]> argsList = new ArrayList<>();
         ArrayList<Pair<String, String>> mimeTypeDecoderPairs = new ArrayList<>();
         for (String mime : mMimeList) {
@@ -70,6 +80,12 @@ public class MultiDecoderPairPerfTest extends MultiCodecPerfTestBase {
         return argsList;
     }
 
+    /**
+     * This test calculates the number of 720p 30 fps decoder instances that the given two
+     * (mime - decoder) pairs can support. Assigns the same number of instances to the two pairs
+     * (if max instances are even), or one more to one pair (if odd) and ensures that all the
+     * concurrent sessions succeed in decoding with meeting the expected frame rate.
+     */
     @LargeTest
     @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void test720p() throws Exception {
@@ -95,6 +111,7 @@ public class MultiDecoderPairPerfTest extends MultiCodecPerfTestBase {
             achievedFrameRate += result.get();
         }
         assertTrue("Unable to achieve the maxFrameRate supported. act/exp: " + achievedFrameRate
-                + "/" + mMaxFrameRate, achievedFrameRate >= mMaxFrameRate);
+                + "/" + mMaxFrameRate + " for " + maxInstances + " instances.",
+                achievedFrameRate >= mMaxFrameRate);
     }
 }

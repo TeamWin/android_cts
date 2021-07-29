@@ -37,6 +37,19 @@ public class RandomRWTest {
     private static final String DIR_RANDOM_WR = "RANDOM_WR";
     private static final String DIR_RANDOM_RD = "RANDOM_RD";
     private static final String REPORT_LOG_NAME = "CtsFileSystemTestCases";
+    private static final double MIN_READ_MBPS;
+    private static final double MIN_WRITE_MBPS;
+
+    static {
+        if (MediaPerformanceClassUtils.isRPerfClass()) {
+            MIN_READ_MBPS = 25;
+            MIN_WRITE_MBPS = 10;
+        } else {
+            // Performance class Build.VERSION_CODES.S and beyond
+            MIN_READ_MBPS = 40;
+            MIN_WRITE_MBPS = 10;
+        }
+    }
 
     @After
     public void tearDown() throws Exception {
@@ -57,9 +70,9 @@ public class RandomRWTest {
         double mbps = FileUtil.doRandomReadTest(getContext(), DIR_RANDOM_RD, report, fileSize,
                 READ_BUFFER_SIZE);
         report.submit(getInstrumentation());
-        if (MediaPerformanceClassUtils.isSPerfClass()) {
-            assertTrue("measured " + mbps + " is less than target (40 MBPS)",
-                       mbps >= 40);
+        if (MediaPerformanceClassUtils.isPerfClass()) {
+            assertTrue("measured " + mbps + " is less than target (" + MIN_READ_MBPS + " MBPS)",
+                       mbps >= MIN_READ_MBPS);
         }
     }
 
@@ -82,10 +95,10 @@ public class RandomRWTest {
                 WRITE_BUFFER_SIZE);
         }
         report.submit(getInstrumentation());
-        if (MediaPerformanceClassUtils.isSPerfClass()) {
+        if (MediaPerformanceClassUtils.isPerfClass()) {
             // for performance class devices we must be able to write 256MB
-            assertTrue("measured " + mbps + " is less than target (10 MBPS)",
-                       mbps >= 10);
+            assertTrue("measured " + mbps + " is less than target (" + MIN_WRITE_MBPS + " MBPS)",
+                       mbps >= MIN_WRITE_MBPS);
         }
     }
 }
