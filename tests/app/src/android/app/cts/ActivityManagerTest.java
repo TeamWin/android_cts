@@ -490,8 +490,14 @@ public class ActivityManagerTest extends InstrumentationTestCase {
         final SettingsSession<Integer> showOnFirstCrash = new SettingsSession<>(
                 Settings.Global.getUriFor(Settings.Global.SHOW_FIRST_CRASH_DIALOG),
                 Settings.Global::getInt, Settings.Global::putInt);
+        final SettingsSession<Integer> showBackground = new SettingsSession<>(
+                Settings.Secure.getUriFor(Settings.Secure.ANR_SHOW_BACKGROUND),
+                Settings.Secure::getInt, Settings.Secure::putInt);
         try {
-            showOnFirstCrash.set(1);
+            SystemUtil.runWithShellPermissionIdentity(() -> {
+                showOnFirstCrash.set(1);
+                showBackground.set(1);
+            });
 
             CommandReceiver.sendCommand(mTargetContext,
                     CommandReceiver.COMMAND_START_ACTIVITY,
@@ -584,7 +590,10 @@ public class ActivityManagerTest extends InstrumentationTestCase {
                     app1Info.uid,
                     PACKAGE_NAME_APP1);
         } finally {
-            showOnFirstCrash.close();
+            SystemUtil.runWithShellPermissionIdentity(() -> {
+                showOnFirstCrash.close();
+                showBackground.close();
+            });
             monitor.finish();
             uid1Watcher.finish();
             SystemUtil.runWithShellPermissionIdentity(() -> {
