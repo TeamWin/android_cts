@@ -17,6 +17,8 @@
 package com.android.bedstead.testapp.processor;
 
 
+import static java.util.stream.Collectors.toList;
+
 import com.android.bedstead.testapp.processor.annotations.TestAppReceiver;
 import com.android.bedstead.testapp.processor.annotations.TestAppSender;
 
@@ -43,11 +45,16 @@ import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
 import javax.lang.model.SourceVersion;
+import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
+import javax.lang.model.type.MirroredTypesException;
 import javax.lang.model.type.TypeKind;
+import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.Elements;
+import javax.lang.model.util.Types;
 import javax.tools.JavaFileObject;
 
 /** Processor for generating TestApp API for remote execution. */
@@ -125,21 +132,130 @@ public final class Processor extends AbstractProcessor {
                 processingEnv.getElementUtils().getTypeElement(
                         NENE_ACTIVITY_CLASSNAME.canonicalName());
 
-        if (!roundEnv.getElementsAnnotatedWith(TestAppReceiver.class).isEmpty()
-                || !roundEnv.getElementsAnnotatedWith(TestAppSender.class).isEmpty()) {
+        Set<? extends Element> receiverAnnotatedElements =
+                roundEnv.getElementsAnnotatedWith(TestAppReceiver.class);
+
+        if (receiverAnnotatedElements.size() > 1) {
+            throw new IllegalStateException(
+                    "Cannot have more than one @TestAppReceiver annotation");
+        }
+
+        if (!receiverAnnotatedElements.isEmpty()) {
+            TestAppReceiver testAppReceiver = receiverAnnotatedElements.iterator().next()
+                    .getAnnotation(TestAppReceiver.class);
+
+
+            List<TypeElement> systemServiceClasses =
+                    extractClassesFromAnnotation(
+                            processingEnv.getTypeUtils(), testAppReceiver::systemServiceClasses);
+
+
             generateTargetedRemoteActivityInterface(neneActivityInterface);
             generateTargetedRemoteActivityImpl(neneActivityInterface);
             generateTargetedRemoteActivityWrapper(neneActivityInterface);
-            generateProvider();
+            generateProvider(systemServiceClasses);
             generateConfiguration();
 
+            for (TypeElement systemServiceClass : systemServiceClasses) {
+                generateRemoteFrameworkClassWrapper(
+                        processingEnv.getElementUtils(), systemServiceClass);
+            }
         }
 
         if (!roundEnv.getElementsAnnotatedWith(TestAppSender.class).isEmpty()) {
-            generateRemoteActivityImpl(neneActivityInterface);
+            generateTestAppActivityImpl(neneActivityInterface);
         }
 
         return true;
+    }
+
+    private void generateRemoteFrameworkClassWrapper(
+            Elements elements, TypeElement systemServiceClass) {
+        ClassName originalClassName = ClassName.get(systemServiceClass);
+        ClassName interfaceClassName = ClassName.get(
+                originalClassName.packageName(), "Remote" + originalClassName.simpleName());
+        ClassName wrapperClassName = ClassName.get(
+                originalClassName.packageName(), interfaceClassName.simpleName() + "Wrapper");
+        ClassName profileClassName = ClassName.get(
+                originalClassName.packageName(), "Profile" + interfaceClassName.simpleName());
+        TypeElement interfaceElement = elements.getTypeElement(interfaceClassName.canonicalName());
+
+        TypeSpec.Builder classBuilder =
+                TypeSpec.classBuilder(
+                        wrapperClassName)
+                        .addSuperinterface(interfaceClassName)
+                        .addModifiers(Modifier.PUBLIC, Modifier.FINAL);
+
+        classBuilder.addField(
+                FieldSpec.builder(profileClassName,
+                        "mProfileClass")
+                        .addModifiers(Modifier.PRIVATE, Modifier.FINAL)
+                        .build());
+        classBuilder.addField(
+                FieldSpec.builder(CROSS_PROFILE_CONNECTOR_CLASSNAME, "mConnector")
+                        .addModifiers(Modifier.PRIVATE, Modifier.FINAL)
+                        .build());
+
+        classBuilder.addMethod(MethodSpec.constructorBuilder()
+                .addModifiers(Modifier.PUBLIC)
+                .addParameter(CROSS_PROFILE_CONNECTOR_CLASSNAME, "connector")
+                .addStatement("mConnector = connector")
+                .addStatement(
+                        "mProfileClass = $T.create(connector)",
+                        profileClassName)
+                .build());
+
+        for (ExecutableElement method : getMethods(interfaceElement)) {
+            MethodSpec.Builder methodBuilder =
+                    MethodSpec.methodBuilder(method.getSimpleName().toString())
+                            .returns(ClassName.get(method.getReturnType()))
+                            .addModifiers(Modifier.PUBLIC)
+                            .addAnnotation(Override.class);
+
+            for (TypeMirror m : method.getThrownTypes()) {
+                methodBuilder.addException(ClassName.get(m));
+            }
+
+            List<String> params = new ArrayList<>();
+
+            for (VariableElement param : method.getParameters()) {
+                ParameterSpec parameterSpec =
+                        ParameterSpec.builder(ClassName.get(param.asType()),
+                                param.getSimpleName().toString()).build();
+
+                params.add(param.getSimpleName().toString());
+
+                methodBuilder.addParameter(parameterSpec);
+            }
+
+            methodBuilder.beginControlFlow("try")
+                    .addStatement("mConnector.connect()");
+
+            if (method.getReturnType().getKind().equals(TypeKind.VOID)) {
+                methodBuilder.addStatement(
+                        "mProfileClass.other().$L($L)",
+                        method.getSimpleName(), String.join(", ", params));
+            } else {
+                methodBuilder.addStatement(
+                        "return mProfileClass.other().$L($L)",
+                        method.getSimpleName(), String.join(", ", params));
+            }
+
+            methodBuilder.nextControlFlow(
+                    "catch ($T e)", UNAVAILABLE_PROFILE_EXCEPTION_CLASSNAME)
+                    .addStatement(
+                            "throw new $T($S, e)",
+                            NENE_EXCEPTION_CLASSNAME, "Error connecting to test app")
+                    .nextControlFlow("catch ($T e)", PROFILE_RUNTIME_EXCEPTION_CLASSNAME)
+                    .addStatement("throw ($T) e.getCause()", RuntimeException.class)
+                    .nextControlFlow("finally")
+                    .addStatement("mConnector.stopManualConnectionManagement()")
+                    .endControlFlow();
+
+            classBuilder.addMethod(methodBuilder.build());
+        }
+
+        writeClassToFile(originalClassName.packageName(), classBuilder.build());
     }
 
     private void generateTargetedRemoteActivityImpl(TypeElement neneActivityInterface) {
@@ -197,12 +313,12 @@ public final class Processor extends AbstractProcessor {
         classBuilder.addField(
                 FieldSpec.builder(PROFILE_TARGETED_REMOTE_ACTIVITY_CLASSNAME,
                         "mProfileTargetedRemoteActivity")
-                .addModifiers(Modifier.PRIVATE, Modifier.FINAL)
-                .build());
+                        .addModifiers(Modifier.PRIVATE, Modifier.FINAL)
+                        .build());
         classBuilder.addField(
                 FieldSpec.builder(CROSS_PROFILE_CONNECTOR_CLASSNAME, "mConnector")
-                .addModifiers(Modifier.PRIVATE, Modifier.FINAL)
-                .build());
+                        .addModifiers(Modifier.PRIVATE, Modifier.FINAL)
+                        .build());
 
         classBuilder.addMethod(MethodSpec.constructorBuilder()
                 .addParameter(CROSS_PROFILE_CONNECTOR_CLASSNAME, "connector")
@@ -264,7 +380,7 @@ public final class Processor extends AbstractProcessor {
         writeClassToFile(PACKAGE_NAME, classBuilder.build());
     }
 
-    private void generateRemoteActivityImpl(TypeElement neneActivityInterface) {
+    private void generateTestAppActivityImpl(TypeElement neneActivityInterface) {
         TypeSpec.Builder classBuilder =
                 TypeSpec.classBuilder(
                         TEST_APP_ACTIVITY_IMPL_CLASSNAME)
@@ -352,17 +468,17 @@ public final class Processor extends AbstractProcessor {
         writeClassToFile(PACKAGE_NAME, classBuilder.build());
     }
 
-    private void generateProvider() {
+    private void generateProvider(List<TypeElement> systemServiceClasses) {
         TypeSpec.Builder classBuilder =
                 TypeSpec.classBuilder(
                         "Provider")
                         .addModifiers(Modifier.PUBLIC, Modifier.FINAL);
 
         classBuilder.addMethod(MethodSpec.methodBuilder("provideTargetedRemoteActivity")
-                        .returns(TARGETED_REMOTE_ACTIVITY_CLASSNAME)
-                        .addModifiers(Modifier.PUBLIC)
-                        .addAnnotation(CrossProfileProvider.class)
-                        .addCode("return new $T();", TARGETED_REMOTE_ACTIVITY_IMPL_CLASSNAME)
+                .returns(TARGETED_REMOTE_ACTIVITY_CLASSNAME)
+                .addModifiers(Modifier.PUBLIC)
+                .addAnnotation(CrossProfileProvider.class)
+                .addCode("return new $T();", TARGETED_REMOTE_ACTIVITY_IMPL_CLASSNAME)
                 .build());
 
         classBuilder.addMethod(MethodSpec.methodBuilder("provideTestAppController")
@@ -371,6 +487,24 @@ public final class Processor extends AbstractProcessor {
                 .addAnnotation(CrossProfileProvider.class)
                 .addCode("return new $T();", TEST_APP_CONTROLLER_CLASSNAME)
                 .build());
+
+        for (TypeElement systemServiceClass : systemServiceClasses) {
+            ClassName originalClassName = ClassName.get(systemServiceClass);
+            ClassName interfaceClassName = ClassName.get(
+                    originalClassName.packageName(), "Remote" + originalClassName.simpleName());
+            ClassName implClassName = ClassName.get(
+                    originalClassName.packageName(), interfaceClassName.simpleName() + "Impl");
+
+            classBuilder.addMethod(
+                    MethodSpec.methodBuilder("provide" + interfaceClassName.simpleName())
+                            .returns(interfaceClassName)
+                            .addModifiers(Modifier.PUBLIC)
+                            .addAnnotation(CrossProfileProvider.class)
+                            .addParameter(CONTEXT_CLASSNAME, "context")
+                            .addCode("return new $T(context.getSystemService($T.class));",
+                                    implClassName, originalClassName)
+                            .build());
+        }
 
         writeClassToFile(PACKAGE_NAME, classBuilder.build());
     }
@@ -408,5 +542,29 @@ public final class Processor extends AbstractProcessor {
                 .filter(e -> e instanceof ExecutableElement)
                 .map(e -> (ExecutableElement) e)
                 .collect(Collectors.toSet());
+    }
+
+    /**
+     * Extract classes provided in an annotation.
+     *
+     * <p>The {@code runnable} should call the annotation method that the classes are being
+     * extracted for.
+     */
+    public static List<TypeElement> extractClassesFromAnnotation(Types types, Runnable runnable) {
+        // From https://docs.oracle.com/javase/8/docs/api/javax/lang/model/AnnotatedConstruct.html
+        // "The annotation returned by this method could contain an element whose value is of type
+        // Class. This value cannot be returned directly: information necessary to locate and load a
+        // class (such as the class loader to use) is not available, and the class might not be
+        // loadable at all. Attempting to read a Class object by invoking the relevant method on the
+        // returned annotation will result in a MirroredTypeException, from which the corresponding
+        // TypeMirror may be extracted."
+        try {
+            runnable.run();
+        } catch (MirroredTypesException e) {
+            return e.getTypeMirrors().stream()
+                    .map(t -> (TypeElement) types.asElement(t))
+                    .collect(toList());
+        }
+        throw new AssertionError("Could not extract classes from annotation");
     }
 }
