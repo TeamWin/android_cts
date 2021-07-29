@@ -28,6 +28,7 @@ import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.ServiceInfo;
 import android.os.Bundle;
+import android.support.test.uiautomator.UiDevice;
 import android.test.InstrumentationTestCase;
 
 public class ActivityManagerFgsBgStartTest extends InstrumentationTestCase {
@@ -55,6 +56,9 @@ public class ActivityManagerFgsBgStartTest extends InstrumentationTestCase {
         CtsAppTestUtils.makeUidIdle(mInstrumentation, PACKAGE_NAME_APP1);
         CtsAppTestUtils.makeUidIdle(mInstrumentation, PACKAGE_NAME_APP2);
         CtsAppTestUtils.turnScreenOn(mInstrumentation, mContext);
+        // Press home key to ensure stopAppSwitches is called so the grace period of
+        // the background start will be ignored if there's any.
+        UiDevice.getInstance(mInstrumentation).pressHome();
     }
 
     @Override
