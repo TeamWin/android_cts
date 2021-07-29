@@ -2660,6 +2660,7 @@ public class MediaCodecTest extends AndroidTestCase {
             for (String mime: info.getSupportedTypes()) {
                 CodecCapabilities caps = info.getCapabilitiesForType(mime);
                 boolean isVideo = (caps.getVideoCapabilities() != null);
+                boolean isAudio = (caps.getAudioCapabilities() != null);
 
                 MediaCodec codec = null;
                 MediaFormat format = null;
@@ -2677,7 +2678,7 @@ public class MediaCodecTest extends AndroidTestCase {
                         format.setInteger(MediaFormat.KEY_BIT_RATE, minBitrate);
                         format.setInteger(MediaFormat.KEY_FRAME_RATE, minFrameRate);
                         format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, IFRAME_INTERVAL);
-                    } else {
+                    } else if(isAudio){
                         AudioCapabilities acaps = caps.getAudioCapabilities();
                         int minSampleRate = acaps.getSupportedSampleRateRanges()[0].getLower();
                         int minChannelCount = 1;
@@ -2685,11 +2686,13 @@ public class MediaCodecTest extends AndroidTestCase {
                         format = MediaFormat.createAudioFormat(mime, minSampleRate, minChannelCount);
                         format.setInteger(MediaFormat.KEY_BIT_RATE, minBitrate);
                     }
-                    format.setInteger(MediaFormat.KEY_PREPEND_HEADER_TO_SYNC_FRAMES, 1);
 
-                    codec.configure(format, null /* surface */, null /* crypto */,
+                    if (isVideo || isAudio) {
+                        format.setInteger(MediaFormat.KEY_PREPEND_HEADER_TO_SYNC_FRAMES, 1);
+
+                        codec.configure(format, null /* surface */, null /* crypto */,
                             isEncoder ? codec.CONFIGURE_FLAG_ENCODE : 0);
-
+                    }
                     if (isVideo && isEncoder) {
                         Log.i(TAG, info.getName() + " supports KEY_PREPEND_HEADER_TO_SYNC_FRAMES");
                     } else {
