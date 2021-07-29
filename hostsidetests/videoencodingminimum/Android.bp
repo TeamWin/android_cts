@@ -1,4 +1,3 @@
-//
 // Copyright (C) 2021 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,32 +11,23 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
 
 package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-android_test_helper_app {
-    name: "CtsRoleSecurityTestApp",
-    defaults: ["cts_defaults"],
+java_test_host {
+    name: "CtsVideoQualityFloorHostTestCases",
     srcs: ["src/**/*.java"],
     libs: [
-        "android.test.runner",
-        "android.test.base",
+        "cts-tradefed",
+        "cts-shim-host-lib",
+        "tradefed",
     ],
-    static_libs: [
-        "androidx.test.core",
-        "androidx.test.rules",
-        "ctstestrunner-axt",
-        "compatibility-device-util-axt",
-    ],
-    platform_apis: true,
-    min_sdk_version: "29",
-    target_sdk_version: "29",
     test_suites: [
-        "general-tests",
-        "cts",
-        "sts",
+        "cts-tradefed",
+        "cts-shim-host-lib",
+        "tradefed",
     ],
 }
+

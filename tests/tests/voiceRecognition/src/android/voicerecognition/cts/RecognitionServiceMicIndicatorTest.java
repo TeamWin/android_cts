@@ -45,7 +45,6 @@ import com.android.compatibility.common.util.SettingsStateChangerRule;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -161,22 +160,20 @@ public final class RecognitionServiceMicIndicatorTest {
         return componentName != null ? componentName.getPackageName() : "";
     }
 
-    @Ignore("b/184963112")
     @Test
     public void testNonTrustedRecognitionServiceCanBlameCallingApp() throws Throwable {
-        // This is a workaound solution for R QPR. We treat trusted if the current voice recognizer
-        // is also a preinstalled app. This is a untrusted case.
+        // We treat trusted if the current voice recognizer is also a preinstalled app. This is a
+        // untrusted case.
         setCurrentRecognizer(CTS_VOICE_RECOGNITION_SERVICE);
 
         // verify that the untrusted app cannot blame the calling app mic access
-        testVoiceRecognitionServiceBlameCallingApp(/* trustVoiceService */ true);
+        testVoiceRecognitionServiceBlameCallingApp(/* trustVoiceService */ false);
     }
 
-    @Ignore("b/184963112")
     @Test
     public void testTrustedRecognitionServiceCanBlameCallingApp() throws Throwable {
-        // This is a workaround solution for R QPR. We treat trusted if the current voice recognizer
-        // is also a preinstalled app. This is a trusted case.
+        // We treat trusted if the current voice recognizer is also a preinstalled app. This is a
+        // trusted case.
         boolean hasPreInstalledRecognizer = hasPreInstalledRecognizer(
                 getComponentPackageNameFromString(mOriginalVoiceRecognizer));
         assumeTrue("No preinstalled recognizer.", hasPreInstalledRecognizer);

@@ -813,11 +813,8 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
      */
     @Test
     public void testSplitscreenPortraitAppOrientationRequests() throws Exception {
-        assumeTrue("Skipping test: no rotation support", supportsRotation());
-        assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
-
         requestOrientationInSplitScreen(createManagedRotationSession(),
-                ROTATION_90 /* portrait */, LANDSCAPE_ORIENTATION_ACTIVITY);
+                isDisplayPortrait() ? ROTATION_0 : ROTATION_90, LANDSCAPE_ORIENTATION_ACTIVITY);
     }
 
     /**
@@ -825,37 +822,35 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
      */
     @Test
     public void testSplitscreenLandscapeAppOrientationRequests() throws Exception {
-        assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
-
         requestOrientationInSplitScreen(createManagedRotationSession(),
-                ROTATION_0 /* landscape */, PORTRAIT_ORIENTATION_ACTIVITY);
+                isDisplayPortrait() ? ROTATION_90 : ROTATION_0, PORTRAIT_ORIENTATION_ACTIVITY);
     }
 
     /**
-     * Rotate the device and launch specified activity in split-screen, checking if orientation
-     * didn't change.
+     * Launch specified activity in split-screen then rotate the divice, checking orientation
+     * should always change by the device rotation.
      */
-    private void requestOrientationInSplitScreen(RotationSession rotationSession, int orientation,
+    private void requestOrientationInSplitScreen(RotationSession rotationSession, int rotation,
             ComponentName activity) throws Exception {
+        assumeTrue("Skipping test: no rotation support", supportsRotation());
         assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
 
-        // Set initial orientation.
-        rotationSession.set(orientation);
-
-        // Launch activities that request orientations and check that device doesn't rotate.
+        // Launch activities in split screen.
         launchActivitiesInSplitScreen(
                 getLaunchActivityBuilder().setTargetActivity(LAUNCHING_ACTIVITY),
                 getLaunchActivityBuilder().setTargetActivity(activity).setMultipleTask(true));
-
         mWmState.assertVisibility(activity, true /* visible */);
+
+        // Rotate the device and it should always rotate regardless orientation app requested.
+        rotationSession.set(rotation);
         assertEquals("Split-screen apps shouldn't influence device orientation",
-                orientation, mWmState.getRotation());
+                rotation, mWmState.getRotation());
 
         getLaunchActivityBuilder().setMultipleTask(true).setTargetActivity(activity).execute();
         mWmState.computeState(activity);
         mWmState.assertVisibility(activity, true /* visible */);
         assertEquals("Split-screen apps shouldn't influence device orientation",
-                orientation, mWmState.getRotation());
+                rotation, mWmState.getRotation());
     }
 
     /**

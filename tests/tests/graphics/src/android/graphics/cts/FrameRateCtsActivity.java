@@ -37,6 +37,8 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.ViewGroup;
 
+import com.android.compatibility.common.util.DisplayUtil;
+
 import com.google.common.primitives.Floats;
 
 import java.io.PrintWriter;
@@ -391,24 +393,6 @@ public class FrameRateCtsActivity extends Activity {
         }
     }
 
-    private boolean isSeamless(Display.Mode mode, Display.Mode other) {
-        if (mode.getModeId() == other.getModeId()) {
-            return true;
-        }
-
-        if (!hasSameResolution(mode, other)) {
-            return false;
-        }
-
-        for (float alternativeFps : mode.getAlternativeRefreshRates()) {
-            if (Math.abs(alternativeFps - other.getRefreshRate()) <= FRAME_RATE_TOLERANCE) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     // Returns the refresh rates with the same resolution as "mode".
     private ArrayList<Float> getRefreshRates(Display.Mode mode, Display display) {
         Display.Mode[] modes = display.getSupportedModes();
@@ -434,7 +418,7 @@ public class FrameRateCtsActivity extends Activity {
         List<Float> seamedRefreshRates = new ArrayList<>();
         Display.Mode[] modes = display.getSupportedModes();
         for (Display.Mode otherMode : modes) {
-            if (!isSeamless(mode, otherMode)) {
+            if (!DisplayUtil.isModeSwitchSeamless(mode, otherMode)) {
                 seamedRefreshRates.add(otherMode.getRefreshRate());
             }
         }
@@ -613,7 +597,7 @@ public class FrameRateCtsActivity extends Activity {
             Display.Mode toMode = mModeChangedEvents.get(eventId);
             assertTrue("Non-seamless mode switch was not expected, but there was a "
                             + "non-seamless switch from from " + fromMode + " to " + toMode + ".",
-                    isSeamless(fromMode, toMode));
+                    DisplayUtil.isModeSwitchSeamless(fromMode, toMode));
         }
     }
 
