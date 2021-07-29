@@ -675,6 +675,27 @@ public class JavaClientTest {
             Assert.assertArrayEquals(baz.d, newBaz.d);
         }
     }
+
+    @Test
+    public void testGetInterfaceVersion() throws RemoteException {
+        ICompatTest compatTest = ICompatTest.Stub.asInterface(mInterface.getICompatTest());
+        if (mShouldBeOld) {
+            assertEquals(1, compatTest.getInterfaceVersion());
+        } else {
+            assertEquals(3, compatTest.getInterfaceVersion());
+        }
+    }
+
+    @Test
+    public void testGetInterfaceHash() throws RemoteException {
+        ICompatTest compatTest = ICompatTest.Stub.asInterface(mInterface.getICompatTest());
+        if (mShouldBeOld) {
+            assertEquals("b663b681b3e0d66f9b5428c2f23365031b7d4ba0", compatTest.getInterfaceHash());
+        } else {
+            assertEquals("notfrozen", compatTest.getInterfaceHash());
+        }
+    }
+
     @Test
     public void testRenameFoo() throws RemoteException {
         Foo foo = new Foo();
