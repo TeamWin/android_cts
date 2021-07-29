@@ -47,6 +47,7 @@ public class CtsCallRedirectionService extends CallRedirectionService {
             controller.setDestinationUri(handle);
             controller.setOriginalPhoneAccount(initialPhoneAccount);
             int decision = controller.getCallRedirectionDecision();
+            // if decision == RESPONSE_TIMEOUT, do nothing and wait for timeout
             if (decision == CtsCallRedirectionServiceController.PLACE_CALL_UNMODIFIED) {
                 placeCallUnmodified();
             } else if (decision == CtsCallRedirectionServiceController.CANCEL_CALL) {
@@ -56,7 +57,19 @@ public class CtsCallRedirectionService extends CallRedirectionService {
                         controller.isConfirmFirst());
             }
         } else {
-            Log.w(TAG, "No control interface.");
+            Log.w(TAG, "onPlaceCall: No control interface.");
+        }
+    }
+
+    @Override
+    public void onRedirectionTimeout() {
+        Log.i(TAG, "onRedirectionTimeout");
+        CtsCallRedirectionServiceController controller =
+                CtsCallRedirectionServiceController.getInstance();
+        if (controller != null) {
+            controller.timeoutNotified();
+        } else {
+            Log.w(TAG, "onDirectionTimeout: No control interface.");
         }
     }
 }
