@@ -23,7 +23,6 @@ import static android.jobscheduler.cts.ConnectivityConstraintTest.isWiFiConnecte
 import static android.jobscheduler.cts.ConnectivityConstraintTest.setWifiState;
 import static android.jobscheduler.cts.TestAppInterface.TEST_APP_PACKAGE;
 import static android.os.PowerManager.ACTION_DEVICE_IDLE_MODE_CHANGED;
-import static android.os.PowerManager.ACTION_LIGHT_DEVICE_IDLE_MODE_CHANGED;
 
 import static com.android.compatibility.common.util.TestUtils.waitUntil;
 
@@ -133,7 +132,6 @@ public class JobThrottlingTest {
             Log.d(TAG, "Received action " + intent.getAction());
             switch (intent.getAction()) {
                 case ACTION_DEVICE_IDLE_MODE_CHANGED:
-                case ACTION_LIGHT_DEVICE_IDLE_MODE_CHANGED:
                     synchronized (JobThrottlingTest.this) {
                         mDeviceInDoze = mPowerManager.isDeviceIdleMode();
                         Log.d(TAG, "mDeviceInDoze: " + mDeviceInDoze);
@@ -159,7 +157,6 @@ public class JobThrottlingTest {
         mTestAppInterface = new TestAppInterface(mContext, mTestJobId);
         final IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(ACTION_DEVICE_IDLE_MODE_CHANGED);
-        intentFilter.addAction(ACTION_LIGHT_DEVICE_IDLE_MODE_CHANGED);
         mContext.registerReceiver(mReceiver, intentFilter);
         assertFalse("Test package already in temp whitelist", isTestAppTempWhitelisted());
         makeTestPackageIdle();
