@@ -88,7 +88,7 @@ public class SimPhonebookContract_SimRecordsMultiSimTest {
              Cursor sim2Cursor = query(SimRecords.getContentUri(mSubscriptionId2, EF_ADN),
                      projection)) {
             assertThat(sim1Cursor).hasCount(1);
-            assertThat(sim1Cursor).hasSingleRow("Name1 Adn1", 5550101);
+            assertThat(sim1Cursor).hasSingleRow(mSubscriptionId1, EF_ADN, "Name1 Adn1", "5550101");
 
             assertThat(sim2Cursor).hasCount(3);
             assertThat(sim2Cursor).atRow(0)
@@ -119,8 +119,8 @@ public class SimPhonebookContract_SimRecordsMultiSimTest {
         };
         try (Cursor sim1Cursor = query(uriSim1, projection);
              Cursor sim2Cursor = query(uriSim2, projection)) {
-            assertThat(sim1Cursor).hasSingleRow(mSubscriptionId1, "Name Sim1");
-            assertThat(sim2Cursor).hasSingleRow(mSubscriptionId2, "Name Sim2");
+            assertThat(sim1Cursor).hasSingleRow(mSubscriptionId1, "5550101");
+            assertThat(sim2Cursor).hasSingleRow(mSubscriptionId2, "5550102");
         }
     }
 
