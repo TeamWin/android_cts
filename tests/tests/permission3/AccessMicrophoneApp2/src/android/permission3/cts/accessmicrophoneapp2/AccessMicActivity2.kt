@@ -14,21 +14,19 @@
  * limitations under the License.
  */
 
-package android.permission4.cts.appthataccessesmic
+package android.permission3.cts.accessmicrophoneapp2
 
 import android.app.Activity
 import android.app.AppOpsManager
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import android.os.Handler
 
 private const val USE_DURATION_MS = 10000L
 private const val SAMPLE_RATE_HZ = 44100
 
-class AccessMicActivity : Activity() {
+class AccessMicActivity2 : Activity() {
     private var recorder: AudioRecord? = null
     private var appOpsManager: AppOpsManager? = null
 
@@ -56,9 +54,6 @@ class AccessMicActivity : Activity() {
         recorder = AudioRecord(MediaRecorder.AudioSource.MIC, SAMPLE_RATE_HZ,
                 AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, minSize)
         recorder?.startRecording()
-        GlobalScope.launch {
-            delay(USE_DURATION_MS)
-            finish()
-        }
+        Handler().postDelayed({ finish() }, USE_DURATION_MS)
     }
 }
