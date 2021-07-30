@@ -22,6 +22,7 @@ import com.android.bedstead.nene.context.Context;
 import com.android.bedstead.nene.devicepolicy.DevicePolicy;
 import com.android.bedstead.nene.packages.Packages;
 import com.android.bedstead.nene.permissions.Permissions;
+import com.android.bedstead.nene.settings.Settings;
 import com.android.bedstead.nene.users.Users;
 
 /**
@@ -57,6 +58,11 @@ public final class TestApis {
     /** Access Test APIs related to context. */
     public Context context() {
         return mContext;
+    }
+
+    /** Access Test APIs relating to Settings. */
+    public Settings settings() {
+        return Settings.sInstance;
     }
 
     /** Access Test APIs related to activities. */

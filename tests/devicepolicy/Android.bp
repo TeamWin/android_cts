@@ -42,5 +42,5 @@ android_test {
         "vts10",
         "general-tests",
     ],
-    platform_apis: true
+    platform_apis: true,
 }
