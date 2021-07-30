@@ -35,6 +35,7 @@
         <option name="cleanup" value="true" />
         <option name="push" value="CtsContentTestCases.apk->/data/local/tmp/cts/content/CtsContentTestCases.apk" />
         <option name="push" value="CtsContentEmptyTestApp.apk->/data/local/tmp/cts/content/CtsContentEmptyTestApp.apk" />
+        <option name="push" value="CtsContentLongLabelNameTestApp.apk->/data/local/tmp/cts/content/CtsContentLongLabelNameTestApp.apk" />
     </target_preparer>
 
     <target_preparer class="com.android.tradefed.targetprep.PushFilePreparer">
