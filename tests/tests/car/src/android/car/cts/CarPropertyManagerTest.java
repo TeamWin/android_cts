@@ -28,12 +28,15 @@ import android.car.PortLocationType;
 import android.car.VehicleAreaSeat;
 import android.car.VehicleAreaType;
 import android.car.VehicleAreaWheel;
+import android.car.VehicleGear;
 import android.car.VehiclePropertyIds;
 import android.car.cts.utils.VehiclePropertyVerifier;
 import android.car.hardware.CarPropertyConfig;
 import android.car.hardware.CarPropertyValue;
 import android.car.hardware.property.CarPropertyManager;
 import android.car.hardware.property.CarPropertyManager.CarPropertyEventCallback;
+import android.car.hardware.property.VehicleElectronicTollCollectionCardStatus;
+import android.car.hardware.property.VehicleElectronicTollCollectionCardType;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresDevice;
 import android.test.suitebuilder.annotation.SmallTest;
@@ -73,6 +76,15 @@ public class CarPropertyManagerTest extends CarApiTestBase {
                     PortLocationType.FRONT_LEFT, PortLocationType.FRONT_RIGHT,
                     PortLocationType.REAR_RIGHT, PortLocationType.REAR_LEFT,
                     PortLocationType.FRONT, PortLocationType.REAR).build();
+    private static final ImmutableSet<Integer> VEHICLE_GEARS =
+            ImmutableSet.<Integer>builder().add(VehicleGear.GEAR_UNKNOWN,
+                    VehicleGear.GEAR_NEUTRAL, VehicleGear.GEAR_REVERSE,
+                    VehicleGear.GEAR_PARK, VehicleGear.GEAR_DRIVE,
+                    VehicleGear.GEAR_FIRST, VehicleGear.GEAR_SECOND,
+                    VehicleGear.GEAR_THIRD, VehicleGear.GEAR_FOURTH,
+                    VehicleGear.GEAR_FIFTH, VehicleGear.GEAR_SIXTH,
+                    VehicleGear.GEAR_SEVENTH, VehicleGear.GEAR_EIGHTH,
+                    VehicleGear.GEAR_NINTH).build();
     /** contains property Ids for the properties required by CDD */
     private final ArraySet<Integer> mPropertyIds = new ArraySet<>();
     private CarPropertyManager mCarPropertyManager;
@@ -196,10 +208,18 @@ public class CarPropertyManagerTest extends CarApiTestBase {
                 VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                 CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                 Integer.class).requireProperty().setConfigArrayVerifier(
-                configArray -> assertWithMessage(
-                        "GEAR_SELECTION config array must specify supported gears")
-                        .that(configArray.size())
-                        .isGreaterThan(0)).setCarPropertyValueVerifier(
+                configArray -> {
+                    assertWithMessage(
+                            "GEAR_SELECTION config array must specify supported gears")
+                            .that(configArray.size())
+                            .isGreaterThan(0);
+                    for (Integer supportedGear : configArray) {
+                        assertWithMessage(
+                                "GEAR_SELECTION config array value must be a defined gear: "
+                                        + supportedGear).that(
+                                supportedGear).isIn(VEHICLE_GEARS);
+                    }
+                }).setCarPropertyValueVerifier(
                 (carPropertyConfig, carPropertyValue) -> assertWithMessage(
                         "GEAR_SELECTION Integer value must be listed as supported gear in "
                                 + "configArray")
@@ -458,7 +478,7 @@ public class CarPropertyManagerTest extends CarApiTestBase {
     public void testInfoDriverSeatIfSupported() {
         VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.INFO_DRIVER_SEAT,
                 CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
-                VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                 CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
                 Integer.class).setCarPropertyValueVerifier(
                 (carPropertyConfig, carPropertyValue) -> {
@@ -495,6 +515,54 @@ public class CarPropertyManagerTest extends CarApiTestBase {
     }
 
     @Test
+    public void testElectronicTollCollectionCardTypeIfSupported() {
+        VehiclePropertyVerifier.newBuilder(
+                VehiclePropertyIds.ELECTRONIC_TOLL_COLLECTION_CARD_TYPE,
+                CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                Integer.class).setCarPropertyValueVerifier(
+                (carPropertyConfig, carPropertyValue) -> {
+                    Integer electronicTollCollectionCardType =
+                            (Integer) carPropertyValue.getValue();
+                    assertWithMessage(
+                            "ELECTRONIC_TOLL_COLLECTION_CARD_TYPE value must be a valid "
+                                    + "VehicleElectronicTollCollectionCardType").that(
+                            electronicTollCollectionCardType).isIn(ImmutableSet.builder().add(
+                            VehicleElectronicTollCollectionCardType.UNKNOWN,
+                            VehicleElectronicTollCollectionCardType.
+                                    JP_ELECTRONIC_TOLL_COLLECTION_CARD,
+                            VehicleElectronicTollCollectionCardType.
+                                    JP_ELECTRONIC_TOLL_COLLECTION_CARD_V2).build());
+                }).build().verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testElectronicTollCollectionCardStatusIfSupported() {
+        VehiclePropertyVerifier.newBuilder(
+                VehiclePropertyIds.ELECTRONIC_TOLL_COLLECTION_CARD_STATUS,
+                CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                Integer.class).setCarPropertyValueVerifier(
+                (carPropertyConfig, carPropertyValue) -> {
+                    Integer electronicTollCollectionCardStatus =
+                            (Integer) carPropertyValue.getValue();
+                    assertWithMessage(
+                            "ELECTRONIC_TOLL_COLLECTION_CARD_STATUS value must be a valid "
+                                    + "VehicleElectronicTollCollectionCardStatus").that(
+                            electronicTollCollectionCardStatus).isIn(ImmutableSet.builder().add(
+                            VehicleElectronicTollCollectionCardStatus.UNKNOWN,
+                            VehicleElectronicTollCollectionCardStatus.
+                                    ELECTRONIC_TOLL_COLLECTION_CARD_VALID,
+                            VehicleElectronicTollCollectionCardStatus.
+                                    ELECTRONIC_TOLL_COLLECTION_CARD_INVALID,
+                            VehicleElectronicTollCollectionCardStatus.
+                                    ELECTRONIC_TOLL_COLLECTION_CARD_NOT_INSERTED).build());
+                }).build().verify(mCarPropertyManager);
+    }
+
+    @Test
     public void testEnvOutsideTemperatureIfSupported() {
         VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.ENV_OUTSIDE_TEMPERATURE,
                 CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
@@ -510,10 +578,18 @@ public class CarPropertyManagerTest extends CarApiTestBase {
                 VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                 CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                 Integer.class).setConfigArrayVerifier(
-                configArray -> assertWithMessage(
-                        "CURRENT_GEAR config array must specify supported gears")
-                        .that(configArray.size())
-                        .isGreaterThan(0)).setCarPropertyValueVerifier(
+                configArray -> {
+                    assertWithMessage(
+                            "CURRENT_GEAR config array must specify supported gears")
+                            .that(configArray.size())
+                            .isGreaterThan(0);
+                    for (Integer supportedGear : configArray) {
+                        assertWithMessage(
+                                "CURRENT_GEAR config array value must be a defined gear: "
+                                        + supportedGear).that(
+                                supportedGear).isIn(VEHICLE_GEARS);
+                    }
+                }).setCarPropertyValueVerifier(
                 (carPropertyConfig, carPropertyValue) -> assertWithMessage(
                         "CURRENT_GEAR Integer value must be listed as supported gear in "
                                 + "configArray")

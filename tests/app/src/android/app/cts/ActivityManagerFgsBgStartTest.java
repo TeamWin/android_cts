@@ -57,7 +57,7 @@ import android.os.IBinder;
 import android.os.PowerExemptionManager;
 import android.os.SystemClock;
 import android.permission.cts.PermissionUtils;
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import android.provider.DeviceConfig;
 import android.provider.Settings;
 
@@ -464,7 +464,7 @@ public class ActivityManagerFgsBgStartTest {
      * @throws Exception
      */
     @Test
-    @SecurityTest(minPatchLevel = "2021-03")
+    @AsbSecurityTest(cveBugId = 173516292)
     public void testFgsLocationStartFromBGWithBind() throws Exception {
         ApplicationInfo app1Info = mContext.getPackageManager().getApplicationInfo(
                 PACKAGE_NAME_APP1, 0);

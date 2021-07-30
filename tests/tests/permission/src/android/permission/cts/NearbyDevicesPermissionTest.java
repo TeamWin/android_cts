@@ -47,6 +47,8 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SdkSuppress;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.CddTest;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -108,12 +110,14 @@ public class NearbyDevicesPermissionTest {
     }
 
     @Test
+    @CddTest(requirement="7.4.3/C-6-1")
     public void testRequestBluetoothPermission30_Default() throws Throwable {
         install(APK_BLUETOOTH_30);
         assertScanBluetoothResult(Result.EMPTY);
     }
 
     @Test
+    @CddTest(requirement="7.4.3/C-6-1")
     public void testRequestBluetoothPermission30_GrantLocation() throws Throwable {
         install(APK_BLUETOOTH_30);
         grantPermission(TEST_APP_PKG, ACCESS_FINE_LOCATION);
@@ -122,12 +126,14 @@ public class NearbyDevicesPermissionTest {
     }
 
     @Test
+    @CddTest(requirement="7.4.3/C-6-1")
     public void testRequestBluetoothPermission31_Default() throws Throwable {
         install(APK_BLUETOOTH_31);
         assertScanBluetoothResult(Result.EXCEPTION);
     }
 
     @Test
+    @CddTest(requirement="7.4.3/C-6-1")
     public void testRequestBluetoothPermission31_GrantNearby() throws Throwable {
         install(APK_BLUETOOTH_31);
         grantPermission(TEST_APP_PKG, BLUETOOTH_CONNECT);
@@ -136,6 +142,7 @@ public class NearbyDevicesPermissionTest {
     }
 
     @Test
+    @CddTest(requirement="7.4.3/C-6-1")
     public void testRequestBluetoothPermission31_GrantLocation() throws Throwable {
         install(APK_BLUETOOTH_31);
         grantPermission(TEST_APP_PKG, ACCESS_FINE_LOCATION);
@@ -144,6 +151,7 @@ public class NearbyDevicesPermissionTest {
     }
 
     @Test
+    @CddTest(requirement="7.4.3/C-6-1")
     public void testRequestBluetoothPermission31_GrantNearby_GrantLocation() throws Throwable {
         install(APK_BLUETOOTH_31);
         grantPermission(TEST_APP_PKG, BLUETOOTH_CONNECT);
@@ -154,12 +162,14 @@ public class NearbyDevicesPermissionTest {
     }
 
     @Test
+    @CddTest(requirement="7.4.3/C-6-1")
     public void testRequestBluetoothPermissionNeverForLocation31_Default() throws Throwable {
         install(APK_BLUETOOTH_NEVER_FOR_LOCATION_31);
         assertScanBluetoothResult(Result.EXCEPTION);
     }
 
     @Test
+    @CddTest(requirement="7.4.3/C-6-1")
     public void testRequestBluetoothPermissionNeverForLocation31_GrantNearby() throws Throwable {
         install(APK_BLUETOOTH_NEVER_FOR_LOCATION_31);
         grantPermission(TEST_APP_PKG, BLUETOOTH_CONNECT);
@@ -168,6 +178,7 @@ public class NearbyDevicesPermissionTest {
     }
 
     @Test
+    @CddTest(requirement="7.4.3/C-6-1")
     public void testRequestBluetoothPermissionNeverForLocation31_GrantLocation() throws Throwable {
         install(APK_BLUETOOTH_NEVER_FOR_LOCATION_31);
         grantPermission(TEST_APP_PKG, ACCESS_FINE_LOCATION);
@@ -176,6 +187,7 @@ public class NearbyDevicesPermissionTest {
     }
 
     @Test
+    @CddTest(requirement="7.4.3/C-6-1")
     public void testRequestBluetoothPermissionNeverForLocation31_GrantNearby_GrantLocation()
             throws Throwable {
         install(APK_BLUETOOTH_NEVER_FOR_LOCATION_31);

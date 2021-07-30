@@ -16,8 +16,17 @@
 
 package com.android.bedstead.testapp;
 
+import android.app.admin.RemoteDevicePolicyManager;
+import android.app.admin.RemoteDevicePolicyManagerWrapper;
 import android.content.BroadcastReceiver;
 import android.content.IntentFilter;
+import android.net.wifi.RemoteWifiManager;
+import android.net.wifi.RemoteWifiManagerWrapper;
+import android.os.RemoteHardwarePropertiesManager;
+import android.os.RemoteHardwarePropertiesManagerWrapper;
+import android.os.RemoteUserManager;
+import android.os.RemoteUserManagerWrapper;
+
 
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.NeneException;
@@ -236,5 +245,21 @@ public final class TestAppInstanceReference implements AutoCloseable, Connection
                 registerReceiver(entry.getKey(), entry.getValue());
             }
         }
+    }
+
+    public RemoteDevicePolicyManager devicePolicyManager() {
+        return new RemoteDevicePolicyManagerWrapper(mConnector);
+    }
+
+    public RemoteUserManager userManager() {
+        return new RemoteUserManagerWrapper(mConnector);
+    }
+
+    public RemoteWifiManager wifiManager() {
+        return new RemoteWifiManagerWrapper(mConnector);
+    }
+
+    public RemoteHardwarePropertiesManager hardwarePropertiesManager() {
+        return new RemoteHardwarePropertiesManagerWrapper(mConnector);
     }
 }
