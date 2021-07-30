@@ -60,7 +60,7 @@ public class RestoreSessionHostSideTest extends BaseBackupHostSideTest {
 
     private static final String TEST_APP_PKG_PREFIX = "android.cts.backup.restoresessionapp";
     private static final String TEST_APP_APK_PREFIX = "CtsRestoreSessionApp";
-    private static final int TEST_APPS_COUNT = 3;
+    private static final int TEST_APPS_COUNT = 2;
 
     private Optional<String> mOldTransport = Optional.empty();
     private BackupUtils mBackupUtils;
@@ -115,7 +115,7 @@ public class RestoreSessionHostSideTest extends BaseBackupHostSideTest {
     @Parameters(method = "bothInstallTypes")
     public void testRestorePackages(boolean incremental) throws Exception {
         testRestorePackagesInternal("testRestorePackages", /* packagesToRestore */
-                2, /* incremental */incremental);
+                1, /* incremental */incremental);
     }
 
     /**
@@ -125,7 +125,7 @@ public class RestoreSessionHostSideTest extends BaseBackupHostSideTest {
     @Parameters(method = "bothInstallTypes")
     public void testRestorePackagesWithMonitorParam(boolean incremental) throws Exception {
         testRestorePackagesInternal("testRestorePackagesWithMonitorParam", /* packagesToRestore */
-                2, /* incremental */incremental);
+                1, /* incremental */incremental);
     }
 
     /**
@@ -144,7 +144,6 @@ public class RestoreSessionHostSideTest extends BaseBackupHostSideTest {
             boolean incremental) throws Exception {
         installPackage(getApkNameForTestApp(1), incremental);
         installPackage(getApkNameForTestApp(2), incremental);
-        installPackage(getApkNameForTestApp(3), incremental);
 
         // Write test values to shared preferences for all test packages.
         checkRestoreSessionDeviceTestForAllApps("testSaveValuesToSharedPrefs");
@@ -153,7 +152,6 @@ public class RestoreSessionHostSideTest extends BaseBackupHostSideTest {
         // Backup all test packages.
         mBackupUtils.backupNowAndAssertSuccess(getPackageNameForTestApp(1));
         mBackupUtils.backupNowAndAssertSuccess(getPackageNameForTestApp(2));
-        mBackupUtils.backupNowAndAssertSuccess(getPackageNameForTestApp(3));
 
         // Clear shared preferences for all test packages.
         checkRestoreSessionDeviceTestForAllApps("testClearSharedPrefs");
@@ -174,7 +172,6 @@ public class RestoreSessionHostSideTest extends BaseBackupHostSideTest {
 
         uninstallPackage(getPackageNameForTestApp(1));
         uninstallPackage(getPackageNameForTestApp(2));
-        uninstallPackage(getPackageNameForTestApp(3));
     }
 
     /** Run the given device test for all test apps. */
