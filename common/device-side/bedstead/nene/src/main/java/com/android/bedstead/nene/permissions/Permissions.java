@@ -39,7 +39,7 @@ import java.util.List;
 import java.util.Set;
 
 /** Permission manager for tests. */
-public class Permissions {
+public final class Permissions {
 
     public static final String MANAGE_PROFILE_AND_DEVICE_OWNERS =
             "android.permission.MANAGE_PROFILE_AND_DEVICE_OWNERS";
