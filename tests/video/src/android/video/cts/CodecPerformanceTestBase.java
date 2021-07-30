@@ -50,6 +50,12 @@ class CodecPerformanceTestBase {
     // passing the test
     static final double FPS_TOLERANCE_FACTOR;
     static final boolean IS_AT_LEAST_VNDK_S;
+
+    // Some older devices can not support concurrent instances of both decoder and encoder
+    // at max resolution. To handle such cases, this test is limited to test the
+    // resolutions that are less than half of max supported frame sizes of encoder.
+    static final boolean EXCLUDE_ENCODER_MAX_RESOLUTION;
+
     static final String mInputPrefix = WorkDir.getMediaDirString();
 
     ArrayList<MediaCodec.BufferInfo> mBufferInfos;
@@ -89,6 +95,9 @@ class CodecPerformanceTestBase {
         FPS_TOLERANCE_FACTOR = deviceInitialSdk <= Build.VERSION_CODES.R ? 0.67 : 0.95;
 
         IS_AT_LEAST_VNDK_S = SystemProperties.getInt("ro.vndk.version", 0) > Build.VERSION_CODES.R;
+
+        // Encoders on devices launched on Android Q and lower aren't tested at maximum resolution
+        EXCLUDE_ENCODER_MAX_RESOLUTION = deviceInitialSdk <= Build.VERSION_CODES.Q;
     }
 
     @Before
@@ -281,6 +290,18 @@ class CodecPerformanceTestBase {
         }
         codec.release();
         return minComplexity;
+    }
+
+    static int getMaxFrameSize(String codecName, String mime) throws IOException {
+        MediaCodec codec = MediaCodec.createByCodecName(codecName);
+        MediaCodecInfo.CodecCapabilities codecCapabilities =
+                codec.getCodecInfo().getCapabilitiesForType(mime);
+        MediaCodecInfo.VideoCapabilities vc = codecCapabilities.getVideoCapabilities();
+        Range<Integer> heights = vc.getSupportedHeights();
+        Range<Integer> widths = vc.getSupportedWidthsFor(heights.getUpper());
+        int maxFrameSize = heights.getUpper() * widths.getUpper();
+        codec.release();
+        return maxFrameSize;
     }
 
     void enqueueDecoderInput(int bufferIndex) {
