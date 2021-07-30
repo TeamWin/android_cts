@@ -31,6 +31,7 @@ java_test_host {
         "src/**/bluetooth/*.java",
         "src/**/cpu/*.java",
         "src/**/devicepower/*.java",
+        "src/**/devicestate/*.java",
         "src/**/gnss/*.java",
         "src/**/jobscheduler/*.java",
         "src/**/integrity/*.java",

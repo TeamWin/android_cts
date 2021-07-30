@@ -16,7 +16,7 @@
 
 package com.android.bedstead.testapp;
 
-import static android.Manifest.permission.INTERACT_ACROSS_USERS;
+import static android.app.admin.DevicePolicyManager.OPERATION_SAFETY_REASON_DRIVING_DISTRACTION;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -28,11 +28,8 @@ import android.content.IntentFilter;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
-import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
-import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.packages.Package;
-import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.eventlib.EventLogs;
@@ -43,7 +40,6 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
 @RunWith(BedsteadJUnit4.class)
 public class TestAppInstanceReferenceTest {
@@ -311,6 +307,45 @@ public class TestAppInstanceReferenceTest {
                     BroadcastReceivedEvent.queryPackage(testApp.packageName())
                             .whereIntent().action().isEqualTo(INTENT_ACTION);
             assertThat(logs.poll()).isNotNull();
+        }
+    }
+
+    @Test
+    public void devicePolicyManager_returnsUsableInstance() {
+        TestApp testApp = mTestAppProvider.any();
+        try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
+            // Arbitrary call which does not require specific permissions to confirm no crash
+            testAppInstance.devicePolicyManager()
+                    .isSafeOperation(OPERATION_SAFETY_REASON_DRIVING_DISTRACTION);
+        }
+    }
+
+    @Test
+    public void userManager_returnsUsableInstance() {
+        TestApp testApp = mTestAppProvider.any();
+        try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
+            // Arbitrary call which does not require specific permissions to confirm no crash
+            testAppInstance.userManager().getUserProfiles();
+        }
+    }
+
+    @Test
+    public void wifiManager_returnsUsableInstance() {
+        TestApp testApp = mTestAppProvider.any();
+        try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
+            // Arbitrary call which does not require specific permissions to confirm no crash
+            testAppInstance.wifiManager().getMaxNumberOfNetworkSuggestionsPerApp();
+        }
+    }
+
+    @Test
+    public void hardwarePropertiesManager_returnsUsableInstance() {
+        TestApp testApp = mTestAppProvider.any();
+        try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
+            // Arbitrary call - there are no methods on this service which don't require permissions
+            assertThrows(SecurityException.class, () -> {
+                testAppInstance.hardwarePropertiesManager().getCpuUsages();
+            });
         }
     }
 }
