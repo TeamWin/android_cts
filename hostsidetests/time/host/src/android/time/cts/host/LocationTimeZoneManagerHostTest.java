@@ -96,11 +96,9 @@ public class LocationTimeZoneManagerHostTest extends BaseHostJUnit4Test {
             mTimeZoneDetectorShellHelper.setAutoDetectionEnabled(true);
         }
 
-        // Make sure geolocation time zone detection is enabled.
+        // On devices with no location time zone providers (e.g. AOSP), we cannot turn geo detection
+        // on until the test LTZPs are configured as the time_zone_detector will refuse.
         mOriginalGeoDetectionEnabled = mTimeZoneDetectorShellHelper.isGeoDetectionEnabled();
-        if (!mOriginalGeoDetectionEnabled) {
-            mTimeZoneDetectorShellHelper.setGeoDetectionEnabled(true);
-        }
     }
 
     @After
@@ -110,12 +108,15 @@ public class LocationTimeZoneManagerHostTest extends BaseHostJUnit4Test {
             return;
         }
 
+        // Reset the geoDetectionEnabled state while there is at least one LTZP configured: this
+        // setting cannot be modified if there are no LTZPs on the device, e.g. on AOSP.
+        mTimeZoneDetectorShellHelper.setGeoDetectionEnabled(mOriginalGeoDetectionEnabled);
+
         // Turn off the service before we reset configuration, otherwise it will restart itself
         // repeatedly.
         mLocationTimeZoneManagerShellHelper.stop();
 
         // Reset settings and server flags as best we can.
-        mTimeZoneDetectorShellHelper.setGeoDetectionEnabled(mOriginalGeoDetectionEnabled);
         mTimeZoneDetectorShellHelper.setAutoDetectionEnabled(mOriginalAutoDetectionEnabled);
         mLocationShellHelper.setLocationEnabledForCurrentUser(mOriginalLocationEnabled);
         mLocationTimeZoneManagerShellHelper.recordProviderStates(false);
@@ -137,6 +138,7 @@ public class LocationTimeZoneManagerHostTest extends BaseHostJUnit4Test {
 
         mLocationTimeZoneManagerShellHelper.start();
         mLocationTimeZoneManagerShellHelper.recordProviderStates(true);
+        mTimeZoneDetectorShellHelper.setGeoDetectionEnabled(true);
 
         mLocationTimeZoneManagerShellHelper.simulateProviderBind(PRIMARY_PROVIDER_INDEX);
         mLocationTimeZoneManagerShellHelper.simulateProviderSuggestion(
@@ -145,6 +147,7 @@ public class LocationTimeZoneManagerHostTest extends BaseHostJUnit4Test {
         LocationTimeZoneManagerServiceStateProto serviceState = dumpServiceState();
         assertLastSuggestion(serviceState, "Europe/London");
         assertProviderStates(serviceState.getPrimaryProviderStatesList(),
+                TimeZoneProviderStateEnum.TIME_ZONE_PROVIDER_STATE_INITIALIZING,
                 TimeZoneProviderStateEnum.TIME_ZONE_PROVIDER_STATE_CERTAIN);
         assertProviderStates(serviceState.getSecondaryProviderStatesList());
     }
@@ -159,6 +162,7 @@ public class LocationTimeZoneManagerHostTest extends BaseHostJUnit4Test {
 
         mLocationTimeZoneManagerShellHelper.start();
         mLocationTimeZoneManagerShellHelper.recordProviderStates(true);
+        mTimeZoneDetectorShellHelper.setGeoDetectionEnabled(true);
 
         mLocationTimeZoneManagerShellHelper.simulateProviderBind(SECONDARY_PROVIDER_INDEX);
         mLocationTimeZoneManagerShellHelper.simulateProviderSuggestion(
@@ -166,8 +170,11 @@ public class LocationTimeZoneManagerHostTest extends BaseHostJUnit4Test {
 
         LocationTimeZoneManagerServiceStateProto serviceState = dumpServiceState();
         assertLastSuggestion(serviceState, "Europe/London");
-        assertProviderStates(serviceState.getPrimaryProviderStatesList());
+        assertProviderStates(serviceState.getPrimaryProviderStatesList(),
+                TimeZoneProviderStateEnum.TIME_ZONE_PROVIDER_STATE_INITIALIZING,
+                TimeZoneProviderStateEnum.TIME_ZONE_PROVIDER_STATE_PERM_FAILED);
         assertProviderStates(serviceState.getSecondaryProviderStatesList(),
+                TimeZoneProviderStateEnum.TIME_ZONE_PROVIDER_STATE_INITIALIZING,
                 TimeZoneProviderStateEnum.TIME_ZONE_PROVIDER_STATE_CERTAIN);
     }
 
@@ -184,6 +191,7 @@ public class LocationTimeZoneManagerHostTest extends BaseHostJUnit4Test {
 
         mLocationTimeZoneManagerShellHelper.start();
         mLocationTimeZoneManagerShellHelper.recordProviderStates(true);
+        mTimeZoneDetectorShellHelper.setGeoDetectionEnabled(true);
 
         mLocationTimeZoneManagerShellHelper.simulateProviderBind(PRIMARY_PROVIDER_INDEX);
 
@@ -195,6 +203,7 @@ public class LocationTimeZoneManagerHostTest extends BaseHostJUnit4Test {
             LocationTimeZoneManagerServiceStateProto serviceState = dumpServiceState();
             assertNoLastSuggestion(serviceState);
             assertProviderStates(serviceState.getPrimaryProviderStatesList(),
+                    TimeZoneProviderStateEnum.TIME_ZONE_PROVIDER_STATE_INITIALIZING,
                     TimeZoneProviderStateEnum.TIME_ZONE_PROVIDER_STATE_UNCERTAIN);
             assertProviderStates(serviceState.getSecondaryProviderStatesList(),
                     TimeZoneProviderStateEnum.TIME_ZONE_PROVIDER_STATE_INITIALIZING);
