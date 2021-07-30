@@ -53,4 +53,11 @@ public final class StringQueryHelper<E extends Queryable>
     public static boolean matches(StringQueryHelper<?> stringQueryHelper, String value) {
         return stringQueryHelper.matches(value);
     }
+
+    /**
+     * True if this query is for an exact string match.
+     */
+    public boolean isQueryingForExactMatch() {
+        return mEqualsValue != null;
+    }
 }

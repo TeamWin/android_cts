@@ -18,6 +18,7 @@ package com.android.bedstead.testapp;
 
 import android.content.Context;
 import android.util.Log;
+import android.os.Bundle;
 
 import com.android.bedstead.nene.TestApis;
 
@@ -85,6 +86,12 @@ public final class TestAppProvider {
         details.mPackageName = "android." + apkName; // TODO: Actually index the package name
         details.mResourceIdentifier = sContext.getResources().getIdentifier(
                 "raw/" + apkName, /* defType= */ null, sContext.getPackageName());
+        // TODO(scottjonathan): Actually index the metadata -
+        //  right now this is hardcoded for remoteDPC
+        details.mMetadata = new Bundle();
+        if (details.mPackageName.equals("android.RemoteDPCTestApp")) {
+            details.mMetadata.putBoolean("testapp-package-query-only", true);
+        }
 
         mTestApps.add(details);
     }

@@ -18,8 +18,8 @@ package com.android.queryable.queries;
 
 import android.os.Bundle;
 
-import com.android.queryable.util.SerializableParcelWrapper;
 import com.android.queryable.Queryable;
+import com.android.queryable.util.SerializableParcelWrapper;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -68,5 +68,9 @@ public final class BundleQueryHelper<E extends Queryable> implements BundleQuery
         }
 
         return matches(serializableBundle.get());
+    }
+
+    public static boolean matches(BundleQueryHelper<?> bundleQueryHelper, Bundle value) {
+        return bundleQueryHelper.matches(value);
     }
 }

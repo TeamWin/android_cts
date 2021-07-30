@@ -16,8 +16,11 @@
 
 package com.android.bedstead.testapp;
 
+import android.os.Bundle;
+
 /** Details about a queryable test app. */
 class TestAppDetails {
     String mPackageName;
     int mResourceIdentifier;
+    Bundle mMetadata;
 }
