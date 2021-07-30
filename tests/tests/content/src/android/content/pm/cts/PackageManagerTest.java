@@ -16,12 +16,15 @@
 
 package android.content.pm.cts;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import android.content.cts.R;
 
 
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.InstrumentationInfo;
 import android.content.pm.PackageInfo;
@@ -31,8 +34,12 @@ import android.content.pm.PermissionInfo;
 import android.content.pm.ProviderInfo;
 import android.content.pm.ResolveInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.support.test.InstrumentationRegistry;
 import android.test.AndroidTestCase;
 
+import com.android.compatibility.common.util.SystemUtil;
+
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -58,10 +65,23 @@ public class PackageManagerTest extends AndroidTestCase {
     private static final String PROVIDER_NAME = "android.content.cts.MockContentProvider";
     private static final String PERMISSIONGROUP_NAME = "android.permission-group.COST_MONEY";
 
+    private static final String SAMPLE_APK_BASE = "/data/local/tmp/cts/content/";
+    private static final String LONG_LABEL_NAME_APK = SAMPLE_APK_BASE
+            + "CtsContentLongLabelNameTestApp.apk";
+    private static final String EMPTY_APP_PACKAGE_NAME = "android.content.cts.emptytestapp";
+
+    private static final int MAX_SAFE_LABEL_LENGTH = 1000;
+
     @Override
     protected void setUp() throws Exception {
         super.setUp();
         mPackageManager = getContext().getPackageManager();
+    }
+
+    @Override
+    protected void tearDown() throws Exception {
+        super.tearDown();
+        uninstallPackage(EMPTY_APP_PACKAGE_NAME);
     }
 
     public void testQuery() throws NameNotFoundException {
@@ -494,5 +514,42 @@ public class PackageManagerTest extends AndroidTestCase {
         assertEquals("shared:android.uid.system", result[0]);
         assertEquals(null, result[1]);
         assertEquals("com.android.cts.ctsshim", result[2]);
+    }
+
+    private boolean installPackage(String apkPath) throws IOException {
+        return SystemUtil.runShellCommand(InstrumentationRegistry.getInstrumentation(),
+                "pm install -t " + apkPath).equals("Success\n");
+    }
+
+    private void uninstallPackage(String packageName) throws IOException {
+        SystemUtil.runShellCommand(InstrumentationRegistry.getInstrumentation(),
+                "pm uninstall " + packageName);
+    }
+
+    public void testLoadApplicationLabel_withLongLabelName_truncated() throws Exception {
+        assertThat(installPackage(LONG_LABEL_NAME_APK)).isTrue();
+        final ApplicationInfo info = mPackageManager.getApplicationInfo(
+                EMPTY_APP_PACKAGE_NAME, 0 /* flags */);
+        final CharSequence resLabel = mPackageManager.getText(
+                EMPTY_APP_PACKAGE_NAME, info.labelRes, info);
+
+        assertThat(resLabel.length()).isGreaterThan(MAX_SAFE_LABEL_LENGTH);
+        assertThat(info.loadLabel(mPackageManager).length()).isEqualTo(MAX_SAFE_LABEL_LENGTH);
+    }
+
+    public void testLoadComponentLabel_withLongLabelName_truncated() throws Exception {
+        assertThat(installPackage(LONG_LABEL_NAME_APK)).isTrue();
+        final ComponentName componentName = ComponentName.createRelative(
+                EMPTY_APP_PACKAGE_NAME, ".MockActivity");
+        final ApplicationInfo appInfo = mPackageManager.getApplicationInfo(
+                EMPTY_APP_PACKAGE_NAME, 0 /* flags */);
+        final ActivityInfo activityInfo = mPackageManager.getActivityInfo(
+                componentName, 0 /* flags */);
+        final CharSequence resLabel = mPackageManager.getText(
+                EMPTY_APP_PACKAGE_NAME, activityInfo.labelRes, appInfo);
+
+        assertThat(resLabel.length()).isGreaterThan(MAX_SAFE_LABEL_LENGTH);
+        assertThat(activityInfo.loadLabel(mPackageManager).length())
+                .isEqualTo(MAX_SAFE_LABEL_LENGTH);
     }
 }
