@@ -945,7 +945,8 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
         final ActivitySession activitySession = createManagedActivityClientSession()
                 .startActivity(getLaunchActivityBuilder()
                         .setUseInstrumentation()
-                        .setTargetActivity(RESIZEABLE_ACTIVITY));
+                        .setTargetActivity(RESIZEABLE_ACTIVITY)
+                        .setWindowingMode(WINDOWING_MODE_FULLSCREEN));
         putActivityInPrimarySplit(RESIZEABLE_ACTIVITY);
         SizeInfo dockedActivitySizes = getActivitySizeInfo(activitySession);
         SizeInfo applicationSizes = getAppSizeInfo(activitySession);
