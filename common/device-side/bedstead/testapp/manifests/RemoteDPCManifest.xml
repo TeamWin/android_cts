@@ -17,8 +17,14 @@
   -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="com.android.bedstead.remoteframeworkclasses">
-    <uses-sdk android:minSdkVersion="27" />
-    <application>
+          package="android.RemoteDPCTestApp">
+    <application
+        android:appComponentFactory="com.android.bedstead.testapp.TestAppAppComponentFactory"
+        android:testOnly="true">
+
+        <!-- Don't allow this test app to be returned by queries unless filtered by package name -->
+        <meta-data android:name="testapp-package-query-only" android:value="true" />
+
     </application>
+    <uses-sdk android:minSdkVersion="28" android:targetSdkVersion="28"/>
 </manifest>

@@ -55,7 +55,7 @@ android_test {
         "DpmWrapper"
     ],
 
-    libs: ["telephony-common"] + ["android.test.runner.stubs"] + ["android.test.base.stubs"] + ["android.test.mock.stubs"] + ["android.car"] + ["voip-common"] + ["truth-prebuilt"],
+    libs: ["telephony-common"] + ["android.test.runner.stubs"] + ["android.test.base.stubs"] + ["android.test.mock.stubs"] + ["android.car-test-stubs"] + ["voip-common"] + ["truth-prebuilt"],
 
     platform_apis: true,
 

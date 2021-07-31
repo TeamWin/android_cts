@@ -14,13 +14,20 @@
  * limitations under the License.
  */
 
-package com.android.bedstead.testapp;
+package com.android.bedstead.nene.settings;
 
-import android.os.Bundle;
+/** APIs related to {@link android.provider.Settings}. */
+public final class Settings {
 
-/** Details about a queryable test app. */
-class TestAppDetails {
-    String mPackageName;
-    int mResourceIdentifier;
-    Bundle mMetadata;
+    public static final Settings sInstance = new Settings();
+
+    private Settings() {
+
+    }
+
+    /** APIs related to {@link android.provider.Settings.Secure}. */
+    public SecureSettings secure() {
+        return SecureSettings.sInstance;
+    }
+
 }
