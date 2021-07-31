@@ -129,12 +129,13 @@ class SolidColorTestPattern(its_base_test.ItsBaseTest):
         # Save test pattern image
         img = image_processing_utils.convert_capture_to_rgb_image(
             cap, props=props)
+        captured_color = color['color']
         image_processing_utils.write_image(
-            img, f'{os.path.join(self.log_path, _NAME)}.jpg', True)
+            img, f'{os.path.join(self.log_path, _NAME)}_{captured_color}.jpg')
 
         # Check solid pattern for correctness
         check_solid_color(img, color['RGB'])
-        logging.debug('Solid color test pattern %s is a PASS', color['color'])
+        logging.debug('Solid color test pattern %s is a PASS', captured_color)
 
 
 if __name__ == '__main__':
