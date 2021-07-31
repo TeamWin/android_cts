@@ -14,13 +14,24 @@
  * limitations under the License.
  */
 
-package com.android.bedstead.testapp;
+package android.security.cts;
 
-import android.os.Bundle;
+import android.platform.test.annotations.AsbSecurityTest;
+import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import static org.junit.Assert.*;
 
-/** Details about a queryable test app. */
-class TestAppDetails {
-    String mPackageName;
-    int mResourceIdentifier;
-    Bundle mMetadata;
+@RunWith(DeviceJUnit4ClassRunner.class)
+public class CVE_2021_29368 extends SecurityTestCase {
+
+   /**
+     * b/174738029
+     *
+     */
+    @AsbSecurityTest(cveBugId = 174738029)
+    @Test
+    public void testPocCVE_2021_29368() throws Exception {
+        AdbUtils.runPocAssertExitStatusNotVulnerable("CVE-2021-29368", getDevice(),60);
+    }
 }

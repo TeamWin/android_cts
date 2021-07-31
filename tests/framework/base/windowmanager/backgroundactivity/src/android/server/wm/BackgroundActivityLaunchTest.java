@@ -183,8 +183,7 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
         assertTrue("Not able to start foreground activity", firstResult);
         // Don't press home button to avoid stop app switches
         mContext.sendBroadcast(new Intent(ACTION_FINISH_ACTIVITY));
-        mWmState.waitForHomeActivityVisible();
-        Thread.sleep(ACTIVITY_BG_START_GRACE_PERIOD_MS / 2);
+        mWmState.waitAndAssertActivityRemoved(APP_A_FOREGROUND_ACTIVITY);
         Intent secondIntent = new Intent();
         secondIntent.setComponent(APP_A_START_ACTIVITY_RECEIVER);
 

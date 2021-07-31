@@ -17,6 +17,8 @@
 package com.android.bedstead.testapp;
 
 import com.android.queryable.Queryable;
+import com.android.queryable.queries.BundleQuery;
+import com.android.queryable.queries.BundleQueryHelper;
 import com.android.queryable.queries.StringQuery;
 import com.android.queryable.queries.StringQueryHelper;
 
@@ -25,6 +27,7 @@ public final class TestAppQueryBuilder implements Queryable {
     private final TestAppProvider mProvider;
 
     StringQueryHelper<TestAppQueryBuilder> mPackageName = new StringQueryHelper<>(this);
+    BundleQueryHelper<TestAppQueryBuilder> mMetadata = new BundleQueryHelper<>(this);
 
     TestAppQueryBuilder(TestAppProvider provider) {
         if (provider == null) {
@@ -43,6 +46,14 @@ public final class TestAppQueryBuilder implements Queryable {
     public StringQuery<TestAppQueryBuilder> wherePackageName() {
         return mPackageName;
     }
+
+    /**
+     * Query for a {@link TestApp} by metadata.
+     */
+    public BundleQuery<TestAppQueryBuilder> whereMetadata() {
+        return mMetadata;
+    }
+
 
     /**
      * Get the {@link TestApp} matching the query.
@@ -70,6 +81,16 @@ public final class TestAppQueryBuilder implements Queryable {
     private boolean matches(TestAppDetails details) {
         if (!StringQueryHelper.matches(mPackageName, details.mPackageName)) {
             return false;
+        }
+
+        if (!BundleQueryHelper.matches(mMetadata, details.mMetadata)) {
+            return false;
+        }
+
+        if (details.mMetadata.getBoolean("testapp-package-query-only", false)) {
+            if (!mPackageName.isQueryingForExactMatch()) {
+                return false;
+            }
         }
 
         return true;

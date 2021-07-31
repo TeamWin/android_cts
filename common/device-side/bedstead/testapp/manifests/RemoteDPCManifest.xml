@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <!--
   ~ Copyright (C) 2021 The Android Open Source Project
   ~
@@ -16,18 +17,14 @@
   -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="android.permission4.cts.appthataccessesmic"
-          android:versionCode="1">
+          package="android.RemoteDPCTestApp">
+    <application
+        android:appComponentFactory="com.android.bedstead.testapp.TestAppAppComponentFactory"
+        android:testOnly="true">
 
-    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+        <!-- Don't allow this test app to be returned by queries unless filtered by package name -->
+        <meta-data android:name="testapp-package-query-only" android:value="true" />
 
-    <application android:label="CtsMicAccess">
-        <activity android:name=".AccessMicActivity"
-                  android:exported="true">
-            <intent-filter>
-                <action android:name="test.action.USE_MIC" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-        </activity>
     </application>
+    <uses-sdk android:minSdkVersion="28" android:targetSdkVersion="28"/>
 </manifest>

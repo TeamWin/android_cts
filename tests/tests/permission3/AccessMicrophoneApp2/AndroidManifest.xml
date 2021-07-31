@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <!--
   ~ Copyright (C) 2021 The Android Open Source Project
   ~
@@ -17,8 +16,18 @@
   -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="com.android.bedstead.remoteframeworkclasses">
-    <uses-sdk android:minSdkVersion="27" />
-    <application>
+          package="android.permission3.cts.accessmicrophoneapp2"
+          android:versionCode="1">
+
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+
+    <application android:label="CtsMicAccess2">
+        <activity android:name=".AccessMicActivity2"
+                  android:exported="true">
+            <intent-filter>
+                <action android:name="test.action.USE_MIC_2" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
     </application>
 </manifest>
