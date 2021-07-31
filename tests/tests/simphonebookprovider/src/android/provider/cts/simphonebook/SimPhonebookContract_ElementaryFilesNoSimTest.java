@@ -25,6 +25,7 @@ import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.platform.test.annotations.Presubmit;
 import android.provider.SimPhonebookContract.ElementaryFiles;
 
 import androidx.annotation.NonNull;
@@ -59,6 +60,7 @@ public class SimPhonebookContract_ElementaryFilesNoSimTest {
     }
 
     @Test
+    @Presubmit
     public void getType_elementaryFiles() {
         String mimeType = mResolver.getType(ElementaryFiles.CONTENT_URI);
 
@@ -66,6 +68,7 @@ public class SimPhonebookContract_ElementaryFilesNoSimTest {
     }
 
     @Test
+    @Presubmit
     public void getType_itemUri() {
         String mimeType = mResolver.getType(
                 ElementaryFiles.getItemUri(1, ElementaryFiles.EF_ADN));
@@ -74,12 +77,14 @@ public class SimPhonebookContract_ElementaryFilesNoSimTest {
     }
 
     @Test
+    @Presubmit
     public void getType_invalidUri_returnsNull() {
         assertThat(mResolver.getType(
                 ElementaryFiles.CONTENT_URI.buildUpon().appendPath("invalid").build())).isNull();
     }
 
     @Test
+    @Presubmit
     public void query_nullProjection_includesAllSupportedColumns() {
         try (Cursor cursor = query(null)) {
             assertThat(cursor.getColumnNames()).asList().containsAtLeast(
@@ -95,6 +100,7 @@ public class SimPhonebookContract_ElementaryFilesNoSimTest {
     }
 
     @Test
+    @Presubmit
     public void query_withProjection_resultHasProjection() {
         // A subset of the columns
         try (Cursor cursor = query(
@@ -131,18 +137,21 @@ public class SimPhonebookContract_ElementaryFilesNoSimTest {
     }
 
     @Test
+    @Presubmit
     public void insert_throwsUnsupportedOperationException() {
         assertThrows(UnsupportedOperationException.class,
                 () -> mResolver.insert(ElementaryFiles.CONTENT_URI, new ContentValues()));
     }
 
     @Test
+    @Presubmit
     public void update_throwsUnsupportedOperationException() {
         assertThrows(UnsupportedOperationException.class,
                 () -> mResolver.update(ElementaryFiles.CONTENT_URI, new ContentValues(), null));
     }
 
     @Test
+    @Presubmit
     public void delete_throwsUnsupportedOperationException() {
         assertThrows(UnsupportedOperationException.class,
                 () -> mResolver.delete(ElementaryFiles.CONTENT_URI, null));
