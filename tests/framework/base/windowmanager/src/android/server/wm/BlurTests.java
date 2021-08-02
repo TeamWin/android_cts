@@ -27,6 +27,7 @@ import static android.server.wm.app.Components.BLUR_ATTRIBUTES_ACTIVITY;
 import static android.server.wm.app.Components.BlurActivity.EXTRA_BACKGROUND_BLUR_RADIUS_PX;
 import static android.server.wm.app.Components.BlurActivity.EXTRA_BLUR_BEHIND_RADIUS_PX;
 import static android.server.wm.app.Components.BlurActivity.EXTRA_NO_BLUR_BACKGROUND_COLOR;
+import static android.view.Display.DEFAULT_DISPLAY;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
@@ -86,8 +87,7 @@ public class BlurTests extends WindowManagerTestBase {
                     Settings.Global.getFloat(resolver, ANIMATOR_DURATION_SCALE, 1f);
             Settings.Global.putFloat(resolver, ANIMATOR_DURATION_SCALE, 0);
         });
-        launchActivity(BACKGROUND_IMAGE_ACTIVITY);
-        mWmState.waitForValidState(BACKGROUND_IMAGE_ACTIVITY);
+        startTestActivity(BACKGROUND_IMAGE_ACTIVITY);
         verifyOnlyBackgroundImageVisible();
         assertTrue(mContext.getSystemService(WindowManager.class).isCrossWindowBlurEnabled());
     }
@@ -322,6 +322,8 @@ public class BlurTests extends WindowManagerTestBase {
     private void startTestActivity(ComponentName activityName, final CliIntentExtra... extras) {
         launchActivity(activityName, extras);
         assertNotEquals(mWmState.getRootTaskIdByActivity(activityName), INVALID_STACK_ID);
+        waitAndAssertResumedActivity(activityName, activityName + " must be resumed");
+        mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
     }
 
 
