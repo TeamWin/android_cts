@@ -270,9 +270,7 @@ public class TaskFragmentOrganizerTest extends TaskFragmentOrganizerTestBase {
 
     @NonNull
     private TaskFragmentCreationParams generateTaskFragCreationParams() {
-        return new TaskFragmentCreationParams.Builder(mTaskFragmentOrganizer.getOrganizerToken(),
-                new Binder(), mOwnerToken)
-                .build();
+        return mTaskFragmentOrganizer.generateTaskFragParams(mOwnerToken);
     }
 
     /**
@@ -292,40 +290,5 @@ public class TaskFragmentOrganizerTest extends TaskFragmentOrganizerTestBase {
             assertWithMessage(parent + " must contains " + child)
                     .that(parent.mChildren).contains(child);
         }
-    }
-
-    private void assertEmptyTaskFragment(TaskFragmentInfo info, IBinder expectedTaskFragToken) {
-        assertTaskFragmentInfoValidity(info, expectedTaskFragToken);
-        assertWithMessage("TaskFragment must be empty").that(info.isEmpty()).isTrue();
-        assertWithMessage("TaskFragmentInfo#getActivities must be empty")
-                .that(info.getActivities()).isEmpty();
-        assertWithMessage("TaskFragment must not contain any running Activity")
-                .that(info.hasRunningActivity()).isFalse();
-        assertWithMessage("TaskFragment must not be visible").that(info.isVisible()).isFalse();
-    }
-
-    private void assertNotEmptyTaskFragment(TaskFragmentInfo info, IBinder expectedTaskFragToken,
-            @Nullable IBinder ... expectedActivityTokens) {
-        assertTaskFragmentInfoValidity(info, expectedTaskFragToken);
-        assertWithMessage("TaskFragment must not be empty").that(info.isEmpty()).isFalse();
-        assertWithMessage("TaskFragment must contain running Activity")
-                .that(info.hasRunningActivity()).isTrue();
-        if (expectedActivityTokens != null) {
-            assertWithMessage("TaskFragmentInfo#getActivities must be empty")
-                    .that(info.getActivities()).containsAtLeastElementsIn(expectedActivityTokens);
-        }
-    }
-
-    private void assertTaskFragmentInfoValidity(TaskFragmentInfo info,
-            IBinder expectedTaskFragToken) {
-        assertWithMessage("TaskFragmentToken must match the token from "
-                + "TaskFragmentCreationParams#getFragmentToken")
-                .that(info.getFragmentToken()).isEqualTo(expectedTaskFragToken);
-        assertWithMessage("WindowContainerToken must not be null")
-                .that(info.getToken()).isNotNull();
-        assertWithMessage("TaskFragmentInfo#getPositionInParent must not be null")
-                .that(info.getPositionInParent()).isNotNull();
-        assertWithMessage("Configuration must not be empty")
-                .that(info.getConfiguration()).isNotEqualTo(new Configuration());
     }
 }
