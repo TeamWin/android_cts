@@ -85,7 +85,7 @@ public final class TestAppProvider {
         // TODO(scottjonathan): Actually index the metadata -
         //  right now this is hardcoded for remoteDPC
         details.mMetadata = new Bundle();
-        if (details.mApp.getPackageName().equals("android.RemoteDPCTestApp")) {
+        if (details.mApp.getPackageName().equals("com.android.RemoteDPC")) {
             details.mMetadata.putBoolean("testapp-package-query-only", true);
         }
 

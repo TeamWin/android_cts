@@ -37,7 +37,8 @@ import org.junit.runners.JUnit4;
 public class ProfileOwnerTest {
 
     //  TODO(180478924): We shouldn't need to hardcode this
-    private static final String DEVICE_ADMIN_TESTAPP_PACKAGE_NAME = "android.DeviceAdminTestApp";
+    private static final String DEVICE_ADMIN_TESTAPP_PACKAGE_NAME =
+            "com.android.bedstead.testapp.DeviceAdminTestApp";
     private static final ComponentName DPC_COMPONENT_NAME =
             new ComponentName(DEVICE_ADMIN_TESTAPP_PACKAGE_NAME,
                     EventLibDeviceAdminReceiver.class.getName());
