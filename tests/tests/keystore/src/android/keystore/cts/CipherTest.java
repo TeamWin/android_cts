@@ -590,10 +590,15 @@ public class CipherTest extends AndroidTestCase {
         return (pm != null && pm.hasSystemFeature("android.software.leanback_only"));
     }
 
+    private boolean hasSecureLockScreen() {
+        PackageManager pm = getContext().getPackageManager();
+        return (pm != null && pm.hasSystemFeature("android.software.secure_lock_screen"));
+    }
+
     @Presubmit
     public void testKeyguardLockAndUnlock()
             throws Exception {
-        if (isLeanbackOnly()) {
+        if (!hasSecureLockScreen()) {
             return;
         }
 
@@ -614,7 +619,7 @@ public class CipherTest extends AndroidTestCase {
         final boolean isUnlockedDeviceRequired = true;
         final boolean isUserAuthRequired = false;
 
-        if (isLeanbackOnly()) {
+        if (!hasSecureLockScreen()) {
             return;
         }
 
@@ -1125,7 +1130,7 @@ public class CipherTest extends AndroidTestCase {
         final boolean isUnlockedDeviceRequired = false;
         final boolean isUserAuthRequired = true;
 
-        if (isLeanbackOnly()) {
+        if (!hasSecureLockScreen()) {
             return;
         }
 
