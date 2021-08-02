@@ -2,6 +2,15 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
+java_library_static {
+    name: "TestApp_JavaProtos",
+    host_supported: true,
+    proto: {
+        type: "lite",
+    },
+    srcs: ["src/library/main/proto/testapp_protos.proto"]
+}
+
 android_library {
     name: "TestApp_TestApps",
     sdk_version: "test_current",
@@ -36,7 +45,8 @@ android_library {
         "ConnectedAppsSDK",
         "ConnectedAppsSDK_Annotations",
         "androidx.annotation_annotation",
-        "TestApp_TestApps"
+        "TestApp_TestApps",
+        "TestApp_JavaProtos"
     ],
     manifest: "src/library/main/AndroidManifest.xml",
     min_sdk_version: "28",
@@ -81,21 +91,25 @@ python_binary_host {
     main: "tools/index/index_testapps.py",
     srcs: [
         "tools/index/index_testapps.py",
-    ]
+        "src/library/main/proto/testapp_protos.proto"
+    ],
+    proto: {
+        canonical_path_from_root: false,
+    }
 }
 
 java_genrule {
     name: "TestApp_Apps",
     srcs: [":EmptyTestApp", ":EmptyTestApp2", ":DeviceAdminTestApp", ":LockTaskApp", ":RemoteDPCTestApp"],
     out: ["TestApp_Apps.res.zip"],
-    tools: ["soong_zip", "index_testapps"],
+    tools: ["soong_zip", "index_testapps", "aapt2"],
     cmd: "mkdir -p $(genDir)/res/raw"
          + " && cp $(location :EmptyTestApp) $(genDir)/res/raw"
          + " && cp $(location :EmptyTestApp2) $(genDir)/res/raw"
          + " && cp $(location :DeviceAdminTestApp) $(genDir)/res/raw"
          + " && cp $(location :LockTaskApp) $(genDir)/res/raw"
          + " && cp $(location :RemoteDPCTestApp) $(genDir)/res/raw"
-         + " && $(location index_testapps) --directory $(genDir)/res/raw"
+         + " && $(location index_testapps) --directory $(genDir)/res/raw --aapt2 $(location aapt2)"
          + " && $(location soong_zip) -o $(out) -C $(genDir)/res -D $(genDir)/res/raw"
 }
 

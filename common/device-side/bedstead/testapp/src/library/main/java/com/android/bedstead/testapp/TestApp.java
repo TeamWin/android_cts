@@ -134,7 +134,7 @@ public class TestApp {
 
     /** The package name of the test app. */
     public String packageName() {
-        return mDetails.mPackageName;
+        return mDetails.mApp.getPackageName();
     }
 
     @Override
