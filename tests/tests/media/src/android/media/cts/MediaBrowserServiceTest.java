@@ -110,7 +110,7 @@ public class MediaBrowserServiceTest extends InstrumentationTestCase {
         mOnItemLoadedLatch.reset();
 
         final CountDownLatch onConnectedLatch = new CountDownLatch(1);
-        getInstrumentation().runOnMainSync((Runnable) () -> {
+        getInstrumentation().runOnMainSync(()-> {
             mMediaBrowser = new MediaBrowser(getInstrumentation().getTargetContext(),
                     TEST_BROWSER_SERVICE, new MediaBrowser.ConnectionCallback() {
                 @Override
@@ -127,7 +127,7 @@ public class MediaBrowserServiceTest extends InstrumentationTestCase {
 
     @Override
     public void tearDown() {
-        getInstrumentation().runOnMainSync((Runnable) () -> {
+        getInstrumentation().runOnMainSync(()-> {
             if (mMediaBrowser != null) {
                 mMediaBrowser.disconnect();
                 mMediaBrowser = null;
@@ -141,7 +141,7 @@ public class MediaBrowserServiceTest extends InstrumentationTestCase {
     }
 
     public void testNotifyChildrenChanged() throws Exception {
-        getInstrumentation().runOnMainSync((Runnable) () -> {
+        getInstrumentation().runOnMainSync(()-> {
             mMediaBrowser.subscribe(StubMediaBrowserService.MEDIA_ID_ROOT, mSubscriptionCallback);
         });
         assertTrue(mOnChildrenLoadedLatch.await(TIME_OUT_MS));
@@ -168,7 +168,7 @@ public class MediaBrowserServiceTest extends InstrumentationTestCase {
         options.putInt(MediaBrowser.EXTRA_PAGE_SIZE, pageSize);
         options.putInt(MediaBrowser.EXTRA_PAGE, page);
 
-        getInstrumentation().runOnMainSync((Runnable) () -> {
+        getInstrumentation().runOnMainSync(()-> {
             mMediaBrowser.subscribe(StubMediaBrowserService.MEDIA_ID_ROOT, options,
                     mSubscriptionCallback);
         });
@@ -200,7 +200,7 @@ public class MediaBrowserServiceTest extends InstrumentationTestCase {
     }
 
     public void testDelayedNotifyChildrenChanged() throws Exception {
-        getInstrumentation().runOnMainSync((Runnable) () -> {
+        getInstrumentation().runOnMainSync(()-> {
             mMediaBrowser.subscribe(StubMediaBrowserService.MEDIA_ID_CHILDREN_DELAYED,
                     mSubscriptionCallback);
         });
@@ -219,7 +219,7 @@ public class MediaBrowserServiceTest extends InstrumentationTestCase {
     }
 
     public void testDelayedItem() throws Exception {
-        getInstrumentation().runOnMainSync((Runnable) () -> {
+        getInstrumentation().runOnMainSync(()-> {
             mMediaBrowser.getItem(StubMediaBrowserService.MEDIA_ID_CHILDREN_DELAYED,
                     mItemCallback);
         });
@@ -234,14 +234,14 @@ public class MediaBrowserServiceTest extends InstrumentationTestCase {
         assertTrue(compareRemoteUserInfo(mBrowserInfo, StubMediaBrowserService.sBrowserInfo));
 
         StubMediaBrowserService.clearBrowserInfo();
-        getInstrumentation().runOnMainSync((Runnable) () -> {
+        getInstrumentation().runOnMainSync(()-> {
             mMediaBrowser.subscribe(StubMediaBrowserService.MEDIA_ID_ROOT, mSubscriptionCallback);
         });
         assertTrue(mOnChildrenLoadedLatch.await(TIME_OUT_MS));
         assertTrue(compareRemoteUserInfo(mBrowserInfo, StubMediaBrowserService.sBrowserInfo));
 
         StubMediaBrowserService.clearBrowserInfo();
-        getInstrumentation().runOnMainSync((Runnable) () -> {
+        getInstrumentation().runOnMainSync(()-> {
             mMediaBrowser.getItem(StubMediaBrowserService.MEDIA_ID_CHILDREN[0], mItemCallback);
         });
         assertTrue(mOnItemLoadedLatch.await(TIME_OUT_MS));
