@@ -820,6 +820,7 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     }
 
     @Test
+    @LargeTest
     public void testRebootlessUpdate_fromV2ToV3_sameBoot() throws Exception {
         assumeTrue("Device does not support updating APEX", mHostUtils.isApexUpdateSupported());
 
