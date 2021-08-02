@@ -1532,19 +1532,12 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
 
     private String installV4PackageFromBuild(String apkName)
             throws IOException, DeviceNotAvailableException {
-        File apkFile = null;
-        File v4SignatureFile = null;
-        try {
-            CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
-            apkFile = buildHelper.getTestFile(apkName);
-            v4SignatureFile = buildHelper.getTestFile(apkName + ".idsig");
-            String remoteApkFilePath = pushFileToRemote(apkFile);
-            pushFileToRemote(v4SignatureFile);
-            return installV4Package(remoteApkFilePath);
-        } finally {
-            cleanUpFile(apkFile);
-            cleanUpFile(v4SignatureFile);
-        }
+        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
+        File apkFile = buildHelper.getTestFile(apkName);
+        File v4SignatureFile = buildHelper.getTestFile(apkName + ".idsig");
+        String remoteApkFilePath = pushFileToRemote(apkFile);
+        pushFileToRemote(v4SignatureFile);
+        return installV4Package(remoteApkFilePath);
     }
 
     private String pushFileToRemote(File localFile) throws DeviceNotAvailableException {
