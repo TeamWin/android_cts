@@ -35,6 +35,7 @@ android_test {
         "ctsdeviceutillegacy-axt",
         "ctsmediautil",
         "ctstestrunner-axt",
+        "cts-media-res-lib",
         "hamcrest-library",
         "ctstestserver",
         "junit",
@@ -43,6 +44,19 @@ android_test {
         "truth-prebuilt",
         "mockito-target-minus-junit4",
         "androidx.heifwriter_heifwriter",
+    ],
+    aaptflags: [
+        "--auto-add-overlay",
+        // Give com.android.mediadrm.cts Java files access to the R class
+        "--extra-packages com.android.mediadrm.cts",
+
+        // Do not compress these files:
+        "-0 .vp9",
+        "-0 .ts",
+        "-0 .heic",
+        "-0 .trp",
+        "-0 .ota",
+        "-0 .mxmf",
     ],
     jni_libs: [
         "libctsmediadrm_jni",
@@ -67,5 +81,5 @@ android_test {
         "mts-media",
     ],
     host_required: ["cts-dynamic-config"],
-    min_sdk_version: "29",
+    min_sdk_version: "31",
 }
