@@ -27,10 +27,10 @@ import android.net.wifi.cts.WifiJUnit4TestBase;
 import android.net.wifi.p2p.WifiP2pWfdInfo;
 import android.os.Build;
 
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SdkSuppress;
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
-import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Before;
 import org.junit.Test;
