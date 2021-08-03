@@ -807,38 +807,58 @@ public class CarPropertyManagerTest extends CarApiTestBase {
                 VehiclePropertyIds.WHEEL_TICK);
         CarPropertyConfig speedConfig = mCarPropertyManager.getCarPropertyConfig(
                 VehiclePropertyIds.PERF_VEHICLE_SPEED);
+        float maxSampleRateHz =
+                Math.max(wheelTickConfig.getMaxSampleRate(), speedConfig.getMaxSampleRate());
+        int eventCounter = getCounterBySampleRate(maxSampleRateHz);
+
         // Ignores the test if sampleRates for properties are too low.
         Assume.assumeTrue("The SampleRates for properties are too low, "
-                        + "skip testUnregisterWithPropertyId test",
-                wheelTickConfig.getMaxSampleRate() < FAST_OR_FASTEST_EVENT_COUNTER
-                        || speedConfig.getMaxSampleRate() < FAST_OR_FASTEST_EVENT_COUNTER);
-
+                        + "skip testUnregisterWithPropertyId test", eventCounter != 0);
         CarPropertyEventCounter speedAndWheelTicksListener = new CarPropertyEventCounter();
+
+        // CarService will register them to the maxSampleRate in CarPropertyConfig
         mCarPropertyManager.registerCallback(speedAndWheelTicksListener,
                 VehiclePropertyIds.PERF_VEHICLE_SPEED, CarPropertyManager.SENSOR_RATE_FASTEST);
         mCarPropertyManager.registerCallback(speedAndWheelTicksListener,
                 VehiclePropertyIds.WHEEL_TICK, CarPropertyManager.SENSOR_RATE_FASTEST);
-        speedAndWheelTicksListener.resetCountDownLatch(FAST_OR_FASTEST_EVENT_COUNTER);
+        speedAndWheelTicksListener.resetCountDownLatch(eventCounter);
         speedAndWheelTicksListener.assertOnChangeEventCalled();
 
+        // Tests unregister the individual property
         mCarPropertyManager.unregisterCallback(speedAndWheelTicksListener,
                 VehiclePropertyIds.PERF_VEHICLE_SPEED);
-        speedAndWheelTicksListener.resetCountDownLatch(FAST_OR_FASTEST_EVENT_COUNTER);
+
+        // Updates counter after unregistering the PERF_VEHICLE_SPEED
+        int wheelTickEventCounter = getCounterBySampleRate(wheelTickConfig.getMaxSampleRate());
+        speedAndWheelTicksListener.resetCountDownLatch(wheelTickEventCounter);
         speedAndWheelTicksListener.assertOnChangeEventCalled();
-        int currentSpeedEvents = speedAndWheelTicksListener.receivedEvent(
+        int speedEventCountAfterFirstCountDown = speedAndWheelTicksListener.receivedEvent(
                 VehiclePropertyIds.PERF_VEHICLE_SPEED);
-        int currentWheelTickEvents = speedAndWheelTicksListener.receivedEvent(
+        int wheelTickEventCountAfterFirstCountDown = speedAndWheelTicksListener.receivedEvent(
                 VehiclePropertyIds.WHEEL_TICK);
 
-        speedAndWheelTicksListener.resetCountDownLatch(FAST_OR_FASTEST_EVENT_COUNTER);
+        speedAndWheelTicksListener.resetCountDownLatch(wheelTickEventCounter);
         speedAndWheelTicksListener.assertOnChangeEventCalled();
-        int speedEventsAfterUnregister = speedAndWheelTicksListener.receivedEvent(
+        int speedEventCountAfterSecondCountDown = speedAndWheelTicksListener.receivedEvent(
                 VehiclePropertyIds.PERF_VEHICLE_SPEED);
-        int wheelTicksEventsAfterUnregister = speedAndWheelTicksListener.receivedEvent(
+        int wheelTickEventCountAfterSecondCountDown = speedAndWheelTicksListener.receivedEvent(
                 VehiclePropertyIds.WHEEL_TICK);
 
-        assertThat(currentSpeedEvents).isEqualTo(speedEventsAfterUnregister);
-        assertThat(wheelTicksEventsAfterUnregister).isGreaterThan(currentWheelTickEvents);
+        assertThat(speedEventCountAfterFirstCountDown).isEqualTo(speedEventCountAfterSecondCountDown);
+        assertThat(wheelTickEventCountAfterSecondCountDown)
+                .isGreaterThan(wheelTickEventCountAfterFirstCountDown);
+    }
+
+    private int getCounterBySampleRate(float maxSampleRateHz) {
+        if (Float.compare(maxSampleRateHz, (float) FAST_OR_FASTEST_EVENT_COUNTER) > 0) {
+            return FAST_OR_FASTEST_EVENT_COUNTER;
+        } else if (Float.compare(maxSampleRateHz, (float) UI_RATE_EVENT_COUNTER) > 0) {
+            return UI_RATE_EVENT_COUNTER;
+        } else if (Float.compare(maxSampleRateHz, (float) ONCHANGE_RATE_EVENT_COUNTER) > 0) {
+            return ONCHANGE_RATE_EVENT_COUNTER;
+        } else {
+            return 0;
+        }
     }
 
     // Returns {0} if the property is global property, otherwise query areaId for CarPropertyConfig
