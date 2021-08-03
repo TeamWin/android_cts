@@ -113,6 +113,8 @@ class CodecEncoderPerformanceTestBase extends CodecPerformanceTestBase {
         double maxOperatingRateDecoder = getMaxOperatingRate(mDecoderName, mDecoderMime);
         double maxOperatingRateEncoder = getMaxOperatingRate(mEncoderName, mEncoderMime);
         mOperatingRateExpected = Math.min(maxOperatingRateDecoder, maxOperatingRateEncoder);
+        // As both decoder and encoder are running in concurrently, expected rate is halved
+        mOperatingRateExpected /= 2.0;
         if (mMaxOpRateScalingFactor > 0.0f) {
             int operatingRateToSet = (int) (mOperatingRateExpected * mMaxOpRateScalingFactor);
             if (mMaxOpRateScalingFactor < 1.0f) {
@@ -126,7 +128,6 @@ class CodecEncoderPerformanceTestBase extends CodecPerformanceTestBase {
         }
         mEncoderFormat.setInteger(MediaFormat.KEY_COMPLEXITY,
                 getEncoderMinComplexity(mEncoderName, mEncoderMime));
-        mOperatingRateExpected /= 2.0;
     }
 
     private void doWork() {
