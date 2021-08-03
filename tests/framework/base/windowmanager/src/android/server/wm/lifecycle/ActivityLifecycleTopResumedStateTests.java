@@ -820,8 +820,10 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
 
         getLifecycleLog().clear();
 
-        // Tap on default display to switch the top activity
-        tapOnDisplayCenter(DEFAULT_DISPLAY);
+        // Tap on task center to switch the top activity.
+        final Task callbackTrackingTask = mWmState
+                .getTaskByActivity(getComponentName(CallbackTrackingActivity.class));
+        tapOnTaskCenter(callbackTrackingTask);
 
         // Wait and assert focus switch
         waitAndAssertActivityTransitions(SingleTopActivity.class,
@@ -835,8 +837,11 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
 
         getLifecycleLog().clear();
 
-        // Tap on new display to switch the top activity
-        tapOnDisplayCenter(newDisplay.mId);
+        // Tap on task center to switch the top activity.
+        final Task singleTopActivityTask = mWmState
+                .getTaskByActivity(getComponentName(SingleTopActivity.class));
+        tapOnTaskCenter(singleTopActivityTask);
+
 
         // Wait and assert focus switch
         waitAndAssertActivityTransitions(CallbackTrackingActivity.class,
@@ -893,9 +898,11 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
                 transition(defaultActivityClass, ON_TOP_POSITION_GAINED)),
                 "launchOnDifferentDisplay");
 
-        // Tap on secondary display to switch the top activity.
+        // Tap on task center to switch the top activity.
         getLifecycleLog().clear();
-        tapOnDisplayCenter(newDisplay.mId);
+        final Task secondActivityTask = mWmState
+                .getTaskByActivity(getComponentName(SecondProcessCallbackTrackingActivity.class));
+        tapOnTaskCenter(secondActivityTask);
 
         // Wait and assert top resumed position switch.
         waitAndAssertActivityStates(state(secondActivityClass, ON_TOP_POSITION_GAINED),
@@ -905,9 +912,11 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
                 transition(secondActivityClass, ON_TOP_POSITION_GAINED)),
                 "tapOnDifferentDisplay");
 
-        // Tap on default display to switch the top activity again.
         getLifecycleLog().clear();
-        tapOnDisplayCenter(DEFAULT_DISPLAY);
+        // Tap on task center to switch the top activity.
+        final Task defaultActivityTask = mWmState
+                .getTaskByActivity(getComponentName(defaultActivityClass));
+        tapOnTaskCenter(defaultActivityTask);
 
         // Wait and assert top resumed position switch.
         waitAndAssertActivityStates(state(secondActivityClass, ON_TOP_POSITION_LOST),
