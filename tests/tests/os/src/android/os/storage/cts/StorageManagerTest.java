@@ -347,13 +347,13 @@ public class StorageManagerTest extends AndroidTestCase {
         // Unmount primary storage, verify we can see it take effect
         mStorageManager.registerStorageVolumeCallback(mContext.getMainExecutor(), callback);
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                .executeShellCommand("sm unmount emulated;0");
+                .executeShellCommand("sm unmount emulated;" + UserHandle.myUserId());
         assertTrue(unmounted.await(15, TimeUnit.SECONDS));
 
         // Now unregister and verify we don't hear future events
         mStorageManager.unregisterStorageVolumeCallback(callback);
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                .executeShellCommand("sm mount emulated;0");
+                .executeShellCommand("sm mount emulated;" + UserHandle.myUserId());
         assertFalse(mounted.await(15, TimeUnit.SECONDS));
     }
 
