@@ -44,10 +44,10 @@ import android.platform.test.annotations.AppModeFull;
 import android.support.test.uiautomator.UiDevice;
 import android.util.Pair;
 
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.LargeTest;
 import androidx.test.filters.SdkSuppress;
-import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
-import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.PollingCheck;
@@ -83,7 +83,7 @@ import java.util.concurrent.TimeUnit;
  * Assumes that all the saved networks is either open/WPA1/WPA2/WPA3 authenticated network.
  */
 @AppModeFull(reason = "Cannot get WifiManager in instant app mode")
-@SmallTest
+@LargeTest
 @RunWith(AndroidJUnit4.class)
 public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
     private static final String TAG = "WifiNetworkSpecifierTest";
