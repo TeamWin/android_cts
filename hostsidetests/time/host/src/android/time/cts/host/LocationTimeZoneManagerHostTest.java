@@ -18,10 +18,13 @@ package android.time.cts.host;
 
 
 import static android.app.time.cts.shell.DeviceConfigKeys.NAMESPACE_SYSTEM_TIME;
-import static android.app.time.cts.shell.LocationTimeZoneManagerShellHelper.PRIMARY_PROVIDER_INDEX;
-import static android.app.time.cts.shell.LocationTimeZoneManagerShellHelper.PROVIDER_MODE_DISABLED;
-import static android.app.time.cts.shell.LocationTimeZoneManagerShellHelper.PROVIDER_MODE_SIMULATED;
-import static android.app.time.cts.shell.LocationTimeZoneManagerShellHelper.SECONDARY_PROVIDER_INDEX;
+import static android.app.time.cts.shell.DeviceConfigShellHelper.SYNC_DISABLED_MODE_UNTIL_REBOOT;
+import static android.app.time.cts.shell.FakeTimeZoneProviderAppShellHelper.FAKE_TZPS_APP_APK;
+import static android.app.time.cts.shell.FakeTimeZoneProviderAppShellHelper.FAKE_TZPS_APP_PACKAGE;
+import static android.app.time.cts.shell.FakeTimeZoneProviderAppShellHelper.STATE_CERTAIN;
+import static android.app.time.cts.shell.FakeTimeZoneProviderAppShellHelper.STATE_DISABLED;
+import static android.app.time.cts.shell.FakeTimeZoneProviderAppShellHelper.STATE_INITIALIZING;
+import static android.app.time.cts.shell.FakeTimeZoneProviderAppShellHelper.STATE_UNCERTAIN;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -32,6 +35,8 @@ import android.app.time.TimeZoneProviderStateEnum;
 import android.app.time.TimeZoneProviderStateProto;
 import android.app.time.cts.shell.DeviceConfigShellHelper;
 import android.app.time.cts.shell.DeviceShellCommandExecutor;
+import android.app.time.cts.shell.FakeTimeZoneProviderAppShellHelper;
+import android.app.time.cts.shell.FakeTimeZoneProviderAppShellHelper.FakeTimeZoneProviderShellHelper;
 import android.app.time.cts.shell.LocationShellHelper;
 import android.app.time.cts.shell.LocationTimeZoneManagerShellHelper;
 import android.app.time.cts.shell.TimeZoneDetectorShellHelper;
@@ -61,6 +66,8 @@ public class LocationTimeZoneManagerHostTest extends BaseHostJUnit4Test {
     private DeviceConfigShellHelper mDeviceConfigShellHelper;
     private DeviceConfigShellHelper.PreTestState mDeviceConfigPreTestState;
     private LocationShellHelper mLocationShellHelper;
+    private FakeTimeZoneProviderShellHelper mPrimaryFakeTimeZoneProviderShellHelper;
+    private FakeTimeZoneProviderShellHelper mSecondaryFakeTimeZoneProviderShellHelper;
 
     @Before
     public void setUp() throws Exception {
@@ -71,12 +78,18 @@ public class LocationTimeZoneManagerHostTest extends BaseHostJUnit4Test {
         // Confirm the service being tested is present. It can be turned off, in which case there's
         // nothing to test.
         mLocationTimeZoneManagerShellHelper.assumeLocationTimeZoneManagerIsPresent();
+
+        // Install the app that hosts the fake providers.
+        // Installations are tracked in BaseHostJUnit4Test and uninstalled automatically.
+        installPackage(FAKE_TZPS_APP_APK);
+
         mTimeZoneDetectorShellHelper = new TimeZoneDetectorShellHelper(shellCommandExecutor);
         mLocationShellHelper = new LocationShellHelper(shellCommandExecutor);
         mDeviceConfigShellHelper = new DeviceConfigShellHelper(shellCommandExecutor);
 
+        // Stop device_config updates for the duration of the test.
         mDeviceConfigPreTestState = mDeviceConfigShellHelper.setSyncModeForTest(
-                DeviceConfigShellHelper.SYNC_DISABLED_MODE_UNTIL_REBOOT, NAMESPACE_SYSTEM_TIME);
+                SYNC_DISABLED_MODE_UNTIL_REBOOT, NAMESPACE_SYSTEM_TIME);
 
         // All tests start with the location_time_zone_manager disabled so that providers can be
         // configured.
@@ -90,7 +103,7 @@ public class LocationTimeZoneManagerHostTest extends BaseHostJUnit4Test {
         }
 
         // Make sure automatic time zone detection is enabled, otherwise the geo detection feature
-        // will be disabled whatever the geolocation detection setting is set to
+        // will be disabled whatever the geolocation detection setting is set to.
         mOriginalAutoDetectionEnabled = mTimeZoneDetectorShellHelper.isAutoDetectionEnabled();
         if (!mOriginalAutoDetectionEnabled) {
             mTimeZoneDetectorShellHelper.setAutoDetectionEnabled(true);
@@ -99,6 +112,15 @@ public class LocationTimeZoneManagerHostTest extends BaseHostJUnit4Test {
         // On devices with no location time zone providers (e.g. AOSP), we cannot turn geo detection
         // on until the test LTZPs are configured as the time_zone_detector will refuse.
         mOriginalGeoDetectionEnabled = mTimeZoneDetectorShellHelper.isGeoDetectionEnabled();
+
+        FakeTimeZoneProviderAppShellHelper fakeTimeZoneProviderAppShellHelper =
+                new FakeTimeZoneProviderAppShellHelper(shellCommandExecutor);
+        // Delay until the fake TZPS app can be found.
+        fakeTimeZoneProviderAppShellHelper.waitForInstallation();
+        mPrimaryFakeTimeZoneProviderShellHelper =
+                fakeTimeZoneProviderAppShellHelper.getPrimaryLocationProviderHelper();
+        mSecondaryFakeTimeZoneProviderShellHelper =
+                fakeTimeZoneProviderAppShellHelper.getSecondaryLocationProviderHelper();
     }
 
     @After
@@ -119,8 +141,6 @@ public class LocationTimeZoneManagerHostTest extends BaseHostJUnit4Test {
         // Reset settings and server flags as best we can.
         mTimeZoneDetectorShellHelper.setAutoDetectionEnabled(mOriginalAutoDetectionEnabled);
         mLocationShellHelper.setLocationEnabledForCurrentUser(mOriginalLocationEnabled);
-        mLocationTimeZoneManagerShellHelper.recordProviderStates(false);
-
         mDeviceConfigShellHelper.restoreDeviceConfigStateForTest(mDeviceConfigPreTestState);
 
         // Attempt to start the service. It may not start if there are no providers configured,
@@ -131,51 +151,80 @@ public class LocationTimeZoneManagerHostTest extends BaseHostJUnit4Test {
     /** Tests what happens when there's only a primary provider and it makes a suggestion. */
     @Test
     public void testOnlyPrimary_suggestionMade() throws Exception {
-        mLocationTimeZoneManagerShellHelper.setProviderModeOverride(
-                PRIMARY_PROVIDER_INDEX, PROVIDER_MODE_SIMULATED);
-        mLocationTimeZoneManagerShellHelper.setProviderModeOverride(
-                SECONDARY_PROVIDER_INDEX, PROVIDER_MODE_DISABLED);
-
-        mLocationTimeZoneManagerShellHelper.start();
-        mLocationTimeZoneManagerShellHelper.recordProviderStates(true);
+        String testPrimaryLocationTimeZoneProviderPackageName = FAKE_TZPS_APP_PACKAGE;
+        String testSecondaryLocationTimeZoneProviderPackageName = null;
+        mLocationTimeZoneManagerShellHelper.startWithTestProviders(
+                testPrimaryLocationTimeZoneProviderPackageName,
+                testSecondaryLocationTimeZoneProviderPackageName,
+                true /* recordProviderStates */);
         mTimeZoneDetectorShellHelper.setGeoDetectionEnabled(true);
+        mPrimaryFakeTimeZoneProviderShellHelper.assertCreated();
+        mSecondaryFakeTimeZoneProviderShellHelper.assertNotCreated();
 
-        mLocationTimeZoneManagerShellHelper.simulateProviderBind(PRIMARY_PROVIDER_INDEX);
-        mLocationTimeZoneManagerShellHelper.simulateProviderSuggestion(
-                PRIMARY_PROVIDER_INDEX, "Europe/London");
+        {
+            LocationTimeZoneManagerServiceStateProto serviceState = dumpServiceState();
+            assertNoLastSuggestion(serviceState);
+            assertProviderStates(serviceState.getPrimaryProviderStatesList(),
+                    TimeZoneProviderStateEnum.TIME_ZONE_PROVIDER_STATE_DISABLED,
+                    TimeZoneProviderStateEnum.TIME_ZONE_PROVIDER_STATE_INITIALIZING);
+            mPrimaryFakeTimeZoneProviderShellHelper.assertCurrentState(STATE_INITIALIZING);
 
-        LocationTimeZoneManagerServiceStateProto serviceState = dumpServiceState();
-        assertLastSuggestion(serviceState, "Europe/London");
-        assertProviderStates(serviceState.getPrimaryProviderStatesList(),
-                TimeZoneProviderStateEnum.TIME_ZONE_PROVIDER_STATE_INITIALIZING,
-                TimeZoneProviderStateEnum.TIME_ZONE_PROVIDER_STATE_CERTAIN);
-        assertProviderStates(serviceState.getSecondaryProviderStatesList());
+            assertProviderStates(serviceState.getSecondaryProviderStatesList(),
+                    TimeZoneProviderStateEnum.TIME_ZONE_PROVIDER_STATE_DISABLED);
+        }
+        mLocationTimeZoneManagerShellHelper.clearRecordedProviderStates();
+
+        mPrimaryFakeTimeZoneProviderShellHelper.reportSuccess("Europe/London");
+
+        {
+            LocationTimeZoneManagerServiceStateProto serviceState = dumpServiceState();
+            assertLastSuggestion(serviceState, "Europe/London");
+            assertProviderStates(serviceState.getPrimaryProviderStatesList(),
+                    TimeZoneProviderStateEnum.TIME_ZONE_PROVIDER_STATE_CERTAIN);
+            mPrimaryFakeTimeZoneProviderShellHelper.assertCurrentState(STATE_CERTAIN);
+
+            assertProviderStates(serviceState.getSecondaryProviderStatesList());
+        }
     }
 
     /** Tests what happens when there's only a secondary provider and it makes a suggestion. */
     @Test
     public void testOnlySecondary_suggestionMade() throws Exception {
-        mLocationTimeZoneManagerShellHelper.setProviderModeOverride(
-                PRIMARY_PROVIDER_INDEX, PROVIDER_MODE_DISABLED);
-        mLocationTimeZoneManagerShellHelper.setProviderModeOverride(
-                SECONDARY_PROVIDER_INDEX, PROVIDER_MODE_SIMULATED);
-
-        mLocationTimeZoneManagerShellHelper.start();
-        mLocationTimeZoneManagerShellHelper.recordProviderStates(true);
+        String testPrimaryLocationTimeZoneProviderPackageName = null;
+        String testSecondaryLocationTimeZoneProviderPackageName = FAKE_TZPS_APP_PACKAGE;
+        mLocationTimeZoneManagerShellHelper.startWithTestProviders(
+                testPrimaryLocationTimeZoneProviderPackageName,
+                testSecondaryLocationTimeZoneProviderPackageName,
+                true /* recordProviderStates */);
         mTimeZoneDetectorShellHelper.setGeoDetectionEnabled(true);
+        mPrimaryFakeTimeZoneProviderShellHelper.assertNotCreated();
+        mSecondaryFakeTimeZoneProviderShellHelper.assertCreated();
 
-        mLocationTimeZoneManagerShellHelper.simulateProviderBind(SECONDARY_PROVIDER_INDEX);
-        mLocationTimeZoneManagerShellHelper.simulateProviderSuggestion(
-                SECONDARY_PROVIDER_INDEX, "Europe/London");
+        {
+            LocationTimeZoneManagerServiceStateProto serviceState = dumpServiceState();
+            assertNoLastSuggestion(serviceState);
+            assertProviderStates(serviceState.getPrimaryProviderStatesList(),
+                    TimeZoneProviderStateEnum.TIME_ZONE_PROVIDER_STATE_DISABLED,
+                    TimeZoneProviderStateEnum.TIME_ZONE_PROVIDER_STATE_INITIALIZING,
+                    TimeZoneProviderStateEnum.TIME_ZONE_PROVIDER_STATE_PERM_FAILED);
 
-        LocationTimeZoneManagerServiceStateProto serviceState = dumpServiceState();
-        assertLastSuggestion(serviceState, "Europe/London");
-        assertProviderStates(serviceState.getPrimaryProviderStatesList(),
-                TimeZoneProviderStateEnum.TIME_ZONE_PROVIDER_STATE_INITIALIZING,
-                TimeZoneProviderStateEnum.TIME_ZONE_PROVIDER_STATE_PERM_FAILED);
-        assertProviderStates(serviceState.getSecondaryProviderStatesList(),
-                TimeZoneProviderStateEnum.TIME_ZONE_PROVIDER_STATE_INITIALIZING,
-                TimeZoneProviderStateEnum.TIME_ZONE_PROVIDER_STATE_CERTAIN);
+            assertProviderStates(serviceState.getSecondaryProviderStatesList(),
+                    TimeZoneProviderStateEnum.TIME_ZONE_PROVIDER_STATE_DISABLED,
+                    TimeZoneProviderStateEnum.TIME_ZONE_PROVIDER_STATE_INITIALIZING);
+        }
+        mLocationTimeZoneManagerShellHelper.clearRecordedProviderStates();
+
+        mSecondaryFakeTimeZoneProviderShellHelper.reportSuccess("Europe/London");
+
+        {
+            LocationTimeZoneManagerServiceStateProto serviceState = dumpServiceState();
+            assertLastSuggestion(serviceState, "Europe/London");
+            assertProviderStates(serviceState.getPrimaryProviderStatesList());
+
+            assertProviderStates(serviceState.getSecondaryProviderStatesList(),
+                    TimeZoneProviderStateEnum.TIME_ZONE_PROVIDER_STATE_CERTAIN);
+            mSecondaryFakeTimeZoneProviderShellHelper.assertCurrentState(STATE_CERTAIN);
+        }
     }
 
     /**
@@ -184,63 +233,74 @@ public class LocationTimeZoneManagerHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testPrimaryAndSecondary() throws Exception {
-        mLocationTimeZoneManagerShellHelper.setProviderModeOverride(
-                PRIMARY_PROVIDER_INDEX, PROVIDER_MODE_SIMULATED);
-        mLocationTimeZoneManagerShellHelper.setProviderModeOverride(
-                SECONDARY_PROVIDER_INDEX, PROVIDER_MODE_SIMULATED);
-
-        mLocationTimeZoneManagerShellHelper.start();
-        mLocationTimeZoneManagerShellHelper.recordProviderStates(true);
+        String testPrimaryLocationTimeZoneProviderPackageName = FAKE_TZPS_APP_PACKAGE;
+        String testSecondaryLocationTimeZoneProviderPackageName = FAKE_TZPS_APP_PACKAGE;
+        mLocationTimeZoneManagerShellHelper.startWithTestProviders(
+                testPrimaryLocationTimeZoneProviderPackageName,
+                testSecondaryLocationTimeZoneProviderPackageName,
+                true /* recordProviderStates*/);
         mTimeZoneDetectorShellHelper.setGeoDetectionEnabled(true);
+        mPrimaryFakeTimeZoneProviderShellHelper.assertCreated();
+        mSecondaryFakeTimeZoneProviderShellHelper.assertCreated();
 
-        mLocationTimeZoneManagerShellHelper.simulateProviderBind(PRIMARY_PROVIDER_INDEX);
-
-        // Simulate the primary being uncertain. This should cause the secondary to be started.
-        mLocationTimeZoneManagerShellHelper.simulateProviderUncertain(PRIMARY_PROVIDER_INDEX);
-
-        // Assert the last suggestion / recorded state transitions match expectations.
         {
             LocationTimeZoneManagerServiceStateProto serviceState = dumpServiceState();
             assertNoLastSuggestion(serviceState);
             assertProviderStates(serviceState.getPrimaryProviderStatesList(),
-                    TimeZoneProviderStateEnum.TIME_ZONE_PROVIDER_STATE_INITIALIZING,
+                    TimeZoneProviderStateEnum.TIME_ZONE_PROVIDER_STATE_DISABLED,
+                    TimeZoneProviderStateEnum.TIME_ZONE_PROVIDER_STATE_INITIALIZING);
+            mPrimaryFakeTimeZoneProviderShellHelper.assertCurrentState(STATE_INITIALIZING);
+
+            assertProviderStates(serviceState.getSecondaryProviderStatesList(),
+                    TimeZoneProviderStateEnum.TIME_ZONE_PROVIDER_STATE_DISABLED);
+            mSecondaryFakeTimeZoneProviderShellHelper.assertCurrentState(STATE_DISABLED);
+        }
+        mLocationTimeZoneManagerShellHelper.clearRecordedProviderStates();
+
+        // Make the primary report being uncertain. This should cause the secondary to be started.
+        mPrimaryFakeTimeZoneProviderShellHelper.reportUncertain();
+
+        {
+            LocationTimeZoneManagerServiceStateProto serviceState = dumpServiceState();
+            assertNoLastSuggestion(serviceState);
+            assertProviderStates(serviceState.getPrimaryProviderStatesList(),
                     TimeZoneProviderStateEnum.TIME_ZONE_PROVIDER_STATE_UNCERTAIN);
+            mPrimaryFakeTimeZoneProviderShellHelper.assertCurrentState(STATE_UNCERTAIN);
+
             assertProviderStates(serviceState.getSecondaryProviderStatesList(),
                     TimeZoneProviderStateEnum.TIME_ZONE_PROVIDER_STATE_INITIALIZING);
+            mSecondaryFakeTimeZoneProviderShellHelper.assertCurrentState(STATE_INITIALIZING);
         }
+        mLocationTimeZoneManagerShellHelper.clearRecordedProviderStates();
 
-        // Clear recorded states before generating new states.
-        mLocationTimeZoneManagerShellHelper.recordProviderStates(true);
+        // Make the secondary report being certain.
+        mSecondaryFakeTimeZoneProviderShellHelper.reportSuccess("Europe/London");
 
-        // Simulate the secondary provider binding and becoming certain.
-        mLocationTimeZoneManagerShellHelper.simulateProviderBind(SECONDARY_PROVIDER_INDEX);
-        mLocationTimeZoneManagerShellHelper.simulateProviderSuggestion(
-                SECONDARY_PROVIDER_INDEX, "Europe/London");
-
-        // Assert the last suggestion / recorded state transitions match expectations.
         {
             LocationTimeZoneManagerServiceStateProto serviceState = dumpServiceState();
             assertLastSuggestion(serviceState, "Europe/London");
             assertProviderStates(serviceState.getPrimaryProviderStatesList());
+            mPrimaryFakeTimeZoneProviderShellHelper.assertCurrentState(STATE_UNCERTAIN);
+
             assertProviderStates(serviceState.getSecondaryProviderStatesList(),
                     TimeZoneProviderStateEnum.TIME_ZONE_PROVIDER_STATE_CERTAIN);
+            mSecondaryFakeTimeZoneProviderShellHelper.assertCurrentState(STATE_CERTAIN);
         }
+        mLocationTimeZoneManagerShellHelper.clearRecordedProviderStates();
 
-        // Clear recorded states before generating new states.
-        mLocationTimeZoneManagerShellHelper.recordProviderStates(true);
+        // Make the primary report being certain.
+        mPrimaryFakeTimeZoneProviderShellHelper.reportSuccess("Europe/Paris");
 
-        // Simulate the primary provider becoming certain.
-        mLocationTimeZoneManagerShellHelper.simulateProviderSuggestion(
-                PRIMARY_PROVIDER_INDEX, "Europe/Paris");
-
-        // Assert the last suggestion / recorded state transitions match expectations.
         {
             LocationTimeZoneManagerServiceStateProto serviceState = dumpServiceState();
             assertLastSuggestion(serviceState, "Europe/Paris");
             assertProviderStates(serviceState.getPrimaryProviderStatesList(),
                     TimeZoneProviderStateEnum.TIME_ZONE_PROVIDER_STATE_CERTAIN);
+            mPrimaryFakeTimeZoneProviderShellHelper.assertCurrentState(STATE_CERTAIN);
+
             assertProviderStates(serviceState.getSecondaryProviderStatesList(),
                     TimeZoneProviderStateEnum.TIME_ZONE_PROVIDER_STATE_DISABLED);
+            mSecondaryFakeTimeZoneProviderShellHelper.assertCurrentState(STATE_DISABLED);
         }
     }
 
