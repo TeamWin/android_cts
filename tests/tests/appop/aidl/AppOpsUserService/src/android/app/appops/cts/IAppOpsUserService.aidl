@@ -24,6 +24,7 @@ interface IAppOpsUserService {
     void callApiThatNotesSyncOpAndCheckLog(in IAppOpsUserClient client);
     void callApiThatNotesSyncOpAndClearLog(in IAppOpsUserClient client);
     void callApiThatNotesSyncOpWithAttributionAndCheckLog(in IAppOpsUserClient client);
+    void callApiThatCallsBackIntoServiceAndCheckLog(in IAppOpsUserClient client);
     void callApiThatNotesSyncOpFromNativeCodeAndCheckLog(in IAppOpsUserClient client);
     void callApiThatNotesSyncOpFromNativeCodeAndCheckMessage(in IAppOpsUserClient client);
     void callApiThatNotesSyncOpAndCheckStackTrace(in IAppOpsUserClient client);
@@ -42,5 +43,4 @@ interface IAppOpsUserService {
     void callApiThatNotesAsyncOpAndCheckCustomMessage(in IAppOpsUserClient client);
     void callApiThatNotesAsyncOpNativelyAndCheckCustomMessage(in IAppOpsUserClient client);
     void callApiThatNotesAsyncOpNativelyAndCheckLog(in IAppOpsUserClient client);
-    void callAppToCallBackForUsToBlameItAndSelfBlame(in IAppOpsUserClient client);
 }
