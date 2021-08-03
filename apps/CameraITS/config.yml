@@ -13,17 +13,38 @@
 # limitations under the License.
 
 TestBeds:
-  - Name: TABLET  # Need 'tablet' in name for tablet scenes
+  - Name: TEST_BED_TABLET_SCENES  # Need 'tablet' in name for tablet scenes
+    # Use TEST_BED_MANUAL for manual testing and remove below lines:
+    #     - serial <tablet_id>
+    #       label: tablet
+    # Test configuration for scenes[0:4, 6, _change]
     Controllers:
         AndroidDevice:
-          - serial: 05051FQCB00426
+          - serial: <device_id>
             label: dut
-          - serial: 5A24000314
+          - serial: <tablet_id>
             label: tablet
     TestParams:
       brightness: 96
-      chart_distance: 22.0
+      chart_distance: 31.0
       debug_mode: "False"  # quotes are needed here
       chart_loc_arg: ""
-      camera: 0
-      scene: scene4
+      camera: <camera-id>
+      scene: <scene-name>  # if <scene-name> left as-is runs all scenes
+
+  - Name: TEST_BED_SENSOR_FUSION  # Need 'sensor_fusion' in name for SF tests
+    # Test configuration for sensor_fusion/test_sensor_fusion.py
+    Controllers:
+        AndroidDevice:
+          - serial: <device-id>
+            label: dut
+    TestParams:
+      fps: 30
+      img_size: 640,480
+      test_length: 7
+      debug_mode: "False"  # quotes are needed here
+      chart_distance: 25
+      rotator_cntl: <controller-type>  # can be arduino or canakit
+      rotator_ch: <controller-channel>
+      camera: <camera-id>
+
