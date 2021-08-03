@@ -53,6 +53,12 @@
     <option name="compatibility:exclude-filter" value="CtsBackupTestCases" />
     <option name="compatibility:exclude-filter" value="CtsBionicAppTestCases" />
     <option name="compatibility:exclude-filter" value="CtsBionicTestCases" />
+    <option name="compatibility:exclude-filter" value="CtsBlobStoreHostTestCases" />
+    <option name="compatibility:exclude-filter" value="CtsBlobStoreHostTestHelper" />
+    <option name="compatibility:exclude-filter" value="CtsBlobStoreTestCases" />
+    <option name="compatibility:exclude-filter" value="CtsBlobStoreTestHelper" />
+    <option name="compatibility:exclude-filter" value="CtsBlobStoreTestHelperDiffSig" />
+    <option name="compatibility:exclude-filter" value="CtsBlobStoreTestHelperDiffSig2" />
     <option name="compatibility:exclude-filter" value="CtsBootStatsTestCases" />
     <option name="compatibility:exclude-filter" value="CtsCalendarcommon2TestCases" />
     <option name="compatibility:exclude-filter" value="CtsCalendarProviderTestCases" />
@@ -206,6 +212,8 @@
     <option name="compatibility:exclude-filter" value="CtsLegacyNotification29TestCases" />
     <option name="compatibility:exclude-filter" value="CtsLocationNoneTestCases" />
     <option name="compatibility:exclude-filter" value="CtsNetTestCasesInternetPermission" />
+    <option name="compatibility:exclude-filter" value="CtsNoPermissionTestCases" />
+    <option name="compatibility:exclude-filter" value="CtsNoPermissionTestCases25" />
     <option name="compatibility:exclude-filter" value="CtsOsTestCases android.os.cts.StrictModeTest" />
     <option name="compatibility:exclude-filter" value="CtsPackageInstallAppOpDefaultTestCases" />
     <option name="compatibility:exclude-filter" value="CtsPackageInstallAppOpDeniedTestCases" />
@@ -214,10 +222,27 @@
     <option name="compatibility:exclude-filter" value="CtsPackageUninstallTestCases" />
     <option name="compatibility:exclude-filter" value="CtsPackageWatchdogTestCases" />
     <option name="compatibility:exclude-filter" value="CtsProtoTestCases" />
+    <option name="compatibility:exclude-filter" value="CtsRsBlasTestCases" />
+    <option name="compatibility:exclude-filter" value="CtsRsCppTestCases" />
+    <option name="compatibility:exclude-filter" value="CtsSelinuxEphemeralTestCases" />
+    <option name="compatibility:exclude-filter" value="CtsSelinuxTargetSdk25TestCases" />
+    <option name="compatibility:exclude-filter" value="CtsSelinuxTargetSdk27TestCases" />
+    <option name="compatibility:exclude-filter" value="CtsSelinuxTargetSdk28TestCases" />
+    <option name="compatibility:exclude-filter" value="CtsSelinuxTargetSdk29TestCases" />
+    <option name="compatibility:exclude-filter" value="CtsSelinuxTargetSdkCurrentTestCases" />
     <option name="compatibility:exclude-filter" value="CtsSimpleCpuTestCases" />
+    <option name="compatibility:exclude-filter" value="CtsSimpleperfTestCases" />
     <option name="compatibility:exclude-filter" value="CtsSoundTriggerTestCases" />
+    <option name="compatibility:exclude-filter" value="CtsStagedInstallHostTestCases" />
+    <option name="compatibility:exclude-filter" value="CtsStrictJavaPackagesTestCases" />
+    <option name="compatibility:exclude-filter" value="CtsSuspendAppsPermissionTestCases" />
+    <option name="compatibility:exclude-filter" value="CtsSuspendAppsTestCases" />
+    <option name="compatibility:exclude-filter" value="CtsSustainedPerformanceHostTestCases" />
+    <option name="compatibility:exclude-filter" value="CtsSyncAccountAccessOtherCertTestCases" />
     <option name="compatibility:exclude-filter" value="CtsSystemIntentTestCases" />
     <option name="compatibility:exclude-filter" value="CtsTelephony3TestCases" />
     <option name="compatibility:exclude-filter" value="CtsThemeDeviceTestCases" />
+    <option name="compatibility:exclude-filter" value="CtsToastLegacyTestCases" />
+    <option name="compatibility:exclude-filter" value="CtsToastTestCases" />
 
 </configuration>
