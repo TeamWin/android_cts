@@ -41,12 +41,16 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 /**
  * CTS Tests for RollbackManager APIs.
  */
 @RunWith(JUnit4.class)
 public class RollbackManagerTest {
+    // TODO: use PackageManager.RollbackDataPolicy.* when they are system API
+    private static final int ROLLBACK_DATA_POLICY_RESTORE = 0;
+    private static final int ROLLBACK_DATA_POLICY_WIPE = 1;
 
     /**
      * Adopts common permissions needed to test rollbacks and uninstalls the
@@ -62,7 +66,7 @@ public class RollbackManagerTest {
                     Manifest.permission.READ_DEVICE_CONFIG,
                     Manifest.permission.WRITE_DEVICE_CONFIG);
 
-        Uninstall.packages(TestApp.A);
+        Uninstall.packages(TestApp.A, TestApp.B, TestApp.C);
     }
 
     /**
@@ -70,7 +74,7 @@ public class RollbackManagerTest {
      */
     @After
     public void teardown() throws InterruptedException, IOException {
-        Uninstall.packages(TestApp.A);
+        Uninstall.packages(TestApp.A, TestApp.B, TestApp.C);
 
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .dropShellPermissionIdentity();
@@ -112,10 +116,7 @@ public class RollbackManagerTest {
 
     @Test
     public void testGetRollbackDataPolicy() throws Exception {
-        // TODO: To change to the following statement when
-        // PackageManager.RollbackDataPolicy.WIPE is available.
-        // final int rollBackDataPolicy = PackageManager.RollbackDataPolicy.WIPE;
-        final int rollBackDataPolicy = 1;
+        final int rollBackDataPolicy = ROLLBACK_DATA_POLICY_WIPE;
 
         Install.single(TestApp.A1).commit();
         assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(1);
@@ -180,5 +181,59 @@ public class RollbackManagerTest {
         RollbackInfo available = RollbackUtils.waitForAvailableRollback(TestApp.A);
         RollbackUtils.rollback(available.getRollbackId(), TestApp.ARotated2);
         assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(1);
+    }
+
+    /**
+     * Test we can't enable rollback for non-allowlisted app without
+     * TEST_MANAGE_ROLLBACKS permission
+     */
+    @Test
+    public void testNonRollbackAllowlistedApp() throws Exception {
+        InstallUtils.dropShellPermissionIdentity();
+        InstallUtils.adoptShellPermissionIdentity(
+                Manifest.permission.INSTALL_PACKAGES,
+                Manifest.permission.DELETE_PACKAGES,
+                Manifest.permission.MANAGE_ROLLBACKS);
+
+        Install.single(TestApp.A1).commit();
+        assertThat(RollbackUtils.getAvailableRollback(TestApp.A)).isNull();
+
+        Install.single(TestApp.A2).setEnableRollback().commit();
+        Thread.sleep(TimeUnit.SECONDS.toMillis(2));
+        assertThat(RollbackUtils.getAvailableRollback(TestApp.A)).isNull();
+    }
+
+    /**
+     * Tests user data is restored according to the preset rollback data policy.
+     */
+    @Test
+    public void testRollbackDataPolicy() throws Exception {
+        Install.multi(TestApp.A1, TestApp.B1, TestApp.C1).commit();
+        // Write user data version = 1
+        InstallUtils.processUserData(TestApp.A);
+        InstallUtils.processUserData(TestApp.B);
+        InstallUtils.processUserData(TestApp.C);
+
+        Install a2 = Install.single(TestApp.A2)
+                .setEnableRollback(ROLLBACK_DATA_POLICY_WIPE);
+        Install b2 = Install.single(TestApp.B2)
+                .setEnableRollback(ROLLBACK_DATA_POLICY_RESTORE);
+        // The rollback data policy of C2 is specified in the manifest
+        Install c2 = Install.single(TestApp.C2).setEnableRollback();
+        Install.multi(a2, b2, c2).setEnableRollback().commit();
+        // Write user data version = 2
+        InstallUtils.processUserData(TestApp.A);
+        InstallUtils.processUserData(TestApp.B);
+        InstallUtils.processUserData(TestApp.C);
+
+        RollbackInfo info = RollbackUtils.getAvailableRollback(TestApp.A);
+        RollbackUtils.rollback(info.getRollbackId());
+        // Read user data version from userdata.txt
+        // A's user data version is -1 for user data is wiped.
+        // B's user data version is 1 as rollback committed.
+        // C's user data version is -1 for user data is wiped.
+        assertThat(InstallUtils.getUserDataVersion(TestApp.A)).isEqualTo(-1);
+        assertThat(InstallUtils.getUserDataVersion(TestApp.B)).isEqualTo(1);
+        assertThat(InstallUtils.getUserDataVersion(TestApp.C)).isEqualTo(-1);
     }
 }
