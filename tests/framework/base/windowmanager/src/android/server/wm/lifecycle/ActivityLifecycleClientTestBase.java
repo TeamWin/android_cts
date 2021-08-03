@@ -483,6 +483,7 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
         protected void onNewIntent(Intent intent) {
             super.onNewIntent(intent);
             mLifecycleLogClient.onActivityCallback(ON_NEW_INTENT);
+            setIntent(intent);
         }
 
         @Override
