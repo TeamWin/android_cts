@@ -27,6 +27,7 @@ import static org.junit.Assert.assertEquals;
 
 import android.Manifest;
 import android.app.AppOpsManager;
+import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -40,6 +41,8 @@ import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -185,5 +188,34 @@ public class PermissionUtils {
         }
 
         assertTrue("Couldn't find any button", foundButton);
+    }
+
+    public static String permissionGrantStateToString(int state) {
+        return constantToString(DevicePolicyManager.class, "PERMISSION_GRANT_STATE_", state);
+    }
+
+    public static String permissionPolicyToString(int policy) {
+        return constantToString(DevicePolicyManager.class, "PERMISSION_POLICY_", policy);
+    }
+
+    // Copied from DebugUtils
+    private static String constantToString(Class<?> clazz, String prefix, int value) {
+        for (Field field : clazz.getDeclaredFields()) {
+            final int modifiers = field.getModifiers();
+            try {
+                if (Modifier.isStatic(modifiers) && Modifier.isFinal(modifiers)
+                        && field.getType().equals(int.class) && field.getName().startsWith(prefix)
+                        && field.getInt(null) == value) {
+                    return constNameWithoutPrefix(prefix, field);
+                }
+            } catch (IllegalAccessException ignored) {
+            }
+        }
+        return prefix + Integer.toString(value);
+    }
+
+    // Copied from DebugUtils
+    private static String constNameWithoutPrefix(String prefix, Field field) {
+        return field.getName().substring(prefix.length());
     }
 }

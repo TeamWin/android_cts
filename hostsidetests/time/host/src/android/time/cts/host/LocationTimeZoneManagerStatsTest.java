@@ -18,15 +18,14 @@ package android.time.cts.host;
 
 import static android.app.time.cts.shell.DeviceConfigKeys.NAMESPACE_SYSTEM_TIME;
 import static android.app.time.cts.shell.DeviceConfigShellHelper.SYNC_DISABLED_MODE_UNTIL_REBOOT;
-import static android.app.time.cts.shell.LocationTimeZoneManagerShellHelper.PRIMARY_PROVIDER_INDEX;
-import static android.app.time.cts.shell.LocationTimeZoneManagerShellHelper.PROVIDER_MODE_DISABLED;
-import static android.app.time.cts.shell.LocationTimeZoneManagerShellHelper.PROVIDER_MODE_SIMULATED;
-import static android.app.time.cts.shell.LocationTimeZoneManagerShellHelper.SECONDARY_PROVIDER_INDEX;
+import static android.app.time.cts.shell.FakeTimeZoneProviderAppShellHelper.FAKE_TZPS_APP_APK;
+import static android.app.time.cts.shell.FakeTimeZoneProviderAppShellHelper.FAKE_TZPS_APP_PACKAGE;
 
 import static java.util.stream.Collectors.toList;
 
 import android.app.time.cts.shell.DeviceConfigShellHelper;
 import android.app.time.cts.shell.DeviceShellCommandExecutor;
+import android.app.time.cts.shell.FakeTimeZoneProviderAppShellHelper;
 import android.app.time.cts.shell.LocationShellHelper;
 import android.app.time.cts.shell.LocationTimeZoneManagerShellHelper;
 import android.app.time.cts.shell.TimeZoneDetectorShellHelper;
@@ -58,6 +57,9 @@ import java.util.function.Function;
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class LocationTimeZoneManagerStatsTest extends BaseHostJUnit4Test {
 
+    private static final int PRIMARY_PROVIDER_INDEX = 0;
+    private static final int SECONDARY_PROVIDER_INDEX = 1;
+
     private static final int PROVIDER_STATES_COUNT =
             LocationTimeZoneProviderStateChanged.State.values().length;
 
@@ -81,6 +83,11 @@ public class LocationTimeZoneManagerStatsTest extends BaseHostJUnit4Test {
         // Confirm the service being tested is present. It can be turned off, in which case there's
         // nothing to test.
         mLocationTimeZoneManagerShellHelper.assumeLocationTimeZoneManagerIsPresent();
+
+        // Install the app that hosts the fake providers.
+        // Installations are tracked in BaseHostJUnit4Test and uninstalled automatically.
+        installPackage(FAKE_TZPS_APP_APK);
+
         mTimeZoneDetectorShellHelper = new TimeZoneDetectorShellHelper(shellCommandExecutor);
         mLocationShellHelper = new LocationShellHelper(shellCommandExecutor);
         mDeviceConfigShellHelper = new DeviceConfigShellHelper(shellCommandExecutor);
@@ -110,6 +117,11 @@ public class LocationTimeZoneManagerStatsTest extends BaseHostJUnit4Test {
         // on until the test LTZPs are configured as the time_zone_detector will refuse.
         mOriginalGeoDetectionEnabled = mTimeZoneDetectorShellHelper.isGeoDetectionEnabled();
 
+        // Make sure that the fake providers used in the tests are available.
+        FakeTimeZoneProviderAppShellHelper fakeTimeZoneProviderAppShellHelper =
+                new FakeTimeZoneProviderAppShellHelper(shellCommandExecutor);
+        fakeTimeZoneProviderAppShellHelper.waitForInstallation();
+
         ConfigUtils.removeConfig(device);
         ReportUtils.clearReports(device);
     }
@@ -132,7 +144,6 @@ public class LocationTimeZoneManagerStatsTest extends BaseHostJUnit4Test {
         // Reset settings and server flags as best we can.
         mTimeZoneDetectorShellHelper.setAutoDetectionEnabled(mOriginalAutoDetectionEnabled);
         mLocationShellHelper.setLocationEnabledForCurrentUser(mOriginalLocationEnabled);
-        mLocationTimeZoneManagerShellHelper.recordProviderStates(false);
 
         ConfigUtils.removeConfig(getDevice());
         ReportUtils.clearReports(getDevice());
@@ -145,33 +156,36 @@ public class LocationTimeZoneManagerStatsTest extends BaseHostJUnit4Test {
 
     @Test
     public void testAtom_locationTimeZoneProviderStateChanged() throws Exception {
-        mLocationTimeZoneManagerShellHelper.setProviderModeOverride(
-                PRIMARY_PROVIDER_INDEX, PROVIDER_MODE_DISABLED);
-        mLocationTimeZoneManagerShellHelper.setProviderModeOverride(
-                SECONDARY_PROVIDER_INDEX, PROVIDER_MODE_SIMULATED);
-        mTimeZoneDetectorShellHelper.setGeoDetectionEnabled(false);
-
-        mLocationTimeZoneManagerShellHelper.start();
-
         ConfigUtils.uploadConfigForPushedAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
                 AtomsProto.Atom.LOCATION_TIME_ZONE_PROVIDER_STATE_CHANGED_FIELD_NUMBER);
 
+        String testPrimaryLocationTimeZoneProviderPackageName = null;
+        String testSecondaryLocationTimeZoneProviderPackageName = FAKE_TZPS_APP_PACKAGE;
+        mLocationTimeZoneManagerShellHelper.startWithTestProviders(
+                testPrimaryLocationTimeZoneProviderPackageName,
+                testSecondaryLocationTimeZoneProviderPackageName,
+                true /* recordProviderStates */);
+
         // Turn geo detection on and off, twice.
         for (int i = 0; i < 2; i++) {
+            Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
             mTimeZoneDetectorShellHelper.setGeoDetectionEnabled(true);
             Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
             mTimeZoneDetectorShellHelper.setGeoDetectionEnabled(false);
-            Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
         }
 
         // Sorted list of events in order in which they occurred.
         List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
         // States.
+        Set<Integer> primaryProviderCreated = singletonStateId(PRIMARY_PROVIDER_INDEX,
+                LocationTimeZoneProviderStateChanged.State.STOPPED);
         Set<Integer> primaryProviderStarted = singletonStateId(PRIMARY_PROVIDER_INDEX,
                 LocationTimeZoneProviderStateChanged.State.INITIALIZING);
         Set<Integer> primaryProviderFailed = singletonStateId(PRIMARY_PROVIDER_INDEX,
                 LocationTimeZoneProviderStateChanged.State.PERM_FAILED);
+        Set<Integer> secondaryProviderCreated = singletonStateId(SECONDARY_PROVIDER_INDEX,
+                LocationTimeZoneProviderStateChanged.State.STOPPED);
         Set<Integer> secondaryProviderStarted = singletonStateId(SECONDARY_PROVIDER_INDEX,
                 LocationTimeZoneProviderStateChanged.State.INITIALIZING);
         Set<Integer> secondaryProviderStopped = singletonStateId(SECONDARY_PROVIDER_INDEX,
@@ -186,21 +200,12 @@ public class LocationTimeZoneManagerStatsTest extends BaseHostJUnit4Test {
         // Assert that the events happened in the expected order. This does not check "wait" (the
         // time between events).
         List<Set<Integer>> stateSets = Arrays.asList(
+                primaryProviderCreated, secondaryProviderCreated,
                 primaryProviderStarted, primaryProviderFailed,
                 secondaryProviderStarted, secondaryProviderStopped,
                 secondaryProviderStarted, secondaryProviderStopped);
         AtomTestUtils.assertStatesOccurred(stateSets, data,
                 0 /* wait */, eventToStateFunction);
-
-        // Assert that the events for the secondary provider happened in the expected order. This
-        // does check "wait" (the time between events).
-        List<StatsLog.EventMetricData> secondaryEvents =
-                extractEventsForProviderIndex(data, SECONDARY_PROVIDER_INDEX);
-        List<Set<Integer>> secondaryStateSets = Arrays.asList(
-                secondaryProviderStarted, secondaryProviderStopped,
-                secondaryProviderStarted, secondaryProviderStopped);
-        AtomTestUtils.assertStatesOccurred(secondaryStateSets, secondaryEvents,
-                AtomTestUtils.WAIT_TIME_SHORT /* wait */, eventToStateFunction);
     }
 
     private static Set<Integer> singletonStateId(int providerIndex,
