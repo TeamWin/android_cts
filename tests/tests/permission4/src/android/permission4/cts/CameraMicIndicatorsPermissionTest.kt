@@ -31,6 +31,7 @@ import android.support.test.uiautomator.By
 import android.support.test.uiautomator.UiDevice
 import android.support.test.uiautomator.UiSelector
 import androidx.test.platform.app.InstrumentationRegistry
+import com.android.compatibility.common.util.DisableAnimationRule
 import com.android.compatibility.common.util.SystemUtil.callWithShellPermissionIdentity
 import com.android.compatibility.common.util.SystemUtil.eventually
 import com.android.compatibility.common.util.SystemUtil.runShellCommand
@@ -42,6 +43,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeFalse
 import org.junit.Assume.assumeTrue
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 
 private const val APP_LABEL = "CtsCameraMicAccess"
@@ -71,6 +73,9 @@ class CameraMicIndicatorsPermissionTest {
         Manifest.permission_group.CAMERA, 0).loadLabel(packageManager).toString()
 
     private var screenTimeoutBeforeTest: Long = 0L
+
+    @get:Rule
+    val disableAnimationRule = DisableAnimationRule()
 
     @Before
     fun setUp() {

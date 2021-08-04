@@ -13,12 +13,9 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<configuration description="Runs a subset of CTS on AOSP tests for gsi_$arch">
 
-    <include name="cts-on-aosp" />
-    <include name="cts-on-gsi-exclude" />
-    <include name="cts-on-gsi-exclude-non-hal" />
-
-    <option name="plan" value="cts-on-gsi" />
-
-</configuration>
+<voice-interaction-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:sessionService="android.voiceinteraction.service.MainInteractionSessionService"
+    android:recognitionService="android.voiceinteraction.service.MainRecognitionService"
+    android:settingsActivity="android.voiceinteraction.service.SettingsActivity"
+    android:supportsAssist="true"/>

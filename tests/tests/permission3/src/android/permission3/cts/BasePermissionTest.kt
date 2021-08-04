@@ -108,9 +108,13 @@ abstract class BasePermissionTest {
     protected fun installPackage(
         apkPath: String,
         reinstall: Boolean = false,
+        grantRuntimePermissions: Boolean = false,
         expectSuccess: Boolean = true
     ) {
-        val output = runShellCommand("pm install${if (reinstall) " -r" else ""} $apkPath").trim()
+        val output = runShellCommand(
+            "pm install${if (reinstall) " -r" else ""}${if (grantRuntimePermissions) " -g" else ""
+                } $apkPath"
+        ).trim()
         if (expectSuccess) {
             assertEquals("Success", output)
         } else {

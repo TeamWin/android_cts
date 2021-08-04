@@ -24,6 +24,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.content.ContextParams
 import android.content.Intent
+import android.content.pm.PackageManager.FEATURE_LEANBACK
 import android.net.Uri
 import android.os.Bundle
 import android.os.Process
@@ -42,12 +43,13 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.android.compatibility.common.util.SystemUtil
 import com.google.common.truth.Truth.assertThat
 import org.junit.After
+import org.junit.Assume.assumeFalse
 import org.junit.Before
 import org.junit.Test
 import org.mockito.ArgumentMatcher
 import org.mockito.Mockito.eq
-import org.mockito.Mockito.intThat
 import org.mockito.Mockito.inOrder
+import org.mockito.Mockito.intThat
 import org.mockito.Mockito.isNull
 import org.mockito.Mockito.mock
 import java.util.concurrent.CountDownLatch
@@ -102,6 +104,7 @@ class RuntimePermissionsAppOpTrackingTest {
     @Test
     @Throws(Exception::class)
     fun testSelfSmsAccess() {
+        assumeNotTv()
         testSelfAccess(Telephony.Sms.CONTENT_URI,
                 Manifest.permission.READ_SMS)
     }
@@ -174,6 +177,7 @@ class RuntimePermissionsAppOpTrackingTest {
     @Test
     @Throws(Exception::class)
     fun testUntrustedSmsAccessAttributeToAnother() {
+        assumeNotTv()
         testUntrustedAccessAttributeToAnother(Telephony.Sms.CONTENT_URI,
                 Manifest.permission.READ_SMS)
     }
@@ -220,6 +224,7 @@ class RuntimePermissionsAppOpTrackingTest {
     @Test
     @Throws(Exception::class)
     fun testUntrustedSmsAccessAttributeToAnotherThroughIntermediary() {
+        assumeNotTv()
         testUntrustedAccessAttributeToAnotherThroughIntermediary(
                 Telephony.Sms.CONTENT_URI,
                 Manifest.permission.READ_SMS)
@@ -317,6 +322,7 @@ class RuntimePermissionsAppOpTrackingTest {
     @Test
     @Throws(Exception::class)
     fun testTrustedAccessSmsAttributeToAnother() {
+        assumeNotTv()
         testTrustedAccessAttributeToAnother(Telephony.Sms.CONTENT_URI,
                 Manifest.permission.READ_SMS)
     }
@@ -658,6 +664,8 @@ class RuntimePermissionsAppOpTrackingTest {
 
         private val instrumentation: Instrumentation
             get() = InstrumentationRegistry.getInstrumentation()
+
+        private val isTv = context.packageManager.hasSystemFeature(FEATURE_LEANBACK)
 
         fun ensureAuxiliaryAppsNotRunningAndNoResidualProcessState() {
             SystemUtil.runShellCommand("am force-stop $RECEIVER_PACKAGE_NAME")
@@ -1168,5 +1176,7 @@ class RuntimePermissionsAppOpTrackingTest {
             activityStatedLatch.await(ASYNC_OPERATION_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)
             return attributionSourceRef.get()
         }
+
+        private fun assumeNotTv() = assumeFalse(isTv)
     }
 }

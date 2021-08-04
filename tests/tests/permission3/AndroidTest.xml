@@ -36,11 +36,11 @@
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
         <option name="test-file-name" value="CtsPermission3TestCases.apk" />
-        <option name="test-file-name" value="CtsAccessMicrophoneApp.apk" />
-        <option name="test-file-name" value="CtsAccessMicrophoneApp2.apk" />
     </target_preparer>
 
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
+        <option name="push" value="CtsAccessMicrophoneApp.apk->/data/local/tmp/cts/permission3/CtsAccessMicrophoneApp.apk" />
+        <option name="push" value="CtsAccessMicrophoneApp2.apk->/data/local/tmp/cts/permission3/CtsAccessMicrophoneApp2.apk" />
         <option name="push" value="CtsPermissionPolicyApp25.apk->/data/local/tmp/cts/permission3/CtsPermissionPolicyApp25.apk" />
         <option name="push" value="CtsUsePermissionApp22.apk->/data/local/tmp/cts/permission3/CtsUsePermissionApp22.apk" />
         <option name="push" value="CtsUsePermissionApp22CalendarOnly.apk->/data/local/tmp/cts/permission3/CtsUsePermissionApp22CalendarOnly.apk" />
