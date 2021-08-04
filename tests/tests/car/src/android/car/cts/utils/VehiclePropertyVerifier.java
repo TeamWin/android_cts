@@ -38,6 +38,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class VehiclePropertyVerifier<T> {
+    private final static String CAR_PROPERTY_VALUE_SOURCE_GETTER = "Getter";
+    private final static String CAR_PROPERTY_VALUE_SOURCE_CALLBACK = "Callback";
+
     private final int mPropertyId;
     private final String mPropertyName;
     private final int mAccess;
@@ -138,20 +141,19 @@ public class VehiclePropertyVerifier<T> {
             CarPropertyManager carPropertyManager) {
         if (mChangeMode == CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC
                 || mChangeMode == CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE) {
-            NonContinuousCarPropertyValueCallback nonContinuousCarPropertyValueCallback =
-                    new NonContinuousCarPropertyValueCallback(mPropertyName,
+            CarPropertyValueCallback carPropertyValueCallback =
+                    new CarPropertyValueCallback(mPropertyName,
                             carPropertyConfig.getAreaIds().length);
             assertWithMessage("Failed to register callback for " + mPropertyName).that(
-                    carPropertyManager.registerCallback(nonContinuousCarPropertyValueCallback,
-                            mPropertyId, CarPropertyManager.SENSOR_RATE_ONCHANGE)).isTrue();
+                    carPropertyManager.registerCallback(carPropertyValueCallback, mPropertyId,
+                            CarPropertyManager.SENSOR_RATE_ONCHANGE)).isTrue();
             List<CarPropertyValue<?>> carPropertyValues =
-                    nonContinuousCarPropertyValueCallback.getCarPropertyValues();
-            carPropertyManager.unregisterCallback(nonContinuousCarPropertyValueCallback,
-                    mPropertyId);
+                    carPropertyValueCallback.getCarPropertyValues();
+            carPropertyManager.unregisterCallback(carPropertyValueCallback, mPropertyId);
 
             for (CarPropertyValue<?> carPropertyValue : carPropertyValues) {
                 verifyCarPropertyValue(carPropertyConfig, carPropertyValue,
-                        carPropertyValue.getAreaId(), "Callback");
+                        carPropertyValue.getAreaId(), CAR_PROPERTY_VALUE_SOURCE_CALLBACK);
             }
             assertWithMessage(mPropertyName
                     + " callback values did not cover all the property's area IDs").that(
@@ -160,6 +162,21 @@ public class VehiclePropertyVerifier<T> {
             ).containsExactlyElementsIn(
                     Arrays.stream(carPropertyConfig.getAreaIds()).boxed().collect(
                             Collectors.toList()));
+
+        } else if (mChangeMode == CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS) {
+            CarPropertyValueCallback carPropertyValueCallback =
+                    new CarPropertyValueCallback(mPropertyName, 1);
+            assertWithMessage("Failed to register callback for " + mPropertyName).that(
+                    carPropertyManager.registerCallback(carPropertyValueCallback, mPropertyId,
+                            CarPropertyManager.SENSOR_RATE_FASTEST)).isTrue();
+            List<CarPropertyValue<?>> carPropertyValues =
+                    carPropertyValueCallback.getCarPropertyValues();
+            carPropertyManager.unregisterCallback(carPropertyValueCallback, mPropertyId);
+
+            for (CarPropertyValue<?> carPropertyValue : carPropertyValues) {
+                verifyCarPropertyValue(carPropertyConfig, carPropertyValue,
+                        carPropertyValue.getAreaId(), CAR_PROPERTY_VALUE_SOURCE_CALLBACK);
+            }
         }
     }
 
@@ -233,7 +250,8 @@ public class VehiclePropertyVerifier<T> {
                     carPropertyManager.getProperty(
                             mPropertyId, areaId);
 
-            verifyCarPropertyValue(carPropertyConfig, carPropertyValue, areaId, "Getter");
+            verifyCarPropertyValue(carPropertyConfig, carPropertyValue, areaId,
+                    CAR_PROPERTY_VALUE_SOURCE_GETTER);
         }
     }
 
@@ -335,24 +353,24 @@ public class VehiclePropertyVerifier<T> {
         }
     }
 
-    private static class NonContinuousCarPropertyValueCallback implements
+    private static class CarPropertyValueCallback implements
             CarPropertyManager.CarPropertyEventCallback {
         private final String mPropertyName;
-        private final int mTotalAreaIds;
+        private final int mTotalOnChangeEvents;
         private final CountDownLatch mCountDownLatch;
         private final List<CarPropertyValue<?>> mCarPropertyValues = new ArrayList<>();
 
-        public NonContinuousCarPropertyValueCallback(String propertyName, int totalAreaIds) {
+        public CarPropertyValueCallback(String propertyName, int totalOnChangeEvents) {
             mPropertyName = propertyName;
-            mTotalAreaIds = totalAreaIds;
-            mCountDownLatch = new CountDownLatch(totalAreaIds);
+            mTotalOnChangeEvents = totalOnChangeEvents;
+            mCountDownLatch = new CountDownLatch(totalOnChangeEvents);
         }
 
         public List<CarPropertyValue<?>> getCarPropertyValues() {
             try {
-                assertWithMessage("Never received " + mTotalAreaIds + "  onChangeEvent(s) for "
-                        + mPropertyName
-                        + " callback before 1500ms timeout").that(
+                assertWithMessage(
+                        "Never received " + mTotalOnChangeEvents + "  onChangeEvent(s) for "
+                                + mPropertyName + " callback before 1500ms timeout").that(
                         mCountDownLatch.await(1500, TimeUnit.MILLISECONDS)).isTrue();
             } catch (InterruptedException e) {
                 assertWithMessage("Waiting for onChangeEvent callback(s) for " + mPropertyName
