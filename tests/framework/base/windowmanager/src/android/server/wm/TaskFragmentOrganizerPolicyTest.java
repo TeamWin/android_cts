@@ -78,18 +78,24 @@ public class TaskFragmentOrganizerPolicyTest {
     @Test(expected = SecurityException.class)
     public void testPerformNonTaskFragmentHierarchyOperation_ThrowException() {
         final List<TaskAppearedInfo> taskInfos = new ArrayList<>();
-        // Register TaskOrganizer to obtain Task information.
-        NestedShellPermission.run(() -> {
-            mTaskOrganizer = new TaskOrganizer();
-            taskInfos.addAll(mTaskOrganizer.registerOrganizer());
-        });
+        try {
+            // Register TaskOrganizer to obtain Task information.
+            NestedShellPermission.run(() -> {
+                mTaskOrganizer = new TaskOrganizer();
+                taskInfos.addAll(mTaskOrganizer.registerOrganizer());
+            });
 
-        // It is expected to throw Security exception when TaskFragmentOrganizer performs a
-        // non-TaskFragment hierarchy operation.
-        final WindowContainerToken taskToken = taskInfos.get(0).getTaskInfo().getToken();
-        final WindowContainerTransaction wct = new WindowContainerTransaction()
-                .reorder(taskToken, true /* opTop */);
-        mTaskFragmentOrganizer.applyTransaction(wct);
+            // It is expected to throw Security exception when TaskFragmentOrganizer performs a
+            // non-TaskFragment hierarchy operation.
+            final WindowContainerToken taskToken = taskInfos.get(0).getTaskInfo().getToken();
+            final WindowContainerTransaction wct = new WindowContainerTransaction()
+                    .reorder(taskToken, true /* opTop */);
+            mTaskFragmentOrganizer.applyTransaction(wct);
+        } finally {
+            if (mTaskOrganizer != null) {
+                NestedShellPermission.run(() -> mTaskOrganizer.unregisterOrganizer());
+            }
+        }
     }
 
     /**
@@ -99,18 +105,24 @@ public class TaskFragmentOrganizerPolicyTest {
     @Test(expected = SecurityException.class)
     public void testSetPropertyOnNonTaskFragment_ThrowException() {
         final List<TaskAppearedInfo> taskInfos = new ArrayList<>();
-        // Register TaskOrganizer to obtain Task information.
-        NestedShellPermission.run(() -> {
-            mTaskOrganizer = new TaskOrganizer();
-            taskInfos.addAll(mTaskOrganizer.registerOrganizer());
-        });
+        try {
+            // Register TaskOrganizer to obtain Task information.
+            NestedShellPermission.run(() -> {
+                mTaskOrganizer = new TaskOrganizer();
+                taskInfos.addAll(mTaskOrganizer.registerOrganizer());
+            });
 
-        // It is expected to throw SecurityException when TaskFragmentOrganizer attempts to change
-        // the property on non-TaskFragment container.
-        final WindowContainerToken taskToken = taskInfos.get(0).getTaskInfo().getToken();
-        final WindowContainerTransaction wct = new WindowContainerTransaction()
-                .setBounds(taskToken, new Rect());
-        mTaskFragmentOrganizer.applyTransaction(wct);
+            // It is expected to throw SecurityException when TaskFragmentOrganizer attempts to
+            // change the property on non-TaskFragment container.
+            final WindowContainerToken taskToken = taskInfos.get(0).getTaskInfo().getToken();
+            final WindowContainerTransaction wct = new WindowContainerTransaction()
+                    .setBounds(taskToken, new Rect());
+            mTaskFragmentOrganizer.applyTransaction(wct);
+        } finally {
+            if (mTaskOrganizer != null) {
+                NestedShellPermission.run(() -> mTaskOrganizer.unregisterOrganizer());
+            }
+        }
     }
 
     /**
