@@ -90,13 +90,12 @@ public class InputDeviceVibratorManagerTest {
         mInputManager = mInstrumentation.getTargetContext().getSystemService(InputManager.class);
         assertNotNull(mInputManager);
         mParser = new InputJsonParser(mInstrumentation.getTargetContext());
-        mDeviceId = mParser.readDeviceId(resourceId);
-        String registerCommand = mParser.readRegisterCommand(resourceId);
-        mUinputDevice = new UinputDevice(mInstrumentation, mDeviceId,
-                mParser.readVendorId(resourceId), mParser.readProductId(resourceId),
-                InputDevice.SOURCE_KEYBOARD, registerCommand);
-        mVibratorManager = getVibratorManager(mParser.readVendorId(resourceId),
-                mParser.readProductId(resourceId));
+
+        mUinputDevice = UinputDevice.create(mInstrumentation, R.raw.google_gamepad_register,
+                InputDevice.SOURCE_KEYBOARD);
+        mDeviceId = mUinputDevice.getDeviceId();
+        mVibratorManager = getVibratorManager(mUinputDevice.getVendorId(),
+                mUinputDevice.getProductId());
         assertTrue(mVibratorManager != null);
     }
 

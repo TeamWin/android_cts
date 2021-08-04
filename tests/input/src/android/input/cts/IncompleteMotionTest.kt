@@ -28,10 +28,10 @@ import android.view.MotionEvent
 import android.view.MotionEvent.ACTION_DOWN
 import android.view.MotionEvent.ACTION_MOVE
 import android.view.View
+import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.MediumTest
 import androidx.test.platform.app.InstrumentationRegistry
-import androidx.test.rule.ActivityTestRule
 import com.android.compatibility.common.util.PollingCheck
 import org.junit.Before
 import org.junit.Rule
@@ -78,14 +78,15 @@ class OverlayFocusedBroadcastReceiver : BroadcastReceiver() {
 @RunWith(AndroidJUnit4::class)
 class IncompleteMotionTest {
     @get:Rule
-    var mActivityRule: ActivityTestRule<IncompleteMotionActivity> =
-            ActivityTestRule(IncompleteMotionActivity::class.java)
-    lateinit var mActivity: IncompleteMotionActivity
-    val mInstrumentation = InstrumentationRegistry.getInstrumentation()
+    val mActivityRule = ActivityScenarioRule(IncompleteMotionActivity::class.java)
+    private lateinit var mActivity: IncompleteMotionActivity
+    private val mInstrumentation = InstrumentationRegistry.getInstrumentation()
 
     @Before
     fun setUp() {
-        mActivity = mActivityRule.getActivity()
+        mActivityRule.getScenario().onActivity {
+            mActivity = it
+        }
         PollingCheck.waitFor { mActivity.hasWindowFocus() }
     }
 

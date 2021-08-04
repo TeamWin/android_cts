@@ -42,7 +42,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import com.android.cts.input.InputJsonParser;
 import com.android.cts.input.UinputDevice;
 
 import org.junit.After;
@@ -102,12 +101,10 @@ public class InputDeviceSensorManagerTest {
 
     private InputManager mInputManager;
     private UinputDevice mUinputDevice;
-    private InputJsonParser mParser;
     private Instrumentation mInstrumentation;
     private SensorManager mSensorManager;
     private HandlerThread mSensorThread = null;
     private Handler mSensorHandler = null;
-    private int mDeviceId;
     private final Object mLock = new Object();
 
     private class Callback extends SensorManager.DynamicSensorCallback {
@@ -373,14 +370,10 @@ public class InputDeviceSensorManagerTest {
         mInputManager = mInstrumentation.getTargetContext().getSystemService(InputManager.class);
         assertNotNull(mInputManager);
 
-        mParser = new InputJsonParser(mInstrumentation.getTargetContext());
-        mDeviceId = mParser.readDeviceId(resourceId);
-        String registerCommand = mParser.readRegisterCommand(resourceId);
-        final int vendorId = mParser.readVendorId(resourceId);
-        final int productId = mParser.readProductId(resourceId);
-        mUinputDevice = new UinputDevice(mInstrumentation, mDeviceId,
-            vendorId, productId, InputDevice.SOURCE_KEYBOARD, registerCommand);
-        mSensorManager = getSensorManager(vendorId, productId);
+        mUinputDevice = UinputDevice.create(mInstrumentation, R.raw.gamepad_sensors_register,
+                InputDevice.SOURCE_KEYBOARD);
+        mSensorManager = getSensorManager(mUinputDevice.getVendorId(),
+                mUinputDevice.getProductId());
         assertNotNull(mSensorManager);
 
         mSensorThread = new HandlerThread("SensorThread");
