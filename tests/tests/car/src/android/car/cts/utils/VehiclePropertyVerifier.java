@@ -47,11 +47,13 @@ public class VehiclePropertyVerifier<T> {
     private final boolean mRequiredProperty;
     private final Optional<ConfigArrayVerifier> mConfigArrayVerifier;
     private final Optional<CarPropertyValueVerifier> mCarPropertyValueVerifier;
+    private final Optional<AreaIdsVerifier> mAreaIdsVerifier;
 
     private VehiclePropertyVerifier(int propertyId, int access, int areaType, int changeMode,
             Class<T> propertyType, boolean requiredProperty,
             Optional<ConfigArrayVerifier> configArrayVerifier,
-            Optional<CarPropertyValueVerifier> carPropertyValueVerifier) {
+            Optional<CarPropertyValueVerifier> carPropertyValueVerifier,
+            Optional<AreaIdsVerifier> areaIdsVerifier) {
         mPropertyId = propertyId;
         mPropertyName = VehiclePropertyIds.toString(propertyId);
         mAccess = access;
@@ -61,6 +63,7 @@ public class VehiclePropertyVerifier<T> {
         mRequiredProperty = requiredProperty;
         mConfigArrayVerifier = configArrayVerifier;
         mCarPropertyValueVerifier = carPropertyValueVerifier;
+        mAreaIdsVerifier = areaIdsVerifier;
     }
 
     public static <T> Builder<T> newBuilder(int propertyId, int access, int areaType,
@@ -176,7 +179,9 @@ public class VehiclePropertyVerifier<T> {
         assertWithMessage(mPropertyName + " must be " + mPropertyType + " type property")
                 .that(carPropertyConfig.getPropertyType()).isEqualTo(mPropertyType);
 
-        if (mAreaType == VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL) {
+        if (mAreaIdsVerifier.isPresent()) {
+            mAreaIdsVerifier.get().verify(carPropertyConfig.getAreaIds());
+        } else if (mAreaType == VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL) {
             assertWithMessage(
                     mPropertyName + "'s AreaIds must contain a single 0 since it is "
                             + areaTypeToString(mAreaType))
@@ -278,6 +283,10 @@ public class VehiclePropertyVerifier<T> {
         void verify(CarPropertyConfig<?> carPropertyConfig, CarPropertyValue<?> carPropertyValue);
     }
 
+    public interface AreaIdsVerifier {
+        void verify(int[] areaIds);
+    }
+
     public static class Builder<T> {
         private final int mPropertyId;
         private final int mAccess;
@@ -287,6 +296,7 @@ public class VehiclePropertyVerifier<T> {
         private boolean mRequiredProperty = false;
         private Optional<ConfigArrayVerifier> mConfigArrayVerifier = Optional.empty();
         private Optional<CarPropertyValueVerifier> mCarPropertyValueVerifier = Optional.empty();
+        private Optional<AreaIdsVerifier> mAreaIdsVerifier = Optional.empty();
 
         private Builder(int propertyId, int access, int areaType, int changeMode,
                 Class<T> propertyType) {
@@ -313,10 +323,15 @@ public class VehiclePropertyVerifier<T> {
             return this;
         }
 
+        public Builder<T> setAreaIdsVerifier(AreaIdsVerifier areaIdsVerifier) {
+            mAreaIdsVerifier = Optional.of(areaIdsVerifier);
+            return this;
+        }
+
         public VehiclePropertyVerifier<T> build() {
             return new VehiclePropertyVerifier<>(mPropertyId, mAccess, mAreaType, mChangeMode,
-                    mPropertyType,
-                    mRequiredProperty, mConfigArrayVerifier, mCarPropertyValueVerifier);
+                    mPropertyType, mRequiredProperty, mConfigArrayVerifier,
+                    mCarPropertyValueVerifier, mAreaIdsVerifier);
         }
     }
 
