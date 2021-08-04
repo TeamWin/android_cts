@@ -16,12 +16,17 @@
 
 package com.android.cts.mockime;
 
+import static java.lang.annotation.RetentionPolicy.SOURCE;
+
 import android.os.Bundle;
 import android.os.PersistableBundle;
 
 import androidx.annotation.ColorInt;
+import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
+import java.lang.annotation.Retention;
 
 /**
  * An immutable data store to control the behavior of {@link MockIme}.
@@ -44,7 +49,7 @@ public class ImeSettings {
     private static final String DRAWS_BEHIND_NAV_BAR = "drawsBehindNavBar";
     private static final String WINDOW_FLAGS = "WindowFlags";
     private static final String WINDOW_FLAGS_MASK = "WindowFlagsMask";
-    private static final String FULLSCREEN_MODE_ALLOWED = "FullscreenModeAllowed";
+    private static final String FULLSCREEN_MODE_POLICY = "FullscreenModePolicy";
     private static final String INPUT_VIEW_SYSTEM_UI_VISIBILITY = "InputViewSystemUiVisibility";
     private static final String WATERMARK_ENABLED = "WatermarkEnabled";
     private static final String HARD_KEYBOARD_CONFIGURATION_BEHAVIOR_ALLOWED =
@@ -57,6 +62,40 @@ public class ImeSettings {
 
     @NonNull
     private final PersistableBundle mBundle;
+
+
+    @Retention(SOURCE)
+    @IntDef(value = {
+            FullscreenModePolicy.NO_FULLSCREEN,
+            FullscreenModePolicy.FORCE_FULLSCREEN,
+            FullscreenModePolicy.OS_DEFAULT,
+    })
+    public @interface FullscreenModePolicy {
+        /**
+         * Let {@link MockIme} always return {@code false} from
+         * {@link android.inputmethodservice.InputMethodService#onEvaluateFullscreenMode()}.
+         *
+         * <p>This is chosen to be the default behavior of {@link MockIme} to make CTS tests most
+         * deterministic.</p>
+         */
+        int NO_FULLSCREEN = 0;
+
+        /**
+         * Let {@link MockIme} always return {@code true} from
+         * {@link android.inputmethodservice.InputMethodService#onEvaluateFullscreenMode()}.
+         *
+         * <p>This can be used to test the behaviors when a full-screen IME is running.</p>
+         */
+        int FORCE_FULLSCREEN = 1;
+
+        /**
+         * Let {@link MockIme} always return the default behavior of
+         * {@link android.inputmethodservice.InputMethodService#onEvaluateFullscreenMode()}.
+         *
+         * <p>This can be used to test the default behavior of that public API.</p>
+         */
+        int OS_DEFAULT = 2;
+    }
 
     ImeSettings(@NonNull String clientPackageName, @NonNull Bundle bundle) {
         mClientPackageName = clientPackageName;
@@ -74,8 +113,9 @@ public class ImeSettings {
         return mClientPackageName;
     }
 
-    public boolean fullscreenModeAllowed(boolean defaultValue) {
-        return mBundle.getBoolean(FULLSCREEN_MODE_ALLOWED, defaultValue);
+    @FullscreenModePolicy
+    public int fullscreenModePolicy() {
+        return mBundle.getInt(FULLSCREEN_MODE_POLICY);
     }
 
     @ColorInt
@@ -152,15 +192,14 @@ public class ImeSettings {
         private final PersistableBundle mBundle = new PersistableBundle();
 
         /**
-         * Controls whether fullscreen mode is allowed or not.
+         * Controls how MockIme reacts to
+         * {@link android.inputmethodservice.InputMethodService#onEvaluateFullscreenMode()}.
          *
-         * <p>By default, fullscreen mode is not allowed in {@link MockIme}.</p>
-         *
-         * @param allowed {@code true} if fullscreen mode is allowed
+         * @param policy one of {@link FullscreenModePolicy}
          * @see MockIme#onEvaluateFullscreenMode()
          */
-        public Builder setFullscreenModeAllowed(boolean allowed) {
-            mBundle.putBoolean(FULLSCREEN_MODE_ALLOWED, allowed);
+        public Builder setFullscreenModePolicy(@FullscreenModePolicy int policy) {
+            mBundle.putInt(FULLSCREEN_MODE_POLICY, policy);
             return this;
         }
 

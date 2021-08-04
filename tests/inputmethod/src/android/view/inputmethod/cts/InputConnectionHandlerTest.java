@@ -16,12 +16,16 @@
 
 package android.view.inputmethod.cts;
 
+import static android.view.inputmethod.cts.util.TestUtils.getOnMainSync;
+import static android.view.inputmethod.cts.util.TestUtils.runOnMainSync;
+
 import static com.android.cts.mockime.ImeEventStreamTestUtils.editorMatcher;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectBindInput;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectCommand;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -35,6 +39,7 @@ import android.text.InputType;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
+import android.view.inputmethod.InputMethodManager;
 import android.view.inputmethod.cts.util.EndToEndImeTestBase;
 import android.view.inputmethod.cts.util.HandlerInputConnection;
 import android.view.inputmethod.cts.util.TestActivity;
@@ -56,6 +61,7 @@ import org.junit.runner.RunWith;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Tests the thread-affinity in {@link InputConnection} callbacks provided by
@@ -175,6 +181,100 @@ public class InputConnectionHandlerTest extends EndToEndImeTestBase {
 
             assertEquals("commitText() must happen on the handler thread",
                     thread.getThreadId(), callingThreadId.get());
+        }
+    }
+
+    /**
+     * Test {@link InputConnection#reportFullscreenMode(boolean)} respects
+     * {@link InputConnection#getHandler()}.
+     */
+    @Test
+    public void testReportFullscreenMode() throws Exception {
+        try (InputConnectionHandlingThread thread = new InputConnectionHandlingThread();
+             MockImeSession imeSession = MockImeSession.create(
+                     InstrumentationRegistry.getInstrumentation().getContext(),
+                     InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                     new ImeSettings.Builder().setFullscreenModePolicy(
+                             ImeSettings.FullscreenModePolicy.FORCE_FULLSCREEN))) {
+
+            final AtomicInteger callingThreadId = new AtomicInteger(0);
+            final CountDownLatch latch = new CountDownLatch(1);
+
+            final class MyInputConnection extends HandlerInputConnection {
+                MyInputConnection() {
+                    super(thread.getHandler());
+                }
+
+                @Override
+                public boolean reportFullscreenMode(boolean enabled) {
+                    callingThreadId.set(Os.gettid());
+                    latch.countDown();
+                    return true;
+                }
+            }
+
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            final String marker = getTestMarker();
+
+            final AtomicReference<View> testEditorViewRef = new AtomicReference<>();
+            TestActivity.startSync(activity -> {
+                final LinearLayout layout = new LinearLayout(activity);
+                layout.setOrientation(LinearLayout.VERTICAL);
+
+                // Just to be conservative, we explicitly check MockImeSession#isActive() here when
+                // injecting our custom InputConnection implementation.
+                final View testEditor = new EditText(activity) {
+                    @Override
+                    public boolean onCheckIsTextEditor() {
+                        return imeSession.isActive();
+                    }
+
+                    @Override
+                    public InputConnection onCreateInputConnection(EditorInfo outAttrs) {
+                        if (imeSession.isActive()) {
+                            outAttrs.inputType = InputType.TYPE_CLASS_TEXT;
+                            outAttrs.privateImeOptions = marker;
+                            return new MyInputConnection();
+                        }
+                        return null;
+                    }
+                };
+
+                testEditor.requestFocus();
+                testEditorViewRef.set(testEditor);
+                layout.addView(testEditor);
+                return layout;
+            });
+
+            // Wait until the MockIme gets bound to the TestActivity.
+            expectBindInput(stream, Process.myPid(), TIMEOUT);
+
+            expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
+
+            assertFalse("InputMethodManager#isFullscreenMode() must return false",
+                    getOnMainSync(() -> InstrumentationRegistry.getInstrumentation().getContext()
+                            .getSystemService(InputMethodManager.class).isFullscreenMode()));
+
+            // In order to have an IME be shown in the fullscreen mode,
+            // SOFT_INPUT_STATE_ALWAYS_VISIBLE is insufficient.  An explicit API call is necessary.
+            runOnMainSync(() -> {
+                final View editor = testEditorViewRef.get();
+                editor.getContext().getSystemService(InputMethodManager.class)
+                        .showSoftInput(editor, 0);
+            });
+
+            expectEvent(stream, editorMatcher("onStartInputView", marker), TIMEOUT);
+
+            assertTrue("reportFullscreenMode() must be called",
+                    latch.await(TIMEOUT, TimeUnit.MILLISECONDS));
+
+            assertEquals("reportFullscreenMode() must happen on the handler thread",
+                    thread.getThreadId(), callingThreadId.get());
+
+            assertTrue("InputMethodManager#isFullscreenMode() must return true",
+                    getOnMainSync(() -> InstrumentationRegistry.getInstrumentation().getContext()
+                            .getSystemService(InputMethodManager.class).isFullscreenMode()));
         }
     }
 }
