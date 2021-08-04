@@ -21,6 +21,8 @@ import static com.android.cts.rollback.lib.RollbackUtils.getRollbackManager;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assert.fail;
+
 import android.Manifest;
 import android.content.rollback.RollbackInfo;
 import android.content.rollback.RollbackManager;
@@ -30,6 +32,7 @@ import androidx.test.InstrumentationRegistry;
 
 import com.android.cts.install.lib.Install;
 import com.android.cts.install.lib.InstallUtils;
+import com.android.cts.install.lib.LocalIntentSender;
 import com.android.cts.install.lib.TestApp;
 import com.android.cts.install.lib.Uninstall;
 import com.android.cts.rollback.lib.Rollback;
@@ -42,6 +45,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -188,6 +192,97 @@ public class RollbackManagerTest {
         assertThat(committedA).packagesContainsExactly(
                 Rollback.from(TestApp.A2).to(TestApp.A1),
                 Rollback.from(TestApp.B2).to(TestApp.B1));
+    }
+
+    /**
+     * Tests that the MANAGE_ROLLBACKS permission is required to call
+     * RollbackManager APIs.
+     */
+    @Test
+    public void testManageRollbacksPermission() throws Exception {
+        // We shouldn't be allowed to call any of the RollbackManager APIs
+        // without the MANAGE_ROLLBACKS permission.
+        InstallUtils.dropShellPermissionIdentity();
+        RollbackManager rm = RollbackUtils.getRollbackManager();
+
+        try {
+            rm.getAvailableRollbacks();
+            fail("expected SecurityException");
+        } catch (SecurityException e) {
+            // Expected.
+        }
+
+        try {
+            rm.getRecentlyCommittedRollbacks();
+            fail("expected SecurityException");
+        } catch (SecurityException e) {
+            // Expected.
+        }
+
+        try {
+            LocalIntentSender sender = new LocalIntentSender();
+            rm.commitRollback(0, Collections.emptyList(), sender.getIntentSender());
+            fail("expected SecurityException");
+        } catch (SecurityException e) {
+            // Expected.
+        }
+
+        try {
+            rm.reloadPersistedData();
+            fail("expected SecurityException");
+        } catch (SecurityException e) {
+            // Expected.
+        }
+
+        try {
+            rm.expireRollbackForPackage(TestApp.A);
+            fail("expected SecurityException");
+        } catch (SecurityException e) {
+            // Expected.
+        }
+    }
+
+    /**
+     * Tests that you cannot enable rollback for a package without the
+     * MANAGE_ROLLBACKS permission.
+     */
+    @Test
+    public void testEnableRollbackPermission() throws Exception {
+        InstallUtils.adoptShellPermissionIdentity(
+                Manifest.permission.INSTALL_PACKAGES,
+                Manifest.permission.DELETE_PACKAGES);
+
+        Install.single(TestApp.A1).commit();
+        Install.single(TestApp.A2).setEnableRollback().commit();
+
+        // We expect v2 of the app was installed, but rollback has not
+        // been enabled.
+        assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(2);
+        InstallUtils.adoptShellPermissionIdentity(
+                Manifest.permission.MANAGE_ROLLBACKS,
+                Manifest.permission.INSTALL_PACKAGES,
+                Manifest.permission.DELETE_PACKAGES);
+        assertThat(RollbackUtils.getAvailableRollback(TestApp.A)).isNull();
+    }
+
+    /**
+     * Tests that you cannot enable rollback for a non-module package when
+     * holding the MANAGE_ROLLBACKS permission without TEST_MANAGE_ROLLBACKS.
+     */
+    @Test
+    public void testNonModuleEnableRollback() throws Exception {
+        InstallUtils.adoptShellPermissionIdentity(
+                Manifest.permission.INSTALL_PACKAGES,
+                Manifest.permission.DELETE_PACKAGES,
+                Manifest.permission.MANAGE_ROLLBACKS);
+
+        Install.single(TestApp.A1).commit();
+        Install.single(TestApp.A2).setEnableRollback().commit();
+
+        // We expect v2 of the app was installed, but rollback has not
+        // been enabled because the test app is not a module.
+        assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(2);
+        assertThat(RollbackUtils.getAvailableRollback(TestApp.A)).isNull();
     }
 
     @Test
