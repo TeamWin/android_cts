@@ -23,6 +23,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.Manifest;
 import android.content.rollback.RollbackInfo;
+import android.content.rollback.RollbackManager;
 import android.provider.DeviceConfig;
 
 import androidx.test.InstrumentationRegistry;
@@ -112,6 +113,81 @@ public class RollbackManagerTest {
         assertThat(committed).packagesContainsExactly(
                 Rollback.from(TestApp.A2).to(TestApp.A1));
         assertThat(committed).causePackagesContainsExactly(TestApp.A2);
+    }
+
+    /**
+     * Tests rollbacks are properly persisted.
+     */
+    @Test
+    public void testSingleRollbackPersistence() throws Exception {
+        RollbackManager rm = RollbackUtils.getRollbackManager();
+
+        Install.single(TestApp.A1).commit();
+        Install.single(TestApp.A2).setEnableRollback().commit();
+        RollbackInfo rollbackA = RollbackUtils.waitForAvailableRollback(TestApp.A);
+        assertThat(rollbackA).isNotNull();
+
+        // Check the available rollback is persisted correctly
+        rm.reloadPersistedData();
+        rollbackA = RollbackUtils.getAvailableRollback(TestApp.A);
+        assertThat(rollbackA).packagesContainsExactly(Rollback.from(TestApp.A2).to(TestApp.A1));
+
+        // Rollback the app
+        TestApp cause = new TestApp("Foo", "com.android.tests.rollback.testapp.Foo",
+                /*versionCode*/ 42, /*isApex*/ false);
+        RollbackUtils.rollback(rollbackA.getRollbackId(), cause);
+        RollbackInfo committed = RollbackUtils.getCommittedRollback(TestApp.A);
+        assertThat(committed).isNotNull();
+
+        // Check the committed rollback is persisted correctly
+        rm.reloadPersistedData();
+        committed = RollbackUtils.getCommittedRollback(TestApp.A);
+        assertThat(committed).hasRollbackId(rollbackA.getRollbackId());
+        assertThat(committed).isNotStaged();
+        assertThat(committed).packagesContainsExactly(Rollback.from(TestApp.A2).to(TestApp.A1));
+        assertThat(committed).causePackagesContainsExactly(cause);
+    }
+
+    /**
+     * Tests rollbacks are properly persisted.
+     */
+    @Test
+    public void testMultiRollbackPersistence() throws Exception {
+        RollbackManager rm = RollbackUtils.getRollbackManager();
+
+        Install.multi(TestApp.A1, TestApp.B1).commit();
+        Install.multi(TestApp.A2, TestApp.B2).setEnableRollback().commit();
+        RollbackInfo rollbackA = RollbackUtils.waitForAvailableRollback(TestApp.A);
+        RollbackInfo rollbackB = RollbackUtils.waitForAvailableRollback(TestApp.B);
+        assertThat(rollbackA).isNotNull();
+        assertThat(rollbackB).isNotNull();
+
+        // Check the available rollback is persisted correctly
+        rm.reloadPersistedData();
+        rollbackA = RollbackUtils.getAvailableRollback(TestApp.A);
+        rollbackB = RollbackUtils.getAvailableRollback(TestApp.B);
+        assertThat(rollbackB).hasRollbackId(rollbackA.getRollbackId());
+        assertThat(rollbackA).packagesContainsExactly(
+                Rollback.from(TestApp.A2).to(TestApp.A1),
+                Rollback.from(TestApp.B2).to(TestApp.B1));
+
+        // Rollback the app
+        RollbackUtils.rollback(rollbackA.getRollbackId());
+        RollbackInfo committedA = RollbackUtils.getCommittedRollback(TestApp.A);
+        RollbackInfo committedB = RollbackUtils.getCommittedRollback(TestApp.B);
+        assertThat(committedA).isNotNull();
+        assertThat(committedB).isNotNull();
+
+        // Check the committed rollback is persisted correctly
+        rm.reloadPersistedData();
+        committedA = RollbackUtils.getCommittedRollback(TestApp.A);
+        committedB = RollbackUtils.getCommittedRollback(TestApp.B);
+        assertThat(committedA).hasRollbackId(rollbackA.getRollbackId());
+        assertThat(committedB).hasRollbackId(rollbackA.getRollbackId());
+        assertThat(committedA).isNotStaged();
+        assertThat(committedA).packagesContainsExactly(
+                Rollback.from(TestApp.A2).to(TestApp.A1),
+                Rollback.from(TestApp.B2).to(TestApp.B1));
     }
 
     @Test
