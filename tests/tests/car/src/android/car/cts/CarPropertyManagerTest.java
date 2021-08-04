@@ -500,7 +500,12 @@ public class CarPropertyManagerTest extends CarApiTestBase {
                                     VehicleAreaSeat.SEAT_ROW_1_LEFT,
                                     VehicleAreaSeat.SEAT_ROW_1_CENTER,
                                     VehicleAreaSeat.SEAT_ROW_1_RIGHT).build());
-                }).build().verify(mCarPropertyManager);
+                }).setAreaIdsVerifier(areaIds -> assertWithMessage(
+                "Even though INFO_DRIVER_SEAT is VEHICLE_AREA_TYPE_SEAT, it is meant to be "
+                        + "VEHICLE_AREA_TYPE_GLOBAL, so its AreaIds must contain a single 0")
+                .that(areaIds).isEqualTo(
+                        new int[]{VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL})).build()
+                .verify(mCarPropertyManager);
     }
 
     @Test
