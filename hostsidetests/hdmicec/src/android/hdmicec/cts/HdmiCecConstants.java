@@ -75,9 +75,11 @@ public final class HdmiCecConstants {
     public static final int CEC_VERSION_1_4 = 0x05;
     public static final int CEC_VERSION_2_0 = 0x06;
 
-    // CEC Power Status
-    public static final int CEC_POWER_STATUS_ON = 0;
-    public static final int CEC_POWER_STATUS_STANDBY = 1;
+    /** CEC Power Status */
+    public static final int CEC_POWER_STATUS_ON = 0x0;
+    public static final int CEC_POWER_STATUS_STANDBY = 0x1;
+    public static final int CEC_POWER_STATUS_IN_TRANSITION_TO_ON = 0x2;
+    public static final int CEC_POWER_STATUS_IN_TRANSITION_TO_STANDBY = 0x3;
 
     // CEC Device feature list
     public static final String HDMI_CEC_FEATURE = "feature:android.hardware.hdmi.cec";
