@@ -74,6 +74,10 @@ public final class SetQueryHelper<E extends Queryable, F, G extends Query<F>> im
         return true;
     }
 
+    public static <F> boolean matches(SetQuery<?, F, ?> query, Set<F> value) {
+        return query.matches(value);
+    }
+
     private boolean checkContainsAtLeast(Set<F> value) {
         Set<F> v = new HashSet<>(value);
 

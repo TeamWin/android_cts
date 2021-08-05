@@ -68,4 +68,8 @@ public final class BooleanQueryHelper<E extends Queryable> implements BooleanQue
     public boolean matches(Boolean value) {
         return (mTargetValue == null) || mTargetValue == value;
     }
+
+    public static boolean matches(BooleanQuery<?> query, Boolean value) {
+        return query.matches(value);
+    }
 }
