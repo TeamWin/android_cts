@@ -736,7 +736,9 @@ def post_raw_sensitivity_boost(props):
   Returns:
     Boolean. True if android.control.postRawSensitivityBoost is supported.
   """
-  return props.get('android.control.postRawSensitivityBoostRange') != [100, 100]
+  return (
+      'android.control.postRawSensitivityBoostRange' in props.keys() and
+      props.get('android.control.postRawSensitivityBoostRange') != [100, 100])
 
 
 def sensor_fusion_capable(props):
