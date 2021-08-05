@@ -52,9 +52,13 @@ _BLUE = {'color': 'BLUE',
 _COLORS_CHECKED_RGB = (_BLACK, _WHITE, _RED, _GREEN, _BLUE)
 _COLORS_CHECKED_MONO = (_BLACK, _WHITE)
 _COLORS_CHECKED_UPGRADE = (_BLACK,)
+_COLORS_CHECKED_BLACK = (_WHITE,) # To make sure testPatternData is ignored
 _FULL_CHECK_FIRST_API_LEVEL = 31
 _SOLID_COLOR_TEST_PATTERN = 1
+_BLACK_TEST_PATTERN = 5
 
+_PATTERN_NAMES = { _SOLID_COLOR_TEST_PATTERN: 'SOLID_COLOR',
+                   _BLACK_TEST_PATTERN: 'BLACK' }
 
 def check_solid_color(img, exp_values, color):
   """Checks solid color test pattern image matches expected values.
@@ -100,6 +104,7 @@ class SolidColorTestPattern(its_base_test.ItsBaseTest):
     2: COLOR_BARS
     3: COLOR_BARS_FADE_TO_GREY
     4: PN9
+    5: BLACK
   """
 
   def test_solid_color_test_pattern(self):
@@ -110,25 +115,28 @@ class SolidColorTestPattern(its_base_test.ItsBaseTest):
       props = cam.get_camera_properties()
       props = cam.override_with_hidden_physical_camera_props(props)
 
-      # Determine patterns to check based on API level
+      # Determine patterns to check based on API level and test pattern
       first_api_level = its_session_utils.get_first_api_level(self.dut.serial)
       if first_api_level >= _FULL_CHECK_FIRST_API_LEVEL:
         if camera_properties_utils.mono_camera(props):
-          colors_checked = _COLORS_CHECKED_MONO
+          colors_checked_solid = _COLORS_CHECKED_MONO
         else:
-          colors_checked = _COLORS_CHECKED_RGB
+          colors_checked_solid = _COLORS_CHECKED_RGB
       else:
-        colors_checked = _COLORS_CHECKED_UPGRADE
+        colors_checked_solid = _COLORS_CHECKED_UPGRADE
+
+      # Determine which patterns are available to test on the device
+      available_patterns = set(props['android.sensor.availableTestPatternModes'])
+      patterns_to_check = available_patterns.intersection(
+          { _SOLID_COLOR_TEST_PATTERN, _BLACK_TEST_PATTERN } )
 
       # Determine if test is run or skipped
-      available_patterns = props['android.sensor.availableTestPatternModes']
       if cam.is_camera_privacy_mode_supported():
-        if _SOLID_COLOR_TEST_PATTERN not in available_patterns:
+        if len(patterns_to_check) == 0:
           raise AssertionError(
-              'SOLID_COLOR not in android.sensor.availableTestPatternModes.')
+              'neither SOLID_COLOR or BLACK ar in android.sensor.availableTestPatternModes.')
       else:
-        camera_properties_utils.skip_unless(
-            _SOLID_COLOR_TEST_PATTERN in available_patterns)
+        camera_properties_utils.skip_unless(len(patterns_to_check) > 0 )
 
       # Take extra frames if no per-frame control
       if camera_properties_utils.per_frame_control(props):
@@ -139,35 +147,48 @@ class SolidColorTestPattern(its_base_test.ItsBaseTest):
       test_failed = False
       colors_failed = []
       # Start checking patterns
-      for color in colors_checked:
-        logging.debug('Assigned RGGB values %s',
-                      str([int(c/_SAT) for c in color['RGGB']]))
-        req = capture_request_utils.auto_capture_request()
-        req['android.sensor.testPatternMode'] = camera_properties_utils.SOLID_COLOR_TEST_PATTERN
-        req['android.sensor.testPatternData'] = color['RGGB']
-        fmt = {'format': 'yuv'}
-        caps = cam.do_capture([req]*num_frames, fmt)
-        cap = caps[-1]
-        logging.debug('Capture metadata RGGB testPatternData: %s',
-                      str(cap['metadata']['android.sensor.testPatternData']))
-        # Save test pattern image
-        img = image_processing_utils.convert_capture_to_rgb_image(
-            cap, props=props)
-        captured_color = color['color']
-        image_processing_utils.write_image(
-            img, f'{os.path.join(self.log_path, _NAME)}_{captured_color}.jpg')
+      for pattern in patterns_to_check:
+        if pattern == _SOLID_COLOR_TEST_PATTERN:
+          colors_checked = colors_checked_solid
+        else:
+          colors_checked = _COLORS_CHECKED_BLACK
 
-        # Check solid pattern for correctness
-        color_test_failed = check_solid_color(img, color['RGB'], captured_color)
+        captured_pattern = _PATTERN_NAMES[pattern]
+        # Start checking colors
+        for color in colors_checked:
+          logging.debug('Assigned RGGB values %s',
+                        str([int(c/_SAT) for c in color['RGGB']]))
+          req = capture_request_utils.auto_capture_request()
+          req['android.sensor.testPatternMode'] = pattern
+          req['android.sensor.testPatternData'] = color['RGGB']
+          fmt = {'format': 'yuv'}
+          caps = cam.do_capture([req]*num_frames, fmt)
+          cap = caps[-1]
+          logging.debug('Capture metadata RGGB pattern: %s, testPatternData: %s',
+                        captured_pattern,
+                        str(cap['metadata']['android.sensor.testPatternData']))
+          # Save test pattern image
+          img = image_processing_utils.convert_capture_to_rgb_image(
+              cap, props=props)
+          captured_color = color['color']
+          image_processing_utils.write_image(
+              img,
+              f'{os.path.join(self.log_path, _NAME)}_{captured_color}_{captured_pattern}.jpg')
 
-        if color_test_failed:
-          colors_failed.append(captured_color)
-          if not test_failed:
-            test_failed = True
+          # Check solid pattern for correctness
+          if pattern == _SOLID_COLOR_TEST_PATTERN:
+            color_test_failed = check_solid_color(img, color['RGB'], captured_color)
+          else:
+            color_test_failed = check_solid_color(img, _BLACK['RGB'], _BLACK['color'])
 
-        logging.debug('Solid color test pattern for color %s is a %s',
-                      captured_color,
-                      ('FAIL' if color_test_failed else 'PASS'))
+          if color_test_failed:
+            colors_failed.append(f'{captured_pattern}/{captured_color}')
+            if not test_failed:
+              test_failed = True
+
+          logging.debug('Solid color test pattern for pattern %s color %s is a %s',
+                        captured_pattern, captured_color,
+                        ('FAIL' if color_test_failed else 'PASS'))
       if test_failed:
         raise AssertionError('Test solid_color_test_pattern failed for colors:'
                              f'{colors_failed}')
