@@ -16,7 +16,10 @@
 
 package android.app.cts;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import android.app.ActivityOptions;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.test.AndroidTestCase;
 
@@ -27,5 +30,22 @@ public class ActivityOptionsTest extends AndroidTestCase {
         Bundle bundle = options.toBundle();
 
         assertNotNull(bundle);
+    }
+
+    public void testActivityOptionsBundle_fromBundle() {
+        final int displayId = 9;
+        final Rect bounds = new Rect(0, 10, 100, 90);
+        // Construct some options with set values
+        ActivityOptions opts = ActivityOptions.makeBasic();
+        opts.setLaunchDisplayId(displayId);
+        opts.setLockTaskEnabled(true);
+        opts.setLaunchBounds(bounds);
+
+        Bundle optsBundle = opts.toBundle();
+
+        ActivityOptions opts2 = ActivityOptions.fromBundle(optsBundle);
+        assertThat(opts2.getLaunchDisplayId()).isEqualTo(displayId);
+        assertThat(opts2.getLockTaskMode()).isTrue();
+        assertThat(opts2.getLaunchBounds()).isEqualTo(bounds);
     }
 }
