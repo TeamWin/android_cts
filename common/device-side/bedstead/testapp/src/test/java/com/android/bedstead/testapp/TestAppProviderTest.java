@@ -20,6 +20,8 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.testng.Assert.assertThrows;
 
+import com.android.queryable.queries.StringQuery;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -38,6 +40,11 @@ public class TestAppProviderTest {
     private static final String NOT_EXISTING_PACKAGENAME = "not.existing.test.app";
 
     private static final String QUERY_ONLY_TEST_APP_PACKAGE_NAME = "com.android.RemoteDPC";
+
+    private static final String PERMISSION_DECLARED_BY_TESTAPP = "android.permission.READ_CALENDAR";
+
+    private static final String METADATA_KEY = "test-metadata-key";
+    private static final String METADATA_VALUE = "test-metadata-value";
 
     private TestAppProvider mTestAppProvider;
 
@@ -113,6 +120,80 @@ public class TestAppProviderTest {
                         .get()).isNotNull();
     }
 
-    // TODO(scottjonathan): Once we support features other than package name, test that we can get
-    //  different test apps by querying for the same thing
+    @Test
+    public void query_byFeature_returnsDifferentTestAppsForSameQuery() {
+        TestApp firstResult = mTestAppProvider.query()
+                .whereTestOnly().isFalse()
+                .get();
+        TestApp secondResult = mTestAppProvider.query()
+                .whereTestOnly().isFalse()
+                .get();
+
+        assertThat(firstResult).isNotEqualTo(secondResult);
+    }
+
+    @Test
+    public void query_testOnly_returnsMatching() {
+        TestApp testApp = mTestAppProvider.query()
+                .whereTestOnly().isTrue()
+                .get();
+
+        assertThat(testApp.testOnly()).isTrue();
+    }
+
+    @Test
+    public void query_notTestOnly_returnsMatching() {
+        TestApp testApp = mTestAppProvider.query()
+                .whereTestOnly().isFalse()
+                .get();
+
+        assertThat(testApp.testOnly()).isFalse();
+    }
+
+    @Test
+    public void query_minSdkVersion_returnsMatching() {
+        TestApp testApp = mTestAppProvider.query()
+                .whereMinSdkVersion().isGreaterThanOrEqualTo(28)
+                .get();
+
+        assertThat(testApp.minSdkVersion()).isAtLeast(28);
+    }
+
+    @Test
+    public void query_targetSdkVersion_returnsMatching() {
+        TestApp testApp = mTestAppProvider.query()
+                .whereTargetSdkVersion().isGreaterThanOrEqualTo(28)
+                .get();
+
+        assertThat(testApp.targetSdkVersion()).isAtLeast(28);
+    }
+
+    @Test
+    public void query_withPermission_returnsMatching() {
+        TestApp testApp = mTestAppProvider.query()
+                .wherePermissions().contains(
+                        StringQuery.string().isEqualTo(PERMISSION_DECLARED_BY_TESTAPP)
+                ).get();
+
+        assertThat(testApp.permissions()).contains(PERMISSION_DECLARED_BY_TESTAPP);
+    }
+
+    @Test
+    public void query_withoutPermission_returnsMatching() {
+        TestApp testApp = mTestAppProvider.query()
+                .wherePermissions().doesNotContain(
+                        StringQuery.string().isEqualTo(PERMISSION_DECLARED_BY_TESTAPP)
+                ).get();
+
+        assertThat(testApp.permissions()).doesNotContain(PERMISSION_DECLARED_BY_TESTAPP);
+    }
+
+    @Test
+    public void query_metadata_returnsMatching() {
+        TestApp testApp = mTestAppProvider.query()
+                .whereMetadata().key(METADATA_KEY).stringValue().isEqualTo(METADATA_VALUE)
+                .get();
+
+        assertThat(testApp.metadata().get(METADATA_KEY)).isEqualTo(METADATA_VALUE);
+    }
 }

@@ -19,6 +19,7 @@ package com.android.bedstead.testapp;
 import static com.android.compatibility.common.util.FileUtils.readInputStreamFully;
 
 import android.content.Context;
+import android.os.Bundle;
 import android.os.UserHandle;
 
 import com.android.bedstead.nene.TestApis;
@@ -32,6 +33,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Set;
 
 /** Represents a single test app which can be installed and interacted with. */
 @TestAppSender
@@ -135,6 +137,40 @@ public class TestApp {
     /** The package name of the test app. */
     public String packageName() {
         return mDetails.mApp.getPackageName();
+    }
+
+    /** The testOnly attribute for the test app. */
+    public boolean testOnly() {
+        return mDetails.mApp.getTestOnly();
+    }
+
+    /** The minSdkVersion of the test app. */
+    public int minSdkVersion() {
+        return mDetails.mApp.getUsesSdk().getMinSdkVersion();
+    }
+
+    /** The maxSdkVersion of the test app. */
+    public int maxSdkVersion() {
+        return mDetails.mApp.getUsesSdk().getMaxSdkVersion();
+    }
+
+    /** The targetSdkVersion of the test app. */
+    public int targetSdkVersion() {
+        return mDetails.mApp.getUsesSdk().getTargetSdkVersion();
+    }
+
+    /** The permissions declared by the test app. */
+    public Set<String> permissions() {
+        return mDetails.mPermissions;
+    }
+
+    /**
+     * The metadata declared by the test app.
+     *
+     * <p>Note that currently all values are of type String.
+     */
+    public Bundle metadata() {
+        return mDetails.mMetadata;
     }
 
     @Override
