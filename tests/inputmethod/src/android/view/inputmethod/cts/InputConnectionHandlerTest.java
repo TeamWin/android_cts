@@ -29,6 +29,8 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import android.content.Context;
+import android.graphics.Color;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Process;
@@ -37,13 +39,13 @@ import android.platform.test.annotations.LargeTest;
 import android.system.Os;
 import android.text.InputType;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputMethodManager;
 import android.view.inputmethod.cts.util.EndToEndImeTestBase;
 import android.view.inputmethod.cts.util.HandlerInputConnection;
 import android.view.inputmethod.cts.util.TestActivity;
-import android.widget.EditText;
 import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
@@ -73,6 +75,7 @@ import java.util.concurrent.atomic.AtomicReference;
 @RunWith(AndroidJUnit4.class)
 public class InputConnectionHandlerTest extends EndToEndImeTestBase {
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
+    private static final int TEST_VIEW_HEIGHT = 10;
 
     private static final String TEST_MARKER_PREFIX =
             "android.view.inputmethod.cts.InputConnectionHandlerTest";
@@ -105,6 +108,21 @@ public class InputConnectionHandlerTest extends EndToEndImeTestBase {
             } catch (InterruptedException e) {
                 fail("Failed to stop the thread: " + e);
             }
+        }
+    }
+
+    /**
+     * A mostly-minimum implementation of {@link View} that can be used to test custom
+     * implementations of {@link View#onCreateInputConnection(EditorInfo)}.
+     */
+    static class TestEditor extends View {
+        TestEditor(@NonNull Context context) {
+            super(context);
+            setBackgroundColor(Color.YELLOW);
+            setFocusableInTouchMode(true);
+            setFocusable(true);
+            setLayoutParams(new ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, TEST_VIEW_HEIGHT));
         }
     }
 
@@ -146,7 +164,7 @@ public class InputConnectionHandlerTest extends EndToEndImeTestBase {
 
                 // Just to be conservative, we explicitly check MockImeSession#isActive() here when
                 // injecting our custom InputConnection implementation.
-                final View testEditor = new EditText(activity) {
+                final TestEditor testEditor = new TestEditor(activity) {
                     @Override
                     public boolean onCheckIsTextEditor() {
                         return imeSession.isActive();
@@ -224,7 +242,7 @@ public class InputConnectionHandlerTest extends EndToEndImeTestBase {
 
                 // Just to be conservative, we explicitly check MockImeSession#isActive() here when
                 // injecting our custom InputConnection implementation.
-                final View testEditor = new EditText(activity) {
+                final TestEditor testEditor = new TestEditor(activity) {
                     @Override
                     public boolean onCheckIsTextEditor() {
                         return imeSession.isActive();
