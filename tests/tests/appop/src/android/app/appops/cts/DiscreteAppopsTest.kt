@@ -560,6 +560,8 @@ class DiscreteAppopsTest {
         runWithShellPermissionIdentity {
             DeviceConfig.setProperty(NAMESPACE_PRIVACY, PROPERTY_CUTOFF, 120000L.toString(), false)
         }
+        // Pause to give the AppOpsService (DiscreteRegistry) time to pick up the new value.
+        Thread.sleep(1000)
 
         waitUntilSafelyInTimeQuant(DEFAULT_TIME_QUANT_MILLIS, SAFETY_MARGIN_MILLIS)
         val timeStamp = System.currentTimeMillis() /
