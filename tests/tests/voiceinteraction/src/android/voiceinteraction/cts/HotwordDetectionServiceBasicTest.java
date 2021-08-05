@@ -26,6 +26,10 @@ import android.app.Instrumentation;
 import android.app.compat.CompatChanges;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.media.AudioAttributes;
+import android.media.AudioFormat;
+import android.media.AudioRecord;
+import android.media.MediaRecorder;
 import android.os.ParcelFileDescriptor;
 import android.os.Parcelable;
 import android.os.Process;
@@ -36,6 +40,7 @@ import android.service.voice.HotwordDetectionService;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.Until;
+import android.util.Log;
 import android.voiceinteraction.common.Utils;
 import android.voiceinteraction.service.EventPayloadParcelable;
 import android.voiceinteraction.service.MainHotwordDetectionService;
@@ -216,6 +221,44 @@ public final class HotwordDetectionServiceBasicTest
 
         verifyDetectedResult(
                 result, MainHotwordDetectionService.DETECTED_RESULT_AFTER_STOP_DETECTION);
+    }
+
+    @Test
+    @RequiresDevice
+    public void testHotwordDetectionService_concurrentCapture() throws Throwable {
+        // Create SoftwareHotwordDetector and wait the HotwordDetectionService ready
+        testHotwordDetection(Utils.HOTWORD_DETECTION_SERVICE_FROM_SOFTWARE_TRIGGER_TEST,
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS);
+
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            AudioRecord record =
+                    new AudioRecord.Builder()
+                            .setAudioAttributes(
+                                    new AudioAttributes.Builder()
+                                            .setInternalCapturePreset(MediaRecorder.AudioSource.MIC)
+                                            .build())
+                            .setAudioFormat(
+                                    new AudioFormat.Builder()
+                                            .setChannelMask(AudioFormat.CHANNEL_IN_MONO)
+                                            .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                                            .build())
+                            .setBufferSizeInBytes(10240) // something large enough to not fail
+                            .build();
+            assertThat(record.getState()).isEqualTo(AudioRecord.STATE_INITIALIZED);
+
+            try {
+                record.startRecording();
+                verifyDetectedResult(
+                        performAndGetDetectionResult(
+                                Utils.HOTWORD_DETECTION_SERVICE_MIC_ONDETECT_TEST),
+                        MainHotwordDetectionService.DETECTED_RESULT);
+                // TODO: Test that it still works after restarting the process or killing audio
+                //  server.
+            } finally {
+                record.release();
+            }
+        });
     }
 
     @Test
