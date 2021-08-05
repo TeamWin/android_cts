@@ -28,6 +28,8 @@ public interface SetQuery<E extends Queryable, F, G extends Query<F>> extends Qu
     }
 
     IntegerQuery<E> size();
+    E isEmpty();
+    E isNotEmpty();
 
     E contains(G... objects);
     E doesNotContain(G... objects);

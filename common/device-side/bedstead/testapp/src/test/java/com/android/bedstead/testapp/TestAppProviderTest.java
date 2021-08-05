@@ -16,11 +16,12 @@
 
 package com.android.bedstead.testapp;
 
+import static com.android.queryable.queries.ActivityQuery.activity;
+import static com.android.queryable.queries.StringQuery.string;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.testng.Assert.assertThrows;
-
-import com.android.queryable.queries.StringQuery;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -29,6 +30,7 @@ import org.junit.runners.JUnit4;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @RunWith(JUnit4.class)
 public class TestAppProviderTest {
@@ -38,6 +40,10 @@ public class TestAppProviderTest {
 
     // Expects that this package name does not match an actual test app
     private static final String NOT_EXISTING_PACKAGENAME = "not.existing.test.app";
+
+    // Expected to be a class name which is used in a test app
+    private static final String KNOWN_EXISTING_TESTAPP_ACTIVITY_CLASSNAME =
+            "android.testapp.activity";
 
     private static final String QUERY_ONLY_TEST_APP_PACKAGE_NAME = "com.android.RemoteDPC";
 
@@ -172,7 +178,7 @@ public class TestAppProviderTest {
     public void query_withPermission_returnsMatching() {
         TestApp testApp = mTestAppProvider.query()
                 .wherePermissions().contains(
-                        StringQuery.string().isEqualTo(PERMISSION_DECLARED_BY_TESTAPP)
+                        string().isEqualTo(PERMISSION_DECLARED_BY_TESTAPP)
                 ).get();
 
         assertThat(testApp.permissions()).contains(PERMISSION_DECLARED_BY_TESTAPP);
@@ -182,7 +188,7 @@ public class TestAppProviderTest {
     public void query_withoutPermission_returnsMatching() {
         TestApp testApp = mTestAppProvider.query()
                 .wherePermissions().doesNotContain(
-                        StringQuery.string().isEqualTo(PERMISSION_DECLARED_BY_TESTAPP)
+                        string().isEqualTo(PERMISSION_DECLARED_BY_TESTAPP)
                 ).get();
 
         assertThat(testApp.permissions()).doesNotContain(PERMISSION_DECLARED_BY_TESTAPP);
@@ -195,5 +201,37 @@ public class TestAppProviderTest {
                 .get();
 
         assertThat(testApp.metadata().get(METADATA_KEY)).isEqualTo(METADATA_VALUE);
+    }
+
+    @Test
+    public void query_withExistingActivity_returnsMatching() {
+        TestApp testApp = mTestAppProvider.query()
+                .whereActivities().contains(
+                        activity().activityClass()
+                            .className().isEqualTo(KNOWN_EXISTING_TESTAPP_ACTIVITY_CLASSNAME)
+                )
+                .get();
+
+        Set<String> activityClassNames = testApp.activities().stream()
+                .map(a -> a.className()).collect(Collectors.toSet());
+        assertThat(activityClassNames).contains(KNOWN_EXISTING_TESTAPP_ACTIVITY_CLASSNAME);
+    }
+
+    @Test
+    public void query_withAnyActivity_returnsMatching() {
+        TestApp testApp = mTestAppProvider.query()
+                .whereActivities().isNotEmpty()
+                .get();
+
+        assertThat(testApp.activities()).isNotEmpty();
+    }
+
+    @Test
+    public void query_withNoActivity_returnsMatching() {
+        TestApp testApp = mTestAppProvider.query()
+                .whereActivities().isEmpty()
+                .get();
+
+        assertThat(testApp.activities()).isEmpty();
     }
 }

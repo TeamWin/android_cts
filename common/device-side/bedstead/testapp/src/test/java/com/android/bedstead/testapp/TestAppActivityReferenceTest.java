@@ -21,8 +21,8 @@ import static com.google.common.truth.Truth.assertThat;
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnPrimaryUser;
-import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnSecondaryUser;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnProfileOwnerProfile;
+import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnSecondaryUser;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.activities.Activity;
 import com.android.bedstead.nene.users.UserReference;
@@ -54,7 +54,7 @@ public class TestAppActivityReferenceTest {
     @IncludeRunOnSecondaryUser
     @IncludeRunOnProfileOwnerProfile
     public void start_activityIsStarted() {
-        TestApp testApp = mTestAppProvider.any(); // TODO(scottjonathan): specify must have activity
+        TestApp testApp = mTestAppProvider.query().whereActivities().isNotEmpty().get();
         try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
             Activity<TestAppActivity> activity = testAppInstance.activities().any().start();
 
@@ -65,7 +65,7 @@ public class TestAppActivityReferenceTest {
 
     @Test
     public void remote_executes() {
-        TestApp testApp = mTestAppProvider.any(); // TODO(scottjonathan): specify must have activity
+        TestApp testApp = mTestAppProvider.query().whereActivities().isNotEmpty().get();
         try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
             Activity<TestAppActivity> activity = testAppInstance.activities().any().start();
 
