@@ -248,6 +248,15 @@ public class CarPropertyManagerTest extends CarApiTestBase {
                 Float.class).requireProperty().build().verify(mCarPropertyManager);
     }
 
+    @Test
+    public void testPerfVehicleSpeedDisplayIfSupported() {
+        VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.PERF_VEHICLE_SPEED_DISPLAY,
+                CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS,
+                Float.class).build().verify(mCarPropertyManager);
+    }
+
     @CddTest(requirement = "2.5.1")
     @Test
     public void testMustSupportParkingBrakeOn() {
@@ -491,7 +500,12 @@ public class CarPropertyManagerTest extends CarApiTestBase {
                                     VehicleAreaSeat.SEAT_ROW_1_LEFT,
                                     VehicleAreaSeat.SEAT_ROW_1_CENTER,
                                     VehicleAreaSeat.SEAT_ROW_1_RIGHT).build());
-                }).build().verify(mCarPropertyManager);
+                }).setAreaIdsVerifier(areaIds -> assertWithMessage(
+                "Even though INFO_DRIVER_SEAT is VEHICLE_AREA_TYPE_SEAT, it is meant to be "
+                        + "VEHICLE_AREA_TYPE_GLOBAL, so its AreaIds must contain a single 0")
+                .that(areaIds).isEqualTo(
+                        new int[]{VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL})).build()
+                .verify(mCarPropertyManager);
     }
 
     @Test

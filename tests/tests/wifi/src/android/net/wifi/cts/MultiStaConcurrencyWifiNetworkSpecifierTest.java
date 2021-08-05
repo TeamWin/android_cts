@@ -35,10 +35,10 @@ import android.os.Build;
 import android.platform.test.annotations.AppModeFull;
 import android.support.test.uiautomator.UiDevice;
 
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.LargeTest;
 import androidx.test.filters.SdkSuppress;
-import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
-import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.ShellIdentityUtils;
@@ -68,7 +68,7 @@ import java.util.List;
  */
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
 @AppModeFull(reason = "Cannot get WifiManager in instant app mode")
-@SmallTest
+@LargeTest
 @RunWith(AndroidJUnit4.class)
 public class MultiStaConcurrencyWifiNetworkSpecifierTest extends WifiJUnit4TestBase {
     private static final String TAG = "MultiStaConcurrencyWifiNetworkSpecifierTest";
