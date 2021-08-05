@@ -30,6 +30,7 @@
         <option name="test-file-name" value="CtsCarPermissionCarInfoTest.apk"/>
         <option name="test-file-name" value="CtsCarPermissionCarEnergyTest.apk"/>
         <option name="test-file-name" value="CtsCarPermissionCarSpeedTest.apk"/>
+        <option name="test-file-name" value="CtsCarPermissionReadCarDisplayUnitsTest.apk"/>
     </target_preparer>
 
     <test class="com.android.tradefed.testtype.AndroidJUnitTest">
@@ -54,5 +55,10 @@
         <option name="package" value="android.car.cts.permissioncarspeed"/>
         <option name="class"
                 value="android.car.cts.permissioncarspeed.PermissionCarSpeedTest"/>
+    </test>
+    <test class="com.android.tradefed.testtype.AndroidJUnitTest">
+        <option name="package" value="android.car.cts.permissionreadcardisplayunits"/>
+        <option name="class"
+                value="android.car.cts.permissionreadcardisplayunits.PermissionReadCarDisplayUnitsTest"/>
     </test>
 </configuration>
