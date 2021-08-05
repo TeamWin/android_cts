@@ -32,12 +32,12 @@ import java.util.Set;
 public class TestAppProviderTest {
 
     // Expects that this package name matches an actual test app
-    private static final String EXISTING_PACKAGENAME = "android.EmptyTestApp";
+    private static final String EXISTING_PACKAGENAME = "com.android.bedstead.testapp.EmptyTestApp";
 
     // Expects that this package name does not match an actual test app
     private static final String NOT_EXISTING_PACKAGENAME = "not.existing.test.app";
 
-    private static final String QUERY_ONLY_TEST_APP_PACKAGE_NAME = "android.RemoteDPCTestApp";
+    private static final String QUERY_ONLY_TEST_APP_PACKAGE_NAME = "com.android.RemoteDPC";
 
     private TestAppProvider mTestAppProvider;
 

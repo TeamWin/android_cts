@@ -57,7 +57,8 @@ public class DevicePolicyTest {
     public static final DeviceState sDeviceState = new DeviceState();
 
     //  TODO(180478924): We shouldn't need to hardcode this
-    private static final String DEVICE_ADMIN_TESTAPP_PACKAGE_NAME = "android.DeviceAdminTestApp";
+    private static final String DEVICE_ADMIN_TESTAPP_PACKAGE_NAME =
+            "com.android.bedstead.testapp.DeviceAdminTestApp";
     private static final ComponentName NON_EXISTING_DPC_COMPONENT_NAME =
             new ComponentName("com.a.package", "com.a.package.Receiver");
     private static final ComponentName DPC_COMPONENT_NAME =

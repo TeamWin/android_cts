@@ -17,7 +17,7 @@
   -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="android.EmptyTestApp">
+          package="com.android.bedstead.testapp.EmptyTestApp">
     <application
         android:appComponentFactory="com.android.bedstead.testapp.TestAppAppComponentFactory">
 

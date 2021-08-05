@@ -109,7 +109,7 @@ public class LockTaskTest {
 
     private static final TestAppProvider sTestAppProvider = new TestAppProvider();
     private static final TestApp sLockTaskTestApp = sTestAppProvider.query()
-            .wherePackageName().isEqualTo("android.LockTaskApp")
+            .wherePackageName().isEqualTo("com.android.bedstead.testapp.LockTaskApp")
             .get(); // TODO(scottjonathan): filter by containing activity not by package name
     private static final TestApp sTestApp = sTestAppProvider.any();
 
