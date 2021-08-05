@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package com.android.bedstead.testapp;
+
+message TestAppIndex {
+  repeated AndroidApp apps = 1;
+}
+
+message AndroidApp {
+  string apk_name = 1;
+  string package_name = 2;
+}

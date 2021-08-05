@@ -14,19 +14,32 @@
 
 import argparse
 from pathlib import Path
+import subprocess
+from src.library.main.proto.testapp_protos_pb2 import TestAppIndex, AndroidApp
 
 def main():
     args_parser = argparse.ArgumentParser(description='Generate index for test apps')
     args_parser.add_argument('--directory', help='Directory containing test apps')
+    args_parser.add_argument('--aapt2', help='The path to aapt2')
     args = args_parser.parse_args()
 
     pathlist = Path(args.directory).rglob('*.apk')
     file_names = [p.name for p in pathlist]
 
-    # TODO(scottjonathan): Replace this with a proto with actual details
-    with open(args.directory + "/index.txt", "w") as outfile:
-        for file_name in file_names:
-            print(file_name.rsplit(".", 1)[0], file=outfile)
+    index = TestAppIndex()
+
+    for file_name in file_names:
+        manifest_content = str(subprocess.check_output(
+            [args.aapt2, 'd', 'xmltree', '--file', 'AndroidManifest.xml', args.directory + "/" + file_name]))
+        androidApp = AndroidApp()
+
+        androidApp.apk_name = file_name
+        # TODO(b/192330233): Replace with more complete parsing
+        androidApp.package_name = manifest_content.split("package=\"")[1].split("\"")[0]
+        index.apps.append(androidApp)
+
+    with open(args.directory + "/index.txt", "wb") as fd:
+        fd.write(index.SerializeToString())
 
 if __name__ == "__main__":
     main()

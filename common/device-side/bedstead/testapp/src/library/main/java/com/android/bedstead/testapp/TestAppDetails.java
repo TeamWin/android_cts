@@ -20,7 +20,7 @@ import android.os.Bundle;
 
 /** Details about a queryable test app. */
 class TestAppDetails {
-    String mPackageName;
+    TestappProtos.AndroidApp mApp;
     int mResourceIdentifier;
     Bundle mMetadata;
 }
