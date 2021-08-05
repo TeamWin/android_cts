@@ -17,7 +17,7 @@
   -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="android.RemoteDPCTestApp">
+          package="com.android.RemoteDPC">
     <application
         android:appComponentFactory="com.android.bedstead.testapp.TestAppAppComponentFactory"
         android:testOnly="true">
