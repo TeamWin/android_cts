@@ -789,6 +789,12 @@ public class TunerTest {
         assertEquals(Tuner.RESULT_SUCCESS, res);
         assertNotNull(other.getFrontendInfo());
         mTuner.shareFrontendFromTuner(other);
+
+        // call openFilter to trigger ITunerDemux.setFrontendDataSourceById()
+        Filter f = mTuner.openFilter(
+                Filter.TYPE_TS, Filter.SUBTYPE_SECTION, 1000, getExecutor(), getFilterCallback());
+        assertNotNull(f);
+
         other.close();
     }
 

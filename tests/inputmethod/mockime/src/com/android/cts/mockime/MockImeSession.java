@@ -46,6 +46,7 @@ import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputContentInfo;
 import android.view.inputmethod.InputMethodManager;
 
+import androidx.annotation.AnyThread;
 import androidx.annotation.GuardedBy;
 import androidx.annotation.IntRange;
 import androidx.annotation.NonNull;
@@ -76,6 +77,9 @@ public class MockImeSession implements AutoCloseable {
     private final Context mContext;
     @NonNull
     private final UiAutomation mUiAutomation;
+
+    @NonNull
+    private final AtomicBoolean mActive = new AtomicBoolean(true);
 
     private final HandlerThread mHandlerThread = new HandlerThread("EventReceiver");
 
@@ -293,10 +297,20 @@ public class MockImeSession implements AutoCloseable {
     }
 
     /**
+     * @return {@code true} until {@link #close()} gets called.
+     */
+    @AnyThread
+    public boolean isActive() {
+        return mActive.get();
+    }
+
+    /**
      * Closes the active session and de-selects {@link MockIme}. Currently which IME will be
      * selected next is up to the system.
      */
     public void close() throws Exception {
+        mActive.set(false);
+
         executeShellCommand(mUiAutomation, "ime reset");
 
         PollingCheck.check("Make sure that MockIME becomes unavailable", TIMEOUT, () ->
