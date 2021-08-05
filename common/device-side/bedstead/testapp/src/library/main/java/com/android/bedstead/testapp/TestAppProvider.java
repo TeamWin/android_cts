@@ -22,10 +22,8 @@ import android.os.Bundle;
 
 import com.android.bedstead.nene.TestApis;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -68,28 +66,26 @@ public final class TestAppProvider {
         int indexId = sContext.getResources().getIdentifier(
                 "raw/index", /* defType= */ null, sContext.getPackageName());
 
-        try (InputStream inputStream = sContext.getResources().openRawResource(indexId);
-             BufferedReader bufferedReader =
-                     new BufferedReader(new InputStreamReader(inputStream))) {
-            String apkName;
-            while ((apkName = bufferedReader.readLine()) != null) {
-                loadApk(apkName);
+        try (InputStream inputStream = sContext.getResources().openRawResource(indexId)) {
+            TestappProtos.TestAppIndex index = TestappProtos.TestAppIndex.parseFrom(inputStream);
+            for (int i = 0; i < index.getAppsCount(); i++) {
+                loadApk(index.getApps(i));
             }
         } catch (IOException e) {
-            throw new RuntimeException("TODO", e);
+            throw new RuntimeException("Error loading testapp index", e);
         }
     }
 
-    private void loadApk(String apkName) {
-        Log.v(TAG, "loadApk(" + apkName + ")");
+    private void loadApk(TestappProtos.AndroidApp app) {
         TestAppDetails details = new TestAppDetails();
-        details.mPackageName = "android." + apkName; // TODO: Actually index the package name
+        details.mApp = app;
         details.mResourceIdentifier = sContext.getResources().getIdentifier(
-                "raw/" + apkName, /* defType= */ null, sContext.getPackageName());
+                "raw/" + app.getApkName().split("\\.", 2)[0], /* defType= */ null, sContext.getPackageName());
+
         // TODO(scottjonathan): Actually index the metadata -
         //  right now this is hardcoded for remoteDPC
         details.mMetadata = new Bundle();
-        if (details.mPackageName.equals("android.RemoteDPCTestApp")) {
+        if (details.mApp.getPackageName().equals("com.android.RemoteDPC")) {
             details.mMetadata.putBoolean("testapp-package-query-only", true);
         }
 
