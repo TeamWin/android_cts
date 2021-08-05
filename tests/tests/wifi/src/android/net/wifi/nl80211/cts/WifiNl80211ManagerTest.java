@@ -31,10 +31,10 @@ import android.net.wifi.nl80211.WifiNl80211Manager;
 import android.os.Build;
 import android.platform.test.annotations.AppModeFull;
 
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SdkSuppress;
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
-import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Before;
 import org.junit.Test;
