@@ -489,10 +489,12 @@ def _get_parser():
   parser.add_argument('--generate_deps_only', action='store_true',
                       help=('Run test and generate dEQP dependency list only '
                             'without comparing build.'))
-  parser.add_argument('--ats_mode', action='store_true',
-                      help=('Run incremental dEQP with Android Test Station.'))
   parser.add_argument('--custom_handler', action='store_true',
                       help='Use custome build file handler')
+  parser.add_argument('--ats_mode', action='store_true',
+                      help=('Run incremental dEQP with Android Test Station.'))
+  parser.add_argument('--userdebug_build', action='store_true',
+                      help=('ATS mode option. Current build on device is userdebug.'))
   return parser
 
 def _create_logger(log_file_name):
@@ -665,20 +667,23 @@ def _ats_run(args, work_dir):
   # base build target file is from test resources.
   base_build_target = os.path.join(work_dir, 'base_build_target_files')
   build_helper = BuildHelper(args.custom_handler)
-  if args.current_build:
-    skip_dEQP, changes = build_helper.compare_base_build_with_current_build(
-        valid_deqp_deps, args.current_build, args.base_build)
-  else:
+  if args.userdebug_build:
+    current_build_fingerprint = adb.get_fingerprint()
     skip_dEQP, changes = build_helper.compare_base_build_with_device_files(
-        valid_deqp_deps, adb, args.base_build)
+        valid_deqp_deps, adb, base_build_target)
+  else:
+    current_build_target = os.path.join(work_dir, 'current_build_target_files')
+    current_build_fingerprint = build_helper.get_system_fingerprint(current_build_target)
+    skip_dEQP, changes = build_helper.compare_base_build_with_current_build(
+        valid_deqp_deps, current_build_target, base_build_target)
   if skip_dEQP:
     _generate_cts_xml(work_dir, INCREMENTAL_DEQP_XML)
   else:
     _generate_cts_xml(work_dir, DEFAULT_CTS_XML)
 
-  _generate_report(os.path.join(work_dir, REPORT_FILENAME),
-                   build_helper.get_system_fingerprint(args.base_build),
-                   adb.get_fingerprint(),
+  _generate_report(os.path.join(*[work_dir, 'logs', REPORT_FILENAME]),
+                   build_helper.get_system_fingerprint(base_build_target),
+                   current_build_fingerprint,
                    deqp_deps,
                    extra_deqp_deps,
                    changes)
@@ -694,7 +699,7 @@ def main():
   log_file_name = ''
   if args.ats_mode:
     work_dir = os.getenv('TF_WORK_DIR')
-    log_file_name = os.path.join('/data/tmp', 'incremental-deqp-log-'+str(uuid.uuid4()))
+    log_file_name = os.path.join(*[work_dir, 'logs', 'incremental-deqp-log-'+str(uuid.uuid4())])
   else:
     work_dir = tempfile.mkdtemp(prefix='incremental-deqp-'
                                 + time.strftime("%Y%m%d-%H%M%S"))
