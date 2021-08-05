@@ -112,4 +112,8 @@ public final class IntegerQueryHelper<E extends Queryable> implements IntegerQue
 
         return true;
     }
+
+    public static boolean matches(IntegerQuery<?> query, Integer value) {
+        return query.matches(value);
+    }
 }
