@@ -17,8 +17,8 @@
 package com.android.bedstead.testapp;
 
 import android.content.Context;
-import android.util.Log;
 import android.os.Bundle;
+import android.util.Log;
 
 import com.android.bedstead.nene.TestApis;
 
@@ -80,16 +80,23 @@ public final class TestAppProvider {
         TestAppDetails details = new TestAppDetails();
         details.mApp = app;
         details.mResourceIdentifier = sContext.getResources().getIdentifier(
-                "raw/" + app.getApkName().split("\\.", 2)[0], /* defType= */ null, sContext.getPackageName());
+                "raw/" + getApkNameWithoutSuffix(app.getApkName()),
+                /* defType= */ null, sContext.getPackageName());
 
-        // TODO(scottjonathan): Actually index the metadata -
-        //  right now this is hardcoded for remoteDPC
-        details.mMetadata = new Bundle();
-        if (details.mApp.getPackageName().equals("com.android.RemoteDPC")) {
-            details.mMetadata.putBoolean("testapp-package-query-only", true);
+        for (int i = 0; i < app.getMetadataCount(); i++) {
+            TestappProtos.Metadata metadataEntry = app.getMetadata(i);
+            details.mMetadata.putString(metadataEntry.getName(), metadataEntry.getValue());
+        }
+
+        for (int i = 0; i < app.getPermissionsCount(); i++) {
+            details.mPermissions.add(app.getPermissions(i).getName());
         }
 
         mTestApps.add(details);
+    }
+
+    private String getApkNameWithoutSuffix(String apkName) {
+        return apkName.split("\\.", 2)[0];
     }
 
     void markTestAppUsed(TestAppDetails testApp) {

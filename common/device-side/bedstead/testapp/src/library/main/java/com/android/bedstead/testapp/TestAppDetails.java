@@ -18,9 +18,13 @@ package com.android.bedstead.testapp;
 
 import android.os.Bundle;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /** Details about a queryable test app. */
 class TestAppDetails {
     TestappProtos.AndroidApp mApp;
     int mResourceIdentifier;
-    Bundle mMetadata;
+    final Bundle mMetadata = new Bundle();
+    final Set<String> mPermissions = new HashSet<>();
 }
