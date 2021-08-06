@@ -473,6 +473,16 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Override
     @Test
+    @TemporarilyIgnoreOnHeadlessSystemUserMode(bugId = "195469779", reason = "Cannot be tested on "
+            + "current setup as DpmWrapper would grant permission to user 0, and activity that "
+            + "checks the permission runs on current user; need to re-enable once test is moved "
+            + "to new infra")
+    public void testPermissionGrant() throws Exception {
+        super.testPermissionGrant();
+    }
+
+    @Override
+    @Test
     @IgnoreOnHeadlessSystemUserMode(reason = "Headless system user doesn't launch activities")
     public void testSuspendPackage() throws Exception {
         super.testSuspendPackage();
