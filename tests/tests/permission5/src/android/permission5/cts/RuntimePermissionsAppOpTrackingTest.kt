@@ -30,6 +30,7 @@ import android.os.Process
 import android.os.RemoteCallback
 import android.os.SystemClock
 import android.os.UserHandle
+import android.permission.PermissionManager
 import android.platform.test.annotations.AppModeFull
 import android.provider.CalendarContract
 import android.provider.CallLog
@@ -408,13 +409,13 @@ class RuntimePermissionsAppOpTrackingTest {
                                 RECEIVER2_PACKAGE_NAME, 0), RECEIVER2_PACKAGE_NAME,
                                 /*attributionTag*/ null, null, context.attributionSource),
                         /*accessorForeground*/ true, /*receiverForeground*/ true,
-                        /*accessorTrusted*/ true, /*accessorAccessCount*/ 1,
+                        /*accessorTrusted*/ false, /*accessorAccessCount*/ 1,
                         /*receiverAccessCount*/ 1, /*checkAccessor*/ true,
                         /*fromDatasource*/ false)
 
                 assertRunningOpAccess(op, speechStartTime, System.currentTimeMillis(),
                         context.attributionSource, /*accessorForeground*/ true,
-                        /*receiverForeground*/ true, /*accessorTrusted*/ true,
+                        /*receiverForeground*/ true, /*accessorTrusted*/ false,
                         /*accessorAccessCount*/ 0, /*receiverAccessCount*/ 1,
                         /*checkAccessor*/ false, /*fromDatasource*/ false)
 
@@ -431,13 +432,13 @@ class RuntimePermissionsAppOpTrackingTest {
                         AttributionSource(recognizerUid, RECEIVER2_PACKAGE_NAME,
                                 /*attributionTag*/ null, null, context.attributionSource),
                         /*accessorForeground*/ true, /*receiverForeground*/ true,
-                        /*accessorTrusted*/ true, /*accessorAccessCount*/ 1,
+                        /*accessorTrusted*/ false, /*accessorAccessCount*/ 1,
                         /*receiverAccessCount*/ 1, /*checkAccessor*/ true,
                         /*fromDatasource*/ false)
 
                 assertNotRunningOpAccess(op, speechStartTime, System.currentTimeMillis(),
                         context.attributionSource, /*accessorForeground*/ true,
-                        /*receiverForeground*/ true, /*accessorTrusted*/ true,
+                        /*receiverForeground*/ true, /*accessorTrusted*/ false,
                         /*accessorAccessCount*/ 0, /*receiverAccessCount*/ 1,
                         /*checkAccessor*/ false, /*fromDatasource*/ false)
 
@@ -590,29 +591,29 @@ class RuntimePermissionsAppOpTrackingTest {
 
                 inOrder.verify(listener).onOpActiveChanged(eq(AppOpsManager.OPSTR_RECORD_AUDIO),
                         eq(recognizerUid), eq(RECEIVER2_PACKAGE_NAME), isNull(), eq(true),
-                        eq(AppOpsManager.ATTRIBUTION_FLAG_ACCESSOR),
+                        eq(AppOpsManager.ATTRIBUTION_FLAG_ACCESSOR or ATTRIBUTION_FLAG_TRUSTED),
                         intThat(attributionChainIdMatcher))
                 inOrder.verify(listener).onOpActiveChanged(eq(AppOpsManager.OPSTR_RECORD_AUDIO),
                         eq(Process.myUid()), eq(context.packageName), eq(ACCESSOR_ATTRIBUTION_TAG),
-                        eq(true), eq(AppOpsManager.ATTRIBUTION_FLAG_INTERMEDIARY),
-                        intThat(attributionChainIdMatcher))
+                        eq(true), eq(AppOpsManager.ATTRIBUTION_FLAG_INTERMEDIARY or
+                        ATTRIBUTION_FLAG_TRUSTED), intThat(attributionChainIdMatcher))
                 inOrder.verify(listener).onOpActiveChanged(eq(AppOpsManager.OPSTR_RECORD_AUDIO),
                         eq(receiverUid), eq(RECEIVER_PACKAGE_NAME), eq(RECEIVER_ATTRIBUTION_TAG),
-                        eq(true), eq(AppOpsManager.ATTRIBUTION_FLAG_RECEIVER),
-                        intThat(attributionChainIdMatcher))
+                        eq(true), eq(AppOpsManager.ATTRIBUTION_FLAG_RECEIVER or
+                        ATTRIBUTION_FLAG_TRUSTED), intThat(attributionChainIdMatcher))
 
                 inOrder.verify(listener).onOpActiveChanged(eq(AppOpsManager.OPSTR_RECORD_AUDIO),
                         eq(recognizerUid), eq(RECEIVER2_PACKAGE_NAME), isNull(), eq(false),
-                        eq(AppOpsManager.ATTRIBUTION_FLAG_ACCESSOR),
+                        eq(AppOpsManager.ATTRIBUTION_FLAG_ACCESSOR or ATTRIBUTION_FLAG_TRUSTED),
                         intThat(attributionChainIdMatcher))
                 inOrder.verify(listener).onOpActiveChanged(eq(AppOpsManager.OPSTR_RECORD_AUDIO),
                         eq(Process.myUid()), eq(context.packageName), eq(ACCESSOR_ATTRIBUTION_TAG),
-                        eq(false), eq(AppOpsManager.ATTRIBUTION_FLAG_INTERMEDIARY),
-                        intThat(attributionChainIdMatcher))
+                        eq(false), eq(AppOpsManager.ATTRIBUTION_FLAG_INTERMEDIARY or
+                        ATTRIBUTION_FLAG_TRUSTED), intThat(attributionChainIdMatcher))
                 inOrder.verify(listener).onOpActiveChanged(eq(AppOpsManager.OPSTR_RECORD_AUDIO),
                         eq(receiverUid), eq(RECEIVER_PACKAGE_NAME), eq(RECEIVER_ATTRIBUTION_TAG),
-                        eq(false), eq(AppOpsManager.ATTRIBUTION_FLAG_RECEIVER),
-                        intThat(attributionChainIdMatcher))
+                        eq(false), eq(AppOpsManager.ATTRIBUTION_FLAG_RECEIVER or
+                        ATTRIBUTION_FLAG_TRUSTED), intThat(attributionChainIdMatcher))
             } finally {
                 // Take down the recognition service
                 instrumentation.runOnMainSync { recognizerRef.get().destroy() }
@@ -649,6 +650,8 @@ class RuntimePermissionsAppOpTrackingTest {
         val OPERATION = "operation"
         val OPERATION_MIC_RECO_WITH_ATTRIBUTION = "operation:mic_reco_with_attribution"
         val OPERATION_INJECT_RECO_WITHOUT_ATTRIBUTION = "operation:inject_reco_without_attribution"
+
+        val ATTRIBUTION_FLAG_TRUSTED = 0x8
 
         private val context: Context
             get() = InstrumentationRegistry.getInstrumentation().getContext()
@@ -751,8 +754,7 @@ class RuntimePermissionsAppOpTrackingTest {
             }
             if (attributionSource.next != null) {
                 assertLastReceiverOps(op, beginEndMillis, endTimeMillis, attributionSource,
-                        receiverForeground, accessorTrusted, assertRunning, fromDatasource,
-                        allPackagesOps)
+                        receiverForeground, accessorTrusted, assertRunning, allPackagesOps)
             }
         }
 
@@ -803,7 +805,7 @@ class RuntimePermissionsAppOpTrackingTest {
             }
             if (attributionSource.next != null) {
                 assertHistoricalReceiverOps(op, attributionSource, receiverForeground,
-                        accessorTrusted, fromDatasource, receiverAccessCount, historicalOps)
+                        accessorTrusted, receiverAccessCount, historicalOps)
             }
         }
 
@@ -899,7 +901,7 @@ class RuntimePermissionsAppOpTrackingTest {
                         accessorForeground, assertedAccessCount)
             } else if (accessorTrusted) {
                 // Access for others and we are trusted. If we got the data from a datasource it
-                // would blame the accessor in a trusted way but all other apps are not trusted.
+                // would blame the accessor in a trusted way
                 if (fromDatasource) {
                     assertAccessCount(attributedPackageOp!!, AppOpsManager.OP_FLAG_TRUSTED_PROXIED,
                             accessorForeground, assertedAccessCount)
@@ -945,7 +947,6 @@ class RuntimePermissionsAppOpTrackingTest {
             receiverForeground: Boolean,
             accessorTrusted: Boolean,
             assertRunning: Boolean,
-            fromDatasource: Boolean,
             allPackagesOps: List<AppOpsManager.PackageOps?>
         ) {
             val receiverPackageOps = findPackageOps(
@@ -961,15 +962,11 @@ class RuntimePermissionsAppOpTrackingTest {
                 val opProxyInfo: AppOpsManager.OpEventProxyInfo?
                 opProxyInfo = if (accessorTrusted) {
                     // Received from a trusted accessor. If we got the data from a datasource it
-                    // would blame the accessor in a trusted way but all other apps are not trusted.
-                    val flags =
-                        if (fromDatasource)
-                            AppOpsManager.OP_FLAG_TRUSTED_PROXIED
-                        else
-                            AppOpsManager.OP_FLAG_TRUSTED_PROXIED
+                    // would blame the accessor in a trusted way
                     assertLastAccessInRange(attributedOpEntry!!, beginTimeMillis, endTimeMillis,
-                            flags, receiverForeground, assertRunning)
-                    attributedOpEntry.getLastProxyInfo(flags)
+                            AppOpsManager.OP_FLAG_TRUSTED_PROXIED, receiverForeground,
+                            assertRunning)
+                    attributedOpEntry.getLastProxyInfo(AppOpsManager.OP_FLAG_TRUSTED_PROXIED)
                 } else {
                     // Received from an untrusted accessor
                     assertLastAccessInRange(attributedOpEntry!!, beginTimeMillis, endTimeMillis,
@@ -989,7 +986,6 @@ class RuntimePermissionsAppOpTrackingTest {
             attributionSource: AttributionSource,
             receiverForeground: Boolean,
             accessorTrusted: Boolean,
-            fromDatasource: Boolean,
             assertedAccessCount: Int,
             historicalOps: AppOpsManager.HistoricalOps
         ) {
@@ -1001,16 +997,9 @@ class RuntimePermissionsAppOpTrackingTest {
                     attributionSource.next!!.attributionTag!!)
             val attributedPackageOp = attributedPackageOps!!.getOp(op)
             if (accessorTrusted) {
-                // Received from a trusted accessor. If we got the data from a datasource
-                // the latter is the proxy and we proxied, otherwise we are the proxy.
-                if (fromDatasource) {
-                    assertAccessCount(attributedPackageOp!!,
-                            AppOpsManager.OP_FLAG_TRUSTED_PROXIED, receiverForeground,
-                            assertedAccessCount)
-                } else {
+                // Received from a trusted accessor.
                     assertAccessCount(attributedPackageOp!!, AppOpsManager.OP_FLAG_TRUSTED_PROXIED,
                             receiverForeground, assertedAccessCount)
-                }
             } else {
                 // Received from an untrusted accessor
                 assertAccessCount(attributedPackageOp!!, AppOpsManager.OP_FLAG_UNTRUSTED_PROXIED,
