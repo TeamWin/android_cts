@@ -37,6 +37,7 @@ import com.android.eventlib.events.broadcastreceivers.BroadcastReceivedEvent;
 
 import org.junit.Before;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -140,7 +141,7 @@ public class TestAppInstanceReferenceTest {
 
     @Test
     public void stop_processIsNotRunning() {
-        TestApp testApp = mTestAppProvider.any();
+        TestApp testApp = mTestAppProvider.query().whereActivities().isNotEmpty().get();
         try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
             testAppInstance.activities().any().start();
 
@@ -152,7 +153,7 @@ public class TestAppInstanceReferenceTest {
 
     @Test
     public void stop_previouslyCalledKeepAlive_processDoesNotRestart() {
-        TestApp testApp = mTestAppProvider.any();
+        TestApp testApp = mTestAppProvider.query().whereActivities().isNotEmpty().get();
         try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
             testAppInstance.activities().any().start();
             testAppInstance.keepAlive();
@@ -294,6 +295,7 @@ public class TestAppInstanceReferenceTest {
     }
 
     @Test
+    @Ignore("b/195626250 Disabled until logging surviving reboots is restored")
     public void registerReceiver_appIsKilled_stillReceivesBroadcast() {
         TestApp testApp = mTestAppProvider.any();
         try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
