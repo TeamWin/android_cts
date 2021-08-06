@@ -78,6 +78,7 @@ import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.content.res.XmlResourceParser;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.os.SystemProperties;
@@ -128,7 +129,9 @@ public class PackageManagerTest {
     private static final String ACTIVITY_ACTION_NAME = "android.intent.action.PMTEST";
     private static final String MAIN_ACTION_NAME = "android.intent.action.MAIN";
     private static final String SERVICE_ACTION_NAME =
-                                "android.content.pm.cts.activity.PMTEST_SERVICE";
+            "android.content.pm.cts.activity.PMTEST_SERVICE";
+    private static final String RECEIVER_ACTION_NAME =
+            "android.content.pm.cts.PackageManagerTest.PMTEST_RECEIVER";
     private static final String GRANTED_PERMISSION_NAME = "android.permission.INTERNET";
     private static final String NOT_GRANTED_PERMISSION_NAME = "android.permission.HARDWARE_TEST";
     private static final String ACTIVITY_NAME = "android.content.pm.cts.TestPmActivity";
@@ -178,6 +181,14 @@ public class PackageManagerTest {
     private static final String NON_EXISTENT_PACKAGE_NAME = "android.content.cts.nonexistent.pkg";
 
     private static final int MAX_SAFE_LABEL_LENGTH = 1000;
+
+    // For intent resolution tests
+    private static final String NON_EXISTENT_ACTION_NAME = "android.intent.action.cts.NON_EXISTENT";
+    private static final String INTENT_RESOLUTION_TEST_PKG_NAME =
+            "android.content.cts.IntentResolutionTest";
+    private static final String RESOLUTION_TEST_ACTION_NAME =
+            "android.intent.action.RESOLUTION_TEST";
+    private static final String SELECTOR_ACTION_NAME = "android.intent.action.SELECTORTEST";
 
     @Before
     public void setup() throws Exception {
@@ -231,10 +242,9 @@ public class PackageManagerTest {
         checkServiceInfoName(SERVICE_NAME, services);
 
         // Test queryBroadcastReceivers
-        String receiverActionName = "android.content.pm.cts.PackageManagerTest.PMTEST_RECEIVER";
-        Intent broadcastIntent = new Intent(receiverActionName);
-        List<ResolveInfo> broadcastReceivers = new ArrayList<ResolveInfo>();
-        broadcastReceivers = mPackageManager.queryBroadcastReceivers(broadcastIntent, 0);
+        Intent broadcastIntent = new Intent(RECEIVER_ACTION_NAME);
+        List<ResolveInfo> broadcastReceivers =
+                mPackageManager.queryBroadcastReceivers(broadcastIntent, 0);
         checkActivityInfoName(RECEIVER_NAME, broadcastReceivers);
 
         // Test queryPermissionsByGroup, queryContentProviders
@@ -247,6 +257,157 @@ public class PackageManagerTest {
         List<ProviderInfo> providers = mPackageManager.queryContentProviders(PACKAGE_NAME,
                 appInfo.uid, 0);
         checkProviderInfoName(PROVIDER_NAME, providers);
+    }
+
+    @Test
+    public void testEnforceIntentToMatchIntentFilter() {
+        Intent intent = new Intent();
+        List<ResolveInfo> results;
+
+        /* Implicit intent tests */
+
+        intent.setPackage(INTENT_RESOLUTION_TEST_PKG_NAME);
+
+        // Implicit intents with matching intent filter
+        intent.setAction(RESOLUTION_TEST_ACTION_NAME);
+        results = mPackageManager.queryIntentActivities(intent, 0);
+        assertEquals(1, results.size());
+        results = mPackageManager.queryIntentServices(intent, 0);
+        assertEquals(1, results.size());
+        results = mPackageManager.queryBroadcastReceivers(intent, 0);
+        assertEquals(1, results.size());
+
+        // Implicit intents with non-matching intent filter
+        intent.setAction(NON_EXISTENT_ACTION_NAME);
+        results = mPackageManager.queryIntentActivities(intent, 0);
+        assertEquals(0, results.size());
+        results = mPackageManager.queryIntentServices(intent, 0);
+        assertEquals(0, results.size());
+        results = mPackageManager.queryBroadcastReceivers(intent, 0);
+        assertEquals(0, results.size());
+
+        /* Explicit intent tests */
+
+        intent = new Intent();
+        ComponentName comp;
+
+        // Explicit intents with matching intent filter
+        intent.setAction(RESOLUTION_TEST_ACTION_NAME);
+        comp = new ComponentName(INTENT_RESOLUTION_TEST_PKG_NAME, ACTIVITY_NAME);
+        intent.setComponent(comp);
+        results = mPackageManager.queryIntentActivities(intent, 0);
+        assertEquals(1, results.size());
+        comp = new ComponentName(INTENT_RESOLUTION_TEST_PKG_NAME, SERVICE_NAME);
+        intent.setComponent(comp);
+        results = mPackageManager.queryIntentServices(intent, 0);
+        assertEquals(1, results.size());
+        comp = new ComponentName(INTENT_RESOLUTION_TEST_PKG_NAME, RECEIVER_NAME);
+        intent.setComponent(comp);
+        results = mPackageManager.queryBroadcastReceivers(intent, 0);
+        assertEquals(1, results.size());
+
+        // Explicit intents with non-matching intent filter on target T+
+        intent.setAction(NON_EXISTENT_ACTION_NAME);
+        comp = new ComponentName(INTENT_RESOLUTION_TEST_PKG_NAME, ACTIVITY_NAME);
+        intent.setComponent(comp);
+        results = mPackageManager.queryIntentActivities(intent, 0);
+        assertEquals(0, results.size());
+        comp = new ComponentName(INTENT_RESOLUTION_TEST_PKG_NAME, SERVICE_NAME);
+        intent.setComponent(comp);
+        results = mPackageManager.queryIntentServices(intent, 0);
+        assertEquals(0, results.size());
+        comp = new ComponentName(INTENT_RESOLUTION_TEST_PKG_NAME, RECEIVER_NAME);
+        intent.setComponent(comp);
+        results = mPackageManager.queryBroadcastReceivers(intent, 0);
+        assertEquals(0, results.size());
+
+        // More comprehensive intent matching tests on target T+
+        intent = new Intent();
+        comp = new ComponentName(INTENT_RESOLUTION_TEST_PKG_NAME, ACTIVITY_NAME + "2");
+        intent.setComponent(comp);
+        intent.setAction(RESOLUTION_TEST_ACTION_NAME);
+        results = mPackageManager.queryIntentActivities(intent, 0);
+        assertEquals(0, results.size());
+        intent.setType("*/*");
+        results = mPackageManager.queryIntentActivities(intent, 0);
+        assertEquals(0, results.size());
+        intent.setData(Uri.parse("http://example.com"));
+        results = mPackageManager.queryIntentActivities(intent, 0);
+        assertEquals(0, results.size());
+        intent.setDataAndType(Uri.parse("http://example.com"), "*/*");
+        results = mPackageManager.queryIntentActivities(intent, 0);
+        assertEquals(1, results.size());
+        intent.addCategory(Intent.CATEGORY_APP_BROWSER);
+        results = mPackageManager.queryIntentActivities(intent, 0);
+        assertEquals(0, results.size());
+
+        // Explicit intents with non-matching intent filter on target < T
+        final String api30Pkg = INTENT_RESOLUTION_TEST_PKG_NAME + "Api30";
+        intent.setAction(NON_EXISTENT_ACTION_NAME);
+        comp = new ComponentName(api30Pkg, ACTIVITY_NAME);
+        intent.setComponent(comp);
+        results = mPackageManager.queryIntentActivities(intent, 0);
+        assertEquals(1, results.size());
+        comp = new ComponentName(api30Pkg, SERVICE_NAME);
+        intent.setComponent(comp);
+        results = mPackageManager.queryIntentServices(intent, 0);
+        assertEquals(1, results.size());
+        comp = new ComponentName(api30Pkg, RECEIVER_NAME);
+        intent.setComponent(comp);
+        results = mPackageManager.queryBroadcastReceivers(intent, 0);
+        assertEquals(1, results.size());
+
+        // Explicit intents with non-matching intent filter on our own package
+        intent.setAction(NON_EXISTENT_ACTION_NAME);
+        comp = new ComponentName(PACKAGE_NAME, ACTIVITY_NAME);
+        intent.setComponent(comp);
+        results = mPackageManager.queryIntentActivities(intent, 0);
+        assertEquals(1, results.size());
+        comp = new ComponentName(PACKAGE_NAME, SERVICE_NAME);
+        intent.setComponent(comp);
+        results = mPackageManager.queryIntentServices(intent, 0);
+        assertEquals(1, results.size());
+        comp = new ComponentName(PACKAGE_NAME, RECEIVER_NAME);
+        intent.setComponent(comp);
+        results = mPackageManager.queryBroadcastReceivers(intent, 0);
+        assertEquals(1, results.size());
+
+        /* Intent selector tests */
+
+        Intent selector = new Intent();
+        selector.setPackage(INTENT_RESOLUTION_TEST_PKG_NAME);
+        intent = new Intent();
+        intent.setSelector(selector);
+
+        // Matching intent and matching selector
+        selector.setAction(SELECTOR_ACTION_NAME);
+        intent.setAction(RESOLUTION_TEST_ACTION_NAME);
+        results = mPackageManager.queryIntentActivities(intent, 0);
+        assertEquals(1, results.size());
+        results = mPackageManager.queryIntentServices(intent, 0);
+        assertEquals(1, results.size());
+        results = mPackageManager.queryBroadcastReceivers(intent, 0);
+        assertEquals(1, results.size());
+
+        // Matching intent and non-matching selector
+        selector.setAction(NON_EXISTENT_ACTION_NAME);
+        intent.setAction(RESOLUTION_TEST_ACTION_NAME);
+        results = mPackageManager.queryIntentActivities(intent, 0);
+        assertEquals(0, results.size());
+        results = mPackageManager.queryIntentServices(intent, 0);
+        assertEquals(0, results.size());
+        results = mPackageManager.queryBroadcastReceivers(intent, 0);
+        assertEquals(0, results.size());
+
+        // Non-matching intent and matching selector
+        selector.setAction(SELECTOR_ACTION_NAME);
+        intent.setAction(NON_EXISTENT_ACTION_NAME);
+        results = mPackageManager.queryIntentActivities(intent, 0);
+        assertEquals(0, results.size());
+        results = mPackageManager.queryIntentServices(intent, 0);
+        assertEquals(0, results.size());
+        results = mPackageManager.queryBroadcastReceivers(intent, 0);
+        assertEquals(0, results.size());
     }
 
     private void checkActivityInfoName(String expectedName, List<ResolveInfo> resolves) {
