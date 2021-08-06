@@ -264,6 +264,6 @@ public class WifiNetworkSuggestionTest extends WifiJUnit3TestBase {
                         .build();
         validateCommonParams(suggestion, true);
         assertNull(suggestion.getPassphrase());
-        assertEquals(passpointConfig, suggestion.getPasspointConfig());
+        assertEquals(passpointConfig.getUniqueId(), suggestion.getPasspointConfig().getUniqueId());
     }
 }
