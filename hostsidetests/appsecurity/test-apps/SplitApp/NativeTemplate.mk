@@ -14,6 +14,9 @@
 # limitations under the License.
 #
 
+# Please do not try to convert this .mk file to a .bp file, since this file
+# is only used in the build_libs.sh script, NOT in the build system..
+
 LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
