@@ -72,36 +72,31 @@ public class PlaybackFrameDrop extends CodecDecoderTestBase {
             ArrayList<MediaCodec.BufferInfo> list, int offset, long ptsOffset) {
         int csdBuffersSize = 0;
         if (hasCSD(format)) {
+            MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
+            bufferInfo.offset = offset;
+            bufferInfo.size = 0;
+            bufferInfo.presentationTimeUs = 0;
+            bufferInfo.flags = MediaCodec.BUFFER_FLAG_CODEC_CONFIG;
             for (int i = 0; ; i++) {
                 String csdKey = "csd-" + i;
                 if (format.containsKey(csdKey)) {
                     ByteBuffer csdBuffer = format.getByteBuffer(csdKey);
-                    csdBuffersSize += csdBuffer.limit();
+                    bufferInfo.size += csdBuffer.limit();
                     buffer.put(csdBuffer);
                     format.removeKey(csdKey);
-                } else {
-                    break;
-                }
+                } else break;
             }
+            list.add(bufferInfo);
+            offset += bufferInfo.size;
         }
         while (true) {
             MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
-            // For the first read sample if csdBuffersSize > 0, the offset to store the bytes
-            // starts from the (offset + csdBuffersSize) as we already stored CSD buffer bytes in
-            // buffer and we consider them as a part of the first sample's data only.
-            // So first sample's size will become (frame buffer size + csdBuffersSize).
-            // Then assigned the csdBuffersSize to 0, so from second sample onwards, the offset
-            // for buffer to read samples will be (offset + 0).
-            bufferInfo.size = mExtractor.readSampleData(buffer, offset + csdBuffersSize);
+            bufferInfo.size = mExtractor.readSampleData(buffer, offset);
             if (bufferInfo.size < 0) {
                 break;
             }
             bufferInfo.offset = offset;
             bufferInfo.presentationTimeUs = ptsOffset + mExtractor.getSampleTime();
-            if (csdBuffersSize > 0) {
-                bufferInfo.size += csdBuffersSize;
-                csdBuffersSize = 0;
-            }
             mInputMaxPtsUs = Math.max(mInputMaxPtsUs, bufferInfo.presentationTimeUs);
             int flags = mExtractor.getSampleFlags();
             bufferInfo.flags = 0;
