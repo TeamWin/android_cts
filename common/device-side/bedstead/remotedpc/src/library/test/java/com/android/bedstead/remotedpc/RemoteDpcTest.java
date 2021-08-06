@@ -47,7 +47,8 @@ import org.junit.runner.RunWith;
 public class RemoteDpcTest {
     // TODO(scottjonathan): Add annotations to ensure that there is no DO/PO on appropriate methods
     //  TODO(180478924): We shouldn't need to hardcode this
-    private static final String DEVICE_ADMIN_TESTAPP_PACKAGE_NAME = "android.DeviceAdminTestApp";
+    private static final String DEVICE_ADMIN_TESTAPP_PACKAGE_NAME =
+            "com.android.bedstead.testapp.DeviceAdminTestApp";
     private static final ComponentName NON_REMOTE_DPC_COMPONENT =
             new ComponentName(DEVICE_ADMIN_TESTAPP_PACKAGE_NAME,
                     EventLibDeviceAdminReceiver.class.getName());

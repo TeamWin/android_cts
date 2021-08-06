@@ -17,15 +17,13 @@
 package com.android.bedstead.testapp;
 
 import android.content.Context;
-import android.util.Log;
 import android.os.Bundle;
+import android.util.Log;
 
 import com.android.bedstead.nene.TestApis;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -68,32 +66,37 @@ public final class TestAppProvider {
         int indexId = sContext.getResources().getIdentifier(
                 "raw/index", /* defType= */ null, sContext.getPackageName());
 
-        try (InputStream inputStream = sContext.getResources().openRawResource(indexId);
-             BufferedReader bufferedReader =
-                     new BufferedReader(new InputStreamReader(inputStream))) {
-            String apkName;
-            while ((apkName = bufferedReader.readLine()) != null) {
-                loadApk(apkName);
+        try (InputStream inputStream = sContext.getResources().openRawResource(indexId)) {
+            TestappProtos.TestAppIndex index = TestappProtos.TestAppIndex.parseFrom(inputStream);
+            for (int i = 0; i < index.getAppsCount(); i++) {
+                loadApk(index.getApps(i));
             }
         } catch (IOException e) {
-            throw new RuntimeException("TODO", e);
+            throw new RuntimeException("Error loading testapp index", e);
         }
     }
 
-    private void loadApk(String apkName) {
-        Log.v(TAG, "loadApk(" + apkName + ")");
+    private void loadApk(TestappProtos.AndroidApp app) {
         TestAppDetails details = new TestAppDetails();
-        details.mPackageName = "android." + apkName; // TODO: Actually index the package name
+        details.mApp = app;
         details.mResourceIdentifier = sContext.getResources().getIdentifier(
-                "raw/" + apkName, /* defType= */ null, sContext.getPackageName());
-        // TODO(scottjonathan): Actually index the metadata -
-        //  right now this is hardcoded for remoteDPC
-        details.mMetadata = new Bundle();
-        if (details.mPackageName.equals("android.RemoteDPCTestApp")) {
-            details.mMetadata.putBoolean("testapp-package-query-only", true);
+                "raw/" + getApkNameWithoutSuffix(app.getApkName()),
+                /* defType= */ null, sContext.getPackageName());
+
+        for (int i = 0; i < app.getMetadataCount(); i++) {
+            TestappProtos.Metadata metadataEntry = app.getMetadata(i);
+            details.mMetadata.putString(metadataEntry.getName(), metadataEntry.getValue());
+        }
+
+        for (int i = 0; i < app.getPermissionsCount(); i++) {
+            details.mPermissions.add(app.getPermissions(i).getName());
         }
 
         mTestApps.add(details);
+    }
+
+    private String getApkNameWithoutSuffix(String apkName) {
+        return apkName.split("\\.", 2)[0];
     }
 
     void markTestAppUsed(TestAppDetails testApp) {
