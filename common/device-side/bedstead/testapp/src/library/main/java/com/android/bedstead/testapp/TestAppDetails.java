@@ -18,6 +18,8 @@ package com.android.bedstead.testapp;
 
 import android.os.Bundle;
 
+import com.android.queryable.info.ActivityInfo;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -27,4 +29,5 @@ class TestAppDetails {
     int mResourceIdentifier;
     final Bundle mMetadata = new Bundle();
     final Set<String> mPermissions = new HashSet<>();
+    final Set<ActivityInfo> mActivities = new HashSet<>();
 }

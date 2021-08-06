@@ -17,6 +17,8 @@
 package com.android.bedstead.testapp;
 
 import com.android.queryable.Queryable;
+import com.android.queryable.info.ActivityInfo;
+import com.android.queryable.queries.ActivityQuery;
 import com.android.queryable.queries.BooleanQuery;
 import com.android.queryable.queries.BooleanQueryHelper;
 import com.android.queryable.queries.BundleQuery;
@@ -40,6 +42,8 @@ public final class TestAppQueryBuilder implements Queryable {
     SetQueryHelper<TestAppQueryBuilder, String, StringQuery<?>> mPermissions =
             new SetQueryHelper<>(this);
     BooleanQueryHelper<TestAppQueryBuilder> mTestOnly = new BooleanQueryHelper<>(this);
+    SetQueryHelper<TestAppQueryBuilder, ActivityInfo, ActivityQuery<?>> mActivities =
+            new SetQueryHelper<>(this);
 
     TestAppQueryBuilder(TestAppProvider provider) {
         if (provider == null) {
@@ -101,6 +105,13 @@ public final class TestAppQueryBuilder implements Queryable {
         return mTestOnly;
     }
 
+    /**
+     * Query for a {@link TestApp} by the testOnly attribute.
+     */
+    public SetQuery<TestAppQueryBuilder, ActivityInfo, ActivityQuery<?>> whereActivities() {
+        return mActivities;
+    }
+
 
     /**
      * Get the {@link TestApp} matching the query.
@@ -146,6 +157,10 @@ public final class TestAppQueryBuilder implements Queryable {
 
         if (!IntegerQueryHelper.matches(
                 mTargetSdkVersion, details.mApp.getUsesSdk().getTargetSdkVersion())) {
+            return false;
+        }
+
+        if (!SetQueryHelper.matches(mActivities, details.mActivities)) {
             return false;
         }
 

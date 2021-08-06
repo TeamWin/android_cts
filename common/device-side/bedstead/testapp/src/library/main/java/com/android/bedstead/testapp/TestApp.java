@@ -28,6 +28,7 @@ import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.packages.PackageReference;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.testapp.processor.annotations.TestAppSender;
+import com.android.queryable.info.ActivityInfo;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -162,6 +163,11 @@ public class TestApp {
     /** The permissions declared by the test app. */
     public Set<String> permissions() {
         return mDetails.mPermissions;
+    }
+
+    /** The activities which exist in the test app. */
+    public Set<ActivityInfo> activities() {
+        return mDetails.mActivities;
     }
 
     /**
