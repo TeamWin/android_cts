@@ -36,6 +36,7 @@ import android.app.UiAutomation;
 import android.app.admin.DevicePolicyManager;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.os.Process;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.BySelector;
 import android.support.test.uiautomator.UiDevice;
@@ -206,14 +207,27 @@ public class PermissionsTest extends BaseDeviceAdminTest {
     public void testPermissionGrantStateGranted_permissionRemainsGranted() throws Exception {
         int grantState = mDevicePolicyManager.getPermissionGrantState(ADMIN_RECEIVER_COMPONENT,
                 PERMISSION_APP_PACKAGE_NAME, READ_CONTACTS);
+        Log.i(TAG, "testPermissionGrantStateGranted_permissionRemainsGranted(): "
+                + mDevicePolicyManager + ".getPermissionGrantState(" + ADMIN_RECEIVER_COMPONENT
+                + ", " + PERMISSION_APP_PACKAGE_NAME + ", " + READ_CONTACTS + ") returned "
+                + grantState + " (" + permissionGrantStateToString(grantState) + ")");
         try {
-            setPermissionGrantState(READ_CONTACTS, PERMISSION_GRANT_STATE_GRANTED);
+            Log.i(TAG, "Granting");
+            boolean granted = setPermissionGrantState(READ_CONTACTS,
+                    PERMISSION_GRANT_STATE_GRANTED);
+            assertWithMessage("granted %s to %s", READ_CONTACTS, PERMISSION_APP_PACKAGE_NAME)
+                    .that(granted).isTrue();
 
+            Log.i(TAG, "Checking");
             assertHasPermissionFromActivity(READ_CONTACTS);
 
             // Should stay granted
-            setPermissionGrantState(READ_CONTACTS, PERMISSION_GRANT_STATE_DEFAULT);
+            Log.i(TAG, "Reset to default");
+            granted = setPermissionGrantState(READ_CONTACTS, PERMISSION_GRANT_STATE_DEFAULT);
+            assertWithMessage("granted %s to %s", READ_CONTACTS, PERMISSION_APP_PACKAGE_NAME)
+                    .that(granted).isTrue();
 
+            Log.i(TAG, "Checking again");
             assertHasPermissionFromActivity(READ_CONTACTS);
         } finally {
             // Restore original state
@@ -554,8 +568,12 @@ public class PermissionsTest extends BaseDeviceAdminTest {
     }
 
     private boolean setPermissionGrantState(String permission, int grantState) {
-        return mDevicePolicyManager.setPermissionGrantState(ADMIN_RECEIVER_COMPONENT,
+        boolean result = mDevicePolicyManager.setPermissionGrantState(ADMIN_RECEIVER_COMPONENT,
                 PERMISSION_APP_PACKAGE_NAME, permission, grantState);
+        Log.d(TAG, "setPermissionGrantState(" + permission + "): requested " + grantState + " ("
+                + permissionGrantStateToString(grantState) + ") using DPM " + mDevicePolicyManager
+                + " on uid " + Process.myUid() + ", got " + result);
+        return result;
     }
 
     private void unableToSetPermissionGrantState(String permission, int grantState) {
@@ -601,12 +619,14 @@ public class PermissionsTest extends BaseDeviceAdminTest {
     }
 
     private void assertHasPermissionFromActivity(String permission) throws Exception {
+        Log.d(TAG, "assertHasPermissionFromActivity(" + permission + ")");
         PermissionUtils.launchActivityAndCheckPermission(
                 mReceiver, permission, PERMISSION_GRANTED,
                 PERMISSION_APP_PACKAGE_NAME, PERMISSIONS_ACTIVITY_NAME);
     }
 
     private void assertNoPermissionFromActivity(String permission) throws Exception {
+        Log.d(TAG, "assertNoPermissionFromActivity(" + permission + ")");
         PermissionUtils.launchActivityAndCheckPermission(
                 mReceiver, permission, PERMISSION_DENIED,
                 PERMISSION_APP_PACKAGE_NAME, PERMISSIONS_ACTIVITY_NAME);
