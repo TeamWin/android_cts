@@ -18,7 +18,7 @@
 
 <resources>
     <string name="permissions">Permissions</string>
-    <string name="deny">Deny</string>
+    <string name="deny">Don\u2019t allow</string>
     <string name="ask">Ask every time</string>
     <string name="allow">Allow</string>
     <string name="allow_foreground">Allow only while using the app</string>
