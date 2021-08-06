@@ -17,8 +17,14 @@
 package com.android.bedstead.testapp;
 
 import com.android.queryable.Queryable;
+import com.android.queryable.queries.BooleanQuery;
+import com.android.queryable.queries.BooleanQueryHelper;
 import com.android.queryable.queries.BundleQuery;
 import com.android.queryable.queries.BundleQueryHelper;
+import com.android.queryable.queries.IntegerQuery;
+import com.android.queryable.queries.IntegerQueryHelper;
+import com.android.queryable.queries.SetQuery;
+import com.android.queryable.queries.SetQueryHelper;
 import com.android.queryable.queries.StringQuery;
 import com.android.queryable.queries.StringQueryHelper;
 
@@ -28,6 +34,12 @@ public final class TestAppQueryBuilder implements Queryable {
 
     StringQueryHelper<TestAppQueryBuilder> mPackageName = new StringQueryHelper<>(this);
     BundleQueryHelper<TestAppQueryBuilder> mMetadata = new BundleQueryHelper<>(this);
+    IntegerQueryHelper<TestAppQueryBuilder> mMinSdkVersion = new IntegerQueryHelper<>(this);
+    IntegerQueryHelper<TestAppQueryBuilder> mMaxSdkVersion = new IntegerQueryHelper<>(this);
+    IntegerQueryHelper<TestAppQueryBuilder> mTargetSdkVersion = new IntegerQueryHelper<>(this);
+    SetQueryHelper<TestAppQueryBuilder, String, StringQuery<?>> mPermissions =
+            new SetQueryHelper<>(this);
+    BooleanQueryHelper<TestAppQueryBuilder> mTestOnly = new BooleanQueryHelper<>(this);
 
     TestAppQueryBuilder(TestAppProvider provider) {
         if (provider == null) {
@@ -52,6 +64,41 @@ public final class TestAppQueryBuilder implements Queryable {
      */
     public BundleQuery<TestAppQueryBuilder> whereMetadata() {
         return mMetadata;
+    }
+
+    /**
+     * Query for a {@link TestApp} by minSdkVersion.
+     */
+    public IntegerQuery<TestAppQueryBuilder> whereMinSdkVersion() {
+        return mMinSdkVersion;
+    }
+
+    /**
+     * Query for a {@link TestApp} by maxSdkVersion.
+     */
+    public IntegerQuery<TestAppQueryBuilder> whereMaxSdkVersion() {
+        return mMaxSdkVersion;
+    }
+
+    /**
+     * Query for a {@link TestApp} by targetSdkVersion.
+     */
+    public IntegerQuery<TestAppQueryBuilder> whereTargetSdkVersion() {
+        return mTargetSdkVersion;
+    }
+
+    /**
+     * Query for a {@link TestApp} by declared permissions.
+     */
+    public SetQuery<TestAppQueryBuilder, String, StringQuery<?>> wherePermissions() {
+        return mPermissions;
+    }
+
+    /**
+     * Query for a {@link TestApp} by the testOnly attribute.
+     */
+    public BooleanQuery<TestAppQueryBuilder> whereTestOnly() {
+        return mTestOnly;
     }
 
 
@@ -79,7 +126,7 @@ public final class TestAppQueryBuilder implements Queryable {
     }
 
     private boolean matches(TestAppDetails details) {
-        if (!StringQueryHelper.matches(mPackageName, details.mPackageName)) {
+        if (!StringQueryHelper.matches(mPackageName, details.mApp.getPackageName())) {
             return false;
         }
 
@@ -87,7 +134,31 @@ public final class TestAppQueryBuilder implements Queryable {
             return false;
         }
 
-        if (details.mMetadata.getBoolean("testapp-package-query-only", false)) {
+        if (!IntegerQueryHelper.matches(
+                mMinSdkVersion, details.mApp.getUsesSdk().getMinSdkVersion())) {
+            return false;
+        }
+
+        if (!IntegerQueryHelper.matches(
+                mMaxSdkVersion, details.mApp.getUsesSdk().getMaxSdkVersion())) {
+            return false;
+        }
+
+        if (!IntegerQueryHelper.matches(
+                mTargetSdkVersion, details.mApp.getUsesSdk().getTargetSdkVersion())) {
+            return false;
+        }
+
+        if (!SetQueryHelper.matches(mPermissions, details.mPermissions)) {
+            return false;
+        }
+
+        if (!BooleanQueryHelper.matches(mTestOnly, details.mApp.getTestOnly())) {
+            return false;
+        }
+
+        if (details.mMetadata.getString("testapp-package-query-only", "false")
+                .equals("true")) {
             if (!mPackageName.isQueryingForExactMatch()) {
                 return false;
             }

@@ -592,8 +592,20 @@ public final class MockIme extends InputMethodService {
 
     @Override
     public boolean onEvaluateFullscreenMode() {
-        return getTracer().onEvaluateFullscreenMode(() ->
-                mSettings.fullscreenModeAllowed(false) && super.onEvaluateFullscreenMode());
+        return getTracer().onEvaluateFullscreenMode(() -> {
+            final int policy = mSettings.fullscreenModePolicy();
+            switch (policy) {
+                case ImeSettings.FullscreenModePolicy.NO_FULLSCREEN:
+                    return false;
+                case ImeSettings.FullscreenModePolicy.FORCE_FULLSCREEN:
+                    return true;
+                case ImeSettings.FullscreenModePolicy.OS_DEFAULT:
+                    return super.onEvaluateFullscreenMode();
+                default:
+                    Log.e(TAG, "unknown FullscreenModePolicy=" + policy);
+                    return false;
+            }
+        });
     }
 
     private static final class KeyboardLayoutView extends LinearLayout {

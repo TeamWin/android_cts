@@ -15,20 +15,13 @@
  */
 package android.media.cts;
 
-import static android.Manifest.permission.MEDIA_CONTENT_CONTROL;
-
-import android.media.AudioManager;
-import android.platform.test.annotations.AppModeFull;
-import com.android.compatibility.common.util.ApiLevelUtil;
-import com.android.compatibility.common.util.MediaUtils;
-import com.android.compatibility.common.util.SystemUtil;
-
-import android.content.ComponentName;
 import android.Manifest;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
+import android.media.AudioManager;
 import android.media.MediaSession2;
 import android.media.Session2CommandGroup;
 import android.media.Session2Token;
@@ -44,9 +37,10 @@ import android.os.Process;
 import android.platform.test.annotations.AppModeFull;
 import android.test.InstrumentationTestCase;
 import android.test.UiThreadTest;
-import android.util.Log;
 import android.view.KeyEvent;
 
+import com.android.compatibility.common.util.ApiLevelUtil;
+import com.android.compatibility.common.util.MediaUtils;
 import com.android.compatibility.common.util.SystemUtil;
 
 import java.io.IOException;
@@ -67,6 +61,7 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
     private MediaSessionManager mSessionManager;
 
     private static boolean sIsAtLeastS = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S);
+    private static boolean sIsAtLeastT = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU);
 
     @Override
     protected void setUp() throws Exception {
@@ -93,7 +88,7 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
         // TODO enable a notification listener, test again, disable, test again
     }
 
-    public void testGetMediaKeyEventSession_throwsSecurityException() throws Exception {
+    public void testGetMediaKeyEventSession_throwsSecurityException() {
         if (!MediaUtils.check(sIsAtLeastS, "test invalid before Android 12")) return;
         try {
             mSessionManager.getMediaKeyEventSession();
@@ -103,17 +98,72 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
         }
     }
 
+    public void testGetMediaKeyEventSessionPackageName_throwsSecurityException() {
+        if (!MediaUtils.check(sIsAtLeastS, "test invalid before Android 12")) return;
+        try {
+            mSessionManager.getMediaKeyEventSessionPackageName();
+            fail("Expected security exception for call to getMediaKeyEventSessionPackageName");
+        } catch (SecurityException ex) {
+            // Expected
+        }
+    }
+
     public void testOnMediaKeyEventSessionChangedListener() throws Exception {
         // The permission can be held only on S+
         if (!MediaUtils.check(sIsAtLeastS, "test invalid before Android 12")) return;
 
-        getInstrumentation().getUiAutomation()
-                .adoptShellPermissionIdentity(Manifest.permission.MEDIA_CONTENT_CONTROL);
+        getInstrumentation().getUiAutomation().adoptShellPermissionIdentity(
+                Manifest.permission.MEDIA_CONTENT_CONTROL,
+                Manifest.permission.MANAGE_EXTERNAL_STORAGE);
 
         MediaKeyEventSessionListener keyEventSessionListener = new MediaKeyEventSessionListener();
         mSessionManager.addOnMediaKeyEventSessionChangedListener(
                 Executors.newSingleThreadExecutor(), keyEventSessionListener);
 
+        MediaSession session = createMediaKeySession();
+        assertTrue(keyEventSessionListener.mCountDownLatch
+                .await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+
+        assertEquals(session.getSessionToken(), keyEventSessionListener.mSessionToken);
+        assertEquals(session.getSessionToken(), mSessionManager.getMediaKeyEventSession());
+        assertEquals(getInstrumentation().getTargetContext().getPackageName(),
+                mSessionManager.getMediaKeyEventSessionPackageName());
+
+        mSessionManager.removeOnMediaKeyEventSessionChangedListener(keyEventSessionListener);
+        keyEventSessionListener.resetCountDownLatch();
+
+        session.release();
+        // This shouldn't be called because the callback is removed
+        assertFalse(keyEventSessionListener.mCountDownLatch.await(WAIT_MS, TimeUnit.MILLISECONDS));
+    }
+
+    public void testOnMediaKeyEventSessionChangedListener_whenSessionIsReleased() throws Exception {
+        // The permission can be held only on S+
+        if (!MediaUtils.check(sIsAtLeastS, "test invalid before Android 12")) return;
+
+        getInstrumentation().getUiAutomation().adoptShellPermissionIdentity(
+                Manifest.permission.MEDIA_CONTENT_CONTROL,
+                Manifest.permission.MANAGE_EXTERNAL_STORAGE);
+
+        MediaKeyEventSessionListener keyEventSessionListener = new MediaKeyEventSessionListener();
+        mSessionManager.addOnMediaKeyEventSessionChangedListener(
+                Executors.newSingleThreadExecutor(), keyEventSessionListener);
+
+        MediaSession session = createMediaKeySession();
+        assertTrue(keyEventSessionListener.mCountDownLatch
+                .await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+
+        // Check that this is called when the session is released.
+        keyEventSessionListener.resetCountDownLatch();
+        session.release();
+        assertTrue(keyEventSessionListener.mCountDownLatch
+                .await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+        assertNull(keyEventSessionListener.mSessionToken);
+        assertNull(mSessionManager.getMediaKeyEventSession());
+        assertEquals("", mSessionManager.getMediaKeyEventSessionPackageName());
+    }
+
+    private MediaSession createMediaKeySession() {
         MediaSession session = new MediaSession(getInstrumentation().getTargetContext(), TAG);
         session.setFlags(MediaSession.FLAG_HANDLES_MEDIA_BUTTONS
                 | MediaSession.FLAG_HANDLES_TRANSPORT_CONTROLS);
@@ -124,25 +174,59 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
         session.setActive(true);
         Utils.assertMediaPlaybackStarted(getInstrumentation().getTargetContext());
 
-        assertTrue(keyEventSessionListener.mCountDownLatch
-                .await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+        return session;
+    }
 
-        assertEquals(session.getSessionToken(), mSessionManager.getMediaKeyEventSession());
+    public void testOnMediaKeyEventSessionChangedListener_noPermission_throwsSecurityException() {
+        if (!MediaUtils.check(sIsAtLeastS, "test invalid before Android 12")) return;
+        MediaKeyEventSessionListener keyEventSessionListener = new MediaKeyEventSessionListener();
+        try {
+            mSessionManager.addOnMediaKeyEventSessionChangedListener(
+                    Executors.newSingleThreadExecutor(), keyEventSessionListener);
+            fail("Expected security exception for call to"
+                    + " addOnMediaKeyEventSessionChangedListener");
+        } catch (SecurityException ex) {
+            // Expected
+        }
+    }
 
-        mSessionManager.removeOnMediaKeyEventSessionChangedListener(keyEventSessionListener);
-        keyEventSessionListener.resetCountDownLatch();
+    public void testOnMediaKeyEventSessionChangedListener_nullNotificationListener_throwsNPE() {
+        if (!MediaUtils.check(sIsAtLeastT, "test invalid before Android 13")) return;
+        MediaKeyEventSessionListener keyEventSessionListener = new MediaKeyEventSessionListener();
+        try {
+            mSessionManager.addOnMediaKeyEventSessionChangedListener(
+                    /* notificationListener= */ null,
+                    Executors.newSingleThreadExecutor(), keyEventSessionListener);
+            fail("Null notification listener should throw NPE");
+        } catch (NullPointerException e) {
+            // Expected
+        }
+    }
 
-        session.release();
-        // This shouldn't be called because the callback is removed
-        assertFalse(keyEventSessionListener.mCountDownLatch.await(WAIT_MS, TimeUnit.MILLISECONDS));
+    public void testOnMediaKeyEventSessionChangedListener_invalidNotificationListener_throwsSE() {
+        if (!MediaUtils.check(sIsAtLeastT, "test invalid before Android 13")) return;
+        final Context context = getInstrumentation().getTargetContext();
+        final ComponentName invalidNotificationListener = new ComponentName(
+                context, MediaSessionManagerTest.class.getName());
+        MediaKeyEventSessionListener keyEventSessionListener = new MediaKeyEventSessionListener();
+        try {
+            mSessionManager.addOnMediaKeyEventSessionChangedListener(
+                    invalidNotificationListener,
+                    Executors.newSingleThreadExecutor(), keyEventSessionListener);
+            fail("Expected security exception for call to"
+                    + " addOnMediaKeyEventSessionChangedListener");
+        } catch (SecurityException ex) {
+            // Expected
+        }
     }
 
     public void testOnMediaKeyEventDispatchedListener() throws Exception {
         // The permission can be held only on S+
         if (!MediaUtils.check(sIsAtLeastS, "test invalid before Android 12")) return;
 
-        getInstrumentation().getUiAutomation()
-                .adoptShellPermissionIdentity(Manifest.permission.MEDIA_CONTENT_CONTROL);
+        getInstrumentation().getUiAutomation().adoptShellPermissionIdentity(
+                Manifest.permission.MEDIA_CONTENT_CONTROL,
+                Manifest.permission.MANAGE_EXTERNAL_STORAGE);
 
         MediaKeyEventDispatchedListener keyEventDispatchedListener =
                 new MediaKeyEventDispatchedListener();
@@ -178,6 +262,56 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
                 .await(WAIT_MS, TimeUnit.MILLISECONDS));
 
         session.release();
+    }
+
+    public void testGetMediaKeyEventSession_nullNotificationListener_throwsNPE() {
+        if (!MediaUtils.check(sIsAtLeastT, "test invalid before Android 13")) return;
+        MediaKeyEventSessionListener keyEventSessionListener = new MediaKeyEventSessionListener();
+        try {
+            mSessionManager.getMediaKeyEventSession(null);
+            fail("Null notification listener should throw NPE");
+        } catch (NullPointerException e) {
+            // Expected
+        }
+    }
+
+    public void testGetMediaKeyEventSession_invalidNotificationListener_throwsSecurityException() {
+        if (!MediaUtils.check(sIsAtLeastT, "test invalid before Android 13")) return;
+        final Context context = getInstrumentation().getTargetContext();
+        final ComponentName invalidNotificationListener = new ComponentName(
+                context, MediaSessionManagerTest.class.getName());
+        MediaKeyEventSessionListener keyEventSessionListener = new MediaKeyEventSessionListener();
+        try {
+            mSessionManager.getMediaKeyEventSession(invalidNotificationListener);
+            fail("Expected security exception for call to getMediaKeyEventSession");
+        } catch (SecurityException ex) {
+            // Expected
+        }
+    }
+
+    public void testGetMediaKeyEventSessionPackageName_nullNotificationListener_throwsNPE() {
+        if (!MediaUtils.check(sIsAtLeastT, "test invalid before Android 13")) return;
+        MediaKeyEventSessionListener keyEventSessionListener = new MediaKeyEventSessionListener();
+        try {
+            mSessionManager.getMediaKeyEventSessionPackageName(null);
+            fail("Null notification listener should throw NPE");
+        } catch (NullPointerException e) {
+            // Expected
+        }
+    }
+
+    public void testGetMediaKeyEventSessionPackageName_invalidListener_throwsSecurityException() {
+        if (!MediaUtils.check(sIsAtLeastT, "test invalid before Android 13")) return;
+        final Context context = getInstrumentation().getTargetContext();
+        final ComponentName invalidNotificationListener = new ComponentName(
+                context, MediaSessionManagerTest.class.getName());
+        MediaKeyEventSessionListener keyEventSessionListener = new MediaKeyEventSessionListener();
+        try {
+            mSessionManager.getMediaKeyEventSessionPackageName(invalidNotificationListener);
+            fail("Expected security exception for call to getMediaKeyEventSessionPackageName");
+        } catch (SecurityException ex) {
+            // Expected
+        }
     }
 
     @UiThreadTest
@@ -655,6 +789,7 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
 
         void resetCountDownLatch() {
             mCountDownLatch = new CountDownLatch(1);
+            mSessionToken = null;
         }
 
         @Override
