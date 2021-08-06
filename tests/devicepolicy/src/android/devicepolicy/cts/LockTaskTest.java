@@ -111,9 +111,11 @@ public class LockTaskTest {
     private static final TestApp sLockTaskTestApp = sTestAppProvider.query()
             .wherePackageName().isEqualTo("com.android.bedstead.testapp.LockTaskApp")
             .get(); // TODO(scottjonathan): filter by containing activity not by package name
-    private static final TestApp sTestApp = sTestAppProvider.any();
+    private static final TestApp sTestApp =
+            sTestAppProvider.query().whereActivities().isNotEmpty().get();
 
-    private static final TestApp sSecondTestApp = sTestAppProvider.any();
+    private static final TestApp sSecondTestApp =
+            sTestAppProvider.query().whereActivities().isNotEmpty().get();
 
     private static final ComponentReference BLOCKED_ACTIVITY_COMPONENT =
             sTestApis.packages().component(new ComponentName(

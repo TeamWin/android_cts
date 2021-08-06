@@ -68,7 +68,8 @@ public final class ApplicationRestrictionsTest {
     private static final TestAppProvider sTestAppProvider = new TestAppProvider();
     private static final TestApis sTestApis = new TestApis();
 
-    private static final TestApp sTestApp = sTestAppProvider.any();
+    private static final TestApp sTestApp =
+            sTestAppProvider.query().whereActivities().isNotEmpty().get();
 
     private static final Context sContext = sTestApis.context().instrumentedContext();
 
