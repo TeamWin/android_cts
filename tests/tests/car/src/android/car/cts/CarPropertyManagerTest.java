@@ -614,6 +614,28 @@ public class CarPropertyManagerTest extends CarApiTestBase {
     }
 
     @Test
+    public void testIgnitionStateIfSupported() {
+        VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.IGNITION_STATE,
+                CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                Integer.class).setCarPropertyValueVerifier(
+                (carPropertyConfig, carPropertyValue) -> {
+                    Integer ignitionState = (Integer) carPropertyValue.getValue();
+                    assertWithMessage(
+                            "IGNITION_STATE must be a defined ignition state: "
+                                    + ignitionState).that(
+                            ignitionState).isIn(ImmutableSet.of(
+                            /*VehicleIgnitionState.UNDEFINED=*/0,
+                            /*VehicleIgnitionState.LOCK=*/1,
+                            /*VehicleIgnitionState.OFF=*/2,
+                            /*VehicleIgnitionState.ACC=*/3,
+                            /*VehicleIgnitionState.ON=*/4,
+                            /*VehicleIgnitionState.START=*/5));
+                }).build().verify(mCarPropertyManager);
+    }
+
+    @Test
     public void testDistanceDisplayUnitsIfSupported() {
         VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.DISTANCE_DISPLAY_UNITS,
                 CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
