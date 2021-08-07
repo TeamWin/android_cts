@@ -193,7 +193,8 @@ public class AudioLoopbackBaseActivity extends PassFailButtons.Activity {
             }
         }
 
-        mIsPeripheralAttached = mOutputDevInfo != null || mInputDevInfo != null;
+        // need BOTH input and output to test
+        mIsPeripheralAttached = mOutputDevInfo != null && mInputDevInfo != null;
         calculateTestPeripheral();
         showConnectedAudioPeripheral();
         calculateLatencyThresholds();
