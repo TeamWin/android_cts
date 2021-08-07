@@ -226,4 +226,7 @@
 
     <!-- b/192916298, b/192013761, b/193544088  CtsAppCloningHostTest from cts-on-gsi -->
     <option name="compatibility:exclude-filter" value="CtsAppCloningHostTest android.scopedstorage.cts.host.AppCloningHostTest#testCreateCloneUserFile" />
+
+    <!-- b/192284443 -->
+    <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.DisplayHashManagerTest#testGenerateAndVerifyDisplayHash" />
 </configuration>

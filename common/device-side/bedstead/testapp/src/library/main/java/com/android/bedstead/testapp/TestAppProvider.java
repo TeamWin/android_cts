@@ -17,10 +17,10 @@
 package com.android.bedstead.testapp;
 
 import android.content.Context;
-import android.os.Bundle;
 import android.util.Log;
 
 import com.android.bedstead.nene.TestApis;
+import com.android.queryable.info.ActivityInfo;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -90,6 +90,14 @@ public final class TestAppProvider {
 
         for (int i = 0; i < app.getPermissionsCount(); i++) {
             details.mPermissions.add(app.getPermissions(i).getName());
+        }
+
+        for (int i = 0; i < app.getActivitiesCount(); i++) {
+            TestappProtos.Activity activityEntry = app.getActivities(i);
+            details.mActivities.add(ActivityInfo.builder()
+                    .activityClass(activityEntry.getName())
+                    .exported(activityEntry.getExported())
+                    .build());
         }
 
         mTestApps.add(details);

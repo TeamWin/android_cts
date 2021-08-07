@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <!--
   ~ Copyright (C) 2021 The Android Open Source Project
   ~
@@ -15,15 +14,19 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="com.android.bedstead.testapp.EmptyTestApp">
-
-    <uses-permission android:name="android.permission.READ_CALENDAR"/>
-
-    <application
-        android:appComponentFactory="com.android.bedstead.testapp.TestAppAppComponentFactory">
-        <meta-data android:name="test-metadata-key" android:value="test-metadata-value" />
+          package="android.car.cts.permissioncarenergyports">
+    <application android:label="PermissionCarEnergyPorts">
+        <uses-library android:name="android.test.runner"/>
     </application>
-    <uses-sdk android:minSdkVersion="28" android:targetSdkVersion="28"/>
+
+    <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
+                     android:functionalTest="true"
+                     android:label="Permission CAR_ENERGY_PORTS Test"
+                     android:targetPackage="android.car.cts.permissioncarenergyports">
+    </instrumentation>
+
+    <uses-feature android:name="android.hardware.type.automotive"/>
+
+    <uses-permission android:name="android.car.permission.CAR_ENERGY_PORTS"/>
 </manifest>
