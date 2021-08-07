@@ -327,7 +327,7 @@ public class ResourcesHardeningTest {
 
             // Start the test app and indicate which test to run.
             try (pidDetector; finishDetector) {
-                final Intent launchIntent = new Intent(Intent.ACTION_VIEW);
+                final Intent launchIntent = new Intent(Intent.ACTION_MAIN);
                 launchIntent.setClassName(TestUtils.TEST_APP_PACKAGE, TestUtils.TEST_ACTIVITY_NAME);
                 launchIntent.putExtra(TestUtils.TEST_NAME_EXTRA_KEY, mTestName);
                 launchIntent.putExtra(TestUtils.TEST_ASSERT_SUCCESS_EXTRA_KEY, assertSuccess);

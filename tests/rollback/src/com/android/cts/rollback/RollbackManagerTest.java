@@ -21,14 +21,18 @@ import static com.android.cts.rollback.lib.RollbackUtils.getRollbackManager;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assert.fail;
+
 import android.Manifest;
 import android.content.rollback.RollbackInfo;
+import android.content.rollback.RollbackManager;
 import android.provider.DeviceConfig;
 
 import androidx.test.InstrumentationRegistry;
 
 import com.android.cts.install.lib.Install;
 import com.android.cts.install.lib.InstallUtils;
+import com.android.cts.install.lib.LocalIntentSender;
 import com.android.cts.install.lib.TestApp;
 import com.android.cts.install.lib.Uninstall;
 import com.android.cts.rollback.lib.Rollback;
@@ -41,6 +45,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -112,6 +117,224 @@ public class RollbackManagerTest {
         assertThat(committed).packagesContainsExactly(
                 Rollback.from(TestApp.A2).to(TestApp.A1));
         assertThat(committed).causePackagesContainsExactly(TestApp.A2);
+    }
+
+    /**
+     * Tests rollback of multi-package installs is implemented.
+     */
+    @Test
+    public void testBasic_MultiPackage() throws Exception {
+        // Prep installation of the test apps.
+        Install.multi(TestApp.A1, TestApp.B1).commit();
+        Install.multi(TestApp.A2, TestApp.B2).setEnableRollback().commit();
+        assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(2);
+        assertThat(InstallUtils.getInstalledVersion(TestApp.B)).isEqualTo(2);
+
+        // TestApp.A should now be available for rollback.
+        RollbackInfo rollback = RollbackUtils.waitForAvailableRollback(TestApp.A);
+        assertThat(rollback).isNotNull();
+        assertThat(rollback).packagesContainsExactly(
+                Rollback.from(TestApp.A2).to(TestApp.A1),
+                Rollback.from(TestApp.B2).to(TestApp.B1));
+
+        // Rollback the app. It should cause both test apps to be rolled back.
+        RollbackUtils.rollback(rollback.getRollbackId());
+        assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(1);
+        assertThat(InstallUtils.getInstalledVersion(TestApp.B)).isEqualTo(1);
+
+        // We should see recent rollbacks listed for both A and B.
+        RollbackInfo rollbackA = RollbackUtils.getCommittedRollback(TestApp.A);
+        RollbackInfo rollbackB = RollbackUtils.getCommittedRollback(TestApp.B);
+        assertThat(rollbackA).packagesContainsExactly(
+                Rollback.from(TestApp.A2).to(TestApp.A1),
+                Rollback.from(TestApp.B2).to(TestApp.B1));
+        assertThat(rollbackA).hasRollbackId(rollback.getRollbackId());
+        assertThat(rollbackB).hasRollbackId(rollback.getRollbackId());
+    }
+
+    /**
+     * Tests rollbacks are properly persisted.
+     */
+    @Test
+    public void testSingleRollbackPersistence() throws Exception {
+        RollbackManager rm = RollbackUtils.getRollbackManager();
+
+        Install.single(TestApp.A1).commit();
+        Install.single(TestApp.A2).setEnableRollback().commit();
+        RollbackInfo rollbackA = RollbackUtils.waitForAvailableRollback(TestApp.A);
+        assertThat(rollbackA).isNotNull();
+
+        // Check the available rollback is persisted correctly
+        rm.reloadPersistedData();
+        rollbackA = RollbackUtils.getAvailableRollback(TestApp.A);
+        assertThat(rollbackA).packagesContainsExactly(Rollback.from(TestApp.A2).to(TestApp.A1));
+
+        // Rollback the app
+        TestApp cause = new TestApp("Foo", "com.android.tests.rollback.testapp.Foo",
+                /*versionCode*/ 42, /*isApex*/ false);
+        RollbackUtils.rollback(rollbackA.getRollbackId(), cause);
+        RollbackInfo committed = RollbackUtils.getCommittedRollback(TestApp.A);
+        assertThat(committed).isNotNull();
+
+        // Check the committed rollback is persisted correctly
+        rm.reloadPersistedData();
+        committed = RollbackUtils.getCommittedRollback(TestApp.A);
+        assertThat(committed).hasRollbackId(rollbackA.getRollbackId());
+        assertThat(committed).isNotStaged();
+        assertThat(committed).packagesContainsExactly(Rollback.from(TestApp.A2).to(TestApp.A1));
+        assertThat(committed).causePackagesContainsExactly(cause);
+    }
+
+    /**
+     * Tests rollbacks are properly persisted.
+     */
+    @Test
+    public void testMultiRollbackPersistence() throws Exception {
+        RollbackManager rm = RollbackUtils.getRollbackManager();
+
+        Install.multi(TestApp.A1, TestApp.B1).commit();
+        Install.multi(TestApp.A2, TestApp.B2).setEnableRollback().commit();
+        RollbackInfo rollbackA = RollbackUtils.waitForAvailableRollback(TestApp.A);
+        RollbackInfo rollbackB = RollbackUtils.waitForAvailableRollback(TestApp.B);
+        assertThat(rollbackA).isNotNull();
+        assertThat(rollbackB).isNotNull();
+
+        // Check the available rollback is persisted correctly
+        rm.reloadPersistedData();
+        rollbackA = RollbackUtils.getAvailableRollback(TestApp.A);
+        rollbackB = RollbackUtils.getAvailableRollback(TestApp.B);
+        assertThat(rollbackB).hasRollbackId(rollbackA.getRollbackId());
+        assertThat(rollbackA).packagesContainsExactly(
+                Rollback.from(TestApp.A2).to(TestApp.A1),
+                Rollback.from(TestApp.B2).to(TestApp.B1));
+
+        // Rollback the app
+        RollbackUtils.rollback(rollbackA.getRollbackId());
+        RollbackInfo committedA = RollbackUtils.getCommittedRollback(TestApp.A);
+        RollbackInfo committedB = RollbackUtils.getCommittedRollback(TestApp.B);
+        assertThat(committedA).isNotNull();
+        assertThat(committedB).isNotNull();
+
+        // Check the committed rollback is persisted correctly
+        rm.reloadPersistedData();
+        committedA = RollbackUtils.getCommittedRollback(TestApp.A);
+        committedB = RollbackUtils.getCommittedRollback(TestApp.B);
+        assertThat(committedA).hasRollbackId(rollbackA.getRollbackId());
+        assertThat(committedB).hasRollbackId(rollbackA.getRollbackId());
+        assertThat(committedA).isNotStaged();
+        assertThat(committedA).packagesContainsExactly(
+                Rollback.from(TestApp.A2).to(TestApp.A1),
+                Rollback.from(TestApp.B2).to(TestApp.B1));
+    }
+
+    /**
+     * Tests that the MANAGE_ROLLBACKS permission is required to call
+     * RollbackManager APIs.
+     */
+    @Test
+    public void testManageRollbacksPermission() throws Exception {
+        // We shouldn't be allowed to call any of the RollbackManager APIs
+        // without the MANAGE_ROLLBACKS permission.
+        InstallUtils.dropShellPermissionIdentity();
+        RollbackManager rm = RollbackUtils.getRollbackManager();
+
+        try {
+            rm.getAvailableRollbacks();
+            fail("expected SecurityException");
+        } catch (SecurityException e) {
+            // Expected.
+        }
+
+        try {
+            rm.getRecentlyCommittedRollbacks();
+            fail("expected SecurityException");
+        } catch (SecurityException e) {
+            // Expected.
+        }
+
+        try {
+            LocalIntentSender sender = new LocalIntentSender();
+            rm.commitRollback(0, Collections.emptyList(), sender.getIntentSender());
+            fail("expected SecurityException");
+        } catch (SecurityException e) {
+            // Expected.
+        }
+
+        try {
+            rm.reloadPersistedData();
+            fail("expected SecurityException");
+        } catch (SecurityException e) {
+            // Expected.
+        }
+
+        try {
+            rm.expireRollbackForPackage(TestApp.A);
+            fail("expected SecurityException");
+        } catch (SecurityException e) {
+            // Expected.
+        }
+    }
+
+    /**
+     * Tests that you cannot enable rollback for a package without the
+     * MANAGE_ROLLBACKS permission.
+     */
+    @Test
+    public void testEnableRollbackPermission() throws Exception {
+        InstallUtils.adoptShellPermissionIdentity(
+                Manifest.permission.INSTALL_PACKAGES,
+                Manifest.permission.DELETE_PACKAGES);
+
+        Install.single(TestApp.A1).commit();
+        Install.single(TestApp.A2).setEnableRollback().commit();
+
+        // We expect v2 of the app was installed, but rollback has not
+        // been enabled.
+        assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(2);
+        InstallUtils.adoptShellPermissionIdentity(
+                Manifest.permission.MANAGE_ROLLBACKS,
+                Manifest.permission.INSTALL_PACKAGES,
+                Manifest.permission.DELETE_PACKAGES);
+        assertThat(RollbackUtils.getAvailableRollback(TestApp.A)).isNull();
+    }
+
+    /**
+     * Tests that you cannot enable rollback for a non-module package when
+     * holding the MANAGE_ROLLBACKS permission without TEST_MANAGE_ROLLBACKS.
+     */
+    @Test
+    public void testNonModuleEnableRollback() throws Exception {
+        InstallUtils.adoptShellPermissionIdentity(
+                Manifest.permission.INSTALL_PACKAGES,
+                Manifest.permission.DELETE_PACKAGES,
+                Manifest.permission.MANAGE_ROLLBACKS);
+
+        Install.single(TestApp.A1).commit();
+        Install.single(TestApp.A2).setEnableRollback().commit();
+
+        // We expect v2 of the app was installed, but rollback has not
+        // been enabled because the test app is not a module.
+        assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(2);
+        assertThat(RollbackUtils.getAvailableRollback(TestApp.A)).isNull();
+    }
+
+    /**
+     * Tests failure to enable rollback for multi-package installs.
+     * If any one of the packages fail to enable rollback, we shouldn't enable
+     * rollback for any package.
+     */
+    @Test
+    public void testMultiPackageEnableFail() throws Exception {
+        Install.single(TestApp.A1).commit();
+        // We should fail to enable rollback here because TestApp B is not
+        // already installed.
+        Install.multi(TestApp.A2, TestApp.B2).setEnableRollback().commit();
+
+        assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(2);
+        assertThat(InstallUtils.getInstalledVersion(TestApp.B)).isEqualTo(2);
+
+        assertThat(RollbackUtils.getAvailableRollback(TestApp.A)).isNull();
+        assertThat(RollbackUtils.getAvailableRollback(TestApp.B)).isNull();
     }
 
     @Test

@@ -174,7 +174,11 @@ def parse_permissions(root, android_app):
 def parse_activities(application_element, android_app):
     for activity_element in find_elements(application_element.children, "activity"):
         activity = Activity()
+
         activity.name = activity_element.attributes["name"]
+        if activity.name.startswith("androidx"):
+            continue # Special case: androidx adds non-logging activities
+
         activity.exported = activity_element.attributes.get("exported", "false") == "true"
 
         parse_intent_filters(activity_element, activity)

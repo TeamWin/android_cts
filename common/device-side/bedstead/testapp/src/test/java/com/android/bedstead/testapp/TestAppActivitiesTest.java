@@ -42,8 +42,8 @@ public class TestAppActivitiesTest {
 
     private static final TestAppProvider sTestAppProvider = new TestAppProvider();
     private static final TestApp sTestApp = sTestAppProvider.query()
-            .wherePackageName().isEqualTo("com.android.bedstead.testapp.EmptyTestApp")
-            .get(); // TODO(scottjonathan): specify must have activity rather than package name
+            .whereActivities().isNotEmpty()
+            .get();
     private static TestAppInstanceReference mTestAppInstance;
 
     private static final String EXISTING_ACTIVITY = "android.testapp.activity";

@@ -21,9 +21,7 @@ import static android.Manifest.permission.RECORD_AUDIO;
 import static android.content.pm.PackageManager.PERMISSION_DENIED;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 
-import static junit.framework.Assert.assertTrue;
-
-import static org.junit.Assert.assertEquals;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.Manifest;
 import android.app.AppOpsManager;
@@ -32,6 +30,8 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.os.Process;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.BySelector;
 import android.support.test.uiautomator.UiDevice;
@@ -44,12 +44,13 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 public class PermissionUtils {
-    private static final String LOG_TAG = PermissionUtils.class.getName();
+    private static final String LOG_TAG = PermissionUtils.class.getSimpleName();
     private static final Set<String> LOCATION_PERMISSIONS = new HashSet<String>();
 
     static {
@@ -69,7 +70,16 @@ public class PermissionUtils {
             throws Exception {
         launchActivityWithAction(permission, ACTION_CHECK_HAS_PERMISSION,
                 packageName, activityName);
-        assertEquals(expected, receiver.waitForBroadcast());
+        assertBroadcastReceived(receiver, expected);
+    }
+
+    private static void assertBroadcastReceived(PermissionBroadcastReceiver receiver,
+            int expected) throws Exception {
+        int actual = receiver.waitForBroadcast();
+        assertWithMessage("value returned by %s (%s=%s, %s=%s)", receiver,
+                expected, permissionToString(expected),
+                actual, permissionToString(actual))
+                        .that(actual).isEqualTo(expected);
     }
 
     public static void launchActivityAndRequestPermission(PermissionBroadcastReceiver receiver,
@@ -77,7 +87,7 @@ public class PermissionUtils {
             throws Exception {
         launchActivityWithAction(permission, ACTION_REQUEST_PERMISSION,
                 packageName, activityName);
-        assertEquals(expected, receiver.waitForBroadcast());
+        assertBroadcastReceived(receiver, expected);
     }
 
     public static void launchActivityAndRequestPermission(PermissionBroadcastReceiver
@@ -105,7 +115,7 @@ public class PermissionUtils {
         launchActivityWithAction(permission, ACTION_REQUEST_PERMISSION,
                 packageName, activityName);
         pressPermissionPromptButton(device, resNames.toArray(new String[0]));
-        assertEquals(expected, receiver.waitForBroadcast());
+        assertBroadcastReceived(receiver, expected);
     }
 
     private static void launchActivityWithAction(String permission, String action,
@@ -115,12 +125,20 @@ public class PermissionUtils {
         launchIntent.putExtra(EXTRA_PERMISSION, permission);
         launchIntent.setAction(action);
         launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
+        Log.d(LOG_TAG, "Launching activity with intent " + launchIntent + " on uid "
+                + Process.myUid());
         getContext().startActivity(launchIntent);
     }
 
     public static void checkPermission(String permission, int expected, String packageName) {
-        assertEquals(getContext().getPackageManager()
+        assertPermission(permission, packageName, getContext().getPackageManager()
                 .checkPermission(permission, packageName), expected);
+    }
+
+    private static void assertPermission(String permission, String packageName, int actual,
+            int expected) {
+        assertWithMessage("Wrong status for permission %s on package %s", permission, packageName)
+                .that(actual).isEqualTo(expected);
     }
 
     /**
@@ -128,7 +146,8 @@ public class PermissionUtils {
      */
     public static void checkPermissionAndAppOps(String permission, int expected, String packageName)
             throws Exception {
-        assertEquals(checkPermissionAndAppOps(permission, packageName), expected);
+        assertPermission(permission, packageName, checkPermissionAndAppOps(permission, packageName),
+                expected);
     }
 
     private static int checkPermissionAndAppOps(String permission, String packageName)
@@ -166,18 +185,23 @@ public class PermissionUtils {
                 "com.android.packageinstaller",
                 "com.android.permissioncontroller"};
 
+        Log.v(LOG_TAG, "pressPermissionPromptButton(): pkgs= " + Arrays.toString(possiblePackages)
+                + ", resIds=" + Arrays.toString(resNames));
+
         boolean foundButton = false;
         for (String resName : resNames) {
             for (String possiblePkg : possiblePackages) {
                 BySelector selector = By
                         .clazz(android.widget.Button.class.getName())
                         .res(possiblePkg, resName);
+                Log.v(LOG_TAG, "trying " + selector);
                 mDevice.wait(Until.hasObject(selector), 5000);
                 UiObject2 button = mDevice.findObject(selector);
                 Log.d(LOG_TAG, String.format("Resource %s in Package %s found? %b", resName,
                         possiblePkg, button != null));
                 if (button != null) {
                     foundButton = true;
+                    Log.d(LOG_TAG, "Clicking on " + button.getText());
                     button.click();
                     break;
                 }
@@ -187,7 +211,8 @@ public class PermissionUtils {
             }
         }
 
-        assertTrue("Couldn't find any button", foundButton);
+        assertWithMessage("Found button on packages %s", Arrays.toString(possiblePackages))
+                .that(foundButton).isTrue();
     }
 
     public static String permissionGrantStateToString(int state) {
@@ -196,6 +221,10 @@ public class PermissionUtils {
 
     public static String permissionPolicyToString(int policy) {
         return constantToString(DevicePolicyManager.class, "PERMISSION_POLICY_", policy);
+    }
+
+    public static String permissionToString(int permission) {
+        return constantToString(PackageManager.class, "PERMISSION_", permission);
     }
 
     // Copied from DebugUtils

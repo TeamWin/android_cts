@@ -46,6 +46,17 @@ public final class SetQueryHelper<E extends Queryable, F, G extends Query<F>> im
     }
 
     @Override
+    public E isEmpty() {
+        return size().isEqualTo(0);
+    }
+
+    @Override
+    public E isNotEmpty() {
+        return size().isGreaterThanOrEqualTo(1);
+    }
+
+
+    @Override
     public E contains(G... objects) {
         mContains.addAll(Arrays.asList(objects));
         return mQuery;
