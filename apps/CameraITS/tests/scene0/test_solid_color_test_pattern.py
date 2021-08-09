@@ -28,8 +28,8 @@ import its_session_utils
 
 _BW_CH_ATOL = 6  # DN in [0,255]
 _RGB_PRIMARY_MIN = 200
-_RGB_SECONDARY_MAX = 55
-_CH_VARIANCE_ATOL = 17
+_RGB_SECONDARY_MAX = 60
+_CH_VARIANCE_ATOL = 30
 _OFF = 0x00000000
 _SAT = 0xFFFFFFFF
 _NAME = os.path.basename(__file__).split('.')[0]
