@@ -318,7 +318,7 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     @Test
     public void testSandboxResizableActivityPackageInAlwaysSandboxDeviceConfigFlag() {
         ComponentName activity = RESIZEABLE_LARGE_ASPECT_RATIO_ACTIVITY;
-        setNeverConstrainDisplayApisFlag(
+        setAlwaysConstrainDisplayApisFlag(
                 "com.android.other::," + activity.getPackageName() + "::");
         runSandboxTest(activity, /* isSandboxed= */ true, /* inSizeCompatModeAfterResize= */ false);
     }
