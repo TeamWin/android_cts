@@ -125,6 +125,15 @@ public class NearbyDevicesRenouncePermissionTest {
 
                     @Override
                     public void onAsyncNoted(AsyncNotedAppOp asyncOp) {
+                        switch (asyncOp.getOp()) {
+                            case OPSTR_FINE_LOCATION:
+                                mLocationNoteCount++;
+                                break;
+                            case OPSTR_BLUETOOTH_SCAN:
+                                mScanNoteCount++;
+                                break;
+                            default:
+                        }
                     }
                 });
     }
@@ -141,38 +150,46 @@ public class NearbyDevicesRenouncePermissionTest {
 
     @AppModeFull
     @Test
-    public void scanWithoutRenouncingNotesBluetoothAndLocation() {
+    public void scanWithoutRenouncingNotesBluetoothAndLocation() throws Exception {
         clearNoteCounts();
         assertThat(performScan(Scenario.DEFAULT)).isEqualTo(Result.FULL);
-        assertThat(mLocationNoteCount).isGreaterThan(0);
-        assertThat(mScanNoteCount).isGreaterThan(0);
+        SystemUtil.eventually(() -> {
+            assertThat(mLocationNoteCount).isGreaterThan(0);
+            assertThat(mScanNoteCount).isGreaterThan(0);
+        });
     }
 
     @AppModeFull
     @Test
-    public void scanRenouncingLocationNotesBluetoothButNotLocation() {
+    public void scanRenouncingLocationNotesBluetoothButNotLocation() throws Exception {
         clearNoteCounts();
         assertThat(performScan(Scenario.RENOUNCE)).isEqualTo(Result.FILTERED);
-        assertThat(mLocationNoteCount).isEqualTo(0);
-        assertThat(mScanNoteCount).isGreaterThan(0);
+        SystemUtil.eventually(() -> {
+            assertThat(mLocationNoteCount).isEqualTo(0);
+            assertThat(mScanNoteCount).isGreaterThan(0);
+        });
     }
 
     @AppModeFull
     @Test
-    public void scanRenouncingInMiddleOfChainNotesBluetoothButNotLocation() {
+    public void scanRenouncingInMiddleOfChainNotesBluetoothButNotLocation() throws Exception {
         clearNoteCounts();
         assertThat(performScan(Scenario.RENOUNCE_MIDDLE)).isEqualTo(Result.FILTERED);
-        assertThat(mLocationNoteCount).isEqualTo(0);
-        assertThat(mScanNoteCount).isGreaterThan(0);
+        SystemUtil.eventually(() -> {
+            assertThat(mLocationNoteCount).isEqualTo(0);
+            assertThat(mScanNoteCount).isGreaterThan(0);
+        });
     }
 
     @AppModeFull
     @Test
-    public void scanRenouncingAtEndOfChainNotesBluetoothButNotLocation() {
+    public void scanRenouncingAtEndOfChainNotesBluetoothButNotLocation() throws Exception {
         clearNoteCounts();
         assertThat(performScan(Scenario.RENOUNCE_END)).isEqualTo(Result.FILTERED);
-        assertThat(mLocationNoteCount).isEqualTo(0);
-        assertThat(mScanNoteCount).isGreaterThan(0);
+        SystemUtil.eventually(() -> {
+            assertThat(mLocationNoteCount).isEqualTo(0);
+            assertThat(mScanNoteCount).isGreaterThan(0);
+        });
     }
 
     private Result performScan(Scenario scenario) {
