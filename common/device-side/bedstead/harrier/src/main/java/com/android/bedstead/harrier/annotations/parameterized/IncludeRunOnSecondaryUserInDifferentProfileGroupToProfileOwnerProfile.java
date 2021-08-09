@@ -16,12 +16,9 @@
 
 package com.android.bedstead.harrier.annotations.parameterized;
 
-import static android.content.pm.PackageManager.FEATURE_DEVICE_ADMIN;
-
+import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
-import com.android.bedstead.harrier.annotations.RequireFeature;
-import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
-import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDeviceOwner;
+import com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser;
 import com.android.bedstead.harrier.annotations.meta.ParameterizedAnnotation;
 
 import java.lang.annotation.ElementType;
@@ -30,13 +27,13 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Parameterize a test so that it runs on the parent of a profile owner.
+ * Parameterize a test so that it runs on a device which has a primary and work profile, but runs
+ * the test on a secondary user which is in a different profile group.
  */
 @Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @ParameterizedAnnotation
-@RequireRunOnPrimaryUser
-@EnsureHasNoDeviceOwner
-@EnsureHasWorkProfile(dpcIsPrimary = true)
-public @interface IncludeRunOnParentOfProfileOwner {
+@RequireRunOnSecondaryUser
+@EnsureHasWorkProfile(forUser = DeviceState.UserType.PRIMARY_USER, dpcIsPrimary = true)
+public @interface IncludeRunOnSecondaryUserInDifferentProfileGroupToProfileOwnerProfile {
 }
