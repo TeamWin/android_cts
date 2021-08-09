@@ -29,6 +29,8 @@
     Bug: 187483828 android.intent.action.VIEW_PERMISSION_USAGE_FOR_PERIOD
     Bug: 187483828 android.intent.action.ACTIVITY_RECOGNIZER
     Bug: 188702477 android.intent.action.DOMAINS_NEED_VERIFICATION
+    Bug: 195605294 android.intent.action.MANAGE_UNUSED_APPS
+    Bug: 195605294 android.intent.action.REVIEW_PERMISSION_HISTORY
 -->
 <dynamicConfig>
     <entry key ="intent_whitelist">
@@ -46,5 +48,7 @@
       <value>android.intent.action.VIEW_PERMISSION_USAGE_FOR_PERIOD</value>
       <value>android.intent.action.ACTIVITY_RECOGNIZER</value>
       <value>android.intent.action.DOMAINS_NEED_VERIFICATION</value>
+      <value>android.intent.action.MANAGE_UNUSED_APPS</value>
+      <value>android.intent.action.REVIEW_PERMISSION_HISTORY</value>
     </entry>
 </dynamicConfig>
