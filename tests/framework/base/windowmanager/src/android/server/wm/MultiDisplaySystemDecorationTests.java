@@ -87,6 +87,7 @@ import org.junit.Test;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * Build/Install/Run:
@@ -276,11 +277,13 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
 
         assertEquals("The number of nav bars should be the same", expected.size(), result.size());
 
-        // Nav bars should show on the same displays
-        for (int i = 0; i < expected.size(); i++) {
-            final int expectedDisplayId = expected.get(i).getDisplayId();
-            mWmState.waitAndAssertNavBarShownOnDisplay(expectedDisplayId);
-        }
+        mWmState.getDisplays().forEach(displayContent -> {
+            List<WindowState> navWindows = expected.stream().filter(ws ->
+                    ws.getDisplayId() == displayContent.mId)
+                    .collect(Collectors.toList());
+
+            mWmState.waitAndAssertNavBarShownOnDisplay(displayContent.mId, navWindows.size());
+        });
     }
 
     // Secondary Home related tests
