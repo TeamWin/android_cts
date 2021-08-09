@@ -614,6 +614,28 @@ public class CarPropertyManagerTest extends CarApiTestBase {
     }
 
     @Test
+    public void testIgnitionStateIfSupported() {
+        VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.IGNITION_STATE,
+                CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                Integer.class).setCarPropertyValueVerifier(
+                (carPropertyConfig, carPropertyValue) -> {
+                    Integer ignitionState = (Integer) carPropertyValue.getValue();
+                    assertWithMessage(
+                            "IGNITION_STATE must be a defined ignition state: "
+                                    + ignitionState).that(
+                            ignitionState).isIn(ImmutableSet.of(
+                            /*VehicleIgnitionState.UNDEFINED=*/0,
+                            /*VehicleIgnitionState.LOCK=*/1,
+                            /*VehicleIgnitionState.OFF=*/2,
+                            /*VehicleIgnitionState.ACC=*/3,
+                            /*VehicleIgnitionState.ON=*/4,
+                            /*VehicleIgnitionState.START=*/5));
+                }).build().verify(mCarPropertyManager);
+    }
+
+    @Test
     public void testDistanceDisplayUnitsIfSupported() {
         VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.DISTANCE_DISPLAY_UNITS,
                 CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
@@ -674,6 +696,103 @@ public class CarPropertyManagerTest extends CarApiTestBase {
         VehiclePropertyVerifier.newBuilder(
                 VehiclePropertyIds.FUEL_CONSUMPTION_UNITS_DISTANCE_OVER_VOLUME,
                 CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                Boolean.class).build().verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testFuelLevelIfSupported() {
+        VehiclePropertyVerifier.newBuilder(
+                VehiclePropertyIds.FUEL_LEVEL,
+                CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS,
+                Float.class).setCarPropertyValueVerifier(
+                (carPropertyConfig, carPropertyValue) -> {
+                    assertWithMessage(
+                            "FUEL_LEVEL Float value must be greater than or equal 0").that(
+                            (Float) carPropertyValue.getValue()).isAtLeast(0);
+
+                    if (mCarPropertyManager.getCarPropertyConfig(
+                            VehiclePropertyIds.INFO_FUEL_CAPACITY) == null) {
+                        return;
+                    }
+
+                    CarPropertyValue<?> infoFuelCapacityValue = mCarPropertyManager.getProperty(
+                            VehiclePropertyIds.INFO_FUEL_CAPACITY,
+                            VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL);
+
+                    assertWithMessage(
+                            "FUEL_LEVEL Float value must not exceed INFO_FUEL_CAPACITY Float "
+                                    + "value").that(
+                            (Float) carPropertyValue.getValue()).isAtMost(
+                            (Float) infoFuelCapacityValue.getValue());
+                }).build().verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testEvBatteryLevelIfSupported() {
+        VehiclePropertyVerifier.newBuilder(
+                VehiclePropertyIds.EV_BATTERY_LEVEL,
+                CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS,
+                Float.class).setCarPropertyValueVerifier(
+                (carPropertyConfig, carPropertyValue) -> {
+                    assertWithMessage(
+                            "EV_BATTERY_LEVEL Float value must be greater than or equal 0").that(
+                            (Float) carPropertyValue.getValue()).isAtLeast(0);
+
+                    if (mCarPropertyManager.getCarPropertyConfig(
+                            VehiclePropertyIds.INFO_EV_BATTERY_CAPACITY) == null) {
+                        return;
+                    }
+
+                    CarPropertyValue<?> infoEvBatteryCapacityValue =
+                            mCarPropertyManager.getProperty(
+                                    VehiclePropertyIds.INFO_EV_BATTERY_CAPACITY,
+                                    VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL);
+
+                    assertWithMessage(
+                            "EV_BATTERY_LEVEL Float value must not exceed "
+                                    + "INFO_EV_BATTERY_CAPACITY Float "
+                                    + "value").that(
+                            (Float) carPropertyValue.getValue()).isAtMost(
+                            (Float) infoEvBatteryCapacityValue.getValue());
+                }).build().verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testEvBatteryInstantaneousChargeRateIfSupported() {
+        VehiclePropertyVerifier.newBuilder(
+                VehiclePropertyIds.EV_BATTERY_INSTANTANEOUS_CHARGE_RATE,
+                CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS,
+                Float.class).build().verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testRangeRemainingIfSupported() {
+        VehiclePropertyVerifier.newBuilder(
+                VehiclePropertyIds.RANGE_REMAINING,
+                CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS,
+                Float.class).setCarPropertyValueVerifier(
+                (carPropertyConfig, carPropertyValue) -> {
+                    assertWithMessage(
+                            "RANGE_REMAINING Float value must be greater than or equal 0").that(
+                            (Float) carPropertyValue.getValue()).isAtLeast(0);
+                }).build().verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testFuelLevelLowIfSupported() {
+        VehiclePropertyVerifier.newBuilder(
+                VehiclePropertyIds.FUEL_LEVEL_LOW,
+                CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                 VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                 CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                 Boolean.class).build().verify(mCarPropertyManager);
