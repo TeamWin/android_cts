@@ -28,6 +28,8 @@ import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnProfil
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnProfileOwnerProfile;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnSecondaryUserInDifferentProfileGroupToProfileOwner;
 
+import com.google.auto.value.AutoAnnotation;
+
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,49 +37,61 @@ import java.util.List;
 /**
  * Utility class for enterprise policy tests.
  */
-@IncludeNone
-@IncludeRunOnDeviceOwnerUser
-@IncludeRunOnAffiliatedDeviceOwnerSecondaryUser
-@IncludeRunOnAffiliatedProfileOwnerSecondaryUser
-@IncludeRunOnNonAffiliatedDeviceOwnerSecondaryUser
-@IncludeRunOnProfileOwnerProfile
-@IncludeRunOnParentOfCorporateOwnedProfileOwner
-@IncludeRunOnSecondaryUserInDifferentProfileGroupToProfileOwner
-@IncludeRunOnParentOfProfileOwner
-@IncludeRunOnProfileOwnerPrimaryUser
 public final class Policy {
 
     private Policy() {
 
     }
 
-    private static final IncludeNone INCLUDE_NONE_ANNOTATION =
-            Policy.class.getAnnotation(IncludeNone.class);
-    private static final IncludeRunOnDeviceOwnerUser INCLUDE_RUN_ON_DEVICE_OWNER_USER =
-            Policy.class.getAnnotation(IncludeRunOnDeviceOwnerUser.class);
-    private static final IncludeRunOnNonAffiliatedDeviceOwnerSecondaryUser
-            INCLUDE_RUN_ON_NON_AFFILIATED_DEVICE_OWNER_SECONDARY_USER =
-            Policy.class.getAnnotation(IncludeRunOnNonAffiliatedDeviceOwnerSecondaryUser.class);
-    private static final IncludeRunOnAffiliatedDeviceOwnerSecondaryUser
-            INCLUDE_RUN_ON_AFFILIATED_DEVICE_OWNER_SECONDARY_USER =
-            Policy.class.getAnnotation(IncludeRunOnAffiliatedDeviceOwnerSecondaryUser.class);
-    private static final IncludeRunOnAffiliatedProfileOwnerSecondaryUser
-            INCLUDE_RUN_ON_AFFILIATED_PROFILE_OWNER_SECONDARY_USER =
-            Policy.class.getAnnotation(IncludeRunOnAffiliatedProfileOwnerSecondaryUser.class);
-    private static final IncludeRunOnProfileOwnerProfile
-            INCLUDE_RUN_ON_PROFILE_OWNER_PROFILE =
-            Policy.class.getAnnotation(IncludeRunOnProfileOwnerProfile.class);
-    private static final IncludeRunOnSecondaryUserInDifferentProfileGroupToProfileOwner
-            INCLUDE_RUN_ON_SECONDARY_USER_IN_DIFFERENT_PROFILE_GROUP_TO_PROFILE_OWNER =
-            Policy.class.getAnnotation(
-                    IncludeRunOnSecondaryUserInDifferentProfileGroupToProfileOwner.class);
-    private static final IncludeRunOnParentOfProfileOwner INCLUDE_RUN_ON_PARENT_OF_PROFILE_OWNER =
-            Policy.class.getAnnotation(IncludeRunOnParentOfProfileOwner.class);
-    private static final IncludeRunOnParentOfCorporateOwnedProfileOwner
-            INCLUDE_RUN_ON_PARENT_OF_CORPORATE_OWNED_PROFILE_OWNER =
-            Policy.class.getAnnotation(IncludeRunOnParentOfCorporateOwnedProfileOwner.class);
-    private static final IncludeRunOnProfileOwnerPrimaryUser INCLUDE_RUN_ON_PROFILE_OWNER_PRIMARY_USER =
-            Policy.class.getAnnotation(IncludeRunOnProfileOwnerPrimaryUser.class);
+    @AutoAnnotation
+    public static IncludeNone includeNone() {
+        return new AutoAnnotation_Policy_includeNone();
+    }
+
+    @AutoAnnotation
+    public static IncludeRunOnDeviceOwnerUser includeRunOnDeviceOwnerUser() {
+        return new AutoAnnotation_Policy_includeRunOnDeviceOwnerUser();
+    }
+
+    @AutoAnnotation
+    public static IncludeRunOnNonAffiliatedDeviceOwnerSecondaryUser includeRunOnNonAffiliatedDeviceOwnerSecondaryUser() {
+        return new AutoAnnotation_Policy_includeRunOnNonAffiliatedDeviceOwnerSecondaryUser();
+    }
+
+    @AutoAnnotation
+    public static IncludeRunOnAffiliatedDeviceOwnerSecondaryUser includeRunOnAffiliatedDeviceOwnerSecondaryUser() {
+        return new AutoAnnotation_Policy_includeRunOnAffiliatedDeviceOwnerSecondaryUser();
+    }
+
+    @AutoAnnotation
+    public static IncludeRunOnAffiliatedProfileOwnerSecondaryUser includeRunOnAffiliatedProfileOwnerSecondaryUser() {
+        return new AutoAnnotation_Policy_includeRunOnAffiliatedProfileOwnerSecondaryUser();
+    }
+
+    @AutoAnnotation
+    public static IncludeRunOnProfileOwnerProfile includeRunOnProfileOwnerProfile() {
+        return new AutoAnnotation_Policy_includeRunOnProfileOwnerProfile();
+    }
+
+    @AutoAnnotation
+    public static IncludeRunOnSecondaryUserInDifferentProfileGroupToProfileOwner includeRunOnSecondaryUserInDifferentProfileGroupToProfileOwner() {
+        return new AutoAnnotation_Policy_includeRunOnSecondaryUserInDifferentProfileGroupToProfileOwner();
+    }
+
+    @AutoAnnotation
+    public static IncludeRunOnParentOfProfileOwner includeRunOnParentOfProfileOwner() {
+        return new AutoAnnotation_Policy_includeRunOnParentOfProfileOwner();
+    }
+
+    @AutoAnnotation
+    public static IncludeRunOnParentOfCorporateOwnedProfileOwner includeRunOnParentOfCorporateOwnedProfileOwner() {
+        return new AutoAnnotation_Policy_includeRunOnParentOfCorporateOwnedProfileOwner();
+    }
+
+    @AutoAnnotation
+    public static IncludeRunOnProfileOwnerPrimaryUser includeRunOnProfileOwnerPrimaryUser() {
+        return new AutoAnnotation_Policy_includeRunOnProfileOwnerPrimaryUser();
+    }
 
     /**
      * Get positive state annotations for the given policy.
@@ -91,15 +105,15 @@ public final class Policy {
             case NO:
                 break;
             case GLOBAL:
-                annotations.add(INCLUDE_RUN_ON_DEVICE_OWNER_USER);
-                annotations.add(INCLUDE_RUN_ON_NON_AFFILIATED_DEVICE_OWNER_SECONDARY_USER);
+                annotations.add(includeRunOnDeviceOwnerUser());
+                annotations.add(includeRunOnNonAffiliatedDeviceOwnerSecondaryUser());
                 break;
             case AFFILIATED:
-                annotations.add(INCLUDE_RUN_ON_DEVICE_OWNER_USER);
-                annotations.add(INCLUDE_RUN_ON_AFFILIATED_DEVICE_OWNER_SECONDARY_USER);
+                annotations.add(includeRunOnDeviceOwnerUser());
+                annotations.add(includeRunOnAffiliatedDeviceOwnerSecondaryUser());
                 break;
             case USER:
-                annotations.add(INCLUDE_RUN_ON_DEVICE_OWNER_USER);
+                annotations.add(includeRunOnDeviceOwnerUser());
                 break;
             default:
                 throw new IllegalStateException(
@@ -110,23 +124,23 @@ public final class Policy {
             case NO:
                 break;
             case AFFILIATED:
-                annotations.add(INCLUDE_RUN_ON_AFFILIATED_PROFILE_OWNER_SECONDARY_USER);
+                annotations.add(includeRunOnAffiliatedProfileOwnerSecondaryUser());
                 break;
             case AFFILIATED_OR_NO_DO:
-                annotations.add(INCLUDE_RUN_ON_PROFILE_OWNER_PRIMARY_USER);
-                annotations.add(INCLUDE_RUN_ON_AFFILIATED_PROFILE_OWNER_SECONDARY_USER);
+                annotations.add(includeRunOnProfileOwnerPrimaryUser());
+                annotations.add(includeRunOnAffiliatedProfileOwnerSecondaryUser());
                 break;
             case PARENT:
-                annotations.add(INCLUDE_RUN_ON_PROFILE_OWNER_PROFILE);
-                annotations.add(INCLUDE_RUN_ON_PARENT_OF_PROFILE_OWNER);
+                annotations.add(includeRunOnProfileOwnerProfile());
+                annotations.add(includeRunOnParentOfProfileOwner());
                 break;
             case COPE_PARENT:
-                annotations.add(INCLUDE_RUN_ON_PROFILE_OWNER_PROFILE);
+                annotations.add(includeRunOnProfileOwnerProfile());
                 //                TODO(scottjonathan): Re-add when we can setup this state
 //                annotations.add(INCLUDE_RUN_ON_PARENT_OF_CORPORATE_OWNED_PROFILE_OWNER);
                 break;
             case PROFILE:
-                annotations.add(INCLUDE_RUN_ON_PROFILE_OWNER_PROFILE);
+                annotations.add(includeRunOnProfileOwnerProfile());
                 break;
             default:
                 throw new IllegalStateException(
@@ -135,7 +149,7 @@ public final class Policy {
 
         if (annotations.isEmpty()) {
             // Don't run the original test unparameterized
-            annotations.add(INCLUDE_NONE_ANNOTATION);
+            annotations.add(includeNone());
         }
 
         return annotations;
@@ -155,10 +169,10 @@ public final class Policy {
             case GLOBAL:
                 break;
             case AFFILIATED:
-                annotations.add(INCLUDE_RUN_ON_NON_AFFILIATED_DEVICE_OWNER_SECONDARY_USER);
+                annotations.add(includeRunOnNonAffiliatedDeviceOwnerSecondaryUser());
                 break;
             case USER:
-                annotations.add(INCLUDE_RUN_ON_AFFILIATED_DEVICE_OWNER_SECONDARY_USER);
+                annotations.add(includeRunOnAffiliatedDeviceOwnerSecondaryUser());
                 break;
             default:
                 throw new IllegalStateException(
@@ -176,17 +190,17 @@ public final class Policy {
                 break;
             case PARENT:
                 annotations.add(
-                        INCLUDE_RUN_ON_SECONDARY_USER_IN_DIFFERENT_PROFILE_GROUP_TO_PROFILE_OWNER);
+                        includeRunOnSecondaryUserInDifferentProfileGroupToProfileOwner());
                 break;
             case COPE_PARENT:
                 annotations.add(
-                        INCLUDE_RUN_ON_SECONDARY_USER_IN_DIFFERENT_PROFILE_GROUP_TO_PROFILE_OWNER);
+                        includeRunOnSecondaryUserInDifferentProfileGroupToProfileOwner());
                 annotations.add(
-                        INCLUDE_RUN_ON_PARENT_OF_PROFILE_OWNER);
+                        includeRunOnParentOfProfileOwner());
                 break;
             case PROFILE:
                 annotations.add(
-                        INCLUDE_RUN_ON_SECONDARY_USER_IN_DIFFERENT_PROFILE_GROUP_TO_PROFILE_OWNER);
+                        includeRunOnSecondaryUserInDifferentProfileGroupToProfileOwner());
                 //                TODO(scottjonathan): Re-add when we can setup this state
 //                annotations.add(
 //                        INCLUDE_RUN_ON_PARENT_OF_CORPORATE_OWNED_PROFILE_OWNER);
@@ -198,7 +212,7 @@ public final class Policy {
 
         if (annotations.isEmpty()) {
             // Don't run the original test unparameterized
-            annotations.add(INCLUDE_NONE_ANNOTATION);
+            annotations.add(includeNone());
         }
 
         return annotations;
@@ -213,20 +227,20 @@ public final class Policy {
         // TODO(scottjonathan): Always include a state without a dpc
 
         if (enterprisePolicy.deviceOwner() == EnterprisePolicy.DeviceOwnerControl.NO) {
-            annotations.add(INCLUDE_RUN_ON_DEVICE_OWNER_USER);
+            annotations.add(includeRunOnDeviceOwnerUser());
         }
 
         if (enterprisePolicy.profileOwner() == EnterprisePolicy.ProfileOwnerControl.NO) {
-            annotations.add(INCLUDE_RUN_ON_PROFILE_OWNER_PROFILE);
+            annotations.add(includeRunOnProfileOwnerProfile());
         } else if (enterprisePolicy.profileOwner() == EnterprisePolicy.ProfileOwnerControl.AFFILIATED) {
-            annotations.add(INCLUDE_RUN_ON_PROFILE_OWNER_PROFILE);
+            annotations.add(includeRunOnProfileOwnerProfile());
         } else if (enterprisePolicy.profileOwner() == EnterprisePolicy.ProfileOwnerControl.AFFILIATED_OR_NO_DO) {
-            annotations.add(INCLUDE_RUN_ON_PROFILE_OWNER_PROFILE);
+            annotations.add(includeRunOnProfileOwnerProfile());
         }
 
         if (annotations.isEmpty()) {
             // Don't run the original test unparameterized
-            annotations.add(INCLUDE_NONE_ANNOTATION);
+            annotations.add(includeNone());
         }
 
         return annotations;
