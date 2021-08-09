@@ -51,12 +51,16 @@ public class VehiclePropertyVerifier<T> {
     private final Optional<ConfigArrayVerifier> mConfigArrayVerifier;
     private final Optional<CarPropertyValueVerifier> mCarPropertyValueVerifier;
     private final Optional<AreaIdsVerifier> mAreaIdsVerifier;
+    private final ImmutableSet<Integer> mPossibleConfigArrayValues;
+    private final boolean mRequirePropertyValueToBeInConfigArray;
 
     private VehiclePropertyVerifier(int propertyId, int access, int areaType, int changeMode,
             Class<T> propertyType, boolean requiredProperty,
             Optional<ConfigArrayVerifier> configArrayVerifier,
             Optional<CarPropertyValueVerifier> carPropertyValueVerifier,
-            Optional<AreaIdsVerifier> areaIdsVerifier) {
+            Optional<AreaIdsVerifier> areaIdsVerifier,
+            ImmutableSet<Integer> possibleConfigArrayValues,
+            boolean requirePropertyValueToBeInConfigArray) {
         mPropertyId = propertyId;
         mPropertyName = VehiclePropertyIds.toString(propertyId);
         mAccess = access;
@@ -67,6 +71,8 @@ public class VehiclePropertyVerifier<T> {
         mConfigArrayVerifier = configArrayVerifier;
         mCarPropertyValueVerifier = carPropertyValueVerifier;
         mAreaIdsVerifier = areaIdsVerifier;
+        mPossibleConfigArrayValues = possibleConfigArrayValues;
+        mRequirePropertyValueToBeInConfigArray = requirePropertyValueToBeInConfigArray;
     }
 
     public static <T> Builder<T> newBuilder(int propertyId, int access, int areaType,
@@ -184,9 +190,19 @@ public class VehiclePropertyVerifier<T> {
         assertWithMessage(mPropertyName + " CarPropertyConfig must have correct property ID")
                 .that(carPropertyConfig.getPropertyId())
                 .isEqualTo(mPropertyId);
-        assertWithMessage(mPropertyName + " must be " + accessToString(mAccess))
-                .that(carPropertyConfig.getAccess())
-                .isEqualTo(mAccess);
+        if (mAccess == CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE) {
+            assertWithMessage(mPropertyName + " must be " + accessToString(
+                    CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ) + ", " + accessToString(
+                    CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_WRITE) + ", or " + accessToString(
+                    CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE))
+                    .that(carPropertyConfig.getAccess())
+                    .isIn(ImmutableSet.of(CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                            CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_WRITE,
+                            CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE));
+        } else {
+            assertWithMessage(mPropertyName + " must be " + accessToString(mAccess))
+                    .that(carPropertyConfig.getAccess()).isEqualTo(mAccess);
+        }
         assertWithMessage(mPropertyName + " must be " + areaTypeToString(mAreaType))
                 .that(carPropertyConfig.getAreaType())
                 .isEqualTo(mAreaType);
@@ -211,9 +227,24 @@ public class VehiclePropertyVerifier<T> {
             verifyNonContinuousCarPropertyConfig(carPropertyConfig);
         }
 
-        if (mConfigArrayVerifier.isPresent()) {
-            mConfigArrayVerifier.get().verify(carPropertyConfig.getConfigArray());
-        } else {
+        if (!mPossibleConfigArrayValues.isEmpty()) {
+            assertWithMessage(
+                    mPropertyName + " configArray must specify supported values")
+                    .that(carPropertyConfig.getConfigArray().size())
+                    .isGreaterThan(0);
+            for (Integer supportedValue : carPropertyConfig.getConfigArray()) {
+                assertWithMessage(
+                        mPropertyName + " configArray value must be a defined "
+                                + "value: "
+                                + supportedValue).that(
+                        supportedValue).isIn(mPossibleConfigArrayValues);
+            }
+        }
+
+        mConfigArrayVerifier.ifPresent(configArrayVerifier -> configArrayVerifier.verify(
+                carPropertyConfig.getConfigArray()));
+
+        if (mPossibleConfigArrayValues.isEmpty() && !mConfigArrayVerifier.isPresent()) {
             assertWithMessage(mPropertyName + " configArray is undefined, so it must be empty")
                     .that(carPropertyConfig.getConfigArray().size()).isEqualTo(0);
         }
@@ -288,6 +319,13 @@ public class VehiclePropertyVerifier<T> {
                         + " type value")
                 .that(carPropertyValue.getValue().getClass()).isEqualTo(mPropertyType);
 
+        if (mRequirePropertyValueToBeInConfigArray) {
+            assertWithMessage(mPropertyName + " - areaId: " + areaId + " - source: " + source +
+                    " value must be listed in configArray")
+                    .that(carPropertyConfig.getConfigArray().contains(
+                            carPropertyValue.getValue())).isTrue();
+        }
+
         mCarPropertyValueVerifier.ifPresent(
                 propertyValueVerifier -> propertyValueVerifier.verify(carPropertyConfig,
                         carPropertyValue));
@@ -315,6 +353,9 @@ public class VehiclePropertyVerifier<T> {
         private Optional<ConfigArrayVerifier> mConfigArrayVerifier = Optional.empty();
         private Optional<CarPropertyValueVerifier> mCarPropertyValueVerifier = Optional.empty();
         private Optional<AreaIdsVerifier> mAreaIdsVerifier = Optional.empty();
+        private ImmutableSet<Integer> mPossibleConfigArrayValues = ImmutableSet.of();
+        private boolean mRequirePropertyValueToBeInConfigArray = false;
+
 
         private Builder(int propertyId, int access, int areaType, int changeMode,
                 Class<T> propertyType) {
@@ -346,10 +387,22 @@ public class VehiclePropertyVerifier<T> {
             return this;
         }
 
+        public Builder<T> setPossibleConfigArrayValues(
+                ImmutableSet<Integer> possibleConfigArrayValues) {
+            mPossibleConfigArrayValues = possibleConfigArrayValues;
+            return this;
+        }
+
+        public Builder<T> requirePropertyValueTobeInConfigArray() {
+            mRequirePropertyValueToBeInConfigArray = true;
+            return this;
+        }
+
         public VehiclePropertyVerifier<T> build() {
             return new VehiclePropertyVerifier<>(mPropertyId, mAccess, mAreaType, mChangeMode,
                     mPropertyType, mRequiredProperty, mConfigArrayVerifier,
-                    mCarPropertyValueVerifier, mAreaIdsVerifier);
+                    mCarPropertyValueVerifier, mAreaIdsVerifier, mPossibleConfigArrayValues,
+                    mRequirePropertyValueToBeInConfigArray);
         }
     }
 
