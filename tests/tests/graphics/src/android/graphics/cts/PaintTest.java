@@ -967,7 +967,7 @@ public class PaintTest {
     @Test
     public void testDefaultDither() {
         Paint p = new Paint();
-        assertTrue(p.isDither());
+        assertFalse(p.isDither());
     }
 
     @Test
@@ -1162,8 +1162,8 @@ public class PaintTest {
 
         p.reset();
         assertEquals(Paint.FILTER_BITMAP_FLAG | Paint.DEV_KERN_TEXT_FLAG
-                    | Paint.EMBEDDED_BITMAP_TEXT_FLAG | Paint.ANTI_ALIAS_FLAG
-                    | Paint.DITHER_FLAG, p.getFlags());
+                    | Paint.EMBEDDED_BITMAP_TEXT_FLAG | Paint.ANTI_ALIAS_FLAG,
+                    p.getFlags());
         assertEquals(null, p.getColorFilter());
         assertEquals(null, p.getMaskFilter());
         assertEquals(null, p.getPathEffect());
