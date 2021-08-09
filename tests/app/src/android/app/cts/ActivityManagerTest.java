@@ -520,7 +520,7 @@ public class ActivityManagerTest extends InstrumentationTestCase {
             monitor.sendCommand(AmMonitor.CMD_CONTINUE);
 
             // Now it should've reached the normal ANR process.
-            assertTrue(monitor.waitFor(AmMonitor.WAIT_FOR_ANR, WAITFOR_MSEC));
+            assertTrue(monitor.waitFor(AmMonitor.WAIT_FOR_ANR, WAITFOR_MSEC * 3));
 
             // Continue again, we need to see the ANR dialog in order to get the error report.
             monitor.sendCommand(AmMonitor.CMD_CONTINUE);
