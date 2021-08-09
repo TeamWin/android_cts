@@ -58,7 +58,8 @@ public class CodecEncoderPerformanceTest extends CodecEncoderPerformanceTestBase
                 {"crowd_run_1280x720_30fps_avc.mp4", 4000000},
                 {"crowd_run_1920x1080_30fps_avc.mp4", 8000000},
                 {"crowd_run_3840x2160_30fps_hevc.mp4", 20000000},
-                {"crowd_run_7680x4320_30fps_hevc.mp4", 40000000},
+                // TODO (b/194721211) Enable 8k tests
+                //{"crowd_run_7680x4320_30fps_hevc.mp4", 40000000},
         });
         // Prepares the params list with the supported Hardware decoder, encoders in the device
         // combined with the key priority and scaling factor
