@@ -530,7 +530,7 @@ public class ExactAlarmsTest {
                         PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
                         PackageManager.DONT_KILL_APP));
         Log.d(TAG, "Un-force-stoppping the test app");
-        Intent i = new Intent("ACTION_PING"); // any action
+        Intent i = new Intent("android.app.action.cts.ACTION_PING");
         i.setComponent(mPermissionChangeReceiver);
         i.setFlags(Intent.FLAG_RECEIVER_FOREGROUND);
         sContext.sendBroadcast(i);
