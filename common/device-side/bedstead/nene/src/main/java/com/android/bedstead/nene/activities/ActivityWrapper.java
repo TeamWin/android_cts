@@ -19,7 +19,6 @@ package com.android.bedstead.nene.activities;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.UserManager;
 
 class ActivityWrapper implements NeneActivity {
 
@@ -57,11 +56,5 @@ class ActivityWrapper implements NeneActivity {
     @Override
     public void startActivity(Intent intent, Bundle options) {
         mActivity.startActivity(intent, options);
-    }
-
-    @Override
-    public Bundle getApplicationRestrictions() {
-        String pkgName = mActivity.getPackageName();
-        return mActivity.getSystemService(UserManager.class).getApplicationRestrictions(pkgName);
     }
 }
