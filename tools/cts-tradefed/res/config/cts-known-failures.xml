@@ -229,4 +229,11 @@
 
     <!-- b/192284443 -->
     <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.DisplayHashManagerTest#testGenerateAndVerifyDisplayHash" />
+
+    <!-- b/195659372 -->
+    <option name="compatibility:exclude-filter" value="CtsPermissionTestCases android.permission.cts.NearbyDevicesRenouncePermissionTest#scanRenouncingAtEndOfChainNotesBluetoothButNotLocation" />
+
+    <!-- b/194293021 -->
+    <option name="compatibility:exclude-filter" value="CtsPrintTestCases" />
+
 </configuration>
