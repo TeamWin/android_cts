@@ -19,6 +19,7 @@ package com.android.bedstead.harrier.annotations;
 import static android.content.pm.PackageManager.FEATURE_DEVICE_ADMIN;
 
 import static com.android.bedstead.harrier.OptionalBoolean.ANY;
+import static com.android.bedstead.harrier.OptionalBoolean.TRUE;
 
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.OptionalBoolean;
@@ -61,4 +62,9 @@ public @interface RequireRunOnWorkProfile {
      * Affiliation ids to be set for the profile owner.
      */
     String[] affiliationIds() default {};
+
+    /**
+     * Should we ensure that we are switched to the parent of the profile.
+     */
+    OptionalBoolean switchedToParentUser() default TRUE;
 }
