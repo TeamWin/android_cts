@@ -16,25 +16,11 @@
 
 package com.android.bedstead.nene.activities;
 
-import android.content.Context;
-import android.os.Bundle;
-import android.os.UserManager;
-
 import com.android.bedstead.nene.TestApis;
 
 public class LocalActivity extends Activity<android.app.Activity> {
 
-    private final Context mContext;
-
     LocalActivity(TestApis testApis, android.app.Activity activity) {
         super(testApis, activity, new ActivityWrapper(activity));
-
-        mContext = activity;
-    }
-
-    @Override
-    public Bundle getApplicationRestrictions() {
-        String packageName = mContext.getPackageName();
-        return mContext.getSystemService(UserManager.class).getApplicationRestrictions(packageName);
     }
 }
