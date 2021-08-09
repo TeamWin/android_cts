@@ -28,3 +28,20 @@ LOCAL_SDK_VERSION := current
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
 include $(BUILD_CTS_PACKAGE)
+
+include $(CLEAR_VARS)
+
+LOCAL_PACKAGE_NAME := CtsContentLongLabelNameTestApp
+
+LOCAL_MANIFEST_FILE := LongLabelNameTestApp/AndroidManifest.xml
+
+LOCAL_MODULE_TAGS := tests
+
+LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
+
+LOCAL_SDK_VERSION := current
+
+# tag this module as a cts test artifact
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
+
+include $(BUILD_CTS_PACKAGE)
