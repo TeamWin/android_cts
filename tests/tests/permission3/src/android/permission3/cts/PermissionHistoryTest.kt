@@ -22,6 +22,9 @@ import android.os.Build
 import android.support.test.uiautomator.By
 import androidx.test.filters.SdkSuppress
 import com.android.compatibility.common.util.SystemUtil
+import org.junit.After
+import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 
 private const val APP_LABEL_1 = "CtsMicAccess"
@@ -34,10 +37,24 @@ private const val HISTORY_PREFERENCE_TIME = "permission_history_time"
 private const val SHOW_SYSTEM = "Show system"
 private const val MORE_OPTIONS = "More options"
 
-@SdkSuppress(minSdkVersion = Build.VERSION_CODES.S, codeName = "S")
+@SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
 class PermissionHistoryTest : BasePermissionTest() {
     private val micLabel = packageManager.getPermissionGroupInfo(
             Manifest.permission_group.MICROPHONE, 0).loadLabel(packageManager).toString()
+
+    @Before
+    fun installApps() {
+        uninstallPackage(APP_PACKAGE_NAME, requireSuccess = false)
+        uninstallPackage(APP2_PACKAGE_NAME, requireSuccess = false)
+        installPackage(APP_APK_PATH, grantRuntimePermissions = true)
+        installPackage(APP2_APK_PATH, grantRuntimePermissions = true)
+    }
+
+    @After
+    fun uninstallApps() {
+        uninstallPackage(APP_PACKAGE_NAME, requireSuccess = false)
+        uninstallPackage(APP2_PACKAGE_NAME, requireSuccess = false)
+    }
 
     @Test
     fun testToggleSystemApps() {
@@ -70,6 +87,7 @@ class PermissionHistoryTest : BasePermissionTest() {
                 PERMISSION_CONTROLLER_PACKAGE_ID_PREFIX + HISTORY_PREFERENCE_TIME))
     }
 
+    @Ignore("b/186656826#comment27")
     @Test
     fun testCameraTimelineWithMultipleApps() {
         openMicrophoneApp(INTENT_ACTION_1)
@@ -97,5 +115,12 @@ class PermissionHistoryTest : BasePermissionTest() {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             })
         }
+    }
+
+    companion object {
+        const val APP_APK_PATH = "$APK_DIRECTORY/CtsAccessMicrophoneApp.apk"
+        const val APP_PACKAGE_NAME = "android.permission3.cts.accessmicrophoneapp"
+        const val APP2_APK_PATH = "$APK_DIRECTORY/CtsAccessMicrophoneApp2.apk"
+        const val APP2_PACKAGE_NAME = "android.permission3.cts.accessmicrophoneapp2"
     }
 }
