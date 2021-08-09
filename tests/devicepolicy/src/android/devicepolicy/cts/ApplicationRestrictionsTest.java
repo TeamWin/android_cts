@@ -23,6 +23,7 @@ import android.app.admin.DevicePolicyManager;
 import android.content.Context;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.os.RemoteUserManager;
 import android.util.Log;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
@@ -32,10 +33,8 @@ import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.PositivePolicyTest;
 import com.android.bedstead.harrier.policies.ApplicationRestrictions;
 import com.android.bedstead.nene.TestApis;
-import com.android.bedstead.nene.activities.Activity;
 import com.android.bedstead.remotedpc.managers.RemoteDevicePolicyManager;
 import com.android.bedstead.testapp.TestApp;
-import com.android.bedstead.testapp.TestAppActivity;
 import com.android.bedstead.testapp.TestAppInstanceReference;
 import com.android.bedstead.testapp.TestAppProvider;
 
@@ -111,9 +110,8 @@ public final class ApplicationRestrictionsTest {
 
         try (TestAppInstanceReference testApp =
                 sTestApp.install(sTestApis.users().instrumented())) {
-
-            Activity<TestAppActivity> activity = testApp.activities().any().start();
-            assertBundle0(activity.getApplicationRestrictions());
+            RemoteUserManager testAppUm = testApp.userManager();
+            assertBundle0(testAppUm.getApplicationRestrictions(sTargetPkg));
 
             // Test overwriting
             rDpm.setApplicationRestrictions(sTargetPkg, BUNDLE_1);
@@ -121,7 +119,7 @@ public final class ApplicationRestrictionsTest {
 
             rDpm.setApplicationRestrictions(sTargetPkg, new Bundle());
             assertEmptyBundle(rDpm.getApplicationRestrictions(sTargetPkg));
-            assertEmptyBundle(activity.getApplicationRestrictions());
+            assertEmptyBundle(testAppUm.getApplicationRestrictions(sTargetPkg));
 
             rDpm.setApplicationRestrictions(sOtherPkg, /* settings= */ null);
             assertEmptyBundle(rDpm.getApplicationRestrictions(sOtherPkg));

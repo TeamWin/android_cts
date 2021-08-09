@@ -22,7 +22,6 @@ import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.PersistableBundle;
-import android.os.UserManager;
 
 import com.android.eventlib.events.activities.ActivityCreatedEvent;
 import com.android.eventlib.events.activities.ActivityDestroyedEvent;
@@ -137,16 +136,5 @@ public class EventLibActivity extends Activity {
         super.onDestroy();
         ActivityDestroyedEvent.logger(this, activityInfo())
                 .log();
-    }
-
-    // TODO(b/193563511): remove once test can call:
-    // testApp.systemServices().userManager().getApplicationRestrictions(pkg)
-    /**
-     * Calls {@link UserManager#getApplicationRestrictions(String)} using the activity's package
-     * name.
-     */
-    public Bundle getApplicationRestrictions() {
-        String pkgName = getPackageName();
-        return getSystemService(UserManager.class).getApplicationRestrictions(pkgName);
     }
 }
