@@ -1805,6 +1805,133 @@ public class ActivityManagerFgsBgStartTest {
         }
     }
 
+    @Test
+    public void testFgsStartInBackgroundRestrictions() throws Exception {
+        ApplicationInfo app1Info = mContext.getPackageManager().getApplicationInfo(
+                PACKAGE_NAME_APP1, 0);
+        ApplicationInfo app2Info = mContext.getPackageManager().getApplicationInfo(
+                PACKAGE_NAME_APP2, 0);
+        WatchUidRunner uid1Watcher = new WatchUidRunner(mInstrumentation, app1Info.uid,
+                WAITFOR_MSEC);
+        WatchUidRunner uid2Watcher = new WatchUidRunner(mInstrumentation, app2Info.uid,
+                WAITFOR_MSEC);
+        WaitForBroadcast waiter = new WaitForBroadcast(mInstrumentation.getTargetContext());
+        final String dumpCommand = "dumpsys activity services " + PACKAGE_NAME_APP2
+                + "/android.app.stubs.LocalForegroundService";
+        final long shortWaitMsec = 5_000;
+        try {
+            // Enable the FGS background startForeground() restriction.
+            enableFgsRestriction(true, true, null);
+
+            // Set background restriction for APP2
+            setAppOp(PACKAGE_NAME_APP2, "RUN_ANY_IN_BACKGROUND", false);
+
+            // Start the APP1 into the TOP state.
+            allowBgActivityStart(PACKAGE_NAME_APP1, true);
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_START_ACTIVITY,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+            uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
+                    WatchUidRunner.STATE_TOP);
+
+            // APP1 binds to APP2.
+            CommandReceiver.sendCommand(mContext, CommandReceiver.COMMAND_BIND_SERVICE,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP2, Context.BIND_INCLUDE_CAPABILITIES, null);
+
+            // APP2 gets proc state BOUND_TOP.
+            uid2Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
+                    WatchUidRunner.STATE_BOUND_TOP);
+
+            waiter = new WaitForBroadcast(mInstrumentation.getTargetContext());
+            waiter.prepare(ACTION_START_FGS_RESULT);
+
+            // START FGS in APP2.
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_START_FOREGROUND_SERVICE,
+                    PACKAGE_NAME_APP2, PACKAGE_NAME_APP2, 0, null);
+            waiter.doWait(WAITFOR_MSEC);
+
+            SystemClock.sleep(shortWaitMsec);
+
+            String[] dumpLines = CtsAppTestUtils.executeShellCmd(
+                    mInstrumentation, dumpCommand).split("\n");
+            assertNotNull(findLine(dumpLines, "isForeground=true"));
+
+            // Finish the activity in APP1
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_STOP_ACTIVITY,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+            mInstrumentation.getUiAutomation().performGlobalAction(
+                    AccessibilityService.GLOBAL_ACTION_HOME);
+
+            // APP1 should have been cached state now.
+            uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
+                    WatchUidRunner.STATE_CACHED_EMPTY);
+
+            // Th FGS in APP2 should have been normal service state now.
+            uid2Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
+                    WatchUidRunner.STATE_SERVICE);
+
+            waiter = new WaitForBroadcast(mInstrumentation.getTargetContext());
+            waiter.prepare(ACTION_START_FGS_RESULT);
+
+            // START FGS in APP1
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_START_FOREGROUND_SERVICE,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+            uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
+                    WatchUidRunner.STATE_FG_SERVICE);
+            waiter.doWait(WAITFOR_MSEC);
+
+            // APP2 should be in FGS state too now.
+            uid2Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
+                    WatchUidRunner.STATE_FG_SERVICE);
+
+            waiter = new WaitForBroadcast(mInstrumentation.getTargetContext());
+            waiter.prepare(ACTION_START_FGS_RESULT);
+
+            // START FGS in APP2.
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_START_FOREGROUND_SERVICE,
+                    PACKAGE_NAME_APP2, PACKAGE_NAME_APP2, 0, null);
+            waiter.doWait(WAITFOR_MSEC);
+
+            SystemClock.sleep(shortWaitMsec);
+
+            dumpLines = CtsAppTestUtils.executeShellCmd(
+                    mInstrumentation, dumpCommand).split("\n");
+            assertNotNull(findLine(dumpLines, "isForeground=true"));
+
+            // Set background restriction for APP1.
+            setAppOp(PACKAGE_NAME_APP1, "RUN_ANY_IN_BACKGROUND", false);
+
+            // Both of them should have normal service state now.
+            uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
+                    WatchUidRunner.STATE_SERVICE);
+            uid2Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
+                    WatchUidRunner.STATE_SERVICE);
+        } finally {
+            uid1Watcher.finish();
+            uid2Watcher.finish();
+            CtsAppTestUtils.executeShellCmd(mInstrumentation,
+                    "appops reset " + PACKAGE_NAME_APP1);
+            CtsAppTestUtils.executeShellCmd(mInstrumentation,
+                    "appops reset " + PACKAGE_NAME_APP2);
+        }
+    }
+
+    /**
+     * Find a line containing {@code label} in {@code lines}.
+     */
+    private String findLine(String[] lines, CharSequence label) {
+        for (String line: lines) {
+            if (line.contains(label)) {
+                return line;
+            }
+        }
+        return null;
+    }
+
     /**
      * Turn on the FGS BG-launch restriction. DeviceConfig can turn on restriction on the whole
      * device (across all apps). AppCompat can turn on restriction on a single app package.
