@@ -798,6 +798,36 @@ public class CarPropertyManagerTest extends CarApiTestBase {
                 Boolean.class).build().verify(mCarPropertyManager);
     }
 
+    @Test
+    public void testFuelDoorOpenIfSupported() {
+        VehiclePropertyVerifier.newBuilder(
+                VehiclePropertyIds.FUEL_DOOR_OPEN,
+                CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                Boolean.class).build().verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testEvChargePortOpenIfSupported() {
+        VehiclePropertyVerifier.newBuilder(
+                VehiclePropertyIds.EV_CHARGE_PORT_OPEN,
+                CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                Boolean.class).build().verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testEvChargePortConnectedIfSupported() {
+        VehiclePropertyVerifier.newBuilder(
+                VehiclePropertyIds.EV_CHARGE_PORT_CONNECTED,
+                CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                Boolean.class).build().verify(mCarPropertyManager);
+    }
+
     @SuppressWarnings("unchecked")
     @Test
     public void testGetProperty() {
