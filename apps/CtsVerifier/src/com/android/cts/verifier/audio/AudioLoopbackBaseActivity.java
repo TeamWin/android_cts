@@ -26,6 +26,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ProgressBar;
@@ -77,6 +78,9 @@ public class AudioLoopbackBaseActivity extends PassFailButtons.Activity {
     ProgressBar mProgressBar;
     int mMaxLevel;
 
+    OnBtnClickListener mBtnClickListener = new OnBtnClickListener();
+    protected Button mTestButton;
+
     String mYesString;
     String mNoString;
 
@@ -94,6 +98,7 @@ public class AudioLoopbackBaseActivity extends PassFailButtons.Activity {
     AudioDeviceInfo mOutputDevInfo;
     AudioDeviceInfo mInputDevInfo;
 
+    protected static final int TESTPERIPHERAL_INVALID       = -1;
     protected static final int TESTPERIPHERAL_NONE          = 0;
     protected static final int TESTPERIPHERAL_ANALOG_JACK   = 1;
     protected static final int TESTPERIPHERAL_USB           = 2;
@@ -222,9 +227,16 @@ public class AudioLoopbackBaseActivity extends PassFailButtons.Activity {
         }
     }
 
-    protected void calculateTestPeripheral() {
+    private void calculateTestPeripheral() {
         if (!mIsPeripheralAttached) {
-            mTestPeripheral = TESTPERIPHERAL_DEVICE;
+            if ((mOutputDevInfo != null && mInputDevInfo == null)
+                || (mOutputDevInfo == null && mInputDevInfo != null)) {
+                mTestPeripheral = TESTPERIPHERAL_INVALID;
+            } else {
+                mTestPeripheral = TESTPERIPHERAL_DEVICE;
+            }
+        } else if (!areIODevicesOnePeripheral()) {
+            mTestPeripheral = TESTPERIPHERAL_INVALID;
         } else if (mInputDevInfo.getType() == AudioDeviceInfo.TYPE_USB_DEVICE ||
                 mInputDevInfo.getType() == AudioDeviceInfo.TYPE_USB_HEADSET) {
             mTestPeripheral = TESTPERIPHERAL_USB;
@@ -238,21 +250,25 @@ public class AudioLoopbackBaseActivity extends PassFailButtons.Activity {
         }
     }
 
-    protected boolean isPeripheralValidForTest() {
+    private boolean isPeripheralValidForTest() {
         return mTestPeripheral == TESTPERIPHERAL_ANALOG_JACK
-                || mTestPeripheral == TESTPERIPHERAL_USB;
-
+                    || mTestPeripheral == TESTPERIPHERAL_USB;
     }
-    protected void showConnectedAudioPeripheral() {
+
+    private void showConnectedAudioPeripheral() {
         mInputDeviceTxt.setText(
                 mInputDevInfo != null ? mInputDevInfo.getProductName().toString()
-                        : "");
+                        : "Not connected");
         mOutputDeviceTxt.setText(
                 mOutputDevInfo != null ? mOutputDevInfo.getProductName().toString()
-                        : "");
+                        : "Not connected");
 
         String pathName;
         switch (mTestPeripheral) {
+            case TESTPERIPHERAL_INVALID:
+                pathName = "Invalid Test Peripheral";
+                break;
+
             case TESTPERIPHERAL_ANALOG_JACK:
                 pathName = "Headset Jack";
                 break;
@@ -271,6 +287,18 @@ public class AudioLoopbackBaseActivity extends PassFailButtons.Activity {
                 break;
         }
         mTestPathTxt.setText(pathName);
+        mTestButton.setEnabled(
+                mTestPeripheral != TESTPERIPHERAL_INVALID && mTestPeripheral != TESTPERIPHERAL_NONE);
+
+    }
+
+    private boolean areIODevicesOnePeripheral() {
+        if (mOutputDevInfo == null || mInputDevInfo == null) {
+            return false;
+        }
+
+        return mOutputDevInfo.getProductName().toString().equals(
+                mInputDevInfo.getProductName().toString());
     }
 
     private void calculateLatencyThresholds() {
@@ -352,6 +380,8 @@ public class AudioLoopbackBaseActivity extends PassFailButtons.Activity {
     private static final String KEY_TEST_PERIPHERAL = "test_peripheral";
     private static final String KEY_TEST_MMAP = "supports_mmap";
     private static final String KEY_TEST_MMAPEXCLUSIVE = "supports_mmap_exclusive";
+    private static final String KEY_LEVEL = "level";
+    private static final String KEY_BUFFER_SIZE = "buffer_size_in_frames";
 
     @Override
     public String getTestId() {
@@ -435,18 +465,18 @@ public class AudioLoopbackBaseActivity extends PassFailButtons.Activity {
                     ResultType.NEUTRAL,
                     ResultUnit.NONE);
         }
-    }
 
-    private static final String KEY_LOOPBACK_AVAILABLE = "loopback_available";
-    private void recordLoopbackStatus(boolean has) {
-        getReportLog().addValue(
-                KEY_LOOPBACK_AVAILABLE,
-                has,
+        int audioLevel = mAudioLevelSeekbar.getProgress();
+        reportLog.addValue(
+                KEY_LEVEL,
+                audioLevel,
                 ResultType.NEUTRAL,
                 ResultUnit.NONE);
+
+        reportLog.submit();
     }
 
-    protected void startAudioTest(Handler messageHandler) {
+    private void startAudioTest(Handler messageHandler) {
         getPassButton().setEnabled(false);
 
         mTestPhase = 0;
@@ -478,12 +508,18 @@ public class AudioLoopbackBaseActivity extends PassFailButtons.Activity {
         }
     }
 
-    protected void handleTestCompletion() {
+    private void handleTestCompletion() {
         mMeanLatencyMillis = StatUtils.calculateMean(mLatencyMillis);
         mMeanAbsoluteDeviation =
                 StatUtils.calculateMeanAbsoluteDeviation(mMeanLatencyMillis, mLatencyMillis);
         mMeanConfidence = StatUtils.calculateMean(mConfidence);
 
+        boolean pass = isPeripheralValidForTest()
+                && mMeanConfidence >= CONFIDENCE_THRESHOLD
+                && mMeanLatencyMillis > EPSILON
+                && mMeanLatencyMillis < mMustLatency;
+
+        getPassButton().setEnabled(pass);
 
         String result;
         if (mMeanConfidence < CONFIDENCE_THRESHOLD) {
@@ -492,10 +528,11 @@ public class AudioLoopbackBaseActivity extends PassFailButtons.Activity {
                     mMeanConfidence, CONFIDENCE_THRESHOLD);
         } else {
             result = String.format(
-                    "Test Finished\nMean Latency:%.2f ms (required:%.2f)\n" +
+                    "Test Finished - %s\nMean Latency:%.2f ms (required:%.2f)\n" +
                             "Mean Absolute Deviation: %.2f\n" +
                             " Confidence: %.2f\n" +
                             " Low Latency Path: %s",
+                    (pass ? "PASS" : "FAIL"),
                     mMeanLatencyMillis,
                     mMustLatency,
                     mMeanAbsoluteDeviation,
@@ -512,9 +549,14 @@ public class AudioLoopbackBaseActivity extends PassFailButtons.Activity {
             }
         }
         mResultText.setText(result);
+
+        recordTestResults();
+
+        showWait(false);
+        mTestButton.setEnabled(true);
     }
 
-    protected void handleTestPhaseCompletion() {
+    private void handleTestPhaseCompletion() {
         if (mNativeAnalyzerThread != null && mTestPhase < NUM_TEST_PHASES) {
             mLatencyMillis[mTestPhase] = mNativeAnalyzerThread.getLatencyMillis();
             mConfidence[mTestPhase] = mNativeAnalyzerThread.getConfidence();
@@ -545,7 +587,7 @@ public class AudioLoopbackBaseActivity extends PassFailButtons.Activity {
     /**
      * handler for messages from audio thread
      */
-    protected Handler mMessageHandler = new Handler() {
+    private Handler mMessageHandler = new Handler() {
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
             switch(msg.what) {
@@ -588,6 +630,12 @@ public class AudioLoopbackBaseActivity extends PassFailButtons.Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        setContentView(R.layout.audio_loopback_latency_activity);
+
+        setPassFailButtonClickListeners();
+        getPassButton().setEnabled(false);
+        setInfoResources(R.string.audio_loopback_latency_test, R.string.audio_loopback_info, -1);
+
         mClaimsOutput = AudioSystemFlags.claimsOutput(this);
         mClaimsInput = AudioSystemFlags.claimsInput(this);
         mClaimsProAudio = AudioSystemFlags.claimsProAudio(this);
@@ -611,6 +659,9 @@ public class AudioLoopbackBaseActivity extends PassFailButtons.Activity {
 
         mTestPathTxt = ((TextView)findViewById(R.id.audio_loopback_testpath));
 
+        mTestButton = (Button)findViewById(R.id.audio_loopback_test_btn);
+        mTestButton.setOnClickListener(mBtnClickListener);
+
         mAudioManager = (AudioManager)getSystemService(AUDIO_SERVICE);
 
         mAudioManager.registerAudioDeviceCallback(new ConnectListener(), new Handler());
@@ -619,5 +670,17 @@ public class AudioLoopbackBaseActivity extends PassFailButtons.Activity {
 
         calculateLatencyThresholds();
         displayLatencyThresholds();
+    }
+
+    private class OnBtnClickListener implements OnClickListener {
+        @Override
+        public void onClick(View v) {
+            switch (v.getId()) {
+                case R.id.audio_loopback_test_btn:
+                    Log.i(TAG, "audio loopback test");
+                    startAudioTest(mMessageHandler);
+                    break;
+            }
+        }
     }
 }
