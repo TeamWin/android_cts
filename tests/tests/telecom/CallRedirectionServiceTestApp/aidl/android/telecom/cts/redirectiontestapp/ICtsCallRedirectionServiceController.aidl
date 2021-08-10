@@ -29,4 +29,8 @@ interface ICtsCallRedirectionServiceController {
     void setCancelCall();
 
     void setPlaceCallUnmodified();
+
+    void setWaitForTimeout();
+
+    boolean waitForTimeoutNotified();
 }
