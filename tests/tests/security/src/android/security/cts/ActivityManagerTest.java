@@ -17,14 +17,13 @@ package android.security.cts;
 
 import android.app.ActivityManager;
 import android.os.IBinder;
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import android.util.Log;
 
 import junit.framework.TestCase;
 
 import java.lang.reflect.InvocationTargetException;
 
-@SecurityTest
 public class ActivityManagerTest extends TestCase {
 
     @Override
@@ -32,7 +31,7 @@ public class ActivityManagerTest extends TestCase {
         super.setUp();
     }
 
-    @SecurityTest(minPatchLevel = "2015-03")
+    @AsbSecurityTest(cveBugId = 19394591)
     public void testActivityManager_injectInputEvents() throws ClassNotFoundException {
         try {
             /*
@@ -50,7 +49,7 @@ public class ActivityManagerTest extends TestCase {
     }
 
     // b/144285917
-    @SecurityTest(minPatchLevel = "2020-05")
+    @AsbSecurityTest(cveBugId = 144285917)
     public void testActivityManager_attachNullApplication() {
         SecurityException securityException = null;
         Exception unexpectedException = null;

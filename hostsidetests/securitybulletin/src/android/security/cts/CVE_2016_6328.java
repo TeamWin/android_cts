@@ -18,7 +18,7 @@ package android.security.cts;
 
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -29,8 +29,8 @@ public class CVE_2016_6328 extends SecurityTestCase {
      * b/162602132
      * Vulnerability Behaviour: SIGSEGV in self
      */
-    @SecurityTest(minPatchLevel = "2021-01")
     @Test
+    @AsbSecurityTest(cveBugId = 162602132)
     public void testPocCVE_2016_6328() throws Exception {
         String inputFiles[] = {"cve_2016_6328.mp4"};
         AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2016-6328",

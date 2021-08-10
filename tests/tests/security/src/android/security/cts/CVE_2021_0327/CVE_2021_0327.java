@@ -21,7 +21,7 @@ import android.test.AndroidTestCase;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import android.os.SystemClock;
 import androidx.test.runner.AndroidJUnit4;
 import androidx.test.InstrumentationRegistry;
@@ -53,7 +53,6 @@ import java.util.stream.Collectors;
 import android.security.cts.CVE_2021_0327.workprofilesetup.AdminReceiver;
 import static org.junit.Assert.assertFalse;
 
-@SecurityTest
 @RunWith(AndroidJUnit4.class)
 public class CVE_2021_0327 {
 
@@ -75,7 +74,7 @@ public class CVE_2021_0327 {
      * b/175817081
      */
     @Test
-    @SecurityTest
+    @AsbSecurityTest(cveBugId = 172935267)
     public void testPocCVE_2021_0327() throws Exception {
         Log.d(TAG, "test start");
         testActivityCreated=false;

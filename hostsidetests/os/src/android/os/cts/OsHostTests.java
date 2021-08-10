@@ -17,7 +17,7 @@
 package android.os.cts;
 
 import android.platform.test.annotations.AppModeFull;
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.tradefed.build.IBuildInfo;
@@ -119,7 +119,7 @@ public class OsHostTests extends DeviceTestCase implements IBuildReceiver, IAbiR
      * Test behavior of malformed Notifications w.r.t. foreground services
      * @throws Exception
      */
-    @SecurityTest(minPatchLevel = "2020-05")
+    @AsbSecurityTest(cveBugId = 140108616)
     @AppModeFull(reason = "Instant apps may not start foreground services")
     public void testForegroundServiceBadNotification() throws Exception {
         final Pattern pattern = Pattern.compile(FILTER_FG_SERVICE_REGEXP);
