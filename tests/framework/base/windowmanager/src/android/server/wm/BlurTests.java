@@ -416,14 +416,14 @@ public class BlurTests extends WindowManagerTestBase {
 
         Color previousColor;
         Color currentColor;
-        final int unaffectedBluePixelX = width / 2 - blurRadius - 1;
-        final int unaffectedRedPixelX = width / 2 + blurRadius + 1;
+        final int unaffectedBluePixelX = width / 2 - blurRadius * 2 - 1;
+        final int unaffectedRedPixelX = width / 2 + blurRadius * 2 + 1;
         for (int y = startHeight; y < endHeight; y++) {
             ColorUtils.verifyColor(
                     "failed for pixel (x, y) = (" + unaffectedBluePixelX + ", " + y + ")",
                     Color.BLUE, screenshot.getPixel(unaffectedBluePixelX, y), 1);
             previousColor = Color.valueOf(Color.BLUE);
-            for (int x = blurAreaStartX; x <= blurAreaEndX; x += stepSize) {
+            for (int x = blurAreaStartX; x < blurAreaEndX; x += stepSize) {
                 currentColor = screenshot.getColor(x, y);
                 assertTrue("assertBlur failed for blue for pixel (x, y) = (" + x + ", " + y + ");"
                         + " previousColor blue: " + previousColor.blue()
