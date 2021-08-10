@@ -16,7 +16,7 @@
 
 package android.security.cts;
 
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -30,7 +30,7 @@ public class Poc19_11 extends SecurityTestCase {
      * b/138441919
      */
     @Test
-    @SecurityTest(minPatchLevel = "2019-11")
+    @AsbSecurityTest(cveBugId = 138441919)
     public void testPocBug_138441919() throws Exception {
         int code = AdbUtils.runProxyAutoConfig("bug_138441919", getDevice());
         assertTrue(code != 139); // 128 + signal 11
@@ -40,7 +40,7 @@ public class Poc19_11 extends SecurityTestCase {
      * b/139806216
      */
     @Test
-    @SecurityTest(minPatchLevel = "2019-11")
+    @AsbSecurityTest(cveBugId = 139806216)
     public void testPocBug_139806216() throws Exception {
         int code = AdbUtils.runProxyAutoConfig("bug_139806216", getDevice());
         assertTrue(code != 139 && code != 135); // 128 + signal 11, 128 + signal 7
