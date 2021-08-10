@@ -299,8 +299,8 @@ public class WifiBackupRestoreTest extends WifiJUnit4TestBase {
         configuration.SSID = "\"TestSsid1\"";
         configuration.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
         configuration.wepKeys = new String[4];
-        configuration.wepKeys[0] = "\"WepAscii1\"";
-        configuration.wepKeys[1] = "\"WepAscii2\"";
+        configuration.wepKeys[0] = "\"WepAscii12345\"";
+        configuration.wepKeys[1] = "\"WepAs\"";
         configuration.wepKeys[2] = "45342312ab";
         configuration.wepKeys[3] = "45342312ab45342312ab34ac12";
         configuration.wepTxKeyIndex = 1;
@@ -375,12 +375,13 @@ public class WifiBackupRestoreTest extends WifiJUnit4TestBase {
     }
 
     /**
-     * Asserts that the 2 lists of WifiConfigurations are equal. This compares all the elements
-     * saved for backup/restore.
+     * Check that expected configrations could be found in restored configurations.
+     * As multi-type configurations would be converted to several single-type configurations,
+     * two list could not be compared directly.
      */
     public static void assertConfigurationsEqual(
             List<WifiConfiguration> expected, List<WifiConfiguration> actual) {
-        assertThat(actual.size()).isEqualTo(expected.size());
+        assertThat(actual.size() >= expected.size()).isTrue();
         for (WifiConfiguration expectedConfiguration : expected) {
             String expectedConfigKey = expectedConfiguration.getKey();
             boolean didCompare = false;
