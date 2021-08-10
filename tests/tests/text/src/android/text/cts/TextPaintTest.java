@@ -33,7 +33,7 @@ public class TextPaintTest extends AndroidTestCase {
         TextPaint textPaint;
 
         textPaint = new TextPaint();
-        assertEquals(DEFAULT_PAINT_FLAGS | TextPaint.ANTI_ALIAS_FLAG | TextPaint.DITHER_FLAG,
+        assertEquals(DEFAULT_PAINT_FLAGS | TextPaint.ANTI_ALIAS_FLAG,
                 textPaint.getFlags());
 
         textPaint = new TextPaint(TextPaint.DITHER_FLAG);
