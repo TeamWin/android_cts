@@ -5285,10 +5285,13 @@ Follow the instructions on the screen to measure the frequency response for the 
     <string name="audio_tap2tone_info">This tests the latency from a screen interaction to a
         resulting tone. This time is a combination of touch screen latency and audio latency.\nThis
         test is best conducted in a quiet room with the device laying on a table. Select
-        the Audio API to test and press the \"Start\" button. Use your fingernail to tap on the
-        field below to trigger the test tone. Results will be displayed in the field above the
-        waveform display.\nFive successful tests runs are required to determine if the test
-        as a whole succeeds.
+        the Audio API to test (\"Native\" has the lowest latency) and press the \"Start\" button.
+        Use your fingernail to tap ONCE on the field below to trigger the test tone. DO NOT leave
+        the finger resting on the test field. A strong "tick" sound from the fingernail striking
+        the display is necessary to register the start of the test process. After tapping ONCE,
+        wait until the results are displayed in the field above the waveform display before
+        tapping for the next test run.\nFive successful tests runs are required to determine
+        if the test as a whole succeeds.
     </string>
     <string name="audio_tap2tone_spec">80ms or less average latency is STRONGLY RECOMMENDED to pass.</string>
     <string name="audio_tap2tone_too_few">Not enough edges. Use fingernail.</string>
