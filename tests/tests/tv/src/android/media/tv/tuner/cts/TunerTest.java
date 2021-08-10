@@ -151,7 +151,7 @@ public class TunerTest {
         assertNotNull(mTuner);
         int version = TunerVersionChecker.getTunerVersion();
         assertTrue(version >= TunerVersionChecker.TUNER_VERSION_1_0);
-        assertTrue(version <= TunerVersionChecker.TUNER_VERSION_1_1);
+        assertTrue(version <= TunerVersionChecker.TUNER_VERSION_2_0);
     }
 
     @Test
