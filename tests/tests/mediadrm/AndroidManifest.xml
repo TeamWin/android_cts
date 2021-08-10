@@ -18,6 +18,9 @@
      package="android.mediadrm.cts"
      android:targetSandboxVersion="2">
 
+    <uses-sdk android:minSdkVersion="31"
+         android:targetSdkVersion="31"/>
+
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
     <uses-permission android:name="android.permission.CAMERA"/>
@@ -39,9 +42,6 @@
 
     <uses-permission android:name="android.permission.VIBRATE"/>
 
-    <permission android:name="android.mediadrm.cts"
-         android:protectionLevel="normal"/>
-
     <application android:networkSecurityConfig="@xml/network_security_config"
          android:requestLegacyExternalStorage="true"
          android:largeHeap="true">
@@ -49,14 +49,14 @@
         <uses-library android:name="org.apache.http.legacy"
              android:required="false"/>
 
-        <activity android:name="android.media.cts.MediaProjectionActivity"
+        <activity android:name="android.mediadrm.cts.MediaProjectionActivity"
              android:label="MediaProjectionActivity"
              android:screenOrientation="locked"/>
-        <activity android:name="android.media.cts.AudioManagerStub"
+        <activity android:name="android.mediadrm.cts.AudioManagerStub"
              android:label="AudioManagerStub"/>
-        <activity android:name="android.media.cts.AudioManagerStubHelper"
+        <activity android:name="android.mediadrm.cts.AudioManagerStubHelper"
              android:label="AudioManagerStubHelper"/>
-        <activity android:name="android.media.cts.DecodeAccuracyTestActivity"
+        <activity android:name="android.mediadrm.cts.DecodeAccuracyTestActivity"
              android:label="DecodeAccuracyTestActivity"
              android:screenOrientation="locked"
              android:configChanges="mcc|mnc|keyboard|keyboardHidden|orientation|screenSize|navigation"
@@ -66,7 +66,7 @@
                 <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST"/>
             </intent-filter>
         </activity>
-        <activity android:name="android.media.cts.MediaSessionTestActivity"
+        <activity android:name="android.mediadrm.cts.MediaSessionTestActivity"
              android:label="MediaSessionTestActivity"
              android:screenOrientation="nosensor"
              android:configChanges="keyboard|keyboardHidden|orientation|screenSize"
@@ -76,7 +76,7 @@
                 <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST"/>
             </intent-filter>
         </activity>
-        <activity android:name="android.media.cts.MediaStubActivity"
+        <activity android:name="android.mediadrm.cts.MediaStubActivity"
              android:label="MediaStubActivity"
              android:screenOrientation="nosensor"
              android:configChanges="keyboard|keyboardHidden|orientation|screenSize"
@@ -86,7 +86,7 @@
                 <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST"/>
             </intent-filter>
         </activity>
-        <activity android:name="android.media.cts.MediaStubActivity2"
+        <activity android:name="android.mediadrm.cts.MediaStubActivity2"
              android:label="MediaStubActivity2"
              android:screenOrientation="nosensor"
              android:configChanges="keyboard|keyboardHidden|orientation|screenSize"
@@ -96,9 +96,9 @@
                 <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST"/>
             </intent-filter>
         </activity>
-        <activity android:name="android.media.cts.FaceDetectorStub"
+        <activity android:name="android.mediadrm.cts.FaceDetectorStub"
              android:label="FaceDetectorStub"/>
-        <activity android:name="android.media.cts.MediaPlayerSurfaceStubActivity"
+        <activity android:name="android.mediadrm.cts.MediaPlayerSurfaceStubActivity"
              android:label="MediaPlayerSurfaceStubActivity"
              android:exported="true">
             <intent-filter>
@@ -106,7 +106,7 @@
                 <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST"/>
             </intent-filter>
         </activity>
-        <activity android:name="android.media.cts.ResourceManagerStubActivity"
+        <activity android:name="android.mediadrm.cts.ResourceManagerStubActivity"
              android:label="ResourceManagerStubActivity"
              android:exported="true">
             <intent-filter>
@@ -114,15 +114,15 @@
                 <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST"/>
             </intent-filter>
         </activity>
-        <activity android:name="android.media.cts.ResourceManagerTestActivity1"
+        <activity android:name="android.mediadrm.cts.ResourceManagerTestActivity1"
              android:label="ResourceManagerTestActivity1"
              android:process=":mediaCodecTestProcess1">
         </activity>
-        <activity android:name="android.media.cts.ResourceManagerTestActivity2"
+        <activity android:name="android.mediadrm.cts.ResourceManagerTestActivity2"
              android:label="ResourceManagerTestActivity2"
              android:process=":mediaCodecTestProcess2">
         </activity>
-        <activity android:name="android.media.cts.RingtonePickerActivity"
+        <activity android:name="android.mediadrm.cts.RingtonePickerActivity"
              android:label="RingtonePickerActivity"
              android:exported="true">
             <intent-filter>
@@ -130,29 +130,29 @@
                 <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST"/>
             </intent-filter>
         </activity>
-        <activity android:name="android.media.cts.MockActivity"/>
-        <activity android:name="android.media.cts.MediaRouter2TestActivity"/>
-        <service android:name="android.media.cts.RemoteVirtualDisplayService"
+        <activity android:name="android.mediadrm.cts.MockActivity"/>
+        <activity android:name="android.mediadrm.cts.MediaRouter2TestActivity"/>
+        <service android:name="android.mediadrm.cts.RemoteVirtualDisplayService"
              android:process=":remoteService"
              android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
             </intent-filter>
         </service>
-        <service android:name="android.media.cts.StubMediaBrowserService"
+        <service android:name="android.mediadrm.cts.StubMediaBrowserService"
              android:exported="true">
             <intent-filter>
                 <action android:name="android.media.browse.MediaBrowserService"/>
             </intent-filter>
         </service>
-        <service android:name="android.media.cts.StubMediaSession2Service"
-             android:permission="android.media.cts"
+        <service android:name="android.mediadrm.cts.StubMediaSession2Service"
+             android:permission="android.mediadrm.cts"
              android:exported="true">
             <intent-filter>
                 <action android:name="android.media.MediaSession2Service"/>
             </intent-filter>
         </service>
-        <service android:name="android.media.cts.LocalMediaProjectionService"
+        <service android:name="android.mediadrm.cts.LocalMediaProjectionService"
              android:foregroundServiceType="mediaProjection"
              android:enabled="true">
         </service>
@@ -162,17 +162,14 @@
                 <action android:name="android.media.MediaRoute2ProviderService"/>
             </intent-filter>
         </service>
-        <service android:name="android.media.cts.MediaButtonReceiverService"
+        <service android:name="android.mediadrm.cts.MediaButtonReceiverService"
              android:exported="true"/>
         <service android:name=".MediaBrowserServiceTestService"
              android:process=":mediaBrowserServiceTestService"/>
         <service android:name=".MediaSessionTestService"
              android:process=":mediaSessionTestService"/>
-        <receiver android:name="android.media.cts.MediaButtonBroadcastReceiver"/>
+        <receiver android:name="android.mediadrm.cts.MediaButtonBroadcastReceiver"/>
     </application>
-
-    <uses-sdk android:minSdkVersion="29"
-         android:targetSdkVersion="29"/>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
          android:targetPackage="android.mediadrm.cts"
