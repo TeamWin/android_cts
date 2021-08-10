@@ -31,6 +31,7 @@
              where this is not required -->
             <intent-filter>
                 <action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED" />
+                <action android:name="android.app.action.cts.ACTION_PING" />
             </intent-filter>
         </receiver>
         <service android:name=".TestService"

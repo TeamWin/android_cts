@@ -28,6 +28,7 @@ import com.android.cts.verifier.ArrayTestListAdapter;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.TestListAdapter.TestListItem;
+import com.android.cts.verifier.features.FeatureUtil;
 
 import java.util.Arrays;
 import java.util.List;
@@ -140,28 +141,32 @@ public class PolicyTransparencyTestListActivity extends PassFailButtons.TestList
     private void addTestsToAdapter(final ArrayTestListAdapter adapter) {
         for (String restriction :
                 UserRestrictions.getUserRestrictionsForPolicyTransparency(mMode)) {
-            final Intent intent = UserRestrictions.getUserRestrictionTestIntent(this, restriction);
+            Intent intent =
+                    UserRestrictions.getUserRestrictionTestIntent(this, restriction, mMode);
             if (!UserRestrictions.isRestrictionValid(this, restriction)) {
                 continue;
             }
-            final String title = UserRestrictions.getRestrictionLabel(this, restriction);
+            String title = UserRestrictions.getRestrictionLabel(this, restriction);
             String testId = getTestId(title);
             intent.putExtra(PolicyTransparencyTestActivity.EXTRA_TEST_ID, testId);
             adapter.add(TestListItem.newTest(title, testId, intent, null));
         }
         for (Pair<Intent, Integer> policy : POLICIES) {
-            final Intent intent = policy.first;
+            Intent intent = policy.first;
             String test = intent.getStringExtra(PolicyTransparencyTestActivity.EXTRA_TEST);
             if (!isPolicyValid(test)) {
                 continue;
             }
+
+            String action = intent.getStringExtra(
+                    PolicyTransparencyTestActivity.EXTRA_SETTINGS_INTENT_ACTION);
             if (mMode == MODE_MANAGED_PROFILE && !ALSO_VALID_FOR_MANAGED_PROFILE.contains(test)) {
                 continue;
             }
             if (mMode == MODE_MANAGED_USER && !ALSO_VALID_FOR_MANAGED_USER.contains(test)) {
                 continue;
             }
-            final String title = getString(policy.second);
+            String title = getString(policy.second);
             String testId = getTestId(title);
             intent.putExtra(PolicyTransparencyTestActivity.EXTRA_TITLE, title);
             intent.putExtra(PolicyTransparencyTestActivity.EXTRA_TEST_ID, testId);
@@ -185,16 +190,14 @@ public class PolicyTransparencyTestListActivity extends PassFailButtons.TestList
         switch (test) {
             case PolicyTransparencyTestActivity.TEST_CHECK_PERMITTED_INPUT_METHOD:
                 return pm.hasSystemFeature(PackageManager.FEATURE_INPUT_METHODS);
-            // TODO(b/189282625): replace FEATURE_WATCH with a more specific feature
             case PolicyTransparencyTestActivity.TEST_CHECK_PERMITTED_ACCESSIBILITY_SERVICE:
                 return (pm.hasSystemFeature(PackageManager.FEATURE_AUDIO_OUTPUT)
-                    && !pm.hasSystemFeature(PackageManager.FEATURE_WATCH));
-            // TODO(b/189282625): replace FEATURE_WATCH with a more specific feature
+                        && FeatureUtil.isThirdPartyAccessibilityServiceSupported(this));
             case PolicyTransparencyTestActivity.TEST_CHECK_KEYGURAD_UNREDACTED_NOTIFICATION:
             case PolicyTransparencyTestActivity.TEST_CHECK_LOCK_SCREEN_INFO:
             case PolicyTransparencyTestActivity.TEST_CHECK_MAXIMUM_TIME_TO_LOCK:
                 return (pm.hasSystemFeature(PackageManager.FEATURE_SECURE_LOCK_SCREEN)
-                    && !pm.hasSystemFeature(PackageManager.FEATURE_WATCH));
+                        && FeatureUtil.isConfigLockScreenSupported(this));
             default:
                 return true;
         }
