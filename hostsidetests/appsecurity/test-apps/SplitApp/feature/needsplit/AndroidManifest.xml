@@ -15,11 +15,14 @@
 -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
         package="com.android.cts.splitapp"
         split="feature"
         android:isSplitRequired="true">
 
-    <uses-sdk android:minSdkVersion="4" android:targetSdkVersion="27" />
+    <!-- The androidx test libraries uses minSdkVersion 14. Applies an overrideLibrary rule here
+        to pass the build error, since tests need to use minSdkVersion 4. -->
+    <uses-sdk android:minSdkVersion="4" tools:overrideLibrary="androidx.test" android:targetSdkVersion="27" />
 
     <!-- New permission should be ignored -->
     <uses-permission android:name="android.permission.INTERNET" />

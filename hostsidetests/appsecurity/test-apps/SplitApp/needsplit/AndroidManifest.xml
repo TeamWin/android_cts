@@ -15,11 +15,12 @@
 -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="com.android.cts.splitapp"
     android:targetSandboxVersion="2"
     android:isSplitRequired="true" >
 
-    <uses-sdk android:minSdkVersion="4" android:targetSdkVersion="27" />
+    <uses-sdk android:minSdkVersion="4" tools:overrideLibrary="androidx.test" android:targetSdkVersion="27" />
 
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
