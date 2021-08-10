@@ -93,6 +93,13 @@ filegroup {
 }
 
 filegroup {
+    name: "ec-p256-por_1_2-no-perm-cap",
+    srcs: [
+        "ec-p256-por_1_2-no-perm-cap",
+    ],
+}
+
+filegroup {
     name: "por_Y_1_2-default-caps",
     srcs: [
         "por_Y_1_2-default-caps",
