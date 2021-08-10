@@ -42,7 +42,7 @@ import android.os.IInterface;
 import android.os.Parcel;
 import android.os.ParcelFileDescriptor;
 import android.os.Parcelable;
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import android.test.AndroidTestCase;
 import android.util.Log;
 import android.util.SparseArray;
@@ -3442,7 +3442,7 @@ public class ParcelTest extends AndroidTestCase {
         assertNotNull("Service should have started without crashing.", connection.get());
     }
 
-    @SecurityTest(minPatchLevel="2020-02")
+    @AsbSecurityTest(cveBugId = 140419401)
     public void testObjectResize() throws Exception {
         Parcel p;
         IBinder b1 = new Binder();

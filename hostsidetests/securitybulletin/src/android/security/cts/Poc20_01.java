@@ -1,6 +1,6 @@
 package android.security.cts;
 
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -13,7 +13,7 @@ public class Poc20_01 extends SecurityTestCase {
      * CVE-2019-14002
      */
     @Test
-    @SecurityTest(minPatchLevel = "2020-01")
+    @AsbSecurityTest(cveBugId = 142271274)
     public void testPocCVE_2019_14002() throws Exception {
         String result =
                 AdbUtils.runCommandLine(

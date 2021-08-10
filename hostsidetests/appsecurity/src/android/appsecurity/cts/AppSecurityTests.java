@@ -23,7 +23,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AppModeInstant;
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 
 import com.android.ddmlib.Log;
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -229,7 +229,7 @@ public class AppSecurityTests extends BaseAppSecurityTest {
      */
     @Test
     @AppModeFull(reason = "Only the platform can define permissions obtainable by instant applications")
-    @SecurityTest
+    @AsbSecurityTest(cveBugId = 111934948)
     public void testPermissionDiffCert() throws Exception {
         Log.i(LOG_TAG, "installing app that attempts to use permission of another app");
         try {
@@ -260,7 +260,7 @@ public class AppSecurityTests extends BaseAppSecurityTest {
      */
     @Test
     @AppModeFull(reason = "Only full apps can hold INSTALL_PACKAGES")
-    @SecurityTest
+    @AsbSecurityTest(cveBugId = 150857253)
     public void testCrossPackageDiffCertSetInstaller() throws Exception {
         Log.i(LOG_TAG, "installing app that attempts to use permission of another app");
         try {

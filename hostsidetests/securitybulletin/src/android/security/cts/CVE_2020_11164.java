@@ -17,7 +17,7 @@ package android.security.cts;
 
 import static org.junit.Assert.*;
 
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -28,8 +28,8 @@ public class CVE_2020_11164 extends SecurityTestCase {
     /**
      * CVE-2020-11164
      */
-    @SecurityTest(minPatchLevel = "2020-10")
     @Test
+    @AsbSecurityTest(cveBugId = 160605595)
     public void testPocCVE_2020_11164() throws Exception {
         String result =
                 AdbUtils.runCommandLine("pm list package com.qualcomm.qti.perfdump", getDevice());

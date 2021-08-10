@@ -16,7 +16,7 @@
 
 package android.security.cts;
 
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import com.android.compatibility.common.util.CrashUtils;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import java.util.Arrays;
@@ -33,8 +33,8 @@ public class CVE_2020_0224 extends SecurityTestCase {
      * b/147664838
      * Vulnerability Behaviour: SIGSEGV in self
      */
-    @SecurityTest(minPatchLevel = "2020-07")
     @Test
+    @AsbSecurityTest(cveBugId = 147664838)
     public void testPocCVE_2020_0224() throws Exception {
         assumeThat(getDevice().getProperty("ro.config.low_ram"), not(is("true")));
         AdbUtils.runProxyAutoConfig("cve_2020_0224", getDevice());

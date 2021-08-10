@@ -61,7 +61,7 @@ import android.os.Looper;
 import android.os.SystemClock;
 import android.permission.cts.appthataccesseslocation.IAccessLocationOnCommand;
 import android.platform.test.annotations.AppModeFull;
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import android.provider.DeviceConfig;
 import android.provider.Settings;
 import android.service.notification.NotificationListenerService;
@@ -578,7 +578,7 @@ public class LocationAccessCheckTest {
     }
 
     @Test
-    @SecurityTest(minPatchLevel = "2019-12-01")
+    @AsbSecurityTest(cveBugId = 141028068)
     public void notificationIsShownOnlyOnce() throws Throwable {
         assumeNotPlayManaged();
         accessLocation();
@@ -588,7 +588,7 @@ public class LocationAccessCheckTest {
     }
 
     @Test
-    @SecurityTest(minPatchLevel = "2019-12-01")
+    @AsbSecurityTest(cveBugId = 141028068)
     public void notificationIsShownAgainAfterClear() throws Throwable {
         assumeNotPlayManaged();
         accessLocation();
@@ -626,7 +626,7 @@ public class LocationAccessCheckTest {
     }
 
     @Test
-    @SecurityTest(minPatchLevel = "2019-12-01")
+    @AsbSecurityTest(cveBugId = 141028068)
     public void removeNotificationOnUninstall() throws Throwable {
         assumeNotPlayManaged();
         accessLocation();
@@ -667,7 +667,7 @@ public class LocationAccessCheckTest {
     }
 
     @Test
-    @SecurityTest(minPatchLevel = "2019-12-01")
+    @AsbSecurityTest(cveBugId = 141028068)
     public void noNotificationIfFeatureDisabled() throws Throwable {
         assumeNotPlayManaged();
         disableLocationAccessCheck();
@@ -676,7 +676,7 @@ public class LocationAccessCheckTest {
     }
 
     @Test
-    @SecurityTest(minPatchLevel = "2019-12-01")
+    @AsbSecurityTest(cveBugId = 141028068)
     public void notificationOnlyForAccessesSinceFeatureWasEnabled() throws Throwable {
         assumeNotPlayManaged();
         // Disable the feature and access location in disabled state
@@ -695,7 +695,7 @@ public class LocationAccessCheckTest {
     }
 
     @Test
-    @SecurityTest(minPatchLevel = "2019-12-01")
+    @AsbSecurityTest(cveBugId = 141028068)
     public void noNotificationIfBlamerNotSystemOrLocationProvider() throws Throwable {
         assumeNotPlayManaged();
         getNotification(true);
@@ -709,7 +709,7 @@ public class LocationAccessCheckTest {
     }
 
     @Test
-    @SecurityTest(minPatchLevel = "2019-12-01")
+    @AsbSecurityTest(cveBugId = 141028068)
     public void testOpeningLocationSettingsDoesNotTriggerAccess() throws Throwable {
         assumeNotPlayManaged();
         Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
