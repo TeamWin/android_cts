@@ -185,7 +185,15 @@ def find_raw_fov_reference(cam, req, props, debug):
                                 rad_dist[3], rad_dist[4],
                                 rad_dist[2]])
         print "dist:", opencv_dist
-        img_raw = cv2.undistort(img_raw, k, opencv_dist)
+        k_new = cv2.getOptimalNewCameraMatrix(
+                k, opencv_dist, (img_raw.shape[1], img_raw.shape[0]), 0)[0]
+        scale = max(k_new[0][0] / k[0][0], k_new[1][1] / k[1][1])
+        if (scale > 1):
+            k_new[0][0] = k[0][0] * scale
+            k_new[1][1] = k[1][1] * scale
+            img_raw = cv2.undistort(img_raw, k, opencv_dist, None, k_new)
+        else:
+            img_raw = cv2.undistort(img_raw, k, opencv_dist)
     size_raw = img_raw.shape
     w_raw = size_raw[1]
     h_raw = size_raw[0]
