@@ -540,6 +540,15 @@
             android:name="androidx.test.core.app.InstrumentationActivityInvoker$BootstrapActivity"
             tools:replace="android:theme"
             android:theme="@style/WhiteBackgroundTheme" />
+        <activity android:name="android.server.wm.SplitActivityLifecycleTest$ActivityA"
+                  android:exported="true"
+                  android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density|touchscreen"/>
+        <activity android:name="android.server.wm.SplitActivityLifecycleTest$ActivityB"
+                  android:exported="true"
+                  android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density|touchscreen"/>
+        <activity android:name="android.server.wm.SplitActivityLifecycleTest$ActivityC"
+                  android:exported="true"
+                  android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density|touchscreen"/>
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
