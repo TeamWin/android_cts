@@ -66,22 +66,21 @@ class PermissionTapjackingTest : BaseUsePermissionTest() {
         assertAppHasPermission(ACCESS_FINE_LOCATION, false)
         requestAppPermissionsForNoResult(ACCESS_FINE_LOCATION) {}
 
-        val buttonCenter = waitFindObject(By.text(
+        val foregroundButtonCenter = waitFindObject(By.text(
                 getPermissionControllerString(ALLOW_FOREGROUND_BUTTON_TEXT))).visibleCenter
-        val messageBounds = waitFindObject(By.text(
-                getPermissionControllerString(REQUEST_LOCATION_MESSAGE, APP_PACKAGE_NAME)))
-                        .visibleBounds
+        val oneTimeButtonBounds = waitFindObject(By.text(getPermissionControllerString(
+            ALLOW_ONE_TIME_BUTTON_TEXT, APP_PACKAGE_NAME))).visibleBounds
 
         // Wait for overlay to hide the dialog
         context.sendBroadcast(Intent(ACTION_SHOW_OVERLAY)
                 .putExtra(EXTRA_FULL_OVERLAY, false)
-                .putExtra(OVERLAY_LEFT, messageBounds.left)
-                .putExtra(OVERLAY_TOP, messageBounds.top)
-                .putExtra(OVERLAY_RIGHT, messageBounds.right)
-                .putExtra(OVERLAY_BOTTOM, messageBounds.bottom))
+                .putExtra(OVERLAY_LEFT, oneTimeButtonBounds.left)
+                .putExtra(OVERLAY_TOP, oneTimeButtonBounds.top)
+                .putExtra(OVERLAY_RIGHT, oneTimeButtonBounds.right)
+                .putExtra(OVERLAY_BOTTOM, oneTimeButtonBounds.bottom))
         waitFindObject(By.res("android.permission3.cts.usepermission:id/overlay"))
 
-        tryClicking(buttonCenter)
+        tryClicking(foregroundButtonCenter)
     }
 
     private fun tryClicking(buttonCenter: Point) {
