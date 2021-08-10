@@ -43,6 +43,8 @@ import android.text.TextUtils;
 
 import com.android.compatibility.common.util.CddTest;
 
+import junit.framework.AssertionFailedError;
+
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
@@ -200,6 +202,19 @@ public class CallRedirectionServiceTest extends BaseTelecomTestWithMockServices 
         assertEquals(getTestNumber(), mCall.getDetails().getHandle());
         assertEquals(TestUtils.TEST_PHONE_ACCOUNT_HANDLE, mCall.getDetails().getAccountHandle());
         assertTrue(Call.STATE_DISCONNECTED != mCall.getState());
+    }
+
+    public void testNotifyTimeout() throws Exception {
+        if (!shouldTestTelecom(mContext)) {
+            return;
+        }
+        mCallRedirectionServiceController.setWaitForTimeout();
+        try {
+            placeAndVerifyCallByRedirection(false /* cancelledByCallRedirection */);
+        } catch (AssertionFailedError e) {
+            // Expected since we set the CallRedirectionService wait for timeout
+        }
+        assertTrue(mCallRedirectionServiceController.waitForTimeoutNotified());
     }
 
     /**
