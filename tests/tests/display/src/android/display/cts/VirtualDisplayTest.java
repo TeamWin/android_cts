@@ -31,7 +31,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.SystemClock;
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import android.test.AndroidTestCase;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -119,7 +119,7 @@ public class VirtualDisplayTest extends AndroidTestCase {
      * Ensures that an application can create a private virtual display and show
      * its own windows on it.
      */
-    @SecurityTest
+    @AsbSecurityTest(cveBugId = 141745510)
     public void testPrivateVirtualDisplay() throws Exception {
         VirtualDisplay virtualDisplay = mDisplayManager.createVirtualDisplay(NAME,
                 WIDTH, HEIGHT, DENSITY, mSurface, 0);
@@ -143,7 +143,7 @@ public class VirtualDisplayTest extends AndroidTestCase {
      * Ensures that an application can create a private presentation virtual display and show
      * its own windows on it.
      */
-    @SecurityTest
+    @AsbSecurityTest(cveBugId = 141745510)
     public void testPrivatePresentationVirtualDisplay() throws Exception {
         VirtualDisplay virtualDisplay = mDisplayManager.createVirtualDisplay(NAME,
                 WIDTH, HEIGHT, DENSITY, mSurface,
@@ -168,7 +168,7 @@ public class VirtualDisplayTest extends AndroidTestCase {
      * Ensures that an application can create a private virtual display and show
      * its own windows on it where the surface is attached or detached dynamically.
      */
-    @SecurityTest
+    @AsbSecurityTest(cveBugId = 141745510)
     public void testPrivateVirtualDisplayWithDynamicSurface() throws Exception {
         VirtualDisplay virtualDisplay = mDisplayManager.createVirtualDisplay(NAME,
                 WIDTH, HEIGHT, DENSITY, null, 0);
@@ -201,7 +201,6 @@ public class VirtualDisplayTest extends AndroidTestCase {
      * be clear if an application creates an virtual display without the
      * flag {@link DisplayManager#VIRTUAL_DISPLAY_FLAG_TRUSTED}.
      */
-    @SecurityTest
     public void testUntrustedSysDecorVirtualDisplay() throws Exception {
         VirtualDisplay virtualDisplay = mDisplayManager.createVirtualDisplay(NAME,
                 WIDTH, HEIGHT, DENSITY, mSurface,
@@ -228,7 +227,6 @@ public class VirtualDisplayTest extends AndroidTestCase {
      * Ensures that throws {@link SecurityException} when an application creates a trusted virtual
      * display without holding the permission {@code ADD_TRUSTED_DISPLAY}.
      */
-    @SecurityTest
     public void testTrustedVirtualDisplay() throws Exception {
         try {
             VirtualDisplay virtualDisplay = mDisplayManager.createVirtualDisplay(NAME,

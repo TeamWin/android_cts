@@ -37,7 +37,7 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.ServiceInfo;
 import android.os.Bundle;
 import android.os.SystemClock;
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import android.provider.DeviceConfig;
 import android.test.InstrumentationTestCase;
 
@@ -368,7 +368,7 @@ public class ActivityManagerFgsBgStartTest extends InstrumentationTestCase {
         }
     }
 
-    @SecurityTest(minPatchLevel = "2021-03")
+    @AsbSecurityTest(cveBugId = 173516292)
     public void testFgsLocationStartFromBGWithBind() throws Exception {
         ApplicationInfo app1Info = mContext.getPackageManager().getApplicationInfo(
                 PACKAGE_NAME_APP1, 0);

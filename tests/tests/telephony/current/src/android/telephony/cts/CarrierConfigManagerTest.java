@@ -43,7 +43,7 @@ import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.os.Looper;
 import android.os.PersistableBundle;
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import android.telephony.CarrierConfigManager;
 import android.telephony.SubscriptionManager;
 import android.telephony.SubscriptionManager.OnSubscriptionsChangedListener;
@@ -187,8 +187,8 @@ public class CarrierConfigManagerTest {
         checkConfig(config);
     }
 
-    @SecurityTest
     @Test
+    @AsbSecurityTest(cveBugId = 73136824)
     public void testRevokePermission() {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             return;

@@ -16,7 +16,7 @@
 
 package android.security.cts;
 
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -35,8 +35,8 @@ public class CVE_2020_0018 extends SecurityTestCase {
     /**
      * b/139945049
      */
-    @SecurityTest(minPatchLevel = "2020-02")
     @Test
+    @AsbSecurityTest(cveBugId = 139945049)
     public void testPocCVE_2020_0018() throws Exception {
         ITestDevice device = getDevice();
         String debuggable = device.getProperty("ro.debuggable").trim();

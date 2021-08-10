@@ -15,7 +15,7 @@
  */
 
 package android.security.cts;
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -27,8 +27,8 @@ public class CVE_2017_0684 extends SecurityTestCase {
      * b/35421151
      * Vulnerability Behaviour: SIGSEGV in media.codec
      */
-    @SecurityTest(minPatchLevel = "2017-07")
     @Test
+    @AsbSecurityTest(cveBugId = 35421151)
     public void testPocCVE_2017_0684() throws Exception {
         pocPusher.only32();
         String errPattern[] = {"media\\.codec", "omx@\\d+?\\.\\d+?-service"};
