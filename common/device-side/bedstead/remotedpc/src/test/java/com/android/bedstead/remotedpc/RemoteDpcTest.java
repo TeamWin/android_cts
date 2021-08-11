@@ -45,7 +45,6 @@ import org.junit.runner.RunWith;
 
 @RunWith(BedsteadJUnit4.class)
 public class RemoteDpcTest {
-    // TODO(scottjonathan): Add annotations to ensure that there is no DO/PO on appropriate methods
     //  TODO(180478924): We shouldn't need to hardcode this
     private static final String DEVICE_ADMIN_TESTAPP_PACKAGE_NAME =
             "com.android.bedstead.testapp.DeviceAdminTestApp";
@@ -710,7 +709,8 @@ public class RemoteDpcTest {
 
         try {
             // Checking that the call succeeds
-            remoteDPC.devicePolicyManager().getCurrentFailedPasswordAttempts();
+            remoteDPC.devicePolicyManager()
+                    .getCurrentFailedPasswordAttempts();
         } finally {
             remoteDPC.remove();
         }
@@ -726,7 +726,7 @@ public class RemoteDpcTest {
             RemoteDpc remoteDPC = RemoteDpc.setAsProfileOwner(profile);
 
             // Checking that the call succeeds
-            remoteDPC.devicePolicyManager().isUsingUnifiedPassword();
+            remoteDPC.devicePolicyManager().isUsingUnifiedPassword(remoteDPC.componentName());
         }
     }
 
@@ -736,7 +736,8 @@ public class RemoteDpcTest {
 
         try {
             assertThrows(SecurityException.class,
-                    () -> remoteDPC.devicePolicyManager().isUsingUnifiedPassword());
+                    () -> remoteDPC.devicePolicyManager()
+                            .isUsingUnifiedPassword(remoteDPC.componentName()));
         } finally {
             remoteDPC.remove();
         }

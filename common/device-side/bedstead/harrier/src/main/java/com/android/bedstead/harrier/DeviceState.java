@@ -22,7 +22,6 @@ import static com.android.bedstead.nene.permissions.Permissions.NOTIFY_PENDING_S
 import static com.android.bedstead.nene.users.UserType.MANAGED_PROFILE_TYPE_NAME;
 import static com.android.bedstead.nene.users.UserType.SECONDARY_USER_TYPE_NAME;
 import static com.android.bedstead.nene.utils.Versions.meetsSdkVersionRequirements;
-import static com.android.bedstead.remotedpc.Configuration.REMOTE_DPC_COMPONENT_NAME;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
@@ -30,6 +29,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
@@ -121,6 +121,7 @@ import java.util.function.Function;
 public final class DeviceState implements TestRule {
 
     private static final String GMS_PKG = "com.google.android.gms";
+    private static final ComponentName REMOTE_DPC_COMPONENT_NAME = RemoteDpc.DPC_COMPONENT_NAME;
 
     private final Context mContext = ApplicationProvider.getApplicationContext();
     private static final TestApis sTestApis = new TestApis();
@@ -1299,8 +1300,9 @@ public final class DeviceState implements TestRule {
             mPrimaryDpc = mDeviceOwner;
         }
         
-        RemoteDpc.forDevicePolicyController(mDeviceOwner).devicePolicyManager()
-                .setAffiliationIds(affiliationIds);
+        RemoteDpc.forDevicePolicyController(mDeviceOwner)
+                .devicePolicyManager()
+                .setAffiliationIds(REMOTE_DPC_COMPONENT_NAME, affiliationIds);
     }
 
     private void ensureHasProfileOwner(UserType onUser, boolean isPrimary, Set<String> affiliationIds) {
@@ -1347,7 +1349,7 @@ public final class DeviceState implements TestRule {
         if (affiliationIds != null) {
             RemoteDpc profileOwner = profileOwner(user);
             profileOwner.devicePolicyManager()
-                    .setAffiliationIds(affiliationIds);
+                    .setAffiliationIds(REMOTE_DPC_COMPONENT_NAME, affiliationIds);
         }
     }
 
