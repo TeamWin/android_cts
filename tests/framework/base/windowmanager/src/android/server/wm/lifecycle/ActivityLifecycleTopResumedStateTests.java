@@ -16,6 +16,7 @@
 
 package android.server.wm.lifecycle;
 
+import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
 import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP;
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
@@ -715,8 +716,11 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             lockScreenSession.setLockCredential().gotoKeyguard();
 
-            showWhenLockedActivity =
-                    launchActivityAndWait(ShowWhenLockedCallbackTrackingActivity.class);
+            ActivityOptions options = ActivityOptions.makeBasic();
+            options.setLaunchWindowingMode(WINDOWING_MODE_FULLSCREEN);
+            showWhenLockedActivity = new Launcher(ShowWhenLockedCallbackTrackingActivity.class)
+                                .setOptions(options)
+                                .launch();
 
             // TODO(b/123432490): Fix extra pause/resume
             LifecycleVerifier.assertSequence(ShowWhenLockedCallbackTrackingActivity.class,
