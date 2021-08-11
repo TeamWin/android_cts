@@ -196,7 +196,6 @@ public class CommandReceiverActivity extends Activity {
             // user mode it runs in a different user.
             // Most DPM operations must be set on device owner user, but a few - like adding user
             // restrictions - must be set in the current user.
-
             boolean useCurrentUserDpm = intent.getBooleanExtra(EXTRA_USE_CURRENT_USER_DPM, false);
             mDpm = useCurrentUserDpm
                     ? getSystemService(DevicePolicyManager.class)
@@ -205,14 +204,15 @@ public class CommandReceiverActivity extends Activity {
 
             mUm = (UserManager) getSystemService(Context.USER_SERVICE);
             mAdmin = DeviceAdminTestReceiver.getReceiverComponentName();
-            final String command = getIntent().getStringExtra(EXTRA_COMMAND);
+            final String command = intent.getStringExtra(EXTRA_COMMAND);
             Log.i(TAG, "Command: " + command);
             switch (command) {
                 case COMMAND_SET_USER_RESTRICTION: {
                     String restrictionKey = intent.getStringExtra(EXTRA_USER_RESTRICTION);
                     boolean enforced = intent.getBooleanExtra(EXTRA_ENFORCED, false);
-                    Log.i(TAG, "Setting '" + restrictionKey + "'=" + enforced + " using " + mDpm
-                            + " on user " + UserHandle.myUserId());
+                    Log.i(TAG, "Setting '" + restrictionKey + "'=" + enforced
+                            + " using " + mDpm + " on user "
+                            + (useCurrentUserDpm ? UserHandle.myUserId() : UserHandle.SYSTEM));
                     if (enforced) {
                         mDpm.addUserRestriction(mAdmin, restrictionKey);
                     } else {
