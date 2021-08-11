@@ -63,6 +63,9 @@ import android.util.Log;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.SystemUtil;
+
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -108,9 +111,21 @@ public class PackageManagerTest {
 
     private static final String SHIM_APEX_PACKAGE_NAME = "com.android.apex.cts.shim";
 
+    private static final String SAMPLE_APK_BASE = "/data/local/tmp/cts/content/";
+    private static final String LONG_LABEL_NAME_APK = SAMPLE_APK_BASE
+            + "CtsContentLongLabelNameTestApp.apk";
+    private static final String EMPTY_APP_PACKAGE_NAME = "android.content.cts.emptytestapp";
+
+    private static final int MAX_SAFE_LABEL_LENGTH = 1000;
+
     @Before
     public void setup() throws Exception {
         mPackageManager = InstrumentationRegistry.getContext().getPackageManager();
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        uninstallPackage(EMPTY_APP_PACKAGE_NAME);
     }
 
     @Test
@@ -1010,5 +1025,42 @@ public class PackageManagerTest {
                 packageInfo.signingInfo.getSigningCertificateHistory();
         assertThat(packageInfo.signatures)
                 .asList().containsExactly((Object[]) pastSigningCertificates);
+    }
+
+    private boolean installPackage(String apkPath) {
+        return SystemUtil.runShellCommand("pm install -t " + apkPath).equals("Success\n");
+    }
+
+    private void uninstallPackage(String packageName) {
+        SystemUtil.runShellCommand("pm uninstall " + packageName);
+    }
+
+    @Test
+    public void loadApplicationLabel_withLongLabelName_truncated() throws Exception {
+        assertThat(installPackage(LONG_LABEL_NAME_APK)).isTrue();
+        final ApplicationInfo info = mPackageManager.getApplicationInfo(
+                EMPTY_APP_PACKAGE_NAME, 0 /* flags */);
+        final CharSequence resLabel = mPackageManager.getText(
+                EMPTY_APP_PACKAGE_NAME, info.labelRes, info);
+
+        assertThat(resLabel.length()).isGreaterThan(MAX_SAFE_LABEL_LENGTH);
+        assertThat(info.loadLabel(mPackageManager).length()).isEqualTo(MAX_SAFE_LABEL_LENGTH);
+    }
+
+    @Test
+    public void loadComponentLabel_withLongLabelName_truncated() throws Exception {
+        assertThat(installPackage(LONG_LABEL_NAME_APK)).isTrue();
+        final ComponentName componentName = ComponentName.createRelative(
+                EMPTY_APP_PACKAGE_NAME, ".MockActivity");
+        final ApplicationInfo appInfo = mPackageManager.getApplicationInfo(
+                EMPTY_APP_PACKAGE_NAME, 0 /* flags */);
+        final ActivityInfo activityInfo = mPackageManager.getActivityInfo(
+                componentName, 0 /* flags */);
+        final CharSequence resLabel = mPackageManager.getText(
+                EMPTY_APP_PACKAGE_NAME, activityInfo.labelRes, appInfo);
+
+        assertThat(resLabel.length()).isGreaterThan(MAX_SAFE_LABEL_LENGTH);
+        assertThat(activityInfo.loadLabel(mPackageManager).length())
+                .isEqualTo(MAX_SAFE_LABEL_LENGTH);
     }
 }
