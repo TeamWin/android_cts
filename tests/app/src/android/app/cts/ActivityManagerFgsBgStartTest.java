@@ -19,6 +19,8 @@ package android.app.cts;
 import static android.app.ActivityManager.PROCESS_CAPABILITY_ALL;
 import static android.app.ActivityManager.PROCESS_CAPABILITY_NONE;
 
+import android.accessibilityservice.AccessibilityService;
+import android.app.ActivityManager;
 import android.app.Instrumentation;
 import android.app.cts.android.app.cts.tools.WaitForBroadcast;
 import android.app.cts.android.app.cts.tools.WatchUidRunner;
@@ -29,6 +31,8 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.ServiceInfo;
 import android.os.Bundle;
 import android.test.InstrumentationTestCase;
+
+import com.android.compatibility.common.util.SystemUtil;
 
 public class ActivityManagerFgsBgStartTest extends InstrumentationTestCase {
     private static final String TAG = ActivityManagerFgsBgStartTest.class.getName();
@@ -44,6 +48,10 @@ public class ActivityManagerFgsBgStartTest extends InstrumentationTestCase {
 
     private static final int WAITFOR_MSEC = 10000;
 
+    private static final String[] PACKAGE_NAMES = {
+            PACKAGE_NAME_APP1, PACKAGE_NAME_APP2, PACKAGE_NAME_APP3
+    };
+
     private Context mContext;
     private Instrumentation mInstrumentation;
 
@@ -55,6 +63,7 @@ public class ActivityManagerFgsBgStartTest extends InstrumentationTestCase {
         CtsAppTestUtils.makeUidIdle(mInstrumentation, PACKAGE_NAME_APP1);
         CtsAppTestUtils.makeUidIdle(mInstrumentation, PACKAGE_NAME_APP2);
         CtsAppTestUtils.turnScreenOn(mInstrumentation, mContext);
+        cleanupResiduals();
     }
 
     @Override
@@ -62,6 +71,21 @@ public class ActivityManagerFgsBgStartTest extends InstrumentationTestCase {
         super.tearDown();
         CtsAppTestUtils.makeUidIdle(mInstrumentation, PACKAGE_NAME_APP1);
         CtsAppTestUtils.makeUidIdle(mInstrumentation, PACKAGE_NAME_APP2);
+        cleanupResiduals();
+    }
+
+    private void cleanupResiduals() {
+        // Stop all the packages to avoid residual impact
+        final ActivityManager am = mContext.getSystemService(ActivityManager.class);
+        for (int i = 0; i < PACKAGE_NAMES.length; i++) {
+            final String pkgName = PACKAGE_NAMES[i];
+            SystemUtil.runWithShellPermissionIdentity(() -> {
+                am.forceStopPackage(pkgName);
+            });
+        }
+        // Make sure we are in Home screen
+        mInstrumentation.getUiAutomation().performGlobalAction(
+                AccessibilityService.GLOBAL_ACTION_HOME);
     }
 
     /**
