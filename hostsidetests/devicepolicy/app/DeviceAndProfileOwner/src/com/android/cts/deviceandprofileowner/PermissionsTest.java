@@ -37,6 +37,7 @@ import android.app.admin.DevicePolicyManager;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Process;
+import android.os.UserHandle;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.BySelector;
 import android.support.test.uiautomator.UiDevice;
@@ -266,13 +267,27 @@ public class PermissionsTest extends BaseDeviceAdminTest {
 
     public void testPermissionGrantStateGranted_userNotifiedOfLocationPermission()
             throws Exception {
+        Log.v(TAG, "testPermissionGrantStateGranted_userNotifiedOfLocationPermission() on user "
+                + UserHandle.myUserId());
+
+        // Needs to use the DPM of current user on headless system user, as device owner runs in the
+        // background and cannot receive notifications
+
+        DevicePolicyManager dpm = mContext.getSystemService(DevicePolicyManager.class);
+
+        assertWithMessage("%s.canAdminGrantSensorsPermissions()", dpm)
+                .that(dpm.canAdminGrantSensorsPermissions()).isTrue();
+
         for (String locationPermission : LOCATION_PERMISSIONS) {
+            Log.d(TAG, "Checking permission " + locationPermission);
+
             // TODO(b/161359841): move NotificationListener to app/common
             CountDownLatch notificationLatch = initPermissionNotificationLatch();
 
-            setPermissionGrantState(locationPermission, PERMISSION_GRANT_STATE_GRANTED);
+            setPermissionGrantState(dpm, locationPermission, PERMISSION_GRANT_STATE_GRANTED);
+            assertPermissionGrantState(dpm, locationPermission, PERMISSION_GRANT_STATE_GRANTED);
 
-            assertPermissionGrantState(locationPermission, PERMISSION_GRANT_STATE_GRANTED);
+            Log.d(TAG, "waiting 60s for notification");
             assertTrue(String.format("Did not receive notification for permission %s",
                     locationPermission), notificationLatch.await(60, TimeUnit.SECONDS));
             NotificationListener.getInstance().clearListeners();
@@ -557,8 +572,10 @@ public class PermissionsTest extends BaseDeviceAdminTest {
     }
 
     private CountDownLatch initPermissionNotificationLatch() {
+        Log.v(TAG, "initPermissionNotificationLatch()");
         CountDownLatch notificationCounterLatch = new CountDownLatch(1);
         NotificationListener.getInstance().addListener((notification) -> {
+            Log.d(TAG, "received notification: " + notification);
             if (notification.getPackageName().equals(
                     mContext.getPackageManager().getPermissionControllerPackageName()) &&
                     notification.getNotification().getChannelId().equals(
@@ -574,7 +591,12 @@ public class PermissionsTest extends BaseDeviceAdminTest {
     }
 
     private boolean setPermissionGrantState(String permission, int grantState) {
-        boolean result = mDevicePolicyManager.setPermissionGrantState(ADMIN_RECEIVER_COMPONENT,
+        return setPermissionGrantState(mDevicePolicyManager, permission, grantState);
+    }
+
+    private boolean setPermissionGrantState(DevicePolicyManager dpm, String permission,
+            int grantState) {
+        boolean result = dpm.setPermissionGrantState(ADMIN_RECEIVER_COMPONENT,
                 PERMISSION_APP_PACKAGE_NAME, permission, grantState);
         Log.d(TAG, "setPermissionGrantState(" + permission + "): requested " + grantState + " ("
                 + permissionGrantStateToString(grantState) + ") using DPM " + mDevicePolicyManager
@@ -591,7 +613,12 @@ public class PermissionsTest extends BaseDeviceAdminTest {
     }
 
     private void assertPermissionGrantState(String permission, int expectedState) {
-        int actualState = mDevicePolicyManager.getPermissionGrantState(ADMIN_RECEIVER_COMPONENT,
+        assertPermissionGrantState(mDevicePolicyManager, permission, expectedState);
+    }
+
+    private void assertPermissionGrantState(DevicePolicyManager dpm, String permission,
+            int expectedState) {
+        int actualState = dpm.getPermissionGrantState(ADMIN_RECEIVER_COMPONENT,
                 PERMISSION_APP_PACKAGE_NAME, permission);
 
         assertWithMessage("%s.getPermissionGrantState(%s, %s, %s) (where %s=%s and %s=%s)",
