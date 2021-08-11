@@ -195,19 +195,26 @@ public class CodecState {
         return mSawInputEOS && mSawOutputEOS;
     }
 
-    /**
-     * doSomeWork() is the worker function that does all buffer handling and decoding works.
-     * It first reads data from {@link MediaExtractor} and pushes it into {@link MediaCodec};
-     * it then dequeues buffer from {@link MediaCodec}, consumes it and pushes back to its own
-     * buffer queue for next round reading data from {@link MediaExtractor}.
-     *
-     * Returns the timestamp of the queued frame, if any.
-     */
+    /** @see #doSomeWork(Boolean) */
     public Long doSomeWork() {
+        return doSomeWork(false /* mustWait */);
+    }
+
+    /**
+     * {@code doSomeWork} is the worker function that does all buffer handling and decoding works.
+     * It first reads data from {@link MediaExtractor} and pushes it into {@link MediaCodec}; it
+     * then dequeues buffer from {@link MediaCodec}, consumes it and pushes back to its own buffer
+     * queue for next round reading data from {@link MediaExtractor}.
+     *
+     * @param boolean  Whether to block on input buffer retrieval
+     *
+     * @return timestamp of the queued frame, if any.
+     */
+    public Long doSomeWork(boolean mustWait) {
         // Extract input data, if relevant
         Long sampleTime = null;
         if (mAvailableInputBufferIndex == -1) {
-            int indexInput = mCodec.dequeueInputBuffer(0 /* timeoutUs */);
+            int indexInput = mCodec.dequeueInputBuffer(mustWait ? -1 : 0 /* timeoutUs */);
             if (indexInput != MediaCodec.INFO_TRY_AGAIN_LATER) {
                 mAvailableInputBufferIndex = indexInput;
             }
