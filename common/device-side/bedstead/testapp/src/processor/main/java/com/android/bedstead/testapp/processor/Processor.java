@@ -229,7 +229,7 @@ public final class Processor extends AbstractProcessor {
             }
 
             methodBuilder.beginControlFlow("try")
-                    .addStatement("mConnector.connect()");
+                    .addStatement("tryConnect(mConnector)");
 
             if (method.getReturnType().getKind().equals(TypeKind.VOID)) {
                 methodBuilder.addStatement(
@@ -254,6 +254,30 @@ public final class Processor extends AbstractProcessor {
 
             classBuilder.addMethod(methodBuilder.build());
         }
+
+        classBuilder.addMethod(
+                MethodSpec.methodBuilder("tryConnect")
+                        .addModifiers(Modifier.PRIVATE)
+                        .addParameter(CROSS_PROFILE_CONNECTOR_CLASSNAME, "connector")
+                        .addException(UNAVAILABLE_PROFILE_EXCEPTION_CLASSNAME)
+                        .addStatement("int retries = 300") // 30 seconds of retries
+                        .beginControlFlow("while (true)")
+                        .beginControlFlow("try")
+                        .addStatement("connector.connect()")
+                        .addStatement("return")
+                        .nextControlFlow("catch ($T e)", UNAVAILABLE_PROFILE_EXCEPTION_CLASSNAME)
+                        .beginControlFlow("if (retries-- <= 0)")
+                        .addStatement("throw e")
+                        .endControlFlow()
+                        .beginControlFlow("try")
+                        .addStatement("$T.sleep(100)", Thread.class)
+                        .nextControlFlow("catch ($T e2)", InterruptedException.class)
+                        .addStatement("throw e")
+                        .endControlFlow()
+                        .endControlFlow()
+                        .endControlFlow()
+                        .build()
+        );
 
         writeClassToFile(originalClassName.packageName(), classBuilder.build());
     }
@@ -351,7 +375,7 @@ public final class Processor extends AbstractProcessor {
             }
 
             methodBuilder.beginControlFlow("try")
-                    .addStatement("mConnector.connect()");
+                    .addStatement("tryConnect(mConnector)");
 
             if (method.getReturnType().getKind().equals(TypeKind.VOID)) {
                 methodBuilder.addStatement(
@@ -376,6 +400,30 @@ public final class Processor extends AbstractProcessor {
 
             classBuilder.addMethod(methodBuilder.build());
         }
+
+        classBuilder.addMethod(
+                MethodSpec.methodBuilder("tryConnect")
+                        .addModifiers(Modifier.PRIVATE)
+                        .addParameter(CROSS_PROFILE_CONNECTOR_CLASSNAME, "connector")
+                        .addException(UNAVAILABLE_PROFILE_EXCEPTION_CLASSNAME)
+                        .addStatement("int retries = 300") // 30 seconds of retries
+                        .beginControlFlow("while (true)")
+                        .beginControlFlow("try")
+                        .addStatement("connector.connect()")
+                        .addStatement("return")
+                        .nextControlFlow("catch ($T e)", UNAVAILABLE_PROFILE_EXCEPTION_CLASSNAME)
+                        .beginControlFlow("if (retries-- <= 0)")
+                        .addStatement("throw e")
+                        .endControlFlow()
+                        .beginControlFlow("try")
+                        .addStatement("$T.sleep(100)", Thread.class)
+                        .nextControlFlow("catch ($T e2)", InterruptedException.class)
+                        .addStatement("throw e")
+                        .endControlFlow()
+                        .endControlFlow()
+                        .endControlFlow()
+                        .build()
+        );
 
         writeClassToFile(PACKAGE_NAME, classBuilder.build());
     }
