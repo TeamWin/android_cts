@@ -25,7 +25,9 @@ import static org.junit.Assert.fail;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.telephony.AccessNetworkConstants;
 import android.telephony.CellInfo;
+import android.telephony.NetworkRegistrationInfo;
 import android.telephony.ServiceState;
 import android.telephony.TelephonyManager;
 import android.util.Log;
@@ -55,8 +57,13 @@ public class CellInfoTest {
                 mTm, TelephonyManager::getServiceState);
 
         if (ss == null) return false;
-        return (ss.getState() == ServiceState.STATE_IN_SERVICE
-                || ss.getState() == ServiceState.STATE_EMERGENCY_ONLY);
+        if (ss.getState() == ServiceState.STATE_EMERGENCY_ONLY) return true;
+        List<NetworkRegistrationInfo> nris = ss.getNetworkRegistrationInfoList();
+        for (NetworkRegistrationInfo nri : nris) {
+            if (nri.getTransportType() != AccessNetworkConstants.TRANSPORT_TYPE_WWAN) continue;
+            if (nri.isRegistered()) return true;
+        }
+        return false;
     }
 
     @Before
