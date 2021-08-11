@@ -60,6 +60,10 @@ abstract class BasePermissionTest {
     private val mPermissionControllerResources: Resources = context.createPackageContext(
             context.packageManager.permissionControllerPackageName, 0).resources
 
+    protected val isTv = packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
+    protected val isWatch = packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)
+    protected val isAutomotive = packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
+
     @get:Rule
     val disableAnimationRule = DisableAnimationRule()
 

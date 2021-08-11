@@ -21,7 +21,6 @@ import android.content.Intent
 import android.os.Build
 import android.support.test.uiautomator.By
 import androidx.test.filters.SdkSuppress
-import com.android.compatibility.common.util.SystemUtil
 import org.junit.After
 import org.junit.Before
 import org.junit.Ignore
@@ -38,7 +37,7 @@ private const val SHOW_SYSTEM = "Show system"
 private const val MORE_OPTIONS = "More options"
 
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
-class PermissionHistoryTest : BasePermissionTest() {
+class PermissionHistoryTest : BasePermissionHubTest() {
     private val micLabel = packageManager.getPermissionGroupInfo(
             Manifest.permission_group.MICROPHONE, 0).loadLabel(packageManager).toString()
 
@@ -106,15 +105,6 @@ class PermissionHistoryTest : BasePermissionTest() {
         context.startActivity(Intent(intentAction).apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         })
-    }
-
-    private fun openMicrophoneTimeline() {
-        SystemUtil.runWithShellPermissionIdentity {
-            context.startActivity(Intent(Intent.ACTION_REVIEW_PERMISSION_HISTORY).apply {
-                putExtra(Intent.EXTRA_PERMISSION_GROUP_NAME, Manifest.permission_group.MICROPHONE)
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            })
-        }
     }
 
     companion object {
