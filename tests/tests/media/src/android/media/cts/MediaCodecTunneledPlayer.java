@@ -581,13 +581,13 @@ public class MediaCodecTunneledPlayer implements MediaTimeProvider {
     public Long queueOneVideoFrame() {
         Log.d(TAG, "queueOneVideoFrame");
 
-        if (mVideoCodecStates == null || !(mState == STATE_IDLE || mState == STATE_PAUSED)) {
+        if (mVideoCodecStates == null || !(mState == STATE_PLAYING || mState == STATE_PAUSED)) {
             return null;
         }
 
         Long result = null;
         for (CodecState state : mVideoCodecStates.values()) {
-            Long timestamp = state.doSomeWork();
+            Long timestamp = state.doSomeWork(true /* mustWait */);
             if (timestamp != null) {
                 result = timestamp;
             }
