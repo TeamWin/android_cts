@@ -58,6 +58,7 @@ import static org.junit.Assert.assertNotEquals;
 
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.keystore.cts.util.TestUtils;
 import android.os.Build;
 import android.os.SystemProperties;
 import android.platform.test.annotations.RestrictedBuildTest;

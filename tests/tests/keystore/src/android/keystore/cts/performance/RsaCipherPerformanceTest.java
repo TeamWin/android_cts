@@ -14,8 +14,10 @@
  * limitations under the License
  */
 
-package android.keystore.cts;
+package android.keystore.cts.performance;
 
+import android.keystore.cts.util.EmptyArray;
+import android.keystore.cts.util.TestUtils;
 import android.security.keystore.KeyProperties;
 
 import org.junit.Test;
