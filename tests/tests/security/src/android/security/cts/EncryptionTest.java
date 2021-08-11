@@ -19,14 +19,12 @@ package android.security.cts;
 import com.android.compatibility.common.util.PropertyUtil;
 
 import android.platform.test.annotations.AppModeFull;
-import android.platform.test.annotations.SecurityTest;
 import android.test.AndroidTestCase;
 import junit.framework.TestCase;
 
 import android.os.Build;
 import android.util.Log;
 
-@SecurityTest
 public class EncryptionTest extends AndroidTestCase {
     static {
         System.loadLibrary("ctssecurity_jni");

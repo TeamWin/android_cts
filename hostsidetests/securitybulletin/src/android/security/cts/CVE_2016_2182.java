@@ -15,7 +15,7 @@
  */
 
 package android.security.cts;
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -29,8 +29,8 @@ public class CVE_2016_2182 extends SecurityTestCase {
      * b/32096880
      * Vulnerability Behaviour: SIGSEGV in self
      */
-    @SecurityTest(minPatchLevel = "2017-03")
     @Test
+    @AsbSecurityTest(cveBugId = 32096880)
     public void testPocCVE_2016_2182() throws Exception {
         assumeFalse(moduleIsPlayManaged("com.google.android.conscrypt"));
         String binaryName = "CVE-2016-2182";

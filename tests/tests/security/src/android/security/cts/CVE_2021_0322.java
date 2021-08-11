@@ -30,7 +30,7 @@ import androidx.test.runner.AndroidJUnit4;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 
 @RunWith(AndroidJUnit4.class)
 public class CVE_2021_0322 {
@@ -44,8 +44,8 @@ public class CVE_2021_0322 {
     /**
      * b/159145361
      */
-    @SecurityTest(minPatchLevel = "2021-01")
     @Test
+    @AsbSecurityTest(cveBugId = 159145361)
     public void testPocCVE_2021_0322() {
         CVE_2021_0322_SliceProvider serviceProvider = new CVE_2021_0322_SliceProvider();
         serviceProvider.attachInfo(mContext, new ProviderInfo());

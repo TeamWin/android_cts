@@ -18,7 +18,7 @@ package com.android.cts.devicepolicy;
 
 import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
 
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import android.stats.devicepolicy.EventId;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
@@ -772,7 +772,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
                 "testEnablingAndDisablingBackupService");
     }
 
-    @SecurityTest(minPatchLevel = "2021-04")
+    @AsbSecurityTest(cveBugId = 173421434)
     public void testDeviceOwnerCanGetDeviceIdentifiers() throws Exception {
         // The Device Owner should have access to all device identifiers.
         if (!mHasFeature) {
