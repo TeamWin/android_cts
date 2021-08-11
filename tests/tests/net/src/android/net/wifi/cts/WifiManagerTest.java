@@ -80,10 +80,10 @@ public class WifiManagerTest extends AndroidTestCase {
     private static final String SSID2 = "\"WifiManagerTestModified\"";
     private static final String PROXY_TEST_SSID = "SomeProxyAp";
     private static final String ADD_NETWORK_EXCEPTION_SUBSTR = "addNetwork";
-    // A full single scan duration is about 6-7 seconds if country code is set
-    // to US. If country code is set to world mode (00), we would expect a scan
-    // duration of roughly 8 seconds. So we set scan timeout as 9 seconds here.
-    private static final int SCAN_TIMEOUT_MSEC = 9000;
+    // A full single scan duration is typically about 6-7 seconds, but
+    // depending on devices it takes more time (9-11 seconds). For a
+    // safety margin, the test waits for 15 seconds.
+    private static final int SCAN_TIMEOUT_MSEC = 15_000;
     private static final int TIMEOUT_MSEC = 6000;
     private static final int WAIT_MSEC = 60;
     private static final int DURATION = 10000;
