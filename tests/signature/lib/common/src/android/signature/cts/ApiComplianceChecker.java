@@ -22,7 +22,9 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Formatter;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -46,6 +48,46 @@ public class ApiComplianceChecker extends ApiPresenceChecker {
         IGNORE_METHOD_ABSTRACT_MODIFIER_WHITE_LIST.add(
                 "public int android.service.euicc.EuiccService.onDownloadSubscription("
                         + "int,android.telephony.euicc.DownloadableSubscription,boolean,boolean)");
+    }
+
+    /**
+     * A set of field values signatures whose value modifier should be ignored.
+     *
+     * <p>If a field value is intended to be changed to correct its value, that change should be
+     * allowed. The field name is the key of the ignoring map, and a FieldValuePair which is a pair
+     * of the old value and the new value is the value of the ignoring map.
+     * WARNING: Entries should only be added after consulting API council.
+     */
+    private static class FieldValuePair {
+        private String oldValue;
+        private String newValue;
+
+        private FieldValuePair(String oldValue, String newValue) {
+            this.oldValue = oldValue;
+            this.newValue = newValue;
+        }
+    };
+    private static final Map<String, FieldValuePair> IGNORE_FIELD_VALUES_MODIFIER_ALLOWED_LIST =
+            new HashMap<String, FieldValuePair>();
+    static {
+        // This field value was previously wrong. As the CtsSystemApiSignatureTestCases package
+        // tests both the old and new specifications with both old and new values, this needs to be
+        // ignored.
+        IGNORE_FIELD_VALUES_MODIFIER_ALLOWED_LIST.put(
+                "android.media.tv.tuner.frontend.FrontendSettings#FEC_28_45(long)",
+                new FieldValuePair("-2147483648", "2147483648"));
+        IGNORE_FIELD_VALUES_MODIFIER_ALLOWED_LIST.put(
+                "android.media.tv.tuner.frontend.FrontendSettings#FEC_29_45(long)",
+                new FieldValuePair("1", "4294967296"));
+        IGNORE_FIELD_VALUES_MODIFIER_ALLOWED_LIST.put(
+                "android.media.tv.tuner.frontend.FrontendSettings#FEC_31_45(long)",
+                new FieldValuePair("2", "8589934592"));
+        IGNORE_FIELD_VALUES_MODIFIER_ALLOWED_LIST.put(
+                "android.media.tv.tuner.frontend.FrontendSettings#FEC_32_45(long)",
+                new FieldValuePair("4", "17179869184"));
+        IGNORE_FIELD_VALUES_MODIFIER_ALLOWED_LIST.put(
+                "android.media.tv.tuner.frontend.FrontendSettings#FEC_77_90(long)",
+                new FieldValuePair("8", "34359738368"));
     }
 
     /** Indicates that the class is an annotation. */
@@ -311,7 +353,7 @@ public class ApiComplianceChecker extends ApiPresenceChecker {
                             expectedFieldType, actualFieldType));
         }
 
-        String message = checkFieldValueCompliance(fieldDescription, field);
+        String message = checkFieldValueCompliance(classDescription, fieldDescription, field);
         if (message != null) {
             resultObserver.notifyFailure(FailureType.MISMATCH_FIELD,
                     fieldDescription.toReadableString(classDescription.getAbsoluteClassName()),
@@ -363,7 +405,8 @@ public class ApiComplianceChecker extends ApiPresenceChecker {
      * @param apiField The field as defined by the platform API.
      * @param deviceField The field as defined by the device under test.
      */
-    private static String checkFieldValueCompliance(JDiffField apiField, Field deviceField) {
+    private static String checkFieldValueCompliance(
+            JDiffClassDescription classDescription, JDiffField apiField, Field deviceField) {
         if ((apiField.mModifier & Modifier.FINAL) == 0 ||
                 (apiField.mModifier & Modifier.STATIC) == 0) {
             // Only final static fields can have fixed values.
@@ -383,6 +426,14 @@ public class ApiComplianceChecker extends ApiPresenceChecker {
 
         String deviceFieldValue = getFieldValueAsString(deviceField);
         if (!Objects.equals(apiFieldValue, deviceFieldValue)) {
+            String fieldName = apiField.toReadableString(classDescription.getAbsoluteClassName());
+            if (IGNORE_FIELD_VALUES_MODIFIER_ALLOWED_LIST.containsKey(fieldName)
+                    && IGNORE_FIELD_VALUES_MODIFIER_ALLOWED_LIST.get(fieldName).oldValue.equals(
+                            apiFieldValue)
+                    && IGNORE_FIELD_VALUES_MODIFIER_ALLOWED_LIST.get(fieldName).newValue.equals(
+                            deviceFieldValue)) {
+                return null;
+            }
             return String.format("Incorrect field value, expected <%s>, found <%s>",
                     apiFieldValue, deviceFieldValue);
 
