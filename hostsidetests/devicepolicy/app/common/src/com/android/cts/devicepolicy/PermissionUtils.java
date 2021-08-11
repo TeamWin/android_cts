@@ -39,6 +39,7 @@ import android.support.test.uiautomator.UiObject2;
 import android.support.test.uiautomator.Until;
 import android.util.Log;
 
+import androidx.test.core.app.ApplicationProvider;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import java.lang.reflect.Field;
@@ -48,10 +49,13 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 public class PermissionUtils {
     private static final String LOG_TAG = PermissionUtils.class.getSimpleName();
     private static final Set<String> LOCATION_PERMISSIONS = new HashSet<String>();
+
+    private static final Context sContext = ApplicationProvider.getApplicationContext();
 
     static {
         LOCATION_PERMISSIONS.add(Manifest.permission.ACCESS_FINE_LOCATION);
@@ -211,7 +215,37 @@ public class PermissionUtils {
             }
         }
 
-        assertWithMessage("Found button on packages %s", Arrays.toString(possiblePackages))
+        if (!sContext.getPackageManager()
+                .hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+            assertWithMessage("Found button on packages %s", Arrays.toString(possiblePackages))
+                    .that(foundButton).isTrue();
+            return;
+        }
+
+        // TODO: ideally the UI should use a more specific resource
+        Pattern resPattern = Pattern.compile(".*car_ui_list_item_title");
+        Log.i(LOG_TAG, "Button not found on automotive build; searching for " + resPattern
+                + " regex instead");
+        BySelector selector = By
+                .clazz(android.widget.TextView.class.getName())
+                .res(resPattern);
+        Log.v(LOG_TAG, "selector: " + selector);
+        mDevice.wait(Until.hasObject(selector), 5000);
+        UiObject2 button = mDevice.findObject(selector);
+        Log.d(LOG_TAG, "button: " + button);
+        if (button != null) {
+            String text = button.getText();
+            // TODO: ideally value of text should not be hardcoded, but they are defined by
+            // resources on PermissionController app (grant_dialog_button_allow and
+            // grant_dialog_button_allow_foreground)
+            if (text.equals("Allow") || text.equals("While using the app")) {
+                foundButton = true;
+                Log.d(LOG_TAG, "Clicking on '" + text + "'");
+                button.click();
+            }
+        }
+
+        assertWithMessage("Couldn't find any button with regex %s", resPattern)
                 .that(foundButton).isTrue();
     }
 
