@@ -22,6 +22,7 @@ android_test_helper_app {
     static_libs: [
         "androidx.test.rules",
         "androidx.test.ext.junit",
+        "androidx.test.uiautomator_uiautomator",
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
         "ub-uiautomator",

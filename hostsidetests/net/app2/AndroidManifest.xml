@@ -52,4 +52,11 @@
         </receiver>
     </application>
 
+    <!--
+      Adding this to make sure that receiving the broadcast is not restricted by
+      package visibility restrictions.
+    -->
+    <queries>
+        <package android:name="android" />
+    </queries>
 </manifest>
