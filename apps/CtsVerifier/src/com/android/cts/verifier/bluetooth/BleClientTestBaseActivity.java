@@ -102,8 +102,8 @@ public class BleClientTestBaseActivity extends PassFailButtons.Activity {
     }
 
     @Override
-    public void onResume() {
-        super.onResume();
+    public void onStart() {
+        super.onStart();
 
         IntentFilter filter = new IntentFilter();
         filter.addAction(BleClientService.BLE_BLUETOOTH_CONNECTED);
@@ -135,8 +135,13 @@ public class BleClientTestBaseActivity extends PassFailButtons.Activity {
     @Override
     public void onPause() {
         super.onPause();
-        unregisterReceiver(mBroadcast);
         closeDialog();
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        unregisterReceiver(mBroadcast);
     }
 
     private synchronized void closeDialog() {
