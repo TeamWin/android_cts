@@ -16,6 +16,6 @@
   -->
 
 <resources>
-    <dimen name="test_background_blur_radius">50dp</dimen>
-    <dimen name="test_blur_behind_radius">25dp</dimen>
+    <dimen name="test_background_blur_radius">80px</dimen>
+    <dimen name="test_blur_behind_radius">40px</dimen>
 </resources>

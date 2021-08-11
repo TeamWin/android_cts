@@ -2137,7 +2137,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             PollingCheck.check(
                     "SoftAp state and info on bridged AP mode are mismatch!!!"
                     + " shouldFallbackSingleApMode = " + shouldFallbackSingleApMode
-                    + ", isEnabled = "  + isEnabled, 5_000,
+                    + ", isEnabled = "  + isEnabled, 10_000,
                     () -> {
                         executor.runAll();
                         int expectedState = isEnabled ? WifiManager.WIFI_AP_STATE_ENABLED
@@ -2449,7 +2449,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
 
             // Verify state and info callback value as expected
             PollingCheck.check(
-                    "SoftAp channel and state mismatch!!!", 5_000,
+                    "SoftAp channel and state mismatch!!!", 10_000,
                     () -> {
                         executor.runAll();
                         int sapChannel = ScanResult.convertFrequencyMhzToChannelIfSupported(

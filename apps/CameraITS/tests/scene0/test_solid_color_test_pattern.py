@@ -26,7 +26,10 @@ import image_processing_utils
 import its_session_utils
 
 
-_CH_TOL = 1  # ~1/255 DN in YUV image
+_BW_CH_ATOL = 6  # DN in [0,255]
+_RGB_PRIMARY_MIN = 200
+_RGB_SECONDARY_MAX = 60
+_CH_VARIANCE_ATOL = 30
 _OFF = 0x00000000
 _SAT = 0xFFFFFFFF
 _NAME = os.path.basename(__file__).split('.')[0]
@@ -52,13 +55,14 @@ _BLUE = {'color': 'BLUE',
 _COLORS_CHECKED_RGB = (_BLACK, _WHITE, _RED, _GREEN, _BLUE)
 _COLORS_CHECKED_MONO = (_BLACK, _WHITE)
 _COLORS_CHECKED_UPGRADE = (_BLACK,)
-_COLORS_CHECKED_BLACK = (_WHITE,) # To make sure testPatternData is ignored
+_COLORS_CHECKED_BLACK = (_WHITE,)  # To make sure testPatternData is ignored
 _FULL_CHECK_FIRST_API_LEVEL = 31
 _SOLID_COLOR_TEST_PATTERN = 1
 _BLACK_TEST_PATTERN = 5
 
-_PATTERN_NAMES = { _SOLID_COLOR_TEST_PATTERN: 'SOLID_COLOR',
-                   _BLACK_TEST_PATTERN: 'BLACK' }
+_PATTERN_NAMES = {_SOLID_COLOR_TEST_PATTERN: 'SOLID_COLOR',
+                  _BLACK_TEST_PATTERN: 'BLACK'}
+
 
 def check_solid_color(img, exp_values, color):
   """Checks solid color test pattern image matches expected values.
@@ -71,22 +75,38 @@ def check_solid_color(img, exp_values, color):
     True if any of the checks fail.
   """
   test_fail = False
-  logging.debug('Checking solid test pattern w/ RGB values %s', str(exp_values))
+  logging.debug('Checking %s solid test pattern w/ RGB values %s',
+                color, str(exp_values))
   rgb_means = [m*255 for m in image_processing_utils.compute_image_means(img)]
   logging.debug('Captured frame averages: %s', str(rgb_means))
   rgb_vars = [v*255*255 for v in
               image_processing_utils.compute_image_variances(img)]
   logging.debug('Captured frame variances: %s', str(rgb_vars))
-  if not np.allclose(rgb_means, exp_values, atol=_CH_TOL):
-    logging.error('Image not expected value for color %s. '
-                  'RGB means: %s, expected: %s, '
-                  'ATOL: %d', color, str(rgb_means), str(exp_values), _CH_TOL)
-    test_fail = True
+  if color in ['BLACK', 'WHITE']:
+    if not np.allclose(rgb_means, exp_values, atol=_BW_CH_ATOL):
+      logging.error('Image not expected value for color %s. '
+                    'RGB means: %s, expected: %s, ATOL: %d',
+                    color, str(rgb_means), str(exp_values), _BW_CH_ATOL)
+      test_fail = True
+  else:
+    exp_values_mask = np.array(exp_values)//255
+    primary = max(rgb_means*exp_values_mask)
+    secondary = max((1-exp_values_mask)*rgb_means)
+    if primary < _RGB_PRIMARY_MIN:
+      logging.error('Primary color %s not bright enough.'
+                    'RGB means: %s, expected: %s, MIN: %d',
+                    color, str(rgb_means), str(exp_values), _RGB_PRIMARY_MIN)
+      test_fail = True
+    if secondary > _RGB_SECONDARY_MAX:
+      logging.error('Secondary colors too bright in %s. '
+                    'RGB means: %s, expected: %s, MAX: %d',
+                    color, str(rgb_means), str(exp_values), _RGB_SECONDARY_MAX)
+      test_fail = True
 
-  if not all(i < _CH_TOL for i in rgb_vars):
+  if not all(i < _CH_VARIANCE_ATOL for i in rgb_vars):
     logging.error('Image has too much variance for color %s. '
                   'RGB variances: %s, ATOL: %d',
-                  color, str(rgb_vars), _CH_TOL)
+                  color, str(rgb_vars), _CH_VARIANCE_ATOL)
     test_fail = True
 
   return test_fail
@@ -126,17 +146,18 @@ class SolidColorTestPattern(its_base_test.ItsBaseTest):
         colors_checked_solid = _COLORS_CHECKED_UPGRADE
 
       # Determine which patterns are available to test on the device
-      available_patterns = set(props['android.sensor.availableTestPatternModes'])
+      available_patterns = set(props[
+          'android.sensor.availableTestPatternModes'])
       patterns_to_check = available_patterns.intersection(
-          { _SOLID_COLOR_TEST_PATTERN, _BLACK_TEST_PATTERN } )
+          {_SOLID_COLOR_TEST_PATTERN, _BLACK_TEST_PATTERN})
 
       # Determine if test is run or skipped
       if cam.is_camera_privacy_mode_supported():
-        if len(patterns_to_check) == 0:
-          raise AssertionError(
-              'neither SOLID_COLOR or BLACK ar in android.sensor.availableTestPatternModes.')
+        if not patterns_to_check:
+          raise AssertionError('neither SOLID_COLOR or BLACK are '
+                               'in android.sensor.availableTestPatternModes.')
       else:
-        camera_properties_utils.skip_unless(len(patterns_to_check) > 0 )
+        camera_properties_utils.skip_unless(patterns_to_check)
 
       # Take extra frames if no per-frame control
       if camera_properties_utils.per_frame_control(props):
@@ -164,8 +185,8 @@ class SolidColorTestPattern(its_base_test.ItsBaseTest):
           fmt = {'format': 'yuv'}
           caps = cam.do_capture([req]*num_frames, fmt)
           cap = caps[-1]
-          logging.debug('Capture metadata RGGB pattern: %s, testPatternData: %s',
-                        captured_pattern,
+          logging.debug('Capture metadata RGGB pattern: %s, '
+                        'testPatternData: %s', captured_pattern,
                         str(cap['metadata']['android.sensor.testPatternData']))
           # Save test pattern image
           img = image_processing_utils.convert_capture_to_rgb_image(
@@ -173,21 +194,24 @@ class SolidColorTestPattern(its_base_test.ItsBaseTest):
           captured_color = color['color']
           image_processing_utils.write_image(
               img,
-              f'{os.path.join(self.log_path, _NAME)}_{captured_color}_{captured_pattern}.jpg')
+              f'{os.path.join(self.log_path, _NAME)}_{captured_color}_'
+              f'{captured_pattern}.jpg')
 
           # Check solid pattern for correctness
           if pattern == _SOLID_COLOR_TEST_PATTERN:
-            color_test_failed = check_solid_color(img, color['RGB'], captured_color)
+            color_test_failed = check_solid_color(img, color['RGB'],
+                                                  captured_color)
           else:
-            color_test_failed = check_solid_color(img, _BLACK['RGB'], _BLACK['color'])
+            color_test_failed = check_solid_color(img, _BLACK['RGB'],
+                                                  _BLACK['color'])
 
           if color_test_failed:
             colors_failed.append(f'{captured_pattern}/{captured_color}')
             if not test_failed:
               test_failed = True
 
-          logging.debug('Solid color test pattern for pattern %s color %s is a %s',
-                        captured_pattern, captured_color,
+          logging.debug('Solid color test pattern for pattern %s color %s '
+                        'is a %s', captured_pattern, captured_color,
                         ('FAIL' if color_test_failed else 'PASS'))
       if test_failed:
         raise AssertionError('Test solid_color_test_pattern failed for colors:'

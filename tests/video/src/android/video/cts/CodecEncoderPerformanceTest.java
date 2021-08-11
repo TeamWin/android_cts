@@ -58,7 +58,8 @@ public class CodecEncoderPerformanceTest extends CodecEncoderPerformanceTestBase
                 {"crowd_run_1280x720_30fps_avc.mp4", 4000000},
                 {"crowd_run_1920x1080_30fps_avc.mp4", 8000000},
                 {"crowd_run_3840x2160_30fps_hevc.mp4", 20000000},
-                {"crowd_run_7680x4320_30fps_hevc.mp4", 40000000},
+                // TODO (b/194721211) Enable 8k tests
+                //{"crowd_run_7680x4320_30fps_hevc.mp4", 40000000},
         });
         // Prepares the params list with the supported Hardware decoder, encoders in the device
         // combined with the key priority and scaling factor
@@ -111,8 +112,9 @@ public class CodecEncoderPerformanceTest extends CodecEncoderPerformanceTestBase
         String log = String.format("DecodeMime: %s, Decoder: %s, resolution: %dp, EncodeMime: %s," +
                 " Encoder: %s, Key-priority: %d :: ", mDecoderMime, mDecoderName, mHeight,
                 mEncoderMime, mEncoderName, mKeyPriority);
+        int maxExpectedFps = getMaxExpectedFps(mWidth, mHeight);
         double expectedFps =
-                Math.min(mOperatingRateExpected, MAX_EXPECTED_FPS) * FPS_TOLERANCE_FACTOR;
+                Math.min(mOperatingRateExpected * FPS_TOLERANCE_FACTOR, maxExpectedFps);
         Log.d(LOG_TAG, log + "act/exp fps: " + mAchievedFps + "/" + expectedFps);
         assertTrue("Unable to achieve the expected rate. " + log + "act/exp fps: " + mAchievedFps
                 + "/" + expectedFps, mAchievedFps >= expectedFps);

@@ -22,6 +22,7 @@ import android.media.MediaCodecList;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.os.Build;
+import android.os.SystemProperties;
 import android.util.Range;
 import android.view.Surface;
 
@@ -31,8 +32,10 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.junit.Before;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 class CodecPerformanceTestBase {
     private static final String LOG_TAG = CodecPerformanceTestBase.class.getSimpleName();
@@ -45,9 +48,8 @@ class CodecPerformanceTestBase {
     // allowed tolerance in measured fps vs expected fps, i.e. codecs achieving fps
     // that is greater than (FPS_TOLERANCE_FACTOR * expectedFps) will be considered as
     // passing the test
-    static final double FPS_TOLERANCE_FACTOR = 0.95;
-    // TODO (b/193458026) Limit max expected fps to 240
-    static final int MAX_EXPECTED_FPS = 240;
+    static final double FPS_TOLERANCE_FACTOR;
+    static final boolean IS_AT_LEAST_VNDK_S;
     static final String mInputPrefix = WorkDir.getMediaDirString();
 
     ArrayList<MediaCodec.BufferInfo> mBufferInfos;
@@ -74,8 +76,26 @@ class CodecPerformanceTestBase {
     Surface mSurface;
     double mOperatingRateExpected;
 
-    static final float[] SCALING_FACTORS_LIST = new float[]{2.0f, 1.25f, 1.0f, 0.75f, 0.0f, -1.0f};
+    static final float[] SCALING_FACTORS_LIST = new float[]{2.5f, 1.25f, 1.0f, 0.75f, 0.0f, -1.0f};
     static final int[] KEY_PRIORITIES_LIST = new int[]{1, 0};
+
+    static {
+        // os.Build.VERSION.DEVICE_INITIAL_SDK_INT can be used here, but it was called
+        // os.Build.VERSION.FIRST_SDK_INT in Android R and below. Using DEVICE_INITIAL_SDK_INT
+        // will mean that the tests built in Android S can't be run on Android R and below.
+        int deviceInitialSdk = SystemProperties.getInt("ro.product.first_api_level", 0);
+
+        // fps tolerance factor is kept quite low for devices launched on Android R and lower
+        FPS_TOLERANCE_FACTOR = deviceInitialSdk <= Build.VERSION_CODES.R ? 0.67 : 0.95;
+
+        IS_AT_LEAST_VNDK_S = SystemProperties.getInt("ro.vndk.version", 0) > Build.VERSION_CODES.R;
+    }
+
+    @Before
+    public void prologue() {
+        assumeTrue("For VNDK R and below, operating rate <= 0 isn't tested",
+                IS_AT_LEAST_VNDK_S || mMaxOpRateScalingFactor > 0.0);
+    }
 
     public CodecPerformanceTestBase(String decoderName, String testFile, int keyPriority,
             float maxOpRateScalingFactor) {
@@ -213,6 +233,18 @@ class CodecPerformanceTestBase {
         extractor.release();
         fail("No video track found in file: " + mTestFile);
         return null;
+    }
+
+    // TODO (b/193458026) Limit max expected fps
+    static int getMaxExpectedFps(int width, int height) {
+        int numSamples = width * height;
+        if (numSamples > 3840 * 2160 * 2) { // 8K
+            return 30;
+        } else if (numSamples > 1920 * 1088 * 2) { // 4K
+            return 120;
+        } else {
+            return 240;
+        }
     }
 
     int getMaxOperatingRate(String codecName, String mime) throws IOException {
