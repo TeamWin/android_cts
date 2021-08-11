@@ -1,4 +1,4 @@
-// Copyright (C) 2021 The Android Open Source Project
+// Copyright (C) 2008 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,17 +13,23 @@
 // limitations under the License.
 
 package {
+    // See: http://go/android-license-faq
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-android_test_helper_app {
-    name: "CVE-2021-0691",
-    defaults: ["cts_support_defaults"],
+android_test {
+    name: "CtsSustainedPerformanceTestCases",
+    // Include both the 32 and 64 bit versions
+    compile_multilib: "both",
+    jni_libs: ["libgltest"],
+    //LOCAL_SHARED_LIBRARIES := libc++
+    //LOCAL_STATIC_LIBRARIES := libc++_static
     srcs: ["src/**/*.java"],
+    sdk_version: "current",
+    min_sdk_version: "5",
+    // Tag this module as a cts test artifact
     test_suites: [
         "cts",
-        "vts10",
-        "sts",
+        "general-tests",
     ],
-    sdk_version: "current",
 }

@@ -18,6 +18,9 @@
      package="android.media.cts"
      android:targetSandboxVersion="2">
 
+    <uses-sdk android:minSdkVersion="31"
+         android:targetSdkVersion="31"/>
+
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
     <uses-permission android:name="android.permission.CAMERA"/>
@@ -170,9 +173,6 @@
              android:process=":mediaSessionTestService"/>
         <receiver android:name="android.media.cts.MediaButtonBroadcastReceiver"/>
     </application>
-
-    <uses-sdk android:minSdkVersion="29"
-         android:targetSdkVersion="29"/>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
          android:targetPackage="android.media.cts"
