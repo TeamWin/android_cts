@@ -30,6 +30,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     compatibility-common-util-devicesidelib \
     guava \
     platform-test-annotations \
+    sts-device-util \
     hamcrest-library \
 
 LOCAL_JAVA_LIBRARIES := \
