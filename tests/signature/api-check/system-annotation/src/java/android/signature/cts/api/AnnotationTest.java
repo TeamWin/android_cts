@@ -16,7 +16,6 @@
 
 package android.signature.cts.api;
 
-import android.os.Build;
 import android.os.Bundle;
 import android.signature.cts.AnnotationChecker;
 import android.signature.cts.ApiDocumentParser;
@@ -42,7 +41,7 @@ public class AnnotationTest extends AbstractApiTest {
 
     @Override
     protected void initializeFromArgs(Bundle instrumentationArgs) throws Exception {
-        mExpectedApiFiles = getCommaSeparatedList(instrumentationArgs, "expected-api-files");
+        mExpectedApiFiles = getCommaSeparatedListRequired(instrumentationArgs, "expected-api-files");
         mAnnotationForExactMatch = instrumentationArgs.getString("annotation-for-exact-match");
     }
 
