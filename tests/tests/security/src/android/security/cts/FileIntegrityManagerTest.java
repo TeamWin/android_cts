@@ -22,6 +22,7 @@ import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RestrictedBuildTest;
 import android.security.FileIntegrityManager;
@@ -59,10 +60,14 @@ public class FileIntegrityManagerTest {
     @Before
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
-        // Assumes every test in this file asserts a requirement of CDD section 9.
-        assumeTrue("Skipping test: FEATURE_SECURITY_MODEL_COMPATIBLE missing.",
-                mContext.getPackageManager()
-                .hasSystemFeature(PackageManager.FEATURE_SECURITY_MODEL_COMPATIBLE));
+        // This feature name check only applies to devices that first shipped with
+        // SC or later.
+        if (PropertyUtil.getFirstApiLevel() >= Build.VERSION_CODES.S) {
+            // Assumes every test in this file asserts a requirement of CDD section 9.
+            assumeTrue("Skipping test: FEATURE_SECURITY_MODEL_COMPATIBLE missing.",
+                    mContext.getPackageManager()
+                    .hasSystemFeature(PackageManager.FEATURE_SECURITY_MODEL_COMPATIBLE));
+        }
 
         mFileIntegrityManager = mContext.getSystemService(FileIntegrityManager.class);
         mCertFactory = CertificateFactory.getInstance("X.509");

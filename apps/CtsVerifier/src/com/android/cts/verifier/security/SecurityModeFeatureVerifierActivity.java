@@ -16,8 +16,12 @@
 
 package com.android.cts.verifier.security;
 
+import static android.os.Build.VERSION;
+import static android.os.Build.VERSION_CODES;
+
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.os.SystemProperties;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -30,7 +34,8 @@ import com.android.cts.verifier.R;
 
 /**
  * This test confirms that handheld and tablet devices correctly declare the
- * {@link PackageManager#FEATURE_SECURITY_MODEL_COMPATIBLE} feature.
+ * {@link PackageManager#FEATURE_SECURITY_MODEL_COMPATIBLE} feature. Only enforced
+ * on devices that launched with SC or later.
  */
 public class SecurityModeFeatureVerifierActivity extends PassFailButtons.Activity {
     private ImageView mHandheldOrTabletImage;
@@ -38,6 +43,7 @@ public class SecurityModeFeatureVerifierActivity extends PassFailButtons.Activit
     private Button mHandheldOrTabletOkButton;
     private Button mHandheldOrTabletNaButton;
     private boolean mFeatureAvailable;
+    private boolean mDeviceLaunchedBeforeS;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,6 +60,10 @@ public class SecurityModeFeatureVerifierActivity extends PassFailButtons.Activit
         mHandheldOrTabletOkButton = (Button) findViewById(R.id.handheld_or_tablet_yes);
         mHandheldOrTabletNaButton = (Button) findViewById(R.id.handheld_or_tablet_not_applicable);
 
+        final int firstApiLevel =
+                SystemProperties.getInt("ro.product.first_api_level", VERSION.SDK_INT);
+        mDeviceLaunchedBeforeS = firstApiLevel < VERSION_CODES.S;
+
         mFeatureAvailable = getPackageManager()
             .hasSystemFeature(PackageManager.FEATURE_SECURITY_MODEL_COMPATIBLE);
 
@@ -67,7 +77,7 @@ public class SecurityModeFeatureVerifierActivity extends PassFailButtons.Activit
         mHandheldOrTabletOkButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                setTestResultAndFinish(mFeatureAvailable);
+                setTestResultAndFinish(mFeatureAvailable || mDeviceLaunchedBeforeS);
             }
         });
     }

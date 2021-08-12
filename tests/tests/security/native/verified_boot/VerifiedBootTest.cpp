@@ -43,12 +43,6 @@ static int getFirstApiLevel() {
 // as current recommendations from NIST for hashing algorithms (SHA-256).
 // https://source.android.com/compatibility/11/android-11-cdd#9_10_device_integrity
 TEST(VerifiedBootTest, avbHashtreeNotUsingSha1) {
-  if(!deviceSupportsFeature("android.hardware.security.model.compatible")) {
-      GTEST_SKIP()
-          << "Skipping test: FEATURE_SECURITY_MODEL_COMPATIBLE missing.";
-    return;
-  }
-
   int first_api_level = getFirstApiLevel();
   GTEST_LOG_(INFO) << "First API level is " << first_api_level;
   if (first_api_level < S_API_LEVEL) {
@@ -57,6 +51,13 @@ TEST(VerifiedBootTest, avbHashtreeNotUsingSha1) {
     return;
   }
 
+  // This feature name check only applies to devices that first shipped with
+  // SC or later. The check above already screens out pre-S devices.
+  if(!deviceSupportsFeature("android.hardware.security.model.compatible")) {
+      GTEST_SKIP()
+          << "Skipping test: FEATURE_SECURITY_MODEL_COMPATIBLE missing.";
+    return;
+  }
   android::fs_mgr::Fstab fstab;
   ASSERT_TRUE(ReadDefaultFstab(&fstab)) << "Failed to read default fstab";
 
