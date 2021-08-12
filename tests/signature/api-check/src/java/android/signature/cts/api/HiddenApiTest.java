@@ -28,7 +28,6 @@ import android.signature.cts.VirtualPath;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.text.ParseException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -45,8 +44,8 @@ public class HiddenApiTest extends AbstractApiTest {
 
     @Override
     protected void initializeFromArgs(Bundle instrumentationArgs) {
-        hiddenapiFiles = getCommaSeparatedList(instrumentationArgs, "hiddenapi-files");
-        hiddenapiTestFlags = getCommaSeparatedList(instrumentationArgs, "hiddenapi-test-flags");
+        hiddenapiFiles = getCommaSeparatedListRequired(instrumentationArgs, "hiddenapi-files");
+        hiddenapiTestFlags = getCommaSeparatedListRequired(instrumentationArgs, "hiddenapi-test-flags");
         hiddenapiFilterFile = instrumentationArgs.getString("hiddenapi-filter-file");
         hiddenapiFilterSet = new HashSet<>();
     }

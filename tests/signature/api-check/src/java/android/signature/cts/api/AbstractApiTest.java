@@ -119,10 +119,18 @@ public class AbstractApiTest extends InstrumentationTestCase {
         mResultObserver.onTestComplete(); // Will throw is there are failures
     }
 
-    static String[] getCommaSeparatedList(Bundle instrumentationArgs, String key) {
+    static String[] getCommaSeparatedListOptional(Bundle instrumentationArgs, String key) {
         String argument = instrumentationArgs.getString(key);
         if (argument == null) {
             return new String[0];
+        }
+        return argument.split(",");
+    }
+
+    static String[] getCommaSeparatedListRequired(Bundle instrumentationArgs, String key) {
+        String argument = instrumentationArgs.getString(key);
+        if (argument == null) {
+            throw new IllegalStateException("Could not find required argument '" + key + "'");
         }
         return argument.split(",");
     }
