@@ -33,13 +33,11 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 @RunWith(Parameterized.class)
 public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
@@ -47,8 +45,9 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
 
     private final String mReconfigFile;
 
-    public CodecDecoderSurfaceTest(String mime, String testFile, String reconfigFile) {
-        super(mime, testFile);
+    public CodecDecoderSurfaceTest(String decoder, String mime, String testFile,
+            String reconfigFile) {
+        super(decoder, mime, testFile);
         mReconfigFile = reconfigFile;
     }
 
@@ -90,7 +89,7 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
     public ActivityTestRule<CodecTestActivity> mActivityRule =
             new ActivityTestRule<>(CodecTestActivity.class);
 
-    @Parameterized.Parameters(name = "{index}({0})")
+    @Parameterized.Parameters(name = "{index}({0}_{1})")
     public static Collection<Object[]> input() {
         final boolean isEncoder = false;
         final boolean needAudio = false;
@@ -141,10 +140,6 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testSimpleDecodeToSurface() throws IOException, InterruptedException {
-        ArrayList<String> listOfDecoders = selectCodecs(mMime, null, null, false);
-        if (listOfDecoders.isEmpty()) {
-            fail("no suitable codecs found for mime: " + mMime);
-        }
         boolean[] boolStates = {true, false};
         OutputManager ref;
         OutputManager test = new OutputManager();
@@ -152,8 +147,8 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
         final int mode = MediaExtractor.SEEK_TO_CLOSEST_SYNC;
         CodecTestActivity activity = mActivityRule.getActivity();
         setUpSurface(activity);
-        for (String decoder : listOfDecoders) {
-            decodeAndSavePts(mTestFile, decoder, pts, mode, Integer.MAX_VALUE);
+        {
+            decodeAndSavePts(mTestFile, mCodecName, pts, mode, Integer.MAX_VALUE);
             ref = mOutputBuff;
             // TODO: Timestamps for deinterlaced content are under review. (E.g. can decoders
             // produce multiple progressive frames?) For now, do not verify timestamps.
@@ -162,11 +157,11 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
                         ref.isOutPtsListIdenticalToInpPtsList(false));
             }
             MediaFormat format = setUpSource(mTestFile);
-            mCodec = MediaCodec.createByCodecName(decoder);
+            mCodec = MediaCodec.createByCodecName(mCodecName);
             activity.setScreenParams(getWidth(format), getHeight(format), true);
             for (boolean isAsync : boolStates) {
-                String log = String.format("codec: %s, file: %s, mode: %s:: ", decoder, mTestFile,
-                        (isAsync ? "async" : "sync"));
+                String log = String.format("codec: %s, file: %s, mode: %s:: ", mCodecName,
+                        mTestFile, (isAsync ? "async" : "sync"));
                 mOutputBuff = test;
                 mOutputBuff.reset();
                 mExtractor.seekTo(pts, mode);
@@ -205,10 +200,6 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
     public void testFlush() throws IOException, InterruptedException {
         MediaFormat format = setUpSource(mTestFile);
         mExtractor.release();
-        ArrayList<String> listOfDecoders = selectCodecs(mMime, null, null, false);
-        if (listOfDecoders.isEmpty()) {
-            fail("no suitable codecs found for mime: " + mMime);
-        }
         mCsdBuffers.clear();
         for (int i = 0; ; i++) {
             String csdKey = "csd-" + i;
@@ -222,8 +213,8 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
         OutputManager test = new OutputManager();
         CodecTestActivity activity = mActivityRule.getActivity();
         setUpSurface(activity);
-        for (String decoder : listOfDecoders) {
-            decodeAndSavePts(mTestFile, decoder, pts, mode, Integer.MAX_VALUE);
+        {
+            decodeAndSavePts(mTestFile, mCodecName, pts, mode, Integer.MAX_VALUE);
             OutputManager ref = mOutputBuff;
             // TODO: Timestamps for deinterlaced content are under review. (E.g. can decoders
             // produce multiple progressive frames?) For now, do not verify timestamps.
@@ -233,10 +224,10 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
             }
             mOutputBuff = test;
             setUpSource(mTestFile);
-            mCodec = MediaCodec.createByCodecName(decoder);
+            mCodec = MediaCodec.createByCodecName(mCodecName);
             activity.setScreenParams(getWidth(format), getHeight(format), false);
             for (boolean isAsync : boolStates) {
-                String log = String.format("decoder: %s, input file: %s, mode: %s:: ", decoder,
+                String log = String.format("decoder: %s, input file: %s, mode: %s:: ", mCodecName,
                         mTestFile, (isAsync ? "async" : "sync"));
                 mExtractor.seekTo(0, mode);
                 configureCodec(format, isAsync, true, false);
@@ -306,35 +297,33 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
         mExtractor.release();
         MediaFormat newFormat = setUpSource(mReconfigFile);
         mExtractor.release();
-        ArrayList<String> listOfDecoders = selectCodecs(mMime, null, null, false);
-        if (listOfDecoders.isEmpty()) {
-            fail("no suitable codecs found for mime: " + mMime);
-        }
         final long pts = 500000;
         final int mode = MediaExtractor.SEEK_TO_CLOSEST_SYNC;
         boolean[] boolStates = {true, false};
         OutputManager test = new OutputManager();
         CodecTestActivity activity = mActivityRule.getActivity();
         setUpSurface(activity);
-        for (String decoder : listOfDecoders) {
-            decodeAndSavePts(mTestFile, decoder, pts, mode, Integer.MAX_VALUE);
+        {
+            decodeAndSavePts(mTestFile, mCodecName, pts, mode, Integer.MAX_VALUE);
             OutputManager ref = mOutputBuff;
-            decodeAndSavePts(mReconfigFile, decoder, pts, mode, Integer.MAX_VALUE);
+            if (!mIsInterlaced) {
+                assertTrue("input pts list and reference pts list are not identical",
+                        ref.isOutPtsListIdenticalToInpPtsList(false));
+            }
+            decodeAndSavePts(mReconfigFile, mCodecName, pts, mode, Integer.MAX_VALUE);
             OutputManager configRef = mOutputBuff;
             // TODO: Timestamps for deinterlaced content are under review. (E.g. can decoders
             // produce multiple progressive frames?) For now, do not verify timestamps.
             if (!mIsInterlaced) {
-                assertTrue("input pts list and reference pts list are not identical",
-                        ref.isOutPtsListIdenticalToInpPtsList(false));
                 assertTrue("input pts list and reconfig ref output pts list are not identical",
                         configRef.isOutPtsListIdenticalToInpPtsList(false));
             }
             mOutputBuff = test;
-            mCodec = MediaCodec.createByCodecName(decoder);
+            mCodec = MediaCodec.createByCodecName(mCodecName);
             activity.setScreenParams(getWidth(format), getHeight(format), false);
             for (boolean isAsync : boolStates) {
                 setUpSource(mTestFile);
-                String log = String.format("decoder: %s, input file: %s, mode: %s:: ", decoder,
+                String log = String.format("decoder: %s, input file: %s, mode: %s:: ", mCodecName,
                         mTestFile, (isAsync ? "async" : "sync"));
                 mExtractor.seekTo(0, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
                 configureCodec(format, isAsync, true, false);
@@ -383,7 +372,7 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
 
                 /* test reconfigure codec for new file */
                 setUpSource(mReconfigFile);
-                log = String.format("decoder: %s, input file: %s, mode: %s:: ", decoder,
+                log = String.format("decoder: %s, input file: %s, mode: %s:: ", mCodecName,
                         mReconfigFile, (isAsync ? "async" : "sync"));
                 activity.setScreenParams(getWidth(newFormat), getHeight(newFormat), true);
                 reConfigureCodec(newFormat, isAsync, false, false);
@@ -413,17 +402,13 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testSimpleDecodeToSurfaceNative() throws IOException, InterruptedException {
-        ArrayList<String> listOfDecoders = selectCodecs(mMime, null, null, false);
-        if (listOfDecoders.isEmpty()) {
-            fail("no suitable codecs found for mime: " + mMime);
-        }
         MediaFormat format = setUpSource(mTestFile);
         mExtractor.release();
         CodecTestActivity activity = mActivityRule.getActivity();
         setUpSurface(activity);
         activity.setScreenParams(getWidth(format), getHeight(format), false);
-        for (String decoder : listOfDecoders) {
-            assertTrue(nativeTestSimpleDecode(decoder, mSurface, mMime, mInpPrefix + mTestFile,
+        {
+            assertTrue(nativeTestSimpleDecode(mCodecName, mSurface, mMime, mInpPrefix + mTestFile,
                     mInpPrefix + mReconfigFile, -1.0f, 0L));
         }
         tearDownSurface();
@@ -435,17 +420,13 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testFlushNative() throws IOException, InterruptedException {
-        ArrayList<String> listOfDecoders = selectCodecs(mMime, null, null, false);
-        if (listOfDecoders.isEmpty()) {
-            fail("no suitable codecs found for mime: " + mMime);
-        }
         MediaFormat format = setUpSource(mTestFile);
         mExtractor.release();
         CodecTestActivity activity = mActivityRule.getActivity();
         setUpSurface(activity);
         activity.setScreenParams(getWidth(format), getHeight(format), true);
-        for (String decoder : listOfDecoders) {
-            assertTrue(nativeTestFlush(decoder, mSurface, mMime, mInpPrefix + mTestFile));
+        {
+            assertTrue(nativeTestFlush(mCodecName, mSurface, mMime, mInpPrefix + mTestFile));
         }
         tearDownSurface();
     }

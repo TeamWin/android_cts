@@ -1000,24 +1000,14 @@ public class KeyAttestationTest extends AndroidTestCase {
             assertThat("Digests in software-enforced",
                     softwareEnforcedDigests, is(expectedDigests));
         } else {
-            switch (attestation.getKeymasterVersion()) {
-                case 1:
-                    // KM1 implementations may not support SHA512 in the TEE
-                    assertTrue(softwareEnforcedDigests.contains(KM_DIGEST_SHA_2_512)
-                            || teeEnforcedDigests.contains(KM_DIGEST_SHA_2_512));
+            if (attestation.getKeymasterVersion() == 1) {
+                // KM1 implementations may not support SHA512 in the TEE
+                assertTrue(softwareEnforcedDigests.contains(KM_DIGEST_SHA_2_512)
+                        || teeEnforcedDigests.contains(KM_DIGEST_SHA_2_512));
 
-                    assertThat(teeEnforcedDigests, hasItems(KM_DIGEST_NONE, KM_DIGEST_SHA_2_256));
-                    break;
-
-                case 2:
-                case 3:
-                case 4:
-                case 41:
-                    assertThat(teeEnforcedDigests, is(expectedDigests));
-                    break;
-
-                default:
-                    fail("Broken CTS test. Should be impossible to get here.");
+                assertThat(teeEnforcedDigests, hasItems(KM_DIGEST_NONE, KM_DIGEST_SHA_2_256));
+            } else {
+                assertThat(teeEnforcedDigests, is(expectedDigests));
             }
         }
     }

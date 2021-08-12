@@ -16,7 +16,7 @@
 
 package android.appsecurity.cts;
 
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.tradefed.build.IBuildInfo;
@@ -515,7 +515,7 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         assertInstallFailsWithError("v2-only-empty.apk", "Unknown failure");
     }
 
-    @SecurityTest
+    @AsbSecurityTest(cveBugId = 64211847)
     public void testInstallApkWhichDoesNotStartWithZipLocalFileHeaderMagic() throws Exception {
         // The APKs below are competely fine except they don't start with ZIP Local File Header
         // magic. Thus, these APKs will install just fine unless Package Manager requires that APKs
@@ -1291,7 +1291,6 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
                 "signatures do not match previously installed version");
     }
 
-
     public void testV4IncToV2NonIncSameKeyUpgradeSucceeds() throws Exception {
         // V4 is only enabled on devices with Incremental feature
         if (!hasIncrementalFeature()) {
@@ -1319,6 +1318,42 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         // non-incremental upgrade with a mismatching key.
         assertInstallFailsWithError("v4-inc-to-v2-noninc-ec-p384-appv2.apk",
                 "signatures do not match previously installed version");
+    }
+
+    public void testInstallV4UpdateAfterRotation() throws Exception {
+        // This test performs an end to end verification of the update of an app with a rotated
+        // key. The app under test exports a bound service that performs its own PackageManager key
+        // rotation API verification, and the instrumentation test binds to the service and invokes
+        // the verifySignatures method to verify that the key rotation APIs return the expected
+        // results. The instrumentation test app is signed with the same key and lineage as the
+        // app under test to also provide a second app that can be used for the checkSignatures
+        // verification.
+
+        // Install the initial versions of the apps; the test method verifies the app under test is
+        // signed with the original signing key.
+        assertInstallV4FromBuildSucceeds("CtsSignatureQueryService.apk");
+        assertInstallV4FromBuildSucceeds("CtsSignatureQueryServiceTest.apk");
+        Utils.runDeviceTests(getDevice(), SERVICE_TEST_PKG, SERVICE_TEST_CLASS,
+                "verifySignatures_noRotation_succeeds");
+
+        // Install the second version of the app signed with the rotated key. This test verifies the
+        // app still functions as expected after the update with the rotated key. The
+        // instrumentation test app is not updated here to allow verification of the pre-key
+        // rotation behavior for the checkSignatures APIs. These APIs should behave similar to the
+        // GET_SIGNATURES flag in that if one or both apps have a signing lineage if the oldest
+        // signers in the lineage match then the methods should return that the signatures match
+        // even if one is signed with a newer key in the lineage.
+        assertInstallV4FromBuildSucceeds("CtsSignatureQueryService_v2.apk");
+        Utils.runDeviceTests(getDevice(), SERVICE_TEST_PKG, SERVICE_TEST_CLASS,
+                "verifySignatures_withRotation_succeeds");
+
+        // Installs the third version of the app under test and the instrumentation test, both
+        // signed with the same rotated key and lineage. This test is intended to verify that the
+        // app can still be updated and function as expected after an update with a rotated key.
+        assertInstallV4FromBuildSucceeds("CtsSignatureQueryService_v3.apk");
+        assertInstallV4FromBuildSucceeds("CtsSignatureQueryServiceTest_v2.apk");
+        Utils.runDeviceTests(getDevice(), SERVICE_TEST_PKG, SERVICE_TEST_CLASS,
+                "verifySignatures_withRotation_succeeds");
     }
 
     private boolean hasIncrementalFeature() throws Exception {
@@ -1362,6 +1397,13 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         String installResult = installV4PackageFromResource(apkFilenameInResources);
         if (!installResult.equals("Success\n")) {
             fail("Failed to install " + apkFilenameInResources + ": " + installResult);
+        }
+    }
+
+    private void assertInstallV4FromBuildSucceeds(String apkName) throws Exception {
+        String installResult = installV4PackageFromBuild(apkName);
+        if (!installResult.equals("Success\n")) {
+            fail("Failed to install " + apkName + ": " + installResult);
         }
     }
 
@@ -1488,6 +1530,16 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         }
     }
 
+    private String installV4PackageFromBuild(String apkName)
+            throws IOException, DeviceNotAvailableException {
+        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
+        File apkFile = buildHelper.getTestFile(apkName);
+        File v4SignatureFile = buildHelper.getTestFile(apkName + ".idsig");
+        String remoteApkFilePath = pushFileToRemote(apkFile);
+        pushFileToRemote(v4SignatureFile);
+        return installV4Package(remoteApkFilePath);
+    }
+
     private String pushFileToRemote(File localFile) throws DeviceNotAvailableException {
         String remotePath = "/data/local/tmp/pkginstalltest-" + localFile.getName();
         getDevice().pushFile(localFile, remotePath);
@@ -1496,7 +1548,7 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
 
     private String installV4Package(String remoteApkPath)
             throws DeviceNotAvailableException {
-        String command = "pm install-incremental -t -g " + remoteApkPath;
+        String command = "pm install-incremental --force-queryable -t -g " + remoteApkPath;
         return getDevice().executeShellCommand(command);
     }
 

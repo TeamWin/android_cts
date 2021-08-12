@@ -30,15 +30,13 @@
 #include <sys/utsname.h>
 #include <unistd.h>
 
-static int page_sz = 0;
-static bool perform_tests = true;
-
 static void* userfault_handler_thread(void* arg) {
-  int uffd = reinterpret_cast<intptr_t>(arg);
   struct uffd_msg msg;
   struct uffdio_copy uffdio_copy;
   ssize_t nread;
   int ret = 0;
+  int uffd = reinterpret_cast<intptr_t>(arg);
+  int page_sz = sysconf(_SC_PAGE_SIZE);
   char* page = static_cast<char*>(mmap(nullptr, page_sz, PROT_READ | PROT_WRITE,
                                        MAP_PRIVATE | MAP_ANONYMOUS, -1, 0));
   if (page == MAP_FAILED) {
@@ -97,7 +95,8 @@ out:
   pthread_exit(reinterpret_cast<void*>(ret));
 }
 
-extern "C" JNIEXPORT void JNICALL Java_android_os_cts_uffdgc_UserfaultfdTest_setUpUserfaultfd(JNIEnv*) {
+extern "C"
+JNIEXPORT bool JNICALL Java_android_os_cts_uffdgc_UserfaultfdTest_confirmKernelVersion(JNIEnv*) {
 #if defined(__linux__)
   static constexpr int kRequiredMajor = 5;
   static constexpr int kRequiredMinor = 4;
@@ -108,23 +107,21 @@ extern "C" JNIEXPORT void JNICALL Java_android_os_cts_uffdgc_UserfaultfdTest_set
       strcmp(uts.sysname, "Linux") != 0 ||
       sscanf(uts.release, "%d.%d", &major, &minor) != 2 ||
       (major < kRequiredMajor || (major == kRequiredMajor && minor < kRequiredMinor))) {
-    perform_tests = false;
+    return false;
   }
+  return true;
 #else
-  perform_tests = false;
+  return false;
 #endif
-  page_sz = sysconf(_SC_PAGE_SIZE);
 }
 
 extern "C"
 JNIEXPORT jint JNICALL Java_android_os_cts_uffdgc_UserfaultfdTest_performKernelSpaceUffd(JNIEnv*) {
-  if (!perform_tests) {
-    return 0;
-  }
   int ret = 0, write_fd = 0;
   void* addr = nullptr;
   pthread_t thr;  // ID of thread that handles page faults
   struct uffdio_register uffdio_register;
+  int page_sz = sysconf(_SC_PAGE_SIZE);
   int uffd = syscall(__NR_userfaultfd, O_CLOEXEC | O_NONBLOCK | UFFD_USER_MODE_ONLY);
   if (uffd < 0) {
     ret = errno;
@@ -205,10 +202,8 @@ out:
 
 // Invoking userfaultfd without USER_MODE_ONLY by a process without CAP_SYS_PTRACE
 // should not be permitted.
-extern "C" JNIEXPORT jint JNICALL Java_android_os_cts_uffdgc_UserfaultfdTest_performUffdWithoutUserModeOnly(JNIEnv*) {
-  if (!perform_tests) {
-    return 0;
-  }
+extern "C"
+JNIEXPORT jint JNICALL Java_android_os_cts_uffdgc_UserfaultfdTest_uffdWithoutUserModeOnly(JNIEnv*) {
   int uffd = syscall(__NR_userfaultfd, O_CLOEXEC | O_NONBLOCK);
   if (uffd < 0) {
     return errno;
@@ -218,11 +213,10 @@ extern "C" JNIEXPORT jint JNICALL Java_android_os_cts_uffdgc_UserfaultfdTest_per
   return 0;
 }
 
-extern "C" JNIEXPORT jint JNICALL Java_android_os_cts_uffdgc_UserfaultfdTest_performMremapDontUnmap(JNIEnv*) {
+extern "C"
+JNIEXPORT jint JNICALL Java_android_os_cts_uffdgc_UserfaultfdTest_performMremapDontUnmap(JNIEnv*) {
   int ret = 0;
-  if (!perform_tests) {
-    return 0;
-  }
+  int page_sz = sysconf(_SC_PAGE_SIZE);
   void* old = mmap(nullptr, page_sz, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, 0);
   if (old == MAP_FAILED ||
       mremap(old, page_sz, page_sz, MREMAP_MAYMOVE | MREMAP_DONTUNMAP, nullptr) == MAP_FAILED) {
@@ -231,11 +225,9 @@ extern "C" JNIEXPORT jint JNICALL Java_android_os_cts_uffdgc_UserfaultfdTest_per
   return ret;
 }
 
-extern "C" JNIEXPORT jint JNICALL Java_android_os_cts_uffdgc_UserfaultfdTest_performMinorUffd(JNIEnv*) {
+extern "C"
+JNIEXPORT jint JNICALL Java_android_os_cts_uffdgc_UserfaultfdTest_performMinorUffd(JNIEnv*) {
   int ret = 0;
-  if (!perform_tests) {
-    return 0;
-  }
   int uffd = syscall(__NR_userfaultfd, O_CLOEXEC | O_NONBLOCK | UFFD_USER_MODE_ONLY);
   if (uffd < 0) {
     ret = errno;

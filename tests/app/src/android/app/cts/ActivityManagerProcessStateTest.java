@@ -84,7 +84,6 @@ import org.junit.runner.RunWith;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 import java.util.function.BiConsumer;
 
 @RunWith(AndroidJUnit4.class)
@@ -2288,6 +2287,49 @@ public class ActivityManagerProcessStateTest {
                 });
     }
 
+    @Test
+    public void testForegroundService_malformedNotificationExtras() throws Exception {
+        PermissionUtils.grantPermission(
+                STUB_PACKAGE_NAME, android.Manifest.permission.PACKAGE_USAGE_STATS);
+        // Use default timeout value 5000
+        final ServiceProcessController controller = new ServiceProcessController(mContext,
+                mInstrumentation, STUB_PACKAGE_NAME, mAllProcesses);
+
+        ApplicationInfo appInfo = mContext.getPackageManager().getApplicationInfo(
+                SIMPLE_PACKAGE_NAME, 0);
+        UidImportanceListener uidGoneListener = new UidImportanceListener(mContext,
+                appInfo.uid, IMPORTANCE_CACHED, WAIT_TIME);
+        uidGoneListener.register();
+
+        ActivityManager am = mContext.getSystemService(ActivityManager.class);
+
+        try {
+            controller.ensureProcessGone();
+
+            // Do initial setup.
+            controller.makeUidIdle();
+            controller.removeFromWhitelist();
+            controller.setAppOpMode(AppOpsManager.OPSTR_START_FOREGROUND, "allow");
+
+            // Put app on whitelist, to allow service to run.
+            controller.addToWhitelist();
+
+            // Add a bad extra to the FGS notification and try to start the service
+            // keep key in sync with com.android.cts.launcherapps.simpleapp.SimpleService
+            mServiceStartForegroundIntent.putExtra("NotifExtras", true);
+            mContext.startService(mServiceStartForegroundIntent);
+
+            // Make sure we crashed the process
+            uidGoneListener.waitForValue(IMPORTANCE_GONE, IMPORTANCE_GONE);
+            assertEquals(IMPORTANCE_GONE, am.getPackageImportance(SIMPLE_PACKAGE_NAME));
+        } finally {
+            mContext.stopService(mServiceStartForegroundIntent);
+            controller.cleanup();
+            controller.setAppOpMode(AppOpsManager.OPSTR_START_FOREGROUND, "ignore");
+            controller.removeFromWhitelist();
+        }
+    }
+
     private void testFgsStickyInternal(int stickyFlag, String waitForBroadcastAction,
             BiConsumer<WatchUidRunner, WaitForBroadcast> checkKillResult) throws Exception {
         ApplicationInfo app1Info = mContext.getPackageManager().getApplicationInfo(
@@ -2313,10 +2355,16 @@ public class ActivityManagerProcessStateTest {
             CommandReceiver.sendCommand(mContext,
                     CommandReceiver.COMMAND_START_FOREGROUND_SERVICE_STICKY,
                     PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, extras);
-            // Stop the activity in app1, app1 now only has FGS.
-            CommandReceiver.sendCommand(mContext,
-                    CommandReceiver.COMMAND_STOP_ACTIVITY,
-                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+
+            // Launch home activity, so the activity in app1 will be stopped, app1 now only has FGS,
+            // we're not "finishing" the activity because removing a task could result in service
+            // restart.
+            final Intent homeIntent = new Intent();
+            homeIntent.setAction(Intent.ACTION_MAIN);
+            homeIntent.addCategory(Intent.CATEGORY_HOME);
+            homeIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            mTargetContext.startActivity(homeIntent);
+
             // The FGS has all while-in-use capabilities.
             uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE,
                     new Integer(PROCESS_CAPABILITY_ALL));

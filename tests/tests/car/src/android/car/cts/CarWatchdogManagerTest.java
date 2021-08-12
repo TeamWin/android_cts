@@ -18,7 +18,6 @@ package android.car.cts;
 
 import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 
-import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.testng.Assert.assertThrows;
@@ -26,8 +25,12 @@ import static org.testng.Assert.assertThrows;
 import android.car.Car;
 import android.car.watchdog.CarWatchdogManager;
 import android.car.watchdog.IoOveruseStats;
+import android.car.watchdog.PerStateBytes;
 import android.car.watchdog.ResourceOveruseStats;
 import android.content.Context;
+import android.os.Process;
+import android.os.UserHandle;
+import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -43,7 +46,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.util.concurrent.atomic.AtomicReference;
-
+@AppModeFull(reason = "Instant Apps cannot get car related permissions")
 public class CarWatchdogManagerTest extends CarApiTestBase {
     private static final String TAG = CarWatchdogManagerTest.class.getSimpleName();
     private static final String CAR_WATCHDOG_SERVICE_NAME
@@ -99,9 +102,27 @@ public class CarWatchdogManagerTest extends CarApiTestBase {
         runShellCommand("dumpsys %s --stop_perf", CAR_WATCHDOG_SERVICE_NAME);
 
         IoOveruseStats ioOveruseStats = stats.get().getIoOveruseStats();
+        PerStateBytes remainingWriteBytes = ioOveruseStats.getRemainingWriteBytes();
         assertWithMessage("Package name").that(stats.get().getPackageName()).isEqualTo(packageName);
         assertWithMessage("Total bytes written to disk").that(
                 ioOveruseStats.getTotalBytesWritten()).isAtLeast(FIVE_HUNDRED_KILOBYTES);
+        assertWithMessage("Remaining write bytes").that(remainingWriteBytes).isNotNull();
+        assertWithMessage("Remaining foreground write bytes").that(
+                remainingWriteBytes.getForegroundModeBytes()).isGreaterThan(0);
+        assertWithMessage("Remaining background write bytes").that(
+                remainingWriteBytes.getBackgroundModeBytes()).isGreaterThan(0);
+        assertWithMessage("Remaining garage mode write bytes").that(
+                remainingWriteBytes.getGarageModeBytes()).isGreaterThan(0);
+        assertWithMessage("Duration in seconds").that(
+                ioOveruseStats.getDurationInSeconds()).isGreaterThan(0);
+        assertWithMessage("Start time").that(ioOveruseStats.getStartTime()).isGreaterThan(0);
+        assertWithMessage("Total overuse").that(ioOveruseStats.getTotalOveruses()).isEqualTo(0);
+        assertWithMessage("Total times killed").that(
+                ioOveruseStats.getTotalTimesKilled()).isEqualTo(0);
+        assertWithMessage("Killable on overuse").that(
+                ioOveruseStats.isKillableOnOveruse()).isTrue();
+        assertWithMessage("User handle").that(stats.get().getUserHandle()).isEqualTo(
+                UserHandle.getUserHandleForUid(Process.myUid()));
     }
 
     /**

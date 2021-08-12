@@ -116,6 +116,10 @@ public class MidiNativeTestActivity extends MidiTestActivityBase {
             endTest(TESTSTATUS_NOTRUN);
         }
 
+        protected void closePorts() {
+            // NOP
+        }
+
         @Override
         void startLoopbackTest(int testID) {
             synchronized (mTestLock) {
@@ -158,6 +162,8 @@ public class MidiNativeTestActivity extends MidiTestActivityBase {
                 updateTestStateUI();
                 enableTestButtons(true);
             }
+
+            closePorts();
         }
 
         /**
@@ -199,6 +205,13 @@ public class MidiNativeTestActivity extends MidiTestActivityBase {
             super.scanDevices(devInfos);
             // Find a USB Loopback Device
             mUSBLoopbackDevice.scanDevices(devInfos);
+        }
+
+        protected void closePorts() {
+            super.closePorts();
+            if (mUSBLoopbackDevice != null) {
+                mUSBLoopbackDevice.closePorts();
+            }
         }
 
         @Override

@@ -47,12 +47,18 @@ public class ThirdPartyInCallServiceTest extends BaseTelecomTestWithMockServices
     private boolean mSkipNullUnboundLatch;
     private String mPreviousRoleHolder;
     private String mThirdPartyPackageName;
+    private boolean mIsDialerRoleAvailable;
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
         mContext = getInstrumentation().getContext();
         mCtsRoleManagerAdapter = new CtsRoleManagerAdapter(getInstrumentation());
+
+        // Do not continue with tests if the Dialer role is not available.
+        mIsDialerRoleAvailable = mCtsRoleManagerAdapter.isDialerRoleAvailable();
+        if (!mIsDialerRoleAvailable) return;
+
         setUpControl();
         mICtsThirdPartyInCallServiceControl.resetLatchForServiceBound(false);
         mThirdPartyPackageName = CtsThirdPtyDialerInCallServiceControl.class.getPackage().getName();
@@ -63,8 +69,10 @@ public class ThirdPartyInCallServiceTest extends BaseTelecomTestWithMockServices
 
     @Override
     public void tearDown() throws Exception {
-        mICtsThirdPartyInCallServiceControl.resetCalls();
-        mCtsRoleManagerAdapter.setDialerRoleHolder(mPreviousRoleHolder);
+        if (mIsDialerRoleAvailable) {
+            mICtsThirdPartyInCallServiceControl.resetCalls();
+            mCtsRoleManagerAdapter.setDialerRoleHolder(mPreviousRoleHolder);
+        }
         super.tearDown();
     }
 
@@ -75,6 +83,8 @@ public class ThirdPartyInCallServiceTest extends BaseTelecomTestWithMockServices
      * @throws Exception
      */
     public void testPermissionGranted() throws Exception {
+        if (!mIsDialerRoleAvailable) return;
+
         assertFalse(mICtsThirdPartyInCallServiceControl.checkPermissionGrant(
                 Manifest.permission.READ_VOICEMAIL));
         assertFalse(mICtsThirdPartyInCallServiceControl.checkPermissionGrant(

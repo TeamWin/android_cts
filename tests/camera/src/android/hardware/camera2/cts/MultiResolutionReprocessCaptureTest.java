@@ -104,6 +104,7 @@ public class MultiResolutionReprocessCaptureTest extends Camera2AndroidTestCase 
                     c, CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES);
             boolean isLogicalCamera = CameraTestUtils.contains(capabilities,
                     CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_LOGICAL_MULTI_CAMERA);
+            boolean isUltraHighResCamera = info.isUltraHighResolutionSensor();
             Set<String> physicalCameraIds = c.getPhysicalCameraIds();
 
             MultiResolutionStreamConfigurationMap multiResolutionMap = c.get(
@@ -121,9 +122,9 @@ public class MultiResolutionReprocessCaptureTest extends Camera2AndroidTestCase 
             int[] multiResolutionInputFormats = multiResolutionMap.getInputFormats();
             int[] multiResolutionOutputFormats = multiResolutionMap.getOutputFormats();
 
-            //TODO: Handle ultra high resolution sensor camera
-            assertTrue("Camera " + id + " must be a logical multi-camera "
-                    + "to support multi-resolution reprocessing.", isLogicalCamera);
+            assertTrue("Camera " + id + " must be a logical multi-camera or ultra high res camera "
+                    + "to support multi-resolution reprocessing.",
+                    isLogicalCamera || isUltraHighResCamera);
 
             for (int format : multiResolutionInputFormats) {
                 assertTrue(String.format("Camera %s: multi-resolution input format %d "
@@ -141,11 +142,17 @@ public class MultiResolutionReprocessCaptureTest extends Camera2AndroidTestCase 
                 // for that format.
                 for (MultiResolutionStreamInfo streamInfo : multiResolutionStreams) {
                     String physicalCameraId = streamInfo.getPhysicalCameraId();
-                    int width = streamInfo.getWidth();
-                    int height = streamInfo.getHeight();
-                    assertTrue("Camera " + id + "'s multi-resolution input info "
-                            + "physical camera id " + physicalCameraId + "isn't valid",
-                            physicalCameraIds.contains(physicalCameraId));
+                    Size streamSize = new Size(streamInfo.getWidth(), streamInfo.getHeight());
+                    if (!isLogicalCamera) {
+                        assertTrue("Camera " + id + " is ultra high resolution camera, but "
+                                + "the multi-resolution reprocessing stream info camera Id "
+                                + physicalCameraId + " doesn't match",
+                                physicalCameraId.equals(id));
+                    } else {
+                        assertTrue("Camera " + id + "'s multi-resolution input info "
+                                + "physical camera id " + physicalCameraId + " isn't valid",
+                                physicalCameraIds.contains(physicalCameraId));
+                    }
 
                     StaticMetadata pInfo = mAllStaticInfo.get(physicalCameraId);
                     CameraCharacteristics pChar = pInfo.getCharacteristics();
@@ -153,17 +160,26 @@ public class MultiResolutionReprocessCaptureTest extends Camera2AndroidTestCase 
                             CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
                     Size[] sizes = pConfig.getInputSizes(format);
 
-                    assertTrue(String.format("Camera %s physical camera %s must "
+                    assertTrue(String.format("Camera %s must "
                             + "support at least one input size for multi-resolution input "
-                            + "format %d.", id, physicalCameraId, format),
+                            + "format %d.", physicalCameraId, format),
                              sizes != null && sizes.length > 0);
 
-                    Size maxSize = CameraTestUtils.getMaxSize(sizes);
+                    List<Size> maxSizes = new ArrayList<Size>();
+                    maxSizes.add(CameraTestUtils.getMaxSize(sizes));
+                    StreamConfigurationMap pMaxResConfig = pChar.get(CameraCharacteristics.
+                            SCALER_STREAM_CONFIGURATION_MAP_MAXIMUM_RESOLUTION);
+                    if (pMaxResConfig != null) {
+                        Size[] maxResSizes = pMaxResConfig.getInputSizes(format);
+                        if (maxResSizes != null && maxResSizes.length > 0) {
+                            maxSizes.add(CameraTestUtils.getMaxSize(maxResSizes));
+                        }
+                    }
+
                     assertTrue(String.format("Camera %s's supported multi-resolution"
-                           + " input size [%d, %d] for physical camera %s is not the largest "
-                           + "supported input size [%d, %d] for format %d", id, width, height,
-                           physicalCameraId, maxSize.getWidth(), maxSize.getHeight(), format),
-                           width == maxSize.getWidth() && height == maxSize.getHeight());
+                           + " input size %s for physical camera %s is not one of the largest "
+                           + "supported input sizes %s for format %d", id, streamSize,
+                           physicalCameraId, maxSizes, format), maxSizes.contains(streamSize));
                 }
             }
 
@@ -329,7 +345,7 @@ public class MultiResolutionReprocessCaptureTest extends Camera2AndroidTestCase 
         CameraTestUtils.setupConfigurationTargets(streamInfo.subList(2, streamInfo.size()),
                 targets, outputConfigs, outputSurfaces, NUM_REPROCESS_CAPTURES_PER_CONFIG,
                 /*substituteY8*/false, /*substituteHeic*/false, /*physicalCameraId*/null,
-                /*ultraHighResolution*/false, multiResStreamConfig, mHandler);
+                multiResStreamConfig, mHandler);
 
         Collection<MultiResolutionStreamInfo> multiResInputs =
                 multiResStreamConfig.getInputInfo(inputFormat);

@@ -48,6 +48,7 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeThat;
 import static org.junit.Assume.assumeTrue;
 
@@ -671,6 +672,8 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
 
     @Test
     public void testDispatchApplyWindowInsetsCount_ime() throws Exception {
+        assumeFalse("Automotive is to skip this test until showing and hiding certain insets "
+                + "simultaneously in a single request is supported", isAutomotive(mContext));
         assumeThat(MockImeSession.getUnavailabilityReason(getInstrumentation().getContext()),
                 nullValue());
 

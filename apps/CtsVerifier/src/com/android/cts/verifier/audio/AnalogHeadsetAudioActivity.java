@@ -86,6 +86,7 @@ public class AnalogHeadsetAudioActivity
 
     // Buttons
     private boolean mHasHeadsetHook;
+    private boolean mHasPlayPause;
     private boolean mHasVolUp;
     private boolean mHasVolDown;
 
@@ -128,6 +129,8 @@ public class AnalogHeadsetAudioActivity
         mPlaybackSuccessBtn.setOnClickListener(this);
         mPlaybackFailBtn = (Button)findViewById(R.id.headset_analog_play_no);
         mPlaybackFailBtn.setOnClickListener(this);
+        mPlaybackSuccessBtn.setEnabled(false);
+        mPlaybackFailBtn.setEnabled(false);
 
         // Keycodes
         mHeadsetHookText = (TextView)findViewById(R.id.headset_keycode_headsethook);
@@ -163,7 +166,7 @@ public class AnalogHeadsetAudioActivity
             return mPlugIntentReceived &&
                     mHeadsetDeviceInfo != null &&
                     mPlaybackSuccess &&
-                    mHasHeadsetHook && mHasVolUp && mHasVolDown;
+                    (mHasHeadsetHook || mHasPlayPause) && mHasVolUp && mHasVolDown;
         }
     }
 
@@ -230,6 +233,10 @@ public class AnalogHeadsetAudioActivity
         } else {
             mPlaybackSuccessBtn.setEnabled(false);
         }
+
+        mPlaybackSuccessBtn.setEnabled(success);
+        mPlaybackFailBtn.setEnabled(success);
+
         getPassButton().setEnabled(calculatePass());
 
         getReportLog().addValue(
@@ -259,7 +266,8 @@ public class AnalogHeadsetAudioActivity
     }
 
     private void showKeyMessagesState() {
-        mHeadsetHookText.setTextColor(mHasHeadsetHook ? Color.WHITE : Color.GRAY);
+        mHeadsetHookText.setTextColor((mHasHeadsetHook || mHasPlayPause)
+                ? Color.WHITE : Color.GRAY);
         mHeadsetVolUpText.setTextColor(mHasVolUp ? Color.WHITE : Color.GRAY);
         mHeadsetVolDownText.setTextColor(mHasVolDown ? Color.WHITE : Color.GRAY);
     }
@@ -322,6 +330,8 @@ public class AnalogHeadsetAudioActivity
 
             case R.id.headset_analog_stop:
                 stopPlay();
+                mPlaybackSuccessBtn.setEnabled(true);
+                mPlaybackFailBtn.setEnabled(true);
                 break;
 
             case R.id.headset_analog_play_yes:
@@ -397,18 +407,32 @@ public class AnalogHeadsetAudioActivity
                 mHasHeadsetHook = true;
                 showKeyMessagesState();
                 getPassButton().setEnabled(calculatePass());
+                getReportLog().addValue(
+                        "KEYCODE_HEADSETHOOK", 1, ResultType.NEUTRAL, ResultUnit.NONE);
+                break;
+
+            case KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE:
+                mHasPlayPause = true;
+                showKeyMessagesState();
+                getPassButton().setEnabled(calculatePass());
+                getReportLog().addValue(
+                        "KEYCODE_MEDIA_PLAY_PAUSE", 1, ResultType.NEUTRAL, ResultUnit.NONE);
                 break;
 
             case KeyEvent.KEYCODE_VOLUME_UP:
                 mHasVolUp = true;
                 showKeyMessagesState();
                 getPassButton().setEnabled(calculatePass());
+                getReportLog().addValue(
+                        "KEYCODE_VOLUME_UP", 1, ResultType.NEUTRAL, ResultUnit.NONE);
                 break;
 
             case KeyEvent.KEYCODE_VOLUME_DOWN:
                 mHasVolDown = true;
                 showKeyMessagesState();
                 getPassButton().setEnabled(calculatePass());
+                getReportLog().addValue(
+                        "KEYCODE_VOLUME_DOWN", 1, ResultType.NEUTRAL, ResultUnit.NONE);
                 break;
         }
         return super.onKeyDown(keyCode, event);

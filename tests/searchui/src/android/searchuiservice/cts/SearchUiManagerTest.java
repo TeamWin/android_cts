@@ -128,6 +128,18 @@ public class SearchUiManagerTest {
         assertTrue(equalBundles(mWatcher.searchContext.getExtras(), EXTRAS));
     }
 
+    @Test
+    public void testSearchContextCtor() {
+        SearchContext searchContext = new SearchContext(RESULT_TYPES, TIMEOUT_MS);
+        assertTrue(equalBundles(EXTRAS, searchContext.getExtras()));
+    }
+
+    @Test
+    public void testQueryCtor() {
+        Query query = new Query(QUERY_INPUT, QUERY_TIMESTAMP);
+        assertTrue(equalBundles(EXTRAS, query.getExtras()));
+    }
+
     public boolean equalBundles(Bundle one, Bundle two) {
         if(one.size() != two.size())
             return false;

@@ -736,7 +736,9 @@ def post_raw_sensitivity_boost(props):
   Returns:
     Boolean. True if android.control.postRawSensitivityBoost is supported.
   """
-  return props.get('android.control.postRawSensitivityBoostRange') != [100, 100]
+  return (
+      'android.control.postRawSensitivityBoostRange' in props.keys() and
+      props.get('android.control.postRawSensitivityBoostRange') != [100, 100])
 
 
 def sensor_fusion_capable(props):
@@ -820,6 +822,20 @@ def color_bars_test_pattern(props):
   """
   return COLOR_BARS_TEST_PATTERN in props.get(
       'android.sensor.availableTestPatternModes')
+
+
+def linear_tonemap(props):
+  """Determines if camera supports CONTRAST_CURVE or GAMMA_VALUE in tonemap.
+
+  Args:
+    props: Camera properties object.
+
+  Returns:
+    Boolean. True if android.tonemap.availableToneMapModes has
+             CONTRAST_CURVE (0) or GAMMA_VALUE (3).
+  """
+  return (0 in props.get('android.tonemap.availableToneMapModes') or
+          3 in props.get('android.tonemap.availableToneMapModes'))
 
 
 if __name__ == '__main__':

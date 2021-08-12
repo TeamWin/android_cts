@@ -158,6 +158,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             ASSIST_APP_PKG + "/.MyInteractionService";
 
     private static final String ARG_ALLOW_FAILURE = "allowFailure";
+    private static final String ARG_LOGGING_TEST = "loggingTest";
 
     private static final String RESTRICT_BACKGROUND_GET_CMD =
         "cmd netpolicy get restrict-background";
@@ -1041,107 +1042,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                     .build());
     }
 
-    @FlakyTest(bugId = 132226089)
-    @Ignore("Ignored while migrating to new infrastructure b/175377361")
-    @Test
-    public void testLockTask() throws Exception {
-        try {
-            installAppAsUser(INTENT_RECEIVER_APK, mUserId);
-            executeDeviceTestClass(".LockTaskTest");
-        } catch (AssertionError ex) {
-            // STOPSHIP(b/32771855), remove this once we fixed the bug.
-            executeShellCommand("dumpsys activity activities");
-            executeShellCommand("dumpsys window -a");
-            executeShellCommand("dumpsys activity service com.android.systemui");
-            throw ex;
-        } finally {
-            getDevice().uninstallPackage(INTENT_RECEIVER_PKG);
-        }
-    }
-
-    @LargeTest
-    @Test
-    public void testLockTaskAfterReboot() throws Exception {
-        try {
-            // Just start kiosk mode
-            executeDeviceTestMethod(
-                    ".LockTaskHostDrivenTest", "testStartLockTask_noAsserts");
-
-            // Reboot while in kiosk mode and then unlock the device
-            rebootAndWaitUntilReady();
-
-            // Check that kiosk mode is working and can't be interrupted
-            executeDeviceTestMethod(".LockTaskHostDrivenTest",
-                    "testLockTaskIsActiveAndCantBeInterrupted");
-        } finally {
-            executeDeviceTestMethod(".LockTaskHostDrivenTest", "testCleanupLockTask_noAsserts");
-        }
-    }
-
-    @LargeTest
-    @Test
-    @Ignore("Ignored while migrating to new infrastructure b/175377361")
-    public void testLockTaskAfterReboot_tryOpeningSettings() throws Exception {
-        try {
-            // Just start kiosk mode
-            executeDeviceTestMethod(
-                    ".LockTaskHostDrivenTest", "testStartLockTask_noAsserts");
-
-            // Reboot while in kiosk mode and then unlock the device
-            rebootAndWaitUntilReady();
-
-            // Wait for the LockTask starting
-            waitForBroadcastIdle();
-
-            // Make sure that the LockTaskUtilityActivityIfWhitelisted was started.
-            executeDeviceTestMethod(".LockTaskHostDrivenTest", "testLockTaskIsActive");
-
-            // Try to open settings via adb
-            executeShellCommand("am start -a android.settings.SETTINGS");
-
-            // Check again
-            executeDeviceTestMethod(".LockTaskHostDrivenTest",
-                    "testLockTaskIsActiveAndCantBeInterrupted");
-        } finally {
-            executeDeviceTestMethod(".LockTaskHostDrivenTest", "testCleanupLockTask_noAsserts");
-        }
-    }
-
-    @Test
-    @Ignore("Ignored while migrating to new infrastructure b/175377361")
-    public void testLockTask_defaultDialer() throws Exception {
-        assumeHasTelephonyAndConnectionServiceFeatures();
-
-        try {
-            executeDeviceTestMethod(".LockTaskHostDrivenTest",
-                    "testLockTaskCanLaunchDefaultDialer");
-        } finally {
-            executeDeviceTestMethod(".LockTaskHostDrivenTest", "testCleanupLockTask_noAsserts");
-        }
-    }
-
-    @Test
-    public void testLockTask_emergencyDialer() throws Exception {
-        assumeHasTelephonyFeature();
-
-        try {
-            executeDeviceTestMethod(".LockTaskHostDrivenTest",
-                    "testLockTaskCanLaunchEmergencyDialer");
-        } finally {
-            executeDeviceTestMethod(".LockTaskHostDrivenTest", "testCleanupLockTask_noAsserts");
-        }
-    }
-
-    @Test
-    public void testLockTask_exitIfNoLongerAllowed() throws Exception {
-        try {
-            executeDeviceTestMethod(".LockTaskHostDrivenTest",
-                    "testLockTaskIsExitedIfNotAllowed");
-        } finally {
-            executeDeviceTestMethod(".LockTaskHostDrivenTest", "testCleanupLockTask_noAsserts");
-        }
-    }
-
     @FlakyTest(bugId = 141314026)
     @Test
     public void testSuspendPackage() throws Exception {
@@ -1284,17 +1184,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         // This is the default test for MixedDeviceOwnerTest and MixedProfileOwnerTest,
         // MixedManagedProfileOwnerTest overrides this method to execute the same test more strictly
         // without allowing failures.
-        executeResetPasswordWithTokenTests(true);
-    }
-
-    @Test
-    public void testResetPasswordWithTokenLogged() throws Exception {
-        assertMetricsLogged(getDevice(), () -> {
-            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".ResetPasswordWithTokenTest",
-                    "testChangePasswordWithToken", mUserId);
-        }, new DevicePolicyEventWrapper.Builder(EventId.RESET_PASSWORD_WITH_TOKEN_VALUE)
-                    .setAdminPackageName(DEVICE_ADMIN_PKG)
-                    .build());
+        executeResetPasswordWithTokenTests(/* allowFailures */ true);
     }
 
     @Test
@@ -1381,9 +1271,10 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         executeDeviceTestClass(".SetSystemSettingTest");
     }
 
-    protected void executeResetPasswordWithTokenTests(Boolean allowFailures) throws Exception {
+    protected void executeResetPasswordWithTokenTests(boolean allowFailures)
+            throws Exception {
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".ResetPasswordWithTokenTest", null, mUserId,
-                Collections.singletonMap(ARG_ALLOW_FAILURE, Boolean.toString(allowFailures)));
+                Collections.singletonMap(ARG_ALLOW_FAILURE, String.valueOf(allowFailures)));
     }
 
     @Test

@@ -146,12 +146,16 @@ public class TaggingSdk30Test extends TaggingBaseTest {
     }
 
     public void testHeapZeroInitActivity() throws Exception {
+        // Note, only Scudo supports heap zero initialization. This test is
+        // effectively a no-op on jemalloc devices.
         runDeviceCompatTest(TEST_PKG, ".TaggingTest", "testHeapZeroInitActivity",
                 /*enabledChanges*/ ImmutableSet.of(),
                 /*disabledChanges*/ ImmutableSet.of());
     }
 
     public void testHeapZeroInitMemtagAsyncActivity() throws Exception {
+        // Note, only Scudo supports heap zero initialization. This test is
+        // effectively a no-op on jemalloc devices.
         runDeviceCompatTest(TEST_PKG, ".TaggingTest", "testHeapZeroInitMemtagAsyncActivity",
                 /*enabledChanges*/ ImmutableSet.of(),
                 /*disabledChanges*/ ImmutableSet.of());

@@ -60,7 +60,8 @@ public class VcnTestBase {
                         .addDhGroup(DH_GROUP_2048_BIT_MODP)
                         .build();
 
-        final String serverHostname = "2001:db8:1::100";
+        // TODO: b/192610392 Improve VcnManagerTest CTS by adding IPv6 test case.
+        final String serverHostname = "192.0.2.1";
         final String testLocalId = "client.test.ike.android.net";
         final String testRemoteId = "server.test.ike.android.net";
         final byte[] psk = "ikeAndroidPsk".getBytes();

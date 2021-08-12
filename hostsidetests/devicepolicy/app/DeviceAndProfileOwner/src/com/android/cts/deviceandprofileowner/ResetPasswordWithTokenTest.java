@@ -28,8 +28,11 @@ import static android.app.admin.DevicePolicyManager.PASSWORD_QUALITY_UNSPECIFIED
 
 import android.app.KeyguardManager;
 import android.app.admin.DevicePolicyManager;
+import android.stats.devicepolicy.EventId;
 
 import androidx.test.InstrumentationRegistry;
+
+import com.android.bedstead.metricsrecorder.EnterpriseMetricsRecorder;
 
 public class ResetPasswordWithTokenTest extends BaseDeviceAdminTest {
 
@@ -40,14 +43,15 @@ public class ResetPasswordWithTokenTest extends BaseDeviceAdminTest {
     private static final byte[] TOKEN1 = "abcdefghijklmnopqrstuvwxyz012345678*".getBytes();
 
     private static final String ARG_ALLOW_FAILURE = "allowFailure";
+    private static final String ARG_LOGGING_TEST = "loggingTest";
 
     private boolean mShouldRun;
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        Boolean allowFailure = Boolean.parseBoolean(InstrumentationRegistry.getArguments()
-                .getString(ARG_ALLOW_FAILURE));
+        Boolean allowFailure = Boolean.parseBoolean(
+                InstrumentationRegistry.getArguments().getString(ARG_ALLOW_FAILURE));
         mShouldRun = setUpResetPasswordToken(allowFailure);
     }
 
@@ -570,6 +574,22 @@ public class ResetPasswordWithTokenTest extends BaseDeviceAdminTest {
         assertPasswordSucceeds("_@3c", caseDescription);
         assertPasswordSucceeds("_25!", caseDescription);
         assertPasswordFails("123", caseDescription); // too short
+    }
+
+    public void testResetPasswordWithTokenLogging() {
+        if (!mShouldRun) {
+            return;
+        }
+
+        try (EnterpriseMetricsRecorder metrics = EnterpriseMetricsRecorder.create()) {
+            mDevicePolicyManager.resetPasswordWithToken(ADMIN_RECEIVER_COMPONENT,
+                    SHORT_PASSWORD, TOKEN0, 0);
+
+            assertNotNull(metrics.query()
+                    .whereType().isEqualTo(EventId.RESET_PASSWORD_WITH_TOKEN_VALUE)
+                    .whereAdminPackageName().isEqualTo(PACKAGE_NAME)
+                    .poll());
+        }
     }
 
     private boolean setUpResetPasswordToken(boolean acceptFailure) {

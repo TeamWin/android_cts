@@ -18,17 +18,46 @@ import math
 import unittest
 
 
-def auto_capture_request():
-  """Returns a capture request with everything set to auto."""
-  return {
+def auto_capture_request(linear_tonemap=False, props=None):
+  """Returns a capture request with everything set to auto.
+
+  Args:
+   linear_tonemap: [Optional] boolean whether linear tonemap should be used.
+   props: [Optional] object from its_session_utils.get_camera_properties().
+          Must present when linear_tonemap is True.
+
+  Returns:
+    Auto capture request, ready to be passed to the
+    its_session_utils.device.do_capture()
+  """
+  req = {
       'android.control.mode': 1,
       'android.control.aeMode': 1,
       'android.control.awbMode': 1,
       'android.control.afMode': 1,
       'android.colorCorrection.mode': 1,
       'android.tonemap.mode': 1,
-      'android.lens.opticalStabilizationMode': 0
+      'android.lens.opticalStabilizationMode': 0,
+      'android.control.videoStabilizationMode': 0
   }
+  if linear_tonemap:
+    if props is None:
+      raise AssertionError('props is None with linear_tonemap.')
+    # CONTRAST_CURVE mode
+    if 0 in props['android.tonemap.availableToneMapModes']:
+      req['android.tonemap.mode'] = 0
+      req['android.tonemap.curve'] = {
+          'red': [0.0, 0.0, 1.0, 1.0],  # coordinate pairs: x0, y0, x1, y1
+          'green': [0.0, 0.0, 1.0, 1.0],
+          'blue': [0.0, 0.0, 1.0, 1.0]
+      }
+    # GAMMA_VALUE mode
+    elif 3 in props['android.tonemap.availableToneMapModes']:
+      req['android.tonemap.mode'] = 3
+      req['android.tonemap.gamma'] = 1.0
+    else:
+      raise AssertionError('Linear tonemap is not supported')
+  return req
 
 
 def manual_capture_request(sensitivity,
@@ -48,7 +77,7 @@ def manual_capture_request(sensitivity,
    linear_tonemap: [Optional] whether a linear tonemap should be used in this
      request.
    props: [Optional] the object returned from
-     its_session_utils.get_camera_properties().Must present when linear_tonemap
+     its_session_utils.get_camera_properties(). Must present when linear_tonemap
      is True.
 
   Returns:

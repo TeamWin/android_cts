@@ -54,6 +54,7 @@ import android.os.Parcel;
 import android.platform.test.annotations.AppModeFull;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
+import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.SystemUtil;
 
 import java.util.ArrayDeque;
@@ -87,6 +88,8 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
     private final Object mLock = new Object();
     private final HandlerThread mHandlerThread = new HandlerThread("SingleDeviceTest");
     private final Handler mHandler;
+    private Boolean mWasVerboseLoggingEnabled;
+
     {
         mHandlerThread.start();
         mHandler = new Handler(mHandlerThread.getLooper());
@@ -101,17 +104,31 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
     private List<WifiAwareSession> mSessions = new ArrayList<>();
 
     private class WifiAwareBroadcastReceiver extends BroadcastReceiver {
+        private final Object mLock = new Object();
         private CountDownLatch mBlocker = new CountDownLatch(1);
+        private int mCountNumber = 0;
 
         @Override
         public void onReceive(Context context, Intent intent) {
             if (WifiAwareManager.ACTION_WIFI_AWARE_STATE_CHANGED.equals(intent.getAction())) {
-                mBlocker.countDown();
+                synchronized(mLock) {
+                    mCountNumber += 1;
+                    mBlocker.countDown();
+                    mBlocker = new CountDownLatch(1);
+                }
             }
         }
 
         boolean waitForStateChange() throws InterruptedException {
-            return mBlocker.await(WAIT_FOR_AWARE_CHANGE_SECS, TimeUnit.SECONDS);
+            CountDownLatch blocker;
+            synchronized (mLock) {
+                mCountNumber--;
+                if (mCountNumber >= 0) {
+                    return true;
+                }
+                blocker = mBlocker;
+            }
+            return blocker.await(WAIT_FOR_AWARE_CHANGE_SECS, TimeUnit.SECONDS);
         }
     }
 
@@ -391,6 +408,14 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
 
         mWifiManager = (WifiManager) getContext().getSystemService(Context.WIFI_SERVICE);
         assertNotNull("Wi-Fi Manager", mWifiManager);
+
+        // turn on verbose logging for tests
+        mWasVerboseLoggingEnabled = ShellIdentityUtils.invokeWithShellPermissions(
+                () -> mWifiManager.isVerboseLoggingEnabled());
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> mWifiManager.setVerboseLoggingEnabled(true));
+
+        // Turn on Wi-Fi
         mWifiLock = mWifiManager.createWifiLock(TAG);
         mWifiLock.acquire();
         if (!mWifiManager.isWifiEnabled()) {
@@ -426,6 +451,9 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
             }
             mSessions.clear();
         }
+
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> mWifiManager.setVerboseLoggingEnabled(mWasVerboseLoggingEnabled));
 
         super.tearDown();
         Thread.sleep(INTERVAL_BETWEEN_TESTS_SECS * 1000);
@@ -494,6 +522,12 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
 
         assertTrue("Timeout waiting for Wi-Fi Aware to change status",
                 receiver1.waitForStateChange());
+        // Interface down event may happen before Wifi State change. In that case, Aware available
+        // state will keep true for a short time.
+        if (mWifiAwareManager.isAvailable()) {
+            assertTrue("Timeout waiting for Wi-Fi Aware to change status",
+                    receiver1.waitForStateChange());
+        }
         assertFalse("Wi-Fi Aware is available (should not be)", mWifiAwareManager.isAvailable());
 
         // 2. Enable Wi-Fi

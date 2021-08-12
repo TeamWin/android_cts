@@ -20,7 +20,7 @@ import android.content.pm.PackageManager
 import android.content.pm.PermissionGroupInfo
 import android.content.pm.PermissionInfo
 import android.platform.test.annotations.AppModeFull
-import android.platform.test.annotations.SecurityTest
+import android.platform.test.annotations.AsbSecurityTest
 import androidx.test.InstrumentationRegistry
 import androidx.test.internal.runner.junit4.AndroidJUnit4ClassRunner
 import com.android.compatibility.common.util.ShellUtils.runShellCommand
@@ -125,8 +125,8 @@ class DuplicatePermissionDefinitionsTest {
         assertThat(groupAInfo.packageName).isEqualTo(APP_DEFINING_PERM_A)
     }
 
-    @SecurityTest
     @Test
+    @AsbSecurityTest(cveBugId = [146211400])
     fun cannotInstallAppsDefiningSamePermissionGroupWhenDifferentCert() {
         install(APK_DEFINING_PERM_A)
         install(APK_ALSO_DEFINING_PERM_GROUP_A_DIFFERENT_CERT)
@@ -161,8 +161,8 @@ class DuplicatePermissionDefinitionsTest {
         assertThat(permAInfo.group).isEqualTo(INVALID_GROUP)
     }
 
-    @SecurityTest
     @Test(expected = PackageManager.NameNotFoundException::class)
+    @AsbSecurityTest(cveBugId = [146211400])
     fun cannotInstallAppsDefiningPermissionWithInvalidGroup() {
         install(APK_DEFINING_PERM_WITH_INVALID_GROUP)
 

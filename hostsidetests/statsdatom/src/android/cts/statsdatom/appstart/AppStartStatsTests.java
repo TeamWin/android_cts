@@ -38,7 +38,13 @@ public class AppStartStatsTests extends DeviceTestCase implements IBuildReceiver
     public static final int WAIT_TIME_MS = 3_500;
     public static final String COMMAND_ENABLE_APP_HIBERNATION =
             "device_config put app_hibernation app_hibernation_enabled true";
+    private static final String CMD_GET_STAY_ON = "settings get global stay_on_while_plugged_in";
+    private static final String CMD_PUT_STAY_ON_TEMPLATE =
+            "settings put global stay_on_while_plugged_in %d";
+    private static final String CMD_ENABLE_STAY_ON =
+            "settings put global stay_on_while_plugged_in 7";
     private IBuildInfo mCtsBuild;
+    private long mOriginalStayOnSetting;
 
     @Override
     protected void setUp() throws Exception {
@@ -47,12 +53,17 @@ public class AppStartStatsTests extends DeviceTestCase implements IBuildReceiver
         ConfigUtils.removeConfig(getDevice());
         ReportUtils.clearReports(getDevice());
         DeviceUtils.installStatsdTestApp(getDevice(), mCtsBuild);
+        mOriginalStayOnSetting = Long.parseLong(
+                getDevice().executeShellCommand(CMD_GET_STAY_ON).trim());
+        getDevice().executeShellCommand(CMD_ENABLE_STAY_ON);
         DeviceUtils.turnScreenOn(getDevice());
         Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
     }
 
     @Override
     protected void tearDown() throws Exception {
+        getDevice().executeShellCommand(
+                String.format(CMD_PUT_STAY_ON_TEMPLATE, mOriginalStayOnSetting));
         ConfigUtils.removeConfig(getDevice());
         ReportUtils.clearReports(getDevice());
         DeviceUtils.uninstallStatsdTestApp(getDevice());
@@ -68,6 +79,8 @@ public class AppStartStatsTests extends DeviceTestCase implements IBuildReceiver
         final int atomTag = AtomsProto.Atom.APP_START_OCCURRED_FIELD_NUMBER;
         ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
                 atomTag,  /*uidInAttributionChain=*/false);
+        getDevice().executeShellCommand(getGlobalHibernationCommand(
+                DeviceUtils.STATSD_ATOM_TEST_PKG, false));
 
         DeviceUtils.runActivity(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
                 STATSD_CTS_FOREGROUND_ACTIVITY, "action", "action.sleep_top", WAIT_TIME_MS);
@@ -81,7 +94,7 @@ public class AppStartStatsTests extends DeviceTestCase implements IBuildReceiver
         assertThat(atom.getActivityName())
                 .isEqualTo("com.android.server.cts.device.statsdatom.StatsdCtsForegroundActivity");
         assertThat(atom.getIsInstantApp()).isFalse();
-        assertThat(atom.getActivityStartMillis()).isGreaterThan(0L);
+        assertThat(atom.getActivityStartTimestampMillis()).isGreaterThan(0L);
         assertThat(atom.getTransitionDelayMillis()).isGreaterThan(0);
         assertThat(atom.getIsHibernating()).isFalse();
     }

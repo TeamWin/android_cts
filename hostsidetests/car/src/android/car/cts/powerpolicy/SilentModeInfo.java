@@ -16,7 +16,7 @@
 
 package android.car.cts.powerpolicy;
 
-import java.util.Arrays;
+import java.util.Objects;
 
 public final class SilentModeInfo {
     private static final String[] ATTR_HEADERS = {"Monitoring HW state signal",
@@ -27,21 +27,22 @@ public final class SilentModeInfo {
     public static final SilentModeInfo NO_SILENT = new SilentModeInfo(true, false, false);
     public static final SilentModeInfo FORCED_SILENT = new SilentModeInfo(false, true, true);
 
-    private final boolean[] mAttrs;
+    private final boolean mForcedSilentMode;
+    private final boolean mMonitoringHWStateSignal;
+    private final boolean mSilentModeByHWStateSignal;
 
     private SilentModeInfo(boolean monitoring, boolean byHW, boolean forced) {
-        mAttrs = new boolean[] {monitoring, byHW, forced};
-    }
-
-    private SilentModeInfo(boolean[] attrs) throws Exception {
-        if (attrs.length != NUMBER_OF_ATTRS) {
-            throw new IllegalArgumentException("attrs.length must be 3");
-        }
-        mAttrs = attrs;
+        mMonitoringHWStateSignal = monitoring;
+        mSilentModeByHWStateSignal = byHW;
+        mForcedSilentMode = forced;
     }
 
     public boolean getForcedSilentMode() {
-        return mAttrs[2];
+        return mForcedSilentMode;
+    }
+
+    public boolean getMonitoringHWStateSignal() {
+        return mMonitoringHWStateSignal;
     }
 
     @Override
@@ -49,17 +50,21 @@ public final class SilentModeInfo {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         SilentModeInfo that = (SilentModeInfo) o;
-        return Arrays.equals(mAttrs, that.mAttrs);
+        return mMonitoringHWStateSignal == that.mMonitoringHWStateSignal
+                && mSilentModeByHWStateSignal == that.mSilentModeByHWStateSignal
+                && mForcedSilentMode == that.mForcedSilentMode;
     }
 
     @Override
     public int hashCode() {
-        return Arrays.hashCode(mAttrs);
+        return Objects.hash(mMonitoringHWStateSignal,
+                mSilentModeByHWStateSignal, mForcedSilentMode);
     }
 
     @Override
     public String toString() {
-        return Arrays.toString(mAttrs);
+        return String.format("SilentModeInfo: %b, %b, %b", mMonitoringHWStateSignal,
+                mSilentModeByHWStateSignal, mForcedSilentMode);
     }
 
     public static SilentModeInfo parse(String cmdOutput) throws Exception {
@@ -70,17 +75,27 @@ public final class SilentModeInfo {
             throw new IllegalArgumentException(
                     "SilentModeQueryResult.parse(): malformatted cmd output: " + cmdOutput);
         }
-        for (int idx = 0; idx < SilentModeInfo.ATTR_HEADERS.length; idx++) {
+        for (int idx = 0; idx < ATTR_HEADERS.length; idx++) {
             String[] tokens = lines[idx].trim().split(":");
-            if (tokens.length != 2
-                    || !tokens[0].contains(SilentModeInfo.ATTR_HEADERS[idx])) {
+            if (tokens.length != 2) {
                 throw new IllegalArgumentException(
                         "SilentModeQueryResult.parse(): malformatted attr line: " + lines[idx]);
             }
-            attrs[idx] = Boolean.parseBoolean(tokens[1].trim());
+            int hdrIdx;
+            String hdr = tokens[0];
+            String val = tokens[1];
+            for (hdrIdx = 0; hdrIdx < ATTR_HEADERS.length; hdrIdx++) {
+                if (hdr.contains(ATTR_HEADERS[hdrIdx])) {
+                    break;
+                }
+            }
+            if (hdrIdx == ATTR_HEADERS.length) {
+                throw new IllegalArgumentException(
+                        "SilentModeQueryResult.parse(): unknown header: " + hdr);
+            }
+            attrs[hdrIdx] = Boolean.parseBoolean(val.trim());
         }
 
-        return new SilentModeInfo(attrs);
+        return new SilentModeInfo(attrs[0], attrs[1], attrs[2]);
     }
-
 }

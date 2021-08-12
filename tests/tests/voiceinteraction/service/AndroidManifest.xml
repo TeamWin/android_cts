@@ -18,8 +18,18 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="android.voiceinteraction.service">
 
-    <application>
+    <application android:label="Voice service">
       <uses-library android:name="android.test.runner" />
+      <service android:name="android.voiceinteraction.service.NoOpVoiceInteractionService"
+              android:label="NoOpVoiceInteractionService has recognition"
+              android:permission="android.permission.BIND_VOICE_INTERACTION"
+              android:exported="true">
+          <meta-data android:name="android.voice_interaction"
+                     android:resource="@xml/has_recognition_interaction_service" />
+          <intent-filter>
+              <action android:name="android.service.voice.VoiceInteractionService" />
+          </intent-filter>
+      </service>
       <service android:name=".MainInteractionService"
               android:label="CTS test voice interaction service"
               android:permission="android.permission.BIND_VOICE_INTERACTION"

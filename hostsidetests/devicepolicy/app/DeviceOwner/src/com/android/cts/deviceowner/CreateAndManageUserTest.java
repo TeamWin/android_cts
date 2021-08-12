@@ -38,6 +38,8 @@ import android.provider.Settings;
 import android.util.DebugUtils;
 import android.util.Log;
 
+import com.android.compatibility.common.util.SystemUtil;
+
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collections;
@@ -230,8 +232,9 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
     @SuppressWarnings("unused")
     private static void assertAllSystemAppsInstalled(Context context,
             DevicePolicyManager devicePolicyManager, ComponentName componentName,
-            Set<String> currentUserPackages) {
+            Set<String> preInstalledSystemPackages) {
         Log.d(TAG, "assertAllSystemAppsInstalled(): checking apps for user " + context.getUserId());
+
         PackageManager packageManager = context.getPackageManager();
         // First get a set of installed package names
         Set<String> installedPackageNames = packageManager
@@ -247,16 +250,14 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
                 .filter(((Predicate<String>) installedPackageNames::contains).negate())
                 .collect(Collectors.toSet());
 
-        if (isHeadlessSystemUserMode()) {
-            // Finally, filter out packages that are not installed for users of type FULL
-            Iterator<String> iterator = uninstalledPackageNames.iterator();
-            while (iterator.hasNext()) {
-                String pkg = iterator.next();
-                if (!currentUserPackages.contains(pkg)) {
-                    Log.d(TAG, "assertAllSystemAppsInstalled(): ignoring package " + pkg
-                            + " as it's not installed on current user");
-                    iterator.remove();
-                }
+        // Finally, filter out packages that are not pre-installed for the user
+        Iterator<String> iterator = uninstalledPackageNames.iterator();
+        while (iterator.hasNext()) {
+            String pkg = iterator.next();
+            if (!preInstalledSystemPackages.contains(pkg)) {
+                Log.i(TAG, "assertAllSystemAppsInstalled(): ignoring package " + pkg
+                        + " as it's not pre-installed on current user");
+                iterator.remove();
             }
         }
 
@@ -265,30 +266,26 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
     }
 
     public void testCreateAndManageUser_LeaveAllSystemApps() throws Exception {
-
-        Set<String> installedPackagesOnCurrentUser = null;
-        if (isHeadlessSystemUserMode()) {
-            // On headless system user mode some packages might not be installed due to the userType
-            // allowlist (which defines which packages are installed for users of type FULL or
-            // SYSTEM). As there is no API to get these packages, we need to query all packages
-            // installed for current user here, and pass it around in the bundle (as the receiver
-            // in the new user doesn't have INTERACT_ACROSS_USER to query).
-
-            int currentUserId = ActivityManager.getCurrentUser();
-            installedPackagesOnCurrentUser = mContext.getPackageManager()
-                    .getInstalledApplicationsAsUser(/* flags= */ 0, currentUserId)
-                    .stream()
-                    .map(applicationInfo -> applicationInfo.packageName)
-                    .collect(Collectors.toSet());
-            Log.d(TAG, "installed apps for current user (" + currentUserId + "): "
-                    + installedPackagesOnCurrentUser);
+        int currentUserId = ActivityManager.getCurrentUser();
+        // TODO: instead of hard-coding the user type, calling getPreInstallableSystemPackages(),
+        // and passing the packages to runCrossUserVerification() / assertAllSystemAppsInstalled(),
+        // ideally the later should call um.getPreInstallableSystemPackages(um.getUsertype())
+        // (where um is the UserManager with the context of the newly created user),
+        // but currently the list of pre-installed apps is passed to the new user in the bundle.
+        // Given that these tests will be refactored anyways, it's not worth to try to change it.
+        String newUserType = UserManager.USER_TYPE_FULL_SECONDARY;
+        Set<String> preInstalledSystemPackages = SystemUtil.callWithShellPermissionIdentity(
+                () -> UserManager.get(mContext).getPreInstallableSystemPackages(newUserType));
+        if (preInstalledSystemPackages != null) {
+            Log.d(TAG, preInstalledSystemPackages.size() + " pre-installed system apps for "
+                    + "new user of type " + newUserType + ": " + preInstalledSystemPackages);
         } else {
-            installedPackagesOnCurrentUser = Collections.emptySet();
+            Log.d(TAG, "no pre-installed system apps allowlist for new user of type" + newUserType);
         }
 
         runCrossUserVerification(/* callback= */ null,
                 DevicePolicyManager.LEAVE_ALL_SYSTEM_APPS_ENABLED, "assertAllSystemAppsInstalled",
-                installedPackagesOnCurrentUser);
+                preInstalledSystemPackages);
         PrimaryUserService.assertCrossUserCallArrived();
     }
 

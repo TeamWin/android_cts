@@ -26,6 +26,7 @@ import android.compat.testing.Classpaths.ClasspathType;
 
 import com.android.compatibility.common.util.DeviceInfo;
 import com.android.compatibility.common.util.HostInfoStore;
+import com.android.modules.utils.build.testing.DeviceSdkLevel;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
 
@@ -44,10 +45,12 @@ public class ClasspathDeviceInfo extends DeviceInfo {
     private static final String HELPER_APP_CLASS = HELPER_APP_PACKAGE + ".ClasspathDeviceTest";
 
     private ITestDevice mDevice;
+    private DeviceSdkLevel deviceSdkLevel;
 
     @Override
     protected void collectDeviceInfo(HostInfoStore store) throws Exception {
         mDevice = getDevice();
+        deviceSdkLevel = new DeviceSdkLevel(mDevice);
 
         store.startArray("jars");
         collectClasspathsJars(store);
@@ -75,6 +78,10 @@ public class ClasspathDeviceInfo extends DeviceInfo {
     }
 
     private void collectSharedLibraryJars(HostInfoStore store) throws Exception {
+        if (!deviceSdkLevel.isDeviceAtLeastS()) {
+            return;
+        }
+
         // Trigger helper app to collect and write info about shared libraries on the device.
         assertThat(runDeviceTests(HELPER_APP_PACKAGE, HELPER_APP_CLASS)).isTrue();
 

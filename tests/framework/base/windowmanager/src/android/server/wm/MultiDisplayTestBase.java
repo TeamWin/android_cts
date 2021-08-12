@@ -182,12 +182,16 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
         private static final Pattern OVERRIDE_DENSITY =
                 Pattern.compile("Override density: (\\d+)");
 
+        /** The size of the physical display. */
         @NonNull
         final Size physicalSize;
+        /** The density of the physical display. */
         final int physicalDensity;
 
+        /** The pre-existing size override applied to a logical display. */
         @Nullable
         final Size overrideSize;
+        /** The pre-existing density override applied to a logical display. */
         @Nullable
         final Integer overrideDensity;
 
@@ -300,8 +304,21 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
         }
 
         void changeDisplayMetrics(double sizeRatio, double densityRatio) {
-            final Size originalSize = mInitialDisplayMetrics.physicalSize;
-            final int density = mInitialDisplayMetrics.physicalDensity;
+            // Given a display may already have an override applied before the test is begun,
+            // resize based upon the override.
+            final Size originalSize;
+            final int density;
+            if (mInitialDisplayMetrics.overrideSize != null) {
+                originalSize = mInitialDisplayMetrics.overrideSize;
+            } else {
+                originalSize = mInitialDisplayMetrics.physicalSize;
+            }
+
+            if (mInitialDisplayMetrics.overrideDensity != null) {
+                density = mInitialDisplayMetrics.overrideDensity;
+            } else {
+                density = mInitialDisplayMetrics.physicalDensity;
+            }
 
             final Size overrideSize = new Size((int)(originalSize.getWidth() * sizeRatio),
                     (int)(originalSize.getHeight() * sizeRatio));

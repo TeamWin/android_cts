@@ -166,12 +166,6 @@ public class AudioRecordSharedAudioTest {
                             -1 /* startFromMillis */);
                 });
 
-        assertThrows(IllegalArgumentException.class, () -> {
-                    record.shareAudioHistory(
-                            InstrumentationRegistry.getTargetContext().getPackageName(),
-                            10000 /* startFromMillis */);
-                });
-
         record.stop();
         record.release();
     }

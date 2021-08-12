@@ -16,6 +16,8 @@
 
 package com.android.bedstead.nene.permissions;
 
+import static android.content.pm.PackageManager.PERMISSION_GRANTED;
+
 import android.app.UiAutomation;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -41,8 +43,9 @@ public class Permissions {
 
     public static final String MANAGE_PROFILE_AND_DEVICE_OWNERS =
             "android.permission.MANAGE_PROFILE_AND_DEVICE_OWNERS";
-
     public static final String MANAGE_DEVICE_ADMINS = "android.permission.MANAGE_DEVICE_ADMINS";
+    public static final String NOTIFY_PENDING_SYSTEM_UPDATE =
+            "android.permission.NOTIFY_PENDING_SYSTEM_UPDATE";
 
     private static final String LOG_TAG = "Permissions";
 
@@ -163,7 +166,11 @@ public class Permissions {
             Log.d(LOG_TAG , "Trying to grant " + permission);
             if (resolvedInstrumentedPackage.grantedPermissions(sUser).contains(permission)) {
                 // Already granted, can skip
-                Log.d(LOG_TAG, permission + " already granted");
+                Log.d(LOG_TAG, permission + " already granted at runtime");
+            } else if (resolvedInstrumentedPackage.requestedPermissions().contains(permission)
+                    && sContext.checkSelfPermission(permission) == PERMISSION_GRANTED) {
+                // Already granted, can skip
+                Log.d(LOG_TAG, permission + " already granted from manifest");
             } else if (SUPPORTS_ADOPT_SHELL_PERMISSIONS
                     && sShellPackage.requestedPermissions().contains(permission)) {
                 adoptedShellPermissions.add(permission);

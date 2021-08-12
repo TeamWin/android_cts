@@ -18,6 +18,7 @@ package android.media.cts;
 
 import android.content.Context;
 import android.media.MediaCodec;
+import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
 import android.media.MediaMuxer;
 import android.platform.test.annotations.AppModeFull;
@@ -36,6 +37,7 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -171,16 +173,8 @@ public class EncoderTest extends AndroidTestCase {
         testEncoderWithFormats(MediaFormat.MIMETYPE_AUDIO_AAC, formats);
     }
 
-    private void testEncoderWithFormats(
-            String mime, List<MediaFormat> formatList) {
-        MediaFormat[] formats = formatList.toArray(new MediaFormat[formatList.size()]);
-        String[] componentNames = MediaUtils.getEncoderNames(formats);
-        if (componentNames.length == 0) {
-            MediaUtils.skipTest("no encoders found for " + Arrays.toString(formats));
-            return;
-        }
-
-        int ThreadCount = 3;
+    private void testEncoderWithFormatsParallel(String mime, List<MediaFormat> formats,
+            List<String> componentNames, int ThreadCount) {
         int testsStarted = 0;
         int allowPerTest = 30;
 
@@ -203,6 +197,42 @@ public class EncoderTest extends AndroidTestCase {
                     pool.awaitTermination(waitingSeconds, TimeUnit.SECONDS));
         } catch (InterruptedException e) {
             fail("interrupted while waiting for encoder threads");
+        }
+    }
+
+    private void testEncoderWithFormats(
+            String mime, List<MediaFormat> formatList) {
+        MediaFormat[] formats = formatList.toArray(new MediaFormat[formatList.size()]);
+        String[] componentNames = MediaUtils.getEncoderNames(formats);
+        if (componentNames.length == 0) {
+            MediaUtils.skipTest("no encoders found for " + Arrays.toString(formats));
+            return;
+        }
+
+        final int ThreadPoolCount = 3;
+        List<String>[] componentNamesGrouped = new List[ThreadPoolCount];
+        for (int i = 0; i < ThreadPoolCount; i++) {
+            componentNamesGrouped[i] = new ArrayList<>();
+        }
+        for (String componentName : componentNames) {
+            MediaCodec codec = null;
+            try {
+                codec = MediaCodec.createByCodecName(componentName);
+                MediaCodecInfo info = codec.getCodecInfo();
+                MediaCodecInfo.CodecCapabilities cap = info.getCapabilitiesForType(mime);
+                int instances = Math.min(cap.getMaxSupportedInstances(), ThreadPoolCount);
+                assertTrue(instances >= 1 && instances <= ThreadPoolCount);
+                componentNamesGrouped[instances - 1].add(componentName);
+            } catch (Exception e) {
+                fail("codec '" + componentName + "' failed construction.");
+            } finally {
+                codec.release();
+            }
+        }
+        for (int i = 0; i < ThreadPoolCount; i++) {
+            if (componentNamesGrouped[i].size() > 0) {
+                testEncoderWithFormatsParallel(mime, formatList, componentNamesGrouped[i], i + 1);
+            }
         }
     }
 

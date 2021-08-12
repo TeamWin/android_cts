@@ -4971,6 +4971,11 @@ public class TextViewTest {
     public void testSetLineHeight() {
         mTextView = new TextView(mActivity);
         mTextView.setText("This is some random text");
+
+        // The line height of RobotoFont is (1900 + 500) / 2048 em.
+        // Not to accidentally divide the line height into half, use the small text size.
+        mTextView.setTextSize(10f);
+
         final float lineSpacingExtra = 50;
         final float lineSpacingMultiplier = 0.2f;
         mTextView.setLineSpacing(lineSpacingExtra, lineSpacingMultiplier);

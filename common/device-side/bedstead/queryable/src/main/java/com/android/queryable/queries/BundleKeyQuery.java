@@ -25,7 +25,7 @@ import com.android.queryable.Queryable;
 import java.io.Serializable;
 
 /** Query for a single key in a {@link Bundle}. */
-public interface BundleKeyQuery<E extends Queryable> extends Serializable {
+public interface BundleKeyQuery<E extends Queryable> {
 
     /** Require that the key exists. */
     E exists();

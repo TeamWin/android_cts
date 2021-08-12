@@ -20,7 +20,7 @@ import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.compatibility.common.util.CrashUtils;
 
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -52,8 +52,8 @@ public class TestMedia extends SecurityTestCase {
      * b/17769851
      * Vulnerability Behaviour: EXIT_VULNERABLE (113)
      */
-    @SecurityTest(minPatchLevel = "2015-12")
     @Test
+    @AsbSecurityTest(cveBugId = 17769851)
     public void testPocCVE_2015_6616() throws Exception {
         pocPusher.only64();
         String inputFiles[] = {"cve_2015_6616.mp4"};
@@ -65,8 +65,8 @@ public class TestMedia extends SecurityTestCase {
      * b/37239013
      * Vulnerability Behaviour: EXIT_VULNERABLE (113)
      */
-    @SecurityTest(minPatchLevel = "2017-07")
     @Test
+    @AsbSecurityTest(cveBugId = 37239013)
     public void testPocCVE_2017_0697() throws Exception {
         String inputFiles[] = {"cve_2017_0697.mp4"};
         AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2017-0697",
@@ -77,8 +77,8 @@ public class TestMedia extends SecurityTestCase {
      * b/127702368
      * Vulnerability Behaviour: EXIT_VULNERABLE (113)
      */
-    @SecurityTest(minPatchLevel = "2019-08")
     @Test
+    @AsbSecurityTest(cveBugId = 127702368)
     public void testPocCVE_2019_2126() throws Exception {
         AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2019-2126", null, getDevice());
     }
@@ -87,8 +87,8 @@ public class TestMedia extends SecurityTestCase {
      * b/66969349
      * Vulnerability Behaviour: SIGSEGV in media.codec
      */
-    @SecurityTest(minPatchLevel = "2018-01")
     @Test
+    @AsbSecurityTest(cveBugId = 66969349)
     public void testPocCVE_2017_13180() throws Exception {
         String processPatternStrings[] = {"media\\.codec", "omx@\\d+?\\.\\d+?-service"};
         AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2017-13180", null, getDevice(),
@@ -99,8 +99,8 @@ public class TestMedia extends SecurityTestCase {
      * b/111210196
      * Vulnerability Behaviour: EXIT_VULNERABLE (113)
      */
-    @SecurityTest(minPatchLevel = "2019-12")
     @Test
+    @AsbSecurityTest(cveBugId = 111210196)
     public void testPocCVE_2019_2228() throws Exception {
         String inputFiles[] = {"cve_2019_2228_ipp.mp4"};
         AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2019-2228",
@@ -111,8 +111,8 @@ public class TestMedia extends SecurityTestCase {
      * b/157650336
      * Vulnerability Behaviour: SIGSEGV in self / EXIT_VULNERABLE (113)
      */
-    @SecurityTest(minPatchLevel = "2020-11")
     @Test
+    @AsbSecurityTest(cveBugId = 157650336)
     public void testPocCVE_2020_0450() throws Exception {
         AdbUtils.assumeHasNfc(getDevice());
         AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2020-0450", null, getDevice());
@@ -122,8 +122,8 @@ public class TestMedia extends SecurityTestCase {
      * b/156997193
      * Vulnerability Behaviour: SIGABRT in self
      */
-    @SecurityTest(minPatchLevel = "2020-11")
     @Test
+    @AsbSecurityTest(cveBugId = 156997193)
     public void testPocCVE_2020_0409() throws Exception {
         String signals[] = {CrashUtils.SIGSEGV, CrashUtils.SIGBUS, CrashUtils.SIGABRT};
         String binaryName = "CVE-2020-0409";
@@ -137,8 +137,8 @@ public class TestMedia extends SecurityTestCase {
      * b/161894517
      * Vulnerability Behaviour: SIGABRT in self
      */
-    @SecurityTest(minPatchLevel = "2020-10")
     @Test
+    @AsbSecurityTest(cveBugId = 161894517)
     public void testPocCVE_2020_0421() throws Exception {
         String signals[] = {CrashUtils.SIGSEGV, CrashUtils.SIGBUS, CrashUtils.SIGABRT};
         String binaryName = "CVE-2020-0421";
@@ -152,8 +152,8 @@ public class TestMedia extends SecurityTestCase {
      * b/132082342
      * Vulnerability Behaviour: SIGSEGV in self
      */
-    @SecurityTest(minPatchLevel = "2019-08")
     @Test
+    @AsbSecurityTest(cveBugId = 132082342)
     public void testPocCVE_2019_2133() throws Exception {
         AdbUtils.assumeHasNfc(getDevice());
         AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2019-2133", null, getDevice());
@@ -163,8 +163,8 @@ public class TestMedia extends SecurityTestCase {
      * b/132083376
      * Vulnerability Behaviour: SIGSEGV in self
      */
-    @SecurityTest(minPatchLevel = "2019-08")
     @Test
+    @AsbSecurityTest(cveBugId = 132083376)
     public void testPocCVE_2019_2134() throws Exception {
         AdbUtils.assumeHasNfc(getDevice());
         AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2019-2134", null, getDevice());
@@ -174,8 +174,8 @@ public class TestMedia extends SecurityTestCase {
      * b/31470908
      * Vulnerability Behaviour: SIGSEGV in self
      */
-    @SecurityTest(minPatchLevel = "2017-04")
     @Test
+    @AsbSecurityTest(cveBugId = 31470908)
     public void testPocCVE_2016_10244() throws Exception {
         String inputFiles[] = {"cve_2016_10244"};
         AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2016-10244",
@@ -186,8 +186,8 @@ public class TestMedia extends SecurityTestCase {
      * b/27793367
      * Vulnerability Behaviour: SIGSEGV in media.codec
      */
-    @SecurityTest(minPatchLevel = "2016-06")
     @Test
+    @AsbSecurityTest(cveBugId = 27793367)
     public void testPocCVE_2016_2485() throws Exception {
         String inputFiles[] = {"cve_2016_2485.raw"};
         String processPatternStrings[] = {"media\\.codec", "omx@\\d+?\\.\\d+?-service"};
@@ -200,8 +200,8 @@ public class TestMedia extends SecurityTestCase {
      * b/141890807
      * Vulnerability Behaviour: EXIT_VULNERABLE (113)
      */
-    @SecurityTest(minPatchLevel = "2020-01")
     @Test
+    @AsbSecurityTest(cveBugId = 141890807)
     public void testPocCVE_2020_0007() throws Exception {
         AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2020-0007", null, getDevice());
     }
@@ -210,8 +210,8 @@ public class TestMedia extends SecurityTestCase {
      * b/118372692
      * Vulnerability Behaviour: SIGSEGV in self
      */
-    @SecurityTest(minPatchLevel = "2019-02")
     @Test
+    @AsbSecurityTest(cveBugId = 118372692)
     public void testPocCVE_2019_1988() throws Exception {
         assumeThat(getDevice().getProperty("ro.config.low_ram"), not(is("true")));
         String inputFiles[] = {"cve_2019_1988.mp4"};
@@ -223,8 +223,8 @@ public class TestMedia extends SecurityTestCase {
      * b/63522430
      * Vulnerability Behaviour: SIGSEGV in media.codec
      */
-    @SecurityTest(minPatchLevel = "2018-01")
     @Test
+    @AsbSecurityTest(cveBugId = 63522430)
     public void testPocCVE_2017_0817() throws Exception {
         String processPatternStrings[] = {"media\\.codec", "omx@\\d+?\\.\\d+?-service"};
         AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2017-0817", null, getDevice(),
@@ -235,8 +235,8 @@ public class TestMedia extends SecurityTestCase {
      * b/36104177
      * Vulnerability Behaviour: EXIT_VULNERABLE (113)
      */
-    @SecurityTest(minPatchLevel = "2017-09")
     @Test
+    @AsbSecurityTest(cveBugId = 36104177)
     public void testPocCVE_2017_0670() throws Exception {
         AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2017-0670", null, getDevice());
     }
@@ -245,8 +245,8 @@ public class TestMedia extends SecurityTestCase {
      * b/68159767
      * Vulnerability Behaviour: EXIT_VULNERABLE (113)
      */
-    @SecurityTest(minPatchLevel = "2018-02")
     @Test
+    @AsbSecurityTest(cveBugId = 68159767)
     public void testPocCVE_2017_13234() throws Exception {
         String inputFiles[] = { "cve_2017_13234.xmf" };
         AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2017-13234",
@@ -257,8 +257,8 @@ public class TestMedia extends SecurityTestCase {
      * b/64340921
      * Vulnerability Behaviour: SIGABRT in audioserver
      */
-    @SecurityTest(minPatchLevel = "2018-02")
     @Test
+    @AsbSecurityTest(cveBugId = 64340921)
     public void testPocCVE_2017_0837() throws Exception {
         String signals[] = {CrashUtils.SIGSEGV, CrashUtils.SIGBUS, CrashUtils.SIGABRT};
         AdbUtils.pocConfig testConfig = new AdbUtils.pocConfig("CVE-2017-0837", getDevice());
@@ -274,7 +274,7 @@ public class TestMedia extends SecurityTestCase {
      * Vulnerability Behaviour: SIGABRT by -fstack-protector
      */
     @Test
-    @SecurityTest(minPatchLevel = "2018-09")
+    @AsbSecurityTest(cveBugId = 62151041)
     public void testPocCVE_2018_9466_CVE_2017_9047() throws Exception {
         String binaryName = "CVE-2018-9466-CVE-2017-9047";
         String signals[] = {CrashUtils.SIGSEGV, CrashUtils.SIGBUS, CrashUtils.SIGABRT};
@@ -288,7 +288,7 @@ public class TestMedia extends SecurityTestCase {
      * Vulnerability Behaviour: SIGABRT by -fstack-protector
      */
     @Test
-    @SecurityTest(minPatchLevel = "2018-09")
+    @AsbSecurityTest(cveBugId = 62151041)
     public void testPocCVE_2018_9466_CVE_2017_9048() throws Exception {
         String binaryName = "CVE-2018-9466-CVE-2017-9048";
         String signals[] = {CrashUtils.SIGSEGV, CrashUtils.SIGBUS, CrashUtils.SIGABRT};
@@ -302,7 +302,7 @@ public class TestMedia extends SecurityTestCase {
      * Vulnerability Behaviour: SIGSEGV in self
      */
     @Test
-    @SecurityTest(minPatchLevel = "2018-09")
+    @AsbSecurityTest(cveBugId = 62151041)
     public void testPocCVE_2018_9466_CVE_2017_9049() throws Exception {
         String binaryName = "CVE-2018-9466-CVE-2017-9049";
         String inputFiles[] = {"cve_2018_9466_cve_2017_9049.xml"};
@@ -320,7 +320,7 @@ public class TestMedia extends SecurityTestCase {
      * Vulnerability Behaviour: SIGSEGV in self
      */
     @Test
-    @SecurityTest(minPatchLevel = "2018-09")
+    @AsbSecurityTest(cveBugId = 62151041)
     public void testPocCVE_2018_9466_CVE_2017_9050() throws Exception {
         String binaryName = "CVE-2018-9466-CVE-2017-9049";
         String inputFiles[] = {"cve_2018_9466_cve_2017_9050.xml"};
@@ -338,8 +338,8 @@ public class TestMedia extends SecurityTestCase {
      * b/23247055
      * Vulnerability Behaviour: SIGABRT in self
      */
-    @SecurityTest(minPatchLevel = "2015-10")
     @Test
+    @AsbSecurityTest(cveBugId = 20674086)
     public void testPocCVE_2015_3873() throws Exception {
         String inputFiles[] = {"cve_2015_3873.mp4"};
         String binaryName = "CVE-2015-3873";
@@ -357,8 +357,8 @@ public class TestMedia extends SecurityTestCase {
      * b/62948670
      * Vulnerability Behaviour: SIGSEGV in media.codec
      */
-    @SecurityTest(minPatchLevel = "2017-11")
     @Test
+    @AsbSecurityTest(cveBugId = 62948670)
     public void testPocCVE_2017_0840() throws Exception {
         pocPusher.only32();
         String processPatternStrings[] = {"media\\.codec", "omx@\\d+?\\.\\d+?-service"};
@@ -370,8 +370,8 @@ public class TestMedia extends SecurityTestCase {
      * b/69065651
      * Vulnerability Behaviour: SIGSEGV in media.codec
      */
-    @SecurityTest(minPatchLevel = "2018-02")
     @Test
+    @AsbSecurityTest(cveBugId = 69065651)
     public void testPocCVE_2017_13241() throws Exception {
         pocPusher.only32();
         String processPatternStrings[] = {"media\\.codec", "omx@\\d+?\\.\\d+?-service"};
@@ -383,8 +383,8 @@ public class TestMedia extends SecurityTestCase {
      * b/111603051
      * Vulnerability Behaviour: SIGSEGV in self
      */
-    @SecurityTest(minPatchLevel = "2018-10")
     @Test
+    @AsbSecurityTest(cveBugId = 111603051)
     public void testPocCVE_2018_9491() throws Exception {
         AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2018-9491", null, getDevice());
     }
@@ -393,8 +393,8 @@ public class TestMedia extends SecurityTestCase {
      * b/79662501
      * Vulnerability Behaviour: EXIT_VULNERABLE (113)
      */
-    @SecurityTest(minPatchLevel = "2018-09")
     @Test
+    @AsbSecurityTest(cveBugId = 79662501)
     public void testPocCVE_2018_9472() throws Exception {
         AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2018-9472", null, getDevice());
     }
@@ -403,8 +403,8 @@ public class TestMedia extends SecurityTestCase {
      * b/36554207
      * Vulnerability Behaviour: SIGSEGV in self
      **/
-    @SecurityTest(minPatchLevel = "2017-06")
     @Test
+    @AsbSecurityTest(cveBugId = 36554207)
     public void testPocCVE_2016_4658() throws Exception {
         String inputFiles[] = {"cve_2016_4658.xml"};
         AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2016-4658",
@@ -416,8 +416,8 @@ public class TestMedia extends SecurityTestCase {
      * b/36554209
      * Vulnerability Behaviour: SIGSEGV in self
      **/
-    @SecurityTest(minPatchLevel = "2017-06")
     @Test
+    @AsbSecurityTest(cveBugId = 36554209)
     public void testPocCVE_2016_5131() throws Exception {
         String inputFiles[] = {"cve_2016_5131.xml"};
         AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2016-5131",
@@ -429,8 +429,8 @@ public class TestMedia extends SecurityTestCase {
      * b/62800140
      * Vulnerability Behaviour: SIGSEGV in self
      */
-    @SecurityTest(minPatchLevel = "2017-10")
     @Test
+    @AsbSecurityTest(cveBugId = 62800140)
     public void testPocCVE_2017_0814() throws Exception {
         AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2017-0814", null, getDevice());
     }
@@ -439,8 +439,8 @@ public class TestMedia extends SecurityTestCase {
      * b/65540999
      * Vulnerability Behaviour: Assert failure
      **/
-    @SecurityTest(minPatchLevel = "2017-11")
     @Test
+    @AsbSecurityTest(cveBugId = 65540999)
     public void testPocCVE_2017_0847() throws Exception {
         String cmdOut = AdbUtils.runCommandLine("ps -eo cmd,gid | grep mediametrics", getDevice());
         if (cmdOut.length() > 0) {
@@ -457,8 +457,8 @@ public class TestMedia extends SecurityTestCase {
      * b/112005441
      * Vulnerability Behaviour: EXIT_VULNERABLE (113)
      */
-    @SecurityTest(minPatchLevel = "2019-09")
     @Test
+    @AsbSecurityTest(cveBugId = 112005441)
     public void testPocCVE_2019_9313() throws Exception {
         AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2019-9313", null, getDevice());
     }
@@ -467,8 +467,8 @@ public class TestMedia extends SecurityTestCase {
      * b/112159345
      * Vulnerability Behaviour: SIGSEGV in self
      **/
-    @SecurityTest(minPatchLevel = "2018-01")
     @Test
+    @AsbSecurityTest(cveBugId = 112159345)
     public void testPocCVE_2018_9527() throws Exception {
         AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2018-9527", null, getDevice());
     }
@@ -482,8 +482,8 @@ public class TestMedia extends SecurityTestCase {
      * b/158762825
      * Vulnerability Behaviour: SIGABRT in self
      */
-    @SecurityTest(minPatchLevel = "2020-11")
     @Test
+    @AsbSecurityTest(cveBugId = 158762825)
     public void testPocCVE_2020_0451() throws Exception {
         assumeFalse(moduleIsPlayManaged("com.google.android.media.swcodec"));
         String inputFiles[] = {"cve_2020_0451.aac"};
@@ -503,8 +503,8 @@ public class TestMedia extends SecurityTestCase {
      * Vulnerability Behaviour: SIGSEGV in self (Android P),
      *                          SIGABRT in self (Android Q onward)
      */
-    @SecurityTest(minPatchLevel = "2018-11")
     @Test
+    @AsbSecurityTest(cveBugId = 112891564)
     public void testPocCVE_2018_9537() throws Exception {
         String binaryName = "CVE-2018-9537";
         String signals[] = {CrashUtils.SIGSEGV, CrashUtils.SIGBUS, CrashUtils.SIGABRT};
@@ -527,8 +527,8 @@ public class TestMedia extends SecurityTestCase {
      * b/143464314
      * Vulnerability Behaviour: SIGSEGV in self / EXIT_VULNERABLE (113)
      */
-    @SecurityTest(minPatchLevel = "2020-10")
     @Test
+    @AsbSecurityTest(cveBugId = 143464314)
     public void testPocCVE_2020_0213() throws Exception {
         assumeFalse(moduleIsPlayManaged("com.google.android.media.swcodec"));
         String inputFiles[] = {"cve_2020_0213.hevc", "cve_2020_0213_info.txt"};
@@ -541,8 +541,8 @@ public class TestMedia extends SecurityTestCase {
      * b/166268541
      * Vulnerability Behaviour: SIGSEGV in media.swcodec
      */
-    @SecurityTest(minPatchLevel = "2020-12")
     @Test
+    @AsbSecurityTest(cveBugId = 166268541)
     public void testPocCVE_2020_0470() throws Exception {
         String inputFiles[] = {"cve_2020_0470.mp4"};
         String processPatternStrings[] = {"media\\.swcodec"};
@@ -555,8 +555,8 @@ public class TestMedia extends SecurityTestCase {
      * b/120426980
      * Vulnerability Behaviour: SIGABRT in self
      */
-    @SecurityTest(minPatchLevel = "2019-09")
     @Test
+    @AsbSecurityTest(cveBugId = 120426980)
     public void testPocCVE_2019_9362() throws Exception {
         String signals[] = {CrashUtils.SIGSEGV, CrashUtils.SIGBUS, CrashUtils.SIGABRT};
         String binaryName = "CVE-2019-9362";
@@ -570,8 +570,8 @@ public class TestMedia extends SecurityTestCase {
      * b/112661742
      * Vulnerability Behaviour: SIGABRT in self
      */
-    @SecurityTest(minPatchLevel = "2019-09")
     @Test
+    @AsbSecurityTest(cveBugId = 112661742)
     public void testPocCVE_2019_9308() throws Exception {
         String inputFiles[] = {"cve_2019_9308.mp4"};
         String binaryName = "CVE-2019-9308";
@@ -589,8 +589,8 @@ public class TestMedia extends SecurityTestCase {
      * b/112662995
      * Vulnerability Behaviour: SIGABRT in self
      */
-    @SecurityTest(minPatchLevel = "2019-09")
     @Test
+    @AsbSecurityTest(cveBugId = 112662995)
     public void testPocCVE_2019_9357() throws Exception {
         String signals[] = {CrashUtils.SIGSEGV, CrashUtils.SIGBUS, CrashUtils.SIGABRT};
         String binaryName = "CVE-2019-9357";
@@ -604,8 +604,8 @@ public class TestMedia extends SecurityTestCase {
      * b/109891727
      * Vulnerability Behaviour: SIGSEGV in media.codec
      */
-    @SecurityTest(minPatchLevel = "2019-09")
     @Test
+    @AsbSecurityTest(cveBugId = 109891727)
     public void testPocCVE_2019_9347() throws Exception {
         pocPusher.only32();
         String processPatternStrings[] = {"media\\.codec", "omx@\\d+?\\.\\d+?-service"};

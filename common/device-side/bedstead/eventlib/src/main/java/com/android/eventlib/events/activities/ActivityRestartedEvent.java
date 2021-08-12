@@ -63,33 +63,21 @@ public final class ActivityRestartedEvent extends Event {
     }
 
     /** Begin logging a {@link ActivityRestartedEvent}. */
-    public static ActivityRestartedEventLogger logger(Activity activity) {
-        return new ActivityRestartedEventLogger(activity);
+    public static ActivityRestartedEventLogger logger(Activity activity, android.content.pm.ActivityInfo activityInfo) {
+        return new ActivityRestartedEventLogger(activity, activityInfo);
     }
 
     /** {@link EventLogger} for {@link ActivityRestartedEvent}. */
     public static final class ActivityRestartedEventLogger
             extends EventLogger<ActivityRestartedEvent> {
-        private ActivityRestartedEventLogger(Activity activity) {
+        private ActivityRestartedEventLogger(Activity activity, android.content.pm.ActivityInfo activityInfo) {
             super(activity, new ActivityRestartedEvent());
-            setActivity(activity);
+            setActivity(activityInfo);
         }
 
         /** Set the {@link Activity} being destroyed. */
-        public ActivityRestartedEventLogger setActivity(Activity activity) {
-            mEvent.mActivity = new ActivityInfo(activity);
-            return this;
-        }
-
-        /** Set the {@link Activity} class being destroyed. */
-        public ActivityRestartedEventLogger setActivity(Class<? extends Activity> activityClass) {
-            mEvent.mActivity = new ActivityInfo(activityClass);
-            return this;
-        }
-
-        /** Set the {@link Activity} class name being destroyed. */
-        public ActivityRestartedEventLogger setActivity(String activityClassName) {
-            mEvent.mActivity = new ActivityInfo(activityClassName);
+        public ActivityRestartedEventLogger setActivity(android.content.pm.ActivityInfo activity) {
+            mEvent.mActivity = ActivityInfo.builder(activity).build();
             return this;
         }
     }

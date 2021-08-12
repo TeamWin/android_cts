@@ -16,6 +16,8 @@
 
 package android.hardware.input.cts.tests;
 
+import static org.junit.Assume.assumeTrue;
+
 import android.hardware.cts.R;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -31,6 +33,13 @@ public class SonyDualSenseBluetoothTest extends InputHidTestCase {
     // Simulates the behavior of PlayStation DualSense gamepad
     public SonyDualSenseBluetoothTest() {
         super(R.raw.sony_dualsense_bluetooth_register);
+    }
+
+    @Override
+    public void setUp() throws Exception {
+        // Do not run this test for kernel versions 4.19 and below
+        assumeTrue(isKernelVersionGreaterThan("4.19"));
+        super.setUp();
     }
 
     @Test

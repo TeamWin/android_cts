@@ -16,12 +16,59 @@
 
 package com.android.bedstead.testapp;
 
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.util.Log;
+
+import com.android.bedstead.nene.TestApis;
+import com.android.queryable.info.ActivityInfo;
+
+import java.util.HashSet;
+import java.util.Set;
+
+/**
+ * Entry point to activity querying.
+ */
 public final class TestAppActivities {
 
-    private final TestAppInstanceReference mInstance;
+    private static final TestApis sTestApis = new TestApis();
 
-    TestAppActivities(TestAppInstanceReference instance) {
+    final TestAppInstanceReference mInstance;
+    private Set<ActivityInfo> mActivities = null;
+
+    static TestAppActivities create(TestAppInstanceReference instance) {
+        TestAppActivities activities = new TestAppActivities(instance);
+        return activities;
+    }
+
+
+    private TestAppActivities(TestAppInstanceReference instance) {
         mInstance = instance;
+    }
+
+    Set<ActivityInfo> activities() {
+        if (mActivities != null) {
+            return mActivities;
+        }
+
+        mActivities = new HashSet<>();
+
+        PackageManager p = sTestApis.context().instrumentedContext().getPackageManager();
+        try {
+            PackageInfo packageInfo = p.getPackageInfo(mInstance.testApp().packageName(), /* flags= */ PackageManager.GET_ACTIVITIES);
+            for (android.content.pm.ActivityInfo activityInfo : packageInfo.activities) {
+                if (activityInfo.name.startsWith("androidx")) {
+                    // Special case: androidx adds non-logging activities
+                    continue;
+                }
+                mActivities.add(com.android.queryable.info.ActivityInfo.builder(
+                        activityInfo).build());
+            }
+        } catch (PackageManager.NameNotFoundException e) {
+            throw new IllegalStateException("Cannot query activities if app is not installed");
+        }
+
+        return mActivities;
     }
 
     /**
@@ -30,11 +77,10 @@ public final class TestAppActivities {
      * <p>Currently, this will always return the same activity.
      */
     public TestAppActivityReference any() {
-        // TODO(scottjonathan): Currently we only have one pattern for testapps and they all have
-        //  exactly one activity - so we will return it here. In future we should expose a query
-        //  interface
-        return new UnresolvedTestAppActivity(
-                mInstance,
-                mInstance.testApp().reference().component("android.testapp.activity"));
+        return query().get();
+    }
+
+    public TestAppActivitiesQueryBuilder query() {
+        return new TestAppActivitiesQueryBuilder(this);
     }
 }

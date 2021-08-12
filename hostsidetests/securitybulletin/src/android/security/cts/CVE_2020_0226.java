@@ -16,7 +16,7 @@
 
 package android.security.cts;
 
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -28,8 +28,8 @@ public class CVE_2020_0226 extends SecurityTestCase {
      * b/150226994
      * Vulnerability Behaviour: SIGSEGV in surfaceflinger
      */
-    @SecurityTest(minPatchLevel = "2020-07")
     @Test
+    @AsbSecurityTest(cveBugId = 150226994)
     public void testPocCVE_2020_0226() throws Exception {
         String processPatternStrings[] = {"surfaceflinger"};
         AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2020-0226", null, getDevice(),

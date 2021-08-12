@@ -50,6 +50,7 @@ android_test_helper_app {
     ],
     static_libs: [
         "androidx.test.rules",
+        "compatibility-device-util-axt",
         "truth-prebuilt",
     ],
     sdk_version: "test_current",

@@ -82,6 +82,7 @@ public class CtsConfigLoadingTest {
                             "hdmi",
                             "inputmethod",
                             "libcore",
+                            "libnativehelper",
                             "location",
                             "media",
                             "metrics",

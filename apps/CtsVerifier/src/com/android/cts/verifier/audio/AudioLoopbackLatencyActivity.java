@@ -64,7 +64,6 @@ public class AudioLoopbackLatencyActivity extends AudioLoopbackBaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         // we need to do this first so that the layout is inplace when the super-class inits
         setContentView(R.layout.audio_loopback_latency_activity);
-        super.onCreate(savedInstanceState);
 
         mTestButton =(Button)findViewById(R.id.audio_loopback_test_btn);
         mTestButton.setOnClickListener(mBtnClickListener);
@@ -72,6 +71,8 @@ public class AudioLoopbackLatencyActivity extends AudioLoopbackBaseActivity {
         setPassFailButtonClickListeners();
         getPassButton().setEnabled(false);
         setInfoResources(R.string.audio_loopback_latency_test, R.string.audio_loopback_info, -1);
+
+        super.onCreate(savedInstanceState);
     }
 
     protected void startAudioTest() {
@@ -82,8 +83,14 @@ public class AudioLoopbackLatencyActivity extends AudioLoopbackBaseActivity {
     protected void handleTestCompletion() {
         super.handleTestCompletion();
 
-        boolean resultValid = mMeanConfidence >= CONFIDENCE_THRESHOLD
-                && mMeanLatencyMillis > 1.0;
+        // We are not enforcing the latency target (PROAUDIO_LATENCY_MS_LIMIT)
+        // test is allowed to pass as long as an analysis is done.
+        boolean resultValid =
+                isPeripheralValidForTest()
+                && mMeanConfidence >= CONFIDENCE_THRESHOLD
+                && mMeanLatencyMillis > EPSILON
+                && mMeanLatencyMillis < mMustLatency;
+
         getPassButton().setEnabled(resultValid);
 
         recordTestResults();

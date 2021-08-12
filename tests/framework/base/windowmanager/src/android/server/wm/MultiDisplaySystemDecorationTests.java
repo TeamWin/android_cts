@@ -17,6 +17,9 @@
 package android.server.wm;
 
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_HOME;
+import static android.server.wm.UiDeviceUtils.pressSleepButton;
+import static android.server.wm.UiDeviceUtils.pressUnlockButton;
+import static android.server.wm.UiDeviceUtils.pressWakeupButton;
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
 import static android.server.wm.app.Components.HOME_ACTIVITY;
 import static android.server.wm.app.Components.SECONDARY_HOME_ACTIVITY;
@@ -193,6 +196,10 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
             if (mTestBitmap != null) {
                 mTestBitmap.recycle();
             }
+            // Turning screen off/on to flush deferred color events due to wallpaper changed.
+            pressSleepButton();
+            pressWakeupButton();
+            pressUnlockButton();
         }
     }
 

@@ -79,7 +79,8 @@ public class AppHibernationStatsTest extends DeviceTestCase implements IBuildRec
         // Sorted list of events in order in which they occurred.
         final List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
         assertThat(data.size()).isAtLeast(1);
-        assertUserLevelHibernationStateChangedEvent(data, /* isHibernating */ true);
+        assertUserLevelHibernationStateChangedEvent(data, /* isHibernating */ true,
+                getDevice().getCurrentUser());
     }
 
     public void testUserLevelAppHibernationStateChanged_fromHibernatingToNotHibernating()
@@ -98,7 +99,8 @@ public class AppHibernationStatsTest extends DeviceTestCase implements IBuildRec
         // Sorted list of events in order in which they occurred.
         final List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
         assertThat(data.size()).isAtLeast(1);
-        assertUserLevelHibernationStateChangedEvent(data, /* isHibernating */ false);
+        assertUserLevelHibernationStateChangedEvent(data, /* isHibernating */ false,
+                getDevice().getCurrentUser());
     }
 
     public void testUserLevelHibernatedApps() throws Exception {
@@ -140,12 +142,12 @@ public class AppHibernationStatsTest extends DeviceTestCase implements IBuildRec
     }
 
     private static void assertUserLevelHibernationStateChangedEvent(
-            List<StatsLog.EventMetricData> data, boolean isHibernating) {
+            List<StatsLog.EventMetricData> data, boolean isHibernating, int currentUser) {
         for (StatsLog.EventMetricData d : data) {
             AtomsProto.UserLevelHibernationStateChanged atom =
                     d.getAtom().getUserLevelHibernationStateChanged();
             if (atom.getPackageName().equals(DeviceUtils.STATSD_ATOM_TEST_PKG)) {
-                assertThat(atom.getUserId()).isEqualTo(0);
+                assertThat(atom.getUserId()).isEqualTo(currentUser);
                 assertThat(atom.getIsHibernating()).isEqualTo(isHibernating);
                 return;
             }

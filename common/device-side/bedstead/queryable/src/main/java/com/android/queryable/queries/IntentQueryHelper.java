@@ -31,6 +31,12 @@ public final class IntentQueryHelper<E extends Queryable> implements IntentQuery
     private final StringQueryHelper<E> mAction;
     private final BundleQueryHelper<E> mExtras;
 
+    IntentQueryHelper() {
+        mQuery = (E) this;
+        mAction = new StringQueryHelper<>(mQuery);
+        mExtras = new BundleQueryHelper<>(mQuery);
+    }
+
     public IntentQueryHelper(E query) {
         mQuery = query;
         mAction = new StringQueryHelper<>(query);
@@ -48,6 +54,7 @@ public final class IntentQueryHelper<E extends Queryable> implements IntentQuery
     }
 
     /** {@code true} if all filters are met by {@code value}. */
+    @Override
     public boolean matches(Intent value) {
         if (!mAction.matches(value.getAction())) {
             return false;

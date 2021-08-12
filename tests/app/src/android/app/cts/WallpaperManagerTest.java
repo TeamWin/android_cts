@@ -528,13 +528,11 @@ public class WallpaperManagerTest {
      */
     private void ensureCleanState() {
         Bitmap bmp = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888);
-        // We expect 5 events to happen when we change a wallpaper:
+        // We expect 3 events to happen when we change a wallpaper:
         // • Wallpaper changed
-        // • System colors are null
-        // • Lock colors are null
         // • System colors are known
         // • Lock colors are known
-        final int expectedEvents = 5;
+        final int expectedEvents = 3;
         mCountDownLatch = new CountDownLatch(expectedEvents);
         if (DEBUG) {
             Log.d(TAG, "Started latch expecting: " + mCountDownLatch.getCount());

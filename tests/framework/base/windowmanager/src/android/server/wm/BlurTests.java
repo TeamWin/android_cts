@@ -27,6 +27,7 @@ import static android.server.wm.app.Components.BLUR_ATTRIBUTES_ACTIVITY;
 import static android.server.wm.app.Components.BlurActivity.EXTRA_BACKGROUND_BLUR_RADIUS_PX;
 import static android.server.wm.app.Components.BlurActivity.EXTRA_BLUR_BEHIND_RADIUS_PX;
 import static android.server.wm.app.Components.BlurActivity.EXTRA_NO_BLUR_BACKGROUND_COLOR;
+import static android.view.Display.DEFAULT_DISPLAY;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
@@ -64,8 +65,8 @@ import org.mockito.Mockito;
 @Presubmit
 @FlakyTest(detail = "Promote once confirmed non-flaky")
 public class BlurTests extends WindowManagerTestBase {
-    private static final int BACKGROUND_BLUR_PX = dpToPx(50);
-    private static final int BLUR_BEHIND_PX = dpToPx(25);
+    private static final int BACKGROUND_BLUR_PX = 80;
+    private static final int BLUR_BEHIND_PX = 40;
     private static final int NO_BLUR_BACKGROUND_COLOR = Color.BLACK;
     private static final int BLUR_BEHIND_DYNAMIC_UPDATE_WAIT_TIME = 300;
     private static final int BACKGROUND_BLUR_DYNAMIC_UPDATE_WAIT_TIME = 100;
@@ -86,8 +87,7 @@ public class BlurTests extends WindowManagerTestBase {
                     Settings.Global.getFloat(resolver, ANIMATOR_DURATION_SCALE, 1f);
             Settings.Global.putFloat(resolver, ANIMATOR_DURATION_SCALE, 0);
         });
-        launchActivity(BACKGROUND_IMAGE_ACTIVITY);
-        mWmState.waitForValidState(BACKGROUND_IMAGE_ACTIVITY);
+        startTestActivity(BACKGROUND_IMAGE_ACTIVITY);
         verifyOnlyBackgroundImageVisible();
         assertTrue(mContext.getSystemService(WindowManager.class).isCrossWindowBlurEnabled());
     }
@@ -220,7 +220,7 @@ public class BlurTests extends WindowManagerTestBase {
 
         Bitmap screenshot = takeScreenshot();
         assertBlurBehind(screenshot, windowFrame);
-        assertBackgroundBlur(screenshot, windowFrame);
+        assertBackgroundBlurOverBlurBehind(screenshot, windowFrame);
 
         setForceBlurDisabled(true);
         Thread.sleep(BLUR_BEHIND_DYNAMIC_UPDATE_WAIT_TIME);
@@ -234,7 +234,7 @@ public class BlurTests extends WindowManagerTestBase {
 
         screenshot = takeScreenshot();
         assertBlurBehind(screenshot, windowFrame);
-        assertBackgroundBlur(screenshot, windowFrame);
+        assertBackgroundBlurOverBlurBehind(screenshot, windowFrame);
     }
 
     @Test
@@ -244,7 +244,7 @@ public class BlurTests extends WindowManagerTestBase {
         final Bitmap screenshot = takeScreenshot();
 
         assertBlurBehind(screenshot, windowFrame);
-        assertBackgroundBlur(screenshot, windowFrame);
+        assertBackgroundBlurOverBlurBehind(screenshot, windowFrame);
     }
 
     @Test
@@ -257,7 +257,7 @@ public class BlurTests extends WindowManagerTestBase {
         Bitmap screenshot = takeScreenshot();
 
         assertBlurBehind(screenshot, windowFrame);
-        assertBackgroundBlur(screenshot, windowFrame);
+        assertBackgroundBlurOverBlurBehind(screenshot, windowFrame);
 
         mBroadcastActionTrigger.finishBroadcastReceiverActivity();
         mWmState.waitAndAssertActivityRemoved(BLUR_ACTIVITY);
@@ -322,6 +322,8 @@ public class BlurTests extends WindowManagerTestBase {
     private void startTestActivity(ComponentName activityName, final CliIntentExtra... extras) {
         launchActivity(activityName, extras);
         assertNotEquals(mWmState.getRootTaskIdByActivity(activityName), INVALID_STACK_ID);
+        waitAndAssertResumedActivity(activityName, activityName + " must be resumed");
+        mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
     }
 
 
@@ -351,12 +353,6 @@ public class BlurTests extends WindowManagerTestBase {
         }
     }
 
-    private static int dpToPx(int dp) {
-        final float density =
-            getInstrumentation().getContext().getResources().getDisplayMetrics().density;
-        return (int) (dp * density + 0.5f);
-    }
-
     private static void assertBlurBehind(Bitmap screenshot, Rect windowFrame) {
         assertBlur(screenshot, BLUR_BEHIND_PX, 0, windowFrame.top);
         assertBlur(screenshot, BLUR_BEHIND_PX, windowFrame.bottom, screenshot.getHeight());
@@ -364,6 +360,13 @@ public class BlurTests extends WindowManagerTestBase {
 
     private static void assertBackgroundBlur(Bitmap screenshot, Rect windowFrame) {
         assertBlur(screenshot, BACKGROUND_BLUR_PX, windowFrame.top, windowFrame.bottom);
+    }
+
+    private static void assertBackgroundBlurOverBlurBehind(Bitmap screenshot, Rect windowFrame) {
+        // We are assuming that the background blur will become bigger by roughly half of the blur
+        // behind radius
+        assertBlur(screenshot, BACKGROUND_BLUR_PX + ((int) (BLUR_BEHIND_PX*0.5f)),
+                windowFrame.top, windowFrame.bottom);
     }
 
     private static void assertNoBlurBehind(Bitmap screenshot, Rect windowFrame) {
@@ -406,10 +409,9 @@ public class BlurTests extends WindowManagerTestBase {
 
         // Adjust the test to check a smaller part of the blurred area in order to accept various
         // blur algorithm approximations used in RenderEngine
-        final int kawaseOffset = (int) (blurRadius * 0.7f);
-        final int blurAreaStartX = width / 2 - blurRadius + kawaseOffset;
-        final int blurAreaEndX = width / 2 + blurRadius - kawaseOffset;
-        final int stepSize = kawaseOffset / 4;
+        final int stepSize = blurRadius / 4;
+        final int blurAreaStartX = width / 2 - blurRadius + stepSize;
+        final int blurAreaEndX = width / 2 + blurRadius;
 
         Color previousColor;
         Color currentColor;

@@ -32,6 +32,9 @@ LOCAL_SRC_FILES := \
     test_session_id.cpp \
     utils.cpp \
 
+LOCAL_C_INCLUDES := \
+    system/media/audio/include
+
 LOCAL_SHARED_LIBRARIES := \
     libaaudio \
     liblog

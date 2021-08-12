@@ -167,17 +167,6 @@ android_test_helper_app {
 }
 
 android_test_helper_app {
-    name: "CtsAppEnumerationQueriesPackageHasProvider",
-    manifest: "AndroidManifest-queriesPackage-hasProvider.xml",
-    defaults: ["CtsAppEnumerationQueriesDefaults"],
-    // Tag this module as a cts test artifact
-    test_suites: [
-        "cts",
-        "general-tests",
-    ],
-}
-
-android_test_helper_app {
     name: "CtsAppEnumerationQueriesNothingTargetsQ",
     manifest: "AndroidManifest-queriesNothing-targetsQ.xml",
     defaults: ["CtsAppEnumerationQueriesDefaults"],

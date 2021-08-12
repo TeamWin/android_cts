@@ -41,7 +41,7 @@ public final class UserfaultfdTest {
       boolean mShouldRunTest = !(FeatureUtil.isAutomotive()
               && ApiLevelUtil.isAtMost(VERSION_CODES.S));
       Assume.assumeTrue("Skip userfaultfd tests on Automotive targets till S", mShouldRunTest);
-      setUpUserfaultfd();
+      Assume.assumeTrue("Skip userfaultfd tests on kernels lower than 5.4", confirmKernelVersion());
   }
 
   // Test if a userfault from kernel-space fails or not. It is
@@ -58,7 +58,7 @@ public final class UserfaultfdTest {
   @Test
   public void nonUserModeOnlyUserfaultfd() {
     // Expect return value to be EPERM (1).
-    assertEquals(1, performUffdWithoutUserModeOnly());
+    assertEquals(1, uffdWithoutUserModeOnly());
   }
 
   // Test if mremap syscall on a non-anonymous shared mapping
@@ -74,9 +74,9 @@ public final class UserfaultfdTest {
     assertEquals(0, performMinorUffd());
   }
 
-  private native void setUpUserfaultfd();
+  private native boolean confirmKernelVersion();
   private native int performKernelSpaceUffd();
-  private native int performUffdWithoutUserModeOnly();
+  private native int uffdWithoutUserModeOnly();
   private native int performMremapDontUnmap();
   private native int performMinorUffd();
 }

@@ -57,6 +57,10 @@ public class CtsRoleManagerAdapter {
         mRoleHolders = new ConcurrentHashMap<>();
     }
 
+    public boolean isDialerRoleAvailable() {
+        return mRoleManager.isRoleAvailable(RoleManager.ROLE_DIALER);
+    }
+
     public void setDialerRoleHolder(String packageName)
             throws Exception {
         if (mRoleManager != null) {

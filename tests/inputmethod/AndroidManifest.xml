@@ -27,6 +27,7 @@
         <uses-library android:name="android.test.runner"/>
 
         <activity android:name="android.view.inputmethod.cts.util.TestActivity"
+             android:theme="@style/no_starting_window"
              android:label="TestActivity"
              android:configChanges="fontScale"
              android:exported="true">
@@ -36,6 +37,7 @@
             </intent-filter>
         </activity>
         <activity android:name="android.view.inputmethod.cts.util.TestActivity2"
+                  android:theme="@style/no_starting_window"
                   android:label="TestActivity2"
                   android:exported="true">
             <intent-filter>
@@ -45,6 +47,7 @@
         </activity>
 
         <activity android:name="android.view.inputmethod.cts.util.StateInitializeActivity"
+             android:theme="@style/no_starting_window"
              android:label="StateInitializeActivity"
              android:configChanges="fontScale"
              android:exported="true">

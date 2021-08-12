@@ -1893,17 +1893,43 @@
         </activity>
         -->
 
-        <activity android:name=".managedprovisioning.LocationListenerActivity"
-                android:label="@string/location_listener_activity"
-                android:exported="true"
-                android:configChanges="keyboardHidden|orientation|screenSize">
+        <activity android:name=".managedprovisioning.LocationTestActivity"
+                  android:exported="true"
+                  android:label="@string/provisioning_byod_location_test_activity">
             <intent-filter>
-                <action android:name="com.android.cts.verifier.managedprovisioning.SET_LOCATION_AND_CHECK" />
-                <category android:name="android.intent.category.DEFAULT"></category>
-                </intent-filter>
+                <action android:name="com.android.cts.verifier.managedprovisioning.TEST_LOCATION_ENABLED" />
+                <action android:name="com.android.cts.verifier.managedprovisioning.TEST_LOCATION_DISABLED" />
+                <action android:name="com.android.cts.verifier.managedprovisioning.TEST_WORK_LOCATION_DISABLED" />
+                <action android:name="com.android.cts.verifier.managedprovisioning.TEST_WORK_LOCATION_DISABLED_PRIMARY" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <meta-data android:name="display_mode"
+                       android:value="single_display_mode" />
+        </activity>
+
+        <!-- Activity to check if location is available in primary profile -->
+        <activity android:name=".managedprovisioning.LocationCheckerActivity"
+                  android:label="@string/provisioning_byod_location_checker_activity"
+                  android:exported="true"
+                  android:configChanges="keyboardHidden|orientation|screenSize">
+            <intent-filter>
+                <action android:name="com.android.cts.verifier.managedprovisioning.CHECK_LOCATION_ACCESS_PRIMARY" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
             <meta-data android:name="display_mode"
                        android:value="multi_display_mode" />
         </activity>
+
+        <!-- Activity alias to check if location is available in work profile -->
+        <activity-alias android:name="com.android.cts.verifier.managedprovisioning.WorkLocationCheckerActivityAlias"
+                        android:targetActivity=".managedprovisioning.LocationCheckerActivity"
+                        android:exported="true"
+                        android:enabled="true">
+            <intent-filter>
+                <action android:name="com.android.cts.verifier.managedprovisioning.CHECK_LOCATION_ACCESS_WORK" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity-alias>
 
         <activity android:name=".net.ConnectivityBackgroundTestActivity"
                 android:exported="true"
@@ -4472,6 +4498,12 @@
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_tunnel" />
+            <meta-data android:name="test_required_features"
+                       android:value="android.software.leanback" />
+            <meta-data android:name="test_excluded_features"
+                       android:value="android.hardware.type.automotive" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".tv.TvInputDiscoveryTestActivity"
@@ -4638,7 +4670,7 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_audio" />
             <meta-data android:name="test_excluded_features"
-                       android:value="android.software.leanback" />
+                       android:value="android.software.leanback:android.hardware.type.automotive" />
             <meta-data android:name="display_mode"
                        android:value="multi_display_mode" />
         </activity>

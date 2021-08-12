@@ -34,11 +34,14 @@ android_test {
         "android.test.runner",
         "android.test.base",
     ],
-    srcs: ["src/**/*.java"],
+    srcs: [
+        "src/**/*.java",
+        ":CtsAlarmUtils",
+    ],
     test_suites: [
         "cts",
         "general-tests",
         "mts",
     ],
-    sdk_version: "test_current",
+    platform_apis: true,
 }

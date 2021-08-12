@@ -17,6 +17,7 @@
 package android.view.cts;
 
 import static android.server.wm.ActivityManagerTestBase.createFullscreenActivityScenarioRule;
+import static android.view.cts.surfacevalidator.ASurfaceControlTestActivity.MultiRectChecker;
 import static android.view.cts.util.ASurfaceControlTestUtils.applyAndDeleteSurfaceTransaction;
 import static android.view.cts.util.ASurfaceControlTestUtils.createSurfaceTransaction;
 import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceControl_acquire;
@@ -94,6 +95,12 @@ public class ASurfaceControlTest {
     private static final int DEFAULT_LAYOUT_WIDTH = 100;
     private static final int DEFAULT_LAYOUT_HEIGHT = 100;
 
+    private static final PixelColor RED = new PixelColor(PixelColor.RED);
+    private static final PixelColor BLUE = new PixelColor(PixelColor.BLUE);
+    private static final PixelColor MAGENTA = new PixelColor(PixelColor.MAGENTA);
+    private static final PixelColor GREEN = new PixelColor(PixelColor.GREEN);
+    private static final PixelColor YELLOW = new PixelColor(PixelColor.YELLOW);
+
     @Rule
     public ActivityScenarioRule<ASurfaceControlTestActivity> mActivityRule =
             createFullscreenActivityScenarioRule(ASurfaceControlTestActivity.class);
@@ -165,7 +172,13 @@ public class ASurfaceControlTest {
         public long setSolidBuffer(long surfaceControl, int width, int height, int color) {
             long surfaceTransaction = createSurfaceTransaction();
             long buffer = setSolidBuffer(surfaceControl, surfaceTransaction, width, height, color);
+            TimedTransactionListener onCommitCallback = new TimedTransactionListener();
+            nSurfaceTransaction_setOnCommitCallback(surfaceTransaction, onCommitCallback);
             applyAndDeleteSurfaceTransaction(surfaceTransaction);
+            try {
+                onCommitCallback.mLatch.await(1, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+            }
             return buffer;
         }
 
@@ -183,7 +196,13 @@ public class ASurfaceControlTest {
             long surfaceTransaction = createSurfaceTransaction();
             setQuadrantBuffer(surfaceControl, surfaceTransaction, width, height, colorTopLeft,
                     colorTopRight, colorBottomRight, colorBottomLeft);
+            TimedTransactionListener onCommitCallback = new TimedTransactionListener();
+            nSurfaceTransaction_setOnCommitCallback(surfaceTransaction, onCommitCallback);
             applyAndDeleteSurfaceTransaction(surfaceTransaction);
+            try {
+                onCommitCallback.mLatch.await(1, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+            }
         }
     }
 
@@ -592,117 +611,97 @@ public class ASurfaceControlTest {
 
     @Test
     public void testSurfaceTransaction_setDestinationRect_twoLayers() {
-        BasicSurfaceHolderCallback callback = new BasicSurfaceHolderCallback() {
-            @Override
-            public void surfaceCreated(SurfaceHolder holder) {
-                long surfaceControl1 = createFromWindow(holder.getSurface());
-                long surfaceControl2 = createFromWindow(holder.getSurface());
+        verifyTest(
+                new BasicSurfaceHolderCallback() {
+                    @Override
+                    public void surfaceCreated(SurfaceHolder holder) {
+                        long surfaceControl1 = createFromWindow(holder.getSurface());
+                        long surfaceControl2 = createFromWindow(holder.getSurface());
 
-                setSolidBuffer(surfaceControl1, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
-                        PixelColor.RED);
-                setSolidBuffer(surfaceControl2, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
-                        PixelColor.BLUE);
-                setGeometry(surfaceControl1, 0, 0, 100, 100, 10, 10, 30, 40, 0);
-                setGeometry(surfaceControl2, 0, 0, 100, 100, 70, 20, 90, 50, 0);
-            }
-        };
-        verifyTest(callback,
-                new PixelChecker(PixelColor.RED) { //600
-                    @Override
-                    public boolean checkPixels(int pixelCount, int width, int height) {
-                        return pixelCount > 540 && pixelCount < 660;
+                        setSolidBuffer(surfaceControl1, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
+                                PixelColor.RED);
+                        setSolidBuffer(surfaceControl2, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
+                                PixelColor.BLUE);
+                        setGeometry(surfaceControl1, 0, 0, 100, 100, 10, 10, 30, 40, 0);
+                        setGeometry(surfaceControl2, 0, 0, 100, 100, 70, 20, 90, 50, 0);
                     }
-                });
-        verifyTest(callback,
-                new PixelChecker(PixelColor.BLUE) { //600
+                },
+
+                new MultiRectChecker(new Rect(0, 0, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT)) {
                     @Override
-                    public boolean checkPixels(int pixelCount, int width, int height) {
-                        return pixelCount > 540 && pixelCount < 660;
+                    public PixelColor getExpectedColor(int x, int y) {
+                        if (x >= 10 && x < 30 && y >= 10 && y < 40) {
+                            return RED;
+                        } else if (x >= 70 && x < 90 && y >= 20 && y < 50) {
+                            return BLUE;
+                        } else {
+                            return YELLOW;
+                        }
                     }
                 });
     }
 
     @Test
     public void testSurfaceTransaction_setSourceRect() {
-        BasicSurfaceHolderCallback callback = new BasicSurfaceHolderCallback() {
-            @Override
-            public void surfaceCreated(SurfaceHolder holder) {
-                long surfaceControl = createFromWindow(holder.getSurface());
+        verifyTest(
+                new BasicSurfaceHolderCallback() {
+                    @Override
+                    public void surfaceCreated(SurfaceHolder holder) {
+                        long surfaceControl = createFromWindow(holder.getSurface());
 
-                setQuadrantBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH,
-                        DEFAULT_LAYOUT_HEIGHT, PixelColor.RED, PixelColor.BLUE,
-                        PixelColor.MAGENTA, PixelColor.GREEN);
-            }
-        };
-        verifyTest(callback,
-                new PixelChecker(PixelColor.RED) { //2500
-                    @Override
-                    public boolean checkPixels(int pixelCount, int width, int height) {
-                        return pixelCount > 2250 && pixelCount < 2750;
+                        setQuadrantBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH,
+                                DEFAULT_LAYOUT_HEIGHT, PixelColor.RED, PixelColor.BLUE,
+                                PixelColor.MAGENTA, PixelColor.GREEN);
                     }
-                });
-        verifyTest(callback,
-                new PixelChecker(PixelColor.BLUE) { //2500
+                },
+
+                new MultiRectChecker(new Rect(0, 0, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT)) {
                     @Override
-                    public boolean checkPixels(int pixelCount, int width, int height) {
-                        return pixelCount > 2250 && pixelCount < 2750;
-                    }
-                });
-        verifyTest(callback,
-                new PixelChecker(PixelColor.MAGENTA) { //2500
-                    @Override
-                    public boolean checkPixels(int pixelCount, int width, int height) {
-                        return pixelCount > 2250 && pixelCount < 2750;
-                    }
-                });
-        verifyTest(callback,
-                new PixelChecker(PixelColor.GREEN) { //2500
-                    @Override
-                    public boolean checkPixels(int pixelCount, int width, int height) {
-                        return pixelCount > 2250 && pixelCount < 2750;
+                    public PixelColor getExpectedColor(int x, int y) {
+                        int halfWidth = DEFAULT_LAYOUT_WIDTH / 2;
+                        int halfHeight = DEFAULT_LAYOUT_HEIGHT / 2;
+                        if (x < halfWidth && y < halfHeight) {
+                            return RED;
+                        } else if (x >= halfWidth && y < halfHeight) {
+                            return BLUE;
+                        } else if (x < halfWidth && y >= halfHeight) {
+                            return GREEN;
+                        } else {
+                            return MAGENTA;
+                        }
                     }
                 });
     }
 
     @Test
     public void testSurfaceTransaction_setSourceRect_smallCentered() {
-        BasicSurfaceHolderCallback callback = new BasicSurfaceHolderCallback() {
-            @Override
-            public void surfaceCreated(SurfaceHolder holder) {
-                long surfaceControl = createFromWindow(holder.getSurface());
+        verifyTest(
+                new BasicSurfaceHolderCallback() {
+                    @Override
+                    public void surfaceCreated(SurfaceHolder holder) {
+                        long surfaceControl = createFromWindow(holder.getSurface());
 
-                setQuadrantBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH,
-                        DEFAULT_LAYOUT_HEIGHT, PixelColor.RED, PixelColor.BLUE,
-                        PixelColor.MAGENTA, PixelColor.GREEN);
-                setGeometry(surfaceControl, 10, 10, 90, 90, 0, 0, 100, 100, 0);
-            }
-        };
-        verifyTest(callback,
-                new PixelChecker(PixelColor.RED) { //2500
-                    @Override
-                    public boolean checkPixels(int pixelCount, int width, int height) {
-                        return pixelCount > 2250 && pixelCount < 2750;
+                        setQuadrantBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH,
+                                DEFAULT_LAYOUT_HEIGHT, PixelColor.RED, PixelColor.BLUE,
+                                PixelColor.MAGENTA, PixelColor.GREEN);
+                        setGeometry(surfaceControl, 10, 10, 90, 90, 0, 0, 100, 100, 0);
                     }
-                });
-        verifyTest(callback,
-                new PixelChecker(PixelColor.BLUE) { //2500
+                },
+
+                new MultiRectChecker(new Rect(0, 0, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT)) {
                     @Override
-                    public boolean checkPixels(int pixelCount, int width, int height) {
-                        return pixelCount > 2250 && pixelCount < 2750;
-                    }
-                });
-        verifyTest(callback,
-                new PixelChecker(PixelColor.MAGENTA) { //2500
-                    @Override
-                    public boolean checkPixels(int pixelCount, int width, int height) {
-                        return pixelCount > 2250 && pixelCount < 2750;
-                    }
-                });
-        verifyTest(callback,
-                new PixelChecker(PixelColor.GREEN) { //2500
-                    @Override
-                    public boolean checkPixels(int pixelCount, int width, int height) {
-                        return pixelCount > 2250 && pixelCount < 2750;
+                    public PixelColor getExpectedColor(int x, int y) {
+                        int halfWidth = DEFAULT_LAYOUT_WIDTH / 2;
+                        int halfHeight = DEFAULT_LAYOUT_HEIGHT / 2;
+                        if (x < halfWidth && y < halfHeight) {
+                            return RED;
+                        } else if (x >= halfWidth && y < halfHeight) {
+                            return BLUE;
+                        } else if (x < halfWidth && y >= halfHeight) {
+                            return GREEN;
+                        } else {
+                            return MAGENTA;
+                        }
                     }
                 });
     }
@@ -731,43 +730,33 @@ public class ASurfaceControlTest {
 
     @Test
     public void testSurfaceTransaction_setSourceRect_extraLarge() {
-        BasicSurfaceHolderCallback callback = new BasicSurfaceHolderCallback() {
-            @Override
-            public void surfaceCreated(SurfaceHolder holder) {
-                long surfaceControl = createFromWindow(holder.getSurface());
+        verifyTest(
+                new BasicSurfaceHolderCallback() {
+                    @Override
+                    public void surfaceCreated(SurfaceHolder holder) {
+                        long surfaceControl = createFromWindow(holder.getSurface());
 
-                setQuadrantBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH,
-                        DEFAULT_LAYOUT_HEIGHT, PixelColor.RED, PixelColor.BLUE,
-                        PixelColor.MAGENTA, PixelColor.GREEN);
-                setGeometry(surfaceControl, -50, -50, 150, 150, 0, 0, 100, 100, 0);
-            }
-        };
-        verifyTest(callback,
-                new PixelChecker(PixelColor.RED) { //2500
-                    @Override
-                    public boolean checkPixels(int pixelCount, int width, int height) {
-                        return pixelCount > 2250 && pixelCount < 2750;
+                        setQuadrantBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH,
+                                DEFAULT_LAYOUT_HEIGHT, PixelColor.RED, PixelColor.BLUE,
+                                PixelColor.MAGENTA, PixelColor.GREEN);
+                        setGeometry(surfaceControl, -50, -50, 150, 150, 0, 0, 100, 100, 0);
                     }
-                });
-        verifyTest(callback,
-                new PixelChecker(PixelColor.BLUE) { //2500
+                },
+
+                new MultiRectChecker(new Rect(0, 0, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT)) {
                     @Override
-                    public boolean checkPixels(int pixelCount, int width, int height) {
-                        return pixelCount > 2250 && pixelCount < 2750;
-                    }
-                });
-        verifyTest(callback,
-                new PixelChecker(PixelColor.MAGENTA) { //2500
-                    @Override
-                    public boolean checkPixels(int pixelCount, int width, int height) {
-                        return pixelCount > 2250 && pixelCount < 2750;
-                    }
-                });
-        verifyTest(callback,
-                new PixelChecker(PixelColor.GREEN) { //2500
-                    @Override
-                    public boolean checkPixels(int pixelCount, int width, int height) {
-                        return pixelCount > 2250 && pixelCount < 2750;
+                    public PixelColor getExpectedColor(int x, int y) {
+                        int halfWidth = DEFAULT_LAYOUT_WIDTH / 2;
+                        int halfHeight = DEFAULT_LAYOUT_HEIGHT / 2;
+                        if (x < halfWidth && y < halfHeight) {
+                            return RED;
+                        } else if (x >= halfWidth && y < halfHeight) {
+                            return BLUE;
+                        } else if (x < halfWidth && y >= halfHeight) {
+                            return GREEN;
+                        } else {
+                            return MAGENTA;
+                        }
                     }
                 });
     }
@@ -1545,40 +1534,37 @@ public class ASurfaceControlTest {
 
     @Test
     public void testSurfaceTransaction_setCropSmall() {
-        BasicSurfaceHolderCallback callback = new BasicSurfaceHolderCallback() {
-            @Override
-            public void surfaceCreated(SurfaceHolder holder) {
-                long surfaceControl = createFromWindow(holder.getSurface());
-
-                setQuadrantBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH,
-                        DEFAULT_LAYOUT_HEIGHT, PixelColor.RED, PixelColor.BLUE,
-                        PixelColor.MAGENTA, PixelColor.GREEN);
-                setCrop(surfaceControl, new Rect(0, 0, 50, 50));
-            }
-        };
-
-        verifyTest(callback,
-                new PixelChecker(PixelColor.RED) { // 2500
+        verifyTest(
+                new BasicSurfaceHolderCallback() {
                     @Override
-                    public boolean checkPixels(int pixelCount, int width, int height) {
-                        return pixelCount > 2000 && pixelCount < 3000;
+                    public void surfaceCreated(SurfaceHolder holder) {
+                        long surfaceControl = createFromWindow(holder.getSurface());
+
+                        setQuadrantBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH,
+                                DEFAULT_LAYOUT_HEIGHT, PixelColor.RED, PixelColor.BLUE,
+                                PixelColor.MAGENTA, PixelColor.GREEN);
+                        setCrop(surfaceControl, new Rect(0, 0, 50, 50));
+                    }
+                },
+
+                new MultiRectChecker(new Rect(0, 0, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT)) {
+                    @Override
+                    public PixelColor getExpectedColor(int x, int y) {
+                        int halfWidth = DEFAULT_LAYOUT_WIDTH / 2;
+                        int halfHeight = DEFAULT_LAYOUT_HEIGHT / 2;
+                        if (x < halfWidth && y < halfHeight) {
+                            return RED;
+                        } else {
+                            return YELLOW;
+                        }
                     }
                 });
-
-        // The rest of the area should be the background color (yellow)
-        verifyTest(callback,
-                new PixelChecker(PixelColor.YELLOW) { // 7500
-                    @Override
-                    public boolean checkPixels(int pixelCount, int width, int height) {
-                        return pixelCount > 7000 && pixelCount < 8000;
-                    }
-                });
-
     }
 
     @Test
     public void testSurfaceTransaction_setCropLarge() {
-        BasicSurfaceHolderCallback callback = new BasicSurfaceHolderCallback() {
+        verifyTest(
+                new BasicSurfaceHolderCallback() {
                     @Override
                     public void surfaceCreated(SurfaceHolder holder) {
                         long surfaceControl = createFromWindow(holder.getSurface());
@@ -1588,34 +1574,22 @@ public class ASurfaceControlTest {
                                 PixelColor.MAGENTA, PixelColor.GREEN);
                         setCrop(surfaceControl, new Rect(0, 0, 150, 150));
                     }
-                };
+                },
 
-        verifyTest(callback,
-                new PixelChecker(PixelColor.RED) {
+                new MultiRectChecker(new Rect(0, 0, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT)) {
                     @Override
-                    public boolean checkPixels(int pixelCount, int width, int height) {
-                        return pixelCount > 2000 && pixelCount < 3000;
-                    }
-                });
-        verifyTest(callback,
-                new PixelChecker(PixelColor.BLUE) {
-                    @Override
-                    public boolean checkPixels(int pixelCount, int width, int height) {
-                        return pixelCount > 2000 && pixelCount < 3000;
-                    }
-                });
-        verifyTest(callback,
-                new PixelChecker(PixelColor.MAGENTA) {
-                    @Override
-                    public boolean checkPixels(int pixelCount, int width, int height) {
-                        return pixelCount > 2000 && pixelCount < 3000;
-                    }
-                });
-        verifyTest(callback,
-                new PixelChecker(PixelColor.GREEN) {
-                    @Override
-                    public boolean checkPixels(int pixelCount, int width, int height) {
-                        return pixelCount > 2000 && pixelCount < 3000;
+                    public PixelColor getExpectedColor(int x, int y) {
+                        int halfWidth = DEFAULT_LAYOUT_WIDTH / 2;
+                        int halfHeight = DEFAULT_LAYOUT_HEIGHT / 2;
+                        if (x < halfWidth && y < halfHeight) {
+                            return RED;
+                        } else if (x >= halfWidth && y < halfHeight) {
+                            return BLUE;
+                        } else if (x < halfWidth && y >= halfHeight) {
+                            return GREEN;
+                        } else {
+                            return MAGENTA;
+                        }
                     }
                 });
     }

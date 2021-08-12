@@ -79,49 +79,29 @@ _GROUPED_SCENES = {
 # Scenes that have to be run manually regardless of configuration
 _MANUAL_SCENES = ['scene5']
 
-# Tests run in more than 1 scene.
-# List is created of type ['scene_source', 'test_to_be_repeated']
-# for the test run in current scene.
-_REPEATED_TESTS = {
-    'scene0': [],
-    'scene1_1': [],
-    'scene1_2': [],
-    'scene2_a': [],
-    'scene2_b': [['scene2_a', 'test_num_faces']],
-    'scene2_c': [['scene2_a', 'test_num_faces']],
-    'scene2_d': [['scene2_a', 'test_num_faces']],
-    'scene2_e': [['scene2_a', 'test_num_faces']],
-    'scene3': [],
-    'scene4': [],
-    'scene5': [],
-    'scene6': [],
-    'sensor_fusion': [],
-    'scene_change': []
-}
-
 # Scene requirements for manual testing.
 _SCENE_REQ = {
     'scene0': None,
     'scene1_1': 'A grey card covering at least the middle 30% of the scene',
     'scene1_2': 'A grey card covering at least the middle 30% of the scene',
-    'scene2_a': 'The picture with 3 faces in tests/scene2_a/scene2_a.pdf',
-    'scene2_b': 'The picture with 3 faces in tests/scene2_b/scene2_b.pdf',
-    'scene2_c': 'The picture with 3 faces in tests/scene2_c/scene2_c.pdf',
-    'scene2_d': 'The picture with 3 faces in tests/scene2_d/scene2_d.pdf',
-    'scene2_e': 'The picture with 3 faces in tests/scene2_e/scene2_e.pdf',
+    'scene2_a': 'The picture with 3 faces in tests/scene2_a/scene2_a.png',
+    'scene2_b': 'The picture with 3 faces in tests/scene2_b/scene2_b.png',
+    'scene2_c': 'The picture with 3 faces in tests/scene2_c/scene2_c.png',
+    'scene2_d': 'The picture with 3 faces in tests/scene2_d/scene2_d.png',
+    'scene2_e': 'The picture with 3 faces in tests/scene2_e/scene2_e.png',
     'scene3': 'The ISO12233 chart',
     'scene4': 'A test chart of a circle covering at least the middle 50% of '
-              'the scene. See tests/scene4/scene4.pdf',
+              'the scene. See tests/scene4/scene4.png',
     'scene5': 'Capture images with a diffuser attached to the camera. '
               'See CameraITS.pdf section 2.3.4 for more details',
     'scene6': 'A grid of black circles on a white background. '
-              'See tests/scene6/scene6.pdf',
+              'See tests/scene6/scene6.png',
     'sensor_fusion': 'A checkerboard pattern for phone to rotate in front of '
                      'in tests/sensor_fusion/checkerboard.pdf\n'
                      'See tests/sensor_fusion/SensorFusion.pdf for detailed '
                      'instructions.\nNote that this test will be skipped '
                      'on devices not supporting REALTIME camera timestamp.',
-    'scene_change': 'The picture with 3 faces in tests/scene2_e/scene2_e.pdf',
+    'scene_change': 'The picture with 3 faces in tests/scene2_e/scene2_e.png',
 }
 
 
@@ -216,7 +196,7 @@ def load_scenes_on_tablet(scene, tablet_id):
   scene_dir = os.listdir(
       os.path.join(os.environ['CAMERA_ITS_TOP'], 'tests', scene))
   for file_name in scene_dir:
-    if file_name.endswith('.pdf'):
+    if file_name.endswith('.png'):
       src_scene_file = os.path.join(os.environ['CAMERA_ITS_TOP'], 'tests',
                                     scene, file_name)
       cmd = f'adb -s {tablet_id} push {src_scene_file} {_DST_SCENE_DIR}'
@@ -506,9 +486,6 @@ def main():
         for file_name in scene_dir:
           if file_name.endswith('.py') and 'test' in file_name:
             scene_test_list.append(file_name)
-        if _REPEATED_TESTS[s]:
-          for t in _REPEATED_TESTS[s]:
-            scene_test_list.append((os.path.join('tests', t[0], t[1] + '.py')))
       else:  # sub-camera
         if SUB_CAMERA_TESTS.get(s):
           scene_test_list = [f'{test}.py' for test in SUB_CAMERA_TESTS[s]]
@@ -625,6 +602,10 @@ def main():
     report_result(device_id, camera_id, results)
 
   logging.info('Test execution completed.')
+
+  # Power down tablet
+  cmd = f'adb -s {tablet_id} shell input keyevent KEYCODE_POWER'
+  subprocess.Popen(cmd.split())
 
 if __name__ == '__main__':
   main()

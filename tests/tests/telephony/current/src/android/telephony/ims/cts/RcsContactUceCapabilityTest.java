@@ -182,12 +182,12 @@ public class RcsContactUceCapabilityTest {
         featureTags.add(FEATURE_TAG_CHAT_SESSION);
         featureTags.add(FEATURE_TAG_FILE_TRANSFER);
 
+        // Create an OptionsBuilder instance through the constructor OptionsBuilder(Uri, int)
         OptionsBuilder optionsBuilder = new OptionsBuilder(TEST_CONTACT,
                 RcsContactUceCapability.SOURCE_TYPE_CACHED);
         optionsBuilder.addFeatureTags(featureTags);
         optionsBuilder.addFeatureTag(FEATURE_TAG_POST_CALL);
         optionsBuilder.setRequestResult(RcsContactUceCapability.REQUEST_RESULT_FOUND);
-
         RcsContactUceCapability testCapability = optionsBuilder.build();
 
         // parcel and unparcel
@@ -198,17 +198,38 @@ public class RcsContactUceCapabilityTest {
                 RcsContactUceCapability.CREATOR.createFromParcel(infoParceled);
         infoParceled.recycle();
 
-        assertEquals(unparceledCapability.getContactUri(), testCapability.getContactUri());
-        assertEquals(unparceledCapability.getSourceType(), testCapability.getSourceType());
-        assertEquals(unparceledCapability.getRequestResult(), testCapability.getRequestResult());
-        assertEquals(unparceledCapability.getCapabilityMechanism(),
-                testCapability.getCapabilityMechanism());
+        // Verify the unparceled capability
+        verifyUnparceledCapability(testCapability, unparceledCapability);
 
-        Set<String> expectedFeatureTags = new HashSet<>(featureTags);
-        expectedFeatureTags.add(FEATURE_TAG_POST_CALL);
+        // Create an OptionsBuilder instance through the constructor OptionsBuilder(Uri)
+        optionsBuilder = new OptionsBuilder(TEST_CONTACT);
+        optionsBuilder.addFeatureTags(featureTags);
+        optionsBuilder.addFeatureTag(FEATURE_TAG_POST_CALL);
+        optionsBuilder.setRequestResult(RcsContactUceCapability.REQUEST_RESULT_FOUND);
+        testCapability = optionsBuilder.build();
 
+        // parcel and unparcel
+        infoParceled = Parcel.obtain();
+        testCapability.writeToParcel(infoParceled, 0);
+        infoParceled.setDataPosition(0);
+        unparceledCapability = RcsContactUceCapability.CREATOR.createFromParcel(infoParceled);
+        infoParceled.recycle();
+
+        // Verify the unparceled capability
+        verifyUnparceledCapability(testCapability, unparceledCapability);
+    }
+
+    private void verifyUnparceledCapability(RcsContactUceCapability expectedCap,
+            RcsContactUceCapability unparceledCapability) {
+        assertEquals(expectedCap.getContactUri(), unparceledCapability.getContactUri());
+        assertEquals(expectedCap.getSourceType(), unparceledCapability.getSourceType());
+        assertEquals(expectedCap.getRequestResult(), unparceledCapability.getRequestResult());
+        assertEquals(expectedCap.getCapabilityMechanism(),
+                unparceledCapability.getCapabilityMechanism());
+
+        Set<String> expectedFeatureTags = expectedCap.getFeatureTags();
         Set<String> unparceledFeatureTags = unparceledCapability.getFeatureTags();
-        assertEquals(unparceledFeatureTags.size(), expectedFeatureTags.size());
+        assertEquals(expectedFeatureTags.size(), unparceledFeatureTags.size());
         Iterator<String> expectedFeatureTag = expectedFeatureTags.iterator();
         while (expectedFeatureTag.hasNext()) {
             assertTrue(unparceledFeatureTags.contains(expectedFeatureTag.next()));

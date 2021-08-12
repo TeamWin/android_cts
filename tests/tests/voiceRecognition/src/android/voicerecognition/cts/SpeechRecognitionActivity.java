@@ -90,7 +90,7 @@ public class SpeechRecognitionActivity extends Activity {
         mHandler = new Handler(getMainLooper());
         mHandler.post(() -> {
             if (onDevice) {
-                mRecognizer = SpeechRecognizer.createOnDeviceSpeechRecognizer(this);
+                mRecognizer = SpeechRecognizer.createOnDeviceTestingSpeechRecognizer(this);
             } else if (customRecognizerComponent != null) {
                 mRecognizer = SpeechRecognizer.createSpeechRecognizer(this,
                         ComponentName.unflattenFromString(customRecognizerComponent));

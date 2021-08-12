@@ -16,9 +16,13 @@
 
 package android.voiceinteraction.service;
 
+import static android.Manifest.permission.CAPTURE_AUDIO_HOTWORD;
+import static android.Manifest.permission.RECORD_AUDIO;
+
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
 import android.Manifest;
+import android.app.UiAutomation;
 import android.content.Intent;
 import android.media.AudioFormat;
 import android.os.ParcelFileDescriptor;
@@ -35,6 +39,7 @@ import android.util.Log;
 import android.voiceinteraction.common.Utils;
 
 import androidx.annotation.NonNull;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -75,6 +80,10 @@ public class BasicVoiceInteractionService extends VoiceInteractionService {
             return START_NOT_STICKY;
         }
 
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        // Drop any identity adopted earlier.
+        uiAutomation.dropShellPermissionIdentity();
+
         final int testEvent = intent.getIntExtra(Utils.KEY_TEST_EVENT, -1);
         Log.i(TAG, "testEvent = " + testEvent);
         if (testEvent == Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_TEST) {
@@ -87,15 +96,15 @@ public class BasicVoiceInteractionService extends VoiceInteractionService {
         } else if (testEvent == Utils.VIS_HOLD_BIND_HOTWORD_DETECTION_PERMISSION_TEST) {
             runWithShellPermissionIdentity(() -> callCreateAlwaysOnHotwordDetector());
         } else if (testEvent == Utils.HOTWORD_DETECTION_SERVICE_DSP_ONDETECT_TEST) {
-            runWithShellPermissionIdentity(() -> {
-                if (mAlwaysOnHotwordDetector != null) {
-                    mAlwaysOnHotwordDetector.triggerHardwareRecognitionEventForTest(/* status */ 0,
-                            /* soundModelHandle */ 100, /* captureAvailable */ true,
-                            /* captureSession */ 101, /* captureDelayMs */ 1000,
-                            /* capturePreambleMs */ 1001, /* triggerInData */ true,
-                            createFakeAudioFormat(), new byte[1024]);
-                }
-            });
+            // need to retain the identity until the callback is triggered
+            uiAutomation.adoptShellPermissionIdentity(RECORD_AUDIO, CAPTURE_AUDIO_HOTWORD);
+            if (mAlwaysOnHotwordDetector != null) {
+                mAlwaysOnHotwordDetector.triggerHardwareRecognitionEventForTest(/* status */ 0,
+                        /* soundModelHandle */ 100, /* captureAvailable */ true,
+                        /* captureSession */ 101, /* captureDelayMs */ 1000,
+                        /* capturePreambleMs */ 1001, /* triggerInData */ true,
+                        createFakeAudioFormat(), new byte[1024]);
+            }
         } else if (testEvent == Utils.HOTWORD_DETECTION_SERVICE_DSP_ONREJECT_TEST) {
             runWithShellPermissionIdentity(() -> {
                 if (mAlwaysOnHotwordDetector != null) {
@@ -107,27 +116,29 @@ public class BasicVoiceInteractionService extends VoiceInteractionService {
                 }
             });
         } else if (testEvent == Utils.HOTWORD_DETECTION_SERVICE_EXTERNAL_SOURCE_ONDETECT_TEST) {
-            runWithShellPermissionIdentity(() -> {
-                if (mAlwaysOnHotwordDetector != null) {
-                    ParcelFileDescriptor audioStream = createFakeAudioStream();
-                    if (audioStream != null) {
-                        mAlwaysOnHotwordDetector.startRecognition(
-                                audioStream,
-                                createFakeAudioFormat(),
-                                createFakePersistableBundleData());
-                    }
+            uiAutomation.adoptShellPermissionIdentity(RECORD_AUDIO, CAPTURE_AUDIO_HOTWORD);
+            if (mAlwaysOnHotwordDetector != null) {
+                ParcelFileDescriptor audioStream = createFakeAudioStream();
+                if (audioStream != null) {
+                    mAlwaysOnHotwordDetector.startRecognition(
+                            audioStream,
+                            createFakeAudioFormat(),
+                            createFakePersistableBundleData());
                 }
-            });
+            }
         } else if (testEvent == Utils.HOTWORD_DETECTION_SERVICE_FROM_SOFTWARE_TRIGGER_TEST) {
             runWithShellPermissionIdentity(() -> {
                 mSoftwareHotwordDetector = callCreateSoftwareHotwordDetector();
             }, Manifest.permission.MANAGE_HOTWORD_DETECTION);
         } else if (testEvent == Utils.HOTWORD_DETECTION_SERVICE_MIC_ONDETECT_TEST) {
-            runWithShellPermissionIdentity(() -> {
-                if (mSoftwareHotwordDetector != null) {
-                    mSoftwareHotwordDetector.startRecognition();
-                }
-            });
+            uiAutomation.adoptShellPermissionIdentity(RECORD_AUDIO, CAPTURE_AUDIO_HOTWORD);
+            if (mSoftwareHotwordDetector != null) {
+                mSoftwareHotwordDetector.startRecognition();
+            }
+        } else if (testEvent == Utils.HOTWORD_DETECTION_SERVICE_CALL_STOP_RECOGNITION) {
+            if (mSoftwareHotwordDetector != null) {
+                mSoftwareHotwordDetector.stopRecognition();
+            }
         } else if (testEvent == Utils.HOTWORD_DETECTION_SERVICE_PROCESS_DIED_TEST) {
             runWithShellPermissionIdentity(() -> {
                 if (mAlwaysOnHotwordDetector != null) {
@@ -148,12 +159,14 @@ public class BasicVoiceInteractionService extends VoiceInteractionService {
     public void onDestroy() {
         super.onDestroy();
         closeFakeAudioStream();
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .dropShellPermissionIdentity();
     }
 
     private AlwaysOnHotwordDetector callCreateAlwaysOnHotwordDetector() {
         Log.i(TAG, "callCreateAlwaysOnHotwordDetector()");
         try {
-            return createAlwaysOnHotwordDetector(/* keyphrase */ "Hello Google",
+            return createAlwaysOnHotwordDetector(/* keyphrase */ "Hello Android",
                     Locale.forLanguageTag("en-US"),
                     createFakePersistableBundleData(),
                     createFakeSharedMemoryData(),
@@ -168,11 +181,12 @@ public class BasicVoiceInteractionService extends VoiceInteractionService {
                             Log.i(TAG, "onDetected");
                             broadcastIntentWithResult(
                                     Utils.HOTWORD_DETECTION_SERVICE_ONDETECT_RESULT_INTENT,
-                                    eventPayload.getHotwordDetectedResult());
+                                    new EventPayloadParcelable(eventPayload));
                         }
 
                         @Override
                         public void onRejected(@NonNull HotwordRejectedResult result) {
+                            super.onRejected(result);
                             Log.i(TAG, "onRejected");
                             broadcastIntentWithResult(
                                     Utils.HOTWORD_DETECTION_SERVICE_ONDETECT_RESULT_INTENT,
@@ -199,7 +213,15 @@ public class BasicVoiceInteractionService extends VoiceInteractionService {
 
                         @Override
                         public void onHotwordDetectionServiceInitialized(int status) {
+                            super.onHotwordDetectionServiceInitialized(status);
+                            Log.i(TAG, "onHotwordDetectionServiceInitialized");
                             verifyHotwordDetectionServiceInitializedStatus(status);
+                        }
+
+                        @Override
+                        public void onHotwordDetectionServiceRestarted() {
+                            super.onHotwordDetectionServiceRestarted();
+                            Log.i(TAG, "onHotwordDetectionServiceRestarted");
                         }
                     });
         } catch (IllegalStateException e) {
@@ -228,7 +250,7 @@ public class BasicVoiceInteractionService extends VoiceInteractionService {
                             Log.i(TAG, "onDetected");
                             broadcastIntentWithResult(
                                     Utils.HOTWORD_DETECTION_SERVICE_ONDETECT_RESULT_INTENT,
-                                    eventPayload.getHotwordDetectedResult());
+                                    new EventPayloadParcelable(eventPayload));
                         }
 
                         @Override

@@ -39,7 +39,7 @@ public class HotwordRejectedResultTest {
     }
 
     @Test
-    public void testHotwordDetectedResultParcelizeDeparcelize() throws Exception {
+    public void testHotwordRejectedResultParcelizeDeparcelize() throws Exception {
         final HotwordRejectedResult hotwordRejectedResult =
                 buildHotwordRejectedResult(HotwordRejectedResult.CONFIDENCE_LEVEL_LOW);
 

@@ -300,8 +300,6 @@ class MuxerTestHelper {
                     if (!ExtractorTest.isFormatSimilar(thisFormat, thatFormat)) continue;
                     if (mBufferInfo.get(i).size() == that.mBufferInfo.get(j).size()) {
                         long tolerance = thisMime.startsWith("video/") ? STTS_TOLERANCE_US : 0;
-                        // TODO(b/157008437) - muxed file pts is +1us of target pts
-                        tolerance += 1; // rounding error
                         int k = 0;
                         for (; k < mBufferInfo.get(i).size(); k++) {
                             MediaCodec.BufferInfo thisInfo = mBufferInfo.get(i).get(k);

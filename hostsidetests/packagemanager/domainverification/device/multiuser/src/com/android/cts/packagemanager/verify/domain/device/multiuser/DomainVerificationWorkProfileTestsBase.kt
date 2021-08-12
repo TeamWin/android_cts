@@ -22,6 +22,8 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import com.android.bedstead.harrier.BedsteadJUnit4
 import com.android.bedstead.harrier.DeviceState
+import com.android.bedstead.harrier.annotations.AfterClass
+import com.android.bedstead.harrier.annotations.BeforeClass
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile
 import com.android.bedstead.harrier.annotations.Postsubmit
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser
@@ -44,10 +46,8 @@ import com.android.cts.packagemanager.verify.domain.java.DomainUtils.DOMAIN_UNHA
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
 import org.junit.After
-import org.junit.AfterClass
 import org.junit.Assume.assumeTrue
 import org.junit.Before
-import org.junit.BeforeClass
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test

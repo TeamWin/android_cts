@@ -87,6 +87,7 @@ public class HostAtomTests extends DeviceTestCase implements IBuildReceiver {
         ConfigUtils.removeConfig(getDevice());
         ReportUtils.clearReports(getDevice());
         DeviceUtils.installStatsdTestApp(getDevice(), mCtsBuild);
+        DeviceUtils.turnBatteryStatsAutoResetOff(getDevice());
         Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
     }
 
@@ -95,6 +96,7 @@ public class HostAtomTests extends DeviceTestCase implements IBuildReceiver {
         ConfigUtils.removeConfig(getDevice());
         ReportUtils.clearReports(getDevice());
         DeviceUtils.uninstallStatsdTestApp(getDevice());
+        DeviceUtils.turnBatteryStatsAutoResetOn(getDevice());
         super.tearDown();
     }
 
@@ -204,6 +206,7 @@ public class HostAtomTests extends DeviceTestCase implements IBuildReceiver {
         if (DeviceUtils.hasFeature(getDevice(), FEATURE_AUTOMOTIVE)) return;
         // Setup, unplug device.
         DeviceUtils.unplugDevice(getDevice());
+        DeviceUtils.flushBatteryStatsHandlers(getDevice());
         Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
 
         final int atomTag = Atom.PLUGGED_STATE_CHANGED_FIELD_NUMBER;
@@ -226,17 +229,17 @@ public class HostAtomTests extends DeviceTestCase implements IBuildReceiver {
 
         // Trigger events in same order.
         DeviceUtils.plugInAc(getDevice());
-        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
         DeviceUtils.unplugDevice(getDevice());
-        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
         plugInUsb();
-        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
         DeviceUtils.unplugDevice(getDevice());
-        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
         plugInWireless();
-        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
         DeviceUtils.unplugDevice(getDevice());
-        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT * 3);
+        DeviceUtils.flushBatteryStatsHandlers(getDevice());
 
         // Sorted list of events in order in which they occurred.
         List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
@@ -246,7 +249,7 @@ public class HostAtomTests extends DeviceTestCase implements IBuildReceiver {
         Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
 
         // Assert that the events happened in the expected order.
-        AtomTestUtils.assertStatesOccurred(stateSet, data, AtomTestUtils.WAIT_TIME_SHORT,
+        AtomTestUtils.assertStatesOccurred(stateSet, data, AtomTestUtils.WAIT_TIME_LONG,
                 atom -> atom.getPluggedStateChanged().getState().getNumber());
     }
 
@@ -335,7 +338,7 @@ public class HostAtomTests extends DeviceTestCase implements IBuildReceiver {
         if (DeviceUtils.hasFeature(getDevice(), FEATURE_AUTOMOTIVE)) return;
         // Setup, turn off battery saver.
         turnBatterySaverOff();
-        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+        DeviceUtils.flushBatteryStatsHandlers(getDevice());
 
         final int atomTag = Atom.BATTERY_SAVER_MODE_STATE_CHANGED_FIELD_NUMBER;
 
@@ -354,7 +357,7 @@ public class HostAtomTests extends DeviceTestCase implements IBuildReceiver {
         turnBatterySaverOn();
         Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
         turnBatterySaverOff();
-        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+        DeviceUtils.flushBatteryStatsHandlers(getDevice());
 
         // Sorted list of events in order in which they occurred.
         List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());

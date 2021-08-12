@@ -30,6 +30,10 @@ import java.lang.Override;
 public class TestActivity extends Activity {
     static final String TAG = "TestActivity";
 
+    public static final int RESULT_TEST_SUCCESS = RESULT_FIRST_USER + 1;
+    public static final int RESULT_TEST_IGNORED = RESULT_FIRST_USER + 2;
+    public static final int RESULT_TEST_FAILED = RESULT_FIRST_USER + 3;
+
     private int mResult;
     private final Object mFinishEvent = new Object();
 
@@ -46,7 +50,11 @@ public class TestActivity extends Activity {
         }
     }
 
-    public boolean callActivity(Class<?> cls) throws Exception {
+    public boolean failed() {
+        return mResult != RESULT_TEST_SUCCESS && mResult != RESULT_TEST_IGNORED;
+    }
+
+    public void callActivity(Class<?> cls) throws Exception {
         Thread thread = new Thread() {
             @Override
             public void run() {
@@ -65,10 +73,5 @@ public class TestActivity extends Activity {
         };
         thread.start();
         thread.join(50000 /* millis */);
-
-        if (mResult == RESULT_OK) {
-          throw new Exception();
-        }
-        return (mResult - RESULT_FIRST_USER) == 1;
     }
 }

@@ -21,7 +21,12 @@ import com.android.queryable.Queryable;
 import java.io.Serializable;
 
 /** Query for a {@link Serializable}. */
-public interface SerializableQuery<E extends Queryable> extends Serializable {
+public interface SerializableQuery<E extends Queryable> extends Query<Serializable> {
+
+    static SerializableQuery<SerializableQuery<?>> serializable() {
+        return new SerializableQueryHelper<>();
+    }
+
     /** Require that the {@link Serializable} is equal to {@code serializable}. */
     E isEqualTo(Serializable serializable);
 }

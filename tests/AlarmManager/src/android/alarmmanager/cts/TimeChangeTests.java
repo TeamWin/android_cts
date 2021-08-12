@@ -22,6 +22,7 @@ import static android.app.AlarmManager.RTC_WAKEUP;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import android.alarmmanager.util.AlarmManagerDeviceConfigHelper;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -142,7 +143,7 @@ public class TimeChangeTests {
 
     @After
     public void tearDown() {
-        mConfigHelper.deleteAll();
+        mConfigHelper.restoreAll();
         BatteryUtils.runDumpsysBatteryReset();
         if (mTimeChanged) {
             // Make an attempt at resetting the clock to normal

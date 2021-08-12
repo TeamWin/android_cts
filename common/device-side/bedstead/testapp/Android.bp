@@ -85,13 +85,14 @@ python_binary_host {
 
 java_genrule {
     name: "TestApp_Apps",
-    srcs: [":EmptyTestApp", ":EmptyTestApp2", ":DeviceAdminTestApp"],
+    srcs: [":EmptyTestApp", ":EmptyTestApp2", ":DeviceAdminTestApp", ":LockTaskApp"],
     out: ["TestApp_Apps.res.zip"],
     tools: ["soong_zip", "index_testapps"],
     cmd: "mkdir -p $(genDir)/res/raw"
          + " && cp $(location :EmptyTestApp) $(genDir)/res/raw"
          + " && cp $(location :EmptyTestApp2) $(genDir)/res/raw"
          + " && cp $(location :DeviceAdminTestApp) $(genDir)/res/raw"
+         + " && cp $(location :LockTaskApp) $(genDir)/res/raw"
          + " && $(location index_testapps) --directory $(genDir)/res/raw"
          + " && $(location soong_zip) -o $(out) -C $(genDir)/res -D $(genDir)/res/raw"
 }
@@ -121,6 +122,16 @@ android_test_helper_app {
         "DeviceAdminApp"
     ],
     manifest: "manifests/DeviceAdminManifest.xml",
+    min_sdk_version: "28"
+}
+
+android_test_helper_app {
+    name: "LockTaskApp",
+    static_libs: [
+        "TestApp_TestApps",
+        "DeviceAdminApp"
+    ],
+    manifest: "manifests/LockTaskAppManifest.xml",
     min_sdk_version: "28"
 }
 

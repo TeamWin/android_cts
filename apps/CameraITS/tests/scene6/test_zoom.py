@@ -34,12 +34,70 @@ LINE_COLOR = (255, 0, 0)  # red
 LINE_THICKNESS = 5
 MIN_AREA_RATIO = 0.00015  # based on 2000/(4000x3000) pixels
 MIN_CIRCLE_PTS = 25
+MIN_FOCUS_DIST_TOL = 0.80  # allow charts a little closer than min
 NAME = os.path.splitext(os.path.basename(__file__))[0]
 NUM_STEPS = 10
 OFFSET_RTOL = 0.15
 RADIUS_RTOL = 0.10
+RADIUS_RTOL_MIN_FD = 0.15
 ZOOM_MAX_THRESH = 10.0
 ZOOM_MIN_THRESH = 2.0
+
+
+def get_test_tols_and_cap_size(cam, props, chart_distance, debug):
+  """Determine the tolerance per camera based on test rig and camera params.
+
+  Cameras are pre-filtered to only include supportable cameras.
+  Supportable cameras are: YUV(RGB)
+
+  Args:
+    cam: camera object
+    props: dict; physical camera properties dictionary
+    chart_distance: float; distance to chart in cm
+    debug: boolean; log additional data
+
+  Returns:
+    dict of TOLs with camera focal length as key
+    largest common size across all cameras
+  """
+  ids = camera_properties_utils.logical_multi_camera_physical_ids(props)
+  physical_props = {}
+  physical_ids = []
+  for i in ids:
+    physical_props[i] = cam.get_camera_properties_by_id(i)
+    # find YUV capable physical cameras
+    if camera_properties_utils.backward_compatible(physical_props[i]):
+      physical_ids.append(i)
+
+  # find physical camera focal lengths that work well with rig
+  chart_distance_m = abs(chart_distance)/100  # convert CM to M
+  test_tols = {}
+  test_yuv_sizes = []
+  for i in physical_ids:
+    min_fd = physical_props[i]['android.lens.info.minimumFocusDistance']
+    focal_l = physical_props[i]['android.lens.info.availableFocalLengths'][0]
+    logging.debug('cam[%s] min_fd: %.3f (diopters), fl: %.2f',
+                  i, min_fd, focal_l)
+    yuv_sizes = capture_request_utils.get_available_output_sizes(
+        'yuv', physical_props[i])
+    test_yuv_sizes.append(yuv_sizes)
+    if debug:
+      logging.debug('cam[%s] yuv sizes: %s', i, str(yuv_sizes))
+
+    # determine if minimum focus distance is less than rig depth
+    if (math.isclose(min_fd, 0.0, rel_tol=1E-6) or  # fixed focus
+        1.0/min_fd < chart_distance_m*MIN_FOCUS_DIST_TOL):
+      test_tols[focal_l] = RADIUS_RTOL
+    else:
+      test_tols[focal_l] = RADIUS_RTOL_MIN_FD
+      logging.debug('loosening RTOL for cam[%s]: '
+                    'min focus distance too large.', i)
+  # find intersection of formats for max common format
+  common_sizes = list(set.intersection(*[set(list) for list in test_yuv_sizes]))
+  if debug:
+    logging.debug('common_fmt: %s', max(common_sizes))
+
+  return test_tols, max(common_sizes)
 
 
 def distance(x, y):
@@ -143,9 +201,7 @@ class ZoomTest(its_base_test.ItsBaseTest):
   """
 
   def test_zoom(self):
-    z_test_list = []
-    fls = []
-    circles = []
+    test_data = {}
     with its_session_utils.ItsSession(
         device_id=self.dut.serial,
         camera_id=self.camera_id,
@@ -161,8 +217,6 @@ class ZoomTest(its_base_test.ItsBaseTest):
 
       z_range = props['android.control.zoomRatioRange']
       logging.debug('testing zoomRatioRange: %s', str(z_range))
-      yuv_size = capture_request_utils.get_largest_yuv_format(props)
-      size = [yuv_size['width'], yuv_size['height']]
       debug = self.debug_mode
 
       z_min, z_max = float(z_range[0]), float(z_range[1])
@@ -170,18 +224,36 @@ class ZoomTest(its_base_test.ItsBaseTest):
       z_list = np.arange(z_min, z_max, float(z_max - z_min) / (NUM_STEPS - 1))
       z_list = np.append(z_list, z_max)
 
+      # set TOLs based on camera and test rig params
+      if camera_properties_utils.logical_multi_camera(props):
+        test_tols, size = get_test_tols_and_cap_size(
+            cam, props, self.chart_distance, debug)
+      else:
+        fl = props['android.lens.info.availableFocalLengths'][0]
+        test_tols = {fl: RADIUS_RTOL}
+        yuv_size = capture_request_utils.get_largest_yuv_format(props)
+        size = [yuv_size['width'], yuv_size['height']]
+      logging.debug('capture size: %s', str(size))
+      logging.debug('test TOLs: %s', str(test_tols))
+
       # do captures over zoom range and find circles with cv2
       logging.debug('cv2_version: %s', cv2.__version__)
+      cam.do_3a()
       req = capture_request_utils.auto_capture_request()
       for i, z in enumerate(z_list):
         logging.debug('zoom ratio: %.2f', z)
         req['android.control.zoomRatio'] = z
-        cap = cam.do_capture(req, cam.CAP_YUV)
+        cap = cam.do_capture(
+            req, {'format': 'yuv', 'width': size[0], 'height': size[1]})
         img = image_processing_utils.convert_capture_to_rgb_image(
             cap, props=props)
         img_name = '%s_%s.jpg' % (os.path.join(self.log_path,
                                                NAME), round(z, 2))
         image_processing_utils.write_image(img, img_name)
+
+        # determine radius tolerance of capture
+        cap_fl = cap['metadata']['android.lens.focalLength']
+        radius_tol = test_tols[cap_fl]
 
         # convert to [0, 255] images with unsigned integer
         img *= 255
@@ -195,49 +267,52 @@ class ZoomTest(its_base_test.ItsBaseTest):
         if circle_cropped(circle, size):
           logging.debug('zoom %.2f is too large! Skip further captures', z)
           break
-        circles.append(circle)
-        z_test_list.append(z)
-        fls.append(cap['metadata']['android.lens.focalLength'])
+        test_data[i] = {'z': z, 'circle': circle, 'r_tol': radius_tol,
+                        'fl': cap_fl}
 
     # assert some range is tested before circles get too big
     zoom_max_thresh = ZOOM_MAX_THRESH
     if z_max < ZOOM_MAX_THRESH:
       zoom_max_thresh = z_max
-    if z_test_list[-1] < zoom_max_thresh:
-      raise AssertionError(f'Max zoom level tested: {z_test_list[-1]}, '
+    test_data_max_z = test_data[max(test_data.keys())]['z']
+    logging.debug('zoom data max: %.2f', test_data_max_z)
+    if test_data_max_z < zoom_max_thresh:
+      raise AssertionError(f'Max zoom ratio tested: {test_data_max_z:.4f}, '
+                           f'range advertised min: {z_min}, max: {z_max} '
                            f'THRESH: {zoom_max_thresh}')
 
     # initialize relative size w/ zoom[0] for diff zoom ratio checks
-    radius_0 = float(circles[0][2])
-    z_0 = float(z_test_list[0])
+    radius_0 = float(test_data[0]['circle'][2])
+    z_0 = float(test_data[0]['z'])
 
-    for i, z in enumerate(z_test_list):
-      logging.debug('Zoom: %.2f, fl: %.2f', z, fls[i])
-      offset_abs = [(circles[i][0] - size[0] // 2),
-                    (circles[i][1] - size[1] // 2)]
-      logging.debug('Circle r: %.1f, center offset x, y: %d, %d', circles[i][2],
-                    offset_abs[0], offset_abs[1])
-      z_ratio = z / z_0
+    for i, data in test_data.items():
+      logging.debug('Zoom: %.2f, fl: %.2f', data['z'], data['fl'])
+      offset_abs = [(data['circle'][0] - size[0] // 2),
+                    (data['circle'][1] - size[1] // 2)]
+      logging.debug('Circle r: %.1f, center offset x, y: %d, %d',
+                    data['circle'][2], offset_abs[0], offset_abs[1])
+      z_ratio = data['z'] / z_0
 
       # check relative size against zoom[0]
-      radius_ratio = circles[i][2] / radius_0
+      radius_ratio = data['circle'][2] / radius_0
       logging.debug('r ratio req: %.3f, measured: %.3f', z_ratio, radius_ratio)
-      if not np.isclose(z_ratio, radius_ratio, rtol=RADIUS_RTOL):
+      if not math.isclose(z_ratio, radius_ratio, rel_tol=data['r_tol']):
         raise AssertionError(f'zoom: {z_ratio:.2f}, radius ratio: '
-                             f'{radius_ratio:.2f}, RTOL: {RADIUS_RTOL}')
+                             f"{radius_ratio:.2f}, RTOL: {data['r_tol']}")
 
       # check relative offset against init vals w/ no focal length change
-      if i == 0 or fls[i - 1] != fls[i]:  # set init values
-        z_init = float(z_test_list[i])
-        offset_init = [circles[i][0] - size[0]//2, circles[i][1] - size[1]//2]
+      if i == 0 or test_data[i-1]['fl'] != data['fl']:  # set init values
+        z_init = float(data['z'])
+        offset_init = [data['circle'][0] - size[0]//2,
+                       data['circle'][1] - size[1]//2]
       else:  # check
-        z_ratio = z / z_init
+        z_ratio = data['z'] / z_init
         offset_rel = (distance(offset_abs[0], offset_abs[1]) / z_ratio /
                       distance(offset_init[0], offset_init[1]))
         logging.debug('offset_rel: %.3f', offset_rel)
-        if not np.isclose(offset_rel, 1.0, rtol=OFFSET_RTOL):
-          raise AssertionError(f'zoom: {z:.2f}, offset(rel): {offset_rel:.4f}, '
-                               f'RTOL: {OFFSET_RTOL}')
+        if not math.isclose(offset_rel, 1.0, rel_tol=OFFSET_RTOL):
+          raise AssertionError(f"zoom: {data['z']:.2f}, offset(rel): "
+                               f'{offset_rel:.4f}, RTOL: {OFFSET_RTOL}')
 
 if __name__ == '__main__':
   test_runner.main()

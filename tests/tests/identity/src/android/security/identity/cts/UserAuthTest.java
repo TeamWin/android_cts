@@ -121,10 +121,15 @@ public class UserAuthTest {
             Context appContext = InstrumentationRegistry.getTargetContext();
             KeyguardManager keyguardManager = (KeyguardManager)appContext.
                                               getSystemService(Context.KEYGUARD_SERVICE);
-            for (int i = 0; i < 5 && keyguardManager.isDeviceLocked(); i++) {
-                Log.w(TAG, "Wait for keyguardManager unlock device ...");
+            int waitCount = 5;
+            do {
                 SystemClock.sleep(1000);
-            }
+                if (!keyguardManager.isDeviceLocked()) {
+                    break;
+                }
+                Log.w(TAG, "Device was still locked, sleeping and retrying...");
+                mLockCredential.enterAndConfirmLockCredential();
+            } while (waitCount-- >= 0);
         }
 
         @Override

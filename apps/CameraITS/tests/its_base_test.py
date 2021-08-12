@@ -156,7 +156,31 @@ class ItsBaseTest(base_test.BaseTestClass):
                   format(self.tablet_screen_brightness))
     self.tablet.adb.shell('settings put system screen_off_timeout {}'.format(
         TABLET_DIMMER_TIMEOUT_MS))
+    self.set_tablet_landscape_orientation()
     self.tablet.adb.shell('am force-stop com.google.android.apps.docs')
+    self.tablet.adb.shell('am force-stop com.google.android.apps.photos')
+    self.tablet.adb.shell('am force-stop com.android.gallery3d')
+
+  def set_tablet_landscape_orientation(self):
+    """Sets the screen orientation to landscape.
+    """
+    # Get the landscape orientation value.
+    # This value is different for Pixel C/Huawei/Samsung tablets.
+    output = self.tablet.adb.shell('dumpsys window | grep mLandscapeRotation')
+    logging.debug('dumpsys window output: %s', output.decode('utf-8').strip())
+    output_list = str(output.decode('utf-8')).strip().split(' ')
+    for val in output_list:
+        if 'LandscapeRotation' in val:
+            landscape_val = str(val.split('=')[-1])
+            # For some tablets the values are in constant forms such as ROTATION_90
+            if 'ROTATION_90' in landscape_val:
+                landscape_val = '1'
+            logging.debug('Changing the orientation to landscape mode.')
+            self.tablet.adb.shell(['settings', 'put', 'system', 'user_rotation',
+                                   landscape_val])
+            break
+    logging.debug('Reported tablet orientation is: %d',
+                  int(self.tablet.adb.shell('settings get system user_rotation')))
 
   def parse_hidden_camera_id(self):
     """Parse the string of camera ID into an array.

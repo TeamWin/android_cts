@@ -32,4 +32,7 @@ import java.lang.annotation.Target;
 public @interface RequireRunOnProfileAnnotation {
     /** The name of the profile type which the test should be run on. */
     String value();
+
+    /** If the profile type requires a profile owner. */
+    boolean hasProfileOwner() default false;
 }

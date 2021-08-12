@@ -63,33 +63,21 @@ public final class ActivityPausedEvent extends Event {
     }
 
     /** Begin logging a {@link ActivityPausedEvent}. */
-    public static ActivityPausedEventLogger logger(Activity activity) {
-        return new ActivityPausedEventLogger(activity);
+    public static ActivityPausedEventLogger logger(Activity activity, android.content.pm.ActivityInfo activityInfo) {
+        return new ActivityPausedEventLogger(activity, activityInfo);
     }
 
     /** {@link EventLogger} for {@link ActivityPausedEvent}. */
     public static final class ActivityPausedEventLogger
             extends EventLogger<ActivityPausedEvent> {
-        private ActivityPausedEventLogger(Activity activity) {
+        private ActivityPausedEventLogger(Activity activity, android.content.pm.ActivityInfo activityInfo) {
             super(activity, new ActivityPausedEvent());
-            setActivity(activity);
+            setActivity(activityInfo);
         }
 
         /** Set the {@link Activity} being destroyed. */
-        public ActivityPausedEventLogger setActivity(Activity activity) {
-            mEvent.mActivity = new ActivityInfo(activity);
-            return this;
-        }
-
-        /** Set the {@link Activity} class being destroyed. */
-        public ActivityPausedEventLogger setActivity(Class<? extends Activity> activityClass) {
-            mEvent.mActivity = new ActivityInfo(activityClass);
-            return this;
-        }
-
-        /** Set the {@link Activity} class name being destroyed. */
-        public ActivityPausedEventLogger setActivity(String activityClassName) {
-            mEvent.mActivity = new ActivityInfo(activityClassName);
+        public ActivityPausedEventLogger setActivity(android.content.pm.ActivityInfo activity) {
+            mEvent.mActivity = ActivityInfo.builder(activity).build();
             return this;
         }
     }

@@ -66,6 +66,7 @@ import java.util.concurrent.TimeUnit;
 public class QuickAccessWalletClientTest {
 
     private static final String SETTING_KEY = "lockscreen_show_wallet";
+    private static String NFC_PAYMENT_DEFAULT_COMPONENT = "nfc_payment_default_component";
 
     private static final GetWalletCardsRequest GET_WALLET_CARDS_REQUEST =
             new GetWalletCardsRequest(700, 440, 64, 5);
@@ -79,10 +80,10 @@ public class QuickAccessWalletClientTest {
     public void setUp() throws Exception {
         // Save current default payment app
         mContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        mDefaultPaymentApp = SettingsUtils.get(Settings.Secure.NFC_PAYMENT_DEFAULT_COMPONENT);
+        mDefaultPaymentApp = SettingsUtils.get(NFC_PAYMENT_DEFAULT_COMPONENT);
         ComponentName component =
                 ComponentName.createRelative(mContext, TestHostApduService.class.getName());
-        SettingsUtils.syncSet(mContext, Settings.Secure.NFC_PAYMENT_DEFAULT_COMPONENT,
+        SettingsUtils.syncSet(mContext, NFC_PAYMENT_DEFAULT_COMPONENT,
                 component.flattenToString());
         TestQuickAccessWalletService.resetStaticFields();
     }
@@ -91,8 +92,7 @@ public class QuickAccessWalletClientTest {
     public void tearDown() {
         // Restore saved default payment app
         ContentResolver cr = mContext.getContentResolver();
-        SettingsUtils.syncSet(mContext, Settings.Secure.NFC_PAYMENT_DEFAULT_COMPONENT,
-                mDefaultPaymentApp);
+        SettingsUtils.syncSet(mContext, NFC_PAYMENT_DEFAULT_COMPONENT, mDefaultPaymentApp);
 
         // Return all services to default state
         setServiceState(TestQuickAccessWalletService.class,

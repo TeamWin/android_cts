@@ -926,7 +926,9 @@ public class StagedInstallTest {
 
     @Test
     public void testFailOverlappingMultipleStagedInstall_BothSinglePackage_Apk() throws Exception {
-        stageSingleApk(TestApp.A1).assertSuccessful();
+        int stagedSessionId = stageSingleApk(TestApp.A1).assertSuccessful().getSessionId();
+        waitForIsReadyBroadcast(stagedSessionId);
+
         int sessionId = stageSingleApk(TestApp.A1).assertSuccessful().getSessionId();
         PackageInstaller.SessionInfo info = waitForBroadcast(sessionId);
         assertThat(info).isStagedSessionFailed();
@@ -1167,6 +1169,8 @@ public class StagedInstallTest {
     public void testApexFailsToInstallIfApkInApexFailsToScan_VerifyPostReboot() throws Exception {
         int sessionId = retrieveLastSessionId();
         assertSessionFailed(sessionId);
+        assertSessionFailedWithMessage(sessionId, "Failed to parse "
+                + "/apex/com.android.apex.cts.shim/app/CtsShimTargetPSdk");
         assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(1);
     }
 

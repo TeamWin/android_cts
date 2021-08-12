@@ -23,7 +23,11 @@ import com.android.queryable.Queryable;
 import java.io.Serializable;
 
 /** Query for a {@link Intent}. */
-public interface IntentQuery<E extends Queryable>  extends Serializable {
+public interface IntentQuery<E extends Queryable> extends Query<Intent> {
+
+    static IntentQuery<IntentQuery<?>> intent() {
+        return new IntentQueryHelper<>();
+    }
 
     /** Query the {@link Intent#getAction}. */
     StringQuery<E> action();

@@ -46,6 +46,7 @@ import android.view.Display;
 import com.google.common.collect.Lists;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Launch runner is an interpreter for a {@link LaunchSequence} command object.
@@ -327,6 +328,10 @@ public class LaunchRunner {
 
         List<WindowManagerState.ActivityTask> endStateTasks =
                 mTestBase.getWmState().getRootTasks();
+
+        endStateTasks = endStateTasks.stream()
+                .filter(task -> activity.getPackageName().equals(task.getPackageName()))
+                .collect(Collectors.toList());
 
         return StateDump.fromTasks(endStateTasks, mBaseTasks);
     }

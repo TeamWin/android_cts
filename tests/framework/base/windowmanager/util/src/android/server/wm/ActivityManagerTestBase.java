@@ -1422,8 +1422,10 @@ public abstract class ActivityManagerTestBase {
             // Not all device variants lock when we go to sleep, so we need to explicitly lock the
             // device. Note that pressSleepButton() above is redundant because the action also
             // puts the device to sleep, but kept around for clarity.
-            mInstrumentation.getUiAutomation().performGlobalAction(
-                    AccessibilityService.GLOBAL_ACTION_LOCK_SCREEN);
+            if (isWatch()) {
+                mInstrumentation.getUiAutomation().performGlobalAction(
+                        AccessibilityService.GLOBAL_ACTION_LOCK_SCREEN);
+            }
             if (mAmbientDisplayConfiguration.alwaysOnEnabled(
                     android.os.Process.myUserHandle().getIdentifier())) {
                 mWmState.waitForAodShowing();
@@ -2617,6 +2619,7 @@ public abstract class ActivityManagerTestBase {
         @Override
         public void addError(Throwable error) {
             super.addError(error);
+            logE("addError: " + error);
             mLastError = error;
         }
     }

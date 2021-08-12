@@ -53,6 +53,7 @@ import android.media.MediaPlayer;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
+import android.net.NetworkInfo;
 import android.net.NetworkRequest;
 import android.net.cts.util.CtsNetUtils;
 import android.net.wifi.WifiManager;
@@ -79,6 +80,7 @@ import androidx.test.InstrumentationRegistry;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.ShellIdentityUtils;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;
@@ -675,7 +677,7 @@ public class AtomTests {
         sleep(500);
         setScreenBrightness(100);
         sleep(500);
-        setScreenBrightness(198);
+        setScreenBrightness(140);
         sleep(500);
 
 
@@ -919,8 +921,13 @@ public class AtomTests {
     @Test
     public void testWifiReconnect() throws Exception {
         Context context = InstrumentationRegistry.getContext();
-        wifiReconnect(context);
+        boolean wifiConnected = isWifiConnected(context);
+        Assert.assertTrue(
+                "Wifi is not connected. The test expects Wifi to be connected before the run",
+                wifiConnected);
+
         wifiDisconnect(context);
+        sleep(500);
         wifiReconnect(context);
         sleep(500);
     }
@@ -1093,19 +1100,46 @@ public class AtomTests {
     public void wifiDisconnect(Context context) throws Exception {
         WifiManager wifiManager = context.getSystemService(WifiManager.class);
         ShellIdentityUtils.invokeWithShellPermissions(() -> wifiManager.disconnect());
+
         PollingCheck.check(
-                "Wifi not disconnected",
+                "Timed out waiting for Wifi to become disconnected",
                 WIFI_CONNECT_TIMEOUT_MILLIS,
-                () -> wifiManager.getConnectionInfo().getNetworkId() == -1);
+                () -> !isWifiConnected(context));
     }
 
     public void wifiReconnect(Context context) throws Exception {
         WifiManager wifiManager = context.getSystemService(WifiManager.class);
         ShellIdentityUtils.invokeWithShellPermissions(() -> wifiManager.reconnect());
+
         PollingCheck.check(
-                "Wifi not connected",
+                "Timed out waiting for Wifi to become connected",
                 WIFI_CONNECT_TIMEOUT_MILLIS,
-                () -> wifiManager.getConnectionInfo().getNetworkId() != -1);
+                () -> isWifiConnected(context));
+    }
+
+    private boolean isWifiConnected(Context context) throws Exception {
+        ConnectivityManager connManager = context.getSystemService(ConnectivityManager.class);
+        if (connManager == null) {
+            return false;
+        }
+
+        Network[] networks = connManager.getAllNetworks();
+        for (Network network : networks) {
+            if (network == null) {
+                continue;
+            }
+
+            NetworkCapabilities caps = connManager.getNetworkCapabilities(network);
+            if (caps == null) {
+                continue;
+            }
+
+            if (caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     @Test

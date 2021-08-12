@@ -26,4 +26,5 @@ public class Utils {
     public static native boolean mistaggedKernelUaccessFails();
 
     public static native boolean heapIsZeroInitialized();
+    public static native boolean allocatorIsScudo();
 }

@@ -21,6 +21,7 @@ import static org.junit.Assume.assumeFalse;
 import android.app.StatusBarManager;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.view.KeyEvent;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
@@ -50,6 +51,20 @@ public class StatusBarManagerApi30Test {
     @Test
     public void testCollapsePanels_withoutStatusBarPermission_doesNotThrow() throws Exception {
         mStatusBarManager.collapsePanels();
+
+        // Nothing thrown, passed
+    }
+
+    @Test
+    public void testTogglePanel_withoutStatusBarPermission_doesNotThrow() throws Exception {
+        mStatusBarManager.togglePanel();
+
+        // Nothing thrown, passed
+    }
+
+    @Test
+    public void testHandleSystemKey_withoutStatusBarPermission_doesNotThrow() throws Exception {
+        mStatusBarManager.handleSystemKey(KeyEvent.KEYCODE_SYSTEM_NAVIGATION_UP);
 
         // Nothing thrown, passed
     }

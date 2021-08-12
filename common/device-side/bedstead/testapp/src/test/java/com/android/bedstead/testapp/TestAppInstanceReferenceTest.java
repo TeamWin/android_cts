@@ -88,9 +88,9 @@ public class TestAppInstanceReferenceTest {
     @Test
     public void activities_any_returnsActivity() {
         TestApp testApp = mTestAppProvider.any();
-        TestAppInstanceReference testAppInstance = testApp.instance(sUser);
-
-        assertThat(testAppInstance.activities().any()).isNotNull();
+        try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
+            assertThat(testAppInstance.activities().any()).isNotNull();
+        }
     }
 
     @Test

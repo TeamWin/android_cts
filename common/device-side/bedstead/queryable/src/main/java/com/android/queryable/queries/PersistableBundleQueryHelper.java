@@ -33,6 +33,10 @@ public final class PersistableBundleQueryHelper<E extends Queryable>
     private final Map<String, PersistableBundleKeyQueryHelper<E>> mKeyQueryHelpers =
             new HashMap<>();
 
+    PersistableBundleQueryHelper() {
+        mQuery = (E) this;
+    }
+
     public PersistableBundleQueryHelper(E query) {
         mQuery = query;
     }
@@ -45,6 +49,7 @@ public final class PersistableBundleQueryHelper<E extends Queryable>
         return mKeyQueryHelpers.get(key);
     }
 
+    @Override
     public boolean matches(PersistableBundle value) {
         for (Map.Entry<String, PersistableBundleKeyQueryHelper<E>> keyQueries :
                 mKeyQueryHelpers.entrySet()) {

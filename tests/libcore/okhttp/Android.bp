@@ -16,8 +16,8 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-android_test {
-    name: "CtsLibcoreOkHttpTestCases",
+java_defaults {
+    name: "libcore_okhttp_test_cases_defaults",
     defaults: ["cts_support_defaults"],
     platform_apis: true,
     min_sdk_version: "29",
@@ -40,10 +40,28 @@ android_test {
     // Include both the 32 and 64 bit versions of libjavacoretests,
     // where applicable.
     compile_multilib: "both",
+}
+
+// Tests used in CTS and in Conscrypt MTS.
+android_test {
+    name: "CtsLibcoreOkHttpTestCases",
+    defaults: ["libcore_okhttp_test_cases_defaults"],
     // Tag this module as a cts test artifact
     test_suites: [
         "cts",
         "general-tests",
        "mts-conscrypt",
     ],
+  test_config: "CtsLibcoreOkHttpTestCases.xml"
+}
+
+// Tests used in ART MTS.
+android_test {
+    name: "MtsLibcoreOkHttpTestCases",
+    defaults: ["libcore_okhttp_test_cases_defaults"],
+    test_suites: [
+        "general-tests",
+        "mts-art",
+    ],
+  test_config: "MtsLibcoreOkHttpTestCases.xml"
 }

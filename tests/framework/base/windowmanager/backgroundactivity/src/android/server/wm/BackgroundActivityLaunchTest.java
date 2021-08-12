@@ -183,8 +183,7 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
         assertTrue("Not able to start foreground activity", firstResult);
         // Don't press home button to avoid stop app switches
         mContext.sendBroadcast(new Intent(ACTION_FINISH_ACTIVITY));
-        mWmState.waitForHomeActivityVisible();
-        Thread.sleep(ACTIVITY_BG_START_GRACE_PERIOD_MS / 2);
+        mWmState.waitAndAssertActivityRemoved(APP_A_FOREGROUND_ACTIVITY);
         Intent secondIntent = new Intent();
         secondIntent.setComponent(APP_A_START_ACTIVITY_RECEIVER);
 
@@ -256,14 +255,16 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
                 APP_A_FOREGROUND_ACTIVITY);
         assertTrue("Not able to launch background activity", result);
         assertTaskStack(new ComponentName[]{APP_A_FOREGROUND_ACTIVITY}, APP_A_FOREGROUND_ACTIVITY);
-        pressHomeAndResumeAppSwitch();
+        // We can't resume app switching after pressing home button, otherwise the grace period
+        // will allow the starts.
+        pressHomeAndWaitHomeResumed();
 
         mContext.sendBroadcast(getLaunchActivitiesBroadcast(APP_A_BACKGROUND_ACTIVITY));
 
         result = waitForActivityFocused(APP_A_FOREGROUND_ACTIVITY);
-        assertFalse("Previously foreground Activity should not be able to relaunch itself", result);
+        assertFalse("Previously foreground Activity should not be able to make it focused", result);
         result = waitForActivityFocused(APP_A_BACKGROUND_ACTIVITY);
-        assertFalse("Previously foreground Activity should not be able to relaunch itself", result);
+        assertFalse("Previously background Activity should not be able to make it focused", result);
         assertTaskStack(new ComponentName[] {APP_A_BACKGROUND_ACTIVITY, APP_A_FOREGROUND_ACTIVITY},
                 APP_A_FOREGROUND_ACTIVITY);
     }
@@ -283,7 +284,9 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
         assertTrue("Not able to launch background activity", result);
         assertTaskStack(new ComponentName[]{APP_A_FOREGROUND_ACTIVITY}, APP_A_FOREGROUND_ACTIVITY);
 
-        pressHomeAndResumeAppSwitch();
+        // We can't resume app switching after pressing home button, otherwise the grace period
+        // will allow the starts.
+        pressHomeAndWaitHomeResumed();
 
         result = waitForActivityFocused(APP_A_FOREGROUND_ACTIVITY);
         assertFalse("FG activity shouldn't be visible", result);
@@ -375,7 +378,9 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
         boolean result = waitForActivityFocused(APP_A_FOREGROUND_ACTIVITY);
         assertTrue("Not able to start foreground activity", result);
         assertTaskStack(new ComponentName[]{APP_A_FOREGROUND_ACTIVITY}, APP_A_FOREGROUND_ACTIVITY);
-        pressHomeAndResumeAppSwitch();
+        // We can't resume app switching after pressing home button, otherwise the grace period
+        // will allow the starts.
+        pressHomeAndWaitHomeResumed();
 
         // The activity, now in the background, will attempt to start 2 activities in quick
         // succession

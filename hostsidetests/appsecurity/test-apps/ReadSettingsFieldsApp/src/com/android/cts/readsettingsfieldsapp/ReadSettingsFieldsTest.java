@@ -52,10 +52,6 @@ public class ReadSettingsFieldsTest extends AndroidTestCase {
                 if (isSettingsDeprecated(ex)) {
                     continue;
                 }
-                /** b/174151290 skip it due to it's @hide but also @TestApi */
-                if (key.equals(Settings.Secure.NFC_PAYMENT_DEFAULT_COMPONENT)) {
-                    continue;
-                }
                 // Skip checking for keys with maxTargetSdk because they might not be readable
                 if (Arrays.asList(settingsKeysWithMaxTargetSdk).contains(key)) {
                     continue;

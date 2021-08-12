@@ -23,6 +23,7 @@ import android.car.hardware.power.CarPowerManager;
 import android.car.hardware.power.CarPowerPolicy;
 import android.car.hardware.power.CarPowerPolicyFilter;
 import android.car.hardware.power.PowerComponent;
+import android.platform.test.annotations.AppModeFull;
 import android.test.suitebuilder.annotation.SmallTest;
 
 import androidx.annotation.Nullable;
@@ -40,12 +41,14 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 @SmallTest
+@AppModeFull(reason = "Instant Apps cannot get car related permissions")
 public final class CarPowerManagerTest extends CarApiTestBase {
     private static String TAG = CarPowerManagerTest.class.getSimpleName();
     private static final int LISTENER_WAIT_TIME_MS = 1000;
     private static final int NO_WAIT = 0;
 
     private CarPowerManager mCarPowerManager;
+    private String mInitialPowerPolicyId;
     private final Executor mExecutor = mContext.getMainExecutor();
 
     @Override
@@ -53,6 +56,15 @@ public final class CarPowerManagerTest extends CarApiTestBase {
     public void setUp() throws Exception {
         super.setUp();
         mCarPowerManager = (CarPowerManager) getCar().getCarManager(Car.POWER_SERVICE);
+        mInitialPowerPolicyId = mCarPowerManager.getCurrentPowerPolicy().getPolicyId();
+    }
+
+    @After
+    public void teardown() throws Exception {
+        CarPowerPolicy policy = mCarPowerManager.getCurrentPowerPolicy();
+        if (!mInitialPowerPolicyId.equals(policy.getPolicyId())) {
+            applyPowerPolicy(mInitialPowerPolicyId);
+        }
     }
 
     /**
@@ -96,6 +108,8 @@ public final class CarPowerManagerTest extends CarApiTestBase {
         makeSureExecutorReady();
         assertWithMessage("Added location listener's current policy")
                 .that(listenerLocation.getCurrentPolicyId(NO_WAIT)).isNull();
+
+        applyPowerPolicy(mInitialPowerPolicyId);
     }
 
     private void makeSureExecutorReady() throws Exception {

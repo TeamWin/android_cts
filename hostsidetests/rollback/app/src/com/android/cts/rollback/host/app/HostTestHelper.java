@@ -644,14 +644,14 @@ public class HostTestHelper {
     }
 
     @Test
-    public void testRollbackFailsBlockingSessions_Phase1_Install() throws Exception {
+    public void testRollbackFailsOtherSessions_Phase1_Install() throws Exception {
         assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(-1);
         Install.single(TestApp.A1).commit();
         Install.single(TestApp.A2).setStaged().setEnableRollback().commit();
     }
 
     @Test
-    public void testRollbackFailsBlockingSessions_Phase2_RollBack() throws Exception {
+    public void testRollbackFailsOtherSessions_Phase2_RollBack() throws Exception {
         assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(2);
         InstallUtils.processUserData(TestApp.A);
         // Stage session for package A to check if it can block rollback of A
@@ -659,7 +659,7 @@ public class HostTestHelper {
 
         // Stage another package not related to the rollback
         Install.single(TestApp.B1).commit();
-        Install.single(TestApp.B2).setStaged().setEnableRollback().commit();
+        final int sessionIdB = Install.single(TestApp.B2).setStaged().setEnableRollback().commit();
 
         final RollbackInfo available = RollbackUtils.getAvailableRollback(TestApp.A);
         RollbackUtils.rollback(available.getRollbackId(), TestApp.A2);
@@ -676,13 +676,18 @@ public class HostTestHelper {
         assertThat(sessionA).isNotNull();
         assertThat(sessionA.isStagedSessionFailed()).isTrue();
 
+        // Assert that the unrelated staged session is also failed
+        final PackageInstaller.SessionInfo sessionB = InstallUtils.getStagedSessionInfo(sessionIdB);
+        assertThat(sessionB).isNotNull();
+        assertThat(sessionB.isStagedSessionFailed()).isTrue();
+
         // Note: The app is not rolled back until after the rollback is staged
         // and the device has been rebooted.
         assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(2);
     }
 
     @Test
-    public void testRollbackFailsBlockingSessions_Phase3_Confirm() throws Exception {
+    public void testRollbackFailsOtherSessions_Phase3_Confirm() throws Exception {
         // Process TestApp.A
         assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(1);
         InstallUtils.processUserData(TestApp.A);
@@ -693,8 +698,69 @@ public class HostTestHelper {
         assertThat(committed).causePackagesContainsExactly(TestApp.A2);
         assertThat(committed.getCommittedSessionId()).isNotEqualTo(-1);
 
-        // Assert that unrelated package were not effected
+        // Assert that unrelated package was also failed
+        assertThat(InstallUtils.getInstalledVersion(TestApp.B)).isEqualTo(1);
+    }
+
+    @Test
+    public void testSimultaneousRollbacksBothSucceed_Phase1_Install() throws Exception {
+        assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(-1);
+        assertThat(InstallUtils.getInstalledVersion(TestApp.B)).isEqualTo(-1);
+        Install.single(TestApp.A1).commit();
+        Install.single(TestApp.A2).setStaged().setEnableRollback().commit();
+        Install.single(TestApp.B1).commit();
+        Install.single(TestApp.B2).setStaged().setEnableRollback().commit();
+    }
+
+    @Test
+    public void testSimultaneousRollbacksBothSucceed_Phase2_RollBack() throws Exception {
+        assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(2);
         assertThat(InstallUtils.getInstalledVersion(TestApp.B)).isEqualTo(2);
+        InstallUtils.processUserData(TestApp.A);
+        InstallUtils.processUserData(TestApp.B);
+
+        final RollbackInfo available = RollbackUtils.getAvailableRollback(TestApp.A);
+        RollbackUtils.rollback(available.getRollbackId(), TestApp.A2);
+        final RollbackInfo committed = RollbackUtils.getCommittedRollback(TestApp.A);
+        assertThat(committed).hasRollbackId(available.getRollbackId());
+        assertThat(committed).isStaged();
+        assertThat(committed).packagesContainsExactly(
+                Rollback.from(TestApp.A2).to(TestApp.A1));
+        assertThat(committed).causePackagesContainsExactly(TestApp.A2);
+        assertThat(committed.getCommittedSessionId()).isNotEqualTo(-1);
+
+        final RollbackInfo availableB = RollbackUtils.getAvailableRollback(TestApp.B);
+        RollbackUtils.rollback(availableB.getRollbackId(), TestApp.B2);
+        final RollbackInfo committedB = RollbackUtils.getCommittedRollback(TestApp.B);
+        assertThat(committedB).hasRollbackId(availableB.getRollbackId());
+        assertThat(committedB).isStaged();
+        assertThat(committedB).packagesContainsExactly(
+                Rollback.from(TestApp.B2).to(TestApp.B1));
+        assertThat(committedB).causePackagesContainsExactly(TestApp.B2);
+        assertThat(committedB.getCommittedSessionId()).isNotEqualTo(-1);
+    }
+
+    @Test
+    public void testSimultaneousRollbacksBothSucceed_Phase3_Confirm() throws Exception {
+        // Process TestApp.A
+        assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(1);
+        InstallUtils.processUserData(TestApp.A);
+        final RollbackInfo committed = RollbackUtils.getCommittedRollback(TestApp.A);
+        assertThat(committed).isStaged();
+        assertThat(committed).packagesContainsExactly(
+                Rollback.from(TestApp.A2).to(TestApp.A1));
+        assertThat(committed).causePackagesContainsExactly(TestApp.A2);
+        assertThat(committed.getCommittedSessionId()).isNotEqualTo(-1);
+
+        // Process TestApp.B
+        assertThat(InstallUtils.getInstalledVersion(TestApp.B)).isEqualTo(1);
+        InstallUtils.processUserData(TestApp.B);
+        final RollbackInfo committedB = RollbackUtils.getCommittedRollback(TestApp.B);
+        assertThat(committedB).isStaged();
+        assertThat(committedB).packagesContainsExactly(
+                Rollback.from(TestApp.B2).to(TestApp.B1));
+        assertThat(committedB).causePackagesContainsExactly(TestApp.B2);
+        assertThat(committedB.getCommittedSessionId()).isNotEqualTo(-1);
     }
 
     /**

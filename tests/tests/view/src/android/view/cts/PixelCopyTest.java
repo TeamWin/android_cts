@@ -35,11 +35,11 @@ import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
+import android.hardware.HardwareBuffer;
 import android.media.Image;
 import android.media.ImageReader;
 import android.media.ImageWriter;
 import android.os.Debug;
-import android.os.Debug.MemoryInfo;
 import android.util.Half;
 import android.util.Log;
 import android.view.PixelCopy;
@@ -68,6 +68,7 @@ import org.junit.runner.Description;
 import org.junit.runner.RunWith;
 import org.junit.runners.model.Statement;
 
+import java.io.File;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.concurrent.CountDownLatch;
@@ -635,7 +636,10 @@ public class PixelCopyTest {
         assertEquals(message, a, Half.toFloat(cA), 0.01);
     }
 
-    private void runGcAndFinalizersSync() {
+    private static void runGcAndFinalizersSync() {
+        Runtime.getRuntime().gc();
+        Runtime.getRuntime().runFinalization();
+
         final CountDownLatch fence = new CountDownLatch(1);
         new Object() {
             @Override
@@ -655,21 +659,58 @@ public class PixelCopyTest {
         } catch (InterruptedException ex) {
             throw new RuntimeException(ex);
         }
-        Runtime.getRuntime().gc();
     }
 
-    private void assertNotLeaking(int iteration, MemoryInfo start, MemoryInfo end) {
+    private static File sProcSelfFd = new File("/proc/self/fd");
+    private static int getFdCount() {
+        return sProcSelfFd.listFiles().length;
+    }
+
+    private static void assertNotLeaking(int iteration,
+            Debug.MemoryInfo start, Debug.MemoryInfo end) {
         Debug.getMemoryInfo(end);
-        if (end.getTotalPss() - start.getTotalPss() > 2000 /* kB */) {
+        assertNotEquals(0, start.getTotalPss());
+        assertNotEquals(0, end.getTotalPss());
+        if (end.getTotalPss() - start.getTotalPss() > 5000 /* kB */) {
             runGcAndFinalizersSync();
             Debug.getMemoryInfo(end);
-            if (end.getTotalPss() - start.getTotalPss() > 2000 /* kB */) {
+            if (end.getTotalPss() - start.getTotalPss() > 7000 /* kB */) {
                 // Guarded by if so we don't continually generate garbage for the
                 // assertion string.
                 assertEquals("Memory leaked, iteration=" + iteration,
                         start.getTotalPss(), end.getTotalPss(),
-                        2000 /* kb */);
+                        7000 /* kb */);
             }
+        }
+    }
+
+    private static void runNotLeakingTest(Runnable test) {
+        Debug.MemoryInfo meminfoStart = new Debug.MemoryInfo();
+        Debug.MemoryInfo meminfoEnd = new Debug.MemoryInfo();
+        int fdCount = -1;
+        // Do a warmup to reach steady-state memory usage
+        for (int i = 0; i < 50; i++) {
+            test.run();
+        }
+        runGcAndFinalizersSync();
+        Debug.getMemoryInfo(meminfoStart);
+        fdCount = getFdCount();
+        // Now run the test
+        for (int i = 0; i < 2000; i++) {
+            if (i % 100 == 5) {
+                assertNotLeaking(i, meminfoStart, meminfoEnd);
+                final int curFdCount = getFdCount();
+                if (curFdCount - fdCount > 10) {
+                    Assert.fail(String.format("FDs leaked. Expected=%d, current=%d, iteration=%d",
+                            fdCount, curFdCount, i));
+                }
+            }
+            test.run();
+        }
+        assertNotLeaking(2000, meminfoStart, meminfoEnd);
+        final int curFdCount = getFdCount();
+        if (curFdCount - fdCount > 10) {
+            Assert.fail(String.format("FDs leaked. Expected=%d, current=%d", fdCount, curFdCount));
         }
     }
 
@@ -690,20 +731,7 @@ public class PixelCopyTest {
             // Test a fullsize copy
             Bitmap bitmap = Bitmap.createBitmap(100, 100, Config.ARGB_8888);
 
-            MemoryInfo meminfoStart = new MemoryInfo();
-            MemoryInfo meminfoEnd = new MemoryInfo();
-
-            for (int i = 0; i < 1000; i++) {
-                if (i == 2) {
-                    // Not really the "start" but by having done a couple
-                    // we've fully initialized any state that may be required,
-                    // so memory usage should be stable now
-                    runGcAndFinalizersSync();
-                    Debug.getMemoryInfo(meminfoStart);
-                }
-                if (i % 100 == 5) {
-                    assertNotLeaking(i, meminfoStart, meminfoEnd);
-                }
+            runNotLeakingTest(() -> {
                 int result = mCopyHelper.request(activity.getView(), bitmap);
                 assertEquals("Copy request failed", PixelCopy.SUCCESS, result);
                 // Make sure nothing messed with the bitmap
@@ -712,9 +740,7 @@ public class PixelCopyTest {
                 assertEquals(Config.ARGB_8888, bitmap.getConfig());
                 assertBitmapQuadColor(bitmap,
                         Color.RED, Color.GREEN, Color.BLUE, Color.BLACK);
-            }
-
-            assertNotLeaking(1000, meminfoStart, meminfoEnd);
+            });
 
         } catch (InterruptedException e) {
             Assert.fail("Interrupted, error=" + e.getMessage());
@@ -792,7 +818,9 @@ public class PixelCopyTest {
 
     @Test
     public void testBufferQueueCrop() throws InterruptedException {
-        ImageReader reader = ImageReader.newInstance(100, 100, PixelFormat.RGBA_8888, 1);
+        ImageReader reader = ImageReader.newInstance(100, 100, PixelFormat.RGBA_8888, 1,
+                HardwareBuffer.USAGE_CPU_WRITE_OFTEN | HardwareBuffer.USAGE_CPU_READ_OFTEN
+                        | HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE);
         ImageWriter writer = ImageWriter.newInstance(reader.getSurface(), 1);
         Image image = writer.dequeueInputImage();
         Image.Plane plane = image.getPlanes()[0];
@@ -829,8 +857,6 @@ public class PixelCopyTest {
     }
 
     private static int getPixelFloatPos(Bitmap bitmap, float xpos, float ypos) {
-        Log.d(TAG, "getPixelFloatPos(): x=" + ((int) (bitmap.getWidth() * xpos))
-                                + " y=" + ((int) (bitmap.getHeight() * ypos)));
         return bitmap.getPixel((int) (bitmap.getWidth() * xpos), (int) (bitmap.getHeight() * ypos));
     }
 
@@ -854,7 +880,6 @@ public class PixelCopyTest {
             // and some closer to the center point, to ensure that our quadrants are even
             float below = .45f;
             float above = .55f;
-            Log.d(TAG, "bitmap w=" + bitmap.getWidth() + " h=" + bitmap.getHeight());
             assertEquals("Top left II " + Integer.toHexString(topLeft) + ", actual= "
                             + Integer.toHexString(getPixelFloatPos(bitmap, below, below)),
                     topLeft, getPixelFloatPos(bitmap, below, below));

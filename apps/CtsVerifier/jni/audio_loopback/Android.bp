@@ -12,7 +12,11 @@ cc_test_library {
         "frameworks/av/media/ndk/include",
         "system/core/include/cutils",
         "cts/apps/CtsVerifier/jni/megaaudio/player",
-        "cts/apps/CtsVerifier/jni/megaaudio/recorder"
+        "cts/apps/CtsVerifier/jni/megaaudio/recorder",
+        "external/oboe/include",
+        "external/oboe/src",
+        "external/oboe/src/common",
+        "external/oboe/src/aaudio",
     ],
     header_libs: ["jni_headers"],
     shared_libs: [

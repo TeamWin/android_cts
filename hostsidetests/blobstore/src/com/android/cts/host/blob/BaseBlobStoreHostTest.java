@@ -17,6 +17,7 @@ package com.android.cts.host.blob;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.testtype.junit4.DeviceTestRunOptions;
 import com.android.tradefed.util.Pair;
@@ -93,8 +94,8 @@ abstract class BaseBlobStoreHostTest extends BaseHostJUnit4Test {
         getDevice().reboot(); // reboot() waits for device available
     }
 
-    protected boolean isMultiUserSupported() throws Exception {
-        return getDevice().isMultiUserSupported();
+    protected static boolean isMultiUserSupported(ITestDevice device) throws Exception {
+        return device.isMultiUserSupported();
     }
 
     protected Map<String, String> createArgsFromLastTestRun() {

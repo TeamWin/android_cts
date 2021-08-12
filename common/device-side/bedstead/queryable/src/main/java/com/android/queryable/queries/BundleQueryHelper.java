@@ -32,6 +32,10 @@ public final class BundleQueryHelper<E extends Queryable> implements BundleQuery
     private final E mQuery;
     private final Map<String, BundleKeyQueryHelper<E>> mKeyQueryHelpers = new HashMap<>();
 
+    BundleQueryHelper() {
+        mQuery = (E) this;
+    }
+
     public BundleQueryHelper(E query) {
         mQuery = query;
     }
@@ -44,6 +48,7 @@ public final class BundleQueryHelper<E extends Queryable> implements BundleQuery
         return mKeyQueryHelpers.get(key);
     }
 
+    @Override
     public boolean matches(Bundle value) {
         for (Map.Entry<String, BundleKeyQueryHelper<E>> keyQueries : mKeyQueryHelpers.entrySet()) {
             if (!keyQueries.getValue().matches(value, keyQueries.getKey())) {

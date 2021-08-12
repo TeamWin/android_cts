@@ -65,7 +65,7 @@ import com.android.bedstead.harrier.annotations.enterprise.EnsureHasProfileOwner
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnDeviceOwnerUser;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnNonAffiliatedDeviceOwnerSecondaryUser;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnParentOfProfileOwner;
-import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnProfileOwner;
+import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnProfileOwnerProfile;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnSecondaryUserInDifferentProfileGroupToProfileOwner;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.packages.Package;
@@ -422,7 +422,7 @@ public class DeviceStateTest {
     }
 
     @Test
-    @IncludeRunOnProfileOwner
+    @IncludeRunOnProfileOwnerProfile
     public void includeRunOnProfileOwnerAnnotation_hasProfileOwner() {
         assertThat(
                 sTestApis.devicePolicy().getProfileOwner(sTestApis.users().instrumented())

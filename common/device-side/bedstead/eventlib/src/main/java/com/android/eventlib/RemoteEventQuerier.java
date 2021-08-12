@@ -34,7 +34,9 @@ import android.os.RemoteException;
 import android.util.Log;
 
 import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.permissions.PermissionContext;
+import com.android.bedstead.nene.users.User;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -75,6 +77,7 @@ public class
 
                 @Override
                 public void onServiceDisconnected(ComponentName className) {
+                    mQuery.set(null);
                     Log.i(LOG_TAG, "Service disconnected from " + className);
                 }
             };
@@ -92,7 +95,7 @@ public class
             }
             return e;
         } catch (RemoteException e) {
-            throw new AssertionError("Error making cross-process call", e);
+            throw new IllegalStateException("Error making cross-process call", e);
         }
     }
 
@@ -109,7 +112,7 @@ public class
             }
             return e;
         } catch (RemoteException e) {
-            throw new AssertionError("Error making cross-process call", e);
+            throw new IllegalStateException("Error making cross-process call", e);
         }
     }
 
@@ -131,7 +134,7 @@ public class
             }
             return e;
         } catch (RemoteException e) {
-            throw new AssertionError("Error making cross-process call", e);
+            throw new IllegalStateException("Error making cross-process call", e);
         }
     }
 
@@ -144,7 +147,7 @@ public class
     private AtomicReference<IQueryService> mQuery = new AtomicReference<>();
     private CountDownLatch mConnectionCountdown;
 
-    private static final int MAX_INITIALISATION_ATTEMPTS = 10;
+    private static final int MAX_INITIALISATION_ATTEMPTS = 300;
     private static final long INITIALISATION_ATTEMPT_DELAY_MS = 100;
 
     private void ensureInitialised() {
@@ -155,13 +158,13 @@ public class
             try {
                 ensureInitialisedOrThrow();
                 return;
-            } catch (Exception e) {
+            } catch (Exception | Error e) {
                 // Ignore, we will retry
             }
             try {
                 Thread.sleep(INITIALISATION_ATTEMPT_DELAY_MS);
             } catch (InterruptedException e) {
-                throw new AssertionError("Interrupted while initialising", e);
+                throw new IllegalStateException("Interrupted while initialising", e);
             }
         }
 
@@ -180,7 +183,8 @@ public class
         try {
             mQuery.get().init(id, data);
         } catch (RemoteException e) {
-            throw new AssertionError("Error making cross-process call", e);
+            mQuery.set(null);
+            throw new IllegalStateException("Error making cross-process call", e);
         }
     }
 
@@ -191,7 +195,9 @@ public class
         intent.setClassName(mPackageName, "com.android.eventlib.QueryService");
 
         AtomicBoolean didBind = new AtomicBoolean(false);
-        if (mEventLogsQuery.getUserHandle() != null) {
+        if (mEventLogsQuery.getUserHandle() != null
+                && mEventLogsQuery.getUserHandle().getIdentifier()
+                != sTestApis.users().instrumented().id()) {
             try (PermissionContext p =
                          sTestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
                 didBind.set(sContext.bindServiceAsUser(
@@ -206,15 +212,30 @@ public class
             try {
                 mConnectionCountdown.await(CONNECTION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
-                throw new AssertionError("Interrupted while binding to service", e);
+                throw new IllegalStateException("Interrupted while binding to service", e);
             }
         } else {
-            throw new AssertionError("Tried to bind but call returned false (intent is "
+            User user = (mEventLogsQuery.getUserHandle() == null) ? sTestApis.users().instrumented().resolve() : sTestApis.users().find(mEventLogsQuery.getUserHandle()).resolve();
+            if (user == null) {
+                throw new AssertionError("Tried to bind to user " + mEventLogsQuery.getUserHandle() + " but does not exist");
+            }
+            if (user.state() != User.UserState.RUNNING_UNLOCKED) {
+                throw new AssertionError("Tried to bind to user " + user + " but they are not RUNNING_UNLOCKED");
+            }
+            Package pkg = sTestApis.packages().find(mPackageName).resolve();
+            if (pkg == null) {
+                throw new AssertionError("Tried to bind to package " + mPackageName + " but it is not installed on any user.");
+            }
+            if (!pkg.installedOnUsers().contains(user)) {
+                throw new AssertionError("Tried to bind to package " + mPackageName + " but it is not installed on target user " + user);
+            }
+
+            throw new IllegalStateException("Tried to bind but call returned false (intent is "
                     + intent + ", user is  " + mEventLogsQuery.getUserHandle() + ")");
         }
 
         if (mQuery.get() == null) {
-            throw new AssertionError("Tried to bind but failed");
+            throw new IllegalStateException("Tried to bind but failed");
         }
     }
 }

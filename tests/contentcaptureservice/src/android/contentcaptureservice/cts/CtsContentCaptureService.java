@@ -318,7 +318,8 @@ public class CtsContentCaptureService extends ContentCaptureService {
         parceled.recycle();
 
         Log.i(TAG, "onContentCaptureEventsRequest(id=" + mId + ", ignoreOrpahn="
-                + mIgnoreOrphanSessionEvents + ", session=" + sessionId + "): " + event);
+                + mIgnoreOrphanSessionEvents + ", session=" + sessionId + "): " + event + " text: "
+                + getEventText(event));
         if (mIgnoreOrphanSessionEvents) return;
         final ViewNode node = event.getViewNode();
         if (node != null) {
@@ -515,6 +516,24 @@ public class CtsContentCaptureService extends ContentCaptureService {
         final String msg = String.format(fmt, args);
         Log.e(TAG, msg);
         sExceptions.add(new IllegalStateException(msg));
+    }
+
+    private static @Nullable String getEventText(ContentCaptureEvent event) {
+        CharSequence eventText = event.getText();
+        if (eventText != null) {
+            return eventText.toString();
+        }
+
+        ViewNode viewNode = event.getViewNode();
+        if (viewNode != null) {
+            eventText = viewNode.getText();
+
+            if (eventText != null) {
+                return eventText.toString();
+            }
+        }
+
+        return null;
     }
 
     public final class Session {

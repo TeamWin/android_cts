@@ -19,7 +19,7 @@ package android.security.cts;
 import com.android.tradefed.device.ITestDevice;
 import com.android.compatibility.common.util.CrashUtils;
 
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -31,8 +31,8 @@ public class CVE_2020_0073 extends SecurityTestCase {
      * b/147309942
      * Vulnerability Behaviour: SIGABRT in self
      */
-    @SecurityTest(minPatchLevel = "2020-04")
     @Test
+    @AsbSecurityTest(cveBugId = 147309942)
     public void testPocCVE_2020_0073() throws Exception {
         AdbUtils.assumeHasNfc(getDevice());
         pocPusher.only64();

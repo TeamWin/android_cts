@@ -16,6 +16,7 @@
 package android.media.cts;
 
 import android.app.ActivityManager;
+import android.content.ContentResolver;
 import android.content.res.AssetFileDescriptor;
 
 import android.app.Activity;
@@ -205,5 +206,18 @@ public class RingtoneManagerTest
         assertTrue(c.getString(RingtoneManager.TITLE_COLUMN_INDEX) != null);
         assertTrue(c.getString(RingtoneManager.URI_COLUMN_INDEX),
                 c.getString(RingtoneManager.URI_COLUMN_INDEX).startsWith("content://"));
+    }
+
+    public void testHasHapticChannels() {
+        if (!isSupportedDevice()) return;
+
+        Cursor c = mRingtoneManager.getCursor();
+        assertTrue("Must have at lease one ringtone available", c.getCount() > 0);
+        mRingtoneManager.hasHapticChannels(0);
+
+        final String uriPrefix = ContentResolver.SCHEME_ANDROID_RESOURCE + "://" +
+                mContext.getPackageName() + "/raw/";
+        assertTrue(RingtoneManager.hasHapticChannels(Uri.parse(uriPrefix + "a_4_haptic")));
+        assertFalse(RingtoneManager.hasHapticChannels(Uri.parse(uriPrefix + "a_4")));
     }
 }

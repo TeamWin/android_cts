@@ -50,6 +50,7 @@ import com.android.compatibility.common.util.ActivitiesWatcher.ActivityWatcher;
 import com.android.compatibility.common.util.RequiredServiceRule;
 
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -90,10 +91,18 @@ public class TranslationManagerTest {
     private static Context sContext;
     private static CtsTranslationService.TranslationReplier sTranslationReplier;
 
+    private static String sOriginalLogTag;
+
     @BeforeClass
     public static void oneTimeSetup() {
         sTranslationReplier = CtsTranslationService.getTranslationReplier();
         sContext = ApplicationProvider.getApplicationContext();
+        sOriginalLogTag = Helper.enableDebugLog();
+    }
+
+    @AfterClass
+    public static void oneTimeReset() {
+        Helper.disableDebugLog(sOriginalLogTag);
     }
 
     @Before

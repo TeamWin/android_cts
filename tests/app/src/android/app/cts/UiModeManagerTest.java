@@ -663,6 +663,7 @@ public class UiModeManagerTest extends AndroidTestCase {
 
     private void applyCommand(String command) {
         final UiAutomation uiAutomation = getInstrumentation().getUiAutomation();
+        uiAutomation.adoptShellPermissionIdentity(Manifest.permission.INTERACT_ACROSS_USERS_FULL);
         try (ParcelFileDescriptor fd = uiAutomation.executeShellCommand(command)) {
             Assert.assertNotNull("Failed to execute shell command: " + command, fd);
             // Wait for the command to finish by reading until EOF

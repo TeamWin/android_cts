@@ -16,6 +16,9 @@
 
 package com.android.bedstead.harrier.annotations.parameterized;
 
+import static android.content.pm.PackageManager.FEATURE_DEVICE_ADMIN;
+
+import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
 import com.android.bedstead.harrier.annotations.meta.ParameterizedAnnotation;
 

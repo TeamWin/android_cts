@@ -218,9 +218,33 @@ public final class ShellCommand {
             return execute();
         }
 
+        public BytesBuilder forBytes() {
+            if (mOutputSuccessChecker != null) {
+                throw new IllegalStateException("Cannot call .forBytes after .validate");
+            }
+
+            return new BytesBuilder(this);
+        }
+
         @Override
         public String toString() {
             return "ShellCommand$Builder{cmd=" + build() + "}";
+        }
+    }
+
+    public static final class BytesBuilder {
+
+        private final Builder mBuilder;
+
+        private BytesBuilder(Builder builder) {
+            mBuilder = builder;
+        }
+
+        /** See {@link ShellCommandUtils#executeCommandForBytes(java.lang.String)}. */
+        public byte[] execute() throws AdbException {
+            return ShellCommandUtils.executeCommandForBytes(
+                    mBuilder.build(),
+                    mBuilder.mStdInBytes);
         }
     }
 }

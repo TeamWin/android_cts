@@ -24,30 +24,26 @@ public final class BroadcastReceiverQueryHelper<E extends Queryable>
         implements BroadcastReceiverQuery<E> {
 
     private final E mQuery;
-    private final ClassQueryHelper<E> mClassQueryHelper;
+    private final ClassQueryHelper<E> mReceiverClassQueryHelper;
+
+    BroadcastReceiverQueryHelper() {
+        mQuery = (E) this;
+        mReceiverClassQueryHelper = new ClassQueryHelper<>(mQuery);
+    }
 
     public BroadcastReceiverQueryHelper(E query) {
         mQuery = query;
-        mClassQueryHelper = new ClassQueryHelper<>(query);
+        mReceiverClassQueryHelper = new ClassQueryHelper<>(query);
     }
 
     @Override
-    public E isSameClassAs(Class<?> clazz) {
-        return mClassQueryHelper.isSameClassAs(clazz);
-    }
-
-    @Override
-    public StringQuery<E> className() {
-        return mClassQueryHelper.className();
-    }
-
-    @Override
-    public StringQuery<E> simpleName() {
-        return mClassQueryHelper.simpleName();
+    public ClassQuery<E> receiverClass() {
+        return mReceiverClassQueryHelper;
     }
 
     /** {@code true} if all filters are met by {@code value}. */
+    @Override
     public boolean matches(BroadcastReceiverInfo value) {
-        return mClassQueryHelper.matches(value);
+        return mReceiverClassQueryHelper.matches(value);
     }
 }

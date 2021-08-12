@@ -18,7 +18,7 @@ package com.android.cts.devicepolicy;
 
 import static com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.FEATURE_MANAGED_USERS;
 
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 
 import com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.RequiresAdditionalFeatures;
 
@@ -52,8 +52,8 @@ public class SeparateProfileChallengeTest extends BaseDevicePolicyTest {
         super.tearDown();
     }
 
-    @SecurityTest
     @Test
+    @AsbSecurityTest(cveBugId = 128599668)
     public void testSeparateProfileChallengePermissions() throws Exception {
         assumeCanCreateOneManagedUser();
 

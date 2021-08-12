@@ -124,7 +124,10 @@ class EvCompensationAdvancedTest(its_base_test.ItsBaseTest):
           if cap['metadata']['android.control.aeState'] == LOCKED:
             lumas.append(extract_luma_from_capture(cap))
             break
-          assert cap['metadata']['android.control.aeState'] == LOCKED
+        if caps[THRESH_CONVERGE_FOR_EV-1]['metadata'][
+            'android.control.aeState'] != LOCKED:
+          raise AssertionError('AE does not reach locked state in '
+                               f'{THRESH_CONVERGE_FOR_EV} frames.')
         logging.debug('lumas in AE locked captures: %s', str(lumas))
 
       i_mid = len(ev_steps) // 2
@@ -149,8 +152,11 @@ class EvCompensationAdvancedTest(its_base_test.ItsBaseTest):
           'Max delta between modeled and measured lumas: %.4f', max_diff)
       logging.debug(
           'Avg delta between modeled and measured lumas: %.4f', avg_diff)
-      assert max_diff < LUMA_DELTA_THRESH, 'diff: %.3f, THRESH: %.2f' % (
-          max_diff, LUMA_DELTA_THRESH)
+      if max_diff > LUMA_DELTA_THRESH:
+        raise AssertionError(f'Max delta between modeled and measured '
+                             f'lumas: {max_diff:.3f}, '
+                             f'TOL: {LUMA_DELTA_THRESH}.')
+
 
 if __name__ == '__main__':
   test_runner.main()

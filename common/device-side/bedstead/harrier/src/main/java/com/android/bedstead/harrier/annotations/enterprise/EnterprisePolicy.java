@@ -31,8 +31,16 @@ public @interface EnterprisePolicy {
     enum DeviceOwnerControl {
         /** A policy that can be applied by a Device Owner to all users on the device. */
         GLOBAL,
+
+        /**
+         * A policy that can be applied by a Device Owner and applies to the device owner
+         * itself and to affiliated users on the device.
+         */
+        AFFILIATED,
+
         /** A policy that can be applied by a Device Owner to only the Device Owner's user. */
         USER,
+
         /** A policy that cannot be applied by a Device Owner. */
         NO
     }
@@ -40,13 +48,27 @@ public @interface EnterprisePolicy {
     enum ProfileOwnerControl {
         /** A policy that can be applied by a Profile Owner to the profile itself and its parent. */
         PARENT,
+
         /**
          * A policy that can be applied by a Profile Owner to the profile itself, and to the
          * parent if it is a COPE profile.
          */
         COPE_PARENT,
+
         /** A policy that can be applied by a Profile Owner to the profile itself. */
         PROFILE,
+
+        /** A policy that can be applied by an affiliated Profile Owner, applying to itself. */
+        AFFILIATED,
+
+        /**
+         * A policy that can be applied by an affiliated Profile Owner or a Profile Owner with no
+         * Device Owner.
+         *
+         * <p>The policy will be applied to the user, and interaction with other users is undefined.
+         */
+        AFFILIATED_OR_NO_DO,
+
         /** A policy that cannot be applied by a Profile Owner. */
         NO
     }

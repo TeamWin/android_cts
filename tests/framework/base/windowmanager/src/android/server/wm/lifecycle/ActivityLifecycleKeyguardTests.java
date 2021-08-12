@@ -28,6 +28,7 @@ import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_STOP;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
+import android.content.pm.PackageManager;
 import android.platform.test.annotations.Presubmit;
 
 import androidx.test.filters.MediumTest;
@@ -76,8 +77,15 @@ public class ActivityLifecycleKeyguardTests extends ActivityLifecycleClientTestB
         } // keyguard hidden
 
         // Verify that activity was resumed
-        waitAndAssertActivityStates(state(activity, ON_RESUME));
-        LifecycleVerifier.assertRestartAndResumeSequence(FirstActivity.class, getLifecycleLog());
+        if (isCar()) {
+            LifecycleVerifier.assertRestartAndResumeSubSequence(FirstActivity.class,
+                    getLifecycleLog());
+            waitAndAssertActivityCurrentState(activity.getClass(), ON_RESUME);
+        } else {
+            waitAndAssertActivityStates(state(activity, ON_RESUME));
+            LifecycleVerifier.assertRestartAndResumeSequence(FirstActivity.class,
+                    getLifecycleLog());
+        }
     }
 
     @Test

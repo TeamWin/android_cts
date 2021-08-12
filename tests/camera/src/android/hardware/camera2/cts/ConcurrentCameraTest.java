@@ -246,7 +246,7 @@ public class ConcurrentCameraTest extends Camera2ConcurrentAndroidTestCase {
                 testSample.combination.getStreamsInformation(), testSample.targets,
                 outputConfigs, testSample.outputSurfaces, MIN_RESULT_COUNT,
                 testSample.substituteY8, /*substituteHEIC*/false, /*physicalCameraId*/null,
-                /*ultraHighResolution*/false, /*multiResStreamConfig*/null, mHandler);
+                /*multiResStreamConfig*/null, mHandler);
             for (OutputConfiguration c : outputConfigs) {
                 testSample.outputConfigs.add(c);
             }

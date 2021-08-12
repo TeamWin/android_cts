@@ -16,6 +16,9 @@
 
 package com.android.bedstead.harrier;
 
+import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
+
+import static com.android.bedstead.nene.permissions.Permissions.NOTIFY_PENDING_SYSTEM_UPDATE;
 import static com.android.bedstead.nene.users.UserType.MANAGED_PROFILE_TYPE_NAME;
 import static com.android.bedstead.nene.users.UserType.SECONDARY_USER_TYPE_NAME;
 import static com.android.bedstead.nene.utils.Versions.meetsSdkVersionRequirements;
@@ -23,6 +26,7 @@ import static com.android.bedstead.remotedpc.Configuration.REMOTE_DPC_COMPONENT_
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
@@ -35,12 +39,15 @@ import android.util.Log;
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.bedstead.harrier.annotations.AfterClass;
+import com.android.bedstead.harrier.annotations.BeforeClass;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.EnsurePackageNotInstalled;
 import com.android.bedstead.harrier.annotations.FailureMode;
 import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature;
 import com.android.bedstead.harrier.annotations.RequireFeature;
+import com.android.bedstead.harrier.annotations.RequireGmsInstrumentation;
 import com.android.bedstead.harrier.annotations.RequirePackageInstalled;
 import com.android.bedstead.harrier.annotations.RequirePackageNotInstalled;
 import com.android.bedstead.harrier.annotations.RequireSdkVersion;
@@ -80,15 +87,23 @@ import junit.framework.AssertionFailedError;
 import org.junit.AssumptionViolatedException;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
+import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.Statement;
+import org.junit.runners.model.TestClass;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 
 
@@ -105,6 +120,8 @@ import java.util.function.Function;
  */
 public final class DeviceState implements TestRule {
 
+    private static final String GMS_PKG = "com.google.android.gms";
+
     private final Context mContext = ApplicationProvider.getApplicationContext();
     private static final TestApis sTestApis = new TestApis();
     private static final String SKIP_TEST_TEARDOWN_KEY = "skip-test-teardown";
@@ -113,8 +130,14 @@ public final class DeviceState implements TestRule {
     private boolean mSkipTestTeardown;
     private boolean mSkipClassTeardown;
     private boolean mSkipTests;
+    private boolean mFailTests;
     private boolean mUsingBedsteadJUnit4 = false;
     private String mSkipTestsReason;
+    private String mFailTestsReason;
+
+    // Marks if the conditions for requiring running under GMS instrumentation have been set
+    // if not - we assume the test should never run under GMS instrumentation
+    private boolean mHasRequireGmsInstrumentation = false;
 
     private static final String TV_PROFILE_TYPE_NAME = "com.android.tv.profile";
 
@@ -153,8 +176,9 @@ public final class DeviceState implements TestRule {
                 Log.d(LOG_TAG, "Preparing state for test " + description.getMethodName());
 
                 assumeFalse(mSkipTestsReason, mSkipTests);
+                assertFalse(mFailTestsReason, mFailTests);
 
-                Collection<Annotation> annotations = getAnnotations(description);
+                List<Annotation> annotations = getAnnotations(description);
                 PermissionContextImpl permissionContext = applyAnnotations(annotations);
 
                 Log.d(LOG_TAG,
@@ -181,7 +205,7 @@ public final class DeviceState implements TestRule {
             }};
     }
 
-    private PermissionContextImpl applyAnnotations(Collection<Annotation> annotations)
+    private PermissionContextImpl applyAnnotations(List<Annotation> annotations)
             throws Throwable {
         PermissionContextImpl permissionContext = null;
         for (Annotation annotation : annotations) {
@@ -250,8 +274,23 @@ public final class DeviceState implements TestRule {
                         annotation.getClass()
                                 .getMethod("installInstrumentedAppInParent")
                                 .invoke(annotation);
+
+
+                boolean dpcIsPrimary = false;
+                Set<String> affiliationIds = null;
+                if (requireRunOnProfileAnnotation.hasProfileOwner()) {
+                    dpcIsPrimary = (boolean)
+                            annotation.annotationType()
+                                    .getMethod("dpcIsPrimary").invoke(annotation);
+                    affiliationIds = new HashSet<>(Arrays.asList((String[])
+                            annotation.annotationType()
+                                    .getMethod("affiliationIds").invoke(annotation)));
+                }
+
                 requireRunOnProfile(requireRunOnProfileAnnotation.value(),
-                        installInstrumentedAppInParent);
+                        installInstrumentedAppInParent,
+                        requireRunOnProfileAnnotation.hasProfileOwner(),
+                        dpcIsPrimary, affiliationIds);
                 continue;
             }
 
@@ -260,11 +299,14 @@ public final class DeviceState implements TestRule {
                         (EnsureHasDeviceOwner) annotation;
                 ensureHasDeviceOwner(ensureHasDeviceOwnerAnnotation.onUser(),
                         ensureHasDeviceOwnerAnnotation.failureMode(),
-                        ensureHasDeviceOwnerAnnotation.isPrimary());
+                        ensureHasDeviceOwnerAnnotation.isPrimary(),
+                        new HashSet<>(Arrays.asList(ensureHasDeviceOwnerAnnotation.affiliationIds())));
+                continue;
             }
 
             if (annotation instanceof EnsureHasNoDeviceOwner) {
                 ensureHasNoDeviceOwner();
+                continue;
             }
 
             if (annotation instanceof RequireFeature) {
@@ -288,7 +330,8 @@ public final class DeviceState implements TestRule {
                 EnsureHasProfileOwner ensureHasProfileOwnerAnnotation =
                         (EnsureHasProfileOwner) annotation;
                 ensureHasProfileOwner(ensureHasProfileOwnerAnnotation.onUser(),
-                        ensureHasProfileOwnerAnnotation.isPrimary());
+                        ensureHasProfileOwnerAnnotation.isPrimary(),
+                        new HashSet<>(Arrays.asList(ensureHasProfileOwnerAnnotation.affiliationIds())));
                 continue;
             }
 
@@ -305,6 +348,14 @@ public final class DeviceState implements TestRule {
                 requireUserSupported(
                         requireUserSupportedAnnotation.value(),
                         requireUserSupportedAnnotation.failureMode());
+                continue;
+            }
+
+            if (annotation instanceof RequireGmsInstrumentation) {
+                RequireGmsInstrumentation requireGmsInstrumentationAnnotation =
+                        (RequireGmsInstrumentation) annotation;
+                requireGmsInstrumentation(requireGmsInstrumentationAnnotation.min(),
+                        requireGmsInstrumentationAnnotation.max());
                 continue;
             }
 
@@ -353,6 +404,12 @@ public final class DeviceState implements TestRule {
             if (annotation instanceof EnsureHasPermission) {
                 EnsureHasPermission ensureHasPermissionAnnotation =
                         (EnsureHasPermission) annotation;
+
+                for (String permission : ensureHasPermissionAnnotation.value()) {
+                    ensureCanGetPermission(permission);
+                }
+
+
                 try {
                     if (permissionContext == null) {
                         permissionContext = sTestApis.permissions().withPermission(
@@ -388,13 +445,18 @@ public final class DeviceState implements TestRule {
             }
         }
 
+        if (!mHasRequireGmsInstrumentation) {
+            // TODO(scottjonathan): Only enforce if we've configured GMS Instrumentation
+            requireNoGmsInstrumentation();
+        }
+
         return permissionContext;
     }
 
-    private Collection<Annotation> getAnnotations(Description description) {
+    private List<Annotation> getAnnotations(Description description) {
         if (mUsingBedsteadJUnit4 && description.isTest()) {
-            // The annotations are already exploded
-            return description.getAnnotations();
+            // The annotations are already exploded for tests
+            return new ArrayList<>(description.getAnnotations());
         }
 
         // Otherwise we should build a new collection by recursively gathering annotations
@@ -434,15 +496,43 @@ public final class DeviceState implements TestRule {
         return new Statement() {
             @Override
             public void evaluate() throws Throwable {
-                Log.d(LOG_TAG, "Preparing state for suite " + description.getMethodName());
+                checkValidAnnotations(description);
 
-                Collection<Annotation> annotations = getAnnotations(description);
-                PermissionContextImpl permissionContext = applyAnnotations(annotations);
+                TestClass testClass = new TestClass(description.getTestClass());
 
-                Log.d(LOG_TAG,
-                        "Finished preparing state for suite " + description.getMethodName());
+                boolean skipAfterClass = true;
+                PermissionContextImpl permissionContext = null;
+
+                if (!mSkipTests && !mFailTests) {
+                    skipAfterClass = false;
+                    Log.d(LOG_TAG, "Preparing state for suite " + description.getClassName());
+
+                    try {
+                        List<Annotation> annotations =
+                                new ArrayList<>(getAnnotations(description));
+                        permissionContext = applyAnnotations(annotations);
+                    } catch (AssumptionViolatedException e) {
+                        mSkipTests = true;
+                        mSkipTestsReason = e.getMessage();
+                    } catch (AssertionError e) {
+                        mFailTests = true;
+                        mFailTestsReason = e.getMessage();
+                    }
+
+                    Log.d(LOG_TAG,
+                            "Finished preparing state for suite "
+                                    + description.getClassName());
+                }
+
+                if (!mSkipTests && !mFailTests) {
+                    runAnnotatedMethods(testClass, BeforeClass.class);
+                }
 
                 base.evaluate();
+
+                if (!skipAfterClass) {
+                    runAnnotatedMethods(testClass, AfterClass.class);
+                }
 
                 if (permissionContext != null) {
                     permissionContext.close();
@@ -455,6 +545,70 @@ public final class DeviceState implements TestRule {
         };
     }
 
+    private static final Map<Class<? extends Annotation>, Class<? extends Annotation>>
+            BANNED_ANNOTATIONS_TO_REPLACEMENTS = getBannedAnnotationsToReplacements();
+    private static Map<
+            Class<? extends Annotation>,
+            Class<? extends Annotation>> getBannedAnnotationsToReplacements() {
+        Map<
+                Class<? extends Annotation>,
+                Class<? extends Annotation>> bannedAnnotationsToReplacements = new HashMap<>();
+        bannedAnnotationsToReplacements.put(org.junit.BeforeClass.class, BeforeClass.class);
+        bannedAnnotationsToReplacements.put(org.junit.AfterClass.class, AfterClass.class);
+        return bannedAnnotationsToReplacements;
+    }
+
+    private void checkValidAnnotations(Description classDescription) {
+        for (Method method : classDescription.getTestClass().getMethods()) {
+            for (Map.Entry<
+                    Class<? extends Annotation>,
+                    Class<? extends Annotation>> bannedAnnotation
+                    : BANNED_ANNOTATIONS_TO_REPLACEMENTS.entrySet()) {
+                if (method.isAnnotationPresent(bannedAnnotation.getKey())) {
+                    throw new IllegalStateException("Do not use "
+                            + bannedAnnotation.getKey().getCanonicalName()
+                            + " when using DeviceState, replace with "
+                            + bannedAnnotation.getValue().getCanonicalName());
+                }
+            }
+
+            if (method.getAnnotation(BeforeClass.class) != null
+                    || method.getAnnotation(AfterClass.class) != null) {
+                checkPublicStaticVoidNoArgs(method);
+            }
+        }
+    }
+
+    private void checkPublicStaticVoidNoArgs(Method method) {
+        if (method.getParameterTypes().length > 0) {
+            throw new IllegalStateException(
+                    "Method " + method.getName() + " should have no parameters");
+        }
+        if (method.getReturnType() != Void.TYPE) {
+            throw new IllegalStateException("Method " + method.getName() + "() should be void");
+        }
+        if (!Modifier.isStatic(method.getModifiers())) {
+            throw new IllegalStateException("Method " + method.getName() + "() should be static");
+        }
+        if (!Modifier.isPublic(method.getModifiers())) {
+            throw new IllegalStateException("Method " + method.getName() + "() should be public");
+        }
+    }
+
+    private void runAnnotatedMethods(
+            TestClass testClass, Class<? extends Annotation> annotation) throws Throwable {
+
+        List<FrameworkMethod> methods = new ArrayList<>(testClass.getAnnotatedMethods(annotation));
+        Collections.reverse(methods);
+        for (FrameworkMethod method : methods) {
+            try {
+                method.invokeExplosively(testClass.getJavaClass());
+            } catch (InvocationTargetException e) {
+                throw e.getCause();
+            }
+        }
+    }
+
     private void requireRunOnUser(String userType) {
         User instrumentedUser = sTestApis.users().instrumented().resolve();
 
@@ -465,7 +619,8 @@ public final class DeviceState implements TestRule {
     }
 
     private void requireRunOnProfile(String userType,
-            OptionalBoolean installInstrumentedAppInParent) {
+            OptionalBoolean installInstrumentedAppInParent,
+            boolean hasProfileOwner, boolean dpcIsPrimary, Set<String> affiliationIds) {
         User instrumentedUser = sTestApis.users().instrumented().resolve();
 
         assumeTrue("This test only runs on users of type " + userType,
@@ -484,6 +639,12 @@ public final class DeviceState implements TestRule {
             sTestApis.packages().find(sContext.getPackageName()).uninstall(
                     instrumentedUser.parent());
         }
+
+        if (hasProfileOwner) {
+            ensureHasProfileOwner(instrumentedUser, dpcIsPrimary, affiliationIds);
+        } else {
+            ensureHasNoProfileOwner(instrumentedUser);
+        }
     }
 
     private void requireFeature(String feature, FailureMode failureMode) {
@@ -496,9 +657,49 @@ public final class DeviceState implements TestRule {
                 !sTestApis.packages().features().contains(feature), failureMode);
     }
 
-    private void requireSdkVersion(int min, int max, FailureMode failureMode) {
+    private void requireNoGmsInstrumentation() {
+        boolean instrumentingGms =
+                sTestApis.context().instrumentedContext().getPackageName().equals(GMS_PKG);
+
         checkFailOrSkip(
-                "Sdk version must be between " + min +  " and " + max + " (inclusive)",
+                "This test never runs using gms instrumentation",
+                !instrumentingGms,
+                FailureMode.SKIP
+        );
+    }
+
+    private void requireGmsInstrumentation(int min, int max) {
+        mHasRequireGmsInstrumentation = true;
+        boolean instrumentingGms =
+                sTestApis.context().instrumentedContext().getPackageName().equals(GMS_PKG);
+
+        if (meetsSdkVersionRequirements(min, max)) {
+            checkFailOrSkip(
+                    "For SDK versions between " + min +  " and " + max
+                            + " (inclusive), this test only runs when using gms instrumentation",
+                    instrumentingGms,
+                    FailureMode.SKIP
+            );
+        } else {
+            checkFailOrSkip(
+                    "For SDK versions between " + min +  " and " + max
+                            + " (inclusive), this test only runs when not using gms "
+                            + "instrumentation",
+                    !instrumentingGms,
+                    FailureMode.SKIP
+            );
+        }
+    }
+
+    private void requireSdkVersion(int min, int max, FailureMode failureMode) {
+        requireSdkVersion(min, max, failureMode,
+                "Sdk version must be between " + min +  " and " + max + " (inclusive)");
+    }
+
+    private void requireSdkVersion(
+            int min, int max, FailureMode failureMode, String failureMessage) {
+        checkFailOrSkip(
+                failureMessage,
                 meetsSdkVersionRequirements(min, max),
                 failureMode
         );
@@ -816,7 +1017,7 @@ public final class DeviceState implements TestRule {
         mProfiles.get(resolvedUserType).put(forUserReference, profile);
 
         if (hasProfileOwner) {
-            ensureHasProfileOwner(profile, profileOwnerIsPrimary);
+            ensureHasProfileOwner(profile, profileOwnerIsPrimary, /* affiliationIds= */ null);
         }
         return profile;
     }
@@ -1046,11 +1247,16 @@ public final class DeviceState implements TestRule {
         }
     }
 
-    private void ensureHasDeviceOwner(UserType onUser, FailureMode failureMode, boolean isPrimary) {
+    private void ensureHasDeviceOwner(UserType onUser, FailureMode failureMode, boolean isPrimary, Set<String> affiliationIds) {
         // TODO(scottjonathan): Should support non-remotedpc device owner (default to remotedpc)
         // TODO(scottjonathan): Should allow setting the device owner on a different user
-        if (isPrimary && mPrimaryDpc != null) {
-            throw new IllegalStateException("Only one DPC can be marked as primary per test");
+        UserReference userReference = resolveUserTypeToUser(onUser);
+        if (isPrimary && mPrimaryDpc != null && !userReference.equals(mPrimaryDpc.user())) {
+            throw new IllegalStateException("Only one DPC can be marked as primary per test (current primary is " + mPrimaryDpc + ")");
+        }
+        if (!userReference.equals(sTestApis.users().instrumented())) {
+            // INTERACT_ACROSS_USERS_FULL is required for RemoteDPC
+            ensureCanGetPermission(INTERACT_ACROSS_USERS_FULL);
         }
 
         DeviceOwner currentDeviceOwner = sTestApis.devicePolicy().getDeviceOwner();
@@ -1058,54 +1264,60 @@ public final class DeviceState implements TestRule {
         if (currentDeviceOwner != null
                 && currentDeviceOwner.componentName().equals(RemoteDpc.DPC_COMPONENT_NAME)) {
             mDeviceOwner = currentDeviceOwner;
-            return;
-        }
+        } else {
+            UserReference instrumentedUser = sTestApis.users().instrumented();
 
-        UserReference instrumentedUser = sTestApis.users().instrumented();
-
-
-        if (!Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.S)) {
-            // Prior to S we can't set device owner if there are other users on the device
-            for (UserReference u : sTestApis.users().all()) {
-                if (u.equals(instrumentedUser)) {
-                    continue;
-                }
-                try {
-                    removeAndRecordUser(u);
-                } catch (NeneException e) {
-                    failOrSkip(
-                            "Error removing user to prepare for DeviceOwner: " + e.toString(),
-                            failureMode);
+            if (!Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.S)) {
+                // Prior to S we can't set device owner if there are other users on the device
+                for (UserReference u : sTestApis.users().all()) {
+                    if (u.equals(instrumentedUser)) {
+                        continue;
+                    }
+                    try {
+                        removeAndRecordUser(u);
+                    } catch (NeneException e) {
+                        failOrSkip(
+                                "Error removing user to prepare for DeviceOwner: " + e.toString(),
+                                failureMode);
+                    }
                 }
             }
+
+            // TODO(scottjonathan): Remove accounts
+            ensureHasNoProfileOwner(userReference);
+
+            if (!mHasChangedDeviceOwner) {
+                mOriginalDeviceOwner = currentDeviceOwner;
+                mHasChangedDeviceOwner = true;
+            }
+
+            mDeviceOwner = RemoteDpc.setAsDeviceOwner(userReference)
+                    .devicePolicyController();
         }
-
-
-        // TODO(scottjonathan): Remove accounts
-        ensureHasNoProfileOwner(onUser);
-
-        if (!mHasChangedDeviceOwner) {
-            mOriginalDeviceOwner = currentDeviceOwner;
-            mHasChangedDeviceOwner = true;
-        }
-
-        mDeviceOwner = RemoteDpc.setAsDeviceOwner(resolveUserTypeToUser(onUser))
-                .devicePolicyController();
 
         if (isPrimary) {
             mPrimaryDpc = mDeviceOwner;
         }
+        
+        RemoteDpc.forDevicePolicyController(mDeviceOwner).devicePolicyManager()
+                .setAffiliationIds(affiliationIds);
     }
 
-    private void ensureHasProfileOwner(UserType onUser, boolean isPrimary) {
+    private void ensureHasProfileOwner(UserType onUser, boolean isPrimary, Set<String> affiliationIds) {
         // TODO(scottjonathan): Should support non-remotedpc profile owner (default to remotedpc)
         UserReference user = resolveUserTypeToUser(onUser);
-        ensureHasProfileOwner(user, isPrimary);
+        ensureHasProfileOwner(user, isPrimary, affiliationIds);
     }
 
-    private void ensureHasProfileOwner(UserReference user, boolean isPrimary) {
-        if (isPrimary && mPrimaryDpc != null) {
+    private void ensureHasProfileOwner(
+            UserReference user, boolean isPrimary, Set<String> affiliationIds) {
+        if (isPrimary && mPrimaryDpc != null && !user.equals(mPrimaryDpc.user())) {
             throw new IllegalStateException("Only one DPC can be marked as primary per test");
+        }
+
+        if (!user.equals(sTestApis.users().instrumented())) {
+            // INTERACT_ACROSS_USERS_FULL is required for RemoteDPC
+            ensureCanGetPermission(INTERACT_ACROSS_USERS_FULL);
         }
 
         ProfileOwner currentProfileOwner = sTestApis.devicePolicy().getProfileOwner(user);
@@ -1117,7 +1329,8 @@ public final class DeviceState implements TestRule {
         }
 
         if (currentProfileOwner != null
-                && currentProfileOwner.componentName().equals(RemoteDpc.DPC_COMPONENT_NAME)) {
+                && currentProfileOwner.componentName().equals(
+                RemoteDpc.DPC_COMPONENT_NAME)) {
             mProfileOwners.put(user, currentProfileOwner);
         } else {
             if (!mChangedProfileOwners.containsKey(user)) {
@@ -1129,6 +1342,12 @@ public final class DeviceState implements TestRule {
 
         if (isPrimary) {
             mPrimaryDpc = mProfileOwners.get(user);
+        }
+
+        if (affiliationIds != null) {
+            RemoteDpc profileOwner = profileOwner(user);
+            profileOwner.devicePolicyManager()
+                    .setAffiliationIds(affiliationIds);
         }
     }
 
@@ -1150,6 +1369,12 @@ public final class DeviceState implements TestRule {
 
     private void ensureHasNoProfileOwner(UserType onUser) {
         UserReference user = resolveUserTypeToUser(onUser);
+
+        ensureHasNoProfileOwner(user);
+    }
+
+    private void ensureHasNoProfileOwner(UserReference user) {
+
         ProfileOwner currentProfileOwner = sTestApis.devicePolicy().getProfileOwner(user);
 
         if (currentProfileOwner == null) {
@@ -1322,6 +1547,7 @@ public final class DeviceState implements TestRule {
             DevicePolicyController profileOwner =
                     mProfileOwners.get(sTestApis.users().instrumented());
 
+
             if (profileOwner.componentName().equals(REMOTE_DPC_COMPONENT_NAME)) {
                 return RemoteDpc.forDevicePolicyController(profileOwner);
             }
@@ -1335,5 +1561,19 @@ public final class DeviceState implements TestRule {
         }
 
         throw new IllegalStateException("No Harrier-managed profile owner or device owner.");
+    }
+
+    private void ensureCanGetPermission(String permission) {
+        // TODO(scottjonathan): Apply gms permission switches automatically rather than hard-coding
+        // TODO(scottjonathan): Add a config to only enforce gms permission when needed
+        if (permission.equals(NOTIFY_PENDING_SYSTEM_UPDATE)) {
+            requireGmsInstrumentation(1, Build.VERSION_CODES.R);
+        }
+        // TODO(scottjonathan): Apply version-specific constraints automatically
+        if (permission.equals(INTERACT_ACROSS_USERS_FULL)) {
+            requireSdkVersion(
+                    Build.VERSION_CODES.Q, Integer.MAX_VALUE, FailureMode.SKIP,
+                    "This test requires INTERACT_ACROSS_USERS_FULL which can only be used on Q+");
+        }
     }
 }

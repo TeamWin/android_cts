@@ -63,7 +63,7 @@ public class EventLibBroadcastReceiverTest {
 
         EventLogs<BroadcastReceivedEvent> eventLogs = BroadcastReceivedEvent
                 .queryPackage(sContext.getPackageName())
-                .whereBroadcastReceiver().isSameClassAs(EventLibBroadcastReceiver.class);
+                .whereBroadcastReceiver().receiverClass().isSameClassAs(EventLibBroadcastReceiver.class);
         assertThat(eventLogs.poll()).isNotNull();
     }
 
@@ -76,7 +76,7 @@ public class EventLibBroadcastReceiverTest {
 
         EventLogs<BroadcastReceivedEvent> eventLogs = BroadcastReceivedEvent
                 .queryPackage(sContext.getPackageName())
-                .whereBroadcastReceiver().className().isEqualTo(GENERATED_RECEIVER_CLASS_NAME);
+                .whereBroadcastReceiver().receiverClass().className().isEqualTo(GENERATED_RECEIVER_CLASS_NAME);
         assertThat(eventLogs.poll()).isNotNull();
     }
 

@@ -112,7 +112,7 @@ def select_ids_to_test(ids, props, chart_distance):
     if (opencv_processing_utils.FOV_THRESH_TELE < fov <
         opencv_processing_utils.FOV_THRESH_WFOV):
       test_ids.append(i)  # RFoV camera
-    elif fov < opencv_processing_utils.FOV_THRESH_SUPER_TELE:
+    elif fov < opencv_processing_utils.FOV_THRESH_TELE40:
       logging.debug('Skipping camera. Not appropriate multi-camera testing.')
       continue  # super-TELE camera
     elif (fov <= opencv_processing_utils.FOV_THRESH_TELE and
@@ -227,30 +227,45 @@ def take_images(cam, caps, props, fmt, cap_camera_ids, out_surfaces, log_path,
   return caps
 
 
-def undo_zoom(cap, props, circle):
+def undo_zoom(cap, circle):
   """Correct coordinates and size of circle for zoom.
 
   Assume that the maximum physical YUV image size is close to active array size.
 
   Args:
     cap: camera capture element
-    props: camera properties
     circle: dict of circle values
   Returns:
     unzoomed circle dict
   """
-  aa = props['android.sensor.info.activeArraySize']
-  aa_w = aa['right'] - aa['left']
-  aa_h = aa['bottom'] - aa['top']
+  yuv_w = cap['width']
+  yuv_h = cap['height']
+  logging.debug('cap size: %d x %d', yuv_w, yuv_h)
   cr = cap['metadata']['android.scaler.cropRegion']
   cr_w = cr['right'] - cr['left']
   cr_h = cr['bottom'] - cr['top']
 
-  # Assume pixels square after zoom. Use same zoom ratios for x and y.
-  zoom_ratio = min(aa_w / cr_w, aa_h / cr_h)
-  circle['x'] = cr['left'] + circle['x'] / zoom_ratio
-  circle['y'] = cr['top'] + circle['y'] / zoom_ratio
+  # Offset due to aspect ratio difference of crop region and yuv
+  # - fit yuv box inside of differently shaped cr box
+  yuv_aspect = yuv_w / yuv_h
+  relative_aspect = yuv_aspect / (cr_w/cr_h)
+  if relative_aspect > 1:
+    zoom_ratio = yuv_w / cr_w
+    yuv_x = 0
+    yuv_y = (cr_h - cr_w / yuv_aspect) / 2
+  else:
+    zoom_ratio = yuv_h / cr_h
+    yuv_x = (cr_w - cr_h * yuv_aspect) / 2
+    yuv_y = 0
+
+  circle['x'] = cr['left'] + yuv_x + circle['x'] / zoom_ratio
+  circle['y'] = cr['top'] + yuv_y + circle['y'] / zoom_ratio
   circle['r'] = circle['r'] / zoom_ratio
+
+  logging.debug(' Calculated zoom ratio: %.3f', zoom_ratio)
+  logging.debug(' Corrected circle X: %.2f', circle['x'])
+  logging.debug(' Corrected circle Y: %.2f', circle['y'])
+  logging.debug(' Corrected circle radius: %.2f', circle['r'])
 
   return circle
 
@@ -317,11 +332,12 @@ def define_reference_camera(pose_reference, cam_reference):
   else:
     logging.debug('pose_reference is CAMERA')
     i_refs = [k for (k, v) in cam_reference.items() if v]
+    i_ref = i_refs[0]
     if len(i_refs) > 1:
-      raise AssertionError('More than 1 reference camera. Check translation '
-                           f'matrices. cam_reference: {cam_reference}')
+      logging.debug('Warning: more than 1 reference camera. Check translation '
+                    'matrices. cam_reference: %s', str(cam_reference))
+      i_2nd = i_refs[1]  # use second camera since both at same location
     else:
-      i_ref = i_refs[0]
       i_2nd = next(k for (k, v) in cam_reference.items() if not v)
   return i_ref, i_2nd
 
@@ -506,7 +522,7 @@ class MultiCameraAlignmentTest(its_base_test.ItsBaseTest):
 
         # Undo zoom to image (if applicable).
         if fmt == 'yuv':
-          circle[i] = undo_zoom(caps[(fmt, i)], physical_props[i], circle[i])
+          circle[i] = undo_zoom(caps[(fmt, i)], circle[i])
 
         # Find focal length, pixel & sensor size
         fl[i] = physical_props[i]['android.lens.info.availableFocalLengths'][0]

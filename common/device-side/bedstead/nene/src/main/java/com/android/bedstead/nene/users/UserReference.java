@@ -77,6 +77,8 @@ public abstract class UserReference implements AutoCloseable {
      * {@link NeneException} will be thrown.
      */
     public final void remove() {
+        // TODO(scottjonathan): There's a potential issue here as when the user is marked as
+        //  "is removing" the DPC still can't be uninstalled because it's set as the profile owner.
         try {
             // Expected success string is "Success: removed user"
             ShellCommand.builder("pm remove-user")

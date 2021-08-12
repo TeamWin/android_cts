@@ -19,10 +19,12 @@ import static org.junit.Assume.assumeTrue;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import com.android.tradefed.invoker.TestInformation;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+import com.android.tradefed.testtype.junit4.AfterClassWithInfo;
+import com.android.tradefed.testtype.junit4.BeforeClassWithInfo;
 import com.android.tradefed.util.Pair;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -33,18 +35,21 @@ import java.util.Map;
 public class BlobStoreMultiUserTest extends BaseBlobStoreHostTest {
     private static final String TEST_CLASS = TARGET_PKG + ".DataCleanupTest";
 
-    private int mPrimaryUserId;
-    private int mSecondaryUserId;
+    private static int mPrimaryUserId;
+    private static int mSecondaryUserId;
+
+    @BeforeClassWithInfo
+    public static void setUpClass(TestInformation testInfo) throws Exception {
+        assumeTrue("Multi-user is not supported on this device",
+                isMultiUserSupported(testInfo.getDevice()));
+
+        mPrimaryUserId = testInfo.getDevice().getPrimaryUserId();
+        mSecondaryUserId = testInfo.getDevice().createUser("Test_User");
+        assertThat(testInfo.getDevice().startUser(mSecondaryUserId)).isTrue();
+    }
 
     @Before
     public void setUp() throws Exception {
-        assumeTrue("Multi-user is not supported on this device",
-                isMultiUserSupported());
-
-        mPrimaryUserId = getDevice().getPrimaryUserId();
-        mSecondaryUserId = getDevice().createUser("Test_User");
-        assertThat(getDevice().startUser(mSecondaryUserId)).isTrue();
-
         for (String apk : new String[] {TARGET_APK, TARGET_APK_DEV}) {
             installPackageAsUser(apk, true /* grantPermissions */, mPrimaryUserId, "-t");
             installPackageAsUser(apk, true /* grantPermissions */, mSecondaryUserId, "-t");
@@ -55,10 +60,10 @@ public class BlobStoreMultiUserTest extends BaseBlobStoreHostTest {
         installPackageAsUser(TARGET_APK_ASSIST, false /* grantPermissions */, mSecondaryUserId);
     }
 
-    @After
-    public void tearDown() throws Exception {
+    @AfterClassWithInfo
+    public static void tearDownClass(TestInformation testInfo) throws Exception {
         if (mSecondaryUserId > 0) {
-            getDevice().removeUser(mSecondaryUserId);
+            testInfo.getDevice().removeUser(mSecondaryUserId);
         }
     }
 

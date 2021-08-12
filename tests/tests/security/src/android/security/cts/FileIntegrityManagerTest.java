@@ -24,7 +24,6 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RestrictedBuildTest;
-import android.platform.test.annotations.SecurityTest;
 import android.security.FileIntegrityManager;
 
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -47,7 +46,6 @@ import java.security.cert.X509Certificate;
 
 
 @AppModeFull
-@SecurityTest
 @RunWith(AndroidJUnit4.class)
 public class FileIntegrityManagerTest {
 

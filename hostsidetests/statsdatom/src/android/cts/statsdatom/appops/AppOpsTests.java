@@ -32,10 +32,28 @@ import com.android.tradefed.testtype.IBuildReceiver;
 import com.google.protobuf.Descriptors;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class AppOpsTests extends DeviceTestCase implements IBuildReceiver {
     private static final int NUM_APP_OPS = AtomsProto.AttributedAppOps.getDefaultInstance().getOp().
             getDescriptorForType().getValues().size() - 1;
+
+    /**
+     * Some ops are only available to specific dynamic uids and are otherwise transformed to less
+     * privileged ops. For example, RECORD_AUDIO_HOTWORD is downgraded to RECORD_AUDIO. This stores
+     * a mapping from an op to the op it can be transformed from.
+     */
+    private static final Map<Integer, Integer> TRANSFORMED_FROM_OP = new HashMap<>();
+
+    static {
+        final int APP_OP_RECORD_AUDIO = 27;
+        final int APP_OP_RECORD_AUDIO_HOTWORD = 102;
+
+        TRANSFORMED_FROM_OP.put(APP_OP_RECORD_AUDIO, APP_OP_RECORD_AUDIO_HOTWORD);
+    }
 
     private IBuildInfo mCtsBuild;
 
@@ -75,8 +93,11 @@ public class AppOpsTests extends DeviceTestCase implements IBuildReceiver {
         Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
 
         ArrayList<Integer> expectedOps = new ArrayList<>();
+        Set<Integer> transformedOps = new HashSet<>(TRANSFORMED_FROM_OP.values());
         for (int i = 0; i < NUM_APP_OPS; i++) {
-            expectedOps.add(i);
+            if (!transformedOps.contains(i)) {
+                expectedOps.add(i);
+            }
         }
 
         for (Descriptors.EnumValueDescriptor valueDescriptor :
@@ -98,13 +119,23 @@ public class AppOpsTests extends DeviceTestCase implements IBuildReceiver {
                         + appOps.getTrustedBackgroundGrantedCount()
                         + appOps.getTrustedForegroundRejectedCount()
                         + appOps.getTrustedBackgroundRejectedCount();
+                int expectedNoted =
+                        appOps.getOpId().getNumber() + 1
+                                + computeExpectedTransformedNoted(appOps.getOpId().getNumber());
                 assertWithMessage("Operation in APP_OPS_ENUM_MAP: " + appOps.getOpId().getNumber())
-                        .that(totalNoted - 1).isEqualTo(appOps.getOpId().getNumber());
+                        .that(totalNoted).isEqualTo(expectedNoted);
                 assertWithMessage("Unexpected Op reported").that(expectedOps).contains(
                         appOps.getOpId().getNumber());
                 expectedOps.remove(expectedOps.indexOf(appOps.getOpId().getNumber()));
             }
         }
         assertWithMessage("Logging app op ids are missing in report.").that(expectedOps).isEmpty();
+    }
+
+    private static int computeExpectedTransformedNoted(int op) {
+        if (!TRANSFORMED_FROM_OP.containsKey(op)) {
+            return 0;
+        }
+        return TRANSFORMED_FROM_OP.get(op) + 1;
     }
 }

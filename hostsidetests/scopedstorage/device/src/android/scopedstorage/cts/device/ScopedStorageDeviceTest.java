@@ -1360,10 +1360,9 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
             revokePermission(packageName, permission);
         } else {
             denyAppOpsToUid(uid, opstr);
+            // TODO(191724755): Poll for AppOp state change instead
+            Thread.sleep(200);
         }
-        // revokePermission waits for permission status to be updated, but MediaProvider still
-        // needs to get permission change callback and clear its permission cache.
-        Thread.sleep(100);
         assertThat(canOpenFileAs(app, file, forWrite)).isFalse();
 
         // Grant
@@ -1371,10 +1370,9 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
             grantPermission(packageName, permission);
         } else {
             allowAppOpsToUid(uid, opstr);
+            // TODO(191724755): Poll for AppOp state change instead
+            Thread.sleep(200);
         }
-        // grantPermission waits for permission status to be updated, but MediaProvider still
-        // needs to get permission change callback and clear its permission cache.
-        Thread.sleep(100);
         assertThat(canOpenFileAs(app, file, forWrite)).isTrue();
 
         // Deny
@@ -1382,10 +1380,9 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
             revokePermission(packageName, permission);
         } else {
             denyAppOpsToUid(uid, opstr);
+            // TODO(191724755): Poll for AppOp state change instead
+            Thread.sleep(200);
         }
-        // revokePermission waits for permission status to be updated, but MediaProvider still
-        // needs to get permission change callback and clear its permission cache.
-        Thread.sleep(100);
         assertThat(canOpenFileAs(app, file, forWrite)).isFalse();
     }
 

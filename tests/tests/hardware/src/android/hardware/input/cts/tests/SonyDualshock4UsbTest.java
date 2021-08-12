@@ -16,6 +16,8 @@
 
 package android.hardware.input.cts.tests;
 
+import static org.junit.Assume.assumeTrue;
+
 import android.hardware.cts.R;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -50,6 +52,7 @@ public class SonyDualshock4UsbTest extends InputHidTestCase {
 
     @Test
     public void testVibrator() throws Exception {
+        assumeTrue("Requires kernel > 4.19", isKernelVersionGreaterThan("4.19"));
         testInputVibratorEvents(R.raw.sony_dualshock4_usb_vibratortests);
     }
 }

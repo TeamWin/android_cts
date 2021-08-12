@@ -27,7 +27,7 @@ import java.lang.annotation.Target;
  * Mark that a test method should only run on specified sdk versions.
  *
  * <p>Your test configuration may be configured so that this test is only run on a device with the
- * given user. Otherwise, you can use {@link DeviceState} to ensure that the test is
+ * given version. Otherwise, you can use {@link DeviceState} to ensure that the test is
  * not run when the sdk version is not correct.
  */
 @Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})

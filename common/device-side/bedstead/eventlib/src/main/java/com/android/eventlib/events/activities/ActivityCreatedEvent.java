@@ -98,30 +98,23 @@ public final class ActivityCreatedEvent extends Event {
     }
 
     /** Begin logging a {@link ActivityCreatedEvent}. */
-    public static ActivityCreatedEventLogger logger(Activity activity, Bundle savedInstanceState) {
-        return new ActivityCreatedEventLogger(activity, savedInstanceState);
+    public static ActivityCreatedEventLogger logger(Activity activity, android.content.pm.ActivityInfo activityInfo, Bundle savedInstanceState) {
+        return new ActivityCreatedEventLogger(activity, activityInfo, savedInstanceState);
     }
 
     /** {@link EventLogger} for {@link ActivityCreatedEvent}. */
     public static final class ActivityCreatedEventLogger extends EventLogger<ActivityCreatedEvent> {
-        private ActivityCreatedEventLogger(Activity activity, Bundle savedInstanceState) {
+        private ActivityCreatedEventLogger(Activity activity, android.content.pm.ActivityInfo activityInfo, Bundle savedInstanceState) {
             super(activity, new ActivityCreatedEvent());
             mEvent.mSavedInstanceState = new SerializableParcelWrapper<>(savedInstanceState);
-            setActivity(activity);
+            setActivity(activityInfo);
         }
 
-        public ActivityCreatedEventLogger setActivity(Activity activity) {
-            mEvent.mActivity = new ActivityInfo(activity);
-            return this;
-        }
-
-        public ActivityCreatedEventLogger setActivity(Class<? extends Activity> activityClass) {
-            mEvent.mActivity = new ActivityInfo(activityClass);
-            return this;
-        }
-
-        public ActivityCreatedEventLogger setActivity(String activityClassName) {
-            mEvent.mActivity = new ActivityInfo(activityClassName);
+        public ActivityCreatedEventLogger setActivity(android.content.pm.ActivityInfo activityInfo) {
+            mEvent.mActivity = ActivityInfo.builder()
+                    .activityClass(activityInfo.name)
+                    .exported(activityInfo.exported)
+                    .build();
             return this;
         }
 

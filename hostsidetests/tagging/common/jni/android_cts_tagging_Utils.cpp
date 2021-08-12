@@ -16,10 +16,14 @@
 
 #include <errno.h>
 #include <jni.h>
+#include <malloc.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/prctl.h>
 #include <sys/utsname.h>
+
+#include <string>
 
 extern "C" JNIEXPORT jboolean Java_android_cts_tagging_Utils_kernelSupportsTaggedPointers() {
 #ifdef __aarch64__
@@ -80,4 +84,15 @@ __attribute__((optnone)) static bool sizeIsZeroInitialized(size_t size) {
 extern "C" JNIEXPORT jboolean JNICALL
 Java_android_cts_tagging_Utils_heapIsZeroInitialized(JNIEnv *) {
   return sizeIsZeroInitialized(100) && sizeIsZeroInitialized(2000) && sizeIsZeroInitialized(200000);
+}
+
+extern "C" JNIEXPORT jboolean JNICALL Java_android_cts_tagging_Utils_allocatorIsScudo(JNIEnv *) {
+  const size_t kMallocInfoBufSize = 8192;
+  std::string buf;
+  buf.reserve(kMallocInfoBufSize);
+  FILE *fp = fmemopen(buf.data(), kMallocInfoBufSize, "w+");
+  malloc_info(0, fp);
+  fclose(fp);
+
+  return buf.find("<malloc version=\"scudo") != std::string::npos;
 }

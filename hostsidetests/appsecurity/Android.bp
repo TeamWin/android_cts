@@ -58,6 +58,11 @@ java_test_host {
         "CtsCorruptApkTests_Compressed_R",
         "CtsCorruptApkTests_Unaligned_Q",
         "CtsCorruptApkTests_Unaligned_R",
+        "CtsSignatureQueryService",
+        "CtsSignatureQueryService_v2",
+        "CtsSignatureQueryService_v3",
+        "CtsSignatureQueryServiceTest",
+        "CtsSignatureQueryServiceTest_v2",
     ],
 
     // Prebuilts of all ABIs.
@@ -67,4 +72,9 @@ java_test_host {
 filegroup {
     name: "CtsHostsideTestsAppSecurityUtil",
     srcs: ["src/android/appsecurity/cts/Utils.java"],
+}
+
+filegroup {
+    name: "cts-ec-p256-por_1_2-default-caps.lineage",
+    srcs: ["certs/pkgsigverify/ec-p256-por_1_2-default-caps"],
 }

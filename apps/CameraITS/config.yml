@@ -47,3 +47,4 @@ TestBeds:
       rotator_cntl: <controller-type>  # can be arduino or canakit
       rotator_ch: <controller-channel>
       camera: <camera-id>
+

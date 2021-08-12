@@ -23,8 +23,11 @@ import android.media.NotProvisionedException;
 import android.media.ResourceBusyException;
 import android.media.UnsupportedSchemeException;
 import android.media.metrics.LogSessionId;
+import android.media.metrics.MediaMetricsManager;
+import android.media.metrics.PlaybackSession;
 import android.os.PersistableBundle;
 import android.util.Log;
+import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import java.util.List;
@@ -131,13 +134,18 @@ public class MediaDrmTest {
                 MediaDrm.PlaybackComponent component = drm.getPlaybackComponent(sid);
                 Assert.assertNotNull("null PlaybackComponent", component);
 
-                String logSessionId = "testPlaybackComponent";
-                component.setLogSessionId(new LogSessionId(logSessionId));
-                assertEquals(logSessionId, component.getLogSessionId().getStringId(),
+                final MediaMetricsManager mediaMetricsManager =
+                        InstrumentationRegistry.getTargetContext()
+                                .getSystemService(MediaMetricsManager.class);
+                final PlaybackSession playbackSession =
+                        mediaMetricsManager.createPlaybackSession();
+                final LogSessionId logSessionId = playbackSession.getSessionId();
+                component.setLogSessionId(logSessionId);
+                assertEquals(logSessionId, component.getLogSessionId(),
                         "LogSessionId not set");
                 PersistableBundle metrics = drm.getMetrics();
                 assertTrue("LogSessionId not found in metrics",
-                        searchMetricsForValue(metrics, logSessionId));
+                        searchMetricsForValue(metrics, logSessionId.getStringId()));
             } catch (UnsupportedOperationException | NotProvisionedException e) {
                 Log.w(TAG, "testPlaybackComponent: skipping scheme " + scheme, e);
             } catch (ResourceBusyException e) {

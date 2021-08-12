@@ -142,8 +142,42 @@ public class ASurfaceControlTestActivity extends Activity {
         return mSurfaceView;
     }
 
+    public abstract static class MultiRectChecker extends RectChecker {
+        public MultiRectChecker(Rect boundsToCheck) {
+            super(boundsToCheck);
+        }
+
+        public abstract PixelColor getExpectedColor(int x, int y);
+    }
+
+    public static class RectChecker extends PixelChecker {
+        private final Rect mBoundsToCheck;
+
+        public RectChecker(Rect boundsToCheck) {
+            super();
+            mBoundsToCheck = boundsToCheck;
+        }
+
+        public RectChecker(Rect boundsToCheck, int expectedColor) {
+            super(expectedColor);
+            mBoundsToCheck = boundsToCheck;
+        }
+
+        public boolean checkPixels(int matchingPixelCount, int width, int height) {
+            int expectedPixelCountMin = mBoundsToCheck.width() * mBoundsToCheck.height() - 100;
+            int expectedPixelCountMax = mBoundsToCheck.width() * mBoundsToCheck.height();
+            return matchingPixelCount > expectedPixelCountMin
+                    && matchingPixelCount <= expectedPixelCountMax;
+        }
+
+        @Override
+        public Rect getBoundsToCheck(Bitmap bitmap) {
+            return mBoundsToCheck;
+        }
+    }
+
     public abstract static class PixelChecker {
-        private PixelColor mPixelColor;
+        private final PixelColor mPixelColor;
 
         public PixelChecker() {
             mPixelColor = new PixelColor();

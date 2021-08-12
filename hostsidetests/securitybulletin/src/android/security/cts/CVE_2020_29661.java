@@ -16,7 +16,7 @@
 
 package android.security.cts;
 
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -29,8 +29,8 @@ public class CVE_2020_29661 extends SecurityTestCase {
      * b/182917768
      *
      */
-    @SecurityTest(minPatchLevel = "2021-05")
     @Test
+    @AsbSecurityTest(cveBugId = 175451767)
     public void testPocCVE_2020_29661() throws Exception {
         AdbUtils.runPocNoOutput("CVE-2020-29661", getDevice(),60);
     }

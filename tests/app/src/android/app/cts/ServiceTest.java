@@ -1296,6 +1296,24 @@ public class ServiceTest extends ActivityTestsBase {
         waitForResultOrThrow(DELAY, "service to be destroyed");
     }
 
+    public void testForegroundService_deferThenKeepNotification() throws Exception {
+        // Start FGS with deferred notification; it should not display
+        mExpectedServiceState = STATE_START_1;
+        startForegroundService(COMMAND_START_FOREGROUND_DEFER_NOTIFICATION);
+        waitForResultOrThrow(DELAY, "service to start first time");
+        assertNoNotification(1);
+
+        // Exit foreground but keep notification - it should display immediately
+        mExpectedServiceState = STATE_START_2;
+        startForegroundService(COMMAND_STOP_FOREGROUND_DONT_REMOVE_NOTIFICATION);
+        waitForResultOrThrow(DELAY, "service to stop foreground");
+        assertNotification(1, LocalForegroundService.getNotificationTitle(1));
+
+        mExpectedServiceState = STATE_DESTROY;
+        mContext.stopService(mLocalForegroundService);
+        waitForResultOrThrow(DELAY, "service to be destroyed");
+    }
+
     class TestSendCallback implements PendingIntent.OnFinished {
         public volatile int result = -1;
 

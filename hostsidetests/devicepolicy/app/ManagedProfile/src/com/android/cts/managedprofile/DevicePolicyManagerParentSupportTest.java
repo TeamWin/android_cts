@@ -1,8 +1,8 @@
 package com.android.cts.managedprofile;
 
 import static android.app.admin.DevicePolicyManager.KEYGUARD_DISABLE_TRUST_AGENTS;
-import static android.app.admin.DevicePolicyManager.PASSWORD_COMPLEXITY_NONE;
 import static android.app.admin.DevicePolicyManager.PASSWORD_COMPLEXITY_HIGH;
+import static android.app.admin.DevicePolicyManager.PASSWORD_COMPLEXITY_NONE;
 import static android.app.admin.DevicePolicyManager.PASSWORD_QUALITY_NUMERIC_COMPLEX;
 import static android.app.admin.DevicePolicyManager.PASSWORD_QUALITY_UNSPECIFIED;
 
@@ -133,14 +133,14 @@ public class DevicePolicyManagerParentSupportTest extends BaseManagedProfileTest
         mParentDevicePolicyManager.setPasswordQuality(ADMIN_RECEIVER_COMPONENT, quality);
     }
 
-    public void testSettingPasswordQualityDoesNotAffectParent() {
+    public void testIsActivePasswordSufficient_onParent_respectsProfileQualityWhenUnified() {
         mDevicePolicyManager.setPasswordQuality(
                 ADMIN_RECEIVER_COMPONENT, PASSWORD_QUALITY_UNSPECIFIED);
         assertThat(mParentDevicePolicyManager.isActivePasswordSufficient()).isTrue();
         mDevicePolicyManager.setPasswordQuality(
                 ADMIN_RECEIVER_COMPONENT, PASSWORD_QUALITY_NUMERIC_COMPLEX);
         try {
-            assertThat(mParentDevicePolicyManager.isActivePasswordSufficient()).isTrue();
+            assertThat(mParentDevicePolicyManager.isActivePasswordSufficient()).isFalse();
         } finally {
             mDevicePolicyManager.setPasswordQuality(
                     ADMIN_RECEIVER_COMPONENT, PASSWORD_QUALITY_UNSPECIFIED);

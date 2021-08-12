@@ -30,6 +30,7 @@ import com.android.eventlib.events.deviceadminreceivers.DeviceAdminEnabledEvent;
 import com.android.eventlib.events.deviceadminreceivers.DeviceAdminPasswordChangedEvent;
 import com.android.eventlib.events.deviceadminreceivers.DeviceAdminPasswordFailedEvent;
 import com.android.eventlib.events.deviceadminreceivers.DeviceAdminPasswordSucceededEvent;
+import com.android.eventlib.events.deviceadminreceivers.DeviceAdminSystemUpdatePendingEvent;
 
 /** Implementation of {@link DeviceAdminReceiver} which logs events in response to callbacks. */
 public class EventLibDeviceAdminReceiver extends DeviceAdminReceiver {
@@ -202,6 +203,15 @@ public class EventLibDeviceAdminReceiver extends DeviceAdminReceiver {
 
     @Override
     public void onSystemUpdatePending(Context context, Intent intent, long receivedTime) {
+        DeviceAdminSystemUpdatePendingEvent.DeviceAdminSystemUpdatePendingEventLogger logger =
+                DeviceAdminSystemUpdatePendingEvent.logger(this, context, intent, receivedTime);
+
+        if (mOverrideDeviceAdminReceiverClassName != null) {
+            logger.setDeviceAdminReceiver(mOverrideDeviceAdminReceiverClassName);
+        }
+
+        logger.log();
+
         super.onSystemUpdatePending(context, intent, receivedTime);
     }
 

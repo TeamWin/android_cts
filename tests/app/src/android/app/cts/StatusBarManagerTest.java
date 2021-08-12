@@ -26,6 +26,7 @@ import android.app.StatusBarManager.DisableInfo;
 import android.app.UiAutomation;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.view.KeyEvent;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
@@ -141,6 +142,40 @@ public class StatusBarManagerTest {
         // We've adopted shell identity for STATUS_BAR in setUp()
 
         mStatusBarManager.collapsePanels();
+
+        // Nothing thrown, passed
+    }
+
+    @Test(expected = SecurityException.class)
+    public void testTogglePanel_withoutStatusBarPermission_throws() throws Exception {
+        // We've adopted shell identity for STATUS_BAR in setUp(), so drop it now
+        mUiAutomation.dropShellPermissionIdentity();
+
+        mStatusBarManager.togglePanel();
+    }
+
+    @Test
+    public void testTogglePanel_withStatusBarPermission_doesNotThrow() throws Exception {
+        // We've adopted shell identity for STATUS_BAR in setUp()
+
+        mStatusBarManager.togglePanel();
+
+        // Nothing thrown, passed
+    }
+
+    @Test(expected = SecurityException.class)
+    public void testHandleSystemKey_withoutStatusBarPermission_throws() throws Exception {
+        // We've adopted shell identity for STATUS_BAR in setUp(), so drop it now
+        mUiAutomation.dropShellPermissionIdentity();
+
+        mStatusBarManager.handleSystemKey(KeyEvent.KEYCODE_SYSTEM_NAVIGATION_UP);
+    }
+
+    @Test
+    public void testHandleSystemKey_withStatusBarPermission_doesNotThrow() throws Exception {
+        // We've adopted shell identity for STATUS_BAR in setUp()
+
+        mStatusBarManager.handleSystemKey(KeyEvent.KEYCODE_SYSTEM_NAVIGATION_UP);
 
         // Nothing thrown, passed
     }

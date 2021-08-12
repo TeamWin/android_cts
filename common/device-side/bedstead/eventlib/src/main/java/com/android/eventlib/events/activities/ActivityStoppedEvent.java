@@ -62,32 +62,20 @@ public final class ActivityStoppedEvent extends Event {
     }
 
     /** Begin logging a {@link ActivityStoppedEvent}. */
-    public static ActivityStoppedEventLogger logger(Activity activity) {
-        return new ActivityStoppedEventLogger(activity);
+    public static ActivityStoppedEventLogger logger(Activity activity, android.content.pm.ActivityInfo activityInfo) {
+        return new ActivityStoppedEventLogger(activity, activityInfo);
     }
 
     /** {@link EventLogger} for {@link ActivityStoppedEvent}. */
     public static final class ActivityStoppedEventLogger extends EventLogger<ActivityStoppedEvent> {
-        private ActivityStoppedEventLogger(Activity activity) {
+        private ActivityStoppedEventLogger(Activity activity, android.content.pm.ActivityInfo activityInfo) {
             super(activity, new ActivityStoppedEvent());
-            setActivity(activity);
+            setActivity(activityInfo);
         }
 
         /** Set the {@link Activity} being stopped. */
-        public ActivityStoppedEventLogger setActivity(Activity activity) {
-            mEvent.mActivity = new ActivityInfo(activity);
-            return this;
-        }
-
-        /** Set the {@link Activity} class being stopped. */
-        public ActivityStoppedEventLogger setActivity(Class<? extends Activity> activityClass) {
-            mEvent.mActivity = new ActivityInfo(activityClass);
-            return this;
-        }
-
-        /** Set the {@link Activity} class name being stopped. */
-        public ActivityStoppedEventLogger setActivity(String activityClassName) {
-            mEvent.mActivity = new ActivityInfo(activityClassName);
+        public ActivityStoppedEventLogger setActivity(android.content.pm.ActivityInfo activity) {
+            mEvent.mActivity = ActivityInfo.builder(activity).build();
             return this;
         }
     }

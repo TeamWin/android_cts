@@ -195,7 +195,6 @@ public class DeviceAdminTestReceiver extends DeviceAdminReceiver {
         filter.addAction(
                 PermissionLockdownTestActivity.ACTION_MANAGED_PROFILE_CHECK_PERMISSION_LOCKDOWN);
         filter.addAction(AuthenticationBoundKeyTestActivity.ACTION_AUTH_BOUND_KEY_TEST);
-        filter.addAction(ByodHelperActivity.ACTION_BYOD_SET_LOCATION_AND_CHECK_UPDATES);
         filter.addAction(VpnTestActivity.ACTION_VPN);
         filter.addAction(AlwaysOnVpnSettingsTestActivity.ACTION_ALWAYS_ON_VPN_SETTINGS_TEST);
         filter.addAction(RecentsRedactionActivity.ACTION_RECENTS);
@@ -210,6 +209,7 @@ public class DeviceAdminTestReceiver extends DeviceAdminReceiver {
         filter.addAction(WorkProfileWidgetActivity.ACTION_TEST_WORK_PROFILE_WIDGET);
         filter.addAction(
                 CrossProfilePermissionControlActivity.ACTION_CROSS_PROFILE_PERMISSION_CONTROL);
+        filter.addAction(LocationCheckerActivity.ACTION_CHECK_LOCATION_WORK);
         dpm.addCrossProfileIntentFilter(getWho(context), filter,
                 DevicePolicyManager.FLAG_MANAGED_CAN_ACCESS_PARENT);
 
@@ -220,7 +220,6 @@ public class DeviceAdminTestReceiver extends DeviceAdminReceiver {
         filter.addAction(ByodHelperActivity.ACTION_INSTALL_APK_IN_PRIMARY);
         filter.addAction(ByodFlowTestActivity.ACTION_TEST_RESULT);
         filter.addAction(CrossProfileTestActivity.ACTION_CROSS_PROFILE_TO_PERSONAL);
-        filter.addAction(LocationListenerActivity.ACTION_SET_LOCATION_AND_CHECK_UPDATES);
 
         dpm.addCrossProfileIntentFilter(getWho(context), filter,
                 DevicePolicyManager.FLAG_PARENT_CAN_ACCESS_MANAGED);

@@ -186,8 +186,9 @@ public class UserReferenceTest {
 
             EventLogs<ActivityCreatedEvent> logs =
                     ActivityCreatedEvent.queryPackage(sContext.getPackageName())
-                            .whereActivity().className().isEqualTo(TEST_ACTIVITY_NAME)
-                            .onUser(sDeviceState.secondaryUser().userHandle());
+                            .whereActivity().activityClass()
+                                .className().isEqualTo(TEST_ACTIVITY_NAME)
+                            .onUser(sDeviceState.secondaryUser());
             assertThat(logs.poll()).isNotNull();
         } finally {
             sTestApis.users().system().switchTo();

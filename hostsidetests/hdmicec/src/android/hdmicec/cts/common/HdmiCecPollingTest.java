@@ -43,7 +43,7 @@ public final class HdmiCecPollingTest extends BaseHdmiCecCtsTest {
      */
     @Test
     public void cect_11_2_6_1_Ack() throws Exception {
-        String expectedOutput = "POLL sent";
+        String expectedOutput = "POLL message sent";
         hdmiCecClient.sendPoll();
         if (!hdmiCecClient.checkConsoleOutput(expectedOutput)) {
             throw new Exception("Could not find " + expectedOutput);
@@ -63,7 +63,7 @@ public final class HdmiCecPollingTest extends BaseHdmiCecCtsTest {
         ITestDevice device = getDevice();
         device.executeShellCommand("input keyevent KEYCODE_SLEEP");
 
-        String expectedOutput = "POLL sent";
+        String expectedOutput = "POLL message sent";
         hdmiCecClient.sendPoll();
         if (!hdmiCecClient.checkConsoleOutput(expectedOutput)) {
             throw new Exception("Could not find " + expectedOutput);

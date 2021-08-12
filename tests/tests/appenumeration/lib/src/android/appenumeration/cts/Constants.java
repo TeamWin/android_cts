@@ -22,8 +22,6 @@ public class Constants {
 
     /** A package that queries for {@link #TARGET_NO_API} package */
     public static final String QUERIES_PACKAGE = PKG_BASE + "queries.pkg";
-    /** A package has a provider that queries for {@link #TARGET_NO_API} package */
-    public static final String QUERIES_PACKAGE_PROVIDER = PKG_BASE + "queries.pkg.hasprovider";
     /** Queries for the unexported authority in {@link #TARGET_FILTERS} provider */
     public static final String QUERIES_UNEXPORTED_PROVIDER_AUTH =
             PKG_BASE + "queries.provider.authority.unexported";
@@ -209,9 +207,6 @@ public class Constants {
             PKG_BASE + "cts.action.SET_INSTALLER_PACKAGE_NAME";
     public static final String ACTION_GET_INSTALLED_ACCESSIBILITYSERVICES_PACKAGES =
             PKG_BASE + "cts.action.GET_INSTALLED_ACCESSIBILITYSERVICES_PACKAGES";
-    public static final String ACTION_CHECK_URI_PERMISSION =
-            PKG_BASE + "cts.action.CHECK_URI_PERMISSION";
-
     public static final String EXTRA_REMOTE_CALLBACK = "remoteCallback";
     public static final String EXTRA_REMOTE_READY_CALLBACK = "remoteReadyCallback";
     public static final String EXTRA_ERROR = "error";

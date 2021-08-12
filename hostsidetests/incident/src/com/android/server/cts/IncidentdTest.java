@@ -67,7 +67,9 @@ public class IncidentdTest extends ProtoDumpTestCase {
 
         WindowManagerIncidentTest.verifyWindowManagerServiceDumpProto(dump.getWindow(), filterLevel);
 
-        UsbIncidentTest.verifyUsbServiceDumpProto(dump.getUsb(), filterLevel);
+        if (UsbIncidentTest.hasUsbFunctionality(getDevice())) {
+            UsbIncidentTest.verifyUsbServiceDumpProto(dump.getUsb(), filterLevel);
+        }
     }
 
     // Splitting these into separate methods to make debugging easier.

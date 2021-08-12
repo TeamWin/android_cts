@@ -86,30 +86,6 @@ public final class MixedProfileOwnerTest extends DeviceAndProfileOwnerTest {
     }
 
     @Override
-    @FlakyTest(bugId = 140932104)
-    @Ignore("Ignored while migrating to new infrastructure b/175377361")
-    @Test
-    public void testLockTaskAfterReboot() throws Exception {
-        super.testLockTaskAfterReboot();
-    }
-
-    @Override
-    @FlakyTest(bugId = 140932104)
-    @Ignore("Ignored while migrating to new infrastructure b/175377361")
-    @Test
-    public void testLockTaskAfterReboot_tryOpeningSettings() throws Exception {
-        super.testLockTaskAfterReboot_tryOpeningSettings();
-    }
-
-    @Override
-    @FlakyTest(bugId = 140932104)
-    @Ignore("Ignored while migrating to new infrastructure b/175377361")
-    @Test
-    public void testLockTask_exitIfNoLongerAllowed() throws Exception {
-        super.testLockTask_exitIfNoLongerAllowed();
-    }
-
-    @Override
     @Test
     public void testSetAutoTimeZoneEnabled() {
         // Profile owner cannot set auto time zone unless it is called by the profile

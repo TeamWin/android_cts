@@ -29,6 +29,12 @@ public final class ClassQueryHelper<E extends Queryable>
     private final StringQueryHelper<E> mClassName;
     private final StringQueryHelper<E> mSimpleName;
 
+    ClassQueryHelper() {
+        mQuery = (E) this;
+        mClassName = new StringQueryHelper<>(mQuery);
+        mSimpleName = new StringQueryHelper<>(mQuery);
+    }
+
     public ClassQueryHelper(E query) {
         mQuery = query;
         mClassName = new StringQueryHelper<>(query);
@@ -50,6 +56,7 @@ public final class ClassQueryHelper<E extends Queryable>
         return mSimpleName;
     }
 
+    @Override
     public boolean matches(ClassInfo value) {
         if (!mClassName.matches(value.className())) {
             return false;

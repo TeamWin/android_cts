@@ -192,12 +192,15 @@ class AutoRevokeTest {
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S, codeName = "S")
     @Test
     fun testUnusedApp_doesntGetSplitPermissionRevoked() {
+        assumeFalse(
+            "Auto doesn't support hibernation for pre-S apps",
+            isAutomotiveDevice())
         withUnusedThresholdMs(3L) {
             withDummyApp(APK_PATH_R_APP, APK_PACKAGE_NAME_R_APP) {
                 // Setup
-                startApp()
+                startApp(APK_PACKAGE_NAME_R_APP)
                 assertPermission(PERMISSION_GRANTED, APK_PACKAGE_NAME_R_APP, BLUETOOTH_CONNECT)
-                killDummyApp()
+                killDummyApp(APK_PACKAGE_NAME_R_APP)
                 Thread.sleep(500)
 
                 // Run
@@ -308,10 +311,7 @@ class AutoRevokeTest {
                 // Setup
                 goToPermissions()
                 click("Calendar")
-                // Wear OS uses a switch and does not display a dialog
-                if (!hasFeatureWatch()) {
-                    click("Allow")
-                }
+                click("Allow")
                 goBack()
                 goBack()
                 goBack()
@@ -495,7 +495,7 @@ class AutoRevokeTest {
         waitForIdle()
         val parent = waitFindObject(
             By.clickable(true)
-                .hasDescendant(By.text("Remove permissions if app isn’t used"))
+                .hasDescendant(By.textStartsWith("Remove permissions"))
                 .hasDescendant(By.clazz(Switch::class.java.name))
         )
         return parent.findObject(By.clazz(Switch::class.java.name))

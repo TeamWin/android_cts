@@ -46,9 +46,13 @@ public class CamcorderProfileTest extends AndroidTestCase {
         CamcorderProfile.QUALITY_720P,
         CamcorderProfile.QUALITY_1080P,
         CamcorderProfile.QUALITY_QVGA,
-        CamcorderProfile.QUALITY_2K,
-        CamcorderProfile.QUALITY_QHD,
         CamcorderProfile.QUALITY_2160P,
+        CamcorderProfile.QUALITY_VGA,
+        CamcorderProfile.QUALITY_4KDCI,
+        CamcorderProfile.QUALITY_QHD,
+        CamcorderProfile.QUALITY_2K,
+        CamcorderProfile.QUALITY_8KUHD,
+
         CamcorderProfile.QUALITY_TIME_LAPSE_LOW,
         CamcorderProfile.QUALITY_TIME_LAPSE_HIGH,
         CamcorderProfile.QUALITY_TIME_LAPSE_QCIF,
@@ -57,18 +61,25 @@ public class CamcorderProfileTest extends AndroidTestCase {
         CamcorderProfile.QUALITY_TIME_LAPSE_720P,
         CamcorderProfile.QUALITY_TIME_LAPSE_1080P,
         CamcorderProfile.QUALITY_TIME_LAPSE_QVGA,
-        CamcorderProfile.QUALITY_TIME_LAPSE_2K,
-        CamcorderProfile.QUALITY_TIME_LAPSE_QHD,
         CamcorderProfile.QUALITY_TIME_LAPSE_2160P,
+        CamcorderProfile.QUALITY_TIME_LAPSE_VGA,
+        CamcorderProfile.QUALITY_TIME_LAPSE_4KDCI,
+        CamcorderProfile.QUALITY_TIME_LAPSE_QHD,
+        CamcorderProfile.QUALITY_TIME_LAPSE_2K,
+        CamcorderProfile.QUALITY_TIME_LAPSE_8KUHD,
+
         CamcorderProfile.QUALITY_HIGH_SPEED_LOW,
         CamcorderProfile.QUALITY_HIGH_SPEED_HIGH,
         CamcorderProfile.QUALITY_HIGH_SPEED_480P,
         CamcorderProfile.QUALITY_HIGH_SPEED_720P,
         CamcorderProfile.QUALITY_HIGH_SPEED_1080P,
-        CamcorderProfile.QUALITY_HIGH_SPEED_2160P
+        CamcorderProfile.QUALITY_HIGH_SPEED_2160P,
+        CamcorderProfile.QUALITY_HIGH_SPEED_CIF,
+        CamcorderProfile.QUALITY_HIGH_SPEED_VGA,
+        CamcorderProfile.QUALITY_HIGH_SPEED_4KDCI,
     };
-    private static final int LAST_QUALITY = CamcorderProfile.QUALITY_2K;
-    private static final int LAST_TIMELAPSE_QUALITY = CamcorderProfile.QUALITY_TIME_LAPSE_2K;
+    private static final int LAST_QUALITY = CamcorderProfile.QUALITY_8KUHD;
+    private static final int LAST_TIMELAPSE_QUALITY = CamcorderProfile.QUALITY_TIME_LAPSE_8KUHD;
     private static final int LAST_HIGH_SPEED_QUALITY = CamcorderProfile.QUALITY_HIGH_SPEED_4KDCI;
     private static final Integer[] UNKNOWN_QUALITIES = {
         LAST_QUALITY + 1, // Unknown normal profile quality

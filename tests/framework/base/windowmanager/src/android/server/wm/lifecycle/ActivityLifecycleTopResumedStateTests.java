@@ -47,6 +47,7 @@ import android.app.Activity;
 import android.app.ActivityOptions;
 import android.content.ComponentName;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.WindowManagerState;
@@ -668,9 +669,17 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
         }
 
         // Lock screen removed - activity should be on top now
-        waitAndAssertActivityStates(state(CallbackTrackingActivity.class, ON_TOP_POSITION_GAINED));
-        LifecycleVerifier.assertStopToResumeSequence(CallbackTrackingActivity.class,
-                getLifecycleLog());
+        if (isCar()) {
+            LifecycleVerifier.assertStopToResumeSubSequence(CallbackTrackingActivity.class,
+                    getLifecycleLog());
+            waitAndAssertActivityCurrentState(CallbackTrackingActivity.class,
+                    ON_TOP_POSITION_GAINED);
+        } else {
+            waitAndAssertActivityStates(
+                    state(CallbackTrackingActivity.class, ON_TOP_POSITION_GAINED));
+            LifecycleVerifier.assertStopToResumeSequence(CallbackTrackingActivity.class,
+                    getLifecycleLog());
+        }
     }
 
     @Test
@@ -691,9 +700,15 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
         }
 
         // Lock screen removed - activity should be on top now
-        waitAndAssertActivityStates(state(activity, ON_TOP_POSITION_GAINED));
-        LifecycleVerifier.assertStopToResumeSequence(CallbackTrackingActivity.class,
-                getLifecycleLog());
+        if (isCar()) {
+            LifecycleVerifier.assertStopToResumeSubSequence(CallbackTrackingActivity.class,
+                    getLifecycleLog());
+            waitAndAssertActivityCurrentState(activity.getClass(), ON_TOP_POSITION_GAINED);
+        } else {
+            waitAndAssertActivityStates(state(activity, ON_TOP_POSITION_GAINED));
+            LifecycleVerifier.assertStopToResumeSequence(CallbackTrackingActivity.class,
+                    getLifecycleLog());
+        }
     }
 
     @Test

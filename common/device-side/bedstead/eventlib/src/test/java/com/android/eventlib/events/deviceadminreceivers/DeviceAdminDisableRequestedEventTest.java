@@ -65,7 +65,7 @@ public final class DeviceAdminDisableRequestedEventTest {
                 DeviceAdminDisableRequestedEvent.queryPackage(sContext.getPackageName())
                         .whereIntent().action().isEqualTo(STRING_VALUE);
 
-        assertThat(eventLogs.get().intent()).isEqualTo(intent);
+        assertThat(eventLogs.poll().intent()).isEqualTo(intent);
     }
 
     @Test
@@ -83,7 +83,7 @@ public final class DeviceAdminDisableRequestedEventTest {
                 DeviceAdminDisableRequestedEvent.queryPackage(sContext.getPackageName())
                         .whereIntent().action().isEqualTo(STRING_VALUE);
 
-        assertThat(eventLogs.get().intent()).isEqualTo(intent);
+        assertThat(eventLogs.poll().intent()).isEqualTo(intent);
     }
 
     @Test
@@ -94,10 +94,10 @@ public final class DeviceAdminDisableRequestedEventTest {
 
         EventLogs<DeviceAdminDisableRequestedEvent> eventLogs =
                 DeviceAdminDisableRequestedEvent.queryPackage(sContext.getPackageName())
-                        .whereDeviceAdminReceiver().className().isEqualTo(
+                        .whereDeviceAdminReceiver().broadcastReceiver().receiverClass().className().isEqualTo(
                         CUSTOM_DEVICE_ADMIN_RECEIVER_CLASS_NAME);
 
-        assertThat(eventLogs.get().deviceAdminReceiver().className()).isEqualTo(
+        assertThat(eventLogs.poll().deviceAdminReceiver().className()).isEqualTo(
                 CUSTOM_DEVICE_ADMIN_RECEIVER_CLASS_NAME);
     }
 
@@ -112,10 +112,10 @@ public final class DeviceAdminDisableRequestedEventTest {
 
         EventLogs<DeviceAdminDisableRequestedEvent> eventLogs =
                 DeviceAdminDisableRequestedEvent.queryPackage(sContext.getPackageName())
-                        .whereDeviceAdminReceiver().className().isEqualTo(
+                        .whereDeviceAdminReceiver().broadcastReceiver().receiverClass().className().isEqualTo(
                         CUSTOM_DEVICE_ADMIN_RECEIVER_CLASS_NAME);
 
-        assertThat(eventLogs.get().deviceAdminReceiver().className()).isEqualTo(
+        assertThat(eventLogs.poll().deviceAdminReceiver().className()).isEqualTo(
                 CUSTOM_DEVICE_ADMIN_RECEIVER_CLASS_NAME);
     }
 
@@ -125,10 +125,10 @@ public final class DeviceAdminDisableRequestedEventTest {
 
         EventLogs<DeviceAdminDisableRequestedEvent> eventLogs =
                 DeviceAdminDisableRequestedEvent.queryPackage(sContext.getPackageName())
-                        .whereDeviceAdminReceiver().className()
+                        .whereDeviceAdminReceiver().broadcastReceiver().receiverClass().className()
                         .isEqualTo(DEFAULT_DEVICE_ADMIN_RECEIVER_CLASS_NAME);
 
-        assertThat(eventLogs.get().deviceAdminReceiver().className())
+        assertThat(eventLogs.poll().deviceAdminReceiver().className())
                 .isEqualTo(DEFAULT_DEVICE_ADMIN_RECEIVER_CLASS_NAME);
     }
 
@@ -142,10 +142,10 @@ public final class DeviceAdminDisableRequestedEventTest {
 
         EventLogs<DeviceAdminDisableRequestedEvent> eventLogs =
                 DeviceAdminDisableRequestedEvent.queryPackage(sContext.getPackageName())
-                        .whereDeviceAdminReceiver().className()
+                        .whereDeviceAdminReceiver().broadcastReceiver().receiverClass().className()
                         .isEqualTo(DEFAULT_DEVICE_ADMIN_RECEIVER_CLASS_NAME);
 
-        assertThat(eventLogs.get().deviceAdminReceiver().className())
+        assertThat(eventLogs.poll().deviceAdminReceiver().className())
                 .isEqualTo(DEFAULT_DEVICE_ADMIN_RECEIVER_CLASS_NAME);
     }
 

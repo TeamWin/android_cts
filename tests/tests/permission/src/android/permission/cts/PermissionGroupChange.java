@@ -32,7 +32,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.platform.test.annotations.AppModeFull;
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiScrollable;
@@ -163,9 +163,9 @@ public class PermissionGroupChange {
         runShellCommand("pm uninstall android.permission.cts.appthatrequestpermission");
     }
 
-    @SecurityTest
     @Test
     @AppModeFull
+    @AsbSecurityTest(cveBugId = 72710897)
     public void permissionGroupShouldNotBeAutoGrantedIfNewMember() throws Throwable {
         installApp("CtsAppThatRequestsPermissionAandB");
 

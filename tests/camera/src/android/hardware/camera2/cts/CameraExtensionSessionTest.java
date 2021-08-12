@@ -32,10 +32,12 @@ import com.android.compatibility.common.util.ResultUnit;
 import com.android.compatibility.common.util.Stat;
 import com.android.ex.camera2.blocking.BlockingSessionCallback;
 import com.android.ex.camera2.blocking.BlockingExtensionSessionCallback;
+import com.android.ex.camera2.blocking.BlockingStateCallback;
 import com.android.ex.camera2.exceptions.TimeoutRuntimeException;
 
 import android.graphics.ImageFormat;
 import android.graphics.SurfaceTexture;
+import android.hardware.HardwareBuffer;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraExtensionCharacteristics;
@@ -73,6 +75,7 @@ import org.junit.runners.Parameterized;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @RunWith(Parameterized.class)
@@ -188,25 +191,18 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                 List<Size> extensionSizes = extensionChars.getExtensionSupportedSizes(extension,
                         mSurfaceTexture.getClass());
                 Size maxSize = CameraTestUtils.getMaxSize(extensionSizes.toArray(new Size[0]));
-                ImageReader privateReader = CameraTestUtils.makeImageReader(maxSize,
-                        ImageFormat.PRIVATE, /*maxImages*/ 3, new ImageDropperListener(),
-                        mTestRule.getHandler());
-                OutputConfiguration privateOutput = new OutputConfiguration(
-                        OutputConfiguration.SURFACE_GROUP_ID_NONE, privateReader.getSurface());
-                List<OutputConfiguration> outputConfigs = new ArrayList<>();
-                outputConfigs.add(privateOutput);
-                BlockingSessionCallback regularSessionListener = new BlockingSessionCallback(
-                        mock(CameraCaptureSession.StateCallback.class));
-                SessionConfiguration regularConfiguration = new SessionConfiguration(
-                        SessionConfiguration.SESSION_REGULAR, outputConfigs,
-                        new HandlerExecutor(mTestRule.getHandler()), regularSessionListener);
-
                 mSurfaceTexture.setDefaultBufferSize(maxSize.getWidth(), maxSize.getHeight());
                 Surface repeatingSurface = new Surface(mSurfaceTexture);
                 OutputConfiguration textureOutput = new OutputConfiguration(
                         OutputConfiguration.SURFACE_GROUP_ID_NONE, repeatingSurface);
                 List<OutputConfiguration> outputs = new ArrayList<>();
                 outputs.add(textureOutput);
+                BlockingSessionCallback regularSessionListener = new BlockingSessionCallback(
+                        mock(CameraCaptureSession.StateCallback.class));
+                SessionConfiguration regularConfiguration = new SessionConfiguration(
+                        SessionConfiguration.SESSION_REGULAR, outputs,
+                        new HandlerExecutor(mTestRule.getHandler()), regularSessionListener);
+
                 BlockingExtensionSessionCallback sessionListener =
                         new BlockingExtensionSessionCallback(mock(
                                 CameraExtensionSession.StateCallback.class));
@@ -239,7 +235,6 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                             SESSION_CLOSE_TIMEOUT_MS);
                 } finally {
                     mTestRule.closeDevice(id);
-                    mTestRule.closeImageReader(privateReader);
                 }
             }
         }
@@ -263,25 +258,18 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                 List<Size> extensionSizes = extensionChars.getExtensionSupportedSizes(extension,
                         mSurfaceTexture.getClass());
                 Size maxSize = CameraTestUtils.getMaxSize(extensionSizes.toArray(new Size[0]));
-                ImageReader privateReader = CameraTestUtils.makeImageReader(maxSize,
-                        ImageFormat.PRIVATE, /*maxImages*/ 3, new ImageDropperListener(),
-                        mTestRule.getHandler());
-                OutputConfiguration privateOutput = new OutputConfiguration(
-                        OutputConfiguration.SURFACE_GROUP_ID_NONE, privateReader.getSurface());
-                List<OutputConfiguration> outputConfigs = new ArrayList<>();
-                outputConfigs.add(privateOutput);
-                BlockingSessionCallback regularSessionListener = new BlockingSessionCallback(
-                        mock(CameraCaptureSession.StateCallback.class));
-                SessionConfiguration regularConfiguration = new SessionConfiguration(
-                        SessionConfiguration.SESSION_REGULAR, outputConfigs,
-                        new HandlerExecutor(mTestRule.getHandler()), regularSessionListener);
-
                 mSurfaceTexture.setDefaultBufferSize(maxSize.getWidth(), maxSize.getHeight());
                 Surface surface = new Surface(mSurfaceTexture);
                 OutputConfiguration textureOutput = new OutputConfiguration(
                         OutputConfiguration.SURFACE_GROUP_ID_NONE, surface);
                 List<OutputConfiguration> outputs = new ArrayList<>();
                 outputs.add(textureOutput);
+                BlockingSessionCallback regularSessionListener = new BlockingSessionCallback(
+                        mock(CameraCaptureSession.StateCallback.class));
+                SessionConfiguration regularConfiguration = new SessionConfiguration(
+                        SessionConfiguration.SESSION_REGULAR, outputs,
+                        new HandlerExecutor(mTestRule.getHandler()), regularSessionListener);
+
                 BlockingExtensionSessionCallback sessionListener =
                         new BlockingExtensionSessionCallback(mock(
                                 CameraExtensionSession.StateCallback.class));
@@ -310,7 +298,6 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                             BlockingSessionCallback.SESSION_CLOSED, SESSION_CLOSE_TIMEOUT_MS);
                 } finally {
                     mTestRule.closeDevice(id);
-                    mTestRule.closeImageReader(privateReader);
                 }
             }
         }
@@ -612,6 +599,155 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                         extensionImageReader.close();
                         mReportLog.submit(InstrumentationRegistry.getInstrumentation());
                     }
+                }
+            }
+        }
+    }
+
+    // Verify concurrent extension sessions behavior
+    @Test
+    public void testConcurrentSessions() throws Exception {
+        Set<Set<String>> concurrentCameraIdSet =
+                mTestRule.getCameraManager().getConcurrentCameraIds();
+        if (concurrentCameraIdSet.isEmpty()) {
+            return;
+        }
+
+        for (String id : mCameraIdsUnderTest) {
+            StaticMetadata staticMeta =
+                    new StaticMetadata(mTestRule.getCameraManager().getCameraCharacteristics(id));
+            if (!staticMeta.isColorCorrectionSupported()) {
+                continue;
+            }
+            CameraExtensionCharacteristics extensionChars =
+                    mTestRule.getCameraManager().getCameraExtensionCharacteristics(id);
+            List<Integer> supportedExtensions = extensionChars.getSupportedExtensions();
+            if (supportedExtensions.isEmpty()) {
+                continue;
+            }
+
+            Set<String> concurrentCameraIds = null;
+            for (Set<String> entry : concurrentCameraIdSet) {
+                if (entry.contains(id)) {
+                    concurrentCameraIds = entry;
+                    break;
+                }
+            }
+            if (concurrentCameraIds == null) {
+                continue;
+            }
+
+            String concurrentCameraId = null;
+            CameraExtensionCharacteristics concurrentExtensionChars = null;
+            for (String entry : concurrentCameraIds) {
+                if (entry.equals(id)) {
+                    continue;
+                }
+                if (!(new StaticMetadata(mTestRule.getCameraManager().getCameraCharacteristics(
+                        entry))).isColorOutputSupported()) {
+                    continue;
+                }
+                CameraExtensionCharacteristics chars =
+                        mTestRule.getCameraManager().getCameraExtensionCharacteristics(entry);
+                if (chars.getSupportedExtensions().isEmpty()) {
+                    continue;
+                }
+                concurrentCameraId = entry;
+                concurrentExtensionChars = chars;
+                break;
+            }
+            if ((concurrentCameraId == null) || (concurrentExtensionChars == null)) {
+                continue;
+            }
+
+            updatePreviewSurfaceTexture();
+            int extensionId = supportedExtensions.get(0);
+            List<Size> extensionSizes = extensionChars.getExtensionSupportedSizes(extensionId,
+                    mSurfaceTexture.getClass());
+            Size maxSize = CameraTestUtils.getMaxSize(extensionSizes.toArray(new Size[0]));
+            mSurfaceTexture.setDefaultBufferSize(maxSize.getWidth(), maxSize.getHeight());
+            OutputConfiguration outputConfig = new OutputConfiguration(
+                    OutputConfiguration.SURFACE_GROUP_ID_NONE,
+                    new Surface(mSurfaceTexture));
+            List<OutputConfiguration> outputConfigs = new ArrayList<>();
+            outputConfigs.add(outputConfig);
+
+            BlockingExtensionSessionCallback sessionListener =
+                    new BlockingExtensionSessionCallback(
+                            mock(CameraExtensionSession.StateCallback.class));
+            ExtensionSessionConfiguration configuration =
+                    new ExtensionSessionConfiguration(extensionId, outputConfigs,
+                            new HandlerExecutor(mTestRule.getHandler()), sessionListener);
+
+            CameraDevice concurrentCameraDevice = null;
+            ImageReader extensionImageReader = null;
+            try {
+                mTestRule.openDevice(id);
+                CameraDevice camera = mTestRule.getCamera();
+                camera.createExtensionSession(configuration);
+                CameraExtensionSession extensionSession = sessionListener.waitAndGetSession(
+                        SESSION_CONFIGURE_TIMEOUT_MS);
+                assertNotNull(extensionSession);
+
+                concurrentCameraDevice = CameraTestUtils.openCamera(mTestRule.getCameraManager(),
+                        concurrentCameraId, new BlockingStateCallback(), mTestRule.getHandler());
+                assertNotNull(concurrentCameraDevice);
+                int concurrentExtensionId =
+                        concurrentExtensionChars.getSupportedExtensions().get(0);
+                List<Size> captureSizes = concurrentExtensionChars.getExtensionSupportedSizes(
+                        concurrentExtensionId, mSurfaceTexture.getClass());
+                assertFalse("No SurfaceTexture output supported", captureSizes.isEmpty());
+                Size captureMaxSize =
+                        CameraTestUtils.getMaxSize(captureSizes.toArray(new Size[0]));
+
+                extensionImageReader = ImageReader.newInstance(
+                        captureMaxSize.getWidth(), captureMaxSize.getHeight(), ImageFormat.PRIVATE,
+                        /*maxImages*/ 1, HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE);
+                Surface imageReaderSurface = extensionImageReader.getSurface();
+                OutputConfiguration readerOutput = new OutputConfiguration(
+                        OutputConfiguration.SURFACE_GROUP_ID_NONE, imageReaderSurface);
+                outputConfigs = new ArrayList<>();
+                outputConfigs.add(readerOutput);
+                CameraExtensionSession.StateCallback mockSessionListener =
+                        mock(CameraExtensionSession.StateCallback.class);
+                ExtensionSessionConfiguration concurrentConfiguration =
+                        new ExtensionSessionConfiguration(concurrentExtensionId, outputConfigs,
+                                new HandlerExecutor(mTestRule.getHandler()),
+                                mockSessionListener);
+                concurrentCameraDevice.createExtensionSession(concurrentConfiguration);
+                // Trying to initialize multiple concurrent extension sessions is expected to fail
+                verify(mockSessionListener, timeout(SESSION_CONFIGURE_TIMEOUT_MS).times(1))
+                        .onConfigureFailed(any(CameraExtensionSession.class));
+                verify(mockSessionListener, times(0)).onConfigured(
+                        any(CameraExtensionSession.class));
+
+                extensionSession.close();
+                sessionListener.getStateWaiter().waitForState(
+                        BlockingExtensionSessionCallback.SESSION_CLOSED,
+                        SESSION_CLOSE_TIMEOUT_MS);
+
+                // Initialization of another extension session must now be possible
+                BlockingExtensionSessionCallback concurrentSessionListener =
+                        new BlockingExtensionSessionCallback(
+                                mock(CameraExtensionSession.StateCallback.class));
+                concurrentConfiguration = new ExtensionSessionConfiguration(concurrentExtensionId,
+                        outputConfigs, new HandlerExecutor(mTestRule.getHandler()),
+                        concurrentSessionListener);
+                concurrentCameraDevice.createExtensionSession(concurrentConfiguration);
+                extensionSession = concurrentSessionListener.waitAndGetSession(
+                        SESSION_CONFIGURE_TIMEOUT_MS);
+                assertNotNull(extensionSession);
+                extensionSession.close();
+                concurrentSessionListener.getStateWaiter().waitForState(
+                        BlockingExtensionSessionCallback.SESSION_CLOSED,
+                        SESSION_CLOSE_TIMEOUT_MS);
+            } finally {
+                mTestRule.closeDevice(id);
+                if (concurrentCameraDevice != null) {
+                    concurrentCameraDevice.close();
+                }
+                if (extensionImageReader != null) {
+                    extensionImageReader.close();
                 }
             }
         }

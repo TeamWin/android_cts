@@ -60,6 +60,7 @@ public final class CompatChangesValidConfigTest extends CompatChangeGatingTestCa
             "DOWNSCALE_85",
             "DOWNSCALE_90",
             "DO_NOT_DOWNSCALE_TO_1080P_ON_TV",
+            "FGS_BG_START_RESTRICTION_CHANGE_ID",
             "FORCE_NON_RESIZE_APP",
             "FORCE_RESIZE_APP",
             "IGNORE_ALLOW_BACKUP_IN_D2D",

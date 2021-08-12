@@ -18,6 +18,7 @@ package android.cts.statsdatom.alarm;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import android.app.ProcessStateEnum;
 import android.cts.statsdatom.lib.AtomTestUtils;
 import android.cts.statsdatom.lib.ConfigUtils;
 import android.cts.statsdatom.lib.DeviceUtils;
@@ -107,6 +108,16 @@ public class AlarmStatsTests extends DeviceTestCase implements IBuildReceiver {
                 continue;
             }
             assertThat(alarm1.test(as) != alarm2.test(as)).isTrue();
+            assertThat(as.getCallingProcessState()).isNoneOf(ProcessStateEnum.PROCESS_STATE_UNKNOWN,
+                    ProcessStateEnum.PROCESS_STATE_UNKNOWN_TO_PROTO);
+            if (as.getIsExact()) {
+                assertThat(as.getExactAlarmAllowedReason()).isAnyOf(
+                        AtomsProto.AlarmScheduled.ReasonCode.PERMISSION,
+                        AtomsProto.AlarmScheduled.ReasonCode.CHANGE_DISABLED);
+            } else {
+                assertThat(as.getExactAlarmAllowedReason()).isEqualTo(
+                        AtomsProto.AlarmScheduled.ReasonCode.NOT_APPLICABLE);
+            }
             count++;
         }
         assertThat(count).isEqualTo(2);

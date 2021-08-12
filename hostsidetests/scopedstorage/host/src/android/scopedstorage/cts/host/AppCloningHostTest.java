@@ -19,6 +19,7 @@ package android.scopedstorage.cts.host;
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeTrue;
 
 import android.platform.test.annotations.AppModeFull;
 
@@ -41,9 +42,8 @@ import org.junit.runner.RunWith;
 public class AppCloningHostTest extends BaseHostTestCase {
     private static final String APP_A = "CtsScopedStorageTestAppA.apk";
     private static final String APP_A_PACKAGE = "android.scopedstorage.cts.testapp.A.withres";
-    private static final String APP_FOR_PVT_PACKAGE = "com.google.android.gms";
     private static final String CONTENT_PROVIDER_URL = "content://android.tradefed.contentprovider";
-    private static final int APP_DATA_DIRECTORY_CREATION_TIMEOUT_MS = 20000;
+    private static final int CLONE_PROFILE_DIRECTORY_CREATION_TIMEOUT_MS = 20000;
     private String mCloneUserId;
     private ContentProviderHandler mContentProviderHandler;
 
@@ -51,6 +51,7 @@ public class AppCloningHostTest extends BaseHostTestCase {
     @Before
     public void setup() throws Exception {
         assumeFalse("Device is in headless system user mode", isHeadlessSystemUserMode());
+        assumeTrue(isAtLeastS());
 
         String output = executeShellCommand(
                 "pm create-user --profileOf 0 --user-type android.os.usertype.profile.CLONE "
@@ -65,7 +66,8 @@ public class AppCloningHostTest extends BaseHostTestCase {
 
     @After
     public void tearDown() throws Exception {
-        if (isHeadlessSystemUserMode()) return;
+        if (isHeadlessSystemUserMode() || !isAtLeastS()) return;
+        mContentProviderHandler.tearDown();
         executeShellCommand("pm remove-user %s", mCloneUserId);
     }
 
@@ -78,15 +80,24 @@ public class AppCloningHostTest extends BaseHostTestCase {
 
     @Test
     public void testCreateCloneUserFile() throws Exception {
+        CommandResult out;
+
         // Check that the clone user directories exist
-        CommandResult out = runContentProviderCommand("query", mCloneUserId, "/sdcard", "");
-        assertThat(isSuccessful(out)).isTrue();
+        eventually(() -> {
+            // Wait for finish.
+            assertThat(isSuccessful(
+                    runContentProviderCommand("query", mCloneUserId, "/sdcard", ""))).isTrue();
+        }, CLONE_PROFILE_DIRECTORY_CREATION_TIMEOUT_MS);
+
         // Create a file on the clone user storage
         out = executeShellV2Command("touch /sdcard/testFile.txt");
         assertThat(isSuccessful(out)).isTrue();
-        out = runContentProviderCommand("write", mCloneUserId, "/sdcard/testFile.txt",
-                "< /sdcard/testFile.txt");
-        assertThat(isSuccessful(out)).isTrue();
+        eventually(() -> {
+            // Wait for finish.
+            assertThat(isSuccessful(
+                    runContentProviderCommand("write", mCloneUserId, "/sdcard/testFile.txt",
+                            "< /sdcard/testFile.txt"))).isTrue();
+        }, CLONE_PROFILE_DIRECTORY_CREATION_TIMEOUT_MS);
 
         // Check that the above created file exists on the clone user storage
         out = runContentProviderCommand("query", mCloneUserId, "/sdcard/testFile.txt", "");
@@ -99,9 +110,11 @@ public class AppCloningHostTest extends BaseHostTestCase {
 
     @Test
     public void testPrivateAppDataDirectoryForCloneUser() throws Exception {
+        installAppAsUser(APP_A, Integer.valueOf(mCloneUserId));
         eventually(() -> {
-            assertThat(isPackageInstalled(APP_FOR_PVT_PACKAGE, mCloneUserId)).isTrue();
-        }, APP_DATA_DIRECTORY_CREATION_TIMEOUT_MS);
+            // Wait for finish.
+            assertThat(isPackageInstalled(APP_A_PACKAGE, mCloneUserId)).isTrue();
+        }, CLONE_PROFILE_DIRECTORY_CREATION_TIMEOUT_MS);
     }
 
     private void installAppAsUser(String packageFile, int userId)

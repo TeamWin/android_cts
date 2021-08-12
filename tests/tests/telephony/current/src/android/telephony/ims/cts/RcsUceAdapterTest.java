@@ -919,6 +919,11 @@ public class RcsUceAdapterTest {
         // Remove the test contact capabilities
         removeTestContactFromEab();
 
+        // Override the carrier config to support group subscribe.
+        PersistableBundle bundle = new PersistableBundle();
+        bundle.putBoolean(CarrierConfigManager.Ims.KEY_ENABLE_PRESENCE_GROUP_SUBSCRIBE_BOOL, true);
+        overrideCarrierConfig(bundle);
+
         // Connect to the ImsService
         setupTestImsService(uceAdapter, true, true /* presence cap */, false /* OPTIONS */);
 
@@ -2345,6 +2350,11 @@ public class RcsUceAdapterTest {
 
         // Remove the test contact capabilities
         removeTestContactFromEab();
+
+        // Override the carrier config to support group subscribe.
+        PersistableBundle bundle = new PersistableBundle();
+        bundle.putBoolean(CarrierConfigManager.Ims.KEY_ENABLE_PRESENCE_GROUP_SUBSCRIBE_BOOL, true);
+        overrideCarrierConfig(bundle);
 
         // Connect to the ImsService
         setupTestImsService(uceAdapter, true, true /* presence cap */, false /* OPTIONS */);

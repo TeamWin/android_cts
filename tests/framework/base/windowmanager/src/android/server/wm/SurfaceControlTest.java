@@ -16,11 +16,12 @@
 package android.server.wm;
 
 import static android.server.wm.ActivityManagerTestBase.createFullscreenActivityScenarioRule;
+import static android.view.cts.surfacevalidator.ASurfaceControlTestActivity.MultiRectChecker;
+import static android.view.cts.surfacevalidator.ASurfaceControlTestActivity.RectChecker;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Rect;
@@ -28,9 +29,9 @@ import android.platform.test.annotations.Presubmit;
 import android.view.Surface;
 import android.view.SurfaceControl;
 import android.view.SurfaceHolder;
-import android.view.cts.surfacevalidator.PixelColor;
 import android.view.cts.surfacevalidator.ASurfaceControlTestActivity;
 import android.view.cts.surfacevalidator.ASurfaceControlTestActivity.PixelChecker;
+import android.view.cts.surfacevalidator.PixelColor;
 
 import androidx.annotation.NonNull;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
@@ -68,33 +69,6 @@ public class SurfaceControlTest {
 
         @Override
         public void surfaceDestroyed(@NonNull SurfaceHolder holder) {}
-    }
-
-    private class RectChecker extends ASurfaceControlTestActivity.PixelChecker {
-        private final Rect mBoundsToCheck;
-        RectChecker(Rect boundsToCheck, int expectedColor) {
-            super(expectedColor);
-            mBoundsToCheck = boundsToCheck;
-        }
-        public boolean checkPixels(int matchingPixelCount, int width, int height) {
-            int expectedPixelCountMin = mBoundsToCheck.width() * mBoundsToCheck.height() - 100;
-            int expectedPixelCountMax = mBoundsToCheck.width() * mBoundsToCheck.height();
-            return matchingPixelCount > expectedPixelCountMin &&
-                    matchingPixelCount <= expectedPixelCountMax;
-        }
-
-        @Override
-        public Rect getBoundsToCheck(Bitmap bitmap) {
-            return mBoundsToCheck;
-        }
-    }
-
-    private abstract class MultiRectChecker extends RectChecker {
-        MultiRectChecker(Rect boundsToCheck, int expectedColor) {
-            super(boundsToCheck, expectedColor);
-        }
-
-        public abstract PixelColor getExpectedColor(int x, int y);
     }
 
     private void verifyTest(SurfaceHolder.Callback callback,
@@ -289,7 +263,7 @@ public class SurfaceControlTest {
                 },
 
                 // The rect should be offset by -50 pixels
-                new MultiRectChecker(new Rect(0, 0, 100, 100), PixelColor.RED) {
+                new MultiRectChecker(new Rect(0, 0, 100, 100)) {
                     final PixelColor red = new PixelColor(PixelColor.RED);
                     final PixelColor black = new PixelColor(PixelColor.BLACK);
                     @Override
@@ -322,7 +296,7 @@ public class SurfaceControlTest {
                 },
 
                 // The rect should be offset by 50 pixels
-                new MultiRectChecker(new Rect(0, 0, 100, 100), PixelColor.RED) {
+                new MultiRectChecker(new Rect(0, 0, 100, 100)) {
                     final PixelColor red = new PixelColor(PixelColor.RED);
                     final PixelColor black = new PixelColor(PixelColor.BLACK);
                     @Override

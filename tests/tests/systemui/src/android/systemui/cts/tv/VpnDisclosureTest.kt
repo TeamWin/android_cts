@@ -18,6 +18,7 @@ package android.systemui.cts.tv
 
 import android.app.Notification
 import android.content.ComponentName
+import android.platform.test.annotations.AppModeFull
 import android.platform.test.annotations.Postsubmit
 import android.server.wm.annotation.Group2
 import android.service.notification.StatusBarNotification
@@ -44,6 +45,7 @@ import kotlin.test.assertTrue
 @Postsubmit
 @Group2
 @RunWith(AndroidJUnit4::class)
+@AppModeFull
 class VpnDisclosureTest : TvTestBase() {
     companion object {
         private const val TAG = "VpnDisclosureTest"

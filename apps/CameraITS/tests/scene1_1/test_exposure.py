@@ -187,6 +187,7 @@ class ExposureTest(its_base_test.ItsBaseTest):
       raw_avlb = (camera_properties_utils.raw16(props) and
                   camera_properties_utils.manual_sensor(props))
       sync_latency = camera_properties_utils.sync_latency(props)
+      logging.debug('sync latency: %d frames', sync_latency)
       largest_yuv = capture_request_utils.get_largest_yuv_format(props)
       match_ar = (largest_yuv['width'], largest_yuv['height'])
       fmt = capture_request_utils.get_smallest_yuv_format(
@@ -201,30 +202,29 @@ class ExposureTest(its_base_test.ItsBaseTest):
       # Do captures with a range of exposures, but constant s*e
       while s*m < sens_range[1] and e/m > expt_range[0]:
         mults.append(m)
-        s_test = round(s * m)
-        e_test = s_e_product // s_test
-        logging.debug('Testing s: %d, e: %dns', s_test, e_test)
+        s_req = round(s * m)
+        e_req = s_e_product // s_req
+        logging.debug('Testing s: %d, e: %dns', s_req, e_req)
         req = capture_request_utils.manual_capture_request(
-            s_test, e_test, 0.0, True, props)
+            s_req, e_req, 0.0, True, props)
         cap = its_session_utils.do_capture_with_latency(
             cam, req, sync_latency, fmt)
         s_res = cap['metadata']['android.sensor.sensitivity']
         e_res = cap['metadata']['android.sensor.exposureTime']
         # determine exposure tolerance based on exposure time
-        if e_test >= THRESH_EXP_KNEE:
+        if e_req >= THRESH_EXP_KNEE:
           thresh_round_down_exp = THRESH_ROUND_DOWN_EXP
         else:
           thresh_round_down_exp = (
               THRESH_ROUND_DOWN_EXP +
               (THRESH_ROUND_DOWN_EXP0 - THRESH_ROUND_DOWN_EXP) *
-              (THRESH_EXP_KNEE - e_test) / THRESH_EXP_KNEE)
-        if not 0 <= s_test - s_res < s_test * THRESH_ROUND_DOWN_GAIN:
-          raise AssertionError(f's_write: {s_test}, s_read: {s_res}, '
-                               f'TOL={THRESH_ROUND_DOWN_GAIN*100}%')
-        if not 0 <= e_test - e_res < e_test * thresh_round_down_exp:
-          raise AssertionError(f'e_write: {e_test/1.0E6:.3f}ms, '
-                               f'e_read: {e_res/1.0E6:.3f}ms, '
-                               f'TOL={thresh_round_down_exp*100}%')
+              (THRESH_EXP_KNEE - e_req) / THRESH_EXP_KNEE)
+        if not 0 <= s_req - s_res < s_req * THRESH_ROUND_DOWN_GAIN:
+          raise AssertionError(f's_req: {s_req}, s_res: {s_res}, '
+                               f'TOL=-{THRESH_ROUND_DOWN_GAIN*100}%')
+        if not 0 <= e_req - e_res < e_req * thresh_round_down_exp:
+          raise AssertionError(f'e_req: {e_req}ns, e_res: {e_res}ns, '
+                               f'TOL=-{thresh_round_down_exp*100}%')
         s_e_product_res = s_res * e_res
         req_res_ratio = s_e_product / s_e_product_res
         logging.debug('Capture result s: %d, e: %dns', s_res, e_res)

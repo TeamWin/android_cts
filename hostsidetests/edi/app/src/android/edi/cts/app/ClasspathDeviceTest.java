@@ -16,6 +16,8 @@
 
 package android.edi.cts.app;
 
+import static org.junit.Assume.assumeTrue;
+
 import android.app.Instrumentation;
 import android.content.Context;
 import android.content.pm.SharedLibraryInfo;
@@ -23,6 +25,8 @@ import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
+
+import com.android.modules.utils.build.SdkLevel;
 
 import com.google.common.collect.ImmutableList;
 
@@ -53,6 +57,7 @@ public class ClasspathDeviceTest {
 
     @Before
     public void before() {
+        assumeTrue(SdkLevel.isAtLeastS());
         instrumentation.getUiAutomation().adoptShellPermissionIdentity();
     }
 

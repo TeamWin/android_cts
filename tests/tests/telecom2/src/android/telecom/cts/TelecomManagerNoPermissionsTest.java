@@ -75,16 +75,6 @@ public class TelecomManagerNoPermissionsTest extends InstrumentationTestCase {
             } catch (SecurityException e) {
                 // expected
             }
-
-            TestUtils.disableCompatCommand(getInstrumentation(),
-                    TestUtils.ENABLE_GET_CALL_STATE_PERMISSION_PROTECTION_STRING);
-            try {
-                tm.getCallState();
-            } catch (SecurityException e) {
-                fail("TelecomManager#getCallState must not require READ_PHONE_STATE when "
-                        + "TelecomManager#ENABLE_GET_CALL_STATE_PERMISSION_PROTECTION is "
-                        + "disabled.");
-            }
         } finally {
             TestUtils.resetCompatCommand(getInstrumentation(),
                     TestUtils.ENABLE_GET_CALL_STATE_PERMISSION_PROTECTION_STRING);
@@ -107,16 +97,6 @@ public class TelecomManagerNoPermissionsTest extends InstrumentationTestCase {
                         + "ENABLE_GET_PHONE_ACCOUNT_PERMISSION_PROTECTION is enabled");
             } catch (SecurityException e) {
                 //expected
-            }
-
-            TestUtils.disableCompatCommand(getInstrumentation(),
-                    TestUtils.ENABLE_GET_PHONE_ACCOUNT_PERMISSION_PROTECTION_STRING);
-            try {
-                mTelecomManager.getPhoneAccount(TestUtils.TEST_DEFAULT_PHONE_ACCOUNT_HANDLE_1);
-            } catch (SecurityException e) {
-                fail("TelecomManager#getPhoneAccount shouldn't require READ_PHONE_NUMBERS or "
-                        + "READ_PRIVILEGED_PHONE_STATE when "
-                        + "ENABLE_GET_PHONE_ACCOUNT_PERMISSION_PROTECTION is disabled");
             }
         } finally {
             TestUtils.resetCompatCommand(getInstrumentation(),

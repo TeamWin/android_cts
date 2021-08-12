@@ -32,14 +32,20 @@ import android.app.Activity;
 import android.app.UiModeManager;
 import android.content.Context;
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.server.wm.TestJournalProvider;
+import android.util.Log;
 import android.window.SplashScreen;
 
 public class HandleSplashScreenExitActivity extends Activity {
     private SplashScreen mSSM;
     private UiModeManager mUiModeManager;
     private boolean mReportSplashScreenNightMode;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -62,7 +68,14 @@ public class HandleSplashScreenExitActivity extends Activity {
                 final boolean containsCenter = view.getIconView() != null;
                 final boolean containsBranding = view.getBrandingView() != null
                         && view.getBrandingView().getBackground() != null;
-                final int iconBackground = view.getIconBackgroundColor();
+                Drawable background = view.getIconView().getBackground();
+                final int iconBackground;
+                if (background != null) {
+                    Bitmap bitmap = ((BitmapDrawable) background).getBitmap();
+                    iconBackground = bitmap.getPixel(bitmap.getWidth() / 2, bitmap.getHeight() / 2);
+                } else {
+                    iconBackground = Color.TRANSPARENT;
+                }
                 TestJournalProvider.putExtras(baseContext, HANDLE_SPLASH_SCREEN_EXIT, bundle -> {
                     bundle.putBoolean(RECEIVE_SPLASH_SCREEN_EXIT, true);
                     bundle.putBoolean(CONTAINS_CENTER_VIEW, containsCenter);

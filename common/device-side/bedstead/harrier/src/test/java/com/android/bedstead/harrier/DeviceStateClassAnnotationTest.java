@@ -21,14 +21,14 @@ import static com.android.bedstead.nene.users.UserType.SECONDARY_USER_TYPE_NAME;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import com.android.bedstead.harrier.annotations.AfterClass;
+import com.android.bedstead.harrier.annotations.BeforeClass;
 import com.android.bedstead.harrier.annotations.EnsureHasNoSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.nene.TestApis;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -37,13 +37,28 @@ import org.junit.runner.RunWith;
 @RunWith(BedsteadJUnit4.class)
 @EnsureHasWorkProfile
 @EnsureHasNoSecondaryUser
-public class DeviceStateClassAnnotationTest {
+public class DeviceStateClassAnnotationTest extends DeviceStateTestParent {
 
     @ClassRule
     @Rule
     public static final DeviceState sDeviceState = new DeviceState();
 
     private static final TestApis sTestApis = new TestApis();
+
+    private static boolean sBeforeClassHasRun = false;
+    private static boolean sShadowedGrandparentWithoutBeforeClassInTestClassHasRun = false;
+
+    // Shadowing
+    @BeforeClass
+    public static void shadowedGrandparentBeforeClass() {
+        DeviceStateTestGrandparent.shadowedGrandparentBeforeClass();
+    }
+
+    // Shadowing
+    public static void shadowedGrandparentWithoutBeforeClass() {
+        sShadowedGrandparentWithoutBeforeClassInTestClassHasRun = true;
+        DeviceStateTestGrandparent.shadowedGrandparentWithoutBeforeClass();
+    }
 
     @BeforeClass
     public static void beforeClass() {
@@ -57,11 +72,27 @@ public class DeviceStateClassAnnotationTest {
         assertThat(sTestApis.users().findUserOfType(
                 sTestApis.users().supportedType(SECONDARY_USER_TYPE_NAME))
         ).isNull();
+
+        // Test that the parent always runs before the child
+        assertThat(sParentBeforeClassHasRun).isTrue();
+
+        sBeforeClassHasRun = true;
     }
 
     @AfterClass
     public static void afterClass() {
         // State is not guaranteed afterClass as changes made by tests can propagate
+    }
+
+    @Test
+    public void beforeClassHasRunInCorrectOrder() {
+        // The @BeforeClass on this class have run
+        assertThat(sBeforeClassHasRun).isTrue();
+        // The @BeforeClass from an ancestor class has run even though shadowed
+        assertThat(sShadowedGrandparentBeforeClassHasRun).isTrue();
+
+        assertThat(sShadowedGrandparentWithoutBeforeClassInTestClassHasRun).isFalse();
+        assertThat(sShadowedGrandparentWithoutBeforeClassHasRun).isTrue();
     }
 
     @Test

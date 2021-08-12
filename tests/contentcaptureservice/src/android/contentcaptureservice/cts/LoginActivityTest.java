@@ -41,6 +41,8 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.content.ComponentName;
+import android.content.Context;
+import android.content.ContextParams;
 import android.content.LocusId;
 import android.contentcaptureservice.cts.CtsContentCaptureService.Session;
 import android.os.Bundle;
@@ -894,6 +896,40 @@ public class LoginActivityTest
         assertViewTreeFinished(events, i + 2);
 
         activity.assertInitialViewsDisappeared(events, children.length);
+    }
+
+    @Test
+    public void testViewAppeared_withNewContext() throws Exception {
+        final CtsContentCaptureService service = enableService();
+        final ActivityWatcher watcher = startWatcher();
+
+        final LoginActivity activity = launchActivity();
+        watcher.waitFor(RESUMED);
+
+        // Add View
+        final LinearLayout rootView = activity.getRootView();
+        final Context newContext = activity.createContext(new ContextParams.Builder().build());
+        final TextView child = newImportantView(newContext, "Important I am");
+        activity.runOnUiThread(() -> rootView.addView(child));
+
+        activity.finish();
+        watcher.waitFor(DESTROYED);
+
+        final Session session = service.getOnlyFinishedSession();
+        Log.v(TAG, "session id: " + session.id);
+
+        final ContentCaptureSessionId sessionId = session.id;
+        assertRightActivity(session, sessionId, activity);
+
+        final List<ContentCaptureEvent> events = activity.assertJustInitialViewsAppeared(session,
+                /* additionalEvents= */ 2);
+        final AutofillId rootId = activity.getRootView().getAutofillId();
+
+        int i = LoginActivity.MIN_EVENTS - 1;
+        assertViewTreeFinished(events, i);
+        assertViewTreeStarted(events, i + 1);
+        assertViewAppeared(events, i + 2, sessionId, child, rootId);
+        assertViewTreeFinished(events, i + 3);
     }
 
     @Test

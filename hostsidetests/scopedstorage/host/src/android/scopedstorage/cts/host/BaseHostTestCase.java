@@ -48,6 +48,10 @@ abstract class BaseHostTestCase extends BaseHostJUnit4Test {
         return "true".equalsIgnoreCase(result);
     }
 
+    protected boolean isAtLeastS() throws DeviceNotAvailableException {
+        return getDevice().getApiLevel() >= 31 /* BUILD.VERSION_CODES.S */;
+    }
+
     protected static void eventually(ThrowingRunnable r, long timeoutMillis) {
         long start = System.currentTimeMillis();
 

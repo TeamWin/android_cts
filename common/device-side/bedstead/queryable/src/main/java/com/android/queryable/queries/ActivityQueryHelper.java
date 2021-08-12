@@ -23,29 +23,38 @@ import com.android.queryable.info.ActivityInfo;
 public final class ActivityQueryHelper<E extends Queryable> implements ActivityQuery<E> {
 
     private final E mQuery;
-    private final ClassQueryHelper<E> mClassQueryHelper;
+    private final ClassQueryHelper<E> mActivityClassQueryHelper;
+    private final BooleanQueryHelper<E> mExportedQueryHelper;
+
+    ActivityQueryHelper() {
+        mQuery = (E) this;
+        mActivityClassQueryHelper = new ClassQueryHelper<>(mQuery);
+        mExportedQueryHelper = new BooleanQueryHelper<>(mQuery);
+    }
 
     public ActivityQueryHelper(E query) {
         mQuery = query;
-        mClassQueryHelper = new ClassQueryHelper<>(query);
+        mActivityClassQueryHelper = new ClassQueryHelper<>(query);
+        mExportedQueryHelper = new BooleanQueryHelper<>(query);
     }
 
     @Override
-    public E isSameClassAs(Class<?> clazz) {
-        return mClassQueryHelper.isSameClassAs(clazz);
+    public ClassQuery<E> activityClass() {
+        return mActivityClassQueryHelper;
     }
 
     @Override
-    public StringQuery<E> className() {
-        return mClassQueryHelper.className();
+    public BooleanQuery<E> exported() {
+        return mExportedQueryHelper;
     }
 
     @Override
-    public StringQuery<E> simpleName() {
-        return mClassQueryHelper.simpleName();
-    }
-
     public boolean matches(ActivityInfo value) {
-        return mClassQueryHelper.matches(value);
+        return mActivityClassQueryHelper.matches(value)
+                && mExportedQueryHelper.matches(value.exported());
+    }
+
+    public static boolean matches(ActivityQueryHelper<?> activityQueryHelper, ActivityInfo value) {
+        return activityQueryHelper.matches(value);
     }
 }

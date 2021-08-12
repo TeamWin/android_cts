@@ -45,7 +45,8 @@ import java.io.InputStream;
 public final class RemoteDpc {
 
     private static final TestApis sTestApis = new TestApis();
-    private static final Context sContext = sTestApis.context().instrumentedContext();
+    // This must be instrumentation not instrumented to access the resources
+    private static final Context sContext = sTestApis.context().instrumentationContext();
 
     public static final ComponentName DPC_COMPONENT_NAME = REMOTE_DPC_COMPONENT_NAME;
 

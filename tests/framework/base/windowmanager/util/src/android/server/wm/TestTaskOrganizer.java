@@ -81,15 +81,18 @@ public class TestTaskOrganizer extends TaskOrganizer {
 
     public TestTaskOrganizer(Context context) {
         super();
+        //TODO(b/192572357): Verify if the context is a UI context when b/190019118 is fixed.
         mContext = context;
     }
 
     @Override
     public List<TaskAppearedInfo> registerOrganizer() {
+        //TODO(b/192572357): Replace createDisplayContext with createWindowContext and
+        // getMaximumWindowMetrics with getCurrentWindowMetrics when b/190019118 is fixed.
         final Rect bounds = mContext.createDisplayContext(
                 mContext.getSystemService(DisplayManager.class)
                         .getDisplay(DEFAULT_DISPLAY)).getSystemService(WindowManager.class)
-                .getCurrentWindowMetrics()
+                .getMaximumWindowMetrics()
                 .getBounds();
         final boolean isLandscape = bounds.width() > bounds.height();
         if (isLandscape) {

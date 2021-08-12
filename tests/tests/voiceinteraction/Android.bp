@@ -33,7 +33,9 @@ android_test {
         "service/src/android/voiceinteraction/service/MainInteractionService.java",
         "service/src/android/voiceinteraction/service/MainInteractionSession.java",
         "service/src/android/voiceinteraction/service/MainInteractionSessionService.java",
-        "service/src/android/voiceinteraction/service/MainRecognitionService.java"
+        "service/src/android/voiceinteraction/service/MainRecognitionService.java",
+        "service/src/android/voiceinteraction/service/EventPayloadParcelable.java",
+        "service/src/android/voiceinteraction/service/EventPayloadParcelable.aidl"
     ],
     // Tag this module as a cts test artifact
     test_suites: [

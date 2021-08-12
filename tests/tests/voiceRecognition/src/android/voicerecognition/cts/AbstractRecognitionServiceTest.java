@@ -44,7 +44,6 @@ import androidx.test.rule.ActivityTestRule;
 import com.android.compatibility.common.util.PollingCheck;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.truth.TruthJUnit;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -88,12 +87,6 @@ abstract class AbstractRecognitionServiceTest {
         prepareDevice();
         mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         mActivity = mActivityTestRule.getActivity();
-        if (isOnDeviceTest()) {
-            // Has to happen before mActivity#init or createOnDeviceSpeechRecognizer() will fail.
-            TruthJUnit.assume()
-                    .that(SpeechRecognizer.isOnDeviceRecognitionAvailable(mActivity))
-                    .isTrue();
-        }
         mActivity.init(isOnDeviceTest(), customRecognizer());
     }
 

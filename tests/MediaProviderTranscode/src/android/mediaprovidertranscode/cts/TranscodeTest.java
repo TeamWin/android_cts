@@ -34,6 +34,7 @@ import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 import android.Manifest;
+import android.content.pm.PackageManager;
 import android.media.ApplicationMediaCapabilities;
 import android.media.MediaFormat;
 import android.net.Uri;
@@ -47,6 +48,7 @@ import android.os.storage.StorageVolume;
 import android.os.UserHandle;
 import android.provider.MediaStore;
 
+import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.cts.install.lib.TestApp;
@@ -105,6 +107,12 @@ public class TranscodeTest {
         // TODO(b/182846329): GSI doesn't support transcoding yet
         Assume.assumeFalse(
                 "Using GSI", SystemProperties.get("ro.build.product").contains("generic"));
+
+        PackageManager pm =
+                InstrumentationRegistry.getInstrumentation().getTargetContext().getPackageManager();
+        Assume.assumeFalse("FEATURE_LEANBACK", pm.hasSystemFeature(pm.FEATURE_LEANBACK));
+        Assume.assumeFalse("FEATURE_WATCH", pm.hasSystemFeature(pm.FEATURE_WATCH));
+        Assume.assumeFalse("FEATURE_AUTOMOTIVE", pm.hasSystemFeature(pm.FEATURE_AUTOMOTIVE));
 
         TranscodeTestUtils.pollForExternalStorageState();
         TranscodeTestUtils.grantPermission(getContext().getPackageName(),

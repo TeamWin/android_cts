@@ -131,13 +131,19 @@ public class BytesTransferredTest extends DeviceTestCase implements IBuildReceiv
         final long mTxPackets;
         final long mAppUid;
 
-        public TransferredBytes(
+        TransferredBytes(
                 long rxBytes, long txBytes, long rxPackets, long txPackets, long appUid) {
             mRxBytes = rxBytes;
             mTxBytes = txBytes;
             mRxPackets = rxPackets;
             mTxPackets = txPackets;
             mAppUid = appUid;
+        }
+
+        TransferredBytes plus(TransferredBytes other) {
+            return new TransferredBytes(this.mRxBytes + other.mRxBytes,
+                    this.mTxBytes + other.mTxBytes, this.mRxPackets + other.mRxPackets,
+                    this.mTxPackets + other.mTxPackets, other.mAppUid);
         }
     }
 
@@ -201,7 +207,10 @@ public class BytesTransferredTest extends DeviceTestCase implements IBuildReceiv
         final List<Atom> atoms = ReportUtils.getGaugeMetricAtoms(getDevice(),
                 /*checkTimestampTruncated=*/true);
         assertThat(atoms.size()).isAtLeast(1);
+
         boolean foundAppStats = false;
+        TransferredBytes transBytesSum = new TransferredBytes(0, 0, 0, 0, /*appUid=*/-1);
+
         for (final Atom atom : atoms) {
             TransferredBytes transferredBytes = p.accept(atom);
             if (transferredBytes != null) {
@@ -213,11 +222,12 @@ public class BytesTransferredTest extends DeviceTestCase implements IBuildReceiv
                             DeviceUtils.STATSD_ATOM_TEST_PKG);
                     assertThat(transferredBytes.mAppUid).isEqualTo(appUid);
                 }
-                assertDataUsageAtomDataExpected(
-                        transferredBytes.mRxBytes, transferredBytes.mTxBytes,
-                        transferredBytes.mRxPackets, transferredBytes.mTxPackets);
+                transBytesSum = transBytesSum.plus(transferredBytes);
             }
         }
+        assertDataUsageAtomDataExpected(
+                transBytesSum.mRxBytes, transBytesSum.mTxBytes,
+                transBytesSum.mRxPackets, transBytesSum.mTxPackets);
         assertWithMessage("Data for uid " + DeviceUtils.getAppUid(getDevice(),
                 DeviceUtils.STATSD_ATOM_TEST_PKG)
                 + " is not found in " + atoms.size() + " atoms.").that(foundAppStats).isTrue();

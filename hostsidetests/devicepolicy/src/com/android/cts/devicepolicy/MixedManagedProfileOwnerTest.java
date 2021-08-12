@@ -211,7 +211,7 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
         // Execute the test method that's guaranteed to succeed. See also test in base class
         // which are tolerant to failure and executed by MixedDeviceOwnerTest and
         // MixedProfileOwnerTest
-        executeResetPasswordWithTokenTests(false);
+        executeResetPasswordWithTokenTests(/* allowFailures */ false);
     }
 
     @Override
@@ -362,42 +362,6 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
     public void testPermissionGrantOfDisallowedPermissionWhileOtherPermIsGranted()
             throws Exception {
         super.testPermissionGrantOfDisallowedPermissionWhileOtherPermIsGranted();
-    }
-
-    @Override
-    @Test
-    public void testLockTask() {
-        // Managed profiles are not allowed to use lock task
-    }
-
-    @Override
-    @Test
-    public void testLockTaskAfterReboot() {
-        // Managed profiles are not allowed to use lock task
-    }
-
-    @Override
-    @Test
-    public void testLockTaskAfterReboot_tryOpeningSettings() {
-        // Managed profiles are not allowed to use lock task
-    }
-
-    @Override
-    @Test
-    public void testLockTask_defaultDialer() {
-        // Managed profiles are not allowed to use lock task
-    }
-
-    @Override
-    @Test
-    public void testLockTask_emergencyDialer() {
-        // Managed profiles are not allowed to use lock task
-    }
-
-    @Override
-    @Test
-    public void testLockTask_exitIfNoLongerAllowed() {
-        // Managed profiles are not allowed to use lock task
     }
 
     @Test

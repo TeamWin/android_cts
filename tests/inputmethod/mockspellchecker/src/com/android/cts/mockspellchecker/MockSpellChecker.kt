@@ -31,6 +31,8 @@ internal inline fun <T> withLog(msg: String, block: () -> T): T {
     return block()
 }
 
+const val EXTRAS_KEY_PREFIX = "prefix"
+
 /** Mock Spell checker for end-to-end tests. */
 class MockSpellChecker : SpellCheckerService() {
 
@@ -108,7 +110,14 @@ class MockSpellChecker : SpellCheckerService() {
         ): SuggestionsInfo {
             // Only use attrs in supportedAttributes
             val attrs = rule.attributes and supportedAttributes
-            return SuggestionsInfo(attrs, rule.suggestionsList.toTypedArray(), cookie, sequence)
+            // Add prefix if it is passed in getBundle()
+            val prefix = bundle.getString(EXTRAS_KEY_PREFIX)
+            val suggestions = if (prefix != null) {
+                rule.suggestionsList.map { prefix + it }.toTypedArray()
+            } else {
+                rule.suggestionsList.toTypedArray()
+            }
+            return SuggestionsInfo(attrs, suggestions, cookie, sequence)
         }
 
         private fun emptySuggestionsInfo() = SuggestionsInfo(0, arrayOf())

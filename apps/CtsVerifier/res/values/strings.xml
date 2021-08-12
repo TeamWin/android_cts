@@ -790,14 +790,13 @@
         This test checks that APIs to notify the companion app of its associated device going in and
         out of Bluetooth range are working correctly.
         Before proceeding, make sure you have a Bluetooth LE device nearby and
-        discoverable. Also, make sure that bluetooth is turned on the device.
+        discoverable. Also, make sure that bluetooth is turned on. Note that, the nearby device can
+        not be a phone since it considers advertising as classic device scan.
         First, you press the go button, wait for a dialog to pop up and select your device from the
         list. Second, make sure your bluetooth device is unreachable(you can power off/reboot your
         Bluetooth device or put it into a Faraday bag) and press the Device Gone button.
         Lastly, make your bluetooth device reachable by waiting for the device to power on or
-        removing it from the Faraday bag and press the Device Present button. Note that, if you are
-        using a phone for the testing, please manually pair on another Bluetooth phone before
-        pressing Device Gone and Device Present.
+        removing it from the Faraday bag and press the Device Present button.
     </string>
 
     <string name="companion_service_test_gone_text">
@@ -908,7 +907,6 @@
         Make sure the device has line of sight to GPS satellites
         (for example, outside, or near a window)
         and then press OK to run the automated tests.</string>
-    <string name="location_listener_activity">Location listener</string>
 
     <!-- Strings for Location GNSS tests -->
     <string name="location_gnss_constellation_type_test">GNSS Measurement Constellation Test</string>
@@ -2277,6 +2275,8 @@
     <string name="action_test_title">Action</string>
     <string name="nls_visibility">Please change the lock screen setting to hide sensitive content
         on the lockscreen</string>
+    <string name="nls_restore_visibility">Please change the lock screen setting to show all
+        content on the lockscreen</string>
     <string name="add_screen_lock">Add a secure screen lock of any type</string>
     <string name="remove_screen_lock">Remove the added screen lock</string>
     <string name="secure_action_lockscreen">Lock the screen and find the SecureActionOnLockScreenTest
@@ -3227,6 +3227,15 @@ You should be prompted to select credentials; choose the ones you just installed
         \n
         Then use the Back button (or navigate back to this app using Recents) to return to this test and mark accordingly.
     </string>
+    <string name="provisioning_byod_location_failed">Failed to obtain location from any provider</string>
+    <string name="provisioning_byod_location_no_provider">Cannot obtain location: no providers available.</string>
+    <string name="provisioning_byod_location_trying">Trying to obtain location using providers: %1$s</string>
+    <string name="provisioning_byod_location_obtained">Location has been obtained.</string>
+    <string name="provisioning_byod_pass_message">PASS: %1$s</string>
+    <string name="provisioning_byod_fail_message">FAIL: %1$s</string>
+    <string name="provisioning_byod_location_test_activity">Location listener</string>
+    <string name="provisioning_byod_location_checker_activity">Location checker</string>
+
 
     <string name="provisioning_byod_wifi_data_usage_settings">Profile-aware data usage settings (Wi-Fi)</string>
     <string name="provisioning_byod_wifi_data_usage_settings_instruction">
@@ -3310,46 +3319,40 @@ You should be prompted to select credentials; choose the ones you just installed
 
     <string name="provisioning_byod_no_gps_location_feature">No GPS feature present. Skip test.</string>
     <string name="provisioning_byod_location_mode_enable">Enable location</string>
-    <string name="provisioning_byod_location_mode_enable_toast_location_change">Location changed</string>
     <string name="provisioning_byod_location_mode_enable_missing_permission">Permission missing</string>
     <string name="provisioning_byod_location_mode_enable_instruction">
-        This test verifies that the location updates can be enabled for the managed profile apps.\n
-        If prompted, accept the location permission after pressing go.\n
-        1. Press the go button to go to the location settings page, set both the main location switch and the work profile location switch enabled.\n
-        2. Press home to go to the launcher.\n
-        3. Move your position a little bit, verify that location updates toast comes up.\n
-        Please wait until the location updates or timeout toast message shows up before going back to the cts-verifier tests.\n
-        4. Go back to the cts-verifier tests using the back button, then mark the test accordingly.\n
+        This test verifies that the location can be enabled for the managed profile apps.\n
+        1. Press the \"Prepare Test\" button to go to the location settings page, set both the main location switch and the work profile location switch enabled.\n
+        2. Return using back button and press Go button to check if location is available. If prompted, accept the location permission.\n
+        3. Check the result message below and mark the test accordingly.\n
+        \n
+        If the test fails to obtain location, try to enable as many location services as possible and move outside to make GPS work.
     </string>
 
     <string name="provisioning_byod_location_mode_disable">Disable location</string>
     <string name="provisioning_byod_location_mode_time_out_toast">Timeout waiting for gps location change</string>
     <string name="provisioning_byod_location_mode_disable_instruction">
-        This test verifies that the location updates can be disabled for the managed profile apps through the main location switch.\n
-        1. Press the go button to go to the location settings page, set the main location switch disabled.\n
-        2. Press home to go to the launcher.\n
-        3. Move your position a little bit, verify that no location updates toast come up and that the timeout message show up after around 15 seconds.
-        Please wait until the timeout or location updates toast message shows up before going back to the cts-verifier tests.\n
-        4. Go back to the cts-verifier tests using the back button, then mark the test accordingly.\n
+        This test verifies that the location can be disabled for the managed profile apps through the main location switch.\n
+        1. Press the \"Prepare Test\" button to go to the location settings page, set the main location switch disabled.\n
+        2. Return using back button and press Go button to check if location is available.  If prompted, accept the location permission.\n
+        3. Check the result message below and mark the test accordingly.\n
     </string>
 
     <string name="provisioning_byod_work_location_mode_disable">Disable location for work profile</string>
     <string name="provisioning_byod_work_location_mode_disable_instruction">
-        This test verifies that the location updates can be disabled for the managed profile apps through work profile location switch.\n
-        1. Press the go button to go to the location settings page, set the work location switch disabled while the main location switch is still enabled.\n
-        2. Press home to go to the launcher.\n
-        3. Move your position a little bit, verify that no location updates toast come up and that the timeout message show up after around 15 seconds.
-        Please wait until the timeout or location updates toast message shows up before going back to the cts-verifier tests.\n
-        4. Go back to the cts-verifier tests using the back button, then mark the test accordingly.\n
+        This test verifies that the location can be disabled for the managed profile apps through work profile location switch.\n
+        1. Press the \"Prepare Test\" button to go to the location settings page, set the work location switch disabled while the main location switch is still enabled.\n
+        2. Return using back button and press Go button to check if location is available. If prompted, accept the location permission.\n
+        3. Check the result message below and mark the test accordingly.\n
     </string>
     <string name="provisioning_byod_primary_location_when_work_disabled">Primary receives updates while work location is disabled</string>
     <string name="provisioning_byod_primary_location_when_work_disabled_instruction">
-        This test verifies that location updates are still received by primary profile when location updates are disabled for managed profile apps through work profile location switch.\n
-        1. Press the go button to go to the location settings page, set the work location switch disabled while the main location switch is still enabled.\n
-        2. Press home to go to the launcher.\n
-        3. Move your position a little bit, verify that location updates toast comes up.\n
-        Please wait until the location updates or timeout toast message shows up before going back to the cts-verifier tests.\n
-        4. Go back to the cts-verifier tests using the back button, then mark the test accordingly.\n
+        This test verifies that location is still available by primary profile when location updates are disabled for managed profile apps through work profile location switch.\n
+        1. Press the \"Prepare Test\" button to go to the location settings page, set the work location switch disabled while the main location switch is still enabled.\n
+        2. Return using back button and press Go button to check if location is available. If prompted, accept the location permission.\n
+        3. Check the result message below and mark the test accordingly.\n
+        \n
+        If the test fails to obtain location, try to enable as many location services as possible and move outside to make GPS work.
     </string>
 
     <string name="provisioning_byod_personal_ringtones">Personal ringtones</string>
@@ -4051,7 +4054,8 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="disallow_add_user">Disallow add user</string>
     <string name="disallow_add_user_action">Adding a new user</string>
     <string name="disallow_adjust_volume">Disallow adjust volume</string>
-    <string name="disallow_adjust_volume_action">Adjusting the volume</string>
+    <string name="disallow_adjust_volume_action">Adjusting the volume\n
+        NOTE: If the device does not support volume adjustment in Settings app please skip this test and mark it as passing.\n</string>
     <string name="disallow_config_date_time">Disallow config date time</string>
     <string name="disallow_config_date_time_action">Configuring auto time, time, auto date or date</string>
     <string name="disallow_config_location">Disallow config location</string>
@@ -4090,7 +4094,8 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="disallow_modify_accounts">Disallow modify accounts</string>
     <string name="disallow_modify_accounts_action">Adding an account, and also removing an account (after you have previously added one)</string>
     <string name="disallow_network_reset">Disallow network reset</string>
-    <string name="disallow_network_reset_action">Resetting network settings</string>
+    <string name="disallow_network_reset_action">Resetting network settings\n
+        NOTE: If the device does not support network reset please skip this test and mark it as passing.\n</string>
     <string name="disallow_outgoing_beam">Disallow outgoing beam</string>
     <string name="disallow_outgoing_beam_action">Switching on android beam</string>
     <string name="disallow_remove_user">Disallow remove user</string>
@@ -4472,16 +4477,19 @@ You should be prompted to select credentials; choose the ones you just installed
          2. Press the \"Disable USB data signaling\" button to disable USB data signaling on
          the device. When disabled, all USB data connections (except from charging functions)
          are prohibited.\n
-         3. Press the \"Go\" button to go to Settings and confirm that the following preferences
-         cannot be selected:\n
+         3. Press the \"Go\" button to go to Settings and confirm that the "USB" preferences in
+         \"System > Developer Options\" cannot be selected and "USB" preference in
+         \"Connected devices\" has disappeared.:\n
               - Connected devices > USB\n
               - System > Developer Options > USB debugging\n
               - System > Developer Options > Default USB configuration\n
               - System > Developer Options > Disable USB audio routing\n
          4. Verify that you cannot mount the device as a USB drive on your desktop computer and
          cannot access files from your phone through USB.\n
-         5. Press the \"Enable USB data signaling\" button to re-enable USB data signaling on
-         the device.\n
+         5. Press the \"Enable USB data signaling\" button to re-enable USB data signaling and
+         replug USB cable in the device. After that the "USB" preferences in
+         \"System > Developer Options\" can be selected and "USB" preference in
+         \"Connected devices\" has appeared.\n
          Please mark the test accordingly.
     </string>
     <string name="device_owner_enable_usb_data_signaling_test">Enable USB data signaling</string>
@@ -5074,14 +5082,15 @@ You should be prompted to select credentials; choose the ones you just installed
     <!-- Audio Loopback Latency Test -->
     <string name="audio_loopback_latency_test">Audio Loopback Latency Test</string>
     <string name="audio_loopback_info">
-          This test requires some form of audio loopback. This can be either:\n
+        This test verifies that the device can achieve the required or recommended loopback latency.
+        To pass the test, the device need only achieve this on one of the following audio paths:\n
           - a <a href="https://source.android.com/devices/audio/latency/loopback">Loopback Plug</a>  connected to a 3.5mm headset jack.\n
           - a <a href="https://source.android.com/devices/audio/latency/loopback">Loopback Plug</a>  connected to a USB audio adapter.\n
-          - a USB interface with patch cords connecting the input and output jaccks.
+          - a USB interface with patch cords connecting the input and output jacks.\n
           Please connect one of these Loopback mechanisms, and proceed with the instructions
-          on the screen.
-          The system will measure the input-output audio latency by injecting a pulse on the output,
-          and computing the distance between replicas of the pulse.
+          on the screen. The required &amp; recommended latencies will be displayed.
+          The system will measure the input-output audio latency by injecting an audio signal to
+          the output and compute the time between generating the signal and recording it back.
           You can vary the Audio Level slider to ensure the pulse will feed back at adequate levels.
           Repeat until a confidence level >= 0.6 is achieved.
     </string>
@@ -5097,14 +5106,24 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="audio_loopback_test_btn">Test</string>
     <string name="audio_loopback_results_text">Results...</string>
 
-    <!-- Audio Loopback Latency Test -->
+    <string name="audio_loopback_failure">FAILURE - Could not allocate analyzer thread.</string>
+
+    <!-- Audio Cold-Start Latency Test -->
     <string name="audio_coldstart_out_latency_test">Audio Cold Start Output Latency Test</string>
     <string name="audio_coldstart_in_latency_test">Audio Cold Start Input Latency Test</string>
 
-    <string name="audio_coldstart_output_info">Info Here</string>
+    <string name="audio_coldstart_output_info">
+        This test measures the time required to output audio from a suspended \"cold\" audio system.
+        It requires that touch-sounds be disabled in the device \"Sound &amp; Vibration\" settings
+        panel.
+    </string>
     <string name="audio_coldstart_input_info">Info Here</string>
     <string name="audio_coldstart_outputlbl">Output Cold Start Latency</string>
     <string name="audio_coldstart_inputlbl">Input Cold Start Latency</string>
+    <string name="audio_coldstart_touchsounds_message">
+        Touch sounds are ENABLED. Please DISABLE touch sounds in the \"Sound &amp; Vibration\" settings panel.
+    </string>
+    <string name="audio_coldstart_notouchsounds_message">Touch sound are DISABLED.</string>
 
     <!-- Audio Frequency Line Test -->
     <string name="audio_frequency_line_test">Audio Frequency Line Test</string>
@@ -5266,10 +5285,13 @@ Follow the instructions on the screen to measure the frequency response for the 
     <string name="audio_tap2tone_info">This tests the latency from a screen interaction to a
         resulting tone. This time is a combination of touch screen latency and audio latency.\nThis
         test is best conducted in a quiet room with the device laying on a table. Select
-        the Audio API to test and press the \"Start\" button. Use your fingernail to tap on the
-        field below to trigger the test tone. Results will be displayed in the field above the
-        waveform display.\nFive successful tests runs are required to determine if the test
-        as a whole succeeds.
+        the Audio API to test (\"Native\" has the lowest latency) and press the \"Start\" button.
+        Use your fingernail to tap ONCE on the field below to trigger the test tone. DO NOT leave
+        the finger resting on the test field. A strong "tick" sound from the fingernail striking
+        the display is necessary to register the start of the test process. After tapping ONCE,
+        wait until the results are displayed in the field above the waveform display before
+        tapping for the next test run.\nFive successful tests runs are required to determine
+        if the test as a whole succeeds.
     </string>
     <string name="audio_tap2tone_spec">80ms or less average latency is STRONGLY RECOMMENDED to pass.</string>
     <string name="audio_tap2tone_too_few">Not enough edges. Use fingernail.</string>
@@ -5538,16 +5560,8 @@ Follow the instructions on the screen to measure the frequency response for the 
     <!-- Pro Audio Test -->
     <string name="proaudio_test">Pro Audio Test</string>
     <string name="proaudio_info">
-       This test requires that you have connected a supported USB Audio Peripheral device
-       (not a headset) and that peripheral\'s audio outputs are connected to the peripherals\'s
-       audio inputs. Alternatively, for devices with an analog audio jack or USB-C Digital
-       to Analog dongle, a <a href="https://source.android.com/devices/audio/latency/loopback">Loopback Plug</a>
-       can be used. Also, if there is an input level
-       control on the peripheral, it must be set to a non-zero value. When the test has
-       verified support for a valid audio peripheral, press the \"Round-Trip Test\" button
-       to complete the test.
-       The latency measurement is generally accurate even when the volume is low. But you may
-       need to increase the volume to bring the confidence number above the threshold.
+        This test will check for validity of the \"Pro Audio\" and subsidiary flags. Note
+        that this test no longer requires a loopback audio device.
     </string>
     <string name="proaudio_hdmi_infotitle">HDMI Support</string>
     <string name="proaudio_hdmi_message">Please connect an HDMI peripheral to validate
@@ -5871,6 +5885,12 @@ Follow the instructions on the screen to measure the frequency response for the 
         have the smallest height.\n\n
     2. Open the bubble, it will tell you if the height is correct.</string>
     <string name="bubbles_test_min_height_button">Send small height bubble</string>
+    <!-- Expanded view max height -->
+    <string name="bubbles_test_max_height_title">Expanded view max height</string>
+    <string name="bubbles_test_max_height_verify">1. Press the button below to update the bubble to
+        have the maximum height.\n\n
+        2. Open the bubble, it will tell you if the height is correct.</string>
+    <string name="bubbles_test_max_height_button">Send max height bubble</string>
     <!-- Low ram -->
     <string name="bubbles_test_lowram_title">No bubbles on low memory device</string>
     <string name="bubbles_test_lowram_verify">Click the button below and verify that a
@@ -6001,12 +6021,6 @@ Follow the instructions on the screen to measure the frequency response for the 
 
     <string name="loopback_test_question">Does this device allow for the connection of a loopback audio peripheral?</string>
     <string name="loopback_dlg_caption">Loopback Peripheral Required</string>
-    <string name="loopback_dlg_text">This test requires an Audio Loopback Peripheral to be connected to the device.\n
-        This can be done in one of three ways:\n
-        1. Connect a <a href="https://source.android.com/devices/audio/latency/loopback">Loopback Plug</a> to the 3.5mm headset jack.\n
-        2. Connect a <a href="https://source.android.com/devices/audio/latency/loopback">Loopback Plug</a> to a USB-C headset adapter.\n
-        3. Connect a USB audio interface peripheral and connect the outputs to the inputs with audio patch cables.
-    </string>
 
     <string name="display_cutout_test">DisplayCutout Test</string>
     <string name="display_cutout_test_instruction">\n

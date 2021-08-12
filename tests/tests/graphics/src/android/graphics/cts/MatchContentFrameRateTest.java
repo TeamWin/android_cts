@@ -16,11 +16,13 @@
 
 package android.graphics.cts;
 
-import static androidx.test.InstrumentationRegistry.getInstrumentation;
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import android.Manifest;
+import android.content.Context;
 import android.hardware.display.DisplayManager;
 
 import androidx.test.filters.MediumTest;
@@ -28,6 +30,7 @@ import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.AdoptShellPermissionsRule;
+import com.android.compatibility.common.util.DisplayUtil;
 
 import org.junit.After;
 import org.junit.Before;
@@ -38,7 +41,6 @@ import org.junit.runner.RunWith;
 @MediumTest
 @RunWith(AndroidJUnit4.class)
 public class MatchContentFrameRateTest {
-    private static final int SETTING_PROPAGATION_TIMEOUT_MILLIS = 50;
 
     @Rule
     public ActivityTestRule<FrameRateCtsActivity> mActivityRule =
@@ -48,13 +50,17 @@ public class MatchContentFrameRateTest {
     public final AdoptShellPermissionsRule mShellPermissionsRule =
             new AdoptShellPermissionsRule(getInstrumentation().getUiAutomation(),
                     Manifest.permission.OVERRIDE_DISPLAY_MODE_REQUESTS,
-                    Manifest.permission.MODIFY_REFRESH_RATE_SWITCHING_TYPE);
+                    Manifest.permission.MODIFY_REFRESH_RATE_SWITCHING_TYPE,
+                    Manifest.permission.HDMI_CEC);
 
     private int mInitialMatchContentFrameRate;
     private DisplayManager mDisplayManager;
 
     @Before
     public void setUp() throws Exception {
+        Context context = getInstrumentation().getTargetContext();
+        assertTrue("Physical display is expected.", DisplayUtil.isDisplayConnected(context));
+
         FrameRateCtsActivity activity = mActivityRule.getActivity();
 
         // Prevent DisplayManager from limiting the allowed refresh rate range based on
@@ -68,8 +74,10 @@ public class MatchContentFrameRateTest {
 
     @After
     public void tearDown() {
-        mDisplayManager.setRefreshRateSwitchingType(mInitialMatchContentFrameRate);
-        mDisplayManager.setShouldAlwaysRespectAppRequestedMode(false);
+        if (mDisplayManager != null) {
+            mDisplayManager.setRefreshRateSwitchingType(mInitialMatchContentFrameRate);
+            mDisplayManager.setShouldAlwaysRespectAppRequestedMode(false);
+        }
     }
 
     @Test

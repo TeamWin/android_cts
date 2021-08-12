@@ -61,8 +61,8 @@ def test_flip_mirror_impl(cam, props, fmt, chart, debug, log_path):
   template = cv2.imread(opencv_processing_utils.CHART_FILE, cv2.IMREAD_ANYDEPTH)
 
   # take img, crop chart, scale and prep for cv2 template match
-  s, e, _, _, fd = cam.do_3a(get_results=True, mono_camera=mono_camera)
-  req = capture_request_utils.manual_capture_request(s, e, fd)
+  cam.do_3a()
+  req = capture_request_utils.auto_capture_request()
   cap = cam.do_capture(req, fmt)
   y, _, _ = image_processing_utils.convert_capture_to_planes(cap, props)
   y = image_processing_utils.rotate_img_per_argv(y)
@@ -73,7 +73,8 @@ def test_flip_mirror_impl(cam, props, fmt, chart, debug, log_path):
       patch.astype(np.uint8), chart.scale)
 
   # check image has content
-  assert np.max(patch)-np.min(patch) > 255/8
+  if np.max(patch)-np.min(patch) < 255/8:
+    raise AssertionError('Image patch has no content! Check setup.')
 
   # save full images if in debug
   if debug:
@@ -113,17 +114,16 @@ def test_flip_mirror_impl(cam, props, fmt, chart, debug, log_path):
     opts.append(opt_val)
 
   # determine if 'nominal' or 'rotated' is best orientation
-  assert_flag = (opts[0] == max(opts) or opts[3] == max(opts))
-  assert assert_flag, ('Optimum orientation is %s' %
-                       CHART_ORIENTATIONS[np.argmax(opts)])
+  if not (opts[0] == max(opts) or opts[3] == max(opts)):
+    raise AssertionError(
+        f'Optimum orientation is {CHART_ORIENTATIONS[np.argmax(opts)]}')
   # print warning if rotated
   if opts[3] == max(opts):
-    logging.warning('Image is rotated 180 degrees. Try "rotate" flag.')
+    logging.warning('Image is rotated 180 degrees. Tablet might be rotated.')
 
 
 class FlipMirrorTest(its_base_test.ItsBaseTest):
-  """Test to verify if the image is flipped or mirrored.
-  """
+  """Test to verify if the image is flipped or mirrored."""
 
   def test_flip_mirror(self):
     """Test if image is properly oriented."""
@@ -139,13 +139,9 @@ class FlipMirrorTest(its_base_test.ItsBaseTest):
       debug = self.debug_mode
       chart_loc_arg = self.chart_loc_arg
 
-      # Load chart for scene
+      # load chart for scene
       its_session_utils.load_scene(
           cam, props, self.scene, self.tablet, self.chart_distance)
-
-      # Check skip conditions
-      camera_properties_utils.skip_unless(
-          camera_properties_utils.read_3a(props))
 
       # initialize chart class and locate chart in scene
       chart = opencv_processing_utils.Chart(

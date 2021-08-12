@@ -27,7 +27,7 @@ import its_session_utils
 
 
 NAME = os.path.basename(__file__).split('.')[0]
-CHECKED_PATTERNS = [1, 2]  # [SOLID_COLOR, COLOR_BARS]
+CHECKED_PATTERNS = [1, 2, 5]  # [SOLID_COLOR, COLOR_BARS, BLACK]
 COLOR_BAR_ORDER = ['WHITE', 'YELLOW', 'CYAN', 'GREEN', 'MAGENTA', 'RED',
                    'BLUE', 'BLACK']
 COLOR_CHECKER = {'BLACK': [0, 0, 0], 'RED': [1, 0, 0], 'GREEN': [0, 1, 0],
@@ -110,7 +110,7 @@ def check_pattern(cap, props, pattern):
   Returns:
     True/False
   """
-  if pattern == 1:  # solid color
+  if pattern == 1 or pattern == 5:  # solid color or black
     return check_solid_color(cap, props)
   elif pattern == 2:  # color bars
     striped = check_color_bars(cap, props, mirror=False)
@@ -170,6 +170,7 @@ class TestPatterns(its_base_test.ItsBaseTest):
     2: COLOR_BARS
     3: COLOR_BARS_FADE_TO_GREY
     4: PN9
+    5: BLACK (test/system only)
   """
 
   def test_test_patterns(self):

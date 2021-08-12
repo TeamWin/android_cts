@@ -16,6 +16,6 @@
   -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="50dp"
-    android:layout_height="50dp">
+    android:layout_width="240px"
+    android:layout_height="200px">
 </FrameLayout>

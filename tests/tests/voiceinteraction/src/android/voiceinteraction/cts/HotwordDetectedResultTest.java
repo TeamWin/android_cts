@@ -44,9 +44,10 @@ public class HotwordDetectedResultTest {
     public void testHotwordDetectedResult_totalSize() throws Exception {
         final int bitsForConfidenceLevel = Utils.bitCount(
                 HotwordDetectedResult.CONFIDENCE_LEVEL_VERY_HIGH);
-        final int bitsForHotwordOffsetMillis = Integer.SIZE;
-        final int bitsForHotwordDurationMillis = Integer.SIZE;
-        final int bitsForAudioChannel = Integer.SIZE;
+        final int bitsForHotwordOffsetMillis = Utils.bitCount(Utils.LIMIT_HOTWORD_OFFSET_MAX_VALUE);
+        final int bitsForHotwordDurationMillis = Utils.bitCount(
+                AudioRecord.getMaxSharedAudioHistoryMillis());
+        final int bitsForAudioChannel = Utils.bitCount(Utils.LIMIT_AUDIO_CHANNEL_MAX_VALUE);
         final int bitsForHotwordDetectionPersonalized = 1;
         final int bitsForScore = Utils.bitCount(HotwordDetectedResult.getMaxScore());
         final int bitsForPersonalizedScore = Utils.bitCount(HotwordDetectedResult.getMaxScore());
@@ -124,6 +125,28 @@ public class HotwordDetectedResultTest {
         assertThrows(IllegalArgumentException.class,
                 () -> new HotwordDetectedResult.Builder().setHotwordDurationMillis(
                         (int) AudioRecord.getMaxSharedAudioHistoryMillis() + 1).build());
+    }
+
+    @Test
+    public void testHotwordDetectedResult_setInvalidHotwordOffsetMillis() throws Exception {
+        assertThrows(IllegalArgumentException.class,
+                () -> new HotwordDetectedResult.Builder().setHotwordOffsetMillis(
+                        HotwordDetectedResult.HOTWORD_OFFSET_UNSET - 1).build());
+
+        assertThrows(IllegalArgumentException.class,
+                () -> new HotwordDetectedResult.Builder().setHotwordOffsetMillis(
+                        Utils.LIMIT_HOTWORD_OFFSET_MAX_VALUE + 1).build());
+    }
+
+    @Test
+    public void testHotwordDetectedResult_setInvalidAudioChannel() throws Exception {
+        assertThrows(IllegalArgumentException.class,
+                () -> new HotwordDetectedResult.Builder().setAudioChannel(
+                        HotwordDetectedResult.AUDIO_CHANNEL_UNSET - 1).build());
+
+        assertThrows(IllegalArgumentException.class,
+                () -> new HotwordDetectedResult.Builder().setAudioChannel(
+                        Utils.LIMIT_AUDIO_CHANNEL_MAX_VALUE + 1).build());
     }
 
     @Test

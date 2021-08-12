@@ -19,6 +19,7 @@ package com.android.bedstead.testapp;
 import android.app.Activity;
 import android.os.Bundle;
 import android.os.PersistableBundle;
+import android.util.Log;
 
 import com.android.eventlib.premade.EventLibActivity;
 

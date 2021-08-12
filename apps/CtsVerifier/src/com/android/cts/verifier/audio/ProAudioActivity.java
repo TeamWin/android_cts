@@ -30,6 +30,7 @@ import android.widget.TextView;
 
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
+import com.android.cts.verifier.audio.audiolib.AudioSystemFlags;
 import com.android.cts.verifier.CtsVerifierReportLog;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
@@ -75,28 +76,6 @@ public class ProAudioActivity
 
     public ProAudioActivity() {
         super();
-    }
-
-    private boolean claimsProAudio() {
-        return getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUDIO_PRO);
-    }
-
-    private boolean claimsLowLatencyAudio() {
-        // CDD Section C-1-1: android.hardware.audio.low_latency
-        return getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUDIO_LOW_LATENCY);
-    }
-
-    private boolean claimsMIDI() {
-        // CDD Section C-1-4: android.software.midi
-        return getPackageManager().hasSystemFeature(PackageManager.FEATURE_MIDI);
-    }
-
-    private boolean claimsUSBHostMode() {
-        return getPackageManager().hasSystemFeature(PackageManager.FEATURE_USB_HOST);
-    }
-
-    private boolean claimsUSBPeripheralMode() {
-        return getPackageManager().hasSystemFeature(PackageManager.FEATURE_USB_ACCESSORY);
     }
 
     // HDMI Stuff
@@ -208,7 +187,7 @@ public class ProAudioActivity
         setPassFailButtonClickListeners();
         setInfoResources(R.string.proaudio_test, R.string.proaudio_info, -1);
 
-        mClaimsProAudio = claimsProAudio();
+        mClaimsProAudio = AudioSystemFlags.claimsProAudio(this);
         ((TextView)findViewById(R.id.proAudioHasProAudioLbl)).setText("" + mClaimsProAudio);
 
         if (!mClaimsProAudio) {
@@ -218,16 +197,16 @@ public class ProAudioActivity
             showDialog(INFO_DIALOG_ID, args);
         }
 
-        mClaimsLowLatencyAudio = claimsLowLatencyAudio();
+        mClaimsLowLatencyAudio = AudioSystemFlags.claimsLowLatencyAudio(this);
         ((TextView)findViewById(R.id.proAudioHasLLALbl)).setText("" + mClaimsLowLatencyAudio);
 
-        mClaimsMIDI = claimsMIDI();
+        mClaimsMIDI = AudioSystemFlags.claimsMIDI(this);
         ((TextView)findViewById(R.id.proAudioHasMIDILbl)).setText("" + mClaimsMIDI);
 
-        mClaimsUSBHostMode = claimsUSBHostMode();
+        mClaimsUSBHostMode = AudioSystemFlags.claimsUSBHostMode(this);
         ((TextView)findViewById(R.id.proAudioMidiHasUSBHostLbl)).setText("" + mClaimsUSBHostMode);
 
-        mClaimsUSBPeripheralMode = claimsUSBPeripheralMode();
+        mClaimsUSBPeripheralMode = AudioSystemFlags.claimsUSBPeripheralMode(this);
         ((TextView)findViewById(
                 R.id.proAudioMidiHasUSBPeripheralLbl)).setText("" + mClaimsUSBPeripheralMode);
 

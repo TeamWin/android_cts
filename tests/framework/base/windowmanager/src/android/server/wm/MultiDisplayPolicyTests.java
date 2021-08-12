@@ -519,6 +519,10 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
 
     private void validateStackFocusSwitchOnStackEmptied(VirtualDisplaySession virtualDisplaySession,
             LockScreenSession lockScreenSession) {
+        if (lockScreenSession != null) {
+            lockScreenSession.setLockCredential();
+        }
+
         // Create new virtual display.
         final DisplayContent newDisplay = virtualDisplaySession.createDisplay();
         mWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
@@ -538,7 +542,7 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
 
         if (lockScreenSession != null) {
             // Unlock and check if the focus is switched back to primary display.
-            lockScreenSession.wakeUpDevice().unlockDevice();
+            lockScreenSession.wakeUpDevice().enterAndConfirmLockCredential();
         }
 
         waitAndAssertTopResumedActivity(VIRTUAL_DISPLAY_ACTIVITY, DEFAULT_DISPLAY,
