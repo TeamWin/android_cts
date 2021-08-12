@@ -340,7 +340,7 @@ def _get_cam_rotations(frames, facing, h, log_path):
             gframe0, mask=pre_mask, **_CV2_FEATURE_PARAMS_PREMASK)
       num_features = len(p0_filtered)
       if num_features < _FEATURE_PTS_MIN:
-        for pt in p0_filtered:
+        for pt in np.rint(p0_filtered).astype(int):
           x, y = pt[0][0], pt[0][1]
           cv2.circle(frames[j], (x, y), 3, (100, 255, 255), -1)
         image_processing_utils.write_image(
@@ -369,7 +369,7 @@ def _get_cam_rotations(frames, facing, h, log_path):
         # Save debug visualization of features that are being
         # tracked in the first frame.
         frame = frames[j]
-        for x, y in p0_filtered[st == 1]:
+        for x, y in np.rint(p0_filtered[st == 1]).astype(int):
           cv2.circle(frame, (x, y), 3, (100, 255, 255), -1)
         image_processing_utils.write_image(
             frame, f'{file_name_stem}_features{j+_START_FRAME:03d}.png')

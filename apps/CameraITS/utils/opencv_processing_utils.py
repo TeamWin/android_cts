@@ -64,7 +64,7 @@ SCALE_TELE40_IN_RFOV_BOX = 0.5
 SCALE_TELE25_IN_RFOV_BOX = 0.33
 
 SQUARE_AREA_MIN_REL = 0.05  # Minimum size for square relative to image area
-SQUARE_TOL = 0.1  # Square W vs H mismatch RTOL
+SQUARE_TOL = 0.05  # Square W vs H mismatch RTOL
 
 VGA_HEIGHT = 480
 VGA_WIDTH = 640
@@ -557,29 +557,17 @@ def get_angle(input_img):
 class Cv2ImageProcessingUtilsTests(unittest.TestCase):
   """Unit tests for this module."""
 
-  def test_get_angle_identify_unrotated_chessboard_angle(self):
-    normal_img_path = os.path.join(
-        TEST_IMG_DIR, 'rotated_chessboards/normal.jpg')
-    wide_img_path = os.path.join(
-        TEST_IMG_DIR, 'rotated_chessboards/wide.jpg')
-    normal_img = cv2.cvtColor(cv2.imread(normal_img_path), cv2.COLOR_BGR2GRAY)
-    wide_img = cv2.cvtColor(cv2.imread(wide_img_path), cv2.COLOR_BGR2GRAY)
-    normal_angle = get_angle(normal_img)
-    wide_angle = get_angle(wide_img)
-    e_msg = f'Angle: 0, Regular: {normal_angle}, Wide: {wide_angle}'
-    self.assertEqual(get_angle(normal_img), 0, e_msg)
-    self.assertEqual(get_angle(wide_img), 0, e_msg)
-
   def test_get_angle_identify_rotated_chessboard_angle(self):
     # Array of the image files and angles containing rotated chessboards.
     test_cases = [
+        ('', 0),
         ('_15_ccw', 15),
         ('_30_ccw', 30),
         ('_45_ccw', 45),
         ('_60_ccw', 60),
         ('_75_ccw', 75),
-        ('_90_ccw', 90)
     ]
+    test_fails = ''
 
     # For each rotated image pair (normal, wide), check angle against expected.
     for suffix, angle in test_cases:
@@ -594,13 +582,20 @@ class Cv2ImageProcessingUtilsTests(unittest.TestCase):
       wide_img = cv2.cvtColor(cv2.imread(wide_img_path), cv2.COLOR_BGR2GRAY)
 
       # Assert angle as expected.
-      normal_angle = get_angle(normal_img)
-      wide_angle = get_angle(wide_img)
-      e_msg = f'Angle: {angle}, Regular: {normal_angle}, Wide: {wide_angle}'
-      self.assertTrue(
-          numpy.isclose(abs(normal_angle), angle, ANGLE_CHECK_TOL), e_msg)
-      self.assertTrue(
-          numpy.isclose(abs(wide_angle), angle, ANGLE_CHECK_TOL), e_msg)
+      normal = get_angle(normal_img)
+      wide = get_angle(wide_img)
+      e_msg = (f'\n Rotation angle test failed: {angle}, extracted normal: '
+               f'{normal:.2f}, wide: {wide:.2f}')
+      if cv2.__version__ == '3.4.2':
+        if (not math.isclose(abs(normal), angle, abs_tol=ANGLE_CHECK_TOL) or
+            not math.isclose(abs(wide), angle, abs_tol=ANGLE_CHECK_TOL)):
+          test_fails += e_msg
+      else:
+        if (not math.isclose(90-normal, angle, abs_tol=ANGLE_CHECK_TOL) or
+            not math.isclose(90-wide, angle, abs_tol=ANGLE_CHECK_TOL)):
+          test_fails += e_msg
+
+    self.assertEqual(len(test_fails), 0, test_fails)
 
 
 if __name__ == '__main__':
