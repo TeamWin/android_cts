@@ -25,10 +25,10 @@ import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
 import android.media.ApplicationMediaCapabilities;
 import android.media.MediaFormat;
-import android.media.MediaTranscodeManager;
-import android.media.MediaTranscodeManager.TranscodingRequest;
-import android.media.MediaTranscodeManager.TranscodingSession;
-import android.media.MediaTranscodeManager.VideoTranscodingRequest;
+import android.media.MediaTranscodingManager;
+import android.media.MediaTranscodingManager.TranscodingRequest;
+import android.media.MediaTranscodingManager.TranscodingSession;
+import android.media.MediaTranscodingManager.VideoTranscodingRequest;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -69,8 +69,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 @RequiresDevice
 @AppModeFull(reason = "Instant apps cannot access the SD card")
 @SdkSuppress(minSdkVersion = 31, codeName = "S")
-public class MediaTranscodeManagerTest extends AndroidTestCase {
-    private static final String TAG = "MediaTranscodeManagerTest";
+public class MediaTranscodingManagerTest extends AndroidTestCase {
+    private static final String TAG = "MediaTranscodingManagerTest";
     /** The time to wait for the transcode operation to complete before failing the test. */
     private static final int TRANSCODE_TIMEOUT_SECONDS = 10;
     /** Copy the transcoded video to /storage/emulated/0/Download/ */
@@ -80,7 +80,7 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
 
     private Context mContext;
     private ContentResolver mContentResolver;
-    private MediaTranscodeManager mMediaTranscodeManager = null;
+    private MediaTranscodingManager mMediaTranscodingManager = null;
     private Uri mSourceHEVCVideoUri = null;
     private Uri mSourceAVCVideoUri = null;
     private Uri mDestinationUri = null;
@@ -142,8 +142,8 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
 
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .adoptShellPermissionIdentity("android.permission.WRITE_MEDIA_STORAGE");
-        mMediaTranscodeManager = mContext.getSystemService(MediaTranscodeManager.class);
-        assertNotNull(mMediaTranscodeManager);
+        mMediaTranscodingManager = mContext.getSystemService(MediaTranscodingManager.class);
+        assertNotNull(mMediaTranscodingManager);
         androidx.test.InstrumentationRegistry.registerInstance(
                 InstrumentationRegistry.getInstrumentation(), new Bundle());
 
@@ -291,7 +291,7 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
                         .build();
         Executor listenerExecutor = Executors.newSingleThreadExecutor();
 
-        TranscodingSession session = mMediaTranscodeManager.enqueueRequest(
+        TranscodingSession session = mMediaTranscodingManager.enqueueRequest(
                 request,
                 listenerExecutor,
                 transcodingSession -> {
@@ -303,7 +303,7 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
         assertNotNull(session);
 
         if (session != null) {
-            Log.d(TAG, "testMediaTranscodeManager - Waiting for transcode to complete.");
+            Log.d(TAG, "testMediaTranscodingManager - Waiting for transcode to complete.");
             boolean finishedOnTime = transcodeCompleteSemaphore.tryAcquire(
                     TRANSCODE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
             assertTrue("Transcode failed to complete in time.", finishedOnTime);
@@ -489,7 +489,7 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
 
         Log.d(TAG, "transcoding to format: " + videoTrackFormat);
 
-        TranscodingSession session = mMediaTranscodeManager.enqueueRequest(
+        TranscodingSession session = mMediaTranscodingManager.enqueueRequest(
                 request,
                 listenerExecutor,
                 transcodingSession -> {
@@ -508,7 +508,7 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
         }
 
         if (session != null) {
-            Log.d(TAG, "testMediaTranscodeManager - Waiting for transcode to cancel.");
+            Log.d(TAG, "testMediaTranscodingManager - Waiting for transcode to cancel.");
             boolean finishedOnTime = transcodeCompleteSemaphore.tryAcquire(
                     TRANSCODE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
             assertTrue("Transcode failed to complete in time.", finishedOnTime);
@@ -573,7 +573,7 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
                         .build();
         Executor listenerExecutor = Executors.newSingleThreadExecutor();
 
-        TranscodingSession session = mMediaTranscodeManager.enqueueRequest(
+        TranscodingSession session = mMediaTranscodingManager.enqueueRequest(
                 request,
                 listenerExecutor,
                 transcodingSession -> {
@@ -602,7 +602,7 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
         statusLatch.await(2, TimeUnit.MILLISECONDS);
         session.cancel();
 
-        Log.d(TAG, "testMediaTranscodeManager - Waiting for transcode to cancel.");
+        Log.d(TAG, "testMediaTranscodingManager - Waiting for transcode to cancel.");
         boolean finishedOnTime = transcodeCompleteSemaphore.tryAcquire(
                 30, TimeUnit.MILLISECONDS);
 
@@ -629,16 +629,16 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
                     new TranscodingRequest.Builder()
                             .setSourceUri(mSourceHEVCVideoUri)
                             .setDestinationUri(mDestinationUri)
-                            .setType(MediaTranscodeManager.TRANSCODING_TYPE_VIDEO)
+                            .setType(MediaTranscodingManager.TRANSCODING_TYPE_VIDEO)
                             .setClientPid(pid)
                             .setClientUid(uid)
-                            .setPriority(MediaTranscodeManager.PRIORITY_REALTIME)
+                            .setPriority(MediaTranscodingManager.PRIORITY_REALTIME)
                             .setVideoTrackFormat(createMediaFormat())
                             .build();
             Executor listenerExecutor = Executors.newSingleThreadExecutor();
 
             TranscodingSession session =
-                    mMediaTranscodeManager.enqueueRequest(
+                    mMediaTranscodingManager.enqueueRequest(
                             request,
                             listenerExecutor,
                             transcodingSession -> {
@@ -665,7 +665,7 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
                         .build();
         Executor listenerExecutor = Executors.newSingleThreadExecutor();
 
-        TranscodingSession session = mMediaTranscodeManager.enqueueRequest(request,
+        TranscodingSession session = mMediaTranscodingManager.enqueueRequest(request,
                 listenerExecutor,
                 TranscodingSession -> {
                     Log.d(TAG,
@@ -717,7 +717,7 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
                         .build();
         Executor listenerExecutor = Executors.newSingleThreadExecutor();
 
-        TranscodingSession session = mMediaTranscodeManager.enqueueRequest(request,
+        TranscodingSession session = mMediaTranscodingManager.enqueueRequest(request,
                 listenerExecutor,
                 TranscodingSession -> {
                     Log.d(TAG,
