@@ -145,6 +145,7 @@ public class SmsManagerTest {
         mTelephonyManager =
             (TelephonyManager) getContext().getSystemService(
                     Context.TELEPHONY_SERVICE);
+        assumeTrue(mTelephonyManager.isSmsCapable());
         mPackageManager = mContext.getPackageManager();
         mDestAddr = mTelephonyManager.getLine1Number();
         mText = "This is a test message";
