@@ -100,9 +100,12 @@ public class PermissionGroupChange {
     }
 
     protected void clickAllowButton() throws Exception {
-        mUiDevice.findObject(new UiSelector().resourceId(mAutomotive
-                ? "android:id/button1"
-                : "com.android.packageinstaller:id/permission_allow_button")).click();
+        if (mAutomotive) {
+            mUiDevice.findObject(new UiSelector().textMatches("(?i)Allow")).click();
+        } else {
+            mUiDevice.findObject(new UiSelector().resourceId(
+                    "com.android.packageinstaller:id/permission_allow_button")).click();
+        }
     }
 
     private void grantPermissionViaUi() throws Throwable {
