@@ -41,6 +41,7 @@ import android.provider.MediaStore;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
+import androidx.test.filters.SdkSuppress;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.MediaUtils;
@@ -67,6 +68,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Presubmit
 @RequiresDevice
 @AppModeFull(reason = "Instant apps cannot access the SD card")
+@SdkSuppress(minSdkVersion = 31, codeName = "S")
 public class MediaTranscodeManagerTest extends AndroidTestCase {
     private static final String TAG = "MediaTranscodeManagerTest";
     /** The time to wait for the transcode operation to complete before failing the test. */
