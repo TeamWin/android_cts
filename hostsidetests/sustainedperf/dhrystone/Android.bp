@@ -4,6 +4,12 @@
 // sed -i 's,^} /\* Proc_,return 0; } /\* Proc_,g' *.c
 
 // See: http://go/android-license-faq
+package {
+    default_applicable_licenses: [
+        "cts_hostsidetests_sustainedperf_dhrystone_license",
+    ],
+}
+
 license {
     name: "cts_hostsidetests_sustainedperf_dhrystone_license",
     visibility: [":__subpackages__"],
