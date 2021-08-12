@@ -137,6 +137,8 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test  {
             "Landroid/hardware/usb/gadget/V1_0/IUsbGadgetCallback$Proxy;",
             "Landroid/hardware/usb/gadget/V1_0/IUsbGadgetCallback$Stub;",
             "Landroid/hardware/usb/gadget/V1_0/Status;",
+            "Landroid/os/CreateAppDataArgs;",
+            "Landroid/os/CreateAppDataResult;",
             "Landroid/os/IDumpstate;",
             "Landroid/os/IDumpstate$Default;",
             "Landroid/os/IDumpstate$Stub;",
