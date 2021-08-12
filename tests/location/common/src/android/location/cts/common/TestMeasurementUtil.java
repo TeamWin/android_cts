@@ -367,12 +367,6 @@ public final class TestMeasurementUtil {
                     "X > 0.0",
                     String.valueOf(correlationVector.getSamplingWidthMeters()),
                     correlationVector.getSamplingWidthMeters() > 0.0);
-            softAssert.assertTrue("frequency_offset_mps : "
-                    + "Offset of the first sampling bin in meters",
-                    timeInNs,
-                    "X >= 0.0",
-                    String.valueOf(correlationVector.getSamplingStartMeters()),
-                    correlationVector.getSamplingStartMeters() >= 0.0);
             softAssert.assertTrue("Magnitude count",
                     timeInNs,
                     "X > 0",
