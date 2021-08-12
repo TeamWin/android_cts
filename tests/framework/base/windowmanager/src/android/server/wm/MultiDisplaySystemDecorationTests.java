@@ -805,6 +805,9 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
         // Launch Ime must not lead to configuration changes.
         waitAndAssertNoImeConfigurationChanged(configChangeVerifyStream);
 
+        // Tap secondDisplay to change it to the top focused display.
+        tapOnDisplayCenter(secondDisplay.mId);
+
         // Move ImeTestActivity from firstDisplay to secondDisplay.
         getLaunchActivityBuilder()
                 .setUseInstrumentation()
