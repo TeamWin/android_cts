@@ -19,7 +19,8 @@ package {
 android_test {
     name: "CtsMediaTranscodingTestCases",
     defaults: ["CtsMediaTranscodingTestCasesDefaults", "cts_defaults"],
-    min_sdk_version: "31",
+    // runs as part of mainline's MTS, so must run on Q devices
+    min_sdk_version: "29",
     test_suites: [
         "cts",
         "general-tests",
