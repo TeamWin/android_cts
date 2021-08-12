@@ -28,8 +28,10 @@ import android.support.test.uiautomator.By
 import android.support.test.uiautomator.BySelector
 import android.support.test.uiautomator.UiScrollable
 import android.support.test.uiautomator.UiSelector
+import android.support.test.uiautomator.StaleObjectException
 import android.text.Spanned
 import android.text.style.ClickableSpan
+import android.util.Log
 import android.view.View
 import com.android.compatibility.common.util.SystemUtil.eventually
 import org.junit.After
@@ -88,8 +90,6 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         const val DENY_AND_DONT_ASK_AGAIN_BUTTON_TEXT =
                 "grant_dialog_button_deny_and_dont_ask_again"
         const val NO_UPGRADE_AND_DONT_ASK_AGAIN_BUTTON_TEXT = "grant_dialog_button_no_upgrade"
-
-        const val REQUEST_LOCATION_MESSAGE = "permgrouprequest_location"
     }
 
     enum class PermissionState {
