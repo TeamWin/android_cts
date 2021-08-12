@@ -1,3 +1,4 @@
+//
 // Copyright (C) 2021 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,26 +12,20 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+//
 
 package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-android_test {
-    name: "CtsUwbTestCases",
-    defaults: ["cts_defaults", "framework-uwb-cts-defaults"],
-    // Tag this module as a cts test artifact
-    test_suites: [
-        "cts",
-        "general-tests",
+android_test_helper_app {
+    name: "CtsAccessMicrophoneAppLocationProvider",
+    defaults: ["mts-target-sdk-version-current"],
+    min_sdk_version: "31",
+    srcs: [
+        "src/**/*.kt",
     ],
-    libs: ["android.test.runner"],
     static_libs: [
-        "androidx.test.ext.junit",
-        "ctstestrunner-axt",
-        "compatibility-device-util-axt",
-        "mockito-target-minus-junit4",
+        "kotlin-stdlib",
     ],
-    srcs: ["src/**/*.java"],
-    platform_apis: true,
 }

@@ -205,6 +205,7 @@
             <intent-filter>
                 <action android:name="com.android.cts.managedprofile.WIPE_DATA"/>
                 <action android:name="com.android.cts.managedprofile.WIPE_DATA_WITH_REASON"/>
+                <action android:name="com.android.cts.managedprofile.WIPE_DATA_WITHOUT_REASON"/>
             </intent-filter>
         </receiver>
 

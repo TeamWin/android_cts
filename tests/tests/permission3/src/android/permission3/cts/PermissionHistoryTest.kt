@@ -38,7 +38,7 @@ private const val SHOW_SYSTEM = "Show system"
 private const val MORE_OPTIONS = "More options"
 
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
-class PermissionHistoryTest : BasePermissionTest() {
+class PermissionHistoryTest : BasePermissionHubTest() {
     private val micLabel = packageManager.getPermissionGroupInfo(
             Manifest.permission_group.MICROPHONE, 0).loadLabel(packageManager).toString()
 
@@ -57,6 +57,19 @@ class PermissionHistoryTest : BasePermissionTest() {
     }
 
     @Test
+    fun testMicrophoneAccessShowsUpOnPrivacyDashboard() {
+        openMicrophoneApp(INTENT_ACTION_1)
+        waitFindObject(By.textContains(APP_LABEL_1))
+
+        openPermissionDashboard()
+        waitFindObject(By.res("android:id/title").textContains("Microphone")).click()
+        waitFindObject(By.descContains(micLabel))
+        waitFindObject(By.textContains(APP_LABEL_1))
+        pressBack()
+        pressBack()
+    }
+
+    @Test
     fun testToggleSystemApps() {
         // I had some hard time mocking a system app.
         // Hence here I am only testing if the toggle is there.
@@ -70,7 +83,7 @@ class PermissionHistoryTest : BasePermissionTest() {
         menuView.click()
 
         waitFindObject(By.text(SHOW_SYSTEM))
-        uiDevice.pressBack()
+        pressBack()
     }
 
     @Test
@@ -85,6 +98,7 @@ class PermissionHistoryTest : BasePermissionTest() {
                 PERMISSION_CONTROLLER_PACKAGE_ID_PREFIX + HISTORY_PREFERENCE_ICON))
         waitFindObject(By.res(
                 PERMISSION_CONTROLLER_PACKAGE_ID_PREFIX + HISTORY_PREFERENCE_TIME))
+        pressBack()
     }
 
     @Ignore("b/186656826#comment27")
@@ -100,6 +114,7 @@ class PermissionHistoryTest : BasePermissionTest() {
         waitFindObject(By.descContains(micLabel))
         waitFindObject(By.textContains(APP_LABEL_1))
         waitFindObject(By.textContains(APP_LABEL_2))
+        pressBack()
     }
 
     private fun openMicrophoneApp(intentAction: String) {
@@ -108,10 +123,9 @@ class PermissionHistoryTest : BasePermissionTest() {
         })
     }
 
-    private fun openMicrophoneTimeline() {
+    private fun openPermissionDashboard() {
         SystemUtil.runWithShellPermissionIdentity {
-            context.startActivity(Intent(Intent.ACTION_REVIEW_PERMISSION_HISTORY).apply {
-                putExtra(Intent.EXTRA_PERMISSION_GROUP_NAME, Manifest.permission_group.MICROPHONE)
+            context.startActivity(Intent(Intent.ACTION_REVIEW_PERMISSION_USAGE).apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             })
         }

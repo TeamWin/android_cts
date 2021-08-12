@@ -98,10 +98,6 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         DENIED_WITH_PREJUDICE
     }
 
-    protected val isTv = packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
-    protected val isWatch = packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)
-    protected val isAutomotive = packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
-
     private val platformResources = context.createPackageContext("android", 0).resources
     private val permissionToLabelResNameMap = mapOf(
             // Contacts
