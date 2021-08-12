@@ -49,10 +49,14 @@ public class EncryptionTest {
     @Before
     public void setUp() throws Exception {
         Context context = InstrumentationRegistry.getInstrumentation().getContext();
-        // Assumes every test in this file asserts a requirement of CDD section 9.
-        assumeTrue("Skipping test: FEATURE_SECURITY_MODEL_COMPATIBLE missing.",
-                context.getPackageManager()
-                .hasSystemFeature(PackageManager.FEATURE_SECURITY_MODEL_COMPATIBLE));
+        // This feature name check only applies to devices that first shipped with
+        // SC or later.
+        if (PropertyUtil.getFirstApiLevel() >= Build.VERSION_CODES.S) {
+            // Assumes every test in this file asserts a requirement of CDD section 9.
+            assumeTrue("Skipping test: FEATURE_SECURITY_MODEL_COMPATIBLE missing.",
+                    !context.getPackageManager()
+                    .hasSystemFeature(PackageManager.FEATURE_SECURITY_MODEL_COMPATIBLE));
+        }
     }
 
     private void handleUnencryptedDevice() {
