@@ -27,7 +27,6 @@ import android.support.test.uiautomator.By
 import android.support.test.uiautomator.BySelector
 import android.support.test.uiautomator.UiDevice
 import android.support.test.uiautomator.UiObject2
-import android.text.Html
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.rule.ActivityTestRule
 import com.android.compatibility.common.util.DisableAnimationRule
@@ -100,14 +99,11 @@ abstract class BasePermissionTest {
         pressHome()
     }
 
-    protected fun getPermissionControllerString(res: String, vararg formatArgs: Any): Pattern {
-        val textWithHtml = mPermissionControllerResources.getString(
-                mPermissionControllerResources.getIdentifier(
-                        res, "string", "com.android.permissioncontroller"), *formatArgs)
-        val textWithoutHtml = Html.fromHtml(textWithHtml, 0).toString()
-        return Pattern.compile(Pattern.quote(textWithoutHtml),
-                Pattern.CASE_INSENSITIVE or Pattern.UNICODE_CASE)
-    }
+    protected fun getPermissionControllerString(res: String): Pattern =
+            Pattern.compile(Pattern.quote(mPermissionControllerResources.getString(
+                    mPermissionControllerResources.getIdentifier(
+                            res, "string", "com.android.permissioncontroller"))),
+                    Pattern.CASE_INSENSITIVE or Pattern.UNICODE_CASE)
 
     protected fun installPackage(
         apkPath: String,
