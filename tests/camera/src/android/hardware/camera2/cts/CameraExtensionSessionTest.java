@@ -130,7 +130,7 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
         for (String id : mCameraIdsUnderTest) {
             StaticMetadata staticMeta =
                     new StaticMetadata(mTestRule.getCameraManager().getCameraCharacteristics(id));
-            if (!staticMeta.isColorCorrectionSupported()) {
+            if (!staticMeta.isColorOutputSupported()) {
                 continue;
             }
             updatePreviewSurfaceTexture();
@@ -180,7 +180,7 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
         for (String id : mCameraIdsUnderTest) {
             StaticMetadata staticMeta =
                     new StaticMetadata(mTestRule.getCameraManager().getCameraCharacteristics(id));
-            if (!staticMeta.isColorCorrectionSupported()) {
+            if (!staticMeta.isColorOutputSupported()) {
                 continue;
             }
             updatePreviewSurfaceTexture();
@@ -247,7 +247,7 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
         for (String id : mCameraIdsUnderTest) {
             StaticMetadata staticMeta =
                     new StaticMetadata(mTestRule.getCameraManager().getCameraCharacteristics(id));
-            if (!staticMeta.isColorCorrectionSupported()) {
+            if (!staticMeta.isColorOutputSupported()) {
                 continue;
             }
             updatePreviewSurfaceTexture();
@@ -309,7 +309,7 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
         for (String id : mCameraIdsUnderTest) {
             StaticMetadata staticMeta =
                     new StaticMetadata(mTestRule.getCameraManager().getCameraCharacteristics(id));
-            if (!staticMeta.isColorCorrectionSupported()) {
+            if (!staticMeta.isColorOutputSupported()) {
                 continue;
             }
             updatePreviewSurfaceTexture();
@@ -368,7 +368,7 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
         for (String id : mCameraIdsUnderTest) {
             StaticMetadata staticMeta =
                     new StaticMetadata(mTestRule.getCameraManager().getCameraCharacteristics(id));
-            if (!staticMeta.isColorCorrectionSupported()) {
+            if (!staticMeta.isColorOutputSupported()) {
                 continue;
             }
             updatePreviewSurfaceTexture();
@@ -474,7 +474,7 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
         for (String id : mCameraIdsUnderTest) {
             StaticMetadata staticMeta =
                     new StaticMetadata(mTestRule.getCameraManager().getCameraCharacteristics(id));
-            if (!staticMeta.isColorCorrectionSupported()) {
+            if (!staticMeta.isColorOutputSupported()) {
                 continue;
             }
             updatePreviewSurfaceTexture();
@@ -616,7 +616,7 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
         for (String id : mCameraIdsUnderTest) {
             StaticMetadata staticMeta =
                     new StaticMetadata(mTestRule.getCameraManager().getCameraCharacteristics(id));
-            if (!staticMeta.isColorCorrectionSupported()) {
+            if (!staticMeta.isColorOutputSupported()) {
                 continue;
             }
             CameraExtensionCharacteristics extensionChars =
@@ -760,7 +760,7 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
         for (String id : mCameraIdsUnderTest) {
             StaticMetadata staticMeta =
                     new StaticMetadata(mTestRule.getCameraManager().getCameraCharacteristics(id));
-            if (!staticMeta.isColorCorrectionSupported()) {
+            if (!staticMeta.isColorOutputSupported()) {
                 continue;
             }
             updatePreviewSurfaceTexture();
@@ -1066,7 +1066,7 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
         for (String id : mCameraIdsUnderTest) {
             StaticMetadata staticMeta =
                     new StaticMetadata(mTestRule.getCameraManager().getCameraCharacteristics(id));
-            if (!staticMeta.isColorCorrectionSupported()) {
+            if (!staticMeta.isColorOutputSupported()) {
                 continue;
             }
             updatePreviewSurfaceTexture();
