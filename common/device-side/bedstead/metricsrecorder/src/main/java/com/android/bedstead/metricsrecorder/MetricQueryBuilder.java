@@ -129,6 +129,7 @@ public class MetricQueryBuilder implements Queryable {
 
     private boolean matches(EnterpriseMetricInfo metric) {
         return mAdminPackageNameQuery.matches(metric.adminPackageName())
+                && mTypeQuery.matches(metric.type())
                 && mBooleanQuery.matches(metric.Boolean())
                 && mStringsQuery.matches(metric.strings());
     }
