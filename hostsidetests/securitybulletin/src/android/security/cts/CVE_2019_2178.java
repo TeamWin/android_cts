@@ -23,21 +23,19 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
-public class CVE_2020_0072 extends SecurityTestCase {
+public class CVE_2019_2178 extends SecurityTestCase {
 
     /**
-     * b/147310271
-     * Vulnerability Behaviour: EXIT_VULNERABLE (113)
+     * b/124462242
+     * Vulnerability Behaviour: SIGSEGV in self
      */
-    @AsbSecurityTest(cveBugId = 147310271)
-    @SecurityTest(minPatchLevel = "2020-04")
+    @AsbSecurityTest(cveBugId = 124462242)
+    @SecurityTest(minPatchLevel = "2019-09")
     @Test
-    public void testPocCVE_2020_0072() throws Exception {
+    public void testPocCVE_2019_2178() throws Exception {
         AdbUtils.assumeHasNfc(getDevice());
         assumeIsSupportedNfcDevice(getDevice());
         pocPusher.only64();
-        AdbUtils.pocConfig testConfig = new AdbUtils.pocConfig("CVE-2020-0072", getDevice());
-        testConfig.checkCrash = false;
-        AdbUtils.runPocAssertNoCrashesNotVulnerable(testConfig);
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2019-2178", null, getDevice());
     }
 }
