@@ -101,8 +101,9 @@ class ParamExposureTimeTest(its_base_test.ItsBaseTest):
     # Assert each shot is brighter than previous.
     for ch, means in enumerate([r_means, g_means, b_means]):
       for i in range(len(EXP_MULT_FACTORS)-1):
-        e_msg = '%s [i+1]: %.4f, [i]: %.4f' % (COLORS[ch], means[i+1], means[i])
-        assert means[i+1] > means[i], e_msg
+        if means[i+1] <= means[i]:
+          raise AssertionError(
+              f'{COLORS[ch]} [i+1]: {means[i+1]:.4f}, [i]: {means[i]:.4f}')
 
 if __name__ == '__main__':
   test_runner.main()
