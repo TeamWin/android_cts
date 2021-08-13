@@ -110,6 +110,7 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
     private static final long MIN_FRONT_SENSOR_S_PERF_CLASS_RESOLUTION = 5000000;
     private static final long MIN_FRONT_SENSOR_R_PERF_CLASS_RESOLUTION = 4000000;
 
+    private static final long MIN_UHR_SENSOR_RESOLUTION = 24000000;
     /*
      * HW Levels short hand
      */
@@ -1481,65 +1482,100 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
     }
 
     /**
-     * Check remosaic reprocessing capabilities. Check that ImageFormat.RAW_SENSOR is supported as
-     * input and output.
+     * Check ultra high resolution sensor characteristics.
      */
     @Test
-    public void testRemosaicReprocessingCharacteristics() {
+    public void testUltraHighResolutionSensorCharacteristics() {
         for (int i = 0; i < mAllCameraIds.length; i++) {
-            Log.i(TAG, "testRemosaicReprocessingCharacteristics: Testing camera ID " +
-                    mAllCameraIds[i]);
-
             CameraCharacteristics c = mCharacteristics.get(i);
+            String cameraId = mAllCameraIds[i];
             int[] capabilities = c.get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES);
             assertNotNull("android.request.availableCapabilities must never be null",
                     capabilities);
+            boolean isUltraHighResolutionSensor = arrayContains(capabilities,
+                    CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_ULTRA_HIGH_RESOLUTION_SENSOR);
+
             boolean supportsRemosaic = arrayContains(capabilities,
                     CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_REMOSAIC_REPROCESSING);
-            if (!supportsRemosaic) {
-                Log.i(TAG, "Remosaic reprocessing not supported by camera id " + i +
-                        " skipping test");
+
+            if (!isUltraHighResolutionSensor) {
+                Log.i(TAG, "Camera id " + cameraId + " not ultra high resolution. Skipping " +
+                        "testUltraHighResolutionSensorCharacteristics");
                 continue;
             }
+            assertArrayContains(
+                    String.format("Ultra high resolution sensor, camera id %s" +
+                    " must also have the RAW capability", cameraId), capabilities,
+                    CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_RAW);
             StreamConfigurationMap configs =
                     c.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP_MAXIMUM_RESOLUTION);
-            Integer maxNumInputStreams =
-                    c.get(CameraCharacteristics.REQUEST_MAX_NUM_INPUT_STREAMS);
-            int[] inputFormats = configs.getInputFormats();
+            assertNotNull("Maximum resolution stream configuration map must not be null for ultra" +
+                    " high resolution sensor camera " + cameraId, configs);
+            Size uhrPixelArraySize = CameraTestUtils.getValueNotNull(
+                c, CameraCharacteristics.SENSOR_INFO_PIXEL_ARRAY_SIZE_MAXIMUM_RESOLUTION);
+            long uhrSensorSize = uhrPixelArraySize.getHeight() * uhrPixelArraySize.getWidth();
+
+            assertTrue("ULTRA_HIGH_RESOLUTION_SENSOR pixel array size should be at least " +
+                    MIN_UHR_SENSOR_RESOLUTION + " pixels, is " + uhrSensorSize + ", for camera id "
+                    + cameraId, uhrSensorSize >= MIN_UHR_SENSOR_RESOLUTION);
+
             int[] outputFormats = configs.getOutputFormats();
+            assertArrayContains(String.format("No max res JPEG image format for ultra high" +
+                  " resolution sensor: ID %s", cameraId), outputFormats, ImageFormat.JPEG);
+            assertArrayContains(String.format("No max res YUV_420_88 image format for ultra high" +
+                  " resolution sensor: ID %s", cameraId), outputFormats, ImageFormat.YUV_420_888);
+            assertArrayContains(String.format("No max res RAW_SENSOR image format for ultra high" +
+                  " resolution sensor: ID %s", cameraId), outputFormats, ImageFormat.RAW_SENSOR);
 
-            mCollector.expectTrue("Support reprocessing but max number of input stream is " +
-                    maxNumInputStreams, maxNumInputStreams != null && maxNumInputStreams > 0);
+            if (supportsRemosaic) {
+                testRemosaicReprocessingCharacteristics(cameraId, c);
+            }
+      }
 
-            // Verify mandatory input formats are supported
-            mCollector.expectTrue("RAW_SENSOR input support needed for REMOSAIC reprocessing",
-                    arrayContains(inputFormats, ImageFormat.RAW_SENSOR));
-            // max capture stall must be reported if one of the reprocessing is supported.
-            final int MAX_ALLOWED_STALL_FRAMES = 4;
-            Integer maxCaptureStall = c.get(CameraCharacteristics.REPROCESS_MAX_CAPTURE_STALL);
-            mCollector.expectTrue("max capture stall must be non-null and no larger than "
-                    + MAX_ALLOWED_STALL_FRAMES,
-                    maxCaptureStall != null && maxCaptureStall <= MAX_ALLOWED_STALL_FRAMES);
+    }
+    /**
+     * Check remosaic reprocessing capabilities. Check that ImageFormat.RAW_SENSOR is supported as
+     * input and output.
+     */
+    private void testRemosaicReprocessingCharacteristics(String cameraId, CameraCharacteristics c) {
+        StreamConfigurationMap configs =
+                c.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP_MAXIMUM_RESOLUTION);
+        Integer maxNumInputStreams =
+                c.get(CameraCharacteristics.REQUEST_MAX_NUM_INPUT_STREAMS);
+        int[] inputFormats = configs.getInputFormats();
+        int[] outputFormats = configs.getOutputFormats();
 
-            for (int input : inputFormats) {
-                // Verify mandatory output formats are supported
-                int[] outputFormatsForInput = configs.getValidOutputFormatsForInput(input);
+        mCollector.expectTrue("Support reprocessing but max number of input stream is " +
+                maxNumInputStreams, maxNumInputStreams != null && maxNumInputStreams > 0);
 
-                // Verify camera can output the reprocess input formats and sizes.
-                Size[] inputSizes = configs.getInputSizes(input);
-                Size[] outputSizes = configs.getOutputSizes(input);
-                Size[] highResOutputSizes = configs.getHighResolutionOutputSizes(input);
-                mCollector.expectTrue("no input size supported for format " + input,
-                        inputSizes.length > 0);
-                mCollector.expectTrue("no output size supported for format " + input,
-                        outputSizes.length > 0);
+        // Verify mandatory input formats are supported
+        mCollector.expectTrue("RAW_SENSOR input support needed for REMOSAIC reprocessing",
+                arrayContains(inputFormats, ImageFormat.RAW_SENSOR));
+        // max capture stall must be reported if one of the reprocessing is supported.
+        final int MAX_ALLOWED_STALL_FRAMES = 4;
+        Integer maxCaptureStall = c.get(CameraCharacteristics.REPROCESS_MAX_CAPTURE_STALL);
+        mCollector.expectTrue("max capture stall must be non-null and no larger than "
+                + MAX_ALLOWED_STALL_FRAMES,
+                maxCaptureStall != null && maxCaptureStall <= MAX_ALLOWED_STALL_FRAMES);
 
-                for (Size inputSize : inputSizes) {
-                    mCollector.expectTrue("Camera must be able to output the supported " +
-                            "reprocessing input size",
-                            arrayContains(outputSizes, inputSize) ||
-                            arrayContains(highResOutputSizes, inputSize));
-                }
+        for (int input : inputFormats) {
+            // Verify mandatory output formats are supported
+            int[] outputFormatsForInput = configs.getValidOutputFormatsForInput(input);
+
+            // Verify camera can output the reprocess input formats and sizes.
+            Size[] inputSizes = configs.getInputSizes(input);
+            Size[] outputSizes = configs.getOutputSizes(input);
+            Size[] highResOutputSizes = configs.getHighResolutionOutputSizes(input);
+            mCollector.expectTrue("no input size supported for format " + input,
+                    inputSizes.length > 0);
+            mCollector.expectTrue("no output size supported for format " + input,
+                    outputSizes.length > 0);
+
+            for (Size inputSize : inputSizes) {
+                mCollector.expectTrue("Camera must be able to output the supported " +
+                        "reprocessing input size",
+                        arrayContains(outputSizes, inputSize) ||
+                        arrayContains(highResOutputSizes, inputSize));
             }
         }
     }
