@@ -635,6 +635,20 @@ public class ArrayMapTest {
         }
     }
 
+    @Test
+    public void testForEach() {
+        ArrayMap<String, Integer> map = new ArrayMap<>();
+
+        for (int i = 0; i < 50; ++i) {
+            map.put(Integer.toString(i), i * 10);
+        }
+
+        // Make sure forEach goes through all of the elements.
+        HashMap<String, Integer> seen = new HashMap<>();
+        map.forEach(seen::put);
+        compareMaps(seen, map);
+    }
+
     /**
      * The entrySet Iterator returns itself from each call to {@code next()}.
      * This is unusual behavior for {@link Iterator#next()}; this test ensures that

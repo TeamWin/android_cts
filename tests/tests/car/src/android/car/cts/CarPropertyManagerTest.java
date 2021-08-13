@@ -681,8 +681,7 @@ public class CarPropertyManagerTest extends CarApiTestBase {
 
     @Test
     public void testVehicleSpeedDisplayUnitsIfSupported() {
-        VehiclePropertyVerifier.newBuilder(/*VehiclePropertyIds.VEHICLE_SPEED_DISPLAY_UNITS=*/
-                289408516,
+        VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.VEHICLE_SPEED_DISPLAY_UNITS,
                 CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                 VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                 CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,

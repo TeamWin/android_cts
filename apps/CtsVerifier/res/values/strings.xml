@@ -5083,8 +5083,8 @@ You should be prompted to select credentials; choose the ones you just installed
         To pass the test, the device need only achieve this on one of the following audio paths:\n
           - a <a href="https://source.android.com/devices/audio/latency/loopback">Loopback Plug</a>  connected to a 3.5mm headset jack.\n
           - a <a href="https://source.android.com/devices/audio/latency/loopback">Loopback Plug</a>  connected to a USB audio adapter.\n
-          - a USB interface with patch cords connecting the input and output jacks.\n
-          Please connect one of these Loopback mechanisms, and proceed with the instructions
+          - a USB interface with patch cords connecting the input and output jacks.
+          \nPlease connect one of these Loopback mechanisms, and proceed with the instructions
           on the screen. The required &amp; recommended latencies will be displayed.
           The system will measure the input-output audio latency by injecting an audio signal to
           the output and compute the time between generating the signal and recording it back.
