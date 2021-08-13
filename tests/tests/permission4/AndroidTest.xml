@@ -31,7 +31,6 @@
         <option name="cleanup-apks" value="true" />
         <option name="test-file-name" value="CtsPermission4TestCases.apk" />
         <option name="test-file-name" value="CtsAppThatAccessesMicAndCameraPermission.apk" />
-        <option name="test-file-name" value="CtsAppThatAccessesMicPermission.apk" />
     </target_preparer>
 
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
