@@ -19,6 +19,8 @@ package android.cts.statsdatom.lib;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import com.android.os.StatsLog;
+
 import com.android.os.AtomsProto.Atom;
 import com.android.os.StatsLog.ConfigMetricsReport;
 import com.android.os.StatsLog.ConfigMetricsReportList;
@@ -32,6 +34,7 @@ import com.android.tradefed.log.LogUtil.CLog;
 import com.google.protobuf.InvalidProtocolBufferException;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -51,7 +54,7 @@ public final class ReportUtils {
 
     /**
      * Extracts and sorts the EventMetricData from the given ConfigMetricsReportList (which must
-     * contain a single report).
+     * contain a single report) and sorts the atoms by timestamp within the report.
      */
     public static List<EventMetricData> getEventMetricDataList(ConfigMetricsReportList reportList)
             throws Exception {
@@ -60,13 +63,37 @@ public final class ReportUtils {
 
         List<EventMetricData> data = new ArrayList<>();
         for (StatsLogReport metric : report.getMetricsList()) {
-            data.addAll(metric.getEventMetrics().getDataList());
+            for (EventMetricData metricData :
+                    metric.getEventMetrics().getDataList()) {
+                if (metricData.hasAtom()) {
+                    data.add(metricData);
+                } else {
+                    data.addAll(backfillAggregatedAtomsInEventMetric(metricData));
+                }
+            }
         }
         data.sort(Comparator.comparing(EventMetricData::getElapsedTimestampNanos));
 
         CLog.d("Get EventMetricDataList as following:\n");
         for (EventMetricData d : data) {
             CLog.d("Atom at " + d.getElapsedTimestampNanos() + ":\n" + d.getAtom().toString());
+        }
+        return data;
+    }
+
+
+    private static List<EventMetricData> backfillAggregatedAtomsInEventMetric(
+            EventMetricData metricData) {
+        if (!metricData.hasAggregatedAtomInfo()) {
+            return Collections.emptyList();
+        }
+        List<EventMetricData> data = new ArrayList<>();
+        StatsLog.AggregatedAtomInfo atomInfo = metricData.getAggregatedAtomInfo();
+        for (long timestamp : atomInfo.getElapsedTimestampNanosList()) {
+            data.add(EventMetricData.newBuilder()
+                    .setAtom(atomInfo.getAtom())
+                    .setElapsedTimestampNanos(timestamp)
+                    .build());
         }
         return data;
     }
