@@ -25,9 +25,9 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import android.platform.test.annotations.AsbSecurityTest;
 import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.LargeTest;
-import android.platform.test.annotations.AsbSecurityTest;
 import android.stats.devicepolicy.EventId;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
@@ -576,8 +576,6 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
                 .build());
     }
 
-    @TemporarilyIgnoreOnHeadlessSystemUserMode(bugId = "132360087",
-            reason = "need more investigation / decide how to support it")
     @Test
     public void testBluetoothRestriction() throws Exception {
         executeDeviceOwnerTest("BluetoothRestrictionTest");
