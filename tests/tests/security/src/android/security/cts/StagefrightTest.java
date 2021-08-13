@@ -2567,6 +2567,13 @@ public class StagefrightTest {
                 new CrashUtils.Config().checkMinAddress(false));
     }
 
+    @Test
+    @SecurityTest(minPatchLevel = "2021-09")
+    public void testStagefright_cve_2021_0635() throws Exception {
+        doStagefrightTest(R.raw.cve_2021_0635_1);
+        doStagefrightTest(R.raw.cve_2021_0635_2);
+    }
+
     private int[] getFrameSizes(int rid) throws IOException {
         final Context context = getInstrumentation().getContext();
         final Resources resources =  context.getResources();
