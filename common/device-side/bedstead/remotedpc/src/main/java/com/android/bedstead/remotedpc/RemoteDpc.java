@@ -16,10 +16,6 @@
 
 package com.android.bedstead.remotedpc;
 
-import static com.android.bedstead.remotedpc.Configuration.REMOTE_DPC_COMPONENT_NAME;
-import static com.android.compatibility.common.util.FileUtils.readInputStreamFully;
-
-import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.os.UserHandle;
@@ -30,25 +26,27 @@ import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.devicepolicy.DeviceOwner;
 import com.android.bedstead.nene.devicepolicy.DevicePolicyController;
 import com.android.bedstead.nene.devicepolicy.ProfileOwner;
-import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.users.UserReference;
-import com.android.bedstead.remotedpc.connected.RemoteDPCBinder;
-import com.android.bedstead.remotedpc.managers.RemoteDevicePolicyManager;
-import com.android.bedstead.remotedpc.managers.RemoteDevicePolicyManager_Wrapper;
-
-import com.google.android.enterprise.connectedapps.CrossProfileConnector;
-
-import java.io.IOException;
-import java.io.InputStream;
+import com.android.bedstead.testapp.TestApp;
+import com.android.bedstead.testapp.TestAppInstanceReference;
+import com.android.bedstead.testapp.TestAppProvider;
 
 /** Entry point to RemoteDPC. */
-public final class RemoteDpc {
+public final class RemoteDpc extends TestAppInstanceReference {
 
     private static final TestApis sTestApis = new TestApis();
     // This must be instrumentation not instrumented to access the resources
     private static final Context sContext = sTestApis.context().instrumentationContext();
 
-    public static final ComponentName DPC_COMPONENT_NAME = REMOTE_DPC_COMPONENT_NAME;
+    public static final ComponentName DPC_COMPONENT_NAME = new ComponentName(
+            "com.android.RemoteDPC",
+            "com.android.eventlib.premade.EventLibDeviceAdminReceiver"
+    );
+
+    private static final TestAppProvider sTestAppProvider = new TestAppProvider();
+    private static final TestApp sTestApp = sTestAppProvider.query()
+            .wherePackageName().isEqualTo(DPC_COMPONENT_NAME.getPackageName())
+            .get();
 
     /**
      * Get the {@link RemoteDpc} instance for the Device Owner.
@@ -156,7 +154,7 @@ public final class RemoteDpc {
         if (controller == null) {
             throw new NullPointerException();
         }
-        if (!controller.componentName().equals(REMOTE_DPC_COMPONENT_NAME)) {
+        if (!controller.componentName().equals(DPC_COMPONENT_NAME)) {
             throw new IllegalStateException("DevicePolicyController is not a RemoteDPC: "
                     + controller);
         }
@@ -191,8 +189,7 @@ public final class RemoteDpc {
         }
 
         ensureInstalled(user);
-        return new RemoteDpc(sTestApis.devicePolicy().setDeviceOwner(user,
-                REMOTE_DPC_COMPONENT_NAME));
+        return new RemoteDpc(sTestApis.devicePolicy().setDeviceOwner(user, DPC_COMPONENT_NAME));
     }
 
     /**
@@ -222,36 +219,18 @@ public final class RemoteDpc {
         }
 
         ensureInstalled(user);
-        return new RemoteDpc(sTestApis.devicePolicy().setProfileOwner(user,
-                REMOTE_DPC_COMPONENT_NAME));
+        return new RemoteDpc(sTestApis.devicePolicy().setProfileOwner(user, DPC_COMPONENT_NAME));
     }
 
     private static void ensureInstalled(UserReference user) {
-        sTestApis.packages().install(user, apkBytes());
-    }
-
-    private static byte[] apkBytes() {
-        int apkId = sContext.getResources().getIdentifier(
-                "raw/RemoteDPC_DPC", /* defType= */ null, sContext.getPackageName());
-        try (InputStream inputStream =
-                     sContext.getResources().openRawResource(apkId)) {
-            return readInputStreamFully(inputStream);
-        } catch (IOException e) {
-            throw new NeneException("Error when reading RemoteDPC bytes", e);
-        }
+        sTestApp.install(user);
     }
 
     private final DevicePolicyController mDevicePolicyController;
-    private final CrossProfileConnector mConnector;
 
     private RemoteDpc(DevicePolicyController devicePolicyController) {
-        if (devicePolicyController == null) {
-            throw new NullPointerException();
-        }
+        super(sTestApp, devicePolicyController == null ? null : devicePolicyController.user());
         mDevicePolicyController = devicePolicyController;
-        mConnector = CrossProfileConnector.builder(sTestApis.context().instrumentedContext())
-                .setBinder(new RemoteDPCBinder(this))
-                .build();
     }
 
     /**
@@ -266,8 +245,23 @@ public final class RemoteDpc {
      */
     public void remove() {
         mDevicePolicyController.remove();
-        sTestApis.packages().find(REMOTE_DPC_COMPONENT_NAME.getPackageName())
+        sTestApis.packages().find(DPC_COMPONENT_NAME.getPackageName())
                 .uninstall(mDevicePolicyController.user());
+    }
+
+    /**
+     * Get the {@link TestAppInstanceReference} for the DPC.
+     *
+     */
+    public TestAppInstanceReference app() {
+        return sTestApp.instance(mDevicePolicyController.user());
+    }
+
+    /**
+     * Get the {@link ComponentName} of the DPC.
+     */
+    public ComponentName componentName() {
+        return DPC_COMPONENT_NAME;
     }
 
     @Override
@@ -283,13 +277,5 @@ public final class RemoteDpc {
 
         RemoteDpc other = (RemoteDpc) obj;
         return other.mDevicePolicyController.equals(mDevicePolicyController);
-    }
-
-    /**
-     * Get a {@link RemoteDevicePolicyManager} to make calls to {@link DevicePolicyManager} using
-     * this RemoteDPC.
-     */
-    public RemoteDevicePolicyManager devicePolicyManager() {
-        return new RemoteDevicePolicyManager_Wrapper(mConnector);
     }
 }

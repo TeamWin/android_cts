@@ -48,7 +48,7 @@ import javax.annotation.Nullable;
  *
  * <p>The user may not exist, or the test app may not be installed on the user.
  */
-public final class TestAppInstanceReference implements AutoCloseable, ConnectionListener {
+public class TestAppInstanceReference implements AutoCloseable, ConnectionListener {
 
     private static final TestApis sTestApis = new TestApis();
 
@@ -60,7 +60,14 @@ public final class TestAppInstanceReference implements AutoCloseable, Connection
     private final ProfileTestAppController mTestAppController;
     private final TestAppActivities mTestAppActivities;
 
-    TestAppInstanceReference(TestApp testApp, UserReference user) {
+    /**
+     * Use {@link TestApp#install} or {@link TestApp#instance} to get an instance of
+     * {@link TestAppInstanceReference}.
+     */
+    public TestAppInstanceReference(TestApp testApp, UserReference user) {
+        if (testApp == null || user == null) {
+            throw new NullPointerException();
+        }
         mTestApp = testApp;
         mUser = user;
         mConnector = CrossProfileConnector.builder(sTestApis.context().instrumentedContext())

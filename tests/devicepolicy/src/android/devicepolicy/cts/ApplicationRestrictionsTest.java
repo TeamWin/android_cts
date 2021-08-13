@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import static org.testng.Assert.expectThrows;
 
 import android.app.admin.DevicePolicyManager;
+import android.app.admin.RemoteDevicePolicyManager;
 import android.content.Context;
 import android.os.Bundle;
 import android.os.Parcelable;
@@ -33,7 +34,6 @@ import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.PositivePolicyTest;
 import com.android.bedstead.harrier.policies.ApplicationRestrictions;
 import com.android.bedstead.nene.TestApis;
-import com.android.bedstead.remotedpc.managers.RemoteDevicePolicyManager;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstanceReference;
 import com.android.bedstead.testapp.TestAppProvider;
@@ -101,12 +101,14 @@ public final class ApplicationRestrictionsTest {
         RemoteDevicePolicyManager rDpm = sDeviceState.dpc().devicePolicyManager();
 
         // Test setting restrictions
-        rDpm.setApplicationRestrictions(sTargetPkg, BUNDLE_0);
-        rDpm.setApplicationRestrictions(sOtherPkg, BUNDLE_1);
+        rDpm.setApplicationRestrictions(sDeviceState.dpc().componentName(), sTargetPkg, BUNDLE_0);
+        rDpm.setApplicationRestrictions(sDeviceState.dpc().componentName(), sOtherPkg, BUNDLE_1);
 
         // Retrieve restrictions using DPM and make sure they are what we put in.
-        assertBundle0(rDpm.getApplicationRestrictions(sTargetPkg));
-        assertBundle1(rDpm.getApplicationRestrictions(sOtherPkg));
+        assertBundle0(rDpm.getApplicationRestrictions(
+                sDeviceState.dpc().componentName(), sTargetPkg));
+        assertBundle1(rDpm.getApplicationRestrictions(
+                sDeviceState.dpc().componentName(), sOtherPkg));
 
         try (TestAppInstanceReference testApp =
                 sTestApp.install(sTestApis.users().instrumented())) {
@@ -114,15 +116,21 @@ public final class ApplicationRestrictionsTest {
             assertBundle0(testAppUm.getApplicationRestrictions(sTargetPkg));
 
             // Test overwriting
-            rDpm.setApplicationRestrictions(sTargetPkg, BUNDLE_1);
-            assertBundle1(rDpm.getApplicationRestrictions(sTargetPkg));
+            rDpm.setApplicationRestrictions(
+                    sDeviceState.dpc().componentName(), sTargetPkg, BUNDLE_1);
+            assertBundle1(rDpm.getApplicationRestrictions(
+                    sDeviceState.dpc().componentName(), sTargetPkg));
 
-            rDpm.setApplicationRestrictions(sTargetPkg, new Bundle());
-            assertEmptyBundle(rDpm.getApplicationRestrictions(sTargetPkg));
+            rDpm.setApplicationRestrictions(
+                    sDeviceState.dpc().componentName(), sTargetPkg, new Bundle());
+            assertEmptyBundle(rDpm.getApplicationRestrictions(
+                    sDeviceState.dpc().componentName(), sTargetPkg));
             assertEmptyBundle(testAppUm.getApplicationRestrictions(sTargetPkg));
 
-            rDpm.setApplicationRestrictions(sOtherPkg, /* settings= */ null);
-            assertEmptyBundle(rDpm.getApplicationRestrictions(sOtherPkg));
+            rDpm.setApplicationRestrictions(
+                    sDeviceState.dpc().componentName(), sOtherPkg, /* settings= */ null);
+            assertEmptyBundle(rDpm.getApplicationRestrictions(
+                    sDeviceState.dpc().componentName(), sOtherPkg));
         }
     }
 

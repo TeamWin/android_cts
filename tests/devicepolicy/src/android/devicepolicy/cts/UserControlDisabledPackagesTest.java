@@ -16,6 +16,8 @@
 
 package android.devicepolicy.cts;
 
+import static com.android.bedstead.remotedpc.RemoteDpc.DPC_COMPONENT_NAME;
+
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
@@ -73,15 +75,15 @@ public class UserControlDisabledPackagesTest {
     @PositivePolicyTest(policy = UserControlDisabledPackages.class)
     public void setUserControlDisabledPackages_toOneProtectedPackage() {
         List<String> originalDisabledPackages =
-                sDeviceState.dpc().devicePolicyManager().getUserControlDisabledPackages();
+                sDeviceState.dpc().devicePolicyManager().getUserControlDisabledPackages(DPC_COMPONENT_NAME);
 
-        sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(
+        sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(DPC_COMPONENT_NAME,
                 Arrays.asList(PACKAGE_NAME));
         try {
-            assertThat(sDeviceState.dpc().devicePolicyManager().getUserControlDisabledPackages())
+            assertThat(sDeviceState.dpc().devicePolicyManager().getUserControlDisabledPackages(DPC_COMPONENT_NAME))
                     .containsExactly(PACKAGE_NAME);
         } finally {
-            sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(
+            sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(DPC_COMPONENT_NAME,
                     originalDisabledPackages);
         }
     }
@@ -90,15 +92,15 @@ public class UserControlDisabledPackagesTest {
     @PositivePolicyTest(policy = UserControlDisabledPackages.class)
     public void setUserControlDisabledPackages_toEmptyProtectedPackages() {
         List<String> originalDisabledPackages =
-                sDeviceState.dpc().devicePolicyManager().getUserControlDisabledPackages();
+                sDeviceState.dpc().devicePolicyManager().getUserControlDisabledPackages(DPC_COMPONENT_NAME);
 
-        sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(
+        sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(DPC_COMPONENT_NAME,
                 Collections.emptyList());
         try {
             assertThat(
-                    sDeviceState.dpc().devicePolicyManager().getUserControlDisabledPackages()).isEmpty();
+                    sDeviceState.dpc().devicePolicyManager().getUserControlDisabledPackages(DPC_COMPONENT_NAME)).isEmpty();
         } finally {
-            sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(
+            sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(DPC_COMPONENT_NAME,
                     originalDisabledPackages);
         }
     }
@@ -107,7 +109,7 @@ public class UserControlDisabledPackagesTest {
     @CannotSetPolicyTest(policy = UserControlDisabledPackages.class)
     public void setUserControlDisabledPackages_notAllowedToSetProtectedPackages_throwsException() {
         assertThrows(SecurityException.class,
-                () -> sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(
+                () -> sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(DPC_COMPONENT_NAME,
                         Collections.emptyList()));
     }
 
@@ -117,7 +119,7 @@ public class UserControlDisabledPackagesTest {
     getUserControlDisabledPackages_noProtectedPackagesSet_returnsEmptyProtectedPackages() {
         // This is testing the default state of the device so the disabled packages returned should
         // be empty.
-        assertThat(sDeviceState.dpc().devicePolicyManager().getUserControlDisabledPackages())
+        assertThat(sDeviceState.dpc().devicePolicyManager().getUserControlDisabledPackages(DPC_COMPONENT_NAME))
                 .isEmpty();
     }
 
@@ -126,7 +128,7 @@ public class UserControlDisabledPackagesTest {
     public void
     getUserControlDisabledPackages_notAllowedToRetrieveProtectedPackages_throwsException() {
         assertThrows(SecurityException.class,
-                () -> sDeviceState.dpc().devicePolicyManager().getUserControlDisabledPackages());
+                () -> sDeviceState.dpc().devicePolicyManager().getUserControlDisabledPackages(DPC_COMPONENT_NAME));
     }
 
     @Test
@@ -135,12 +137,12 @@ public class UserControlDisabledPackagesTest {
     public void setUserControlDisabledPackages_launchActivity_verifyPackageNotStopped()
             throws Exception {
         List<String> originalDisabledPackages =
-                sDeviceState.dpc().devicePolicyManager().getUserControlDisabledPackages();
+                sDeviceState.dpc().devicePolicyManager().getUserControlDisabledPackages(DPC_COMPONENT_NAME);
         UserReference currentRunningUserOnTest = sTestApis.users().instrumented();
         int currentRunningUserId = currentRunningUserOnTest.id();
         String testAppPackageName = sTestApp.packageName();
 
-        sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(
+        sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(DPC_COMPONENT_NAME,
                 Arrays.asList(testAppPackageName));
         try (TestAppInstanceReference instance = sTestApp.install(currentRunningUserOnTest)) {
             instance.activities().any().start();
@@ -154,13 +156,13 @@ public class UserControlDisabledPackagesTest {
                 stopPackage(testAppPackageName, currentRunningUserId);
             }
         } finally {
-            sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(
+            sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(DPC_COMPONENT_NAME,
                     originalDisabledPackages);
         }
     }
 
     private void stopPackage(String packageName, int userId) throws Exception {
-        sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(
+        sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(DPC_COMPONENT_NAME,
                 Collections.emptyList());
         sActivityManager.forceStopPackageAsUser(packageName, userId);
         assertPackageStopped(packageName, userId, /* stopped= */ true);
