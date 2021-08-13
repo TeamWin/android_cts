@@ -132,6 +132,31 @@ android_test_helper_app {
     apex_available: [ "com.android.apex.apkrollback.test_v2" ],
 }
 
+android_test_helper_app {
+    name: "TestAppARollbackWipeV2",
+    manifest: "testapp/ARollbackWipeV2.xml",
+    sdk_version: "current",
+    srcs: ["testapp/src/**/*.java"],
+    resource_dirs: ["testapp/res_v2"],
+    apex_available: [ "com.android.apex.apkrollback.test_v2" ],
+}
+
+android_test_helper_app {
+    name: "TestAppBRollbackRestoreV2",
+    manifest: "testapp/BRollbackRestoreV2.xml",
+    sdk_version: "current",
+    srcs: ["testapp/src/**/*.java"],
+    resource_dirs: ["testapp/res_v2"],
+}
+
+android_test_helper_app {
+    name: "TestAppCRollbackRetainV2",
+    manifest: "testapp/CRollbackRetainV2.xml",
+    sdk_version: "current",
+    srcs: ["testapp/src/**/*.java"],
+    resource_dirs: ["testapp/res_v2"],
+}
+
 java_library {
     name: "cts-install-lib-java",
     srcs: ["src/**/lib/*.java"],
@@ -156,6 +181,9 @@ java_library {
         ":TestAppASplitV2",
         ":TestAppAOriginalV1",
         ":TestAppARotatedV2",
+        ":TestAppARollbackWipeV2",
+        ":TestAppBRollbackRestoreV2",
+        ":TestAppCRollbackRetainV2",
         ":StagedInstallTestApexV1",
         ":StagedInstallTestApexV2",
         ":StagedInstallTestApexV3",
