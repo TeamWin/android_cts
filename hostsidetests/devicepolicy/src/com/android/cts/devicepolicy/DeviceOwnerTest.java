@@ -25,9 +25,9 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import android.platform.test.annotations.AsbSecurityTest;
 import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.LargeTest;
-import android.platform.test.annotations.AsbSecurityTest;
 import android.stats.devicepolicy.EventId;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
@@ -530,8 +530,6 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
 
     @FlakyTest(bugId = 137096267)
     @Test
-    @TemporarilyIgnoreOnHeadlessSystemUserMode(bugId = "132361856", reason = "3 failures such as "
-            + "missing activity handling bugreport intent")
     public void testAdminActionBookkeeping() throws Exception {
         if (isHeadlessSystemUserMode()) {
             // TODO(b/176993670):ALLOW_TEST_API_ACCESS is needed by DevicePolicyManagerWrapper to
