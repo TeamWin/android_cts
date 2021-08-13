@@ -26,6 +26,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.RemoteException;
+import android.os.UserHandle;
 import android.provider.Settings;
 import android.server.wm.WindowManagerStateHelper;
 import android.support.test.uiautomator.By;
@@ -131,19 +132,27 @@ public final class DeviceOwnerTest extends InstrumentationTestCase {
 
         Log.d(TAG, "Waiting " + TIMEOUT_MS + "ms for the '" + WORK_POLICY_INFO_TEXT + "' message");
 
-        return (null != mDevice.wait(Until.findObject(By.text(WORK_POLICY_INFO_TEXT)), TIMEOUT_MS));
+        boolean found = null != mDevice.wait(Until.findObject(By.text(WORK_POLICY_INFO_TEXT)),
+                TIMEOUT_MS);
+
+        Log.d(TAG, "Message found: " + found);
+        return found;
     }
 
     private void launchSettingsPage(Context ctx, String pageName) throws Exception {
         Intent intent = new Intent(pageName);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
 
+        Log.d(TAG, "Launching settings page on user " + UserHandle.myUserId() + " using " + intent);
+        ctx.startActivity(intent);
+
         ComponentName componentName =
                 ctx.getPackageManager()
                         .resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY)
                         .getComponentInfo()
                         .getComponentName();
-        ctx.startActivity(intent);
+
+        Log.d(TAG, "Waiting for STATE_RESUMED on " + componentName);
 
         new WindowManagerStateHelper().waitForActivityState(componentName, STATE_RESUMED);
     }
