@@ -2606,6 +2606,13 @@ public class StagefrightTest {
         assertExtractorDoesNotHang(R.raw.bug_127313764);
     }
 
+    @Test
+    @AsbSecurityTest(cveBugId = 189402477)
+    public void testStagefright_cve_2021_0635() throws Exception {
+        doStagefrightTest(R.raw.cve_2021_0635_1);
+        doStagefrightTest(R.raw.cve_2021_0635_2);
+    }
+
     private int[] getFrameSizes(int rid) throws IOException {
         final Context context = getInstrumentation().getContext();
         final Resources resources =  context.getResources();
