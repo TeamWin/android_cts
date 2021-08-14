@@ -21,21 +21,24 @@ import android.os.UserManager
 import com.android.bedstead.harrier.DeviceState
 import com.android.bedstead.nene.TestApis
 import com.android.bedstead.nene.users.UserReference
-import com.android.bedstead.remotedpc.managers.RemoteDevicePolicyManager
+import android.app.admin.RemoteDevicePolicyManager
+import android.content.ComponentName
 
-internal fun RemoteDevicePolicyManager.getAppLinkPolicy() =
-    getUserRestrictions()?.getBoolean(UserManager.ALLOW_PARENT_PROFILE_APP_LINKING, false) ?: false
+internal fun RemoteDevicePolicyManager.getAppLinkPolicy(admin: ComponentName) =
+    getUserRestrictions(admin)?.getBoolean(
+            UserManager.ALLOW_PARENT_PROFILE_APP_LINKING, false) ?: false
 
-internal fun RemoteDevicePolicyManager.setAppLinkPolicy(allow: Boolean) {
+internal fun RemoteDevicePolicyManager.setAppLinkPolicy(admin: ComponentName, allow: Boolean) {
     if (allow) {
-        addUserRestriction(UserManager.ALLOW_PARENT_PROFILE_APP_LINKING)
+        addUserRestriction(admin, UserManager.ALLOW_PARENT_PROFILE_APP_LINKING)
     } else {
-        clearUserRestriction(UserManager.ALLOW_PARENT_PROFILE_APP_LINKING)
+        clearUserRestriction(admin, UserManager.ALLOW_PARENT_PROFILE_APP_LINKING)
     }
 }
 
 internal fun DeviceState.getWorkDevicePolicyManager() =
-    profileOwner(workProfile(DeviceState.UserType.PRIMARY_USER))!!.devicePolicyManager()
+    profileOwner(workProfile(DeviceState.UserType.PRIMARY_USER))!!
+            .app().devicePolicyManager()
 
 internal fun <T> TestApis.withUserContext(user: UserReference, block: (context: Context) -> T) =
     permissions()
