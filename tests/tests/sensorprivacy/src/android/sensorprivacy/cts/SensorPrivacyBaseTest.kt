@@ -187,6 +187,9 @@ abstract class SensorPrivacyBaseTest(
     @Test
     @AppModeFull(reason = "Instant apps can't manage keyguard")
     fun testCantChangeWhenLocked() {
+        Assume.assumeTrue(packageManager
+                .hasSystemFeature(PackageManager.FEATURE_SECURE_LOCK_SCREEN))
+
         setSensor(false)
         assertFalse(isSensorPrivacyEnabled())
         runWhileLocked {
