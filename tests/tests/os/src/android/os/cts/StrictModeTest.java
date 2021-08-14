@@ -16,9 +16,11 @@
 
 package android.os.cts;
 
+import static android.Manifest.permission.INTERNAL_SYSTEM_WINDOW;
 import static android.content.Context.WINDOW_SERVICE;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
+import static android.view.WindowManager.LayoutParams.TYPE_PHONE;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -28,6 +30,7 @@ import static org.junit.Assert.fail;
 
 import android.app.Activity;
 import android.app.Instrumentation;
+import android.app.Service;
 import android.app.WallpaperManager;
 import android.content.ComponentName;
 import android.content.Context;
@@ -39,6 +42,7 @@ import android.content.res.Configuration;
 import android.hardware.display.DisplayManager;
 import android.net.TrafficStats;
 import android.net.Uri;
+import android.os.Binder;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.os.StrictMode;
@@ -65,11 +69,14 @@ import android.system.OsConstants;
 import android.util.Log;
 import android.view.Display;
 import android.view.GestureDetector;
+import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.WindowManager;
+import android.window.WindowProviderService;
 
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.rule.ServiceTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
@@ -930,6 +937,100 @@ public class StrictModeTest {
         }
     }
 
+    @Test
+    public void testIncorrectContextUse_Service_ThrowViolation() throws Exception {
+        StrictMode.setVmPolicy(
+                new StrictMode.VmPolicy.Builder()
+                        .detectIncorrectContextUse()
+                        .penaltyLog()
+                        .build());
+
+        final Intent intent = new Intent(getContext(), TestService.class);
+        final ServiceTestRule serviceRule = new ServiceTestRule();
+        TestService service = ((TestService.TestToken) serviceRule.bindService(intent))
+                .getService();
+        try {
+            assertViolation("Tried to access visual service " + WM_CLASS_NAME,
+                    () -> service.getSystemService(WindowManager.class));
+
+            assertViolation(
+                    "The API:ViewConfiguration needs a proper configuration.",
+                    () -> ViewConfiguration.get(service));
+
+            mInstrumentation.runOnMainSync(() -> {
+                try {
+                    assertViolation("The API:GestureDetector#init needs a proper configuration.",
+                            () -> new GestureDetector(service,
+                                    mGestureListener));
+                } catch (Exception e) {
+                    fail("Failed because of " + e);
+                }
+            });
+
+            if (isWallpaperSupported()) {
+                assertViolation("Tried to access UI related API:", () ->
+                        service.getSystemService(WallpaperManager.class)
+                                .getDesiredMinimumWidth());
+            }
+        } finally {
+            serviceRule.unbindService();
+        }
+    }
+
+    @Test
+    public void testIncorrectContextUse_WindowProviderService_NoViolation() throws Exception {
+        StrictMode.setVmPolicy(
+                new StrictMode.VmPolicy.Builder()
+                        .detectIncorrectContextUse()
+                        .penaltyLog()
+                        .build());
+
+        final Intent intent = new Intent(getContext(), TestWindowService.class);
+        final ServiceTestRule serviceRule = new ServiceTestRule();
+        TestWindowService service = ((TestWindowService.TestToken) serviceRule.bindService(intent))
+                .getService();
+        try {
+            assertNoViolation(() -> service.getSystemService(WindowManager.class));
+
+            final View view = new View(service);
+            final WindowManager.LayoutParams correctType =
+                    new WindowManager.LayoutParams(TYPE_APPLICATION_OVERLAY);
+            final WindowManager.LayoutParams wrongType =
+                    new WindowManager.LayoutParams(TYPE_PHONE);
+
+            mInstrumentation.runOnMainSync(() -> {
+                try {
+                    WindowManager wm = service.getSystemService(WindowManager.class);
+                    assertNoViolation(() -> wm.addView(view, correctType));
+
+                    wm.removeViewImmediate(view);
+
+                    // adding window with TYPE_PHONE needs to hold INTERNAL_SYSTEM_WINDOW
+                    // permission.
+                    mInstrumentation.getUiAutomation()
+                            .adoptShellPermissionIdentity(INTERNAL_SYSTEM_WINDOW);
+                    try {
+                        assertViolation("WindowContext's window type must match type in "
+                                + "WindowManager.LayoutParams", () -> wm.addView(view, wrongType));
+                    } finally {
+                        mInstrumentation.getUiAutomation().dropShellPermissionIdentity();
+                    }
+                    assertNoViolation(() -> new GestureDetector(service, mGestureListener));
+                } catch (Exception e) {
+                    fail("Failed because of " + e);
+                }
+            });
+            assertNoViolation(() -> ViewConfiguration.get(service));
+
+            if (isWallpaperSupported()) {
+                assertNoViolation(() -> service.getSystemService(WallpaperManager.class)
+                        .getDesiredMinimumWidth());
+            }
+        } finally {
+            serviceRule.unbindService();
+        }
+    }
+
     /**
      * Returns {@code true} to indicate that wallpaper is supported.
      * <p>
@@ -1213,5 +1314,40 @@ public class StrictModeTest {
         return pm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)
                 || pm.hasSystemFeature(PackageManager.FEATURE_WIFI)
                 || pm.hasSystemFeature(PackageManager.FEATURE_ETHERNET);
+    }
+
+    public static class TestService extends Service {
+        private final TestToken mToken = new TestToken();
+
+        @Override
+        public IBinder onBind(Intent intent) {
+            return mToken;
+        }
+
+        public class TestToken extends Binder {
+            TestService getService() {
+                return TestService.this;
+            }
+        }
+    }
+
+    public static class TestWindowService extends WindowProviderService {
+        private final TestToken mToken = new TestToken();
+
+        @Override
+        public IBinder onBind(Intent intent) {
+            return mToken;
+        }
+
+        @Override
+        public int getWindowType() {
+            return TYPE_APPLICATION_OVERLAY;
+        }
+
+        public class TestToken extends Binder {
+            TestWindowService getService() {
+                return TestWindowService.this;
+            }
+        }
     }
 }
