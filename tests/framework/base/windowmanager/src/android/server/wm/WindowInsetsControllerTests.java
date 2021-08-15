@@ -110,7 +110,7 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
 
     @Test
     public void testHide() {
-        final TestActivity activity = startActivity(TestActivity.class);
+        final TestActivity activity = startActivityInWindowingModeFullScreen(TestActivity.class);
         final View rootView = activity.getWindow().getDecorView();
 
         testHideInternal(rootView, statusBars());
@@ -128,7 +128,7 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
 
     @Test
     public void testShow() {
-        final TestActivity activity = startActivity(TestActivity.class);
+        final TestActivity activity = startActivityInWindowingModeFullScreen(TestActivity.class);
         final View rootView = activity.getWindow().getDecorView();
 
         testShowInternal(rootView, statusBars());
@@ -175,7 +175,7 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
 
     @Test
     public void testTopAppHidesStatusBarByMethod() {
-        final TestActivity activity = startActivity(TestActivity.class);
+        final TestActivity activity = startActivityInWindowingModeFullScreen(TestActivity.class);
         final View rootView = activity.getWindow().getDecorView();
 
         testTopAppHidesStatusBarInternal(activity, rootView,
@@ -207,7 +207,7 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
                 nullValue());
         final MockImeSession imeSession = MockImeHelper.createManagedMockImeSession(this);
         final ImeEventStream stream = imeSession.openEventStream();
-        final TestActivity activity = startActivity(TestActivity.class);
+        final TestActivity activity = startActivityInWindowingModeFullScreen(TestActivity.class);
         expectEvent(stream, editorMatcher("onStartInput", activity.mEditTextMarker), TIMEOUT);
 
         final View rootView = activity.getWindow().getDecorView();
@@ -224,7 +224,7 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
                 nullValue());
         final MockImeSession imeSession = MockImeHelper.createManagedMockImeSession(this);
         final ImeEventStream stream = imeSession.openEventStream();
-        final TestActivity activity = startActivity(TestActivity.class);
+        final TestActivity activity = startActivityInWindowingModeFullScreen(TestActivity.class);
         expectEvent(stream, editorMatcher("onStartInput", activity.mEditTextMarker), TIMEOUT);
 
         final View rootView = activity.getWindow().getDecorView();
@@ -244,7 +244,7 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
 
     @Test
     public void testSetSystemBarsBehavior_default() throws InterruptedException {
-        final TestActivity activity = startActivity(TestActivity.class);
+        final TestActivity activity = startActivityInWindowingModeFullScreen(TestActivity.class);
         final View rootView = activity.getWindow().getDecorView();
 
         // Assume we have the bars and they can be visible.
@@ -418,7 +418,7 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
 
     @Test
     public void testSetSystemUiVisibilityAfterCleared_showBarsBySwipe() throws Exception {
-        final TestActivity activity = startActivity(TestActivity.class);
+        final TestActivity activity = startActivityInWindowingModeFullScreen(TestActivity.class);
         final View rootView = activity.getWindow().getDecorView();
 
         // Assume we have the bars and they can be visible.
@@ -477,7 +477,7 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
 
     @Test
     public void testSetSystemUiVisibilityAfterCleared_showBarsByApp() throws Exception {
-        final TestActivity activity = startActivity(TestActivity.class);
+        final TestActivity activity = startActivityInWindowingModeFullScreen(TestActivity.class);
         final View rootView = activity.getWindow().getDecorView();
 
         // Assume we have the bars and they can be visible.
@@ -544,7 +544,8 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
                 nullValue());
         try (MockImeSession imeSession = MockImeSession.create(instrumentation.getContext(),
                 instrumentation.getUiAutomation(), new ImeSettings.Builder())) {
-            final TestShowOnCreateActivity activity = startActivity(TestShowOnCreateActivity.class);
+            final TestShowOnCreateActivity activity =
+                    startActivityInWindowingModeFullScreen(TestShowOnCreateActivity.class);
             final View rootView = activity.getWindow().getDecorView();
             PollingCheck.waitFor(TIMEOUT,
                     () -> rootView.getRootWindowInsets().isVisible(ime()));
@@ -624,7 +625,7 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
 
     @Test
     public void testDispatchApplyWindowInsetsCount_systemBars() throws InterruptedException {
-        final TestActivity activity = startActivity(TestActivity.class);
+        final TestActivity activity = startActivityInWindowingModeFullScreen(TestActivity.class);
         final View rootView = activity.getWindow().getDecorView();
         getInstrumentation().waitForIdleSync();
 
@@ -678,7 +679,7 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
                 nullValue());
 
         MockImeHelper.createManagedMockImeSession(this);
-        final TestActivity activity = startActivity(TestActivity.class);
+        final TestActivity activity = startActivityInWindowingModeFullScreen(TestActivity.class);
         final View rootView = activity.getWindow().getDecorView();
         getInstrumentation().waitForIdleSync();
 
