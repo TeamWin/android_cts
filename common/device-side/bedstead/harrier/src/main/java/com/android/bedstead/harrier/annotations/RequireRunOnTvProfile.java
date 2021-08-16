@@ -17,6 +17,7 @@
 package com.android.bedstead.harrier.annotations;
 
 import static com.android.bedstead.harrier.OptionalBoolean.ANY;
+import static com.android.bedstead.harrier.OptionalBoolean.TRUE;
 
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.OptionalBoolean;
@@ -41,4 +42,9 @@ import java.lang.annotation.Target;
 @RequireRunOnProfileAnnotation("com.android.tv.profile")
 public @interface RequireRunOnTvProfile {
     OptionalBoolean installInstrumentedAppInParent() default ANY;
+
+    /**
+     * Should we ensure that we are switched to the parent of the profile.
+     */
+    OptionalBoolean switchedToParentUser() default TRUE;
 }

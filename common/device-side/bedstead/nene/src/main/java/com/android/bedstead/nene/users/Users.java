@@ -16,13 +16,16 @@
 
 package com.android.bedstead.nene.users;
 
+import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
 import static android.os.Build.VERSION.SDK_INT;
+import static android.os.Build.VERSION_CODES.Q;
 import static android.os.Process.myUserHandle;
 
 import static com.android.bedstead.nene.users.UserType.MANAGED_PROFILE_TYPE_NAME;
 import static com.android.bedstead.nene.users.UserType.SECONDARY_USER_TYPE_NAME;
 import static com.android.bedstead.nene.users.UserType.SYSTEM_USER_TYPE_NAME;
 
+import android.app.ActivityManager;
 import android.os.Build;
 import android.os.UserHandle;
 
@@ -33,7 +36,9 @@ import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.exceptions.AdbParseException;
 import com.android.bedstead.nene.exceptions.NeneException;
+import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.bedstead.nene.utils.ShellCommand;
+import com.android.bedstead.nene.utils.Versions;
 import com.android.compatibility.common.util.PollingCheck;
 
 import java.util.Collection;
@@ -67,6 +72,23 @@ public final class Users {
         fillCache();
 
         return mCachedUsers.values();
+    }
+
+    /** Get a {@link UserReference} for the user currently switched to. */
+    public UserReference current() {
+        if (Versions.meetsMinimumSdkVersionRequirement(Q)) {
+            try (PermissionContext p =
+                         mTestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
+                return find(ActivityManager.getCurrentUser());
+            }
+        }
+
+        try {
+            return find((int) ShellCommand.builder("am get-current-user")
+                    .executeAndParseOutput(i -> Integer.parseInt(i.trim())));
+        } catch (AdbException e) {
+            throw new NeneException("Error getting current user", e);
+        }
     }
 
     /** Get a {@link UserReference} for the user running the current test process. */

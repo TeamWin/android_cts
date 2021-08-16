@@ -14,7 +14,14 @@
  * limitations under the License.
  */
 
-package com.android.bedstead.harrier.annotations.meta;
+package com.android.bedstead.harrier.annotations.parameterized;
+
+import static com.android.bedstead.harrier.DeviceState.UserType.SYSTEM_USER;
+import static com.android.bedstead.harrier.OptionalBoolean.FALSE;
+
+import com.android.bedstead.harrier.annotations.RequireRunOnSystemUser;
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
+import com.android.bedstead.harrier.annotations.meta.ParameterizedAnnotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -22,14 +29,13 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Mark that an annotation is used to indicate that a test should run on a given user type.
- *
- * <p>The annotation annotated with {@link RequireRunOnUserAnnotation} must have the same body as
- * {@link RequireRunOnUser}.
+ * Parameterize a test so that it runs on a device owner user, but with the current user switched to
+ * another user.
  */
-@Target(ElementType.ANNOTATION_TYPE)
+@Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface RequireRunOnUserAnnotation {
-    /** The name of the user types which the test should be run on. */
-    String[] value();
+@ParameterizedAnnotation
+@RequireRunOnSystemUser(switchedToUser = FALSE)
+@EnsureHasDeviceOwner(onUser = SYSTEM_USER)
+public @interface IncludeRunOnBackgroundDeviceOwnerUser {
 }

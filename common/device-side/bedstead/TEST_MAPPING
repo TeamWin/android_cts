@@ -13,9 +13,6 @@
       "name": "NeneTest"
     },
     {
-      "name": "HarrierTest"
-    },
-    {
       "name": "ActivityContextTest"
     },
     {
@@ -27,6 +24,9 @@
     },
     {
       "name": "DeviceAdminAppTest"
+    },
+    {
+      "name": "HarrierTest"
     }
   ]
 }
