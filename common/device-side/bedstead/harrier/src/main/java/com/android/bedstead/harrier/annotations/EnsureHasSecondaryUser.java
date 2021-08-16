@@ -16,6 +16,7 @@
 
 package com.android.bedstead.harrier.annotations;
 
+import static com.android.bedstead.harrier.OptionalBoolean.ANY;
 import static com.android.bedstead.harrier.OptionalBoolean.TRUE;
 
 import com.android.bedstead.harrier.DeviceState;
@@ -43,4 +44,9 @@ import java.lang.annotation.Target;
 public @interface EnsureHasSecondaryUser {
     /** Whether the instrumented test app should be installed in the secondary user. */
     OptionalBoolean installInstrumentedApp() default TRUE;
+
+    /**
+     * Should we ensure that we are switched to the given user
+     */
+    OptionalBoolean switchedToUser() default ANY;
 }

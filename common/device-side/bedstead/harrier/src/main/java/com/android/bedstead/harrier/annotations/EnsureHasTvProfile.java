@@ -17,6 +17,7 @@
 package com.android.bedstead.harrier.annotations;
 
 import static com.android.bedstead.harrier.DeviceState.UserType.CURRENT_USER;
+import static com.android.bedstead.harrier.OptionalBoolean.ANY;
 import static com.android.bedstead.harrier.OptionalBoolean.TRUE;
 
 import com.android.bedstead.harrier.DeviceState;
@@ -44,4 +45,9 @@ public @interface EnsureHasTvProfile {
 
     /** Whether the instrumented test app should be installed in the tv profile. */
     OptionalBoolean installInstrumentedApp() default TRUE;
+
+    /**
+     * Should we ensure that we are switched to the parent of the profile.
+     */
+    OptionalBoolean switchedToParentUser() default ANY;
 }

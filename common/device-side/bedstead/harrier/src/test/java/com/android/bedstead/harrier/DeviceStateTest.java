@@ -23,6 +23,8 @@ import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 
 import static com.android.bedstead.harrier.DeviceState.UserType.ANY;
 import static com.android.bedstead.harrier.DeviceState.UserType.PRIMARY_USER;
+import static com.android.bedstead.harrier.OptionalBoolean.FALSE;
+import static com.android.bedstead.harrier.OptionalBoolean.TRUE;
 import static com.android.bedstead.harrier.annotations.RequireAospBuild.GMS_CORE_PACKAGE;
 import static com.android.bedstead.harrier.annotations.RequireCnGmsBuild.CHINA_GOOGLE_SERVICES_FEATURE;
 import static com.android.bedstead.nene.users.UserType.MANAGED_PROFILE_TYPE_NAME;
@@ -62,6 +64,7 @@ import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDeviceOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoProfileOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasProfileOwner;
+import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnBackgroundDeviceOwnerUser;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnDeviceOwnerUser;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnNonAffiliatedDeviceOwnerSecondaryUser;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnParentOfProfileOwner;
@@ -565,5 +568,71 @@ public class DeviceStateTest {
     @IncludeRunOnParentOfProfileOwner
     public void includeRunOnParentOfProfileOwnerAnnotation_isRunningOnParentOfProfileOwner() {
         assertThat(sDeviceState.workProfile()).isNotNull();
+    }
+
+    @Test
+    @RequireRunOnPrimaryUser
+    public void requireRunOnUser_isCurrentUser() {
+        assertThat(sTestApis.users().current()).isEqualTo(sDeviceState.primaryUser());
+    }
+
+    @Test
+    @RequireRunOnPrimaryUser(switchedToUser = FALSE)
+    public void requireRunOnUser_specifyNotSwitchedToUser_isNotCurrentUser() {
+        assertThat(sTestApis.users().current()).isNotEqualTo(sDeviceState.primaryUser());
+    }
+
+    @Test
+    @EnsureHasSecondaryUser(switchedToUser = FALSE) // We don't test the default as it's ANY
+    public void ensureHasUser_specifyIsNotSwitchedToUser_isNotCurrentUser() {
+        assertThat(sTestApis.users().current()).isNotEqualTo(sDeviceState.secondaryUser());
+    }
+
+    @Test
+    @EnsureHasSecondaryUser(switchedToUser = TRUE)
+    public void ensureHasUser_specifySwitchedToUser_isCurrentUser() {
+        assertThat(sTestApis.users().current()).isEqualTo(sDeviceState.secondaryUser());
+    }
+
+    @Test
+    @RequireRunOnWorkProfile
+    public void requireRunOnProfile_parentIsCurrentUser() {
+        assertThat(sTestApis.users().current()).isEqualTo(
+                sDeviceState.workProfile().resolve().parent());
+    }
+
+    @Test
+    @RequireRunOnWorkProfile(switchedToParentUser = FALSE)
+    public void requireRunOnProfile_specifyNotSwitchedToParentUser_parentIsNotCurrentUser() {
+        assertThat(sTestApis.users().current()).isNotEqualTo(
+                sDeviceState.workProfile().resolve().parent());
+    }
+
+    @Test
+    @EnsureHasWorkProfile(switchedToParentUser = FALSE) // We don't test the default as it's ANY
+    public void ensureHasWorkProfile_specifyNotSwitchedToParentUser_parentIsNotCurrentUser() {
+        assertThat(sTestApis.users().current()).isNotEqualTo(
+                sDeviceState.workProfile().resolve().parent());
+    }
+
+    @Test
+    @EnsureHasWorkProfile(switchedToParentUser = TRUE)
+    public void ensureHasWorkProfile_specifySwitchedToParentUser_parentIsCurrentUser() {
+        assertThat(sTestApis.users().current()).isEqualTo(
+                sDeviceState.workProfile().resolve().parent());
+    }
+
+    @Test
+    @IncludeRunOnBackgroundDeviceOwnerUser
+    public void includeRunOnBackgroundDeviceOwnerUserAnnotation_isRunningOnDeviceOwnerUser() {
+        assertThat(sTestApis.users().instrumented())
+                .isEqualTo(sDeviceState.dpc().devicePolicyController().user());
+    }
+
+    @Test
+    @IncludeRunOnBackgroundDeviceOwnerUser
+    public void includeRunOnBackgroundDeviceOwnerUserAnnotation_isNotCurrentUser() {
+        assertThat(sTestApis.users().current())
+                .isNotEqualTo(sTestApis.users().instrumented());
     }
 }
