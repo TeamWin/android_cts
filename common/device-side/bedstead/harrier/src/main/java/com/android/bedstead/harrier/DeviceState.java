@@ -24,6 +24,7 @@ import static com.android.bedstead.nene.users.UserType.SECONDARY_USER_TYPE_NAME;
 import static com.android.bedstead.nene.utils.Versions.meetsSdkVersionRequirements;
 
 import static com.google.common.truth.Truth.assertWithMessage;
+import static com.google.common.truth.TruthJUnit.assume;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assume.assumeFalse;
@@ -99,6 +100,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -122,6 +124,13 @@ public final class DeviceState implements TestRule {
 
     private static final String GMS_PKG = "com.google.android.gms";
     private static final ComponentName REMOTE_DPC_COMPONENT_NAME = RemoteDpc.DPC_COMPONENT_NAME;
+
+    private static final String SWITCHED_TO_USER = "switchedToUser";
+    private static final String SWITCHED_TO_PARENT_USER = "switchedToParentUser";
+    public static final String INSTALL_INSTRUMENTED_APP = "installInstrumentedApp";
+    public static final String FOR_USER = "forUser";
+    public static final String DPC_IS_PRIMARY = "dpcIsPrimary";
+    public static final String AFFILIATION_IDS = "affiliationIds";
 
     private final Context mContext = ApplicationProvider.getApplicationContext();
     private static final TestApis sTestApis = new TestApis();
@@ -216,7 +225,7 @@ public final class DeviceState implements TestRule {
                     annotationType.getAnnotation(EnsureHasNoProfileAnnotation.class);
             if (ensureHasNoProfileAnnotation != null) {
                 UserType userType = (UserType) annotation.annotationType()
-                        .getMethod("forUser").invoke(annotation);
+                        .getMethod(FOR_USER).invoke(annotation);
                 ensureHasNoProfile(ensureHasNoProfileAnnotation.value(), userType);
                 continue;
             }
@@ -225,22 +234,26 @@ public final class DeviceState implements TestRule {
                     annotationType.getAnnotation(EnsureHasProfileAnnotation.class);
             if (ensureHasProfileAnnotation != null) {
                 UserType forUser = (UserType) annotation.annotationType()
-                        .getMethod("forUser").invoke(annotation);
+                        .getMethod(FOR_USER).invoke(annotation);
                 OptionalBoolean installInstrumentedApp = (OptionalBoolean)
                         annotation.annotationType()
-                                .getMethod("installInstrumentedApp").invoke(annotation);
+                                .getMethod(INSTALL_INSTRUMENTED_APP).invoke(annotation);
 
                 boolean dpcIsPrimary = false;
                 if (ensureHasProfileAnnotation.hasProfileOwner()) {
                     dpcIsPrimary = (boolean)
                             annotation.annotationType()
-                                    .getMethod("dpcIsPrimary").invoke(annotation);
+                                    .getMethod(DPC_IS_PRIMARY).invoke(annotation);
                 }
+
+                OptionalBoolean switchedToParentUser = (OptionalBoolean)
+                        annotation.annotationType()
+                                .getMethod(SWITCHED_TO_PARENT_USER).invoke(annotation);
 
                 ensureHasProfile(
                         ensureHasProfileAnnotation.value(), installInstrumentedApp,
                         forUser, ensureHasProfileAnnotation.hasProfileOwner(),
-                        dpcIsPrimary);
+                        dpcIsPrimary, switchedToParentUser);
                 continue;
             }
 
@@ -255,16 +268,23 @@ public final class DeviceState implements TestRule {
                     annotationType.getAnnotation(EnsureHasUserAnnotation.class);
             if (ensureHasUserAnnotation != null) {
                 OptionalBoolean installInstrumentedApp = (OptionalBoolean)
-                        annotation.getClass()
-                                .getMethod("installInstrumentedApp").invoke(annotation);
-                ensureHasUser(ensureHasUserAnnotation.value(), installInstrumentedApp);
+                        annotation.annotationType()
+                                .getMethod(INSTALL_INSTRUMENTED_APP).invoke(annotation);
+                OptionalBoolean switchedToUser = (OptionalBoolean)
+                        annotation.annotationType()
+                                .getMethod(SWITCHED_TO_USER).invoke(annotation);
+                ensureHasUser(
+                        ensureHasUserAnnotation.value(), installInstrumentedApp, switchedToUser);
                 continue;
             }
 
             RequireRunOnUserAnnotation requireRunOnUserAnnotation =
                     annotationType.getAnnotation(RequireRunOnUserAnnotation.class);
             if (requireRunOnUserAnnotation != null) {
-                requireRunOnUser(requireRunOnUserAnnotation.value());
+                OptionalBoolean switchedToUser = (OptionalBoolean)
+                        annotation.annotationType()
+                                .getMethod(SWITCHED_TO_USER).invoke(annotation);
+                requireRunOnUser(requireRunOnUserAnnotation.value(), switchedToUser);
                 continue;
             }
 
@@ -272,9 +292,13 @@ public final class DeviceState implements TestRule {
                     annotationType.getAnnotation(RequireRunOnProfileAnnotation.class);
             if (requireRunOnProfileAnnotation != null) {
                 OptionalBoolean installInstrumentedAppInParent = (OptionalBoolean)
-                        annotation.getClass()
+                        annotation.annotationType()
                                 .getMethod("installInstrumentedAppInParent")
                                 .invoke(annotation);
+
+                OptionalBoolean switchedToParentUser = (OptionalBoolean)
+                        annotation.annotationType()
+                                .getMethod(SWITCHED_TO_PARENT_USER).invoke(annotation);
 
 
                 boolean dpcIsPrimary = false;
@@ -282,16 +306,16 @@ public final class DeviceState implements TestRule {
                 if (requireRunOnProfileAnnotation.hasProfileOwner()) {
                     dpcIsPrimary = (boolean)
                             annotation.annotationType()
-                                    .getMethod("dpcIsPrimary").invoke(annotation);
+                                    .getMethod(DPC_IS_PRIMARY).invoke(annotation);
                     affiliationIds = new HashSet<>(Arrays.asList((String[])
                             annotation.annotationType()
-                                    .getMethod("affiliationIds").invoke(annotation)));
+                                    .getMethod(AFFILIATION_IDS).invoke(annotation)));
                 }
 
                 requireRunOnProfile(requireRunOnProfileAnnotation.value(),
                         installInstrumentedAppInParent,
                         requireRunOnProfileAnnotation.hasProfileOwner(),
-                        dpcIsPrimary, affiliationIds);
+                        dpcIsPrimary, switchedToParentUser, affiliationIds);
                 continue;
             }
 
@@ -610,18 +634,21 @@ public final class DeviceState implements TestRule {
         }
     }
 
-    private void requireRunOnUser(String userType) {
+    private void requireRunOnUser(String[] userTypes, OptionalBoolean switchedToUser) {
         User instrumentedUser = sTestApis.users().instrumented().resolve();
 
-        assumeTrue("This test only runs on users of type " + userType,
-                instrumentedUser.type().name().equals(userType));
+        assume().withMessage("This test only runs on users of type %s", Arrays.toString(userTypes))
+                .that(userTypes).asList().contains(instrumentedUser.type().name());
 
         mUsers.put(instrumentedUser.type(), instrumentedUser);
+
+        ensureSwitchedToUser(switchedToUser, instrumentedUser);
     }
 
     private void requireRunOnProfile(String userType,
             OptionalBoolean installInstrumentedAppInParent,
-            boolean hasProfileOwner, boolean dpcIsPrimary, Set<String> affiliationIds) {
+            boolean hasProfileOwner, boolean dpcIsPrimary,
+            OptionalBoolean switchedToParentUser, Set<String> affiliationIds) {
         User instrumentedUser = sTestApis.users().instrumented().resolve();
 
         assumeTrue("This test only runs on users of type " + userType,
@@ -645,6 +672,16 @@ public final class DeviceState implements TestRule {
             ensureHasProfileOwner(instrumentedUser, dpcIsPrimary, affiliationIds);
         } else {
             ensureHasNoProfileOwner(instrumentedUser);
+        }
+
+        ensureSwitchedToUser(switchedToParentUser, instrumentedUser.parent());
+    }
+
+    private void ensureSwitchedToUser(OptionalBoolean switchedtoUser, UserReference user) {
+        if (switchedtoUser.equals(OptionalBoolean.TRUE)) {
+            switchToUser(user);
+        } else if (switchedtoUser.equals(OptionalBoolean.FALSE)) {
+            switchFromUser(user);
         }
     }
 
@@ -766,8 +803,9 @@ public final class DeviceState implements TestRule {
     private final List<UserBuilder> mRemovedUsers = new ArrayList<>();
     private final List<BlockingBroadcastReceiver> mRegisteredBroadcastReceivers = new ArrayList<>();
     private boolean mHasChangedDeviceOwner = false;
-    private DevicePolicyController mOriginalDeviceOwner = null;
+    private DevicePolicyController mOriginalDeviceOwner;
     private Map<UserReference, DevicePolicyController> mChangedProfileOwners = new HashMap<>();
+    private UserReference mOriginalSwitchedUser;
 
     /**
      * Get the {@link UserReference} of the work profile for the current user.
@@ -990,7 +1028,8 @@ public final class DeviceState implements TestRule {
             OptionalBoolean installInstrumentedApp,
             UserType forUser,
             boolean hasProfileOwner,
-            boolean profileOwnerIsPrimary) {
+            boolean profileOwnerIsPrimary,
+            OptionalBoolean switchedToParentUser) {
         requireFeature("android.software.managed_users", FailureMode.SKIP);
         com.android.bedstead.nene.users.UserType resolvedUserType =
                 requireUserSupported(profileType, FailureMode.SKIP);
@@ -1020,6 +1059,9 @@ public final class DeviceState implements TestRule {
         if (hasProfileOwner) {
             ensureHasProfileOwner(profile, profileOwnerIsPrimary, /* affiliationIds= */ null);
         }
+
+        ensureSwitchedToUser(switchedToParentUser, forUserReference);
+
         return profile;
     }
 
@@ -1044,7 +1086,9 @@ public final class DeviceState implements TestRule {
         }
     }
 
-    private void ensureHasUser(String userType, OptionalBoolean installInstrumentedApp) {
+    private void ensureHasUser(
+            String userType, OptionalBoolean installInstrumentedApp,
+            OptionalBoolean switchedToUser) {
         com.android.bedstead.nene.users.UserType resolvedUserType =
                 requireUserSupported(userType, FailureMode.SKIP);
 
@@ -1060,6 +1104,8 @@ public final class DeviceState implements TestRule {
         } else if (installInstrumentedApp.equals(OptionalBoolean.FALSE)) {
             sTestApis.packages().find(sContext.getPackageName()).uninstall(user);
         }
+
+        ensureSwitchedToUser(switchedToUser, user);
 
         mUsers.put(resolvedUserType, user);
     }
@@ -1085,6 +1131,8 @@ public final class DeviceState implements TestRule {
         if (userReference == null) {
             return; // Nothing to remove
         }
+
+        switchFromUser(userReference);
 
         User user = userReference.resolve();
 
@@ -1161,6 +1209,18 @@ public final class DeviceState implements TestRule {
     }
 
     private void teardownShareableState() {
+        if (mOriginalSwitchedUser != null) {
+            if (mOriginalSwitchedUser.resolve() == null) {
+                Log.d(LOG_TAG, "Could not switch back to original user "
+                        + mOriginalSwitchedUser
+                        + " as it does not exist. Switching to system instead.");
+                sTestApis.users().system().switchTo();
+            } else {
+                mOriginalSwitchedUser.switchTo();
+            }
+            mOriginalSwitchedUser = null;
+        }
+
         if (mHasChangedDeviceOwner) {
             if (mOriginalDeviceOwner == null) {
                 if (mDeviceOwner != null) {
@@ -1577,5 +1637,47 @@ public final class DeviceState implements TestRule {
                     Build.VERSION_CODES.Q, Integer.MAX_VALUE, FailureMode.SKIP,
                     "This test requires INTERACT_ACROSS_USERS_FULL which can only be used on Q+");
         }
+    }
+
+    private void switchToUser(UserReference user) {
+        UserReference currentUser = sTestApis.users().current();
+        if (!currentUser.equals(user)) {
+            if (mOriginalSwitchedUser == null) {
+                mOriginalSwitchedUser = currentUser;
+            }
+            user.switchTo();
+        }
+    }
+
+    private void switchFromUser(UserReference user) {
+        UserReference currentUser = sTestApis.users().current();
+        if (!currentUser.equals(user)) {
+            return;
+        }
+
+        // We need to find a different user to switch to
+        // full users only, starting with lowest ID
+        List<UserReference> users = new ArrayList<>(sTestApis.users().all());
+        users.sort(Comparator.comparingInt(u -> u.id()));
+
+        for (UserReference otherUser : users) {
+            if (otherUser.equals(user)) {
+                continue;
+            }
+
+            // TODO(scottjonathan): We can maybe optimise this by using user type rather
+            //  than resolving
+            if (otherUser.resolve().parent() != null) {
+                continue;
+            }
+
+            switchToUser(otherUser);
+            return;
+        }
+
+        // There are no users to switch to so we'll create one
+        ensureHasUser(SECONDARY_USER_TYPE_NAME,
+                /* installInstrumentedApp= */ OptionalBoolean.ANY,
+                /* switchedToUser= */ OptionalBoolean.TRUE);
     }
 }

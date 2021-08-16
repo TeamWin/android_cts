@@ -18,6 +18,7 @@ package com.android.bedstead.nene.users;
 
 import static android.os.Build.VERSION.SDK_INT;
 
+import static com.android.bedstead.harrier.OptionalBoolean.TRUE;
 import static com.android.bedstead.nene.users.UserType.MANAGED_PROFILE_TYPE_NAME;
 import static com.android.bedstead.nene.users.UserType.SECONDARY_USER_TYPE_NAME;
 import static com.android.bedstead.nene.users.UserType.SYSTEM_USER_TYPE_NAME;
@@ -36,6 +37,7 @@ import com.android.bedstead.harrier.annotations.EnsureHasNoSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
+import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDeviceOwner;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.NeneException;
@@ -461,5 +463,17 @@ public class UsersTest {
         UserReference userReference = mTestApis.users().nonExisting();
 
         assertThat(userReference.resolve()).isNull();
+    }
+
+    @Test
+    @EnsureHasSecondaryUser(switchedToUser = TRUE)
+    public void currentUser_secondaryUser_returnsCurrentUser() {
+        assertThat(mTestApis.users().current()).isEqualTo(sDeviceState.secondaryUser());
+    }
+
+    @Test
+    @RequireRunOnPrimaryUser(switchedToUser = TRUE)
+    public void currentUser_primaryUser_returnsCurrentUser() {
+        assertThat(mTestApis.users().current()).isEqualTo(sDeviceState.primaryUser());
     }
 }

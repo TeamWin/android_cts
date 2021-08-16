@@ -28,21 +28,22 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Mark that a test method should run on the primary user.
+ * Mark that a test method should run on the system user.
  *
- * <p>Your test configuration should be such that this test is only run on the primary user
+ * <p>Your test configuration should be such that this test is only run on the system user
  *
- * <p>Optionally, you can guarantee that these methods do not run outside of the primary
+ * <p>Optionally, you can guarantee that these methods do not run outside of the system
  * user by using {@link DeviceState}.
  *
- * <p>Note that in practice this requires that the test runs on the system user, but excludes
- * headless system users. To mark that a test should run on the system user, including headless
- * system users, see {@link RequireRunOnSystemUser}.
+ * <p>Note that this requires that the test runs on the system user, including headless system
+ * users. To mark that a test should run on the primary user, excluding headless
+ * system users, see {@link RequireRunOnPrimaryUser}.
  */
 @Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-@RequireRunOnUserAnnotation("android.os.usertype.full.SYSTEM")
-public @interface RequireRunOnPrimaryUser {
+@RequireRunOnUserAnnotation(
+        {"android.os.usertype.full.SYSTEM", "android.os.usertype.system.HEADLESS"})
+public @interface RequireRunOnSystemUser {
     /**
      * Should we ensure that we are switched to the given user
      */
