@@ -2568,7 +2568,7 @@ public class StagefrightTest {
     }
 
     @Test
-    @SecurityTest(minPatchLevel = "2021-09")
+    @AsbSecurityTest(cveBugId = 189402477)
     public void testStagefright_cve_2021_0635() throws Exception {
         doStagefrightTest(R.raw.cve_2021_0635_1);
         doStagefrightTest(R.raw.cve_2021_0635_2);
