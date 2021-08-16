@@ -31,7 +31,7 @@ import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.Postsubmit;
-import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnProfileOwnerProfile;
+import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnProfileOwnerProfileWithNoDeviceOwner;
 import com.android.bedstead.nene.TestApis;
 
 import org.junit.ClassRule;
@@ -55,7 +55,7 @@ public class RingtoneTest {
     // TODO(b/188893663): Parameterize the different ringtone types (remove 2/3rds of this class)
 
     @Test
-    @IncludeRunOnProfileOwnerProfile
+    @IncludeRunOnProfileOwnerProfileWithNoDeviceOwner
     public void getActualDefaultRingtoneUri_ringtone_matchesSettingsProviderRingtone() {
         String defaultRingtone = Settings.System.getString(
                 sContext.getContentResolver(), Settings.System.RINGTONE);
@@ -68,7 +68,7 @@ public class RingtoneTest {
     }
 
     @Test
-    @IncludeRunOnProfileOwnerProfile
+    @IncludeRunOnProfileOwnerProfileWithNoDeviceOwner
     public void getActualDefaultRingtoneUri_notification_matchesSettingsProviderNotificationSound() {
         String defaultRingtone = Settings.System.getString(
                 sContext.getContentResolver(), Settings.System.NOTIFICATION_SOUND);
@@ -81,7 +81,7 @@ public class RingtoneTest {
     }
 
     @Test
-    @IncludeRunOnProfileOwnerProfile
+    @IncludeRunOnProfileOwnerProfileWithNoDeviceOwner
     public void getActualDefaultRingtoneUri_alarm_matchesSettingsProviderAlarmAlert() {
         String defaultRingtone = Settings.System.getString(
                 sContext.getContentResolver(), Settings.System.ALARM_ALERT);
@@ -94,7 +94,7 @@ public class RingtoneTest {
     }
 
     @Test
-    @IncludeRunOnProfileOwnerProfile
+    @IncludeRunOnProfileOwnerProfileWithNoDeviceOwner
     @EnsureHasPermission(WRITE_SETTINGS)
     public void setActualDefaultRingtoneUri_ringtone_setsSyncParentSoundsToFalse() {
         int originalSyncParentSounds = sTestApis.settings().secure().getInt(SYNC_PARENT_SOUNDS);
@@ -119,7 +119,7 @@ public class RingtoneTest {
     }
 
     @Test
-    @IncludeRunOnProfileOwnerProfile
+    @IncludeRunOnProfileOwnerProfileWithNoDeviceOwner
     @EnsureHasPermission(WRITE_SETTINGS)
     public void getActualDefaultRingtoneUri_ringtone_syncParentSoundsIsFalse_returnsSetRingtone() {
         int originalSyncParentSounds = sTestApis.settings().secure().getInt(SYNC_PARENT_SOUNDS);
@@ -140,7 +140,7 @@ public class RingtoneTest {
     }
 
     @Test
-    @IncludeRunOnProfileOwnerProfile
+    @IncludeRunOnProfileOwnerProfileWithNoDeviceOwner
     @EnsureHasPermission(WRITE_SETTINGS)
     public void getActualDefaultRingtoneUri_ringtone_syncParentSoundsIsTrue_returnsDefaultRingtone() {
         int originalSyncParentSounds = sTestApis.settings().secure().getInt(SYNC_PARENT_SOUNDS);
@@ -161,7 +161,7 @@ public class RingtoneTest {
     }
 
     @Test
-    @IncludeRunOnProfileOwnerProfile
+    @IncludeRunOnProfileOwnerProfileWithNoDeviceOwner
     @EnsureHasPermission(WRITE_SETTINGS)
     public void getActualDefaultRingtoneUri_ringtone_syncParentSoundsIsFalseAndUriWasPreviouslySet_returnsPreviouslySetRingtone() {
         int originalSyncParentSounds = sTestApis.settings().secure().getInt(SYNC_PARENT_SOUNDS);
@@ -183,7 +183,7 @@ public class RingtoneTest {
     }
 
     @Test
-    @IncludeRunOnProfileOwnerProfile
+    @IncludeRunOnProfileOwnerProfileWithNoDeviceOwner
     @EnsureHasPermission(WRITE_SETTINGS)
     public void setActualDefaultRingtoneUri__notification_setsSyncParentSoundsToFalse() {
         int originalSyncParentSounds = sTestApis.settings().secure().getInt(SYNC_PARENT_SOUNDS);
@@ -207,7 +207,7 @@ public class RingtoneTest {
     }
 
     @Test
-    @IncludeRunOnProfileOwnerProfile
+    @IncludeRunOnProfileOwnerProfileWithNoDeviceOwner
     @EnsureHasPermission(WRITE_SETTINGS)
     public void getActualDefaultRingtoneUri_notification_syncParentSoundsIsFalse_returnsSetRingtone() {
         int originalSyncParentSounds = sTestApis.settings().secure().getInt(SYNC_PARENT_SOUNDS);
@@ -228,7 +228,7 @@ public class RingtoneTest {
     }
 
     @Test
-    @IncludeRunOnProfileOwnerProfile
+    @IncludeRunOnProfileOwnerProfileWithNoDeviceOwner
     @EnsureHasPermission(WRITE_SETTINGS)
     public void getActualDefaultRingtoneUri_notification_syncParentSoundsIsTrue_returnsDefaultRingtone() {
         int originalSyncParentSounds = sTestApis.settings().secure().getInt(SYNC_PARENT_SOUNDS);
@@ -249,7 +249,7 @@ public class RingtoneTest {
     }
 
     @Test
-    @IncludeRunOnProfileOwnerProfile
+    @IncludeRunOnProfileOwnerProfileWithNoDeviceOwner
     @EnsureHasPermission(WRITE_SETTINGS)
     public void getActualDefaultRingtoneUri_notification_syncParentSoundsIsFalseAndUriWasPreviouslySet_returnsPreviouslySetRingtone() {
         int originalSyncParentSounds = sTestApis.settings().secure().getInt(SYNC_PARENT_SOUNDS);
@@ -271,7 +271,7 @@ public class RingtoneTest {
     }
 
     @Test
-    @IncludeRunOnProfileOwnerProfile
+    @IncludeRunOnProfileOwnerProfileWithNoDeviceOwner
     @EnsureHasPermission(WRITE_SETTINGS)
     public void setActualDefaultRingtoneUri_alarm_setsSyncParentSoundsToFalse() {
         int originalSyncParentSounds = sTestApis.settings().secure().getInt(SYNC_PARENT_SOUNDS);
@@ -296,7 +296,7 @@ public class RingtoneTest {
     }
 
     @Test
-    @IncludeRunOnProfileOwnerProfile
+    @IncludeRunOnProfileOwnerProfileWithNoDeviceOwner
     @EnsureHasPermission(WRITE_SETTINGS)
     public void getActualDefaultRingtoneUri_alarm_syncParentSoundsIsFalse_returnsSetRingtone() {
         int originalSyncParentSounds = sTestApis.settings().secure().getInt(SYNC_PARENT_SOUNDS);
@@ -317,7 +317,7 @@ public class RingtoneTest {
     }
 
     @Test
-    @IncludeRunOnProfileOwnerProfile
+    @IncludeRunOnProfileOwnerProfileWithNoDeviceOwner
     @EnsureHasPermission(WRITE_SETTINGS)
     public void getActualDefaultRingtoneUri_alarm_syncParentSoundsIsTrue_returnsDefaultRingtone() {
         int originalSyncParentSounds = sTestApis.settings().secure().getInt(SYNC_PARENT_SOUNDS);
@@ -338,7 +338,7 @@ public class RingtoneTest {
     }
 
     @Test
-    @IncludeRunOnProfileOwnerProfile
+    @IncludeRunOnProfileOwnerProfileWithNoDeviceOwner
     @EnsureHasPermission(WRITE_SETTINGS)
     public void getActualDefaultRingtoneUri_alarm_syncParentSoundsIsFalseAndUriWasPreviouslySet_returnsPreviouslySetRingtone() {
         int originalSyncParentSounds = sTestApis.settings().secure().getInt(SYNC_PARENT_SOUNDS);
