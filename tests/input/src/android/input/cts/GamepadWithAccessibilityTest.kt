@@ -22,11 +22,12 @@ import android.view.accessibility.AccessibilityManager
 import android.view.InputDevice
 import android.view.KeyCharacterMap.VIRTUAL_KEYBOARD
 import android.view.KeyEvent
+import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.MediumTest
 import androidx.test.platform.app.InstrumentationRegistry
-import androidx.test.rule.ActivityTestRule
 import com.android.compatibility.common.util.PollingCheck
+import com.android.cts.input.UinputDevice
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -37,12 +38,9 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-import com.android.cts.input.InputJsonParser
-import com.android.cts.input.UinputDevice
-
 private fun setTouchExplorationEnabled(instrumentation: Instrumentation, enabled: Boolean) {
         val TIMEOUT_FOR_SERVICE_ENABLE_MILLIS: Long = 10_000 // 10s
-        var manager: AccessibilityManager =
+        val manager: AccessibilityManager =
             instrumentation.getTargetContext().getSystemService(AccessibilityManager::class.java)
 
         val uiAutomation = instrumentation.getUiAutomation()
@@ -70,14 +68,15 @@ private fun setTouchExplorationEnabled(instrumentation: Instrumentation, enabled
 @RunWith(AndroidJUnit4::class)
 class GamepadWithAccessibilityTest {
     @get:Rule
-    var mActivityRule: ActivityTestRule<CaptureEventActivity> =
-            ActivityTestRule(CaptureEventActivity::class.java)
-    lateinit var mActivity: CaptureEventActivity
-    val mInstrumentation = InstrumentationRegistry.getInstrumentation()
+    val activityRule = ActivityScenarioRule(CaptureEventActivity::class.java)
+    private lateinit var mActivity: CaptureEventActivity
+    private val mInstrumentation = InstrumentationRegistry.getInstrumentation()
 
     @Before
     fun setUp() {
-        mActivity = mActivityRule.getActivity()
+        activityRule.getScenario().onActivity {
+            mActivity = it
+        }
         PollingCheck.waitFor { mActivity.hasWindowFocus() }
         setTouchExplorationEnabled(mInstrumentation, true)
     }
@@ -93,14 +92,8 @@ class GamepadWithAccessibilityTest {
      */
     @Test
     fun testDeviceId() {
-        val resourceId = R.raw.google_gamepad_register
-
-        val parser = InputJsonParser(mInstrumentation.getTargetContext())
-        val resourceDeviceId = parser.readDeviceId(resourceId)
-        val registerCommand = parser.readRegisterCommand(resourceId)
-        val uInputDevice = UinputDevice(mInstrumentation, resourceDeviceId,
-                parser.readVendorId(resourceId), parser.readProductId(resourceId),
-                InputDevice.SOURCE_KEYBOARD, registerCommand)
+        val uInputDevice = UinputDevice.create(mInstrumentation, R.raw.google_gamepad_register,
+                InputDevice.SOURCE_KEYBOARD)
 
         val EV_SYN = 0
         val SYN_REPORT = 0
@@ -116,7 +109,7 @@ class GamepadWithAccessibilityTest {
         uInputDevice.injectEvents(evdevEventsUp.joinToString(prefix = "[", postfix = "]",
                 separator = ","))
 
-        val lastInputEvent = mActivity.getLastInputEvent()
+        val lastInputEvent = mActivity.getInputEvent()
         assertNotNull(lastInputEvent)
         assertTrue(lastInputEvent is KeyEvent)
         val keyEvent = lastInputEvent as KeyEvent

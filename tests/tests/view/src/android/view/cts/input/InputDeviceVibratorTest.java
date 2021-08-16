@@ -108,14 +108,12 @@ public class InputDeviceVibratorTest {
         mInputManager = mInstrumentation.getTargetContext().getSystemService(InputManager.class);
         assertNotNull(mInputManager);
         mParser = new InputJsonParser(mInstrumentation.getTargetContext());
-        mDeviceId = mParser.readDeviceId(resourceId);
-        String registerCommand = mParser.readRegisterCommand(resourceId);
-        mUinputDevice = new UinputDevice(mInstrumentation, mDeviceId,
-                mParser.readVendorId(resourceId), mParser.readProductId(resourceId),
-                InputDevice.SOURCE_KEYBOARD, registerCommand);
-        mVibrator = getVibrator(mParser.readVendorId(resourceId),
-                mParser.readProductId(resourceId));
-        assertTrue(mVibrator != null);
+
+        mUinputDevice = UinputDevice.create(mInstrumentation, R.raw.google_gamepad_register,
+                InputDevice.SOURCE_KEYBOARD);
+        mDeviceId = mUinputDevice.getDeviceId();
+        mVibrator = getVibrator(mUinputDevice.getVendorId(), mUinputDevice.getProductId());
+        assertNotNull(mVibrator);
         mVibrator.addVibratorStateListener(mListener);
         verify(mListener, timeout(CALLBACK_TIMEOUT_MILLIS)
                 .times(1)).onVibratorStateChanged(false);

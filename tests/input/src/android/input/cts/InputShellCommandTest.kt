@@ -17,10 +17,10 @@ package android.input.cts
 
 import android.view.MotionEvent
 import android.view.View
+import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.MediumTest
 import androidx.test.platform.app.InstrumentationRegistry
-import androidx.test.rule.ActivityTestRule
 import com.android.compatibility.common.util.PollingCheck
 import com.android.compatibility.common.util.ShellUtils
 import com.google.common.truth.Truth.assertThat
@@ -44,14 +44,15 @@ private fun getViewCenterOnScreen(v: View): Pair<Int, Int> {
 @RunWith(AndroidJUnit4::class)
 class InputShellCommandTest {
     @get:Rule
-    var mActivityRule: ActivityTestRule<CaptureEventActivity> =
-            ActivityTestRule(CaptureEventActivity::class.java)
-    lateinit var mActivity: CaptureEventActivity
-    val mInstrumentation = InstrumentationRegistry.getInstrumentation()
+    val activityRule = ActivityScenarioRule(CaptureEventActivity::class.java)
+    private lateinit var mActivity: CaptureEventActivity
+    private val mInstrumentation = InstrumentationRegistry.getInstrumentation()
 
     @Before
     fun setUp() {
-        mActivity = mActivityRule.getActivity()
+        activityRule.getScenario().onActivity {
+            mActivity = it
+        }
         PollingCheck.waitFor { mActivity.hasWindowFocus() }
     }
 
@@ -96,7 +97,7 @@ class InputShellCommandTest {
     }
 
     private fun getMotionEvent(): MotionEvent {
-        val event = mActivity.getLastInputEvent()
+        val event = mActivity.getInputEvent()
         assertThat(event).isNotNull()
         assertThat(event).isInstanceOf(MotionEvent::class.java)
         return event as MotionEvent
@@ -111,12 +112,12 @@ class InputShellCommandTest {
     }
 
     private fun assertTapToolType(toolType: Int) {
-        var event = getMotionEvent()
-        assertThat(event.action).isEqualTo(MotionEvent.ACTION_DOWN)
-        assertToolType(event, toolType)
+        val downEvent = getMotionEvent()
+        assertThat(downEvent.action).isEqualTo(MotionEvent.ACTION_DOWN)
+        assertToolType(downEvent, toolType)
 
-        event = getMotionEvent()
-        assertThat(event.action).isEqualTo(MotionEvent.ACTION_UP)
-        assertToolType(event, toolType)
+        val upEvent = getMotionEvent()
+        assertThat(upEvent.action).isEqualTo(MotionEvent.ACTION_UP)
+        assertToolType(upEvent, toolType)
     }
 }

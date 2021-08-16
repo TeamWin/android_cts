@@ -46,7 +46,7 @@ class CaptureEventActivity : Activity() {
         return true
     }
 
-    fun getLastInputEvent(): InputEvent? {
+    fun getInputEvent(): InputEvent? {
         return mEvents.poll(5, TimeUnit.SECONDS)
     }
 }
