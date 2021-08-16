@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+package com.android.bedstead.remoteframeworkclasses;
 import com.android.bedstead.remoteframeworkclasses.processor.annotations.RemoteFrameworkClasses;
 
 /**
