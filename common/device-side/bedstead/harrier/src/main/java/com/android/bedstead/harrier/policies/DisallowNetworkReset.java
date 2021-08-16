@@ -17,14 +17,13 @@
 package com.android.bedstead.harrier.policies;
 
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_DEVICE_OWNER;
-import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_TO_OWN_USER;
-import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.NO;
+import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_GLOBALLY;
 
 import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
 
 /** Policy for network reset test. */
 // TODO(b/189195534):  Update the profileOwner flag once support is added for the way this policy
 //  can be set by a Profile Owner
-@EnterprisePolicy(deviceOwner = APPLIED_BY_DEVICE_OWNER | APPLIES_TO_OWN_USER, profileOwner = NO)
+@EnterprisePolicy(dpc = APPLIED_BY_DEVICE_OWNER | APPLIES_GLOBALLY)
 public final class DisallowNetworkReset {
 }

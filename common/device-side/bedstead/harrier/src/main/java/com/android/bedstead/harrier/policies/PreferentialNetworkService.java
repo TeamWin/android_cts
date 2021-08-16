@@ -18,7 +18,6 @@ package com.android.bedstead.harrier.policies;
 
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_PROFILE_OWNER_PROFILE;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_TO_OWN_USER;
-import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.NO;
 
 import android.app.admin.DevicePolicyManager;
 
@@ -28,7 +27,6 @@ import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
  * Policy for testing preferential network service.
  * See {@link DevicePolicyManager#setPreferentialNetworkServiceEnabled(boolean)} for more detail.
  */
-@EnterprisePolicy(deviceOwner = NO,
-        profileOwner = APPLIED_BY_PROFILE_OWNER_PROFILE | APPLIES_TO_OWN_USER)
+@EnterprisePolicy(dpc = APPLIED_BY_PROFILE_OWNER_PROFILE | APPLIES_TO_OWN_USER)
 public final class PreferentialNetworkService {
 }

@@ -183,18 +183,20 @@ public final class DeviceState implements TestRule {
     private Statement applyTest(final Statement base, final Description description) {
         return new Statement() {
             @Override public void evaluate() throws Throwable {
-                Log.d(LOG_TAG, "Preparing state for test " + description.getMethodName());
-
-                assumeFalse(mSkipTestsReason, mSkipTests);
-                assertFalse(mFailTestsReason, mFailTests);
-
-                List<Annotation> annotations = getAnnotations(description);
-                PermissionContextImpl permissionContext = applyAnnotations(annotations);
-
-                Log.d(LOG_TAG,
-                        "Finished preparing state for test " + description.getMethodName());
+                PermissionContextImpl permissionContext = null;
 
                 try {
+                    Log.d(LOG_TAG, "Preparing state for test " + description.getMethodName());
+
+                    assumeFalse(mSkipTestsReason, mSkipTests);
+                    assertFalse(mFailTestsReason, mFailTests);
+
+                    List<Annotation> annotations = getAnnotations(description);
+                    permissionContext = applyAnnotations(annotations);
+
+                    Log.d(LOG_TAG,
+                            "Finished preparing state for test " + description.getMethodName());
+
                     base.evaluate();
                 } finally {
                     Log.d(LOG_TAG,
