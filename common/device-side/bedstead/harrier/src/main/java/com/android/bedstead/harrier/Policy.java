@@ -16,6 +16,7 @@
 
 package com.android.bedstead.harrier;
 
+import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_AFFILIATED_PROFILE_OWNER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_AFFILIATED_PROFILE_OWNER_PROFILE;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_AFFILIATED_PROFILE_OWNER_USER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_DEVICE_OWNER;
@@ -23,15 +24,11 @@ import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePoli
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_PROFILE;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_USER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_IN_BACKGROUND;
-import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_TO_AFFILIATED_CHILD_PROFILES;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_TO_AFFILIATED_OTHER_USERS;
-import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_TO_COPE_PARENT;
-import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_TO_OTHER_USERS;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_TO_OWN_USER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_TO_PARENT;
-import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_TO_UNAFFILIATED_CHILD_PROFILES;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_TO_UNAFFILIATED_OTHER_USERS;
-import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.DOES_NOT_APPLY_IN_BACKGROUND;
+import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.DO_NOT_APPLY_TO_NEGATIVE_TESTS;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.NO;
 
 import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
@@ -46,13 +43,17 @@ import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnParent
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnProfileOwnerPrimaryUser;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnProfileOwnerProfileWithNoDeviceOwner;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnSecondaryUserInDifferentProfileGroupToProfileOwnerProfile;
+import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnUnaffiliatedProfileOwnerSecondaryUser;
 
 import com.google.auto.value.AutoAnnotation;
+import com.google.common.collect.ImmutableMap;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -90,6 +91,11 @@ public final class Policy {
     }
 
     @AutoAnnotation
+    private static IncludeRunOnUnaffiliatedProfileOwnerSecondaryUser includeRunOnUnaffiliatedProfileOwnerSecondaryUser() {
+        return new AutoAnnotation_Policy_includeRunOnUnaffiliatedProfileOwnerSecondaryUser();
+    }
+
+    @AutoAnnotation
     private static IncludeRunOnProfileOwnerProfileWithNoDeviceOwner includeRunOnProfileOwnerProfileWithNoDeviceOwner() {
         return new AutoAnnotation_Policy_includeRunOnProfileOwnerProfileWithNoDeviceOwner();
     }
@@ -119,38 +125,75 @@ public final class Policy {
         return new AutoAnnotation_Policy_includeRunOnBackgroundDeviceOwnerUser();
     }
 
-    private static final int VALID_DEVICE_OWNER_FLAGS =
-            APPLIES_TO_OWN_USER | APPLIES_IN_BACKGROUND
-                    | DOES_NOT_APPLY_IN_BACKGROUND | APPLIES_TO_UNAFFILIATED_OTHER_USERS
-                    | APPLIES_TO_AFFILIATED_OTHER_USERS | APPLIES_TO_UNAFFILIATED_CHILD_PROFILES
-                    | APPLIES_TO_AFFILIATED_CHILD_PROFILES | APPLIED_BY_DEVICE_OWNER;
-    private static final int VALID_PROFILE_OWNER_FLAGS =
-            APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_PROFILE
-            | APPLIED_BY_AFFILIATED_PROFILE_OWNER_PROFILE
+    // This is a map containing all Include* annotations and the flags which lead to them
+    // This is not validated - every state must have a single APPLIED_BY annotation
+    private static final ImmutableMap<Integer, Annotation> STATE_ANNOTATIONS = ImmutableMap.<Integer, Annotation>builder()
+            .put(APPLIED_BY_DEVICE_OWNER | APPLIES_TO_OWN_USER, includeRunOnDeviceOwnerUser())
+            .put(APPLIED_BY_DEVICE_OWNER | APPLIES_TO_OWN_USER | APPLIES_IN_BACKGROUND, includeRunOnBackgroundDeviceOwnerUser())
+
+            .put(APPLIED_BY_DEVICE_OWNER | APPLIES_TO_UNAFFILIATED_OTHER_USERS, includeRunOnNonAffiliatedDeviceOwnerSecondaryUser())
+            .put(APPLIED_BY_DEVICE_OWNER | APPLIES_TO_AFFILIATED_OTHER_USERS, includeRunOnAffiliatedDeviceOwnerSecondaryUser())
+
+            .put(APPLIED_BY_AFFILIATED_PROFILE_OWNER_USER | APPLIES_TO_OWN_USER, includeRunOnAffiliatedProfileOwnerSecondaryUser())
+            .put(APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_USER | APPLIES_TO_OWN_USER, includeRunOnUnaffiliatedProfileOwnerSecondaryUser())
+            .put(APPLIED_BY_PROFILE_OWNER_USER_WITH_NO_DO | APPLIES_TO_OWN_USER, includeRunOnProfileOwnerPrimaryUser())
+
+            .put(APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_PROFILE | APPLIES_TO_OWN_USER, includeRunOnProfileOwnerProfileWithNoDeviceOwner())
+            .put(APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_PROFILE | APPLIES_TO_PARENT, includeRunOnParentOfProfileOwnerWithNoDeviceOwner())
+
+            .put(APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_PROFILE | APPLIES_TO_UNAFFILIATED_OTHER_USERS, includeRunOnSecondaryUserInDifferentProfileGroupToProfileOwnerProfile())
+            .build();
+
+    // This must contain one key for every APPLIED_BY that is being used, and maps to the "default" for testing that DPC type
+    // in general this will be a state which runs on the same user as the dpc.
+    private static final ImmutableMap<Integer, Annotation> DPC_STATE_ANNOTATIONS = ImmutableMap.<Integer, Annotation>builder()
+            .put(APPLIED_BY_DEVICE_OWNER, includeRunOnDeviceOwnerUser())
+            .put(APPLIED_BY_AFFILIATED_PROFILE_OWNER, includeRunOnAffiliatedProfileOwnerSecondaryUser())
+            .put(APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_USER, includeRunOnProfileOwnerPrimaryUser())
+            .put(APPLIED_BY_PROFILE_OWNER_USER_WITH_NO_DO, includeRunOnProfileOwnerPrimaryUser())
+            .put(APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_PROFILE, includeRunOnProfileOwnerProfileWithNoDeviceOwner())
+            .build();
+
+    private static final int APPLIED_BY_FLAGS =
+            APPLIED_BY_DEVICE_OWNER | APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_PROFILE
+                    | APPLIED_BY_AFFILIATED_PROFILE_OWNER_PROFILE
                     | APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_USER
-                    | APPLIED_BY_AFFILIATED_PROFILE_OWNER_USER
-                    | APPLIES_TO_AFFILIATED_OTHER_USERS
-                    | APPLIES_TO_OWN_USER
-                    | APPLIED_BY_PROFILE_OWNER_USER_WITH_NO_DO
-                    | APPLIES_TO_PARENT
-                    | APPLIES_TO_OTHER_USERS
-                    | APPLIES_TO_COPE_PARENT
-                    | APPLIES_IN_BACKGROUND
-                    | DOES_NOT_APPLY_IN_BACKGROUND;
+                    | APPLIED_BY_AFFILIATED_PROFILE_OWNER_USER;
+
+
+    private static final Map<Annotation, Set<Integer>> ANNOTATIONS_MAP = calculateAnnotationsMap(STATE_ANNOTATIONS);
+
+    private static Map<Annotation, Set<Integer>> calculateAnnotationsMap(
+            Map<Integer, Annotation> annotations) {
+        Map<Annotation, Set<Integer>> b = new HashMap<>();
+
+        for (Map.Entry<Integer, Annotation> i : annotations.entrySet()) {
+            if (!b.containsKey(i.getValue())) {
+                b.put(i.getValue(), new HashSet<>());
+            }
+
+            b.get(i.getValue()).add(i.getKey());
+        }
+
+        return b;
+    }
+
 
     /**
      * Get positive state annotations for the given policy.
      *
      * <p>These are states which should be run where the policy is able to be applied.
      */
-    public static List<Annotation> positiveStates(EnterprisePolicy enterprisePolicy) {
+    public static List<Annotation> positiveStates(String policyName, EnterprisePolicy enterprisePolicy) {
         Set<Annotation> annotations = new HashSet<>();
 
-        validateDeviceOwnerFlags(enterprisePolicy.deviceOwner());
-        validateProfileOwnerFlags(enterprisePolicy.profileOwner());
+        validateFlags(policyName, enterprisePolicy.dpc());
 
-        deviceOwnerPositiveStates(enterprisePolicy.deviceOwner(), annotations);
-        profileOwnerPositiveStates(enterprisePolicy.profileOwner(), annotations);
+        for (Map.Entry<Annotation, Set<Integer>> annotation : ANNOTATIONS_MAP.entrySet()) {
+            if (isPositive(enterprisePolicy.dpc(), annotation.getValue())) {
+                annotations.add(annotation.getKey());
+            }
+        }
 
         if (annotations.isEmpty()) {
             // Don't run the original test unparameterized
@@ -160,59 +203,29 @@ public final class Policy {
         return new ArrayList<>(annotations);
     }
 
-    private static void deviceOwnerPositiveStates(int flags, Set<Annotation> annotations) {
-        if (!hasFlag(flags, APPLIED_BY_DEVICE_OWNER)) {
-            return;
-        }
-
-        if (hasFlag(flags, APPLIES_TO_OWN_USER)) {
-            annotations.add(includeRunOnDeviceOwnerUser());
-
-            if (hasFlag(flags, APPLIES_IN_BACKGROUND)) {
-                annotations.add(includeRunOnBackgroundDeviceOwnerUser());
+    private static boolean isPositive(int[] policyFlags, Set<Integer> annotationFlags) {
+        for (int annotationFlag : annotationFlags) {
+            if (hasFlag(policyFlags, annotationFlag)) {
+                return true;
             }
         }
-
-        if (hasFlag(flags, APPLIES_TO_UNAFFILIATED_OTHER_USERS)) {
-            annotations.add(includeRunOnNonAffiliatedDeviceOwnerSecondaryUser());
-        }
-
-        if (hasFlag(flags, APPLIES_TO_AFFILIATED_OTHER_USERS)) {
-            annotations.add(includeRunOnAffiliatedDeviceOwnerSecondaryUser());
-        }
+        return false;
     }
 
-    private static void profileOwnerPositiveStates(int flags, Set<Annotation> annotations) {
-        if (hasFlag(flags, APPLIED_BY_AFFILIATED_PROFILE_OWNER_USER)) {
-            if (hasFlag(flags, APPLIES_TO_OWN_USER)) {
-                annotations.add(includeRunOnAffiliatedProfileOwnerSecondaryUser());
+    private static boolean isNegative(int[] policyFlags, Set<Integer> annotationFlags) {
+        for (int annotationFlag : annotationFlags) {
+            if (hasFlag(annotationFlag, DO_NOT_APPLY_TO_NEGATIVE_TESTS, /* nonMatchingFlag= */ NO)) {
+                return false; // We don't support using this annotation for negative tests
+            }
+
+            int appliedByFlag = APPLIED_BY_FLAGS & annotationFlag;
+            int otherFlags = annotationFlag ^ appliedByFlag; // remove the appliedByFlag
+            if (hasFlag(policyFlags, /* matchingFlag= */ appliedByFlag, /* nonMatchingFlag= */ otherFlags)) {
+                return true;
             }
         }
 
-        if (hasFlag(flags, APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_USER)) {
-            if (hasFlag(flags, APPLIES_TO_OWN_USER)) {
-                // TODO(scottjonathan): This might be more appropriate as includeRunOnUnaffiliatedProfileOwnerSecondaryUser
-                annotations.add(includeRunOnProfileOwnerPrimaryUser());
-            }
-        }
-
-        // APPLIED_BY_AFFILIATED_PROFILE_OWNER_PROFILE
-
-        if (hasFlag(flags, APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_PROFILE)) {
-            if (hasFlag(flags, APPLIES_TO_OWN_USER)) {
-                annotations.add(includeRunOnProfileOwnerProfileWithNoDeviceOwner());
-            }
-
-            if (hasFlag(flags, APPLIES_TO_PARENT)) {
-                annotations.add(includeRunOnParentOfProfileOwnerWithNoDeviceOwner());
-            }
-        }
-
-        if (hasFlag(flags, APPLIED_BY_PROFILE_OWNER_USER_WITH_NO_DO)) {
-            if (hasFlag(flags, APPLIES_TO_OWN_USER)) {
-                annotations.add(includeRunOnProfileOwnerPrimaryUser());
-            }
-        }
+        return false;
     }
 
     /**
@@ -220,14 +233,16 @@ public final class Policy {
      *
      * <p>These are states which should be run where the policy is not able to be applied.
      */
-    public static List<Annotation> negativeStates(EnterprisePolicy enterprisePolicy) {
+    public static List<Annotation> negativeStates(String policyName, EnterprisePolicy enterprisePolicy) {
         Set<Annotation> annotations = new HashSet<>();
 
-        validateDeviceOwnerFlags(enterprisePolicy.deviceOwner());
-        validateProfileOwnerFlags(enterprisePolicy.profileOwner());
+        validateFlags(policyName, enterprisePolicy.dpc());
 
-        deviceOwnerNegativeStates(enterprisePolicy.deviceOwner(), annotations);
-        profileOwnerNegativeStates(enterprisePolicy.profileOwner(), annotations);
+        for (Map.Entry<Annotation, Set<Integer>> annotation : ANNOTATIONS_MAP.entrySet()) {
+            if (isNegative(enterprisePolicy.dpc(), annotation.getValue())) {
+                annotations.add(annotation.getKey());
+            }
+        }
 
         if (annotations.isEmpty()) {
             // Don't run the original test unparameterized
@@ -235,78 +250,28 @@ public final class Policy {
         }
 
         return new ArrayList<>(annotations);
-    }
-
-    private static void deviceOwnerNegativeStates(int flags, Set<Annotation> annotations) {
-        if (!hasFlag(flags, APPLIED_BY_DEVICE_OWNER)) {
-            return;
-        }
-
-        if (!hasFlag(flags, APPLIES_TO_OWN_USER)) {
-            // Seems like it'd never happen
-            annotations.add(includeRunOnDeviceOwnerUser());
-        }
-
-        if (!hasFlag(flags, APPLIES_TO_AFFILIATED_OTHER_USERS)) {
-            annotations.add(includeRunOnAffiliatedDeviceOwnerSecondaryUser());
-        }
-
-        if (!hasFlag(flags, APPLIES_TO_UNAFFILIATED_OTHER_USERS)) {
-            annotations.add(includeRunOnNonAffiliatedDeviceOwnerSecondaryUser());
-        }
-    }
-
-    private static void profileOwnerNegativeStates(int flags, Set<Annotation> annotations) {
-        if (hasFlag(flags, APPLIED_BY_AFFILIATED_PROFILE_OWNER_USER)) {
-            if (!hasFlag(flags, APPLIES_TO_OWN_USER)) {
-                annotations.add(includeRunOnAffiliatedProfileOwnerSecondaryUser());
-            }
-        }
-
-        if (hasFlag(flags, APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_USER)) {
-            if (!hasFlag(flags, APPLIES_TO_OWN_USER)) {
-                // TODO(scottjonathan): This might be more appropriate as includeRunOnUnaffiliatedProfileOwnerSecondaryUser
-                annotations.add(includeRunOnProfileOwnerPrimaryUser());
-            }
-        }
-
-        // APPLIED_BY_AFFILIATED_PROFILE_OWNER_PROFILE
-
-        if (hasFlag(flags, APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_PROFILE)) {
-            if (!hasFlag(flags, APPLIES_TO_OWN_USER)) {
-                annotations.add(includeRunOnProfileOwnerProfileWithNoDeviceOwner());
-            }
-
-            if (!hasFlag(flags, APPLIES_TO_PARENT)) {
-                annotations.add(includeRunOnParentOfProfileOwnerWithNoDeviceOwner());
-            }
-
-            if (!hasFlag(flags, APPLIES_TO_OTHER_USERS)) {
-                annotations.add(
-                        includeRunOnSecondaryUserInDifferentProfileGroupToProfileOwnerProfile());
-            }
-        }
-
-        if (hasFlag(flags, APPLIED_BY_PROFILE_OWNER_USER_WITH_NO_DO)) {
-            if (!hasFlag(flags, APPLIES_TO_OWN_USER)) {
-                annotations.add(includeRunOnProfileOwnerPrimaryUser());
-            }
-        }
     }
 
     /**
      * Get state annotations where the policy cannot be set for the given policy.
      */
-    public static List<Annotation> cannotSetPolicyStates(EnterprisePolicy enterprisePolicy) {
+    public static List<Annotation> cannotSetPolicyStates(String policyName, EnterprisePolicy enterprisePolicy) {
         Set<Annotation> annotations = new HashSet<>();
 
-        validateDeviceOwnerFlags(enterprisePolicy.deviceOwner());
-        validateProfileOwnerFlags(enterprisePolicy.profileOwner());
+        validateFlags(policyName, enterprisePolicy.dpc());
 
         // TODO(scottjonathan): Always include a state without a dpc
 
-        deviceOwnerCannotSetPolicyStates(enterprisePolicy.deviceOwner(), annotations);
-        profileOwnerCannotSetPolicyStates(enterprisePolicy.profileOwner(), annotations);
+        int allFlags = 0;
+        for (int p : enterprisePolicy.dpc()) {
+            allFlags = allFlags | p;
+        }
+
+        for (Map.Entry<Integer, Annotation> appliedByFlag : DPC_STATE_ANNOTATIONS.entrySet()) {
+            if ((appliedByFlag.getKey() & allFlags) == 0) {
+                annotations.add(appliedByFlag.getValue());
+            }
+        }
 
         if (annotations.isEmpty()) {
             // Don't run the original test unparameterized
@@ -316,70 +281,53 @@ public final class Policy {
         return new ArrayList<>(annotations);
     }
 
-    private static void deviceOwnerCannotSetPolicyStates(int flags, Set<Annotation> annotations) {
-        if (flags == NO) { // Can't be set by DO
-            annotations.add(includeRunOnDeviceOwnerUser());
-        }
-    }
+    private static void validateFlags(String policyName, int[] values) {
+        int usedAppliedByFlags = 0;
 
-    private static void profileOwnerCannotSetPolicyStates(int flags, Set<Annotation> annotations) {
-        if (!hasFlag(flags, APPLIED_BY_AFFILIATED_PROFILE_OWNER_USER)) {
-            annotations.add(includeRunOnAffiliatedProfileOwnerSecondaryUser());
-        }
-
-        if (!hasFlag(flags, APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_USER)) {
-            annotations.add(includeRunOnProfileOwnerPrimaryUser());
-        }
-
-        // APPLIED_BY_AFFILIATED_PROFILE_OWNER_PROFILE
-
-        if (!hasFlag(flags, APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_PROFILE)) {
-            annotations.add(includeRunOnProfileOwnerProfileWithNoDeviceOwner());
-        }
-
-        if (!hasFlag(flags, APPLIED_BY_PROFILE_OWNER_USER_WITH_NO_DO)) {
-            annotations.add(includeRunOnProfileOwnerPrimaryUser());
-        }
-    }
-
-    private static void validateDeviceOwnerFlags(int value) {
-        if (value == NO) {
-            return;
-        }
-
-        int invalidFlags = (value | VALID_DEVICE_OWNER_FLAGS) ^ VALID_DEVICE_OWNER_FLAGS;
-        if (invalidFlags > 0) {
-            throw new IllegalStateException(
-                    "Invalid state passed for device owner: " + extractFlags(invalidFlags));
-        }
-    }
-
-    private static void validateProfileOwnerFlags(int value) {
-        if (value == NO) {
-            return;
-        }
-        int invalidFlags = (value | VALID_PROFILE_OWNER_FLAGS) ^ VALID_PROFILE_OWNER_FLAGS;
-        if (invalidFlags > 0) {
-            throw new IllegalStateException(
-                    "Invalid state passed for profile owner: " + extractFlags(invalidFlags));
-        }
-    }
-
-    private static boolean hasFlag(int value, int flag) {
-        return (value & flag) > 0;
-    }
-
-    private static Set<Integer> extractFlags(int flags) {
-        Set<Integer> extracted = new HashSet<>();
-        int nextValue = 1;
-        while (flags > 0) {
-            if ((flags & 1) > 0) {
-                extracted.add(nextValue);
+        for (int value : values) {
+            validateFlags(policyName, value);
+            int newUsedAppliedByFlags = usedAppliedByFlags | (value & APPLIED_BY_FLAGS);
+            if (newUsedAppliedByFlags == usedAppliedByFlags) {
+                throw new IllegalStateException(
+                        "Cannot have more than one policy flag APPLIED by the same component. "
+                                + "Error in policy " + policyName);
             }
-            nextValue = nextValue << 1;
-            flags = flags >> 1;
+            usedAppliedByFlags = newUsedAppliedByFlags;
+        }
+    }
+
+    private static void validateFlags(String policyName, int value) {
+        int matchingAppliedByFlags = APPLIED_BY_FLAGS & value;
+
+        if (matchingAppliedByFlags == 0) {
+            throw new IllegalStateException(
+                    "All policy flags must specify 1 APPLIED_BY flag. Policy " + policyName
+                            + " did not.");
+        }
+    }
+
+    private static boolean hasFlag(int[] values, int matchingFlag) {
+        return hasFlag(values, matchingFlag, /* nonMatchingFlag= */ NO);
+    }
+
+    private static boolean hasFlag(int[] values, int matchingFlag, int nonMatchingFlag) {
+        for (int value : values) {
+            if (hasFlag(value, matchingFlag, nonMatchingFlag)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean hasFlag(int value, int matchingFlag, int nonMatchingFlag) {
+        if (!((value & matchingFlag) == matchingFlag)) {
+            return false;
         }
 
-        return extracted;
+        if (nonMatchingFlag != NO) {
+            return (value & nonMatchingFlag) != nonMatchingFlag;
+        }
+
+        return true;
     }
 }

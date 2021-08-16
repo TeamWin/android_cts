@@ -73,6 +73,8 @@ public class NetworkResetTest {
         restoreSettings(mOriginalAirplaneMode, mOriginalPrivateDnsMode, mOriginalAvoidBadWifi);
     }
 
+    // TODO: Add @NegativePolicyTest
+
     @Test
     @PositivePolicyTest(policy = DisallowNetworkReset.class)
     @EnsureHasPermission({NETWORK_SETTINGS, WRITE_SECURE_SETTINGS})
@@ -93,12 +95,10 @@ public class NetworkResetTest {
         }
     }
 
-
     @Test
     @PositivePolicyTest(policy = DisallowPrivateDnsConfig.class)
     @EnsureHasPermission({NETWORK_SETTINGS, WRITE_SECURE_SETTINGS})
-    public void factoryReset_disallowedByConfigPrivateDnsPolicy_doesPartialFactoryReset()
-            throws Exception {
+    public void factoryReset_disallowedByConfigPrivateDnsPolicy_doesPartialFactoryReset() {
         final boolean originalUserRestriction =
                 sUserManager.hasUserRestriction(DISALLOW_CONFIG_PRIVATE_DNS);
         try {
