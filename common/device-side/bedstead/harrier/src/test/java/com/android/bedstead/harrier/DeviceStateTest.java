@@ -67,9 +67,9 @@ import com.android.bedstead.harrier.annotations.enterprise.EnsureHasProfileOwner
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnBackgroundDeviceOwnerUser;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnDeviceOwnerUser;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnNonAffiliatedDeviceOwnerSecondaryUser;
-import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnParentOfProfileOwner;
-import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnProfileOwnerProfile;
-import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnSecondaryUserInDifferentProfileGroupToProfileOwner;
+import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnParentOfProfileOwnerWithNoDeviceOwner;
+import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnProfileOwnerProfileWithNoDeviceOwner;
+import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnSecondaryUserInDifferentProfileGroupToProfileOwnerProfile;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.users.UserReference;
@@ -425,7 +425,7 @@ public class DeviceStateTest {
     }
 
     @Test
-    @IncludeRunOnProfileOwnerProfile
+    @IncludeRunOnProfileOwnerProfileWithNoDeviceOwner
     public void includeRunOnProfileOwnerAnnotation_hasProfileOwner() {
         assertThat(
                 sTestApis.devicePolicy().getProfileOwner(sTestApis.users().instrumented())
@@ -433,7 +433,7 @@ public class DeviceStateTest {
     }
 
     @Test
-    @IncludeRunOnSecondaryUserInDifferentProfileGroupToProfileOwner
+    @IncludeRunOnSecondaryUserInDifferentProfileGroupToProfileOwnerProfile
     public void includeRunOnSecondaryUserInDifferentProfileGroupToProfileOwnerAnnotation_isRunningOnSecondaryUserInDifferentProfileGroupToProfileOwner() {
         assertThat(sTestApis.users().instrumented().resolve().type().name())
                 .isEqualTo(SECONDARY_USER_TYPE_NAME);
@@ -565,7 +565,7 @@ public class DeviceStateTest {
     }
 
     @Test
-    @IncludeRunOnParentOfProfileOwner
+    @IncludeRunOnParentOfProfileOwnerWithNoDeviceOwner
     public void includeRunOnParentOfProfileOwnerAnnotation_isRunningOnParentOfProfileOwner() {
         assertThat(sDeviceState.workProfile()).isNotNull();
     }
