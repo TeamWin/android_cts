@@ -185,7 +185,7 @@ public class RingtoneTest {
     @Test
     @IncludeRunOnProfileOwnerProfileWithNoDeviceOwner
     @EnsureHasPermission(WRITE_SETTINGS)
-    public void setActualDefaultRingtoneUri__notification_setsSyncParentSoundsToFalse() {
+    public void setActualDefaultRingtoneUri_notification_setsSyncParentSoundsToFalse() {
         int originalSyncParentSounds = sTestApis.settings().secure().getInt(SYNC_PARENT_SOUNDS);
         Uri originalUri = RingtoneManager.getActualDefaultRingtoneUri(
                 sContext, RingtoneManager.TYPE_NOTIFICATION);

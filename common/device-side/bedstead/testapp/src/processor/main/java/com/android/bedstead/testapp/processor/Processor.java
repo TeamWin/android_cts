@@ -228,13 +228,16 @@ public final class Processor extends AbstractProcessor {
                 methodBuilder.addParameter(parameterSpec);
             }
 
-            methodBuilder.beginControlFlow("try")
-                    .addStatement("tryConnect(mConnector)");
+            methodBuilder.addStatement("int retries = 300") // 30 seconds of retries
+                    .beginControlFlow("while (true)")
+                    .beginControlFlow("try")
+                    .addStatement("mConnector.connect()");
 
             if (method.getReturnType().getKind().equals(TypeKind.VOID)) {
                 methodBuilder.addStatement(
                         "mProfileClass.other().$L($L)",
                         method.getSimpleName(), String.join(", ", params));
+                methodBuilder.addStatement("return");
             } else {
                 methodBuilder.addStatement(
                         "return mProfileClass.other().$L($L)",
@@ -243,41 +246,27 @@ public final class Processor extends AbstractProcessor {
 
             methodBuilder.nextControlFlow(
                     "catch ($T e)", UNAVAILABLE_PROFILE_EXCEPTION_CLASSNAME)
+                    .beginControlFlow("if (retries-- <= 0)")
                     .addStatement(
                             "throw new $T($S, e)",
                             NENE_EXCEPTION_CLASSNAME, "Error connecting to test app")
+                    .endControlFlow()
+                    .beginControlFlow("try")
+                    .addStatement("$T.sleep(100)", Thread.class)
+                    .nextControlFlow("catch ($T e2)", InterruptedException.class)
+                    .addStatement(
+                            "throw new $T($S, e)",
+                            NENE_EXCEPTION_CLASSNAME, "Error connecting to test app")
+                    .endControlFlow()
                     .nextControlFlow("catch ($T e)", PROFILE_RUNTIME_EXCEPTION_CLASSNAME)
                     .addStatement("throw ($T) e.getCause()", RuntimeException.class)
                     .nextControlFlow("finally")
                     .addStatement("mConnector.stopManualConnectionManagement()")
-                    .endControlFlow();
+                    .endControlFlow() // try
+                    .endControlFlow(); // while(true)
 
             classBuilder.addMethod(methodBuilder.build());
         }
-
-        classBuilder.addMethod(
-                MethodSpec.methodBuilder("tryConnect")
-                        .addModifiers(Modifier.PRIVATE)
-                        .addParameter(CROSS_PROFILE_CONNECTOR_CLASSNAME, "connector")
-                        .addException(UNAVAILABLE_PROFILE_EXCEPTION_CLASSNAME)
-                        .addStatement("int retries = 300") // 30 seconds of retries
-                        .beginControlFlow("while (true)")
-                        .beginControlFlow("try")
-                        .addStatement("connector.connect()")
-                        .addStatement("return")
-                        .nextControlFlow("catch ($T e)", UNAVAILABLE_PROFILE_EXCEPTION_CLASSNAME)
-                        .beginControlFlow("if (retries-- <= 0)")
-                        .addStatement("throw e")
-                        .endControlFlow()
-                        .beginControlFlow("try")
-                        .addStatement("$T.sleep(100)", Thread.class)
-                        .nextControlFlow("catch ($T e2)", InterruptedException.class)
-                        .addStatement("throw e")
-                        .endControlFlow()
-                        .endControlFlow()
-                        .endControlFlow()
-                        .build()
-        );
 
         writeClassToFile(originalClassName.packageName(), classBuilder.build());
     }
@@ -374,13 +363,16 @@ public final class Processor extends AbstractProcessor {
                 methodBuilder.addParameter(parameterSpec);
             }
 
-            methodBuilder.beginControlFlow("try")
-                    .addStatement("tryConnect(mConnector)");
+            methodBuilder.addStatement("int retries = 300") // 30 seconds of retries
+                    .beginControlFlow("while (true)")
+                    .beginControlFlow("try")
+                    .addStatement("mConnector.connect()");
 
             if (method.getReturnType().getKind().equals(TypeKind.VOID)) {
                 methodBuilder.addStatement(
                         "mProfileTargetedRemoteActivity.other().$L($L)",
                         method.getSimpleName(), params);
+                methodBuilder.addStatement("return");
             } else {
                 methodBuilder.addStatement(
                         "return mProfileTargetedRemoteActivity.other().$L($L)",
@@ -389,41 +381,27 @@ public final class Processor extends AbstractProcessor {
 
             methodBuilder.nextControlFlow(
                     "catch ($T e)", UNAVAILABLE_PROFILE_EXCEPTION_CLASSNAME)
+                    .beginControlFlow("if (retries-- <= 0)")
                     .addStatement(
                             "throw new $T($S, e)",
                             NENE_EXCEPTION_CLASSNAME, "Error connecting to test app")
+                    .endControlFlow()
+                    .beginControlFlow("try")
+                    .addStatement("$T.sleep(100)", Thread.class)
+                    .nextControlFlow("catch ($T e2)", InterruptedException.class)
+                    .addStatement(
+                            "throw new $T($S, e)",
+                            NENE_EXCEPTION_CLASSNAME, "Error connecting to test app")
+                    .endControlFlow()
                     .nextControlFlow("catch ($T e)", PROFILE_RUNTIME_EXCEPTION_CLASSNAME)
                     .addStatement("throw ($T) e.getCause()", RuntimeException.class)
                     .nextControlFlow("finally")
                     .addStatement("mConnector.stopManualConnectionManagement()")
-                    .endControlFlow();
+                    .endControlFlow() // try
+                    .endControlFlow(); // while(true)
 
             classBuilder.addMethod(methodBuilder.build());
         }
-
-        classBuilder.addMethod(
-                MethodSpec.methodBuilder("tryConnect")
-                        .addModifiers(Modifier.PRIVATE)
-                        .addParameter(CROSS_PROFILE_CONNECTOR_CLASSNAME, "connector")
-                        .addException(UNAVAILABLE_PROFILE_EXCEPTION_CLASSNAME)
-                        .addStatement("int retries = 300") // 30 seconds of retries
-                        .beginControlFlow("while (true)")
-                        .beginControlFlow("try")
-                        .addStatement("connector.connect()")
-                        .addStatement("return")
-                        .nextControlFlow("catch ($T e)", UNAVAILABLE_PROFILE_EXCEPTION_CLASSNAME)
-                        .beginControlFlow("if (retries-- <= 0)")
-                        .addStatement("throw e")
-                        .endControlFlow()
-                        .beginControlFlow("try")
-                        .addStatement("$T.sleep(100)", Thread.class)
-                        .nextControlFlow("catch ($T e2)", InterruptedException.class)
-                        .addStatement("throw e")
-                        .endControlFlow()
-                        .endControlFlow()
-                        .endControlFlow()
-                        .build()
-        );
 
         writeClassToFile(PACKAGE_NAME, classBuilder.build());
     }
