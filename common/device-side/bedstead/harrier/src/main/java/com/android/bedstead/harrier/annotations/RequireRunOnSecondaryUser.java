@@ -16,7 +16,10 @@
 
 package com.android.bedstead.harrier.annotations;
 
+import static com.android.bedstead.harrier.OptionalBoolean.TRUE;
+
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.OptionalBoolean;
 import com.android.bedstead.harrier.annotations.meta.RequireRunOnUserAnnotation;
 
 import java.lang.annotation.ElementType;
@@ -41,4 +44,8 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @RequireRunOnUserAnnotation("android.os.usertype.full.SECONDARY")
 public @interface RequireRunOnSecondaryUser {
+    /**
+     * Should we ensure that we are switched to the given user
+     */
+    OptionalBoolean switchedToUser() default TRUE;
 }

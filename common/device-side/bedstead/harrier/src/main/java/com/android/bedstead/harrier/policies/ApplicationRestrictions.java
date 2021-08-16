@@ -16,8 +16,10 @@
 
 package com.android.bedstead.harrier.policies;
 
-import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.DeviceOwnerControl.USER;
-import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.ProfileOwnerControl.PROFILE;
+import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_DEVICE_OWNER;
+import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_PROFILE_OWNER;
+import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_IN_BACKGROUND;
+import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_TO_OWN_USER;
 
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
@@ -31,7 +33,9 @@ import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
  * {@link DevicePolicyManager#setApplicationRestrictions(ComponentName, String, Bundle)} and
  * {@link DevicePolicyManager#getApplicationRestrictions(ComponentName, String)}.
  */
-@EnterprisePolicy(deviceOwner = USER, profileOwner = PROFILE)
+@EnterprisePolicy(deviceOwner =
+        APPLIED_BY_DEVICE_OWNER | APPLIES_TO_OWN_USER | APPLIES_IN_BACKGROUND,
+        profileOwner = APPLIED_BY_PROFILE_OWNER | APPLIES_TO_OWN_USER)
 // TODO(b/193563511): need a way to indicate that this test can run on device owner user when system
 // users headless system user mode
 public final class ApplicationRestrictions {
