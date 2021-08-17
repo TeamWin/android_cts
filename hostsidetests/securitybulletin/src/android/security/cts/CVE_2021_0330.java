@@ -16,7 +16,7 @@
 
 package android.security.cts;
 
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -29,8 +29,8 @@ public class CVE_2021_0330 extends SecurityTestCase {
      * b/170732441
      * Vulnerability Behaviour: SIGSEGV in storaged
      */
-    @SecurityTest(minPatchLevel = "2021-02")
     @Test
+    @AsbSecurityTest(cveBugId = 170732441)
     public void testPocCVE_2021_0330() throws Exception {
         AdbUtils.pocConfig testConfig = new AdbUtils.pocConfig("CVE-2021-0330", getDevice());
         testConfig.config = new CrashUtils.Config().setProcessPatterns("storaged");

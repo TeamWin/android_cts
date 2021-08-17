@@ -33,11 +33,12 @@ import android.content.Context;
 import android.database.Cursor;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
 import android.os.FileUtils;
 import android.os.ParcelFileDescriptor;
 import android.os.storage.StorageManager;
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import android.provider.MediaStore;
 import android.provider.MediaStore.Files.FileColumns;
 import android.provider.MediaStore.Video.Media;
@@ -49,6 +50,7 @@ import android.provider.cts.media.MediaStoreUtils.PendingSession;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.SdkSuppress;
 
 import org.junit.Assume;
 import org.junit.Before;
@@ -66,6 +68,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
 
+@SdkSuppress(minSdkVersion = Build.VERSION_CODES.R)
 @RunWith(Parameterized.class)
 public class MediaStore_Video_MediaTest {
     private Context mContext;
@@ -255,12 +258,9 @@ public class MediaStore_Video_MediaTest {
         }
     }
 
-    @SecurityTest
     @Test
+    @AsbSecurityTest(cveBugId = 134155286)
     public void testIsoLocationRedaction() throws Exception {
-        // STOPSHIP: remove this once isolated storage is always enabled
-        Assume.assumeTrue(StorageManager.hasIsolatedStorage());
-
         // These videos have all had their ISO location metadata (in the (c)xyz box) artificially
         // modified to +58.0000+011.0000 (middle of Skagerrak).
         int[] videoIds = new int[] {

@@ -24,6 +24,7 @@ java_test_host {
         "arcts",
         "cts",
         "general-tests",
+        "mts",
     ],
     libs: [
         "cts-tradefed",

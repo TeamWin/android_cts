@@ -198,25 +198,6 @@ public class SettingsPanelTest {
     }
 
     @Test
-    public void internetPanel_seeMoreButton_launchesIntoSettings() {
-        // Launch panel
-        launchInternetPanel();
-        String currentPackage = mDevice.getCurrentPackageName();
-        assertThat(currentPackage).isEqualTo(mSettingsPackage);
-
-        // Click the see more button
-        assumeTrue(mHasTouchScreen);
-        mDevice.findObject(By.res(mSettingsPackage, RESOURCE_SEE_MORE)).click();
-        mDevice.wait(Until.hasObject(By.pkg(mSettingsPackage).depth(0)), TIMEOUT);
-
-        // Assert that we're still in Settings, on a different page.
-        currentPackage = mDevice.getCurrentPackageName();
-        assertThat(currentPackage).isEqualTo(mSettingsPackage);
-        UiObject2 titleView = mDevice.findObject(By.res(mSettingsPackage, RESOURCE_TITLE));
-        assertThat(titleView).isNull();
-    }
-
-    @Test
     public void volumePanel_seeMoreButton_launchesIntoSettings() {
         assumeTrue(mHasTouchScreen);
         // Launch panel

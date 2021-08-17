@@ -33,6 +33,7 @@
     <option name="compatibility:include-filter" value="CtsSimPhonebookProviderTestCases" />
     <option name="compatibility:include-filter" value="CtsSimRestrictedApisTestCases" />
     <option name="compatibility:include-filter" value="CtsStatsdHostTestCases" />
+    <option name="compatibility:include-filter" value="CtsStatsdAtomHostTestCases" />
     <option name="compatibility:include-filter" value="CtsTelecomTestCases" />
     <option name="compatibility:include-filter" value="CtsTelecomTestCases2" />
     <option name="compatibility:include-filter" value="CtsTelecomTestCases3" />

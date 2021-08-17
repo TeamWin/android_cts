@@ -81,6 +81,8 @@ import android.webkit.cts.WebViewSyncLoader.WaitForLoadedClient;
 import android.webkit.cts.WebViewSyncLoader.WaitForProgressClient;
 import android.widget.LinearLayout;
 
+import androidx.test.filters.FlakyTest;
+
 import com.android.compatibility.common.util.NullWebViewUtils;
 import com.android.compatibility.common.util.PollingCheck;
 import com.google.common.util.concurrent.SettableFuture;
@@ -807,6 +809,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         assertEquals("false", mOnUiThread.evaluateJavascriptSync("'custom_property' in interface"));
     }
 
+    @FlakyTest(bugId = 171702662)
     public void testJavascriptInterfaceForClientPopup() throws Exception {
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;
@@ -1442,11 +1445,11 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         // can not scroll any more
         mOnUiThread.findNext(false);
         waitForScrollingComplete(previousScrollY);
-        assertTrue(mOnUiThread.getScrollY() == previousScrollY);
+        assertEquals(mOnUiThread.getScrollY(), previousScrollY);
 
         mOnUiThread.findNext(true);
         waitForScrollingComplete(previousScrollY);
-        assertTrue(mOnUiThread.getScrollY() == previousScrollY);
+        assertEquals(mOnUiThread.getScrollY(), previousScrollY);
     }
 
     public void testDocumentHasImages() throws Exception, Throwable {

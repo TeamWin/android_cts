@@ -14,25 +14,25 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-
 <!--
   ~ A test app used for when you need to install test packages that have a functioning package name
   ~ and UID. For example, you could use it to set permissions or app-ops.
   -->
+
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-        package="com.android.cts.testapps.testapp1">
+     package="com.android.cts.testapps.testapp1">
     <uses-permission android:name="android.permission.INTERACT_ACROSS_PROFILES"/>
     <application android:testOnly="true"
-            android:crossProfile="true">
-        <uses-library android:name="android.test.runner" />
-        <receiver android:name=".CanInteractAcrossProfilesChangedReceiver">
+         android:crossProfile="true">
+        <uses-library android:name="android.test.runner"/>
+        <receiver android:name=".CanInteractAcrossProfilesChangedReceiver"
+             android:exported="true">
             <intent-filter>
-                <action android:name="android.content.pm.action.CAN_INTERACT_ACROSS_PROFILES_CHANGED" />
+                <action android:name="android.content.pm.action.CAN_INTERACT_ACROSS_PROFILES_CHANGED"/>
             </intent-filter>
         </receiver>
-        <activity
-            android:name="android.app.Activity"
-            android:exported="true">
+        <activity android:name="android.app.Activity"
+             android:exported="true">
         </activity>
     </application>
 </manifest>

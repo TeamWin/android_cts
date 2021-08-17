@@ -27,11 +27,11 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Rect;
+import android.hardware.display.DisplayManager;
 import android.media.MediaDataSource;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.MediaMetadataRetriever;
-import android.media.MediaRecorder;
 import android.os.ParcelFileDescriptor;
 import android.net.Uri;
 import android.os.Build;
@@ -41,6 +41,7 @@ import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.RequiresDevice;
 import android.test.AndroidTestCase;
 import android.util.Log;
+import android.view.Display;
 
 import androidx.test.filters.SmallTest;
 
@@ -56,7 +57,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.function.Function;
 
@@ -87,6 +87,7 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
             Color.valueOf(0.64f, 0.64f, 0.0f),
     };
     private boolean mIsAtLeastR = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.R);
+    private boolean mIsAtLeastS = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S);
 
     @Override
     protected void setUp() throws Exception {
@@ -108,6 +109,7 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
     protected AssetFileDescriptor getAssetFileDescriptorFor(final String res)
             throws FileNotFoundException {
         File inpFile = new File(mInpPrefix + res);
+        Preconditions.assertTestFileExists(mInpPrefix + res);
         ParcelFileDescriptor parcelFD =
                 ParcelFileDescriptor.open(inpFile, ParcelFileDescriptor.MODE_READ_ONLY);
         return new AssetFileDescriptor(parcelFD, 0, parcelFD.getStatSize());
@@ -385,6 +387,13 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
     }
 
     public void testID3v240ExtHeader() {
+        if(!ApiLevelUtil.isAtLeast(Build.VERSION_CODES.R)) {
+            // The fix for b/154357105 was released in mainline release 30.09.007.01
+            // See https://android-build.googleplex.com/builds/treetop/googleplex-android-review/11174063
+            if (TestUtils.skipTestIfMainlineLessThan("com.google.android.media", 300900701)) {
+                return;
+            }
+        }
         setDataSourceFd("sinesweepid3v24ext.mp3");
         assertEquals("Mime type was other than expected",
                 "audio/mpeg",
@@ -642,11 +651,31 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
     public void testThumbnailVP9Hdr() {
         if (!MediaUtils.check(mIsAtLeastR, "test needs Android 11")) return;
 
+        DisplayManager displayManager = mContext.getSystemService(DisplayManager.class);
+        int numberOfSupportedHdrTypes =
+            displayManager.getDisplay(Display.DEFAULT_DISPLAY).getHdrCapabilities()
+                .getSupportedHdrTypes().length;
+
+        if (numberOfSupportedHdrTypes == 0) {
+            MediaUtils.skipTest("No supported HDR display type");
+            return;
+        }
+
         testThumbnail("video_1280x720_vp9_hdr_static_3mbps.mkv", 1280, 720);
     }
 
     public void testThumbnailAV1Hdr() {
         if (!MediaUtils.check(mIsAtLeastR, "test needs Android 11")) return;
+
+        DisplayManager displayManager = mContext.getSystemService(DisplayManager.class);
+        int numberOfSupportedHdrTypes =
+            displayManager.getDisplay(Display.DEFAULT_DISPLAY).getHdrCapabilities()
+                .getSupportedHdrTypes().length;
+
+        if (numberOfSupportedHdrTypes == 0) {
+            MediaUtils.skipTest("No supported HDR display type");
+            return;
+        }
 
         testThumbnail("video_1280x720_av1_hdr_static_3mbps.webm", 1280, 720);
     }
@@ -1038,8 +1067,20 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
             return;
         }
 
-        testGetImage("heifwriter_input.heic", 1920, 1080, 0 /*rotation*/,
+        testGetImage("heifwriter_input.heic", 1920, 1080, "image/heif", 0 /*rotation*/,
                 4 /*imageCount*/, 3 /*primary*/, true /*useGrid*/, true /*checkColor*/);
+    }
+
+    public void testGetImageAtIndexAvif() throws Exception {
+        if (!MediaUtils.check(mIsAtLeastS, "test needs Android 12")) return;
+        testGetImage("sample.avif", 1920, 1080, "image/avif", 0 /*rotation*/,
+                1 /*imageCount*/, 0 /*primary*/, false /*useGrid*/, true /*checkColor*/);
+    }
+
+    public void testGetImageAtIndexAvifGrid() throws Exception {
+        if (!MediaUtils.check(mIsAtLeastS, "test needs Android 12")) return;
+        testGetImage("sample_grid2x4.avif", 1920, 1080, "image/avif", 0 /*rotation*/,
+                1 /*imageCount*/, 0 /*primary*/, true /*useGrid*/, true /*checkColor*/);
     }
 
     /**
@@ -1065,13 +1106,14 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
     }
 
     private void testGetImage(
-            final String res, int width, int height, int rotation,
+            final String res, int width, int height, String mimeType, int rotation,
             int imageCount, int primary, boolean useGrid, boolean checkColor)
                     throws Exception {
         Stopwatch timer = new Stopwatch();
         MediaExtractor extractor = null;
         AssetFileDescriptor afd = null;
         InputStream inputStream = null;
+        Preconditions.assertTestFileExists(mInpPrefix + res);
 
         try {
             setDataSourceFd(res);
@@ -1095,6 +1137,8 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
             assertEquals("Wrong primary index", primary,
                     Integer.parseInt(mRetriever.extractMetadata(
                             MediaMetadataRetriever.METADATA_KEY_IMAGE_PRIMARY)));
+            assertEquals("Wrong mime type", mimeType,
+                    mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE));
 
             if (checkColor) {
                 Bitmap bitmap = null;
@@ -1104,6 +1148,7 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
                 for (int imageIndex = 0; imageIndex < imageCount; imageIndex++) {
                     timer.start();
                     bitmap = mRetriever.getImageAtIndex(imageIndex);
+                    assertNotNull("Failed to retrieve image at index " + imageIndex, bitmap);
                     timer.end();
                     timer.printDuration("getImageAtIndex");
 
@@ -1179,6 +1224,7 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
     private void copyMediaFile() {
         InputStream inputStream = null;
         FileOutputStream outputStream = null;
+        Preconditions.assertTestFileExists(mInpPrefix + "testvideo.3gp");
         String outputPath = new File(
             Environment.getExternalStorageDirectory(), TEST_MEDIA_FILE).getAbsolutePath();
         try {

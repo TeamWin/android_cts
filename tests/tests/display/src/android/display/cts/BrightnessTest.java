@@ -410,7 +410,8 @@ public class BrightnessTest {
      */
     private int numberOfSystemAppsWithPermission(String permission) {
         List<PackageInfo> packages = mContext.getPackageManager().getPackagesHoldingPermissions(
-                new String[] {permission}, PackageManager.MATCH_SYSTEM_ONLY);
+                new String[]{permission}, PackageManager.MATCH_SYSTEM_ONLY);
+        packages.removeIf(packageInfo -> packageInfo.packageName.equals("com.android.shell"));
         return packages.size();
     }
 

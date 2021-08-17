@@ -17,6 +17,7 @@
 package android.telecom.cts;
 
 import static android.telecom.Call.STATE_SELECT_PHONE_ACCOUNT;
+import static android.telephony.TelephonyManager.CALL_STATE_RINGING;
 
 import android.content.Context;
 import android.media.AudioManager;
@@ -132,7 +133,7 @@ public class OutgoingCallTest extends BaseTelecomTestWithMockServices {
         Map<Integer, List<EmergencyNumber>> emergencyNumbers = null;
 
         for (int i = 0; i < 5; i++) {
-            emergencyNumbers = mPhoneStateListener.waitForEmergencyNumberListUpdate(
+            emergencyNumbers = mTelephonyCallback.waitForEmergencyNumberListUpdate(
                     TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS);
             assertNotNull("Never got an update that the test emergency number was registered",
                     emergencyNumbers);
@@ -174,6 +175,7 @@ public class OutgoingCallTest extends BaseTelecomTestWithMockServices {
                 .getAddress().getSchemeSpecificPart();
         verifyPhoneStateListenerCallbacksForCall(TelephonyManager.CALL_STATE_OFFHOOK,
                 expectedNumber);
+        verifyCallStateListener(TelephonyManager.CALL_STATE_OFFHOOK);
     }
 
     /**

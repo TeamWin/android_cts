@@ -20,8 +20,11 @@ package {
 
 android_test_helper_app {
     name: "CtsAppThatRequestsOneTimePermission",
-    defaults: ["cts_defaults"],
-    sdk_version: "test_current",
+    defaults: [
+        "cts_defaults",
+        "mts-target-sdk-version-current",
+    ],
+    min_sdk_version: "30",
     // Tag this module as a cts test artifact
     test_suites: [
         "cts",

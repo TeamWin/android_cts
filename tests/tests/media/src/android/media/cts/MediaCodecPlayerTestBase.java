@@ -150,7 +150,7 @@ class MediaCodecPlayerTestBase<T extends Activity> extends ActivityInstrumentati
         return true;
     }
 
-    private boolean isResolutionSupported(String mime, String[] features,
+    protected boolean isResolutionSupported(String mime, String[] features,
             int videoWidth, int videoHeight) {
         MediaFormat format = MediaFormat.createVideoFormat(mime, videoWidth, videoHeight);
         for (String feature: features) {

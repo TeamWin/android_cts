@@ -17,7 +17,7 @@ package android.media.cts;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import android.stats.mediametrics.Mediametrics;
+import android.stats.mediametrics_message.MediametricsMessage;
 
 import com.android.internal.os.StatsdConfigProto;
 import com.android.internal.os.StatsdConfigProto.SimpleAtomMatcher;
@@ -67,20 +67,25 @@ public class MediaExtractorHostSideTest extends BaseMediaHostSideTest {
     public void testMediaMetricsEntryPointSdk() throws Exception {
         runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, DEVICE_SIDE_TEST_CLASS, "testEntryPointSdk");
         assertThat(getMediaExtractorReportedEntryPoint())
-                .isEqualTo(Mediametrics.ExtractorData.EntryPoint.SDK);
+                .isEqualTo(MediametricsMessage.ExtractorData.EntryPoint.SDK);
     }
 
     public void testMediaMetricsEntryPointNdkNoJvm() throws Exception {
         runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, DEVICE_SIDE_TEST_CLASS, "testEntryPointNdkNoJvm");
         assertThat(getMediaExtractorReportedEntryPoint())
-                .isEqualTo(Mediametrics.ExtractorData.EntryPoint.NDK_NO_JVM);
+                .isEqualTo(MediametricsMessage.ExtractorData.EntryPoint.NDK_NO_JVM);
     }
 
     public void testMediaMetricsEntryPointNdkWithJvm() throws Exception {
         runDeviceTests(
                 DEVICE_SIDE_TEST_PACKAGE, DEVICE_SIDE_TEST_CLASS, "testEntryPointNdkWithJvm");
         assertThat(getMediaExtractorReportedEntryPoint())
-                .isEqualTo(Mediametrics.ExtractorData.EntryPoint.NDK_WITH_JVM);
+                .isEqualTo(MediametricsMessage.ExtractorData.EntryPoint.NDK_WITH_JVM);
+    }
+
+    public void testMediaMetricsLogSessionId() throws Exception {
+        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, DEVICE_SIDE_TEST_CLASS, "testLogSessionId");
+        assertThat(getMediaExtractorReportedLogSessionId()).isEqualTo("FakeLogSessionId");
     }
 
     // Internal methods.
@@ -139,8 +144,22 @@ public class MediaExtractorHostSideTest extends BaseMediaHostSideTest {
      *
      * <p>Note: Calls {@link #getAndClearReportList()} to obtain the statsd report.
      */
-    private Mediametrics.ExtractorData.EntryPoint getMediaExtractorReportedEntryPoint()
+    private MediametricsMessage.ExtractorData.EntryPoint getMediaExtractorReportedEntryPoint()
             throws Exception {
+        return getMediaExtractorReportedData().getEntryPoint();
+    }
+
+    /**
+     * Asserts that a single log session id has been reported by MediaMetrics and returns it.
+     *
+     * <p>Note: Calls {@link #getAndClearReportList()} to obtain the statsd report.
+     */
+    private String getMediaExtractorReportedLogSessionId()
+            throws Exception {
+        return getMediaExtractorReportedData().getLogSessionId();
+    }
+
+    private MediametricsMessage.ExtractorData getMediaExtractorReportedData() throws Exception {
         ConfigMetricsReportList reportList = getAndClearReportList();
         assertThat(reportList.getReportsCount()).isEqualTo(1);
         StatsLog.ConfigMetricsReport report = reportList.getReports(0);
@@ -158,7 +177,7 @@ public class MediaExtractorHostSideTest extends BaseMediaHostSideTest {
         mediametricsExtractorReported.removeIf(
                 entry -> !DEVICE_SIDE_TEST_PACKAGE.equals(entry.getPackageName()));
         assertThat(mediametricsExtractorReported).hasSize(1);
-        return mediametricsExtractorReported.get(0).getExtractorData().getEntryPoint();
+        return mediametricsExtractorReported.get(0).getExtractorData();
     }
 
     /** Gets a statsd report and removes it from the device. */

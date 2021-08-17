@@ -15,7 +15,7 @@
  */
 
 package android.security.cts;
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -30,8 +30,8 @@ public class CVE_2017_13194 extends SecurityTestCase {
      * b/64710201
      * Vulnerability Behaviour: SIGSEGV in media.codec
      */
-    @SecurityTest(minPatchLevel = "2018-01")
     @Test
+    @AsbSecurityTest(cveBugId = 64710201)
     public void testPocCVE_2017_13194() throws Exception {
         assumeFalse(moduleIsPlayManaged("com.google.android.media.swcodec"));
         pocPusher.only64();

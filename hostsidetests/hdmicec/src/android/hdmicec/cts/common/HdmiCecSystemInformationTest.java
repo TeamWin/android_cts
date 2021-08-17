@@ -16,12 +16,14 @@
 
 package android.hdmicec.cts.common;
 
-import static com.google.common.truth.Truth.assertThat;
+import static android.hdmicec.cts.HdmiCecConstants.TIMEOUT_SAFETY_MS;
 
+import static com.google.common.truth.Truth.assertThat;
 
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.CecOperand;
+import android.hdmicec.cts.HdmiCecConstants;
 import android.hdmicec.cts.LogicalAddress;
 
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -38,28 +40,12 @@ import java.util.List;
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class HdmiCecSystemInformationTest extends BaseHdmiCecCtsTest {
 
-    /** The version number 0x05 refers to CEC v1.4 */
-    private static final int CEC_VERSION_NUMBER = 0x05;
-
     @Rule
     public RuleChain ruleChain =
             RuleChain
                     .outerRule(CecRules.requiresCec(this))
                     .around(CecRules.requiresLeanback(this))
                     .around(hdmiCecClient);
-
-    /**
-     * Test 11.2.6-1
-     * Tests for Ack {@code <Polling Message>} message.
-     */
-    @Test
-    public void cect_11_2_6_1_Ack() throws Exception {
-        String expectedOutput = "POLL message sent";
-        hdmiCecClient.sendPoll();
-        if (!hdmiCecClient.checkConsoleOutput(expectedOutput)) {
-            throw new Exception("Could not find " + expectedOutput);
-        }
-    }
 
     /**
      * Tests 11.2.6-2, 10.1.1.1-1
@@ -92,16 +78,97 @@ public final class HdmiCecSystemInformationTest extends BaseHdmiCecCtsTest {
     }
 
     /**
+     * Tests {@code <Report Features>}
+     *
+     * <p>Tests that the device reports the correct information in {@code <Report Features>} in
+     * response to a {@code <Give Features>} message.
+     */
+    @Test
+    public void cect_reportFeatures_deviceTypeContainedInAllDeviceTypes() throws Exception {
+        setCec20();
+        List<LogicalAddress> testDevices =
+                Arrays.asList(
+                        LogicalAddress.TV,
+                        LogicalAddress.RECORDER_1,
+                        LogicalAddress.TUNER_1,
+                        LogicalAddress.PLAYBACK_1,
+                        LogicalAddress.AUDIO_SYSTEM,
+                        LogicalAddress.BROADCAST);
+        for (LogicalAddress testDevice : testDevices) {
+            if (hasLogicalAddress(testDevice)) {
+                /* Skip the DUT logical address */
+                continue;
+            }
+            hdmiCecClient.sendCecMessage(testDevice, CecOperand.GIVE_FEATURES);
+            String message = hdmiCecClient.checkExpectedOutput(CecOperand.REPORT_FEATURES);
+            int receivedParams = CecMessage.getParams(message, 2, 4);
+
+            int deviceType = 0;
+            for (LogicalAddress address : mDutLogicalAddresses) {
+                switch (address.getDeviceType()) {
+                    case HdmiCecConstants.CEC_DEVICE_TYPE_PLAYBACK_DEVICE:
+                        deviceType |= 1 << 4;
+                        break;
+                    case HdmiCecConstants.CEC_DEVICE_TYPE_TV:
+                        deviceType |= 1 << 7;
+                        break;
+                    case HdmiCecConstants.CEC_DEVICE_TYPE_AUDIO_SYSTEM:
+                        deviceType |= 1 << 3;
+                        break;
+                    case HdmiCecConstants.CEC_DEVICE_TYPE_RECORDER:
+                        deviceType |= 1 << 6;
+                        break;
+                    case HdmiCecConstants.CEC_DEVICE_TYPE_TUNER:
+                        deviceType |= 1 << 5;
+                        break;
+                    case HdmiCecConstants.CEC_DEVICE_TYPE_RESERVED:
+                        break;
+                }
+            }
+
+            assertThat(receivedParams & deviceType).isNotEqualTo(1);
+        }
+    }
+
+    /**
      * Test 11.2.6-6
      * Tests that the device sends a {@code <CEC Version>} in response to a {@code <Get CEC
      * Version>}
      */
     @Test
     public void cect_11_2_6_6_GiveCecVersion() throws Exception {
+        int cecVersion = HdmiCecConstants.CEC_VERSION_1_4;
+
         hdmiCecClient.sendCecMessage(hdmiCecClient.getSelfDevice(), CecOperand.GET_CEC_VERSION);
         String message =
                 hdmiCecClient.checkExpectedOutput(
                         hdmiCecClient.getSelfDevice(), CecOperand.CEC_VERSION);
-        assertThat(CecMessage.getParams(message)).isEqualTo(CEC_VERSION_NUMBER);
+        assertThat(CecMessage.getParams(message)).isEqualTo(cecVersion);
+    }
+
+    /**
+     * Test HF4-2-12
+     * Tests that the device sends a {@code <CEC Version>} with correct version argument in
+     * response to a {@code <Get CEC Version>} message.
+     *
+     * Also verifies that the CEC version reported in {@code <Report Features>} matches the CEC
+     * version reported in {@code <CEC Version>}.
+     */
+    @Test
+    public void cect_hf4_2_12_GiveCecVersion() throws Exception {
+        int cecVersion = HdmiCecConstants.CEC_VERSION_2_0;
+        setCec20();
+
+        hdmiCecClient.sendCecMessage(hdmiCecClient.getSelfDevice(), CecOperand.GET_CEC_VERSION);
+        String reportCecVersion = hdmiCecClient.checkExpectedOutput(hdmiCecClient.getSelfDevice(),
+                CecOperand.CEC_VERSION);
+        assertThat(CecMessage.getParams(reportCecVersion)).isEqualTo(cecVersion);
+
+        Thread.sleep(TIMEOUT_SAFETY_MS);
+
+        hdmiCecClient.sendCecMessage(hdmiCecClient.getSelfDevice(), CecOperand.GIVE_FEATURES);
+        String reportFeatures = hdmiCecClient.checkExpectedOutput(LogicalAddress.BROADCAST,
+                CecOperand.REPORT_FEATURES);
+        assertThat(CecMessage.getParams(reportFeatures, 2)).isEqualTo(cecVersion);
     }
 }

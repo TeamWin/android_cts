@@ -16,8 +16,8 @@
 
 package android.hdmicec.cts;
 
-import android.hdmicec.cts.error.ErrorCodes;
 import android.hdmicec.cts.error.CecClientWrapperException;
+import android.hdmicec.cts.error.ErrorCodes;
 
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
@@ -30,12 +30,11 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
-import java.io.InputStreamReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.concurrent.TimeUnit;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
@@ -218,7 +217,7 @@ public final class HdmiCecClientWrapper extends ExternalResource {
      * output console of the cec-communication channel with the appended params.
      */
     public void sendCecMessage(LogicalAddress source, CecOperand message, String params)
-            throws CecClientWrapperException {
+            throws Exception {
         sendCecMessage(source, targetDevice, message, params);
     }
 
@@ -303,6 +302,7 @@ public final class HdmiCecClientWrapper extends ExternalResource {
         checkCecClient();
         String sendMessageString = "tx " + source + destination + ":" + message + params;
         try {
+            CLog.v("Sending CEC message: " + sendMessageString);
             mOutputConsole.write(sendMessageString);
             mOutputConsole.newLine();
             mOutputConsole.flush();
@@ -321,8 +321,8 @@ public final class HdmiCecClientWrapper extends ExternalResource {
     }
 
     /**
-     * Sends a <USER_CONTROL_PRESSED> and <USER_CONTROL_RELEASED> from source to destination through
-     * the output console of the cec-communication channel with the mentioned keycode.
+     * Sends a <USER_CONTROL_PRESSED> and <USER_CONTROL_RELEASED> from source to destination
+     * through the output console of the cec-communication channel with the mentioned keycode.
      */
     public void sendUserControlPressAndRelease(
             LogicalAddress source, LogicalAddress destination, int keycode, boolean holdKey)
@@ -395,12 +395,12 @@ public final class HdmiCecClientWrapper extends ExternalResource {
     }
 
     /** Sends a poll message to the device */
-    public void sendPoll() throws CecClientWrapperException {
+    public void sendPoll() throws Exception {
         sendPoll(targetDevice);
     }
 
     /** Sends a poll message to the destination */
-    public void sendPoll(LogicalAddress destination) throws CecClientWrapperException {
+    public void sendPoll(LogicalAddress destination) throws Exception {
         String command = CecClientMessage.POLL + " " + destination;
         sendConsoleMessage(command);
     }
@@ -409,7 +409,7 @@ public final class HdmiCecClientWrapper extends ExternalResource {
     /** Sends a message to the output console of the cec-client */
     public void sendConsoleMessage(String message) throws CecClientWrapperException {
         checkCecClient();
-        CLog.v("Sending message:: " + message);
+        CLog.v("Sending console message:: " + message);
         try {
             mOutputConsole.write(message);
             mOutputConsole.flush();
@@ -750,6 +750,10 @@ public final class HdmiCecClientWrapper extends ExternalResource {
     /** Get the physical address of the cec-client instance, will return 0xFFFF if uninitialised */
     public int getPhysicalAddress() {
         return physicalAddress;
+    }
+
+    public void clearClientOutput() {
+        mInputConsole = new BufferedReader(new InputStreamReader(mCecClient.getInputStream()));
     }
 
     /**

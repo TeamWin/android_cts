@@ -16,6 +16,9 @@
 
 package com.android.cts.deviceandprofileowner;
 
+import static android.app.admin.DevicePolicyManager.PASSWORD_QUALITY_COMPLEX;
+import static android.app.admin.DevicePolicyManager.PASSWORD_QUALITY_UNSPECIFIED;
+
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 import static com.android.cts.deviceandprofileowner.BaseDeviceAdminTest.ADMIN_RECEIVER_COMPONENT;
 
@@ -147,4 +150,17 @@ public class OrgOwnedProfileOwnerParentTest extends InstrumentationTestCase {
                         restriction));
     }
 
+    public void testCanSetPasswordQualityOnParent() {
+        mParentDevicePolicyManager.setPasswordQuality(ADMIN_RECEIVER_COMPONENT,
+                PASSWORD_QUALITY_COMPLEX);
+        try {
+            assertThat(mParentDevicePolicyManager.getPasswordQuality(
+                    ADMIN_RECEIVER_COMPONENT)).isEqualTo(PASSWORD_QUALITY_COMPLEX);
+            assertThat(mParentDevicePolicyManager.isActivePasswordSufficient()).isFalse();
+        } finally {
+            // Cleanup
+            mParentDevicePolicyManager.setPasswordQuality(ADMIN_RECEIVER_COMPONENT,
+                    PASSWORD_QUALITY_UNSPECIFIED);
+        }
+    }
 }

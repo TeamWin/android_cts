@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2021 The Android Open Source Project
+// Copyright (C) 2014 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,14 +12,16 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
+
+// Automatically generated file from build_libs.sh.
+// DO NOT MODIFY THIS FILE.
 
 package {
     // See: http://go/android-license-faq
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-android_test {
+android_test_helper_app {
     name: "CtsSplitApp_armeabi",
     defaults: ["cts_support_defaults"],
     sdk_version: "current",
@@ -33,5 +35,23 @@ android_test {
     aaptflags: [
         "--version-code 100",
         "--replace-version",
+    ],
+}
+
+android_test_helper_app {
+    name: "CtsSplitApp_revision12_armeabi",
+    defaults: ["cts_support_defaults"],
+    sdk_version: "current",
+    java_resource_dirs: ["raw_revision"],
+    // tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
+    certificate: ":cts-testkey1",
+    aaptflags: [
+        "--version-code 100",
+        "--replace-version",
+        "--revision-code 12",
     ],
 }

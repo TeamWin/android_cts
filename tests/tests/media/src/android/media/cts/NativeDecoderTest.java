@@ -24,6 +24,7 @@ import android.media.MediaFormat;
 import android.media.MediaPlayer;
 import android.media.cts.TestUtils.Monitor;
 import android.net.Uri;
+import android.os.Build;
 import android.os.ParcelFileDescriptor;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
@@ -34,6 +35,7 @@ import android.webkit.cts.CtsTestServer;
 
 import androidx.test.filters.SmallTest;
 
+import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.MediaUtils;
 
 import org.apache.http.Header;
@@ -75,6 +77,8 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
 
     private static final int CONFIG_MODE_NONE = 0;
     private static final int CONFIG_MODE_QUEUE = 1;
+
+    private static boolean sIsAtLeastS = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S);
 
     static final String mInpPrefix = WorkDir.getMediaDirString();
     short[] mMasterBuffer;
@@ -180,6 +184,7 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
 
     protected static AssetFileDescriptor getAssetFileDescriptorFor(final String res)
             throws FileNotFoundException {
+        Preconditions.assertTestFileExists(mInpPrefix + res);
         File inpFile = new File(mInpPrefix + res);
         ParcelFileDescriptor parcelFD =
                 ParcelFileDescriptor.open(inpFile, ParcelFileDescriptor.MODE_READ_ONLY);
@@ -389,6 +394,7 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
 
     private int testDecoder(final String res, boolean wrapFd, boolean useCallback)
             throws Exception {
+        Preconditions.assertTestFileExists(mInpPrefix + res);
         if (!MediaUtils.hasCodecsForResource(mInpPrefix  + res)) {
             return 0; // skip
         }
@@ -594,6 +600,7 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
     }
 
     private int testVideoPlayback(final String res) throws Exception {
+        Preconditions.assertTestFileExists(mInpPrefix + res);
         if (!MediaUtils.checkCodecsForResource(mInpPrefix + res)) {
             return 0; // skip
         }
@@ -610,35 +617,42 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
             int fd, long startOffset, long length);
 
     @Presubmit
+    @NonMediaMainlineTest
     public void testMuxerAvc() throws Exception {
         // IMPORTANT: this file must not have B-frames
         testMuxer("video_1280x720_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz.mp4", false);
     }
 
+    @NonMediaMainlineTest
     public void testMuxerH263() throws Exception {
         // IMPORTANT: this file must not have B-frames
         testMuxer("video_176x144_3gp_h263_300kbps_25fps_aac_stereo_128kbps_11025hz.3gp", false);
     }
 
+    @NonMediaMainlineTest
     public void testMuxerHevc() throws Exception {
         // IMPORTANT: this file must not have B-frames
         testMuxer("video_640x360_mp4_hevc_450kbps_no_b.mp4", false);
     }
 
+    @NonMediaMainlineTest
     public void testMuxerVp8() throws Exception {
         testMuxer("bbb_s1_640x360_webm_vp8_2mbps_30fps_vorbis_5ch_320kbps_48000hz.webm", true);
     }
 
+    @NonMediaMainlineTest
     public void testMuxerVp9() throws Exception {
         testMuxer("video_1280x720_webm_vp9_csd_309kbps_25fps_vorbis_stereo_128kbps_48000hz.webm",
                 true);
     }
 
+    @NonMediaMainlineTest
     public void testMuxerVp9NoCsd() throws Exception {
         testMuxer("bbb_s1_640x360_webm_vp9_0p21_1600kbps_30fps_vorbis_stereo_128kbps_48000hz.webm",
                 true);
     }
 
+    @NonMediaMainlineTest
     public void testMuxerVp9Hdr() throws Exception {
         testMuxer("video_256x144_webm_vp9_hdr_83kbps_24fps.webm", true);
     }
@@ -649,12 +663,14 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
         testMuxer("video_176x144_mp4_mpeg2_105kbps_25fps_aac_stereo_128kbps_44100hz.mp4", false);
     }
 
+    @NonMediaMainlineTest
     public void testMuxerMpeg4() throws Exception {
         // IMPORTANT: this file must not have B-frames
         testMuxer("video_176x144_mp4_mpeg4_300kbps_25fps_aac_stereo_128kbps_44100hz.mp4", false);
     }
 
     private void testMuxer(final String res, boolean webm) throws Exception {
+        Preconditions.assertTestFileExists(mInpPrefix + res);
         if (!MediaUtils.checkCodecsForResource(mInpPrefix + res)) {
             return; // skip
         }
@@ -695,6 +711,7 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
         org.release();
         remux.release();
 
+        Preconditions.assertTestFileExists(mInpPrefix + res);
         MediaPlayer player1 =
                 MediaPlayer.create(mContext, Uri.fromFile(new File(mInpPrefix + res)));
         MediaPlayer player2 = MediaPlayer.create(mContext, Uri.parse("file://" + tmpFile));
@@ -763,9 +780,134 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
             }
         }
 
-        // there's no good way to compare two MediaFormats, so compare their string
-        // representation
-        return f1.toString().equals(f2.toString());
+        // before S, mpeg4 writers jammed a fixed SAR value into the output;
+        // this was fixed in S
+        if (!sIsAtLeastS) {
+            if (f1.containsKey(MediaFormat.KEY_PIXEL_ASPECT_RATIO_HEIGHT)
+                            && f2.containsKey(MediaFormat.KEY_PIXEL_ASPECT_RATIO_HEIGHT)) {
+                f2.setInteger(MediaFormat.KEY_PIXEL_ASPECT_RATIO_HEIGHT,
+                                f1.getInteger(MediaFormat.KEY_PIXEL_ASPECT_RATIO_HEIGHT));
+            }
+            if (f1.containsKey(MediaFormat.KEY_PIXEL_ASPECT_RATIO_WIDTH)
+                            && f2.containsKey(MediaFormat.KEY_PIXEL_ASPECT_RATIO_WIDTH)) {
+                f2.setInteger(MediaFormat.KEY_PIXEL_ASPECT_RATIO_WIDTH,
+                                f1.getInteger(MediaFormat.KEY_PIXEL_ASPECT_RATIO_WIDTH));
+            }
+        }
+
+        // look for f2 (the new) being a superset (>=) of f1 (the original)
+        // ensure that all of our fields in f1 appear in f2 with the same
+        // value. We allow f2 to contain extra fields.
+        Set<String> keys = f1.getKeys();
+        for (String key: keys) {
+            if (key == null) {
+                continue;
+            }
+            if (!f2.containsKey(key)) {
+                return false;
+            }
+            int f1Type = f1.getValueTypeForKey(key);
+            if (f1Type != f2.getValueTypeForKey(key)) {
+                return false;
+            }
+            switch (f1Type) {
+                case MediaFormat.TYPE_INTEGER:
+                    int f1Int = f1.getInteger(key);
+                    int f2Int = f2.getInteger(key);
+                    if (f1Int != f2Int) {
+                        return false;
+                    }
+                    break;
+                case MediaFormat.TYPE_LONG:
+                    long f1Long = f1.getLong(key);
+                    long f2Long = f2.getLong(key);
+                    if (f1Long != f2Long) {
+                        return false;
+                    }
+                    break;
+                case MediaFormat.TYPE_FLOAT:
+                    float f1Float = f1.getFloat(key);
+                    float f2Float = f2.getFloat(key);
+                    if (f1Float != f2Float) {
+                        return false;
+                    }
+                    break;
+                case MediaFormat.TYPE_STRING:
+                    String f1String = f1.getString(key);
+                    String f2String = f2.getString(key);
+                    if (!f1String.equals(f2String)) {
+                        return false;
+                    }
+                    break;
+                case MediaFormat.TYPE_BYTE_BUFFER:
+                    ByteBuffer f1ByteBuffer = f1.getByteBuffer(key);
+                    ByteBuffer f2ByteBuffer = f2.getByteBuffer(key);
+                    if (!f1ByteBuffer.equals(f2ByteBuffer)) {
+                        return false;
+                    }
+                    break;
+                default:
+                    return false;
+            }
+        }
+
+        // repeat for getFeatures
+        // (which we don't use in this test, but include for completeness)
+        Set<String> features = f1.getFeatures();
+        for (String key: features) {
+            if (key == null) {
+                continue;
+            }
+            if (!f2.containsKey(key)) {
+                return false;
+            }
+            int f1Type = f1.getValueTypeForKey(key);
+            if (f1Type != f2.getValueTypeForKey(key)) {
+                return false;
+            }
+            switch (f1Type) {
+                case MediaFormat.TYPE_INTEGER:
+                    int f1Int = f1.getInteger(key);
+                    int f2Int = f2.getInteger(key);
+                    if (f1Int != f2Int) {
+                        return false;
+                    }
+                    break;
+                case MediaFormat.TYPE_LONG:
+                    long f1Long = f1.getLong(key);
+                    long f2Long = f2.getLong(key);
+                    if (f1Long != f2Long) {
+                        return false;
+                    }
+                    break;
+                case MediaFormat.TYPE_FLOAT:
+                    float f1Float = f1.getFloat(key);
+                    float f2Float = f2.getFloat(key);
+                    if (f1Float != f2Float) {
+                        return false;
+                    }
+                    break;
+                case MediaFormat.TYPE_STRING:
+                    String f1String = f1.getString(key);
+                    String f2String = f2.getString(key);
+                    if (!f1String.equals(f2String)) {
+                        return false;
+                    }
+                    break;
+                case MediaFormat.TYPE_BYTE_BUFFER:
+                    ByteBuffer f1ByteBuffer = f1.getByteBuffer(key);
+                    ByteBuffer f2ByteBuffer = f2.getByteBuffer(key);
+                    if (!f1ByteBuffer.equals(f2ByteBuffer)) {
+                        return false;
+                    }
+                    break;
+                default:
+                    return false;
+            }
+        }
+
+        // not otherwise disqualified
+        return true;
     }
 
     private static native boolean testMuxerNative(int in, long inoffset, long insize,

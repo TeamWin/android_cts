@@ -64,6 +64,7 @@ import androidx.test.InstrumentationRegistry;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Executor;
 
@@ -593,10 +594,13 @@ public class CellInfoTest {
 
         if (mRadioHalVersion >= RADIO_HAL_VERSION_1_5) {
             int[] bands = nr.getBands();
+
             for (int band: bands) {
                 assertTrue("getBand out of range [1, 95] or [257, 261], band = " + band,
                         (band >= BAND_FR1_MIN_NR && band <= BAND_FR1_MAX_NR)
                         || (band >= BAND_FR2_MIN_NR && band <= BAND_FR2_MAX_NR));
+
+                verifyCellIdentityNrBands(bands);
             }
         }
 
@@ -649,6 +653,14 @@ public class CellInfoTest {
                 + ssRsrq, -20 <= ssRsrq && ssRsrq <= -3 || ssRsrq == CellInfo.UNAVAILABLE);
         assertTrue("getSsSinr() out of range [-23, 40] | Integer.MAX_INTEGER, ssSinr = "
                 + ssSinr, -23 <= ssSinr && ssSinr <= 40 || ssSinr == CellInfo.UNAVAILABLE);
+    }
+
+    private void verifyCellIdentityNrBands(int[] nrBands) {
+        //Verify the registered cell reports non-null band.
+        assertTrue(nrBands != null);
+
+        //Verify the registered cell reports at least one band.
+        assertTrue(Arrays.stream(nrBands).anyMatch(band -> band > 0));
     }
 
     private void verifyCellInfoLteParcelandHashcode(CellInfoLte lte) {
@@ -709,9 +721,12 @@ public class CellInfoTest {
 
         if (mRadioHalVersion >= RADIO_HAL_VERSION_1_5) {
             int[] bands = lte.getBands();
+
             for (int band: bands) {
                 assertTrue("getBand out of range [1, 88], band = " + band,
                         band >= BAND_MIN_LTE && band <= BAND_MAX_LTE);
+
+                verifyCellIdentityLteBands(bands);
             }
         }
 
@@ -815,6 +830,14 @@ public class CellInfoTest {
 
         CellSignalStrengthLte newCss = CellSignalStrengthLte.CREATOR.createFromParcel(p);
         assertEquals(cellSignalStrengthLte, newCss);
+    }
+
+    private void verifyCellIdentityLteBands(int[] lteBands) {
+        //Verify the registered cell reports non-null band.
+        assertTrue(lteBands != null);
+
+        //Verify the registered cell reports at least one band.
+        assertTrue(Arrays.stream(lteBands).anyMatch(band -> band > 0));
     }
 
     // Verify wcdma cell information is within correct range.

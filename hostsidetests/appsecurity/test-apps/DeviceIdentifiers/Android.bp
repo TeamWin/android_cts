@@ -24,12 +24,14 @@ android_test_helper_app {
     static_libs: [
         "androidx.test.rules",
         "compatibility-device-util-axt",
+        "platform-test-annotations",
     ],
     libs: ["android.test.base"],
     srcs: ["src/**/*.java"],
     test_suites: [
         "cts",
         "general-tests",
+        "sts",
     ],
     optimize: {
         enabled: false,

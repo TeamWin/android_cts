@@ -106,8 +106,9 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
     private static final long PREVIEW_RUN_MS = 500;
     private static final long FRAME_DURATION_30FPS_NSEC = (long) 1e9 / 30;
 
-    private static final long MIN_BACK_SENSOR_PERFORMANCE_CLASS_RESOLUTION = 12000000;
-    private static final long MIN_FRONT_SENSOR_PERFORMANCE_CLASS_RESOLUTION = 6000000;
+    private static final long MIN_BACK_SENSOR_PERF_CLASS_RESOLUTION = 12000000;
+    private static final long MIN_FRONT_SENSOR_S_PERF_CLASS_RESOLUTION = 5000000;
+    private static final long MIN_FRONT_SENSOR_R_PERF_CLASS_RESOLUTION = 4000000;
 
     /*
      * HW Levels short hand
@@ -1480,6 +1481,71 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
     }
 
     /**
+     * Check remosaic reprocessing capabilities. Check that ImageFormat.RAW_SENSOR is supported as
+     * input and output.
+     */
+    @Test
+    public void testRemosaicReprocessingCharacteristics() {
+        for (int i = 0; i < mAllCameraIds.length; i++) {
+            Log.i(TAG, "testRemosaicReprocessingCharacteristics: Testing camera ID " +
+                    mAllCameraIds[i]);
+
+            CameraCharacteristics c = mCharacteristics.get(i);
+            int[] capabilities = c.get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES);
+            assertNotNull("android.request.availableCapabilities must never be null",
+                    capabilities);
+            boolean supportsRemosaic = arrayContains(capabilities,
+                    CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_REMOSAIC_REPROCESSING);
+            if (!supportsRemosaic) {
+                Log.i(TAG, "Remosaic reprocessing not supported by camera id " + i +
+                        " skipping test");
+                continue;
+            }
+            StreamConfigurationMap configs =
+                    c.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP_MAXIMUM_RESOLUTION);
+            Integer maxNumInputStreams =
+                    c.get(CameraCharacteristics.REQUEST_MAX_NUM_INPUT_STREAMS);
+            int[] inputFormats = configs.getInputFormats();
+            int[] outputFormats = configs.getOutputFormats();
+
+            mCollector.expectTrue("Support reprocessing but max number of input stream is " +
+                    maxNumInputStreams, maxNumInputStreams != null && maxNumInputStreams > 0);
+
+            // Verify mandatory input formats are supported
+            mCollector.expectTrue("RAW_SENSOR input support needed for REMOSAIC reprocessing",
+                    arrayContains(inputFormats, ImageFormat.RAW_SENSOR));
+            // max capture stall must be reported if one of the reprocessing is supported.
+            final int MAX_ALLOWED_STALL_FRAMES = 4;
+            Integer maxCaptureStall = c.get(CameraCharacteristics.REPROCESS_MAX_CAPTURE_STALL);
+            mCollector.expectTrue("max capture stall must be non-null and no larger than "
+                    + MAX_ALLOWED_STALL_FRAMES,
+                    maxCaptureStall != null && maxCaptureStall <= MAX_ALLOWED_STALL_FRAMES);
+
+            for (int input : inputFormats) {
+                // Verify mandatory output formats are supported
+                int[] outputFormatsForInput = configs.getValidOutputFormatsForInput(input);
+
+                // Verify camera can output the reprocess input formats and sizes.
+                Size[] inputSizes = configs.getInputSizes(input);
+                Size[] outputSizes = configs.getOutputSizes(input);
+                Size[] highResOutputSizes = configs.getHighResolutionOutputSizes(input);
+                mCollector.expectTrue("no input size supported for format " + input,
+                        inputSizes.length > 0);
+                mCollector.expectTrue("no output size supported for format " + input,
+                        outputSizes.length > 0);
+
+                for (Size inputSize : inputSizes) {
+                    mCollector.expectTrue("Camera must be able to output the supported " +
+                            "reprocessing input size",
+                            arrayContains(outputSizes, inputSize) ||
+                            arrayContains(highResOutputSizes, inputSize));
+                }
+            }
+        }
+    }
+
+
+    /**
      * Check depth output capability
      */
     @Test
@@ -2331,6 +2397,53 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
     }
 
     /**
+     * Check rotate-and-crop camera reporting.
+     * Every device must report NONE; if actually supporting feature, must report NONE, 90, AUTO at
+     * least.
+     */
+    @Test
+    public void testRotateAndCropCharacteristics() {
+        for (int i = 0; i < mAllCameraIds.length; i++) {
+            Log.i(TAG, "testRotateAndCropCharacteristics: Testing camera ID " + mAllCameraIds[i]);
+
+            CameraCharacteristics c = mCharacteristics.get(i);
+
+            if (!arrayContains(mCameraIdsUnderTest, mAllCameraIds[i])) {
+                // Skip hidden physical cameras
+                continue;
+            }
+
+            int[] availableRotateAndCropModes = c.get(
+                    CameraCharacteristics.SCALER_AVAILABLE_ROTATE_AND_CROP_MODES);
+            assertTrue("availableRotateAndCropModes must not be null",
+                     availableRotateAndCropModes != null);
+            boolean foundAuto = false;
+            boolean foundNone = false;
+            boolean found90 = false;
+            for (int mode :  availableRotateAndCropModes) {
+                switch(mode) {
+                    case CameraCharacteristics.SCALER_ROTATE_AND_CROP_NONE:
+                        foundNone = true;
+                        break;
+                    case CameraCharacteristics.SCALER_ROTATE_AND_CROP_90:
+                        found90 = true;
+                        break;
+                    case CameraCharacteristics.SCALER_ROTATE_AND_CROP_AUTO:
+                        foundAuto = true;
+                        break;
+                }
+            }
+            if (availableRotateAndCropModes.length > 1) {
+                assertTrue("To support SCALER_ROTATE_AND_CROP: NONE, 90, and AUTO must be included",
+                        foundNone && found90 && foundAuto);
+            } else {
+                assertTrue("If only one SCALER_ROTATE_AND_CROP value is supported, it must be NONE",
+                        foundNone);
+            }
+        }
+    }
+
+    /**
      * Check that all devices available through the legacy API are also
      * accessible via Camera2.
      */
@@ -2438,19 +2551,20 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
     }
 
     /**
-     * Check camera characteristics for S Performance class requirements as specified
+     * Check camera characteristics for R and S Performance class requirements as specified
      * in CDD camera section 7.5
      */
     @Test
     @CddTest(requirement="7.5")
-    public void testCameraSPerfClassCharacteristics() throws Exception {
+    public void testCameraPerfClassCharacteristics() throws Exception {
         if (mAdoptShellPerm) {
             // Skip test for system camera. Performance class is only applicable for public camera
             // ids.
             return;
         }
+        boolean isRPerfClass = CameraTestUtils.isRPerfClass();
         boolean isSPerfClass = CameraTestUtils.isSPerfClass();
-        if (!isSPerfClass) {
+        if (!isRPerfClass && !isSPerfClass) {
             return;
         }
 
@@ -2482,36 +2596,9 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
             if (isPrimaryRear) {
                 hasPrimaryRear = true;
                 mCollector.expectTrue("Primary rear camera resolution should be at least " +
-                        MIN_BACK_SENSOR_PERFORMANCE_CLASS_RESOLUTION + " pixels, is "+
+                        MIN_BACK_SENSOR_PERF_CLASS_RESOLUTION + " pixels, is "+
                         sensorResolution,
-                        sensorResolution >= MIN_BACK_SENSOR_PERFORMANCE_CLASS_RESOLUTION);
-
-                // 720P @ 240fps
-                boolean supportHighSpeed = staticInfo.isCapabilitySupported(CONSTRAINED_HIGH_SPEED);
-                mCollector.expectTrue("Primary rear camera should support high speed recording",
-                        supportHighSpeed);
-                if (supportHighSpeed) {
-                    boolean supportHD240 = false;
-                    Size[] availableHighSpeedSizes = config.getHighSpeedVideoSizes();
-                    for (Size size : availableHighSpeedSizes) {
-                        if (!size.equals(HD)) {
-                            continue;
-                        }
-                        Range<Integer>[] availableFpsRanges =
-                                config.getHighSpeedVideoFpsRangesFor(size);
-                        for (Range<Integer> fpsRange : availableFpsRanges) {
-                            if (fpsRange.getUpper() == 240) {
-                                supportHD240 = true;
-                                break;
-                            }
-                        }
-                        if (supportHD240) {
-                            break;
-                        }
-                    }
-                    mCollector.expectTrue("Primary rear camera should support HD @ 240fps",
-                            supportHD240);
-                }
+                        sensorResolution >= MIN_BACK_SENSOR_PERF_CLASS_RESOLUTION);
 
                 // 4K @ 30fps
                 boolean supportUHD = videoSizes.contains(UHD);
@@ -2526,10 +2613,17 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
                 }
             } else {
                 hasPrimaryFront = true;
-                mCollector.expectTrue("Primary front camera resolution should be at least " +
-                        MIN_FRONT_SENSOR_PERFORMANCE_CLASS_RESOLUTION + " pixels, is "+
-                        sensorResolution,
-                        sensorResolution >= MIN_FRONT_SENSOR_PERFORMANCE_CLASS_RESOLUTION);
+                if (isSPerfClass) {
+                    mCollector.expectTrue("Primary front camera resolution should be at least " +
+                            MIN_FRONT_SENSOR_S_PERF_CLASS_RESOLUTION + " pixels, is "+
+                            sensorResolution,
+                            sensorResolution >= MIN_FRONT_SENSOR_S_PERF_CLASS_RESOLUTION);
+                } else {
+                    mCollector.expectTrue("Primary front camera resolution should be at least " +
+                            MIN_FRONT_SENSOR_R_PERF_CLASS_RESOLUTION + " pixels, is "+
+                            sensorResolution,
+                            sensorResolution >= MIN_FRONT_SENSOR_R_PERF_CLASS_RESOLUTION);
+                }
                 // 1080P @ 30fps
                 boolean supportFULLHD = videoSizes.contains(FULLHD);
                 mCollector.expectTrue("Primary front camera should support 1080P video recording",
@@ -2542,38 +2636,36 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
                 }
             }
 
+            String facingString = hasPrimaryRear ? "rear" : "front";
             // H-1-3
-            mCollector.expectTrue("Primary rear/front camera should be at least FULL, but is " +
-                   staticInfo.getHardwareLevelChecked(), staticInfo.isHardwareLevelAtLeastFull());
-
-            // H-1-4
-            if (isPrimaryRear) {
-                mCollector.expectTrue("Primary rear camera should support RAW capability",
-                        staticInfo.isCapabilitySupported(RAW));
+            if (isSPerfClass || (isRPerfClass && isPrimaryRear)) {
+                mCollector.expectTrue("Primary " + facingString +
+                        " camera should be at least FULL, but is " +
+                        toStringHardwareLevel(staticInfo.getHardwareLevelChecked()),
+                        staticInfo.isHardwareLevelAtLeastFull());
+            } else {
+                mCollector.expectTrue("Primary " + facingString +
+                        " camera should be at least LIMITED, but is " +
+                        toStringHardwareLevel(staticInfo.getHardwareLevelChecked()),
+                        staticInfo.isHardwareLevelAtLeastLimited());
             }
 
-            // H-1-5
+            // H-1-4
             Integer timestampSource = c.get(CameraCharacteristics.SENSOR_INFO_TIMESTAMP_SOURCE);
             mCollector.expectTrue(
-                    "Primary rear/front camera should support real-time timestamp source",
+                    "Primary " + facingString + " camera should support real-time timestamp source",
                     timestampSource != null &&
                     timestampSource.equals(CameraMetadata.SENSOR_INFO_TIMESTAMP_SOURCE_REALTIME));
 
             // H-1-8
-            Size[] jpegSizes = staticInfo.getJpegOutputSizesChecked();
-            assertTrue("Primary rear/front cameras must support JPEG formats",
-                    jpegSizes != null && jpegSizes.length > 0);
-            for (Size jpegSize : jpegSizes) {
-                mCollector.expectTrue(
-                        "Primary rear/front camera's JPEG size must be at least 1080p, but is " +
-                        jpegSize,
-                        jpegSize.getWidth() >= FULLHD.getWidth() &&
-                        jpegSize.getHeight() >= FULLHD.getHeight());
+            if (isSPerfClass && isPrimaryRear) {
+                mCollector.expectTrue("Primary rear camera should support RAW capability",
+                        staticInfo.isCapabilitySupported(RAW));
             }
         }
-        mCollector.expectTrue("There must be a primary rear camera for S performance class.",
+        mCollector.expectTrue("There must be a primary rear camera for performance class.",
                 hasPrimaryRear);
-        mCollector.expectTrue("There must be a primary front camera for S performance class.",
+        mCollector.expectTrue("There must be a primary front camera for performance class.",
                 hasPrimaryFront);
     }
 

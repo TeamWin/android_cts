@@ -16,33 +16,44 @@
 
 package android.security.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
+
 import android.platform.test.annotations.RestrictedBuildTest;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.tradefed.targetprep.DeviceInfoCollector;
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.PropertyUtil;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.CollectingOutputReceiver;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
-import com.android.tradefed.testtype.DeviceTestCase;
-import com.android.tradefed.testtype.IBuildReceiver;
-import com.android.tradefed.testtype.IDeviceTest;
+import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.util.FileUtil;
 
-import com.android.compatibility.common.util.CddTest;
+import org.json.JSONObject;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileReader;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.lang.String;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -50,18 +61,13 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.Scanner;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.json.JSONObject;
-
 
 /**
  * Host-side SELinux tests.
@@ -70,7 +76,8 @@ import org.json.JSONObject;
  * run as the shell user to evaluate aspects of the state of SELinux on the test
  * device which otherwise would not be available to a normal apk.
  */
-public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, IDeviceTest {
+@RunWith(DeviceJUnit4ClassRunner.class)
+public class SELinuxHostTest extends BaseHostJUnit4Test {
 
     // Keep in sync with AndroidTest.xml
     private static final String DEVICE_INFO_DEVICE_DIR = "/sdcard/device-info-files/";
@@ -118,23 +125,6 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
      */
     private ITestDevice mDevice;
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void setBuild(IBuildInfo build) {
-        mBuild = build;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void setDevice(ITestDevice device) {
-        super.setDevice(device);
-        mDevice = device;
-    }
-
     public static File copyResourceToTempFile(String resName) throws IOException {
         InputStream is = SELinuxHostTest.class.getResourceAsStream(resName);
         File tempFile = File.createTempFile("SELinuxHostTest", ".tmp");
@@ -163,9 +153,13 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
         }
     }
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setUp() throws Exception {
+        // Assumes every test in this file asserts a requirement of CDD section 9.
+        assumeSecurityModelCompat();
+
+        mDevice = getDevice();
+        mBuild = getBuild();
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mBuild);
         sepolicyAnalyze = copyResourceToTempFile("/sepolicy-analyze");
         sepolicyAnalyze.setExecutable(true);
@@ -190,6 +184,11 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
             deviceNonplatFcFile = getDeviceFile(mDevice, cachedDeviceNonplatFcFiles,
                     "/vendor_file_contexts", "vendor_file_contexts");
         }
+    }
+
+    private void assumeSecurityModelCompat() throws Exception {
+        assumeTrue("Skipping test: FEATURE_SECURITY_MODEL_COMPATIBLE missing.",
+                getDevice().hasFeature("feature:android.hardware.security.model.compatible"));
     }
 
     /*
@@ -402,6 +401,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
      * @throws Exception
      */
     @CddTest(requirement="9.7")
+    @Test
     public void testGlobalEnforcing() throws Exception {
         CollectingOutputReceiver out = new CollectingOutputReceiver();
         mDevice.executeShellCommand("cat /sys/fs/selinux/enforce", out);
@@ -415,6 +415,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
      */
     @CddTest(requirement="9.7")
     @RestrictedBuildTest
+    @Test
     public void testAllDomainsEnforcing() throws Exception {
 
         /* run sepolicy-analyze permissive check on policy file */
@@ -530,6 +531,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
      * Asserts that no HAL server domains are exempted from the prohibition of socket use with the
      * only exceptions for the automotive device type.
      */
+    @Test
     public void testNoExemptionsForSocketsUseWithinHalServer() throws Exception {
         if (!isFullTrebleDevice()) {
             return;
@@ -558,6 +560,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
      * initiating socket communications between core and vendor domains. This attribute must not be
      * used on production Treble devices.
      */
+    @Test
     public void testNoExemptionsForSocketsBetweenCoreAndVendorBan() throws Exception {
         if (!isFullTrebleDevice()) {
             return;
@@ -578,6 +581,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
      * Asserts that no vendor domains are exempted from the prohibition on directly
      * executing binaries from /system.
      * */
+    @Test
     public void testNoExemptionsForVendorExecutingCore() throws Exception {
         if (!isFullTrebleDevice()) {
             return;
@@ -603,6 +607,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
      * @throws Exception
      */
     @CddTest(requirement="9.7")
+    @Test
     public void testMLSAttributes() throws Exception {
         assertNotInAttribute("mlstrustedsubject", "untrusted_app");
         assertNotInAttribute("mlstrustedobject", "app_data_file");
@@ -614,6 +619,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
      * @throws Exception
      */
     @CddTest(requirement="9.7")
+    @Test
     public void testValidSeappContexts() throws Exception {
 
         /* obtain seapp_contexts file from running device */
@@ -682,6 +688,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
      * @throws Exception
      */
     @CddTest(requirement="9.7")
+    @Test
     public void testAospSeappContexts() throws Exception {
 
         /* obtain seapp_contexts file from running device */
@@ -703,6 +710,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
      * @throws Exception
      */
     @CddTest(requirement="9.7")
+    @Test
     public void testAospFileContexts() throws Exception {
 
         /* retrieve the checkfc executable from jar */
@@ -734,6 +742,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
      * @throws Exception
      */
     @CddTest(requirement="9.7")
+    @Test
     public void testAospPropertyContexts() throws Exception {
 
         /* obtain property_contexts file from running device */
@@ -759,6 +768,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
      * @throws Exception
      */
     @CddTest(requirement="9.7")
+    @Test
     public void testAospServiceContexts() throws Exception {
 
         /* obtain service_contexts file from running device */
@@ -780,6 +790,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
      * @throws Exception
      */
     @CddTest(requirement="9.7")
+    @Test
     public void testValidFileContexts() throws Exception {
 
         /* retrieve the checkfc executable from jar */
@@ -817,6 +828,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
      * @throws Exception
      */
     @CddTest(requirement="9.7")
+    @Test
     public void testValidPropertyContexts() throws Exception {
 
         /* retrieve the checkfc executable from jar */
@@ -856,6 +868,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
      * @throws Exception
      */
     @CddTest(requirement="9.7")
+    @Test
     public void testValidServiceContexts() throws Exception {
 
         /* retrieve the checkfc executable from jar */
@@ -958,6 +971,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
      *
      * @throws Exception
      */
+    @Test
     public void testDataTypeViolators() throws Exception {
         assertSepolicyTests("TestDataTypeViolations", "/sepolicy_tests",
                 PropertyUtil.isVendorApiLevelNewerThan(mDevice, 27) /* includeVendorSepolicy */);
@@ -968,6 +982,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
      *
      * @throws Exception
      */
+    @Test
     public void testProcTypeViolators() throws Exception {
         assertSepolicyTests("TestProcTypeViolations", "/sepolicy_tests",
                 PropertyUtil.isVendorApiLevelNewerThan(mDevice, 27) /* includeVendorSepolicy */);
@@ -978,6 +993,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
      *
      * @throws Exception
      */
+    @Test
     public void testSysfsTypeViolators() throws Exception {
         assertSepolicyTests("TestSysfsTypeViolations", "/sepolicy_tests",
                 PropertyUtil.isVendorApiLevelNewerThan(mDevice, 27) /* includeVendorSepolicy */);
@@ -988,6 +1004,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
      *
      * @throws Exception
      */
+    @Test
     public void testVendorTypeViolators() throws Exception {
         assertSepolicyTests("TestVendorTypeViolations", "/sepolicy_tests",
                 PropertyUtil.isVendorApiLevelNewerThan(mDevice, 27) /* includeVendorSepolicy */);
@@ -998,6 +1015,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
      *
      * @throws Exception
      */
+    @Test
     public void testTracefsTypeViolators() throws Exception {
         assertSepolicyTests("TestTracefsTypeViolations", "/sepolicy_tests",
                 PropertyUtil.isVendorApiLevelNewerThan(mDevice, 30) /* includeVendorSepolicy */);
@@ -1008,6 +1026,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
      *
      * @throws Exception
      */
+    @Test
     public void testDebugfsTypeViolators() throws Exception {
         assertSepolicyTests("TestDebugfsTypeViolations", "/sepolicy_tests",
                 PropertyUtil.isVendorApiLevelNewerThan(mDevice, 30) /* includeVendorSepolicy */);
@@ -1020,6 +1039,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
      *
      * @throws Exception
      */
+    @Test
     public void testCoredomainViolators() throws Exception {
         assertSepolicyTests("CoredomainViolations", "/treble_sepolicy_tests",
                 PropertyUtil.isVendorApiLevelNewerThan(mDevice, 27) /* includeVendorSepolicy */);
@@ -1031,6 +1051,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
      * @throws Exception
      */
     @CddTest(requirement="9.7")
+    @Test
     public void testNoBooleans() throws Exception {
 
         /* run sepolicy-analyze booleans check on policy file */
@@ -1057,6 +1078,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
      *
      * @throws Exception
      */
+    @Test
     public void testNoBugreportDenials() throws Exception {
         // Take a bugreport and get its logcat output.
         mDevice.executeAdbCommand("logcat", "-c");
@@ -1269,6 +1291,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
 
     /* Init is always there */
     @CddTest(requirement="9.7")
+    @Test
     public void testInitDomain() throws DeviceNotAvailableException {
         assertDomainHasExecutable("u:r:init:s0", "/system/bin/init");
         assertDomainHasExecutable("u:r:vendor_init:s0", "/system/bin/init");
@@ -1277,96 +1300,112 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
 
     /* Ueventd is always there */
     @CddTest(requirement="9.7")
+    @Test
     public void testUeventdDomain() throws DeviceNotAvailableException {
         assertDomainOne("u:r:ueventd:s0", "/system/bin/ueventd");
     }
 
     /* healthd may or may not exist */
     @CddTest(requirement="9.7")
+    @Test
     public void testHealthdDomain() throws DeviceNotAvailableException {
         assertDomainZeroOrOne("u:r:healthd:s0", "/system/bin/healthd");
     }
 
     /* Servicemanager is always there */
     @CddTest(requirement="9.7")
+    @Test
     public void testServicemanagerDomain() throws DeviceNotAvailableException {
         assertDomainOne("u:r:servicemanager:s0", "/system/bin/servicemanager");
     }
 
     /* Vold is always there */
     @CddTest(requirement="9.7")
+    @Test
     public void testVoldDomain() throws DeviceNotAvailableException {
         assertDomainOne("u:r:vold:s0", "/system/bin/vold");
     }
 
     /* netd is always there */
     @CddTest(requirement="9.7")
+    @Test
     public void testNetdDomain() throws DeviceNotAvailableException {
         assertDomainN("u:r:netd:s0", "/system/bin/netd", "/system/bin/iptables-restore", "/system/bin/ip6tables-restore");
     }
 
     /* Surface flinger is always there */
     @CddTest(requirement="9.7")
+    @Test
     public void testSurfaceflingerDomain() throws DeviceNotAvailableException {
         assertDomainOne("u:r:surfaceflinger:s0", "/system/bin/surfaceflinger");
     }
 
     /* Zygote is always running */
     @CddTest(requirement="9.7")
+    @Test
     public void testZygoteDomain() throws DeviceNotAvailableException {
         assertDomainN("u:r:zygote:s0", "zygote", "zygote64", "usap32", "usap64");
     }
 
     /* Checks drmserver for devices that require it */
     @CddTest(requirement="9.7")
+    @Test
     public void testDrmServerDomain() throws DeviceNotAvailableException {
         assertDomainZeroOrOne("u:r:drmserver:s0", "/system/bin/drmserver");
     }
 
     /* Installd is always running */
     @CddTest(requirement="9.7")
+    @Test
     public void testInstalldDomain() throws DeviceNotAvailableException {
         assertDomainOne("u:r:installd:s0", "/system/bin/installd");
     }
 
     /* keystore is always running */
     @CddTest(requirement="9.7")
+    @Test
     public void testKeystoreDomain() throws DeviceNotAvailableException {
         assertDomainOne("u:r:keystore:s0", "/system/bin/keystore2");
     }
 
     /* System server better be running :-P */
     @CddTest(requirement="9.7")
+    @Test
     public void testSystemServerDomain() throws DeviceNotAvailableException {
         assertDomainOne("u:r:system_server:s0", "system_server");
     }
 
     /* Watchdogd may or may not be there */
     @CddTest(requirement="9.7")
+    @Test
     public void testWatchdogdDomain() throws DeviceNotAvailableException {
         assertDomainZeroOrOne("u:r:watchdogd:s0", "/system/bin/watchdogd");
     }
 
     /* logd may or may not be there */
     @CddTest(requirement="9.7")
+    @Test
     public void testLogdDomain() throws DeviceNotAvailableException {
         assertDomainZeroOrOne("u:r:logd:s0", "/system/bin/logd");
     }
 
     /* lmkd may or may not be there */
     @CddTest(requirement="9.7")
+    @Test
     public void testLmkdDomain() throws DeviceNotAvailableException {
         assertDomainZeroOrOne("u:r:lmkd:s0", "/system/bin/lmkd");
     }
 
     /* Wifi may be off so cardinality of 0 or 1 is ok */
     @CddTest(requirement="9.7")
+    @Test
     public void testWpaDomain() throws DeviceNotAvailableException {
         assertDomainZeroOrOne("u:r:wpa:s0", "/system/bin/wpa_supplicant");
     }
 
     /* permissioncontroller, if running, always runs in permissioncontroller_app */
     @CddTest(requirement="9.7")
+    @Test
     public void testPermissionControllerDomain() throws DeviceNotAvailableException {
         assertExecutableHasDomain("com.google.android.permissioncontroller", "u:r:permissioncontroller_app:s0");
         assertExecutableHasDomain("com.android.permissioncontroller", "u:r:permissioncontroller_app:s0");
@@ -1374,12 +1413,14 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
 
     /* vzwomatrigger may or may not be running */
     @CddTest(requirement="9.7")
+    @Test
     public void testVzwOmaTriggerDomain() throws DeviceNotAvailableException {
         assertDomainZeroOrOne("u:r:vzwomatrigger_app:s0", "com.android.vzwomatrigger");
     }
 
     /* gmscore, if running, always runs in gmscore_app */
     @CddTest(requirement="9.7")
+    @Test
     public void testGMSCoreDomain() throws DeviceNotAvailableException {
         assertExecutableHasDomain("com.google.android.gms", "u:r:gmscore_app:s0");
         assertExecutableHasDomain("com.google.android.gms.ui", "u:r:gmscore_app:s0");
@@ -1392,6 +1433,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
      * needed
      */
     @CddTest(requirement="9.7")
+    @Test
     public void testInitShellDomain() throws DeviceNotAvailableException {
         assertDomainEmpty("u:r:init_shell:s0");
     }
@@ -1401,6 +1443,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
      * needed
      */
     @CddTest(requirement="9.7")
+    @Test
     public void testRecoveryDomain() throws DeviceNotAvailableException {
         assertDomainEmpty("u:r:recovery:s0");
     }
@@ -1411,6 +1454,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
      */
     @CddTest(requirement="9.7")
     @RestrictedBuildTest
+    @Test
     public void testSuDomain() throws DeviceNotAvailableException {
         assertDomainEmpty("u:r:su:s0");
     }
@@ -1419,6 +1463,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
      * All kthreads should be in kernel context.
      */
     @CddTest(requirement="9.7")
+    @Test
     public void testKernelDomain() throws DeviceNotAvailableException {
         String domain = "u:r:kernel:s0";
         List<ProcessDetails> procs = ProcessDetails.getProcMap(mDevice).get(domain);

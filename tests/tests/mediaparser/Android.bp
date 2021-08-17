@@ -23,7 +23,7 @@ android_test {
     test_suites: [
         "cts",
         "general-tests",
-        "mts",
+        "mts-media",
     ],
 }
 
@@ -47,5 +47,4 @@ java_defaults {
         "android.test.runner",
     ],
     sdk_version: "test_current",
-
 }

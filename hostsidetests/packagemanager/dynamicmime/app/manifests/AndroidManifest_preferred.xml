@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <!--
   ~ Copyright (C) 2020 The Android Open Source Project
   ~
@@ -17,11 +16,12 @@
   -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="android.dynamicmime.preferred">
+     package="android.dynamicmime.preferred">
     <application android:testOnly="true"
-                 android:label="TestApp.Application">
-        <uses-library android:name="android.test.runner" />
-        <activity android:name="android.dynamicmime.common.activity.FirstActivity">
+         android:label="TestApp.Application">
+        <uses-library android:name="android.test.runner"/>
+        <activity android:name="android.dynamicmime.common.activity.FirstActivity"
+             android:exported="true">
             <intent-filter android:label="TestApp.FirstActivity">
                 <action android:name="android.dynamicmime.preferred.TEST_ACTION"/>
                 <action android:name="android.dynamicmime.preferred.FILTER_INFO_HOOK_group_first"/>
@@ -30,7 +30,8 @@
             </intent-filter>
         </activity>
 
-        <activity android:name="android.dynamicmime.common.activity.TwoGroupsActivity">
+        <activity android:name="android.dynamicmime.common.activity.TwoGroupsActivity"
+             android:exported="true">
             <intent-filter android:label="TestApp.TwoGroupsActivity">
                 <action android:name="android.dynamicmime.preferred.TEST_ACTION"/>
                 <action android:name="android.dynamicmime.preferred.FILTER_INFO_HOOK_group_both"/>
@@ -61,15 +62,14 @@
         </activity>
 
         <receiver android:name="android.dynamicmime.app.AppMimeGroupsReceiver"
-                  android:exported="true">
+             android:exported="true">
             <intent-filter>
                 <action android:name="android.dynamicmime.UPDATE_MIME_GROUP_REQUEST"/>
             </intent-filter>
         </receiver>
     </application>
 
-    <instrumentation
-        android:name="androidx.test.runner.AndroidJUnitRunner"
-        android:targetPackage="android.dynamicmime.preferred">
+    <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
+         android:targetPackage="android.dynamicmime.preferred">
     </instrumentation>
 </manifest>

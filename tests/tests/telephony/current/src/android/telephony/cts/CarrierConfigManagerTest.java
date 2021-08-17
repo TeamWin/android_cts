@@ -38,12 +38,14 @@ import static org.junit.Assert.fail;
 
 
 import android.app.UiAutomation;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
-import android.net.ConnectivityManager;
 import android.os.Looper;
 import android.os.PersistableBundle;
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import android.telephony.CarrierConfigManager;
 import android.telephony.SubscriptionManager;
 import android.telephony.SubscriptionManager.OnSubscriptionsChangedListener;
@@ -57,6 +59,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -102,9 +106,7 @@ public class CarrierConfigManagerTest {
      * the device supports cellular data.
      */
     private boolean hasTelephony() {
-        ConnectivityManager mgr =
-                (ConnectivityManager) getContext().getSystemService(Context.CONNECTIVITY_SERVICE);
-        return mgr.isNetworkSupported(ConnectivityManager.TYPE_MOBILE);
+        return mTelephonyManager.isDataCapable();
     }
 
     private boolean isSimCardPresent() {
@@ -199,8 +201,8 @@ public class CarrierConfigManagerTest {
         checkConfig(config);
     }
 
-    @SecurityTest
     @Test
+    @AsbSecurityTest(cveBugId = 73136824)
     public void testRevokePermission() {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             return;
@@ -314,6 +316,46 @@ public class CarrierConfigManagerTest {
         } finally {
             mConfigManager.overrideConfig(subId, null);
             ui.dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
+    public void testExtraRebroadcastOnUnlock() throws Throwable {
+        if (!hasTelephony()) {
+            return;
+        }
+
+        BlockingQueue<Boolean> queue = new ArrayBlockingQueue<Boolean>(5);
+        BroadcastReceiver receiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if (CarrierConfigManager.ACTION_CARRIER_CONFIG_CHANGED.equals(intent.getAction())) {
+                    queue.add(new Boolean(true));
+                    // verify that REBROADCAST_ON_UNLOCK is populated
+                    assertFalse(
+                            intent.getBooleanExtra(CarrierConfigManager.EXTRA_REBROADCAST_ON_UNLOCK,
+                            true));
+                }
+            }
+        };
+
+        try {
+            final IntentFilter filter =
+                    new IntentFilter(CarrierConfigManager.ACTION_CARRIER_CONFIG_CHANGED);
+            getContext().registerReceiver(receiver, filter);
+
+            // verify that carrier config is received
+            int subId = SubscriptionManager.getDefaultSubscriptionId();
+            getInstrumentation().getUiAutomation().adoptShellPermissionIdentity();
+            mConfigManager.notifyConfigChangedForSubId(subId);
+
+            Boolean broadcastReceived = queue.poll(BROADCAST_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+            assertNotNull(broadcastReceived);
+            assertTrue(broadcastReceived);
+        } finally {
+            // unregister receiver
+            getContext().unregisterReceiver(receiver);
+            receiver = null;
         }
     }
 

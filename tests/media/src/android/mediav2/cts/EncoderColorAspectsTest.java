@@ -19,10 +19,14 @@ package android.mediav2.cts;
 import android.media.MediaCodec;
 import android.media.MediaFormat;
 import android.media.MediaMuxer;
+import android.os.Build;
 import android.util.Log;
 
 import androidx.test.filters.SmallTest;
 
+import com.android.compatibility.common.util.ApiLevelUtil;
+
+import org.junit.Assume;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -52,6 +56,8 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
     private int mTrackID = -1;
 
     private ArrayList<String> mCheckESList = new ArrayList<>();
+
+    private static boolean sIsAtLeastR = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.R);
 
     public EncoderColorAspectsTest(String encoderName, String mime, int width, int height,
             int range, int standard, int transferCurve) {
@@ -132,6 +138,7 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
     @SmallTest
     @Test(timeout = PER_TEST_TIMEOUT_SMALL_TEST_MS)
     public void testColorAspects() throws IOException, InterruptedException {
+        Assume.assumeTrue("Test introduced with Android 11", sIsAtLeastR);
         setUpSource(mInputFile);
         mOutputBuff = new OutputManager();
         {

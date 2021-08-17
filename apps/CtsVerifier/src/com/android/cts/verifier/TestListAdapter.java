@@ -19,10 +19,6 @@ package com.android.cts.verifier;
 import static com.android.cts.verifier.TestListActivity.sCurrentDisplayMode;
 import static com.android.cts.verifier.TestListActivity.sInitialLaunch;
 
-import com.android.compatibility.common.util.ReportLog;
-import com.android.compatibility.common.util.TestResultHistory;
-import com.android.cts.verifier.TestListActivity.DisplayMode;
-
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
@@ -36,6 +32,9 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
+
+import com.android.compatibility.common.util.ReportLog;
+import com.android.cts.verifier.TestListActivity.DisplayMode;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -117,6 +116,9 @@ public abstract class TestListAdapter extends BaseAdapter {
         /** Configs necessary to run this test. */
         final String[] requiredConfigs;
 
+        /** Intent actions necessary to run this test. */
+        final String[] requiredActions;
+
         /** Features such that, if any present, the test gets excluded from being shown. */
         final String[] excludedFeatures;
 
@@ -125,6 +127,8 @@ public abstract class TestListAdapter extends BaseAdapter {
 
         /** Configs display mode to run this test. */
         final String displayMode;
+
+        // TODO: refactor to use a Builder approach instead
 
         public static TestListItem newTest(Context context, int titleResId, String testName,
             Intent intent, String[] requiredFeatures, String[] excludedFeatures,
@@ -136,45 +140,50 @@ public abstract class TestListAdapter extends BaseAdapter {
         public static TestListItem newTest(Context context, int titleResId, String testName,
                 Intent intent, String[] requiredFeatures, String[] excludedFeatures) {
             return newTest(context.getString(titleResId), testName, intent, requiredFeatures,
-                    excludedFeatures, null);
+                    excludedFeatures, /* applicableFeatures= */ null);
         }
 
         public static TestListItem newTest(Context context, int titleResId, String testName,
                 Intent intent, String[] requiredFeatures) {
-            return newTest(context.getString(titleResId), testName, intent, requiredFeatures, null,
-                    null);
+            return newTest(context.getString(titleResId), testName, intent, requiredFeatures,
+                    /* excludedFeatures= */ null, /* applicableFeatures= */ null);
         }
 
         public static TestListItem newTest(String title, String testName, Intent intent,
-                String[] requiredFeatures, String[] requiredConfigs, String[] excludedFeatures,
-                String[] applicableFeatures, String displayMode) {
+                String[] requiredFeatures, String[] requiredConfigs, String[] requiredActions,
+                String[] excludedFeatures, String[] applicableFeatures, String displayMode) {
             return new TestListItem(title, testName, intent, requiredFeatures, requiredConfigs,
-                    excludedFeatures, applicableFeatures, displayMode);
+                    requiredActions, excludedFeatures, applicableFeatures, displayMode);
         }
 
         public static TestListItem newTest(String title, String testName, Intent intent,
             String[] requiredFeatures, String[] requiredConfigs, String[] excludedFeatures,
             String[] applicableFeatures) {
             return new TestListItem(title, testName, intent, requiredFeatures, requiredConfigs,
-                excludedFeatures, applicableFeatures, null);
+                    /* requiredActions = */ null, excludedFeatures, applicableFeatures,
+                    /* displayMode= */ null);
         }
 
         public static TestListItem newTest(String title, String testName, Intent intent,
                 String[] requiredFeatures, String[] excludedFeatures, String[] applicableFeatures) {
-            return new TestListItem(title, testName, intent, requiredFeatures, null,
-                    excludedFeatures, applicableFeatures, null);
+            return new TestListItem(title, testName, intent, requiredFeatures,
+                    /* requiredConfigs= */ null, /* requiredActions = */ null, excludedFeatures,
+                    applicableFeatures, /* displayMode= */ null);
         }
 
         public static TestListItem newTest(String title, String testName, Intent intent,
                 String[] requiredFeatures, String[] excludedFeatures) {
-            return new TestListItem(title, testName, intent, requiredFeatures, null,
-                    excludedFeatures, null, null);
+            return new TestListItem(title, testName, intent, requiredFeatures,
+                    /* requiredConfigs= */ null, /* requiredActions = */ null, excludedFeatures,
+                    /* applicableFeatures= */ null, /* displayMode= */ null);
         }
 
         public static TestListItem newTest(String title, String testName, Intent intent,
                 String[] requiredFeatures) {
-            return new TestListItem(title, testName, intent, requiredFeatures, null, null, null,
-                    null);
+            return new TestListItem(title, testName, intent, requiredFeatures,
+                    /* requiredConfigs= */ null, /* requiredActions = */ null,
+                    /* excludedFeatures= */ null, /* applicableFeatures= */ null,
+                    /* displayMode= */ null);
         }
 
         public static TestListItem newCategory(Context context, int titleResId) {
@@ -182,24 +191,29 @@ public abstract class TestListAdapter extends BaseAdapter {
         }
 
         public static TestListItem newCategory(String title) {
-            return new TestListItem(title, null, null, null, null, null, null, null);
+            return new TestListItem(title, /* testName= */ null, /* intent= */ null,
+                    /* requiredFeatures= */ null,  /* requiredConfigs= */ null,
+                    /* requiredActions = */ null, /* excludedFeatures= */ null,
+                    /* applicableFeatures= */ null, /* displayMode= */ null);
         }
 
         protected TestListItem(String title, String testName, Intent intent,
                 String[] requiredFeatures, String[] excludedFeatures, String[] applicableFeatures) {
-            this(title, testName, intent, requiredFeatures, null, excludedFeatures,
-                    applicableFeatures, null);
+            this(title, testName, intent, requiredFeatures, /* requiredConfigs= */ null,
+                    /* requiredActions = */ null, excludedFeatures, applicableFeatures,
+                    /* displayMode= */ null);
         }
 
         protected TestListItem(String title, String testName, Intent intent,
-                String[] requiredFeatures, String[] requiredConfigs, String[] excludedFeatures,
-                String[] applicableFeatures, String displayMode) {
+                String[] requiredFeatures, String[] requiredConfigs, String[] requiredActions,
+                String[] excludedFeatures, String[] applicableFeatures, String displayMode) {
             this.title = title;
             if (!sInitialLaunch) {
                 testName = setTestNameSuffix(sCurrentDisplayMode, testName);
             }
             this.testName = testName;
             this.intent = intent;
+            this.requiredActions = requiredActions;
             this.requiredFeatures = requiredFeatures;
             this.requiredConfigs = requiredConfigs;
             this.excludedFeatures = excludedFeatures;

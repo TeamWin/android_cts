@@ -600,9 +600,23 @@ public class SubscriptionManagerTest {
         List<SubscriptionInfo> infoList = mSm.getSubscriptionsInGroup(uuid);
         assertNotNull(infoList);
         assertEquals(1, infoList.size());
+        assertNull(infoList.get(0).getGroupUuid());
+
+        infoList = ShellIdentityUtils.invokeMethodWithShellPermissions(mSm,
+                (sm) -> sm.getSubscriptionsInGroup(uuid));
+        assertNotNull(infoList);
+        assertEquals(1, infoList.size());
         assertEquals(uuid, infoList.get(0).getGroupUuid());
 
-        List<SubscriptionInfo> availableInfoList = mSm.getAvailableSubscriptionInfoList();
+        List<SubscriptionInfo> availableInfoList;
+        try {
+            mSm.getAvailableSubscriptionInfoList();
+            fail("SecurityException should be thrown without READ_PRIVILEGED_PHONE_STATE");
+        } catch (SecurityException ex) {
+            // Ignore
+        }
+        availableInfoList = ShellIdentityUtils.invokeMethodWithShellPermissions(mSm,
+                (sm) -> sm.getAvailableSubscriptionInfoList());
         if (availableInfoList.size() > 1) {
             List<Integer> availableSubGroup = availableInfoList.stream()
                     .map(info -> info.getSubscriptionId())
@@ -644,6 +658,12 @@ public class SubscriptionManagerTest {
         List<SubscriptionInfo> infoList = mSm.getSubscriptionsInGroup(uuid);
         assertNotNull(infoList);
         assertEquals(1, infoList.size());
+        assertNull(infoList.get(0).getGroupUuid());
+
+        infoList = ShellIdentityUtils.invokeMethodWithShellPermissions(mSm,
+                (sm) -> sm.getSubscriptionsInGroup(uuid));
+        assertNotNull(infoList);
+        assertEquals(1, infoList.size());
         assertEquals(uuid, infoList.get(0).getGroupUuid());
 
         // Remove from subscription group with current sub Id.
@@ -681,6 +701,23 @@ public class SubscriptionManagerTest {
         String mnc = info.getMncString();
         assertTrue(mcc == null || mcc.length() <= 3);
         assertTrue(mnc == null || mnc.length() <= 3);
+    }
+
+    @Test
+    public void testSetUiccApplicationsEnabled() {
+        if (!isSupported()) return;
+
+        boolean canDisable = ShellIdentityUtils.invokeMethodWithShellPermissions(mSm,
+                (sm) -> sm.canDisablePhysicalSubscription());
+        if (canDisable) {
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mSm,
+                    (sm) -> sm.setUiccApplicationsEnabled(mSubId, false));
+            assertFalse(mSm.getActiveSubscriptionInfo(mSubId).areUiccApplicationsEnabled());
+
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mSm,
+                    (sm) -> sm.setUiccApplicationsEnabled(mSubId, true));
+            assertTrue(mSm.getActiveSubscriptionInfo(mSubId).areUiccApplicationsEnabled());
+        }
     }
 
     @Test
@@ -948,27 +985,32 @@ public class SubscriptionManagerTest {
 
     @Test
     public void testSetAndGetD2DStatusSharing() {
+        if (!isSupported()) return;
+
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         uiAutomation.adoptShellPermissionIdentity(MODIFY_PHONE_STATE);
-        int originalD2DStatusSharing = mSm.getDeviceToDeviceStatusSharing(mSubId);
-        mSm.setDeviceToDeviceStatusSharing(SubscriptionManager.D2D_SHARING_ALL_CONTACTS, mSubId);
+        int originalD2DStatusSharing = mSm.getDeviceToDeviceStatusSharingPreference(mSubId);
+        mSm.setDeviceToDeviceStatusSharingPreference(mSubId,
+                SubscriptionManager.D2D_SHARING_ALL_CONTACTS);
         assertEquals(SubscriptionManager.D2D_SHARING_ALL_CONTACTS,
-                mSm.getDeviceToDeviceStatusSharing(mSubId));
-        mSm.setDeviceToDeviceStatusSharing(SubscriptionManager.D2D_SHARING_ALL, mSubId);
+                mSm.getDeviceToDeviceStatusSharingPreference(mSubId));
+        mSm.setDeviceToDeviceStatusSharingPreference(mSubId, SubscriptionManager.D2D_SHARING_ALL);
         assertEquals(SubscriptionManager.D2D_SHARING_ALL,
-                mSm.getDeviceToDeviceStatusSharing(mSubId));
-        mSm.setDeviceToDeviceStatusSharing(originalD2DStatusSharing, mSubId);
+                mSm.getDeviceToDeviceStatusSharingPreference(mSubId));
+        mSm.setDeviceToDeviceStatusSharingPreference(mSubId, originalD2DStatusSharing);
         uiAutomation.dropShellPermissionIdentity();
     }
 
     @Test
     public void testSetAndGetD2DSharingContacts() {
+        if (!isSupported()) return;
+
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         uiAutomation.adoptShellPermissionIdentity(MODIFY_PHONE_STATE);
         List<Uri> originalD2DSharingContacts = mSm.getDeviceToDeviceStatusSharingContacts(mSubId);
-        mSm.setDeviceToDeviceStatusSharingContacts(CONTACTS, mSubId);
+        mSm.setDeviceToDeviceStatusSharingContacts(mSubId, CONTACTS);
         assertEquals(CONTACTS, mSm.getDeviceToDeviceStatusSharingContacts(mSubId));
-        mSm.setDeviceToDeviceStatusSharingContacts(originalD2DSharingContacts, mSubId);
+        mSm.setDeviceToDeviceStatusSharingContacts(mSubId, originalD2DSharingContacts);
         uiAutomation.dropShellPermissionIdentity();
     }
 

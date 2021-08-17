@@ -41,15 +41,14 @@ import android.platform.test.annotations.AppModeFull;
 import android.support.test.uiautomator.UiDevice;
 import android.util.Log;
 
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
-import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.ThrowingRunnable;
-
 
 import org.junit.After;
 import org.junit.Before;
@@ -254,6 +253,11 @@ public class WifiBackupRestoreTest extends WifiJUnit4TestBase {
         try {
             uiAutomation.adoptShellPermissionIdentity();
 
+
+            // get soft ap configuration and set it back to update configuration to user
+            // configuration.
+            mWifiManager.setSoftApConfiguration(mWifiManager.getSoftApConfiguration());
+
             // Retrieve original soft ap config.
             origSoftApConfig = mWifiManager.getSoftApConfiguration();
 
@@ -261,8 +265,13 @@ public class WifiBackupRestoreTest extends WifiJUnit4TestBase {
             byte[] backupData = mWifiManager.retrieveSoftApBackupData();
 
             // Modify softap config and set it.
+            String origSsid = origSoftApConfig.getSsid();
+            char lastOrigSsidChar = origSsid.charAt(origSsid.length() - 1);
+            String updatedSsid = new StringBuilder(origSsid.substring(0, origSsid.length() - 1))
+                    .append((lastOrigSsidChar == 'a' || lastOrigSsidChar == 'A') ? 'b' : 'a')
+                    .toString();
             SoftApConfiguration modSoftApConfig = new SoftApConfiguration.Builder(origSoftApConfig)
-                    .setSsid(origSoftApConfig.getSsid() + "b")
+                    .setSsid(updatedSsid)
                     .build();
             mWifiManager.setSoftApConfiguration(modSoftApConfig);
             // Ensure that it does not match the orig softap config.
@@ -379,7 +388,7 @@ public class WifiBackupRestoreTest extends WifiJUnit4TestBase {
      * As multi-type configurations would be converted to several single-type configurations,
      * two list could not be compared directly.
      */
-    public static void assertConfigurationsEqual(
+    private void assertConfigurationsEqual(
             List<WifiConfiguration> expected, List<WifiConfiguration> actual) {
         assertThat(actual.size() >= expected.size()).isTrue();
         for (WifiConfiguration expectedConfiguration : expected) {
@@ -401,7 +410,7 @@ public class WifiBackupRestoreTest extends WifiJUnit4TestBase {
     /**
      * Asserts that the 2 WifiConfigurations are equal.
      */
-    private static void assertConfigurationEqual(
+    private void assertConfigurationEqual(
             WifiConfiguration expected, WifiConfiguration actual) {
         assertThat(actual).isNotNull();
         assertThat(expected).isNotNull();
@@ -427,6 +436,13 @@ public class WifiBackupRestoreTest extends WifiJUnit4TestBase {
                 .that(actual.getIpConfiguration()).isEqualTo(expected.getIpConfiguration());
         assertWithMessage("Network: " + actual.toString())
                 .that(actual.meteredOverride).isEqualTo(expected.meteredOverride);
+        if (WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(mContext)) {
+            assertWithMessage("Network: " + actual.toString())
+                    .that(actual.getProfileKey()).isEqualTo(expected.getProfileKey());
+        } else {
+            assertWithMessage("Network: " + actual.toString())
+                    .that(actual.getKey()).isEqualTo(expected.getKey());
+        }
     }
 
     private void testRestoreFromBackupData(

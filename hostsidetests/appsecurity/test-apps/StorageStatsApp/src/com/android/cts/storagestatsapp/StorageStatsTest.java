@@ -19,6 +19,7 @@ package com.android.cts.storagestatsapp;
 import static android.os.storage.StorageManager.UUID_DEFAULT;
 
 import static com.android.cts.storageapp.Utils.CACHE_ALL;
+import static com.android.cts.storageapp.Utils.CACHE_EXT;
 import static com.android.cts.storageapp.Utils.CODE_ALL;
 import static com.android.cts.storageapp.Utils.DATA_ALL;
 import static com.android.cts.storageapp.Utils.MB_IN_BYTES;
@@ -130,6 +131,12 @@ public class StorageStatsTest extends InstrumentationTestCase {
         final long deltaCache = CACHE_ALL;
         assertMostlyEquals(deltaCache, afterApp.getCacheBytes() - beforeApp.getCacheBytes());
         assertMostlyEquals(deltaCache, afterUser.getCacheBytes() - beforeUser.getCacheBytes());
+
+        final long deltaExternalCache = CACHE_EXT;
+        assertMostlyEquals(deltaExternalCache,
+                afterApp.getExternalCacheBytes() - beforeApp.getExternalCacheBytes());
+        assertMostlyEquals(deltaExternalCache,
+                afterUser.getExternalCacheBytes() - beforeUser.getExternalCacheBytes());
     }
 
     public void testVerifyStatsMultiple() throws Exception {
@@ -295,6 +302,8 @@ public class StorageStatsTest extends InstrumentationTestCase {
         final long targetA = doAllocateProvider(PKG_A, 0.5, 1262304000);
         final long targetB = doAllocateProvider(PKG_B, 2.0, 1420070400);
         final long totalAllocated = targetA + targetB;
+
+        MediaStore.waitForIdle(getContext().getContentResolver());
 
         // Apps using up some cache space shouldn't change how much we can
         // allocate, or how much we think is free; but it should decrease real

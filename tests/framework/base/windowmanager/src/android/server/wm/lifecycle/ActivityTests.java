@@ -18,6 +18,7 @@ package android.server.wm.lifecycle;
 
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+import static android.server.wm.WindowManagerState.STATE_STOPPED;
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_DESTROY;
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_PAUSE;
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_RESTART;
@@ -28,15 +29,12 @@ import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_TOP_P
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_TOP_POSITION_LOST;
 import static android.server.wm.lifecycle.LifecycleVerifier.transition;
 
-import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
-
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
 import android.platform.test.annotations.Presubmit;
 
-import androidx.test.filters.FlakyTest;
 import androidx.test.filters.MediumTest;
 
 import org.junit.Test;
@@ -69,10 +67,8 @@ public class ActivityTests extends ActivityLifecycleClientTestBase {
         // Launch two activities - second one to cover the first one and make it invisible.
         final Activity firstActivity = launchActivityAndWait(FirstActivity.class);
         final Activity secondActivity = launchActivityAndWait(SecondActivity.class);
-        waitAndAssertActivityStates(state(secondActivity, ON_RESUME),
-                state(firstActivity, ON_STOP));
         // Wait for activity to report saved state to the server.
-        getInstrumentation().waitForIdleSync();
+        mWmState.waitForActivityState(firstActivity.getComponentName(), STATE_STOPPED);
 
         // Release the instance of the non-visible activity below.
         getLifecycleLog().clear();
@@ -93,7 +89,6 @@ public class ActivityTests extends ActivityLifecycleClientTestBase {
      * Verify that {@link Activity#finishAndRemoveTask()} removes all activities in task if called
      * for root of task.
      */
-    @FlakyTest(bugId=137329632)
     @Test
     public void testFinishTask_FromRoot() throws Exception {
         final Class<? extends Activity> rootActivityClass = CallbackTrackingActivity.class;
@@ -121,7 +116,6 @@ public class ActivityTests extends ActivityLifecycleClientTestBase {
      * Verify that {@link Activity#finishAndRemoveTask()} removes all activities in task if called
      * for root of task. This version verifies lifecycle when top activity is translucent
      */
-    @FlakyTest(bugId=137329632)
     @Test
     public void testFinishTask_FromRoot_TranslucentOnTop() throws Exception {
         final Class<? extends Activity> rootActivityClass = CallbackTrackingActivity.class;
@@ -150,7 +144,6 @@ public class ActivityTests extends ActivityLifecycleClientTestBase {
      * Verify that {@link Activity#finishAndRemoveTask()} only removes one activity in task if
      * called not for root of task.
      */
-    @FlakyTest(bugId=137329632)
     @Test
     public void testFinishTask_NotFromRoot() throws Exception {
         final Class<? extends Activity> rootActivityClass = CallbackTrackingActivity.class;
@@ -175,7 +168,6 @@ public class ActivityTests extends ActivityLifecycleClientTestBase {
      * Verify the lifecycle of {@link Activity#finishAfterTransition()} for activity that has a
      * transition set.
      */
-    @FlakyTest(bugId=137329632)
     @Test
     public void testFinishAfterTransition() throws Exception {
         final TransitionSourceActivity rootActivity =
@@ -211,7 +203,6 @@ public class ActivityTests extends ActivityLifecycleClientTestBase {
      * Verify the lifecycle of {@link Activity#finishAfterTransition()} for activity with no
      * transition set.
      */
-    @FlakyTest(bugId=137329632)
     @Test
     public void testFinishAfterTransition_noTransition() throws Exception {
         final Activity rootActivity = launchActivityAndWait(FirstActivity.class);

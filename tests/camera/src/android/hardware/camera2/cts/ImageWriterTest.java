@@ -181,6 +181,19 @@ public class ImageWriterTest extends Camera2AndroidTestCase {
     }
 
     @Test
+    public void testWriterReaderBlobFormats() throws Exception {
+        int[] READER_TEST_FORMATS = {ImageFormat.JPEG, ImageFormat.DEPTH_JPEG,
+                                     ImageFormat.HEIC, ImageFormat.DEPTH_POINT_CLOUD};
+
+        for (int format : READER_TEST_FORMATS) {
+            ImageReader reader = ImageReader.newInstance(640, 480, format, 1 /*maxImages*/);
+            ImageWriter writer = ImageWriter.newInstance(reader.getSurface(), 1 /*maxImages*/);
+            writer.close();
+            reader.close();
+        }
+    }
+
+    @Test
     public void testWriterFormatOverride() throws Exception {
         int[] TEXTURE_TEST_FORMATS = {ImageFormat.YV12, ImageFormat.YUV_420_888};
         SurfaceTexture texture = new SurfaceTexture(/*random int*/1);

@@ -23,6 +23,12 @@
 
     <object type="module_controller" class="com.android.tradefed.testtype.suite.module.Sdk30ModuleController" />
 
+    <!-- Keep screen on for Bluetooth scanning -->
+    <target_preparer class="com.android.tradefed.targetprep.DeviceSetup">
+        <option name="force-skip-system-props" value="true" /> <!-- avoid restarting device -->
+        <option name="screen-always-on" value="on" />
+    </target_preparer>
+
     <!-- Install main test suite apk -->
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
@@ -39,6 +45,10 @@
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
         <option name="push" value="CtsAppThatRequestsPermissionAandB.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestsPermissionAandB.apk" />
         <option name="push" value="CtsAppThatRequestsPermissionAandC.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestsPermissionAandC.apk" />
+        <option name="push" value="CtsAppThatRequestsBluetoothPermission30.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestsBluetoothPermission30.apk" />
+        <option name="push" value="CtsAppThatRequestsBluetoothPermission31.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestsBluetoothPermission31.apk" />
+        <option name="push" value="CtsAppThatRequestsBluetoothPermissionNeverForLocation31.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestsBluetoothPermissionNeverForLocation31.apk" />
+        <option name="push" value="CtsAppThatRequestsBluetoothPermissionNeverForLocationNoProvider.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestsBluetoothPermissionNeverForLocationNoProvider.apk" />
         <option name="push" value="CtsAppThatRequestsContactsPermission16.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestsContactsPermission16.apk" />
         <option name="push" value="CtsAppThatRequestsContactsPermission15.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestsContactsPermission15.apk" />
         <option name="push" value="CtsAppThatRequestsContactsAndCallLogPermission16.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestsContactsAndCallLogPermission16.apk" />
@@ -48,6 +58,7 @@
         <option name="push" value="CtsAppThatRequestsLocationPermission22.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestsLocationPermission22.apk" />
         <option name="push" value="CtsAppThatRequestsStoragePermission29.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestsStoragePermission29.apk" />
         <option name="push" value="CtsAppThatRequestsStoragePermission28.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestsStoragePermission28.apk" />
+        <option name="push" value="CtsAppThatRequestsLocationAndBackgroundPermission28.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestsLocationAndBackgroundPermission28.apk" />
         <option name="push" value="CtsAppThatRequestsLocationAndBackgroundPermission29.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestsLocationAndBackgroundPermission29.apk" />
         <option name="push" value="CtsAppThatAccessesLocationOnCommand.apk->/data/local/tmp/cts/permissions/CtsAppThatAccessesLocationOnCommand.apk" />
         <option name="push" value="AppThatDoesNotHaveBgLocationAccess.apk->/data/local/tmp/cts/permissions/AppThatDoesNotHaveBgLocationAccess.apk" />
@@ -67,6 +78,14 @@
         <option name="push" value="CtsInstallPermissionEscalatorApp.apk->/data/local/tmp/cts/permissions/CtsInstallPermissionEscalatorApp.apk" />
         <option name="push" value="CtsAppThatRequestsOneTimePermission.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestsOneTimePermission.apk" />
         <option name="push" value="AppThatDefinesUndefinedPermissionGroupElement.apk->/data/local/tmp/cts/permissions/AppThatDefinesUndefinedPermissionGroupElement.apk" />
+        <option name="push" value="CtsAppThatDefinesPermissionA.apk->/data/local/tmp/cts/permissions/CtsAppThatDefinesPermissionA.apk" />
+        <option name="push" value="CtsAppThatAlsoDefinesPermissionA.apk->/data/local/tmp/cts/permissions/CtsAppThatAlsoDefinesPermissionA.apk" />
+        <option name="push" value="CtsAppThatAlsoDefinesPermissionADifferentCert.apk->/data/local/tmp/cts/permissions/CtsAppThatAlsoDefinesPermissionADifferentCert.apk" />
+        <option name="push" value="CtsAppThatAlsoDefinesPermissionGroupADifferentCert.apk->/data/local/tmp/cts/permissions/CtsAppThatAlsoDefinesPermissionGroupADifferentCert.apk" />
+        <option name="push" value="CtsAppThatDefinesPermissionInPlatformGroup.apk->/data/local/tmp/cts/permissions/CtsAppThatDefinesPermissionInPlatformGroup.apk" />
+        <option name="push" value="CtsAppThatAlsoDefinesPermissionGroupADifferentCert30.apk->/data/local/tmp/cts/permissions/CtsAppThatAlsoDefinesPermissionGroupADifferentCert30.apk" />
+        <option name="push" value="CtsAppThatDefinesPermissionWithInvalidGroup.apk->/data/local/tmp/cts/permissions/CtsAppThatDefinesPermissionWithInvalidGroup.apk" />
+        <option name="push" value="CtsAppThatDefinesPermissionWithInvalidGroup30.apk->/data/local/tmp/cts/permissions/CtsAppThatDefinesPermissionWithInvalidGroup30.apk" />
         <option name="push" value="CtsStorageEscalationApp28.apk->/data/local/tmp/cts/permissions/CtsStorageEscalationApp28.apk" />
         <option name="push" value="CtsStorageEscalationApp29Full.apk->/data/local/tmp/cts/permissions/CtsStorageEscalationApp29Full.apk" />
         <option name="push" value="CtsStorageEscalationApp29Scoped.apk->/data/local/tmp/cts/permissions/CtsStorageEscalationApp29Scoped.apk" />
@@ -87,4 +106,8 @@
         <option name="package" value="android.permission.cts" />
         <option name="runtime-hint" value="13m" />
     </test>
+
+    <system_checker class="com.android.tradefed.suite.checker.UserChecker" >
+        <option name="user-cleanup" value="true" />
+    </system_checker>
 </configuration>

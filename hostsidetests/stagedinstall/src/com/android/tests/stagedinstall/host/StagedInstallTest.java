@@ -617,8 +617,6 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     @Test
     @LargeTest
     public void testInstallApkChangingFingerprint() throws Exception {
-        assumeThat(getDevice().getBuildFlavor(), not(endsWith("-user")));
-
         try {
             getDevice().executeShellCommand("setprop persist.pm.mock-upgrade true");
             runPhase("testInstallApkChangingFingerprint");
@@ -697,6 +695,16 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
         assumeTrue("Device does not support updating APEX", mHostUtils.isApexUpdateSupported());
 
         runPhase("testApexWithUnsignedPayloadFailsVerification");
+    }
+
+    @Test
+    @LargeTest
+    public void testApexSetsUpdatedSystemAppFlag() throws Exception {
+        assumeTrue("Device does not support updating APEX", mHostUtils.isApexUpdateSupported());
+
+        runPhase("testApexSetsUpdatedSystemAppFlag_preUpdate");
+        installV2Apex();
+        runPhase("testApexSetsUpdatedSystemAppFlag_postUpdate");
     }
 
     /**

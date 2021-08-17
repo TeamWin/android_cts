@@ -25,7 +25,6 @@ license {
 
 cc_test {
     name: "dhry",
-
     srcs: [
         "dhry_1.c",
         "dhry_2.c",

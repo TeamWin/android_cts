@@ -205,4 +205,26 @@ public final class SettingsUtils {
         return SystemUtil.runShellCommand(
                 String.format("settings --user %d get secure %s", userId, key)).trim();
     }
+
+    public static class SettingResetter implements AutoCloseable {
+        private final String mNamespace;
+        private final String mKey;
+        private final String mOldValue;
+
+        public SettingResetter(String namespace, String key, String value) {
+            mNamespace = namespace;
+            mKey = key;
+            mOldValue = get(namespace, key);
+            set(namespace, key, value);
+        }
+
+        @Override
+        public void close() {
+            if (mOldValue != null) {
+                set(mNamespace, mKey, mOldValue);
+            } else {
+                delete(mNamespace, mKey);
+            }
+        }
+    }
 }

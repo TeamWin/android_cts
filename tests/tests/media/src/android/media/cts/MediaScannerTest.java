@@ -26,6 +26,7 @@ import android.media.MediaMetadataRetriever;
 import android.media.MediaScannerConnection;
 import android.media.MediaScannerConnection.MediaScannerConnectionClient;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
@@ -41,6 +42,7 @@ import android.util.Log;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
 
+import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.FileCopyHelper;
 import com.android.compatibility.common.util.PollingCheck;
 
@@ -51,6 +53,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 
 @Presubmit
@@ -84,6 +87,7 @@ public class MediaScannerTest extends AndroidTestCase {
 
     protected AssetFileDescriptor getAssetFileDescriptorFor(final String res)
             throws FileNotFoundException {
+        Preconditions.assertTestFileExists(mInpPrefix + res);
         File inpFile = new File(mInpPrefix + res);
         ParcelFileDescriptor parcelFD =
                 ParcelFileDescriptor.open(inpFile, ParcelFileDescriptor.MODE_READ_ONLY);
@@ -635,16 +639,30 @@ public class MediaScannerTest extends AndroidTestCase {
         }
     }
 
-    public static void startMediaScan() {
-        new Thread(() -> {
+    private static void scanVolume() {
+        if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.R)) {
             MediaStore.scanVolume(InstrumentationRegistry.getTargetContext().getContentResolver(),
                     MediaStore.VOLUME_EXTERNAL_PRIMARY);
-        }).start();
+        } else {
+            // on Q, scanVolume(Context, String path) should be used
+            try {
+                Method scanVolumeMethod = MediaStore.class
+                    .getMethod("scanVolume", Context.class, File.class);
+                scanVolumeMethod.invoke(null,
+                        InstrumentationRegistry.getTargetContext(),
+                        Environment.getExternalStorageDirectory());
+            } catch (Exception ex) {
+                fail("could not find scanVolume method" + ex);
+            }
+        }
+    }
+
+    public static void startMediaScan() {
+        new Thread(() -> { scanVolume(); }).start();
     }
 
     public static void startMediaScanAndWait() {
-        MediaStore.scanVolume(InstrumentationRegistry.getTargetContext().getContentResolver(),
-                MediaStore.VOLUME_EXTERNAL_PRIMARY);
+        scanVolume();
     }
 
     private void checkMediaScannerConnection() {

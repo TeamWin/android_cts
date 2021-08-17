@@ -69,7 +69,7 @@ import org.mockito.MockitoAnnotations;
 public class AccessibilityGestureDetectorTest {
 
     // Constants
-    private static final float GESTURE_LENGTH_INCHES = 2.0f;
+    private static final float GESTURE_LENGTH_INCHES = 1.0f;
     // The movement should exceed the threshold 1 cm in 150 ms defined in Swipe.java. It means the
     // swipe velocity in testing should be greater than 2.54 cm / 381 ms. Therefore the
     // duration should be smaller than 381.
@@ -244,7 +244,11 @@ public class AccessibilityGestureDetectorTest {
                 twoFingerSingleTap(displayId),
                 AccessibilityService.GESTURE_2_FINGER_SINGLE_TAP,
                 displayId);
-        testGesture(
+                testGesture(
+                        twoFingerTripleTapAndHold(displayId),
+                        AccessibilityService.GESTURE_2_FINGER_TRIPLE_TAP_AND_HOLD,
+                        displayId);
+                testGesture(
                 twoFingerDoubleTap(displayId),
                 AccessibilityService.GESTURE_2_FINGER_DOUBLE_TAP,
                 displayId);
@@ -261,7 +265,11 @@ public class AccessibilityGestureDetectorTest {
                 threeFingerSingleTap(displayId),
                 AccessibilityService.GESTURE_3_FINGER_SINGLE_TAP,
                 displayId);
-        testGesture(
+                testGesture(
+                        threeFingerSingleTapAndHold(displayId),
+                        AccessibilityService.GESTURE_3_FINGER_SINGLE_TAP_AND_HOLD,
+                        displayId);
+                testGesture(
                 threeFingerDoubleTap(displayId),
                 AccessibilityService.GESTURE_3_FINGER_DOUBLE_TAP,
                 displayId);
@@ -273,6 +281,10 @@ public class AccessibilityGestureDetectorTest {
                 threeFingerTripleTap(displayId),
                 AccessibilityService.GESTURE_3_FINGER_TRIPLE_TAP,
                 displayId);
+                testGesture(
+                        threeFingerTripleTapAndHold(displayId),
+                        AccessibilityService.GESTURE_3_FINGER_TRIPLE_TAP_AND_HOLD,
+                        displayId);
 
         testGesture(
                 fourFingerSingleTap(displayId),
@@ -367,7 +379,6 @@ public class AccessibilityGestureDetectorTest {
         // Use AccessibilityService.dispatchGesture() instead of Instrumentation.sendPointerSync()
         // because accessibility services read gesture events upstream from the point where
         // sendPointerSync() injects events.
-        mService.clearGestures();
         mService.runOnServiceSync(() ->
         mService.dispatchGesture(gesture, mGestureDispatchCallback, null));
         verify(mGestureDispatchCallback, timeout(GESTURE_DISPATCH_TIMEOUT_MS).atLeastOnce())
@@ -530,6 +541,10 @@ public class AccessibilityGestureDetectorTest {
         return multiFingerMultiTap(2, 1, displayId);
     }
 
+    private GestureDescription twoFingerTripleTapAndHold(int displayId) {
+        return multiFingerMultiTapAndHold(2, 3, displayId);
+    }
+
     private GestureDescription twoFingerDoubleTap(int displayId) {
         return multiFingerMultiTap(2, 2, displayId);
     }
@@ -546,6 +561,10 @@ public class AccessibilityGestureDetectorTest {
         return multiFingerMultiTap(3, 1, displayId);
     }
 
+    private GestureDescription threeFingerSingleTapAndHold(int displayId) {
+        return multiFingerMultiTapAndHold(3, 1, displayId);
+    }
+
     private GestureDescription threeFingerDoubleTap(int displayId) {
         return multiFingerMultiTap(3, 2, displayId);
     }
@@ -556,6 +575,10 @@ public class AccessibilityGestureDetectorTest {
 
     private GestureDescription threeFingerTripleTap(int displayId) {
         return multiFingerMultiTap(3, 3, displayId);
+    }
+
+    private GestureDescription threeFingerTripleTapAndHold(int displayId) {
+        return multiFingerMultiTapAndHold(3, 3, displayId);
     }
 
     private GestureDescription fourFingerSingleTap(int displayId) {

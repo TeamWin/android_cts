@@ -56,6 +56,7 @@ import android.os.RemoteCallback;
 import android.os.SystemClock;
 import android.provider.Telephony;
 import android.telephony.SmsCbMessage;
+import android.telephony.SmsManager;
 import android.telephony.SmsMessage;
 import android.telephony.TelephonyManager;
 import android.telephony.cdma.CdmaSmsCbProgramData;
@@ -482,7 +483,6 @@ public class SmsManagerTest {
 
     @Test
     public void testContentProviderAccessRestriction() throws Exception {
-        if (!mTelephonyManager.isSmsCapable()) return;
         Uri dummySmsUri = null;
         Context context = getInstrumentation().getContext();
         ContentResolver contentResolver = context.getContentResolver();
@@ -493,19 +493,18 @@ public class SmsManagerTest {
             originalWriteSmsMode = context.getSystemService(AppOpsManager.class)
                     .unsafeCheckOpNoThrow(AppOpsManager.OPSTR_WRITE_SMS,
                             getPackageUid(ctsPackageName), ctsPackageName);
-            dummySmsUri = executeWithShellPermissionIdentity(() -> {
-                setModeForOps(ctsPackageName,
-                        AppOpsManager.MODE_ALLOWED, AppOpsManager.OPSTR_WRITE_SMS);
-                ContentValues contentValues = new ContentValues();
-                contentValues.put(Telephony.TextBasedSmsColumns.ADDRESS, "addr");
-                contentValues.put(Telephony.TextBasedSmsColumns.READ, 1);
-                contentValues.put(Telephony.TextBasedSmsColumns.SUBJECT, "subj");
-                contentValues.put(Telephony.TextBasedSmsColumns.BODY, "created_at_" +
-                        new Date().toString().replace(" ", "_"));
-                return contentResolver.insert(Telephony.Sms.CONTENT_URI, contentValues);
-            });
+            setModeForOps(ctsPackageName,
+                    AppOpsManager.MODE_ALLOWED, AppOpsManager.OPSTR_WRITE_SMS);
+            ContentValues contentValues = new ContentValues();
+            contentValues.put(Telephony.TextBasedSmsColumns.ADDRESS, "addr");
+            contentValues.put(Telephony.TextBasedSmsColumns.READ, 1);
+            contentValues.put(Telephony.TextBasedSmsColumns.SUBJECT, "subj");
+            contentValues.put(Telephony.TextBasedSmsColumns.BODY, "created_at_"
+                    + new Date().toString().replace(" ", "_"));
+
+            dummySmsUri = contentResolver.insert(Telephony.Sms.CONTENT_URI, contentValues);
             assertNotNull("Failed to insert test sms", dummySmsUri);
-            assertNotEquals("Failed to insert test sms", dummySmsUri.getLastPathSegment(), "0");
+            assertNotEquals("Failed to insert test sms", "0", dummySmsUri.getLastPathSegment());
             testSmsAccessAboutDefaultApp(LEGACY_SMS_APP);
             testSmsAccessAboutDefaultApp(MODERN_SMS_APP);
         } finally {
@@ -570,10 +569,16 @@ public class SmsManagerTest {
     private void setSmsApp(String pkg) throws Exception {
         executeWithShellPermissionIdentity(() -> {
             Context context = getInstrumentation().getContext();
+            RoleManager roleManager = context.getSystemService(RoleManager.class);
             CompletableFuture<Boolean> result = new CompletableFuture<>();
-            context.getSystemService(RoleManager.class).addRoleHolderAsUser(
-                    RoleManager.ROLE_SMS, pkg, RoleManager.MANAGE_HOLDERS_FLAG_DONT_KILL_APP,
-                    context.getUser(), AsyncTask.THREAD_POOL_EXECUTOR, result::complete);
+            if (roleManager.getRoleHoldersAsUser(RoleManager.ROLE_SMS,
+                    context.getUser()).contains(pkg)) {
+                result.complete(true);
+            } else {
+                roleManager.addRoleHolderAsUser(RoleManager.ROLE_SMS, pkg,
+                        RoleManager.MANAGE_HOLDERS_FLAG_DONT_KILL_APP, context.getUser(),
+                        AsyncTask.THREAD_POOL_EXECUTOR, result::complete);
+            }
             assertTrue(result.get(5, TimeUnit.SECONDS));
         });
     }
@@ -630,9 +635,9 @@ public class SmsManagerTest {
         mReceivedDataSms = false;
         sMessageId = 0L;
         mSentIntent = PendingIntent.getBroadcast(mContext, 0, mSendIntent,
-                PendingIntent.FLAG_ONE_SHOT);
+                PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_MUTABLE_UNAUDITED);
         mDeliveredIntent = PendingIntent.getBroadcast(mContext, 0, mDeliveryIntent,
-                PendingIntent.FLAG_ONE_SHOT);
+                PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_MUTABLE_UNAUDITED);
     }
 
     /**
@@ -648,8 +653,8 @@ public class SmsManagerTest {
             ArrayList<PendingIntent> sentIntents = new ArrayList<PendingIntent>();
             ArrayList<PendingIntent> deliveryIntents = new ArrayList<PendingIntent>();
             for (int i = 0; i < numPartsSent; i++) {
-                sentIntents.add(PendingIntent.getBroadcast(mContext, 0, mSendIntent, 0));
-                deliveryIntents.add(PendingIntent.getBroadcast(mContext, 0, mDeliveryIntent, 0));
+                sentIntents.add(PendingIntent.getBroadcast(mContext, 0, mSendIntent, PendingIntent.FLAG_MUTABLE_UNAUDITED));
+                deliveryIntents.add(PendingIntent.getBroadcast(mContext, 0, mDeliveryIntent, PendingIntent.FLAG_MUTABLE_UNAUDITED));
             }
             sendMultiPartTextMessage(mDestAddr, parts, sentIntents, deliveryIntents, addMessageId);
         }
@@ -800,6 +805,15 @@ public class SmsManagerTest {
         } catch (Exception e) {
             // expected
         }
+    }
+
+    @Test
+    public void testCreateForSubscriptionId() {
+        int testSubId = 123;
+        SmsManager smsManager = mContext.getSystemService(SmsManager.class)
+                .createForSubscriptionId(testSubId);
+        assertEquals("getSubscriptionId() should be " + testSubId, testSubId,
+                smsManager.getSubscriptionId());
     }
 
     protected ArrayList<String> divideMessage(String text) {

@@ -26,6 +26,22 @@
     <!-- We need the calllog permissions for ContactsTest, which is the test for legacy provider. -->
     <uses-permission android:name="android.permission.READ_CALL_LOG" />
     <uses-permission android:name="android.permission.WRITE_CALL_LOG" />
+
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.GET_CONTENT" />
+            <data android:mimeType="vnd.android.cursor.item/contact" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.PICK" />
+            <data android:scheme="content://com.android.contacts/contacts" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="content://com.android.contacts/contacts" />
+        </intent>
+    </queries>
+
     <application>
         <uses-library android:name="android.test.runner"/>
 

@@ -415,6 +415,7 @@ public class MediaSyncTest extends ActivityInstrumentationTestCase2<MediaStubAct
             final float playbackRate) throws Exception {
         final int limit = 5;
         String info = "";
+        Preconditions.assertTestFileExists(inputResource);
         for (int tries = 0; ; ++tries) {
             // Run test
             final AtomicBoolean completed = new AtomicBoolean();
@@ -473,6 +474,8 @@ public class MediaSyncTest extends ActivityInstrumentationTestCase2<MediaStubAct
             PlayAVState state) {
         // allow 750ms for playback to get to stable state.
         final int PLAYBACK_RAMP_UP_TIME_US = 750000;
+
+        Preconditions.assertTestFileExists(inputResource);
 
         final Object conditionFirstAudioBuffer = new Object();
 
