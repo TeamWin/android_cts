@@ -266,6 +266,7 @@ public class MediaStoreTest {
     }
 
     @Test
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
     public void testCanManageMedia() throws Exception {
         final String opString = AppOpsManager.permissionToOp(Manifest.permission.MANAGE_MEDIA);
 
