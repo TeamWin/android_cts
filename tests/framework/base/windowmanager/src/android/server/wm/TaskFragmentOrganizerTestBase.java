@@ -23,6 +23,7 @@ import static org.junit.Assert.fail;
 import android.app.Activity;
 import android.content.res.Configuration;
 import android.os.IBinder;
+import android.util.ArrayMap;
 import android.window.TaskFragmentAppearedInfo;
 import android.window.TaskFragmentInfo;
 import android.window.TaskFragmentOrganizer;
@@ -36,6 +37,7 @@ import org.junit.Before;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -43,6 +45,7 @@ public class TaskFragmentOrganizerTestBase extends WindowManagerTestBase {
     public BasicTaskFragmentOrganizer mTaskFragmentOrganizer;
 
     @Before
+    @Override
     public void setUp() throws Exception {
         super.setUp();
         mTaskFragmentOrganizer = new BasicTaskFragmentOrganizer();
@@ -61,7 +64,8 @@ public class TaskFragmentOrganizerTestBase extends WindowManagerTestBase {
     public static class BasicTaskFragmentOrganizer extends TaskFragmentOrganizer {
         private final static int WAIT_TIMEOUT_IN_SECOND = 10;
 
-        private TaskFragmentInfo mInfo;
+        private final Map<IBinder, TaskFragmentInfo> mInfos = new ArrayMap<>();
+        private final Map<IBinder, TaskFragmentInfo> mRemovedInfos = new ArrayMap<>();
         private IBinder mTaskFragToken;
         private Configuration mParentConfig;
         private final List<WindowContainerToken> mKnownTaskFragments = new ArrayList<>();
@@ -75,8 +79,12 @@ public class TaskFragmentOrganizerTestBase extends WindowManagerTestBase {
             super(Runnable::run);
         }
 
-        public TaskFragmentInfo getTaskFragmentInfo() {
-            return mInfo;
+        public TaskFragmentInfo getTaskFragmentInfo(IBinder taskFragToken) {
+            return mInfos.get(taskFragToken);
+        }
+
+        public TaskFragmentInfo getRemovedTaskFragmentInfo(IBinder taskFragToken) {
+            return mRemovedInfos.get(taskFragToken);
         }
 
         public void waitForTaskFragmentCreated() {
@@ -129,6 +137,7 @@ public class TaskFragmentOrganizerTestBase extends WindowManagerTestBase {
         @Override
         public void unregisterOrganizer() {
             removeAllTaskFragments();
+            mRemovedInfos.clear();
             super.unregisterOrganizer();
         }
 
@@ -136,23 +145,25 @@ public class TaskFragmentOrganizerTestBase extends WindowManagerTestBase {
         public void onTaskFragmentAppeared(
                 @NonNull TaskFragmentAppearedInfo taskFragmentAppearedInfo) {
             super.onTaskFragmentAppeared(taskFragmentAppearedInfo);
-            mInfo = taskFragmentAppearedInfo.getTaskFragmentInfo();
-            mKnownTaskFragments.add(mInfo.getToken());
+            final TaskFragmentInfo info = taskFragmentAppearedInfo.getTaskFragmentInfo();
+            mInfos.put(info.getFragmentToken(), info);
+            mKnownTaskFragments.add(info.getToken());
             mAppearedLatch.countDown();
         }
 
         @Override
         public void onTaskFragmentInfoChanged(@NonNull TaskFragmentInfo taskFragmentInfo) {
             super.onTaskFragmentInfoChanged(taskFragmentInfo);
-            mInfo = taskFragmentInfo;
+            mInfos.put(taskFragmentInfo.getFragmentToken(), taskFragmentInfo);
             mChangedLatch.countDown();
         }
 
         @Override
         public void onTaskFragmentVanished(@NonNull TaskFragmentInfo taskFragmentInfo) {
             super.onTaskFragmentVanished(taskFragmentInfo);
-            mInfo = taskFragmentInfo;
-            mKnownTaskFragments.remove(mInfo.getToken());
+            mInfos.remove(taskFragmentInfo.getFragmentToken());
+            mRemovedInfos.put(taskFragmentInfo.getFragmentToken(), taskFragmentInfo);
+            mKnownTaskFragments.remove(taskFragmentInfo.getToken());
             mVanishedLatch.countDown();
         }
 
