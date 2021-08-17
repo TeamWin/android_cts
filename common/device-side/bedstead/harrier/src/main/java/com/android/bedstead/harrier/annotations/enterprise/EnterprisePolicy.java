@@ -32,80 +32,91 @@ public @interface EnterprisePolicy {
     /** A policy that cannot be applied. */
     int NO = 0;
 
-    // Applies to
-
-    // Note that profiles are a subset of users
+    /** A policy which applies to the user of the package which applied the policy. */
     int APPLIES_TO_OWN_USER = 1;
+    /** A policy which applies to unaffiliated other users. */
     int APPLIES_TO_UNAFFILIATED_OTHER_USERS = 1 << 1;
+    /** A policy which applies to affiliated other users. */
     int APPLIES_TO_AFFILIATED_OTHER_USERS = 1 << 2;
+    /** A policy which applies to unaffiliated profiles of the user of the package which applied the policy. */
     int APPLIES_TO_UNAFFILIATED_CHILD_PROFILES = 1 << 3;
+    /** A policy which applies to affiliated profiles of the user of the package which applied the policy. */
     int APPLIES_TO_AFFILIATED_CHILD_PROFILES = 1 << 4;
-
-    /** A policy that can be applied by a Profile Owner to the parent of the profile owner. */
+    /** A policy that applies to the parent of the profile of the package which applied the policy. */
     int APPLIES_TO_PARENT = 1 << 5;
-
-    /**
-     * A policy that can be applied by a Profile Owner to the parent of the profile owner if the
-     * profile is a COPE profile.
-     */
+    /** A policy that applies to the parent of the profile of the package which applied the policy if that profile is a COPE profile. */
     int APPLIES_TO_COPE_PARENT = 1 << 6;
 
+    /** A policy that applies to affiliated or unaffiliate profiles of the package which applied the policy. */
     int APPLIES_TO_CHILD_PROFILES =
             APPLIES_TO_UNAFFILIATED_CHILD_PROFILES | APPLIES_TO_AFFILIATED_CHILD_PROFILES;
+    /** A policy that applies to affiliated or unaffiliated other users. */
     int APPLIES_TO_OTHER_USERS =
             APPLIES_TO_UNAFFILIATED_OTHER_USERS | APPLIES_TO_AFFILIATED_OTHER_USERS;
 
-    /** A policy that can be applied to all users on the device. */
+    /** A policy that applies to all users on the device. */
     int APPLIES_GLOBALLY = APPLIES_TO_OWN_USER | APPLIES_TO_OTHER_USERS | APPLIES_TO_CHILD_PROFILES;
 
 
     // Applied by
 
+    /** A policy that can be applied by a device owner. */
     int APPLIED_BY_DEVICE_OWNER = 1 << 7;
-
     /** A policy that can be applied by a profile owner of an unaffiliated profile. */
     int APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_PROFILE = 1 << 8;
-
     /** A policy that can be applied by a profile owner of an affiliated profile */
     int APPLIED_BY_AFFILIATED_PROFILE_OWNER_PROFILE = 1 << 9;
-
+    /** A policy that can be applied by a profile owner of an affiliated or unaffiliated profile. */
     int APPLIED_BY_PROFILE_OWNER_PROFILE =
             APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_PROFILE
                     | APPLIED_BY_AFFILIATED_PROFILE_OWNER_PROFILE;
-
     /**
      * A policy that can be applied by a Profile Owner for a User (not Profile) with no Device
      * Owner.
      */
     int APPLIED_BY_PROFILE_OWNER_USER_WITH_NO_DO = 1 << 10;
-
     /**
      * A policy that can be applied by an unaffiliated Profile Owner for a User (not Profile) with
      * a Device Owner.
      */
     int APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_USER_WITH_DO = 1 << 11;
-
     /** A policy that can be applied by a profile owner of an unaffiliated user. */
     int APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_USER =
             APPLIED_BY_PROFILE_OWNER_USER_WITH_NO_DO
                     | APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_USER_WITH_DO;
-
     /** A policy that can be applied by a profile owner of an affiliated user. */
     int APPLIED_BY_AFFILIATED_PROFILE_OWNER_USER = 1 << 12;
-
+    /** A policy that can be applied by an affiliated or unaffiliated profile owner on a User (not Profile). */
     int APPLIED_BY_PROFILE_OWNER_USER =
             APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_USER | APPLIED_BY_AFFILIATED_PROFILE_OWNER_USER;
-
+    /** A policy that can be applied by an affiliated profile owner on a user or profile. */
+    int APPLIED_BY_AFFILIATED_PROFILE_OWNER = APPLIED_BY_AFFILIATED_PROFILE_OWNER_PROFILE | APPLIED_BY_AFFILIATED_PROFILE_OWNER_USER;
+    /** A policy that can be applied by a profile owner, affiliate or unaffiliated, running on a user or profile. */
     int APPLIED_BY_PROFILE_OWNER =
             APPLIED_BY_PROFILE_OWNER_PROFILE
             | APPLIED_BY_PROFILE_OWNER_USER;
 
 
     // Modifiers
+    /** Internal use only. Do not use */
+    // This is to be used to mark specific annotations as not generating negative tests
+    int DO_NOT_APPLY_TO_NEGATIVE_TESTS = 1 << 13;
 
-    int APPLIES_IN_BACKGROUND = 1 << 13;
-    int DOES_NOT_APPLY_IN_BACKGROUND = 1 << 14;
+    /**
+     * A policy which applies even when the user is not in the foreground.
+     *
+     * <p>Note that lacking this flag does not mean a policy does not apply - to indicate that use
+     * {@link DOES_NOT_APPLY_IN_BACKGROUND}. */
+    int APPLIES_IN_BACKGROUND = 1 << 14 | (DO_NOT_APPLY_TO_NEGATIVE_TESTS);
+    /**
+     * A policy which does not apply when the user is not in the foreground.
+     *
+     * <p>At present this does not generate any additional tests but may do in future.
+     *
+     * <p>Note that lacking this flag does not mean a policy does apply - to indicate that use
+     * {@link APPLIES_IN_BACKGROUND}. */
+    int DOES_NOT_APPLY_IN_BACKGROUND = 1 << 15;
 
-    int deviceOwner();
-    int profileOwner();
+    /** Flags indicating DPC states which can set the policy. */
+    int[] dpc() default {};
 }

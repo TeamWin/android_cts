@@ -54,7 +54,7 @@ import java.util.stream.Collectors;
 public final class Users {
 
     static final int SYSTEM_USER_ID = 0;
-    private static final long WAIT_FOR_USER_TIMEOUT_MS = 1000 * 60;
+    private static final long WAIT_FOR_USER_TIMEOUT_MS = 1000 * 120;
 
     private Map<Integer, User> mCachedUsers = null;
     private Map<String, UserType> mCachedUserTypes = null;

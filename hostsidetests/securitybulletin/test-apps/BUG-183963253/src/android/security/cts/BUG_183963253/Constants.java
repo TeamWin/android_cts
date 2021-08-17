@@ -14,16 +14,12 @@
  * limitations under the License.
  */
 
-package com.android.bedstead.harrier.policies;
+package android.security.cts.BUG_183963253;
 
-import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_DEVICE_OWNER;
-import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_GLOBALLY;
+final class Constants {
 
-import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
+    public static final String LOG_TAG = "BUG-183963253";
+    public static final String TEST_APP_PACKAGE = Constants.class.getPackage().getName();
 
-/** Policy for network reset test. */
-// TODO(b/189195534):  Update the profileOwner flag once support is added for the way this policy
-//  can be set by a Profile Owner
-@EnterprisePolicy(dpc = APPLIED_BY_DEVICE_OWNER | APPLIES_GLOBALLY)
-public final class DisallowNetworkReset {
+    public static final String ACTION_START_TAPJACKING = "BUG_183963253.start_tapjacking";
 }
