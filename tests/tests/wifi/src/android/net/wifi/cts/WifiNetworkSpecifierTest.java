@@ -173,8 +173,8 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
                 () -> mWifiManager.getPrivilegedConfiguredNetworks());
         // check we have >= 1 saved network
         assertFalse("Need at least one saved network", savedNetworks.isEmpty());
-        // Pick the last saved network on the device (assumes that it is in range)
-        mTestNetwork = savedNetworks.get(savedNetworks.size()  - 1);
+        // Pick the first saved network on the device (assumes that it is in range)
+        mTestNetwork = savedNetworks.get(0);
 
         // Wait for Wifi to be disconnected.
         PollingCheck.check(
