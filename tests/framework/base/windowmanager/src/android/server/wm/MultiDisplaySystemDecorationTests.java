@@ -404,11 +404,11 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
                 newDisplay.mId);
 
         final ImeEventStream stream = mockImeSession.openEventStream();
+        ImeEventStream configChangeVerifyStream = stream.copy();
         expectEvent(stream, editorMatcher("onStartInput",
                 imeTestActivitySession.getActivity().mEditText.getPrivateImeOptions()), TIMEOUT);
 
         // Make the activity to show soft input.
-        ImeEventStream configChangeVerifyStream = stream.copy();
         showSoftInputAndAssertImeShownOnDisplay(newDisplay.mId, imeTestActivitySession, stream);
 
         // Assert the configuration of the IME window is the same as the configuration of the
