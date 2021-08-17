@@ -18,6 +18,7 @@ package com.android.bedstead.harrier;
 
 import androidx.annotation.Nullable;
 
+import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
 import com.android.bedstead.harrier.annotations.enterprise.NegativePolicyTest;
@@ -348,6 +349,19 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
                         policy.getAnnotation(EnterprisePolicy.class);
                 List<Annotation> replacementAnnotations =
                         Policy.cannotSetPolicyStates(policy.getName(), enterprisePolicy);
+
+                annotations.addAll(index, replacementAnnotations);
+                index += replacementAnnotations.size();
+            } else if (annotation instanceof CanSetPolicyTest) {
+                annotations.remove(index);
+                Class<?> policy = ((CanSetPolicyTest) annotation).policy();
+                boolean singleTestOnly = ((CanSetPolicyTest) annotation).singleTestOnly();
+
+                EnterprisePolicy enterprisePolicy =
+                        policy.getAnnotation(EnterprisePolicy.class);
+                List<Annotation> replacementAnnotations =
+                        Policy.canSetPolicyStates(
+                                policy.getName(), enterprisePolicy, singleTestOnly);
 
                 annotations.addAll(index, replacementAnnotations);
                 index += replacementAnnotations.size();
