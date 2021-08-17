@@ -139,10 +139,10 @@ public class TaskFragmentOrganizerPolicyTest {
         final Activity activity = instrumentation.startActivitySync(intent);
 
         // Create a TaskFragment with a TaskFragmentOrganizer.
-        final IBinder fragmentToken = new Binder();
+        final IBinder taskFragToken = new Binder();
         final IBinder activityToken = getActivityToken(activity);
         final TaskFragmentCreationParams params = new TaskFragmentCreationParams.Builder(
-                mTaskFragmentOrganizer.getOrganizerToken(), fragmentToken, activityToken)
+                mTaskFragmentOrganizer.getOrganizerToken(), taskFragToken, activityToken)
                 .build();
         WindowContainerTransaction wct = new WindowContainerTransaction()
                 .createTaskFragment(params);
@@ -156,7 +156,9 @@ public class TaskFragmentOrganizerPolicyTest {
         // Try to perform an operation on the TaskFragment when is organized by the previous
         // TaskFragmentOrganizer.
         wct = new WindowContainerTransaction()
-                .deleteTaskFragment(mTaskFragmentOrganizer.getTaskFragmentInfo().getToken());
+                .deleteTaskFragment(mTaskFragmentOrganizer.getTaskFragmentInfo(taskFragToken)
+                        .getToken());
+
         // It is expected to throw SecurityException when performing operations on the TaskFragment
         // which is not organized by the same TaskFragmentOrganizer.
         anotherOrganizer.applyTransaction(wct);
