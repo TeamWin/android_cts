@@ -50,6 +50,7 @@ import com.google.common.collect.ImmutableMap;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -279,6 +280,44 @@ public final class Policy {
         }
 
         return new ArrayList<>(annotations);
+    }
+
+    /**
+     * Get state annotations where the policy can be set for the given policy.
+     */
+    public static List<Annotation> canSetPolicyStates(
+            String policyName, EnterprisePolicy enterprisePolicy, boolean singleTestOnly) {
+        Set<Annotation> annotations = new HashSet<>();
+
+        validateFlags(policyName, enterprisePolicy.dpc());
+
+        int allFlags = 0;
+        for (int p : enterprisePolicy.dpc()) {
+            allFlags = allFlags | p;
+        }
+
+        for (Map.Entry<Integer, Annotation> appliedByFlag : DPC_STATE_ANNOTATIONS.entrySet()) {
+            if ((appliedByFlag.getKey() & allFlags) == appliedByFlag.getKey()) {
+                annotations.add(appliedByFlag.getValue());
+            }
+        }
+
+        if (annotations.isEmpty()) {
+            // Don't run the original test unparameterized
+            annotations.add(includeNone());
+        }
+
+        List<Annotation> annotationList = new ArrayList<>(annotations);
+
+        if (singleTestOnly) {
+            // We select one annotation in an arbitrary but deterministic way
+            annotationList.sort(Comparator.comparing(a -> a.annotationType().getName()));
+            Annotation firstAnnotation = annotationList.get(0);
+            annotationList.clear();
+            annotationList.add(firstAnnotation);
+        }
+
+        return annotationList;
     }
 
     private static void validateFlags(String policyName, int[] values) {
