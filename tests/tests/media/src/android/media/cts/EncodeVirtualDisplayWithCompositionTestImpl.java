@@ -427,7 +427,8 @@ public class EncodeVirtualDisplayWithCompositionTestImpl {
      * Determines if two color values are approximately equal.
      */
     private static boolean approxEquals(int expected, int actual) {
-        final int MAX_DELTA = 7;
+        // allow differences between BT.601 and BT.709 conversions during encoding/decoding for now
+        final int MAX_DELTA = 17;
         return Math.abs(expected - actual) <= MAX_DELTA;
     }
 
