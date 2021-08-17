@@ -229,14 +229,19 @@ public class HostAtomTests extends DeviceTestCase implements IBuildReceiver {
 
         // Trigger events in same order.
         DeviceUtils.plugInAc(getDevice());
+        DeviceUtils.flushBatteryStatsHandlers(getDevice());
         Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
         DeviceUtils.unplugDevice(getDevice());
+        DeviceUtils.flushBatteryStatsHandlers(getDevice());
         Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
         plugInUsb();
+        DeviceUtils.flushBatteryStatsHandlers(getDevice());
         Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
         DeviceUtils.unplugDevice(getDevice());
+        DeviceUtils.flushBatteryStatsHandlers(getDevice());
         Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
         plugInWireless();
+        DeviceUtils.flushBatteryStatsHandlers(getDevice());
         Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
         DeviceUtils.unplugDevice(getDevice());
         DeviceUtils.flushBatteryStatsHandlers(getDevice());
