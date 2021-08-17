@@ -1,4 +1,4 @@
-// Copyright (C) 2014 The Android Open Source Project
+// Copyright (C) 2021 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,27 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package {
-    default_applicable_licenses: ["Android-Apache-2.0"],
-}
-
-android_app {
-    name: "CtsHoloGeneration",
-    dex_preopt: {
-        enabled: false,
-    },
-    optimize: {
-        enabled: false,
-    },
-    static_libs: ["androidx.test.rules"],
-    libs: [
-        "android.test.runner",
-        "android.test.base",
-    ],
-    uses_libs: [
-        "android.test.runner",
-        "android.test.base",
-    ],
+android_test_helper_app {
+    name: "BUG-183963253",
+    defaults: ["cts_support_defaults"],
     srcs: ["src/**/*.java"],
+    test_suites: [
+        "cts",
+        "vts10",
+        "sts",
+    ],
+    static_libs: [
+        "androidx.appcompat_appcompat",
+        "androidx.test.rules",
+        "androidx.test.uiautomator_uiautomator",
+        "androidx.test.core",
+    ],
     sdk_version: "current",
 }

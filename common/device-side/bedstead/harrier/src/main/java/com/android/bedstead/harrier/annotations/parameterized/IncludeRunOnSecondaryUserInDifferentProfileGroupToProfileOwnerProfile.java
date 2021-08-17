@@ -14,7 +14,12 @@
  * limitations under the License.
  */
 
-package com.android.bedstead.harrier.annotations.meta;
+package com.android.bedstead.harrier.annotations.parameterized;
+
+import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
+import com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser;
+import com.android.bedstead.harrier.annotations.meta.ParameterizedAnnotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -22,14 +27,13 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Mark that an annotation is used to indicate that a test should run on a given user type.
- *
- * <p>The annotation annotated with {@link RequireRunOnUserAnnotation} must have the same body as
- * {@link RequireRunOnUser}.
+ * Parameterize a test so that it runs on a device which has a primary and work profile, but runs
+ * the test on a secondary user which is in a different profile group.
  */
-@Target(ElementType.ANNOTATION_TYPE)
+@Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface RequireRunOnUserAnnotation {
-    /** The name of the user types which the test should be run on. */
-    String[] value();
+@ParameterizedAnnotation
+@RequireRunOnSecondaryUser
+@EnsureHasWorkProfile(forUser = DeviceState.UserType.PRIMARY_USER, dpcIsPrimary = true)
+public @interface IncludeRunOnSecondaryUserInDifferentProfileGroupToProfileOwnerProfile {
 }

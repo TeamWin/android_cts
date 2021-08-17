@@ -17,6 +17,7 @@
 package com.android.bedstead.nene.users;
 
 import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
+import static android.os.Build.VERSION_CODES.Q;
 
 import android.content.Intent;
 import android.os.UserHandle;
@@ -28,6 +29,7 @@ import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.bedstead.nene.users.User.UserState;
 import com.android.bedstead.nene.utils.ShellCommand;
 import com.android.bedstead.nene.utils.ShellCommandUtils;
+import com.android.bedstead.nene.utils.Versions;
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
 
 import javax.annotation.Nullable;
@@ -159,9 +161,11 @@ public abstract class UserReference implements AutoCloseable {
                                 .getIdentifier() == mId);
 
         try {
-            try (PermissionContext p =
-                         mTestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
-                broadcastReceiver.registerForAllUsers();
+            if (Versions.meetsMinimumSdkVersionRequirement(Q)) {
+                try (PermissionContext p =
+                             mTestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
+                    broadcastReceiver.registerForAllUsers();
+                }
             }
 
             // Expects no output on success or failure
@@ -171,7 +175,9 @@ public abstract class UserReference implements AutoCloseable {
                     .validate(String::isEmpty)
                     .execute();
 
-            broadcastReceiver.awaitForBroadcast();
+            if (Versions.meetsMinimumSdkVersionRequirement(Q)) {
+                broadcastReceiver.awaitForBroadcast();
+            }
         } catch (AdbException e) {
             throw new NeneException("Could not switch to user", e);
         } finally {

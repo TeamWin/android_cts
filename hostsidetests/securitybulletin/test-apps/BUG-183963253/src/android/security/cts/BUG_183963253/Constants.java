@@ -14,14 +14,12 @@
  * limitations under the License.
  */
 
-package com.android.bedstead.harrier.policies;
+package android.security.cts.BUG_183963253;
 
-import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.DeviceOwnerControl.NO;
-import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.ProfileOwnerControl.COPE_PARENT;
+final class Constants {
 
-import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
+    public static final String LOG_TAG = "BUG-183963253";
+    public static final String TEST_APP_PACKAGE = Constants.class.getPackage().getName();
 
-/** Example Policy until real policies are added. */
-@EnterprisePolicy(profileOwner = COPE_PARENT, deviceOwner = NO)
-public class TestPolicy {
+    public static final String ACTION_START_TAPJACKING = "BUG_183963253.start_tapjacking";
 }
