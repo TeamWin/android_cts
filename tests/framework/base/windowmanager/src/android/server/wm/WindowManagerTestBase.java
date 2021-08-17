@@ -18,9 +18,6 @@ package android.server.wm;
 
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
-import static android.server.wm.ActivityManagerTestBase.launchHomeActivityNoWait;
-import static android.server.wm.UiDeviceUtils.pressUnlockButton;
-import static android.server.wm.UiDeviceUtils.pressWakeupButton;
 import static android.view.Display.DEFAULT_DISPLAY;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
@@ -34,21 +31,12 @@ import android.os.Bundle;
 
 import com.android.compatibility.common.util.SystemUtil;
 
-import org.junit.Before;
-
 import java.lang.reflect.Array;
 
 import javax.annotation.concurrent.GuardedBy;
 
 public class WindowManagerTestBase extends MultiDisplayTestBase {
     static final long TIMEOUT_WINDOW_FOCUS_CHANGED = 1000; // milliseconds
-
-    @Before
-    public void setupBase() {
-        pressWakeupButton();
-        pressUnlockButton();
-        launchHomeActivityNoWait();
-    }
 
     static <T extends FocusableActivity> T startActivity(Class<T> cls) {
         return startActivity(cls, DEFAULT_DISPLAY);

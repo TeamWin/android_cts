@@ -23,6 +23,8 @@
 #include <fstab/fstab.h>
 #include <gtest/gtest.h>
 
+#include "utils.h"
+
 // The relevant Android API levels
 constexpr auto S_API_LEVEL = 31;
 
@@ -41,6 +43,12 @@ static int getFirstApiLevel() {
 // as current recommendations from NIST for hashing algorithms (SHA-256).
 // https://source.android.com/compatibility/11/android-11-cdd#9_10_device_integrity
 TEST(VerifiedBootTest, avbHashtreeNotUsingSha1) {
+  if(!deviceSupportsFeature("android.hardware.security.model.compatible")) {
+      GTEST_SKIP()
+          << "Skipping test: FEATURE_SECURITY_MODEL_COMPATIBLE missing.";
+    return;
+  }
+
   int first_api_level = getFirstApiLevel();
   GTEST_LOG_(INFO) << "First API level is " << first_api_level;
   if (first_api_level < S_API_LEVEL) {

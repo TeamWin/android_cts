@@ -16,8 +16,6 @@
 
 package android.inputmethodservice.cts.devicetest;
 
-import static android.content.Intent.ACTION_CLOSE_SYSTEM_DIALOGS;
-import static android.content.Intent.FLAG_RECEIVER_FOREGROUND;
 import static android.inputmethodservice.cts.DeviceEvent.isFrom;
 import static android.inputmethodservice.cts.DeviceEvent.isNewerThan;
 import static android.inputmethodservice.cts.DeviceEvent.isType;
@@ -36,10 +34,10 @@ import static android.inputmethodservice.cts.common.ImeCommandConstants.EXTRA_AR
 import static android.inputmethodservice.cts.common.ImeCommandConstants.EXTRA_COMMAND;
 import static android.inputmethodservice.cts.devicetest.MoreCollectors.startingFrom;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeNotNull;
+import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
-import android.content.Intent;
 import android.inputmethodservice.cts.DeviceEvent;
 import android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType;
 import android.inputmethodservice.cts.common.EditTextAppConstants;
@@ -70,8 +68,6 @@ import java.util.stream.Collector;
  */
 @RunWith(AndroidJUnit4.class)
 public class InputMethodServiceDeviceTest {
-
-    private static final String FEATURE_WATCH = "android.hardware.type.watch";
 
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(20);
 
@@ -325,35 +321,44 @@ public class InputMethodServiceDeviceTest {
                 "-e", EXTRA_ARG_STRING1, Ime2Constants.IME_ID));
 
         InputMethodVisibilityVerifier.assertIme2Visible(TIMEOUT);
+    }
 
-        if (helper.shell("pm list features").contains(FEATURE_WATCH)) {
-            // Skip if running on Wear devices because those devices will go through an activity
-            // change during screen off/on cycle due to Ambient mode. Activity change will cause
-            // EditText to retain focus but not show IME.
-            // We also do not use "assumeFalse" because this test is executed as part of
-            // host-side tests, and throwing AssumptionViolatedException would not give us
-            // better understanding about what is happening.
-            // TODO(b/188662291): Remove this while introducing a dedicated test for b/b/160391516.
-            return;
-        }
+    /**
+     * Test IME switcher dialog after turning off/on the screen.
+     *
+     * <p>Regression test for Bug 160391516.</p>
+     */
+    @Test
+    public void testImeSwitchingWithoutWindowFocusAfterDisplayOffOn() throws Throwable {
+        final TestHelper helper = new TestHelper();
 
-        // Make sure the IME switch UI still works after device screen off / on with focusing
-        // same Editor.
-        turnScreenOff(helper);
-        turnScreenOn(helper);
-        helper.shell(ShellCommandUtils.unlockScreen());
-        assertTrue(helper.findUiObject(EditTextAppConstants.EDIT_TEXT_RES_NAME).isFocused());
+        helper.launchActivity(EditTextAppConstants.PACKAGE, EditTextAppConstants.CLASS,
+                EditTextAppConstants.URI);
 
-        // Switch IME from CtsInputMethod2 to CtsInputMethod1.
-        showInputMethodPicker(helper);
-        helper.shell(ShellCommandUtils.broadcastIntent(
-                ACTION_IME_COMMAND, Ime2Constants.PACKAGE,
-                "-e", EXTRA_COMMAND, COMMAND_SWITCH_INPUT_METHOD,
-                "-e", EXTRA_ARG_STRING1, Ime1Constants.IME_ID));
+        helper.findUiObject(EditTextAppConstants.EDIT_TEXT_RES_NAME).click();
 
         InputMethodVisibilityVerifier.assertIme1Visible(TIMEOUT);
 
-        // Switch IME from CtsInputMethod1 to CtsInputMethod2.
+        turnScreenOff(helper);
+        turnScreenOn(helper);
+        helper.shell(ShellCommandUtils.dismissKeyguard());
+        helper.shell(ShellCommandUtils.unlockScreen());
+        {
+            final UiObject2 editText = helper.findUiObject(EditTextAppConstants.EDIT_TEXT_RES_NAME);
+            assumeNotNull("App's view focus behavior after turning off/on the screen is not fully"
+                            + " guaranteed. If the IME is not shown here, just skip this test.",
+                    editText);
+            assumeTrue("App's view focus behavior after turning off/on the screen is not fully"
+                            + " guaranteed. If the IME is not shown here, just skip this test.",
+                    editText.isFocused());
+        }
+
+        InputMethodVisibilityVerifier.assumeIme1Visible("IME behavior after turning off/on the"
+                + " screen is not fully guaranteed. If the IME is not shown here, just skip this.",
+                TIMEOUT);
+
+        // Emulating IME switching with the IME switcher dialog.  An interesting point is that
+        // the IME target window is not focused when the IME switcher dialog is shown.
         showInputMethodPicker(helper);
         helper.shell(ShellCommandUtils.broadcastIntent(
                 ACTION_IME_COMMAND, Ime1Constants.PACKAGE,

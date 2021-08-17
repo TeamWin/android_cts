@@ -40,7 +40,6 @@ public class ImsRegistrationAttributesTest {
         featureTags.add("+g.3gpp.icsi-ref=\"urn%3Aurn-7%3A3gpp-service.ims.icsi.oma.cpm.session\"");
         featureTags.add("+g.gsma.callcomposer");
 
-
         // IWLAN
         ImsRegistrationAttributes attr = new ImsRegistrationAttributes.Builder(
                 ImsRegistrationImplBase.REGISTRATION_TECH_IWLAN).setFeatureTags(featureTags)
@@ -49,6 +48,8 @@ public class ImsRegistrationAttributesTest {
                 attr.getRegistrationTechnology());
         assertEquals(AccessNetworkConstants.TRANSPORT_TYPE_WLAN,
                 attr.getTransportType());
+        assertEquals(0, (attr.getAttributeFlags()
+                & ImsRegistrationAttributes.ATTR_EPDG_OVER_CELL_INTERNET));
         assertEquals(featureTags, attr.getFeatureTags());
 
         //LTE
@@ -58,6 +59,21 @@ public class ImsRegistrationAttributesTest {
                 attr.getRegistrationTechnology());
         assertEquals(AccessNetworkConstants.TRANSPORT_TYPE_WWAN,
                 attr.getTransportType());
+        assertEquals(0, (attr.getAttributeFlags()
+                & ImsRegistrationAttributes.ATTR_EPDG_OVER_CELL_INTERNET));
+        assertNotNull(attr.getFeatureTags());
+        assertEquals(0, attr.getFeatureTags().size());
+
+        // cross sim
+        attr = new ImsRegistrationAttributes.Builder(
+                ImsRegistrationImplBase.REGISTRATION_TECH_CROSS_SIM).build();
+        assertEquals(ImsRegistrationImplBase.REGISTRATION_TECH_CROSS_SIM,
+                attr.getRegistrationTechnology());
+        assertEquals(AccessNetworkConstants.TRANSPORT_TYPE_WLAN,
+                attr.getTransportType());
+        assertEquals(ImsRegistrationAttributes.ATTR_EPDG_OVER_CELL_INTERNET,
+                (attr.getAttributeFlags()
+                        & ImsRegistrationAttributes.ATTR_EPDG_OVER_CELL_INTERNET));
         assertNotNull(attr.getFeatureTags());
         assertEquals(0, attr.getFeatureTags().size());
 
@@ -68,7 +84,9 @@ public class ImsRegistrationAttributesTest {
                 attr.getRegistrationTechnology());
         assertEquals(AccessNetworkConstants.TRANSPORT_TYPE_WWAN,
                 attr.getTransportType());
-        assertEquals(0, attr.getAttributeFlags());
+        assertEquals(0,
+                (attr.getAttributeFlags()
+                        & ImsRegistrationAttributes.ATTR_EPDG_OVER_CELL_INTERNET));
         assertNotNull(attr.getFeatureTags());
         assertEquals(0, attr.getFeatureTags().size());
     }

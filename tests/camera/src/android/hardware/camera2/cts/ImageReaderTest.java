@@ -36,6 +36,7 @@ import android.hardware.camera2.cts.CameraTestUtils.ImageDropperListener;
 import android.hardware.camera2.cts.helpers.StaticMetadata;
 import android.hardware.camera2.cts.rs.BitmapUtils;
 import android.hardware.camera2.cts.testcases.Camera2AndroidTestCase;
+import android.hardware.camera2.params.OutputConfiguration;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.Image.Plane;
@@ -51,6 +52,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -209,6 +211,19 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
                 openDevice(id);
 
                 bufferFormatTestByCamera(ImageFormat.RAW_PRIVATE, /*repeating*/false);
+            } finally {
+                closeDevice(id);
+            }
+        }
+    }
+
+    @Test
+    public void testP010() throws Exception {
+        for (String id : mCameraIdsUnderTest) {
+            try {
+                Log.v(TAG, "Testing YUV P010 capture for Camera " + id);
+                openDevice(id);
+                bufferFormatTestByCamera(ImageFormat.YCBCR_P010, /*repeating*/false);
             } finally {
                 closeDevice(id);
             }
@@ -421,17 +436,38 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
         for (String id : mCameraIdsUnderTest) {
             try {
                 Log.v(TAG, "Private format and protected usage testing for camera " + id);
-                if (!mAllStaticInfo.get(id).isCapabilitySupported(
+                List<String> testCameraIds = new ArrayList<>();
+
+                if (mAllStaticInfo.get(id).isCapabilitySupported(
                         CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_SECURE_IMAGE_DATA)) {
+                    // Test the camera id without using physical camera
+                    testCameraIds.add(null);
+                }
+
+                if (mAllStaticInfo.get(id).isLogicalMultiCamera()) {
+                    Set<String> physicalIdsSet =
+                        mAllStaticInfo.get(id).getCharacteristics().getPhysicalCameraIds();
+                    for (String physicalId : physicalIdsSet) {
+                        if (mAllStaticInfo.get(physicalId).isCapabilitySupported(
+                                CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_SECURE_IMAGE_DATA)) {
+                            testCameraIds.add(physicalId);
+                        }
+                    }
+                }
+
+                if (testCameraIds.isEmpty()) {
                     Log.i(TAG, "Camera " + id +
                             " does not support secure image data capability, skipping");
-
                     continue;
                 }
                 openDevice(id);
-                bufferFormatTestByCamera(ImageFormat.PRIVATE, /*setUsageFlag*/ true,
-                        HardwareBuffer.USAGE_PROTECTED_CONTENT, /*repeating*/ true,
-                        /*checkSession*/ true, /*validateImageData*/ false);
+
+                for (String testCameraId : testCameraIds) {
+                    bufferFormatTestByCamera(ImageFormat.PRIVATE, /*setUsageFlag*/ true,
+                            HardwareBuffer.USAGE_PROTECTED_CONTENT, /*repeating*/ true,
+                            /*checkSession*/ true, /*validateImageData*/ false,
+                            testCameraId);
+                }
             } finally {
                 closeDevice(id);
             }
@@ -1048,16 +1084,42 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
     }
 
     private void bufferFormatTestByCamera(int format, boolean setUsageFlag, long usageFlag,
+            boolean repeating, boolean checkSession, boolean validateImageData) throws Exception {
+        bufferFormatTestByCamera(format, setUsageFlag, usageFlag, repeating, checkSession,
+                validateImageData, /*physicalId*/null);
+    }
+
+    private void bufferFormatTestByCamera(int format, boolean setUsageFlag, long usageFlag,
             // TODO: Consider having some sort of test configuration class passed to reduce the
             //       proliferation of parameters ?
-            boolean repeating, boolean checkSession, boolean validateImageData)
+            boolean repeating, boolean checkSession, boolean validateImageData, String physicalId)
             throws Exception {
-        Size[] availableSizes = mStaticInfo.getAvailableSizesForFormatChecked(format,
+        StaticMetadata staticInfo;
+        if (physicalId == null) {
+            staticInfo = mStaticInfo;
+        } else {
+            staticInfo = mAllStaticInfo.get(physicalId);
+        }
+
+        Size[] availableSizes = staticInfo.getAvailableSizesForFormatChecked(format,
                 StaticMetadata.StreamDirection.Output);
+
+        boolean secureTest = setUsageFlag &&
+                ((usageFlag & HardwareBuffer.USAGE_PROTECTED_CONTENT) != 0);
+        Size secureDataSize = null;
+        if (secureTest) {
+            secureDataSize = staticInfo.getCharacteristics().get(
+                    CameraCharacteristics.SCALER_DEFAULT_SECURE_IMAGE_SIZE);
+        }
 
         // for each resolution, test imageReader:
         for (Size sz : availableSizes) {
             try {
+                // For secure mode test only test default secure data size if HAL advertises one.
+                if (secureDataSize != null && !secureDataSize.equals(sz)) {
+                    continue;
+                }
+
                 if (VERBOSE) {
                     Log.v(TAG, "Testing size " + sz.toString() + " format " + format
                             + " for camera " + mCamera.getId());
@@ -1071,13 +1133,27 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
                     createDefaultImageReader(sz, format, MAX_NUM_IMAGES, mListener);
                 }
 
-                if (checkSession) {
-                    checkImageReaderSessionConfiguration(
-                            "Camera capture session validation for format: " + format + "failed");
+                // Don't queue up images if we won't validate them
+                if (!validateImageData) {
+                    ImageDropperListener imageDropperListener = new ImageDropperListener();
+                    mReader.setOnImageAvailableListener(imageDropperListener, mHandler);
                 }
 
-                // Start capture.
-                CaptureRequest request = prepareCaptureRequest();
+                if (checkSession) {
+                    checkImageReaderSessionConfiguration(
+                            "Camera capture session validation for format: " + format + "failed",
+                            physicalId);
+                }
+
+                ArrayList<OutputConfiguration> outputConfigs = new ArrayList<>();
+                OutputConfiguration config = new OutputConfiguration(mReader.getSurface());
+                if (physicalId != null) {
+                    config.setPhysicalCameraId(physicalId);
+                }
+                outputConfigs.add(config);
+                CaptureRequest request = prepareCaptureRequestForConfigs(
+                        outputConfigs, CameraDevice.TEMPLATE_PREVIEW).build();
+
                 SimpleCaptureCallback listener = new SimpleCaptureCallback();
                 startCapture(request, repeating, listener, mHandler);
 

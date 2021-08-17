@@ -779,7 +779,7 @@ void WriteGoldenPixelsYuv(AHardwareBuffer* buffer,
                           const AHardwareBuffer_Desc& desc,
                           const std::vector<GoldenPixel>& goldens) {
     AHardwareBuffer_Planes planes_info;
-    int result = AHardwareBuffer_lockPlanes(buffer, AHARDWAREBUFFER_USAGE_CPU_READ_RARELY, -1,
+    int result = AHardwareBuffer_lockPlanes(buffer, AHARDWAREBUFFER_USAGE_CPU_WRITE_RARELY, -1,
                                             nullptr, &planes_info);
     ASSERT_EQ(NO_ERROR, result) << "AHardwareBuffer_lock failed with error " << result;
     std::array<uint8_t, 4> golden_color;

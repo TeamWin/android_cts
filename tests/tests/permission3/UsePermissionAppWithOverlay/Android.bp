@@ -20,6 +20,8 @@ package {
 
 android_test_helper_app {
     name: "CtsUsePermissionAppWithOverlay",
+    defaults: ["mts-target-sdk-version-current"],
+    min_sdk_version: "30",
     srcs: [
         "src/**/*.kt",
     ],

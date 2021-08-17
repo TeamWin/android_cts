@@ -21,6 +21,7 @@ import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.lessThan;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
+import static org.junit.Assert.assertNotEquals;
 
 import android.net.http.SslError;
 import android.os.StrictMode;
@@ -322,7 +323,7 @@ public class WebViewZoomTest extends ActivityInstrumentationTestCase2<WebViewCts
         }
 
         public float expectZoomBy(float currentScale, float scaleAmount) {
-            assertTrue(scaleAmount != 1.0f);
+            assertNotEquals(scaleAmount, 1.0f);
 
             float nextScale = currentScale * scaleAmount;
             ScaleChangedState state = waitForNextScaleChange();

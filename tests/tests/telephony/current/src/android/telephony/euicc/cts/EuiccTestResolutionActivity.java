@@ -74,7 +74,7 @@ public class EuiccTestResolutionActivity extends Activity {
                         getApplicationContext(),
                         0 /* requestCode */,
                         resolutionActivityIntent,
-                        PendingIntent.FLAG_ONE_SHOT);
+                        PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_MUTABLE_UNAUDITED);
 
         // add pending intent to extra
         Intent resultIntent = new Intent();
@@ -93,7 +93,7 @@ public class EuiccTestResolutionActivity extends Activity {
     private PendingIntent createCallbackIntent(String action) {
         Intent intent = new Intent(action);
         return PendingIntent.getBroadcast(
-                getApplicationContext(), REQUEST_CODE, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+                getApplicationContext(), REQUEST_CODE, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE_UNAUDITED);
     }
 
     private void sendCallbackAndFinish(int resultCode) {

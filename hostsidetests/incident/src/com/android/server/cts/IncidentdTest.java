@@ -24,9 +24,6 @@ public class IncidentdTest extends ProtoDumpTestCase {
     private static final String TAG = "IncidentdTest";
 
     public void testIncidentReportDump(final int filterLevel, final String dest) throws Exception {
-        if (incidentdDisabled()) {
-            return;
-        }
         final String destArg = dest == null || dest.isEmpty() ? "" : "-p " + dest;
         final IncidentProto dump = getDump(IncidentProto.parser(), "incident " + destArg + " 2>/dev/null");
 
@@ -42,10 +39,7 @@ public class IncidentdTest extends ProtoDumpTestCase {
 
         SettingsIncidentTest.verifySettingsServiceDumpProto(dump.getSettings(), filterLevel);
 
-        NotificationIncidentTest.verifyNotificationServiceDumpProto(dump.getNotification(), filterLevel);
-
         if (BatteryIncidentTest.hasBattery(getDevice())) {
-            BatteryStatsIncidentTest.verifyBatteryStatsServiceDumpProto(dump.getBatterystats(), filterLevel);
             BatteryIncidentTest.verifyBatteryServiceDumpProto(dump.getBattery(), filterLevel);
         }
 
@@ -69,15 +63,13 @@ public class IncidentdTest extends ProtoDumpTestCase {
 
         ActivityManagerIncidentTest.verifyActivityManagerServiceDumpProcessesProto(dump.getAmprocesses(), filterLevel);
 
-        AlarmManagerIncidentTest.verifyAlarmManagerServiceDumpProto(dump.getAlarm(), filterLevel);
-
         // GraphicsStats is expected to be all AUTOMATIC.
 
         WindowManagerIncidentTest.verifyWindowManagerServiceDumpProto(dump.getWindow(), filterLevel);
 
-        JobSchedulerIncidentTest.verifyJobSchedulerServiceDumpProto(dump.getJobscheduler(), filterLevel);
-
-        UsbIncidentTest.verifyUsbServiceDumpProto(dump.getUsb(), filterLevel);
+        if (UsbIncidentTest.hasUsbFunctionality(getDevice())) {
+            UsbIncidentTest.verifyUsbServiceDumpProto(dump.getUsb(), filterLevel);
+        }
     }
 
     // Splitting these into separate methods to make debugging easier.

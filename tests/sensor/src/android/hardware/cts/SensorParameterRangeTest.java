@@ -22,6 +22,7 @@ import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.hardware.cts.helpers.SensorCtsHelper;
 import android.os.Build;
+import android.platform.test.annotations.AppModeFull;
 import android.text.TextUtils;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
@@ -94,6 +95,7 @@ public class SensorParameterRangeTest extends SensorTestCase {
         mVrModeHighPerformance = pm.hasSystemFeature(PackageManager.FEATURE_VR_MODE_HIGH_PERFORMANCE);
     }
 
+    @AppModeFull(reason = "Instant apps cannot have HIGH_SAMPLING_RATE_SENSORS permission.")
     public void testAccelerometerRange() {
         double hifiMaxFrequency = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.N) ?
                 ACCELEROMETER_HIFI_MAX_FREQUENCY :
@@ -112,6 +114,7 @@ public class SensorParameterRangeTest extends SensorTestCase {
                 hifiMaxFrequency);
     }
 
+    @AppModeFull(reason = "Instant apps cannot have HIGH_SAMPLING_RATE_SENSORS permission.")
     public void testGyroscopeRange() {
         double hifiMaxFrequency = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.N) ?
                 GYRO_HIFI_MAX_FREQUENCY :
@@ -135,6 +138,7 @@ public class SensorParameterRangeTest extends SensorTestCase {
                 hifiMaxFrequency);
     }
 
+    @AppModeFull(reason = "Instant apps cannot have HIGH_SAMPLING_RATE_SENSORS permission.")
     public void testMagnetometerRange() {
         checkSensorRangeAndFrequency(
                 Sensor.TYPE_MAGNETIC_FIELD,
@@ -183,7 +187,6 @@ public class SensorParameterRangeTest extends SensorTestCase {
                     sensor.getName(), sensor.getMaximumRange(), range,
                     SensorCtsHelper.getUnitsForSensor(sensor)),
                 sensor.getMaximumRange() >= (range - 0.1));
-
         double actualMaxFrequency = SensorCtsHelper.getFrequency(sensor.getMinDelay(),
                 TimeUnit.MICROSECONDS);
         assertTrue(String.format("%s Max Frequency actual=%.2f expected=%.2fHz",

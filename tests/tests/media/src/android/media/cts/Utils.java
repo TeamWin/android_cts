@@ -164,7 +164,7 @@ public class Utils {
 
             am.registerAudioPlaybackCallback(callback, handler);
             mediaPlayer = MediaPlayer.create(context, Uri.fromFile(new File(mInpPrefix +
-                    "sine1khzs40dblong.mp3")));
+                    "sine1khzm40db.wav")));
             mediaPlayer.start();
             if (!callback.mCountDownLatch.await(TEST_TIMING_TOLERANCE_MS, TimeUnit.MILLISECONDS)
                     || callback.mActiveConfigSize != activeConfigSizeBeforeStart + 1) {

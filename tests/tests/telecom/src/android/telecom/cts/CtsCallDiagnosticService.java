@@ -21,7 +21,7 @@ import android.telecom.BluetoothCallQualityReport;
 import android.telecom.Call;
 import android.telecom.CallAudioState;
 import android.telecom.CallDiagnosticService;
-import android.telecom.DiagnosticCall;
+import android.telecom.CallDiagnostics;
 import android.telephony.CallQuality;
 import android.telephony.ims.ImsReasonInfo;
 import android.util.Log;
@@ -42,9 +42,10 @@ public class CtsCallDiagnosticService extends CallDiagnosticService {
     private CountDownLatch mChangeLatch = new CountDownLatch(1);
     private CountDownLatch mBluetoothCallQualityReportLatch = new CountDownLatch(1);
     private CountDownLatch mCallAudioStateLatch = new CountDownLatch(1);
-    private List<CtsDiagnosticCall> mCalls = new ArrayList<>();
+    private List<CtsCallDiagnostics> mCalls = new ArrayList<>();
+    private CharSequence mDisconnectMessage = null;
 
-    public static class CtsDiagnosticCall extends DiagnosticCall {
+    public class CtsCallDiagnostics extends CallDiagnostics {
         private Call.Details mCallDetails;
         private int mMessageType;
         private int mMessageValue;
@@ -52,6 +53,7 @@ public class CtsCallDiagnosticService extends CallDiagnosticService {
         private CountDownLatch mCallQualityReceivedLatch = new CountDownLatch(1);
         private CountDownLatch mReceivedMessageLatch = new CountDownLatch(1);
         private CountDownLatch mCallDetailsReceivedLatch = new CountDownLatch(1);
+        private CountDownLatch mDisconnectLatch = new CountDownLatch(1);
 
         @Override
         public void onCallDetailsChanged(@NonNull Call.Details details) {
@@ -69,13 +71,15 @@ public class CtsCallDiagnosticService extends CallDiagnosticService {
         @Nullable
         @Override
         public CharSequence onCallDisconnected(int disconnectCause, int preciseDisconnectCause) {
-            return null;
+            mDisconnectLatch.countDown();
+            return mDisconnectMessage;
         }
 
         @Nullable
         @Override
         public CharSequence onCallDisconnected(@NonNull ImsReasonInfo disconnectReason) {
-            return null;
+            mDisconnectLatch.countDown();
+            return mDisconnectMessage;
         }
 
         @Override
@@ -84,8 +88,6 @@ public class CtsCallDiagnosticService extends CallDiagnosticService {
             mReceivedMessageLatch.countDown();
         }
 
-        @NonNull
-        @Override
         public Call.Details getCallDetails() {
             return mCallDetails;
         }
@@ -117,6 +119,10 @@ public class CtsCallDiagnosticService extends CallDiagnosticService {
         public CountDownLatch getCallDetailsReceivedLatch() {
             return mCallDetailsReceivedLatch;
         }
+
+        public CountDownLatch getDisconnectLatch() {
+            return mDisconnectLatch;
+        }
     }
 
     @Override
@@ -137,19 +143,21 @@ public class CtsCallDiagnosticService extends CallDiagnosticService {
 
     @NonNull
     @Override
-    public DiagnosticCall onInitializeDiagnosticCall(@NonNull Call.Details call) {
-        CtsDiagnosticCall diagCall = new CtsDiagnosticCall();
+    public CallDiagnostics onInitializeCallDiagnostics(@NonNull Call.Details call) {
+        CtsCallDiagnostics diagCall = new CtsCallDiagnostics();
         diagCall.mCallDetails = call;
         mCalls.add(diagCall);
         mChangeLatch.countDown();
+        mChangeLatch = new CountDownLatch(1);
         return diagCall;
     }
 
     @Override
-    public void onRemoveDiagnosticCall(@NonNull DiagnosticCall call) {
+    public void onRemoveCallDiagnostics(@NonNull CallDiagnostics call) {
         Log.i(LOG_TAG, "onRemoveDiagnosticCall: " + call);
         mCalls.remove(call);
         mChangeLatch.countDown();
+        mChangeLatch = new CountDownLatch(1);
     }
 
     @Override
@@ -186,16 +194,18 @@ public class CtsCallDiagnosticService extends CallDiagnosticService {
     }
 
     public CountDownLatch getCallChangeLatch() {
-        CountDownLatch latch = mChangeLatch;
-        mChangeLatch = new CountDownLatch(1);
-        return latch;
+        return mChangeLatch;
     }
 
     public CountDownLatch getBluetoothCallQualityReportLatch() {
         return mBluetoothCallQualityReportLatch;
     }
 
-    public List<CtsDiagnosticCall> getCalls() {
+    public List<CtsCallDiagnostics> getCalls() {
         return mCalls;
+    }
+
+    public void setDisconnectMessage(CharSequence charSequence) {
+        mDisconnectMessage = charSequence;
     }
 }

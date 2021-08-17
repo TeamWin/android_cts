@@ -18,7 +18,11 @@ package {
 
 android_test {
     name: "CtsBackupTestCases",
-    defaults: ["cts_defaults"],
+    defaults: [
+        "cts_defaults",
+        "mts-target-sdk-version-current",
+    ],
+    min_sdk_version: "30",
     compile_multilib: "both",
     libs: [
         "android.test.runner",
@@ -37,8 +41,8 @@ android_test {
     srcs: ["src/**/*.java"],
     test_suites: [
         "cts",
-	"mts-permission",
         "general-tests",
+        "mts-permission",
     ],
     sdk_version: "test_current",
 }

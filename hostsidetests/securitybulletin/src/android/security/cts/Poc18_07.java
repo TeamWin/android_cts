@@ -16,7 +16,7 @@
 
 package android.security.cts;
 
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -30,7 +30,7 @@ public class Poc18_07 extends SecurityTestCase {
     * b/76221123
     */
     @Test
-    @SecurityTest(minPatchLevel = "2018-07")
+    @AsbSecurityTest(cveBugId = 76221123)
     public void testPocCVE_2018_9424() throws Exception {
         AdbUtils.runPocAssertNoCrashes(
             "CVE-2018-9424", getDevice(), "android\\.hardware\\.drm@\\d\\.\\d-service");
@@ -40,7 +40,7 @@ public class Poc18_07 extends SecurityTestCase {
      * CVE-2017-18275
      */
     @Test
-    @SecurityTest(minPatchLevel = "2018-07")
+    @AsbSecurityTest(cveBugId = 78242049)
     public void testPocCVE_2017_18275() throws Exception {
       String command =
           "am startservice "

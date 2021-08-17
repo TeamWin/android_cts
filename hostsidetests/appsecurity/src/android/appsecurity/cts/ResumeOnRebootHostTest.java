@@ -125,9 +125,6 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
                 deviceClearLskf();
             } finally {
                 removeTestPackages();
-
-                getDevice().rebootUntilOnline();
-                getDevice().waitForDeviceAvailable();
             }
         }
     }
@@ -174,9 +171,6 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
                 deviceClearLskf();
             } finally {
                 removeTestPackages();
-
-                getDevice().rebootUntilOnline();
-                getDevice().waitForDeviceAvailable();
             }
         }
     }
@@ -234,9 +228,6 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
                 deviceClearLskf();
             } finally {
                 removeTestPackages();
-
-                getDevice().rebootUntilOnline();
-                getDevice().waitForDeviceAvailable();
             }
         }
     }
@@ -296,9 +287,6 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
                 deviceClearLskf();
             } finally {
                 removeTestPackages();
-
-                getDevice().rebootUntilOnline();
-                getDevice().waitForDeviceAvailable();
             }
         }
     }

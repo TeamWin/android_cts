@@ -35,20 +35,26 @@ android_test {
         "androidx.test.rules",
         "platform-test-annotations",
         "platformprotosnano",
-        "permission-test-util-lib"
+        "permission-test-util-lib",
+        "CtsAppTestStubsShared",
     ],
     srcs: [
         "src/**/*.java",
+        "src/**/*.kt",
         "NotificationListener/src/com/android/test/notificationlistener/INotificationUriAccessService.aidl",
     ],
     // Tag this module as a cts test artifact
     test_suites: [
         "cts",
         "general-tests",
+        "sts"
     ],
     instrumentation_for: "CtsAppTestStubs",
     sdk_version: "test_current",
     min_sdk_version: "14",
+    // Disable coverage since it pushes us over the dex limit and we don't
+    // actually need to measure the tests themselves.
+    jacoco: { exclude_filter: ["**"] }
 }
 
 android_test {

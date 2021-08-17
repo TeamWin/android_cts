@@ -42,6 +42,7 @@ import static org.junit.Assert.assertEquals;
 import android.app.UiAutomation;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.FlakyTest;
+import android.platform.test.annotations.SystemUserOnly;
 
 import androidx.annotation.NonNull;
 import androidx.test.InstrumentationRegistry;
@@ -83,6 +84,8 @@ public class SplitPermissionTest {
             TMP_DIR + "CtsAppThatRequestsLocationPermission28.apk";
     private static final String APK_LOCATION_22 =
             TMP_DIR + "CtsAppThatRequestsLocationPermission22.apk";
+    private static final String APK_LOCATION_BACKGROUND_28 =
+            TMP_DIR + "CtsAppThatRequestsLocationAndBackgroundPermission28.apk";
     private static final String APK_LOCATION_BACKGROUND_29 =
             TMP_DIR + "CtsAppThatRequestsLocationAndBackgroundPermission29.apk";
     private static final String APK_SHARED_UID_LOCATION_29 =
@@ -231,6 +234,7 @@ public class SplitPermissionTest {
      * implicitly due to splits.
      */
     @Test
+    @SystemUserOnly(reason = "Secondary users have the DISALLOW_OUTGOING_CALLS user restriction")
     public void nonInheritedStateLowTargetSDKPreM() throws Exception {
         install(APK_CONTACTS_15);
 
@@ -323,6 +327,7 @@ public class SplitPermissionTest {
      * <p>(Pre-M version of test)
      */
     @Test
+    @SystemUserOnly(reason = "Secondary users have the DISALLOW_OUTGOING_CALLS user restriction")
     public void inheritGrantedPermissionStatePreM() throws Exception {
         install(APK_CONTACTS_16);
 
@@ -390,6 +395,7 @@ public class SplitPermissionTest {
      * <p>(Pre-M version of test)
      */
     @Test
+    @SystemUserOnly(reason = "Secondary users have the DISALLOW_OUTGOING_CALLS user restriction")
     public void grantNewSplitPermissionStatePreM() throws Exception {
         install(APK_CONTACTS_15);
         revokePermission(APP_PKG, READ_CONTACTS);
@@ -466,10 +472,33 @@ public class SplitPermissionTest {
     }
 
     /**
+     * An implicit permission should get revoked when the app gets updated and now requests the
+     * permission. This even happens if the app is not targeting the SDK the permission was split
+     * in.
+     */
+    @Test
+    public void newPermissionGetRevokedOnUpgradeBeforeSplitSDK() throws Exception {
+        install(APK_LOCATION_28);
+
+        // Background permission can only be granted together with foreground permission
+        grantPermission(APP_PKG, ACCESS_COARSE_LOCATION);
+        grantPermission(APP_PKG, ACCESS_BACKGROUND_LOCATION);
+
+        // Background location was introduced in SDK 29. Hence an app targeting 28 is usually
+        // unaware of this permission. If the app declares that it is aware by adding the permission
+        // in the manifest the permission will get revoked. This allows the app to request the
+        // permission from the user.
+        install(APK_LOCATION_BACKGROUND_28);
+
+        assertPermissionRevoked(ACCESS_BACKGROUND_LOCATION);
+    }
+
+    /**
      * An implicit permission should <u>not</u> get revoked when the app gets updated as pre-M apps
      * cannot deal with revoked permissions. Hence only the user should ever explicitly do that.
      */
     @Test
+    @SystemUserOnly(reason = "Secondary users have the DISALLOW_OUTGOING_CALLS user restriction")
     public void newPermissionGetRevokedOnUpgradePreM() throws Exception {
         install(APK_CONTACTS_15);
 

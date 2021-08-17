@@ -104,6 +104,7 @@ public class MediaPlayerFlakyNetworkTest extends MediaPlayerTestBase {
     private String[] getSupportedVideos() {
         Vector<String> supported = new Vector<String>();
         for (String video : TEST_VIDEOS) {
+            Preconditions.assertTestFileExists(mInpPrefix + video);
             if (MediaUtils.hasCodecsForPath(mContext, mInpPrefix + video)) {
                 supported.add(video);
             }
@@ -250,6 +251,7 @@ public class MediaPlayerFlakyNetworkTest extends MediaPlayerTestBase {
 
     private void localHttpStreamTest(final String name)
             throws Throwable {
+        Preconditions.assertTestFileExists(mInpPrefix + name);
         String stream_url = mServer.getAssetUrl(mInpPrefix + name);
         mMediaPlayer.setDataSource(stream_url);
 

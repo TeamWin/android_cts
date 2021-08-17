@@ -14,38 +14,52 @@
 """Verify camera startup is < 500ms for both front and back primary cameras.
 """
 
-import its.caps
-import its.device
+import logging
+
+from mobly import test_runner
+
+import camera_properties_utils
+import its_base_test
+import its_session_utils
 
 CAMERA_LAUNCH_S_PERFORMANCE_CLASS_THRESHOLD = 500  # ms
 
 
-def main():
-    """Test camera launch latency for S performance class as specified in CDD.
+class CameraLaunchSPerfClassTest(its_base_test.ItsBaseTest):
+  """Test camera launch latency for S performance class as specified in CDD.
 
-    [7.5/H-1-7] MUST have camera2 startup latency (open camera to first preview
-    frame) < 500ms as measured by the CTS camera PerformanceTest under ITS
-    lighting conditions (3000K) for both primary cameras.
-    """
+  [7.5/H-1-7] MUST have camera2 startup latency (open camera to first preview
+  frame) < 500ms as measured by the CTS camera PerformanceTest under ITS
+  lighting conditions (3000K) for both primary cameras.
+  """
 
-    # Open camera with "with" semantics to check skip condition and save camera
-    # id
-    cam_id = ''
-    with its.device.ItsSession() as cam:
-        its.caps.skip_unless(
-            cam.is_s_performance_class_primary_camera())
-        cam_id = cam._camera_id
+  def test_camera_launch(self):
+    # Open camera with "with" semantics to check skip condition and load chart
+    #
+    with its_session_utils.ItsSession(
+        device_id=self.dut.serial,
+        camera_id=self.camera_id) as cam:
+
+      camera_properties_utils.skip_unless(
+          cam.is_performance_class_primary_camera())
+
+      # Load chart for scene.
+      props = cam.get_camera_properties()
+      its_session_utils.load_scene(
+          cam, props, self.scene, self.tablet, self.chart_distance)
 
     # Create an its session without opening the camera to test camera launch
     # latency
-    session = its.device.ItsSession(camera_id=cam_id)
+    cam = its_session_utils.ItsSession(
+        device_id=self.dut.serial,
+        camera_id=self.camera_id)
 
-    launch_ms = session.measure_camera_launch_ms()
-    print 'camera launch time: %.1f ms' % launch_ms
-
-    msg = 'camera launch time: %.1f ms, THRESH: %.1f ms' \
-        % (launch_ms, CAMERA_LAUNCH_S_PERFORMANCE_CLASS_THRESHOLD)
-    assert launch_ms < CAMERA_LAUNCH_S_PERFORMANCE_CLASS_THRESHOLD, msg
+    launch_ms = cam.measure_camera_launch_ms()
+    if launch_ms >= CAMERA_LAUNCH_S_PERFORMANCE_CLASS_THRESHOLD:
+      raise AssertionError(f'camera launch time: {launch_ms} ms, THRESH: '
+                           f'{CAMERA_LAUNCH_S_PERFORMANCE_CLASS_THRESHOLD} ms')
+    else:
+      logging.debug('camera launch time: %.1f ms', launch_ms)
 
 if __name__ == '__main__':
-    main()
+  test_runner.main()

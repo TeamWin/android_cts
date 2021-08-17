@@ -305,7 +305,7 @@ public class MultiUserTest extends BaseHostJUnit4Test {
             }
             final int lastSwitchUserId = Integer.parseInt(lines[0], 10);
             if (userId == lastSwitchUserId) {
-                // InputMethodManagerService.Lifecycle#onSwitchUser() gets called.  Ready to go.
+                // InputMethodManagerService.Lifecycle#onUserSwitching() gets called.  Ready to go.
                 return;
             }
             if (System.currentTimeMillis() > initialTime + USER_SWITCH_TIMEOUT) {

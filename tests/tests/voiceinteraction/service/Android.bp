@@ -32,3 +32,18 @@ android_test_helper_app {
     ],
     sdk_version: "test_current",
 }
+
+// A test service that doesn't define RecognitionService
+android_test_helper_app {
+    name: "CtsNoRecognitionVoiceInteractionService",
+    defaults: ["cts_support_defaults"],
+    srcs: ["noRecognitionVoiceInteractionService/**/*.java"],
+    resource_dirs: ["noRecognitionVoiceInteractionService/res"],
+    manifest: "noRecognitionVoiceInteractionService/AndroidManifest.xml",
+    // Tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
+    sdk_version: "test_current",
+}

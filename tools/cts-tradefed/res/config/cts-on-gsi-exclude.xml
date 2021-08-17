@@ -65,7 +65,29 @@
     <!-- b/183654427 Remove CtsTelecomTestCases from cts-on-gsi -->
     <option name="compatibility:exclude-filter" value="CtsTelecomTestCases" />
 
+    <!-- b/183234756, b/80388296, b/110260628, b/159295445, b/159294948 CtsDevicePolicyManagerTestCases -->
+    <option name="compatibility:exclude-filter" value="CtsDevicePolicyManagerTestCases" />
+
+    <!-- b/183985653 -->
+    <option name="compatibility:module-arg" value="CtsDeqpTestCases:include-filter:dEQP-EGL.*" />
+    <option name="compatibility:module-arg" value="CtsDeqpTestCases:include-filter:dEQP-GLES2.functional.prerequisite#*" />
+    <option name="compatibility:module-arg" value="CtsDeqpTestCases:include-filter:dEQP-GLES3.functional.prerequisite#*" />
+    <option name="compatibility:module-arg" value="CtsDeqpTestCases:include-filter:dEQP-VK.api.smoke#*" />
+
     <!-- b/183659262 Remove CtsPreferenceTestCases from cts-on-gsi -->
     <option name="compatibility:exclude-filter" value="CtsPreferenceTestCases" />
+
+    <!-- b/183636777 Remove CtsShortcutManagerPackage4 from cts-on-gsi -->
+    <option name="compatibility:exclude-filter" value="CtsShortcutManagerPackage4" />
+
+    <!-- b/185451791. Can't have single overlay package for both AOSP version and Google-signed mainline modules -->
+    <option name="compatibility:exclude-filter" value="CtsWifiTestCases android.net.wifi.cts.ConcurrencyTest#testPersistentGroupOperation" />
+    <option name="compatibility:exclude-filter" value="CtsWifiTestCases android.net.wifi.cts.ConcurrencyTest#testRequestNetworkInfo" />
+
+    <!-- b/192916298, b/192013761, b/193544088  CtsAppCloningHostTest from cts-on-gsi -->
+    <option name="compatibility:exclude-filter" value="CtsAppCloningHostTest android.scopedstorage.cts.host.AppCloningHostTest#testCreateCloneUserFile" />
+
+    <!-- b/194146521 -->
+    <option name="compatibility:exclude-filter" value="CtsPermission3TestCases android.permission3.cts.PermissionTest23#testNoResidualPermissionsOnUninstall" />
 
 </configuration>

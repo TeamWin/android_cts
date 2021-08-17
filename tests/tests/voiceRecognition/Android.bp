@@ -30,8 +30,9 @@ android_test {
         "compatibility-device-util-axt",
         "androidx.test.ext.junit",
         "truth-prebuilt",
+        "cts-wm-util",
     ],
     srcs: ["src/**/*.java"],
     resource_dirs: ["res"],
-    sdk_version: "system_current",
+    sdk_version: "test_current",
 }

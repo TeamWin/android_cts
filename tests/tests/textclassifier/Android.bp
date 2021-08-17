@@ -29,14 +29,20 @@ android_test {
     ],
     libs: ["android.test.base"],
     static_libs: [
+        "androidx.appcompat_appcompat",
         "androidx.test.core",
         "androidx.test.rules",
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
         "truth-prebuilt",
+        "androidx.test.espresso.core",
+        "androidx.test.ext.junit",
+        "androidx.test.uiautomator",
     ],
     srcs: [
         "src/**/*.java",
     ],
+    resource_dirs: ["res"],
     sdk_version: "test_current",
+    min_sdk_version: "30",
 }

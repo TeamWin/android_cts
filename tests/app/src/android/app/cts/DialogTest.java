@@ -21,8 +21,8 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeFalse;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
 
 import android.app.Dialog;
 import android.app.Instrumentation;
@@ -57,12 +57,10 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.LinearLayout;
 
-
 import androidx.test.annotation.UiThreadTest;
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
-
 
 import com.android.compatibility.common.util.PollingCheck;
 
@@ -96,6 +94,7 @@ public class DialogTest {
     public void setup() throws Throwable {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mContext = mInstrumentation.getContext();
+        CtsAppTestUtils.turnScreenOn(mInstrumentation, mContext);
         mInstrumentation.waitForIdleSync();
     }
 

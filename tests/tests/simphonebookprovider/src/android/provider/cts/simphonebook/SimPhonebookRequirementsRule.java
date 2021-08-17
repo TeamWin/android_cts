@@ -26,9 +26,12 @@ import android.telephony.TelephonyManager;
 
 import androidx.test.core.app.ApplicationProvider;
 
+import com.android.compatibility.common.util.PollingCheck;
+
 import org.junit.rules.ExternalResource;
 
 class SimPhonebookRequirementsRule extends ExternalResource {
+    private static final String TAG = "SimPhonebookRequirementsRule";
 
     private final int mMinimumSimCount;
 
@@ -50,10 +53,19 @@ class SimPhonebookRequirementsRule extends ExternalResource {
         // DSDS or DSDA (e.g. crosshatch and blueline).
         assumeThat("not enough SIMs",
                 telephonyManager.getSupportedModemCount(), greaterThanOrEqualTo(mMinimumSimCount));
-        RemovableSims removableSims = new RemovableSims(context);
 
-        assumeThat(removableSims.getRemovableSimSlotCount(),
+        RemovableSims removableSims = new RemovableSims(context);
+        assumeThat("Device does not have enough SIMs.",
+                removableSims.getRemovableSimSlotCount(),
                 greaterThanOrEqualTo(mMinimumSimCount));
+        try {
+            // Poll for a bit in case it takes a while for the SIMs to be initialized.
+            PollingCheck.waitFor(30_000,
+                    () -> removableSims
+                            .getSubscriptionInfoForRemovableSims().size() >= mMinimumSimCount);
+        } catch (AssertionError e) {
+            // Swallowed here because the assert that follows validates the same thing.
+        }
         assertWithMessage("A SIM must be installed in each SIM slot")
                 .that(removableSims.getSubscriptionInfoForRemovableSims().size())
                 .isAtLeast(mMinimumSimCount);

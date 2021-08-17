@@ -67,9 +67,12 @@ public class ParentProfileTest extends BaseManagedProfileTest {
             .add("getPasswordExpiration")
             .add("getPasswordMaximumLength")
             .add("getPasswordComplexity")
+            .add("getRequiredPasswordComplexity")
+            .add("setRequiredPasswordComplexity")
             .add("setCameraDisabled")
             .add("getCameraDisabled")
             .add("isActivePasswordSufficient")
+            .add("isActivePasswordSufficientForDeviceRequirement")
             .add("getCurrentFailedPasswordAttempts")
             .add("getMaximumFailedPasswordsForWipe")
             .add("setMaximumFailedPasswordsForWipe")
@@ -97,6 +100,8 @@ public class ParentProfileTest extends BaseManagedProfileTest {
             .add("getAccountTypesWithManagementDisabled")
             .add("setAccountManagementDisabled")
             .add("setDefaultSmsApplication")
+            .add("getPermittedInputMethods")
+            .add("setPermittedInputMethods")
             .build();
 
     private static final String LOG_TAG = "ParentProfileTest";

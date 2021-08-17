@@ -34,6 +34,7 @@ android_test {
         "mockito-target-minus-junit4",
         "androidx.test.rules",
         "ub-uiautomator",
+        "junit-params",
     ],
 
     libs: [
@@ -53,5 +54,6 @@ android_test {
         "cts",
         "general-tests",
         "mts",
+        "sts",
     ],
 }

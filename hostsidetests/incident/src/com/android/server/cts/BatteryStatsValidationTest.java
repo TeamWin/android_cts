@@ -151,19 +151,6 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
                 "am start -n com.android.server.cts.device.batterystats/.SimpleActivity");
     }
 
-    public void testUidForegroundDuration() throws Exception {
-        batteryOnScreenOff();
-        installPackage(DEVICE_SIDE_TEST_APK, true);
-        // No foreground time before test
-        assertValueRange("st", "", STATE_TIME_FOREGROUND_INDEX, 0, 0);
-        turnScreenOnForReal();
-        assertScreenOn();
-        executeForeground(ACTION_SHOW_APPLICATION_OVERLAY, 2000);
-        Thread.sleep(TIME_SPENT_IN_FOREGROUND); // should be in foreground for about this long
-        assertApproximateTimeInState(STATE_TIME_FOREGROUND_INDEX, TIME_SPENT_IN_FOREGROUND);
-        batteryOffScreenOn();
-    }
-
     public void testUidBackgroundDuration() throws Exception {
         batteryOnScreenOff();
         installPackage(DEVICE_SIDE_TEST_APK, true);

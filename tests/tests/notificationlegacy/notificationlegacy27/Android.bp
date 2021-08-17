@@ -36,5 +36,5 @@ android_test {
         "cts",
         "general-tests",
     ],
-    min_sdk_version: "27",
+    target_sdk_version: "27"
 }

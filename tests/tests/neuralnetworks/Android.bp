@@ -44,6 +44,7 @@ cc_test {
     test_suites: [
         "cts",
         "mts",
+        "mts-neuralnetworks",
         "general-tests",
     ],
     sdk_version: "current",

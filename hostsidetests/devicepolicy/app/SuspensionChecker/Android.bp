@@ -18,6 +18,7 @@ package {
 
 android_library {
     name: "cts-devicepolicy-suspensionchecker",
+    min_sdk_version: "23",
     srcs: ["src/**/*.java"],
     manifest: "AndroidManifest.xml",
     static_libs: [

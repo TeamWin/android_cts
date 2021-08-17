@@ -211,7 +211,7 @@ public class ImeInsetsControllerTest extends EndToEndImeTestBase {
     }
 
     private int getBottomOfWindow(View decorView) {
-        int viewPos[] = new int[2];
+        final int[] viewPos = new int[2];
         decorView.getLocationOnScreen(viewPos);
         return decorView.getHeight() + viewPos[1];
     }

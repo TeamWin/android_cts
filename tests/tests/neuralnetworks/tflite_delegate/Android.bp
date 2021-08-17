@@ -43,12 +43,14 @@ cc_test {
     ],
     static_libs: [
         "libgtest_ndk_c++",
+        "libgmock_ndk",
         "libtflite_static",
     ],
     // Tag this module as a cts test artifact
     test_suites: [
         "cts",
         "mts",
+        "mts-neuralnetworks",
         "general-tests",
     ],
     sdk_version: "current",

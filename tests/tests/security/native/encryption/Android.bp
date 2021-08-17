@@ -15,6 +15,9 @@ cc_test {
         "libbase",
         "libcutils",
     ],
+    static_libs: [
+        "libctssecurity_native_test_utils",
+    ],
     multilib: {
         lib32: {
             suffix: "32",

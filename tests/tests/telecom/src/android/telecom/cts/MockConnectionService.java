@@ -51,9 +51,10 @@ public class MockConnectionService extends ConnectionService {
 
     public static final int EVENT_CONNECTION_SERVICE_FOCUS_GAINED = 0;
     public static final int EVENT_CONNECTION_SERVICE_FOCUS_LOST = 1;
-
-    // Next event id is 2
-    private static final int TOTAL_EVENT = EVENT_CONNECTION_SERVICE_FOCUS_LOST + 1;
+    public static final int EVENT_CONNECTION_SERVICE_CREATE_CONNECTION = 2;
+    public static final int EVENT_CONNECTION_SERVICE_CREATE_CONNECTION_FAILED = 3;
+    // Update TOTAL_EVENT below with last event.
+    private static final int TOTAL_EVENT = EVENT_CONNECTION_SERVICE_CREATE_CONNECTION_FAILED + 1;
 
     private static final int DEFAULT_EVENT_TIMEOUT_MS = 2000;
 
@@ -103,6 +104,7 @@ public class MockConnectionService extends ConnectionService {
         connection.putExtras(testExtra);
         outgoingConnections.add(connection);
         lock.release();
+        mEventLock[EVENT_CONNECTION_SERVICE_CREATE_CONNECTION].release();
         return connection;
     }
 
@@ -145,6 +147,7 @@ public class MockConnectionService extends ConnectionService {
         }
         incomingConnections.add(connection);
         lock.release();
+        mEventLock[EVENT_CONNECTION_SERVICE_CREATE_CONNECTION].release();
         return connection;
     }
 
@@ -156,6 +159,7 @@ public class MockConnectionService extends ConnectionService {
         connection.setPhoneAccountHandle(connectionManagerPhoneAccount);
         failedConnections.add(connection);
         lock.release();
+        mEventLock[EVENT_CONNECTION_SERVICE_CREATE_CONNECTION_FAILED].release();
     }
 
     @Override

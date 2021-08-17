@@ -189,7 +189,7 @@ class LinkerNamespacesHelper {
 
         Collections.addAll(systemLibs, PUBLIC_SYSTEM_LIBRARIES);
         Collections.addAll(systemLibs, OPTIONAL_SYSTEM_LIBRARIES);
-        // System path could contain public ART libraries on foreign arch. http://b/149852946
+	// System path could contain public ART libraries on foreign arch. http://b/149852946
         if (isForeignArchitecture()) {
             Collections.addAll(systemLibs, PUBLIC_ART_LIBRARIES);
         }
@@ -201,21 +201,19 @@ class LinkerNamespacesHelper {
 
         Collections.addAll(artApexLibs, PUBLIC_ART_LIBRARIES);
 
-        // Check if public.libraries.txt contains libs other than the
-        // public system libs (NDK libs).
+        // Check if /system/etc/public.libraries-company.txt and /product/etc/public.libraries
+        // -company.txt files are well-formed. The libraries however are not loaded for test;
+        // It is done in another test CtsUsesNativeLibraryTest because since Android S those libs
+        // are not available unless they are explicited listed in the app manifest.
 
         List<String> oemLibs = new ArrayList<>();
         String oemLibsError = readExtensionConfigFiles(PUBLIC_CONFIG_DIR, oemLibs);
         if (oemLibsError != null) return oemLibsError;
-        // OEM libs that passed above tests are available to Android app via JNI
-        systemLibs.addAll(oemLibs);
 
         // PRODUCT libs that passed are also available
         List<String> productLibs = new ArrayList<>();
         String productLibsError = readExtensionConfigFiles(PRODUCT_CONFIG_DIR, productLibs);
         if (productLibsError != null) return productLibsError;
-
-        List<String> vendorLibs = readPublicLibrariesFile(new File(VENDOR_CONFIG_FILE));
 
         // Make sure that the libs in grey-list are not exposed to apps. In fact, it
         // would be better for us to run this check against all system libraries which
@@ -226,6 +224,7 @@ class LinkerNamespacesHelper {
         // Note: check for systemLibs isn't needed since we already checked
         // /system/etc/public.libraries.txt against NDK and
         // /system/etc/public.libraries-<company>.txt against lib<name>.<company>.so.
+        List<String> vendorLibs = readPublicLibrariesFile(new File(VENDOR_CONFIG_FILE));
         for (String lib : vendorLibs) {
             if (greyListLibs.contains(lib)) {
                 return "Internal library \"" + lib + "\" must not be available to apps.";
@@ -233,15 +232,11 @@ class LinkerNamespacesHelper {
         }
 
         return runAccessibilityTestImpl(systemLibs.toArray(new String[systemLibs.size()]),
-                                        artApexLibs.toArray(new String[artApexLibs.size()]),
-                                        vendorLibs.toArray(new String[vendorLibs.size()]),
-                                        productLibs.toArray(new String[productLibs.size()]));
+                                        artApexLibs.toArray(new String[artApexLibs.size()]));
     }
 
     private static native String runAccessibilityTestImpl(String[] publicSystemLibs,
-                                                          String[] publicRuntimeLibs,
-                                                          String[] publicVendorLibs,
-                                                          String[] publicProductLibs);
+                                                          String[] publicRuntimeLibs);
 
     private static void invokeIncrementGlobal(Class<?> clazz) throws Exception {
         clazz.getMethod("incrementGlobal").invoke(null);
@@ -387,27 +382,18 @@ class LinkerNamespacesHelper {
     }
 
     public static String runDlopenPublicLibraries() {
-        String error;
-        try {
-            List<String> publicLibs = new ArrayList<>();
-            Collections.addAll(publicLibs, PUBLIC_SYSTEM_LIBRARIES);
-            Collections.addAll(publicLibs, PUBLIC_ART_LIBRARIES);
-            error = readExtensionConfigFiles(PUBLIC_CONFIG_DIR, publicLibs);
-            if (error != null) return error;
-            error = readExtensionConfigFiles(PRODUCT_CONFIG_DIR, publicLibs);
-            if (error != null) return error;
-            publicLibs.addAll(readPublicLibrariesFile(new File(VENDOR_CONFIG_FILE)));
-            for (String lib : publicLibs) {
-                String result = LinkerNamespacesHelper.tryDlopen(lib);
-                if (result != null) {
-                    if (error == null) {
-                        error = "";
-                    }
-                    error += result + "\n";
+        String error = null;
+        List<String> publicLibs = new ArrayList<>();
+        Collections.addAll(publicLibs, PUBLIC_SYSTEM_LIBRARIES);
+        Collections.addAll(publicLibs, PUBLIC_ART_LIBRARIES);
+        for (String lib : publicLibs) {
+            String result = LinkerNamespacesHelper.tryDlopen(lib);
+            if (result != null) {
+                if (error == null) {
+                    error = "";
                 }
+                error += result + "\n";
             }
-        } catch (IOException e) {
-            return e.toString();
         }
         return error;
     }

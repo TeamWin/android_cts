@@ -22,13 +22,15 @@ android_test {
     static_libs: [
         "ctstestrunner-axt",
         "bluetooth-test-util-lib",
+        "compatibility-device-util-axt",
     ],
     libs: [
         "android.test.runner",
         "android.test.base",
     ],
     srcs: ["src/**/*.java"],
-    sdk_version: "current",
+    // Allows access to system apis
+    platform_apis: true,
     // Tag this module as a cts test artifact
     test_suites: [
         "cts",

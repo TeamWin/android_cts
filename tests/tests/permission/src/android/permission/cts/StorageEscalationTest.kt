@@ -23,14 +23,19 @@ import android.app.Instrumentation
 import android.app.UiAutomation
 import android.content.Context
 import android.content.pm.PackageManager
-import android.platform.test.annotations.SecurityTest
+import android.os.Process
+import android.os.UserHandle
+import android.platform.test.annotations.AppModeFull
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.compatibility.common.util.SystemUtil
 import org.junit.After
 import org.junit.Assert
+import org.junit.Assert.assertTrue
+import org.junit.Assume.assumeNoException
 import org.junit.Before
 import org.junit.Test
 
+@AppModeFull
 class StorageEscalationTest {
     companion object {
         private const val APK_DIRECTORY = "/data/local/tmp/cts/permissions"
@@ -46,39 +51,89 @@ class StorageEscalationTest {
     private val instrumentation: Instrumentation = InstrumentationRegistry.getInstrumentation()
     private val context: Context = instrumentation.context
     private val uiAutomation: UiAutomation = instrumentation.uiAutomation
+    private var secondaryUserId: Int? = null
 
     @Before
     @After
     fun uninstallApp() {
-        SystemUtil.runShellCommand("pm uninstall $APP_PACKAGE_NAME")
+        SystemUtil.runShellCommand("pm uninstall $APP_PACKAGE_NAME --user ALL")
     }
 
     private fun installPackage(apk: String) {
-        SystemUtil.runShellCommand("pm install -r $apk")
+        var userString = ""
+        secondaryUserId?.let { userId ->
+            userString = " --user $userId"
+        }
+        val result = SystemUtil.runShellCommand("pm install -r$userString $apk")
+        assertTrue("Expected output to contain \"Success\", but was \"$result\"",
+                result.contains("Success"))
+    }
+
+    private fun createSecondaryUser() {
+        val createUserOutput: String = SystemUtil.runShellCommand("pm create-user secondary")
+        var formatException: Exception? = null
+        val userId = try {
+            createUserOutput.split(" id ".toRegex())[1].trim { it <= ' ' }.toInt()
+        } catch (e: Exception) {
+            formatException = e
+            -1
+        }
+        assumeNoException("Failed to parse userId from $createUserOutput", formatException)
+        SystemUtil.runShellCommand("am start-user -w $userId")
+        secondaryUserId = userId
+    }
+
+    @After
+    fun removeSecondaryUser() {
+        secondaryUserId?.let { userId ->
+            SystemUtil.runShellCommand("pm remove-user $userId")
+            secondaryUserId = null
+        }
     }
 
     private fun grantStoragePermissions() {
         for (permName in permissions) {
-            uiAutomation.grantRuntimePermission(APP_PACKAGE_NAME, permName)
+            var user = Process.myUserHandle()
+            secondaryUserId?.let {
+                user = UserHandle.of(it)
+            }
+            uiAutomation.grantRuntimePermissionAsUser(APP_PACKAGE_NAME, permName, user)
         }
     }
 
     private fun assertStoragePermissionState(granted: Boolean) {
         for (permName in permissions) {
-            Assert.assertEquals(granted, context.packageManager.checkPermission(permName,
+            var userContext = context
+            secondaryUserId?.let { userId ->
+                SystemUtil.runWithShellPermissionIdentity {
+                    userContext = context.createPackageContextAsUser(
+                            APP_PACKAGE_NAME, 0, UserHandle.of(userId))
+                }
+            }
+            Assert.assertEquals(granted, userContext.packageManager.checkPermission(permName,
                 APP_PACKAGE_NAME) == PackageManager.PERMISSION_GRANTED)
         }
     }
 
     @Test
-    @SecurityTest(minPatchLevel = "2021-03")
     fun testCannotEscalateWithSdkDowngrade() {
         runStorageEscalationTest(APP_APK_PATH_29_SCOPED, APP_APK_PATH_28)
     }
 
     @Test
-    @SecurityTest(minPatchLevel = "2021-03")
     fun testCannotEscalateWithNewManifestLegacyRequest() {
+        runStorageEscalationTest(APP_APK_PATH_29_SCOPED, APP_APK_PATH_29_FULL)
+    }
+
+    @Test
+    fun testCannotEscalateWithSdkDowngradeSecondary() {
+        createSecondaryUser()
+        runStorageEscalationTest(APP_APK_PATH_29_SCOPED, APP_APK_PATH_28)
+    }
+
+    @Test
+    fun testCannotEscalateWithNewManifestLegacyRequestSecondary() {
+        createSecondaryUser()
         runStorageEscalationTest(APP_APK_PATH_29_SCOPED, APP_APK_PATH_29_FULL)
     }
 

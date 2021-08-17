@@ -16,6 +16,8 @@
 
 package android.hdmicec.cts;
 
+import static org.junit.Assume.assumeTrue;
+
 import android.hdmicec.cts.error.DumpsysParseException;
 
 import com.android.tradefed.config.Option;
@@ -32,6 +34,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -91,6 +94,8 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
 
     @Before
     public void setUp() throws Exception {
+        setCec14();
+
         mDutLogicalAddresses = getDumpsysLogicalAddresses();
         hdmiCecClient.setTargetLogicalAddress(getTargetLogicalAddress());
         boolean startAsTv = !hasDeviceType(HdmiCecConstants.CEC_DEVICE_TYPE_TV);
@@ -172,10 +177,12 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
             if (!logicalAddressList.isEmpty()) {
                 return logicalAddressList;
             }
-        } catch (Exception e) {
-            throw new DumpsysParseException("Parsing dumpsys for logicalAddress failed.", e);
+        } catch (IOException | DeviceNotAvailableException e) {
+            throw new DumpsysParseException(
+                    "Could not parse logicalAddress from dumpsys.", e);
         }
-        throw new DumpsysParseException("Could not parse logicalAddress from dumpsys.");
+        throw new DumpsysParseException(
+                "Could not parse logicalAddress from dumpsys.");
     }
 
     /** Gets the DUT's logical address to which messages should be sent */
@@ -184,8 +191,7 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
     }
 
     /** Gets the given device's logical address to which messages should be sent */
-    public static LogicalAddress getTargetLogicalAddress(ITestDevice device)
-            throws DumpsysParseException {
+    public static LogicalAddress getTargetLogicalAddress(ITestDevice device) throws DumpsysParseException {
         return getTargetLogicalAddress(device, HdmiCecConstants.CEC_DEVICE_TYPE_UNKNOWN);
     }
 
@@ -284,6 +290,33 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
         return mDutLogicalAddresses.contains(address);
     }
 
+    private static void setCecVersion(ITestDevice device, int cecVersion) throws Exception {
+        device.executeShellCommand("cmd hdmi_control cec_setting set hdmi_cec_version " +
+                cecVersion);
+
+        TimeUnit.SECONDS.sleep(HdmiCecConstants.TIMEOUT_CEC_REINIT_SECONDS);
+    }
+
+    /**
+     * Configures the device to use CEC 2.0. Skips the test if the device does not support CEC 2.0.
+     * @throws Exception
+     */
+    public void setCec20() throws Exception {
+        setCecVersion(getDevice(), HdmiCecConstants.CEC_VERSION_2_0);
+        hdmiCecClient.sendCecMessage(hdmiCecClient.getSelfDevice(), CecOperand.GET_CEC_VERSION);
+        String reportCecVersion = hdmiCecClient.checkExpectedOutput(hdmiCecClient.getSelfDevice(),
+                CecOperand.CEC_VERSION);
+        boolean supportsCec2 = CecMessage.getParams(reportCecVersion)
+                >= HdmiCecConstants.CEC_VERSION_2_0;
+
+        // Device still reports a CEC version < 2.0.
+        assumeTrue(supportsCec2);
+    }
+
+    public void setCec14() throws Exception {
+        setCecVersion(getDevice(), HdmiCecConstants.CEC_VERSION_1_4);
+    }
+
     public String getSystemLocale() throws Exception {
         ITestDevice device = getDevice();
         return device.executeShellCommand("getprop " + PROPERTY_LOCALE).trim();
@@ -299,7 +332,27 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
     }
 
     public boolean isLanguageEditable() throws Exception {
-        String val = getDevice().executeShellCommand("getprop ro.hdmi.set_menu_language");
+        String val = getDevice().executeShellCommand(
+                "getprop ro.hdmi.set_menu_language");
         return val.trim().equals("true") ? true : false;
+    }
+
+    public static String getSettingsValue(ITestDevice device, String setting) throws Exception {
+        return device.executeShellCommand("cmd hdmi_control cec_setting get " + setting)
+                .replace(setting + " = ", "").trim();
+    }
+
+    public String getSettingsValue(String setting) throws Exception {
+        return getSettingsValue(getDevice(), setting);
+    }
+
+    public static void setSettingsValue(ITestDevice device, String setting, String value)
+            throws Exception {
+        device.executeShellCommand("cmd hdmi_control cec_setting set " + setting + " " +
+                value);
+    }
+
+    public void setSettingsValue(String setting, String value) throws Exception {
+        setSettingsValue(getDevice(), setting, value);
     }
 }

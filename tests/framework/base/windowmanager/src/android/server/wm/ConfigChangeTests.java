@@ -43,10 +43,8 @@ import static org.junit.Assume.assumeTrue;
 import android.content.ComponentName;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
-import android.provider.Settings;
 import android.server.wm.CommandSession.ActivityCallback;
 import android.server.wm.TestJournalProvider.TestJournalContainer;
-import android.server.wm.settings.SettingsSession;
 
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -235,17 +233,8 @@ public class ConfigChangeTests extends ActivityManagerTestBase {
         }
     }
 
-    /** Helper class to save, set, and restore font_scale preferences. */
-    private static class FontScaleSession extends SettingsSession<Float> {
-        FontScaleSession() {
-            super(Settings.System.getUriFor(Settings.System.FONT_SCALE),
-                    Settings.System::getFloat,
-                    Settings.System::putFloat);
-        }
-    }
-
     private void testChangeFontScale(ComponentName activityName, boolean relaunch) {
-        final FontScaleSession fontScaleSession = mObjectTracker.manage(new FontScaleSession());
+        final FontScaleSession fontScaleSession = createManagedFontScaleSession();
         fontScaleSession.set(1.0f);
         separateTestJournal();
         launchActivity(activityName);
@@ -305,7 +294,7 @@ public class ConfigChangeTests extends ActivityManagerTestBase {
         assertRelaunchOrConfigChanged(TEST_ACTIVITY, 1 /* numRelaunch */,
                 0 /* numConfigChange */);
         final int newAssetSeq = getAssetSeqNumber(TEST_ACTIVITY);
-        assertEquals("Asset sequence number must be incremented.", assetSeq + 1, newAssetSeq);
+        assertTrue("Asset sequence number must be incremented.", assetSeq < newAssetSeq);
     }
 
     private static int getAssetSeqNumber(ComponentName activityName) {

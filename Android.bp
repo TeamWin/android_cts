@@ -108,3 +108,8 @@ java_defaults {
         },
     },
 }
+
+java_defaults {
+    name: "mts-target-sdk-version-current",
+    target_sdk_version: "10000",
+}

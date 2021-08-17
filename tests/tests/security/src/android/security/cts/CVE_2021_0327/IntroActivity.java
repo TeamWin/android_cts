@@ -2,30 +2,23 @@ package android.security.cts.CVE_2021_0327;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.UiAutomation;
 import android.app.admin.DevicePolicyManager;
+import android.app.admin.ManagedProfileProvisioningParams;
+import android.app.admin.ProvisioningException;
 import android.content.ClipData;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.view.View;
-import android.util.Log;
-import android.os.SystemClock;
-
-//import android.support.test.InstrumentationRegistry;
-import androidx.test.InstrumentationRegistry;
-import android.support.test.uiautomator.UiDevice;
-import android.support.test.uiautomator.UiObject2;
-import android.support.test.uiautomator.By;
-import android.support.test.uiautomator.BySelector;
-import java.io.*;
-import java.util.stream.Collectors;
-
+import android.os.UserHandle;
 import android.security.cts.CVE_2021_0327.workprofilesetup.AdminReceiver;
+import android.util.Log;
+
+import androidx.test.InstrumentationRegistry;
 
 public class IntroActivity extends Activity {
 
-    private static final int AR_WORK_PROFILE_SETUP = 1;
     private static final String TAG = "CVE_2021_0327";
 
     private void launchOtherUserActivity() {
@@ -45,50 +38,7 @@ public class IntroActivity extends Activity {
         } else if (canLaunchOtherUserActivity()) {
             launchOtherUserActivity();
         } else {
-            setupWorkProfile(null);
-
-            //detect buttons to click
-            boolean profileSetUp=false;
-            String button;
-            java.util.List<UiObject2> objects;
-            UiDevice mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
-            BySelector selector = By.clickable(true);
-
-
-            while(!profileSetUp){
-              do {
-                Log.i(TAG, "waiting for clickable");
-                SystemClock.sleep(3000);
-              } while((objects = mUiDevice.findObjects(selector)).size()==0);
-              for(UiObject2 o : objects){
-                button=o.getText();
-                Log.d(TAG,"button:" + button);
-
-                if(button==null){
-                  continue;
-                }
-
-                switch(button){
-                  case "Delete" :
-                    o.click();
-                    Log.i(TAG, "clicked: Delete");
-                    break;
-                  case "Accept & continue" :
-                    o.click();
-                    Log.i(TAG, "clicked: Accept & continue");
-                    break;
-                  case "Next" :
-                    o.click();
-                    profileSetUp=true;
-                    Log.i(TAG, "clicked: Next");
-                    break;
-                  default :
-                    continue;
-                }
-                break;
-              }
-            }
-            //end while(!profileSetUp);
+            setupWorkProfile();
         }
     }
 
@@ -101,29 +51,32 @@ public class IntroActivity extends Activity {
         return (getPackageManager().resolveActivity(intent, 0) != null);
     }
 
-    public void setupWorkProfile(View view) {
+    private void setupWorkProfile() {
         Log.d(TAG, "setupWorkProfile()");
-        Intent intent = new Intent(DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE);
-        intent.putExtra(
-                DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME,
-                new ComponentName(this, AdminReceiver.class)
-        );
-        startActivityForResult(intent, AR_WORK_PROFILE_SETUP);
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        uiAutomation.adoptShellPermissionIdentity();
+        DevicePolicyManager devicePolicyManager = getSystemService(DevicePolicyManager.class);
+        try {
+            UserHandle profile = devicePolicyManager.createAndProvisionManagedProfile(
+                    new ManagedProfileProvisioningParams.Builder(
+                            new ComponentName(this, AdminReceiver.class),
+                            "profileOwner").build());
+            if (profile == null) {
+                showErrorDialog();
+            } else {
+                launchOtherUserActivity();
+            }
+        } catch (ProvisioningException e) {
+            showErrorDialog();
+        } finally {
+            uiAutomation.dropShellPermissionIdentity();
+        }
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        Log.d(TAG, "onActivityResult()");
-        if (requestCode == AR_WORK_PROFILE_SETUP) {
-            if (resultCode == RESULT_OK) {
-                launchOtherUserActivity();
-            } else {
-                new AlertDialog.Builder(this)
-                        .setMessage("Work profile setup failed")
-                        .setPositiveButton("ok", null)
-                        .show();
-            }
-        }
-        super.onActivityResult(requestCode, resultCode, data);
+    private void showErrorDialog() {
+        new AlertDialog.Builder(this)
+                .setMessage("Work profile setup failed")
+                .setPositiveButton("ok", null)
+                .show();
     }
 }

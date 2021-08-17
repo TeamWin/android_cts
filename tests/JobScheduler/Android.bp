@@ -34,6 +34,7 @@ android_test {
     test_suites: [
         "cts",
         "general-tests",
+        "mts",
     ],
     // sdk_version: "current",
     platform_apis: true,

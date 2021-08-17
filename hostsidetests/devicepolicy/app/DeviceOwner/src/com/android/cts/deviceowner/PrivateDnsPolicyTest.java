@@ -16,7 +16,6 @@
 
 package com.android.cts.deviceowner;
 
-import static android.app.admin.DevicePolicyManager.PRIVATE_DNS_MODE_OFF;
 import static android.app.admin.DevicePolicyManager.PRIVATE_DNS_MODE_OPPORTUNISTIC;
 import static android.app.admin.DevicePolicyManager.PRIVATE_DNS_MODE_PROVIDER_HOSTNAME;
 
@@ -60,11 +59,10 @@ public class PrivateDnsPolicyTest extends BaseDeviceOwnerTest {
     }
 
     private void setUserRestriction(String restriction, boolean add) {
-        DevicePolicyManager dpm = mContext.getSystemService(DevicePolicyManager.class);
         if (add) {
-            dpm.addUserRestriction(getWho(), restriction);
+            mDevicePolicyManager.addUserRestriction(getWho(), restriction);
         } else {
-            dpm.clearUserRestriction(getWho(), restriction);
+            mDevicePolicyManager.clearUserRestriction(getWho(), restriction);
         }
     }
 

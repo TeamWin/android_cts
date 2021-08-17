@@ -86,6 +86,7 @@ public class DecoderConformanceTest extends MediaPlayerTestBase {
 
 
     private List<String> readResourceLines(String fileName) throws Exception {
+        Preconditions.assertTestFileExists(mInpPrefix + fileName);
         InputStream is = new FileInputStream(mInpPrefix + fileName);
         BufferedReader in = new BufferedReader(new InputStreamReader(is, "UTF-8"));
 
@@ -135,6 +136,7 @@ public class DecoderConformanceTest extends MediaPlayerTestBase {
     protected static AssetFileDescriptor getAssetFileDescriptorFor(final String res, String mime)
             throws FileNotFoundException {
         String tag = MIMETYPE_TO_TAG.get(mime);
+        Preconditions.assertTestFileExists(mInpPrefix + res + "." + tag);
         File inpFile = new File(mInpPrefix + res + "." + tag);
         ParcelFileDescriptor parcelFD =
                 ParcelFileDescriptor.open(inpFile, ParcelFileDescriptor.MODE_READ_ONLY);

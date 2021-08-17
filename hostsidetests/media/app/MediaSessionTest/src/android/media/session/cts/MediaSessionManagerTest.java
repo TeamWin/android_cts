@@ -25,8 +25,8 @@ import static org.junit.Assert.fail;
 import android.content.ComponentName;
 import android.content.Context;
 import android.media.session.MediaController;
-import android.media.session.MediaSessionManager;
 import android.media.session.MediaSessionManager.RemoteUserInfo;
+import android.media.session.MediaSessionManager;
 import android.os.Process;
 import android.service.notification.NotificationListenerService;
 

@@ -103,6 +103,7 @@ public class MediaPlayerTestBase extends ActivityInstrumentationTestCase2<MediaS
 
     protected static AssetFileDescriptor getAssetFileDescriptorFor(final String res)
             throws FileNotFoundException {
+        Preconditions.assertTestFileExists(mInpPrefix + res);
         File inpFile = new File(mInpPrefix + res);
         ParcelFileDescriptor parcelFD =
                 ParcelFileDescriptor.open(inpFile, ParcelFileDescriptor.MODE_READ_ONLY);
@@ -111,6 +112,7 @@ public class MediaPlayerTestBase extends ActivityInstrumentationTestCase2<MediaS
 
     // returns true on success
     protected boolean loadResource(final String res) throws Exception {
+        Preconditions.assertTestFileExists(mInpPrefix + res);
         if (!MediaUtils.hasCodecsForResource(mInpPrefix + res)) {
             return false;
         }

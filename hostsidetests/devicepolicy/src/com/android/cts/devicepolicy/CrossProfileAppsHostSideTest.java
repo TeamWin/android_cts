@@ -5,7 +5,6 @@ import static android.stats.devicepolicy.EventId.CROSS_PROFILE_APPS_START_ACTIVI
 import static android.stats.devicepolicy.EventId.START_ACTIVITY_BY_INTENT_VALUE;
 
 import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
-import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.isStatsdEnabled;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -240,7 +239,7 @@ public class CrossProfileAppsHostSideTest extends BaseDevicePolicyTest {
     @LargeTest
     @Test
     public void testStartMainActivity_logged() throws Exception {
-        if (!mHasManagedUserFeature || !isStatsdEnabled(getDevice())) {
+        if (!mHasManagedUserFeature) {
             return;
         }
         assertMetricsLogged(
@@ -261,7 +260,7 @@ public class CrossProfileAppsHostSideTest extends BaseDevicePolicyTest {
     @LargeTest
     @Test
     public void testGetTargetUserProfiles_logged() throws Exception {
-        if (!mHasManagedUserFeature || !isStatsdEnabled(getDevice())) {
+        if (!mHasManagedUserFeature) {
             return;
         }
         assertMetricsLogged(

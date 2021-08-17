@@ -291,6 +291,7 @@ public class VisualizerTest extends PostProcTestBase {
             return;
         }
         AudioEffect vc = null;
+        Preconditions.assertTestFileExists(mInpPrefix + "sine1khzm40db.wav");
         try {
             // this test will play a 1kHz sine wave with peaks at -40dB
             MediaPlayer mp = MediaPlayer
@@ -365,6 +366,7 @@ public class VisualizerTest extends PostProcTestBase {
             return;
         }
         AudioEffect vc = null;
+        Preconditions.assertTestFileExists(mInpPrefix + "sine1khzs40dblong.mp3");
         try {
             // this test will play a 1kHz sine wave with peaks at -40dB
             MediaPlayer mp = MediaPlayer.create(getContext(),

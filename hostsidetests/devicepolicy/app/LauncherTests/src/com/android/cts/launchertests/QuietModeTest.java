@@ -109,7 +109,6 @@ public class QuietModeTest {
             return;
         }
         setDefaultLauncher(InstrumentationRegistry.getInstrumentation(), mOriginalLauncher);
-        startActivitySync(mOriginalLauncher);
     }
 
     @Test
@@ -295,9 +294,8 @@ public class QuietModeTest {
     }
 
     private void setTestAppAsDefaultLauncher() {
-        setDefaultLauncher(
-                InstrumentationRegistry.getInstrumentation(),
-                LAUNCHER_ACTIVITY.flattenToString());
+        setDefaultLauncher(InstrumentationRegistry.getInstrumentation(),
+                LAUNCHER_ACTIVITY.getPackageName());
     }
 }
 

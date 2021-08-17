@@ -15,6 +15,7 @@ cc_test {
         "libavb_user",
         "libavb",
         "libfs_mgr",
+        "libctssecurity_native_test_utils",
     ],
     shared_libs: [
         "libbase",

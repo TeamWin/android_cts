@@ -74,11 +74,30 @@ android_test_helper_app {
 }
 
 android_test_helper_app {
+    name: "CtsAppDataIsolationAppApi29A",
+    defaults: ["cts_support_defaults"],
+    srcs: ["common/src/**/*.java", "AppA/src/**/*.java", "AppA/aidl/**/*.aidl"],
+    sdk_version: "test_current",
+    static_libs: ["androidx.test.rules", "truth-prebuilt", "testng", "ub-uiautomator", "compatibility-device-util-axt"],
+    libs: ["android.test.base"],
+    // tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
+    certificate: ":cts-testkey1",
+    dex_preopt: {
+        enabled: false,
+    },
+    manifest: "AppA/AndroidManifest_api29.xml",
+}
+
+android_test_helper_app {
     name: "CtsAppDataIsolationAppB",
     defaults: ["cts_support_defaults"],
     srcs: ["common/src/**/*.java", "AppB/src/**/*.java"],
     sdk_version: "test_current",
-    static_libs: ["androidx.test.rules", "truth-prebuilt", "testng", "compatibility-device-util-axt"],
+    static_libs: ["androidx.test.rules", "truth-prebuilt", "testng", "ub-uiautomator", "compatibility-device-util-axt"],
     libs: ["android.test.base"],
     // tag this module as a cts test artifact
     test_suites: [

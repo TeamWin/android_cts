@@ -122,7 +122,7 @@ public class UninstallPinnedTest {
             mContext.getPackageManager().getPackageInstaller().uninstall(TEST_PKG_NAME,
                     PendingIntent.getBroadcast(mContext, 1,
                             new Intent(CALLBACK_ACTION),
-                            0).getIntentSender());
+                            PendingIntent.FLAG_MUTABLE).getIntentSender());
         });
 
         int status = statusFuture.join();
@@ -145,7 +145,7 @@ public class UninstallPinnedTest {
     private void pinActivity(ComponentName component) {
         mWmState.computeState();
 
-        int stackId = mWmState.getStackIdByActivity(component);
+        int stackId = mWmState.getRootTaskIdByActivity(component);
 
         runWithShellPermissionIdentity(() -> {
             mActivityTaskManager.startSystemLockTaskMode(

@@ -16,27 +16,33 @@
 
 package android.autofillservice.cts.inline;
 
-import static android.autofillservice.cts.CannedFillResponse.NO_RESPONSE;
-import static android.autofillservice.cts.WebViewActivity.HTML_NAME_PASSWORD;
-import static android.autofillservice.cts.WebViewActivity.HTML_NAME_USERNAME;
-import static android.autofillservice.cts.augmented.CannedAugmentedFillResponse.NO_AUGMENTED_RESPONSE;
+import static android.autofillservice.cts.activities.WebViewActivity.HTML_NAME_PASSWORD;
+import static android.autofillservice.cts.activities.WebViewActivity.HTML_NAME_USERNAME;
+import static android.autofillservice.cts.testcore.CannedAugmentedFillResponse.NO_AUGMENTED_RESPONSE;
+import static android.autofillservice.cts.testcore.CannedFillResponse.NO_RESPONSE;
 
 import android.app.assist.AssistStructure.ViewNode;
-import android.autofillservice.cts.AutofillActivityTestRule;
-import android.autofillservice.cts.CannedFillResponse;
-import android.autofillservice.cts.Helper;
-import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
-import android.autofillservice.cts.MyWebView;
-import android.autofillservice.cts.WebViewActivity;
-import android.autofillservice.cts.augmented.AugmentedAutofillAutoActivityLaunchTestCase;
-import android.autofillservice.cts.augmented.CannedAugmentedFillResponse;
+import android.autofillservice.cts.activities.MyWebView;
+import android.autofillservice.cts.activities.WebViewActivity;
+import android.autofillservice.cts.commontests.AugmentedAutofillAutoActivityLaunchTestCase;
+import android.autofillservice.cts.testcore.AugmentedHelper;
+import android.autofillservice.cts.testcore.AutofillActivityTestRule;
+import android.autofillservice.cts.testcore.CannedAugmentedFillResponse;
+import android.autofillservice.cts.testcore.CannedFillResponse;
+import android.autofillservice.cts.testcore.CtsAugmentedAutofillService.AugmentedFillRequest;
+import android.autofillservice.cts.testcore.Helper;
+import android.autofillservice.cts.testcore.InstrumentedAutoFillService.FillRequest;
 import android.support.test.uiautomator.UiObject2;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.autofill.AutofillId;
+import android.view.autofill.AutofillValue;
+
+import androidx.test.filters.FlakyTest;
 
 import org.junit.Test;
 
+@FlakyTest(bugId = 162372863)
 public class InlineAugmentedWebViewActivityTest extends
         AugmentedAutofillAutoActivityLaunchTestCase<WebViewActivity> {
 
@@ -79,8 +85,14 @@ public class InlineAugmentedWebViewActivityTest extends
 
         // Trigger autofill.
         mActivity.getUsernameInput().click();
-        sReplier.getNextFillRequest();
-        sAugmentedReplier.getNextFillRequest();
+
+        final FillRequest autofillRequest = sReplier.getNextFillRequest();
+        AutofillId usernameId = getAutofillIdByWebViewTag(autofillRequest, HTML_NAME_USERNAME);
+        final AugmentedFillRequest request = sAugmentedReplier.getNextFillRequest();
+
+        // Assert request
+        AugmentedHelper.assertBasicRequestInfo(request, mActivity, usernameId,
+                (AutofillValue) null);
 
         // Assert not shown.
         mUiBot.assertNoDatasetsEver();
@@ -143,7 +155,12 @@ public class InlineAugmentedWebViewActivityTest extends
                         .build())
                 .build());
 
-        sAugmentedReplier.getNextFillRequest();
+        final AugmentedFillRequest request = sAugmentedReplier.getNextFillRequest();
+
+        // Assert request
+        AugmentedHelper.assertBasicRequestInfo(request, mActivity, usernameId,
+                (AutofillValue) null);
+
         final UiObject2 datasetPicker = mUiBot.assertDatasets("dude");
 
         // Now Autofill it.

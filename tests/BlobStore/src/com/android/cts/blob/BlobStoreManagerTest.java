@@ -137,6 +137,9 @@ public class BlobStoreManagerTest {
         runShellCmd("cmd blob_store clear-all-sessions");
         runShellCmd("cmd blob_store clear-all-blobs");
         mContext.getFilesDir().delete();
+        for (String pkg : new String[] {HELPER_PKG, HELPER_PKG2, HELPER_PKG3}) {
+            runShellCmd("cmd package clear " + pkg);
+        }
     }
 
     @Test
@@ -336,9 +339,9 @@ public class BlobStoreManagerTest {
                 assertThat(session.isPublicAccessAllowed()).isTrue();
             });
 
-            assertPkgCanAccess(blobData, HELPER_PKG);
-            assertPkgCanAccess(blobData, HELPER_PKG2);
-            assertPkgCanAccess(blobData, HELPER_PKG3);
+            acquireLeaseAndAssertPkgCanAccess(blobData, HELPER_PKG);
+            acquireLeaseAndAssertPkgCanAccess(blobData, HELPER_PKG2);
+            acquireLeaseAndAssertPkgCanAccess(blobData, HELPER_PKG3);
         } finally {
             blobData.delete();
         }
@@ -380,7 +383,7 @@ public class BlobStoreManagerTest {
                 assertThat(session.isSameSignatureAccessAllowed()).isTrue();
             });
 
-            assertPkgCanAccess(blobData, HELPER_PKG);
+            acquireLeaseAndAssertPkgCanAccess(blobData, HELPER_PKG);
             assertPkgCannotAccess(blobData, HELPER_PKG2);
             assertPkgCannotAccess(blobData, HELPER_PKG3);
         } finally {
@@ -426,7 +429,7 @@ public class BlobStoreManagerTest {
             });
 
             assertPkgCannotAccess(blobData, HELPER_PKG);
-            assertPkgCanAccess(blobData, HELPER_PKG2);
+            acquireLeaseAndAssertPkgCanAccess(blobData, HELPER_PKG2);
             assertPkgCannotAccess(blobData, HELPER_PKG3);
         } finally {
             blobData.delete();
@@ -451,8 +454,8 @@ public class BlobStoreManagerTest {
             });
 
             assertPkgCannotAccess(blobData, HELPER_PKG);
-            assertPkgCanAccess(blobData, HELPER_PKG2);
-            assertPkgCanAccess(blobData, HELPER_PKG3);
+            acquireLeaseAndAssertPkgCanAccess(blobData, HELPER_PKG2);
+            acquireLeaseAndAssertPkgCanAccess(blobData, HELPER_PKG3);
         } finally {
             blobData.delete();
         }
@@ -502,13 +505,13 @@ public class BlobStoreManagerTest {
             assertPkgCannotAccess(blobData, connection3);
 
             commitBlobFromPkg(blobData, connection1);
-            assertPkgCanAccess(blobData, connection1);
+            acquireLeaseAndAssertPkgCanAccess(blobData, connection1);
             assertPkgCannotAccess(blobData, connection2);
             assertPkgCannotAccess(blobData, connection3);
 
             commitBlobFromPkg(blobData, connection2);
-            assertPkgCanAccess(blobData, connection1);
-            assertPkgCanAccess(blobData, connection2);
+            acquireLeaseAndAssertPkgCanAccess(blobData, connection1);
+            acquireLeaseAndAssertPkgCanAccess(blobData, connection2);
             assertPkgCannotAccess(blobData, connection3);
         } finally {
             blobData.delete();
@@ -535,9 +538,9 @@ public class BlobStoreManagerTest {
                 assertThat(session.isPublicAccessAllowed()).isFalse();
             });
 
-            assertPkgCanAccess(blobData, HELPER_PKG);
+            acquireLeaseAndAssertPkgCanAccess(blobData, HELPER_PKG);
             assertPkgCannotAccess(blobData, HELPER_PKG2);
-            assertPkgCanAccess(blobData, HELPER_PKG3);
+            acquireLeaseAndAssertPkgCanAccess(blobData, HELPER_PKG3);
         } finally {
             blobData.delete();
         }
@@ -563,15 +566,15 @@ public class BlobStoreManagerTest {
                 assertThat(session.isPublicAccessAllowed()).isFalse();
             });
 
-            assertPkgCanAccess(blobData, connection1);
-            assertPkgCanAccess(blobData, connection2);
+            acquireLeaseAndAssertPkgCanAccess(blobData, connection1);
+            acquireLeaseAndAssertPkgCanAccess(blobData, connection2);
             assertPkgCannotAccess(blobData, connection3);
 
             commitBlobFromPkg(blobData, ICommandReceiver.FLAG_ACCESS_TYPE_PUBLIC, connection2);
 
-            assertPkgCanAccess(blobData, connection1);
-            assertPkgCanAccess(blobData, connection2);
-            assertPkgCanAccess(blobData, connection3);
+            acquireLeaseAndAssertPkgCanAccess(blobData, connection1);
+            acquireLeaseAndAssertPkgCanAccess(blobData, connection2);
+            acquireLeaseAndAssertPkgCanAccess(blobData, connection3);
         } finally {
             blobData.delete();
             connection1.unbind();
@@ -693,7 +696,7 @@ public class BlobStoreManagerTest {
                 assertThat(pfd).isNotNull();
                 blobData.verifyBlob(pfd);
             }
-            assertPkgCanAccess(blobData, connection);
+            acquireLeaseAndAssertPkgCanAccess(blobData, connection);
         } finally {
             blobData.delete();
             connection.unbind();
@@ -924,6 +927,37 @@ public class BlobStoreManagerTest {
         } finally {
             blobData.delete();
             blobData2.delete();
+        }
+    }
+
+    @Test
+    public void testAcquireLease_multipleLeasees() throws Exception {
+        final FakeBlobData blobData = new FakeBlobData.Builder(mContext).build();
+        blobData.prepare();
+        final TestServiceConnection serviceConnection = bindToHelperService(HELPER_PKG);
+        try {
+            final long sessionId = mBlobStoreManager.createSession(blobData.getBlobHandle());
+            assertThat(sessionId).isGreaterThan(0L);
+
+            commitBlob(blobData, session -> {
+                session.allowPublicAccess();
+                assertThat(session.isPublicAccessAllowed()).isTrue();
+            });
+
+            acquireLease(mContext, blobData.getBlobHandle(), R.string.test_desc);
+            assertLeasedBlobs(mBlobStoreManager, blobData.getBlobHandle());
+            acquireLeaseFrmPkg(blobData, serviceConnection);
+            assertPkgCanAccess(blobData, serviceConnection);
+
+            // Release the lease from this package
+            releaseLease(mContext, blobData.getBlobHandle());
+            assertNoLeasedBlobs(mBlobStoreManager);
+
+            // Helper package should still be able to read the blob
+            assertPkgCanAccess(blobData, serviceConnection);
+        } finally {
+            blobData.delete();
+            serviceConnection.unbind();
         }
     }
 
@@ -1768,6 +1802,12 @@ public class BlobStoreManagerTest {
         }
     }
 
+    private void acquireLeaseFrmPkg(FakeBlobData blobData, TestServiceConnection serviceConnection)
+            throws Exception {
+        final ICommandReceiver commandReceiver = serviceConnection.getCommandReceiver();
+        commandReceiver.acquireLease(blobData.getBlobHandle());
+    }
+
     private void openSessionFromPkg(long sessionId, String pkg) throws Exception {
         final TestServiceConnection serviceConnection = bindToHelperService(pkg);
         try {
@@ -1778,19 +1818,29 @@ public class BlobStoreManagerTest {
         }
     }
 
-    private void assertPkgCanAccess(FakeBlobData blobData, String pkg) throws Exception {
+    private void acquireLeaseAndAssertPkgCanAccess(FakeBlobData blobData, String pkg)
+            throws Exception {
         final TestServiceConnection serviceConnection = bindToHelperService(pkg);
         try {
-            assertPkgCanAccess(blobData, serviceConnection);
+            acquireLeaseAndAssertPkgCanAccess(blobData, serviceConnection);
         } finally {
             serviceConnection.unbind();
         }
     }
 
-    private void assertPkgCanAccess(FakeBlobData blobData,
+    private void acquireLeaseAndAssertPkgCanAccess(FakeBlobData blobData,
             TestServiceConnection serviceConnection) throws Exception {
         final ICommandReceiver commandReceiver = serviceConnection.getCommandReceiver();
         commandReceiver.acquireLease(blobData.getBlobHandle());
+        try (ParcelFileDescriptor pfd = commandReceiver.openBlob(blobData.getBlobHandle())) {
+            assertThat(pfd).isNotNull();
+            blobData.verifyBlob(pfd);
+        }
+    }
+
+    private void assertPkgCanAccess(FakeBlobData blobData, TestServiceConnection serviceConnection)
+            throws Exception {
+        final ICommandReceiver commandReceiver = serviceConnection.getCommandReceiver();
         try (ParcelFileDescriptor pfd = commandReceiver.openBlob(blobData.getBlobHandle())) {
             assertThat(pfd).isNotNull();
             blobData.verifyBlob(pfd);

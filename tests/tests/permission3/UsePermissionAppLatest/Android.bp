@@ -27,6 +27,8 @@ filegroup {
 
 android_test_helper_app {
     name: "CtsUsePermissionAppLatest",
+    defaults: ["mts-target-sdk-version-current"],
+    min_sdk_version: "30",
     srcs: [
         ":CtsUsePermissionAppSrc",
     ],

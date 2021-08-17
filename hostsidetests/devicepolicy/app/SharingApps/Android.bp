@@ -37,6 +37,7 @@ android_test_helper_app {
     test_suites: [
         "cts",
         "general-tests",
+        "mts",
     ],
     manifest: "sharingapp1/AndroidManifest.xml",
 }
@@ -62,6 +63,7 @@ android_test_helper_app {
     test_suites: [
         "cts",
         "general-tests",
+        "mts",
     ],
     manifest: "sharingapp2/AndroidManifest.xml",
 }
