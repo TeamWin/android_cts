@@ -17,6 +17,7 @@
 package android.telephonyprovider.cts;
 
 import static android.telephonyprovider.cts.DefaultSmsAppHelper.assumeTelephony;
+import static android.telephonyprovider.cts.DefaultSmsAppHelper.assumeSms;
 
 import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
@@ -61,6 +62,7 @@ public class ThreadsTest {
     @Before
     public void setupTestEnvironment() {
         assumeTelephony();
+        assumeSms();
         cleanup();
         mContext = getInstrumentation().getContext();
         mContentResolver = mContext.getContentResolver();
