@@ -52,6 +52,7 @@ import android.telecom.TelecomManager;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.NegativePolicyTest;
@@ -125,6 +126,7 @@ public class LockTaskTest {
 
     @Test
     @PositivePolicyTest(policy = LockTask.class)
+    @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void setLockTaskPackages_lockTaskPackagesIsSet() {
         String[] originalLockTaskPackages =
                 sDeviceState.dpc().devicePolicyManager()
@@ -145,6 +147,7 @@ public class LockTaskTest {
 
     @Test
     @PositivePolicyTest(policy = LockTask.class)
+    @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void startLockTask_recordsMetric() {
         String[] originalLockTaskPackages =
                 sDeviceState.dpc().devicePolicyManager()
@@ -187,6 +190,7 @@ public class LockTaskTest {
 
     @Test
     @PositivePolicyTest(policy = LockTask.class)
+    @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void setLockTaskPackages_empty_lockTaskPackagesIsSet() {
         String[] originalLockTaskPackages =
                 sDeviceState.dpc().devicePolicyManager()
@@ -207,6 +211,7 @@ public class LockTaskTest {
 
     @Test
     @PositivePolicyTest(policy = LockTask.class)
+    @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void setLockTaskPackages_includesPolicyExemptApp_lockTaskPackagesIsSet() {
         Set<String> policyExemptApps = sTestApis.devicePolicy().getPolicyExemptApps();
         assumeFalse("OEM does not define any policy-exempt apps",
@@ -239,6 +244,7 @@ public class LockTaskTest {
 
     @Test
     @PositivePolicyTest(policy = LockTask.class)
+    @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void isLockTaskPermitted_lockTaskPackageIsSet_returnsTrue() {
         String[] originalLockTaskPackages =
                 sDeviceState.dpc().devicePolicyManager()
@@ -276,6 +282,7 @@ public class LockTaskTest {
 
     @Test
     @PositivePolicyTest(policy = LockTask.class)
+    @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void isLockTaskPermitted_lockTaskPackageIsNotSet_returnsFalse() {
         String[] originalLockTaskPackages =
                 sDeviceState.dpc().devicePolicyManager()
@@ -294,6 +301,7 @@ public class LockTaskTest {
 
     @Test
     @PositivePolicyTest(policy = LockTask.class)
+    @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void isLockTaskPermitted_includesPolicyExemptApps() {
         Set<String> policyExemptApps = sTestApis.devicePolicy().getPolicyExemptApps();
         // TODO(b/188035301): Add a unit test which ensures this actually gets tested
@@ -319,7 +327,8 @@ public class LockTaskTest {
 
     @Test
     @PositivePolicyTest(policy = LockTask.class)
-    // TODO(scottjonathan): Support additional parameterization for cases like this
+    // TODO(b/188893663): Support additional parameterization for cases like this
+    @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void setLockTaskFeatures_overviewFeature_setsFeature() {
         int originalLockTaskFeatures =
                 sDeviceState.dpc().devicePolicyManager()
@@ -343,6 +352,7 @@ public class LockTaskTest {
 
     @Test
     @PositivePolicyTest(policy = LockTask.class)
+    @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void setLockTaskFeatures_overviewFeature_throwsException() {
         // Overview can only be used in combination with home
         int originalLockTaskFeatures =
@@ -362,6 +372,7 @@ public class LockTaskTest {
 
     @Test
     @PositivePolicyTest(policy = LockTask.class)
+    @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void setLockTaskFeatures_notificationsFeature_throwsException() {
         // Notifications can only be used in combination with home
         int originalLockTaskFeatures =
@@ -381,7 +392,8 @@ public class LockTaskTest {
 
     @Test
     @PositivePolicyTest(policy = LockTask.class)
-    // TODO(scottjonathan): Support additional parameterization for cases like this
+    // TODO(b/188893663): Support additional parameterization for cases like this
+    @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void setLockTaskFeatures_multipleFeatures_setsFeatures() {
         int originalLockTaskFeatures =
                 sDeviceState.dpc().devicePolicyManager()
@@ -420,6 +432,7 @@ public class LockTaskTest {
 
     @Test
     @PositivePolicyTest(policy = LockTask.class)
+    @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void startLockTask_includedInLockTaskPackages_taskIsLocked() {
         String[] originalLockTaskPackages =
                 sDeviceState.dpc().devicePolicyManager()
@@ -448,6 +461,7 @@ public class LockTaskTest {
 
     @Test
     @PositivePolicyTest(policy = LockTask.class)
+    @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void startLockTask_notIncludedInLockTaskPackages_taskIsNotLocked() {
         String[] originalLockTaskPackages =
                 sDeviceState.dpc().devicePolicyManager()
@@ -504,6 +518,7 @@ public class LockTaskTest {
 
     @Test
     @PositivePolicyTest(policy = LockTask.class)
+    @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void finish_isLocked_doesNotFinish() {
         String[] originalLockTaskPackages =
                 sDeviceState.dpc().devicePolicyManager()
@@ -535,6 +550,7 @@ public class LockTaskTest {
 
     @Test
     @PositivePolicyTest(policy = LockTask.class)
+    @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void finish_hasStoppedLockTask_doesFinish() {
         String[] originalLockTaskPackages =
                 sDeviceState.dpc().devicePolicyManager()
@@ -565,6 +581,7 @@ public class LockTaskTest {
 
     @Test
     @PositivePolicyTest(policy = LockTask.class)
+    @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void setLockTaskPackages_removingCurrentlyLockedTask_taskFinishes() {
         String[] originalLockTaskPackages =
                 sDeviceState.dpc().devicePolicyManager()
@@ -595,6 +612,7 @@ public class LockTaskTest {
 
     @Test
     @PositivePolicyTest(policy = LockTask.class)
+    @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void setLockTaskPackages_removingCurrentlyLockedTask_otherLockedTasksRemainLocked() {
         String[] originalLockTaskPackages =
                 sDeviceState.dpc().devicePolicyManager()
@@ -635,6 +653,7 @@ public class LockTaskTest {
 
     @Test
     @PositivePolicyTest(policy = LockTask.class)
+    @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void startActivity_withinSameTask_startsActivity() {
         String[] originalLockTaskPackages =
                 sDeviceState.dpc().devicePolicyManager()
@@ -668,6 +687,7 @@ public class LockTaskTest {
 
     @Test
     @PositivePolicyTest(policy = LockTask.class)
+    @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void startActivity_withinSameTask_blockStartInTask_doesNotStart() {
         String[] originalLockTaskPackages =
                 sDeviceState.dpc().devicePolicyManager()
@@ -706,6 +726,7 @@ public class LockTaskTest {
 
     @Test
     @PositivePolicyTest(policy = LockTask.class)
+    @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void startActivity_inNewTask_blockStartInTask_doesNotStart() {
         String[] originalLockTaskPackages =
                 sDeviceState.dpc().devicePolicyManager()
@@ -744,6 +765,7 @@ public class LockTaskTest {
 
     @Test
     @PositivePolicyTest(policy = LockTask.class)
+    @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void startActivity_fromPermittedPackage_newTask_starts() {
         String[] originalLockTaskPackages =
                 sDeviceState.dpc().devicePolicyManager().getLockTaskPackages(DPC_COMPONENT_NAME);
@@ -773,6 +795,7 @@ public class LockTaskTest {
 
     @Test
     @PositivePolicyTest(policy = LockTask.class)
+    @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void startActivity_fromNonPermittedPackage_newTask_doesNotStart() {
         String[] originalLockTaskPackages =
                 sDeviceState.dpc().devicePolicyManager().getLockTaskPackages(DPC_COMPONENT_NAME);
@@ -802,6 +825,7 @@ public class LockTaskTest {
 
     @Test
     @PositivePolicyTest(policy = LockTask.class)
+    @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void startActivity_lockTaskEnabledOption_startsInLockTaskMode() {
         String[] originalLockTaskPackages =
                 sDeviceState.dpc().devicePolicyManager().getLockTaskPackages(DPC_COMPONENT_NAME);
@@ -829,6 +853,7 @@ public class LockTaskTest {
 
     @Test
     @PositivePolicyTest(policy = LockTask.class)
+    @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void startActivity_lockTaskEnabledOption_notAllowedPackage_throwsException() {
         String[] originalLockTaskPackages =
                 sDeviceState.dpc().devicePolicyManager().getLockTaskPackages(DPC_COMPONENT_NAME);
@@ -850,6 +875,7 @@ public class LockTaskTest {
 
     @Test
     @PositivePolicyTest(policy = LockTask.class)
+    @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void startActivity_ifWhitelistedActivity_startsInLockTaskMode() {
         String[] originalLockTaskPackages =
                 sDeviceState.dpc().devicePolicyManager().getLockTaskPackages(DPC_COMPONENT_NAME);
@@ -878,6 +904,7 @@ public class LockTaskTest {
 
     @Test
     @PositivePolicyTest(policy = LockTask.class)
+    @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void startActivity_ifWhitelistedActivity_notWhitelisted_startsNotInLockTaskMode() {
         String[] originalLockTaskPackages =
                 sDeviceState.dpc().devicePolicyManager().getLockTaskPackages(DPC_COMPONENT_NAME);
@@ -907,6 +934,7 @@ public class LockTaskTest {
 
     @Test
     @PositivePolicyTest(policy = LockTask.class)
+    @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void finish_ifWhitelistedActivity_doesNotFinish() {
         String[] originalLockTaskPackages =
                 sDeviceState.dpc().devicePolicyManager().getLockTaskPackages(DPC_COMPONENT_NAME);
@@ -939,6 +967,7 @@ public class LockTaskTest {
 
     @Test
     @PositivePolicyTest(policy = LockTask.class)
+    @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void setLockTaskPackages_removingExistingIfWhitelistedActivity_stopsTask() {
         String[] originalLockTaskPackages =
                 sDeviceState.dpc().devicePolicyManager().getLockTaskPackages(DPC_COMPONENT_NAME);
@@ -970,6 +999,7 @@ public class LockTaskTest {
     @Test
     @PositivePolicyTest(policy = LockTask.class)
     @RequireFeature(FEATURE_TELEPHONY)
+    @Postsubmit(reason = "b/181993922 automatically marked flaky")
     // Tests that the default dialer doesn't crash or otherwise misbehave in lock task mode
     public void launchDefaultDialerInLockTaskMode_launches() {
         String[] originalLockTaskPackages =
@@ -1005,6 +1035,7 @@ public class LockTaskTest {
     @Test
     @PositivePolicyTest(policy = LockTask.class)
     @RequireFeature(FEATURE_TELEPHONY)
+    @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void launchEmergencyDialerInLockTaskMode_notWhitelisted_noKeyguardFeature_doesNotLaunch() {
         String[] originalLockTaskPackages =
                 sDeviceState.dpc().devicePolicyManager().getLockTaskPackages(DPC_COMPONENT_NAME);
@@ -1043,6 +1074,7 @@ public class LockTaskTest {
     @Test
     @PositivePolicyTest(policy = LockTask.class)
     @RequireFeature(FEATURE_TELEPHONY)
+    @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void launchEmergencyDialerInLockTaskMode_notWhitelisted_keyguardFeature_launches() {
         String[] originalLockTaskPackages =
                 sDeviceState.dpc().devicePolicyManager().getLockTaskPackages(DPC_COMPONENT_NAME);
