@@ -21,6 +21,7 @@ import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.database.Cursor;
+import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.SystemClock;
@@ -100,9 +101,7 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
     }
 
     private UiObject findDocument(String label) throws UiObjectNotFoundException {
-        final UiSelector docList = new UiSelector().resourceId(
-                getDocumentsUiPackageId() + ":id/container_directory").childSelector(
-                new UiSelector().resourceId(getDocumentsUiPackageId() + ":id/dir_list"));
+        final UiSelector docList = new UiSelector().resourceId(getDocumentsUiPackageId() + ":id/dir_list");
 
         // Wait for the first list item to appear
         assertTrue("First list item",
@@ -117,9 +116,28 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
             //do nothing, already be in list mode.
         }
 
-        // Now scroll around to find our item
-        new UiScrollable(docList).scrollIntoView(new UiSelector().text(label));
-        return new UiObject(docList.childSelector(new UiSelector().text(label)));
+        // Repeat swipe gesture to find our item
+        // (UiScrollable#scrollIntoView does not seem to work well with SwipeRefreshLayout)
+        UiObject targetObject = new UiObject(docList.childSelector(new UiSelector().text(label)));
+        UiObject saveButton = findSaveButton();
+        int stepLimit = 10;
+        while (stepLimit-- > 0) {
+            if (targetObject.exists()) {
+                boolean targetObjectFullyVisible = !saveButton.exists()
+                        || targetObject.getVisibleBounds().bottom
+                        <= saveButton.getVisibleBounds().top;
+                if (targetObjectFullyVisible) {
+                    break;
+                }
+            }
+
+            mDevice.swipe(/* startX= */ mDevice.getDisplayWidth() / 2,
+                    /* startY= */ mDevice.getDisplayHeight() / 2,
+                    /* endX= */ mDevice.getDisplayWidth() / 2,
+                    /* endY= */ 0,
+                    /* steps= */ 40);
+        }
+        return targetObject;
     }
 
     private UiObject findSaveButton() throws UiObjectNotFoundException {
