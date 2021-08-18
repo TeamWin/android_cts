@@ -295,7 +295,7 @@ class CameraMicIndicatorsPermissionTest {
                 // indicator
                 uiDevice.openQuickSettings()
                 assertPrivacyChipAndIndicatorsPresent(
-                    useMic || useHotword,
+                    useMic,
                     useCamera,
                     chainUsage,
                     safetyCenterEnabled
@@ -390,11 +390,13 @@ class CameraMicIndicatorsPermissionTest {
         chainUsage: Boolean,
         safetyCenterEnabled: Boolean = false
     ) {
-        // Ensure the privacy chip is present
-        eventually {
-            val privacyChip = uiDevice.findObject(UiSelector().resourceId(PRIVACY_CHIP_ID))
-            assertTrue("view with id $PRIVACY_CHIP_ID not found", privacyChip.exists())
-            privacyChip.click()
+        // Ensure the privacy chip is present (or not)
+        val chipFound = isChipPresent()
+        if (useMic || useCamera) {
+            assertTrue("Did not find chip", chipFound)
+        } else { // hotword
+            assertFalse("Found chip, but did not expect to", chipFound)
+            return
         }
 
         eventually {
@@ -453,6 +455,21 @@ class CameraMicIndicatorsPermissionTest {
         assertEquals("Expected two $APP_LABEL view", 2, appViews.size)
         val shellView = uiDevice.findObjects(By.textContains(shellLabel))
         assertEquals("Expected only one shell view", 1, shellView.size)
+    }
+
+    private fun isChipPresent(): Boolean {
+        var chipFound = false
+        try {
+            eventually {
+                val privacyChip = uiDevice.findObject(By.res(PRIVACY_CHIP_ID))
+                assertNotNull("view with id $PRIVACY_CHIP_ID not found", privacyChip)
+                privacyChip.click()
+                chipFound = true
+            }
+        } catch (e: Exception) {
+            // Handle more gracefully after
+        }
+        return chipFound
     }
 
     private fun pressBack() {
