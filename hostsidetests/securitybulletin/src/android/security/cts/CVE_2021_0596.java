@@ -18,20 +18,21 @@ package android.security.cts;
 
 import android.platform.test.annotations.AsbSecurityTest;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
-import org.junit.Test;
 import org.junit.runner.RunWith;
-import static org.junit.Assert.*;
+import org.junit.Test;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
-public class CVE_2021_29368 extends SecurityTestCase {
+public class CVE_2021_0596 extends SecurityTestCase {
 
-   /**
-     * b/174738029
-     *
+    /**
+     * b/181346550
+     * Vulnerability Behaviour: SIGSEGV in self
      */
-    @AsbSecurityTest(cveBugId = 174738029)
+    @AsbSecurityTest(cveBugId = 181346550)
     @Test
-    public void testPocCVE_2021_29368() throws Exception {
-        AdbUtils.runPocAssertExitStatusNotVulnerable("CVE-2021-29368", getDevice(),60);
+    public void testPocCVE_2021_0596() throws Exception {
+        AdbUtils.assumeHasNfc(getDevice());
+        pocPusher.only64();
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2021-0596", null, getDevice());
     }
 }
