@@ -19,12 +19,13 @@ package {
 android_test {
     name: "CtsMediaTranscodingTestCases",
     defaults: ["CtsMediaTranscodingTestCasesDefaults", "cts_defaults"],
-    // runs as part of mainline's MTS, so must run on Q devices
+    // part of MTS, so we need compatibility back to Q/29
     min_sdk_version: "29",
     test_suites: [
         "cts",
         "general-tests",
         "mts-media",
+        "mts",
     ],
     static_libs: [
         "compatibility-device-util-axt",
@@ -44,5 +45,4 @@ java_defaults {
         "android.test.base",
         "android.test.runner",
     ],
-    sdk_version: "test_current",
 }
