@@ -24,6 +24,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.fail;
 
 import android.Manifest;
+import android.content.pm.PackageManager;
 import android.content.rollback.RollbackInfo;
 import android.content.rollback.RollbackManager;
 import android.provider.DeviceConfig;
@@ -438,11 +439,11 @@ public class RollbackManagerTest {
         InstallUtils.processUserData(TestApp.C);
 
         Install a2 = Install.single(TestApp.A2)
-                .setEnableRollback(ROLLBACK_DATA_POLICY_WIPE);
+                .setEnableRollback(PackageManager.ROLLBACK_DATA_POLICY_WIPE);
         Install b2 = Install.single(TestApp.B2)
-                .setEnableRollback(ROLLBACK_DATA_POLICY_RESTORE);
-        // The rollback data policy of C2 is specified in the manifest
-        Install c2 = Install.single(TestApp.C2).setEnableRollback();
+                .setEnableRollback(PackageManager.ROLLBACK_DATA_POLICY_RESTORE);
+        Install c2 = Install.single(TestApp.C2)
+                .setEnableRollback(PackageManager.ROLLBACK_DATA_POLICY_RETAIN);
         Install.multi(a2, b2, c2).setEnableRollback().commit();
         // Write user data version = 2
         InstallUtils.processUserData(TestApp.A);
@@ -453,10 +454,41 @@ public class RollbackManagerTest {
         RollbackUtils.rollback(info.getRollbackId());
         // Read user data version from userdata.txt
         // A's user data version is -1 for user data is wiped.
-        // B's user data version is 1 as rollback committed.
-        // C's user data version is -1 for user data is wiped.
+        // B's user data version is 1 for user data is restored.
+        // C's user data version is 2 for user data is retained.
         assertThat(InstallUtils.getUserDataVersion(TestApp.A)).isEqualTo(-1);
         assertThat(InstallUtils.getUserDataVersion(TestApp.B)).isEqualTo(1);
-        assertThat(InstallUtils.getUserDataVersion(TestApp.C)).isEqualTo(-1);
+        assertThat(InstallUtils.getUserDataVersion(TestApp.C)).isEqualTo(2);
+    }
+
+    /**
+     * Tests user data is restored according to the rollback data policy defined in the manifest.
+     */
+    @Test
+    public void testRollbackDataPolicy_Manifest() throws Exception {
+        Install.multi(TestApp.A1, TestApp.B1, TestApp.C1).commit();
+        // Write user data version = 1
+        InstallUtils.processUserData(TestApp.A);
+        InstallUtils.processUserData(TestApp.B);
+        InstallUtils.processUserData(TestApp.C);
+
+        Install a2 = Install.single(TestApp.ARollbackWipe2).setEnableRollback();
+        Install b2 = Install.single(TestApp.BRollbackRestore2).setEnableRollback();
+        Install c2 = Install.single(TestApp.CRollbackRetain2).setEnableRollback();
+        Install.multi(a2, b2, c2).setEnableRollback().commit();
+        // Write user data version = 2
+        InstallUtils.processUserData(TestApp.A);
+        InstallUtils.processUserData(TestApp.B);
+        InstallUtils.processUserData(TestApp.C);
+
+        RollbackInfo info = RollbackUtils.getAvailableRollback(TestApp.A);
+        RollbackUtils.rollback(info.getRollbackId());
+        // Read user data version from userdata.txt
+        // A's user data version is -1 for user data is wiped.
+        // B's user data version is 1 for user data is restored.
+        // C's user data version is 2 for user data is retained.
+        assertThat(InstallUtils.getUserDataVersion(TestApp.A)).isEqualTo(-1);
+        assertThat(InstallUtils.getUserDataVersion(TestApp.B)).isEqualTo(1);
+        assertThat(InstallUtils.getUserDataVersion(TestApp.C)).isEqualTo(2);
     }
 }

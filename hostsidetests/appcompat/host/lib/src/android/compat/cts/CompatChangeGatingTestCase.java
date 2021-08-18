@@ -214,7 +214,7 @@ public class CompatChangeGatingTestCase extends DeviceTestCase implements IBuild
     }
 
     private static List<StatsLog.EventMetricData> getEventMetricDataList(
-            ConfigMetricsReportList reportList) throws IllegalStateException {
+            ConfigMetricsReportList reportList) {
         try {
             return ReportUtils.getEventMetricDataList(reportList);
         } catch (Exception e) {
