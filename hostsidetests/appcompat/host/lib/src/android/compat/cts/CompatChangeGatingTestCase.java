@@ -25,6 +25,7 @@ import com.android.ddmlib.testrunner.TestResult.TestStatus;
 import com.android.internal.os.StatsdConfigProto;
 import com.android.os.AtomsProto;
 import com.android.os.AtomsProto.Atom;
+import com.android.os.StatsLog;
 import com.android.os.StatsLog.ConfigMetricsReport;
 import com.android.os.StatsLog.ConfigMetricsReportList;
 import com.android.tradefed.build.IBuildInfo;
@@ -46,7 +47,9 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -315,6 +318,7 @@ public class CompatChangeGatingTestCase extends DeviceTestCase implements IBuild
         return getReportList(configId).stream()
                 .flatMap(report -> report.getMetricsList().stream())
                 .flatMap(metric -> metric.getEventMetrics().getDataList().stream())
+                .flatMap(metricData -> backfillAggregatedAtomsInEventMetric(metricData).stream())
                 .filter(eventMetricData -> eventMetricData.hasAtom())
                 .map(eventMetricData -> eventMetricData.getAtom())
                 .map(atom -> atom.getAppCompatibilityChangeReported())
@@ -323,6 +327,23 @@ public class CompatChangeGatingTestCase extends DeviceTestCase implements IBuild
                         atom -> atom.getChangeId(), // Key
                         atom -> atom.getState() ==  // Value
                                 AtomsProto.AppCompatibilityChangeReported.State.ENABLED));
+    }
+
+    private List<StatsLog.EventMetricData> backfillAggregatedAtomsInEventMetric(
+            StatsLog.EventMetricData metricData) {
+        if (!metricData.hasAggregatedAtomInfo()) {
+            return Collections.singletonList(metricData);
+        }
+        List<StatsLog.EventMetricData> data = new ArrayList<>();
+        StatsLog.AggregatedAtomInfo atomInfo = metricData.getAggregatedAtomInfo();
+        for (long timestamp : atomInfo.getElapsedTimestampNanosList()) {
+            StatsLog.EventMetricData newMetricData = StatsLog.EventMetricData.newBuilder()
+                    .setAtom(atomInfo.getAtom())
+                    .setElapsedTimestampNanos(timestamp)
+                    .build();
+            data.add(newMetricData);
+        }
+        return data;
     }
 
     /**

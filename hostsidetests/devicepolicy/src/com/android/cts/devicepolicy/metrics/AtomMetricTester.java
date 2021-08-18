@@ -23,6 +23,7 @@ import com.android.internal.os.StatsdConfigProto.FieldValueMatcher;
 import com.android.internal.os.StatsdConfigProto.SimpleAtomMatcher;
 import com.android.internal.os.StatsdConfigProto.StatsdConfig;
 import com.android.os.AtomsProto.Atom;
+import com.android.os.StatsLog;
 import com.android.os.StatsLog.ConfigMetricsReport;
 import com.android.os.StatsLog.ConfigMetricsReportList;
 import com.android.os.StatsLog.EventMetricData;
@@ -37,10 +38,10 @@ import com.google.protobuf.MessageLite;
 import com.google.protobuf.Parser;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 /**
  * Tests Statsd atoms.
@@ -117,15 +118,39 @@ class AtomMetricTester {
             throws Exception {
         assertTrue("Expected one report", reportList.getReportsCount() == 1);
         final ConfigMetricsReport report = reportList.getReports(0);
-        final List<StatsLogReport> metricsList = report.getMetricsList();
-        return metricsList.stream()
-                .flatMap(statsLogReport -> statsLogReport.getEventMetrics().getDataList().stream())
-                .sorted(Comparator.comparing(EventMetricData::getElapsedTimestampNanos))
-                .peek(eventMetricData -> {
-                    CLog.d("Atom at " + eventMetricData.getElapsedTimestampNanos()
-                            + ":\n" + eventMetricData.getAtom().toString());
-                })
-                .collect(Collectors.toList());
+        List<EventMetricData> data = new ArrayList<>();
+        for (StatsLogReport metric : report.getMetricsList()) {
+            for (EventMetricData metricData :
+                    metric.getEventMetrics().getDataList()) {
+                if (metricData.hasAtom()) {
+                    data.add(metricData);
+                } else {
+                    data.addAll(backfillAggregatedAtomsInEventMetric(metricData));
+                }
+            }
+        }
+        data.sort(Comparator.comparing(EventMetricData::getElapsedTimestampNanos));
+
+        CLog.d("Get EventMetricDataList as following:\n");
+        for (EventMetricData d : data) {
+            CLog.d("Atom at " + d.getElapsedTimestampNanos() + ":\n" + d.getAtom().toString());
+        }
+        return data;
+    }
+
+    private List<EventMetricData> backfillAggregatedAtomsInEventMetric(EventMetricData metricData) {
+        if (!metricData.hasAggregatedAtomInfo()) {
+            return Collections.emptyList();
+        }
+        List<EventMetricData> data = new ArrayList<>();
+        StatsLog.AggregatedAtomInfo atomInfo = metricData.getAggregatedAtomInfo();
+        for (long timestamp : atomInfo.getElapsedTimestampNanosList()) {
+            data.add(EventMetricData.newBuilder()
+                    .setAtom(atomInfo.getAtom())
+                    .setElapsedTimestampNanos(timestamp)
+                    .build());
+        }
+        return data;
     }
 
     /** Gets the statsd report. Note that this also deletes that report from statsd. */
