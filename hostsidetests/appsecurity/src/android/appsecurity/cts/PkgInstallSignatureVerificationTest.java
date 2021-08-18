@@ -1321,6 +1321,11 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
     }
 
     public void testInstallV4UpdateAfterRotation() throws Exception {
+        // V4 is only enabled on devices with Incremental feature
+        if (!hasIncrementalFeature()) {
+            return;
+        }
+
         // This test performs an end to end verification of the update of an app with a rotated
         // key. The app under test exports a bound service that performs its own PackageManager key
         // rotation API verification, and the instrumentation test binds to the service and invokes
