@@ -1099,8 +1099,7 @@ public class CarrierApiTest extends BaseCarrierApiTest {
                     (sm) -> getSubscriptionIdList(sm.getSubscriptionsInGroup(uuid)));
 
             activeSubGroup.add(subId);
-            assertThat(infoList).hasSize(activeSubGroup.size());
-            assertThat(infoList).containsExactly(activeSubGroup);
+            assertThat(infoList).containsExactlyElementsIn(activeSubGroup);
         } finally {
             removeSubscriptionsFromGroup(uuid);
         }
@@ -1132,8 +1131,7 @@ public class CarrierApiTest extends BaseCarrierApiTest {
                 List<Integer> infoList =
                         getSubscriptionIdList(mSubscriptionManager.getSubscriptionsInGroup(uuid));
                 accessibleSubGroup.add(subId);
-                assertThat(infoList).hasSize(accessibleSubGroup.size());
-                assertThat(infoList).containsExactly(accessibleSubGroup);
+                assertThat(infoList).containsExactlyElementsIn(accessibleSubGroup);
             }
         } finally {
             removeSubscriptionsFromGroup(uuid);
