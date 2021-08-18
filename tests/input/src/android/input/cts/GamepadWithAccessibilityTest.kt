@@ -69,21 +69,21 @@ private fun setTouchExplorationEnabled(instrumentation: Instrumentation, enabled
 class GamepadWithAccessibilityTest {
     @get:Rule
     val activityRule = ActivityScenarioRule(CaptureEventActivity::class.java)
-    private lateinit var mActivity: CaptureEventActivity
-    private val mInstrumentation = InstrumentationRegistry.getInstrumentation()
+    private lateinit var activity: CaptureEventActivity
+    private val instrumentation = InstrumentationRegistry.getInstrumentation()
 
     @Before
     fun setUp() {
         activityRule.getScenario().onActivity {
-            mActivity = it
+            activity = it
         }
-        PollingCheck.waitFor { mActivity.hasWindowFocus() }
-        setTouchExplorationEnabled(mInstrumentation, true)
+        PollingCheck.waitFor { activity.hasWindowFocus() }
+        setTouchExplorationEnabled(instrumentation, true)
     }
 
     @After
     fun tearDown() {
-        setTouchExplorationEnabled(mInstrumentation, false)
+        setTouchExplorationEnabled(instrumentation, false)
     }
 
     /**
@@ -92,7 +92,7 @@ class GamepadWithAccessibilityTest {
      */
     @Test
     fun testDeviceId() {
-        val uInputDevice = UinputDevice.create(mInstrumentation, R.raw.google_gamepad_register,
+        val uinputDevice = UinputDevice.create(instrumentation, R.raw.google_gamepad_register,
                 InputDevice.SOURCE_KEYBOARD)
 
         val EV_SYN = 0
@@ -102,14 +102,14 @@ class GamepadWithAccessibilityTest {
         val EV_KEY_UP = 0
         val BTN_GAMEPAD = 0x130
         val evdevEventsDown = intArrayOf(EV_KEY, BTN_GAMEPAD, EV_KEY_DOWN, EV_SYN, SYN_REPORT, 0)
-        uInputDevice.injectEvents(evdevEventsDown.joinToString(prefix = "[", postfix = "]",
+        uinputDevice.injectEvents(evdevEventsDown.joinToString(prefix = "[", postfix = "]",
                 separator = ","))
 
         val evdevEventsUp = intArrayOf(EV_KEY, BTN_GAMEPAD, EV_KEY_UP, EV_SYN, SYN_REPORT, 0)
-        uInputDevice.injectEvents(evdevEventsUp.joinToString(prefix = "[", postfix = "]",
+        uinputDevice.injectEvents(evdevEventsUp.joinToString(prefix = "[", postfix = "]",
                 separator = ","))
 
-        val lastInputEvent = mActivity.getInputEvent()
+        val lastInputEvent = activity.getInputEvent()
         assertNotNull(lastInputEvent)
         assertTrue(lastInputEvent is KeyEvent)
         val keyEvent = lastInputEvent as KeyEvent
@@ -117,6 +117,6 @@ class GamepadWithAccessibilityTest {
         // KeyEvent.FLAG_IS_ACCESSIBILITY_EVENT in getFlags()
         assertEquals(KeyEvent.FLAG_FROM_SYSTEM, keyEvent.getFlags())
         assertNotEquals(keyEvent.getDeviceId(), VIRTUAL_KEYBOARD)
-        assertEquals(keyEvent.getDeviceId(), uInputDevice.getDeviceId())
+        assertEquals(keyEvent.getDeviceId(), uinputDevice.getDeviceId())
     }
 }
