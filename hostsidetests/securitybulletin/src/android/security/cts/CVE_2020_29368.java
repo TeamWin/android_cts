@@ -23,7 +23,7 @@ import org.junit.runner.RunWith;
 import static org.junit.Assert.*;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
-public class CVE_2021_29368 extends SecurityTestCase {
+public class CVE_2020_29368 extends SecurityTestCase {
 
    /**
      * b/174738029
@@ -31,7 +31,7 @@ public class CVE_2021_29368 extends SecurityTestCase {
      */
     @AsbSecurityTest(cveBugId = 174738029)
     @Test
-    public void testPocCVE_2021_29368() throws Exception {
-        assertFalse(AdbUtils.runPocCheckExitCode("CVE-2021-29368", getDevice(),60));
+    public void testPocCVE_2020_29368() throws Exception {
+        assertFalse(AdbUtils.runPocCheckExitCode("CVE-2020-29368", getDevice(),60));
     }
 }
