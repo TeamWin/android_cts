@@ -366,7 +366,7 @@
              android:theme="@style/no_starting_window"/>
         <activity android:name="android.server.wm.WindowFocusTests$PrimaryActivity"/>
         <activity android:name="android.server.wm.WindowFocusTests$SecondaryActivity"
-             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density"/>
+             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density|touchscreen"/>
         <activity android:name="android.server.wm.WindowFocusTests$LosingFocusActivity"/>
         <activity android:name="android.server.wm.WindowFocusTests$AutoEngagePointerCaptureActivity" />
         <activity android:name="android.server.wm.WindowMetricsActivityTests$MetricsActivity"
