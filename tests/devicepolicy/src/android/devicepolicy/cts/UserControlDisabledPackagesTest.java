@@ -33,6 +33,7 @@ import android.util.Log;
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
+import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PositivePolicyTest;
 import com.android.bedstead.harrier.policies.UserControlDisabledPackages;
@@ -73,6 +74,7 @@ public class UserControlDisabledPackagesTest {
 
     @Test
     @PositivePolicyTest(policy = UserControlDisabledPackages.class)
+    @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void setUserControlDisabledPackages_toOneProtectedPackage() {
         List<String> originalDisabledPackages =
                 sDeviceState.dpc().devicePolicyManager().getUserControlDisabledPackages(DPC_COMPONENT_NAME);
@@ -90,6 +92,7 @@ public class UserControlDisabledPackagesTest {
 
     @Test
     @PositivePolicyTest(policy = UserControlDisabledPackages.class)
+    @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void setUserControlDisabledPackages_toEmptyProtectedPackages() {
         List<String> originalDisabledPackages =
                 sDeviceState.dpc().devicePolicyManager().getUserControlDisabledPackages(DPC_COMPONENT_NAME);
@@ -115,6 +118,7 @@ public class UserControlDisabledPackagesTest {
 
     @Test
     @PositivePolicyTest(policy = UserControlDisabledPackages.class)
+    @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void
     getUserControlDisabledPackages_noProtectedPackagesSet_returnsEmptyProtectedPackages() {
         // This is testing the default state of the device so the disabled packages returned should
@@ -134,6 +138,7 @@ public class UserControlDisabledPackagesTest {
     @Test
     @EnsureHasPermission(value = permission.FORCE_STOP_PACKAGES)
     @PositivePolicyTest(policy = UserControlDisabledPackages.class)
+    @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void setUserControlDisabledPackages_launchActivity_verifyPackageNotStopped()
             throws Exception {
         List<String> originalDisabledPackages =

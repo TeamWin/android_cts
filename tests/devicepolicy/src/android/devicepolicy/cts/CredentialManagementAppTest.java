@@ -42,6 +42,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.activitycontext.ActivityContext;
 import com.android.bedstead.harrier.BedsteadJUnit4;
+import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.compatibility.common.util.BlockingCallback;
@@ -240,6 +241,7 @@ public class CredentialManagementAppTest {
     }
 
     @Test
+    @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void choosePrivateKeyAlias_isCredentialManagementApp_aliasSelected() throws Exception {
         setCredentialManagementApp();
         try {
