@@ -93,8 +93,9 @@ public class WifiConfigLockdownTest extends BaseDeviceOwnerTest {
                 ++updateCount;
             }
         }
-        assertEquals("Expected to update two configs: the DO created one and the regular one." +
-                " Instead updated: " + updateCount, 2, updateCount);
+        // There might be auto-upgrade configs returned.
+        assertTrue("Expected to update two configs: the DO created one and the regular one." +
+                " Instead updated: " + updateCount, updateCount >= 2);
     }
 
     public void testDeviceOwnerCanRemoveConfig() throws Exception {
@@ -107,8 +108,9 @@ public class WifiConfigLockdownTest extends BaseDeviceOwnerTest {
                 ++removeCount;
             }
         }
-        assertEquals("Expected to remove two configs: the DO created one and the regular one." +
-                " Instead removed: " + removeCount, 2, removeCount);
+        // There might be auto-upgrade configs returned.
+        assertTrue("Expected to remove two configs: the DO created one and the regular one." +
+                " Instead removed: " + removeCount, removeCount >= 2);
     }
 
     public void testRegularAppCannotUpdateDeviceOwnerConfig() throws Exception {
@@ -121,8 +123,9 @@ public class WifiConfigLockdownTest extends BaseDeviceOwnerTest {
                 ++updateCount;
             }
         }
-        assertEquals("Expected to have tried to update one config: the DO created one" +
-                " Instead tried to update: " + updateCount, 1, updateCount);
+        // There might be auto-upgrade configs returned.
+        assertTrue("Expected to have tried to update one config: the DO created one" +
+                " Instead tried to update: " + updateCount, updateCount >= 1);
 
         // Assert nothing has changed
         configs = mWifiManager.getConfiguredNetworks();
@@ -133,8 +136,9 @@ public class WifiConfigLockdownTest extends BaseDeviceOwnerTest {
                 ++notChangedCount;
             }
         }
-        assertEquals("Expected to see one unchanged config, saw instead: " + notChangedCount, 1,
-                notChangedCount);
+        // There might be auto-upgrade configs returned.
+        assertTrue("Expected to see one unchanged config, saw instead: " + notChangedCount,
+                notChangedCount >= 1);
     }
 
     public void testRegularAppCannotRemoveDeviceOwnerConfig() throws Exception {
@@ -147,8 +151,9 @@ public class WifiConfigLockdownTest extends BaseDeviceOwnerTest {
                 ++removeCount;
             }
         }
+        // There might be auto-upgrade configs returned.
         assertEquals("Expected to try to remove one config: the DO created one." +
-                " Instead tried to remove: " + removeCount, 1, removeCount);
+                " Instead tried to remove: " + removeCount, removeCount >= 1);
 
         // Assert nothing has changed
         configs = mWifiManager.getConfiguredNetworks();
@@ -158,8 +163,9 @@ public class WifiConfigLockdownTest extends BaseDeviceOwnerTest {
                 ++notChangedCount;
             }
         }
-        assertEquals("Expected to see one unchanged config, saw instead: " + notChangedCount, 1,
-                notChangedCount);
+        // There might be auto-upgrade configs returned.
+        assertEquals("Expected to see one unchanged config, saw instead: " + notChangedCount,
+                notChangedCount >= 1);
     }
 
     private void startRegularActivity(String action, int netId, String ssid, int securityType,
