@@ -406,11 +406,16 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         isLegacyApp: Boolean,
         targetSdk: Int
     ) {
-        pressBack()
-        pressBack()
-        pressBack()
         if (isTv) {
+            // Dismiss DeprecatedTargetSdkVersionDialog, if present
+            if (waitFindObjectOrNull(By.text(APP_PACKAGE_NAME), 1000L) != null) {
+                pressBack()
+            }
             pressHome()
+        } else {
+            pressBack()
+            pressBack()
+            pressBack()
         }
 
         // Try multiple times as the AppInfo page might have read stale data
