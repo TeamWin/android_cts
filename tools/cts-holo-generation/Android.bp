@@ -29,10 +29,6 @@ android_app {
         "android.test.runner",
         "android.test.base",
     ],
-    uses_libs: [
-        "android.test.runner",
-        "android.test.base",
-    ],
     srcs: ["src/**/*.java"],
     sdk_version: "current",
 }
