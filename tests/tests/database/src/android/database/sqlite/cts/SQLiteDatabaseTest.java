@@ -560,6 +560,16 @@ public class SQLiteDatabaseTest extends AndroidTestCase {
         }
     }
 
+    public void testExecPerConnectionSQLPragma() {
+        mDatabase.execPerConnectionSQL("PRAGMA busy_timeout = 12000;", null);
+
+        // Assert connection has busy timeout configured
+        try (Cursor c = mDatabase.rawQuery("PRAGMA busy_timeout;", null)) {
+            assertTrue(c.moveToNext());
+            assertEquals(c.getInt(0), 12000);
+        }
+    }
+
     public void testFindEditTable() {
         String tables = "table1 table2 table3";
         assertEquals("table1", SQLiteDatabase.findEditTable(tables));
