@@ -173,8 +173,6 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         Rect topInsetsBounds = new Rect(insets.left, 0, appBounds.right - insets.right, insets.top);
         Rect bottomInsetsBounds = new Rect(insets.left, appBounds.bottom - insets.bottom,
                 appBounds.right - insets.right, appBounds.bottom);
-        assertFalse("Top insets bounds rect is empty", topInsetsBounds.isEmpty());
-        assertFalse("Bottom insets bounds rect is empty", bottomInsetsBounds.isEmpty());
 
         if (appBounds.isEmpty()) {
             fail("Couldn't find splash screen bounds. Impossible to assert the colors");
