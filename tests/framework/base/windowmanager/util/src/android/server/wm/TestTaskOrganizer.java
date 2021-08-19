@@ -24,6 +24,9 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.app.WindowConfiguration.WINDOWING_MODE_MULTI_WINDOW;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
 import static android.view.Display.DEFAULT_DISPLAY;
+import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION;
+
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
 import android.app.ActivityManager;
 import android.content.Context;
@@ -65,7 +68,6 @@ public class TestTaskOrganizer extends TaskOrganizer {
     private final ArraySet<Integer> mSecondaryChildrenTaskIds = new ArraySet<>();
     private final Rect mPrimaryBounds = new Rect();
     private final Rect mSecondaryBounds = new Rect();
-    private final Context mContext;
 
     private static final int[] CONTROLLED_ACTIVITY_TYPES = {
             ACTIVITY_TYPE_STANDARD,
@@ -79,21 +81,16 @@ public class TestTaskOrganizer extends TaskOrganizer {
             WINDOWING_MODE_UNDEFINED
     };
 
-    public TestTaskOrganizer(Context context) {
-        super();
-        //TODO(b/192572357): Verify if the context is a UI context when b/190019118 is fixed.
-        mContext = context;
-    }
-
     @Override
     public List<TaskAppearedInfo> registerOrganizer() {
-        //TODO(b/192572357): Replace createDisplayContext with createWindowContext and
-        // getMaximumWindowMetrics with getCurrentWindowMetrics when b/190019118 is fixed.
-        final Rect bounds = mContext.createDisplayContext(
-                mContext.getSystemService(DisplayManager.class)
-                        .getDisplay(DEFAULT_DISPLAY)).getSystemService(WindowManager.class)
-                .getMaximumWindowMetrics()
+        final Context context = getInstrumentation().getContext();
+        final Rect bounds = context.createDisplayContext(
+                context.getSystemService(DisplayManager.class).getDisplay(DEFAULT_DISPLAY))
+                .createWindowContext(TYPE_APPLICATION, null /* options */)
+                .getSystemService(WindowManager.class)
+                .getCurrentWindowMetrics()
                 .getBounds();
+
         final boolean isLandscape = bounds.width() > bounds.height();
         if (isLandscape) {
             bounds.splitVertically(mPrimaryBounds, mSecondaryBounds);
