@@ -798,6 +798,27 @@ public class TunerTest {
         other.close();
     }
 
+    @Test
+    public void testClose() throws Exception {
+        Tuner other = new Tuner(mContext, null, 100);
+
+        List<Integer> ids = other.getFrontendIds();
+        assertFalse(ids.isEmpty());
+        FrontendInfo info = other.getFrontendInfoById(ids.get(0));
+
+        FrontendSettings feSettings = createFrontendSettings(info);
+        int res = other.tune(feSettings);
+        assertEquals(Tuner.RESULT_SUCCESS, res);
+        assertNotNull(other.getFrontendInfo());
+
+        other.close();
+
+        // make sure pre-existing tuner is still functional
+        res = mTuner.tune(feSettings);
+        assertEquals(Tuner.RESULT_SUCCESS, res);
+        assertNotNull(mTuner.getFrontendInfo());
+    }
+
     private boolean hasTuner() {
         return mContext.getPackageManager().hasSystemFeature("android.hardware.tv.tuner");
     }
