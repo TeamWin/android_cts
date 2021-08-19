@@ -237,9 +237,6 @@
     <option name="compatibility:exclude-filter" value="CtsAutoFillServiceTestCases android.autofillservice.cts.inline.InlineSimpleSaveActivityTest#testAutofill_oneDatasetAndSave" />
     <option name="compatibility:exclude-filter" value="CtsAutoFillServiceTestCases[instant] android.autofillservice.cts.inline.InlineSimpleSaveActivityTest#testAutofill_oneDatasetAndSave" />
 
-    <!-- b/195580880 -->
-    <option name="compatibility:exclude-filter" value="CtsAppSecurityHostTestCases android.appsecurity.cts.PkgInstallSignatureVerificationTest#testInstallV4UpdateAfterRotation" />
-
     <!-- b/194293021 -->
     <option name="compatibility:exclude-filter" value="CtsPrintTestCases" />
     <option name="compatibility:exclude-filter" value="CtsPrintTestCases[instant]" />
