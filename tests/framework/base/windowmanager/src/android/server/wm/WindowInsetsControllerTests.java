@@ -62,11 +62,14 @@ import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.ViewParent;
 import android.view.Window;
 import android.view.WindowInsets;
 import android.view.WindowInsetsAnimation;
 import android.view.WindowInsetsController;
 import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -87,6 +90,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 /**
  * Test whether WindowInsetsController controls window insets as expected.
@@ -570,6 +574,38 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
     }
 
     @Test
+    public void testShowIme_immediatelyAfterDetachAndReattach() throws Exception {
+        final Instrumentation instrumentation = getInstrumentation();
+        assumeThat(MockImeSession.getUnavailabilityReason(instrumentation.getContext()),
+                nullValue());
+        MockImeHelper.createManagedMockImeSession(this);
+        final TestActivity activity = startActivity(TestActivity.class);
+        final View rootView = activity.getWindow().getDecorView();
+
+        PollingCheck.waitFor(TIMEOUT, () -> getOnMainSync(rootView::hasWindowFocus));
+
+        View editor = getOnMainSync(rootView::findFocus);
+        ViewGroup parent = (ViewGroup) getOnMainSync(editor::getParent);
+
+        getInstrumentation().runOnMainSync(() -> {
+            parent.removeView(editor);
+        });
+
+        // Wait until checkFocus() is dispatched
+        getInstrumentation().waitForIdleSync();
+
+        getInstrumentation().runOnMainSync(() -> {
+            parent.addView(editor);
+            editor.requestFocus();
+            editor.getWindowInsetsController().show(ime());
+        });
+
+        PollingCheck.waitFor(TIMEOUT, () -> getOnMainSync(
+                () -> rootView.getRootWindowInsets().isVisible(ime())),
+                "Expected IME to become visible but didn't.");
+    }
+
+    @Test
     public void testInsetsDispatch() throws Exception {
         // Start an activity which hides system bars.
         final TestHideOnCreateActivity activity = startActivity(TestHideOnCreateActivity.class);
@@ -865,5 +901,12 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
             dialog.getWindow().addFlags(FLAG_ALT_FOCUSABLE_IM);
             dialog.show();
         }
+    }
+
+    private <R> R getOnMainSync(Supplier<R> f) {
+        final Object[] result = new Object[1];
+        getInstrumentation().runOnMainSync(() -> result[0] = f.get());
+        //noinspection unchecked
+        return (R) result[0];
     }
 }
