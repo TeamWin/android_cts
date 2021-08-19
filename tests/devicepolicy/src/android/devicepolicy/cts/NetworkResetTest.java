@@ -34,6 +34,7 @@ import android.provider.Settings;
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
+import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.PositivePolicyTest;
 import com.android.bedstead.harrier.policies.DisallowNetworkReset;
 import com.android.bedstead.harrier.policies.DisallowPrivateDnsConfig;
@@ -78,6 +79,7 @@ public class NetworkResetTest {
     @Test
     @PositivePolicyTest(policy = DisallowNetworkReset.class)
     @EnsureHasPermission({NETWORK_SETTINGS, WRITE_SECURE_SETTINGS})
+    @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void factoryReset_disallowedByNetworkResetPolicy_doesNotFactoryReset() throws Exception {
         final boolean originalUserRestriction =
                 sUserManager.hasUserRestriction(DISALLOW_NETWORK_RESET);
@@ -98,6 +100,7 @@ public class NetworkResetTest {
     @Test
     @PositivePolicyTest(policy = DisallowPrivateDnsConfig.class)
     @EnsureHasPermission({NETWORK_SETTINGS, WRITE_SECURE_SETTINGS})
+    @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void factoryReset_disallowedByConfigPrivateDnsPolicy_doesPartialFactoryReset() {
         final boolean originalUserRestriction =
                 sUserManager.hasUserRestriction(DISALLOW_CONFIG_PRIVATE_DNS);
@@ -121,6 +124,7 @@ public class NetworkResetTest {
     @Test
     @PositivePolicyTest(policy = DisallowNetworkReset.class)
     @EnsureHasPermission({NETWORK_SETTINGS, WRITE_SECURE_SETTINGS})
+    @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void factoryReset_noPolicyRestrictions_resetsToDefault() throws Exception {
         final boolean originalPrivateDnsUserRestriction =
                 sUserManager.hasUserRestriction(DISALLOW_CONFIG_PRIVATE_DNS);

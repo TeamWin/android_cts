@@ -46,6 +46,7 @@ import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
+import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature;
 import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
@@ -471,6 +472,7 @@ public final class DevicePolicyManagerTest {
     @RequireFeature(PackageManager.FEATURE_DEVICE_ADMIN)
     @Test
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void newlyProvisionedFullyManagedDevice_canOptOutOfControllingSensorPermissionGrants()
             throws Exception {
         try {
