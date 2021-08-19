@@ -57,6 +57,10 @@ public class Constants {
             PKG_BASE + "queries.nothing.receives.uri";
     public static final String QUERIES_NOTHING_RECEIVES_PERM_URI =
             PKG_BASE + "queries.nothing.receives.perm.uri";
+    public static final String QUERIES_NOTHING_RECEIVES_PERSISTABLE_URI =
+            PKG_BASE + "queries.nothing.receives.persistable.uri";
+    public static final String QUERIES_NOTHING_RECEIVES_NON_PERSISTABLE_URI =
+            PKG_BASE + "queries.nothing.receives.nonpersistable.uri";
     /** Another package that has no queries tag or permission to query any specific packages */
     public static final String QUERIES_NOTHING_SEES_INSTALLER =
             PKG_BASE + "queries.nothing.sees.installer";
@@ -131,6 +135,10 @@ public class Constants {
     public static final String TARGET_FILTERS_APK = BASE_PATH + "CtsAppEnumerationFilters.apk";
     public static final String QUERIES_NOTHING_SEES_INSTALLER_APK =
             BASE_PATH + "CtsAppEnumerationQueriesNothingSeesInstaller.apk";
+    public static final String QUERIES_NOTHING_RECEIVES_PERSISTABLE_URI_APK =
+            BASE_PATH + "CtsAppEnumerationQueriesNothingReceivesPersistableUri.apk";
+    public static final String QUERIES_NOTHING_RECEIVES_NON_PERSISTABLE_URI_APK =
+            BASE_PATH + "CtsAppEnumerationQueriesNothingReceivesNonPersistableUri.apk";
 
     public static final String[] ALL_QUERIES_TARGETING_R_PACKAGES = {
             QUERIES_NOTHING,
@@ -219,6 +227,8 @@ public class Constants {
             PKG_BASE + "cts.action.LAUNCHER_APPS_SHOULD_HIDE_FROM_SUGGESTIONS";
     public static final String ACTION_CHECK_URI_PERMISSION =
             PKG_BASE + "cts.action.CHECK_URI_PERMISSION";
+    public static final String ACTION_TAKE_PERSISTABLE_URI_PERMISSION =
+            PKG_BASE + "cts.action.TAKE_PERSISTABLE_URI_PERMISSION";
 
     public static final String EXTRA_REMOTE_CALLBACK = "remoteCallback";
     public static final String EXTRA_REMOTE_READY_CALLBACK = "remoteReadyCallback";

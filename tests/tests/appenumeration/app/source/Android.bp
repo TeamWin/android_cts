@@ -57,6 +57,28 @@ android_test_helper_app {
 }
 
 android_test_helper_app {
+    name: "CtsAppEnumerationQueriesNothingReceivesPersistableUri",
+    manifest: "AndroidManifest-queriesNothing-receivesPersistableUri.xml",
+    defaults: ["CtsAppEnumerationQueriesDefaults"],
+    // Tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
+}
+
+android_test_helper_app {
+    name: "CtsAppEnumerationQueriesNothingReceivesNonPersistableUri",
+    manifest: "AndroidManifest-queriesNothing-receivesNonPersistableUri.xml",
+    defaults: ["CtsAppEnumerationQueriesDefaults"],
+    // Tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
+}
+
+android_test_helper_app {
     name: "CtsAppEnumerationQueriesNothingSeesInstaller",
     manifest: "AndroidManifest-queriesNothing-seesInstaller.xml",
     defaults: ["CtsAppEnumerationQueriesDefaults"],

@@ -285,6 +285,13 @@ public class TestActivity extends Activity {
                         .getString(EXTRA_AUTHORITY);
                 sendCheckUriPermission(remoteCallback, sourceAuthority, targetPackageName,
                         targetUid);
+            } else if (Constants.ACTION_TAKE_PERSISTABLE_URI_PERMISSION.equals(action)) {
+                final Uri uri = intent.getData();
+                final int modeFlags = intent.getFlags();
+                if (uri != null) {
+                    getContentResolver().takePersistableUriPermission(uri, modeFlags);
+                }
+                finish();
             } else {
                 sendError(remoteCallback, new Exception("unknown action " + action));
             }
