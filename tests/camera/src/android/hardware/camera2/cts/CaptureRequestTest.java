@@ -86,7 +86,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
     private static final long EXPOSURE_TIME_BOUNDARY_60HZ_NS = 8333333L; // 8.3ms, Approximation.
     private static final long EXPOSURE_TIME_ERROR_MARGIN_NS = 100000L; // 100us, Approximation.
     private static final float EXPOSURE_TIME_ERROR_MARGIN_RATE = 0.03f; // 3%, Approximation.
-    private static final float SENSITIVITY_ERROR_MARGIN_RATE = 0.03f; // 3%, Approximation.
+    private static final float SENSITIVITY_ERROR_MARGIN_RATE = 0.06f; // 6%, Approximation.
     private static final int DEFAULT_NUM_EXPOSURE_TIME_STEPS = 3;
     private static final int DEFAULT_NUM_SENSITIVITY_STEPS = 8;
     private static final int DEFAULT_SENSITIVITY_STEP_SIZE = 100;
