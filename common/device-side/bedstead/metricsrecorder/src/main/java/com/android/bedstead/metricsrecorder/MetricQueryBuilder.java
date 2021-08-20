@@ -143,4 +143,9 @@ public class MetricQueryBuilder implements Queryable {
                         mStringsQuery.describeQuery("strings")
         ) + "}";
     }
+
+    @Override
+    public String toString() {
+        return describeQuery("");
+    }
 }
