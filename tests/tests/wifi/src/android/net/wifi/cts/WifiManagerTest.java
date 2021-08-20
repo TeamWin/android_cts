@@ -4288,12 +4288,11 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         }
     }
 
-
     /**
-     * Verify that insecure WPA-Enterprise network configurations are rejected.
+     * Verify that secure WPA-Enterprise network configurations can be added and updated.
      */
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
-    public void testInsecureEnterpriseConfigurationsRejected() throws Exception {
+    public void testSecureEnterpriseConfigurationsAccepted() throws Exception {
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported
             return;
@@ -4310,9 +4309,6 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         try {
             uiAutomation.adoptShellPermissionIdentity();
 
-            // Verify that an insecure network is rejected
-            assertEquals(INVALID_NETWORK_ID, mWifiManager.addNetwork(wifiConfiguration));
-
             // Now configure it correctly with a Root CA cert and domain name
             wifiConfiguration.enterpriseConfig.setCaCertificate(FakeKeys.CA_CERT0);
             wifiConfiguration.enterpriseConfig.setAltSubjectMatch(TEST_DOM_SUBJECT_MATCH);
@@ -4324,13 +4320,6 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             // Verify that the update API accepts configurations configured securely
             wifiConfiguration.networkId = networkId;
             assertEquals(networkId, mWifiManager.updateNetwork(wifiConfiguration));
-
-            // Now clear the security configuration
-            wifiConfiguration.enterpriseConfig.setCaCertificate(null);
-            wifiConfiguration.enterpriseConfig.setAltSubjectMatch(null);
-
-            // Verify that the update API rejects insecure configurations
-            assertEquals(INVALID_NETWORK_ID, mWifiManager.updateNetwork(wifiConfiguration));
         } finally {
             if (networkId != INVALID_NETWORK_ID) {
                 // Clean up the previously added network
