@@ -16,10 +16,18 @@
 
 package android.server.wm;
 
+import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
+import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+import static android.server.wm.TaskFragmentOrganizerTestBase.assertEmptyTaskFragment;
+import static android.server.wm.TaskFragmentOrganizerTestBase.assertNotEmptyTaskFragment;
 import static android.server.wm.TaskFragmentOrganizerTestBase.getActivityToken;
+import static android.server.wm.app.Components.LAUNCHING_ACTIVITY;
+
+import static com.google.common.truth.Truth.assertThat;
 
 import android.app.Activity;
 import android.app.Instrumentation;
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.graphics.Rect;
 import android.os.Binder;
@@ -29,6 +37,7 @@ import android.server.wm.TaskFragmentOrganizerTestBase.BasicTaskFragmentOrganize
 import android.server.wm.WindowContextTests.TestActivity;
 import android.window.TaskAppearedInfo;
 import android.window.TaskFragmentCreationParams;
+import android.window.TaskFragmentInfo;
 import android.window.TaskFragmentOrganizer;
 import android.window.TaskOrganizer;
 import android.window.WindowContainerToken;
@@ -133,17 +142,12 @@ public class TaskFragmentOrganizerPolicyTest {
      */
     @Test(expected = SecurityException.class)
     public void testPerformOperationsOnNonOrganizedTaskFragment_ThrowException() {
-        final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
-        final Intent intent = new Intent(instrumentation.getTargetContext(), TestActivity.class)
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        final Activity activity = instrumentation.startActivitySync(intent);
+        final Activity activity = startNewActivity();
 
         // Create a TaskFragment with a TaskFragmentOrganizer.
-        final IBinder taskFragToken = new Binder();
-        final IBinder activityToken = getActivityToken(activity);
-        final TaskFragmentCreationParams params = new TaskFragmentCreationParams.Builder(
-                mTaskFragmentOrganizer.getOrganizerToken(), taskFragToken, activityToken)
-                .build();
+        final TaskFragmentCreationParams params = mTaskFragmentOrganizer.generateTaskFragParams(
+                getActivityToken(activity));
+        final IBinder taskFragToken = params.getFragmentToken();
         WindowContainerTransaction wct = new WindowContainerTransaction()
                 .createTaskFragment(params);
         mTaskFragmentOrganizer.applyTransaction(wct);
@@ -162,5 +166,70 @@ public class TaskFragmentOrganizerPolicyTest {
         // It is expected to throw SecurityException when performing operations on the TaskFragment
         // which is not organized by the same TaskFragmentOrganizer.
         anotherOrganizer.applyTransaction(wct);
+    }
+
+    /**
+     * Verifies the behavior to start Activity from another process in a new created Task under
+     * TaskFragment with {@link android.permission#ACTIVITY_EMBEDDING}.
+     * <p>
+     * If the application to start Activity holds the permission, the activity is allowed to start
+     * on the Task. Otherwise, the TaskFragment should remain empty.
+     * </p>
+     */
+    @Test
+    public void testStartActivityFromAnotherProcessInEmbeddedTask() {
+        final Activity activity = startNewActivity();
+        final IBinder ownerToken = getActivityToken(activity);
+        final TaskFragmentCreationParams params = mTaskFragmentOrganizer.generateTaskFragParams(
+                ownerToken);
+        final IBinder taskFragToken = params.getFragmentToken();
+        final Intent intent = new Intent()
+                .setComponent(LAUNCHING_ACTIVITY)
+                .addFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK);
+        final IBinder errorCallbackToken = new Binder();
+
+        WindowContainerTransaction wct = new WindowContainerTransaction()
+                .setErrorCallbackToken(errorCallbackToken)
+                .createTaskFragment(params)
+                .startActivityInTaskFragment(taskFragToken, ownerToken, intent,
+                        null /* activityOptions */);
+
+        mTaskFragmentOrganizer.applyTransaction(wct);
+
+        mTaskFragmentOrganizer.waitForTaskFragmentCreated();
+
+        TaskFragmentInfo info = mTaskFragmentOrganizer.getTaskFragmentInfo(taskFragToken);
+
+        // TaskFragment must remain empty because we don't hold EMBEDDING_ACTIVITY permission to
+        // launch Activity in the embedded Task.
+        assertEmptyTaskFragment(info, taskFragToken);
+
+        mTaskFragmentOrganizer.waitForTaskFragmentError();
+
+        assertThat(mTaskFragmentOrganizer.getThrowable())
+                .isInstanceOf(ActivityNotFoundException.class);
+        assertThat(mTaskFragmentOrganizer.getErrorCallbackToken()).isEqualTo(errorCallbackToken);
+
+        final WindowContainerTransaction wctWithPermission = new WindowContainerTransaction()
+                .startActivityInTaskFragment(taskFragToken, ownerToken, intent,
+                        null /* activityOptions */);
+
+        NestedShellPermission.run(() -> mTaskFragmentOrganizer.applyTransaction(wctWithPermission),
+                "android.permission.ACTIVITY_EMBEDDING");
+
+        mTaskFragmentOrganizer.waitForTaskFragmentChanged();
+
+        info = mTaskFragmentOrganizer.getTaskFragmentInfo(taskFragToken);
+
+        // The new started Activity must be launched in the new created Task under the TaskFragment
+        // with token taskFragToken.
+        assertNotEmptyTaskFragment(info, taskFragToken);
+    }
+
+    private static Activity startNewActivity() {
+        final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+        final Intent intent = new Intent(instrumentation.getTargetContext(), TestActivity.class)
+                .addFlags(FLAG_ACTIVITY_NEW_TASK);
+        return instrumentation.startActivitySync(intent);
     }
 }
