@@ -32,14 +32,9 @@ import android.support.test.uiautomator.UiDevice
 import android.support.test.uiautomator.UiSelector
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.compatibility.common.util.DisableAnimationRule
-import com.android.compatibility.common.util.SystemUtil.callWithShellPermissionIdentity
-import com.android.compatibility.common.util.SystemUtil.eventually
-import com.android.compatibility.common.util.SystemUtil.runShellCommand
-import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
+import com.android.compatibility.common.util.SystemUtil.*
 import org.junit.After
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertTrue
+import org.junit.Assert.*
 import org.junit.Assume.assumeFalse
 import org.junit.Assume.assumeTrue
 import org.junit.Before
@@ -66,6 +61,7 @@ class CameraMicIndicatorsPermissionTest {
     private val uiDevice: UiDevice = UiDevice.getInstance(instrumentation)
     private val packageManager: PackageManager = context.packageManager
 
+    private val isTv = packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
     private var wasEnabled = false
     private val micLabel = packageManager.getPermissionGroupInfo(
         Manifest.permission_group.MICROPHONE, 0).loadLabel(packageManager).toString()
@@ -124,9 +120,10 @@ class CameraMicIndicatorsPermissionTest {
                 screenTimeoutBeforeTest
             )
         }
-
-        pressBack()
-        pressBack()
+        if (!isTv) {
+            pressBack()
+            pressBack()
+        }
         pressHome()
         pressHome()
         Thread.sleep(3000)
@@ -169,15 +166,13 @@ class CameraMicIndicatorsPermissionTest {
             assertTrue("View with text $APP_LABEL not found", appView.exists())
         }
 
-        if (packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)) {
+        if (isTv) {
             assertTvIndicatorsShown(useMic, useCamera, useHotword)
         } else if (packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
             assertCarIndicatorsShown(useMic, useCamera)
         } else {
-            // Hotword gets remapped to RECORD_AUDIO on handheld, so handheld should show a mic
-            // indicator
             uiDevice.openQuickSettings()
-            assertPrivacyChipAndIndicatorsPresent(useMic || useHotword, useCamera)
+            assertPrivacyChipAndIndicatorsPresent(useMic, useCamera)
         }
     }
 
@@ -201,22 +196,12 @@ class CameraMicIndicatorsPermissionTest {
 
     private fun assertCarIndicatorsShown(useMic: Boolean, useCamera: Boolean) {
         // Ensure the privacy chip is present (or not)
-        var chipFound = false
-        try {
-            eventually {
-                val privacyChip = uiDevice.findObject(By.res(PRIVACY_CHIP_ID))
-                assertNotNull("view with id $PRIVACY_CHIP_ID not found", privacyChip)
-                privacyChip.click()
-                chipFound = true
-            }
-        } catch (e: Exception) {
-            // Handle more gracefully below
-        }
-
+        val chipFound = isChipPresent()
         if (useMic || useCamera) {
             assertTrue("Did not find chip", chipFound)
         } else {
             assertFalse("Found chip, but did not expect to", chipFound)
+            return
         }
 
         eventually {
@@ -233,11 +218,13 @@ class CameraMicIndicatorsPermissionTest {
     }
 
     private fun assertPrivacyChipAndIndicatorsPresent(useMic: Boolean, useCamera: Boolean) {
-        // Ensure the privacy chip is present
-        eventually {
-            val privacyChip = uiDevice.findObject(UiSelector().resourceId(PRIVACY_CHIP_ID))
-            assertTrue("view with id $PRIVACY_CHIP_ID not found", privacyChip.exists())
-            privacyChip.click()
+        // Ensure the privacy chip is present (or not)
+        val chipFound = isChipPresent()
+        if (useMic || useCamera) {
+            assertTrue("Did not find chip", chipFound)
+        } else {
+            assertFalse("Found chip, but did not expect to", chipFound)
+            return
         }
 
         eventually {
@@ -252,6 +239,21 @@ class CameraMicIndicatorsPermissionTest {
             val appView = uiDevice.findObject(UiSelector().textContains(APP_LABEL))
             assertTrue("View with text $APP_LABEL not found", appView.exists())
         }
+    }
+
+    private fun isChipPresent(): Boolean {
+        var chipFound = false
+        try {
+            eventually {
+                val privacyChip = uiDevice.findObject(By.res(PRIVACY_CHIP_ID))
+                assertNotNull("view with id $PRIVACY_CHIP_ID not found", privacyChip)
+                privacyChip.click()
+                chipFound = true
+            }
+        } catch (e: Exception) {
+            // Handle more gracefully after
+        }
+        return chipFound
     }
 
     private fun pressBack() {
