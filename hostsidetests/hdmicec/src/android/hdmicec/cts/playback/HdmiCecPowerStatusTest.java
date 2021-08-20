@@ -67,7 +67,7 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
         ITestDevice device = getDevice();
 
         try {
-            device.executeShellCommand("input keyevent KEYCODE_SLEEP");
+            sendDeviceToSleep();
 
             TimeUnit.SECONDS.sleep(HdmiCecConstants.MAX_SLEEP_TIME_SECONDS);
 
@@ -88,7 +88,7 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
             assertWithMessage("Device should wake up on <Set Stream Path>")
                     .that(wakeStateAfter.trim()).isEqualTo("mWakefulness=Awake");
         } finally {
-            device.executeShellCommand("input keyevent KEYCODE_WAKEUP");
+            wakeUpDevice();
         }
     }
 }
