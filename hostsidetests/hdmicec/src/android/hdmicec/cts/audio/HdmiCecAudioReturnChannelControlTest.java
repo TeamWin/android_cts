@@ -93,11 +93,11 @@ public final class HdmiCecAudioReturnChannelControlTest extends BaseHdmiCecCtsTe
                 CecOperand.REPORT_PHYSICAL_ADDRESS,
                 CecMessage.formatParams(HdmiCecConstants.TV_PHYSICAL_ADDRESS,
                         HdmiCecConstants.PHYSICAL_ADDRESS_LENGTH));
-        getDevice().executeShellCommand("input keyevent KEYCODE_SLEEP");
+        sendDeviceToSleep();
         try {
             hdmiCecClient.checkExpectedOutput(LogicalAddress.TV, CecOperand.TERMINATE_ARC);
         } finally {
-            getDevice().executeShellCommand("input keyevent KEYCODE_WAKEUP");
+            wakeUpDevice();
         }
     }
 

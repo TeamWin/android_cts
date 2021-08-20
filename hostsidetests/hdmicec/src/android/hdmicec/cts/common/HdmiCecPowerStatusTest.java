@@ -68,12 +68,10 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
         setCec20();
 
         // Move device to standby
-        device.executeShellCommand("input keyevent KEYCODE_SLEEP");
-        TimeUnit.SECONDS.sleep(HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS);
+        sendDeviceToSleep();
 
         // Turn device on
-        device.executeShellCommand("input keyevent KEYCODE_WAKEUP");
-        TimeUnit.SECONDS.sleep(HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS);
+        wakeUpDevice();
 
         String reportPowerStatus = hdmiCecClient.checkExpectedOutput(LogicalAddress.BROADCAST,
                 CecOperand.REPORT_POWER_STATUS);
@@ -100,12 +98,10 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
         setCec20();
 
         // Turn device on
-        device.executeShellCommand("input keyevent KEYCODE_WAKEUP");
-        TimeUnit.SECONDS.sleep(HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS);
+        wakeUpDevice();
 
         // Move device to standby
-        device.executeShellCommand("input keyevent KEYCODE_SLEEP");
-        TimeUnit.SECONDS.sleep(HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS);
+        sendDeviceToSleep();
 
         String reportPowerStatus = hdmiCecClient.checkExpectedOutput(LogicalAddress.BROADCAST,
                 CecOperand.REPORT_POWER_STATUS);
@@ -131,8 +127,7 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
         ITestDevice device = getDevice();
         /* Make sure the device is not booting up/in standby */
         device.waitForBootComplete(HdmiCecConstants.REBOOT_TIMEOUT);
-        device.executeShellCommand("input keyevent KEYCODE_WAKEUP");
-        TimeUnit.SECONDS.sleep(HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS);
+        wakeUpDevice();
 
         LogicalAddress cecClientDevice = hdmiCecClient.getSelfDevice();
         hdmiCecClient.sendCecMessage(cecClientDevice, CecOperand.GIVE_POWER_STATUS);
@@ -154,8 +149,7 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
             /* Make sure the device is not booting up/in standby */
             device.waitForBootComplete(HdmiCecConstants.REBOOT_TIMEOUT);
             /* The sleep below could send some devices into a deep suspend state. */
-            device.executeShellCommand("input keyevent KEYCODE_SLEEP");
-            TimeUnit.SECONDS.sleep(HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS);
+            sendDeviceToSleep();
             int waitTimeSeconds = HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS;
             int powerStatus;
             LogicalAddress cecClientDevice = hdmiCecClient.getSelfDevice();
@@ -172,7 +166,7 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
             assertThat(powerStatus).isEqualTo(OFF);
         } finally {
             /* Wake up the device */
-            device.executeShellCommand("input keyevent KEYCODE_WAKEUP");
+            wakeUpDevice();
         }
     }
 
@@ -195,8 +189,7 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
 
         for (Integer operand : powerControlOperands) {
             try {
-                device.executeShellCommand("input keyevent KEYCODE_SLEEP");
-                TimeUnit.SECONDS.sleep(HdmiCecConstants.MAX_SLEEP_TIME_SECONDS);
+                sendDeviceToSleep();
                 String wakeStateBefore = device.executeShellCommand(
                         "dumpsys power | grep mWakefulness=");
                 assertThat(wakeStateBefore.trim()).isEqualTo("mWakefulness=Asleep");
@@ -209,7 +202,7 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
                 assertWithMessage("Device should wake up on <User Control Pressed> %s", operand)
                         .that(wakeStateAfter.trim()).isEqualTo("mWakefulness=Awake");
             } finally {
-                device.executeShellCommand("input keyevent KEYCODE_WAKEUP");
+                wakeUpDevice();
             }
         }
     }
@@ -233,8 +226,7 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
 
         for (Integer operand : powerControlOperands) {
             try {
-                device.executeShellCommand("input keyevent KEYCODE_WAKEUP");
-                TimeUnit.SECONDS.sleep(HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS);
+                wakeUpDevice();
                 String wakeStateBefore = device.executeShellCommand(
                         "dumpsys power | grep mWakefulness=");
                 assertThat(wakeStateBefore.trim()).isEqualTo("mWakefulness=Awake");
@@ -248,7 +240,7 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
                         operand)
                         .that(wakeStateAfter.trim()).isEqualTo("mWakefulness=Asleep");
             } finally {
-                device.executeShellCommand("input keyevent KEYCODE_WAKEUP");
+                wakeUpDevice();
             }
         }
     }

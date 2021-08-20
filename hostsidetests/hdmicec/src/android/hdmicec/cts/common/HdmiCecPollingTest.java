@@ -61,7 +61,7 @@ public final class HdmiCecPollingTest extends BaseHdmiCecCtsTest {
         setCec20();
 
         ITestDevice device = getDevice();
-        device.executeShellCommand("input keyevent KEYCODE_SLEEP");
+        sendDeviceToSleep();
 
         String expectedOutput = "POLL message sent";
         hdmiCecClient.sendPoll();

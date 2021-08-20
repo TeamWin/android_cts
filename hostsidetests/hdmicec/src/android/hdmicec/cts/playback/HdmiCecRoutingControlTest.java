@@ -152,13 +152,13 @@ public final class HdmiCecRoutingControlTest extends BaseHdmiCecCtsTest {
                     CecOperand.SET_STREAM_PATH,
                     CecMessage.formatParams(dumpsysPhysicalAddress));
             TimeUnit.SECONDS.sleep(5);
-            device.executeShellCommand("input keyevent KEYCODE_SLEEP");
+            sendDeviceToSleep();
             String message = hdmiCecClient.checkExpectedOutput(LogicalAddress.TV,
                     CecOperand.INACTIVE_SOURCE);
             CecMessage.assertPhysicalAddressValid(message, dumpsysPhysicalAddress);
         } finally {
             /* Wake up the device */
-            device.executeShellCommand("input keyevent KEYCODE_WAKEUP");
+            wakeUpDevice();
             setPowerControlMode(previousPowerControlMode);
         }
     }

@@ -210,15 +210,15 @@ public final class HdmiCecSystemAudioModeTest extends BaseHdmiCecCtsTest {
     @Test
     public void cect_11_2_15_6_SystemAudioModeOffBeforeStandby() throws Exception {
         try {
-            getDevice().executeShellCommand("input keyevent KEYCODE_WAKEUP");
+            wakeUpDevice();
             sendSystemAudioModeInitiation();
             String message = hdmiCecClient.checkExpectedOutput(CecOperand.SET_SYSTEM_AUDIO_MODE);
             assertThat(CecMessage.getParams(message)).isEqualTo(ON);
-            getDevice().executeShellCommand("input keyevent KEYCODE_SLEEP");
+            sendDeviceToSleep();
             message = hdmiCecClient.checkExpectedOutput(CecOperand.SET_SYSTEM_AUDIO_MODE);
             assertThat(CecMessage.getParams(message)).isEqualTo(OFF);
         } finally {
-            getDevice().executeShellCommand("input keyevent KEYCODE_WAKEUP");
+            wakeUpDevice();
         }
     }
 
