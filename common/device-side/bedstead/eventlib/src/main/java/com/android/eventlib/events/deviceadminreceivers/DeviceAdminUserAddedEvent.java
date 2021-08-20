@@ -95,6 +95,15 @@ public final class DeviceAdminUserAddedEvent extends Event {
             }
             return true;
         }
+
+        @Override
+        public String describeQuery(String fieldName) {
+            return toStringBuilder(DeviceAdminUserAddedEvent.class, this)
+                    .field("intent", mIntent)
+                    .field("deviceAdminReceiver", mDeviceAdminReceiver)
+                    .field("addedUser", mAddedUser)
+                    .toString();
+        }
     }
 
     /** Begins logging a {@link DeviceAdminUserAddedEvent}. */

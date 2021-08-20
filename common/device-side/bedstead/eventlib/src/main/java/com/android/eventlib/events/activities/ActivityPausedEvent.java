@@ -60,6 +60,13 @@ public final class ActivityPausedEvent extends Event {
             }
             return true;
         }
+
+        @Override
+        public String describeQuery(String fieldName) {
+            return toStringBuilder(ActivityPausedEvent.class, this)
+                    .field("activity", mActivity)
+                    .toString();
+        }
     }
 
     /** Begins logging a {@link ActivityPausedEvent}. */

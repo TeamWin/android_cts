@@ -68,4 +68,12 @@ public final class ClassQueryHelper<E extends Queryable>
 
         return true;
     }
+
+    @Override
+    public String describeQuery(String fieldName) {
+        return Queryable.joinQueryStrings(
+                mClassName.describeQuery(fieldName + ".className"),
+                mSimpleName.describeQuery(fieldName + ".simpleName")
+        );
+    }
 }

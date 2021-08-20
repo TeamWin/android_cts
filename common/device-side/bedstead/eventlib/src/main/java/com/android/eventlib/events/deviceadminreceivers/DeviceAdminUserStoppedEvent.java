@@ -96,6 +96,15 @@ public final class DeviceAdminUserStoppedEvent extends Event {
             }
             return true;
         }
+
+        @Override
+        public String describeQuery(String fieldName) {
+            return toStringBuilder(DeviceAdminUserStoppedEvent.class, this)
+                    .field("intent", mIntent)
+                    .field("deviceAdminReceiver", mDeviceAdminReceiver)
+                    .field("stoppedUser", mStoppedUser)
+                    .toString();
+        }
     }
 
     /** Begins logging a {@link DeviceAdminUserStoppedEvent}. */

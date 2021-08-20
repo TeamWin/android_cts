@@ -21,6 +21,8 @@ import android.os.Bundle;
 import com.android.queryable.Queryable;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 /** Implementation of {@link BundleKeyQuery}. */
 public final class BundleKeyQueryHelper<E extends Queryable> implements BundleKeyQuery<E>,
@@ -104,5 +106,24 @@ public final class BundleKeyQueryHelper<E extends Queryable> implements BundleKe
         }
 
         return true;
+    }
+
+    @Override
+    public String describeQuery(String fieldName) {
+        List<String> queryStrings = new ArrayList<>();
+        if (mExpectsToExist != null) {
+            queryStrings.add(fieldName + " exists");
+        }
+        if (mStringQuery != null) {
+            queryStrings.add(mStringQuery.describeQuery(fieldName + ".stringValue"));
+        }
+        if (mSerializableQuery != null) {
+            queryStrings.add(mSerializableQuery.describeQuery(fieldName + ".serializableValue"));
+        }
+        if (mBundleQuery != null) {
+            queryStrings.add(mBundleQuery.describeQuery(fieldName + ".bundleValue"));
+        }
+
+        return Queryable.joinQueryStrings(queryStrings);
     }
 }

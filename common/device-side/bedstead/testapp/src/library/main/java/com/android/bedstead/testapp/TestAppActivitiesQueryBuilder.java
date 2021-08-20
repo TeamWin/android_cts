@@ -64,4 +64,11 @@ public final class TestAppActivitiesQueryBuilder implements Queryable {
 
         throw new IllegalStateException("No matching unused activity for query");
     }
+
+    @Override
+    public String describeQuery(String fieldName) {
+        return "{" + Queryable.joinQueryStrings(
+                mActivity.describeQuery("activity")
+        ) + "}";
+    }
 }

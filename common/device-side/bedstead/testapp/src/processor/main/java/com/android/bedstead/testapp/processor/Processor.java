@@ -71,7 +71,7 @@ public final class Processor extends AbstractProcessor {
     private static final ClassName NENE_ACTIVITY_CLASSNAME =
             ClassName.get(
                     "com.android.bedstead.nene.activities",
-                    "NeneActivity");
+                    "NeneActivityDirect");
     private static final ClassName TEST_APP_ACTIVITY_CLASSNAME =
             ClassName.get(
                     "com.android.bedstead.testapp",

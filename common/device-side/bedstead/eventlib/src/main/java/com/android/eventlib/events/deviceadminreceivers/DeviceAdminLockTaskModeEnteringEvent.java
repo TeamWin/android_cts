@@ -95,6 +95,15 @@ public final class DeviceAdminLockTaskModeEnteringEvent extends Event {
             }
             return true;
         }
+
+        @Override
+        public String describeQuery(String fieldName) {
+            return toStringBuilder(DeviceAdminLockTaskModeEnteringEvent.class, this)
+                    .field("intent", mIntent)
+                    .field("deviceAdminReceiver", mDeviceAdminReceiver)
+                    .field("pkg", mPkg)
+                    .toString();
+        }
     }
 
     /** Begins logging a {@link DeviceAdminLockTaskModeEnteringEvent}. */
