@@ -34,6 +34,7 @@ import com.android.bedstead.nene.utils.ShellCommandUtils;
 import com.android.bedstead.nene.utils.Versions;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -49,7 +50,8 @@ public final class Permissions {
 
     private static final String LOG_TAG = "Permissions";
 
-    private List<PermissionContextImpl> mPermissionContexts = new ArrayList<>();
+    private final List<PermissionContextImpl> mPermissionContexts =
+            Collections.synchronizedList(new ArrayList<>());
     private static final TestApis sTestApis = new TestApis();
     private static final Context sContext = sTestApis.context().instrumentedContext();
     private static final PackageManager sPackageManager = sContext.getPackageManager();
@@ -143,15 +145,17 @@ public final class Permissions {
         Set<String> grantedPermissions = new HashSet<>();
         Set<String> deniedPermissions = new HashSet<>();
 
-        for (PermissionContextImpl permissionContext : mPermissionContexts) {
-            for (String permission : permissionContext.grantedPermissions()) {
-                grantedPermissions.add(permission);
-                deniedPermissions.remove(permission);
-            }
+        synchronized (mPermissionContexts) {
+            for (PermissionContextImpl permissionContext : mPermissionContexts) {
+                for (String permission : permissionContext.grantedPermissions()) {
+                    grantedPermissions.add(permission);
+                    deniedPermissions.remove(permission);
+                }
 
-            for (String permission : permissionContext.deniedPermissions()) {
-                grantedPermissions.remove(permission);
-                deniedPermissions.add(permission);
+                for (String permission : permissionContext.deniedPermissions()) {
+                    grantedPermissions.remove(permission);
+                    deniedPermissions.add(permission);
+                }
             }
         }
 
@@ -174,12 +178,9 @@ public final class Permissions {
             } else if (SUPPORTS_ADOPT_SHELL_PERMISSIONS
                     && sShellPackage.requestedPermissions().contains(permission)) {
                 adoptedShellPermissions.add(permission);
-                Log.d(LOG_TAG, "will adopt " + permission);
             } else if (canGrantPermission(permission)) {
-                Log.d(LOG_TAG, "Granting " + permission);
                 sInstrumentedPackage.grantPermission(sUser, permission);
             } else {
-                Log.d(LOG_TAG, "Can not grant " + permission);
                 removePermissionContextsUntilCanApply();
                 throw new NeneException("PermissionContext requires granting "
                         + permission + " but cannot.");
@@ -187,16 +188,12 @@ public final class Permissions {
         }
 
         for (String permission : deniedPermissions) {
-            Log.d(LOG_TAG , "Trying to deny " + permission);
             if (!resolvedInstrumentedPackage.grantedPermissions(sUser).contains(permission)) {
                 // Already denied, can skip
-                Log.d(LOG_TAG, permission + " already denied");
             } else if (SUPPORTS_ADOPT_SHELL_PERMISSIONS
                     && !sShellPackage.requestedPermissions().contains(permission)) {
                 adoptedShellPermissions.add(permission);
-                Log.d(LOG_TAG, "will adopt " + permission);
             } else { // We can't deny a permission to ourselves
-                Log.d(LOG_TAG, "Can not deny " + permission);
                 removePermissionContextsUntilCanApply();
                 throw new NeneException("PermissionContext requires denying "
                         + permission + " but cannot.");
@@ -253,7 +250,9 @@ public final class Permissions {
             return;
         }
 
-        if (mExistingPermissions.isEmpty()) {
+        if (mExistingPermissions == null) {
+            return; // We haven't recorded previous permissions
+        } else if (mExistingPermissions.isEmpty()) {
             ShellCommandUtils.uiAutomation().dropShellPermissionIdentity();
         } else if (mExistingPermissions == UiAutomation.ALL_PERMISSIONS) {
             ShellCommandUtils.uiAutomation().adoptShellPermissionIdentity();
