@@ -305,7 +305,7 @@ public class WindowManagerStateHelper extends WindowManagerState {
         }, windowName + "'s surface is disappeared");
     }
 
-    void waitAndAssertWindowSurfaceShown(String windowName, boolean shown) {
+    public void waitAndAssertWindowSurfaceShown(String windowName, boolean shown) {
         assertTrue(
                 waitForWithAmState(state -> state.isWindowSurfaceShown(windowName) == shown,
                         windowName + "'s  isWindowSurfaceShown to return " + shown));
