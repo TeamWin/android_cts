@@ -204,7 +204,7 @@ public class PassFailButtons {
 
         @Override
         public final String getReportSectionName() {
-            return setTestNameSuffix(sCurrentDisplayMode, getClass().getName());
+            return setTestNameSuffix(sCurrentDisplayMode, getClass().getSimpleName());
         }
 
         @Override
@@ -288,7 +288,7 @@ public class PassFailButtons {
 
         @Override
         public final String getReportSectionName() {
-            return setTestNameSuffix(sCurrentDisplayMode, getClass().getName());
+            return setTestNameSuffix(sCurrentDisplayMode, getClass().getSimpleName());
         }
 
         @Override
@@ -375,7 +375,7 @@ public class PassFailButtons {
 
         @Override
         public final String getReportSectionName() {
-            return setTestNameSuffix(sCurrentDisplayMode, getClass().getName());
+            return setTestNameSuffix(sCurrentDisplayMode, getClass().getSimpleName());
         }
 
         /**
