@@ -159,10 +159,10 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
 
     private static final String TAG = "WifiManagerTest";
     private static final String SSID1 = "\"WifiManagerTest\"";
-    // A full single scan duration is about 6-7 seconds if country code is set
-    // to US. If country code is set to world mode (00), we would expect a scan
-    // duration of roughly 8 seconds. So we set scan timeout as 9 seconds here.
-    private static final int SCAN_TEST_WAIT_DURATION_MS = 9000;
+    // A full single scan duration is typically about 6-7 seconds, but
+    // depending on devices it takes more time (9-11 seconds). For a
+    // safety margin, the test waits for 15 seconds.
+    private static final int SCAN_TEST_WAIT_DURATION_MS = 15_000;
     private static final int TEST_WAIT_DURATION_MS = 10_000;
     private static final int WIFI_CONNECT_TIMEOUT_MILLIS = 30_000;
     private static final int WAIT_MSEC = 60;
