@@ -37,6 +37,7 @@ import static com.android.queryable.queries.StringQuery.string;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
+import static com.android.bedstead.metricsrecorder.truth.MetricQueryBuilderSubject.assertThat;
 
 import static org.junit.Assume.assumeFalse;
 import static org.testng.Assert.assertThrows;
@@ -160,15 +161,13 @@ public class LockTaskTest {
             try {
                 activity.startLockTask();
 
-                // TODO(b/191745956): Improve metrics query interface
                 assertThat(metrics.query()
                         .whereType().isEqualTo(EventId.SET_LOCKTASK_MODE_ENABLED_VALUE)
                         .whereAdminPackageName().isEqualTo(DPC_COMPONENT_NAME.getPackageName())
                         .whereBoolean().isTrue()
                         .whereStrings().contains(
                                 string().isEqualTo(sTestApp.packageName())
-                        )
-                        .poll()).isNotNull();
+                        )).wasLogged();
             } finally {
                 activity.stopLockTask();
             }
