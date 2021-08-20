@@ -934,15 +934,23 @@ public final class MockIme extends InputMethodService {
 
         final boolean supportedClientInlineSuggestions;
         final boolean supportedServiceInlineSuggestions;
+        final boolean supportedInlineSuggestions;
         if (mInlineSuggestionsExtras != null) {
             styles.putAll(mInlineSuggestionsExtras);
             supportedClientInlineSuggestions =
                     mInlineSuggestionsExtras.getBoolean("ClientSuggestions", true);
             supportedServiceInlineSuggestions =
                     mInlineSuggestionsExtras.getBoolean("ServiceSuggestions", true);
+            supportedInlineSuggestions =
+                    mInlineSuggestionsExtras.getBoolean("InlineSuggestions", true);
         } else {
             supportedClientInlineSuggestions = true;
             supportedServiceInlineSuggestions = true;
+            supportedInlineSuggestions = true;
+        }
+
+        if (!supportedInlineSuggestions) {
+            return null;
         }
 
         return getTracer().onCreateInlineSuggestionsRequest(() -> {

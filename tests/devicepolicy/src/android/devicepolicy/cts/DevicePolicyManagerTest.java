@@ -512,6 +512,7 @@ public final class DevicePolicyManagerTest {
     @RequireFeature(PackageManager.FEATURE_DEVICE_ADMIN)
     @Test
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void newlyProvisionedFullyManagedDevice_canOptOutOfControllingSensorPermissionGrants()
             throws Exception {
         try {

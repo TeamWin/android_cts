@@ -66,6 +66,7 @@ class CameraMicIndicatorsPermissionTest {
     private val uiDevice: UiDevice = UiDevice.getInstance(instrumentation)
     private val packageManager: PackageManager = context.packageManager
 
+    private val isTv = packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
     private var wasEnabled = false
     private val micLabel = packageManager.getPermissionGroupInfo(
         Manifest.permission_group.MICROPHONE, 0).loadLabel(packageManager).toString()
@@ -124,9 +125,10 @@ class CameraMicIndicatorsPermissionTest {
                 screenTimeoutBeforeTest
             )
         }
-
-        pressBack()
-        pressBack()
+        if (!isTv) {
+            pressBack()
+            pressBack()
+        }
         pressHome()
         pressHome()
         Thread.sleep(3000)
@@ -169,7 +171,7 @@ class CameraMicIndicatorsPermissionTest {
             assertTrue("View with text $APP_LABEL not found", appView.exists())
         }
 
-        if (packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)) {
+        if (isTv) {
             assertTvIndicatorsShown(useMic, useCamera, useHotword)
         } else if (packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
             assertCarIndicatorsShown(useMic, useCamera)

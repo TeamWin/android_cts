@@ -15,6 +15,8 @@
  */
 package android.media.cts;
 
+import static junit.framework.TestCase.assertEquals;
+
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
@@ -31,7 +33,6 @@ import android.media.MediaPlayer.OnTimedTextListener;
 import android.media.MediaRecorder;
 import android.media.MediaTimestamp;
 import android.media.PlaybackParams;
-import android.media.SubtitleData;
 import android.media.SyncParams;
 import android.media.TimedText;
 import android.media.audiofx.AudioEffect;
@@ -142,22 +143,16 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
     }
 
     private void testIfMediaServerDied(final String res) throws Exception {
-        mMediaPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
-            @Override
-            public boolean onError(MediaPlayer mp, int what, int extra) {
-                assertTrue(mp == mMediaPlayer);
-                assertTrue("mediaserver process died", what != MediaPlayer.MEDIA_ERROR_SERVER_DIED);
-                Log.w(LOG_TAG, "onError " + what);
-                return false;
-            }
+        mMediaPlayer.setOnErrorListener((mp, what, extra) -> {
+            assertSame(mp, mMediaPlayer);
+            assertTrue("mediaserver process died", what != MediaPlayer.MEDIA_ERROR_SERVER_DIED);
+            Log.w(LOG_TAG, "onError " + what);
+            return false;
         });
 
-        mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-            @Override
-            public void onCompletion(MediaPlayer mp) {
-                assertTrue(mp == mMediaPlayer);
-                mOnCompletionCalled.signal();
-            }
+        mMediaPlayer.setOnCompletionListener(mp -> {
+            assertSame(mp, mMediaPlayer);
+            mOnCompletionCalled.signal();
         });
 
         AssetFileDescriptor afd = getAssetFileDescriptorFor(res);
@@ -226,10 +221,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         InputStream is = new FileInputStream(mInpPrefix + res);
         BufferedReader reader = new BufferedReader(new InputStreamReader(is));
 
-        StringBuilder builder = new StringBuilder();
-        builder.append("data:;base64,");
-        builder.append(reader.readLine());
-        Uri uri = Uri.parse(builder.toString());
+        Uri uri = Uri.parse("data:;base64," + reader.readLine());
 
         MediaPlayer mp = MediaPlayer.create(mContext, uri);
 
@@ -279,21 +271,21 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
     }
 
     public void testPlayAudioMp3() throws Exception {
-        testPlayAudio("testmp3_2.mp3",
+        internalTestPlayAudio("testmp3_2.mp3",
                 34909 /* duration */, 70 /* tolerance */, 100 /* seekDuration */);
     }
 
     public void testPlayAudioOpus() throws Exception {
-        testPlayAudio("testopus.opus",
+        internalTestPlayAudio("testopus.opus",
                 34909 /* duration */, 70 /* tolerance */, 100 /* seekDuration */);
     }
 
     public void testPlayAudioAmr() throws Exception {
-        testPlayAudio("testamr.amr",
+        internalTestPlayAudio("testamr.amr",
                 34909 /* duration */, 70 /* tolerance */, 100 /* seekDuration */);
     }
 
-    public void testPlayAudio(final String res,
+    private void internalTestPlayAudio(final String res,
             int mp3Duration, int tolerance, int seekDuration) throws Exception {
         Preconditions.assertTestFileExists(mInpPrefix + res);
         MediaPlayer mp = MediaPlayer.create(mContext, Uri.fromFile(new File(mInpPrefix + res)));
@@ -392,19 +384,16 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
             mp.setWakeMode(mContext, PowerManager.PARTIAL_WAKE_LOCK);
             mp.setLooping(true);
             mOnCompletionCalled.reset();
-            mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-                @Override
-                public void onCompletion(MediaPlayer mp) {
-                    Log.i("@@@", "got oncompletion");
-                    mOnCompletionCalled.signal();
-                }
+            mp.setOnCompletionListener(mp1 -> {
+                Log.i("@@@", "got oncompletion");
+                mOnCompletionCalled.signal();
             });
 
             assertFalse(mp.isPlaying());
             mp.start();
             assertTrue(mp.isPlaying());
 
-            int duration = mp.getDuration();
+            long duration = mp.getDuration();
             Thread.sleep(duration * 4); // allow for several loops
             assertTrue(mp.isPlaying());
             assertEquals("wrong number of completion signals", 0, mOnCompletionCalled.getNumSignal());
@@ -530,13 +519,10 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
     }
 
     static class OutputListener {
-        int mSession;
         AudioEffect mVc;
         Visualizer mVis;
-        byte [] mVisData;
         boolean mSoundDetected;
         OutputListener(int session) {
-            mSession = session;
             // creating a volume controller on output mix ensures that ro.audio.silent mutes
             // audio after the effects and not before
             mVc = new AudioEffect(
@@ -554,29 +540,36 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
             if (size > range[1]) {
                 size = range[1];
             }
-            assertTrue(mVis.setCaptureSize(size) == Visualizer.SUCCESS);
+            assertEquals(Visualizer.SUCCESS, mVis.setCaptureSize(size));
 
-            mVis.setDataCaptureListener(new Visualizer.OnDataCaptureListener() {
-                @Override
-                public void onWaveFormDataCapture(Visualizer visualizer,
-                        byte[] waveform, int samplingRate) {
-                    if (!mSoundDetected) {
-                        for (int i = 0; i < waveform.length; i++) {
-                            // 8 bit unsigned PCM, zero level is at 128, which is -128 when
-                            // seen as a signed byte
-                            if (waveform[i] != -128) {
-                                mSoundDetected = true;
-                                break;
+            Visualizer.OnDataCaptureListener onDataCaptureListener =
+                    new Visualizer.OnDataCaptureListener() {
+                        @Override
+                        public void onWaveFormDataCapture(Visualizer visualizer,
+                                byte[] waveform, int samplingRate) {
+                            if (!mSoundDetected) {
+                                for (byte b : waveform) {
+                                    // 8 bit unsigned PCM, zero level is at 128, which is -128 when
+                                    // seen as a signed byte
+                                    if (b != -128) {
+                                        mSoundDetected = true;
+                                        break;
+                                    }
+                                }
                             }
                         }
-                    }
-                }
 
-                @Override
-                public void onFftDataCapture(Visualizer visualizer, byte[] fft, int samplingRate) {
-                }
-            }, 10000 /* milliHertz */, true /* PCM */, false /* FFT */);
-            assertTrue(mVis.setEnabled(true) == Visualizer.SUCCESS);
+                        @Override
+                        public void onFftDataCapture(
+                                Visualizer visualizer, byte[] fft, int samplingRate) {}
+                    };
+
+            mVis.setDataCaptureListener(
+                    onDataCaptureListener,
+                    /* rate= */ 10000, // In milliHertz.
+                    /* waveform= */ true, // Is PCM.
+                    /* fft= */ false); // Do not request a frequency capture.
+            assertEquals(Visualizer.SUCCESS, mVis.setEnabled(true));
         }
 
         void reset() {
@@ -628,14 +621,11 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
     }
 
     private void initMediaPlayer(MediaPlayer player) throws Exception {
-        AssetFileDescriptor afd = getAssetFileDescriptorFor("test1m1s.mp3");
-        try {
+        try (AssetFileDescriptor afd = getAssetFileDescriptorFor("test1m1s.mp3")) {
             player.reset();
             player.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
             player.prepare();
             player.seekTo(56000);
-        } finally {
-            afd.close();
         }
     }
 
@@ -678,27 +668,23 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
 
         final Monitor mTestCompleted = new Monitor();
 
-        Thread timer = new Thread(new Runnable() {
-
-            @Override
-            public void run() {
-                long startTime = SystemClock.elapsedRealtime();
-                while(true) {
-                    SystemClock.sleep(SLEEP_TIME);
-                    if (mTestCompleted.isSignalled()) {
-                        // done
-                        return;
-                    }
-                    long now = SystemClock.elapsedRealtime();
-                    if ((now - startTime) > 45000) {
-                        // We've been running for 45 seconds and still aren't done, so we're stuck
-                        // somewhere. Signal ourselves to dump the thread stacks.
-                        android.os.Process.sendSignal(android.os.Process.myPid(), 3);
-                        SystemClock.sleep(2000);
-                        fail("Test is stuck, see ANR stack trace for more info. You may need to" +
-                                " create /data/anr first");
-                        return;
-                    }
+        Thread timer = new Thread(() -> {
+            long startTime = SystemClock.elapsedRealtime();
+            while(true) {
+                SystemClock.sleep(SLEEP_TIME);
+                if (mTestCompleted.isSignalled()) {
+                    // done
+                    return;
+                }
+                long now = SystemClock.elapsedRealtime();
+                if ((now - startTime) > 45000) {
+                    // We've been running for 45 seconds and still aren't done, so we're stuck
+                    // somewhere. Signal ourselves to dump the thread stacks.
+                    android.os.Process.sendSignal(android.os.Process.myPid(), 3);
+                    SystemClock.sleep(2000);
+                    fail("Test is stuck, see ANR stack trace for more info. You may need to" +
+                            " create /data/anr first");
+                    return;
                 }
             }
         });
@@ -711,22 +697,16 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
                 initMediaPlayer(mMediaPlayer2);
                 mOnCompletionCalled.reset();
                 mOnInfoCalled.reset();
-                mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-                    @Override
-                    public void onCompletion(MediaPlayer mp) {
-                        assertEquals(mMediaPlayer, mp);
-                        mOnCompletionCalled.signal();
-                    }
+                mMediaPlayer.setOnCompletionListener(mp -> {
+                    assertEquals(mMediaPlayer, mp);
+                    mOnCompletionCalled.signal();
                 });
-                mMediaPlayer2.setOnInfoListener(new MediaPlayer.OnInfoListener() {
-                    @Override
-                    public boolean onInfo(MediaPlayer mp, int what, int extra) {
-                        assertEquals(mMediaPlayer2, mp);
-                        if (what == MediaPlayer.MEDIA_INFO_STARTED_AS_NEXT) {
-                            mOnInfoCalled.signal();
-                        }
-                        return false;
+                mMediaPlayer2.setOnInfoListener((mp, what, extra) -> {
+                    assertEquals(mMediaPlayer2, mp);
+                    if (what == MediaPlayer.MEDIA_INFO_STARTED_AS_NEXT) {
+                        mOnInfoCalled.signal();
                     }
+                    return false;
                 });
 
                 mMediaPlayer.setNextMediaPlayer(mMediaPlayer2);
@@ -757,22 +737,16 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
             initMediaPlayer(mMediaPlayer2);
             mMediaPlayer.setNextMediaPlayer(mMediaPlayer2);
 
-            mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-                @Override
-                public void onCompletion(MediaPlayer mp) {
-                    assertEquals(mMediaPlayer, mp);
-                    mOnCompletionCalled.signal();
-                }
+            mMediaPlayer.setOnCompletionListener(mp -> {
+                assertEquals(mMediaPlayer, mp);
+                mOnCompletionCalled.signal();
             });
-            mMediaPlayer2.setOnInfoListener(new MediaPlayer.OnInfoListener() {
-                @Override
-                public boolean onInfo(MediaPlayer mp, int what, int extra) {
-                    assertEquals(mMediaPlayer2, mp);
-                    if (what == MediaPlayer.MEDIA_INFO_STARTED_AS_NEXT) {
-                        mOnInfoCalled.signal();
-                    }
-                    return false;
+            mMediaPlayer2.setOnInfoListener((mp, what, extra) -> {
+                assertEquals(mMediaPlayer2, mp);
+                if (what == MediaPlayer.MEDIA_INFO_STARTED_AS_NEXT) {
+                    mOnInfoCalled.signal();
                 }
+                return false;
             });
             assertTrue(mMediaPlayer.isPlaying());
             assertFalse(mOnCompletionCalled.isSignalled());
@@ -922,7 +896,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
             // is captured after volume adjustment).
             boolean first = true;
             while((SystemClock.elapsedRealtime() - start) < captureintervalms) {
-                assertTrue(vis.getWaveForm(vizdata) == Visualizer.SUCCESS);
+                assertEquals(Visualizer.SUCCESS, vis.getWaveForm(vizdata));
                 for (int i = 0; i < vizdata.length - 1; i++) {
                     if (vizdata[i] == -128 && vizdata[i + 1] == -128) {
                         if (first) {
@@ -973,12 +947,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
 
         final CountDownLatch seekDone = new CountDownLatch(1);
 
-        mMediaPlayer.setOnSeekCompleteListener(new MediaPlayer.OnSeekCompleteListener() {
-            @Override
-            public void onSeekComplete(MediaPlayer mp) {
-                seekDone.countDown();
-            }
-        });
+        mMediaPlayer.setOnSeekCompleteListener(mp -> seekDone.countDown());
 
         if (!checkLoadResource("testvideo.3gp")) {
             return; // skip;
@@ -1047,7 +1016,6 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         return getActivity().getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA);
     }
 
-    private Camera mCamera;
     private void testRecordedVideoPlaybackWithAngle(int angle) throws Exception {
         int width = RECORDED_VIDEO_WIDTH;
         int height = RECORDED_VIDEO_HEIGHT;
@@ -1059,8 +1027,8 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         }
 
         boolean isSupported = false;
-        mCamera = Camera.open(0);
-        Camera.Parameters parameters = mCamera.getParameters();
+        Camera camera = Camera.open(0);
+        Camera.Parameters parameters = camera.getParameters();
         List<Camera.Size> videoSizes = parameters.getSupportedVideoSizes();
         // getSupportedVideoSizes returns null when separate video/preview size
         // is not supported.
@@ -1068,8 +1036,8 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
             // If we have CamcorderProfile use it instead of Preview size.
             if (CamcorderProfile.hasProfile(0, CamcorderProfile.QUALITY_LOW)) {
                 CamcorderProfile profile = CamcorderProfile.get(0, CamcorderProfile.QUALITY_LOW);
-                videoSizes = new ArrayList();
-                videoSizes.add(mCamera.new Size(profile.videoFrameWidth, profile.videoFrameHeight));
+                videoSizes = new ArrayList<>();
+                videoSizes.add(camera.new Size(profile.videoFrameWidth, profile.videoFrameHeight));
             } else {
                 videoSizes = parameters.getSupportedPreviewSizes();
             }
@@ -1081,8 +1049,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
                 break;
             }
         }
-        mCamera.release();
-        mCamera = null;
+        camera.release();
         if (!isSupported) {
             width = videoSizes.get(0).width;
             height = videoSizes.get(0).height;
@@ -1096,7 +1063,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
     private void checkOrientation(int angle) throws Exception {
         assertTrue(angle >= 0);
         assertTrue(angle < 360);
-        assertTrue((angle % 90) == 0);
+        assertEquals(0, (angle % 90));
     }
 
     private void recordVideo(
@@ -1117,7 +1084,6 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         Thread.sleep(durationMs);
         recorder.stop();
         recorder.release();
-        recorder = null;
     }
 
     private void checkDisplayedVideoSize(
@@ -1138,7 +1104,6 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         String rotation = retriever.extractMetadata(
                 MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION);
         retriever.release();
-        retriever = null;
         assertNotNull(rotation);
         assertEquals(Integer.parseInt(rotation), angle);
     }
@@ -1150,19 +1115,9 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
             return; // skip
         }
 
-        mMediaPlayer.setOnSeekCompleteListener(new MediaPlayer.OnSeekCompleteListener() {
-            @Override
-            public void onSeekComplete(MediaPlayer mp) {
-                mOnSeekCompleteCalled.signal();
-            }
-        });
+        mMediaPlayer.setOnSeekCompleteListener(mp -> mOnSeekCompleteCalled.signal());
         mOnCompletionCalled.reset();
-        mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-            @Override
-            public void onCompletion(MediaPlayer mp) {
-                mOnCompletionCalled.signal();
-            }
-        });
+        mMediaPlayer.setOnCompletionListener(mp -> mOnCompletionCalled.signal());
         mMediaPlayer.setDisplay(mActivity.getSurfaceHolder());
 
         mMediaPlayer.prepare();
@@ -1206,12 +1161,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
             return; // skip
         }
 
-        mMediaPlayer.setOnSeekCompleteListener(new MediaPlayer.OnSeekCompleteListener() {
-            @Override
-            public void onSeekComplete(MediaPlayer mp) {
-                mOnSeekCompleteCalled.signal();
-            }
-        });
+        mMediaPlayer.setOnSeekCompleteListener(mp -> mOnSeekCompleteCalled.signal());
         mMediaPlayer.setDisplay(mActivity.getSurfaceHolder());
 
         mMediaPlayer.prepare();
@@ -1225,7 +1175,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         mOnSeekCompleteCalled.waitForSignal();
         Thread.sleep(playTime);
         assertFalse("MediaPlayer should not be playing", mMediaPlayer.isPlaying());
-        assertTrue("MediaPlayer position should be 0", mMediaPlayer.getCurrentPosition() == 0);
+        assertEquals("MediaPlayer position should be 0", 0, mMediaPlayer.getCurrentPosition());
 
         mMediaPlayer.start();
         Thread.sleep(playTime);
@@ -1237,7 +1187,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         Thread.sleep(1000);
         int position = mMediaPlayer.getCurrentPosition();
         Thread.sleep(playTime);
-        assertTrue("MediaPlayer should be paused", mMediaPlayer.getCurrentPosition() == position);
+        assertEquals("MediaPlayer should be paused", mMediaPlayer.getCurrentPosition(), position);
 
         mMediaPlayer.stop();
     }
@@ -1290,12 +1240,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
             return; // skip
         }
 
-        mMediaPlayer.setOnSeekCompleteListener(new MediaPlayer.OnSeekCompleteListener() {
-            @Override
-            public void onSeekComplete(MediaPlayer mp) {
-                mOnSeekCompleteCalled.signal();
-            }
-        });
+        mMediaPlayer.setOnSeekCompleteListener(mp -> mOnSeekCompleteCalled.signal());
         mMediaPlayer.setDisplay(mActivity.getSurfaceHolder());
         mMediaPlayer.prepare();
         mOnSeekCompleteCalled.reset();
@@ -1373,7 +1318,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         long nt1 = System.nanoTime();
         MediaTimestamp ts1 = mMediaPlayer.getTimestamp();
         long nt2 = System.nanoTime();
-        assertTrue("Media player should return a valid time stamp", ts1 != null);
+        assertNotNull("Media player should return a valid time stamp", ts1);
         assertEquals("MediaPlayer had error in clockRate " + ts1.getMediaClockRate(),
                 playbackRate, ts1.getMediaClockRate(), 0.001f);
         assertTrue("The nanoTime of Media timestamp should be taken when getTimestamp is called.",
@@ -1381,21 +1326,21 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
 
         mMediaPlayer.pause();
         ts1 = mMediaPlayer.getTimestamp();
-        assertTrue("Media player should return a valid time stamp", ts1 != null);
-        assertTrue("Media player should have play rate of 0.0f when paused",
-                ts1.getMediaClockRate() == 0.0f);
+        assertNotNull("Media player should return a valid time stamp", ts1);
+        assertEquals("Media player should have play rate of 0.0f when paused", 0.0f,
+                ts1.getMediaClockRate());
 
         mMediaPlayer.seekTo(0);
         mMediaPlayer.start();
         Thread.sleep(SLEEP_TIME);  // let player get into stable state.
         int playTime = 4000;  // The testing clip is about 10 second long.
         ts1 = mMediaPlayer.getTimestamp();
-        assertTrue("Media player should return a valid time stamp", ts1 != null);
+        assertNotNull("Media player should return a valid time stamp", ts1);
         Thread.sleep(playTime);
         MediaTimestamp ts2 = mMediaPlayer.getTimestamp();
-        assertTrue("Media player should return a valid time stamp", ts2 != null);
-        assertTrue("The clockRate should not be changed.",
-                ts1.getMediaClockRate() == ts2.getMediaClockRate());
+        assertNotNull("Media player should return a valid time stamp", ts2);
+        assertEquals("The clockRate should not be changed.", ts1.getMediaClockRate(),
+                ts2.getMediaClockRate());
         assertEquals("MediaPlayer had error in timestamp.",
                 ts1.getAnchorMediaTimeUs() + (long)(playTime * ts1.getMediaClockRate() * 1000),
                 ts2.getAnchorMediaTimeUs(), toleranceUs);
@@ -1409,21 +1354,12 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
             return; // skip
         }
 
-        mMediaPlayer.setOnSeekCompleteListener(
-                new MediaPlayer.OnSeekCompleteListener() {
-                    @Override
-                    public void onSeekComplete(MediaPlayer mp) {
-                        mOnSeekCompleteCalled.signal();
-                    }
-                });
+        mMediaPlayer.setOnSeekCompleteListener(mp -> mOnSeekCompleteCalled.signal());
         final BlockingDeque<MediaTimestamp> timestamps = new LinkedBlockingDeque<>();
         mMediaPlayer.setOnMediaTimeDiscontinuityListener(
-                new MediaPlayer.OnMediaTimeDiscontinuityListener() {
-                    @Override
-                    public void onMediaTimeDiscontinuity(MediaPlayer mp, MediaTimestamp timestamp) {
-                        mOnMediaTimeDiscontinuityCalled.signal();
-                        timestamps.add(timestamp);
-                    }
+                (mp, timestamp) -> {
+                    mOnMediaTimeDiscontinuityCalled.signal();
+                    timestamps.add(timestamp);
                 });
         mMediaPlayer.setDisplay(mActivity.getSurfaceHolder());
         mMediaPlayer.prepare();
@@ -1699,7 +1635,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
 
         Vector<Integer> subtitleTrackIndex = new Vector<>();
         for (int i = 0; i < trackInfos.length; ++i) {
-            assertTrue(trackInfos[i] != null);
+            assertNotNull(trackInfos[i]);
             if (trackInfos[i].getTrackType() == MediaPlayer.TrackInfo.MEDIA_TRACK_TYPE_SUBTITLE) {
                 subtitleTrackIndex.add(i);
             }
@@ -1729,22 +1665,16 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
 
         getInstrumentation().waitForIdleSync();
 
-        mMediaPlayer.setOnSubtitleDataListener(new MediaPlayer.OnSubtitleDataListener() {
-            @Override
-            public void onSubtitleData(MediaPlayer mp, SubtitleData data) {
-                if (data != null && data.getData() != null) {
-                    mOnSubtitleDataCalled.signal();
-                }
+        mMediaPlayer.setOnSubtitleDataListener((mp, data) -> {
+            if (data != null && data.getData() != null) {
+                mOnSubtitleDataCalled.signal();
             }
         });
-        mMediaPlayer.setOnInfoListener(new MediaPlayer.OnInfoListener() {
-            @Override
-            public boolean onInfo(MediaPlayer mp, int what, int extra) {
-                if (what == MediaPlayer.MEDIA_INFO_METADATA_UPDATE) {
-                    mOnInfoCalled.signal();
-                }
-                return false;
+        mMediaPlayer.setOnInfoListener((mp, what, extra) -> {
+            if (what == MediaPlayer.MEDIA_INFO_METADATA_UPDATE) {
+                mOnInfoCalled.signal();
             }
+            return false;
         });
 
         mMediaPlayer.setDisplay(getActivity().getSurfaceHolder());
@@ -1793,22 +1723,16 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
             return; // skip;
         }
 
-        mMediaPlayer.setOnSubtitleDataListener(new MediaPlayer.OnSubtitleDataListener() {
-            @Override
-            public void onSubtitleData(MediaPlayer mp, SubtitleData data) {
-                if (data != null && data.getData() != null) {
-                    mOnSubtitleDataCalled.signal();
-                }
+        mMediaPlayer.setOnSubtitleDataListener((mp, data) -> {
+            if (data != null && data.getData() != null) {
+                mOnSubtitleDataCalled.signal();
             }
         });
-        mMediaPlayer.setOnInfoListener(new MediaPlayer.OnInfoListener() {
-            @Override
-            public boolean onInfo(MediaPlayer mp, int what, int extra) {
-                if (what == MediaPlayer.MEDIA_INFO_METADATA_UPDATE) {
-                    mOnInfoCalled.signal();
-                }
-                return false;
+        mMediaPlayer.setOnInfoListener((mp, what, extra) -> {
+            if (what == MediaPlayer.MEDIA_INFO_METADATA_UPDATE) {
+                mOnInfoCalled.signal();
             }
+            return false;
         });
 
         mMediaPlayer.setDisplay(getActivity().getSurfaceHolder());
@@ -1844,23 +1768,17 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
             return; // skip;
         }
 
-        mMediaPlayer.setOnSubtitleDataListener(new MediaPlayer.OnSubtitleDataListener() {
-            @Override
-            public void onSubtitleData(MediaPlayer mp, SubtitleData data) {
-                if (data != null && data.getData() != null
-                        && data.getTrackIndex() == mSubtitleTrackIndex.get(0)) {
-                    mOnSubtitleDataCalled.signal();
-                }
+        mMediaPlayer.setOnSubtitleDataListener((mp, data) -> {
+            if (data != null && data.getData() != null
+                    && data.getTrackIndex() == mSubtitleTrackIndex.get(0)) {
+                mOnSubtitleDataCalled.signal();
             }
         });
-        mMediaPlayer.setOnInfoListener(new MediaPlayer.OnInfoListener() {
-            @Override
-            public boolean onInfo(MediaPlayer mp, int what, int extra) {
-                if (what == MediaPlayer.MEDIA_INFO_METADATA_UPDATE) {
-                    mOnInfoCalled.signal();
-                }
-                return false;
+        mMediaPlayer.setOnInfoListener((mp, what, extra) -> {
+            if (what == MediaPlayer.MEDIA_INFO_METADATA_UPDATE) {
+                mOnInfoCalled.signal();
             }
+            return false;
         });
 
         mMediaPlayer.setDisplay(getActivity().getSurfaceHolder());
@@ -1903,14 +1821,11 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
 
         getInstrumentation().waitForIdleSync();
 
-        mMediaPlayer.setOnInfoListener(new MediaPlayer.OnInfoListener() {
-            @Override
-            public boolean onInfo(MediaPlayer mp, int what, int extra) {
-                if (what == MediaPlayer.MEDIA_INFO_METADATA_UPDATE) {
-                    mOnInfoCalled.signal();
-                }
-                return false;
+        mMediaPlayer.setOnInfoListener((mp, what, extra) -> {
+            if (what == MediaPlayer.MEDIA_INFO_METADATA_UPDATE) {
+                mOnInfoCalled.signal();
             }
+            return false;
         });
 
         mMediaPlayer.setDisplay(getActivity().getSurfaceHolder());
@@ -1944,7 +1859,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
 
         Vector<Integer> externalTrackIndex = new Vector<>();
         for (int i = 0; i < trackInfos.length; ++i) {
-            assertTrue(trackInfos[i] != null);
+            assertNotNull(trackInfos[i]);
             if (trackInfos[i].getTrackType() == MediaPlayer.TrackInfo.MEDIA_TRACK_TYPE_TIMEDTEXT) {
                 MediaFormat format = trackInfos[i].getFormat();
                 String mime = format.getString(MediaFormat.KEY_MIME);
@@ -1981,13 +1896,11 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         if (!checkLoadResource("testvideo_with_2_timedtext_tracks.3gp")) {
             return; // skip;
         }
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                try {
-                    loadSubtitleSource("test_subtitle1_srt.3gp");
-                } catch (Exception e) {
-                    throw new AssertionFailedError(e.getMessage());
-                }
+        runTestOnUiThread(() -> {
+            try {
+                loadSubtitleSource("test_subtitle1_srt.3gp");
+            } catch (Exception e) {
+                throw new AssertionFailedError(e.getMessage());
             }
         });
         getInstrumentation().waitForIdleSync();
@@ -1995,15 +1908,12 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         mMediaPlayer.setDisplay(getActivity().getSurfaceHolder());
         mMediaPlayer.setScreenOnWhilePlaying(true);
         mMediaPlayer.setWakeMode(mContext, PowerManager.PARTIAL_WAKE_LOCK);
-        mMediaPlayer.setOnTimedTextListener(new MediaPlayer.OnTimedTextListener() {
-            @Override
-            public void onTimedText(MediaPlayer mp, TimedText text) {
-                if (text != null) {
-                    String plainText = text.getText();
-                    if (plainText != null) {
-                        mOnTimedTextCalled.signal();
-                        Log.d(LOG_TAG, "text: " + plainText.trim());
-                    }
+        mMediaPlayer.setOnTimedTextListener((mp, text) -> {
+            if (text != null) {
+                String plainText = text.getText();
+                if (plainText != null) {
+                    mOnTimedTextCalled.signal();
+                    Log.d(LOG_TAG, "text: " + plainText.trim());
                 }
             }
         });
@@ -2062,40 +1972,37 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         testTimedText("testvideo_with_2_timedtext_tracks.3gp", 2,
                 new String[] {"test_subtitle1_srt.3gp", "test_subtitle2_srt.3gp"},
                 new VerifyAndSignalTimedText(),
-                new Callable<Void>() {
-                    @Override
-                    public Void call() throws Exception {
-                        selectTimedTextTrack(0);
-                        mOnTimedTextCalled.reset();
+                () -> {
+                    selectTimedTextTrack(0);
+                    mOnTimedTextCalled.reset();
 
-                        mMediaPlayer.start();
-                        if (speed != 1.0f) {
-                            mMediaPlayer.setPlaybackParams(new PlaybackParams().setSpeed(speed));
-                        }
-
-                        assertTrue(mMediaPlayer.isPlaying());
-
-                        // Waits until at least two subtitles are fired. Timeout is 2.5 sec.
-                        // Please refer the test srt files:
-                        // test_subtitle1_srt.3gp and test_subtitle2_srt.3gp
-                        assertTrue(mOnTimedTextCalled.waitForCountedSignals(2, 2500) >= 2);
-
-                        selectTimedTextTrack(1);
-                        mOnTimedTextCalled.reset();
-                        assertTrue(mOnTimedTextCalled.waitForCountedSignals(2, 2500) >= 2);
-
-                        selectTimedTextTrack(2);
-                        mOnTimedTextCalled.reset();
-                        assertTrue(mOnTimedTextCalled.waitForCountedSignals(2, 2500) >= 2);
-
-                        selectTimedTextTrack(3);
-                        mOnTimedTextCalled.reset();
-                        assertTrue(mOnTimedTextCalled.waitForCountedSignals(2, 2500) >= 2);
-                        mMediaPlayer.stop();
-
-                        assertEquals("Wrong bounds count", 2, mBoundsCount);
-                        return null;
+                    mMediaPlayer.start();
+                    if (speed != 1.0f) {
+                        mMediaPlayer.setPlaybackParams(new PlaybackParams().setSpeed(speed));
                     }
+
+                    assertTrue(mMediaPlayer.isPlaying());
+
+                    // Waits until at least two subtitles are fired. Timeout is 2.5 sec.
+                    // Please refer the test srt files:
+                    // test_subtitle1_srt.3gp and test_subtitle2_srt.3gp
+                    assertTrue(mOnTimedTextCalled.waitForCountedSignals(2, 2500) >= 2);
+
+                    selectTimedTextTrack(1);
+                    mOnTimedTextCalled.reset();
+                    assertTrue(mOnTimedTextCalled.waitForCountedSignals(2, 2500) >= 2);
+
+                    selectTimedTextTrack(2);
+                    mOnTimedTextCalled.reset();
+                    assertTrue(mOnTimedTextCalled.waitForCountedSignals(2, 2500) >= 2);
+
+                    selectTimedTextTrack(3);
+                    mOnTimedTextCalled.reset();
+                    assertTrue(mOnTimedTextCalled.waitForCountedSignals(2, 2500) >= 2);
+                    mMediaPlayer.stop();
+
+                    assertEquals("Wrong bounds count", 2, mBoundsCount);
+                    return null;
                 });
     }
 
@@ -2111,32 +2018,24 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         }
         testTimedText("testvideo_with_2_timedtext_tracks.3gp", 2, new String [] {},
                 new VerifyAndSignalTimedText(num.get(), true),
-                new Callable<Void>() {
-                    @Override
-                    public Void call() throws Exception {
-                        selectTimedTextTrack(0);
-                        mOnSeekCompleteCalled.reset();
+                () -> {
+                    selectTimedTextTrack(0);
+                    mOnSeekCompleteCalled.reset();
+                    mOnTimedTextCalled.reset();
+                    OnSeekCompleteListener seekListener = mp -> mOnSeekCompleteCalled.signal();
+                    mMediaPlayer.setOnSeekCompleteListener(seekListener);
+                    mMediaPlayer.start();
+                    assertTrue(mMediaPlayer.isPlaying());
+                    int n = num.get();
+                    for (int i = 0; i < iteration.get(); ++i) {
+                        assertEquals(n, mOnTimedTextCalled.waitForCountedSignals(n, 15000));
                         mOnTimedTextCalled.reset();
-                        OnSeekCompleteListener seekListener = new OnSeekCompleteListener() {
-                            @Override
-                            public void onSeekComplete(MediaPlayer mp) {
-                                mOnSeekCompleteCalled.signal();
-                            }
-                        };
-                        mMediaPlayer.setOnSeekCompleteListener(seekListener);
-                        mMediaPlayer.start();
-                        assertTrue(mMediaPlayer.isPlaying());
-                        int n = num.get();
-                        for (int i = 0; i < iteration.get(); ++i) {
-                            assertTrue(mOnTimedTextCalled.waitForCountedSignals(n, 15000) == n);
-                            mOnTimedTextCalled.reset();
-                            mMediaPlayer.seekTo(0);
-                            mOnSeekCompleteCalled.waitForSignal();
-                            mOnSeekCompleteCalled.reset();
-                        }
-                        mMediaPlayer.stop();
-                        return null;
+                        mMediaPlayer.seekTo(0);
+                        mOnSeekCompleteCalled.waitForSignal();
+                        mOnSeekCompleteCalled.reset();
                     }
+                    mMediaPlayer.stop();
+                    return null;
                 });
     }
 
@@ -2155,29 +2054,25 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
 
         mMediaPlayer.prepare();
         assertFalse(mMediaPlayer.isPlaying());
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                try {
-                    readTimedTextTracks();
-                } catch (Exception e) {
-                    throw new AssertionFailedError(e.getMessage());
-                }
+        runTestOnUiThread(() -> {
+            try {
+                readTimedTextTracks();
+            } catch (Exception e) {
+                throw new AssertionFailedError(e.getMessage());
             }
         });
         getInstrumentation().waitForIdleSync();
         assertEquals(getTimedTextTrackCount(), numInternalTracks);
 
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                try {
-                    // Adds two more external subtitle files.
-                    for (String subRes : subtitleResources) {
-                        loadSubtitleSource(subRes);
-                    }
-                    readTimedTextTracks();
-                } catch (Exception e) {
-                    throw new AssertionFailedError(e.getMessage());
+        runTestOnUiThread(() -> {
+            try {
+                // Adds two more external subtitle files.
+                for (String subRes : subtitleResources) {
+                    loadSubtitleSource(subRes);
                 }
+                readTimedTextTracks();
+            } catch (Exception e) {
+                throw new AssertionFailedError(e.getMessage());
             }
         });
         getInstrumentation().waitForIdleSync();
@@ -2191,14 +2086,12 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         if (!checkLoadResource("testvideo_with_2_timedtext_tracks.3gp")) {
             return; // skip;
         }
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                try {
-                    loadSubtitleSource("test_subtitle1_srt.3gp");
-                    loadSubtitleSource("test_subtitle2_srt.3gp");
-                } catch (Exception e) {
-                    throw new AssertionFailedError(e.getMessage());
-                }
+        runTestOnUiThread(() -> {
+            try {
+                loadSubtitleSource("test_subtitle1_srt.3gp");
+                loadSubtitleSource("test_subtitle2_srt.3gp");
+            } catch (Exception e) {
+                throw new AssertionFailedError(e.getMessage());
             }
         });
         getInstrumentation().waitForIdleSync();
@@ -2211,15 +2104,15 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         int count = 0;
         MediaPlayer.TrackInfo[] trackInfos = mMediaPlayer.getTrackInfo();
         assertTrue(trackInfos != null && trackInfos.length != 0);
-        for (int i = 0; i < trackInfos.length; ++i) {
-            assertTrue(trackInfos[i] != null);
-            if (trackInfos[i].getTrackType() == MediaPlayer.TrackInfo.MEDIA_TRACK_TYPE_TIMEDTEXT) {
-                String trackLanguage = trackInfos[i].getLanguage();
-                assertTrue(trackLanguage != null);
+        for (MediaPlayer.TrackInfo trackInfo : trackInfos) {
+            assertNotNull(trackInfo);
+            if (trackInfo.getTrackType() == MediaPlayer.TrackInfo.MEDIA_TRACK_TYPE_TIMEDTEXT) {
+                String trackLanguage = trackInfo.getLanguage();
+                assertNotNull(trackLanguage);
                 trackLanguage = trackLanguage.trim();
                 Log.d(LOG_TAG, "track info lang: " + trackLanguage);
                 assertTrue("Should not see empty track language with our test data.",
-                           trackLanguage.length() > 0);
+                        trackLanguage.length() > 0);
                 count++;
             }
         }
@@ -2252,12 +2145,9 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         }
         mMediaPlayer.prepare();
         mOnCompletionCalled.reset();
-        mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-            @Override
-            public void onCompletion(MediaPlayer mp) {
-                mOnCompletionCalled.signal();
-                mMediaPlayer.start();
-            }
+        mMediaPlayer.setOnCompletionListener(mp -> {
+            mOnCompletionCalled.signal();
+            mMediaPlayer.start();
         });
         // skip the first part of the file so we reach EOF sooner
         mMediaPlayer.seekTo(5000);
@@ -2294,12 +2184,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         int duration = mMediaPlayer.getDuration();
         assertTrue("resource too short", duration > 6000);
         mOnCompletionCalled.reset();
-        mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-            @Override
-            public void onCompletion(MediaPlayer mp) {
-                mOnCompletionCalled.signal();
-            }
-        });
+        mMediaPlayer.setOnCompletionListener(mp -> mOnCompletionCalled.signal());
         mMediaPlayer.seekTo(duration - 5000);
         mMediaPlayer.start();
         while (mMediaPlayer.isPlaying()) {
@@ -2322,49 +2207,24 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         mMediaPlayer.setDisplay(getActivity().getSurfaceHolder());
         mMediaPlayer.setScreenOnWhilePlaying(true);
 
-        mMediaPlayer.setOnVideoSizeChangedListener(new MediaPlayer.OnVideoSizeChangedListener() {
-            @Override
-            public void onVideoSizeChanged(MediaPlayer mp, int width, int height) {
-                mOnVideoSizeChangedCalled.signal();
-            }
-        });
+        mMediaPlayer.setOnVideoSizeChangedListener(
+                (mp, width, height) -> mOnVideoSizeChangedCalled.signal());
 
-        mMediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-            @Override
-            public void onPrepared(MediaPlayer mp) {
-                mOnPrepareCalled.signal();
-            }
-        });
+        mMediaPlayer.setOnPreparedListener(mp -> mOnPrepareCalled.signal());
 
-        mMediaPlayer.setOnSeekCompleteListener(new MediaPlayer.OnSeekCompleteListener() {
-            @Override
-            public void onSeekComplete(MediaPlayer mp) {
-                mOnSeekCompleteCalled.signal();
-            }
-        });
+        mMediaPlayer.setOnSeekCompleteListener(mp -> mOnSeekCompleteCalled.signal());
 
         mOnCompletionCalled.reset();
-        mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-            @Override
-            public void onCompletion(MediaPlayer mp) {
-                mOnCompletionCalled.signal();
-            }
+        mMediaPlayer.setOnCompletionListener(mp -> mOnCompletionCalled.signal());
+
+        mMediaPlayer.setOnErrorListener((mp, what, extra) -> {
+            mOnErrorCalled.signal();
+            return false;
         });
 
-        mMediaPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
-            @Override
-            public boolean onError(MediaPlayer mp, int what, int extra) {
-                mOnErrorCalled.signal();
-                return false;
-            }
-        });
-
-        mMediaPlayer.setOnInfoListener(new MediaPlayer.OnInfoListener() {
-            @Override
-            public boolean onInfo(MediaPlayer mp, int what, int extra) {
-                mOnInfoCalled.signal();
-                return false;
-            }
+        mMediaPlayer.setOnInfoListener((mp, what, extra) -> {
+            mOnInfoCalled.signal();
+            return false;
         });
 
         assertFalse(mOnPrepareCalled.isSignalled());
