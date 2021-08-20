@@ -19,9 +19,12 @@ package com.android.queryable.queries;
 import com.android.queryable.Queryable;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public final class SetQueryHelper<E extends Queryable, F, G extends Query<F>> implements SetQuery<E, F, G>, Serializable {
 
@@ -122,5 +125,21 @@ public final class SetQueryHelper<E extends Queryable, F, G extends Query<F>> im
         }
 
         return null;
+    }
+
+    @Override
+    public String describeQuery(String fieldName) {
+        List<String> queryStrings = new ArrayList<>();
+        queryStrings.add(mSizeQuery.describeQuery(fieldName + ".size"));
+        if (!mContains.isEmpty()) {
+            queryStrings.add(fieldName + " contains {" + mContains.stream().map(Object::toString).collect(
+                    Collectors.joining(", ")) + "}");
+        }
+        if (!mDoesNotContain.isEmpty()) {
+            queryStrings.add(fieldName + " does not contain any of {" + mDoesNotContain.stream().map(Object::toString).collect(
+                    Collectors.joining(", ")) + "}");
+        }
+
+        return Queryable.joinQueryStrings(queryStrings);
     }
 }

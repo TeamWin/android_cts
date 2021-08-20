@@ -77,6 +77,14 @@ public final class BroadcastReceivedEvent extends Event {
             }
             return true;
         }
+
+        @Override
+        public String describeQuery(String fieldName) {
+            return toStringBuilder(BroadcastReceivedEvent.class, this)
+                    .field("intent", mIntent)
+                    .field("broadcastReceiver", mBroadcastReceiver)
+                    .toString();
+        }
     }
 
     /** Begins logging a {@link BroadcastReceivedEvent}. */

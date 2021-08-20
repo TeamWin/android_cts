@@ -80,6 +80,14 @@ public final class DeviceAdminTransferOwnershipCompleteEvent extends Event {
             }
             return true;
         }
+
+        @Override
+        public String describeQuery(String fieldName) {
+            return toStringBuilder(DeviceAdminTransferOwnershipCompleteEvent.class, this)
+                    .field("deviceAdminReceiver", mDeviceAdminReceiver)
+                    .field("bundle", mBundle)
+                    .toString();
+        }
     }
 
     /** Begins logging a {@link DeviceAdminTransferOwnershipCompleteEvent}. */

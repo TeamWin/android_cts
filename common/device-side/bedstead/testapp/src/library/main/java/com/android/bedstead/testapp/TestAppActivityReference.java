@@ -27,6 +27,7 @@ import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.packages.ComponentReference;
 import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.eventlib.events.activities.ActivityCreatedEvent;
+import com.android.eventlib.events.activities.ActivityEvents;
 import com.android.eventlib.events.activities.ActivityStartedEvent;
 
 /**
@@ -71,7 +72,7 @@ public abstract class TestAppActivityReference {
         }
 
         ActivityStartedEvent
-                .queryPackage(mComponent.packageName().packageName())
+                .queryPackage(mComponent.pkg().packageName())
                 .whereActivity().activityClass().className().isEqualTo(
                         mComponent.className()).waitForEvent();
 
@@ -93,11 +94,18 @@ public abstract class TestAppActivityReference {
         }
 
         ActivityCreatedEvent
-                .queryPackage(mComponent.packageName().packageName())
+                .queryPackage(mComponent.pkg().packageName())
                 .whereActivity().activityClass().className().isEqualTo(
                         mComponent.className()).waitForEvent();
 
         return sTestApis.activities().wrap(
                 TestAppActivity.class, new TestAppActivityImpl(mInstance, mComponent));
+    }
+
+    /**
+     * Query events for this activity.
+     */
+    public ActivityEvents events() {
+        return ActivityEvents.forActivity(new TestAppActivityImpl(mInstance, mComponent));
     }
 }

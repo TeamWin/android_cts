@@ -21,6 +21,8 @@ import androidx.annotation.Nullable;
 import com.android.queryable.Queryable;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 /** Implementation of {@link LongQuery}. */
 public final class LongQueryHelper<E extends Queryable> implements LongQuery<E>, Serializable {
@@ -84,6 +86,11 @@ public final class LongQueryHelper<E extends Queryable> implements LongQuery<E>,
         return mQuery;
     }
 
+    @Override
+    public boolean matches(Long value) {
+        return matches(value.longValue());
+    }
+
     /** {@code true} if all filters are met by {@code value}. */
     public boolean matches(long value) {
         if (mEqualToValue != null && mEqualToValue != value) {
@@ -107,5 +114,27 @@ public final class LongQueryHelper<E extends Queryable> implements LongQuery<E>,
         }
 
         return true;
+    }
+
+    @Override
+    public String describeQuery(String fieldName) {
+        List<String> queryStrings = new ArrayList<>();
+        if (mEqualToValue != null) {
+            queryStrings.add(fieldName + "=" + mEqualToValue);
+        }
+        if (mGreaterThanValue != null) {
+            queryStrings.add(fieldName + ">" + mGreaterThanValue);
+        }
+        if (mGreaterThanOrEqualToValue != null) {
+            queryStrings.add(fieldName + ">=" + mGreaterThanOrEqualToValue);
+        }
+        if (mLessThanValue != null) {
+            queryStrings.add(fieldName + "<" + mLessThanValue);
+        }
+        if (mLessThanOrEqualToValue != null) {
+            queryStrings.add(fieldName + "<=" + mLessThanOrEqualToValue);
+        }
+
+        return Queryable.joinQueryStrings(queryStrings);
     }
 }

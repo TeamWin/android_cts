@@ -96,6 +96,15 @@ public final class DeviceAdminUserSwitchedEvent extends Event {
             }
             return true;
         }
+
+        @Override
+        public String describeQuery(String fieldName) {
+            return toStringBuilder(DeviceAdminUserSwitchedEvent.class, this)
+                    .field("intent", mIntent)
+                    .field("deviceAdminReceiver", mDeviceAdminReceiver)
+                    .field("switchedUser", mSwitchedUser)
+                    .toString();
+        }
     }
 
     /** Begins logging a {@link DeviceAdminUserSwitchedEvent}. */

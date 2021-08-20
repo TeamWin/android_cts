@@ -66,7 +66,16 @@ public final class BooleanQueryHelper<E extends Queryable> implements BooleanQue
 
     @Override
     public boolean matches(Boolean value) {
-        return (mTargetValue == null) || mTargetValue == value;
+        return (mTargetValue == null) || mTargetValue.equals(value);
+    }
+
+    @Override
+    public String describeQuery(String fieldName) {
+        if (mTargetValue == null) {
+            return null;
+        }
+
+        return fieldName + "=" + mTargetValue;
     }
 
     public static boolean matches(BooleanQuery<?> query, Boolean value) {

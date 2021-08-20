@@ -19,6 +19,8 @@ package com.android.queryable.queries;
 import com.android.queryable.Queryable;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 /** Implementation of {@link StringQuery}. */
 public final class StringQueryHelper<E extends Queryable>
@@ -59,5 +61,15 @@ public final class StringQueryHelper<E extends Queryable>
      */
     public boolean isQueryingForExactMatch() {
         return mEqualsValue != null;
+    }
+
+    @Override
+    public String describeQuery(String fieldName) {
+        List<String> queryStrings = new ArrayList<>();
+        if (mEqualsValue != null) {
+            queryStrings.add(fieldName + "=" + mEqualsValue);
+        }
+
+        return Queryable.joinQueryStrings(queryStrings);
     }
 }

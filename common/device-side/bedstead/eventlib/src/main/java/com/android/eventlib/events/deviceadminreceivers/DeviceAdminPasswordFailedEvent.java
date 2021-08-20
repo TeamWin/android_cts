@@ -97,6 +97,15 @@ public final class DeviceAdminPasswordFailedEvent extends Event {
             }
             return true;
         }
+
+        @Override
+        public String describeQuery(String fieldName) {
+            return toStringBuilder(DeviceAdminPasswordFailedEvent.class, this)
+                    .field("intent", mIntent)
+                    .field("deviceAdminReceiver", mDeviceAdminReceiver)
+                    .field("userHandle", mUserHandle)
+                    .toString();
+        }
     }
 
     /** Begins logging a {@link DeviceAdminPasswordFailedEvent}. */

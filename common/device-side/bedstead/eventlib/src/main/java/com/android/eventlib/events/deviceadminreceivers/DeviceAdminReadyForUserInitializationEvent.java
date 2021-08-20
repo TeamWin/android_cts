@@ -80,6 +80,14 @@ public final class DeviceAdminReadyForUserInitializationEvent extends Event {
             }
             return true;
         }
+
+        @Override
+        public String describeQuery(String fieldName) {
+            return toStringBuilder(DeviceAdminReadyForUserInitializationEvent.class, this)
+                    .field("intent", mIntent)
+                    .field("deviceAdminReceiver", mDeviceAdminReceiver)
+                    .toString();
+        }
     }
 
     /** Begins logging a {@link DeviceAdminReadyForUserInitializationEvent}. */

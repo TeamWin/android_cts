@@ -80,6 +80,14 @@ public final class DeviceAdminSecurityLogsAvailableEvent extends Event {
             }
             return true;
         }
+
+        @Override
+        public String describeQuery(String fieldName) {
+            return toStringBuilder(DeviceAdminSecurityLogsAvailableEvent.class, this)
+                    .field("intent", mIntent)
+                    .field("deviceAdminReceiver", mDeviceAdminReceiver)
+                    .toString();
+        }
     }
 
     /** Begins logging a {@link DeviceAdminSecurityLogsAvailableEvent}. */

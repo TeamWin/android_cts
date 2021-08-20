@@ -97,6 +97,15 @@ public final class DeviceAdminPasswordChangedEvent extends Event {
             }
             return true;
         }
+
+        @Override
+        public String describeQuery(String fieldName) {
+            return toStringBuilder(DeviceAdminPasswordChangedEvent.class, this)
+                    .field("intent", mIntent)
+                    .field("deviceAdminReceiver", mDeviceAdminReceiver)
+                    .field("userHandle", mUserHandle)
+                    .toString();
+        }
     }
 
     /** Begins logging a {@link DeviceAdminPasswordChangedEvent}. */

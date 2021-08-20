@@ -22,10 +22,8 @@ import androidx.annotation.CheckResult;
 
 import com.android.queryable.Queryable;
 
-import java.io.Serializable;
-
 /** Query for a single key in a {@link Bundle}. */
-public interface BundleKeyQuery<E extends Queryable> {
+public interface BundleKeyQuery<E extends Queryable> extends Queryable {
 
     /** Require that the key exists. */
     E exists();

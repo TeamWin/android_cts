@@ -93,6 +93,15 @@ public final class DeviceAdminBugreportSharedEvent extends Event {
             }
             return true;
         }
+
+        @Override
+        public String describeQuery(String fieldName) {
+            return toStringBuilder(DeviceAdminBugreportSharedEvent.class, this)
+                    .field("intent", mIntent)
+                    .field("deviceAdminReceiver", mDeviceAdminReceiver)
+                    .field("bugReportHash", mBugreportHash)
+                    .toString();
+        }
     }
 
     /** Begins logging a {@link DeviceAdminBugreportSharedEvent}. */

@@ -18,8 +18,8 @@ package com.android.queryable.queries;
 
 import android.content.Intent;
 
-import com.android.queryable.util.SerializableParcelWrapper;
 import com.android.queryable.Queryable;
+import com.android.queryable.util.SerializableParcelWrapper;
 
 import java.io.Serializable;
 
@@ -76,5 +76,13 @@ public final class IntentQueryHelper<E extends Queryable> implements IntentQuery
         }
 
         return matches(serializableBundle.get());
+    }
+
+    @Override
+    public String describeQuery(String fieldName) {
+        return Queryable.joinQueryStrings(
+                mAction.describeQuery(fieldName + ".action"),
+                mExtras.describeQuery(fieldName + ".extras")
+        );
     }
 }

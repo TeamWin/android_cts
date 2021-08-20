@@ -96,6 +96,15 @@ public final class DeviceAdminPasswordExpiringEvent extends Event {
             }
             return true;
         }
+
+        @Override
+        public String describeQuery(String fieldName) {
+            return toStringBuilder(DeviceAdminPasswordExpiringEvent.class, this)
+                    .field("intent", mIntent)
+                    .field("deviceAdminReceiver", mDeviceAdminReceiver)
+                    .field("user", mUser)
+                    .toString();
+        }
     }
 
     /** Begins logging a {@link DeviceAdminPasswordExpiringEvent}. */

@@ -22,6 +22,8 @@ import com.android.queryable.Queryable;
 import com.android.queryable.util.SerializableParcelWrapper;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 /** Implementation of {@link UserHandleQuery}. */
 public final class UserHandleQueryHelper<E extends Queryable>
@@ -79,5 +81,18 @@ public final class UserHandleQueryHelper<E extends Queryable>
         }
 
         return matches(serializableBundle.get());
+    }
+
+    @Override
+    public String describeQuery(String fieldName) {
+        List<String> queryStrings = new ArrayList<>();
+        if (mEqualsValue != null) {
+            queryStrings.add(fieldName + "=" + mEqualsValue);
+        }
+        if (mIdQuery != null) {
+            queryStrings.add(mIdQuery.describeQuery(fieldName + ".id"));
+        }
+
+        return Queryable.joinQueryStrings(queryStrings);
     }
 }

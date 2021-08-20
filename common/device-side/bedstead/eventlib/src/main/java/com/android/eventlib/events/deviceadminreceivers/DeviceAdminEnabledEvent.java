@@ -76,6 +76,14 @@ public final class DeviceAdminEnabledEvent extends Event {
             }
             return true;
         }
+
+        @Override
+        public String describeQuery(String fieldName) {
+            return toStringBuilder(DeviceAdminEnabledEvent.class, this)
+                    .field("intent", mIntent)
+                    .field("deviceAdminReceiver", mDeviceAdminReceiver)
+                    .toString();
+        }
     }
 
     /** Begins logging a {@link DeviceAdminEnabledEvent}. */

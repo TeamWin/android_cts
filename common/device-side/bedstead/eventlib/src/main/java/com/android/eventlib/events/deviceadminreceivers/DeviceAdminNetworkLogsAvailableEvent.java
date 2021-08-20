@@ -110,6 +110,16 @@ public final class DeviceAdminNetworkLogsAvailableEvent extends Event {
             }
             return true;
         }
+
+        @Override
+        public String describeQuery(String fieldName) {
+            return toStringBuilder(DeviceAdminNetworkLogsAvailableEvent.class, this)
+                    .field("intent", mIntent)
+                    .field("deviceAdminReceiver", mDeviceAdminReceiver)
+                    .field("batchToken", mBatchToken)
+                    .field("networkLogsCount", mNetworkLogsCount)
+                    .toString();
+        }
     }
 
     /** Begins logging a {@link DeviceAdminNetworkLogsAvailableEvent}. */

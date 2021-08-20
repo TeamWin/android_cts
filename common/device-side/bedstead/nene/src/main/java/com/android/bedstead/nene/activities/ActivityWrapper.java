@@ -17,8 +17,10 @@
 package com.android.bedstead.nene.activities;
 
 import android.app.Activity;
+import android.content.ComponentName;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.UserHandle;
 
 class ActivityWrapper implements NeneActivity {
 
@@ -26,6 +28,17 @@ class ActivityWrapper implements NeneActivity {
 
     ActivityWrapper(Activity activity) {
         mActivity = activity;
+    }
+
+    @Override
+    public ComponentName getComponentName() {
+        return mActivity.getComponentName();
+    }
+
+    @Override
+    public UserHandle getUser() {
+        // Assuming if we have an Activity it's on the current user
+        return android.os.Process.myUserHandle();
     }
 
     @Override
