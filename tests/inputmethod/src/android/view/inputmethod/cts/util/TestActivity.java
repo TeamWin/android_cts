@@ -16,14 +16,20 @@
 
 package android.view.inputmethod.cts.util;
 
+import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
+import static android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_UNCHANGED;
+import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.graphics.PixelFormat;
 import android.os.Bundle;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.TextView;
 
 import androidx.annotation.AnyThread;
 import androidx.annotation.NonNull;
@@ -36,6 +42,7 @@ import java.util.function.Function;
 
 public class TestActivity extends Activity {
 
+    public static final String OVERLAY_WINDOW_NAME = "TestActivity.APP_OVERLAY_WINDOW";
     private static final AtomicReference<Function<TestActivity, View>> sInitializer =
             new AtomicReference<>();
 
@@ -44,6 +51,8 @@ public class TestActivity extends Activity {
     private AtomicBoolean mIgnoreBackKey = new AtomicBoolean();
 
     private long mOnBackPressedCallCount;
+
+    private TextView mOverlayView;
 
     /**
      * Controls how {@link #onBackPressed()} behaves.
@@ -82,6 +91,16 @@ public class TestActivity extends Activity {
         setContentView(mInitializer.apply(this));
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (mOverlayView != null) {
+            mOverlayView.getContext()
+                    .getSystemService(WindowManager.class).removeView(mOverlayView);
+            mOverlayView = null;
+        }
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -92,6 +111,23 @@ public class TestActivity extends Activity {
             return;
         }
         super.onBackPressed();
+    }
+
+    public void showOverlayWindow() {
+        if (mOverlayView != null) {
+            throw new IllegalStateException("can only show one overlay at a time.");
+        }
+        Context overlayContext = getApplicationContext().createWindowContext(getDisplay(),
+                TYPE_APPLICATION_OVERLAY, null);
+        mOverlayView = new TextView(overlayContext);
+        WindowManager.LayoutParams params =
+                new WindowManager.LayoutParams(MATCH_PARENT, MATCH_PARENT,
+                        TYPE_APPLICATION_OVERLAY, FLAG_NOT_FOCUSABLE, PixelFormat.TRANSLUCENT);
+        params.setTitle(OVERLAY_WINDOW_NAME);
+        mOverlayView.setLayoutParams(params);
+        mOverlayView.setText("IME CTS TestActivity OverlayView");
+        mOverlayView.setBackgroundColor(0x77FFFF00);
+        overlayContext.getSystemService(WindowManager.class).addView(mOverlayView, params);
     }
 
     /**

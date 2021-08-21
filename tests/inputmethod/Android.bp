@@ -27,9 +27,11 @@ android_test {
     compile_multilib: "both",
     libs: ["android.test.runner"],
     static_libs: [
+        "androidx.test.ext.junit",
         "androidx.test.rules",
         "androidx.test.uiautomator_uiautomator",
         "compatibility-device-util-axt",
+        "cts-wm-util",
         "ctstestrunner-axt",
         "CtsMockInputMethodLib",
         "CtsMockSpellCheckerLib",

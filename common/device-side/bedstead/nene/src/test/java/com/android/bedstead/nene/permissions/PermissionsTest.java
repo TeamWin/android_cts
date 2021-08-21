@@ -56,6 +56,8 @@ public class PermissionsTest {
 
     @Test
     public void default_permissionIsNotGranted() {
+        ShellCommandUtils.uiAutomation().dropShellPermissionIdentity();
+
         assertThat(sContext.checkSelfPermission(PERMISSION_HELD_BY_SHELL))
                 .isEqualTo(PERMISSION_DENIED);
     }
