@@ -19,9 +19,6 @@ package android.net.wifi.cts;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
-import java.nio.ByteBuffer;
-import java.util.List;
-
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -32,11 +29,13 @@ import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.WifiLock;
 import android.platform.test.annotations.AppModeFull;
-import android.test.AndroidTestCase;
 
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.SystemUtil;
+
+import java.nio.ByteBuffer;
+import java.util.List;
 
 @AppModeFull(reason = "Cannot get WifiManager in instant app mode")
 public class ScanResultTest extends WifiJUnit3TestBase {
@@ -338,5 +337,7 @@ public class ScanResultTest extends WifiJUnit3TestBase {
                 .that("\"" + scanResultSsidUnquoted + "\"")
                 .isEqualTo(wifiInfoSsidQuoted);
         assertThat(currentNetwork.frequency).isEqualTo(wifiInfo.getFrequency());
+        assertThat(currentNetwork.getSecurityTypes())
+                .asList().contains(wifiInfo.getCurrentSecurityType());
     }
 }
