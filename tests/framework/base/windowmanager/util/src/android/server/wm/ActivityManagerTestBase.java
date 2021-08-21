@@ -425,7 +425,7 @@ public abstract class ActivityManagerTestBase {
          * @param activityClass The {@link Activity} class to be launched
          * @param displayId ID of the target display
          */
-        void launchTestActivityOnDisplaySync(Class<T> activityClass, int displayId) {
+        public void launchTestActivityOnDisplaySync(Class<T> activityClass, int displayId) {
             launchTestActivityOnDisplaySync(activityClass, displayId, WINDOWING_MODE_UNDEFINED);
         }
 
@@ -558,7 +558,7 @@ public abstract class ActivityManagerTestBase {
             }
         }
 
-        T getActivity() {
+        public T getActivity() {
             return mTestActivity;
         }
 
