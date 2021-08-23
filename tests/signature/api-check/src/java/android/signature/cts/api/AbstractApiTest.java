@@ -29,8 +29,6 @@ import android.util.Log;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.stream.Stream;
@@ -108,13 +106,12 @@ public class AbstractApiTest extends InstrumentationTestCase {
     void runWithTestResultObserver(RunnableWithTestResultObserver runnable) {
         try {
             runnable.run(mResultObserver);
-        } catch (Exception e) {
-            StringWriter writer = new StringWriter();
-            writer.write(e.toString());
-            writer.write("\n");
-            e.printStackTrace(new PrintWriter(writer));
-            mResultObserver.notifyFailure(FailureType.CAUGHT_EXCEPTION, e.getClass().getName(),
-                    writer.toString());
+        } catch (Error|Exception e) {
+            mResultObserver.notifyFailure(
+                    FailureType.CAUGHT_EXCEPTION,
+                    e.getClass().getName(),
+                    "Uncaught exception thrown by test",
+                    e);
         }
         mResultObserver.onTestComplete(); // Will throw is there are failures
     }
