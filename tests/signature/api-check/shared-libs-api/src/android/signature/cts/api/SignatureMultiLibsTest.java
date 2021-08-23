@@ -27,7 +27,12 @@ import java.util.stream.Stream;
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 
 /**
- * Performs the signature multi-libs check via a JUnit test.
+ * Verifies that any shared library provided by this device and for which this test has a
+ * corresponding API specific file provides the expected API.
+ *
+ * <pre>This test relies on the AndroidManifest.xml file for the APK in which this is run having a
+ * {@code <uses-library>} entry for every shared library that provides an API that is contained
+ * within the shared-libs-all.api.zip supplied to this test.
  */
 public class SignatureMultiLibsTest extends SignatureTest {
 
@@ -56,6 +61,11 @@ public class SignatureMultiLibsTest extends SignatureTest {
         });
     }
 
+    /**
+     * Get all the shared libraries available on the device.
+     *
+     * @return a stream of available shared library names.
+     */
     private Stream<String> getLibraries() {
         try {
             String result = runShellCommand(getInstrumentation(), "cmd package list libraries");
@@ -65,11 +75,27 @@ public class SignatureMultiLibsTest extends SignatureTest {
         }
     }
 
+    /**
+     * Check to see if the supplied name is an API file for a shared library that is available on
+     * this device.
+     *
+     * @param name the name of the possible API file for a shared library.
+     * @return true if it is, false otherwise.
+     */
     private boolean checkLibrary (String name) {
         String libraryName = name.substring(name.lastIndexOf('/') + 1).split("-")[0];
         return getLibraries().anyMatch(libraryName::equals);
     }
 
+    /**
+     * Override the method that gets the files from a supplied zip file to filter out any file that
+     * does not correspond to a shared library available on the device.
+     *
+     * @param path the path to the zip file.
+     * @return a stream of paths in the zip file that contain APIs that should be available to this
+     * tests.
+     * @throws IOException if there was an issue reading the zip file.
+     */
     @Override
     protected Stream<VirtualPath> getZipEntryFiles(LocalFilePath path) throws IOException {
         // Only return entries corresponding to shared libraries.
