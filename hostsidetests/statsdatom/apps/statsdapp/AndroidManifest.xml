@@ -58,6 +58,11 @@
              android:foregroundServiceType="camera"
              android:exported="true"/>
 
+        <activity android:name=".StatsdCtsNonResizeablePortraitActivity"
+                  android:resizeableActivity="false"
+                  android:screenOrientation="portrait"
+                  android:exported="true"/>
+
         <activity android:name=".VideoPlayerActivity"
              android:label="@string/app_name"
              android:resizeableActivity="true"
