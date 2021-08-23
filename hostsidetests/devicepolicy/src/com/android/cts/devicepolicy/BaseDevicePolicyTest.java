@@ -803,6 +803,10 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
         return getDevice().getPrimaryUserId();
     }
 
+    protected int getCurrentUser() throws DeviceNotAvailableException {
+        return getDevice().getCurrentUser();
+    }
+
     protected int getUserSerialNumber(int userId) throws DeviceNotAvailableException{
         // TODO: Move this logic to ITestDevice.
         // dumpsys user output contains lines like "UserInfo{0:Owner:13} serialNo=0 isPrimary=true"
