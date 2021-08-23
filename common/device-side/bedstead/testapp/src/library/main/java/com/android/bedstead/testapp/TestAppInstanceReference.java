@@ -260,6 +260,11 @@ public class TestAppInstanceReference implements AutoCloseable, ConnectionListen
         }
     }
 
+    /** Access events related to this test app. */
+    public TestAppEvents events() {
+        return new TestAppEvents(this);
+    }
+
     /**
      * Access {@link DevicePolicyManager} using this test app.
      *
