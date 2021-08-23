@@ -81,5 +81,6 @@ android_test {
         "mts-media",
     ],
     host_required: ["cts-dynamic-config"],
-    min_sdk_version: "31",
+    min_sdk_version: "29",
+    target_sdk_version: "31",
 }
