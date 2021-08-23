@@ -137,6 +137,7 @@ public final class DeviceState implements TestRule {
     private static final String SKIP_TEST_TEARDOWN_KEY = "skip-test-teardown";
     private static final String SKIP_CLASS_TEARDOWN_KEY = "skip-class-teardown";
     private static final String SKIP_TESTS_REASON_KEY = "skip-tests-reason";
+    private static final String MIN_SDK_VERSION_KEY = "min-sdk-version";
     private boolean mSkipTestTeardown;
     private boolean mSkipClassTeardown;
     private boolean mSkipTests;
@@ -144,6 +145,9 @@ public final class DeviceState implements TestRule {
     private boolean mUsingBedsteadJUnit4 = false;
     private String mSkipTestsReason;
     private String mFailTestsReason;
+    // The minimum version supported by tests, defaults to current version
+    private final int mMinSdkVersion;
+    private int mMinSdkVersionCurrentTest;
 
     // Marks if the conditions for requiring running under GMS instrumentation have been set
     // if not - we assume the test should never run under GMS instrumentation
@@ -159,6 +163,7 @@ public final class DeviceState implements TestRule {
                 arguments.getString(SKIP_CLASS_TEARDOWN_KEY, "false"));
         mSkipTestsReason = arguments.getString(SKIP_TESTS_REASON_KEY, "");
         mSkipTests = !mSkipTestsReason.isEmpty();
+        mMinSdkVersion = arguments.getInt(MIN_SDK_VERSION_KEY, Build.VERSION.SDK_INT);
     }
 
     void setSkipTestTeardown(boolean skipTestTeardown) {
@@ -191,6 +196,7 @@ public final class DeviceState implements TestRule {
                     assumeFalse(mSkipTestsReason, mSkipTests);
                     assertFalse(mFailTestsReason, mFailTests);
 
+                    mMinSdkVersionCurrentTest = mMinSdkVersion;
                     List<Annotation> annotations = getAnnotations(description);
                     permissionContext = applyAnnotations(annotations);
 
@@ -472,6 +478,9 @@ public final class DeviceState implements TestRule {
             }
         }
 
+        requireSdkVersion(/* min= */ mMinSdkVersionCurrentTest,
+                /* max= */ Integer.MAX_VALUE, FailureMode.SKIP);
+
         if (!mHasRequireGmsInstrumentation) {
             // TODO(scottjonathan): Only enforce if we've configured GMS Instrumentation
             requireNoGmsInstrumentation();
@@ -738,6 +747,7 @@ public final class DeviceState implements TestRule {
 
     private void requireSdkVersion(
             int min, int max, FailureMode failureMode, String failureMessage) {
+        mMinSdkVersionCurrentTest = min;
         checkFailOrSkip(
                 failureMessage,
                 meetsSdkVersionRequirements(min, max),
