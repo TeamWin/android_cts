@@ -22,127 +22,77 @@ import com.android.bedstead.nene.activities.NeneActivity;
 /**
  * Quick access to event queries about activities.
  */
-public class ActivityEvents {
-
-    private final NeneActivity mActivity;
-
+public interface ActivityEvents {
     /** Access events for activity. */
-    public static ActivityEvents forActivity(NeneActivity activity) {
-        return new ActivityEvents(activity);
+    static ActivityEvents forActivity(NeneActivity activity) {
+        return new ActivityEventsImpl(activity);
     }
 
     /** Access events for activity. */
-    public static ActivityEvents forActivity(Activity<? extends NeneActivity> activity) {
-        return new ActivityEvents(activity.activity());
-    }
-
-    private ActivityEvents(NeneActivity activity) {
-        mActivity = activity;
+    static ActivityEvents forActivity(Activity<? extends NeneActivity> activity) {
+        return new ActivityEventsImpl(activity.activity());
     }
 
     /**
-     * Query for when this activity is created.
+     * Query for when an activity is created.
      *
      * <p>Additional filters can be added to the returned object.
      *
      * <p>{@code #poll} can be used to fetch results, and the result can be asserted on.
      */
-    public ActivityCreatedEvent.ActivityCreatedEventQuery created() {
-        return ActivityCreatedEvent.queryPackage(
-                mActivity.getComponentName().getPackageName())
-                .whereActivity().activityClass().className().isEqualTo(
-                        mActivity.getComponentName().getClassName())
-                .onUser(mActivity.getUser());
-    }
+    ActivityCreatedEvent.ActivityCreatedEventQuery activityCreated();
 
     /**
-     * Query for when this activity is destroyed.
+     * Query for when an activity is destroyed.
      *
      * <p>Additional filters can be added to the returned object.
      *
      * <p>{@code #poll} can be used to fetch results, and the result can be asserted on.
      */
-    public ActivityDestroyedEvent.ActivityDestroyedEventQuery destroyed() {
-        return ActivityDestroyedEvent.queryPackage(
-                mActivity.getComponentName().getPackageName())
-                .whereActivity().activityClass().className().isEqualTo(
-                        mActivity.getComponentName().getClassName())
-                .onUser(mActivity.getUser());
-    }
+    ActivityDestroyedEvent.ActivityDestroyedEventQuery activityDestroyed();
 
     /**
-     * Query for when this activity is paused.
+     * Query for when an activity is paused.
      *
      * <p>Additional filters can be added to the returned object.
      *
      * <p>{@code #poll} can be used to fetch results, and the result can be asserted on.
      */
-    public ActivityPausedEvent.ActivityPausedEventQuery paused() {
-        return ActivityPausedEvent.queryPackage(
-                mActivity.getComponentName().getPackageName())
-                .whereActivity().activityClass().className().isEqualTo(
-                        mActivity.getComponentName().getClassName())
-                .onUser(mActivity.getUser());
-    }
+    ActivityPausedEvent.ActivityPausedEventQuery activityPaused();
 
     /**
-     * Query for when this activity is restarted.
+     * Query for when an activity is restarted.
      *
      * <p>Additional filters can be added to the returned object.
      *
      * <p>{@code #poll} can be used to fetch results, and the result can be asserted on.
      */
-    public ActivityRestartedEvent.ActivityRestartedEventQuery restarted() {
-        return ActivityRestartedEvent.queryPackage(
-                mActivity.getComponentName().getPackageName())
-                .whereActivity().activityClass().className().isEqualTo(
-                        mActivity.getComponentName().getClassName())
-                .onUser(mActivity.getUser());
-    }
+    ActivityRestartedEvent.ActivityRestartedEventQuery activityRestarted();
 
     /**
-     * Query for when this activity is resumed.
+     * Query for when an activity is resumed.
      *
      * <p>Additional filters can be added to the returned object.
      *
      * <p>{@code #poll} can be used to fetch results, and the result can be asserted on.
      */
-    public ActivityResumedEvent.ActivityResumedEventQuery resumed() {
-        return ActivityResumedEvent.queryPackage(
-                mActivity.getComponentName().getPackageName())
-                .whereActivity().activityClass().className().isEqualTo(
-                        mActivity.getComponentName().getClassName())
-                .onUser(mActivity.getUser());
-    }
+    ActivityResumedEvent.ActivityResumedEventQuery activityResumed();
 
     /**
-     * Query for when this activity is started.
+     * Query for when an activity is started.
      *
      * <p>Additional filters can be added to the returned object.
      *
      * <p>{@code #poll} can be used to fetch results, and the result can be asserted on.
      */
-    public ActivityStartedEvent.ActivityStartedEventQuery started() {
-        return ActivityStartedEvent.queryPackage(
-                mActivity.getComponentName().getPackageName())
-                .whereActivity().activityClass().className().isEqualTo(
-                        mActivity.getComponentName().getClassName())
-                .onUser(mActivity.getUser());
-    }
+    ActivityStartedEvent.ActivityStartedEventQuery activityStarted();
 
     /**
-     * Query for when this activity is stopped.
+     * Query for when an activity is stopped.
      *
      * <p>Additional filters can be added to the returned object.
      *
      * <p>{@code #poll} can be used to fetch results, and the result can be asserted on.
      */
-    public ActivityStoppedEvent.ActivityStoppedEventQuery stopped() {
-        return ActivityStoppedEvent.queryPackage(
-                mActivity.getComponentName().getPackageName())
-                .whereActivity().activityClass().className().isEqualTo(
-                        mActivity.getComponentName().getClassName())
-                .onUser(mActivity.getUser());
-    }
-
+    ActivityStoppedEvent.ActivityStoppedEventQuery activityStopped();
 }
