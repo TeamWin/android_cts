@@ -54,13 +54,13 @@ private fun getViewCenterOnScreen(v: View): Pair<Float, Float> {
  * When OverlayActivity receives focus, it will send out the OVERLAY_ACTIVITY_FOCUSED broadcast.
  */
 class OverlayFocusedBroadcastReceiver : BroadcastReceiver() {
-    private val mIsFocused = AtomicBoolean(false)
+    private val isFocused = AtomicBoolean(false)
     override fun onReceive(context: Context, intent: Intent) {
-        mIsFocused.set(true)
+        isFocused.set(true)
     }
 
     fun overlayActivityIsFocused(): Boolean {
-        return mIsFocused.get()
+        return isFocused.get()
     }
 }
 
@@ -78,16 +78,16 @@ class OverlayFocusedBroadcastReceiver : BroadcastReceiver() {
 @RunWith(AndroidJUnit4::class)
 class IncompleteMotionTest {
     @get:Rule
-    val mActivityRule = ActivityScenarioRule(IncompleteMotionActivity::class.java)
-    private lateinit var mActivity: IncompleteMotionActivity
-    private val mInstrumentation = InstrumentationRegistry.getInstrumentation()
+    val activityRule = ActivityScenarioRule(IncompleteMotionActivity::class.java)
+    private lateinit var activity: IncompleteMotionActivity
+    private val instrumentation = InstrumentationRegistry.getInstrumentation()
 
     @Before
     fun setUp() {
-        mActivityRule.getScenario().onActivity {
-            mActivity = it
+        activityRule.getScenario().onActivity {
+            activity = it
         }
-        PollingCheck.waitFor { mActivity.hasWindowFocus() }
+        PollingCheck.waitFor { activity.hasWindowFocus() }
     }
 
     /**
@@ -96,13 +96,13 @@ class IncompleteMotionTest {
     @Test
     fun testIncompleteMotion() {
         val downTime = SystemClock.uptimeMillis()
-        val (x, y) = getViewCenterOnScreen(mActivity.window.decorView)
+        val (x, y) = getViewCenterOnScreen(activity.window.decorView)
 
         // Start a valid touch stream
         sendEvent(downTime, ACTION_DOWN, x, y, true /*sync*/)
         // Lock up the UI thread. This ensures that the motion event that we will write will
         // not get processed by the app right away.
-        mActivity.runOnUiThread {
+        activity.runOnUiThread {
             val sendMoveAndFocus = thread(start = true) {
                 sendEvent(downTime, ACTION_MOVE, x, y + 10, false /*sync*/)
                 // The MOVE event is sent async because the UI thread is blocked.
@@ -115,12 +115,12 @@ class IncompleteMotionTest {
                 val handler = Handler(looper)
                 val receiver = OverlayFocusedBroadcastReceiver()
                 val intentFilter = IntentFilter(OVERLAY_ACTIVITY_FOCUSED)
-                mActivity.registerReceiver(receiver, intentFilter, null, handler)
+                activity.registerReceiver(receiver, intentFilter, null, handler)
 
                 // Now send hasFocus=false event to the app by launching a new focusable window
                 startOverlayActivity()
                 PollingCheck.waitFor { receiver.overlayActivityIsFocused() }
-                mActivity.unregisterReceiver(receiver)
+                activity.unregisterReceiver(receiver)
                 handlerThread.quit()
                 // We need to ensure that the focus event has been written to the app's socket
                 // before unblocking the UI thread. Having the overlay activity receive
@@ -131,14 +131,14 @@ class IncompleteMotionTest {
             }
             sendMoveAndFocus.join()
         }
-        PollingCheck.waitFor { !mActivity.hasWindowFocus() }
+        PollingCheck.waitFor { !activity.hasWindowFocus() }
         // If the platform implementation has a bug, it would consume both MOVE and FOCUS events,
         // but will only call 'finish' for the focus event.
         // The MOVE event would not be propagated to the app, because the Choreographer
         // callback never gets scheduled
         // If we wait too long here, we will cause ANR (if the platform has a bug).
         // If the MOVE event is received, however, we can stop the test.
-        PollingCheck.waitFor { mActivity.receivedMove() }
+        PollingCheck.waitFor { activity.receivedMove() }
     }
 
     private fun sendEvent(downTime: Long, action: Int, x: Float, y: Float, sync: Boolean) {
@@ -148,7 +148,7 @@ class IncompleteMotionTest {
         }
         val event = MotionEvent.obtain(downTime, eventTime, action, x, y, 0 /*metaState*/)
         event.source = InputDevice.SOURCE_TOUCHSCREEN
-        mInstrumentation.uiAutomation.injectInputEvent(event, sync)
+        instrumentation.uiAutomation.injectInputEvent(event, sync)
     }
 
     /**
@@ -162,6 +162,6 @@ class IncompleteMotionTest {
     private fun startOverlayActivity() {
         val flags = " -W -n "
         val startCmd = "am start $flags android.input.cts/.OverlayActivity"
-        mInstrumentation.uiAutomation.executeShellCommand(startCmd)
+        instrumentation.uiAutomation.executeShellCommand(startCmd)
     }
 }

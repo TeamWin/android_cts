@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.view.cts;
+package android.view.cts.input;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -23,6 +23,7 @@ import static org.junit.Assert.assertNotNull;
 import android.app.Instrumentation;
 import android.view.InputDevice;
 import android.view.KeyEvent;
+import android.view.cts.R;
 
 import androidx.annotation.NonNull;
 import androidx.test.ext.junit.runners.AndroidJUnit4;

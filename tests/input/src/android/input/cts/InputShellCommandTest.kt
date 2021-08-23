@@ -20,7 +20,6 @@ import android.view.View
 import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.MediumTest
-import androidx.test.platform.app.InstrumentationRegistry
 import com.android.compatibility.common.util.PollingCheck
 import com.android.compatibility.common.util.ShellUtils
 import com.google.common.truth.Truth.assertThat
@@ -45,15 +44,14 @@ private fun getViewCenterOnScreen(v: View): Pair<Int, Int> {
 class InputShellCommandTest {
     @get:Rule
     val activityRule = ActivityScenarioRule(CaptureEventActivity::class.java)
-    private lateinit var mActivity: CaptureEventActivity
-    private val mInstrumentation = InstrumentationRegistry.getInstrumentation()
+    private lateinit var activity: CaptureEventActivity
 
     @Before
     fun setUp() {
         activityRule.getScenario().onActivity {
-            mActivity = it
+            activity = it
         }
-        PollingCheck.waitFor { mActivity.hasWindowFocus() }
+        PollingCheck.waitFor { activity.hasWindowFocus() }
     }
 
     /**
@@ -61,7 +59,7 @@ class InputShellCommandTest {
      */
     @Test
     fun testDefaultToolType() {
-        val (x, y) = getViewCenterOnScreen(mActivity.window.decorView)
+        val (x, y) = getViewCenterOnScreen(activity.window.decorView)
 
         ShellUtils.runShellCommand("input tap $x $y")
         assertTapToolType(MotionEvent.TOOL_TYPE_FINGER)
@@ -72,7 +70,7 @@ class InputShellCommandTest {
      */
     @Test
     fun testToolType() {
-        val (x, y) = getViewCenterOnScreen(mActivity.window.decorView)
+        val (x, y) = getViewCenterOnScreen(activity.window.decorView)
 
         ShellUtils.runShellCommand("input touchscreen tap $x $y")
         assertTapToolType(MotionEvent.TOOL_TYPE_FINGER)
@@ -97,7 +95,7 @@ class InputShellCommandTest {
     }
 
     private fun getMotionEvent(): MotionEvent {
-        val event = mActivity.getInputEvent()
+        val event = activity.getInputEvent()
         assertThat(event).isNotNull()
         assertThat(event).isInstanceOf(MotionEvent::class.java)
         return event as MotionEvent
