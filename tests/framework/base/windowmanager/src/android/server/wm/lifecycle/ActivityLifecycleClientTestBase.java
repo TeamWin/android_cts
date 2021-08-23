@@ -93,6 +93,12 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
     static final String EXTRA_START_ACTIVITY_IN_ON_CREATE = "start_activity_in_on_create";
     static final String EXTRA_START_ACTIVITY_WHEN_IDLE = "start_activity_when_idle";
     static final String EXTRA_ACTIVITY_ON_USER_LEAVE_HINT = "activity_on_user_leave_hint";
+    /**
+     * There is no guarantee that an activity will get top resumed state, especially if it finishes
+     * itself in onResumed(), like a trampoline activity. Use this flag to skip recording top
+     * resumed state to avoid affecting verification.
+     */
+    static final String EXTRA_SKIP_TOP_RESUMED_STATE = "skip_top_resumed_state";
 
     static final ComponentName CALLBACK_TRACKING_ACTIVITY =
             getComponentName(CallbackTrackingActivity.class);
@@ -488,8 +494,10 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
 
         @Override
         public void onTopResumedActivityChanged(boolean isTopResumedActivity) {
-            mLifecycleLogClient.onActivityCallback(
-                    isTopResumedActivity ? ON_TOP_POSITION_GAINED : ON_TOP_POSITION_LOST);
+            if (!getIntent().getBooleanExtra(EXTRA_SKIP_TOP_RESUMED_STATE, false)) {
+                mLifecycleLogClient.onActivityCallback(
+                        isTopResumedActivity ? ON_TOP_POSITION_GAINED : ON_TOP_POSITION_LOST);
+            }
         }
 
         @Override
@@ -552,10 +560,12 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
         boolean mReceivedResultOk;
 
         /** Adds the flag to the extra of intent which will forward to {@link ResultActivity}. */
-        static Consumer<Intent> forwardFlag(String flag) {
+        static Consumer<Intent> forwardFlag(String... flags) {
             return intent -> {
                 final Bundle data = new Bundle();
-                data.putBoolean(flag, true);
+                for (String f : flags) {
+                    data.putBoolean(f, true);
+                }
                 intent.putExtra(EXTRA_FORWARD_EXTRAS, data);
             };
         }

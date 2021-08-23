@@ -60,7 +60,6 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.platform.test.annotations.Presubmit;
 
-import androidx.test.filters.FlakyTest;
 import androidx.test.filters.MediumTest;
 
 import com.android.compatibility.common.util.AmUtils;
@@ -325,7 +324,6 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
                 transition(ResultActivity.class, ON_CREATE),
                 transition(ResultActivity.class, ON_START),
                 transition(ResultActivity.class, ON_RESUME),
-                transition(ResultActivity.class, ON_TOP_POSITION_GAINED),
                 // Activity that was launched for result is finished automatically - the base
                 // launching activity is brought to front.
                 transition(LaunchForResultActivity.class, ON_ACTIVITY_RESULT),
@@ -887,7 +885,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
 
     @Test
     public void testFinishInOnCreate() throws Exception {
-        verifyFinishAtStage( ResultActivity.class, EXTRA_FINISH_IN_ON_CREATE,
+        verifyFinishAtStage(ResultActivity.class, EXTRA_FINISH_IN_ON_CREATE,
                 Arrays.asList(ON_CREATE, ON_DESTROY), "onCreate");
     }
 
@@ -914,27 +912,38 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
     @Test
     public void testFinishInOnResume() throws Exception {
         verifyFinishAtStage(ResultActivity.class, EXTRA_FINISH_IN_ON_RESUME,
-                Arrays.asList(ON_CREATE, ON_START, ON_POST_CREATE, ON_RESUME,
-                        ON_TOP_POSITION_GAINED, ON_TOP_POSITION_LOST, ON_PAUSE, ON_STOP,
+                true /* skipTopResumedState */,
+                Arrays.asList(ON_CREATE, ON_START, ON_POST_CREATE, ON_RESUME, ON_PAUSE, ON_STOP,
                         ON_DESTROY), "onResume");
     }
 
     @Test
     public void testFinishInOnResumeNoDisplay() throws Exception {
         verifyFinishAtStage(NoDisplayActivity.class, EXTRA_FINISH_IN_ON_RESUME,
-                Arrays.asList(ON_CREATE, ON_START, ON_POST_CREATE, ON_RESUME,
-                        ON_TOP_POSITION_GAINED, ON_TOP_POSITION_LOST, ON_PAUSE, ON_STOP,
+                true /* skipTopResumedState */,
+                Arrays.asList(ON_CREATE, ON_START, ON_POST_CREATE, ON_RESUME, ON_PAUSE, ON_STOP,
                         ON_DESTROY), "onResume");
     }
 
     private void verifyFinishAtStage(Class<? extends Activity> activityClass,
             String finishStageExtra, List<LifecycleLog.ActivityCallback> expectedSequence,
             String stageName) throws Exception {
-        new Launcher(activityClass)
+        verifyFinishAtStage(activityClass, finishStageExtra, false /* skipTopResumedState */,
+                expectedSequence, stageName);
+    }
+
+    private void verifyFinishAtStage(Class<? extends Activity> activityClass,
+            String finishStageExtra, boolean skipTopResumedState,
+            List<LifecycleLog.ActivityCallback> expectedSequence,
+            String stageName) throws Exception {
+        final Launcher launcher = new Launcher(activityClass)
                 .setExpectedState(ON_DESTROY)
                 .setExtraFlags(finishStageExtra)
-                .setNoInstance()
-                .launch();
+                .setNoInstance();
+        if (skipTopResumedState) {
+            launcher.setExtraFlags(EXTRA_SKIP_TOP_RESUMED_STATE);
+        }
+        launcher.launch();
 
         waitAndAssertActivityTransitions(activityClass, expectedSequence, "finish in " + stageName);
     }
