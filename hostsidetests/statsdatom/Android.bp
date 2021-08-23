@@ -41,6 +41,7 @@ java_test_host {
         "src/**/perfetto/*.java",
         "src/**/permissionstate/*.java",
         "src/**/settingsstats/*.java",
+        "src/**/sizecompatrestartbutton/*.java",
         "src/**/statsd/*.java",
         "src/**/telephony/*.java",
         "src/**/wifi/*.java",
