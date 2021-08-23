@@ -515,6 +515,54 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
         }
     }
 
+    /**
+     * b/197302116. The apps can't be granted prefix UriPermissions to the uri, when the query
+     * result of the uri is 1.
+     */
+    @Test
+    public void testOwningOneFileNotGrantPrefixUriPermission() throws Exception {
+        installPackage(MEDIA.apk);
+
+        int user = getDevice().getCurrentUser();
+
+        // revoke permissions
+        updatePermissions(MEDIA.pkg, user, new String[] {
+                PERM_READ_EXTERNAL_STORAGE,
+                PERM_WRITE_EXTERNAL_STORAGE,
+        }, false);
+
+
+        // revoke the app ops permission
+        updateAppOp(MEDIA.pkg, user, APP_OPS_MANAGE_EXTERNAL_STORAGE, false);
+
+        runDeviceTests(MEDIA.pkg, MEDIA.clazz,
+                "testOwningOneFileNotGrantPrefixUriPermission", user);
+    }
+
+    /**
+     * If the app grants read UriPermission to the uri without id (E.g.
+     * MediaStore.Audio.Media.EXTERNAL_CONTENT_URI), the query result of the uri should be the same
+     * without granting permission.
+     */
+    @Test
+    public void testReadUriPermissionOnUriWithoutId_sameQueryResult() throws Exception {
+        installPackage(MEDIA.apk);
+
+        int user = getDevice().getCurrentUser();
+
+        // revoke permissions
+        updatePermissions(MEDIA.pkg, user, new String[] {
+                PERM_READ_EXTERNAL_STORAGE,
+                PERM_WRITE_EXTERNAL_STORAGE,
+        }, false);
+
+
+        // revoke the app ops permission
+        updateAppOp(MEDIA.pkg, user, APP_OPS_MANAGE_EXTERNAL_STORAGE, false);
+
+        runDeviceTests(MEDIA.pkg, MEDIA.clazz,
+                "testReadUriPermissionOnUriWithoutId_sameQueryResult", user);
+    }
 
     @Test
     public void testGrantUriPermission() throws Exception {
