@@ -195,4 +195,8 @@
     <!-- String title of embedded display activity -->
     <string name="non_default_display_activity">Non default display activity</string>
 
+    <!-- String title of the accessibility drag & drop activity -->
+    <string name="accessibility_drag_and_drop_test_activity">Drag and drop</string>
+    <string name="drag_and_drop_text">Dragged text</string>
+
 </resources>
