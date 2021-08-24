@@ -60,7 +60,6 @@ android_test {
 
     jni_libs: [
         "ld-android",
-        "libbacktrace",
         "libbase",
         "libbinder",
         "libbpf",
