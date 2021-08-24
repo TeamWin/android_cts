@@ -129,9 +129,10 @@ class RawSensitivityBurstTest(its_base_test.ItsBaseTest):
 
       # Asserts that each shot is noisier than previous
       for i in x[0:-1]:
-        e_msg = 'variances [i]: %.5f, [i+1]: %.5f, THRESH: %.2f' % (
-            variances[i], variances[i+1], _VAR_THRESH)
-        assert variances[i] < variances[i+1] / _VAR_THRESH, e_msg
+        if variances[i] >= variances[i+1] / _VAR_THRESH:
+          raise AssertionError(
+              f'variances [i]: {variances[i] :.5f}, [i+1]: '
+              f'{variances[i+1]:.5f}, THRESH: {_VAR_THRESH}')
 
 if __name__ == '__main__':
   test_runner.main()
