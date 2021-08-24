@@ -51,6 +51,8 @@ class CodecPerformanceTestBase {
     static final double FPS_TOLERANCE_FACTOR;
     static final boolean IS_AT_LEAST_VNDK_S;
 
+    static final int DEVICE_INITIAL_SDK;
+
     // Some older devices can not support concurrent instances of both decoder and encoder
     // at max resolution. To handle such cases, this test is limited to test the
     // resolutions that are less than half of max supported frame sizes of encoder.
@@ -89,21 +91,30 @@ class CodecPerformanceTestBase {
         // os.Build.VERSION.DEVICE_INITIAL_SDK_INT can be used here, but it was called
         // os.Build.VERSION.FIRST_SDK_INT in Android R and below. Using DEVICE_INITIAL_SDK_INT
         // will mean that the tests built in Android S can't be run on Android R and below.
-        int deviceInitialSdk = SystemProperties.getInt("ro.product.first_api_level", 0);
+        DEVICE_INITIAL_SDK = SystemProperties.getInt("ro.product.first_api_level", 0);
 
         // fps tolerance factor is kept quite low for devices launched on Android R and lower
-        FPS_TOLERANCE_FACTOR = deviceInitialSdk <= Build.VERSION_CODES.R ? 0.67 : 0.95;
+        FPS_TOLERANCE_FACTOR = DEVICE_INITIAL_SDK <= Build.VERSION_CODES.R ? 0.67 : 0.95;
 
         IS_AT_LEAST_VNDK_S = SystemProperties.getInt("ro.vndk.version", 0) > Build.VERSION_CODES.R;
 
         // Encoders on devices launched on Android Q and lower aren't tested at maximum resolution
-        EXCLUDE_ENCODER_MAX_RESOLUTION = deviceInitialSdk <= Build.VERSION_CODES.Q;
+        EXCLUDE_ENCODER_MAX_RESOLUTION = DEVICE_INITIAL_SDK <= Build.VERSION_CODES.Q;
     }
 
     @Before
     public void prologue() {
         assumeTrue("For VNDK R and below, operating rate <= 0 isn't tested",
                 IS_AT_LEAST_VNDK_S || mMaxOpRateScalingFactor > 0.0);
+
+        assumeTrue("For devices launched on Android P and below, operating rate tests are disabled",
+                DEVICE_INITIAL_SDK > Build.VERSION_CODES.P);
+
+        if (DEVICE_INITIAL_SDK <= Build.VERSION_CODES.Q) {
+            assumeTrue("For devices launched with Android Q and below, operating rate tests are " +
+                            "limited to operating rate scaling factor > 0.0 and <= 1.25",
+                    mMaxOpRateScalingFactor > 0.0 && mMaxOpRateScalingFactor <= 1.25);
+        }
     }
 
     public CodecPerformanceTestBase(String decoderName, String testFile, int keyPriority,
