@@ -415,9 +415,7 @@ public class TunerTest {
         Filter f = mTuner.openFilter(
                 Filter.TYPE_TS, Filter.SUBTYPE_SECTION, 1000, getExecutor(), getFilterCallback());
         assertNotNull(f);
-        if (!TunerVersionChecker.isHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_2_0)) {
-            assertNotEquals(Tuner.INVALID_FILTER_ID, f.getId());
-        }
+        assertNotEquals(Tuner.INVALID_FILTER_ID, f.getId());
         if (TunerVersionChecker.isHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_1_1)) {
             assertNotEquals(Tuner.INVALID_FILTER_ID_LONG, f.getIdLong());
         } else {
