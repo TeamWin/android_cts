@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,22 +14,9 @@
  * limitations under the License.
  */
 
-package android.input.cts
+package com.android.server.cts.device.statsdatom;
 
-import android.app.Activity
-import android.view.MotionEvent
-import java.util.concurrent.atomic.AtomicBoolean
-
-class IncompleteMotionActivity : Activity() {
-    private val receivedMove = AtomicBoolean(false)
-    override fun onTouchEvent(event: MotionEvent): Boolean {
-        if (event.action == MotionEvent.ACTION_MOVE) {
-            receivedMove.set(true)
-        }
-        return true
-    }
-
-    fun receivedMove(): Boolean {
-        return receivedMove.get()
-    }
+/** A non-resizeable portrait activity (to be run as a foreground process) which performs one of a
+ * number of actions. */
+public class StatsdCtsNonResizeablePortraitActivity extends StatsdCtsForegroundActivity {
 }

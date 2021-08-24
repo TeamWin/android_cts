@@ -99,9 +99,10 @@ public abstract class ApiPresenceCheckerTest<T extends ApiPresenceChecker> {
     protected static class NoFailures implements ResultObserver {
 
         @Override
-        public void notifyFailure(FailureType type, String name, String errmsg) {
+        public void notifyFailure(FailureType type, String name, String errmsg,
+                Throwable throwable) {
             Assert.fail("Saw unexpected test failure: " + name + " failure type: " + type
-                    + " error message: " + errmsg);
+                    + " error message: " + errmsg + " throwable: " + throwable);
         }
     }
 
@@ -116,7 +117,8 @@ public abstract class ApiPresenceCheckerTest<T extends ApiPresenceChecker> {
         }
 
         @Override
-        public void notifyFailure(FailureType type, String name, String errMsg) {
+        public void notifyFailure(FailureType type, String name, String errMsg,
+                Throwable throwable) {
             if (type == expectedType) {
                 if (failureSeen) {
                     Assert.fail("Saw second test failure: " + name + " failure type: " + type);

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.view.cts;
+package android.view.cts.input;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -36,6 +36,7 @@ import android.os.MemoryFile;
 import android.os.SystemClock;
 import android.util.Log;
 import android.view.InputDevice;
+import android.view.cts.R;
 
 import androidx.annotation.NonNull;
 import androidx.test.ext.junit.runners.AndroidJUnit4;

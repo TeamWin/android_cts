@@ -198,6 +198,10 @@ public abstract class VirtualInputDevice implements InputManager.InputDeviceList
         return mDeviceId;
     }
 
+    public int getRegisterCommandDeviceId() {
+        return mId;
+    }
+
     public int getVendorId() {
         return mVendorId;
     }
