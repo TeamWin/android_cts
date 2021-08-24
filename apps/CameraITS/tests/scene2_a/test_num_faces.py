@@ -34,6 +34,72 @@ NUM_FACES = 3
 W, H = 640, 480
 
 
+def check_face_bounding_box(rect, aw, ah, index):
+  """Checks face bounding box is within the active array area.
+
+  Args:
+    rect: dict; with face bounding box information
+    aw: int; active array width
+    ah: int; active array height
+    index: int to designate face number
+  """
+  logging.debug('Checking bounding box in face %d: %s', index, str(rect))
+  if (rect['top'] >= rect['bottom'] or
+      rect['left'] >= rect['right']):
+    raise AssertionError('Face coordinates incorrect! '
+                         f" t: {rect['top']}, b: {rect['bottom']}, "
+                         f" l: {rect['left']}, r: {rect['right']}")
+  if (not 0 <= rect['top'] <= ah or
+      not 0 <= rect['bottom'] <= ah):
+    raise AssertionError('Face top/bottom outside of image height! '
+                         f"t: {rect['top']}, b: {rect['bottom']}, "
+                         f"h: {ah}")
+  if (not 0 <= rect['left'] <= aw or
+      not 0 <= rect['right'] <= aw):
+    raise AssertionError('Face left/right outside of image width! '
+                         f"l: {rect['left']}, r: {rect['right']}, "
+                         f" w: {aw}")
+
+
+def check_face_landmarks(face, fd_mode, index):
+  """Checks face landmarks fall within face bounding box.
+
+  Face ID should be -1 for SIMPLE and unique for FULL
+  Args:
+    face: dict from face detection algorithm
+    fd_mode: int of face detection mode
+    index: int to designate face number
+  """
+  logging.debug('Checking landmarks in face %d: %s', index, str(face))
+  if fd_mode == FD_MODE_SIMPLE:
+    if 'leftEye' in face or 'rightEye' in face:
+      raise AssertionError('Eyes not supported in FD_MODE_SIMPLE.')
+    if 'mouth' in face:
+      raise AssertionError('Mouth not supported in FD_MODE_SIMPLE.')
+    if face['id'] != -1:
+      raise AssertionError('face_id should be -1 in FD_MODE_SIMPLE.')
+  elif fd_mode == FD_MODE_FULL:
+    l, r = face['bounds']['left'], face['bounds']['right']
+    t, b = face['bounds']['top'], face['bounds']['bottom']
+    l_eye_x, l_eye_y = face['leftEye']['x'], face['leftEye']['y']
+    r_eye_x, r_eye_y = face['rightEye']['x'], face['rightEye']['y']
+    mouth_x, mouth_y = face['mouth']['x'], face['mouth']['y']
+    if not l <= l_eye_x <= r:
+      raise AssertionError(f'Face l: {l}, r: {r}, left eye x: {l_eye_x}')
+    if not t <= l_eye_y <= b:
+      raise AssertionError(f'Face t: {t}, b: {b}, left eye y: {l_eye_y}')
+    if not l <= r_eye_x <= r:
+      raise AssertionError(f'Face l: {l}, r: {r}, right eye x: {r_eye_x}')
+    if not t <= r_eye_y <= b:
+      raise AssertionError(f'Face t: {t}, b: {b}, right eye y: {r_eye_y}')
+    if not l <= mouth_x <= r:
+      raise AssertionError(f'Face l: {l}, r: {r}, mouth x: {mouth_x}')
+    if not t <= mouth_y <= b:
+      raise AssertionError(f'Face t: {t}, b: {b}, mouth y: {mouth_y}')
+  else:
+    raise AssertionError(f'Unknown face detection mode: {fd_mode}.')
+
+
 def draw_face_rectangles(img, faces, aw, ah):
   """Draw rectangles on top of image.
 
@@ -129,24 +195,16 @@ class NumFacesTest(its_base_test.ItsBaseTest):
           for score in face_scores:
             if not 1 <= score <= 100:
               raise AssertionError(f'score not between [1:100]! {score}')
+
           # Face bounds should be within active array
           face_rectangles = [face['bounds'] for face in faces]
-          for rect in face_rectangles:
-            if (rect['top'] >= rect['bottom'] or
-                rect['left'] >= rect['right']):
-              raise AssertionError('Face coordinates incorrect! '
-                                   f" t: {rect['top']}, b: {rect['bottom']}, "
-                                   f" l: {rect['left']}, r: {rect['right']}")
-            if (not 0 <= rect['top'] <= ah or
-                not 0 <= rect['bottom'] <= ah):
-              raise AssertionError('Face top/bottom outside of image height! '
-                                   f"t: {rect['top']}, b: {rect['bottom']}, "
-                                   f"h: {ah}")
-            if (not 0 <= rect['left'] <= aw or
-                not 0 <= rect['right'] <= aw):
-              raise AssertionError('Face left/right outside of image width! '
-                                   f"l: {rect['left']}, r: {rect['right']}, "
-                                   f" w: {aw}")
+          for j, rect in enumerate(face_rectangles):
+            check_face_bounding_box(rect, aw, ah, j)
+
+          # Face landmarks (if provided) are within face bounding box
+          for k, face in enumerate(faces):
+            check_face_landmarks(face, fd_mode, k)
+
 
 if __name__ == '__main__':
   test_runner.main()
