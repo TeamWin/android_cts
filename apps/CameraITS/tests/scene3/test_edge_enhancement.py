@@ -141,24 +141,26 @@ class EdgeEnhancementTest(its_base_test.ItsBaseTest):
                     str(sharpness_regular))
 
       logging.debug('Verify HQ is sharper than OFF')
-      e_msg = 'HQ: %.3f, OFF: %.3f' % (sharpness_regular[EDGE_MODES['HQ']],
-                                       sharpness_regular[EDGE_MODES['OFF']])
-      assert (sharpness_regular[EDGE_MODES['HQ']] >
-              sharpness_regular[EDGE_MODES['OFF']]), e_msg
+      if (sharpness_regular[EDGE_MODES['HQ']] <=
+          sharpness_regular[EDGE_MODES['OFF']]):
+        raise AssertionError(f"HQ: {sharpness_regular[EDGE_MODES['HQ']]:.3f}, "
+                             f"OFF: {sharpness_regular[EDGE_MODES['OFF']]:.3f}")
 
       logging.debug('Verify OFF is not sharper than FAST')
-      e_msg = 'FAST: %.3f, OFF: %.3f, RTOL: %.2f' % (
-          sharpness_regular[EDGE_MODES['FAST']],
-          sharpness_regular[EDGE_MODES['OFF']], SHARPNESS_RTOL)
-      assert (sharpness_regular[EDGE_MODES['FAST']] >
-              sharpness_regular[EDGE_MODES['OFF']]*(1.0-SHARPNESS_RTOL)), e_msg
+      if (sharpness_regular[EDGE_MODES['FAST']] <=
+          sharpness_regular[EDGE_MODES['OFF']]*(1.0-SHARPNESS_RTOL)):
+        raise AssertionError(
+            f"FAST: {sharpness_regular[EDGE_MODES['FAST']]:.3f}, "
+            f"OFF: {sharpness_regular[EDGE_MODES['OFF']]:.3f}, "
+            f"RTOL: {SHARPNESS_RTOL}")
 
       logging.debug('Verify FAST is not sharper than HQ')
-      e_msg = 'HQ: %.3f, FAST: %.3f, RTOL: %.2f' % (
-          sharpness_regular[EDGE_MODES['HQ']],
-          sharpness_regular[EDGE_MODES['FAST']], SHARPNESS_RTOL)
-      assert (sharpness_regular[EDGE_MODES['HQ']] >
-              sharpness_regular[EDGE_MODES['FAST']]*(1.0-SHARPNESS_RTOL)), e_msg
+      if (sharpness_regular[EDGE_MODES['HQ']] <=
+          sharpness_regular[EDGE_MODES['FAST']]*(1.0-SHARPNESS_RTOL)):
+        raise AssertionError(
+            f"HQ: {sharpness_regular[EDGE_MODES['HQ']]:.3f}, "
+            f"FAST: {sharpness_regular[EDGE_MODES['FAST']]:.3f}, "
+            f"RTOL: {SHARPNESS_RTOL}")
 
 if __name__ == '__main__':
   test_runner.main()
