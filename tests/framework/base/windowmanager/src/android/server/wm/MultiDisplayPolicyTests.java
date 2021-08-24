@@ -837,10 +837,12 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
                 mWmState.getResumedActivitiesCountInPackage(
                         SDK_27_LAUNCHING_ACTIVITY.getPackageName()));
 
+        // Start SeparateProcessActivity in the same task as LaunchingActivity by setting
+        // allowMultipleInstances to false, and the TestActivity should be resumed.
         getLaunchActivityBuilder().setUseInstrumentation()
                 .setTargetActivity(SDK_27_SEPARATE_PROCESS_ACTIVITY).setNewTask(true)
                 .setDisplayId(DEFAULT_DISPLAY).setWindowingMode(WINDOWING_MODE_FULLSCREEN)
-                .execute();
+                .allowMultipleInstances(false).execute();
         waitAndAssertTopResumedActivity(SDK_27_SEPARATE_PROCESS_ACTIVITY, DEFAULT_DISPLAY,
                 "Activity launched on default display must be resumed and focused");
         assertTrue("Activity that was on secondary display must be resumed",

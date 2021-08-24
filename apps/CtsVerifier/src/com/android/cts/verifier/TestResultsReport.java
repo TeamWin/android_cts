@@ -19,35 +19,26 @@ package com.android.cts.verifier;
 import android.content.Context;
 import android.os.Build;
 import android.text.TextUtils;
-import android.util.Xml;
 
 import com.android.compatibility.common.util.DevicePropertyInfo;
 import com.android.compatibility.common.util.ICaseResult;
 import com.android.compatibility.common.util.IInvocationResult;
 import com.android.compatibility.common.util.IModuleResult;
-import com.android.compatibility.common.util.InvocationResult;
 import com.android.compatibility.common.util.ITestResult;
-import com.android.compatibility.common.util.MetricsXmlSerializer;
+import com.android.compatibility.common.util.InvocationResult;
 import com.android.compatibility.common.util.ReportLog;
 import com.android.compatibility.common.util.TestResultHistory;
 import com.android.compatibility.common.util.TestStatus;
 import com.android.cts.verifier.TestListActivity.DisplayMode;
 import com.android.cts.verifier.TestListAdapter.TestListItem;
 
-import org.xmlpull.v1.XmlSerializer;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -72,7 +63,6 @@ class TestResultsReport {
     private static final String TEST_TAG = "test";
     private static final String TEST_DETAILS_TAG = "details";
 
-    private static final String MODULE_ID = "noabi CtsVerifier";
     private static final String TEST_CASE_NAME = "manualTests";
 
     private final Context mContext;
@@ -91,7 +81,8 @@ class TestResultsReport {
         String versionBaseOs = null;
         String versionSecurityPatch = null;
         IInvocationResult result = new InvocationResult();
-        IModuleResult moduleResult = result.getOrCreateModule(MODULE_ID);
+        IModuleResult moduleResult = result.getOrCreateModule(
+                mContext.getResources().getString(R.string.module_id));
 
         // Collect build fields available in API level 21
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
