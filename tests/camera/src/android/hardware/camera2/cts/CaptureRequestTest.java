@@ -816,7 +816,8 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
                 }
                 openDevice(id);
                 Size maxPreviewSize = mOrderedPreviewSizes.get(0);
-                digitalZoomTestByCamera(maxPreviewSize);
+                digitalZoomTestByCamera(maxPreviewSize, /*repeating*/false);
+                digitalZoomTestByCamera(maxPreviewSize, /*repeating*/true);
             } finally {
                 closeDevice();
             }
@@ -2562,7 +2563,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
         stopPreview();
     }
 
-    private void digitalZoomTestByCamera(Size previewSize) throws Exception {
+    private void digitalZoomTestByCamera(Size previewSize, boolean repeating) throws Exception {
         final int ZOOM_STEPS = 15;
         final PointF[] TEST_ZOOM_CENTERS;
         final float maxZoom = mStaticInfo.getAvailableMaxDigitalZoomChecked();
@@ -2649,12 +2650,18 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
         };
 
         final int CAPTURE_SUBMIT_REPEAT;
+        final int NUM_RESULTS_TO_SKIP;
         {
             int maxLatency = mStaticInfo.getSyncMaxLatency();
             if (maxLatency == CameraMetadata.SYNC_MAX_LATENCY_UNKNOWN) {
                 CAPTURE_SUBMIT_REPEAT = NUM_FRAMES_WAITED_FOR_UNKNOWN_LATENCY + 1;
             } else {
                 CAPTURE_SUBMIT_REPEAT = maxLatency + 1;
+            }
+            if (repeating) {
+                NUM_RESULTS_TO_SKIP = NUM_FRAMES_WAITED_FOR_UNKNOWN_LATENCY + 1;
+            } else {
+                NUM_RESULTS_TO_SKIP = CAPTURE_SUBMIT_REPEAT - 1;
             }
         }
 
@@ -2680,21 +2687,29 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
                     if (VERBOSE) {
                         Log.v(TAG, "Testing Zoom for factor " + zoomFactor + " and center " +
                                 center + " The cropRegion is " + cropRegions[i] +
-                                " Preview size is " + previewSize);
+                                " Preview size is " + previewSize + ", repeating is " + repeating);
                     }
                     requestBuilder.set(CaptureRequest.SCALER_CROP_REGION, cropRegions[i]);
                     requests[i] = requestBuilder.build();
-                    for (int j = 0; j < CAPTURE_SUBMIT_REPEAT; ++j) {
-                        if (VERBOSE) {
-                            Log.v(TAG, "submit crop region " + cropRegions[i]);
+                    if (VERBOSE) {
+                        Log.v(TAG, "submit crop region " + cropRegions[i]);
+                    }
+                    if (repeating) {
+                        mSession.setRepeatingRequest(requests[i], listener, mHandler);
+                        // Drop first few frames
+                        waitForNumResults(listener, NUM_RESULTS_TO_SKIP);
+                        // Interleave a regular capture
+                        mSession.capture(requests[0], listener, mHandler);
+                    } else {
+                        for (int j = 0; j < CAPTURE_SUBMIT_REPEAT; ++j) {
+                            mSession.capture(requests[i], listener, mHandler);
                         }
-                        mSession.capture(requests[i], listener, mHandler);
                     }
 
                     /*
                      * Validate capture result
                      */
-                    waitForNumResults(listener, CAPTURE_SUBMIT_REPEAT - 1); // Drop first few frames
+                    waitForNumResults(listener, NUM_RESULTS_TO_SKIP); // Drop first few frames
                     TotalCaptureResult result = listener.getTotalCaptureResultForRequest(
                             requests[i], NUM_RESULTS_WAIT_TIMEOUT);
                     List<CaptureResult> partialResults = result.getPartialResults();
@@ -2756,7 +2771,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
 
                 if (maxZoom > 1.0f) {
                     mCollector.expectTrue(
-                            String.format("Most zoomed-in crop region should be smaller" +
+                            String.format("Most zoomed-in crop region should be smaller " +
                                             "than active array w/h" +
                                             "(last crop = %s, active array = %s)",
                                             previousCrop, activeArraySize),
@@ -2955,7 +2970,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
             }
 
             aspectRatiosTested.add(aspectRatio);
-            digitalZoomTestByCamera(size);
+            digitalZoomTestByCamera(size, /*repeating*/false);
         }
     }
 
