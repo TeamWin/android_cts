@@ -15,6 +15,7 @@
 
 
 import logging
+import math
 import os.path
 import matplotlib
 from matplotlib import pylab
@@ -137,21 +138,21 @@ class BlackWhiteTest(its_base_test.ItsBaseTest):
 
       # Assert blacks below CH_THRESH_BLACK
       for ch, mean in enumerate(black_means):
-        e_msg = '%s black: %.1f, THRESH: %.f' % (
-            COLOR_PLANES[ch], mean, CH_THRESH_BLACK)
-        assert mean < CH_THRESH_BLACK, e_msg
+        if mean >= CH_THRESH_BLACK:
+          raise AssertionError(f'{COLOR_PLANES[ch]} black: {mean:.1f}, '
+                               f'THRESH: {CH_THRESH_BLACK}')
 
       # Assert whites above CH_THRESH_WHITE
       for ch, mean in enumerate(white_means):
-        e_msg = '%s white: %.1f, THRESH: %.f' % (
-            COLOR_PLANES[ch], mean, CH_THRESH_WHITE)
-        assert mean > CH_THRESH_WHITE, e_msg
+        if mean <= CH_THRESH_WHITE:
+          raise AssertionError(f'{COLOR_PLANES[ch]} white: {mean:.1f}, '
+                               f'THRESH: {CH_THRESH_WHITE}')
 
       # Assert channels saturate evenly (was test_channel_saturation)
-      e_msg = 'ch saturation not equal! RGB: %s, ATOL: %.f' % (
-          str(white_means), CH_TOL_WHITE)
-      assert np.isclose(
-          np.amin(white_means), np.amax(white_means), atol=CH_TOL_WHITE), e_msg
+      if not math.isclose(
+          np.amin(white_means), np.amax(white_means), abs_tol=CH_TOL_WHITE):
+        raise AssertionError('channel saturation not equal! '
+                             f'RGB: {white_means}, ATOL: {CH_TOL_WHITE}')
 
 if __name__ == '__main__':
   test_runner.main()

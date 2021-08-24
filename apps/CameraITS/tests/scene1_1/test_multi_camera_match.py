@@ -106,7 +106,8 @@ class MultiCameraMatchTest(its_base_test.ItsBaseTest):
           aa_w, aa_h = aa['right'] - aa['left'], aa['bottom'] - aa['top']
 
           # Calculate a center crop region.
-          assert zoom >= 1
+          if zoom < 1:
+            raise AssertionError(f'zoom < 1! {zoom}')
           crop_w = aa_w // zoom
           crop_h = aa_h // zoom
           crop_region = {'left': aa_w // 2 - crop_w // 2,
@@ -136,9 +137,9 @@ class MultiCameraMatchTest(its_base_test.ItsBaseTest):
         y_means[fl] = y_mean
 
       # compare Y means
-      e_msg += 'TOL=%.5f' % _THRESH_DIFF
-      assert np.isclose(max(y_means.values()), min(y_means.values()),
-                        rtol=_THRESH_DIFF), e_msg
+      if not np.isclose(max(y_means.values()), min(y_means.values()),
+                        rtol=_THRESH_DIFF):
+        raise AssertionError(f'{e_msg}TOL={_THRESH_DIFF}')
 
 if __name__ == '__main__':
   test_runner.main()
