@@ -31,5 +31,9 @@
         <receiver android:name=".TestBroadcastReceiver"
                   android:exported="true"
         />
+        <provider android:name=".TestContentProvider"
+            android:authorities="android.app.usage.cts.test1.provider"
+            android:exported="true"
+        />
     </application>
 </manifest>

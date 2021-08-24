@@ -40,10 +40,13 @@ import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
+import android.content.ContentProviderClient;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.IBinder;
 import android.os.Parcel;
 import android.os.SystemClock;
@@ -127,6 +130,8 @@ public class UsageStatsTest {
             = "android.app.usage.cts.test1.TestService";
     private static final String TEST_APP_CLASS_BROADCAST_RECEIVER
             = "android.app.usage.cts.test1.TestBroadcastReceiver";
+    private static final String TEST_AUTHORITY = "android.app.usage.cts.test1.provider";
+    private static final String TEST_APP_CONTENT_URI_STRING = "content://" + TEST_AUTHORITY;
     private static final String TEST_APP2_PKG = "android.app.usage.cts.test2";
     private static final String TEST_APP2_CLASS_FINISHING_TASK_ROOT =
             "android.app.usage.cts.test2.FinishingTaskRootActivity";
@@ -292,6 +297,20 @@ public class UsageStatsTest {
         verifyLastTimeAnyComponentUsedWithinRange(startTime, endTime, TEST_APP_PKG);
     }
 
+    @AppModeFull(reason = "No usage events access in instant apps")
+    @Test
+    public void testLastTimeAnyComponentUsed_bindContentProviderShouldBeDetected()
+            throws Exception {
+        mUiDevice.wakeUp();
+        dismissKeyguard(); // also want to start out with the keyguard dismissed.
+
+        final long startTime = System.currentTimeMillis();
+        bindToTestContentProvider();
+        final long endTime = System.currentTimeMillis();
+
+        verifyLastTimeAnyComponentUsedWithinRange(startTime, endTime, TEST_APP_PKG);
+    }
+
     private void verifyLastTimeAnyComponentUsedWithinRange(
             long startTime, long endTime, String targetPackage) {
         final Map<String, UsageStats> map = mUsageStatsManager.queryAndAggregateUsageStats(
@@ -299,8 +318,8 @@ public class UsageStatsTest {
         final UsageStats stats = map.get(targetPackage);
         assertNotNull(stats);
         final long lastTimeAnyComponentUsed = stats.getLastTimeAnyComponentUsed();
-        assertLessThan(startTime, lastTimeAnyComponentUsed);
-        assertLessThan(lastTimeAnyComponentUsed, endTime);
+        assertLessThanOrEqual(startTime, lastTimeAnyComponentUsed);
+        assertLessThanOrEqual(lastTimeAnyComponentUsed, endTime);
 
         SystemUtil.runWithShellPermissionIdentity(()-> {
             final long lastDayAnyComponentUsedGlobal =
@@ -1844,6 +1863,25 @@ public class UsageStatsTest {
                     latch.await(TIMEOUT, TimeUnit.MILLISECONDS));
         } catch (InterruptedException e) {
             throw new IllegalStateException("Interrupted", e);
+        }
+    }
+
+    /**
+     * Bind to the test app's content provider.
+     */
+    private void bindToTestContentProvider() throws Exception {
+        // Acquire unstable content provider so that test process isn't killed when content
+        // provider app is killed.
+        final Uri testUri = Uri.parse(TEST_APP_CONTENT_URI_STRING);
+        ContentProviderClient client =
+                mContext.getContentResolver().acquireUnstableContentProviderClient(testUri);
+        try (Cursor cursor = client.query(
+                testUri,
+                null /* projection */,
+                null /* selection */,
+                null /* selectionArgs */,
+                null /* sortOrder */)) {
+            assertNotNull(cursor);
         }
     }
 
