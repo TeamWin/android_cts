@@ -47,6 +47,7 @@ import static android.appenumeration.cts.Constants.ACTION_REQUEST_SYNC_AND_AWAIT
 import static android.appenumeration.cts.Constants.ACTION_SET_INSTALLER_PACKAGE_NAME;
 import static android.appenumeration.cts.Constants.ACTION_START_DIRECTLY;
 import static android.appenumeration.cts.Constants.ACTION_START_FOR_RESULT;
+import static android.appenumeration.cts.Constants.ACTION_TAKE_PERSISTABLE_URI_PERMISSION;
 import static android.appenumeration.cts.Constants.ACTIVITY_CLASS_DUMMY_ACTIVITY;
 import static android.appenumeration.cts.Constants.ACTIVITY_CLASS_TEST;
 import static android.appenumeration.cts.Constants.CALLBACK_EVENT_INVALID;
@@ -68,7 +69,11 @@ import static android.appenumeration.cts.Constants.QUERIES_NOTHING;
 import static android.appenumeration.cts.Constants.QUERIES_NOTHING_PERM;
 import static android.appenumeration.cts.Constants.QUERIES_NOTHING_PROVIDER;
 import static android.appenumeration.cts.Constants.QUERIES_NOTHING_Q;
+import static android.appenumeration.cts.Constants.QUERIES_NOTHING_RECEIVES_NON_PERSISTABLE_URI;
+import static android.appenumeration.cts.Constants.QUERIES_NOTHING_RECEIVES_NON_PERSISTABLE_URI_APK;
 import static android.appenumeration.cts.Constants.QUERIES_NOTHING_RECEIVES_PERM_URI;
+import static android.appenumeration.cts.Constants.QUERIES_NOTHING_RECEIVES_PERSISTABLE_URI;
+import static android.appenumeration.cts.Constants.QUERIES_NOTHING_RECEIVES_PERSISTABLE_URI_APK;
 import static android.appenumeration.cts.Constants.QUERIES_NOTHING_RECEIVES_URI;
 import static android.appenumeration.cts.Constants.QUERIES_NOTHING_SEES_INSTALLER;
 import static android.appenumeration.cts.Constants.QUERIES_NOTHING_SEES_INSTALLER_APK;
@@ -334,6 +339,41 @@ public class AppEnumerationTests {
                         .setData(Uri.parse("content://" + QUERIES_NOTHING_PERM + "2/test"))
                         .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION));
         assertVisible(QUERIES_NOTHING_RECEIVES_PERM_URI, QUERIES_NOTHING_PERM);
+    }
+
+    @Test
+    public void startActivityWithUriGrant_cannotSeeProviderAfterUpdated() throws Exception {
+        assertNotVisible(QUERIES_NOTHING_RECEIVES_NON_PERSISTABLE_URI, QUERIES_NOTHING_PERM);
+
+        // send with uri grant flags; should be visible
+        startExplicitActivityWithIntent(QUERIES_NOTHING_PERM,
+                QUERIES_NOTHING_RECEIVES_NON_PERSISTABLE_URI,
+                new Intent(ACTION_JUST_FINISH)
+                        .setData(Uri.parse("content://" + QUERIES_NOTHING_PERM + "3/test"))
+                        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION));
+        assertVisible(QUERIES_NOTHING_RECEIVES_NON_PERSISTABLE_URI, QUERIES_NOTHING_PERM);
+
+        // update the package; shouldn't be visible
+        runShellCommand("pm install " + QUERIES_NOTHING_RECEIVES_NON_PERSISTABLE_URI_APK);
+        assertNotVisible(QUERIES_NOTHING_RECEIVES_NON_PERSISTABLE_URI, QUERIES_NOTHING_PERM);
+    }
+
+    @Test
+    public void startActivityWithPersistableUriGrant_canSeeProviderAfterUpdated() throws Exception {
+        assertNotVisible(QUERIES_NOTHING_RECEIVES_PERSISTABLE_URI, QUERIES_NOTHING_PERM);
+
+        // send with persistable uri grant flags; should be visible
+        startExplicitActivityWithIntent(QUERIES_NOTHING_PERM,
+                QUERIES_NOTHING_RECEIVES_PERSISTABLE_URI,
+                new Intent(ACTION_TAKE_PERSISTABLE_URI_PERMISSION)
+                        .setData(Uri.parse("content://" + QUERIES_NOTHING_PERM + "3/test"))
+                        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION
+                                | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION));
+        assertVisible(QUERIES_NOTHING_RECEIVES_PERSISTABLE_URI, QUERIES_NOTHING_PERM);
+
+        // update the package; should be still visible
+        runShellCommand("pm install " + QUERIES_NOTHING_RECEIVES_PERSISTABLE_URI_APK);
+        assertVisible(QUERIES_NOTHING_RECEIVES_PERSISTABLE_URI, QUERIES_NOTHING_PERM);
     }
 
     private void startExplicitActivityWithIntent(

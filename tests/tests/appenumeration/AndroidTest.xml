@@ -68,6 +68,8 @@
         <option name="test-file-name" value="CtsAppEnumerationAppWidgetProviderTarget.apk" />
         <option name="test-file-name" value="CtsAppEnumerationAppWidgetProviderSharedUidTarget.apk" />
         <option name="test-file-name" value="CtsAppEnumerationPreferredActivityTarget.apk" />
+        <option name="test-file-name" value="CtsAppEnumerationQueriesNothingReceivesPersistableUri.apk" />
+        <option name="test-file-name" value="CtsAppEnumerationQueriesNothingReceivesNonPersistableUri.apk" />
     </target_preparer>
 
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
@@ -96,6 +98,8 @@
         <option name="push" value="CtsAppEnumerationStub.apk->/data/local/tmp/cts/appenumeration/CtsAppEnumerationStub.apk" />
         <option name="push" value="CtsAppEnumerationFilters.apk->/data/local/tmp/cts/appenumeration/CtsAppEnumerationFilters.apk" />
         <option name="push" value="CtsAppEnumerationQueriesNothingSeesInstaller.apk->/data/local/tmp/cts/appenumeration/CtsAppEnumerationQueriesNothingSeesInstaller.apk" />
+        <option name="push" value="CtsAppEnumerationQueriesNothingReceivesPersistableUri.apk->/data/local/tmp/cts/appenumeration/CtsAppEnumerationQueriesNothingReceivesPersistableUri.apk" />
+        <option name="push" value="CtsAppEnumerationQueriesNothingReceivesNonPersistableUri.apk->/data/local/tmp/cts/appenumeration/CtsAppEnumerationQueriesNothingReceivesNonPersistableUri.apk" />
     </target_preparer>
 
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >

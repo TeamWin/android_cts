@@ -32,5 +32,9 @@
                   android:readPermission="android.appenumeration.queries.nothing.haspermission.READ"
                   android:grantUriPermissions="true"
                   android:authorities="android.appenumeration.queries.nothing.haspermission2" />
+        <provider android:name="android.appenumeration.cts.query.TestProvider"
+                  android:exported="false"
+                  android:grantUriPermissions="true"
+                  android:authorities="android.appenumeration.queries.nothing.haspermission3" />
     </application>
 </manifest>
