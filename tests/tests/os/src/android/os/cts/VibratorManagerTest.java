@@ -68,7 +68,7 @@ public class VibratorManagerTest {
     @Rule
     public final MockitoRule mMockitoRule = MockitoJUnit.rule();
 
-    private static final long CALLBACK_TIMEOUT_MILLIS = 5000;
+    private static final long CALLBACK_TIMEOUT_MILLIS = 5_000;
     private static final VibrationAttributes VIBRATION_ATTRIBUTES =
             new VibrationAttributes.Builder()
                     .setUsage(VibrationAttributes.USAGE_TOUCH)
@@ -87,6 +87,8 @@ public class VibratorManagerTest {
             OnVibratorStateChangedListener listener = mock(OnVibratorStateChangedListener.class);
             mVibratorManager.getVibrator(vibratorId).addVibratorStateListener(listener);
             mStateListeners.put(vibratorId, listener);
+            // Adding a listener to the Vibrator should trigger the callback once with the current
+            // vibrator state, so reset mocks to clear it for tests.
             reset(listener);
         }
     }
@@ -108,20 +110,26 @@ public class VibratorManagerTest {
 
     @LargeTest
     @Test
-    public void testVibrateOneShot() {
+    public void testVibrateOneShotStartsAndFinishesVibration() {
         VibrationEffect oneShot =
                 VibrationEffect.createOneShot(300, VibrationEffect.DEFAULT_AMPLITUDE);
         mVibratorManager.vibrate(CombinedVibration.createParallel(oneShot));
         assertStartsThenStopsVibrating(300);
+    }
 
-        oneShot = VibrationEffect.createOneShot(500, 255 /* Max amplitude */);
+    @Test
+    public void testVibrateOneShotMaxAmplitude() {
+        VibrationEffect oneShot = VibrationEffect.createOneShot(500, 255 /* Max amplitude */);
         mVibratorManager.vibrate(CombinedVibration.createParallel(oneShot));
         assertStartsVibrating();
 
         mVibratorManager.cancel();
         assertStopsVibrating();
+    }
 
-        oneShot = VibrationEffect.createOneShot(100, 1 /* Min amplitude */);
+    @Test
+    public void testVibrateOneShotMinAmplitude() {
+        VibrationEffect oneShot = VibrationEffect.createOneShot(100, 1 /* Min amplitude */);
         mVibratorManager.vibrate(CombinedVibration.createParallel(oneShot),
                 VIBRATION_ATTRIBUTES);
         assertStartsVibrating();
@@ -129,16 +137,28 @@ public class VibratorManagerTest {
 
     @LargeTest
     @Test
-    public void testVibrateWaveform() {
+    public void testVibrateWaveformStartsAndFinishesVibration() {
         final long[] timings = new long[]{100, 200, 300, 400, 500};
         final int[] amplitudes = new int[]{64, 128, 255, 128, 64};
         VibrationEffect waveform = VibrationEffect.createWaveform(timings, amplitudes, -1);
         mVibratorManager.vibrate(CombinedVibration.createParallel(waveform));
         assertStartsThenStopsVibrating(1500);
+    }
 
-        waveform = VibrationEffect.createWaveform(timings, amplitudes, 0);
+    @LargeTest
+    @Test
+    public void testVibrateWaveformRepeats() {
+        final long[] timings = new long[]{100, 200, 300, 400, 500};
+        final int[] amplitudes = new int[]{64, 128, 255, 128, 64};
+        VibrationEffect waveform = VibrationEffect.createWaveform(timings, amplitudes, 0);
         mVibratorManager.vibrate(CombinedVibration.createParallel(waveform));
         assertStartsVibrating();
+
+        SystemClock.sleep(2000);
+        int[] vibratorIds = mVibratorManager.getVibratorIds();
+        for (int vibratorId : vibratorIds) {
+            assertTrue(mVibratorManager.getVibrator(vibratorId).isVibrating());
+        }
 
         mVibratorManager.cancel();
         assertStopsVibrating();
@@ -260,6 +280,5 @@ public class VibratorManagerTest {
         OnVibratorStateChangedListener listener = mStateListeners.get(vibratorId);
         verify(listener, timeout(CALLBACK_TIMEOUT_MILLIS).atLeastOnce())
                 .onVibratorStateChanged(eq(expected));
-        reset(listener);
     }
 }
