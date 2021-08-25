@@ -1679,16 +1679,31 @@ public class CameraTestUtils extends Assert {
      */
     public static Size[] getSupportedSizeForFormat(int format, String cameraId,
             CameraManager cameraManager) throws CameraAccessException {
+        return getSupportedSizeForFormat(format, cameraId, cameraManager,
+                /*maxResolution*/false);
+    }
+
+    public static Size[] getSupportedSizeForFormat(int format, String cameraId,
+            CameraManager cameraManager, boolean maxResolution) throws CameraAccessException {
         CameraCharacteristics properties = cameraManager.getCameraCharacteristics(cameraId);
         assertNotNull("Can't get camera characteristics!", properties);
         if (VERBOSE) {
             Log.v(TAG, "get camera characteristics for camera: " + cameraId);
         }
-        StreamConfigurationMap configMap =
-                properties.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+        CameraCharacteristics.Key<StreamConfigurationMap> configMapTag = maxResolution ?
+                CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP_MAXIMUM_RESOLUTION :
+                CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP;
+        StreamConfigurationMap configMap = properties.get(configMapTag);
+        if (configMap == null) {
+            assertTrue("SCALER_STREAM_CONFIGURATION_MAP is null!", maxResolution);
+            return null;
+        }
+
         Size[] availableSizes = configMap.getOutputSizes(format);
-        assertArrayNotEmpty(availableSizes, "availableSizes should not be empty for format: "
-                + format);
+        if (!maxResolution) {
+            assertArrayNotEmpty(availableSizes, "availableSizes should not be empty for format: "
+                    + format);
+        }
         Size[] highResAvailableSizes = configMap.getHighResolutionOutputSizes(format);
         if (highResAvailableSizes != null && highResAvailableSizes.length > 0) {
             Size[] allSizes = new Size[availableSizes.length + highResAvailableSizes.length];
