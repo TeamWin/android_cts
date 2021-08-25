@@ -95,6 +95,7 @@ import android.platform.test.annotations.AppModeFull;
 import android.text.TextUtils;
 import android.util.Log;
 
+import androidx.core.content.FileProvider;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.rule.ServiceTestRule;
 import androidx.test.runner.AndroidJUnit4;
@@ -110,6 +111,7 @@ import org.junit.runner.RunWith;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -203,6 +205,7 @@ public class PackageManagerTest {
     private static final String RESOLUTION_TEST_ACTION_NAME =
             "android.intent.action.RESOLUTION_TEST";
     private static final String SELECTOR_ACTION_NAME = "android.intent.action.SELECTORTEST";
+    private static final String FILE_PROVIDER_AUTHORITY = "android.content.cts.fileprovider";
 
     private static final ComponentName ACTIVITY_COMPONENT = new ComponentName(
             PACKAGE_NAME, ACTIVITY_NAME);
@@ -348,9 +351,9 @@ public class PackageManagerTest {
 
         // More comprehensive intent matching tests on target T+
         intent = new Intent();
-        comp = new ComponentName(INTENT_RESOLUTION_TEST_PKG_NAME, ACTIVITY_NAME + "2");
+        comp = new ComponentName(INTENT_RESOLUTION_TEST_PKG_NAME, ACTIVITY_NAME);
         intent.setComponent(comp);
-        intent.setAction(RESOLUTION_TEST_ACTION_NAME);
+        intent.setAction(RESOLUTION_TEST_ACTION_NAME + "2");
         results = mPackageManager.queryIntentActivities(intent, 0);
         assertEquals(0, results.size());
         intent.setType("*/*");
@@ -362,6 +365,17 @@ public class PackageManagerTest {
         intent.setDataAndType(Uri.parse("http://example.com"), "*/*");
         results = mPackageManager.queryIntentActivities(intent, 0);
         assertEquals(1, results.size());
+        File file = new File(mContext.getFilesDir(), "test.txt");
+        try {
+            file.createNewFile();
+        } catch (IOException e) {
+            fail(e.getMessage());
+        }
+        Uri uri = FileProvider.getUriForFile(mContext, FILE_PROVIDER_AUTHORITY, file);
+        intent.setData(uri);
+        results = mPackageManager.queryIntentActivities(intent, 0);
+        assertEquals(1, results.size());
+        file.delete();
         intent.addCategory(Intent.CATEGORY_APP_BROWSER);
         results = mPackageManager.queryIntentActivities(intent, 0);
         assertEquals(0, results.size());
