@@ -83,19 +83,23 @@ class NumFacesTest(its_base_test.ItsBaseTest):
         _, _, _, _, _ = cam.do_3a(get_results=True, mono_camera=mono_camera)
 
       for fd_mode in fd_modes:
-        assert FD_MODE_OFF <= fd_mode <= FD_MODE_FULL
+        if not FD_MODE_OFF <= fd_mode <= FD_MODE_FULL:
+          raise AssertionError(f'FD mode {fd_mode} not in MODES! '
+                               f'OFF: {FD_MODE_OFF}, FULL: {FD_MODE_FULL}')
         req = capture_request_utils.auto_capture_request()
         req['android.statistics.faceDetectMode'] = fd_mode
         fmt = {'format': 'yuv', 'width': W, 'height': H}
         caps = cam.do_capture([req]*NUM_TEST_FRAMES, fmt)
         for i, cap in enumerate(caps):
-          md = cap['metadata']
-          assert md['android.statistics.faceDetectMode'] == fd_mode
-          faces = md['android.statistics.faces']
+          fd_mode_cap = cap['metadata']['android.statistics.faceDetectMode']
+          if fd_mode_cap != fd_mode:
+            raise AssertionError(f'metadata {fd_mode_cap} != req {fd_mode}')
 
+          faces = cap['metadata']['android.statistics.faces']
           # 0 faces should be returned for OFF mode
           if fd_mode == FD_MODE_OFF:
-            assert not faces
+            if faces:
+              raise AssertionError(f'Error: faces detected in OFF: {faces}')
             continue
           # Face detection could take several frames to warm up,
           # but should detect the correct number of faces in last frame
@@ -111,7 +115,9 @@ class NumFacesTest(its_base_test.ItsBaseTest):
             img_name = '%s_fd_mode_%s.jpg' % (os.path.join(self.log_path,
                                                            NAME), fd_mode)
             image_processing_utils.write_image(img, img_name)
-            assert fnd_faces == NUM_FACES
+            if fnd_faces != NUM_FACES:
+              raise AssertionError('Wrong num of faces found! '
+                                   f'Found: {fnd_faces}, expected: {NUM_FACES}')
           if not faces:
             continue
 
@@ -121,16 +127,26 @@ class NumFacesTest(its_base_test.ItsBaseTest):
           # Reasonable scores for faces
           face_scores = [face['score'] for face in faces]
           for score in face_scores:
-            assert 1 <= score <= 100
+            if not 1 <= score <= 100:
+              raise AssertionError(f'score not between [1:100]! {score}')
           # Face bounds should be within active array
           face_rectangles = [face['bounds'] for face in faces]
           for rect in face_rectangles:
-            assert rect['top'] < rect['bottom']
-            assert rect['left'] < rect['right']
-            assert 0 <= rect['top'] <= ah
-            assert 0 <= rect['bottom'] <= ah
-            assert 0 <= rect['left'] <= aw
-            assert 0 <= rect['right'] <= aw
+            if (rect['top'] >= rect['bottom'] or
+                rect['left'] >= rect['right']):
+              raise AssertionError('Face coordinates incorrect! '
+                                   f" t: {rect['top']}, b: {rect['bottom']}, "
+                                   f" l: {rect['left']}, r: {rect['right']}")
+            if (not 0 <= rect['top'] <= ah or
+                not 0 <= rect['bottom'] <= ah):
+              raise AssertionError('Face top/bottom outside of image height! '
+                                   f"t: {rect['top']}, b: {rect['bottom']}, "
+                                   f"h: {ah}")
+            if (not 0 <= rect['left'] <= aw or
+                not 0 <= rect['right'] <= aw):
+              raise AssertionError('Face left/right outside of image width! '
+                                   f"l: {rect['left']}, r: {rect['right']}, "
+                                   f" w: {aw}")
 
 if __name__ == '__main__':
   test_runner.main()
