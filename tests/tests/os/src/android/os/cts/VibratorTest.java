@@ -18,7 +18,6 @@ package android.os.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -103,6 +102,8 @@ public class VibratorTest {
                 Vibrator.class);
 
         mVibrator.addVibratorStateListener(mStateListener);
+        // Adding a listener to the Vibrator should trigger the callback once with the current
+        // vibrator state, so reset mocks to clear it for tests.
         reset(mStateListener);
     }
 
@@ -156,34 +157,46 @@ public class VibratorTest {
 
     @LargeTest
     @Test
-    public void testVibrateOneShot() {
+    public void testVibrateOneShotStartsAndFinishesVibration() {
         VibrationEffect oneShot =
                 VibrationEffect.createOneShot(300, VibrationEffect.DEFAULT_AMPLITUDE);
         mVibrator.vibrate(oneShot);
         assertStartsThenStopsVibrating(300);
+    }
 
-        oneShot = VibrationEffect.createOneShot(10_000, 255 /* Max amplitude */);
+    @Test
+    public void testVibrateOneShotMaxAmplitude() {
+        VibrationEffect oneShot = VibrationEffect.createOneShot(10_000, 255 /* Max amplitude */);
         mVibrator.vibrate(oneShot);
         assertStartsVibrating();
 
         mVibrator.cancel();
         assertStopsVibrating();
+    }
 
-        oneShot = VibrationEffect.createOneShot(300, 1 /* Min amplitude */);
+    @Test
+    public void testVibrateOneShotMinAmplitude() {
+        VibrationEffect oneShot = VibrationEffect.createOneShot(300, 1 /* Min amplitude */);
         mVibrator.vibrate(oneShot, AUDIO_ATTRIBUTES);
         assertStartsVibrating();
     }
 
     @LargeTest
     @Test
-    public void testVibrateWaveform() {
-        final long[] timings = new long[] {100, 200, 300, 400, 500};
-        final int[] amplitudes = new int[] {64, 128, 255, 128, 64};
+    public void testVibrateWaveformStartsAndFinishesVibration() {
+        final long[] timings = new long[]{100, 200, 300, 400, 500};
+        final int[] amplitudes = new int[]{64, 128, 255, 128, 64};
         VibrationEffect waveform = VibrationEffect.createWaveform(timings, amplitudes, -1);
         mVibrator.vibrate(waveform);
         assertStartsThenStopsVibrating(1500);
+    }
 
-        waveform = VibrationEffect.createWaveform(timings, amplitudes, 0);
+    @LargeTest
+    @Test
+    public void testVibrateWaveformRepeats() {
+        final long[] timings = new long[] {100, 200, 300, 400, 500};
+        final int[] amplitudes = new int[] {64, 128, 255, 128, 64};
+        VibrationEffect waveform = VibrationEffect.createWaveform(timings, amplitudes, 0);
         mVibrator.vibrate(waveform, AUDIO_ATTRIBUTES);
         assertStartsVibrating();
 
@@ -379,7 +392,6 @@ public class VibratorTest {
         if (mVibrator.hasVibrator()) {
             verify(mStateListener, timeout(CALLBACK_TIMEOUT_MILLIS).atLeastOnce())
                     .onVibratorStateChanged(eq(expected));
-            reset(mStateListener);
         }
     }
 }
