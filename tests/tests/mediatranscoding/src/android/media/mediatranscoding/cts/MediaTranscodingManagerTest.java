@@ -30,7 +30,7 @@ import android.media.MediaTranscodingManager.TranscodingRequest;
 import android.media.MediaTranscodingManager.TranscodingSession;
 import android.media.MediaTranscodingManager.VideoTranscodingRequest;
 import android.net.Uri;
-import android.os.Build;
+// import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.FileUtils;
@@ -45,7 +45,6 @@ import android.util.Log;
 import androidx.test.filters.SdkSuppress;
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.MediaUtils;
 
 import org.junit.Test;
@@ -70,6 +69,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Presubmit
 @RequiresDevice
 @AppModeFull(reason = "Instant apps cannot access the SD card")
+@SdkSuppress(minSdkVersion = 31, codeName = "S")
 public class MediaTranscodingManagerTest extends AndroidTestCase {
     private static final String TAG = "MediaTranscodingManagerTest";
     /** The time to wait for the transcode operation to complete before failing the test. */
@@ -94,8 +94,6 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
 
     // Threshold for the psnr to make sure the transcoded video is valid.
     private static final int PSNR_THRESHOLD = 20;
-
-    private static boolean sIsAtLeastS = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S);
 
     // Copy the resource to cache.
     private Uri resourceToUri(Context context, int resId, String name) throws IOException {
@@ -170,13 +168,7 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
     }
 
     // Skip the test for TV, Car and Watch devices.
-    // also skip if the underlying system is too old (e.g. Q/R)
     private boolean shouldSkip() {
-
-        // Transcoding was introduced in Android S
-        if (!MediaUtils.check(sIsAtLeastS, "mediatranscoding tests need Android 12")) {
-            return true;
-        }
 
         PackageManager pm =
                 InstrumentationRegistry.getInstrumentation().getTargetContext().getPackageManager();
