@@ -446,7 +446,7 @@ public class WebViewSslTest extends ActivityInstrumentationTestCase2<WebViewCtsA
         final WebViewCtsActivity activity = getActivity();
         mWebView = activity.getWebView();
         if (mWebView != null) {
-            new PollingCheck() {
+            new PollingCheck(WebkitUtils.TEST_TIMEOUT_MS) {
                 @Override
                     protected boolean check() {
                         return activity.hasWindowFocus();
@@ -955,7 +955,7 @@ public class WebViewSslTest extends ActivityInstrumentationTestCase2<WebViewCtsA
         });
         // Wait until clearclientcertpreferences clears the preferences. Generally this is just a
         // thread hopping.
-        new PollingCheck(WebViewTest.TEST_TIMEOUT) {
+        new PollingCheck(WebkitUtils.TEST_TIMEOUT_MS) {
             @Override
             protected boolean check() {
                 return cleared.get();

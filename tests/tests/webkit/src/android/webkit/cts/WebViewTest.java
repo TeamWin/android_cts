@@ -122,7 +122,6 @@ import org.apache.http.util.EntityUtils;
 
 @AppModeFull
 public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActivity> {
-    public static final long TEST_TIMEOUT = 20000L;
     private static final int INITIAL_PROGRESS = 100;
     private static final String X_REQUESTED_WITH = "X-Requested-With";
     private static final String PRINTER_TEST_FILE = "print.pdf";
@@ -169,7 +168,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         final WebViewCtsActivity activity = getActivity();
         mWebView = activity.getWebView();
         if (mWebView != null) {
-            new PollingCheck() {
+            new PollingCheck(WebkitUtils.TEST_TIMEOUT_MS) {
                 @Override
                     protected boolean check() {
                         return activity.hasWindowFocus();
@@ -609,7 +608,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
             private synchronized String waitForResult() {
                 while (!mWasProvideResultCalled) {
                     try {
-                        wait(TEST_TIMEOUT);
+                        wait(WebkitUtils.TEST_TIMEOUT_MS);
                     } catch (InterruptedException e) {
                         continue;
                     }
@@ -884,7 +883,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
             });
             if (isPictureFilledWithColor(pictureRef.get(), color))
                 break;
-            new PollingCheck(TEST_TIMEOUT) {
+            new PollingCheck(WebkitUtils.TEST_TIMEOUT_MS) {
                 @Override
                 protected boolean check() {
                     return listener.callCount > oldCallCount;
@@ -943,7 +942,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         final String url = mWebServer.getAssetUrl(TestHtmlConstants.HELLO_WORLD_URL);
         mOnUiThread.setPictureListener(listener);
         mOnUiThread.loadUrlAndWaitForCompletion(url);
-        new PollingCheck(TEST_TIMEOUT) {
+        new PollingCheck(WebkitUtils.TEST_TIMEOUT_MS) {
             @Override
             protected boolean check() {
                 return listener.callCount > 0;
@@ -955,7 +954,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         final int oldCallCount = listener.callCount;
         final String newUrl = mWebServer.getAssetUrl(TestHtmlConstants.SMALL_IMG_URL);
         mOnUiThread.loadUrlAndWaitForCompletion(newUrl);
-        new PollingCheck(TEST_TIMEOUT) {
+        new PollingCheck(WebkitUtils.TEST_TIMEOUT_MS) {
             @Override
             protected boolean check() {
                 return listener.callCount > oldCallCount;
@@ -1265,7 +1264,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         };
 
         mOnUiThread.saveWebArchive(baseName, autoName, callback);
-        assertTrue(saving.tryAcquire(TEST_TIMEOUT, TimeUnit.MILLISECONDS));
+        assertTrue(saving.tryAcquire(WebkitUtils.TEST_TIMEOUT_MS, TimeUnit.MILLISECONDS));
     }
 
     public void testSaveWebArchive() throws Throwable {
@@ -1533,7 +1532,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
 
         // Wait for UI thread to settle and receive page dimentions from renderer
         // such that we can invoke page down.
-        new PollingCheck() {
+        new PollingCheck(WebkitUtils.TEST_TIMEOUT_MS) {
             @Override
             protected boolean check() {
                  return mOnUiThread.pageDown(false);
@@ -1558,7 +1557,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
 
         // jump to the bottom
         assertTrue(mOnUiThread.pageDown(true));
-        new PollingCheck() {
+        new PollingCheck(WebkitUtils.TEST_TIMEOUT_MS) {
             @Override
             protected boolean check() {
                 return bottomScrollY == mOnUiThread.getScrollY();
@@ -1567,7 +1566,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
 
         // jump to the top
         assertTrue(mOnUiThread.pageUp(true));
-         new PollingCheck() {
+         new PollingCheck(WebkitUtils.TEST_TIMEOUT_MS) {
             @Override
             protected boolean check() {
                 return topScrollY == mOnUiThread.getScrollY();
@@ -1581,7 +1580,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         }
         mOnUiThread.loadDataAndWaitForCompletion(
                 "<html><body></body></html>", "text/html", null);
-        new PollingCheck() {
+        new PollingCheck(WebkitUtils.TEST_TIMEOUT_MS) {
             @Override
             protected boolean check() {
                 return mOnUiThread.getScale() != 0 && mOnUiThread.getContentHeight() != 0
@@ -1621,7 +1620,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
                 + "px;margin:0px auto;\">Get the height of HTML content.</p>";
         mOnUiThread.loadDataAndWaitForCompletion("<html><body>" + p
                 + "</body></html>", "text/html", null);
-        new PollingCheck() {
+        new PollingCheck(WebkitUtils.TEST_TIMEOUT_MS) {
             @Override
             protected boolean check() {
                 return mOnUiThread.getContentHeight() > pageHeight;
@@ -1631,7 +1630,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         final int extraSpace = mOnUiThread.getContentHeight() - pageHeight;
         mOnUiThread.loadDataAndWaitForCompletion("<html><body>" + p
                 + p + "</body></html>", "text/html", null);
-        new PollingCheck() {
+        new PollingCheck(WebkitUtils.TEST_TIMEOUT_MS) {
             @Override
             protected boolean check() {
                 // |pageHeight| is accurate, |extraSpace| = getContentheight() - |pageHeight|, so it
@@ -1685,7 +1684,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
                 "width:" + dimension + "px\">Test fling scroll.</p>";
         mOnUiThread.loadDataAndWaitForCompletion("<html><body>" + p
                 + "</body></html>", "text/html", null);
-        new PollingCheck() {
+        new PollingCheck(WebkitUtils.TEST_TIMEOUT_MS) {
             @Override
             protected boolean check() {
                 return mOnUiThread.getContentHeight() >= dimension;
@@ -1698,7 +1697,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
 
         mOnUiThread.flingScroll(10000, 10000);
 
-        new PollingCheck() {
+        new PollingCheck(WebkitUtils.TEST_TIMEOUT_MS) {
             @Override
             protected boolean check() {
                 return mOnUiThread.getScrollX() > previousScrollX &&
@@ -1728,7 +1727,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         handler.reset();
         getInstrumentation().sendKeyDownUpSync(KeyEvent.KEYCODE_TAB);
         mOnUiThread.requestFocusNodeHref(hrefMsg);
-        new PollingCheck() {
+        new PollingCheck(WebkitUtils.TEST_TIMEOUT_MS) {
             @Override
             protected boolean check() {
                 boolean done = false;
@@ -1753,7 +1752,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         hrefMsg2.setTarget(handler);
         getInstrumentation().sendKeyDownUpSync(KeyEvent.KEYCODE_TAB);
         mOnUiThread.requestFocusNodeHref(hrefMsg2);
-        new PollingCheck() {
+        new PollingCheck(WebkitUtils.TEST_TIMEOUT_MS) {
             @Override
             protected boolean check() {
                 boolean done = false;
@@ -1831,7 +1830,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
                         middleX, middleY, 0));
         getInstrumentation().waitForIdleSync();
         mOnUiThread.requestImageRef(msg);
-        new PollingCheck() {
+        new PollingCheck(WebkitUtils.TEST_TIMEOUT_MS) {
             @Override
             protected boolean check() {
                 boolean done = false;
@@ -1934,7 +1933,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         mOnUiThread.loadDataAndWaitForCompletion("<html><body>" + p
                 + "</body></html>", "text/html", null);
 
-        new PollingCheck(TEST_TIMEOUT) {
+        new PollingCheck(WebkitUtils.TEST_TIMEOUT_MS) {
             @Override
             protected boolean check() {
                 return Math.abs(defaultScale - mOnUiThread.getScale()) < .01f;
@@ -1946,7 +1945,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         mOnUiThread.loadDataAndWaitForCompletion("<html><body>" + p
                 + "2" + "</body></html>", "text/html", null);
 
-        new PollingCheck(TEST_TIMEOUT) {
+        new PollingCheck(WebkitUtils.TEST_TIMEOUT_MS) {
             @Override
             protected boolean check() {
                 return Math.abs(defaultScale - mOnUiThread.getScale()) < .01f;
@@ -1957,7 +1956,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         mOnUiThread.loadDataAndWaitForCompletion("<html><body>" + p
                 + "3" + "</body></html>", "text/html", null);
 
-        new PollingCheck(TEST_TIMEOUT) {
+        new PollingCheck(WebkitUtils.TEST_TIMEOUT_MS) {
             @Override
             protected boolean check() {
                 return Math.abs(0.5 - mOnUiThread.getScale()) < .01f;
@@ -1968,7 +1967,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         mOnUiThread.loadDataAndWaitForCompletion("<html><body>" + p
                 + "4" + "</body></html>", "text/html", null);
 
-        new PollingCheck(TEST_TIMEOUT) {
+        new PollingCheck(WebkitUtils.TEST_TIMEOUT_MS) {
             @Override
             protected boolean check() {
                 return Math.abs(defaultScale - mOnUiThread.getScale()) < .01f;
@@ -2046,7 +2045,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         assertEquals(2, saveList.getCurrentIndex());
 
         // wait for the list items to get inflated
-        new PollingCheck(TEST_TIMEOUT) {
+        new PollingCheck(WebkitUtils.TEST_TIMEOUT_MS) {
             @Override
             protected boolean check() {
                 return restoreList.getItemAtIndex(0).getUrl() != null &&
@@ -2080,7 +2079,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         String p = "<p style=\"height:" + dimension + "px;width:" + dimension + "px\">&nbsp;</p>";
         mOnUiThread.loadDataAndWaitForCompletion("<html><body>" + p
                 + "</body></html>", "text/html", null);
-        new PollingCheck() {
+        new PollingCheck(WebkitUtils.TEST_TIMEOUT_MS) {
             @Override
             protected boolean check() {
                 return mOnUiThread.getContentHeight() >= dimension;
@@ -2179,7 +2178,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         mOnUiThread.setNetworkAvailable(false);
 
         // Wait for the DOM to receive notification of the network state change.
-        new PollingCheck(TEST_TIMEOUT) {
+        new PollingCheck(WebkitUtils.TEST_TIMEOUT_MS) {
             @Override
             protected boolean check() {
                 return mOnUiThread.getTitle().equals("OFFLINE");
@@ -2189,7 +2188,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         mOnUiThread.setNetworkAvailable(true);
 
         // Wait for the DOM to receive notification of the network state change.
-        new PollingCheck(TEST_TIMEOUT) {
+        new PollingCheck(WebkitUtils.TEST_TIMEOUT_MS) {
             @Override
             protected boolean check() {
                 return mOnUiThread.getTitle().equals("ONLINE");
@@ -2316,7 +2315,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
 
         final String EXPECTED_TITLE = "test";
         mOnUiThread.evaluateJavascript("document.title='" + EXPECTED_TITLE + "';", null);
-        new PollingCheck(TEST_TIMEOUT) {
+        new PollingCheck(WebkitUtils.TEST_TIMEOUT_MS) {
             @Override
             protected boolean check() {
                 return mOnUiThread.getTitle().equals(EXPECTED_TITLE);
@@ -2728,7 +2727,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
 
     private void pollingCheckWebBackForwardList(final String currUrl, final int currIndex,
             final int size) {
-        new PollingCheck() {
+        new PollingCheck(WebkitUtils.TEST_TIMEOUT_MS) {
             @Override
             protected boolean check() {
                 WebBackForwardList list = mWebView.copyBackForwardList();
