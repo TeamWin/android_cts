@@ -27,8 +27,6 @@ import android.platform.test.annotations.Presubmit;
  * Tests that App Compat overrides are added/removed for a test package via the Device Config flags
  * in the 'app_compat_overrides' namespace, following both flag changes and package updates.
  *
- * TODO(b/194177015): Test that overrides are added/removed after package in installed/removed.
- *
  * <p>Build/Install/Run:
  * atest com.android.cts.appcompat.AppCompatOverridesServiceTest
  */
@@ -54,6 +52,8 @@ public class AppCompatOverridesServiceTest extends CompatChangeGatingTestCase {
 
     private static final String FLAG_OWNED_CHANGE_IDS = "owned_change_ids";
     private static final String FLAG_REMOVE_OVERRIDES = "remove_overrides";
+
+    public static final int WAIT_TIME_MS = 1_000;
 
     private String initialOwnedChangeIdsValue;
     private String initialRemoveOverridesValue;
@@ -83,10 +83,29 @@ public class AppCompatOverridesServiceTest extends CompatChangeGatingTestCase {
         restoreFlagValue(FLAG_REMOVE_OVERRIDES, initialRemoveOverridesValue);
     }
 
-    public void testPackageOverrideFlagPackageNotInstalled() throws Exception {
+    public void testPackageOverrideFlagPackageInstalledAfterFlagAdded() throws Exception {
         putFlagValue(OVERRIDE_PKG, CTS_CHANGE_ID + ":::true");
 
         Change ctsChange = getChange(CTS_CHANGE_ID);
+        assertThat(ctsChange.hasRawOverrides).isFalse();
+
+        // Now install the app and the override should be applied
+        installPackage(OVERRIDE_PKG_VERSION_1_FILENAME, false);
+        Thread.sleep(WAIT_TIME_MS);
+
+        ctsChange = getChange(CTS_CHANGE_ID);
+        assertThat(ctsChange.hasRawOverrides).isTrue();
+        assertThat(ctsChange.rawOverrideStr).isEqualTo(
+                String.format(OVERRIDE_FORMAT, OVERRIDE_PKG, true));
+        assertThat(ctsChange.hasOverrides).isTrue();
+        assertThat(ctsChange.overridesStr).isEqualTo(
+                String.format(OVERRIDE_FORMAT, OVERRIDE_PKG, true));
+
+        // Now uninstall the app and the override should be applied removed
+        uninstallPackage(OVERRIDE_PKG, false);
+        Thread.sleep(WAIT_TIME_MS);
+
+        ctsChange = getChange(CTS_CHANGE_ID);
         assertThat(ctsChange.hasRawOverrides).isFalse();
     }
 
