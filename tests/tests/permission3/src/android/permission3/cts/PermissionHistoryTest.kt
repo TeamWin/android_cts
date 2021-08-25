@@ -23,6 +23,7 @@ import android.support.test.uiautomator.By
 import androidx.test.filters.SdkSuppress
 import com.android.compatibility.common.util.SystemUtil
 import org.junit.After
+import org.junit.Assume.assumeFalse
 import org.junit.Before
 import org.junit.Ignore
 import org.junit.Test
@@ -41,6 +42,10 @@ private const val MORE_OPTIONS = "More options"
 class PermissionHistoryTest : BasePermissionHubTest() {
     private val micLabel = packageManager.getPermissionGroupInfo(
             Manifest.permission_group.MICROPHONE, 0).loadLabel(packageManager).toString()
+
+    // Permission history is not available on TV devices.
+    @Before
+    fun assumeNotTv() = assumeFalse(isTv)
 
     @Before
     fun installApps() {
