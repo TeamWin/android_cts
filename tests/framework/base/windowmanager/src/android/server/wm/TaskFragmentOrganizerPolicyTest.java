@@ -27,7 +27,6 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.app.Activity;
 import android.app.Instrumentation;
-import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.graphics.Rect;
 import android.os.Binder;
@@ -206,8 +205,7 @@ public class TaskFragmentOrganizerPolicyTest {
 
         mTaskFragmentOrganizer.waitForTaskFragmentError();
 
-        assertThat(mTaskFragmentOrganizer.getThrowable())
-                .isInstanceOf(ActivityNotFoundException.class);
+        assertThat(mTaskFragmentOrganizer.getThrowable()).isInstanceOf(SecurityException.class);
         assertThat(mTaskFragmentOrganizer.getErrorCallbackToken()).isEqualTo(errorCallbackToken);
 
         final WindowContainerTransaction wctWithPermission = new WindowContainerTransaction()
