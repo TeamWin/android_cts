@@ -36,8 +36,6 @@ import org.junit.runner.RunWith;
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class HdmiCecTvStandbyTest extends BaseHdmiCecCtsTest {
 
-    private static final LogicalAddress TV_DEVICE = LogicalAddress.TV;
-
     public HdmiCecTvStandbyTest() {
         super(HdmiCecConstants.CEC_DEVICE_TYPE_TV);
     }
@@ -46,7 +44,7 @@ public class HdmiCecTvStandbyTest extends BaseHdmiCecCtsTest {
     public RuleChain ruleChain =
             RuleChain.outerRule(CecRules.requiresCec(this))
                     .around(CecRules.requiresLeanback(this))
-                    .around(CecRules.requiresDeviceType(this, TV_DEVICE))
+                    .around(CecRules.requiresDeviceType(this, HdmiCecConstants.CEC_DEVICE_TYPE_TV))
                     .around(hdmiCecClient);
 
     private static final String HDMI_CONTROL_DEVICE_AUTO_OFF =

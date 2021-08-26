@@ -16,6 +16,8 @@
 
 package android.hdmicec.cts;
 
+import androidx.annotation.IntDef;
+
 import java.io.File;
 
 public final class HdmiCecConstants {
@@ -35,8 +37,6 @@ public final class HdmiCecConstants {
     public static final int TV_PHYSICAL_ADDRESS = 0x0000;
     public static final int PHYSICAL_ADDRESS_LENGTH = 4; /* Num nibbles in CEC message */
 
-    public static final int PLAYBACK_DEVICE_TYPE = 0x04;
-
     public static final int CEC_CONTROL_SELECT = 0x0;
     public static final int CEC_CONTROL_UP = 0x1;
     public static final int CEC_CONTROL_DOWN = 0x2;
@@ -52,6 +52,19 @@ public final class HdmiCecConstants {
     public static final int CEC_CONTROL_POWER_ON_FUNCTION = 0x6D;
 
     public static final int UNRECOGNIZED_OPCODE = 0x0;
+
+    @IntDef(
+            value = {
+                CEC_DEVICE_TYPE_UNKNOWN,
+                CEC_DEVICE_TYPE_TV,
+                CEC_DEVICE_TYPE_RECORDER,
+                CEC_DEVICE_TYPE_RESERVED,
+                CEC_DEVICE_TYPE_TUNER,
+                CEC_DEVICE_TYPE_PLAYBACK_DEVICE,
+                CEC_DEVICE_TYPE_AUDIO_SYSTEM,
+                CEC_DEVICE_TYPE_SWITCH
+            })
+    public @interface CecDeviceType {}
 
     public static final int CEC_DEVICE_TYPE_UNKNOWN = -1;
     public static final int CEC_DEVICE_TYPE_TV = 0;

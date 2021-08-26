@@ -46,11 +46,12 @@ public final class HdmiCecLogicalAddressTest extends BaseHdmiCecCtsTest {
 
     @Rule
     public RuleChain ruleChain =
-        RuleChain
-            .outerRule(CecRules.requiresCec(this))
-            .around(CecRules.requiresLeanback(this))
-            .around(CecRules.requiresDeviceType(this, AUDIO_DEVICE))
-            .around(hdmiCecClient);
+            RuleChain.outerRule(CecRules.requiresCec(this))
+                    .around(CecRules.requiresLeanback(this))
+                    .around(
+                            CecRules.requiresDeviceType(
+                                    this, HdmiCecConstants.CEC_DEVICE_TYPE_AUDIO_SYSTEM))
+                    .around(hdmiCecClient);
 
     /**
      * Test 10.2.5-1

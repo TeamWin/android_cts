@@ -46,12 +46,14 @@ public final class HdmiCecTvPowerToggleTest extends BaseHdmiCecCtsTest {
     private static final LogicalAddress PLAYBACK_DEVICE = LogicalAddress.PLAYBACK_1;
     private static final String POWER_CONTROL_MODE =
             "hdmi_control_send_standby_on_sleep";
+
     @Rule
     public RuleChain ruleChain =
-            RuleChain
-                    .outerRule(CecRules.requiresCec(this))
+            RuleChain.outerRule(CecRules.requiresCec(this))
                     .around(CecRules.requiresLeanback(this))
-                    .around(CecRules.requiresDeviceType(this, LogicalAddress.PLAYBACK_1))
+                    .around(
+                            CecRules.requiresDeviceType(
+                                    this, HdmiCecConstants.CEC_DEVICE_TYPE_PLAYBACK_DEVICE))
                     .around(hdmiCecClient);
 
     public HdmiCecTvPowerToggleTest() {

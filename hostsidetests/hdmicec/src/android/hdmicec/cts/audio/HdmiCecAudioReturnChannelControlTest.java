@@ -46,11 +46,12 @@ public final class HdmiCecAudioReturnChannelControlTest extends BaseHdmiCecCtsTe
 
     @Rule
     public RuleChain ruleChain =
-        RuleChain
-            .outerRule(CecRules.requiresCec(this))
-            .around(CecRules.requiresLeanback(this))
-            .around(CecRules.requiresDeviceType(this, AUDIO_DEVICE))
-            .around(hdmiCecClient);
+            RuleChain.outerRule(CecRules.requiresCec(this))
+                    .around(CecRules.requiresLeanback(this))
+                    .around(
+                            CecRules.requiresDeviceType(
+                                    this, HdmiCecConstants.CEC_DEVICE_TYPE_AUDIO_SYSTEM))
+                    .around(hdmiCecClient);
 
     private void checkArcIsInitiated() throws CecClientWrapperException {
         try {

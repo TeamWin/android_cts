@@ -36,19 +36,18 @@ import org.junit.runner.RunWith;
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class HdmiCecDeviceOsdNameTest extends BaseHdmiCecCtsTest {
 
-    private static final LogicalAddress PLAYBACK_DEVICE = LogicalAddress.PLAYBACK_1;
-
     public HdmiCecDeviceOsdNameTest() {
         super(HdmiCecConstants.CEC_DEVICE_TYPE_PLAYBACK_DEVICE);
     }
 
     @Rule
     public RuleChain ruleChain =
-        RuleChain
-            .outerRule(CecRules.requiresCec(this))
-            .around(CecRules.requiresLeanback(this))
-            .around(CecRules.requiresDeviceType(this, PLAYBACK_DEVICE))
-            .around(hdmiCecClient);
+            RuleChain.outerRule(CecRules.requiresCec(this))
+                    .around(CecRules.requiresLeanback(this))
+                    .around(
+                            CecRules.requiresDeviceType(
+                                    this, HdmiCecConstants.CEC_DEVICE_TYPE_PLAYBACK_DEVICE))
+                    .around(hdmiCecClient);
 
     /**
      * Test 11.2.11-1a

@@ -47,10 +47,11 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
 
     @Rule
     public RuleChain ruleChain =
-            RuleChain
-                    .outerRule(CecRules.requiresCec(this))
+            RuleChain.outerRule(CecRules.requiresCec(this))
                     .around(CecRules.requiresLeanback(this))
-                    .around(CecRules.requiresDeviceType(this, LogicalAddress.PLAYBACK_1))
+                    .around(
+                            CecRules.requiresDeviceType(
+                                    this, HdmiCecConstants.CEC_DEVICE_TYPE_PLAYBACK_DEVICE))
                     .around(hdmiCecClient);
 
     /**

@@ -18,6 +18,7 @@ package android.hdmicec.cts;
 
 import static org.junit.Assume.assumeTrue;
 
+import android.hdmicec.cts.HdmiCecConstants.CecDeviceType;
 import android.hdmicec.cts.error.DumpsysParseException;
 
 import com.android.tradefed.config.Option;
@@ -62,7 +63,7 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
 
     public final HdmiCecClientWrapper hdmiCecClient;
     public List<LogicalAddress> mDutLogicalAddresses = new ArrayList<>();
-    public int mTestDeviceType = HdmiCecConstants.CEC_DEVICE_TYPE_UNKNOWN;
+    public @CecDeviceType int mTestDeviceType;
 
     /**
      * Constructor for BaseHdmiCecCtsTest.
@@ -84,10 +85,10 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
      * Constructor for BaseHdmiCecCtsTest.
      *
      * @param testDeviceType The primary test device type. This is used to determine to which
-     * logical address of the DUT messages should be sent.
+     *     logical address of the DUT messages should be sent.
      * @param clientParams Extra parameters to use when launching cec-client
      */
-    public BaseHdmiCecCtsTest(int testDeviceType, String... clientParams) {
+    public BaseHdmiCecCtsTest(@CecDeviceType int testDeviceType, String... clientParams) {
         this.hdmiCecClient = new HdmiCecClientWrapper(clientParams);
         mTestDeviceType = testDeviceType;
     }
@@ -113,16 +114,17 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
             return new RequiredFeatureRule(testPointer, HdmiCecConstants.LEANBACK_FEATURE);
         }
 
-        public static TestRule requiresDeviceType(BaseHostJUnit4Test testPointer,
-                                                  LogicalAddress dutLogicalAddress) {
+        public static TestRule requiresDeviceType(
+                BaseHostJUnit4Test testPointer, @CecDeviceType int dutDeviceType) {
             return RequiredPropertyRule.asCsvContainsValue(
-                        testPointer,
-                        HdmiCecConstants.HDMI_DEVICE_TYPE_PROPERTY,
-                        dutLogicalAddress.getDeviceTypeString());
+                    testPointer,
+                    HdmiCecConstants.HDMI_DEVICE_TYPE_PROPERTY,
+                    Integer.toString(dutDeviceType));
         }
 
         /** This rule will skip the test if the DUT belongs to the HDMI device type deviceType. */
-        public static TestRule skipDeviceType(BaseHostJUnit4Test testPointer, int deviceType) {
+        public static TestRule skipDeviceType(
+                BaseHostJUnit4Test testPointer, @CecDeviceType int deviceType) {
             return RequiredPropertyRule.asCsvDoesNotContainsValue(
                     testPointer,
                     HdmiCecConstants.HDMI_DEVICE_TYPE_PROPERTY,
@@ -277,7 +279,7 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
                 "Could not parse " + addressType.getAddressType() + " from dumpsys.");
     }
 
-    public boolean hasDeviceType(int deviceType) {
+    public boolean hasDeviceType(@CecDeviceType int deviceType) {
         for (LogicalAddress address : mDutLogicalAddresses) {
             if (address.getDeviceType() == deviceType) {
                 return true;

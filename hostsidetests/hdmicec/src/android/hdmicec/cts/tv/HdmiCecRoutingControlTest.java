@@ -45,7 +45,7 @@ public final class HdmiCecRoutingControlTest extends BaseHdmiCecCtsTest {
     public RuleChain ruleChain =
             RuleChain.outerRule(CecRules.requiresCec(this))
                     .around(CecRules.requiresLeanback(this))
-                    .around(CecRules.requiresDeviceType(this, LogicalAddress.TV))
+                    .around(CecRules.requiresDeviceType(this, HdmiCecConstants.CEC_DEVICE_TYPE_TV))
                     .around(hdmiCecClient);
 
     public HdmiCecRoutingControlTest() {
