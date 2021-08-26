@@ -92,6 +92,11 @@ import android.media.tv.tuner.frontend.IsdbtFrontendSettings;
 import android.media.tv.tuner.frontend.OnTuneEventListener;
 import android.media.tv.tuner.frontend.ScanCallback;
 
+import android.os.ConditionVariable;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
+
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
@@ -779,6 +784,70 @@ public class TunerTest {
     }
 
     @Test
+    public void testResourceReclaimed() throws Exception {
+        List<Integer> ids = mTuner.getFrontendIds();
+        assertFalse(ids.isEmpty());
+        FrontendInfo info = mTuner.getFrontendInfoById(ids.get(0));
+        FrontendSettings feSettings = createFrontendSettings(info);
+
+        // first tune with mTuner to acquire resource
+        int res = mTuner.tune(feSettings);
+        assertEquals(Tuner.RESULT_SUCCESS, res);
+        assertNotNull(mTuner.getFrontendInfo());
+
+        // now tune with a higher priority tuner to have mTuner's resource reclaimed
+        Tuner higherPrioTuner = new Tuner(mContext, null, 200);
+        res = higherPrioTuner.tune(feSettings);
+        assertEquals(Tuner.RESULT_SUCCESS, res);
+        assertNotNull(higherPrioTuner.getFrontendInfo());
+
+        higherPrioTuner.close();
+    }
+
+    @Test
+    public void testResourceReclaimedDifferentThread() throws Exception {
+        List<Integer> ids = mTuner.getFrontendIds();
+        assertFalse(ids.isEmpty());
+        FrontendInfo info = mTuner.getFrontendInfoById(ids.get(0));
+        FrontendSettings feSettings = createFrontendSettings(info);
+
+        // first tune with mTuner to acquire resource
+        int res = mTuner.tune(feSettings);
+        assertEquals(Tuner.RESULT_SUCCESS, res);
+        assertNotNull(mTuner.getFrontendInfo());
+
+        // now tune with a higher priority tuner to have mTuner's resource reclaimed
+        TunerHandler tunerHandler = createTunerHandler(null);
+        Message msgCreate = new Message();
+        msgCreate.what = MSG_TUNER_HANDLER_CREATE;
+        msgCreate.arg1 = 200;
+        tunerHandler.sendMessage(msgCreate);
+        mTunerHandlerTaskComplete.block();
+        mTunerHandlerTaskComplete.close();
+
+        Message msgTune = new Message();
+        msgTune.what = MSG_TUNER_HANDLER_TUNE;
+        msgTune.obj = (Object) feSettings;
+        tunerHandler.sendMessage(msgTune);
+
+        mTunerHandlerTaskComplete.block();
+        mTunerHandlerTaskComplete.close();
+        res = tunerHandler.getResult();
+        assertEquals(Tuner.RESULT_SUCCESS, res);
+
+        Tuner higherPrioTuner = tunerHandler.getTuner();
+        assertNotNull(higherPrioTuner.getFrontendInfo());
+
+        Message msgClose = new Message();
+        msgClose.what = MSG_TUNER_HANDLER_CLOSE;
+        tunerHandler.sendMessage(msgClose);
+
+        // call mTuner.close in parallel
+        mTuner.close();
+        mTuner = null;
+    }
+
+    @Test
     public void testShareFrontendFromTuner() throws Exception {
         Tuner other = new Tuner(mContext, null, 100);
         List<Integer> ids = other.getFrontendIds();
@@ -1251,5 +1320,74 @@ public class TunerTest {
                 ScanCallback.super.onDvbcAnnexReported(dvbcAnnext);
             }
         };
+    }
+
+    // TunerHandler utility for testing Tuner api calls in a different thread
+    private static final int MSG_TUNER_HANDLER_CREATE = 1;
+    private static final int MSG_TUNER_HANDLER_TUNE = 2;
+    private static final int MSG_TUNER_HANDLER_CLOSE = 3;
+
+    private ConditionVariable mTunerHandlerTaskComplete = new ConditionVariable();
+
+    private TunerHandler createTunerHandler(Looper looper) {
+        if (looper != null) {
+            return new TunerHandler(looper);
+        } else if ((looper = Looper.myLooper()) != null) {
+            return new TunerHandler(looper);
+        } else if ((looper = Looper.getMainLooper()) != null) {
+            return new TunerHandler(looper);
+        }
+        return null;
+    }
+
+    private class TunerHandler extends Handler {
+        Object mLock = new Object();
+        Tuner mHandlersTuner;
+        int mResult;
+
+        private TunerHandler(Looper looper) {
+            super(looper);
+        }
+
+        public Tuner getTuner() {
+            synchronized (mLock) {
+                return mHandlersTuner;
+            }
+        }
+
+        public int getResult() {
+            synchronized (mLock) {
+                return mResult;
+            }
+        }
+
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case MSG_TUNER_HANDLER_CREATE: {
+                    synchronized (mLock) {
+                        int useCase = msg.arg1;
+                        mHandlersTuner = new Tuner(mContext, null, useCase);
+                    }
+                    break;
+                }
+                case MSG_TUNER_HANDLER_TUNE: {
+                    synchronized (mLock) {
+                        FrontendSettings feSettings = (FrontendSettings) msg.obj;
+                        mResult = mHandlersTuner.tune(feSettings);
+                    }
+                    break;
+                }
+                case MSG_TUNER_HANDLER_CLOSE: {
+                    synchronized (mLock) {
+                        mHandlersTuner.close();
+                    }
+                    break;
+                }
+                default:
+                    break;
+            }
+            mTunerHandlerTaskComplete.open();
+        }
     }
 }
