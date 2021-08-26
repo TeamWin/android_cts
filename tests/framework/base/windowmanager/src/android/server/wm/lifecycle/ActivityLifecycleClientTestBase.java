@@ -54,12 +54,11 @@ import android.os.Bundle;
 import android.os.Looper;
 import android.server.wm.MultiDisplayTestBase;
 import android.server.wm.ObjectTracker;
+import android.server.wm.cts.R;
 import android.server.wm.lifecycle.LifecycleLog.ActivityCallback;
 import android.transition.Transition;
 import android.transition.TransitionListenerAdapter;
 import android.util.Pair;
-
-import android.server.wm.cts.R;
 
 import androidx.annotation.NonNull;
 import androidx.test.rule.ActivityTestRule;
@@ -94,9 +93,8 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
     static final String EXTRA_START_ACTIVITY_WHEN_IDLE = "start_activity_when_idle";
     static final String EXTRA_ACTIVITY_ON_USER_LEAVE_HINT = "activity_on_user_leave_hint";
     /**
-     * There is no guarantee that an activity will get top resumed state, especially if it finishes
-     * itself in onResumed(), like a trampoline activity. Use this flag to skip recording top
-     * resumed state to avoid affecting verification.
+     * Use this flag to skip recording top resumed state to avoid affecting verification.
+     * @see Launcher#setSkipTopResumedStateCheck()
      */
     static final String EXTRA_SKIP_TOP_RESUMED_STATE = "skip_top_resumed_state";
 
@@ -138,6 +136,7 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
         private boolean mNoInstance;
         private final Class<? extends Activity> mActivityClass;
         private boolean mSkipLaunchTimeCheck;
+        private boolean mSkipTopResumedStateCheck;
 
         private boolean mLaunchCalled = false;
 
@@ -166,6 +165,9 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
             for (String flag : mExtraFlags) {
                 intent.putExtra(flag, true);
             }
+            if (mSkipTopResumedStateCheck) {
+                intent.putExtra(EXTRA_SKIP_TOP_RESUMED_STATE, true);
+            }
             if (mPostIntentSetup != null) {
                 mPostIntentSetup.accept(intent);
             }
@@ -186,8 +188,9 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
             }
             // Wait for activity to reach the desired state and verify launch time.
             if (mExpectedState == null) {
-                mExpectedState = CallbackTrackingActivity.class.isAssignableFrom(mActivityClass)
-                        ? ON_TOP_POSITION_GAINED : ON_RESUME;
+                mExpectedState = mSkipTopResumedStateCheck
+                        || !CallbackTrackingActivity.class.isAssignableFrom(mActivityClass)
+                        ? ON_RESUME : ON_TOP_POSITION_GAINED;
             }
             waitAndAssertActivityStates(state(mActivityClass, mExpectedState));
             if (!mSkipLaunchTimeCheck) {
@@ -243,6 +246,16 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
         /** Indicate that launch time verification should not be performed. */
         Launcher setSkipLaunchTimeCheck() {
             mSkipLaunchTimeCheck = true;
+            return this;
+        }
+
+        /**
+         * There is no guarantee that an activity will get top resumed state, especially if it
+         * finishes itself in onResumed(), like a trampoline activity. Set to skip recording
+         * top resumed state to avoid affecting verification.
+         */
+        Launcher setSkipTopResumedStateCheck() {
+            mSkipTopResumedStateCheck = true;
             return this;
         }
 
