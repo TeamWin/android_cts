@@ -18,10 +18,12 @@ package android.server.wm;
 
 import static android.app.AppOpsManager.MODE_ALLOWED;
 import static android.app.AppOpsManager.OPSTR_SYSTEM_ALERT_WINDOW;
+import static android.provider.Settings.Secure.IMMERSIVE_MODE_CONFIRMATIONS;
 import static android.server.wm.UiDeviceUtils.pressUnlockButton;
 import static android.server.wm.UiDeviceUtils.pressWakeupButton;
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
 import static android.server.wm.overlay.Components.OverlayActivity.EXTRA_TOKEN;
+import static android.view.WindowInsets.Type.navigationBars;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
@@ -54,6 +56,7 @@ import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
 import android.server.wm.overlay.Components;
 import android.server.wm.overlay.R;
+import android.server.wm.settings.SettingsSession;
 import android.server.wm.shared.BlockingResultReceiver;
 import android.server.wm.shared.IUntrustedTouchTestService;
 import android.util.ArrayMap;
@@ -74,7 +77,9 @@ import com.android.compatibility.common.util.AppOpsUtils;
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
@@ -128,6 +133,8 @@ public class WindowUntrustedTouchTest {
     private static final String SETTING_MAXIMUM_OBSCURING_OPACITY =
             "maximum_obscuring_opacity_for_touch";
 
+    private static SettingsSession<String> sImmersiveModeConfirmationSetting;
+
     private final WindowManagerStateHelper mWmState = new WindowManagerStateHelper();
     private final Map<String, FutureConnection<IUntrustedTouchTestService>> mConnections =
             new ArrayMap<>();
@@ -157,14 +164,35 @@ public class WindowUntrustedTouchTest {
     public ActivityScenarioRule<TestActivity> activityRule =
             new ActivityScenarioRule<>(TestActivity.class);
 
+    @BeforeClass
+    public static void setUpClass() {
+        sImmersiveModeConfirmationSetting = new SettingsSession<>(
+                Settings.Secure.getUriFor(IMMERSIVE_MODE_CONFIRMATIONS),
+                Settings.Secure::getString, Settings.Secure::putString);
+        sImmersiveModeConfirmationSetting.set("confirmed");
+    }
+
+    @AfterClass
+    public static void tearDownClass() {
+        if (sImmersiveModeConfirmationSetting != null) {
+            sImmersiveModeConfirmationSetting.close();
+        }
+    }
+
     @Before
     public void setUp() throws Exception {
         ActivityOptions options = ActivityOptions.makeBasic();
+        // Launch test in the fullscreen mode with navigation bar hidden,
+        // in order to ensure text toast is tappable and overlays above the test app
+        // on ARC++ and cf_pc devices. b/191075641.
         options.setLaunchWindowingMode(WindowConfiguration.WINDOWING_MODE_FULLSCREEN);
         activityRule.getScenario().launch(TestActivity.class, options.toBundle())
                 .onActivity(activity -> {
             mActivity = activity;
             mContainer = mActivity.view;
+            // On ARC++, text toast is fixed on the screen. Its position may overlays the navigation
+            // bar. Hide it to ensure the text toast overlays the app. b/191075641
+            mContainer.getWindowInsetsController().hide(navigationBars());
             mContainer.setOnTouchListener(this::onTouchEvent);
         });
         mInstrumentation = getInstrumentation();

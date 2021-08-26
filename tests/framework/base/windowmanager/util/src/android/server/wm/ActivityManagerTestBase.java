@@ -257,6 +257,12 @@ public abstract class ActivityManagerTestBase {
             .around(new WrapperRule(null /* before */, this::tearDownBase));
 
     /**
+     * Whether to wait for the rotation to be stable state after testing. It can be set if the
+     * display rotation may be changed by test.
+     */
+    protected boolean mWaitForRotationOnTearDown;
+
+    /**
      * @return the am command to start the given activity with the following extra key/value pairs.
      * {@param extras} a list of {@link CliIntentExtra} representing a generic intent extra
      */
@@ -605,6 +611,10 @@ public abstract class ActivityManagerTestBase {
         stopTestPackage(SECOND_TEST_PACKAGE);
         stopTestPackage(THIRD_TEST_PACKAGE);
         launchHomeActivityNoWait();
+
+        if (mWaitForRotationOnTearDown) {
+            mWmState.waitForDisplayUnfrozen();
+        }
     }
 
     /**
@@ -1686,6 +1696,7 @@ public abstract class ActivityManagerTestBase {
             super.close();
             // Restore accelerometer_rotation preference.
             mAccelerometerRotation.close();
+            mWaitForRotationOnTearDown = true;
         }
 
         private class SettingsObserver extends ContentObserver {
