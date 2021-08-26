@@ -17,6 +17,7 @@
 package android.os.cts;
 
 import static android.Manifest.permission.INTERNAL_SYSTEM_WINDOW;
+import static android.Manifest.permission.SYSTEM_ALERT_WINDOW;
 import static android.content.Context.WINDOW_SERVICE;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
@@ -997,27 +998,26 @@ public class StrictModeTest {
                     new WindowManager.LayoutParams(TYPE_APPLICATION_OVERLAY);
             final WindowManager.LayoutParams wrongType =
                     new WindowManager.LayoutParams(TYPE_PHONE);
+            WindowManager wm = service.getSystemService(WindowManager.class);
 
             mInstrumentation.runOnMainSync(() -> {
                 try {
-                    WindowManager wm = service.getSystemService(WindowManager.class);
-                    assertNoViolation(() -> wm.addView(view, correctType));
+                    // Hold INTERNAL_SYSTEM_WINDOW and SYSTEM_ALERT_WINDOW permission to
+                    // add TYPE_APPLICATION_OVERLAY and TYPE_PHONE window.
+                    mInstrumentation.getUiAutomation().adoptShellPermissionIdentity(
+                            INTERNAL_SYSTEM_WINDOW, SYSTEM_ALERT_WINDOW);
 
+                    assertNoViolation(() -> wm.addView(view, correctType));
                     wm.removeViewImmediate(view);
 
-                    // adding window with TYPE_PHONE needs to hold INTERNAL_SYSTEM_WINDOW
-                    // permission.
-                    mInstrumentation.getUiAutomation()
-                            .adoptShellPermissionIdentity(INTERNAL_SYSTEM_WINDOW);
-                    try {
-                        assertViolation("WindowContext's window type must match type in "
-                                + "WindowManager.LayoutParams", () -> wm.addView(view, wrongType));
-                    } finally {
-                        mInstrumentation.getUiAutomation().dropShellPermissionIdentity();
-                    }
+                    assertViolation("WindowContext's window type must match type in "
+                            + "WindowManager.LayoutParams", () -> wm.addView(view, wrongType));
+
                     assertNoViolation(() -> new GestureDetector(service, mGestureListener));
                 } catch (Exception e) {
                     fail("Failed because of " + e);
+                } finally {
+                    mInstrumentation.getUiAutomation().dropShellPermissionIdentity();
                 }
             });
             assertNoViolation(() -> ViewConfiguration.get(service));
