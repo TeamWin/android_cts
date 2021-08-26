@@ -45,6 +45,7 @@ import static android.appenumeration.cts.Constants.EXTRA_CERT;
 import static android.appenumeration.cts.Constants.EXTRA_DATA;
 import static android.appenumeration.cts.Constants.EXTRA_ERROR;
 import static android.appenumeration.cts.Constants.EXTRA_FLAGS;
+import static android.appenumeration.cts.Constants.EXTRA_ID;
 import static android.appenumeration.cts.Constants.EXTRA_REMOTE_CALLBACK;
 import static android.appenumeration.cts.Constants.EXTRA_REMOTE_READY_CALLBACK;
 import static android.content.Intent.EXTRA_COMPONENT_NAME;
@@ -74,6 +75,8 @@ import android.content.SyncAdapterType;
 import android.content.SyncStatusObserver;
 import android.content.pm.LauncherApps;
 import android.content.pm.PackageInfo;
+import android.content.pm.PackageInstaller.SessionCallback;
+import android.content.pm.PackageInstaller.SessionInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.SharedLibraryInfo;
 import android.database.Cursor;
@@ -297,6 +300,30 @@ public class TestActivity extends Activity {
                 final String targetPackageName = intent.getBundleExtra(EXTRA_DATA)
                         .getString(Intent.EXTRA_PACKAGE_NAME);
                 sendCanPackageQuery(remoteCallback, sourcePackageName, targetPackageName);
+            } else if (Constants.ACTION_GET_ALL_PACKAGE_INSTALLER_SESSIONS.equals(action)) {
+                final List<SessionInfo> infos = getSystemService(LauncherApps.class)
+                        .getAllPackageInstallerSessions();
+                sendSessionInfosListResult(remoteCallback, infos);
+            } else if (Constants.ACTION_AWAIT_LAUNCHER_APPS_SESSION_CALLBACK.equals(action)) {
+                final int expectedEventCode = intent.getBundleExtra(EXTRA_DATA)
+                        .getInt(EXTRA_ID, SessionInfo.INVALID_ID);
+                awaitLauncherAppsSessionCallback(remoteCallback, expectedEventCode,
+                        EXTENDED_TIMEOUT_MS);
+            } else if (Constants.ACTION_GET_SESSION_INFO.equals(action)) {
+                final int sessionId = intent.getBundleExtra(EXTRA_DATA)
+                        .getInt(EXTRA_ID, SessionInfo.INVALID_ID);
+                final List<SessionInfo> infos = Arrays.asList(getPackageManager()
+                        .getPackageInstaller()
+                        .getSessionInfo(sessionId));
+                sendSessionInfosListResult(remoteCallback, infos);
+            } else if (Constants.ACTION_GET_STAGED_SESSIONS.equals(action)) {
+                final List<SessionInfo> infos = getPackageManager().getPackageInstaller()
+                        .getStagedSessions();
+                sendSessionInfosListResult(remoteCallback, infos);
+            } else if (Constants.ACTION_GET_ALL_SESSIONS.equals(action)) {
+                final List<SessionInfo> infos = getPackageManager().getPackageInstaller()
+                        .getAllSessions();
+                sendSessionInfosListResult(remoteCallback, infos);
             } else {
                 sendError(remoteCallback, new Exception("unknown action " + action));
             }
@@ -730,6 +757,72 @@ public class TestActivity extends Activity {
         } catch (PackageManager.NameNotFoundException e) {
             sendError(remoteCallback, e);
         }
+    }
+
+    private void sendSessionInfosListResult(RemoteCallback remoteCallback,
+            List<SessionInfo> infos) {
+        final ArrayList<Parcelable> parcelables = new ArrayList<>(infos);
+        for (SessionInfo info : infos) {
+            parcelables.add(info);
+        }
+        final Bundle result = new Bundle();
+        result.putParcelableArrayList(EXTRA_RETURN_RESULT, parcelables);
+        remoteCallback.sendResult(result);
+        finish();
+    }
+
+    private void awaitLauncherAppsSessionCallback(RemoteCallback remoteCallback,
+            int expectedSessionId, long timeoutMs) {
+        final Object token = new Object();
+        final Bundle result = new Bundle();
+        final LauncherApps launcherApps = getSystemService(LauncherApps.class);
+        final SessionCallback sessionCallback = new SessionCallback() {
+
+            @Override
+            public void onCreated(int sessionId) {
+                // No-op
+            }
+
+            @Override
+            public void onBadgingChanged(int sessionId) {
+                // No-op
+            }
+
+            @Override
+            public void onActiveChanged(int sessionId, boolean active) {
+                // No-op
+            }
+
+            @Override
+            public void onProgressChanged(int sessionId, float progress) {
+                // No-op
+            }
+
+            @Override
+            public void onFinished(int sessionId, boolean success) {
+                if (sessionId != expectedSessionId) {
+                    return;
+                }
+
+                mainHandler.removeCallbacksAndMessages(token);
+                result.putInt(EXTRA_ID, sessionId);
+                remoteCallback.sendResult(result);
+
+                launcherApps.unregisterPackageInstallerSessionCallback(this);
+                finish();
+            }
+        };
+
+        launcherApps.registerPackageInstallerSessionCallback(this.getMainExecutor(),
+                sessionCallback);
+
+        mainHandler.postDelayed(() -> {
+            result.putInt(EXTRA_ID, SessionInfo.INVALID_ID);
+            remoteCallback.sendResult(result);
+
+            launcherApps.unregisterPackageInstallerSessionCallback(sessionCallback);
+            finish();
+        }, token, timeoutMs);
     }
 
     @Override

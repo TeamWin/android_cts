@@ -30,6 +30,7 @@ android_test {
 	    "androidx.test.ext.junit",
         "hamcrest-library",
 	    "CtsAppEnumerationTestLib",
+	    "cts-install-lib",
     ],
 
     srcs: ["src/**/*.java"],
