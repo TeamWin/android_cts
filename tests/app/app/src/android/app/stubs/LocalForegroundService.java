@@ -125,7 +125,7 @@ public class LocalForegroundService extends LocalService {
         bundle.putInt(EXTRA_COMMAND, command);
         return bundle;
     }
-
+  
     public static Bundle newCommand(int command) {
         Bundle bundle = new Bundle();
         bundle.putParcelable(LocalService.REPORT_OBJ_NAME, new IBinderParcelable(new Binder()));
