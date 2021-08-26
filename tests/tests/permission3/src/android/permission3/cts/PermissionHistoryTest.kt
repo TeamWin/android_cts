@@ -18,11 +18,13 @@ package android.permission3.cts
 
 import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager.FEATURE_LEANBACK
 import android.os.Build
 import android.support.test.uiautomator.By
 import androidx.test.filters.SdkSuppress
 import com.android.compatibility.common.util.SystemUtil
 import org.junit.After
+import org.junit.Assume.assumeFalse
 import org.junit.Before
 import org.junit.Ignore
 import org.junit.Test
@@ -42,6 +44,11 @@ class PermissionHistoryTest : BasePermissionTest() {
     private val micLabel = packageManager.getPermissionGroupInfo(
             Manifest.permission_group.MICROPHONE, 0).loadLabel(packageManager).toString()
 
+    // Permission history is not available on TV devices.
+    @Before
+    fun assumeNotTv() =
+            assumeFalse(packageManager.hasSystemFeature(FEATURE_LEANBACK))
+
     @Before
     fun installApps() {
         uninstallPackage(APP_PACKAGE_NAME, requireSuccess = false)
@@ -54,6 +61,19 @@ class PermissionHistoryTest : BasePermissionTest() {
     fun uninstallApps() {
         uninstallPackage(APP_PACKAGE_NAME, requireSuccess = false)
         uninstallPackage(APP2_PACKAGE_NAME, requireSuccess = false)
+    }
+
+    @Test
+    fun testMicrophoneAccessShowsUpOnPrivacyDashboard() {
+        openMicrophoneApp(INTENT_ACTION_1)
+        waitFindObject(By.textContains(APP_LABEL_1))
+
+        openPermissionDashboard()
+        waitFindObject(By.res("android:id/title").textContains("Microphone")).click()
+        waitFindObject(By.descContains(micLabel))
+        waitFindObject(By.textContains(APP_LABEL_1))
+        pressBack()
+        pressBack()
     }
 
     @Test
@@ -70,7 +90,7 @@ class PermissionHistoryTest : BasePermissionTest() {
         menuView.click()
 
         waitFindObject(By.text(SHOW_SYSTEM))
-        uiDevice.pressBack()
+        pressBack()
     }
 
     @Test
@@ -85,6 +105,7 @@ class PermissionHistoryTest : BasePermissionTest() {
                 PERMISSION_CONTROLLER_PACKAGE_ID_PREFIX + HISTORY_PREFERENCE_ICON))
         waitFindObject(By.res(
                 PERMISSION_CONTROLLER_PACKAGE_ID_PREFIX + HISTORY_PREFERENCE_TIME))
+        pressBack()
     }
 
     @Ignore("b/186656826#comment27")
@@ -100,6 +121,7 @@ class PermissionHistoryTest : BasePermissionTest() {
         waitFindObject(By.descContains(micLabel))
         waitFindObject(By.textContains(APP_LABEL_1))
         waitFindObject(By.textContains(APP_LABEL_2))
+        pressBack()
     }
 
     private fun openMicrophoneApp(intentAction: String) {
@@ -112,6 +134,14 @@ class PermissionHistoryTest : BasePermissionTest() {
         SystemUtil.runWithShellPermissionIdentity {
             context.startActivity(Intent(Intent.ACTION_REVIEW_PERMISSION_HISTORY).apply {
                 putExtra(Intent.EXTRA_PERMISSION_GROUP_NAME, Manifest.permission_group.MICROPHONE)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            })
+        }
+    }
+
+    private fun openPermissionDashboard() {
+        SystemUtil.runWithShellPermissionIdentity {
+            context.startActivity(Intent(Intent.ACTION_REVIEW_PERMISSION_USAGE).apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             })
         }
