@@ -263,6 +263,7 @@ public class TunerTest {
                         status.getMer();
                         break;
                     case FrontendStatus.FRONTEND_STATUS_TYPE_FREQ_OFFSET:
+                        status.getFreqOffsetLong();
                         status.getFreqOffset();
                         break;
                     case FrontendStatus.FRONTEND_STATUS_TYPE_HIERARCHY:
@@ -998,8 +999,8 @@ public class TunerTest {
 
     private FrontendSettings createFrontendSettings(FrontendInfo info) {
             FrontendCapabilities caps = info.getFrontendCapabilities();
-            int minFreq = info.getFrequencyRange().getLower();
-            int maxFreq = info.getFrequencyRange().getUpper();
+            long minFreq = info.getFrequencyRangeLong().getLower();
+            long maxFreq = info.getFrequencyRangeLong().getUpper();
             FrontendCapabilities feCaps = info.getFrontendCapabilities();
             switch(info.getType()) {
                 case FrontendSettings.TYPE_ANALOG: {
@@ -1008,7 +1009,7 @@ public class TunerTest {
                     int sif = getFirstCapable(analogCaps.getSifStandardCapability());
                     return AnalogFrontendSettings
                             .builder()
-                            .setFrequency(minFreq)
+                            .setFrequencyLong(minFreq)
                             .setSignalType(signalType)
                             .setSifStandard(sif)
                             .build();
@@ -1020,11 +1021,11 @@ public class TunerTest {
                     Atsc3FrontendSettings settings =
                             Atsc3FrontendSettings
                                     .builder()
-                                    .setFrequency(minFreq)
+                                    .setFrequencyLong(minFreq)
                                     .setBandwidth(bandwidth)
                                     .setDemodOutputFormat(demod)
                                     .build();
-                    settings.setEndFrequency(maxFreq);
+                    settings.setEndFrequencyLong(maxFreq);
                     return settings;
                 }
                 case FrontendSettings.TYPE_ATSC: {
@@ -1032,7 +1033,7 @@ public class TunerTest {
                     int modulation = getFirstCapable(atscCaps.getModulationCapability());
                     return AtscFrontendSettings
                             .builder()
-                            .setFrequency(minFreq)
+                            .setFrequencyLong(minFreq)
                             .setModulation(modulation)
                             .build();
                 }
@@ -1044,12 +1045,12 @@ public class TunerTest {
                     DvbcFrontendSettings settings =
                             DvbcFrontendSettings
                                     .builder()
-                                    .setFrequency(minFreq)
+                                    .setFrequencyLong(minFreq)
                                     .setModulation(modulation)
                                     .setInnerFec(fec)
                                     .setAnnex(annex)
                                     .build();
-                    settings.setEndFrequency(maxFreq);
+                    settings.setEndFrequencyLong(maxFreq);
                     return settings;
                 }
                 case FrontendSettings.TYPE_DVBS: {
@@ -1059,11 +1060,11 @@ public class TunerTest {
                     DvbsFrontendSettings settings =
                             DvbsFrontendSettings
                                     .builder()
-                                    .setFrequency(minFreq)
+                                    .setFrequencyLong(minFreq)
                                     .setModulation(modulation)
                                     .setStandard(standard)
                                     .build();
-                    settings.setEndFrequency(maxFreq);
+                    settings.setEndFrequencyLong(maxFreq);
                     return settings;
                 }
                 case FrontendSettings.TYPE_DVBT: {
@@ -1076,7 +1077,7 @@ public class TunerTest {
                     int guardInterval = getFirstCapable(dvbtCaps.getGuardIntervalCapability());
                     return DvbtFrontendSettings
                             .builder()
-                            .setFrequency(minFreq)
+                            .setFrequencyLong(minFreq)
                             .setTransmissionMode(transmission)
                             .setBandwidth(bandwidth)
                             .setConstellation(constellation)
@@ -1094,7 +1095,7 @@ public class TunerTest {
                     int codeRate = getFirstCapable(isdbs3Caps.getCodeRateCapability());
                     return Isdbs3FrontendSettings
                             .builder()
-                            .setFrequency(minFreq)
+                            .setFrequencyLong(minFreq)
                             .setModulation(modulation)
                             .setCodeRate(codeRate)
                             .build();
@@ -1105,7 +1106,7 @@ public class TunerTest {
                     int codeRate = getFirstCapable(isdbsCaps.getCodeRateCapability());
                     return IsdbsFrontendSettings
                             .builder()
-                            .setFrequency(minFreq)
+                            .setFrequencyLong(minFreq)
                             .setModulation(modulation)
                             .setCodeRate(codeRate)
                             .build();
@@ -1119,7 +1120,7 @@ public class TunerTest {
                     int guardInterval = getFirstCapable(isdbtCaps.getGuardIntervalCapability());
                     return IsdbtFrontendSettings
                             .builder()
-                            .setFrequency(minFreq)
+                            .setFrequencyLong(minFreq)
                             .setModulation(modulation)
                             .setBandwidth(bandwidth)
                             .setMode(mode)
@@ -1140,7 +1141,7 @@ public class TunerTest {
                     DtmbFrontendSettings settings =
                             DtmbFrontendSettings
                                     .builder()
-                                    .setFrequency(minFreq)
+                                    .setFrequencyLong(minFreq)
                                     .setModulation(modulation)
                                     .setTransmissionMode(transmissionMode)
                                     .setBandwidth(bandwidth)
@@ -1148,7 +1149,7 @@ public class TunerTest {
                                     .setGuardInterval(guardInterval)
                                     .setTimeInterleaveMode(timeInterleaveMode)
                                     .build();
-                    settings.setEndFrequency(maxFreq);
+                    settings.setEndFrequencyLong(maxFreq);
                     return settings;
                 }
                 default:
@@ -1192,6 +1193,11 @@ public class TunerTest {
 
             @Override
             public void onFrequenciesReported(int[] frequency) {}
+
+            @Override
+            public void onFrequenciesLongReported(long[] frequencies) {
+                ScanCallback.super.onFrequenciesLongReported(frequencies);
+            }
 
             @Override
             public void onSymbolRatesReported(int[] rate) {}
