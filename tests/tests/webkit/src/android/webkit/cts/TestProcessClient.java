@@ -150,7 +150,8 @@ class TestProcessClient extends Assert implements AutoCloseable, ServiceConnecti
             mService = null;
             mContext.unbindService(this);
             mLastResult = TestProcessService.REPLY_EXCEPTION;
-            mLastException = new AssertionFailedError("Service disconnected unexpectedly");
+            mLastException = new AssertionFailedError(
+                    "Service disconnected unexpectedly: " + className);
             mLock.notify();
         }
     }
