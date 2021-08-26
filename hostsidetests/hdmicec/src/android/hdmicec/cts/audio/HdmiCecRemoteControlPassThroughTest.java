@@ -41,11 +41,12 @@ public final class HdmiCecRemoteControlPassThroughTest extends BaseHdmiCecCtsTes
 
     @Rule
     public RuleChain ruleChain =
-        RuleChain
-            .outerRule(CecRules.requiresCec(this))
-            .around(CecRules.requiresLeanback(this))
-            .around(CecRules.requiresDeviceType(this, LogicalAddress.AUDIO_SYSTEM))
-            .around(hdmiCecClient);
+            RuleChain.outerRule(CecRules.requiresCec(this))
+                    .around(CecRules.requiresLeanback(this))
+                    .around(
+                            CecRules.requiresDeviceType(
+                                    this, HdmiCecConstants.CEC_DEVICE_TYPE_AUDIO_SYSTEM))
+                    .around(hdmiCecClient);
 
     /**
      * Test 11.2.13-1

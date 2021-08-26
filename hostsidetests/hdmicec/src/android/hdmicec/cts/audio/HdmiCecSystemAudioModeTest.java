@@ -54,11 +54,12 @@ public final class HdmiCecSystemAudioModeTest extends BaseHdmiCecCtsTest {
 
     @Rule
     public RuleChain ruleChain =
-        RuleChain
-            .outerRule(CecRules.requiresCec(this))
-            .around(CecRules.requiresLeanback(this))
-            .around(CecRules.requiresDeviceType(this, AUDIO_DEVICE))
-            .around(hdmiCecClient);
+            RuleChain.outerRule(CecRules.requiresCec(this))
+                    .around(CecRules.requiresLeanback(this))
+                    .around(
+                            CecRules.requiresDeviceType(
+                                    this, HdmiCecConstants.CEC_DEVICE_TYPE_AUDIO_SYSTEM))
+                    .around(hdmiCecClient);
 
     public void sendSystemAudioModeTermination() throws Exception {
         hdmiCecClient.sendCecMessage(LogicalAddress.TV, AUDIO_DEVICE,
