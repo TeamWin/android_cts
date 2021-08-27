@@ -24,6 +24,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
 import android.media.ApplicationMediaCapabilities;
+import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.MediaTranscodingManager;
 import android.media.MediaTranscodingManager.TranscodingRequest;
@@ -457,10 +458,16 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
         ApplicationMediaCapabilities clientCaps =
                 new ApplicationMediaCapabilities.Builder().build();
 
+        MediaFormat srcVideoFormat = getVideoTrackFormat(fileUri);
+        assertNotNull(srcVideoFormat);
+
+        int width = srcVideoFormat.getInteger(MediaFormat.KEY_WIDTH);
+        int height = srcVideoFormat.getInteger(MediaFormat.KEY_HEIGHT);
+
         TranscodingRequest.VideoFormatResolver
                 resolver = new TranscodingRequest.VideoFormatResolver(clientCaps,
                 MediaFormat.createVideoFormat(
-                        MediaFormat.MIMETYPE_VIDEO_HEVC, WIDTH, HEIGHT));
+                        MediaFormat.MIMETYPE_VIDEO_HEVC, width, height));
         assertTrue(resolver.shouldTranscode());
         MediaFormat videoTrackFormat = resolver.resolveVideoFormat();
         assertNotNull(videoTrackFormat);
@@ -761,5 +768,21 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
         assertTrue("Transcode failed to complete in time.", finishedOnTime);
         assertTrue("Failed to receive at least 10 progress updates",
                 progressUpdateCount.get() > 10);
+    }
+
+    private MediaFormat getVideoTrackFormat(Uri fileUri) throws IOException {
+        MediaFormat videoFormat = null;
+        MediaExtractor extractor = new MediaExtractor();
+        extractor.setDataSource(fileUri.toString());
+        // Find video track format
+        for (int trackID = 0; trackID < extractor.getTrackCount(); trackID++) {
+            MediaFormat format = extractor.getTrackFormat(trackID);
+            if (format.getString(MediaFormat.KEY_MIME).startsWith("video/")) {
+                videoFormat = format;
+                break;
+            }
+        }
+        extractor.release();
+        return videoFormat;
     }
 }
