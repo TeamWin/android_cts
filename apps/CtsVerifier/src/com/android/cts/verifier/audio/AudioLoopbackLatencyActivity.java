@@ -388,6 +388,14 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
         return setTestNameSuffix(sCurrentDisplayMode, getClass().getName());
     }
 
+    @Override
+    public String getReportFileName() { return PassFailButtons.AUDIO_TESTS_REPORT_LOG_NAME; }
+
+    @Override
+    public final String getReportSectionName() {
+        return setTestNameSuffix(sCurrentDisplayMode, "audio_loopback_latency_activity");
+    }
+
     //
     // Subclasses should call this explicitly. SubClasses should call submit() after their logs
     //
