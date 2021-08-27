@@ -45,7 +45,7 @@ public class HiddenApiTest extends AbstractApiTest {
     @Override
     protected void initializeFromArgs(Bundle instrumentationArgs) {
         hiddenapiFiles = getCommaSeparatedListRequired(instrumentationArgs, "hiddenapi-files");
-        hiddenapiTestFlags = getCommaSeparatedListRequired(instrumentationArgs, "hiddenapi-test-flags");
+        hiddenapiTestFlags = getCommaSeparatedListOptional(instrumentationArgs, "hiddenapi-test-flags");
         hiddenapiFilterFile = instrumentationArgs.getString("hiddenapi-filter-file");
         hiddenapiFilterSet = new HashSet<>();
     }
@@ -165,7 +165,15 @@ public class HiddenApiTest extends AbstractApiTest {
         });
     }
 
+    /**
+     * Determines whether to test the member.
+     *
+     * @param member the member
+     * @return true if the member should be tested, false otherwise.
+     */
     protected boolean shouldTestMember(DexMember member) {
+        // Test the member if it supports ANY of the flags specified in the hiddenapi-test-flags
+        // argument.
         Set<String> flags = member.getHiddenapiFlags();
         for (String testFlag : hiddenapiTestFlags) {
             if (flags.contains(testFlag)) {
