@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.media.cts;
+package android.mediadrm.cts;
 
 import android.media.cts.R;
 
@@ -38,6 +38,7 @@ import android.media.SyncParams;
 import android.media.TimedText;
 import android.media.audiofx.AudioEffect;
 import android.media.audiofx.Visualizer;
+import android.media.cts.Preconditions;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.IBinder;
@@ -63,10 +64,6 @@ import junit.framework.AssertionFailedError;
 
 /**
  * Tests for the MediaPlayer API and local video/audio playback.
- *
- * The files in res/raw used by testLocalVideo* are (c) copyright 2008,
- * Blender Foundation / www.bigbuckbunny.org, and are licensed under the Creative Commons
- * Attribution 3.0 License at http://creativecommons.org/licenses/by/3.0/us/.
  */
 @AppModeFull(reason = "TODO: evaluate and port to instant")
 public class MediaPlayerDrmTest extends MediaPlayerDrmTestBase {
