@@ -19,40 +19,21 @@ package android.car.cts;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.car.VehiclePropertyIds;
+import android.car.cts.utils.VehiclePropertyUtils;
 import android.platform.test.annotations.RequiresDevice;
 import android.test.suitebuilder.annotation.SmallTest;
-import android.util.Log;
 
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.lang.reflect.Field;
-import java.util.ArrayList;
 import java.util.List;
 
 @SmallTest
 @RequiresDevice
 @RunWith(AndroidJUnit4.class)
 public class VehiclePropertyIdsTest {
-    private static final String TAG = "VehiclePropertyIdsTest";
-
-    // Get all enums from the class.
-    private static List<Integer> getIntegersFromDataEnums() {
-        Field[] fields = VehiclePropertyIds.class.getDeclaredFields();
-        List<Integer> integerList = new ArrayList<>(5);
-        for (Field f : fields) {
-            if (f.getType() == int.class) {
-                try {
-                    integerList.add(f.getInt(VehiclePropertyIds.class));
-                } catch (IllegalAccessException | RuntimeException e) {
-                    Log.w(TAG, "Failed to get value");
-                }
-            }
-        }
-        return integerList;
-    }
 
     /**
      * Test for {@link VehiclePropertyIds#toString()}
@@ -331,7 +312,8 @@ public class VehiclePropertyIdsTest {
      */
     @Test
     public void testAllPropertiesAreMappedInToString() {
-        List<Integer> systemProperties = getIntegersFromDataEnums();
+        List<Integer> systemProperties =
+                VehiclePropertyUtils.getIntegersFromDataEnums(VehiclePropertyIds.class);
         for (int propertyId : systemProperties) {
             String propertyString = VehiclePropertyIds.toString(propertyId);
             assertThat(propertyString.startsWith("0x")).isFalse();

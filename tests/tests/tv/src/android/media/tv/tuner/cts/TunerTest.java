@@ -92,6 +92,11 @@ import android.media.tv.tuner.frontend.IsdbtFrontendSettings;
 import android.media.tv.tuner.frontend.OnTuneEventListener;
 import android.media.tv.tuner.frontend.ScanCallback;
 
+import android.os.ConditionVariable;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
+
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
@@ -263,6 +268,7 @@ public class TunerTest {
                         status.getMer();
                         break;
                     case FrontendStatus.FRONTEND_STATUS_TYPE_FREQ_OFFSET:
+                        status.getFreqOffsetLong();
                         status.getFreqOffset();
                         break;
                     case FrontendStatus.FRONTEND_STATUS_TYPE_HIERARCHY:
@@ -778,6 +784,70 @@ public class TunerTest {
     }
 
     @Test
+    public void testResourceReclaimed() throws Exception {
+        List<Integer> ids = mTuner.getFrontendIds();
+        assertFalse(ids.isEmpty());
+        FrontendInfo info = mTuner.getFrontendInfoById(ids.get(0));
+        FrontendSettings feSettings = createFrontendSettings(info);
+
+        // first tune with mTuner to acquire resource
+        int res = mTuner.tune(feSettings);
+        assertEquals(Tuner.RESULT_SUCCESS, res);
+        assertNotNull(mTuner.getFrontendInfo());
+
+        // now tune with a higher priority tuner to have mTuner's resource reclaimed
+        Tuner higherPrioTuner = new Tuner(mContext, null, 200);
+        res = higherPrioTuner.tune(feSettings);
+        assertEquals(Tuner.RESULT_SUCCESS, res);
+        assertNotNull(higherPrioTuner.getFrontendInfo());
+
+        higherPrioTuner.close();
+    }
+
+    @Test
+    public void testResourceReclaimedDifferentThread() throws Exception {
+        List<Integer> ids = mTuner.getFrontendIds();
+        assertFalse(ids.isEmpty());
+        FrontendInfo info = mTuner.getFrontendInfoById(ids.get(0));
+        FrontendSettings feSettings = createFrontendSettings(info);
+
+        // first tune with mTuner to acquire resource
+        int res = mTuner.tune(feSettings);
+        assertEquals(Tuner.RESULT_SUCCESS, res);
+        assertNotNull(mTuner.getFrontendInfo());
+
+        // now tune with a higher priority tuner to have mTuner's resource reclaimed
+        TunerHandler tunerHandler = createTunerHandler(null);
+        Message msgCreate = new Message();
+        msgCreate.what = MSG_TUNER_HANDLER_CREATE;
+        msgCreate.arg1 = 200;
+        tunerHandler.sendMessage(msgCreate);
+        mTunerHandlerTaskComplete.block();
+        mTunerHandlerTaskComplete.close();
+
+        Message msgTune = new Message();
+        msgTune.what = MSG_TUNER_HANDLER_TUNE;
+        msgTune.obj = (Object) feSettings;
+        tunerHandler.sendMessage(msgTune);
+
+        mTunerHandlerTaskComplete.block();
+        mTunerHandlerTaskComplete.close();
+        res = tunerHandler.getResult();
+        assertEquals(Tuner.RESULT_SUCCESS, res);
+
+        Tuner higherPrioTuner = tunerHandler.getTuner();
+        assertNotNull(higherPrioTuner.getFrontendInfo());
+
+        Message msgClose = new Message();
+        msgClose.what = MSG_TUNER_HANDLER_CLOSE;
+        tunerHandler.sendMessage(msgClose);
+
+        // call mTuner.close in parallel
+        mTuner.close();
+        mTuner = null;
+    }
+
+    @Test
     public void testShareFrontendFromTuner() throws Exception {
         Tuner other = new Tuner(mContext, null, 100);
         List<Integer> ids = other.getFrontendIds();
@@ -998,8 +1068,8 @@ public class TunerTest {
 
     private FrontendSettings createFrontendSettings(FrontendInfo info) {
             FrontendCapabilities caps = info.getFrontendCapabilities();
-            int minFreq = info.getFrequencyRange().getLower();
-            int maxFreq = info.getFrequencyRange().getUpper();
+            long minFreq = info.getFrequencyRangeLong().getLower();
+            long maxFreq = info.getFrequencyRangeLong().getUpper();
             FrontendCapabilities feCaps = info.getFrontendCapabilities();
             switch(info.getType()) {
                 case FrontendSettings.TYPE_ANALOG: {
@@ -1008,7 +1078,7 @@ public class TunerTest {
                     int sif = getFirstCapable(analogCaps.getSifStandardCapability());
                     return AnalogFrontendSettings
                             .builder()
-                            .setFrequency(minFreq)
+                            .setFrequencyLong(minFreq)
                             .setSignalType(signalType)
                             .setSifStandard(sif)
                             .build();
@@ -1020,11 +1090,11 @@ public class TunerTest {
                     Atsc3FrontendSettings settings =
                             Atsc3FrontendSettings
                                     .builder()
-                                    .setFrequency(minFreq)
+                                    .setFrequencyLong(minFreq)
                                     .setBandwidth(bandwidth)
                                     .setDemodOutputFormat(demod)
                                     .build();
-                    settings.setEndFrequency(maxFreq);
+                    settings.setEndFrequencyLong(maxFreq);
                     return settings;
                 }
                 case FrontendSettings.TYPE_ATSC: {
@@ -1032,7 +1102,7 @@ public class TunerTest {
                     int modulation = getFirstCapable(atscCaps.getModulationCapability());
                     return AtscFrontendSettings
                             .builder()
-                            .setFrequency(minFreq)
+                            .setFrequencyLong(minFreq)
                             .setModulation(modulation)
                             .build();
                 }
@@ -1044,12 +1114,12 @@ public class TunerTest {
                     DvbcFrontendSettings settings =
                             DvbcFrontendSettings
                                     .builder()
-                                    .setFrequency(minFreq)
+                                    .setFrequencyLong(minFreq)
                                     .setModulation(modulation)
                                     .setInnerFec(fec)
                                     .setAnnex(annex)
                                     .build();
-                    settings.setEndFrequency(maxFreq);
+                    settings.setEndFrequencyLong(maxFreq);
                     return settings;
                 }
                 case FrontendSettings.TYPE_DVBS: {
@@ -1059,11 +1129,11 @@ public class TunerTest {
                     DvbsFrontendSettings settings =
                             DvbsFrontendSettings
                                     .builder()
-                                    .setFrequency(minFreq)
+                                    .setFrequencyLong(minFreq)
                                     .setModulation(modulation)
                                     .setStandard(standard)
                                     .build();
-                    settings.setEndFrequency(maxFreq);
+                    settings.setEndFrequencyLong(maxFreq);
                     return settings;
                 }
                 case FrontendSettings.TYPE_DVBT: {
@@ -1076,7 +1146,7 @@ public class TunerTest {
                     int guardInterval = getFirstCapable(dvbtCaps.getGuardIntervalCapability());
                     return DvbtFrontendSettings
                             .builder()
-                            .setFrequency(minFreq)
+                            .setFrequencyLong(minFreq)
                             .setTransmissionMode(transmission)
                             .setBandwidth(bandwidth)
                             .setConstellation(constellation)
@@ -1094,7 +1164,7 @@ public class TunerTest {
                     int codeRate = getFirstCapable(isdbs3Caps.getCodeRateCapability());
                     return Isdbs3FrontendSettings
                             .builder()
-                            .setFrequency(minFreq)
+                            .setFrequencyLong(minFreq)
                             .setModulation(modulation)
                             .setCodeRate(codeRate)
                             .build();
@@ -1105,7 +1175,7 @@ public class TunerTest {
                     int codeRate = getFirstCapable(isdbsCaps.getCodeRateCapability());
                     return IsdbsFrontendSettings
                             .builder()
-                            .setFrequency(minFreq)
+                            .setFrequencyLong(minFreq)
                             .setModulation(modulation)
                             .setCodeRate(codeRate)
                             .build();
@@ -1119,7 +1189,7 @@ public class TunerTest {
                     int guardInterval = getFirstCapable(isdbtCaps.getGuardIntervalCapability());
                     return IsdbtFrontendSettings
                             .builder()
-                            .setFrequency(minFreq)
+                            .setFrequencyLong(minFreq)
                             .setModulation(modulation)
                             .setBandwidth(bandwidth)
                             .setMode(mode)
@@ -1140,7 +1210,7 @@ public class TunerTest {
                     DtmbFrontendSettings settings =
                             DtmbFrontendSettings
                                     .builder()
-                                    .setFrequency(minFreq)
+                                    .setFrequencyLong(minFreq)
                                     .setModulation(modulation)
                                     .setTransmissionMode(transmissionMode)
                                     .setBandwidth(bandwidth)
@@ -1148,7 +1218,7 @@ public class TunerTest {
                                     .setGuardInterval(guardInterval)
                                     .setTimeInterleaveMode(timeInterleaveMode)
                                     .build();
-                    settings.setEndFrequency(maxFreq);
+                    settings.setEndFrequencyLong(maxFreq);
                     return settings;
                 }
                 default:
@@ -1192,6 +1262,11 @@ public class TunerTest {
 
             @Override
             public void onFrequenciesReported(int[] frequency) {}
+
+            @Override
+            public void onFrequenciesLongReported(long[] frequencies) {
+                ScanCallback.super.onFrequenciesLongReported(frequencies);
+            }
 
             @Override
             public void onSymbolRatesReported(int[] rate) {}
@@ -1245,5 +1320,74 @@ public class TunerTest {
                 ScanCallback.super.onDvbcAnnexReported(dvbcAnnext);
             }
         };
+    }
+
+    // TunerHandler utility for testing Tuner api calls in a different thread
+    private static final int MSG_TUNER_HANDLER_CREATE = 1;
+    private static final int MSG_TUNER_HANDLER_TUNE = 2;
+    private static final int MSG_TUNER_HANDLER_CLOSE = 3;
+
+    private ConditionVariable mTunerHandlerTaskComplete = new ConditionVariable();
+
+    private TunerHandler createTunerHandler(Looper looper) {
+        if (looper != null) {
+            return new TunerHandler(looper);
+        } else if ((looper = Looper.myLooper()) != null) {
+            return new TunerHandler(looper);
+        } else if ((looper = Looper.getMainLooper()) != null) {
+            return new TunerHandler(looper);
+        }
+        return null;
+    }
+
+    private class TunerHandler extends Handler {
+        Object mLock = new Object();
+        Tuner mHandlersTuner;
+        int mResult;
+
+        private TunerHandler(Looper looper) {
+            super(looper);
+        }
+
+        public Tuner getTuner() {
+            synchronized (mLock) {
+                return mHandlersTuner;
+            }
+        }
+
+        public int getResult() {
+            synchronized (mLock) {
+                return mResult;
+            }
+        }
+
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case MSG_TUNER_HANDLER_CREATE: {
+                    synchronized (mLock) {
+                        int useCase = msg.arg1;
+                        mHandlersTuner = new Tuner(mContext, null, useCase);
+                    }
+                    break;
+                }
+                case MSG_TUNER_HANDLER_TUNE: {
+                    synchronized (mLock) {
+                        FrontendSettings feSettings = (FrontendSettings) msg.obj;
+                        mResult = mHandlersTuner.tune(feSettings);
+                    }
+                    break;
+                }
+                case MSG_TUNER_HANDLER_CLOSE: {
+                    synchronized (mLock) {
+                        mHandlersTuner.close();
+                    }
+                    break;
+                }
+                default:
+                    break;
+            }
+            mTunerHandlerTaskComplete.open();
+        }
     }
 }

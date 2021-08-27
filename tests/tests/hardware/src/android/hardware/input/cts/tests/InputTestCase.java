@@ -126,7 +126,9 @@ public abstract class InputTestCase {
         assertEquals(mCurrentTestCase + " (action)",
                 expectedKeyEvent.getAction(), receivedKeyEvent.getAction());
         assertSource(mCurrentTestCase, expectedKeyEvent, receivedKeyEvent);
-        assertEquals(mCurrentTestCase + " (keycode)",
+        assertEquals(mCurrentTestCase + " (keycode) expected: "
+                + KeyEvent.keyCodeToString(expectedKeyEvent.getKeyCode()) + " received: "
+                + KeyEvent.keyCodeToString(receivedKeyEvent.getKeyCode()),
                 expectedKeyEvent.getKeyCode(), receivedKeyEvent.getKeyCode());
         assertMetaState(mCurrentTestCase, expectedKeyEvent.getMetaState(),
                 receivedKeyEvent.getMetaState());
