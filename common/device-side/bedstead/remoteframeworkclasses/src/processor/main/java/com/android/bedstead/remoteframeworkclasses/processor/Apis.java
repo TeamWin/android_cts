@@ -79,11 +79,13 @@ public final class Apis {
 
         String[] packageSplit = apiTxt.split("package " + packageName + " \\{", 2);
         if (packageSplit.length < 2) {
+            System.out.println("Package " + packageName + " not in file");
             // Package not in this file
             return new HashSet<>();
         }
         String[] classSplit = packageSplit[1].split("class " + simpleClassName + " \\{", 2);
         if (classSplit.length < 2) {
+            System.out.println("Class " + simpleClassName + " not in file");
             // Class not in this file
             return new HashSet<>();
         }
@@ -93,6 +95,11 @@ public final class Apis {
         for (String line : lines) {
             String methodLine = line.trim();
             if (methodLine.isEmpty()) {
+                continue;
+            }
+
+            if (methodLine.startsWith("ctor")) {
+                // Skip constructors
                 continue;
             }
 

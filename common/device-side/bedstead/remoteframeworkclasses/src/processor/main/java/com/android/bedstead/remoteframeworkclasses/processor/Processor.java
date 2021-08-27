@@ -72,7 +72,8 @@ public final class Processor extends AbstractProcessor {
             "android.app.admin.DevicePolicyManager",
             "android.net.wifi.WifiManager",
             "android.os.HardwarePropertiesManager",
-            "android.os.UserManager"
+            "android.os.UserManager",
+            "android.content.pm.PackageManager"
     };
 
     private static final Set<String> BLOCKLISTED_METHODS = ImmutableSet.of(
@@ -92,22 +93,17 @@ public final class Processor extends AbstractProcessor {
 
             // Uses Executor
             "public void addSuggestionConnectionStatusListener(java.util.concurrent.Executor, android.net.wifi.WifiManager.SuggestionConnectionStatusListener)",
-            // Uses Executor
             "public void addSuggestionUserApprovalStatusListener(java.util.concurrent.Executor, android.net.wifi.WifiManager.SuggestionUserApprovalStatusListener)",
-            // Uses Executor
             "public void clearApplicationUserData(android.content.ComponentName, @NonNull String, @NonNull java.util.concurrent.Executor, android.app.admin.DevicePolicyManager.OnClearApplicationUserDataListener)",
+            "public void registerScanResultsCallback(java.util.concurrent.Executor, android.net.wifi.WifiManager.ScanResultsCallback)",
+            "public void registerSubsystemRestartTrackingCallback(java.util.concurrent.Executor, android.net.wifi.WifiManager.SubsystemRestartTrackingCallback)",
             // Uses WpsCallback
             "public void cancelWps(android.net.wifi.WifiManager.WpsCallback)",
             // Uses MulticastLock
             "public android.net.wifi.WifiManager.MulticastLock createMulticastLock(String)",
             // Uses WifiLock
             "public android.net.wifi.WifiManager.WifiLock createWifiLock(int, String)",
-            // Uses WifiLock
             "public android.net.wifi.WifiManager.WifiLock createWifiLock(String)",
-            // Uses Executor
-            "public void registerScanResultsCallback(java.util.concurrent.Executor, android.net.wifi.WifiManager.ScanResultsCallback)",
-            // Uses Executor
-            "public void registerSubsystemRestartTrackingCallback(java.util.concurrent.Executor, android.net.wifi.WifiManager.SubsystemRestartTrackingCallback)",
             // Uses SuggestionConnectionStatusListener
             "public void removeSuggestionConnectionStatusListener(android.net.wifi.WifiManager.SuggestionConnectionStatusListener)",
             // Uses SuggestionUserApprovalStatusListener
@@ -119,7 +115,49 @@ public final class Processor extends AbstractProcessor {
             // Uses ScanResultsCallback
             "public void unregisterScanResultsCallback(@NonNull android.net.wifi.WifiManager.ScanResultsCallback)",
             // Uses SubsystemRestartTrackingCallback
-            "public void unregisterSubsystemRestartTrackingCallback(android.net.wifi.WifiManager.SubsystemRestartTrackingCallback)"
+            "public void unregisterSubsystemRestartTrackingCallback(android.net.wifi.WifiManager.SubsystemRestartTrackingCallback)",
+
+            // PackageManager
+
+            // Uses IBinder
+            "public android.os.IBinder getHoldLockToken()",
+            "public void holdLock(android.os.IBinder, int)",
+            // Uses Drawable
+            "public abstract android.graphics.drawable.Drawable getActivityBanner(@NonNull android.content.ComponentName) throws android.content.pm.PackageManager.NameNotFoundException",
+            "public abstract android.graphics.drawable.Drawable getActivityBanner(@NonNull android.content.Intent) throws android.content.pm.PackageManager.NameNotFoundException",
+            "public abstract android.graphics.drawable.Drawable getActivityIcon(@NonNull android.content.ComponentName) throws android.content.pm.PackageManager.NameNotFoundException",
+            "public abstract android.graphics.drawable.Drawable getActivityIcon(@NonNull android.content.Intent) throws android.content.pm.PackageManager.NameNotFoundException",
+            "public abstract android.graphics.drawable.Drawable getActivityLogo(@NonNull android.content.ComponentName) throws android.content.pm.PackageManager.NameNotFoundException",
+            "public abstract android.graphics.drawable.Drawable getActivityLogo(@NonNull android.content.Intent) throws android.content.pm.PackageManager.NameNotFoundException",
+            "public abstract android.graphics.drawable.Drawable getApplicationBanner(@NonNull android.content.pm.ApplicationInfo)",
+            "public abstract android.graphics.drawable.Drawable getApplicationBanner(@NonNull String) throws android.content.pm.PackageManager.NameNotFoundException",
+            "public abstract android.graphics.drawable.Drawable getApplicationIcon(@NonNull android.content.pm.ApplicationInfo)",
+            "public abstract android.graphics.drawable.Drawable getApplicationIcon(@NonNull String) throws android.content.pm.PackageManager.NameNotFoundException",
+            "public abstract android.graphics.drawable.Drawable getApplicationLogo(@NonNull android.content.pm.ApplicationInfo)",
+            "public abstract android.graphics.drawable.Drawable getApplicationLogo(@NonNull String) throws android.content.pm.PackageManager.NameNotFoundException",
+            "public abstract android.graphics.drawable.Drawable getDefaultActivityIcon()",
+            "public abstract android.graphics.drawable.Drawable getDrawable(@NonNull String, @DrawableRes int, @Nullable android.content.pm.ApplicationInfo)",
+            "public abstract android.graphics.drawable.Drawable getUserBadgedDrawableForDensity(@NonNull android.graphics.drawable.Drawable, @NonNull android.os.UserHandle, @Nullable android.graphics.Rect, int)",
+            "public abstract android.graphics.drawable.Drawable getUserBadgedIcon(@NonNull android.graphics.drawable.Drawable, @NonNull android.os.UserHandle)",
+            "public boolean isDefaultApplicationIcon(@NonNull android.graphics.drawable.Drawable)",
+            // Uses Executor
+            "public void getGroupOfPlatformPermission(@NonNull String, @NonNull java.util.concurrent.Executor, @NonNull java.util.function.Consumer<java.lang.String>)",
+            "public void getPlatformPermissionsForGroup(@NonNull String, @NonNull java.util.concurrent.Executor, @NonNull java.util.function.Consumer<java.util.List<java.lang.String>>)",
+            // Uses Resources
+            "public abstract android.content.res.Resources getResourcesForActivity(@NonNull android.content.ComponentName) throws android.content.pm.PackageManager.NameNotFoundException",
+            "public abstract android.content.res.Resources getResourcesForApplication(@NonNull android.content.pm.ApplicationInfo) throws android.content.pm.PackageManager.NameNotFoundException",
+            "public android.content.res.Resources getResourcesForApplication(@NonNull android.content.pm.ApplicationInfo, @Nullable android.content.res.Configuration) throws android.content.pm.PackageManager.NameNotFoundException",
+            "public abstract android.content.res.Resources getResourcesForApplication(@NonNull String) throws android.content.pm.PackageManager.NameNotFoundException",
+            // Uses PackageInstaller
+            "public abstract android.content.pm.PackageInstaller getPackageInstaller()",
+            // Uses XmlResourceParser
+            "public abstract android.content.res.XmlResourceParser getXml(@NonNull String, @XmlRes int, @Nullable android.content.pm.ApplicationInfo)",
+            // Uses OnChecksumsReadyListener
+            "public void requestChecksums(@NonNull String, boolean, int, @NonNull java.util.List<java.security.cert.Certificate>, @NonNull android.content.pm.PackageManager.OnChecksumsReadyListener) throws java.security.cert.CertificateEncodingException, android.content.pm.PackageManager.NameNotFoundException"
+
+
+
+
     );
 
     @Override
