@@ -396,12 +396,18 @@ public class PermissionsTest extends BaseDeviceAdminTest {
     }
 
     public void testPermissionPolicyAutoGrant_multiplePermissionsInGroup() throws Exception {
-        setPermissionPolicy(PERMISSION_POLICY_AUTO_GRANT);
+        int permissionPolicy = mDevicePolicyManager.getPermissionPolicy(ADMIN_RECEIVER_COMPONENT);
+        try {
+            setPermissionPolicy(PERMISSION_POLICY_AUTO_GRANT);
 
-        // Both permissions should be granted
-        assertPermissionPolicy(PERMISSION_POLICY_AUTO_GRANT);
-        assertCanRequestPermissionFromActivity(READ_CONTACTS);
-        assertCanRequestPermissionFromActivity(WRITE_CONTACTS);
+            // Both permissions should be granted
+            assertPermissionPolicy(PERMISSION_POLICY_AUTO_GRANT);
+            assertCanRequestPermissionFromActivity(READ_CONTACTS);
+            assertCanRequestPermissionFromActivity(WRITE_CONTACTS);
+        } finally {
+            // Restore original state
+            setPermissionPolicy(permissionPolicy);
+        }
     }
 
     public void testCannotRequestPermission() throws Exception {
