@@ -50,7 +50,7 @@ public class ComponentReference {
     /**
      * Get the {@link PackageReference} for this component.
      */
-    public PackageReference packageName() {
+    public PackageReference pkg() {
         return mPackage;
     }
 

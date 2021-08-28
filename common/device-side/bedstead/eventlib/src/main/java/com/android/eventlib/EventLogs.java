@@ -81,6 +81,8 @@ public abstract class EventLogs<E extends Event> implements Serializable {
      * <p>This will timeout after {@code timeout} and return null if no matching event is logged.
      */
     public E poll(Duration timeout) {
+        // TODO(b/197315353): If we can't bind, this should show a useful failure message
+
         return getQuerier().poll(sEarliestLogTime, timeout);
     }
 

@@ -67,8 +67,6 @@ import java.util.concurrent.LinkedBlockingQueue;
  */
 @AppModeFull
 public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCtsActivity> {
-
-    private static final int WEBVIEW_TIMEOUT = 5000;
     private static final String LOG_TAG = "WebSettingsTest";
 
     private final String EMPTY_IMAGE_HEIGHT = "0";
@@ -515,7 +513,7 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
         mSettings.setJavaScriptCanOpenWindowsAutomatically(false);
         assertFalse(mSettings.getJavaScriptCanOpenWindowsAutomatically());
         mOnUiThread.loadUrl(mWebServer.getAssetUrl(TestHtmlConstants.POPUP_URL));
-        new PollingCheck(WEBVIEW_TIMEOUT) {
+        new PollingCheck(WebkitUtils.TEST_TIMEOUT_MS) {
             @Override
             protected boolean check() {
                 return "Popup blocked".equals(mOnUiThread.getTitle());
@@ -536,7 +534,7 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
         mSettings.setJavaScriptEnabled(true);
         assertTrue(mSettings.getJavaScriptEnabled());
         loadAssetUrl(TestHtmlConstants.JAVASCRIPT_URL);
-        new PollingCheck(WEBVIEW_TIMEOUT) {
+        new PollingCheck(WebkitUtils.TEST_TIMEOUT_MS) {
             @Override
             protected boolean check() {
                 return "javascript on".equals(mOnUiThread.getTitle());
@@ -546,7 +544,7 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
         mSettings.setJavaScriptEnabled(false);
         assertFalse(mSettings.getJavaScriptEnabled());
         loadAssetUrl(TestHtmlConstants.JAVASCRIPT_URL);
-        new PollingCheck(WEBVIEW_TIMEOUT) {
+        new PollingCheck(WebkitUtils.TEST_TIMEOUT_MS) {
             @Override
             protected boolean check() {
                 return "javascript off".equals(mOnUiThread.getTitle());
@@ -737,7 +735,7 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
         mSettings.setJavaScriptEnabled(true);
 
         mOnUiThread.loadUrlAndWaitForCompletion(url);
-        new PollingCheck(WEBVIEW_TIMEOUT) {
+        new PollingCheck(WebkitUtils.TEST_TIMEOUT_MS) {
             protected boolean check() {
                 return "Loaded".equals(mOnUiThread.getTitle());
             }
@@ -764,7 +762,7 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
         mSettings.setJavaScriptEnabled(true);
 
         mOnUiThread.loadUrlAndWaitForCompletion(url);
-        new PollingCheck(WEBVIEW_TIMEOUT) {
+        new PollingCheck(WebkitUtils.TEST_TIMEOUT_MS) {
             @Override
             protected boolean check() {
                 return "Loaded".equals(mOnUiThread.getTitle());
@@ -1297,7 +1295,7 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
     }
 
     private void waitForNonEmptyImage() {
-        new PollingCheck(WEBVIEW_TIMEOUT) {
+        new PollingCheck(WebkitUtils.TEST_TIMEOUT_MS) {
             @Override
             protected boolean check() {
                 return !EMPTY_IMAGE_HEIGHT.equals(mOnUiThread.getTitle());

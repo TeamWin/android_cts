@@ -32,7 +32,7 @@ import com.android.queryable.queries.ActivityQueryHelper;
  */
 public final class ActivityRestartedEvent extends Event {
 
-    /** Begin a query for {@link ActivityRestartedEvent} events. */
+    /** Begins a query for {@link ActivityRestartedEvent} events. */
     public static ActivityRestartedEventQuery queryPackage(String packageName) {
         return new ActivityRestartedEventQuery(packageName);
     }
@@ -60,9 +60,16 @@ public final class ActivityRestartedEvent extends Event {
             }
             return true;
         }
+
+        @Override
+        public String describeQuery(String fieldName) {
+            return toStringBuilder(ActivityRestartedEvent.class, this)
+                    .field("activity", mActivity)
+                    .toString();
+        }
     }
 
-    /** Begin logging a {@link ActivityRestartedEvent}. */
+    /** Begins logging a {@link ActivityRestartedEvent}. */
     public static ActivityRestartedEventLogger logger(Activity activity, android.content.pm.ActivityInfo activityInfo) {
         return new ActivityRestartedEventLogger(activity, activityInfo);
     }
@@ -75,7 +82,7 @@ public final class ActivityRestartedEvent extends Event {
             setActivity(activityInfo);
         }
 
-        /** Set the {@link Activity} being destroyed. */
+        /** Sets the {@link Activity} being destroyed. */
         public ActivityRestartedEventLogger setActivity(android.content.pm.ActivityInfo activity) {
             mEvent.mActivity = ActivityInfo.builder(activity).build();
             return this;

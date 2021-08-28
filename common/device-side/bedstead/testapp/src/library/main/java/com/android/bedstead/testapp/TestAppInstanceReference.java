@@ -16,17 +16,23 @@
 
 package com.android.bedstead.testapp;
 
+import android.app.admin.DevicePolicyManager;
 import android.app.admin.RemoteDevicePolicyManager;
 import android.app.admin.RemoteDevicePolicyManagerWrapper;
 import android.content.BroadcastReceiver;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
+import android.content.pm.RemotePackageManager;
+import android.content.pm.RemotePackageManagerWrapper;
 import android.net.wifi.RemoteWifiManager;
 import android.net.wifi.RemoteWifiManagerWrapper;
+import android.net.wifi.WifiManager;
+import android.os.HardwarePropertiesManager;
 import android.os.RemoteHardwarePropertiesManager;
 import android.os.RemoteHardwarePropertiesManagerWrapper;
 import android.os.RemoteUserManager;
 import android.os.RemoteUserManagerWrapper;
-
+import android.os.UserManager;
 
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.NeneException;
@@ -254,19 +260,53 @@ public class TestAppInstanceReference implements AutoCloseable, ConnectionListen
         }
     }
 
+    /** Access events related to this test app. */
+    public TestAppEvents events() {
+        return new TestAppEvents(this);
+    }
+
+    /**
+     * Access {@link DevicePolicyManager} using this test app.
+     *
+     * <p>Almost all methods are available. Those that are not will be missing from the interface.
+     */
     public RemoteDevicePolicyManager devicePolicyManager() {
         return new RemoteDevicePolicyManagerWrapper(mConnector);
     }
 
+    /**
+     * Access {@link UserManager} using this test app.
+     *
+     * <p>Almost all methods are available. Those that are not will be missing from the interface.
+     */
     public RemoteUserManager userManager() {
         return new RemoteUserManagerWrapper(mConnector);
     }
 
+    /**
+     * Access {@link WifiManager} using this test app.
+     *
+     * <p>Almost all methods are available. Those that are not will be missing from the interface.
+     */
     public RemoteWifiManager wifiManager() {
         return new RemoteWifiManagerWrapper(mConnector);
     }
 
+    /**
+     * Access {@link HardwarePropertiesManager} using this test app.
+     *
+     * <p>Almost all methods are available. Those that are not will be missing from the interface.
+     */
     public RemoteHardwarePropertiesManager hardwarePropertiesManager() {
         return new RemoteHardwarePropertiesManagerWrapper(mConnector);
+    }
+
+    /**
+     * Access {@link PackageManager} using this test app.
+     *
+     * <p>Almost all methods are available. Those that are not will be missing from the interface.
+     */
+    public RemotePackageManager packageManager() {
+        return new RemotePackageManagerWrapper(mConnector);
     }
 }

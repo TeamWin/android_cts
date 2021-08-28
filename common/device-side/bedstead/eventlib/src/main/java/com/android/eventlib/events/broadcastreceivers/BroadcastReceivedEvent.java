@@ -37,7 +37,7 @@ import com.android.queryable.util.SerializableParcelWrapper;
  */
 public final class BroadcastReceivedEvent extends Event {
 
-    /** Begin a query for {@link BroadcastReceivedEvent} events. */
+    /** Begins a query for {@link BroadcastReceivedEvent} events. */
     public static BroadcastReceivedEventQuery queryPackage(String packageName) {
         return new BroadcastReceivedEventQuery(packageName);
     }
@@ -77,9 +77,17 @@ public final class BroadcastReceivedEvent extends Event {
             }
             return true;
         }
+
+        @Override
+        public String describeQuery(String fieldName) {
+            return toStringBuilder(BroadcastReceivedEvent.class, this)
+                    .field("intent", mIntent)
+                    .field("broadcastReceiver", mBroadcastReceiver)
+                    .toString();
+        }
     }
 
-    /** Begin logging a {@link BroadcastReceivedEvent}. */
+    /** Begins logging a {@link BroadcastReceivedEvent}. */
     public static BroadcastReceivedEventLogger logger(
             BroadcastReceiver broadcastReceiver, Context context, Intent intent) {
         return new BroadcastReceivedEventLogger(broadcastReceiver, context, intent);
@@ -95,28 +103,28 @@ public final class BroadcastReceivedEvent extends Event {
             setBroadcastReceiver(broadcastReceiver);
         }
 
-        /** Set the {@link BroadcastReceiver} which received this event. */
+        /** Sets the {@link BroadcastReceiver} which received this event. */
         public BroadcastReceivedEventLogger setBroadcastReceiver(
                 BroadcastReceiver broadcastReceiver) {
             mEvent.mBroadcastReceiver = new BroadcastReceiverInfo(broadcastReceiver);
             return this;
         }
 
-        /** Set the {@link BroadcastReceiver} which received this event. */
+        /** Sets the {@link BroadcastReceiver} which received this event. */
         public BroadcastReceivedEventLogger setBroadcastReceiver(
                 Class<? extends BroadcastReceiver> broadcastReceiverClass) {
             mEvent.mBroadcastReceiver = new BroadcastReceiverInfo(broadcastReceiverClass);
             return this;
         }
 
-        /** Set the {@link BroadcastReceiver} which received this event. */
+        /** Sets the {@link BroadcastReceiver} which received this event. */
         public BroadcastReceivedEventLogger setBroadcastReceiver(
                 String broadcastReceiverClassName) {
             mEvent.mBroadcastReceiver = new BroadcastReceiverInfo(broadcastReceiverClassName);
             return this;
         }
 
-        /** Set the {@link Intent} which was received. */
+        /** Sets the {@link Intent} which was received. */
         public BroadcastReceivedEventLogger setIntent(Intent intent) {
             mEvent.mIntent = new SerializableParcelWrapper<>(intent);
             return this;

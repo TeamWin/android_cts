@@ -61,6 +61,8 @@ public class TestAppInstanceReferenceTest {
     private static final IntentFilter INTENT_FILTER_2 = new IntentFilter(INTENT_ACTION_2);
     private static final Intent INTENT_2 = new Intent(INTENT_ACTION_2);
 
+    private static final int NON_EXISTING_UID = -1;
+
     @Before
     public void setup() {
         mTestAppProvider = new TestAppProvider();
@@ -84,7 +86,7 @@ public class TestAppInstanceReferenceTest {
 
     @Test
     public void activities_any_returnsActivity() {
-        TestApp testApp = mTestAppProvider.any();
+        TestApp testApp = mTestAppProvider.query().whereActivities().isNotEmpty().get();
         try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
             assertThat(testAppInstance.activities().any()).isNotNull();
         }
@@ -174,7 +176,7 @@ public class TestAppInstanceReferenceTest {
 
     @Test
     public void process_isRunning_isNotNull() {
-        TestApp testApp = mTestAppProvider.any();
+        TestApp testApp = mTestAppProvider.query().whereActivities().isNotEmpty().get();
         try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
             testAppInstance.activities().any().start();
 
@@ -348,6 +350,15 @@ public class TestAppInstanceReferenceTest {
             assertThrows(SecurityException.class, () -> {
                 testAppInstance.hardwarePropertiesManager().getCpuUsages();
             });
+        }
+    }
+
+    @Test
+    public void packageManager_returnsUsableInstance() {
+        TestApp testApp = mTestAppProvider.any();
+        try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
+            assertThat(testAppInstance.packageManager().getPackagesForUid(NON_EXISTING_UID))
+                    .isNull();
         }
     }
 }

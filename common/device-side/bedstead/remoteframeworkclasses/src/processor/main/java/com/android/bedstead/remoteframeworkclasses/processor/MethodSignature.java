@@ -79,7 +79,17 @@ public final class MethodSignature {
         Visibility visibility = Visibility.valueOf(parts[0].toUpperCase());
         string = parts[1];
         parts = string.split(" ", 2);
-        TypeMirror returnType = typeForString(parts[0], types, elements);
+
+        TypeMirror returnType;
+        if (parts[0].equals("abstract")) {
+            // Doesn't matter - we're wrapping anyway
+            string = parts[1];
+            parts = string.split(" ", 2);
+            returnType = typeForString(parts[0], types, elements);
+        } else {
+            returnType = typeForString(parts[0], types, elements);
+        }
+
         string = parts[1];
         parts = string.split("\\(", 2);
         String methodName = parts[0];

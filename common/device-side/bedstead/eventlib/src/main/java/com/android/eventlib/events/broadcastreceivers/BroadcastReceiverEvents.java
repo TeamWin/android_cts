@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,19 @@
  * limitations under the License.
  */
 
-package android.mediadrm.cts;
-
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+package com.android.eventlib.events.broadcastreceivers;
 
 /**
- * Annotation for tests that are not related to media mainline.
+ * Quick access to event queries about broadcast receivers.
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD, ElementType.TYPE})
-public @interface NonMediaMainlineTest {
+public interface BroadcastReceiverEvents {
+
+    /**
+     * Query for when a broadcast is received
+     *
+     * <p>Additional filters can be added to the returned object.
+     *
+     * <p>{@code #poll} can be used to fetch results, and the result can be asserted on.
+     */
+    BroadcastReceivedEvent.BroadcastReceivedEventQuery broadcastReceived();
 }

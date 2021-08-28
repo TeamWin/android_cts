@@ -32,7 +32,7 @@ import com.android.queryable.queries.ActivityQueryHelper;
  */
 public final class ActivityPausedEvent extends Event {
 
-    /** Begin a query for {@link ActivityPausedEvent} events. */
+    /** Begins a query for {@link ActivityPausedEvent} events. */
     public static ActivityPausedEventQuery queryPackage(String packageName) {
         return new ActivityPausedEventQuery(packageName);
     }
@@ -60,9 +60,16 @@ public final class ActivityPausedEvent extends Event {
             }
             return true;
         }
+
+        @Override
+        public String describeQuery(String fieldName) {
+            return toStringBuilder(ActivityPausedEvent.class, this)
+                    .field("activity", mActivity)
+                    .toString();
+        }
     }
 
-    /** Begin logging a {@link ActivityPausedEvent}. */
+    /** Begins logging a {@link ActivityPausedEvent}. */
     public static ActivityPausedEventLogger logger(Activity activity, android.content.pm.ActivityInfo activityInfo) {
         return new ActivityPausedEventLogger(activity, activityInfo);
     }
@@ -75,7 +82,7 @@ public final class ActivityPausedEvent extends Event {
             setActivity(activityInfo);
         }
 
-        /** Set the {@link Activity} being destroyed. */
+        /** Sets the {@link Activity} being destroyed. */
         public ActivityPausedEventLogger setActivity(android.content.pm.ActivityInfo activity) {
             mEvent.mActivity = ActivityInfo.builder(activity).build();
             return this;

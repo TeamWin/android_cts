@@ -36,14 +36,14 @@ public final class Activities {
     }
 
     /**
-     * Wrap the given {@link NeneActivity} to use Nene APIs.
+     * Wrap the given {@link NeneActivityDirect} to use Nene APIs.
      */
-    public Activity<NeneActivity> wrap(NeneActivity activity) {
+    public Activity<NeneActivityDirect> wrap(NeneActivity activity) {
         return new Activity<>(mTestApis, activity, activity);
     }
 
     /**
-     * Wrap the given {@link NeneActivity} subclass to use Nene APIs.
+     * Wrap the given {@link NeneActivityDirect} subclass to use Nene APIs.
      */
     public <E extends NeneActivity> Activity<E> wrap(Class<E> clazz, E activity) {
         return new Activity<>(mTestApis, activity, activity);

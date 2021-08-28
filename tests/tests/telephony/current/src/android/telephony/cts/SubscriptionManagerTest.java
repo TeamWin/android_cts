@@ -338,6 +338,35 @@ public class SubscriptionManagerTest {
     }
 
     @Test
+    public void testSubscriptionInfoRecord() {
+        if (!isSupported()) return;
+
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        uiAutomation.adoptShellPermissionIdentity();
+        String uniqueId = "00:01:02:03:04:05";
+        String displayName = "device_name";
+        mSm.addSubscriptionInfoRecord(uniqueId, displayName, 0,
+                SubscriptionManager.SUBSCRIPTION_TYPE_REMOTE_SIM);
+        assertNotNull(mSm.getActiveSubscriptionInfoForIcc(uniqueId));
+        mSm.removeSubscriptionInfoRecord(uniqueId,
+                SubscriptionManager.SUBSCRIPTION_TYPE_REMOTE_SIM);
+        assertNull(mSm.getActiveSubscriptionInfoForIcc(uniqueId));
+        uiAutomation.dropShellPermissionIdentity();
+
+        // Testing permission fail
+        try {
+            mSm.addSubscriptionInfoRecord(uniqueId, displayName, 0,
+                    SubscriptionManager.SUBSCRIPTION_TYPE_REMOTE_SIM);
+            mSm.removeSubscriptionInfoRecord(uniqueId,
+                    SubscriptionManager.SUBSCRIPTION_TYPE_REMOTE_SIM);
+            fail("SecurityException should be thrown without MODIFY_PHONE_STATE");
+        } catch (SecurityException expected) {
+            // expected
+        }
+
+    }
+
+    @Test
     public void testSetDefaultVoiceSubId() {
         if (!isSupported()) return;
 

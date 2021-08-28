@@ -69,7 +69,7 @@ public class WebViewZoomTest extends ActivityInstrumentationTestCase2<WebViewCts
         mOnUiThread = new WebViewOnUiThread(mWebView);
         mOnUiThread.requestFocus();
 
-        new PollingCheck() {
+        new PollingCheck(WebkitUtils.TEST_TIMEOUT_MS) {
             @Override
                 protected boolean check() {
                     return activity.hasWindowFocus();
