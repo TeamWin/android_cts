@@ -445,6 +445,10 @@ public class TestImpl extends ITest.Stub {
   @Override
   public IBinder getICompatTest() {
     return new CompatTest();
+  }
 
+  @Override
+  public IBinder getLegacyBinderTest() {
+    return new ILegacyBinder.Stub();
   }
 }

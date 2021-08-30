@@ -119,7 +119,10 @@ cc_defaults {
 cc_test_library {
     name: "libbinder_ndk_test_utilities",
     defaults: ["libbinder_ndk_test_defaults"],
-    srcs: ["utilities.cpp"],
+    srcs: [
+        "legacy_binder.cpp",
+        "utilities.cpp",
+    ],
 }
 
 cc_test_library {
