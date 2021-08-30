@@ -186,6 +186,34 @@ public class AudioAttributesTest extends CtsAndroidTestCase {
     }
 
     // -----------------------------------------------------------------
+    // Deprecation tests
+    // ----------------------------------
+    private int[] DEPRECATED_USAGES = { AudioAttributes.USAGE_NOTIFICATION_COMMUNICATION_REQUEST,
+            AudioAttributes.USAGE_NOTIFICATION_COMMUNICATION_DELAYED,
+            AudioAttributes.USAGE_NOTIFICATION_COMMUNICATION_INSTANT };
+
+    public void testDeprecationNotificationUsagesBuilder() throws Exception {
+        for (int deprecatedNotifUsage : DEPRECATED_USAGES) {
+            final AudioAttributes aa = new AudioAttributes.Builder()
+                    .setUsage(deprecatedNotifUsage)
+                    .build();
+            assertEquals("Deprecated notification usage value not remapped",
+                    AudioAttributes.USAGE_NOTIFICATION, aa.getUsage());
+        }
+    }
+
+    public void testDeprecationNotificationUsagesCopyBuilder() throws Exception {
+        for (int deprecatedNotifUsage : DEPRECATED_USAGES) {
+            final AudioAttributes aa = new AudioAttributes.Builder()
+                    .setUsage(deprecatedNotifUsage)
+                    .build();
+            final AudioAttributes copy = new AudioAttributes.Builder(aa).build();
+            assertEquals("Deprecated notification usage value not remapped",
+                    AudioAttributes.USAGE_NOTIFICATION, copy.getUsage());
+        }
+    }
+
+    // -----------------------------------------------------------------
     // Regression tests
     // ----------------------------------
     // Test against regression where setLegacyStreamType() was creating a different Builder
