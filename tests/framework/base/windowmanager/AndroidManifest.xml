@@ -37,57 +37,6 @@
          android:requestLegacyExternalStorage="true">
         <uses-library android:name="android.test.runner"/>
 
-        <activity android:name="android.server.wm.AspectRatioTests$MaxAspectRatioActivity"
-             android:label="MaxAspectRatioActivity"
-             android:maxAspectRatio="1.0"
-             android:resizeableActivity="false"/>
-
-        <activity android:name="android.server.wm.AspectRatioTests$MetaDataMaxAspectRatioActivity"
-             android:label="MetaDataMaxAspectRatioActivity"
-             android:resizeableActivity="false">
-            <meta-data android:name="android.max_aspect"
-                 android:value="1.0"/>
-        </activity>
-
-        <activity android:name="android.server.wm.AspectRatioTests$MaxAspectRatioResizeableActivity"
-             android:label="MaxAspectRatioResizeableActivity"
-             android:maxAspectRatio="1.0"
-             android:resizeableActivity="true"/>
-
-        <activity android:name="android.server.wm.AspectRatioTests$MaxAspectRatioUnsetActivity"
-             android:label="MaxAspectRatioUnsetActivity"
-             android:resizeableActivity="false"/>
-
-        <activity android:name="android.server.wm.AspectRatioTests$MinAspectRatioActivity"
-             android:label="MinAspectRatioActivity"
-             android:minWidth="1dp"
-             android:minAspectRatio="3.0"
-             android:resizeableActivity="false"/>
-
-        <activity android:name="android.server.wm.AspectRatioTests$MinAspectRatioResizeableActivity"
-             android:label="MinAspectRatioResizeableActivity"
-             android:minWidth="1dp"
-             android:minAspectRatio="3.0"
-             android:resizeableActivity="true"/>
-
-        <activity android:name="android.server.wm.AspectRatioTests$MinAspectRatioUnsetActivity"
-             android:label="MinAspectRatioUnsetActivity"
-             android:resizeableActivity="false"/>
-
-        <activity android:name="android.server.wm.AspectRatioTests$MinAspectRatioLandscapeActivity"
-             android:label="MinAspectRatioLandscapeActivity"
-             android:minWidth="1dp"
-             android:minAspectRatio="3.0"
-             android:resizeableActivity="false"
-             android:screenOrientation="landscape"/>
-
-        <activity android:name="android.server.wm.AspectRatioTests$MinAspectRatioPortraitActivity"
-             android:label="MinAspectRatioPortraitActivity"
-             android:minWidth="1dp"
-             android:minAspectRatio="3.0"
-             android:resizeableActivity="false"
-             android:screenOrientation="portrait"/>
-
         <activity android:name="android.server.wm.ActivityManagerTestBase$ConfigChangeHandlingActivity"
              android:resizeableActivity="true"
              android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density|touchscreen"/>

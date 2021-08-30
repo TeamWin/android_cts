@@ -629,5 +629,52 @@
 
         <service android:name=".OverlayTestService"
                  android:exported="true" />
+
+        <!-- Aspect Ratio Test Activities -->
+        <activity android:name=".MaxAspectRatioActivity"
+                  android:label="MaxAspectRatioActivity"
+                  android:maxAspectRatio="1.0"
+                  android:resizeableActivity="false"
+                  android:exported="true"/>
+        <activity android:name=".MetaDataMaxAspectRatioActivity"
+                  android:label="MetaDataMaxAspectRatioActivity"
+                  android:resizeableActivity="false"
+                  android:exported="true">
+            <meta-data android:name="android.max_aspect"
+                       android:value="1.0"/>
+        </activity>
+        <activity android:name=".MaxAspectRatioResizableActivity"
+                  android:label="MaxAspectRatioResizeableActivity"
+                  android:maxAspectRatio="1.0"
+                  android:resizeableActivity="true"
+                  android:exported="true"/>
+        <activity android:name=".MaxAspectRatioUnsetActivity"
+                  android:label="MaxAspectRatioUnsetActivity"
+                  android:resizeableActivity="false"
+                  android:exported="true"/>
+        <activity android:name=".MinAspectRatioActivity"
+                  android:label="MinAspectRatioActivity"
+                  android:minWidth="1dp"
+                  android:minAspectRatio="3.0"
+                  android:resizeableActivity="false"
+                  android:exported="true"/>
+        <activity android:name=".MinAspectRatioUnsetActivity"
+                  android:label="MinAspectRatioUnsetActivity"
+                  android:resizeableActivity="false"
+                  android:exported="true"/>
+        <activity android:name=".MinAspectRatioLandscapeActivity"
+                  android:label="MinAspectRatioLandscapeActivity"
+                  android:minWidth="1dp"
+                  android:minAspectRatio="3.0"
+                  android:resizeableActivity="false"
+                  android:screenOrientation="landscape"
+                  android:exported="true"/>
+        <activity android:name=".MinAspectRatioPortraitActivity"
+                  android:label="MinAspectRatioPortraitActivity"
+                  android:minWidth="1dp"
+                  android:minAspectRatio="3.0"
+                  android:resizeableActivity="false"
+                  android:screenOrientation="portrait"
+                  android:exported="true"/>
     </application>
 </manifest>
