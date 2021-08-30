@@ -47,6 +47,10 @@ class PermissionHistoryTest : BasePermissionHubTest() {
     @Before
     fun assumeNotTv() = assumeFalse(isTv)
 
+    // Permission history is not available on Auto devices.
+    @Before
+    fun assumeNotAuto() = assumeFalse(isAutomotive)
+
     @Before
     fun installApps() {
         uninstallPackage(APP_PACKAGE_NAME, requireSuccess = false)
