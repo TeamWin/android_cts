@@ -188,8 +188,7 @@ public class JavaClientTest {
         assertEquals(null, mInterface.RepeatNullableBinder(null));
     }
 
-    private static class Empty extends IEmpty.Stub {
-    }
+    private static class Empty extends IEmpty.Stub {}
 
     @Test
     public void testRepeatInterface() throws RemoteException {
