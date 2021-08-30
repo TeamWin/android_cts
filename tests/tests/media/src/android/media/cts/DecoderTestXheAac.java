@@ -63,7 +63,7 @@ public class DecoderTestXheAac {
     // list of all AAC decoders as enumerated through the MediaCodecList
     // lazy initialization in setUp()
     private static ArrayList<String> sAacDecoderNames;
-
+    private static String defaultAacDecoder = null;
     @Before
     public void setUp() throws Exception {
         final Instrumentation inst = InstrumentationRegistry.getInstrumentation();
@@ -75,9 +75,28 @@ public class DecoderTestXheAac {
         }
     }
 
-    protected static ArrayList<String> initAacDecoderNames() {
-        // at least 1 AAC decoder expected
+    protected static ArrayList<String> initAacDecoderNames() throws IOException {
         ArrayList<String> aacDecoderNames = new ArrayList<String>(1);
+        // Default aac decoder (the one that gets created when createDecoderByType with AAC mime
+        // is called) is expected to pass all DRC tests
+        if (defaultAacDecoder != null) {
+            aacDecoderNames.add(defaultAacDecoder);
+        } else {
+            MediaCodec decoder = MediaCodec.createDecoderByType(MediaFormat.MIMETYPE_AUDIO_AAC);
+            aacDecoderNames.add(decoder.getName());
+            defaultAacDecoder = decoder.getName();
+            decoder.release();
+        }
+        // Add all decoders that advertise support for AACObjectXHE profile as decoders that
+        // support xHE-AAC profile are expected to support DRC
+        MediaFormat format = MediaFormat.createAudioFormat(MediaFormat.MIMETYPE_AUDIO_AAC, 48000,
+                2);
+        // Set both KEY_AAC_PROFILE and KEY_PROFILE as some codecs may only recognize one of
+        // these two keys
+        format.setInteger(MediaFormat.KEY_AAC_PROFILE,
+                MediaCodecInfo.CodecProfileLevel.AACObjectXHE);
+        format.setInteger(MediaFormat.KEY_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectXHE);
+
         final MediaCodecList mediaCodecList = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
         final MediaCodecInfo[] mediaCodecInfos = mediaCodecList.getCodecInfos();
         for (MediaCodecInfo mediaCodecInfo : mediaCodecInfos) {
@@ -87,10 +106,17 @@ public class DecoderTestXheAac {
             if (mediaCodecInfo.isEncoder()) {
                 continue;
             }
+            final String codecName = mediaCodecInfo.getName();
             final String[] mimeTypes = mediaCodecInfo.getSupportedTypes();
             for (String mimeType : mimeTypes) {
                 if (MediaFormat.MIMETYPE_AUDIO_AAC.equalsIgnoreCase(mimeType)) {
-                    aacDecoderNames.add(mediaCodecInfo.getName());
+                    MediaCodecInfo.CodecCapabilities caps = mediaCodecInfo.getCapabilitiesForType(
+                            mimeType);
+                    if (caps.isFormatSupported(format)) {
+                        if (!aacDecoderNames.contains(codecName)) {
+                            aacDecoderNames.add(codecName);
+                        }
+                    }
                     break;
                 }
             }
