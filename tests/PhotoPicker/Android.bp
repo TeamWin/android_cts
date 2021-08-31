@@ -20,7 +20,7 @@ android_test {
     name: "CtsPhotoPickerTest",
     manifest: "AndroidManifest.xml",
     test_config: "AndroidTest.xml",
-    srcs: ["src/**/*.java", "helper/**/*.java",],
+    srcs: ["src/**/*.java", "helper/**/*.java", ":CtsProviderTestUtils",],
     compile_multilib: "both",
     test_suites: ["device-tests", "mts-mediaprovider", "cts"],
     sdk_version: "test_current",
@@ -29,6 +29,6 @@ android_test {
     static_libs: [
             "androidx.test.rules",
             "cts-install-lib",
-            "platform-test-annotations",
+            "androidx.test.uiautomator_uiautomator",
     ],
 }
