@@ -52,8 +52,8 @@ except:
     print \"N/A\"
 ")
 
-echo $CV2_VER | grep -q -e "^2.4" -e "^3.2" || \
-    echo ">> Require python opencv 2.4. or 3.2. Got $CV2_VER" >&2
+echo $CV2_VER | grep -q -e "^3.*" || \
+    echo ">> Require python opencv version greater than 3. Got $CV2_VER" >&2
 
 export PYTHONPATH="$PWD/pymodules:$PYTHONPATH"
 
