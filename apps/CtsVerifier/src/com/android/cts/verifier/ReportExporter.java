@@ -23,6 +23,7 @@ import android.os.Build;
 import android.os.Environment;
 import android.os.FileUtils;
 import android.os.ParcelFileDescriptor;
+import android.util.Log;
 
 import com.android.compatibility.common.util.FileUtil;
 import com.android.compatibility.common.util.IInvocationResult;
@@ -49,6 +50,8 @@ import java.util.logging.Logger;
  * Background task to generate a report and save it to external storage.
  */
 class ReportExporter extends AsyncTask<Void, Void, String> {
+    private static final String TAG = ReportExporter.class.getSimpleName();
+    private static final boolean DEBUG = true;
 
     public static final String REPORT_DIRECTORY = "VerifierReports";
     public static final String LOGS_DIRECTORY = "ReportLogFiles";
@@ -76,11 +79,15 @@ class ReportExporter extends AsyncTask<Void, Void, String> {
     // so that they will get ZIPped into the transmitted file.
     //
     private void copyReportFiles(File tempDir) {
+        if (DEBUG) {
+            Log.d(TAG, "copyReportFiles(" + tempDir.getAbsolutePath() + ")");
+        }
+
         File externalStorageDirectory = Environment.getExternalStorageDirectory();
         File reportLogFolder =
                 new File(Environment.getExternalStorageDirectory().getAbsolutePath()
                         + File.separator
-                        + REPORT_DIRECTORY);
+                        + LOGS_DIRECTORY);
         File[] reportLogFiles = reportLogFolder.listFiles();
 
         // if no ReportLog files have been created (i.e. the folder doesn't exist)
@@ -156,6 +163,9 @@ class ReportExporter extends AsyncTask<Void, Void, String> {
     }
 
     private void saveReportOnInternalStorage(File reportZipFile) {
+        if (DEBUG) {
+            Log.d(TAG, "---- saveReportOnInternalStorage(" + reportZipFile.getAbsolutePath() + ")");
+        }
         try {
             ParcelFileDescriptor pfd = ParcelFileDescriptor.open(
                     reportZipFile, ParcelFileDescriptor.MODE_READ_ONLY);
