@@ -960,6 +960,27 @@ TEST_P(NdkBinderTest_Aidl, GetInterfaceHash) {
   }
 }
 
+TEST_P(NdkBinderTest_Aidl, LegacyBinder) {
+  SpAIBinder binder;
+  iface->getLegacyBinderTest(&binder);
+  ASSERT_NE(nullptr, binder.get());
+
+  ASSERT_TRUE(AIBinder_associateClass(binder.get(), kLegacyBinderClass));
+
+  constexpr int32_t kVal = 42;
+
+  ::ndk::ScopedAParcel in;
+  ::ndk::ScopedAParcel out;
+  ASSERT_EQ(STATUS_OK, AIBinder_prepareTransaction(binder.get(), in.getR()));
+  ASSERT_EQ(STATUS_OK, AParcel_writeInt32(in.get(), kVal));
+  ASSERT_EQ(STATUS_OK,
+            AIBinder_transact(binder.get(), FIRST_CALL_TRANSACTION, in.getR(), out.getR(), 0));
+
+  int32_t output;
+  ASSERT_EQ(STATUS_OK, AParcel_readInt32(out.get(), &output));
+  EXPECT_EQ(kVal, output);
+}
+
 TEST_P(NdkBinderTest_Aidl, ParcelableHolderTest) {
   ExtendableParcelable ep;
   MyExt myext1;
