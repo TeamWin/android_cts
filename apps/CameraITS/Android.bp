@@ -16,6 +16,10 @@
 // Zip all the files in this directory together for merging into cts-verifier.zip.
 // build/envsetup.sh is used as a known file to get the location of the top of the
 // directory.
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
 genrule {
     name: "camera-its",
     srcs: [
