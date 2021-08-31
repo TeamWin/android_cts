@@ -24,6 +24,7 @@
 #include <condition_variable>
 #include <mutex>
 
+#include "legacy_binder.h"
 #include "utilities.h"
 
 using ::aidl::test_package::Bar;
@@ -449,6 +450,11 @@ class MyTest : public ::aidl::test_package::BnTest,
 #endif
     };
     *_aidl_return = SharedRefBase::make<MyCompatTest>()->asBinder();
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
+
+  ::ndk::ScopedAStatus getLegacyBinderTest(::ndk::SpAIBinder* _aidl_return) {
+    *_aidl_return = ::ndk::SpAIBinder(AIBinder_new(kLegacyBinderClass, nullptr));
     return ::ndk::ScopedAStatus(AStatus_newOk());
   }
 
