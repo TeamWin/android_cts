@@ -57,6 +57,7 @@ aidl_interface {
             enabled: false,
         }
     },
+    unstable: true,
 }
 
 aidl_interface {
@@ -118,7 +119,10 @@ cc_defaults {
 cc_test_library {
     name: "libbinder_ndk_test_utilities",
     defaults: ["libbinder_ndk_test_defaults"],
-    srcs: ["utilities.cpp"],
+    srcs: [
+        "legacy_binder.cpp",
+        "utilities.cpp",
+    ],
 }
 
 cc_test_library {
@@ -129,7 +133,7 @@ cc_test_library {
     ],
     // Using the up-to-date version of the interface
     shared_libs: [
-        "libbinder_ndk_test_interface-V1-ndk",
+        "libbinder_ndk_test_interface-ndk",
         "libbinder_ndk_compat_test_interface-V3-ndk",
         "libbinder_ndk_test_utilities",
     ],
@@ -148,7 +152,7 @@ cc_test_library {
         "libbinder_ndk_compat_test_interface_dup-V1-ndk",
     ],
     shared_libs: [
-        "libbinder_ndk_test_interface-V1-ndk",
+        "libbinder_ndk_test_interface-ndk",
         "libbinder_ndk_test_utilities",
     ],
 }
@@ -165,7 +169,7 @@ cc_test_library {
         "test_status.cpp",
     ],
     shared_libs: [
-        "libbinder_ndk_test_interface-V1-ndk",
+        "libbinder_ndk_test_interface-ndk",
         "libbinder_ndk_compat_test_interface-V3-ndk",
         "libbinder_ndk_test_utilities",
     ],
