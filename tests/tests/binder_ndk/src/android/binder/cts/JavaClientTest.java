@@ -696,6 +696,12 @@ public class JavaClientTest {
     }
 
     @Test
+    public void testLegacyBinder() throws RemoteException {
+        ILegacyBinder compatTest = ILegacyBinder.Stub.asInterface(mInterface.getLegacyBinderTest());
+        assertEquals(42, compatTest.RepeatInt(42));
+    }
+
+    @Test
     public void testRenameFoo() throws RemoteException {
         Foo foo = new Foo();
         foo.d = new Bar();
