@@ -121,6 +121,18 @@ bool VkInit::init() {
   ASSERT(status == VK_SUCCESS || status == VK_INCOMPLETE);
   ASSERT(gpuCount > 0);
 
+  VkPhysicalDeviceSamplerYcbcrConversionFeaturesKHR ycbcrFeatures = {
+      .sType =
+          VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SAMPLER_YCBCR_CONVERSION_FEATURES_KHR,
+      .pNext = nullptr,
+  };
+  VkPhysicalDeviceFeatures2KHR physicalDeviceFeatures = {
+      .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2_KHR,
+      .pNext = &ycbcrFeatures,
+  };
+  vkGetPhysicalDeviceFeatures2(mGpu, &physicalDeviceFeatures);
+  ASSERT(ycbcrFeatures.samplerYcbcrConversion == VK_TRUE);
+
   VkPhysicalDeviceProperties physicalDeviceProperties;
   vkGetPhysicalDeviceProperties(mGpu, &physicalDeviceProperties);
   std::vector<const char *> deviceExt;
@@ -182,7 +194,7 @@ bool VkInit::init() {
 
   VkDeviceCreateInfo deviceCreateInfo{
       .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-      .pNext = nullptr,
+      .pNext = &ycbcrFeatures,
       .queueCreateInfoCount = 1,
       .pQueueCreateInfos = &queueCreateInfo,
       .enabledLayerCount = 0,
@@ -225,18 +237,6 @@ bool VkInit::init() {
   mPfnImportSemaphoreFd =
           (PFN_vkImportSemaphoreFdKHR)vkGetDeviceProcAddr(mDevice, "vkImportSemaphoreFdKHR");
   ASSERT(mPfnImportSemaphoreFd);
-
-  VkPhysicalDeviceSamplerYcbcrConversionFeaturesKHR ycbcrFeatures{
-      .sType =
-          VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SAMPLER_YCBCR_CONVERSION_FEATURES_KHR,
-      .pNext = nullptr,
-  };
-  VkPhysicalDeviceFeatures2KHR physicalDeviceFeatures{
-      .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2_KHR,
-      .pNext = &ycbcrFeatures,
-  };
-  vkGetPhysicalDeviceFeatures2(mGpu, &physicalDeviceFeatures);
-  ASSERT(ycbcrFeatures.samplerYcbcrConversion == VK_TRUE);
 
   vkGetDeviceQueue(mDevice, 0, 0, &mQueue);
   vkGetPhysicalDeviceMemoryProperties(mGpu, &mMemoryProperties);
