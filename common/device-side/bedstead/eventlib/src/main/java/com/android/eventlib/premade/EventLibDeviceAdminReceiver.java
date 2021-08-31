@@ -280,7 +280,12 @@ public class EventLibDeviceAdminReceiver extends DeviceAdminReceiver {
 
         logger.log();
 
-        return super.onChoosePrivateKeyAlias(context, intent, uid, uri, alias);
+        // TODO(b/198280332) Allow TestApp to return values for methods.
+        super.onChoosePrivateKeyAlias(context, intent, uid, uri, alias);
+        if (uri == null) {
+            return null;
+        }
+        return uri.getQueryParameter("alias");
     }
 
     @Override
