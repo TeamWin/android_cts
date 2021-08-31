@@ -39,10 +39,12 @@ import org.junit.runner.RunWith;
 
 import java.io.File;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.List;
 
 
 /**
@@ -113,6 +115,26 @@ public class IncrementalLoadingProgressTest extends BaseHostJUnit4Test {
         // Wait for loading progress to update
         RunUtil.getDefault().sleep(WAIT_FOR_LOADING_PROGRESS_UPDATE_MS);
         // Check full loading progress
+        assertTrue(runDeviceTests(DEVICE_TEST_PACKAGE_NAME, TEST_CLASS_NAME,
+                "testGetFullLoadingProgress"));
+    }
+
+    @LargeTest
+    @Test
+    public void testGetLoadingProgressDuringMigration() throws Exception {
+        // Check partial loading progress
+        assertTrue(runDeviceTests(DEVICE_TEST_PACKAGE_NAME, TEST_CLASS_NAME,
+                "testGetPartialLoadingProgress"));
+        final List<File> apks = new ArrayList<>(2);
+        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(getBuild());
+        final File base_apk = buildHelper.getTestFile(TEST_APK);
+        assertNotNull(base_apk);
+        apks.add(base_apk);
+        final File split_apk = buildHelper.getTestFile(TEST_SPLIT_APK);
+        assertNotNull(split_apk);
+        apks.add(split_apk);
+        // Trigger app migration through normal package installation.
+        getDevice().installPackages(apks, false, "-t");
         assertTrue(runDeviceTests(DEVICE_TEST_PACKAGE_NAME, TEST_CLASS_NAME,
                 "testGetFullLoadingProgress"));
     }
