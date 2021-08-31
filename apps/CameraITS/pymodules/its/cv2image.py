@@ -286,7 +286,7 @@ def get_angle(input_img):
     if cv2_version.startswith('2.4.'):
         contours, _ = cv2.findContours(
                 thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    elif cv2_version.startswith('3.2.'):
+    elif cv2_version.startswith('3.'):
         _, contours, _ = cv2.findContours(
                 thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
@@ -310,7 +310,7 @@ def get_angle(input_img):
 
         if cv2_version.startswith('2.4.'):
             box = numpy.int0(cv2.cv.BoxPoints(rect))
-        elif cv2_version.startswith('3.2.'):
+        elif cv2_version.startswith('3.'):
             box = numpy.int0(cv2.boxPoints(rect))
         square_contours.append(contour)
 
