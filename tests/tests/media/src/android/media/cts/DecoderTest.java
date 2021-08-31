@@ -2469,7 +2469,7 @@ public class DecoderTest extends MediaPlayerTestBase {
     }
 
     public void testCodecEarlyEOSH263() throws Exception {
-        testCodecEarlyEOS("video_176x144_3gp_h263_300kbps_12fps_aac_stereo_128kbps_22050hz.mp4",
+        testCodecEarlyEOS("video_176x144_3gp_h263_300kbps_12fps_aac_stereo_128kbps_22050hz.3gp",
                 64 /* eosframe */);
     }
 
