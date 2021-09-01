@@ -43,6 +43,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.net.ConnectivityManager;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
@@ -1302,9 +1303,11 @@ public class TelephonyManagerTest {
     @Test
     public void testGetPhoneCapabilityAndVerify() {
         boolean is5gStandalone = getContext().getResources().getBoolean(
-                com.android.internal.R.bool.config_telephony5gStandalone);
+                Resources.getSystem().getIdentifier("config_telephony5gStandalone", "bool",
+                        "android"));
         boolean is5gNonStandalone = getContext().getResources().getBoolean(
-                com.android.internal.R.bool.config_telephony5gNonStandalone);
+                Resources.getSystem().getIdentifier("config_telephony5gNonStandalone", "bool",
+                        "android"));
         int[] deviceNrCapabilities = new int[0];
         if (is5gStandalone || is5gNonStandalone) {
             List<Integer> list = new ArrayList<>();
