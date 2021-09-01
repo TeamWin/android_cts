@@ -19,6 +19,7 @@ package android.permission3.cts
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager.FEATURE_LEANBACK
+import android.content.pm.PackageManager.FEATURE_AUTOMOTIVE
 import android.os.Build
 import android.support.test.uiautomator.By
 import androidx.test.filters.SdkSuppress
@@ -48,6 +49,11 @@ class PermissionHistoryTest : BasePermissionTest() {
     @Before
     fun assumeNotTv() =
             assumeFalse(packageManager.hasSystemFeature(FEATURE_LEANBACK))
+
+    // Permission history is not available on Auto devices.
+    @Before
+    fun assumeNotAuto() =
+            assumeFalse(packageManager.hasSystemFeature(FEATURE_AUTOMOTIVE))
 
     @Before
     fun installApps() {
