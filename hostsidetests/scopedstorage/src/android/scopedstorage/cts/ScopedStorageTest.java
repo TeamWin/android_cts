@@ -3048,12 +3048,24 @@ public class ScopedStorageTest {
         assertThat(readPfd.getStatSize()).isEqualTo(writePfd.getStatSize());
     }
 
+    private void assertStartsWith(String actual, String prefix) throws Exception {
+        String message = "String \"" + actual + "\" should start with \"" + prefix + "\"";
+
+        assertWithMessage(message).that(actual).startsWith(prefix);
+    }
+
     private void assertLowerFsFd(ParcelFileDescriptor pfd) throws Exception {
-        assertThat(Os.readlink("/proc/self/fd/" + pfd.getFd()).startsWith("/storage")).isTrue();
+        String path = Os.readlink("/proc/self/fd/" + pfd.getFd());
+        String prefix = "/storage";
+
+        assertStartsWith(path, prefix);
     }
 
     private void assertUpperFsFd(ParcelFileDescriptor pfd) throws Exception {
-        assertThat(Os.readlink("/proc/self/fd/" + pfd.getFd()).startsWith("/mnt/user")).isTrue();
+        String path = Os.readlink("/proc/self/fd/" + pfd.getFd());
+        String prefix = "/mnt/user";
+
+        assertStartsWith(path, prefix);
     }
 
     private void assertLowerFsFdWithPassthrough(ParcelFileDescriptor pfd) throws Exception {
