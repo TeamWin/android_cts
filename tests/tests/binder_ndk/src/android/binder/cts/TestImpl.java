@@ -38,16 +38,6 @@ import test_package.SimpleUnion;
 
 public class TestImpl extends ITest.Stub {
   @Override
-  public int getInterfaceVersion() {
-    return this.VERSION;
-  }
-
-  @Override
-  public String getInterfaceHash() {
-    return this.HASH;
-  }
-
-  @Override
   protected void dump(FileDescriptor fd, PrintWriter pw, String[] args) {
     for (String arg : args) {
       pw.print(arg);
@@ -455,6 +445,10 @@ public class TestImpl extends ITest.Stub {
   @Override
   public IBinder getICompatTest() {
     return new CompatTest();
+  }
 
+  @Override
+  public IBinder getLegacyBinderTest() {
+    return new ILegacyBinder.Stub();
   }
 }

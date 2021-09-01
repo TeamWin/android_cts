@@ -188,17 +188,7 @@ public class JavaClientTest {
         assertEquals(null, mInterface.RepeatNullableBinder(null));
     }
 
-    private static class Empty extends IEmpty.Stub {
-        @Override
-        public int getInterfaceVersion() {
-            return this.VERSION;
-        }
-
-        @Override
-        public String getInterfaceHash() {
-            return this.HASH;
-        }
-    }
+    private static class Empty extends IEmpty.Stub {}
 
     @Test
     public void testRepeatInterface() throws RemoteException {
@@ -703,6 +693,12 @@ public class JavaClientTest {
         } else {
             assertEquals("notfrozen", compatTest.getInterfaceHash());
         }
+    }
+
+    @Test
+    public void testLegacyBinder() throws RemoteException {
+        ILegacyBinder compatTest = ILegacyBinder.Stub.asInterface(mInterface.getLegacyBinderTest());
+        assertEquals(42, compatTest.RepeatInt(42));
     }
 
     @Test

@@ -132,4 +132,6 @@ interface ITest {
     IBinder getICompatTest();
 
     void RepeatExtendableParcelableWithoutExtension(in ExtendableParcelable input, out ExtendableParcelable output);
+
+    IBinder getLegacyBinderTest();
 }
