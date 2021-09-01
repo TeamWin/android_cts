@@ -19,6 +19,7 @@ package com.android.cts.mediastorageapp;
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -447,6 +448,7 @@ public class MediaStorageTest {
         assertAccessFileAPISupport(file);
         assertReadWriteFileAPISupport(file);
         assertRenameFileAPISupport(file);
+        assertRenameAndReplaceFileAPISupport(file, create);
         assertDeleteFileAPISupport(file);
     }
 
@@ -471,15 +473,52 @@ public class MediaStorageTest {
     public void assertRenameFileAPISupport(File oldFile) throws Exception {
         final String oldName = oldFile.getAbsolutePath();
         final String extension = oldName.substring(oldName.lastIndexOf('.')).trim();
-        // TODO(b/178816495): Changing the extension changes the media-type and hence the media-URI
-        // corresponding to the new file is not accessible to the caller. Rename to the same
-        // extension so that the test app does not lose access and is able to delete the file.
-        final String newName = "cts" + System.nanoTime() + extension;
-        final File newFile = Environment.buildPath(Environment.getExternalStorageDirectory(),
-                Environment.DIRECTORY_DOWNLOADS, newName);
-        assertThat(oldFile.renameTo(newFile)).isTrue();
+        // Rename to same extension so test app does not lose access to file.
+        final String newRelativeName = "cts" + System.nanoTime() + extension;
+        final File newFile = Environment.buildPath(
+            Environment.getExternalStorageDirectory(),
+            Environment.DIRECTORY_DOWNLOADS,
+            newRelativeName);
+        final String newName = newFile.getAbsolutePath();
+        assertWithMessage("Rename from oldName [%s] to newName [%s]", oldName, newName)
+            .that(oldFile.renameTo(newFile))
+            .isTrue();
         // Rename back to oldFile for other ops like delete
-        assertThat(newFile.renameTo(oldFile)).isTrue();
+        assertWithMessage("Rename back from newName [%s] to oldName [%s]", newName, oldName)
+            .that(newFile.renameTo(oldFile))
+            .isTrue();
+    }
+
+    public void assertRenameAndReplaceFileAPISupport(File oldFile, Callable<Uri> create)
+            throws Exception {
+        final String oldName = oldFile.getAbsolutePath();
+
+        // Create new file to which we have access via grant URI
+        final Uri newUri = create.call();
+        assertWithMessage("Check newFile created").that(newUri).isNotNull();
+        clearMediaOwner(newUri, mUserId);
+        File newFile = new File(queryForSingleColumn(newUri, MediaColumns.DATA));
+        final String newName = newFile.getAbsolutePath();
+
+        assertWithMessage(
+            "Rename should fail without newFile grant from oldName [%s] to newName [%s]",
+            oldName, newName)
+            .that(oldFile.renameTo(newFile))
+            .isFalse();
+
+        // Grant access to newFile and rename should succeed.
+        doEscalation(MediaStore.createWriteRequest(mContentResolver, Arrays.asList(newUri)));
+        assertWithMessage("Rename from oldName [%s] to newName [%s]", oldName, newName)
+            .that(oldFile.renameTo(newFile))
+            .isTrue();
+
+        // We need to request grant on newUri again, since the rename above caused the URI grant
+        // to be revoked.
+        doEscalation(MediaStore.createWriteRequest(mContentResolver, Arrays.asList(newUri)));
+        // Rename back to oldFile for other ops like delete
+        assertWithMessage("Rename back from newName [%s] to oldName [%s]", newName, oldName)
+            .that(newFile.renameTo(oldFile))
+            .isTrue();
     }
 
     private void assertDeleteFileAPISupport(File file) throws Exception {
