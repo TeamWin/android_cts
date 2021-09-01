@@ -16,17 +16,21 @@
 
 package android.media.cts;
 
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 import static junit.framework.Assert.assertEquals;
 
 import static org.junit.Assert.fail;
 import static org.junit.Assert.assertTrue;
 import static org.testng.Assert.assertFalse;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.content.res.Resources;
+import android.hardware.hdmi.HdmiControlManager;
 import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.media.session.MediaSession;
@@ -84,17 +88,27 @@ public class MediaActivityTest {
     private Map<Integer, Integer> mStreamVolumeMap = new HashMap<>();
     private MediaSession mSession;
 
+    private HdmiControlManager mHdmiControlManager;
+    private int mHdmiEnableStatus;
+
     @Rule
     public ActivityTestRule<MediaSessionTestActivity> mActivityRule =
             new ActivityTestRule<>(MediaSessionTestActivity.class, false, false);
 
     @Before
     public void setUp() throws Exception {
+        getInstrumentation().getUiAutomation().adoptShellPermissionIdentity(
+            Manifest.permission.HDMI_CEC);
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mContext = mInstrumentation.getContext();
         mUseFixedVolume = mContext.getResources().getBoolean(
                 Resources.getSystem().getIdentifier("config_useFixedVolume", "bool", "android"));
         mAudioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
+        mHdmiControlManager = mContext.getSystemService(HdmiControlManager.class);
+        if(mHdmiControlManager != null) {
+            mHdmiEnableStatus = mHdmiControlManager.getHdmiCecEnabled();
+            mHdmiControlManager.setHdmiCecEnabled(HdmiControlManager.HDMI_CEC_CONTROL_DISABLED);
+        }
 
         mStreamVolumeMap.clear();
         for (Integer stream : ALL_VOLUME_STREAMS) {
@@ -132,6 +146,9 @@ public class MediaActivityTest {
         if (mSession != null) {
             mSession.release();
             mSession = null;
+        }
+        if (mHdmiControlManager != null) {
+            mHdmiControlManager.setHdmiCecEnabled(mHdmiEnableStatus);
         }
 
         try {
