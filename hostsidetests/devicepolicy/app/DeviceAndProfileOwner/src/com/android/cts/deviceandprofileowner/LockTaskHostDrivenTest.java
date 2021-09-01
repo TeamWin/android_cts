@@ -36,6 +36,7 @@ import android.util.Log;
 import androidx.test.InstrumentationRegistry;
 
 import java.time.Duration;
+import java.util.List;
 import com.android.compatibility.common.util.PollingCheck;
 
 /**
@@ -255,9 +256,12 @@ public class LockTaskHostDrivenTest extends BaseDeviceAdminTest {
     }
 
     private void checkLockedActivityIsRunning() {
-        String activityName =
-                mActivityManager.getAppTasks().get(0).getTaskInfo().topActivity.getClassName();
-        assertEquals(LOCK_TASK_ACTIVITY, activityName);
+        List<ActivityManager.AppTask> appTasks = mActivityManager.getAppTasks();
+        ActivityManager.RecentTaskInfo taskInfo = appTasks.stream()
+                .filter(task -> task.getTaskInfo().topActivity != null &&
+                task.getTaskInfo().topActivity.getClassName().equals(LOCK_TASK_ACTIVITY)).
+                findFirst().get().getTaskInfo();
+        assertTrue(taskInfo.isRunning);
 
         PollingCheck.waitFor(
                 () -> (mActivityManager.getLockTaskModeState()
