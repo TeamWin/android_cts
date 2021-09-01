@@ -20,6 +20,8 @@ import static com.android.bedstead.remotedpc.RemoteDpc.DPC_COMPONENT_NAME;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assert.assertThrows;
+
 import android.content.Context;
 import android.net.Uri;
 import android.os.Handler;
@@ -38,6 +40,7 @@ import com.android.compatibility.common.util.BlockingCallback;
 import com.android.compatibility.common.util.FakeKeys;
 
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -56,6 +59,11 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+/**
+ * Test that a DPC can manage keys and certificate on a device by installing, generating and
+ * removing key pairs via DevicePolicyManager APIs. The instrumented test app can use the installed
+ * keys by requesting access to them and retrieving them via KeyChain APIs.
+ */
 @RunWith(BedsteadJUnit4.class)
 public class KeyManagementTest {
 
@@ -65,6 +73,7 @@ public class KeyManagementTest {
             generatePrivateKey(FakeKeys.FAKE_RSA_1.privateKey, RSA);
     private static final Certificate CERTIFICATE =
             generateCertificate(FakeKeys.FAKE_RSA_1.caCertificate);
+    private static final Certificate[] CERTIFICATES = new Certificate[]{CERTIFICATE};
 
     private final ExecutorService mExecutor = Executors.newSingleThreadExecutor();
     private final Handler mHandler = new Handler(Looper.getMainLooper());
@@ -90,6 +99,69 @@ public class KeyManagementTest {
 
     @Test
     @Postsubmit(reason = "new test")
+    @CanSetPolicyTest(policy = KeyManagement.class, singleTestOnly = true)
+    public void installKeyPair_nullPrivateKey_throwException() throws Exception {
+        assertThrows(NullPointerException.class,
+                () -> sDeviceState.dpc().devicePolicyManager().installKeyPair(
+                        DPC_COMPONENT_NAME, /* privKey = */ null, CERTIFICATE, RSA_ALIAS));
+    }
+
+    @Test
+    @Postsubmit(reason = "new test")
+    @CanSetPolicyTest(policy = KeyManagement.class, singleTestOnly = true)
+    public void installKeyPair_nullCertificate_throwException() throws Exception {
+        assertThrows(NullPointerException.class,
+                () -> sDeviceState.dpc().devicePolicyManager().installKeyPair(
+                        DPC_COMPONENT_NAME, PRIVATE_KEY, /* cert = */ null, RSA_ALIAS));
+    }
+
+    @Test
+    @Postsubmit(reason = "new test")
+    @CanSetPolicyTest(policy = KeyManagement.class, singleTestOnly = true)
+    public void installKeyPair_nullAdminComponent_throwException() throws Exception {
+        assertThrows(SecurityException.class,
+                () -> sDeviceState.dpc().devicePolicyManager().installKeyPair(
+                        /* admin = */ null, PRIVATE_KEY, CERTIFICATE, RSA_ALIAS));
+    }
+
+    @Test
+    @Ignore
+    @Postsubmit(reason = "new test")
+    @PositivePolicyTest(policy = KeyManagement.class)
+    public void installKeyPair_withAutomatedAccess_aliasIsGranted() throws Exception {
+        try {
+            // Install keypair with automated access
+            sDeviceState.dpc().devicePolicyManager().installKeyPair(DPC_COMPONENT_NAME, PRIVATE_KEY,
+                    CERTIFICATES, RSA_ALIAS, /* requestAccess = */ true);
+
+            // TODO(b/198407955): Call KeyChain.getPrivateKey with the DPC context and verify
+            // the private key is not null
+        } finally {
+            // Remove keypair
+            sDeviceState.dpc().devicePolicyManager().removeKeyPair(DPC_COMPONENT_NAME, RSA_ALIAS);
+        }
+    }
+
+    @Test
+    @Ignore
+    @Postsubmit(reason = "new test")
+    @PositivePolicyTest(policy = KeyManagement.class)
+    public void installKeyPair_withoutAutomatedAccess_aliasIsNotGranted() throws Exception {
+        try {
+            // Install keypair with automated access
+            sDeviceState.dpc().devicePolicyManager().installKeyPair(DPC_COMPONENT_NAME, PRIVATE_KEY,
+                    CERTIFICATES, RSA_ALIAS, /* requestAccess = */ false);
+
+            // TODO(b/198407955): Call KeyChain.getPrivateKey with the DPC context and verify
+            // the private key is null
+        } finally {
+            // Remove keypair
+            sDeviceState.dpc().devicePolicyManager().removeKeyPair(DPC_COMPONENT_NAME, RSA_ALIAS);
+        }
+    }
+
+    @Test
+    @Postsubmit(reason = "new test")
     @CanSetPolicyTest(policy = KeyManagement.class)
     public void removeKeyPair_validRsaKeyPair_success() throws Exception {
         try {
@@ -105,12 +177,72 @@ public class KeyManagementTest {
 
     @Test
     @Postsubmit(reason = "new test")
+    @CanSetPolicyTest(policy = KeyManagement.class)
+    public void hasKeyPair_nonExistentAlias_false() throws Exception {
+        assertThat(sDeviceState.dpc().devicePolicyManager().hasKeyPair(RSA_ALIAS)).isFalse();
+    }
+
+    @Test
+    @Postsubmit(reason = "new test")
+    @CanSetPolicyTest(policy = KeyManagement.class)
+    public void hasKeyPair_installedAlias_true() throws Exception {
+        try {
+            // Install keypair
+            sDeviceState.dpc().devicePolicyManager()
+                    .installKeyPair(DPC_COMPONENT_NAME, PRIVATE_KEY, CERTIFICATE, RSA_ALIAS);
+
+            assertThat(sDeviceState.dpc().devicePolicyManager().hasKeyPair(RSA_ALIAS)).isTrue();
+        } finally {
+            // Remove keypair
+            sDeviceState.dpc().devicePolicyManager().removeKeyPair(DPC_COMPONENT_NAME, RSA_ALIAS);
+        }
+    }
+
+    @Test
+    @Postsubmit(reason = "new test")
+    @CanSetPolicyTest(policy = KeyManagement.class)
+    public void hasKeyPair_removedAlias_false() throws Exception {
+        try {
+            // Install keypair
+            sDeviceState.dpc().devicePolicyManager()
+                    .installKeyPair(DPC_COMPONENT_NAME, PRIVATE_KEY, CERTIFICATE, RSA_ALIAS);
+            sDeviceState.dpc().devicePolicyManager().removeKeyPair(DPC_COMPONENT_NAME, RSA_ALIAS);
+
+            assertThat(sDeviceState.dpc().devicePolicyManager().hasKeyPair(RSA_ALIAS)).isFalse();
+        } finally {
+            // Remove keypair
+            sDeviceState.dpc().devicePolicyManager().removeKeyPair(DPC_COMPONENT_NAME, RSA_ALIAS);
+        }
+    }
+
+    @Test
+    @Postsubmit(reason = "new test")
     @PositivePolicyTest(policy = KeyManagement.class)
     public void choosePrivateKeyAlias_aliasIsSelectedByAdmin_returnAlias() throws Exception {
         try {
             // Install keypair
             sDeviceState.dpc().devicePolicyManager()
                     .installKeyPair(DPC_COMPONENT_NAME, PRIVATE_KEY, CERTIFICATE, RSA_ALIAS);
+            KeyChainAliasCallback callback = new KeyChainAliasCallback();
+
+            choosePrivateKeyAlias(callback, RSA_ALIAS);
+
+            assertThat(callback.await()).isEqualTo(RSA_ALIAS);
+        } finally {
+            // Remove keypair
+            sDeviceState.dpc().devicePolicyManager().removeKeyPair(DPC_COMPONENT_NAME, RSA_ALIAS);
+        }
+    }
+
+    @Test
+    @Postsubmit(reason = "new test")
+    @PositivePolicyTest(policy = KeyManagement.class)
+    public void choosePrivateKeyAlias_nonUserSelectedAliasIsSelectedByAdmin_returnAlias()
+            throws Exception {
+        try {
+            // Install keypair which is not user selectable
+            sDeviceState.dpc().devicePolicyManager().installKeyPair(DPC_COMPONENT_NAME, PRIVATE_KEY,
+                    CERTIFICATES, RSA_ALIAS, /* flags = */ 0);
             KeyChainAliasCallback callback = new KeyChainAliasCallback();
 
             choosePrivateKeyAlias(callback, RSA_ALIAS);
