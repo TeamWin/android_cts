@@ -206,7 +206,7 @@ public class MultiWindowTests extends ActivityManagerTestBase {
         int displayWindowingMode = mWmState.getDisplay(
                 mWmState.getDisplayByActivity(TEST_ACTIVITY)).getWindowingMode();
         separateTestJournal();
-        mTaskOrganizer.dismissSplitScreen();
+        mTaskOrganizer.dismissSplitScreen(true /* primaryOnTop */);
         if (displayWindowingMode == WINDOWING_MODE_FULLSCREEN) {
             // Exit split-screen mode and ensure we only get 1 multi-window mode changed callback.
             final ActivityLifecycleCounts lifecycleCounts = waitForOnMultiWindowModeChanged(
@@ -256,7 +256,7 @@ public class MultiWindowTests extends ActivityManagerTestBase {
                 mTaskOrganizer.getTaskInfo(noRelaunchTaskId).getToken();
         WindowContainerTransaction t = new WindowContainerTransaction()
                 .setWindowingMode(noRelaunchTaskToken, WINDOWING_MODE_FULLSCREEN);
-        mTaskOrganizer.dismissSplitScreen(t, false /* primaryOnTop */);
+        mTaskOrganizer.dismissSplitScreen(t, true /* primaryOnTop */);
 
         lifecycleCounts = waitForOnMultiWindowModeChanged(NO_RELAUNCH_ACTIVITY);
         assertEquals("mMultiWindowModeChangedCount",
