@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.media.cts;
+package android.media.codec.cts;
 
 import static org.testng.Assert.assertThrows;
 
@@ -38,6 +38,9 @@ import android.media.MediaCrypto;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.cts.AudioHelper;
+import android.media.cts.InputSurface;
+import android.media.cts.OutputSurface;
+import android.media.cts.Preconditions;
 import android.media.cts.StreamUtils;
 import android.opengl.GLES20;
 import android.os.Build;
