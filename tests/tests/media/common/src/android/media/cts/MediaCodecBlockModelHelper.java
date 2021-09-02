@@ -318,12 +318,12 @@ public class MediaCodecBlockModelHelper extends AndroidTestCase {
     }
 
     public static class SlotEvent {
-        SlotEvent(boolean input, int index) {
+        public SlotEvent(boolean input, int index) {
             this.input = input;
             this.index = index;
         }
-        final boolean input;
-        final int index;
+        public final boolean input;
+        public final int index;
     }
 
     private static final UUID CLEARKEY_SCHEME_UUID =
