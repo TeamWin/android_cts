@@ -845,28 +845,6 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     }
 
     @Test
-    public void testSetUserControlDisabledPackages_singleUser_verifyMetricIsLogged()
-            throws Exception {
-        final List<Integer> otherUserIds = new ArrayList<>();
-        try {
-            setupDeviceForSetUserControlDisabledPackagesTesting(otherUserIds);
-
-            // Set the package under test as a protected package.
-            assertMetricsLogged(getDevice(),
-                    () -> executeDeviceTestMethod(".UserControlDisabledPackagesTest",
-                            "testSetUserControlDisabledPackages"),
-                    new DevicePolicyEventWrapper.Builder(
-                            EventId.SET_USER_CONTROL_DISABLED_PACKAGES_VALUE)
-                            .setAdminPackageName(DEVICE_OWNER_PKG)
-                            .setStrings(new String[] {SIMPLE_APP_PKG})
-                            .build());
-        } finally {
-            cleanupProtectedPackage(otherUserIds);
-            getDevice().uninstallPackageForUser(SIMPLE_APP_APK, mPrimaryUserId);
-        }
-    }
-
-    @Test
     public void testSetUserControlDisabledPackages_singleUser_verifyPackageNotStopped()
             throws Exception {
         final List<Integer> otherUserIds = new ArrayList<>();
@@ -905,33 +883,6 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
         } finally {
             cleanupProtectedPackage(otherUserIds);
             getDevice().uninstallPackageForUser(SIMPLE_APP_APK, mPrimaryUserId);
-        }
-    }
-
-    @Test
-    public void testSetUserControlDisabledPackages_multiUser_verifyMetricIsLogged()
-            throws Exception {
-        assumeCanCreateAdditionalUsers(1);
-        final int userId = createUser();
-        final List<Integer> otherUserIds = new ArrayList<>();
-        otherUserIds.add(userId);
-        try {
-            setupDeviceForSetUserControlDisabledPackagesTesting(otherUserIds);
-
-            // Set the package under test as a protected package.
-            assertMetricsLogged(getDevice(),
-                    () -> executeDeviceTestMethod(".UserControlDisabledPackagesTest",
-                            "testSetUserControlDisabledPackages"),
-                    new DevicePolicyEventWrapper.Builder(
-                            EventId.SET_USER_CONTROL_DISABLED_PACKAGES_VALUE)
-                            .setAdminPackageName(DEVICE_OWNER_PKG)
-                            .setStrings(new String[] {SIMPLE_APP_PKG})
-                            .build());
-        } finally {
-            cleanupProtectedPackage(otherUserIds);
-            getDevice().uninstallPackageForUser(SIMPLE_APP_APK, mPrimaryUserId);
-            getDevice().uninstallPackageForUser(SIMPLE_APP_APK, userId);
-            removeUser(userId);
         }
     }
 
