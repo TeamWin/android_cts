@@ -136,28 +136,6 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
         super.tearDown();
     }
 
-    public void testCanInstallAndRemoveValidRsaKeypair() throws Exception {
-        final String alias = "com.android.test.valid-rsa-key-1";
-
-        // Install keypair.
-        assertThat(mDevicePolicyManager.installKeyPair(getWho(), mFakePrivKey, mFakeCert, alias))
-                .isTrue();
-        try {
-            // Request and retrieve using the alias.
-            assertGranted(alias, false);
-            assertThat(new KeyChainAliasFuture(alias).get()).isEqualTo(alias);
-            assertGranted(alias, true);
-
-            // Verify key is at least something like the one we put in.
-            assertThat(KeyChain.getPrivateKey(mActivity, alias).getAlgorithm()).isEqualTo("RSA");
-        } finally {
-            // Delete regardless of whether the test succeeded.
-            assertThat(mDevicePolicyManager.removeKeyPair(getWho(), alias)).isTrue();
-        }
-        // Verify alias is actually deleted.
-        assertGranted(alias, false);
-    }
-
     public void testCanInstallWithAutomaticAccess() throws Exception {
         final String grant = "com.android.test.autogrant-key-1";
         final String withhold = "com.android.test.nongrant-key-1";

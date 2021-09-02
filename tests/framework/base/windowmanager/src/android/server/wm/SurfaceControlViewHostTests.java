@@ -519,4 +519,57 @@ public class SurfaceControlViewHostTests implements SurfaceHolder.Callback {
         assertTrue(mClicked);
     }
 
+    @Test
+    public void testCanReplaceSurfacePackage() throws Throwable {
+        // Create a surface view and wait for its surface to be created.
+        {
+            CountDownLatch surfaceCreated = new CountDownLatch(1);
+            mActivityRule.runOnUiThread(() -> {
+                final FrameLayout content = new FrameLayout(mActivity);
+                mSurfaceView = new SurfaceView(mActivity);
+                mSurfaceView.setZOrderOnTop(true);
+                content.addView(mSurfaceView, new FrameLayout.LayoutParams(
+                        DEFAULT_SURFACE_VIEW_WIDTH, DEFAULT_SURFACE_VIEW_HEIGHT, 
+                        Gravity.LEFT | Gravity.TOP));
+                mActivity.setContentView(content, new ViewGroup.LayoutParams(
+                        DEFAULT_SURFACE_VIEW_WIDTH, DEFAULT_SURFACE_VIEW_HEIGHT));
+                mSurfaceView.getHolder().addCallback(new SurfaceCreatedCallback(surfaceCreated));
+
+                // Create an embedded view without click handling.
+                mVr = new SurfaceControlViewHost(mActivity, mActivity.getDisplay(),
+                        mSurfaceView.getHostToken());
+                mEmbeddedView = new Button(mActivity);
+                mVr.setView(mEmbeddedView, mEmbeddedViewWidth, mEmbeddedViewHeight);
+
+            });
+            surfaceCreated.await();
+            mSurfaceView.setChildSurfacePackage(mVr.getSurfacePackage());
+            mInstrumentation.waitForIdleSync();
+            waitUntilEmbeddedViewDrawn();
+        }
+
+        {
+            CountDownLatch hostReady = new CountDownLatch(1);
+            // Create a second surface view and wait for its surface to be created.
+            mActivityRule.runOnUiThread(() -> {
+                // Create an embedded view.
+                mVr = new SurfaceControlViewHost(mActivity, mActivity.getDisplay(),
+                        mSurfaceView.getHostToken());
+                mEmbeddedView = new Button(mActivity);
+                mEmbeddedView.setOnClickListener((View v) -> mClicked = true);
+                mVr.setView(mEmbeddedView, mEmbeddedViewWidth, mEmbeddedViewHeight);
+                hostReady.countDown();
+
+            });
+            hostReady.await();
+            mSurfaceView.setChildSurfacePackage(mVr.getSurfacePackage());
+            mInstrumentation.waitForIdleSync();
+            waitUntilEmbeddedViewDrawn();
+        }
+
+        // Check to see if the click went through - this only would happen if the surface package
+        // was replaced
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
+        assertTrue(mClicked);
+    }
 }

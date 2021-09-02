@@ -1870,7 +1870,7 @@ public class PackageManagerTest {
             final List<ComponentEnabledSetting> enabledSettings = List.of(
                     new ComponentEnabledSetting(ACTIVITY_COMPONENT, activityState, DONT_KILL_APP),
                     new ComponentEnabledSetting(SERVICE_COMPONENT, serviceState, DONT_KILL_APP));
-            mPackageManager.setComponentEnabledSettings(enabledSettings);
+            setComponentEnabledSettingsAndWaitForBroadcasts(enabledSettings);
         }
     }
 
@@ -1912,7 +1912,7 @@ public class PackageManagerTest {
             final List<ComponentEnabledSetting> enabledSettings = List.of(
                     new ComponentEnabledSetting(ACTIVITY_COMPONENT, activityState, DONT_KILL_APP),
                     new ComponentEnabledSetting(STUB_ACTIVITY_COMPONENT, stubState, 0));
-            mPackageManager.setComponentEnabledSettings(enabledSettings);
+            setComponentEnabledSettingsAndWaitForBroadcasts(enabledSettings);
             mInstrumentation.getUiAutomation().dropShellPermissionIdentity();
         }
     }
