@@ -233,48 +233,6 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
         }
     }
 
-    public void testNullKeyParamsFailPredictably() throws Exception {
-        final String alias = "com.android.test.null-key-1";
-        try {
-            mDevicePolicyManager.installKeyPair(getWho(), null, mFakeCert, alias);
-            fail("Exception should have been thrown for null PrivateKey");
-        } catch (NullPointerException expected) {
-        }
-        try {
-            mDevicePolicyManager.installKeyPair(getWho(), mFakePrivKey, null, alias);
-            fail("Exception should have been thrown for null Certificate");
-        } catch (NullPointerException expected) {
-        }
-    }
-
-    public void testNullAdminComponentIsDenied() throws Exception {
-        final String alias = "com.android.test.null-admin-1";
-        try {
-            mDevicePolicyManager.installKeyPair(null, mFakePrivKey, mFakeCert, alias);
-            fail("Exception should have been thrown for null ComponentName");
-        } catch (SecurityException expected) {
-        }
-    }
-
-    public void testNotUserSelectableAliasCanBeChosenViaPolicy() throws Exception {
-        final String alias = "com.android.test.not-selectable-key-1";
-
-        // Install keypair.
-        assertThat(
-                mDevicePolicyManager.installKeyPair(
-                        getWho(), mFakePrivKey, new Certificate[] {mFakeCert}, alias, 0))
-                .isTrue();
-        try {
-            // Request and retrieve using the alias.
-            assertGranted(alias, false);
-            assertThat(new KeyChainAliasFuture(alias).get()).isEqualTo(alias);
-            assertGranted(alias, true);
-        } finally {
-            // Delete regardless of whether the test succeeded.
-            assertThat(mDevicePolicyManager.removeKeyPair(getWho(), alias)).isTrue();
-        }
-    }
-
     byte[] signDataWithKey(String algoIdentifier, PrivateKey privateKey) throws Exception {
         byte[] data = new String("hello").getBytes();
         Signature sign = Signature.getInstance(algoIdentifier);
@@ -791,29 +749,6 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
         } finally {
             assertThat(mDevicePolicyManager.removeKeyPair(getWho(), alias)).isTrue();
         }
-    }
-
-    public void testHasKeyPair_NonExistent() {
-        assertThat(mDevicePolicyManager.hasKeyPair(NON_EXISTENT_ALIAS)).isFalse();
-    }
-
-    public void testHasKeyPair_Installed() {
-        mDevicePolicyManager.installKeyPair(getWho(), mFakePrivKey, new Certificate[]{mFakeCert},
-                TEST_ALIAS, /* requestAccess= */ true);
-
-        try {
-            assertThat(mDevicePolicyManager.hasKeyPair(TEST_ALIAS)).isTrue();
-        } finally {
-            mDevicePolicyManager.removeKeyPair(getWho(), TEST_ALIAS);
-        }
-    }
-
-    public void testHasKeyPair_Removed() {
-        mDevicePolicyManager.installKeyPair(getWho(), mFakePrivKey, new Certificate[]{mFakeCert},
-                TEST_ALIAS, /* requestAccess= */ true);
-        mDevicePolicyManager.removeKeyPair(getWho(), TEST_ALIAS);
-
-        assertThat(mDevicePolicyManager.hasKeyPair(TEST_ALIAS)).isFalse();
     }
 
     public void testGetKeyPairGrants_NonExistent() {
