@@ -33,6 +33,7 @@ import android.content.Context;
 import android.graphics.Color;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.Looper;
 import android.os.Process;
 import android.os.SystemClock;
 import android.platform.test.annotations.LargeTest;
@@ -43,6 +44,7 @@ import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputMethodManager;
+import android.view.inputmethod.SurroundingText;
 import android.view.inputmethod.cts.util.EndToEndImeTestBase;
 import android.view.inputmethod.cts.util.HandlerInputConnection;
 import android.view.inputmethod.cts.util.TestActivity;
@@ -53,6 +55,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.cts.mockime.ImeCommand;
+import com.android.cts.mockime.ImeEvent;
 import com.android.cts.mockime.ImeEventStream;
 import com.android.cts.mockime.ImeSettings;
 import com.android.cts.mockime.MockImeSession;
@@ -75,6 +78,19 @@ import java.util.concurrent.atomic.AtomicReference;
 @RunWith(AndroidJUnit4.class)
 public class InputConnectionHandlerTest extends EndToEndImeTestBase {
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
+
+    /**
+     * The value used in android.inputmethodservice.RemoteInputConnection#MAX_WAIT_TIME_MILLIS.
+     *
+     * <p>Although this is not a strictly-enforced timeout for all the Android devices, hopefully
+     * it'd be acceptable to assume that IMEs can receive result within 2 second even on slower
+     * devices.</p>
+     *
+     * <p>TODO: Consider making this as a test API.</p>
+     */
+    private static final long TIMEOUT_IN_REMOTE_INPUT_CONNECTION =
+            TimeUnit.MILLISECONDS.toMillis(2000);
+
     private static final int TEST_VIEW_HEIGHT = 10;
 
     private static final String TEST_MARKER_PREFIX =
@@ -293,6 +309,157 @@ public class InputConnectionHandlerTest extends EndToEndImeTestBase {
             assertTrue("InputMethodManager#isFullscreenMode() must return true",
                     getOnMainSync(() -> InstrumentationRegistry.getInstrumentation().getContext()
                             .getSystemService(InputMethodManager.class).isFullscreenMode()));
+        }
+    }
+
+    /**
+     * A holder of {@link Handler} that is bound to a background {@link Looper} where
+     * {@link Throwable} thrown from tasks running there will be just ignored instead of triggering
+     * process crashes.
+     */
+    private static final class ErrorSwallowingHandlerThread implements AutoCloseable {
+        @NonNull
+        private final Handler mHandler;
+
+        @NonNull
+        Handler getHandler() {
+            return mHandler;
+        }
+
+        @NonNull
+        static ErrorSwallowingHandlerThread create() {
+            final CountDownLatch latch = new CountDownLatch(1);
+            final AtomicReference<Looper> mLooperRef = new AtomicReference<>();
+            new Thread(() -> {
+                Looper.prepare();
+                mLooperRef.set(Looper.myLooper());
+                latch.countDown();
+
+                while (true) {
+                    try {
+                        Looper.loop();
+                        return;
+                    } catch (Throwable ignore) {
+                    }
+                }
+            }).start();
+
+            try {
+                assertTrue(latch.await(TIMEOUT, TimeUnit.MICROSECONDS));
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                fail("Failed to create a Handler thread");
+            }
+
+            final Handler handler = Handler.createAsync(mLooperRef.get());
+            return new ErrorSwallowingHandlerThread(handler);
+        }
+
+        private ErrorSwallowingHandlerThread(@NonNull Handler handler) {
+            mHandler = handler;
+        }
+
+        @Override
+        public void close() {
+            mHandler.getLooper().quitSafely();
+            try {
+                mHandler.getLooper().getThread().join(TIMEOUT);
+            } catch (InterruptedException e) {
+                fail("Failed to terminate the thread");
+            }
+        }
+    }
+
+    /**
+     * Ensures that {@code event}'s elapse time is less than the given threshold.
+     *
+     * @param event {@link ImeEvent} to be tested.
+     * @param elapseThresholdInMilliSecond threshold in milli sec.
+     */
+    private static void expectElapseTimeLessThan(@NonNull ImeEvent event,
+            long elapseThresholdInMilliSecond) {
+        final long elapseTimeInMilli = TimeUnit.NANOSECONDS.toMillis(
+                event.getExitTimestamp() - event.getEnterTimestamp());
+        if (elapseTimeInMilli > elapseThresholdInMilliSecond) {
+            fail(event.getEventName() + " took " + elapseTimeInMilli + " msec,"
+                    + " which must be less than " + elapseThresholdInMilliSecond + " msec.");
+        }
+    }
+
+    /**
+     * Test {@link InputConnection#getSurroundingText(int, int, int)} that throws an exception.
+     */
+    @Test
+    public void testExceptionFromGetSurroundingText() throws Exception {
+        try (ErrorSwallowingHandlerThread handlerThread = ErrorSwallowingHandlerThread.create();
+             MockImeSession imeSession = MockImeSession.create(
+                     InstrumentationRegistry.getInstrumentation().getContext(),
+                     InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                     new ImeSettings.Builder())) {
+
+            final CountDownLatch latch = new CountDownLatch(1);
+
+            final class MyInputConnection extends HandlerInputConnection {
+                MyInputConnection() {
+                    super(handlerThread.getHandler());
+                }
+
+                @Override
+                public SurroundingText getSurroundingText(int beforeLength, int afterLength,
+                        int flags) {
+                    latch.countDown();
+                    throw new RuntimeException("Exception!");
+                }
+
+            }
+
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            final String marker = getTestMarker();
+
+            TestActivity.startSync(activity -> {
+                final LinearLayout layout = new LinearLayout(activity);
+                layout.setOrientation(LinearLayout.VERTICAL);
+
+                // Just to be conservative, we explicitly check MockImeSession#isActive() here when
+                // injecting our custom InputConnection implementation.
+                final TestEditor testEditor = new TestEditor(activity) {
+                    @Override
+                    public boolean onCheckIsTextEditor() {
+                        return imeSession.isActive();
+                    }
+
+                    @Override
+                    public InputConnection onCreateInputConnection(EditorInfo outAttrs) {
+                        if (imeSession.isActive()) {
+                            outAttrs.inputType = InputType.TYPE_CLASS_TEXT;
+                            outAttrs.privateImeOptions = marker;
+                            return new MyInputConnection();
+                        }
+                        return null;
+                    }
+                };
+
+                testEditor.requestFocus();
+                layout.addView(testEditor);
+                return layout;
+            });
+
+            // Wait until the MockIme gets bound to the TestActivity.
+            expectBindInput(stream, Process.myPid(), TIMEOUT);
+
+            // Wait until "onStartInput" gets called for the EditText.
+            expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
+
+            final ImeCommand command = imeSession.callGetSurroundingText(1, 1, 0);
+            final ImeEvent result = expectCommand(stream, command, TIMEOUT);
+
+            assertTrue("IC#getSurroundingText() must be called",
+                    latch.await(TIMEOUT, TimeUnit.MILLISECONDS));
+
+            assertTrue("Exceptions from IC#getSurroundingText() must be interpreted as null.",
+                    result.isNullReturnValue());
+            expectElapseTimeLessThan(result, TIMEOUT_IN_REMOTE_INPUT_CONNECTION);
         }
     }
 }
