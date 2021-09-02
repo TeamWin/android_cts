@@ -178,6 +178,25 @@ public class PrivilegedUpdateTests extends DeviceTestCase implements IAbiReceive
         }
     }
 
+    public void testUninstallDisabledUpdatedSystemApp_remainingDisabled() throws Exception {
+        if (!isDefaultAbi()) {
+            Log.w(TAG, "Skipping test for non-default abi.");
+            return;
+        }
+
+        getDevice().executeShellCommand("pm enable " + SHIM_PKG);
+        runDeviceTests(TEST_PKG, ".PrivilegedAppDisableTest", "testPrivAppAndEnabled");
+        try {
+            assertNull(getDevice().installPackage(
+                    mBuildHelper.getTestFile(SHIM_UPDATE_APK), true));
+            getDevice().executeShellCommand("pm disable-user " + SHIM_PKG);
+            runDeviceTests(TEST_PKG, ".PrivilegedAppDisableTest", "testUpdatedPrivAppAndDisabled");
+        } finally {
+            getDevice().uninstallPackage(SHIM_PKG);
+        }
+        runDeviceTests(TEST_PKG, ".PrivilegedAppDisableTest", "testPrivAppAndDisabled");
+    }
+
     private void runDeviceTests(String packageName, String testClassName, String testMethodName)
             throws DeviceNotAvailableException {
         Utils.runDeviceTests(getDevice(), packageName, testClassName, testMethodName);
