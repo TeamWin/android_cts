@@ -1225,21 +1225,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         executeDeviceTestMethod(".ResetPasswordTest", "testResetPasswordDeprecated");
     }
 
-    @LockSettingsTest
-    @Test
-    public void testResetPasswordWithToken() throws Exception {
-        assumeHasSecureLockScreenFeature();
-
-        // If ResetPasswordWithTokenTest for managed profile is executed before device owner and
-        // primary user profile owner tests, password reset token would have been disabled for
-        // the primary user, so executing ResetPasswordWithTokenTest on user 0 would fail. We allow
-        // this and do not fail the test in this case.
-        // This is the default test for MixedDeviceOwnerTest and MixedProfileOwnerTest,
-        // MixedManagedProfileOwnerTest overrides this method to execute the same test more strictly
-        // without allowing failures.
-        executeResetPasswordWithTokenTests(/* allowFailures */ true);
-    }
-
     @Test
     public void testPasswordSufficientInitially() throws Exception {
         executeDeviceTestClass(".PasswordSufficientInitiallyTest");
@@ -1322,12 +1307,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     @Test
     public void testSetSystemSetting() throws Exception {
         executeDeviceTestClass(".SetSystemSettingTest");
-    }
-
-    protected void executeResetPasswordWithTokenTests(boolean allowFailures)
-            throws Exception {
-        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".ResetPasswordWithTokenTest", null, mUserId,
-                Collections.singletonMap(ARG_ALLOW_FAILURE, String.valueOf(allowFailures)));
     }
 
     @Test
