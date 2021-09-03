@@ -222,6 +222,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         super.tearDown();
     }
 
+    // TODO(b/198641824):remove after fixing the failure in the migrated test
     @Test
     public void testCaCertManagement() throws Exception {
         executeDeviceTestClass(".CaCertManagementTest");
