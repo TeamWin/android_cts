@@ -30,4 +30,9 @@ public final class Settings {
         return SecureSettings.sInstance;
     }
 
+    /** APIs related to {@link android.provider.Settings.Global}. */
+    public GlobalSettings global() {
+        return GlobalSettings.sInstance;
+    }
+
 }
