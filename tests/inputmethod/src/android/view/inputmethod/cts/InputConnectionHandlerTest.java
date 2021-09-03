@@ -345,7 +345,7 @@ public class InputConnectionHandlerTest extends EndToEndImeTestBase {
             }).start();
 
             try {
-                assertTrue(latch.await(TIMEOUT, TimeUnit.MICROSECONDS));
+                assertTrue(latch.await(TIMEOUT, TimeUnit.MILLISECONDS));
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 fail("Failed to create a Handler thread");
