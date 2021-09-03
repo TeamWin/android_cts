@@ -23,13 +23,12 @@ import random
 import sys
 import unittest
 
+import capture_request_utils
+import cv2
+import error_util
 import numpy
 from PIL import Image
 
-
-import cv2
-import capture_request_utils
-import error_util
 
 # The matrix is from JFIF spec
 DEFAULT_YUV_TO_RGB_CCM = numpy.matrix([[1.000, 0.000, 1.402],
@@ -345,6 +344,40 @@ def convert_capture_to_planes(cap, props=None):
     return [mean_image[:, :, i] / white_level for i in idxs]
   else:
     raise error_util.CameraItsError('Invalid format %s' % (cap['format']))
+
+
+def downscale_image(img, f):
+  """Shrink an image by a given integer factor.
+
+  This function computes output pixel values by averaging over rectangular
+  regions of the input image; it doesn't skip or sample pixels, and all input
+  image pixels are evenly weighted.
+
+  If the downscaling factor doesn't cleanly divide the width and/or height,
+  then the remaining pixels on the right or bottom edge are discarded prior
+  to the downscaling.
+
+  Args:
+    img: The input image as an ndarray.
+    f: The downscaling factor, which should be an integer.
+
+  Returns:
+    The new (downscaled) image, as an ndarray.
+  """
+  h, w, chans = img.shape
+  f = int(f)
+  assert f >= 1
+  h = (h//f)*f
+  w = (w//f)*f
+  img = img[0:h:, 0:w:, ::]
+  chs = []
+  for i in range(chans):
+    ch = img.reshape(h*w*chans)[i::chans].reshape(h, w)
+    ch = ch.reshape(h, w//f, f).mean(2).reshape(h, w//f)
+    ch = ch.T.reshape(w//f, h//f, f).mean(2).T.reshape(h//f, w//f)
+    chs.append(ch.reshape(h*w//(f*f)))
+  img = numpy.vstack(chs).T.reshape(h//f, w//f, chans)
+  return img
 
 
 def convert_raw_to_rgb_image(r_plane, gr_plane, gb_plane, b_plane, props,
