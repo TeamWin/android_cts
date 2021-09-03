@@ -89,6 +89,7 @@ import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -1312,8 +1313,12 @@ public class ActivityManagerTest extends InstrumentationTestCase {
         final WatchUidRunner watcher3 = new WatchUidRunner(mInstrumentation, ai3.uid, waitForSec);
 
         final CountDownLatch[] latchHolder = new CountDownLatch[1];
-        final int[] levelHolder = new int[1];
-        final Bundle extras = initWaitingForTrimLevel(latchHolder, levelHolder);
+        final int[] expectedLevel = new int[1];
+        final Bundle extras = initWaitingForTrimLevel(level -> {
+            if (level == expectedLevel[0]) {
+                latchHolder[0].countDown();
+            }
+        });
         try {
             // Make sure we could start activity from background
             SystemUtil.runShellCommand(mInstrumentation,
@@ -1326,6 +1331,7 @@ public class ActivityManagerTest extends InstrumentationTestCase {
             toggleScreenOn(true);
 
             latchHolder[0] = new CountDownLatch(1);
+            expectedLevel[0] = TRIM_MEMORY_RUNNING_MODERATE;
 
             // Start an activity
             CommandReceiver.sendCommand(mTargetContext, CommandReceiver.COMMAND_START_ACTIVITY,
@@ -1337,54 +1343,63 @@ public class ActivityManagerTest extends InstrumentationTestCase {
             SystemUtil.runShellCommand(mInstrumentation, "am memory-factor set MODERATE");
             assertTrue("Failed to wait for the trim memory event",
                     latchHolder[0].await(waitForSec, TimeUnit.MILLISECONDS));
-            assertEquals(TRIM_MEMORY_RUNNING_MODERATE, levelHolder[0]);
 
             latchHolder[0] = new CountDownLatch(1);
+            expectedLevel[0] = TRIM_MEMORY_RUNNING_LOW;
             // Force the memory pressure to low
             SystemUtil.runShellCommand(mInstrumentation, "am memory-factor set LOW");
             assertTrue("Failed to wait for the trim memory event",
                     latchHolder[0].await(waitForSec, TimeUnit.MILLISECONDS));
-            assertEquals(TRIM_MEMORY_RUNNING_LOW, levelHolder[0]);
 
             latchHolder[0] = new CountDownLatch(1);
+            expectedLevel[0] = TRIM_MEMORY_RUNNING_CRITICAL;
             // Force the memory pressure to critical
             SystemUtil.runShellCommand(mInstrumentation, "am memory-factor set CRITICAL");
             assertTrue("Failed to wait for the trim memory event",
                     latchHolder[0].await(waitForSec, TimeUnit.MILLISECONDS));
-            assertEquals(TRIM_MEMORY_RUNNING_CRITICAL, levelHolder[0]);
+
+            CommandReceiver.sendCommand(mTargetContext, CommandReceiver.COMMAND_START_SERVICE,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, LocalForegroundService.newCommand(
+                    LocalForegroundService.COMMAND_START_NO_FOREGROUND));
 
             // Reset the memory pressure override
             SystemUtil.runShellCommand(mInstrumentation, "am memory-factor reset");
 
             latchHolder[0] = new CountDownLatch(1);
+            expectedLevel[0] = TRIM_MEMORY_UI_HIDDEN;
             // Start another activity in package2
             CommandReceiver.sendCommand(mTargetContext, CommandReceiver.COMMAND_START_ACTIVITY,
                     PACKAGE_NAME_APP1, PACKAGE_NAME_APP2, 0, null);
             watcher2.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_TOP, null);
+            watcher1.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_SERVICE, null);
             assertTrue("Failed to wait for the trim memory event",
                     latchHolder[0].await(waitForSec, TimeUnit.MILLISECONDS));
-            assertEquals(TRIM_MEMORY_UI_HIDDEN, levelHolder[0]);
 
             // Start the heavy weight activity
             final Intent intent = new Intent();
             final CountDownLatch[] heavyLatchHolder = new CountDownLatch[1];
-            final int[] heavyLevelHolder = new int[1];
+            final Predicate[] testFunc = new Predicate[1];
 
             intent.setPackage(CANT_SAVE_STATE_1_PACKAGE_NAME);
             intent.setAction(Intent.ACTION_MAIN);
             intent.addCategory(Intent.CATEGORY_LAUNCHER);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            intent.putExtras(initWaitingForTrimLevel(heavyLatchHolder, heavyLevelHolder));
+            intent.putExtras(initWaitingForTrimLevel(level -> {
+                if (testFunc[0].test(level)) {
+                    heavyLatchHolder[0].countDown();
+                }
+            }));
 
             mTargetContext.startActivity(intent);
             watcher3.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_TOP, null);
 
             heavyLatchHolder[0] = new CountDownLatch(1);
+            testFunc[0] = level -> TRIM_MEMORY_RUNNING_MODERATE <= (int) level
+                    && TRIM_MEMORY_RUNNING_CRITICAL >= (int) level;
             // Force the memory pressure to moderate
             SystemUtil.runShellCommand(mInstrumentation, "am memory-factor set MODERATE");
             assertTrue("Failed to wait for the trim memory event",
                     heavyLatchHolder[0].await(waitForSec, TimeUnit.MILLISECONDS));
-            assertEquals(TRIM_MEMORY_RUNNING_MODERATE, heavyLevelHolder[0]);
 
             // Now go home
             final Intent homeIntent = new Intent();
@@ -1393,27 +1408,11 @@ public class ActivityManagerTest extends InstrumentationTestCase {
             homeIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
             heavyLatchHolder[0] = new CountDownLatch(1);
+            testFunc[0] = level -> TRIM_MEMORY_BACKGROUND == (int) level;
             mTargetContext.startActivity(homeIntent);
             assertTrue("Failed to wait for the trim memory event",
                     heavyLatchHolder[0].await(waitForSec, TimeUnit.MILLISECONDS));
-            assertEquals(TRIM_MEMORY_BACKGROUND, heavyLevelHolder[0]);
 
-            // All done, clean up.
-            CommandReceiver.sendCommand(mTargetContext, CommandReceiver.COMMAND_STOP_ACTIVITY,
-                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP2, 0, null);
-            CommandReceiver.sendCommand(mTargetContext, CommandReceiver.COMMAND_STOP_ACTIVITY,
-                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
-
-            final Intent finishIntent = new Intent();
-            finishIntent.setPackage(CANT_SAVE_STATE_1_PACKAGE_NAME);
-            finishIntent.setAction(ACTION_FINISH);
-            finishIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            finishIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            mTargetContext.startActivity(finishIntent);
-
-            watcher1.waitFor(WatchUidRunner.CMD_CACHED, null);
-            watcher2.waitFor(WatchUidRunner.CMD_CACHED, null);
-            watcher3.waitFor(WatchUidRunner.CMD_CACHED, null);
         } finally {
             SystemUtil.runShellCommand(mInstrumentation,
                     "cmd deviceidle whitelist -" + PACKAGE_NAME_APP1);
@@ -1682,16 +1681,15 @@ public class ActivityManagerTest extends InstrumentationTestCase {
         return lru;
     }
 
-    private Bundle initWaitingForTrimLevel(
-            final CountDownLatch[] latchHolder, final int[] levelHolder) {
+    private Bundle initWaitingForTrimLevel(final Consumer<Integer> checker) {
         final IBinder binder = new Binder() {
             @Override
             protected boolean onTransact(int code, Parcel data, Parcel reply, int flags)
                     throws RemoteException {
                 switch (code) {
                     case IBinder.FIRST_CALL_TRANSACTION:
-                        levelHolder[0] = data.readInt();
-                        latchHolder[0].countDown();
+                        final int level = data.readInt();
+                        checker.accept(level);
                         return true;
                     default:
                         return false;
