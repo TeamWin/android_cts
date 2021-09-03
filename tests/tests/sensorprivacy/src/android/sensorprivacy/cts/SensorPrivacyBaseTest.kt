@@ -27,6 +27,7 @@ import android.platform.test.annotations.AppModeFull
 import android.hardware.SensorPrivacyManager.Sensors.CAMERA
 import android.hardware.SensorPrivacyManager.Sensors.MICROPHONE
 import android.hardware.SensorPrivacyManager.Sources.OTHER
+import android.hardware.camera2.CameraManager
 import android.support.test.uiautomator.By
 import android.view.KeyEvent
 import androidx.test.platform.app.InstrumentationRegistry
@@ -67,6 +68,8 @@ abstract class SensorPrivacyBaseTest(
                 "android.sensorprivacy.cts.usemiccamera.extra.DELAYED_ACTIVITY"
         const val DELAYED_ACTIVITY_NEW_TASK_EXTRA =
                 "android.sensorprivacy.cts.usemiccamera.extra.DELAYED_ACTIVITY_NEW_TASK"
+        const val RETRY_CAM_EXTRA =
+                "android.sensorprivacy.cts.usemiccamera.extra.RETRY_CAM_EXTRA"
         const val PKG_NAME = "android.sensorprivacy.cts.usemiccamera"
         const val RECORDING_FILE_NAME = "${PKG_NAME}_record.mp4"
         const val ACTIVITY_TITLE_SNIP = "CtsUseMic"
@@ -125,6 +128,7 @@ abstract class SensorPrivacyBaseTest(
     }
 
     fun testDialog(delayedActivity: Boolean = false, delayedActivityNewTask: Boolean = false) {
+        checkCameraPresentIfNeeded()
         try {
             setSensor(true)
             val intent = Intent(MIC_CAM_ACTIVITY_ACTION)
@@ -218,6 +222,7 @@ abstract class SensorPrivacyBaseTest(
     @Test
     @AppModeFull(reason = "Uses secondary app, instant apps have no visibility")
     fun testOpNotRunningWhileSensorPrivacyEnabled() {
+        checkCameraPresentIfNeeded()
         setSensor(false)
         val before = System.currentTimeMillis()
         startTestApp()
@@ -236,8 +241,11 @@ abstract class SensorPrivacyBaseTest(
     @Test
     @AppModeFull(reason = "Uses secondary app, instant apps have no visibility")
     fun testOpStartsRunningAfterStartedWithSensoryPrivacyEnabled() {
+        checkCameraPresentIfNeeded()
         setSensor(true)
-        startTestApp()
+        // Retry camera connection because external cameras are disconnected
+        // if sensor privacy is enabled (b/182204067)
+        startTestApp(true)
         UiAutomatorUtils.waitFindObject(By.text(
                 Pattern.compile("Cancel", Pattern.CASE_INSENSITIVE))).click()
         assertOpRunning(false)
@@ -250,8 +258,11 @@ abstract class SensorPrivacyBaseTest(
     @Test
     @AppModeFull(reason = "Uses secondary app, instant apps have no visibility")
     fun testOpGetsRecordedAfterStartedWithSensorPrivacyEnabled() {
+        checkCameraPresentIfNeeded()
         setSensor(true)
-        startTestApp()
+        // Retry camera connection because external cameras are disconnected
+        // if sensor privacy is enabled (b/182204067)
+        startTestApp(true)
         UiAutomatorUtils.waitFindObject(By.text(
                 Pattern.compile("Cancel", Pattern.CASE_INSENSITIVE))).click()
         val before = System.currentTimeMillis()
@@ -269,6 +280,7 @@ abstract class SensorPrivacyBaseTest(
     @Test
     @AppModeFull(reason = "Uses secondary app, instant apps have no visibility")
     fun testOpLastAccessUpdatesAfterToggleSensorPrivacy() {
+        checkCameraPresentIfNeeded()
         setSensor(false)
         val before = System.currentTimeMillis()
         startTestApp()
@@ -300,6 +312,7 @@ abstract class SensorPrivacyBaseTest(
     @Test
     @AppModeFull(reason = "Uses secondary app, instant apps have no visibility")
     fun testOpFinishedWhileToggleOn() {
+        checkCameraPresentIfNeeded()
         setSensor(false)
         startTestApp()
         eventually {
@@ -317,13 +330,25 @@ abstract class SensorPrivacyBaseTest(
         assertOpRunning(false)
     }
 
+    private fun checkCameraPresentIfNeeded() {
+        if (sensor == CAMERA) {
+            val cameraManager: CameraManager = context.getSystemService(CameraManager::class.java)!!
+            Assume.assumeTrue("No camera available", cameraManager.cameraIdList.isNotEmpty())
+        }
+    }
+
     private fun startTestApp() {
+        startTestApp(false)
+    }
+
+    private fun startTestApp(retryCameraOnError: Boolean) {
         val intent = Intent(MIC_CAM_ACTIVITY_ACTION)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 .addFlags(Intent.FLAG_ACTIVITY_MATCH_EXTERNAL)
         for (extra in extras) {
             intent.putExtra(extra, true)
         }
+        intent.putExtra(RETRY_CAM_EXTRA, retryCameraOnError)
         context.startActivity(intent)
         // Wait for app to open
         UiAutomatorUtils.waitFindObject(By.textContains(ACTIVITY_TITLE_SNIP))
