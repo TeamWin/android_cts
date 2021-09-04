@@ -203,18 +203,6 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
     }
 
     @Override
-    @LockSettingsTest
-    @Test
-    public void testResetPasswordWithToken() throws Exception {
-        assumeHasSecureLockScreenFeature();
-
-        // Execute the test method that's guaranteed to succeed. See also test in base class
-        // which are tolerant to failure and executed by MixedDeviceOwnerTest and
-        // MixedProfileOwnerTest
-        executeResetPasswordWithTokenTests(/* allowFailures */ false);
-    }
-
-    @Override
     @Test
     public void testSetSystemSetting() {
         // Managed profile owner cannot set currently allowlisted system settings.

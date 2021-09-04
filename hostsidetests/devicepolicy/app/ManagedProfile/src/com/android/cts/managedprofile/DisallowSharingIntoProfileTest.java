@@ -17,6 +17,7 @@
 package com.android.cts.managedprofile;
 
 import static com.android.cts.managedprofile.BaseManagedProfileTest.ADMIN_RECEIVER_COMPONENT;
+
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 import android.app.admin.DevicePolicyManager;
@@ -127,24 +128,6 @@ public class DisallowSharingIntoProfileTest extends InstrumentationTestCase {
         ResolveInfo toProfileForwarderInfo = getIntentForwarder(
                 new Intent(KNOWN_ACTION_TO_PROFILE));
         assertCrossProfileIntentsResolvability(sharingIntentsToProfile, toProfileForwarderInfo,
-                /* expectForwardable */ true);
-    }
-
-    /**
-     * Test sharing initiated from the profile side i.e. user tries to pick up personal data within
-     * a work app. See javadoc of {@link #DisallowSharingIntoProfileTest} class for the mechanism
-     * behind this test.
-     */
-    public void testSharingFromProfile() throws Exception {
-        testSetUp();
-        ResolveInfo toPersonalForwarderInfo = getIntentForwarder(
-                new Intent(KNOWN_ACTION_TO_PERSONAL));
-
-        testDisableSharingIntoProfile();
-        assertCrossProfileIntentsResolvability(sharingIntentsToPersonal, toPersonalForwarderInfo,
-                /* expectForwardable */ false);
-        testEnableSharingIntoProfile();
-        assertCrossProfileIntentsResolvability(sharingIntentsToPersonal, toPersonalForwarderInfo,
                 /* expectForwardable */ true);
     }
 

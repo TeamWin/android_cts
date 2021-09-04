@@ -99,7 +99,7 @@ public class CarWatchdogHostTest extends CarHostJUnit4TestCase {
     private static final Pattern FOREGROUND_BYTES_PATTERN = Pattern.compile(
             "foregroundModeBytes = (\\d+)");
 
-    private static final long POLL_TIMEOUT_MS = 6000;
+    private static final long POLL_TIMEOUT_MS = 15000;
 
     private long mOriginalForegroundBytes;
 
@@ -108,7 +108,7 @@ public class CarWatchdogHostTest extends CarHostJUnit4TestCase {
         String isClearSuccess = executeCommand(CLEAR_CMD);
         assertWithMessage("pm clear").that(isClearSuccess.trim()).isEqualTo("Success");
         String foregroundBytesDump = executeCommand(GET_IO_OVERUSE_FOREGROUNG_BYTES_CMD);
-        mOriginalForegroundBytes = parseMessageForIoForegroundBytes(foregroundBytesDump);
+        mOriginalForegroundBytes = parseForegroundBytesFromMessage(foregroundBytesDump);
         executeCommand("%s %d", SET_IO_OVERUSE_FOREGROUNG_BYTES_CMD, TWO_HUNDRED_MEGABYTES);
         executeCommand("logcat -c");
         executeCommand(START_CUSTOM_PERF_COLLECTION_CMD);
@@ -121,13 +121,16 @@ public class CarWatchdogHostTest extends CarHostJUnit4TestCase {
         String pid = executeCommand(GET_PID_CMD);
         assertWithMessage("pid").that(pid).isNotEmpty();
 
-        String notificationMessage = checkActivityDumpNotification();
-        long remainingBytes = parseMessageForIoForegroundBytes(notificationMessage);
+        long remainingBytes = readForegroundBytesFromActivityDump();
 
         // Send intent with amount of bytes to kill app
         executeCommand(
                 "am start -W -a android.intent.action.MAIN -n %s/%s.%s --el bytes_to_kill %d",
                 APP_PKG, APP_PKG, ACTIVITY_CLASS, remainingBytes);
+
+        remainingBytes = readForegroundBytesFromActivityDump();
+        assertWithMessage("Application exceeded I/O overuse threshold").that(
+                remainingBytes).isEqualTo(0);
 
         verifyTestAppKilled();
     }
@@ -138,7 +141,7 @@ public class CarWatchdogHostTest extends CarHostJUnit4TestCase {
         executeCommand("%s %d", SET_IO_OVERUSE_FOREGROUNG_BYTES_CMD, mOriginalForegroundBytes);
     }
 
-    private String checkActivityDumpNotification() throws Exception {
+    private long readForegroundBytesFromActivityDump() throws Exception {
         AtomicReference<String> notification = new AtomicReference<>();
         PollingCheck.check("Unable to receive notification", POLL_TIMEOUT_MS, () -> {
             String dump = fetchActivityDumpsys();
@@ -149,10 +152,10 @@ public class CarWatchdogHostTest extends CarHostJUnit4TestCase {
             return false;
         });
 
-        return notification.get();
+        return parseForegroundBytesFromMessage(notification.get());
     }
 
-    private long parseMessageForIoForegroundBytes(String message) throws IllegalArgumentException {
+    private long parseForegroundBytesFromMessage(String message) throws IllegalArgumentException {
         Matcher m = FOREGROUND_BYTES_PATTERN.matcher(message);
         if (m.find()) {
             return Long.parseLong(m.group(1));
