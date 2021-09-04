@@ -35,6 +35,7 @@ import android.media.MediaRecorder
 import android.os.Bundle
 import android.os.Handler
 import android.os.Process
+import android.util.Log
 import android.util.Size
 
 private const val MIC = 1 shl 0
@@ -42,10 +43,15 @@ private const val CAM = 1 shl 1
 
 private const val SAMPLING_RATE = 8000
 
+private const val RETRY_TIMEOUT = 5000L
+private const val TAG = "UseMicCamera"
+
 class UseMicCamera : Activity() {
     private var audioRecord: AudioRecord? = null
     private var cameraDevice: CameraDevice? = null
     private lateinit var appOpsManager: AppOpsManager
+    private var cameraOpenRetryCount: Int = 0
+    private var cameraMaxOpenRetry: Int = 0
 
     companion object {
         const val MIC_CAM_ACTIVITY_ACTION =
@@ -60,6 +66,8 @@ class UseMicCamera : Activity() {
                 "android.sensorprivacy.cts.usemiccamera.extra.DELAYED_ACTIVITY"
         const val DELAYED_ACTIVITY_NEW_TASK_EXTRA =
                 "android.sensorprivacy.cts.usemiccamera.extra.DELAYED_ACTIVITY_NEW_TASK"
+        const val RETRY_CAM_EXTRA =
+                "android.sensorprivacy.cts.usemiccamera.extra.RETRY_CAM_EXTRA"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -125,6 +133,15 @@ class UseMicCamera : Activity() {
         val outputSize: Size = config!!.getOutputSizes(outputFormat)[0]
         val handler = Handler(mainLooper)
 
+        // Retry camera connection because external cameras are disconnected
+        // if sensor privacy is enabled (b/182204067)
+        val isExternalCamera = (cameraManager!!.getCameraCharacteristics(cameraId)
+                .get(CameraCharacteristics.LENS_FACING)
+                == CameraCharacteristics.LENS_FACING_EXTERNAL)
+        if (intent.getBooleanExtra(RETRY_CAM_EXTRA, false) && isExternalCamera) {
+            cameraMaxOpenRetry = 1
+        }
+
         val cameraDeviceCallback = object : CameraDevice.StateCallback() {
             override fun onOpened(cD: CameraDevice) {
                 val imageReader = ImageReader.newInstance(
@@ -149,14 +166,26 @@ class UseMicCamera : Activity() {
 
                 cD.createCaptureSession(sessionConfiguration)
                 cameraDevice = cD
+                cameraOpenRetryCount = 0
             }
 
             override fun onDisconnected(cameraDevice: CameraDevice) {
             }
             override fun onError(cameraDevice: CameraDevice, i: Int) {
+                // Retry once after timeout if cause is ERROR_CAMERA_DISABLED because it may
+                // be triggered if camera mute is not supported and sensor privacy is enabled
+                if (i == ERROR_CAMERA_DISABLED && cameraOpenRetryCount < cameraMaxOpenRetry) {
+                    cameraDevice.close()
+                    cameraOpenRetryCount++
+                    handler.postDelayed({ openCam() }, RETRY_TIMEOUT)
+                }
             }
         }
 
-        cameraManager!!.openCamera(cameraId, mainExecutor, cameraDeviceCallback)
+        try {
+            cameraManager!!.openCamera(cameraId, mainExecutor, cameraDeviceCallback)
+        } catch (e: android.hardware.camera2.CameraAccessException) {
+            Log.e(TAG, "openCamera: " + e)
+        }
     }
 }
