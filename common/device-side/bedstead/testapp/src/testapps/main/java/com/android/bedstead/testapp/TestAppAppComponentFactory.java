@@ -18,6 +18,7 @@ package com.android.bedstead.testapp;
 
 import android.app.Activity;
 import android.app.AppComponentFactory;
+import android.app.Service;
 import android.app.admin.DevicePolicyManager;
 import android.content.BroadcastReceiver;
 import android.content.Intent;
@@ -76,6 +77,25 @@ import com.android.bedstead.testapp.processor.annotations.TestAppReceiver;
                             classLoader, BaseTestAppBroadcastReceiver.class.getName(), intent);
             receiver.setOverrideBroadcastReceiverClassName(className);
             return receiver;
+        }
+    }
+
+    @Override
+    public Service instantiateService(ClassLoader classLoader, String className, Intent intent)
+            throws InstantiationException, IllegalAccessException, ClassNotFoundException {
+        try {
+            return super.instantiateService(classLoader, className, intent);
+        } catch (ClassNotFoundException e) {
+            if (className.endsWith("AccountAuthenticatorService")) {
+                Log.d(LOG_TAG, "Service class (" + className
+                        + ") not found, routing to TestAppAccountAuthenticatorService");
+                return super.instantiateService(
+                        classLoader,
+                        TestAppAccountAuthenticatorService.class.getName(),
+                        intent);
+            } else {
+                throw e;
+            }
         }
     }
 }
