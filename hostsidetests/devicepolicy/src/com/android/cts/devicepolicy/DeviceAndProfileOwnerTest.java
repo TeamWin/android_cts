@@ -1775,34 +1775,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
-    public void testEnrollmentSpecificIdCorrectCalculation() throws Exception {
-
-        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".EnrollmentSpecificIdTest",
-                "testCorrectCalculationOfEsid", mUserId);
-    }
-
-    @Test
-    public void testEnrollmentSpecificIdCorrectCalculationLogged() throws Exception {
-        boolean isManagedProfile = (mPrimaryUserId != mUserId);
-
-        assertMetricsLogged(getDevice(), () -> {
-            executeDeviceTestMethod(".EnrollmentSpecificIdTest",
-                    "testCorrectCalculationOfEsid");
-        }, new DevicePolicyEventWrapper.Builder(EventId.SET_ORGANIZATION_ID_VALUE)
-                .setAdminPackageName(DEVICE_ADMIN_PKG)
-                .setBoolean(isManagedProfile)
-                .build());
-    }
-
-    @Test
-    public void testEnrollmentSpecificIdEmptyAndMultipleSet() throws DeviceNotAvailableException {
-        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".EnrollmentSpecificIdTest",
-                "testThrowsForEmptyOrganizationId", mUserId);
-        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".EnrollmentSpecificIdTest",
-                "testThrowsWhenTryingToReSetOrganizationId", mUserId);
-    }
-
-    @Test
     public void testAdminControlOverSensorPermissionGrantsDefault() throws Exception {
         // By default, admin should not be able to grant sensors-related permissions.
         executeDeviceTestMethod(".SensorPermissionGrantTest",
