@@ -38,7 +38,7 @@ import java.io.Serializable;
  */
 public final class CustomEvent extends Event {
 
-    /** Begin a query for {@link CustomEvent} events. */
+    /** Begins a query for {@link CustomEvent} events. */
     public static CustomEventQuery queryPackage(String packageName) {
         return new CustomEventQuery(packageName);
     }
@@ -76,7 +76,7 @@ public final class CustomEvent extends Event {
         }
     }
 
-    /** Begin logging a {@link CustomEvent}. */
+    /** Begins logging a {@link CustomEvent}. */
     public static CustomEventLogger logger(Context context) {
         return new CustomEventLogger(context);
     }
@@ -86,13 +86,13 @@ public final class CustomEvent extends Event {
             super(context, new CustomEvent());
         }
 
-        /** Set the {@link CustomEvent#tag()}. */
+        /** Sets the {@link CustomEvent#tag()}. */
         public CustomEventLogger setTag(String tag) {
             mEvent.mTag = tag;
             return this;
         }
 
-        /** Set the {@link CustomEvent#data()}. */
+        /** Sets the {@link CustomEvent#data()}. */
         public CustomEventLogger setData(Serializable data) {
             mEvent.mData = data;
             return this;

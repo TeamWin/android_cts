@@ -25,7 +25,7 @@ public final class StringQueryHelper<E extends Queryable>
         implements StringQuery<E>, Serializable{
 
     private final E mQuery;
-    private String mEqualsValue = null;
+    private String mEqualsValue;
 
     StringQueryHelper() {
         mQuery = (E) this;

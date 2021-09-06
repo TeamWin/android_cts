@@ -32,7 +32,7 @@ import com.android.queryable.queries.ActivityQueryHelper;
  */
 public final class ActivityDestroyedEvent extends Event {
 
-    /** Begin a query for {@link ActivityDestroyedEvent} events. */
+    /** Begins a query for {@link ActivityDestroyedEvent} events. */
     public static ActivityDestroyedEventQuery queryPackage(String packageName) {
         return new ActivityDestroyedEventQuery(packageName);
     }
@@ -62,7 +62,7 @@ public final class ActivityDestroyedEvent extends Event {
         }
     }
 
-    /** Begin logging a {@link ActivityDestroyedEvent}. */
+    /** Begins logging a {@link ActivityDestroyedEvent}. */
     public static ActivityDestroyedEventLogger logger(Activity activity, android.content.pm.ActivityInfo activityInfo) {
         return new ActivityDestroyedEventLogger(activity, activityInfo);
     }
@@ -75,7 +75,7 @@ public final class ActivityDestroyedEvent extends Event {
             setActivity(activityInfo);
         }
 
-        /** Set the {@link Activity} being destroyed. */
+        /** Sets the {@link Activity} being destroyed. */
         public ActivityDestroyedEventLogger setActivity(android.content.pm.ActivityInfo activity) {
             mEvent.mActivity = ActivityInfo.builder(activity).build();
             return this;

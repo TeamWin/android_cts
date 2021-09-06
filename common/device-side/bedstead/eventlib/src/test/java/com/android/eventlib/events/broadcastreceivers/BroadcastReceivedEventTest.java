@@ -58,8 +58,7 @@ public final class BroadcastReceivedEventTest {
 
     @Test
     public void whereIntent_works() {
-        Intent intent = new Intent();
-        intent.setAction(STRING_VALUE);
+        Intent intent = new Intent(STRING_VALUE);
         BroadcastReceivedEvent.logger(BROADCAST_RECEIVER, sContext, intent).log();
 
         EventLogs<BroadcastReceivedEvent> eventLogs =
@@ -71,8 +70,7 @@ public final class BroadcastReceivedEventTest {
 
     @Test
     public void whereIntent_skipsNonMatching() {
-        Intent intent = new Intent();
-        intent.setAction(STRING_VALUE);
+        Intent intent = new Intent(STRING_VALUE);
         Intent differentIntent = new Intent();
         differentIntent.setAction(DIFFERENT_STRING_VALUE);
         BroadcastReceivedEvent.logger(BROADCAST_RECEIVER, sContext, differentIntent).log();
