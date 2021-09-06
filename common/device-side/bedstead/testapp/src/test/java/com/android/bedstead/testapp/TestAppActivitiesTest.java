@@ -16,6 +16,8 @@
 
 package com.android.bedstead.testapp;
 
+import static com.android.queryable.queries.ActivityQuery.activity;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.testng.Assert.assertThrows;
@@ -40,14 +42,18 @@ public class TestAppActivitiesTest {
     private static final TestApis sTestApis = new TestApis();
     private static final UserReference sUser = sTestApis.users().instrumented();
 
-    private static final TestAppProvider sTestAppProvider = new TestAppProvider();
-    private static final TestApp sTestApp = sTestAppProvider.query()
-            .whereActivities().isNotEmpty()
-            .get();
-    private static TestAppInstanceReference mTestAppInstance;
-
     private static final String EXISTING_ACTIVITY = "android.testapp.activity";
     private static final String NON_EXISTING_ACTIVITY = "non.existing.activity";
+
+    private static final TestAppProvider sTestAppProvider = new TestAppProvider();
+    private static final TestApp sTestApp = sTestAppProvider.query()
+            .whereActivities().contains(
+                    activity().activityClass().className().isEqualTo(EXISTING_ACTIVITY)
+            ).whereActivities().doesNotContain(
+                    activity().activityClass().className().isEqualTo(NON_EXISTING_ACTIVITY)
+            )
+            .get();
+    private static TestAppInstanceReference mTestAppInstance;
 
     @Before
     public void setup() {
