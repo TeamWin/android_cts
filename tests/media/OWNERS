@@ -5,9 +5,7 @@ dichenzhang@google.com
 essick@google.com
 gokrishnan@google.com
 lajos@google.com
-marcone@google.com
 wonsik@google.com
 
-# LON
-olly@google.com
-andrewlewis@google.com
+# go/android-fwk-media-solutions for info on areas of ownership.
+include platform/frameworks/av:/media/janitors/media_solutions_OWNERS
