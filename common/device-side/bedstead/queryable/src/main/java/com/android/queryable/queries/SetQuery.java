@@ -16,17 +16,22 @@
 
 package com.android.queryable.queries;
 
+import androidx.annotation.CheckResult;
+
 import com.android.queryable.Queryable;
 
 import java.util.Set;
 
-/** Query for a {@link java.util.Set}. */
+/** Query for a {@link Set}. */
 public interface SetQuery<E extends Queryable, F, G extends Query<F>> extends Query<Set<F>> {
 
+    /** Queries a {@link Set}. */
     static SetQuery<SetQuery<?, ?, ?>, ?, ?> set() {
         return new SetQueryHelper<>();
     }
 
+    /** Queries the size of the set. */
+    @CheckResult
     IntegerQuery<E> size();
     E isEmpty();
     E isNotEmpty();
