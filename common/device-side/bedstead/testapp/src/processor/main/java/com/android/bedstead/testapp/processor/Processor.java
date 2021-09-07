@@ -187,7 +187,6 @@ public final class Processor extends AbstractProcessor {
                     extractClassesFromAnnotation(
                             processingEnv.getTypeUtils(), testAppReceiver::systemServiceClasses);
 
-
             generateTargetedRemoteActivityInterface(neneActivityInterface);
             generateTargetedRemoteActivityImpl(neneActivityInterface);
             generateTargetedRemoteActivityWrapper(neneActivityInterface);

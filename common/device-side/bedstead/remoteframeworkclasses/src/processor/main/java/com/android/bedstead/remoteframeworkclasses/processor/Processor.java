@@ -16,7 +16,6 @@
 
 package com.android.bedstead.remoteframeworkclasses.processor;
 
-
 import com.android.bedstead.remoteframeworkclasses.processor.annotations.RemoteFrameworkClasses;
 
 import com.google.android.enterprise.connectedapps.annotations.CrossUser;
@@ -78,7 +77,8 @@ public final class Processor extends AbstractProcessor {
             "android.os.UserManager",
             "android.content.pm.PackageManager",
             "android.content.pm.CrossProfileApps",
-            "android.content.pm.LauncherApps"
+            "android.content.pm.LauncherApps",
+            "android.accounts.AccountManager"
     };
 
     private static final String PARENT_PROFILE_INSTANCE =
@@ -263,7 +263,41 @@ public final class Processor extends AbstractProcessor {
 
             //Uses PackageInfo.SessionCallback
             "public void unregisterPackageInstallerSessionCallback("
-                    + "android.content.pm.PackageInstaller.SessionCallback)"
+                    + "android.content.pm.PackageInstaller.SessionCallback)",
+
+            // AccountManager
+
+            // Uses Activity
+            "public android.accounts.AccountManagerFuture<android.os.Bundle> addAccount(String, String, String[], android.os.Bundle, android.app.Activity, android.accounts.AccountManagerCallback<android.os.Bundle>, android.os.Handler)",
+            "public android.accounts.AccountManagerFuture<android.os.Bundle> finishSession(android.os.Bundle, android.app.Activity, android.accounts.AccountManagerCallback<android.os.Bundle>, android.os.Handler)",
+            "public android.accounts.AccountManagerFuture<android.os.Bundle> editProperties(String, android.app.Activity, android.accounts.AccountManagerCallback<android.os.Bundle>, android.os.Handler)",
+            "public android.accounts.AccountManagerFuture<android.os.Bundle> getAuthToken(android.accounts.Account, String, android.os.Bundle, android.app.Activity, android.accounts.AccountManagerCallback<android.os.Bundle>, android.os.Handler)",
+            "public android.accounts.AccountManagerFuture<android.os.Bundle> getAuthTokenByFeatures(String, String, String[], android.app.Activity, android.os.Bundle, android.os.Bundle, android.accounts.AccountManagerCallback<android.os.Bundle>, android.os.Handler)",
+            "public android.accounts.AccountManagerFuture<android.os.Bundle> removeAccount(android.accounts.Account, android.app.Activity, android.accounts.AccountManagerCallback<android.os.Bundle>, android.os.Handler)",
+            "public android.accounts.AccountManagerFuture<android.os.Bundle> startAddAccountSession(String, String, String[], android.os.Bundle, android.app.Activity, android.accounts.AccountManagerCallback<android.os.Bundle>, android.os.Handler)",
+            "public android.accounts.AccountManagerFuture<android.os.Bundle> startUpdateCredentialsSession(android.accounts.Account, String, android.os.Bundle, android.app.Activity, android.accounts.AccountManagerCallback<android.os.Bundle>, android.os.Handler)",
+            "public android.accounts.AccountManagerFuture<android.os.Bundle> updateCredentials(android.accounts.Account, String, android.os.Bundle, android.app.Activity, android.accounts.AccountManagerCallback<android.os.Bundle>, android.os.Handler)",
+            "public android.accounts.AccountManagerFuture<android.os.Bundle> confirmCredentials(android.accounts.Account, android.os.Bundle, android.app.Activity, android.accounts.AccountManagerCallback<android.os.Bundle>, android.os.Handler)",
+
+            // Uses OnAccountsUpdateListener
+            "public void addOnAccountsUpdatedListener(android.accounts.OnAccountsUpdateListener, android.os.Handler, boolean)",
+            "public void addOnAccountsUpdatedListener(android.accounts.OnAccountsUpdateListener, android.os.Handler, boolean, String[])",
+            "public void removeOnAccountsUpdatedListener(android.accounts.OnAccountsUpdateListener)",
+
+            // Uses AccountManagerCallback
+            "public android.accounts.AccountManagerFuture<android.os.Bundle> getAuthToken(android.accounts.Account, String, boolean, android.accounts.AccountManagerCallback<android.os.Bundle>, android.os.Handler)",
+            "public android.accounts.AccountManagerFuture<android.os.Bundle> getAuthToken(android.accounts.Account, String, android.os.Bundle, boolean, android.accounts.AccountManagerCallback<android.os.Bundle>, android.os.Handler)",
+            "public android.accounts.AccountManagerFuture<android.os.Bundle> addAccount(String, String, String[], android.os.Bundle, android.app.Activity, android.accounts.AccountManagerCallback<android.os.Bundle>, android.os.Handler)",
+            "public android.accounts.AccountManagerFuture<android.os.Bundle> getAuthToken(android.accounts.Account, String, boolean, android.accounts.AccountManagerCallback<android.os.Bundle>, android.os.Handler)",
+            "public android.accounts.AccountManagerFuture<android.os.Bundle> getAuthToken(android.accounts.Account, String, android.os.Bundle, boolean, android.accounts.AccountManagerCallback<android.os.Bundle>, android.os.Handler)",
+            "public android.os.Bundle hasFeatures(android.accounts.Account, String[], android.accounts.AccountManagerCallback<java.lang.Boolean>, android.os.Handler)",
+            "public android.os.Bundle isCredentialsUpdateSuggested(android.accounts.Account, String, android.accounts.AccountManagerCallback<java.lang.Boolean>, android.os.Handler)",
+            "public android.accounts.AccountManagerFuture<android.accounts.Account[]> getAccountsByTypeAndFeatures(String, String[], android.accounts.AccountManagerCallback<android.accounts.Account[]>, android.os.Handler)",
+            "public android.accounts.AccountManagerFuture<java.lang.Boolean> hasFeatures(android.accounts.Account, String[], android.accounts.AccountManagerCallback<java.lang.Boolean>, android.os.Handler)",
+            "public android.os.Bundle isCredentialsUpdateSuggested(android.accounts.AccountAuthenticatorResponse, android.accounts.Account, String) throws android.accounts.NetworkErrorException",
+            "public android.accounts.AccountManagerFuture<java.lang.Boolean> isCredentialsUpdateSuggested(android.accounts.Account, String, android.accounts.AccountManagerCallback<java.lang.Boolean>, android.os.Handler)",
+            "public android.accounts.AccountManagerFuture<java.lang.Boolean> removeAccount(android.accounts.Account, android.accounts.AccountManagerCallback<java.lang.Boolean>, android.os.Handler)",
+            "public android.accounts.AccountManagerFuture<android.accounts.Account> renameAccount(android.accounts.Account, @Size(min=1) String, android.accounts.AccountManagerCallback<android.accounts.Account>, android.os.Handler)"
     );
 
 
@@ -272,6 +306,10 @@ public final class Processor extends AbstractProcessor {
                     "NullParcelableRemoteDevicePolicyManager");
     private static final ClassName COMPONENT_NAME_CLASSNAME =
             ClassName.get("android.content", "ComponentName");
+
+    private static final ClassName ACCOUNT_MANAGE_FUTURE_WRAPPER_CLASSNAME =
+            ClassName.get(
+                    "com.android.bedstead.remoteframeworkclasses", "AccountManagerFutureWrapper");
 
     @Override
     public SourceVersion getSupportedSourceVersion() {
@@ -366,7 +404,6 @@ public final class Processor extends AbstractProcessor {
                 TypeSpec.interfaceBuilder(className)
                         .addModifiers(Modifier.PUBLIC);
 
-
         classBuilder.addJavadoc("Public, test, and system interface for {@link $T}.\n\n",
                 frameworkClass);
         classBuilder.addJavadoc("<p>All methods are annotated {@link $T} for compatibility with the"
@@ -377,6 +414,8 @@ public final class Processor extends AbstractProcessor {
         classBuilder.addAnnotation(AnnotationSpec.builder(CrossUser.class)
                 .addMember("parcelableWrappers", "$T.class",
                         NULL_PARCELABLE_REMOTE_DEVICE_POLICY_MANAGER_CLASSNAME)
+                .addMember("futureWrappers", "$T.class",
+                        ACCOUNT_MANAGE_FUTURE_WRAPPER_CLASSNAME)
                 .build());
 
         for (ExecutableElement method : methods) {
