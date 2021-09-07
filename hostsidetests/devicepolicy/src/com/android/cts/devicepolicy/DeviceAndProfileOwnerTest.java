@@ -682,26 +682,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
-    public void testScreenCaptureDisabled() throws Exception {
-        assertMetricsLogged(getDevice(), () -> {
-            // We need to ensure that the policy is deactivated for the device owner case, so making
-            // sure the second test is run even if the first one fails
-            try {
-                setScreenCaptureDisabled(mUserId, true);
-            } finally {
-                setScreenCaptureDisabled(mUserId, false);
-            }
-        }, new DevicePolicyEventWrapper.Builder(EventId.SET_SCREEN_CAPTURE_DISABLED_VALUE)
-                    .setAdminPackageName(DEVICE_ADMIN_PKG)
-                    .setBoolean(true)
-                    .build(),
-            new DevicePolicyEventWrapper.Builder(EventId.SET_SCREEN_CAPTURE_DISABLED_VALUE)
-                    .setAdminPackageName(DEVICE_ADMIN_PKG)
-                    .setBoolean(false)
-                    .build());
-    }
-
-    @Test
     public void testScreenCaptureDisabled_assist() throws Exception {
         try {
             // Install and enable assistant, notice that profile can't have assistant.
@@ -2003,21 +1983,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     protected void startSimpleActivityAsUser(int userId) throws Exception {
         installAppAsUser(TEST_APP_APK, /* grantPermissions */ true, /* dontKillApp */ true, userId);
         startActivityAsUser(userId, TEST_APP_PKG, TEST_APP_PKG + ".SimpleActivity");
-    }
-
-    protected void setScreenCaptureDisabled(int userId, boolean disabled) throws Exception {
-        String testMethodName = disabled
-                ? "testSetScreenCaptureDisabled_true"
-                : "testSetScreenCaptureDisabled_false";
-        executeDeviceTestMethod(".ScreenCaptureDisabledTest", testMethodName);
-
-        testMethodName = disabled
-                ? "testScreenCaptureImpossible"
-                : "testScreenCapturePossible";
-
-        startSimpleActivityAsUser(userId);
-        executeDeviceTestMethod(".ScreenCaptureDisabledTest", testMethodName);
-        forceStopPackageForUser(TEST_APP_PKG, userId);
     }
 
     protected void setScreenCaptureDisabled_assist(int userId, boolean disabled) throws Exception {
