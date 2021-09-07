@@ -17,6 +17,7 @@
 package android.keystore.cts;
 
 import android.content.pm.PackageManager;
+import android.keystore.cts.util.TestUtils;
 import android.security.KeyPairGeneratorSpec;
 import android.security.keystore.KeyProperties;
 import android.security.keystore.KeyProtection;
