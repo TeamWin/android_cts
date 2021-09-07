@@ -646,6 +646,7 @@ public class CameraManagerTest extends Camera2ParameterizedTestCase {
             String expectedStr, String unExpectedStr) throws Exception {
         String candidateId = expectedEventQueue.poll(AVAILABILITY_TIMEOUT_MS,
                 java.util.concurrent.TimeUnit.MILLISECONDS);
+        assertNotNull("No " + expectedStr + " notice for expected ID " + expectedId, candidateId);
         assertTrue("Received " + expectedStr + " notice for wrong ID, " +
                 "expected " + expectedId + ", got " + candidateId, expectedId.equals(candidateId));
         assertTrue("Received >  1 " + expectedStr + " callback for id " + expectedId,
@@ -859,6 +860,43 @@ public class CameraManagerTest extends Camera2ParameterizedTestCase {
                     candidatePhysicalIds == null);
         }
 
+        if (mAdoptShellPerm) {
+            // Open an arbitrary camera and make sure subsequently subscribed listener receives
+            // correct onCameraOpened/onCameraClosed callbacks
+
+            MockStateCallback mockListener = MockStateCallback.mock();
+            mCameraListener = new BlockingStateCallback(mockListener);
+
+            if (useExecutor) {
+                mCameraManager.openCamera(cameras[0], executor, mCameraListener);
+            } else {
+                mCameraManager.openCamera(cameras[0], mCameraListener, mHandler);
+            }
+
+            // Block until opened
+            mCameraListener.waitForState(BlockingStateCallback.STATE_OPENED,
+                    CameraTestUtils.CAMERA_IDLE_TIMEOUT_MS);
+            // Then verify only open happened, and close the camera
+            CameraDevice camera = verifyCameraStateOpened(cameras[0], mockListener);
+
+            if (useExecutor) {
+                mCameraManager.registerAvailabilityCallback(executor, ac);
+            } else {
+                mCameraManager.registerAvailabilityCallback(ac, mHandler);
+            }
+
+            // Verify that we see the expected 'onCameraOpened' event.
+            verifySingleAvailabilityCbsReceived(onCameraOpenedEventQueue,
+                    onCameraClosedEventQueue, cameras[0], "onCameraOpened", "onCameraClosed");
+
+            camera.close();
+
+            mCameraListener.waitForState(BlockingStateCallback.STATE_CLOSED,
+                    CameraTestUtils.CAMERA_CLOSE_TIMEOUT_MS);
+
+            verifySingleAvailabilityCbsReceived(onCameraClosedEventQueue,
+                    onCameraOpenedEventQueue, cameras[0], "onCameraClosed", "onCameraOpened");
+        }
     } // testCameraManagerListenerCallbacks
 
     // Verify no LEGACY-level devices appear on devices first launched in the Q release or newer
