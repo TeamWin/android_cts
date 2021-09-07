@@ -33,4 +33,7 @@ public class DESedeECBPKCS7PaddingCipherTest extends DESedeCipherTestBase {
     protected byte[] getKatIv() {
         return null;
     }
+
+    @Override
+    protected boolean isStrongbox() { return false; }
 }
