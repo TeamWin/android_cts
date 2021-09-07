@@ -16,6 +16,8 @@
 
 package android.keystore.cts;
 
+import android.keystore.cts.util.EmptyArray;
+import android.keystore.cts.util.TestUtils;
 import android.security.keystore.KeyProperties;
 import android.security.keystore.KeyProtection;
 import android.test.AndroidTestCase;
@@ -60,6 +62,10 @@ abstract class BlockCipherTestBase extends AndroidTestCase {
 
     @Override
     protected void setUp() throws Exception {
+        if (isStrongbox()) {
+            TestUtils.assumeStrongBox();
+        }
+
         super.setUp();
         mAndroidKeyStore = KeyStore.getInstance("AndroidKeyStore");
         mAndroidKeyStore.load(null);
@@ -93,6 +99,8 @@ abstract class BlockCipherTestBase extends AndroidTestCase {
 
     protected abstract byte[] getIv(AlgorithmParameters params)
             throws InvalidParameterSpecException;
+
+    protected abstract boolean isStrongbox();
 
     private byte[] getKatInput(int opmode) {
         switch (opmode) {
@@ -544,13 +552,19 @@ abstract class BlockCipherTestBase extends AndroidTestCase {
         SecretKey key2 = importKey(katKeyBytes);
 
         init(opmode, key2, getKatAlgorithmParameterSpec());
-        byte[] output2;
+        byte[] output2 = null;
         try {
             output2 = doFinal(input);
         } catch (BadPaddingException expected) {
             // Padding doesn't decode probably because the new key is being used. This can only
             // occur if padding is used.
             return;
+        } catch (IllegalBlockSizeException notExpected) {
+            if (isStrongbox()) {
+                fail("Should throw BadPaddingException (b/194126736)");
+            } else {
+                throw notExpected;
+            }
         }
 
         // Either padding wasn't used or the old key was used.
@@ -662,7 +676,15 @@ abstract class BlockCipherTestBase extends AndroidTestCase {
 
         // Complete the current block. There are blockSize - 4 bytes left to fill.
         byte[] output = update(new byte[getBlockSize() - 4]);
-        assertEquals(getBlockSize(), output.length);
+
+        try {
+            assertEquals(getBlockSize(), output.length);
+        } catch (NullPointerException e) {
+            if (isStrongbox() && output == null) {
+                fail("b/194134359");
+            }
+            throw e;
+        }
 
         assertEquals(null, update(new byte[1]));
         assertEquals(null, update(new byte[1], 0, 1));
@@ -746,9 +768,13 @@ abstract class BlockCipherTestBase extends AndroidTestCase {
             for (int plaintextIndex = 0; plaintextIndex < plaintext.length; plaintextIndex++) {
                 byte[] output = update(new byte[] {plaintext[plaintextIndex]});
                 if ((plaintextIndex % blockSize) == blockSize - 1) {
+                    String additionalInformation = "";
+                    if (isStrongbox() && output == null) {
+                        additionalInformation = " (b/194134359)";
+                    }
                     // Cipher.update is expected to have output a new block
                     assertEquals(
-                            "plaintext index: " + plaintextIndex,
+                            "plaintext index: " + plaintextIndex + additionalInformation,
                             subarray(
                                     expectedCiphertext,
                                     ciphertextIndex,
@@ -811,8 +837,12 @@ abstract class BlockCipherTestBase extends AndroidTestCase {
                         || ((!paddingEnabled) && ((ciphertextIndex % blockSize) == blockSize - 1));
 
                 if (outputExpected) {
+                    String additionalInformation = "";
+                    if (isStrongbox()) {
+                        additionalInformation = " (b/194134040)";
+                    }
                     assertEquals(
-                            "ciphertext index: " + ciphertextIndex,
+                            "ciphertext index: " + ciphertextIndex + additionalInformation,
                             subarray(expectedPlaintext, plaintextIndex, plaintextIndex + blockSize),
                             output);
                 } else {
@@ -1054,6 +1084,13 @@ abstract class BlockCipherTestBase extends AndroidTestCase {
             doFinal(ciphertext);
             fail();
         } catch (BadPaddingException expected) {}
+        catch (IllegalBlockSizeException e) {
+            if (isStrongbox()) {
+                fail("Should throw BadPaddingException (b/194126736)");
+            } else {
+                fail();
+            }
+        }
     }
 
     public void testDecryptWithMissingPadding() throws Exception {
@@ -1069,6 +1106,13 @@ abstract class BlockCipherTestBase extends AndroidTestCase {
             doFinal(ciphertext);
             fail();
         } catch (BadPaddingException expected) {}
+        catch (IllegalBlockSizeException e) {
+            if (isStrongbox()) {
+                fail("Should throw BadPaddingException (b/194126736)");
+            } else {
+                fail();
+            }
+        }
     }
 
     public void testUpdateCopySafe() throws Exception {
@@ -1151,7 +1195,11 @@ abstract class BlockCipherTestBase extends AndroidTestCase {
         System.arraycopy(input, 0, buffer, inputOffsetInBuffer, input.length);
         createCipher();
         initKat(opmode);
-        assertEquals(expectedOutput.length,
+        String additionalInformation = "";
+        if (isStrongbox() && opmode == Cipher.ENCRYPT_MODE) {
+            additionalInformation = "May fail due to b/194134359";
+        }
+        assertEquals(additionalInformation, expectedOutput.length,
                 update(buffer, inputOffsetInBuffer, input.length,
                         buffer, outputOffsetInBuffer));
         assertEquals(expectedOutput,
@@ -1322,6 +1370,7 @@ abstract class BlockCipherTestBase extends AndroidTestCase {
                             .setBlockModes(getBlockMode())
                             .setEncryptionPaddings(getPadding())
                             .setRandomizedEncryptionRequired(false)
+                            .setIsStrongBoxBacked(isStrongbox())
                             .build());
             return (SecretKey) mAndroidKeyStore.getKey(keyAlias, null);
         } catch (Exception e) {
@@ -1439,8 +1488,13 @@ abstract class BlockCipherTestBase extends AndroidTestCase {
 
         if (isStreamCipher()) {
             if (outputLength != inputLength) {
-                fail("Output of update (" + outputLength + ") not same size as input ("
-                        + inputLength + ")");
+                if (isStrongbox()) {
+                    fail("Output of update (" + outputLength + ") not same size as input ("
+                                + inputLength + ") b/194123581");
+                } else {
+                    fail("Output of update (" + outputLength + ") not same size as input ("
+                            + inputLength + ")");
+                }
             }
         } else {
             if ((outputLength % getBlockSize()) != 0) {

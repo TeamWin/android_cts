@@ -17,6 +17,8 @@
 package android.keystore.cts;
 
 import android.content.Context;
+import android.keystore.cts.util.ImportedKey;
+import android.keystore.cts.util.TestUtils;
 import android.security.keystore.KeyProtection;
 import android.test.AndroidTestCase;
 

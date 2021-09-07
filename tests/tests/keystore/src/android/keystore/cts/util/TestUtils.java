@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-package android.keystore.cts;
+package android.keystore.cts.util;
+
+import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -25,6 +27,8 @@ import android.security.keystore.KeyInfo;
 import android.security.keystore.KeyProperties;
 import android.security.keystore.KeyProtection;
 import android.test.MoreAsserts;
+
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.internal.util.HexDump;
 
@@ -74,18 +78,25 @@ import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.SecretKeySpec;
 
-abstract class TestUtils extends Assert {
+abstract public class TestUtils extends Assert {
 
-    static final String EXPECTED_CRYPTO_OP_PROVIDER_NAME = "AndroidKeyStoreBCWorkaround";
-    static final String EXPECTED_PROVIDER_NAME = "AndroidKeyStore";
+    public static final String EXPECTED_CRYPTO_OP_PROVIDER_NAME = "AndroidKeyStoreBCWorkaround";
+    public static final String EXPECTED_PROVIDER_NAME = "AndroidKeyStore";
 
-    static final long DAY_IN_MILLIS = 1000 * 60 * 60 * 24;
+    public static final long DAY_IN_MILLIS = 1000 * 60 * 60 * 24;
 
     private TestUtils() {}
 
+    static public void assumeStrongBox() {
+        PackageManager packageManager =
+                InstrumentationRegistry.getInstrumentation().getTargetContext().getPackageManager();
+        assumeTrue("Can only test if we have StrongBox",
+                packageManager.hasSystemFeature(PackageManager.FEATURE_STRONGBOX_KEYSTORE));
+    }
+
     // Returns 0 if not implemented. Otherwise returns the feature version.
     //
-    static int getFeatureVersionKeystore(Context appContext) {
+    public static int getFeatureVersionKeystore(Context appContext) {
         PackageManager pm = appContext.getPackageManager();
 
         int featureVersionFromPm = 0;
@@ -109,7 +120,7 @@ abstract class TestUtils extends Assert {
 
     // Returns 0 if not implemented. Otherwise returns the feature version.
     //
-    static int getFeatureVersionKeystoreStrongBox(Context appContext) {
+    public static int getFeatureVersionKeystoreStrongBox(Context appContext) {
         PackageManager pm = appContext.getPackageManager();
 
         int featureVersionFromPm = 0;
@@ -135,14 +146,14 @@ abstract class TestUtils extends Assert {
      * Returns whether 3DES KeyStore tests should run on this device. 3DES support was added in
      * KeyMaster 4.0 and there should be no software fallback on earlier KeyMaster versions.
      */
-    static boolean supports3DES() {
+    public static boolean supports3DES() {
         return "true".equals(SystemProperties.get("ro.hardware.keystore_desede"));
     }
 
     /**
      * Returns whether the device has a StrongBox backed KeyStore.
      */
-    static boolean hasStrongBox(Context context) {
+    public static boolean hasStrongBox(Context context) {
         return context.getPackageManager()
             .hasSystemFeature(PackageManager.FEATURE_STRONGBOX_KEYSTORE);
     }
@@ -151,7 +162,7 @@ abstract class TestUtils extends Assert {
      * Asserts the the key algorithm and algorithm-specific parameters of the two keys in the
      * provided pair match.
      */
-    static void assertKeyPairSelfConsistent(KeyPair keyPair) {
+    public static void assertKeyPairSelfConsistent(KeyPair keyPair) {
         assertKeyPairSelfConsistent(keyPair.getPublic(), keyPair.getPrivate());
     }
 
@@ -159,7 +170,7 @@ abstract class TestUtils extends Assert {
      * Asserts the the key algorithm and public algorithm-specific parameters of the two provided
      * keys match.
      */
-    static void assertKeyPairSelfConsistent(PublicKey publicKey, PrivateKey privateKey) {
+    public static void assertKeyPairSelfConsistent(PublicKey publicKey, PrivateKey privateKey) {
         assertNotNull(publicKey);
         assertNotNull(privateKey);
         assertEquals(publicKey.getAlgorithm(), privateKey.getAlgorithm());
@@ -188,7 +199,7 @@ abstract class TestUtils extends Assert {
         }
     }
 
-    static int getKeySizeBits(Key key) {
+    public static int getKeySizeBits(Key key) {
         if (key instanceof ECKey) {
             return ((ECKey) key).getParams().getCurve().getField().getFieldSize();
         } else if (key instanceof RSAKey) {
@@ -198,7 +209,7 @@ abstract class TestUtils extends Assert {
         }
     }
 
-    static void assertKeySize(int expectedSizeBits, KeyPair keyPair) {
+    public static void assertKeySize(int expectedSizeBits, KeyPair keyPair) {
         assertEquals(expectedSizeBits, getKeySizeBits(keyPair.getPrivate()));
         assertEquals(expectedSizeBits, getKeySizeBits(keyPair.getPublic()));
     }
@@ -207,7 +218,7 @@ abstract class TestUtils extends Assert {
      * Asserts that the provided key pair is an Android Keystore key pair stored under the provided
      * alias.
      */
-    static void assertKeyStoreKeyPair(KeyStore keyStore, String alias, KeyPair keyPair) {
+    public static void assertKeyStoreKeyPair(KeyStore keyStore, String alias, KeyPair keyPair) {
         assertKeyMaterialExportable(keyPair.getPublic());
         assertKeyMaterialNotExportable(keyPair.getPrivate());
         assertTransparentKey(keyPair.getPublic());
@@ -293,12 +304,12 @@ abstract class TestUtils extends Assert {
         }
     }
 
-    static void assertECParameterSpecEqualsIgnoreSeedIfNotPresent(
+    public static void assertECParameterSpecEqualsIgnoreSeedIfNotPresent(
             ECParameterSpec expected, ECParameterSpec actual) {
         assertECParameterSpecEqualsIgnoreSeedIfNotPresent(null, expected, actual);
     }
 
-    static void assertECParameterSpecEqualsIgnoreSeedIfNotPresent(String message,
+    public static void assertECParameterSpecEqualsIgnoreSeedIfNotPresent(String message,
             ECParameterSpec expected, ECParameterSpec actual) {
         EllipticCurve expectedCurve = expected.getCurve();
         EllipticCurve actualCurve = actual.getCurve();
@@ -319,7 +330,7 @@ abstract class TestUtils extends Assert {
         }
     }
 
-    static KeyInfo getKeyInfo(Key key) throws InvalidKeySpecException, NoSuchAlgorithmException,
+    public static KeyInfo getKeyInfo(Key key) throws InvalidKeySpecException, NoSuchAlgorithmException,
             NoSuchProviderException {
         if ((key instanceof PrivateKey) || (key instanceof PublicKey)) {
             return KeyFactory.getInstance(key.getAlgorithm(), "AndroidKeyStore")
@@ -332,11 +343,11 @@ abstract class TestUtils extends Assert {
         }
     }
 
-    static <T> void assertContentsInAnyOrder(Iterable<T> actual, T... expected) {
+    public static <T> void assertContentsInAnyOrder(Iterable<T> actual, T... expected) {
         assertContentsInAnyOrder(null, actual, expected);
     }
 
-    static <T> void assertContentsInAnyOrder(String message, Iterable<T> actual, T... expected) {
+    public static <T> void assertContentsInAnyOrder(String message, Iterable<T> actual, T... expected) {
         Map<T, Integer> actualFreq = getFrequencyTable(actual);
         Map<T, Integer> expectedFreq = getFrequencyTable(expected);
         if (actualFreq.equals(expectedFreq)) {
@@ -439,7 +450,7 @@ abstract class TestUtils extends Assert {
         Collections.sort((List<Comparable>)values);
     }
 
-    static String[] toLowerCase(String... values) {
+    public static String[] toLowerCase(String... values) {
         if (values == null) {
             return null;
         }
@@ -451,7 +462,7 @@ abstract class TestUtils extends Assert {
         return result;
     }
 
-    static PrivateKey getRawResPrivateKey(Context context, int resId) throws Exception {
+    public static PrivateKey getRawResPrivateKey(Context context, int resId) throws Exception {
         byte[] pkcs8EncodedForm;
         try (InputStream in = context.getResources().openRawResource(resId)) {
             pkcs8EncodedForm = drain(in);
@@ -469,14 +480,14 @@ abstract class TestUtils extends Assert {
         }
     }
 
-    static X509Certificate getRawResX509Certificate(Context context, int resId) throws Exception {
+    public static X509Certificate getRawResX509Certificate(Context context, int resId) throws Exception {
         try (InputStream in = context.getResources().openRawResource(resId)) {
             return (X509Certificate) CertificateFactory.getInstance("X.509")
                     .generateCertificate(in);
         }
     }
 
-    static KeyPair importIntoAndroidKeyStore(
+    public static KeyPair importIntoAndroidKeyStore(
             String alias,
             PrivateKey privateKey,
             Certificate certificate,
@@ -491,7 +502,7 @@ abstract class TestUtils extends Assert {
                 (PrivateKey) keyStore.getKey(alias, null));
     }
 
-    static ImportedKey importIntoAndroidKeyStore(
+    public static ImportedKey importIntoAndroidKeyStore(
             String alias,
             SecretKey key,
             KeyProtection keyProtection) throws Exception {
@@ -503,7 +514,7 @@ abstract class TestUtils extends Assert {
         return new ImportedKey(alias, key, (SecretKey) keyStore.getKey(alias, null));
     }
 
-    static ImportedKey importIntoAndroidKeyStore(
+    public static ImportedKey importIntoAndroidKeyStore(
             String alias, Context context, int privateResId, int certResId, KeyProtection params)
                     throws Exception {
         Certificate originalCert = TestUtils.getRawResX509Certificate(context, certResId);
@@ -531,7 +542,7 @@ abstract class TestUtils extends Assert {
                 keystoreBacked);
     }
 
-    static byte[] drain(InputStream in) throws IOException {
+    public static byte[] drain(InputStream in) throws IOException {
         ByteArrayOutputStream result = new ByteArrayOutputStream();
         byte[] buffer = new byte[16 * 1024];
         int chunkSize;
@@ -541,20 +552,20 @@ abstract class TestUtils extends Assert {
         return result.toByteArray();
     }
 
-    static KeyProtection.Builder buildUpon(KeyProtection params) {
+    public static KeyProtection.Builder buildUpon(KeyProtection params) {
         return buildUponInternal(params, null);
     }
 
-    static KeyProtection.Builder buildUpon(KeyProtection params, int newPurposes) {
+    public static KeyProtection.Builder buildUpon(KeyProtection params, int newPurposes) {
         return buildUponInternal(params, newPurposes);
     }
 
-    static KeyProtection.Builder buildUpon(
+    public static KeyProtection.Builder buildUpon(
             KeyProtection.Builder builder) {
         return buildUponInternal(builder.build(), null);
     }
 
-    static KeyProtection.Builder buildUpon(
+    public static KeyProtection.Builder buildUpon(
             KeyProtection.Builder builder, int newPurposes) {
         return buildUponInternal(builder.build(), newPurposes);
     }
@@ -580,20 +591,20 @@ abstract class TestUtils extends Assert {
         return result;
     }
 
-    static KeyGenParameterSpec.Builder buildUpon(KeyGenParameterSpec spec) {
+    public static KeyGenParameterSpec.Builder buildUpon(KeyGenParameterSpec spec) {
         return buildUponInternal(spec, null);
     }
 
-    static KeyGenParameterSpec.Builder buildUpon(KeyGenParameterSpec spec, int newPurposes) {
+    public static KeyGenParameterSpec.Builder buildUpon(KeyGenParameterSpec spec, int newPurposes) {
         return buildUponInternal(spec, newPurposes);
     }
 
-    static KeyGenParameterSpec.Builder buildUpon(
+    public static KeyGenParameterSpec.Builder buildUpon(
             KeyGenParameterSpec.Builder builder) {
         return buildUponInternal(builder.build(), null);
     }
 
-    static KeyGenParameterSpec.Builder buildUpon(
+    public static KeyGenParameterSpec.Builder buildUpon(
             KeyGenParameterSpec.Builder builder, int newPurposes) {
         return buildUponInternal(builder.build(), newPurposes);
     }
@@ -629,7 +640,7 @@ abstract class TestUtils extends Assert {
         return result;
     }
 
-    static KeyPair getKeyPairForKeyAlgorithm(String keyAlgorithm, Iterable<KeyPair> keyPairs) {
+    public static KeyPair getKeyPairForKeyAlgorithm(String keyAlgorithm, Iterable<KeyPair> keyPairs) {
         for (KeyPair keyPair : keyPairs) {
             if (keyAlgorithm.equalsIgnoreCase(keyPair.getPublic().getAlgorithm())) {
                 return keyPair;
@@ -638,7 +649,7 @@ abstract class TestUtils extends Assert {
         throw new IllegalArgumentException("No KeyPair for key algorithm " + keyAlgorithm);
     }
 
-    static Key getKeyForKeyAlgorithm(String keyAlgorithm, Iterable<? extends Key> keys) {
+    public static Key getKeyForKeyAlgorithm(String keyAlgorithm, Iterable<? extends Key> keys) {
         for (Key key : keys) {
             if (keyAlgorithm.equalsIgnoreCase(key.getAlgorithm())) {
                 return key;
@@ -647,7 +658,7 @@ abstract class TestUtils extends Assert {
         throw new IllegalArgumentException("No Key for key algorithm " + keyAlgorithm);
     }
 
-    static byte[] generateLargeKatMsg(byte[] seed, int msgSizeBytes) throws Exception {
+    public static byte[] generateLargeKatMsg(byte[] seed, int msgSizeBytes) throws Exception {
         byte[] result = new byte[msgSizeBytes];
         MessageDigest digest = MessageDigest.getInstance("SHA-512");
         int resultOffset = 0;
@@ -662,7 +673,7 @@ abstract class TestUtils extends Assert {
         return result;
     }
 
-    static byte[] leftPadWithZeroBytes(byte[] array, int length) {
+    public static byte[] leftPadWithZeroBytes(byte[] array, int length) {
         if (array.length >= length) {
             return array;
         }
@@ -671,7 +682,7 @@ abstract class TestUtils extends Assert {
         return result;
     }
 
-    static boolean contains(int[] array, int value) {
+    public static boolean contains(int[] array, int value) {
         for (int element : array) {
             if (element == value) {
                 return true;
@@ -680,11 +691,11 @@ abstract class TestUtils extends Assert {
         return false;
     }
 
-    static boolean isHmacAlgorithm(String algorithm) {
+    public static boolean isHmacAlgorithm(String algorithm) {
         return algorithm.toUpperCase(Locale.US).startsWith("HMAC");
     }
 
-    static String getHmacAlgorithmDigest(String algorithm) {
+    public static String getHmacAlgorithmDigest(String algorithm) {
         String algorithmUpperCase = algorithm.toUpperCase(Locale.US);
         if (!algorithmUpperCase.startsWith("HMAC")) {
             return null;
@@ -696,7 +707,7 @@ abstract class TestUtils extends Assert {
         return result;
     }
 
-    static String getKeyAlgorithm(String transformation) {
+    public static String getKeyAlgorithm(String transformation) {
         try {
             return getCipherKeyAlgorithm(transformation);
         } catch (IllegalArgumentException e) {
@@ -736,7 +747,7 @@ abstract class TestUtils extends Assert {
         throw new IllegalArgumentException("Unsupported transformation: " + transformation);
     }
 
-    static String getCipherKeyAlgorithm(String transformation) {
+    public static String getCipherKeyAlgorithm(String transformation) {
         String transformationUpperCase = transformation.toUpperCase(Locale.US);
         if (transformationUpperCase.startsWith("AES/")) {
             return KeyProperties.KEY_ALGORITHM_AES;
@@ -749,7 +760,7 @@ abstract class TestUtils extends Assert {
         }
     }
 
-    static boolean isCipherSymmetric(String transformation) {
+    public static boolean isCipherSymmetric(String transformation) {
         String transformationUpperCase = transformation.toUpperCase(Locale.US);
         if (transformationUpperCase.startsWith("AES/") || transformationUpperCase.startsWith(
                 "DESEDE/")) {
@@ -761,7 +772,7 @@ abstract class TestUtils extends Assert {
         }
     }
 
-    static String getCipherDigest(String transformation) {
+    public static String getCipherDigest(String transformation) {
         String transformationUpperCase = transformation.toUpperCase(Locale.US);
         if (transformationUpperCase.contains("/OAEP")) {
             if (transformationUpperCase.endsWith("/OAEPPADDING")) {
@@ -790,7 +801,7 @@ abstract class TestUtils extends Assert {
         }
     }
 
-    static String getCipherEncryptionPadding(String transformation) {
+    public static String getCipherEncryptionPadding(String transformation) {
         String transformationUpperCase = transformation.toUpperCase(Locale.US);
         if (transformationUpperCase.endsWith("/NOPADDING")) {
             return KeyProperties.ENCRYPTION_PADDING_NONE;
@@ -805,11 +816,11 @@ abstract class TestUtils extends Assert {
         }
     }
 
-    static String getCipherBlockMode(String transformation) {
+    public static String getCipherBlockMode(String transformation) {
         return transformation.split("/")[1].toUpperCase(Locale.US);
     }
 
-    static String getSignatureAlgorithmDigest(String algorithm) {
+    public static String getSignatureAlgorithmDigest(String algorithm) {
         String algorithmUpperCase = algorithm.toUpperCase(Locale.US);
         int withIndex = algorithmUpperCase.indexOf("WITH");
         if (withIndex == -1) {
@@ -822,7 +833,7 @@ abstract class TestUtils extends Assert {
         return digest;
     }
 
-    static String getSignatureAlgorithmPadding(String algorithm) {
+    public static String getSignatureAlgorithmPadding(String algorithm) {
         String algorithmUpperCase = algorithm.toUpperCase(Locale.US);
         if (algorithmUpperCase.endsWith("WITHECDSA")) {
             return null;
@@ -835,7 +846,7 @@ abstract class TestUtils extends Assert {
         }
     }
 
-    static String getSignatureAlgorithmKeyAlgorithm(String algorithm) {
+    public static String getSignatureAlgorithmKeyAlgorithm(String algorithm) {
         String algorithmUpperCase = algorithm.toUpperCase(Locale.US);
         if (algorithmUpperCase.endsWith("WITHECDSA")) {
             return KeyProperties.KEY_ALGORITHM_EC;
@@ -847,7 +858,7 @@ abstract class TestUtils extends Assert {
         }
     }
 
-    static boolean isKeyLongEnoughForSignatureAlgorithm(String algorithm, int keySizeBits) {
+    public static boolean isKeyLongEnoughForSignatureAlgorithm(String algorithm, int keySizeBits) {
         String keyAlgorithm = getSignatureAlgorithmKeyAlgorithm(algorithm);
         if (KeyProperties.KEY_ALGORITHM_EC.equalsIgnoreCase(keyAlgorithm)) {
             // No length restrictions for ECDSA
@@ -878,11 +889,11 @@ abstract class TestUtils extends Assert {
         }
     }
 
-    static boolean isKeyLongEnoughForSignatureAlgorithm(String algorithm, Key key) {
+    public static boolean isKeyLongEnoughForSignatureAlgorithm(String algorithm, Key key) {
         return isKeyLongEnoughForSignatureAlgorithm(algorithm, getKeySizeBits(key));
     }
 
-    static int getMaxSupportedPlaintextInputSizeBytes(String transformation, int keySizeBits) {
+    public static int getMaxSupportedPlaintextInputSizeBytes(String transformation, int keySizeBits) {
         String encryptionPadding = getCipherEncryptionPadding(transformation);
         int modulusSizeBytes = (keySizeBits + 7) / 8;
         if (KeyProperties.ENCRYPTION_PADDING_NONE.equalsIgnoreCase(encryptionPadding)) {
@@ -902,7 +913,7 @@ abstract class TestUtils extends Assert {
 
     }
 
-    static int getMaxSupportedPlaintextInputSizeBytes(String transformation, Key key) {
+    public static int getMaxSupportedPlaintextInputSizeBytes(String transformation, Key key) {
         String keyAlgorithm = getCipherKeyAlgorithm(transformation);
         if (KeyProperties.KEY_ALGORITHM_AES.equalsIgnoreCase(keyAlgorithm)
                 || KeyProperties.KEY_ALGORITHM_3DES.equalsIgnoreCase(keyAlgorithm)) {
@@ -914,7 +925,7 @@ abstract class TestUtils extends Assert {
         }
     }
 
-    static int getDigestOutputSizeBits(String digest) {
+    public static int getDigestOutputSizeBits(String digest) {
         if (KeyProperties.DIGEST_NONE.equals(digest)) {
             return -1;
         } else if (KeyProperties.DIGEST_MD5.equals(digest)) {
@@ -934,12 +945,12 @@ abstract class TestUtils extends Assert {
         }
     }
 
-    static byte[] concat(byte[] arr1, byte[] arr2) {
+    public static byte[] concat(byte[] arr1, byte[] arr2) {
         return concat(arr1, 0, (arr1 != null) ? arr1.length : 0,
                 arr2, 0, (arr2 != null) ? arr2.length : 0);
     }
 
-    static byte[] concat(byte[] arr1, int offset1, int len1,
+    public static byte[] concat(byte[] arr1, int offset1, int len1,
             byte[] arr2, int offset2, int len2) {
         if (len1 == 0) {
             return subarray(arr2, offset2, len2);
@@ -956,7 +967,7 @@ abstract class TestUtils extends Assert {
         return result;
     }
 
-    static byte[] subarray(byte[] arr, int offset, int len) {
+    public static byte[] subarray(byte[] arr, int offset, int len) {
         if (len == 0) {
             return EmptyArray.BYTE;
         }
@@ -968,7 +979,7 @@ abstract class TestUtils extends Assert {
         return result;
     }
 
-    static KeyProtection getMinimalWorkingImportParametersForSigningingWith(
+    public static KeyProtection getMinimalWorkingImportParametersForSigningingWith(
             String signatureAlgorithm) {
         String keyAlgorithm = getSignatureAlgorithmKeyAlgorithm(signatureAlgorithm);
         String digest = getSignatureAlgorithmDigest(signatureAlgorithm);
@@ -988,7 +999,7 @@ abstract class TestUtils extends Assert {
         }
     }
 
-    static KeyProtection getMinimalWorkingImportParametersWithLimitedUsageForSigningingWith(
+    public static KeyProtection getMinimalWorkingImportParametersWithLimitedUsageForSigningingWith(
             String signatureAlgorithm, int maxUsageCount) {
         String keyAlgorithm = getSignatureAlgorithmKeyAlgorithm(signatureAlgorithm);
         String digest = getSignatureAlgorithmDigest(signatureAlgorithm);
@@ -1010,18 +1021,18 @@ abstract class TestUtils extends Assert {
         }
     }
 
-    static KeyProtection getMinimalWorkingImportParametersForCipheringWith(
+    public static KeyProtection getMinimalWorkingImportParametersForCipheringWith(
             String transformation, int purposes) {
         return getMinimalWorkingImportParametersForCipheringWith(transformation, purposes, false);
     }
 
-    static KeyProtection getMinimalWorkingImportParametersForCipheringWith(
+    public static KeyProtection getMinimalWorkingImportParametersForCipheringWith(
             String transformation, int purposes, boolean ivProvidedWhenEncrypting) {
         return getMinimalWorkingImportParametersForCipheringWith(transformation, purposes,
             ivProvidedWhenEncrypting, false, false);
     }
 
-    static KeyProtection getMinimalWorkingImportParametersForCipheringWith(
+    public static KeyProtection getMinimalWorkingImportParametersForCipheringWith(
             String transformation, int purposes, boolean ivProvidedWhenEncrypting,
             boolean isUnlockedDeviceRequired, boolean isUserAuthRequired) {
         String keyAlgorithm = TestUtils.getCipherKeyAlgorithm(transformation);
@@ -1064,7 +1075,7 @@ abstract class TestUtils extends Assert {
         }
     }
 
-    static byte[] getBigIntegerMagnitudeBytes(BigInteger value) {
+    public static byte[] getBigIntegerMagnitudeBytes(BigInteger value) {
         return removeLeadingZeroByteIfPresent(value.toByteArray());
     }
 
@@ -1075,7 +1086,7 @@ abstract class TestUtils extends Assert {
         return TestUtils.subarray(value, 1, value.length - 1);
     }
 
-    static byte[] generateRandomMessage(int messageSize) {
+    public static byte[] generateRandomMessage(int messageSize) {
         byte[] message = new byte[messageSize];
         new SecureRandom().nextBytes(message);
         return message;

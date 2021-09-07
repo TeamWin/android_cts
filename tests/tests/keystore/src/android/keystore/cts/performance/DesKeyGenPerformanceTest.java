@@ -14,35 +14,37 @@
  * limitations under the License
  */
 
-package android.keystore.cts;
+package android.keystore.cts.performance;
 
+import android.keystore.cts.util.TestUtils;
 import android.security.keystore.KeyProperties;
 
-import org.junit.Test;
+public class DesKeyGenPerformanceTest extends PerformanceTestBase {
 
-public class HmacKeyGenPerformanceTest extends PerformanceTestBase {
+    final int[] SUPPORTED_DES_KEY_SIZES = {168};
 
-    final int[] SUPPORTED_KEY_SIZES = {64, 128, 256, 512};
-
-    public void testHmacKeyGen() throws Exception {
-        for (int keySize : SUPPORTED_KEY_SIZES) {
+    public void testDesKeyGen() throws Exception {
+        if (!TestUtils.supports3DES()) {
+            return;
+        }
+        for (int keySize : SUPPORTED_DES_KEY_SIZES) {
             measure(
                     new KeystoreSecretKeyGenMeasurable(
-                            new AndroidKeystoreHmacKeyGenerator("HmacSHA1", keySize), keySize),
+                            new DefaultKeystoreSecretKeyGenerator("DESede", keySize), keySize),
                     new KeystoreSecretKeyGenMeasurable(
-                            new DefaultKeystoreSecretKeyGenerator("HmacSHA1", keySize), keySize));
+                            new AndroidKeystoreDesKeyGenerator("DESede", keySize), keySize));
         }
     }
 
-    private class AndroidKeystoreHmacKeyGenerator extends AndroidKeystoreKeyGenerator {
+    private class AndroidKeystoreDesKeyGenerator extends AndroidKeystoreKeyGenerator {
 
-        AndroidKeystoreHmacKeyGenerator(String algorithm, int keySize) throws Exception {
+        AndroidKeystoreDesKeyGenerator(String algorithm, int keySize) throws Exception {
             super(algorithm);
             getSecretKeyGenerator()
                     .init(
                             getKeyGenParameterSpecBuilder(
-                                            KeyProperties.PURPOSE_SIGN
-                                                    | KeyProperties.PURPOSE_VERIFY)
+                                            KeyProperties.PURPOSE_ENCRYPT
+                                                    | KeyProperties.PURPOSE_DECRYPT)
                                     .setKeySize(keySize)
                                     .build());
         }

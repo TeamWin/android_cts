@@ -14,8 +14,9 @@
  * limitations under the License
  */
 
-package android.keystore.cts;
+package android.keystore.cts.performance;
 
+import android.keystore.cts.util.TestUtils;
 import android.os.SystemClock;
 import android.security.keystore.KeyGenParameterSpec;
 import android.test.AndroidTestCase;
@@ -41,7 +42,7 @@ public class PerformanceTestBase extends AndroidTestCase {
 
     public static final long MS_PER_NS = 1000000L;
     protected static final String TAG = "KeystorePerformanceTest";
-    private static final String REPORT_LOG_NAME = "CtsKeystoreTestCases";
+    private static final String REPORT_LOG_NAME = "CtsKeystorePerformanceTests";
     /**
      * Number of milliseconds to spend repeating a single test.
      *

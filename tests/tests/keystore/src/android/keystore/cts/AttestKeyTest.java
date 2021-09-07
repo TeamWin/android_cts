@@ -24,11 +24,11 @@ import static android.security.keystore.KeyProperties.PURPOSE_SIGN;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
 import android.content.pm.PackageManager;
+import android.keystore.cts.util.TestUtils;
 import android.security.keystore.KeyGenParameterSpec;
 import android.util.Log;
 
@@ -50,8 +50,6 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.stream.Stream;
-
-import javax.security.auth.x500.X500Principal;
 
 public class AttestKeyTest {
     private static final String TAG = AttestKeyTest.class.getSimpleName();
@@ -145,7 +143,7 @@ public class AttestKeyTest {
 
     @Test
     public void testAttestKeySecurityLevelMismatch() throws Exception {
-        assumeStrongBox();
+        TestUtils.assumeStrongBox();
 
         final String strongBoxAttestKeyAlias = "nonAttestKey";
         final String attestedKeyAlias = "attestedKey";
@@ -165,13 +163,6 @@ public class AttestKeyTest {
                     is("Invalid security level: Cannot sign non-StrongBox key with StrongBox "
                             + "attestKey"));
         }
-    }
-
-    private void assumeStrongBox() {
-        PackageManager packageManager =
-                InstrumentationRegistry.getInstrumentation().getTargetContext().getPackageManager();
-        assumeTrue("Can only test if we have StrongBox",
-                packageManager.hasSystemFeature(PackageManager.FEATURE_STRONGBOX_KEYSTORE));
     }
 
     private void assumeAttestKey() {
