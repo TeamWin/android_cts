@@ -61,13 +61,13 @@ _INT_STR_DICT = {'11': '1_1', '12': '1_2'}  # recover replaced '_' in scene def
 _ALL_SCENES = [
     'scene0', 'scene1_1', 'scene1_2', 'scene2_a', 'scene2_b', 'scene2_c',
     'scene2_d', 'scene2_e', 'scene3', 'scene4', 'scene5', 'scene6',
-    'sensor_fusion', 'scene_change'
+    'sensor_fusion'
 ]
 
 # Scenes that can be automated through tablet display
 _AUTO_SCENES = [
     'scene0', 'scene1_1', 'scene1_2', 'scene2_a', 'scene2_b', 'scene2_c',
-    'scene2_d', 'scene2_e', 'scene3', 'scene4', 'scene6', 'scene_change'
+    'scene2_d', 'scene2_e', 'scene3', 'scene4', 'scene6'
 ]
 
 # Scenes that are logically grouped and can be called as group
@@ -101,7 +101,6 @@ _SCENE_REQ = {
                      'See tests/sensor_fusion/SensorFusion.pdf for detailed '
                      'instructions.\nNote that this test will be skipped '
                      'on devices not supporting REALTIME camera timestamp.',
-    'scene_change': 'The picture with 3 faces in tests/scene2_e/scene2_e.png',
 }
 
 
