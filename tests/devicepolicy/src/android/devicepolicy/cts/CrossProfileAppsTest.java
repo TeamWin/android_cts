@@ -17,14 +17,17 @@
 package android.devicepolicy.cts;
 
 import static com.android.bedstead.harrier.DeviceState.UserType.PRIMARY_USER;
+import static com.android.bedstead.harrier.DeviceState.UserType.WORK_PROFILE;
 import static com.android.bedstead.harrier.OptionalBoolean.FALSE;
 import static com.android.bedstead.harrier.OptionalBoolean.TRUE;
+import static com.android.queryable.queries.StringQuery.string;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.testng.Assert.assertThrows;
 
+import android.app.admin.RemoteDevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.CrossProfileApps;
@@ -40,11 +43,15 @@ import androidx.test.uiautomator.Until;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
+import com.android.bedstead.testapp.TestApp;
+import com.android.bedstead.testapp.TestAppInstanceReference;
+import com.android.bedstead.testapp.TestAppProvider;
 
 import org.junit.ClassRule;
 import org.junit.Ignore;
@@ -52,7 +59,9 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 @RunWith(BedsteadJUnit4.class)
@@ -68,6 +77,14 @@ public final class CrossProfileAppsTest {
 
     @ClassRule @Rule
     public static final DeviceState sDeviceState = new DeviceState();
+    private static final TestAppProvider sTestAppProvider = new TestAppProvider();
+
+    private static final TestApp sCrossProfileTestApp = sTestAppProvider.query()
+            .wherePermissions().contains(
+                    string().isEqualTo("android.permission.INTERACT_ACROSS_PROFILES")).get();
+    private static final TestApp sNonCrossProfileTestApp = sTestAppProvider.query()
+            .wherePermissions().doesNotContain(
+                    string().isEqualTo("android.permission.INTERACT_ACROSS_PROFILES")).get();
 
     @Test
     @RequireRunOnPrimaryUser
@@ -304,5 +321,149 @@ public final class CrossProfileAppsTest {
     public void getProfileSwitchingIconDrawable_callingFromPrimaryUser_targetIsWorkProfile_notNull() {
         assertThat(sCrossProfileApps.getProfileSwitchingIconDrawable(
                 sDeviceState.workProfile().userHandle())).isNotNull();
+    }
+
+    @Ignore("b/199122256 investigate install failure")
+    @Test
+    @EnsureHasWorkProfile
+    @RequireRunOnPrimaryUser
+    public void canRequestInteractAcrossProfiles_fromPersonalProfile_returnsTrue()
+            throws Exception {
+        RemoteDevicePolicyManager profileOwner = sDeviceState.profileOwner(WORK_PROFILE)
+                .devicePolicyManager();
+        try (TestAppInstanceReference personalApp = sCrossProfileTestApp.install(
+                sDeviceState.primaryUser());
+             TestAppInstanceReference workApp = sCrossProfileTestApp.install(
+                sDeviceState.workProfile())) {
+            profileOwner.setCrossProfilePackages(
+                    sDeviceState.profileOwner(WORK_PROFILE).componentName(),
+                    Set.of(sCrossProfileTestApp.packageName()));
+
+            assertThat(personalApp.crossProfileApps().canRequestInteractAcrossProfiles()).isTrue();
+        }
+    }
+
+    @Ignore("b/199122256 investigate install failure")
+    @Test
+    @EnsureHasWorkProfile
+    @RequireRunOnPrimaryUser
+    public void canRequestInteractAcrossProfiles_fromWorkProfile_returnsTrue()
+            throws Exception {
+        RemoteDevicePolicyManager profileOwner = sDeviceState.profileOwner(WORK_PROFILE)
+                .devicePolicyManager();
+        try (TestAppInstanceReference personalApp = sCrossProfileTestApp.install(
+                sDeviceState.primaryUser());
+             TestAppInstanceReference workApp = sCrossProfileTestApp.install(
+                sDeviceState.workProfile())) {
+            profileOwner.setCrossProfilePackages(
+                    sDeviceState.profileOwner(WORK_PROFILE).componentName(),
+                    Set.of(sCrossProfileTestApp.packageName()));
+
+            assertThat(workApp.crossProfileApps().canRequestInteractAcrossProfiles()).isTrue();
+        }
+    }
+
+    @Test
+    @EnsureHasNoWorkProfile
+    @RequireRunOnPrimaryUser
+    public void canRequestInteractAcrossProfiles_noOtherProfiles_returnsFalse()
+            throws Exception {
+        try (TestAppInstanceReference personalApp = sCrossProfileTestApp.install(
+                sDeviceState.primaryUser())) {
+
+            assertThat(personalApp.crossProfileApps().canRequestInteractAcrossProfiles()).isFalse();
+        }
+    }
+
+    @Ignore("b/199122256 investigate install failure")
+    @Test
+    @EnsureHasWorkProfile
+    @RequireRunOnPrimaryUser
+    public void canRequestInteractAcrossProfiles_packageNotInAllowList_returnsTrue()
+            throws Exception {
+        RemoteDevicePolicyManager profileOwner = sDeviceState.profileOwner(WORK_PROFILE)
+                .devicePolicyManager();
+        try (TestAppInstanceReference personalApp = sCrossProfileTestApp.install(
+                sDeviceState.primaryUser());
+             TestAppInstanceReference workApp = sCrossProfileTestApp.install(
+                sDeviceState.workProfile())) {
+            profileOwner.setCrossProfilePackages(
+                    sDeviceState.profileOwner(WORK_PROFILE).componentName(),
+                    Collections.emptySet());
+
+            assertThat(personalApp.crossProfileApps().canRequestInteractAcrossProfiles()).isTrue();
+        }
+    }
+
+    @Ignore("b/199122256 investigate install failure")
+    @Test
+    @EnsureHasWorkProfile
+    @RequireRunOnPrimaryUser
+    public void canRequestInteractAcrossProfiles_packageNotInstalledInPersonalProfile_returnsTrue()
+            throws Exception {
+        RemoteDevicePolicyManager profileOwner = sDeviceState.profileOwner(WORK_PROFILE)
+                .devicePolicyManager();
+        try (TestAppInstanceReference workApp = sCrossProfileTestApp.install(
+                sDeviceState.workProfile())) {
+            profileOwner.setCrossProfilePackages(
+                    sDeviceState.profileOwner(WORK_PROFILE).componentName(),
+                    Set.of(sCrossProfileTestApp.packageName()));
+
+            assertThat(workApp.crossProfileApps().canRequestInteractAcrossProfiles()).isTrue();
+        }
+    }
+
+    @Test
+    @EnsureHasWorkProfile
+    @RequireRunOnPrimaryUser
+    public void canRequestInteractAcrossProfiles_packageNotInstalledInWorkProfile_returnsTrue()
+            throws Exception {
+        RemoteDevicePolicyManager profileOwner = sDeviceState.profileOwner(WORK_PROFILE)
+                .devicePolicyManager();
+        try (TestAppInstanceReference personalApp = sCrossProfileTestApp.install(
+                sDeviceState.primaryUser())) {
+            profileOwner.setCrossProfilePackages(
+                    sDeviceState.profileOwner(WORK_PROFILE).componentName(),
+                    Set.of(sCrossProfileTestApp.packageName()));
+
+            assertThat(personalApp.crossProfileApps().canRequestInteractAcrossProfiles()).isTrue();
+        }
+    }
+
+    @Ignore("b/199122256 investigate install failure")
+    @Test
+    @EnsureHasWorkProfile
+    @RequireRunOnPrimaryUser
+    public void canRequestInteractAcrossProfiles_permissionNotRequested_returnsFalse()
+            throws Exception {
+        RemoteDevicePolicyManager profileOwner = sDeviceState.profileOwner(WORK_PROFILE)
+                .devicePolicyManager();
+        try (TestAppInstanceReference personalApp = sNonCrossProfileTestApp.install(
+                sDeviceState.primaryUser());
+             TestAppInstanceReference workApp = sNonCrossProfileTestApp.install(
+                sDeviceState.workProfile())) {
+            profileOwner.setCrossProfilePackages(
+                    sDeviceState.profileOwner(WORK_PROFILE).componentName(),
+                    Set.of(sCrossProfileTestApp.packageName()));
+
+            assertThat(personalApp.crossProfileApps().canRequestInteractAcrossProfiles()).isFalse();
+        }
+    }
+
+    // TODO(b/199148889): add require INTERACT_ACROSS_PROFILE permission for the dpc.
+    @Test
+    @EnsureHasWorkProfile
+    @RequireRunOnPrimaryUser
+    public void canRequestInteractAcrossProfiles_profileOwner_returnsFalse()
+            throws Exception {
+        RemoteDevicePolicyManager profileOwner = sDeviceState.profileOwner(WORK_PROFILE)
+                .devicePolicyManager();
+        profileOwner.setCrossProfilePackages(
+                sDeviceState.profileOwner(WORK_PROFILE).componentName(),
+                Set.of(sDeviceState.profileOwner(WORK_PROFILE).componentName().getPackageName()));
+
+        assertThat(
+                sDeviceState.profileOwner(WORK_PROFILE).crossProfileApps()
+                        .canRequestInteractAcrossProfiles()).isFalse();
     }
 }
