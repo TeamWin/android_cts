@@ -14,7 +14,7 @@
  * limitations under the License
  */
 
-package android.keystore.cts;
+package android.keystore.cts.performance;
 
 import android.security.keystore.KeyProperties;
 
