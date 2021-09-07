@@ -860,7 +860,7 @@ public class AppEnumerationTests {
         final Result result = sendCommand(QUERIES_NOTHING, TARGET_STUB,
                 /* targetUid */ INVALID_UID, /* intentExtra */ null,
                 Constants.ACTION_AWAIT_PACKAGE_DATA_CLEARED, /* waitForReady */ true);
-        runShellCommand("pm clear " + TARGET_STUB);
+        runShellCommand("pm clear --user cur " + TARGET_STUB);
         try {
             result.await();
             fail();
@@ -875,7 +875,7 @@ public class AppEnumerationTests {
         final Result result = sendCommand(QUERIES_NOTHING_PERM, TARGET_STUB,
                 /* targetUid */ INVALID_UID, /* intentExtra */ null,
                 Constants.ACTION_AWAIT_PACKAGE_DATA_CLEARED, /* waitForReady */ true);
-        runShellCommand("pm clear " + TARGET_STUB);
+        runShellCommand("pm clear --user cur " + TARGET_STUB);
         try {
             Assert.assertEquals(TARGET_STUB,
                     Uri.parse(result.await().getString(EXTRA_DATA)).getSchemeSpecificPart());
