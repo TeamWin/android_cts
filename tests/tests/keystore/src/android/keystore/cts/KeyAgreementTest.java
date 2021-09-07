@@ -32,6 +32,7 @@ import junit.framework.TestCase;
 import org.junit.Assert;
 
 import android.content.Context;
+import android.keystore.cts.util.TestUtils;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
 import android.security.keystore.KeyInfo;

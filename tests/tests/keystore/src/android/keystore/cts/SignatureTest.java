@@ -17,6 +17,9 @@
 package android.keystore.cts;
 
 import android.keystore.cts.R;
+import android.keystore.cts.util.EmptyArray;
+import android.keystore.cts.util.ImportedKey;
+import android.keystore.cts.util.TestUtils;
 
 import java.security.InvalidKeyException;
 import java.security.Key;
