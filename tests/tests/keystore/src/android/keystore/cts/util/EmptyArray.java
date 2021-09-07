@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package android.keystore.cts;
+package android.keystore.cts.util;
 
-abstract class EmptyArray {
+public abstract class EmptyArray {
     private EmptyArray() {}
 
     public static final byte[] BYTE = new byte[0];

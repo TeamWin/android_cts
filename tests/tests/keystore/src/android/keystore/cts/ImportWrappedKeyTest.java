@@ -28,6 +28,7 @@ import static android.security.keymaster.KeymasterDefs.KM_PURPOSE_ENCRYPT;
 import static android.security.keystore.KeyProperties.PURPOSE_WRAP_KEY;
 
 import android.content.pm.PackageManager;
+import android.keystore.cts.util.TestUtils;
 import android.os.SystemProperties;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;

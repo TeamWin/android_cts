@@ -14,69 +14,72 @@
  * limitations under the License
  */
 
-package android.keystore.cts;
+package android.keystore.cts.performance;
 
+import android.keystore.cts.util.TestUtils;
 import android.security.keystore.KeyProperties;
-
-import org.junit.Test;
 
 import java.security.AlgorithmParameters;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 
-public class AesCipherPerformanceTest extends PerformanceTestBase {
+public class DesCipherPerformanceTest extends PerformanceTestBase {
 
-    final int[] SUPPORTED_AES_KEY_SIZES = {128, 256};
+    final int[] SUPPORTED_DES_KEY_SIZES = {168};
     final int[] TEST_MESSAGE_SIZES = {1 << 6, 1 << 10, 1 << 17};
 
-    public void testAES_CBC_NoPadding() throws Exception {
-        testAesCipher("AES/CBC/NoPadding", SUPPORTED_AES_KEY_SIZES, TEST_MESSAGE_SIZES);
+    public void testDESede_CBC_NoPadding() throws Exception {
+        if (!TestUtils.supports3DES()) {
+            return;
+        }
+        testDesCipher("DESede/CBC/NoPadding", SUPPORTED_DES_KEY_SIZES, TEST_MESSAGE_SIZES);
     }
 
-    public void testAES_CBC_PKCS7Padding() throws Exception {
-        testAesCipher("AES/CBC/PKCS7Padding", SUPPORTED_AES_KEY_SIZES, TEST_MESSAGE_SIZES);
+    public void testDESede_CBC_PKCS7Padding() throws Exception {
+        if (!TestUtils.supports3DES()) {
+            return;
+        }
+        testDesCipher("DESede/CBC/PKCS7Padding", SUPPORTED_DES_KEY_SIZES, TEST_MESSAGE_SIZES);
     }
 
-    public void testAES_CTR_NoPadding() throws Exception {
-        testAesCipher("AES/CTR/NoPadding", SUPPORTED_AES_KEY_SIZES, TEST_MESSAGE_SIZES);
+    public void testDESede_ECB_NoPadding() throws Exception {
+        if (!TestUtils.supports3DES()) {
+            return;
+        }
+        testDesCipher("DESede/ECB/NoPadding", SUPPORTED_DES_KEY_SIZES, TEST_MESSAGE_SIZES);
     }
 
-    public void testAES_ECB_NoPadding() throws Exception {
-        testAesCipher("AES/ECB/NoPadding", SUPPORTED_AES_KEY_SIZES, TEST_MESSAGE_SIZES);
+    public void testDESede_ECB_PKCS7Padding() throws Exception {
+        if (!TestUtils.supports3DES()) {
+            return;
+        }
+        testDesCipher("DESede/ECB/PKCS7Padding", SUPPORTED_DES_KEY_SIZES, TEST_MESSAGE_SIZES);
     }
 
-    public void testAES_ECB_PKCS7Padding() throws Exception {
-        testAesCipher("AES/ECB/PKCS7Padding", SUPPORTED_AES_KEY_SIZES, TEST_MESSAGE_SIZES);
-    }
-
-    public void testAES_GCM_NoPadding() throws Exception {
-        testAesCipher("AES/GCM/NoPadding", SUPPORTED_AES_KEY_SIZES, TEST_MESSAGE_SIZES);
-    }
-
-    private void testAesCipher(String algorithm, int[] keySizes, int[] messageSizes)
+    private void testDesCipher(String algorithm, int[] keySizes, int[] messageSizes)
             throws Exception {
         for (int keySize : keySizes) {
-            KeystoreKeyGenerator androidKeystoreAesGenerator =
-                    new AndroidKeystoreAesKeyGenerator(algorithm, keySize);
-            KeystoreKeyGenerator defaultKeystoreAesGenerator =
+            KeystoreKeyGenerator androidKeystoreDesGenerator =
+                    new AndroidKeystoreDesKeyGenerator(algorithm, keySize);
+            KeystoreKeyGenerator defaultKeystoreDesGenerator =
                     new DefaultKeystoreSecretKeyGenerator(algorithm, keySize);
             for (int messageSize : messageSizes) {
                 measure(
-                        new KeystoreAesEncryptMeasurable(
-                                androidKeystoreAesGenerator, keySize, messageSize),
-                        new KeystoreAesEncryptMeasurable(
-                                defaultKeystoreAesGenerator, keySize, messageSize),
-                        new KeystoreAesDecryptMeasurable(
-                                androidKeystoreAesGenerator, keySize, messageSize),
-                        new KeystoreAesDecryptMeasurable(
-                                defaultKeystoreAesGenerator, keySize, messageSize));
+                        new KeystoreDesEncryptMeasurable(
+                                androidKeystoreDesGenerator, keySize, messageSize),
+                        new KeystoreDesEncryptMeasurable(
+                                defaultKeystoreDesGenerator, keySize, messageSize),
+                        new KeystoreDesDecryptMeasurable(
+                                androidKeystoreDesGenerator, keySize, messageSize),
+                        new KeystoreDesDecryptMeasurable(
+                                defaultKeystoreDesGenerator, keySize, messageSize));
             }
         }
     }
 
-    private class AndroidKeystoreAesKeyGenerator extends AndroidKeystoreKeyGenerator {
-        AndroidKeystoreAesKeyGenerator(String algorithm, int keySize) throws Exception {
+    private class AndroidKeystoreDesKeyGenerator extends AndroidKeystoreKeyGenerator {
+        AndroidKeystoreDesKeyGenerator(String algorithm, int keySize) throws Exception {
             super(algorithm);
             getSecretKeyGenerator()
                     .init(
@@ -92,11 +95,11 @@ public class AesCipherPerformanceTest extends PerformanceTestBase {
         }
     }
 
-    private class KeystoreAesEncryptMeasurable extends KeystoreMeasurable {
+    private class KeystoreDesEncryptMeasurable extends KeystoreMeasurable {
         private final Cipher mCipher;
         private SecretKey mKey;
 
-        KeystoreAesEncryptMeasurable(
+        KeystoreDesEncryptMeasurable(
                 KeystoreKeyGenerator keyGenerator, int keySize, int messageSize) throws Exception {
             super(keyGenerator, "encrypt", keySize, messageSize);
             mCipher = Cipher.getInstance(getAlgorithm());
@@ -118,13 +121,13 @@ public class AesCipherPerformanceTest extends PerformanceTestBase {
         }
     }
 
-    private class KeystoreAesDecryptMeasurable extends KeystoreMeasurable {
+    private class KeystoreDesDecryptMeasurable extends KeystoreMeasurable {
         private final Cipher mCipher;
         private byte[] mEncryptedMessage;
-        private AlgorithmParameters mParameters;
         private SecretKey mKey;
+        private AlgorithmParameters mParameters;
 
-        KeystoreAesDecryptMeasurable(
+        KeystoreDesDecryptMeasurable(
                 KeystoreKeyGenerator keyGenerator, int keySize, int messageSize) throws Exception {
             super(keyGenerator, "decrypt", keySize, messageSize);
             mCipher = Cipher.getInstance(getAlgorithm());
