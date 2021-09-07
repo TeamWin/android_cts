@@ -152,7 +152,7 @@ public class WifiConfigLockdownTest extends BaseDeviceOwnerTest {
             }
         }
         // There might be auto-upgrade configs returned.
-        assertEquals("Expected to try to remove one config: the DO created one." +
+        assertTrue("Expected to try to remove one config: the DO created one." +
                 " Instead tried to remove: " + removeCount, removeCount >= 1);
 
         // Assert nothing has changed
@@ -164,7 +164,7 @@ public class WifiConfigLockdownTest extends BaseDeviceOwnerTest {
             }
         }
         // There might be auto-upgrade configs returned.
-        assertEquals("Expected to see one unchanged config, saw instead: " + notChangedCount,
+        assertTrue("Expected to see one unchanged config, saw instead: " + notChangedCount,
                 notChangedCount >= 1);
     }
 
