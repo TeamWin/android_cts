@@ -93,10 +93,10 @@ public class VibrationAttributesTest {
     @Test
     public void testNotEqualsDifferentAudioUsage() {
         AudioAttributes tmp = createAudioAttributes(
-                AudioAttributes.USAGE_NOTIFICATION_COMMUNICATION_INSTANT);
+                AudioAttributes.USAGE_NOTIFICATION);
         VibrationAttributes attr = new VibrationAttributes.Builder(tmp, null).build();
         AudioAttributes tmp2 = createAudioAttributes(
-                AudioAttributes.USAGE_NOTIFICATION_COMMUNICATION_DELAYED);
+                AudioAttributes.USAGE_NOTIFICATION_EVENT);
         VibrationAttributes attr2 = new VibrationAttributes.Builder(tmp2, null).build();
         assertEquals(attr.getUsage(), attr2.getUsage());
         assertNotEquals(attr, attr2);
