@@ -513,7 +513,8 @@ public abstract class ActivityManagerTestBase {
     /** Whether or not the device pin/pattern/password lock. */
     protected boolean supportsSecureLock() {
         return !hasDeviceFeature(FEATURE_LEANBACK)
-                && !hasDeviceFeature(FEATURE_EMBEDDED);
+                && !hasDeviceFeature(FEATURE_EMBEDDED)
+                && !hasDeviceFeature(FEATURE_AUTOMOTIVE);
     }
 
     /** Whether or not the device supports "swipe" lock. */
