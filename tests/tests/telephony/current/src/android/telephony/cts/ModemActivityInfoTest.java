@@ -15,12 +15,16 @@
  */
 package android.telephony.cts;
 
-import android.telephony.ModemActivityInfo;
-
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import android.os.SystemClock;
+import android.telephony.ModemActivityInfo;
+
 import org.junit.Test;
+
+import java.util.stream.IntStream;
 
 /**
  * CTS test for ModemActivityInfo APIs
@@ -31,12 +35,12 @@ public class ModemActivityInfoTest {
     private static final int VALID_SLEEP_TIME_MS = 1;
     private static final int VALID_IDLE_TIME_MS = 1;
     private static final int VALID_RX_TIME_MS = 1;
-    private static final int[] VALID_TX_TIME_MS = {1, 1};
+    private static final int[] VALID_TX_TIME_MS = {1, 1, 1, 1, 1};
 
     private static final int INVALID_SLEEP_TIME_MS = -1;
     private static final int INVALID_IDLE_TIME_MS = -1;
     private static final int INVALID_RX_TIME_MS = -1;
-    private static final int[] INVALID_TX_TIME_MS = {-1, 1};
+    private static final int[] INVALID_TX_TIME_MS = {-1, 1, -1, 1, -1};
 
     @Test
     public void testModemActivityInfoIsValid() {
@@ -63,5 +67,26 @@ public class ModemActivityInfoTest {
                 VALID_IDLE_TIME_MS, INVALID_TX_TIME_MS, INVALID_RX_TIME_MS);
         assertFalse("ModemActivityInfo should be invalid because transmit time is invalid",
                 modemActivityInfo.isValid());
+    }
+
+    @Test
+    public void testAccessors() {
+        ModemActivityInfo info = new ModemActivityInfo(SystemClock.elapsedRealtime(),
+                VALID_SLEEP_TIME_MS, VALID_IDLE_TIME_MS, VALID_TX_TIME_MS, VALID_RX_TIME_MS);
+        assertTrue(SystemClock.elapsedRealtime() >= info.getTimestampMillis());
+        assertEquals(VALID_SLEEP_TIME_MS, info.getSleepTimeMillis());
+        assertEquals(VALID_IDLE_TIME_MS, info.getIdleTimeMillis());
+        assertEquals(VALID_RX_TIME_MS, info.getReceiveTimeMillis());
+        IntStream.range(0, ModemActivityInfo.getNumTxPowerLevels()).forEach(
+                (x) -> assertEquals(VALID_TX_TIME_MS[x],
+                        info.getTransmitDurationMillisAtPowerLevel(x)));
+    }
+
+    @Test
+    public void testDiff() {
+        ModemActivityInfo info = new ModemActivityInfo(SystemClock.elapsedRealtime(),
+                VALID_SLEEP_TIME_MS, VALID_IDLE_TIME_MS, VALID_TX_TIME_MS, VALID_RX_TIME_MS);
+        ModemActivityInfo zeroInfo = new ModemActivityInfo(0, 0, 0, new int[]{0, 0, 0, 0, 0}, 0);
+        assertEquals(info, zeroInfo.getDelta(info));
     }
 }
