@@ -1,5 +1,7 @@
 package android.keystore.cts;
 
+import android.keystore.cts.util.TestUtils;
+
 public abstract class DESedeCipherTestBase extends BlockCipherTestBase {
 
     private static final byte[] KAT_KEY = HexEncoding.decode(

@@ -27,6 +27,9 @@ import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 
+import android.keystore.cts.util.EmptyArray;
+import android.keystore.cts.util.ImportedKey;
+import android.keystore.cts.util.TestUtils;
 import android.security.keystore.KeyProperties;
 import android.test.AndroidTestCase;
 import android.test.MoreAsserts;
