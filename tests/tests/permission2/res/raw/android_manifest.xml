@@ -4308,6 +4308,11 @@
     <permission android:name="android.permission.REQUEST_OBSERVE_COMPANION_DEVICE_PRESENCE"
                 android:protectionLevel="normal" />
 
+    <!-- Allows an application to deliver messages to system
+         -->
+    <permission android:name="android.permission.DELIVER_COMPANION_MESSAGES"
+                android:protectionLevel="normal" />
+
     <!-- Allows an application to create new companion device associations.
          @SystemApi
          @hide -->
