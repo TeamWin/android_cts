@@ -77,22 +77,6 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
 
     // Most tests for this class are defined in DeviceAndProfileOwnerTest
 
-    /**
-     * Verify that screenshots are still possible for activities in the primary user when the policy
-     * is set on the profile owner.
-     */
-    @LargeTest
-    @Test
-    public void testScreenCaptureDisabled_allowedPrimaryUser() throws Exception {
-        // disable screen capture in profile
-        setScreenCaptureDisabled(mUserId, true);
-
-        // start the ScreenCaptureDisabledActivity in the parent
-        installAppAsUser(DEVICE_ADMIN_APK, mParentUserId);
-        startSimpleActivityAsUser(mParentUserId);
-        executeDeviceTestMethod(".ScreenCaptureDisabledTest", "testScreenCapturePossible");
-    }
-
     @FlakyTest
     @Test
     public void testScreenCaptureDisabled_assist_allowedPrimaryUser() throws Exception {

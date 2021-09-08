@@ -14,35 +14,35 @@
  * limitations under the License
  */
 
-package android.keystore.cts;
+package android.keystore.cts.performance;
 
 import android.security.keystore.KeyProperties;
 
 import org.junit.Test;
 
-public class AesKeyGenPerformanceTest extends PerformanceTestBase {
+public class HmacKeyGenPerformanceTest extends PerformanceTestBase {
 
-    final int[] SUPPORTED_AES_KEY_SIZES = {128, 256};
+    final int[] SUPPORTED_KEY_SIZES = {64, 128, 256, 512};
 
-    public void testAesKeyGen() throws Exception {
-        for (int keySize : SUPPORTED_AES_KEY_SIZES) {
+    public void testHmacKeyGen() throws Exception {
+        for (int keySize : SUPPORTED_KEY_SIZES) {
             measure(
                     new KeystoreSecretKeyGenMeasurable(
-                            new DefaultKeystoreSecretKeyGenerator("AES", keySize), keySize),
+                            new AndroidKeystoreHmacKeyGenerator("HmacSHA1", keySize), keySize),
                     new KeystoreSecretKeyGenMeasurable(
-                            new AndroidKeystoreAesKeyGenerator("AES", keySize), keySize));
+                            new DefaultKeystoreSecretKeyGenerator("HmacSHA1", keySize), keySize));
         }
     }
 
-    private class AndroidKeystoreAesKeyGenerator extends AndroidKeystoreKeyGenerator {
+    private class AndroidKeystoreHmacKeyGenerator extends AndroidKeystoreKeyGenerator {
 
-        AndroidKeystoreAesKeyGenerator(String algorithm, int keySize) throws Exception {
+        AndroidKeystoreHmacKeyGenerator(String algorithm, int keySize) throws Exception {
             super(algorithm);
             getSecretKeyGenerator()
                     .init(
                             getKeyGenParameterSpecBuilder(
-                                            KeyProperties.PURPOSE_ENCRYPT
-                                                    | KeyProperties.PURPOSE_DECRYPT)
+                                            KeyProperties.PURPOSE_SIGN
+                                                    | KeyProperties.PURPOSE_VERIFY)
                                     .setKeySize(keySize)
                                     .build());
         }

@@ -25,6 +25,7 @@ android_test_helper_app {
     srcs: ["src/**/*.java"],
     sdk_version: "current",
     test_suites: [
+        "mts",
         "cts",
         "general-tests",
     ],

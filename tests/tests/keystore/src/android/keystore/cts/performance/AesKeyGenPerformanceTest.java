@@ -14,30 +14,29 @@
  * limitations under the License
  */
 
-package android.keystore.cts;
+package android.keystore.cts.performance;
 
 import android.security.keystore.KeyProperties;
 
-public class DesKeyGenPerformanceTest extends PerformanceTestBase {
+import org.junit.Test;
 
-    final int[] SUPPORTED_DES_KEY_SIZES = {168};
+public class AesKeyGenPerformanceTest extends PerformanceTestBase {
 
-    public void testDesKeyGen() throws Exception {
-        if (!TestUtils.supports3DES()) {
-            return;
-        }
-        for (int keySize : SUPPORTED_DES_KEY_SIZES) {
+    final int[] SUPPORTED_AES_KEY_SIZES = {128, 256};
+
+    public void testAesKeyGen() throws Exception {
+        for (int keySize : SUPPORTED_AES_KEY_SIZES) {
             measure(
                     new KeystoreSecretKeyGenMeasurable(
-                            new DefaultKeystoreSecretKeyGenerator("DESede", keySize), keySize),
+                            new DefaultKeystoreSecretKeyGenerator("AES", keySize), keySize),
                     new KeystoreSecretKeyGenMeasurable(
-                            new AndroidKeystoreDesKeyGenerator("DESede", keySize), keySize));
+                            new AndroidKeystoreAesKeyGenerator("AES", keySize), keySize));
         }
     }
 
-    private class AndroidKeystoreDesKeyGenerator extends AndroidKeystoreKeyGenerator {
+    private class AndroidKeystoreAesKeyGenerator extends AndroidKeystoreKeyGenerator {
 
-        AndroidKeystoreDesKeyGenerator(String algorithm, int keySize) throws Exception {
+        AndroidKeystoreAesKeyGenerator(String algorithm, int keySize) throws Exception {
             super(algorithm);
             getSecretKeyGenerator()
                     .init(

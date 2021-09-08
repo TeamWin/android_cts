@@ -42,6 +42,7 @@ android_test {
     srcs: ["src5/**/*.java"],
     // tag this module as a cts test artifact
     test_suites: [
+        "mts",
         "cts",
         "general-tests",
     ],
@@ -56,6 +57,7 @@ android_test {
     manifest: "AndroidManifestProfileable.xml",
     // tag this module as a cts test artifact
     test_suites: [
+        "mts",
         "cts",
         "vts10",
         "general-tests",
@@ -70,6 +72,7 @@ android_test {
     srcs: ["src7/**/*.java"],
     // tag this module as a cts test artifact
     test_suites: [
+        "mts",
         "cts",
         "general-tests",
     ],
@@ -105,6 +108,7 @@ android_test {
     ],
     // tag this module as a cts test artifact
     test_suites: [
+        "mts",
         "cts",
         "general-tests",
     ],
@@ -120,6 +124,7 @@ android_test {
     manifest: "AndroidManifestShell.xml",
     // tag this module as a cts test artifact
     test_suites: [
+        "mts",
         "cts",
         "vts10",
         "general-tests",
