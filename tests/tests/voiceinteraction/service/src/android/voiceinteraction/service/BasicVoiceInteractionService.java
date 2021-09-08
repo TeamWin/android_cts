@@ -214,8 +214,13 @@ public class BasicVoiceInteractionService extends VoiceInteractionService {
                         @Override
                         public void onHotwordDetectionServiceInitialized(int status) {
                             super.onHotwordDetectionServiceInitialized(status);
-                            Log.i(TAG, "onHotwordDetectionServiceInitialized");
-                            verifyHotwordDetectionServiceInitializedStatus(status);
+                            Log.i(TAG, "onHotwordDetectionServiceInitialized status = " + status);
+                            if (status != HotwordDetectionService.INITIALIZATION_STATUS_SUCCESS) {
+                                return;
+                            }
+                            broadcastIntentWithResult(
+                                    Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
+                                    Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS);
                         }
 
                         @Override
@@ -257,7 +262,7 @@ public class BasicVoiceInteractionService extends VoiceInteractionService {
                         public void onError() {
                             Log.i(TAG, "onError");
                             broadcastIntentWithResult(
-                                    Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
+                                    Utils.HOTWORD_DETECTION_SERVICE_SOFTWARE_TRIGGER_RESULT_INTENT,
                                     Utils.HOTWORD_DETECTION_SERVICE_GET_ERROR);
                         }
 
@@ -278,7 +283,13 @@ public class BasicVoiceInteractionService extends VoiceInteractionService {
 
                         @Override
                         public void onHotwordDetectionServiceInitialized(int status) {
-                            verifyHotwordDetectionServiceInitializedStatus(status);
+                            Log.i(TAG, "onHotwordDetectionServiceInitialized status = " + status);
+                            if (status != HotwordDetectionService.INITIALIZATION_STATUS_SUCCESS) {
+                                return;
+                            }
+                            broadcastIntentWithResult(
+                                    Utils.HOTWORD_DETECTION_SERVICE_SOFTWARE_TRIGGER_RESULT_INTENT,
+                                    Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS);
                         }
 
                         @Override
@@ -361,14 +372,6 @@ public class BasicVoiceInteractionService extends VoiceInteractionService {
                 Log.w(TAG, "Failed closing : " + e);
             }
             mTempParcelFileDescriptor = null;
-        }
-    }
-
-    private void verifyHotwordDetectionServiceInitializedStatus(int status) {
-        if (status == HotwordDetectionService.INITIALIZATION_STATUS_SUCCESS) {
-            broadcastIntentWithResult(
-                    Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
-                    Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS);
         }
     }
 }

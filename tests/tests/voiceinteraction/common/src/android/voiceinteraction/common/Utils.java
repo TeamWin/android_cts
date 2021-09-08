@@ -173,6 +173,8 @@ public class Utils {
 
     public static final String HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT =
             "android.intent.action.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT";
+    public static final String HOTWORD_DETECTION_SERVICE_SOFTWARE_TRIGGER_RESULT_INTENT =
+            "android.intent.action.HOTWORD_DETECTION_SERVICE_SOFTWARE_TRIGGER_RESULT";
     public static final String HOTWORD_DETECTION_SERVICE_ONDETECT_RESULT_INTENT =
             "android.intent.action.HOTWORD_DETECTION_SERVICE_ONDETECT_RESULT";
     public static final String KEY_SERVICE_TYPE = "serviceType";
