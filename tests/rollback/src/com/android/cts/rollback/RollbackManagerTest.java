@@ -24,6 +24,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.fail;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.rollback.RollbackInfo;
 import android.content.rollback.RollbackManager;
@@ -37,6 +38,7 @@ import com.android.cts.install.lib.LocalIntentSender;
 import com.android.cts.install.lib.TestApp;
 import com.android.cts.install.lib.Uninstall;
 import com.android.cts.rollback.lib.Rollback;
+import com.android.cts.rollback.lib.RollbackBroadcastReceiver;
 import com.android.cts.rollback.lib.RollbackUtils;
 
 import org.junit.After;
@@ -58,6 +60,8 @@ public class RollbackManagerTest {
     private static final int ROLLBACK_DATA_POLICY_RESTORE = 0;
     private static final int ROLLBACK_DATA_POLICY_WIPE = 1;
 
+    private static final String PROPERTY_ENABLE_ROLLBACK_TIMEOUT_MILLIS = "enable_rollback_timeout";
+
     /**
      * Adopts common permissions needed to test rollbacks and uninstalls the
      * test apps.
@@ -68,9 +72,12 @@ public class RollbackManagerTest {
                 .adoptShellPermissionIdentity(
                     Manifest.permission.INSTALL_PACKAGES,
                     Manifest.permission.DELETE_PACKAGES,
+                    Manifest.permission.MANAGE_ROLLBACKS,
                     Manifest.permission.TEST_MANAGE_ROLLBACKS,
                     Manifest.permission.READ_DEVICE_CONFIG,
-                    Manifest.permission.WRITE_DEVICE_CONFIG);
+                    Manifest.permission.WRITE_DEVICE_CONFIG,
+                    Manifest.permission.FORCE_STOP_PACKAGES,
+                    Manifest.permission.SET_TIME);
 
         Uninstall.packages(TestApp.A, TestApp.B, TestApp.C);
     }
@@ -490,5 +497,261 @@ public class RollbackManagerTest {
         assertThat(InstallUtils.getUserDataVersion(TestApp.A)).isEqualTo(-1);
         assertThat(InstallUtils.getUserDataVersion(TestApp.B)).isEqualTo(1);
         assertThat(InstallUtils.getUserDataVersion(TestApp.C)).isEqualTo(2);
+    }
+
+    /**
+     * Test explicit expiration of rollbacks.
+     * Does not test the scheduling aspects of rollback expiration.
+     */
+    @Test
+    public void testRollbackExpiration() throws Exception {
+        Install.single(TestApp.A1).commit();
+        Install.single(TestApp.A2).setEnableRollback().commit();
+        RollbackUtils.waitForAvailableRollback(TestApp.A);
+
+        // Expire the rollback.
+        RollbackUtils.getRollbackManager().expireRollbackForPackage(TestApp.A);
+
+        // The rollback should no longer be available.
+        assertThat(RollbackUtils.getAvailableRollback(TestApp.A)).isNull();
+    }
+
+    /**
+     * Test restrictions on rollback broadcast sender.
+     * A random app should not be able to send a ROLLBACK_COMMITTED broadcast.
+     */
+    @Test
+    public void testRollbackBroadcastRestrictions() throws Exception {
+        RollbackBroadcastReceiver broadcastReceiver = new RollbackBroadcastReceiver();
+        Intent broadcast = new Intent(Intent.ACTION_ROLLBACK_COMMITTED);
+        try {
+            InstrumentationRegistry.getContext().sendBroadcast(broadcast);
+            fail("Succeeded in sending restricted broadcast from app context.");
+        } catch (SecurityException se) {
+            // Expected behavior.
+        }
+
+        // Confirm that we really haven't received the broadcast.
+        // TODO: How long to wait for the expected timeout?
+        assertThat(broadcastReceiver.poll(5, TimeUnit.SECONDS)).isNull();
+
+        // TODO: Do we need to do this? Do we need to ensure this is always
+        // called, even when the test fails?
+        broadcastReceiver.unregister();
+    }
+
+    /**
+     * Test rollback of apks involving splits.
+     */
+    @Test
+    public void testRollbackWithSplits() throws Exception {
+        Install.single(TestApp.ASplit1).commit();
+        Install.single(TestApp.ASplit2).setEnableRollback().commit();
+        RollbackInfo rollback = RollbackUtils.waitForAvailableRollback(TestApp.A);
+        assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(2);
+
+        RollbackUtils.rollback(rollback.getRollbackId());
+        assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(1);
+    }
+
+    /**
+     * Test bad update automatic rollback.
+     */
+    @Test
+    public void testBadUpdateRollback() throws Exception {
+        // Prep installation of the test apps.
+        Install.single(TestApp.A1).commit();
+        Install.single(TestApp.ACrashing2).setEnableRollback().commit();
+        assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(2);
+
+        Install.single(TestApp.B1).commit();
+        Install.single(TestApp.B2).setEnableRollback().commit();
+        assertThat(InstallUtils.getInstalledVersion(TestApp.B)).isEqualTo(2);
+
+        // Both test apps should now be available for rollback, and the
+        // targetPackage returned for rollback should be correct.
+        RollbackInfo rollbackA = RollbackUtils.waitForAvailableRollback(TestApp.A);
+        assertThat(rollbackA).packagesContainsExactly(Rollback.from(TestApp.A2).to(TestApp.A1));
+        RollbackInfo rollbackB = RollbackUtils.waitForAvailableRollback(TestApp.B);
+        assertThat(rollbackB).packagesContainsExactly(Rollback.from(TestApp.B2).to(TestApp.B1));
+
+        // Register rollback committed receiver
+        RollbackBroadcastReceiver rollbackReceiver = new RollbackBroadcastReceiver();
+
+        // Crash TestApp.A PackageWatchdog#TRIGGER_FAILURE_COUNT times to trigger rollback
+        RollbackUtils.sendCrashBroadcast(TestApp.A, 5);
+
+        // Verify we received a broadcast for the rollback.
+        assertThat(rollbackReceiver.poll(1, TimeUnit.MINUTES)).isNotNull();
+
+        // TestApp.A is automatically rolled back by the RollbackPackageHealthObserver
+        assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(1);
+        // Instrumented app is still the package installer
+        String installer = InstrumentationRegistry.getContext().getPackageManager()
+                .getInstallerPackageName(TestApp.A);
+        assertThat(installer).isEqualTo(getClass().getPackageName());
+        // TestApp.B is untouched
+        assertThat(InstallUtils.getInstalledVersion(TestApp.B)).isEqualTo(2);
+    }
+
+    /**
+     * Tests we fail to enable rollbacks if enable-rollback times out.
+     */
+    @Test
+    public void testEnableRollbackTimeoutFailsRollback() throws Exception {
+        //setting the timeout to a very short amount that will definitely be triggered
+        DeviceConfig.setProperty(DeviceConfig.NAMESPACE_ROLLBACK,
+                PROPERTY_ENABLE_ROLLBACK_TIMEOUT_MILLIS,
+                Long.toString(0), false /* makeDefault*/);
+
+        try {
+            Install.single(TestApp.A1).commit();
+            RollbackUtils.waitForUnavailableRollback(TestApp.A);
+
+            // Block the RollbackManager to make extra sure it will not be
+            // able to enable the rollback in time.
+            RollbackManager rm = RollbackUtils.getRollbackManager();
+            rm.blockRollbackManager(TimeUnit.SECONDS.toMillis(1));
+            Install.single(TestApp.A2).setEnableRollback().commit();
+            assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(2);
+
+            // Give plenty of time for RollbackManager to unblock and attempt
+            // to make the rollback available before asserting that the
+            // rollback was not made available.
+            Thread.sleep(TimeUnit.SECONDS.toMillis(2));
+            assertThat(RollbackUtils.getAvailableRollback(TestApp.A)).isNull();
+        } finally {
+            //setting the timeout back to default
+            DeviceConfig.setProperty(DeviceConfig.NAMESPACE_ROLLBACK,
+                    PROPERTY_ENABLE_ROLLBACK_TIMEOUT_MILLIS,
+                    null, false /* makeDefault*/);
+        }
+    }
+
+    /**
+     * Tests we fail to enable rollbacks if enable-rollback times out for any child session.
+     */
+    @Test
+    public void testEnableRollbackTimeoutFailsRollback_MultiPackage() throws Exception {
+        DeviceConfig.setProperty(DeviceConfig.NAMESPACE_ROLLBACK,
+                PROPERTY_ENABLE_ROLLBACK_TIMEOUT_MILLIS,
+                Long.toString(5000), false /* makeDefault*/);
+
+        try {
+            Install.multi(TestApp.A1, TestApp.B1).commit();
+            RollbackUtils.waitForUnavailableRollback(TestApp.A);
+
+            // Block the 2nd session for 10s so it will not be able to enable the rollback in time.
+            RollbackManager rm = RollbackUtils.getRollbackManager();
+            rm.blockRollbackManager(TimeUnit.SECONDS.toMillis(0));
+            rm.blockRollbackManager(TimeUnit.SECONDS.toMillis(10));
+            Install.multi(TestApp.A2, TestApp.B2).setEnableRollback().commit();
+            assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(2);
+            assertThat(InstallUtils.getInstalledVersion(TestApp.B)).isEqualTo(2);
+
+            // Give plenty of time for RollbackManager to unblock and attempt
+            // to make the rollback available before asserting that the
+            // rollback was not made available.
+            Thread.sleep(TimeUnit.SECONDS.toMillis(2));
+            assertThat(RollbackUtils.getAvailableRollback(TestApp.A)).isNull();
+            assertThat(RollbackUtils.getAvailableRollback(TestApp.B)).isNull();
+        } finally {
+            //setting the timeout back to default
+            DeviceConfig.setProperty(DeviceConfig.NAMESPACE_ROLLBACK,
+                    PROPERTY_ENABLE_ROLLBACK_TIMEOUT_MILLIS,
+                    null, false /* makeDefault*/);
+        }
+    }
+
+    /**
+     * Test the scheduling aspect of rollback expiration.
+     */
+    @Test
+    public void testRollbackExpiresAfterLifetime() throws Exception {
+        long expirationTime = TimeUnit.SECONDS.toMillis(30);
+        DeviceConfig.setProperty(DeviceConfig.NAMESPACE_ROLLBACK_BOOT,
+                RollbackManager.PROPERTY_ROLLBACK_LIFETIME_MILLIS,
+                Long.toString(expirationTime), false /* makeDefault*/);
+
+        try {
+            Install.single(TestApp.A1).commit();
+            Install.single(TestApp.A2).setEnableRollback().commit();
+            RollbackUtils.waitForAvailableRollback(TestApp.A);
+
+            // Give it a little more time, but still not long enough to expire
+            Thread.sleep(expirationTime / 2);
+            assertThat(RollbackUtils.getAvailableRollback(TestApp.A)).isNotNull();
+
+            // Check that the data has expired after the expiration time (with a buffer of 1 second)
+            Thread.sleep(expirationTime / 2 + TimeUnit.SECONDS.toMillis(1));
+            assertThat(RollbackUtils.getAvailableRollback(TestApp.A)).isNull();
+        } finally {
+            // Restore default config values
+            DeviceConfig.setProperty(DeviceConfig.NAMESPACE_ROLLBACK_BOOT,
+                    RollbackManager.PROPERTY_ROLLBACK_LIFETIME_MILLIS,
+                    null, false /* makeDefault*/);
+        }
+    }
+
+    /**
+     * Test that available rollbacks should expire correctly when the property
+     * {@link RollbackManager#PROPERTY_ROLLBACK_LIFETIME_MILLIS} is changed
+     */
+    @Test
+    public void testRollbackExpiresWhenLifetimeChanges() throws Exception {
+        Install.single(TestApp.A1).commit();
+        Install.single(TestApp.A2).setEnableRollback().commit();
+        RollbackUtils.waitForAvailableRollback(TestApp.A);
+
+        // Change the lifetime to 0 which should expire rollbacks immediately
+        DeviceConfig.setProperty(DeviceConfig.NAMESPACE_ROLLBACK_BOOT,
+                RollbackManager.PROPERTY_ROLLBACK_LIFETIME_MILLIS,
+                Long.toString(0), false /* makeDefault*/);
+
+        try {
+            RollbackUtils.waitForUnavailableRollback(TestApp.A);
+        } finally {
+            // Restore default config values
+            DeviceConfig.setProperty(DeviceConfig.NAMESPACE_ROLLBACK_BOOT,
+                    RollbackManager.PROPERTY_ROLLBACK_LIFETIME_MILLIS,
+                    null, false /* makeDefault*/);
+        }
+    }
+
+    /**
+     * Test that changing time on device does not affect the duration of time that we keep
+     * rollback available
+     */
+    @Test
+    public void testTimeChangeDoesNotAffectLifetime() throws Exception {
+        long expirationTime = TimeUnit.SECONDS.toMillis(30);
+        DeviceConfig.setProperty(DeviceConfig.NAMESPACE_ROLLBACK_BOOT,
+                RollbackManager.PROPERTY_ROLLBACK_LIFETIME_MILLIS,
+                Long.toString(expirationTime), false /* makeDefault*/);
+
+        try {
+            Install.single(TestApp.A1).commit();
+            Install.single(TestApp.A2).setEnableRollback().commit();
+            RollbackUtils.waitForAvailableRollback(TestApp.A);
+            RollbackUtils.forwardTimeBy(expirationTime);
+
+            try {
+                // The rollback should be still available after forwarding time
+                assertThat(RollbackUtils.getAvailableRollback(TestApp.A)).isNotNull();
+                // The rollback shouldn't expire when half of the expiration time elapses
+                Thread.sleep(expirationTime / 2);
+                assertThat(RollbackUtils.getAvailableRollback(TestApp.A)).isNotNull();
+                // The rollback now should expire
+                Thread.sleep(expirationTime / 2 + TimeUnit.SECONDS.toMillis(1));
+                assertThat(RollbackUtils.getAvailableRollback(TestApp.A)).isNull();
+            } finally {
+                RollbackUtils.forwardTimeBy(-expirationTime);
+            }
+        } finally {
+            // Restore default config values
+            DeviceConfig.setProperty(DeviceConfig.NAMESPACE_ROLLBACK_BOOT,
+                    RollbackManager.PROPERTY_ROLLBACK_LIFETIME_MILLIS,
+                    null, false /* makeDefault*/);
+        }
     }
 }
