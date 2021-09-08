@@ -48,7 +48,6 @@ import android.app.Activity;
 import android.app.ActivityOptions;
 import android.content.ComponentName;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.WindowManagerState;
@@ -232,7 +231,8 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
 
         getLifecycleLog().clear();
         final Activity launchForResultActivity = new Launcher(LaunchForResultActivity.class)
-                .customizeIntent(LaunchForResultActivity.forwardFlag(EXTRA_FINISH_IN_ON_RESUME))
+                .customizeIntent(LaunchForResultActivity.forwardFlag(EXTRA_FINISH_IN_ON_RESUME,
+                        EXTRA_SKIP_TOP_RESUMED_STATE))
                 // Start the TranslucentResultActivity to avoid activity below stopped sometimes
                 // and resulted in different lifecycle events.
                 .setExtraFlags(LaunchForResultActivity.EXTRA_USE_TRANSLUCENT_RESULT)
@@ -263,8 +263,6 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
                 transition(TranslucentResultActivity.class, ON_START),
                 transition(TranslucentResultActivity.class, ON_POST_CREATE),
                 transition(TranslucentResultActivity.class, ON_RESUME),
-                transition(TranslucentResultActivity.class, ON_TOP_POSITION_GAINED),
-                transition(TranslucentResultActivity.class, ON_TOP_POSITION_LOST),
                 transition(TranslucentResultActivity.class, ON_PAUSE),
                 transition(LaunchForResultActivity.class, ON_ACTIVITY_RESULT),
                 transition(LaunchForResultActivity.class, ON_RESUME),
