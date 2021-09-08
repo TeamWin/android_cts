@@ -561,11 +561,11 @@ class Cv2ImageProcessingUtilsTests(unittest.TestCase):
     # Array of the image files and angles containing rotated chessboards.
     test_cases = [
         ('', 0),
-        ('_15_ccw', 15),
-        ('_30_ccw', 30),
-        ('_45_ccw', 45),
-        ('_60_ccw', 60),
-        ('_75_ccw', 75),
+        ('_15_ccw', -15),
+        ('_30_ccw', -30),
+        ('_45_ccw', -45),
+        ('_60_ccw', -60),
+        ('_75_ccw', -75),
     ]
     test_fails = ''
 
@@ -584,16 +584,17 @@ class Cv2ImageProcessingUtilsTests(unittest.TestCase):
       # Assert angle as expected.
       normal = get_angle(normal_img)
       wide = get_angle(wide_img)
+      valid_angles = (angle, angle+90)  # try both angle & +90 due to squares
       e_msg = (f'\n Rotation angle test failed: {angle}, extracted normal: '
-               f'{normal:.2f}, wide: {wide:.2f}')
-      if cv2.__version__ == '3.4.2':
-        if (not math.isclose(abs(normal), angle, abs_tol=ANGLE_CHECK_TOL) or
-            not math.isclose(abs(wide), angle, abs_tol=ANGLE_CHECK_TOL)):
-          test_fails += e_msg
-      else:
-        if (not math.isclose(90-normal, angle, abs_tol=ANGLE_CHECK_TOL) or
-            not math.isclose(90-wide, angle, abs_tol=ANGLE_CHECK_TOL)):
-          test_fails += e_msg
+               f'{normal:.2f}, wide: {wide:.2f}, valid_angles: {valid_angles}')
+      matched_angles = False
+      for a in valid_angles:
+        if (math.isclose(normal, a, abs_tol=ANGLE_CHECK_TOL) and
+            math.isclose(wide, a, abs_tol=ANGLE_CHECK_TOL)):
+          matched_angles = True
+
+      if not matched_angles:
+        test_fails += e_msg
 
     self.assertEqual(len(test_fails), 0, test_fails)
 
