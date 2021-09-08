@@ -28,6 +28,7 @@ import com.google.android.enterprise.connectedapps.annotations.CrossProfileProvi
 import com.google.auto.service.AutoService;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
@@ -521,14 +522,23 @@ public final class Processor extends AbstractProcessor {
             ClassName implClassName = ClassName.get(
                     originalClassName.packageName(), interfaceClassName.simpleName() + "Impl");
 
+            CodeBlock systemServiceGetterCode = CodeBlock.of(
+                    "context.getSystemService($T.class)", originalClassName);
+
+            if (systemServiceClass.asType().toString().equals(
+                    "android.content.pm.PackageManager")) {
+                // Special case - getSystemService will return null
+                systemServiceGetterCode = CodeBlock.of("context.getPackageManager()");
+            }
+
             classBuilder.addMethod(
                     MethodSpec.methodBuilder("provide" + interfaceClassName.simpleName())
                             .returns(interfaceClassName)
                             .addModifiers(Modifier.PUBLIC)
                             .addAnnotation(CrossProfileProvider.class)
                             .addParameter(CONTEXT_CLASSNAME, "context")
-                            .addCode("return new $T(context.getSystemService($T.class));",
-                                    implClassName, originalClassName)
+                            .addCode("return new $T($L);",
+                                    implClassName, systemServiceGetterCode)
                             .build());
         }
 
