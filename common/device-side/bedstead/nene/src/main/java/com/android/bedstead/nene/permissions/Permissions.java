@@ -182,8 +182,10 @@ public final class Permissions {
                 sInstrumentedPackage.grantPermission(sUser, permission);
             } else {
                 removePermissionContextsUntilCanApply();
-                throw new NeneException("PermissionContext requires granting "
-                        + permission + " but cannot.");
+
+                throwPermissionException("PermissionContext requires granting "
+                        + permission + " but cannot.", permission, sUser,
+                        resolvedInstrumentedPackage);
             }
         }
 
@@ -195,8 +197,9 @@ public final class Permissions {
                 adoptedShellPermissions.add(permission);
             } else { // We can't deny a permission to ourselves
                 removePermissionContextsUntilCanApply();
-                throw new NeneException("PermissionContext requires denying "
-                        + permission + " but cannot.");
+                throwPermissionException("PermissionContext requires denying "
+                        + permission + " but cannot.", permission, sUser,
+                        resolvedInstrumentedPackage);
             }
         }
 
@@ -205,6 +208,30 @@ public final class Permissions {
             ShellCommandUtils.uiAutomation().adoptShellPermissionIdentity(
                     adoptedShellPermissions.toArray(new String[0]));
         }
+    }
+
+    private void throwPermissionException(
+            String message, String permission, UserReference user, Package instrumentedPackage) {
+        String protectionLevel = "Permission not found";
+        try {
+            protectionLevel = Integer.toString(sPackageManager.getPermissionInfo(
+                    permission, /* flags= */ 0).protectionLevel);
+        } catch (PackageManager.NameNotFoundException e) {
+            Log.e(LOG_TAG, "Permission not found", e);
+        }
+
+        throw new NeneException(message + "\n\nRunning On User: " + user
+                + "\nPermission: " + permission
+                + "\nPermission protection level: " + protectionLevel
+                + "\nPermission state: " + sContext.checkSelfPermission(permission)
+                + "\nInstrumented Package: " + instrumentedPackage.packageName()
+                + "\n\nGranted Permissions:\n"
+                + instrumentedPackage.grantedPermissions(user)
+                + "\n\nRequested Permissions:\n"
+                + instrumentedPackage.requestedPermissions()
+                + "\n\nCan adopt shell permissions: " + SUPPORTS_ADOPT_SHELL_PERMISSIONS
+                + "\nShell permissions:"
+                + sShellPackage.requestedPermissions());
     }
 
     void clearPermissions() {
