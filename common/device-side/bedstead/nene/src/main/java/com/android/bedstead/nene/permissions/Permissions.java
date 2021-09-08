@@ -33,6 +33,8 @@ import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.utils.ShellCommandUtils;
 import com.android.bedstead.nene.utils.Versions;
 
+import com.google.common.collect.ImmutableSet;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -60,8 +62,19 @@ public final class Permissions {
     private static final UserReference sUser = sTestApis.users().instrumented();
     private static final Package sShellPackage =
             sTestApis.packages().find("com.android.shell").resolve();
+    private static final Set<String> sCheckedGrantPermissions = new HashSet<>();
+    private static final Set<String> sCheckedDenyPermissions = new HashSet<>();
     private static final boolean SUPPORTS_ADOPT_SHELL_PERMISSIONS =
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q;
+
+    /**
+     * Permissions which cannot be given to shell.
+     *
+     * <p>Each entry must include a comment with the reason it cannot be added.
+     */
+    private static final ImmutableSet EXEMPT_SHELL_PERMISSIONS = ImmutableSet.of(
+
+    );
 
     // Permissions is a singleton as permission state must be application wide
     public static final Permissions sInstance = new Permissions();
@@ -167,6 +180,8 @@ public final class Permissions {
         Set<String> adoptedShellPermissions = new HashSet<>();
 
         for (String permission : grantedPermissions) {
+            checkCanGrantOnAllSupportedVersions(permission, sUser, resolvedInstrumentedPackage);
+
             Log.d(LOG_TAG , "Trying to grant " + permission);
             if (resolvedInstrumentedPackage.grantedPermissions(sUser).contains(permission)) {
                 // Already granted, can skip
@@ -190,6 +205,8 @@ public final class Permissions {
         }
 
         for (String permission : deniedPermissions) {
+            checkCanDenyOnAllSupportedVersions(permission, sUser, resolvedInstrumentedPackage);
+
             if (!resolvedInstrumentedPackage.grantedPermissions(sUser).contains(permission)) {
                 // Already denied, can skip
             } else if (SUPPORTS_ADOPT_SHELL_PERMISSIONS
@@ -208,6 +225,34 @@ public final class Permissions {
             ShellCommandUtils.uiAutomation().adoptShellPermissionIdentity(
                     adoptedShellPermissions.toArray(new String[0]));
         }
+    }
+
+    private void checkCanGrantOnAllSupportedVersions(
+            String permission, UserReference user, Package instrumentedPackage) {
+        if (sCheckedGrantPermissions.contains(permission)) {
+            return;
+        }
+
+        if (Versions.isDevelopmentVersion()
+                && !sShellPackage.requestedPermissions().contains(permission)
+                && !EXEMPT_SHELL_PERMISSIONS.contains(permission)) {
+            throwPermissionException(permission + " is not granted to shell on latest development"
+                    + "version. You must add it to the com.android.shell manifest. If that is not"
+                    + "possible add it to"
+                    + "com.android.bedstead.nene.permissions.Permissions#EXEMPT_SHELL_PERMISSIONS",
+                    permission, user, instrumentedPackage);
+        }
+
+        sCheckedGrantPermissions.add(permission);
+    }
+
+    private void checkCanDenyOnAllSupportedVersions(
+            String permission, UserReference user, Package instrumentedPackage) {
+        if (sCheckedDenyPermissions.contains(permission)) {
+            return;
+        }
+
+        sCheckedDenyPermissions.add(permission);
     }
 
     private void throwPermissionException(
@@ -231,7 +276,8 @@ public final class Permissions {
                 + instrumentedPackage.requestedPermissions()
                 + "\n\nCan adopt shell permissions: " + SUPPORTS_ADOPT_SHELL_PERMISSIONS
                 + "\nShell permissions:"
-                + sShellPackage.requestedPermissions());
+                + sShellPackage.requestedPermissions()
+                + "\nExempt Shell permissions: " + EXEMPT_SHELL_PERMISSIONS);
     }
 
     void clearPermissions() {
