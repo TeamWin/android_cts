@@ -720,12 +720,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         executeDeviceTestMethod(".ApplicationHiddenTest", "testCannotHidePolicyExemptApps");
     }
 
-    @Test
-    public void testAccountManagement_deviceAndProfileOwnerAlwaysAllowed() throws Exception {
-        installAppAsUser(ACCOUNT_MANAGEMENT_APK, mUserId);
-        executeDeviceTestClass(".AllowedAccountManagementTest");
-    }
-
+    // TODO(b/197491427): AccountManager support in TestApp
     @Test
     public void testAccountManagement_userRestrictionAddAccount() throws Exception {
         installAppAsUser(ACCOUNT_MANAGEMENT_APK, mUserId);
@@ -739,6 +734,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         executeAccountTest("testAddAccount_allowed");
     }
 
+    // TODO(b/197491427): AccountManager support in TestApp
     @Test
     public void testAccountManagement_userRestrictionRemoveAccount() throws Exception {
         installAppAsUser(ACCOUNT_MANAGEMENT_APK, mUserId);
@@ -752,6 +748,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         executeAccountTest("testRemoveAccount_allowed");
     }
 
+    // TODO(b/197491427): AccountManager support in TestApp
     @Test
     public void testAccountManagement_disabledAddAccount() throws Exception {
         installAppAsUser(ACCOUNT_MANAGEMENT_APK, mUserId);
@@ -765,6 +762,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         executeAccountTest("testAddAccount_allowed");
     }
 
+    // TODO(b/197491427): AccountManager support in TestApp
     @Test
     public void testAccountManagement_disabledRemoveAccount() throws Exception {
         installAppAsUser(ACCOUNT_MANAGEMENT_APK, mUserId);
