@@ -3558,15 +3558,15 @@ public class TelephonyManagerTest {
         }
     }
 
-    private void disableNrDualConnectivity() {
+    private int disableNrDualConnectivity() {
         if (!ShellIdentityUtils.invokeMethodWithShellPermissions(
                 mTelephonyManager, (tm) -> tm.isRadioInterfaceCapabilitySupported(
                         TelephonyManager
                                 .CAPABILITY_NR_DUAL_CONNECTIVITY_CONFIGURATION_AVAILABLE))) {
-            return;
+            return TelephonyManager.ENABLE_NR_DUAL_CONNECTIVITY_NOT_SUPPORTED;
         }
 
-        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+        int result = ShellIdentityUtils.invokeMethodWithShellPermissions(
                 mTelephonyManager,
                 (tm) -> tm.setNrDualConnectivityState(
                         TelephonyManager.NR_DUAL_CONNECTIVITY_DISABLE));
@@ -3575,9 +3575,12 @@ public class TelephonyManagerTest {
                 ShellIdentityUtils.invokeMethodWithShellPermissions(
                         mTelephonyManager, (tm) -> tm.isNrDualConnectivityEnabled());
         // Only verify the result for supported devices on IRadio 1.6+
-        if (mRadioVersion >= RADIO_HAL_VERSION_1_6) {
+        if (mRadioVersion >= RADIO_HAL_VERSION_1_6
+                && result != TelephonyManager.ENABLE_NR_DUAL_CONNECTIVITY_NOT_SUPPORTED) {
             assertFalse(isNrDualConnectivityEnabled);
         }
+
+        return result;
     }
 
     @Test
@@ -3596,9 +3599,14 @@ public class TelephonyManagerTest {
         boolean isInitiallyEnabled = ShellIdentityUtils.invokeMethodWithShellPermissions(
                 mTelephonyManager, (tm) -> tm.isNrDualConnectivityEnabled());
         boolean isNrDualConnectivityEnabled;
+        int result;
         if (isInitiallyEnabled) {
-            disableNrDualConnectivity();
+            result = disableNrDualConnectivity();
+            if (result == TelephonyManager.ENABLE_NR_DUAL_CONNECTIVITY_NOT_SUPPORTED) {
+                return;
+            }
         }
+
 
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
                 mTelephonyManager,
