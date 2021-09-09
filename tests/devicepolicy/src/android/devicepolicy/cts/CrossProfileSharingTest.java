@@ -16,15 +16,19 @@
 
 package android.devicepolicy.cts;
 
+import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
 import static android.app.admin.DevicePolicyManager.ACTION_DATA_SHARING_RESTRICTION_APPLIED;
+import static android.app.admin.DevicePolicyManager.FLAG_MANAGED_CAN_ACCESS_PARENT;
+import static android.app.admin.DevicePolicyManager.FLAG_PARENT_CAN_ACCESS_MANAGED;
 import static android.content.pm.PackageManager.MATCH_DEFAULT_ONLY;
 import static android.os.UserManager.DISALLOW_SHARE_INTO_MANAGED_PROFILE;
 
+import static com.android.bedstead.harrier.DeviceState.UserType.PRIMARY_USER;
+import static com.android.bedstead.harrier.DeviceState.UserType.WORK_PROFILE;
 import static com.android.bedstead.remotedpc.RemoteDpc.DPC_COMPONENT_NAME;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
-import android.app.admin.DevicePolicyManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -32,9 +36,13 @@ import android.content.pm.ResolveInfo;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
 import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.permissions.PermissionContext;
+import com.android.bedstead.nene.users.UserReference;
+import com.android.bedstead.remotedpc.RemoteDpc;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstanceReference;
 import com.android.bedstead.testapp.TestAppProvider;
@@ -77,6 +85,12 @@ public class CrossProfileSharingTest {
             new Intent(Intent.ACTION_PICK).addCategory(Intent.CATEGORY_DEFAULT)
     };
 
+    // These are the data sharing intents which can be forwarded to the managed profile.
+    private static final Intent[] SHARING_INTENTS = {
+            new Intent(Intent.ACTION_SEND).setType("*/*"),
+            new Intent(Intent.ACTION_SEND_MULTIPLE).setType("*/*")
+    };
+
     /**
      * Test sharing initiated from the profile side i.e. user tries to pick up personal data within
      * a work app when DISALLOW_SHARE_INTO_MANAGED_PROFILE is enforced.
@@ -84,9 +98,8 @@ public class CrossProfileSharingTest {
     @Test
     @Postsubmit(reason = "new test")
     @RequireRunOnWorkProfile
-    public void openingPersonalFromProfile_disallowShareIntoProfile_restrictionApplied()
-            throws Exception {
-        ResolveInfo toPersonalForwarderInfo = getToPersonalForwarderInfo();
+    public void openingPersonalFromProfile_disallowShareIntoProfile_restrictionApplied() {
+        ResolveInfo toPersonalForwarderInfo = getWorkToPersonalForwarder();
 
         // Enforce the restriction and wait for it to be applied.
         setSharingIntoProfileEnabled(false);
@@ -109,9 +122,8 @@ public class CrossProfileSharingTest {
     @Test
     @Postsubmit(reason = "new test")
     @RequireRunOnWorkProfile
-    public void openingPersonalFromProfile_disallowShareIntoProfile_restrictionRemoved()
-            throws Exception {
-        ResolveInfo toPersonalForwarderInfo = getToPersonalForwarderInfo();
+    public void openingPersonalFromProfile_disallowShareIntoProfile_restrictionRemoved() {
+        ResolveInfo workToPersonalForwarder = getWorkToPersonalForwarder();
 
         // Enforce the restriction and wait for it to be applied, then remove it and wait again.
         setSharingIntoProfileEnabled(false);
@@ -121,37 +133,76 @@ public class CrossProfileSharingTest {
         try (TestAppInstanceReference testAppParent =
                      sTestApp.install(sDeviceState.primaryUser())) {
             // Verify that the intents resolve into cross-profile forwarder.
-            assertCrossProfileIntentsResolvability(OPENING_INTENTS,
-                    toPersonalForwarderInfo, /* expectForwardable */ true);
+            assertCrossProfileIntentsResolvability(
+                    OPENING_INTENTS, workToPersonalForwarder, /* expectForwardable */ true);
         }
+    }
+
+    @Test
+    @Postsubmit(reason = "new test")
+    @EnsureHasWorkProfile(forUser = PRIMARY_USER)
+    public void sharingFromPersonalToWork_disallowShareIntoProfile_restrictionApplied() {
+        ResolveInfo personalToWorkForwarder = getPersonalToWorkForwarder();
+
+        // Enforce the restriction and wait for it to be applied.
+        setSharingIntoProfileEnabled(false);
+
+        try {
+            // Verify that sharing intent doesn't get resolve into profile forwarder.
+            assertCrossProfileIntentsResolvability(
+                    SHARING_INTENTS, personalToWorkForwarder, /* expectForwardable */ false);
+        } finally {
+            setSharingIntoProfileEnabled(true);
+        }
+
+    }
+
+    @Test
+    @Postsubmit(reason = "new test")
+    @EnsureHasWorkProfile(forUser = PRIMARY_USER)
+    public void sharingFromPersonalToWork_disallowShareIntoProfile_restrictionRemoved() {
+        ResolveInfo personalToWorkForwarder = getPersonalToWorkForwarder();
+
+        // Enforce the restriction and wait for it to be applied, then remove it and wait again.
+        setSharingIntoProfileEnabled(false);
+        setSharingIntoProfileEnabled(true);
+
+        // Verify that sharing intent gets resolved into profile forwarder successfully.
+        assertCrossProfileIntentsResolvability(
+                SHARING_INTENTS, personalToWorkForwarder, /* expectForwardable */ true);
+    }
+
+    private ResolveInfo getPersonalToWorkForwarder() {
+        return getResolveInfo(sDeviceState.workProfile(), FLAG_MANAGED_CAN_ACCESS_PARENT);
+    }
+
+    private ResolveInfo getWorkToPersonalForwarder() {
+        return getResolveInfo(sDeviceState.primaryUser(), FLAG_PARENT_CAN_ACCESS_MANAGED);
     }
 
     /**
      * Finds ResolveInfo for a system activity that forwards cross-profile intent by resolving an
-     * intent that it handled in the primary user from the profile user.
+     * intent that it handled in one profile from the other profile.
      * TODO(b/198759180): replace it with a @TestApi
      */
-    private ResolveInfo getToPersonalForwarderInfo() {
+    private ResolveInfo getResolveInfo(UserReference targetProfile, int direction) {
         ResolveInfo forwarderInfo;
-        try (TestAppInstanceReference testAppParent =
-                     sTestApp.install(sDeviceState.primaryUser())) {
+        try (TestAppInstanceReference testApp = sTestApp.install(targetProfile)) {
             // Set up cross profile intent filters so we can resolve these to find out framework's
             // intent forwarder activity as ground truth
-            sDeviceState.dpc().devicePolicyManager()
+            sDeviceState.profileOwner(WORK_PROFILE).devicePolicyManager()
                     .addCrossProfileIntentFilter(DPC_COMPONENT_NAME,
-                            new IntentFilter(CROSS_PROFILE_ACTION),
-                            DevicePolicyManager.FLAG_PARENT_CAN_ACCESS_MANAGED);
+                            new IntentFilter(CROSS_PROFILE_ACTION), direction);
             try {
                 forwarderInfo = getCrossProfileIntentForwarder(new Intent(CROSS_PROFILE_ACTION));
             } finally {
-                sDeviceState.dpc().devicePolicyManager()
+                sDeviceState.profileOwner(WORK_PROFILE).devicePolicyManager()
                         .clearCrossProfileIntentFilters(DPC_COMPONENT_NAME);
             }
         }
         return forwarderInfo;
     }
 
-    //
     private ResolveInfo getCrossProfileIntentForwarder(Intent intent) {
         List<ResolveInfo> result = sTestApis.context().instrumentedContext().getPackageManager()
                 .queryIntentActivities(intent, MATCH_DEFAULT_ONLY);
@@ -164,14 +215,18 @@ public class CrossProfileSharingTest {
     }
 
     private void setSharingIntoProfileEnabled(boolean enabled) {
+        RemoteDpc remoteDpc = sDeviceState.profileOwner(WORK_PROFILE);
         IntentFilter filter = new IntentFilter(ACTION_DATA_SHARING_RESTRICTION_APPLIED);
-        try (BlockingBroadcastReceiver receiver =
-                     BlockingBroadcastReceiver.create(sContext, filter).register()) {
+        Context remoteCtx = sTestApis.context().androidContextAsUser(remoteDpc.user());
+        try (PermissionContext permissionContext =
+                     sTestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL);
+             BlockingBroadcastReceiver receiver =
+                     BlockingBroadcastReceiver.create(remoteCtx, filter).register()) {
             if (enabled) {
-                sDeviceState.dpc().devicePolicyManager().clearUserRestriction(
+                remoteDpc.devicePolicyManager().clearUserRestriction(
                         DPC_COMPONENT_NAME, DISALLOW_SHARE_INTO_MANAGED_PROFILE);
             } else {
-                sDeviceState.dpc().devicePolicyManager().addUserRestriction(
+                remoteDpc.devicePolicyManager().addUserRestriction(
                         DPC_COMPONENT_NAME, DISALLOW_SHARE_INTO_MANAGED_PROFILE);
             }
         }
