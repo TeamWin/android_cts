@@ -46,7 +46,7 @@ public final class Apis {
         return Arrays.stream(API_FILES)
                 .map(f -> {
                     try {
-                        return Resources.toString(Processor.class.getResource("/" + f),
+                        return Resources.toString(Processor.class.getResource("/apis/" + f),
                                 StandardCharsets.UTF_8);
                     } catch (IOException e) {
                         throw new IllegalStateException("Could not read file " + f);
