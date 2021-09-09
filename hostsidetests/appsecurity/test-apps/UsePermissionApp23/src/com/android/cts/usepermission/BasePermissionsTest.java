@@ -17,6 +17,9 @@
 package com.android.cts.usepermission;
 
 import static junit.framework.Assert.assertEquals;
+import static android.content.pm.PackageManager.MATCH_DIRECT_BOOT_AWARE;
+import static android.content.pm.PackageManager.MATCH_DIRECT_BOOT_UNAWARE;
+import static android.content.pm.PackageManager.MATCH_SYSTEM_ONLY;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
@@ -27,10 +30,12 @@ import android.app.Instrumentation;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.content.res.Resources;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.SystemClock;
+import android.os.UserHandle;
 import android.provider.Settings;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.Direction;
@@ -62,6 +67,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeoutException;
+import java.util.regex.Pattern;
 
 @RunWith(AndroidJUnit4.class)
 public abstract class BasePermissionsTest {
@@ -77,6 +83,7 @@ public abstract class BasePermissionsTest {
 
     private Context mContext;
     private Resources mPlatformResources;
+    private Resources mPermissionControllerResources;
     private boolean mWatch;
     private boolean mAutomotive;
 
@@ -251,7 +258,7 @@ public abstract class BasePermissionsTest {
     }
 
     @Before
-    public void beforeTest() {
+    public void beforeTest() throws PackageManager.NameNotFoundException{
         mContext = InstrumentationRegistry.getTargetContext();
         try {
             Context platformContext = mContext.createPackageContext(PLATFORM_PACKAGE_NAME, 0);
@@ -265,9 +272,37 @@ public abstract class BasePermissionsTest {
         mAutomotive = packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
         initPermissionToLabelMap(packageManager.isPermissionReviewModeEnabled());
 
+        if (mAutomotive) {
+            Context permissionControllerContext = mContext.createPackageContext(
+                    getPermissionControllerPackageName(), 0);
+            mPermissionControllerResources = permissionControllerContext.getResources();
+            assertNotNull(mPermissionControllerResources);
+        }
+
         UiObject2 button = getUiDevice().findObject(By.text("Close"));
         if (button != null) {
             button.click();
+        }
+    }
+
+    private String getPermissionControllerPackageName() {
+        final Intent intent = new Intent("android.intent.action.MANAGE_PERMISSIONS");
+        intent.addCategory(Intent.CATEGORY_DEFAULT);
+
+        PackageManager packageManager = mContext.getPackageManager();
+
+        final List<ResolveInfo> matches = packageManager.queryIntentActivities(intent,
+                MATCH_SYSTEM_ONLY | MATCH_DIRECT_BOOT_AWARE | MATCH_DIRECT_BOOT_UNAWARE);
+
+        if (matches.size() == 1) {
+            ResolveInfo resolveInfo = matches.get(0);
+            if (!resolveInfo.activityInfo.applicationInfo.isPrivilegedApp()) {
+                throw new RuntimeException("The permissions manager must be a privileged app");
+            }
+            return matches.get(0).activityInfo.packageName;
+        } else {
+            throw new RuntimeException("There must be exactly one permissions manager; found "
+                    + matches);
         }
     }
 
@@ -299,20 +334,24 @@ public abstract class BasePermissionsTest {
 
     protected void clickAllowButton() throws Exception {
         scrollToBottomIfWatch();
-        getUiDevice().wait(
-            Until.findObject(mAutomotive
-                ? By.res("android:id/button1")
-                : By.res("com.android.packageinstaller:id/permission_allow_button")),
-            GLOBAL_TIMEOUT_MILLIS).click();
+        if (mAutomotive) {
+            clickStringRes("grant_dialog_button_allow");
+        } else {
+            getUiDevice().wait(
+                Until.findObject(By.res("com.android.packageinstaller:id/permission_allow_button")),
+                GLOBAL_TIMEOUT_MILLIS).click();
+        }
     }
 
     protected void clickDenyButton() throws Exception {
         scrollToBottomIfWatch();
-        getUiDevice().wait(
-            Until.findObject(mAutomotive
-                ? By.res("android:id/button3")
-                : By.res("com.android.packageinstaller:id/permission_deny_button")),
-            GLOBAL_TIMEOUT_MILLIS).click();
+        if (mAutomotive) {
+            clickStringRes("grant_dialog_button_deny");
+        } else {
+            getUiDevice().wait(
+                Until.findObject(By.res("com.android.packageinstaller:id/permission_deny_button")),
+                GLOBAL_TIMEOUT_MILLIS).click();
+        }
     }
 
     protected void clickDontAskAgainCheckbox() throws Exception {
@@ -324,11 +363,22 @@ public abstract class BasePermissionsTest {
 
     protected void clickDontAskAgainButton() throws Exception {
         scrollToBottomIfWatch();
-        getUiDevice().wait(
-            Until.findObject(mAutomotive
-                ? By.res("android:id/button2")
-                : By.res("com.android.packageinstaller:id/permission_deny_dont_ask_again_button")),
-            GLOBAL_TIMEOUT_MILLIS).click();
+        if (mAutomotive) {
+            clickStringRes("never_ask_again");
+        } else {
+            getUiDevice().wait(
+                Until.findObject(By.res("com.android.packageinstaller:id/permission_deny_dont_ask_again_button")),
+                GLOBAL_TIMEOUT_MILLIS).click();
+        }
+    }
+
+    private void clickStringRes(String res) throws TimeoutException, UiObjectNotFoundException {
+        String s = mPermissionControllerResources.getString(mPermissionControllerResources
+                .getIdentifier(res, "string", "com.android.packageinstaller"));
+        waitForIdle();
+        getUiDevice().wait(Until.findObject(By.text(
+                Pattern.compile(Pattern.quote(s), Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE))),
+                GLOBAL_TIMEOUT_MILLIS).click();
     }
 
     protected void grantPermission(String permission) throws Exception {
