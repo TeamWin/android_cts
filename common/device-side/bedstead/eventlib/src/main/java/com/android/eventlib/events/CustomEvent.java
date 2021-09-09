@@ -74,6 +74,14 @@ public final class CustomEvent extends Event {
             }
             return true;
         }
+
+        @Override
+        public String describeQuery(String fieldName) {
+            return toStringBuilder(CustomEvent.class, this)
+                    .field("tag", mTag)
+                    .field("data", mData)
+                    .toString();
+        }
     }
 
     /** Begins logging a {@link CustomEvent}. */

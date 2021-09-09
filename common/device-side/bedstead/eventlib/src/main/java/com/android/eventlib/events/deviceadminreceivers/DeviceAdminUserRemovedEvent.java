@@ -95,6 +95,15 @@ public final class DeviceAdminUserRemovedEvent extends Event {
             }
             return true;
         }
+
+        @Override
+        public String describeQuery(String fieldName) {
+            return toStringBuilder(DeviceAdminUserRemovedEvent.class, this)
+                    .field("intent", mIntent)
+                    .field("deviceAdminReceiver", mDeviceAdminReceiver)
+                    .field("removedUser", mRemovedUser)
+                    .toString();
+        }
     }
 
     /** Begins logging a {@link DeviceAdminUserRemovedEvent}. */

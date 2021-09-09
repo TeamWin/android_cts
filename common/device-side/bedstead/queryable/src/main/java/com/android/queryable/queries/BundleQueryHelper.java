@@ -22,7 +22,9 @@ import com.android.queryable.Queryable;
 import com.android.queryable.util.SerializableParcelWrapper;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /** Implementation of {@link BundleQuery}. */
@@ -72,5 +74,15 @@ public final class BundleQueryHelper<E extends Queryable> implements BundleQuery
 
     public static boolean matches(BundleQueryHelper<?> bundleQueryHelper, Bundle value) {
         return bundleQueryHelper.matches(value);
+    }
+
+    @Override
+    public String describeQuery(String fieldName) {
+        List<String> queryStrings = new ArrayList<>();
+        for (Map.Entry<String, BundleKeyQueryHelper<E>> query : mKeyQueryHelpers.entrySet()) {
+            queryStrings.add(query.getValue().describeQuery(fieldName + "." + query.getKey()));
+        }
+
+        return Queryable.joinQueryStrings(queryStrings);
     }
 }

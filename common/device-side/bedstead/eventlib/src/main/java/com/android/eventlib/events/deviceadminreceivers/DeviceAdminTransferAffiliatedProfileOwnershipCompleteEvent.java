@@ -84,6 +84,15 @@ public final class DeviceAdminTransferAffiliatedProfileOwnershipCompleteEvent ex
             }
             return true;
         }
+
+        @Override
+        public String describeQuery(String fieldName) {
+            return toStringBuilder(
+                    DeviceAdminTransferAffiliatedProfileOwnershipCompleteEvent.class, this)
+                    .field("deviceAdminReceiver", mDeviceAdminReceiver)
+                    .field("user", mUser)
+                    .toString();
+        }
     }
 
     /** Begins logging a {@link DeviceAdminTransferAffiliatedProfileOwnershipCompleteEvent}. */

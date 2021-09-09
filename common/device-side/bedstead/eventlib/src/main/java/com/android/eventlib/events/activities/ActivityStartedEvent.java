@@ -59,6 +59,13 @@ public final class ActivityStartedEvent extends Event {
             }
             return true;
         }
+
+        @Override
+        public String describeQuery(String fieldName) {
+            return toStringBuilder(ActivityStartedEvent.class, this)
+                    .field("activity", mActivity)
+                    .toString();
+        }
     }
 
     /** Begins logging a {@link ActivityStartedEvent}. */

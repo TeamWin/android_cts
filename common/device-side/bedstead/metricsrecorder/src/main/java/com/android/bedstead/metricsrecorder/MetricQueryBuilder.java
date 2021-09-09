@@ -28,6 +28,8 @@ import com.android.queryable.queries.StringQueryHelper;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MetricQueryBuilder implements Queryable {
     private final EnterpriseMetricsRecorder mRecorder;
@@ -132,5 +134,14 @@ public class MetricQueryBuilder implements Queryable {
                 && mTypeQuery.matches(metric.type())
                 && mBooleanQuery.matches(metric.Boolean())
                 && mStringsQuery.matches(metric.strings());
+    }
+
+    @Override
+    public String describeQuery(String fieldName) {
+        return "{" + Queryable.joinQueryStrings(
+                mAdminPackageNameQuery.describeQuery("adminPackageName"),
+                        mBooleanQuery.describeQuery("boolean"),
+                        mStringsQuery.describeQuery("strings")
+        ) + "}";
     }
 }

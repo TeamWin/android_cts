@@ -60,6 +60,13 @@ public final class ActivityRestartedEvent extends Event {
             }
             return true;
         }
+
+        @Override
+        public String describeQuery(String fieldName) {
+            return toStringBuilder(ActivityRestartedEvent.class, this)
+                    .field("activity", mActivity)
+                    .toString();
+        }
     }
 
     /** Begins logging a {@link ActivityRestartedEvent}. */

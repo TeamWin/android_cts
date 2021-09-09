@@ -120,6 +120,17 @@ public final class DeviceAdminChoosePrivateKeyAliasEvent extends Event {
             }
             return true;
         }
+
+        @Override
+        public String describeQuery(String fieldName) {
+            return toStringBuilder(DeviceAdminChoosePrivateKeyAliasEvent.class, this)
+                    .field("intent", mIntent)
+                    .field("deviceAdminReceiver", mDeviceAdminReceiver)
+                    .field("uid", mUid)
+                    .field("uri", mUri)
+                    .field("alias", mAlias)
+                    .toString();
+        }
     }
 
     /** Begins logging a {@link DeviceAdminChoosePrivateKeyAliasEvent}. */

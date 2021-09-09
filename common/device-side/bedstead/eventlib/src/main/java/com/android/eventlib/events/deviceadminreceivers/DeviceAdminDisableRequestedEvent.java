@@ -80,6 +80,14 @@ public final class DeviceAdminDisableRequestedEvent extends Event {
             }
             return true;
         }
+
+        @Override
+        public String describeQuery(String fieldName) {
+            return toStringBuilder(DeviceAdminDisableRequestedEvent.class, this)
+                    .field("intent", mIntent)
+                    .field("deviceAdminReceiver", mDeviceAdminReceiver)
+                    .toString();
+        }
     }
 
     /** Begins logging a {@link DeviceAdminDisableRequestedEvent}. */

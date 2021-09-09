@@ -54,6 +54,14 @@ public final class ActivityQueryHelper<E extends Queryable> implements ActivityQ
                 && mExportedQueryHelper.matches(value.exported());
     }
 
+    @Override
+    public String describeQuery(String fieldName) {
+        return Queryable.joinQueryStrings(
+          mActivityClassQueryHelper.describeQuery(fieldName + ".activity"),
+          mExportedQueryHelper.describeQuery(fieldName + ".exported")
+        );
+    }
+
     public static boolean matches(ActivityQueryHelper<?> activityQueryHelper, ActivityInfo value) {
         return activityQueryHelper.matches(value);
     }
