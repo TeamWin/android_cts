@@ -16,6 +16,12 @@
 
 package android.media.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.content.res.AssetFileDescriptor;
 import android.media.MediaCodec;
 import android.media.MediaCodec.BufferInfo;
@@ -33,6 +39,7 @@ import android.util.Log;
 import android.view.Surface;
 import android.webkit.cts.CtsTestServer;
 
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
@@ -45,6 +52,11 @@ import org.apache.http.impl.io.SocketOutputBuffer;
 import org.apache.http.io.SessionOutputBuffer;
 import org.apache.http.params.HttpParams;
 import org.apache.http.util.CharArrayBuffer;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.io.File;
 import java.io.FileDescriptor;
@@ -65,6 +77,7 @@ import java.util.zip.Adler32;
 @SmallTest
 @RequiresDevice
 @AppModeFull(reason = "TODO: evaluate and port to instant")
+@RunWith(AndroidJUnit4.class)
 public class NativeDecoderTest extends MediaPlayerTestBase {
     private static final String TAG = "DecoderTest";
 
@@ -78,22 +91,28 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
     private static final int CONFIG_MODE_NONE = 0;
     private static final int CONFIG_MODE_QUEUE = 1;
 
-    private static boolean sIsAtLeastS = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S);
+    private static final boolean sIsAtLeastS = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S);
 
     static final String mInpPrefix = WorkDir.getMediaDirString();
     short[] mMasterBuffer;
 
-    /** Load jni on initialization */
     static {
+        // Load jni on initialization.
         Log.i("@@@", "before loadlibrary");
         System.loadLibrary("ctsmediacodec_jni");
         Log.i("@@@", "after loadlibrary");
     }
 
+    @Before
     @Override
-    protected void setUp() throws Exception {
+    public void setUp() throws Throwable {
         super.setUp();
+    }
 
+    @After
+    @Override
+    public void tearDown() {
+        super.tearDown();
     }
 
     // check that native extractor behavior matches java extractor
@@ -117,6 +136,8 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
             }
     }
 
+    @Ignore
+    @Test
     public void SKIP_testExtractor() throws Exception {
         // duplicate of CtsMediaV2TestCases:ExtractorTest$FunctionalityTest#testExtract where
         // checksum is computed over track format attributes, track buffer and buffer
@@ -264,9 +285,9 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
             foo.add(ex.getSampleTrackIndex());
             foo.add(ex.getSampleFlags());
             foo.add((int)ex.getSampleTime()); // just the low bits should be OK
-            byte foobar[] = new byte[n];
+            byte[] foobar = new byte[n];
             buf.get(foobar, 0, n);
-            foo.add((int)adler32(foobar));
+            foo.add(adler32(foobar));
             ex.advance();
         }
 
@@ -282,6 +303,8 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
             String path, String[] keys, String[] values, boolean testNativeSource);
 
     @Presubmit
+    @Ignore
+    @Test
     public void SKIP_testExtractorFileDurationNative() throws Exception {
         // duplicate of CtsMediaV2TestCases:ExtractorTest$FunctionalityTest#testExtract where
         // checksum is computed over track format attributes, track buffer and buffer
@@ -331,6 +354,8 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
 
     private static native long getExtractorCachedDurationNative(String uri, boolean testNativeSource);
 
+    @Ignore
+    @Test
     public void SKIP_testDecoder() throws Exception {
         // duplicate of CtsMediaV2TestCases:CodecDecoderTest#testSimpleDecode where checksum  is
         // computed over decoded output in both SDK and NDK side and checked for equality.
@@ -358,6 +383,7 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
         }
     }
 
+    @Test
     public void testDataSource() throws Exception {
         int testsRun = testDecoder(
                 "video_176x144_3gp_h263_300kbps_12fps_aac_mono_24kbps_11025hz.3gp", /* wrapFd */
@@ -367,6 +393,7 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
         }
     }
 
+    @Test
     public void testDataSourceAudioOnly() throws Exception {
         int testsRun = testDecoder(
                 "loudsoftmp3.mp3",
@@ -379,6 +406,7 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
         }
     }
 
+    @Test
     public void testDataSourceWithCallback() throws Exception {
         int testsRun = testDecoder(
                 "video_176x144_3gp_h263_300kbps_12fps_aac_mono_24kbps_11025hz.3gp",/* wrapFd */
@@ -442,7 +470,7 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
                 codec[i].start();
                 inbuffers[i] = codec[i].getInputBuffers();
                 outbuffers[i] = codec[i].getOutputBuffers();
-                trackdata[i] = new ArrayList<Integer>();
+                trackdata[i] = new ArrayList<>();
             } else {
                 fail("unexpected mime type: " + mime);
             }
@@ -531,14 +559,13 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
         int idx = 0;
         for (int i = 0; i < numtracks; i++) {
             ArrayList<Integer> src = trackdata[i];
-            int tracksize = src.size();
-            for (int j = 0; j < tracksize; j++) {
-                trackbytes[idx++] = src.get(j);
+            for (Integer integer : src) {
+                trackbytes[idx++] = integer;
             }
         }
 
-        for (int i = 0; i < codec.length; i++) {
-            codec[i].release();
+        for (MediaCodec mediaCodec : codec) {
+            mediaCodec.release();
         }
 
         return trackbytes;
@@ -576,6 +603,8 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
             boolean useCallback)
             throws IOException;
 
+    @Ignore
+    @Test
     public void SKIP_testVideoPlayback() throws Exception {
         // duplicate of
         // CtsMediaV2TestCases:CodecDecoderSurfaceTest#testSimpleDecodeToSurfaceNative[*]
@@ -618,52 +647,62 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
 
     @Presubmit
     @NonMediaMainlineTest
+    @Test
     public void testMuxerAvc() throws Exception {
         // IMPORTANT: this file must not have B-frames
         testMuxer("video_1280x720_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz.mp4", false);
     }
 
     @NonMediaMainlineTest
+    @Test
     public void testMuxerH263() throws Exception {
         // IMPORTANT: this file must not have B-frames
         testMuxer("video_176x144_3gp_h263_300kbps_25fps_aac_stereo_128kbps_11025hz.3gp", false);
     }
 
     @NonMediaMainlineTest
+    @Test
     public void testMuxerHevc() throws Exception {
         // IMPORTANT: this file must not have B-frames
         testMuxer("video_640x360_mp4_hevc_450kbps_no_b.mp4", false);
     }
 
     @NonMediaMainlineTest
+    @Test
     public void testMuxerVp8() throws Exception {
         testMuxer("bbb_s1_640x360_webm_vp8_2mbps_30fps_vorbis_5ch_320kbps_48000hz.webm", true);
     }
 
     @NonMediaMainlineTest
+    @Test
     public void testMuxerVp9() throws Exception {
         testMuxer("video_1280x720_webm_vp9_csd_309kbps_25fps_vorbis_stereo_128kbps_48000hz.webm",
                 true);
     }
 
     @NonMediaMainlineTest
+    @Test
     public void testMuxerVp9NoCsd() throws Exception {
         testMuxer("bbb_s1_640x360_webm_vp9_0p21_1600kbps_30fps_vorbis_stereo_128kbps_48000hz.webm",
                 true);
     }
 
     @NonMediaMainlineTest
+    @Test
     public void testMuxerVp9Hdr() throws Exception {
         testMuxer("video_256x144_webm_vp9_hdr_83kbps_24fps.webm", true);
     }
 
     // We do not support MPEG-2 muxing as of yet
+    @Ignore
+    @Test
     public void SKIP_testMuxerMpeg2() throws Exception {
         // IMPORTANT: this file must not have B-frames
         testMuxer("video_176x144_mp4_mpeg2_105kbps_25fps_aac_stereo_128kbps_44100hz.mp4", false);
     }
 
     @NonMediaMainlineTest
+    @Test
     public void testMuxerMpeg4() throws Exception {
         // IMPORTANT: this file must not have B-frames
         testMuxer("video_176x144_mp4_mpeg4_300kbps_25fps_aac_stereo_128kbps_44100hz.mp4", false);
@@ -726,7 +765,7 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
         if (buf == null) {
             return "(null)";
         }
-        final char digits[] =
+        final char[] digits =
             { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
 
         StringBuilder hex = new StringBuilder();
@@ -775,7 +814,7 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
             Boolean match = compareByteBufferInFormats(f1, f2, key);
             if (match == null) {
                 break;
-            } else if (match == false) {
+            } else if (!match) {
                 return false;
             }
         }
@@ -914,6 +953,7 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
             int out, boolean webm);
 
     @Presubmit
+    @Test
     public void testFormat() throws Exception {
         assertTrue("media format fail, see log for details", testFormatNative());
     }
@@ -921,6 +961,7 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
     private static native boolean testFormatNative();
 
     @Presubmit
+    @Test
     public void testPssh() throws Exception {
         testPssh("psshtest.mp4");
     }
@@ -950,6 +991,7 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
 
     private static native boolean testPsshNative(int fd, long offset, long size);
 
+    @Test
     public void testCryptoInfo() throws Exception {
         assertTrue("native cryptoinfo failed, see log for details", testCryptoInfoNative());
     }
@@ -957,6 +999,7 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
     private static native boolean testCryptoInfoNative();
 
     @Presubmit
+    @Test
     public void testMediaFormat() throws Exception {
         assertTrue("native mediaformat failed, see log for details", testMediaFormatNative());
     }
@@ -964,6 +1007,7 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
     private static native boolean testMediaFormatNative();
 
     @Presubmit
+    @Test
     public void testAMediaDataSourceClose() throws Throwable {
 
         final CtsTestServer slowServer = new SlowCtsTestServer();
