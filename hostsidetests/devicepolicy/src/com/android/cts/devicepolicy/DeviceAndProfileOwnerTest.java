@@ -716,21 +716,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
-    public void testSupportMessage() throws Exception {
-        executeDeviceTestClass(".SupportMessageTest");
-        assertMetricsLogged(getDevice(), () -> {
-            executeDeviceTestMethod(".SupportMessageTest", "testShortSupportMessageSetGetAndClear");
-        }, new DevicePolicyEventWrapper.Builder(EventId.SET_SHORT_SUPPORT_MESSAGE_VALUE)
-                .setAdminPackageName(DEVICE_ADMIN_PKG)
-                .build());
-        assertMetricsLogged(getDevice(), () -> {
-            executeDeviceTestMethod(".SupportMessageTest", "testLongSupportMessageSetGetAndClear");
-        }, new DevicePolicyEventWrapper.Builder(EventId.SET_LONG_SUPPORT_MESSAGE_VALUE)
-                .setAdminPackageName(DEVICE_ADMIN_PKG)
-                .build());
-    }
-
-    @Test
     public void testApplicationHidden() throws Exception {
         installAppPermissionAppAsUser();
         executeDeviceTestClass(".ApplicationHiddenTest");
