@@ -3247,9 +3247,9 @@ public class AudioTrackTest {
         };
         final int MAX_CHANNEL_BIT = 1 << (AudioSystem.FCC_24 - 1); // highest allowed channel.
         final int TEST_CONF_ARRAY[] = {
-                (1 << AudioSystem.OUT_CHANNEL_COUNT_MAX) - 1,
                 MAX_CHANNEL_BIT,      // likely silent - no physical device on top channel.
                 MAX_CHANNEL_BIT | 1,  // first channel will likely have physical device.
+                (1 << AudioSystem.OUT_CHANNEL_COUNT_MAX) - 1,
         };
         final int TEST_WRITE_MODE_ARRAY[] = {
                 AudioTrack.WRITE_BLOCKING,
@@ -3261,10 +3261,12 @@ public class AudioTrackTest {
 
         double frequency = 200; // frequency changes for each test
         for (int TEST_FORMAT : TEST_FORMAT_ARRAY) {
-            for (int TEST_CONF : TEST_CONF_ARRAY) {
-                for (int TEST_SR : TEST_SR_ARRAY) {
-                    for (int TEST_WRITE_MODE : TEST_WRITE_MODE_ARRAY) {
-                        for (int useDirect = 0; useDirect < 2; ++useDirect) {
+            for (int TEST_SR : TEST_SR_ARRAY) {
+                for (int TEST_WRITE_MODE : TEST_WRITE_MODE_ARRAY) {
+                    for (int useDirect = 0; useDirect < 2; ++useDirect) {
+                        for (int TEST_CONF : TEST_CONF_ARRAY) {
+                            // put TEST_CONF in the inner loop to avoid
+                            // back-to-back creation of large tracks.
                             playOnceStreamByteBuffer(
                                     TEST_NAME, frequency, TEST_SWEEP,
                                     TEST_STREAM_TYPE, TEST_SR, TEST_CONF, TEST_FORMAT,
