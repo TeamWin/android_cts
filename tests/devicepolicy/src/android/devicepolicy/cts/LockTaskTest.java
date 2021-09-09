@@ -31,13 +31,13 @@ import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.content.pm.PackageManager.FEATURE_TELEPHONY;
 
+import static com.android.bedstead.metricsrecorder.truth.MetricQueryBuilderSubject.assertThat;
 import static com.android.bedstead.remotedpc.RemoteDpc.DPC_COMPONENT_NAME;
 import static com.android.eventlib.truth.EventLogsSubject.assertThat;
 import static com.android.queryable.queries.StringQuery.string;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
-import static com.android.bedstead.metricsrecorder.truth.MetricQueryBuilderSubject.assertThat;
 
 import static org.junit.Assume.assumeFalse;
 import static org.testng.Assert.assertThrows;
@@ -562,7 +562,7 @@ public class LockTaskTest {
 
             activity.activity().finish();
 
-            assertThat(activity.activity().events().destroyed()).eventOccurred();
+            assertThat(activity.activity().events().activityDestroyed()).eventOccurred();
             assertThat(sTestApis.activities().foregroundActivity()).isNotEqualTo(
                     activity.activity().component());
         } finally {
@@ -588,7 +588,7 @@ public class LockTaskTest {
             sDeviceState.dpc().devicePolicyManager()
                     .setLockTaskPackages(DPC_COMPONENT_NAME, new String[]{});
 
-            assertThat(activity.activity().events().destroyed()).eventOccurred();
+            assertThat(activity.activity().events().activityDestroyed()).eventOccurred();
             assertThat(sTestApis.activities().foregroundActivity()).isNotEqualTo(
                     activity.activity().component());
         } finally {
@@ -619,7 +619,7 @@ public class LockTaskTest {
                 sDeviceState.dpc().devicePolicyManager()
                         .setLockTaskPackages(DPC_COMPONENT_NAME, new String[]{sTestApp.packageName()});
 
-                assertThat(activity2.activity().events().destroyed()).eventOccurred();
+                assertThat(activity2.activity().events().activityDestroyed()).eventOccurred();
                 assertThat(sTestApis.activities().getLockTaskModeState()).isEqualTo(
                         LOCK_TASK_MODE_LOCKED);
                 assertThat(sTestApis.activities().foregroundActivity()).isEqualTo(
@@ -655,7 +655,7 @@ public class LockTaskTest {
 
             firstActivity.startActivity(secondActivityIntent);
 
-            assertThat(secondActivity.events().started()).eventOccurred();
+            assertThat(secondActivity.events().activityStarted()).eventOccurred();
             assertThat(sTestApis.activities().foregroundActivity()).isEqualTo(secondActivity.component());
         } finally {
             sDeviceState.dpc().devicePolicyManager()
@@ -961,7 +961,7 @@ public class LockTaskTest {
 
             sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(DPC_COMPONENT_NAME, new String[]{});
 
-            assertThat(activity.activity().events().destroyed()).eventOccurred();
+            assertThat(activity.activity().events().activityDestroyed()).eventOccurred();
             assertThat(sTestApis.activities().foregroundActivity()).isNotEqualTo(
                     activity.activity().component());
         } finally {
