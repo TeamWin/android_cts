@@ -31,7 +31,9 @@ import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.content.pm.PackageManager.FEATURE_TELEPHONY;
 
+import static com.android.bedstead.metricsrecorder.truth.MetricQueryBuilderSubject.assertThat;
 import static com.android.bedstead.remotedpc.RemoteDpc.DPC_COMPONENT_NAME;
+import static com.android.eventlib.truth.EventLogsSubject.assertThat;
 import static com.android.queryable.queries.StringQuery.string;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -69,9 +71,6 @@ import com.android.bedstead.testapp.TestAppActivityReference;
 import com.android.bedstead.testapp.TestAppInstanceReference;
 import com.android.bedstead.testapp.TestAppProvider;
 import com.android.compatibility.common.util.PollingCheck;
-import com.android.eventlib.EventLogs;
-import com.android.eventlib.events.activities.ActivityDestroyedEvent;
-import com.android.eventlib.events.activities.ActivityStartedEvent;
 
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -162,15 +161,13 @@ public class LockTaskTest {
             try {
                 activity.startLockTask();
 
-                // TODO(b/191745956): Improve metrics query interface
                 assertThat(metrics.query()
                         .whereType().isEqualTo(EventId.SET_LOCKTASK_MODE_ENABLED_VALUE)
                         .whereAdminPackageName().isEqualTo(DPC_COMPONENT_NAME.getPackageName())
                         .whereBoolean().isTrue()
                         .whereStrings().contains(
                                 string().isEqualTo(sTestApp.packageName())
-                        )
-                        .poll()).isNotNull();
+                        )).wasLogged();
             } finally {
                 activity.stopLockTask();
             }
@@ -565,12 +562,7 @@ public class LockTaskTest {
 
             activity.activity().finish();
 
-            // TODO(b/189327037): Replace with more direct integration between TestApp and EventLib
-            EventLogs<ActivityDestroyedEvent> events =
-                    ActivityDestroyedEvent.queryPackage(sTestApp.packageName())
-                    .whereActivity().activityClass().className().isEqualTo(
-                            activity.activity().component().className());
-            assertThat(events.poll()).isNotNull();
+            assertThat(activity.activity().events().activityDestroyed()).eventOccurred();
             assertThat(sTestApis.activities().foregroundActivity()).isNotEqualTo(
                     activity.activity().component());
         } finally {
@@ -596,12 +588,7 @@ public class LockTaskTest {
             sDeviceState.dpc().devicePolicyManager()
                     .setLockTaskPackages(DPC_COMPONENT_NAME, new String[]{});
 
-            // TODO(b/189327037): Replace with more direct integration between TestApp and EventLib
-            EventLogs<ActivityDestroyedEvent> events =
-                    ActivityDestroyedEvent.queryPackage(sTestApp.packageName())
-                            .whereActivity().activityClass().className().isEqualTo(
-                                    activity.activity().component().className());
-            assertThat(events.poll()).isNotNull();
+            assertThat(activity.activity().events().activityDestroyed()).eventOccurred();
             assertThat(sTestApis.activities().foregroundActivity()).isNotEqualTo(
                     activity.activity().component());
         } finally {
@@ -632,12 +619,7 @@ public class LockTaskTest {
                 sDeviceState.dpc().devicePolicyManager()
                         .setLockTaskPackages(DPC_COMPONENT_NAME, new String[]{sTestApp.packageName()});
 
-                // TODO(b/189327037): Replace with more direct integration between TestApp and EventLib
-                EventLogs<ActivityDestroyedEvent> events =
-                        ActivityDestroyedEvent.queryPackage(sSecondTestApp.packageName())
-                                .whereActivity().activityClass().className().isEqualTo(
-                                activity2.activity().component().className());
-                assertThat(events.poll()).isNotNull();
+                assertThat(activity2.activity().events().activityDestroyed()).eventOccurred();
                 assertThat(sTestApis.activities().getLockTaskModeState()).isEqualTo(
                         LOCK_TASK_MODE_LOCKED);
                 assertThat(sTestApis.activities().foregroundActivity()).isEqualTo(
@@ -673,11 +655,7 @@ public class LockTaskTest {
 
             firstActivity.startActivity(secondActivityIntent);
 
-            EventLogs<ActivityStartedEvent> events =
-                    ActivityStartedEvent.queryPackage(sSecondTestApp.packageName())
-                            .whereActivity().activityClass().className().isEqualTo(
-                                    secondActivity.component().className());
-            assertThat(events.poll()).isNotNull();
+            assertThat(secondActivity.events().activityStarted()).eventOccurred();
             assertThat(sTestApis.activities().foregroundActivity()).isEqualTo(secondActivity.component());
         } finally {
             sDeviceState.dpc().devicePolicyManager()
@@ -983,11 +961,7 @@ public class LockTaskTest {
 
             sDeviceState.dpc().devicePolicyManager().setLockTaskPackages(DPC_COMPONENT_NAME, new String[]{});
 
-            EventLogs<ActivityDestroyedEvent> events =
-                    ActivityDestroyedEvent.queryPackage(sLockTaskTestApp.packageName())
-                            .whereActivity().activityClass().className().isEqualTo(
-                            activity.activity().component().className());
-            assertThat(events.poll()).isNotNull();
+            assertThat(activity.activity().events().activityDestroyed()).eventOccurred();
             assertThat(sTestApis.activities().foregroundActivity()).isNotEqualTo(
                     activity.activity().component());
         } finally {
@@ -1017,7 +991,7 @@ public class LockTaskTest {
 
             sTestApis.context().instrumentedContext().startActivity(intent, options);
             PollingCheck.waitFor(() -> {
-                PackageReference pkg = sTestApis.activities().foregroundActivity().packageName();
+                PackageReference pkg = sTestApis.activities().foregroundActivity().pkg();
                 if (pkg == null) {
                     return false;
                 }
@@ -1058,7 +1032,7 @@ public class LockTaskTest {
                 activity.activity().startActivity(intent);
 
                 if (sTestApis.activities().foregroundActivity() != null) {
-                    assertThat(sTestApis.activities().foregroundActivity().packageName()).isNotEqualTo(
+                    assertThat(sTestApis.activities().foregroundActivity().pkg()).isNotEqualTo(
                             emergencyDialerPackageName);
                 }
             } finally {
@@ -1095,7 +1069,7 @@ public class LockTaskTest {
 
                 activity.startActivity(intent);
 
-                assertThat(sTestApis.activities().foregroundActivity().packageName())
+                assertThat(sTestApis.activities().foregroundActivity().pkg())
                         .isEqualTo(sTestApis.packages().find(emergencyDialerPackageName));
                 assertThat(sTestApis.activities().getLockTaskModeState()).isEqualTo(
                         LOCK_TASK_MODE_LOCKED);

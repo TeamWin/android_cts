@@ -21,6 +21,8 @@ import android.net.Uri;
 import com.android.queryable.Queryable;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 /** Implementation of {@link UriQuery}. */
 public final class UriQueryHelper<E extends Queryable>
@@ -66,5 +68,18 @@ public final class UriQueryHelper<E extends Queryable>
      */
     public static boolean matches(UriQueryHelper<?> uriQueryHelper, Uri value) {
         return uriQueryHelper.matches(value);
+    }
+
+    @Override
+    public String describeQuery(String fieldName) {
+        List<String> queryStrings = new ArrayList<>();
+        if (mEqualsValue != null) {
+            queryStrings.add(fieldName + "=" + mEqualsValue);
+        }
+        if (mStringValue != null) {
+            queryStrings.add(mStringValue.describeQuery(fieldName + ".stringValue"));
+        }
+
+        return Queryable.joinQueryStrings(queryStrings);
     }
 }

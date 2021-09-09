@@ -95,6 +95,15 @@ public final class ActivityCreatedEvent extends Event {
             }
             return true;
         }
+
+        @Override
+        public String describeQuery(String fieldName) {
+            return toStringBuilder(ActivityCreatedEvent.class, this)
+                    .field("savedInstanceState", mSavedInstanceState)
+                    .field("persistentState", mPersistentState)
+                    .field("activity", mActivity)
+                    .toString();
+        }
     }
 
     /** Begins logging a {@link ActivityCreatedEvent}. */

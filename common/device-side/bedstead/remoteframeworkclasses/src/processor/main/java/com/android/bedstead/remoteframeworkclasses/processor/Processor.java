@@ -22,6 +22,8 @@ import com.android.bedstead.remoteframeworkclasses.processor.annotations.RemoteF
 import com.google.android.enterprise.connectedapps.annotations.CrossUser;
 import com.google.auto.service.AutoService;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.io.Resources;
+import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
@@ -30,6 +32,8 @@ import com.squareup.javapoet.TypeSpec;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -60,7 +64,6 @@ import javax.tools.JavaFileObject;
  *
  * <p>This will also generate an implementation of the interface which takes an instance of the
  * framework class in the constructor, and each method proxying calls to the framework class.
- *
  */
 @SupportedAnnotationTypes({
         "com.android.bedstead.remoteframeworkclasses.processor.annotations.RemoteFrameworkClasses",
@@ -76,27 +79,39 @@ public final class Processor extends AbstractProcessor {
             "android.content.pm.PackageManager"
     };
 
+    private static final String PARENT_PROFILE_INSTANCE =
+            "public android.app.admin.DevicePolicyManager getParentProfileInstance(android"
+                    + ".content.ComponentName)";
+
     private static final Set<String> BLOCKLISTED_METHODS = ImmutableSet.of(
             // DevicePolicyManager
 
             // Uses ServiceConnection
-            "public boolean bindDeviceAdminServiceAsUser(android.content.ComponentName, android.content.Intent, android.content.ServiceConnection, int, android.os.UserHandle)",
+            "public boolean bindDeviceAdminServiceAsUser(android.content.ComponentName, android"
+                    + ".content.Intent, android.content.ServiceConnection, int, android.os"
+                    + ".UserHandle)",
             // Uses AttestedKeyPair
-            "public android.security.AttestedKeyPair generateKeyPair(android.content.ComponentName, String, android.security.keystore.KeyGenParameterSpec, int)",
-            // Uses DevicePolicyManager
-            "public android.app.admin.DevicePolicyManager getParentProfileInstance(android.content.ComponentName)",
+            "public android.security.AttestedKeyPair generateKeyPair(android.content"
+                    + ".ComponentName, String, android.security.keystore.KeyGenParameterSpec, int)",
             // Uses Executor
-            "public void installSystemUpdate(@NonNull android.content.ComponentName, android.net.Uri, java.util.concurrent.Executor, android.app.admin.DevicePolicyManager.InstallSystemUpdateCallback)",
-
+            "public void installSystemUpdate(@NonNull android.content.ComponentName, android.net"
+                    + ".Uri, java.util.concurrent.Executor, android.app.admin.DevicePolicyManager"
+                    + ".InstallSystemUpdateCallback)",
 
             // WifiManager
 
             // Uses Executor
-            "public void addSuggestionConnectionStatusListener(java.util.concurrent.Executor, android.net.wifi.WifiManager.SuggestionConnectionStatusListener)",
-            "public void addSuggestionUserApprovalStatusListener(java.util.concurrent.Executor, android.net.wifi.WifiManager.SuggestionUserApprovalStatusListener)",
-            "public void clearApplicationUserData(android.content.ComponentName, @NonNull String, @NonNull java.util.concurrent.Executor, android.app.admin.DevicePolicyManager.OnClearApplicationUserDataListener)",
-            "public void registerScanResultsCallback(java.util.concurrent.Executor, android.net.wifi.WifiManager.ScanResultsCallback)",
-            "public void registerSubsystemRestartTrackingCallback(java.util.concurrent.Executor, android.net.wifi.WifiManager.SubsystemRestartTrackingCallback)",
+            "public void addSuggestionConnectionStatusListener(java.util.concurrent.Executor, "
+                    + "android.net.wifi.WifiManager.SuggestionConnectionStatusListener)",
+            "public void addSuggestionUserApprovalStatusListener(java.util.concurrent.Executor, "
+                    + "android.net.wifi.WifiManager.SuggestionUserApprovalStatusListener)",
+            "public void clearApplicationUserData(android.content.ComponentName, @NonNull String,"
+                    + " @NonNull java.util.concurrent.Executor, android.app.admin"
+                    + ".DevicePolicyManager.OnClearApplicationUserDataListener)",
+            "public void registerScanResultsCallback(java.util.concurrent.Executor, android.net"
+                    + ".wifi.WifiManager.ScanResultsCallback)",
+            "public void registerSubsystemRestartTrackingCallback(java.util.concurrent.Executor, "
+                    + "android.net.wifi.WifiManager.SubsystemRestartTrackingCallback)",
             // Uses WpsCallback
             "public void cancelWps(android.net.wifi.WifiManager.WpsCallback)",
             // Uses MulticastLock
@@ -105,17 +120,23 @@ public final class Processor extends AbstractProcessor {
             "public android.net.wifi.WifiManager.WifiLock createWifiLock(int, String)",
             "public android.net.wifi.WifiManager.WifiLock createWifiLock(String)",
             // Uses SuggestionConnectionStatusListener
-            "public void removeSuggestionConnectionStatusListener(android.net.wifi.WifiManager.SuggestionConnectionStatusListener)",
+            "public void removeSuggestionConnectionStatusListener(android.net.wifi.WifiManager"
+                    + ".SuggestionConnectionStatusListener)",
             // Uses SuggestionUserApprovalStatusListener
-            "public void removeSuggestionUserApprovalStatusListener(android.net.wifi.WifiManager.SuggestionUserApprovalStatusListener)",
+            "public void removeSuggestionUserApprovalStatusListener(android.net.wifi.WifiManager"
+                    + ".SuggestionUserApprovalStatusListener)",
             // Uses LocalOnlyHotspotCallback
-            "public void startLocalOnlyHotspot(android.net.wifi.WifiManager.LocalOnlyHotspotCallback, android.os.Handler)",
+            "public void startLocalOnlyHotspot(android.net.wifi.WifiManager"
+                    + ".LocalOnlyHotspotCallback, android.os.Handler)",
             // Uses WpsCallback
-            "public void startWps(android.net.wifi.WpsInfo, android.net.wifi.WifiManager.WpsCallback)",
+            "public void startWps(android.net.wifi.WpsInfo, android.net.wifi.WifiManager"
+                    + ".WpsCallback)",
             // Uses ScanResultsCallback
-            "public void unregisterScanResultsCallback(@NonNull android.net.wifi.WifiManager.ScanResultsCallback)",
+            "public void unregisterScanResultsCallback(@NonNull android.net.wifi.WifiManager"
+                    + ".ScanResultsCallback)",
             // Uses SubsystemRestartTrackingCallback
-            "public void unregisterSubsystemRestartTrackingCallback(android.net.wifi.WifiManager.SubsystemRestartTrackingCallback)",
+            "public void unregisterSubsystemRestartTrackingCallback(android.net.wifi.WifiManager"
+                    + ".SubsystemRestartTrackingCallback)",
 
             // PackageManager
 
@@ -123,42 +144,85 @@ public final class Processor extends AbstractProcessor {
             "public android.os.IBinder getHoldLockToken()",
             "public void holdLock(android.os.IBinder, int)",
             // Uses Drawable
-            "public abstract android.graphics.drawable.Drawable getActivityBanner(@NonNull android.content.ComponentName) throws android.content.pm.PackageManager.NameNotFoundException",
-            "public abstract android.graphics.drawable.Drawable getActivityBanner(@NonNull android.content.Intent) throws android.content.pm.PackageManager.NameNotFoundException",
-            "public abstract android.graphics.drawable.Drawable getActivityIcon(@NonNull android.content.ComponentName) throws android.content.pm.PackageManager.NameNotFoundException",
-            "public abstract android.graphics.drawable.Drawable getActivityIcon(@NonNull android.content.Intent) throws android.content.pm.PackageManager.NameNotFoundException",
-            "public abstract android.graphics.drawable.Drawable getActivityLogo(@NonNull android.content.ComponentName) throws android.content.pm.PackageManager.NameNotFoundException",
-            "public abstract android.graphics.drawable.Drawable getActivityLogo(@NonNull android.content.Intent) throws android.content.pm.PackageManager.NameNotFoundException",
-            "public abstract android.graphics.drawable.Drawable getApplicationBanner(@NonNull android.content.pm.ApplicationInfo)",
-            "public abstract android.graphics.drawable.Drawable getApplicationBanner(@NonNull String) throws android.content.pm.PackageManager.NameNotFoundException",
-            "public abstract android.graphics.drawable.Drawable getApplicationIcon(@NonNull android.content.pm.ApplicationInfo)",
-            "public abstract android.graphics.drawable.Drawable getApplicationIcon(@NonNull String) throws android.content.pm.PackageManager.NameNotFoundException",
-            "public abstract android.graphics.drawable.Drawable getApplicationLogo(@NonNull android.content.pm.ApplicationInfo)",
-            "public abstract android.graphics.drawable.Drawable getApplicationLogo(@NonNull String) throws android.content.pm.PackageManager.NameNotFoundException",
+            "public abstract android.graphics.drawable.Drawable getActivityBanner(@NonNull "
+                    + "android.content.ComponentName) throws android.content.pm.PackageManager"
+                    + ".NameNotFoundException",
+            "public abstract android.graphics.drawable.Drawable getActivityBanner(@NonNull "
+                    + "android.content.Intent) throws android.content.pm.PackageManager"
+                    + ".NameNotFoundException",
+            "public abstract android.graphics.drawable.Drawable getActivityIcon(@NonNull android"
+                    + ".content.ComponentName) throws android.content.pm.PackageManager"
+                    + ".NameNotFoundException",
+            "public abstract android.graphics.drawable.Drawable getActivityIcon(@NonNull android"
+                    + ".content.Intent) throws android.content.pm.PackageManager"
+                    + ".NameNotFoundException",
+            "public abstract android.graphics.drawable.Drawable getActivityLogo(@NonNull android"
+                    + ".content.ComponentName) throws android.content.pm.PackageManager"
+                    + ".NameNotFoundException",
+            "public abstract android.graphics.drawable.Drawable getActivityLogo(@NonNull android"
+                    + ".content.Intent) throws android.content.pm.PackageManager"
+                    + ".NameNotFoundException",
+            "public abstract android.graphics.drawable.Drawable getApplicationBanner(@NonNull "
+                    + "android.content.pm.ApplicationInfo)",
+            "public abstract android.graphics.drawable.Drawable getApplicationBanner(@NonNull "
+                    + "String) throws android.content.pm.PackageManager.NameNotFoundException",
+            "public abstract android.graphics.drawable.Drawable getApplicationIcon(@NonNull "
+                    + "android.content.pm.ApplicationInfo)",
+            "public abstract android.graphics.drawable.Drawable getApplicationIcon(@NonNull "
+                    + "String) throws android.content.pm.PackageManager.NameNotFoundException",
+            "public abstract android.graphics.drawable.Drawable getApplicationLogo(@NonNull "
+                    + "android.content.pm.ApplicationInfo)",
+            "public abstract android.graphics.drawable.Drawable getApplicationLogo(@NonNull "
+                    + "String) throws android.content.pm.PackageManager.NameNotFoundException",
             "public abstract android.graphics.drawable.Drawable getDefaultActivityIcon()",
-            "public abstract android.graphics.drawable.Drawable getDrawable(@NonNull String, @DrawableRes int, @Nullable android.content.pm.ApplicationInfo)",
-            "public abstract android.graphics.drawable.Drawable getUserBadgedDrawableForDensity(@NonNull android.graphics.drawable.Drawable, @NonNull android.os.UserHandle, @Nullable android.graphics.Rect, int)",
-            "public abstract android.graphics.drawable.Drawable getUserBadgedIcon(@NonNull android.graphics.drawable.Drawable, @NonNull android.os.UserHandle)",
+            "public abstract android.graphics.drawable.Drawable getDrawable(@NonNull String, "
+                    + "@DrawableRes int, @Nullable android.content.pm.ApplicationInfo)",
+            "public abstract android.graphics.drawable.Drawable getUserBadgedDrawableForDensity"
+                    + "(@NonNull android.graphics.drawable.Drawable, @NonNull android.os"
+                    + ".UserHandle, @Nullable android.graphics.Rect, int)",
+            "public abstract android.graphics.drawable.Drawable getUserBadgedIcon(@NonNull "
+                    + "android.graphics.drawable.Drawable, @NonNull android.os.UserHandle)",
             "public boolean isDefaultApplicationIcon(@NonNull android.graphics.drawable.Drawable)",
             // Uses Executor
-            "public void getGroupOfPlatformPermission(@NonNull String, @NonNull java.util.concurrent.Executor, @NonNull java.util.function.Consumer<java.lang.String>)",
-            "public void getPlatformPermissionsForGroup(@NonNull String, @NonNull java.util.concurrent.Executor, @NonNull java.util.function.Consumer<java.util.List<java.lang.String>>)",
+            "public void getGroupOfPlatformPermission(@NonNull String, @NonNull java.util"
+                    + ".concurrent.Executor, @NonNull java.util.function.Consumer<java.lang"
+                    + ".String>)",
+            "public void getPlatformPermissionsForGroup(@NonNull String, @NonNull java.util"
+                    + ".concurrent.Executor, @NonNull java.util.function.Consumer<java.util"
+                    + ".List<java.lang.String>>)",
             // Uses Resources
-            "public abstract android.content.res.Resources getResourcesForActivity(@NonNull android.content.ComponentName) throws android.content.pm.PackageManager.NameNotFoundException",
-            "public abstract android.content.res.Resources getResourcesForApplication(@NonNull android.content.pm.ApplicationInfo) throws android.content.pm.PackageManager.NameNotFoundException",
-            "public android.content.res.Resources getResourcesForApplication(@NonNull android.content.pm.ApplicationInfo, @Nullable android.content.res.Configuration) throws android.content.pm.PackageManager.NameNotFoundException",
-            "public abstract android.content.res.Resources getResourcesForApplication(@NonNull String) throws android.content.pm.PackageManager.NameNotFoundException",
+            "public abstract android.content.res.Resources getResourcesForActivity(@NonNull "
+                    + "android.content.ComponentName) throws android.content.pm.PackageManager"
+                    + ".NameNotFoundException",
+            "public abstract android.content.res.Resources getResourcesForApplication(@NonNull "
+                    + "android.content.pm.ApplicationInfo) throws android.content.pm"
+                    + ".PackageManager.NameNotFoundException",
+            "public android.content.res.Resources getResourcesForApplication(@NonNull android"
+                    + ".content.pm.ApplicationInfo, @Nullable android.content.res.Configuration) "
+                    + "throws android.content.pm.PackageManager.NameNotFoundException",
+            "public abstract android.content.res.Resources getResourcesForApplication(@NonNull "
+                    + "String) throws android.content.pm.PackageManager.NameNotFoundException",
             // Uses PackageInstaller
             "public abstract android.content.pm.PackageInstaller getPackageInstaller()",
             // Uses XmlResourceParser
-            "public abstract android.content.res.XmlResourceParser getXml(@NonNull String, @XmlRes int, @Nullable android.content.pm.ApplicationInfo)",
+            "public abstract android.content.res.XmlResourceParser getXml(@NonNull String, "
+                    + "@XmlRes int, @Nullable android.content.pm.ApplicationInfo)",
             // Uses OnChecksumsReadyListener
-            "public void requestChecksums(@NonNull String, boolean, int, @NonNull java.util.List<java.security.cert.Certificate>, @NonNull android.content.pm.PackageManager.OnChecksumsReadyListener) throws java.security.cert.CertificateEncodingException, android.content.pm.PackageManager.NameNotFoundException"
-
-
+            "public void requestChecksums(@NonNull String, boolean, int, @NonNull java.util"
+                    + ".List<java.security.cert.Certificate>, @NonNull android.content.pm"
+                    + ".PackageManager.OnChecksumsReadyListener) throws java.security.cert"
+                    + ".CertificateEncodingException, android.content.pm.PackageManager"
+                    + ".NameNotFoundException"
 
 
     );
+
+
+    private static final ClassName NULL_PARCELABLE_REMOTE_DEVICE_POLICY_MANAGER_CLASSNAME =
+            ClassName.get("com.android.bedstead.remoteframeworkclasses",
+                    "NullParcelableRemoteDevicePolicyManager");
+    private static final ClassName COMPONENT_NAME_CLASSNAME =
+            ClassName.get("android.content", "ComponentName");
 
     @Override
     public SourceVersion getSupportedSourceVersion() {
@@ -180,9 +244,42 @@ public final class Processor extends AbstractProcessor {
                 generateRemoteSystemService(
                         typeElement, blocklistedMethodSignatures, processingEnv.getElementUtils());
             }
+
+            generateWrappers();
         }
 
         return true;
+    }
+
+    private void generateWrappers() {
+        generateWrapper(NULL_PARCELABLE_REMOTE_DEVICE_POLICY_MANAGER_CLASSNAME);
+    }
+
+    private void generateWrapper(ClassName className) {
+        String contents = null;
+        try {
+            URL url = Processor.class.getResource(
+                    "/parcelablewrappers/" + className.simpleName() + ".java.txt");
+            contents = Resources.toString(url, StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            throw new IllegalStateException("Could not parse wrapper " + className, e);
+        }
+
+        JavaFileObject builderFile;
+        try {
+            builderFile = processingEnv.getFiler()
+                    .createSourceFile(className.packageName() + "." + className.simpleName());
+        } catch (IOException e) {
+            throw new IllegalStateException(
+                    "Could not write parcelablewrapper for " + className, e);
+        }
+
+        try (PrintWriter out = new PrintWriter(builderFile.openWriter())) {
+            out.write(contents);
+        } catch (IOException e) {
+            throw new IllegalStateException(
+                    "Could not write parcelablewrapper for " + className, e);
+        }
     }
 
     private void generateRemoteSystemService(
@@ -199,10 +296,18 @@ public final class Processor extends AbstractProcessor {
 
         generateFrameworkInterface(frameworkClass, methods);
         generateFrameworkImpl(frameworkClass, methods);
+
+        if (frameworkClass.getSimpleName().contentEquals("DevicePolicyManager")) {
+            // Special case, we need to support the .getParentProfileInstance method
+            generateDpmParent(frameworkClass, methods);
+        }
     }
 
     private void generateFrameworkInterface(
             TypeElement frameworkClass, Set<ExecutableElement> methods) {
+        MethodSignature parentProfileInstanceSignature =
+                MethodSignature.forApiString(PARENT_PROFILE_INSTANCE, processingEnv.getTypeUtils(),
+                        processingEnv.getElementUtils());
         String packageName = frameworkClass.getEnclosingElement().toString();
         ClassName className = ClassName.get(packageName,
                 "Remote" + frameworkClass.getSimpleName().toString());
@@ -213,10 +318,17 @@ public final class Processor extends AbstractProcessor {
                         .addModifiers(Modifier.PUBLIC);
 
 
-        classBuilder.addJavadoc("Public and test interface for {@link $T}.\n\n", frameworkClass);
+        classBuilder.addJavadoc("Public, test, and system interface for {@link $T}.\n\n",
+                frameworkClass);
         classBuilder.addJavadoc("<p>All methods are annotated {@link $T} for compatibility with the"
                 + " Connected Apps SDK.\n\n", CrossUser.class);
         classBuilder.addJavadoc("<p>For implementation see {@link $T}.\n", implClassName);
+
+
+        classBuilder.addAnnotation(AnnotationSpec.builder(CrossUser.class)
+                .addMember("parcelableWrappers", "$T.class",
+                        NULL_PARCELABLE_REMOTE_DEVICE_POLICY_MANAGER_CLASSNAME)
+                .build());
 
         for (ExecutableElement method : methods) {
             MethodSpec.Builder methodBuilder =
@@ -224,6 +336,15 @@ public final class Processor extends AbstractProcessor {
                             .returns(ClassName.get(method.getReturnType()))
                             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
                             .addAnnotation(CrossUser.class);
+
+
+            MethodSignature signature = MethodSignature.forMethod(method,
+                    processingEnv.getElementUtils());
+            if (signature.equals(parentProfileInstanceSignature)) {
+                // Special case, we want to return a RemoteDevicePolicyManager instead
+                methodBuilder.returns(ClassName.get(
+                        "android.app.admin", "RemoteDevicePolicyManager"));
+            }
 
             methodBuilder.addJavadoc("See {@link $T#$L}.",
                     ClassName.get(frameworkClass.asType()), method.getSimpleName());
@@ -246,7 +367,93 @@ public final class Processor extends AbstractProcessor {
         writeClassToFile(packageName, classBuilder.build());
     }
 
+    private void generateDpmParent(TypeElement frameworkClass, Set<ExecutableElement> methods) {
+        MethodSignature parentProfileInstanceSignature = MethodSignature.forApiString(
+                PARENT_PROFILE_INSTANCE, processingEnv.getTypeUtils(),
+                processingEnv.getElementUtils());
+        String packageName = frameworkClass.getEnclosingElement().toString();
+        ClassName className =
+                ClassName.get(packageName, "Remote" + frameworkClass.getSimpleName() + "Parent");
+        TypeSpec.Builder classBuilder =
+                TypeSpec.classBuilder(className).addModifiers(Modifier.FINAL, Modifier.PUBLIC);
+
+        classBuilder.addAnnotation(AnnotationSpec.builder(CrossUser.class)
+                .addMember("parcelableWrappers", "$T.class",
+                        NULL_PARCELABLE_REMOTE_DEVICE_POLICY_MANAGER_CLASSNAME)
+                .build());
+
+        classBuilder.addField(ClassName.get(frameworkClass),
+                "mFrameworkClass", Modifier.PRIVATE, Modifier.FINAL);
+
+        classBuilder.addMethod(
+                MethodSpec.constructorBuilder()
+                        .addModifiers(Modifier.PUBLIC)
+                        .addParameter(ClassName.get(frameworkClass), "frameworkClass")
+                        .addCode("mFrameworkClass = frameworkClass;")
+                        .build()
+        );
+
+        for (ExecutableElement method : methods) {
+            MethodSpec.Builder methodBuilder =
+                    MethodSpec.methodBuilder(method.getSimpleName().toString())
+                            .returns(ClassName.get(method.getReturnType()))
+                            .addModifiers(Modifier.PUBLIC)
+                            .addAnnotation(CrossUser.class);
+
+            MethodSignature signature = MethodSignature.forMethod(method,
+                    processingEnv.getElementUtils());
+
+            for (TypeMirror thrownType : method.getThrownTypes()) {
+                methodBuilder.addException(ClassName.get(thrownType));
+            }
+
+            methodBuilder.addParameter(COMPONENT_NAME_CLASSNAME, "profileOwnerComponentName");
+
+            List<String> paramNames = new ArrayList<>();
+
+            for (VariableElement param : method.getParameters()) {
+                String paramName = param.getSimpleName().toString();
+                ParameterSpec parameterSpec =
+                        ParameterSpec.builder(ClassName.get(param.asType()), paramName).build();
+
+                paramNames.add(paramName);
+
+                methodBuilder.addParameter(parameterSpec);
+            }
+
+            if (signature.equals(parentProfileInstanceSignature)) {
+                // Special case, we want to return a RemoteDevicePolicyManager instead
+                methodBuilder.returns(ClassName.get(
+                        "android.app.admin", "RemoteDevicePolicyManager"));
+                methodBuilder.addStatement(
+                        "mFrameworkClass.getParentProfileInstance(profileOwnerComponentName).$L"
+                                + "($L)",
+                        method.getSimpleName(), String.join(", ", paramNames));
+                methodBuilder.addStatement("throw new $T($S)", UnsupportedOperationException.class,
+                        "TestApp does not support calling .getParentProfileInstance() on a parent"
+                                + ".");
+            } else if (method.getReturnType().getKind().equals(TypeKind.VOID)) {
+                methodBuilder.addStatement(
+                        "mFrameworkClass.getParentProfileInstance(profileOwnerComponentName).$L"
+                                + "($L)",
+                        method.getSimpleName(), String.join(", ", paramNames));
+            } else {
+                methodBuilder.addStatement(
+                        "return mFrameworkClass.getParentProfileInstance"
+                                + "(profileOwnerComponentName).$L($L)",
+                        method.getSimpleName(), String.join(", ", paramNames));
+            }
+
+            classBuilder.addMethod(methodBuilder.build());
+        }
+
+        writeClassToFile(packageName, classBuilder.build());
+    }
+
     private void generateFrameworkImpl(TypeElement frameworkClass, Set<ExecutableElement> methods) {
+        MethodSignature parentProfileInstanceSignature = MethodSignature.forApiString(
+                PARENT_PROFILE_INSTANCE, processingEnv.getTypeUtils(),
+                processingEnv.getElementUtils());
         String packageName = frameworkClass.getEnclosingElement().toString();
         ClassName interfaceClassName = ClassName.get(packageName,
                 "Remote" + frameworkClass.getSimpleName().toString());
@@ -256,7 +463,7 @@ public final class Processor extends AbstractProcessor {
                 TypeSpec.classBuilder(
                         className)
                         .addSuperinterface(interfaceClassName)
-                        .addModifiers(Modifier.PUBLIC, Modifier.FINAL);
+                        .addModifiers(Modifier.FINAL, Modifier.PUBLIC);
 
         classBuilder.addField(ClassName.get(frameworkClass),
                 "mFrameworkClass", Modifier.PRIVATE, Modifier.FINAL);
@@ -276,6 +483,9 @@ public final class Processor extends AbstractProcessor {
                             .addModifiers(Modifier.PUBLIC)
                             .addAnnotation(Override.class);
 
+            MethodSignature signature = MethodSignature.forMethod(method,
+                    processingEnv.getElementUtils());
+
             for (TypeMirror thrownType : method.getThrownTypes()) {
                 methodBuilder.addException(ClassName.get(thrownType));
             }
@@ -283,16 +493,24 @@ public final class Processor extends AbstractProcessor {
             List<String> paramNames = new ArrayList<>();
 
             for (VariableElement param : method.getParameters()) {
-                ParameterSpec parameterSpec =
-                        ParameterSpec.builder(ClassName.get(param.asType()),
-                                param.getSimpleName().toString()).build();
+                String paramName = param.getSimpleName().toString();
 
-                paramNames.add(param.getSimpleName().toString());
+                ParameterSpec parameterSpec =
+                        ParameterSpec.builder(ClassName.get(param.asType()), paramName).build();
+
+                paramNames.add(paramName);
 
                 methodBuilder.addParameter(parameterSpec);
             }
 
-            if (method.getReturnType().getKind().equals(TypeKind.VOID)) {
+            if (signature.equals(parentProfileInstanceSignature)) {
+                // Special case, we want to return a RemoteDevicePolicyManager instead
+                methodBuilder.returns(ClassName.get(
+                        "android.app.admin", "RemoteDevicePolicyManager"));
+                methodBuilder.addStatement(
+                        "return new $T(mFrameworkClass.$L($L))",
+                        className, method.getSimpleName(), String.join(", ", paramNames));
+            } else if (method.getReturnType().getKind().equals(TypeKind.VOID)) {
                 methodBuilder.addStatement(
                         "mFrameworkClass.$L($L)",
                         method.getSimpleName(), String.join(", ", paramNames));

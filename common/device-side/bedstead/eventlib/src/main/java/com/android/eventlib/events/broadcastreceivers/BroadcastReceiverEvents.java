@@ -14,14 +14,19 @@
  * limitations under the License.
  */
 
-import com.android.bedstead.remoteframeworkclasses.processor.annotations.RemoteFrameworkClasses;
+package com.android.eventlib.events.broadcastreceivers;
 
 /**
- * Entry point to RemoteFrameworkClasses
+ * Quick access to event queries about broadcast receivers.
  */
-@RemoteFrameworkClasses
-public final class RemoteFrameworkClassesConfiguration {
-    private RemoteFrameworkClassesConfiguration() {
+public interface BroadcastReceiverEvents {
 
-    }
+    /**
+     * Query for when a broadcast is received
+     *
+     * <p>Additional filters can be added to the returned object.
+     *
+     * <p>{@code #poll} can be used to fetch results, and the result can be asserted on.
+     */
+    BroadcastReceivedEvent.BroadcastReceivedEventQuery broadcastReceived();
 }

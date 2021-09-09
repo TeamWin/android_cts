@@ -96,6 +96,15 @@ public final class DeviceAdminBugreportFailedEvent extends Event {
             }
             return true;
         }
+
+        @Override
+        public String describeQuery(String fieldName) {
+            return toStringBuilder(DeviceAdminBugreportFailedEvent.class, this)
+                    .field("intent", mIntent)
+                    .field("deviceAdminReceiver", mDeviceAdminReceiver)
+                    .field("failureCode", mFailureCode)
+                    .toString();
+        }
     }
 
     /** Begins logging a {@link DeviceAdminBugreportFailedEvent}. */

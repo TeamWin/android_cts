@@ -771,6 +771,27 @@ public class RemoteDpcTest {
         } finally {
             remoteDPC.remove();
         }
+    }
 
+    @Test
+    public void getParentProfileInstance_returnsUsableInstance() {
+        try (UserReference profile = sTestApis.users().createUser()
+                .parent(sUser)
+                .type(sTestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
+                .createAndStart()) {
+            RemoteDpc remoteDpc = RemoteDpc.setAsProfileOwner(profile);
+
+            // Confirm that we can call methods on the RemoteDevicePolicyManager which comes from
+            // getParentProfileInstance
+            remoteDpc.devicePolicyManager()
+                    .getParentProfileInstance(remoteDpc.componentName())
+                    .getPasswordQuality(remoteDpc.componentName());
+
+            // APIs which are not supported on parent instances should throw SecurityException
+            assertThrows(SecurityException.class, () ->
+                    remoteDpc.devicePolicyManager()
+                            .getParentProfileInstance(remoteDpc.componentName())
+                            .getParentProfileInstance(remoteDpc.componentName()));
+        }
     }
 }

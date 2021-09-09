@@ -557,29 +557,17 @@ def get_angle(input_img):
 class Cv2ImageProcessingUtilsTests(unittest.TestCase):
   """Unit tests for this module."""
 
-  def test_get_angle_identify_unrotated_chessboard_angle(self):
-    normal_img_path = os.path.join(
-        TEST_IMG_DIR, 'rotated_chessboards/normal.jpg')
-    wide_img_path = os.path.join(
-        TEST_IMG_DIR, 'rotated_chessboards/wide.jpg')
-    normal_img = cv2.cvtColor(cv2.imread(normal_img_path), cv2.COLOR_BGR2GRAY)
-    wide_img = cv2.cvtColor(cv2.imread(wide_img_path), cv2.COLOR_BGR2GRAY)
-    normal_angle = get_angle(normal_img)
-    wide_angle = get_angle(wide_img)
-    e_msg = f'Angle: 0, Regular: {normal_angle}, Wide: {wide_angle}'
-    self.assertEqual(get_angle(normal_img), 0, e_msg)
-    self.assertEqual(get_angle(wide_img), 0, e_msg)
-
   def test_get_angle_identify_rotated_chessboard_angle(self):
     # Array of the image files and angles containing rotated chessboards.
     test_cases = [
-        ('_15_ccw', 15),
-        ('_30_ccw', 30),
-        ('_45_ccw', 45),
-        ('_60_ccw', 60),
-        ('_75_ccw', 75),
-        ('_90_ccw', 90)
+        ('', 0),
+        ('_15_ccw', -15),
+        ('_30_ccw', -30),
+        ('_45_ccw', -45),
+        ('_60_ccw', -60),
+        ('_75_ccw', -75),
     ]
+    test_fails = ''
 
     # For each rotated image pair (normal, wide), check angle against expected.
     for suffix, angle in test_cases:
@@ -594,13 +582,21 @@ class Cv2ImageProcessingUtilsTests(unittest.TestCase):
       wide_img = cv2.cvtColor(cv2.imread(wide_img_path), cv2.COLOR_BGR2GRAY)
 
       # Assert angle as expected.
-      normal_angle = get_angle(normal_img)
-      wide_angle = get_angle(wide_img)
-      e_msg = f'Angle: {angle}, Regular: {normal_angle}, Wide: {wide_angle}'
-      self.assertTrue(
-          numpy.isclose(abs(normal_angle), angle, ANGLE_CHECK_TOL), e_msg)
-      self.assertTrue(
-          numpy.isclose(abs(wide_angle), angle, ANGLE_CHECK_TOL), e_msg)
+      normal = get_angle(normal_img)
+      wide = get_angle(wide_img)
+      valid_angles = (angle, angle+90)  # try both angle & +90 due to squares
+      e_msg = (f'\n Rotation angle test failed: {angle}, extracted normal: '
+               f'{normal:.2f}, wide: {wide:.2f}, valid_angles: {valid_angles}')
+      matched_angles = False
+      for a in valid_angles:
+        if (math.isclose(normal, a, abs_tol=ANGLE_CHECK_TOL) and
+            math.isclose(wide, a, abs_tol=ANGLE_CHECK_TOL)):
+          matched_angles = True
+
+      if not matched_angles:
+        test_fails += e_msg
+
+    self.assertEqual(len(test_fails), 0, test_fails)
 
 
 if __name__ == '__main__':

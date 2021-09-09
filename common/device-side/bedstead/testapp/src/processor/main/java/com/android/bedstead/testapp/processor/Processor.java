@@ -65,13 +65,14 @@ import javax.tools.JavaFileObject;
 })
 @AutoService(javax.annotation.processing.Processor.class)
 public final class Processor extends AbstractProcessor {
+    public static final String PACKAGE_NAME = "com.android.bedstead.testapp";
     // TODO(scottjonathan): Add more verification before generating - and add processor tests
     private static final ClassName CONTEXT_CLASSNAME =
             ClassName.get("android.content", "Context");
     private static final ClassName NENE_ACTIVITY_CLASSNAME =
             ClassName.get(
                     "com.android.bedstead.nene.activities",
-                    "NeneActivity");
+                    "NeneActivityDirect");
     private static final ClassName TEST_APP_ACTIVITY_CLASSNAME =
             ClassName.get(
                     "com.android.bedstead.testapp",
@@ -113,12 +114,47 @@ public final class Processor extends AbstractProcessor {
                     "ProfileRuntimeException");
     private static final ClassName NENE_EXCEPTION_CLASSNAME =
             ClassName.get(
-                    "com.android.bedstead.nene.exceptions", "NeneException");
+                    "com.android.bedstead.nene.exceptions",
+                    "NeneException");
     private static final ClassName TEST_APP_INSTANCE_REFERENCE_CLASSNAME =
-            ClassName.get("com.android.bedstead.testapp", "TestAppInstanceReference");
+            ClassName.get("com.android.bedstead.testapp",
+                    "TestAppInstanceReference");
     private static final ClassName COMPONENT_REFERENCE_CLASSNAME =
-            ClassName.get("com.android.bedstead.nene.packages", "ComponentReference");
-    public static final String PACKAGE_NAME = "com.android.bedstead.testapp";
+            ClassName.get("com.android.bedstead.nene.packages",
+                    "ComponentReference");
+    private static final ClassName REMOTE_DEVICE_POLICY_MANAGER_PARENT_CLASSNAME =
+            ClassName.get("android.app.admin", "RemoteDevicePolicyManagerParent");
+    private static final ClassName DEVICE_POLICY_MANAGER_CLASSNAME =
+            ClassName.get("android.app.admin", "DevicePolicyManager");
+    private static final ClassName COMPONENT_NAME_CLASSNAME =
+            ClassName.get("android.content", "ComponentName");
+    private static final ClassName REMOTE_DEVICE_POLICY_MANAGER_PARENT_WRAPPER_CLASSNAME =
+            ClassName.get("android.app.admin",
+                    "RemoteDevicePolicyManagerParentWrapper");
+
+    /**
+     * Extract classes provided in an annotation.
+     *
+     * <p>The {@code runnable} should call the annotation method that the classes are being
+     * extracted for.
+     */
+    public static List<TypeElement> extractClassesFromAnnotation(Types types, Runnable runnable) {
+        // From https://docs.oracle.com/javase/8/docs/api/javax/lang/model/AnnotatedConstruct.html
+        // "The annotation returned by this method could contain an element whose value is of type
+        // Class. This value cannot be returned directly: information necessary to locate and load a
+        // class (such as the class loader to use) is not available, and the class might not be
+        // loadable at all. Attempting to read a Class object by invoking the relevant method on the
+        // returned annotation will result in a MirroredTypeException, from which the corresponding
+        // TypeMirror may be extracted."
+        try {
+            runnable.run();
+        } catch (MirroredTypesException e) {
+            return e.getTypeMirrors().stream()
+                    .map(t -> (TypeElement) types.asElement(t))
+                    .collect(toList());
+        }
+        throw new AssertionError("Could not extract classes from annotation");
+    }
 
     @Override
     public SourceVersion getSupportedSourceVersion() {
@@ -157,6 +193,7 @@ public final class Processor extends AbstractProcessor {
             generateProvider(systemServiceClasses);
             generateConfiguration();
 
+            generateDpmParentWrapper(processingEnv.getElementUtils());
             for (TypeElement systemServiceClass : systemServiceClasses) {
                 generateRemoteFrameworkClassWrapper(
                         processingEnv.getElementUtils(), systemServiceClass);
@@ -174,11 +211,14 @@ public final class Processor extends AbstractProcessor {
             Elements elements, TypeElement systemServiceClass) {
         ClassName originalClassName = ClassName.get(systemServiceClass);
         ClassName interfaceClassName = ClassName.get(
-                originalClassName.packageName(), "Remote" + originalClassName.simpleName());
+                originalClassName.packageName(),
+                "Remote" + originalClassName.simpleName());
         ClassName wrapperClassName = ClassName.get(
-                originalClassName.packageName(), interfaceClassName.simpleName() + "Wrapper");
+                originalClassName.packageName(),
+                interfaceClassName.simpleName() + "Wrapper");
         ClassName profileClassName = ClassName.get(
-                originalClassName.packageName(), "Profile" + interfaceClassName.simpleName());
+                originalClassName.packageName(),
+                "Profile" + interfaceClassName.simpleName());
         TypeElement interfaceElement = elements.getTypeElement(interfaceClassName.canonicalName());
 
         TypeSpec.Builder classBuilder =
@@ -234,7 +274,18 @@ public final class Processor extends AbstractProcessor {
                     .beginControlFlow("try")
                     .addStatement("mConnector.connect()");
 
-            if (method.getReturnType().getKind().equals(TypeKind.VOID)) {
+            if (method.getReturnType().toString().equals(
+                    "android.app.admin.RemoteDevicePolicyManager")
+                    && method.getSimpleName().contentEquals("getParentProfileInstance")) {
+                // Special case, we want to return a new parent wrapper, but still call through to
+                // the other side for exceptions, etc.
+                methodBuilder.addStatement(
+                        "mProfileClass.other().$L($L)",
+                        method.getSimpleName(), String.join(", ", params));
+                methodBuilder.addStatement("return new $T(mConnector, $L)",
+                        REMOTE_DEVICE_POLICY_MANAGER_PARENT_WRAPPER_CLASSNAME,
+                        String.join(", ", params));
+            } else if (method.getReturnType().getKind().equals(TypeKind.VOID)) {
                 methodBuilder.addStatement(
                         "mProfileClass.other().$L($L)",
                         method.getSimpleName(), String.join(", ", params));
@@ -270,6 +321,117 @@ public final class Processor extends AbstractProcessor {
         }
 
         writeClassToFile(originalClassName.packageName(), classBuilder.build());
+    }
+
+    private void generateDpmParentWrapper(Elements elements) {
+        ClassName interfaceClassName = ClassName.get(
+                "android.app.admin", "RemoteDevicePolicyManager");
+        ClassName profileClassName = ClassName.get(
+                "android.app.admin", "ProfileRemoteDevicePolicyManagerParent");
+        TypeElement interfaceElement = elements.getTypeElement(interfaceClassName.canonicalName());
+
+        TypeSpec.Builder classBuilder =
+                TypeSpec.classBuilder(
+                        REMOTE_DEVICE_POLICY_MANAGER_PARENT_WRAPPER_CLASSNAME)
+                        .addSuperinterface(interfaceClassName)
+                        .addModifiers(Modifier.PUBLIC, Modifier.FINAL);
+
+        classBuilder.addField(
+                FieldSpec.builder(profileClassName,
+                        "mProfileClass")
+                        .addModifiers(Modifier.PRIVATE, Modifier.FINAL)
+                        .build());
+        classBuilder.addField(
+                FieldSpec.builder(CROSS_PROFILE_CONNECTOR_CLASSNAME, "mConnector")
+                        .addModifiers(Modifier.PRIVATE, Modifier.FINAL)
+                        .build());
+        classBuilder.addField(
+                FieldSpec.builder(COMPONENT_NAME_CLASSNAME, "mProfileOwnerComponentName")
+                        .addModifiers(Modifier.PRIVATE, Modifier.FINAL)
+                        .build());
+
+        classBuilder.addMethod(MethodSpec.constructorBuilder()
+                .addModifiers(Modifier.PUBLIC)
+                .addParameter(CROSS_PROFILE_CONNECTOR_CLASSNAME, "connector")
+                .addParameter(COMPONENT_NAME_CLASSNAME, "profileOwnerComponentName")
+                .addStatement("mConnector = connector")
+                .addStatement("mProfileOwnerComponentName = profileOwnerComponentName")
+                .addStatement("mProfileClass = $T.create(connector)", profileClassName)
+                .build());
+
+        for (ExecutableElement method : getMethods(interfaceElement)) {
+            MethodSpec.Builder methodBuilder =
+                    MethodSpec.methodBuilder(method.getSimpleName().toString())
+                            .returns(ClassName.get(method.getReturnType()))
+                            .addModifiers(Modifier.PUBLIC)
+                            .addAnnotation(Override.class);
+
+            for (TypeMirror m : method.getThrownTypes()) {
+                methodBuilder.addException(ClassName.get(m));
+            }
+
+            List<String> params = new ArrayList<>();
+
+            params.add("mProfileOwnerComponentName");
+
+            for (VariableElement param : method.getParameters()) {
+                ParameterSpec parameterSpec = ParameterSpec.builder(ClassName.get(param.asType()),
+                        param.getSimpleName().toString()).build();
+
+                params.add(param.getSimpleName().toString());
+
+                methodBuilder.addParameter(parameterSpec);
+            }
+
+            methodBuilder.beginControlFlow("try").addStatement("tryConnect(mConnector)");
+
+            if (method.getReturnType().getKind().equals(TypeKind.VOID)) {
+                methodBuilder.addStatement("mProfileClass.other().$L($L)", method.getSimpleName(),
+                        String.join(", ", params));
+            } else {
+                methodBuilder.addStatement("return mProfileClass.other().$L($L)",
+                        method.getSimpleName(), String.join(", ", params));
+            }
+
+            methodBuilder.nextControlFlow(
+                    "catch ($T e)", UNAVAILABLE_PROFILE_EXCEPTION_CLASSNAME)
+                    .addStatement(
+                            "throw new $T($S, e)",
+                            NENE_EXCEPTION_CLASSNAME, "Error connecting to test app")
+                    .nextControlFlow("catch ($T e)", PROFILE_RUNTIME_EXCEPTION_CLASSNAME)
+                    .addStatement("throw ($T) e.getCause()", RuntimeException.class)
+                    .nextControlFlow("finally")
+                    .addStatement("mConnector.stopManualConnectionManagement()")
+                    .endControlFlow();
+
+            classBuilder.addMethod(methodBuilder.build());
+        }
+
+        classBuilder.addMethod(
+                MethodSpec.methodBuilder("tryConnect")
+                        .addModifiers(Modifier.PRIVATE)
+                        .addParameter(CROSS_PROFILE_CONNECTOR_CLASSNAME, "connector")
+                        .addException(UNAVAILABLE_PROFILE_EXCEPTION_CLASSNAME)
+                        .addStatement("int retries = 300") // 30 seconds of retries
+                        .beginControlFlow("while (true)")
+                        .beginControlFlow("try")
+                        .addStatement("connector.connect()")
+                        .addStatement("return")
+                        .nextControlFlow("catch ($T e)", UNAVAILABLE_PROFILE_EXCEPTION_CLASSNAME)
+                        .beginControlFlow("if (retries-- <= 0)")
+                        .addStatement("throw e")
+                        .endControlFlow()
+                        .beginControlFlow("try")
+                        .addStatement("$T.sleep(100)", Thread.class)
+                        .nextControlFlow("catch ($T e2)", InterruptedException.class)
+                        .addStatement("throw e")
+                        .endControlFlow()
+                        .endControlFlow()
+                        .endControlFlow()
+                        .build()
+        );
+
+        writeClassToFile("android.app.admin", classBuilder.build());
     }
 
     private void generateTargetedRemoteActivityImpl(TypeElement neneActivityInterface) {
@@ -515,6 +677,17 @@ public final class Processor extends AbstractProcessor {
                 .addCode("return new $T();", TEST_APP_CONTROLLER_CLASSNAME)
                 .build());
 
+        classBuilder.addMethod(MethodSpec.methodBuilder(
+                "provideRemoteDevicePolicyManagerParent")
+                .returns(REMOTE_DEVICE_POLICY_MANAGER_PARENT_CLASSNAME)
+                .addModifiers(Modifier.PUBLIC)
+                .addAnnotation(CrossProfileProvider.class)
+                .addParameter(CONTEXT_CLASSNAME, "context")
+                .addCode("return new $T(context.getSystemService($T.class));",
+                        REMOTE_DEVICE_POLICY_MANAGER_PARENT_CLASSNAME,
+                        DEVICE_POLICY_MANAGER_CLASSNAME)
+                .build());
+
         for (TypeElement systemServiceClass : systemServiceClasses) {
             ClassName originalClassName = ClassName.get(systemServiceClass);
             ClassName interfaceClassName = ClassName.get(
@@ -578,29 +751,5 @@ public final class Processor extends AbstractProcessor {
                 .filter(e -> e instanceof ExecutableElement)
                 .map(e -> (ExecutableElement) e)
                 .collect(Collectors.toSet());
-    }
-
-    /**
-     * Extract classes provided in an annotation.
-     *
-     * <p>The {@code runnable} should call the annotation method that the classes are being
-     * extracted for.
-     */
-    public static List<TypeElement> extractClassesFromAnnotation(Types types, Runnable runnable) {
-        // From https://docs.oracle.com/javase/8/docs/api/javax/lang/model/AnnotatedConstruct.html
-        // "The annotation returned by this method could contain an element whose value is of type
-        // Class. This value cannot be returned directly: information necessary to locate and load a
-        // class (such as the class loader to use) is not available, and the class might not be
-        // loadable at all. Attempting to read a Class object by invoking the relevant method on the
-        // returned annotation will result in a MirroredTypeException, from which the corresponding
-        // TypeMirror may be extracted."
-        try {
-            runnable.run();
-        } catch (MirroredTypesException e) {
-            return e.getTypeMirrors().stream()
-                    .map(t -> (TypeElement) types.asElement(t))
-                    .collect(toList());
-        }
-        throw new AssertionError("Could not extract classes from annotation");
     }
 }

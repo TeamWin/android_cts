@@ -80,6 +80,14 @@ public final class DeviceAdminProfileProvisioningCompleteEvent extends Event {
             }
             return true;
         }
+
+        @Override
+        public String describeQuery(String fieldName) {
+            return toStringBuilder(DeviceAdminProfileProvisioningCompleteEvent.class, this)
+                    .field("intent", mIntent)
+                    .field("deviceAdminReceiver", mDeviceAdminReceiver)
+                    .toString();
+        }
     }
 
     /** Begins logging a {@link DeviceAdminProfileProvisioningCompleteEvent}. */
