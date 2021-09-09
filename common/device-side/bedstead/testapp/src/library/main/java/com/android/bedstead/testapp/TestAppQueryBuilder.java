@@ -30,6 +30,9 @@ import com.android.queryable.queries.SetQueryHelper;
 import com.android.queryable.queries.StringQuery;
 import com.android.queryable.queries.StringQueryHelper;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /** Builder for progressively building {@link TestApp} queries. */
 public final class TestAppQueryBuilder implements Queryable {
     private final TestAppProvider mProvider;
@@ -180,5 +183,19 @@ public final class TestAppQueryBuilder implements Queryable {
         }
 
         return true;
+    }
+
+    @Override
+    public String describeQuery(String fieldName) {
+        return "{" + Queryable.joinQueryStrings(
+                mPackageName.describeQuery("packageName"),
+                mMetadata.describeQuery("metadata"),
+                mMinSdkVersion.describeQuery("minSdkVersion"),
+                mMaxSdkVersion.describeQuery("maxSdkVersion"),
+                mTargetSdkVersion.describeQuery("targetSdkVersion"),
+                mActivities.describeQuery("activities"),
+                mPermissions.describeQuery("permissions"),
+                mTestOnly.describeQuery("testOnly")
+        ) + "}";
     }
 }

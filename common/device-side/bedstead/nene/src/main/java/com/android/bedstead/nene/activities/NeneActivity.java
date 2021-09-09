@@ -16,31 +16,13 @@
 
 package com.android.bedstead.nene.activities;
 
-import android.app.Activity;
-import android.content.Intent;
-import android.os.Bundle;
+import android.os.UserHandle;
 
 /**
- * Interface for use by classes which are able to be used in Nene activity test apis.
- *
- * <p>Methods on this interface should match exactly methods on {@link Activity}.
+ * Additional methods which are not direct wrappes of {@link Activity}.
  */
-public interface NeneActivity {
-    /** See {@link Activity#startLockTask}. */
-    void startLockTask();
+public interface NeneActivity extends NeneActivityDirect {
 
-    /** See {@link Activity#stopLockTask}. */
-    void stopLockTask();
-
-    /** See {@link Activity#finish()}. */
-    void finish();
-
-    /** See {@link Activity#isFinishing}. */
-    boolean isFinishing();
-
-    /** See {@link Activity#startActivity}. */
-    void startActivity(Intent intent);
-
-    /** See {@link Activity#startActivity}. */
-    void startActivity(Intent intent, Bundle options);
+    /** See {@link android.app.Activity#getUser()}. */
+    UserHandle getUser();
 }

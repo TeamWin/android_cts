@@ -60,6 +60,13 @@ public final class ActivityDestroyedEvent extends Event {
             }
             return true;
         }
+
+        @Override
+        public String describeQuery(String fieldName) {
+            return toStringBuilder(ActivityDestroyedEvent.class, this)
+                    .field("activity", mActivity)
+                    .toString();
+        }
     }
 
     /** Begins logging a {@link ActivityDestroyedEvent}. */

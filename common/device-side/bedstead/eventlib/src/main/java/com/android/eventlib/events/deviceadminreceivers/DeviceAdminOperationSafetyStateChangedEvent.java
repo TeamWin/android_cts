@@ -97,6 +97,15 @@ public final class DeviceAdminOperationSafetyStateChangedEvent extends Event {
             }
             return true;
         }
+
+        @Override
+        public String describeQuery(String fieldName) {
+            return toStringBuilder(DeviceAdminOperationSafetyStateChangedEvent.class, this)
+                    .field("deviceAdminReceiver", mDeviceAdminReceiver)
+                    .field("reason", mReason)
+                    .field("isSafe", mIsSafe)
+                    .toString();
+        }
     }
 
     /** Begins logging a {@link DeviceAdminOperationSafetyStateChangedEvent}. */

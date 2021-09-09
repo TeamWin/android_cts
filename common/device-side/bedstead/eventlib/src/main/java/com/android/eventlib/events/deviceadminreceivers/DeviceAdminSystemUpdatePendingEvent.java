@@ -95,6 +95,15 @@ public class DeviceAdminSystemUpdatePendingEvent extends Event {
             }
             return true;
         }
+
+        @Override
+        public String describeQuery(String fieldName) {
+            return toStringBuilder(DeviceAdminSystemUpdatePendingEvent.class, this)
+                    .field("intent", mIntent)
+                    .field("deviceAdminReceiver", mDeviceAdminReceiver)
+                    .field("receivedTime", mReceivedTime)
+                    .toString();
+        }
     }
 
     /** Begins logging a {@link DeviceAdminSystemUpdatePendingEvent}. */
