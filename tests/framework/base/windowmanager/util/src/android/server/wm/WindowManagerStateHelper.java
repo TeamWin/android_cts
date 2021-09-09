@@ -272,10 +272,17 @@ public class WindowManagerStateHelper extends WindowManagerState {
                 "app transition idle on Display " + displayId);
     }
 
-    public void waitAndAssertNavBarShownOnDisplay(int displayId) {
-        assertTrue(waitForWithAmState(
-                state -> state.getAndAssertSingleNavBarWindowOnDisplay(displayId) != null,
-                "navigation bar #" + displayId + " show"));
+    void waitAndAssertNavBarShownOnDisplay(int displayId) {
+        waitAndAssertNavBarShownOnDisplay(displayId, 1 /* expectedNavBarCount */);
+    }
+
+    void waitAndAssertNavBarShownOnDisplay(int displayId, int expectedNavBarCount) {
+        assertTrue(waitForWithAmState(state -> {
+            List<WindowState> navWindows = state
+                    .getAndAssertNavBarWindowsOnDisplay(displayId, expectedNavBarCount);
+
+            return navWindows != null;
+        }, "navigation bar #" + displayId + " show"));
     }
 
     public void waitAndAssertKeyguardShownOnSecondaryDisplay(int displayId) {
