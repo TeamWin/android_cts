@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package android.devicepolicy.cts;
 
-package com.android.cts.deviceandprofileowner;
+import static android.Manifest.permission.LOCAL_MAC_ADDRESS;
+import static android.Manifest.permission.NETWORK_SETTINGS;
+import static android.Manifest.permission.READ_PRIVILEGED_PHONE_STATE;
 
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.testng.Assert.assertThrows;
 
 import android.annotation.NonNull;
-import android.app.UiAutomation;
+import android.content.Context;
 import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.telephony.TelephonyManager;
+
+import com.android.bedstead.harrier.BedsteadJUnit4;
+import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.EnsureHasPermission;
+import com.android.bedstead.harrier.annotations.Postsubmit;
+import com.android.bedstead.harrier.annotations.enterprise.PositivePolicyTest;
+import com.android.bedstead.harrier.policies.EnrollmentSpecificId;
+import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.testapp.TestAppProvider;
+
+import org.junit.ClassRule;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.nio.ByteBuffer;
 import java.security.InvalidKeyException;
@@ -33,61 +50,71 @@ import java.security.NoSuchAlgorithmException;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
-/**
- * Tests for the Enrollment-Specific ID functionality.
- *
- * NOTE: Tests in this class need to be run separately from the host-side since each
- * sets a non-resettable Organization ID, so the DPC needs to be completely removed
- * before each test.
- */
-public class EnrollmentSpecificIdTest extends BaseDeviceAdminTest {
-    private static final String[] PERMISSIONS_TO_ADOPT = {
-            "android.permission.READ_PRIVILEGED_PHONE_STATE",
-            "android.permission.NETWORK_SETTINGS",
-            "android.permission.LOCAL_MAC_ADDRESS"};
+@RunWith(BedsteadJUnit4.class)
+public final class EnrollmentSpecificIdTest {
+
     private static final String ORGANIZATION_ID = "abcxyz123";
-    private UiAutomation mUiAutomation;
+    private static final String DIFFERENT_ORGANIZATION_ID = "xyz";
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mUiAutomation = getInstrumentation().getUiAutomation();
-    }
+    @ClassRule
+    @Rule
+    public static final DeviceState sDeviceState = new DeviceState();
 
-    public void testThrowsForEmptyOrganizationId() {
+    private static final TestAppProvider sTestAppProvider = new TestAppProvider();
+    private static final TestApis sTestApis = new TestApis();
+    private static final Context sContext = sTestApis.context().instrumentedContext();
+
+    @Test
+    @Postsubmit(reason = "New test")
+    @PositivePolicyTest(policy = EnrollmentSpecificId.class)
+    public void emptyOrganizationId_throws() {
         assertThrows(IllegalArgumentException.class,
-                () -> mDevicePolicyManager.setOrganizationId(""));
+                () -> sDeviceState.dpc().devicePolicyManager().setOrganizationId(""));
     }
 
-    public void testThrowsWhenTryingToReSetOrganizationId() {
-        mUiAutomation.adoptShellPermissionIdentity(PERMISSIONS_TO_ADOPT);
+    @Test
+    @Postsubmit(reason = "New test")
+    @PositivePolicyTest(policy = EnrollmentSpecificId.class)
+    public void reSetOrganizationId_throws() {
+        try {
+            sDeviceState.dpc().devicePolicyManager().setOrganizationId(ORGANIZATION_ID);
 
-        mDevicePolicyManager.setOrganizationId("abc");
-        final String firstEsid = mDevicePolicyManager.getEnrollmentSpecificId();
-        assertThat(firstEsid).isNotEmpty();
-
-        assertThrows(IllegalStateException.class,
-                () -> mDevicePolicyManager.setOrganizationId("xyz"));
+            assertThrows(IllegalStateException.class,
+                    () -> sDeviceState.dpc().devicePolicyManager()
+                            .setOrganizationId(DIFFERENT_ORGANIZATION_ID));
+        } finally {
+            sTestApis.devicePolicy().clearOrganizationId(sDeviceState.dpc().user());
+        }
     }
 
     /**
      * This test tests that the platform calculates the ESID according to the specification and
      * does not, for example, return the same ESID regardless of the managing package.
      */
-    public void testCorrectCalculationOfEsid() {
-        mUiAutomation.adoptShellPermissionIdentity(PERMISSIONS_TO_ADOPT);
-        mDevicePolicyManager.setOrganizationId(ORGANIZATION_ID);
-        final String esidFromDpm = mDevicePolicyManager.getEnrollmentSpecificId();
-        final String calculatedEsid = calculateEsid(ADMIN_RECEIVER_COMPONENT.getPackageName(),
-                ORGANIZATION_ID);
-        assertThat(esidFromDpm).isEqualTo(calculatedEsid);
+    @Test
+    @Postsubmit(reason = "New test")
+    @PositivePolicyTest(policy = EnrollmentSpecificId.class)
+    @EnsureHasPermission({READ_PRIVILEGED_PHONE_STATE, NETWORK_SETTINGS, LOCAL_MAC_ADDRESS})
+    public void enrollmentSpecificId_CorrectlyCalculated() {
+        try {
+            sDeviceState.dpc().devicePolicyManager().setOrganizationId(ORGANIZATION_ID);
+            final String esidFromDpm = sDeviceState.dpc().devicePolicyManager()
+                    .getEnrollmentSpecificId();
+            final String calculatedEsid = calculateEsid(
+                    sDeviceState.dpc().componentName().getPackageName(),
+                    ORGANIZATION_ID);
+
+            assertThat(esidFromDpm).isEqualTo(calculatedEsid);
+        } finally {
+            sTestApis.devicePolicy().clearOrganizationId(sDeviceState.dpc().user());
+        }
     }
 
     private String calculateEsid(String profileOwnerPackage, String enterpriseIdString) {
-        TelephonyManager telephonyService = mContext.getSystemService(TelephonyManager.class);
+        TelephonyManager telephonyService = sContext.getSystemService(TelephonyManager.class);
         assertThat(telephonyService).isNotNull();
 
-        WifiManager wifiManager = mContext.getSystemService(WifiManager.class);
+        WifiManager wifiManager = sContext.getSystemService(WifiManager.class);
         assertThat(wifiManager).isNotNull();
 
         final byte[] serialNumber = getPaddedHardwareIdentifier(Build.getSerial()).getBytes();
@@ -126,7 +153,8 @@ public class EnrollmentSpecificIdTest extends BaseDeviceAdminTest {
         if (hardwareIdentifier == null) {
             hardwareIdentifier = "";
         }
-        return String.format("%16s", hardwareIdentifier);
+        String hwIdentifier = String.format("%16s", hardwareIdentifier);
+        return hwIdentifier.substring(0, 16);
     }
 
     private static String getPaddedProfileOwnerName(String profileOwnerPackage) {

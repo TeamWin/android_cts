@@ -720,12 +720,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         executeDeviceTestMethod(".ApplicationHiddenTest", "testCannotHidePolicyExemptApps");
     }
 
-    @Test
-    public void testAccountManagement_deviceAndProfileOwnerAlwaysAllowed() throws Exception {
-        installAppAsUser(ACCOUNT_MANAGEMENT_APK, mUserId);
-        executeDeviceTestClass(".AllowedAccountManagementTest");
-    }
-
+    // TODO(b/197491427): AccountManager support in TestApp
     @Test
     public void testAccountManagement_userRestrictionAddAccount() throws Exception {
         installAppAsUser(ACCOUNT_MANAGEMENT_APK, mUserId);
@@ -739,6 +734,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         executeAccountTest("testAddAccount_allowed");
     }
 
+    // TODO(b/197491427): AccountManager support in TestApp
     @Test
     public void testAccountManagement_userRestrictionRemoveAccount() throws Exception {
         installAppAsUser(ACCOUNT_MANAGEMENT_APK, mUserId);
@@ -752,6 +748,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         executeAccountTest("testRemoveAccount_allowed");
     }
 
+    // TODO(b/197491427): AccountManager support in TestApp
     @Test
     public void testAccountManagement_disabledAddAccount() throws Exception {
         installAppAsUser(ACCOUNT_MANAGEMENT_APK, mUserId);
@@ -765,6 +762,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         executeAccountTest("testAddAccount_allowed");
     }
 
+    // TODO(b/197491427): AccountManager support in TestApp
     @Test
     public void testAccountManagement_disabledRemoveAccount() throws Exception {
         installAppAsUser(ACCOUNT_MANAGEMENT_APK, mUserId);
@@ -1752,34 +1750,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                 .stream()
                 .map(line -> line.substring(prefixLength))
                 .collect(Collectors.toList());
-    }
-
-    @Test
-    public void testEnrollmentSpecificIdCorrectCalculation() throws Exception {
-
-        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".EnrollmentSpecificIdTest",
-                "testCorrectCalculationOfEsid", mUserId);
-    }
-
-    @Test
-    public void testEnrollmentSpecificIdCorrectCalculationLogged() throws Exception {
-        boolean isManagedProfile = (mPrimaryUserId != mUserId);
-
-        assertMetricsLogged(getDevice(), () -> {
-            executeDeviceTestMethod(".EnrollmentSpecificIdTest",
-                    "testCorrectCalculationOfEsid");
-        }, new DevicePolicyEventWrapper.Builder(EventId.SET_ORGANIZATION_ID_VALUE)
-                .setAdminPackageName(DEVICE_ADMIN_PKG)
-                .setBoolean(isManagedProfile)
-                .build());
-    }
-
-    @Test
-    public void testEnrollmentSpecificIdEmptyAndMultipleSet() throws DeviceNotAvailableException {
-        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".EnrollmentSpecificIdTest",
-                "testThrowsForEmptyOrganizationId", mUserId);
-        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".EnrollmentSpecificIdTest",
-                "testThrowsWhenTryingToReSetOrganizationId", mUserId);
     }
 
     @Test

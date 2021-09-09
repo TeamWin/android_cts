@@ -50,7 +50,6 @@ NOT_YET_MANDATED = {
     'scene5': [],
     'scene6': [['test_zoom', 30]],
     'sensor_fusion': [],
-    'scene_change': [['test_scene_change', 31]]
 }
 
 

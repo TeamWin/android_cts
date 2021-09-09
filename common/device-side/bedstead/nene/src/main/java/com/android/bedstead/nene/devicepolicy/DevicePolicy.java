@@ -193,6 +193,20 @@ public final class DevicePolicy {
     }
 
     /**
+     * Resets organization ID via @TestApi.
+     * @param user whose organization ID to clear
+     */
+    public void clearOrganizationId(UserReference user) {
+        try (PermissionContext p =
+                     mTestApis.permissions().withPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)) {
+            DevicePolicyManager devicePolicyManager =
+                    mTestApis.context().instrumentedContextAsUser(user)
+                            .getSystemService(DevicePolicyManager.class);
+            devicePolicyManager.clearOrganizationId();
+        }
+    }
+
+    /**
      * Runs {@code operation}. If it fails, runs {@code terminalCheck} and then retries
      * {@code operation} until it does not fail or for a maximum of 30 seconds.
      *
