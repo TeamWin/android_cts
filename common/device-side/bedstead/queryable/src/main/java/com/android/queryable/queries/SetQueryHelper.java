@@ -132,12 +132,14 @@ public final class SetQueryHelper<E extends Queryable, F, G extends Query<F>> im
         List<String> queryStrings = new ArrayList<>();
         queryStrings.add(mSizeQuery.describeQuery(fieldName + ".size"));
         if (!mContains.isEmpty()) {
-            queryStrings.add(fieldName + " contains {" + mContains.stream().map(Object::toString).collect(
-                    Collectors.joining(", ")) + "}");
+            queryStrings.add(fieldName + " contains matches of ["
+                    + mContains.stream().map(t -> "{" + t.describeQuery("") + "}").collect(
+                            Collectors.joining(", ")) + "]");
         }
         if (!mDoesNotContain.isEmpty()) {
-            queryStrings.add(fieldName + " does not contain any of {" + mDoesNotContain.stream().map(Object::toString).collect(
-                    Collectors.joining(", ")) + "}");
+            queryStrings.add(fieldName + " does not contain anything matching any of ["
+                    + mDoesNotContain.stream().map(t -> "{" + t.describeQuery("") + "}").collect(
+                            Collectors.joining(", ")) + "]");
         }
 
         return Queryable.joinQueryStrings(queryStrings);
