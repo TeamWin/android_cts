@@ -150,6 +150,7 @@ public class AudioInColdStartLatencyActivity
         }
 
         mRecorder.stopStream();
+        mRecorder.teardownStream();
 
         mIsTestRunning = false;
 
