@@ -30,12 +30,6 @@
                  android:value="android.provider.apps.cts.gallerytestapp.ReviewPrewarmService"/>
         </activity>
 
-        <!-- (b/197919878) Disable startup provider due to resource loading issue. -->
-        <provider
-            android:name="androidx.startup.InitializationProvider"
-            android:authorities="${applicationId}.androidx-startup"
-            tools:node="remove" />
-
     </application>
 
 </manifest>
