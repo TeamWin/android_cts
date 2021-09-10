@@ -2328,6 +2328,35 @@
     <string name="tiles_in_customizer">Open Quick Settings and click the button to customize Quick
         Settings. Check that the Tile Service for CTS Verifier is available to be added</string>
     <string name="tiles_removing_tile">Check that Tile Service is disabled</string>
+    <string name="tile_request_service_name">Request Tile Service</string>
+    <string name="tiles_request_test">Tile Service Request Test</string>
+    <string name="tiles_request_info">This test checks that a request to add a TileService is
+    shown correctly to the user and the correct answer is relayed to the app.</string>
+    <string name="tiles_request_tile_not_present">Open Quick Settings and pass this test
+    if there are no tiles named %1$s in any page.</string>
+    <string name="tiles_request_dismissed">After pressing \"Start request\", a dialog will appear
+        requesting to add a quick settings tile. When it appears, dismiss it by tapping outside of
+        it, or going back.</string>
+    <string name="tiles_request_answer_no">After pressing \"Start request\", a dialog will appear
+        requesting to add a quick settings tile. When it appears, tap the option in the dialog to
+        not add the tile.</string>
+    <string name="tiles_request_correct_info">After pressing \"Start request\", a dialog will appear
+        requesting to add a quick settings tile. When it appears, verify the following information
+        in the dialog:\n
+  1. The name of the app requesting to add the tile is %1$s.\n
+  2. The label in the tile is %2$s.\n
+After verifying, tap the option in the dialog to not add the tile.\n
+When the buttons are enabled, pass this test if the information in the dialog was correct.
+    </string>
+    <string name="tiles_request_answer_yes">After pressing \"Start request\", a dialog will appear
+        requesting to add a quick settings tile. When it appears, tap the option in the dialog to
+        add the tile.
+    </string>
+    <string name="tiles_request_tile_present">Open Quick Settings and pass this test if a tile named
+        %1$s is visible in some page.
+    </string>
+    <string name="tiles_request_check_tile_already_added">Checking tile already added response
+    </string>
     <string name="vr_tests">VR Tests</string>
     <string name="test_category_vr">VR</string>
     <string name="vr_test_title">VR Listener Test</string>

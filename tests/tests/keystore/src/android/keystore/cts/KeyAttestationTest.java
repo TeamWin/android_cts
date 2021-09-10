@@ -221,7 +221,10 @@ public class KeyAttestationTest extends AndroidTestCase {
                 fail("Attestation challenges larger than 128 bytes should be rejected");
             } catch (ProviderException e) {
                 KeyStoreException cause = (KeyStoreException) e.getCause();
-                assertEquals(KM_ERROR_INVALID_INPUT_LENGTH, cause.getErrorCode());
+                assertTrue(KM_ERROR_INVALID_INPUT_LENGTH == cause.getErrorCode() ||
+                        (devicePropertiesAttestation
+                                && KM_ERROR_CANNOT_ATTEST_IDS == cause.getErrorCode())
+                );
             }
         }
     }
@@ -496,7 +499,10 @@ public class KeyAttestationTest extends AndroidTestCase {
                 fail("Attestation challenges larger than 128 bytes should be rejected");
             } catch(ProviderException e){
                 KeyStoreException cause = (KeyStoreException) e.getCause();
-                assertEquals(KM_ERROR_INVALID_INPUT_LENGTH, cause.getErrorCode());
+                assertTrue(KM_ERROR_INVALID_INPUT_LENGTH == cause.getErrorCode() ||
+                        (devicePropertiesAttestation
+                                && KM_ERROR_CANNOT_ATTEST_IDS == cause.getErrorCode())
+                );
             }
         }
     }

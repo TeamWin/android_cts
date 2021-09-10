@@ -14,14 +14,9 @@
  * limitations under the License.
  */
 
-import com.android.bedstead.remoteframeworkclasses.processor.annotations.RemoteFrameworkClasses;
+package com.android.cts.verifier.qstiles;
 
-/**
- * Entry point to RemoteFrameworkClasses
- */
-@RemoteFrameworkClasses
-public final class RemoteFrameworkClassesConfiguration {
-    private RemoteFrameworkClassesConfiguration() {
+import android.service.quicksettings.TileService;
 
-    }
+public class RequestTileService extends TileService {
 }

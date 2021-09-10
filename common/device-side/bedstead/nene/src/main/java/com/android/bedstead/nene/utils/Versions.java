@@ -26,7 +26,7 @@ public final class Versions {
     /** Any version. */
     public static final int ANY = -1;
 
-    private static final String DEVELOPMENT_CODENAME = "S";
+    private static final String DEVELOPMENT_CODENAME = "T";
 
     private Versions() {
 
@@ -96,5 +96,13 @@ public final class Versions {
         }
 
         return true;
+    }
+
+    /**
+     * {@code true} if the current running version is the latest in-development version.
+     */
+    public static boolean isDevelopmentVersion() {
+        return Build.VERSION.SDK_INT == Build.VERSION_CODES.CUR_DEVELOPMENT
+                && Build.VERSION.CODENAME.equals(DEVELOPMENT_CODENAME);
     }
 }

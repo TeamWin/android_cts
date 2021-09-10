@@ -1144,33 +1144,6 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
         }
     }
 
-    public void testSetUserControlDisabledPackages_failIfNotDeviceOwner() {
-        if (!mDeviceAdmin) {
-            Log.w(TAG, "Skipping testSetUserControlDisabledPackages_failIfNotDeviceOwner()");
-            return;
-        }
-        final String TEST_PACKAGE_NAME = "package1";
-        List<String> packages = new ArrayList<>();
-        packages.add(TEST_PACKAGE_NAME);
-        try {
-            mDevicePolicyManager.setUserControlDisabledPackages(mComponent, packages);
-            fail("setUserControlDisabledPackages did not throw expected SecurityException");
-        } catch(SecurityException e) {
-        }
-    }
-
-    public void testGetUserControlDisabledPackages_failIfNotDeviceOwner() {
-        if (!mDeviceAdmin) {
-            Log.w(TAG, "Skipping testGetUserControlDisabledPackages_failIfNotDeviceOwner()");
-            return;
-        }
-        try {
-            mDevicePolicyManager.getUserControlDisabledPackages(mComponent);
-            fail("getUserControlDisabledPackages did not throw expected SecurityException");
-        } catch(SecurityException e) {
-        }
-    }
-
     public void testSetNearbyNotificationStreamingPolicy_failIfNotDeviceOrProfileOwner() {
         if (!mDeviceAdmin) {
             String message =
