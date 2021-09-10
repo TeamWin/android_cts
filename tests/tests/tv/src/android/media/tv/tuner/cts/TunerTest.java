@@ -91,6 +91,9 @@ import android.media.tv.tuner.frontend.IsdbtFrontendCapabilities;
 import android.media.tv.tuner.frontend.IsdbtFrontendSettings;
 import android.media.tv.tuner.frontend.OnTuneEventListener;
 import android.media.tv.tuner.frontend.ScanCallback;
+import android.media.tv.tunerresourcemanager.TunerFrontendInfo;
+import android.media.tv.tunerresourcemanager.TunerFrontendRequest;
+import android.media.tv.tunerresourcemanager.TunerResourceManager;
 
 import android.os.ConditionVariable;
 import android.os.Handler;
@@ -129,6 +132,7 @@ public class TunerTest {
     private Context mContext;
     private Tuner mTuner;
     private CountDownLatch mLockLatch = new CountDownLatch(1);
+    private TunerResourceManager mTunerResourceManager = null;
 
     @Before
     public void setUp() throws Exception {
@@ -889,6 +893,445 @@ public class TunerTest {
         assertNotNull(mTuner.getFrontendInfo());
     }
 
+    @Test
+    public void testHasUnusedFrontend1() throws Exception {
+        prepTRMCustomFeResourceMapTest();
+
+        // Use try block to ensure restoring the TunerResourceManager
+        // Note: the handles will be changed from the original value, but should be OK
+        try {
+            TunerFrontendInfo[] infos = new TunerFrontendInfo[6];
+            // tunerFrontendInfo(handle, FrontendSettings.TYPE_*, exclusiveGroupId
+            infos[0] = tunerFrontendInfo(1, FrontendSettings.TYPE_DVBT, 1);
+            infos[1] = tunerFrontendInfo(2, FrontendSettings.TYPE_DVBC, 1);
+            infos[2] = tunerFrontendInfo(3, FrontendSettings.TYPE_DVBS, 1);
+            infos[3] = tunerFrontendInfo(4, FrontendSettings.TYPE_DVBT, 2);
+            infos[4] = tunerFrontendInfo(5, FrontendSettings.TYPE_DVBC, 2);
+            infos[5] = tunerFrontendInfo(6, FrontendSettings.TYPE_DVBS, 2);
+
+            mTunerResourceManager.setFrontendInfoList(infos);
+
+            Tuner A = new Tuner(mContext, null, 100);
+            Tuner B = new Tuner(mContext, null, 100);
+            Tuner C = new Tuner(mContext, null, 100);
+
+            // check before anyone holds resource
+            assertFalse(A.hasUnusedFrontend(FrontendSettings.TYPE_UNDEFINED));
+            assertFalse(A.hasUnusedFrontend(FrontendSettings.TYPE_ATSC));
+            assertTrue(A.hasUnusedFrontend(FrontendSettings.TYPE_DVBT));
+            assertTrue(A.hasUnusedFrontend(FrontendSettings.TYPE_DVBC));
+            assertTrue(A.hasUnusedFrontend(FrontendSettings.TYPE_DVBS));
+
+            // let B hold resource
+            assignFeResource(B.getClientId(), FrontendSettings.TYPE_DVBT,
+                             true /* expectedResult */, 1 /* expectedHandle */);
+
+            // check when one of the two exclusive groups are held
+            assertTrue(A.hasUnusedFrontend(FrontendSettings.TYPE_DVBT));
+            assertTrue(A.hasUnusedFrontend(FrontendSettings.TYPE_DVBC));
+            assertTrue(A.hasUnusedFrontend(FrontendSettings.TYPE_DVBS));
+
+            assertTrue(B.hasUnusedFrontend(FrontendSettings.TYPE_DVBT));
+
+            // let C hold the resource
+            assignFeResource(C.getClientId(), FrontendSettings.TYPE_DVBC,
+                             true /* expectedResult */, 5 /* expectedHandle */);
+
+            assertFalse(A.hasUnusedFrontend(FrontendSettings.TYPE_DVBT));
+            assertFalse(A.hasUnusedFrontend(FrontendSettings.TYPE_DVBC));
+            assertFalse(A.hasUnusedFrontend(FrontendSettings.TYPE_DVBS));
+
+            assertFalse(B.hasUnusedFrontend(FrontendSettings.TYPE_DVBT));
+            assertFalse(C.hasUnusedFrontend(FrontendSettings.TYPE_DVBT));
+
+            // let go of B's resource
+            B.close();
+
+            assertTrue(A.hasUnusedFrontend(FrontendSettings.TYPE_DVBT));
+            assertTrue(A.hasUnusedFrontend(FrontendSettings.TYPE_DVBC));
+            assertTrue(A.hasUnusedFrontend(FrontendSettings.TYPE_DVBS));
+
+            assertTrue(B.hasUnusedFrontend(FrontendSettings.TYPE_DVBT));
+            assertTrue(C.hasUnusedFrontend(FrontendSettings.TYPE_DVBT));
+
+            C.close();
+            A.close();
+        } catch (Exception e) {
+            throw (e);
+        } finally {
+            cleanupTRMCustomFeResourceMapTest();
+        }
+    }
+
+    @Test
+    public void testHasUnusedFrontend2() throws Exception {
+        prepTRMCustomFeResourceMapTest();
+
+        // Use try block to ensure restoring the TunerResourceManager
+        // Note: the handles will be changed from the original value, but should be OK
+        try {
+            TunerFrontendInfo[] infos = new TunerFrontendInfo[5];
+            // tunerFrontendInfo(handle, FrontendSettings.TYPE_*, exclusiveGroupId
+            infos[0] = tunerFrontendInfo(1, FrontendSettings.TYPE_DVBT, 1);
+            infos[1] = tunerFrontendInfo(2, FrontendSettings.TYPE_DVBC, 1);
+            infos[2] = tunerFrontendInfo(3, FrontendSettings.TYPE_DVBT, 2);
+            infos[3] = tunerFrontendInfo(4, FrontendSettings.TYPE_DVBC, 2);
+            infos[4] = tunerFrontendInfo(5, FrontendSettings.TYPE_DVBS, 3);
+
+            mTunerResourceManager.setFrontendInfoList(infos);
+
+            Tuner A = new Tuner(mContext, null, 100);
+            Tuner B = new Tuner(mContext, null, 100);
+            Tuner C = new Tuner(mContext, null, 100);
+
+            // let B hold resource
+            assignFeResource(B.getClientId(), FrontendSettings.TYPE_DVBT,
+                             true /* expectedResult */, 1 /* expectedHandle */);
+
+            assertTrue(A.hasUnusedFrontend(FrontendSettings.TYPE_DVBT));
+            assertTrue(A.hasUnusedFrontend(FrontendSettings.TYPE_DVBC));
+            assertTrue(A.hasUnusedFrontend(FrontendSettings.TYPE_DVBS));
+
+            // let C hold the resource
+            assignFeResource(C.getClientId(), FrontendSettings.TYPE_DVBC,
+                             true /* expectedResult */, 4 /* expectedHandle */);
+
+            assertFalse(A.hasUnusedFrontend(FrontendSettings.TYPE_DVBT));
+            assertFalse(A.hasUnusedFrontend(FrontendSettings.TYPE_DVBC));
+            assertTrue(A.hasUnusedFrontend(FrontendSettings.TYPE_DVBS));
+
+            B.close();
+            C.close();
+        } catch (Exception e) {
+            throw (e);
+        } finally {
+            cleanupTRMCustomFeResourceMapTest();
+        }
+    }
+
+    @Test
+    public void testHasUnusedFrontend3() throws Exception {
+        prepTRMCustomFeResourceMapTest();
+
+        // Use try block to ensure restoring the TunerResourceManager
+        // Note: the handles will be changed from the original value, but should be OK
+        try {
+            TunerFrontendInfo[] infos = new TunerFrontendInfo[6];
+            // tunerFrontendInfo(handle, FrontendSettings.TYPE_*, exclusiveGroupId
+            infos[0] = tunerFrontendInfo(1, FrontendSettings.TYPE_DVBT, 1);
+            infos[1] = tunerFrontendInfo(2, FrontendSettings.TYPE_DVBC, 1);
+            infos[2] = tunerFrontendInfo(3, FrontendSettings.TYPE_DVBS, 1);
+            infos[3] = tunerFrontendInfo(4, FrontendSettings.TYPE_DVBT, 2);
+            infos[4] = tunerFrontendInfo(5, FrontendSettings.TYPE_DVBC, 2);
+            infos[5] = tunerFrontendInfo(6, FrontendSettings.TYPE_DVBS, 2);
+
+            mTunerResourceManager.setFrontendInfoList(infos);
+
+            Tuner A = new Tuner(mContext, null, 100);
+            Tuner B = new Tuner(mContext, null, 100);
+            Tuner C = new Tuner(mContext, null, 100);
+
+            // let B hold resource
+            assignFeResource(B.getClientId(), FrontendSettings.TYPE_DVBT,
+                             true /* expectedResult */, 1 /* expectedHandle */);
+
+            assertTrue(A.hasUnusedFrontend(FrontendSettings.TYPE_DVBT));
+            assertTrue(A.hasUnusedFrontend(FrontendSettings.TYPE_DVBC));
+            assertTrue(A.hasUnusedFrontend(FrontendSettings.TYPE_DVBS));
+
+            // let C share from B
+            mTunerResourceManager.shareFrontend(C.getClientId(), B.getClientId());
+
+            assertTrue(A.hasUnusedFrontend(FrontendSettings.TYPE_DVBT));
+            assertTrue(A.hasUnusedFrontend(FrontendSettings.TYPE_DVBC));
+            assertTrue(A.hasUnusedFrontend(FrontendSettings.TYPE_DVBS));
+
+            A.close();
+            C.close();
+            B.close();
+        } catch (Exception e) {
+            throw (e);
+        } finally {
+            cleanupTRMCustomFeResourceMapTest();
+        }
+    }
+
+    @Test
+    public void testIsLowestPriorityCornerCases() throws Exception {
+        prepTRMCustomFeResourceMapTest();
+
+        // Use try block to ensure restoring the TunerResourceManager
+        // Note: the handles will be changed from the original value, but should be OK
+        try {
+            setupSingleTunerSetupForIsLowestPriority();
+
+            // must return true when non existing frontend type is specified
+            assertTrue(mTuner.isLowestPriority(FrontendSettings.TYPE_UNDEFINED));
+            assertTrue(mTuner.isLowestPriority(FrontendSettings.TYPE_ATSC));
+
+            // must return true when no one is holding the resource
+            assertTrue(mTuner.isLowestPriority(FrontendSettings.TYPE_DVBT));
+            assertTrue(mTuner.isLowestPriority(FrontendSettings.TYPE_DVBC));
+            assertTrue(mTuner.isLowestPriority(FrontendSettings.TYPE_DVBT));
+
+            // must return true when the callee is the only one holding the resource
+            assignFeResource(mTuner.getClientId(), FrontendSettings.TYPE_DVBT,
+                             true /* expectedResult */, 1 /* expectedHandle */);
+            assertTrue(mTuner.isLowestPriority(FrontendSettings.TYPE_DVBT));
+            assertTrue(mTuner.isLowestPriority(FrontendSettings.TYPE_DVBC));
+            assertTrue(mTuner.isLowestPriority(FrontendSettings.TYPE_DVBT));
+
+        } catch (Exception e) {
+            throw (e);
+        } finally {
+            cleanupTRMCustomFeResourceMapTest();
+        }
+    }
+
+    @Test
+    public void testIsLowestPriorityTwoClients() throws Exception {
+        prepTRMCustomFeResourceMapTest();
+
+        // Use try block to ensure restoring the TunerResourceManager
+        // Note: the handles will be changed from the original value, but should be OK
+        try {
+            setupSingleTunerSetupForIsLowestPriority();
+            testTwoClientsForIsLowestPriority(200, 100); // A > B
+            testTwoClientsForIsLowestPriority(100, 200); // A < B
+            testTwoClientsForIsLowestPriority(100, 100); // A = B
+
+            setupDualTunerSetupForIsLowestPriority();
+            testTwoClientsForIsLowestPriority(200, 100); // A > B
+            testTwoClientsForIsLowestPriority(100, 200); // A < B
+            testTwoClientsForIsLowestPriority(100, 100); // A = B
+        } catch (Exception e) {
+            throw (e);
+        } finally {
+            cleanupTRMCustomFeResourceMapTest();
+        }
+    }
+
+    @Test
+    public void testIsLowestPriorityThreeClients() throws Exception {
+        prepTRMCustomFeResourceMapTest();
+
+        // Use try block to ensure restoring the TunerResourceManager
+        // Note: the handles will be changed from the original value, but should be OK
+        try {
+            setupDualTunerSetupForIsLowestPriority();
+            testThreeClientsForIsLowestPriority(300, 200, 100); // A > B > C
+            testThreeClientsForIsLowestPriority(300, 100, 200); // A > C > B
+            testThreeClientsForIsLowestPriority(200, 300, 100); // B > A > C
+            testThreeClientsForIsLowestPriority(200, 100, 300); // C > A > B
+            testThreeClientsForIsLowestPriority(100, 300, 200); // B > C > A
+            testThreeClientsForIsLowestPriority(100, 200, 300); // C > B > A
+            testThreeClientsForIsLowestPriority(100, 100, 100); // A = B = C
+            testThreeClientsForIsLowestPriority(200, 200, 100); // A = B > C
+            testThreeClientsForIsLowestPriority(200, 100, 100); // A > B = C
+            testThreeClientsForIsLowestPriority(200, 100, 200); // A = C > B
+            testThreeClientsForIsLowestPriority(200, 300, 200); // B > A = C
+            testThreeClientsForIsLowestPriority(100, 100, 200); // C > A = B
+            testThreeClientsForIsLowestPriority(100, 200, 200); // B = C > A
+        } catch (Exception e) {
+            throw (e);
+        } finally {
+            cleanupTRMCustomFeResourceMapTest();
+        }
+    }
+
+    private TunerFrontendInfo tunerFrontendInfo(
+            int handle, int frontendType, int exclusiveGroupId) {
+        TunerFrontendInfo info = new TunerFrontendInfo();
+        info.handle = handle;
+        info.type = frontendType;
+        info.exclusiveGroupId = exclusiveGroupId;
+        return info;
+    }
+
+    /**
+     * Prep function for TunerTest that requires custom frontend resource map
+     */
+    private void prepTRMCustomFeResourceMapTest() {
+        if (mTunerResourceManager == null) {
+            mTunerResourceManager = (TunerResourceManager)
+                    mContext.getSystemService(Context.TV_TUNER_RESOURCE_MGR_SERVICE);
+        }
+        mTunerResourceManager.storeResourceMap(TunerResourceManager.TUNER_RESOURCE_TYPE_FRONTEND);
+        mTunerResourceManager.clearResourceMap(TunerResourceManager.TUNER_RESOURCE_TYPE_FRONTEND);
+    }
+
+    /**
+     * Clean up function for TunerTest that requires custom frontend resource map
+     */
+    private void cleanupTRMCustomFeResourceMapTest() {
+        // first close mTuner in case a frontend resource is opened
+        if (mTuner != null) {
+            mTuner.close();
+            mTuner = null;
+        }
+
+        // now restore the original frontend resource map
+        if (mTunerResourceManager != null) {
+            mTunerResourceManager.restoreResourceMap(
+                    TunerResourceManager.TUNER_RESOURCE_TYPE_FRONTEND);
+        }
+    }
+
+    private void clearFrontendInfoList() {
+        if (mTunerResourceManager != null) {
+            mTunerResourceManager.clearResourceMap(
+                    TunerResourceManager.TUNER_RESOURCE_TYPE_FRONTEND);
+        }
+    }
+
+    private void assignFeResource(int clientId, int frontendType,
+                                  boolean expectedResult, int expectedHandle) {
+        int[] feHandle = new int[1];
+        TunerFrontendRequest request = new TunerFrontendRequest();
+        request.clientId = clientId;
+        request.frontendType = frontendType;
+        boolean granted = mTunerResourceManager.requestFrontend(request, feHandle);
+        assertEquals(granted, expectedResult);
+        assertEquals(feHandle[0], expectedHandle);
+    }
+
+    private void setupSingleTunerSetupForIsLowestPriority() {
+        // first clear the frontend resource to register new set of resources
+        clearFrontendInfoList();
+
+        TunerFrontendInfo[] infos = new TunerFrontendInfo[3];
+        // tunerFrontendInfo(handle, FrontendSettings.TYPE_*, exclusiveGroupId
+        infos[0] = tunerFrontendInfo(1, FrontendSettings.TYPE_DVBT, 1);
+        infos[1] = tunerFrontendInfo(2, FrontendSettings.TYPE_DVBC, 1);
+        infos[2] = tunerFrontendInfo(3, FrontendSettings.TYPE_DVBS, 1);
+
+        mTunerResourceManager.setFrontendInfoList(infos);
+    }
+
+    private void setupDualTunerSetupForIsLowestPriority() {
+        // first clear the frontend resource to register new set of resources
+        clearFrontendInfoList();
+
+        TunerFrontendInfo[] infos = new TunerFrontendInfo[6];
+        // tunerFrontendInfo(handle, FrontendSettings.TYPE_*, exclusiveGroupId
+        infos[0] = tunerFrontendInfo(1, FrontendSettings.TYPE_DVBT, 1);
+        infos[1] = tunerFrontendInfo(2, FrontendSettings.TYPE_DVBC, 1);
+        infos[2] = tunerFrontendInfo(3, FrontendSettings.TYPE_DVBS, 1);
+        infos[3] = tunerFrontendInfo(4, FrontendSettings.TYPE_DVBT, 2);
+        infos[4] = tunerFrontendInfo(5, FrontendSettings.TYPE_DVBC, 2);
+        infos[5] = tunerFrontendInfo(6, FrontendSettings.TYPE_DVBS, 2);
+
+        mTunerResourceManager.setFrontendInfoList(infos);
+    }
+
+
+    private void testTwoClientsForIsLowestPriority(int prioA, int prioB) {
+
+        Tuner A = new Tuner(mContext, null, prioA);
+        Tuner B = new Tuner(mContext, null, prioB);
+
+        // all should return true
+        assertTrue(A.isLowestPriority(FrontendSettings.TYPE_DVBT));
+        assertTrue(B.isLowestPriority(FrontendSettings.TYPE_DVBC));
+
+        // let A hold resource
+        assignFeResource(A.getClientId(), FrontendSettings.TYPE_DVBT,
+                         true /* expectedResult */, 1 /* expectedHandle */);
+
+        // should return true for A as A is the sole holder
+        assertTrue(A.isLowestPriority(FrontendSettings.TYPE_DVBT));
+        // should return false for B only if A < B
+        if ( prioA < prioB ) {
+            assertFalse(B.isLowestPriority(FrontendSettings.TYPE_DVBC));
+        } else {
+            assertTrue(B.isLowestPriority(FrontendSettings.TYPE_DVBC));
+        }
+
+        A.close();
+        B.close();
+    }
+
+    private void testThreeClientsForIsLowestPriority(int prioA, int prioB, int prioC) {
+
+        Tuner A = new Tuner(mContext, null, prioA);
+        Tuner B = new Tuner(mContext, null, prioB);
+        Tuner C = new Tuner(mContext, null, prioC);
+
+        // all should return true
+        assertTrue(A.isLowestPriority(FrontendSettings.TYPE_DVBT));
+        assertTrue(B.isLowestPriority(FrontendSettings.TYPE_DVBC));
+        assertTrue(C.isLowestPriority(FrontendSettings.TYPE_DVBS));
+
+        // let A & C hold resource
+        assignFeResource(A.getClientId(), FrontendSettings.TYPE_DVBT,
+                         true /* expectedResult */, 1 /* expectedHandle */);
+
+        assignFeResource(C.getClientId(), FrontendSettings.TYPE_DVBC,
+                         true /* expectedResult */, 5 /* expectedHandle */);
+
+        // should return false for B only if A < B
+        if (prioA > prioB && prioB > prioC) {
+            assertFalse(A.isLowestPriority(FrontendSettings.TYPE_DVBC));
+            assertFalse(B.isLowestPriority(FrontendSettings.TYPE_DVBS));
+            assertTrue(C.isLowestPriority(FrontendSettings.TYPE_DVBT));
+        } else if (prioA > prioC && prioC > prioB) {
+            assertFalse(A.isLowestPriority(FrontendSettings.TYPE_DVBC));
+            assertTrue(B.isLowestPriority(FrontendSettings.TYPE_DVBS));
+            assertTrue(C.isLowestPriority(FrontendSettings.TYPE_DVBT));
+        } else if (prioA > prioC && prioC > prioB) {
+            assertFalse(A.isLowestPriority(FrontendSettings.TYPE_DVBC));
+            assertTrue(B.isLowestPriority(FrontendSettings.TYPE_DVBS));
+            assertTrue(C.isLowestPriority(FrontendSettings.TYPE_DVBT));
+        } else if (prioB > prioA && prioA > prioC) {
+            assertFalse(A.isLowestPriority(FrontendSettings.TYPE_DVBC));
+            assertFalse(B.isLowestPriority(FrontendSettings.TYPE_DVBS));
+            assertTrue(C.isLowestPriority(FrontendSettings.TYPE_DVBT));
+        } else if (prioC > prioA && prioA > prioB) {
+            assertTrue(A.isLowestPriority(FrontendSettings.TYPE_DVBC));
+            assertTrue(B.isLowestPriority(FrontendSettings.TYPE_DVBS));
+            assertFalse(C.isLowestPriority(FrontendSettings.TYPE_DVBT));
+        } else if (prioB > prioC && prioC > prioA) {
+            assertTrue(A.isLowestPriority(FrontendSettings.TYPE_DVBC));
+            assertFalse(B.isLowestPriority(FrontendSettings.TYPE_DVBS));
+            assertFalse(C.isLowestPriority(FrontendSettings.TYPE_DVBT));
+        } else if (prioC > prioB && prioB > prioA) {
+            assertTrue(A.isLowestPriority(FrontendSettings.TYPE_DVBC));
+            assertFalse(B.isLowestPriority(FrontendSettings.TYPE_DVBS));
+            assertFalse(C.isLowestPriority(FrontendSettings.TYPE_DVBT));
+        } else if (prioA == prioB && prioB == prioC) {
+            assertTrue(A.isLowestPriority(FrontendSettings.TYPE_DVBC));
+            assertTrue(B.isLowestPriority(FrontendSettings.TYPE_DVBS));
+            assertTrue(C.isLowestPriority(FrontendSettings.TYPE_DVBT));
+        } else if (prioA == prioB && prioB > prioC) {
+            assertFalse(A.isLowestPriority(FrontendSettings.TYPE_DVBC));
+            assertFalse(B.isLowestPriority(FrontendSettings.TYPE_DVBS));
+            assertTrue(C.isLowestPriority(FrontendSettings.TYPE_DVBT));
+        } else if (prioA > prioB && prioB == prioC) {
+            assertFalse(A.isLowestPriority(FrontendSettings.TYPE_DVBC));
+            assertTrue(B.isLowestPriority(FrontendSettings.TYPE_DVBS));
+            assertTrue(C.isLowestPriority(FrontendSettings.TYPE_DVBT));
+        } else if (prioA == prioC && prioC > prioB) {
+            assertTrue(A.isLowestPriority(FrontendSettings.TYPE_DVBC));
+            assertTrue(B.isLowestPriority(FrontendSettings.TYPE_DVBS));
+            assertTrue(C.isLowestPriority(FrontendSettings.TYPE_DVBT));
+        } else if (prioB > prioA && prioA == prioC) {
+            assertTrue(A.isLowestPriority(FrontendSettings.TYPE_DVBC));
+            assertFalse(B.isLowestPriority(FrontendSettings.TYPE_DVBS));
+            assertTrue(C.isLowestPriority(FrontendSettings.TYPE_DVBT));
+        } else if (prioC > prioA && prioA == prioB) {
+            assertTrue(A.isLowestPriority(FrontendSettings.TYPE_DVBC));
+            assertTrue(B.isLowestPriority(FrontendSettings.TYPE_DVBS));
+            assertFalse(C.isLowestPriority(FrontendSettings.TYPE_DVBT));
+        } else if (prioB == prioC && prioC > prioA) {
+            assertTrue(A.isLowestPriority(FrontendSettings.TYPE_DVBC));
+            assertFalse(B.isLowestPriority(FrontendSettings.TYPE_DVBS));
+            assertFalse(C.isLowestPriority(FrontendSettings.TYPE_DVBT));
+        }
+
+        A.close();
+        B.close();
+        C.close();
+    }
     private boolean hasTuner() {
         return mContext.getPackageManager().hasSystemFeature("android.hardware.tv.tuner");
     }
