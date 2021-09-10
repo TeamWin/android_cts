@@ -875,7 +875,8 @@
     <string name="ibo_test">Ignore Battery Optimizations Test</string>
     <string name="ibo_test_info">
         This test verifies that the device provides a user affordance to ask the user if the system
-        should disable battery optimizations for an app.
+        should disable battery optimizations for an app and to allow a user to remove the app from
+        the exemption list.
     </string>
     <string name="ibo_test_start_unexempt_app">
         Remove the test app from the ignore battery optimizations list to begin the test. (Try going
@@ -887,8 +888,9 @@
     <string name="ibo_next_to_confirm">Press next to confirm.</string>
     <string name="ibo_app_not_exempted">The app is not exempted from battery optimizations.</string>
     <string name="ibo_unexempt_app">
-        Remove the test app from the ignore battery optimizations list. (Try going
-        to the App Info page and make sure the system is optimizing battery for the app.)
+        Remove the test app from the ignore battery optimizations list. (Either run \"adb shell cmd
+        deviceidle whitelist -com.android.cts.verifier\" or open the list of apps and their
+        exemption statuses. Find the test app in the list and remove the app\'s exemption.)
     </string>
     <string name="ibo_app_is_exempted">The app is exempted from battery optimizations.</string>
     <string name="ibo_exempt_app_list">
