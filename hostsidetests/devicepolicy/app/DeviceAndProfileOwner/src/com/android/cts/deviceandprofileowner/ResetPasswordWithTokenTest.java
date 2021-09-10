@@ -26,24 +26,15 @@ import static android.app.admin.DevicePolicyManager.PASSWORD_QUALITY_NUMERIC;
 import static android.app.admin.DevicePolicyManager.PASSWORD_QUALITY_SOMETHING;
 import static android.app.admin.DevicePolicyManager.PASSWORD_QUALITY_UNSPECIFIED;
 
-import android.app.KeyguardManager;
 import android.app.admin.DevicePolicyManager;
-import android.stats.devicepolicy.EventId;
 
 import androidx.test.InstrumentationRegistry;
-
-import com.android.bedstead.metricsrecorder.EnterpriseMetricsRecorder;
 
 public class ResetPasswordWithTokenTest extends BaseDeviceAdminTest {
 
     private static final String SHORT_PASSWORD = "1234";
-    private static final String COMPLEX_PASSWORD = "abc123.";
-
     private static final byte[] TOKEN0 = "abcdefghijklmnopqrstuvwxyz0123456789".getBytes();
-    private static final byte[] TOKEN1 = "abcdefghijklmnopqrstuvwxyz012345678*".getBytes();
-
     private static final String ARG_ALLOW_FAILURE = "allowFailure";
-    private static final String ARG_LOGGING_TEST = "loggingTest";
 
     private boolean mShouldRun;
 
@@ -65,87 +56,6 @@ public class ResetPasswordWithTokenTest extends BaseDeviceAdminTest {
                 PASSWORD_QUALITY_UNSPECIFIED);
         mDevicePolicyManager.setRequiredPasswordComplexity(PASSWORD_COMPLEXITY_NONE);
         super.tearDown();
-    }
-
-    public void testBadTokenShouldFail() {
-        if (!mShouldRun) {
-            return;
-        }
-        // resetting password with wrong token should fail
-        assertFalse(mDevicePolicyManager.resetPasswordWithToken(ADMIN_RECEIVER_COMPONENT,
-                SHORT_PASSWORD, TOKEN1, 0));
-    }
-
-    public void testChangePasswordWithToken() {
-        if (!mShouldRun) {
-            return;
-        }
-        // try changing password with token
-        assertTrue(mDevicePolicyManager.resetPasswordWithToken(ADMIN_RECEIVER_COMPONENT,
-                SHORT_PASSWORD, TOKEN0, 0));
-
-        // Set a strong password constraint and expect the sufficiency check to fail
-        mDevicePolicyManager.setPasswordQuality(ADMIN_RECEIVER_COMPONENT, PASSWORD_QUALITY_NUMERIC);
-        mDevicePolicyManager.setPasswordMinimumLength(ADMIN_RECEIVER_COMPONENT, 6);
-        assertPasswordSufficiency(false);
-
-        // try changing to a stronger password and verify it satisfies requested constraint
-        assertTrue(mDevicePolicyManager.resetPasswordWithToken(ADMIN_RECEIVER_COMPONENT,
-                COMPLEX_PASSWORD, TOKEN0, 0));
-        assertPasswordSufficiency(true);
-    }
-
-    public void testResetPasswordFailIfQualityNotMet() {
-        if (!mShouldRun) {
-            return;
-        }
-        mDevicePolicyManager.setPasswordQuality(ADMIN_RECEIVER_COMPONENT, PASSWORD_QUALITY_NUMERIC);
-        mDevicePolicyManager.setPasswordMinimumLength(ADMIN_RECEIVER_COMPONENT, 6);
-
-        assertFalse(mDevicePolicyManager.resetPasswordWithToken(ADMIN_RECEIVER_COMPONENT,
-                SHORT_PASSWORD, TOKEN0, 0));
-
-        assertTrue(mDevicePolicyManager.resetPasswordWithToken(ADMIN_RECEIVER_COMPONENT,
-                COMPLEX_PASSWORD, TOKEN0, 0));
-    }
-
-    public void testPasswordMetricAfterResetPassword() {
-        if (!mShouldRun) {
-            return;
-        }
-        mDevicePolicyManager.setPasswordQuality(ADMIN_RECEIVER_COMPONENT,
-                PASSWORD_QUALITY_COMPLEX);
-        mDevicePolicyManager.setPasswordMinimumNumeric(ADMIN_RECEIVER_COMPONENT, 1);
-        mDevicePolicyManager.setPasswordMinimumLetters(ADMIN_RECEIVER_COMPONENT, 1);
-        mDevicePolicyManager.setPasswordMinimumSymbols(ADMIN_RECEIVER_COMPONENT, 0);
-        assertTrue(mDevicePolicyManager.resetPasswordWithToken(ADMIN_RECEIVER_COMPONENT,
-                COMPLEX_PASSWORD, TOKEN0, 0));
-
-        // Change required complexity and verify new password satisfies it
-        // First set a slightly stronger requirement and expect password sufficiency is false
-        mDevicePolicyManager.setPasswordMinimumNumeric(ADMIN_RECEIVER_COMPONENT, 3);
-        mDevicePolicyManager.setPasswordMinimumLetters(ADMIN_RECEIVER_COMPONENT, 3);
-        mDevicePolicyManager.setPasswordMinimumSymbols(ADMIN_RECEIVER_COMPONENT, 2);
-        assertPasswordSufficiency(false);
-        // Then sets the appropriate quality and verify it should pass
-        mDevicePolicyManager.setPasswordMinimumSymbols(ADMIN_RECEIVER_COMPONENT, 1);
-        assertPasswordSufficiency(true);
-    }
-
-    public void testClearPasswordWithToken() {
-        if (!mShouldRun) {
-            return;
-        }
-        KeyguardManager km = mContext.getSystemService(KeyguardManager.class);
-        // First set a password
-        assertTrue(mDevicePolicyManager.resetPasswordWithToken(ADMIN_RECEIVER_COMPONENT,
-                SHORT_PASSWORD, TOKEN0, 0));
-        assertTrue(km.isDeviceSecure());
-
-        // clear password with token
-        assertTrue(mDevicePolicyManager.resetPasswordWithToken(ADMIN_RECEIVER_COMPONENT, null,
-                TOKEN0, 0));
-        assertFalse(km.isDeviceSecure());
     }
 
     public void testPasswordQuality_something() {
@@ -574,22 +484,6 @@ public class ResetPasswordWithTokenTest extends BaseDeviceAdminTest {
         assertPasswordSucceeds("_@3c", caseDescription);
         assertPasswordSucceeds("_25!", caseDescription);
         assertPasswordFails("123", caseDescription); // too short
-    }
-
-    public void testResetPasswordWithTokenLogging() {
-        if (!mShouldRun) {
-            return;
-        }
-
-        try (EnterpriseMetricsRecorder metrics = EnterpriseMetricsRecorder.create()) {
-            mDevicePolicyManager.resetPasswordWithToken(ADMIN_RECEIVER_COMPONENT,
-                    SHORT_PASSWORD, TOKEN0, 0);
-
-            assertNotNull(metrics.query()
-                    .whereType().isEqualTo(EventId.RESET_PASSWORD_WITH_TOKEN_VALUE)
-                    .whereAdminPackageName().isEqualTo(PACKAGE_NAME)
-                    .poll());
-        }
     }
 
     private boolean setUpResetPasswordToken(boolean acceptFailure) {
