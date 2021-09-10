@@ -22,8 +22,10 @@ import static android.provider.MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
+import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.ClipData;
 import android.content.ContentResolver;
@@ -63,6 +65,9 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.function.Supplier;
 
 /**
  * Photo Picker Device only tests.
@@ -75,6 +80,7 @@ public class PhotoPickerTest {
     private static final String DISPLAY_NAME_PREFIX = "ctsPhotoPicker";
     private static final String REGEX_PACKAGE_NAME =
             "com(.google)?.android.providers.media(.module)?";
+    private static final long POLLING_SLEEP_MILLIS = 200;
     private static final long TIMEOUT = 30 * DateUtils.SECOND_IN_MILLIS;
 
     public static int REQUEST_CODE = 42;
@@ -132,11 +138,87 @@ public class PhotoPickerTest {
     }
 
     @Test
+    public void testMultiSelect_invalidParam() throws Exception {
+        final Intent intent = new Intent(MediaStore.ACTION_PICK_IMAGES);
+        intent.putExtra(MediaStore.EXTRA_PICK_IMAGES_MAX, MediaStore.getPickImagesMaxLimit() + 1);
+        mActivity.startActivityForResult(intent, REQUEST_CODE);
+        final GetResultActivity.Result res = mActivity.getResult();
+        assertEquals(Activity.RESULT_CANCELED, res.resultCode);
+    }
+
+    @Test
+    public void testMultiSelect_invalidNegativeParam() throws Exception {
+        final Intent intent = new Intent(MediaStore.ACTION_PICK_IMAGES);
+        intent.putExtra(MediaStore.EXTRA_PICK_IMAGES_MAX, -1);
+        mActivity.startActivityForResult(intent, REQUEST_CODE);
+        final GetResultActivity.Result res = mActivity.getResult();
+        assertEquals(Activity.RESULT_CANCELED, res.resultCode);
+    }
+
+    @Test
+    public void testMultiSelect_returnsNotMoreThanMax() throws Exception {
+        final int imageCount = 2;
+        createImages(imageCount + 1);
+        final Intent intent = new Intent(MediaStore.ACTION_PICK_IMAGES);
+        intent.putExtra(MediaStore.EXTRA_PICK_IMAGES_MAX, imageCount);
+        mActivity.startActivityForResult(intent, REQUEST_CODE);
+
+        final List<UiObject> itemList = findItemList(imageCount + 1);
+        final int itemCount = itemList.size();
+        assertThat(itemCount).isEqualTo(imageCount + 1);
+        // Select imageCount + 1 items
+        for (int i = 0; i < itemCount; i++) {
+            final UiObject item = itemList.get(i);
+            item.click();
+            mDevice.waitForIdle();
+        }
+
+        UiObject snackbarTextView = mDevice.findObject(new UiSelector().text(
+                "Select up to 2 items"));
+        assertThat(snackbarTextView).isNotNull();
+        pollForCondition(() -> !snackbarTextView.exists(), "Timed out waiting for snackbar to "
+                + "disappear");
+
+        final UiObject addButton = findAddButton();
+        addButton.click();
+        mDevice.waitForIdle();
+
+        final ClipData clipData = mActivity.getResult().data.getClipData();
+        final int count = clipData.getItemCount();
+        assertThat(count).isEqualTo(imageCount);
+    }
+
+    @Test
+    public void testMultiSelect_doesNotRespectExtraAllowMultiple() throws Exception {
+        final int imageCount = 2;
+        createImages(imageCount);
+        final Intent intent = new Intent(MediaStore.ACTION_PICK_IMAGES);
+        intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+        mActivity.startActivityForResult(intent, REQUEST_CODE);
+
+        final List<UiObject> itemList = findItemList(imageCount);
+        final int itemCount = itemList.size();
+        assertThat(itemCount).isEqualTo(imageCount);
+        // Select 1 items
+        final UiObject item = itemList.get(0);
+        item.click();
+        mDevice.waitForIdle();
+
+        // Shows preview Add button; single select flow
+        final UiObject addButton = findPreviewAddButton();
+        addButton.click();
+        mDevice.waitForIdle();
+
+        final Uri uri = mActivity.getResult().data.getData();
+        assertRedactedReadOnlyAccess(uri);
+    }
+
+    @Test
     public void testMultiSelect() throws Exception {
         final int imageCount = 4;
         createImages(imageCount);
         final Intent intent = new Intent(MediaStore.ACTION_PICK_IMAGES);
-        intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+        intent.putExtra(MediaStore.EXTRA_PICK_IMAGES_MAX, MediaStore.getPickImagesMaxLimit());
         mActivity.startActivityForResult(intent, REQUEST_CODE);
 
         final List<UiObject> itemList = findItemList(imageCount);
@@ -165,7 +247,7 @@ public class PhotoPickerTest {
         final int videoCount = 2;
         createVideos(videoCount);
         final Intent intent = new Intent(MediaStore.ACTION_PICK_IMAGES);
-        intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+        intent.putExtra(MediaStore.EXTRA_PICK_IMAGES_MAX, videoCount);
         intent.setType("video/*");
         mActivity.startActivityForResult(intent, REQUEST_CODE);
 
@@ -395,6 +477,17 @@ public class PhotoPickerTest {
     private UiObject findAddButton() throws UiObjectNotFoundException {
         return new UiObject(new UiSelector().resourceIdMatches(
                 REGEX_PACKAGE_NAME + ":id/button_add"));
+    }
+
+    private static void pollForCondition(Supplier<Boolean> condition, String errorMessage)
+            throws Exception {
+        for (int i = 0; i < TIMEOUT / POLLING_SLEEP_MILLIS; i++) {
+            if (condition.get()) {
+                return;
+            }
+            Thread.sleep(POLLING_SLEEP_MILLIS);
+        }
+        throw new TimeoutException(errorMessage);
     }
 }
 
