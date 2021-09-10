@@ -361,4 +361,12 @@ public class TestAppInstanceReferenceTest {
                     .isNull();
         }
     }
+
+    @Test
+    public void crossProfileApps_returnsUsableInstance() {
+        TestApp testApp = mTestAppProvider.any();
+        try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
+            assertThat(testAppInstance.crossProfileApps().getTargetUserProfiles()).isEmpty();
+        }
+    }
 }
