@@ -46,6 +46,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.function.BiFunction;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
@@ -711,6 +712,22 @@ public class ArrayMapTest {
         map.removeAll(Arrays.asList(2, 4));
         if (!map.isEmpty()) {
             fail("ArrayMap removeAll failure, expect empty, but " + map);
+        }
+    }
+
+    @Test
+    public void testReplaceAll() {
+        final ArrayMap<Integer, Integer> map = new ArrayMap<>();
+        final ArrayMap<Integer, Integer> expectedMap = new ArrayMap<>();
+        final BiFunction<Integer, Integer, Integer> function = (k, v) -> 2 * v;
+        for (Integer i : Arrays.asList(0, 1, 2, 3, 4, 5)) {
+            map.put(i, i);
+            expectedMap.put(i, 2 * i);
+        }
+
+        map.replaceAll(function);
+        if (!compare(map, expectedMap)) {
+            fail("ArrayMap replaceAll failure, expect " + expectedMap + ", but " + map);
         }
     }
 }
