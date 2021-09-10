@@ -79,15 +79,6 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
         assertWithMessage("New user").that(userHandle).isNotNull();
     }
 
-    public void testCreateAndManageUser_LowStorage() throws Exception {
-        UserManager.UserOperationException e = expectThrows(
-                UserManager.UserOperationException.class, () -> createAndManageUser());
-
-        assertUserOperationResult(e.getUserOperationResult(),
-                UserManager.USER_OPERATION_ERROR_LOW_STORAGE,
-                "user creation on low storage");
-    }
-
     public void testCreateAndManageUser_MaxUsers() throws Exception {
         UserManager.UserOperationException e = expectThrows(
                 UserManager.UserOperationException.class, () -> createAndManageUser());

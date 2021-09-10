@@ -123,27 +123,6 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
         }
     }
 
-    @FlakyTest(bugId = 137071121)
-    @Test
-    public void testCreateAndManageUser_LowStorage() throws Exception {
-        assumeCanCreateOneManagedUser();
-
-        try {
-            // Force low storage
-            getDevice().setSetting("global", "sys_storage_threshold_percentage", "100");
-            getDevice().setSetting("global", "sys_storage_threshold_max_bytes",
-                    String.valueOf(Long.MAX_VALUE));
-
-            // The next createAndManageUser should return USER_OPERATION_ERROR_LOW_STORAGE.
-            executeCreateAndManageUserTest("testCreateAndManageUser_LowStorage");
-        } finally {
-            getDevice().executeShellCommand(
-                    "settings delete global sys_storage_threshold_percentage");
-            getDevice().executeShellCommand(
-                    "settings delete global sys_storage_threshold_max_bytes");
-        }
-    }
-
     @Test
     public void testCreateAndManageUser_MaxUsers() throws Exception {
         assumeCanCreateOneManagedUser();
