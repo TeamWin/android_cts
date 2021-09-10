@@ -21,7 +21,10 @@ import android.app.admin.RemoteDevicePolicyManager;
 import android.app.admin.RemoteDevicePolicyManagerWrapper;
 import android.content.BroadcastReceiver;
 import android.content.IntentFilter;
+import android.content.pm.CrossProfileApps;
 import android.content.pm.PackageManager;
+import android.content.pm.RemoteCrossProfileApps;
+import android.content.pm.RemoteCrossProfileAppsWrapper;
 import android.content.pm.RemotePackageManager;
 import android.content.pm.RemotePackageManagerWrapper;
 import android.net.wifi.RemoteWifiManager;
@@ -308,5 +311,14 @@ public class TestAppInstanceReference implements AutoCloseable, ConnectionListen
      */
     public RemotePackageManager packageManager() {
         return new RemotePackageManagerWrapper(mConnector);
+    }
+
+    /**
+     * Access {@link CrossProfileApps} using this test app.
+     *
+     * <p>Almost all methods are available. Those that are not will be missing from the interface.
+     */
+    public RemoteCrossProfileApps crossProfileApps() {
+        return new RemoteCrossProfileAppsWrapper(mConnector);
     }
 }
