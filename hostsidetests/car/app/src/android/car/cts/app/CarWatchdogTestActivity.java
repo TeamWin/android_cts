@@ -43,11 +43,12 @@ import java.util.concurrent.Executors;
 public class CarWatchdogTestActivity extends Activity {
     private static final String TAG = CarWatchdogTestActivity.class.getSimpleName();
     private static final long TEN_MEGABYTES = 1024 * 1024 * 10;
+    private static final long TWO_HUNDRED_MEGABYTES = 1024 * 1024 * 200;
     private static final int DISK_DELAY_MS = 4000;
     private static final double EXCEED_WARN_THRESHOLD_PERCENT = 0.9;
 
     private final ExecutorService mExecutor = Executors.newSingleThreadExecutor();
-    private String mDumpMessage = "WAIT: Waiting...";
+    private String mDumpMessage = "";
     private Car mCar;
     private File mTestDir;
 
@@ -108,6 +109,7 @@ public class CarWatchdogTestActivity extends Activity {
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
+        setDumpMessage("");
         Bundle extras = intent.getExtras();
         if (extras == null) {
             Log.w(TAG, "onNewIntent: empty extras");
@@ -120,7 +122,16 @@ public class CarWatchdogTestActivity extends Activity {
             return;
         }
         mExecutor.execute(() -> {
-            writeToDisk(remainingBytes);
+            IoOveruseListener listener = addResourceOveruseListenerLocked();
+            try {
+                listener.setExpectedMinWrittenBytes(TWO_HUNDRED_MEGABYTES);
+
+                writeToDisk(remainingBytes);
+
+                listener.checkIsNotified();
+            } finally {
+                mCarWatchdogManager.removeResourceOveruseListener(listener);
+            }
         });
     }
 
