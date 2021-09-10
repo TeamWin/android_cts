@@ -242,6 +242,9 @@
         <activity android:name="android.server.wm.lifecycle.ActivityStarterTests$FinishOnTaskLaunchActivity"
                   android:finishOnTaskLaunch="true"
                   android:exported="true"/>
+        <activity android:name="android.server.wm.lifecycle.ActivityStarterTests$RelinquishTaskIdentityActivity"
+                  android:exported="true"
+                  android:relinquishTaskIdentity="true"/>
 
         <provider android:name="android.server.wm.TestJournalProvider"
              android:authorities="android.server.wm.testjournalprovider"
