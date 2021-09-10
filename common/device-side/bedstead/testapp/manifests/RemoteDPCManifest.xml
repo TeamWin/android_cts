@@ -18,6 +18,9 @@
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="com.android.RemoteDPC">
+
+    <uses-permission android:name="android.permission.INTERACT_ACROSS_PROFILES"/>
+
     <application
         android:appComponentFactory="com.android.bedstead.testapp.TestAppAppComponentFactory"
         android:testOnly="true">
