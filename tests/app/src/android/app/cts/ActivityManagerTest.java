@@ -1545,26 +1545,6 @@ public class ActivityManagerTest extends InstrumentationTestCase {
             assertTrue("Failed to wait for the trim memory event",
                     heavyLatchHolder[0].await(waitForSec, TimeUnit.MILLISECONDS));
 
-            // All done, clean up.
-            CommandReceiver.sendCommand(mTargetContext, CommandReceiver.COMMAND_STOP_ACTIVITY,
-                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP2, 0, null);
-            CommandReceiver.sendCommand(mTargetContext, CommandReceiver.COMMAND_STOP_ACTIVITY,
-                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
-            CommandReceiver.sendCommand(mTargetContext, CommandReceiver.COMMAND_STOP_SERVICE,
-                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP2, 0, null);
-            CommandReceiver.sendCommand(mTargetContext, CommandReceiver.COMMAND_STOP_SERVICE,
-                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
-
-            final Intent finishIntent = new Intent();
-            finishIntent.setPackage(CANT_SAVE_STATE_1_PACKAGE_NAME);
-            finishIntent.setAction(ACTION_FINISH);
-            finishIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            finishIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            mTargetContext.startActivity(finishIntent);
-
-            watcher1.waitFor(WatchUidRunner.CMD_CACHED, null);
-            watcher2.waitFor(WatchUidRunner.CMD_CACHED, null);
-            watcher3.waitFor(WatchUidRunner.CMD_CACHED, null);
         } finally {
             SystemUtil.runShellCommand(mInstrumentation,
                     "cmd deviceidle whitelist -" + PACKAGE_NAME_APP1);
