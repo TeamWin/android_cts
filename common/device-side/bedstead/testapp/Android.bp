@@ -100,7 +100,7 @@ python_binary_host {
 
 java_genrule {
     name: "TestApp_Apps",
-    srcs: [":EmptyTestApp", ":EmptyTestApp2", ":DeviceAdminTestApp", ":LockTaskApp", ":RemoteDPCTestApp"],
+    srcs: [":EmptyTestApp", ":EmptyTestApp2", ":DeviceAdminTestApp", ":LockTaskApp", ":RemoteDPCTestApp", ":SmsApp"],
     out: ["TestApp_Apps.res.zip"],
     tools: ["soong_zip", "index_testapps", "aapt2"],
     cmd: "mkdir -p $(genDir)/res/raw"
@@ -109,6 +109,7 @@ java_genrule {
          + " && cp $(location :DeviceAdminTestApp) $(genDir)/res/raw"
          + " && cp $(location :LockTaskApp) $(genDir)/res/raw"
          + " && cp $(location :RemoteDPCTestApp) $(genDir)/res/raw"
+         + " && cp $(location :SmsApp) $(genDir)/res/raw"
          + " && $(location index_testapps) --directory $(genDir)/res/raw --aapt2 $(location aapt2)"
          + " && $(location soong_zip) -o $(out) -C $(genDir)/res -D $(genDir)/res/raw"
 }
@@ -158,6 +159,16 @@ android_test_helper_app {
         "DeviceAdminApp"
     ],
     manifest: "manifests/RemoteDPCManifest.xml",
+    min_sdk_version: "28"
+}
+
+android_test_helper_app {
+    name: "SmsApp",
+    static_libs: [
+        "TestApp_TestApps",
+        "DeviceAdminApp"
+    ],
+    manifest: "manifests/SmsAppManifest.xml",
     min_sdk_version: "28"
 }
 
