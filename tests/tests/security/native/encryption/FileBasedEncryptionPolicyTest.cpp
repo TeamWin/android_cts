@@ -180,6 +180,7 @@ static void validateEncryptionModes(int contents_mode, int filenames_mode,
 // https://source.android.com/security/encryption/file-based.html
 TEST(FileBasedEncryptionPolicyTest, allowedPolicy) {
     int first_api_level = getFirstApiLevel();
+    char crypto_type[PROPERTY_VALUE_MAX];
     struct fscrypt_get_policy_ex_arg arg;
     int res;
     int contents_mode;
@@ -192,6 +193,9 @@ TEST(FileBasedEncryptionPolicyTest, allowedPolicy) {
     }
 
     GTEST_LOG_(INFO) << "First API level is " << first_api_level;
+
+    property_get("ro.crypto.type", crypto_type, "");
+    GTEST_LOG_(INFO) << "ro.crypto.type is '" << crypto_type << "'";
 
     // Note: SELinux policy allows the shell domain to use these ioctls, but not
     // apps.  Therefore this test needs to be a real native test that's run
@@ -214,6 +218,15 @@ TEST(FileBasedEncryptionPolicyTest, allowedPolicy) {
             if (first_api_level < Q_API_LEVEL) {
                 GTEST_LOG_(INFO)
                         << "Exempt from file-based encryption due to old starting API level";
+                return;
+            }
+            if (strcmp(crypto_type, "managed") == 0) {
+                // Android is running in a virtualized environment and the file system is encrypted
+                // by the host system.
+                GTEST_LOG_(INFO) << "Exempt from file-based encryption because the file system is "
+                                 << "encrypted by the host system";
+                // Note: All encryption-related CDD requirements still must be met,
+                // but they can't be tested directly in this case.
                 return;
             }
             FAIL() << "Device isn't using file-based encryption";
