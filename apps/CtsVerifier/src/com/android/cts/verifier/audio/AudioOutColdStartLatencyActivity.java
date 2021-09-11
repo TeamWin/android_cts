@@ -112,10 +112,6 @@ public class AudioOutColdStartLatencyActivity
         return mColdStartlatencyMS;
     }
 
-    protected void stopAudio() {
-        stopAudioTest();
-    }
-
     void startOutTimer() {
         TimerTask task = new TimerTask() {
             public void run() {
@@ -198,6 +194,8 @@ public class AudioOutColdStartLatencyActivity
         }
 
         mPlayer.stopStream();
+        mPlayer.teardownStream();
+
         mIsTestRunning = false;
 
         stopOutTimer();

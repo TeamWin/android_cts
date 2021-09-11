@@ -62,9 +62,6 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     private static final String SIMPLE_APP_PKG = "com.android.cts.launcherapps.simpleapp";
     private static final String SIMPLE_APP_ACTIVITY = SIMPLE_APP_PKG + ".SimpleActivity";
 
-    private static final String SIMPLE_SMS_APP_PKG = "android.telephony.cts.sms.simplesmsapp";
-    private static final String SIMPLE_SMS_APP_APK = "SimpleSmsApp.apk";
-
     private static final String WIFI_CONFIG_CREATOR_PKG =
             "com.android.cts.deviceowner.wificonfigcreator";
     private static final String WIFI_CONFIG_CREATOR_APK = "CtsWifiConfigCreator.apk";
@@ -120,27 +117,6 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
                     "testRequestBugreportThrowsSecurityException");
         } finally {
             removeUser(userId);
-        }
-    }
-
-    @FlakyTest(bugId = 137071121)
-    @Test
-    public void testCreateAndManageUser_LowStorage() throws Exception {
-        assumeCanCreateOneManagedUser();
-
-        try {
-            // Force low storage
-            getDevice().setSetting("global", "sys_storage_threshold_percentage", "100");
-            getDevice().setSetting("global", "sys_storage_threshold_max_bytes",
-                    String.valueOf(Long.MAX_VALUE));
-
-            // The next createAndManageUser should return USER_OPERATION_ERROR_LOW_STORAGE.
-            executeCreateAndManageUserTest("testCreateAndManageUser_LowStorage");
-        } finally {
-            getDevice().executeShellCommand(
-                    "settings delete global sys_storage_threshold_percentage");
-            getDevice().executeShellCommand(
-                    "settings delete global sys_storage_threshold_max_bytes");
         }
     }
 
@@ -785,18 +761,6 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
                     .build());
     }
 
-    @TemporarilyIgnoreOnHeadlessSystemUserMode(bugId = "185486201", reason = "need to change DPMS")
-    @Test
-    public void testDefaultSmsApplication() throws Exception {
-        assumeHasTelephonyFeature();
-
-        installAppAsUser(SIMPLE_SMS_APP_APK, mPrimaryUserId);
-
-        executeDeviceTestMethod(".DefaultSmsApplicationTest", "testSetDefaultSmsApplication");
-
-        getDevice().uninstallPackage(SIMPLE_SMS_APP_PKG);
-    }
-
     @Test
     public void testNoHiddenActivityFoundTest() throws Exception {
         try {
@@ -842,28 +806,6 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     }
 
     @Test
-    public void testSetUserControlDisabledPackages_singleUser_verifyMetricIsLogged()
-            throws Exception {
-        final List<Integer> otherUserIds = new ArrayList<>();
-        try {
-            setupDeviceForSetUserControlDisabledPackagesTesting(otherUserIds);
-
-            // Set the package under test as a protected package.
-            assertMetricsLogged(getDevice(),
-                    () -> executeDeviceTestMethod(".UserControlDisabledPackagesTest",
-                            "testSetUserControlDisabledPackages"),
-                    new DevicePolicyEventWrapper.Builder(
-                            EventId.SET_USER_CONTROL_DISABLED_PACKAGES_VALUE)
-                            .setAdminPackageName(DEVICE_OWNER_PKG)
-                            .setStrings(new String[] {SIMPLE_APP_PKG})
-                            .build());
-        } finally {
-            cleanupProtectedPackage(otherUserIds);
-            getDevice().uninstallPackageForUser(SIMPLE_APP_APK, mPrimaryUserId);
-        }
-    }
-
-    @Test
     public void testSetUserControlDisabledPackages_singleUser_verifyPackageNotStopped()
             throws Exception {
         final List<Integer> otherUserIds = new ArrayList<>();
@@ -902,33 +844,6 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
         } finally {
             cleanupProtectedPackage(otherUserIds);
             getDevice().uninstallPackageForUser(SIMPLE_APP_APK, mPrimaryUserId);
-        }
-    }
-
-    @Test
-    public void testSetUserControlDisabledPackages_multiUser_verifyMetricIsLogged()
-            throws Exception {
-        assumeCanCreateAdditionalUsers(1);
-        final int userId = createUser();
-        final List<Integer> otherUserIds = new ArrayList<>();
-        otherUserIds.add(userId);
-        try {
-            setupDeviceForSetUserControlDisabledPackagesTesting(otherUserIds);
-
-            // Set the package under test as a protected package.
-            assertMetricsLogged(getDevice(),
-                    () -> executeDeviceTestMethod(".UserControlDisabledPackagesTest",
-                            "testSetUserControlDisabledPackages"),
-                    new DevicePolicyEventWrapper.Builder(
-                            EventId.SET_USER_CONTROL_DISABLED_PACKAGES_VALUE)
-                            .setAdminPackageName(DEVICE_OWNER_PKG)
-                            .setStrings(new String[] {SIMPLE_APP_PKG})
-                            .build());
-        } finally {
-            cleanupProtectedPackage(otherUserIds);
-            getDevice().uninstallPackageForUser(SIMPLE_APP_APK, mPrimaryUserId);
-            getDevice().uninstallPackageForUser(SIMPLE_APP_APK, userId);
-            removeUser(userId);
         }
     }
 

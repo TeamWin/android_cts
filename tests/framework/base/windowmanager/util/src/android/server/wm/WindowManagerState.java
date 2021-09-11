@@ -1385,6 +1385,8 @@ public class WindowManagerState {
             return mSurfaceHeight;
         }
 
+        public String getAffinity() { return mAffinity; }
+
         public ArrayList<Activity> getActivities() {
             return mActivities;
         }

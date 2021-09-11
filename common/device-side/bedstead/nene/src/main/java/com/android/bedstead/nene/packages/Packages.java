@@ -16,7 +16,15 @@
 
 package com.android.bedstead.nene.packages;
 
+import static android.Manifest.permission.INSTALL_PACKAGES;
+import static android.Manifest.permission.INSTALL_TEST_ONLY_PACKAGE;
+import static android.Manifest.permission.INTERACT_ACROSS_USERS;
 import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
+import static android.content.pm.PackageInstaller.EXTRA_STATUS;
+import static android.content.pm.PackageInstaller.EXTRA_STATUS_MESSAGE;
+import static android.content.pm.PackageInstaller.STATUS_FAILURE;
+import static android.content.pm.PackageInstaller.STATUS_SUCCESS;
+import static android.content.pm.PackageInstaller.SessionParams.MODE_FULL_INSTALL;
 import static android.os.Build.VERSION.SDK_INT;
 
 import static com.android.bedstead.nene.users.User.UserState.RUNNING_UNLOCKED;
@@ -26,6 +34,8 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageInstaller;
+import android.content.pm.PackageManager;
 import android.os.Build;
 
 import androidx.annotation.CheckResult;
@@ -40,6 +50,7 @@ import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.bedstead.nene.users.User;
 import com.android.bedstead.nene.users.UserReference;
+import com.android.bedstead.nene.utils.BlockingIntentSender;
 import com.android.bedstead.nene.utils.ShellCommand;
 import com.android.bedstead.nene.utils.ShellCommandUtils;
 import com.android.bedstead.nene.utils.Versions;
@@ -51,6 +62,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
@@ -284,76 +296,53 @@ public final class Packages {
 
         BlockingBroadcastReceiver broadcastReceiver =
                 registerPackageInstalledBroadcastReceiver(user);
+
+        PackageManager packageManager =
+                mTestApis.context().androidContextAsUser(user).getPackageManager();
+        PackageInstaller packageInstaller = packageManager.getPackageInstaller();
+
         try {
-            // Expected output "Success"
-            ShellCommand.builderForUser(user, "pm install")
-                    .addOption("-S", apkFile.length)
-                    .addOperand("-r")
-                    .addOperand("-t")
-                    .writeToStdIn(apkFile)
-                    .validate(ShellCommandUtils::startsWithSuccess)
-                    .execute();
+            int sessionId;
+            try (PermissionContext p = mTestApis.permissions().withPermission(
+                    INTERACT_ACROSS_USERS_FULL, INTERACT_ACROSS_USERS, INSTALL_TEST_ONLY_PACKAGE)) {
+                PackageInstaller.SessionParams sessionParams = new PackageInstaller.SessionParams(
+                        MODE_FULL_INSTALL);
+                sessionParams.setInstallFlagAllowTest();
+                sessionId = packageInstaller.createSession(sessionParams);
+            }
+
+            PackageInstaller.Session session = packageInstaller.openSession(sessionId);
+            try (OutputStream out =
+                         session.openWrite("NAME", 0, apkFile.length)) {
+                out.write(apkFile);
+                session.fsync(out);
+            }
+
+            try (BlockingIntentSender intentSender = BlockingIntentSender.create()) {
+                try (PermissionContext p =
+                             mTestApis.permissions().withPermission(INSTALL_PACKAGES)) {
+                    session.commit(intentSender.intentSender());
+                    session.close();
+
+                    Intent intent = intentSender.await();
+
+                    if (intent.getIntExtra(EXTRA_STATUS, /* defaultValue= */ STATUS_FAILURE)
+                            != STATUS_SUCCESS) {
+                        throw new NeneException("Not successful while installing package. "
+                                + "Got status: "
+                                + intent.getIntExtra(
+                                EXTRA_STATUS, /* defaultValue= */ STATUS_FAILURE)
+                                + " extra info: " + intent.getStringExtra(EXTRA_STATUS_MESSAGE));
+                    }
+                }
+            }
 
             return waitForPackageAddedBroadcast(broadcastReceiver);
-        } catch (AdbException e) {
-            throw new NeneException("Could not install from bytes for user " + user, e);
+        } catch (IOException e) {
+            throw new NeneException("Could not install package", e);
         } finally {
             broadcastReceiver.unregisterQuietly();
         }
-
-        // TODO(scottjonathan): Re-enable this after we have a TestAPI which allows us to install
-        //   testOnly apks
-//        BlockingBroadcastReceiver broadcastReceiver =
-//                registerPackageInstalledBroadcastReceiver(user);
-//
-//        PackageManager packageManager =
-//                mTestApis.context().androidContextAsUser(user).getPackageManager();
-//        PackageInstaller packageInstaller = packageManager.getPackageInstaller();
-//
-//        try {
-//            int sessionId;
-//            try(PermissionContext p =
-//                        mTestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
-//                PackageInstaller.SessionParams sessionParams =
-//                      new PackageInstaller.SessionParams(MODE_FULL_INSTALL);
-//                // TODO(scottjonathan): Enable installing test apps once there is a test
-//                //  API for this
-////                    sessionParams.installFlags =
-//                          sessionParams.installFlags | INSTALL_ALLOW_TEST;
-//                sessionId = packageInstaller.createSession(sessionParams);
-//            }
-//
-//            PackageInstaller.Session session = packageInstaller.openSession(sessionId);
-//            try (OutputStream out =
-//                         session.openWrite("NAME", 0, apkFile.length)) {
-//                out.write(apkFile);
-//                session.fsync(out);
-//            }
-//
-//            try (BlockingIntentSender intentSender = BlockingIntentSender.create()) {
-//                try (PermissionContext p =
-//                             mTestApis.permissions().withPermission(INSTALL_PACKAGES)) {
-//                    session.commit(intentSender.intentSender());
-//                    session.close();
-//                }
-//
-//                Intent intent = intentSender.await();
-//                if (intent.getIntExtra(EXTRA_STATUS, /* defaultValue= */ STATUS_FAILURE)
-//                        != STATUS_SUCCESS) {
-//                    throw new NeneException("Not successful while installing package. "
-//                            + "Got status: "
-//                            + intent.getIntExtra(
-//                            EXTRA_STATUS, /* defaultValue= */ STATUS_FAILURE)
-//                            + " exta info: " + intent.getStringExtra(EXTRA_STATUS_MESSAGE));
-//                }
-//            }
-//
-//            return waitForPackageAddedBroadcast(broadcastReceiver);
-//        } catch (IOException e) {
-//            throw new NeneException("Could not install package", e);
-//        } finally {
-//            broadcastReceiver.unregisterQuietly();
-//        }
     }
 
     private PackageReference installPreS(UserReference user, byte[] apkFile) {

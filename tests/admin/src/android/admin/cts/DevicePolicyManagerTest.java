@@ -924,19 +924,6 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
         }
     }
 
-    public void testSetDefaultSmsApplication_failIfNotDeviceOwner() {
-        if (!mDeviceAdmin) {
-            Log.w(TAG, "Skipping testSetDefaultSmsApplication_failIfNotDeviceOwner");
-            return;
-        }
-        try {
-            mDevicePolicyManager.setDefaultSmsApplication(mComponent, "android.admin.cts");
-            fail("did not throw expected SecurityException");
-        } catch (SecurityException e) {
-            assertDeviceOwnerMessage(e.getMessage());
-        }
-    }
-
     public void testCreateAdminSupportIntent_returnNullIfRestrictionIsNotSet() {
         if (!mDeviceAdmin) {
             Log.w(TAG, "Skipping testCreateAdminSupportIntent");
@@ -1154,33 +1141,6 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
             fail("getCrossProfileCalendarPackages did not throw expected SecurityException");
         } catch (SecurityException e) {
             assertProfileOwnerMessage(e.getMessage());
-        }
-    }
-
-    public void testSetUserControlDisabledPackages_failIfNotDeviceOwner() {
-        if (!mDeviceAdmin) {
-            Log.w(TAG, "Skipping testSetUserControlDisabledPackages_failIfNotDeviceOwner()");
-            return;
-        }
-        final String TEST_PACKAGE_NAME = "package1";
-        List<String> packages = new ArrayList<>();
-        packages.add(TEST_PACKAGE_NAME);
-        try {
-            mDevicePolicyManager.setUserControlDisabledPackages(mComponent, packages);
-            fail("setUserControlDisabledPackages did not throw expected SecurityException");
-        } catch(SecurityException e) {
-        }
-    }
-
-    public void testGetUserControlDisabledPackages_failIfNotDeviceOwner() {
-        if (!mDeviceAdmin) {
-            Log.w(TAG, "Skipping testGetUserControlDisabledPackages_failIfNotDeviceOwner()");
-            return;
-        }
-        try {
-            mDevicePolicyManager.getUserControlDisabledPackages(mComponent);
-            fail("getUserControlDisabledPackages did not throw expected SecurityException");
-        } catch(SecurityException e) {
         }
     }
 
