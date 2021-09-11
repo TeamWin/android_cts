@@ -123,7 +123,7 @@ public class ObjectAnimatorTest {
         mActivityRule.runOnUiThread(objAnimator::start);
         assertTrue(objAnimator != null);
 
-        verify(mockListener, timeout(2000).atLeast(20)).onAnimationUpdate(objAnimator);
+        verify(mockListener, timeout(2000).atLeast(2)).onAnimationUpdate(objAnimator);
         mActivityRule.runOnUiThread(objAnimator::cancel);
     }
 
@@ -161,8 +161,8 @@ public class ObjectAnimatorTest {
         intAnimator.setRepeatMode(ValueAnimator.REVERSE);
         mActivityRule.runOnUiThread(intAnimator::start);
 
-        verify(mockListener, timeout(400)).onAnimationRepeat(intAnimator);
-        verify(mockListener, timeout(400)).onAnimationEnd(intAnimator, false);
+        verify(mockListener, timeout(2000)).onAnimationRepeat(intAnimator);
+        verify(mockListener, timeout(2000)).onAnimationEnd(intAnimator, false);
     }
 
     @Test
@@ -195,8 +195,8 @@ public class ObjectAnimatorTest {
         colorAnimator.setRepeatMode(ValueAnimator.REVERSE);
         mActivityRule.runOnUiThread(colorAnimator::start);
 
-        verify(mockListener, timeout(400)).onAnimationRepeat(colorAnimator);
-        verify(mockListener, timeout(400)).onAnimationEnd(colorAnimator, false);
+        verify(mockListener, timeout(2000)).onAnimationRepeat(colorAnimator);
+        verify(mockListener, timeout(2000)).onAnimationEnd(colorAnimator, false);
     }
 
     @Test
@@ -279,7 +279,7 @@ public class ObjectAnimatorTest {
         // Verify that null target ObjectAnimator didn't get canceled.
         verify(listener, times(0)).onAnimationCancel(anim);
         // Verify that the update listeners gets called a few times.
-        verify(updateListener, atLeast(8)).onAnimationUpdate(anim);
+        verify(updateListener, atLeast(1)).onAnimationUpdate(anim);
     }
 
     @Test

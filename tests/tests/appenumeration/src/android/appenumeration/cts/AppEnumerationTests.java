@@ -19,6 +19,7 @@ package android.appenumeration.cts;
 import static android.Manifest.permission.SET_PREFERRED_APPLICATIONS;
 import static android.appenumeration.cts.Constants.ACTION_AWAIT_LAUNCHER_APPS_CALLBACK;
 import static android.appenumeration.cts.Constants.ACTION_BIND_SERVICE;
+import static android.appenumeration.cts.Constants.ACTION_MAY_PACKAGE_QUERY;
 import static android.appenumeration.cts.Constants.ACTION_CHECK_SIGNATURES;
 import static android.appenumeration.cts.Constants.ACTION_CHECK_URI_PERMISSION;
 import static android.appenumeration.cts.Constants.ACTION_GET_INSTALLED_ACCESSIBILITYSERVICES_PACKAGES;
@@ -204,6 +205,8 @@ public class AppEnumerationTests {
 
     // The shared library for getting dependent packages
     private static final String TEST_SHARED_LIB_NAME = "android.test.runner";
+    private static final String TEST_NONEXISTENT_PACKAGE_NAME_1 = "com.android.cts.nonexistent1";
+    private static final String TEST_NONEXISTENT_PACKAGE_NAME_2 = "com.android.cts.nonexistent2";
 
     private static final Account ACCOUNT_SYNCADAPTER = new Account(
             TARGET_SYNCADAPTER, "android.appenumeration.account.type");
@@ -1282,6 +1285,41 @@ public class AppEnumerationTests {
         assertThat(permissionResult, is(PackageManager.PERMISSION_DENIED));
     }
 
+    @Test
+    public void mayPackageQuery_queriesActivityAction_canSeeFilters() throws Exception {
+        assertThat(sPm.mayPackageQuery(QUERIES_ACTIVITY_ACTION, TARGET_FILTERS),
+                is(true));
+    }
+
+    @Test
+    public void mayPackageQuery_queriesNothing_cannotSeeFilters() throws Exception {
+        assertThat(sPm.mayPackageQuery(QUERIES_NOTHING, TARGET_FILTERS),
+                is(false));
+    }
+
+    @Test
+    public void mayPackageQuery_withNonexistentPackages() {
+        assertThrows(PackageManager.NameNotFoundException.class,
+                () -> sPm.mayPackageQuery(
+                        TEST_NONEXISTENT_PACKAGE_NAME_1, TEST_NONEXISTENT_PACKAGE_NAME_2));
+        assertThrows(PackageManager.NameNotFoundException.class,
+                () -> sPm.mayPackageQuery(
+                        QUERIES_NOTHING_PERM, TEST_NONEXISTENT_PACKAGE_NAME_2));
+        assertThrows(PackageManager.NameNotFoundException.class,
+                () -> sPm.mayPackageQuery(
+                        TEST_NONEXISTENT_PACKAGE_NAME_1, TARGET_FILTERS));
+    }
+
+    @Test
+    public void mayPackageQuery_callerHasNoPackageVisibility() {
+        assertThrows(PackageManager.NameNotFoundException.class,
+                () -> mayPackageQuery(
+                        QUERIES_NOTHING, QUERIES_ACTIVITY_ACTION, TARGET_FILTERS));
+        assertThrows(PackageManager.NameNotFoundException.class,
+                () -> mayPackageQuery(
+                        QUERIES_NOTHING_SHARED_USER, QUERIES_PACKAGE, TARGET_SHARED_USER));
+    }
+
     private void assertNotVisible(String sourcePackageName, String targetPackageName)
             throws Exception {
         if (!sGlobalFeatureEnabled) return;
@@ -1640,6 +1678,15 @@ public class AppEnumerationTests {
                 extraData, ACTION_CHECK_URI_PERMISSION, /* waitForReady */ false);
         final Bundle response = result.await();
         return response.getInt(Intent.EXTRA_RETURN_RESULT);
+    }
+
+    private boolean mayPackageQuery(String callerPackageName, String sourcePackageName,
+            String targetPackageName) throws Exception {
+        final Bundle extraData = new Bundle();
+        extraData.putString(Intent.EXTRA_PACKAGE_NAME, targetPackageName);
+        final Bundle response = sendCommandBlocking(callerPackageName, sourcePackageName,
+                extraData, ACTION_MAY_PACKAGE_QUERY);
+        return response.getBoolean(Intent.EXTRA_RETURN_RESULT);
     }
 
     interface Result {

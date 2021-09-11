@@ -76,7 +76,8 @@ public final class Processor extends AbstractProcessor {
             "android.net.wifi.WifiManager",
             "android.os.HardwarePropertiesManager",
             "android.os.UserManager",
-            "android.content.pm.PackageManager"
+            "android.content.pm.PackageManager",
+            "android.content.pm.CrossProfileApps"
     };
 
     private static final String PARENT_PROFILE_INSTANCE =
@@ -212,9 +213,18 @@ public final class Processor extends AbstractProcessor {
                     + ".List<java.security.cert.Certificate>, @NonNull android.content.pm"
                     + ".PackageManager.OnChecksumsReadyListener) throws java.security.cert"
                     + ".CertificateEncodingException, android.content.pm.PackageManager"
-                    + ".NameNotFoundException"
+                    + ".NameNotFoundException",
 
+            // CrossProfileApps
 
+            // Uses Drawable
+            "public android.graphics.drawable.Drawable getProfileSwitchingIconDrawable("
+                    + "android.os.UserHandle)",
+            // Uses Activity
+            "public void startActivity("
+                    + "android.content.Intent, android.os.UserHandle, android.app.Activity)",
+            "public void startActivity(android.content.Intent, android.os.UserHandle,"
+                    + "android.app.Activity, android.os.Bundle)"
     );
 
 

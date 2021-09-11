@@ -292,6 +292,11 @@ public class TestActivity extends Activity {
                     getContentResolver().takePersistableUriPermission(uri, modeFlags);
                 }
                 finish();
+            } else if (Constants.ACTION_MAY_PACKAGE_QUERY.equals(action)) {
+                final String sourcePackageName = intent.getStringExtra(Intent.EXTRA_PACKAGE_NAME);
+                final String targetPackageName = intent.getBundleExtra(EXTRA_DATA)
+                        .getString(Intent.EXTRA_PACKAGE_NAME);
+                sendMayPackageQuery(remoteCallback, sourcePackageName, targetPackageName);
             } else {
                 sendError(remoteCallback, new Exception("unknown action " + action));
             }
@@ -711,6 +716,20 @@ public class TestActivity extends Activity {
         result.putInt(EXTRA_RETURN_RESULT, permissionResult);
         remoteCallback.sendResult(result);
         finish();
+    }
+
+    private void sendMayPackageQuery(RemoteCallback remoteCallback, String sourcePackageName,
+            String targetPackageName) {
+        try {
+            final boolean visibility = getPackageManager().mayPackageQuery(sourcePackageName,
+                    targetPackageName);
+            final Bundle result = new Bundle();
+            result.putBoolean(EXTRA_RETURN_RESULT, visibility);
+            remoteCallback.sendResult(result);
+            finish();
+        } catch (PackageManager.NameNotFoundException e) {
+            sendError(remoteCallback, e);
+        }
     }
 
     @Override
