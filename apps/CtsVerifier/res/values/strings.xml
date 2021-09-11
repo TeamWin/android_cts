@@ -355,6 +355,12 @@
         authentication with timeout 0 can only be accessed once per reader session.
     </string>
 
+    <!-- Strings for IdentityAuthPerPresenationMultiDocument -->
+    <string name="sec_identity_credential_authentication_multi_document_test">Identity Credential Authentication Multi-Document</string>
+    <string name="sec_identity_credential_authentication_multi_document_test_info">
+        This test is for Identity Credential presentations with multiple documents.
+    </string>
+
     <string name="sec_unlocked_device_required_test">Unlocked Device Required</string>
     <string name="sec_unlocked_device_required_test_info">
         This test ensures that keys created with setUnlockedDeviceRequired are usable when the
