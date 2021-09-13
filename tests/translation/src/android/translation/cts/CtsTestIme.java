@@ -194,7 +194,7 @@ public final class CtsTestIme extends InputMethodService {
             filter.addAction(ACTION_ASSERT_UI_TRANSLATION_CALLBACK_ON_FINISH);
             filter.addAction(ACTION_ASSERT_UI_TRANSLATION_CALLBACK_ON_RESUME);
             filter.addAction(ACTION_ASSERT_UI_TRANSLATION_CALLBACK_ON_PAUSE);
-            mContext.registerReceiver(this, filter);
+            mContext.registerReceiver(this, filter, Context.RECEIVER_NOT_EXPORTED);
         }
 
         void unRegister() {

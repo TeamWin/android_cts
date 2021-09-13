@@ -59,7 +59,8 @@ public class VoiceInteractionTest extends AbstractVoiceInteractionTestCase {
     @Before
     public void setUp() throws Exception {
         mReceiver = new TestResultsReceiver();
-        mContext.registerReceiver(mReceiver, new IntentFilter(Utils.BROADCAST_INTENT));
+        mContext.registerReceiver(mReceiver, new IntentFilter(Utils.BROADCAST_INTENT),
+                Context.RECEIVER_NOT_EXPORTED);
         startTestActivity();
     }
 

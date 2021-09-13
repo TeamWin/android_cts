@@ -2002,7 +2002,7 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
                 mContext.unregisterReceiver(this);
                 latch.countDown();
             }
-        }, intentFilter);
+        }, intentFilter, Context.RECEIVER_NOT_EXPORTED);
 
         // Trigger the negative button.
         mUiBot.saveForAutofill(style, /* yesDoIt= */ false, SAVE_DATA_TYPE_PASSWORD);
