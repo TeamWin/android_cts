@@ -512,13 +512,6 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
     @Override
     @Test
     @IgnoreOnHeadlessSystemUserMode(reason = "Headless system user doesn't have credentials")
-    public void testResetPasswordWithToken() throws Exception {
-        super.testResetPasswordWithToken();
-    }
-
-    @Override
-    @Test
-    @IgnoreOnHeadlessSystemUserMode(reason = "Headless system user doesn't have credentials")
     public void testResetPasswordDeprecated() throws Exception {
         super.testResetPasswordDeprecated();
     }
