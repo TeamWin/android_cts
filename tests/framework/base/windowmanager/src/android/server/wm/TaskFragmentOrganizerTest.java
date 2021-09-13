@@ -34,7 +34,6 @@ import android.platform.test.annotations.Presubmit;
 import android.server.wm.WindowContextTests.TestActivity;
 import android.server.wm.WindowManagerState.Task;
 import android.server.wm.WindowManagerState.TaskFragment;
-import android.server.wm.WindowManagerState.WindowContainer;
 import android.window.TaskFragmentCreationParams;
 import android.window.TaskFragmentInfo;
 import android.window.TaskFragmentOrganizer;
@@ -43,10 +42,9 @@ import android.window.WindowContainerTransaction;
 
 import androidx.annotation.NonNull;
 
-import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
-
 /**
  * Tests that verify the behavior of {@link TaskFragmentOrganizer}.
  *
@@ -151,6 +149,7 @@ public class TaskFragmentOrganizerTest extends TaskFragmentOrganizerTestBase {
      * Bundle)} to start Activity in TaskFragment without creating new Task.
      */
     @Test
+    @Ignore("b/197364677")
     public void testStartActivityInTaskFragment_reuseTask() {
         final TaskFragmentCreationParams params = generateTaskFragCreationParams();
         final IBinder taskFragToken = params.getFragmentToken();
@@ -188,6 +187,7 @@ public class TaskFragmentOrganizerTest extends TaskFragmentOrganizerTestBase {
      * Bundle)} to start Activity on new created Task.
      */
     @Test
+    @Ignore("b/197364677")
     public void testStartActivityInTaskFragment_createNewTask() {
         final TaskFragmentCreationParams params = generateTaskFragCreationParams();
         final IBinder taskFragToken = params.getFragmentToken();
