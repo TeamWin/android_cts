@@ -215,7 +215,7 @@ public class TaskFragmentOrganizerPolicyTest {
         NestedShellPermission.run(() -> mTaskFragmentOrganizer.applyTransaction(wctWithPermission),
                 "android.permission.ACTIVITY_EMBEDDING");
 
-        mTaskFragmentOrganizer.waitForTaskFragmentChanged();
+        mTaskFragmentOrganizer.waitForTaskFragmentInfoChanged();
 
         info = mTaskFragmentOrganizer.getTaskFragmentInfo(taskFragToken);
 
