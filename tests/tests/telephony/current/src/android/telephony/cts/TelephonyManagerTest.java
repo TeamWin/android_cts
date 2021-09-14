@@ -3611,10 +3611,15 @@ public class TelephonyManagerTest {
         }
 
 
-        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+        result = ShellIdentityUtils.invokeMethodWithShellPermissions(
                 mTelephonyManager,
                 (tm) -> tm.setNrDualConnectivityState(
                         TelephonyManager.NR_DUAL_CONNECTIVITY_ENABLE));
+
+        if (result == TelephonyManager.ENABLE_NR_DUAL_CONNECTIVITY_NOT_SUPPORTED) {
+            return;
+        }
+
         isNrDualConnectivityEnabled = ShellIdentityUtils.invokeMethodWithShellPermissions(
                 mTelephonyManager, (tm) -> tm.isNrDualConnectivityEnabled());
         // Only verify the result for supported devices on IRadio 1.6+
