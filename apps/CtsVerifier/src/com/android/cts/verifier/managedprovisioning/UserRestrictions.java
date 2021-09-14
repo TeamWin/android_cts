@@ -161,6 +161,39 @@ public class UserRestrictions {
         }
     }
 
+    /**
+     * Copied from UserRestrictionsUtils. User restrictions that cannot be set by profile owners.
+     * Applied to all users.
+     */
+    private static final List<String> DEVICE_OWNER_ONLY_RESTRICTIONS =
+            Arrays.asList(
+                    UserManager.DISALLOW_USER_SWITCH,
+                    UserManager.DISALLOW_CONFIG_PRIVATE_DNS,
+                    UserManager.DISALLOW_MICROPHONE_TOGGLE,
+                    UserManager.DISALLOW_CAMERA_TOGGLE);
+
+    /**
+     * Copied from UserRestrictionsUtils. User restrictions that cannot be set by profile owners
+     * of secondary users. When set by DO they will be applied to all users.
+     */
+    private static final List<String> PRIMARY_USER_ONLY_RESTRICTIONS =
+            Arrays.asList(
+                    UserManager.DISALLOW_BLUETOOTH,
+                    UserManager.DISALLOW_USB_FILE_TRANSFER,
+                    UserManager.DISALLOW_CONFIG_TETHERING,
+                    UserManager.DISALLOW_NETWORK_RESET,
+                    UserManager.DISALLOW_FACTORY_RESET,
+                    UserManager.DISALLOW_ADD_USER,
+                    UserManager.DISALLOW_CONFIG_CELL_BROADCASTS,
+                    UserManager.DISALLOW_CONFIG_MOBILE_NETWORKS,
+                    UserManager.DISALLOW_MOUNT_PHYSICAL_MEDIA,
+                    UserManager.DISALLOW_SMS,
+                    UserManager.DISALLOW_FUN,
+                    UserManager.DISALLOW_SAFE_BOOT,
+                    UserManager.DISALLOW_CREATE_WINDOWS,
+                    UserManager.DISALLOW_DATA_ROAMING,
+                    UserManager.DISALLOW_AIRPLANE_MODE);
+
     private static final List<String> ALSO_VALID_FOR_MANAGED_PROFILE_POLICY_TRANSPARENCY =
             Arrays.asList(
                     UserManager.DISALLOW_APPS_CONTROL,
@@ -238,9 +271,8 @@ public class UserRestrictions {
                         .putExtra(PolicyTransparencyTestActivity.EXTRA_SETTINGS_INTENT_ACTION,
                                 item.intentAction);
 
-        // When test for restriction in device owner test mode, not set on the current user.
         intent.putExtra(CommandReceiverActivity.EXTRA_USE_CURRENT_USER_DPM,
-                !isDeviceOwnerMode(mode));
+                !(isDeviceOwnerMode(mode) && isOnlyValidForDeviceOwnerOrPrimaryUser(restriction)));
         return intent;
     }
 
@@ -355,6 +387,11 @@ public class UserRestrictions {
      */
     private static boolean isDeviceOwnerMode(int mode) {
         return mode == PolicyTransparencyTestListActivity.MODE_DEVICE_OWNER;
+    }
+
+    private static boolean isOnlyValidForDeviceOwnerOrPrimaryUser(String restriction) {
+        return DEVICE_OWNER_ONLY_RESTRICTIONS.contains(restriction)
+                || PRIMARY_USER_ONLY_RESTRICTIONS.contains(restriction);
     }
 
     private static class UserRestrictionItem {
