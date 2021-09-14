@@ -16,6 +16,8 @@
 
 package android.server.wm;
 
+import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
+
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
@@ -23,6 +25,7 @@ import static org.junit.Assert.fail;
 
 import android.app.Activity;
 import android.content.res.Configuration;
+import android.graphics.Rect;
 import android.os.Binder;
 import android.os.IBinder;
 import android.util.ArrayMap;
@@ -30,7 +33,6 @@ import android.window.TaskFragmentAppearedInfo;
 import android.window.TaskFragmentCreationParams;
 import android.window.TaskFragmentInfo;
 import android.window.TaskFragmentOrganizer;
-import android.window.WindowContainerToken;
 import android.window.WindowContainerTransaction;
 
 import androidx.annotation.NonNull;
@@ -39,11 +41,10 @@ import androidx.annotation.Nullable;
 import org.junit.After;
 import org.junit.Before;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 
 public class TaskFragmentOrganizerTestBase extends WindowManagerTestBase {
     public BasicTaskFragmentOrganizer mTaskFragmentOrganizer;
@@ -110,7 +111,6 @@ public class TaskFragmentOrganizerTestBase extends WindowManagerTestBase {
         private Configuration mParentConfig;
         private IBinder mErrorToken;
         private Throwable mThrowable;
-        private final List<WindowContainerToken> mKnownTaskFragments = new ArrayList<>();
 
         private CountDownLatch mAppearedLatch = new CountDownLatch(1);
         private CountDownLatch mChangedLatch = new CountDownLatch(1);
@@ -138,6 +138,14 @@ public class TaskFragmentOrganizerTestBase extends WindowManagerTestBase {
             return mErrorToken;
         }
 
+        public void resetLatch() {
+            mAppearedLatch = new CountDownLatch(1);
+            mChangedLatch = new CountDownLatch(1);
+            mVanishedLatch = new CountDownLatch(1);
+            mParentChangedLatch = new CountDownLatch(1);
+            mErrorLatch = new CountDownLatch(1);
+        }
+
         /**
          * Generates a {@link TaskFragmentCreationParams} with {@code ownerToken} specified.
          *
@@ -147,8 +155,31 @@ public class TaskFragmentOrganizerTestBase extends WindowManagerTestBase {
          */
         @NonNull
         public TaskFragmentCreationParams generateTaskFragParams(@NonNull IBinder ownerToken) {
+            return generateTaskFragParams(ownerToken, new Rect(), WINDOWING_MODE_UNDEFINED);
+        }
+
+        @NonNull
+        public TaskFragmentCreationParams generateTaskFragParams(@NonNull IBinder ownerToken,
+                @NonNull Rect bounds, int windowingMode) {
             return new TaskFragmentCreationParams.Builder(getOrganizerToken(), new Binder(),
-                    ownerToken).build();
+                    ownerToken)
+                    .setInitialBounds(bounds)
+                    .setWindowingMode(windowingMode)
+                    .build();
+        }
+
+        public void setAppearedCount(int count) {
+            mAppearedLatch = new CountDownLatch(count);
+        }
+
+        public TaskFragmentInfo waitForAndGetTaskFragmentInfo(IBinder taskFragToken,
+                Predicate<TaskFragmentInfo> condition, String message) {
+            final TaskFragmentInfo[] info = new TaskFragmentInfo[1];
+            waitForOrFail(message, () -> {
+                info[0] = getTaskFragmentInfo(taskFragToken);
+                return condition.test(info[0]);
+            });
+            return info[0];
         }
 
         public void waitForTaskFragmentCreated() {
@@ -159,7 +190,7 @@ public class TaskFragmentOrganizerTestBase extends WindowManagerTestBase {
             }
         }
 
-        public void waitForTaskFragmentChanged() {
+        public void waitForTaskFragmentInfoChanged() {
             try {
                 assertThat(mChangedLatch.await(WAIT_TIMEOUT_IN_SECOND, TimeUnit.SECONDS)).isTrue();
             } catch (InterruptedException e) {
@@ -193,17 +224,11 @@ public class TaskFragmentOrganizerTestBase extends WindowManagerTestBase {
         }
 
         private void removeAllTaskFragments() {
-            if (mKnownTaskFragments.isEmpty()) {
-                // Skip if there's no organized TaskFragment.
-                return;
-            }
-            mVanishedLatch = new CountDownLatch(mKnownTaskFragments.size());
             final WindowContainerTransaction wct = new WindowContainerTransaction();
-            for (WindowContainerToken token : mKnownTaskFragments) {
-                wct.deleteTaskFragment(token);
+            for (TaskFragmentInfo info : mInfos.values()) {
+                wct.deleteTaskFragment(info.getToken());
             }
             applyTransaction(wct);
-            waitForTaskFragmentRemoved();
         }
 
         @Override
@@ -219,7 +244,6 @@ public class TaskFragmentOrganizerTestBase extends WindowManagerTestBase {
             super.onTaskFragmentAppeared(taskFragmentAppearedInfo);
             final TaskFragmentInfo info = taskFragmentAppearedInfo.getTaskFragmentInfo();
             mInfos.put(info.getFragmentToken(), info);
-            mKnownTaskFragments.add(info.getToken());
             mAppearedLatch.countDown();
         }
 
@@ -235,7 +259,6 @@ public class TaskFragmentOrganizerTestBase extends WindowManagerTestBase {
             super.onTaskFragmentVanished(taskFragmentInfo);
             mInfos.remove(taskFragmentInfo.getFragmentToken());
             mRemovedInfos.put(taskFragmentInfo.getFragmentToken(), taskFragmentInfo);
-            mKnownTaskFragments.remove(taskFragmentInfo.getToken());
             mVanishedLatch.countDown();
         }
 

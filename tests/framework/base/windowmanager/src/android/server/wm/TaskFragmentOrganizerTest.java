@@ -26,7 +26,6 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Intent;
-import android.content.res.Configuration;
 import android.graphics.Rect;
 import android.os.Binder;
 import android.os.Bundle;
@@ -43,7 +42,6 @@ import android.window.WindowContainerToken;
 import android.window.WindowContainerTransaction;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
 import org.junit.After;
 import org.junit.Before;
@@ -72,14 +70,6 @@ public class TaskFragmentOrganizerTest extends TaskFragmentOrganizerTestBase {
         mOwnerToken = getActivityToken(mOwnerActivity);
         mOwnerActivityName = mOwnerActivity.getComponentName();
         mOwnerTaskId = mOwnerActivity.getTaskId();
-    }
-
-    @After
-    @Override
-    public void tearDown() {
-        removeRootTask(mOwnerTaskId);
-        mWmState.waitForActivityState(mOwnerActivityName, WindowManagerState.STATE_DESTROYED);
-        super.tearDown();
     }
 
     /**
