@@ -5523,6 +5523,15 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
             </intent-filter>
+            <meta-data
+                android:name="test_category"
+                android:value="@string/test_category_telecom"/>
+            <meta-data
+                android:name="test_required_features"
+                android:value="android.hardware.telephony"/>
+            <meta-data
+                android:name="test_required_configs"
+                android:value="config_voice_capable"/>
             <meta-data android:name="display_mode"
                        android:value="multi_display_mode" />
         </activity>
