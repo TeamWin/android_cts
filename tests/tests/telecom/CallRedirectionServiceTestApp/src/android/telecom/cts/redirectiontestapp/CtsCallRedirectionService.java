@@ -56,6 +56,7 @@ public class CtsCallRedirectionService extends CallRedirectionService {
                 redirectCall(controller.getTargetHandle(), controller.getTargetPhoneAccount(),
                         controller.isConfirmFirst());
             }
+            controller.onPlaceCallInvoked();
         } else {
             Log.w(TAG, "onPlaceCall: No control interface.");
         }

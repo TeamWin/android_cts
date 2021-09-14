@@ -53,6 +53,7 @@ public class CtsCallRedirectionServiceController extends Service {
     private PhoneAccountHandle mOriginalPhoneAccount = null;
     private boolean mConfirmFirst = false;
     private CountDownLatch mTimeoutNotified = new CountDownLatch(1);
+    private CountDownLatch mOnPlaceCallInvoked = new CountDownLatch(1);
 
     private static CtsCallRedirectionServiceController sCallRedirectionServiceController = null;
 
@@ -61,6 +62,7 @@ public class CtsCallRedirectionServiceController extends Service {
                 public void reset() {
                     mDecision = NO_DECISION_YET;
                     mTimeoutNotified = new CountDownLatch(1);
+                    mOnPlaceCallInvoked = new CountDownLatch(1);
                 }
 
                 @Override
@@ -97,6 +99,15 @@ public class CtsCallRedirectionServiceController extends Service {
                     Log.i(TAG, "waitForTimeoutNotified");
                     try {
                         return mTimeoutNotified.await(TIMEOUT, TimeUnit.MILLISECONDS);
+                    } catch (InterruptedException e) {
+                        return false;
+                    }
+                }
+
+                @Override
+                public boolean waitForOnPlaceCallInvoked() {
+                    try {
+                        return mOnPlaceCallInvoked.await(TIMEOUT, TimeUnit.MILLISECONDS);
                     } catch (InterruptedException e) {
                         return false;
                     }
@@ -150,5 +161,9 @@ public class CtsCallRedirectionServiceController extends Service {
 
     public void timeoutNotified() {
         mTimeoutNotified.countDown();
+    }
+
+    public void onPlaceCallInvoked() {
+        mOnPlaceCallInvoked.countDown();
     }
 }
