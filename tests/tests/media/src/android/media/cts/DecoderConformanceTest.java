@@ -16,7 +16,7 @@
 
 package android.media.cts;
 
-import android.media.cts.R;
+import static org.junit.Assert.fail;
 
 import android.content.res.AssetFileDescriptor;
 import android.media.MediaCodec;
@@ -26,13 +26,18 @@ import android.media.MediaFormat;
 import android.os.ParcelFileDescriptor;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
-import android.util.Range;
+
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.android.compatibility.common.util.DeviceReportLog;
 import com.android.compatibility.common.util.MediaUtils;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
-import com.android.compatibility.common.util.Stat;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.runner.RunWith;
+import org.junit.Test;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -40,7 +45,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -55,8 +59,9 @@ import java.util.HashMap;
  * based on the YUV 420 plannar format.
  */
 @AppModeFull(reason = "There should be no instant apps specific behavior related to conformance")
+@RunWith(AndroidJUnit4.class)
 public class DecoderConformanceTest extends MediaPlayerTestBase {
-    private static enum Status {
+    private enum Status {
         FAIL,
         PASS,
         SKIP;
@@ -74,16 +79,33 @@ public class DecoderConformanceTest extends MediaPlayerTestBase {
         put(MediaFormat.MIMETYPE_VIDEO_VP9, "vp9");
     }};
 
+    @Before
     @Override
-    protected void setUp() throws Exception {
+    public void setUp() throws Throwable {
         super.setUp();
     }
 
+    @After
     @Override
-    protected void tearDown() throws Exception {
+    public void tearDown() {
         super.tearDown();
     }
 
+    /**
+     * Test VP9 decoders from vendor.
+     */
+    @Test
+    public void testVP9Other() throws Exception {
+        decodeTestVectors(MediaFormat.MIMETYPE_VIDEO_VP9, false /* isGoog */);
+    }
+
+    /**
+     * Test Google's VP9 decoder from libvpx.
+     */
+    @Test
+    public void testVP9Goog() throws Exception {
+        decodeTestVectors(MediaFormat.MIMETYPE_VIDEO_VP9, true /* isGoog */);
+    }
 
     private List<String> readResourceLines(String fileName) throws Exception {
         Preconditions.assertTestFileExists(mInpPrefix + fileName);
@@ -217,19 +239,4 @@ public class DecoderConformanceTest extends MediaPlayerTestBase {
 
         }
     }
-
-    /**
-     * Test VP9 decoders from vendor.
-     */
-    public void testVP9Other() throws Exception {
-        decodeTestVectors(MediaFormat.MIMETYPE_VIDEO_VP9, false /* isGoog */);
-    }
-
-    /**
-     * Test Google's VP9 decoder from libvpx.
-     */
-    public void testVP9Goog() throws Exception {
-        decodeTestVectors(MediaFormat.MIMETYPE_VIDEO_VP9, true /* isGoog */);
-    }
-
 }

@@ -15,24 +15,28 @@
  */
 package android.media.cts;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.media.MediaPlayer;
 import android.media.cts.TestUtils.Monitor;
-import android.os.Handler;
-import android.os.Looper;
-import android.os.Message;
-import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.webkit.cts.CtsTestServer;
 
-import com.android.compatibility.common.util.MediaUtils;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 
-import org.apache.http.HttpServerConnection;
+import com.android.compatibility.common.util.MediaUtils;
 
 import org.apache.http.impl.DefaultHttpServerConnection;
 import org.apache.http.impl.io.SocketOutputBuffer;
 import org.apache.http.io.SessionOutputBuffer;
 import org.apache.http.params.HttpParams;
 import org.apache.http.util.CharArrayBuffer;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.io.IOException;
 
@@ -48,6 +52,7 @@ import java.util.concurrent.FutureTask;
  */
 @NonMediaMainlineTest
 @AppModeFull(reason = "TODO: evaluate and port to instant")
+@RunWith(AndroidJUnit4.class)
 public class MediaPlayerFlakyNetworkTest extends MediaPlayerTestBase {
     private static final String PKG = "android.media.cts";
     static final String mInpPrefix = WorkDir.getMediaDirString();
@@ -66,37 +71,50 @@ public class MediaPlayerFlakyNetworkTest extends MediaPlayerTestBase {
 
     private CtsTestServer mServer;
 
+    @Before
+    public void setUp() throws Throwable {
+        super.setUp();
+    }
+
+    @After
     @Override
-    public void tearDown() throws Exception {
+    public void tearDown() {
         releaseMediaPlayer();
         releaseHttpServer();
         super.tearDown();
     }
 
+    @Test
     public void test_S0P0() throws Throwable {
         doPlayStreams(0, 0);
     }
 
+    @Test
     public void test_S1P000005() throws Throwable {
         doPlayStreams(1, 0.000005f);
     }
 
+    @Test
     public void test_S2P00001() throws Throwable {
         doPlayStreams(2, 0.00001f);
     }
 
+    @Test
     public void test_S3P00001() throws Throwable {
         doPlayStreams(3, 0.00001f);
     }
 
+    @Test
     public void test_S4P00001() throws Throwable {
         doPlayStreams(4, 0.00001f);
     }
 
+    @Test
     public void test_S5P00001() throws Throwable {
         doPlayStreams(5, 0.00001f);
     }
 
+    @Test
     public void test_S6P00002() throws Throwable {
         doPlayStreams(6, 0.00002f);
     }
@@ -259,19 +277,11 @@ public class MediaPlayerFlakyNetworkTest extends MediaPlayerTestBase {
         mMediaPlayer.setScreenOnWhilePlaying(true);
 
         mOnPrepareCalled.reset();
-        mMediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-            @Override
-            public void onPrepared(MediaPlayer mp) {
-                mOnPrepareCalled.signal();
-            }
-        });
+        mMediaPlayer.setOnPreparedListener(mp -> mOnPrepareCalled.signal());
 
-        mMediaPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
-            @Override
-            public boolean onError(MediaPlayer mp, int what, int extra) {
-                fail("Media player had error " + what + " extra " + extra + " playing " + name);
-                return true;
-            }
+        mMediaPlayer.setOnErrorListener((mp, what, extra) -> {
+            fail("Media player had error " + what + " extra " + extra + " playing " + name);
+            return true;
         });
 
         mMediaPlayer.prepareAsync();

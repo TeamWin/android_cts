@@ -16,6 +16,11 @@
 package android.media.cts;
 
 import static junit.framework.TestCase.assertEquals;
+import static junit.framework.TestCase.assertFalse;
+import static junit.framework.TestCase.assertNotNull;
+import static junit.framework.TestCase.assertSame;
+import static junit.framework.TestCase.assertTrue;
+import static junit.framework.TestCase.fail;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -50,11 +55,17 @@ import android.platform.test.annotations.RequiresDevice;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
 
 import com.android.compatibility.common.util.MediaUtils;
 
 import junit.framework.AssertionFailedError;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -86,6 +97,7 @@ import java.util.stream.Stream;
 @RequiresDevice
 @NonMediaMainlineTest
 @AppModeFull(reason = "TODO: evaluate and port to instant")
+@RunWith(AndroidJUnit4.class)
 public class MediaPlayerTest extends MediaPlayerTestBase {
 
     private String RECORDED_FILE;
@@ -113,7 +125,8 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
     private int mBoundsCount;
 
     @Override
-    protected void setUp() throws Exception {
+    @Before
+    public void setUp() throws Throwable {
         super.setUp();
         RECORDED_FILE = new File(Environment.getExternalStorageDirectory(),
                 "mediaplayer_record.out").getAbsolutePath();
@@ -121,14 +134,16 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
     }
 
     @Override
-    protected void tearDown() throws Exception {
-        super.tearDown();
+    @After
+    public void tearDown() {
         if (mOutFile != null && mOutFile.exists()) {
             mOutFile.delete();
         }
+        super.tearDown();
     }
 
     @Presubmit
+    @Test
     public void testFlacHeapOverflow() throws Exception {
         testIfMediaServerDied("heap_oob_flac.mp3");
     }
@@ -172,6 +187,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
     }
 
     // Bug 13652927
+    @Test
     public void testVorbisCrash() throws Exception {
         MediaPlayer mp = mMediaPlayer;
         MediaPlayer mp2 = mMediaPlayer2;
@@ -200,6 +216,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
     }
 
     @Presubmit
+    @Test
     public void testPlayNullSourcePath() throws Exception {
         try {
             mMediaPlayer.setDataSource((String) null);
@@ -209,6 +226,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         }
     }
 
+    @Test
     public void testPlayAudioFromDataURI() throws Exception {
         final int mp3Duration = 34909;
         final int tolerance = 70;
@@ -270,16 +288,19 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         }
     }
 
+    @Test
     public void testPlayAudioMp3() throws Exception {
         internalTestPlayAudio("testmp3_2.mp3",
                 34909 /* duration */, 70 /* tolerance */, 100 /* seekDuration */);
     }
 
+    @Test
     public void testPlayAudioOpus() throws Exception {
         internalTestPlayAudio("testopus.opus",
                 34909 /* duration */, 70 /* tolerance */, 100 /* seekDuration */);
     }
 
+    @Test
     public void testPlayAudioAmr() throws Exception {
         internalTestPlayAudio("testamr.amr",
                 34909 /* duration */, 70 /* tolerance */, 100 /* seekDuration */);
@@ -336,6 +357,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         }
     }
 
+    @Test
     public void testConcurentPlayAudio() throws Exception {
         final String res = "test1m1s.mp3"; // MP3 longer than 1m are usualy offloaded
         final int tolerance = 70;
@@ -374,6 +396,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         }
     }
 
+    @Test
     public void testPlayAudioLooping() throws Exception {
         final String res = "testmp3.mp3";
 
@@ -409,6 +432,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         }
     }
 
+    @Test
     public void testPlayMidi() throws Exception {
         runMidiTest("midi8sec.mid", 8000 /* duration */);
         runMidiTest("testrtttl.rtttl", 30000 /* duration */);
@@ -586,6 +610,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         }
     }
 
+    @Test
     public void testPlayAudioTwice() throws Exception {
 
         final String res = "camera_click.ogg";
@@ -616,6 +641,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         }
     }
 
+    @Test
     public void testPlayVideo() throws Exception {
         playLoadedVideoTest("testvideo.3gp", 352, 288);
     }
@@ -630,6 +656,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
     }
 
     @Presubmit
+    @Test
     public void testSetNextMediaPlayerWithReset() throws Exception {
 
         initMediaPlayer(mMediaPlayer);
@@ -647,6 +674,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
     }
 
     @Presubmit
+    @Test
     public void testSetNextMediaPlayerWithRelease() throws Exception {
 
         initMediaPlayer(mMediaPlayer);
@@ -663,6 +691,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         }
     }
 
+    @Test
     public void testSetNextMediaPlayer() throws Exception {
         initMediaPlayer(mMediaPlayer);
 
@@ -781,6 +810,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
     // and result in zeroes being detected. If there is a gap in playback, that
     // will also result in zeroes being detected.
     // Note that this test does NOT guarantee that the correct data is played
+    @Test
     public void testGapless1() throws Exception {
         flakyTestWrapper("monodcpos.mp3", "monodcneg.mp3");
     }
@@ -789,11 +819,13 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
     // with a strong positive DC offset. This is used to detect if there is
     // a gap in playback
     // Note that this test does NOT guarantee that the correct data is played
+    @Test
     public void testGapless2() throws Exception {
         flakyTestWrapper("stereonoisedcpos.m4a", "stereonoisedcpos.m4a");
     }
 
     // same as above, but with a mono file
+    @Test
     public void testGapless3() throws Exception {
         flakyTestWrapper("mononoisedcpos.m4a", "mononoisedcpos.m4a");
     }
@@ -940,6 +972,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
      * After reseting, the video should continue playing
      * from the time setDisplay() was called
      */
+    @Test
     public void testVideoSurfaceResetting() throws Exception {
         final int tolerance = 150;
         final int audioLatencyTolerance = 1000;  /* covers audio path latency variability */
@@ -996,18 +1029,22 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         Thread.sleep(SLEEP_TIME);
     }
 
+    @Test
     public void testRecordedVideoPlayback0() throws Exception {
         testRecordedVideoPlaybackWithAngle(0);
     }
 
+    @Test
     public void testRecordedVideoPlayback90() throws Exception {
         testRecordedVideoPlaybackWithAngle(90);
     }
 
+    @Test
     public void testRecordedVideoPlayback180() throws Exception {
         testRecordedVideoPlaybackWithAngle(180);
     }
 
+    @Test
     public void testRecordedVideoPlayback270() throws Exception {
         testRecordedVideoPlaybackWithAngle(270);
     }
@@ -1109,6 +1146,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
     }
 
     // setPlaybackParams() with non-zero speed should start playback.
+    @Test
     public void testSetPlaybackParamsPositiveSpeed() throws Exception {
         if (!checkLoadResource(
                 "video_480x360_mp4_h264_1000kbps_30fps_aac_stereo_128kbps_44100hz.mp4")) {
@@ -1155,6 +1193,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
     }
 
     // setPlaybackParams() with zero speed should pause playback.
+    @Test
     public void testSetPlaybackParamsZeroSpeed() throws Exception {
         if (!checkLoadResource(
                 "video_480x360_mp4_h264_1000kbps_30fps_aac_stereo_128kbps_44100hz.mp4")) {
@@ -1192,6 +1231,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         mMediaPlayer.stop();
     }
 
+    @Test
     public void testPlaybackRate() throws Exception {
         final int toleranceMs = 1000;
         if (!checkLoadResource(
@@ -1233,6 +1273,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
     }
 
     @Presubmit
+    @Test
     public void testSeekModes() throws Exception {
         // This clip has 2 I frames at 66687us and 4299687us.
         if (!checkLoadResource(
@@ -1302,6 +1343,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         return cp;
     }
 
+    @Test
     public void testGetTimestamp() throws Exception {
         final int toleranceUs = 100000;
         final float playbackRate = 1.0f;
@@ -1348,6 +1390,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         mMediaPlayer.stop();
     }
 
+    @Test
     public void testMediaTimeDiscontinuity() throws Exception {
         if (!checkLoadResource(
                 "bbb_s1_320x240_mp4_h264_mp2_800kbps_30fps_aac_lc_5ch_240kbps_44100hz.mp4")) {
@@ -1404,47 +1447,55 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         mMediaPlayer.reset();
     }
 
+    @Test
     public void testLocalVideo_MKV_H265_1280x720_500kbps_25fps_AAC_Stereo_128kbps_44100Hz()
             throws Exception {
         playLoadedVideoTest("video_1280x720_mkv_h265_500kbps_25fps_aac_stereo_128kbps_44100hz.mkv",
                 1280, 720);
     }
+    @Test
     public void testLocalVideo_MP4_H264_480x360_500kbps_25fps_AAC_Stereo_128kbps_44110Hz()
             throws Exception {
         playLoadedVideoTest("video_480x360_mp4_h264_500kbps_25fps_aac_stereo_128kbps_44100hz.mp4",
                 480, 360);
     }
 
+    @Test
     public void testLocalVideo_MP4_H264_480x360_500kbps_30fps_AAC_Stereo_128kbps_44110Hz()
             throws Exception {
         playLoadedVideoTest("video_480x360_mp4_h264_500kbps_30fps_aac_stereo_128kbps_44100hz.mp4",
                 480, 360);
     }
 
+    @Test
     public void testLocalVideo_MP4_H264_480x360_1000kbps_25fps_AAC_Stereo_128kbps_44110Hz()
             throws Exception {
         playLoadedVideoTest("video_480x360_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz.mp4",
                 480, 360);
     }
 
+    @Test
     public void testLocalVideo_MP4_H264_480x360_1000kbps_30fps_AAC_Stereo_128kbps_44110Hz()
             throws Exception {
         playLoadedVideoTest("video_480x360_mp4_h264_1000kbps_30fps_aac_stereo_128kbps_44100hz.mp4",
                 480, 360);
     }
 
+    @Test
     public void testLocalVideo_MP4_H264_480x360_1350kbps_25fps_AAC_Stereo_128kbps_44110Hz()
             throws Exception {
         playLoadedVideoTest("video_480x360_mp4_h264_1350kbps_25fps_aac_stereo_128kbps_44100hz.mp4",
                 480, 360);
     }
 
+    @Test
     public void testLocalVideo_MP4_H264_480x360_1350kbps_30fps_AAC_Stereo_128kbps_44110Hz()
             throws Exception {
         playLoadedVideoTest("video_480x360_mp4_h264_1350kbps_30fps_aac_stereo_128kbps_44100hz.mp4",
                 480, 360);
     }
 
+    @Test
     public void testLocalVideo_MP4_H264_480x360_1350kbps_30fps_AAC_Stereo_128kbps_44110Hz_frag()
             throws Exception {
         playLoadedVideoTest(
@@ -1453,168 +1504,197 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
     }
 
 
+    @Test
     public void testLocalVideo_MP4_H264_480x360_1350kbps_30fps_AAC_Stereo_192kbps_44110Hz()
             throws Exception {
         playLoadedVideoTest("video_480x360_mp4_h264_1350kbps_30fps_aac_stereo_192kbps_44100hz.mp4",
                 480, 360);
     }
 
+    @Test
     public void testLocalVideo_3gp_H263_176x144_56kbps_12fps_AAC_Mono_24kbps_11025Hz()
             throws Exception {
         playLoadedVideoTest("video_176x144_3gp_h263_56kbps_12fps_aac_mono_24kbps_11025hz.3gp", 176,
                 144);
     }
 
+    @Test
     public void testLocalVideo_3gp_H263_176x144_56kbps_12fps_AAC_Mono_24kbps_22050Hz()
             throws Exception {
         playLoadedVideoTest("video_176x144_3gp_h263_56kbps_12fps_aac_mono_24kbps_22050hz.3gp", 176,
                 144);
     }
 
+    @Test
     public void testLocalVideo_3gp_H263_176x144_56kbps_12fps_AAC_Stereo_24kbps_11025Hz()
             throws Exception {
         playLoadedVideoTest("video_176x144_3gp_h263_56kbps_12fps_aac_stereo_24kbps_11025hz.3gp",
                 176, 144);
     }
 
+    @Test
     public void testLocalVideo_3gp_H263_176x144_56kbps_12fps_AAC_Stereo_24kbps_22050Hz()
             throws Exception {
         playLoadedVideoTest("video_176x144_3gp_h263_56kbps_12fps_aac_stereo_24kbps_22050hz.3gp",
                 176, 144);
     }
 
+    @Test
     public void testLocalVideo_3gp_H263_176x144_56kbps_12fps_AAC_Stereo_128kbps_11025Hz()
             throws Exception {
         playLoadedVideoTest("video_176x144_3gp_h263_56kbps_12fps_aac_stereo_128kbps_11025hz.3gp",
                 176, 144);
     }
 
+    @Test
     public void testLocalVideo_3gp_H263_176x144_56kbps_12fps_AAC_Stereo_128kbps_22050Hz()
             throws Exception {
         playLoadedVideoTest("video_176x144_3gp_h263_56kbps_12fps_aac_stereo_128kbps_22050hz.3gp",
                 176, 144);
     }
 
+    @Test
     public void testLocalVideo_3gp_H263_176x144_56kbps_25fps_AAC_Mono_24kbps_11025Hz()
             throws Exception {
         playLoadedVideoTest("video_176x144_3gp_h263_56kbps_25fps_aac_mono_24kbps_11025hz.3gp", 176,
                 144);
     }
 
+    @Test
     public void testLocalVideo_3gp_H263_176x144_56kbps_25fps_AAC_Mono_24kbps_22050Hz()
             throws Exception {
         playLoadedVideoTest("video_176x144_3gp_h263_56kbps_25fps_aac_mono_24kbps_22050hz.3gp", 176,
                 144);
     }
 
+    @Test
     public void testLocalVideo_3gp_H263_176x144_56kbps_25fps_AAC_Stereo_24kbps_11025Hz()
             throws Exception {
         playLoadedVideoTest("video_176x144_3gp_h263_56kbps_25fps_aac_stereo_24kbps_11025hz.3gp",
                 176, 144);
     }
 
+    @Test
     public void testLocalVideo_3gp_H263_176x144_56kbps_25fps_AAC_Stereo_24kbps_22050Hz()
             throws Exception {
         playLoadedVideoTest("video_176x144_3gp_h263_56kbps_25fps_aac_stereo_24kbps_22050hz.3gp",
                 176, 144);
     }
 
+    @Test
     public void testLocalVideo_3gp_H263_176x144_56kbps_25fps_AAC_Stereo_128kbps_11025Hz()
             throws Exception {
         playLoadedVideoTest("video_176x144_3gp_h263_56kbps_25fps_aac_stereo_128kbps_11025hz.3gp",
                 176, 144);
     }
 
+    @Test
     public void testLocalVideo_3gp_H263_176x144_56kbps_25fps_AAC_Stereo_128kbps_22050Hz()
             throws Exception {
         playLoadedVideoTest("video_176x144_3gp_h263_56kbps_25fps_aac_stereo_128kbps_22050hz.3gp",
                 176, 144);
     }
 
+    @Test
     public void testLocalVideo_3gp_H263_176x144_300kbps_12fps_AAC_Mono_24kbps_11025Hz()
             throws Exception {
         playLoadedVideoTest("video_176x144_3gp_h263_300kbps_12fps_aac_mono_24kbps_11025hz.3gp", 176,
                 144);
     }
 
+    @Test
     public void testLocalVideo_3gp_H263_176x144_300kbps_12fps_AAC_Mono_24kbps_22050Hz()
             throws Exception {
         playLoadedVideoTest("video_176x144_3gp_h263_300kbps_12fps_aac_mono_24kbps_22050hz.3gp", 176,
                 144);
     }
 
+    @Test
     public void testLocalVideo_3gp_H263_176x144_300kbps_12fps_AAC_Stereo_24kbps_11025Hz()
             throws Exception {
         playLoadedVideoTest("video_176x144_3gp_h263_300kbps_12fps_aac_stereo_24kbps_11025hz.3gp",
                 176, 144);
     }
 
+    @Test
     public void testLocalVideo_3gp_H263_176x144_300kbps_12fps_AAC_Stereo_24kbps_22050Hz()
             throws Exception {
         playLoadedVideoTest("video_176x144_3gp_h263_300kbps_12fps_aac_stereo_24kbps_22050hz.3gp",
                 176, 144);
     }
 
+    @Test
     public void testLocalVideo_3gp_H263_176x144_300kbps_12fps_AAC_Stereo_128kbps_11025Hz()
             throws Exception {
         playLoadedVideoTest("video_176x144_3gp_h263_300kbps_12fps_aac_stereo_128kbps_11025hz.3gp",
                 176, 144);
     }
 
+    @Test
     public void testLocalVideo_3gp_H263_176x144_300kbps_12fps_AAC_Stereo_128kbps_22050Hz()
             throws Exception {
         playLoadedVideoTest("video_176x144_3gp_h263_300kbps_12fps_aac_stereo_128kbps_22050hz.3gp",
                 176, 144);
     }
 
+    @Test
     public void testLocalVideo_3gp_H263_176x144_300kbps_25fps_AAC_Mono_24kbps_11025Hz()
             throws Exception {
         playLoadedVideoTest("video_176x144_3gp_h263_300kbps_25fps_aac_mono_24kbps_11025hz.3gp", 176,
                 144);
     }
 
+    @Test
     public void testLocalVideo_3gp_H263_176x144_300kbps_25fps_AAC_Mono_24kbps_22050Hz()
             throws Exception {
         playLoadedVideoTest("video_176x144_3gp_h263_300kbps_25fps_aac_mono_24kbps_22050hz.3gp", 176,
                 144);
     }
 
+    @Test
     public void testLocalVideo_3gp_H263_176x144_300kbps_25fps_AAC_Stereo_24kbps_11025Hz()
             throws Exception {
         playLoadedVideoTest("video_176x144_3gp_h263_300kbps_25fps_aac_stereo_24kbps_11025hz.3gp",
                 176, 144);
     }
 
+    @Test
     public void testLocalVideo_3gp_H263_176x144_300kbps_25fps_AAC_Stereo_24kbps_22050Hz()
             throws Exception {
         playLoadedVideoTest("video_176x144_3gp_h263_300kbps_25fps_aac_stereo_24kbps_22050hz.3gp",
                 176, 144);
     }
 
+    @Test
     public void testLocalVideo_3gp_H263_176x144_300kbps_25fps_AAC_Stereo_128kbps_11025Hz()
             throws Exception {
         playLoadedVideoTest("video_176x144_3gp_h263_300kbps_25fps_aac_stereo_128kbps_11025hz.3gp",
                 176, 144);
     }
 
+    @Test
     public void testLocalVideo_3gp_H263_176x144_300kbps_25fps_AAC_Stereo_128kbps_22050Hz()
             throws Exception {
         playLoadedVideoTest("video_176x144_3gp_h263_300kbps_25fps_aac_stereo_128kbps_22050hz.3gp",
                 176, 144);
     }
 
+    @Test
     public void testLocalVideo_cp1251_3_a_ms_acm_mp3() throws Exception {
         playLoadedVideoTest("cp1251_3_a_ms_acm_mp3.mkv", -1, -1);
     }
 
+    @Test
     public void testLocalVideo_mkv_audio_pcm_be() throws Exception {
         playLoadedVideoTest("mkv_audio_pcms16be.mkv", -1, -1);
     }
 
+    @Test
     public void testLocalVideo_mkv_audio_pcm_le() throws Exception {
         playLoadedVideoTest("mkv_audio_pcms16le.mkv", -1, -1);
     }
 
+    @Test
     public void testLocalVideo_segment000001_m2ts()
             throws Exception {
         if (checkLoadResource("segment000001.ts")) {
@@ -1658,6 +1738,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         }
     }
 
+    @Test
     public void testDeselectTrackForSubtitleTracks() throws Throwable {
         if (!checkLoadResource("testvideo_with_2_subtitle_tracks.mp4")) {
             return; // skip;
@@ -1718,6 +1799,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         mMediaPlayer.stop();
     }
 
+    @Test
     public void testChangeSubtitleTrack() throws Throwable {
         if (!checkLoadResource("testvideo_with_2_subtitle_tracks.mp4")) {
             return; // skip;
@@ -1763,6 +1845,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         mMediaPlayer.stop();
     }
 
+    @Test
     public void testOnSubtitleDataListener() throws Throwable {
         if (!checkLoadResource("testvideo_with_2_subtitle_tracks.mp4")) {
             return; // skip;
@@ -1814,6 +1897,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
     }
 
     @Presubmit
+    @Test
     public void testGetTrackInfoForVideoWithSubtitleTracks() throws Throwable {
         if (!checkLoadResource("testvideo_with_2_subtitle_tracks.mp4")) {
             return; // skip;
@@ -1892,11 +1976,12 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         }
     }
 
+    @Test
     public void testDeselectTrackForTimedTextTrack() throws Throwable {
         if (!checkLoadResource("testvideo_with_2_timedtext_tracks.3gp")) {
             return; // skip;
         }
-        runTestOnUiThread(() -> {
+        runOnUiThread(() -> {
             try {
                 loadSubtitleSource("test_subtitle1_srt.3gp");
             } catch (Exception e) {
@@ -1960,10 +2045,12 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         mMediaPlayer.stop();
     }
 
+    @Test
     public void testChangeTimedTextTrack() throws Throwable {
         testChangeTimedTextTrackWithSpeed(1.0f);
     }
 
+    @Test
     public void testChangeTimedTextTrackFast() throws Throwable {
         testChangeTimedTextTrackWithSpeed(2.0f);
     }
@@ -2006,6 +2093,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
                 });
     }
 
+    @Test
     public void testSeekWithTimedText() throws Throwable {
         AtomicInteger iteration = new AtomicInteger(5);
         AtomicInteger num = new AtomicInteger(10);
@@ -2054,7 +2142,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
 
         mMediaPlayer.prepare();
         assertFalse(mMediaPlayer.isPlaying());
-        runTestOnUiThread(() -> {
+        runOnUiThread(() -> {
             try {
                 readTimedTextTracks();
             } catch (Exception e) {
@@ -2064,7 +2152,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         getInstrumentation().waitForIdleSync();
         assertEquals(getTimedTextTrackCount(), numInternalTracks);
 
-        runTestOnUiThread(() -> {
+        runOnUiThread(() -> {
             try {
                 // Adds two more external subtitle files.
                 for (String subRes : subtitleResources) {
@@ -2082,11 +2170,12 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
     }
 
     @Presubmit
+    @Test
     public void testGetTrackInfoForVideoWithTimedText() throws Throwable {
         if (!checkLoadResource("testvideo_with_2_timedtext_tracks.3gp")) {
             return; // skip;
         }
-        runTestOnUiThread(() -> {
+        runOnUiThread(() -> {
             try {
                 loadSubtitleSource("test_subtitle1_srt.3gp");
                 loadSubtitleSource("test_subtitle2_srt.3gp");
@@ -2124,6 +2213,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
      *  This test assumes the resources being tested are between 8 and 14 seconds long
      *  The ones being used here are 10 seconds long.
      */
+    @Test
     public void testResumeAtEnd() throws Throwable {
         int testsRun =
             testResumeAtEnd("loudsoftmp3.mp3") +
@@ -2160,6 +2250,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         return 1;
     }
 
+    @Test
     public void testPositionAtEnd() throws Throwable {
         int testsRun =
             testPositionAtEnd("test1m1shighstereo.mp3") +
@@ -2197,6 +2288,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         return 1;
     }
 
+    @Test
     public void testCallback() throws Throwable {
         final int mp4Duration = 8484;
 
@@ -2248,6 +2340,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         mOnErrorCalled.waitForSignal();
     }
 
+    @Test
     public void testRecordAndPlay() throws Exception {
         if (!hasMicrophone()) {
             MediaUtils.skipTest(LOG_TAG, "no microphone");
@@ -2334,6 +2427,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
     }
 
     // Smoke test playback from a MediaDataSource.
+    @Test
     public void testPlaybackFromAMediaDataSource() throws Exception {
         final String res = "video_480x360_mp4_h264_1350kbps_30fps_aac_stereo_192kbps_44100hz.mp4";
         final int duration = 10000;
@@ -2375,6 +2469,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
     }
 
     @Presubmit
+    @Test
     public void testNullMediaDataSourceIsRejected() throws Exception {
         try {
             mMediaPlayer.setDataSource((MediaDataSource) null);
@@ -2385,6 +2480,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
     }
 
     @Presubmit
+    @Test
     public void testMediaDataSourceIsClosedOnReset() throws Exception {
         TestMediaDataSource dataSource = new TestMediaDataSource(new byte[0]);
         mMediaPlayer.setDataSource(dataSource);
@@ -2393,6 +2489,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
     }
 
     @Presubmit
+    @Test
     public void testPlaybackFailsIfMediaDataSourceThrows() throws Exception {
         final String res = "video_480x360_mp4_h264_1350kbps_30fps_aac_stereo_192kbps_44100hz.mp4";
         Preconditions.assertTestFileExists(mInpPrefix + res);
@@ -2412,6 +2509,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
     }
 
     @Presubmit
+    @Test
     public void testPlaybackFailsIfMediaDataSourceReturnsAnError() throws Exception {
         final String res = "video_480x360_mp4_h264_1350kbps_30fps_aac_stereo_192kbps_44100hz.mp4";
         Preconditions.assertTestFileExists(mInpPrefix + res);
@@ -2431,6 +2529,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
     }
 
     @Presubmit
+    @Test
     public void testSetOnRtpRxNoticeListenerWithoutPermission() {
         try {
             mMediaPlayer.setOnRtpRxNoticeListener(
@@ -2442,6 +2541,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
     }
 
     @Presubmit
+    @Test
     public void testSetOnRtpRxNoticeListenerWithPermission() {
         try {
             getInstrumentation().getUiAutomation().adoptShellPermissionIdentity();
