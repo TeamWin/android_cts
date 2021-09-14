@@ -19,6 +19,7 @@ package android.os.cts
 import android.companion.CompanionDeviceManager
 import android.content.pm.PackageManager
 import android.content.pm.PackageManager.FEATURE_AUTOMOTIVE
+import android.content.pm.PackageManager.FEATURE_LEANBACK
 import android.content.pm.PackageManager.FEATURE_COMPANION_DEVICE_SETUP
 import android.content.pm.PackageManager.PERMISSION_GRANTED
 import android.net.MacAddress
@@ -87,6 +88,7 @@ class CompanionDeviceManagerTest : InstrumentationTestCase() {
         pm.hasSystemFeature(FEATURE_COMPANION_DEVICE_SETUP)
     }
     private val isAuto: Boolean by lazy { pm.hasSystemFeature(FEATURE_AUTOMOTIVE) }
+    private val isTV: Boolean by lazy { pm.hasSystemFeature(FEATURE_LEANBACK) }
 
     private fun isShellAssociated(macAddress: String, packageName: String): Boolean {
         val userId = context.userId
@@ -218,6 +220,10 @@ class CompanionDeviceManagerTest : InstrumentationTestCase() {
     @AppModeFull(reason = "Companion API for non-instant apps only")
     @Test
     fun testRequestNotifications() {
+        // Skip this test for Android TV due to NotificationAccessConfirmationActivity only exists
+        // in Settings but not in TvSettings for Android TV devices (b/199224565).
+        assumeFalse(isTV)
+
         installApk("--user ${UserHandle.myUserId()} $TEST_APP_APK_LOCATION")
         startApp(TEST_APP_PACKAGE_NAME)
 
