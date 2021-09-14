@@ -428,8 +428,6 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
         }
     }
 
-    @TemporarilyIgnoreOnHeadlessSystemUserMode(bugId = "185855799",
-            reason = "Not working on automotive, need to decide how to support it")
     @Test
     public void testLocationPermissionGrantNotifies() throws Exception {
         installAppPermissionAppAsUser();
@@ -507,13 +505,6 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
     @IgnoreOnHeadlessSystemUserMode(reason = "Headless system user doesn't have credentials")
     public void testPasswordExpiration() throws Exception {
         super.testPasswordExpiration();
-    }
-
-    @Override
-    @Test
-    @IgnoreOnHeadlessSystemUserMode(reason = "Headless system user doesn't have credentials")
-    public void testResetPasswordWithToken() throws Exception {
-        super.testResetPasswordWithToken();
     }
 
     @Override

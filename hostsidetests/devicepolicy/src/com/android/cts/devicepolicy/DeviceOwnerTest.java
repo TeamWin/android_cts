@@ -806,24 +806,6 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     }
 
     @Test
-    public void testSetUserControlDisabledPackages_singleUser_verifyPackageNotStopped()
-            throws Exception {
-        final List<Integer> otherUserIds = new ArrayList<>();
-        try {
-            setupDeviceForSetUserControlDisabledPackagesTesting(otherUserIds);
-            // Set the package under test as a protected package.
-            executeDeviceTestMethod(".UserControlDisabledPackagesTest",
-                    "testSetUserControlDisabledPackages");
-
-            // Try to stop the package on the primary user.
-            tryStoppingProtectedPackage(otherUserIds, /* canUserStopPackage= */ false);
-        } finally {
-            cleanupProtectedPackage(otherUserIds);
-            getDevice().uninstallPackageForUser(SIMPLE_APP_APK, mPrimaryUserId);
-        }
-    }
-
-    @Test
     public void testSetUserControlDisabledPackages_singleUser_reboot_verifyPackageNotStopped()
             throws Exception {
         final List<Integer> otherUserIds = new ArrayList<>();
@@ -844,29 +826,6 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
         } finally {
             cleanupProtectedPackage(otherUserIds);
             getDevice().uninstallPackageForUser(SIMPLE_APP_APK, mPrimaryUserId);
-        }
-    }
-
-    @Test
-    public void testSetUserControlDisabledPackages_multiUser_verifyPackageNotStopped()
-            throws Exception {
-        assumeCanCreateAdditionalUsers(1);
-        final int userId = createUser();
-        final List<Integer> otherUserIds = new ArrayList<>();
-        otherUserIds.add(userId);
-        try {
-            setupDeviceForSetUserControlDisabledPackagesTesting(otherUserIds);
-            // Set the package under test as a protected package.
-            executeDeviceTestMethod(".UserControlDisabledPackagesTest",
-                    "testSetUserControlDisabledPackages");
-
-            // Try to stop the package under test on all users.
-            tryStoppingProtectedPackage(otherUserIds, /* canUserStopPackage= */ false);
-        } finally {
-            cleanupProtectedPackage(otherUserIds);
-            getDevice().uninstallPackageForUser(SIMPLE_APP_APK, mPrimaryUserId);
-            getDevice().uninstallPackageForUser(SIMPLE_APP_APK, userId);
-            removeUser(userId);
         }
     }
 
