@@ -882,6 +882,9 @@ public class StrictModeTest {
         assertViolation("Tried to access visual service " + WM_CLASS_NAME,
                 () -> configContext.getSystemService(WindowManager.class));
 
+        // Make the ViewConfiguration to be cached so that we won't call WindowManager
+        ViewConfiguration.get(configContext);
+
         assertNoViolation(() -> ViewConfiguration.get(configContext));
 
         mInstrumentation.runOnMainSync(() -> {
