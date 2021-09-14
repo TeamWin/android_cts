@@ -119,7 +119,7 @@ public class TileServiceRequestVerifierActivity extends InteractiveVerifierActiv
 
         @Override
         protected void requestAction() {
-            int result = mStatusBarManager.requestAddTileService(
+            mStatusBarManager.requestAddTileService(
                     getTileComponentName(),
                     mTileLabel,
                     mIcon,
@@ -134,10 +134,6 @@ public class TileServiceRequestVerifierActivity extends InteractiveVerifierActiv
                         next();
                     }
             );
-            if (result != StatusBarManager.TILE_ADD_REQUEST_ANSWER_SUCCESS) {
-                setFailed("Request returned error code " + result);
-                next();
-            }
         }
 
         @Override
@@ -161,7 +157,7 @@ public class TileServiceRequestVerifierActivity extends InteractiveVerifierActiv
 
         @Override
         protected void requestAction() {
-            int result = mStatusBarManager.requestAddTileService(
+            mStatusBarManager.requestAddTileService(
                     getTileComponentName(),
                     mTileLabel,
                     mIcon,
@@ -176,10 +172,6 @@ public class TileServiceRequestVerifierActivity extends InteractiveVerifierActiv
                         next();
                     }
             );
-            if (result != StatusBarManager.TILE_ADD_REQUEST_ANSWER_SUCCESS) {
-                setFailed("Request returned error code " + result);
-                next();
-            }
         }
 
         @Override
@@ -205,7 +197,7 @@ public class TileServiceRequestVerifierActivity extends InteractiveVerifierActiv
 
         @Override
         protected void requestAction() {
-            int result = mStatusBarManager.requestAddTileService(
+            mStatusBarManager.requestAddTileService(
                     getTileComponentName(),
                     mTileLabel,
                     mIcon,
@@ -221,10 +213,6 @@ public class TileServiceRequestVerifierActivity extends InteractiveVerifierActiv
                         next();
                     }
             );
-            if (result != StatusBarManager.TILE_ADD_REQUEST_ANSWER_SUCCESS) {
-                setFailed("Request returned error code " + result);
-                next();
-            }
         }
 
         @Override
@@ -249,7 +237,7 @@ public class TileServiceRequestVerifierActivity extends InteractiveVerifierActiv
 
         @Override
         protected void requestAction() {
-            int result = mStatusBarManager.requestAddTileService(
+            mStatusBarManager.requestAddTileService(
                     getTileComponentName(),
                     mTileLabel,
                     mIcon,
@@ -263,9 +251,6 @@ public class TileServiceRequestVerifierActivity extends InteractiveVerifierActiv
                         next();
                     }
             );
-            if (result != StatusBarManager.TILE_ADD_REQUEST_ANSWER_SUCCESS) {
-                setFailed("Request returned error code " + result);
-            }
         }
 
         @Override
@@ -297,7 +282,7 @@ public class TileServiceRequestVerifierActivity extends InteractiveVerifierActiv
 
         @Override
         protected void test() {
-            int result = mStatusBarManager.requestAddTileService(
+            mStatusBarManager.requestAddTileService(
                     getTileComponentName(),
                     mTileLabel,
                     mIcon,
@@ -312,11 +297,6 @@ public class TileServiceRequestVerifierActivity extends InteractiveVerifierActiv
                         next();
                     }
             );
-            if (result != StatusBarManager.TILE_ADD_REQUEST_ANSWER_SUCCESS) {
-                setFailed("Request returned error code " + result);
-                next();
-                return;
-            }
             status = READY_AFTER_LONG_DELAY;
             next();
         }

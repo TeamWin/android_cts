@@ -26,11 +26,14 @@ import android.service.quicksettings.TileService
 import androidx.test.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
+import com.google.common.util.concurrent.MoreExecutors
 import org.junit.Assume
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.util.concurrent.Executor
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.function.Consumer
 
 /**
  * Test that the request fails in all the expected ways.
@@ -42,12 +45,15 @@ class RequestTileServiceAddTest {
 
     companion object {
         private const val LABEL = "label"
+        private const val TIME_OUT_SECONDS = 5L
     }
 
     private lateinit var statusBarService: StatusBarManager
     private lateinit var context: Context
     private lateinit var icon: Icon
-    private lateinit var executor: StoreExecutor
+    private lateinit var consumer: StoreIntConsumer
+    private val executor = MoreExecutors.directExecutor()
+    private lateinit var latch: CountDownLatch
 
     @Before
     fun setUp() {
@@ -57,37 +63,42 @@ class RequestTileServiceAddTest {
         statusBarService = context.getSystemService(StatusBarManager::class.java)!!
 
         icon = Icon.createWithResource(context, R.drawable.ic_android)
-        executor = StoreExecutor()
+        latch = CountDownLatch(1)
+        consumer = StoreIntConsumer(latch)
     }
 
     @Test
     fun testRequestBadPackageFails() {
         val componentName = ComponentName("test_pkg", "test_cls")
 
-        val answer = statusBarService.requestAddTileService(
+        statusBarService.requestAddTileService(
                 componentName,
                 LABEL,
                 icon,
-                executor
-        ) {}
+                executor,
+                consumer
+        )
 
-        assertThat(answer)
-                .isEqualTo(StatusBarManager.TILE_ADD_REQUEST_ANSWER_FAILED_MISMATCHED_PACKAGE)
-        assertThat(executor.runnables).isEmpty()
+        latch.await(TIME_OUT_SECONDS, TimeUnit.SECONDS)
+
+        assertThat(consumer.result)
+                .isEqualTo(StatusBarManager.TILE_ADD_REQUEST_ERROR_MISMATCHED_PACKAGE)
     }
 
     @Test
     fun testRequestBadComponentName() {
         val componentName = ComponentName(context, "test_cls")
-        val answer = statusBarService.requestAddTileService(
+        statusBarService.requestAddTileService(
                 componentName,
                 LABEL,
                 icon,
-                executor
-        ) {}
+                executor,
+                consumer
+        )
 
-        assertThat(answer).isEqualTo(StatusBarManager.TILE_ADD_REQUEST_ANSWER_FAILED_BAD_COMPONENT)
-        assertThat(executor.runnables).isEmpty()
+        latch.await(TIME_OUT_SECONDS, TimeUnit.SECONDS)
+
+        assertThat(consumer.result).isEqualTo(StatusBarManager.TILE_ADD_REQUEST_ERROR_BAD_COMPONENT)
     }
 
     @Test
@@ -99,22 +110,25 @@ class RequestTileServiceAddTest {
                 PackageManager.SYNCHRONOUS or PackageManager.DONT_KILL_APP
         )
 
-        val answer = statusBarService.requestAddTileService(
+        statusBarService.requestAddTileService(
                 componentName,
                 LABEL,
                 icon,
-                executor
-        ) {}
+                executor,
+                consumer
+        )
 
-        assertThat(answer).isEqualTo(StatusBarManager.TILE_ADD_REQUEST_ANSWER_FAILED_BAD_COMPONENT)
-        assertThat(executor.runnables).isEmpty()
+        latch.await(TIME_OUT_SECONDS, TimeUnit.SECONDS)
+
+        assertThat(consumer.result).isEqualTo(StatusBarManager.TILE_ADD_REQUEST_ERROR_BAD_COMPONENT)
     }
 
-    private class StoreExecutor : Executor {
-        var runnables = mutableListOf<Runnable>()
+    private class StoreIntConsumer(private val latch: CountDownLatch) : Consumer<Int> {
+        var result: Int? = null
 
-        override fun execute(command: Runnable) {
-            runnables.add(command)
+        override fun accept(t: Int) {
+            result = t
+            latch.countDown()
         }
     }
 }
