@@ -23,6 +23,7 @@
     <option name="config-descriptor:metadata" key="parameter" value="not_multi_abi" />
     <!-- Uses SwitchUserTargetPreparer to switch to system so running secondary is not relevant -->
     <option name="config-descriptor:metadata" key="parameter" value="not_secondary_user" />
+    <option name="config-descriptor:metadata" key="parameter" value="no_foldable_states" />
 
     <target_preparer class="com.android.tradefed.targetprep.SwitchUserTargetPreparer">
         <option name="user-type" value="system" />
