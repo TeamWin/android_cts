@@ -73,6 +73,7 @@ public abstract class BaseUserRestrictionsTest extends BaseDeviceAdminTest {
             UserManager.DISALLOW_BLUETOOTH_SHARING,
             UserManager.DISALLOW_CAMERA_TOGGLE,
             UserManager.DISALLOW_MICROPHONE_TOGGLE,
+            UserManager.DISALLOW_CHANGE_WIFI_STATE,
     };
 
     /**
@@ -96,6 +97,7 @@ public abstract class BaseUserRestrictionsTest extends BaseDeviceAdminTest {
             // UserManager.DISALLOW_DATA_ROAMING, // Not set during CTS
             UserManager.DISALLOW_CAMERA_TOGGLE,
             UserManager.DISALLOW_MICROPHONE_TOGGLE,
+            UserManager.DISALLOW_CHANGE_WIFI_STATE,
 
             // PO can set them too, but when DO sets them, they're global.
             UserManager.DISALLOW_ADJUST_VOLUME,
