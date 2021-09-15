@@ -88,6 +88,11 @@ def check_solid_color(img, exp_values, color):
                     'RGB means: %s, expected: %s, ATOL: %d',
                     color, str(rgb_means), str(exp_values), _BW_CH_ATOL)
       test_fail = True
+    if not all(i < _CH_VARIANCE_ATOL for i in rgb_vars):
+      logging.error('Image has too much variance for color %s. '
+                    'RGB variances: %s, ATOL: %d',
+                    color, str(rgb_vars), _CH_VARIANCE_ATOL)
+      test_fail = True
   else:
     exp_values_mask = np.array(exp_values)//255
     primary = max(rgb_means*exp_values_mask)
@@ -101,14 +106,18 @@ def check_solid_color(img, exp_values, color):
       logging.error('Secondary colors too bright in %s. '
                     'RGB means: %s, expected: %s, MAX: %d',
                     color, str(rgb_means), str(exp_values), _RGB_SECONDARY_MAX)
+
+    primary_rgb_vars = max(rgb_vars*exp_values_mask)
+    secondary_rgb_vars = max((1-exp_values_mask)*rgb_vars)
+    if primary_rgb_vars > _CH_VARIANCE_ATOL:
+      logging.error('Image primary color has too much variance for %s. '
+                    'RGB variances: %s, ATOL: %d',
+                    color, str(rgb_vars), _CH_VARIANCE_ATOL)
       test_fail = True
-
-  if not all(i < _CH_VARIANCE_ATOL for i in rgb_vars):
-    logging.error('Image has too much variance for color %s. '
-                  'RGB variances: %s, ATOL: %d',
-                  color, str(rgb_vars), _CH_VARIANCE_ATOL)
-    test_fail = True
-
+    elif secondary_rgb_vars > _CH_VARIANCE_ATOL:
+      logging.error('Image secondary color has too much variance for %s. '
+                    'RGB variances: %s, ATOL: %d',
+                    color, str(rgb_vars), _CH_VARIANCE_ATOL)
   return test_fail
 
 
