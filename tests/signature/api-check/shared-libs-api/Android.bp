@@ -26,3 +26,55 @@ java_library {
         "compatibility-device-util-axt",
     ],
 }
+
+android_test {
+    name: "CtsSharedLibsApiSignatureTestCases",
+    defaults: ["cts_defaults"],
+    java_resources: [
+        ":CtsSharedLibsApiSignatureTestCases_cts-shared-libs-all.api",
+    ],
+    static_libs: [
+        "cts-api-signature-multilib-test",
+        "cts-api-signature-test",
+    ],
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
+    sdk_version: "current",
+    jni_libs: ["libclassdescriptors"],
+    compile_multilib: "both",
+    dex_preopt: {
+        enabled: false,
+    },
+    optimize: {
+        enabled: false,
+    },
+    use_embedded_native_libs: false,
+    srcs: ["src/**/*.java"],
+}
+
+genrule {
+    name: "CtsSharedLibsApiSignatureTestCases_cts-shared-libs-all.api",
+    srcs: [
+        ":prebuilt_sdk_system_public_api_txt",
+    ],
+    tools: [
+        "soong_zip",
+        "metalava",
+    ],
+    out: [
+        "shared-libs-all.api.zip",
+    ],
+    cmd: "for f in $(in); do " +
+        "  fileName=$$(basename $${f} .txt) && " +
+        "  if [ $${fileName} == android ] || [[ $${fileName} =~ removed ]] || [[ $${fileName} =~ incompatibilities ]]; " +
+        "    then continue; fi && " +
+        "  platformSdkVersion=$$(echo $${f} | awk -F/ '{print $$(3)}') && " +
+        "  if [ $${platformSdkVersion} -lt 28 ]; then continue; fi && " +
+        "  apiLevel=$$(echo $${f} | awk -F/ '{print $$(4)}') && " +
+        "  $(location metalava) -J--add-opens=java.base/java.util=ALL-UNNAMED --no-banner " +
+        "    -convert2xmlnostrip $${f} $(genDir)/list/$${fileName}-$${platformSdkVersion}-$${apiLevel}.api; " +
+        "done && " +
+        "$(location soong_zip) -o $(out) -C $(genDir)/list -D $(genDir)/list",
+}
