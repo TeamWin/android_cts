@@ -172,7 +172,7 @@ class CameraMicIndicatorsPermissionTest {
         if (packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)) {
             assertTvIndicatorsShown(useMic, useCamera, useHotword)
         } else if (packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
-            assertCarIndicatorsShown(useMic, useCamera)
+            assertCarIndicatorsShown(useMic, useCamera, useHotword)
         } else {
             // Hotword gets remapped to RECORD_AUDIO on handheld, so handheld should show a mic
             // indicator
@@ -199,7 +199,7 @@ class CameraMicIndicatorsPermissionTest {
         }
     }
 
-    private fun assertCarIndicatorsShown(useMic: Boolean, useCamera: Boolean) {
+    private fun assertCarIndicatorsShown(useMic: Boolean, useCamera: Boolean, useHotword: Boolean) {
         // Ensure the privacy chip is present (or not)
         var chipFound = false
         try {
@@ -213,22 +213,27 @@ class CameraMicIndicatorsPermissionTest {
             // Handle more gracefully below
         }
 
-        if (useMic || useCamera) {
+        if (useMic) {
             assertTrue("Did not find chip", chipFound)
-        } else {
+        } else if (useHotword || useCamera) {
             assertFalse("Found chip, but did not expect to", chipFound)
         }
 
         eventually {
-            if (useMic) {
-                val appView = uiDevice.findObject(UiSelector().textContains(micLabel))
+            if (useCamera || useHotword) {
+                // There should be no microphone dialog when using hot word and/or camera
+                val micLabelView = uiDevice.findObject(UiSelector().textContains(micLabel))
+                assertFalse("View with text $micLabel found, but did not expect to",
+                        micLabelView.exists())
+                val appView = uiDevice.findObject(UiSelector().textContains(APP_LABEL))
+                assertFalse("View with text $APP_LABEL found, but did not expect to",
+                        appView.exists())
+            } else if (useMic) {
+                val micLabelView = uiDevice.findObject(UiSelector().textContains(micLabel))
+                assertTrue("View with text $micLabel not found", micLabelView.exists())
+                val appView = uiDevice.findObject(UiSelector().textContains(APP_LABEL))
                 assertTrue("View with text $APP_LABEL not found", appView.exists())
             }
-            if (useCamera) {
-                // There is no camera indicator in Cars.
-            }
-            val appView = uiDevice.findObject(UiSelector().textContains(APP_LABEL))
-            assertTrue("View with text $APP_LABEL not found", appView.exists())
         }
     }
 
