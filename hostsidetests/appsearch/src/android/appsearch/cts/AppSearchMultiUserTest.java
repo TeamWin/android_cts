@@ -75,11 +75,29 @@ public class AppSearchMultiUserTest extends AppSearchHostTestBase {
     }
 
     @Test
-    public void testMultiUser_documentAccess() throws Exception {
+    public void testMultiUser_cantAccessOtherUsersData() throws Exception {
         runDeviceTestAsUserInPkgA("testPutDocuments", mSecondaryUserId);
         runDeviceTestAsUserInPkgA("testGetDocuments_exist", mSecondaryUserId);
         // Cannot get the document from another user.
         runDeviceTestAsUserInPkgA("testGetDocuments_nonexist", mInitialUserId);
+    }
+
+    @Test
+    public void testMultiUser_canInteractAsAnotherUser() throws Exception {
+        Map<String, String> args =
+                Collections.singletonMap(USER_ID_KEY, String.valueOf(mSecondaryUserId));
+
+        // We can do the normal set of operations while pretending to be another user.
+        runDeviceTestAsUserInPkgA("testPutDocumentsAsAnotherUser", mInitialUserId, args);
+        runDeviceTestAsUserInPkgA("testGetDocumentsAsAnotherUser_exist", mInitialUserId, args);
+    }
+
+    @Test
+    public void testCreateSessionInStoppedUser() throws Exception {
+        Map<String, String> args =
+                Collections.singletonMap(USER_ID_KEY, String.valueOf(mSecondaryUserId));
+        getDevice().stopUser(mSecondaryUserId, /*waitFlag=*/true, /*forceFlag=*/true);
+        runDeviceTestAsUserInPkgA("createSessionInStoppedUser", mInitialUserId, args);
     }
 
     @Test

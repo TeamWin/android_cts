@@ -23,6 +23,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.testng.Assert.expectThrows;
 
+import android.Manifest;
 import android.app.UiAutomation;
 import android.app.appsearch.AppSearchBatchResult;
 import android.app.appsearch.AppSearchManager;
@@ -109,9 +110,57 @@ public class AppSearchDeviceTest {
     }
 
     @Test
+    public void testPutDocumentsAsAnotherUser() throws Exception {
+        mUiAutomation.adoptShellPermissionIdentity(Manifest.permission.INTERACT_ACROSS_USERS_FULL);
+        try {
+            Bundle args = InstrumentationRegistry.getArguments();
+            int userId = Integer.parseInt(args.getString(USER_ID_KEY));
+
+            // Initialize as other user
+            AppSearchSessionShim db = AppSearchSessionShimImpl.createSearchSession(
+                    new AppSearchManager.SearchContext.Builder(DB_NAME).build(),
+                    userId).get();
+
+            // Schema registration
+            db.setSchema(new SetSchemaRequest.Builder().addSchemas(SCHEMA)
+                    .setSchemaTypeVisibilityForPackage(SCHEMA.getSchemaType(), /*visible=*/ true,
+                            new PackageIdentifier(PKG_B, PKG_B_CERT_SHA256)).build()).get();
+
+            // Index a document
+            AppSearchBatchResult<String, Void> result = checkIsBatchResultSuccess(
+                    db.put(new PutDocumentsRequest.Builder().addGenericDocuments(DOCUMENT).build()));
+            assertThat(result.getSuccesses()).containsExactly(ID, /*v0=*/null);
+            assertThat(result.getFailures()).isEmpty();
+
+        } finally {
+            mUiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
     public void testGetDocuments_exist() throws Exception {
         List<GenericDocument> outDocuments = doGet(mDb, NAMESPACE, ID);
         assertThat(outDocuments).containsExactly(DOCUMENT);
+    }
+
+    @Test
+    public void testGetDocumentsAsAnotherUser_exist() throws Exception {
+        mUiAutomation.adoptShellPermissionIdentity(Manifest.permission.INTERACT_ACROSS_USERS_FULL);
+        try {
+            Bundle args = InstrumentationRegistry.getArguments();
+            int userId = Integer.parseInt(args.getString(USER_ID_KEY));
+
+            // Initialize as other user
+            AppSearchSessionShim db = AppSearchSessionShimImpl.createSearchSession(
+                    new AppSearchManager.SearchContext.Builder(DB_NAME).build(),
+                    userId).get();
+
+            // Get documents
+            List<GenericDocument> outDocuments = doGet(db, NAMESPACE, ID);
+            assertThat(outDocuments).containsExactly(DOCUMENT);
+        } finally {
+            mUiAutomation.dropShellPermissionIdentity();
+        }
     }
 
     @Test
@@ -136,5 +185,21 @@ public class AppSearchDeviceTest {
     @Test
     public void clearTestData() throws Exception {
         mDb.setSchema(new SetSchemaRequest.Builder().setForceOverride(true).build()).get();
+    }
+
+    @Test
+    public void createSessionInStoppedUser() {
+        mUiAutomation.adoptShellPermissionIdentity(Manifest.permission.INTERACT_ACROSS_USERS_FULL);
+        try {
+            Bundle args = InstrumentationRegistry.getArguments();
+            int userId = Integer.parseInt(args.getString(USER_ID_KEY));
+            ExecutionException exception = expectThrows(ExecutionException.class, () ->
+                    AppSearchSessionShimImpl.createSearchSession(
+                            new AppSearchManager.SearchContext.Builder(DB_NAME).build(),
+                            userId).get());
+            assertThat(exception.getMessage()).contains("is locked or not running.");
+        } finally {
+            mUiAutomation.dropShellPermissionIdentity();
+        }
     }
 }
