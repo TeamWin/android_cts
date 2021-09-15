@@ -83,6 +83,7 @@ public class KeyGeneratorTest extends AndroidTestCase {
     }
 
     static final int[] AES_SUPPORTED_KEY_SIZES = new int[] {128, 192, 256};
+    static final int[] AES_STRONGBOX_SUPPORTED_KEY_SIZES = new int[] {128, 256};
     static final int[] DES_SUPPORTED_KEY_SIZES = new int[] {168};
 
     public void testAlgorithmList() {
@@ -277,13 +278,18 @@ public class KeyGeneratorTest extends AndroidTestCase {
                     }
                 }
                 rng.resetCounters();
-                if (TestUtils.contains(AES_SUPPORTED_KEY_SIZES, i)) {
+                if (TestUtils.contains(useStrongbox ?
+                        AES_STRONGBOX_SUPPORTED_KEY_SIZES : AES_SUPPORTED_KEY_SIZES, i)) {
                     keyGenerator.init(spec, rng);
                     SecretKey key = keyGenerator.generateKey();
                     assertEquals(i, TestUtils.getKeyInfo(key).getKeySize());
                     assertEquals((i + 7) / 8, rng.getOutputSizeBytes());
                 } else {
                     try {
+                        if (useStrongbox && (i == 192)) {
+                            throw new InvalidAlgorithmParameterException("Strongbox does not"
+                                    + " support key size 192.");
+                        }
                         keyGenerator.init(spec, rng);
                         fail();
                     } catch (InvalidAlgorithmParameterException expected) {}
