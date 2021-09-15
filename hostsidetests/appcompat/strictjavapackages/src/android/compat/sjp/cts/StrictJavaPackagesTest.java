@@ -26,6 +26,7 @@ import static org.junit.Assume.assumeTrue;
 import android.compat.testing.Classpaths;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
+import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -196,6 +197,132 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
             );
 
     /**
+     * TODO(b/199529199): Address these.
+     * List of duplicate classes between bootclasspath and shared libraries.
+     *
+     * <p> DO NOT ADD CLASSES TO THIS LIST!
+     */
+    private static final Set<String> BCP_AND_SHARED_LIB_BURNDOWN_LIST =
+                ImmutableSet.of(
+                    "Landroid/accounts/AccountManager;",
+                    "Landroid/accounts/AccountManagerCallback;",
+                    "Landroid/accounts/AccountManagerFuture;",
+                    "Landroid/accounts/AccountsException;",
+                    "Landroid/accounts/AuthenticatorException;",
+                    "Landroid/accounts/OperationCanceledException;",
+                    "Landroid/app/Application;",
+                    "Landroid/app/IApplicationThread;",
+                    "Landroid/app/IServiceConnection;",
+                    "Landroid/app/PackageDeleteObserver;",
+                    "Landroid/content/ComponentCallbacks;",
+                    "Landroid/content/ComponentCallbacks2;",
+                    "Landroid/content/ContentInterface;",
+                    "Landroid/content/ContentProvider;",
+                    "Landroid/content/ContentProviderNative;",
+                    "Landroid/content/ContentProviderProxy;",
+                    "Landroid/content/ContentResolver;",
+                    "Landroid/content/Context;",
+                    "Landroid/content/ContextWrapper;",
+                    "Landroid/content/DialogInterface;",
+                    "Landroid/content/IContentProvider;",
+                    "Landroid/content/Intent;",
+                    "Landroid/content/IntentSender;",
+                    "Landroid/content/OperationApplicationException;",
+                    "Landroid/content/pm/ActivityInfo;",
+                    "Landroid/content/pm/ApplicationInfo;",
+                    "Landroid/content/pm/InstantAppInfo;",
+                    "Landroid/content/pm/IPackageDataObserver;",
+                    "Landroid/content/pm/KeySet;",
+                    "Landroid/content/pm/PackageManager;",
+                    "Landroid/content/pm/VerifierDeviceIdentity;",
+                    "Landroid/content/res/Resources;",
+                    "Landroid/database/CrossProcessCursor;",
+                    "Landroid/database/CrossProcessCursorWrapper;",
+                    "Landroid/database/Cursor;",
+                    "Landroid/database/CursorWrapper;",
+                    "Landroid/hidl/base/V1_0/DebugInfo;",
+                    "Landroid/hidl/base/V1_0/IBase;",
+                    "Landroid/hidl/manager/V1_0/IServiceManager;",
+                    "Landroid/hidl/manager/V1_0/IServiceNotification;",
+                    "Landroid/os/Binder;",
+                    "Landroid/os/Bundle;",
+                    "Landroid/os/IBinder;",
+                    "Landroid/os/IInterface;",
+                    "Landroid/os/Parcelable;",
+                    "Landroid/os/ParcelFileDescriptor;",
+                    "Landroid/os/RemoteException;",
+                    "Landroid/os/storage/VolumeInfo;",
+                    "Landroid/util/AndroidException;",
+                    "Landroid/view/DisplayAdjustments;",
+                    "Landroid/view/LayerMetadataKey;",
+                    "Landroid/view/ViewDebug;",
+                    "Landroidx/annotation/Keep;",
+                    "Lcom/google/android/embms/nano/EmbmsProtos;",
+                    "Lcom/google/protobuf/nano/android/ParcelableExtendableMessageNano;",
+                    "Lcom/google/protobuf/nano/android/ParcelableMessageNano;",
+                    "Lcom/google/protobuf/nano/android/ParcelableMessageNanoCreator;",
+                    "Lcom/google/protobuf/nano/CodedInputByteBufferNano;",
+                    "Lcom/google/protobuf/nano/CodedOutputByteBufferNano;",
+                    "Lcom/google/protobuf/nano/ExtendableMessageNano;",
+                    "Lcom/google/protobuf/nano/Extension;",
+                    "Lcom/google/protobuf/nano/FieldArray;",
+                    "Lcom/google/protobuf/nano/FieldData;",
+                    "Lcom/google/protobuf/nano/InternalNano;",
+                    "Lcom/google/protobuf/nano/InvalidProtocolBufferNanoException;",
+                    "Lcom/google/protobuf/nano/MapFactories;",
+                    "Lcom/google/protobuf/nano/MessageNano;",
+                    "Lcom/google/protobuf/nano/MessageNanoPrinter;",
+                    "Lcom/google/protobuf/nano/UnknownFieldData;",
+                    "Lcom/google/protobuf/nano/WireFormatNano;",
+                    "Lcom/qualcomm/qcrilhook/BaseQmiTypes;",
+                    "Lcom/qualcomm/qcrilhook/CSignalStrength;",
+                    "Lcom/qualcomm/qcrilhook/EmbmsOemHook;",
+                    "Lcom/qualcomm/qcrilhook/EmbmsProtoUtils;",
+                    "Lcom/qualcomm/qcrilhook/IOemHookCallback;",
+                    "Lcom/qualcomm/qcrilhook/IQcRilHook;",
+                    "Lcom/qualcomm/qcrilhook/IQcRilHookExt;",
+                    "Lcom/qualcomm/qcrilhook/OemHookCallback;",
+                    "Lcom/qualcomm/qcrilhook/PresenceMsgBuilder;",
+                    "Lcom/qualcomm/qcrilhook/PresenceMsgParser;",
+                    "Lcom/qualcomm/qcrilhook/PresenceOemHook;",
+                    "Lcom/qualcomm/qcrilhook/PrimitiveParser;",
+                    "Lcom/qualcomm/qcrilhook/QcRilHook;",
+                    "Lcom/qualcomm/qcrilhook/QcRilHookCallback;",
+                    "Lcom/qualcomm/qcrilhook/QcRilHookCallbackExt;",
+                    "Lcom/qualcomm/qcrilhook/QcRilHookExt;",
+                    "Lcom/qualcomm/qcrilhook/QmiOemHook;",
+                    "Lcom/qualcomm/qcrilhook/QmiOemHookConstants;",
+                    "Lcom/qualcomm/qcrilhook/QmiPrimitiveTypes;",
+                    "Lcom/qualcomm/qcrilhook/TunerOemHook;",
+                    "Lcom/qualcomm/qcrilmsgtunnel/IQcrilMsgTunnel;",
+                    "Lcom/qualcomm/utils/CommandException;",
+                    "Lcom/qualcomm/utils/RILConstants;",
+                    "Lorg/chromium/net/ApiVersion;",
+                    "Lorg/chromium/net/BidirectionalStream;",
+                    "Lorg/chromium/net/CallbackException;",
+                    "Lorg/chromium/net/CronetEngine;",
+                    "Lorg/chromium/net/CronetException;",
+                    "Lorg/chromium/net/CronetProvider;",
+                    "Lorg/chromium/net/EffectiveConnectionType;",
+                    "Lorg/chromium/net/ExperimentalBidirectionalStream;",
+                    "Lorg/chromium/net/ExperimentalCronetEngine;",
+                    "Lorg/chromium/net/ExperimentalUrlRequest;",
+                    "Lorg/chromium/net/ICronetEngineBuilder;",
+                    "Lorg/chromium/net/InlineExecutionProhibitedException;",
+                    "Lorg/chromium/net/NetworkException;",
+                    "Lorg/chromium/net/NetworkQualityRttListener;",
+                    "Lorg/chromium/net/NetworkQualityThroughputListener;",
+                    "Lorg/chromium/net/QuicException;",
+                    "Lorg/chromium/net/RequestFinishedInfo;",
+                    "Lorg/chromium/net/RttThroughputValues;",
+                    "Lorg/chromium/net/ThreadStatsUid;",
+                    "Lorg/chromium/net/UploadDataProvider;",
+                    "Lorg/chromium/net/UploadDataProviders;",
+                    "Lorg/chromium/net/UploadDataSink;",
+                    "Lorg/chromium/net/UrlRequest;",
+                    "Lorg/chromium/net/UrlResponseInfo;"
+                );
+    /**
      * Ensure that there are no duplicate classes among jars listed in BOOTCLASSPATH.
      */
     @Test
@@ -285,6 +412,29 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
     }
 
     /**
+     * Ensure that there are no duplicate classes among jars listed in BOOTCLASSPATH and
+     * shared library jars.
+     */
+    @Test
+    public void testBootClasspathAndSharedLibs_nonDuplicateClasses() throws Exception {
+        assumeTrue(ApiLevelUtil.isAfter(getDevice(), 29));
+        ImmutableList.Builder<String> jars = ImmutableList.builder();
+        jars.addAll(Classpaths.getJarsOnClasspath(getDevice(), BOOTCLASSPATH));
+        jars.addAll(Classpaths.getSharedLibraryInfos(getDevice(), getBuild())
+                .stream()
+                .map(sharedLibraryInfo -> sharedLibraryInfo.paths)
+                .flatMap(ImmutableCollection::stream)
+                .filter(this::doesFileExist)
+                .collect(ImmutableList.toImmutableList())
+        );
+        Multimap<String, String> duplicates = getDuplicateClasses(jars.build());
+        Multimap<String, String> filtered = Multimaps.filterKeys(duplicates,
+            duplicate -> !BCP_AND_SHARED_LIB_BURNDOWN_LIST.contains(duplicate)
+        );
+        assertThat(filtered).isEmpty();
+    }
+
+    /**
      * Gets the duplicate classes within a list of jar files.
      *
      * @param jars a list of jar files.
@@ -307,11 +457,20 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
         for (String clazz : allClasses.keySet()) {
             Collection<String> jarsWithClazz = allClasses.get(clazz);
             if (jarsWithClazz.size() > 1) {
-                CLog.i("Class %s is duplicated in %s", clazz, jarsWithClazz);
+                CLog.w("Class %s is duplicated in %s;", clazz, jarsWithClazz);
                 duplicates.putAll(clazz, jarsWithClazz);
             }
         }
 
         return duplicates;
+    }
+
+    private boolean doesFileExist(String path) {
+        assertThat(path).isNotNull();
+        try {
+            return getDevice().doesFileExist(path);
+        } catch(DeviceNotAvailableException e) {
+            throw new RuntimeException("Could not check whether " + path + " exists on device", e);
+        }
     }
 }
