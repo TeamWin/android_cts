@@ -37,6 +37,7 @@ import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -99,6 +100,7 @@ public class SettingsPanelTest {
 
     // Check correct package is opened
 
+    @Ignore
     @Test
     public void internetPanel_correctPackage() {
         launchInternetPanel();
@@ -136,6 +138,7 @@ public class SettingsPanelTest {
         assertThat(currentPackage).isEqualTo(mSettingsPackage);
     }
 
+    @Ignore
     @Test
     public void internetPanel_doneClosesPanel() {
         // Launch panel
