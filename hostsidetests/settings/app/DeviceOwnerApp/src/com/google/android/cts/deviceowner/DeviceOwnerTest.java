@@ -88,7 +88,7 @@ public final class DeviceOwnerTest extends InstrumentationTestCase {
         mDevice = UiDevice.getInstance(getInstrumentation());
         mPackageManager = mContext.getPackageManager();
         mDevicePolicyManager = TestAppSystemServiceFactory.getDevicePolicyManager(mContext,
-                BasicAdminReceiver.class);
+                BasicAdminReceiver.class, /* forDeviceOwner= */ true);
 
         mIsDeviceOwner = mDevicePolicyManager.isDeviceOwnerApp(PACKAGE_NAME);
         Log.d(TAG, "setup(): dpm=" + mDevicePolicyManager + ", isDO: " + mIsDeviceOwner);

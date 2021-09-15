@@ -79,32 +79,35 @@ public final class TestAppSystemServiceFactory {
      * Gets the proper {@link DevicePolicyManager} instance to be used by the test.
      */
     public static DevicePolicyManager getDevicePolicyManager(Context context,
-            Class<? extends BroadcastReceiver> receiverClass) {
-        return getSystemService(context, DevicePolicyManager.class, receiverClass);
+            Class<? extends BroadcastReceiver> receiverClass, boolean forDeviceOwner) {
+        return getSystemService(context, DevicePolicyManager.class, receiverClass, forDeviceOwner);
     }
 
     /**
-     * Gets the proper {@link WifiManager} instance to be used by the test.
+     * Gets the proper {@link WifiManager} instance to be used by device owner tests.
      */
     public static WifiManager getWifiManager(Context context,
             Class<? extends BroadcastReceiver> receiverClass) {
-        return getSystemService(context, WifiManager.class, receiverClass);
+        return getSystemService(context, WifiManager.class, receiverClass,
+                /* forDeviceOwner= */ true);
     }
 
     /**
-     * Gets the proper {@link HardwarePropertiesManager} instance to be used by the test.
+     * Gets the proper {@link HardwarePropertiesManager} instance to be used by device owner tests.
      */
     public static HardwarePropertiesManager getHardwarePropertiesManager(Context context,
             Class<? extends BroadcastReceiver> receiverClass) {
-        return getSystemService(context, HardwarePropertiesManager.class, receiverClass);
+        return getSystemService(context, HardwarePropertiesManager.class, receiverClass,
+                /* forDeviceOwner= */ true);
     }
 
     /**
-     * Gets the proper {@link UserManager} instance to be used by the test.
+     * Gets the proper {@link UserManager} instance to be used by device owner tests.
      */
     public static UserManager getUserManager(Context context,
             Class<? extends BroadcastReceiver> receiverClass) {
-        return getSystemService(context, UserManager.class, receiverClass);
+        return getSystemService(context, UserManager.class, receiverClass,
+                /* forDeviceOwner= */ true);
     }
 
     private static void assertHasRequiredReceiver(Context context) {
@@ -146,9 +149,7 @@ public final class TestAppSystemServiceFactory {
     }
 
     private static <T> T getSystemService(Context context, Class<T> serviceClass,
-            Class<? extends BroadcastReceiver> receiverClass) {
-        assertHasRequiredReceiver(context);
-
+            Class<? extends BroadcastReceiver> receiverClass, boolean forDeviceOwner) {
         ServiceManagerWrapper<T> wrapper = null;
         Class<?> wrappedClass;
 
@@ -182,6 +183,10 @@ public final class TestAppSystemServiceFactory {
 
         @SuppressWarnings("unchecked")
         T manager = (T) context.getSystemService(wrappedClass);
+
+        if (!forDeviceOwner) return manager;
+
+        assertHasRequiredReceiver(context);
 
         int userId = context.getUserId();
         if (userId == UserHandle.USER_SYSTEM || !UserManager.isHeadlessSystemUserMode()) {

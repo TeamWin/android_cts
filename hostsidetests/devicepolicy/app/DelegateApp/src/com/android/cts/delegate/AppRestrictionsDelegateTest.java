@@ -29,6 +29,8 @@ import android.os.Bundle;
 import android.os.Process;
 import android.util.Log;
 
+import androidx.test.InstrumentationRegistry;
+
 import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -149,6 +151,8 @@ public class AppRestrictionsDelegateTest extends BaseJUnit3TestCase  {
                 + Process.myUserHandle());
         mContext.startActivity(new Intent()
                 .setComponent(component)
+                .putExtra("admin_type",
+                        InstrumentationRegistry.getArguments().getString("admin_type"))
                 .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_NEW_TASK));
     }
 

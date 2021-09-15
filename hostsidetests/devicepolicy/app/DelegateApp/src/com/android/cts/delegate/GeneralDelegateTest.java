@@ -23,6 +23,7 @@ import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -39,7 +40,8 @@ public class GeneralDelegateTest extends BaseJUnit3TestCase {
         String[] expectedScopes = arguments.getString(PARAM_SCOPES).split(",");
         List<String> delegatedScopes = mDpm.getDelegatedScopes(/* admin= */ null,
                 mContext.getPackageName());
-        Log.v(TAG, "delegatedScopes: " + delegatedScopes);
+        Log.v(TAG, "delegatedScopes: " + delegatedScopes
+                + " expected: " + Arrays.toString(expectedScopes));
 
         assertNotNull("Received null scopes", delegatedScopes);
         MoreAsserts.assertContentsInAnyOrder("Delegated scopes do not match expected scopes",

@@ -26,6 +26,8 @@ import android.os.Parcelable;
 import android.os.UserManager;
 import android.test.MoreAsserts;
 
+import androidx.test.InstrumentationRegistry;
+
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -305,6 +307,8 @@ public class ApplicationRestrictionsTest extends BaseDeviceAdminTest {
         mContext.startActivity(new Intent()
                 .setComponent(new ComponentName(
                         APP_RESTRICTIONS_TARGET_PKG, APP_RESTRICTIONS_ACTIVITY_NAME))
+                .putExtra("admin_type",
+                        InstrumentationRegistry.getArguments().getString("admin_type"))
                 .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_NEW_TASK));
     }
 

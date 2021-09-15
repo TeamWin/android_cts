@@ -68,7 +68,7 @@ public abstract class BaseDeviceOwnerTest extends AndroidTestCase {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mDevice = UiDevice.getInstance(mInstrumentation);
         mDevicePolicyManager = TestAppSystemServiceFactory.getDevicePolicyManager(mContext,
-                BasicAdminReceiver.class);
+                BasicAdminReceiver.class, /* forDeviceOwner= */ true);
         mWifiManager = TestAppSystemServiceFactory.getWifiManager(mContext,
                 BasicAdminReceiver.class);
         WifiManager currentUserWifiManager = mContext.getSystemService(WifiManager.class);

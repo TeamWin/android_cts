@@ -1890,6 +1890,8 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             throws Exception {
         for (Map.Entry<String, DevicePolicyEventWrapper[]> entry : delegationTests.entrySet()) {
             final String delegationTestClass = entry.getKey();
+            CLog.i("executeDelegationTests(): executing %s (%s)", delegationTestClass,
+                    positive ? "positive" : "negative");
             final DevicePolicyEventWrapper[] expectedMetrics = entry.getValue();
             final DevicePolicyEventLogVerifier.Action testRun = () -> {
                 runDeviceTestsAsUser(DELEGATE_APP_PKG, delegationTestClass,
