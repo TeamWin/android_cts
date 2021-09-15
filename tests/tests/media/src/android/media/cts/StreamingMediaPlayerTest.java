@@ -15,6 +15,10 @@
  */
 package android.media.cts;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.media.MediaFormat;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.TrackInfo;
@@ -29,6 +33,8 @@ import android.test.InstrumentationTestRunner;
 import android.util.Log;
 import android.webkit.cts.CtsTestServer;
 
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+
 import com.android.compatibility.common.util.DynamicConfigDeviceSide;
 import com.android.compatibility.common.util.MediaUtils;
 
@@ -41,6 +47,11 @@ import org.apache.http.impl.DefaultHttpServerConnection;
 import org.apache.http.impl.io.SocketOutputBuffer;
 import org.apache.http.io.SessionOutputBuffer;
 import org.apache.http.params.HttpParams;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,6 +61,7 @@ import java.util.Map;
  */
 @NonMediaMainlineTest
 @AppModeFull(reason = "TODO: evaluate and port to instant")
+@RunWith(AndroidJUnit4.class)
 public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
 
     private static final String TAG = "StreamingMediaPlayerTest";
@@ -77,9 +89,12 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
 
     private String mInputUrl;
 
+    @Before
     @Override
-    protected void setUp() throws Exception {
+    public void setUp() throws Throwable {
         // if launched with InstrumentationTestRunner to pass a command line argument
+        // TODO(b/194655325#comment3): Replace the following code snippet with non-deprecated
+        // components.
         if (getInstrumentation() instanceof InstrumentationTestRunner) {
             InstrumentationTestRunner testRunner =
                     (InstrumentationTestRunner)getInstrumentation();
@@ -94,6 +109,12 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
 
         super.setUp();
         dynamicConfig = new DynamicConfigDeviceSide(MODULE_NAME);
+    }
+
+    @After
+    @Override
+    public void tearDown() {
+        super.tearDown();
     }
 
 /* RTSP tests are more flaky and vulnerable to network condition.
@@ -127,6 +148,7 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
     }
 */
     // Streaming HTTP video from YouTube
+    @Test
     public void testHTTP_H263_AMR_Video1() throws Exception {
         if (!MediaUtils.checkDecoder(MediaFormat.MIMETYPE_VIDEO_H263, MediaFormat.MIMETYPE_AUDIO_AMR_NB)) {
             return; // skip
@@ -136,6 +158,7 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
         playVideoTest(urlString, 176, 144);
     }
 
+    @Test
     public void testHTTP_H263_AMR_Video2() throws Exception {
         if (!MediaUtils.checkDecoder(MediaFormat.MIMETYPE_VIDEO_H263, MediaFormat.MIMETYPE_AUDIO_AMR_NB)) {
             return; // skip
@@ -145,6 +168,7 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
         playVideoTest(urlString, 176, 144);
     }
 
+    @Test
     public void testHTTP_MPEG4SP_AAC_Video1() throws Exception {
         if (!MediaUtils.checkDecoder(MediaFormat.MIMETYPE_VIDEO_MPEG4)) {
             return; // skip
@@ -154,6 +178,7 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
         playVideoTest(urlString, 176, 144);
     }
 
+    @Test
     public void testHTTP_MPEG4SP_AAC_Video2() throws Exception {
         if (!MediaUtils.checkDecoder(MediaFormat.MIMETYPE_VIDEO_MPEG4)) {
             return; // skip
@@ -163,6 +188,7 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
         playVideoTest(urlString, 176, 144);
     }
 
+    @Test
     public void testHTTP_H264Base_AAC_Video1() throws Exception {
         if (!MediaUtils.checkDecoder(MediaFormat.MIMETYPE_VIDEO_AVC)) {
             return; // skip
@@ -172,6 +198,7 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
         playVideoTest(urlString, 640, 360);
     }
 
+    @Test
     public void testHTTP_H264Base_AAC_Video2() throws Exception {
         if (!MediaUtils.checkDecoder(MediaFormat.MIMETYPE_VIDEO_AVC)) {
             return; // skip
@@ -182,6 +209,7 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
     }
 
     // Streaming HLS video downloaded from YouTube
+    @Test
     public void testHLS() throws Exception {
         if (!MediaUtils.checkDecoder(MediaFormat.MIMETYPE_VIDEO_AVC)) {
             return; // skip
@@ -192,6 +220,7 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
         localHlsTest("hls_variant/index.m3u8", 60 * 1000, LOCAL_HLS_BITS_PER_MS, false /*isAudioOnly*/);
     }
 
+    @Test
     public void testHlsWithHeadersCookies() throws Exception {
         if (!MediaUtils.checkDecoder(MediaFormat.MIMETYPE_VIDEO_AVC)) {
             return; // skip
@@ -220,6 +249,7 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
         localHlsTest("hls_variant/index.m3u8", 60 * 1000, LOCAL_HLS_BITS_PER_MS, false /*isAudioOnly*/);
     }
 
+    @Test
     public void testHlsSampleAes_bbb_audio_only_overridable() throws Exception {
         if (!MediaUtils.checkDecoder(MediaFormat.MIMETYPE_VIDEO_AVC)) {
             return; // skip
@@ -235,6 +265,7 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
 
     }
 
+    @Test
     public void testHlsSampleAes_bbb_unmuxed_1500k() throws Exception {
         if (!MediaUtils.checkDecoder(MediaFormat.MIMETYPE_VIDEO_AVC)) {
             return; // skip
@@ -252,27 +283,35 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
 
 
     // Streaming audio from local HTTP server
+    @Test
     public void testPlayMp3Stream1() throws Throwable {
         localHttpAudioStreamTest("ringer.mp3", false, false);
     }
+    @Test
     public void testPlayMp3Stream2() throws Throwable {
         localHttpAudioStreamTest("ringer.mp3", false, false);
     }
+    @Test
     public void testPlayMp3StreamRedirect() throws Throwable {
         localHttpAudioStreamTest("ringer.mp3", true, false);
     }
+    @Test
     public void testPlayMp3StreamNoLength() throws Throwable {
         localHttpAudioStreamTest("noiseandchirps.mp3", false, true);
     }
+    @Test
     public void testPlayOggStream() throws Throwable {
         localHttpAudioStreamTest("noiseandchirps.ogg", false, false);
     }
+    @Test
     public void testPlayOggStreamRedirect() throws Throwable {
         localHttpAudioStreamTest("noiseandchirps.ogg", true, false);
     }
+    @Test
     public void testPlayOggStreamNoLength() throws Throwable {
         localHttpAudioStreamTest("noiseandchirps.ogg", false, true);
     }
+    @Test
     public void testPlayMp3Stream1Ssl() throws Throwable {
         localHttpsAudioStreamTest("ringer.mp3", false, false);
     }
@@ -359,18 +398,11 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
             mMediaPlayer.setScreenOnWhilePlaying(true);
 
             mOnBufferingUpdateCalled.reset();
-            mMediaPlayer.setOnBufferingUpdateListener(new MediaPlayer.OnBufferingUpdateListener() {
-                @Override
-                public void onBufferingUpdate(MediaPlayer mp, int percent) {
-                    mOnBufferingUpdateCalled.signal();
-                }
-            });
-            mMediaPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
-                @Override
-                public boolean onError(MediaPlayer mp, int what, int extra) {
-                    fail("Media player had error " + what + " playing " + name);
-                    return true;
-                }
+            mMediaPlayer.setOnBufferingUpdateListener(
+                    (mp, percent) -> mOnBufferingUpdateCalled.signal());
+            mMediaPlayer.setOnErrorListener((mp, what, extra) -> {
+                fail("Media player had error " + what + " playing " + name);
+                return true;
             });
 
             assertFalse(mOnBufferingUpdateCalled.isSignalled());
@@ -385,6 +417,7 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
         }
     }
 
+    @Test
     public void testPlayHlsStream() throws Throwable {
         if (!MediaUtils.checkDecoder(MediaFormat.MIMETYPE_VIDEO_AVC)) {
             return; // skip
@@ -392,6 +425,7 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
         localHlsTest("hls.m3u8", false, false, false /*isAudioOnly*/);
     }
 
+    @Test
     public void testPlayHlsStreamWithQueryString() throws Throwable {
         if (!MediaUtils.checkDecoder(MediaFormat.MIMETYPE_VIDEO_AVC)) {
             return; // skip
@@ -399,6 +433,7 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
         localHlsTest("hls.m3u8", true, false, false /*isAudioOnly*/);
     }
 
+    @Test
     public void testPlayHlsStreamWithRedirect() throws Throwable {
         if (!MediaUtils.checkDecoder(MediaFormat.MIMETYPE_VIDEO_AVC)) {
             return; // skip
@@ -406,6 +441,7 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
         localHlsTest("hls.m3u8", false, true, false /*isAudioOnly*/);
     }
 
+    @Test
     public void testPlayHlsStreamWithTimedId3() throws Throwable {
         if (!MediaUtils.checkDecoder(MediaFormat.MIMETYPE_VIDEO_AVC)) {
             Log.d(TAG, "Device doesn't have video codec, skipping test");
@@ -545,6 +581,7 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
         }
     }
 
+    @Test
     public void testBlockingReadRelease() throws Throwable {
 
         mServer = new CtsTestServer(mContext);

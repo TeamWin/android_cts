@@ -16,18 +16,23 @@
 
 package android.media.cts;
 
-import android.content.Context;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
+
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo.VideoCapabilities;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
-import android.os.Build;
 import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 import android.util.Pair;
 import android.text.TextUtils;
 import android.view.Surface;
+
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.DeviceReportLog;
@@ -36,14 +41,18 @@ import com.android.compatibility.common.util.MediaUtils;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
 
-import java.io.IOException;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.runner.RunWith;
+import org.junit.Test;
+
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.LinkedList;
-import java.util.Scanner;
 
 @MediaHeavyPresubmitTest
 @AppModeFull(reason = "TODO: evaluate and port to instant")
+@RunWith(AndroidJUnit4.class)
 public class VideoDecoderPerfTest extends MediaPlayerTestBase {
     private static final String TAG = "VideoDecoderPerfTest";
     private static final String REPORT_LOG_NAME = "CtsMediaTestCases";
@@ -75,15 +84,17 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
     private boolean mSkipRateChecking = false;
     static final String mInpPrefix = WorkDir.getMediaDirString();
 
+    @Before
     @Override
-    protected void setUp() throws Exception {
+    public void setUp() throws Throwable {
         super.setUp();
         Bundle bundle = InstrumentationRegistry.getArguments();
         mSkipRateChecking = TextUtils.equals("true", bundle.getString("mts-media"));
     }
 
+    @After
     @Override
-    protected void tearDown() throws Exception {
+    public void tearDown() {
         super.tearDown();
     }
 
@@ -347,24 +358,38 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
         "bbb_s1_320x240_mp4_h264_mp2_800kbps_30fps_aac_lc_5ch_240kbps_44100hz.mp4",
     };
 
+    @Test
     public void testAvcCount0320x0240() throws Exception { count(sAvcMedia0320x0240, 2, 4); }
+    @Test
     public void testAvcGoog0Perf0320x0240() throws Exception { perf(sAvcMedia0320x0240, GOOG, 0); }
+    @Test
     public void testAvcGoog1Perf0320x0240() throws Exception { perf(sAvcMedia0320x0240, GOOG, 1); }
+    @Test
     public void testAvcOther0Perf0320x0240() throws Exception { perf(sAvcMedia0320x0240, OTHER, 0); }
+    @Test
     public void testAvcOther1Perf0320x0240() throws Exception { perf(sAvcMedia0320x0240, OTHER, 1); }
+    @Test
     public void testAvcOther2Perf0320x0240() throws Exception { perf(sAvcMedia0320x0240, OTHER, 2); }
+    @Test
     public void testAvcOther3Perf0320x0240() throws Exception { perf(sAvcMedia0320x0240, OTHER, 3); }
 
     private static final String[] sAvcMedia0720x0480 = {
         "bbb_s1_720x480_mp4_h264_mp3_2mbps_30fps_aac_lc_5ch_320kbps_48000hz.mp4",
     };
 
+    @Test
     public void testAvcCount0720x0480() throws Exception { count(sAvcMedia0720x0480, 2, 4); }
+    @Test
     public void testAvcGoog0Perf0720x0480() throws Exception { perf(sAvcMedia0720x0480, GOOG, 0); }
+    @Test
     public void testAvcGoog1Perf0720x0480() throws Exception { perf(sAvcMedia0720x0480, GOOG, 1); }
+    @Test
     public void testAvcOther0Perf0720x0480() throws Exception { perf(sAvcMedia0720x0480, OTHER, 0); }
+    @Test
     public void testAvcOther1Perf0720x0480() throws Exception { perf(sAvcMedia0720x0480, OTHER, 1); }
+    @Test
     public void testAvcOther2Perf0720x0480() throws Exception { perf(sAvcMedia0720x0480, OTHER, 2); }
+    @Test
     public void testAvcOther3Perf0720x0480() throws Exception { perf(sAvcMedia0720x0480, OTHER, 3); }
 
     // prefer highest effective bitrate, then high profile
@@ -374,12 +399,19 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
         "bbb_s3_1280x720_mp4_h264_mp32_8mbps_60fps_aac_he_v2_6ch_144kbps_44100hz.mp4",
     };
 
+    @Test
     public void testAvcCount1280x0720() throws Exception { count(sAvcMedia1280x0720, 2, 4); }
+    @Test
     public void testAvcGoog0Perf1280x0720() throws Exception { perf(sAvcMedia1280x0720, GOOG, 0); }
+    @Test
     public void testAvcGoog1Perf1280x0720() throws Exception { perf(sAvcMedia1280x0720, GOOG, 1); }
+    @Test
     public void testAvcOther0Perf1280x0720() throws Exception { perf(sAvcMedia1280x0720, OTHER, 0); }
+    @Test
     public void testAvcOther1Perf1280x0720() throws Exception { perf(sAvcMedia1280x0720, OTHER, 1); }
+    @Test
     public void testAvcOther2Perf1280x0720() throws Exception { perf(sAvcMedia1280x0720, OTHER, 2); }
+    @Test
     public void testAvcOther3Perf1280x0720() throws Exception { perf(sAvcMedia1280x0720, OTHER, 3); }
 
     // prefer highest effective bitrate, then high profile
@@ -390,12 +422,19 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
         "bbb_s2_1920x1080_mp4_h264_mp42_20mbps_60fps_aac_he_v2_5ch_160kbps_48000hz.mp4",
     };
 
+    @Test
     public void testAvcCount1920x1080() throws Exception { count(sAvcMedia1920x1080, 2, 4); }
+    @Test
     public void testAvcGoog0Perf1920x1080() throws Exception { perf(sAvcMedia1920x1080, GOOG, 0); }
+    @Test
     public void testAvcGoog1Perf1920x1080() throws Exception { perf(sAvcMedia1920x1080, GOOG, 1); }
+    @Test
     public void testAvcOther0Perf1920x1080() throws Exception { perf(sAvcMedia1920x1080, OTHER, 0); }
+    @Test
     public void testAvcOther1Perf1920x1080() throws Exception { perf(sAvcMedia1920x1080, OTHER, 1); }
+    @Test
     public void testAvcOther2Perf1920x1080() throws Exception { perf(sAvcMedia1920x1080, OTHER, 2); }
+    @Test
     public void testAvcOther3Perf1920x1080() throws Exception { perf(sAvcMedia1920x1080, OTHER, 3); }
 
     // H263 tests
@@ -404,20 +443,30 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
         "video_176x144_3gp_h263_300kbps_12fps_aac_stereo_128kbps_22050hz.3gp",
     };
 
+    @Test
     public void testH263Count0176x0144() throws Exception { count(sH263Media0176x0144, 2, 2); }
+    @Test
     public void testH263Goog0Perf0176x0144() throws Exception { perf(sH263Media0176x0144, GOOG, 0); }
+    @Test
     public void testH263Goog1Perf0176x0144() throws Exception { perf(sH263Media0176x0144, GOOG, 1); }
+    @Test
     public void testH263Other0Perf0176x0144() throws Exception { perf(sH263Media0176x0144, OTHER, 0); }
+    @Test
     public void testH263Other1Perf0176x0144() throws Exception { perf(sH263Media0176x0144, OTHER, 1); }
 
     private static final String[] sH263Media0352x0288 = {
         "video_352x288_3gp_h263_300kbps_12fps_aac_stereo_128kbps_22050hz.3gp",
     };
 
+    @Test
     public void testH263Count0352x0288() throws Exception { count(sH263Media0352x0288, 2, 2); }
+    @Test
     public void testH263Goog0Perf0352x0288() throws Exception { perf(sH263Media0352x0288, GOOG, 0); }
+    @Test
     public void testH263Goog1Perf0352x0288() throws Exception { perf(sH263Media0352x0288, GOOG, 1); }
+    @Test
     public void testH263Other0Perf0352x0288() throws Exception { perf(sH263Media0352x0288, OTHER, 0); }
+    @Test
     public void testH263Other1Perf0352x0288() throws Exception { perf(sH263Media0352x0288, OTHER, 1); }
 
     // No media for H263 704x576
@@ -430,60 +479,95 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
         "bbb_s1_352x288_mp4_hevc_mp2_600kbps_30fps_aac_he_stereo_96kbps_48000hz.mp4",
     };
 
+    @Test
     public void testHevcCount0352x0288() throws Exception { count(sHevcMedia0352x0288, 2, 4); }
+    @Test
     public void testHevcGoog0Perf0352x0288() throws Exception { perf(sHevcMedia0352x0288, GOOG, 0); }
+    @Test
     public void testHevcGoog1Perf0352x0288() throws Exception { perf(sHevcMedia0352x0288, GOOG, 1); }
+    @Test
     public void testHevcOther0Perf0352x0288() throws Exception { perf(sHevcMedia0352x0288, OTHER, 0); }
+    @Test
     public void testHevcOther1Perf0352x0288() throws Exception { perf(sHevcMedia0352x0288, OTHER, 1); }
+    @Test
     public void testHevcOther2Perf0352x0288() throws Exception { perf(sHevcMedia0352x0288, OTHER, 2); }
+    @Test
     public void testHevcOther3Perf0352x0288() throws Exception { perf(sHevcMedia0352x0288, OTHER, 3); }
 
     private static final String[] sHevcMedia0640x0360 = {
         "bbb_s1_640x360_mp4_hevc_mp21_1600kbps_30fps_aac_he_6ch_288kbps_44100hz.mp4",
     };
 
+    @Test
     public void testHevcCount0640x0360() throws Exception { count(sHevcMedia0640x0360, 2, 4); }
+    @Test
     public void testHevcGoog0Perf0640x0360() throws Exception { perf(sHevcMedia0640x0360, GOOG, 0); }
+    @Test
     public void testHevcGoog1Perf0640x0360() throws Exception { perf(sHevcMedia0640x0360, GOOG, 1); }
+    @Test
     public void testHevcOther0Perf0640x0360() throws Exception { perf(sHevcMedia0640x0360, OTHER, 0); }
+    @Test
     public void testHevcOther1Perf0640x0360() throws Exception { perf(sHevcMedia0640x0360, OTHER, 1); }
+    @Test
     public void testHevcOther2Perf0640x0360() throws Exception { perf(sHevcMedia0640x0360, OTHER, 2); }
+    @Test
     public void testHevcOther3Perf0640x0360() throws Exception { perf(sHevcMedia0640x0360, OTHER, 3); }
 
     private static final String[] sHevcMedia0720x0480 = {
         "bbb_s1_720x480_mp4_hevc_mp3_1600kbps_30fps_aac_he_6ch_240kbps_48000hz.mp4",
     };
 
+    @Test
     public void testHevcCount0720x0480() throws Exception { count(sHevcMedia0720x0480, 2, 4); }
+    @Test
     public void testHevcGoog0Perf0720x0480() throws Exception { perf(sHevcMedia0720x0480, GOOG, 0); }
+    @Test
     public void testHevcGoog1Perf0720x0480() throws Exception { perf(sHevcMedia0720x0480, GOOG, 1); }
+    @Test
     public void testHevcOther0Perf0720x0480() throws Exception { perf(sHevcMedia0720x0480, OTHER, 0); }
+    @Test
     public void testHevcOther1Perf0720x0480() throws Exception { perf(sHevcMedia0720x0480, OTHER, 1); }
+    @Test
     public void testHevcOther2Perf0720x0480() throws Exception { perf(sHevcMedia0720x0480, OTHER, 2); }
+    @Test
     public void testHevcOther3Perf0720x0480() throws Exception { perf(sHevcMedia0720x0480, OTHER, 3); }
 
     private static final String[] sHevcMedia1280x0720 = {
         "bbb_s4_1280x720_mp4_hevc_mp31_4mbps_30fps_aac_he_stereo_80kbps_32000hz.mp4",
     };
 
+    @Test
     public void testHevcCount1280x0720() throws Exception { count(sHevcMedia1280x0720, 2, 4); }
+    @Test
     public void testHevcGoog0Perf1280x0720() throws Exception { perf(sHevcMedia1280x0720, GOOG, 0); }
+    @Test
     public void testHevcGoog1Perf1280x0720() throws Exception { perf(sHevcMedia1280x0720, GOOG, 1); }
+    @Test
     public void testHevcOther0Perf1280x0720() throws Exception { perf(sHevcMedia1280x0720, OTHER, 0); }
+    @Test
     public void testHevcOther1Perf1280x0720() throws Exception { perf(sHevcMedia1280x0720, OTHER, 1); }
+    @Test
     public void testHevcOther2Perf1280x0720() throws Exception { perf(sHevcMedia1280x0720, OTHER, 2); }
+    @Test
     public void testHevcOther3Perf1280x0720() throws Exception { perf(sHevcMedia1280x0720, OTHER, 3); }
 
     private static final String[] sHevcMedia1920x1080 = {
         "bbb_s2_1920x1080_mp4_hevc_mp41_10mbps_60fps_aac_lc_6ch_384kbps_22050hz.mp4",
     };
 
+    @Test
     public void testHevcCount1920x1080() throws Exception { count(sHevcMedia1920x1080, 2, 4); }
+    @Test
     public void testHevcGoog0Perf1920x1080() throws Exception { perf(sHevcMedia1920x1080, GOOG, 0); }
+    @Test
     public void testHevcGoog1Perf1920x1080() throws Exception { perf(sHevcMedia1920x1080, GOOG, 1); }
+    @Test
     public void testHevcOther0Perf1920x1080() throws Exception { perf(sHevcMedia1920x1080, OTHER, 0); }
+    @Test
     public void testHevcOther1Perf1920x1080() throws Exception { perf(sHevcMedia1920x1080, OTHER, 1); }
+    @Test
     public void testHevcOther2Perf1920x1080() throws Exception { perf(sHevcMedia1920x1080, OTHER, 2); }
+    @Test
     public void testHevcOther3Perf1920x1080() throws Exception { perf(sHevcMedia1920x1080, OTHER, 3); }
 
     // prefer highest effective bitrate
@@ -492,12 +576,19 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
         "bbb_s2_3840x2160_mp4_hevc_mp51_20mbps_60fps_aac_lc_6ch_384kbps_32000hz.mp4",
     };
 
+    @Test
     public void testHevcCount3840x2160() throws Exception { count(sHevcMedia3840x2160, 2, 4); }
+    @Test
     public void testHevcGoog0Perf3840x2160() throws Exception { perf(sHevcMedia3840x2160, GOOG, 0); }
+    @Test
     public void testHevcGoog1Perf3840x2160() throws Exception { perf(sHevcMedia3840x2160, GOOG, 1); }
+    @Test
     public void testHevcOther0Perf3840x2160() throws Exception { perf(sHevcMedia3840x2160, OTHER, 0); }
+    @Test
     public void testHevcOther1Perf3840x2160() throws Exception { perf(sHevcMedia3840x2160, OTHER, 1); }
+    @Test
     public void testHevcOther2Perf3840x2160() throws Exception { perf(sHevcMedia3840x2160, OTHER, 2); }
+    @Test
     public void testHevcOther3Perf3840x2160() throws Exception { perf(sHevcMedia3840x2160, OTHER, 3); }
 
     // MPEG2 tests
@@ -518,24 +609,38 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
         "video_176x144_mp4_mpeg4_300kbps_25fps_aac_stereo_128kbps_44100hz.mp4",
     };
 
+    @Test
     public void testMpeg4Count0176x0144() throws Exception { count(sMpeg4Media0176x0144, 2, 4); }
+    @Test
     public void testMpeg4Goog0Perf0176x0144() throws Exception { perf(sMpeg4Media0176x0144, GOOG, 0); }
+    @Test
     public void testMpeg4Goog1Perf0176x0144() throws Exception { perf(sMpeg4Media0176x0144, GOOG, 1); }
+    @Test
     public void testMpeg4Other0Perf0176x0144() throws Exception { perf(sMpeg4Media0176x0144, OTHER, 0); }
+    @Test
     public void testMpeg4Other1Perf0176x0144() throws Exception { perf(sMpeg4Media0176x0144, OTHER, 1); }
+    @Test
     public void testMpeg4Other2Perf0176x0144() throws Exception { perf(sMpeg4Media0176x0144, OTHER, 2); }
+    @Test
     public void testMpeg4Other3Perf0176x0144() throws Exception { perf(sMpeg4Media0176x0144, OTHER, 3); }
 
     private static final String[] sMpeg4Media0480x0360 = {
         "video_480x360_mp4_mpeg4_860kbps_25fps_aac_stereo_128kbps_44100hz.mp4",
     };
 
+    @Test
     public void testMpeg4Count0480x0360() throws Exception { count(sMpeg4Media0480x0360, 2, 4); }
+    @Test
     public void testMpeg4Goog0Perf0480x0360() throws Exception { perf(sMpeg4Media0480x0360, GOOG, 0); }
+    @Test
     public void testMpeg4Goog1Perf0480x0360() throws Exception { perf(sMpeg4Media0480x0360, GOOG, 1); }
+    @Test
     public void testMpeg4Other0Perf0480x0360() throws Exception { perf(sMpeg4Media0480x0360, OTHER, 0); }
+    @Test
     public void testMpeg4Other1Perf0480x0360() throws Exception { perf(sMpeg4Media0480x0360, OTHER, 1); }
+    @Test
     public void testMpeg4Other2Perf0480x0360() throws Exception { perf(sMpeg4Media0480x0360, OTHER, 2); }
+    @Test
     public void testMpeg4Other3Perf0480x0360() throws Exception { perf(sMpeg4Media0480x0360, OTHER, 3); }
 
    // No media for MPEG4 640x480
@@ -544,12 +649,19 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
         "video_1280x720_mp4_mpeg4_1000kbps_25fps_aac_stereo_128kbps_44100hz.mp4",
     };
 
+    @Test
     public void testMpeg4Count1280x0720() throws Exception { count(sMpeg4Media1280x0720, 2, 4); }
+    @Test
     public void testMpeg4Goog0Perf1280x0720() throws Exception { perf(sMpeg4Media1280x0720, GOOG, 0); }
+    @Test
     public void testMpeg4Goog1Perf1280x0720() throws Exception { perf(sMpeg4Media1280x0720, GOOG, 1); }
+    @Test
     public void testMpeg4Other0Perf1280x0720() throws Exception { perf(sMpeg4Media1280x0720, OTHER, 0); }
+    @Test
     public void testMpeg4Other1Perf1280x0720() throws Exception { perf(sMpeg4Media1280x0720, OTHER, 1); }
+    @Test
     public void testMpeg4Other2Perf1280x0720() throws Exception { perf(sMpeg4Media1280x0720, OTHER, 2); }
+    @Test
     public void testMpeg4Other3Perf1280x0720() throws Exception { perf(sMpeg4Media1280x0720, OTHER, 3); }
 
     // VP8 tests
@@ -558,20 +670,30 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
         "bbb_s1_320x180_webm_vp8_800kbps_30fps_opus_5ch_320kbps_48000hz.webm",
     };
 
+    @Test
     public void testVp8Count0320x0180() throws Exception { count(sVp8Media0320x0180, 2, 2); }
+    @Test
     public void testVp8Goog0Perf0320x0180() throws Exception { perf(sVp8Media0320x0180, GOOG, 0); }
+    @Test
     public void testVp8Goog1Perf0320x0180() throws Exception { perf(sVp8Media0320x0180, GOOG, 1); }
+    @Test
     public void testVp8Other0Perf0320x0180() throws Exception { perf(sVp8Media0320x0180, OTHER, 0); }
+    @Test
     public void testVp8Other1Perf0320x0180() throws Exception { perf(sVp8Media0320x0180, OTHER, 1); }
 
     private static final String[] sVp8Media0640x0360 = {
         "bbb_s1_640x360_webm_vp8_2mbps_30fps_vorbis_5ch_320kbps_48000hz.webm",
     };
 
+    @Test
     public void testVp8Count0640x0360() throws Exception { count(sVp8Media0640x0360, 2, 2); }
+    @Test
     public void testVp8Goog0Perf0640x0360() throws Exception { perf(sVp8Media0640x0360, GOOG, 0); }
+    @Test
     public void testVp8Goog1Perf0640x0360() throws Exception { perf(sVp8Media0640x0360, GOOG, 1); }
+    @Test
     public void testVp8Other0Perf0640x0360() throws Exception { perf(sVp8Media0640x0360, OTHER, 0); }
+    @Test
     public void testVp8Other1Perf0640x0360() throws Exception { perf(sVp8Media0640x0360, OTHER, 1); }
 
     // prefer highest effective bitrate
@@ -580,10 +702,15 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
         "bbb_s3_1280x720_webm_vp8_8mbps_60fps_opus_6ch_384kbps_48000hz.webm",
     };
 
+    @Test
     public void testVp8Count1280x0720() throws Exception { count(sVp8Media1280x0720, 2, 2); }
+    @Test
     public void testVp8Goog0Perf1280x0720() throws Exception { perf(sVp8Media1280x0720, GOOG, 0); }
+    @Test
     public void testVp8Goog1Perf1280x0720() throws Exception { perf(sVp8Media1280x0720, GOOG, 1); }
+    @Test
     public void testVp8Other0Perf1280x0720() throws Exception { perf(sVp8Media1280x0720, OTHER, 0); }
+    @Test
     public void testVp8Other1Perf1280x0720() throws Exception { perf(sVp8Media1280x0720, OTHER, 1); }
 
     // prefer highest effective bitrate
@@ -592,10 +719,15 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
         "bbb_s2_1920x1080_webm_vp8_20mbps_60fps_vorbis_6ch_384kbps_48000hz.webm",
     };
 
+    @Test
     public void testVp8Count1920x1080() throws Exception { count(sVp8Media1920x1080, 2, 2); }
+    @Test
     public void testVp8Goog0Perf1920x1080() throws Exception { perf(sVp8Media1920x1080, GOOG, 0); }
+    @Test
     public void testVp8Goog1Perf1920x1080() throws Exception { perf(sVp8Media1920x1080, GOOG, 1); }
+    @Test
     public void testVp8Other0Perf1920x1080() throws Exception { perf(sVp8Media1920x1080, OTHER, 0); }
+    @Test
     public void testVp8Other1Perf1920x1080() throws Exception { perf(sVp8Media1920x1080, OTHER, 1); }
 
     // VP9 tests
@@ -604,48 +736,76 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
         "bbb_s1_320x180_webm_vp9_0p11_600kbps_30fps_vorbis_mono_64kbps_48000hz.webm",
     };
 
+    @Test
     public void testVp9Count0320x0180() throws Exception { count(sVp9Media0320x0180, 2, 4); }
+    @Test
     public void testVp9Goog0Perf0320x0180() throws Exception { perf(sVp9Media0320x0180, GOOG, 0); }
+    @Test
     public void testVp9Goog1Perf0320x0180() throws Exception { perf(sVp9Media0320x0180, GOOG, 1); }
+    @Test
     public void testVp9Other0Perf0320x0180() throws Exception { perf(sVp9Media0320x0180, OTHER, 0); }
+    @Test
     public void testVp9Other1Perf0320x0180() throws Exception { perf(sVp9Media0320x0180, OTHER, 1); }
+    @Test
     public void testVp9Other2Perf0320x0180() throws Exception { perf(sVp9Media0320x0180, OTHER, 2); }
+    @Test
     public void testVp9Other3Perf0320x0180() throws Exception { perf(sVp9Media0320x0180, OTHER, 3); }
 
     private static final String[] sVp9Media0640x0360 = {
         "bbb_s1_640x360_webm_vp9_0p21_1600kbps_30fps_vorbis_stereo_128kbps_48000hz.webm",
     };
 
+    @Test
     public void testVp9Count0640x0360() throws Exception { count(sVp9Media0640x0360, 2, 4); }
+    @Test
     public void testVp9Goog0Perf0640x0360() throws Exception { perf(sVp9Media0640x0360, GOOG, 0); }
+    @Test
     public void testVp9Goog1Perf0640x0360() throws Exception { perf(sVp9Media0640x0360, GOOG, 1); }
+    @Test
     public void testVp9Other0Perf0640x0360() throws Exception { perf(sVp9Media0640x0360, OTHER, 0); }
+    @Test
     public void testVp9Other1Perf0640x0360() throws Exception { perf(sVp9Media0640x0360, OTHER, 1); }
+    @Test
     public void testVp9Other2Perf0640x0360() throws Exception { perf(sVp9Media0640x0360, OTHER, 2); }
+    @Test
     public void testVp9Other3Perf0640x0360() throws Exception { perf(sVp9Media0640x0360, OTHER, 3); }
 
     private static final String[] sVp9Media1280x0720 = {
         "bbb_s4_1280x720_webm_vp9_0p31_4mbps_30fps_opus_stereo_128kbps_48000hz.webm",
     };
 
+    @Test
     public void testVp9Count1280x0720() throws Exception { count(sVp9Media1280x0720, 2, 4); }
+    @Test
     public void testVp9Goog0Perf1280x0720() throws Exception { perf(sVp9Media1280x0720, GOOG, 0); }
+    @Test
     public void testVp9Goog1Perf1280x0720() throws Exception { perf(sVp9Media1280x0720, GOOG, 1); }
+    @Test
     public void testVp9Other0Perf1280x0720() throws Exception { perf(sVp9Media1280x0720, OTHER, 0); }
+    @Test
     public void testVp9Other1Perf1280x0720() throws Exception { perf(sVp9Media1280x0720, OTHER, 1); }
+    @Test
     public void testVp9Other2Perf1280x0720() throws Exception { perf(sVp9Media1280x0720, OTHER, 2); }
+    @Test
     public void testVp9Other3Perf1280x0720() throws Exception { perf(sVp9Media1280x0720, OTHER, 3); }
 
     private static final String[] sVp9Media1920x1080 = {
         "bbb_s2_1920x1080_webm_vp9_0p41_10mbps_60fps_vorbis_6ch_384kbps_22050hz.webm",
     };
 
+    @Test
     public void testVp9Count1920x1080() throws Exception { count(sVp9Media1920x1080, 2, 4); }
+    @Test
     public void testVp9Goog0Perf1920x1080() throws Exception { perf(sVp9Media1920x1080, GOOG, 0); }
+    @Test
     public void testVp9Goog1Perf1920x1080() throws Exception { perf(sVp9Media1920x1080, GOOG, 1); }
+    @Test
     public void testVp9Other0Perf1920x1080() throws Exception { perf(sVp9Media1920x1080, OTHER, 0); }
+    @Test
     public void testVp9Other1Perf1920x1080() throws Exception { perf(sVp9Media1920x1080, OTHER, 1); }
+    @Test
     public void testVp9Other2Perf1920x1080() throws Exception { perf(sVp9Media1920x1080, OTHER, 2); }
+    @Test
     public void testVp9Other3Perf1920x1080() throws Exception { perf(sVp9Media1920x1080, OTHER, 3); }
 
     // prefer highest effective bitrate
@@ -654,11 +814,18 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
         "bbb_s2_3840x2160_webm_vp9_0p51_20mbps_60fps_vorbis_6ch_384kbps_32000hz.webm",
     };
 
+    @Test
     public void testVp9Count3840x2160() throws Exception { count(sVp9Media3840x2160, 2, 4); }
+    @Test
     public void testVp9Goog0Perf3840x2160() throws Exception { perf(sVp9Media3840x2160, GOOG, 0); }
+    @Test
     public void testVp9Goog1Perf3840x2160() throws Exception { perf(sVp9Media3840x2160, GOOG, 1); }
+    @Test
     public void testVp9Other0Perf3840x2160() throws Exception { perf(sVp9Media3840x2160, OTHER, 0); }
+    @Test
     public void testVp9Other1Perf3840x2160() throws Exception { perf(sVp9Media3840x2160, OTHER, 1); }
+    @Test
     public void testVp9Other2Perf3840x2160() throws Exception { perf(sVp9Media3840x2160, OTHER, 2); }
+    @Test
     public void testVp9Other3Perf3840x2160() throws Exception { perf(sVp9Media3840x2160, OTHER, 3); }
 }
