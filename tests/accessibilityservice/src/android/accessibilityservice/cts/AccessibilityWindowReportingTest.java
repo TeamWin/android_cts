@@ -24,6 +24,7 @@ import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.getActi
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityAndWaitForItToBeOnscreen;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityOnSpecifiedDisplayAndWaitForItToBeOnscreen;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.supportsMultiDisplay;
+import static android.accessibilityservice.cts.utils.AsyncUtils.DEFAULT_TIMEOUT_MS;
 import static android.accessibilityservice.cts.utils.DisplayUtils.VirtualDisplaySession;
 import static android.accessibilityservice.cts.utils.DisplayUtils.getStatusBarHeight;
 import static android.content.pm.PackageManager.FEATURE_PICTURE_IN_PICTURE;
@@ -44,13 +45,17 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assume.assumeTrue;
 
+import android.Manifest;
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.accessibilityservice.cts.activities.AccessibilityWindowReportingActivity;
+import android.accessibilityservice.cts.activities.NotTouchableWindowTestActivity;
 import android.accessibilityservice.cts.activities.NonDefaultDisplayActivity;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
+import android.content.ComponentName;
+import android.content.Intent;
 import android.graphics.Rect;
 import android.os.SystemClock;
 import android.view.Gravity;
@@ -68,6 +73,8 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.SystemUtil;
+
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -76,6 +83,7 @@ import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 
@@ -154,10 +162,9 @@ public class AccessibilityWindowReportingTest {
         final WindowManager.LayoutParams paramsForBottom = layoutParmsForWindowOnBottom();
         final Button button = new Button(mActivity);
         button.setText(R.string.button1);
-        sUiAutomation.executeAndWaitForEvent(() -> sInstrumentation.runOnMainSync(
-                () -> mActivity.getWindowManager().addView(button, paramsForTop)),
-                filterWindowsChangedWithChangeTypes(WINDOWS_CHANGE_ADDED),
-                TIMEOUT_ASYNC_PROCESSING);
+
+        addWindowAndWaitForEvent(button, paramsForTop,
+                        filterWindowsChangedWithChangeTypes(WINDOWS_CHANGE_ADDED));
 
         // Move window from top to bottom
         sUiAutomation.executeAndWaitForEvent(() -> sInstrumentation.runOnMainSync(
@@ -410,18 +417,110 @@ public class AccessibilityWindowReportingTest {
         assertTrue("Failed to find accessibility window for auto-complete pop-up", foundPopup);
     }
 
+    @Test
+    public void showNotTouchableWindow_activityWindowIsNotVisible()
+            throws TimeoutException {
+        try {
+            launchNotTouchableWindowTestActivityFromShell();
+
+            Intent intent = new Intent();
+            intent.setAction(NotTouchableWindowTestActivity.ADD_WINDOW);
+
+            try {
+                sendIntentAndWaitForEvent(intent,
+                        filterWindowsChangeTypesAndWindowTitle(sUiAutomation, WINDOWS_CHANGE_ADDED,
+                                NotTouchableWindowTestActivity.NON_TOUCHABLE_WINDOW_TITLE.toString())
+                );
+
+                List<AccessibilityWindowInfo> windows = sUiAutomation.getWindows();
+                assertNotNull(windows);
+                assertEquals(0, windows.stream().filter(
+                        w -> NotTouchableWindowTestActivity.TITLE.equals(w.getTitle())).count());
+            } finally {
+                intent.setAction(NotTouchableWindowTestActivity.REMOVE_WINDOW);
+                sendIntentAndWaitForEvent(intent,
+                        filterWindowsChangedWithChangeTypes(WINDOWS_CHANGE_REMOVED));
+            }
+        } finally {
+            Intent intent = new Intent();
+            intent.setAction(NotTouchableWindowTestActivity.FINISH_ACTIVITY);
+            sendIntentAndWaitForEvent(intent,
+                    filterWindowsChangedWithChangeTypes(WINDOWS_CHANGE_REMOVED));
+        }
+    }
+
+    @Test
+    public void showNotTouchableTrustedWindow_activityWindowIsVisible()
+            throws TimeoutException {
+        try {
+            launchNotTouchableWindowTestActivityFromShell();
+
+            Intent intent = new Intent();
+            intent.setAction(NotTouchableWindowTestActivity.ADD_TRUSTED_WINDOW);
+
+            try {
+                SystemUtil.runWithShellPermissionIdentity(() -> {
+                    sendIntentAndWaitForEvent(intent,
+                            filterWindowsChangeTypesAndWindowTitle(sUiAutomation,
+                                    WINDOWS_CHANGE_ADDED,
+                                    NotTouchableWindowTestActivity.NON_TOUCHABLE_WINDOW_TITLE.toString())
+                    );
+                }, Manifest.permission.INTERNAL_SYSTEM_WINDOW);
+
+                List<AccessibilityWindowInfo> windows = sUiAutomation.getWindows();
+                assertNotNull(windows);
+
+                assertEquals(1, windows.stream().filter(
+                        w -> NotTouchableWindowTestActivity.TITLE.equals(w.getTitle())).count());
+            } finally {
+                intent.setAction(NotTouchableWindowTestActivity.REMOVE_WINDOW);
+                sendIntentAndWaitForEvent(intent,
+                        filterWindowsChangedWithChangeTypes(WINDOWS_CHANGE_REMOVED));
+            }
+        } finally {
+            Intent intent = new Intent();
+            intent.setAction(NotTouchableWindowTestActivity.FINISH_ACTIVITY);
+            sendIntentAndWaitForEvent(intent,
+                    filterWindowsChangedWithChangeTypes(WINDOWS_CHANGE_REMOVED));
+        }
+    }
+
+    // We want to test WindowState#isTrustedOverlay which refers to flag stored in the
+    // Session class and is not updated since the Session is created.
+    // Use shell command instead of ActivityLaunchUtils to get INTERNAL_SYSTEM_WINDOW
+    // permission when the Session is created.
+    private void launchNotTouchableWindowTestActivityFromShell() {
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            sUiAutomation.executeAndWaitForEvent(
+                    () -> {
+                        final ComponentName componentName = new ComponentName(
+                                sInstrumentation.getContext(), NotTouchableWindowTestActivity.class);
+
+                        String command = "am start -n " + componentName.flattenToString();
+                        try {
+                            SystemUtil.runShellCommand(sInstrumentation, command);
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    },
+                    (event) -> {
+                        final AccessibilityWindowInfo window =
+                                findWindowByTitleAndDisplay(sUiAutomation,
+                                        NotTouchableWindowTestActivity.TITLE, 0);
+                        return window != null;
+                    }, DEFAULT_TIMEOUT_MS);
+        }, Manifest.permission.INTERNAL_SYSTEM_WINDOW);
+    }
+
     private View showTopWindowAndWaitForItToShowUp() throws TimeoutException {
         final WindowManager.LayoutParams paramsForTop = layoutParmsForWindowOnTop();
         final Button button = new Button(mActivity);
         button.setText(R.string.button1);
-        sUiAutomation.executeAndWaitForEvent(() -> sInstrumentation.runOnMainSync(
-                () -> mActivity.getWindowManager().addView(button, paramsForTop)),
-                (event) -> {
-                    return (event.getEventType() == TYPE_WINDOWS_CHANGED)
-                            && (findWindowByTitle(sUiAutomation, mActivityTitle) != null)
-                            && (findWindowByTitle(sUiAutomation, TOP_WINDOW_TITLE) != null);
-                },
-                TIMEOUT_ASYNC_PROCESSING);
+        addWindowAndWaitForEvent(button, paramsForTop, (event) -> {
+            return (event.getEventType() == TYPE_WINDOWS_CHANGED)
+                    && (findWindowByTitle(sUiAutomation, mActivityTitle) != null)
+                    && (findWindowByTitle(sUiAutomation, TOP_WINDOW_TITLE) != null);
+        });
         return button;
     }
 
@@ -454,4 +553,22 @@ public class AccessibilityWindowReportingTest {
         });
         return params;
     }
+
+    private void addWindowAndWaitForEvent(View view, WindowManager.LayoutParams params,
+            UiAutomation.AccessibilityEventFilter filter)
+            throws TimeoutException {
+        sUiAutomation.executeAndWaitForEvent(() -> sInstrumentation.runOnMainSync(
+                () -> mActivity.getWindowManager().addView(view, params)),
+                filter,
+                TIMEOUT_ASYNC_PROCESSING);
+    }
+
+    private void sendIntentAndWaitForEvent(Intent intent,
+            UiAutomation.AccessibilityEventFilter filter) throws TimeoutException {
+        sUiAutomation.executeAndWaitForEvent(() -> sInstrumentation.runOnMainSync(
+                () -> sInstrumentation.getContext().sendBroadcast(intent)),
+                filter,
+                TIMEOUT_ASYNC_PROCESSING);
+    }
+
 }

@@ -57,6 +57,11 @@
              android:supportsPictureInPicture="true"
              android:screenOrientation="locked"/>
 
+        <activity android:label="Activity for testing window accessibility reporting"
+                  android:name=".activities.NotTouchableWindowTestActivity"
+                  android:process=":NotTouchableWindowTestActivity"
+                  android:exported="true"/>
+
         <activity android:label="@string/non_default_display_activity"
                   android:name=".activities.NonDefaultDisplayActivity"
                   android:screenOrientation="locked"/>
