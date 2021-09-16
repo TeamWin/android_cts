@@ -1769,6 +1769,12 @@ public class StagefrightTest {
      ***********************************************************/
 
     @Test
+    @AsbSecurityTest(cveBugId = 175038625)
+    public void testStagefright_cve_2020_11299() throws Exception {
+        doStagefrightTest(R.raw.cve_2020_11299);
+    }
+
+    @Test
     @AsbSecurityTest(cveBugId = 162756960)
     public void testStagefright_cve_2020_11196() throws Exception {
         doStagefrightTest(R.raw.cve_2020_11196);
