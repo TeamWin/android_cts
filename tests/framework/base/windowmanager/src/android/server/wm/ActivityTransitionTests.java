@@ -63,6 +63,10 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
     // Duration of the R.anim.alpha animation
     static final long CUSTOM_ANIMATION_DURATION = 2000L;
 
+    // Allowable error for the measured animation duration.
+    static final long EXPECTED_DURATION_TOLERANCE_START = 200;
+    static final long EXPECTED_DURATION_TOLERANCE_FINISH = 1000;
+
     private static boolean customTaskAnimationDisabled() {
         try {
             return Integer.parseInt(executeShellCommand(
@@ -72,11 +76,10 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
         }
     }
 
-    @Test
+   @Test
     public void testActivityTransitionDurationNoShortenAsExpected() throws Exception {
-        final long expectedDurationMs = CUSTOM_ANIMATION_DURATION - 100L;
-        final long minDurationMs = expectedDurationMs;
-        final long maxDurationMs = expectedDurationMs + 300L;
+        final long minDurationMs = CUSTOM_ANIMATION_DURATION - EXPECTED_DURATION_TOLERANCE_START;
+        final long maxDurationMs = CUSTOM_ANIMATION_DURATION + EXPECTED_DURATION_TOLERANCE_FINISH;
         final Range<Long> durationRange = new Range<>(minDurationMs, maxDurationMs);
 
         final CountDownLatch latch = new CountDownLatch(1);
@@ -117,9 +120,8 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
     public void testTaskTransitionDurationNoShortenAsExpected() throws Exception {
         assumeFalse(customTaskAnimationDisabled());
 
-        final long expectedDurationMs = CUSTOM_ANIMATION_DURATION - 100L;
-        final long minDurationMs = expectedDurationMs;
-        final long maxDurationMs = expectedDurationMs + 300L;
+        final long minDurationMs = CUSTOM_ANIMATION_DURATION - EXPECTED_DURATION_TOLERANCE_START;
+        final long maxDurationMs = CUSTOM_ANIMATION_DURATION + EXPECTED_DURATION_TOLERANCE_FINISH;
         final Range<Long> durationRange = new Range<>(minDurationMs, maxDurationMs);
 
         final CountDownLatch latch = new CountDownLatch(1);
@@ -156,9 +158,8 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
     public void testTaskTransitionOverrideDisabled() throws Exception {
         assumeTrue(customTaskAnimationDisabled());
 
-        final long expectedDurationMs = DEFAULT_ANIMATION_DURATION - 100L;
-        final long minDurationMs = expectedDurationMs;
-        final long maxDurationMs = expectedDurationMs + 1000L;
+        final long minDurationMs = DEFAULT_ANIMATION_DURATION - EXPECTED_DURATION_TOLERANCE_START;
+        final long maxDurationMs = DEFAULT_ANIMATION_DURATION + EXPECTED_DURATION_TOLERANCE_FINISH;
         final Range<Long> durationRange = new Range<>(minDurationMs, maxDurationMs);
 
         final CountDownLatch latch = new CountDownLatch(1);
@@ -197,9 +198,8 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
     public void testTaskTransitionOverride() throws Exception {
         assumeTrue(customTaskAnimationDisabled());
 
-        final long expectedDurationMs = CUSTOM_ANIMATION_DURATION - 100L;
-        final long minDurationMs = expectedDurationMs;
-        final long maxDurationMs = expectedDurationMs + 1000L;
+        final long minDurationMs = CUSTOM_ANIMATION_DURATION - EXPECTED_DURATION_TOLERANCE_START;
+        final long maxDurationMs = CUSTOM_ANIMATION_DURATION + EXPECTED_DURATION_TOLERANCE_FINISH;
         final Range<Long> durationRange = new Range<>(minDurationMs, maxDurationMs);
 
         final CountDownLatch latch = new CountDownLatch(1);
