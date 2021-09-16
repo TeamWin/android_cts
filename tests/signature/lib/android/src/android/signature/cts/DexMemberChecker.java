@@ -164,10 +164,21 @@ public class DexMemberChecker {
             return true;
         } catch (NoSuchFieldException ex) {
             return false;
+        } catch (NoClassDefFoundError ex) {
+            // The field has a type that cannot be loaded.
+            return true;
         }
     }
 
     private static boolean hasMatchingField_JNI(Class<?> klass, DexField dexField) {
+        try {
+            DexMember.typeToClass(dexField.getDexType());
+        } catch (ClassNotFoundException e) {
+            Log.w(TAG, "Type of field not found: " + dexField.toString(), e);
+            // Skip this field, no process is able to load it.
+            return true;
+        }
+
         try {
             Field ifield = getField_JNI(klass, dexField.getName(), dexField.getDexType());
             if (ifield.getDeclaringClass() == klass) {
@@ -190,22 +201,44 @@ public class DexMemberChecker {
     }
 
     private static boolean hasMatchingMethod_Reflection(Class<?> klass, DexMethod dexMethod) {
-        List<String> methodParams = dexMethod.getJavaParameterTypes();
+        // Load parameter types to make sure they are all resolvable.
+        Class<?>[] parameterClasses;
+        try {
+            parameterClasses = dexMethod.getJavaParameterClasses();
+        } catch (ClassNotFoundException e) {
+            // Skip this method, no process is able to call it.
+            Log.w(TAG, "Parameter types not found for: " + dexMethod, e);
+            return true;
+        }
 
         if (dexMethod.isConstructor()) {
-            for (Constructor<?> constructor : klass.getDeclaredConstructors()) {
-                if (typesMatch(constructor.getParameterTypes(), methodParams)) {
+            try {
+                if (klass.getDeclaredConstructor(parameterClasses) != null) {
                     return true;
                 }
+            } catch (NoSuchMethodException e) {
+              return false;
             }
-        } else {
-            String methodReturnType = dexMethod.getJavaType();
-            for (Method method : klass.getDeclaredMethods()) {
-                if (method.getName().equals(dexMethod.getName())
-                        && method.getReturnType().getTypeName().equals(methodReturnType)
-                        && typesMatch(method.getParameterTypes(), methodParams)) {
+        } else if (!dexMethod.isStaticConstructor()) {
+            Class<?> returnClass;
+            try {
+                returnClass = DexMember.typeToClass(dexMethod.getDexType());
+            } catch (ClassNotFoundException e) {
+                // Skip this method, no process is able to call it.
+                Log.w(TAG, "Return types not found for: " + dexMethod, e);
+                return true;
+            }
+            try {
+                Method m = klass.getDeclaredMethod(dexMethod.getName(), parameterClasses);
+                // Note we're not comparing return types, as the method returned by
+                // getDeclaredMethod could have a different return type. getDeclaredMethods would
+                // allow us to compare, but we cannot use getDeclaredMethods as it will throw for
+                // any methods that has a return type or parameter that cannot be resolved.
+                if (m != null) {
                     return true;
                 }
+            } catch (NoSuchMethodException e) {
+              return false;
             }
         }
         return false;
