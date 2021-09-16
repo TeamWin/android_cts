@@ -18,6 +18,7 @@ package android.security.cts;
 
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AsbSecurityTest;
+import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import org.junit.Assert;
@@ -33,7 +34,12 @@ public class CVE_2021_0586 extends BaseHostJUnit4Test {
 
     @Before
     public void setUp() throws Exception {
-        uninstallPackage(getDevice(), TEST_PKG);
+        ITestDevice device = getDevice();
+        uninstallPackage(device, TEST_PKG);
+        /* Wake up the screen */
+        AdbUtils.runCommandLine("input keyevent KEYCODE_WAKEUP", device);
+        AdbUtils.runCommandLine("input keyevent KEYCODE_MENU", device);
+        AdbUtils.runCommandLine("input keyevent KEYCODE_HOME", device);
     }
 
     /**
@@ -46,6 +52,6 @@ public class CVE_2021_0586 extends BaseHostJUnit4Test {
         installPackage(TEST_APP);
         AdbUtils.runCommandLine("pm grant " + TEST_PKG + " android.permission.SYSTEM_ALERT_WINDOW",
                 getDevice());
-        Assert.assertTrue(runDeviceTests(TEST_PKG, TEST_CLASS, "testClick"));
+        Assert.assertTrue(runDeviceTests(TEST_PKG, TEST_CLASS, "testOverlayButtonPresence"));
     }
 }
