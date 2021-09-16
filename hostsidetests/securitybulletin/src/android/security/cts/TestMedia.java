@@ -590,26 +590,6 @@ public class TestMedia extends SecurityTestCase {
         AdbUtils.runPocAssertNoCrashesNotVulnerable(testConfig);
     }
 
-    /**
-     * b/112891564
-     * Vulnerability Behaviour: SIGSEGV in self (Android P),
-     *                          SIGABRT in self (Android Q onward)
-     */
-    @Test
-    @AsbSecurityTest(cveBugId = 112891564)
-    public void testPocCVE_2018_9537() throws Exception {
-        String binaryName = "CVE-2018-9537";
-        String signals[] = {CrashUtils.SIGSEGV, CrashUtils.SIGBUS, CrashUtils.SIGABRT};
-        AdbUtils.pocConfig testConfig = new AdbUtils.pocConfig(binaryName, getDevice());
-        // example of check crash to skip:
-        // Abort message: 'frameworks/av/media/extractors/mkv/MatroskaExtractor.cpp:548 CHECK(mCluster) failed.'
-        testConfig.config = new CrashUtils.Config()
-                .setProcessPatterns(binaryName)
-                .appendAbortMessageExcludes("CHECK\\(.*?\\)");
-        testConfig.config.setSignals(signals);
-        AdbUtils.runPocAssertNoCrashesNotVulnerable(testConfig);
-    }
-
     /******************************************************************************
      * To prevent merge conflicts, add tests for Q below this comment, before any
      * existing test methods
