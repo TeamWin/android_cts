@@ -20,6 +20,7 @@ import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.HdmiCecClientWrapper;
 import android.hdmicec.cts.HdmiCecConstants;
+import android.hdmicec.cts.LogicalAddress;
 import android.hdmicec.cts.error.CecClientWrapperException;
 import android.hdmicec.cts.error.ErrorCodes;
 
@@ -107,15 +108,15 @@ public class CecPortDiscoverer extends BaseTargetPreparer {
                 throw new TargetSetupError("No adapters connected to host.");
             }
 
-            int targetDevice =
-                    BaseHdmiCecCtsTest.getTargetLogicalAddress(device).getLogicalAddressAsInt();
+            int targetDeviceType =
+                    BaseHdmiCecCtsTest.getTargetLogicalAddress(device).getDeviceType();
             int toDevice;
             launchCommand.add("-t");
-            if (targetDevice == 0) {
-                toDevice = 4;
+            if (targetDeviceType == HdmiCecConstants.CEC_DEVICE_TYPE_TV) {
+                toDevice = LogicalAddress.PLAYBACK_1.getLogicalAddressAsInt();
                 launchCommand.add("p");
             } else {
-                toDevice = 0;
+                toDevice = LogicalAddress.TV.getLogicalAddressAsInt();
                 launchCommand.add("x");
             }
 
@@ -128,7 +129,7 @@ public class CecPortDiscoverer extends BaseTargetPreparer {
              */
             serialNoParam = serialNoParam.substring(1);
             StringBuilder sendVendorCommand = new StringBuilder("cmd hdmi_control vendorcommand ");
-            sendVendorCommand.append(" -t " + targetDevice);
+            sendVendorCommand.append(" -t " + targetDeviceType);
             sendVendorCommand.append(" -d " + toDevice);
             sendVendorCommand.append(" -a " + serialNoParam);
 
