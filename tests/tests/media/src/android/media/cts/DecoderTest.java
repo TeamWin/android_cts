@@ -27,6 +27,7 @@ import static android.media.MediaCodecInfo.CodecProfileLevel.HEVCProfileMain;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -3996,8 +3997,9 @@ public class DecoderTest extends MediaPlayerTestBase {
                         waitTimeMs),
                 mMediaCodecPlayer.isFirstTunnelFrameReady());
         // Assert that video peek is enabled and working
-        assertTrue(String.format("First frame not rendered within %d milliseconds", waitTimeMs),
-                mMediaCodecPlayer.getCurrentPosition() != 0);
+        assertNotEquals(String.format("First frame not rendered within %d milliseconds",
+                        waitTimeMs), CodecState.UNINITIALIZED_TIMESTAMP,
+                mMediaCodecPlayer.getCurrentPosition());
 
         // mMediaCodecPlayer.reset() handled in TearDown();
     }
@@ -4070,16 +4072,16 @@ public class DecoderTest extends MediaPlayerTestBase {
                         waitTimeMsStep1),
                 mMediaCodecPlayer.isFirstTunnelFrameReady());
         // Assert that video peek is disabled
-        assertEquals("First frame rendered while peek disabled",
-                mMediaCodecPlayer.getCurrentPosition(), 0);
+        assertEquals("First frame rendered while peek disabled", CodecState.UNINITIALIZED_TIMESTAMP,
+                mMediaCodecPlayer.getCurrentPosition());
         mMediaCodecPlayer.setVideoPeek(true); // Reenable video peek
         final int waitTimeMsStep2 = 150;
         Thread.sleep(waitTimeMsStep2);
         // Assert that video peek is enabled
-        assertTrue(String.format(
+        assertNotEquals(String.format(
                         "First frame not rendered within %d milliseconds while peek enabled",
-                        waitTimeMsStep2),
-                mMediaCodecPlayer.getCurrentPosition() != 0);
+                        waitTimeMsStep2), CodecState.UNINITIALIZED_TIMESTAMP,
+                mMediaCodecPlayer.getCurrentPosition());
 
         // mMediaCodecPlayer.reset() handled in TearDown();
     }
@@ -4208,19 +4210,22 @@ public class DecoderTest extends MediaPlayerTestBase {
         // start video playback
         mMediaCodecPlayer.startThread();
         Thread.sleep(100);
-        assertTrue("Video playback stalled", mMediaCodecPlayer.getCurrentPosition() != 0);
+        assertNotEquals("Video playback stalled", CodecState.UNINITIALIZED_TIMESTAMP,
+                mMediaCodecPlayer.getCurrentPosition());
         mMediaCodecPlayer.pause();
         Thread.sleep(50);
         assertTrue("Video is ahead of audio", mMediaCodecPlayer.getCurrentPosition() <=
                 mMediaCodecPlayer.getAudioTrackPositionUs());
         mMediaCodecPlayer.videoFlush();
         Thread.sleep(50);
-        assertEquals("Video frame rendered after flush", mMediaCodecPlayer.getCurrentPosition(), 0);
+        assertEquals("Video frame rendered after flush", CodecState.UNINITIALIZED_TIMESTAMP,
+                mMediaCodecPlayer.getCurrentPosition());
         // We queue one frame, but expect it not to be rendered
         Long queuedVideoTimestamp = mMediaCodecPlayer.queueOneVideoFrame();
         assertNotNull("Failed to queue a video frame", queuedVideoTimestamp);
         Thread.sleep(50); // longer wait to account for buffer manipulation
-        assertEquals("Video frame rendered during pause", mMediaCodecPlayer.getCurrentPosition(), 0);
+        assertEquals("Video frame rendered during pause", CodecState.UNINITIALIZED_TIMESTAMP,
+                mMediaCodecPlayer.getCurrentPosition());
         mMediaCodecPlayer.resume();
         Thread.sleep(100);
         ArrayList<Long> renderedVideoTimestamps =
@@ -4316,11 +4321,12 @@ public class DecoderTest extends MediaPlayerTestBase {
         // starts video playback
         mMediaCodecPlayer.startThread();
 
-        sleepUntil(() -> mMediaCodecPlayer.getCurrentPosition() > 0, Duration.ofSeconds(1));
+        sleepUntil(() ->
+                mMediaCodecPlayer.getCurrentPosition() > CodecState.UNINITIALIZED_TIMESTAMP,
+                Duration.ofSeconds(1));
         final int firstPosition = mMediaCodecPlayer.getCurrentPosition();
-        assertTrue(
-                "On frame rendered not called after playback start!",
-                firstPosition > 0);
+        assertNotEquals("On frame rendered not called after playback start!",
+                CodecState.UNINITIALIZED_TIMESTAMP, firstPosition);
         AudioTimestamp firstTimestamp = mMediaCodecPlayer.getTimestamp();
         assertTrue("Timestamp is null!", firstTimestamp != null);
 

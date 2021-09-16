@@ -527,21 +527,30 @@ public class MediaCodecTunneledPlayer implements MediaTimeProvider {
         return (int)((mDurationUs + 500) / 1000);
     }
 
+    /**
+     * Retrieve the presentation timestamp of the latest queued output sample.
+     * In tunnel mode, retrieves the presentation timestamp of the latest rendered video frame.
+     * @return presentation timestamp in microseconds, or {@code CodecState.UNINITIALIZED_TIMESTAMP}
+     * if playback has not started.
+    */
     public int getCurrentPosition() {
         if (mVideoCodecStates == null) {
-                return 0;
+            return CodecState.UNINITIALIZED_TIMESTAMP;
         }
 
-        long positionUs = 0;
+        long positionUs = CodecState.UNINITIALIZED_TIMESTAMP;
 
         for (CodecState state : mVideoCodecStates.values()) {
             long trackPositionUs = state.getCurrentPositionUs();
-
             if (trackPositionUs > positionUs) {
                 positionUs = trackPositionUs;
             }
         }
-        return (int)((positionUs + 500) / 1000);
+
+        if (positionUs == CodecState.UNINITIALIZED_TIMESTAMP) {
+            return CodecState.UNINITIALIZED_TIMESTAMP;
+        }
+        return (int) (positionUs + 500) / 1000;
     }
 
     /**
