@@ -934,10 +934,15 @@ public class PackageManagerShellCommandIncrementalTest {
     }
 
     static boolean isAppInstalled(String packageName) throws IOException {
-        final String commandResult = executeShellCommand("pm list packages");
-        final int prefixLength = "package:".length();
+        return isAppInstalledForUser(packageName, -1);
+    }
+
+    static boolean isAppInstalledForUser(String packageName, int userId) throws IOException {
+        final String command = userId < 0 ? "pm list packages " + packageName :
+                "pm list packages --user " + userId + " " + packageName;
+        final String commandResult = executeShellCommand(command);
         return Arrays.stream(commandResult.split("\\r?\\n"))
-                .anyMatch(line -> line.substring(prefixLength).equals(packageName));
+                .anyMatch(line -> line.equals("package:" + packageName));
     }
 
     private String getSplits(String packageName) throws IOException {
