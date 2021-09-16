@@ -16,6 +16,7 @@
 package android.angle.cts;
 
 import com.android.tradefed.device.ITestDevice;
+import com.android.tradefed.device.PackageInfo;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
 import java.util.HashMap;
@@ -34,7 +35,6 @@ class CtsAngleCommon {
     static final String SETTINGS_GLOBAL_ANGLE_IN_USE_DIALOG_BOX = "show_angle_in_use_dialog_box";
 
     // System Properties
-    static final String PROPERTY_GFX_ANGLE_SUPPORTED = "ro.gfx.angle.supported";
     static final String PROPERTY_TEMP_RULES_FILE = "debug.angle.rules";
 
     // Rules File
@@ -43,6 +43,7 @@ class CtsAngleCommon {
     static final String DEVICE_TEMP_RULES_FILE_PATH = DEVICE_TEMP_RULES_FILE_DIRECTORY + "/" + DEVICE_TEMP_RULES_FILE_FILENAME;
 
     // ANGLE
+    static final String ANGLE_PACKAGE_NAME = "com.android.angle";
     static final String ANGLE_DRIVER_TEST_PKG = "com.android.angleIntegrationTest.driverTest";
     static final String ANGLE_DRIVER_TEST_SEC_PKG = "com.android.angleIntegrationTest.driverTestSecondary";
     static final String ANGLE_DRIVER_TEST_CLASS = "AngleDriverTestActivity";
@@ -103,10 +104,10 @@ class CtsAngleCommon {
         setProperty(device, PROPERTY_TEMP_RULES_FILE, "\"\"");
     }
 
-    static boolean isAngleLoadable(ITestDevice device) throws Exception {
-        String angleSupported = device.getProperty(PROPERTY_GFX_ANGLE_SUPPORTED);
+    static boolean isAngleInstalled(ITestDevice device) throws Exception {
+        PackageInfo info = device.getAppPackageInfo(ANGLE_PACKAGE_NAME);
 
-        return (angleSupported != null) && (angleSupported.equals("true"));
+        return (info != null);
     }
 
     static boolean isNativeDriverAngle(ITestDevice device) throws Exception {
