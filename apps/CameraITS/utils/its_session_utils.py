@@ -876,6 +876,7 @@ class ItsSession(object):
             lock_awb=False,
             get_results=False,
             ev_comp=0,
+            auto_flash=False,
             mono_camera=False):
     """Perform a 3A operation on the device.
 
@@ -896,6 +897,7 @@ class ItsSession(object):
       lock_awb: Request AWB lock after convergence, and wait for it.
       get_results: Return the 3A results from this function.
       ev_comp: An EV compensation value to use when running AE.
+      auto_flash: AE control boolean to enable auto flash.
       mono_camera: Boolean for monochrome camera.
 
       Region format in args:
@@ -930,6 +932,8 @@ class ItsSession(object):
       cmd['awbLock'] = True
     if ev_comp != 0:
       cmd['evComp'] = ev_comp
+    if auto_flash:
+      cmd['autoFlash'] = True
     if self._hidden_physical_id:
       cmd['physicalId'] = self._hidden_physical_id
     self.sock.send(json.dumps(cmd).encode() + '\n'.encode())

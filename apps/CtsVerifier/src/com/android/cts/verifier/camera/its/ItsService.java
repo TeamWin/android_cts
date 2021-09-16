@@ -167,6 +167,7 @@ public class ItsService extends Service implements SensorEventListener {
     public static final String TRIGGER_AF_KEY = "af";
     public static final String VIB_PATTERN_KEY = "pattern";
     public static final String EVCOMP_KEY = "evComp";
+    public static final String AUTO_FLASH_KEY = "autoFlash";
     public static final String AUDIO_RESTRICTION_MODE_KEY = "mode";
 
     private CameraManager mCameraManager = null;
@@ -1289,6 +1290,12 @@ public class ItsService extends Service implements SensorEventListener {
                 Logt.i(TAG, String.format("Running 3A with AE exposure compensation value: %d", evComp));
             }
 
+            // Auto flash can be specified as part of AE convergence.
+            boolean autoFlash = params.optBoolean(AUTO_FLASH_KEY, false);
+            if (autoFlash == true) {
+                Logt.i(TAG, String.format("Running with auto flash mode."));
+            }
+
             // By default, AE and AF both get triggered, but the user can optionally override this.
             // Also, AF won't get triggered if the lens is fixed-focus.
             boolean doAE = true;
@@ -1362,8 +1369,6 @@ public class ItsService extends Service implements SensorEventListener {
                         req.set(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_AUTO);
                         req.set(CaptureRequest.CONTROL_CAPTURE_INTENT,
                                 CaptureRequest.CONTROL_CAPTURE_INTENT_PREVIEW);
-                        req.set(CaptureRequest.CONTROL_AE_MODE,
-                                CaptureRequest.CONTROL_AE_MODE_ON);
                         req.set(CaptureRequest.CONTROL_AE_EXPOSURE_COMPENSATION, 0);
                         req.set(CaptureRequest.CONTROL_AE_LOCK, false);
                         req.set(CaptureRequest.CONTROL_AE_REGIONS, regionAE);
@@ -1380,6 +1385,14 @@ public class ItsService extends Service implements SensorEventListener {
 
                         if (evComp != 0) {
                             req.set(CaptureRequest.CONTROL_AE_EXPOSURE_COMPENSATION, evComp);
+                        }
+
+                        if (autoFlash == false) {
+                            req.set(CaptureRequest.CONTROL_AE_MODE,
+                                    CaptureRequest.CONTROL_AE_MODE_ON);
+                        } else {
+                            req.set(CaptureRequest.CONTROL_AE_MODE,
+                                    CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH);
                         }
 
                         if (mConvergedAE && mNeedsLockedAE) {
