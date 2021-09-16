@@ -87,6 +87,8 @@ public class ShellPermissionTest {
 
     @Test
     @SystemUserOnly
+    @AppModeFull(reason = "Instant apps cannot read properties of other packages. Also the shell "
+            + "is never an instant app, hence this test does not matter for instant apps.")
     public void testBlacklistedPermissionsForSystemUser() throws Exception {
         testBlacklistedPermissions();
     }
