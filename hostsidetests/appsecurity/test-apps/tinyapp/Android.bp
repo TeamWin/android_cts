@@ -156,6 +156,46 @@ android_test_helper_app {
     sdk_version: "current",
 }
 
+// This is the test package signed using the V3 signature scheme with
+// a rotated key and part of a shareduid. The capabilities of this lineage
+// prevent the previous key in the lineage from using a signature permission.
+// This package is intended to verify shared signing keys in separate app
+// lineages retain their own declared capabilities.
+android_test_helper_app {
+    name: "v3-ec-p256-with-por_1_2-no-perm-cap-sharedUid",
+    manifest: "AndroidManifest-shareduid.xml",
+    certificate: ":ec-p256_2",
+    additional_certificates: [":ec-p256"],
+    lineage: ":ec-p256-por_1_2-no-perm-cap",
+    srcs: ["src/**/*.java"],
+    // resource_dirs is the default value: ["res"]
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
+    sdk_version: "current",
+}
+
+// This is the test package with a new name intended to be installed
+// alongside the original test package when verifying platform behavior when
+// two apps share the same previous signer in their lineage with different
+// capabilities granted; the lineage for this package prevents an app signed
+// with the previous signing key from joining a sharedUserId.
+android_test_helper_app {
+    name: "v3-ec-p256-with-por_1_2-no-shUid-cap-declperm2",
+    manifest: "AndroidManifest-declperm2.xml",
+    certificate: ":ec-p256_2",
+    additional_certificates: [":ec-p256"],
+    lineage: ":ec-p256-por_1_2-no-shUid-cap",
+    srcs: ["src/**/*.java"],
+    // resource_dirs is the default value: ["res"]
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
+    sdk_version: "current",
+}
+
 // This is the first companion package signed using the V3 signature scheme
 // with a rotated key and part of a sharedUid. The capabilities of this lineage
 // grant access to the previous key in the lineage to join the sharedUid.
@@ -283,6 +323,23 @@ android_test_helper_app {
         ":ec-p256",
     ],
     lineage: ":ec-p256-por-1_2_4-default-caps",
+    srcs: ["src/**/*.java"],
+    // resource_dirs is the default value: ["res"]
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
+    sdk_version: "current",
+}
+
+// This is a version of the companion package that requests the signature permission
+// declared by the test package. This package is signed with the original signing
+// key and is intended to verify that a common signing key shared between two
+// lineages retains its capability from the package declaring the signature permission.
+android_test_helper_app {
+    name: "v3-ec-p256-1-companion-usesperm",
+    manifest: "AndroidManifest-companion-usesperm.xml",
+    certificate: ":ec-p256",
     srcs: ["src/**/*.java"],
     // resource_dirs is the default value: ["res"]
     test_suites: [
