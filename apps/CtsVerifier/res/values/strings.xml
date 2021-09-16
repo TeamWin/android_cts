@@ -3516,8 +3516,7 @@ You should be prompted to select credentials; choose the ones you just installed
             5) Long-press the power button. The power button menu, which usually shows the power-off
             button, etc., isn\'t shown.\n
             6) Press the power button to turn off the screen, and press it again to turn the screen
-            back on. Lock screen shouldn\'t be shown.\n
-            7) The assistant gesture isn\'t available.
+            back on. Lock screen shouldn\'t be shown.
     </string>
     <string name="device_owner_lock_task_ui_system_info_test">Enable system info</string>
     <string name="device_owner_lock_task_ui_system_info_test_info">
@@ -3533,8 +3532,7 @@ You should be prompted to select credentials; choose the ones you just installed
             5) Long-press the power button. The power button menu, which usually shows the power-off
             button, etc., isn\'t shown.\n
             6) Press the power button to turn off the screen, and press it again to turn the screen
-            back on. Lock screen shouldn\'t be shown.\n
-            7) The assistant gesture isn\'t available.\n\n
+            back on. Lock screen shouldn\'t be shown.\n\n
             Mark the test as \'pass\' only if ALL of the above requirements are met.
     </string>
     <string name="device_owner_lock_task_ui_notifications_test">Enable notifications</string>
@@ -3551,8 +3549,7 @@ You should be prompted to select credentials; choose the ones you just installed
             4) Long-press the power button. The power button menu, which usually shows the power-off
             button, etc., isn\'t shown.\n
             5) Press the power button to turn off the screen, and press it again to turn the screen
-            back on. Lock screen shouldn\'t be shown.\n
-            6) The assistant gesture isn\'t available.\n\n
+            back on. Lock screen shouldn\'t be shown.\n\n
             Mark the test as \'pass\' only if ALL of the above requirements are met.
     </string>
     <string name="device_owner_lock_task_ui_home_test">Enable Home button</string>
@@ -3570,8 +3567,7 @@ You should be prompted to select credentials; choose the ones you just installed
             5) Long-press the power button. The power button menu, which usually shows the power-off
             button, etc., isn\'t shown.\n
             6) Press the power button to turn off the screen, and press it again to turn the screen
-            back on. Lock screen shouldn\'t be shown.\n
-            7) The assistant gesture isn\'t available.\n\n
+            back on. Lock screen shouldn\'t be shown.\n\n
             Mark the test as \'pass\' only if ALL of the above requirements are met.
     </string>
     <string name="device_owner_lock_task_ui_recents_test">Enable Overview button</string>
@@ -3587,8 +3583,7 @@ You should be prompted to select credentials; choose the ones you just installed
             3) Long-press the power button. The power button menu, which usually shows the power-off
             button, etc., isn\'t shown.\n
             4) Press the power button to turn off the screen, and press it again to turn the screen
-            back on. Lock screen shouldn\'t be shown.\n
-            5) The assistant gesture isn\'t available.\n\n
+            back on. Lock screen shouldn\'t be shown.\n\n
             Mark the test as \'pass\' only if ALL of the above requirements are met.
     </string>
     <string name="device_owner_lock_task_ui_global_actions_test">Enable global actions</string>
@@ -3606,8 +3601,7 @@ You should be prompted to select credentials; choose the ones you just installed
             4) The software Overview button is hidden and the Overview gesture (swipe-up) does not
             work.\n
             5) Press the power button to turn off the screen, and press it again to turn the screen
-            back on. Lock screen shouldn\'t be shown.\n
-            6) The assistant gesture isn\'t available.\n\n
+            back on. Lock screen shouldn\'t be shown.\n\n
             Mark the test as \'pass\' only if ALL of the above requirements are met.
     </string>
     <string name="device_owner_lock_task_ui_keyguard_test">Enable keyguard</string>
@@ -3624,8 +3618,7 @@ You should be prompted to select credentials; choose the ones you just installed
             4) The software Overview button is hidden and the Overview gesture (swipe-up) does not
             work.\n
             5) Long-press the power button. The power button menu, which usually shows the power-off
-            button, etc., isn\'t shown.\n
-            6) The assistant gesture isn\'t available.\n\n
+            button, etc., isn\'t shown.\n\n
             Mark the test as \'pass\' only if ALL of the above requirements are met.
     </string>
     <string name="device_owner_lock_task_ui_stop_lock_task_test">Stop LockTask mode</string>
