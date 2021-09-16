@@ -1693,17 +1693,17 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
     }
 
     /**
-     * Verify that {@link InputConnection#deleteSurroundingTextInCodePoints(int, int)} fails when
-     * the target app does not implement it. This can happen if the app was built before
-     * {@link android.os.Build.VERSION_CODES#N}.
+     * Verify that the app does not crash even if it does not implement
+     * {@link InputConnection#deleteSurroundingTextInCodePoints(int, int)}, which can happen if the
+     * app was built before {@link android.os.Build.VERSION_CODES#N}.
      */
     @Test
     public void testDeleteSurroundingTextInCodePointsFailWithMethodMissing() throws Exception {
         testMinimallyImplementedInputConnection((MockImeSession session, ImeEventStream stream) -> {
             final ImeCommand command = session.callDeleteSurroundingTextInCodePoints(1, 2);
             final ImeEvent result = expectCommand(stream, command, TIMEOUT);
-            assertFalse("IC#deleteSurroundingTextInCodePoints() returns false when the target app"
-                    + " does not implement it.", result.getReturnBooleanValue());
+            assertTrue("IC#deleteSurroundingTextInCodePoints() returns true even when the target"
+                    + " app does not implement it.", result.getReturnBooleanValue());
         });
     }
 
@@ -1971,18 +1971,17 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
     }
 
     /**
-     * Verify that {@link InputConnection#setComposingRegion(int, int)} fails when the target app
-     * does not implement it. This can happen if the app was built before
-     * {@link android.os.Build.VERSION_CODES#GINGERBREAD}.
+     * Verify that the app does not crash even if it does not implement
+     * {@link InputConnection#setComposingRegion(int, int)}, which can happen if the app was built
+     * before {@link android.os.Build.VERSION_CODES#GINGERBREAD}.
      */
     @Test
     public void testSetComposingRegionFailWithMethodMissing() throws Exception {
         testMinimallyImplementedInputConnection((MockImeSession session, ImeEventStream stream) -> {
             final ImeCommand command = session.callSetComposingRegion(1, 23);
             final ImeEvent result = expectCommand(stream, command, TIMEOUT);
-            // CAVEAT: this behavior is a bit questionable and may change in a future version.
-            assertFalse("Currently IC#setComposingRegion() returns false when the target app does"
-                    + " not implement it.", result.getReturnBooleanValue());
+            assertTrue("IC#setComposingRegion() returns true even when the target app does not"
+                    + " implement it.", result.getReturnBooleanValue());
         });
     }
 
@@ -2255,9 +2254,9 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
     }
 
     /**
-     * Verify that {@link InputConnection#commitCorrection(CorrectionInfo)} fails when the target
-     * app does not implement it. This can happen if the app was built before
-     * {@link android.os.Build.VERSION_CODES#HONEYCOMB}.
+     * Verify that the app does not crash even if it does not implement
+     * {@link InputConnection#commitCorrection(CorrectionInfo)}, which can happen if the app was
+     * built before {@link android.os.Build.VERSION_CODES#HONEYCOMB}.
      */
     @Test
     public void testCommitCorrectionFailWithMethodMissing() throws Exception {
@@ -2266,9 +2265,8 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
                     createTestCharSequence("testOldText", new Annotation("param", "oldText")),
                     createTestCharSequence("testNewText", new Annotation("param", "newText"))));
             final ImeEvent result = expectCommand(stream, command, TIMEOUT);
-            // CAVEAT: this behavior is a bit questionable and may change in a future version.
-            assertFalse("Currently IC#commitCorrection() returns false when the target app does"
-                    + " not implement it.", result.getReturnBooleanValue());
+            assertTrue("IC#commitCorrection() returns true even when the target app does not"
+                    + " implement it.", result.getReturnBooleanValue());
         });
     }
 

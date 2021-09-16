@@ -2660,9 +2660,10 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             waitForConnection();
 
             WifiInfo wifiInfo = mWifiManager.getConnectionInfo();
+            savedNetworks = mWifiManager.getConfiguredNetworks();
 
             // find the current network's WifiConfiguration
-            currentConfig = mWifiManager.getConfiguredNetworks()
+            currentConfig = savedNetworks
                     .stream()
                     .filter(config -> config.networkId == wifiInfo.getNetworkId())
                     .findAny()
@@ -2672,6 +2673,14 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             assertNotEquals("Ensure that the saved network is configured as unmetered",
                     currentConfig.meteredOverride,
                     WifiConfiguration.METERED_OVERRIDE_METERED);
+
+            // Disable all except the currently connected networks to avoid reconnecting to the
+            // wrong network after later setting the current network as metered.
+            for (WifiConfiguration network : savedNetworks) {
+                if (network.networkId != currentConfig.networkId) {
+                    assertTrue(mWifiManager.disableNetwork(network.networkId));
+                }
+            }
 
             // Check the network capabilities to ensure that the network is marked not metered.
             waitForNetworkCallbackAndCheckForMeteredness(false);
@@ -2699,6 +2708,12 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             // Restore original network config (restore the meteredness back);
             if (currentConfig != null) {
                 mWifiManager.updateNetwork(currentConfig);
+            }
+            // re-enable all networks
+            if (savedNetworks != null) {
+                for (WifiConfiguration network : savedNetworks) {
+                    mWifiManager.enableNetwork(network.networkId, true);
+                }
             }
             uiAutomation.dropShellPermissionIdentity();
         }
