@@ -1080,4 +1080,8 @@ abstract class TestUtils extends Assert {
         new SecureRandom().nextBytes(message);
         return message;
     }
+
+    public static boolean isAttestationSupported() {
+        return SystemProperties.getInt("ro.product.first_api_level", 0) >= 26;
+    }
 }

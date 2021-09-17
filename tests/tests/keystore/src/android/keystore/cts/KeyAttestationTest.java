@@ -55,6 +55,7 @@ import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assume.assumeTrue;
 
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
@@ -161,6 +162,8 @@ public class KeyAttestationTest extends AndroidTestCase {
 
     @RequiresDevice
     public void testEcAttestation() throws Exception {
+        assumeTrue(TestUtils.isAttestationSupported());
+
         if (getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_PC))
             return;
 
@@ -214,6 +217,8 @@ public class KeyAttestationTest extends AndroidTestCase {
     }
 
     public void testEcAttestation_TooLargeChallenge() throws Exception {
+        assumeTrue(TestUtils.isAttestationSupported());
+
         boolean[] devicePropertiesAttestationValues = {true, false};
         for (boolean devicePropertiesAttestation : devicePropertiesAttestationValues) {
             try {
@@ -268,6 +273,8 @@ public class KeyAttestationTest extends AndroidTestCase {
     @RestrictedBuildTest
     @RequiresDevice
     public void testEcAttestation_DeviceLocked() throws Exception {
+        assumeTrue(TestUtils.isAttestationSupported());
+
         if (getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_PC))
             return;
 
@@ -428,6 +435,8 @@ public class KeyAttestationTest extends AndroidTestCase {
 
     @RequiresDevice
     public void testRsaAttestation() throws Exception {
+        assumeTrue(TestUtils.isAttestationSupported());
+
         if (getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_PC))
             return;
 
@@ -490,6 +499,7 @@ public class KeyAttestationTest extends AndroidTestCase {
     }
 
     public void testRsaAttestation_TooLargeChallenge() throws Exception {
+        assumeTrue(TestUtils.isAttestationSupported());
         boolean[] devicePropertiesAttestationValues = {true, false};
         for (boolean devicePropertiesAttestation : devicePropertiesAttestationValues) {
             try {
@@ -544,6 +554,8 @@ public class KeyAttestationTest extends AndroidTestCase {
     @RestrictedBuildTest
     @RequiresDevice  // Emulators have no place to store the needed key
     public void testRsaAttestation_DeviceLocked() throws Exception {
+        assumeTrue(TestUtils.isAttestationSupported());
+
         if (getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_PC))
             return;
 
