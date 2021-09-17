@@ -1933,6 +1933,71 @@ public class ActivityManagerFgsBgStartTest {
     }
 
     /**
+     * When PowerExemptionManager.addToTemporaryAllowList() is called more than one time, the second
+     * call can extend the duration of the first call if the first call has not expired yet.
+     * @throws Exception
+     */
+    @Test
+    public void testOverlappedTempAllowList() throws Exception {
+        ApplicationInfo app1Info = mContext.getPackageManager().getApplicationInfo(
+                PACKAGE_NAME_APP1, 0);
+        WatchUidRunner uid1Watcher = new WatchUidRunner(mInstrumentation, app1Info.uid,
+                WAITFOR_MSEC);
+        try {
+            // Enable the FGS background startForeground() restriction.
+            enableFgsRestriction(true, true, null);
+            // Start FGS in BG state.
+            WaitForBroadcast waiter = new WaitForBroadcast(mInstrumentation.getTargetContext());
+            waiter.prepare(ACTION_START_FGS_RESULT);
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_START_FOREGROUND_SERVICE,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+            // APP1 does not enter FGS state
+            try {
+                waiter.doWait(WAITFOR_MSEC);
+                fail("Service should not enter foreground service state");
+            } catch (Exception e) {
+            }
+
+            waiter = new WaitForBroadcast(mInstrumentation.getTargetContext());
+            waiter.prepare(ACTION_START_FGS_RESULT);
+            runWithShellPermissionIdentity(() -> {
+                mContext.getSystemService(PowerExemptionManager.class).addToTemporaryAllowList(
+                        PACKAGE_NAME_APP1, PowerExemptionManager.REASON_PUSH_MESSAGING,
+                        "", 10000);
+            });
+
+            SystemClock.sleep(5000);
+            runWithShellPermissionIdentity(() -> {
+                mContext.getSystemService(PowerExemptionManager.class).addToTemporaryAllowList(
+                        PACKAGE_NAME_APP1, PowerExemptionManager.REASON_PUSH_MESSAGING,
+                        "", 10000);
+            });
+            SystemClock.sleep(5000);
+
+            // The first addToTemporaryAllowList()'s 10000ms duration has expired.
+            // Now FGS start is allowed by second addToTemporaryAllowList()'s 10000ms duration.
+            waiter = new WaitForBroadcast(mInstrumentation.getTargetContext());
+            waiter.prepare(ACTION_START_FGS_RESULT);
+            // Now it can start FGS.
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_START_FOREGROUND_SERVICE,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+            uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE);
+            waiter.doWait(WAITFOR_MSEC);
+            // Stop the FGS.
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_STOP_FOREGROUND_SERVICE,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+            uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY);
+        } finally {
+            uid1Watcher.finish();
+            // allow temp allowlist to expire.
+            SystemClock.sleep(5000);
+        }
+    }
+
+    /**
      * Turn on the FGS BG-launch restriction. DeviceConfig can turn on restriction on the whole
      * device (across all apps). AppCompat can turn on restriction on a single app package.
      * @param enable true to turn on restriction, false to turn off.
