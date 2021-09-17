@@ -212,8 +212,7 @@ abstract class SensorPrivacyBaseTest(
     }
 
     fun unblockSensorWithDialogAndAssert() {
-        UiAutomatorUtils.waitFindObject(By.text(
-                Pattern.compile("Unblock", Pattern.CASE_INSENSITIVE))).click()
+        UiAutomatorUtils.waitFindObject(By.res("android:id/button1")).click()
         eventually {
             assertFalse(isSensorPrivacyEnabled())
         }
