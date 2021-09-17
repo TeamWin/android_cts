@@ -29,7 +29,6 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
-import java.util.Objects;
 import java.util.stream.Stream;
 
 @SuppressWarnings("deprecation")
@@ -39,8 +38,7 @@ public class BootClassPathClassesProvider extends ClassProvider {
     @Override
     public Stream<Class<?>> getAllClasses() {
         maybeAttachJvmtiAgent();
-        return (Stream<Class<?>>)
-            Arrays.stream(getClassloaderDescriptors(Object.class.getClassLoader()))
+        return Arrays.stream(getClassloaderDescriptors(Object.class.getClassLoader()))
                 .map(descriptor -> {
                     String classname = descriptor.replace('/', '.');
                     // omit L and ; at the front and at the end
@@ -50,12 +48,9 @@ public class BootClassPathClassesProvider extends ClassProvider {
                     try {
                         return getClass(classname);
                     } catch (ClassNotFoundException e) {
-                        // It could be that a class failed to verify.
-                        // No process will be able to load it, so it's ok to silently ignore.
-                        return null;
+                        throw new RuntimeException("Cannot load " + classname, e);
                     }
-                })
-                .filter(Objects::nonNull);
+                });
     }
 
     @Override
