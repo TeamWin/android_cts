@@ -23,6 +23,7 @@ import android.webkit.PacProcessor;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -37,6 +38,11 @@ public final class PacProcessorTest {
     public void setUp() throws Throwable {
         Context context = InstrumentationRegistry.getInstrumentation().getContext();
         mProcess = TestProcessClient.createProcessB(context);
+    }
+
+    @After
+    public void tearDown() throws Throwable {
+        mProcess.close();
     }
 
     static class TestCreatePacProcessor extends TestProcessClient.TestRunnable {
