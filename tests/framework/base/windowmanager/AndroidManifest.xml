@@ -548,9 +548,11 @@
                   android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density|touchscreen"/>
         <activity android:name="android.server.wm.SplitActivityLifecycleTest$ActivityB"
                   android:exported="true"
+                  android:taskAffinity=".TaskFragmentB.embeddedTask"
                   android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density|touchscreen"/>
         <activity android:name="android.server.wm.SplitActivityLifecycleTest$ActivityC"
                   android:exported="true"
+                  android:taskAffinity=".TaskFragmentB.embeddedTask"
                   android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density|touchscreen"/>
     </application>
 
