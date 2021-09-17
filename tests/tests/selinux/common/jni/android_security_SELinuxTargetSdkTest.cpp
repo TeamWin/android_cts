@@ -26,7 +26,7 @@
 #include <memory>
 
 struct SecurityContext_Delete {
-    void operator()(security_context_t p) const {
+    void operator()(char* p) const {
         freecon(p);
     }
 };
