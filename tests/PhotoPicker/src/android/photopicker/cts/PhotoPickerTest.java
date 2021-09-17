@@ -65,7 +65,6 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 
@@ -236,24 +235,28 @@ public class PhotoPickerTest {
 
         final ClipData clipData = mActivity.getResult().data.getClipData();
         final int count = clipData.getItemCount();
-        assertThat(count).isEqualTo(imageCount);
+        assertThat(count).isEqualTo(itemCount);
         for (int i = 0; i < count; i++) {
             assertRedactedReadOnlyAccess(clipData.getItemAt(i).getUri());
         }
     }
 
     @Test
-    public void testSelectVideos() throws Exception {
+    public void testMimeTypeFilter() throws Exception {
         final int videoCount = 2;
         createVideos(videoCount);
+        final int imageCount = 1;
+        createImages(imageCount);
+        final String mimeType = "video/dng";
         final Intent intent = new Intent(MediaStore.ACTION_PICK_IMAGES);
-        intent.putExtra(MediaStore.EXTRA_PICK_IMAGES_MAX, videoCount);
-        intent.setType("video/*");
+        intent.putExtra(MediaStore.EXTRA_PICK_IMAGES_MAX, MediaStore.getPickImagesMaxLimit());
+        intent.setType(mimeType);
         mActivity.startActivityForResult(intent, REQUEST_CODE);
 
-        final List<UiObject> itemList = findVideoItemList(videoCount);
+        // find all items
+        final List<UiObject> itemList = findItemList(-1);
         final int itemCount = itemList.size();
-        assertThat(itemCount).isEqualTo(videoCount);
+        assertThat(itemCount).isAtLeast(videoCount);
         for (int i = 0; i < itemCount; i++) {
             final UiObject item = itemList.get(i);
             item.click();
@@ -266,9 +269,11 @@ public class PhotoPickerTest {
 
         final ClipData clipData = mActivity.getResult().data.getClipData();
         final int count = clipData.getItemCount();
-        assertThat(count).isEqualTo(videoCount);
+        assertThat(count).isEqualTo(itemCount);
         for (int i = 0; i < count; i++) {
-            assertRedactedReadOnlyAccess(clipData.getItemAt(i).getUri());
+            final Uri uri = clipData.getItemAt(i).getUri();
+            assertRedactedReadOnlyAccess(uri);
+            assertMimeType(uri, mimeType);
         }
     }
 
@@ -315,6 +320,11 @@ public class PhotoPickerTest {
             }
             return session.publish();
         }
+    }
+
+    private void assertMimeType(Uri uri, String expectedMimeType) throws Exception {
+        final String resultMimeType = mContext.getContentResolver().getType(uri);
+        assertThat(resultMimeType).isEqualTo(expectedMimeType);
     }
 
     private void assertRedactedReadOnlyAccess(Uri uri) throws Exception {
@@ -424,6 +434,12 @@ public class PhotoPickerTest {
         ShellUtils.runShellCommand(cmd);
     }
 
+    /**
+     * Get the list of items from the photo grid list.
+     * @param itemCount if the itemCount is -1, return all matching items. Otherwise, return the
+     *                  item list that its size is not greater than the itemCount.
+     * @throws Exception
+     */
     private List<UiObject> findItemList(int itemCount) throws Exception {
         final List<UiObject> itemList = new ArrayList<>();
         final UiSelector gridList = new UiSelector().className(
@@ -439,32 +455,16 @@ public class PhotoPickerTest {
                 REGEX_PACKAGE_NAME + ":id/icon_thumbnail");
         final UiScrollable grid = new UiScrollable(gridList);
         final int childCount = grid.getChildCount();
-        for (int i = 0; i < childCount && i < itemCount; i++) {
+        final int count = itemCount == -1 ? childCount : itemCount;
+
+        for (int i = 0; i < childCount; i++) {
             final UiObject item = grid.getChildByInstance(itemSelector, i);
-            itemList.add(item);
-        }
-        return itemList;
-    }
-
-    private List<UiObject> findVideoItemList(int itemCount) throws Exception {
-        final List<UiObject> itemList = new ArrayList<>();
-        final UiSelector gridList = new UiSelector().className(
-                "androidx.recyclerview.widget.RecyclerView").resourceIdMatches(
-                REGEX_PACKAGE_NAME + ":id/photo_list");
-
-        // Wait for the first item to appear
-        assertWithMessage("Timed out while waiting for first item to appear")
-                .that(new UiObject(gridList.childSelector(new UiSelector())).waitForExists(TIMEOUT))
-                .isTrue();
-
-        final UiSelector videoSelector = new UiSelector().resourceIdMatches(
-                REGEX_PACKAGE_NAME + ":id/icon_video").fromParent(new UiSelector().text("00:09"));
-
-        final UiScrollable grid = new UiScrollable(gridList);
-        final int childCount = grid.getChildCount();
-        for (int i = 0; i < childCount && i < itemCount; i++) {
-            final UiObject item = grid.getChildByInstance(videoSelector, i);
-            itemList.add(item);
+            if (item.exists()) {
+                itemList.add(item);
+            }
+            if (itemList.size() == count) {
+                break;
+            }
         }
         return itemList;
     }
