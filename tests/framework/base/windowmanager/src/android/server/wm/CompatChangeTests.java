@@ -50,6 +50,9 @@ import androidx.test.filters.FlakyTest;
 
 import libcore.junit.util.compat.CoreCompatChangeRule.EnableCompatChanges;
 
+import org.hamcrest.Matcher;
+import org.hamcrest.Matchers;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -590,9 +593,9 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
         mDisplayMetricsSession.changeAspectRatio(SIZE_COMPAT_DISPLAY_ASPECT_RATIO,
                 ORIENTATION_PORTRAIT);
         launchActivity(activity);
-        assertEquals(expectedInPortrait,
+        Assert.assertThat(
                 getActivityAspectRatio(activity, /* useAppBounds= */ useAppBoundsInPortrait),
-                FLOAT_EQUALITY_DELTA);
+                greaterThanOrEqualToInexact(expectedInPortrait));
 
         // Change the orientation of the display to landscape. In this case we should see
         // fixed orientation letterboxing and the aspect ratio should be applied there.
@@ -601,9 +604,8 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
         launchActivity(activity);
         // A different aspect ratio logic is applied in fixed orientation letterboxing, so we need
         // to use getBounds() rather than getAppBounds() here.
-        assertEquals(expectedInLandscape,
-                getActivityAspectRatio(activity, /* useAppBounds= */ true),
-                FLOAT_EQUALITY_DELTA);
+        Assert.assertThat(getActivityAspectRatio(activity, /* useAppBounds= */ true),
+                greaterThanOrEqualToInexact(expectedInLandscape));
     }
 
     /**
@@ -673,6 +675,10 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
         } catch (PackageManager.NameNotFoundException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private static Matcher<Float> greaterThanOrEqualToInexact(float expected) {
+        return Matchers.greaterThanOrEqualTo(expected - FLOAT_EQUALITY_DELTA);
     }
 
     private static ComponentName component(Class<? extends Activity> activity) {
