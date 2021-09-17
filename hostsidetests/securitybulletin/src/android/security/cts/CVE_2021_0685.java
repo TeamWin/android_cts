@@ -18,7 +18,6 @@ package android.security.cts;
 
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AsbSecurityTest;
-import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import org.junit.Assert;
@@ -27,31 +26,21 @@ import org.junit.runner.RunWith;
 import org.junit.Test;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
-public class CVE_2021_0586 extends BaseHostJUnit4Test {
-    private static final String TEST_PKG = "android.security.cts.cve_2021_0586";
+public class CVE_2021_0685 extends BaseHostJUnit4Test {
+    private static final String TEST_PKG = "android.security.cts.cve_2021_0685";
     private static final String TEST_CLASS = TEST_PKG + "." + "DeviceTest";
-    private static final String TEST_APP = "CVE-2021-0586.apk";
+    private static final String TEST_APP = "CVE-2021-0685.apk";
 
     @Before
     public void setUp() throws Exception {
-        ITestDevice device = getDevice();
-        uninstallPackage(device, TEST_PKG);
-        /* Wake up the screen */
-        AdbUtils.runCommandLine("input keyevent KEYCODE_WAKEUP", device);
-        AdbUtils.runCommandLine("input keyevent KEYCODE_MENU", device);
-        AdbUtils.runCommandLine("input keyevent KEYCODE_HOME", device);
+        uninstallPackage(getDevice(), TEST_PKG);
     }
 
-    /**
-     * b/182584940
-     */
     @AppModeFull
-    @AsbSecurityTest(cveBugId = 182584940)
+    @AsbSecurityTest(cveBugId = 191055353)
     @Test
-    public void testPocCVE_2021_0586() throws Exception {
+    public void testPocCVE_2021_0685() throws Exception {
         installPackage(TEST_APP);
-        AdbUtils.runCommandLine("pm grant " + TEST_PKG + " android.permission.SYSTEM_ALERT_WINDOW",
-                getDevice());
-        Assert.assertTrue(runDeviceTests(TEST_PKG, TEST_CLASS, "testOverlayButtonPresence"));
+        Assert.assertTrue(runDeviceTests(TEST_PKG, TEST_CLASS, "testPackageElementPresence"));
     }
 }
