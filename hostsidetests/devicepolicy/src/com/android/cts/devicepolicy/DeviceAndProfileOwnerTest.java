@@ -22,6 +22,7 @@ import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.LargeTest;
@@ -910,6 +911,8 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     // the DelegatedCertinstallerTest.
     @Test
     public void testDelegatedCertInstallerDirectly() throws Exception {
+        assumeTrue(mHasAttestation);
+
         if (!mHasFeature) {
             return;
         }
@@ -923,6 +926,8 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     // access to it.
     @Test
     public void testSetKeyGrant() throws Exception {
+        assumeTrue(mHasAttestation);
+
         if (!mHasFeature) {
             return;
         }
@@ -1624,6 +1629,8 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testGenerateKeyPairLogged() throws Exception {
+        assumeTrue(mHasAttestation);
+
         if (!mHasFeature || !isStatsdEnabled(getDevice())) {
             return;
         }

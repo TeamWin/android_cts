@@ -52,6 +52,7 @@ import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
+import static org.junit.Assume.assumeTrue;
 
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
@@ -147,6 +148,8 @@ public class KeyAttestationTest extends AndroidTestCase {
 
     @RequiresDevice
     public void testEcAttestation() throws Exception {
+        assumeTrue(TestUtils.isAttestationSupported());
+
         if (getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_PC))
             return;
 
@@ -187,6 +190,8 @@ public class KeyAttestationTest extends AndroidTestCase {
     }
 
     public void testEcAttestation_TooLargeChallenge() throws Exception {
+        assumeTrue(TestUtils.isAttestationSupported());
+
         try {
             testEcAttestation(new byte[129], true /* includeValidityDates */, "secp256r1", 256,
                     KM_PURPOSE_SIGN);
@@ -230,6 +235,8 @@ public class KeyAttestationTest extends AndroidTestCase {
     @RestrictedBuildTest
     @RequiresDevice
     public void testEcAttestation_DeviceLocked() throws Exception {
+        assumeTrue(TestUtils.isAttestationSupported());
+
         if (getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_PC))
             return;
 
@@ -293,6 +300,8 @@ public class KeyAttestationTest extends AndroidTestCase {
 
     @RequiresDevice
     public void testRsaAttestation() throws Exception {
+        assumeTrue(TestUtils.isAttestationSupported());
+
         if (getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_PC))
             return;
 
@@ -350,6 +359,8 @@ public class KeyAttestationTest extends AndroidTestCase {
     }
 
     public void testRsaAttestation_TooLargeChallenge() throws Exception {
+        assumeTrue(TestUtils.isAttestationSupported());
+
         try {
             testRsaAttestation(new byte[129], true /* includeValidityDates */, 512, PURPOSE_SIGN,
                     null /* paddingModes; may be empty because we'll never test them */);
@@ -392,6 +403,8 @@ public class KeyAttestationTest extends AndroidTestCase {
     @RestrictedBuildTest
     @RequiresDevice  // Emulators have no place to store the needed key
     public void testRsaAttestation_DeviceLocked() throws Exception {
+        assumeTrue(TestUtils.isAttestationSupported());
+
         if (getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_PC))
             return;
 
