@@ -461,6 +461,42 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
     }
 
     /**
+     * Test {@link InputConnection#getTextAfterCursor(int, int)} fails when a negative
+     * {@code length} is passed.  See Bug 169114026 for background.
+     */
+    @Test
+    public void testGetTextAfterCursorFailWithNegativeLength() throws Exception {
+        final String unexpectedResult = "123";
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public CharSequence getTextAfterCursor(int n, int flags) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putInt("n", n);
+                    args.putInt("flags", flags);
+                });
+                return unexpectedResult;
+            }
+        }
+
+        testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
+            final ImeCommand command = session.callGetTextAfterCursor(-1, 0);
+            final ImeEvent result = expectCommand(stream, command, LONG_TIMEOUT);
+            assertTrue("IC#getTextAfterCursor() returns null for a negative length.",
+                    result.isNullReturnValue());
+            methodCallVerifier.expectNotCalled(
+                    "IC#getTextAfterCursor() will not be triggered with a negative length.",
+                    EXPECTED_NOT_CALLED_TIMEOUT);
+        });
+    }
+
+    /**
      * Test {@link InputConnection#getTextAfterCursor(int, int)} fails after a system-defined
      * time-out even if the target app does not respond.
      */
@@ -583,6 +619,42 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
                 assertEquals(expectedN, args.get("n"));
                 assertEquals(expectedFlags, args.get("flags"));
             });
+        });
+    }
+
+    /**
+     * Test {@link InputConnection#getTextBeforeCursor(int, int)} fails when a negative
+     * {@code length} is passed.  See Bug 169114026 for background.
+     */
+    @Test
+    public void testGetTextBeforeCursorFailWithNegativeLength() throws Exception {
+        final String unexpectedResult = "123";
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public CharSequence getTextBeforeCursor(int n, int flags) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putInt("n", n);
+                    args.putInt("flags", flags);
+                });
+                return unexpectedResult;
+            }
+        }
+
+        testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
+            final ImeCommand command = session.callGetTextBeforeCursor(-1, 0);
+            final ImeEvent result = expectCommand(stream, command, LONG_TIMEOUT);
+            assertTrue("IC#getTextBeforeCursor() returns null for a negative length.",
+                    result.isNullReturnValue());
+            methodCallVerifier.expectNotCalled(
+                    "IC#getTextBeforeCursor() will not be triggered with a negative length.",
+                    EXPECTED_NOT_CALLED_TIMEOUT);
         });
     }
 
@@ -851,6 +923,82 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
                 assertEquals(expectedAfterLength, args.get("afterLength"));
                 assertEquals(expectedFlags, args.get("flags"));
             });
+        });
+    }
+
+    /**
+     * Test {@link InputConnection#getSurroundingText(int, int, int)} fails when a nagative
+     * {@code afterLength} is passed.  See Bug 169114026 for background.
+     */
+    @Test
+    public void testGetSurroundingTextFailWithNegativeAfterLength() throws Exception {
+        final SurroundingText unexpectedResult = new SurroundingText("012345", 1, 2, 0);
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public SurroundingText getSurroundingText(int beforeLength, int afterLength,
+                    int flags) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putInt("beforeLength", beforeLength);
+                    args.putInt("afterLength", afterLength);
+                    args.putInt("flags", flags);
+                });
+                return unexpectedResult;
+            }
+        }
+
+        testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
+            final ImeCommand command = session.callGetSurroundingText(1, -1, 0);
+            final ImeEvent result = expectCommand(stream, command, LONG_TIMEOUT);
+            assertTrue("IC#getSurroundingText() returns null for a negative afterLength.",
+                    result.isNullReturnValue());
+            methodCallVerifier.expectNotCalled(
+                    "IC#getSurroundingText() will not be triggered with a negative afterLength.",
+                    EXPECTED_NOT_CALLED_TIMEOUT);
+        });
+    }
+
+    /**
+     * Test {@link InputConnection#getSurroundingText(int, int, int)} fails when a negative
+     * {@code beforeLength} is passed.  See Bug 169114026 for background.
+     */
+    @Test
+    public void testGetSurroundingTextFailWithNegativeBeforeLength() throws Exception {
+        final SurroundingText unexpectedResult = new SurroundingText("012345", 1, 2, 0);
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public SurroundingText getSurroundingText(int beforeLength, int afterLength,
+                    int flags) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putInt("beforeLength", beforeLength);
+                    args.putInt("afterLength", afterLength);
+                    args.putInt("flags", flags);
+                });
+                return unexpectedResult;
+            }
+        }
+
+        testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
+            final ImeCommand command = session.callGetSurroundingText(-1, 1, 0);
+            final ImeEvent result = expectCommand(stream, command, LONG_TIMEOUT);
+            assertTrue("IC#getSurroundingText() returns null for a negative beforeLength.",
+                    result.isNullReturnValue());
+            methodCallVerifier.expectNotCalled(
+                    "IC#getSurroundingText() will not be triggered with a negative beforeLength.",
+                    EXPECTED_NOT_CALLED_TIMEOUT);
         });
     }
 

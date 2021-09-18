@@ -33,6 +33,17 @@ import com.android.internal.annotations.GuardedBy;
 import junit.framework.Assert;
 import junit.framework.AssertionFailedError;
 
+/**
+ * IPC interface to run tests in a freshly spawned service process.
+ *
+ * CTS test modules usually run all tests in the same process, but some WebView tests
+ * need to verify things that only happen once per process. This client interface allows
+ * two separate service processes to be created which are guaranteed to be freshly launched
+ * and to not have loaded the WebView implementation before the test runs. The caller must
+ * close() the client once it's done with it to allow the service process to exit.
+ * The two service processes are identical to each other (A and B are arbitrary labels); we
+ * have two in case a test needs to run more than one thing at once.
+ */
 class TestProcessClient extends Assert implements AutoCloseable, ServiceConnection {
     private Context mContext;
 
@@ -74,7 +85,7 @@ class TestProcessClient extends Assert implements AutoCloseable, ServiceConnecti
                 if (!sFreshProcess) {
                     fail("Service process was unexpectedly reused");
                 }
-                sFreshProcess = true;
+                sFreshProcess = false;
             }
         }
 
