@@ -262,23 +262,4 @@ public class TaskFragmentOrganizerTest extends TaskFragmentOrganizerTestBase {
     private TaskFragmentCreationParams generateTaskFragCreationParams() {
         return mTaskFragmentOrganizer.generateTaskFragParams(mOwnerToken);
     }
-
-    /**
-     * Verifies whether the window hierarchy is as expected or not.
-     * <p>
-     * The sample usage is as follows:
-     * <pre class="prettyprint">
-     * assertWindowHierarchy(rootTask, leafTask, taskFragment, activity);
-     * </pre></p>
-     *
-     * @param containers The containers to be verified. It should be put from top to down
-     */
-    private void assertWindowHierarchy(WindowContainer ... containers) {
-        for (int i = 0; i < containers.length - 2; i++) {
-            final WindowContainer parent = containers[i];
-            final WindowContainer child = containers[i + 1];
-            assertWithMessage(parent + " must contains " + child)
-                    .that(parent.mChildren).contains(child);
-        }
-    }
 }
