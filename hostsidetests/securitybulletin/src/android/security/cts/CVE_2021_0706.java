@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,37 +21,31 @@ import android.platform.test.annotations.AsbSecurityTest;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.junit.Test;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
-public class CVE_2021_0586 extends BaseHostJUnit4Test {
-    private static final String TEST_PKG = "android.security.cts.cve_2021_0586";
+public class CVE_2021_0706 extends BaseHostJUnit4Test {
+
+    private static final String TEST_PKG = "android.security.cts.CVE_2021_0706";
     private static final String TEST_CLASS = TEST_PKG + "." + "DeviceTest";
-    private static final String TEST_APP = "CVE-2021-0586.apk";
+    private static final String TEST_APP = "CVE-2021-0706.apk";
 
     @Before
     public void setUp() throws Exception {
+        uninstallPackage(getDevice(), TEST_PKG);
+    }
+
+    @AppModeFull
+    @AsbSecurityTest(cveBugId = 193444889)
+    @Test
+    public void testPocCVE_2021_0706() throws Exception {
         ITestDevice device = getDevice();
-        uninstallPackage(device, TEST_PKG);
-        /* Wake up the screen */
         AdbUtils.runCommandLine("input keyevent KEYCODE_WAKEUP", device);
         AdbUtils.runCommandLine("input keyevent KEYCODE_MENU", device);
         AdbUtils.runCommandLine("input keyevent KEYCODE_HOME", device);
-    }
-
-    /**
-     * b/182584940
-     */
-    @AppModeFull
-    @AsbSecurityTest(cveBugId = 182584940)
-    @Test
-    public void testPocCVE_2021_0586() throws Exception {
         installPackage(TEST_APP);
-        AdbUtils.runCommandLine("pm grant " + TEST_PKG + " android.permission.SYSTEM_ALERT_WINDOW",
-                getDevice());
-        Assert.assertTrue(runDeviceTests(TEST_PKG, TEST_CLASS, "testOverlayButtonPresence"));
+        runDeviceTests(TEST_PKG, TEST_CLASS, "testDisablePlugin");
     }
 }
