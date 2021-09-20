@@ -66,7 +66,8 @@ public class GeneralDelegateTest extends BaseJUnit3TestCase {
             mDpm.setUninstallBlocked(myComponentName, myPackageName, true);
             fail("Expected SecurityException not thrown");
         } catch (SecurityException expected) {
-            MoreAsserts.assertContainsRegex("No active admin", expected.getMessage());
+            MoreAsserts.assertContainsRegex("does not exist or is not owned by uid",
+                    expected.getMessage());
         }
     }
 }
