@@ -42,6 +42,7 @@ import android.security.identity.ResultData;
 import android.security.identity.WritableIdentityCredential;
 import android.security.identity.SessionTranscriptMismatchException;
 import androidx.test.InstrumentationRegistry;
+import com.android.security.identity.internal.Util;
 
 import org.junit.Test;
 
@@ -368,7 +369,7 @@ public class ProvisioningTest {
 
     @Test
     public void alreadyPersonalized() throws IdentityCredentialException {
-        assumeTrue("IC HAL is not implemented", Util.isHalImplemented());
+        assumeTrue("IC HAL is not implemented", TestUtil.isHalImplemented());
 
         Context appContext = InstrumentationRegistry.getTargetContext();
         IdentityCredentialStore store = IdentityCredentialStore.getInstance(appContext);
@@ -387,7 +388,7 @@ public class ProvisioningTest {
 
     @Test
     public void nonExistent() throws IdentityCredentialException {
-        assumeTrue("IC HAL is not implemented", Util.isHalImplemented());
+        assumeTrue("IC HAL is not implemented", TestUtil.isHalImplemented());
 
         Context appContext = InstrumentationRegistry.getTargetContext();
         IdentityCredentialStore store = IdentityCredentialStore.getInstance(appContext);
@@ -400,7 +401,7 @@ public class ProvisioningTest {
 
     @Test
     public void defaultStoreSupportsAnyDocumentType() throws IdentityCredentialException {
-        assumeTrue("IC HAL is not implemented", Util.isHalImplemented());
+        assumeTrue("IC HAL is not implemented", TestUtil.isHalImplemented());
 
         Context appContext = InstrumentationRegistry.getTargetContext();
         IdentityCredentialStore store = IdentityCredentialStore.getInstance(appContext);
@@ -412,7 +413,7 @@ public class ProvisioningTest {
     @Test
     public void deleteCredentialByName()
             throws IdentityCredentialException, CborException, CertificateEncodingException {
-        assumeTrue("IC HAL is not implemented", Util.isHalImplemented());
+        assumeTrue("IC HAL is not implemented", TestUtil.isHalImplemented());
 
         Context appContext = InstrumentationRegistry.getTargetContext();
         IdentityCredentialStore store = IdentityCredentialStore.getInstance(appContext);
@@ -450,11 +451,11 @@ public class ProvisioningTest {
     @Test
     public void deleteCredential()
             throws IdentityCredentialException, CborException, CertificateEncodingException {
-        assumeTrue("IC HAL is not implemented", Util.isHalImplemented());
+        assumeTrue("IC HAL is not implemented", TestUtil.isHalImplemented());
 
         Context appContext = InstrumentationRegistry.getTargetContext();
         IdentityCredentialStore store = IdentityCredentialStore.getInstance(appContext);
-        assumeTrue("IdentityCredential.delete() not supported", Util.getFeatureVersion() >= 202101);
+        assumeTrue("IdentityCredential.delete() not supported", TestUtil.getFeatureVersion() >= 202101);
 
         store.deleteCredentialByName("test");
         assertNull(store.deleteCredentialByName("test"));
@@ -494,11 +495,11 @@ public class ProvisioningTest {
     @Test
     public void proofOfOwnership()
             throws IdentityCredentialException, CborException, CertificateEncodingException {
-        assumeTrue("IC HAL is not implemented", Util.isHalImplemented());
+        assumeTrue("IC HAL is not implemented", TestUtil.isHalImplemented());
 
         Context appContext = InstrumentationRegistry.getTargetContext();
         IdentityCredentialStore store = IdentityCredentialStore.getInstance(appContext);
-        assumeTrue("IdentityCredential.proveOwnership() not supported", Util.getFeatureVersion() >= 202101);
+        assumeTrue("IdentityCredential.proveOwnership() not supported", TestUtil.getFeatureVersion() >= 202101);
 
         store.deleteCredentialByName("test");
         assertNull(store.deleteCredentialByName("test"));
@@ -535,7 +536,7 @@ public class ProvisioningTest {
 
     @Test
     public void testProvisionAndRetrieve() throws IdentityCredentialException, CborException {
-        assumeTrue("IC HAL is not implemented", Util.isHalImplemented());
+        assumeTrue("IC HAL is not implemented", TestUtil.isHalImplemented());
 
         Context appContext = InstrumentationRegistry.getTargetContext();
         IdentityCredentialStore store = IdentityCredentialStore.getInstance(appContext);
@@ -625,7 +626,7 @@ public class ProvisioningTest {
     @Test
     public void testProvisionAndRetrieveMultipleTimes() throws IdentityCredentialException,
             InvalidKeyException {
-        assumeTrue("IC HAL is not implemented", Util.isHalImplemented());
+        assumeTrue("IC HAL is not implemented", TestUtil.isHalImplemented());
 
         Context appContext = InstrumentationRegistry.getTargetContext();
         IdentityCredentialStore store = IdentityCredentialStore.getInstance(appContext);
@@ -688,7 +689,7 @@ public class ProvisioningTest {
 
     @Test
     public void testProvisionAndRetrieveWithFiltering() throws IdentityCredentialException {
-        assumeTrue("IC HAL is not implemented", Util.isHalImplemented());
+        assumeTrue("IC HAL is not implemented", TestUtil.isHalImplemented());
 
         Context appContext = InstrumentationRegistry.getTargetContext();
         IdentityCredentialStore store = IdentityCredentialStore.getInstance(appContext);
@@ -741,7 +742,7 @@ public class ProvisioningTest {
 
     @Test
     public void testProvisionAndRetrieveElementWithNoACP() throws IdentityCredentialException {
-        assumeTrue("IC HAL is not implemented", Util.isHalImplemented());
+        assumeTrue("IC HAL is not implemented", TestUtil.isHalImplemented());
 
         Context appContext = InstrumentationRegistry.getTargetContext();
         IdentityCredentialStore store = IdentityCredentialStore.getInstance(appContext);
@@ -782,7 +783,7 @@ public class ProvisioningTest {
 
     @Test
     public void testProvisionAndRetrieveWithEntryNotInRequest() throws IdentityCredentialException {
-        assumeTrue("IC HAL is not implemented", Util.isHalImplemented());
+        assumeTrue("IC HAL is not implemented", TestUtil.isHalImplemented());
 
         Context appContext = InstrumentationRegistry.getTargetContext();
         IdentityCredentialStore store = IdentityCredentialStore.getInstance(appContext);
@@ -838,7 +839,7 @@ public class ProvisioningTest {
 
     @Test
     public void nonExistentEntries() throws IdentityCredentialException {
-        assumeTrue("IC HAL is not implemented", Util.isHalImplemented());
+        assumeTrue("IC HAL is not implemented", TestUtil.isHalImplemented());
 
         Context appContext = InstrumentationRegistry.getTargetContext();
         IdentityCredentialStore store = IdentityCredentialStore.getInstance(appContext);
@@ -883,7 +884,7 @@ public class ProvisioningTest {
 
     @Test
     public void multipleNamespaces() throws IdentityCredentialException, CborException {
-        assumeTrue("IC HAL is not implemented", Util.isHalImplemented());
+        assumeTrue("IC HAL is not implemented", TestUtil.isHalImplemented());
 
         Context appContext = InstrumentationRegistry.getTargetContext();
         IdentityCredentialStore store = IdentityCredentialStore.getInstance(appContext);
@@ -978,7 +979,7 @@ public class ProvisioningTest {
 
     @Test
     public void testProvisionAcpIdNotInValidRange() throws IdentityCredentialException {
-        assumeTrue("IC HAL is not implemented", Util.isHalImplemented());
+        assumeTrue("IC HAL is not implemented", TestUtil.isHalImplemented());
 
         Context appContext = InstrumentationRegistry.getTargetContext();
         IdentityCredentialStore store = IdentityCredentialStore.getInstance(appContext);
@@ -1016,7 +1017,7 @@ public class ProvisioningTest {
     @Test
     public void testProvisionAcpIdNotStartingAtZero() throws
             IdentityCredentialException, CborException {
-        assumeTrue("IC HAL is not implemented", Util.isHalImplemented());
+        assumeTrue("IC HAL is not implemented", TestUtil.isHalImplemented());
 
         Context appContext = InstrumentationRegistry.getTargetContext();
         IdentityCredentialStore store = IdentityCredentialStore.getInstance(appContext);
@@ -1105,11 +1106,11 @@ public class ProvisioningTest {
 
     @Test
     public void testUpdateCredential() throws IdentityCredentialException, CborException, NoSuchAlgorithmException {
-        assumeTrue("IC HAL is not implemented", Util.isHalImplemented());
+        assumeTrue("IC HAL is not implemented", TestUtil.isHalImplemented());
 
         Context appContext = InstrumentationRegistry.getTargetContext();
         IdentityCredentialStore store = IdentityCredentialStore.getInstance(appContext);
-        assumeTrue("IdentityCredential.update() not supported", Util.getFeatureVersion() >= 202101);
+        assumeTrue("IdentityCredential.update() not supported", TestUtil.getFeatureVersion() >= 202101);
 
         // Create the credential...
         //
