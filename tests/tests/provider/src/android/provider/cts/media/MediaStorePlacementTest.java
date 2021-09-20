@@ -221,8 +221,9 @@ public class MediaStorePlacementTest {
                 Optional.of("Android/media/android.provider.cts/foo"), null));
         assertFalse(updatePlacement(uri,
                 Optional.of("Android/media/com.example/foo"), null));
-        assertFalse(updatePlacement(uri,
+        assertTrue(updatePlacement(uri,
                 Optional.of("DCIM"), null));
+        assertFalse(updatePlacement(uri, Optional.of("Android/media"), null));
     }
 
     @Test
@@ -232,12 +233,13 @@ public class MediaStorePlacementTest {
         final Uri uri = ProviderTestUtils.stageMedia(R.drawable.scenery,
                 mExternalImages, "image/jpeg");
 
-        assertFalse(updatePlacement(uri,
+        assertTrue(updatePlacement(uri,
                 Optional.of("Android/media/android.provider.cts/foo"), null));
         assertFalse(updatePlacement(uri,
                 Optional.of("Android/media/com.example/foo"), null));
         assertTrue(updatePlacement(uri,
                 Optional.of("DCIM"), null));
+        assertFalse(updatePlacement(uri, Optional.of("Android/media"), null));
     }
 
     @Test
