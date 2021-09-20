@@ -355,4 +355,9 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
     public void setSettingsValue(String setting, String value) throws Exception {
         setSettingsValue(getDevice(), setting, value);
     }
+
+    public String getDeviceList() throws Exception {
+        return getDevice().executeShellCommand(
+                "dumpsys hdmi_control | sed -n '/mDeviceInfos/,/mCecController/{//!p;}'");
+    }
 }
