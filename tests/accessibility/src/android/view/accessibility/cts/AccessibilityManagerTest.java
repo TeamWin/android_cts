@@ -103,6 +103,9 @@ public class AccessibilityManagerTest {
     public static final String ACCESSIBILITY_INTERACTIVE_UI_TIMEOUT_MS =
             "accessibility_interactive_ui_timeout_ms";
 
+    private static final String ENABLE_ACCESSIBILITY_AUDIO_DESCRIPTION_BY_DEFAULT =
+            "enable_accessibility_audio_description_by_default";
+
     private AccessibilityManager mAccessibilityManager;
 
     private Context mTargetContext;
@@ -432,6 +435,22 @@ public class AccessibilityManagerTest {
             assertEquals("Should return original timeout", 7000,
                     mAccessibilityManager.getRecommendedTimeoutMillis(7000,
                             AccessibilityManager.FLAG_CONTENT_CONTROLS));
+        } finally {
+            automan.destroy();
+        }
+    }
+
+    @Test
+    public void testIsAudioDescriptionEnabled() throws Exception {
+        UiAutomation automan = sInstrumentation.getUiAutomation(
+                UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
+
+        try {
+            putSecureSetting(automan, ENABLE_ACCESSIBILITY_AUDIO_DESCRIPTION_BY_DEFAULT, "1");
+            assertTrue(mAccessibilityManager.isAudioDescriptionEnabled());
+
+            putSecureSetting(automan, ENABLE_ACCESSIBILITY_AUDIO_DESCRIPTION_BY_DEFAULT, "0");
+            assertFalse(mAccessibilityManager.isAudioDescriptionEnabled());
         } finally {
             automan.destroy();
         }
