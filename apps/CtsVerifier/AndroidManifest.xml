@@ -4910,7 +4910,7 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_audio" />
             <meta-data android:name="test_excluded_features"
-                android:value="android.hardware.type.watch:android.hardware.type.television" />
+                android:value="android.hardware.type.watch:android.hardware.type.television:android.hardware.type.automotive" />
             <meta-data android:name="display_mode" android:value="multi_display_mode" />
         </activity>
 

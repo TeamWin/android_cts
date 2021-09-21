@@ -468,8 +468,7 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                 R.string.enterprise_privacy_test,
                 enterprisePolicyTestIntent));
 
-        if (packageManager.hasSystemFeature(PackageManager.FEATURE_MANAGED_USERS)
-                && UserManager.supportsMultipleUsers()) {
+        if (FeatureUtil.supportManagedSecondaryUsers(this)) {
             // Managed user
             adapter.add(createInteractiveTestItem(this, MANAGED_USER_TEST_ID,
                     R.string.managed_user_test,

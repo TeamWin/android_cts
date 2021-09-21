@@ -28,6 +28,7 @@ import android.content.res.Configuration;
 import android.graphics.Rect;
 import android.os.Binder;
 import android.os.IBinder;
+import android.server.wm.WindowManagerState.WindowContainer;
 import android.util.ArrayMap;
 import android.window.TaskFragmentAppearedInfo;
 import android.window.TaskFragmentCreationParams;
@@ -100,6 +101,25 @@ public class TaskFragmentOrganizerTestBase extends WindowManagerTestBase {
                 .that(info.getPositionInParent()).isNotNull();
         assertWithMessage("Configuration must not be empty")
                 .that(info.getConfiguration()).isNotEqualTo(new Configuration());
+    }
+
+    /**
+     * Verifies whether the window hierarchy is as expected or not.
+     * <p>
+     * The sample usage is as follows:
+     * <pre class="prettyprint">
+     * assertWindowHierarchy(rootTask, leafTask, taskFragment, activity);
+     * </pre></p>
+     *
+     * @param containers The containers to be verified. It should be put from top to down
+     */
+    public static void assertWindowHierarchy(WindowContainer... containers) {
+        for (int i = 0; i < containers.length - 2; i++) {
+            final WindowContainer parent = containers[i];
+            final WindowContainer child = containers[i + 1];
+            assertWithMessage(parent + " must contains " + child)
+                    .that(parent.mChildren).contains(child);
+        }
     }
 
     public static class BasicTaskFragmentOrganizer extends TaskFragmentOrganizer {
