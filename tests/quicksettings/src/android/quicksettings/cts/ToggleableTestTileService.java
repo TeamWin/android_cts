@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.app.stubs;
+package android.quicksettings.cts;
 
 import android.content.ComponentName;
 import android.service.quicksettings.Tile;
