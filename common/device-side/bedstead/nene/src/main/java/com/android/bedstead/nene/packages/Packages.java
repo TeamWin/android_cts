@@ -226,6 +226,7 @@ public final class Packages {
                     + "(Trying to install into user " + resolvedUser + ")");
         }
 
+        // This is not in the try because if the install fails we don't want to await the broadcast
         BlockingBroadcastReceiver broadcastReceiver =
                 registerPackageInstalledBroadcastReceiver(user);
 
@@ -294,14 +295,16 @@ public final class Packages {
                     + "(Trying to install into user " + resolvedUser + ")");
         }
 
+        // This is not inside the try because if the install is unsuccessful we don't want to await
+        // the broadcast
         BlockingBroadcastReceiver broadcastReceiver =
                 registerPackageInstalledBroadcastReceiver(user);
 
-        PackageManager packageManager =
-                mTestApis.context().androidContextAsUser(user).getPackageManager();
-        PackageInstaller packageInstaller = packageManager.getPackageInstaller();
+        try  {
+            PackageManager packageManager =
+                    mTestApis.context().androidContextAsUser(user).getPackageManager();
+            PackageInstaller packageInstaller = packageManager.getPackageInstaller();
 
-        try {
             int sessionId;
             try (PermissionContext p = mTestApis.permissions().withPermission(
                     INTERACT_ACROSS_USERS_FULL, INTERACT_ACROSS_USERS, INSTALL_TEST_ONLY_PACKAGE)) {

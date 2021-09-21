@@ -153,6 +153,8 @@ public abstract class UserReference implements AutoCloseable {
      * Make the user the foreground user.
      */
     public UserReference switchTo() {
+        // This is created outside of the try because we don't want to wait for the broadcast
+        // on versions less than Q
         BlockingBroadcastReceiver broadcastReceiver =
                 new BlockingBroadcastReceiver(mTestApis.context().instrumentedContext(),
                         Intent.ACTION_USER_FOREGROUND,

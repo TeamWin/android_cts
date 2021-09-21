@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertAbout;
 
 import androidx.annotation.Nullable;
 
+import com.android.eventlib.Event;
 import com.android.eventlib.EventLogs;
 
 import com.google.common.truth.Fact;
@@ -28,25 +29,26 @@ import com.google.common.truth.Subject;
 
 import java.time.Duration;
 
-public final class EventLogsSubject extends Subject {
+/** {@link Subject} for queries about {@link EventLogs}. */
+public final class EventLogsSubject<E extends Event> extends Subject {
 
     /**
      * Assertions about {@link EventLogs}.
      */
-    public static Factory<EventLogsSubject, EventLogs<?>> eventLogs() {
+    public static <F extends Event> Factory<EventLogsSubject<F>, EventLogs<F>> eventLogs() {
         return EventLogsSubject::new;
     }
 
     /**
      * Assertions about {@link EventLogs}.
      */
-    public static EventLogsSubject assertThat(@Nullable EventLogs<?> actual) {
-        return assertAbout(eventLogs()).that(actual);
+    public static <F extends Event> EventLogsSubject<F> assertThat(@Nullable EventLogs<F> actual) {
+        return assertAbout(EventLogsSubject.<F>eventLogs()).that(actual);
     }
 
-    @Nullable private final EventLogs<?> mActual;
+    @Nullable private final EventLogs<E> mActual;
 
-    private EventLogsSubject(FailureMetadata metadata, @Nullable EventLogs<?> actual) {
+    private EventLogsSubject(FailureMetadata metadata, @Nullable EventLogs<E> actual) {
         super(metadata, actual);
         this.mActual = actual;
     }
@@ -54,22 +56,32 @@ public final class EventLogsSubject extends Subject {
     /**
      * Asserts that an event occurred (that {@link EventLogs#poll()} returns non-null).
      */
-    public void eventOccurred() {
-        if (mActual.poll() == null) {
-            // TODO(b/197315353): Add non-matching events
-            failWithoutActual(Fact.simpleFact("Expected event to have occurred matching: "
-                    + mActual + " but it did not occur."));
+    public E eventOccurred() {
+        E event = mActual.poll();
+
+        if (event == null) {
+            fail();
         }
+
+        return event;
     }
 
     /**
      * Asserts that an event occurred (that {@link EventLogs#poll(Duration)} returns non-null).
      */
-    public void eventOccurredWithin(Duration timeout) {
-        if (mActual.poll(timeout) == null) {
-            // TODO(b/197315353): Add non-matching events
-            failWithoutActual(Fact.simpleFact("Expected event to have occurred matching: "
-                    + mActual + " but it did not occur."));
+    public E eventOccurredWithin(Duration timeout) {
+        E event = mActual.poll(timeout);
+
+        if (event == null) {
+            fail();
         }
+
+        return event;
+    }
+
+    private void fail() {
+        // TODO(b/197315353): Add non-matching events
+        failWithoutActual(Fact.simpleFact("Expected event to have occurred matching: "
+                + mActual + " but it did not occur."));
     }
 }
