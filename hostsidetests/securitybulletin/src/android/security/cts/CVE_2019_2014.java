@@ -32,6 +32,7 @@ public class CVE_2019_2014 extends SecurityTestCase {
     @AsbSecurityTest(cveBugId = 120499324)
     public void testPocCVE_2019_2014() throws Exception {
         pocPusher.only64();
-        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2019-2014", null, getDevice());
+        AdbUtils.runPocAssertExitStatusNotVulnerable("CVE-2019-2014", getDevice(),
+                 AdbUtils.TIMEOUT_SEC);
     }
 }
