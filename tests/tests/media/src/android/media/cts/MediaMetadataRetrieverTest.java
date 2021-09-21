@@ -153,6 +153,37 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
         return ds;
     }
 
+    public void testExceptionWhileClosingMediaDataSource() throws IOException {
+        MediaDataSource backingMediaDataSource =
+                TestMediaDataSource.fromAssetFd(
+                        getAssetFileDescriptorFor("audio_with_metadata.mp3"));
+        MediaDataSource mediaDataSource = new MediaDataSource() {
+            @Override
+            public int readAt(long position, byte[] buffer, int offset, int size)
+                    throws IOException {
+                return backingMediaDataSource.readAt(position, buffer, offset, size);
+            }
+
+            @Override
+            public long getSize() throws IOException {
+                return backingMediaDataSource.getSize();
+            }
+
+            @Override
+            public void close() throws IOException {
+                backingMediaDataSource.close();
+                throw new IOException();
+            }
+        };
+        mRetriever.setDataSource(mediaDataSource);
+        try {
+            mRetriever.release();
+            fail("Expected IOException not thrown.");
+        } catch (IOException e) {
+            // Expected.
+        }
+    }
+
     public void testAudioMetadata() {
         setDataSourceCallback("audio_with_metadata.mp3");
 

@@ -853,7 +853,7 @@ public class MediaMuxerTest extends AndroidTestCase {
         testFd.close();
     }
 
-    private void verifyLocationInFile(String fileName) {
+    private void verifyLocationInFile(String fileName) throws IOException {
         MediaMetadataRetriever retriever = new MediaMetadataRetriever();
         retriever.setDataSource(fileName);
         String location = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_LOCATION);
