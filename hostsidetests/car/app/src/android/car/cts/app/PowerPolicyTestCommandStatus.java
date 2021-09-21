@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,13 @@
  * limitations under the License.
  */
 
-package com.android.eventlib;
+package android.car.cts.app;
 
-import java.time.Duration;
-import java.time.Instant;
+public final class PowerPolicyTestCommandStatus {
+    public static final String IN_PROGRESS = "in-progress";
+    public static final String PROPAGATED = "propagated";
+    public static final String SUCCEED = "succeed";
+    public static final String FAILED = "failed";
 
-
-/** Interface for interacting with a local or remote {@link Event} store. */
-interface EventQuerier<E extends Event> {
-    /**
-     * Gets the next unseen {@link Event} which wasn't logged before {@code earliestLogTime},
-     * or blocks until one is logged.
-     *
-     * <p>After {@code timeout}, null will be returned.
-     */
-    E poll(Instant earliestLogTime, Duration timeout);
+    private PowerPolicyTestCommandStatus() { }
 }

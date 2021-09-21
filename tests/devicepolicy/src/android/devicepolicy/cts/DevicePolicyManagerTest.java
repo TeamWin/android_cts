@@ -44,12 +44,12 @@ import androidx.test.core.app.ApplicationProvider;
 import com.android.bedstead.deviceadminapp.DeviceAdminApp;
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
-import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature;
 import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDpc;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.permissions.PermissionContext;
@@ -108,13 +108,12 @@ public final class DevicePolicyManagerTest {
     @Rule
     public static final DeviceState sDeviceState = new DeviceState();
 
-
     @RequireRunOnPrimaryUser
-    @EnsureHasNoWorkProfile
+    @EnsureHasNoDpc
     @RequireFeature(PackageManager.FEATURE_DEVICE_ADMIN)
     @RequireFeature(PackageManager.FEATURE_MANAGED_USERS)
-    @Test
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @Test
     public void newlyProvisionedManagedProfile_createsProfile() throws Exception {
         UserHandle profile = null;
         try {
@@ -131,11 +130,11 @@ public final class DevicePolicyManagerTest {
     }
 
     @RequireRunOnPrimaryUser
-    @EnsureHasNoWorkProfile
+    @EnsureHasNoDpc
     @RequireFeature(PackageManager.FEATURE_DEVICE_ADMIN)
     @RequireFeature(PackageManager.FEATURE_MANAGED_USERS)
-    @Test
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @Test
     public void newlyProvisionedManagedProfile_createsManagedProfile() throws Exception {
         UserHandle profile = null;
         try {
@@ -152,11 +151,11 @@ public final class DevicePolicyManagerTest {
     }
 
     @RequireRunOnPrimaryUser
-    @EnsureHasNoWorkProfile
+    @EnsureHasNoDpc
     @RequireFeature(PackageManager.FEATURE_DEVICE_ADMIN)
     @RequireFeature(PackageManager.FEATURE_MANAGED_USERS)
-    @Test
     @EnsureHasPermission({MANAGE_PROFILE_AND_DEVICE_OWNERS, INTERACT_ACROSS_USERS_FULL})
+    @Test
     public void newlyProvisionedManagedProfile_setsActiveAdmin() throws Exception {
         UserHandle profile = null;
         try {
@@ -175,11 +174,11 @@ public final class DevicePolicyManagerTest {
     }
 
     @RequireRunOnPrimaryUser
-    @EnsureHasNoWorkProfile
+    @EnsureHasNoDpc
     @RequireFeature(PackageManager.FEATURE_DEVICE_ADMIN)
     @RequireFeature(PackageManager.FEATURE_MANAGED_USERS)
-    @Test
     @EnsureHasPermission({MANAGE_PROFILE_AND_DEVICE_OWNERS, INTERACT_ACROSS_USERS})
+    @Test
     public void newlyProvisionedManagedProfile_setsProfileOwner() throws Exception {
         UserHandle profile = null;
         try {
@@ -197,12 +196,12 @@ public final class DevicePolicyManagerTest {
     }
 
     @RequireRunOnPrimaryUser
-    @EnsureHasNoWorkProfile
+    @EnsureHasNoDpc
     @RequireFeature(PackageManager.FEATURE_DEVICE_ADMIN)
     @RequireFeature(PackageManager.FEATURE_MANAGED_USERS)
-    @Test
-    @Ignore
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @Ignore
+    @Test
     public void newlyProvisionedManagedProfile_copiesAccountToProfile() throws Exception {
         UserHandle profile = null;
         try {
@@ -222,11 +221,11 @@ public final class DevicePolicyManagerTest {
     }
 
     @RequireRunOnPrimaryUser
-    @EnsureHasNoWorkProfile
+    @EnsureHasNoDpc
     @RequireFeature(PackageManager.FEATURE_DEVICE_ADMIN)
     @RequireFeature(PackageManager.FEATURE_MANAGED_USERS)
-    @Test
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @Test
     public void newlyProvisionedManagedProfile_removesAccountFromParentByDefault()
             throws Exception {
         UserHandle profile = null;
@@ -247,12 +246,12 @@ public final class DevicePolicyManagerTest {
     }
 
     @RequireRunOnPrimaryUser
-    @EnsureHasNoWorkProfile
+    @EnsureHasNoDpc
     @RequireFeature(PackageManager.FEATURE_DEVICE_ADMIN)
     @RequireFeature(PackageManager.FEATURE_MANAGED_USERS)
-    @Test
-    @Ignore
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @Ignore
+    @Test
     public void newlyProvisionedManagedProfile_keepsAccountInParentIfRequested() throws Exception {
         UserHandle profile = null;
         try {
@@ -273,11 +272,11 @@ public final class DevicePolicyManagerTest {
     }
 
     @RequireRunOnPrimaryUser
-    @EnsureHasNoWorkProfile
+    @EnsureHasNoDpc
     @RequireFeature(PackageManager.FEATURE_DEVICE_ADMIN)
     @RequireFeature(PackageManager.FEATURE_MANAGED_USERS)
-    @Test
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @Test
     public void newlyProvisionedManagedProfile_removesNonRequiredAppsFromProfile()
             throws Exception {
         UserHandle profile = null;
@@ -299,11 +298,11 @@ public final class DevicePolicyManagerTest {
     }
 
     @RequireRunOnPrimaryUser
-    @EnsureHasNoWorkProfile
+    @EnsureHasNoDpc
     @RequireFeature(PackageManager.FEATURE_DEVICE_ADMIN)
     @RequireFeature(PackageManager.FEATURE_MANAGED_USERS)
-    @Test
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @Test
     public void newlyProvisionedManagedProfile_setsCrossProfilePackages()
             throws Exception {
         UserHandle profile = null;
@@ -413,9 +412,10 @@ public final class DevicePolicyManagerTest {
     }
 
     @RequireRunOnPrimaryUser
+    @EnsureHasNoDpc
     @RequireFeature(PackageManager.FEATURE_DEVICE_ADMIN)
-    @Test
     @EnsureHasPermission({MANAGE_PROFILE_AND_DEVICE_OWNERS})
+    @Test
     public void newlyProvisionedFullyManagedDevice_setsDeviceOwner() throws Exception {
         try {
             FullyManagedDeviceProvisioningParams params =
@@ -432,9 +432,10 @@ public final class DevicePolicyManagerTest {
     }
 
     @RequireRunOnPrimaryUser
+    @EnsureHasNoDpc
     @RequireFeature(PackageManager.FEATURE_DEVICE_ADMIN)
-    @Test
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @Test
     public void newlyProvisionedFullyManagedDevice_doesNotThrowException() throws Exception {
         try {
             FullyManagedDeviceProvisioningParams params =
@@ -449,9 +450,10 @@ public final class DevicePolicyManagerTest {
     }
 
     @RequireRunOnPrimaryUser
+    @EnsureHasNoDpc
     @RequireFeature(PackageManager.FEATURE_DEVICE_ADMIN)
-    @Test
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @Test
     public void newlyProvisionedFullyManagedDevice_canControlSensorPermissionGrantsByDefault()
             throws Exception {
         try {
@@ -469,10 +471,11 @@ public final class DevicePolicyManagerTest {
     }
 
     @RequireRunOnPrimaryUser
+    @EnsureHasNoDpc
     @RequireFeature(PackageManager.FEATURE_DEVICE_ADMIN)
-    @Test
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     @Postsubmit(reason = "b/181993922 automatically marked flaky")
+    @Test
     public void newlyProvisionedFullyManagedDevice_canOptOutOfControllingSensorPermissionGrants()
             throws Exception {
         try {
@@ -492,9 +495,10 @@ public final class DevicePolicyManagerTest {
     }
 
     @RequireRunOnPrimaryUser
+    @EnsureHasNoDpc
     @RequireFeature(PackageManager.FEATURE_DEVICE_ADMIN)
-    @Test
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @Test
     public void newlyProvisionedFullyManagedDevice_leavesAllSystemAppsEnabledWhenRequested()
             throws Exception {
         try {

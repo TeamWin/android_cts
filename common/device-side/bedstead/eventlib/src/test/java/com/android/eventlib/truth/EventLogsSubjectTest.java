@@ -24,6 +24,7 @@ import static com.google.common.truth.ExpectFailure.expectFailureAbout;
 import android.content.Context;
 
 import com.android.bedstead.nene.TestApis;
+import com.android.eventlib.Event;
 import com.android.eventlib.EventLogs;
 import com.android.eventlib.events.CustomEvent;
 
@@ -74,12 +75,14 @@ public class EventLogsSubjectTest {
         EventLogs<CustomEvent> eventLogs =
                 CustomEvent.queryPackage(sContext.getPackageName());
 
-        expectFailure(whenTesting -> whenTesting.that(eventLogs).eventOccurredWithin(
-                Duration.ofSeconds(5)));
+        expectFailure(
+                (ExpectFailure.SimpleSubjectBuilderCallback<EventLogsSubject<CustomEvent>,
+                        EventLogs<CustomEvent>>) whenTesting ->
+                        whenTesting.that(eventLogs).eventOccurredWithin(Duration.ofSeconds(5)));
     }
 
-    private static AssertionError expectFailure(
-            ExpectFailure.SimpleSubjectBuilderCallback<EventLogsSubject, EventLogs<?>> callback) {
+    private static <E extends Event> AssertionError expectFailure(
+            ExpectFailure.SimpleSubjectBuilderCallback<EventLogsSubject<E>, EventLogs<E>> callback) {
         return expectFailureAbout(eventLogs(), callback);
     }
 }
