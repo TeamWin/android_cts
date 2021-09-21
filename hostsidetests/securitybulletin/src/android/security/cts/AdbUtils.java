@@ -488,7 +488,7 @@ public class AdbUtils {
      */
     public static void runPocAssertExitStatusNotVulnerable(String pocName, String arguments,
             ITestDevice device, int timeout) throws Exception {
-              runPocGetExitStatus(pocName, arguments, null, device, timeout);
+        runPocAssertExitStatusNotVulnerable(pocName, arguments, null, device, timeout);
     }
 
     /**
