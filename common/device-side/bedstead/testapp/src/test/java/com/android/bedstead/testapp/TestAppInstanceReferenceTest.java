@@ -42,6 +42,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.time.Duration;
+
 @RunWith(BedsteadJUnit4.class)
 public class TestAppInstanceReferenceTest {
 
@@ -62,6 +64,7 @@ public class TestAppInstanceReferenceTest {
     private static final Intent INTENT_2 = new Intent(INTENT_ACTION_2);
 
     private static final int NON_EXISTING_UID = -1;
+    private static final Duration SHORT_TIMEOUT = Duration.ofSeconds(5);
 
     @Before
     public void setup() {
@@ -243,7 +246,7 @@ public class TestAppInstanceReferenceTest {
             EventLogs<BroadcastReceivedEvent> logs =
                     BroadcastReceivedEvent.queryPackage(testApp.packageName())
                             .whereIntent().action().isEqualTo(INTENT_ACTION);
-            assertThat(logs.get()).isNull();
+            assertThat(logs.poll(SHORT_TIMEOUT)).isNull();
         }
     }
 
@@ -259,7 +262,7 @@ public class TestAppInstanceReferenceTest {
             EventLogs<BroadcastReceivedEvent> logs =
                     BroadcastReceivedEvent.queryPackage(testApp.packageName())
                             .whereIntent().action().isEqualTo(INTENT_ACTION);
-            assertThat(logs.get()).isNull();
+            assertThat(logs.poll(SHORT_TIMEOUT)).isNull();
         }
     }
 
@@ -280,7 +283,7 @@ public class TestAppInstanceReferenceTest {
             EventLogs<BroadcastReceivedEvent> logs2 =
                     BroadcastReceivedEvent.queryPackage(testApp.packageName())
                             .whereIntent().action().isEqualTo(INTENT_ACTION_2);
-            assertThat(logs.get()).isNull();
+            assertThat(logs.poll(SHORT_TIMEOUT)).isNull();
             assertThat(logs2.poll()).isNotNull();
         }
     }

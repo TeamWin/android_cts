@@ -30,4 +30,15 @@ class TestAppDetails {
     final Bundle mMetadata = new Bundle();
     final Set<String> mPermissions = new HashSet<>();
     final Set<ActivityInfo> mActivities = new HashSet<>();
+
+    @Override
+    public String toString() {
+        return "TestAppDetails{"
+                + "mApp=" + mApp
+                + ", mResourceIdentifier=" + mResourceIdentifier
+                + ", mMetadata=" + mMetadata
+                + ", mPermissions=" + mPermissions
+                + ", mActivities=" + mActivities
+                + '}';
+    }
 }

@@ -162,7 +162,7 @@ public final class DeviceAdminChoosePrivateKeyAliasEventTest {
     }
 
     @Test
-    public void whereUid_works() {
+    public void whereUid_works() throws Exception {
         DeviceAdminChoosePrivateKeyAliasEvent.logger(
                 DEVICE_ADMIN_RECEIVER, sContext, INTENT, UID, URI, ALIAS)
                 .log();

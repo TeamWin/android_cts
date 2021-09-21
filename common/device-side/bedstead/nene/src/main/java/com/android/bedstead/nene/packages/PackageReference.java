@@ -134,6 +134,7 @@ public abstract class PackageReference {
                 new IntentFilter(Intent.ACTION_PACKAGE_REMOVED);
         packageRemovedIntentFilter.addDataScheme("package");
 
+        // This is outside of the try because we don't want to await if the package isn't installed
         BlockingBroadcastReceiver broadcastReceiver = BlockingBroadcastReceiver.create(
                 mTestApis.context().androidContextAsUser(user),
                 packageRemovedIntentFilter);
