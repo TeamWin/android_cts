@@ -62,6 +62,7 @@ import com.android.bedstead.harrier.annotations.RequireSdkVersion;
 import com.android.bedstead.harrier.annotations.RequireUserSupported;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDeviceOwner;
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDpc;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoProfileOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasProfileOwner;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnBackgroundDeviceOwnerUser;
@@ -634,5 +635,42 @@ public class DeviceStateTest {
     public void includeRunOnBackgroundDeviceOwnerUserAnnotation_isNotCurrentUser() {
         assertThat(sTestApis.users().current())
                 .isNotEqualTo(sTestApis.users().instrumented());
+    }
+
+    @Test
+    @EnsureHasNoProfileOwner
+    public void ensureHasNoProfileOwnerAnnotation_currentUserHasNoProfileOwner() {
+        assertThat(sTestApis.devicePolicy()
+                .getProfileOwner(sTestApis.users().instrumented()))
+                .isNull();
+    }
+
+    @Test
+    @EnsureHasNoDeviceOwner
+    public void ensureHasNoDeviceOwnerAnnotation_noDeviceOwner() {
+        assertThat(sTestApis.devicePolicy().getDeviceOwner()).isNull();
+    }
+
+    @Test
+    @EnsureHasNoDpc
+    public void ensureHasNoDpcAnnotation_currentUserHasNoProfileOwner() {
+        assertThat(sTestApis.devicePolicy()
+                .getProfileOwner(sTestApis.users().instrumented()))
+                .isNull();
+    }
+
+    @Test
+    @EnsureHasNoDpc
+    public void ensureHasNoDpcAnnotation_noDeviceOwner() {
+        assertThat(sTestApis.devicePolicy().getDeviceOwner()).isNull();
+    }
+
+    @Test
+    @EnsureHasNoDpc
+    public void ensureHasNoDpcAnnotation_workProfileDoesNotExist() {
+        assertThat(sTestApis.users().findProfileOfType(
+                sTestApis.users().supportedType(MANAGED_PROFILE_TYPE_NAME),
+                sTestApis.users().instrumented())
+        ).isNull();
     }
 }

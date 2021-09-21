@@ -80,6 +80,7 @@ import com.android.bedstead.nene.utils.ShellCommand;
 import com.android.bedstead.nene.utils.Versions;
 import com.android.bedstead.remotedpc.RemoteDpc;
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
+import com.android.eventlib.EventLogs;
 
 import com.google.common.base.Objects;
 
@@ -195,6 +196,9 @@ public final class DeviceState implements TestRule {
 
                     assumeFalse(mSkipTestsReason, mSkipTests);
                     assertFalse(mFailTestsReason, mFailTests);
+
+                    // Ensure that tests only see events from the current test
+                    EventLogs.resetLogs();
 
                     mMinSdkVersionCurrentTest = mMinSdkVersion;
                     List<Annotation> annotations = getAnnotations(description);

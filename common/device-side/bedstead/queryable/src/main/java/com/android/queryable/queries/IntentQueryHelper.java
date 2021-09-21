@@ -68,14 +68,14 @@ public final class IntentQueryHelper<E extends Queryable> implements IntentQuery
 
     /**
      * {@code true} if all filters are met by the {@link Intent} contained in
-     * {@code serializableBundle}.
+     * {@code serializableIntent}.
      */
-    public boolean matches(SerializableParcelWrapper<Intent> serializableBundle) {
-        if ((serializableBundle == null || serializableBundle.get() == null)) {
+    public boolean matches(SerializableParcelWrapper<Intent> serializableIntent) {
+        if ((serializableIntent == null || serializableIntent.get() == null)) {
             return false;
         }
 
-        return matches(serializableBundle.get());
+        return matches(serializableIntent.get());
     }
 
     @Override
