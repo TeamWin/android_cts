@@ -16,31 +16,30 @@
 
 package android.gamemanager.cts;
 
-import static com.google.common.truth.Truth.assertThat;
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
+
+import static org.junit.Assume.assumeTrue;
 
 import android.app.GameManager;
 import android.content.Context;
-import android.util.Log;
-
-import androidx.test.ext.junit.rules.ActivityScenarioRule;
-
-import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.ShellIdentityUtils;
-import com.android.compatibility.common.util.SystemUtil;
 
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+@RunWith(AndroidJUnit4.class)
 public class GameManagerTest {
     private static final String TAG = "GameManagerTest";
+    private static final String GAME_OVERLAY_FEATURE_NAME =
+            "com.google.android.feature.GAME_OVERLAY";
 
     private GameManagerCtsActivity mActivity;
     private Context mContext;
@@ -66,6 +65,9 @@ public class GameManagerTest {
      */
     @Test
     public void testGetGameModeUnsupported() {
+        assumeTrue(InstrumentationRegistry.getContext().getPackageManager()
+                .hasSystemFeature(GAME_OVERLAY_FEATURE_NAME));
+
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mGameManager,
                 (gameManager) -> gameManager.setGameMode(mActivity.getPackageName(),
                         GameManager.GAME_MODE_UNSUPPORTED));
@@ -82,6 +84,9 @@ public class GameManagerTest {
      */
     @Test
     public void testGetGameModeStandard() {
+        assumeTrue(InstrumentationRegistry.getContext().getPackageManager()
+                .hasSystemFeature(GAME_OVERLAY_FEATURE_NAME));
+
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mGameManager,
                 (gameManager) -> gameManager.setGameMode(mActivity.getPackageName(),
                         GameManager.GAME_MODE_STANDARD));
@@ -98,6 +103,9 @@ public class GameManagerTest {
      */
     @Test
     public void testGetGameModePerformance() {
+        assumeTrue(InstrumentationRegistry.getContext().getPackageManager()
+                .hasSystemFeature(GAME_OVERLAY_FEATURE_NAME));
+
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mGameManager,
                 (gameManager) -> gameManager.setGameMode(mActivity.getPackageName(),
                         GameManager.GAME_MODE_PERFORMANCE));
@@ -114,6 +122,9 @@ public class GameManagerTest {
      */
     @Test
     public void testGetGameModeBattery() {
+        assumeTrue(InstrumentationRegistry.getContext().getPackageManager()
+                .hasSystemFeature(GAME_OVERLAY_FEATURE_NAME));
+
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mGameManager,
                 (gameManager) -> gameManager.setGameMode(mActivity.getPackageName(),
                         GameManager.GAME_MODE_BATTERY));
