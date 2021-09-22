@@ -212,7 +212,12 @@ abstract class SensorPrivacyBaseTest(
     }
 
     fun unblockSensorWithDialogAndAssert() {
-        UiAutomatorUtils.waitFindObject(By.res("android:id/button1")).click()
+        val buttonResId = if (packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)) {
+            "com.android.systemui:id/bottom_sheet_positive_button"
+        } else {
+            "android:id/button1"
+        }
+        UiAutomatorUtils.waitFindObject(By.res(buttonResId)).click()
         eventually {
             assertFalse(isSensorPrivacyEnabled())
         }
