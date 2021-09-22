@@ -75,7 +75,11 @@ public class TestApp {
         if (resolve() != null) {
             reference().install(user);
         } else {
-            sTestApis.packages().install(user, apkBytes());
+            try {
+                sTestApis.packages().install(user, apkBytes());
+            } catch (NeneException e) {
+                throw new NeneException("Error while installing TestApp " + this, e);
+            }
         }
 
         return new TestAppInstanceReference(this, user);
@@ -186,6 +190,9 @@ public class TestApp {
 
     @Override
     public String toString() {
-        return "TestApp[" + packageName() + "]";
+        return "TestApp{"
+                + "packageName=" + packageName()
+                + ", details=" + mDetails
+                + "}";
     }
 }
