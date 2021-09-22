@@ -33,7 +33,6 @@ import android.stats.devicepolicy.EventId;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.RequiresAdditionalFeatures;
-import com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.TemporarilyIgnoreOnHeadlessSystemUserMode;
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 import com.android.tradefed.log.LogUtil.CLog;
 
@@ -840,33 +839,50 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
             throws Exception {
         assumeCanCreateAdditionalUsers(1);
         final int userId = createUser();
+
+        String stopBgUsersOnSwitchValue = getStopBgUsersOnSwitchProperty();
         try {
-            installAppAsUser(SIMPLE_APP_APK, userId);
-            switchUser(userId);
-            startProtectedPackage(userId);
-            // Set the package under test as a protected package.
-            runDeviceTestsAsUser(DEVICE_OWNER_PKG, ".UserControlDisabledPackagesTest",
-                    "testSetUserControlDisabledPackages", mPrimaryUserId);
+            // Set it to zero otherwise test will crash on automotive when switching users
+            setStopBgUsersOnSwitchProperty("0");
+            try {
+                installAppAsUser(SIMPLE_APP_APK, userId);
+                switchUser(userId);
+                startProtectedPackage(userId);
+                // Set the package under test as a protected package.
+                runDeviceTestsAsUser(DEVICE_OWNER_PKG, ".UserControlDisabledPackagesTest",
+                        "testSetUserControlDisabledPackages", mPrimaryUserId);
 
-            // Reboot and verify protected packages are persisted.
-            rebootAndWaitUntilReady();
-            // Device starts on the primary user and not on the last user (i.e. the created user)
-            // before the reboot occurred.
-            switchUser(userId);
+                // Reboot and verify protected packages are persisted.
+                CLog.i("Reboot");
+                rebootAndWaitUntilReady();
+                CLog.i("Device is ready");
 
-            // The simple app package seems to be set into stopped state on reboot.
-            // Launch the activity again to get it out of stopped state for the created user.
-            startProtectedPackage(userId);
-            // Try to force-stop the package under test on the created user.
-            tryStoppingProtectedPackage(userId, /* canUserStopPackage= */ false);
+                if (isHeadlessSystemUserMode()) {
+                    // Device stars on last user, so we need to explicitly start the user running
+                    // the tests
+                    startUser(mPrimaryUserId);
+                } else {
+                    // Device starts on the primary user and not on the last user (i.e. the created
+                    // user) before the reboot occurred.
+                    switchUser(userId);
+                }
+
+                // The simple app package seems to be set into stopped state on reboot.
+                // Launch the activity again to get it out of stopped state for the created user.
+                startProtectedPackage(userId);
+                // Try to force-stop the package under test on the created user.
+                tryStoppingProtectedPackage(userId, /* canUserStopPackage= */ false);
+            } finally {
+                // Clear the protected packages so that the package under test can be force-stopped.
+                runDeviceTestsAsUser(DEVICE_OWNER_PKG, ".UserControlDisabledPackagesTest",
+                        "testClearSetUserControlDisabledPackages", mPrimaryUserId);
+                tryStoppingProtectedPackage(userId, /* canUserStopPackage= */ true);
+
+                // Removal of the created user and the installed simple app on the created user are
+                // done in tear down.
+            }
         } finally {
-            // Clear the protected packages so that the package under test can be force-stopped.
-            runDeviceTestsAsUser(DEVICE_OWNER_PKG, ".UserControlDisabledPackagesTest",
-                    "testClearSetUserControlDisabledPackages", mPrimaryUserId);
-            tryStoppingProtectedPackage(userId, /* canUserStopPackage= */ true);
-
-            // Removal of the created user and the installed simple app on the created user are done
-            // in tear down.
+          setStopBgUsersOnSwitchProperty(stopBgUsersOnSwitchValue);
         }
     }
 
@@ -1026,6 +1042,8 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
         // These test must be run on device owner user, as it's the only user that's guaranteed  to
         // be always running (otherwise, the test case would crash on headless system user mode if
         // the current user is switched out)
+        // NOTE: there's a setStopBgUsersOnSwitchProperty() method now that would avoid the crash,
+        // but it's not worth to change these tests as they will be migrated to the new infra
         executeDeviceOwnerTestMethod(".CreateAndManageUserTest", testMethod);
     }
 
@@ -1033,6 +1051,8 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
         // These test must be run on device owner user, as it's the only user that's guaranteed  to
         // be always running (otherwise, the test case would crash on headless system user mode if
         // the current user is switched out)
+        // NOTE: there's a setStopBgUsersOnSwitchProperty() method now that would avoid the crash,
+        // but it's not worth to change these tests as they will be migrated to the new infra
         executeDeviceOwnerTestMethod(".ListForegroundAffiliatedUsersTest", testMethod);
     }
 
