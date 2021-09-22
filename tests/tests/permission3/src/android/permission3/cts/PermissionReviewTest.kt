@@ -114,6 +114,14 @@ class PermissionReviewTest : BaseUsePermissionTest() {
     }
 
     @Test
+    fun testNotificationPermissionAddedToReview() {
+        startAppActivityAndAssertResultCode(Activity.RESULT_CANCELED) {
+            waitFindObject(By.text("Notifications"), 5000L)
+            clickPermissionReviewCancel()
+        }
+    }
+
+    @Test
     fun testReviewPermissionWhenServiceIsBound() {
         val results = LinkedBlockingQueue<Int>()
         // We are starting a activity instead of the service directly, because

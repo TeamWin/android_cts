@@ -45,7 +45,6 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         const val APP_APK_PATH_22 = "$APK_DIRECTORY/CtsUsePermissionApp22.apk"
         const val APP_APK_PATH_22_CALENDAR_ONLY =
             "$APK_DIRECTORY/CtsUsePermissionApp22CalendarOnly.apk"
-        const val APP_APK_PATH_22_NONE = "$APK_DIRECTORY/CtsUsePermissionApp22None.apk"
         const val APP_APK_PATH_23 = "$APK_DIRECTORY/CtsUsePermissionApp23.apk"
         const val APP_APK_PATH_25 = "$APK_DIRECTORY/CtsUsePermissionApp25.apk"
         const val APP_APK_PATH_26 = "$APK_DIRECTORY/CtsUsePermissionApp26.apk"
