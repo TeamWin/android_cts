@@ -242,5 +242,9 @@
 
     <!-- b/194146521 -->
     <option name="compatibility:exclude-filter" value="CtsPermission3TestCases android.permission3.cts.PermissionTest23#testNoResidualPermissionsOnUninstall" />
+ 
+    <!-- b/198992105 -->
+    <option name="compatibility:exclude-filter" value="CtsStatsdAtomHostTestCases android.cts.statsd.atom.UidAtomTests#testDangerousPermissionState" />
+    <option name="compatibility:exclude-filter" value="CtsStatsdAtomHostTestCases android.cts.statsd.atom.UidAtomTests#testDangerousPermissionStateSampled" />
 
 </configuration>
