@@ -39,11 +39,10 @@ import java.util.Objects;
  */
 public final class DeviceOwner extends DevicePolicyController {
 
-    DeviceOwner(TestApis testApis,
-            UserReference user,
+    DeviceOwner(UserReference user,
             PackageReference pkg,
             ComponentName componentName) {
-        super(testApis, user, pkg, componentName);
+        super(user, pkg, componentName);
     }
 
     @Override
@@ -65,11 +64,11 @@ public final class DeviceOwner extends DevicePolicyController {
         }
 
         DevicePolicyManager devicePolicyManager =
-                mTestApis.context().androidContextAsUser(mUser).getSystemService(
+                TestApis.context().androidContextAsUser(mUser).getSystemService(
                         DevicePolicyManager.class);
 
         try (PermissionContext p =
-                     mTestApis.permissions().withPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)) {
+                     TestApis.permissions().withPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)) {
             devicePolicyManager.forceRemoveActiveAdmin(mComponentName, mUser.id());
         }
     }

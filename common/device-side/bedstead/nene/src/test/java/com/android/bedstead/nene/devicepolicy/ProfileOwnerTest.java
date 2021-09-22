@@ -42,19 +42,16 @@ public class ProfileOwnerTest {
     private static final ComponentName DPC_COMPONENT_NAME =
             new ComponentName(DEVICE_ADMIN_TESTAPP_PACKAGE_NAME,
                     EventLibDeviceAdminReceiver.class.getName());
-
-    private static final TestApis sTestApis = new TestApis();
-    private static final UserReference sUser = sTestApis.users().instrumented();
+    private static final UserReference sUser = TestApis.users().instrumented();
     private static UserReference sProfile;
-
     private static TestApp sTestApp;
     private static ProfileOwner sProfileOwner;
 
     @BeforeClass
     public static void setupClass() {
-        sProfile = sTestApis.users().createUser()
+        sProfile = TestApis.users().createUser()
                 .parent(sUser)
-                .type(sTestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
+                .type(TestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
                 .createAndStart();
 
         sTestApp = new TestAppProvider().query()
@@ -63,7 +60,7 @@ public class ProfileOwnerTest {
 
         sTestApp.install(sProfile);
 
-        sProfileOwner = sTestApis.devicePolicy().setProfileOwner(sProfile, DPC_COMPONENT_NAME);
+        sProfileOwner = TestApis.devicePolicy().setProfileOwner(sProfile, DPC_COMPONENT_NAME);
     }
 
     @AfterClass
@@ -90,9 +87,9 @@ public class ProfileOwnerTest {
     public void remove_removesProfileOwner() {
         sProfileOwner.remove();
         try {
-            assertThat(sTestApis.devicePolicy().getProfileOwner(sProfile)).isNull();
+            assertThat(TestApis.devicePolicy().getProfileOwner(sProfile)).isNull();
         } finally {
-            sProfileOwner = sTestApis.devicePolicy().setProfileOwner(sProfile, DPC_COMPONENT_NAME);
+            sProfileOwner = TestApis.devicePolicy().setProfileOwner(sProfile, DPC_COMPONENT_NAME);
         }
     }
 }

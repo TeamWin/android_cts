@@ -34,9 +34,8 @@ import com.android.bedstead.testapp.TestAppProvider;
 /** Entry point to RemoteDPC. */
 public final class RemoteDpc extends TestAppInstanceReference {
 
-    private static final TestApis sTestApis = new TestApis();
     // This must be instrumentation not instrumented to access the resources
-    private static final Context sContext = sTestApis.context().instrumentationContext();
+    private static final Context sContext = TestApis.context().instrumentationContext();
 
     public static final ComponentName DPC_COMPONENT_NAME = new ComponentName(
             "com.android.RemoteDPC",
@@ -55,7 +54,7 @@ public final class RemoteDpc extends TestAppInstanceReference {
      */
     @Nullable
     public static RemoteDpc deviceOwner() {
-        DeviceOwner deviceOwner = sTestApis.devicePolicy().getDeviceOwner();
+        DeviceOwner deviceOwner = TestApis.devicePolicy().getDeviceOwner();
         if (deviceOwner == null || !deviceOwner.componentName().equals(DPC_COMPONENT_NAME)) {
             return null;
         }
@@ -70,7 +69,7 @@ public final class RemoteDpc extends TestAppInstanceReference {
      */
     @Nullable
     public static RemoteDpc profileOwner() {
-        return profileOwner(sTestApis.users().instrumented());
+        return profileOwner(TestApis.users().instrumented());
     }
 
     /**
@@ -84,7 +83,7 @@ public final class RemoteDpc extends TestAppInstanceReference {
             throw new NullPointerException();
         }
 
-        return profileOwner(sTestApis.users().find(profile));
+        return profileOwner(TestApis.users().find(profile));
     }
 
     /**
@@ -98,7 +97,7 @@ public final class RemoteDpc extends TestAppInstanceReference {
             throw new NullPointerException();
         }
 
-        ProfileOwner profileOwner = sTestApis.devicePolicy().getProfileOwner(profile);
+        ProfileOwner profileOwner = TestApis.devicePolicy().getProfileOwner(profile);
         if (profileOwner == null || !profileOwner.componentName().equals(DPC_COMPONENT_NAME)) {
             return null;
         }
@@ -114,7 +113,7 @@ public final class RemoteDpc extends TestAppInstanceReference {
      */
     @Nullable
     public static RemoteDpc any() {
-        return any(sTestApis.users().instrumented());
+        return any(TestApis.users().instrumented());
     }
 
     /**
@@ -129,7 +128,7 @@ public final class RemoteDpc extends TestAppInstanceReference {
             throw new NullPointerException();
         }
 
-        return any(sTestApis.users().find(user));
+        return any(TestApis.users().find(user));
     }
 
     /**
@@ -169,7 +168,7 @@ public final class RemoteDpc extends TestAppInstanceReference {
         if (user == null) {
             throw new NullPointerException();
         }
-        return setAsDeviceOwner(sTestApis.users().find(user));
+        return setAsDeviceOwner(TestApis.users().find(user));
     }
 
     /**
@@ -180,7 +179,7 @@ public final class RemoteDpc extends TestAppInstanceReference {
             throw new NullPointerException();
         }
 
-        DeviceOwner deviceOwner = sTestApis.devicePolicy().getDeviceOwner();
+        DeviceOwner deviceOwner = TestApis.devicePolicy().getDeviceOwner();
         if (deviceOwner != null) {
             if (deviceOwner.componentName().equals(DPC_COMPONENT_NAME)) {
                 return new RemoteDpc(deviceOwner); // Already set
@@ -189,7 +188,7 @@ public final class RemoteDpc extends TestAppInstanceReference {
         }
 
         ensureInstalled(user);
-        return new RemoteDpc(sTestApis.devicePolicy().setDeviceOwner(user, DPC_COMPONENT_NAME));
+        return new RemoteDpc(TestApis.devicePolicy().setDeviceOwner(user, DPC_COMPONENT_NAME));
     }
 
     /**
@@ -199,7 +198,7 @@ public final class RemoteDpc extends TestAppInstanceReference {
         if (user == null) {
             throw new NullPointerException();
         }
-        return setAsProfileOwner(sTestApis.users().find(user));
+        return setAsProfileOwner(TestApis.users().find(user));
     }
 
     /**
@@ -210,7 +209,7 @@ public final class RemoteDpc extends TestAppInstanceReference {
             throw new NullPointerException();
         }
 
-        ProfileOwner profileOwner = sTestApis.devicePolicy().getProfileOwner(user);
+        ProfileOwner profileOwner = TestApis.devicePolicy().getProfileOwner(user);
         if (profileOwner != null) {
             if (profileOwner.componentName().equals(DPC_COMPONENT_NAME)) {
                 return new RemoteDpc(profileOwner); // Already set
@@ -219,7 +218,7 @@ public final class RemoteDpc extends TestAppInstanceReference {
         }
 
         ensureInstalled(user);
-        return new RemoteDpc(sTestApis.devicePolicy().setProfileOwner(user, DPC_COMPONENT_NAME));
+        return new RemoteDpc(TestApis.devicePolicy().setProfileOwner(user, DPC_COMPONENT_NAME));
     }
 
     private static void ensureInstalled(UserReference user) {
@@ -245,7 +244,7 @@ public final class RemoteDpc extends TestAppInstanceReference {
      */
     public void remove() {
         mDevicePolicyController.remove();
-        sTestApis.packages().find(DPC_COMPONENT_NAME.getPackageName())
+        TestApis.packages().find(DPC_COMPONENT_NAME.getPackageName())
                 .uninstall(mDevicePolicyController.user());
     }
 

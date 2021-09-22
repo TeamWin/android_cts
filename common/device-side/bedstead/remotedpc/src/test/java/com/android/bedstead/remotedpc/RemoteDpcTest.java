@@ -55,11 +55,10 @@ public class RemoteDpcTest {
     @ClassRule @Rule
     public static DeviceState sDeviceState = new DeviceState();
 
-    private static final TestApis sTestApis = new TestApis();
     private static TestApp sNonRemoteDpcTestApp;
-    private static final UserReference sUser = sTestApis.users().instrumented();
+    private static final UserReference sUser = TestApis.users().instrumented();
     private static final UserReference NON_EXISTING_USER_REFERENCE =
-            sTestApis.users().find(99999);
+            TestApis.users().find(99999);
     private static final UserHandle NON_EXISTING_USER_HANDLE =
             NON_EXISTING_USER_REFERENCE.userHandle();
 
@@ -87,7 +86,7 @@ public class RemoteDpcTest {
     @Test
     public void deviceOwner_nonRemoteDpcDeviceOwner_returnsNull() {
         DeviceOwner deviceOwner =
-                sTestApis.devicePolicy().setDeviceOwner(sUser, NON_REMOTE_DPC_COMPONENT);
+                TestApis.devicePolicy().setDeviceOwner(sUser, NON_REMOTE_DPC_COMPONENT);
         try {
             assertThat(RemoteDpc.deviceOwner()).isNull();
         } finally {
@@ -114,7 +113,7 @@ public class RemoteDpcTest {
     @Test
     public void profileOwner_nonRemoteDpcProfileOwner_returnsNull() {
         ProfileOwner profileOwner =
-                sTestApis.devicePolicy().setProfileOwner(sUser, NON_REMOTE_DPC_COMPONENT);
+                TestApis.devicePolicy().setProfileOwner(sUser, NON_REMOTE_DPC_COMPONENT);
         try {
             assertThat(RemoteDpc.profileOwner()).isNull();
         } finally {
@@ -140,9 +139,9 @@ public class RemoteDpcTest {
     @Test
     @EnsureHasNoDeviceOwner
     public void profileOwner_userHandle_noProfileOwner_returnsNull() {
-        UserReference profile = sTestApis.users().createUser()
+        UserReference profile = TestApis.users().createUser()
                 .parent(sUser)
-                .type(sTestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
+                .type(TestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
                 .createAndStart();
         try {
             assertThat(RemoteDpc.profileOwner(profile.userHandle())).isNull();
@@ -154,13 +153,13 @@ public class RemoteDpcTest {
     @Test
     @EnsureHasNoDeviceOwner
     public void profileOwner_userHandle_nonRemoteDpcProfileOwner_returnsNull() {
-        UserReference profile = sTestApis.users().createUser()
+        UserReference profile = TestApis.users().createUser()
                 .parent(sUser)
-                .type(sTestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
+                .type(TestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
                 .createAndStart();
         sNonRemoteDpcTestApp.install(profile);
         try {
-            sTestApis.devicePolicy().setProfileOwner(profile, NON_REMOTE_DPC_COMPONENT);
+            TestApis.devicePolicy().setProfileOwner(profile, NON_REMOTE_DPC_COMPONENT);
 
             assertThat(RemoteDpc.profileOwner(profile.userHandle())).isNull();
         } finally {
@@ -171,9 +170,9 @@ public class RemoteDpcTest {
     @Test
     @EnsureHasNoDeviceOwner
     public void profileOwner_userHandle_remoteDpcProfileOwner_returnsInstance() {
-        UserReference profile = sTestApis.users().createUser()
+        UserReference profile = TestApis.users().createUser()
                 .parent(sUser)
-                .type(sTestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
+                .type(TestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
                 .createAndStart();
         RemoteDpc.setAsProfileOwner(profile);
         try {
@@ -192,9 +191,9 @@ public class RemoteDpcTest {
     @Test
     @EnsureHasNoDeviceOwner
     public void profileOwner_userReference_noProfileOwner_returnsNull() {
-        UserReference profile = sTestApis.users().createUser()
+        UserReference profile = TestApis.users().createUser()
                 .parent(sUser)
-                .type(sTestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
+                .type(TestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
                 .createAndStart();
         try {
             assertThat(RemoteDpc.profileOwner(profile)).isNull();
@@ -206,13 +205,13 @@ public class RemoteDpcTest {
     @Test
     @EnsureHasNoDeviceOwner
     public void profileOwner_userReference_nonRemoteDpcProfileOwner_returnsNull() {
-        UserReference profile = sTestApis.users().createUser()
+        UserReference profile = TestApis.users().createUser()
                 .parent(sUser)
-                .type(sTestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
+                .type(TestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
                 .createAndStart();
         sNonRemoteDpcTestApp.install(profile);
         try {
-            sTestApis.devicePolicy().setProfileOwner(profile, NON_REMOTE_DPC_COMPONENT);
+            TestApis.devicePolicy().setProfileOwner(profile, NON_REMOTE_DPC_COMPONENT);
 
             assertThat(RemoteDpc.profileOwner(profile)).isNull();
         } finally {
@@ -223,9 +222,9 @@ public class RemoteDpcTest {
     @Test
     @EnsureHasNoDeviceOwner
     public void profileOwner_userReference_remoteDpcProfileOwner_returnsInstance() {
-        UserReference profile = sTestApis.users().createUser()
+        UserReference profile = TestApis.users().createUser()
                 .parent(sUser)
-                .type(sTestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
+                .type(TestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
                 .createAndStart();
         RemoteDpc.setAsProfileOwner(profile);
         try {
@@ -242,7 +241,7 @@ public class RemoteDpcTest {
 
     @Test
     public void any_noDeviceOwner_nonRemoteDpcProfileOwner_returnsNull() {
-        ProfileOwner profileOwner = sTestApis.devicePolicy().setProfileOwner(sUser,
+        ProfileOwner profileOwner = TestApis.devicePolicy().setProfileOwner(sUser,
                 NON_REMOTE_DPC_COMPONENT);
 
         try {
@@ -254,7 +253,7 @@ public class RemoteDpcTest {
 
     @Test
     public void any_nonRemoteDpcDeviceOwner_noProfileOwner_returnsNull() {
-        DeviceOwner deviceOwner = sTestApis.devicePolicy().setDeviceOwner(sUser,
+        DeviceOwner deviceOwner = TestApis.devicePolicy().setDeviceOwner(sUser,
                 NON_REMOTE_DPC_COMPONENT);
 
         try {
@@ -299,13 +298,13 @@ public class RemoteDpcTest {
     @Test
     @EnsureHasNoDeviceOwner
     public void any_userHandle_noDeviceOwner_nonRemoteDpcProfileOwner_returnsNull() {
-        UserReference profile = sTestApis.users().createUser()
+        UserReference profile = TestApis.users().createUser()
                 .parent(sUser)
-                .type(sTestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
+                .type(TestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
                 .createAndStart();
         sNonRemoteDpcTestApp.install(profile);
         try {
-            sTestApis.devicePolicy().setProfileOwner(profile, NON_REMOTE_DPC_COMPONENT);
+            TestApis.devicePolicy().setProfileOwner(profile, NON_REMOTE_DPC_COMPONENT);
 
             assertThat(RemoteDpc.any(profile.userHandle())).isNull();
         } finally {
@@ -315,7 +314,7 @@ public class RemoteDpcTest {
 
     @Test
     public void any_userHandle_nonRemoteDpcDeviceOwner_noProfileOwner_returnsNull() {
-        DeviceOwner deviceOwner = sTestApis.devicePolicy().setDeviceOwner(sUser,
+        DeviceOwner deviceOwner = TestApis.devicePolicy().setDeviceOwner(sUser,
                 NON_REMOTE_DPC_COMPONENT);
 
         try {
@@ -339,9 +338,9 @@ public class RemoteDpcTest {
     @Test
     @EnsureHasNoDeviceOwner
     public void any_userHandle_remoteDpcProfileOwner_returnsProfileOwner() {
-        UserReference profile = sTestApis.users().createUser()
+        UserReference profile = TestApis.users().createUser()
                 .parent(sUser)
-                .type(sTestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
+                .type(TestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
                 .createAndStart();
         try {
             RemoteDpc profileOwner = RemoteDpc.setAsProfileOwner(profile);
@@ -365,13 +364,13 @@ public class RemoteDpcTest {
     @Test
     @EnsureHasNoDeviceOwner
     public void any_userReference_noDeviceOwner_nonRemoteDpcProfileOwner_returnsNull() {
-        UserReference profile = sTestApis.users().createUser()
+        UserReference profile = TestApis.users().createUser()
                 .parent(sUser)
-                .type(sTestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
+                .type(TestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
                 .createAndStart();
         sNonRemoteDpcTestApp.install(profile);
         try {
-            sTestApis.devicePolicy().setProfileOwner(profile, NON_REMOTE_DPC_COMPONENT);
+            TestApis.devicePolicy().setProfileOwner(profile, NON_REMOTE_DPC_COMPONENT);
 
             assertThat(RemoteDpc.any(profile)).isNull();
         } finally {
@@ -381,7 +380,7 @@ public class RemoteDpcTest {
 
     @Test
     public void any_userReference_nonRemoteDpcDeviceOwner_noProfileOwner_returnsNull() {
-        DeviceOwner deviceOwner = sTestApis.devicePolicy().setDeviceOwner(sUser,
+        DeviceOwner deviceOwner = TestApis.devicePolicy().setDeviceOwner(sUser,
                 NON_REMOTE_DPC_COMPONENT);
 
         try {
@@ -405,9 +404,9 @@ public class RemoteDpcTest {
     @Test
     @EnsureHasNoDeviceOwner
     public void any_userReference_remoteDpcProfileOwner_returnsProfileOwner() {
-        UserReference profile = sTestApis.users().createUser()
+        UserReference profile = TestApis.users().createUser()
                 .parent(sUser)
-                .type(sTestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
+                .type(TestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
                 .createAndStart();
         try {
             RemoteDpc profileOwner = RemoteDpc.setAsProfileOwner(profile);
@@ -434,11 +433,11 @@ public class RemoteDpcTest {
     public void setAsDeviceOwner_userHandle_alreadySet_doesNothing() {
         RemoteDpc.setAsDeviceOwner(sUser.userHandle());
 
-        DeviceOwner deviceOwner = sTestApis.devicePolicy().getDeviceOwner();
+        DeviceOwner deviceOwner = TestApis.devicePolicy().getDeviceOwner();
         try {
             RemoteDpc.setAsDeviceOwner(sUser.userHandle());
 
-            deviceOwner = sTestApis.devicePolicy().getDeviceOwner();
+            deviceOwner = TestApis.devicePolicy().getDeviceOwner();
             assertThat(deviceOwner).isNotNull();
         } finally {
             if (deviceOwner != null) {
@@ -449,15 +448,15 @@ public class RemoteDpcTest {
 
     @Test
     public void setAsDeviceOwner_userHandle_alreadyHasDeviceOwner_replacesDeviceOwner() {
-        sTestApis.devicePolicy().setDeviceOwner(sUser, NON_REMOTE_DPC_COMPONENT);
+        TestApis.devicePolicy().setDeviceOwner(sUser, NON_REMOTE_DPC_COMPONENT);
 
         try {
             RemoteDpc remoteDPC = RemoteDpc.setAsDeviceOwner(sUser.userHandle());
 
-            DeviceOwner deviceOwner = sTestApis.devicePolicy().getDeviceOwner();
+            DeviceOwner deviceOwner = TestApis.devicePolicy().getDeviceOwner();
             assertThat(deviceOwner).isEqualTo(remoteDPC.devicePolicyController());
         } finally {
-            sTestApis.devicePolicy().getDeviceOwner().remove();
+            TestApis.devicePolicy().getDeviceOwner().remove();
         }
     }
 
@@ -465,7 +464,7 @@ public class RemoteDpcTest {
     public void setAsDeviceOwner_userHandle_doesNotHaveDeviceOwner_setsDeviceOwner() {
         RemoteDpc.setAsDeviceOwner(sUser.userHandle());
 
-        DeviceOwner deviceOwner = sTestApis.devicePolicy().getDeviceOwner();
+        DeviceOwner deviceOwner = TestApis.devicePolicy().getDeviceOwner();
         try {
             assertThat(deviceOwner).isNotNull();
         } finally {
@@ -491,11 +490,11 @@ public class RemoteDpcTest {
     public void setAsDeviceOwner_userReference_alreadySet_doesNothing() {
         RemoteDpc.setAsDeviceOwner(sUser);
 
-        DeviceOwner deviceOwner = sTestApis.devicePolicy().getDeviceOwner();
+        DeviceOwner deviceOwner = TestApis.devicePolicy().getDeviceOwner();
         try {
             RemoteDpc.setAsDeviceOwner(sUser);
 
-            deviceOwner = sTestApis.devicePolicy().getDeviceOwner();
+            deviceOwner = TestApis.devicePolicy().getDeviceOwner();
             assertThat(deviceOwner).isNotNull();
         } finally {
             if (deviceOwner != null) {
@@ -506,15 +505,15 @@ public class RemoteDpcTest {
 
     @Test
     public void setAsDeviceOwner_userReference_alreadyHasDeviceOwner_replacesDeviceOwner() {
-        sTestApis.devicePolicy().setDeviceOwner(sUser, NON_REMOTE_DPC_COMPONENT);
+        TestApis.devicePolicy().setDeviceOwner(sUser, NON_REMOTE_DPC_COMPONENT);
 
         try {
             RemoteDpc remoteDPC = RemoteDpc.setAsDeviceOwner(sUser);
 
-            DeviceOwner deviceOwner = sTestApis.devicePolicy().getDeviceOwner();
+            DeviceOwner deviceOwner = TestApis.devicePolicy().getDeviceOwner();
             assertThat(deviceOwner).isEqualTo(remoteDPC.devicePolicyController());
         } finally {
-            sTestApis.devicePolicy().getDeviceOwner().remove();
+            TestApis.devicePolicy().getDeviceOwner().remove();
         }
     }
 
@@ -522,7 +521,7 @@ public class RemoteDpcTest {
     public void setAsDeviceOwner_userReference_doesNotHaveDeviceOwner_setsDeviceOwner() {
         RemoteDpc.setAsDeviceOwner(sUser);
 
-        DeviceOwner deviceOwner = sTestApis.devicePolicy().getDeviceOwner();
+        DeviceOwner deviceOwner = TestApis.devicePolicy().getDeviceOwner();
         try {
             assertThat(deviceOwner).isNotNull();
         } finally {
@@ -547,16 +546,16 @@ public class RemoteDpcTest {
     @Test
     @EnsureHasNoDeviceOwner
     public void setAsProfileOwner_userHandle_alreadySet_doesNothing() {
-        UserReference profile = sTestApis.users().createUser()
+        UserReference profile = TestApis.users().createUser()
                 .parent(sUser)
-                .type(sTestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
+                .type(TestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
                 .createAndStart();
         try {
             RemoteDpc.setAsProfileOwner(profile.userHandle());
 
             RemoteDpc.setAsProfileOwner(profile.userHandle());
 
-            assertThat(sTestApis.devicePolicy().getProfileOwner(profile)).isNotNull();
+            assertThat(TestApis.devicePolicy().getProfileOwner(profile)).isNotNull();
         } finally {
             profile.remove();
         }
@@ -565,17 +564,17 @@ public class RemoteDpcTest {
     @Test
     @EnsureHasNoDeviceOwner
     public void setAsProfileOwner_userHandle_alreadyHasProfileOwner_replacesProfileOwner() {
-        UserReference profile = sTestApis.users().createUser()
+        UserReference profile = TestApis.users().createUser()
                 .parent(sUser)
-                .type(sTestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
+                .type(TestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
                 .createAndStart();
         sNonRemoteDpcTestApp.install(profile);
         try {
-            sTestApis.devicePolicy().setProfileOwner(profile, NON_REMOTE_DPC_COMPONENT);
+            TestApis.devicePolicy().setProfileOwner(profile, NON_REMOTE_DPC_COMPONENT);
 
             RemoteDpc remoteDPC = RemoteDpc.setAsProfileOwner(profile.userHandle());
 
-            assertThat(sTestApis.devicePolicy().getProfileOwner(profile))
+            assertThat(TestApis.devicePolicy().getProfileOwner(profile))
                     .isEqualTo(remoteDPC.devicePolicyController());
         } finally {
             profile.remove();
@@ -585,14 +584,14 @@ public class RemoteDpcTest {
     @Test
     @EnsureHasNoDeviceOwner
     public void setAsProfileOwner_userHandle_doesNotHaveProfileOwner_setsProfileOwner() {
-        UserReference profile = sTestApis.users().createUser()
+        UserReference profile = TestApis.users().createUser()
                 .parent(sUser)
-                .type(sTestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
+                .type(TestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
                 .createAndStart();
         try {
             RemoteDpc.setAsProfileOwner(profile.userHandle());
 
-            assertThat(sTestApis.devicePolicy().getProfileOwner(profile)).isNotNull();
+            assertThat(TestApis.devicePolicy().getProfileOwner(profile)).isNotNull();
         } finally {
             profile.remove();
         }
@@ -613,16 +612,16 @@ public class RemoteDpcTest {
     @Test
     @EnsureHasNoDeviceOwner
     public void setAsProfileOwner_userReference_alreadySet_doesNothing() {
-        UserReference profile = sTestApis.users().createUser()
+        UserReference profile = TestApis.users().createUser()
                 .parent(sUser)
-                .type(sTestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
+                .type(TestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
                 .createAndStart();
         try {
             RemoteDpc.setAsProfileOwner(profile);
 
             RemoteDpc.setAsProfileOwner(profile);
 
-            assertThat(sTestApis.devicePolicy().getProfileOwner(profile)).isNotNull();
+            assertThat(TestApis.devicePolicy().getProfileOwner(profile)).isNotNull();
         } finally {
             profile.remove();
         }
@@ -631,17 +630,17 @@ public class RemoteDpcTest {
     @Test
     @EnsureHasNoDeviceOwner
     public void setAsProfileOwner_userReference_alreadyHasProfileOwner_replacesProfileOwner() {
-        UserReference profile = sTestApis.users().createUser()
+        UserReference profile = TestApis.users().createUser()
                 .parent(sUser)
-                .type(sTestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
+                .type(TestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
                 .createAndStart();
         sNonRemoteDpcTestApp.install(profile);
         try {
-            sTestApis.devicePolicy().setProfileOwner(profile, NON_REMOTE_DPC_COMPONENT);
+            TestApis.devicePolicy().setProfileOwner(profile, NON_REMOTE_DPC_COMPONENT);
 
             RemoteDpc remoteDPC = RemoteDpc.setAsProfileOwner(profile);
 
-            assertThat(sTestApis.devicePolicy().getProfileOwner(profile))
+            assertThat(TestApis.devicePolicy().getProfileOwner(profile))
                     .isEqualTo(remoteDPC.devicePolicyController());
         } finally {
             profile.remove();
@@ -651,14 +650,14 @@ public class RemoteDpcTest {
     @Test
     @EnsureHasNoDeviceOwner
     public void setAsProfileOwner_userReference_doesNotHaveProfileOwner_setsProfileOwner() {
-        UserReference profile = sTestApis.users().createUser()
+        UserReference profile = TestApis.users().createUser()
                 .parent(sUser)
-                .type(sTestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
+                .type(TestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
                 .createAndStart();
         try {
             RemoteDpc.setAsProfileOwner(profile);
 
-            assertThat(sTestApis.devicePolicy().getProfileOwner(profile)).isNotNull();
+            assertThat(TestApis.devicePolicy().getProfileOwner(profile)).isNotNull();
         } finally {
             profile.remove();
         }
@@ -670,7 +669,7 @@ public class RemoteDpcTest {
 
         try {
             assertThat(remoteDPC.devicePolicyController())
-                    .isEqualTo(sTestApis.devicePolicy().getDeviceOwner());
+                    .isEqualTo(TestApis.devicePolicy().getDeviceOwner());
         } finally {
             remoteDPC.remove();
         }
@@ -682,21 +681,21 @@ public class RemoteDpcTest {
 
         remoteDPC.remove();
 
-        assertThat(sTestApis.devicePolicy().getDeviceOwner()).isNull();
+        assertThat(TestApis.devicePolicy().getDeviceOwner()).isNull();
     }
 
     @Test
     @EnsureHasNoDeviceOwner
     public void remove_profileOwner_removes() {
-        try (UserReference profile = sTestApis.users().createUser()
+        try (UserReference profile = TestApis.users().createUser()
                 .parent(sUser)
-                .type(sTestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
+                .type(TestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
                 .createAndStart()) {
             RemoteDpc remoteDPC = RemoteDpc.setAsProfileOwner(profile);
 
             remoteDPC.remove();
 
-            assertThat(sTestApis.devicePolicy().getProfileOwner(profile)).isNull();
+            assertThat(TestApis.devicePolicy().getProfileOwner(profile)).isNull();
         }
     }
 
@@ -719,9 +718,9 @@ public class RemoteDpcTest {
     @Test
     @EnsureHasNoDeviceOwner
     public void frameworkCall_onProfile_makesCall() {
-        try (UserReference profile = sTestApis.users().createUser()
+        try (UserReference profile = TestApis.users().createUser()
                 .parent(sUser)
-                .type(sTestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
+                .type(TestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
                 .createAndStart()) {
             RemoteDpc remoteDPC = RemoteDpc.setAsProfileOwner(profile);
 
@@ -750,7 +749,7 @@ public class RemoteDpcTest {
 
     @Test
     public void forDevicePolicyController_nonRemoteDpcDevicePolicyController_throwsException() {
-        DeviceOwner deviceOwner = sTestApis.devicePolicy().setDeviceOwner(sUser,
+        DeviceOwner deviceOwner = TestApis.devicePolicy().setDeviceOwner(sUser,
                 NON_REMOTE_DPC_COMPONENT);
 
         try {
@@ -775,9 +774,9 @@ public class RemoteDpcTest {
 
     @Test
     public void getParentProfileInstance_returnsUsableInstance() {
-        try (UserReference profile = sTestApis.users().createUser()
+        try (UserReference profile = TestApis.users().createUser()
                 .parent(sUser)
-                .type(sTestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
+                .type(TestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
                 .createAndStart()) {
             RemoteDpc remoteDpc = RemoteDpc.setAsProfileOwner(profile);
 

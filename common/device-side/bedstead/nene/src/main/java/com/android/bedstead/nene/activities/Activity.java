@@ -45,12 +45,10 @@ public class Activity<E> {
      * {@link LocalActivity}.
      */
 
-    private final TestApis mTestApis;
     private final E mActivityInstance;
     private final NeneActivity mActivity;
 
-    Activity(TestApis testApis, E activityInstance, NeneActivity activity) {
-        mTestApis = testApis;
+    Activity(E activityInstance, NeneActivity activity) {
         mActivityInstance = activityInstance;
         mActivity = activity;
     }
@@ -67,7 +65,7 @@ public class Activity<E> {
         // TODO(scottjonathan): What if we're already in lock task mode when we start it here?
         //  find another thing to poll on
         PollingCheck.waitFor(
-                () -> mTestApis.activities().getLockTaskModeState() != LOCK_TASK_MODE_NONE);
+                () -> TestApis.activities().getLockTaskModeState() != LOCK_TASK_MODE_NONE);
     }
 
     /**
@@ -82,7 +80,7 @@ public class Activity<E> {
         // TODO(scottjonathan): What if we're already in lock task mode when we start it here?
         //  find another thing to poll on
         PollingCheck.waitFor(
-                () -> mTestApis.activities().getLockTaskModeState() == LOCK_TASK_MODE_NONE);
+                () -> TestApis.activities().getLockTaskModeState() == LOCK_TASK_MODE_NONE);
     }
 
     /**
@@ -96,14 +94,15 @@ public class Activity<E> {
     public void startActivity(Intent intent) {
         Log.d(TAG, "startActivity(): " + intent);
         if (intent.getComponent() == null) {
-            ComponentReference startActivity = mTestApis.activities().foregroundActivity();
+            ComponentReference startActivity = TestApis.activities().foregroundActivity();
             mActivity.startActivity(intent);
             PollingCheck.waitFor(() -> !Objects.equals(startActivity,
-                    mTestApis.activities().foregroundActivity()));
+                    TestApis.activities().foregroundActivity()));
         } else {
             mActivity.startActivity(intent);
-            ComponentReference component = new ComponentReference(mTestApis, intent.getComponent());
-            PollingCheck.waitFor(() -> component.equals(mTestApis.activities().foregroundActivity()));
+            ComponentReference component = new ComponentReference(intent.getComponent());
+            PollingCheck.waitFor(
+                    () -> component.equals(TestApis.activities().foregroundActivity()));
         }
     }
 

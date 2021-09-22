@@ -64,16 +64,15 @@ public class EventLogsTest {
     private boolean hasScheduledEventsOnTestApp = false;
     private final ScheduledExecutorService mScheduledExecutorService =
             Executors.newSingleThreadScheduledExecutor();
-    private static final TestApis sTestApis = new TestApis();
-    private static final Context sContext = sTestApis.context().instrumentedContext();
-    private static final UserReference sProfile = sTestApis.users().createUser()
-            .parent(sTestApis.users().instrumented())
-            .type(sTestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
+    private static final Context sContext = TestApis.context().instrumentedContext();
+    private static final UserReference sProfile = TestApis.users().createUser()
+            .parent(TestApis.users().instrumented())
+            .type(TestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
             .createAndStart();
 
     @BeforeClass
     public static void setupClass() {
-        sTestApis.packages().find(TEST_APP_PACKAGE_NAME).install(sProfile);
+        TestApis.packages().find(TEST_APP_PACKAGE_NAME).install(sProfile);
     }
 
     @AfterClass
@@ -629,7 +628,7 @@ public class EventLogsTest {
     }
 
     private void logCustomEventOnTestApp(String tag, String data) {
-        logCustomEventOnTestApp(sTestApis.users().instrumented(), tag, data);
+        logCustomEventOnTestApp(TestApis.users().instrumented(), tag, data);
     }
 
     private void logCustomEventOnTestApp() {

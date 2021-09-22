@@ -134,7 +134,6 @@ public final class DeviceState implements TestRule {
     public static final String AFFILIATION_IDS = "affiliationIds";
 
     private final Context mContext = ApplicationProvider.getApplicationContext();
-    private static final TestApis sTestApis = new TestApis();
     private static final String SKIP_TEST_TEARDOWN_KEY = "skip-test-teardown";
     private static final String SKIP_CLASS_TEARDOWN_KEY = "skip-class-teardown";
     private static final String SKIP_TESTS_REASON_KEY = "skip-tests-reason";
@@ -449,7 +448,7 @@ public final class DeviceState implements TestRule {
 
                 try {
                     if (permissionContext == null) {
-                        permissionContext = sTestApis.permissions().withPermission(
+                        permissionContext = TestApis.permissions().withPermission(
                                 ensureHasPermissionAnnotation.value());
                     } else {
                         permissionContext = permissionContext.withPermission(
@@ -468,7 +467,7 @@ public final class DeviceState implements TestRule {
 
                 try {
                     if (permissionContext == null) {
-                        permissionContext = sTestApis.permissions().withoutPermission(
+                        permissionContext = TestApis.permissions().withoutPermission(
                                 ensureDoesNotHavePermission.value());
                     } else {
                         permissionContext = permissionContext.withoutPermission(
@@ -650,7 +649,7 @@ public final class DeviceState implements TestRule {
     }
 
     private void requireRunOnUser(String[] userTypes, OptionalBoolean switchedToUser) {
-        User instrumentedUser = sTestApis.users().instrumented().resolve();
+        User instrumentedUser = TestApis.users().instrumented().resolve();
 
         assume().withMessage("This test only runs on users of type %s", Arrays.toString(userTypes))
                 .that(userTypes).asList().contains(instrumentedUser.type().name());
@@ -664,7 +663,7 @@ public final class DeviceState implements TestRule {
             OptionalBoolean installInstrumentedAppInParent,
             boolean hasProfileOwner, boolean dpcIsPrimary,
             OptionalBoolean switchedToParentUser, Set<String> affiliationIds) {
-        User instrumentedUser = sTestApis.users().instrumented().resolve();
+        User instrumentedUser = TestApis.users().instrumented().resolve();
 
         assumeTrue("This test only runs on users of type " + userType,
                 instrumentedUser.type().name().equals(userType));
@@ -676,10 +675,10 @@ public final class DeviceState implements TestRule {
         mProfiles.get(instrumentedUser.type()).put(instrumentedUser.parent(), instrumentedUser);
 
         if (installInstrumentedAppInParent.equals(OptionalBoolean.TRUE)) {
-            sTestApis.packages().find(sContext.getPackageName()).install(
+            TestApis.packages().find(sContext.getPackageName()).install(
                     instrumentedUser.parent());
         } else if (installInstrumentedAppInParent.equals(OptionalBoolean.FALSE)) {
-            sTestApis.packages().find(sContext.getPackageName()).uninstall(
+            TestApis.packages().find(sContext.getPackageName()).uninstall(
                     instrumentedUser.parent());
         }
 
@@ -702,17 +701,17 @@ public final class DeviceState implements TestRule {
 
     private void requireFeature(String feature, FailureMode failureMode) {
         checkFailOrSkip("Device must have feature " + feature,
-                sTestApis.packages().features().contains(feature), failureMode);
+                TestApis.packages().features().contains(feature), failureMode);
     }
 
     private void requireDoesNotHaveFeature(String feature, FailureMode failureMode) {
         checkFailOrSkip("Device must not have feature " + feature,
-                !sTestApis.packages().features().contains(feature), failureMode);
+                !TestApis.packages().features().contains(feature), failureMode);
     }
 
     private void requireNoGmsInstrumentation() {
         boolean instrumentingGms =
-                sTestApis.context().instrumentedContext().getPackageName().equals(GMS_PKG);
+                TestApis.context().instrumentedContext().getPackageName().equals(GMS_PKG);
 
         checkFailOrSkip(
                 "This test never runs using gms instrumentation",
@@ -724,7 +723,7 @@ public final class DeviceState implements TestRule {
     private void requireGmsInstrumentation(int min, int max) {
         mHasRequireGmsInstrumentation = true;
         boolean instrumentingGms =
-                sTestApis.context().instrumentedContext().getPackageName().equals(GMS_PKG);
+                TestApis.context().instrumentedContext().getPackageName().equals(GMS_PKG);
 
         if (meetsSdkVersionRequirements(min, max)) {
             checkFailOrSkip(
@@ -762,11 +761,11 @@ public final class DeviceState implements TestRule {
     private com.android.bedstead.nene.users.UserType requireUserSupported(
             String userType, FailureMode failureMode) {
         com.android.bedstead.nene.users.UserType resolvedUserType =
-                sTestApis.users().supportedType(userType);
+                TestApis.users().supportedType(userType);
 
         checkFailOrSkip(
                 "Device must support user type " + userType
-                + " only supports: " + sTestApis.users().supportedTypes(),
+                + " only supports: " + TestApis.users().supportedTypes(),
                 resolvedUserType != null, failureMode);
 
         return resolvedUserType;
@@ -805,7 +804,7 @@ public final class DeviceState implements TestRule {
 
     private static final String LOG_TAG = "DeviceState";
 
-    private static final Context sContext = sTestApis.context().instrumentedContext();
+    private static final Context sContext = TestApis.context().instrumentedContext();
 
     private final Map<com.android.bedstead.nene.users.UserType, UserReference> mUsers =
             new HashMap<>();
@@ -898,7 +897,7 @@ public final class DeviceState implements TestRule {
      */
     public UserReference profile(String profileType, UserReference forUser) {
         com.android.bedstead.nene.users.UserType resolvedUserType =
-                sTestApis.users().supportedType(profileType);
+                TestApis.users().supportedType(profileType);
 
         if (resolvedUserType == null) {
             throw new IllegalStateException("Can not have a profile of type " + profileType
@@ -923,7 +922,7 @@ public final class DeviceState implements TestRule {
         }
 
         if (!mProfiles.containsKey(userType) || !mProfiles.get(userType).containsKey(forUser)) {
-            UserReference parentUser = sTestApis.users().instrumented().resolve().parent();
+            UserReference parentUser = TestApis.users().instrumented().resolve().parent();
 
             if (parentUser != null) {
                 if (mProfiles.containsKey(userType)
@@ -980,7 +979,7 @@ public final class DeviceState implements TestRule {
      * Get the user ID of the first human user on the device.
      */
     public UserReference primaryUser() {
-        return sTestApis.users().all()
+        return TestApis.users().all()
                 .stream().filter(User::isPrimary).findFirst()
                 .orElseThrow(IllegalStateException::new);
     }
@@ -1007,7 +1006,7 @@ public final class DeviceState implements TestRule {
      */
     public UserReference user(String userType) {
         com.android.bedstead.nene.users.UserType resolvedUserType =
-                sTestApis.users().supportedType(userType);
+                TestApis.users().supportedType(userType);
 
         if (resolvedUserType == null) {
             throw new IllegalStateException("Can not have a user of type " + userType
@@ -1052,7 +1051,7 @@ public final class DeviceState implements TestRule {
         UserReference forUserReference = resolveUserTypeToUser(forUser);
 
         UserReference profile =
-                sTestApis.users().findProfileOfType(resolvedUserType, forUserReference);
+                TestApis.users().findProfileOfType(resolvedUserType, forUserReference);
         if (profile == null) {
             profile = createProfile(resolvedUserType, forUserReference);
         }
@@ -1060,9 +1059,9 @@ public final class DeviceState implements TestRule {
         profile.start();
 
         if (installInstrumentedApp.equals(OptionalBoolean.TRUE)) {
-            sTestApis.packages().find(sContext.getPackageName()).install(profile);
+            TestApis.packages().find(sContext.getPackageName()).install(profile);
         } else if (installInstrumentedApp.equals(OptionalBoolean.FALSE)) {
-            sTestApis.packages().find(sContext.getPackageName()).uninstall(profile);
+            TestApis.packages().find(sContext.getPackageName()).uninstall(profile);
         }
 
         if (!mProfiles.containsKey(resolvedUserType)) {
@@ -1083,7 +1082,7 @@ public final class DeviceState implements TestRule {
     private void ensureHasNoProfile(String profileType, UserType forUser) {
         UserReference forUserReference = resolveUserTypeToUser(forUser);
         com.android.bedstead.nene.users.UserType resolvedProfileType =
-                sTestApis.users().supportedType(profileType);
+                TestApis.users().supportedType(profileType);
 
         if (resolvedProfileType == null) {
             // These profile types don't exist so there can't be any
@@ -1091,7 +1090,7 @@ public final class DeviceState implements TestRule {
         }
 
         UserReference profile =
-                sTestApis.users().findProfileOfType(
+                TestApis.users().findProfileOfType(
                         resolvedProfileType,
                         forUserReference);
         if (profile != null) {
@@ -1105,7 +1104,7 @@ public final class DeviceState implements TestRule {
         com.android.bedstead.nene.users.UserType resolvedUserType =
                 requireUserSupported(userType, FailureMode.SKIP);
 
-        Collection<UserReference> users = sTestApis.users().findUsersOfType(resolvedUserType);
+        Collection<UserReference> users = TestApis.users().findUsersOfType(resolvedUserType);
 
         UserReference user = users.isEmpty() ? createUser(resolvedUserType)
                 : users.iterator().next();
@@ -1113,9 +1112,9 @@ public final class DeviceState implements TestRule {
         user.start();
 
         if (installInstrumentedApp.equals(OptionalBoolean.TRUE)) {
-            sTestApis.packages().find(sContext.getPackageName()).install(user);
+            TestApis.packages().find(sContext.getPackageName()).install(user);
         } else if (installInstrumentedApp.equals(OptionalBoolean.FALSE)) {
-            sTestApis.packages().find(sContext.getPackageName()).uninstall(user);
+            TestApis.packages().find(sContext.getPackageName()).uninstall(user);
         }
 
         ensureSwitchedToUser(switchedToUser, user);
@@ -1128,14 +1127,14 @@ public final class DeviceState implements TestRule {
      */
     private void ensureHasNoUser(String userType) {
         com.android.bedstead.nene.users.UserType resolvedUserType =
-                sTestApis.users().supportedType(userType);
+                TestApis.users().supportedType(userType);
 
         if (resolvedUserType == null) {
             // These user types don't exist so there can't be any
             return;
         }
 
-        for (UserReference secondaryUser : sTestApis.users().findUsersOfType(resolvedUserType)) {
+        for (UserReference secondaryUser : TestApis.users().findUsersOfType(resolvedUserType)) {
             removeAndRecordUser(secondaryUser);
         }
     }
@@ -1150,7 +1149,7 @@ public final class DeviceState implements TestRule {
         User user = userReference.resolve();
 
         if (!mCreatedUsers.remove(user)) {
-            mRemovedUsers.add(sTestApis.users().createUser()
+            mRemovedUsers.add(TestApis.users().createUser()
                     .name(user.name())
                     .type(user.type())
                     .parent(user.parent()));
@@ -1161,7 +1160,7 @@ public final class DeviceState implements TestRule {
 
     public void requireCanSupportAdditionalUser() {
         int maxUsers = getMaxNumberOfUsersSupported();
-        int currentUsers = sTestApis.users().all().size();
+        int currentUsers = TestApis.users().all().size();
 
         assumeTrue("The device does not have space for an additional user (" + currentUsers +
                 " current users, " + maxUsers + " max users)", currentUsers + 1 <= maxUsers);
@@ -1192,9 +1191,9 @@ public final class DeviceState implements TestRule {
     private UserReference resolveUserTypeToUser(UserType userType) {
         switch (userType) {
             case SYSTEM_USER:
-                return sTestApis.users().system();
+                return TestApis.users().system();
             case CURRENT_USER:
-                return sTestApis.users().instrumented();
+                return TestApis.users().instrumented();
             case PRIMARY_USER:
                 return primaryUser();
             case SECONDARY_USER:
@@ -1227,7 +1226,7 @@ public final class DeviceState implements TestRule {
                 Log.d(LOG_TAG, "Could not switch back to original user "
                         + mOriginalSwitchedUser
                         + " as it does not exist. Switching to system instead.");
-                sTestApis.users().system().switchTo();
+                TestApis.users().system().switchTo();
             } else {
                 mOriginalSwitchedUser.switchTo();
             }
@@ -1241,7 +1240,7 @@ public final class DeviceState implements TestRule {
                 }
             } else if (!mOriginalDeviceOwner.equals(mDeviceOwner)) {
                 mDeviceOwner.remove();
-                sTestApis.devicePolicy().setDeviceOwner(
+                TestApis.devicePolicy().setDeviceOwner(
                         mOriginalDeviceOwner.user(), mOriginalDeviceOwner.componentName());
             }
             mHasChangedDeviceOwner = false;
@@ -1252,7 +1251,7 @@ public final class DeviceState implements TestRule {
                 mChangedProfileOwners.entrySet()) {
 
             ProfileOwner currentProfileOwner =
-                    sTestApis.devicePolicy().getProfileOwner(originalProfileOwner.getKey());
+                    TestApis.devicePolicy().getProfileOwner(originalProfileOwner.getKey());
 
             if (Objects.equal(currentProfileOwner, originalProfileOwner.getValue())) {
                 continue; // No need to restore
@@ -1263,7 +1262,7 @@ public final class DeviceState implements TestRule {
             }
 
             if (originalProfileOwner.getValue() != null) {
-                sTestApis.devicePolicy().setProfileOwner(originalProfileOwner.getKey(),
+                TestApis.devicePolicy().setProfileOwner(originalProfileOwner.getKey(),
                         originalProfileOwner.getValue().componentName());
             }
         }
@@ -1286,7 +1285,7 @@ public final class DeviceState implements TestRule {
             com.android.bedstead.nene.users.UserType profileType, UserReference parent) {
         requireCanSupportAdditionalUser();
         try {
-            UserReference user = sTestApis.users().createUser()
+            UserReference user = TestApis.users().createUser()
                     .parent(parent)
                     .type(profileType)
                     .createAndStart();
@@ -1300,7 +1299,7 @@ public final class DeviceState implements TestRule {
     private UserReference createUser(com.android.bedstead.nene.users.UserType userType) {
         requireCanSupportAdditionalUser();
         try {
-            UserReference user = sTestApis.users().createUser()
+            UserReference user = TestApis.users().createUser()
                     .type(userType)
                     .createAndStart();
             mCreatedUsers.add(user);
@@ -1328,22 +1327,22 @@ public final class DeviceState implements TestRule {
         if (isPrimary && mPrimaryDpc != null && !userReference.equals(mPrimaryDpc.user())) {
             throw new IllegalStateException("Only one DPC can be marked as primary per test (current primary is " + mPrimaryDpc + ")");
         }
-        if (!userReference.equals(sTestApis.users().instrumented())) {
+        if (!userReference.equals(TestApis.users().instrumented())) {
             // INTERACT_ACROSS_USERS_FULL is required for RemoteDPC
             ensureCanGetPermission(INTERACT_ACROSS_USERS_FULL);
         }
 
-        DeviceOwner currentDeviceOwner = sTestApis.devicePolicy().getDeviceOwner();
+        DeviceOwner currentDeviceOwner = TestApis.devicePolicy().getDeviceOwner();
 
         if (currentDeviceOwner != null
                 && currentDeviceOwner.componentName().equals(RemoteDpc.DPC_COMPONENT_NAME)) {
             mDeviceOwner = currentDeviceOwner;
         } else {
-            UserReference instrumentedUser = sTestApis.users().instrumented();
+            UserReference instrumentedUser = TestApis.users().instrumented();
 
             if (!Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.S)) {
                 // Prior to S we can't set device owner if there are other users on the device
-                for (UserReference u : sTestApis.users().all()) {
+                for (UserReference u : TestApis.users().all()) {
                     if (u.equals(instrumentedUser)) {
                         continue;
                     }
@@ -1390,13 +1389,13 @@ public final class DeviceState implements TestRule {
             throw new IllegalStateException("Only one DPC can be marked as primary per test");
         }
 
-        if (!user.equals(sTestApis.users().instrumented())) {
+        if (!user.equals(TestApis.users().instrumented())) {
             // INTERACT_ACROSS_USERS_FULL is required for RemoteDPC
             ensureCanGetPermission(INTERACT_ACROSS_USERS_FULL);
         }
 
-        ProfileOwner currentProfileOwner = sTestApis.devicePolicy().getProfileOwner(user);
-        DeviceOwner currentDeviceOwner = sTestApis.devicePolicy().getDeviceOwner();
+        ProfileOwner currentProfileOwner = TestApis.devicePolicy().getProfileOwner(user);
+        DeviceOwner currentDeviceOwner = TestApis.devicePolicy().getDeviceOwner();
 
         if (currentDeviceOwner != null && currentDeviceOwner.user().equals(user)) {
             // Can't have DO and PO on the same user
@@ -1427,7 +1426,7 @@ public final class DeviceState implements TestRule {
     }
 
     private void ensureHasNoDeviceOwner() {
-        DeviceOwner deviceOwner = sTestApis.devicePolicy().getDeviceOwner();
+        DeviceOwner deviceOwner = TestApis.devicePolicy().getDeviceOwner();
 
         if (deviceOwner == null) {
             return;
@@ -1450,7 +1449,7 @@ public final class DeviceState implements TestRule {
 
     private void ensureHasNoProfileOwner(UserReference user) {
 
-        ProfileOwner currentProfileOwner = sTestApis.devicePolicy().getProfileOwner(user);
+        ProfileOwner currentProfileOwner = TestApis.devicePolicy().getProfileOwner(user);
 
         if (currentProfileOwner == null) {
             return;
@@ -1460,7 +1459,7 @@ public final class DeviceState implements TestRule {
             mChangedProfileOwners.put(user, currentProfileOwner);
         }
 
-        sTestApis.devicePolicy().getProfileOwner(user).remove();
+        TestApis.devicePolicy().getProfileOwner(user).remove();
         mProfileOwners.remove(user);
     }
 
@@ -1540,7 +1539,7 @@ public final class DeviceState implements TestRule {
     private void requirePackageInstalled(
             String packageName, UserType forUser, FailureMode failureMode) {
 
-        Package pkg = sTestApis.packages().find(packageName).resolve();
+        Package pkg = TestApis.packages().find(packageName).resolve();
         checkFailOrSkip(
                 packageName + " is required to be installed for " + forUser,
                 pkg != null,
@@ -1561,7 +1560,7 @@ public final class DeviceState implements TestRule {
 
     private void requirePackageNotInstalled(
             String packageName, UserType forUser, FailureMode failureMode) {
-        Package pkg = sTestApis.packages().find(packageName).resolve();
+        Package pkg = TestApis.packages().find(packageName).resolve();
         if (pkg == null) {
             // Definitely not installed
             return;
@@ -1583,7 +1582,7 @@ public final class DeviceState implements TestRule {
     private void ensurePackageNotInstalled(
             String packageName, UserType forUser) {
 
-        Package pkg = sTestApis.packages().find(packageName).resolve();
+        Package pkg = TestApis.packages().find(packageName).resolve();
         if (pkg == null) {
             // Definitely not installed
             return;
@@ -1618,9 +1617,9 @@ public final class DeviceState implements TestRule {
             return RemoteDpc.forDevicePolicyController(mPrimaryDpc);
         }
 
-        if (mProfileOwners.containsKey(sTestApis.users().instrumented())) {
+        if (mProfileOwners.containsKey(TestApis.users().instrumented())) {
             DevicePolicyController profileOwner =
-                    mProfileOwners.get(sTestApis.users().instrumented());
+                    mProfileOwners.get(TestApis.users().instrumented());
 
 
             if (profileOwner.componentName().equals(REMOTE_DPC_COMPONENT_NAME)) {
@@ -1653,7 +1652,7 @@ public final class DeviceState implements TestRule {
     }
 
     private void switchToUser(UserReference user) {
-        UserReference currentUser = sTestApis.users().current();
+        UserReference currentUser = TestApis.users().current();
         if (!currentUser.equals(user)) {
             if (mOriginalSwitchedUser == null) {
                 mOriginalSwitchedUser = currentUser;
@@ -1663,14 +1662,14 @@ public final class DeviceState implements TestRule {
     }
 
     private void switchFromUser(UserReference user) {
-        UserReference currentUser = sTestApis.users().current();
+        UserReference currentUser = TestApis.users().current();
         if (!currentUser.equals(user)) {
             return;
         }
 
         // We need to find a different user to switch to
         // full users only, starting with lowest ID
-        List<UserReference> users = new ArrayList<>(sTestApis.users().all());
+        List<UserReference> users = new ArrayList<>(TestApis.users().all());
         users.sort(Comparator.comparingInt(u -> u.id()));
 
         for (UserReference otherUser : users) {

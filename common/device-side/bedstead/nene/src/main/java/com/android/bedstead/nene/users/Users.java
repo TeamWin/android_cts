@@ -60,11 +60,11 @@ public final class Users {
     private Map<String, UserType> mCachedUserTypes = null;
     private Set<UserType> mCachedUserTypeValues = null;
     private final AdbUserParser mParser;
-    private final TestApis mTestApis;
 
-    public Users(TestApis testApis) {
-        mTestApis = testApis;
-        mParser = AdbUserParser.get(mTestApis, SDK_INT);
+    public static final Users sInstance = new Users();
+
+    private Users() {
+        mParser = AdbUserParser.get(SDK_INT);
     }
 
     /** Get all {@link User}s on the device. */
@@ -78,7 +78,7 @@ public final class Users {
     public UserReference current() {
         if (Versions.meetsMinimumSdkVersionRequirement(Q)) {
             try (PermissionContext p =
-                         mTestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
+                         TestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
                 return find(ActivityManager.getCurrentUser());
             }
         }
@@ -103,12 +103,12 @@ public final class Users {
 
     /** Get a {@link UserReference} by {@code id}. */
     public UserReference find(int id) {
-        return new UnresolvedUser(mTestApis, id);
+        return new UnresolvedUser(id);
     }
 
     /** Get a {@link UserReference} by {@code userHandle}. */
     public UserReference find(UserHandle userHandle) {
-        return new UnresolvedUser(mTestApis, userHandle.getIdentifier());
+        return new UnresolvedUser(userHandle.getIdentifier());
     }
 
     @Nullable
@@ -265,7 +265,7 @@ public final class Users {
      */
     @CheckResult
     public UserBuilder createUser() {
-        return new UserBuilder(mTestApis);
+        return new UserBuilder();
     }
 
     /**
@@ -279,7 +279,7 @@ public final class Users {
             id++;
         }
 
-        return new UnresolvedUser(mTestApis, id);
+        return new UnresolvedUser(id);
     }
 
     private void fillCache() {

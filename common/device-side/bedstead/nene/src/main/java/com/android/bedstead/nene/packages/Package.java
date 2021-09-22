@@ -20,7 +20,6 @@ import static android.content.pm.PackageManager.GET_PERMISSIONS;
 
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.util.Log;
 
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.users.UserReference;
@@ -56,11 +55,11 @@ public class Package extends PackageReference {
     private final MutablePackage mMutablePackage;
     private final Set<String> mRequestedPermissions;
 
-    Package(TestApis testApis, MutablePackage mutablePackage) {
-        super(testApis, mutablePackage.mPackageName);
+    Package(MutablePackage mutablePackage) {
+        super(mutablePackage.mPackageName);
         mMutablePackage = mutablePackage;
         mRequestedPermissions = new HashSet<>();
-        mPackageManager = testApis.context().instrumentedContext().getPackageManager();
+        mPackageManager = TestApis.context().instrumentedContext().getPackageManager();
 
         try {
             PackageInfo packageInfo = mPackageManager.getPackageInfo(

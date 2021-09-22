@@ -88,7 +88,6 @@ public class DeviceStateTest {
     @Rule
     public static final DeviceState sDeviceState = new DeviceState();
 
-    private static final TestApis sTestApis = new TestApis();
     private static final String TV_PROFILE_TYPE_NAME = "com.android.tv.profile";
 
     private static final String TEST_PERMISSION_1 = INTERACT_ACROSS_PROFILES;
@@ -109,7 +108,7 @@ public class DeviceStateTest {
     @Test
     @RequireRunOnWorkProfile
     public void workProfile_runningOnWorkProfile_returnsCurrentProfile() {
-        assertThat(sDeviceState.workProfile()).isEqualTo(sTestApis.users().instrumented());
+        assertThat(sDeviceState.workProfile()).isEqualTo(TestApis.users().instrumented());
     }
 
     @Test
@@ -122,9 +121,9 @@ public class DeviceStateTest {
     @EnsureHasNoWorkProfile
     @EnsureHasNoDeviceOwner
     public void workProfile_createdWorkProfile_throwsException() {
-        try (UserReference workProfile = sTestApis.users().createUser()
-                .parent(sTestApis.users().instrumented())
-                .type(sTestApis.users().supportedType(MANAGED_PROFILE_TYPE_NAME))
+        try (UserReference workProfile = TestApis.users().createUser()
+                .parent(TestApis.users().instrumented())
+                .type(TestApis.users().supportedType(MANAGED_PROFILE_TYPE_NAME))
                 .create()) {
             assertThrows(IllegalStateException.class, sDeviceState::workProfile);
         }
@@ -133,9 +132,9 @@ public class DeviceStateTest {
     @Test
     @EnsureHasWorkProfile
     public void ensureHasWorkProfileAnnotation_workProfileExists() {
-        assertThat(sTestApis.users().findProfileOfType(
-                sTestApis.users().supportedType(MANAGED_PROFILE_TYPE_NAME),
-                sTestApis.users().instrumented())
+        assertThat(TestApis.users().findProfileOfType(
+                TestApis.users().supportedType(MANAGED_PROFILE_TYPE_NAME),
+                TestApis.users().instrumented())
         ).isNotNull();
     }
 
@@ -145,9 +144,9 @@ public class DeviceStateTest {
     @Test
     @EnsureHasNoWorkProfile
     public void ensureHasNoWorkProfileAnnotation_workProfileDoesNotExist() {
-        assertThat(sTestApis.users().findProfileOfType(
-                sTestApis.users().supportedType(MANAGED_PROFILE_TYPE_NAME),
-                sTestApis.users().instrumented())
+        assertThat(TestApis.users().findProfileOfType(
+                TestApis.users().supportedType(MANAGED_PROFILE_TYPE_NAME),
+                TestApis.users().instrumented())
         ).isNull();
     }
 
@@ -160,7 +159,7 @@ public class DeviceStateTest {
     @Test
     @RequireRunOnTvProfile
     public void tvProfile_runningOnTvProfile_returnsCurrentProfile() {
-        assertThat(sDeviceState.tvProfile()).isEqualTo(sTestApis.users().instrumented());
+        assertThat(sDeviceState.tvProfile()).isEqualTo(TestApis.users().instrumented());
     }
 
     @Test
@@ -173,9 +172,9 @@ public class DeviceStateTest {
     @RequireUserSupported(TV_PROFILE_TYPE_NAME)
     @EnsureHasNoTvProfile
     public void tvProfile_createdTvProfile_throwsException() {
-        try (UserReference tvProfile = sTestApis.users().createUser()
-                .parent(sTestApis.users().instrumented())
-                .type(sTestApis.users().supportedType(TV_PROFILE_TYPE_NAME))
+        try (UserReference tvProfile = TestApis.users().createUser()
+                .parent(TestApis.users().instrumented())
+                .type(TestApis.users().supportedType(TV_PROFILE_TYPE_NAME))
                 .create()) {
             assertThrows(IllegalStateException.class, sDeviceState::tvProfile);
         }
@@ -184,9 +183,9 @@ public class DeviceStateTest {
     @Test
     @EnsureHasTvProfile
     public void ensureHasTvProfileAnnotation_tvProfileExists() {
-        assertThat(sTestApis.users().findProfileOfType(
-                sTestApis.users().supportedType(TV_PROFILE_TYPE_NAME),
-                sTestApis.users().instrumented())
+        assertThat(TestApis.users().findProfileOfType(
+                TestApis.users().supportedType(TV_PROFILE_TYPE_NAME),
+                TestApis.users().instrumented())
         ).isNotNull();
     }
 
@@ -197,9 +196,9 @@ public class DeviceStateTest {
     @RequireUserSupported(TV_PROFILE_TYPE_NAME)
     @EnsureHasNoTvProfile
     public void ensureHasNoTvProfileAnnotation_tvProfileDoesNotExist() {
-        assertThat(sTestApis.users().findProfileOfType(
-                sTestApis.users().supportedType(TV_PROFILE_TYPE_NAME),
-                sTestApis.users().instrumented())
+        assertThat(TestApis.users().findProfileOfType(
+                TestApis.users().supportedType(TV_PROFILE_TYPE_NAME),
+                TestApis.users().instrumented())
         ).isNull();
     }
 
@@ -218,7 +217,7 @@ public class DeviceStateTest {
     @Test
     @RequireRunOnSecondaryUser
     public void secondaryUser_runningOnSecondaryUser_returnsCurrentUser() {
-        assertThat(sDeviceState.secondaryUser()).isEqualTo(sTestApis.users().instrumented());
+        assertThat(sDeviceState.secondaryUser()).isEqualTo(TestApis.users().instrumented());
     }
 
     @Test
@@ -230,8 +229,8 @@ public class DeviceStateTest {
     @Test
     @EnsureHasNoSecondaryUser
     public void secondaryUser_createdSecondaryUser_throwsException() {
-        try (UserReference secondaryUser = sTestApis.users().createUser()
-                .type(sTestApis.users().supportedType(SECONDARY_USER_TYPE_NAME))
+        try (UserReference secondaryUser = TestApis.users().createUser()
+                .type(TestApis.users().supportedType(SECONDARY_USER_TYPE_NAME))
                 .create()) {
             assertThrows(IllegalStateException.class, sDeviceState::secondaryUser);
         }
@@ -240,8 +239,8 @@ public class DeviceStateTest {
     @Test
     @EnsureHasSecondaryUser
     public void ensureHasSecondaryUserAnnotation_secondaryUserExists() {
-        assertThat(sTestApis.users().findUserOfType(
-                sTestApis.users().supportedType(SECONDARY_USER_TYPE_NAME))
+        assertThat(TestApis.users().findUserOfType(
+                TestApis.users().supportedType(SECONDARY_USER_TYPE_NAME))
         ).isNotNull();
     }
 
@@ -251,40 +250,40 @@ public class DeviceStateTest {
     @Test
     @EnsureHasNoSecondaryUser
     public void ensureHasNoSecondaryUserAnnotation_secondaryUserDoesNotExist() {
-        assertThat(sTestApis.users().findUserOfType(
-                sTestApis.users().supportedType(SECONDARY_USER_TYPE_NAME))
+        assertThat(TestApis.users().findUserOfType(
+                TestApis.users().supportedType(SECONDARY_USER_TYPE_NAME))
         ).isNull();
     }
 
     @Test
     @EnsureHasPermission(TEST_PERMISSION_1)
     public void ensureHasPermission_permissionIsGranted() {
-        assertThat(sTestApis.context().instrumentedContext()
+        assertThat(TestApis.context().instrumentedContext()
                 .checkSelfPermission(TEST_PERMISSION_1)).isEqualTo(PERMISSION_GRANTED);
     }
 
     @Test
     @EnsureHasPermission({TEST_PERMISSION_1, TEST_PERMISSION_2})
     public void ensureHasPermission_multiplePermissions_permissionsAreGranted() {
-        assertThat(sTestApis.context().instrumentedContext()
+        assertThat(TestApis.context().instrumentedContext()
                 .checkSelfPermission(TEST_PERMISSION_1)).isEqualTo(PERMISSION_GRANTED);
-        assertThat(sTestApis.context().instrumentedContext()
+        assertThat(TestApis.context().instrumentedContext()
                 .checkSelfPermission(TEST_PERMISSION_2)).isEqualTo(PERMISSION_GRANTED);
     }
 
     @Test
     @EnsureDoesNotHavePermission(TEST_PERMISSION_1)
     public void ensureDoesNotHavePermission_permissionIsDenied() {
-        assertThat(sTestApis.context().instrumentedContext()
+        assertThat(TestApis.context().instrumentedContext()
                 .checkSelfPermission(TEST_PERMISSION_1)).isEqualTo(PERMISSION_DENIED);
     }
 
     @Test
     @EnsureDoesNotHavePermission({TEST_PERMISSION_1, TEST_PERMISSION_2})
     public void ensureDoesNotHavePermission_multiplePermissions_permissionsAreDenied() {
-        assertThat(sTestApis.context().instrumentedContext()
+        assertThat(TestApis.context().instrumentedContext()
                 .checkSelfPermission(TEST_PERMISSION_1)).isEqualTo(PERMISSION_DENIED);
-        assertThat(sTestApis.context().instrumentedContext()
+        assertThat(TestApis.context().instrumentedContext()
                 .checkSelfPermission(TEST_PERMISSION_2)).isEqualTo(PERMISSION_DENIED);
     }
 
@@ -292,21 +291,21 @@ public class DeviceStateTest {
     @EnsureHasPermission(TEST_PERMISSION_1)
     @EnsureDoesNotHavePermission(TEST_PERMISSION_2)
     public void ensureHasPermissionAndDoesNotHavePermission_permissionsAreCorrect() {
-        assertThat(sTestApis.context().instrumentedContext()
+        assertThat(TestApis.context().instrumentedContext()
                 .checkSelfPermission(TEST_PERMISSION_1)).isEqualTo(PERMISSION_GRANTED);
-        assertThat(sTestApis.context().instrumentedContext()
+        assertThat(TestApis.context().instrumentedContext()
                 .checkSelfPermission(TEST_PERMISSION_2)).isEqualTo(PERMISSION_DENIED);
     }
 
     @EnsureHasDeviceOwner
     public void ensureHasDeviceOwnerAnnotation_deviceOwnerIsSet() {
-        assertThat(sTestApis.devicePolicy().getDeviceOwner()).isNotNull();
+        assertThat(TestApis.devicePolicy().getDeviceOwner()).isNotNull();
     }
 
     @Test
     @EnsureHasNoDeviceOwner
     public void ensureHasNoDeviceOwnerAnnotation_deviceOwnerIsNotSet() {
-        assertThat(sTestApis.devicePolicy().getDeviceOwner()).isNull();
+        assertThat(TestApis.devicePolicy().getDeviceOwner()).isNull();
     }
 
     @Test
@@ -324,28 +323,28 @@ public class DeviceStateTest {
     @Test
     @EnsureHasProfileOwner
     public void ensureHasProfileOwnerAnnotation_defaultUser_profileOwnerIsSet() {
-        assertThat(sTestApis.devicePolicy().getProfileOwner(sTestApis.users().instrumented()))
+        assertThat(TestApis.devicePolicy().getProfileOwner(TestApis.users().instrumented()))
                 .isNotNull();
     }
 
     @Test
     @EnsureHasNoProfileOwner
     public void ensureHasNoProfileOwnerAnnotation_defaultUser_profileOwnerIsNotSet() {
-        assertThat(sTestApis.devicePolicy().getProfileOwner(sTestApis.users().instrumented()))
+        assertThat(TestApis.devicePolicy().getProfileOwner(TestApis.users().instrumented()))
                 .isNull();
     }
 
     @EnsureHasSecondaryUser
     @EnsureHasProfileOwner(onUser = DeviceState.UserType.SECONDARY_USER)
     public void ensureHasProfileOwnerAnnotation_otherUser_setsProfileOwner() {
-        assertThat(sTestApis.devicePolicy().getProfileOwner(sDeviceState.secondaryUser()))
+        assertThat(TestApis.devicePolicy().getProfileOwner(sDeviceState.secondaryUser()))
                 .isNotNull();
     }
 
     @EnsureHasSecondaryUser
     @EnsureHasNoProfileOwner(onUser = DeviceState.UserType.SECONDARY_USER)
     public void ensureHasNoProfileOwnerAnnotation_otherUser_profileOwnerIsNotSet() {
-        assertThat(sTestApis.devicePolicy().getProfileOwner(sDeviceState.secondaryUser())).isNull();
+        assertThat(TestApis.devicePolicy().getProfileOwner(sDeviceState.secondaryUser())).isNull();
     }
 
     @Test
@@ -357,7 +356,7 @@ public class DeviceStateTest {
     @Test
     @EnsureHasProfileOwner
     public void profileOwner_defaultUser_profileOwnerIsSet_returnsProfileOwner() {
-        assertThat(sTestApis.devicePolicy().getProfileOwner(sTestApis.users().instrumented()))
+        assertThat(TestApis.devicePolicy().getProfileOwner(TestApis.users().instrumented()))
                 .isNotNull();
     }
 
@@ -389,7 +388,7 @@ public class DeviceStateTest {
     @RequireRunOnWorkProfile
     public void requireRunOnWorkProfileAnnotation_isRunningOnWorkProfile() {
         assertThat(
-                sTestApis.users().instrumented().resolve().type().name())
+                TestApis.users().instrumented().resolve().type().name())
                 .isEqualTo(MANAGED_PROFILE_TYPE_NAME);
     }
 
@@ -397,7 +396,7 @@ public class DeviceStateTest {
     @RequireRunOnWorkProfile
     public void requireRunOnWorkProfileAnnotation_workProfileHasProfileOwner() {
         assertThat(
-                sTestApis.devicePolicy().getProfileOwner(sTestApis.users().instrumented())
+                TestApis.devicePolicy().getProfileOwner(TestApis.users().instrumented())
         ).isNotNull();
     }
 
@@ -405,23 +404,23 @@ public class DeviceStateTest {
     @RequireRunOnSecondaryUser
     public void requireRunOnSecondaryUserAnnotation_isRunningOnSecondaryUser() {
         assertThat(
-                sTestApis.users().instrumented().resolve().type().name())
+                TestApis.users().instrumented().resolve().type().name())
                 .isEqualTo(SECONDARY_USER_TYPE_NAME);
     }
 
     @Test
     @IncludeRunOnDeviceOwnerUser
     public void includeRunOnDeviceOwnerUserAnnotation_isRunningOnDeviceOwnerUser() {
-        assertThat(sTestApis.devicePolicy().getDeviceOwner().user())
-                .isEqualTo(sTestApis.users().instrumented());
+        assertThat(TestApis.devicePolicy().getDeviceOwner().user())
+                .isEqualTo(TestApis.users().instrumented());
     }
 
     @Test
     @IncludeRunOnNonAffiliatedDeviceOwnerSecondaryUser
     public void includeRunOnNonAffiliatedDeviceOwnerSecondaryUserAnnotation_isRunningOnNonAffiliatedDeviceOwnerSecondaryUser() {
-        assertThat(sTestApis.devicePolicy().getDeviceOwner().user())
-                .isNotEqualTo(sTestApis.users().instrumented());
-        assertThat(sTestApis.users().instrumented().resolve().type().name())
+        assertThat(TestApis.devicePolicy().getDeviceOwner().user())
+                .isNotEqualTo(TestApis.users().instrumented());
+        assertThat(TestApis.users().instrumented().resolve().type().name())
                 .isEqualTo(SECONDARY_USER_TYPE_NAME);
     }
 
@@ -429,18 +428,18 @@ public class DeviceStateTest {
     @IncludeRunOnProfileOwnerProfileWithNoDeviceOwner
     public void includeRunOnProfileOwnerAnnotation_hasProfileOwner() {
         assertThat(
-                sTestApis.devicePolicy().getProfileOwner(sTestApis.users().instrumented())
+                TestApis.devicePolicy().getProfileOwner(TestApis.users().instrumented())
         ).isNotNull();
     }
 
     @Test
     @IncludeRunOnSecondaryUserInDifferentProfileGroupToProfileOwnerProfile
     public void includeRunOnSecondaryUserInDifferentProfileGroupToProfileOwnerAnnotation_isRunningOnSecondaryUserInDifferentProfileGroupToProfileOwner() {
-        assertThat(sTestApis.users().instrumented().resolve().type().name())
+        assertThat(TestApis.users().instrumented().resolve().type().name())
                 .isEqualTo(SECONDARY_USER_TYPE_NAME);
         assertThat(sDeviceState.workProfile(PRIMARY_USER))
-                .isNotEqualTo(sTestApis.users().instrumented());
-        assertThat(sTestApis.devicePolicy().getProfileOwner(sDeviceState.workProfile(PRIMARY_USER)))
+                .isNotEqualTo(TestApis.users().instrumented());
+        assertThat(TestApis.devicePolicy().getProfileOwner(sDeviceState.workProfile(PRIMARY_USER)))
                 .isNotNull();
 
         // TODO(scottjonathan): Assert profile groups are different
@@ -448,31 +447,31 @@ public class DeviceStateTest {
 
     @RequirePackageInstalled(value = GMS_CORE_PACKAGE, onUser = ANY)
     public void requirePackageInstalledAnnotation_anyUser_packageIsInstalled() {
-        assertThat(sTestApis.packages().find(GMS_CORE_PACKAGE).resolve()).isNotNull();
+        assertThat(TestApis.packages().find(GMS_CORE_PACKAGE).resolve()).isNotNull();
     }
 
     @Test
     @RequirePackageInstalled(GMS_CORE_PACKAGE)
     public void requirePackageInstalledAnnotation_currentUser_packageIsInstalled() {
-        assertThat(sTestApis.packages().find(GMS_CORE_PACKAGE).resolve().installedOnUsers())
-                .contains(sTestApis.users().instrumented());
+        assertThat(TestApis.packages().find(GMS_CORE_PACKAGE).resolve().installedOnUsers())
+                .contains(TestApis.users().instrumented());
     }
 
     @Test
     @RequirePackageNotInstalled(value = GMS_CORE_PACKAGE, onUser = ANY)
     public void requirePackageNotInstalledAnnotation_anyUser_packageIsNotInstalled() {
-        assertThat(sTestApis.packages().find(GMS_CORE_PACKAGE).resolve()).isNull();
+        assertThat(TestApis.packages().find(GMS_CORE_PACKAGE).resolve()).isNull();
 
     }
 
     @Test
     @RequirePackageNotInstalled(GMS_CORE_PACKAGE)
     public void requirePackageNotInstalledAnnotation_currentUser_packageIsNotInstalled() {
-        Package resolvedPackage = sTestApis.packages().find(GMS_CORE_PACKAGE).resolve();
+        Package resolvedPackage = TestApis.packages().find(GMS_CORE_PACKAGE).resolve();
 
         if (resolvedPackage != null) {
             assertThat(resolvedPackage.installedOnUsers())
-                    .doesNotContain(sTestApis.users().instrumented());
+                    .doesNotContain(TestApis.users().instrumented());
         }
     }
 
@@ -480,56 +479,56 @@ public class DeviceStateTest {
     @EnsurePackageNotInstalled(value = GMS_CORE_PACKAGE, onUser = ANY)
     @Ignore // TODO(scottjonathan): Restore this with a package which can be uninstalled
     public void ensurePackageNotInstalledAnnotation_anyUser_packageIsNotInstalled() {
-        assertThat(sTestApis.packages().find(GMS_CORE_PACKAGE).resolve()).isNull();
+        assertThat(TestApis.packages().find(GMS_CORE_PACKAGE).resolve()).isNull();
     }
 
     @Test
     @EnsurePackageNotInstalled(GMS_CORE_PACKAGE)
     @Ignore // TODO(scottjonathan): Restore this with a package which can be uninstalled
     public void ensurePackageNotInstalledAnnotation_currentUser_packageIsNotInstalled() {
-        Package resolvedPackage = sTestApis.packages().find(GMS_CORE_PACKAGE).resolve();
+        Package resolvedPackage = TestApis.packages().find(GMS_CORE_PACKAGE).resolve();
 
         if (resolvedPackage != null) {
             assertThat(resolvedPackage.installedOnUsers())
-                    .doesNotContain(sTestApis.users().instrumented());
+                    .doesNotContain(TestApis.users().instrumented());
         }
     }
 
     @Test
     @RequireAospBuild
     public void requireAospBuildAnnotation_isRunningOnAospBuild() {
-        assertThat(sTestApis.packages().find(GMS_CORE_PACKAGE).resolve()).isNull();
+        assertThat(TestApis.packages().find(GMS_CORE_PACKAGE).resolve()).isNull();
     }
 
     @Test
     @RequireGmsBuild
     public void requireGmsBuildAnnotation_isRunningOnGmsbuild() {
-        assertThat(sTestApis.packages().find(GMS_CORE_PACKAGE).resolve()).isNotNull();
+        assertThat(TestApis.packages().find(GMS_CORE_PACKAGE).resolve()).isNotNull();
     }
 
     @Test
     @RequireCnGmsBuild
     public void requireCnGmsBuildAnnotation_isRunningOnCnGmsBuild() {
-        assertThat(sTestApis.packages().features()).contains(CHINA_GOOGLE_SERVICES_FEATURE);
+        assertThat(TestApis.packages().features()).contains(CHINA_GOOGLE_SERVICES_FEATURE);
     }
 
     @Test
     @RequireNotCnGmsBuild
     public void requireNotCnGmsBuildAnnotation_isNotRunningOnCnGmsBuild() {
-        assertThat(sTestApis.packages().features()).doesNotContain(CHINA_GOOGLE_SERVICES_FEATURE);
+        assertThat(TestApis.packages().features()).doesNotContain(CHINA_GOOGLE_SERVICES_FEATURE);
 
     }
 
     @Test
     @RequireFeature(CHINA_GOOGLE_SERVICES_FEATURE)
     public void requireHasFeatureAnnotation_doesNotHaveFeature() {
-        assertThat(sTestApis.packages().features()).contains(CHINA_GOOGLE_SERVICES_FEATURE);
+        assertThat(TestApis.packages().features()).contains(CHINA_GOOGLE_SERVICES_FEATURE);
     }
 
     @Test
     @RequireDoesNotHaveFeature(CHINA_GOOGLE_SERVICES_FEATURE)
     public void requireDoesNotHaveFeatureAnnotation_doesNotHaveFeature() {
-        assertThat(sTestApis.packages().features()).doesNotContain(CHINA_GOOGLE_SERVICES_FEATURE);
+        assertThat(TestApis.packages().features()).doesNotContain(CHINA_GOOGLE_SERVICES_FEATURE);
     }
 
     @Test
@@ -554,14 +553,14 @@ public class DeviceStateTest {
     @Test
     @RequireRunOnPrimaryUser
     public void requireRunOnPrimaryUserAnnotation_isRunningOnPrimaryUser() {
-        assertThat(sTestApis.users().instrumented().resolve().type().name())
+        assertThat(TestApis.users().instrumented().resolve().type().name())
                 .isEqualTo(SYSTEM_USER_TYPE_NAME);
     }
 
     @Test
     @RequireRunOnTvProfile
     public void requireRunOnTvProfileAnnotation_isRunningOnTvProfile() {
-        assertThat(sTestApis.users().instrumented().resolve().type().name())
+        assertThat(TestApis.users().instrumented().resolve().type().name())
                 .isEqualTo(TV_PROFILE_TYPE_NAME);
     }
 
@@ -574,103 +573,103 @@ public class DeviceStateTest {
     @Test
     @RequireRunOnPrimaryUser
     public void requireRunOnUser_isCurrentUser() {
-        assertThat(sTestApis.users().current()).isEqualTo(sDeviceState.primaryUser());
+        assertThat(TestApis.users().current()).isEqualTo(sDeviceState.primaryUser());
     }
 
     @Test
     @RequireRunOnPrimaryUser(switchedToUser = FALSE)
     public void requireRunOnUser_specifyNotSwitchedToUser_isNotCurrentUser() {
-        assertThat(sTestApis.users().current()).isNotEqualTo(sDeviceState.primaryUser());
+        assertThat(TestApis.users().current()).isNotEqualTo(sDeviceState.primaryUser());
     }
 
     @Test
     @EnsureHasSecondaryUser(switchedToUser = FALSE) // We don't test the default as it's ANY
     public void ensureHasUser_specifyIsNotSwitchedToUser_isNotCurrentUser() {
-        assertThat(sTestApis.users().current()).isNotEqualTo(sDeviceState.secondaryUser());
+        assertThat(TestApis.users().current()).isNotEqualTo(sDeviceState.secondaryUser());
     }
 
     @Test
     @EnsureHasSecondaryUser(switchedToUser = TRUE)
     public void ensureHasUser_specifySwitchedToUser_isCurrentUser() {
-        assertThat(sTestApis.users().current()).isEqualTo(sDeviceState.secondaryUser());
+        assertThat(TestApis.users().current()).isEqualTo(sDeviceState.secondaryUser());
     }
 
     @Test
     @RequireRunOnWorkProfile
     public void requireRunOnProfile_parentIsCurrentUser() {
-        assertThat(sTestApis.users().current()).isEqualTo(
+        assertThat(TestApis.users().current()).isEqualTo(
                 sDeviceState.workProfile().resolve().parent());
     }
 
     @Test
     @RequireRunOnWorkProfile(switchedToParentUser = FALSE)
     public void requireRunOnProfile_specifyNotSwitchedToParentUser_parentIsNotCurrentUser() {
-        assertThat(sTestApis.users().current()).isNotEqualTo(
+        assertThat(TestApis.users().current()).isNotEqualTo(
                 sDeviceState.workProfile().resolve().parent());
     }
 
     @Test
     @EnsureHasWorkProfile(switchedToParentUser = FALSE) // We don't test the default as it's ANY
     public void ensureHasWorkProfile_specifyNotSwitchedToParentUser_parentIsNotCurrentUser() {
-        assertThat(sTestApis.users().current()).isNotEqualTo(
+        assertThat(TestApis.users().current()).isNotEqualTo(
                 sDeviceState.workProfile().resolve().parent());
     }
 
     @Test
     @EnsureHasWorkProfile(switchedToParentUser = TRUE)
     public void ensureHasWorkProfile_specifySwitchedToParentUser_parentIsCurrentUser() {
-        assertThat(sTestApis.users().current()).isEqualTo(
+        assertThat(TestApis.users().current()).isEqualTo(
                 sDeviceState.workProfile().resolve().parent());
     }
 
     @Test
     @IncludeRunOnBackgroundDeviceOwnerUser
     public void includeRunOnBackgroundDeviceOwnerUserAnnotation_isRunningOnDeviceOwnerUser() {
-        assertThat(sTestApis.users().instrumented())
+        assertThat(TestApis.users().instrumented())
                 .isEqualTo(sDeviceState.dpc().devicePolicyController().user());
     }
 
     @Test
     @IncludeRunOnBackgroundDeviceOwnerUser
     public void includeRunOnBackgroundDeviceOwnerUserAnnotation_isNotCurrentUser() {
-        assertThat(sTestApis.users().current())
-                .isNotEqualTo(sTestApis.users().instrumented());
+        assertThat(TestApis.users().current())
+                .isNotEqualTo(TestApis.users().instrumented());
     }
 
     @Test
     @EnsureHasNoProfileOwner
     public void ensureHasNoProfileOwnerAnnotation_currentUserHasNoProfileOwner() {
-        assertThat(sTestApis.devicePolicy()
-                .getProfileOwner(sTestApis.users().instrumented()))
+        assertThat(TestApis.devicePolicy()
+                .getProfileOwner(TestApis.users().instrumented()))
                 .isNull();
     }
 
     @Test
     @EnsureHasNoDeviceOwner
     public void ensureHasNoDeviceOwnerAnnotation_noDeviceOwner() {
-        assertThat(sTestApis.devicePolicy().getDeviceOwner()).isNull();
+        assertThat(TestApis.devicePolicy().getDeviceOwner()).isNull();
     }
 
     @Test
     @EnsureHasNoDpc
     public void ensureHasNoDpcAnnotation_currentUserHasNoProfileOwner() {
-        assertThat(sTestApis.devicePolicy()
-                .getProfileOwner(sTestApis.users().instrumented()))
+        assertThat(TestApis.devicePolicy()
+                .getProfileOwner(TestApis.users().instrumented()))
                 .isNull();
     }
 
     @Test
     @EnsureHasNoDpc
     public void ensureHasNoDpcAnnotation_noDeviceOwner() {
-        assertThat(sTestApis.devicePolicy().getDeviceOwner()).isNull();
+        assertThat(TestApis.devicePolicy().getDeviceOwner()).isNull();
     }
 
     @Test
     @EnsureHasNoDpc
     public void ensureHasNoDpcAnnotation_workProfileDoesNotExist() {
-        assertThat(sTestApis.users().findProfileOfType(
-                sTestApis.users().supportedType(MANAGED_PROFILE_TYPE_NAME),
-                sTestApis.users().instrumented())
+        assertThat(TestApis.users().findProfileOfType(
+                TestApis.users().supportedType(MANAGED_PROFILE_TYPE_NAME),
+                TestApis.users().instrumented())
         ).isNull();
     }
 }

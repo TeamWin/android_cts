@@ -64,12 +64,11 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class EventLibDeviceAdminReceiverTest {
 
-    private static final TestApis sTestApis = new TestApis();
-    private static final Context sContext = sTestApis.context().instrumentedContext();
+    private static final Context sContext = TestApis.context().instrumentedContext();
     private static final ComponentName DEVICE_ADMIN_COMPONENT =
             new ComponentName(
                     sContext.getPackageName(), EventLibDeviceAdminReceiver.class.getName());
-    private static final UserReference sUser = sTestApis.users().instrumented();
+    private static final UserReference sUser = TestApis.users().instrumented();
     private static final Intent sIntent = new Intent();
     private static final String PKG = "package";
     private static final int UID = 1;
@@ -91,7 +90,7 @@ public class EventLibDeviceAdminReceiverTest {
     @Test
     public void enableDeviceOwner_logsEnabledEvent() {
         DeviceOwner deviceOwner =
-                sTestApis.devicePolicy().setDeviceOwner(sUser, DEVICE_ADMIN_COMPONENT);
+                TestApis.devicePolicy().setDeviceOwner(sUser, DEVICE_ADMIN_COMPONENT);
 
         try {
             EventLogs<DeviceAdminEnabledEvent> eventLogs =
@@ -106,7 +105,7 @@ public class EventLibDeviceAdminReceiverTest {
     @Test
     public void enableProfileOwner_logsEnabledEvent() {
         ProfileOwner profileOwner =
-                sTestApis.devicePolicy().setProfileOwner(sUser, DEVICE_ADMIN_COMPONENT);
+                TestApis.devicePolicy().setProfileOwner(sUser, DEVICE_ADMIN_COMPONENT);
 
         try {
             EventLogs<DeviceAdminEnabledEvent> eventLogs =

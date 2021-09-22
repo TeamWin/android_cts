@@ -59,8 +59,6 @@ import javax.annotation.Nullable;
  */
 public class TestAppInstanceReference implements AutoCloseable, ConnectionListener {
 
-    private static final TestApis sTestApis = new TestApis();
-
     private final TestApp mTestApp;
     private final UserReference mUser;
     private final CrossProfileConnector mConnector;
@@ -79,7 +77,7 @@ public class TestAppInstanceReference implements AutoCloseable, ConnectionListen
         }
         mTestApp = testApp;
         mUser = user;
-        mConnector = CrossProfileConnector.builder(sTestApis.context().instrumentedContext())
+        mConnector = CrossProfileConnector.builder(TestApis.context().instrumentedContext())
                 .setBinder(new TestAppBinder(this))
                 .build();
         mConnector.registerConnectionListener(this);

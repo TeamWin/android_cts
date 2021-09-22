@@ -42,8 +42,7 @@ public class DeviceOwnerTest {
             new ComponentName(DEVICE_ADMIN_TESTAPP_PACKAGE_NAME,
                     EventLibDeviceAdminReceiver.class.getName());
 
-    private static final TestApis sTestApis = new TestApis();
-    private static final UserReference sUser = sTestApis.users().instrumented();
+    private static final UserReference sUser = TestApis.users().instrumented();
 
     private static TestApp sTestApp;
     private static DeviceOwner sDeviceOwner;
@@ -56,7 +55,7 @@ public class DeviceOwnerTest {
 
         sTestApp.install(sUser);
 
-        sDeviceOwner = sTestApis.devicePolicy().setDeviceOwner(sUser, DPC_COMPONENT_NAME);
+        sDeviceOwner = TestApis.devicePolicy().setDeviceOwner(sUser, DPC_COMPONENT_NAME);
     }
 
     @AfterClass
@@ -84,9 +83,9 @@ public class DeviceOwnerTest {
     public void remove_removesDeviceOwner() {
         sDeviceOwner.remove();
         try {
-            assertThat(sTestApis.devicePolicy().getDeviceOwner()).isNull();
+            assertThat(TestApis.devicePolicy().getDeviceOwner()).isNull();
         } finally {
-            sDeviceOwner = sTestApis.devicePolicy().setDeviceOwner(sUser, DPC_COMPONENT_NAME);
+            sDeviceOwner = TestApis.devicePolicy().setDeviceOwner(sUser, DPC_COMPONENT_NAME);
         }
     }
 }

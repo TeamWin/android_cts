@@ -50,9 +50,8 @@ public class TestAppInstanceReferenceTest {
     @ClassRule @Rule
     public static final DeviceState sDeviceState = new DeviceState();
 
-    private static final TestApis sTestApis = new TestApis();
-    private static final Context sContext = sTestApis.context().instrumentedContext();
-    private static final UserReference sUser = sTestApis.users().instrumented();
+    private static final Context sContext = TestApis.context().instrumentedContext();
+    private static final UserReference sUser = TestApis.users().instrumented();
 
     private TestAppProvider mTestAppProvider;
 
@@ -102,7 +101,7 @@ public class TestAppInstanceReferenceTest {
 
         testAppInstance.uninstall();
 
-        Package pkg = sTestApis.packages().find(testApp.packageName()).resolve();
+        Package pkg = TestApis.packages().find(testApp.packageName()).resolve();
         if (pkg != null) {
             assertThat(pkg.installedOnUsers()).doesNotContain(sUser);
         }
@@ -115,7 +114,7 @@ public class TestAppInstanceReferenceTest {
             // Intentionally empty
         }
 
-        Package pkg = sTestApis.packages().find(testApp.packageName()).resolve();
+        Package pkg = TestApis.packages().find(testApp.packageName()).resolve();
         if (pkg != null) {
             assertThat(pkg.installedOnUsers()).doesNotContain(sUser);
         }

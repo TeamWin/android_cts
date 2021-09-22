@@ -36,14 +36,12 @@ import java.io.File;
 
 @RunWith(JUnit4.class)
 public class PackageReferenceTest {
-
-    private static final TestApis sTestApis = new TestApis();
-    private static final UserReference sUser = sTestApis.users().instrumented();
+    private static final UserReference sUser = TestApis.users().instrumented();
     private static final String NON_EXISTING_PACKAGE_NAME = "com.package.does.not.exist";
     private static final String PACKAGE_NAME = NON_EXISTING_PACKAGE_NAME;
     private static final String EXISTING_PACKAGE_NAME = "com.android.providers.telephony";
     private final PackageReference mTestAppReference =
-            sTestApis.packages().find(TEST_APP_PACKAGE_NAME);
+            TestApis.packages().find(TEST_APP_PACKAGE_NAME);
 
     // Controlled by AndroidTest.xml
     private static final String TEST_APP_PACKAGE_NAME =
@@ -51,11 +49,11 @@ public class PackageReferenceTest {
     private static final File TEST_APP_APK_FILE =
             new File("/data/local/tmp/NeneTestApp1.apk");
     private static final Context sContext =
-            sTestApis.context().instrumentedContext();
-    private static final UserReference sOtherUser = sTestApis.users().createUser().createAndStart();
+            TestApis.context().instrumentedContext();
+    private static final UserReference sOtherUser = TestApis.users().createUser().createAndStart();
 
     private static final PackageReference sInstrumentedPackage =
-            sTestApis.packages().find(sContext.getPackageName());
+            TestApis.packages().find(sContext.getPackageName());
 
     // Relies on this being declared by AndroidManifest.xml
     // TODO(scottjonathan): Replace with TestApp
@@ -75,17 +73,17 @@ public class PackageReferenceTest {
 
     @Test
     public void packageName_returnsPackageName() {
-        sTestApis.packages().find(PACKAGE_NAME).packageName().equals(PACKAGE_NAME);
+        TestApis.packages().find(PACKAGE_NAME).packageName().equals(PACKAGE_NAME);
     }
 
     @Test
     public void resolve_nonExistingPackage_returnsNull() {
-        assertThat(sTestApis.packages().find(NON_EXISTING_PACKAGE_NAME).resolve()).isNull();
+        assertThat(TestApis.packages().find(NON_EXISTING_PACKAGE_NAME).resolve()).isNull();
     }
 
     @Test
     public void resolve_existingPackage_returnsPackage() {
-        assertThat(sTestApis.packages().find(EXISTING_PACKAGE_NAME).resolve()).isNotNull();
+        assertThat(TestApis.packages().find(EXISTING_PACKAGE_NAME).resolve()).isNotNull();
     }
 
     @Test
@@ -101,9 +99,9 @@ public class PackageReferenceTest {
 
     @Test
     public void uninstallForAllUsers_isUninstalledForAllUsers() {
-        PackageReference pkg = sTestApis.packages().install(sUser, TEST_APP_APK_FILE);
+        PackageReference pkg = TestApis.packages().install(sUser, TEST_APP_APK_FILE);
         try {
-            sTestApis.packages().install(sOtherUser, TEST_APP_APK_FILE);
+            TestApis.packages().install(sOtherUser, TEST_APP_APK_FILE);
 
             mTestAppReference.uninstallFromAllUsers();
 
@@ -120,9 +118,9 @@ public class PackageReferenceTest {
 
     @Test
     public void uninstall_packageIsInstalledForDifferentUser_isUninstalledForUser() {
-        PackageReference pkg = sTestApis.packages().install(sUser, TEST_APP_APK_FILE);
+        PackageReference pkg = TestApis.packages().install(sUser, TEST_APP_APK_FILE);
         try {
-            sTestApis.packages().install(sOtherUser, TEST_APP_APK_FILE);
+            TestApis.packages().install(sOtherUser, TEST_APP_APK_FILE);
 
             mTestAppReference.uninstall(sUser);
 
@@ -135,7 +133,7 @@ public class PackageReferenceTest {
 
     @Test
     public void uninstall_packageIsUninstalled() {
-        sTestApis.packages().install(sUser, TEST_APP_APK_FILE);
+        TestApis.packages().install(sUser, TEST_APP_APK_FILE);
 
         mTestAppReference.uninstall(sUser);
 
@@ -149,7 +147,7 @@ public class PackageReferenceTest {
 
     @Test
     public void uninstall_packageNotInstalledForUser_doesNotThrowException() {
-        sTestApis.packages().install(sUser, TEST_APP_APK_FILE);
+        TestApis.packages().install(sUser, TEST_APP_APK_FILE);
 
         try {
             mTestAppReference.uninstall(sOtherUser);
@@ -160,7 +158,7 @@ public class PackageReferenceTest {
 
     @Test
     public void uninstall_packageDoesNotExist_doesNotThrowException() {
-        PackageReference packageReference = sTestApis.packages().find(NON_EXISTING_PACKAGE_NAME);
+        PackageReference packageReference = TestApis.packages().find(NON_EXISTING_PACKAGE_NAME);
 
         packageReference.uninstall(sUser);
     }
@@ -168,14 +166,14 @@ public class PackageReferenceTest {
     @Test
     public void grantPermission_installPermission_throwsException() {
         assertThrows(NeneException.class, () ->
-                sTestApis.packages().find(sContext.getPackageName()).grantPermission(sUser,
+                TestApis.packages().find(sContext.getPackageName()).grantPermission(sUser,
                 INSTALL_PERMISSION));
     }
 
     @Test
     public void grantPermission_nonDeclaredPermission_throwsException() {
         assertThrows(NeneException.class, () ->
-                sTestApis.packages().find(sContext.getPackageName()).grantPermission(sUser,
+                TestApis.packages().find(sContext.getPackageName()).grantPermission(sUser,
                 UNDECLARED_RUNTIME_PERMISSION));
     }
 
@@ -195,7 +193,7 @@ public class PackageReferenceTest {
     @Test
     public void grantPermission_permissionIsUserSpecific_permissionIsGrantedOnlyForThatUser() {
         // Permissions are auto-granted on the current user so we need to test against new users
-        try (UserReference newUser = sTestApis.users().createUser().create()) {
+        try (UserReference newUser = TestApis.users().createUser().create()) {
             sInstrumentedPackage.install(sOtherUser);
             sInstrumentedPackage.install(newUser);
 
@@ -214,14 +212,14 @@ public class PackageReferenceTest {
     @Test
     public void grantPermission_packageDoesNotExist_throwsException() {
         assertThrows(NeneException.class, () ->
-                sTestApis.packages().find(NON_EXISTING_PACKAGE_NAME).grantPermission(sUser,
+                TestApis.packages().find(NON_EXISTING_PACKAGE_NAME).grantPermission(sUser,
                 DECLARED_RUNTIME_PERMISSION));
     }
 
     @Test
     public void grantPermission_permissionDoesNotExist_throwsException() {
         assertThrows(NeneException.class, () ->
-                sTestApis.packages().find(sContext.getPackageName()).grantPermission(sUser,
+                TestApis.packages().find(sContext.getPackageName()).grantPermission(sUser,
                 NON_EXISTING_PERMISSION));
     }
 
@@ -237,14 +235,14 @@ public class PackageReferenceTest {
     @Test
     @Ignore("Cannot be tested because all runtime permissions are granted by default")
     public void denyPermission_ownPackage_permissionIsNotGranted_doesNotThrowException() {
-        PackageReference packageReference = sTestApis.packages().find(sContext.getPackageName());
+        PackageReference packageReference = TestApis.packages().find(sContext.getPackageName());
 
         packageReference.denyPermission(sUser, USER_SPECIFIC_PERMISSION);
     }
 
     @Test
     public void denyPermission_ownPackage_permissionIsGranted_throwsException() {
-        PackageReference packageReference = sTestApis.packages().find(sContext.getPackageName());
+        PackageReference packageReference = TestApis.packages().find(sContext.getPackageName());
         packageReference.grantPermission(sUser, USER_SPECIFIC_PERMISSION);
 
         assertThrows(NeneException.class, () ->
@@ -269,14 +267,14 @@ public class PackageReferenceTest {
     @Test
     public void denyPermission_packageDoesNotExist_throwsException() {
         assertThrows(NeneException.class, () ->
-                sTestApis.packages().find(NON_EXISTING_PACKAGE_NAME).denyPermission(sUser,
+                TestApis.packages().find(NON_EXISTING_PACKAGE_NAME).denyPermission(sUser,
                         DECLARED_RUNTIME_PERMISSION));
     }
 
     @Test
     public void denyPermission_permissionDoesNotExist_throwsException() {
         assertThrows(NeneException.class, () ->
-                sTestApis.packages().find(sContext.getPackageName()).denyPermission(sUser,
+                TestApis.packages().find(sContext.getPackageName()).denyPermission(sUser,
                         NON_EXISTING_PERMISSION));
     }
 
@@ -303,7 +301,7 @@ public class PackageReferenceTest {
     @Test
     public void denyPermission_nonDeclaredPermission_throwsException() {
         assertThrows(NeneException.class, () ->
-                sTestApis.packages().find(sContext.getPackageName()).denyPermission(sUser,
+                TestApis.packages().find(sContext.getPackageName()).denyPermission(sUser,
                         UNDECLARED_RUNTIME_PERMISSION));
     }
 
@@ -324,7 +322,7 @@ public class PackageReferenceTest {
     @Test
     public void denyPermission_permissionIsUserSpecific_permissionIsDeniedOnlyForThatUser() {
         // Permissions are auto-granted on the current user so we need to test against new users
-        try (UserReference newUser = sTestApis.users().createUser().create()) {
+        try (UserReference newUser = TestApis.users().createUser().create()) {
             sInstrumentedPackage.install(sOtherUser);
             sInstrumentedPackage.install(newUser);
             sInstrumentedPackage.grantPermission(sOtherUser, USER_SPECIFIC_PERMISSION);
