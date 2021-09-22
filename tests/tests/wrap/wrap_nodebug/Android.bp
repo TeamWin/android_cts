@@ -1,4 +1,4 @@
-// Copyright (C) 2021 The Android Open Source Project
+// Copyright (C) 2017 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,19 +17,32 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-java_library {
-    name: "cts_tests_tests_wrap_src",
-    srcs: ["src/**/*.java"],
+android_test {
+    name: "CtsWrapWrapNoDebugTestCases",
+    compile_multilib: "both",
+    dex_preopt: {
+        enabled: false,
+    },
+    optimize: {
+        enabled: false,
+    },
+    static_libs: [
+        "compatibility-device-util-axt",
+        "androidx.test.rules",
+        "wrap_debug_lib"
+    ],
     libs: [
         "android.test.runner.stubs",
         "android.test.base.stubs",
     ],
-}
-
-filegroup {
-    name: "wrap.sh",
-    srcs: [
-        "wrap.sh",
+    srcs: [":cts_tests_tests_wrap_src"],
+    test_suites: [
+        "cts",
+        "general-tests",
     ],
-    path: ".",
+    sdk_version: "current",
+    manifest: "AndroidManifest.xml",
+    // Jarjar to make WrapTest unique.
+    jarjar_rules: "jarjar-rules.txt",
+    use_embedded_native_libs: false,
 }
