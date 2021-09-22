@@ -72,7 +72,12 @@ public class TestApp {
      * Install the {@link TestApp} on the device for the given {@link UserReference}.
      */
     public TestAppInstanceReference install(UserReference user) {
-        sTestApis.packages().install(user, apkBytes());
+        if (resolve() != null) {
+            reference().install(user);
+        } else {
+            sTestApis.packages().install(user, apkBytes());
+        }
+
         return new TestAppInstanceReference(this, user);
     }
 

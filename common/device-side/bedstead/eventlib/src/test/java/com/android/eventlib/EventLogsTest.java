@@ -38,7 +38,6 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -499,7 +498,6 @@ public class EventLogsTest {
     }
 
     @Test
-    @Ignore("Restore when this functionality is restored")
     public void otherProcessGetsKilled_stillReturnsLogs() {
         logCustomEventOnTestApp(/* tag= */ null, /* data= */ null);
 
@@ -509,7 +507,6 @@ public class EventLogsTest {
     }
 
     @Test
-    @Ignore("Restore when this functionality is restored")
     public void otherProcessGetsKilledMultipleTimes_stillReturnsOriginalLog() {
         logCustomEventOnTestApp(/* tag= */ TEST_TAG1, /* data= */ null);
         killTestApp();
@@ -521,7 +518,6 @@ public class EventLogsTest {
     }
 
     @Test
-    @Ignore("Restore when this functionality is restored")
     public void otherProcessGetsKilled_returnsLogsInCorrectOrder() {
         logCustomEventOnTestApp(/* tag= */ TEST_TAG1, /* data= */ null);
         logCustomEventOnTestApp(/* tag= */ TEST_TAG2, /* data= */ null);
@@ -533,7 +529,6 @@ public class EventLogsTest {
     }
 
     @Test
-    @Ignore("Restore when this functionality is restored")
     public void otherProcessGetsKilledMultipleTimes_returnsLogsInCorrectOrder() {
         logCustomEventOnTestApp(/* tag= */ TEST_TAG1, /* data= */ null);
         killTestApp();

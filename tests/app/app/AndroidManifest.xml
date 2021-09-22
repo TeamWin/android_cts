@@ -443,6 +443,20 @@
             </meta-data>
         </service>
 
+        <service android:name="android.app.stubs.LiveWallpaperNoUnfoldTransition"
+             android:icon="@drawable/robot"
+             android:label="@string/wallpaper_title"
+             android:permission="android.permission.BIND_WALLPAPER"
+             android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService">
+                </action>
+            </intent-filter>
+            <meta-data android:name="android.service.wallpaper"
+                 android:resource="@xml/wallpaper_no_default_unfold_transition">
+            </meta-data>
+        </service>
+
         <service android:name="android.app.stubs.TestNotificationListener"
              android:exported="true"
              android:label="TestNotificationListener"

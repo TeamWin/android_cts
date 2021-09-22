@@ -150,7 +150,7 @@ public final class DeviceAdminChoosePrivateKeyAliasEvent extends Event {
             super(context, new DeviceAdminChoosePrivateKeyAliasEvent());
             mEvent.mIntent = new SerializableParcelWrapper<>(intent);
             mEvent.mUid = uid;
-            mEvent.mUri = uri;
+            mEvent.mUri = new SerializableParcelWrapper<>(uri);
             mEvent.mAlias = alias;
             setDeviceAdminReceiver(deviceAdminReceiver);
         }
@@ -190,7 +190,7 @@ public final class DeviceAdminChoosePrivateKeyAliasEvent extends Event {
 
         /** Sets the {@link Uri} which was received. */
         public DeviceAdminChoosePrivateKeyAliasEventLogger setUri(Uri uri) {
-            mEvent.mUri = uri;
+            mEvent.mUri = new SerializableParcelWrapper<>(uri);
             return this;
         }
 
@@ -204,7 +204,7 @@ public final class DeviceAdminChoosePrivateKeyAliasEvent extends Event {
     protected SerializableParcelWrapper<Intent> mIntent;
     protected DeviceAdminReceiverInfo mDeviceAdminReceiver;
     protected int mUid;
-    protected Uri mUri;
+    protected SerializableParcelWrapper<Uri> mUri;
     protected String mAlias;
 
     /**
@@ -236,7 +236,10 @@ public final class DeviceAdminChoosePrivateKeyAliasEvent extends Event {
      * {@link DeviceAdminReceiver#onChoosePrivateKeyAlias(Context, Intent, int, Uri, String)
      */
     public Uri uri() {
-        return mUri;
+        if (mUri == null) {
+            return null;
+        }
+        return mUri.get();
     }
 
     /**
@@ -252,7 +255,7 @@ public final class DeviceAdminChoosePrivateKeyAliasEvent extends Event {
         return "DeviceAdminChoosePrivateKeyAliasEvent{"
                 + " intent=" + intent()
                 + ", uid=" + mUid
-                + ", uri=" + mUri
+                + ", uri=" + uri()
                 + ", alias=" + mAlias
                 + ", deviceAdminReceiver=" + mDeviceAdminReceiver
                 + ", packageName='" + mPackageName + "'"

@@ -19,6 +19,7 @@ package com.android.queryable.queries;
 import android.net.Uri;
 
 import com.android.queryable.Queryable;
+import com.android.queryable.util.SerializableParcelWrapper;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -61,6 +62,18 @@ public final class UriQueryHelper<E extends Queryable>
         }
 
         return true;
+    }
+
+    /**
+     * {@code true} if all filters are met by the {@link Uri} contained in
+     * {@code serializableUri}.
+     */
+    public boolean matches(SerializableParcelWrapper<Uri> serializableUri) {
+        if ((serializableUri == null || serializableUri.get() == null)) {
+            return false;
+        }
+
+        return matches(serializableUri.get());
     }
 
     /**

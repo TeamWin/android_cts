@@ -613,17 +613,24 @@ public class MediaScannerTest extends AndroidTestCase {
             c.close();
 
             // also test with the MediaMetadataRetriever API
-            MediaMetadataRetriever woodly = new MediaMetadataRetriever();
-            AssetFileDescriptor afd = getAssetFileDescriptorFor(entry.fileName);
-            woodly.setDataSource(afd.getFileDescriptor(),
-                    afd.getStartOffset(), afd.getDeclaredLength());
+            String[] actual;
+            try (MediaMetadataRetriever metadataRetriever = new MediaMetadataRetriever()) {
+                AssetFileDescriptor afd = getAssetFileDescriptorFor(entry.fileName);
+                metadataRetriever.setDataSource(afd.getFileDescriptor(),
+                        afd.getStartOffset(), afd.getDeclaredLength());
 
-            String[] actual = new String[5];
-            actual[0] = woodly.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
-            actual[1] = woodly.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM);
-            actual[2] = woodly.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUMARTIST);
-            actual[3] = woodly.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE);
-            actual[4] = woodly.extractMetadata(MediaMetadataRetriever.METADATA_KEY_COMPOSER);
+                actual = new String[5];
+                actual[0] = metadataRetriever.extractMetadata(
+                        MediaMetadataRetriever.METADATA_KEY_ARTIST);
+                actual[1] = metadataRetriever.extractMetadata(
+                        MediaMetadataRetriever.METADATA_KEY_ALBUM);
+                actual[2] = metadataRetriever.extractMetadata(
+                        MediaMetadataRetriever.METADATA_KEY_ALBUMARTIST);
+                actual[3] = metadataRetriever.extractMetadata(
+                        MediaMetadataRetriever.METADATA_KEY_TITLE);
+                actual[4] = metadataRetriever.extractMetadata(
+                        MediaMetadataRetriever.METADATA_KEY_COMPOSER);
+            }
 
             for (int j = 0; j < 5; j++) {
                 if ("".equals(entry.tags[j])) {

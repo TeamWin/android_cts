@@ -25,8 +25,6 @@ import com.android.eventlib.premade.EventLibActivity;
 import java.util.Map;
 import java.util.WeakHashMap;
 
-import javax.annotation.Nullable;
-
 /**
  * An {@link Activity} which logs events for all lifecycle events and supports TestApp Features.
  */
@@ -37,13 +35,18 @@ public class BaseTestAppActivity extends EventLibActivity {
     /**
      * Find an activity for the given class name.
      *
-     * <p>This will return {@code null} if there is no existing activity for the class name.
+     * <p>This will throw an {@link IllegalStateException} if there is no existing activity for the
+     * class name.
      *
      * <p>This method is thread-safe
      */
-    @Nullable
     public static BaseTestAppActivity findActivity(String activityClassName) {
         synchronized (BaseTestAppActivity.class) {
+            if (!sActivities.containsKey(activityClassName)) {
+                throw new IllegalStateException("No existing activity named "
+                        + activityClassName + ". Found activities: " + sActivities.keySet());
+            }
+
             return sActivities.get(activityClassName);
         }
     }

@@ -26,9 +26,7 @@ import android.os.Bundle;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.packages.ComponentReference;
 import com.android.bedstead.nene.permissions.PermissionContext;
-import com.android.eventlib.events.activities.ActivityCreatedEvent;
 import com.android.eventlib.events.activities.ActivityEvents;
-import com.android.eventlib.events.activities.ActivityStartedEvent;
 
 /**
  * A reference to an activity in a test app for which there may or may not be an instance.
@@ -71,10 +69,7 @@ public abstract class TestAppActivityReference {
             sTestApis.context().instrumentedContext().startActivity(intent);
         }
 
-        ActivityStartedEvent
-                .queryPackage(mComponent.pkg().packageName())
-                .whereActivity().activityClass().className().isEqualTo(
-                        mComponent.className()).waitForEvent();
+        events().activityStarted().waitForEvent();
 
         return sTestApis.activities().wrap(
                 TestAppActivity.class, new TestAppActivityImpl(mInstance, mComponent));
@@ -93,10 +88,7 @@ public abstract class TestAppActivityReference {
             sTestApis.context().instrumentedContext().startActivity(intent, options);
         }
 
-        ActivityCreatedEvent
-                .queryPackage(mComponent.pkg().packageName())
-                .whereActivity().activityClass().className().isEqualTo(
-                        mComponent.className()).waitForEvent();
+        events().activityStarted().waitForEvent();
 
         return sTestApis.activities().wrap(
                 TestAppActivity.class, new TestAppActivityImpl(mInstance, mComponent));

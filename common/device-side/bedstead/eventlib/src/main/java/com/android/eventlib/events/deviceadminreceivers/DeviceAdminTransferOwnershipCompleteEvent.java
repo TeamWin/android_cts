@@ -30,6 +30,7 @@ import com.android.queryable.queries.DeviceAdminReceiverQuery;
 import com.android.queryable.queries.DeviceAdminReceiverQueryHelper;
 import com.android.queryable.queries.PersistableBundleQuery;
 import com.android.queryable.queries.PersistableBundleQueryHelper;
+import com.android.queryable.util.SerializableParcelWrapper;
 
 /**
  * Event logged when
@@ -105,7 +106,7 @@ public final class DeviceAdminTransferOwnershipCompleteEvent extends Event {
                 DeviceAdminReceiver deviceAdminReceiver,
                 Context context, PersistableBundle bundle) {
             super(context, new DeviceAdminTransferOwnershipCompleteEvent());
-            mEvent.mBundle = bundle;
+            mEvent.mBundle = new SerializableParcelWrapper<>(bundle);
             setDeviceAdminReceiver(deviceAdminReceiver);
         }
 
@@ -132,13 +133,13 @@ public final class DeviceAdminTransferOwnershipCompleteEvent extends Event {
 
         /** Sets the {@link PersistableBundle} which was received. */
         public DeviceAdminTransferOwnershipCompleteEventLogger setBundle(PersistableBundle bundle) {
-            mEvent.mBundle = bundle;
+            mEvent.mBundle = new SerializableParcelWrapper<>(bundle);
             return this;
         }
     }
 
     protected DeviceAdminReceiverInfo mDeviceAdminReceiver;
-    protected PersistableBundle mBundle;
+    protected SerializableParcelWrapper<PersistableBundle> mBundle;
 
     /** Information about the {@link DeviceAdminReceiver} which received the intent. */
     public DeviceAdminReceiverInfo deviceAdminReceiver() {
@@ -150,13 +151,16 @@ public final class DeviceAdminTransferOwnershipCompleteEvent extends Event {
      * {@link DeviceAdminReceiver#onTransferOwnershipComplete(Context, PersistableBundle)}.
      */
     public PersistableBundle bundle() {
-        return mBundle;
+        if (mBundle == null) {
+            return null;
+        }
+        return mBundle.get();
     }
 
     @Override
     public String toString() {
         return "DeviceAdminTransferOwnershipCompleteEvent{"
-                + ", bundle=" + mBundle
+                + ", bundle=" + bundle()
                 + ", deviceAdminReceiver=" + mDeviceAdminReceiver
                 + ", packageName='" + mPackageName + "'"
                 + ", timestamp=" + mTimestamp
