@@ -1,16 +1,7 @@
 {
   "presubmit": [
     {
-      "name": "RemoteDPCTest"
-    },
-    {
-      "name": "TestAppTest"
-    },
-    {
       "name": "BedsteadQueryableTest"
-    },
-    {
-      "name": "NeneTest"
     },
     {
       "name": "ActivityContextTest"
@@ -20,6 +11,9 @@
     }
   ], "postsubmit": [
     {
+      "name": "NeneTest"
+    },
+    {
       "name": "EventLibTest"
     },
     {
@@ -27,6 +21,12 @@
     },
     {
       "name": "HarrierTest"
+    },
+    {
+      "name": "RemoteDPCTest"
+    },
+    {
+      "name": "TestAppTest"
     }
   ]
 }
