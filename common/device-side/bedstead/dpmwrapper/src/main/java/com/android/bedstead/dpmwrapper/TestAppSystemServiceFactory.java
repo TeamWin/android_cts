@@ -125,8 +125,13 @@ public final class TestAppSystemServiceFactory {
             return;
         }
 
+        int numberReceivers = (packageInfo.receivers == null ? 0 : packageInfo.receivers.length);
+        Log.d(TAG, "assertHasRequiredReceiver(" + packageName + "): userId=" + context.getUserId()
+                + ", info=" + packageInfo + ", receivers=" + numberReceivers);
+
         if (packageInfo.receivers != null) {
             for (ActivityInfo receiver : packageInfo.receivers) {
+                Log.v(TAG, "checking receiver " + receiver);
                 Class<?> receiverClass = null;
                 try {
                     receiverClass = Class.forName(receiver.name);
@@ -135,14 +140,21 @@ public final class TestAppSystemServiceFactory {
                     continue;
                 }
                 if (TestAppCallbacksReceiver.class.isAssignableFrom(receiverClass)) {
-                    Log.d(TAG, "Found " + receiverClass + " on " + packageName);
+                    Log.d(TAG, "Found " + receiverClass.getName() + " on " + packageName);
                     sHasRequiredReceiver.put(packageName, Boolean.TRUE);
                     return;
                 }
             }
         }
-        fail("Package " + packageName + " doesn't have a " + TestAppCallbacksReceiver.class
-                + " receiver - did you add it to the manifest?");
+        if (numberReceivers == 0) {
+            // This is happening sometimes on headless system user; most likely it's a permission
+            // issue querying pm, but given that the DpmWrapper is temporary and this check is more
+            // of a validation to avoid other issues, it's ok to just log...
+            Log.wtf(TAG, "Package " + packageName + " has no receivers");
+            return;
+        }
+        fail("Package " + packageName + " has " + numberReceivers + " receivers, but not extends "
+                + TestAppCallbacksReceiver.class.getName() + " - did you add one to the manifest?");
     }
 
     private static <T> T getSystemService(Context context, Class<T> serviceClass,
