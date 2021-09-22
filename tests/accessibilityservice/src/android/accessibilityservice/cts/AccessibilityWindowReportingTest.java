@@ -49,8 +49,8 @@ import android.Manifest;
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.accessibilityservice.cts.activities.AccessibilityWindowReportingActivity;
-import android.accessibilityservice.cts.activities.NotTouchableWindowTestActivity;
 import android.accessibilityservice.cts.activities.NonDefaultDisplayActivity;
+import android.accessibilityservice.cts.activities.NotTouchableWindowTestActivity;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
@@ -58,6 +58,7 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.graphics.Rect;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeFull;
 import android.view.Gravity;
 import android.view.InputDevice;
 import android.view.MotionEvent;
@@ -417,6 +418,7 @@ public class AccessibilityWindowReportingTest {
         assertTrue("Failed to find accessibility window for auto-complete pop-up", foundPopup);
     }
 
+    @AppModeFull
     @Test
     public void showNotTouchableWindow_activityWindowIsNotVisible()
             throws TimeoutException {
@@ -449,6 +451,7 @@ public class AccessibilityWindowReportingTest {
         }
     }
 
+    @AppModeFull
     @Test
     public void showNotTouchableTrustedWindow_activityWindowIsVisible()
             throws TimeoutException {
