@@ -97,6 +97,7 @@ public class SubscriptionManagerTest {
     }
 
     private int mSubId;
+    private int mDefaultVoiceSubId;
     private String mPackageName;
 
     /**
@@ -150,6 +151,7 @@ public class SubscriptionManagerTest {
 
         mSm = InstrumentationRegistry.getContext().getSystemService(SubscriptionManager.class);
         mSubId = SubscriptionManager.getDefaultDataSubscriptionId();
+        mDefaultVoiceSubId = SubscriptionManager.getDefaultVoiceSubscriptionId();
         mPackageName = InstrumentationRegistry.getContext().getPackageName();
     }
 
@@ -827,9 +829,11 @@ public class SubscriptionManagerTest {
                 fail("setSubscriptionEnabled() did not work second time");
             }
 
-            // Reset default data subId as it may have been changed as part of the calls above
+            // Reset default subIds as they may have changed as part of the calls above
             ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mSm,
                     (sm) -> sm.setDefaultDataSubId(mSubId));
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mSm,
+                    (sm) -> sm.setDefaultVoiceSubId(mDefaultVoiceSubId));
 
             // Other tests also expect that cellular data must be available if telephony is
             // supported. Wait for that before returning.
