@@ -71,6 +71,12 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
                 "com.android.permissioncontroller:" +
                         "id/permission_no_upgrade_and_dont_ask_again_button"
 
+        const val ALLOW_RADIO_BUTTON = "com.android.permissioncontroller:id/allow_radio_button"
+        const val ALLOW_FOREGROUND_RADIO_BUTTON =
+                "com.android.permissioncontroller:id/allow_foreground_only_radio_button"
+        const val ASK_RADIO_BUTTON = "com.android.permissioncontroller:id/ask_radio_button"
+        const val DENY_RADIO_BUTTON = "com.android.permissioncontroller:id/deny_radio_button"
+
         const val ALLOW_BUTTON_TEXT = "grant_dialog_button_allow"
         const val ALLOW_FOREGROUND_BUTTON_TEXT = "grant_dialog_button_allow_foreground"
         const val DENY_BUTTON_TEXT = "grant_dialog_button_deny"
@@ -428,47 +434,45 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
             val wasGranted = if (isAutomotive) {
                 // Automotive doesn't support one time permissions, and thus
                 // won't show an "Ask every time" message
-                !waitFindObject(byTextRes(R.string.deny)).isChecked
+                !waitFindObject(By.res(DENY_RADIO_BUTTON)).isChecked
             } else {
-                !(waitFindObject(byTextRes(R.string.deny)).isChecked ||
+                !(waitFindObject(By.res(DENY_RADIO_BUTTON)).isChecked ||
                     (!isLegacyApp && hasAskButton(permission) &&
-                        waitFindObject(byTextRes(R.string.ask)).isChecked))
+                        waitFindObject(By.res(ASK_RADIO_BUTTON)).isChecked))
             }
             var alreadyChecked = false
             val button = waitFindObject(
-                byTextRes(
-                    if (isAutomotive) {
-                        // Automotive doesn't support one time permissions, and thus
-                        // won't show an "Ask every time" message
-                        when (state) {
-                            PermissionState.ALLOWED -> R.string.allow
-                            PermissionState.DENIED -> R.string.deny
-                            PermissionState.DENIED_WITH_PREJUDICE -> R.string.deny
-                        }
-                    } else {
-                        when (state) {
-                            PermissionState.ALLOWED ->
-                                if (showsForegroundOnlyButton(permission)) {
-                                    R.string.allow_foreground
-                                } else if (isMediaStorageButton(permission, targetSdk)) {
-                                    R.string.allow_media_storage
-                                } else if (isAllStorageButton(permission, targetSdk)) {
-                                    R.string.allow_external_storage
-                                } else {
-                                    R.string.allow
-                                }
-                            PermissionState.DENIED ->
-                                if (!isLegacyApp && hasAskButton(permission)) {
-                                    R.string.ask
-                                } else {
-                                    R.string.deny
-                                }
-                            PermissionState.DENIED_WITH_PREJUDICE -> {
-                                    R.string.deny
-                            }
-                        }
+                if (isAutomotive) {
+                    // Automotive doesn't support one time permissions, and thus
+                    // won't show an "Ask every time" message
+                    when (state) {
+                        PermissionState.ALLOWED -> By.res(ALLOW_RADIO_BUTTON)
+                        PermissionState.DENIED -> By.res(DENY_RADIO_BUTTON)
+                        PermissionState.DENIED_WITH_PREJUDICE -> By.res(DENY_RADIO_BUTTON)
                     }
-                )
+                } else {
+                    when (state) {
+                        PermissionState.ALLOWED ->
+                            if (showsForegroundOnlyButton(permission)) {
+                                By.res(ALLOW_FOREGROUND_RADIO_BUTTON)
+                            } else if (isMediaStorageButton(permission, targetSdk)) {
+                                // Uses "allow_foreground_only_radio_button" as id
+                                byTextRes(R.string.allow_media_storage)
+                            } else if (isAllStorageButton(permission, targetSdk)) {
+                                // Uses "allow_always_radio_button" as id
+                                byTextRes(R.string.allow_external_storage)
+                            } else {
+                                By.res(ALLOW_RADIO_BUTTON)
+                            }
+                        PermissionState.DENIED ->
+                            if (!isLegacyApp && hasAskButton(permission)) {
+                                By.res(ASK_RADIO_BUTTON)
+                            } else {
+                                By.res(DENY_RADIO_BUTTON)
+                            }
+                        PermissionState.DENIED_WITH_PREJUDICE -> By.res(DENY_RADIO_BUTTON)
+                    }
+                }
             )
             alreadyChecked = button.isChecked
             if (!alreadyChecked) {
