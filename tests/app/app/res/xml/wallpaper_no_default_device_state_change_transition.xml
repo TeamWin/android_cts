@@ -19,5 +19,5 @@
     android:thumbnail="@drawable/icon_red"
     android:author="@string/wallpaper_collection"
     android:description="@string/wallpaper_description"
-    android:shouldUseDefaultUnfoldTransition="false"
+    android:shouldUseDefaultDeviceStateChangeTransition="false"
 />

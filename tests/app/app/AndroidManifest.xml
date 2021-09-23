@@ -454,7 +454,7 @@
                 </action>
             </intent-filter>
             <meta-data android:name="android.service.wallpaper"
-                 android:resource="@xml/wallpaper_no_default_unfold_transition">
+                 android:resource="@xml/wallpaper_no_default_device_state_change_transition">
             </meta-data>
         </service>
 
