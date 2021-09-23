@@ -68,16 +68,20 @@ class PermissionTapjackingTest : BaseUsePermissionTest() {
 
         val foregroundButtonCenter = waitFindObject(By.text(
                 getPermissionControllerString(ALLOW_FOREGROUND_BUTTON_TEXT))).visibleCenter
-        val oneTimeButtonBounds = waitFindObject(By.text(getPermissionControllerString(
-            ALLOW_ONE_TIME_BUTTON_TEXT, APP_PACKAGE_NAME))).visibleBounds
+        val oneTimeButton = waitFindObjectOrNull(By.text(
+                getPermissionControllerString(ALLOW_ONE_TIME_BUTTON_TEXT)))
+        // If one-time button is not available, fallback to deny button
+        val overlayButtonBounds = oneTimeButton?.visibleBounds
+                ?: waitFindObject(By.text(getPermissionControllerString(
+                        DENY_BUTTON_TEXT))).visibleBounds
 
         // Wait for overlay to hide the dialog
         context.sendBroadcast(Intent(ACTION_SHOW_OVERLAY)
                 .putExtra(EXTRA_FULL_OVERLAY, false)
-                .putExtra(OVERLAY_LEFT, oneTimeButtonBounds.left)
-                .putExtra(OVERLAY_TOP, oneTimeButtonBounds.top)
-                .putExtra(OVERLAY_RIGHT, oneTimeButtonBounds.right)
-                .putExtra(OVERLAY_BOTTOM, oneTimeButtonBounds.bottom))
+                .putExtra(OVERLAY_LEFT, overlayButtonBounds.left)
+                .putExtra(OVERLAY_TOP, overlayButtonBounds.top)
+                .putExtra(OVERLAY_RIGHT, overlayButtonBounds.right)
+                .putExtra(OVERLAY_BOTTOM, overlayButtonBounds.bottom))
         waitFindObject(By.res("android.permission3.cts.usepermission:id/overlay"))
 
         tryClicking(foregroundButtonCenter)

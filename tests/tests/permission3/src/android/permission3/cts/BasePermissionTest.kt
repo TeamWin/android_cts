@@ -147,6 +147,11 @@ abstract class BasePermissionTest {
         return UiAutomatorUtils.waitFindObject(selector, timeoutMillis)
     }
 
+    protected fun waitFindObjectOrNull(selector: BySelector): UiObject2? {
+        waitForIdle()
+        return UiAutomatorUtils.waitFindObjectOrNull(selector)
+    }
+
     protected fun waitFindObjectOrNull(selector: BySelector, timeoutMillis: Long): UiObject2? {
         waitForIdle()
         return UiAutomatorUtils.waitFindObjectOrNull(selector, timeoutMillis)
