@@ -165,6 +165,27 @@ public class AudioAttributesTest extends CtsAndroidTestCase {
         assertEquals(AudioAttributes.USAGE_MEDIA, getSystemUsage(attributes));
     }
 
+    public void testSpatializationAttr() {
+        for (int virtBehavior : new int[] { AudioAttributes.SPATIALIZATION_BEHAVIOR_AUTO,
+                                            AudioAttributes.SPATIALIZATION_BEHAVIOR_NEVER}) {
+            AudioAttributes attributes = new AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_MEDIA)
+                    .setSpatializationBehavior(virtBehavior)
+                    .build();
+            assertEquals("Spatialization behavior doesn't match", virtBehavior,
+                    attributes.getSpatializationBehavior());
+        }
+
+        for (boolean isVirtualized : new boolean[] { true, false }) {
+            AudioAttributes attributes = new AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_MEDIA)
+                    .setIsContentSpatialized(isVirtualized)
+                    .build();
+            assertEquals("Is content virtualized doesn't match", isVirtualized,
+                    attributes.isContentSpatialized());
+        }
+    }
+
     // -----------------------------------------------------------------
     // Capture policy tests
     // ----------------------------------
