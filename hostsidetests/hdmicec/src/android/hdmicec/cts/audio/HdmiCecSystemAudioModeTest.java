@@ -19,8 +19,6 @@ package android.hdmicec.cts.audio;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
-import com.google.common.collect.Range;
-
 import android.hdmicec.cts.AudioManagerHelper;
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecMessage;
@@ -30,12 +28,14 @@ import android.hdmicec.cts.LogicalAddress;
 
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
+import com.google.common.collect.Range;
+
 import org.junit.After;
 import org.junit.Ignore;
 import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
-import org.junit.Test;
 
 import java.util.concurrent.TimeUnit;
 

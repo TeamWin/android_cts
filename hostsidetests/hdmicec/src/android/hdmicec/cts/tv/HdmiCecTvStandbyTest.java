@@ -16,6 +16,8 @@
 
 package android.hdmicec.cts.tv;
 
+import static com.google.common.truth.Truth.assertWithMessage;
+
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecOperand;
 import android.hdmicec.cts.HdmiCecConstants;
@@ -29,8 +31,6 @@ import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 
-
-import static com.google.common.truth.Truth.assertWithMessage;
 
 /** HDMI CEC tests for system standby features (Section 11.1.3) */
 @RunWith(DeviceJUnit4ClassRunner.class)
