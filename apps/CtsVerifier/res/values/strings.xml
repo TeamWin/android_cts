@@ -5116,11 +5116,34 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="audio_coldstart_in_latency_test">Audio Cold Start Input Latency Test</string>
 
     <string name="audio_coldstart_output_info">
-        This test measures the time required to output audio from a suspended \"cold\" audio system.
-        It requires that touch-sounds be disabled in the device \"Sound &amp; Vibration\" settings
+        This test measures the time required to play audio from a suspended \"cold\" audio system.
+        This time is defined as the \"cold start latency\". To pass this test, a maximum
+        cold start latency time of 500ms or less is REQUIRED, while a time of 100ms or less
+        is STRONGLY RECOMMENDED. (See <a href="https://source.android.com/compatibility/android-cdd#5_6_audio_latency">Android CDD § 5.6. Audio Latency</a>)
+        \n\nTo run this test, it is required to have touch-sounds disabled in the device
+        \"Sound &amp; Vibration\" settings
         panel.
+        \n\nThe \"Java API\" and \"Native API\" allow for capturing performance data from the
+        two streaming APIs. The cold start latency measurement need only pass for one API.
+        The Native API generally gives the best performance.
+        \n\nAlthough not part of the pass criteria, the test will also report \"open\" &amp;
+        \"start\" times. Open time is the time taken to allocate and prepare the player for the
+        specified stream attributes. Start time is the time taken to start playing audio on an
+        open stream.
     </string>
-    <string name="audio_coldstart_input_info">Info Here</string>
+    <string name="audio_coldstart_input_info">
+        This test measures the time required to record audio from a suspended \"cold\" audio system.
+        This time is defined as the \"cold start latency\". To pass this test, a maximum
+        cold start latency time of 500ms or less is REQUIRED, while a time of 100ms or less
+        is STRONGLY RECOMMENDED. (See <a href="https://source.android.com/compatibility/android-cdd#5_6_audio_latency">Android CDD § 5.6. Audio Latency</a>)
+        \n\nThe \"Java API\" and \"Native API\" allow for capturing performance data from the
+        two streaming APIs. The cold start latency measurement need only pass for one API.
+        The Native API generally gives the best performance.
+        \n\nAlthough not part of the pass criteria, the test will also report \"open\" &amp;
+        \"start\" times. Open time is the time taken to allocate and prepare the recorder for the
+        specified stream attributes. Start time is the time taken to start recording audio on an
+        open stream.
+    </string>
     <string name="audio_coldstart_outputlbl">Output Cold Start Latency</string>
     <string name="audio_coldstart_inputlbl">Input Cold Start Latency</string>
     <string name="audio_coldstart_touchsounds_message">
