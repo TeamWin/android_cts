@@ -493,12 +493,12 @@ public class MediaStorageTest {
             throws Exception {
         final String oldName = oldFile.getAbsolutePath();
 
-        // Create new file to which we have access via grant URI
+        // Create new file to which we do not have any access.
         final Uri newUri = create.call();
         assertWithMessage("Check newFile created").that(newUri).isNotNull();
-        clearMediaOwner(newUri, mUserId);
         File newFile = new File(queryForSingleColumn(newUri, MediaColumns.DATA));
         final String newName = newFile.getAbsolutePath();
+        clearMediaOwner(newUri, mUserId);
 
         assertWithMessage(
             "Rename should fail without newFile grant from oldName [%s] to newName [%s]",
