@@ -16,24 +16,37 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-android_test {
-    name: "CtsSharedUserMigrationTestCases",
+android_test_helper_app {
+    name: "CtsSharedUserMigrationPermissionTestApp1",
     defaults: ["cts_defaults"],
-    static_libs: [
-        "compatibility-device-util-axt",
-        "androidx.test.rules",
-        "ctstestrunner-axt",
-        "permission-test-util-lib",
-    ],
-    libs: [
-        "android.test.runner",
-        "android.test.base",
-    ],
-    srcs: ["src/**/*.java"],
-    // Tag this module as a cts test artifact
+    sdk_version: "current",
+    // tag this module as a cts test artifact
     test_suites: [
         "cts",
         "general-tests",
     ],
-    sdk_version: "test_current",
+}
+
+android_test_helper_app {
+    name: "CtsSharedUserMigrationPermissionTestApp2",
+    defaults: ["cts_defaults"],
+    sdk_version: "current",
+    manifest: "AndroidManifest2.xml",
+    // tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
+}
+
+android_test_helper_app {
+    name: "CtsSharedUserMigrationPermissionTestApp3",
+    defaults: ["cts_defaults"],
+    sdk_version: "current",
+    manifest: "AndroidManifest3.xml",
+    // tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
 }

@@ -15,17 +15,11 @@
 -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-        package="android.uidmigration.cts" >
+        package="android.uidmigration.cts.PermissionTestApp.secondary"
+        android:sharedUserId="android.uidmigration.cts" >
 
-    <application android:label="SharedUserMigrationTest" />
+     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+     <uses-permission android:name="android.permission.INTERNET" />
 
-    <instrumentation
-        android:name="androidx.test.runner.AndroidJUnitRunner"
-        android:targetPackage="android.uidmigration.cts"
-        android:label="CTS tests of android.uidmigration" >
-        <meta-data
-            android:name="listener"
-            android:value="com.android.cts.runner.CtsTestRunListener" />
-    </instrumentation>
-
+    <application android:hasCode="false"/>
 </manifest>
