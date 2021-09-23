@@ -21,9 +21,15 @@ import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.server.wm.TaskFragmentOrganizerTestBase.assertEmptyTaskFragment;
 import static android.server.wm.TaskFragmentOrganizerTestBase.assertNotEmptyTaskFragment;
 import static android.server.wm.TaskFragmentOrganizerTestBase.getActivityToken;
+import static android.server.wm.WindowManagerState.STATE_RESUMED;
 import static android.server.wm.app.Components.LAUNCHING_ACTIVITY;
+import static android.server.wm.app30.Components.SDK_30_TEST_ACTIVITY;
+
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
 import static com.google.common.truth.Truth.assertThat;
+
+import static org.junit.Assert.assertEquals;
 
 import android.app.Activity;
 import android.app.Instrumentation;
@@ -61,12 +67,14 @@ import java.util.List;
  */
 @RunWith(AndroidJUnit4.class)
 @Presubmit
-public class TaskFragmentOrganizerPolicyTest {
+public class TaskFragmentOrganizerPolicyTest extends ActivityManagerTestBase {
     private TaskOrganizer mTaskOrganizer;
     private BasicTaskFragmentOrganizer mTaskFragmentOrganizer;
 
     @Before
-    public void setUp() {
+    @Override
+    public void setUp() throws Exception {
+        super.setUp();
         mTaskFragmentOrganizer = new BasicTaskFragmentOrganizer();
         mTaskFragmentOrganizer.registerOrganizer();
     }
@@ -222,6 +230,65 @@ public class TaskFragmentOrganizerPolicyTest {
         // The new started Activity must be launched in the new created Task under the TaskFragment
         // with token taskFragToken.
         assertNotEmptyTaskFragment(info, taskFragToken);
+    }
+
+    /**
+     * Verifies the behavior of starting an Activity of another app in TaskFragment is not
+     * allowed without permissions.
+     */
+    @Test
+    public void testStartAnotherAppActivityInTaskFragment() {
+        final Activity activity = startNewActivity();
+        final IBinder ownerToken = getActivityToken(activity);
+        final TaskFragmentCreationParams params =
+                mTaskFragmentOrganizer.generateTaskFragParams(ownerToken);
+        final IBinder taskFragToken = params.getFragmentToken();
+        final WindowContainerTransaction wct = new WindowContainerTransaction()
+                .createTaskFragment(params)
+                .startActivityInTaskFragment(taskFragToken, ownerToken,
+                        new Intent().setComponent(SDK_30_TEST_ACTIVITY),
+                        null /* activityOptions */);
+        mTaskFragmentOrganizer.applyTransaction(wct);
+        mTaskFragmentOrganizer.waitForTaskFragmentCreated();
+
+        // Launching an activity of another app in TaskFragment should report error.
+        mTaskFragmentOrganizer.waitForTaskFragmentError();
+        assertThat(mTaskFragmentOrganizer.getThrowable()).isInstanceOf(SecurityException.class);
+
+        // Making sure no activity launched
+        TaskFragmentInfo info = mTaskFragmentOrganizer.getTaskFragmentInfo(taskFragToken);
+        assertEmptyTaskFragment(info, taskFragToken);
+    }
+
+    /**
+     * Verifies the behavior of starting an Activity of another app while activities of the host
+     * app are already embedded in TaskFragment.
+     */
+    @Test
+    public void testStartAnotherAppActivityWithEmbeddedTaskFragments() {
+        final Activity activity = startNewActivity();
+        final IBinder ownerToken = getActivityToken(activity);
+        final TaskFragmentCreationParams params =
+                mTaskFragmentOrganizer.generateTaskFragParams(ownerToken);
+        final IBinder taskFragToken = params.getFragmentToken();
+        final WindowContainerTransaction wct = new WindowContainerTransaction()
+                .createTaskFragment(params)
+                .startActivityInTaskFragment(taskFragToken, ownerToken,
+                        new Intent(getInstrumentation().getTargetContext(),
+                                WindowMetricsActivityTests.MetricsActivity.class),
+                        null /* activityOptions */);
+        mTaskFragmentOrganizer.applyTransaction(wct);
+        mTaskFragmentOrganizer.waitForTaskFragmentCreated();
+        mTaskFragmentOrganizer.waitForAndGetTaskFragmentInfo(
+                taskFragToken, info -> info.getActivities().size() == 1,
+                "getActivities from TaskFragment must contain 1 activities");
+
+        activity.startActivity(new Intent().setComponent(SDK_30_TEST_ACTIVITY));
+
+        waitAndAssertActivityState(SDK_30_TEST_ACTIVITY, STATE_RESUMED,
+                "Activity should be resumed.");
+        TaskFragmentInfo info = mTaskFragmentOrganizer.getTaskFragmentInfo(taskFragToken);
+        assertEquals(1, info.getActivities().size());
     }
 
     private static Activity startNewActivity() {

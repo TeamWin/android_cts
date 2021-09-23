@@ -33,6 +33,7 @@ import android.security.identity.IdentityCredentialStore;
 import android.security.identity.NoAuthenticationKeyAvailableException;
 import android.security.identity.ResultData;
 import androidx.test.InstrumentationRegistry;
+import com.android.security.identity.internal.Util;
 
 import org.junit.Test;
 
@@ -62,7 +63,7 @@ public class DynamicAuthTest {
 
     @Test
     public void dynamicAuthTest() throws Exception {
-        assumeTrue("IC HAL is not implemented", Util.isHalImplemented());
+        assumeTrue("IC HAL is not implemented", TestUtil.isHalImplemented());
 
         Context appContext = InstrumentationRegistry.getTargetContext();
         IdentityCredentialStore store = IdentityCredentialStore.getInstance(appContext);
@@ -460,14 +461,14 @@ public class DynamicAuthTest {
 
     @Test
     public void dynamicAuthWithExpirationTest() throws Exception {
-        assumeTrue("IC HAL is not implemented", Util.isHalImplemented());
+        assumeTrue("IC HAL is not implemented", TestUtil.isHalImplemented());
 
         Context appContext = InstrumentationRegistry.getTargetContext();
         IdentityCredentialStore store = IdentityCredentialStore.getInstance(appContext);
         assumeTrue(
             "IdentityCredential.storeStaticAuthenticationData(X509Certificate, Instant, byte[]) " +
             "not supported",
-            Util.getFeatureVersion() >= 202101);
+            TestUtil.getFeatureVersion() >= 202101);
 
         String credentialName = "test";
 

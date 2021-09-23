@@ -51,7 +51,7 @@ public class AttestationTest {
 
     @Test
     public void attestationTest() throws Exception {
-        assumeTrue("IC HAL is not implemented", Util.isHalImplemented());
+        assumeTrue("IC HAL is not implemented", TestUtil.isHalImplemented());
 
         Context appContext = InstrumentationRegistry.getTargetContext();
         IdentityCredentialStore store = IdentityCredentialStore.getInstance(appContext);

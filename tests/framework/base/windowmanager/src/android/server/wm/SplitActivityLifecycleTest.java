@@ -38,8 +38,8 @@ import android.window.TaskFragmentInfo;
 import android.window.WindowContainerToken;
 import android.window.WindowContainerTransaction;
 
+import org.junit.Ignore;
 import org.junit.Test;
-
 /**
  * Tests that verify the behavior of split Activity.
  * <p>
@@ -327,6 +327,7 @@ public class SplitActivityLifecycleTest extends TaskFragmentOrganizerTestBase {
      * </pre></p>
      */
     @Test
+    @Ignore("b/197364677")
     public void testActivityLaunchInExpandedTaskFragment_AboveEmbeddedTask() {
         // Initialize test environment by launching Activity A and B side-by-side.
         initializeSplitActivities(true /* verifyEmbeddedTask */);
@@ -373,6 +374,7 @@ public class SplitActivityLifecycleTest extends TaskFragmentOrganizerTestBase {
      * </pre></p>
      */
     @Test
+    @Ignore("b/197364677")
     public void testActivityLaunchAboveEmbeddedTaskInTaskFragment() {
         // Initialize test environment by launching Activity A and B side-by-side.
         initializeSplitActivities(true /* verifyEmbeddedTask */);
@@ -416,6 +418,7 @@ public class SplitActivityLifecycleTest extends TaskFragmentOrganizerTestBase {
      * </pre></p>
      */
     @Test
+    @Ignore("b/197364677")
     public void testActivityLaunchToEmbeddedTaskInTaskFragment() {
         // Initialize test environment by launching Activity A and B side-by-side.
         initializeSplitActivities(true /* verifyEmbeddedTask */);
