@@ -52,7 +52,7 @@ public class AppBTests {
         assertDirDoesNotExist("/data/data/" + APPA_PKG);
         assertDirDoesNotExist("/data/misc/profiles/cur/" + getCurrentUserId() + "/"
                 + APPA_PKG);
-        assertDirIsNotAccessible("/data/misc/profiles/ref");
+        assertDirDoesNotExist("/data/misc/profiles/ref/" + APPA_PKG);
     }
 
     @Test
@@ -65,7 +65,7 @@ public class AppBTests {
         }
         assertFileIsAccessible("/data/misc/profiles/cur/" + getCurrentUserId() + "/"
                 + APPA_PKG + "/primary.prof");
-        assertDirIsNotAccessible("/data/misc/profiles/ref");
+        assertDirIsAccessible("/data/misc/profiles/ref/" + APPA_PKG);
     }
 
     @Test

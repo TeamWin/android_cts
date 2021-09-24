@@ -178,8 +178,9 @@ public class AppATests {
     }
 
     @Test
-    public void testAppARefProfileDataNotAccessible() {
-        assertDirIsNotAccessible("/data/misc/profiles/ref");
+    public void testAppARefProfileDataAccessible() {
+        assertDirIsAccessible("/data/misc/profiles/ref/"
+                + mContext.getPackageName());
     }
 
     @Test
@@ -190,7 +191,7 @@ public class AppATests {
         assertDirDoesNotExist(applicationInfo.deviceProtectedDataDir);
         assertDirDoesNotExist("/data/data/" + APPB_PKG);
         assertDirDoesNotExist("/data/misc/profiles/cur/" + getCurrentUserId() + "/" + APPB_PKG);
-        assertDirIsNotAccessible("/data/misc/profiles/ref");
+        assertDirDoesNotExist("/data/misc/profiles/ref/" + APPB_PKG);
     }
 
     @Test
@@ -253,7 +254,7 @@ public class AppATests {
         testAppADeDataExists();
         testAppAExternalDirsDoExist();
         testAppACurProfileDataAccessible();
-        testAppARefProfileDataNotAccessible();
+        testAppARefProfileDataAccessible();
 
         // Verify after unlocking device, app a has still no access to app b dir.
         testCannotAccessAppBDataDir();

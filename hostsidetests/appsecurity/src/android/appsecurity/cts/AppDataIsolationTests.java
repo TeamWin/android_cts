@@ -56,8 +56,8 @@ public class AppDataIsolationTests extends BaseAppSecurityTest {
             "testAppADeDataDoesNotExist";
     private static final String APPA_METHOD_CHECK_CUR_PROFILE_ACCESSIBLE =
             "testAppACurProfileDataAccessible";
-    private static final String APPA_METHOD_CHECK_REF_PROFILE_NOT_ACCESSIBLE =
-            "testAppARefProfileDataNotAccessible";
+    private static final String APPA_METHOD_CHECK_REF_PROFILE_ACCESSIBLE =
+            "testAppARefProfileDataAccessible";
     private static final String APPA_METHOD_UNLOCK_DEVICE_AND_VERIFY_CE_DE_EXTERNAL_EXIST =
             "testAppAUnlockDeviceAndVerifyCeDeExternalDataExist";
     private static final String APPA_METHOD_CANNOT_ACCESS_APPB_DIR = "testCannotAccessAppBDataDir";
@@ -133,7 +133,7 @@ public class AppDataIsolationTests extends BaseAppSecurityTest {
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_DE_DATA_EXISTS);
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_EXTERNAL_DIRS_DO_EXIST);
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_CUR_PROFILE_ACCESSIBLE);
-        runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_REF_PROFILE_NOT_ACCESSIBLE);
+        runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_REF_PROFILE_ACCESSIBLE);
 
         // Force stop and verify CE, DE and external storage contains data, cur profile is
         // accessible and ref profile is not accessible, to confirm it's binding back the same data
@@ -143,7 +143,7 @@ public class AppDataIsolationTests extends BaseAppSecurityTest {
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_DE_DATA_EXISTS);
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_EXTERNAL_DIRS_DO_EXIST);
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_CUR_PROFILE_ACCESSIBLE);
-        runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_REF_PROFILE_NOT_ACCESSIBLE);
+        runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_REF_PROFILE_ACCESSIBLE);
     }
 
     @Test
@@ -164,7 +164,7 @@ public class AppDataIsolationTests extends BaseAppSecurityTest {
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_DE_DATA_EXISTS);
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_EXTERNAL_DIRS_DO_EXIST);
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_CUR_PROFILE_ACCESSIBLE);
-        runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_REF_PROFILE_NOT_ACCESSIBLE);
+        runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_REF_PROFILE_ACCESSIBLE);
 
         // Reboot and verify CE, DE and external storage contains data, cur profile is accessible
         // and ref profile is not accessible
@@ -173,7 +173,7 @@ public class AppDataIsolationTests extends BaseAppSecurityTest {
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_DE_DATA_EXISTS);
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_EXTERNAL_DIRS_DO_EXIST);
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_CUR_PROFILE_ACCESSIBLE);
-        runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_REF_PROFILE_NOT_ACCESSIBLE);
+        runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_REF_PROFILE_ACCESSIBLE);
     }
 
     private boolean isFbeModeEmulated() throws Exception {
@@ -212,7 +212,7 @@ public class AppDataIsolationTests extends BaseAppSecurityTest {
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_DE_DATA_EXISTS);
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_EXTERNAL_DIRS_DO_EXIST);
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_CUR_PROFILE_ACCESSIBLE);
-        runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_REF_PROFILE_NOT_ACCESSIBLE);
+        runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_REF_PROFILE_ACCESSIBLE);
 
         try {
             // Setup screenlock
@@ -243,7 +243,7 @@ public class AppDataIsolationTests extends BaseAppSecurityTest {
             runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_CE_DATA_DOES_NOT_EXIST);
             runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_EXTERNAL_DIRS_UNAVAILABLE);
             runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_CUR_PROFILE_ACCESSIBLE);
-            runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_REF_PROFILE_NOT_ACCESSIBLE);
+            runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_REF_PROFILE_ACCESSIBLE);
             // Verify cannot access other apps data
             runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CANNOT_ACCESS_APPB_DIR);
 
@@ -258,7 +258,7 @@ public class AppDataIsolationTests extends BaseAppSecurityTest {
             runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_DE_DATA_EXISTS);
             runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_EXTERNAL_DIRS_DO_EXIST);
             runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_CUR_PROFILE_ACCESSIBLE);
-            runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_REF_PROFILE_NOT_ACCESSIBLE);
+            runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_REF_PROFILE_ACCESSIBLE);
         } finally {
             try {
                 // Always try to unlock first, then clear screenlock setting
