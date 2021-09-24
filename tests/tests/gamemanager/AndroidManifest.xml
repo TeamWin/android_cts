@@ -20,6 +20,10 @@
 
     <application android:appCategory="game">
         <uses-library android:name="android.test.runner"/>
+        <meta-data android:name="com.android.app.gamemode.performance.enabled"
+                   android:value="true"/>
+        <meta-data android:name="com.android.app.gamemode.battery.enabled"
+                   android:value="true"/>
         <activity android:name=".GameManagerCtsActivity"
                   android:label="GameManagerCtsActivity"
                   android:exported="true">

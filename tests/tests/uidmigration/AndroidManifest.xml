@@ -17,8 +17,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
         package="android.uidmigration.cts" >
 
-    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
-
     <application android:label="SharedUserMigrationTest" />
 
     <instrumentation

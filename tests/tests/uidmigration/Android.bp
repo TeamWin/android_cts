@@ -23,6 +23,7 @@ android_test {
         "compatibility-device-util-axt",
         "androidx.test.rules",
         "ctstestrunner-axt",
+        "permission-test-util-lib",
     ],
     libs: [
         "android.test.runner",

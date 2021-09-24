@@ -23,6 +23,9 @@
         <option name="push" value="CtsSharedUserMigrationInstallTestAppRm.apk->/data/local/tmp/cts/uidmigration/InstallTestAppRm.apk" />
         <option name="push" value="CtsSharedUserMigrationInstallTestAppMax.apk->/data/local/tmp/cts/uidmigration/InstallTestAppMax.apk" />
         <option name="push" value="CtsSharedUserMigrationInstallTestApp2.apk->/data/local/tmp/cts/uidmigration/InstallTestApp2.apk" />
+        <option name="push" value="CtsSharedUserMigrationPermissionTestApp1.apk->/data/local/tmp/cts/uidmigration/PermissionTestApp1.apk" />
+        <option name="push" value="CtsSharedUserMigrationPermissionTestApp2.apk->/data/local/tmp/cts/uidmigration/PermissionTestApp2.apk" />
+        <option name="push" value="CtsSharedUserMigrationPermissionTestApp3.apk->/data/local/tmp/cts/uidmigration/PermissionTestApp3.apk" />
     </target_preparer>
 
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">

@@ -476,18 +476,6 @@
             </intent-filter>
         </service>
 
-        <service android:name="android.app.stubs.ToggleableTestTileService"
-             android:exported="true"
-             android:label="BooleanTestTileService"
-             android:icon="@drawable/robot"
-             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
-            <intent-filter>
-                <action android:name="android.service.quicksettings.action.QS_TILE"/>
-            </intent-filter>
-            <meta-data android:name="android.service.quicksettings.TOGGLEABLE_TILE"
-                 android:value="true"/>
-        </service>
-
         <activity android:name="android.app.stubs.AutomaticZenRuleActivity"
              android:exported="true">
             <intent-filter>
