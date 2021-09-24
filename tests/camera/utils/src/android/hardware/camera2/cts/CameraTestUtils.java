@@ -1542,9 +1542,13 @@ public class CameraTestUtils extends Assert {
                 }
                 int h = (i == 0) ? height : height / 2;
                 for (int row = 0; row < h; row++) {
-                    int length = rowStride;
+                    // Each 10-bit pixel occupies 2 bytes
+                    int length = 2 * width;
                     buffer.get(data, offset, length);
                     offset += length;
+                    if (row < h - 1) {
+                        buffer.position(buffer.position() + rowStride - length);
+                    }
                 }
                 if (VERBOSE) Log.v(TAG, "Finished reading data from plane " + i);
                 buffer.rewind();
