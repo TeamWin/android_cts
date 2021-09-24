@@ -53,6 +53,7 @@ import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -184,6 +185,7 @@ public class TaskFragmentOrganizerPolicyTest extends ActivityManagerTestBase {
      * </p>
      */
     @Test
+    @Ignore("b/197364677")
     public void testStartActivityFromAnotherProcessInEmbeddedTask() {
         final Activity activity = startNewActivity();
         final IBinder ownerToken = getActivityToken(activity);
