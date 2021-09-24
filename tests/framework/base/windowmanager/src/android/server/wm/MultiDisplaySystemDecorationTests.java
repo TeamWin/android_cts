@@ -628,18 +628,7 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
         assumeTrue(MSG_NO_MOCK_IME, supportsInstallableIme());
 
         final MockImeSession mockImeSession = createManagedMockImeSession(this);
-
-        // Launch Ime test activity and initial the editor focus on default display.
-        final TestActivitySession<ImeTestActivity2> defaultDisplaySession =
-                createManagedTestActivitySession();
-        defaultDisplaySession.launchTestActivityOnDisplaySync(ImeTestActivity2.class,
-                DEFAULT_DISPLAY);
         final ImeEventStream stream = mockImeSession.openEventStream();
-        expectEvent(stream, editorMatcher("onStartInput",
-                defaultDisplaySession.getActivity().mEditText.getPrivateImeOptions()), TIMEOUT);
-
-        // Verify the activity shows soft input on the default display.
-        showSoftInputAndAssertImeShownOnDisplay(DEFAULT_DISPLAY, defaultDisplaySession, stream);
 
         // Create a virtual display with the policy to hide the IME.
         final DisplayContent newDisplay = createManagedVirtualDisplaySession()
@@ -661,15 +650,11 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
         imeTestActivitySession.launchTestActivityOnDisplay(ImeTestActivity.class,
                 newDisplay.mId);
 
-        // Expect no onStartInput when user taps the editor on the display with the HIDE policy.
+        // Expect no onStartInput and the activity does not show soft input when user taps the
+        // editor on the display with the HIDE policy.
         tapAndAssertEditorFocusedOnImeActivity(imeTestActivitySession, newDisplay.mId);
         notExpectEvent(stream, editorMatcher("onStartInput",
                 imeTestActivitySession.getActivity().mEditText.getPrivateImeOptions()),
-                NOT_EXPECT_TIMEOUT);
-
-        final EditText editText = imeTestActivitySession.getActivity().mEditText;
-        // Verify the activity does not show soft input.
-        notExpectEvent(stream, editorMatcher("onStartInput", editText.getPrivateImeOptions()),
                 NOT_EXPECT_TIMEOUT);
         InputMethodVisibilityVerifier.expectImeInvisible(NOT_EXPECT_TIMEOUT);
     }
