@@ -567,7 +567,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         final List<LifecycleLog.ActivityCallback> expectedSequence =
                 Arrays.asList(ON_CREATE, ON_START, ON_POST_CREATE, ON_RESUME,
                         ON_TOP_POSITION_GAINED, ON_TOP_POSITION_LOST, ON_PAUSE, ON_STOP,
-                        ON_ACTIVITY_RESULT, ON_RESTART, ON_START, ON_RESUME,
+                        ON_RESTART, ON_START, ON_ACTIVITY_RESULT, ON_RESUME,
                         ON_TOP_POSITION_GAINED);
         LifecycleVerifier.assertSequence(LaunchForwardResultActivity.class, getLifecycleLog(),
                 expectedSequence, "becomingVisibleResumed");
@@ -589,13 +589,10 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         // TODO(b/79218023): First activity might also be stopped before getting result.
         final List<LifecycleLog.ActivityCallback> sequenceWithStop =
                 Arrays.asList(ON_CREATE, ON_START, ON_POST_CREATE, ON_RESUME,
-                        ON_PAUSE, ON_STOP, ON_ACTIVITY_RESULT, ON_RESTART, ON_START, ON_RESUME);
-        final List<LifecycleLog.ActivityCallback> thirdSequence =
-                Arrays.asList(ON_CREATE, ON_START, ON_POST_CREATE, ON_RESUME,
                         ON_PAUSE, ON_STOP, ON_RESTART, ON_START, ON_ACTIVITY_RESULT, ON_RESUME);
         LifecycleVerifier.assertSequenceMatchesOneOf(LaunchForResultActivity.class,
                 getLifecycleLog(),
-                Arrays.asList(expectedSequence, sequenceWithStop, thirdSequence), "activityResult");
+                Arrays.asList(expectedSequence, sequenceWithStop), "activityResult");
     }
 
     @Test
@@ -621,23 +618,17 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
 
         final boolean isTranslucent = isTranslucent(activity);
 
-        final List<List<LifecycleLog.ActivityCallback>> expectedSequences;
+        final List<LifecycleLog.ActivityCallback> expectedSequences;
         if (isTranslucent) {
-            expectedSequences = Arrays.asList(
-                    Arrays.asList(ON_CREATE, ON_START, ON_POST_CREATE, ON_RESUME, ON_PAUSE,
-                            ON_ACTIVITY_RESULT, ON_RESUME)
-            );
+            expectedSequences = Arrays.asList(ON_CREATE, ON_START, ON_POST_CREATE, ON_RESUME,
+                    ON_PAUSE, ON_ACTIVITY_RESULT, ON_RESUME);
         } else {
-            expectedSequences = Arrays.asList(
-                    Arrays.asList(ON_CREATE, ON_START, ON_POST_CREATE, ON_RESUME, ON_PAUSE, ON_STOP,
-                            ON_RESTART, ON_START, ON_ACTIVITY_RESULT, ON_RESUME),
-                    Arrays.asList(ON_CREATE, ON_START, ON_POST_CREATE, ON_RESUME, ON_PAUSE, ON_STOP,
-                            ON_ACTIVITY_RESULT, ON_RESTART, ON_START, ON_RESUME)
-            );
+            expectedSequences = Arrays.asList(ON_CREATE, ON_START, ON_POST_CREATE, ON_RESUME,
+                    ON_PAUSE, ON_STOP, ON_RESTART, ON_START, ON_ACTIVITY_RESULT, ON_RESUME);
         }
-        waitForActivityTransitions(LaunchForResultActivity.class, expectedSequences.get(0));
+        waitForActivityTransitions(LaunchForResultActivity.class, expectedSequences);
 
-        LifecycleVerifier.assertSequenceMatchesOneOf(LaunchForResultActivity.class,
+        LifecycleVerifier.assertSequence(LaunchForResultActivity.class,
                 getLifecycleLog(), expectedSequences, "activityResult");
     }
 
