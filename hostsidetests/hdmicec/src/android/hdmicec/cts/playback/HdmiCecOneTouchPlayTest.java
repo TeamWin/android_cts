@@ -77,6 +77,18 @@ public final class HdmiCecOneTouchPlayTest extends BaseHdmiCecCtsTest {
     }
 
     /**
+     * Test to check that the device initiates an One Touch Play when woken up after a quiescent
+     * boot.
+     */
+    @Test
+    public void testOtpAfterQuiescentBootWakeup() throws Exception {
+        rebootQuiescent();
+        hdmiCecClient.discardAllMessages();
+        wakeUpDevice();
+        hdmiCecClient.checkExpectedOutput(LogicalAddress.TV, CecOperand.TEXT_VIEW_ON);
+    }
+
+    /**
      * Tests that the device sends a {@code <Text View On>} when the pairing activity is started on
      * device, followed by a {@code <Active Source>} message.
      */

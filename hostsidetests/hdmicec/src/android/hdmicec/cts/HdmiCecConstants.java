@@ -26,6 +26,7 @@ public final class HdmiCecConstants {
 
     public static final String PHYSICAL_ADDRESS_NAME = "cec-phy-addr";
     public static final int REBOOT_TIMEOUT = 60000;
+    public static final int REBOOT_TIMEOUT_QUIESCENT = 2 * REBOOT_TIMEOUT;
     public static final int TIMEOUT_CEC_REINIT_SECONDS = 5;
     public static final int TIMEOUT_SAFETY_MS = 500;
 
@@ -100,6 +101,13 @@ public final class HdmiCecConstants {
 
     // CEC Device property list
     public static final String HDMI_DEVICE_TYPE_PROPERTY = "ro.hdmi.device_type";
+
+    // Quiescent Boot Support property
+    public static final String QUIESCENT_BOOT_SUPPORTED = "ro.boot.quiescent";
+    public static final String QUIESCENT_BOOT_SUPPORTED_TRUE = "1";
+
+    // Quiescent Reboot shell command
+    public static final String QUIESCENT_REBOOT_SHELL_CMD = "reboot quiescent";
 
     /*
      * The default name of local directory into which the port to device mapping files are stored.
