@@ -112,6 +112,7 @@ public class SplashscreenTests extends ActivityManagerTestBase {
     public void setUp() throws Exception {
         super.setUp();
         mWmState.setSanityCheckWithFocusedWindow(false);
+        mWmState.waitForDisplayUnfrozen();
     }
 
     @After

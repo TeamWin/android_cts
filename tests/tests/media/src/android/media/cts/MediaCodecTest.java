@@ -2866,8 +2866,8 @@ public class MediaCodecTest extends AndroidTestCase {
                 if (audioCaps != null) {
                     format = MediaFormat.createAudioFormat(
                             type,
-                            audioCaps.getMaxInputChannelCount(),
-                            audioCaps.getSupportedSampleRateRanges()[0].getLower());
+                            audioCaps.getSupportedSampleRateRanges()[0].getLower(),
+                            audioCaps.getMaxInputChannelCount());
                     if (info.isEncoder()) {
                         format.setInteger(MediaFormat.KEY_BIT_RATE, AUDIO_BIT_RATE);
                     }
