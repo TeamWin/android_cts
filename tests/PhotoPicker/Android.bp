@@ -30,5 +30,6 @@ android_test {
             "androidx.test.rules",
             "cts-install-lib",
             "androidx.test.uiautomator_uiautomator",
+            "Harrier",
     ],
 }

@@ -19,6 +19,7 @@ package android.server.wm;
 import static android.app.WindowConfiguration.WINDOWING_MODE_MULTI_WINDOW;
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+import static android.server.wm.app.Components.LAUNCHING_ACTIVITY;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -256,6 +257,33 @@ public class TaskFragmentOrganizerTest extends TaskFragmentOrganizerTestBase {
         final int currTaskFragCount = mWmState.getRootTask(mOwnerTaskId).getTaskFragments().size();
         assertWithMessage("TaskFragment with token " + taskFragToken + " must be"
                 + " removed.").that(originalTaskFragCount - currTaskFragCount).isEqualTo(1);
+    }
+
+    /**
+     * Verifies the visibility of an activity behind a TaskFragment that has the same
+     * bounds of the host Task.
+     */
+    @Test
+    public void testActivityVisibilityBehindTaskFragment() {
+        // Start an activity and reparent it to a TaskFragment.
+        final Activity embeddedActivity =
+                startActivity(WindowMetricsActivityTests.MetricsActivity.class);
+        final IBinder embeddedActivityToken = getActivityToken(embeddedActivity);
+        final TaskFragmentCreationParams params = generateTaskFragCreationParams();
+        final IBinder taskFragToken = params.getFragmentToken();
+        final WindowContainerTransaction wct = new WindowContainerTransaction()
+                .createTaskFragment(params)
+                .reparentActivityToTaskFragment(taskFragToken, embeddedActivityToken);
+        mTaskFragmentOrganizer.applyTransaction(wct);
+        mTaskFragmentOrganizer.waitForTaskFragmentCreated();
+        // The activity below must be occluded and stopped.
+        waitAndAssertActivityState(mOwnerActivityName, WindowManagerState.STATE_STOPPED,
+                "Activity must be stopped");
+
+        // Finishing the top activity and remain the TaskFragment on top. The next top activity
+        // must be resumed.
+        embeddedActivity.finish();
+        waitAndAssertResumedActivity(mOwnerActivityName, "Activity must be resumed");
     }
 
     @NonNull

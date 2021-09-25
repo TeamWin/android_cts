@@ -16,20 +16,28 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-android_test_helper_app {
-    name: "BUG-183613671",
-    defaults: ["cts_support_defaults"],
-    srcs: ["src/**/*.java"],
+android_test {
+    name: "CtsCarBuiltinApiTestCases",
+    defaults: ["cts_defaults"],
     test_suites: [
         "cts",
-        "vts10",
-        "sts",
+        "general-tests",
+    ],
+
+    srcs: ["src/**/*.java"],
+    libs: [
+        "android.car.builtin",
+        "android.test.base",
     ],
     static_libs: [
-        "androidx.appcompat_appcompat",
         "androidx.test.rules",
-        "androidx.test.uiautomator_uiautomator",
-        "androidx.test.core",
+        "androidx.test.ext.truth",
+        "compatibility-device-util-axt",
+        "ctstestrunner-axt",
+        "testng",
     ],
-    sdk_version: "current",
+
+    platform_apis: true,
+    sdk_version: "module_current",
+    resource_dirs: [],
 }
