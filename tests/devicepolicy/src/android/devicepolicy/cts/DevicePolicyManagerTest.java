@@ -768,6 +768,14 @@ public final class DevicePolicyManagerTest {
                 sDeviceState.deviceOwner().componentName()));
     }
 
+    @EnsureHasDeviceOwner
+    @Test
+    public void getKeyguardDisabledFeatures_adminPassedDoesNotBelongToCaller_throwsException() {
+        assertThrows(SecurityException.class,
+                () -> sDevicePolicyManager.getKeyguardDisabledFeatures(
+                        sDeviceState.deviceOwner().componentName()));
+    }
+
     private static HashMap<String, String> createNfcIntentData() {
         HashMap<String, String> nfcIntentInput = new HashMap<String, String>();
         nfcIntentInput.putAll(
