@@ -647,4 +647,12 @@ public final class DevicePolicyManagerTest {
         assertThrows(SecurityException.class, () -> sDevicePolicyManager.getCameraDisabled(
                 sDeviceState.deviceOwner().componentName()));
     }
+
+    @EnsureHasDeviceOwner
+    @Test
+    public void getKeyguardDisabledFeatures_adminPassedDoesNotBelongToCaller_throwsException() {
+        assertThrows(SecurityException.class,
+                () -> sDevicePolicyManager.getKeyguardDisabledFeatures(
+                        sDeviceState.deviceOwner().componentName()));
+    }
 }
