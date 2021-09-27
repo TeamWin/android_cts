@@ -14,14 +14,16 @@
  * limitations under the License.
  */
 
-package android.security.cts.BUG_183963253;
+package android.security.cts.BUG_183613671;
 
-import static android.security.cts.BUG_183963253.Constants.LOG_TAG;
+import static android.security.cts.BUG_183613671.Constants.LOG_TAG;
 
 import org.junit.Before;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import android.content.Context;
 import android.content.Intent;
@@ -46,7 +48,7 @@ import static org.junit.Assert.assertNotNull;
 @RunWith(AndroidJUnit4.class)
 public class DeviceTest {
 
-    private static final long WAIT_FOR_UI_TIMEOUT = 10_000;
+    private static final long WAIT_FOR_UI_TIMEOUT = 20_000;
 
     private Context mContext;
     private UiDevice mDevice;
@@ -83,7 +85,7 @@ public class DeviceTest {
         mContext.sendBroadcast(new Intent(Constants.ACTION_START_TAPJACKING));
         Log.d(LOG_TAG, "Sent intent to start tap-jacking!");
 
-        UiObject2 overlay = waitForView(By.text("BUG_183963253 overlay text"));
+        UiObject2 overlay = waitForView(By.text("BUG_183613671 OVERLAY TEXT"));
         assertNull("Tap-jacking successful. Overlay was displayed.!", overlay);
     }
 
@@ -106,12 +108,18 @@ public class DeviceTest {
 
     private void launchTapjackedActivity() {
         Intent intent = new Intent();
-        intent.setAction("android.settings.USAGE_ACCESS_SETTINGS");
+        intent.setAction("android.car.settings.SCREEN_LOCK_ACTIVITY");
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
         mContext.startActivity(intent);
 
-        UiObject2 view = waitForView(By.text(Constants.TEST_APP_PACKAGE));
-        assertNotNull("Activity under-test was not launched or found!", view);
+        UiObject2 activityInstance = waitForView(By.pkg("com.android.car.settings").depth(0));
+        assertNotNull("Activity under-test was not launched or found!", activityInstance);
+
+        UiObject2 textView = waitForView(By.res("com.android.car.settings", "password_entry"));
+        assertNotNull("Password confirmation screen was not launched or found!", textView);
+        textView.setText("test1234");
+        mDevice.pressEnter();
+
         Log.d(LOG_TAG, "Started Activity under-test.");
     }
 
