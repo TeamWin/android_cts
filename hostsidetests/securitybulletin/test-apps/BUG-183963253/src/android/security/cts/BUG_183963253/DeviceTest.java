@@ -57,11 +57,11 @@ public class DeviceTest {
 
         mContext = getApplicationContext();
 
-        // If the permission is not granted, the app will show up in the Usage Access Settings.
+        // If the permission is not granted, the app will not be able to show an overlay dialog.
         // This is required for the test below.
         // NOTE: The permission is granted by the HostJUnit4Test implementation and should not fail.
-        assertEquals("Permission PACKAGE_USAGE_STATS not granted!",
-                mContext.checkSelfPermission("android.permission.PACKAGE_USAGE_STATS"),
+        assertEquals("Permission SYSTEM_ALERT_WINDOW not granted!",
+                mContext.checkSelfPermission("android.permission.SYSTEM_ALERT_WINDOW"),
                 PackageManager.PERMISSION_GRANTED);
 
         // Initialize UiDevice instance
