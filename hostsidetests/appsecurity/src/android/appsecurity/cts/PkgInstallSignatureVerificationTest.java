@@ -705,6 +705,23 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
                 "verifySignatures_withRotation_succeeds");
     }
 
+    public void testInstallV31UpdateAfterRotation() throws Exception {
+        // This test is the same as above, but using the v3.1 signature scheme for rotation.
+        assertInstallFromBuildSucceeds("CtsSignatureQueryService.apk");
+        assertInstallFromBuildSucceeds("CtsSignatureQueryServiceTest.apk");
+        Utils.runDeviceTests(getDevice(), SERVICE_TEST_PKG, SERVICE_TEST_CLASS,
+                "verifySignatures_noRotation_succeeds");
+
+        assertInstallSucceeds("CtsSignatureQueryService_v2-tgt-33.apk");
+        Utils.runDeviceTests(getDevice(), SERVICE_TEST_PKG, SERVICE_TEST_CLASS,
+                "verifySignatures_withRotation_succeeds");
+
+        assertInstallSucceeds("CtsSignatureQueryService_v3-tgt-33.apk");
+        assertInstallSucceeds("CtsSignatureQueryServiceTest_v2-tgt-33.apk");
+        Utils.runDeviceTests(getDevice(), SERVICE_TEST_PKG, SERVICE_TEST_CLASS,
+                "verifySignatures_withRotation_succeeds");
+    }
+
     public void testInstallV3KeyRotationSigPerm() throws Exception {
         // tests that a v3 signed APK can still get a signature permission from an app with its
         // older signing certificate.
@@ -987,6 +1004,110 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         assertInstallFromBuildSucceeds("v3-ec-p256-1-companion-usesperm.apk");
         Utils.runDeviceTests(getDevice(), DEVICE_TESTS_PKG, DEVICE_TESTS_CLASS, "testHasPerm");
     }
+
+    public void testV31TargetTPlatformUsesRotatedKey() throws Exception {
+        // The v3.1 signature block is intended to allow applications to target T+ for APK signing
+        // key rotation without needing multi-targeting APKs. This test verifies a standard APK
+        // install with the rotated key in the v3.1 signing block targeting T is recognized by the
+        // platform, and this rotated key is used as the signing identity.
+        assertInstallSucceeds("v31-ec-p256_2-tgt-33.apk");
+        Utils.runDeviceTests(
+                getDevice(), DEVICE_TESTS_PKG, DEVICE_TESTS_CLASS,
+                "testUsingRotatedSigner");
+    }
+
+    public void testV31TargetLaterThanDevicePlatformUsesOriginalKey() throws Exception {
+        // The v3.1 signature block allows targeting SDK versions later than T for rotation; for
+        // this test a target of 100001 is used assuming it will be beyond the platform's version.
+        // Since the target version for rotation is beyond the platform's version the original
+        // signer from the v3.0 block should be used.
+        assertInstallSucceeds("v31-ec-p256_2-tgt-100001.apk");
+        Utils.runDeviceTests(
+                getDevice(), DEVICE_TESTS_PKG, DEVICE_TESTS_CLASS,
+                "testUsingOriginalSigner");
+    }
+
+    public void testV31BlockStrippedWithV3StrippingProtectionAttrSet() throws Exception {
+        // With the introduction of the v3.1 signature scheme, a new stripping protection attribute
+        // has been added to the v3.0 signer to protect against stripping and modification of the
+        // v3.1 signing block. This test verifies a stripped v3.1 block is detected when the v3.0
+        // stripping protection attribute is set.
+        assertInstallFails("v31-block-stripped-v3-attr-value-33.apk");
+    }
+
+    public void testV31BlockWithMultipleSignersUsesCorrectSigner() throws Exception {
+        // All of the APKs for this test use multiple v3.1 signers; those targeting SDK versions
+        // expected to be outside the version of a device under test use the original signer, and
+        // those targeting an expected range for a device use the rotated key. This test is
+        // intended to ensure the signer with the min / max SDK version that matches the device
+        // SDK version is used.
+
+        // The APK used for this test contains two signers in the v3.1 signing block. The first
+        // has a range from 100001 to Integer.MAX_VALUE and is using the original signing key;
+        // the second targets 33 to 100000 using the rotated key.
+        assertInstallSucceeds("v31-ec-p256_2-tgt-33-ec-p256-tgt-100001.apk");
+        Utils.runDeviceTests(
+                getDevice(), DEVICE_TESTS_PKG, DEVICE_TESTS_CLASS,
+                "testUsingRotatedSigner");
+        uninstallPackage();
+
+        // The APK for this test contains two signers in the v3.1 block, one targeting SDK versions
+        // 1 to 27 using the original signer, and the other targeting 33+ using the rotated signer.
+        assertInstallSucceeds("v31-ec-p256_2-tgt-33-ec-p256-tgt-1-27.apk");
+        Utils.runDeviceTests(
+                getDevice(), DEVICE_TESTS_PKG, DEVICE_TESTS_CLASS,
+                "testUsingRotatedSigner");
+        uninstallPackage();
+
+        // This APK combines the extra signers from the APKs above, one targeting 1 to 27 with the
+        // original signing key, another targeting 100001+ with the original signing key, and the
+        // last targeting 33 to 100000 with the rotated key.
+        assertInstallSucceeds("v31-ec-p256_2-tgt-33-ec-p256-tgt-1-27-and-100001.apk");
+        Utils.runDeviceTests(
+                getDevice(), DEVICE_TESTS_PKG, DEVICE_TESTS_CLASS,
+                "testUsingRotatedSigner");
+    }
+
+    public void testV31UpdateV3ToFromV31Succeeds() throws Exception {
+        // Since the v3.1 block is just intended to allow targeting SDK versions T and later for
+        // rotation, an APK signed with the rotated key in a v3.0 signing block should support
+        // updates to an APK signed with the same signing key in a v3.1 signing block.
+        assertInstallFromBuildSucceeds("v3-ec-p256-with-por_1_2-default-caps.apk");
+        assertInstallSucceeds("v31-ec-p256_2-tgt-33.apk");
+        uninstallPackage();
+
+        // Similarly an APK signed with the rotated key in a v3.1 signing block should support
+        // updates to an APK signed with the same signing key in a v3.0 signing block.
+        assertInstallSucceeds("v31-ec-p256_2-tgt-33.apk");
+        assertInstallFromBuildSucceeds("v3-ec-p256-with-por_1_2-default-caps.apk");
+        uninstallPackage();
+    }
+
+    public void testV31RotationTargetModifiedReportedByV3() throws Exception {
+        // When determining if a signer in the v3.1 signing block should be applied, the min / max
+        // SDK versions from the signer are compared against the device's SDK version; if the device
+        // is not within the signer's range then the block is skipped, other v3.1 blocks are
+        // checked, and finally the v3.0 block is used. The v3.0 signer block contains an additional
+        // attribute with the rotation-min-sdk-version that was expected in the v3.1 signing
+        // block; if this attribute's value does not match what was found in the v3.1 block the
+        // APK should fail to install.
+        assertInstallFails("v31-ec-p256_2-tgt-33-modified.apk");
+    }
+
+    public void testV31RotationTargetsDevRelease() throws Exception {
+        // The v3.1 signature scheme allows targeting a platform release under development through
+        // the use of a rotation-targets-dev-release additional attribute. Since a platform under
+        // development shares the same SDK version as the most recently released platform, the
+        // attribute is used by the platform to determine if a signer block should be applied. If
+        // the signer's minSdkVersion is the same as the device's SDK version and this attribute
+        // is set, then the platform will check the value of ro.build.version.codename; a value of
+        // "REL" indicates the platform is a release platform, so the current signer block will not
+        // be used. During T's development, the SDK version is 31 and the codename is not "REL", so
+        // this test APK will install on T during development as well as after its release since
+        // the SDK version will be bumped at that point.
+        assertInstallSucceeds("v31-ec-p256_2-tgt-31-dev-release.apk");
+    }
+
 
     public void testInstallTargetSdk30WithV1Signers() throws Exception {
         // An app targeting SDK version >= 30 must have at least a V2 signature; this test verifies
