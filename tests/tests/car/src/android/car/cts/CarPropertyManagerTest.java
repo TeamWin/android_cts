@@ -29,6 +29,7 @@ import android.car.VehicleAreaSeat;
 import android.car.VehicleAreaType;
 import android.car.VehicleAreaWheel;
 import android.car.VehicleGear;
+import android.car.VehicleIgnitionState;
 import android.car.VehiclePropertyIds;
 import android.car.cts.utils.VehiclePropertyVerifier;
 import android.car.hardware.CarPropertyConfig;
@@ -625,13 +626,10 @@ public class CarPropertyManagerTest extends CarApiTestBase {
                     assertWithMessage(
                             "IGNITION_STATE must be a defined ignition state: "
                                     + ignitionState).that(
-                            ignitionState).isIn(ImmutableSet.of(
-                            /*VehicleIgnitionState.UNDEFINED=*/0,
-                            /*VehicleIgnitionState.LOCK=*/1,
-                            /*VehicleIgnitionState.OFF=*/2,
-                            /*VehicleIgnitionState.ACC=*/3,
-                            /*VehicleIgnitionState.ON=*/4,
-                            /*VehicleIgnitionState.START=*/5));
+                            ignitionState).isIn(ImmutableSet.of(VehicleIgnitionState.UNDEFINED,
+                            VehicleIgnitionState.LOCK, VehicleIgnitionState.OFF,
+                            VehicleIgnitionState.ACC, VehicleIgnitionState.ON,
+                            VehicleIgnitionState.START));
                 }).build().verify(mCarPropertyManager);
     }
 
