@@ -263,4 +263,12 @@ public final class RemoteDpc extends TestAppInstanceReference {
         RemoteDpc other = (RemoteDpc) obj;
         return other.mDevicePolicyController.equals(mDevicePolicyController);
     }
+
+    @Override
+    public String toString() {
+        return "RemoteDpc{"
+                + "devicePolicyController=" + mDevicePolicyController
+                + ", testApp=" + super.toString()
+                + '}';
+    }
 }

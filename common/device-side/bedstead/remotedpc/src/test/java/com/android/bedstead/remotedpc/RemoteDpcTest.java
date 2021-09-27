@@ -733,6 +733,7 @@ public class RemoteDpcTest {
 
     @Test
     @EnsureHasNoWorkProfile
+    @EnsureHasNoDeviceOwner
     public void getParentProfileInstance_returnsUsableInstance() {
         try (UserReference profile = TestApis.users().createUser()
                 .parent(sUser)

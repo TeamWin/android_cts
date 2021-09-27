@@ -16,9 +16,8 @@
 
 package com.android.bedstead.nene.users;
 
-import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
+import static android.Manifest.permission.INTERACT_ACROSS_USERS;
 import static android.os.Build.VERSION.SDK_INT;
-import static android.os.Build.VERSION_CODES.Q;
 import static android.os.Build.VERSION_CODES.S;
 import static android.os.Process.myUserHandle;
 
@@ -113,9 +112,9 @@ public final class Users {
 
     /** Get a {@link UserReference} for the user currently switched to. */
     public UserReference current() {
-        if (Versions.meetsMinimumSdkVersionRequirement(Q)) {
+        if (Versions.meetsMinimumSdkVersionRequirement(S)) {
             try (PermissionContext p =
-                         TestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
+                         TestApis.permissions().withPermission(INTERACT_ACROSS_USERS)) {
                 return find(ActivityManager.getCurrentUser());
             }
         }

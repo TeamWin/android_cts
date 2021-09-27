@@ -39,6 +39,7 @@ import com.android.bedstead.harrier.annotations.EnsureHasNoSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
+import com.android.bedstead.harrier.annotations.RequireHeadlessSystemUserMode;
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDeviceOwner;
@@ -485,6 +486,7 @@ public class UsersTest {
     @Test
     @RequireRunOnPrimaryUser // TODO(201319776): Use @RequireRunNotOnSecondaryUser
     @EnsureHasSecondaryUser
+    @RequireHeadlessSystemUserMode
     public void switch_hasSetStopBgUsersOnSwitch_stopsUser() throws Exception {
         boolean originalStopBgUsersOnSwitch = TestApis.users().getStopBgUsersOnSwitch();
         try {

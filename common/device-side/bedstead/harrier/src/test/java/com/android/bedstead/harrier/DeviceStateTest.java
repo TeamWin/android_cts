@@ -51,6 +51,7 @@ import com.android.bedstead.harrier.annotations.RequireCnGmsBuild;
 import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature;
 import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.RequireGmsBuild;
+import com.android.bedstead.harrier.annotations.RequireHeadlessSystemUserMode;
 import com.android.bedstead.harrier.annotations.RequireNotCnGmsBuild;
 import com.android.bedstead.harrier.annotations.RequireNotHeadlessSystemUserMode;
 import com.android.bedstead.harrier.annotations.RequirePackageInstalled;
@@ -604,7 +605,7 @@ public class DeviceStateTest {
     }
 
     @Test
-    @RequireRunOnWorkProfile(switchedToParentUser = TRUE)
+    @RequireRunOnWorkProfile(switchedToParentUser = FALSE)
     public void requireRunOnProfile_specifyNotSwitchedToParentUser_parentIsNotCurrentUser() {
         assertThat(TestApis.users().current()).isNotEqualTo(
                 sDeviceState.workProfile().resolve().parent());
@@ -679,5 +680,11 @@ public class DeviceStateTest {
     @RequireNotHeadlessSystemUserMode
     public void requireNotHeadlessSystemUserModeAnnotation_notHeadlessSystemUserMode() {
         assertThat(TestApis.users().isHeadlessSystemUserMode()).isFalse();
+    }
+
+    @Test
+    @RequireHeadlessSystemUserMode
+    public void requireHeadlessSystemUserModeAnnotation_isHeadlessSystemUserMode() {
+        assertThat(TestApis.users().isHeadlessSystemUserMode()).isTrue();
     }
 }

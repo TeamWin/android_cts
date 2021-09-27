@@ -319,4 +319,14 @@ public class TestAppInstanceReference implements AutoCloseable, ConnectionListen
     public RemoteCrossProfileApps crossProfileApps() {
         return new RemoteCrossProfileAppsWrapper(mConnector);
     }
+
+    @Override
+    public String toString() {
+        return "TestAppInstanceReference{"
+                + "testApp=" + mTestApp
+                + ", user=" + mUser
+                + ", registeredBroadcastReceivers=" + mRegisteredBroadcastReceivers
+                + ", keepAliveManually=" + mKeepAliveManually
+                + '}';
+    }
 }

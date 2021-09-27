@@ -48,6 +48,7 @@ import com.android.bedstead.harrier.annotations.FailureMode;
 import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature;
 import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.RequireGmsInstrumentation;
+import com.android.bedstead.harrier.annotations.RequireHeadlessSystemUserMode;
 import com.android.bedstead.harrier.annotations.RequireNotHeadlessSystemUserMode;
 import com.android.bedstead.harrier.annotations.RequirePackageInstalled;
 import com.android.bedstead.harrier.annotations.RequirePackageNotInstalled;
@@ -446,6 +447,11 @@ public final class DeviceState implements TestRule {
 
             if (annotation instanceof RequireNotHeadlessSystemUserMode) {
                 requireNotHeadlessSystemUserMode();
+                continue;
+            }
+
+            if (annotation instanceof RequireHeadlessSystemUserMode) {
+                requireHeadlessSystemUserMode();
                 continue;
             }
 
@@ -1077,6 +1083,11 @@ public final class DeviceState implements TestRule {
         UserReference profile =
                 TestApis.users().findProfileOfType(resolvedUserType, forUserReference);
         if (profile == null) {
+            if (profileType.equals(MANAGED_PROFILE_TYPE_NAME)) {
+                // DO + work profile isn't a valid state
+                ensureHasNoDeviceOwner();
+            }
+
             profile = createProfile(resolvedUserType, forUserReference);
         }
 
@@ -1355,18 +1366,6 @@ public final class DeviceState implements TestRule {
 
         UserReference userReference = TestApis.users().system();
 
-        if (HEADLESS_SET_DO_AND_PO) {
-            UserReference instrumentedUser = TestApis.users().instrumented();
-
-            if (instrumentedUser.equals(userReference)) {
-                // Automotive devices don't allow setting a DO without a PO
-                requireDoesNotHaveFeature("android.hardware.type.automotive", failureMode);
-            }
-
-            // Headless devices will set a PO when setting DO, so the existing PO must be removed
-            ensureHasNoProfileOwner(instrumentedUser);
-        }
-
         if (isPrimary && mPrimaryDpc != null && !userReference.equals(mPrimaryDpc.user())) {
             throw new IllegalStateException(
                     "Only one DPC can be marked as primary per test (current primary is "
@@ -1384,6 +1383,17 @@ public final class DeviceState implements TestRule {
             mDeviceOwner = currentDeviceOwner;
         } else {
             UserReference instrumentedUser = TestApis.users().instrumented();
+
+            if (HEADLESS_SET_DO_AND_PO) {
+                if (instrumentedUser.equals(userReference)) {
+                    // Automotive devices don't allow setting a DO without a PO
+                    requireDoesNotHaveFeature("android.hardware.type.automotive", failureMode);
+                }
+
+                // Headless devices will set a PO when setting DO, so the existing PO must be
+                // removed
+                ensureHasNoProfileOwner(instrumentedUser);
+            }
 
             if (!Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.S)) {
                 // Prior to S we can't set device owner if there are other users on the device
@@ -1737,6 +1747,11 @@ public final class DeviceState implements TestRule {
 
     private void requireNotHeadlessSystemUserMode() {
         assumeFalse("This test is not supported on headless system user devices",
+                TestApis.users().isHeadlessSystemUserMode());
+    }
+
+    private void requireHeadlessSystemUserMode() {
+        assumeTrue("This test is only supported on headless system user devices",
                 TestApis.users().isHeadlessSystemUserMode());
     }
 }

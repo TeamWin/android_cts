@@ -133,6 +133,13 @@ public final class DevicePolicy {
     }
 
     /**
+     * Get the profile owner for the instrumented user..
+     */
+    public ProfileOwner getProfileOwner() {
+        return getProfileOwner(TestApis.users().instrumented());
+    }
+
+    /**
      * Get the profile owner for a given {@link UserReference}.
      */
     public ProfileOwner getProfileOwner(UserReference user) {
