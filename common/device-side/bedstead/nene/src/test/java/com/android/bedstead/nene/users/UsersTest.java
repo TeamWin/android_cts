@@ -18,7 +18,9 @@ package com.android.bedstead.nene.users;
 
 import static android.os.Build.VERSION.SDK_INT;
 
+import static com.android.bedstead.harrier.DeviceState.UserType.SYSTEM_USER;
 import static com.android.bedstead.harrier.OptionalBoolean.TRUE;
+import static com.android.bedstead.nene.users.User.UserState.RUNNING_UNLOCKED;
 import static com.android.bedstead.nene.users.UserType.MANAGED_PROFILE_TYPE_NAME;
 import static com.android.bedstead.nene.users.UserType.SECONDARY_USER_TYPE_NAME;
 import static com.android.bedstead.nene.users.UserType.SYSTEM_USER_TYPE_NAME;
@@ -38,9 +40,11 @@ import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
+import com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDeviceOwner;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.NeneException;
+import com.android.compatibility.common.util.PollingCheck;
 
 import org.junit.ClassRule;
 import org.junit.Ignore;
@@ -249,6 +253,7 @@ public class UsersTest {
 
     @Test
     @EnsureHasNoDeviceOwner // Device Owners can disable managed profiles
+    @EnsureHasNoWorkProfile(forUser = SYSTEM_USER)
     public void createUser_specifiesManagedProfileUserType_createsUser() {
         UserReference systemUser = TestApis.users().system();
         UserReference user = TestApis.users().createUser()
@@ -262,6 +267,7 @@ public class UsersTest {
     }
 
     @Test
+    @EnsureHasNoWorkProfile(forUser = SYSTEM_USER)
     public void createUser_createsProfile_parentIsSet() {
         UserReference systemUser = TestApis.users().system();
         UserReference user = TestApis.users().createUser()
@@ -315,7 +321,7 @@ public class UsersTest {
 
         try {
             user = TestApis.users().createUser().name(USER_NAME).createAndStart().resolve();
-            assertThat(user.state()).isEqualTo(User.UserState.RUNNING_UNLOCKED);
+            assertThat(user.state()).isEqualTo(RUNNING_UNLOCKED);
         } finally {
             if (user != null) {
                 user.remove();
@@ -474,5 +480,43 @@ public class UsersTest {
     @RequireRunOnPrimaryUser(switchedToUser = TRUE)
     public void currentUser_primaryUser_returnsCurrentUser() {
         assertThat(TestApis.users().current()).isEqualTo(sDeviceState.primaryUser());
+    }
+
+    @Test
+    @RequireRunOnPrimaryUser // TODO(201319776): Use @RequireRunNotOnSecondaryUser
+    @EnsureHasSecondaryUser
+    public void switch_hasSetStopBgUsersOnSwitch_stopsUser() throws Exception {
+        boolean originalStopBgUsersOnSwitch = TestApis.users().getStopBgUsersOnSwitch();
+        try {
+            TestApis.users().setStopBgUsersOnSwitch(true);
+            TestApis.users().system().switchTo();
+
+            PollingCheck.waitFor(() ->
+                    !sDeviceState.secondaryUser().resolve().state().equals(RUNNING_UNLOCKED),
+                    "Expected switched from user to stop. It did not.");
+
+            assertThat(sDeviceState.secondaryUser().resolve().state())
+                    .isNotEqualTo(RUNNING_UNLOCKED);
+        } finally {
+            sDeviceState.secondaryUser().start();
+            TestApis.users().setStopBgUsersOnSwitch(originalStopBgUsersOnSwitch);
+        }
+    }
+
+    @Test
+    @RequireRunOnSecondaryUser
+    public void switch_hasSetStopBgUsersOnSwitchFalse_doesNotStopUser() {
+        boolean originalStopBgUsersOnSwitch = TestApis.users().getStopBgUsersOnSwitch();
+
+        try {
+            TestApis.users().setStopBgUsersOnSwitch(false);
+            TestApis.users().system().switchTo();
+
+            assertThat(sDeviceState.secondaryUser().resolve().state()).isEqualTo(RUNNING_UNLOCKED);
+        } finally {
+            TestApis.users().setStopBgUsersOnSwitch(originalStopBgUsersOnSwitch);
+            sDeviceState.secondaryUser().start();
+            sDeviceState.secondaryUser().switchTo();
+        }
     }
 }

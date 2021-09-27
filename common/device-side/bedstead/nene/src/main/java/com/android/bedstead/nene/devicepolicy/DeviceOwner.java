@@ -22,6 +22,8 @@ import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.os.Build;
 
+import androidx.annotation.Nullable;
+
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.exceptions.NeneException;
@@ -39,10 +41,24 @@ import java.util.Objects;
  */
 public final class DeviceOwner extends DevicePolicyController {
 
+    // TODO(b/201313785): When running on a headless system user device, a DeviceOwner will have a
+    //  linked ProfileOwner which must be removed at the same time - this is because such devices
+    //  automatically add a profile owner when setting device owner. This can be removed once the
+    //  bug is fixed
+    private final @Nullable ProfileOwner mLinkedProfileOwner;
+
     DeviceOwner(UserReference user,
             PackageReference pkg,
             ComponentName componentName) {
+        this(user, pkg, componentName, /* linkedProfileOwner= */ null);
+    }
+
+    DeviceOwner(UserReference user,
+            PackageReference pkg,
+            ComponentName componentName,
+            ProfileOwner linkedProfileOwner) {
         super(user, pkg, componentName);
+        this.mLinkedProfileOwner = linkedProfileOwner;
     }
 
     @Override
@@ -51,6 +67,9 @@ public final class DeviceOwner extends DevicePolicyController {
         stringBuilder.append("user=").append(user());
         stringBuilder.append(", package=").append(pkg());
         stringBuilder.append(", componentName=").append(componentName());
+        if (mLinkedProfileOwner != null) {
+            stringBuilder.append(", linkedProfileOwner=").append(mLinkedProfileOwner);
+        }
         stringBuilder.append("}");
 
         return stringBuilder.toString();
@@ -70,6 +89,10 @@ public final class DeviceOwner extends DevicePolicyController {
         try (PermissionContext p =
                      TestApis.permissions().withPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)) {
             devicePolicyManager.forceRemoveActiveAdmin(mComponentName, mUser.id());
+        }
+
+        if (mLinkedProfileOwner != null) {
+            mLinkedProfileOwner.remove();
         }
     }
 

@@ -111,6 +111,13 @@ public class TestApp {
     }
 
     /**
+     * Uninstall the {@link TestApp} from the device from all users.
+     */
+    public void uninstallFromAllUsers() {
+        reference().uninstallFromAllUsers();
+    }
+
+    /**
      * Uninstall the {@link TestApp} on the device from the given {@link UserReference}.
      */
     public void uninstall(UserReference user) {

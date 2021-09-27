@@ -29,6 +29,7 @@ import android.os.Build;
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
+import com.android.bedstead.harrier.annotations.RequireRunOnSystemUser;
 import com.android.bedstead.harrier.annotations.RequireSdkVersion;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.NeneException;
@@ -142,7 +143,7 @@ public class SecureSettingsTest {
     }
 
     @Test
-    @RequireSdkVersion(min = Build.VERSION_CODES.S)
+    @RequireSdkVersion(max = Build.VERSION_CODES.R)
     public void getIntWithContentResolver_preS_throwsException() {
         assertThrows(NeneException.class, () -> TestApis.settings().secure().getInt(
                 TestApis.context().instrumentedContext().getContentResolver(), KEY));
@@ -206,6 +207,9 @@ public class SecureSettingsTest {
         });
     }
 
+
+    // TODO(b/201319369): this requires a system user but should not
+    @RequireRunOnSystemUser
     @Test
     public void reset_resetsSecureSettings() {
         TestApis.settings().secure().putInt(KEY, INT_VALUE);
@@ -215,6 +219,8 @@ public class SecureSettingsTest {
         assertThrows(NeneException.class, () -> TestApis.settings().secure().getInt(KEY));
     }
 
+    // TODO(b/201319369): this requires a system user but should not
+    @RequireRunOnSystemUser
     @Test
     @RequireSdkVersion(min = Build.VERSION_CODES.S)
     public void resetWithContentResolver_resetsSecureSettings() {
@@ -240,6 +246,8 @@ public class SecureSettingsTest {
                 () -> TestApis.settings().secure().reset(contentResolver));
     }
 
+    // TODO(b/201319369): this requires a system user but should not
+    @RequireRunOnSystemUser
     @Test
     public void resetWithUser_instrumentedUser_resetsSecureSettings() {
         TestApis.settings().secure().putInt(TestApis.users().instrumented(), KEY, INT_VALUE);

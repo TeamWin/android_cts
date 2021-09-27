@@ -14,12 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.bedstead.harrier.annotations.parameterized;
-
-import com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser;
-import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
-import com.android.bedstead.harrier.annotations.enterprise.EnsureHasProfileOwner;
-import com.android.bedstead.harrier.annotations.meta.ParameterizedAnnotation;
+package com.android.bedstead.harrier.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -27,14 +22,12 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Parameterize a test so that it runs on a affiliated secondary user on a device with a
- * Device Owner - with the profile owner set as primary.
+ * Marks that a test method should not be run on devices which are in headless system user mode.
+ *
+ * <p>You can guarantee that these methods do not run on headless system user mode devices by
+ * using {@code DeviceState}.
  */
-@Target({ElementType.METHOD, ElementType.TYPE})
+@Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-@ParameterizedAnnotation
-@RequireRunOnSecondaryUser
-@EnsureHasDeviceOwner(affiliationIds = "affiliated")
-@EnsureHasProfileOwner(affiliationIds = "affiliated", isPrimary = true)
-public @interface IncludeRunOnAffiliatedProfileOwnerSecondaryUser {
+public @interface RequireNotHeadlessSystemUserMode {
 }

@@ -24,7 +24,6 @@ import static com.android.bedstead.nene.users.UserType.SECONDARY_USER_TYPE_NAME;
 import static com.android.bedstead.nene.utils.Versions.meetsSdkVersionRequirements;
 
 import static com.google.common.truth.Truth.assertWithMessage;
-import static com.google.common.truth.TruthJUnit.assume;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assume.assumeFalse;
@@ -49,6 +48,7 @@ import com.android.bedstead.harrier.annotations.FailureMode;
 import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature;
 import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.RequireGmsInstrumentation;
+import com.android.bedstead.harrier.annotations.RequireNotHeadlessSystemUserMode;
 import com.android.bedstead.harrier.annotations.RequirePackageInstalled;
 import com.android.bedstead.harrier.annotations.RequirePackageNotInstalled;
 import com.android.bedstead.harrier.annotations.RequireSdkVersion;
@@ -123,6 +123,11 @@ import java.util.function.Function;
  */
 public final class DeviceState implements TestRule {
 
+    // TODO(b/201313785): Remove this logic once headless system user mode restores
+    //  setDeviceOwner
+    private static final boolean HEADLESS_SET_DO_AND_PO =
+            TestApis.users().isHeadlessSystemUserMode();
+
     private static final String GMS_PKG = "com.google.android.gms";
     private static final ComponentName REMOTE_DPC_COMPONENT_NAME = RemoteDpc.DPC_COMPONENT_NAME;
 
@@ -185,7 +190,7 @@ public final class DeviceState implements TestRule {
         throw new IllegalStateException("Unknown description type: " + description);
     }
 
-    private Statement applyTest(final Statement base, final Description description) {
+    private Statement applyTest(Statement base, Description description) {
         return new Statement() {
             @Override public void evaluate() throws Throwable {
                 PermissionContextImpl permissionContext = null;
@@ -230,6 +235,8 @@ public final class DeviceState implements TestRule {
             throws Throwable {
         PermissionContextImpl permissionContext = null;
         for (Annotation annotation : annotations) {
+            Log.i(LOG_TAG, "Applying annotation " + annotation);
+
             Class<? extends Annotation> annotationType = annotation.annotationType();
 
             EnsureHasNoProfileAnnotation ensureHasNoProfileAnnotation =
@@ -333,10 +340,10 @@ public final class DeviceState implements TestRule {
             if (annotation instanceof EnsureHasDeviceOwner) {
                 EnsureHasDeviceOwner ensureHasDeviceOwnerAnnotation =
                         (EnsureHasDeviceOwner) annotation;
-                ensureHasDeviceOwner(ensureHasDeviceOwnerAnnotation.onUser(),
-                        ensureHasDeviceOwnerAnnotation.failureMode(),
+                ensureHasDeviceOwner(ensureHasDeviceOwnerAnnotation.failureMode(),
                         ensureHasDeviceOwnerAnnotation.isPrimary(),
-                        new HashSet<>(Arrays.asList(ensureHasDeviceOwnerAnnotation.affiliationIds())));
+                        new HashSet<>(
+                                Arrays.asList(ensureHasDeviceOwnerAnnotation.affiliationIds())));
                 continue;
             }
 
@@ -437,6 +444,11 @@ public final class DeviceState implements TestRule {
                 continue;
             }
 
+            if (annotation instanceof RequireNotHeadlessSystemUserMode) {
+                requireNotHeadlessSystemUserMode();
+                continue;
+            }
+
             if (annotation instanceof EnsureHasPermission) {
                 EnsureHasPermission ensureHasPermissionAnnotation =
                         (EnsureHasPermission) annotation;
@@ -444,7 +456,6 @@ public final class DeviceState implements TestRule {
                 for (String permission : ensureHasPermissionAnnotation.value()) {
                     ensureCanGetPermission(permission);
                 }
-
 
                 try {
                     if (permissionContext == null) {
@@ -531,7 +542,7 @@ public final class DeviceState implements TestRule {
         }
     }
 
-    private Statement applySuite(final Statement base, final Description description) {
+    private Statement applySuite(Statement base, Description description) {
         return new Statement() {
             @Override
             public void evaluate() throws Throwable {
@@ -539,21 +550,33 @@ public final class DeviceState implements TestRule {
 
                 TestClass testClass = new TestClass(description.getTestClass());
 
-                boolean skipAfterClass = true;
                 PermissionContextImpl permissionContext = null;
 
-                if (!mSkipTests && !mFailTests) {
-                    skipAfterClass = false;
-                    Log.d(LOG_TAG, "Preparing state for suite " + description.getClassName());
+                if (mSkipTests || mFailTests) {
+                    Log.d(LOG_TAG, "Skipping suite setup and teardown due to skipTests: "
+                            + mSkipTests + ", failTests: " + mFailTests);
+                    base.evaluate();
+                    return;
+                }
+
+                Log.d(LOG_TAG, "Preparing state for suite " + description.getClassName());
+
+                boolean originalStopBgUsersOnSwitch =
+                        TestApis.users().getStopBgUsersOnSwitch();
+
+                try {
+                    TestApis.users().setStopBgUsersOnSwitch(false);
 
                     try {
                         List<Annotation> annotations =
                                 new ArrayList<>(getAnnotations(description));
                         permissionContext = applyAnnotations(annotations);
                     } catch (AssumptionViolatedException e) {
+                        Log.i(LOG_TAG, "Assumption failed during class setup", e);
                         mSkipTests = true;
                         mSkipTestsReason = e.getMessage();
                     } catch (AssertionError e) {
+                        Log.i(LOG_TAG, "Assertion failed during class setup", e);
                         mFailTests = true;
                         mFailTestsReason = e.getMessage();
                     }
@@ -561,24 +584,25 @@ public final class DeviceState implements TestRule {
                     Log.d(LOG_TAG,
                             "Finished preparing state for suite "
                                     + description.getClassName());
-                }
 
-                if (!mSkipTests && !mFailTests) {
-                    runAnnotatedMethods(testClass, BeforeClass.class);
-                }
+                    if (!mSkipTests && !mFailTests) {
+                        // Tests may be skipped during the class setup
+                        runAnnotatedMethods(testClass, BeforeClass.class);
+                    }
 
-                base.evaluate();
-
-                if (!skipAfterClass) {
+                    base.evaluate();
+                } finally {
                     runAnnotatedMethods(testClass, AfterClass.class);
-                }
 
-                if (permissionContext != null) {
-                    permissionContext.close();
-                }
+                    if (permissionContext != null) {
+                        permissionContext.close();
+                    }
 
-                if (!mSkipClassTeardown) {
-                    teardownShareableState();
+                    if (!mSkipClassTeardown) {
+                        teardownShareableState();
+                    }
+
+                    TestApis.users().setStopBgUsersOnSwitch(originalStopBgUsersOnSwitch);
                 }
             }
         };
@@ -651,8 +675,8 @@ public final class DeviceState implements TestRule {
     private void requireRunOnUser(String[] userTypes, OptionalBoolean switchedToUser) {
         User instrumentedUser = TestApis.users().instrumented().resolve();
 
-        assume().withMessage("This test only runs on users of type %s", Arrays.toString(userTypes))
-                .that(userTypes).asList().contains(instrumentedUser.type().name());
+        assumeTrue("This test only runs on users of type " + Arrays.toString(userTypes),
+                Arrays.stream(userTypes).anyMatch(i -> i.equals(instrumentedUser.type().name())));
 
         mUsers.put(instrumentedUser.type(), instrumentedUser);
 
@@ -1135,6 +1159,11 @@ public final class DeviceState implements TestRule {
         }
 
         for (UserReference secondaryUser : TestApis.users().findUsersOfType(resolvedUserType)) {
+            if (secondaryUser.equals(TestApis.users().instrumented())) {
+                throw new AssumptionViolatedException(
+                        "This test only runs on devices without a "
+                                + userType + " user. But the instrumented user is " + userType);
+            }
             removeAndRecordUser(secondaryUser);
         }
     }
@@ -1225,8 +1254,8 @@ public final class DeviceState implements TestRule {
             if (mOriginalSwitchedUser.resolve() == null) {
                 Log.d(LOG_TAG, "Could not switch back to original user "
                         + mOriginalSwitchedUser
-                        + " as it does not exist. Switching to system instead.");
-                TestApis.users().system().switchTo();
+                        + " as it does not exist. Switching to initial instead.");
+                TestApis.users().initial().switchTo();
             } else {
                 mOriginalSwitchedUser.switchTo();
             }
@@ -1241,7 +1270,7 @@ public final class DeviceState implements TestRule {
             } else if (!mOriginalDeviceOwner.equals(mDeviceOwner)) {
                 mDeviceOwner.remove();
                 TestApis.devicePolicy().setDeviceOwner(
-                        mOriginalDeviceOwner.user(), mOriginalDeviceOwner.componentName());
+                        mOriginalDeviceOwner.componentName());
             }
             mHasChangedDeviceOwner = false;
             mOriginalDeviceOwner = null;
@@ -1320,12 +1349,28 @@ public final class DeviceState implements TestRule {
         }
     }
 
-    private void ensureHasDeviceOwner(UserType onUser, FailureMode failureMode, boolean isPrimary, Set<String> affiliationIds) {
+    private void ensureHasDeviceOwner(FailureMode failureMode, boolean isPrimary,
+            Set<String> affiliationIds) {
         // TODO(scottjonathan): Should support non-remotedpc device owner (default to remotedpc)
-        // TODO(scottjonathan): Should allow setting the device owner on a different user
-        UserReference userReference = resolveUserTypeToUser(onUser);
+
+        UserReference userReference = TestApis.users().system();
+
+        if (HEADLESS_SET_DO_AND_PO) {
+            UserReference instrumentedUser = TestApis.users().instrumented();
+
+            if (instrumentedUser.equals(userReference)) {
+                // Automotive devices don't allow setting a DO without a PO
+                requireDoesNotHaveFeature("android.hardware.type.automotive", failureMode);
+            }
+
+            // Headless devices will set a PO when setting DO, so the existing PO must be removed
+            ensureHasNoProfileOwner(instrumentedUser);
+        }
+
         if (isPrimary && mPrimaryDpc != null && !userReference.equals(mPrimaryDpc.user())) {
-            throw new IllegalStateException("Only one DPC can be marked as primary per test (current primary is " + mPrimaryDpc + ")");
+            throw new IllegalStateException(
+                    "Only one DPC can be marked as primary per test (current primary is "
+                            + mPrimaryDpc + ")");
         }
         if (!userReference.equals(TestApis.users().instrumented())) {
             // INTERACT_ACROSS_USERS_FULL is required for RemoteDPC
@@ -1364,8 +1409,7 @@ public final class DeviceState implements TestRule {
                 mHasChangedDeviceOwner = true;
             }
 
-            mDeviceOwner = RemoteDpc.setAsDeviceOwner(userReference)
-                    .devicePolicyController();
+            mDeviceOwner = RemoteDpc.setAsDeviceOwner().devicePolicyController();
         }
 
         if (isPrimary) {
@@ -1670,15 +1714,13 @@ public final class DeviceState implements TestRule {
         // We need to find a different user to switch to
         // full users only, starting with lowest ID
         List<UserReference> users = new ArrayList<>(TestApis.users().all());
-        users.sort(Comparator.comparingInt(u -> u.id()));
+        users.sort(Comparator.comparingInt(UserReference::id));
 
         for (UserReference otherUser : users) {
             if (otherUser.equals(user)) {
                 continue;
             }
 
-            // TODO(scottjonathan): We can maybe optimise this by using user type rather
-            //  than resolving
             if (otherUser.resolve().parent() != null) {
                 continue;
             }
@@ -1691,5 +1733,10 @@ public final class DeviceState implements TestRule {
         ensureHasUser(SECONDARY_USER_TYPE_NAME,
                 /* installInstrumentedApp= */ OptionalBoolean.ANY,
                 /* switchedToUser= */ OptionalBoolean.TRUE);
+    }
+
+    private void requireNotHeadlessSystemUserMode() {
+        assumeFalse("This test is not supported on headless system user devices",
+                TestApis.users().isHeadlessSystemUserMode());
     }
 }

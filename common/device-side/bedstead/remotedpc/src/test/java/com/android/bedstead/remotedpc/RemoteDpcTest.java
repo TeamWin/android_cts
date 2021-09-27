@@ -27,7 +27,14 @@ import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.AfterClass;
 import com.android.bedstead.harrier.annotations.BeforeClass;
+import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
+import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature;
+import com.android.bedstead.harrier.annotations.RequireNotHeadlessSystemUserMode;
+import com.android.bedstead.harrier.annotations.RequireRunOnSystemUser;
+import com.android.bedstead.harrier.annotations.RequireUserSupported;
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDeviceOwner;
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoProfileOwner;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.devicepolicy.DeviceOwner;
 import com.android.bedstead.nene.devicepolicy.ProfileOwner;
@@ -84,9 +91,11 @@ public class RemoteDpcTest {
     }
 
     @Test
+    // TODO(b/201313785): Auto doesn't support only having DO on user 0
+    @RequireDoesNotHaveFeature("android.hardware.type.automotive")
     public void deviceOwner_nonRemoteDpcDeviceOwner_returnsNull() {
         DeviceOwner deviceOwner =
-                TestApis.devicePolicy().setDeviceOwner(sUser, NON_REMOTE_DPC_COMPONENT);
+                TestApis.devicePolicy().setDeviceOwner(NON_REMOTE_DPC_COMPONENT);
         try {
             assertThat(RemoteDpc.deviceOwner()).isNull();
         } finally {
@@ -96,7 +105,7 @@ public class RemoteDpcTest {
 
     @Test
     public void deviceOwner_remoteDpcDeviceOwner_returnsInstance() {
-        RemoteDpc remoteDPC = RemoteDpc.setAsDeviceOwner(sUser);
+        RemoteDpc remoteDPC = RemoteDpc.setAsDeviceOwner();
 
         try {
             assertThat(RemoteDpc.deviceOwner()).isNotNull();
@@ -111,6 +120,8 @@ public class RemoteDpcTest {
     }
 
     @Test
+    // TODO(b/201313785): Auto doesn't support only having DO on user 0
+    @RequireDoesNotHaveFeature("android.hardware.type.automotive")
     public void profileOwner_nonRemoteDpcProfileOwner_returnsNull() {
         ProfileOwner profileOwner =
                 TestApis.devicePolicy().setProfileOwner(sUser, NON_REMOTE_DPC_COMPONENT);
@@ -138,6 +149,7 @@ public class RemoteDpcTest {
 
     @Test
     @EnsureHasNoDeviceOwner
+    @EnsureHasNoWorkProfile
     public void profileOwner_userHandle_noProfileOwner_returnsNull() {
         UserReference profile = TestApis.users().createUser()
                 .parent(sUser)
@@ -152,6 +164,7 @@ public class RemoteDpcTest {
 
     @Test
     @EnsureHasNoDeviceOwner
+    @EnsureHasNoWorkProfile
     public void profileOwner_userHandle_nonRemoteDpcProfileOwner_returnsNull() {
         UserReference profile = TestApis.users().createUser()
                 .parent(sUser)
@@ -169,6 +182,7 @@ public class RemoteDpcTest {
 
     @Test
     @EnsureHasNoDeviceOwner
+    @EnsureHasNoWorkProfile
     public void profileOwner_userHandle_remoteDpcProfileOwner_returnsInstance() {
         UserReference profile = TestApis.users().createUser()
                 .parent(sUser)
@@ -190,6 +204,8 @@ public class RemoteDpcTest {
 
     @Test
     @EnsureHasNoDeviceOwner
+    @RequireUserSupported(UserType.MANAGED_PROFILE_TYPE_NAME)
+    @EnsureHasNoWorkProfile
     public void profileOwner_userReference_noProfileOwner_returnsNull() {
         UserReference profile = TestApis.users().createUser()
                 .parent(sUser)
@@ -204,6 +220,10 @@ public class RemoteDpcTest {
 
     @Test
     @EnsureHasNoDeviceOwner
+    @RequireRunOnSystemUser
+    @EnsureHasNoWorkProfile
+    // TODO(b/201313785): Auto doesn't support only having DO on user 0
+    @RequireDoesNotHaveFeature("android.hardware.type.automotive")
     public void profileOwner_userReference_nonRemoteDpcProfileOwner_returnsNull() {
         UserReference profile = TestApis.users().createUser()
                 .parent(sUser)
@@ -221,6 +241,7 @@ public class RemoteDpcTest {
 
     @Test
     @EnsureHasNoDeviceOwner
+    @EnsureHasNoWorkProfile
     public void profileOwner_userReference_remoteDpcProfileOwner_returnsInstance() {
         UserReference profile = TestApis.users().createUser()
                 .parent(sUser)
@@ -252,8 +273,10 @@ public class RemoteDpcTest {
     }
 
     @Test
+    // TODO(b/201313785): Auto doesn't support only having DO on user 0
+    @RequireDoesNotHaveFeature("android.hardware.type.automotive")
     public void any_nonRemoteDpcDeviceOwner_noProfileOwner_returnsNull() {
-        DeviceOwner deviceOwner = TestApis.devicePolicy().setDeviceOwner(sUser,
+        DeviceOwner deviceOwner = TestApis.devicePolicy().setDeviceOwner(
                 NON_REMOTE_DPC_COMPONENT);
 
         try {
@@ -265,7 +288,7 @@ public class RemoteDpcTest {
 
     @Test
     public void any_remoteDpcDeviceOwner_returnsDeviceOwner() {
-        RemoteDpc remoteDPC = RemoteDpc.setAsDeviceOwner(sUser);
+        RemoteDpc remoteDPC = RemoteDpc.setAsDeviceOwner();
 
         try {
             assertThat(RemoteDpc.any()).isNotNull();
@@ -297,6 +320,7 @@ public class RemoteDpcTest {
 
     @Test
     @EnsureHasNoDeviceOwner
+    @EnsureHasNoWorkProfile
     public void any_userHandle_noDeviceOwner_nonRemoteDpcProfileOwner_returnsNull() {
         UserReference profile = TestApis.users().createUser()
                 .parent(sUser)
@@ -313,8 +337,10 @@ public class RemoteDpcTest {
     }
 
     @Test
+    // TODO(b/201313785): Auto doesn't support only having DO on user 0
+    @RequireDoesNotHaveFeature("android.hardware.type.automotive")
     public void any_userHandle_nonRemoteDpcDeviceOwner_noProfileOwner_returnsNull() {
-        DeviceOwner deviceOwner = TestApis.devicePolicy().setDeviceOwner(sUser,
+        DeviceOwner deviceOwner = TestApis.devicePolicy().setDeviceOwner(
                 NON_REMOTE_DPC_COMPONENT);
 
         try {
@@ -325,18 +351,17 @@ public class RemoteDpcTest {
     }
 
     @Test
+    @EnsureHasDeviceOwner
+    @EnsureHasNoProfileOwner
     public void any_userHandle_remoteDpcDeviceOwner_returnsDeviceOwner() {
-        RemoteDpc deviceOwner = RemoteDpc.setAsDeviceOwner(sUser);
+        RemoteDpc deviceOwner = RemoteDpc.deviceOwner();
 
-        try {
-            assertThat(RemoteDpc.any(sUser.userHandle())).isEqualTo(deviceOwner);
-        } finally {
-            deviceOwner.devicePolicyController().remove();
-        }
+        assertThat(RemoteDpc.any(sUser.userHandle())).isEqualTo(deviceOwner);
     }
 
     @Test
     @EnsureHasNoDeviceOwner
+    @EnsureHasNoWorkProfile
     public void any_userHandle_remoteDpcProfileOwner_returnsProfileOwner() {
         UserReference profile = TestApis.users().createUser()
                 .parent(sUser)
@@ -363,6 +388,7 @@ public class RemoteDpcTest {
 
     @Test
     @EnsureHasNoDeviceOwner
+    @EnsureHasNoWorkProfile
     public void any_userReference_noDeviceOwner_nonRemoteDpcProfileOwner_returnsNull() {
         UserReference profile = TestApis.users().createUser()
                 .parent(sUser)
@@ -379,8 +405,10 @@ public class RemoteDpcTest {
     }
 
     @Test
+    // TODO(b/201313785): Auto doesn't support only having DO on user 0
+    @RequireDoesNotHaveFeature("android.hardware.type.automotive")
     public void any_userReference_nonRemoteDpcDeviceOwner_noProfileOwner_returnsNull() {
-        DeviceOwner deviceOwner = TestApis.devicePolicy().setDeviceOwner(sUser,
+        DeviceOwner deviceOwner = TestApis.devicePolicy().setDeviceOwner(
                 NON_REMOTE_DPC_COMPONENT);
 
         try {
@@ -391,18 +419,18 @@ public class RemoteDpcTest {
     }
 
     @Test
+    @EnsureHasDeviceOwner
+    // TODO(b/201313785): We can't have a state where we have a DO but no PO
+    @RequireNotHeadlessSystemUserMode
     public void any_userReference_remoteDpcDeviceOwner_returnsDeviceOwner() {
-        RemoteDpc deviceOwner = RemoteDpc.setAsDeviceOwner(sUser);
+        RemoteDpc deviceOwner = RemoteDpc.deviceOwner();
 
-        try {
-            assertThat(RemoteDpc.any(sUser)).isEqualTo(deviceOwner);
-        } finally {
-            deviceOwner.devicePolicyController().remove();
-        }
+        assertThat(RemoteDpc.any(sUser)).isEqualTo(deviceOwner);
     }
 
     @Test
     @EnsureHasNoDeviceOwner
+    @EnsureHasNoWorkProfile
     public void any_userReference_remoteDpcProfileOwner_returnsProfileOwner() {
         UserReference profile = TestApis.users().createUser()
                 .parent(sUser)
@@ -418,40 +446,22 @@ public class RemoteDpcTest {
     }
 
     @Test
-    public void setAsDeviceOwner_userHandle_null_throwsException() {
-        assertThrows(NullPointerException.class,
-                () -> RemoteDpc.setAsDeviceOwner((UserHandle) null));
-    }
-
-    @Test
-    public void setAsDeviceOwner_userHandle_nonExistingUser_throwsException() {
-        assertThrows(NeneException.class,
-                () -> RemoteDpc.setAsDeviceOwner(NON_EXISTING_USER_HANDLE));
-    }
-
-    @Test
-    public void setAsDeviceOwner_userHandle_alreadySet_doesNothing() {
-        RemoteDpc.setAsDeviceOwner(sUser.userHandle());
+    @EnsureHasDeviceOwner
+    public void setAsDeviceOwner_alreadySet_doesNothing() {
+        RemoteDpc.setAsDeviceOwner();
 
         DeviceOwner deviceOwner = TestApis.devicePolicy().getDeviceOwner();
-        try {
-            RemoteDpc.setAsDeviceOwner(sUser.userHandle());
-
-            deviceOwner = TestApis.devicePolicy().getDeviceOwner();
-            assertThat(deviceOwner).isNotNull();
-        } finally {
-            if (deviceOwner != null) {
-                deviceOwner.remove();
-            }
-        }
+        assertThat(deviceOwner).isNotNull();
     }
 
     @Test
-    public void setAsDeviceOwner_userHandle_alreadyHasDeviceOwner_replacesDeviceOwner() {
-        TestApis.devicePolicy().setDeviceOwner(sUser, NON_REMOTE_DPC_COMPONENT);
+    // TODO(b/201313785): Auto doesn't support only having DO on user 0
+    @RequireDoesNotHaveFeature("android.hardware.type.automotive")
+    public void setAsDeviceOwner_alreadyHasDeviceOwner_replacesDeviceOwner() {
+        TestApis.devicePolicy().setDeviceOwner(NON_REMOTE_DPC_COMPONENT);
 
         try {
-            RemoteDpc remoteDPC = RemoteDpc.setAsDeviceOwner(sUser.userHandle());
+            RemoteDpc remoteDPC = RemoteDpc.setAsDeviceOwner();
 
             DeviceOwner deviceOwner = TestApis.devicePolicy().getDeviceOwner();
             assertThat(deviceOwner).isEqualTo(remoteDPC.devicePolicyController());
@@ -461,65 +471,10 @@ public class RemoteDpcTest {
     }
 
     @Test
-    public void setAsDeviceOwner_userHandle_doesNotHaveDeviceOwner_setsDeviceOwner() {
-        RemoteDpc.setAsDeviceOwner(sUser.userHandle());
-
-        DeviceOwner deviceOwner = TestApis.devicePolicy().getDeviceOwner();
-        try {
-            assertThat(deviceOwner).isNotNull();
-        } finally {
-            if (deviceOwner != null) {
-                deviceOwner.remove();
-            }
-        }
-    }
-
-    @Test
-    public void setAsDeviceOwner_userReference_null_throwsException() {
-        assertThrows(NullPointerException.class,
-                () -> RemoteDpc.setAsDeviceOwner((UserReference) null));
-    }
-
-    @Test
-    public void setAsDeviceOwner_userReference_nonExistingUser_throwsException() {
-        assertThrows(NeneException.class,
-                () -> RemoteDpc.setAsDeviceOwner(NON_EXISTING_USER_REFERENCE));
-    }
-
-    @Test
-    public void setAsDeviceOwner_userReference_alreadySet_doesNothing() {
-        RemoteDpc.setAsDeviceOwner(sUser);
-
-        DeviceOwner deviceOwner = TestApis.devicePolicy().getDeviceOwner();
-        try {
-            RemoteDpc.setAsDeviceOwner(sUser);
-
-            deviceOwner = TestApis.devicePolicy().getDeviceOwner();
-            assertThat(deviceOwner).isNotNull();
-        } finally {
-            if (deviceOwner != null) {
-                deviceOwner.remove();
-            }
-        }
-    }
-
-    @Test
-    public void setAsDeviceOwner_userReference_alreadyHasDeviceOwner_replacesDeviceOwner() {
-        TestApis.devicePolicy().setDeviceOwner(sUser, NON_REMOTE_DPC_COMPONENT);
-
-        try {
-            RemoteDpc remoteDPC = RemoteDpc.setAsDeviceOwner(sUser);
-
-            DeviceOwner deviceOwner = TestApis.devicePolicy().getDeviceOwner();
-            assertThat(deviceOwner).isEqualTo(remoteDPC.devicePolicyController());
-        } finally {
-            TestApis.devicePolicy().getDeviceOwner().remove();
-        }
-    }
-
-    @Test
-    public void setAsDeviceOwner_userReference_doesNotHaveDeviceOwner_setsDeviceOwner() {
-        RemoteDpc.setAsDeviceOwner(sUser);
+    // TODO(b/201313785): Auto doesn't support only having DO on user 0
+    @RequireDoesNotHaveFeature("android.hardware.type.automotive")
+    public void setAsDeviceOwner_doesNotHaveDeviceOwner_setsDeviceOwner() {
+        RemoteDpc.setAsDeviceOwner();
 
         DeviceOwner deviceOwner = TestApis.devicePolicy().getDeviceOwner();
         try {
@@ -545,6 +500,7 @@ public class RemoteDpcTest {
 
     @Test
     @EnsureHasNoDeviceOwner
+    @EnsureHasNoWorkProfile
     public void setAsProfileOwner_userHandle_alreadySet_doesNothing() {
         UserReference profile = TestApis.users().createUser()
                 .parent(sUser)
@@ -563,6 +519,7 @@ public class RemoteDpcTest {
 
     @Test
     @EnsureHasNoDeviceOwner
+    @EnsureHasNoWorkProfile
     public void setAsProfileOwner_userHandle_alreadyHasProfileOwner_replacesProfileOwner() {
         UserReference profile = TestApis.users().createUser()
                 .parent(sUser)
@@ -583,6 +540,7 @@ public class RemoteDpcTest {
 
     @Test
     @EnsureHasNoDeviceOwner
+    @EnsureHasNoWorkProfile
     public void setAsProfileOwner_userHandle_doesNotHaveProfileOwner_setsProfileOwner() {
         UserReference profile = TestApis.users().createUser()
                 .parent(sUser)
@@ -611,6 +569,7 @@ public class RemoteDpcTest {
 
     @Test
     @EnsureHasNoDeviceOwner
+    @EnsureHasNoWorkProfile
     public void setAsProfileOwner_userReference_alreadySet_doesNothing() {
         UserReference profile = TestApis.users().createUser()
                 .parent(sUser)
@@ -629,6 +588,7 @@ public class RemoteDpcTest {
 
     @Test
     @EnsureHasNoDeviceOwner
+    @EnsureHasNoWorkProfile
     public void setAsProfileOwner_userReference_alreadyHasProfileOwner_replacesProfileOwner() {
         UserReference profile = TestApis.users().createUser()
                 .parent(sUser)
@@ -649,6 +609,7 @@ public class RemoteDpcTest {
 
     @Test
     @EnsureHasNoDeviceOwner
+    @EnsureHasNoWorkProfile
     public void setAsProfileOwner_userReference_doesNotHaveProfileOwner_setsProfileOwner() {
         UserReference profile = TestApis.users().createUser()
                 .parent(sUser)
@@ -664,8 +625,9 @@ public class RemoteDpcTest {
     }
 
     @Test
+    @EnsureHasDeviceOwner
     public void devicePolicyController_returnsDevicePolicyController() {
-        RemoteDpc remoteDPC = RemoteDpc.setAsDeviceOwner(sUser);
+        RemoteDpc remoteDPC = RemoteDpc.deviceOwner();
 
         try {
             assertThat(remoteDPC.devicePolicyController())
@@ -676,8 +638,9 @@ public class RemoteDpcTest {
     }
 
     @Test
+    @EnsureHasDeviceOwner
     public void remove_deviceOwner_removes() {
-        RemoteDpc remoteDPC = RemoteDpc.setAsDeviceOwner(sUser);
+        RemoteDpc remoteDPC = RemoteDpc.deviceOwner();
 
         remoteDPC.remove();
 
@@ -686,6 +649,7 @@ public class RemoteDpcTest {
 
     @Test
     @EnsureHasNoDeviceOwner
+    @EnsureHasNoWorkProfile
     public void remove_profileOwner_removes() {
         try (UserReference profile = TestApis.users().createUser()
                 .parent(sUser)
@@ -704,7 +668,7 @@ public class RemoteDpcTest {
 
     @Test
     public void frameworkCall_makesCall() {
-        RemoteDpc remoteDPC = RemoteDpc.setAsDeviceOwner(sUser);
+        RemoteDpc remoteDPC = RemoteDpc.setAsDeviceOwner();
 
         try {
             // Checking that the call succeeds
@@ -717,6 +681,7 @@ public class RemoteDpcTest {
 
     @Test
     @EnsureHasNoDeviceOwner
+    @EnsureHasNoWorkProfile
     public void frameworkCall_onProfile_makesCall() {
         try (UserReference profile = TestApis.users().createUser()
                 .parent(sUser)
@@ -730,16 +695,12 @@ public class RemoteDpcTest {
     }
 
     @Test
+    @EnsureHasDeviceOwner
     public void frameworkCallRequiresProfileOwner_notProfileOwner_throwsSecurityException() {
-        RemoteDpc remoteDPC = RemoteDpc.setAsDeviceOwner(sUser);
+        RemoteDpc remoteDPC = RemoteDpc.deviceOwner();
 
-        try {
-            assertThrows(SecurityException.class,
-                    () -> remoteDPC.devicePolicyManager()
-                            .isUsingUnifiedPassword(remoteDPC.componentName()));
-        } finally {
-            remoteDPC.remove();
-        }
+        assertThrows(SecurityException.class, () ->
+                remoteDPC.devicePolicyManager().isUsingUnifiedPassword(remoteDPC.componentName()));
     }
 
     @Test
@@ -748,9 +709,10 @@ public class RemoteDpcTest {
     }
 
     @Test
+    // TODO(b/201313785): Auto doesn't support only having DO on user 0
+    @RequireDoesNotHaveFeature("android.hardware.type.automotive")
     public void forDevicePolicyController_nonRemoteDpcDevicePolicyController_throwsException() {
-        DeviceOwner deviceOwner = TestApis.devicePolicy().setDeviceOwner(sUser,
-                NON_REMOTE_DPC_COMPONENT);
+        DeviceOwner deviceOwner = TestApis.devicePolicy().setDeviceOwner(NON_REMOTE_DPC_COMPONENT);
 
         try {
             assertThrows(IllegalStateException.class,
@@ -761,18 +723,16 @@ public class RemoteDpcTest {
     }
 
     @Test
+    @EnsureHasDeviceOwner
     public void forDevicePolicyController_remoteDpcDevicePolicyController_returnsRemoteDpc() {
-        RemoteDpc remoteDPC = RemoteDpc.setAsDeviceOwner(sUser);
+        RemoteDpc remoteDPC = RemoteDpc.deviceOwner();
 
-        try {
-            assertThat(RemoteDpc.forDevicePolicyController(remoteDPC.devicePolicyController()))
-                    .isNotNull();
-        } finally {
-            remoteDPC.remove();
-        }
+        assertThat(RemoteDpc.forDevicePolicyController(remoteDPC.devicePolicyController()))
+                .isNotNull();
     }
 
     @Test
+    @EnsureHasNoWorkProfile
     public void getParentProfileInstance_returnsUsableInstance() {
         try (UserReference profile = TestApis.users().createUser()
                 .parent(sUser)

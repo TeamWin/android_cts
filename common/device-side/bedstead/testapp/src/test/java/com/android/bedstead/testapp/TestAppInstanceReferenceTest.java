@@ -62,7 +62,6 @@ public class TestAppInstanceReferenceTest {
     private static final IntentFilter INTENT_FILTER_2 = new IntentFilter(INTENT_ACTION_2);
     private static final Intent INTENT_2 = new Intent(INTENT_ACTION_2);
 
-    private static final int NON_EXISTING_UID = -1;
     private static final Duration SHORT_TIMEOUT = Duration.ofSeconds(5);
 
     @Before
@@ -359,8 +358,7 @@ public class TestAppInstanceReferenceTest {
     public void packageManager_returnsUsableInstance() {
         TestApp testApp = mTestAppProvider.any();
         try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
-            assertThat(testAppInstance.packageManager().getPackagesForUid(NON_EXISTING_UID))
-                    .isNull();
+            assertThat(testAppInstance.packageManager().hasSystemFeature("")).isFalse();
         }
     }
 

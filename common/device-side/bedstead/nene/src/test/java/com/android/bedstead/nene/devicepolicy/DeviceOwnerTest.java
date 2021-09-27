@@ -21,7 +21,6 @@ import static com.google.common.truth.Truth.assertThat;
 import android.content.ComponentName;
 
 import com.android.bedstead.nene.TestApis;
-import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppProvider;
 import com.android.eventlib.premade.EventLibDeviceAdminReceiver;
@@ -42,8 +41,6 @@ public class DeviceOwnerTest {
             new ComponentName(DEVICE_ADMIN_TESTAPP_PACKAGE_NAME,
                     EventLibDeviceAdminReceiver.class.getName());
 
-    private static final UserReference sUser = TestApis.users().instrumented();
-
     private static TestApp sTestApp;
     private static DeviceOwner sDeviceOwner;
 
@@ -53,20 +50,20 @@ public class DeviceOwnerTest {
                 .wherePackageName().isEqualTo(DEVICE_ADMIN_TESTAPP_PACKAGE_NAME)
                 .get();
 
-        sTestApp.install(sUser);
+        sTestApp.install(TestApis.users().system());
 
-        sDeviceOwner = TestApis.devicePolicy().setDeviceOwner(sUser, DPC_COMPONENT_NAME);
+        sDeviceOwner = TestApis.devicePolicy().setDeviceOwner(DPC_COMPONENT_NAME);
     }
 
     @AfterClass
     public static void teardownClass() {
         sDeviceOwner.remove();
-        sTestApp.uninstall(sUser);
+        sTestApp.uninstallFromAllUsers();
     }
 
     @Test
     public void user_returnsUser() {
-        assertThat(sDeviceOwner.user()).isEqualTo(sUser);
+        assertThat(sDeviceOwner.user()).isEqualTo(TestApis.users().system());
     }
 
     @Test
@@ -85,7 +82,7 @@ public class DeviceOwnerTest {
         try {
             assertThat(TestApis.devicePolicy().getDeviceOwner()).isNull();
         } finally {
-            sDeviceOwner = TestApis.devicePolicy().setDeviceOwner(sUser, DPC_COMPONENT_NAME);
+            sDeviceOwner = TestApis.devicePolicy().setDeviceOwner(DPC_COMPONENT_NAME);
         }
     }
 }

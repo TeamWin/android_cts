@@ -19,16 +19,14 @@ package com.android.bedstead.nene.users;
 import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
 import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
-import static android.os.Build.VERSION.SDK_INT;
+import static android.os.Build.VERSION_CODES.Q;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import static org.junit.Assume.assumeTrue;
 import static org.testng.Assert.assertThrows;
 
 import android.content.Context;
 import android.content.Intent;
-import android.os.Build;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
@@ -37,6 +35,7 @@ import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
+import com.android.bedstead.harrier.annotations.RequireSdkVersion;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.permissions.PermissionContext;
@@ -148,6 +147,7 @@ public class UserReferenceTest {
 
     @Test
     @EnsureHasSecondaryUser
+    @RequireRunOnPrimaryUser // TODO(201319776): Use @RequireRunNotOnSecondaryUser
     public void stop_userStarted_userIsStopped() {
         sDeviceState.secondaryUser().stop();
 
@@ -157,6 +157,7 @@ public class UserReferenceTest {
 
     @Test
     @EnsureHasSecondaryUser
+    @RequireRunOnPrimaryUser // TODO(201319776): Use @RequireRunNotOnSecondaryUser
     public void stop_userNotStarted_doesNothing() {
         sDeviceState.secondaryUser().stop();
 
@@ -168,10 +169,9 @@ public class UserReferenceTest {
 
     @Test
     @EnsureHasSecondaryUser
+    @RequireRunOnPrimaryUser // TODO(201319776): Use @RequireRunNotOnSecondaryUser
+    @RequireSdkVersion(min = Q)
     public void switchTo_userIsSwitched() {
-        assumeTrue(
-                "INTERACT_ACROSS_USERS_FULL is only usable by tests on Q+",
-                SDK_INT >= Build.VERSION_CODES.Q);
         try (PermissionContext p =
                      TestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
 

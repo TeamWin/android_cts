@@ -49,6 +49,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * A JUnit test runner for use with Bedstead.
@@ -56,6 +57,7 @@ import java.util.Set;
 public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
 
     private static final String BEDSTEAD_PACKAGE_NAME = "com.android.bedstead";
+    private static final String REQUIRE_PREFIX = "Require";
 
     // These are annotations which are not included indirectly
     private static final Set<String> sIgnoredAnnotationPackages = new HashSet<>();
@@ -64,6 +66,23 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
         sIgnoredAnnotationPackages.add("com.android.bedstead.harrier.annotations.meta");
         sIgnoredAnnotationPackages.add("kotlin.*");
         sIgnoredAnnotationPackages.add("org.junit");
+    }
+
+    private static int annotationSorter(Annotation a, Annotation b) {
+        // Sort so require comes before ensure and everything else is alphabetical
+        if (a.annotationType().getSimpleName().startsWith(REQUIRE_PREFIX)) {
+            return b.annotationType().getSimpleName().startsWith(REQUIRE_PREFIX)
+                    ? alphabeticSorter(a, b) : -1;
+        }
+        return b.annotationType().getSimpleName().startsWith(REQUIRE_PREFIX)
+                ? 1 : alphabeticSorter(a, b);
+    }
+
+    private static int alphabeticSorter(Annotation a, Annotation b) {
+        // TODO(b/201319781): This is currently arbitrarily in reverse alphabetical order because
+        // it works with existing tests we need to add support for explicit dependencies between
+        // annotations
+        return b.annotationType().getSimpleName().compareTo(a.annotationType().getSimpleName());
     }
 
     /**
@@ -91,7 +110,11 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
         private void calculateAnnotations() {
             List<Annotation> annotations =
                     new ArrayList<>(Arrays.asList(getDeclaringClass().getAnnotations()));
-            annotations.addAll(Arrays.asList(getMethod().getAnnotations()));
+            annotations.sort(BedsteadJUnit4::annotationSorter);
+
+            annotations.addAll(Arrays.stream(getMethod().getAnnotations())
+                    .sorted(BedsteadJUnit4::annotationSorter)
+                    .collect(Collectors.toList()));
 
             parseEnterpriseAnnotations(annotations);
 
@@ -150,6 +173,7 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
             annotations.remove(index);
             List<Annotation> replacementAnnotations =
                     getReplacementAnnotations(annotation, parameterizedAnnotation);
+            replacementAnnotations.sort(BedsteadJUnit4::annotationSorter);
             annotations.addAll(index, replacementAnnotations);
             index += replacementAnnotations.size();
         }
@@ -327,6 +351,7 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
                         policy.getAnnotation(EnterprisePolicy.class);
                 List<Annotation> replacementAnnotations =
                         Policy.positiveStates(policy.getName(), enterprisePolicy);
+                replacementAnnotations.sort(BedsteadJUnit4::annotationSorter);
 
                 annotations.addAll(index, replacementAnnotations);
                 index += replacementAnnotations.size();
@@ -338,6 +363,7 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
                         policy.getAnnotation(EnterprisePolicy.class);
                 List<Annotation> replacementAnnotations =
                         Policy.negativeStates(policy.getName(), enterprisePolicy);
+                replacementAnnotations.sort(BedsteadJUnit4::annotationSorter);
 
                 annotations.addAll(index, replacementAnnotations);
                 index += replacementAnnotations.size();
@@ -349,6 +375,7 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
                         policy.getAnnotation(EnterprisePolicy.class);
                 List<Annotation> replacementAnnotations =
                         Policy.cannotSetPolicyStates(policy.getName(), enterprisePolicy);
+                replacementAnnotations.sort(BedsteadJUnit4::annotationSorter);
 
                 annotations.addAll(index, replacementAnnotations);
                 index += replacementAnnotations.size();
@@ -362,6 +389,7 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
                 List<Annotation> replacementAnnotations =
                         Policy.canSetPolicyStates(
                                 policy.getName(), enterprisePolicy, singleTestOnly);
+                replacementAnnotations.sort(BedsteadJUnit4::annotationSorter);
 
                 annotations.addAll(index, replacementAnnotations);
                 index += replacementAnnotations.size();

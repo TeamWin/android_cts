@@ -52,6 +52,7 @@ import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature;
 import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.RequireGmsBuild;
 import com.android.bedstead.harrier.annotations.RequireNotCnGmsBuild;
+import com.android.bedstead.harrier.annotations.RequireNotHeadlessSystemUserMode;
 import com.android.bedstead.harrier.annotations.RequirePackageInstalled;
 import com.android.bedstead.harrier.annotations.RequirePackageNotInstalled;
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
@@ -310,6 +311,7 @@ public class DeviceStateTest {
 
     @Test
     @EnsureHasDeviceOwner
+    @RequireNotHeadlessSystemUserMode // TODO(b/201313785): re-enable
     public void deviceOwner_deviceOwnerIsSet_returnsDeviceOwner() {
         assertThat(sDeviceState.deviceOwner()).isNotNull();
     }
@@ -602,7 +604,7 @@ public class DeviceStateTest {
     }
 
     @Test
-    @RequireRunOnWorkProfile(switchedToParentUser = FALSE)
+    @RequireRunOnWorkProfile(switchedToParentUser = TRUE)
     public void requireRunOnProfile_specifyNotSwitchedToParentUser_parentIsNotCurrentUser() {
         assertThat(TestApis.users().current()).isNotEqualTo(
                 sDeviceState.workProfile().resolve().parent());
@@ -671,5 +673,11 @@ public class DeviceStateTest {
                 TestApis.users().supportedType(MANAGED_PROFILE_TYPE_NAME),
                 TestApis.users().instrumented())
         ).isNull();
+    }
+
+    @Test
+    @RequireNotHeadlessSystemUserMode
+    public void requireNotHeadlessSystemUserModeAnnotation_notHeadlessSystemUserMode() {
+        assertThat(TestApis.users().isHeadlessSystemUserMode()).isFalse();
     }
 }

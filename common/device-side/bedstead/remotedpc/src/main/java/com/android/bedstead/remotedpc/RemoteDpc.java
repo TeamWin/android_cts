@@ -164,21 +164,7 @@ public final class RemoteDpc extends TestAppInstanceReference {
     /**
      * Set RemoteDPC as the Device Owner.
      */
-    public static RemoteDpc setAsDeviceOwner(UserHandle user) {
-        if (user == null) {
-            throw new NullPointerException();
-        }
-        return setAsDeviceOwner(TestApis.users().find(user));
-    }
-
-    /**
-     * Set RemoteDPC as the Device Owner.
-     */
-    public static RemoteDpc setAsDeviceOwner(UserReference user) {
-        if (user == null) {
-            throw new NullPointerException();
-        }
-
+    public static RemoteDpc setAsDeviceOwner() {
         DeviceOwner deviceOwner = TestApis.devicePolicy().getDeviceOwner();
         if (deviceOwner != null) {
             if (deviceOwner.componentName().equals(DPC_COMPONENT_NAME)) {
@@ -187,8 +173,8 @@ public final class RemoteDpc extends TestAppInstanceReference {
             deviceOwner.remove();
         }
 
-        ensureInstalled(user);
-        return new RemoteDpc(TestApis.devicePolicy().setDeviceOwner(user, DPC_COMPONENT_NAME));
+        ensureInstalled(TestApis.users().system());
+        return new RemoteDpc(TestApis.devicePolicy().setDeviceOwner(DPC_COMPONENT_NAME));
     }
 
     /**
