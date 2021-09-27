@@ -1094,6 +1094,10 @@ public class WindowManagerState {
         return mFocusedDisplayId;
     }
 
+    public boolean isFixedToUserRotation() {
+        return getDisplay(DEFAULT_DISPLAY).mIsFixedToUserRotation;
+    }
+
     public static class DisplayContent extends DisplayArea {
         public int mId;
         ArrayList<Task> mRootTasks = new ArrayList<>();
@@ -1117,6 +1121,7 @@ public class WindowManagerState {
         private int mUserRotation;
         private int mFixedToUserRotationMode;
         private int mLastOrientation;
+        private boolean mIsFixedToUserRotation;
 
         DisplayContent(DisplayContentProto proto) {
             super(proto.rootDisplayArea);
@@ -1163,6 +1168,7 @@ public class WindowManagerState {
                 mUserRotation = rotationProto.userRotation;
                 mFixedToUserRotationMode = rotationProto.fixedToUserRotationMode;
                 mLastOrientation = rotationProto.lastOrientation;
+                mIsFixedToUserRotation = rotationProto.isFixedToUserRotation;
             }
         }
 
