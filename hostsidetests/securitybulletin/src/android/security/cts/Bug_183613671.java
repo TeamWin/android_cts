@@ -35,7 +35,7 @@ public final class Bug_183613671 extends BaseHostJUnit4Test {
     public void setUp() throws Exception {
         assumeTrue(
                 "not an Automotive device",
-                getDevice().hasFeature("android.hardware.type.automotive"));
+                getDevice().hasFeature("feature:android.hardware.type.automotive"));
         uninstallPackage(getDevice(), TEST_PKG);
     }
 
