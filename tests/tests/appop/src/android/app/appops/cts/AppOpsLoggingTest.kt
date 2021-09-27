@@ -48,8 +48,10 @@ import android.content.ServiceConnection
 import android.content.pm.PackageManager.FEATURE_BLUETOOTH
 import android.content.pm.PackageManager.FEATURE_BLUETOOTH_LE
 import android.content.pm.PackageManager.FEATURE_TELEPHONY
+import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraDevice
 import android.hardware.camera2.CameraManager
+import android.hardware.camera2.CameraMetadata
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
@@ -615,7 +617,14 @@ class AppOpsLoggingTest {
 
         assumeTrue(cameraManager.cameraIdList.isNotEmpty())
 
-        cameraManager.openCamera(cameraManager.cameraIdList[0], { it.run() },
+        val cameraId = cameraManager!!.cameraIdList[0]
+        val char = cameraManager!!.getCameraCharacteristics(cameraId)
+        val hwLevel = char!!.get(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL)
+
+        assumeTrue("AppOps not available for legacy level device",
+	        hwLevel != CameraMetadata.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY)
+
+        cameraManager.openCamera(cameraId, { it.run() },
             object : CameraDevice.StateCallback() {
                 override fun onOpened(camera: CameraDevice) {
                     openedCamera.complete(camera)
