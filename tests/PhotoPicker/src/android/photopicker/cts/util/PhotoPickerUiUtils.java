@@ -48,7 +48,7 @@ public class PhotoPickerUiUtils {
         final List<UiObject> itemList = new ArrayList<>();
         final UiSelector gridList = new UiSelector().className(
                 "androidx.recyclerview.widget.RecyclerView").resourceIdMatches(
-                REGEX_PACKAGE_NAME + ":id/photo_list");
+                REGEX_PACKAGE_NAME + ":id/picker_tab_recyclerview");
 
         // Wait for the first item to appear
         assertWithMessage("Timed out while waiting for first item to appear")
