@@ -101,7 +101,7 @@ public class AppCompatOverridesServiceTest extends CompatChangeGatingTestCase {
         assertThat(ctsChange.overridesStr).isEqualTo(
                 String.format(OVERRIDE_FORMAT, OVERRIDE_PKG, true));
 
-        // Now uninstall the app and the override should be applied removed
+        // Now uninstall the app and the override should be removed
         uninstallPackage(OVERRIDE_PKG, false);
         Thread.sleep(WAIT_TIME_MS);
 
@@ -211,7 +211,7 @@ public class AppCompatOverridesServiceTest extends CompatChangeGatingTestCase {
                 String.format(OVERRIDE_FORMAT, OVERRIDE_PKG, false));
     }
 
-    public void testPackageOverrideFlagWithRemoveEntry() throws Exception {
+    public void testPackageOverrideFlagChangedToEmpty() throws Exception {
         installPackage(OVERRIDE_PKG_VERSION_1_FILENAME, false);
 
         putFlagValue(OVERRIDE_PKG, CTS_CHANGE_ID + ":::true");
@@ -224,9 +224,54 @@ public class AppCompatOverridesServiceTest extends CompatChangeGatingTestCase {
         assertThat(ctsChange.overridesStr).isEqualTo(
                 String.format(OVERRIDE_FORMAT, OVERRIDE_PKG, true));
 
-        // Now change entry in flag to remove override (no enabled boolean) and the override should
-        // be removed
-        putFlagValue(OVERRIDE_PKG, CTS_CHANGE_ID + ":::");
+        // Now remove entry in flag and the override should be removed
+        putFlagValue(OVERRIDE_PKG, CTS_CHANGE_ID + "");
+
+        ctsChange = getChange(CTS_CHANGE_ID);
+        assertThat(ctsChange.hasRawOverrides).isFalse();
+    }
+
+    public void testPackageOverrideFlagChangedToEmptyThenPackageUninstalled()
+            throws Exception {
+        installPackage(OVERRIDE_PKG_VERSION_1_FILENAME, false);
+
+        putFlagValue(OVERRIDE_PKG, CTS_CHANGE_ID + ":::true");
+
+        Change ctsChange = getChange(CTS_CHANGE_ID);
+        assertThat(ctsChange.hasRawOverrides).isTrue();
+        assertThat(ctsChange.rawOverrideStr).isEqualTo(
+                String.format(OVERRIDE_FORMAT, OVERRIDE_PKG, true));
+        assertThat(ctsChange.hasOverrides).isTrue();
+        assertThat(ctsChange.overridesStr).isEqualTo(
+                String.format(OVERRIDE_FORMAT, OVERRIDE_PKG, true));
+
+        // Now remove entry in flag and the override should be removed
+        putFlagValue(OVERRIDE_PKG, CTS_CHANGE_ID + "");
+        uninstallPackage(OVERRIDE_PKG, false);
+        Thread.sleep(WAIT_TIME_MS);
+
+        ctsChange = getChange(CTS_CHANGE_ID);
+        assertThat(ctsChange.hasRawOverrides).isFalse();
+    }
+
+    public void testPackageOverrideFlagPackageUninstalledAndThenFlagChangedToEmpty()
+            throws Exception {
+        installPackage(OVERRIDE_PKG_VERSION_1_FILENAME, false);
+
+        putFlagValue(OVERRIDE_PKG, CTS_CHANGE_ID + ":::true");
+
+        Change ctsChange = getChange(CTS_CHANGE_ID);
+        assertThat(ctsChange.hasRawOverrides).isTrue();
+        assertThat(ctsChange.rawOverrideStr).isEqualTo(
+                String.format(OVERRIDE_FORMAT, OVERRIDE_PKG, true));
+        assertThat(ctsChange.hasOverrides).isTrue();
+        assertThat(ctsChange.overridesStr).isEqualTo(
+                String.format(OVERRIDE_FORMAT, OVERRIDE_PKG, true));
+
+        // Now uninstall the app and the override should be removed
+        uninstallPackage(OVERRIDE_PKG, false);
+        putFlagValue(OVERRIDE_PKG, CTS_CHANGE_ID + "");
+        Thread.sleep(WAIT_TIME_MS);
 
         ctsChange = getChange(CTS_CHANGE_ID);
         assertThat(ctsChange.hasRawOverrides).isFalse();
