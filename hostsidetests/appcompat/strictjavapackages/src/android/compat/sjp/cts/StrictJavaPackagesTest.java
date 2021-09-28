@@ -192,6 +192,28 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
                     "Lcom/android/internal/util/FrameworkStatsLog;"
             );
 
+    private static final String FEATURE_WEARABLE = "android.hardware.type.watch";
+    private static final String FEATURE_AUTOMOTIVE = "android.hardware.type.automotive";
+
+    private static final Set<String> WEAR_HIDL_OVERLAP_BURNDOWN_LIST =
+            ImmutableSet.of(
+                "Landroid/hidl/base/V1_0/DebugInfo$Architecture;",
+                "Landroid/hidl/base/V1_0/IBase;",
+                "Landroid/hidl/base/V1_0/IBase$Proxy;",
+                "Landroid/hidl/base/V1_0/IBase$Stub;",
+                "Landroid/hidl/base/V1_0/DebugInfo;",
+                "Landroid/hidl/safe_union/V1_0/Monostate;"
+            );
+
+    private static final Set<String> AUTOMOTIVE_HIDL_OVERLAP_BURNDOWN_LIST =
+            ImmutableSet.of(
+                "Landroid/hidl/base/V1_0/DebugInfo$Architecture;",
+                "Landroid/hidl/base/V1_0/IBase;",
+                "Landroid/hidl/base/V1_0/IBase$Proxy;",
+                "Landroid/hidl/base/V1_0/IBase$Stub;",
+                "Landroid/hidl/base/V1_0/DebugInfo;"
+            );
+
     /**
      * TODO(b/199529199): Address these.
      * List of duplicate classes between bootclasspath and shared libraries.
@@ -289,7 +311,19 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
         assumeTrue(ApiLevelUtil.isAfter(getDevice(), 29));
         ImmutableList<String> jars =
                 Classpaths.getJarsOnClasspath(getDevice(), SYSTEMSERVERCLASSPATH);
-        assertThat(getDuplicateClasses(jars)).isEmpty();
+        ImmutableSet<String> overlapBurndownList;
+        if (hasFeature(FEATURE_AUTOMOTIVE)) {
+            overlapBurndownList = ImmutableSet.copyOf(AUTOMOTIVE_HIDL_OVERLAP_BURNDOWN_LIST);
+        } else if (hasFeature(FEATURE_WEARABLE)) {
+            overlapBurndownList = ImmutableSet.copyOf(WEAR_HIDL_OVERLAP_BURNDOWN_LIST);
+        } else {
+            overlapBurndownList = ImmutableSet.of();
+        }
+        Multimap<String, String> duplicates = getDuplicateClasses(jars);
+        Multimap<String, String> filtered = Multimaps.filterKeys(duplicates,
+                duplicate -> !overlapBurndownList.contains(duplicate));
+
+        assertThat(filtered).isEmpty();
     }
 
     /**
@@ -302,12 +336,21 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
         ImmutableList.Builder<String> jars = ImmutableList.builder();
         jars.addAll(Classpaths.getJarsOnClasspath(getDevice(), BOOTCLASSPATH));
         jars.addAll(Classpaths.getJarsOnClasspath(getDevice(), SYSTEMSERVERCLASSPATH));
-
+        ImmutableSet<String> overlapBurndownList;
+        if (hasFeature(FEATURE_AUTOMOTIVE)) {
+            overlapBurndownList = ImmutableSet.<String>builder()
+                  .addAll(BCP_AND_SSCP_OVERLAP_BURNDOWN_LIST)
+                  .addAll(AUTOMOTIVE_HIDL_OVERLAP_BURNDOWN_LIST).build();
+        } else if (hasFeature(FEATURE_WEARABLE)) {
+            overlapBurndownList = ImmutableSet.<String>builder()
+                  .addAll(BCP_AND_SSCP_OVERLAP_BURNDOWN_LIST)
+                  .addAll(WEAR_HIDL_OVERLAP_BURNDOWN_LIST).build();
+        } else {
+            overlapBurndownList = ImmutableSet.copyOf(BCP_AND_SSCP_OVERLAP_BURNDOWN_LIST);
+        }
         Multimap<String, String> duplicates = getDuplicateClasses(jars.build());
         Multimap<String, String> filtered = Multimaps.filterKeys(duplicates,
-                duplicate -> !BCP_AND_SSCP_OVERLAP_BURNDOWN_LIST.contains(duplicate));
-
-        assertThat(filtered).isEmpty();
+                duplicate -> !overlapBurndownList.contains(duplicate));
     }
 
     /**
@@ -444,5 +487,9 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
                    .map(jar -> getSharedLibraryNameOrPath(jar, sharedLibs))
                    .distinct()
                    .count() == 1;
+    }
+
+    private boolean hasFeature(String featureName) throws DeviceNotAvailableException {
+        return getDevice().executeShellCommand("pm list features").contains(featureName);
     }
 }
