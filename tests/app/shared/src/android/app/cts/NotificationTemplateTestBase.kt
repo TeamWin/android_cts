@@ -68,7 +68,15 @@ open class NotificationTemplateTestBase : AndroidTestCase() {
     }
 
     protected fun createBitmap(width: Int, height: Int): Bitmap =
-            Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888).also {
+            context.resources.displayMetrics.let {
+                // IMPORTANT: Pass current DisplayMetrics when creating a Bitmap, so that it
+                // receives the correct density. Otherwise, the Bitmap may get the default density
+                // (DisplayMetrics.DENSITY_DEVICE), which in some cases (eg. for apps running in
+                // compat mode) may be different from the actual density the app is rendered with.
+                // This would lead to the Bitmap eventually being rendered with different sizes,
+                // than the ones passed here.
+                Bitmap.createBitmap(it, width, height, Bitmap.Config.ARGB_8888)
+            }.also {
                 it.eraseColor(Color.GRAY)
             }
 
