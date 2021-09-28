@@ -355,7 +355,7 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
     }
 
     @Test
-    public void testNonfullscreenAppOrientationRequests() {
+    public void testTranslucentAppOrientationRequests() {
         assumeTrue("Skipping test: no orientation request support", supportsOrientationRequest());
 
         separateTestJournal();
@@ -369,7 +369,7 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
         separateTestJournal();
 
         launchActivity(SDK26_TRANSLUCENT_LANDSCAPE_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
-        assertEquals("Legacy non-fullscreen activity requested landscape orientation",
+        assertEquals("Legacy translucent activity requested landscape orientation",
                 SCREEN_ORIENTATION_LANDSCAPE, mWmState.getLastOrientation());
 
         // TODO(b/36897968): uncomment once we can suppress unsupported configurations
@@ -525,17 +525,17 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
     }
 
     @Test
-    public void testNonFullscreenActivityPermitted() throws Exception {
+    public void testTranslucentActivityPermitted() throws Exception {
         assumeTrue("Skipping test: no orientation request support", supportsOrientationRequest());
 
         final RotationSession rotationSession = createManagedRotationSession();
         rotationSession.set(ROTATION_0);
 
-        launchActivity(SDK26_TRANSLUCENT_LANDSCAPE_ACTIVITY);
+        launchActivity(SDK26_TRANSLUCENT_LANDSCAPE_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
         mWmState.assertResumedActivity(
-                "target SDK <= 26 non-fullscreen activity should be allowed to launch",
+                "target SDK <= 26 translucent activity should be allowed to launch",
                 SDK26_TRANSLUCENT_LANDSCAPE_ACTIVITY);
-        assertEquals("non-fullscreen activity requested landscape orientation",
+        assertEquals("translucent activity requested landscape orientation",
                 SCREEN_ORIENTATION_LANDSCAPE, mWmState.getLastOrientation());
     }
 
