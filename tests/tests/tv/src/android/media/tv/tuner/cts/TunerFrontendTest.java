@@ -523,6 +523,7 @@ public class TunerFrontendTest {
     @Test
     public void testFrontendInfoWithIntFrequency() throws Exception {
         List<Integer> ids = mTuner.getFrontendIds();
+        if (ids == null) return;
         List<FrontendInfo> infos = mTuner.getAvailableFrontendInfos();
         Map<Integer, FrontendInfo> infoMap = new HashMap<>();
         for (FrontendInfo info : infos) {
