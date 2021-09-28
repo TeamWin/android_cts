@@ -39,6 +39,7 @@ import android.graphics.Rect;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
 import android.view.Gravity;
+import android.view.SurfaceControl;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.WindowManager;
@@ -68,12 +69,9 @@ import java.util.concurrent.TimeUnit;
 
 @Presubmit
 public class DisplayHashManagerTest {
-    //TODO (b/195136026): There's currently know way to know when the buffer has been drawn in
-    // SurfaceFlinger. Use sleep for now to make sure it's been drawn. Once b/195136026 is
-    // completed, port this code to listen for the transaction complete so we can be sure the buffer
-    // has been latched.
-    private static final int SLEEP_TIME_MS = 1000;
+    private static final int WAIT_TIME_S = 5;
 
+    private final Point mCenter = new Point();
     private final Point mTestViewSize = new Point(200, 300);
 
     private Instrumentation mInstrumentation;
@@ -106,6 +104,10 @@ public class DisplayHashManagerTest {
             mActivity.setContentView(mMainView);
         });
         mInstrumentation.waitForIdleSync();
+        mActivity.runOnUiThread(() -> {
+            mCenter.set((mMainView.getWidth() - mTestViewSize.x) / 2,
+                    (mMainView.getHeight() - mTestViewSize.y) / 2);
+        });
         mDisplayHashManager = context.getSystemService(DisplayHashManager.class);
 
         Set<String> algorithms = mDisplayHashManager.getSupportedHashAlgorithms();
@@ -203,7 +205,10 @@ public class DisplayHashManagerTest {
 
     @Test
     public void testGenerateDisplayHash_ViewOffscreen() {
-        final CountDownLatch viewLayoutLatch = new CountDownLatch(2);
+        final CountDownLatch committedCallbackLatch = new CountDownLatch(1);
+        final SurfaceControl.Transaction t = new SurfaceControl.Transaction();
+        t.addTransactionCommittedListener(mExecutor, committedCallbackLatch::countDown);
+
         mInstrumentation.runOnMainSync(() -> {
             final RelativeLayout.LayoutParams p = new RelativeLayout.LayoutParams(mTestViewSize.x,
                     mTestViewSize.y);
@@ -211,17 +216,12 @@ public class DisplayHashManagerTest {
             mTestView.setBackgroundColor(Color.BLUE);
             mTestView.setX(-mTestViewSize.x);
 
-            ViewTreeObserver viewTreeObserver = mTestView.getViewTreeObserver();
-            viewTreeObserver.addOnGlobalLayoutListener(viewLayoutLatch::countDown);
-            viewTreeObserver.registerFrameCommitCallback(viewLayoutLatch::countDown);
-
             mMainView.addView(mTestView, p);
-            mMainView.invalidate();
+            mMainView.getRootSurfaceControl().applyTransactionOnDraw(t);
         });
         mInstrumentation.waitForIdleSync();
         try {
-            viewLayoutLatch.await(5, TimeUnit.SECONDS);
-            Thread.sleep(SLEEP_TIME_MS);
+            committedCallbackLatch.await(WAIT_TIME_S, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
         }
 
@@ -237,7 +237,9 @@ public class DisplayHashManagerTest {
         final WindowManager wm = mActivity.getWindowManager();
         final WindowManager.LayoutParams windowParams = new WindowManager.LayoutParams();
 
-        final CountDownLatch viewLayoutLatch = new CountDownLatch(2);
+        final CountDownLatch committedCallbackLatch = new CountDownLatch(1);
+        final SurfaceControl.Transaction t = new SurfaceControl.Transaction();
+        t.addTransactionCommittedListener(mExecutor, committedCallbackLatch::countDown);
         mInstrumentation.runOnMainSync(() -> {
             mMainView = new RelativeLayout(mActivity);
             windowParams.width = mTestViewSize.x;
@@ -246,21 +248,27 @@ public class DisplayHashManagerTest {
             windowParams.flags = FLAG_LAYOUT_NO_LIMITS;
             mActivity.addWindow(mMainView, windowParams);
 
-            final RelativeLayout.LayoutParams p = new RelativeLayout.LayoutParams(mTestViewSize.x,
-                    mTestViewSize.y);
-            mTestView = new View(mActivity);
-            mTestView.setBackgroundColor(Color.BLUE);
+            mMainView.getViewTreeObserver().addOnWindowAttachListener(
+                    new ViewTreeObserver.OnWindowAttachListener() {
+                        @Override
+                        public void onWindowAttached() {
+                            final RelativeLayout.LayoutParams p = new RelativeLayout.LayoutParams(
+                                    mTestViewSize.x,
+                                    mTestViewSize.y);
+                            mTestView = new View(mActivity);
+                            mTestView.setBackgroundColor(Color.BLUE);
+                            mMainView.addView(mTestView, p);
+                            mMainView.getRootSurfaceControl().applyTransactionOnDraw(t);
+                        }
 
-            ViewTreeObserver viewTreeObserver = mTestView.getViewTreeObserver();
-            viewTreeObserver.addOnGlobalLayoutListener(viewLayoutLatch::countDown);
-            viewTreeObserver.registerFrameCommitCallback(viewLayoutLatch::countDown);
-
-            mMainView.addView(mTestView, p);
+                        @Override
+                        public void onWindowDetached() {
+                        }
+                    });
         });
         mInstrumentation.waitForIdleSync();
         try {
-            viewLayoutLatch.await(5, TimeUnit.SECONDS);
-            Thread.sleep(SLEEP_TIME_MS);
+            committedCallbackLatch.await(WAIT_TIME_S, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
         }
 
@@ -357,7 +365,9 @@ public class DisplayHashManagerTest {
 
     @Test
     public void testGenerateAndVerifyDisplayHash_MultiColor() {
-        final CountDownLatch viewLayoutLatch = new CountDownLatch(2);
+        final CountDownLatch committedCallbackLatch = new CountDownLatch(1);
+        final SurfaceControl.Transaction t = new SurfaceControl.Transaction();
+        t.addTransactionCommittedListener(mExecutor, committedCallbackLatch::countDown);
         mInstrumentation.runOnMainSync(() -> {
             final RelativeLayout.LayoutParams p = new RelativeLayout.LayoutParams(mTestViewSize.x,
                     mTestViewSize.y);
@@ -376,17 +386,14 @@ public class DisplayHashManagerTest {
             linearLayout.addView(redView, redParams);
             mTestView = linearLayout;
 
-            ViewTreeObserver viewTreeObserver = mTestView.getViewTreeObserver();
-            viewTreeObserver.addOnGlobalLayoutListener(viewLayoutLatch::countDown);
-            viewTreeObserver.registerFrameCommitCallback(viewLayoutLatch::countDown);
-
+            mTestView.setX(mCenter.x);
+            mTestView.setY(mCenter.y);
             mMainView.addView(mTestView, p);
-            mMainView.invalidate();
+            mMainView.getRootSurfaceControl().applyTransactionOnDraw(t);
         });
         mInstrumentation.waitForIdleSync();
         try {
-            viewLayoutLatch.await(5, TimeUnit.SECONDS);
-            Thread.sleep(SLEEP_TIME_MS);
+            committedCallbackLatch.await(WAIT_TIME_S, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
         }
 
@@ -412,22 +419,23 @@ public class DisplayHashManagerTest {
     }
 
     private void setupChildView() {
-        final CountDownLatch viewLayoutLatch = new CountDownLatch(2);
+        final CountDownLatch committedCallbackLatch = new CountDownLatch(1);
+        final SurfaceControl.Transaction t = new SurfaceControl.Transaction();
+        t.addTransactionCommittedListener(mExecutor, committedCallbackLatch::countDown);
+
         mInstrumentation.runOnMainSync(() -> {
             final RelativeLayout.LayoutParams p = new RelativeLayout.LayoutParams(mTestViewSize.x,
                     mTestViewSize.y);
             mTestView = new View(mActivity);
+            mTestView.setX(mCenter.x);
+            mTestView.setY(mCenter.y);
             mTestView.setBackgroundColor(Color.BLUE);
-            ViewTreeObserver viewTreeObserver = mTestView.getViewTreeObserver();
-            viewTreeObserver.addOnGlobalLayoutListener(viewLayoutLatch::countDown);
-            viewTreeObserver.registerFrameCommitCallback(viewLayoutLatch::countDown);
             mMainView.addView(mTestView, p);
-            mMainView.invalidate();
+            mMainView.getRootSurfaceControl().applyTransactionOnDraw(t);
         });
         mInstrumentation.waitForIdleSync();
         try {
-            viewLayoutLatch.await(5, TimeUnit.SECONDS);
-            Thread.sleep(SLEEP_TIME_MS);
+            committedCallbackLatch.await(WAIT_TIME_S, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
         }
     }

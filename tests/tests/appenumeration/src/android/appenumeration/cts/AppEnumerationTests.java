@@ -19,7 +19,7 @@ package android.appenumeration.cts;
 import static android.Manifest.permission.SET_PREFERRED_APPLICATIONS;
 import static android.appenumeration.cts.Constants.ACTION_AWAIT_LAUNCHER_APPS_CALLBACK;
 import static android.appenumeration.cts.Constants.ACTION_BIND_SERVICE;
-import static android.appenumeration.cts.Constants.ACTION_MAY_PACKAGE_QUERY;
+import static android.appenumeration.cts.Constants.ACTION_CAN_PACKAGE_QUERY;
 import static android.appenumeration.cts.Constants.ACTION_CHECK_SIGNATURES;
 import static android.appenumeration.cts.Constants.ACTION_CHECK_URI_PERMISSION;
 import static android.appenumeration.cts.Constants.ACTION_GET_INSTALLED_ACCESSIBILITYSERVICES_PACKAGES;
@@ -167,8 +167,8 @@ import androidx.annotation.Nullable;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.AmUtils;
+import com.android.compatibility.common.util.SystemUtil;
 
 import org.hamcrest.core.IsNull;
 import org.junit.AfterClass;
@@ -1286,37 +1286,37 @@ public class AppEnumerationTests {
     }
 
     @Test
-    public void mayPackageQuery_queriesActivityAction_canSeeFilters() throws Exception {
-        assertThat(sPm.mayPackageQuery(QUERIES_ACTIVITY_ACTION, TARGET_FILTERS),
+    public void canPackageQuery_queriesActivityAction_canSeeFilters() throws Exception {
+        assertThat(sPm.canPackageQuery(QUERIES_ACTIVITY_ACTION, TARGET_FILTERS),
                 is(true));
     }
 
     @Test
-    public void mayPackageQuery_queriesNothing_cannotSeeFilters() throws Exception {
-        assertThat(sPm.mayPackageQuery(QUERIES_NOTHING, TARGET_FILTERS),
+    public void canPackageQuery_queriesNothing_cannotSeeFilters() throws Exception {
+        assertThat(sPm.canPackageQuery(QUERIES_NOTHING, TARGET_FILTERS),
                 is(false));
     }
 
     @Test
-    public void mayPackageQuery_withNonexistentPackages() {
+    public void canPackageQuery_withNonexistentPackages() {
         assertThrows(PackageManager.NameNotFoundException.class,
-                () -> sPm.mayPackageQuery(
+                () -> sPm.canPackageQuery(
                         TEST_NONEXISTENT_PACKAGE_NAME_1, TEST_NONEXISTENT_PACKAGE_NAME_2));
         assertThrows(PackageManager.NameNotFoundException.class,
-                () -> sPm.mayPackageQuery(
+                () -> sPm.canPackageQuery(
                         QUERIES_NOTHING_PERM, TEST_NONEXISTENT_PACKAGE_NAME_2));
         assertThrows(PackageManager.NameNotFoundException.class,
-                () -> sPm.mayPackageQuery(
+                () -> sPm.canPackageQuery(
                         TEST_NONEXISTENT_PACKAGE_NAME_1, TARGET_FILTERS));
     }
 
     @Test
-    public void mayPackageQuery_callerHasNoPackageVisibility() {
+    public void canPackageQuery_callerHasNoPackageVisibility() {
         assertThrows(PackageManager.NameNotFoundException.class,
-                () -> mayPackageQuery(
+                () -> canPackageQuery(
                         QUERIES_NOTHING, QUERIES_ACTIVITY_ACTION, TARGET_FILTERS));
         assertThrows(PackageManager.NameNotFoundException.class,
-                () -> mayPackageQuery(
+                () -> canPackageQuery(
                         QUERIES_NOTHING_SHARED_USER, QUERIES_PACKAGE, TARGET_SHARED_USER));
     }
 
@@ -1680,12 +1680,12 @@ public class AppEnumerationTests {
         return response.getInt(Intent.EXTRA_RETURN_RESULT);
     }
 
-    private boolean mayPackageQuery(String callerPackageName, String sourcePackageName,
+    private boolean canPackageQuery(String callerPackageName, String sourcePackageName,
             String targetPackageName) throws Exception {
         final Bundle extraData = new Bundle();
         extraData.putString(Intent.EXTRA_PACKAGE_NAME, targetPackageName);
         final Bundle response = sendCommandBlocking(callerPackageName, sourcePackageName,
-                extraData, ACTION_MAY_PACKAGE_QUERY);
+                extraData, ACTION_CAN_PACKAGE_QUERY);
         return response.getBoolean(Intent.EXTRA_RETURN_RESULT);
     }
 

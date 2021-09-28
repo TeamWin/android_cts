@@ -229,8 +229,8 @@ public class Constants {
             PKG_BASE + "cts.action.CHECK_URI_PERMISSION";
     public static final String ACTION_TAKE_PERSISTABLE_URI_PERMISSION =
             PKG_BASE + "cts.action.TAKE_PERSISTABLE_URI_PERMISSION";
-    public static final String ACTION_MAY_PACKAGE_QUERY =
-            PKG_BASE + "cts.action.MAY_PACKAGE_QUERY";
+    public static final String ACTION_CAN_PACKAGE_QUERY =
+            PKG_BASE + "cts.action.CAN_PACKAGE_QUERY";
 
     public static final String EXTRA_REMOTE_CALLBACK = "remoteCallback";
     public static final String EXTRA_REMOTE_READY_CALLBACK = "remoteReadyCallback";

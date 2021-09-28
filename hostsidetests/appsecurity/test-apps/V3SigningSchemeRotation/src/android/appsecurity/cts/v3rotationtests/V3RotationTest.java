@@ -251,6 +251,36 @@ public class V3RotationTest extends AndroidTestCase {
                 pm.hasSigningCertificate(uid, secondCertBytes, PackageManager.CERT_INPUT_SHA256));
     }
 
+    public void testUsingOriginalSigner() throws Exception {
+        // Verifies the platform only recognized the original signing key during installation.
+        PackageManager pm = getContext().getPackageManager();
+        PackageInfo pi = pm.getPackageInfo(PKG, PackageManager.GET_SIGNING_CERTIFICATES);
+        assertFalse(
+                "APK is expected to use the original signing key, but past signing certificates "
+                        + "were reported",
+                pi.signingInfo.hasPastSigningCertificates());
+        assertExpectedSignatures(pi.signingInfo.getApkContentsSigners(), EC_P256_FIRST_CERT_HEX);
+        byte[] secondCertBytes = fromHexToByteArray(EC_P256_SECOND_CERT_HEX);
+        assertFalse("APK is not expected to have the rotated key in its signing lineage",
+                pm.hasSigningCertificate(PKG, secondCertBytes, PackageManager.CERT_INPUT_RAW_X509));
+    }
+
+    public void testUsingRotatedSigner() throws Exception {
+        // Verifies the platform recognized the rotated signing key during installation.
+        PackageManager pm = getContext().getPackageManager();
+        PackageInfo pi = pm.getPackageInfo(PKG, PackageManager.GET_SIGNING_CERTIFICATES);
+        assertTrue(
+                "APK is expected to be signed with the rotated signing key, but past signing "
+                        + "certificates were not reported",
+                pi.signingInfo.hasPastSigningCertificates());
+        assertExpectedSignatures(pi.signingInfo.getApkContentsSigners(), EC_P256_SECOND_CERT_HEX);
+        assertExpectedSignatures(pi.signingInfo.getSigningCertificateHistory(),
+                EC_P256_FIRST_CERT_HEX, EC_P256_SECOND_CERT_HEX);
+        byte[] firstCertBytes = fromHexToByteArray(EC_P256_FIRST_CERT_HEX);
+        assertTrue("APK is expected to have the original key in its signing lineage",
+                pm.hasSigningCertificate(PKG, firstCertBytes, PackageManager.CERT_INPUT_RAW_X509));
+    }
+
     private  static byte[] fromHexToByteArray(String str) {
         if (str == null || str.length() == 0 || str.length() % 2 != 0) {
             return null;

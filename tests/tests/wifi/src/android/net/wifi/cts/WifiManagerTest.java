@@ -3773,7 +3773,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         assertEquals(WifiManager.STATUS_NETWORK_SUGGESTIONS_SUCCESS,
                 mWifiManager.addNetworkSuggestions(Arrays.asList(suggestion)));
         verifySuggestionFoundWithMacRandomizationSetting(TEST_SSID,
-                WifiConfiguration.RANDOMIZATION_NON_PERSISTENT);
+                WifiNetworkSuggestion.RANDOMIZATION_NON_PERSISTENT);
 
         suggestion = new WifiNetworkSuggestion.Builder()
                 .setSsid(TEST_SSID).setWpa2Passphrase(TEST_PASSPHRASE)
@@ -3781,7 +3781,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         assertEquals(WifiManager.STATUS_NETWORK_SUGGESTIONS_SUCCESS,
                 mWifiManager.addNetworkSuggestions(Arrays.asList(suggestion)));
         verifySuggestionFoundWithMacRandomizationSetting(TEST_SSID,
-                WifiConfiguration.RANDOMIZATION_PERSISTENT);
+                WifiNetworkSuggestion.RANDOMIZATION_PERSISTENT);
     }
 
     private void verifySuggestionFoundWithMacRandomizationSetting(String ssid,
@@ -3789,8 +3789,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         List<WifiNetworkSuggestion> retrievedSuggestions = mWifiManager.getNetworkSuggestions();
         for (WifiNetworkSuggestion entry : retrievedSuggestions) {
             if (entry.getSsid().equals(ssid)) {
-                assertEquals(macRandomizationSetting,
-                        entry.getWifiConfiguration().macRandomizationSetting);
+                assertEquals(macRandomizationSetting, entry.getMacRandomizationSetting());
                 return; // pass test after the MAC randomization setting is verified.
             }
         }
