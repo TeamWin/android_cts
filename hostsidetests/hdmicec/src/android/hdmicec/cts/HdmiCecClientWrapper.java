@@ -353,14 +353,15 @@ public final class HdmiCecClientWrapper extends ExternalResource {
 
         try {
             if (holdKey) {
-                /* Repeat once between 200ms and 450ms for at least 5 seconds. Since message will be
-                 * sent once later, send 16 times in loop every 300ms. */
-                int repeat = 16;
+                /* Repeat once every 450ms for at least 5 seconds. Send 11 times in loop every
+                 * 450ms. The message is sent once after the loop as well.
+                 * ((11 + 1) * 0.45 = 5.4s total) */
+                int repeat = 11;
                 for (int i = 0; i < repeat; i++) {
                     mOutputConsole.write(command);
                     mOutputConsole.newLine();
                     mOutputConsole.flush();
-                    TimeUnit.MILLISECONDS.sleep(300);
+                    TimeUnit.MILLISECONDS.sleep(450);
                 }
             }
 
