@@ -14,7 +14,8 @@ java_test_helper_library {
     test_suites: [
         "cts",
         "general-tests",
-        "sts"
+        "sts",
+        "mts"
     ],
     host_supported: true,
     device_supported: false,

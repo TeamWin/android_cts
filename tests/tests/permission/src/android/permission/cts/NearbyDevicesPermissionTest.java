@@ -51,6 +51,7 @@ import com.android.compatibility.common.util.CddTest;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -214,6 +215,7 @@ public class NearbyDevicesPermissionTest {
      * scan results; they'd always need to involve the user to gain permissions.
      */
     @Test
+    @Ignore
     public void testRequestBluetoothPermission_Upgrade() throws Throwable {
         install(APK_BLUETOOTH_30);
         grantPermission(TEST_APP_PKG, ACCESS_FINE_LOCATION);

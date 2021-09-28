@@ -23,9 +23,9 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
-
 import android.platform.test.annotations.RequiresDevice;
 
+import com.android.compatibility.common.util.PropertyUtil;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
@@ -203,8 +203,12 @@ public class DirectBootHostTest extends BaseHostJUnit4Test {
                 getDevice().hasFeature(FEATURE_DEVICE_ADMIN));
         assumeTrue("Skipping test: FEATURE_SECURE_LOCK_SCREEN missing.",
                 getDevice().hasFeature(FEATURE_SECURE_LOCK_SCREEN));
-        assumeTrue("Skipping test: FEATURE_SECURITY_MODEL_COMPATIBLE missing.",
-                getDevice().hasFeature(FEATURE_SECURITY_MODEL_COMPATIBLE));
+        // This feature name check only applies to devices that first shipped with
+        // SC or later.
+        if (PropertyUtil.getFirstApiLevel(getDevice()) >= 31) {
+            assumeTrue("Skipping test: FEATURE_SECURITY_MODEL_COMPATIBLE missing.",
+                    getDevice().hasFeature("feature:android.hardware.security.model.compatible"));
+        }
     }
 
     private boolean isAutomotiveDevice() throws Exception {

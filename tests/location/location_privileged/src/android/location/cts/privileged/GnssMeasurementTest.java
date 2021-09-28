@@ -106,7 +106,7 @@ public class GnssMeasurementTest {
         correlationVectors.add(
                 new CorrelationVector.Builder()
                         .setSamplingWidthMeters(30d)
-                        .setSamplingStartMeters(20d)
+                        .setSamplingStartMeters(-20d)
                         .setFrequencyOffsetMetersPerSecond(20d)
                         .setMagnitude(new int[] {0, 3000, 5000, 3000, 0, 0, 1000, 0})
                         .build());

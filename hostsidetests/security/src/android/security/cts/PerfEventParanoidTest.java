@@ -42,6 +42,7 @@ public class PerfEventParanoidTest extends BaseHostJUnit4Test {
     private static final String PERF_EVENT_LSM_SYSPROP = "sys.init.perf_lsm_hooks";
 
     private static final int ANDROID_R_API_LEVEL = 30;
+    private static final int ANDROID_S_API_LEVEL = 31;
 
     @Before
     public void setUp() throws Exception {
@@ -86,7 +87,11 @@ public class PerfEventParanoidTest extends BaseHostJUnit4Test {
     }
 
     private void assumeSecurityModelCompat() throws DeviceNotAvailableException {
-        assumeTrue("Skipping test: FEATURE_SECURITY_MODEL_COMPATIBLE missing.",
-                getDevice().hasFeature("feature:android.hardware.security.model.compatible"));
+        // This feature name check only applies to devices that first shipped with
+        // SC or later.
+        if (PropertyUtil.getFirstApiLevel(mDevice) >= ANDROID_S_API_LEVEL) {
+            assumeTrue("Skipping test: FEATURE_SECURITY_MODEL_COMPATIBLE missing.",
+                    getDevice().hasFeature("feature:android.hardware.security.model.compatible"));
+        }
     }
 }
