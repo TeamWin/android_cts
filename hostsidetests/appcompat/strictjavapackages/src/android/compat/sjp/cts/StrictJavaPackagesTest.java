@@ -24,15 +24,14 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assume.assumeTrue;
 
 import android.compat.testing.Classpaths;
+import android.compat.testing.SharedLibraryInfo;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.tradefed.device.DeviceNotAvailableException;
-import com.android.tradefed.log.LogUtil;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
-import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
@@ -45,7 +44,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -418,18 +416,20 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
     @Test
     public void testBootClasspathAndSharedLibs_nonDuplicateClasses() throws Exception {
         assumeTrue(ApiLevelUtil.isAfter(getDevice(), 29));
-        ImmutableList.Builder<String> jars = ImmutableList.builder();
+        final ImmutableList.Builder<String> jars = ImmutableList.builder();
+        final ImmutableList<SharedLibraryInfo> sharedLibs =
+                Classpaths.getSharedLibraryInfos(getDevice(), getBuild());
         jars.addAll(Classpaths.getJarsOnClasspath(getDevice(), BOOTCLASSPATH));
-        jars.addAll(Classpaths.getSharedLibraryInfos(getDevice(), getBuild())
-                .stream()
+        jars.addAll(sharedLibs.stream()
                 .map(sharedLibraryInfo -> sharedLibraryInfo.paths)
                 .flatMap(ImmutableCollection::stream)
                 .filter(this::doesFileExist)
                 .collect(ImmutableList.toImmutableList())
         );
-        Multimap<String, String> duplicates = getDuplicateClasses(jars.build());
-        Multimap<String, String> filtered = Multimaps.filterKeys(duplicates,
+        final Multimap<String, String> duplicates = getDuplicateClasses(jars.build());
+        final Multimap<String, String> filtered = Multimaps.filterKeys(duplicates,
             duplicate -> !BCP_AND_SHARED_LIB_BURNDOWN_LIST.contains(duplicate)
+                         && !isSameLibrary(duplicates.get(duplicate), sharedLibs)
         );
         assertThat(filtered).isEmpty();
     }
@@ -472,5 +472,25 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
         } catch(DeviceNotAvailableException e) {
             throw new RuntimeException("Could not check whether " + path + " exists on device", e);
         }
+    }
+
+    /**
+     * Check whether a list of jars are all different versions of the same library.
+     */
+    private boolean isSameLibrary(Collection<String> jars,
+                ImmutableList<SharedLibraryInfo> sharedLibs) {
+        return jars.stream()
+                .map(jar -> {
+                    for (SharedLibraryInfo sharedLib: sharedLibs) {
+                        for (String path: sharedLib.paths) {
+                            if (path.equals(jar)) {
+                                return sharedLib.name;
+                            }
+                        }
+                    }
+                    throw new RuntimeException(jar + " is not in shared libs.");
+                })
+                .distinct()
+                .count() == 1;
     }
 }
