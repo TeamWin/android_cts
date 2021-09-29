@@ -23,6 +23,7 @@ import static android.contentcaptureservice.cts.Assertions.assertViewAppeared;
 import static android.contentcaptureservice.cts.Assertions.assertViewTreeFinished;
 import static android.contentcaptureservice.cts.Assertions.assertViewTreeStarted;
 import static android.contentcaptureservice.cts.Assertions.assertViewsOptionallyDisappeared;
+import static android.contentcaptureservice.cts.Assertions.removeUnknownEvent;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -106,7 +107,7 @@ public class LoginActivity extends AbstractRootViewActivity {
         assertSessionId(sessionId, activity.mPassword);
         assertSessionId(sessionId, activity.mPasswordLabel);
 
-        final List<ContentCaptureEvent> events = session.getEvents();
+        final List<ContentCaptureEvent> events = removeUnknownEvent(session.getEvents());
         Log.v(TAG, "events(" + events.size() + "): " + events);
         // TODO(b/123540067): ideally it should be X so it reflects just the views defined
         // in the layout - right now it's generating events for 2 intermediate parents
