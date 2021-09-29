@@ -1367,13 +1367,15 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
      * Initialize the supported video sizes.
      */
     private void initSupportedVideoSize(String cameraId)  throws Exception {
-        Size maxVideoSize = SIZE_BOUND_1080P;
+        Size maxVideoSize = SIZE_BOUND_720P;
         if (CamcorderProfile.hasProfile(CamcorderProfile.QUALITY_2160P)) {
             maxVideoSize = SIZE_BOUND_2160P;
         } else if (CamcorderProfile.hasProfile(CamcorderProfile.QUALITY_QHD)) {
             maxVideoSize = SIZE_BOUND_QHD;
         } else if (CamcorderProfile.hasProfile(CamcorderProfile.QUALITY_2K)) {
             maxVideoSize = SIZE_BOUND_2K;
+        } else if (CamcorderProfile.hasProfile(CamcorderProfile.QUALITY_1080P)) {
+            maxVideoSize = SIZE_BOUND_1080P;
         }
 
         mSupportedVideoSizes =
