@@ -268,7 +268,7 @@ public class CapturedActivity extends Activity {
 
             Rect boundsToCheck =
                     animationTestCase.getBoundsToCheck(findViewById(android.R.id.content));
-            if (boundsToCheck.width() < 90 || boundsToCheck.height() < 90) {
+            if (boundsToCheck.width() < 40 || boundsToCheck.height() < 40) {
                 fail("capture bounds too small to be a fullscreen activity: " + boundsToCheck);
             }
 
