@@ -34,6 +34,8 @@ import static android.nfc.NfcAdapter.EXTRA_NDEF_MESSAGES;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static org.junit.Assert.assertThrows;
+
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.app.AppOpsManager;
@@ -59,11 +61,13 @@ import androidx.test.core.app.ApplicationProvider;
 import com.android.bedstead.deviceadminapp.DeviceAdminApp;
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature;
 import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDpc;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.packages.Package;
@@ -756,6 +760,37 @@ public final class DevicePolicyManagerTest {
                 .createProvisioningIntentFromNfcIntent(NFC_INTENT_NO_NDEF_RECORD);
 
         assertThat(provisioningIntent).isNull();
+    }
+
+    @EnsureHasDeviceOwner
+    @Test
+    public void getCameraDisabled_adminPassedDoesNotBelongToCaller_throwsException() {
+        assertThrows(SecurityException.class, () -> sDevicePolicyManager.getCameraDisabled(
+                sDeviceState.deviceOwner().componentName()));
+    }
+
+    @EnsureHasDeviceOwner
+    @Test
+    public void getKeyguardDisabledFeatures_adminPassedDoesNotBelongToCaller_throwsException() {
+        assertThrows(SecurityException.class,
+                () -> sDevicePolicyManager.getKeyguardDisabledFeatures(
+                        sDeviceState.deviceOwner().componentName()));
+    }
+
+    @EnsureHasDeviceOwner
+    @EnsureDoesNotHavePermission(MANAGE_DEVICE_ADMINS)
+    @Test
+    public void removeActiveAdmin_adminPassedDoesNotBelongToCaller_throwsException() {
+        assertThrows(SecurityException.class, () -> sDevicePolicyManager.removeActiveAdmin(
+                sDeviceState.deviceOwner().componentName()));
+    }
+
+    @EnsureHasDeviceOwner
+    @EnsureHasPermission(MANAGE_DEVICE_ADMINS)
+    @Test
+    public void removeActiveAdmin_adminPassedDoesNotBelongToCaller_manageDeviceAdminsPermission_noException() {
+        sDevicePolicyManager.removeActiveAdmin(
+                sDeviceState.deviceOwner().componentName());
     }
 
     private static HashMap<String, String> createNfcIntentData() {

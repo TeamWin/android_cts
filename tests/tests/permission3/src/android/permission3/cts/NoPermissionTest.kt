@@ -24,15 +24,6 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class NoPermissionTest : BaseUsePermissionTest() {
     @Test
-    fun testStartActivity22() {
-        installPackage(APP_APK_PATH_22_NONE)
-
-        startAppActivityAndAssertResultCode(Activity.RESULT_OK) {}
-
-        clearTargetSdkWarning()
-    }
-
-    @Test
     fun testStartActivityLatest() {
         installPackage(APP_APK_PATH_LATEST_NONE)
 

@@ -36,6 +36,7 @@ import android.content.pm.ServiceInfo;
 import android.os.Handler;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityManager;
+import android.view.accessibility.AccessibilityManager.AccessibilityServicesStateChangeListener;
 import android.view.accessibility.AccessibilityManager.AccessibilityStateChangeListener;
 import android.view.accessibility.AccessibilityManager.TouchExplorationStateChangeListener;
 
@@ -44,6 +45,7 @@ import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.SystemUtil;
+import com.android.compatibility.common.util.TestUtils;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -150,6 +152,17 @@ public class AccessibilityManagerTest {
                 return mAccessibilityManager.isTouchExplorationEnabled();
             }
         }.run();
+    }
+
+    @Test
+    public void testRemoveAccessibilityServicesStateChangeListener() throws Exception {
+        AccessibilityServicesStateChangeListener listener = (state) -> {
+            /* do nothing */
+        };
+        mAccessibilityManager.addAccessibilityServicesStateChangeListener(listener);
+
+        assertTrue(mAccessibilityManager.removeAccessibilityServicesStateChangeListener(listener));
+        assertFalse(mAccessibilityManager.removeAccessibilityServicesStateChangeListener(listener));
     }
 
     @Test
@@ -318,13 +331,13 @@ public class AccessibilityManagerTest {
         mAccessibilityManager.addTouchExplorationStateChangeListener(listener);
         mSpeakingAccessibilityServiceRule.enableService();
         mVibratingAccessibilityServiceRule.enableService();
-        assertAtomicBooleanBecomes(atomicBoolean, true, waitObject,
-                "Touch exploration state listener not called when services enabled");
+        waitForAtomicBooleanBecomes(atomicBoolean, true, waitObject,
+                "Touch exploration state listener called when services enabled");
         assertTrue("Listener told that touch exploration is enabled, but manager says disabled",
                 mAccessibilityManager.isTouchExplorationEnabled());
         InstrumentedAccessibilityService.disableAllServices();
-        assertAtomicBooleanBecomes(atomicBoolean, false, waitObject,
-                "Touch exploration state listener not called when services disabled");
+        waitForAtomicBooleanBecomes(atomicBoolean, false, waitObject,
+                "Touch exploration state listener called when services disabled");
         assertFalse("Listener told that touch exploration is disabled, but manager says it enabled",
                 mAccessibilityManager.isTouchExplorationEnabled());
         mAccessibilityManager.removeTouchExplorationStateChangeListener(listener);
@@ -344,17 +357,61 @@ public class AccessibilityManagerTest {
         mAccessibilityManager.addTouchExplorationStateChangeListener(listener, mHandler);
         mSpeakingAccessibilityServiceRule.enableService();
         mVibratingAccessibilityServiceRule.enableService();
-        assertAtomicBooleanBecomes(atomicBoolean, true, waitObject,
-                "Touch exploration state listener not called when services enabled");
+        waitForAtomicBooleanBecomes(atomicBoolean, true, waitObject,
+                "Touch exploration state listener called when services enabled");
         assertTrue("Listener told that touch exploration is enabled, but manager says disabled",
                 mAccessibilityManager.isTouchExplorationEnabled());
         InstrumentedAccessibilityService.disableAllServices();
-        assertAtomicBooleanBecomes(atomicBoolean, false, waitObject,
-                "Touch exploration state listener not called when services disabled");
+        waitForAtomicBooleanBecomes(atomicBoolean, false, waitObject,
+                "Touch exploration state listener called when services disabled");
         assertFalse("Listener told that touch exploration is disabled, but manager says it enabled",
                 mAccessibilityManager.isTouchExplorationEnabled());
         mAccessibilityManager.removeTouchExplorationStateChangeListener(listener);
     }
+
+    @Test
+    public void testAccessibilityServicesStateListenerNoExecutor() {
+        final Object waitObject = new Object();
+        final AtomicBoolean serviceEnabled = new AtomicBoolean(false);
+        final UiAutomation automan = sInstrumentation.getUiAutomation(
+                UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
+        final AccessibilityServicesStateChangeListener listener = (AccessibilityManager manager) ->
+                checkServiceEnabled(waitObject, manager, serviceEnabled,
+                        VibratingAccessibilityService.class.getSimpleName());
+        try {
+            mAccessibilityManager.addAccessibilityServicesStateChangeListener(listener);
+
+            mVibratingAccessibilityServiceRule.enableService();
+
+            waitForAtomicBooleanBecomes(serviceEnabled, true, waitObject,
+                    "Accessibility services state listener called when service is enabled");
+        } finally {
+            automan.destroy();
+        }
+    }
+
+    @Test
+    public void testAccessibilityServicesStateListenerWithExecutor() {
+        final Object waitObject = new Object();
+        final AtomicBoolean serviceEnabled = new AtomicBoolean(false);
+        final UiAutomation automan = sInstrumentation.getUiAutomation(
+                UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
+        final AccessibilityServicesStateChangeListener listener = (AccessibilityManager manager) ->
+                checkServiceEnabled(waitObject, manager, serviceEnabled,
+                        VibratingAccessibilityService.class.getSimpleName());
+        try {
+            mAccessibilityManager.addAccessibilityServicesStateChangeListener(
+                    mTargetContext.getMainExecutor(), listener);
+
+            mVibratingAccessibilityServiceRule.enableService();
+
+            waitForAtomicBooleanBecomes(serviceEnabled, true, waitObject,
+                    "Accessibility services state listener called when service is enabled");
+        } finally {
+            automan.destroy();
+        }
+    }
+
 
     @Test
     public void testAccessibilityStateListenerNoHandler() throws Exception {
@@ -369,13 +426,13 @@ public class AccessibilityManagerTest {
         };
         mAccessibilityManager.addAccessibilityStateChangeListener(listener);
         mSpeakingAndVibratingAccessibilityServiceRule.enableService();
-        assertAtomicBooleanBecomes(atomicBoolean, true, waitObject,
-                "Accessibility state listener not called when services enabled");
+        waitForAtomicBooleanBecomes(atomicBoolean, true, waitObject,
+                "Accessibility state listener called when services enabled");
         assertTrue("Listener told that accessibility is enabled, but manager says disabled",
                 mAccessibilityManager.isEnabled());
         InstrumentedAccessibilityService.disableAllServices();
-        assertAtomicBooleanBecomes(atomicBoolean, false, waitObject,
-                "Accessibility state listener not called when services disabled");
+        waitForAtomicBooleanBecomes(atomicBoolean, false, waitObject,
+                "Accessibility state listener called when services disabled");
         assertFalse("Listener told that accessibility is disabled, but manager says enabled",
                 mAccessibilityManager.isEnabled());
         mAccessibilityManager.removeAccessibilityStateChangeListener(listener);
@@ -394,13 +451,13 @@ public class AccessibilityManagerTest {
         };
         mAccessibilityManager.addAccessibilityStateChangeListener(listener, mHandler);
         mSpeakingAndVibratingAccessibilityServiceRule.enableService();
-        assertAtomicBooleanBecomes(atomicBoolean, true, waitObject,
-                "Accessibility state listener not called when services enabled");
+        waitForAtomicBooleanBecomes(atomicBoolean, true, waitObject,
+                "Accessibility state listener called when services enabled");
         assertTrue("Listener told that accessibility is enabled, but manager says disabled",
                 mAccessibilityManager.isEnabled());
         InstrumentedAccessibilityService.disableAllServices();
-        assertAtomicBooleanBecomes(atomicBoolean, false, waitObject,
-                "Accessibility state listener not called when services disabled");
+        waitForAtomicBooleanBecomes(atomicBoolean, false, waitObject,
+                "Accessibility state listener called when services disabled");
         assertFalse("Listener told that accessibility is disabled, but manager says enabled",
                 mAccessibilityManager.isEnabled());
         mAccessibilityManager.removeAccessibilityStateChangeListener(listener);
@@ -437,18 +494,26 @@ public class AccessibilityManagerTest {
         }
     }
 
-    private void assertAtomicBooleanBecomes(AtomicBoolean atomicBoolean,
-            boolean expectedValue, Object waitObject, String message)
-            throws Exception {
-        long timeoutTime =
-                System.currentTimeMillis() + TIMEOUT_SERVICE_ENABLE;
+    private void checkServiceEnabled(Object waitObject, AccessibilityManager manager,
+            AtomicBoolean serviceEnabled, String serviceName) {
         synchronized (waitObject) {
-            while ((atomicBoolean.get() != expectedValue)
-                    && (System.currentTimeMillis() < timeoutTime)) {
-                waitObject.wait(timeoutTime - System.currentTimeMillis());
+            List<AccessibilityServiceInfo> infos = manager.getEnabledAccessibilityServiceList(
+                    AccessibilityServiceInfo.FEEDBACK_ALL_MASK);
+            for (AccessibilityServiceInfo info : infos) {
+                final String serviceId = info.getId();
+                if (serviceId.endsWith(serviceName)) {
+                    serviceEnabled.set(true);
+                    waitObject.notifyAll();
+                }
             }
         }
-        assertTrue(message, atomicBoolean.get() == expectedValue);
+    }
+
+    private void waitForAtomicBooleanBecomes(AtomicBoolean atomicBoolean,
+            boolean expectedValue, Object waitObject, String condition) {
+        long timeoutTime = System.currentTimeMillis() + TIMEOUT_SERVICE_ENABLE;
+        TestUtils.waitOn(waitObject, () -> atomicBoolean.get() == expectedValue, timeoutTime,
+                condition);
     }
 
     private void waitForAccessibilityEnabled() throws InterruptedException {
