@@ -296,6 +296,7 @@ public class KernelConfigTest extends DeviceTestCase implements IBuildReceiver, 
         put("ATOLL-AB", null);
         put("SDM660", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
         put("BENGAL", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
+        put("KHAJE", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
         put("DEFAULT", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y",
             "CONFIG_UNMAP_KERNEL_AT_EL0=y"});
     }};
