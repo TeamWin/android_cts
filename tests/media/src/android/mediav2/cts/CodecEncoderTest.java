@@ -706,7 +706,6 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     private native boolean nativeTestSetForceSyncFrame(String encoder, String file, String mime,
             int[] list0, int[] list1, int[] list2, int colorFormat);
 
-    @Ignore("TODO(b/) = test sometimes timesout")
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testSetForceSyncFrameNative() throws IOException {
@@ -742,8 +741,6 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
         mOutputBuff = new OutputManager();
         mSaveToMem = true;
         {
-            /* TODO(b/147574800) */
-            if (mCodecName.equals("c2.android.hevc.encoder")) return;
             mCodec = MediaCodec.createByCodecName(mCodecName);
             format.removeKey(MediaFormat.KEY_BITRATE_MODE);
             MediaCodecInfo.EncoderCapabilities cap =
@@ -803,7 +800,6 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     private native boolean nativeTestAdaptiveBitRate(String encoder, String file, String mime,
             int[] list0, int[] list1, int[] list2, int colorFormat);
 
-    @Ignore("TODO(b/) = test sometimes timesout")
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testAdaptiveBitRateNative() throws IOException {
@@ -811,8 +807,6 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
             mAdaptiveBitrateMimeList.contains(mMime));
         int colorFormat = -1;
         {
-            /* TODO(b/147574800) */
-            if (mCodecName.equals("c2.android.hevc.encoder")) return;
             if (!mIsAudio) {
                 colorFormat = findByteBufferColorFormat(mCodecName, mMime);
                 assertTrue("no valid color formats received", colorFormat != -1);
