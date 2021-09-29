@@ -79,7 +79,7 @@ public final class ClearDeviceOwnerTest {
 
     private void removeDeviceOwner() {
         DevicePolicyManager dpm = TestAppSystemServiceFactory.getDevicePolicyManager(mContext,
-                BasicAdminReceiver.class);
+                BasicAdminReceiver.class, /* forDeviceOWner= */ true);
         Log.d(TAG, "removeDeviceOwner(): dpm=" + dpm);
 
         assertWithMessage("dpm for user %s", UserHandle.myUserId()).that(dpm).isNotNull();

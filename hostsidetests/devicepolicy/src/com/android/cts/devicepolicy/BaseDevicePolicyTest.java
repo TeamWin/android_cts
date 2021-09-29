@@ -1070,10 +1070,15 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
                 + " -c android.intent.category.DEFAULT "
                 + " --es extra-command " + command
                 + " " + extras
+                + getAdditionalExtrasForSetPolicyActivity()
                 + " " + packageName + "/.SetPolicyActivity";
         String commandOutput = getDevice().executeShellCommand(adbCommand);
         CLog.d("Output for command " + adbCommand + ": " + commandOutput);
         return commandOutput;
+    }
+
+    protected String getAdditionalExtrasForSetPolicyActivity() {
+        return "";
     }
 
     /**
