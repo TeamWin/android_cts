@@ -234,6 +234,9 @@ public class BiometricSimpleTests extends BiometricTestBase {
     @Test
     public void testSimpleBiometricAuth() throws Exception {
         for (SensorProperties props : mSensorProperties) {
+            if (props.getSensorStrength() == SensorProperties.STRENGTH_CONVENIENCE) {
+                continue;
+            }
 
             Log.d(TAG, "testSimpleBiometricAuth, sensor: " + props.getSensorId());
 
@@ -345,6 +348,10 @@ public class BiometricSimpleTests extends BiometricTestBase {
     @Test
     public void testBiometricCancellation() throws Exception {
         for (SensorProperties props : mSensorProperties) {
+            if (props.getSensorStrength() == SensorProperties.STRENGTH_CONVENIENCE) {
+                continue;
+            }
+
             try (BiometricTestSession session =
                          mBiometricManager.createTestSession(props.getSensorId())) {
                 enrollForSensor(session, props.getSensorId());
