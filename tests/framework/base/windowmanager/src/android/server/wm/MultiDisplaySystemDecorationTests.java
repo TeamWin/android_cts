@@ -34,6 +34,7 @@ import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.WindowManager.DISPLAY_IME_POLICY_FALLBACK_DISPLAY;
 import static android.view.WindowManager.DISPLAY_IME_POLICY_HIDE;
 import static android.view.WindowManager.DISPLAY_IME_POLICY_LOCAL;
+import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_UNCHANGED;
 import static android.view.WindowManager.LayoutParams.TYPE_WALLPAPER;
 
 import static com.android.cts.mockime.ImeEventStreamTestUtils.editorMatcher;
@@ -68,6 +69,7 @@ import android.server.wm.TestJournalProvider.TestJournalContainer;
 import android.server.wm.WindowManagerState.WindowState;
 import android.server.wm.intent.Activities;
 import android.text.TextUtils;
+import android.view.Window;
 import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
@@ -825,6 +827,9 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
             layout.setOrientation(LinearLayout.VERTICAL);
             layout.addView(mEditText);
             mEditText.requestFocus();
+            // SOFT_INPUT_STATE_UNSPECIFIED may produced unexpected behavior for CTS. To make tests
+            // deterministic, using SOFT_INPUT_STATE_UNCHANGED instead.
+            setUnchangedSoftInputState();
             setContentView(layout);
         }
 
@@ -836,6 +841,15 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
         void resetPrivateImeOptionsIdentifier() {
             mEditText.setPrivateImeOptions(
                     getClass().getName() + "/" + Long.toString(SystemClock.elapsedRealtimeNanos()));
+        }
+
+        private void setUnchangedSoftInputState() {
+            final Window window = getWindow();
+            final int currentSoftInputMode = window.getAttributes().softInputMode;
+            final int newSoftInputMode =
+                    (currentSoftInputMode & ~WindowManager.LayoutParams.SOFT_INPUT_MASK_STATE)
+                            | SOFT_INPUT_STATE_UNCHANGED;
+            window.setSoftInputMode(newSoftInputMode);
         }
     }
 
