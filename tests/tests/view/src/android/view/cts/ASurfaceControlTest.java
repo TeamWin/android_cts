@@ -447,7 +447,7 @@ public class ASurfaceControlTest {
                         long surfaceControl = createFromWindow(holder.getSurface());
 
                         setSolidBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
-                                PixelColor.RED);
+                                PixelColor.TRANSLUCENT_RED);
                         setBufferOpaque(surfaceControl, true);
                     }
                 },
@@ -460,7 +460,7 @@ public class ASurfaceControlTest {
     }
 
     @Test
-    public void testSurfaceTransaction_setBufferOpaque_transparent() {
+    public void testSurfaceTransaction_setBufferOpaque_translucent() {
         verifyTest(
                 new BasicSurfaceHolderCallback() {
                     @Override
@@ -468,7 +468,7 @@ public class ASurfaceControlTest {
                         long surfaceControl = createFromWindow(holder.getSurface());
 
                         setSolidBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
-                                PixelColor.TRANSPARENT_RED);
+                                PixelColor.TRANSLUCENT_RED);
                         setBufferOpaque(surfaceControl, false);
                     }
                 },
@@ -1614,6 +1614,50 @@ public class ASurfaceControlTest {
                         } else {
                             return YELLOW;
                         }
+                    }
+                });
+    }
+
+    @Test
+    public void testSurfaceTransaction_setPositionAndScale() {
+        verifyTest(
+                new BasicSurfaceHolderCallback() {
+                    @Override
+                    public void surfaceCreated(SurfaceHolder holder) {
+                        long surfaceControl = createFromWindow(holder.getSurface());
+
+                        setQuadrantBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH,
+                                DEFAULT_LAYOUT_HEIGHT, PixelColor.RED, PixelColor.BLUE,
+                                PixelColor.MAGENTA, PixelColor.GREEN);
+
+                        // Set the position to -50, -50 in parent space then scale 2x in each
+                        // direction relative to 0,0. The end result should be a -50,-50,150,150
+                        // buffer coverage or essentially a 2x center-scale
+
+                        setPosition(surfaceControl, -50, -50);
+                        setScale(surfaceControl, 2, 2);
+                    }
+                },
+                new MultiRectChecker(new Rect(0, 0, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT)) {
+                    @Override
+                    public PixelColor getExpectedColor(int x, int y) {
+                        int halfWidth = DEFAULT_LAYOUT_WIDTH / 2;
+                        int halfHeight = DEFAULT_LAYOUT_HEIGHT / 2;
+                        if (x < halfWidth && y < halfHeight) {
+                            return RED;
+                        } else if (x >= halfWidth && y < halfHeight) {
+                            return BLUE;
+                        } else if (x < halfWidth && y >= halfHeight) {
+                            return GREEN;
+                        } else {
+                            return MAGENTA;
+                        }
+                    }
+
+                    @Override
+                    public boolean checkPixels(int matchingPixelCount, int width, int height) {
+                        // There will be sampling artifacts along the center line, ignore those
+                        return matchingPixelCount > 9000 && matchingPixelCount < 11000;
                     }
                 });
     }
