@@ -17,7 +17,7 @@
 package android.app.cts;
 
 import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertNull;
+import static junit.framework.Assert.assertTrue;
 
 import android.app.BroadcastOptions;
 import android.os.Build;
@@ -74,9 +74,12 @@ public class BroadcastOptionsTest {
         BroadcastOptions bo;
 
         bo = BroadcastOptions.makeBasic();
+        Bundle bundle = bo.toBundle();
 
-        // If no options are set, toBundle() should return null
-        assertNull(bo.toBundle());
+        // Only background activity launch key is set.
+        assertEquals(1, bundle.size());
+        // TODO: Use BroadcastOptions.KEY_PENDING_INTENT_BACKGROUND_ACTIVITY_ALLOWED instead.
+        assertTrue(bundle.containsKey("android.pendingIntent.backgroundActivityAllowed"));
 
         // Check the default values about temp-allowlist.
         assertBroadcastOption_noTemporaryAppAllowList(bo);
