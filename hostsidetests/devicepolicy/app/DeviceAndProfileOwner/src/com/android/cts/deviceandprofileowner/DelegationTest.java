@@ -104,10 +104,10 @@ public class DelegationTest extends BaseDeviceAdminTest {
     @Override
     public void tearDown() throws Exception {
         mContext.unregisterReceiver(mReceiver);
-        mDevicePolicyManager.setDelegatedScopes(ADMIN_RECEIVER_COMPONENT,
-                TEST_PKG, Collections.emptyList());
-        mDevicePolicyManager.setDelegatedScopes(ADMIN_RECEIVER_COMPONENT,
-                DELEGATE_PKG, Collections.emptyList());
+
+        setDelegatedScopes(TEST_PKG, Collections.emptyList());
+        setDelegatedScopes(DELEGATE_PKG, Collections.emptyList());
+
         super.tearDown();
     }
 
@@ -138,7 +138,7 @@ public class DelegationTest extends BaseDeviceAdminTest {
         startAndWaitDelegateActivity();
 
         // Set the delegated scopes.
-        mDevicePolicyManager.setDelegatedScopes(ADMIN_RECEIVER_COMPONENT, DELEGATE_PKG, scopes);
+        setDelegatedScopes(DELEGATE_PKG, scopes);
 
         // Wait until the delegate reports its new scopes.
         String reportedScopes[] = waitReportedScopes();
@@ -157,8 +157,7 @@ public class DelegationTest extends BaseDeviceAdminTest {
                 DELEGATION_ENABLE_SYSTEM_APP);
         try {
             // Trying to delegate to non existent package should throw.
-            mDevicePolicyManager.setDelegatedScopes(ADMIN_RECEIVER_COMPONENT,
-                    NON_EXISTENT_PKG, scopes);
+            setDelegatedScopes(NON_EXISTENT_PKG, scopes);
             fail("Should throw when delegating to non existent package");
         } catch(IllegalArgumentException expected) {
         }
@@ -184,10 +183,8 @@ public class DelegationTest extends BaseDeviceAdminTest {
                 .isEmpty());
 
         // After delegating scopes to two packages.
-        mDevicePolicyManager.setDelegatedScopes(ADMIN_RECEIVER_COMPONENT,
-                DELEGATE_PKG, someScopes);
-        mDevicePolicyManager.setDelegatedScopes(ADMIN_RECEIVER_COMPONENT,
-                TEST_PKG, otherScopes);
+        setDelegatedScopes(DELEGATE_PKG, someScopes);
+        setDelegatedScopes(TEST_PKG, otherScopes);
 
         // The expected delegates are returned.
         assertTrue("Expected delegate not found", getDelegatePackages(DELEGATION_APP_RESTRICTIONS)
@@ -219,8 +216,7 @@ public class DelegationTest extends BaseDeviceAdminTest {
         for (String scope : doOrManagedPoDelegations) {
             if (isDeviceOwner || isManagedProfileOwner) {
                 try {
-                    mDevicePolicyManager.setDelegatedScopes(ADMIN_RECEIVER_COMPONENT, DELEGATE_PKG,
-                            Collections.singletonList(scope));
+                    setDelegatedScopes(DELEGATE_PKG, Collections.singletonList(scope));
                 } catch (SecurityException e) {
                     fail("DO or managed PO fails to delegate " + scope + " exception: " + e);
                     Log.e(TAG, "DO or managed PO fails to delegate " + scope, e);
@@ -228,8 +224,7 @@ public class DelegationTest extends BaseDeviceAdminTest {
             } else {
                 assertThrows("PO not in a managed profile shouldn't be able to delegate " + scope,
                         SecurityException.class,
-                        () -> mDevicePolicyManager.setDelegatedScopes(ADMIN_RECEIVER_COMPONENT,
-                                DELEGATE_PKG, Collections.singletonList(scope)));
+                        () -> setDelegatedScopes(DELEGATE_PKG, Collections.singletonList(scope)));
             }
         }
     }
@@ -244,8 +239,7 @@ public class DelegationTest extends BaseDeviceAdminTest {
         for (String scope : doOrOrgOwnedManagedPoDelegations) {
             if (isDeviceOwner || isOrgOwnedManagedProfileOwner) {
                 try {
-                    mDevicePolicyManager.setDelegatedScopes(ADMIN_RECEIVER_COMPONENT, DELEGATE_PKG,
-                            Collections.singletonList(scope));
+                    setDelegatedScopes(DELEGATE_PKG, Collections.singletonList(scope));
                 } catch (SecurityException e) {
                     fail("DO or organization-owned managed PO fails to delegate " + scope
                             + " exception: " + e);
@@ -255,8 +249,7 @@ public class DelegationTest extends BaseDeviceAdminTest {
                 assertThrows("PO not in an organization-owned managed profile shouldn't be able to "
                         + "delegate " + scope,
                         SecurityException.class,
-                        () -> mDevicePolicyManager.setDelegatedScopes(ADMIN_RECEIVER_COMPONENT,
-                                DELEGATE_PKG, Collections.singletonList(scope)));
+                        () -> setDelegatedScopes(DELEGATE_PKG, Collections.singletonList(scope)));
             }
         }
     }
@@ -275,12 +268,10 @@ public class DelegationTest extends BaseDeviceAdminTest {
 
     private void testExclusiveDelegation(String scope) throws Exception {
 
-        mDevicePolicyManager.setDelegatedScopes(ADMIN_RECEIVER_COMPONENT,
-                DELEGATE_PKG, Collections.singletonList(scope));
+        setDelegatedScopes(DELEGATE_PKG, Collections.singletonList(scope));
         // Set exclusive scope on TEST_PKG should lead to the scope being removed from the
         // previous delegate DELEGATE_PKG
-        mDevicePolicyManager.setDelegatedScopes(ADMIN_RECEIVER_COMPONENT,
-                TEST_PKG, Collections.singletonList(scope));
+        setDelegatedScopes(TEST_PKG, Collections.singletonList(scope));
 
 
         assertThat(mDevicePolicyManager.getDelegatedScopes(ADMIN_RECEIVER_COMPONENT, TEST_PKG))
@@ -292,7 +283,7 @@ public class DelegationTest extends BaseDeviceAdminTest {
     private List<String> getDelegatePackages(String scope) {
         List<String> packages = mDevicePolicyManager.getDelegatePackages(ADMIN_RECEIVER_COMPONENT,
                 scope);
-        Log.d(TAG, "getDelegatePackages(" + scope + "): " + packages);
+        Log.v(TAG, "getDelegatePackages(" + scope + "): " + packages);
         return packages;
     }
 
