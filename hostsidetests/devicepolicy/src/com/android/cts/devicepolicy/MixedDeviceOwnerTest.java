@@ -604,9 +604,16 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
     protected void runDeviceTestsAsUser(String pkgName, String testClassName, String testName,
             int userId, Map<String, String> params) throws DeviceNotAvailableException {
         Map<String, String> newParams = new HashMap(params);
-        newParams.putAll(getParamsForDeviceOwnerTest());
+        Map<String, String> doParams = getParamsForDeviceOwnerTest();
+        CLog.d("runDeviceTestsAsUser(): adding device owner params (%s)", doParams);
+        newParams.putAll(doParams);
         super.runDeviceTestsAsUser(
                 pkgName, testClassName, testName, userId, newParams);
+    }
+
+    @Override
+    protected String getAdditionalExtrasForSetPolicyActivity() {
+        return " --es extra-admin-type DeviceOwner";
     }
 
     @Override
