@@ -240,7 +240,7 @@ public class PipActivity extends AbstractLifecycleLogActivity {
         filter.addAction(ACTION_SET_REQUESTED_ORIENTATION);
         filter.addAction(ACTION_FINISH);
         filter.addAction(ACTION_ON_PIP_REQUESTED);
-        registerReceiver(mReceiver, filter);
+        registerReceiver(mReceiver, filter, Context.RECEIVER_EXPORTED);
 
         // Don't dump configuration when entering PIP to avoid the verifier getting the intermediate
         // state. In this case it is expected that the verifier will check the changed configuration

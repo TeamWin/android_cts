@@ -92,7 +92,7 @@ public class ToastWindowTest extends ActivityManagerTestBase {
         IntentFilter filter = new IntentFilter();
         filter.addAction(ACTION_TOAST_DISPLAYED);
         filter.addAction(ACTION_TOAST_TAP_DETECTED);
-        mContext.registerReceiver(mAppCommunicator, filter);
+        mContext.registerReceiver(mAppCommunicator, filter, Context.RECEIVER_EXPORTED);
     }
 
     @After

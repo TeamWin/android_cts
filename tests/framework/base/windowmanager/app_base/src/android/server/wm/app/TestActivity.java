@@ -88,7 +88,8 @@ public class TestActivity extends AbstractLifecycleLogActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        registerReceiver(mReceiver, new IntentFilter(TEST_ACTIVITY_ACTION_FINISH_SELF));
+        registerReceiver(mReceiver, new IntentFilter(TEST_ACTIVITY_ACTION_FINISH_SELF),
+                Context.RECEIVER_EXPORTED);
     }
 
     @Override
