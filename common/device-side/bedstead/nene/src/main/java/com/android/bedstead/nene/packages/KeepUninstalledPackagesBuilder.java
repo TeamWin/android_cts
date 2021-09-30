@@ -41,10 +41,8 @@ import java.util.stream.Collectors;
 public final class KeepUninstalledPackagesBuilder {
 
     private final List<String> mPackages = new ArrayList<>();
-    private final TestApis mTestApis;
 
-    KeepUninstalledPackagesBuilder(TestApis testApis) {
-        mTestApis = testApis;
+    KeepUninstalledPackagesBuilder() {
     }
 
     /**
@@ -58,10 +56,10 @@ public final class KeepUninstalledPackagesBuilder {
         //  APK files and keeping them (either as a file or in memory) until needed to resolve or
         //  re-install
         PackageManager packageManager =
-                mTestApis.context().instrumentedContext().getPackageManager();
+                TestApis.context().instrumentedContext().getPackageManager();
 
         try (PermissionContext p =
-                    mTestApis.permissions().withPermission(KEEP_UNINSTALLED_PACKAGES)) {
+                    TestApis.permissions().withPermission(KEEP_UNINSTALLED_PACKAGES)) {
             packageManager.setKeepUninstalledPackages(mPackages);
         }
     }
@@ -91,7 +89,7 @@ public final class KeepUninstalledPackagesBuilder {
      */
     @CheckResult
     public KeepUninstalledPackagesBuilder add(String pkg) {
-        return add(mTestApis.packages().find(pkg));
+        return add(TestApis.packages().find(pkg));
     }
 
     /**
@@ -111,6 +109,6 @@ public final class KeepUninstalledPackagesBuilder {
     @CheckResult
     public KeepUninstalledPackagesBuilder addPackageNames(Collection<String> packages) {
         return add(packages.stream().map(
-                (s) -> mTestApis.packages().find(s)).collect(Collectors.toSet()));
+                (s) -> TestApis.packages().find(s)).collect(Collectors.toSet()));
     }
 }

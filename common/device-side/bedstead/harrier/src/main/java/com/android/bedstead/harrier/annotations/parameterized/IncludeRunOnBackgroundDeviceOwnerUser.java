@@ -16,7 +16,6 @@
 
 package com.android.bedstead.harrier.annotations.parameterized;
 
-import static com.android.bedstead.harrier.DeviceState.UserType.SYSTEM_USER;
 import static com.android.bedstead.harrier.OptionalBoolean.FALSE;
 
 import com.android.bedstead.harrier.annotations.RequireRunOnSystemUser;
@@ -36,6 +35,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @ParameterizedAnnotation
 @RequireRunOnSystemUser(switchedToUser = FALSE)
-@EnsureHasDeviceOwner(onUser = SYSTEM_USER)
+@EnsureHasDeviceOwner
 public @interface IncludeRunOnBackgroundDeviceOwnerUser {
 }

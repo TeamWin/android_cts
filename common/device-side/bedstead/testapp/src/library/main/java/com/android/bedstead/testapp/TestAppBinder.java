@@ -36,8 +36,6 @@ public final class TestAppBinder implements ConnectionBinder {
 
     private static final String LOG_TAG = TestAppBinder.class.getName();
 
-    private static final TestApis sTestApis = new TestApis();
-
     private final TestAppInstanceReference mTestAppInstance;
 
     public TestAppBinder(TestAppInstanceReference testAppInstance) {
@@ -60,7 +58,7 @@ public final class TestAppBinder implements ConnectionBinder {
         Log.i(LOG_TAG, "Attempting to bind to " + bindIntent);
 
         try (PermissionContext p =
-                     sTestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
+                     TestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
             return context.bindServiceAsUser(bindIntent,
                     connection, /* flags= */ BIND_AUTO_CREATE,
                     mTestAppInstance.user().userHandle());

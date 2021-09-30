@@ -40,7 +40,7 @@ internal fun DeviceState.getWorkDevicePolicyManager() =
     profileOwner(workProfile(DeviceState.UserType.PRIMARY_USER))!!
             .app().devicePolicyManager()
 
-internal fun <T> TestApis.withUserContext(user: UserReference, block: (context: Context) -> T) =
-    permissions()
+internal fun <T> withUserContext(user: UserReference, block: (context: Context) -> T) =
+    TestApis.permissions()
         .withPermission("android.permission.INTERACT_ACROSS_USERS_FULL")
-        .use { block(context().androidContextAsUser(user)) }
+        .use { block(TestApis.context().androidContextAsUser(user)) }

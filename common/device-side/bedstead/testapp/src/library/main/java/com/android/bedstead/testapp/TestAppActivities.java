@@ -30,8 +30,6 @@ import java.util.Set;
  */
 public final class TestAppActivities {
 
-    private static final TestApis sTestApis = new TestApis();
-
     final TestAppInstanceReference mInstance;
     private Set<ActivityInfo> mActivities = null;
 
@@ -52,7 +50,7 @@ public final class TestAppActivities {
 
         mActivities = new HashSet<>();
 
-        PackageManager p = sTestApis.context().instrumentedContext().getPackageManager();
+        PackageManager p = TestApis.context().instrumentedContext().getPackageManager();
         try {
             PackageInfo packageInfo = p.getPackageInfo(
                     mInstance.testApp().packageName(), /* flags= */ PackageManager.GET_ACTIVITIES);

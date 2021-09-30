@@ -17,9 +17,13 @@
 package android.server.biometrics;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyObject;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -39,6 +43,7 @@ import android.util.Log;
 import com.android.server.biometrics.nano.SensorStateProto;
 
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
@@ -85,11 +90,16 @@ public class BiometricSimpleTests extends BiometricTestBase {
     @Test
     public void testPackageManagerAndDumpsysMatch() throws Exception {
         final BiometricServiceState state = getCurrentState();
+        final PackageManager pm = mContext.getPackageManager();
         if (mSensorProperties.isEmpty()) {
             assertTrue(state.mSensorStates.sensorStates.isEmpty());
-        } else {
-            final PackageManager pm = mContext.getPackageManager();
 
+            assertFalse(pm.hasSystemFeature(PackageManager.FEATURE_FINGERPRINT));
+            assertFalse(pm.hasSystemFeature(PackageManager.FEATURE_FACE));
+            assertFalse(pm.hasSystemFeature(PackageManager.FEATURE_IRIS));
+
+            assertTrue(state.mSensorStates.sensorStates.isEmpty());
+        } else {
             assertEquals(pm.hasSystemFeature(PackageManager.FEATURE_FINGERPRINT),
                     state.mSensorStates.containsModality(SensorStateProto.FINGERPRINT));
             assertEquals(pm.hasSystemFeature(PackageManager.FEATURE_FACE),
@@ -218,6 +228,44 @@ public class BiometricSimpleTests extends BiometricTestBase {
         }
     }
 
+    @Test
+    public void testSimpleBiometricAuth_convenience() throws Exception {
+        for (SensorProperties props : mSensorProperties) {
+            if (props.getSensorStrength() != SensorProperties.STRENGTH_CONVENIENCE) {
+                continue;
+            }
+
+            Log.d(TAG, "testSimpleBiometricAuth_convenience, sensor: " + props.getSensorId());
+
+            try (BiometricTestSession session =
+                         mBiometricManager.createTestSession(props.getSensorId())) {
+
+                // Let's just try to check+auth against WEAK, since CONVENIENCE isn't even
+                // exposed to public BiometricPrompt APIs (as intended).
+                final int authenticatorStrength = Authenticators.BIOMETRIC_WEAK;
+                assertNotEquals("Sensor: " + props.getSensorId()
+                                + ", strength: " + props.getSensorStrength(),
+                        BiometricManager.BIOMETRIC_SUCCESS,
+                        mBiometricManager.canAuthenticate(authenticatorStrength));
+
+                enrollForSensor(session, props.getSensorId());
+
+                assertNotEquals("Sensor: " + props.getSensorId()
+                                + ", strength: " + props.getSensorStrength(),
+                        BiometricManager.BIOMETRIC_SUCCESS,
+                        mBiometricManager.canAuthenticate(authenticatorStrength));
+
+                BiometricPrompt.AuthenticationCallback callback =
+                        mock(BiometricPrompt.AuthenticationCallback.class);
+
+                showDefaultBiometricPrompt(props.getSensorId(), 0 /* userId */,
+                        true /* requireConfirmation */, callback, new CancellationSignal());
+
+                verify(callback).onAuthenticationError(anyInt(), anyObject());
+            }
+        }
+    }
+
     /**
      * Tests that the values specified through the public APIs are shown on the BiometricPrompt UI
      * when biometric auth is requested.
@@ -226,8 +274,11 @@ public class BiometricSimpleTests extends BiometricTestBase {
      * {@link BiometricPrompt#AUTHENTICATION_RESULT_TYPE_BIOMETRIC}
      */
     @Test
-    public void testSimpleBiometricAuth() throws Exception {
+    public void testSimpleBiometricAuth_nonConvenience() throws Exception {
         for (SensorProperties props : mSensorProperties) {
+            if (props.getSensorStrength() == SensorProperties.STRENGTH_CONVENIENCE) {
+                continue;
+            }
 
             Log.d(TAG, "testSimpleBiometricAuth, sensor: " + props.getSensorId());
 
@@ -255,18 +306,8 @@ public class BiometricSimpleTests extends BiometricTestBase {
                 final String randomDescription = String.valueOf(random.nextInt(10000));
                 final String randomNegativeButtonText = String.valueOf(random.nextInt(10000));
 
-                CountDownLatch latch = new CountDownLatch(1);
                 BiometricPrompt.AuthenticationCallback callback =
-                        new BiometricPrompt.AuthenticationCallback() {
-                    @Override
-                    public void onAuthenticationSucceeded(
-                            BiometricPrompt.AuthenticationResult result) {
-                        assertEquals("Must be TYPE_BIOMETRIC",
-                                BiometricPrompt.AUTHENTICATION_RESULT_TYPE_BIOMETRIC,
-                                result.getAuthenticationType());
-                        latch.countDown();
-                    }
-                };
+                        mock(BiometricPrompt.AuthenticationCallback.class);
 
                 showDefaultBiometricPromptWithContents(props.getSensorId(), 0 /* userId */,
                         true /* requireConfirmation */, callback, randomTitle, randomSubtitle,
@@ -283,7 +324,13 @@ public class BiometricSimpleTests extends BiometricTestBase {
 
                 // Finish auth
                 successfullyAuthenticate(session, 0 /* userId */);
-                latch.await(3, TimeUnit.SECONDS);
+
+                ArgumentCaptor<BiometricPrompt.AuthenticationResult> resultCaptor =
+                        ArgumentCaptor.forClass(BiometricPrompt.AuthenticationResult.class);
+                verify(callback).onAuthenticationSucceeded(resultCaptor.capture());
+                assertEquals("Must be TYPE_BIOMETRIC",
+                        BiometricPrompt.AUTHENTICATION_RESULT_TYPE_BIOMETRIC,
+                        resultCaptor.getValue().getAuthenticationType());
             }
         }
     }
@@ -339,6 +386,10 @@ public class BiometricSimpleTests extends BiometricTestBase {
     @Test
     public void testBiometricCancellation() throws Exception {
         for (SensorProperties props : mSensorProperties) {
+            if (props.getSensorStrength() == SensorProperties.STRENGTH_CONVENIENCE) {
+                continue;
+            }
+
             try (BiometricTestSession session =
                          mBiometricManager.createTestSession(props.getSensorId())) {
                 enrollForSensor(session, props.getSensorId());

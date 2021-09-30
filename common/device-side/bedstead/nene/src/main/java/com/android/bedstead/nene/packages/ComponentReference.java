@@ -31,20 +31,16 @@ import com.android.bedstead.nene.utils.ShellCommand;
 @Experimental
 public class ComponentReference {
 
-    final TestApis mTestApis;
     final PackageReference mPackage;
     final String mClassName;
 
-    public ComponentReference(TestApis testApis, PackageReference packageName, String className) {
-        mTestApis = testApis;
+    public ComponentReference(PackageReference packageName, String className) {
         mPackage = packageName;
         mClassName = className;
     }
 
-    public ComponentReference(TestApis testApis, ComponentName component) {
-        this(testApis,
-                new UnresolvedPackage(testApis, component.getPackageName()),
-                component.getClassName());
+    public ComponentReference(ComponentName component) {
+        this(new UnresolvedPackage(component.getPackageName()), component.getClassName());
     }
 
     /**
@@ -87,7 +83,7 @@ public class ComponentReference {
      * Enable this component for the instrumented user.
      */
     public ComponentReference enable() {
-        return enable(mTestApis.users().instrumented());
+        return enable(TestApis.users().instrumented());
     }
 
     /**
@@ -109,7 +105,7 @@ public class ComponentReference {
      * Disable this component for the instrumented user.
      */
     public ComponentReference disable() {
-        return disable(mTestApis.users().instrumented());
+        return disable(TestApis.users().instrumented());
     }
 
     @Override

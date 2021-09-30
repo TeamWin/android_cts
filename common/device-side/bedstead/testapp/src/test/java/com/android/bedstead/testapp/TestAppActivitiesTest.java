@@ -39,8 +39,7 @@ public class TestAppActivitiesTest {
 
     @ClassRule @Rule
     public static final DeviceState sDeviceState = new DeviceState();
-    private static final TestApis sTestApis = new TestApis();
-    private static final UserReference sUser = sTestApis.users().instrumented();
+    private static final UserReference sUser = TestApis.users().instrumented();
 
     private static final String EXISTING_ACTIVITY = "android.testapp.activity";
     private static final String NON_EXISTING_ACTIVITY = "non.existing.activity";

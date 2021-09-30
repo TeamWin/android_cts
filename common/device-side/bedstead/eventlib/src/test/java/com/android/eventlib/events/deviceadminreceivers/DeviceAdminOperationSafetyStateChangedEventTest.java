@@ -32,8 +32,7 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public final class DeviceAdminOperationSafetyStateChangedEventTest {
 
-    private static final TestApis sTestApis = new TestApis();
-    private static final Context sContext = sTestApis.context().instrumentedContext();
+    private static final Context sContext = TestApis.context().instrumentedContext();
 
     private static final String DEFAULT_DEVICE_ADMIN_RECEIVER_CLASS_NAME =
             TestDeviceAdminReceiver.class.getName();

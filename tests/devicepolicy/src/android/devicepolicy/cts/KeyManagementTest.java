@@ -85,6 +85,7 @@ public class KeyManagementTest {
     @Test
     @Postsubmit(reason = "new test")
     @CanSetPolicyTest(policy = KeyManagement.class)
+    @Ignore("b/200112753")
     public void installKeyPair_validRsaKeyPair_success() throws Exception {
         try {
             // Install keypair
@@ -118,6 +119,7 @@ public class KeyManagementTest {
     @Test
     @Postsubmit(reason = "new test")
     @CanSetPolicyTest(policy = KeyManagement.class, singleTestOnly = true)
+    @Ignore("b/200112753")
     public void installKeyPair_nullAdminComponent_throwException() throws Exception {
         assertThrows(SecurityException.class,
                 () -> sDeviceState.dpc().devicePolicyManager().installKeyPair(
@@ -163,6 +165,7 @@ public class KeyManagementTest {
     @Test
     @Postsubmit(reason = "new test")
     @CanSetPolicyTest(policy = KeyManagement.class)
+    @Ignore("b/200112753")
     public void removeKeyPair_validRsaKeyPair_success() throws Exception {
         try {
             // Install keypair
@@ -185,6 +188,7 @@ public class KeyManagementTest {
     @Test
     @Postsubmit(reason = "new test")
     @CanSetPolicyTest(policy = KeyManagement.class)
+    @Ignore("b/200112753")
     public void hasKeyPair_installedAlias_true() throws Exception {
         try {
             // Install keypair
@@ -201,7 +205,8 @@ public class KeyManagementTest {
     @Test
     @Postsubmit(reason = "new test")
     @CanSetPolicyTest(policy = KeyManagement.class)
-    public void hasKeyPair_removedAlias_false() throws Exception {
+    @Ignore("b/200112753")
+    public void hasKeyPair_removedAlias_false() {
         try {
             // Install keypair
             sDeviceState.dpc().devicePolicyManager()
@@ -218,6 +223,7 @@ public class KeyManagementTest {
     @Test
     @Postsubmit(reason = "new test")
     @PositivePolicyTest(policy = KeyManagement.class)
+    @Ignore("b/200112753")
     public void choosePrivateKeyAlias_aliasIsSelectedByAdmin_returnAlias() throws Exception {
         try {
             // Install keypair
@@ -237,6 +243,7 @@ public class KeyManagementTest {
     @Test
     @Postsubmit(reason = "new test")
     @PositivePolicyTest(policy = KeyManagement.class)
+    @Ignore("b/200112753")
     public void choosePrivateKeyAlias_nonUserSelectedAliasIsSelectedByAdmin_returnAlias()
             throws Exception {
         try {
@@ -257,6 +264,7 @@ public class KeyManagementTest {
     @Test
     @Postsubmit(reason = "new test")
     @PositivePolicyTest(policy = KeyManagement.class)
+    @Ignore("b/200112753")
     public void getPrivateKey_aliasIsGranted_returnPrivateKey() throws Exception {
         try {
             // Install keypair
