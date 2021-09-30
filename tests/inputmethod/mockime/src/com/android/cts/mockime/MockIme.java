@@ -548,7 +548,7 @@ public final class MockIme extends InputMethodService {
             final Handler handler = new Handler(mHandlerThread.getLooper());
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 registerReceiver(mCommandReceiver, filter, null /* broadcastPermission */, handler,
-                        Context.RECEIVER_VISIBLE_TO_INSTANT_APPS);
+                        Context.RECEIVER_VISIBLE_TO_INSTANT_APPS | Context.RECEIVER_EXPORTED);
             } else {
                 registerReceiver(mCommandReceiver, filter, null /* broadcastPermission */, handler);
             }
