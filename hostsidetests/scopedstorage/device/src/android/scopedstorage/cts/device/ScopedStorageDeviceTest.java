@@ -111,6 +111,7 @@ import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 
 import android.Manifest;
@@ -1073,6 +1074,61 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
             oldFile.delete();
             newFile.delete();
         }
+    }
+
+    void writeAndCheckMtime(final boolean append) throws Exception {
+        File file = new File(getDcimDir(), "update_modifies_mtime.jpg");
+
+        try {
+            assertThat(file.createNewFile()).isTrue();
+            assertThat(file.exists()).isTrue();
+
+            final long creationTime = file.lastModified();
+
+            // File should exist
+            assertNotEquals(creationTime, 0L);
+
+            // Sleep a bit more than 1 second because although
+            // File::lastModified() represents the duration in milliseconds,
+            // has 1 second precision.
+            // With lower sleep durations the test results flakey...
+            Thread.sleep(2000);
+
+            // Modification time should be the same as long the file has not
+            // been modified
+            assertEquals(creationTime, file.lastModified());
+
+            // Sleep a bit more than 1 second because although
+            // File::lastModified() represents the duration in milliseconds,
+            // has 1 second precision.
+            // With lower sleep durations the test results flakey...
+            Thread.sleep(2000);
+
+            // Assert we can write to the file
+            try (FileOutputStream fos = new FileOutputStream(file, append)) {
+                fos.write(BYTES_DATA1);
+                fos.close();
+            }
+
+            final long modificationTime = file.lastModified();
+
+            // As the file has been written, modification time should have
+            // changed
+            assertNotEquals(modificationTime, 0L);
+            assertNotEquals(modificationTime, creationTime);
+        } finally {
+            file.delete();
+        }
+    }
+
+    @Test
+    public void testAppendUpdatesMtime() throws Exception {
+        writeAndCheckMtime(true);
+    }
+
+    @Test
+    public void testWriteUpdatesMtime() throws Exception {
+        writeAndCheckMtime(false);
     }
 
     @Test

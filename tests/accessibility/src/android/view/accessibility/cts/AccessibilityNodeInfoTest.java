@@ -328,6 +328,7 @@ public class AccessibilityNodeInfoTest {
         // Populate 10 fields
         info.setMovementGranularities(AccessibilityNodeInfo.MOVEMENT_GRANULARITY_LINE);
         info.setViewIdResourceName("foo.bar:id/baz");
+        info.setUniqueId("foo.bar:id/baz10");
         info.setDrawingOrder(5);
         info.setAvailableExtraData(
                 Arrays.asList(AccessibilityNodeInfo.EXTRA_DATA_TEXT_CHARACTER_LOCATION_KEY));
@@ -471,6 +472,8 @@ public class AccessibilityNodeInfoTest {
                 receivedInfo.getMovementGranularities());
         assertEquals("viewId has incorrect value", expectedInfo.getViewIdResourceName(),
                 receivedInfo.getViewIdResourceName());
+        assertEquals("Unique id has incorrect value", expectedInfo.getUniqueId(),
+            receivedInfo.getUniqueId());
         assertEquals("drawing order has incorrect value", expectedInfo.getDrawingOrder(),
                 receivedInfo.getDrawingOrder());
         assertEquals("Extra data flags have incorrect value", expectedInfo.getAvailableExtraData(),
@@ -650,6 +653,7 @@ public class AccessibilityNodeInfoTest {
         assertSame("movementGranularities not properly recycled", 0,
                 info.getMovementGranularities());
         assertNull("viewId not properly recycled", info.getViewIdResourceName());
+        assertNull("Unique id not properly recycled", info.getUniqueId());
         assertEquals(0, info.getDrawingOrder());
         assertTrue(info.getAvailableExtraData().isEmpty());
         assertNull("Pane title not properly recycled", info.getPaneTitle());

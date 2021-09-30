@@ -25,6 +25,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.database.SQLException;
+import android.database.sqlite.SQLiteCantOpenDatabaseException;
 import android.database.sqlite.SQLiteCursor;
 import android.database.sqlite.SQLiteCursorDriver;
 import android.database.sqlite.SQLiteDatabase;
@@ -133,6 +134,70 @@ public class SQLiteDatabaseTest extends AndroidTestCase {
         db = SQLiteDatabase.create(factory);
         assertNotNull(db);
         db.close();
+    }
+
+    public void testOpenDatabase_fail_no_path() {
+        CursorFactory factory = MockSQLiteCursor::new;
+        SQLiteDatabase db = null;
+        try {
+            db = SQLiteDatabase.openDatabase("filename.db",
+                    factory, SQLiteDatabase.CREATE_IF_NECESSARY);
+        } catch (SQLiteCantOpenDatabaseException e) {
+            assertTrue(
+                    "Wrong exception message: " + e.getMessage(),
+                    e.getMessage().contains("Directory not specified in the file path"));
+            assertFalse(
+                    "Wrong exception message: " + e.getMessage(),
+                    e.getMessage().contains("Unknown reason"));
+        } finally {
+            if (db != null) {
+                db.close();
+            }
+        }
+    }
+
+    public void testOpenDatabase_fail_root_path_create_if_necessary() {
+        CursorFactory factory = MockSQLiteCursor::new;
+        SQLiteDatabase db = null;
+        try {
+            db = SQLiteDatabase.openDatabase("/filename.db",
+                    factory, SQLiteDatabase.CREATE_IF_NECESSARY);
+        } catch (SQLiteCantOpenDatabaseException e) {
+            assertTrue(
+                    "Wrong exception message: " + e.getMessage(),
+                    e.getMessage().contains(
+                            "File /filename.db doesn't exist and CREATE_IF_NECESSARY is set"));
+            assertFalse(
+                    "Wrong exception message: " + e.getMessage(),
+                    e.getMessage().contains("Unknown reason"));
+        } finally {
+            if (db != null) {
+                db.close();
+            }
+        }
+    }
+
+    public void testOpenDatabase_fail_root_path_no_create() {
+        CursorFactory factory = MockSQLiteCursor::new;
+        SQLiteDatabase db = null;
+        try {
+            db = SQLiteDatabase.openDatabase("/filename.db",
+                    factory, 0);
+        } catch (SQLiteCantOpenDatabaseException e) {
+            assertTrue(
+                    "Wrong exception message: " + e.getMessage(),
+                    e.getMessage().contains("File /filename.db doesn't exist"));
+            assertFalse(
+                    "Wrong exception message: " + e.getMessage(),
+                    e.getMessage().contains("CREATE_IF_NECESSARY"));
+            assertFalse(
+                    "Wrong exception message: " + e.getMessage(),
+                    e.getMessage().contains("Unknown reason"));
+        } finally {
+            if (db != null) {
+                db.close();
+            }
+        }
     }
 
     public void testDeleteDatabase() throws IOException {
