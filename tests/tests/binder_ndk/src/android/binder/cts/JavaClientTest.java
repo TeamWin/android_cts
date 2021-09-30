@@ -282,6 +282,9 @@ public class JavaClientTest {
         assertEquals("", mInterface.RepeatString(""));
         assertEquals("a", mInterface.RepeatString("a"));
         assertEquals("foo", mInterface.RepeatString("foo"));
+
+        String stringWithNulls = "a\0df";
+        assertEquals(stringWithNulls, mInterface.RepeatString(stringWithNulls));
     }
 
     @Test

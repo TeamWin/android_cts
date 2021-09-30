@@ -456,6 +456,12 @@ TEST_P(NdkBinderTest_Aidl, RepeatString) {
 
   EXPECT_OK(iface->RepeatString("say what?", &res));
   EXPECT_EQ("say what?", res);
+
+  std::string stringWithNulls = "asdf";
+  stringWithNulls[1] = '\0';
+
+  EXPECT_OK(iface->RepeatString(stringWithNulls, &res));
+  EXPECT_EQ(stringWithNulls, res);
 }
 
 TEST_P(NdkBinderTest_Aidl, RepeatNullableString) {
