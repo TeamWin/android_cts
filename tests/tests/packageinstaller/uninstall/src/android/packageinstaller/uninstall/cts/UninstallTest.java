@@ -18,6 +18,7 @@ package android.packageinstaller.uninstall.cts;
 import static android.app.AppOpsManager.MODE_ALLOWED;
 import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+import static android.content.pm.PackageManager.FEATURE_AUTOMOTIVE;
 import static android.graphics.PixelFormat.TRANSLUCENT;
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
@@ -27,6 +28,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
 
 import android.content.Context;
 import android.content.Intent;
@@ -148,6 +150,8 @@ public class UninstallTest {
 
     @Test
     public void testUninstall() throws Exception {
+        // TODO(b/200620676) STOPSHIP Fix accessibility issue and remove assumeNoAutomotive()
+        assumeNoAutomotive();
         assertTrue(isInstalled());
 
         startUninstall();
@@ -197,5 +201,10 @@ public class UninstallTest {
         } catch (PackageManager.NameNotFoundException e) {
             return false;
         }
+    }
+
+    private void assumeNoAutomotive() {
+        assumeFalse("automotive build",
+                mContext.getPackageManager().hasSystemFeature(FEATURE_AUTOMOTIVE));
     }
 }
