@@ -26,14 +26,12 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import static org.testng.Assert.assertThrows;
 
 import android.app.ActivityManager;
-import android.app.UiAutomation;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.UserManager;
 
 import androidx.test.core.app.ApplicationProvider;
-import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
@@ -45,7 +43,6 @@ import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
-import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
 
@@ -62,10 +59,6 @@ public final class StartProfilesTest {
     private static final UserManager sUserManager = sContext.getSystemService(UserManager.class);
     private static final ActivityManager sActivityManager =
             sContext.getSystemService(ActivityManager.class);
-
-    private UiAutomation mUiAutomation =
-            InstrumentationRegistry.getInstrumentation().getUiAutomation();
-    private final TestApis mTestApis = new TestApis();
 
     @ClassRule @Rule
     public static final DeviceState sDeviceState = new DeviceState();

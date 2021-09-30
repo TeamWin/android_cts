@@ -48,6 +48,10 @@ public abstract class PollingCheck {
         mErrorMessage = errorMessage;
     }
 
+    public PollingCheck(String errorMessage) {
+        this(DEFAULT_TIMEOUT, errorMessage);
+    }
+
     protected abstract boolean check();
 
     public void run() {
@@ -113,6 +117,15 @@ public abstract class PollingCheck {
 
     public static void waitFor(final PollingCheckCondition condition) {
         new PollingCheck() {
+            @Override
+            protected boolean check() {
+                return condition.canProceed();
+            }
+        }.run();
+    }
+
+    public static void waitFor(final PollingCheckCondition condition, String errorMessage) {
+        new PollingCheck(errorMessage) {
             @Override
             protected boolean check() {
                 return condition.canProceed();

@@ -30,8 +30,6 @@ import java.util.Iterator;
  */
 public final class TestAppActivitiesQueryBuilder implements Queryable {
 
-    private static final TestApis sTestApis = new TestApis();
-
     private final TestAppActivities mTestAppActivities;
     private ActivityQueryHelper<TestAppActivitiesQueryBuilder> mActivity =
             new ActivityQueryHelper<>(this);
@@ -55,7 +53,7 @@ public final class TestAppActivitiesQueryBuilder implements Queryable {
             if (ActivityQueryHelper.matches(mActivity, activity)) {
                 activityIterator.remove();
                 return new UnresolvedTestAppActivity(mTestAppActivities.mInstance,
-                        sTestApis.packages().component(
+                        TestApis.packages().component(
                                 new ComponentName(
                                         mTestAppActivities.mInstance.testApp().packageName(),
                                         activity.className())));

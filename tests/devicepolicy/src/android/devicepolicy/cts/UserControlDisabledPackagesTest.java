@@ -61,15 +61,14 @@ import java.util.List;
 public class UserControlDisabledPackagesTest {
     private static final String TAG = "UserControlDisabledPackagesTest";
 
-    private static final TestApis sTestApis = new TestApis();
     private static final TestAppProvider sTestAppProvider = new TestAppProvider();
     private static final TestApp sTestApp =
             sTestAppProvider.query().whereActivities().isNotEmpty().get();
 
     private static final ActivityManager sActivityManager =
-            sTestApis.context().instrumentedContext().getSystemService(ActivityManager.class);
+            TestApis.context().instrumentedContext().getSystemService(ActivityManager.class);
     private static final PackageManager sPackageManager =
-            sTestApis.context().instrumentedContext().getPackageManager();
+            TestApis.context().instrumentedContext().getPackageManager();
 
     private static final String PACKAGE_NAME = "com.android.foo.bar.baz";
 
@@ -184,7 +183,7 @@ public class UserControlDisabledPackagesTest {
         List<String> originalDisabledPackages =
                 sDeviceState.dpc().devicePolicyManager().getUserControlDisabledPackages(
                         DPC_COMPONENT_NAME);
-        UserReference currentRunningUserOnTest = sTestApis.users().instrumented();
+        UserReference currentRunningUserOnTest = TestApis.users().instrumented();
         int currentRunningUserId = currentRunningUserOnTest.id();
         String testAppPackageName = sTestApp.packageName();
 

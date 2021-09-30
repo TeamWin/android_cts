@@ -99,7 +99,6 @@ public final class DevicePolicyManagerTest {
     private static final UserManager sUserManager = sContext.getSystemService(UserManager.class);
     private static final SharedPreferences sSharedPreferences =
             sContext.getSharedPreferences("required-apps.txt", Context.MODE_PRIVATE);
-    private static final TestApis sTestApis = new TestApis();
 
     private static final ComponentName DEVICE_ADMIN_COMPONENT_NAME =
             DeviceAdminApp.deviceAdminComponentName(sContext);
@@ -168,7 +167,7 @@ public final class DevicePolicyManagerTest {
             assertThat(profile).isNotNull();
         } finally {
             if (profile != null) {
-                sTestApis.users().find(profile).remove();
+                TestApis.users().find(profile).remove();
             }
         }
     }
@@ -189,7 +188,7 @@ public final class DevicePolicyManagerTest {
             assertThat(sUserManager.isManagedProfile(profile.getIdentifier())).isTrue();
         } finally {
             if (profile != null) {
-                sTestApis.users().find(profile).remove();
+                TestApis.users().find(profile).remove();
             }
         }
     }
@@ -212,7 +211,7 @@ public final class DevicePolicyManagerTest {
                     .isEqualTo(DEVICE_ADMIN_COMPONENT_NAME);
         } finally {
             if (profile != null) {
-                sTestApis.users().find(profile).remove();
+                TestApis.users().find(profile).remove();
             }
         }
     }
@@ -234,7 +233,7 @@ public final class DevicePolicyManagerTest {
             assertThat(profileDpm.isProfileOwnerApp(sContext.getPackageName())).isTrue();
         } finally {
             if (profile != null) {
-                sTestApis.users().find(profile).remove();
+                TestApis.users().find(profile).remove();
             }
         }
     }
@@ -259,7 +258,7 @@ public final class DevicePolicyManagerTest {
             assertThat(hasTestAccount(profile)).isTrue();
         } finally {
             if (profile != null) {
-                sTestApis.users().find(profile).remove();
+                TestApis.users().find(profile).remove();
             }
         }
     }
@@ -284,7 +283,7 @@ public final class DevicePolicyManagerTest {
             assertThat(hasTestAccount(sContext.getUser())).isFalse();
         } finally {
             if (profile != null) {
-                sTestApis.users().find(profile).remove();
+                TestApis.users().find(profile).remove();
             }
         }
     }
@@ -310,7 +309,7 @@ public final class DevicePolicyManagerTest {
             assertThat(hasTestAccount(sContext.getUser())).isTrue();
         } finally {
             if (profile != null) {
-                sTestApis.users().find(profile).remove();
+                TestApis.users().find(profile).remove();
             }
         }
     }
@@ -336,7 +335,7 @@ public final class DevicePolicyManagerTest {
             assertThat(getInstalledPackagesOnUser(nonRequiredApps, profile)).isEmpty();
         } finally {
             if (profile != null) {
-                sTestApis.users().find(profile).remove();
+                TestApis.users().find(profile).remove();
             }
         }
     }
@@ -361,7 +360,7 @@ public final class DevicePolicyManagerTest {
             }
         } finally {
             if (profile != null) {
-                sTestApis.users().find(profile).remove();
+                TestApis.users().find(profile).remove();
             }
         }
     }
@@ -426,11 +425,11 @@ public final class DevicePolicyManagerTest {
     }
 
     private boolean isPackageInstalledOnUser(String packageName, UserHandle user) {
-        Package resolvedPackage = sTestApis.packages().find(packageName).resolve();
+        Package resolvedPackage = TestApis.packages().find(packageName).resolve();
         if (resolvedPackage == null) {
             return false;
         }
-        return resolvedPackage.installedOnUsers().contains(sTestApis.users().find(user));
+        return resolvedPackage.installedOnUsers().contains(TestApis.users().find(user));
     }
 
     private Set<String> getConfigurableDefaultCrossProfilePackages() {
@@ -450,7 +449,7 @@ public final class DevicePolicyManagerTest {
             return sContext;
         }
         try (PermissionContext p =
-                     sTestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
+                     TestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
             return sContext.createContextAsUser(user, /* flags= */ 0);
         }
     }
@@ -584,14 +583,14 @@ public final class DevicePolicyManagerTest {
     }
 
     private void resetUserSetupCompletedFlag() {
-        try (PermissionContext p = sTestApis.permissions().withPermission(WRITE_SECURE_SETTINGS)) {
+        try (PermissionContext p = TestApis.permissions().withPermission(WRITE_SECURE_SETTINGS)) {
             Settings.Secure.putInt(sContext.getContentResolver(), USER_SETUP_COMPLETE_KEY, 0);
         }
         sDevicePolicyManager.forceUpdateUserSetupComplete(sContext.getUserId());
     }
 
     private void setUserSetupCompletedFlag() {
-        try (PermissionContext p = sTestApis.permissions().withPermission(WRITE_SECURE_SETTINGS)) {
+        try (PermissionContext p = TestApis.permissions().withPermission(WRITE_SECURE_SETTINGS)) {
             Settings.Secure.putInt(sContext.getContentResolver(), USER_SETUP_COMPLETE_KEY, 1);
         }
         sDevicePolicyManager.forceUpdateUserSetupComplete(sContext.getUserId());

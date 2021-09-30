@@ -53,8 +53,7 @@ public class NetworkResetTest {
     @ClassRule @Rule
     public static final DeviceState sDeviceState = new DeviceState();
 
-    private static final TestApis sTestApis = new TestApis();
-    private static final Context sContext = sTestApis.context().instrumentedContext();
+    private static final Context sContext = TestApis.context().instrumentedContext();
     private static final UserManager sUserManager = sContext.getSystemService(UserManager.class);
     private static final ConnectivityManager sConnectivityManager =
             sContext.getSystemService(ConnectivityManager.class);

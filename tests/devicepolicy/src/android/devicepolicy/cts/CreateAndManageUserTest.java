@@ -47,8 +47,6 @@ public class CreateAndManageUserTest {
 
     private static final String TAG = "CreateAndManageUserTest";
 
-    private static final TestApis sTestApis = new TestApis();
-
     @ClassRule
     @Rule
     public static final DeviceState sDeviceState = new DeviceState();
@@ -72,8 +70,8 @@ public class CreateAndManageUserTest {
     @CanSetPolicyTest(policy = CreateAndManageUser.class)
     public void createAndManageUser_lowStorage_throwOperationException() {
         try {
-            sTestApis.settings().global().putInt(SYS_STORAGE_THRESHOLD_PERCENTAGE, 100);
-            sTestApis.settings().global().putString(SYS_STORAGE_THRESHOLD_MAX_BYTES,
+            TestApis.settings().global().putInt(SYS_STORAGE_THRESHOLD_PERCENTAGE, 100);
+            TestApis.settings().global().putString(SYS_STORAGE_THRESHOLD_MAX_BYTES,
                     String.valueOf(Long.MAX_VALUE));
 
             UserManager.UserOperationException e = expectThrows(
@@ -81,7 +79,7 @@ public class CreateAndManageUserTest {
 
             assertThat(e.getUserOperationResult()).isEqualTo(USER_OPERATION_ERROR_LOW_STORAGE);
         } finally {
-            sTestApis.settings().global().reset();
+            TestApis.settings().global().reset();
         }
     }
 
@@ -98,7 +96,7 @@ public class CreateAndManageUserTest {
 
     private void removeUser(UserHandle userHandle) {
         if (userHandle != null) {
-            sTestApis.users().find(userHandle).remove();
+            TestApis.users().find(userHandle).remove();
         }
     }
 }
