@@ -31,7 +31,6 @@ import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PositivePolicyTest;
 import com.android.bedstead.harrier.policies.SupportMessage;
 import com.android.bedstead.metricsrecorder.EnterpriseMetricsRecorder;
-import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.remotedpc.RemoteDpc;
 
 import org.junit.After;
@@ -62,7 +61,6 @@ public final class SupportMessageTest {
             new String(new char[LONG_SUPPORT_MESSAGE_REASONABLE_LENGTH])
                     .replace('\0', 'A');
     private static final String EMPTY_SUPPORT_MESSAGE = "";
-    private static final TestApis sTestApis = new TestApis();
 
     private RemoteDevicePolicyManager mDevicePolicyManager;
     private ComponentName mAdmin;

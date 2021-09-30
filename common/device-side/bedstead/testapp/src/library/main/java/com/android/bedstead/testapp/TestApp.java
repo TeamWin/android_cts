@@ -27,6 +27,7 @@ import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.packages.PackageReference;
 import com.android.bedstead.nene.users.UserReference;
+import com.android.bedstead.nene.users.Users;
 import com.android.bedstead.testapp.processor.annotations.TestAppSender;
 import com.android.queryable.info.ActivityInfo;
 
@@ -39,10 +40,8 @@ import java.util.Set;
 /** Represents a single test app which can be installed and interacted with. */
 @TestAppSender
 public class TestApp {
-
-    private static final TestApis sTestApis = new TestApis();
     // Must be instrumentation context to access resources
-    private static final Context sContext = sTestApis.context().instrumentationContext();
+    private static final Context sContext = TestApis.context().instrumentationContext();
     private final TestAppDetails mDetails;
 
     TestApp(TestAppDetails details) {
@@ -58,7 +57,7 @@ public class TestApp {
      * <p>This will only be resolvable after the app is installed.
      */
     public PackageReference reference() {
-        return sTestApis.packages().find(packageName());
+        return TestApis.packages().find(packageName());
     }
 
     /**
@@ -69,6 +68,15 @@ public class TestApp {
     }
 
     /**
+     * Install the {@link TestApp} on the device for the instrumented user.
+     *
+     * <p>See {@link Users#instrumented()}
+     */
+    public TestAppInstanceReference install() {
+        return install(TestApis.users().instrumented());
+    }
+
+    /**
      * Install the {@link TestApp} on the device for the given {@link UserReference}.
      */
     public TestAppInstanceReference install(UserReference user) {
@@ -76,7 +84,7 @@ public class TestApp {
             reference().install(user);
         } else {
             try {
-                sTestApis.packages().install(user, apkBytes());
+                TestApis.packages().install(user, apkBytes());
             } catch (NeneException e) {
                 throw new NeneException("Error while installing TestApp " + this, e);
             }
@@ -89,8 +97,24 @@ public class TestApp {
      * Install the {@link TestApp} on the device for the given {@link UserHandle}.
      */
     public TestAppInstanceReference install(UserHandle user) {
-        install(sTestApis.users().find(user));
+        install(TestApis.users().find(user));
         return instance(user);
+    }
+
+    /**
+     * Uninstall the {@link TestApp} on the device from the instrumented user.
+     *
+     * <p>See {@link Users#instrumented()}
+     */
+    public void uninstall() {
+        uninstall(TestApis.users().instrumented());
+    }
+
+    /**
+     * Uninstall the {@link TestApp} from the device from all users.
+     */
+    public void uninstallFromAllUsers() {
+        reference().uninstallFromAllUsers();
     }
 
     /**
@@ -104,7 +128,7 @@ public class TestApp {
      * Uninstall the {@link TestApp} on the device from the given {@link UserHandle}.
      */
     public void uninstall(UserHandle user) {
-        uninstall(sTestApis.users().find(user));
+        uninstall(TestApis.users().find(user));
     }
 
     /**
@@ -113,7 +137,7 @@ public class TestApp {
      * <p>This does not check if the user exists, or if the test app is installed on the user.
      */
     public TestAppInstanceReference instance(UserHandle user) {
-        return instance(sTestApis.users().find(user));
+        return instance(TestApis.users().find(user));
     }
 
     /**

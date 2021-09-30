@@ -36,13 +36,11 @@ import java.io.File;
 
 @RunWith(JUnit4.class)
 public class TestAppTest {
-
-    private static final TestApis sTestApis = new TestApis();
-    private static final UserReference sUser = sTestApis.users().instrumented();
+    private static final UserReference sUser = TestApis.users().instrumented();
     private static final UserHandle sUserHandle = sUser.userHandle();
-    private static final UserReference sNonExistingUser = sTestApis.users().find(9999);
+    private static final UserReference sNonExistingUser = TestApis.users().find(9999);
     private static final UserHandle sNonExistingUserHandle = sNonExistingUser.userHandle();
-    private static final Context sContext = sTestApis.context().instrumentedContext();
+    private static final Context sContext = TestApis.context().instrumentedContext();
 
     private TestAppProvider mTestAppProvider;
 
@@ -55,7 +53,7 @@ public class TestAppTest {
     public void reference_returnsNeneReference() {
         TestApp testApp = mTestAppProvider.any();
 
-        assertThat(testApp.reference()).isEqualTo(sTestApis.packages().find(testApp.packageName()));
+        assertThat(testApp.reference()).isEqualTo(TestApis.packages().find(testApp.packageName()));
     }
 
     @Test
@@ -67,6 +65,19 @@ public class TestAppTest {
             Package pkg = testApp.resolve();
 
             assertThat(pkg.packageName()).isEqualTo(testApp.packageName());
+        } finally {
+            testApp.uninstall(sUser);
+        }
+    }
+
+    @Test
+    public void install_noUserSpecified_installsInInstrumentedUser() {
+        TestApp testApp = mTestAppProvider.any();
+
+        testApp.install();
+
+        try {
+            assertThat(testApp.resolve().installedOnUsers()).contains(sUser);
         } finally {
             testApp.uninstall(sUser);
         }
@@ -236,6 +247,19 @@ public class TestAppTest {
         testApp.uninstall(sUser);
 
         testApp.uninstall(sUserHandle);
+    }
+
+    @Test
+    public void uninstall_noUserSpecified_uninstallsFromInstrumentedUser() {
+        TestApp testApp = mTestAppProvider.any();
+        testApp.install(sUser);
+
+        testApp.uninstall();
+
+        Package testAppPackage = testApp.reference().resolve();
+        if (testAppPackage != null) {
+            assertThat(testAppPackage.installedOnUsers()).doesNotContain(sUser);
+        }
     }
 
     @Test

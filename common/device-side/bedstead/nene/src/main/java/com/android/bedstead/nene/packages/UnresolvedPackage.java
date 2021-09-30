@@ -16,14 +16,12 @@
 
 package com.android.bedstead.nene.packages;
 
-import com.android.bedstead.nene.TestApis;
-
 /**
  * Default implementation of {@link PackageReference} used when we haven't fetched information from
  * the device.
  */
 public final class UnresolvedPackage extends PackageReference {
-    UnresolvedPackage(TestApis testApis, String packageName) {
-        super(testApis, packageName);
+    UnresolvedPackage(String packageName) {
+        super(packageName);
     }
 }

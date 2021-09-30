@@ -44,13 +44,7 @@ public class AdbPackageParser26 implements AdbPackageParser {
 
     private static final int PACKAGE_LIST_BASE_INDENTATION = 2;
 
-    private final TestApis mTestApis;
-
-    AdbPackageParser26(TestApis testApis) {
-        if (testApis == null) {
-            throw new NullPointerException();
-        }
-        mTestApis = testApis;
+    AdbPackageParser26() {
     }
 
     @Override
@@ -84,7 +78,7 @@ public class AdbPackageParser26 implements AdbPackageParser {
         Set<String> packageStrings = extractPackageStrings(packagesList);
         Map<String, Package> packages = new HashMap<>();
         for (String packageString : packageStrings) {
-            Package pkg = new Package(mTestApis, parsePackage(packageString));
+            Package pkg = new Package(parsePackage(packageString));
             packages.put(pkg.packageName(), pkg);
         }
         return packages;
@@ -155,7 +149,7 @@ public class AdbPackageParser26 implements AdbPackageParser {
             return;
         }
 
-        UserReference user = mTestApis.users().find(userId);
+        UserReference user = TestApis.users().find(userId);
         Package.MutableUserPackage userPackage = new Package.MutableUserPackage();
         userPackage.mGrantedPermissions = new HashSet<>();
         pkg.mInstalledOnUsers.put(user, userPackage);

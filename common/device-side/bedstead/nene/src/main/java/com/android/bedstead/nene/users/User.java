@@ -20,8 +20,6 @@ import android.util.Log;
 
 import androidx.annotation.Nullable;
 
-import com.android.bedstead.nene.TestApis;
-
 /**
  * Representation of a user on an Android device.
  *
@@ -72,8 +70,8 @@ public final class User extends UserReference {
 
     final MutableUser mMutableUser;
 
-    User(TestApis testApis, MutableUser mutableUser) {
-        super(testApis, mutableUser.mId);
+    User(MutableUser mutableUser) {
+        super(mutableUser.mId);
         mMutableUser = mutableUser;
     }
 

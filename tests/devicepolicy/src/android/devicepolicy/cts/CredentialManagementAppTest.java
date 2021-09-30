@@ -75,7 +75,6 @@ public class CredentialManagementAppTest {
     private static final Certificate CERTIFICATE =
             getCertificate(FakeKeys.FAKE_RSA_1.caCertificate);
     private static final Certificate[] CERTIFICATES = new Certificate[]{CERTIFICATE};
-    private static final TestApis sTestApis = new TestApis();
 
     private static final Context CONTEXT = ApplicationProvider.getApplicationContext();
     private static final String MANAGE_CREDENTIALS = "android:manage_credentials";
@@ -325,7 +324,7 @@ public class CredentialManagementAppTest {
 
     // TODO (b/174677062): Move this into infrastructure
     private void setCredentialManagementApp() throws Exception {
-        try (PermissionContext p = sTestApis.permissions().withPermission(
+        try (PermissionContext p = TestApis.permissions().withPermission(
                 MANAGE_CREDENTIAL_MANAGEMENT_APP_PERMISSION)){
             assertTrue("Unable to set credential management app",
                     KeyChain.setCredentialManagementApp(CONTEXT, PACKAGE_NAME,
@@ -339,7 +338,7 @@ public class CredentialManagementAppTest {
 
     // TODO (b/174677062): Move this into infrastructure
     private void removeCredentialManagementApp() throws Exception {
-        try (PermissionContext p = sTestApis.permissions().withPermission(
+        try (PermissionContext p = TestApis.permissions().withPermission(
                 MANAGE_CREDENTIAL_MANAGEMENT_APP_PERMISSION)){
             assertTrue("Unable to remove credential management app",
                     KeyChain.removeCredentialManagementApp(CONTEXT));

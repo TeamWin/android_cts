@@ -40,8 +40,7 @@ import java.time.Duration;
 @RunWith(JUnit4.class)
 public class EventLogsSubjectTest {
 
-    private static final TestApis sTestApis = new TestApis();
-    public static final Context sContext = sTestApis.context().instrumentedContext();
+    public static final Context sContext = TestApis.context().instrumentedContext();
 
     @Before
     public void setup() {

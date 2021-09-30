@@ -53,8 +53,7 @@ public class
 
     private static final int CONNECTION_TIMEOUT_SECONDS = 30;
     private static final String LOG_TAG = "RemoteEventQuerier";
-    private static final TestApis sTestApis = new TestApis();
-    private static final Context sContext = sTestApis.context().instrumentedContext();
+    private static final Context sContext = TestApis.context().instrumentedContext();
 
     private final String mPackageName;
     private final EventLogsQuery<E, F> mEventLogsQuery;
@@ -174,9 +173,9 @@ public class
         AtomicBoolean didBind = new AtomicBoolean(false);
         if (mEventLogsQuery.getUserHandle() != null
                 && mEventLogsQuery.getUserHandle().getIdentifier()
-                != sTestApis.users().instrumented().id()) {
+                != TestApis.users().instrumented().id()) {
             try (PermissionContext p =
-                         sTestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
+                         TestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
                 didBind.set(sContext.bindServiceAsUser(
                         intent, connection, /* flags= */ BIND_AUTO_CREATE,
                         mEventLogsQuery.getUserHandle()));
@@ -193,15 +192,15 @@ public class
             }
         } else {
             User user = (mEventLogsQuery.getUserHandle() == null)
-                    ? sTestApis.users().instrumented().resolve()
-                    : sTestApis.users().find(mEventLogsQuery.getUserHandle()).resolve();
+                    ? TestApis.users().instrumented().resolve()
+                    : TestApis.users().find(mEventLogsQuery.getUserHandle()).resolve();
             if (user == null) {
                 throw new AssertionError("Tried to bind to user " + mEventLogsQuery.getUserHandle() + " but does not exist");
             }
             if (user.state() != User.UserState.RUNNING_UNLOCKED) {
                 throw new AssertionError("Tried to bind to user " + user + " but they are not RUNNING_UNLOCKED");
             }
-            Package pkg = sTestApis.packages().find(mPackageName).resolve();
+            Package pkg = TestApis.packages().find(mPackageName).resolve();
             if (pkg == null) {
                 throw new AssertionError("Tried to bind to package " + mPackageName + " but it is not installed on any user.");
             }

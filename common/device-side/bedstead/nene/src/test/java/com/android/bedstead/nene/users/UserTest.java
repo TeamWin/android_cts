@@ -36,13 +36,11 @@ public class UserTest {
     private static final UserType USER_TYPE = new UserType(new UserType.MutableUserType());
     private static final String USER_NAME = "userName";
 
-    private final TestApis mTestApis = new TestApis();
-
     @Test
     public void id_returnsId() {
         User.MutableUser mutableUser = createValidMutableUser();
         mutableUser.mId = USER_ID;
-        User user = new User(mTestApis, mutableUser);
+        User user = new User(mutableUser);
 
         assertThat(user.id()).isEqualTo(USER_ID);
     }
@@ -52,14 +50,14 @@ public class UserTest {
         User.MutableUser mutableUser = createValidMutableUser();
         mutableUser.mId = null;
 
-        assertThrows(NullPointerException.class, () -> new User(mTestApis, mutableUser));
+        assertThrows(NullPointerException.class, () -> new User(mutableUser));
     }
 
     @Test
     public void serialNo_returnsSerialNo() {
         User.MutableUser mutableUser = createValidMutableUser();
         mutableUser.mSerialNo = SERIAL_NO;
-        User user = new User(mTestApis, mutableUser);
+        User user = new User(mutableUser);
 
         assertThat(user.serialNo()).isEqualTo(SERIAL_NO);
     }
@@ -67,7 +65,7 @@ public class UserTest {
     @Test
     public void serialNo_notSet_returnsNull() {
         User.MutableUser mutableUser = createValidMutableUser();
-        User user = new User(mTestApis, mutableUser);
+        User user = new User(mutableUser);
 
         assertThat(user.serialNo()).isNull();
     }
@@ -76,7 +74,7 @@ public class UserTest {
     public void name_returnsName() {
         User.MutableUser mutableUser = createValidMutableUser();
         mutableUser.mName = USER_NAME;
-        User user = new User(mTestApis, mutableUser);
+        User user = new User(mutableUser);
 
         assertThat(user.name()).isEqualTo(USER_NAME);
     }
@@ -84,7 +82,7 @@ public class UserTest {
     @Test
     public void name_notSet_returnsNull() {
         User.MutableUser mutableUser = createValidMutableUser();
-        User user = new User(mTestApis, mutableUser);
+        User user = new User(mutableUser);
 
         assertThat(user.name()).isNull();
     }
@@ -93,7 +91,7 @@ public class UserTest {
     public void type_returnsName() {
         User.MutableUser mutableUser = createValidMutableUser();
         mutableUser.mType = USER_TYPE;
-        User user = new User(mTestApis, mutableUser);
+        User user = new User(mutableUser);
 
         assertThat(user.type()).isEqualTo(USER_TYPE);
     }
@@ -101,7 +99,7 @@ public class UserTest {
     @Test
     public void type_notSet_returnsNull() {
         User.MutableUser mutableUser = createValidMutableUser();
-        User user = new User(mTestApis, mutableUser);
+        User user = new User(mutableUser);
 
         assertThat(user.type()).isNull();
     }
@@ -110,7 +108,7 @@ public class UserTest {
     public void hasProfileOwner_returnsHasProfileOwner() {
         User.MutableUser mutableUser = createValidMutableUser();
         mutableUser.mHasProfileOwner = true;
-        User user = new User(mTestApis, mutableUser);
+        User user = new User(mutableUser);
 
         assertThat(user.hasProfileOwner()).isTrue();
     }
@@ -118,7 +116,7 @@ public class UserTest {
     @Test
     public void hasProfileOwner_notSet_returnsNull() {
         User.MutableUser mutableUser = createValidMutableUser();
-        User user = new User(mTestApis, mutableUser);
+        User user = new User(mutableUser);
 
         assertThat(user.hasProfileOwner()).isNull();
     }
@@ -127,7 +125,7 @@ public class UserTest {
     public void isPrimary_returnsIsPrimary() {
         User.MutableUser mutableUser = createValidMutableUser();
         mutableUser.mIsPrimary = true;
-        User user = new User(mTestApis, mutableUser);
+        User user = new User(mutableUser);
 
         assertThat(user.isPrimary()).isTrue();
     }
@@ -135,14 +133,14 @@ public class UserTest {
     @Test
     public void isPrimary_notSet_returnsNull() {
         User.MutableUser mutableUser = createValidMutableUser();
-        User user = new User(mTestApis, mutableUser);
+        User user = new User(mutableUser);
 
         assertThat(user.isPrimary()).isNull();
     }
 
     @Test
     public void state_userNotStarted_returnsState() {
-        UserReference user = mTestApis.users().createUser().create();
+        UserReference user = TestApis.users().createUser().create();
         user.stop();
 
         try {
@@ -155,7 +153,7 @@ public class UserTest {
     @Test
     @Ignore("TODO: Ensure we can enter the user locked state")
     public void state_userLocked_returnsState() {
-        UserReference user = mTestApis.users().createUser().createAndStart();
+        UserReference user = TestApis.users().createUser().createAndStart();
 
         try {
             assertThat(user.resolve().state()).isEqualTo(User.UserState.RUNNING_LOCKED);
@@ -166,7 +164,7 @@ public class UserTest {
 
     @Test
     public void state_userUnlocked_returnsState() {
-        UserReference user = mTestApis.users().createUser().createAndStart();
+        UserReference user = TestApis.users().createUser().createAndStart();
 
         try {
             assertThat(user.resolve().state()).isEqualTo(User.UserState.RUNNING_UNLOCKED);
@@ -177,23 +175,23 @@ public class UserTest {
 
     @Test
     public void parent_returnsParent() {
-        UserReference parentUser = new User(mTestApis, createValidMutableUser());
+        UserReference parentUser = new User(createValidMutableUser());
         User.MutableUser mutableUser = createValidMutableUser();
         mutableUser.mParent = parentUser;
-        User user = new User(mTestApis, mutableUser);
+        User user = new User(mutableUser);
 
         assertThat(user.parent()).isEqualTo(parentUser);
     }
 
     @Test
     public void autoclose_removesUser() {
-        int numUsers = mTestApis.users().all().size();
+        int numUsers = TestApis.users().all().size();
 
-        try (UserReference user = mTestApis.users().createUser().create()) {
+        try (UserReference user = TestApis.users().createUser().create()) {
             // We intentionally don't do anything here, just rely on the auto-close behaviour
         }
 
-        assertThat(mTestApis.users().all()).hasSize(numUsers);
+        assertThat(TestApis.users().all()).hasSize(numUsers);
     }
 
     private User.MutableUser createValidMutableUser() {

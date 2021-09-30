@@ -144,24 +144,21 @@ public final class Packages {
         }
     }
 
+    public static final Packages sInstance = new Packages();
+
     private Map<String, Package> mCachedPackages = null;
     private Set<String> mFeatures = null;
     private final AdbPackageParser mParser;
-    final TestApis mTestApis;
     private final Context mInstrumentedContext;
 
     private final IntentFilter mPackageAddedIntentFilter =
             new IntentFilter(Intent.ACTION_PACKAGE_ADDED);
 
 
-    public Packages(TestApis testApis) {
-        if (testApis == null) {
-            throw new NullPointerException();
-        }
+    public Packages() {
         mPackageAddedIntentFilter.addDataScheme("package");
-        mTestApis = testApis;
-        mParser = AdbPackageParser.get(mTestApis, SDK_INT);
-        mInstrumentedContext = mTestApis.context().instrumentedContext();
+        mParser = AdbPackageParser.get(SDK_INT);
+        mInstrumentedContext = TestApis.context().instrumentedContext();
     }
 
 
@@ -258,7 +255,7 @@ public final class Packages {
         //  the same time...
         String installedPackageName = intent.getDataString().split(":", 2)[1];
 
-        return mTestApis.packages().find(installedPackageName);
+        return TestApis.packages().find(installedPackageName);
     }
 
     // TODO: Move this somewhere reusable (in utils)
@@ -302,11 +299,11 @@ public final class Packages {
 
         try  {
             PackageManager packageManager =
-                    mTestApis.context().androidContextAsUser(user).getPackageManager();
+                    TestApis.context().androidContextAsUser(user).getPackageManager();
             PackageInstaller packageInstaller = packageManager.getPackageInstaller();
 
             int sessionId;
-            try (PermissionContext p = mTestApis.permissions().withPermission(
+            try (PermissionContext p = TestApis.permissions().withPermission(
                     INTERACT_ACROSS_USERS_FULL, INTERACT_ACROSS_USERS, INSTALL_TEST_ONLY_PACKAGE)) {
                 PackageInstaller.SessionParams sessionParams = new PackageInstaller.SessionParams(
                         MODE_FULL_INSTALL);
@@ -323,7 +320,7 @@ public final class Packages {
 
             try (BlockingIntentSender intentSender = BlockingIntentSender.create()) {
                 try (PermissionContext p =
-                             mTestApis.permissions().withPermission(INSTALL_PACKAGES)) {
+                             TestApis.permissions().withPermission(INSTALL_PACKAGES)) {
                     session.commit(intentSender.intentSender());
                     session.close();
 
@@ -350,7 +347,7 @@ public final class Packages {
 
     private PackageReference installPreS(UserReference user, byte[] apkFile) {
         // Prior to S we cannot pass bytes to stdin so we write it to a temp file first
-        File outputDir = mTestApis.context().instrumentedContext().getCacheDir();
+        File outputDir = TestApis.context().instrumentedContext().getCacheDir();
         File outputFile = null;
         try {
             outputFile = File.createTempFile("tmp", ".apk", outputDir);
@@ -410,16 +407,16 @@ public final class Packages {
     private BlockingBroadcastReceiver registerPackageInstalledBroadcastReceiver(
             UserReference user) {
         BlockingBroadcastReceiver broadcastReceiver = BlockingBroadcastReceiver.create(
-                mTestApis.context().androidContextAsUser(user),
+                TestApis.context().androidContextAsUser(user),
                 mPackageAddedIntentFilter);
 
-        if (user.equals(mTestApis.users().instrumented())) {
+        if (user.equals(TestApis.users().instrumented())) {
             broadcastReceiver.register();
         } else {
             // TODO(scottjonathan): If this is cross-user then it needs _FULL, but older versions
             //  cannot get full - so we'll need to poll
             try (PermissionContext p =
-                         mTestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
+                         TestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
                 broadcastReceiver.register();
             }
         }
@@ -438,7 +435,7 @@ public final class Packages {
     public KeepUninstalledPackagesBuilder keepUninstalledPackages() {
         Versions.requireMinimumVersion(Build.VERSION_CODES.S);
 
-        return new KeepUninstalledPackagesBuilder(mTestApis);
+        return new KeepUninstalledPackagesBuilder();
     }
 
     @Nullable
@@ -460,7 +457,7 @@ public final class Packages {
         if (packageName == null) {
             throw new NullPointerException();
         }
-        return new UnresolvedPackage(mTestApis, packageName);
+        return new UnresolvedPackage(packageName);
     }
 
     /**
@@ -474,7 +471,7 @@ public final class Packages {
             throw new NullPointerException();
         }
 
-        return new ComponentReference(mTestApis,
+        return new ComponentReference(
                 find(componentName.getPackageName()), componentName.getClassName());
     }
 

@@ -18,8 +18,6 @@ package com.android.bedstead.harrier.annotations.enterprise;
 
 import static android.content.pm.PackageManager.FEATURE_DEVICE_ADMIN;
 
-import static com.android.bedstead.harrier.DeviceState.UserType.SYSTEM_USER;
-
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.FailureMode;
 import com.android.bedstead.harrier.annotations.RequireFeature;
@@ -37,6 +35,10 @@ import java.lang.annotation.Target;
  * the correct state for the method. If using {@link DeviceState}, you can use
  * {@link DeviceState#deviceOwner()} to interact with the device owner.
  *
+ * <p>When running on a device with a headless system user, enforcing this with {@link DeviceState}
+ * will also result in the profile owner of the current user being set to the same device policy
+ * controller.
+ *
  * <p>If {@link DeviceState} is required to set the device owner (because there isn't one already)
  * then all users and accounts may be removed from the device.
  */
@@ -44,10 +46,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @RequireFeature(FEATURE_DEVICE_ADMIN)
 public @interface EnsureHasDeviceOwner {
-    /** Which user type the device owner should be installed on. */
-    DeviceState.UserType onUser() default SYSTEM_USER;
-
-    /** Behaviour if the device owner cannot be set. */
+     /** Behaviour if the device owner cannot be set. */
     FailureMode failureMode() default FailureMode.FAIL;
 
     /**

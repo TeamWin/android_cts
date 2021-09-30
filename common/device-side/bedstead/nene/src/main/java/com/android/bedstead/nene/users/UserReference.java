@@ -41,14 +41,9 @@ import javax.annotation.Nullable;
  */
 public abstract class UserReference implements AutoCloseable {
 
-    private final TestApis mTestApis;
     private final int mId;
 
-    UserReference(TestApis testApis, int id) {
-        if (testApis == null) {
-            throw new NullPointerException();
-        }
-        mTestApis = testApis;
+    UserReference(int id) {
         mId = id;
     }
 
@@ -69,7 +64,7 @@ public abstract class UserReference implements AutoCloseable {
      */
     @Nullable
     public final User resolve() {
-        return mTestApis.users().fetchUser(mId);
+        return TestApis.users().fetchUser(mId);
     }
 
     /**
@@ -87,7 +82,7 @@ public abstract class UserReference implements AutoCloseable {
                     .addOperand(mId)
                     .validate(ShellCommandUtils::startsWithSuccess)
                     .execute();
-            mTestApis.users().waitForUserToNotExistOrMatch(this, User::isRemoving);
+            TestApis.users().waitForUserToNotExistOrMatch(this, User::isRemoving);
         } catch (AdbException e) {
             throw new NeneException("Could not remove user " + this, e);
         }
@@ -111,7 +106,7 @@ public abstract class UserReference implements AutoCloseable {
                     .addOperand("-w")
                     .validate(ShellCommandUtils::startsWithSuccess)
                     .execute();
-            User waitedUser = mTestApis.users().waitForUserToNotExistOrMatch(
+            User waitedUser = TestApis.users().waitForUserToNotExistOrMatch(
                     this, (user) -> user.state() == UserState.RUNNING_UNLOCKED);
             if (waitedUser == null) {
                 throw new NeneException("User does not exist " + this);
@@ -137,7 +132,7 @@ public abstract class UserReference implements AutoCloseable {
                     .allowEmptyOutput(true)
                     .validate(String::isEmpty)
                     .execute();
-            User waitedUser = mTestApis.users().waitForUserToNotExistOrMatch(
+            User waitedUser = TestApis.users().waitForUserToNotExistOrMatch(
                     this, (user) -> user.state() == UserState.NOT_RUNNING);
             if (waitedUser == null) {
                 throw new NeneException("User does not exist " + this);
@@ -156,7 +151,7 @@ public abstract class UserReference implements AutoCloseable {
         // This is created outside of the try because we don't want to wait for the broadcast
         // on versions less than Q
         BlockingBroadcastReceiver broadcastReceiver =
-                new BlockingBroadcastReceiver(mTestApis.context().instrumentedContext(),
+                new BlockingBroadcastReceiver(TestApis.context().instrumentedContext(),
                         Intent.ACTION_USER_FOREGROUND,
                         (intent) ->((UserHandle)
                                 intent.getParcelableExtra(Intent.EXTRA_USER))
@@ -165,7 +160,7 @@ public abstract class UserReference implements AutoCloseable {
         try {
             if (Versions.meetsMinimumSdkVersionRequirement(Q)) {
                 try (PermissionContext p =
-                             mTestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
+                             TestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
                     broadcastReceiver.registerForAllUsers();
                 }
             }
