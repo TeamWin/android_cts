@@ -29,31 +29,30 @@ import java.util.List;
 
 public final class Activities {
 
-    private final TestApis mTestApis;
+    public static final Activities sInstance = new Activities();
 
-    public Activities(TestApis testApis) {
-        mTestApis = testApis;
+    private Activities() {
     }
 
     /**
      * Wrap the given {@link NeneActivityDirect} to use Nene APIs.
      */
     public Activity<NeneActivityDirect> wrap(NeneActivity activity) {
-        return new Activity<>(mTestApis, activity, activity);
+        return new Activity<>(activity, activity);
     }
 
     /**
      * Wrap the given {@link NeneActivityDirect} subclass to use Nene APIs.
      */
     public <E extends NeneActivity> Activity<E> wrap(Class<E> clazz, E activity) {
-        return new Activity<>(mTestApis, activity, activity);
+        return new Activity<>(activity, activity);
     }
 
     /**
      * Wrap the given {@link android.app.Activity} to use Nene APIs.
      */
     public LocalActivity wrap(android.app.Activity activity) {
-        return new LocalActivity(mTestApis, activity);
+        return new LocalActivity(activity);
     }
 
     /**
@@ -61,16 +60,16 @@ public final class Activities {
      */
     @Experimental
     public ComponentReference foregroundActivity() {
-        try (PermissionContext p = mTestApis.permissions().withPermission(REAL_GET_TASKS)) {
+        try (PermissionContext p = TestApis.permissions().withPermission(REAL_GET_TASKS)) {
             ActivityManager activityManager =
-                    mTestApis.context().instrumentedContext().getSystemService(
+                    TestApis.context().instrumentedContext().getSystemService(
                             ActivityManager.class);
             List<ActivityManager.RunningTaskInfo> runningTasks = activityManager.getRunningTasks(1);
             if (runningTasks.isEmpty()) {
                 return null;
             }
 
-            return new ComponentReference(mTestApis, runningTasks.get(0).topActivity);
+            return new ComponentReference(runningTasks.get(0).topActivity);
         }
     }
 
@@ -83,7 +82,7 @@ public final class Activities {
     @Experimental
     public int getLockTaskModeState() {
         ActivityManager activityManager =
-                mTestApis.context().instrumentedContext().getSystemService(
+                TestApis.context().instrumentedContext().getSystemService(
                         ActivityManager.class);
 
         return activityManager.getLockTaskModeState();

@@ -63,8 +63,7 @@ public class PreferentialNetworkServiceTest {
     private final long NO_CALLBACK_TIMEOUT_MS = 100L;
     private final String TAG = PreferentialNetworkServiceTest.class.getSimpleName();
 
-    private static final TestApis sTestApis = new TestApis();
-    private static final Context sContext = sTestApis.context().instrumentedContext();
+    private static final Context sContext = TestApis.context().instrumentedContext();
     private static final ConnectivityManager sCm =
             sContext.getSystemService(ConnectivityManager.class);
     private final HandlerThread mHandlerThread = new HandlerThread(TAG + " handler thread");

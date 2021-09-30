@@ -32,9 +32,8 @@ public final class TestAppProvider {
 
     private static final String TAG = TestAppProvider.class.getSimpleName();
 
-    private static final TestApis sTestApis = new TestApis();
     // Must be instrumentation context to access resources
-    private static final Context sContext = sTestApis.context().instrumentationContext();
+    private static final Context sContext = TestApis.context().instrumentationContext();
 
     private boolean mTestAppsInitialised = false;
     private final Set<TestAppDetails> mTestApps = new HashSet<>();

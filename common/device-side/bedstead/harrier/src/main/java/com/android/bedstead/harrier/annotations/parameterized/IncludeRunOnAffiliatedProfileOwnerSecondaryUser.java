@@ -16,8 +16,6 @@
 
 package com.android.bedstead.harrier.annotations.parameterized;
 
-import static com.android.bedstead.harrier.DeviceState.UserType.SYSTEM_USER;
-
 import com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasProfileOwner;
@@ -36,7 +34,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @ParameterizedAnnotation
 @RequireRunOnSecondaryUser
-@EnsureHasDeviceOwner(onUser = SYSTEM_USER, affiliationIds = "affiliated")
+@EnsureHasDeviceOwner(affiliationIds = "affiliated")
 @EnsureHasProfileOwner(affiliationIds = "affiliated", isPrimary = true)
 public @interface IncludeRunOnAffiliatedProfileOwnerSecondaryUser {
 }

@@ -24,6 +24,11 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.PersistableBundle;
 
+import com.android.bedstead.harrier.BedsteadJUnit4;
+import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature;
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDeviceOwner;
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoProfileOwner;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.devicepolicy.DeviceOwner;
 import com.android.bedstead.nene.devicepolicy.ProfileOwner;
@@ -57,19 +62,22 @@ import com.android.eventlib.events.deviceadminreceivers.DeviceAdminUserStoppedEv
 import com.android.eventlib.events.deviceadminreceivers.DeviceAdminUserSwitchedEvent;
 
 import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
-@RunWith(JUnit4.class)
+@RunWith(BedsteadJUnit4.class)
 public class EventLibDeviceAdminReceiverTest {
 
-    private static final TestApis sTestApis = new TestApis();
-    private static final Context sContext = sTestApis.context().instrumentedContext();
+    @ClassRule @Rule
+    public static final DeviceState sDeviceState = new DeviceState();
+
+    private static final Context sContext = TestApis.context().instrumentedContext();
     private static final ComponentName DEVICE_ADMIN_COMPONENT =
             new ComponentName(
                     sContext.getPackageName(), EventLibDeviceAdminReceiver.class.getName());
-    private static final UserReference sUser = sTestApis.users().instrumented();
+    private static final UserReference sUser = TestApis.users().instrumented();
     private static final Intent sIntent = new Intent();
     private static final String PKG = "package";
     private static final int UID = 1;
@@ -89,9 +97,12 @@ public class EventLibDeviceAdminReceiverTest {
     }
 
     @Test
+    @EnsureHasNoDeviceOwner
+    // TODO(b/201313785): Auto doesn't support only having DO on user 0
+    @RequireDoesNotHaveFeature("android.hardware.type.automotive")
     public void enableDeviceOwner_logsEnabledEvent() {
         DeviceOwner deviceOwner =
-                sTestApis.devicePolicy().setDeviceOwner(sUser, DEVICE_ADMIN_COMPONENT);
+                TestApis.devicePolicy().setDeviceOwner(DEVICE_ADMIN_COMPONENT);
 
         try {
             EventLogs<DeviceAdminEnabledEvent> eventLogs =
@@ -104,9 +115,10 @@ public class EventLibDeviceAdminReceiverTest {
     }
 
     @Test
+    @EnsureHasNoProfileOwner
     public void enableProfileOwner_logsEnabledEvent() {
         ProfileOwner profileOwner =
-                sTestApis.devicePolicy().setProfileOwner(sUser, DEVICE_ADMIN_COMPONENT);
+                TestApis.devicePolicy().setProfileOwner(sUser, DEVICE_ADMIN_COMPONENT);
 
         try {
             EventLogs<DeviceAdminEnabledEvent> eventLogs =

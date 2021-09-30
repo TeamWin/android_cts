@@ -49,16 +49,14 @@ import java.util.stream.Collectors;
  * <p>To resolve the package into a {@link Package}, see {@link #resolve()}.
  */
 public abstract class PackageReference {
-    private final TestApis mTestApis;
     private final String mPackageName;
 
     private static final int PIDS_PER_USER_ID = 100000;
 
     private final PackageManager mPackageManager;
 
-    PackageReference(TestApis testApis, String packageName) {
-        mTestApis = testApis;
-        mPackageManager = mTestApis.context().instrumentedContext().getPackageManager();
+    PackageReference(String packageName) {
+        mPackageManager = TestApis.context().instrumentedContext().getPackageManager();
         mPackageName = packageName;
     }
 
@@ -73,7 +71,7 @@ public abstract class PackageReference {
      */
     @Nullable
     public Package resolve() {
-        return mTestApis.packages().fetchPackage(mPackageName);
+        return TestApis.packages().fetchPackage(mPackageName);
     }
 
     /**
@@ -136,11 +134,11 @@ public abstract class PackageReference {
 
         // This is outside of the try because we don't want to await if the package isn't installed
         BlockingBroadcastReceiver broadcastReceiver = BlockingBroadcastReceiver.create(
-                mTestApis.context().androidContextAsUser(user),
+                TestApis.context().androidContextAsUser(user),
                 packageRemovedIntentFilter);
 
         try {
-            try (PermissionContext p = mTestApis.permissions().withPermission(
+            try (PermissionContext p = TestApis.permissions().withPermission(
                     INTERACT_ACROSS_USERS_FULL)) {
                 broadcastReceiver.register();
             }
@@ -187,7 +185,7 @@ public abstract class PackageReference {
      */
     @Experimental
     public PackageReference enable() {
-        return enable(mTestApis.users().instrumented());
+        return enable(TestApis.users().instrumented());
     }
 
     /**
@@ -211,7 +209,7 @@ public abstract class PackageReference {
      */
     @Experimental
     public PackageReference disable() {
-        return disable(mTestApis.users().instrumented());
+        return disable(TestApis.users().instrumented());
     }
 
     /**
@@ -221,7 +219,7 @@ public abstract class PackageReference {
      */
     @Experimental
     public ComponentReference component(String componentName) {
-        return new ComponentReference(mTestApis, this, componentName);
+        return new ComponentReference(this, componentName);
     }
 
     /**
@@ -266,8 +264,8 @@ public abstract class PackageReference {
         // There is no readable output upon failure so we need to check ourselves
         checkCanGrantOrRevokePermission(user, permission);
 
-        if (packageName().equals(mTestApis.context().instrumentedContext().getPackageName())
-                && user.equals(mTestApis.users().instrumented())) {
+        if (packageName().equals(TestApis.context().instrumentedContext().getPackageName())
+                && user.equals(TestApis.users().instrumented())) {
             Package resolved = resolve();
             if (!resolved.grantedPermissions(user).contains(permission)) {
                 return this; // Already denied
@@ -339,7 +337,7 @@ public abstract class PackageReference {
                     .addOperand("-n")
                     .executeAndParseOutput(o -> parsePsOutput(o).stream()
                     .filter(p -> p.mPackageName.equals(mPackageName))
-                    .map(p -> new ProcessReference(this, p.mPid, mTestApis.users().find(p.mUserId))))
+                    .map(p -> new ProcessReference(this, p.mPid, TestApis.users().find(p.mUserId))))
                     .collect(Collectors.toSet());
         } catch (AdbException e) {
             throw new NeneException("Error getting running processes ", e);

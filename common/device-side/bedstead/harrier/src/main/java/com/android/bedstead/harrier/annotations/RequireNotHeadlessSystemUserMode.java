@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
-package com.android.bedstead.nene.users;
+package com.android.bedstead.harrier.annotations;
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * Default implementation of {@link UserReference}.
+ * Marks that a test method should not be run on devices which are in headless system user mode.
  *
- * <p>Represents the abstract idea of a {@link User}, which may or may not exist.
+ * <p>You can guarantee that these methods do not run on headless system user mode devices by
+ * using {@code DeviceState}.
  */
-public final class UnresolvedUser extends UserReference {
-    UnresolvedUser(int id) {
-        super(id);
-    }
-
-    @Override
-    public String toString() {
-        return "UnresolvedUser{id=" + id() + "}";
-    }
+@Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
+@Retention(RetentionPolicy.RUNTIME)
+public @interface RequireNotHeadlessSystemUserMode {
 }

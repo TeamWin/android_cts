@@ -61,8 +61,7 @@ public class CrossProfileSharingTest {
     @Rule
     public static final DeviceState sDeviceState = new DeviceState();
 
-    private static final TestApis sTestApis = new TestApis();
-    private static final Context sContext = sTestApis.context().instrumentedContext();
+    private static final Context sContext = TestApis.context().instrumentedContext();
     private static final TestAppProvider sTestAppProvider = new TestAppProvider();
 
     // TODO(b/198420874): rather than querying by package name, query apps by intents they need to
@@ -204,7 +203,7 @@ public class CrossProfileSharingTest {
     }
 
     private ResolveInfo getCrossProfileIntentForwarder(Intent intent) {
-        List<ResolveInfo> result = sTestApis.context().instrumentedContext().getPackageManager()
+        List<ResolveInfo> result = TestApis.context().instrumentedContext().getPackageManager()
                 .queryIntentActivities(intent, MATCH_DEFAULT_ONLY);
         assertWithMessage("Failed to get intent forwarder component")
                 .that(result.size()).isEqualTo(1);
@@ -217,9 +216,9 @@ public class CrossProfileSharingTest {
     private void setSharingIntoProfileEnabled(boolean enabled) {
         RemoteDpc remoteDpc = sDeviceState.profileOwner(WORK_PROFILE);
         IntentFilter filter = new IntentFilter(ACTION_DATA_SHARING_RESTRICTION_APPLIED);
-        Context remoteCtx = sTestApis.context().androidContextAsUser(remoteDpc.user());
+        Context remoteCtx = TestApis.context().androidContextAsUser(remoteDpc.user());
         try (PermissionContext permissionContext =
-                     sTestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL);
+                     TestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL);
              BlockingBroadcastReceiver receiver =
                      BlockingBroadcastReceiver.create(remoteCtx, filter).register()) {
             if (enabled) {
@@ -235,7 +234,7 @@ public class CrossProfileSharingTest {
     private void assertCrossProfileIntentsResolvability(
             Intent[] intents, ResolveInfo expectedForwarder, boolean expectForwardable) {
         for (Intent intent : intents) {
-            List<ResolveInfo> resolveInfoList = sTestApis.context().instrumentedContext()
+            List<ResolveInfo> resolveInfoList = TestApis.context().instrumentedContext()
                     .getPackageManager().queryIntentActivities(intent, MATCH_DEFAULT_ONLY);
             if (expectForwardable) {
                 assertWithMessage(String.format(

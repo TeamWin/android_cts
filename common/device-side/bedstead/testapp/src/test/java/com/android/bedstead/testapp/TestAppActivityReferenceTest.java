@@ -36,8 +36,7 @@ import org.junit.runner.RunWith;
 @RunWith(BedsteadJUnit4.class)
 public class TestAppActivityReferenceTest {
 
-    private static final TestApis sTestApis = new TestApis();
-    private static final UserReference sUser = sTestApis.users().instrumented();
+    private static final UserReference sUser = TestApis.users().instrumented();
 
     @ClassRule @Rule
     public static final DeviceState sDeviceState = new DeviceState();
@@ -58,7 +57,7 @@ public class TestAppActivityReferenceTest {
         try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
             Activity<TestAppActivity> activity = testAppInstance.activities().any().start();
 
-            assertThat(sTestApis.activities().foregroundActivity()).isEqualTo(
+            assertThat(TestApis.activities().foregroundActivity()).isEqualTo(
                     activity.activity().component());
         }
     }

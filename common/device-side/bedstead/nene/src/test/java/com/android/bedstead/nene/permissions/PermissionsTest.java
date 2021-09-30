@@ -44,8 +44,7 @@ public class PermissionsTest {
             "android.permission.INTERACT_ACROSS_PROFILES";
     private static final String DIFFERENT_PERMISSION_HELD_BY_SHELL =
             "android.permission.INTERACT_ACROSS_USERS_FULL";
-    private static final TestApis sTestApis = new TestApis();
-    private static final Context sContext = sTestApis.context().instrumentedContext();
+    private static final Context sContext = TestApis.context().instrumentedContext();
 
     private static final String NON_EXISTING_PERMISSION = "permissionWhichDoesNotExist";
 
@@ -68,7 +67,7 @@ public class PermissionsTest {
                 Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q);
 
         try (PermissionContext p =
-                     sTestApis.permissions().withPermission(PERMISSION_HELD_BY_SHELL)) {
+                     TestApis.permissions().withPermission(PERMISSION_HELD_BY_SHELL)) {
             assertThat(sContext.checkSelfPermission(PERMISSION_HELD_BY_SHELL))
                     .isEqualTo(PERMISSION_GRANTED);
         }
@@ -80,7 +79,7 @@ public class PermissionsTest {
                 Build.VERSION.SDK_INT < Build.VERSION_CODES.Q);
 
         assertThrows(NeneException.class,
-                () -> sTestApis.permissions().withoutPermission(
+                () -> TestApis.permissions().withoutPermission(
                         DECLARED_PERMISSION_NOT_HELD_BY_SHELL_PRE_S));
     }
 
@@ -89,8 +88,8 @@ public class PermissionsTest {
         assumeTrue("assume shell identity is only available on Q+",
                 Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q);
 
-        try (PermissionContext p = sTestApis.permissions().withPermission(PERMISSION_HELD_BY_SHELL);
-             PermissionContext p2 = sTestApis.permissions().withoutPermission(
+        try (PermissionContext p = TestApis.permissions().withPermission(PERMISSION_HELD_BY_SHELL);
+             PermissionContext p2 = TestApis.permissions().withoutPermission(
                      PERMISSION_HELD_BY_SHELL)) {
 
             assertThat(sContext.checkSelfPermission(PERMISSION_HELD_BY_SHELL))
@@ -104,9 +103,9 @@ public class PermissionsTest {
                 Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q);
 
         try (PermissionContext p =
-                     sTestApis.permissions().withPermission(PERMISSION_HELD_BY_SHELL)) {
+                     TestApis.permissions().withPermission(PERMISSION_HELD_BY_SHELL)) {
             try (PermissionContext p2 =
-                         sTestApis.permissions().withoutPermission(PERMISSION_HELD_BY_SHELL)) {
+                         TestApis.permissions().withoutPermission(PERMISSION_HELD_BY_SHELL)) {
                 // Intentionally empty as we're testing that autoclosing restores the permission
             }
 
@@ -121,7 +120,7 @@ public class PermissionsTest {
                 Build.VERSION.SDK_INT < Build.VERSION_CODES.Q);
 
         assertThrows(NeneException.class,
-                () -> sTestApis.permissions().withoutPermission(INSTALL_PERMISSION));
+                () -> TestApis.permissions().withoutPermission(INSTALL_PERMISSION));
     }
 
     @Test
@@ -132,7 +131,7 @@ public class PermissionsTest {
                 Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.S));
 
         try (PermissionContext p =
-                    sTestApis.permissions().withoutPermission(
+                    TestApis.permissions().withoutPermission(
                             DECLARED_PERMISSION_NOT_HELD_BY_SHELL_PRE_S)) {
             assertThat(
                     sContext.checkSelfPermission(DECLARED_PERMISSION_NOT_HELD_BY_SHELL_PRE_S))
@@ -146,14 +145,14 @@ public class PermissionsTest {
                 Build.VERSION.SDK_INT < Build.VERSION_CODES.Q);
 
         assertThrows(NeneException.class,
-                () -> sTestApis.permissions().withoutPermission(
+                () -> TestApis.permissions().withoutPermission(
                         DECLARED_PERMISSION_NOT_HELD_BY_SHELL_PRE_S));
     }
 
     @Test
     public void withPermission_permissionIsAlreadyGrantedInInstrumentedApp_permissionIsGranted() {
         try (PermissionContext p =
-                    sTestApis.permissions().withPermission(
+                    TestApis.permissions().withPermission(
                             DECLARED_PERMISSION_NOT_HELD_BY_SHELL_PRE_S)) {
             assertThat(
                     sContext.checkSelfPermission(DECLARED_PERMISSION_NOT_HELD_BY_SHELL_PRE_S))
@@ -164,20 +163,20 @@ public class PermissionsTest {
     @Test
     public void withPermission_nonExistingPermission_throwsException() {
         assertThrows(NeneException.class,
-                () -> sTestApis.permissions().withPermission(NON_EXISTING_PERMISSION));
+                () -> TestApis.permissions().withPermission(NON_EXISTING_PERMISSION));
     }
 
     @Test
     public void withoutPermission_nonExistingPermission_doesNotThrowException() {
         try (PermissionContext p =
-                     sTestApis.permissions().withoutPermission(NON_EXISTING_PERMISSION)) {
+                     TestApis.permissions().withoutPermission(NON_EXISTING_PERMISSION)) {
             // Intentionally empty
         }
     }
 
     @Test
     public void withPermissionAndWithoutPermission_bothApplied() {
-        try (PermissionContext p = sTestApis.permissions().withPermission(PERMISSION_HELD_BY_SHELL)
+        try (PermissionContext p = TestApis.permissions().withPermission(PERMISSION_HELD_BY_SHELL)
                 .withoutPermission(DIFFERENT_PERMISSION_HELD_BY_SHELL)) {
 
             assertThat(sContext.checkSelfPermission(PERMISSION_HELD_BY_SHELL))
@@ -189,7 +188,7 @@ public class PermissionsTest {
 
     @Test
     public void withoutPermissionAndWithPermission_bothApplied() {
-        try (PermissionContext p = sTestApis.permissions()
+        try (PermissionContext p = TestApis.permissions()
                 .withoutPermission(DIFFERENT_PERMISSION_HELD_BY_SHELL)
                 .withPermission(PERMISSION_HELD_BY_SHELL)) {
 
@@ -202,14 +201,14 @@ public class PermissionsTest {
 
     @Test
     public void withPermissionAndWithoutPermission_contradictoryPermissions_throwsException() {
-        assertThrows(NeneException.class, () -> sTestApis.permissions()
+        assertThrows(NeneException.class, () -> TestApis.permissions()
                 .withPermission(PERMISSION_HELD_BY_SHELL)
                 .withoutPermission(PERMISSION_HELD_BY_SHELL));
     }
 
     @Test
     public void withoutPermissionAndWithPermission_contradictoryPermissions_throwsException() {
-        assertThrows(NeneException.class, () -> sTestApis.permissions()
+        assertThrows(NeneException.class, () -> TestApis.permissions()
                 .withoutPermission(PERMISSION_HELD_BY_SHELL)
                 .withPermission(PERMISSION_HELD_BY_SHELL));
     }
@@ -223,7 +222,7 @@ public class PermissionsTest {
 
         try {
             PermissionContext p =
-                    sTestApis.permissions()
+                    TestApis.permissions()
                             .withoutPermission(PERMISSION_HELD_BY_SHELL);
             p.close();
 

@@ -39,7 +39,6 @@ import com.android.bedstead.harrier.annotations.enterprise.NegativePolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PositivePolicyTest;
 import com.android.bedstead.harrier.policies.ScreenCaptureDisabled;
 import com.android.bedstead.metricsrecorder.EnterpriseMetricsRecorder;
-import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstanceReference;
 import com.android.bedstead.testapp.TestAppProvider;
@@ -62,7 +61,6 @@ public class ScreenCaptureDisabledTest {
     @Rule
     public static final DeviceState sDeviceState = new DeviceState();
 
-    private static final TestApis sTestApis = new TestApis();
     private static final TestAppProvider sTestAppProvider = new TestAppProvider();
     private static final TestApp sTestApp =
             sTestAppProvider.query().whereActivities().isNotEmpty().get();
@@ -189,8 +187,7 @@ public class ScreenCaptureDisabledTest {
     }
 
     private Bitmap takeScreenshotExpectingFailure() {
-        try (TestAppInstanceReference testApp = sTestApp.install(
-                sTestApis.users().instrumented())) {
+        try (TestAppInstanceReference testApp = sTestApp.install()) {
             testApp.activities().any().start();
             return PollingCheck.waitFor(WAIT_IN_MILLISECOND, mUiAutomation::takeScreenshot,
                     Objects::isNull);
@@ -198,8 +195,7 @@ public class ScreenCaptureDisabledTest {
     }
 
     private Bitmap takeScreenshotExpectingSuccess() {
-        try (TestAppInstanceReference testApp = sTestApp.install(
-                sTestApis.users().instrumented())) {
+        try (TestAppInstanceReference testApp = sTestApp.install()) {
             testApp.activities().any().start();
             return PollingCheck.waitFor(WAIT_IN_MILLISECOND, mUiAutomation::takeScreenshot,
                     Objects::nonNull);
