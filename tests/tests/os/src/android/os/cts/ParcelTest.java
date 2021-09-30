@@ -18,6 +18,7 @@ package android.os.cts;
 
 import java.io.FileDescriptor;
 import java.io.Serializable;
+import java.sql.Array;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -49,6 +50,8 @@ import android.util.SparseArray;
 import android.util.SparseBooleanArray;
 
 import com.google.common.util.concurrent.AbstractFuture;
+
+import static org.junit.Assert.assertThrows;
 
 public class ParcelTest extends AndroidTestCase {
 
@@ -2053,6 +2056,34 @@ public class ParcelTest extends AndroidTestCase {
         p.writeParcelable(s, 0);
         p.setDataPosition(0);
         assertEquals(s, p.readParcelable(mcl));
+
+        p.recycle();
+    }
+
+    public void testReadParcelableWithClass() {
+        Parcel p;
+        MockClassLoader mcl = new MockClassLoader();
+        final String signatureString  = "1234567890abcdef";
+        Signature s = new Signature(signatureString);
+
+        p = Parcel.obtain();
+        p.writeParcelable(s, 0);
+        p.setDataPosition(0);
+        assertEquals(s, p.readParcelable(mcl, Signature.class));
+
+        p.setDataPosition(0);
+        assertThrows(BadParcelableException.class, () -> p.readParcelable(mcl, Intent.class));
+        p.recycle();
+    }
+
+    public void testReadParcelableWithSubClass() {
+        Parcel p;
+
+        final TestSubIntent testSubIntent = new TestSubIntent(new Intent(), "Test");
+        p = Parcel.obtain();
+        p.writeParcelable(testSubIntent, 0);
+        p.setDataPosition(0);
+        assertEquals(testSubIntent, (p.readParcelable(getClass().getClassLoader(), Intent.class)));
         p.recycle();
     }
 
@@ -2065,6 +2096,32 @@ public class ParcelTest extends AndroidTestCase {
         p.writeParcelableCreator(s);
         p.setDataPosition(0);
         assertSame(Signature.CREATOR, p.readParcelableCreator(mcl));
+
+        p.recycle();
+    }
+
+    public void testReadParcelableCreatorWithClass() {
+        MockClassLoader mcl = new MockClassLoader();
+        final String signatureString  = "1234567890abcdef";
+        Signature s = new Signature(signatureString);
+
+        Parcel p = Parcel.obtain();
+        p.writeParcelableCreator(s);
+
+        p.setDataPosition(0);
+        assertThrows(BadParcelableException.class, () -> p.readParcelableCreator(mcl, Intent.class));
+        p.recycle();
+    }
+
+    public void testReadParcelableCreatorWithSubClass() {
+        final TestSubIntent testSubIntent = new TestSubIntent(new Intent(), "1234567890abcdef");
+
+        Parcel p = Parcel.obtain();
+        p.writeParcelableCreator(testSubIntent);
+
+        p.setDataPosition(0);
+        assertSame(TestSubIntent.CREATOR,
+                p.readParcelableCreator(getClass().getClassLoader(), Intent.class));
         p.recycle();
     }
 
@@ -2975,6 +3032,70 @@ public class ParcelTest extends AndroidTestCase {
         for (int i = 0; i < arrayList.size(); i++) {
             assertEquals(arrayList.get(i), arrayList2.get(i));
         }
+
+        p.recycle();
+    }
+
+    @SuppressWarnings("unchecked")
+    public void testReadListWithClass() {
+        Parcel p;
+        MockClassLoader mcl = new MockClassLoader();
+        ArrayList<Signature> arrayList = new ArrayList();
+        ArrayList<Signature> parcelableArrayList = new ArrayList();
+        final String s1  = "1234567890abcdef";
+        final String s2  = "abcdef1234567890";
+        parcelableArrayList.add(new Signature(s1));
+        parcelableArrayList.add(new Signature(s2));
+
+        p = Parcel.obtain();
+        p.writeList(parcelableArrayList);
+        p.setDataPosition(0);
+        assertEquals(0, arrayList.size());
+        p.readList(arrayList, mcl, Signature.class);
+        assertEquals(2, arrayList.size());
+        for (int i = 0; i < arrayList.size(); i++) {
+            assertEquals(arrayList.get(i), parcelableArrayList.get(i));
+        }
+
+        p.setDataPosition(0);
+        assertThrows(BadParcelableException.class, () -> p.readList(new ArrayList(), mcl, Intent.class));
+
+        p.setDataPosition(0);
+        assertThrows(BadParcelableException.class, () -> p.readList(new ArrayList(), mcl, Integer.class));
+        p.recycle();
+
+        ArrayList<String> stringArrayList = new ArrayList();
+        stringArrayList.add(s1);
+        stringArrayList.add(s2);
+        Parcel p1 = Parcel.obtain();
+        p1.writeList(stringArrayList);
+
+        p1.setDataPosition(0);
+        assertThrows(BadParcelableException.class, () -> p1.readList(new ArrayList(), mcl, Integer.class));
+        p1.recycle();
+    }
+
+    @SuppressWarnings("unchecked")
+    public void testReadListWithSubClass() {
+        Parcel p;
+        ArrayList<Intent> arrayList = new ArrayList();
+        ArrayList<Intent> parcelableArrayList = new ArrayList();
+        final Intent baseintent = new Intent();
+        final TestSubIntent testSubIntent = new TestSubIntent(baseintent, "1234567890abcdef");
+        final TestSubIntent testSubIntent1 = new TestSubIntent(baseintent, "abcdef1234567890");
+        parcelableArrayList.add(testSubIntent);
+        parcelableArrayList.add(testSubIntent1);
+
+        p = Parcel.obtain();
+        p.writeList(parcelableArrayList);
+        p.setDataPosition(0);
+        assertEquals(0, arrayList.size());
+        p.readList(arrayList, getClass().getClassLoader(), Intent.class);
+        assertEquals(2, arrayList.size());
+        for (int i = 0; i < arrayList.size(); i++) {
+            assertEquals(arrayList.get(i), parcelableArrayList.get(i));
+        }
+
         p.recycle();
     }
 
@@ -3376,6 +3497,42 @@ public class ParcelTest extends AndroidTestCase {
                 reply.readExceptionCode() != 0);
         assertNull("Binder should have been overwritten by the exception",
                 reply.readStrongBinder());
+    }
+
+    private static class TestSubIntent extends Intent {
+        private final String mString;
+
+        public TestSubIntent(Intent baseIntent, String s) {
+            super(baseIntent);
+            mString = s;
+        }
+
+        public void writeToParcel(Parcel dest, int parcelableFlags) {
+            super.writeToParcel(dest, parcelableFlags);
+            dest.writeString(mString);
+        }
+
+        TestSubIntent(Parcel in) {
+            readFromParcel(in);
+            mString = in.readString();
+        }
+
+        public static final Creator<TestSubIntent> CREATOR = new Creator<TestSubIntent>() {
+            public TestSubIntent createFromParcel(Parcel source) {
+                return new TestSubIntent(source);
+            }
+
+            @Override
+            public TestSubIntent[] newArray(int size) {
+                return new TestSubIntent[size];
+            }
+        };
+
+        @Override
+        public boolean equals(Object obj) {
+            final TestSubIntent other = (TestSubIntent) obj;
+            return mString.equals(other.mString);
+        }
     }
 
     public static class ParcelObjectFreeService extends Service {
