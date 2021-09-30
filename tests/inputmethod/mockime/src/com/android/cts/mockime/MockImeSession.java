@@ -30,6 +30,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -216,9 +217,15 @@ public class MockImeSession implements AutoCloseable {
         writeMockImeSettings(mContext, mImeEventActionName, imeSettings);
 
         mHandlerThread.start();
-        mContext.registerReceiver(mEventReceiver,
-                new IntentFilter(mImeEventActionName), null /* broadcastPermission */,
-                new Handler(mHandlerThread.getLooper()));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            mContext.registerReceiver(mEventReceiver,
+                    new IntentFilter(mImeEventActionName), null /* broadcastPermission */,
+                    new Handler(mHandlerThread.getLooper()), Context.RECEIVER_EXPORTED);
+        } else {
+            mContext.registerReceiver(mEventReceiver,
+                    new IntentFilter(mImeEventActionName), null /* broadcastPermission */,
+                    new Handler(mHandlerThread.getLooper()));
+        }
 
         executeShellCommand(mUiAutomation, "ime enable " + getMockImeId());
         executeShellCommand(mUiAutomation, "ime set " + getMockImeId());
