@@ -47,8 +47,12 @@ import org.junit.runner.RunWith;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -63,6 +67,8 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+
+import static java.util.Collections.singletonList;
 
 @RunWith(AndroidJUnit4.class)
 public class BundleTest {
@@ -88,6 +94,12 @@ public class BundleTest {
         mBundle.setClassLoader(getClass().getClassLoader());
         mSpannable = new SpannableString("foo bar");
         mSpannable.setSpan(new ForegroundColorSpan(0x123456), 0, 3, 0);
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        CustomParcelable.sDeserialized = false;
+        CustomSerializable.sDeserialized = false;
     }
 
     @Test
@@ -1143,7 +1155,71 @@ public class BundleTest {
         assertEquals(1, copy.size());
     }
 
+    @Test
+    public void testGetParcelable_isLazy() {
+        mBundle.putParcelable(KEY1, new CustomParcelable(13, "Tiramisu"));
+        roundtrip();
+        mBundle.isEmpty(); // Triggers partial deserialization (leaving lazy values)
+        assertThat(CustomParcelable.sDeserialized).isFalse();
+        mBundle.getParcelable(KEY1);
+        assertThat(CustomParcelable.sDeserialized).isTrue();
+    }
+
+    @Test
+    public void testGetParcelableArray_isLazy() {
+        mBundle.putParcelableArray(KEY1, new Parcelable[] {new CustomParcelable(13, "Tiramisu")});
+        roundtrip();
+        mBundle.isEmpty(); // Triggers partial deserialization (leaving lazy values)
+        assertThat(CustomParcelable.sDeserialized).isFalse();
+        mBundle.getParcelableArray(KEY1);
+        assertThat(CustomParcelable.sDeserialized).isTrue();
+    }
+
+    @Test
+    public void testGetParcelableArrayList_isLazy() {
+        mBundle.putParcelableArrayList(KEY1,
+                new ArrayList<>(singletonList(new CustomParcelable(13, "Tiramisu"))));
+        roundtrip();
+        mBundle.isEmpty(); // Triggers partial deserialization (leaving lazy values)
+        assertThat(CustomParcelable.sDeserialized).isFalse();
+        mBundle.getParcelableArrayList(KEY1);
+        assertThat(CustomParcelable.sDeserialized).isTrue();
+    }
+
+    @Test
+    public void testGetSparseParcelableArray_isLazy() {
+        SparseArray<Parcelable> container = new SparseArray<>();
+        container.put(0, new CustomParcelable(13, "Tiramisu"));
+        mBundle.putSparseParcelableArray(KEY1, container);
+        roundtrip();
+        mBundle.isEmpty(); // Triggers partial deserialization (leaving lazy values)
+        assertThat(CustomParcelable.sDeserialized).isFalse();
+        mBundle.getSparseParcelableArray(KEY1);
+        assertThat(CustomParcelable.sDeserialized).isTrue();
+    }
+
+    @Test
+    public void testGetSerializable_isLazy() {
+        mBundle.putSerializable(KEY1, new CustomSerializable());
+        roundtrip();
+        mBundle.isEmpty(); // Triggers partial deserialization (leaving lazy values)
+        assertThat(CustomSerializable.sDeserialized).isFalse();
+        mBundle.getSerializable(KEY1);
+        assertThat(CustomSerializable.sDeserialized).isTrue();
+    }
+
+    private static class CustomSerializable implements Serializable {
+        public static boolean sDeserialized = false;
+
+        private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+            in.defaultReadObject();
+            sDeserialized = true;
+        }
+    }
+
     private static class CustomParcelable implements Parcelable {
+        public static boolean sDeserialized = false;
+
         public final int integer;
         public final String string;
         public boolean throwsDuringDeserialization;
@@ -1160,6 +1236,7 @@ public class BundleTest {
             if (throwsDuringDeserialization) {
                 throw new RuntimeException();
             }
+            sDeserialized = true;
         }
 
         public CustomParcelable setThrowsDuringDeserialization(
