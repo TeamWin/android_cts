@@ -28,6 +28,7 @@ import android.text.TextUtils;
 import android.util.ArrayMap;
 
 import com.android.cts.verifier.R;
+import com.android.cts.verifier.features.FeatureUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -160,6 +161,39 @@ public class UserRestrictions {
         }
     }
 
+    /**
+     * Copied from UserRestrictionsUtils. User restrictions that cannot be set by profile owners.
+     * Applied to all users.
+     */
+    private static final List<String> DEVICE_OWNER_ONLY_RESTRICTIONS =
+            Arrays.asList(
+                    UserManager.DISALLOW_USER_SWITCH,
+                    UserManager.DISALLOW_CONFIG_PRIVATE_DNS,
+                    UserManager.DISALLOW_MICROPHONE_TOGGLE,
+                    UserManager.DISALLOW_CAMERA_TOGGLE);
+
+    /**
+     * Copied from UserRestrictionsUtils. User restrictions that cannot be set by profile owners
+     * of secondary users. When set by DO they will be applied to all users.
+     */
+    private static final List<String> PRIMARY_USER_ONLY_RESTRICTIONS =
+            Arrays.asList(
+                    UserManager.DISALLOW_BLUETOOTH,
+                    UserManager.DISALLOW_USB_FILE_TRANSFER,
+                    UserManager.DISALLOW_CONFIG_TETHERING,
+                    UserManager.DISALLOW_NETWORK_RESET,
+                    UserManager.DISALLOW_FACTORY_RESET,
+                    UserManager.DISALLOW_ADD_USER,
+                    UserManager.DISALLOW_CONFIG_CELL_BROADCASTS,
+                    UserManager.DISALLOW_CONFIG_MOBILE_NETWORKS,
+                    UserManager.DISALLOW_MOUNT_PHYSICAL_MEDIA,
+                    UserManager.DISALLOW_SMS,
+                    UserManager.DISALLOW_FUN,
+                    UserManager.DISALLOW_SAFE_BOOT,
+                    UserManager.DISALLOW_CREATE_WINDOWS,
+                    UserManager.DISALLOW_DATA_ROAMING,
+                    UserManager.DISALLOW_AIRPLANE_MODE);
+
     private static final List<String> ALSO_VALID_FOR_MANAGED_PROFILE_POLICY_TRANSPARENCY =
             Arrays.asList(
                     UserManager.DISALLOW_APPS_CONTROL,
@@ -203,7 +237,7 @@ public class UserRestrictions {
     }
 
     public static List<String> getUserRestrictionsForPolicyTransparency(int mode) {
-        if (mode == PolicyTransparencyTestListActivity.MODE_DEVICE_OWNER) {
+        if (isDeviceOwnerMode(mode)) {
             ArrayList<String> result = new ArrayList<String>();
             // They are all valid except for DISALLOW_REMOVE_MANAGED_PROFILE
             for (String st : RESTRICTION_IDS_FOR_POLICY_TRANSPARENCY) {
@@ -221,7 +255,11 @@ public class UserRestrictions {
         throw new RuntimeException("Invalid mode " + mode);
     }
 
-    public static Intent getUserRestrictionTestIntent(Context context, String restriction) {
+    /**
+     * Creates and returns a new intent to set user restriction
+     */
+    public static Intent getUserRestrictionTestIntent(Context context, String restriction,
+                int mode) {
         final UserRestrictionItem item = USER_RESTRICTION_ITEMS.get(restriction);
         final Intent intent =
                 new Intent(PolicyTransparencyTestActivity.ACTION_SHOW_POLICY_TRANSPARENCY_TEST)
@@ -232,10 +270,9 @@ public class UserRestrictions {
                                 context.getString(item.label))
                         .putExtra(PolicyTransparencyTestActivity.EXTRA_SETTINGS_INTENT_ACTION,
                                 item.intentAction);
-        // For DISALLOW_FACTORY_RESET, set on the device owner, not on the current user.
-        if (!UserManager.DISALLOW_FACTORY_RESET.equals(restriction)) {
-            intent.putExtra(CommandReceiverActivity.EXTRA_USE_CURRENT_USER_DPM, true);
-        }
+
+        intent.putExtra(CommandReceiverActivity.EXTRA_USE_CURRENT_USER_DPM,
+                !(isDeviceOwnerMode(mode) && isOnlyValidForDeviceOwnerOrPrimaryUser(restriction)));
         return intent;
     }
 
@@ -275,8 +312,8 @@ public class UserRestrictions {
                 }
                 return isCellBroadcastAppLinkEnabled;
             case UserManager.DISALLOW_FUN:
-                // Easter egg is not available on watch
-                return !pm.hasSystemFeature(PackageManager.FEATURE_WATCH);
+                // Easter egg is not available on watch or automotive
+                return FeatureUtil.isFunSupported(context);
             case UserManager.DISALLOW_CONFIG_MOBILE_NETWORKS:
                 return pm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY);
             case UserManager.DISALLOW_CONFIG_WIFI:
@@ -294,10 +331,10 @@ public class UserRestrictions {
             case UserManager.DISALLOW_CONFIG_CREDENTIALS:
                 return !pm.hasSystemFeature(PackageManager.FEATURE_WATCH)
                         && hasSettingsActivity(context, ACTION_CREDENTIALS_INSTALL);
-            case UserManager.DISALLOW_CONFIG_LOCATION:
             case UserManager.DISALLOW_CONFIG_SCREEN_TIMEOUT:
-                // TODO(b/189282625): replace FEATURE_WATCH with a more specific feature
-                return !pm.hasSystemFeature(PackageManager.FEATURE_WATCH);
+                return FeatureUtil.isScreenTimeoutSupported(context);
+            case UserManager.DISALLOW_CONFIG_LOCATION:
+                return FeatureUtil.isConfigLocationSupported(context);
             default:
                 return true;
         }
@@ -343,6 +380,18 @@ public class UserRestrictions {
         }
 
         return !TextUtils.isEmpty(resolveInfo.activityInfo.applicationInfo.packageName);
+    }
+
+    /**
+     * Checks whether target mode is device owner test mode
+     */
+    private static boolean isDeviceOwnerMode(int mode) {
+        return mode == PolicyTransparencyTestListActivity.MODE_DEVICE_OWNER;
+    }
+
+    private static boolean isOnlyValidForDeviceOwnerOrPrimaryUser(String restriction) {
+        return DEVICE_OWNER_ONLY_RESTRICTIONS.contains(restriction)
+                || PRIMARY_USER_ONLY_RESTRICTIONS.contains(restriction);
     }
 
     private static class UserRestrictionItem {
