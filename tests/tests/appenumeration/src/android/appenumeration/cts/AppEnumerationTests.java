@@ -359,6 +359,8 @@ public class AppEnumerationTests {
 
         // update the package; shouldn't be visible
         runShellCommand("pm install " + QUERIES_NOTHING_RECEIVES_NON_PERSISTABLE_URI_APK);
+        // Wait until the updating is done
+        AmUtils.waitForBroadcastIdle();
         assertNotVisible(QUERIES_NOTHING_RECEIVES_NON_PERSISTABLE_URI, QUERIES_NOTHING_PERM);
     }
 
@@ -377,6 +379,8 @@ public class AppEnumerationTests {
 
         // update the package; should be still visible
         runShellCommand("pm install " + QUERIES_NOTHING_RECEIVES_PERSISTABLE_URI_APK);
+        // Wait until the updating is done
+        AmUtils.waitForBroadcastIdle();
         assertVisible(QUERIES_NOTHING_RECEIVES_PERSISTABLE_URI, QUERIES_NOTHING_PERM);
     }
 
