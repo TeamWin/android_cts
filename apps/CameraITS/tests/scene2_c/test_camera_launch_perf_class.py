@@ -22,6 +22,7 @@ import camera_properties_utils
 import its_base_test
 import its_session_utils
 
+CAMERA_LAUNCH_R_PERFORMANCE_CLASS_THRESHOLD = 600  # ms
 CAMERA_LAUNCH_S_PERFORMANCE_CLASS_THRESHOLD = 500  # ms
 
 
@@ -40,8 +41,8 @@ class CameraLaunchSPerfClassTest(its_base_test.ItsBaseTest):
         device_id=self.dut.serial,
         camera_id=self.camera_id) as cam:
 
-      camera_properties_utils.skip_unless(
-          cam.is_performance_class_primary_camera())
+      perf_class_level = cam.get_performance_class_level()
+      camera_properties_utils.skip_unless(perf_class_level >= 11)
 
       # Load chart for scene.
       props = cam.get_camera_properties()
@@ -55,9 +56,14 @@ class CameraLaunchSPerfClassTest(its_base_test.ItsBaseTest):
         camera_id=self.camera_id)
 
     launch_ms = cam.measure_camera_launch_ms()
-    if launch_ms >= CAMERA_LAUNCH_S_PERFORMANCE_CLASS_THRESHOLD:
+    if perf_class_level >= 12:
+      perf_class_threshold = CAMERA_LAUNCH_S_PERFORMANCE_CLASS_THRESHOLD
+    else:
+      perf_class_threshold = CAMERA_LAUNCH_R_PERFORMANCE_CLASS_THRESHOLD
+
+    if launch_ms >= perf_class_threshold:
       raise AssertionError(f'camera launch time: {launch_ms} ms, THRESH: '
-                           f'{CAMERA_LAUNCH_S_PERFORMANCE_CLASS_THRESHOLD} ms')
+                           f'{perf_class_threshold} ms')
     else:
       logging.debug('camera launch time: %.1f ms', launch_ms)
 
