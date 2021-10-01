@@ -17,6 +17,7 @@
 package android.server.biometrics;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -85,11 +86,16 @@ public class BiometricSimpleTests extends BiometricTestBase {
     @Test
     public void testPackageManagerAndDumpsysMatch() throws Exception {
         final BiometricServiceState state = getCurrentState();
+        final PackageManager pm = mContext.getPackageManager();
         if (mSensorProperties.isEmpty()) {
             assertTrue(state.mSensorStates.sensorStates.isEmpty());
-        } else {
-            final PackageManager pm = mContext.getPackageManager();
 
+            assertFalse(pm.hasSystemFeature(PackageManager.FEATURE_FINGERPRINT));
+            assertFalse(pm.hasSystemFeature(PackageManager.FEATURE_FACE));
+            assertFalse(pm.hasSystemFeature(PackageManager.FEATURE_IRIS));
+
+            assertTrue(state.mSensorStates.sensorStates.isEmpty());
+        } else {
             assertEquals(pm.hasSystemFeature(PackageManager.FEATURE_FINGERPRINT),
                     state.mSensorStates.containsModality(SensorStateProto.FINGERPRINT));
             assertEquals(pm.hasSystemFeature(PackageManager.FEATURE_FACE),
@@ -228,6 +234,9 @@ public class BiometricSimpleTests extends BiometricTestBase {
     @Test
     public void testSimpleBiometricAuth() throws Exception {
         for (SensorProperties props : mSensorProperties) {
+            if (props.getSensorStrength() == SensorProperties.STRENGTH_CONVENIENCE) {
+                continue;
+            }
 
             Log.d(TAG, "testSimpleBiometricAuth, sensor: " + props.getSensorId());
 
@@ -339,6 +348,10 @@ public class BiometricSimpleTests extends BiometricTestBase {
     @Test
     public void testBiometricCancellation() throws Exception {
         for (SensorProperties props : mSensorProperties) {
+            if (props.getSensorStrength() == SensorProperties.STRENGTH_CONVENIENCE) {
+                continue;
+            }
+
             try (BiometricTestSession session =
                          mBiometricManager.createTestSession(props.getSensorId())) {
                 enrollForSensor(session, props.getSensorId());
