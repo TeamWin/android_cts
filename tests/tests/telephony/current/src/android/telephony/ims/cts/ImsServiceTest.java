@@ -3459,7 +3459,7 @@ public class ImsServiceTest {
         }
 
         sSrcReceiver.clearQueue();
-        sServiceConnector.setDeviceSingleRegistrationEnabled(true);
+        sServiceConnector.setDeviceSingleRegistrationEnabled(isSingleRegistrationEnabledOnDevice);
         sSrcReceiver.waitForChanged();
         capability = sSrcReceiver.getCapability();
 
