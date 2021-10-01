@@ -40,7 +40,7 @@ import java.util.List;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
-public class SystemPalette {
+public class SystemPaletteTest {
 
     // Hue goes from 0 to 360
     private static final int MAX_HUE_DISTANCE = 30;
