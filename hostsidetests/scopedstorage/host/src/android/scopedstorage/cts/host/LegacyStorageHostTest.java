@@ -147,6 +147,11 @@ public class LegacyStorageHostTest extends BaseHostTestCase {
     }
 
     @Test
+    public void testCanTrashOtherAndroidMediaFiles_hasRW() throws Exception {
+        runDeviceTest("testCanTrashOtherAndroidMediaFiles_hasRW");
+    }
+
+    @Test
     public void testCantRename_hasR() throws Exception {
         revokePermissions("android.permission.WRITE_EXTERNAL_STORAGE");
         runDeviceTest("testCantRename_hasR");
