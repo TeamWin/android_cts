@@ -34,6 +34,7 @@ import android.hardware.camera2.cts.helpers.StaticMetadata;
 import android.hardware.camera2.cts.testcases.Camera2AndroidTestCase;
 import android.hardware.camera2.params.BlackLevelPattern;
 import android.hardware.camera2.params.ColorSpaceTransform;
+import android.hardware.camera2.params.DeviceStateOrientationMap;
 import android.hardware.camera2.params.RecommendedStreamConfigurationMap;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.CamcorderProfile;
@@ -2475,6 +2476,40 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
             } else {
                 assertTrue("If only one SCALER_ROTATE_AND_CROP value is supported, it must be NONE",
                         foundNone);
+            }
+        }
+    }
+
+    /**
+     * Check DeviceStateOrientationMap camera reporting.
+     * If present, the map should only be part of logical camera characteristics.
+     * Verify that all device state modes return valid orientations.
+     */
+    @Test
+    public void testDeviceStateOrientationMapCharacteristics() {
+        for (int i = 0; i < mAllCameraIds.length; i++) {
+            Log.i(TAG, "testDeviceStateOrientationMapCharacteristics: Testing camera ID " +
+                    mAllCameraIds[i]);
+
+            CameraCharacteristics c = mCharacteristics.get(i);
+            DeviceStateOrientationMap orientationMap = c.get(
+                    CameraCharacteristics.INFO_DEVICE_STATE_ORIENTATION_MAP);
+            if (orientationMap == null) {
+                continue;
+            }
+            // DeviceStateOrientationMaps must only be present within logical camera
+            // characteristics.
+            assertTrue("Camera id: " + i + " All devices advertising a " +
+                    "DeviceStateOrientationMap must also be logical cameras!",
+                    CameraTestUtils.hasCapability(c,
+                    CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_LOGICAL_MULTI_CAMERA));
+            List<Long> supportedStates = new ArrayList<>(Arrays.asList(
+                    DeviceStateOrientationMap.NORMAL, DeviceStateOrientationMap.FOLDED));
+            for (long deviceState : supportedStates) {
+                int orientation = orientationMap.getSensorOrientation(deviceState);
+                assertTrue("CameraId: " + i + " Unexpected orientation: " + orientation,
+                        (orientation >= 0) && (orientation <= 270) &&
+                        ((orientation % 90) == 0));
             }
         }
     }
