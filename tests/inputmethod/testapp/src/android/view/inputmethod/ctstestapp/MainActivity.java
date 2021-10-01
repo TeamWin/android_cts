@@ -141,7 +141,8 @@ public final class MainActivity extends Activity {
                 }
             }
         };
-        registerReceiver(mBroadcastReceiver, new IntentFilter(ACTION_TRIGGER));
+        registerReceiver(mBroadcastReceiver, new IntentFilter(ACTION_TRIGGER),
+                Context.RECEIVER_EXPORTED);
     }
 
     @Override

@@ -55,8 +55,7 @@ public class DefaultSmsApplicationTest {
     @Rule
     public static DeviceState sDeviceState = new DeviceState();
 
-    private static final TestApis sTestApis = new TestApis();
-    private static final Context sContext = sTestApis.context().instrumentedContext();
+    private static final Context sContext = TestApis.context().instrumentedContext();
     private static final TestAppProvider sTestAppProvider = new TestAppProvider();
     private static final TestApp sSmsApp = sTestAppProvider
             .query()
@@ -85,8 +84,7 @@ public class DefaultSmsApplicationTest {
     public void setDefaultSmsApplication_works() {
         assumeTrue(mTelephonyManager.isSmsCapable());
         String previousSmsAppName = getDefaultSmsPackage();
-        try (TestAppInstanceReference smsApp =
-                     sSmsApp.install(sTestApis.users().instrumented())) {
+        try (TestAppInstanceReference smsApp = sSmsApp.install()) {
             mDpm.setDefaultSmsApplication(mAdmin, smsApp.testApp().packageName());
 
             assertThat(getDefaultSmsPackage()).isEqualTo(smsApp.testApp().packageName());
@@ -102,8 +100,7 @@ public class DefaultSmsApplicationTest {
     public void setDefaultSmsApplication_unchanged() {
         assumeTrue(mTelephonyManager.isSmsCapable());
         String previousSmsAppName = getDefaultSmsPackage();
-        try (TestAppInstanceReference smsApp =
-                     sSmsApp.install(sTestApis.users().instrumented())) {
+        try (TestAppInstanceReference smsApp = sSmsApp.install()) {
             mDpm.setDefaultSmsApplication(mAdmin, smsApp.testApp().packageName());
 
             assertThat(getDefaultSmsPackage()).isEqualTo(previousSmsAppName);
@@ -133,8 +130,7 @@ public class DefaultSmsApplicationTest {
     @Postsubmit(reason = "new test")
     @CanSetPolicyTest(policy = DefaultSmsApplication.class)
     public void setDefaultSmsApplication_nullAdmin_throwsException() {
-        try (TestAppInstanceReference smsApp =
-                     sSmsApp.install(sTestApis.users().instrumented())) {
+        try (TestAppInstanceReference smsApp = sSmsApp.install()) {
 
             assertThrows(NullPointerException.class, () ->
                     mDpm.setDefaultSmsApplication(
@@ -149,8 +145,7 @@ public class DefaultSmsApplicationTest {
     public void setDefaultSmsApplication_notSmsCapable_unchanged() {
         assumeTrue(!mTelephonyManager.isSmsCapable());
         String previousSmsAppName = getDefaultSmsPackage();
-        try (TestAppInstanceReference smsApp =
-                     sSmsApp.install(sTestApis.users().instrumented())) {
+        try (TestAppInstanceReference smsApp = sSmsApp.install()) {
             mDpm.setDefaultSmsApplication(mAdmin, smsApp.testApp().packageName());
 
             assertThat(getDefaultSmsPackage()).isEqualTo(previousSmsAppName);
@@ -163,8 +158,7 @@ public class DefaultSmsApplicationTest {
     @Postsubmit(reason = "new test")
     @CannotSetPolicyTest(policy = DefaultSmsApplication.class)
     public void setDefaultSmsApplication_invalidAdmin_throwsException() {
-        try (TestAppInstanceReference smsApp =
-                     sSmsApp.install(sTestApis.users().instrumented())) {
+        try (TestAppInstanceReference smsApp = sSmsApp.install()) {
 
             assertThrows(SecurityException.class, () ->
                     mDpm.setDefaultSmsApplication(mAdmin, smsApp.testApp().packageName()));

@@ -36,7 +36,6 @@ import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.PositivePolicyTest;
 import com.android.bedstead.harrier.policies.EnrollmentSpecificId;
 import com.android.bedstead.nene.TestApis;
-import com.android.bedstead.testapp.TestAppProvider;
 
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -60,9 +59,7 @@ public final class EnrollmentSpecificIdTest {
     @Rule
     public static final DeviceState sDeviceState = new DeviceState();
 
-    private static final TestAppProvider sTestAppProvider = new TestAppProvider();
-    private static final TestApis sTestApis = new TestApis();
-    private static final Context sContext = sTestApis.context().instrumentedContext();
+    private static final Context sContext = TestApis.context().instrumentedContext();
 
     @Test
     @Postsubmit(reason = "New test")
@@ -83,7 +80,7 @@ public final class EnrollmentSpecificIdTest {
                     () -> sDeviceState.dpc().devicePolicyManager()
                             .setOrganizationId(DIFFERENT_ORGANIZATION_ID));
         } finally {
-            sTestApis.devicePolicy().clearOrganizationId(sDeviceState.dpc().user());
+            TestApis.devicePolicy().clearOrganizationId(sDeviceState.dpc().user());
         }
     }
 
@@ -106,7 +103,7 @@ public final class EnrollmentSpecificIdTest {
 
             assertThat(esidFromDpm).isEqualTo(calculatedEsid);
         } finally {
-            sTestApis.devicePolicy().clearOrganizationId(sDeviceState.dpc().user());
+            TestApis.devicePolicy().clearOrganizationId(sDeviceState.dpc().user());
         }
     }
 

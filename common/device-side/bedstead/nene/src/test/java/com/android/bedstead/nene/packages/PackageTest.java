@@ -41,14 +41,13 @@ public class PackageTest {
     private static final String ACCESS_NETWORK_STATE_PERMISSION =
             "android.permission.ACCESS_NETWORK_STATE";
 
-    private static final TestApis sTestApis = new TestApis();
-    private static final Context sContext = sTestApis.context().instrumentedContext();
-    private static final UserReference sUser = sTestApis.users().instrumented();
+    private static final Context sContext = TestApis.context().instrumentedContext();
+    private static final UserReference sUser = TestApis.users().instrumented();
 
     @Test
     public void installedOnUsers_includesUserWithPackageInstalled() {
-        sTestApis.packages().install(sUser, TEST_APP_APK_FILE);
-        PackageReference packageReference = sTestApis.packages().find(TEST_APP_PACKAGE_NAME);
+        TestApis.packages().install(sUser, TEST_APP_APK_FILE);
+        PackageReference packageReference = TestApis.packages().find(TEST_APP_PACKAGE_NAME);
 
         try {
             assertThat(packageReference.resolve().installedOnUsers()).contains(sUser);
@@ -59,9 +58,9 @@ public class PackageTest {
 
     @Test
     public void installedOnUsers_doesNotIncludeUserWithoutPackageInstalled() {
-        UserReference user = sTestApis.users().createUser().create();
-        sTestApis.packages().install(sUser, TEST_APP_APK_FILE);
-        PackageReference packageReference = sTestApis.packages().find(TEST_APP_PACKAGE_NAME);
+        UserReference user = TestApis.users().createUser().create();
+        TestApis.packages().install(sUser, TEST_APP_APK_FILE);
+        PackageReference packageReference = TestApis.packages().find(TEST_APP_PACKAGE_NAME);
 
         try {
             assertThat(packageReference.resolve().installedOnUsers()).doesNotContain(user);
@@ -75,7 +74,7 @@ public class PackageTest {
     public void grantedPermission_includesKnownInstallPermission() {
         // TODO(scottjonathan): This relies on the fact that the instrumented app declares
         //  ACCESS_NETWORK_STATE - this should be replaced with TestApp with a useful query
-        PackageReference packageReference = sTestApis.packages().find(sContext.getPackageName());
+        PackageReference packageReference = TestApis.packages().find(sContext.getPackageName());
 
         assertThat(packageReference.resolve().grantedPermissions(sUser))
                 .contains(ACCESS_NETWORK_STATE_PERMISSION);

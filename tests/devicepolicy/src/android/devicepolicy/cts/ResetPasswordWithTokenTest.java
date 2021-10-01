@@ -77,8 +77,7 @@ public class ResetPasswordWithTokenTest {
     private static final String RESET_PASSWORD_TOKEN_DISABLED =
             "Cannot reset password token as it is disabled for the primary user";
 
-    private static final TestApis sTestApis = new TestApis();
-    private static final Context sContext = sTestApis.context().instrumentedContext();
+    private static final Context sContext = TestApis.context().instrumentedContext();
     private final KeyguardManager sLocalKeyguardManager =
             sContext.getSystemService(KeyguardManager.class);
 

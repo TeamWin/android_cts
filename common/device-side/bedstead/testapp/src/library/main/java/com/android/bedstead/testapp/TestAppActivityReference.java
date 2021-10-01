@@ -33,8 +33,6 @@ import com.android.eventlib.events.activities.ActivityEvents;
  */
 public abstract class TestAppActivityReference {
 
-    static final TestApis sTestApis = new TestApis();
-
     final TestAppInstanceReference mInstance;
     final ComponentReference mComponent;
 
@@ -65,13 +63,13 @@ public abstract class TestAppActivityReference {
         intent.setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK);
 
         try (PermissionContext p =
-                     sTestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
-            sTestApis.context().instrumentedContext().startActivity(intent);
+                     TestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
+            TestApis.context().instrumentedContext().startActivity(intent);
         }
 
         events().activityStarted().waitForEvent();
 
-        return sTestApis.activities().wrap(
+        return TestApis.activities().wrap(
                 TestAppActivity.class, new TestAppActivityImpl(mInstance, mComponent));
     }
 
@@ -84,13 +82,13 @@ public abstract class TestAppActivityReference {
         intent.setComponent(mComponent.componentName());
         intent.setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK);
         try (PermissionContext p =
-                     sTestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
-            sTestApis.context().instrumentedContext().startActivity(intent, options);
+                     TestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
+            TestApis.context().instrumentedContext().startActivity(intent, options);
         }
 
         events().activityStarted().waitForEvent();
 
-        return sTestApis.activities().wrap(
+        return TestApis.activities().wrap(
                 TestAppActivity.class, new TestAppActivityImpl(mInstance, mComponent));
     }
 

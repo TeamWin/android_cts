@@ -29,8 +29,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Mark that a test method should run on a device which has a secondary user that is not the
- * current user.
+ * Mark that a test method should run on a device which has a secondary user.
  *
  * <p>Your test configuration may be configured so that this test is only run on a device which
  * has a secondary user that is not the current user. Otherwise, you can use {@link DeviceState}

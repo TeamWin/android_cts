@@ -18,6 +18,8 @@ package android.devicepolicy.cts;
 
 import static org.junit.Assert.assertThrows;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.accounts.AuthenticatorException;
@@ -41,8 +43,6 @@ import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstanceReference;
 import com.android.bedstead.testapp.TestAppProvider;
 
-import static com.google.common.truth.Truth.*;
-
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Ignore;
@@ -58,8 +58,7 @@ public class AccountManagementTest {
     @Rule
     public static final DeviceState sDeviceState = new DeviceState();
 
-    private static final TestApis sTestApis = new TestApis();
-    private static final Context sContext = sTestApis.context().instrumentedContext();
+    private static final Context sContext = TestApis.context().instrumentedContext();
     private static final TestAppProvider sTestAppProvider = new TestAppProvider();
     private static final TestApp sAccountManagementApp = sTestAppProvider
             .query()
@@ -158,8 +157,7 @@ public class AccountManagementTest {
     @CanSetPolicyTest(policy = AccountManagement.class)
     public void addAccount_fromDpcWithAccountManagementDisabled_accountAdded()
             throws OperationCanceledException, AuthenticatorException, IOException {
-        try (TestAppInstanceReference accountAuthenticatorApp =
-                     sAccountManagementApp.install(sTestApis.users().instrumented())) {
+        try (TestAppInstanceReference accountAuthenticatorApp = sAccountManagementApp.install()) {
             mDpm.setAccountManagementDisabled(mAdmin, EXISTING_ACCOUNT_TYPE, /* disabled= */ true);
 
             // Management is disabled, but the DO/PO is still allowed to use the APIs
@@ -182,8 +180,7 @@ public class AccountManagementTest {
     @CanSetPolicyTest(policy = AccountManagement.class)
     public void addAccount_fromDpcWithDisallowModifyAccountsRestriction_accountAdded()
             throws OperationCanceledException, AuthenticatorException, IOException {
-        try (TestAppInstanceReference accountAuthenticatorApp =
-                     sAccountManagementApp.install(sTestApis.users().instrumented())) {
+        try (TestAppInstanceReference accountAuthenticatorApp = sAccountManagementApp.install()) {
             mDpm.addUserRestriction(mAdmin, UserManager.DISALLOW_MODIFY_ACCOUNTS);
 
             // Management is disabled, but the DO/PO is still allowed to use the APIs
@@ -206,8 +203,7 @@ public class AccountManagementTest {
     @CanSetPolicyTest(policy = AccountManagement.class)
     public void removeAccount_fromDpcWithDisallowModifyAccountsRestriction_accountRemoved()
             throws OperationCanceledException, AuthenticatorException, IOException {
-        try (TestAppInstanceReference accountAuthenticatorApp =
-                     sAccountManagementApp.install(sTestApis.users().instrumented())) {
+        try (TestAppInstanceReference accountAuthenticatorApp = sAccountManagementApp.install()) {
             mDpm.addUserRestriction(mAdmin, UserManager.DISALLOW_MODIFY_ACCOUNTS);
 
             // Management is disabled, but the DO/PO is still allowed to use the APIs
@@ -227,8 +223,7 @@ public class AccountManagementTest {
     @CanSetPolicyTest(policy = AccountManagement.class)
     public void addAccount_withDisallowModifyAccountsRestriction_throwsException()
             throws OperationCanceledException, AuthenticatorException, IOException {
-        try (TestAppInstanceReference accountAuthenticatorApp =
-                     sAccountManagementApp.install(sTestApis.users().instrumented())) {
+        try (TestAppInstanceReference accountAuthenticatorApp = sAccountManagementApp.install()) {
             mDpm.addUserRestriction(mAdmin, UserManager.DISALLOW_MODIFY_ACCOUNTS);
 
             assertThrows(OperationCanceledException.class, () ->
@@ -244,8 +239,7 @@ public class AccountManagementTest {
     public void removeAccount_withDisallowModifyAccountsRestriction_throwsException()
             throws OperationCanceledException, AuthenticatorException, IOException,
             InterruptedException {
-        try (TestAppInstanceReference accountAuthenticatorApp =
-                     sAccountManagementApp.install(sTestApis.users().instrumented())) {
+        try (TestAppInstanceReference accountAuthenticatorApp = sAccountManagementApp.install()) {
             addAccountWithType(EXISTING_ACCOUNT_TYPE);
             mDpm.addUserRestriction(mAdmin, UserManager.DISALLOW_MODIFY_ACCOUNTS);
 
@@ -262,8 +256,7 @@ public class AccountManagementTest {
     @CanSetPolicyTest(policy = AccountManagement.class)
     public void addAccount_withAccountManagementDisabled_throwsException()
             throws OperationCanceledException, AuthenticatorException, IOException {
-        try (TestAppInstanceReference accountAuthenticatorApp =
-                     sAccountManagementApp.install(sTestApis.users().instrumented())) {
+        try (TestAppInstanceReference accountAuthenticatorApp = sAccountManagementApp.install()) {
             mDpm.setAccountManagementDisabled(mAdmin, EXISTING_ACCOUNT_TYPE, /* disabled= */ true);
 
             assertThrows(OperationCanceledException.class, () ->
@@ -279,8 +272,7 @@ public class AccountManagementTest {
     public void removeAccount_withAccountManagementDisabled_throwsException()
             throws OperationCanceledException, AuthenticatorException, IOException,
             InterruptedException {
-        try (TestAppInstanceReference accountAuthenticatorApp =
-                     sAccountManagementApp.install(sTestApis.users().instrumented())) {
+        try (TestAppInstanceReference accountAuthenticatorApp = sAccountManagementApp.install()) {
             addAccountWithType(EXISTING_ACCOUNT_TYPE);
             mDpm.setAccountManagementDisabled(mAdmin, EXISTING_ACCOUNT_TYPE, /* disabled= */ true);
 
