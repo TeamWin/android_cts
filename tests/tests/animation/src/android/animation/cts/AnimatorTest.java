@@ -94,13 +94,12 @@ public class AnimatorTest {
         assertEquals(duration, animatorLocal.getDuration());
     }
 
+    @UiThreadTest
     @Test
     public void testIsRunning() throws Throwable {
         assertFalse(mAnimator.isRunning());
-        mAnimator.setDuration(2000);
-        startAnimation(mAnimator);
+        mAnimator.start();
         assertTrue(mAnimator.isRunning());
-        mActivityRule.runOnUiThread(mAnimator::end);
     }
 
     @Test

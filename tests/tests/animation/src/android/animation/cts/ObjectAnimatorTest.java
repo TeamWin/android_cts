@@ -157,12 +157,12 @@ public class ObjectAnimatorTest {
 
         intAnimator.addUpdateListener(updateListener);
         intAnimator.setDuration(200);
-        intAnimator.setRepeatCount(1);
+        intAnimator.setRepeatCount(10);
         intAnimator.setRepeatMode(ValueAnimator.REVERSE);
         mActivityRule.runOnUiThread(intAnimator::start);
 
         verify(mockListener, timeout(2000)).onAnimationRepeat(intAnimator);
-        verify(mockListener, timeout(2000)).onAnimationEnd(intAnimator, false);
+        verify(mockListener, timeout(3000)).onAnimationEnd(intAnimator, false);
     }
 
     @Test
@@ -191,12 +191,12 @@ public class ObjectAnimatorTest {
 
         colorAnimator.addUpdateListener(updateListener);
         colorAnimator.setDuration(200);
-        colorAnimator.setRepeatCount(1);
+        colorAnimator.setRepeatCount(10);
         colorAnimator.setRepeatMode(ValueAnimator.REVERSE);
         mActivityRule.runOnUiThread(colorAnimator::start);
 
         verify(mockListener, timeout(2000)).onAnimationRepeat(colorAnimator);
-        verify(mockListener, timeout(2000)).onAnimationEnd(colorAnimator, false);
+        verify(mockListener, timeout(3000)).onAnimationEnd(colorAnimator, false);
     }
 
     @Test
