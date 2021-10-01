@@ -40,6 +40,7 @@ import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.TestListAdapter.TestListItem;
 import com.android.cts.verifier.TestResult;
+import com.android.cts.verifier.features.FeatureUtil;
 
 /**
  * Activity that lists all positive device owner tests. Requires the following adb command be issued
@@ -252,7 +253,7 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                                     R.string.device_owner_user_restriction_unset,
                                     CommandReceiverActivity.createSetCurrentUserRestrictionIntent(
                                             UserManager.DISALLOW_CONFIG_WIFI, false))
-            }));
+                    }));
         }
 
         // DISALLOW_AMBIENT_DISPLAY.
@@ -272,8 +273,7 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
         //                         new Intent(Settings.ACTION_DISPLAY_SETTINGS))}));
 
         // DISALLOW_CONFIG_VPN
-        // TODO(b/189282625): replace FEATURE_WATCH with a more specific feature
-        if (!packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)) {
+        if (FeatureUtil.isConfigVpnSupported(this)) {
             adapter.add(createInteractiveTestItem(this, DISALLOW_CONFIG_VPN_ID,
                     R.string.device_owner_disallow_config_vpn,
                     R.string.device_owner_disallow_config_vpn_info,

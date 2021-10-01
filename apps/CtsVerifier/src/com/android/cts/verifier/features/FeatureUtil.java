@@ -65,6 +65,13 @@ public final class FeatureUtil {
     }
 
     /**
+     * Checks whether the device supports configuring VPN
+     */
+    public static boolean isConfigVpnSupported(Context context) {
+        return !isWatchOrAutomotive(context);
+    }
+
+    /**
      * Checks whether the device is watch or automotive
      */
     private static boolean isWatchOrAutomotive(Context context) {
