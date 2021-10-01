@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.sensorprivacy.cts.usemiccamera
+package android.sensorprivacy.cts.usemiccamera.overlay
 
 import android.app.Activity
 import android.app.AppOpsManager
@@ -35,11 +35,9 @@ class UseMicCamera : Activity() {
     private var cam: Cam? = null
     private lateinit var appOpsManager: AppOpsManager
 
-    val activitiesToFinish = mutableSetOf<Activity>()
-
     companion object {
-        const val MIC_CAM_ACTIVITY_ACTION =
-                "android.sensorprivacy.cts.usemiccamera.action.USE_MIC_CAM"
+        const val MIC_CAM_OVERLAY_ACTIVITY_ACTION =
+                "android.sensorprivacy.cts.usemiccamera.overlay.action.USE_MIC_CAM"
         const val FINISH_MIC_CAM_ACTIVITY_ACTION =
                 "android.sensorprivacy.cts.usemiccamera.action.FINISH_USE_MIC_CAM"
         const val USE_MIC_EXTRA =
@@ -67,9 +65,8 @@ class UseMicCamera : Activity() {
                 cam?.close()
                 appOpsManager.finishOp(AppOpsManager.OPSTR_CAMERA,
                         Process.myUid(), applicationContext.packageName)
-                appOpsManager.finishOp(AppOpsManager.OPSTR_RECORD_AUDIO,
-                        Process.myUid(), applicationContext.packageName)
                 finishAndRemoveTask()
+                Runtime.getRuntime().exit(0)
             }
         }, IntentFilter(FINISH_MIC_CAM_ACTIVITY_ACTION))
 
@@ -80,18 +77,16 @@ class UseMicCamera : Activity() {
         }
         if (useCam) {
             handler.postDelayed({
-                cam = openCam(this, intent.getBooleanExtra(RETRY_CAM_EXTRA, false))
+                cam = openCam(this, intent.getBooleanExtra(UseMicCamera.RETRY_CAM_EXTRA, false))
             }, 1000)
         }
 
-        if (intent.getBooleanExtra(DELAYED_ACTIVITY_EXTRA, false)) {
-            handler.postDelayed({
-                val intent = Intent(this, BlankActivity::class.java)
-                if (intent.getBooleanExtra(DELAYED_ACTIVITY_NEW_TASK_EXTRA, false)) {
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                }
-                startActivity(intent)
-            }, 2000)
-        }
+        handler.postDelayed({
+            val intent = Intent(this, OverlayActivity::class.java)
+            if (intent.getBooleanExtra(DELAYED_ACTIVITY_NEW_TASK_EXTRA, false)) {
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            startActivity(intent)
+        }, 2000)
     }
 }
