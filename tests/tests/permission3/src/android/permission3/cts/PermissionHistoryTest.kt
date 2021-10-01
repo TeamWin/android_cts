@@ -25,7 +25,6 @@ import com.android.compatibility.common.util.SystemUtil
 import org.junit.After
 import org.junit.Assume.assumeFalse
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Test
 
 private const val APP_LABEL_1 = "CtsMicAccess"
@@ -93,6 +92,7 @@ class PermissionHistoryTest : BasePermissionHubTest() {
 
         waitFindObject(By.text(SHOW_SYSTEM))
         pressBack()
+        pressBack()
     }
 
     @Test
@@ -110,7 +110,6 @@ class PermissionHistoryTest : BasePermissionHubTest() {
         pressBack()
     }
 
-    @Ignore("b/186656826#comment27")
     @Test
     fun testCameraTimelineWithMultipleApps() {
         openMicrophoneApp(INTENT_ACTION_1)
