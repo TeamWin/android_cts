@@ -14,17 +14,19 @@
  * limitations under the License.
  */
 
-package android.sensorprivacy.cts
+package com.android.cts.overlay.target;
 
-import android.hardware.SensorPrivacyManager.Sensors.CAMERA
-import android.hardware.camera2.CameraManager
-import org.junit.Assume
+import android.app.Service;
+import android.content.Intent;
+import android.os.Binder;
+import android.os.IBinder;
 
-class SensorPrivacyCameraTest : SensorPrivacyBaseTest(CAMERA, USE_CAM_EXTRA) {
+/** A stub service used by {@link OverlayTargetActivity} */
+public class OverlayTargetService extends Service {
+    private Binder mBinder = new Binder();
 
-    override fun init() {
-        val cameraManager: CameraManager = context.getSystemService(CameraManager::class.java)!!
-        Assume.assumeTrue("No camera available", cameraManager.cameraIdList.isNotEmpty())
-        super.init()
+    @Override
+    public IBinder onBind(Intent intent) {
+        return mBinder;
     }
 }

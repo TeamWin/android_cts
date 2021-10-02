@@ -238,7 +238,7 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
             long remainingTime = timeout;
             while (true) {
                 if (mCallCount.get() != 0) {
-                    fail("The method must not be called.");
+                    fail("The method must not be called. params=" + evaluateBundle(mArgs.get()));
                 }
                 if (remainingTime < 0) {
                     break;  // This is indeed an expected scenario, not an error.
@@ -251,6 +251,26 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
             } else {
                 assertEquals(0, mCallCount.get());
             }
+        }
+
+        /**
+         * Recursively evaluate {@link Bundle} so that {@link Bundle#toString()} can print all the
+         * nested {@link Bundle} objects.
+         *
+         * @param bundle {@link Bundle} to recursively evaluate.
+         * @return the {@code bundle} object passed.
+         */
+        @Nullable
+        private static Bundle evaluateBundle(@Nullable Bundle bundle) {
+            if (bundle != null) {
+                for (String key : bundle.keySet()) {
+                    final Object value = bundle.get(key);
+                    if (value instanceof Bundle) {
+                        evaluateBundle((Bundle) value);
+                    }
+                }
+            }
+            return bundle;
         }
     }
 
