@@ -19,7 +19,7 @@ package {
 }
 
 android_test_helper_app {
-    name: "CtsUseMicOrCameraForSensorPrivacy",
+    name: "CtsUseMicOrCameraAndOverlayForSensorPrivacy",
     defaults: ["cts_defaults"],
 
     sdk_version: "test_current",
