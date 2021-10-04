@@ -214,6 +214,18 @@ public class ParcelTest extends AndroidTestCase {
         p.recycle();
     }
 
+    public void testObtainWithBinder() {
+        Parcel p = Parcel.obtain(new Binder("anything"));
+        // testing does not throw an exception, Parcel still works
+
+        final int kTest = 17;
+        p.writeInt(kTest);
+        p.setDataPosition(0);
+        assertEquals(kTest, p.readInt());
+
+        p.recycle();
+    }
+
     public void testEnforceInterface() {
         Parcel p;
         String s = "IBinder interface token";
