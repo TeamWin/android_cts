@@ -18,6 +18,7 @@ package {
 
 java_defaults {
     name: "CtsAppEnumerationQueriesDefaults",
+    defaults: ["cts_support_defaults"],
     srcs: ["src/**/*.java"],
     static_libs: ["CtsAppEnumerationTestLib"],
     sdk_version: "test_current",
@@ -275,6 +276,7 @@ android_test_helper_app {
         "general-tests",
     ],
 }
+
 android_test_helper_app {
     name: "CtsAppEnumerationWildcardBrowsableActivitySource",
     manifest: "AndroidManifest-queriesWildcard-browsableActivity.xml",

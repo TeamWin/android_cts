@@ -159,7 +159,7 @@ public class Constants {
             QUERIES_WILDCARD_WEB,
     };
 
-    public static final String ACTIVITY_CLASS_TEST = PKG_BASE + "cts.query.TestActivity";
+    public static final String ACTIVITY_CLASS_TEST = PKG_BASE + "cts.TestActivity";
     public static final String ACTIVITY_CLASS_DUMMY_ACTIVITY = PKG_BASE + "testapp.DummyActivity";
 
     public static final String ACTION_MANIFEST_ACTIVITY = PKG_BASE + "action.ACTIVITY";

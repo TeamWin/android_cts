@@ -20,6 +20,8 @@
           android:sharedUserId="android.appenumeration.shareduid">
     <application>
         <uses-library android:name="android.test.runner" />
+        <activity android:name="android.appenumeration.cts.TestActivity"
+                  android:exported="true" />
 
         <service android:name="android.appenumeration.testapp.MockAuthenticatorService"
                  android:exported="false">

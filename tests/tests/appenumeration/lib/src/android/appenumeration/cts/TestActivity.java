@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.appenumeration.cts.query;
+package android.appenumeration.cts;
 
 import static android.appenumeration.cts.Constants.ACTION_CHECK_SIGNATURES;
 import static android.appenumeration.cts.Constants.ACTION_GET_INSTALLED_PACKAGES;
@@ -57,9 +57,6 @@ import static android.os.Process.INVALID_UID;
 import android.accounts.Account;
 import android.app.Activity;
 import android.app.PendingIntent;
-import android.appenumeration.cts.Constants;
-import android.appenumeration.cts.MissingBroadcastException;
-import android.appenumeration.cts.MissingCallbackException;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProviderInfo;
 import android.content.ActivityNotFoundException;
@@ -98,6 +95,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ *  A test activity running in the query and target applications.
+ */
 public class TestActivity extends Activity {
 
     private final static long TIMEOUT_MS = 3000;
