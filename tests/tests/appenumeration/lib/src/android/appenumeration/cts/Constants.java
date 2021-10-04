@@ -241,6 +241,10 @@ public class Constants {
             PKG_BASE + "cts.action.GET_STAGED_SESSIONS";
     public static final String ACTION_GET_ALL_SESSIONS =
             PKG_BASE + "cts.action.GET_ALL_SESSIONS";
+    public static final String ACTION_PENDING_INTENT_GET_ACTIVITY =
+            PKG_BASE + "cts.action.PENDING_INTENT_GET_ACTIVITY";
+    public static final String ACTION_PENDING_INTENT_GET_CREATOR_PACKAGE =
+            PKG_BASE + "cts.action.PENDING_INTENT_GET_CREATOR_PACKAGE";
 
     public static final String EXTRA_REMOTE_CALLBACK = "remoteCallback";
     public static final String EXTRA_REMOTE_READY_CALLBACK = "remoteReadyCallback";
@@ -251,6 +255,7 @@ public class Constants {
     public static final String EXTRA_AUTHORITY = "authority";
     public static final String EXTRA_ACCOUNT = "account";
     public static final String EXTRA_ID = "id";
+    public static final String EXTRA_PENDING_INTENT = "pendingIntent";
 
     public static final int CALLBACK_EVENT_INVALID = -1;
     public static final int CALLBACK_EVENT_PACKAGE_ADDED = 0;
