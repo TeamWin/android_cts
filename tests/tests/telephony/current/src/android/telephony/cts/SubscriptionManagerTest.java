@@ -775,9 +775,12 @@ public class SubscriptionManagerTest {
                 fail("testSetUiccApplicationsEnabled was not able to enable to UICC app on time");
             }
 
-            // Reset default data subId as it may have been changed as part of the calls above
+            // Reset default data and voice subId as it may have been changed as part of the
+            // calls above
             ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mSm,
                     (sm) -> sm.setDefaultDataSubId(mSubId));
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mSm,
+                    (sm) -> sm.setDefaultVoiceSubscriptionId(mDefaultVoiceSubId));
 
             // Other tests also expect that cellular data must be available if telephony is
             // supported. Wait for that before returning.
