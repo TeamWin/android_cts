@@ -34,18 +34,17 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.FeatureInfo;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
 import android.os.Build;
 
 import androidx.annotation.CheckResult;
-import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.annotations.Experimental;
 import com.android.bedstead.nene.exceptions.AdbException;
-import com.android.bedstead.nene.exceptions.AdbParseException;
 import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.bedstead.nene.users.User;
@@ -63,11 +62,12 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Test APIs relating to packages.
@@ -146,56 +146,62 @@ public final class Packages {
 
     public static final Packages sInstance = new Packages();
 
-    private Map<String, Package> mCachedPackages = null;
     private Set<String> mFeatures = null;
-    private final AdbPackageParser mParser;
     private final Context mInstrumentedContext;
 
     private final IntentFilter mPackageAddedIntentFilter =
             new IntentFilter(Intent.ACTION_PACKAGE_ADDED);
 
+    private static final PackageManager sPackageManager =
+            TestApis.context().instrumentedContext().getPackageManager();
+
+    static final AdbPackageParser sParser = AdbPackageParser.get(SDK_INT);
+
 
     public Packages() {
         mPackageAddedIntentFilter.addDataScheme("package");
-        mParser = AdbPackageParser.get(SDK_INT);
         mInstrumentedContext = TestApis.context().instrumentedContext();
     }
-
 
     /** Get the features available on the device. */
     public Set<String> features() {
         if (mFeatures == null) {
-            fillCache();
+            mFeatures = new HashSet<>();
+            PackageManager pm = TestApis.context().instrumentedContext().getPackageManager();
+            FeatureInfo[] features = pm.getSystemAvailableFeatures();
+            if (features != null) {
+                Arrays.stream(features).map(f -> f.name).forEach(mFeatures::add);
+            }
         }
-
         return mFeatures;
     }
 
-    /** Resolve all packages on the device. */
-    public Collection<PackageReference> all() {
-        return new HashSet<>(allResolved());
+    /** Get packages installed for the instrumented user. */
+    public Collection<Package> installedForUser() {
+        return installedForUser(TestApis.users().instrumented());
     }
 
     /** Resolve all packages installed for a given {@link UserReference}. */
-    public Collection<PackageReference> installedForUser(UserReference user) {
+    public Collection<Package> installedForUser(UserReference user) {
         if (user == null) {
             throw new NullPointerException();
         }
-        Set<PackageReference> installedForUser = new HashSet<>();
 
-        for (Package pkg : allResolved()) {
-            if (pkg.installedOnUsers().contains(user)) {
-                installedForUser.add(pkg);
-            }
-        }
-
-        return installedForUser;
+        return TestApis.context().androidContextAsUser(user).getPackageManager()
+                .getInstalledPackages(/* flags= */ 0)
+                .stream()
+                .map(i -> new Package(i.packageName))
+                .collect(Collectors.toSet());
     }
 
-    private Collection<Package> allResolved() {
-        fillCache();
+    /** Install the {@link File} to the instrumented user. */
+    public Package install(File apkFile) {
+        return install(TestApis.users().instrumented(), apkFile);
+    }
 
-        return mCachedPackages.values();
+    /** Install a file as a byte array to the instrumented user. */
+    public Package install(byte[] apkFile) {
+        return install(TestApis.users().instrumented(), apkFile);
     }
 
     /**
@@ -207,7 +213,7 @@ public final class Packages {
      *
      * <p>If the package is marked testOnly, it will still be installed.
      */
-    public PackageReference install(UserReference user, File apkFile) {
+    public Package install(UserReference user, File apkFile) {
         if (user == null || apkFile == null) {
             throw new NullPointerException();
         }
@@ -244,7 +250,7 @@ public final class Packages {
         }
     }
 
-    private PackageReference waitForPackageAddedBroadcast(
+    private Package waitForPackageAddedBroadcast(
             BlockingBroadcastReceiver broadcastReceiver) {
         Intent intent = broadcastReceiver.awaitForBroadcast();
         if (intent == null) {
@@ -276,7 +282,7 @@ public final class Packages {
      *
      * <p>If the package is marked testOnly, it will still be installed.
      */
-    public PackageReference install(UserReference user, byte[] apkFile) {
+    public Package install(UserReference user, byte[] apkFile) {
         if (user == null || apkFile == null) {
             throw new NullPointerException();
         }
@@ -345,7 +351,7 @@ public final class Packages {
         }
     }
 
-    private PackageReference installPreS(UserReference user, byte[] apkFile) {
+    private Package installPreS(UserReference user, byte[] apkFile) {
         // Prior to S we cannot pass bytes to stdin so we write it to a temp file first
         File outputDir = TestApis.context().instrumentedContext().getCacheDir();
         File outputFile = null;
@@ -373,7 +379,7 @@ public final class Packages {
      * <p>If the package is marked testOnly, it will still be installed.
      */
     @Experimental
-    public PackageReference install(UserReference user, AndroidResource resource) {
+    public Package install(UserReference user, AndroidResource resource) {
         int indexId = mInstrumentedContext.getResources().getIdentifier(
                 resource.mName, /* defType= */ null, /* defPackage= */ null);
 
@@ -395,7 +401,7 @@ public final class Packages {
      * <p>If the package is marked testOnly, it will still be installed.
      */
     @Experimental
-    public PackageReference install(UserReference user, JavaResource resource) {
+    public Package install(UserReference user, JavaResource resource) {
         try (InputStream inputStream =
                      Packages.class.getClassLoader().getResourceAsStream(resource.mName)) {
             return install(user, readInputStreamFully(inputStream));
@@ -438,26 +444,18 @@ public final class Packages {
         return new KeepUninstalledPackagesBuilder();
     }
 
-    @Nullable
-    Package fetchPackage(String packageName) {
-        // TODO(scottjonathan): fillCache probably does more than we need here -
-        //  can we make it more efficient?
-        fillCache();
-
-        return mCachedPackages.get(packageName);
-    }
-
     /**
      * Get a reference to a package with the given {@code packageName}.
      *
-     * <p>This does not guarantee that the package exists. Call {@link PackageReference#resolve()}
-     * to find specific details about the package on the device.
+     * <p>This does not guarantee that the package exists. Call {@link Package#exists()}
+     * to find if the package exists on the device, or {@link Package#installedOnUsers()}
+     * to find the users it is installed for.
      */
-    public PackageReference find(String packageName) {
+    public Package find(String packageName) {
         if (packageName == null) {
             throw new NullPointerException();
         }
-        return new UnresolvedPackage(packageName);
+        return new Package(packageName);
     }
 
     /**
@@ -475,16 +473,9 @@ public final class Packages {
                 find(componentName.getPackageName()), componentName.getClassName());
     }
 
-    private void fillCache() {
-        try {
-            // TODO: Replace use of adb on supported versions of Android
-            String packageDumpsysOutput = ShellCommand.builder("dumpsys package").execute();
-            AdbPackageParser.ParseResult result = mParser.parse(packageDumpsysOutput);
-
-            mCachedPackages = result.mPackages;
-            mFeatures = result.mFeatures;
-        } catch (AdbException | AdbParseException e) {
-            throw new RuntimeException("Error filling cache", e);
-        }
+    /** Get a reference to the package being instrumented. */
+    @Experimental
+    public Package instrumented() {
+        return find(TestApis.context().instrumentedContext().getPackageName());
     }
 }

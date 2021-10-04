@@ -407,10 +407,19 @@ public final class DeviceState implements TestRule {
                 RequireSdkVersion requireSdkVersionAnnotation =
                         (RequireSdkVersion) annotation;
 
-                requireSdkVersion(
-                        requireSdkVersionAnnotation.min(),
-                        requireSdkVersionAnnotation.max(),
-                        requireSdkVersionAnnotation.failureMode());
+                if (requireSdkVersionAnnotation.reason().isEmpty()) {
+                    requireSdkVersion(
+                            requireSdkVersionAnnotation.min(),
+                            requireSdkVersionAnnotation.max(),
+                            requireSdkVersionAnnotation.failureMode());
+                } else {
+                    requireSdkVersion(
+                            requireSdkVersionAnnotation.min(),
+                            requireSdkVersionAnnotation.max(),
+                            requireSdkVersionAnnotation.failureMode(),
+                            requireSdkVersionAnnotation.reason());
+                }
+
                 continue;
             }
 
@@ -705,7 +714,7 @@ public final class DeviceState implements TestRule {
         mProfiles.get(instrumentedUser.type()).put(instrumentedUser.parent(), instrumentedUser);
 
         if (installInstrumentedAppInParent.equals(OptionalBoolean.TRUE)) {
-            TestApis.packages().find(sContext.getPackageName()).install(
+            TestApis.packages().find(sContext.getPackageName()).installExisting(
                     instrumentedUser.parent());
         } else if (installInstrumentedAppInParent.equals(OptionalBoolean.FALSE)) {
             TestApis.packages().find(sContext.getPackageName()).uninstall(
@@ -1094,7 +1103,7 @@ public final class DeviceState implements TestRule {
         profile.start();
 
         if (installInstrumentedApp.equals(OptionalBoolean.TRUE)) {
-            TestApis.packages().find(sContext.getPackageName()).install(profile);
+            TestApis.packages().find(sContext.getPackageName()).installExisting(profile);
         } else if (installInstrumentedApp.equals(OptionalBoolean.FALSE)) {
             TestApis.packages().find(sContext.getPackageName()).uninstall(profile);
         }
@@ -1147,7 +1156,7 @@ public final class DeviceState implements TestRule {
         user.start();
 
         if (installInstrumentedApp.equals(OptionalBoolean.TRUE)) {
-            TestApis.packages().find(sContext.getPackageName()).install(user);
+            TestApis.packages().find(sContext.getPackageName()).installExisting(user);
         } else if (installInstrumentedApp.equals(OptionalBoolean.FALSE)) {
             TestApis.packages().find(sContext.getPackageName()).uninstall(user);
         }
@@ -1593,11 +1602,7 @@ public final class DeviceState implements TestRule {
     private void requirePackageInstalled(
             String packageName, UserType forUser, FailureMode failureMode) {
 
-        Package pkg = TestApis.packages().find(packageName).resolve();
-        checkFailOrSkip(
-                packageName + " is required to be installed for " + forUser,
-                pkg != null,
-                failureMode);
+        Package pkg = TestApis.packages().find(packageName);
 
         if (forUser.equals(UserType.ANY)) {
             checkFailOrSkip(
@@ -1607,18 +1612,14 @@ public final class DeviceState implements TestRule {
         } else {
             checkFailOrSkip(
                     packageName + " is required to be installed for " + forUser,
-                    pkg.installedOnUsers().contains(resolveUserTypeToUser(forUser)),
+                    pkg.installedOnUser(resolveUserTypeToUser(forUser)),
                     failureMode);
         }
     }
 
     private void requirePackageNotInstalled(
             String packageName, UserType forUser, FailureMode failureMode) {
-        Package pkg = TestApis.packages().find(packageName).resolve();
-        if (pkg == null) {
-            // Definitely not installed
-            return;
-        }
+        Package pkg = TestApis.packages().find(packageName);
 
         if (forUser.equals(UserType.ANY)) {
             checkFailOrSkip(
@@ -1628,29 +1629,20 @@ public final class DeviceState implements TestRule {
         } else {
             checkFailOrSkip(
                     packageName + " is required to be not installed for " + forUser,
-                    !pkg.installedOnUsers().contains(resolveUserTypeToUser(forUser)),
+                    !pkg.installedOnUser(resolveUserTypeToUser(forUser)),
                     failureMode);
         }
     }
 
     private void ensurePackageNotInstalled(
             String packageName, UserType forUser) {
-
-        Package pkg = TestApis.packages().find(packageName).resolve();
-        if (pkg == null) {
-            // Definitely not installed
-            return;
-        }
+        Package pkg = TestApis.packages().find(packageName);
 
         if (forUser.equals(UserType.ANY)) {
-            if (!pkg.installedOnUsers().isEmpty()) {
-                pkg.uninstallFromAllUsers();
-            }
+            pkg.uninstallFromAllUsers();
         } else {
             UserReference user = resolveUserTypeToUser(forUser);
-            if (pkg.installedOnUsers().contains(user)) {
-                pkg.uninstall(user);
-            }
+            pkg.uninstall(user);
         }
     }
 

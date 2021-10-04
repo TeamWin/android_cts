@@ -68,7 +68,7 @@ public class DeviceOwnerTest {
 
     @Test
     public void pkg_returnsPackage() {
-        assertThat(sDeviceOwner.pkg()).isEqualTo(sTestApp.reference());
+        assertThat(sDeviceOwner.pkg()).isEqualTo(sTestApp.pkg());
     }
 
     @Test

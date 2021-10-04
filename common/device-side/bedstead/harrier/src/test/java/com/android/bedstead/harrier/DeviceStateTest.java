@@ -450,63 +450,56 @@ public class DeviceStateTest {
 
     @RequirePackageInstalled(value = GMS_CORE_PACKAGE, onUser = ANY)
     public void requirePackageInstalledAnnotation_anyUser_packageIsInstalled() {
-        assertThat(TestApis.packages().find(GMS_CORE_PACKAGE).resolve()).isNotNull();
+        assertThat(TestApis.packages().find(GMS_CORE_PACKAGE).installedOnUsers()).isNotEmpty();
     }
 
     @Test
     @RequirePackageInstalled(GMS_CORE_PACKAGE)
     public void requirePackageInstalledAnnotation_currentUser_packageIsInstalled() {
-        assertThat(TestApis.packages().find(GMS_CORE_PACKAGE).resolve().installedOnUsers())
-                .contains(TestApis.users().instrumented());
+        assertThat(TestApis.packages().find(GMS_CORE_PACKAGE).installedOnUser())
+                .isTrue();
     }
 
     @Test
     @RequirePackageNotInstalled(value = GMS_CORE_PACKAGE, onUser = ANY)
     public void requirePackageNotInstalledAnnotation_anyUser_packageIsNotInstalled() {
-        assertThat(TestApis.packages().find(GMS_CORE_PACKAGE).resolve()).isNull();
-
+        assertThat(TestApis.packages().find(GMS_CORE_PACKAGE).installedOnUsers().isEmpty());
     }
 
     @Test
     @RequirePackageNotInstalled(GMS_CORE_PACKAGE)
     public void requirePackageNotInstalledAnnotation_currentUser_packageIsNotInstalled() {
-        Package resolvedPackage = TestApis.packages().find(GMS_CORE_PACKAGE).resolve();
+        Package pkg = TestApis.packages().find(GMS_CORE_PACKAGE);
 
-        if (resolvedPackage != null) {
-            assertThat(resolvedPackage.installedOnUsers())
-                    .doesNotContain(TestApis.users().instrumented());
-        }
+        assertThat(pkg.installedOnUser()).isFalse();
     }
 
     @Test
     @EnsurePackageNotInstalled(value = GMS_CORE_PACKAGE, onUser = ANY)
     @Ignore // TODO(scottjonathan): Restore this with a package which can be uninstalled
     public void ensurePackageNotInstalledAnnotation_anyUser_packageIsNotInstalled() {
-        assertThat(TestApis.packages().find(GMS_CORE_PACKAGE).resolve()).isNull();
+        assertThat(TestApis.packages().find(GMS_CORE_PACKAGE).installedOnUsers()).isEmpty();
     }
 
     @Test
     @EnsurePackageNotInstalled(GMS_CORE_PACKAGE)
     @Ignore // TODO(scottjonathan): Restore this with a package which can be uninstalled
     public void ensurePackageNotInstalledAnnotation_currentUser_packageIsNotInstalled() {
-        Package resolvedPackage = TestApis.packages().find(GMS_CORE_PACKAGE).resolve();
+        Package pkg = TestApis.packages().find(GMS_CORE_PACKAGE);
 
-        if (resolvedPackage != null) {
-            assertThat(resolvedPackage.installedOnUsers())
-                    .doesNotContain(TestApis.users().instrumented());
-        }
+        assertThat(pkg.installedOnUser()).isFalse();
     }
 
     @Test
     @RequireAospBuild
     public void requireAospBuildAnnotation_isRunningOnAospBuild() {
-        assertThat(TestApis.packages().find(GMS_CORE_PACKAGE).resolve()).isNull();
+        assertThat(TestApis.packages().find(GMS_CORE_PACKAGE).exists()).isFalse();
     }
 
     @Test
     @RequireGmsBuild
     public void requireGmsBuildAnnotation_isRunningOnGmsbuild() {
-        assertThat(TestApis.packages().find(GMS_CORE_PACKAGE).resolve()).isNotNull();
+        assertThat(TestApis.packages().find(GMS_CORE_PACKAGE).exists()).isTrue();
     }
 
     @Test

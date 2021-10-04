@@ -31,22 +31,22 @@ import com.android.bedstead.nene.utils.ShellCommand;
 @Experimental
 public class ComponentReference {
 
-    final PackageReference mPackage;
+    final Package mPackage;
     final String mClassName;
 
-    public ComponentReference(PackageReference packageName, String className) {
+    public ComponentReference(Package packageName, String className) {
         mPackage = packageName;
         mClassName = className;
     }
 
     public ComponentReference(ComponentName component) {
-        this(new UnresolvedPackage(component.getPackageName()), component.getClassName());
+        this(new Package(component.getPackageName()), component.getClassName());
     }
 
     /**
-     * Get the {@link PackageReference} for this component.
+     * Get the {@link Package} for this component.
      */
-    public PackageReference pkg() {
+    public Package pkg() {
         return mPackage;
     }
 

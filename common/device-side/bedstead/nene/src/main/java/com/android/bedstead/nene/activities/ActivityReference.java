@@ -19,13 +19,13 @@ package com.android.bedstead.nene.activities;
 import android.content.ComponentName;
 
 import com.android.bedstead.nene.packages.ComponentReference;
-import com.android.bedstead.nene.packages.PackageReference;
+import com.android.bedstead.nene.packages.Package;
 
 /**
  * A representation of an activity on device which may or may not exist.
  */
 public final class ActivityReference extends ComponentReference {
-    public ActivityReference(PackageReference packageName, String className) {
+    public ActivityReference(Package packageName, String className) {
         super(packageName, className);
     }
 

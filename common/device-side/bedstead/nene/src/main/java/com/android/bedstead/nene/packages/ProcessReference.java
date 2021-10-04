@@ -16,8 +16,6 @@
 
 package com.android.bedstead.nene.packages;
 
-import android.util.Log;
-
 import com.android.bedstead.nene.annotations.Experimental;
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.exceptions.NeneException;
@@ -27,11 +25,11 @@ import com.android.bedstead.nene.utils.ShellCommand;
 @Experimental
 public final class ProcessReference {
 
-    private final PackageReference mPackage;
+    private final Package mPackage;
     private final int mProcessId;
     private final UserReference mUser;
 
-    ProcessReference(PackageReference pkg, int processId, UserReference user) {
+    ProcessReference(Package pkg, int processId, UserReference user) {
         if (pkg == null) {
             throw new NullPointerException();
         }
@@ -40,18 +38,30 @@ public final class ProcessReference {
         mUser = user;
     }
 
-    public PackageReference pkg() {
+    /**
+     * Get the {@link Package} this process is associated with.
+     */
+    public Package pkg() {
         return mPackage;
     }
 
+    /**
+     * Get the pid of this process.
+     */
     public int pid() {
         return mProcessId;
     }
 
+    /**
+     * Get the {@link UserReference} this process is running on.
+     */
     public UserReference user() {
         return mUser;
     }
 
+    /**
+     * Kill the process.
+     */
     public void kill() {
         try {
             ShellCommand.builder("kill")

@@ -16,6 +16,8 @@
 
 package android.devicepolicy.cts;
 
+import static android.content.pm.ApplicationInfo.FLAG_STOPPED;
+
 import static com.android.bedstead.metricsrecorder.truth.MetricQueryBuilderSubject.assertThat;
 import static com.android.bedstead.remotedpc.RemoteDpc.DPC_COMPONENT_NAME;
 
@@ -26,7 +28,6 @@ import static org.testng.Assert.assertThrows;
 
 import android.Manifest.permission;
 import android.app.ActivityManager;
-import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.stats.devicepolicy.EventId;
@@ -42,7 +43,7 @@ import com.android.bedstead.harrier.annotations.enterprise.PositivePolicyTest;
 import com.android.bedstead.harrier.policies.UserControlDisabledPackages;
 import com.android.bedstead.metricsrecorder.EnterpriseMetricsRecorder;
 import com.android.bedstead.nene.TestApis;
-import com.android.bedstead.nene.users.UserReference;
+import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstanceReference;
 import com.android.bedstead.testapp.TestAppProvider;
@@ -183,22 +184,19 @@ public class UserControlDisabledPackagesTest {
         List<String> originalDisabledPackages =
                 sDeviceState.dpc().devicePolicyManager().getUserControlDisabledPackages(
                         DPC_COMPONENT_NAME);
-        UserReference currentRunningUserOnTest = TestApis.users().instrumented();
-        int currentRunningUserId = currentRunningUserOnTest.id();
         String testAppPackageName = sTestApp.packageName();
 
         sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(DPC_COMPONENT_NAME,
                 Arrays.asList(testAppPackageName));
-        try (TestAppInstanceReference instance = sTestApp.install(currentRunningUserOnTest)) {
+        try (TestAppInstanceReference instance = sTestApp.install()) {
             instance.activities().any().start();
 
-            sActivityManager.forceStopPackageAsUser(testAppPackageName, currentRunningUserId);
+            sActivityManager.forceStopPackage(testAppPackageName);
 
             try {
-                assertPackageStopped(
-                        testAppPackageName, currentRunningUserId, /* stopped= */ false);
+                assertPackageNotStopped(testAppPackageName);
             } finally {
-                stopPackage(testAppPackageName, currentRunningUserId);
+                stopPackage(sTestApp.pkg());
             }
         } finally {
             sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(
@@ -207,25 +205,25 @@ public class UserControlDisabledPackagesTest {
         }
     }
 
-    private void stopPackage(String packageName, int userId) throws Exception {
+    private void stopPackage(Package pkg) throws Exception {
         sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(DPC_COMPONENT_NAME,
                 Collections.emptyList());
-        sActivityManager.forceStopPackageAsUser(packageName, userId);
-        assertPackageStopped(packageName, userId, /* stopped= */ true);
+
+        pkg.forceStop();
     }
 
-    private void assertPackageStopped(String packageName, int userId, boolean stopped)
+    private void assertPackageNotStopped(String packageName)
             throws Exception {
-        assertWithMessage("Package %s stopped for user %s", packageName, userId)
-                .that(isPackageStopped(packageName, userId)).isEqualTo(stopped);
+        assertWithMessage("Package %s not stopped for", packageName)
+                .that(isPackageStopped(packageName)).isFalse();
     }
 
-    private boolean isPackageStopped(String packageName, int userId) throws Exception {
-        PackageInfo packageInfo = sPackageManager.getPackageInfoAsUser(
-                packageName, PackageManager.GET_META_DATA, userId);
-        boolean stopped = (packageInfo.applicationInfo.flags & ApplicationInfo.FLAG_STOPPED)
-                == ApplicationInfo.FLAG_STOPPED;
-        Log.i(TAG, "Application flags for " + packageName + " on user " + userId + " = "
+    private boolean isPackageStopped(String packageName) throws Exception {
+        PackageInfo packageInfo =
+                sPackageManager.getPackageInfo(packageName, PackageManager.GET_META_DATA);
+        boolean stopped = (packageInfo.applicationInfo.flags & FLAG_STOPPED)
+                == FLAG_STOPPED;
+        Log.i(TAG, "Application flags for " + packageName + " = "
                 + Integer.toHexString(packageInfo.applicationInfo.flags) + ". Stopped: " + stopped);
         return stopped;
     }

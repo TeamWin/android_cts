@@ -16,6 +16,8 @@
 
 package com.android.bedstead.remotedpc;
 
+import static android.os.UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES;
+
 import android.content.ComponentName;
 import android.content.Context;
 import android.os.UserHandle;
@@ -39,7 +41,7 @@ public final class RemoteDpc extends TestAppInstanceReference {
 
     public static final ComponentName DPC_COMPONENT_NAME = new ComponentName(
             "com.android.RemoteDPC",
-            "com.android.eventlib.premade.EventLibDeviceAdminReceiver"
+            "com.android.bedstead.testapp.BaseTestAppDeviceAdminReceiver"
     );
 
     private static final TestAppProvider sTestAppProvider = new TestAppProvider();
@@ -174,7 +176,9 @@ public final class RemoteDpc extends TestAppInstanceReference {
         }
 
         ensureInstalled(TestApis.users().system());
-        return new RemoteDpc(TestApis.devicePolicy().setDeviceOwner(DPC_COMPONENT_NAME));
+        RemoteDpc remoteDpc = new RemoteDpc(
+                TestApis.devicePolicy().setDeviceOwner(DPC_COMPONENT_NAME));
+        return remoteDpc;
     }
 
     /**
@@ -204,7 +208,14 @@ public final class RemoteDpc extends TestAppInstanceReference {
         }
 
         ensureInstalled(user);
-        return new RemoteDpc(TestApis.devicePolicy().setProfileOwner(user, DPC_COMPONENT_NAME));
+        RemoteDpc remoteDpc = new RemoteDpc(
+                TestApis.devicePolicy().setProfileOwner(user, DPC_COMPONENT_NAME));
+
+        // DISALLOW_INSTALL_UNKNOWN_SOURCES causes verification failures in work profiles
+        remoteDpc.devicePolicyManager()
+                .clearUserRestriction(remoteDpc.componentName(), DISALLOW_INSTALL_UNKNOWN_SOURCES);
+
+        return remoteDpc;
     }
 
     private static void ensureInstalled(UserReference user) {

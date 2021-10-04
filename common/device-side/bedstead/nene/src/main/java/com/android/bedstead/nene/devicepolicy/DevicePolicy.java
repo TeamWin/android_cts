@@ -39,7 +39,7 @@ import com.android.bedstead.nene.annotations.Experimental;
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.exceptions.AdbParseException;
 import com.android.bedstead.nene.exceptions.NeneException;
-import com.android.bedstead.nene.packages.PackageReference;
+import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.bedstead.nene.users.User;
 import com.android.bedstead.nene.users.UserReference;
@@ -118,7 +118,7 @@ public final class DevicePolicy {
                             + " as a profile owner is already set: " + profileOwner);
         }
 
-        PackageReference pkg = TestApis.packages().find(
+        Package pkg = TestApis.packages().find(
                 profileOwnerComponent.getPackageName());
         if (!TestApis.packages().installedForUser(user).contains(pkg)) {
             throw new NeneException(
@@ -203,7 +203,7 @@ public final class DevicePolicy {
             }
         }
 
-        PackageReference deviceOwnerPackage = TestApis.packages().find(
+        Package deviceOwnerPackage = TestApis.packages().find(
                 deviceOwnerComponent.getPackageName());
 
         if (HEADLESS_SET_DO_AND_PO) {
@@ -251,7 +251,7 @@ public final class DevicePolicy {
             terminalCheck.run();
 
             try {
-                PollingCheck.waitFor(30_000, () -> {
+                PollingCheck.waitFor(() -> {
                     try {
                         operation.run();
                         return true;
@@ -320,7 +320,7 @@ public final class DevicePolicy {
                             + " as a device owner is already set: " + deviceOwner);
         }
 
-        PackageReference pkg = TestApis.packages().find(
+        Package pkg = TestApis.packages().find(
                 deviceOwnerComponent.getPackageName());
         if (!TestApis.packages().installedForUser(user).contains(pkg)) {
             throw new NeneException(

@@ -16,6 +16,8 @@
 
 package com.android.bedstead.remotedpc;
 
+import static android.os.UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.testng.Assert.assertThrows;
@@ -43,7 +45,6 @@ import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.users.UserType;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppProvider;
-import com.android.eventlib.premade.EventLibDeviceAdminReceiver;
 
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -57,7 +58,7 @@ public class RemoteDpcTest {
             "com.android.bedstead.testapp.DeviceAdminTestApp";
     private static final ComponentName NON_REMOTE_DPC_COMPONENT =
             new ComponentName(DEVICE_ADMIN_TESTAPP_PACKAGE_NAME,
-                    EventLibDeviceAdminReceiver.class.getName());
+                    "com.android.bedstead.testapp.DeviceAdminTestApp.DeviceAdminReceiver");
 
     @ClassRule @Rule
     public static DeviceState sDeviceState = new DeviceState();
@@ -72,7 +73,7 @@ public class RemoteDpcTest {
     @BeforeClass
     public static void setupClass() {
         sNonRemoteDpcTestApp = new TestAppProvider().query()
-                // TODO(scottjonathan): Query by feature not package name
+                // TODO(180478924): Query by feature not package name
                 .wherePackageName().isEqualTo(DEVICE_ADMIN_TESTAPP_PACKAGE_NAME)
                 .get();
 
@@ -150,6 +151,7 @@ public class RemoteDpcTest {
     @Test
     @EnsureHasNoDeviceOwner
     @EnsureHasNoWorkProfile
+    @RequireRunOnSystemUser
     public void profileOwner_userHandle_noProfileOwner_returnsNull() {
         UserReference profile = TestApis.users().createUser()
                 .parent(sUser)
@@ -165,6 +167,7 @@ public class RemoteDpcTest {
     @Test
     @EnsureHasNoDeviceOwner
     @EnsureHasNoWorkProfile
+    @RequireRunOnSystemUser
     public void profileOwner_userHandle_nonRemoteDpcProfileOwner_returnsNull() {
         UserReference profile = TestApis.users().createUser()
                 .parent(sUser)
@@ -183,6 +186,7 @@ public class RemoteDpcTest {
     @Test
     @EnsureHasNoDeviceOwner
     @EnsureHasNoWorkProfile
+    @RequireRunOnSystemUser
     public void profileOwner_userHandle_remoteDpcProfileOwner_returnsInstance() {
         UserReference profile = TestApis.users().createUser()
                 .parent(sUser)
@@ -204,8 +208,8 @@ public class RemoteDpcTest {
 
     @Test
     @EnsureHasNoDeviceOwner
-    @RequireUserSupported(UserType.MANAGED_PROFILE_TYPE_NAME)
     @EnsureHasNoWorkProfile
+    @RequireRunOnSystemUser
     public void profileOwner_userReference_noProfileOwner_returnsNull() {
         UserReference profile = TestApis.users().createUser()
                 .parent(sUser)
@@ -242,6 +246,7 @@ public class RemoteDpcTest {
     @Test
     @EnsureHasNoDeviceOwner
     @EnsureHasNoWorkProfile
+    @RequireRunOnSystemUser
     public void profileOwner_userReference_remoteDpcProfileOwner_returnsInstance() {
         UserReference profile = TestApis.users().createUser()
                 .parent(sUser)
@@ -321,6 +326,7 @@ public class RemoteDpcTest {
     @Test
     @EnsureHasNoDeviceOwner
     @EnsureHasNoWorkProfile
+    @RequireRunOnSystemUser
     public void any_userHandle_noDeviceOwner_nonRemoteDpcProfileOwner_returnsNull() {
         UserReference profile = TestApis.users().createUser()
                 .parent(sUser)
@@ -362,6 +368,7 @@ public class RemoteDpcTest {
     @Test
     @EnsureHasNoDeviceOwner
     @EnsureHasNoWorkProfile
+    @RequireRunOnSystemUser
     public void any_userHandle_remoteDpcProfileOwner_returnsProfileOwner() {
         UserReference profile = TestApis.users().createUser()
                 .parent(sUser)
@@ -389,6 +396,7 @@ public class RemoteDpcTest {
     @Test
     @EnsureHasNoDeviceOwner
     @EnsureHasNoWorkProfile
+    @RequireRunOnSystemUser
     public void any_userReference_noDeviceOwner_nonRemoteDpcProfileOwner_returnsNull() {
         UserReference profile = TestApis.users().createUser()
                 .parent(sUser)
@@ -431,6 +439,7 @@ public class RemoteDpcTest {
     @Test
     @EnsureHasNoDeviceOwner
     @EnsureHasNoWorkProfile
+    @RequireRunOnSystemUser
     public void any_userReference_remoteDpcProfileOwner_returnsProfileOwner() {
         UserReference profile = TestApis.users().createUser()
                 .parent(sUser)
@@ -501,6 +510,7 @@ public class RemoteDpcTest {
     @Test
     @EnsureHasNoDeviceOwner
     @EnsureHasNoWorkProfile
+    @RequireRunOnSystemUser
     public void setAsProfileOwner_userHandle_alreadySet_doesNothing() {
         UserReference profile = TestApis.users().createUser()
                 .parent(sUser)
@@ -520,6 +530,7 @@ public class RemoteDpcTest {
     @Test
     @EnsureHasNoDeviceOwner
     @EnsureHasNoWorkProfile
+    @RequireRunOnSystemUser
     public void setAsProfileOwner_userHandle_alreadyHasProfileOwner_replacesProfileOwner() {
         UserReference profile = TestApis.users().createUser()
                 .parent(sUser)
@@ -541,6 +552,7 @@ public class RemoteDpcTest {
     @Test
     @EnsureHasNoDeviceOwner
     @EnsureHasNoWorkProfile
+    @RequireRunOnSystemUser
     public void setAsProfileOwner_userHandle_doesNotHaveProfileOwner_setsProfileOwner() {
         UserReference profile = TestApis.users().createUser()
                 .parent(sUser)
@@ -550,6 +562,28 @@ public class RemoteDpcTest {
             RemoteDpc.setAsProfileOwner(profile.userHandle());
 
             assertThat(TestApis.devicePolicy().getProfileOwner(profile)).isNotNull();
+        } finally {
+            profile.remove();
+        }
+    }
+
+    @Test
+    @EnsureHasNoDeviceOwner
+    @EnsureHasNoWorkProfile
+    @RequireRunOnSystemUser
+    public void setAsProfileOwner_disallowInstallUnknownSourcesIsDisabled() {
+        // This is a temp fix for an issue where DISALLOW_INSTALL_UNKNOWN_SOURCES causes
+        // verification failures
+        UserReference profile = TestApis.users().createUser()
+                .parent(sUser)
+                .type(TestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
+                .createAndStart();
+        try {
+            RemoteDpc profileOwner = RemoteDpc.setAsProfileOwner(profile.userHandle());
+
+            assertThat(profileOwner.userManager()
+                    .hasUserRestriction(DISALLOW_INSTALL_UNKNOWN_SOURCES))
+                    .isFalse();
         } finally {
             profile.remove();
         }
@@ -570,6 +604,7 @@ public class RemoteDpcTest {
     @Test
     @EnsureHasNoDeviceOwner
     @EnsureHasNoWorkProfile
+    @RequireRunOnSystemUser
     public void setAsProfileOwner_userReference_alreadySet_doesNothing() {
         UserReference profile = TestApis.users().createUser()
                 .parent(sUser)
@@ -589,6 +624,7 @@ public class RemoteDpcTest {
     @Test
     @EnsureHasNoDeviceOwner
     @EnsureHasNoWorkProfile
+    @RequireRunOnSystemUser
     public void setAsProfileOwner_userReference_alreadyHasProfileOwner_replacesProfileOwner() {
         UserReference profile = TestApis.users().createUser()
                 .parent(sUser)
@@ -610,6 +646,7 @@ public class RemoteDpcTest {
     @Test
     @EnsureHasNoDeviceOwner
     @EnsureHasNoWorkProfile
+    @RequireRunOnSystemUser
     public void setAsProfileOwner_userReference_doesNotHaveProfileOwner_setsProfileOwner() {
         UserReference profile = TestApis.users().createUser()
                 .parent(sUser)
@@ -650,6 +687,7 @@ public class RemoteDpcTest {
     @Test
     @EnsureHasNoDeviceOwner
     @EnsureHasNoWorkProfile
+    @RequireRunOnSystemUser
     public void remove_profileOwner_removes() {
         try (UserReference profile = TestApis.users().createUser()
                 .parent(sUser)
@@ -682,6 +720,7 @@ public class RemoteDpcTest {
     @Test
     @EnsureHasNoDeviceOwner
     @EnsureHasNoWorkProfile
+    @RequireRunOnSystemUser
     public void frameworkCall_onProfile_makesCall() {
         try (UserReference profile = TestApis.users().createUser()
                 .parent(sUser)
@@ -734,6 +773,7 @@ public class RemoteDpcTest {
     @Test
     @EnsureHasNoWorkProfile
     @EnsureHasNoDeviceOwner
+    @RequireRunOnSystemUser
     public void getParentProfileInstance_returnsUsableInstance() {
         try (UserReference profile = TestApis.users().createUser()
                 .parent(sUser)

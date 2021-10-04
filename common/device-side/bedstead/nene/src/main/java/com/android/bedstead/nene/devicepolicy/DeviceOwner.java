@@ -27,7 +27,7 @@ import androidx.annotation.Nullable;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.exceptions.NeneException;
-import com.android.bedstead.nene.packages.PackageReference;
+import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.utils.ShellCommand;
@@ -48,13 +48,13 @@ public final class DeviceOwner extends DevicePolicyController {
     private final @Nullable ProfileOwner mLinkedProfileOwner;
 
     DeviceOwner(UserReference user,
-            PackageReference pkg,
+            Package pkg,
             ComponentName componentName) {
         this(user, pkg, componentName, /* linkedProfileOwner= */ null);
     }
 
     DeviceOwner(UserReference user,
-            PackageReference pkg,
+            Package pkg,
             ComponentName componentName,
             ProfileOwner linkedProfileOwner) {
         super(user, pkg, componentName);

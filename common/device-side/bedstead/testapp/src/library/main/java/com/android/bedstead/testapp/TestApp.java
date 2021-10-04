@@ -25,7 +25,6 @@ import android.os.UserHandle;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.packages.Package;
-import com.android.bedstead.nene.packages.PackageReference;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.users.Users;
 import com.android.bedstead.testapp.processor.annotations.TestAppSender;
@@ -52,19 +51,12 @@ public class TestApp {
     }
 
     /**
-     * Get a {@link PackageReference} for the {@link TestApp}.
+     * Get a {@link Package} for the {@link TestApp}.
      *
      * <p>This will only be resolvable after the app is installed.
      */
-    public PackageReference reference() {
+    public Package pkg() {
         return TestApis.packages().find(packageName());
-    }
-
-    /**
-     * Get a {@link Package} for the {@link TestApp}, or {@code null} if it is not installed.
-     */
-    public Package resolve() {
-        return reference().resolve();
     }
 
     /**
@@ -80,14 +72,10 @@ public class TestApp {
      * Install the {@link TestApp} on the device for the given {@link UserReference}.
      */
     public TestAppInstanceReference install(UserReference user) {
-        if (resolve() != null) {
-            reference().install(user);
-        } else {
-            try {
-                TestApis.packages().install(user, apkBytes());
-            } catch (NeneException e) {
-                throw new NeneException("Error while installing TestApp " + this, e);
-            }
+        try {
+            pkg().installBytes(user, this::apkBytes);
+        } catch (NeneException e) {
+            throw new NeneException("Error while installing TestApp " + this, e);
         }
 
         return new TestAppInstanceReference(this, user);
@@ -114,14 +102,14 @@ public class TestApp {
      * Uninstall the {@link TestApp} from the device from all users.
      */
     public void uninstallFromAllUsers() {
-        reference().uninstallFromAllUsers();
+        pkg().uninstallFromAllUsers();
     }
 
     /**
      * Uninstall the {@link TestApp} on the device from the given {@link UserReference}.
      */
     public void uninstall(UserReference user) {
-        reference().uninstall(user);
+        pkg().uninstall(user);
     }
 
     /**

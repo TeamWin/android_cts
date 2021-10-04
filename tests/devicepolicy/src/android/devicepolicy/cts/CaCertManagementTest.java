@@ -32,8 +32,8 @@ import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PositivePolicyTest;
 import com.android.bedstead.harrier.policies.CaCertManagement;
 import com.android.bedstead.metricsrecorder.EnterpriseMetricsRecorder;
+import com.android.bedstead.nene.utils.Poll;
 import com.android.compatibility.common.util.FakeKeys;
-import com.android.compatibility.common.util.PollingCheck;
 
 import org.junit.ClassRule;
 import org.junit.Ignore;
@@ -60,9 +60,6 @@ public class CaCertManagementTest {
     @Rule
     public static final DeviceState sDeviceState = new DeviceState();
 
-    // Max time to wait until the certificate is found in the accepted
-    // issuers list before declaring test failure.
-    private static final long ACCEPTED_ISSUERS_TIMEOUT = 30 * 1000;
     public static final byte[] CA_CERT_1 = FakeKeys.FAKE_RSA_1.caCertificate;
     public static final byte[] CA_CERT_2 = FakeKeys.FAKE_DSA_1.caCertificate;
 
@@ -258,11 +255,13 @@ public class CaCertManagementTest {
             throws GeneralSecurityException {
         // Verify that the user added CA is reflected in the default X509TrustManager.
         X509TrustManager tm = getFirstX509TrustManager();
-        PollingCheck.waitFor(
-                ACCEPTED_ISSUERS_TIMEOUT,
-                () -> newStatus == Arrays.asList(tm.getAcceptedIssuers()).contains(caCert),
-                newStatus ? "Couldn't find certificate in trusted certificates list."
-                        : "Found uninstalled certificate in trusted certificates list.");
+
+        Poll.forValue("Accepted issuers", () -> Arrays.asList(tm.getAcceptedIssuers()))
+                .toMeet((acceptedIssuers) -> newStatus == acceptedIssuers.contains(caCert))
+                .errorOnFail(
+                        newStatus ? "Couldn't find certificate in trusted certificates list."
+                        : "Found uninstalled certificate in trusted certificates list.")
+                .await();
     }
 
     private static X509TrustManager getFirstX509TrustManager() throws GeneralSecurityException {

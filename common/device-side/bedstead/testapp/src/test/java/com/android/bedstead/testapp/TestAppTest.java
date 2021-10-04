@@ -23,19 +23,27 @@ import static org.testng.Assert.assertThrows;
 import android.content.Context;
 import android.os.UserHandle;
 
+import com.android.bedstead.harrier.BedsteadJUnit4;
+import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
 import com.android.bedstead.nene.TestApis;
-import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.users.UserReference;
 
 import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
 import java.io.File;
 
-@RunWith(JUnit4.class)
+@RunWith(BedsteadJUnit4.class)
 public class TestAppTest {
+
+    @ClassRule @Rule
+    public static final DeviceState sDeviceState = new DeviceState();
+
     private static final UserReference sUser = TestApis.users().instrumented();
     private static final UserHandle sUserHandle = sUser.userHandle();
     private static final UserReference sNonExistingUser = TestApis.users().find(9999);
@@ -53,21 +61,7 @@ public class TestAppTest {
     public void reference_returnsNeneReference() {
         TestApp testApp = mTestAppProvider.any();
 
-        assertThat(testApp.reference()).isEqualTo(TestApis.packages().find(testApp.packageName()));
-    }
-
-    @Test
-    public void resolve_returnsNenePackage() {
-        TestApp testApp = mTestAppProvider.any();
-        testApp.install(sUser);
-
-        try {
-            Package pkg = testApp.resolve();
-
-            assertThat(pkg.packageName()).isEqualTo(testApp.packageName());
-        } finally {
-            testApp.uninstall(sUser);
-        }
+        assertThat(testApp.pkg()).isEqualTo(TestApis.packages().find(testApp.packageName()));
     }
 
     @Test
@@ -77,7 +71,7 @@ public class TestAppTest {
         testApp.install();
 
         try {
-            assertThat(testApp.resolve().installedOnUsers()).contains(sUser);
+            assertThat(testApp.pkg().installedOnUser(sUser)).isTrue();
         } finally {
             testApp.uninstall(sUser);
         }
@@ -90,7 +84,7 @@ public class TestAppTest {
         testApp.install(sUser);
 
         try {
-            assertThat(testApp.resolve().installedOnUsers()).contains(sUser);
+            assertThat(testApp.pkg().installedOnUser(sUser)).isTrue();
         } finally {
             testApp.uninstall(sUser);
         }
@@ -117,7 +111,7 @@ public class TestAppTest {
         testApp.install(sUserHandle);
 
         try {
-            assertThat(testApp.resolve().installedOnUsers()).contains(sUser);
+            assertThat(testApp.pkg().installedOnUser(sUser)).isTrue();
         } finally {
             testApp.uninstall(sUser);
         }
@@ -256,10 +250,7 @@ public class TestAppTest {
 
         testApp.uninstall();
 
-        Package testAppPackage = testApp.reference().resolve();
-        if (testAppPackage != null) {
-            assertThat(testAppPackage.installedOnUsers()).doesNotContain(sUser);
-        }
+        assertThat(testApp.pkg().installedOnUser(sUser)).isFalse();
     }
 
     @Test
@@ -269,10 +260,7 @@ public class TestAppTest {
 
         testApp.uninstall(sUserHandle);
 
-        Package testAppPackage = testApp.reference().resolve();
-        if (testAppPackage != null) {
-            assertThat(testAppPackage.installedOnUsers()).doesNotContain(sUser);
-        }
+        assertThat(testApp.pkg().installedOnUser(sUser)).isFalse();
     }
 
     @Test
@@ -282,10 +270,7 @@ public class TestAppTest {
 
         testApp.uninstall(sUser);
 
-        Package testAppPackage = testApp.reference().resolve();
-        if (testAppPackage != null) {
-            assertThat(testAppPackage.installedOnUsers()).doesNotContain(sUser);
-        }
+        assertThat(testApp.pkg().installedOnUser(sUser)).isFalse();
     }
 
     @Test
@@ -301,6 +286,46 @@ public class TestAppTest {
             assertThat(outputFile.exists()).isTrue();
         } finally {
             outputFile.delete();
+        }
+    }
+
+    @Test
+    @EnsureHasDeviceOwner
+    public void install_repeated_hasRemoteDpcDeviceOwner_doesNotFailVerification() {
+        TestApp testApp = mTestAppProvider.any();
+        try (TestAppInstanceReference t = testApp.install()) {
+            // Intentionally empty
+        }
+        try (TestAppInstanceReference t = testApp.install()) {
+            // Intentionally empty
+        }
+    }
+
+    @Test
+    @EnsureHasWorkProfile(dpcIsPrimary = true)
+    public void install_repeated_hasRemoteDpcWorkProfile_doesNotFailVerification() {
+        TestApp testApp = mTestAppProvider.any();
+
+        // The first install can be into the parent or the work profile and it will succeed
+        try (TestAppInstanceReference t = testApp.install()) {
+            // Intentionally empty
+        }
+
+        // The second will fail 100% of the time if DISALLOW_INSTALL_UNKNOWN_SOURCES is enabled
+        try (TestAppInstanceReference t = testApp.install(sDeviceState.workProfile())) {
+            // Intentionally empty
+        }
+    }
+
+    @Test
+    @EnsureHasWorkProfile
+    public void install_repeated_hasRemoteDpcWorkProfile_installsInParent_doesNotFailVerification() {
+        TestApp testApp = mTestAppProvider.any();
+        try (TestAppInstanceReference t = testApp.install()) {
+            // Intentionally empty
+        }
+        try (TestAppInstanceReference t = testApp.install()) {
+            // Intentionally empty
         }
     }
 }

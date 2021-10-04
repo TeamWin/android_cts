@@ -32,17 +32,17 @@ import android.os.UserManager;
 
 import androidx.annotation.CheckResult;
 import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
 
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.exceptions.AdbParseException;
 import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.permissions.PermissionContext;
+import com.android.bedstead.nene.utils.Poll;
 import com.android.bedstead.nene.utils.ShellCommand;
 import com.android.bedstead.nene.utils.Versions;
-import com.android.compatibility.common.util.PollingCheck;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -52,14 +52,13 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public final class Users {
 
     static final int SYSTEM_USER_ID = 0;
-    private static final long WAIT_FOR_USER_TIMEOUT_MS = 1000 * 120;
+    private static final long WAIT_FOR_USER_TIMEOUT_MS = 1000 * 240;
     private static final String PROPERTY_STOP_BG_USERS_ON_SWITCH = "fw.stop_bg_users_on_switch";
 
     private Map<Integer, User> mCachedUsers = null;
@@ -404,16 +403,15 @@ public final class Users {
         // TODO(scottjonathan): This is pretty heavy because we resolve everything when we know we
         //  are throwing away everything except one user. Optimise
         try {
-            AtomicReference<User> returnUser = new AtomicReference<>();
-            PollingCheck.waitFor(WAIT_FOR_USER_TIMEOUT_MS, () -> {
-                User user = userReference.resolve();
-                returnUser.set(user);
-                if (user == null) {
-                    return !waitForExist;
-                }
-                return userChecker.apply(user);
-            });
-            return returnUser.get();
+            return Poll.forValue("user", userReference::resolve)
+                    .toMeet((user) -> {
+                        if (user == null) {
+                            return !waitForExist;
+                        }
+                        return userChecker.apply(user);
+                    }).timeout(Duration.ofMillis(WAIT_FOR_USER_TIMEOUT_MS))
+                    .errorOnFail("Expected user to meet requirement")
+                    .await();
         } catch (AssertionError e) {
             User user = userReference.resolve();
 
