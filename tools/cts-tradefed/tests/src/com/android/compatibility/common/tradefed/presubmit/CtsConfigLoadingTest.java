@@ -33,6 +33,7 @@ import com.android.tradefed.invoker.shard.token.TokenProperty;
 import com.android.tradefed.targetprep.DeviceSetup;
 import com.android.tradefed.targetprep.ITargetPreparer;
 import com.android.tradefed.testtype.AndroidJUnitTest;
+import com.android.tradefed.testtype.GTest;
 import com.android.tradefed.testtype.HostTest;
 import com.android.tradefed.testtype.IRemoteTest;
 import com.android.tradefed.testtype.ITestFilterReceiver;
@@ -260,6 +261,13 @@ public class CtsConfigLoadingTest {
                         throw new ConfigurationException(
                                 String.format("%s: %s reports 0 test cases.",
                                         config.getName(), test));
+                    }
+                }
+                if (test instanceof GTest) {
+                    if (((GTest) test).isRebootBeforeTestEnabled()) {
+                        throw new ConfigurationException(String.format(
+                                "%s: instead of reboot-before-test use a RebootTargetPreparer "
+                                + "which is more optimized during sharding.", config.getName()));
                     }
                 }
                 // Tests are expected to implement that interface.
