@@ -339,7 +339,7 @@ public class SubscriptionManagerTest {
 
     @Test
     public void testSubscriptionInfoRecord() {
-        if (!isSupported()) return;
+        if (!isSupported() || !isAutomotive()) return;
 
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         uiAutomation.adoptShellPermissionIdentity();
@@ -1177,6 +1177,11 @@ public class SubscriptionManagerTest {
     private static boolean isSupported() {
         return InstrumentationRegistry.getContext().getPackageManager()
                 .hasSystemFeature(PackageManager.FEATURE_TELEPHONY);
+    }
+
+    private static boolean isAutomotive() {
+        return InstrumentationRegistry.getContext().getPackageManager()
+                .hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
     }
 
     private static boolean isDSDS() {
