@@ -35,7 +35,10 @@ public class SdkExtensionsTest extends TestCase {
 
     /** Verifies that getExtensionVersion only return existing versions */
     public void testValidValues() throws Exception {
-        for (int sdk = Build.VERSION_CODES.R; sdk <= 1_000_000; sdk++) {
+        int rExtensionVersion = SdkExtensions.getExtensionVersion(Build.VERSION_CODES.R);
+        assertTrue(rExtensionVersion == 0 || rExtensionVersion == 1);
+        int firstUnassigned = Build.VERSION_CODES.R + 1;
+        for (int sdk = firstUnassigned; sdk <= 1_000_000; sdk++) {
             // No extension SDKs versions yet.
             assertEquals(0, SdkExtensions.getExtensionVersion(sdk));
         }
