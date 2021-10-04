@@ -23,6 +23,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.compat.testing.Classpaths;
 import android.compat.testing.Classpaths.ClasspathType;
+import android.compat.testing.SharedLibraryInfo;
 
 import com.android.compatibility.common.util.DeviceInfo;
 import com.android.compatibility.common.util.HostInfoStore;
@@ -31,6 +32,7 @@ import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
 import org.jf.dexlib2.iface.ClassDef;
@@ -40,9 +42,6 @@ import org.jf.dexlib2.iface.ClassDef;
  * from the device.
  */
 public class ClasspathDeviceInfo extends DeviceInfo {
-
-    private static final String HELPER_APP_PACKAGE = "android.edi.cts.app";
-    private static final String HELPER_APP_CLASS = HELPER_APP_PACKAGE + ".ClasspathDeviceTest";
 
     private ITestDevice mDevice;
     private DeviceSdkLevel deviceSdkLevel;
@@ -54,7 +53,7 @@ public class ClasspathDeviceInfo extends DeviceInfo {
 
         store.startArray("jars");
         collectClasspathsJars(store);
-        collectSharedLibraryJars(store);
+        collectSharedLibraries(store);
         store.endArray();
     }
 
@@ -77,46 +76,27 @@ public class ClasspathDeviceInfo extends DeviceInfo {
         }
     }
 
-    private void collectSharedLibraryJars(HostInfoStore store) throws Exception {
+    private void collectSharedLibraries(HostInfoStore store) throws Exception {
         if (!deviceSdkLevel.isDeviceAtLeastS()) {
             return;
         }
-
-        // Trigger helper app to collect and write info about shared libraries on the device.
-        assertThat(runDeviceTests(HELPER_APP_PACKAGE, HELPER_APP_CLASS)).isTrue();
-
-        String remoteFile = "/sdcard/shared-libs.txt";
-        String content;
-        try {
-            content = mDevice.pullFileContents(remoteFile);
-        } finally {
-            mDevice.deleteFile(remoteFile);
-        }
-
-        for (String line : content.split("\n")) {
-            String[] words = line.split(" ");
-            assertWithMessage(
-                    "expected each line to be in the format: <name> <type> <version> <path>...")
-                    .that(words.length)
-                    .isAtLeast(4);
-            String libraryName = words[0];
-            String libraryType = words[1];
-            String libraryVersion = words[2];
-            for (int i = 3; i < words.length; i++) {
-                String path = words[i];
+        final ImmutableList<SharedLibraryInfo> sharedLibraries =
+                Classpaths.getSharedLibraryInfos(mDevice, getBuild());
+        for (SharedLibraryInfo libraryInfo : sharedLibraries) {
+            for (int index = 0; index < libraryInfo.paths.size(); ++index) {
+                final String path = libraryInfo.paths.get(index);
                 if (!mDevice.doesFileExist(path)) {
                     CLog.w("Shared library is not present on device " + path);
                     continue;
                 }
-
                 store.startGroup();
                 store.startGroup("shared_library");
-                store.addResult("name", libraryName);
-                store.addResult("type", libraryType);
-                store.addResult("version", libraryVersion);
+                store.addResult("name", libraryInfo.name);
+                store.addResult("type", libraryInfo.type);
+                store.addResult("version", libraryInfo.version);
                 store.endGroup(); // shared_library
                 store.addResult("path", path);
-                store.addResult("index", i - 3); // minus <name> <type> <version>
+                store.addResult("index", index);
                 collectClassInfo(store, path);
                 store.endGroup();
             }
