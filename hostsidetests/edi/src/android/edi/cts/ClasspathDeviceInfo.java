@@ -18,9 +18,6 @@ package android.edi.cts;
 import static android.compat.testing.Classpaths.ClasspathType.BOOTCLASSPATH;
 import static android.compat.testing.Classpaths.ClasspathType.SYSTEMSERVERCLASSPATH;
 
-import static com.google.common.truth.Truth.assertThat;
-import static com.google.common.truth.Truth.assertWithMessage;
-
 import android.compat.testing.Classpaths;
 import android.compat.testing.Classpaths.ClasspathType;
 import android.compat.testing.SharedLibraryInfo;
@@ -28,14 +25,18 @@ import android.compat.testing.SharedLibraryInfo;
 import com.android.compatibility.common.util.DeviceInfo;
 import com.android.compatibility.common.util.HostInfoStore;
 import com.android.modules.utils.build.testing.DeviceSdkLevel;
+import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
-import com.android.tradefed.log.LogUtil.CLog;
+import com.android.tradefed.util.FileUtil;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
 import org.jf.dexlib2.iface.ClassDef;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.stream.IntStream;
 
 /**
  * Collects information about Java classes present in *CLASSPATH variables and Java shared libraries
@@ -44,12 +45,13 @@ import org.jf.dexlib2.iface.ClassDef;
 public class ClasspathDeviceInfo extends DeviceInfo {
 
     private ITestDevice mDevice;
-    private DeviceSdkLevel deviceSdkLevel;
+    private DeviceSdkLevel mDeviceSdkLevel;
+    private final Object mStoreLock = new Object();
 
     @Override
     protected void collectDeviceInfo(HostInfoStore store) throws Exception {
         mDevice = getDevice();
-        deviceSdkLevel = new DeviceSdkLevel(mDevice);
+        mDeviceSdkLevel = new DeviceSdkLevel(mDevice);
 
         store.startArray("jars");
         collectClasspathsJars(store);
@@ -66,50 +68,119 @@ public class ClasspathDeviceInfo extends DeviceInfo {
     private void collectClasspathJarInfo(HostInfoStore store, ClasspathType classpath)
             throws Exception {
         ImmutableList<String> paths = Classpaths.getJarsOnClasspath(mDevice, classpath);
-        for (int i = 0; i < paths.size(); i++) {
-            store.startGroup();
-            store.addResult("classpath", classpath.name());
-            store.addResult("path", paths.get(i));
-            store.addResult("index", i);
-            collectClassInfo(store, paths.get(i));
-            store.endGroup();
-        }
+        IntStream.range(0, paths.size())
+                .parallel()
+                .mapToObj(i -> new JarInfo(i, paths.get(i)))
+                .peek(JarInfo::pullRemoteJar)
+                .peek(JarInfo::parseClassDefs)
+                .forEach(jarInfo -> {
+                    synchronized (mStoreLock) {
+                        try {
+                            store.startGroup();
+                            store.addResult("classpath", classpath.name());
+                            store.addResult("path", jarInfo.mPath);
+                            store.addResult("index", jarInfo.mIndex);
+                            collectClassInfo(store, jarInfo.mClassDefs);
+                            store.endGroup();
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        } finally {
+                            FileUtil.deleteFile(jarInfo.mLocalCopy);
+                        }
+                    }
+                });
     }
 
     private void collectSharedLibraries(HostInfoStore store) throws Exception {
-        if (!deviceSdkLevel.isDeviceAtLeastS()) {
+        if (!mDeviceSdkLevel.isDeviceAtLeastS()) {
             return;
         }
-        final ImmutableList<SharedLibraryInfo> sharedLibraries =
-                Classpaths.getSharedLibraryInfos(mDevice, getBuild());
-        for (SharedLibraryInfo libraryInfo : sharedLibraries) {
-            for (int index = 0; index < libraryInfo.paths.size(); ++index) {
-                final String path = libraryInfo.paths.get(index);
-                if (!mDevice.doesFileExist(path)) {
-                    CLog.w("Shared library is not present on device " + path);
-                    continue;
-                }
-                store.startGroup();
-                store.startGroup("shared_library");
-                store.addResult("name", libraryInfo.name);
-                store.addResult("type", libraryInfo.type);
-                store.addResult("version", libraryInfo.version);
-                store.endGroup(); // shared_library
-                store.addResult("path", path);
-                store.addResult("index", index);
-                collectClassInfo(store, path);
-                store.endGroup();
-            }
-        }
+        Classpaths.getSharedLibraryInfos(mDevice, getBuild())
+                .stream()
+                .parallel()
+                .flatMap(sharedLibraryInfo -> IntStream.range(0, sharedLibraryInfo.paths.size())
+                        .parallel()
+                        .mapToObj(i ->
+                                new JarInfo(i, sharedLibraryInfo.paths.get(i), sharedLibraryInfo))
+                )
+                .filter(JarInfo::doesRemoteFileExist)
+                .peek(JarInfo::pullRemoteJar)
+                .peek(JarInfo::parseClassDefs)
+                .forEach(jarInfo -> {
+                    synchronized (mStoreLock) {
+                        try {
+                            store.startGroup();
+                            store.startGroup("shared_library");
+                            store.addResult("name", jarInfo.mSharedLibraryInfo.name);
+                            store.addResult("type", jarInfo.mSharedLibraryInfo.type);
+                            store.addResult("version", jarInfo.mSharedLibraryInfo.version);
+                            store.endGroup(); // shared_library
+                            store.addResult("path", jarInfo.mPath);
+                            store.addResult("index", jarInfo.mIndex);
+                            collectClassInfo(store, jarInfo.mClassDefs);
+                            store.endGroup();
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        } finally {
+                            FileUtil.deleteFile(jarInfo.mLocalCopy);
+                        }
+                    }
+                });
     }
 
-    private void collectClassInfo(HostInfoStore store, String path) throws Exception {
+
+    private void collectClassInfo(HostInfoStore store, ImmutableSet<ClassDef> defs)
+            throws IOException {
         store.startArray("classes");
-        for (ClassDef classDef : Classpaths.getClassDefsFromJar(mDevice, path)) {
+        for (ClassDef classDef : defs) {
             store.startGroup();
             store.addResult("name", classDef.getType());
             store.endGroup();
         }
         store.endArray();
     }
+
+    /** Helper class to represent a jar file during stream transformations. */
+    private final class JarInfo {
+        final int mIndex;
+        final String mPath;
+        final SharedLibraryInfo mSharedLibraryInfo;
+        ImmutableSet<ClassDef> mClassDefs;
+        File mLocalCopy;
+
+        private JarInfo(int index, String path) {
+            this(index, path, null);
+        }
+
+        private JarInfo(int index, String path, SharedLibraryInfo sharedLibraryInfo) {
+            this.mIndex = index;
+            this.mPath = path;
+            this.mSharedLibraryInfo = sharedLibraryInfo;
+        }
+
+        private boolean doesRemoteFileExist() {
+            try {
+                return mDevice.doesFileExist(mPath);
+            } catch (DeviceNotAvailableException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        private void pullRemoteJar() {
+            try {
+                mLocalCopy = mDevice.pullFile(mPath);
+            } catch (DeviceNotAvailableException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        private void parseClassDefs() {
+            try {
+                mClassDefs = Classpaths.getClassDefsFromJar(mLocalCopy);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
 }
