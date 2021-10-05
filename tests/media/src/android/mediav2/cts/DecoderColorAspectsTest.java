@@ -246,6 +246,9 @@ public class DecoderColorAspectsTest extends CodecDecoderTestBase {
         ArrayList<MediaFormat> formats = new ArrayList<>();
         formats.add(format);
         Assume.assumeTrue(areFormatsSupported(mCodecName, mMime, formats));
+        if (doesAnyFormatHaveHDRProfile(mMime, formats)) {
+            Assume.assumeTrue(canDisplaySupportHDRContent());
+        }
         CodecTestActivity activity = mActivityRule.getActivity();
         setUpSurface(activity);
         activity.setScreenParams(getWidth(format), getHeight(format), true);
