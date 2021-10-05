@@ -23,6 +23,7 @@ import android.app.admin.DevicePolicyManager;
 import android.content.BroadcastReceiver;
 import android.content.Intent;
 import android.content.pm.CrossProfileApps;
+import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
 import android.net.wifi.WifiManager;
 import android.os.HardwarePropertiesManager;
@@ -41,7 +42,8 @@ import com.android.bedstead.testapp.processor.annotations.TestAppReceiver;
                 UserManager.class,
                 WifiManager.class,
                 PackageManager.class,
-                CrossProfileApps.class
+                CrossProfileApps.class,
+                LauncherApps.class
         }
 )public final class TestAppAppComponentFactory extends AppComponentFactory {
 
