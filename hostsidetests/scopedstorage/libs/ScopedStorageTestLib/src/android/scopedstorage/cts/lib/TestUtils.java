@@ -417,10 +417,8 @@ public class TestUtils {
     }
 
     public static void verifyInsertFromExternalPrivateDirViaRelativePath_denied() throws Exception {
-        resetDefaultExternalStorageVolume();
-
         // Test that inserting files from Android/obb/.. is not allowed.
-        final String androidObbDir = getContext().getObbDir().toString();
+        final String androidObbDir = getExternalObbDir().toString();
         ContentValues values = new ContentValues();
         values.put(
                 MediaStore.MediaColumns.RELATIVE_PATH,
@@ -436,8 +434,6 @@ public class TestUtils {
     }
 
     public static void verifyInsertFromExternalMediaDirViaRelativePath_allowed() throws Exception {
-        resetDefaultExternalStorageVolume();
-
         // Test that inserting files from Android/media/.. is allowed.
         final String androidMediaDir = getExternalMediaDir().toString();
         final ContentValues values = new ContentValues();
@@ -448,13 +444,11 @@ public class TestUtils {
     }
 
     public static void verifyInsertFromExternalPrivateDirViaData_denied() throws Exception {
-        resetDefaultExternalStorageVolume();
-
         ContentValues values = new ContentValues();
 
         // Test that inserting files from Android/obb/.. is not allowed.
         final String androidObbDir =
-                getContext().getObbDir().toString() + "/" + System.currentTimeMillis();
+                getExternalObbDir().toString() + "/" + System.currentTimeMillis();
         values.put(MediaStore.MediaColumns.DATA, androidObbDir);
         assertThrows(IllegalArgumentException.class, () -> insertFile(values));
 
@@ -465,8 +459,6 @@ public class TestUtils {
     }
 
     public static void verifyInsertFromExternalMediaDirViaData_allowed() throws Exception {
-        resetDefaultExternalStorageVolume();
-
         // Test that inserting files from Android/media/.. is allowed.
         ContentValues values = new ContentValues();
         final String androidMediaDirFile =
@@ -477,7 +469,6 @@ public class TestUtils {
 
     // NOTE: While updating, DATA field should be ignored for all the apps including file manager.
     public static void verifyUpdateToExternalDirsViaData_denied() throws Exception {
-        resetDefaultExternalStorageVolume();
         Uri uri = insertFileFromExternalMedia(false);
 
         final String androidMediaDirFile =
@@ -487,7 +478,7 @@ public class TestUtils {
         assertEquals(0, updateFile(uri, values));
 
         final String androidObbDir =
-                getContext().getObbDir().toString() + "/" + System.currentTimeMillis();
+                getExternalObbDir().toString() + "/" + System.currentTimeMillis();
         values.put(MediaStore.MediaColumns.DATA, androidObbDir);
         assertEquals(0, updateFile(uri, values));
 
@@ -498,7 +489,6 @@ public class TestUtils {
 
     public static void verifyUpdateToExternalMediaDirViaRelativePath_allowed()
             throws IOException {
-        resetDefaultExternalStorageVolume();
         Uri uri = insertFileFromExternalMedia(true);
 
         // Test that update to files from Android/media/.. is allowed.
@@ -512,11 +502,10 @@ public class TestUtils {
 
     public static void verifyUpdateToExternalPrivateDirsViaRelativePath_denied()
             throws Exception {
-        resetDefaultExternalStorageVolume();
         Uri uri = insertFileFromExternalMedia(true);
 
         // Test that update to files from Android/obb/.. is not allowed.
-        final String androidObbDir = getContext().getObbDir().toString();
+        final String androidObbDir = getExternalObbDir().toString();
         ContentValues values = new ContentValues();
         values.put(
                 MediaStore.MediaColumns.RELATIVE_PATH,
@@ -1193,6 +1182,18 @@ public class TestUtils {
     }
 
     /**
+     * Creates and returns the Android obb sub-directory belonging to the calling package.
+     */
+    public static File getExternalObbDir() {
+        final String packageName = getContext().getPackageName();
+        final File res = new File(getAndroidObbDir(), packageName);
+        if (!res.equals(getContext().getObbDirs()[0])) {
+            res.mkdirs();
+        }
+        return res;
+    }
+
+    /**
      * Creates and returns the Android media sub-directory belonging to the calling package.
      */
     public static File getExternalMediaDir() {
@@ -1270,6 +1271,10 @@ public class TestUtils {
 
     public static File getAndroidDataDir() {
         return new File(getAndroidDir(), "data");
+    }
+
+    public static File getAndroidObbDir() {
+        return new File(getAndroidDir(), "obb");
     }
 
     public static File getAndroidMediaDir() {
