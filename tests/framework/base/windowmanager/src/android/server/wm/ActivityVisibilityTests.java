@@ -651,7 +651,7 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
         lockScreenSession.sleepDevice();
         mWmState.waitForAllStoppedActivities();
         separateTestJournal();
-        launchActivity(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY);
+        launchActivityNoWait(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY);
         mWmState.waitForActivityState(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY, STATE_STOPPED);
         // Display should keep off, because setTurnScreenOn(false) has been called at
         // {@link TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY}'s onStop.
