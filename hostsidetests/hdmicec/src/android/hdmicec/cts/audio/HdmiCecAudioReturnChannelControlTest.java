@@ -20,18 +20,18 @@ package android.hdmicec.cts.audio;
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.CecOperand;
-import android.hdmicec.cts.error.CecClientWrapperException;
-import android.hdmicec.cts.error.ErrorCodes;
 import android.hdmicec.cts.HdmiCecConstants;
 import android.hdmicec.cts.LogicalAddress;
+import android.hdmicec.cts.error.CecClientWrapperException;
+import android.hdmicec.cts.error.ErrorCodes;
 
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.Ignore;
 import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
-import org.junit.Test;
 
 /** HDMI CEC test to test audio return channel control (Section 11.2.17) */
 @Ignore("b/162820841")
@@ -46,11 +46,12 @@ public final class HdmiCecAudioReturnChannelControlTest extends BaseHdmiCecCtsTe
 
     @Rule
     public RuleChain ruleChain =
-        RuleChain
-            .outerRule(CecRules.requiresCec(this))
-            .around(CecRules.requiresLeanback(this))
-            .around(CecRules.requiresDeviceType(this, AUDIO_DEVICE))
-            .around(hdmiCecClient);
+            RuleChain.outerRule(CecRules.requiresCec(this))
+                    .around(CecRules.requiresLeanback(this))
+                    .around(
+                            CecRules.requiresDeviceType(
+                                    this, HdmiCecConstants.CEC_DEVICE_TYPE_AUDIO_SYSTEM))
+                    .around(hdmiCecClient);
 
     private void checkArcIsInitiated() throws CecClientWrapperException {
         try {
@@ -92,11 +93,11 @@ public final class HdmiCecAudioReturnChannelControlTest extends BaseHdmiCecCtsTe
                 CecOperand.REPORT_PHYSICAL_ADDRESS,
                 CecMessage.formatParams(HdmiCecConstants.TV_PHYSICAL_ADDRESS,
                         HdmiCecConstants.PHYSICAL_ADDRESS_LENGTH));
-        getDevice().executeShellCommand("input keyevent KEYCODE_SLEEP");
+        sendDeviceToSleep();
         try {
             hdmiCecClient.checkExpectedOutput(LogicalAddress.TV, CecOperand.TERMINATE_ARC);
         } finally {
-            getDevice().executeShellCommand("input keyevent KEYCODE_WAKEUP");
+            wakeUpDevice();
         }
     }
 

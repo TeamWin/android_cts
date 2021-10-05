@@ -36,8 +36,6 @@ import org.junit.runner.RunWith;
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class HdmiCecAudioReturnChannelControlTest extends BaseHdmiCecCtsTest {
 
-    private static final LogicalAddress TV_DEVICE = LogicalAddress.TV;
-
     public HdmiCecAudioReturnChannelControlTest() {
         super(HdmiCecConstants.CEC_DEVICE_TYPE_TV, "-t", "a");
     }
@@ -46,7 +44,7 @@ public final class HdmiCecAudioReturnChannelControlTest extends BaseHdmiCecCtsTe
     public RuleChain ruleChain =
             RuleChain.outerRule(CecRules.requiresCec(this))
                     .around(CecRules.requiresLeanback(this))
-                    .around(CecRules.requiresDeviceType(this, TV_DEVICE))
+                    .around(CecRules.requiresDeviceType(this, HdmiCecConstants.CEC_DEVICE_TYPE_TV))
                     .around(hdmiCecClient);
 
     /**

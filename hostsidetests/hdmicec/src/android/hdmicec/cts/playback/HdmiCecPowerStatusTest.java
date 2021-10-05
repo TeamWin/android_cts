@@ -47,10 +47,11 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
 
     @Rule
     public RuleChain ruleChain =
-            RuleChain
-                    .outerRule(CecRules.requiresCec(this))
+            RuleChain.outerRule(CecRules.requiresCec(this))
                     .around(CecRules.requiresLeanback(this))
-                    .around(CecRules.requiresDeviceType(this, LogicalAddress.PLAYBACK_1))
+                    .around(
+                            CecRules.requiresDeviceType(
+                                    this, HdmiCecConstants.CEC_DEVICE_TYPE_PLAYBACK_DEVICE))
                     .around(hdmiCecClient);
 
     /**
@@ -67,7 +68,7 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
         ITestDevice device = getDevice();
 
         try {
-            device.executeShellCommand("input keyevent KEYCODE_SLEEP");
+            sendDeviceToSleep();
 
             TimeUnit.SECONDS.sleep(HdmiCecConstants.MAX_SLEEP_TIME_SECONDS);
 
@@ -88,7 +89,7 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
             assertWithMessage("Device should wake up on <Set Stream Path>")
                     .that(wakeStateAfter.trim()).isEqualTo("mWakefulness=Awake");
         } finally {
-            device.executeShellCommand("input keyevent KEYCODE_WAKEUP");
+            wakeUpDevice();
         }
     }
 }

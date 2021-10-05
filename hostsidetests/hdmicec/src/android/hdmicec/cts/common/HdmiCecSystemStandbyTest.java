@@ -16,12 +16,11 @@
 
 package android.hdmicec.cts.common;
 
-import static com.google.common.truth.Truth.assertThat;
-
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecOperand;
 import android.hdmicec.cts.HdmiCecConstants;
 import android.hdmicec.cts.LogicalAddress;
+import android.hdmicec.cts.WakeLockHelper;
 
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -29,9 +28,9 @@ import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
-import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -71,7 +70,7 @@ public final class HdmiCecSystemStandbyTest extends BaseHdmiCecCtsTest {
     @After
     public void resetDutState() throws Exception {
         /* Wake up the device */
-        getDevice().executeShellCommand("input keyevent KEYCODE_WAKEUP");
+        wakeUpDevice();
         setHdmiControlDeviceAutoOff(previousDeviceAutoOff);
         setPowerControlMode(previousPowerControlMode);
     }
@@ -82,12 +81,14 @@ public final class HdmiCecSystemStandbyTest extends BaseHdmiCecCtsTest {
      */
     @Test
     public void cect_HandleBroadcastStandby() throws Exception {
-        getDevice().reboot();
+        ITestDevice device = getDevice();
+        device.reboot();
         TimeUnit.SECONDS.sleep(5);
         for (LogicalAddress source : mLogicalAddresses) {
             if (!hasLogicalAddress(source)) {
+                WakeLockHelper.acquirePartialWakeLock(device);
                 hdmiCecClient.sendCecMessage(source, LogicalAddress.BROADCAST, CecOperand.STANDBY);
-                checkDeviceAsleepAfterStandbySent();
+                checkStandbyAndWakeUp();
             }
         }
     }
@@ -98,11 +99,13 @@ public final class HdmiCecSystemStandbyTest extends BaseHdmiCecCtsTest {
      */
     @Test
     public void cect_HandleAddressedStandby() throws Exception {
-        getDevice().reboot();
+        ITestDevice device = getDevice();
+        device.reboot();
         for (LogicalAddress source : mLogicalAddresses) {
             if (!hasLogicalAddress(source)) {
+                WakeLockHelper.acquirePartialWakeLock(device);
                 hdmiCecClient.sendCecMessage(source, CecOperand.STANDBY);
-                checkDeviceAsleepAfterStandbySent();
+                checkStandbyAndWakeUp();
             }
         }
     }
@@ -117,10 +120,13 @@ public final class HdmiCecSystemStandbyTest extends BaseHdmiCecCtsTest {
          * CEC CTS does not specify for TV a no broadcast on standby test. On Android TVs, there is
          * a feature to turn off this standby broadcast and this test tests the same.
          */
-        ITestDevice device = getDevice();
-        device.executeShellCommand("input keyevent KEYCODE_SLEEP");
-        hdmiCecClient.checkOutputDoesNotContainMessage(LogicalAddress.BROADCAST,
-                CecOperand.STANDBY);
+        sendDeviceToSleep();
+        try {
+            hdmiCecClient.checkOutputDoesNotContainMessage(
+                    LogicalAddress.BROADCAST, CecOperand.STANDBY);
+        } finally {
+            wakeUpDevice();
+        }
     }
 
     private void defineLogicalAddressList() throws Exception {
@@ -149,14 +155,5 @@ public final class HdmiCecSystemStandbyTest extends BaseHdmiCecCtsTest {
         String val = getSettingsValue(POWER_CONTROL_MODE);
         setSettingsValue(POWER_CONTROL_MODE, valToSet);
         return val;
-    }
-
-    private void checkDeviceAsleepAfterStandbySent() throws Exception {
-        ITestDevice device = getDevice();
-        TimeUnit.SECONDS.sleep(5);
-        String wakeState = device.executeShellCommand("dumpsys power | grep mWakefulness=");
-        assertThat(wakeState.trim()).isEqualTo("mWakefulness=Asleep");
-        device.executeShellCommand("input keyevent KEYCODE_WAKEUP");
-        TimeUnit.SECONDS.sleep(5);
     }
 }

@@ -16,6 +16,8 @@
 
 package android.hdmicec.cts;
 
+import androidx.annotation.IntDef;
+
 import java.io.File;
 
 public final class HdmiCecConstants {
@@ -24,6 +26,7 @@ public final class HdmiCecConstants {
 
     public static final String PHYSICAL_ADDRESS_NAME = "cec-phy-addr";
     public static final int REBOOT_TIMEOUT = 60000;
+    public static final int REBOOT_TIMEOUT_QUIESCENT = 2 * REBOOT_TIMEOUT;
     public static final int TIMEOUT_CEC_REINIT_SECONDS = 5;
     public static final int TIMEOUT_SAFETY_MS = 500;
 
@@ -34,8 +37,6 @@ public final class HdmiCecConstants {
     public static final int DEFAULT_PHYSICAL_ADDRESS = 0x1000;
     public static final int TV_PHYSICAL_ADDRESS = 0x0000;
     public static final int PHYSICAL_ADDRESS_LENGTH = 4; /* Num nibbles in CEC message */
-
-    public static final int PLAYBACK_DEVICE_TYPE = 0x04;
 
     public static final int CEC_CONTROL_SELECT = 0x0;
     public static final int CEC_CONTROL_UP = 0x1;
@@ -52,6 +53,19 @@ public final class HdmiCecConstants {
     public static final int CEC_CONTROL_POWER_ON_FUNCTION = 0x6D;
 
     public static final int UNRECOGNIZED_OPCODE = 0x0;
+
+    @IntDef(
+            value = {
+                CEC_DEVICE_TYPE_UNKNOWN,
+                CEC_DEVICE_TYPE_TV,
+                CEC_DEVICE_TYPE_RECORDER,
+                CEC_DEVICE_TYPE_RESERVED,
+                CEC_DEVICE_TYPE_TUNER,
+                CEC_DEVICE_TYPE_PLAYBACK_DEVICE,
+                CEC_DEVICE_TYPE_AUDIO_SYSTEM,
+                CEC_DEVICE_TYPE_SWITCH
+            })
+    public @interface CecDeviceType {}
 
     public static final int CEC_DEVICE_TYPE_UNKNOWN = -1;
     public static final int CEC_DEVICE_TYPE_TV = 0;
@@ -87,6 +101,13 @@ public final class HdmiCecConstants {
 
     // CEC Device property list
     public static final String HDMI_DEVICE_TYPE_PROPERTY = "ro.hdmi.device_type";
+
+    // Quiescent Boot Support property
+    public static final String QUIESCENT_BOOT_SUPPORTED = "ro.boot.quiescent";
+    public static final String QUIESCENT_BOOT_SUPPORTED_TRUE = "1";
+
+    // Quiescent Reboot shell command
+    public static final String QUIESCENT_REBOOT_SHELL_CMD = "reboot quiescent";
 
     /*
      * The default name of local directory into which the port to device mapping files are stored.

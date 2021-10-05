@@ -16,6 +16,8 @@
 
 package android.hdmicec.cts.tv;
 
+import static com.google.common.truth.Truth.assertWithMessage;
+
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.CecOperand;
@@ -24,7 +26,6 @@ import android.hdmicec.cts.HdmiControlManagerUtility;
 import android.hdmicec.cts.LogicalAddress;
 
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
-import static com.google.common.truth.Truth.assertWithMessage;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -39,7 +40,6 @@ import java.util.concurrent.TimeUnit;
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class HdmiCecTvOneTouchPlayTest extends BaseHdmiCecCtsTest {
 
-    private static final LogicalAddress TV_DEVICE = LogicalAddress.TV;
     private static final int WAIT_TIME_MS = 300;
 
     private static final int SLEEP_TIMESTEP_SECONDS = 1;
@@ -60,7 +60,7 @@ public class HdmiCecTvOneTouchPlayTest extends BaseHdmiCecCtsTest {
     public RuleChain ruleChain =
             RuleChain.outerRule(CecRules.requiresCec(this))
                     .around(CecRules.requiresLeanback(this))
-                    .around(CecRules.requiresDeviceType(this, TV_DEVICE))
+                    .around(CecRules.requiresDeviceType(this, HdmiCecConstants.CEC_DEVICE_TYPE_TV))
                     .around(hdmiCecClient);
 
     /**
@@ -145,15 +145,14 @@ public class HdmiCecTvOneTouchPlayTest extends BaseHdmiCecCtsTest {
     public void cect_11_1_1_3_ImageViewOnWhenInStandby() throws Exception {
         try {
             getDevice().reboot();
-            getDevice().executeShellCommand("input keyevent KEYCODE_SLEEP");
+            sendDeviceToSleep();
             assertDevicePowerStatus(HdmiCecConstants.CEC_POWER_STATUS_STANDBY);
             /* Get the first device the client has started as */
             LogicalAddress testDevice = testDevices.get(0);
             hdmiCecClient.sendCecMessage(testDevice, LogicalAddress.TV, CecOperand.IMAGE_VIEW_ON);
             assertDevicePowerStatus(HdmiCecConstants.CEC_POWER_STATUS_ON);
         } finally {
-            getDevice().executeShellCommand("input keyevent KEYCODE_WAKEUP");
-            TimeUnit.SECONDS.sleep(MAX_POWER_TRANSITION_WAIT_TIME);
+            wakeUpDevice();
         }
     }
 
@@ -167,15 +166,14 @@ public class HdmiCecTvOneTouchPlayTest extends BaseHdmiCecCtsTest {
     public void cect_11_1_1_4_TextViewOnWhenInStandby() throws Exception {
         try {
             getDevice().reboot();
-            getDevice().executeShellCommand("input keyevent KEYCODE_SLEEP");
+            sendDeviceToSleep();
             assertDevicePowerStatus(HdmiCecConstants.CEC_POWER_STATUS_STANDBY);
             /* Get the first device the client has started as */
             LogicalAddress testDevice = testDevices.get(0);
             hdmiCecClient.sendCecMessage(testDevice, LogicalAddress.TV, CecOperand.TEXT_VIEW_ON);
             assertDevicePowerStatus(HdmiCecConstants.CEC_POWER_STATUS_ON);
         } finally {
-            getDevice().executeShellCommand("input keyevent KEYCODE_WAKEUP");
-            TimeUnit.SECONDS.sleep(MAX_POWER_TRANSITION_WAIT_TIME);
+            wakeUpDevice();
         }
     }
 
