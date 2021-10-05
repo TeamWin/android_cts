@@ -1498,6 +1498,7 @@ public abstract class ActivityManagerTestBase {
             // LockScreenSession#close is always called before stopping all test activities,
             // which could cause the keyguard to stay occluded after wakeup.
             // If Keyguard is occluded, pressing the back key can hide the ShowWhenLocked activity.
+            wakeUpDevice();
             pressBackButton();
 
             // If the credential wasn't set, the steps for restoring can be simpler.
