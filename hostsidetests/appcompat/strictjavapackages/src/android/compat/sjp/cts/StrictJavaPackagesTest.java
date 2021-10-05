@@ -183,6 +183,7 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test  {
         );
 
     private static final String FEATURE_WEARABLE = "android.hardware.type.watch";
+    private static final String FEATURE_AUTOMOTIVE = "android.hardware.type.automotive";
 
     private static final Set<String> WEAR_HIDL_OVERLAP_BURNDOWN_LIST =
         ImmutableSet.of(
@@ -192,6 +193,15 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test  {
             "Landroid/hidl/base/V1_0/IBase$Stub;",
             "Landroid/hidl/base/V1_0/DebugInfo;",
             "Landroid/hidl/safe_union/V1_0/Monostate;"
+        );
+
+    private static final Set<String> AUTOMOTIVE_HIDL_OVERLAP_BURNDOWN_LIST =
+        ImmutableSet.of(
+            "Landroid/hidl/base/V1_0/DebugInfo$Architecture;",
+            "Landroid/hidl/base/V1_0/IBase;",
+            "Landroid/hidl/base/V1_0/IBase$Proxy;",
+            "Landroid/hidl/base/V1_0/IBase$Stub;",
+            "Landroid/hidl/base/V1_0/DebugInfo;"
         );
 
     /**
@@ -216,7 +226,9 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test  {
             final Set<DeviceFile> sscpJarFiles =
                 pullJarsFromEnvVariable(tmpDir, "SYSTEMSERVERCLASSPATH");
             ImmutableSet<String> overlapBurndownList;
-            if (hasFeature(FEATURE_WEARABLE)) {
+            if (hasFeature(FEATURE_AUTOMOTIVE)) {
+                overlapBurndownList = ImmutableSet.copyOf(AUTOMOTIVE_HIDL_OVERLAP_BURNDOWN_LIST);
+            } else if (hasFeature(FEATURE_WEARABLE)) {
                 overlapBurndownList = ImmutableSet.copyOf(WEAR_HIDL_OVERLAP_BURNDOWN_LIST);
             } else {
                 overlapBurndownList = ImmutableSet.of();
@@ -238,7 +250,11 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test  {
                 pullJarsFromEnvVariable(tmpDir, "SYSTEMSERVERCLASSPATH")
             );
             ImmutableSet<String> overlapBurndownList;
-            if (hasFeature(FEATURE_WEARABLE)) {
+            if (hasFeature(FEATURE_AUTOMOTIVE)) {
+                overlapBurndownList = ImmutableSet.<String>builder()
+                        .addAll(BCP_AND_SSCP_OVERLAP_BURNDOWN_LIST)
+                        .addAll(AUTOMOTIVE_HIDL_OVERLAP_BURNDOWN_LIST).build();
+            } else if (hasFeature(FEATURE_WEARABLE)) {
                 overlapBurndownList = ImmutableSet.<String>builder()
                         .addAll(BCP_AND_SSCP_OVERLAP_BURNDOWN_LIST)
                         .addAll(WEAR_HIDL_OVERLAP_BURNDOWN_LIST).build();
