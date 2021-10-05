@@ -37,4 +37,6 @@ java_test_host {
         "modules-utils-build-testing",
         "hamcrest-library",
     ],
+    data: [":SharedLibraryInfoTestApp"],
+    per_testcase_directory: true,
 }
