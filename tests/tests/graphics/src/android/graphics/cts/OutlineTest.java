@@ -239,5 +239,10 @@ public class OutlineTest {
         outline.offset(-5, -10);
         assertTrue(outline.getRect(outRect));
         assertEquals(new Rect(0, 0, 10, 10), outRect);
+
+        // Test cumulative effects
+        outline.offset(-5, -10);
+        assertTrue(outline.getRect(outRect));
+        assertEquals(new Rect(-5, -10, 5, 0), outRect);
     }
 }
