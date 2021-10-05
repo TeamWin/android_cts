@@ -71,6 +71,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
@@ -1135,7 +1136,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         playVideoTest(file, displayWidth, displayHeight);
     }
 
-    private void checkVideoRotationAngle(int angle, String file) {
+    private void checkVideoRotationAngle(int angle, String file) throws IOException {
         MediaMetadataRetriever retriever = new MediaMetadataRetriever();
         retriever.setDataSource(file);
         String rotation = retriever.extractMetadata(

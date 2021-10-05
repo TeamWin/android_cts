@@ -510,7 +510,7 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         retriever = null;
     }
 
-    private boolean checkLocationInFile(String fileName) {
+    private boolean checkLocationInFile(String fileName) throws IOException {
         MediaMetadataRetriever retriever = new MediaMetadataRetriever();
         retriever.setDataSource(fileName);
         String location = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_LOCATION);
