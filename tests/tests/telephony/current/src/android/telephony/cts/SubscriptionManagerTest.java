@@ -346,7 +346,7 @@ public class SubscriptionManagerTest {
 
     @Test
     public void testSubscriptionInfoRecord() {
-        if (!isSupported()) return;
+        if (!isSupported() || !isAutomotive()) return;
 
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         uiAutomation.adoptShellPermissionIdentity();
@@ -804,9 +804,12 @@ public class SubscriptionManagerTest {
                 fail("testSetUiccApplicationsEnabled was not able to enable to UICC app on time");
             }
 
-            // Reset default data subId as it may have been changed as part of the calls above
+            // Reset default data and voice subId as it may have been changed as part of the
+            // calls above
             ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mSm,
                     (sm) -> sm.setDefaultDataSubId(mSubId));
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mSm,
+                    (sm) -> sm.setDefaultVoiceSubscriptionId(mDefaultVoiceSubId));
 
             // Other tests also expect that cellular data must be available if telephony is
             // supported. Wait for that before returning.
@@ -1244,6 +1247,11 @@ public class SubscriptionManagerTest {
     private static boolean isSupported() {
         return InstrumentationRegistry.getContext().getPackageManager()
                 .hasSystemFeature(PackageManager.FEATURE_TELEPHONY);
+    }
+
+    private static boolean isAutomotive() {
+        return InstrumentationRegistry.getContext().getPackageManager()
+                .hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
     }
 
     private static boolean isDSDS() {

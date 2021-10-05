@@ -231,6 +231,16 @@ public class Constants {
             PKG_BASE + "cts.action.TAKE_PERSISTABLE_URI_PERMISSION";
     public static final String ACTION_CAN_PACKAGE_QUERY =
             PKG_BASE + "cts.action.CAN_PACKAGE_QUERY";
+    public static final String ACTION_GET_ALL_PACKAGE_INSTALLER_SESSIONS =
+            PKG_BASE + "cts.action.GET_ALL_PACKAGE_INSTALLER_SESSIONS";
+    public static final String ACTION_AWAIT_LAUNCHER_APPS_SESSION_CALLBACK =
+            PKG_BASE + "cts.action.AWAIT_LAUNCHER_APPS_SESSION_CALLBACK";
+    public static final String ACTION_GET_SESSION_INFO =
+            PKG_BASE + "cts.action.GET_SESSION_INFO";
+    public static final String ACTION_GET_STAGED_SESSIONS =
+            PKG_BASE + "cts.action.GET_STAGED_SESSIONS";
+    public static final String ACTION_GET_ALL_SESSIONS =
+            PKG_BASE + "cts.action.GET_ALL_SESSIONS";
 
     public static final String EXTRA_REMOTE_CALLBACK = "remoteCallback";
     public static final String EXTRA_REMOTE_READY_CALLBACK = "remoteReadyCallback";
@@ -240,6 +250,7 @@ public class Constants {
     public static final String EXTRA_CERT = "cert";
     public static final String EXTRA_AUTHORITY = "authority";
     public static final String EXTRA_ACCOUNT = "account";
+    public static final String EXTRA_ID = "id";
 
     public static final int CALLBACK_EVENT_INVALID = -1;
     public static final int CALLBACK_EVENT_PACKAGE_ADDED = 0;

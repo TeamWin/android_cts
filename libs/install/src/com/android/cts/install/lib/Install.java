@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.content.Intent;
 import android.content.pm.PackageInstaller;
+import android.text.TextUtils;
 
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -38,6 +39,7 @@ public class Install {
     // Indicates whether Install represents a multiPackage install.
     private final boolean mIsMultiPackage;
     // PackageInstaller.Session parameters.
+    private String mPackageName = null;
     private boolean mIsStaged = false;
     private boolean mIsDowngrade = false;
     private boolean mEnableRollback = false;
@@ -93,6 +95,14 @@ public class Install {
         }
         Install install = new Install(true, installs);
         return install;
+    }
+
+    /**
+     * Sets package name to the session params.
+     */
+    public Install setPackageName(String packageName) {
+        mPackageName = packageName;
+        return this;
     }
 
     /**
@@ -227,6 +237,9 @@ public class Install {
         try {
             PackageInstaller.SessionParams params =
                     new PackageInstaller.SessionParams(mSessionMode);
+            if (!TextUtils.isEmpty(mPackageName)) {
+                params.setAppPackageName(mPackageName);
+            }
             if (multiPackage) {
                 params.setMultiPackage();
             }
