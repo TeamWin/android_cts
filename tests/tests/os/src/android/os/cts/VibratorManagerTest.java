@@ -22,6 +22,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.timeout;
@@ -74,8 +75,13 @@ public class VibratorManagerTest {
                     .setUsage(VibrationAttributes.USAGE_TOUCH)
                     .build();
 
-    private VibratorManager mVibratorManager;
+    /**
+     * These listeners are used for test helper methods like asserting it starts/stops vibrating.
+     * It's not strongly required that the interactions with these mocks are validated by all tests.
+     */
     private final SparseArray<OnVibratorStateChangedListener> mStateListeners = new SparseArray<>();
+
+    private VibratorManager mVibratorManager;
 
     @Before
     public void setUp() {
@@ -89,13 +95,32 @@ public class VibratorManagerTest {
             mStateListeners.put(vibratorId, listener);
             // Adding a listener to the Vibrator should trigger the callback once with the current
             // vibrator state, so reset mocks to clear it for tests.
-            reset(listener);
+            assertVibratorState(false);
+            clearInvocations(listener);
         }
     }
 
     @After
     public void cleanUp() {
+        // Clearing invocations so we can use these listeners to wait for the vibrator to
+        // asynchronously cancel the ongoing vibration, if any was left pending by a test.
+        for (int i = 0; i < mStateListeners.size(); i++) {
+            clearInvocations(mStateListeners.valueAt(i));
+        }
         mVibratorManager.cancel();
+
+        for (int i = 0; i < mStateListeners.size(); i++) {
+            int vibratorId = mStateListeners.keyAt(i);
+
+            // Wait for cancel to take effect, if device is still vibrating.
+            if (mVibratorManager.getVibrator(vibratorId).isVibrating()) {
+                assertStopsVibrating(vibratorId);
+            }
+
+            // Remove all listeners added by the tests.
+            mVibratorManager.getVibrator(vibratorId).removeVibratorStateListener(
+                    mStateListeners.valueAt(i));
+        }
     }
 
     @Test
@@ -247,8 +272,7 @@ public class VibratorManagerTest {
 
     private void assertStartsThenStopsVibrating(long duration) {
         for (int i = 0; i < mStateListeners.size(); i++) {
-            verify(mStateListeners.valueAt(i), timeout(CALLBACK_TIMEOUT_MILLIS).atLeastOnce())
-                    .onVibratorStateChanged(true);
+            assertVibratorState(mStateListeners.keyAt(i), true);
         }
         SystemClock.sleep(duration);
         assertVibratorState(false);
