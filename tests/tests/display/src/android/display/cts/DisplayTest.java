@@ -71,6 +71,7 @@ import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.AdoptShellPermissionsRule;
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.DisplayUtil;
 import com.android.compatibility.common.util.PropertyUtil;
 
@@ -1022,6 +1023,7 @@ public class DisplayTest {
         assertEquals(supportsWideGamut, supportsP3);
     }
 
+    @CddTest(requirement="7.1.1.1/H-0-2")
     @Test
     public void testRestrictedFramebufferSize() {
         PackageManager packageManager = mContext.getPackageManager();
