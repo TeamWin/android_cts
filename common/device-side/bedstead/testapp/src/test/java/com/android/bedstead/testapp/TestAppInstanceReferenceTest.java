@@ -369,4 +369,12 @@ public class TestAppInstanceReferenceTest {
             assertThat(testAppInstance.crossProfileApps().getTargetUserProfiles()).isEmpty();
         }
     }
+
+    @Test
+    public void launcherApps_returnsUsableInstance() {
+        TestApp testApp = mTestAppProvider.any();
+        try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
+            assertThat(testAppInstance.launcherApps().hasShortcutHostPermission()).isFalse();
+        }
+    }
 }
