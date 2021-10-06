@@ -393,23 +393,4 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
         checkDeviceAsleep();
         wakeUpDevice();
     }
-
-    public void rebootQuiescent() throws Exception {
-        ITestDevice device = getDevice();
-        assumeTrue(
-                device.getProperty(HdmiCecConstants.QUIESCENT_BOOT_SUPPORTED)
-                        .equals(HdmiCecConstants.QUIESCENT_BOOT_SUPPORTED_TRUE));
-        device.executeShellCommand(HdmiCecConstants.QUIESCENT_REBOOT_SHELL_CMD);
-        if (device.waitForBootComplete(HdmiCecConstants.REBOOT_TIMEOUT_QUIESCENT)) {
-            try {
-                checkDeviceAsleep();
-            } catch (DeviceNotAvailableException dnae) {
-                throw dnae;
-            } catch (Exception e) {
-                throw new Exception("Device didn't go to sleep after a quiescent reboot", e);
-            }
-        } else {
-            throw new Exception("Quiescent reboot not complete, timed out!");
-        }
-    }
 }
