@@ -419,7 +419,11 @@ public class HeifWriterTest extends AndroidTestCase {
                 }
                 mWidth = mBitmaps[0].getWidth();
                 mHeight = mBitmaps[0].getHeight();
-                retriever.release();
+                try {
+                    retriever.release();
+                } catch (IOException e) {
+                    // Ignoring errors occurred while releasing the MediaMetadataRetriever.
+                }
             }
 
             private void cleanupStaleOutputs() {

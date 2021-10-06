@@ -123,12 +123,14 @@ public class ContactsContract_RawContactsTest extends AndroidTestCase {
                 lookupContact.getId(), rawContact.load().getContactId());
     }
 
-    public void testGetDeviceAccountNameAndType_haveSameNullness() {
-        String name = RawContacts.getLocalAccountName(mContext);
-        String type = RawContacts.getLocalAccountType(mContext);
+    // TODO(b/197121290): reference the CDD requirement for this.
+    public void testGetDeviceAccountName_returnsNull() {
+        assertNull(RawContacts.getLocalAccountName(mContext));
+    }
 
-        assertTrue("Device account name and type must both be null or both be non-null",
-                (name == null && type == null) || (name != null && type != null));
+    // TODO(b/197121290): reference the CDD requirement for this.
+    public void testGetDeviceAccountType_returnsNull() {
+        assertNull(RawContacts.getLocalAccountType(mContext));
     }
 
     public void testRawContactDelete_setsDeleteFlag() {
@@ -220,31 +222,6 @@ public class ContactsContract_RawContactsTest extends AndroidTestCase {
 
         // Clean up
         RawContactUtil.delete(mResolver, rawContactid, true);
-    }
-
-    /**
-     * The local account is the default if a raw contact insert uses null for
-     * the {@link RawContacts#ACCOUNT_NAME} and {@link RawContacts#ACCOUNT_TYPE}.
-     *
-     * <p>See {@link #testRawContactCreate_noAccountUsesLocalAccount()}
-     */
-    @CddTest(requirement="3.18/C-1-1,C-1-2,C-1-3")
-    public void testRawContactCreate_nullAccountUsesLocalAccount() throws Exception {
-        // Save a raw contact using the default local account
-        TestRawContact rawContact = mBuilder.newRawContact()
-                .with(RawContacts.ACCOUNT_TYPE, (String) null)
-                .with(RawContacts.ACCOUNT_NAME, (String) null)
-                .insert();
-
-        String[] row =  RawContactUtil.queryByRawContactId(mResolver, rawContact.getId(),
-                new String[] {
-                        RawContacts.ACCOUNT_NAME, RawContacts.ACCOUNT_TYPE
-                });
-
-        // When the raw contact is inserted into the default local account the contact is created
-        // in the local account.
-        assertEquals(RawContacts.getLocalAccountName(mContext), row[0]);
-        assertEquals(RawContacts.getLocalAccountType(mContext), row[1]);
     }
 
     public void testRawContactUpdate_updatesContactUpdatedTimestamp() {

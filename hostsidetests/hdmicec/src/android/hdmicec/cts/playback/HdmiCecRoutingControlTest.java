@@ -28,9 +28,9 @@ import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
-import org.junit.Test;
 
 import java.util.concurrent.TimeUnit;
 
@@ -50,11 +50,12 @@ public final class HdmiCecRoutingControlTest extends BaseHdmiCecCtsTest {
 
     @Rule
     public RuleChain ruleChain =
-        RuleChain
-            .outerRule(CecRules.requiresCec(this))
-            .around(CecRules.requiresLeanback(this))
-            .around(CecRules.requiresDeviceType(this, LogicalAddress.PLAYBACK_1))
-            .around(hdmiCecClient);
+            RuleChain.outerRule(CecRules.requiresCec(this))
+                    .around(CecRules.requiresLeanback(this))
+                    .around(
+                            CecRules.requiresDeviceType(
+                                    this, HdmiCecConstants.CEC_DEVICE_TYPE_PLAYBACK_DEVICE))
+                    .around(hdmiCecClient);
 
     private String setPowerControlMode(String valToSet) throws Exception {
         String val = getSettingsValue(POWER_CONTROL_MODE);
@@ -151,13 +152,13 @@ public final class HdmiCecRoutingControlTest extends BaseHdmiCecCtsTest {
                     CecOperand.SET_STREAM_PATH,
                     CecMessage.formatParams(dumpsysPhysicalAddress));
             TimeUnit.SECONDS.sleep(5);
-            device.executeShellCommand("input keyevent KEYCODE_SLEEP");
+            sendDeviceToSleep();
             String message = hdmiCecClient.checkExpectedOutput(LogicalAddress.TV,
                     CecOperand.INACTIVE_SOURCE);
             CecMessage.assertPhysicalAddressValid(message, dumpsysPhysicalAddress);
         } finally {
             /* Wake up the device */
-            device.executeShellCommand("input keyevent KEYCODE_WAKEUP");
+            wakeUpDevice();
             setPowerControlMode(previousPowerControlMode);
         }
     }

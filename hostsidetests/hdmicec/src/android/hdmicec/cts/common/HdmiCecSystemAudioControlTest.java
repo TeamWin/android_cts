@@ -17,6 +17,7 @@
 package android.hdmicec.cts.common;
 
 import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assume.assumeFalse;
 
 import android.hdmicec.cts.AudioManagerHelper;
@@ -29,13 +30,13 @@ import android.hdmicec.cts.LogicalAddress;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
-import java.util.concurrent.TimeUnit;
-
 import org.junit.Before;
 import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
-import org.junit.Test;
+
+import java.util.concurrent.TimeUnit;
 
 /** HDMI CEC test to verify system audio control commands (Section 11.1.15, 11.2.15) */
 @RunWith(DeviceJUnit4ClassRunner.class)
@@ -154,8 +155,8 @@ public final class HdmiCecSystemAudioControlTest extends BaseHdmiCecCtsTest {
         ITestDevice device = getDevice();
         /* Home Key to prevent device from going to deep suspend state */
         device.executeShellCommand("input keyevent KEYCODE_HOME");
-        device.executeShellCommand("input keyevent KEYCODE_SLEEP");
-        device.executeShellCommand("input keyevent KEYCODE_WAKEUP");
+        sendDeviceToSleep();
+        wakeUpDevice();
         hdmiCecClient.checkExpectedOutput(
                 hdmiCecClient.getSelfDevice(), CecOperand.GIVE_SYSTEM_AUDIO_MODE_STATUS);
     }

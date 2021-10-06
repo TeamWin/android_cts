@@ -16,6 +16,8 @@
 
 package android.hdmicec.cts.tv;
 
+import static com.google.common.truth.Truth.assertWithMessage;
+
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecOperand;
 import android.hdmicec.cts.HdmiCecConstants;
@@ -30,13 +32,9 @@ import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 
 
-import static com.google.common.truth.Truth.assertWithMessage;
-
 /** HDMI CEC tests for system standby features (Section 11.1.3) */
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class HdmiCecTvStandbyTest extends BaseHdmiCecCtsTest {
-
-    private static final LogicalAddress TV_DEVICE = LogicalAddress.TV;
 
     public HdmiCecTvStandbyTest() {
         super(HdmiCecConstants.CEC_DEVICE_TYPE_TV);
@@ -46,7 +44,7 @@ public class HdmiCecTvStandbyTest extends BaseHdmiCecCtsTest {
     public RuleChain ruleChain =
             RuleChain.outerRule(CecRules.requiresCec(this))
                     .around(CecRules.requiresLeanback(this))
-                    .around(CecRules.requiresDeviceType(this, TV_DEVICE))
+                    .around(CecRules.requiresDeviceType(this, HdmiCecConstants.CEC_DEVICE_TYPE_TV))
                     .around(hdmiCecClient);
 
     private static final String HDMI_CONTROL_DEVICE_AUTO_OFF =
@@ -64,14 +62,14 @@ public class HdmiCecTvStandbyTest extends BaseHdmiCecCtsTest {
         device.waitForBootComplete(HdmiCecConstants.REBOOT_TIMEOUT);
         boolean wasOn = setHdmiControlDeviceAutoOff(true);
         try {
-            device.executeShellCommand("input keyevent KEYCODE_SLEEP");
+            sendDeviceToSleep();
             hdmiCecClient.checkExpectedOutput(LogicalAddress.BROADCAST, CecOperand.STANDBY);
             String wakeState = device.executeShellCommand("dumpsys power | grep mWakefulness=");
             assertWithMessage("Device is not in standby.")
                     .that(wakeState.trim())
                     .isEqualTo("mWakefulness=Asleep");
         } finally {
-            device.executeShellCommand("input keyevent KEYCODE_WAKEUP");
+            wakeUpDevice();
             setHdmiControlDeviceAutoOff(wasOn);
         }
     }
