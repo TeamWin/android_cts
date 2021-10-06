@@ -16,6 +16,8 @@
 
 package android.devicepolicy.cts;
 
+import static com.android.queryable.queries.ServiceQuery.service;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertThrows;
@@ -55,13 +57,15 @@ public class DeviceOwnerPrerequisitesTest {
     private static final TestAppProvider sTestAppProvider = new TestAppProvider();
     private static final TestApp sAccountManagementApp = sTestAppProvider
             .query()
-            .wherePackageName()
-            // TODO(b/198423919): Support Querying services in TestApp
-            .isEqualTo("com.android.bedstead.testapp.AccountManagementApp")
+            // TODO(b/198417584): Support Querying XML resources in TestApp.
+            // TODO(b/198590265) Filter for the correct account type.
+            .whereServices().contains(
+                    service().serviceClass().className()
+                            .isEqualTo("com.android.bedstead.testapp.AccountManagementApp"
+                                    + ".TestAppAccountAuthenticatorService"))
             .get();
     private static final TestApp sDpcApp = sTestAppProvider
             .query()
-            // TODO(b/198423919): Support Querying services in TestApp
             .wherePackageName().isEqualTo(RemoteDpc.DPC_COMPONENT_NAME.getPackageName())
             .get();
 

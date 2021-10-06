@@ -16,8 +16,11 @@
 
 package android.devicepolicy.cts;
 
-import static org.junit.Assert.assertThrows;
+import static com.android.queryable.queries.ServiceQuery.service;
+
 import static com.google.common.truth.Truth.assertThat;
+
+import static org.junit.Assert.assertThrows;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
@@ -62,9 +65,12 @@ public class AccountManagementTest {
     private static final TestAppProvider sTestAppProvider = new TestAppProvider();
     private static final TestApp sAccountManagementApp = sTestAppProvider
             .query()
-            .wherePackageName()
-            // TODO(b/198423919): Support Querying services in TestApp
-            .isEqualTo("com.android.bedstead.testapp.AccountManagementApp")
+            // TODO(b/198590265) Filter for the correct account type.
+            // TODO(b/202941328) Support querying for intent-filters.
+            .whereServices().contains(
+                    service().serviceClass().className()
+                            .isEqualTo("com.android.bedstead.testapp.AccountManagementApp"
+                                    + ".TestAppAccountAuthenticatorService"))
             .get();
     private static final String EXISTING_ACCOUNT_TYPE =
             "com.android.bedstead.testapp.AccountManagementApp.account.type";
