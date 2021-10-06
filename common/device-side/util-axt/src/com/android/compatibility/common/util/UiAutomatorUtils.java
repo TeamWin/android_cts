@@ -35,6 +35,9 @@ import java.util.regex.Pattern;
 public class UiAutomatorUtils {
     private UiAutomatorUtils() {}
 
+    /** Default swipe deadzone percentage. See {@link UiScrollable}. */
+    private static final double DEFAULT_SWIPE_DEADZONE_PCT = 0.1;
+
     private static Pattern sCollapsingToolbarResPattern =
             Pattern.compile(".*:id/collapsing_toolbar");
 
@@ -75,7 +78,7 @@ public class UiAutomatorUtils {
 
             if (view == null) {
                 final double deadZone = !(FeatureUtil.isWatch() || FeatureUtil.isTV())
-                        ? 0.25 : 0;
+                        ? 0.25 : DEFAULT_SWIPE_DEADZONE_PCT;
                 UiScrollable scrollable = new UiScrollable(new UiSelector().scrollable(true));
                 scrollable.setSwipeDeadZonePercentage(deadZone);
                 if (scrollable.exists()) {
