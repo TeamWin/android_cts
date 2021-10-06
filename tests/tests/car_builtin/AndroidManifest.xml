@@ -18,8 +18,16 @@
     package="android.car.cts.builtin">
     <uses-feature android:name="android.hardware.type.automotive" />
 
-    <application>
+    <application android:description="@string/app_description">
         <uses-library android:name="android.test.runner" />
+
+        <activity android:name="android.car.cts.builtin.activity.SimpleActivity"
+                  android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
 
         <service android:name="android.car.cts.builtin.os.SharedMemoryTestService"
             android:process=":shdmemservice">
