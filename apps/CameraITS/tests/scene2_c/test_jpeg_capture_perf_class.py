@@ -14,38 +14,53 @@
 """Verify jpeg capture latency for both front and back primary cameras.
 """
 
-import its.caps
-import its.device
+import logging
+
+from mobly import test_runner
+
+import camera_properties_utils
+import its_base_test
+import its_session_utils
 
 JPEG_CAPTURE_S_PERFORMANCE_CLASS_THRESHOLD = 1000  # ms
 
 
-def main():
-    """Test jpeg capture latency for S performance class as specified in CDD.
+class JpegCaptureSPerfClassTest(its_base_test.ItsBaseTest):
+  """Test jpeg capture latency for S performance class as specified in CDD.
 
-    [7.5/H-1-6] MUST have camera2 JPEG capture latency < 1000ms for 1080p
-    resolution as measured by the CTS camera PerformanceTest under ITS lighting
-    conditions (3000K) for both primary cameras.
-    """
+  [7.5/H-1-6] MUST have camera2 JPEG capture latency < 1000ms for 1080p
+  resolution as measured by the CTS camera PerformanceTest under ITS lighting
+  conditions (3000K) for both primary cameras.
+  """
 
-    # Open camera with "with" semantics to check skip condition and save camera
-    # id
-    cam_id = ''
-    with its.device.ItsSession() as cam:
-        its.caps.skip_unless(
-            cam.is_s_performance_class_primary_camera())
-        cam_id = cam._camera_id
+  def test_jpeg_capture(self):
+    # Open camera with "with" semantics to check skip condition and load chart
+    #
+    with its_session_utils.ItsSession(
+        device_id=self.dut.serial,
+        camera_id=self.camera_id) as cam:
+
+      camera_properties_utils.skip_unless(
+          cam.is_performance_class_primary_camera())
+
+      # Load chart for scene.
+      props = cam.get_camera_properties()
+      its_session_utils.load_scene(
+          cam, props, self.scene, self.tablet, self.chart_distance)
 
     # Create an Its session without opening the camera to test camera jpeg
     # capture latency because the test opens camera internally
-    session = its.device.ItsSession(camera_id=cam_id)
+    cam = its_session_utils.ItsSession(
+        device_id=self.dut.serial,
+        camera_id=self.camera_id)
 
-    jpeg_capture_ms = session.measure_camera_1080p_jpeg_capture_ms()
-    print '1080p jpeg capture time: %.1f ms' % jpeg_capture_ms
-
-    msg = '1080p jpeg capture time: %.1f ms, THRESH: %.1f ms' \
-        % (jpeg_capture_ms, JPEG_CAPTURE_S_PERFORMANCE_CLASS_THRESHOLD)
-    assert jpeg_capture_ms < JPEG_CAPTURE_S_PERFORMANCE_CLASS_THRESHOLD, msg
+    jpeg_capture_ms = cam.measure_camera_1080p_jpeg_capture_ms()
+    if jpeg_capture_ms >= JPEG_CAPTURE_S_PERFORMANCE_CLASS_THRESHOLD:
+      raise AssertionError(f'1080p jpeg capture time: {jpeg_capture_ms} ms, '
+                           f'THRESH: '
+                           f'{JPEG_CAPTURE_S_PERFORMANCE_CLASS_THRESHOLD} ms')
+    else:
+      logging.debug('1080p jpeg capture time: %.1f ms', jpeg_capture_ms)
 
 if __name__ == '__main__':
-    main()
+  test_runner.main()

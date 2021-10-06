@@ -384,37 +384,40 @@ public class MediaCodecTest extends AndroidTestCase {
             fail("stop should not return MediaCodec.CodecException on wrong state");
         } catch (IllegalStateException e) { // expected
         }
-        try {
-            codec.getSupportedVendorParameters();
-            fail("getSupportedVendorParameters should throw IllegalStateException" +
-                    " when in Uninitialized state");
-        } catch (IllegalStateException e) { // expected
-        } catch (Exception e) {
-            fail("unexpected exception: " + e.toString());
-        }
-        try {
-            codec.getParameterDescriptor("");
-            fail("getParameterDescriptor should throw IllegalStateException" +
-                    " when in Uninitialized state");
-        } catch (IllegalStateException e) { // expected
-        } catch (Exception e) {
-            fail("unexpected exception: " + e.toString());
-        }
-        try {
-            codec.subscribeToVendorParameters(List.of(""));
-            fail("subscribeToVendorParameters should throw IllegalStateException" +
-                    " when in Uninitialized state");
-        } catch (IllegalStateException e) { // expected
-        } catch (Exception e) {
-            fail("unexpected exception: " + e.toString());
-        }
-        try {
-            codec.unsubscribeFromVendorParameters(List.of(""));
-            fail("unsubscribeFromVendorParameters should throw IllegalStateException" +
-                    " when in Uninitialized state");
-        } catch (IllegalStateException e) { // expected
-        } catch (Exception e) {
-            fail("unexpected exception: " + e.toString());
+
+        if (mIsAtLeastS) {
+            try {
+                codec.getSupportedVendorParameters();
+                fail("getSupportedVendorParameters should throw IllegalStateException" +
+                        " when in Uninitialized state");
+            } catch (IllegalStateException e) { // expected
+            } catch (Exception e) {
+                fail("unexpected exception: " + e.toString());
+            }
+            try {
+                codec.getParameterDescriptor("");
+                fail("getParameterDescriptor should throw IllegalStateException" +
+                        " when in Uninitialized state");
+            } catch (IllegalStateException e) { // expected
+            } catch (Exception e) {
+                fail("unexpected exception: " + e.toString());
+            }
+            try {
+                codec.subscribeToVendorParameters(List.of(""));
+                fail("subscribeToVendorParameters should throw IllegalStateException" +
+                        " when in Uninitialized state");
+            } catch (IllegalStateException e) { // expected
+            } catch (Exception e) {
+                fail("unexpected exception: " + e.toString());
+            }
+            try {
+                codec.unsubscribeFromVendorParameters(List.of(""));
+                fail("unsubscribeFromVendorParameters should throw IllegalStateException" +
+                        " when in Uninitialized state");
+            } catch (IllegalStateException e) { // expected
+            } catch (Exception e) {
+                fail("unexpected exception: " + e.toString());
+            }
         }
 
         if (mIsAtLeastR) {
@@ -1653,25 +1656,25 @@ public class MediaCodecTest extends AndroidTestCase {
         public int mMaxH;
         public int mFps;
         public int mBitRate;
-    };
+    }
 
     public void testCryptoInfoPattern() {
         CryptoInfo info = new CryptoInfo();
         Pattern pattern = new Pattern(1 /*blocksToEncrypt*/, 2 /*blocksToSkip*/);
-        if (pattern.getEncryptBlocks() != 1) {
-            fail("Incorrect number of encrypt blocks in pattern");
-        }
-        if (pattern.getSkipBlocks() != 2) {
-            fail("Incorrect number of skip blocks in pattern");
-        }
+        assertEquals(1, pattern.getEncryptBlocks());
+        assertEquals(2, pattern.getSkipBlocks());
         pattern.set(3 /*blocksToEncrypt*/, 4 /*blocksToSkip*/);
-        if (pattern.getEncryptBlocks() != 3) {
-            fail("Incorrect number of encrypt blocks in pattern");
-        }
-        if (pattern.getSkipBlocks() != 4) {
-            fail("Incorrect number of skip blocks in pattern");
-        }
+        assertEquals(3, pattern.getEncryptBlocks());
+        assertEquals(4, pattern.getSkipBlocks());
         info.setPattern(pattern);
+        // Check that CryptoInfo does not leak access to the underlying pattern.
+        if (mIsAtLeastS) {
+            // getPattern() availability SDK>=S
+            pattern.set(10, 10);
+            info.getPattern().set(10, 10);
+            assertSame(3, info.getPattern().getEncryptBlocks());
+            assertSame(4, info.getPattern().getSkipBlocks());
+        }
     }
 
     private static CodecInfo getAvcSupportedFormatInfo() {
@@ -1905,6 +1908,7 @@ public class MediaCodecTest extends AndroidTestCase {
 
     private MediaExtractor getMediaExtractorForMimeType(final String resource,
             String mimeTypePrefix) throws IOException {
+        Preconditions.assertTestFileExists(mInpPrefix + resource);
         MediaExtractor mediaExtractor = new MediaExtractor();
         File inpFile = new File(mInpPrefix + resource);
         ParcelFileDescriptor parcelFD =
@@ -2682,6 +2686,9 @@ public class MediaCodecTest extends AndroidTestCase {
                         AudioCapabilities acaps = caps.getAudioCapabilities();
                         int minSampleRate = acaps.getSupportedSampleRateRanges()[0].getLower();
                         int minChannelCount = 1;
+                        if (mIsAtLeastS) {
+                            minChannelCount = acaps.getMinInputChannelCount();
+                        }
                         int minBitrate = acaps.getBitrateRange().getLower();
                         format = MediaFormat.createAudioFormat(mime, minSampleRate, minChannelCount);
                         format.setInteger(MediaFormat.KEY_BIT_RATE, minBitrate);

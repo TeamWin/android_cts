@@ -18,29 +18,28 @@ package android.host.multiuser;
 
 import android.platform.test.annotations.Presubmit;
 
-import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
-
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Test verifies that users can be created/switched to without error dialogs shown to the user
+ *
  * Run: atest CreateUsersNoAppCrashesTest
  */
 @RunWith(DeviceJUnit4ClassRunner.class)
-public class CreateUsersNoAppCrashesTest extends BaseMultiUserTest {
+public final class CreateUsersNoAppCrashesTest extends BaseMultiUserTest {
+
+    @Rule
+    public final RuleChain mLookAllThoseRules = RuleChain.outerRule(new SupportsMultiUserRule(this))
+            .around(new AppCrashRetryRule());
 
     @Presubmit
     @Test
     public void testCanCreateGuestUser() throws Exception {
-        if (!mSupportsMultiUser) {
-            return;
-        }
         int userId = getDevice().createUser(
                 "TestUser_" + System.currentTimeMillis() /* name */,
                 true /* guest */,
@@ -52,9 +51,6 @@ public class CreateUsersNoAppCrashesTest extends BaseMultiUserTest {
     @Presubmit
     @Test
     public void testCanCreateSecondaryUser() throws Exception {
-        if (!mSupportsMultiUser) {
-            return;
-        }
         int userId = getDevice().createUser(
                 "TestUser_" + System.currentTimeMillis() /* name */,
                 false /* guest */,

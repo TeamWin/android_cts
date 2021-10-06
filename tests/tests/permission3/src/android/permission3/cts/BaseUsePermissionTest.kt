@@ -32,7 +32,6 @@ import android.text.Spanned
 import android.text.style.ClickableSpan
 import android.view.View
 import com.android.compatibility.common.util.SystemUtil.eventually
-import com.android.compatibility.common.util.UiAutomatorUtils.waitFindObjectOrNull
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -46,14 +45,19 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         const val APP_APK_PATH_22 = "$APK_DIRECTORY/CtsUsePermissionApp22.apk"
         const val APP_APK_PATH_22_CALENDAR_ONLY =
             "$APK_DIRECTORY/CtsUsePermissionApp22CalendarOnly.apk"
+        const val APP_APK_PATH_22_NONE = "$APK_DIRECTORY/CtsUsePermissionApp22None.apk"
         const val APP_APK_PATH_23 = "$APK_DIRECTORY/CtsUsePermissionApp23.apk"
         const val APP_APK_PATH_25 = "$APK_DIRECTORY/CtsUsePermissionApp25.apk"
         const val APP_APK_PATH_26 = "$APK_DIRECTORY/CtsUsePermissionApp26.apk"
         const val APP_APK_PATH_28 = "$APK_DIRECTORY/CtsUsePermissionApp28.apk"
         const val APP_APK_PATH_29 = "$APK_DIRECTORY/CtsUsePermissionApp29.apk"
+        const val APP_APK_PATH_30 = "$APK_DIRECTORY/CtsUsePermissionApp30.apk"
+        const val APP_APK_PATH_30_WITH_BACKGROUND =
+                "$APK_DIRECTORY/CtsUsePermissionApp30WithBackground.apk"
+        const val APP_APK_PATH_30_WITH_BLUETOOTH =
+                "$APK_DIRECTORY/CtsUsePermissionApp30WithBluetooth.apk"
         const val APP_APK_PATH_LATEST = "$APK_DIRECTORY/CtsUsePermissionAppLatest.apk"
-        const val APP_APK_PATH_LATEST_WITH_BACKGROUND =
-                "$APK_DIRECTORY/CtsUsePermissionAppLatestWithBackground.apk"
+        const val APP_APK_PATH_LATEST_NONE = "$APK_DIRECTORY/CtsUsePermissionAppLatestNone.apk"
         const val APP_APK_PATH_WITH_OVERLAY = "$APK_DIRECTORY/CtsUsePermissionAppWithOverlay.apk"
         const val APP_PACKAGE_NAME = "android.permission3.cts.usepermission"
 
@@ -143,7 +147,12 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
             // Camera
             android.Manifest.permission.CAMERA to "@android:string/permgrouplab_camera",
             // Body sensors
-            android.Manifest.permission.BODY_SENSORS to "@android:string/permgrouplab_sensors"
+            android.Manifest.permission.BODY_SENSORS to "@android:string/permgrouplab_sensors",
+            // Bluetooth
+            android.Manifest.permission.BLUETOOTH_CONNECT to
+                    "@android:string/permgrouplab_nearby_devices",
+            android.Manifest.permission.BLUETOOTH_SCAN to
+                    "@android:string/permgrouplab_nearby_devices"
     )
 
     @Before
@@ -156,7 +165,7 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         click(By.res("android:id/button1"))
 
     protected fun clickPermissionReviewContinue() {
-        if (isAutomotive) {
+        if (isAutomotive || isWatch) {
             click(By.text(getPermissionControllerString("review_button_continue")))
         } else {
             click(By.res("com.android.permissioncontroller:id/continue_button"))
@@ -164,7 +173,7 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
     }
 
     protected fun clickPermissionReviewCancel() {
-        if (isAutomotive) {
+        if (isAutomotive || isWatch) {
             click(By.text(getPermissionControllerString("review_button_cancel")))
         } else {
             click(By.res("com.android.permissioncontroller:id/cancel_button"))
@@ -250,6 +259,11 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         val result = requestAppPermissions(*permissions, block = block)
         assertEquals(Activity.RESULT_OK, result.resultCode)
         assertEquals(
+            result.resultData!!.getStringArrayExtra("$APP_PACKAGE_NAME.PERMISSIONS")!!.size,
+            result.resultData!!.getIntArrayExtra("$APP_PACKAGE_NAME.GRANT_RESULTS")!!.size
+        )
+
+        assertEquals(
             permissionAndExpectedGrantResults.toList(),
             result.resultData!!.getStringArrayExtra("$APP_PACKAGE_NAME.PERMISSIONS")!!
                 .zip(
@@ -290,7 +304,7 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
     }
 
     protected fun clickAllowAlwaysInSettings() {
-        if (isAutomotive || isTv) {
+        if (isAutomotive || isTv || isWatch) {
             click(By.text(getPermissionControllerString("app_permission_button_allow_always")))
         } else {
             click(By.res("com.android.permissioncontroller:id/allow_always_radio_button"))
@@ -307,7 +321,7 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
     }
 
     protected fun clickPermissionRequestDenyButton() {
-        if (isAutomotive || isTv) {
+        if (isAutomotive || isWatch || isTv) {
             click(By.text(getPermissionControllerString(DENY_BUTTON_TEXT)))
         } else {
             click(By.res(DENY_BUTTON))
@@ -316,7 +330,7 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
 
     protected fun clickPermissionRequestSettingsLinkAndDeny() {
         clickPermissionRequestSettingsLink()
-        if (isAutomotive) {
+        if (isAutomotive || isWatch) {
             click(By.text(getPermissionControllerString("app_permission_button_deny")))
         } else {
             click(By.res("com.android.permissioncontroller:id/deny_radio_button"))
@@ -350,14 +364,23 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
     protected fun clickPermissionRequestDenyAndDontAskAgainButton() {
         if (isAutomotive) {
             click(By.text(getPermissionControllerString(DENY_AND_DONT_ASK_AGAIN_BUTTON_TEXT)))
+        } else if (isWatch) {
+            click(By.text(getPermissionControllerString(DENY_BUTTON_TEXT)))
         } else {
             click(By.res(DENY_AND_DONT_ASK_AGAIN_BUTTON))
         }
     }
 
     // Only used in TV and Watch form factors
-    protected fun clickPermissionRequestDontAskAgainButton() =
-        click(By.res("com.android.permissioncontroller:id/permission_deny_dont_ask_again_button"))
+    protected fun clickPermissionRequestDontAskAgainButton() {
+        if (isWatch) {
+            click(By.text(getPermissionControllerString(DENY_BUTTON_TEXT)))
+        } else {
+            click(
+                By.res("com.android.permissioncontroller:id/permission_deny_dont_ask_again_button")
+            )
+        }
+    }
 
     protected fun clickPermissionRequestNoUpgradeAndDontAskAgainButton() {
         if (isAutomotive) {
@@ -431,13 +454,17 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
             val wasGranted = if (isAutomotive) {
                 // Automotive doesn't support one time permissions, and thus
                 // won't show an "Ask every time" message
-                !waitFindObject(By.res(DENY_RADIO_BUTTON)).isChecked
+                !waitFindObject(By.text(
+                        getPermissionControllerString("app_permission_button_deny"))).isChecked
             } else if (isTv) {
                 !(waitFindObject(
                     By.text(getPermissionControllerString(DENY_BUTTON_TEXT))).isChecked ||
                     (!isLegacyApp && hasAskButton(permission) && waitFindObject(
                         By.text(getPermissionControllerString(ASK_BUTTON_TEXT))).isChecked))
             } else {
+                if (isWatch) {
+                    click(By.text("Deny"))
+                }
                 !(waitFindObject(By.res(DENY_RADIO_BUTTON)).isChecked ||
                     (!isLegacyApp && hasAskButton(permission) &&
                         waitFindObject(By.res(ASK_RADIO_BUTTON)).isChecked))
@@ -448,9 +475,18 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
                     // Automotive doesn't support one time permissions, and thus
                     // won't show an "Ask every time" message
                     when (state) {
-                        PermissionState.ALLOWED -> By.res(ALLOW_RADIO_BUTTON)
-                        PermissionState.DENIED -> By.res(DENY_RADIO_BUTTON)
-                        PermissionState.DENIED_WITH_PREJUDICE -> By.res(DENY_RADIO_BUTTON)
+                        PermissionState.ALLOWED ->
+                            if (showsForegroundOnlyButton(permission)) {
+                                By.text(getPermissionControllerString(
+                                        "app_permission_button_allow_foreground"))
+                            } else {
+                                By.text(getPermissionControllerString(
+                                                "app_permission_button_allow"))
+                            }
+                        PermissionState.DENIED -> By.text(
+                                getPermissionControllerString("app_permission_button_deny"))
+                        PermissionState.DENIED_WITH_PREJUDICE -> By.text(
+                                getPermissionControllerString("app_permission_button_deny"))
                     }
                 } else if (isTv) {
                     when (state) {
@@ -510,7 +546,9 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
                     null
                 )
                 val confirmText = resources.getString(confirmTextRes)
-                click(byTextStartsWithCaseInsensitive(confirmText))
+                if (!isWatch) {
+                    click(byTextStartsWithCaseInsensitive(confirmText))
+                }
             }
             pressBack()
         }

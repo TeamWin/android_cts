@@ -18,7 +18,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="android.provider.cts.simphonebook">
 
-    <uses-sdk android:targetSdkVersion="S" />
+    <uses-sdk android:targetSdkVersion="31" />
 
     <uses-permission android:name="android.permission.READ_CONTACTS" />
     <uses-permission android:name="android.permission.WRITE_CONTACTS" />

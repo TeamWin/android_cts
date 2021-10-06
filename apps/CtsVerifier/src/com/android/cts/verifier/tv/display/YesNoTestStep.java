@@ -16,21 +16,24 @@
 
 package com.android.cts.verifier.tv.display;
 
+import android.app.Activity;
 import android.view.View;
 
-import com.android.cts.verifier.R;
 import com.android.cts.verifier.tv.TestStepBase;
 import com.android.cts.verifier.tv.TvAppVerifierActivity;
+
+import java.util.List;
 
 /**
  * Encapsulates the logic of a test step, which displays human instructions for a manual test and
  * two buttons - Yes and No, which respectively set the test in passing and failing state.
  */
-public abstract class YesNoTestStep extends TestStepBase {
-    private View positiveButton;
-    private View negativeButton;
-    private final int positiveButtonText;
-    private final int negativeButtonText;
+public class YesNoTestStep extends TestStepBase {
+    private View mPositiveButton;
+    private View mNegativeButton;
+    private final int mPositiveButtonText;
+    private final int mNegativeButtonText;
+
     /**
      * Constructs a test step containing human instructions for a manual test and two buttons - Yes
      * and No.
@@ -38,43 +41,54 @@ public abstract class YesNoTestStep extends TestStepBase {
      * @param context The test activity which this test step is part of.
      * @param instructionText The text of the test instruction visible to the user.
      */
-    public YesNoTestStep(TvAppVerifierActivity context, String instructionText, 
+    public YesNoTestStep(Activity context, String instructionText,
             int positiveButtonText, int negativeButtonText) {
         super(context, instructionText);
-        this.positiveButtonText = positiveButtonText;
-        this.negativeButtonText = negativeButtonText;
+        this.mPositiveButtonText = positiveButtonText;
+        this.mNegativeButtonText = negativeButtonText;
     }
 
     @Override
-    public void createUiElements() {
-        super.createUiElements();
-        positiveButton =
-                mContext.createButtonItem(
-                        positiveButtonText,
+    public List<View> createUiElements() {
+        List<View> list = super.createUiElements();
+        mPositiveButton =
+                TvAppVerifierActivity.createButtonItem(
+                        mContext.getLayoutInflater(),
+                        null,
+                        mPositiveButtonText,
+
                         (View view) -> {
                             disableInteractivity();
                             // do nothing so the test will pass
                             done();
                         });
-        negativeButton =
-                mContext.createButtonItem(
-                        negativeButtonText,
+        list.add(mPositiveButton);
+
+        mNegativeButton =
+                TvAppVerifierActivity.createButtonItem(
+                        mContext.getLayoutInflater(),
+                        null,
+                        mNegativeButtonText,
                         (View view) -> {
                             disableInteractivity();
                             getAsserter().fail();
                             done();
                         });
+        list.add(mNegativeButton);
+
+        return list;
     }
 
     @Override
     public void enableInteractivity() {
-        TvAppVerifierActivity.setButtonEnabled(positiveButton, true);
-        TvAppVerifierActivity.setButtonEnabled(negativeButton, true);
+        TvAppVerifierActivity.setButtonEnabled(mPositiveButton, true);
+        TvAppVerifierActivity.setButtonEnabled(mNegativeButton, true);
+        mPositiveButton.requestFocus();
     }
 
     @Override
     public void disableInteractivity() {
-        TvAppVerifierActivity.setButtonEnabled(positiveButton, false);
-        TvAppVerifierActivity.setButtonEnabled(negativeButton, false);
+        TvAppVerifierActivity.setButtonEnabled(mPositiveButton, false);
+        TvAppVerifierActivity.setButtonEnabled(mNegativeButton, false);
     }
 }

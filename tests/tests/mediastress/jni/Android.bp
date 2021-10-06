@@ -28,7 +28,9 @@ cc_library_shared {
         "libOpenMAXAL",
     ],
     stl: "none",
-    sdk_version: "current",
+    // this test suite will run on sdk 29 as part of MTS, make sure it's compatible
+    // (revisit if/when we add features to this library that require newer sdk)
+    sdk_version: "29",
     cflags: [
         "-Wall",
         "-Werror",

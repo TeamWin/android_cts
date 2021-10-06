@@ -27,6 +27,7 @@ android_test_helper_app {
     srcs: [
         "src/**/*.java"
     ],
+    v4_signature: true,
     // tag this module as a cts test artifact
     test_suites: [
         "cts",

@@ -16,11 +16,14 @@
 
 package com.android.cts.devicepolicy;
 
-import static org.junit.Assert.fail;
+import static com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.FEATURE_MANAGED_USERS;
 
+import com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.RequiresAdditionalFeatures;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil;
 
+// We need multi user to be supported in order to create a profile of the user owner.
+@RequiresAdditionalFeatures({FEATURE_MANAGED_USERS})
 public abstract class BaseManagedProfileTest extends BaseDevicePolicyTest {
     protected static final String MANAGED_PROFILE_PKG = "com.android.cts.managedprofile";
     protected static final String INTENT_SENDER_PKG = "com.android.cts.intent.sender";
@@ -46,18 +49,13 @@ public abstract class BaseManagedProfileTest extends BaseDevicePolicyTest {
     protected int mParentUserId;
     // ID of the profile we'll create. This will always be a profile of the parent.
     protected int mProfileUserId;
-    protected boolean mHasNfcFeature;
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
 
-        // We need multi user to be supported in order to create a profile of the user owner.
-        mHasFeature = mHasFeature && hasDeviceFeature("android.software.managed_users");
-        mHasNfcFeature = hasDeviceFeature("android.hardware.nfc")
-                && hasDeviceFeature("android.sofware.nfc.beam");
+        if (mFeaturesCheckerRule.hasRequiredFeatures()) {
 
-        if (mHasFeature) {
             removeTestUsers();
             mParentUserId = mPrimaryUserId;
             mProfileUserId = createManagedProfile(mParentUserId);
@@ -75,19 +73,18 @@ public abstract class BaseManagedProfileTest extends BaseDevicePolicyTest {
 
     @Override
     public void tearDown() throws Exception {
-        if (mHasFeature) {
-            removeUser(mProfileUserId);
-            getDevice().uninstallPackage(MANAGED_PROFILE_PKG);
-            getDevice().uninstallPackage(INTENT_SENDER_PKG);
-            getDevice().uninstallPackage(INTENT_RECEIVER_PKG);
-            getDevice().uninstallPackage(NOTIFICATION_PKG);
-            getDevice().uninstallPackage(TEST_APP_1_APK);
-            getDevice().uninstallPackage(TEST_APP_2_APK);
-            getDevice().uninstallPackage(TEST_APP_3_APK);
-            getDevice().uninstallPackage(TEST_APP_4_APK);
-            getDevice().uninstallPackage(SHARING_APP_1_APK);
-            getDevice().uninstallPackage(SHARING_APP_2_APK);
-        }
+        removeUser(mProfileUserId);
+        getDevice().uninstallPackage(MANAGED_PROFILE_PKG);
+        getDevice().uninstallPackage(INTENT_SENDER_PKG);
+        getDevice().uninstallPackage(INTENT_RECEIVER_PKG);
+        getDevice().uninstallPackage(NOTIFICATION_PKG);
+        getDevice().uninstallPackage(TEST_APP_1_APK);
+        getDevice().uninstallPackage(TEST_APP_2_APK);
+        getDevice().uninstallPackage(TEST_APP_3_APK);
+        getDevice().uninstallPackage(TEST_APP_4_APK);
+        getDevice().uninstallPackage(SHARING_APP_1_APK);
+        getDevice().uninstallPackage(SHARING_APP_2_APK);
+
         super.tearDown();
     }
 

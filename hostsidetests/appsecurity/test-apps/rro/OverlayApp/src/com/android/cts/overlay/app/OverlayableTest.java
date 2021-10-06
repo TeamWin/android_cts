@@ -16,6 +16,7 @@
 package com.android.cts.overlay.app;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
@@ -25,6 +26,7 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import java.io.InputStreamReader;
+import java.util.Objects;
 import java.util.concurrent.Executor;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
@@ -109,6 +111,19 @@ public class OverlayableTest {
 
         result = context.getResources().getString(R.string.other_policy_public);
         assertEquals(NOT_OVERLAID, result);
+    }
+
+    @Test
+    public void testOverlayCodeNotLoaded() throws Exception {
+        assertOverlayEnabled(POLICY_ALL_PACKAGE);
+        Context context = getTargetContext();
+
+        String result = context.getResources().getString(R.string.policy_public);
+        assertEquals(OVERLAID, result);
+
+        final String overlayClassName = "com.android.cts.overlay.all.InjectedOverlay";
+        assertThrows(ClassNotFoundException.class, () -> Objects.requireNonNull(
+                getClass().getClassLoader()).loadClass(overlayClassName));
     }
 
     @Test

@@ -25,6 +25,8 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertThat;
 
+import android.app.AppOpsManager;
+import android.app.UiAutomation;
 import android.app.UiModeManager;
 import android.content.Context;
 import android.content.Intent;
@@ -39,6 +41,8 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.RemoteException;
+import android.os.Process;
+import android.os.UserHandle;
 import android.provider.CallLog;
 import android.telecom.Call;
 import android.telecom.CallAudioState;
@@ -53,12 +57,15 @@ import android.telecom.VideoProfile;
 import android.telecom.cts.MockInCallService.InCallServiceCallbacks;
 import android.telecom.cts.carmodetestapp.ICtsCarModeInCallServiceControl;
 import android.telephony.PhoneStateListener;
+import android.telephony.TelephonyCallback;
 import android.telephony.TelephonyManager;
 import android.telephony.emergency.EmergencyNumber;
 import android.test.InstrumentationTestCase;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.Pair;
+
+import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ShellIdentityUtils;
 
@@ -71,6 +78,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * Base class for Telecom CTS tests that require a {@link CtsConnectionService} and
@@ -87,6 +95,9 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
 
     public static final String TEST_EMERGENCY_NUMBER = "5553637";
     public static final Uri TEST_EMERGENCY_URI = Uri.fromParts("tel", TEST_EMERGENCY_NUMBER, null);
+    public static final String PKG_NAME = "android.telecom.cts";
+    public static final String PERMISSION_PROCESS_OUTGOING_CALLS =
+            "android.permission.PROCESS_OUTGOING_CALLS";
 
     Context mContext;
     TelecomManager mTelecomManager;
@@ -119,9 +130,10 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
     MockConnectionService connectionService = null;
     boolean mIsEmergencyCallingSetup = false;
 
-    HandlerThread mPhoneStateListenerThread;
-    Handler mPhoneStateListenerHandler;
-    TestPhoneStateListener mPhoneStateListener;
+    HandlerThread mTelephonyCallbackThread;
+    Handler mTelephonyCallbackHandler;
+    TestTelephonyCallback mTelephonyCallback;
+    TestCallStateListener mTestCallStateListener;
     Handler mHandler;
 
     /**
@@ -181,20 +193,46 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         );
     }
 
-    static class TestPhoneStateListener extends PhoneStateListener {
+    static class TestCallStateListener extends TelephonyCallback
+            implements TelephonyCallback.CallStateListener {
+
+        private CountDownLatch mCountDownLatch = new CountDownLatch(1);
+        private int mLastState = -1;
+
+        @Override
+        public void onCallStateChanged(int state) {
+            Log.i(TAG, "onCallStateChanged: state=" + state);
+            mLastState = state;
+            mCountDownLatch.countDown();
+            mCountDownLatch = new CountDownLatch(1);
+        }
+
+        public CountDownLatch getCountDownLatch() {
+            return mCountDownLatch;
+        }
+
+        public int getLastState() {
+            return mLastState;
+        }
+    }
+
+    static class TestTelephonyCallback extends TelephonyCallback implements
+            TelephonyCallback.CallStateListener,
+            TelephonyCallback.OutgoingEmergencyCallListener,
+            TelephonyCallback.EmergencyNumberListListener {
         /** Semaphore released for every callback invocation. */
         public Semaphore mCallbackSemaphore = new Semaphore(0);
 
-        List<Pair<Integer, String>> mCallStates = new ArrayList<>();
+        List<Integer> mCallStates = new ArrayList<>();
         EmergencyNumber mLastOutgoingEmergencyNumber;
 
         LinkedBlockingQueue<Map<Integer, List<EmergencyNumber>>> mEmergencyNumberListQueue =
                new LinkedBlockingQueue<>(2);
 
         @Override
-        public void onCallStateChanged(int state, String number) {
-            Log.i(TAG, "onCallStateChanged: state=" + state + ", number=" + number);
-            mCallStates.add(Pair.create(state, number));
+        public void onCallStateChanged(int state) {
+            Log.i(TAG, "onCallStateChanged: state=" + state);
+            mCallStates.add(state);
             mCallbackSemaphore.release();
         }
 
@@ -235,15 +273,18 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         // mode in any of the tests would cause subsequent test failures.
         // For Watch, UI_MODE shouldn't be normal mode.
         mUiModeManager = mContext.getSystemService(UiModeManager.class);
-        if (mUiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_CAR) {
-            mUiModeManager.disableCarMode(0);
-        }
+        TestUtils.executeShellCommand(getInstrumentation(), "telecom reset-car-mode");
 
-        if  (mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH)) {
+        if (mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH)) {
              assertUiMode(Configuration.UI_MODE_TYPE_WATCH);
         } else {
              assertUiMode(Configuration.UI_MODE_TYPE_NORMAL);
         }
+
+        AppOpsManager aom = mContext.getSystemService(AppOpsManager.class);
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(aom,
+                (appOpsMan) -> appOpsMan.setUidMode(AppOpsManager.OPSTR_PROCESS_OUTGOING_CALLS,
+                Process.myUid(), AppOpsManager.MODE_ALLOWED));
 
         mTelecomManager = (TelecomManager) mContext.getSystemService(Context.TELECOM_SERVICE);
         mTelephonyManager = (TelephonyManager) mContext.getSystemService(Context.TELEPHONY_SERVICE);
@@ -252,27 +293,26 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         TestUtils.setDefaultDialer(getInstrumentation(), PACKAGE);
         setupCallbacks();
 
-        // PhoneStateListener's public API registers the listener on the calling thread, which must
-        // be a looper thread. So we need to create and register the listener in a custom looper
-        // thread.
-        mPhoneStateListenerThread = new HandlerThread("PhoneStateListenerThread");
-        mPhoneStateListenerThread.start();
-        mPhoneStateListenerHandler = new Handler(mPhoneStateListenerThread.getLooper());
-        final CountDownLatch registeredLatch = new CountDownLatch(1);
-        mPhoneStateListenerHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                mPhoneStateListener = new TestPhoneStateListener();
-                ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
-                    (tm) -> tm.listen(mPhoneStateListener,
-                        PhoneStateListener.LISTEN_CALL_STATE
-                                | PhoneStateListener.LISTEN_OUTGOING_EMERGENCY_CALL
-                                | PhoneStateListener.LISTEN_EMERGENCY_NUMBER_LIST));
-                registeredLatch.countDown();
-            }
-        });
-        registeredLatch.await(
+       // Register a call state listener.
+        mTestCallStateListener = new TestCallStateListener();
+        CountDownLatch latch = mTestCallStateListener.getCountDownLatch();
+        mTelephonyManager.registerTelephonyCallback(r -> r.run(), mTestCallStateListener);
+        latch.await(
                 TestUtils.WAIT_FOR_PHONE_STATE_LISTENER_REGISTERED_TIMEOUT_S, TimeUnit.SECONDS);
+        // Create a new thread for the telephony callback.
+        mTelephonyCallbackThread = new HandlerThread("PhoneStateListenerThread");
+        mTelephonyCallbackThread.start();
+        mTelephonyCallbackHandler = new Handler(mTelephonyCallbackThread.getLooper());
+
+        mTelephonyCallback = new TestTelephonyCallback();
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                (tm) -> tm.registerTelephonyCallback(
+                        mTelephonyCallbackHandler::post,
+                        mTelephonyCallback));
+        UiAutomation uiAutomation =
+                InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        uiAutomation.grantRuntimePermissionAsUser(PKG_NAME, PERMISSION_PROCESS_OUTGOING_CALLS,
+                UserHandle.CURRENT);
     }
 
     @Override
@@ -282,17 +322,10 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
             return;
         }
 
-        final CountDownLatch unregisteredLatch = new CountDownLatch(1);
-        mPhoneStateListenerHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                mTelephonyManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_NONE);
-                unregisteredLatch.countDown();
-            }
-        });
-        unregisteredLatch.await(
-                TestUtils.WAIT_FOR_PHONE_STATE_LISTENER_REGISTERED_TIMEOUT_S, TimeUnit.SECONDS);
-        mPhoneStateListenerThread.quit();
+        mTelephonyManager.unregisterTelephonyCallback(mTestCallStateListener);
+
+        mTelephonyManager.unregisterTelephonyCallback(mTelephonyCallback);
+        mTelephonyCallbackThread.quit();
 
         cleanupCalls();
         if (!TextUtils.isEmpty(mPreviousDefaultDialer)) {
@@ -309,6 +342,10 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
             TestUtils.executeShellCommand(getInstrumentation(), "telecom cleanup-stuck-calls");
             throw t;
         }
+        UiAutomation uiAutomation =
+                InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        uiAutomation.revokeRuntimePermissionAsUser(PKG_NAME, PERMISSION_PROCESS_OUTGOING_CALLS,
+                UserHandle.CURRENT);
     }
 
     protected PhoneAccount setupConnectionService(MockConnectionService connectionService,
@@ -547,13 +584,9 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         extras.putParcelable(TelecomManager.EXTRA_INCOMING_CALL_ADDRESS, incomingHandle);
         mTelecomManager.addNewIncomingCall(TestUtils.TEST_PHONE_ACCOUNT_HANDLE, extras);
 
-        try {
-            if (!connectionService.lock.tryAcquire(TestUtils.WAIT_FOR_CALL_ADDED_TIMEOUT_S,
-                    TimeUnit.SECONDS)) {
-                fail("Incoming Connection failure indication did not get called.");
-            }
-        } catch (InterruptedException e) {
-            fail("InterruptedException while waiting for incoming call failure");
+        if (!connectionService.waitForEvent(
+                MockConnectionService.EVENT_CONNECTION_SERVICE_CREATE_CONNECTION_FAILED)) {
+            fail("Incoming Connection failure indication did not get called.");
         }
 
         assertEquals("ConnectionService did not receive failed connection",
@@ -764,20 +797,32 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
     }
 
     MockConnection verifyConnectionForOutgoingCall(Uri address) {
-        try {
-            if (!connectionService.lock.tryAcquire(TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
-                    TimeUnit.MILLISECONDS)) {
-                fail("No outgoing call connection requested by Telecom");
-            }
-        } catch (InterruptedException e) {
-            Log.i(TAG, "Test interrupted!");
+        if (!connectionService.waitForEvent(
+                MockConnectionService.EVENT_CONNECTION_SERVICE_CREATE_CONNECTION)) {
+            fail("No outgoing call connection requested by Telecom");
         }
-
         assertThat("Telecom should create outgoing connection for outgoing call",
                 connectionService.outgoingConnections.size(), not(equalTo(0)));
+
+        // There is a subtle race condition in ConnectionService.  When onCreateIncomingConnection
+        // or onCreateOutgoingConnection completes, ConnectionService then adds the connection to
+        // the list of tracked connections.  It's very possible for the lock to be released and
+        // the connection to have not yet been added to the connection list yet.
+        waitUntilConditionIsTrueOrTimeout(new Condition() {
+                                              @Override
+                                              public Object expected() {
+                                                  return true;
+                                              }
+
+                                              @Override
+                                              public Object actual() {
+                                                  return getConnection(address) != null;
+                                              }
+                                          },
+                WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
+                "Expected call from number " + address);
         Connection connection = getConnection(address);
-        assertNotNull("Could not find outgoing connection in list of active connections.",
-                connection);
+
         if (connection instanceof MockConnection) {
             if (connectionService.outgoingConnections.contains(connection)) {
                 return (MockConnection) connection;
@@ -929,9 +974,15 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         assertConferenceState(conference, Connection.STATE_ACTIVE);
     }
 
+    void verifyCallStateListener(int expectedCallState) throws InterruptedException {
+        mTestCallStateListener.getCountDownLatch().await(
+                TestUtils.WAIT_FOR_PHONE_STATE_LISTENER_CALLBACK_TIMEOUT_S, TimeUnit.SECONDS);
+        assertEquals(expectedCallState, mTestCallStateListener.getLastState());
+    }
+
     void verifyPhoneStateListenerCallbacksForCall(int expectedCallState, String expectedNumber)
             throws Exception {
-        assertTrue(mPhoneStateListener.mCallbackSemaphore.tryAcquire(
+        assertTrue(mTelephonyCallback.mCallbackSemaphore.tryAcquire(
                 TestUtils.WAIT_FOR_PHONE_STATE_LISTENER_CALLBACK_TIMEOUT_S, TimeUnit.SECONDS));
         // At this point we can only be sure that we got AN update, but not necessarily the one we
         // are looking for; wait until we see the state we want before verifying further.
@@ -943,12 +994,9 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
 
                                               @Override
                                               public Object actual() {
-                                                  return mPhoneStateListener.mCallStates
+                                                  return mTelephonyCallback.mCallStates
                                                           .stream()
-                                                          .filter(p -> p.first.equals(
-                                                                  expectedCallState)
-                                                                  && p.second.equals(
-                                                                  expectedNumber))
+                                                          .filter(p -> p == expectedCallState)
                                                           .count() > 0;
                                               }
                                           },
@@ -960,9 +1008,9 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         // Get the most recent callback; it is possible that there was an initial state reported due
         // to the fact that TelephonyManager will sometimes give an initial state back to the caller
         // when the listener is registered.
-        Pair<Integer, String> callState = mPhoneStateListener.mCallStates.get(
-                mPhoneStateListener.mCallStates.size() - 1);
-        assertEquals(expectedCallState, (int) callState.first);
+        int callState = mTelephonyCallback.mCallStates.get(
+                mTelephonyCallback.mCallStates.size() - 1);
+        assertEquals(expectedCallState, callState);
         // Note: We do NOT check the phone number here.  Due to changes in how the phone state
         // broadcast is sent, the caller may receive multiple broadcasts, and the number will be
         // present in one or the other.  We waited for a full matching broadcast above so we can
@@ -971,7 +1019,7 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
 
     void verifyPhoneStateListenerCallbacksForEmergencyCall(String expectedNumber)
         throws Exception {
-        assertTrue(mPhoneStateListener.mCallbackSemaphore.tryAcquire(
+        assertTrue(mTelephonyCallback.mCallbackSemaphore.tryAcquire(
             TestUtils.WAIT_FOR_PHONE_STATE_LISTENER_CALLBACK_TIMEOUT_S, TimeUnit.SECONDS));
         // At this point we can only be sure that we got AN update, but not necessarily the one we
         // are looking for; wait until we see the state we want before verifying further.
@@ -983,9 +1031,9 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
 
                                               @Override
                                               public Object actual() {
-                                                  return mPhoneStateListener
+                                                  return mTelephonyCallback
                                                       .mLastOutgoingEmergencyNumber != null
-                                                      && mPhoneStateListener
+                                                      && mTelephonyCallback
                                                       .mLastOutgoingEmergencyNumber.getNumber()
                                                       .equals(expectedNumber);
                                               }
@@ -993,7 +1041,7 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
             WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
             "Expected emergency number: " + expectedNumber);
 
-        assertEquals(mPhoneStateListener.mLastOutgoingEmergencyNumber.getNumber(),
+        assertEquals(mTelephonyCallback.mLastOutgoingEmergencyNumber.getNumber(),
             expectedNumber);
     }
 
@@ -1322,16 +1370,17 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
                 new Condition() {
                     @Override
                     public Object expected() {
-                        return state;
+                        return true;
                     }
 
                     @Override
                     public Object actual() {
-                        return call.getState();
+                        return call.getState() == state && call.getDetails().getState() == state;
                     }
                 },
                 WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
-                "Call: " + call + " should be in state " + state
+                "Expected state: " + state + ", callState=" + call.getState() + ", detailState="
+                    + call.getDetails().getState()
         );
     }
 

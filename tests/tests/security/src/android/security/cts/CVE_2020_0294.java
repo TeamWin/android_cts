@@ -23,7 +23,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -34,7 +34,6 @@ import org.junit.runner.RunWith;
 import static org.junit.Assert.*;
 import static org.junit.Assume.*;
 
-@SecurityTest
 @RunWith(AndroidJUnit4.class)
 public class CVE_2020_0294 {
     private static final String TAG = "CVE_2020_0294";
@@ -43,7 +42,7 @@ public class CVE_2020_0294 {
      * b/170661753
      */
     @Test
-    @SecurityTest(minPatchLevel = "2020-12")
+    @AsbSecurityTest(cveBugId = 154915372)
     public void testPocCVE_2020_0294() throws Exception {
         Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
         ActivityManager activityManager = (ActivityManager) instrumentation.getContext()

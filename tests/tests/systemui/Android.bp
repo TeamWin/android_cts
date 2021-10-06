@@ -23,14 +23,27 @@ android_test {
         "cts",
         "general-tests",
     ],
-    libs: ["android.test.runner"],
+
+    libs: [
+        "android.test.runner",
+    ],
+
     static_libs: [
+        "kotlin-stdlib",
+        "kotlin-test",
+        "systemui-cts-common",
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
+        "CtsMockInputMethodLib",
         "androidx.test.rules",
+        "androidx.test.ext.junit",
+        "androidx.test.uiautomator",
         "cts-wm-util",
         "ub-uiautomator",
     ],
-    srcs: ["src/**/*.java"],
+    srcs: [
+        "src/**/*.java",
+        "src/**/*.kt",
+    ],
     platform_apis: true,
 }

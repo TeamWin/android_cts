@@ -65,12 +65,11 @@ import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.graphics.fonts.FontStyle;
 import android.icu.lang.UCharacter;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.LocaleList;
-import android.os.Looper;
 import android.os.Parcelable;
 import android.os.SystemClock;
 import android.text.Editable;
@@ -83,6 +82,7 @@ import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
+import android.text.StaticLayout;
 import android.text.TextDirectionHeuristics;
 import android.text.TextPaint;
 import android.text.TextUtils;
@@ -199,9 +199,10 @@ public class TextViewTest {
         }
     };
     private static final int CLICK_TIMEOUT = ViewConfiguration.getDoubleTapTimeout() + 50;
+    private static final int BOLD_TEXT_ADJUSTMENT =
+            FontStyle.FONT_WEIGHT_BOLD - FontStyle.FONT_WEIGHT_NORMAL;
 
     private CharSequence mTransformedText;
-    private Handler mHandler = new Handler(Looper.getMainLooper());
 
     @Rule
     public ActivityTestRule<TextViewCtsActivity> mActivityRule =
@@ -211,7 +212,7 @@ public class TextViewTest {
     public void setup() {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mActivity = mActivityRule.getActivity();
-        PollingCheck.waitFor(mActivity::hasWindowFocus);
+        PollingCheck.waitFor(TIMEOUT, mActivity::hasWindowFocus);
     }
 
     /**
@@ -320,6 +321,127 @@ public class TextViewTest {
         mActivityRule.runOnUiThread(() -> mTextView.setKeyListener(qwertyKeyListener));
         mInstrumentation.waitForIdleSync();
         assertSame(qwertyKeyListener, mTextView.getKeyListener());
+    }
+
+    @Test
+    public void testFontWeightAdjustment_forceBoldTextEnabled_textIsBolded() throws Throwable {
+        mActivityRule.runOnUiThread(() -> mTextView = findTextView(R.id.textview_text));
+        mInstrumentation.waitForIdleSync();
+
+        assertEquals(FontStyle.FONT_WEIGHT_NORMAL, mTextView.getTypeface().getWeight());
+
+        Configuration cf = new Configuration();
+        cf.fontWeightAdjustment = BOLD_TEXT_ADJUSTMENT;
+        mActivityRule.runOnUiThread(() -> mTextView.dispatchConfigurationChanged(cf));
+        mInstrumentation.waitForIdleSync();
+
+        Typeface forceBoldedPaintTf = mTextView.getPaint().getTypeface();
+        assertEquals(FontStyle.FONT_WEIGHT_BOLD, forceBoldedPaintTf.getWeight());
+        assertEquals(FontStyle.FONT_WEIGHT_NORMAL, mTextView.getTypeface().getWeight());
+    }
+
+    @Test
+    public void testFontWeightAdjustment_forceBoldTextDisabled_textIsUnbolded() throws Throwable {
+        Configuration cf = new Configuration();
+        cf.fontWeightAdjustment = BOLD_TEXT_ADJUSTMENT;
+        mActivityRule.runOnUiThread(() -> {
+            mTextView = findTextView(R.id.textview_text);
+            mTextView.dispatchConfigurationChanged(cf);
+            cf.fontWeightAdjustment = 0;
+            mTextView.dispatchConfigurationChanged(cf);
+        });
+        mInstrumentation.waitForIdleSync();
+
+        Typeface forceUnboldedPaintTf = mTextView.getPaint().getTypeface();
+        assertEquals(FontStyle.FONT_WEIGHT_NORMAL, forceUnboldedPaintTf.getWeight());
+        assertEquals(FontStyle.FONT_WEIGHT_NORMAL, mTextView.getTypeface().getWeight());
+    }
+
+    @Test
+    public void testFontWeightAdjustment_forceBoldTextEnabled_originalTypefaceKeptWhenEnabled()
+            throws Throwable {
+        mActivityRule.runOnUiThread(() -> {
+            mTextView = findTextView(R.id.textview_text);
+            Configuration cf = new Configuration();
+            cf.fontWeightAdjustment = BOLD_TEXT_ADJUSTMENT;
+            mTextView.dispatchConfigurationChanged(cf);
+            mTextView.setTypeface(Typeface.MONOSPACE);
+        });
+        mInstrumentation.waitForIdleSync();
+
+        assertEquals(Typeface.MONOSPACE, mTextView.getTypeface());
+
+        Typeface forceBoldedPaintTf = mTextView.getPaint().getTypeface();
+        assertTrue(forceBoldedPaintTf.isBold());
+        assertEquals(Typeface.create(Typeface.MONOSPACE,
+                FontStyle.FONT_WEIGHT_BOLD, false), forceBoldedPaintTf);
+    }
+
+
+    @Test
+    public void testFontWeightAdjustment_forceBoldTextDisabled_originalTypefaceIsKept()
+            throws Throwable {
+        mActivityRule.runOnUiThread(() -> {
+            mTextView = findTextView(R.id.textview_text);
+            Configuration cf = new Configuration();
+            cf.fontWeightAdjustment = 0;
+            mTextView.dispatchConfigurationChanged(cf);
+            mTextView.setTypeface(Typeface.MONOSPACE);
+        });
+        mInstrumentation.waitForIdleSync();
+
+        assertEquals(Typeface.MONOSPACE, mTextView.getTypeface());
+        assertEquals(Typeface.MONOSPACE, mTextView.getPaint().getTypeface());
+    }
+
+    @Test
+    public void testFontWeightAdjustment_forceBoldTextEnabled_boldTypefaceIsBolded()
+            throws Throwable {
+        Typeface originalTypeface = Typeface.create(Typeface.MONOSPACE, Typeface.BOLD);
+        mActivityRule.runOnUiThread(() -> {
+            mTextView = findTextView(R.id.textview_text);
+            Configuration cf = new Configuration();
+            cf.fontWeightAdjustment = BOLD_TEXT_ADJUSTMENT;
+            mTextView.dispatchConfigurationChanged(cf);
+            mTextView.setTypeface(originalTypeface);
+        });
+        mInstrumentation.waitForIdleSync();
+
+        assertEquals(originalTypeface, mTextView.getTypeface());
+        assertEquals(FontStyle.FONT_WEIGHT_MAX,
+                mTextView.getPaint().getTypeface().getWeight());
+    }
+
+    @Test
+    public void testFontWeightAdjustment_adjustmentIsNegative_fontWeightIsLower() throws Throwable {
+        mActivityRule.runOnUiThread(() -> {
+            mTextView = findTextView(R.id.textview_text);
+            Configuration cf = new Configuration();
+            cf.fontWeightAdjustment = -200;
+            mTextView.dispatchConfigurationChanged(cf);
+            mTextView.setTypeface(Typeface.MONOSPACE);
+        });
+        mInstrumentation.waitForIdleSync();
+
+        assertEquals(Typeface.MONOSPACE, mTextView.getTypeface());
+        assertEquals(200, mTextView.getPaint().getTypeface().getWeight());
+    }
+
+    @Test
+    public void testFontWeightAdjustment_adjustmentIsNegative_fontWeightIsMinimum()
+            throws Throwable {
+        mActivityRule.runOnUiThread(() -> {
+            mTextView = findTextView(R.id.textview_text);
+            Configuration cf = new Configuration();
+            cf.fontWeightAdjustment = -500;
+            mTextView.dispatchConfigurationChanged(cf);
+            mTextView.setTypeface(Typeface.MONOSPACE);
+        });
+        mInstrumentation.waitForIdleSync();
+
+        assertEquals(Typeface.MONOSPACE, mTextView.getTypeface());
+        assertEquals(FontStyle.FONT_WEIGHT_MIN,
+                mTextView.getPaint().getTypeface().getWeight());
     }
 
     @Test
@@ -3251,6 +3373,23 @@ public class TextViewTest {
 
     @UiThreadTest
     @Test
+    public void setSetImeConsumesInput() {
+        InputConnection input = initTextViewForSimulatedIme();
+        mTextView.setCursorVisible(true);
+        assertTrue(mTextView.isCursorVisible());
+
+        mTextView.setImeConsumesInput(true);
+        assertFalse(mTextView.isCursorVisible());
+
+        mTextView.setCursorVisible(true);
+        assertFalse(mTextView.isCursorVisible());
+
+        input.closeConnection();
+        assertTrue(mTextView.isCursorVisible());
+    }
+
+    @UiThreadTest
+    @Test
     public void testPerformLongClick() {
         mTextView = findTextView(R.id.textview_text);
         mTextView.setText("This is content");
@@ -4832,6 +4971,11 @@ public class TextViewTest {
     public void testSetLineHeight() {
         mTextView = new TextView(mActivity);
         mTextView.setText("This is some random text");
+
+        // The line height of RobotoFont is (1900 + 500) / 2048 em.
+        // Not to accidentally divide the line height into half, use the small text size.
+        mTextView.setTextSize(10f);
+
         final float lineSpacingExtra = 50;
         final float lineSpacingMultiplier = 0.2f;
         mTextView.setLineSpacing(lineSpacingExtra, lineSpacingMultiplier);
@@ -8573,6 +8717,27 @@ public class TextViewTest {
         textView.setTextDirection(View.TEXT_DIRECTION_LOCALE);
 
         assertEquals(TextDirectionHeuristics.LOCALE, textView.getTextDirectionHeuristic());
+    }
+
+    @Test
+    public void measureConsistency() {
+        String text = "12\n34";
+        TextView textView = new TextView(mActivity);
+        textView.setTextSize(TypedValue.COMPLEX_UNIT_PX, 100);
+        textView.setText(text);
+
+        int width = (int) Math.ceil(Layout.getDesiredWidth(text, textView.getPaint()));
+        int height = StaticLayout.Builder.obtain(text, 0, text.length(),
+                textView.getPaint(), width).build().getHeight();
+        // Reserve enough width for the text.
+        int wMeasureSpec = View.MeasureSpec.makeMeasureSpec(width * 2, View.MeasureSpec.AT_MOST);
+        int hMeasureSpec = View.MeasureSpec.makeMeasureSpec(height * 2, View.MeasureSpec.AT_MOST);
+
+        textView.measure(wMeasureSpec, hMeasureSpec);
+        int measuredWidth = textView.getMeasuredWidth();
+
+        textView.measure(wMeasureSpec, hMeasureSpec);
+        assertEquals(measuredWidth, textView.getMeasuredWidth());
     }
 
     private void initializeTextForSmartSelection(CharSequence text) throws Throwable {

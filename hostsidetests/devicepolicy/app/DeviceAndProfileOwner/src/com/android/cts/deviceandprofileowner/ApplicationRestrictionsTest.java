@@ -112,7 +112,7 @@ public class ApplicationRestrictionsTest extends BaseDeviceAdminTest {
             fail("Expected SecurityException not thrown");
         } catch (SecurityException expected) {
             MoreAsserts.assertContainsRegex(
-                    "Caller with uid \\d+ is not a delegate of scope delegation-app-restrictions.",
+                    "Calling identity is not authorized",
                     expected.getMessage());
         }
         try {
@@ -120,7 +120,7 @@ public class ApplicationRestrictionsTest extends BaseDeviceAdminTest {
             fail("Expected SecurityException not thrown");
         } catch (SecurityException expected) {
             MoreAsserts.assertContainsRegex(
-                    "Caller with uid \\d+ is not a delegate of scope delegation-app-restrictions.",
+                    "Calling identity is not authorized",
                     expected.getMessage());
         }
     }

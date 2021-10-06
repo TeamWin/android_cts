@@ -24,7 +24,6 @@ android_test_helper_app {
         "compatibility-device-util-axt",
         "CtsDynamicMimeCommon",
         "hamcrest-library",
-        "android-support-test",
         "androidx.test.uiautomator_uiautomator",
     ],
     srcs: ["src/**/*.java"],

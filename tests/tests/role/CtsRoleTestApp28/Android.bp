@@ -16,9 +16,10 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-android_test {
+android_test_helper_app {
     name: "CtsRoleTestApp28",
-    sdk_version: "test_current",
+    min_sdk_version: "28",
+    target_sdk_version: "28",
 
     srcs: [
         "src/**/*.java"

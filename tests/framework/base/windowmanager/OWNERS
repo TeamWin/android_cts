@@ -15,8 +15,6 @@
 # pip
 # Bug template url: https://b.corp.google.com/issues/new?component=316251&template=1018197 = per-file PinnedStackTests.java
 # bubbles
-# Bug template url: https://b.corp.google.com/issues/new?component=555586&template=1210986 = per-file ActivityViewTest.java
-# split-screen
 # Bug template url: https://b.corp.google.com/issues/new?component=928697&template=1490890 = per-file MultiWindowTests.java, ReplaceWindowTests.java
 # app-compat
 # Bug template url: https://b.corp.google.com/issues/new?component=970984&template=1516678 = per-file *Compat*, DeprecatedTargetSdkTest.java, DisplaySizeTest.java, PrereleaseSdkTest.java

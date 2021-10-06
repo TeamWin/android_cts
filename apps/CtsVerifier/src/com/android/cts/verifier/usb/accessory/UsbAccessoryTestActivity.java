@@ -23,6 +23,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.hardware.usb.UsbAccessory;
 import android.hardware.usb.UsbManager;
 import android.os.AsyncTask;
@@ -49,6 +53,8 @@ import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Random;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Guide the user to run test for the USB accessory interface.
@@ -62,6 +68,11 @@ public class UsbAccessoryTestActivity extends PassFailButtons.Activity implement
 
     private TextView mStatus;
     private ProgressBar mProgress;
+
+    private BroadcastReceiver mUsbAccessoryHandshakeReceiver;
+
+    private Boolean mAccessoryStart = false;
+    private CompletableFuture<Void> mAccessoryHandshakeIntent = new CompletableFuture<>();
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -78,12 +89,30 @@ public class UsbAccessoryTestActivity extends PassFailButtons.Activity implement
         getPassButton().setEnabled(false);
 
         AccessoryAttachmentHandler.addObserver(this);
+
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(UsbManager.ACTION_USB_ACCESSORY_HANDSHAKE);
+
+        mUsbAccessoryHandshakeReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                synchronized (UsbAccessoryTestActivity.this) {
+                    mAccessoryStart = intent.getBooleanExtra(
+                            UsbManager.EXTRA_ACCESSORY_START, false);
+                    mAccessoryHandshakeIntent.complete(null);
+                }
+            }
+        };
+
+        registerReceiver(mUsbAccessoryHandshakeReceiver, filter);
     }
 
     @Override
     public void onAttached(UsbAccessory accessory) {
         mStatus.setText(R.string.usb_accessory_test_step2);
         mProgress.setVisibility(View.VISIBLE);
+
+        final long accessroyStarTime = 3 * 1000;
 
         AccessoryAttachmentHandler.removeObserver(this);
 
@@ -243,6 +272,15 @@ public class UsbAccessoryTestActivity extends PassFailButtons.Activity implement
                                     ResultUnit.KBPS);
                             Log.i(LOG_TAG, "Read data transfer speed is " + speedKBPS + "KBPS");
 
+                            nextTest(is, os, "Receive USB_ACCESSORY_HANDSHAKE intent");
+
+                            mAccessoryHandshakeIntent.get(accessroyStarTime,
+                                    TimeUnit.MILLISECONDS);
+                            assertTrue(mAccessoryStart);
+
+                            unregisterReceiver(mUsbAccessoryHandshakeReceiver);
+                            mUsbAccessoryHandshakeReceiver = null;
+
                             nextTest(is, os, "done");
                         }
                     }
@@ -299,6 +337,10 @@ public class UsbAccessoryTestActivity extends PassFailButtons.Activity implement
     @Override
     protected void onDestroy() {
         AccessoryAttachmentHandler.removeObserver(this);
+
+        if (mUsbAccessoryHandshakeReceiver != null) {
+            unregisterReceiver(mUsbAccessoryHandshakeReceiver);
+        }
 
         super.onDestroy();
     }

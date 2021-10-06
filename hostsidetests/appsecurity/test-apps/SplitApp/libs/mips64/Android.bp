@@ -12,7 +12,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
+
+// Automatically generated file from build_libs.sh.
+// DO NOT MODIFY THIS FILE.
 
 package {
     // See: http://go/android-license-faq
@@ -33,5 +35,23 @@ android_test_helper_app {
     aaptflags: [
         "--version-code 100",
         "--replace-version",
+    ],
+}
+
+android_test_helper_app {
+    name: "CtsSplitApp_revision12_mips64",
+    defaults: ["cts_support_defaults"],
+    sdk_version: "current",
+    java_resource_dirs: ["raw_revision"],
+    // tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
+    certificate: ":cts-testkey1",
+    aaptflags: [
+        "--version-code 100",
+        "--replace-version",
+        "--revision-code 12",
     ],
 }

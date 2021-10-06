@@ -34,9 +34,10 @@ import android.provider.Settings;
 import android.test.InstrumentationTestCase;
 import android.util.Log;
 
+import com.android.cts.devicepolicy.CameraUtils;
+
 import com.google.common.collect.ImmutableSet;
 
-import java.util.concurrent.TimeUnit;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -184,8 +185,7 @@ public class UserRestrictionsParentTest extends InstrumentationTestCase {
         while (successToOpen != canOpen && retries > 0) {
             retries--;
             Thread.sleep(500);
-            successToOpen = CameraUtils
-                    .blockUntilOpenCamera(mCameraManager, mBackgroundHandler);
+            successToOpen = CameraUtils.blockUntilOpenCamera(mCameraManager, mBackgroundHandler);
         }
         assertEquals(String.format("Timed out waiting the value to change to %b (actual=%b)",
                 canOpen, successToOpen), canOpen, successToOpen);

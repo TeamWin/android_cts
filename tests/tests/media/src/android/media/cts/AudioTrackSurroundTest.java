@@ -173,6 +173,7 @@ public class AudioTrackSurroundTest extends CtsAndroidTestCase {
     // Load a resource into a byte[]
     private byte[] loadRawResourceBytes(@RawRes final String res) throws Exception {
         final String mInpPrefix = WorkDir.getMediaDirString();
+        Preconditions.assertTestFileExists(mInpPrefix + res);
         InputStream is = new FileInputStream(mInpPrefix + res);
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         try (BufferedInputStream bis = new BufferedInputStream(is)) {

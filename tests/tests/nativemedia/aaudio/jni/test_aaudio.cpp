@@ -35,6 +35,10 @@ enum {
     PARAM_PERF_MODE
 };
 
+static const int64_t MAX_LATENCY_RANGE = 200 * NANOS_PER_MILLISECOND;
+static const int64_t MAX_LATENCY = 800 * NANOS_PER_MILLISECOND;
+static const int NUM_TIMESTAMP_QUERY = 3;
+
 static std::string getTestName(const ::testing::TestParamInfo<StreamTestParams>& info) {
     return std::string() + sharingModeToString(std::get<PARAM_SHARING_MODE>(info.param)) +
             "__" + performanceModeToString(std::get<PARAM_PERF_MODE>(info.param));
@@ -129,6 +133,61 @@ class AAudioStreamTest : public ::testing::TestWithParam<StreamTestParams> {
         }
     }
 
+    int64_t getLatency(const int64_t presentationTime, const int64_t presentationPosition) const {
+        const int64_t frameIndex = isOutput() ? AAudioStream_getFramesWritten(stream())
+                                              : AAudioStream_getFramesRead(stream());
+        const int64_t nowNs = getNanoseconds();
+        const int64_t frameIndexDelta = frameIndex - presentationPosition;
+        const int64_t frameTimeDelta = (frameIndexDelta * NANOS_PER_SECOND) / actual().sampleRate;
+        const int64_t framePresentationTime = presentationTime + frameTimeDelta;
+        return isOutput() ? (framePresentationTime - nowNs) : (nowNs - framePresentationTime);
+    }
+
+    void testTimestamp(const int64_t timeoutNanos) {
+        // Record for 1 seconds to ensure we can get a valid timestamp
+        const int32_t frames = actual().sampleRate;
+        mHelper->startStream();
+        int64_t maxLatencyNanos = 0;
+        int64_t minLatencyNanos = NANOS_PER_SECOND;
+        int64_t sumLatencyNanos = 0;
+        int64_t lastPresentationPosition = -1;
+        // Get the maximum and minimum latency within 3 successfully timestamp query.
+        for (int i = 0; i < NUM_TIMESTAMP_QUERY; ++i) {
+            aaudio_result_t result;
+            int maxRetries = 10; // Try 10 times to get timestamp
+            int64_t presentationTime = 0;
+            int64_t presentationPosition = 0;
+            do {
+                processData(frames, timeoutNanos);
+                presentationTime = 0;
+                presentationPosition = 0;
+                result = AAudioStream_getTimestamp(
+                        stream(), CLOCK_MONOTONIC, &presentationPosition, &presentationTime);
+            } while (result != AAUDIO_OK && --maxRetries > 0 &&
+                    lastPresentationPosition == presentationPosition);
+
+            if (result == AAUDIO_OK) {
+                const int64_t latencyNanos = getLatency(presentationTime, presentationPosition);
+                maxLatencyNanos = std::max(maxLatencyNanos, latencyNanos);
+                minLatencyNanos = std::min(minLatencyNanos, latencyNanos);
+                sumLatencyNanos += latencyNanos;
+            }
+
+            EXPECT_EQ(AAUDIO_OK, result);
+            // There should be a new timestamp available in 10s.
+            EXPECT_NE(lastPresentationPosition, presentationPosition);
+            lastPresentationPosition = presentationPosition;
+        }
+        mHelper->stopStream();
+        // The latency must be consistent.
+        EXPECT_LT(maxLatencyNanos - minLatencyNanos, MAX_LATENCY_RANGE);
+        EXPECT_LT(sumLatencyNanos / NUM_TIMESTAMP_QUERY, MAX_LATENCY);
+    }
+
+    virtual bool isOutput() const = 0;
+
+    virtual void processData(const int32_t frames, const int64_t timeoutNanos) = 0;
+
     std::unique_ptr<T> mHelper;
     bool mSetupSuccessful = false;
 
@@ -139,6 +198,9 @@ class AAudioStreamTest : public ::testing::TestWithParam<StreamTestParams> {
 class AAudioInputStreamTest : public AAudioStreamTest<InputStreamBuilderHelper> {
 protected:
     void SetUp() override;
+
+    bool isOutput() const override { return false; }
+    void processData(const int32_t frames, const int64_t timeoutNanos) override;
 
     int32_t mFramesPerRead;
 };
@@ -163,6 +225,18 @@ void AAudioInputStreamTest::SetUp() {
     allocateDataBuffer(mFramesPerRead);
 }
 
+void AAudioInputStreamTest::processData(const int32_t frames, const int64_t timeoutNanos) {
+    // See b/62090113. For legacy path, the device is only known after
+    // the stream has been started.
+    EXPECT_NE(AAUDIO_UNSPECIFIED, AAudioStream_getDeviceId(stream()));
+    for (int32_t framesLeft = frames; framesLeft > 0; ) {
+        aaudio_result_t result = AAudioStream_read(
+                stream(), getDataBuffer(), std::min(frames, mFramesPerRead), timeoutNanos);
+        EXPECT_GT(result, 0);
+        framesLeft -= result;
+    }
+}
+
 TEST_P(AAudioInputStreamTest, testReading) {
     if (!mSetupSuccessful) return;
 
@@ -170,20 +244,19 @@ TEST_P(AAudioInputStreamTest, testReading) {
     EXPECT_EQ(0, AAudioStream_getFramesRead(stream()));
     EXPECT_EQ(0, AAudioStream_getFramesWritten(stream()));
     mHelper->startStream();
-    // See b/62090113. For legacy path, the device is only known after
-    // the stream has been started.
-    ASSERT_NE(AAUDIO_UNSPECIFIED, AAudioStream_getDeviceId(stream()));
-    for (int32_t framesLeft = framesToRecord; framesLeft > 0; ) {
-        aaudio_result_t result = AAudioStream_read(
-                stream(), getDataBuffer(), std::min(framesToRecord, mFramesPerRead),
-                DEFAULT_READ_TIMEOUT);
-        ASSERT_GT(result, 0);
-        framesLeft -= result;
-    }
+    processData(framesToRecord, DEFAULT_READ_TIMEOUT);
     mHelper->stopStream();
     EXPECT_GE(AAudioStream_getFramesRead(stream()), framesToRecord);
     EXPECT_GE(AAudioStream_getFramesWritten(stream()), framesToRecord);
     EXPECT_GE(AAudioStream_getXRunCount(stream()), 0);
+}
+
+TEST_P(AAudioInputStreamTest, testGetTimestamp) {
+    if (!mSetupSuccessful) return;
+
+    // Disabling timestamp test for input stream due to timestamp will not be available on devices
+    // that don't support MMAP. This is caused by b/30557134.
+    // testTimestamp(DEFAULT_READ_TIMEOUT);
 }
 
 TEST_P(AAudioInputStreamTest, testStartReadStop) {
@@ -274,6 +347,9 @@ INSTANTIATE_TEST_CASE_P(SPM, AAudioInputStreamTest,
 class AAudioOutputStreamTest : public AAudioStreamTest<OutputStreamBuilderHelper> {
   protected:
     void SetUp() override;
+
+    bool isOutput() const override { return true; }
+    void processData(const int32_t frames, const int64_t timeoutNanos) override;
 };
 
 void AAudioOutputStreamTest::SetUp() {
@@ -288,6 +364,16 @@ void AAudioOutputStreamTest::SetUp() {
     if (!mSetupSuccessful) return;
 
     allocateDataBuffer(framesPerBurst());
+}
+
+void AAudioOutputStreamTest::processData(const int32_t frames, const int64_t timeoutNanos) {
+    for (int32_t framesLeft = frames; framesLeft > 0;) {
+        aaudio_result_t framesWritten = AAudioStream_write(
+                stream(), getDataBuffer(),
+                std::min(framesPerBurst(), framesLeft), timeoutNanos);
+        EXPECT_GT(framesWritten, 0);
+        framesLeft -= framesWritten;
+    }
 }
 
 TEST_P(AAudioOutputStreamTest, testWriting) {
@@ -452,6 +538,19 @@ TEST_P(AAudioOutputStreamTest, testWriteStopWrite) {
 
         mHelper->stopStream();
     }
+}
+
+TEST_P(AAudioOutputStreamTest, testGetTimestamp) {
+    if (!mSetupSuccessful) return;
+
+    // Calculate a reasonable timeout value.
+    const int32_t timeoutBursts = 20;
+    int64_t timeoutNanos =
+            timeoutBursts * (NANOS_PER_SECOND * framesPerBurst() / actual().sampleRate);
+    // Account for cold start latency.
+    timeoutNanos = std::max(timeoutNanos, 400 * NANOS_PER_MILLISECOND);
+
+    testTimestamp(timeoutNanos);
 }
 
 TEST_P(AAudioOutputStreamTest, testRelease) {

@@ -16,17 +16,17 @@
  -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.jdwptunnel.sampleapp.profileable">
+     package="android.jdwptunnel.sampleapp.profileable">
 
     <application android:debuggable="false">
-        <activity android:name=".ProfileableSampleDeviceActivity" >
+        <activity android:name=".ProfileableSampleDeviceActivity"
+             android:exported="true">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-       <profileable android:shell="true" />
+       <profileable android:shell="true"/>
     </application>
 
 </manifest>
-

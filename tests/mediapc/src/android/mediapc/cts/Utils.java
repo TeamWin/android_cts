@@ -17,15 +17,13 @@
 package android.mediapc.cts;
 
 import android.os.Build;
-import android.os.SystemProperties;
 import android.util.Log;
 
 /**
  * Test utilities.
  */
 /* package private */ class Utils {
-    private static final int sPc = SystemProperties.getInt(
-                "ro.odm.build.media_performance_class", 0);
+    private static final int sPc = Build.VERSION.MEDIA_PERFORMANCE_CLASS;
 
     private static final String TAG = "PerformanceClassTestUtils";
 

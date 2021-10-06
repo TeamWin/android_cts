@@ -43,6 +43,21 @@ android_test_helper_app {
 }
 
 android_test_helper_app {
+    name: "CtsOverlayPolicyAllHasCode",
+    defaults: ["cts_support_defaults"],
+    manifest: "AndroidManifest.xml",
+    sdk_version: "current",
+    certificate: ":cts-testkey1",
+    srcs: [
+        "rro_src/**/*.java",
+    ],
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
+}
+
+android_test_helper_app {
     name: "CtsOverlayPolicyAllNoName",
     defaults: ["cts_support_defaults"],
     manifest: "AndroidManifestNoName.xml",

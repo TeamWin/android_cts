@@ -44,6 +44,7 @@ public class PropertyUtil {
     private static final String VENDOR_API_LEVEL = "ro.board.api_level";
     private static final String VENDOR_FIRST_API_LEVEL = "ro.board.first_api_level";
     private static final String VNDK_VERSION = "ro.vndk.version";
+    private static final String CAMERAX_EXTENSIONS_ENABLED = "ro.camerax.extensions.enabled";
 
     public static final String GOOGLE_SETTINGS_QUERY =
             "content query --uri content://com.google.settings/partner";
@@ -67,6 +68,14 @@ public class PropertyUtil {
             }
         }
         return false;
+    }
+
+    /**
+     * Return the CameraX extensions enabled property value. If the read-only property is unset,
+     * the default value returned will be 'false'.
+     */
+    public static boolean areCameraXExtensionsEnabled() {
+        return getPropertyBoolean(CAMERAX_EXTENSIONS_ENABLED);
     }
 
     /**
@@ -198,6 +207,17 @@ public class PropertyUtil {
         }
         String value = getProperty(property);
         return (value == null) ? false : value.matches(regex);
+    }
+
+    /**
+     * Retrieves the desired boolean property, returning false if not found.
+     */
+    public static boolean getPropertyBoolean(String property) {
+        String value = getProperty(property);
+        if (value == null) {
+            return false;
+        }
+        return Boolean.parseBoolean(value);
     }
 
     /**

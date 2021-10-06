@@ -101,8 +101,8 @@ public class TelephonyCallbackTest {
     @SimActivationState
     private int mVoiceActivationState;
     private boolean mOnAllowedNetworkTypesChangedCalled;
-    private int mAllowedNetworkTypeReason;
-    private long mAllowedNetworkTypeValue;
+    private int mAllowedNetworkTypeReason = -1;
+    private long mAllowedNetworkTypeValue = -1;
     private BarringInfo mBarringInfo;
     private PreciseDataConnectionState mPreciseDataConnectionState;
     private PreciseCallState mPreciseCallState;
@@ -797,7 +797,7 @@ public class TelephonyCallbackTest {
     private class CallStateListener extends TelephonyCallback
             implements TelephonyCallback.CallStateListener {
         @Override
-        public void onCallStateChanged(int state, String incomingNumber) {
+        public void onCallStateChanged(int state) {
             synchronized (mLock) {
                 mOnCallStateChangedCalled = true;
                 mLock.notify();
@@ -813,10 +813,9 @@ public class TelephonyCallbackTest {
         }
         assertFalse(mOnCallStateChangedCalled);
 
-        mHandler.post(() -> {
-            mCallStateCallback = new CallStateListener();
-            registerTelephonyCallback(mCallStateCallback);
-        });
+        mCallStateCallback = new CallStateListener();
+        registerTelephonyCallback(mCallStateCallback);
+
         synchronized (mLock) {
             if (!mOnCallStateChangedCalled) {
                 mLock.wait(WAIT_TIME);
@@ -1324,6 +1323,7 @@ public class TelephonyCallbackTest {
         @Override
         public void onAllowedNetworkTypesChanged(int reason, long allowedNetworkType) {
             synchronized (mLock) {
+                Log.d(TAG, "onAllowedNetworkTypesChanged");
                 mAllowedNetworkTypeReason = reason;
                 mAllowedNetworkTypeValue = allowedNetworkType;
                 mOnAllowedNetworkTypesChangedCalled = true;
@@ -1335,25 +1335,26 @@ public class TelephonyCallbackTest {
 
     @Test
     public void testOnAllowedNetworkTypesChangedByRegisterPhoneStateListener() throws Throwable {
+        if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
+            Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
+            return;
+        }
+        long originalAllowedNetworkTypeUser = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, (tm) -> {
+                    return tm.getAllowedNetworkTypesForReason(
+                            TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_USER);
+                });
         assertFalse(mOnAllowedNetworkTypesChangedCalled);
 
         mHandler.post(() -> {
             mAllowedNetworkTypesCallback = new AllowedNetworkTypesListener();
             registerTelephonyCallbackWithPermission(mAllowedNetworkTypesCallback);
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                    mTelephonyManager,
+                    (tm) -> tm.setAllowedNetworkTypesForReason(
+                            TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_USER,
+                            TelephonyManager.NETWORK_TYPE_BITMASK_NR));
         });
-
-        long originalAllowedNetworkTypeUser = ShellIdentityUtils.invokeMethodWithShellPermissions(
-                mTelephonyManager, (tm) -> {
-                    return tm.getAllowedNetworkTypesForReason(
-                            TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_USER);
-                }
-        );
-
-        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
-                mTelephonyManager,
-                (tm) -> tm.setAllowedNetworkTypesForReason(
-                        TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_USER,
-                        TelephonyManager.NETWORK_TYPE_BITMASK_NR));
 
         synchronized (mLock) {
             if (!mOnAllowedNetworkTypesChangedCalled) {
@@ -1365,8 +1366,7 @@ public class TelephonyCallbackTest {
                 mTelephonyManager, (tm) -> {
                     return tm.getAllowedNetworkTypesForReason(
                             TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_USER);
-                }
-        );
+                });
 
         assertEquals(TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_USER, mAllowedNetworkTypeReason);
         assertEquals(allowedNetworkTypeUser, mAllowedNetworkTypeValue);
@@ -1390,7 +1390,12 @@ public class TelephonyCallbackTest {
         public void onLinkCapacityEstimateChanged(
                 List<LinkCapacityEstimate> linkCapacityEstimateList) {
             synchronized (mLock) {
-                mOnLinkCapacityEstimateChangedCalled = true;
+                int lceType = linkCapacityEstimateList.get(0).getType();
+                if (lceType == LinkCapacityEstimate.LCE_TYPE_COMBINED
+                        || lceType == LinkCapacityEstimate.LCE_TYPE_PRIMARY
+                        || lceType == LinkCapacityEstimate.LCE_TYPE_SECONDARY) {
+                    mOnLinkCapacityEstimateChangedCalled = true;
+                }
                 mLock.notify();
             }
         }
@@ -1420,5 +1425,4 @@ public class TelephonyCallbackTest {
         unRegisterTelephonyCallback(mOnLinkCapacityEstimateChangedCalled,
                 mLinkCapacityEstimateChangedListener);
     }
-
 }

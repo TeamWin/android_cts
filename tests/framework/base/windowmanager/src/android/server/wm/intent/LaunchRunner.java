@@ -46,6 +46,7 @@ import android.view.Display;
 import com.google.common.collect.Lists;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Launch runner is an interpreter for a {@link LaunchSequence} command object.
@@ -267,6 +268,11 @@ public class LaunchRunner {
 
         if (activity == null) {
             return activityContext;
+        } else if (startForResult && activityContext == activity) {
+            // The result may have been sent back to caller activity and forced the caller activity
+            // to be resumed again, before the started activity actually resumed. Just wait for idle
+            // for that case.
+            getInstrumentation().waitForIdleSync();
         } else {
             waitAndAssertActivityLaunched(activity, intent);
         }
@@ -322,6 +328,10 @@ public class LaunchRunner {
 
         List<WindowManagerState.ActivityTask> endStateTasks =
                 mTestBase.getWmState().getRootTasks();
+
+        endStateTasks = endStateTasks.stream()
+                .filter(task -> activity.getPackageName().equals(task.getPackageName()))
+                .collect(Collectors.toList());
 
         return StateDump.fromTasks(endStateTasks, mBaseTasks);
     }

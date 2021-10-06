@@ -27,10 +27,13 @@ android_test {
     srcs: [
         "src/**/*.java",
         "app/src/**/*.java",
+        "app30/src/**/*.java",
+        ":CtsAlarmUtils",
     ],
     test_suites: [
         "cts",
         "general-tests",
+        "mts-scheduling",
     ],
     platform_apis: true,
 }

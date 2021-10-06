@@ -50,33 +50,33 @@ public class PermissionEscalationTest {
                 PermissionInfo.PROTECTION_SIGNATURE, (stealAudio1Permission2.protectionLevel
                         & PermissionInfo.PROTECTION_MASK_BASE));
      }
-     
-     @Test
-     public void testRuntimePermissionsAreNotGranted() throws Exception {
-         // TODO (b/172366747): It is weird that the permission cannot become a runtime permission
-         //                     during runtime but can become one during reboot.
-         Context context = InstrumentationRegistry.getTargetContext();
 
-         // Ensure permission is now dangerous but denied
-         PermissionInfo stealAudio1Permission1 = context.getPackageManager()
-                 .getPermissionInfo(Manifest.permission.STEAL_AUDIO1, 0);
-         assertSame("Signature permission can become dangerous after reboot",
-                 PermissionInfo.PROTECTION_DANGEROUS, (stealAudio1Permission1.protectionLevel
+    @Test
+    public void testRuntimePermissionsAreNotGranted() throws Exception {
+        // TODO (b/172366747): It is weird that the permission cannot become a runtime permission
+        //                     during runtime but can become one during reboot.
+        Context context = InstrumentationRegistry.getTargetContext();
+
+        // Ensure permission is now dangerous but denied
+        PermissionInfo stealAudio1Permission1 = context.getPackageManager()
+                .getPermissionInfo(Manifest.permission.STEAL_AUDIO1, 0);
+        assertSame("Signature permission can become dangerous after reboot",
+                PermissionInfo.PROTECTION_DANGEROUS, (stealAudio1Permission1.protectionLevel
                         & PermissionInfo.PROTECTION_MASK_BASE));
 
-         assertSame("Permission should be denied",
-                 context.checkSelfPermission(Manifest.permission.STEAL_AUDIO1),
-                 PackageManager.PERMISSION_DENIED);
+        assertSame("Permission should be denied",
+                context.checkSelfPermission(Manifest.permission.STEAL_AUDIO1),
+                PackageManager.PERMISSION_DENIED);
 
-         // Ensure permission is now dangerous but denied
-         PermissionInfo stealAudio1Permission2 = context.getPackageManager()
-                 .getPermissionInfo(Manifest.permission.STEAL_AUDIO2, 0);
-         assertSame("Signature permission can become dangerous after reboot",
-                 PermissionInfo.PROTECTION_DANGEROUS, (stealAudio1Permission2.protectionLevel
-                         & PermissionInfo.PROTECTION_MASK_BASE));
+        // Ensure permission is now dangerous but denied
+        PermissionInfo stealAudio1Permission2 = context.getPackageManager()
+                .getPermissionInfo(Manifest.permission.STEAL_AUDIO2, 0);
+        assertSame("Signature permission can become dangerous after reboot",
+                PermissionInfo.PROTECTION_DANGEROUS, (stealAudio1Permission2.protectionLevel
+                        & PermissionInfo.PROTECTION_MASK_BASE));
 
-         assertSame("Permission should be denied",
-                 context.checkSelfPermission(Manifest.permission.STEAL_AUDIO2),
-                 PackageManager.PERMISSION_DENIED);
+        assertSame("Permission should be denied",
+                context.checkSelfPermission(Manifest.permission.STEAL_AUDIO2),
+                PackageManager.PERMISSION_DENIED);
     }
-}
+ }

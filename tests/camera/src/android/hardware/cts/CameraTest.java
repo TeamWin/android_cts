@@ -523,19 +523,12 @@ public class CameraTest extends Assert {
         initializeMessageLooper(cameraId);
         Parameters parameters = mCamera.getParameters();
 
-        Size QCIF = mCamera.new Size(176, 144);
-        Size VGA = mCamera.new Size(640, 480);
-        Size defaultPicSize = parameters.getPictureSize();
-
         for (Size size: parameters.getSupportedPreviewSizes()) {
             mPreviewCallbackResult = PREVIEW_CALLBACK_NOT_RECEIVED;
             mCamera.setPreviewCallback(mPreviewCallback);
             parameters.setPreviewSize(size.width, size.height);
-            if (size.equals(QCIF)) {
-                parameters.setPictureSize(VGA.width, VGA.height);
-            } else {
-                parameters.setPictureSize(defaultPicSize.width, defaultPicSize.height);
-            }
+            Size pictureSize = getPictureSizeForPreview(size, parameters);
+            parameters.setPictureSize(pictureSize.width, pictureSize.height);
             mCamera.setParameters(parameters);
             assertEquals(size, mCamera.getParameters().getPreviewSize());
             checkPreviewCallback();
@@ -1470,17 +1463,11 @@ public class CameraTest extends Assert {
         mCamera.setPreviewDisplay(surfaceHolder);
         Parameters parameters = mCamera.getParameters();
         PreviewCallbackWithBuffer callback = new PreviewCallbackWithBuffer();
-        Size QCIF = mCamera.new Size(176, 144);
-        Size VGA = mCamera.new Size(640, 480);
-        Size defaultPicSize = parameters.getPictureSize();
 
         // Test all preview sizes.
         for (Size size: parameters.getSupportedPreviewSizes()) {
-            if (size.equals(QCIF)) {
-                parameters.setPictureSize(VGA.width, VGA.height);
-            } else {
-                parameters.setPictureSize(defaultPicSize.width, defaultPicSize.height);
-            }
+            Size pictureSize = getPictureSizeForPreview(size, parameters);
+            parameters.setPictureSize(pictureSize.width, pictureSize.height);
             parameters.setPreviewSize(size.width, size.height);
             mCamera.setParameters(parameters);
             assertEquals(size, mCamera.getParameters().getPreviewSize());
@@ -1569,20 +1556,13 @@ public class CameraTest extends Assert {
             return;
         }
 
-        Size QCIF = mCamera.new Size(176, 144);
-        Size VGA = mCamera.new Size(640, 480);
-        Size defaultPicSize = parameters.getPictureSize();
-
         // Test the zoom parameters.
         assertEquals(0, parameters.getZoom());  // default zoom should be 0.
         for (Size size: parameters.getSupportedPreviewSizes()) {
             parameters = mCamera.getParameters();
+            Size pictureSize = getPictureSizeForPreview(size, parameters);
             parameters.setPreviewSize(size.width, size.height);
-            if (size.equals(QCIF)) {
-                parameters.setPictureSize(VGA.width, VGA.height);
-            } else {
-                parameters.setPictureSize(defaultPicSize.width, defaultPicSize.height);
-            }
+            parameters.setPictureSize(pictureSize.width, pictureSize.height);
             mCamera.setParameters(parameters);
             parameters = mCamera.getParameters();
             int maxZoom = parameters.getMaxZoom();
@@ -3520,6 +3500,24 @@ public class CameraTest extends Assert {
                             "have all listed cameras be connected and openable for testing", e);
                 }
             }
+        }
+    }
+
+    private Size getPictureSizeForPreview(Size previewSize, Parameters parameters) {
+        Size QCIF = mCamera.new Size(176, 144);
+        Size defaultPicSize = parameters.getPictureSize();
+        List<Size> supportedPicSizes = parameters.getSupportedPictureSizes();
+        Size smallestPicSize = defaultPicSize;
+        for (Size size: supportedPicSizes) {
+            if (smallestPicSize.width > size.width) {
+                smallestPicSize = size;
+            }
+        }
+
+        if (previewSize.equals(QCIF)) {
+            return smallestPicSize;
+        } else {
+            return defaultPicSize;
         }
     }
 }

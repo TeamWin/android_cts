@@ -18,19 +18,20 @@ package android.autofillservice.cts.inline;
 
 import static android.app.Activity.RESULT_CANCELED;
 import static android.app.Activity.RESULT_OK;
-import static android.autofillservice.cts.CannedFillResponse.NO_RESPONSE;
-import static android.autofillservice.cts.Helper.ID_USERNAME;
-import static android.autofillservice.cts.augmented.AugmentedHelper.assertBasicRequestInfo;
+import static android.autofillservice.cts.testcore.AugmentedHelper.assertBasicRequestInfo;
+import static android.autofillservice.cts.testcore.CannedFillResponse.NO_RESPONSE;
+import static android.autofillservice.cts.testcore.Helper.ID_USERNAME;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import android.autofillservice.cts.AutofillActivityTestRule;
-import android.autofillservice.cts.augmented.AugmentedAuthActivity;
-import android.autofillservice.cts.augmented.AugmentedAutofillAutoActivityLaunchTestCase;
-import android.autofillservice.cts.augmented.AugmentedLoginActivity;
-import android.autofillservice.cts.augmented.CannedAugmentedFillResponse;
-import android.autofillservice.cts.augmented.CtsAugmentedAutofillService;
+import android.autofillservice.cts.activities.AugmentedAuthActivity;
+import android.autofillservice.cts.activities.AugmentedLoginActivity;
+import android.autofillservice.cts.commontests.AugmentedAutofillAutoActivityLaunchTestCase;
+import android.autofillservice.cts.testcore.AutofillActivityTestRule;
+import android.autofillservice.cts.testcore.CannedAugmentedFillResponse;
+import android.autofillservice.cts.testcore.CtsAugmentedAutofillService;
 import android.content.IntentSender;
+import android.platform.test.annotations.Presubmit;
 import android.service.autofill.Dataset;
 import android.view.autofill.AutofillId;
 import android.view.autofill.AutofillValue;
@@ -38,6 +39,7 @@ import android.widget.EditText;
 
 import org.junit.Test;
 
+@Presubmit
 public class InlineAugmentedAuthTest
         extends AugmentedAutofillAutoActivityLaunchTestCase<AugmentedLoginActivity> {
 
@@ -204,5 +206,11 @@ public class InlineAugmentedAuthTest
         mUiBot.selectByRelativeId(AugmentedAuthActivity.ID_AUTH_ACTIVITY_BUTTON);
         mUiBot.waitForIdle();
         assertThat(unField.getText().toString()).isEqualTo("");
+
+        // Return from the auth activity to login activity, if the login onResume() is prior to
+        // the test finished, there is another FillRequest() will be received. Because it may
+        // notifyViewEntered() in onResume().
+        mUiBot.assertShownByRelativeId(ID_USERNAME);
+        sAugmentedReplier.getNextFillRequest();
     }
 }

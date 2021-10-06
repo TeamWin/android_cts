@@ -26,14 +26,18 @@ import android.os.Bundle;
 import android.telecom.BluetoothCallQualityReport;
 import android.telecom.Call;
 import android.telecom.CallAudioState;
+import android.telecom.CallDiagnostics;
 import android.telecom.Connection;
-import android.telecom.DiagnosticCall;
+import android.telecom.DisconnectCause;
 import android.telecom.TelecomManager;
+import android.telephony.CallQuality;
+import android.telephony.TelephonyManager;
 
 import java.util.concurrent.TimeUnit;
 
 public class CallDiagnosticServiceTest extends BaseTelecomTestWithMockServices {
     private static final String POOR_CALL_MESSAGE = "Can you hear me?";
+    private static final String OVERRIDE_MESSAGE = "Whoopsie doodles; call dropped.  Oh well.";
     private static final int POOR_MESSAGE_ID = 90210;
     private TelecomManager mTelecomManager;
     private MockConnection mConnection;
@@ -60,9 +64,12 @@ public class CallDiagnosticServiceTest extends BaseTelecomTestWithMockServices {
 
     @Override
     protected void tearDown() throws Exception {
-        super.tearDown();
-
+        if (mConnection != null ) {
+            mConnection.onDisconnect();
+            mConnection.destroy();
+        }
         TestUtils.setCallDiagnosticService(getInstrumentation(), "default");
+        super.tearDown();
     }
 
     /**
@@ -76,7 +83,7 @@ public class CallDiagnosticServiceTest extends BaseTelecomTestWithMockServices {
         setupCall();
 
         assertEquals(1, mService.getCalls().size());
-        final CtsCallDiagnosticService.CtsDiagnosticCall diagnosticCall =
+        final CtsCallDiagnosticService.CtsCallDiagnostics diagnosticCall =
                 mService.getCalls().get(0);
 
         // Add an extra to the connection and verify CDS gets it.
@@ -97,8 +104,6 @@ public class CallDiagnosticServiceTest extends BaseTelecomTestWithMockServices {
                         Connection.EXTRA_AUDIO_CODEC) == Connection.AUDIO_CODEC_AMR_WB;
             }
         }, TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS, "Extras propagation");
-
-        mConnection.onDisconnect();
     }
 
     /**
@@ -129,10 +134,14 @@ public class CallDiagnosticServiceTest extends BaseTelecomTestWithMockServices {
         // Disconnect the first call.
         mConnection.onDisconnect();
         mConnection.destroy();
+        mConnection = null;
 
         mService.getCallChangeLatch().await(TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
                 TimeUnit.MILLISECONDS);
         assertEquals(1, mService.getCalls().size());
+
+        connection.onDisconnect();
+        connection.destroy();
     }
 
 
@@ -161,8 +170,6 @@ public class CallDiagnosticServiceTest extends BaseTelecomTestWithMockServices {
         mService.getBluetoothCallQualityReportLatch().await(
                 TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS, TimeUnit.MILLISECONDS);
         assertEquals(report, mService.getBluetoothCallQualityReport());
-
-        mConnection.onDisconnect();
     }
 
     /**
@@ -195,17 +202,17 @@ public class CallDiagnosticServiceTest extends BaseTelecomTestWithMockServices {
 
         Bundle message = new Bundle();
         message.putInt(Connection.EXTRA_DEVICE_TO_DEVICE_MESSAGE_TYPE,
-                DiagnosticCall.MESSAGE_CALL_NETWORK_TYPE);
+                CallDiagnostics.MESSAGE_CALL_NETWORK_TYPE);
         message.putInt(Connection.EXTRA_DEVICE_TO_DEVICE_MESSAGE_VALUE,
-                DiagnosticCall.NETWORK_TYPE_NR);
+                TelephonyManager.NETWORK_TYPE_LTE);
         mConnection.sendConnectionEvent(Connection.EVENT_DEVICE_TO_DEVICE_MESSAGE, message);
 
-        CtsCallDiagnosticService.CtsDiagnosticCall diagnosticCall = mService.getCalls().get(0);
+        CtsCallDiagnosticService.CtsCallDiagnostics diagnosticCall = mService.getCalls().get(0);
         diagnosticCall.getReceivedMessageLatch().await(TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
                 TimeUnit.MILLISECONDS);
-        assertEquals(DiagnosticCall.MESSAGE_CALL_NETWORK_TYPE,
+        assertEquals(CallDiagnostics.MESSAGE_CALL_NETWORK_TYPE,
                 diagnosticCall.getMessageType());
-        assertEquals(DiagnosticCall.NETWORK_TYPE_NR,
+        assertEquals(TelephonyManager.NETWORK_TYPE_LTE,
                 diagnosticCall.getMessageValue());
     }
 
@@ -219,9 +226,9 @@ public class CallDiagnosticServiceTest extends BaseTelecomTestWithMockServices {
         }
         setupCall();
 
-        CtsCallDiagnosticService.CtsDiagnosticCall diagnosticCall = mService.getCalls().get(0);
-        diagnosticCall.sendDeviceToDeviceMessage(DiagnosticCall.MESSAGE_DEVICE_BATTERY_STATE,
-                DiagnosticCall.BATTERY_STATE_LOW);
+        CtsCallDiagnosticService.CtsCallDiagnostics diagnosticCall = mService.getCalls().get(0);
+        diagnosticCall.sendDeviceToDeviceMessage(CallDiagnostics.MESSAGE_DEVICE_BATTERY_STATE,
+                CallDiagnostics.BATTERY_STATE_LOW);
 
         final TestUtils.InvokeCounter counter = mConnection.getInvokeCounter(
                 MockConnection.ON_CALL_EVENT);
@@ -233,8 +240,8 @@ public class CallDiagnosticServiceTest extends BaseTelecomTestWithMockServices {
         assertNotNull(extras);
         int messageType = extras.getInt(Connection.EXTRA_DEVICE_TO_DEVICE_MESSAGE_TYPE);
         int messageValue = extras.getInt(Connection.EXTRA_DEVICE_TO_DEVICE_MESSAGE_VALUE);
-        assertEquals(DiagnosticCall.MESSAGE_DEVICE_BATTERY_STATE, messageType);
-        assertEquals(DiagnosticCall.BATTERY_STATE_LOW, messageValue);
+        assertEquals(CallDiagnostics.MESSAGE_DEVICE_BATTERY_STATE, messageType);
+        assertEquals(CallDiagnostics.BATTERY_STATE_LOW, messageValue);
     }
 
     /**
@@ -247,7 +254,7 @@ public class CallDiagnosticServiceTest extends BaseTelecomTestWithMockServices {
         }
         setupCall();
 
-        CtsCallDiagnosticService.CtsDiagnosticCall diagnosticCall = mService.getCalls().get(0);
+        CtsCallDiagnosticService.CtsCallDiagnostics diagnosticCall = mService.getCalls().get(0);
         diagnosticCall.displayDiagnosticMessage(POOR_MESSAGE_ID, POOR_CALL_MESSAGE);
 
         mOnConnectionEventCounter.waitForCount(1, WAIT_FOR_STATE_CHANGE_TIMEOUT_MS);
@@ -271,7 +278,7 @@ public class CallDiagnosticServiceTest extends BaseTelecomTestWithMockServices {
         }
         setupCall();
 
-        CtsCallDiagnosticService.CtsDiagnosticCall diagnosticCall = mService.getCalls().get(0);
+        CtsCallDiagnosticService.CtsCallDiagnostics diagnosticCall = mService.getCalls().get(0);
         diagnosticCall.clearDiagnosticMessage(POOR_MESSAGE_ID);
 
         mOnConnectionEventCounter.waitForCount(1, WAIT_FOR_STATE_CHANGE_TIMEOUT_MS);
@@ -281,6 +288,81 @@ public class CallDiagnosticServiceTest extends BaseTelecomTestWithMockServices {
         assertNotNull(extras);
         int messageId = extras.getInt(Call.EXTRA_DIAGNOSTIC_MESSAGE_ID);
         assertEquals(POOR_MESSAGE_ID, messageId);
+    }
+
+    /**
+     * Test not overriding the disconnect message.
+     * @throws InterruptedException
+     */
+    public void testSetNullDisconnectMessage() throws InterruptedException {
+        if (!shouldTestTelecom(mContext)) {
+            return;
+        }
+        setupCall();
+        mService.setDisconnectMessage(null);
+        mConnection.setDisconnected(new DisconnectCause(DisconnectCause.ERROR));
+        mConnection.destroy();
+        CtsCallDiagnosticService.CtsCallDiagnostics diagnosticCall = mService.getCalls().get(0);
+        diagnosticCall.getDisconnectLatch().await(TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
+                TimeUnit.MILLISECONDS);
+
+        assertCallState(mCall, Call.STATE_DISCONNECTED);
+        assertNull(mCall.getDetails().getDisconnectCause().getLabel());
+        assertNull(mCall.getDetails().getDisconnectCause().getDescription());
+    }
+
+    /**
+     * Test override the disconnect message.
+     * @throws InterruptedException
+     */
+    public void testOverrideDisconnectMessage() throws InterruptedException {
+        if (!shouldTestTelecom(mContext)) {
+            return;
+        }
+        setupCall();
+        mService.setDisconnectMessage(OVERRIDE_MESSAGE);
+        mConnection.setDisconnected(new DisconnectCause(DisconnectCause.ERROR));
+        mConnection.destroy();
+        CtsCallDiagnosticService.CtsCallDiagnostics diagnosticCall = mService.getCalls().get(0);
+        diagnosticCall.getDisconnectLatch().await(TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
+                TimeUnit.MILLISECONDS);
+
+        assertCallState(mCall, Call.STATE_DISCONNECTED);
+        assertEquals(OVERRIDE_MESSAGE, mCall.getDetails().getDisconnectCause().getLabel());
+        assertEquals(OVERRIDE_MESSAGE, mCall.getDetails().getDisconnectCause().getDescription());
+    }
+
+    /**
+     * Test call quality report received.
+     * @throws InterruptedException
+     */
+    public void testReceiveCallQualityReport() throws InterruptedException {
+        if (!shouldTestTelecom(mContext)) {
+            return;
+        }
+        setupCall();
+
+        // Fake out a call quality report.
+        android.telephony.CallQuality callQuality = new CallQuality(
+                android.telephony.CallQuality.CALL_QUALITY_EXCELLENT,
+                android.telephony.CallQuality.CALL_QUALITY_EXCELLENT,
+                60000, // duration
+                90210, // transmitted
+                90210, // received
+                0, // lost
+                0, // lost
+                0, // jitter
+                0, // jitter
+                10, // round trip
+                0); // codec
+        Bundle message = new Bundle();
+        message.putParcelable("android.telecom.extra.CALL_QUALITY_REPORT", callQuality);
+        mConnection.sendConnectionEvent("android.telecom.event.CALL_QUALITY_REPORT", message);
+
+        CtsCallDiagnosticService.CtsCallDiagnostics diagnosticCall = mService.getCalls().get(0);
+        diagnosticCall.getCallQualityReceivedLatch().await(
+                TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+        assertNotNull(diagnosticCall.getCallQuality());
     }
 
     /**
@@ -305,9 +387,17 @@ public class CallDiagnosticServiceTest extends BaseTelecomTestWithMockServices {
                 TimeUnit.MILLISECONDS);
         mService = CtsCallDiagnosticService.getInstance();
         assertNotNull(mService);
-        mService.getCallChangeLatch().await(TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
-                TimeUnit.MILLISECONDS);
-        assertEquals(1, mService.getCalls().size());
+        waitUntilConditionIsTrueOrTimeout(new Condition() {
+            @Override
+            public Object expected() {
+                return 1;
+            }
+
+            @Override
+            public Object actual() {
+                return mService.getCalls().size();
+            }
+        }, TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS, "Call added");
 
         // Make the call active.
         mConnection.setActive();

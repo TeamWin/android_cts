@@ -16,7 +16,7 @@
 
 package android.security.cts;
 
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -30,7 +30,7 @@ public class Poc20_06 extends SecurityTestCase {
      * CVE-2020-3635
      */
     @Test
-    @SecurityTest(minPatchLevel = "2020-06")
+    @AsbSecurityTest(cveBugId = 148817146)
     public void testPocCVE_2020_3635() throws Exception {
         String isApplicable = AdbUtils.runCommandLine("service list", getDevice());
         if (isApplicable.contains("com.qualcomm.qti.IPerfManager")) {
@@ -47,7 +47,7 @@ public class Poc20_06 extends SecurityTestCase {
      * CVE-2020-3626
      */
     @Test
-    @SecurityTest(minPatchLevel = "2020-06")
+    @AsbSecurityTest(cveBugId = 150697952)
     public void testPocCVE_2020_3626() throws Exception {
         String isApplicable =
                 AdbUtils.runCommandLine("pm list package com.qualcomm.qti.lpa", getDevice());
@@ -62,7 +62,7 @@ public class Poc20_06 extends SecurityTestCase {
      * CVE-2020-3628
      */
     @Test
-    @SecurityTest(minPatchLevel = "2020-06")
+    @AsbSecurityTest(cveBugId = 150695508)
     public void testPocCVE_2020_3628() throws Exception {
         String result = AdbUtils.runCommandLine(
                 "pm list package com.qualcomm.qti.logkit",getDevice());
@@ -73,7 +73,7 @@ public class Poc20_06 extends SecurityTestCase {
      * CVE-2020-3676
      */
     @Test
-    @SecurityTest(minPatchLevel = "2020-06")
+    @AsbSecurityTest(cveBugId = 152310294)
     public void testPocCVE_2020_3676() throws Exception {
         String isApplicable = AdbUtils.runCommandLine("service list", getDevice());
         if (isApplicable.contains("com.qualcomm.qti.IPerfManager")) {

@@ -35,7 +35,7 @@ import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 import android.platform.test.annotations.AppModeFull;
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
@@ -106,8 +106,8 @@ public class UninstallTest {
         mContext.startActivity(intent);
     }
 
-    @SecurityTest
     @Test
+    @AsbSecurityTest(cveBugId = 171221302)
     public void overlaysAreSuppressedWhenConfirmingUninstall() throws Exception {
         AppOpsUtils.setOpMode(mContext.getPackageName(), "SYSTEM_ALERT_WINDOW", MODE_ALLOWED);
 

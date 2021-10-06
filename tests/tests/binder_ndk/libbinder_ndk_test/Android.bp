@@ -22,7 +22,7 @@ filegroup {
         "test_package/Baz.aidl",
         "test_package/ICompatTest.aidl",
     ],
-    visibility: ["//visibility:private"]
+    visibility: ["//visibility:private"],
 }
 
 filegroup {
@@ -43,7 +43,7 @@ filegroup {
         "test_package/MyExt.aidl",
         "test_package/SimpleUnion.aidl",
     ],
-    visibility: ["//visibility:private"]
+    visibility: ["//visibility:private"],
 }
 
 aidl_interface {
@@ -55,7 +55,7 @@ aidl_interface {
         },
         cpp: {
             enabled: false,
-        }
+        },
     },
     unstable: true,
 }
@@ -73,7 +73,7 @@ aidl_interface {
         },
         cpp: {
             enabled: false,
-        }
+        },
     },
 }
 
@@ -97,7 +97,7 @@ aidl_interface {
     visibility: [
         ":__subpackages__",
         "//system/tools/aidl/build:__pkg__",
-    ]
+    ],
 }
 
 cc_defaults {

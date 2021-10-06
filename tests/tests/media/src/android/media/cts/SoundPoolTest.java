@@ -25,8 +25,11 @@ import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.media.SoundPool;
 import android.media.cts.R;
+import android.os.Build;
 import android.platform.test.annotations.AppModeFull;
+import android.util.Log;
 import androidx.test.InstrumentationRegistry;
+import com.android.compatibility.common.util.ApiLevelUtil;
 import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileOutputStream;
@@ -42,6 +45,7 @@ import org.junit.runner.RunWith;
 @AppModeFull(reason = "TODO: evaluate and port to instant")
 @RunWith(JUnitParamsRunner.class)
 abstract class SoundPoolTest {
+    private static final String TAG = "SoundPoolTest(Base)";
 
     private static final int SOUNDPOOL_STREAMS = 4;
     private static final int PRIORITY = 1;
@@ -160,6 +164,12 @@ abstract class SoundPoolTest {
     @Test
     @Parameters({"1", "2", "4"})
     public void testSoundPoolOp(int streamCount) throws Exception {
+        // Mainline compatibility
+        if (!ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S) && streamCount < 4) {
+            Log.d(TAG, "API before S: Skipping testSoundPoolOp(" + streamCount + ")");
+            return;
+        }
+
         mSoundPool = new SoundPool.Builder().setMaxStreams(streamCount)
                 .setAudioAttributes(getAudioAttributes()).build();
         int sampleID = loadSampleSync(getSoundA(), PRIORITY);
@@ -205,6 +215,12 @@ abstract class SoundPoolTest {
     @Test
     @Parameters({"1", "2", "4"})
     public void testMultiSound(int streamCount) throws Exception {
+        // Mainline compatibility
+        if (!ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S) && streamCount < 4) {
+            Log.d(TAG, "API before S: Skipping testMultiSound(" + streamCount + ")");
+            return;
+        }
+
         mSoundPool = new SoundPool.Builder().setMaxStreams(streamCount)
                 .setAudioAttributes(getAudioAttributes()).build();
         int sampleID1 = loadSampleSync(getSoundA(), PRIORITY);
@@ -237,6 +253,12 @@ abstract class SoundPoolTest {
     @Test
     @Parameters({"1", "2", "4"})
     public void testLoadMore(int streamCount) throws Exception {
+        // Mainline compatibility
+        if (!ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S) && streamCount < 4) {
+            Log.d(TAG, "API before S: Skipping testLoadMore(" + streamCount + ")");
+            return;
+        }
+
         mSoundPool = new SoundPool.Builder().setMaxStreams(streamCount)
                 .setAudioAttributes(getAudioAttributes()).build();
         int[] sounds = getSounds();

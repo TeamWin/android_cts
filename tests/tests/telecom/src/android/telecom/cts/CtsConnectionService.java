@@ -62,6 +62,7 @@ public class CtsConnectionService extends ConnectionService {
     @Override
     public void onBindClient(Intent intent) {
         sTelecomConnectionService = this;
+        Log.i("TelecomCTS", "CS bound");
         sIsBound = true;
     }
 
@@ -337,12 +338,14 @@ public class CtsConnectionService extends ConnectionService {
 
     @Override
     public boolean onUnbind(Intent intent) {
-        Log.i(LOG_TAG, "Service has been unbound");
-        sServiceUnBoundLatch.countDown();
-        sIsBound = false;
-        sConnectionService = null;
-        sTelecomConnectionService = null;
-        return super.onUnbind(intent);
+        synchronized (sLock) {
+            Log.i(LOG_TAG, "Service has been unbound");
+            sIsBound = false;
+            sServiceUnBoundLatch.countDown();
+            sConnectionService = null;
+            sTelecomConnectionService = null;
+            return super.onUnbind(intent);
+        }
     }
 
     public static boolean isServiceRegisteredToTelecom() {

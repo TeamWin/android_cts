@@ -23,6 +23,7 @@ android_test_helper_app {
         "arcts",
         "cts",
         "general-tests",
+        "mts",
     ],
     srcs: ["src/**/*.java"],
     static_libs: [

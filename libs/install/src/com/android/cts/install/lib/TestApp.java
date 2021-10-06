@@ -50,14 +50,22 @@ public class TestApp {
             "TestAppASplitV2.apk", "TestAppASplitV2_anydpi.apk");
     public static final TestApp AIncompleteSplit = new TestApp("AIncompleteSplit", A, 1,
             /*isApex*/false, "TestAppASplitV1_anydpi.apk");
+    public static final TestApp AOriginal1 = new TestApp("AOriginalV1", A, 1, /*isApex*/false,
+            "TestAppAOriginalV1.apk");
+    public static final TestApp ARotated2 = new TestApp("ARotatedV2", A, 2, /*isApex*/false,
+            "TestAppARotatedV2.apk");
 
     public static final TestApp B1 = new TestApp("Bv1", B, 1, /*isApex*/false,
             "TestAppBv1.apk");
     public static final TestApp B2 = new TestApp("Bv2", B, 2, /*isApex*/false,
             "TestAppBv2.apk");
+    public static final TestApp B3 = new TestApp("Bv3", B, 3, /*isApex*/false,
+            "TestAppBv3.apk");
 
     public static final TestApp C1 = new TestApp("Cv1", C, 1, /*isApex*/false,
             "TestAppCv1.apk");
+    public static final TestApp C2 = new TestApp("Cv2", C, 2, /*isApex*/false,
+            "TestAppCv2.apk");
 
     // Apex collection
     public static final TestApp Apex1 = new TestApp("Apex1", SHIM_APEX_PACKAGE_NAME, 1,

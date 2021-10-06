@@ -18,6 +18,7 @@ package android.webkit.cts;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.lessThan;
+import static org.junit.Assert.assertNotEquals;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -955,7 +956,7 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
         mOnUiThread.clearCache(true);
         mOnUiThread.loadUrlAndWaitForCompletion(
             mWebServer.getAssetUrl(TestHtmlConstants.HELLO_WORLD_URL));
-        assertFalse(TestHtmlConstants.HELLO_WORLD_TITLE.equals(mOnUiThread.getTitle()));
+        assertNotEquals(TestHtmlConstants.HELLO_WORLD_TITLE, mOnUiThread.getTitle());
         mOnUiThread.loadDataAndWaitForCompletion(getNetworkImageHtml(), "text/html", null);
         assertEquals(EMPTY_IMAGE_HEIGHT, mOnUiThread.getTitle());
         mOnUiThread.loadDataAndWaitForCompletion(DATA_URL_IMAGE_HTML, "text/html", null);

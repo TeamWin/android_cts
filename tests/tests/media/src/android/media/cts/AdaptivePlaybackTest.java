@@ -24,10 +24,12 @@ import android.media.MediaCodecInfo.CodecProfileLevel;
 import android.media.MediaCodecList;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
+import android.os.Build;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 import android.view.Surface;
 
+import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.MediaUtils;
 
 import android.opengl.GLES20;
@@ -50,6 +52,8 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
     private static final String TAG = "AdaptivePlaybackTest";
     private boolean verify = false;
     private static final int MIN_FRAMES_BEFORE_DRC = 2;
+
+    private static boolean sIsAtLeastS = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S);
 
     public Iterable<Codec> H264(CodecFactory factory) {
         return factory.createCodecList(
@@ -468,6 +472,12 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
                             warn(mDecoder.getWarnings());
                             mDecoder.clearWarnings();
                             mDecoder.flush();
+                            // First run will trigger output format change exactly once,
+                            // and subsequent runs should not trigger format change.
+                            // this part of test is new for Android12
+                            if (sIsAtLeastS) {
+                                assertEquals(1, mDecoder.getOutputFormatChangeCount());
+                            }
                         }
                     });
                 if (verify) {
@@ -597,7 +607,10 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
                                     segmentSize,
                                     lastSequence /* sendEos */,
                                     lastSequence /* expectEos */,
-                                    mAdjustTimeUs);
+                                    mAdjustTimeUs,
+                                    // Try sleeping after first queue so that we can verify
+                                    // output format change event happens at the right time.
+                                    true /* sleepAfterFirstQueue */);
                             if (lastSequence && frames >= 0) {
                                 warn("did not receive EOS, received " + frames + " frames");
                             } else if (!lastSequence && frames < 0) {
@@ -677,7 +690,8 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
                                 framesBeforeEos,
                                 true /* sendEos */,
                                 true /* expectEos */,
-                                adjustTimeUs);
+                                adjustTimeUs,
+                                false /* sleepAfterFirstQueue */);
                         if (framesB >= 0) {
                             warn("did not receive EOS, received " + (-framesB) + " frames");
                         }
@@ -751,7 +765,8 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
                                 segmentSize,
                                 lastSequence /* sendEos */,
                                 lastSequence /* expectEos */,
-                                mAdjustTimeUs);
+                                mAdjustTimeUs,
+                                false /* sleepAfterFirstQueue */);
                             if (lastSequence && frames >= 0) {
                                 warn("did not receive EOS, received " + frames + " frames");
                             } else if (!lastSequence && frames < 0) {
@@ -881,6 +896,13 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
         Vector<Long> mRenderedTimeStamps; // using Vector as it is implicitly synchronized
         long mLastRenderNanoTime;
         int mFramesNotifiedRendered;
+        // True iff previous dequeue request returned INFO_OUTPUT_FORMAT_CHANGED.
+        boolean mOutputFormatChanged;
+        // Number of output format change event
+        int mOutputFormatChangeCount;
+        // Save the timestamps of the first frame of each sequence.
+        // Note: this is the only time output format change could happen.
+        ArrayList<Long> mFirstQueueTimestamps;
 
         public Decoder(String codecName) {
             MediaCodec codec = null;
@@ -898,6 +920,9 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
             mRenderedTimeStamps = new Vector<Long>();
             mLastRenderNanoTime = System.nanoTime();
             mFramesNotifiedRendered = 0;
+            mOutputFormatChanged = false;
+            mOutputFormatChangeCount = 0;
+            mFirstQueueTimestamps = new ArrayList<Long>();
 
             codec.setOnFrameRenderedListener(this, null);
         }
@@ -905,7 +930,7 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
         public void onFrameRendered(MediaCodec codec, long presentationTimeUs, long nanoTime) {
             final long NSECS_IN_1SEC = 1000000000;
             if (!mRenderedTimeStamps.remove(presentationTimeUs)) {
-                warn("invalid timestamp " + presentationTimeUs + ", queued " +
+                warn("invalid (rendered) timestamp " + presentationTimeUs + ", rendered " +
                         mRenderedTimeStamps);
             }
             assert nanoTime > mLastRenderNanoTime;
@@ -929,6 +954,10 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
 
         public void clearWarnings() {
             mWarnings.clear();
+        }
+
+        public int getOutputFormatChangeCount() {
+            return mOutputFormatChangeCount;
         }
 
         public void configureAndStart(MediaFormat format, TestSurface surface) {
@@ -987,6 +1016,8 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
                 Log.d(TAG, "output format has changed to " + format);
                 int colorFormat = format.getInteger(MediaFormat.KEY_COLOR_FORMAT);
                 mDoChecksum = isRecognizedFormat(colorFormat);
+                mOutputFormatChanged = true;
+                ++mOutputFormatChangeCount;
                 return null;
             } else if (ix < 0) {
                 Log.v(TAG, "no output");
@@ -995,12 +1026,20 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
             /* create checksum */
             long sum = 0;
 
-
             Log.v(TAG, "dequeue #" + ix + " => { [" + info.size + "] flags=" + info.flags +
                     " @" + info.presentationTimeUs + "}");
 
             // we get a nonzero size for valid decoded frames
             boolean doRender = (info.size != 0);
+
+            if (doRender) {
+                mRenderedTimeStamps.add(info.presentationTimeUs);
+                if (!mTimeStamps.remove(info.presentationTimeUs)) {
+                    warn("invalid (decoded) timestamp " + info.presentationTimeUs + ", queued " +
+                            mTimeStamps);
+                }
+            }
+
             if (mSurface.getSurface() == null) {
                 if (mDoChecksum) {
                     sum = checksum(mOutputBuffers[ix], info.size, mCRC);
@@ -1022,12 +1061,17 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
                 mCodec.releaseOutputBuffer(ix, doRender);
             }
 
-            if (doRender) {
-                mRenderedTimeStamps.add(info.presentationTimeUs);
-                if (!mTimeStamps.remove(info.presentationTimeUs)) {
-                    warn("invalid timestamp " + info.presentationTimeUs + ", queued " +
-                            mTimeStamps);
+            if (mOutputFormatChanged) {
+                // Previous dequeue was output format change; format change must
+                // correspond to a new sequence, so it must happen right before
+                // the first frame of one of the sequences.
+                // this part of test is new for Android12
+                if (sIsAtLeastS) {
+                    assertTrue("Codec " + getName() + " cannot find formatchange " + info.presentationTimeUs +
+                        " in " + mFirstQueueTimestamps,
+                        mFirstQueueTimestamps.remove(info.presentationTimeUs));
                 }
+                mOutputFormatChanged = false;
             }
 
             return String.format(Locale.US, "{pts=%d, flags=%x, data=0x%x}",
@@ -1079,7 +1123,8 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
         public int queueInputBufferRange(
                 Media media, int frameStartIx, int frameEndIx, boolean sendEosAtEnd,
                 boolean waitForEos) {
-            return queueInputBufferRange(media,frameStartIx,frameEndIx,sendEosAtEnd,waitForEos,0);
+            return queueInputBufferRange(
+                    media, frameStartIx, frameEndIx, sendEosAtEnd, waitForEos, 0, false);
         }
 
         public void queueCSD(MediaFormat format) {
@@ -1109,7 +1154,7 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
 
         public int queueInputBufferRange(
                 Media media, int frameStartIx, int frameEndIx, boolean sendEosAtEnd,
-                boolean waitForEos, long adjustTimeUs) {
+                boolean waitForEos, long adjustTimeUs, boolean sleepAfterFirstQueue) {
             MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
             int frameIx = frameStartIx;
             int numFramesDecoded = 0;
@@ -1125,6 +1170,19 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
                             frameIx,
                             sendEosAtEnd && (frameIx + 1 == frameEndIx),
                             adjustTimeUs)) {
+                        if (frameIx == frameStartIx) {
+                            if (sleepAfterFirstQueue) {
+                                // MediaCodec detects and processes output format change upon
+                                // the first frame. It must not send the event prematurely with
+                                // pending buffers to be dequeued. Sleep after the first frame
+                                // with new resolution to make sure MediaCodec had enough time
+                                // to process the frame with pending buffers.
+                                try {
+                                    Thread.sleep(100);
+                                } catch (InterruptedException e) {}
+                            }
+                            mFirstQueueTimestamps.add(mTimeStamps.get(mTimeStamps.size() - 1));
+                        }
                         frameIx++;
                     }
                 }
@@ -1336,6 +1394,8 @@ class Media {
 
     public static Media read(final String video, int numFrames)
             throws java.io.IOException {
+
+        Preconditions.assertTestFileExists(video);
         MediaExtractor extractor = new MediaExtractor();
         extractor.setDataSource(video);
 

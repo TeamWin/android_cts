@@ -17,7 +17,6 @@
 package android.telephonyprovider.cts;
 
 import static android.telephonyprovider.cts.DefaultSmsAppHelper.hasTelephony;
-import static android.telephonyprovider.cts.DefaultSmsAppHelper.hasSms;
 
 import android.content.ContentResolver;
 import android.provider.Telephony;
@@ -26,19 +25,17 @@ import android.test.InstrumentationTestCase;
 public class CellBroadcastProviderTest extends InstrumentationTestCase {
     private ContentResolver mContentResolver;
     private boolean mHasTelephony;
-    private boolean mHasSms;
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
         mContentResolver = getInstrumentation().getContext().getContentResolver();
         mHasTelephony = hasTelephony();
-        mHasSms = hasSms();
     }
 
     // this is only allowed for privileged process
     public void testAccess() {
-        if (!mHasTelephony || !mHasSms) {
+        if (!mHasTelephony) {
             return;
         }
         try {
@@ -51,7 +48,7 @@ public class CellBroadcastProviderTest extends InstrumentationTestCase {
     }
 
     public void testAccessMessageHistoryWithoutPermission() {
-        if (!mHasTelephony || !mHasSms) {
+        if (!mHasTelephony) {
             return;
         }
         try {

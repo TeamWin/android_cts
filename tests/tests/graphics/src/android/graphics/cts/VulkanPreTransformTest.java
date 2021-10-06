@@ -30,6 +30,7 @@ import android.util.Log;
 import android.view.PixelCopy;
 import android.view.SurfaceView;
 
+import androidx.test.filters.FlakyTest;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
@@ -105,13 +106,11 @@ public class VulkanPreTransformTest {
     @Before
     public void setUp() {
         Log.d(TAG, "setUp!");
-        // Work around for b/77148807
-        // Activity was falsely created before ActivityManager set config change to landscape
-        SystemClock.sleep(2000);
         mContext = InstrumentationRegistry.getContext();
     }
 
     @Test
+    @FlakyTest (bugId = 184584284)
     public void testVulkanPreTransformSetToMatchCurrentTransform() throws Throwable {
         Log.d(TAG, "testVulkanPreTransformSetToMatchCurrentTransform start");
         if (!hasDeviceFeature(PackageManager.FEATURE_SCREEN_PORTRAIT)
@@ -120,13 +119,13 @@ public class VulkanPreTransformTest {
             return;
         }
         sActivity = mActivityRule.launchActivity(null);
-        SystemClock.sleep(5000);
         sActivity.testVulkanPreTransform(true);
         sActivity.finish();
         sActivity = null;
     }
 
     @Test
+    @FlakyTest (bugId = 184584284)
     public void testVulkanPreTransformNotSetToMatchCurrentTransform() throws Throwable {
         Log.d(TAG, "testVulkanPreTransformNotSetToMatchCurrentTransform start");
         if (!hasDeviceFeature(PackageManager.FEATURE_SCREEN_PORTRAIT)
@@ -135,7 +134,6 @@ public class VulkanPreTransformTest {
             return;
         }
         sActivity = mActivityRule.launchActivity(null);
-        SystemClock.sleep(5000);
         sActivity.testVulkanPreTransform(false);
         sActivity.finish();
         sActivity = null;
@@ -145,15 +143,11 @@ public class VulkanPreTransformTest {
         return mContext.getPackageManager().hasSystemFeature(requiredFeature);
     }
 
-    private static Bitmap takeScreenshot() {
+    private static Bitmap takeScreenshot(int width, int height) {
         assertNotNull("sActivity should not be null", sActivity);
-        Rect srcRect = new Rect();
-        sActivity.findViewById(R.id.surfaceview).getGlobalVisibleRect(srcRect);
         SynchronousPixelCopy copy = new SynchronousPixelCopy();
-        Bitmap dest =
-                Bitmap.createBitmap(srcRect.width(), srcRect.height(), Bitmap.Config.ARGB_8888);
-        int copyResult =
-                copy.request((SurfaceView) sActivity.findViewById(R.id.surfaceview), srcRect, dest);
+        Bitmap dest = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        int copyResult = copy.request((SurfaceView) sActivity.findViewById(R.id.surfaceview), dest);
         assertEquals("PixelCopy failed", PixelCopy.SUCCESS, copyResult);
         return dest;
     }
@@ -170,11 +164,9 @@ public class VulkanPreTransformTest {
     }
 
     private static boolean validatePixelValuesAfterRotation(
-            boolean setPreTransform, int preTransformHint) {
-        Bitmap bitmap = takeScreenshot();
+            int width, int height, boolean setPreTransform, int preTransformHint) {
+        Bitmap bitmap = takeScreenshot(width, height);
 
-        int width = bitmap.getWidth();
-        int height = bitmap.getHeight();
         int diff = 0;
         if (!setPreTransform || preTransformHint == 0x1 /*VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR*/) {
             diff += pixelDiff(bitmap.getPixel(0, 0), 255, 0, 0);

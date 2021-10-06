@@ -20,6 +20,7 @@ import static android.content.Context.CLIPBOARD_SERVICE;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import android.autofillservice.cts.commontests.AugmentedAutofillManualActivityLaunchTestCase;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.platform.test.annotations.AppModeFull;

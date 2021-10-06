@@ -21,6 +21,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.os.SystemClock;
 import android.telephony.ModemActivityInfo;
+import android.util.Range;
 
 import org.junit.Test;
 
@@ -31,6 +32,12 @@ import java.util.stream.IntStream;
  */
 public class ModemActivityInfoTest {
     private static final String TAG = "ModemActivityInfoTest";
+
+    private static final Range RANGE_FOR_TX_POWER_LEVEL_0 = new Range<>(Integer.MIN_VALUE, 0);
+    private static final Range RANGE_FOR_TX_POWER_LEVEL_1 = new Range<>(0, 5);
+    private static final Range RANGE_FOR_TX_POWER_LEVEL_2 = new Range<>(5, 15);
+    private static final Range RANGE_FOR_TX_POWER_LEVEL_3 = new Range<>(15, 20);
+    private static final Range RANGE_FOR_TX_POWER_LEVEL_4 = new Range<>(20, Integer.MAX_VALUE);
 
     private static final int VALID_SLEEP_TIME_MS = 1;
     private static final int VALID_IDLE_TIME_MS = 1;
@@ -80,6 +87,16 @@ public class ModemActivityInfoTest {
         IntStream.range(0, ModemActivityInfo.getNumTxPowerLevels()).forEach(
                 (x) -> assertEquals(VALID_TX_TIME_MS[x],
                         info.getTransmitDurationMillisAtPowerLevel(x)));
+        assertEquals(RANGE_FOR_TX_POWER_LEVEL_0, info.getTransmitPowerRange(
+                ModemActivityInfo.TX_POWER_LEVEL_0));
+        assertEquals(RANGE_FOR_TX_POWER_LEVEL_1, info.getTransmitPowerRange(
+                ModemActivityInfo.TX_POWER_LEVEL_1));
+        assertEquals(RANGE_FOR_TX_POWER_LEVEL_2, info.getTransmitPowerRange(
+                ModemActivityInfo.TX_POWER_LEVEL_2));
+        assertEquals(RANGE_FOR_TX_POWER_LEVEL_3, info.getTransmitPowerRange(
+                ModemActivityInfo.TX_POWER_LEVEL_3));
+        assertEquals(RANGE_FOR_TX_POWER_LEVEL_4, info.getTransmitPowerRange(
+                ModemActivityInfo.TX_POWER_LEVEL_4));
     }
 
     @Test

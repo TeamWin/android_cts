@@ -133,7 +133,7 @@ public class StartActivityAsUserTests {
             WindowManagerState amState = mAmWmState;
             amState.computeState();
             ComponentName componentName = ComponentName.createRelative(PACKAGE, CLASS);
-            stackId[0] = amState.getStackIdByActivity(componentName);
+            stackId[0] = amState.getRootTaskIdByActivity(componentName);
         });
 
         assertThat(stackId[0]).isEqualTo(INVALID_STACK);

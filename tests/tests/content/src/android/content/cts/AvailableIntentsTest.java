@@ -446,6 +446,14 @@ public class AvailableIntentsTest extends AndroidTestCase {
         }
     }
 
+    public void testRequestManageMedia() {
+        if (FeatureUtil.isAutomotive()) {
+            // Skip the test for automotive device.
+            return;
+        }
+        assertCanBeHandled(new Intent(Settings.ACTION_REQUEST_MANAGE_MEDIA));
+    }
+
     public void testInteractAcrossProfilesSettings() {
         PackageManager packageManager = mContext.getPackageManager();
         if (packageManager.hasSystemFeature(PackageManager.FEATURE_MANAGED_PROFILES)) {
@@ -557,6 +565,10 @@ public class AvailableIntentsTest extends AndroidTestCase {
 
     public void testAddNetworksIntent() {
         assertCanBeHandled(new Intent(Settings.ACTION_WIFI_ADD_NETWORKS));
+    }
+
+    public void testManageUnusedAppsIntent() {
+        assertCanBeHandled(new Intent(Intent.ACTION_MANAGE_UNUSED_APPS));
     }
 
     private boolean isHandheld() {

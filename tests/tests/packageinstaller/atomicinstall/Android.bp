@@ -25,6 +25,8 @@ android_test {
         ":AtomicInstallCorrupt"
     ],
     static_libs: [
+        "androidx.annotation_annotation",
+        "androidx.core_core",
         "androidx.test.runner",
         "truth-prebuilt",
 	"cts-install-lib",

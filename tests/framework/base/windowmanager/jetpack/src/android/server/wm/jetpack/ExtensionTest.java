@@ -26,6 +26,7 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.graphics.Rect;
 import android.os.IBinder;
+import android.platform.test.annotations.FlakyTest;
 import android.server.wm.jetpack.utils.ExtensionUtils;
 import android.server.wm.jetpack.utils.wrapper.TestDeviceState;
 import android.server.wm.jetpack.utils.wrapper.TestDisplayFeature;
@@ -57,7 +58,9 @@ import java.util.List;
  *     atest CtsWindowManagerJetpackTestCases:ExtensionTest
  */
 // TODO(b/155343832) add a foldable presubmit target.
+// TODO(b/185151233) reinstate test
 @LargeTest
+@FlakyTest
 @RunWith(AndroidJUnit4.class)
 public class ExtensionTest extends JetpackExtensionTestBase {
     private ActivityTestRule<TestActivity> mActivityTestRule = new ActivityTestRule<>(
