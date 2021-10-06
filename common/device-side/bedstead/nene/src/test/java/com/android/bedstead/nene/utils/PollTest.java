@@ -82,7 +82,7 @@ public class PollTest {
                         .errorOnFail()
                         .await());
         assertThat(expected).hasMessageThat()
-                .isEqualTo("Expected tester value to be equal to Value1. Was Value2");
+                .startsWith("Expected tester value to be equal to Value1. Was Value2");
     }
 
     @Test
@@ -96,7 +96,7 @@ public class PollTest {
                         .errorOnFail("Custom error")
                         .await());
         assertThat(expected).hasMessageThat()
-                .isEqualTo("Custom error. tester value was Value2");
+                .startsWith("Custom error. tester value was Value2");
     }
 
     @Test
@@ -138,7 +138,7 @@ public class PollTest {
                         .errorOnFail()
                         .await());
         assertThat(expected).hasMessageThat()
-                .isEqualTo("Expected tester value to not be equal to Value2. Was Value2");
+                .startsWith("Expected tester value to not be equal to Value2. Was Value2");
     }
 
     @Test
@@ -152,7 +152,7 @@ public class PollTest {
                         .errorOnFail("Custom error")
                         .await());
         assertThat(expected).hasMessageThat()
-                .isEqualTo("Custom error. tester value was Value2");
+                .startsWith("Custom error. tester value was Value2");
     }
 
     @Test
@@ -194,7 +194,7 @@ public class PollTest {
                         .errorOnFail()
                         .await());
         assertThat(expected).hasMessageThat()
-                .isEqualTo("Expected tester value to be null. Was Value2");
+                .startsWith("Expected tester value to be null. Was Value2");
     }
 
     @Test
@@ -208,7 +208,7 @@ public class PollTest {
                         .errorOnFail("Custom error")
                         .await());
         assertThat(expected).hasMessageThat()
-                .isEqualTo("Custom error. tester value was Value2");
+                .startsWith("Custom error. tester value was Value2");
     }
 
     @Test
@@ -250,7 +250,7 @@ public class PollTest {
                         .errorOnFail()
                         .await());
         assertThat(expected).hasMessageThat()
-                .isEqualTo("Expected tester value to not be null. Was null");
+                .startsWith("Expected tester value to not be null. Was null");
     }
 
     @Test
@@ -264,7 +264,7 @@ public class PollTest {
                         .errorOnFail("Custom error")
                         .await());
         assertThat(expected).hasMessageThat()
-                .isEqualTo("Custom error. tester value was null");
+                .startsWith("Custom error. tester value was null");
     }
 
     @Test
@@ -306,7 +306,7 @@ public class PollTest {
                         .errorOnFail()
                         .await());
         assertThat(expected).hasMessageThat()
-                .isEqualTo("Expected tester value to meet checker function. Was null");
+                .startsWith("Expected tester value to meet checker function. Was null");
     }
 
     @Test
@@ -320,7 +320,7 @@ public class PollTest {
                         .errorOnFail("Custom error")
                         .await());
         assertThat(expected).hasMessageThat()
-                .isEqualTo("Custom error. tester value was null");
+                .startsWith("Custom error. tester value was null");
     }
 
     @Test

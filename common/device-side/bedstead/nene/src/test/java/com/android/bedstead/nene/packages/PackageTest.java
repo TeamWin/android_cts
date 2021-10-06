@@ -311,6 +311,7 @@ public class PackageTest {
 
     @Test
     @EnsureHasSecondaryUser
+    @RequireRunOnSystemUser // TODO(201319776): Just needs to be not the secondary user
     public void denyPermission_permissionIsUserSpecific_permissionIsDeniedOnlyForThatUser() {
         try (TestAppInstanceReference instance1 = sTestApp.install();
              TestAppInstanceReference instance2 = sTestApp.install(sDeviceState.secondaryUser())) {

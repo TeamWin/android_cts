@@ -312,7 +312,6 @@ public class DeviceStateTest {
 
     @Test
     @EnsureHasDeviceOwner
-    @RequireNotHeadlessSystemUserMode // TODO(b/201313785): re-enable
     public void deviceOwner_deviceOwnerIsSet_returnsDeviceOwner() {
         assertThat(sDeviceState.deviceOwner()).isNotNull();
     }

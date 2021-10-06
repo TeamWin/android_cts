@@ -61,11 +61,6 @@ import java.util.Set;
  */
 public final class DevicePolicy {
 
-    // TODO(b/201313785): Remove this logic once headless system user mode restores
-    //  setDeviceOwner
-    private static final boolean HEADLESS_SET_DO_AND_PO =
-            TestApis.users().isHeadlessSystemUserMode();
-
     public static final DevicePolicy sInstance = new DevicePolicy();
 
     private static final String LOG_TAG = "DevicePolicy";
@@ -173,10 +168,6 @@ public final class DevicePolicy {
 
         try {
             setUserSetupComplete(user, false);
-            if (HEADLESS_SET_DO_AND_PO) {
-                currentUserSetupComplete = getUserSetupComplete(TestApis.users().current());
-                setUserSetupComplete(TestApis.users().current(), false);
-            }
 
             try (PermissionContext p =
                          TestApis.permissions().withPermission(
@@ -189,7 +180,7 @@ public final class DevicePolicy {
                 //  we retry because if the DO/PO was recently removed, it can take some time
                 //  to be allowed to set it again
                 retryIfNotTerminal(
-                        () -> devicePolicyManager.setDeviceOwner(
+                        () -> setDeviceOwnerOnly(devicePolicyManager,
                                 deviceOwnerComponent, "Nene", user.id()),
                         () -> checkForTerminalDeviceOwnerFailures(
                                 user, deviceOwnerComponent, /* allowAdditionalUsers= */ true));
@@ -206,14 +197,23 @@ public final class DevicePolicy {
         Package deviceOwnerPackage = TestApis.packages().find(
                 deviceOwnerComponent.getPackageName());
 
-        if (HEADLESS_SET_DO_AND_PO) {
-            ProfileOwner linkedProfileOwner =
-                    new ProfileOwner(
-                            TestApis.users().current(), deviceOwnerPackage, deviceOwnerComponent);
-            return new DeviceOwner(user, deviceOwnerPackage, deviceOwnerComponent,
-                    linkedProfileOwner);
-        }
         return new DeviceOwner(user, deviceOwnerPackage, deviceOwnerComponent);
+    }
+
+    /**
+     * Set Device Owner without changing any other device state.
+     *
+     * <p>This is used instead of {@link DevicePolicyManager#setDeviceOwner(ComponentName)} directly
+     * because on S_V2 and above, that method can also set profile owners and install packages in
+     * some circumstances.
+     */
+    private void setDeviceOwnerOnly(DevicePolicyManager devicePolicyManager,
+            ComponentName component, String name, int deviceOwnerUserId) {
+        if (Versions.meetsMinimumSdkVersionRequirement(Versions.S_V2)) {
+            devicePolicyManager.setDeviceOwnerOnly(component, name, deviceOwnerUserId);
+        } else {
+            devicePolicyManager.setDeviceOwner(component, name, deviceOwnerUserId);
+        }
     }
 
     /**
@@ -380,24 +380,6 @@ public final class DevicePolicy {
 
                 mCachedDeviceOwner = result.mDeviceOwner;
                 mCachedProfileOwners = result.mProfileOwners;
-
-                // TODO(b/201313785): Remove this logic once headless system user mode restores
-                //  setDeviceOwner
-                if (TestApis.users().isHeadlessSystemUserMode() && mCachedDeviceOwner != null) {
-                    ProfileOwner currentProfileOwner =
-                            mCachedProfileOwners.get(TestApis.users().current());
-
-                    if (currentProfileOwner != null
-                            && currentProfileOwner.mComponentName.equals(
-                                    mCachedDeviceOwner.mComponentName)) {
-                        // We will assume that the matching profile owner was created by setting
-                        // the device owner
-                        mCachedDeviceOwner = new DeviceOwner(mCachedDeviceOwner.user(),
-                                mCachedDeviceOwner.mPackage,
-                                mCachedDeviceOwner.mComponentName, currentProfileOwner);
-                    }
-
-                }
 
                 return;
             } catch (AdbParseException e) {

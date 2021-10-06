@@ -124,11 +124,6 @@ import java.util.function.Function;
  */
 public final class DeviceState implements TestRule {
 
-    // TODO(b/201313785): Remove this logic once headless system user mode restores
-    //  setDeviceOwner
-    private static final boolean HEADLESS_SET_DO_AND_PO =
-            TestApis.users().isHeadlessSystemUserMode();
-
     private static final String GMS_PKG = "com.google.android.gms";
     private static final ComponentName REMOTE_DPC_COMPONENT_NAME = RemoteDpc.DPC_COMPONENT_NAME;
 
@@ -1392,17 +1387,6 @@ public final class DeviceState implements TestRule {
             mDeviceOwner = currentDeviceOwner;
         } else {
             UserReference instrumentedUser = TestApis.users().instrumented();
-
-            if (HEADLESS_SET_DO_AND_PO) {
-                if (instrumentedUser.equals(userReference)) {
-                    // Automotive devices don't allow setting a DO without a PO
-                    requireDoesNotHaveFeature("android.hardware.type.automotive", failureMode);
-                }
-
-                // Headless devices will set a PO when setting DO, so the existing PO must be
-                // removed
-                ensureHasNoProfileOwner(instrumentedUser);
-            }
 
             if (!Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.S)) {
                 // Prior to S we can't set device owner if there are other users on the device

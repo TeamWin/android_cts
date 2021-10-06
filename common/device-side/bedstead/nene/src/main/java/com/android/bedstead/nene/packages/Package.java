@@ -25,6 +25,7 @@ import static android.content.pm.PackageManager.MATCH_UNINSTALLED_PACKAGES;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 import static android.content.pm.PermissionInfo.PROTECTION_DANGEROUS;
 import static android.content.pm.PermissionInfo.PROTECTION_FLAG_DEVELOPMENT;
+import static android.os.Build.VERSION_CODES.S;
 import static android.os.Process.myUid;
 
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -545,25 +546,28 @@ public final class Package {
     }
 
     private PackageInfo packageInfoForUserPreQ(UserReference user, int flags) {
+        AdbPackage pkg = parseDumpsys().mPackages.get(mPackageName);
+
+        if (pkg == null) {
+            return null;
+        }
+
+        PackageInfo packageInfo = new PackageInfo();
+        packageInfo.packageName = mPackageName;
+        packageInfo.requestedPermissions = pkg.requestedPermissions().toArray(new String[]{});
+
+        return packageInfo;
+    }
+
+    private AdbPackageParser.ParseResult parseDumpsys() {
         try {
             String dumpsysOutput = ShellCommand.builder("dumpsys package").execute();
-
-            AdbPackageParser.ParseResult r = Packages.sParser.parse(dumpsysOutput);
-            AdbPackage pkg = r.mPackages.get(mPackageName);
-
-            if (pkg == null) {
-                return null;
-            }
-
-            PackageInfo packageInfo = new PackageInfo();
-            packageInfo.packageName = mPackageName;
-            packageInfo.requestedPermissions = pkg.requestedPermissions().toArray(new String[]{});
-
-            return packageInfo;
+            return Packages.sParser.parse(dumpsysOutput);
         } catch (AdbException | AdbParseException e) {
-            throw new NeneException("Error getting package info pre Q", e);
+            throw new NeneException("Error parsing package dumpsys", e);
         }
     }
+
 
     @Nullable
     private ApplicationInfo applicationInfoFromAnyUser(int flags) {
@@ -743,9 +747,13 @@ public final class Package {
 
     /** {@code true} if the package exists on the device. */
     public boolean exists() {
-        try (PermissionContext p = TestApis.permissions().withPermission(QUERY_ALL_PACKAGES)) {
-            return packageInfoFromAnyUser(MATCH_UNINSTALLED_PACKAGES) != null;
+        if (Versions.meetsMinimumSdkVersionRequirement(S)) {
+            try (PermissionContext p = TestApis.permissions().withPermission(QUERY_ALL_PACKAGES)) {
+                return packageInfoFromAnyUser(MATCH_UNINSTALLED_PACKAGES) != null;
+            }
         }
+
+        return parseDumpsys().mPackages.containsKey(mPackageName);
     }
 
     private static final class ProcessInfo {
