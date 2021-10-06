@@ -77,7 +77,8 @@ public final class Processor extends AbstractProcessor {
             "android.os.HardwarePropertiesManager",
             "android.os.UserManager",
             "android.content.pm.PackageManager",
-            "android.content.pm.CrossProfileApps"
+            "android.content.pm.CrossProfileApps",
+            "android.content.pm.LauncherApps"
     };
 
     private static final String PARENT_PROFILE_INSTANCE =
@@ -224,7 +225,45 @@ public final class Processor extends AbstractProcessor {
             "public void startActivity("
                     + "android.content.Intent, android.os.UserHandle, android.app.Activity)",
             "public void startActivity(android.content.Intent, android.os.UserHandle,"
-                    + "android.app.Activity, android.os.Bundle)"
+                    + "android.app.Activity, android.os.Bundle)",
+
+            // LauncherApps
+
+            //Uses LauncherApps.Callback
+            "public void registerCallback("
+                    + "android.content.pm.LauncherApps.Callback, android.os.Handler)",
+            "public void registerCallback("
+                    + "android.content.pm.LauncherApps.Callback)",
+
+            //Uses Drawable
+            "public android.graphics.drawable.Drawable getShortcutBadgedIconDrawable("
+            + "android.content.pm.ShortcutInfo, int)",
+            "public android.graphics.drawable.Drawable getShortcutIconDrawable("
+            + "android.content.pm.ShortcutInfo, int)",
+
+            //Uses Executor
+            "public void registerPackageInstallerSessionCallback("
+                    + "@NonNull @CallbackExecutor java.util.concurrent.Executor,"
+                    + "@NonNull android.content.pm.PackageInstaller.SessionCallback)",
+
+            // Uses LauncherActivityInfo
+            "public java.util.List<android.content.pm.LauncherActivityInfo> getActivityList("
+                    + "String, android.os.UserHandle)",
+            "public java.util.List<android.content.pm.LauncherActivityInfo> "
+                    + "getShortcutConfigActivityList(String, android.os.UserHandle)",
+            "public android.content.IntentSender getShortcutConfigActivityIntent("
+                    + "@NonNull android.content.pm.LauncherActivityInfo)",
+            "public android.content.pm.LauncherActivityInfo resolveActivity("
+                    + "android.content.Intent, android.os.UserHandle)",
+
+            //Uses LauncherApps.ShortcutQuery
+            "public java.util.List<android.content.pm.ShortcutInfo> getShortcuts("
+                    + "android.content.pm.LauncherApps.ShortcutQuery, android.os.UserHandle)",
+            "public void unregisterCallback(android.content.pm.LauncherApps.Callback)",
+
+            //Uses PackageInfo.SessionCallback
+            "public void unregisterPackageInstallerSessionCallback("
+                    + "android.content.pm.PackageInstaller.SessionCallback)"
     );
 
 
