@@ -45,6 +45,8 @@ import static android.appenumeration.cts.Constants.ACTION_LAUNCHER_APPS_SHOULD_H
 import static android.appenumeration.cts.Constants.ACTION_MANIFEST_ACTIVITY;
 import static android.appenumeration.cts.Constants.ACTION_MANIFEST_PROVIDER;
 import static android.appenumeration.cts.Constants.ACTION_MANIFEST_SERVICE;
+import static android.appenumeration.cts.Constants.ACTION_PENDING_INTENT_GET_ACTIVITY;
+import static android.appenumeration.cts.Constants.ACTION_PENDING_INTENT_GET_CREATOR_PACKAGE;
 import static android.appenumeration.cts.Constants.ACTION_QUERY_ACTIVITIES;
 import static android.appenumeration.cts.Constants.ACTION_QUERY_PROVIDERS;
 import static android.appenumeration.cts.Constants.ACTION_QUERY_RESOLVER;
@@ -69,6 +71,7 @@ import static android.appenumeration.cts.Constants.EXTRA_DATA;
 import static android.appenumeration.cts.Constants.EXTRA_ERROR;
 import static android.appenumeration.cts.Constants.EXTRA_FLAGS;
 import static android.appenumeration.cts.Constants.EXTRA_ID;
+import static android.appenumeration.cts.Constants.EXTRA_PENDING_INTENT;
 import static android.appenumeration.cts.Constants.EXTRA_REMOTE_CALLBACK;
 import static android.appenumeration.cts.Constants.EXTRA_REMOTE_READY_CALLBACK;
 import static android.appenumeration.cts.Constants.QUERIES_ACTIVITY_ACTION;
@@ -136,6 +139,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContainingInAnyOrder;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.emptyArray;
+import static org.hamcrest.Matchers.emptyOrNullString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
@@ -1893,6 +1897,22 @@ public class AppEnumerationTests {
                         QUERIES_NOTHING_SHARED_USER, QUERIES_PACKAGE, TARGET_SHARED_USER));
     }
 
+    @Test
+    public void pendingIntent_getCreatorPackage_queriesPackage_canSeeNoApi()
+            throws Exception {
+        final PendingIntent pendingIntent = getPendingIntentActivity(TARGET_NO_API);
+        assertThat(getPendingIntentCreatorPackage(QUERIES_PACKAGE, pendingIntent),
+                is(TARGET_NO_API));
+    }
+
+    @Test
+    public void pendingIntent_getCreatorPackage_queriesNothing_cannotSeeNoApi()
+            throws Exception {
+        final PendingIntent pendingIntent = getPendingIntentActivity(TARGET_NO_API);
+        assertThat(getPendingIntentCreatorPackage(QUERIES_NOTHING, pendingIntent),
+                is(emptyOrNullString()));
+    }
+
     private void assertNotVisible(String sourcePackageName, String targetPackageName)
             throws Exception {
         if (!sGlobalFeatureEnabled) return;
@@ -2079,7 +2099,7 @@ public class AppEnumerationTests {
                 InstrumentationRegistry.getInstrumentation().getContext(), 100,
                 new Intent("android.appenumeration.cts.action.SEND_RESULT").setComponent(
                         new ComponentName(targetPackageName,
-                                "android.appenumeration.cts.query.TestActivity")),
+                                "android.appenumeration.cts.TestActivity")),
                 PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE);
 
         Bundle response = sendCommandBlocking(sourcePackageName, targetPackageName,
@@ -2262,6 +2282,19 @@ public class AppEnumerationTests {
         return response.getBoolean(Intent.EXTRA_RETURN_RESULT);
     }
 
+    private PendingIntent getPendingIntentActivity(String sourcePackageName) throws Exception  {
+        final Bundle bundle = sendCommandBlocking(sourcePackageName, null /* targetPackageName */,
+                null /* intentExtra */, ACTION_PENDING_INTENT_GET_ACTIVITY);
+        return bundle.getParcelable(EXTRA_PENDING_INTENT);
+    }
+
+    private String getPendingIntentCreatorPackage(String sourcePackageName,
+            PendingIntent pendingIntent) throws Exception  {
+        final Bundle bundle = sendCommandBlocking(sourcePackageName, null /* targetPackageName */,
+                pendingIntent, ACTION_PENDING_INTENT_GET_CREATOR_PACKAGE);
+        return bundle.getString(Intent.EXTRA_PACKAGE_NAME);
+    }
+
     interface Result {
         Bundle await() throws Exception;
     }
@@ -2285,7 +2318,7 @@ public class AppEnumerationTests {
             if (intentExtra instanceof Intent) {
                 intent.putExtra(Intent.EXTRA_INTENT, intentExtra);
             } else if (intentExtra instanceof PendingIntent) {
-                intent.putExtra("pendingIntent", intentExtra);
+                intent.putExtra(EXTRA_PENDING_INTENT, intentExtra);
             } else if (intentExtra instanceof Bundle) {
                 intent.putExtra(EXTRA_DATA, intentExtra);
             }
