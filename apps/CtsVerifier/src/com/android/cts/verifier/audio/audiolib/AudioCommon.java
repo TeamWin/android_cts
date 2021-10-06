@@ -1,7 +1,10 @@
-package com.android.cts.verifier.audio;
+package com.android.cts.verifier.audio.audiolib;
 
 import android.media.AudioManager;
 import android.media.AudioTrack;
+
+import com.android.cts.verifier.audio.AudioRecordHelper;
+import com.android.cts.verifier.audio.Util;
 
 import java.util.ArrayList;
 import java.util.Random;
@@ -9,7 +12,7 @@ import java.util.Random;
 /**
  * This class stores common constants and methods.
  */
-public class Common {
+public class AudioCommon {
 
   public static final int RECORDING_SAMPLE_RATE_HZ
       = AudioRecordHelper.getInstance().getSampleRate();
@@ -95,7 +98,7 @@ public class Common {
   private static double[] frequencies() {
     double[] originalFrequencies = originalFrequencies();
 
-    double[] randomFrequencies = new double[Common.REPETITIONS * originalFrequencies.length];
+    double[] randomFrequencies = new double[AudioCommon.REPETITIONS * originalFrequencies.length];
     for (int i = 0; i < REPETITIONS * originalFrequencies.length; i++) {
       randomFrequencies[i] = originalFrequencies[ORDER[i] % originalFrequencies.length];
     }
@@ -108,13 +111,13 @@ public class Common {
    */
   private static double[] originalFrequencies() {
     ArrayList<Double> frequencies = new ArrayList<Double>();
-    double frequency = Common.MIN_FREQUENCY_HZ;
-    while (frequency <= Common.MAX_FREQUENCY_HZ) {
+    double frequency = AudioCommon.MIN_FREQUENCY_HZ;
+    while (frequency <= AudioCommon.MAX_FREQUENCY_HZ) {
       frequencies.add(new Double(frequency));
       if ((frequency >= 18500) && (frequency < 20000)) {
-        frequency += Common.FREQUENCY_STEP_HZ;
+        frequency += AudioCommon.FREQUENCY_STEP_HZ;
       } else {
-        frequency += Common.FREQUENCY_STEP_HZ * 10;
+        frequency += AudioCommon.FREQUENCY_STEP_HZ * 10;
       }
     }
     Double[] frequenciesArray = frequencies.toArray(new Double[frequencies.size()]);
