@@ -423,6 +423,8 @@ public class AnalogHeadsetAudioActivity
             }
         }
 
+        reportHeadsetPort(mHeadsetDeviceInfo != null);
+
         getReportLog().addValue(
                 KEY_HEADSET_CONNECTED,
                 mHeadsetDeviceInfo != null ? 1 : 0,
