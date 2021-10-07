@@ -4115,17 +4115,138 @@ public class DecoderTest extends MediaPlayerTestBase {
     }
 
     /**
-     * Test tunneled audio PTS gaps with PCM audio.
+     * Test tunneled audio PTS gaps with HEVC if supported.
      * If there exist PTS Gaps in AudioTrack playback, the framePosition returned by
-     * AudioTrack#getTimestamp must not advance for any silent frames rendered to fill the gap.
+     * AudioTrack#getTimestamp must not advance for any silent frames rendered to fill the
+     * gap.
      */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     @Test
-    public void testTunneledAudioPtsGapsPcm() throws Exception {
-        testTunneledAudioPtsGaps(MediaFormat.MIMETYPE_AUDIO_OPUS,
+    public void testTunneledAudioPtsGapsHevc() throws Exception {
+        testTunneledAudioPtsGaps(MediaFormat.MIMETYPE_VIDEO_HEVC,
+                "video_1280x720_mkv_h265_500kbps_25fps_aac_stereo_128kbps_44100hz.mkv");
+    }
+
+    /**
+     * Test tunneled audio PTS gaps with AVC if supported
+     * If there exist PTS Gaps in AudioTrack playback, the framePosition returned by
+     * AudioTrack#getTimestamp must not advance for any silent frames rendered to fill the
+     * gap.
+     */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
+    @Test
+    public void testTunneledAudioPtsGapsAvc() throws Exception {
+        testTunneledAudioPtsGaps(MediaFormat.MIMETYPE_VIDEO_AVC,
+                "video_480x360_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz.mp4");
+    }
+
+    /**
+     * Test tunneled audio PTS gaps with VP9 if supported
+     * If there exist PTS Gaps in AudioTrack playback, the framePosition returned by
+     * AudioTrack#getTimestamp must not advance for any silent frames rendered to fill the
+     * gap.
+     */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
+    @Test
+    public void testTunneledAudioPtsGapsVp9() throws Exception {
+        testTunneledAudioPtsGaps(MediaFormat.MIMETYPE_VIDEO_VP9,
                 "bbb_s1_640x360_webm_vp9_0p21_1600kbps_30fps_vorbis_stereo_128kbps_48000hz.webm");
     }
 
     private void testTunneledAudioPtsGaps(String mimeType, String fileName) throws Exception {
+        if (!MediaUtils.check(isVideoFeatureSupported(mimeType,
+                CodecCapabilities.FEATURE_TunneledPlayback),
+                "No tunneled video playback codec found for MIME " + mimeType)) {
+            return;
+        }
+
+        AudioManager am = mContext.getSystemService(AudioManager.class);
+
+        mMediaCodecPlayer = new MediaCodecTunneledPlayer(mContext,
+                getActivity().getSurfaceHolder(), true, am.generateAudioSessionId());
+
+        final Uri mediaUri = Uri.fromFile(new File(mInpPrefix, fileName));
+        mMediaCodecPlayer.setAudioDataSource(mediaUri, null);
+
+        assertTrue("MediaCodecPlayer.start() failed!", mMediaCodecPlayer.start());
+        assertTrue("MediaCodecPlayer.prepare() failed!", mMediaCodecPlayer.prepare());
+
+        mMediaCodecPlayer.startThread();
+        sleepUntil(() -> mMediaCodecPlayer.getTimestamp() != null
+                && mMediaCodecPlayer.getTimestamp().framePosition > 0,  Duration.ofSeconds(1));
+        // After 30 ms, Changing the presentation offset for audio track
+        Thread.sleep(30);
+
+        // Requirement: If the audio presentation timestamp header sent by the app is greater than
+        // the current audio clock by less than 100ms, the framePosition returned by
+        // AudioTrack#getTimestamp (per get_presentation_position) must not advance for any silent
+        // frames rendered to fill the gap.
+        // TODO: add link to documentation when available
+        mMediaCodecPlayer.setAudioTrackOffsetMs(100);
+        // Wait for 20 ms so that whatever was buffered before offset is played
+        Thread.sleep(20);
+        long initialFramePosition = mMediaCodecPlayer.getTimestamp().framePosition;
+
+        // Verify that the framePosition did not advance after 30 ms. This ensures framePosition
+        // returned by AudioTrack#getTimestamp did not advance for any silent frames rendered to
+        // fill PTS gaps.
+        Thread.sleep(30);
+        assertEquals(
+                "Initial frame position != Final frame position after introducing PTS gaps",
+                initialFramePosition, mMediaCodecPlayer.getTimestamp().framePosition);
+
+        Thread.sleep(500);
+        mMediaCodecPlayer.stopWritingToAudioTrack(true);
+
+        // Sleep till framePosition stabilizes, i.e. playback is complete or till max 3 seconds.
+        long framePosCurrent = 0;
+        int totalSleepMs = 0;
+        while (totalSleepMs < 3000
+                && framePosCurrent != mMediaCodecPlayer.getTimestamp().framePosition) {
+            framePosCurrent = mMediaCodecPlayer.getTimestamp().framePosition;
+            Thread.sleep(500);
+            totalSleepMs += 500;
+        }
+
+        // Verify if number of frames written and played are same even if PTS Gaps were present
+        // in the playback.
+        assertEquals("Number of frames written != Number of frames played",
+                mMediaCodecPlayer.getAudioFramesWritten(),
+                mMediaCodecPlayer.getTimestamp().framePosition);
+    }
+
+    /**
+     * Test tunneled audioTimestamp progress with underrun, with HEVC if supported
+     */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
+    @Test
+    public void testTunneledAudioTimestampProgressWithUnderrunHevc() throws Exception {
+        testTunneledAudioPtsGaps(MediaFormat.MIMETYPE_VIDEO_HEVC,
+                "video_1280x720_mkv_h265_500kbps_25fps_aac_stereo_128kbps_44100hz.mkv");
+    }
+
+    /**
+     * Test tunneled audioTimestamp progress with underrun, with AVC if supported.
+     */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
+    @Test
+    public void testTunneledAudioTimestampProgressWithUnderrunAvc() throws Exception {
+        testTunneledAudioPtsGaps(MediaFormat.MIMETYPE_VIDEO_AVC,
+                "video_480x360_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz.mp4");
+    }
+
+    /**
+     *  Test tunneled audioTimestamp progress with underrun, with VP9 if supported.
+     */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
+    @Test
+    public void testTunneledAudioTimestampProgressWithUnderrunVp9() throws Exception {
+        testTunneledAudioPtsGaps(MediaFormat.MIMETYPE_VIDEO_VP9,
+                "bbb_s1_640x360_webm_vp9_0p21_1600kbps_30fps_vorbis_stereo_128kbps_48000hz.webm");
+    }
+
+    private void testTunneledAudioTimestampProgressWithUnderrun(
+            String mimeType, String fileName) throws Exception {
         if (!MediaUtils.check(isVideoFeatureSupported(mimeType,
                 CodecCapabilities.FEATURE_TunneledPlayback),
                 "No tunneled video playback codec found for MIME " + mimeType)) {
@@ -4166,8 +4287,8 @@ public class DecoderTest extends MediaPlayerTestBase {
         }
 
         // Verify if number of frames written and played are same. This ensures the
-        // framePosition returned by AudioTrack#getTimestamp did not advance for any silent frames
-        // rendered to fill PTS gaps.
+        // framePosition returned by AudioTrack#getTimestamp progresses correctly in case of
+        // underrun
         assertEquals("Number of frames written != Number of frames played",
                 mMediaCodecPlayer.getAudioFramesWritten(),
                 mMediaCodecPlayer.getTimestamp().framePosition);
