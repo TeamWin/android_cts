@@ -150,34 +150,38 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
 
         // Start the victim process (service running in process :lmk_victim)
         // We rely on a victim process (instead of expecting the allocating process to die)
-        // because it can be flaky and dependent on lmkd configuration
-        // (e.g. the OOM reaper can get to it first, depending on the allocation timings)
+        // because 1. it is likely to be less flaky (higher oom score processes will be killed
+        // faster, making less likely for the OOM reaper to trigger and 2. we need two processes
+        // to be able to force evictions on 32-bit userspace devices with > 4 GB RAM.
         DeviceUtils.executeServiceAction(getDevice(), "LmkVictimBackgroundService",
-                "action.end_immediately");
+                "action.allocate_memory");
         // Start fg activity and allocate
         try (AutoCloseable a = DeviceUtils.withActivity(
                 getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
                 "StatsdCtsForegroundActivity", "action", "action.lmk")) {
             // Sorted list of events in order in which they occurred.
-            List<EventMetricData> data = null;
+            List<LmkKillOccurred> atoms = null;
             for (int i = 0; i < 60; ++i) {
                 Thread.sleep(1_000);
-                data = ReportUtils.getEventMetricDataList(getDevice());
-                if (!data.isEmpty()) {
+                atoms = ReportUtils.getEventMetricDataList(getDevice()).stream()
+                        .map(EventMetricData::getAtom)
+                        .filter(Atom::hasLmkKillOccurred)
+                        .map(Atom::getLmkKillOccurred)
+                        .filter(atom -> atom.getUid() == appUid)
+                        .collect(Collectors.toList());
+                if (!atoms.isEmpty()) {
                   break;
                 }
             }
 
-            assertThat(data).isNotEmpty();
+            assertThat(atoms).isNotEmpty();
             // Even though both processes might have died, the non-fg one (victim)
             // must have been first.
-            assertThat(data.get(0).getAtom().hasLmkKillOccurred()).isTrue();
-            LmkKillOccurred atom = data.get(0).getAtom().getLmkKillOccurred();
-            assertThat(atom.getUid()).isEqualTo(appUid);
-            assertThat(atom.getProcessName())
+            assertThat(atoms.get(0).getProcessName())
                     .isEqualTo(DeviceUtils.STATSD_ATOM_TEST_PKG + ":lmk_victim");
-            assertThat(atom.getOomAdjScore()).isAtLeast(500);
-            assertThat(atom.getRssInBytes() + atom.getSwapInBytes()).isGreaterThan(0);
+            assertThat(atoms.get(0).getOomAdjScore()).isGreaterThan(0);
+            assertThat(atoms.get(0).getRssInBytes() + atoms.get(0).getSwapInBytes())
+                    .isGreaterThan(0);
       }
     }
 
