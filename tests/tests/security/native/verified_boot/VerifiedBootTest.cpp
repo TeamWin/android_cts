@@ -23,6 +23,8 @@
 #include <fstab/fstab.h>
 #include <gtest/gtest.h>
 
+#include "utils.h"
+
 // The relevant Android API levels
 constexpr auto S_API_LEVEL = 31;
 
@@ -49,6 +51,13 @@ TEST(VerifiedBootTest, avbHashtreeNotUsingSha1) {
     return;
   }
 
+  // This feature name check only applies to devices that first shipped with
+  // SC or later. The check above already screens out pre-S devices.
+  if(!deviceSupportsFeature("android.hardware.security.model.compatible")) {
+      GTEST_SKIP()
+          << "Skipping test: FEATURE_SECURITY_MODEL_COMPATIBLE missing.";
+    return;
+  }
   android::fs_mgr::Fstab fstab;
   ASSERT_TRUE(ReadDefaultFstab(&fstab)) << "Failed to read default fstab";
 

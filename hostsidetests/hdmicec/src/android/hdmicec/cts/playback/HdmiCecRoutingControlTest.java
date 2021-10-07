@@ -16,14 +16,13 @@
 
 package android.hdmicec.cts.playback;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.CecOperand;
-import android.hdmicec.cts.HdmiCecClientWrapper;
 import android.hdmicec.cts.HdmiCecConstants;
 import android.hdmicec.cts.LogicalAddress;
-import android.hdmicec.cts.RequiredPropertyRule;
-import android.hdmicec.cts.RequiredFeatureRule;
 
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -40,6 +39,10 @@ import java.util.concurrent.TimeUnit;
 public final class HdmiCecRoutingControlTest extends BaseHdmiCecCtsTest {
 
     private static final int PHYSICAL_ADDRESS = 0x1000;
+    private static final String POWER_CONTROL_MODE =
+            "power_control_mode";
+    private static final String POWER_CONTROL_MODE_NONE =
+            "none";
 
     public HdmiCecRoutingControlTest() {
         super(HdmiCecConstants.CEC_DEVICE_TYPE_PLAYBACK_DEVICE);
@@ -52,6 +55,42 @@ public final class HdmiCecRoutingControlTest extends BaseHdmiCecCtsTest {
             .around(CecRules.requiresLeanback(this))
             .around(CecRules.requiresDeviceType(this, LogicalAddress.PLAYBACK_1))
             .around(hdmiCecClient);
+
+    private String setPowerControlMode(String valToSet) throws Exception {
+        String val = getSettingsValue(POWER_CONTROL_MODE);
+        setSettingsValue(POWER_CONTROL_MODE, valToSet);
+        return val;
+    }
+
+    /**
+     * Test 11.1.2-2, HF4-7-2
+     *
+     * Tests that the device does not respond to a {@code <Request Active Source>} message
+     * when it is not the current active source.
+     */
+    @Test
+    public void cect_11_1_2_2_RequestActiveSource() throws Exception {
+        ITestDevice device = getDevice();
+
+        hdmiCecClient.sendCecMessage(
+                LogicalAddress.TV,
+                LogicalAddress.BROADCAST,
+                CecOperand.ACTIVE_SOURCE,
+                CecMessage.formatParams(HdmiCecConstants.TV_PHYSICAL_ADDRESS,
+                        HdmiCecConstants.PHYSICAL_ADDRESS_LENGTH));
+
+        TimeUnit.SECONDS.sleep(HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS);
+
+        String isActiveSource = device.executeShellCommand(
+                "dumpsys hdmi_control | grep \"isActiveSource()\"");
+        assertThat(isActiveSource.trim()).isEqualTo("isActiveSource(): false");
+
+        hdmiCecClient.sendCecMessage(LogicalAddress.TV, LogicalAddress.BROADCAST,
+                CecOperand.REQUEST_ACTIVE_SOURCE);
+
+        hdmiCecClient.checkOutputDoesNotContainMessage(
+                LogicalAddress.BROADCAST, CecOperand.ACTIVE_SOURCE);
+    }
 
     /**
      * Test 11.2.2-1
@@ -103,6 +142,7 @@ public final class HdmiCecRoutingControlTest extends BaseHdmiCecCtsTest {
     @Test
     public void cect_11_2_2_4_InactiveSourceOnStandby() throws Exception {
         ITestDevice device = getDevice();
+        String previousPowerControlMode = setPowerControlMode(POWER_CONTROL_MODE_NONE);
         try {
             int dumpsysPhysicalAddress = getDumpsysPhysicalAddress();
             hdmiCecClient.sendCecMessage(
@@ -118,6 +158,7 @@ public final class HdmiCecRoutingControlTest extends BaseHdmiCecCtsTest {
         } finally {
             /* Wake up the device */
             device.executeShellCommand("input keyevent KEYCODE_WAKEUP");
+            setPowerControlMode(previousPowerControlMode);
         }
     }
 }

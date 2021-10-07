@@ -24,7 +24,7 @@ import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.UserManager;
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import android.telephony.TelephonyManager;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -37,7 +37,7 @@ public class LocationPolicyTest {
     private final Context mContext = InstrumentationRegistry.getInstrumentation().getContext();
 
     @Test
-    @SecurityTest
+    @AsbSecurityTest(cveBugId = 148414207)
     public void testLocationPolicyPermissions() throws Exception {
         assertNotNull(mContext);
         PackageManager pm = mContext.getPackageManager();

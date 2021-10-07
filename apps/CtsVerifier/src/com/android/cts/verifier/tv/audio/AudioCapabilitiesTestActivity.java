@@ -99,10 +99,10 @@ public class AudioCapabilitiesTestActivity extends TvAppVerifierActivity
     @Override
     protected void createTestItems() {
         mSupportDolbyAtmosYesItem =
-                createUserItem(
+                createAndAttachUserItem(
                         R.string.tv_audio_capabilities_atmos_supported, R.string.tv_yes, this);
         setButtonEnabled(mSupportDolbyAtmosYesItem, true);
-        mSupportDolbyAtmosNoItem = createButtonItem(R.string.tv_no, this);
+        mSupportDolbyAtmosNoItem = createAndAttachButtonItem(R.string.tv_no, this);
         setButtonEnabled(mSupportDolbyAtmosNoItem, true);
     }
 
@@ -125,8 +125,9 @@ public class AudioCapabilitiesTestActivity extends TvAppVerifierActivity
 
             getAsserter()
                     .withMessage("AudioTrack.isDirectPlaybackSupported is expected to return true"
-                            + " for PCM16 2 channel")
-                    .that(AudioTrack.isDirectPlaybackSupported(makeAudioFormat(ENCODING_PCM_16BIT, 44100, 2), audioAttributes))
+                            + " for PCM 2 channel")
+                    .that(AudioTrack.isDirectPlaybackSupported(
+                            makeAudioFormat(ENCODING_PCM_16BIT, 44100, 2), audioAttributes))
                     .isTrue();
         }
     }
@@ -150,14 +151,16 @@ public class AudioCapabilitiesTestActivity extends TvAppVerifierActivity
 
             getAsserter()
                     .withMessage("AudioTrack.isDirectPlaybackSupported is expected to return true"
-                            + " for PCM16 6 channel")
-                    .that(AudioTrack.isDirectPlaybackSupported(makeAudioFormat(ENCODING_PCM_16BIT, 44100, 6), audioAttributes))
+                            + " for PCM 6 channel")
+                    .that(AudioTrack.isDirectPlaybackSupported(
+                            makeAudioFormat(ENCODING_PCM_16BIT, 44100, 6), audioAttributes))
                     .isTrue();
 
             getAsserter()
                     .withMessage("AudioTrack.isDirectPlaybackSupported is expected to return true "
                             + "for EAC3 6 channel")
-                    .that(AudioTrack.isDirectPlaybackSupported(makeAudioFormat(ENCODING_E_AC3, 44100, 6), audioAttributes))
+                    .that(AudioTrack.isDirectPlaybackSupported(
+                            makeAudioFormat(ENCODING_E_AC3, 44100, 6), audioAttributes))
                     .isTrue();
 
             ImmutableList.Builder<String> actualAtmosFormatStrings = ImmutableList.builder();

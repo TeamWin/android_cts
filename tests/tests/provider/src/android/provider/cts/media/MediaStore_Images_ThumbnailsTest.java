@@ -40,6 +40,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ImageDecoder;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.provider.MediaStore.Images.Media;
@@ -57,6 +58,7 @@ import android.util.Log;
 import android.util.Size;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.SdkSuppress;
 
 import junit.framework.AssertionFailedError;
 
@@ -74,6 +76,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 
+@SdkSuppress(minSdkVersion = Build.VERSION_CODES.R)
 @RunWith(Parameterized.class)
 public class MediaStore_Images_ThumbnailsTest {
     private ArrayList<Uri> mRowsAdded;
@@ -115,7 +118,7 @@ public class MediaStore_Images_ThumbnailsTest {
 
         mRowsAdded = new ArrayList<Uri>();
 
-        Log.d(TAG, "Using volume " + mVolumeName);
+        Log.d(TAG, "Using volume " + mVolumeName + " for user " + mContext.getUserId());
         mExternalImages = MediaStore.Images.Media.getContentUri(mVolumeName);
 
         final DisplayMetrics metrics = mContext.getResources().getDisplayMetrics();

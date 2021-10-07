@@ -3383,8 +3383,6 @@ bool nativeImageReaderTestBase(
         JNIEnv* env, jstring jOutPath, jint format, AImageReader_ImageCallback cb,
         jstring jOverrideCameraId) {
     const int NUM_TEST_IMAGES = 10;
-    const int TEST_WIDTH  = 640;
-    const int TEST_HEIGHT = 480;
     media_status_t mediaRet = AMEDIA_ERROR_UNKNOWN;
     int numCameras = 0;
     bool pass = false;
@@ -3455,9 +3453,6 @@ bool nativeImageReaderTestBase(
         int32_t testWidth, testHeight;
         switch (format) {
             case AIMAGE_FORMAT_JPEG:
-                testWidth = TEST_WIDTH;
-                testHeight = TEST_HEIGHT;
-                break;
             case AIMAGE_FORMAT_Y8:
             case AIMAGE_FORMAT_HEIC:
             case AIMAGE_FORMAT_DEPTH_JPEG:
@@ -3992,8 +3987,6 @@ testStillCaptureNative(
         jstring jOverrideCameraId) {
     ALOGV("%s", __FUNCTION__);
     const int NUM_TEST_IMAGES = 10;
-    const int TEST_WIDTH  = 640;
-    const int TEST_HEIGHT = 480;
     media_status_t mediaRet = AMEDIA_ERROR_UNKNOWN;
     int numCameras = 0;
     bool pass = false;
@@ -4060,8 +4053,12 @@ testStillCaptureNative(
             ImageReaderListener::validateImageCb
         };
         readerListener.setDumpFilePathBase(outPath);
+        int32_t testWidth, testHeight;
+        if (!staticInfo.getMaxSizeForFormat(AIMAGE_FORMAT_JPEG, &testWidth, &testHeight)) {
+            goto cleanup;
+        }
         mediaRet = testCase.initImageReaderWithErrorLog(
-                TEST_WIDTH, TEST_HEIGHT, AIMAGE_FORMAT_JPEG, NUM_TEST_IMAGES,
+                testWidth, testHeight, AIMAGE_FORMAT_JPEG, NUM_TEST_IMAGES,
                 &readerCb);
         if (mediaRet != AMEDIA_OK) {
             // Don't log error here. testcase did it
@@ -4106,13 +4103,13 @@ testStillCaptureNative(
         }
 
         int64_t minFrameDurationNs = staticInfo.getMinFrameDurationFor(
-                AIMAGE_FORMAT_JPEG, TEST_WIDTH, TEST_HEIGHT);
+                AIMAGE_FORMAT_JPEG, testWidth, testHeight);
         if (minFrameDurationNs < 0) {
             LOG_ERROR(errorString, "Get camera %s minFrameDuration failed", cameraId);
             goto cleanup;
         }
         int64_t stallDurationNs = staticInfo.getStallDurationFor(
-                AIMAGE_FORMAT_JPEG, TEST_WIDTH, TEST_HEIGHT);
+                AIMAGE_FORMAT_JPEG, testWidth, testHeight);
         if (stallDurationNs < 0) {
             LOG_ERROR(errorString, "Get camera %s stallDuration failed", cameraId);
             goto cleanup;

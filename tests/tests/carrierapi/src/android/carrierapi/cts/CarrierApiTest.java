@@ -1071,7 +1071,11 @@ public class CarrierApiTest extends BaseCarrierApiTest {
 
     @Test
     public void testAddSubscriptionToExistingGroupForMultipleSims() {
-        if (mTelephonyManager.getPhoneCount() < DSDS_PHONE_COUNT) return;
+        if (mTelephonyManager.getPhoneCount() < DSDS_PHONE_COUNT
+                || mSubscriptionManager.getActiveSubscriptionInfoList().size() < DSDS_PHONE_COUNT) {
+            // This test requires at least two active subscriptions.
+            return;
+        }
 
         // Set subscription group with current sub Id.
         int subId = SubscriptionManager.getDefaultDataSubscriptionId();
@@ -1084,9 +1088,6 @@ public class CarrierApiTest extends BaseCarrierApiTest {
             List<SubscriptionInfo> activeSubInfos =
                     ShellIdentityUtils.invokeMethodWithShellPermissions(mSubscriptionManager,
                     (sm) -> sm.getActiveSubscriptionInfoList());
-
-            // Verify that the device has at least two active subscriptions.
-            assertThat(activeSubInfos.size()).isAtLeast(DSDS_PHONE_COUNT);
 
             List<Integer> activeSubGroup = getSubscriptionIdList(activeSubInfos);
             activeSubGroup.removeIf(id -> id == subId);

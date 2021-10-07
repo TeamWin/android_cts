@@ -26,7 +26,6 @@ import android.app.FragmentTransaction;
 import android.app.KeyguardManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Resources;
@@ -520,13 +519,9 @@ public class UnlockedDeviceRequiredTest extends PassFailButtons.Activity {
          * @return {@code true} if the device meets the requirements for the test
          */
         private boolean verifyTestRequirements() {
-            if (!mKeyguardManager.isDeviceSecure()) {
-                mTestState = STATE_AWAITING_LOCK_SCREEN_CONFIG;
-                return false;
-            }
             boolean requirementsMet = true;
-            // If the device was previously verified to not support biometric unlock then do not run
-            // this verification again.
+            // Check for biometric support at least once to ensure the user is not prompted to
+            // configure a biometric unlock if not supported by the device.
             if (mBiometricsSupported) {
                 int biometricResponse = mBiometricManager.canAuthenticate(
                         BiometricManager.Authenticators.BIOMETRIC_STRONG);
@@ -535,14 +530,15 @@ public class UnlockedDeviceRequiredTest extends PassFailButtons.Activity {
                     // boolean to indicate the lack of support to prevent this check on future
                     // invocations.
                     case BiometricManager.BIOMETRIC_ERROR_HW_UNAVAILABLE:
+                    case BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE:
                         mBiometricsSupported = false;
-                        requirementsMet = true;
                         break;
                     // A success response indicates at least one biometric is registered for device
                     // unlock.
                     case BiometricManager.BIOMETRIC_SUCCESS:
-                        requirementsMet = true;
                         break;
+                    // A response of none enrolled indicates the device has the hardware to support
+                    // biometrics, but a biometric unlock has not yet been configured.
                     case BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED:
                         mTestState = STATE_AWAITING_BIOMETRIC_CONFIG;
                         requirementsMet = false;
@@ -556,6 +552,10 @@ public class UnlockedDeviceRequiredTest extends PassFailButtons.Activity {
                         requirementsMet = false;
                         break;
                 }
+            }
+            if (!mKeyguardManager.isDeviceSecure()) {
+                mTestState = STATE_AWAITING_LOCK_SCREEN_CONFIG;
+                requirementsMet = false;
             }
             return requirementsMet;
         }

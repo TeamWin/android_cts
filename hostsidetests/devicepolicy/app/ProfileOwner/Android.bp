@@ -30,11 +30,13 @@ android_test_helper_app {
     static_libs: [
         "ctstestrunner-axt",
         "compatibility-device-util-axt",
+        "devicepolicy-deviceside-common",
         "ub-uiautomator",
     ],
     // tag this module as a cts test artifact
     test_suites: [
         "cts",
         "general-tests",
+        "mts",
     ],
 }

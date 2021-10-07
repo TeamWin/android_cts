@@ -84,6 +84,7 @@ public abstract class BaseBackupHostSideTest extends BaseHostJUnit4Test {
                 getBackupUtils().isBackupEnabled());
         assertEquals("LocalTransport should be selected at this point", LOCAL_TRANSPORT,
                 getCurrentTransport());
+        mBackupUtils.wakeAndUnlockDevice();
     }
 
     protected BackupUtils getBackupUtils() {
@@ -144,9 +145,14 @@ public abstract class BaseBackupHostSideTest extends BaseHostJUnit4Test {
         }
     }
 
-    private void setLocalTransportParameters(String parameters) throws Exception {
+    protected void setLocalTransportParameters(String parameters) throws Exception {
         getDevice().executeShellCommand("settings put secure backup_local_transport_parameters "
                 + parameters);
+    }
+
+    protected String getLocalTransportParameters() throws DeviceNotAvailableException {
+        return getDevice().executeShellCommand(
+                "settings get secure backup_local_transport_parameters");
     }
 
     protected void enableFakeEncryptionOnTransport() throws Exception {

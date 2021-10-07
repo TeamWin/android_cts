@@ -38,7 +38,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
 
-import androidx.test.filters.FlakyTest;
 import androidx.test.filters.MediumTest;
 
 import org.junit.Before;
@@ -52,7 +51,6 @@ import java.util.Arrays;
  */
 @MediumTest
 @Presubmit
-@FlakyTest(bugId=137329632)
 @android.server.wm.annotation.Group3
 public class ActivityLifecycleFreeformTests extends ActivityLifecycleClientTestBase {
 

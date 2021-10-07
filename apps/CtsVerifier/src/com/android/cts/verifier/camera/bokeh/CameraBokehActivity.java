@@ -474,6 +474,10 @@ public class CameraBokehActivity extends PassFailButtons.Activity
         Image img = null;
         try {
             img = reader.acquireNextImage();
+            if (img == null) {
+                Log.d(TAG, "Invalid image!");
+                return;
+            }
             final int format = img.getFormat();
 
             Size configuredSize = (format == ImageFormat.YUV_420_888 ? mPreviewSize : mJpegSize);

@@ -36,6 +36,9 @@ import android.media.AudioSystem;
 import android.media.AudioTimestamp;
 import android.media.AudioTrack;
 import android.media.PlaybackParams;
+import android.media.metrics.LogSessionId;
+import android.media.metrics.MediaMetricsManager;
+import android.media.metrics.PlaybackSession;
 import android.os.PersistableBundle;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
@@ -2118,6 +2121,7 @@ public class AudioTrackTest {
                 streamName);
     }
 
+    // Note: this test may fail if playing through a remote device such as Bluetooth.
     private void doTestTimestamp(int sampleRate, int channelMask, int encoding, int transferMode,
             String streamName) throws Exception {
         // constants for test
@@ -2126,6 +2130,7 @@ public class AudioTrackTest {
         final int TEST_USAGE = AudioAttributes.USAGE_MEDIA;
 
         final int MILLIS_PER_SECOND = 1000;
+        final int FRAME_TOLERANCE = sampleRate * TEST_BUFFER_MS / MILLIS_PER_SECOND;
 
         // -------- initialization --------------
         final int frameSize =
@@ -2164,62 +2169,79 @@ public class AudioTrackTest {
             track.play();
 
             // Android nanoTime implements MONOTONIC, same as our audio timestamps.
-            final long trackStartTimeNs = System.nanoTime();
 
             final ByteBuffer data = ByteBuffer.allocate(frameCount * frameSize);
             data.order(java.nio.ByteOrder.nativeOrder()).limit(frameCount * frameSize);
             final AudioTimestamp timestamp = new AudioTimestamp();
 
             long framesWritten = 0;
-            final AudioHelper.TimestampVerifier tsVerifier =
-                    new AudioHelper.TimestampVerifier(TAG, sampleRate, isProAudioDevice());
-            for (int i = 0; i < TEST_LOOP_CNT; ++i) {
-                final long trackWriteTimeNs = System.nanoTime();
 
-                data.position(0);
-                assertEquals("write did not complete",
-                        data.limit(), track.write(data, data.limit(), AudioTrack.WRITE_BLOCKING));
-                assertEquals("write did not fill buffer",
-                        data.position(), data.limit());
-                framesWritten += data.limit() / frameSize;
+            // We start data delivery twice, the second start simulates restarting
+            // the track after a fully drained underrun (important case for Android TV).
+            for (int start = 0; start < 2; ++start) {
+                final long trackStartTimeNs = System.nanoTime();
+                final AudioHelper.TimestampVerifier tsVerifier =
+                        new AudioHelper.TimestampVerifier(
+                                TAG + "(start " + start + ")",
+                                sampleRate, framesWritten, isProAudioDevice());
+                for (int i = 0; i < TEST_LOOP_CNT; ++i) {
+                    final long trackWriteTimeNs = System.nanoTime();
 
-                // track.getTimestamp may return false if there are no physical HAL outputs.
-                // This may occur on TV devices without connecting an HDMI monitor.
-                // It may also be true immediately after start-up, as the mixing thread could
-                // be idle, but since we've already pushed much more than the minimum buffer size,
-                // that is unlikely.
-                // Nevertheless, we don't want to have unnecessary failures, so we ignore the
-                // first iteration if we don't get a timestamp.
-                final boolean result = track.getTimestamp(timestamp);
-                assertTrue("timestamp could not be read", result || i == 0);
-                if (!result) {
-                    continue;
+                    data.position(0);
+                    assertEquals("write did not complete",
+                            data.limit(), track.write(data, data.limit(),
+                            AudioTrack.WRITE_BLOCKING));
+                    assertEquals("write did not fill buffer",
+                            data.position(), data.limit());
+                    framesWritten += data.limit() / frameSize;
+
+                    // track.getTimestamp may return false if there are no physical HAL outputs.
+                    // This may occur on TV devices without connecting an HDMI monitor.
+                    // It may also be true immediately after start-up, as the mixing thread could
+                    // be idle, but since we've already pushed much more than the
+                    // minimum buffer size, that is unlikely.
+                    // Nevertheless, we don't want to have unnecessary failures, so we ignore the
+                    // first iteration if we don't get a timestamp.
+                    final boolean result = track.getTimestamp(timestamp);
+                    assertTrue("timestamp could not be read", result || i == 0);
+                    if (!result) {
+                        continue;
+                    }
+
+                    tsVerifier.add(timestamp);
+
+                    // Ensure that seen is greater than presented.
+                    // This is an "on-the-fly" read without pausing because pausing may cause the
+                    // timestamp to become stale and affect our jitter measurements.
+                    final long framesPresented = timestamp.framePosition;
+                    final int framesSeen = track.getPlaybackHeadPosition();
+                    assertTrue("server frames ahead of client frames",
+                            framesWritten >= framesSeen);
+                    assertTrue("presented frames ahead of server frames",
+                            framesSeen >= framesPresented);
                 }
+                // Full drain.
+                Thread.sleep(1000 /* millis */);
+                // check that we are really at the end of playback.
+                assertTrue("timestamp should be valid while draining",
+                        track.getTimestamp(timestamp));
+                // Fast tracks and sw emulated tracks may not fully drain.
+                // We log the status here.
+                if (framesWritten != timestamp.framePosition) {
+                    Log.d(TAG, "timestamp should fully drain.  written: "
+                            + framesWritten + " position: " + timestamp.framePosition);
+                }
+                final long framesLowerLimit = framesWritten - FRAME_TOLERANCE;
+                assertTrue("timestamp frame position needs to be close to written: "
+                                + timestamp.framePosition  + " >= " + framesLowerLimit,
+                        timestamp.framePosition >= framesLowerLimit);
 
-                tsVerifier.add(timestamp);
+                assertTrue("timestamp should not advance during underrun: "
+                        + timestamp.framePosition  + " <= " + framesWritten,
+                        timestamp.framePosition <= framesWritten);
 
-                // Ensure that seen is greater than presented.
-                // This is an "on-the-fly" read without pausing because pausing may cause the
-                // timestamp to become stale and affect our jitter measurements.
-                final long framesPresented = timestamp.framePosition;
-                final int framesSeen = track.getPlaybackHeadPosition();
-                assertTrue("server frames ahead of client frames",
-                        framesWritten >= framesSeen);
-                assertTrue("presented frames ahead of server frames",
-                        framesSeen >= framesPresented);
+                tsVerifier.verifyAndLog(trackStartTimeNs, streamName);
             }
-            // Full drain.
-            Thread.sleep(1000 /* millis */);
-            // check that we are really at the end of playback.
-            assertTrue("timestamp should be valid while draining", track.getTimestamp(timestamp));
-            // fast tracks and sw emulated tracks may not fully drain.  we log the status here.
-            if (framesWritten != timestamp.framePosition) {
-                Log.d(TAG, "timestamp should fully drain.  written: "
-                        + framesWritten + " position: " + timestamp.framePosition);
-            }
-
-            tsVerifier.verifyAndLog(trackStartTimeNs, streamName);
-
         } finally {
             track.release();
         }
@@ -2882,6 +2904,47 @@ public class AudioTrackTest {
         );
         assertEquals(Float.NEGATIVE_INFINITY,
             audioTrack.getAudioDescriptionMixLeveldB(), 0.f /*delta*/);
+    }
+
+    @Test
+    public void testSetLogSessionId() throws Exception {
+        if (!hasAudioOutput()) {
+            return;
+        }
+        AudioTrack audioTrack = null;
+        try {
+            audioTrack = new AudioTrack.Builder()
+                    .setAudioFormat(new AudioFormat.Builder()
+                            .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                            .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
+                            .build())
+                    .build();
+            audioTrack.setLogSessionId(LogSessionId.LOG_SESSION_ID_NONE); // should not throw.
+            assertEquals(LogSessionId.LOG_SESSION_ID_NONE, audioTrack.getLogSessionId());
+
+            final String ARBITRARY_MAGIC = "0123456789abcdef"; // 16 char Base64Url.
+            audioTrack.setLogSessionId(new LogSessionId(ARBITRARY_MAGIC));
+            assertEquals(new LogSessionId(ARBITRARY_MAGIC), audioTrack.getLogSessionId());
+
+            final MediaMetricsManager mediaMetricsManager =
+                    getContext().getSystemService(MediaMetricsManager.class);
+            final PlaybackSession playbackSession = mediaMetricsManager.createPlaybackSession();
+            audioTrack.setLogSessionId(playbackSession.getSessionId());
+            assertEquals(playbackSession.getSessionId(), audioTrack.getLogSessionId());
+
+            // write some data to generate a log entry.
+            short data[] = new short[audioTrack.getSampleRate() / 2];
+            audioTrack.play();
+            audioTrack.write(data, 0 /* offsetInShorts */, data.length);
+            audioTrack.stop();
+            Thread.sleep(500 /* millis */); // drain
+
+            // Also can check the mediametrics dumpsys to validate logs generated.
+        } finally {
+            if (audioTrack != null) {
+                audioTrack.release();
+            }
+        }
     }
 
     /*

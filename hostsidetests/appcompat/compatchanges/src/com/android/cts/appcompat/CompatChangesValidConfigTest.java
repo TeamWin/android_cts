@@ -43,7 +43,32 @@ public final class CompatChangesValidConfigTest extends CompatChangeGatingTestCa
     );
 
     private static final Set<String> OVERRIDABLE_CHANGES = ImmutableSet.of(
-            "CTS_SYSTEM_API_OVERRIDABLE_CHANGEID"
+            "ALWAYS_SANDBOX_DISPLAY_APIS",
+            "CTS_SYSTEM_API_OVERRIDABLE_CHANGEID",
+            "DOWNSCALED",
+            "DOWNSCALE_30",
+            "DOWNSCALE_35",
+            "DOWNSCALE_40",
+            "DOWNSCALE_45",
+            "DOWNSCALE_50",
+            "DOWNSCALE_55",
+            "DOWNSCALE_60",
+            "DOWNSCALE_65",
+            "DOWNSCALE_70",
+            "DOWNSCALE_75",
+            "DOWNSCALE_80",
+            "DOWNSCALE_85",
+            "DOWNSCALE_90",
+            "DO_NOT_DOWNSCALE_TO_1080P_ON_TV",
+            "FGS_BG_START_RESTRICTION_CHANGE_ID",
+            "FORCE_NON_RESIZE_APP",
+            "FORCE_RESIZE_APP",
+            "IGNORE_ALLOW_BACKUP_IN_D2D",
+            "IGNORE_FULL_BACKUP_CONTENT_IN_D2D",
+            "NEVER_SANDBOX_DISPLAY_APIS",
+            "OVERRIDE_MIN_ASPECT_RATIO",
+            "OVERRIDE_MIN_ASPECT_RATIO_LARGE",
+            "OVERRIDE_MIN_ASPECT_RATIO_MEDIUM"
     );
 
     /**

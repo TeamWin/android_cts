@@ -42,6 +42,7 @@ public class IsolatedService extends Service {
                 assertDirDoesNotExist("/data/data/" + getPackageName());
 
                 int currentUserId = getCurrentUserId();
+
                 assertDirDoesNotExist("/data/misc/profiles/cur/" + currentUserId + "/"
                         + getPackageName());
 

@@ -41,6 +41,7 @@ public class NfcPreferredPaymentTest {
 
     private final static String mRouteDestination = "Host";
     private final static String mDescription = "CTS Nfc Test Service";
+    private final static String NFC_PAYMENT_DEFAULT_COMPONENT = "nfc_payment_default_component";
     private final static List<String> mAids = Arrays.asList("A000000004101011",
                                                             "A000000004101012",
                                                             "A000000004101013");
@@ -64,7 +65,7 @@ public class NfcPreferredPaymentTest {
         assertNotNull(mAdapter);
         mCardEmulation = CardEmulation.getInstance(mAdapter);
         Settings.Secure.putString(mContext.getContentResolver(),
-                Settings.Secure.NFC_PAYMENT_DEFAULT_COMPONENT,
+                NFC_PAYMENT_DEFAULT_COMPONENT,
                 CtsNfcTestService.flattenToString());
     }
 

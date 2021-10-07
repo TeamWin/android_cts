@@ -158,6 +158,7 @@ public class KeyAttestationTest extends AndroidTestCase {
         assertEquals(0, parseSystemOsVersion("99.99.100"));
     }
 
+    @RequiresDevice
     public void testEcAttestation() throws Exception {
         if (getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_PC))
             return;
@@ -424,6 +425,7 @@ public class KeyAttestationTest extends AndroidTestCase {
         }
     }
 
+    @RequiresDevice
     public void testRsaAttestation() throws Exception {
         if (getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_PC))
             return;

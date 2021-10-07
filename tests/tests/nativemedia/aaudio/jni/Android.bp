@@ -32,6 +32,7 @@ cc_library_shared {
         "test_session_id.cpp",
         "utils.cpp",
     ],
+    include_dirs: ["system/media/audio/include"],
     shared_libs: [
         "libaaudio",
         "liblog",

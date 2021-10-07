@@ -16,6 +16,7 @@
 
 package android.telephony.cts;
 
+import static android.app.AppOpsManager.OPSTR_USE_ICC_AUTH_WITH_DEVICE_IDENTIFIER;
 import static android.telephony.PhoneCapability.DEVICE_NR_CAPABILITY_NSA;
 import static android.telephony.PhoneCapability.DEVICE_NR_CAPABILITY_SA;
 
@@ -34,6 +35,7 @@ import static org.junit.Assert.fail;
 
 import android.Manifest.permission;
 import android.annotation.NonNull;
+import android.app.AppOpsManager;
 import android.app.UiAutomation;
 import android.bluetooth.BluetoothAdapter;
 import android.content.BroadcastReceiver;
@@ -68,6 +70,7 @@ import android.telephony.CellIdentityNr;
 import android.telephony.CellInfo;
 import android.telephony.CellLocation;
 import android.telephony.DataThrottlingRequest;
+import android.telephony.ImsiEncryptionInfo;
 import android.telephony.ModemActivityInfo;
 import android.telephony.NetworkRegistrationInfo;
 import android.telephony.PhoneCapability;
@@ -87,7 +90,7 @@ import android.telephony.ThermalMitigationRequest;
 import android.telephony.UiccCardInfo;
 import android.telephony.UiccSlotInfo;
 import android.telephony.data.ApnSetting;
-import android.telephony.data.SlicingConfig;
+import android.telephony.data.NetworkSlicingConfig;
 import android.telephony.emergency.EmergencyNumber;
 import android.text.TextUtils;
 import android.util.Log;
@@ -104,8 +107,14 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -153,7 +162,7 @@ public class TelephonyManagerTest {
     private String mSelfCertHash;
 
     private static final int TOLERANCE = 1000;
-    private static final int TIMEOUT_FOR_NETWORK_OPS = TOLERANCE * 10;
+    private static final int TIMEOUT_FOR_NETWORK_OPS = TOLERANCE * 180;
     private PhoneStateListener mListener;
     private static ConnectivityManager mCm;
     private static final String TAG = "TelephonyManagerTest";
@@ -201,6 +210,62 @@ public class TelephonyManagerTest {
 
     private static final String TEST_FORWARD_NUMBER = "54321";
     private static final String TESTING_PLMN = "12345";
+
+    private static final String BAD_IMSI_CERT_URL = "https:badurl.badurl:8080";
+    private static final String IMSI_CERT_STRING_EPDG = "-----BEGIN CERTIFICATE-----"
+            + "\nMIIDkzCCAnugAwIBAgIEJ4MVZDANBgkqhkiG9w0BAQsFADB6MQswCQYDVQQGEwJV"
+            + "\nUzEOMAwGA1UECBMFVGV4YXMxDzANBgNVBAcTBklydmluZzEiMCAGA1UEChMZVmVy"
+            + "\naXpvbiBEYXRhIFNlcnZpY2VzIExMQzEMMAoGA1UECxMDTk5PMRgwFgYDVQQDEw9F"
+            + "\nQVAtSURFLlZaVy5DT00wHhcNMTcxMTEzMTkxMTA1WhcNMjcxMTExMTkxMTA1WjB6"
+            + "\nMQswCQYDVQQGEwJVUzEOMAwGA1UECBMFVGV4YXMxDzANBgNVBAcTBklydmluZzEi"
+            + "\nMCAGA1UEChMZVmVyaXpvbiBEYXRhIFNlcnZpY2VzIExMQzEMMAoGA1UECxMDTk5P"
+            + "\nMRgwFgYDVQQDEw9FQVAtSURFLlZaVy5DT00wggEiMA0GCSqGSIb3DQEBAQUAA4IB"
+            + "\nDwAwggEKAoIBAQCrQ28TvN0uUV/vK4YUS7+zcYMKAe5IYtDa3Wa0r64iyBSz6Eau"
+            + "\nT+YHNNzCV4xMqURM5mIY6796LnmWR5jViUgrHyw0d06mLE54uUET/drn2pwhaobK"
+            + "\nNVvbYzpm5W3dvext+klEgIhpRW4fR/uNUmD0O9n/5ofpg++wbvMNWEIjeTVUGPRT"
+            + "\nCeVblH3tK8bKdCKjp48HtuciY7gE8LMoHhMHA1cob9VktSYTy2ABa+rKAPAaqVz4"
+            + "\nL0Arlbi9INHSDNFlLvy1xE5dyYIqhRMicM2i4LCMwJnwf0tz8m7DmDxfdmC4HY2Q"
+            + "\nz4VpbQOu10oRhXXrhZFkZEmqp6RYQmDRDDDtAgMBAAGjITAfMB0GA1UdDgQWBBSg"
+            + "\nFA6liox07smzfITrvjSlgWkMMTANBgkqhkiG9w0BAQsFAAOCAQEAIoFKLgLfS9f1"
+            + "\n0UG85rb+noaeXY0YofSY0dxFIW3rA5zjRD0kus9iyw9CfADDD305hefJ4Kq/NLAF"
+            + "\n0odR4MOTan5KhXTlD9/8mZjSSeEktgCX3BbmMqKoKcaV6Oo9C0RfwGccDms6D+Dw"
+            + "\n3GkgsvKJEB8LjApzQSmDwCV9BVJsC60041cndqBxMr3RMxCkO6/sQRKyAuzx5f91"
+            + "\nWn5cpYxvl4//TatSc9oeU+ootlxfXszdRPM5xqCodm6gWmxRkK6DePlhpaZ1sKdw"
+            + "\nCQg/mA35Eh5ZgOpZT2YG+a8BbDRCF5gj/pu1tPt8VfApPHq6lAoitlrx1cEdJWx6"
+            + "\n5JXaFrs0UA=="
+            + "\n-----END CERTIFICATE-----";
+    private static final String IMSI_CERT_STRING_WLAN = "-----BEGIN CERTIFICATE-----"
+            + "\nMIIFbzCCBFegAwIBAgIUAz8I/cK3fILeJ9PSbi7MkN8yZBkwDQYJKoZIhvcNAQEL"
+            + "\nBQAwgY0xCzAJBgNVBAYTAk5MMRIwEAYDVQQHEwlBbXN0ZXJkYW0xJTAjBgNVBAoT"
+            + "\nHFZlcml6b24gRW50ZXJwcmlzZSBTb2x1dGlvbnMxEzARBgNVBAsTCkN5YmVydHJ1"
+            + "\nc3QxLjAsBgNVBAMTJVZlcml6b24gUHVibGljIFN1cmVTZXJ2ZXIgQ0EgRzE0LVNI"
+            + "\nQTIwHhcNMTcxMTE2MTU1NjMzWhcNMTkxMTE2MTU1NjMzWjB6MQswCQYDVQQGEwJV"
+            + "\nUzEOMAwGA1UECBMFVGV4YXMxDzANBgNVBAcTBklydmluZzEiMCAGA1UEChMZVmVy"
+            + "\naXpvbiBEYXRhIFNlcnZpY2VzIExMQzEMMAoGA1UECxMDTk5PMRgwFgYDVQQDEw9F"
+            + "\nQVAtSURFLlZaVy5DT00wggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCr"
+            + "\nQ28TvN0uUV/vK4YUS7+zcYMKAe5IYtDa3Wa0r64iyBSz6EauT+YHNNzCV4xMqURM"
+            + "\n5mIY6796LnmWR5jViUgrHyw0d06mLE54uUET/drn2pwhaobKNVvbYzpm5W3dvext"
+            + "\n+klEgIhpRW4fR/uNUmD0O9n/5ofpg++wbvMNWEIjeTVUGPRTCeVblH3tK8bKdCKj"
+            + "\np48HtuciY7gE8LMoHhMHA1cob9VktSYTy2ABa+rKAPAaqVz4L0Arlbi9INHSDNFl"
+            + "\nLvy1xE5dyYIqhRMicM2i4LCMwJnwf0tz8m7DmDxfdmC4HY2Qz4VpbQOu10oRhXXr"
+            + "\nhZFkZEmqp6RYQmDRDDDtAgMBAAGjggHXMIIB0zAMBgNVHRMBAf8EAjAAMEwGA1Ud"
+            + "\nIARFMEMwQQYJKwYBBAGxPgEyMDQwMgYIKwYBBQUHAgEWJmh0dHBzOi8vc2VjdXJl"
+            + "\nLm9tbmlyb290LmNvbS9yZXBvc2l0b3J5MIGpBggrBgEFBQcBAQSBnDCBmTAtBggr"
+            + "\nBgEFBQcwAYYhaHR0cDovL3Zwc3NnMTQyLm9jc3Aub21uaXJvb3QuY29tMDMGCCsG"
+            + "\nAQUFBzAChidodHRwOi8vY2FjZXJ0Lm9tbmlyb290LmNvbS92cHNzZzE0Mi5jcnQw"
+            + "\nMwYIKwYBBQUHMAKGJ2h0dHA6Ly9jYWNlcnQub21uaXJvb3QuY29tL3Zwc3NnMTQy"
+            + "\nLmRlcjAaBgNVHREEEzARgg9FQVAtSURFLlZaVy5DT00wDgYDVR0PAQH/BAQDAgWg"
+            + "\nMB0GA1UdJQQWMBQGCCsGAQUFBwMBBggrBgEFBQcDAjAfBgNVHSMEGDAWgBTkLbuR"
+            + "\nAWUmH7R6P6MVJaTOjEQzOzA+BgNVHR8ENzA1MDOgMaAvhi1odHRwOi8vdnBzc2cx"
+            + "\nNDIuY3JsLm9tbmlyb290LmNvbS92cHNzZzE0Mi5jcmwwHQYDVR0OBBYEFKAUDqWK"
+            + "\njHTuybN8hOu+NKWBaQwxMA0GCSqGSIb3DQEBCwUAA4IBAQAbSrvVrdxRPLnVu6vc"
+            + "\n4BiFT2gWDhZ63EyV4f877sC1iMJRFlfwWQQfHVyhGTFa8JnhbEhhTxCP+L00Q8rX"
+            + "\nKbOw9ei5g2yp7OjStwhHz5T20UejjKkl7hKtMduZXxFToqhVwIpqG58Tzl/35FX4"
+            + "\nu+YDPgwTX5gbpbJxpbncn9voxWGWu3AbHVvzaskfBgZfWAuJnbgq0WTEt7bGOfiI"
+            + "\nelIIQe7XL6beFcdAM9C7DlgOLqpR/31LncrMC46cPA5HmfV4mnpeK/9uq0mMbUJK"
+            + "\nx2vNRWONSm2UGwdb00tLsTloxeqCOMpbkBiqi/RhOlIKIOWMPojukA5+xryh2FVs"
+            + "\n7bdw"
+            + "\n-----END CERTIFICATE-----";
 
     private static final int RADIO_HAL_VERSION_1_3 = makeRadioVersion(1, 3);
     private static final int RADIO_HAL_VERSION_1_5 = makeRadioVersion(1, 5);
@@ -306,6 +371,7 @@ public class TelephonyManagerTest {
     }
 
     private void saveAllowedNetworkTypesForAllReasons() {
+        if (!hasCellular()) return;
         mIsAllowedNetworkTypeChanged = false;
         if (mAllowedNetworkTypesList == null) {
             mAllowedNetworkTypesList = new HashMap<>();
@@ -565,6 +631,11 @@ public class TelephonyManagerTest {
      */
     @Test
     public void testTelephonyManager() {
+        if (!InstrumentationRegistry.getContext().getPackageManager()
+                .hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            Log.d(TAG, "Skipping test that requires PackageManager.FEATURE_TELEPHONY");
+            return;
+        }
         assertTrue(mTelephonyManager.getNetworkType() >= TelephonyManager.NETWORK_TYPE_UNKNOWN);
         assertTrue(mTelephonyManager.getPhoneType() >= TelephonyManager.PHONE_TYPE_NONE);
         assertTrue(mTelephonyManager.getSimState() >= TelephonyManager.SIM_STATE_UNKNOWN);
@@ -605,6 +676,18 @@ public class TelephonyManagerTest {
                 (tm) -> tm.getSubscriberId());
         mTelephonyManager.getLine1Number();
         mTelephonyManager.getNetworkOperator();
+
+        try {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .adoptShellPermissionIdentity(
+                            "android.permission.READ_PRIVILEGED_PHONE_STATE");
+            mTelephonyManager.getPhoneAccountHandle();
+        } catch (SecurityException e) {
+            fail("TelephonyManager#getPhoneAccountHandle requires READ_PRIVILEGED_PHONE_STATE");
+        } finally {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+        }
         mTelephonyManager.getSimCountryIso();
         mTelephonyManager.getVoiceMailAlphaTag();
         mTelephonyManager.isNetworkRoaming();
@@ -669,6 +752,20 @@ public class TelephonyManagerTest {
         mTelephonyManager.getDefaultRespondViaMessageApplication();
         ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
                 TelephonyManager::getAndUpdateDefaultRespondViaMessageApplication);
+
+        // Verify getImei/getSubscriberId/getIccAuthentication:
+        // With app ops permision USE_ICC_AUTH_WITH_DEVICE_IDENTIFIER, should not throw
+        // SecurityException.
+        try {
+            setAppOpsPermissionAllowed(true, OPSTR_USE_ICC_AUTH_WITH_DEVICE_IDENTIFIER);
+
+            mTelephonyManager.getImei();
+            mTelephonyManager.getSubscriberId();
+            mTelephonyManager.getIccAuthentication(
+                    TelephonyManager.APPTYPE_USIM, TelephonyManager.AUTHTYPE_EAP_AKA, "");
+        } finally {
+            setAppOpsPermissionAllowed(false, OPSTR_USE_ICC_AUTH_WITH_DEVICE_IDENTIFIER);
+        }
     }
 
     @Test
@@ -901,6 +998,29 @@ public class TelephonyManagerTest {
         PhoneAccountHandle handle =
                 new PhoneAccountHandle(new ComponentName("com.example.foo", "bar"), "baz");
         assertNull(mTelephonyManager.createForPhoneAccountHandle(handle));
+    }
+
+    @Test
+    public void testGetPhoneAccountHandle() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            Log.d(TAG, "Skipping test that requires FEATURE_TELEPHONY");
+            return;
+        }
+        TelecomManager telecomManager = getContext().getSystemService(TelecomManager.class);
+        PhoneAccountHandle defaultAccount = telecomManager
+                .getDefaultOutgoingPhoneAccount(PhoneAccount.SCHEME_TEL);
+        try {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .adoptShellPermissionIdentity(
+                            "android.permission.READ_PRIVILEGED_PHONE_STATE");
+            PhoneAccountHandle phoneAccountHandle = mTelephonyManager.getPhoneAccountHandle();
+            assertEquals(phoneAccountHandle, defaultAccount);
+        } catch (SecurityException e) {
+            fail("TelephonyManager#getPhoneAccountHandle requires READ_PRIVILEGED_PHONE_STATE");
+        } finally {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+        }
     }
 
     /**
@@ -1222,10 +1342,12 @@ public class TelephonyManagerTest {
         // and then do a reset to move data to default.
         try {
             ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
-                    TelephonyManager::resetSettings, "android.permission.NETWORK_SETTINGS");
+                    TelephonyManager::resetSettings,
+                    "android.permission.NETWORK_SETTINGS",
+                    "android.permission.MODIFY_PHONE_STATE");
         } catch (SecurityException e) {
-            fail("TelephonyManager#resetSettings requires the"
-                    + " android.Manifest.permission.NETWORK_SETTINGS permission");
+            e.printStackTrace();
+            fail(e.toString());
         }
         // This may timeout because the default is equal to the initial data setting, but there is
         // no way to definitively check what the default should be, so assume the default will be
@@ -1245,10 +1367,12 @@ public class TelephonyManagerTest {
         // and then do a reset to move data to default again.
         try {
             ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
-                    TelephonyManager::resetSettings, "android.permission.NETWORK_SETTINGS");
+                    TelephonyManager::resetSettings,
+                    "android.permission.NETWORK_SETTINGS",
+                    "android.permission.MODIFY_PHONE_STATE");
         } catch (SecurityException e) {
-            fail("TelephonyManager#resetSettings requires the"
-                    + " android.Manifest.permission.NETWORK_SETTINGS permission");
+            e.printStackTrace();
+            fail(e.toString());
         }
 
         assertTrue("resetSettings did not reset default data",
@@ -1289,6 +1413,24 @@ public class TelephonyManagerTest {
         assertEquals(mServiceState, mTelephonyManager.getServiceState());
     }
 
+    @Test
+    public void testGetServiceStateForInactiveSub() {
+        if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
+            Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
+            return;
+        }
+
+        int[] allSubs = mSubscriptionManager.getActiveSubscriptionIdList();
+        // generate a subscription that is valid (>0) but inactive (not part of active subId list)
+        // A simple way to do this is sum the active subIds and add 1
+        int inactiveValidSub = 1;
+        for (int sub : allSubs) {
+            inactiveValidSub += sub;
+        }
+
+        assertNull(mTelephonyManager.createForSubscriptionId(inactiveValidSub).getServiceState());
+    }
+
     private MockPhoneCapabilityListener mMockPhoneCapabilityListener;
 
     private class MockPhoneCapabilityListener extends TelephonyCallback
@@ -1305,6 +1447,10 @@ public class TelephonyManagerTest {
 
     @Test
     public void testGetPhoneCapabilityAndVerify() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            Log.d(TAG,"skipping test that requires Telephony");
+            return;
+        }
         boolean is5gStandalone = getContext().getResources().getBoolean(
                 Resources.getSystem().getIdentifier("config_telephony5gStandalone", "bool",
                         "android"));
@@ -1475,8 +1621,6 @@ public class TelephonyManagerTest {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             return;
         }
-        assertEquals(mTelephonyManager.getServiceState().getState(), ServiceState.STATE_IN_SERVICE);
-
         TestThread t = new TestThread(new Runnable() {
             public void run() {
                 Looper.prepare();
@@ -1954,6 +2098,7 @@ public class TelephonyManagerTest {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             return;
         }
+        if (mTelephonyManager.getPhoneType() != TelephonyManager.PHONE_TYPE_GSM) return;
 
         try {
             ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
@@ -1977,6 +2122,7 @@ public class TelephonyManagerTest {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             return;
         }
+        if (mTelephonyManager.getPhoneType() != TelephonyManager.PHONE_TYPE_GSM) return;
 
         try {
             ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
@@ -2289,13 +2435,6 @@ public class TelephonyManagerTest {
             assertThat(status).isEqualTo(TelephonyManager.CALL_COMPOSER_STATUS_OFF);
 
             ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
-                    tm -> tm.setCallComposerStatus(
-                            TelephonyManager.CALL_COMPOSER_STATUS_ON_NO_PICTURES));
-            status = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
-                    tm -> tm.getCallComposerStatus());
-            assertThat(status).isEqualTo(TelephonyManager.CALL_COMPOSER_STATUS_ON_NO_PICTURES);
-
-            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
                     tm -> tm.setCallComposerStatus(TelephonyManager.CALL_COMPOSER_STATUS_ON));
             status = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
                     tm -> tm.getCallComposerStatus());
@@ -2309,13 +2448,6 @@ public class TelephonyManagerTest {
 
             ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
                     tm -> tm.setCallComposerStatus(TelephonyManager.CALL_COMPOSER_STATUS_ON));
-            status = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
-                    tm -> tm.getCallComposerStatus());
-            assertThat(status).isEqualTo(TelephonyManager.CALL_COMPOSER_STATUS_OFF);
-
-            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
-                    tm -> tm.setCallComposerStatus(
-                            TelephonyManager.CALL_COMPOSER_STATUS_ON_NO_PICTURES));
             status = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
                     tm -> tm.getCallComposerStatus());
             assertThat(status).isEqualTo(TelephonyManager.CALL_COMPOSER_STATUS_OFF);
@@ -2719,17 +2851,71 @@ public class TelephonyManagerTest {
             // expected
         }
         // test with permission
+        PublicKey epdgKey = null;
+        PublicKey wlanKey = null;
         try {
-            ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
-                    (tm) -> tm.getCarrierInfoForImsiEncryption(TelephonyManager.KEY_TYPE_EPDG));
+            PersistableBundle carrierConfig = mCarrierConfigManager.getConfigForSubId(mTestSub);
+
+            assertNotNull("CarrierConfigManager#getConfigForSubId() returned null",
+                    carrierConfig);
+            assertFalse("CarrierConfigManager#getConfigForSubId() returned empty bundle",
+                    carrierConfig.isEmpty());
+
+            // purge the certs in carrierConfigs first
+            carrierConfig.putInt(
+                    CarrierConfigManager.IMSI_KEY_AVAILABILITY_INT, 3);
+            carrierConfig.putString(
+                    CarrierConfigManager.IMSI_KEY_DOWNLOAD_URL_STRING, BAD_IMSI_CERT_URL);
+            carrierConfig.putString(
+                    CarrierConfigManager.IMSI_CARRIER_PUBLIC_KEY_EPDG_STRING,
+                    IMSI_CERT_STRING_EPDG);
+            carrierConfig.putString(
+                    CarrierConfigManager.IMSI_CARRIER_PUBLIC_KEY_WLAN_STRING,
+                    IMSI_CERT_STRING_WLAN);
+            overrideCarrierConfig(carrierConfig);
+        } catch (Exception e) {
+            fail("Could not override carrier config. e=" + e.toString());
+        }
+
+        try {
+            // It appears that the two certs actually have the same public key. Ideally we would
+            // want these to be different for testing, but it's challenging to create a valid
+            // certificate string for testing and these are the only two examples available
+            InputStream inStream = new ByteArrayInputStream(IMSI_CERT_STRING_WLAN.getBytes());
+            CertificateFactory cf = CertificateFactory.getInstance("X.509");
+            X509Certificate cert = (X509Certificate) cf.generateCertificate(inStream);
+            wlanKey = cert.getPublicKey();
+
+            inStream = new ByteArrayInputStream(IMSI_CERT_STRING_EPDG.getBytes());
+            cert = (X509Certificate) cf.generateCertificate(inStream);
+            epdgKey = cert.getPublicKey();
+        } catch (CertificateException e) {
+            fail("Could not create certs. e=" + e.toString());
+        }
+
+        try {
+            ImsiEncryptionInfo info = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                    mTelephonyManager,
+                    (tm) -> {
+                        return tm.getCarrierInfoForImsiEncryption(TelephonyManager.KEY_TYPE_EPDG);
+                    });
+            assertNotNull("Encryption info returned null", info);
+            assertEquals(epdgKey, info.getPublicKey());
+            assertEquals(TelephonyManager.KEY_TYPE_EPDG, info.getKeyType());
         } catch (SecurityException se) {
             fail("testGetCarrierInfoForImsiEncryption: SecurityException not expected");
         } catch (IllegalArgumentException iae) {
             // IllegalArgumentException is okay, just not SecurityException
         }
         try {
-            ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
-                    (tm) -> tm.getCarrierInfoForImsiEncryption(TelephonyManager.KEY_TYPE_WLAN));
+            ImsiEncryptionInfo info = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                    mTelephonyManager,
+                    (tm) -> {
+                        return tm.getCarrierInfoForImsiEncryption(TelephonyManager.KEY_TYPE_WLAN);
+                    });
+            assertNotNull("Encryption info returned null", info);
+            assertEquals(wlanKey, info.getPublicKey());
+            assertEquals(TelephonyManager.KEY_TYPE_WLAN, info.getKeyType());
         } catch (SecurityException se) {
             fail("testGetCarrierInfoForImsiEncryption: SecurityException not expected");
         } catch (IllegalArgumentException iae) {
@@ -3038,6 +3224,15 @@ public class TelephonyManagerTest {
     }
 
     @Test
+    public void testModemActivityInfoException() {
+        TelephonyManager.ModemActivityInfoException exception =
+                new TelephonyManager.ModemActivityInfoException(
+                        TelephonyManager.ModemActivityInfoException.ERROR_PHONE_NOT_AVAILABLE);
+        assertEquals(TelephonyManager.ModemActivityInfoException.ERROR_PHONE_NOT_AVAILABLE,
+                exception.getErrorCode());
+    }
+
+    @Test
     public void testGetSupportedModemCount() {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             return;
@@ -3150,70 +3345,6 @@ public class TelephonyManagerTest {
     }
 
     @Test
-    public void testDataDuringVoiceCallPolicy() {
-        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
-            return;
-        }
-
-        ShellIdentityUtils.ShellPermissionMethodHelper<Boolean, TelephonyManager> getPolicyHelper =
-                (tm) -> tm.isMobileDataPolicyEnabled(
-                        TelephonyManager.MOBILE_DATA_POLICY_DATA_ON_NON_DEFAULT_DURING_VOICE_CALL);
-
-        boolean allowDataDuringVoiceCall = ShellIdentityUtils.invokeMethodWithShellPermissions(
-                mTelephonyManager, getPolicyHelper);
-
-        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
-                mTelephonyManager, (tm) -> tm.setMobileDataPolicyEnabledStatus(
-                        TelephonyManager.MOBILE_DATA_POLICY_DATA_ON_NON_DEFAULT_DURING_VOICE_CALL,
-                        !allowDataDuringVoiceCall));
-
-        assertNotEquals(allowDataDuringVoiceCall,
-                ShellIdentityUtils.invokeMethodWithShellPermissions(
-                        mTelephonyManager, getPolicyHelper));
-
-        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
-                mTelephonyManager, (tm) -> tm.setMobileDataPolicyEnabledStatus(
-                        TelephonyManager.MOBILE_DATA_POLICY_DATA_ON_NON_DEFAULT_DURING_VOICE_CALL,
-                        allowDataDuringVoiceCall));
-
-        assertEquals(allowDataDuringVoiceCall,
-                ShellIdentityUtils.invokeMethodWithShellPermissions(
-                        mTelephonyManager, getPolicyHelper));
-    }
-
-    @Test
-    public void testAlwaysAllowMmsDataPolicy() {
-        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
-            return;
-        }
-
-        ShellIdentityUtils.ShellPermissionMethodHelper<Boolean, TelephonyManager> getPolicyHelper =
-                (tm) -> tm.isMobileDataPolicyEnabled(
-                        TelephonyManager.MOBILE_DATA_POLICY_MMS_ALWAYS_ALLOWED);
-
-        boolean mmsAlwaysAllowed = ShellIdentityUtils.invokeMethodWithShellPermissions(
-                mTelephonyManager, getPolicyHelper);
-
-        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
-                mTelephonyManager, (tm) -> tm.setMobileDataPolicyEnabledStatus(
-                        TelephonyManager.MOBILE_DATA_POLICY_MMS_ALWAYS_ALLOWED,
-                        !mmsAlwaysAllowed));
-
-        assertNotEquals(mmsAlwaysAllowed,
-                ShellIdentityUtils.invokeMethodWithShellPermissions(
-                        mTelephonyManager, getPolicyHelper));
-
-        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
-                mTelephonyManager, (tm) -> tm.setMobileDataPolicyEnabledStatus(
-                        TelephonyManager.MOBILE_DATA_POLICY_MMS_ALWAYS_ALLOWED,
-                        mmsAlwaysAllowed));
-
-        assertEquals(mmsAlwaysAllowed,
-                ShellIdentityUtils.invokeMethodWithShellPermissions(
-                        mTelephonyManager, getPolicyHelper));
-    }
-
-    @Test
     public void testThermalDataEnable() {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             return;
@@ -3294,7 +3425,7 @@ public class TelephonyManagerTest {
                 (tm) -> tm.setDataEnabledForReason(TelephonyManager.DATA_ENABLED_REASON_CARRIER,
                         false));
 
-        waitForMs(100);
+        waitForMs(500);
         boolean isDataEnabledForReason = ShellIdentityUtils.invokeMethodWithShellPermissions(
                 mTelephonyManager, (tm) -> tm.isDataEnabledForReason(
                         TelephonyManager.DATA_ENABLED_REASON_CARRIER));
@@ -3309,7 +3440,7 @@ public class TelephonyManagerTest {
                 (tm) -> tm.setDataEnabledForReason(TelephonyManager.DATA_ENABLED_REASON_CARRIER,
                         true));
 
-        waitForMs(100);
+        waitForMs(500);
         isDataEnabledForReason = ShellIdentityUtils.invokeMethodWithShellPermissions(
                 mTelephonyManager, (tm) -> tm.isDataEnabledForReason(
                         TelephonyManager.DATA_ENABLED_REASON_CARRIER));
@@ -3330,6 +3461,7 @@ public class TelephonyManagerTest {
                 (tm) -> tm.setDataEnabledForReason(TelephonyManager.DATA_ENABLED_REASON_USER,
                         false));
 
+        waitForMs(500);
         boolean isDataEnabledForReason = ShellIdentityUtils.invokeMethodWithShellPermissions(
                 mTelephonyManager, (tm) -> tm.isDataEnabledForReason(
                         TelephonyManager.DATA_ENABLED_REASON_USER));
@@ -3344,6 +3476,7 @@ public class TelephonyManagerTest {
                 (tm) -> tm.setDataEnabledForReason(TelephonyManager.DATA_ENABLED_REASON_USER,
                         true));
 
+        waitForMs(500);
         isDataEnabledForReason = ShellIdentityUtils.invokeMethodWithShellPermissions(
                 mTelephonyManager, (tm) -> tm.isDataEnabledForReason(
                         TelephonyManager.DATA_ENABLED_REASON_USER));
@@ -3351,6 +3484,70 @@ public class TelephonyManagerTest {
         isDataConnectionAvailable = ShellIdentityUtils.invokeMethodWithShellPermissions(
                 mTelephonyManager, (tm) -> tm.isDataConnectionAllowed());
         assertTrue(isDataConnectionAvailable);
+    }
+
+    @Test
+    public void testDataDuringVoiceCallPolicy() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+
+        ShellIdentityUtils.ShellPermissionMethodHelper<Boolean, TelephonyManager> getPolicyHelper =
+                (tm) -> tm.isMobileDataPolicyEnabled(
+                        TelephonyManager.MOBILE_DATA_POLICY_DATA_ON_NON_DEFAULT_DURING_VOICE_CALL);
+
+        boolean allowDataDuringVoiceCall = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, getPolicyHelper);
+
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                mTelephonyManager, (tm) -> tm.setMobileDataPolicyEnabled(
+                        TelephonyManager.MOBILE_DATA_POLICY_DATA_ON_NON_DEFAULT_DURING_VOICE_CALL,
+                        !allowDataDuringVoiceCall));
+
+        assertNotEquals(allowDataDuringVoiceCall,
+                ShellIdentityUtils.invokeMethodWithShellPermissions(
+                        mTelephonyManager, getPolicyHelper));
+
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                mTelephonyManager, (tm) -> tm.setMobileDataPolicyEnabled(
+                        TelephonyManager.MOBILE_DATA_POLICY_DATA_ON_NON_DEFAULT_DURING_VOICE_CALL,
+                        allowDataDuringVoiceCall));
+
+        assertEquals(allowDataDuringVoiceCall,
+                ShellIdentityUtils.invokeMethodWithShellPermissions(
+                        mTelephonyManager, getPolicyHelper));
+    }
+
+    @Test
+    public void testAlwaysAllowMmsDataPolicy() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+
+        ShellIdentityUtils.ShellPermissionMethodHelper<Boolean, TelephonyManager> getPolicyHelper =
+                (tm) -> tm.isMobileDataPolicyEnabled(
+                        TelephonyManager.MOBILE_DATA_POLICY_MMS_ALWAYS_ALLOWED);
+
+        boolean mmsAlwaysAllowed = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, getPolicyHelper);
+
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                mTelephonyManager, (tm) -> tm.setMobileDataPolicyEnabled(
+                        TelephonyManager.MOBILE_DATA_POLICY_MMS_ALWAYS_ALLOWED,
+                        !mmsAlwaysAllowed));
+
+        assertNotEquals(mmsAlwaysAllowed,
+                ShellIdentityUtils.invokeMethodWithShellPermissions(
+                        mTelephonyManager, getPolicyHelper));
+
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                mTelephonyManager, (tm) -> tm.setMobileDataPolicyEnabled(
+                        TelephonyManager.MOBILE_DATA_POLICY_MMS_ALWAYS_ALLOWED,
+                        mmsAlwaysAllowed));
+
+        assertEquals(mmsAlwaysAllowed,
+                ShellIdentityUtils.invokeMethodWithShellPermissions(
+                        mTelephonyManager, getPolicyHelper));
     }
 
     @Test
@@ -3945,11 +4142,11 @@ public class TelephonyManagerTest {
                                     .setDataThrottlingRequest(new DataThrottlingRequest.Builder()
                                             .setDataThrottlingAction(
                                                     DataThrottlingRequest
-                                                            .DATA_THROTTLING_ACTION_THROTTLE_PRIMARY_CARRIER
+                                                    .DATA_THROTTLING_ACTION_THROTTLE_PRIMARY_CARRIER
                                             )
                                             .setCompletionDurationMillis(-1)
                                             .build())
-                                    .build()));
+                            .build()));
         } catch (IllegalArgumentException e) {
         }
 
@@ -3967,7 +4164,7 @@ public class TelephonyManagerTest {
                                             )
                                             .setCompletionDurationMillis(-1)
                                             .build())
-                                    .build()));
+                            .build()));
         } catch (IllegalArgumentException e) {
         }
     }
@@ -4183,6 +4380,7 @@ public class TelephonyManagerTest {
                 mTelephonyManager, (tm) -> {
                     List<UiccCardInfo> cardInfos = mTelephonyManager.getUiccCardsInfo();
                     Set<String> presentCards = Arrays.stream(mTelephonyManager.getUiccSlotsInfo())
+                            .filter(Objects::nonNull)
                             .filter(UiccSlotInfo::getIsActive)
                             .map(UiccSlotInfo::getCardId)
                             .filter(Objects::nonNull)
@@ -4338,7 +4536,7 @@ public class TelephonyManagerTest {
 
         synchronized (mLock) {
             t.start();
-            mLock.wait(TOLERANCE); // wait for mListener
+            mLock.wait(TOLERANCE); // wait for listener
         }
 
         // Test register
@@ -4355,7 +4553,7 @@ public class TelephonyManagerTest {
             mOnCellInfoChanged = false;
 
             CellInfoResultsCallback resultsCallback = new CellInfoResultsCallback();
-            mTelephonyManager.requestCellInfoUpdate(getContext().getMainExecutor(), resultsCallback);
+            mTelephonyManager.requestCellInfoUpdate(mSimpleExecutor, resultsCallback);
             mLock.wait(TOLERANCE);
 
             assertTrue("Test register, mOnCellLocationChangedCalled should be true.",
@@ -4395,6 +4593,13 @@ public class TelephonyManagerTest {
         }
     }
 
+    private void setAppOpsPermissionAllowed(boolean allowed, String op) {
+        AppOpsManager appOpsManager = getContext().getSystemService(AppOpsManager.class);
+        int mode = allowed ? AppOpsManager.MODE_ALLOWED : AppOpsManager.opToDefaultMode(op);
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                appOpsManager, (appOps) -> appOps.setUidMode(op, Process.myUid(), mode));
+    }
+
     /**
      * Verifies that {@link TelephonyManager#getNetworkSlicingConfiguration()} does not throw any
      * exception
@@ -4404,9 +4609,107 @@ public class TelephonyManagerTest {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             return;
         }
-        CompletableFuture<SlicingConfig> resultFuture = new CompletableFuture<>();
+        CompletableFuture<NetworkSlicingConfig> resultFuture = new CompletableFuture<>();
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
                 (tm) -> tm.getNetworkSlicingConfiguration(mSimpleExecutor, resultFuture::complete));
+    }
+
+    @Test
+    public void testCheckCarrierPrivilegesForPackageEnforcesReadPrivilege() {
+        try {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity("android.permission.READ_PRIVILEGED_PHONE_STATE");
+            mTelephonyManager.checkCarrierPrivilegesForPackage(mSelfPackageName);
+        } catch (SecurityException e) {
+            fail("TelephonyManager#checkCarrierPrivilegesForPackage requires "
+                    + "READ_PRIVILEGED_PHONE_STATE");
+        } finally {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
+    public void testCheckCarrierPrivilegesForPackageThrowsExceptionWithoutReadPrivilege() {
+        if (!hasCellular()) return;
+        try {
+            mTelephonyManager.checkCarrierPrivilegesForPackage(mSelfPackageName);
+            fail("TelephonyManager#checkCarrierPrivilegesForPackage must be protected "
+                    + "with READ_PRIVILEGED_PHONE_STATE");
+        } catch (SecurityException e) {
+            // expected
+        }
+    }
+
+    @Test
+    public void testCheckCarrierPrivilegesForPackageAnyPhone() {
+        try {
+            mTelephonyManager.checkCarrierPrivilegesForPackageAnyPhone(mSelfPackageName);
+        } catch (SecurityException e) {
+            fail("TelephonyManager#checkCarrierPrivilegesForPackageAnyPhone shouldn't require "
+                    + "READ_PRIVILEGED_PHONE_STATE");
+        }
+    }
+
+    @Test
+    public void testGetCarrierPackageNamesForIntentAndPhoneEnforcesReadPrivilege() {
+        try {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity("android.permission.READ_PRIVILEGED_PHONE_STATE");
+            Intent intent = new Intent();
+            int phoneId = 1;
+            mTelephonyManager.getCarrierPackageNamesForIntentAndPhone(intent, phoneId);
+        } catch (SecurityException e) {
+            fail("TelephonyManager#getCarrierPackageNamesForIntentAndPhone requires "
+                    + "READ_PRIVILEGED_PHONE_STATE");
+        } finally {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
+    public void testGetCarrierPackageNamesForIntentAndPhoneThrowsExceptionWithoutReadPrivilege() {
+        if (!hasCellular()) return;
+        try {
+            Intent intent = new Intent();
+            int phoneId = 1;
+            mTelephonyManager.getCarrierPackageNamesForIntentAndPhone(intent, phoneId);
+            fail("TelephonyManager#getCarrierPackageNamesForIntentAndPhone must be protected "
+                    + "with READ_PRIVILEGED_PHONE_STATE");
+        } catch (SecurityException e) {
+            // expected
+        } finally {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
+    public void testGetPackagesWithCarrierPrivilegesEnforcesReadPrivilege() {
+        try {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity("android.permission.READ_PRIVILEGED_PHONE_STATE");
+            mTelephonyManager.getPackagesWithCarrierPrivileges();
+        } catch (SecurityException e) {
+            fail("TelephonyManager#getPackagesWithCarrierPrivileges requires "
+                    + "READ_PRIVILEGED_PHONE_STATE");
+        } finally {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
+    public void testGetPackagesWithCarrierPrivilegesThrowsExceptionWithoutReadPrivilege() {
+        if (!hasCellular()) return;
+        try {
+            mTelephonyManager.getPackagesWithCarrierPrivileges();
+            fail("TelephonyManager#getPackagesWithCarrierPrivileges must be protected "
+                    + "with READ_PRIVILEGED_PHONE_STATE");
+        } catch (SecurityException e) {
+            // expected
+        }
     }
 }
 

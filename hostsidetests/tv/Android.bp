@@ -26,9 +26,15 @@ java_test_host {
         "tradefed",
         "compatibility-host-util",
     ],
+    static_libs: [
+        "cts-statsd-atom-host-test-utils",
+    ],
     // Tag this module as a cts test artifact
     test_suites: [
         "cts",
         "general-tests",
+    ],
+    data: [
+        ":CtsTvTestCasesHelperApp",
     ],
 }

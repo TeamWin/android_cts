@@ -34,5 +34,7 @@ cc_library_shared {
         "-Wall",
         "-Werror",
     ],
-    sdk_version: "current",
+    // this test suite runs on sdk 29 as part of MTS, make sure it's compatible
+    // (revisit if/when we add features to this library that require newer sdk.)
+    sdk_version: "29",
 }

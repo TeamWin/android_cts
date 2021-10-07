@@ -16,7 +16,7 @@
 
 package android.security.cts;
 
-import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.AsbSecurityTest;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -31,7 +31,7 @@ public class Poc20_11 extends SecurityTestCase {
      * b/162741784
      */
     @Test
-    @SecurityTest(minPatchLevel = "2020-11")
+    @AsbSecurityTest(cveBugId = 162741784)
     public void testPocCVE_2020_0437() throws Exception {
         assumeFalse(moduleIsPlayManaged("com.google.android.cellbroadcast"));
         AdbUtils.runCommandLine("logcat -c", getDevice());

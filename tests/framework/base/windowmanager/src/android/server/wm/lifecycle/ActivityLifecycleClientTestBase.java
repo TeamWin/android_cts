@@ -17,6 +17,7 @@
 package android.server.wm.lifecycle;
 
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
+import static android.content.Intent.FLAG_ACTIVITY_FORWARD_RESULT;
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.server.wm.StateLogger.log;
@@ -34,7 +35,7 @@ import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_START
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_STOP;
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_TOP_POSITION_GAINED;
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_TOP_POSITION_LOST;
-import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.PRE_ON_CREATE;
+import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_USER_LEAVE_HINT;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
@@ -91,6 +92,7 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
     static final String EXTRA_FINISH_IN_ON_STOP = "finish_in_on_stop";
     static final String EXTRA_START_ACTIVITY_IN_ON_CREATE = "start_activity_in_on_create";
     static final String EXTRA_START_ACTIVITY_WHEN_IDLE = "start_activity_when_idle";
+    static final String EXTRA_ACTIVITY_ON_USER_LEAVE_HINT = "activity_on_user_leave_hint";
 
     static final ComponentName CALLBACK_TRACKING_ACTIVITY =
             getComponentName(CallbackTrackingActivity.class);
@@ -249,8 +251,10 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
      * time.
      * @return The launched Activity instance.
      */
-    Activity launchActivityAndWait(Class<? extends Activity> activityClass) throws Exception {
-        return new Launcher(activityClass).launch();
+    @SuppressWarnings("unchecked")
+    <T extends Activity> T launchActivityAndWait(Class<? extends Activity> activityClass)
+            throws Exception {
+        return (T) new Launcher(activityClass).launch();
     }
 
     /**
@@ -261,6 +265,16 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
             Pair<Class<? extends Activity>, ActivityCallback>... activityCallbacks) {
         log("Start waitAndAssertActivityCallbacks");
         mLifecycleTracker.waitAndAssertActivityStates(activityCallbacks);
+    }
+
+    /**
+     * Blocking call that will wait and verify that the activity transition settles with the
+     * expected state.
+     */
+    final void waitAndAssertActivityCurrentState(
+            Class<? extends Activity> activityClass, ActivityCallback expectedState) {
+        log("Start waitAndAssertActivityCurrentState");
+        mLifecycleTracker.waitAndAssertActivityCurrentState(activityClass, expectedState);
     }
 
     /**
@@ -338,7 +352,6 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
         protected void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
             mLifecycleLogClient = LifecycleLog.LifecycleLogClient.create(this);
-            mLifecycleLogClient.onActivityCallback(PRE_ON_CREATE);
             mLifecycleLogClient.onActivityCallback(ON_CREATE);
 
             final Intent intent = getIntent();
@@ -414,6 +427,15 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
             super.onRestart();
             mLifecycleLogClient.onActivityCallback(ON_RESTART);
         }
+
+        @Override
+        protected void onUserLeaveHint() {
+            super.onUserLeaveHint();
+
+            if (getIntent().getBooleanExtra(EXTRA_ACTIVITY_ON_USER_LEAVE_HINT, false)) {
+                mLifecycleLogClient.onActivityCallback(ON_USER_LEAVE_HINT);
+            }
+        }
     }
 
     // Test activity
@@ -426,6 +448,10 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
 
     // Test activity
     public static class ThirdActivity extends LifecycleTrackingActivity {
+    }
+
+    // Test activity
+    public static class SideActivity extends LifecycleTrackingActivity {
     }
 
     // Translucent test activity
@@ -489,6 +515,29 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
     }
 
     /**
+     * Test activity that launches {@link TrampolineActivity} for result.
+     */
+    public static class LaunchForwardResultActivity extends CallbackTrackingActivity {
+        @Override
+        protected void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            final Intent intent = new Intent(this, TrampolineActivity.class);
+            startActivityForResult(intent, 1 /* requestCode */);
+        }
+    }
+
+    public static class TrampolineActivity extends CallbackTrackingActivity {
+        @Override
+        protected void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            final Intent intent = new Intent(this, ResultActivity.class);
+            intent.setFlags(FLAG_ACTIVITY_FORWARD_RESULT);
+            startActivity(intent);
+            finish();
+        }
+    }
+
+    /**
      * Test activity that launches {@link ResultActivity} for result.
      */
     public static class LaunchForResultActivity extends CallbackTrackingActivity {
@@ -547,13 +596,8 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
         }
     }
 
-    /** Test activity that is started for result. */
-    public static class TranslucentResultActivity extends CallbackTrackingActivity {
-        @Override
-        protected void onCreate(Bundle savedInstanceState) {
-            setResult(RESULT_OK);
-            super.onCreate(savedInstanceState);
-        }
+    /** Translucent activity that is started for result. */
+    public static class TranslucentResultActivity extends ResultActivity {
     }
 
     /** Test activity that is started for result. */
@@ -586,12 +630,26 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
 
     /** Test activity that can call {@link Activity#recreate()} if requested in a new intent. */
     public static class SingleTopActivity extends CallbackTrackingActivity {
-
+        static final String EXTRA_LAUNCH_ACTIVITY = "extra_launch_activity";
+        static final String EXTRA_NEW_TASK = "extra_new_task";
         @Override
         protected void onNewIntent(Intent intent) {
             super.onNewIntent(intent);
             if (intent != null && intent.getBooleanExtra(EXTRA_RECREATE, false)) {
                 recreate();
+            }
+        }
+
+        @Override
+        protected void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+
+            if (getIntent().getBooleanExtra(EXTRA_LAUNCH_ACTIVITY, false)) {
+                final Intent intent = new Intent(this, SingleTopActivity.class);
+                if (getIntent().getBooleanExtra(EXTRA_NEW_TASK, false)) {
+                    intent.setFlags(FLAG_ACTIVITY_NEW_TASK);
+                }
+                startActivityForResult(intent, 1 /* requestCode */);
             }
         }
     }
@@ -615,8 +673,12 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
 
             // Enter picture in picture with the given aspect ratio if provided
             if (getIntent().hasExtra(EXTRA_ENTER_PIP)) {
-                enterPictureInPictureMode(new PictureInPictureParams.Builder().build());
+                enterPip();
             }
+        }
+
+        void enterPip() {
+            enterPictureInPictureMode(new PictureInPictureParams.Builder().build());
         }
     }
 
@@ -703,68 +765,37 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
         return new ComponentName(getInstrumentation().getContext(), activity);
     }
 
-    void moveTaskToPrimarySplitScreenAndVerify(Activity activity) {
+    void moveTaskToPrimarySplitScreenAndVerify(Activity primaryActivity,
+            Activity secondaryActivity) throws Exception {
         getLifecycleLog().clear();
 
-        moveTaskToPrimarySplitScreen(activity.getTaskId(), true /* showSideActivity */);
+        mWmState.computeState(secondaryActivity.getComponentName());
+        moveActivitiesToSplitScreen(primaryActivity.getComponentName(),
+                secondaryActivity.getComponentName());
 
-        final Class<? extends Activity> activityClass = activity.getClass();
-        waitAndAssertActivityEnterSplitScreenTransitions(activityClass, "enterSplitScreen");
-    }
-
-    /**
-     * Blocking call that will wait for activities to perform the entering split screen sequence of
-     * transitions.
-     * @see LifecycleTracker#waitForActivityTransitions(Class, List)
-     */
-    final void waitAndAssertActivityEnterSplitScreenTransitions(
-            Class<? extends Activity> activityClass, String message) {
-        log("Start waitAndAssertActivitySplitScreenTransitions");
+        final Class<? extends Activity> activityClass = primaryActivity.getClass();
 
         final List<LifecycleLog.ActivityCallback> expectedTransitions =
                 new ArrayList<LifecycleLog.ActivityCallback>(
                         LifecycleVerifier.getSplitScreenTransitionSequence(activityClass));
-
         final List<LifecycleLog.ActivityCallback> expectedTransitionForMinimizedDock =
                 LifecycleVerifier.appendMinimizedDockTransitionTrail(expectedTransitions);
 
-        mLifecycleTracker.waitForActivityTransitions(activityClass, expectedTransitions);
-
-        if (!expectedTransitions.contains(ON_MULTI_WINDOW_MODE_CHANGED)) {
-            LifecycleVerifier.assertSequenceMatchesOneOf(
-                    activityClass,
-                    getLifecycleLog(),
-                    Arrays.asList(expectedTransitions, expectedTransitionForMinimizedDock),
-                    message);
-        } else {
-            final List<LifecycleLog.ActivityCallback> extraSequence =
-                    new ArrayList<LifecycleLog.ActivityCallback>(
-                            Arrays.asList(ON_MULTI_WINDOW_MODE_CHANGED, ON_TOP_POSITION_LOST,
-                                    ON_PAUSE, ON_STOP, ON_DESTROY, PRE_ON_CREATE, ON_CREATE,
-                                    ON_START, ON_POST_CREATE, ON_RESUME, ON_TOP_POSITION_GAINED));
-            final List<LifecycleLog.ActivityCallback> extraSequenceForMinimizedDock =
-                    LifecycleVerifier.appendMinimizedDockTransitionTrail(extraSequence);
-            final int displayWindowingMode =
-                    getDisplayWindowingModeByActivity(getComponentName(activityClass));
-            if (displayWindowingMode != WINDOWING_MODE_FULLSCREEN) {
-                // For non-fullscreen display mode, there won't be a multi-window callback.
-                expectedTransitions.removeAll(Collections.singleton(ON_MULTI_WINDOW_MODE_CHANGED));
-                expectedTransitionForMinimizedDock.removeAll(
-                        Collections.singleton(ON_MULTI_WINDOW_MODE_CHANGED));
-                extraSequence.removeAll(Collections.singleton(ON_MULTI_WINDOW_MODE_CHANGED));
-                extraSequenceForMinimizedDock.removeAll(
-                        Collections.singleton(ON_MULTI_WINDOW_MODE_CHANGED));
-            }
-            LifecycleVerifier.assertSequenceMatchesOneOf(
-                    activityClass,
-                    getLifecycleLog(),
-                    Arrays.asList(
-                            expectedTransitions,
-                            extraSequence,
-                            expectedTransitionForMinimizedDock,
-                            extraSequenceForMinimizedDock),
-                    message);
+        final int displayWindowingMode =
+                getDisplayWindowingModeByActivity(getComponentName(activityClass));
+        if (displayWindowingMode != WINDOWING_MODE_FULLSCREEN) {
+            // For non-fullscreen display mode, there won't be a multi-window callback.
+            expectedTransitions.removeAll(Collections.singleton(ON_MULTI_WINDOW_MODE_CHANGED));
+            expectedTransitionForMinimizedDock.removeAll(
+                    Collections.singleton(ON_MULTI_WINDOW_MODE_CHANGED));
         }
+
+        mLifecycleTracker.waitForActivityTransitions(activityClass, expectedTransitions);
+        LifecycleVerifier.assertSequenceMatchesOneOf(
+                activityClass,
+                getLifecycleLog(),
+                Arrays.asList(expectedTransitions, expectedTransitionForMinimizedDock),
+                "enterSplitScreen");
     }
 
     final ActivityOptions getLaunchOptionsForFullscreen() {

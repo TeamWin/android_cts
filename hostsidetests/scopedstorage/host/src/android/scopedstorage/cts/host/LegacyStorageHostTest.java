@@ -137,6 +137,11 @@ public class LegacyStorageHostTest extends BaseHostTestCase {
     }
 
     @Test
+    public void testInsertHiddenFile() throws Exception {
+        runDeviceTest("testInsertHiddenFile");
+    }
+
+    @Test
     public void testCanRename_hasRW() throws Exception {
         runDeviceTest("testCanRename_hasRW");
     }
@@ -202,5 +207,46 @@ public class LegacyStorageHostTest extends BaseHostTestCase {
     @Test
     public void testInsertWithUnsupportedMimeType() throws Exception {
         runDeviceTest("testInsertWithUnsupportedMimeType");
+    }
+
+    @Test
+    public void testLegacySystemGalleryCanRenameImagesAndVideosWithoutDbUpdates() throws Exception {
+        runDeviceTest("testLegacySystemGalleryCanRenameImagesAndVideosWithoutDbUpdates");
+    }
+
+    @Test
+    public void testLegacySystemGalleryWithoutWESCannotRename() throws Exception {
+        revokePermissions("android.permission.WRITE_EXTERNAL_STORAGE");
+        runDeviceTest("testLegacySystemGalleryWithoutWESCannotRename");
+    }
+
+    @Test
+    public void testLegacyWESCanRenameImagesAndVideosWithDbUpdates_hasW() throws Exception {
+        runDeviceTest("testLegacyWESCanRenameImagesAndVideosWithDbUpdates_hasW");
+    }
+
+    @Test
+    public void testScanUpdatesMetadataForNewlyAddedFile_hasRW() throws Exception {
+        runDeviceTest("testScanUpdatesMetadataForNewlyAddedFile_hasRW");
+    }
+
+    @Test
+    public void testInsertFromExternalDirsViaData() throws Exception {
+        runDeviceTest("testInsertFromExternalDirsViaData");
+    }
+
+    @Test
+    public void testUpdateToExternalDirsViaData() throws Exception {
+        runDeviceTest("testUpdateToExternalDirsViaData");
+    }
+
+    @Test
+    public void testInsertFromExternalDirsViaRelativePath() throws Exception {
+        runDeviceTest("testInsertFromExternalDirsViaRelativePath");
+    }
+
+    @Test
+    public void testUpdateToExternalDirsViaRelativePath() throws Exception {
+        runDeviceTest("testUpdateToExternalDirsViaRelativePath");
     }
 }

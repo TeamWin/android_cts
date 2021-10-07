@@ -37,6 +37,8 @@ cc_test_library {
         "liblog",
     ],
     header_libs: ["liblog_headers"],
+    // this test suite will run on sdk 29 as part of MTS, make sure it's compatible
+    // (revisit if/when we add features to this library that require newer sdk.
     sdk_version: "29",
     cflags: [
         "-Werror",
@@ -72,7 +74,9 @@ cc_test_library {
         "-DEGL_EGLEXT_PROTOTYPES",
     ],
     gtest: false,
-    sdk_version: "current",
+    // this test suite will run on sdk 29 as part of MTS, make sure it's compatible
+    // (revisit if/when we add features to this library that require newer sdk.
+    sdk_version: "29",
 }
 
 //------------------------------------------------------------------------------
@@ -103,5 +107,7 @@ cc_test_library {
     ],
     stl: "libc++_static",
     gtest: false,
-    sdk_version: "current",
+    // this test suite will run on sdk 29 as part of MTS, make sure it's compatible
+    // (revisit if/when we add features to this library that require newer sdk.
+    sdk_version: "29",
 }

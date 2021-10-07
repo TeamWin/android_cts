@@ -228,3 +228,190 @@ android_test_helper_app {
     ],
     sdk_version: "current",
 }
+
+// This is a version of the test package that declares a signature permission.
+// The lineage used to sign this test package does not trust the first signing
+// key but grants default capabilities to the second signing key.
+android_test_helper_app {
+    name: "v3-ec-p256-with-por_1_2_3-1-no-caps-2-default-declperm",
+    manifest: "AndroidManifest-declperm.xml",
+    certificate: ":ec-p256_3",
+    additional_certificates: [
+        ":ec-p256",
+    ],
+    lineage: ":ec-p256-por-1_2_3-1-no-caps-2-default",
+    srcs: ["src/**/*.java"],
+    // resource_dirs is the default value: ["res"]
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
+    sdk_version: "current",
+}
+
+// This is a version of the test package that declares a signature permission.
+// The lineage used to sign this test package does not trust either of the signing
+// keys so an app with only common signers in the lineage should not be granted the
+// permission.
+android_test_helper_app {
+    name: "v3-ec-p256-with-por_1_2_3-no-caps-declperm",
+    manifest: "AndroidManifest-declperm.xml",
+    certificate: ":ec-p256_3",
+    additional_certificates: [
+        ":ec-p256",
+    ],
+    lineage: ":ec-p256-por-1_2_3-no-caps",
+    srcs: ["src/**/*.java"],
+    // resource_dirs is the default value: ["res"]
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
+    sdk_version: "current",
+}
+
+// This is a version of the companion package that requests the signature permission
+// declared by the test package above. This package is signed with a signing key that
+// diverges from the package above and is intended to verify that a common signing
+// key in the lineage that is still granted the permission capability is sufficient
+// to be granted a signature permission.
+android_test_helper_app {
+    name: "v3-ec-p256-with-por_1_2_4-companion-usesperm",
+    manifest: "AndroidManifest-companion-usesperm.xml",
+    certificate: ":ec-p256_4",
+    additional_certificates: [
+        ":ec-p256",
+    ],
+    lineage: ":ec-p256-por-1_2_4-default-caps",
+    srcs: ["src/**/*.java"],
+    // resource_dirs is the default value: ["res"]
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
+    sdk_version: "current",
+}
+
+// This is a version of the test package that declares a signature permission
+// with the knownSigner protection flag. This app is signed with the rsa-2048
+// signing key with the trusted certificates being ec-p256 and ec-p256_3.
+android_test_helper_app {
+    name: "v3-rsa-2048-decl-knownSigner-ec-p256-1-3",
+    manifest: "AndroidManifest-decl-knownSigner.xml",
+    certificate: ":rsa-2048",
+    srcs: ["src/**/*.java"],
+    // resource_dirs is the default value: ["res"]
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
+    sdk_version: "current",
+}
+
+// This is a version of the test package that declares a signature permission
+// without the knownSigner protection flag. This app is signed with the same
+// rsa-2048 signing key to allow updates from the package above. This app can
+// be used to verify behavior when an app initially uses the knownSigner flag
+// and subsequently removes the flag from the permission declaration.
+android_test_helper_app {
+    name: "v3-rsa-2048-declperm",
+    manifest: "AndroidManifest-declperm.xml",
+    certificate: ":rsa-2048",
+    srcs: ["src/**/*.java"],
+    // resource_dirs is the default value: ["res"]
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
+    sdk_version: "current",
+}
+
+// This is a version of the test package that declares a signature permission
+// with the knownSigner protection flag using a string resource instead of a
+// string-array resource for the trusted certs.
+android_test_helper_app {
+    name: "v3-rsa-2048-decl-knownSigner-str-res-ec-p256-1",
+    manifest: "AndroidManifest-decl-knownSigner-str-res.xml",
+    certificate: ":rsa-2048",
+    srcs: ["src/**/*.java"],
+    // resource_dirs is the default value: ["res"]
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
+    sdk_version: "current",
+}
+
+// This is a version of the test package that declares a signature permission
+// with the knownSigner protection flag using a string constant as the value
+// of the knownCerts attribute.
+android_test_helper_app {
+    name: "v3-rsa-2048-decl-knownSigner-str-const-ec-p256-1",
+    manifest: "AndroidManifest-decl-knownSigner-str-const.xml",
+    certificate: ":rsa-2048",
+    srcs: ["src/**/*.java"],
+    // resource_dirs is the default value: ["res"]
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
+    sdk_version: "current",
+}
+
+// This is a version of the companion package that uses the permission
+// declared with the knownSigner flag. This app's current signer is in
+// the array of certificate digests as declared by the test package
+// above.
+android_test_helper_app {
+    name: "v3-ec-p256_3-companion-uses-knownSigner",
+    manifest: "AndroidManifest-uses-knownSigner.xml",
+    certificate: ":ec-p256_3",
+    srcs: ["src/**/*.java"],
+    // resource_dirs is the default value: ["res"]
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
+    sdk_version: "current",
+}
+
+// This is a version of the companion package that uses the permission
+// declared with the knownSigner flag. This app's current signer is not
+// in the array of certificate digests as declared by the test package
+// above.
+android_test_helper_app {
+    name: "v3-ec-p256_2-companion-uses-knownSigner",
+    manifest: "AndroidManifest-uses-knownSigner.xml",
+    certificate: ":ec-p256_2",
+    srcs: ["src/**/*.java"],
+    // resource_dirs is the default value: ["res"]
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
+    sdk_version: "current",
+}
+
+// This is a version of the companion package that uses the permission
+// declared with the knownSigner flag. This app is signed with a rotated
+// signing key with the current signer not in the array of certificate
+// digests as declared by the test package, but the previous signer in
+// the lineage is. This app can be used to verify that knownSigner
+// permissions are also granted if the app was previously signed with
+// one of the declared digests.
+android_test_helper_app {
+    name: "v3-ec-p256-with-por_1_2-companion-uses-knownSigner",
+    manifest: "AndroidManifest-uses-knownSigner.xml",
+    certificate: ":ec-p256_2",
+    additional_certificates: [
+        ":ec-p256",
+    ],
+    lineage: ":ec-p256-por_1_2-default-caps",
+    srcs: ["src/**/*.java"],
+    // resource_dirs is the default value: ["res"]
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
+    sdk_version: "current",
+}

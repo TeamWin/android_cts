@@ -24,8 +24,10 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.os.BugreportManager;
 import android.os.BugreportParams;
+import android.os.UserManager;
 import android.util.Pair;
 
 import androidx.test.InstrumentationRegistry;
@@ -35,6 +37,7 @@ import androidx.test.runner.AndroidJUnit4;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import static org.junit.Assume.assumeFalse;
 import org.junit.runner.RunWith;
 
 import java.util.concurrent.CountDownLatch;
@@ -50,15 +53,25 @@ public class BugreportManagerTest {
     // associated to this bugreport)
     private static final String INTENT_BUGREPORT_FINISHED =
             "com.android.internal.intent.action.BUGREPORT_FINISHED";
+    private static final String INTENT_REMOTE_BUGREPORT_DISPATCH =
+            "android.intent.action.REMOTE_BUGREPORT_DISPATCH";
+    private static final String REMOTE_BUGREPORT_MIMETYPE = "application/vnd.android.bugreport";
     private static final String EXTRA_BUGREPORT = "android.intent.extra.BUGREPORT";
     private static final String EXTRA_SCREENSHOT = "android.intent.extra.SCREENSHOT";
     private static final String BUGREPORT_SERVICE = "bugreportd";
 
     private Context mContext;
+    private BugreportManager mBugreportManager;
+
+    private boolean mIsTv;
 
     @Before
     public void setup() {
+        assumeFalse("Bugreport cannot run in headless system user mode",
+                          UserManager.isHeadlessSystemUserMode());
         mContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        mBugreportManager = mContext.getSystemService(BugreportManager.class);
+        mIsTv = mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK);
         // Kill current bugreport, so that it does not interfere with future bugreports.
         runShellCommand("setprop ctl.stop " + BUGREPORT_SERVICE);
     }
@@ -83,11 +96,7 @@ public class BugreportManagerTest {
         String bugreport = brFiles.first;
         String screenshot = brFiles.second;
 
-        assertThat(bugreport).startsWith(
-                "/data/user_de/0/com.android.shell/files/bugreports/bugreport-");
-        assertThat(bugreport).endsWith(".zip");
-        // telephony bugreport contains "telephony" in the bugreport name
-        assertThat(bugreport).contains("-telephony-");
+        assertBugreportFileNameCorrect(bugreport, "-telephony-" /* suffixName */);
         assertThatFileisNotEmpty(bugreport);
         // telephony bugreport does not take any screenshot
         assertThat(screenshot).isNull();
@@ -100,15 +109,85 @@ public class BugreportManagerTest {
         String bugreport = brFiles.first;
         String screenshot = brFiles.second;
 
-        assertThat(bugreport).startsWith(
-                "/data/user_de/0/com.android.shell/files/bugreports/bugreport-");
-        assertThat(bugreport).endsWith(".zip");
+        assertBugreportFileNameCorrect(bugreport, null /* suffixName */);
         assertThatFileisNotEmpty(bugreport);
         // full bugreport takes a default screenshot
-        assertThat(screenshot).startsWith(
-                "/data/user_de/0/com.android.shell/files/bugreports/screenshot-");
-        assertThat(screenshot).endsWith("-default.png");
+        assertScreenshotFileNameCorrect(screenshot);
         assertThatFileisNotEmpty(screenshot);
+    }
+
+    @LargeTest
+    @Test
+    public void testInteractiveBugreport() throws Exception {
+        Pair<String, String> brFiles = triggerBugreport(BugreportParams.BUGREPORT_MODE_INTERACTIVE);
+        String bugreport = brFiles.first;
+        String screenshot = brFiles.second;
+
+        assertBugreportFileNameCorrect(bugreport, null /* suffixName */);
+        assertThatFileisNotEmpty(bugreport);
+        // tv does not support screenshot button in the ui, interactive bugreport takes a
+        // default screenshot.
+        if (mIsTv) {
+            assertScreenshotFileNameCorrect(screenshot);
+            assertThatFileisNotEmpty(screenshot);
+        } else {
+            assertThat(screenshot).isNull();
+        }
+    }
+
+    @LargeTest
+    @Test
+    public void testWifiBugreport() throws Exception {
+        Pair<String, String> brFiles = triggerBugreport(BugreportParams.BUGREPORT_MODE_WIFI);
+        String bugreport = brFiles.first;
+        String screenshot = brFiles.second;
+
+        assertBugreportFileNameCorrect(bugreport, "-wifi-" /* suffixName */);
+        assertThatFileisNotEmpty(bugreport);
+        // wifi bugreport does not take any screenshot
+        assertThat(screenshot).isNull();
+    }
+
+    @LargeTest
+    @Test
+    public void testRemoteBugreport() throws Exception {
+        Pair<String, String> brFiles = triggerBugreport(BugreportParams.BUGREPORT_MODE_REMOTE);
+        String bugreport = brFiles.first;
+        String screenshot = brFiles.second;
+
+        assertBugreportFileNameCorrect(bugreport, null /* suffixName */);
+        assertThatFileisNotEmpty(bugreport);
+        // remote bugreport does not take any screenshot
+        assertThat(screenshot).isNull();
+    }
+
+    @LargeTest
+    @Test
+    public void testWearBugreport() throws Exception {
+        Pair<String, String> brFiles = triggerBugreport(BugreportParams.BUGREPORT_MODE_WEAR);
+        String bugreport = brFiles.first;
+        String screenshot = brFiles.second;
+
+        assertBugreportFileNameCorrect(bugreport, null /* suffixName */);
+        assertThatFileisNotEmpty(bugreport);
+        // wear bugreport takes a default screenshot
+        assertScreenshotFileNameCorrect(screenshot);
+        assertThatFileisNotEmpty(screenshot);
+    }
+
+    private void assertBugreportFileNameCorrect(String fileName, String suffixName) {
+        assertThat(fileName).startsWith(
+                "/data/user_de/0/com.android.shell/files/bugreports/bugreport-");
+        assertThat(fileName).endsWith(".zip");
+        if (suffixName != null) {
+            assertThat(fileName).contains(suffixName);
+        }
+    }
+
+    private void assertScreenshotFileNameCorrect(String fileName) {
+        assertThat(fileName).startsWith(
+                "/data/user_de/0/com.android.shell/files/bugreports/screenshot-");
+        assertThat(fileName).endsWith("-default.png");
     }
 
     private void assertThatFileisNotEmpty(String file) throws Exception {
@@ -151,18 +230,17 @@ public class BugreportManagerTest {
 
     private Pair<String, String> triggerBugreport(int type) throws Exception {
         BugreportBroadcastReceiver br = new BugreportBroadcastReceiver();
-        mContext.registerReceiver(br, new IntentFilter(INTENT_BUGREPORT_FINISHED));
-
-        String shellCommand = "am bug-report";
-        switch (type) {
-            case BugreportParams.BUGREPORT_MODE_TELEPHONY:
-                shellCommand = shellCommand.concat(" --telephony");
-            case BugreportParams.BUGREPORT_MODE_FULL:
-                // default (no arg) takes full bugreport
-                break;
+        final IntentFilter intentFilter;
+        if (type == BugreportParams.BUGREPORT_MODE_REMOTE) {
+            intentFilter = new IntentFilter(INTENT_REMOTE_BUGREPORT_DISPATCH,
+                    REMOTE_BUGREPORT_MIMETYPE);
+        } else {
+            intentFilter = new IntentFilter(INTENT_BUGREPORT_FINISHED);
         }
-        String res = runShellCommand(shellCommand).trim();
-        assertThat(res).isEqualTo("Your lovely bug report is being created; please be patient.");
+        mContext.registerReceiver(br, intentFilter);
+        final BugreportParams params = new BugreportParams(type);
+        mBugreportManager.requestBugreport(params, "" /* shareTitle */, "" /* shareDescription */);
+
         try {
             br.waitForBugreportFinished();
         } finally {
@@ -172,6 +250,8 @@ public class BugreportManagerTest {
         }
 
         Intent response = br.getBugreportFinishedIntent();
+        assertThat(response.getAction()).isEqualTo(intentFilter.getAction(0));
+
         String bugreport = response.getStringExtra(EXTRA_BUGREPORT);
         String screenshot = response.getStringExtra(EXTRA_SCREENSHOT);
         return new Pair<String, String>(bugreport, screenshot);

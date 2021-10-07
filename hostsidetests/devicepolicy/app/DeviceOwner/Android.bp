@@ -32,7 +32,7 @@ android_test_helper_app {
         "junit",
         "android.test.base",
         "bouncycastle-unbundled",
-	"org.apache.http.legacy",
+        "org.apache.http.legacy",
     ],
     static_libs: [
         "ctstestrunner-axt",
@@ -41,6 +41,8 @@ android_test_helper_app {
         "cts-security-test-support-library",
         "truth-prebuilt",
         "androidx.legacy_legacy-support-v4",
+        "devicepolicy-deviceside-common",
+        "DpmWrapper",
     ],
     min_sdk_version: "21",
     // tag this module as a cts test artifact
@@ -48,5 +50,7 @@ android_test_helper_app {
         "arcts",
         "cts",
         "general-tests",
+        "mts",
+        "sts",
     ],
 }

@@ -133,8 +133,8 @@ public class PocPusher extends TestWatcher {
             }
             testFile += bitness;
         }
-        File localFile = buildHelper.getTestFile(testFile);
         CLog.i("Pushing local: %s to remote: %s", testFile.toString(), remoteFile);
+        File localFile = buildHelper.getTestFile(testFile);
         device.pushFile(localFile, remoteFile);
         if (cleanup) {
             filesToCleanup.add(remoteFile);

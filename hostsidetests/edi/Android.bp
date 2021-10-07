@@ -19,9 +19,10 @@ package {
 java_test_host {
     name: "CtsEdiHostTestCases",
     srcs: ["src/**/*.java"],
-    // tag this module as a cts test artifact
     test_suites: [
+        "ats",
         "cts",
+        "gts",
         "general-tests",
     ],
     libs: [
@@ -32,9 +33,7 @@ java_test_host {
     ],
     static_libs: [
         "compat-classpaths-testing",
+        "modules-utils-build-testing",
         "hamcrest-library",
-    ],
-    data: [
-        ":ClasspathDeviceInfoHelperApp",
     ],
 }

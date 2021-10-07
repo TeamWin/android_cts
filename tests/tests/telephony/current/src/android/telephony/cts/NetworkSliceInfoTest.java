@@ -18,6 +18,7 @@ package android.telephony.cts;
 
 import static android.telephony.data.NetworkSliceInfo.SLICE_SERVICE_TYPE_EMBB;
 import static android.telephony.data.NetworkSliceInfo.SLICE_SERVICE_TYPE_MIOT;
+import static android.telephony.data.NetworkSliceInfo.SLICE_STATUS_CONFIGURED;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -33,6 +34,7 @@ public class NetworkSliceInfoTest {
     private static final int TEST_SLICE_SERVICE_TYPE = SLICE_SERVICE_TYPE_EMBB;
     private static final int TEST_HPLMN_SLICE_DIFFERENTIATOR = 10;
     private static final int TEST_HPLMN_SLICE_SERVICE_TYPE = SLICE_SERVICE_TYPE_MIOT;
+    private static final int TEST_SLICE_STATUS = SLICE_STATUS_CONFIGURED;
 
     @Test
     public void testParceling() {
@@ -105,5 +107,11 @@ public class NetworkSliceInfoTest {
             fail("Illegal state exception expected");
         } catch (IllegalArgumentException ignored) {
         }
+    }
+
+    @Test
+    public void testGetterAndSetterForSliceStatus() {
+        NetworkSliceInfo si = new NetworkSliceInfo.Builder().setStatus(TEST_SLICE_STATUS).build();
+        assertThat(si.getStatus()).isEqualTo(SLICE_STATUS_CONFIGURED);
     }
 }

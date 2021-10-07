@@ -16,6 +16,8 @@
 
 package android.theme.cts;
 
+import android.platform.test.annotations.RequiresDevice;
+
 import com.android.ddmlib.Log;
 import com.android.ddmlib.Log.LogLevel;
 import com.android.tradefed.device.CollectingOutputReceiver;

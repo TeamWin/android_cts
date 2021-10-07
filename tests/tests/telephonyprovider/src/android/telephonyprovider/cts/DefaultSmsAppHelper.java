@@ -33,7 +33,6 @@ import org.junit.Assume;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
-import android.telephony.TelephonyManager;
 
 class DefaultSmsAppHelper {
     static void ensureDefaultSmsApp() {
@@ -109,10 +108,6 @@ class DefaultSmsAppHelper {
 
     static void assumeTelephony() {
         Assume.assumeTrue(hasTelephony());
-    }
-
-    static void assumeSms() {
-        Assume.assumeTrue(hasSms());
     }
 
     static boolean hasTelephony() {

@@ -130,6 +130,8 @@ public class ViewUnbufferedTest {
         mMaxReceivedCountPerFrame = 0;
         WindowUtil.waitForFocus(mActivity);
         mView = mActivity.findViewById(R.id.test_view);
+        // Make sure all window animations are completed.
+        mAutomation.syncInputTransactions(true /* waitForAnimations */);
     }
 
     @After

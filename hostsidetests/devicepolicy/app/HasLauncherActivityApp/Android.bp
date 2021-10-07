@@ -32,6 +32,7 @@ android_test_helper_app {
         "arcts",
         "cts",
         "general-tests",
+        "mts",
     ],
     sdk_version: "current",
 }
@@ -51,6 +52,7 @@ android_test_helper_app {
         "arcts",
         "cts",
         "general-tests",
+        "mts",
     ],
     manifest: "no_launcher_activity_AndroidManifest.xml",
     sdk_version: "current",
@@ -71,6 +73,7 @@ android_test_helper_app {
         "arcts",
         "cts",
         "general-tests",
+        "mts",
     ],
     manifest: "no_permission_AndroidManifest.xml",
     sdk_version: "current",

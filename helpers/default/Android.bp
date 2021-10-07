@@ -30,7 +30,7 @@ android_test_helper_app {
     srcs: ["src/**/*.java"],
 
     static_libs: [
-        "android-support-test",
+        "androidx.test.rules",
         "cts-helpers-core",
         "cts-helpers-interfaces",
         "ub-uiautomator",

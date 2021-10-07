@@ -46,6 +46,7 @@ public class MediaPlayerSurfaceStubActivity extends Activity {
         mMediaPlayer = new MediaPlayer();
         AssetFileDescriptor afd = null;
 
+        Preconditions.assertTestFileExists(mInpPrefix + "testvideo.3gp");
         try {
             File inpFile = new File(mInpPrefix + "testvideo.3gp");
             ParcelFileDescriptor parcelFD =

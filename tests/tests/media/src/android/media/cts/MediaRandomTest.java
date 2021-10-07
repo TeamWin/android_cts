@@ -163,6 +163,7 @@ public class MediaRandomTest extends ActivityInstrumentationTestCase2<MediaStubA
     }
 
     private void loadSource(final String res) throws Exception {
+        Preconditions.assertTestFileExists(mInpPrefix + res);
         File inpFile = new File(mInpPrefix + res);
         ParcelFileDescriptor parcelFD =
                 ParcelFileDescriptor.open(inpFile, ParcelFileDescriptor.MODE_READ_ONLY);

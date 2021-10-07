@@ -26,6 +26,8 @@
 #include <cutils/properties.h>
 #include <gtest/gtest.h>
 
+#include "utils.h"
+
 // Non-upstream encryption modes that are used on some devices.
 #define FSCRYPT_MODE_AES_256_HEH 126
 #define FSCRYPT_MODE_PRIVATE 127
@@ -33,6 +35,7 @@
 // The relevant Android API levels
 #define Q_API_LEVEL 29
 #define R_API_LEVEL 30
+#define S_API_LEVEL 31
 
 static int getFirstApiLevel(void) {
     int level = property_get_int32("ro.product.first_api_level", 0);
@@ -167,6 +170,26 @@ static void validateEncryptionModes(int contents_mode, int filenames_mode,
     }
 }
 
+// Ideally we'd check whether /data is on eMMC, but that is hard to do from a
+// CTS test.  To keep things simple we just check whether the system knows about
+// at least one eMMC device.
+static bool usingEmmcStorage() {
+    struct stat stbuf;
+    return lstat("/sys/class/block/mmcblk0", &stbuf) == 0;
+}
+
+// CDD 9.9.3/C-1-15: must not reuse IVs for file contents encryption except when
+// limited by hardware that only supports 32-bit IVs.  Like most other
+// encryption security requirements, CTS can't directly test this.  But the most
+// likely case where this requirement wouldn't be met is a misconfiguration
+// where FSCRYPT_POLICY_FLAG_IV_INO_LBLK_32 ("emmc_optimized" in the fstab) is
+// used on a non-eMMC based device.  CTS can test for that, so we do so below.
+static void validateEncryptionFlags(int flags) {
+    if (flags & FSCRYPT_POLICY_FLAG_IV_INO_LBLK_32) {
+        EXPECT_TRUE(usingEmmcStorage());
+    }
+}
+
 // We check the encryption policy of /data/local/tmp because it's one of the
 // only encrypted directories the shell domain has permission to open.  Ideally
 // we'd check the user's credential-encrypted storage (/data/user/0) instead.
@@ -185,6 +208,7 @@ TEST(FileBasedEncryptionPolicyTest, allowedPolicy) {
     int res;
     int contents_mode;
     int filenames_mode;
+    int flags;
     bool allow_legacy_modes = false;
 
     android::base::unique_fd fd(open(DIR_TO_CHECK, O_RDONLY | O_CLOEXEC));
@@ -195,6 +219,15 @@ TEST(FileBasedEncryptionPolicyTest, allowedPolicy) {
     property_get("ro.crypto.type", crypto_type, "");
     GTEST_LOG_(INFO) << "ro.crypto.type is '" << crypto_type << "'";
     GTEST_LOG_(INFO) << "First API level is " << first_api_level;
+
+    // This feature name check only applies to devices that first shipped with
+    // SC or later.
+    if(first_api_level >= S_API_LEVEL &&
+       !deviceSupportsFeature("android.hardware.security.model.compatible")) {
+        GTEST_SKIP()
+            << "Skipping test: FEATURE_SECURITY_MODEL_COMPATIBLE missing.";
+        return;
+    }
 
     // Note: SELinux policy allows the shell domain to use these ioctls, but not
     // apps.  Therefore this test needs to be a real native test that's run
@@ -239,6 +272,7 @@ TEST(FileBasedEncryptionPolicyTest, allowedPolicy) {
             GTEST_LOG_(INFO) << "Detected v1 encryption policy";
             contents_mode = arg.policy.v1.contents_encryption_mode;
             filenames_mode = arg.policy.v1.filenames_encryption_mode;
+            flags = arg.policy.v1.flags;
 
             // Starting with Android 11, FBE must use a strong, non-reversible
             // key derivation function [CDD 9.9.3/C-1-13], and FBE keys must
@@ -262,6 +296,7 @@ TEST(FileBasedEncryptionPolicyTest, allowedPolicy) {
             GTEST_LOG_(INFO) << "Detected v2 encryption policy";
             contents_mode = arg.policy.v2.contents_encryption_mode;
             filenames_mode = arg.policy.v2.filenames_encryption_mode;
+            flags = arg.policy.v2.flags;
             break;
         default:
             FAIL() << "Unknown encryption policy version: " << arg.policy.version;
@@ -271,4 +306,6 @@ TEST(FileBasedEncryptionPolicyTest, allowedPolicy) {
     GTEST_LOG_(INFO) << "Filenames encryption mode: " << filenames_mode;
 
     validateEncryptionModes(contents_mode, filenames_mode, allow_legacy_modes);
+
+    validateEncryptionFlags(flags);
 }

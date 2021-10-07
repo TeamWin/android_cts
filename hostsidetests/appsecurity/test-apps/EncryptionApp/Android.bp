@@ -35,6 +35,7 @@ android_test_helper_app {
     test_suites: [
         "cts",
         "general-tests",
+        "mts-mainline-infra",
     ],
     certificate: ":cts-testkey1",
 }

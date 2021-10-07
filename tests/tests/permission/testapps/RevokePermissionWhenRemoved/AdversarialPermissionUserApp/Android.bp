@@ -26,6 +26,7 @@ android_test_helper_app {
         "cts",
         "general-tests",
         "sts",
+        "mts",
     ],
     certificate: ":cts-testkey2",
 }

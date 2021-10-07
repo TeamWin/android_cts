@@ -159,7 +159,7 @@ public class MediaCodecClearKeyPlayer implements MediaTimeProvider {
                 while (mThreadStarted == true) {
                     doSomeWork();
                     if (mAudioTrackState != null) {
-                        mAudioTrackState.process();
+                        mAudioTrackState.processAudioTrack();
                     }
                     try {
                         Thread.sleep(5);
@@ -171,7 +171,7 @@ public class MediaCodecClearKeyPlayer implements MediaTimeProvider {
                     }
                 }
                 if (mAudioTrackState != null) {
-                    mAudioTrackState.stop();
+                    mAudioTrackState.stopAudioTrack();
                 }
             }
         });

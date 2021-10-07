@@ -243,7 +243,8 @@ VkTestResult DeviceInfo::init(JNIEnv* env, jobject jSurface) {
 SwapchainInfo::SwapchainInfo(const DeviceInfo* const deviceInfo)
       : mDeviceInfo(deviceInfo),
         mFormat(VK_FORMAT_UNDEFINED),
-        mDisplaySize({0, 0}),
+        mSurfaceSize({0, 0}),
+        mImageSize({0, 0}),
         mSwapchain(VK_NULL_HANDLE),
         mSwapchainLength(0) {}
 
@@ -289,7 +290,7 @@ VkTestResult SwapchainInfo::init(bool setPreTransform, int* outPreTransformHint)
     ASSERT(formatIndex < formatCount);
 
     mFormat = formats[formatIndex].format;
-    mDisplaySize = surfaceCapabilities.currentExtent;
+    mImageSize = mSurfaceSize = surfaceCapabilities.currentExtent;
 
     VkSurfaceTransformFlagBitsKHR preTransform =
             (setPreTransform ? surfaceCapabilities.currentTransform
@@ -302,7 +303,7 @@ VkTestResult SwapchainInfo::init(bool setPreTransform, int* outPreTransformHint)
          (VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR | VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR |
           VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_90_BIT_KHR |
           VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_270_BIT_KHR)) != 0) {
-        std::swap(mDisplaySize.width, mDisplaySize.height);
+        std::swap(mImageSize.width, mImageSize.height);
     }
 
     if (outPreTransformHint) {
@@ -318,7 +319,7 @@ VkTestResult SwapchainInfo::init(bool setPreTransform, int* outPreTransformHint)
             .minImageCount = surfaceCapabilities.minImageCount,
             .imageFormat = mFormat,
             .imageColorSpace = formats[formatIndex].colorSpace,
-            .imageExtent = mDisplaySize,
+            .imageExtent = mImageSize,
             .imageArrayLayers = 1,
             .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
             .imageSharingMode = VK_SHARING_MODE_EXCLUSIVE,
@@ -467,8 +468,8 @@ VkTestResult Renderer::createFrameBuffers() {
                 .renderPass = mRenderPass,
                 .attachmentCount = 1,
                 .pAttachments = &mImageViews[i],
-                .width = mSwapchainInfo->displaySize().width,
-                .height = mSwapchainInfo->displaySize().height,
+                .width = mSwapchainInfo->imageSize().width,
+                .height = mSwapchainInfo->imageSize().height,
                 .layers = 1,
         };
         VK_CALL(vkCreateFramebuffer(mDeviceInfo->device(), &framebufferCreateInfo, nullptr,
@@ -597,8 +598,8 @@ VkTestResult Renderer::createGraphicsPipeline() {
     const VkViewport viewports = {
             .x = 0.0f,
             .y = 0.0f,
-            .width = (float)mSwapchainInfo->displaySize().width,
-            .height = (float)mSwapchainInfo->displaySize().height,
+            .width = (float)mSwapchainInfo->imageSize().width,
+            .height = (float)mSwapchainInfo->imageSize().height,
             .minDepth = 0.0f,
             .maxDepth = 1.0f,
     };
@@ -608,7 +609,7 @@ VkTestResult Renderer::createGraphicsPipeline() {
                             .x = 0,
                             .y = 0,
                     },
-            .extent = mSwapchainInfo->displaySize(),
+            .extent = mSwapchainInfo->imageSize(),
     };
     const VkPipelineViewportStateCreateInfo viewportInfo = {
             .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
@@ -786,7 +787,7 @@ VkTestResult Renderer::init(JNIEnv* env, jobject jAssetManager) {
                                                 .x = 0,
                                                 .y = 0,
                                         },
-                                .extent = mSwapchainInfo->displaySize(),
+                                .extent = mSwapchainInfo->imageSize(),
                         },
                 .clearValueCount = 1,
                 .pClearValues = &clearVals,

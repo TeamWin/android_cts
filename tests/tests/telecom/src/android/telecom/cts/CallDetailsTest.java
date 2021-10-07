@@ -296,6 +296,9 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
         mConnection.setConnectionProperties(Connection.PROPERTY_REMOTELY_HOSTED);
         // Not propagated
         assertCallProperties(mCall, 0);
+
+        mConnection.setConnectionProperties(Connection.PROPERTY_CROSS_SIM);
+        assertCallProperties(mCall, Call.Details.PROPERTY_CROSS_SIM);
     }
 
     /**
@@ -496,7 +499,7 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
 
         // EXTRA_INCOMING_PICTURE
         Uri testIncomingPictureUrl = Uri.parse("content://carrier.xyz/picture1");
-        exampleExtras.putParcelable(TelecomManager.EXTRA_INCOMING_PICTURE, testIncomingPictureUrl);
+        exampleExtras.putParcelable(TelecomManager.EXTRA_PICTURE_URI, testIncomingPictureUrl);
 
         // EXTRA_OUTGOING_PICTURE
         ParcelUuid testOutgoingPicture = ParcelUuid.fromString("11111111-2222-3333-4444-55555555");
@@ -533,7 +536,7 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
         assertEquals(longitude, testGetLocation.getLongitude(), 0);
         assertEquals(true, exampleExtras.getBoolean(TelecomManager.EXTRA_HAS_PICTURE));
         assertEquals(testIncomingPictureUrl,
-                exampleExtras.getParcelable(TelecomManager.EXTRA_INCOMING_PICTURE));
+                exampleExtras.getParcelable(TelecomManager.EXTRA_PICTURE_URI));
         assertEquals(testOutgoingPicture,
                 exampleExtras.getParcelable(TelecomManager.EXTRA_OUTGOING_PICTURE));
     }

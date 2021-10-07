@@ -45,6 +45,8 @@ import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
 import android.util.Log;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 import com.android.compatibility.common.util.PropertyUtil;
 
 import junit.framework.Assert;
@@ -128,6 +130,7 @@ public class SensorTest extends SensorTestCase {
                 PackageManager.FEATURE_SENSOR_ACCELEROMETER);
         // accelerometer sensor is optional
         if (hasAccelerometer) {
+            assertNotNull(sensor);
             assertEquals(Sensor.TYPE_ACCELEROMETER, sensor.getType());
             assertSensorValues(sensor);
         } else {
@@ -139,6 +142,7 @@ public class SensorTest extends SensorTestCase {
                 PackageManager.FEATURE_SENSOR_STEP_COUNTER);
         // stepcounter sensor is optional
         if (hasStepCounter) {
+            assertNotNull(sensor);
             assertEquals(Sensor.TYPE_STEP_COUNTER, sensor.getType());
             assertSensorValues(sensor);
         } else {
@@ -150,6 +154,7 @@ public class SensorTest extends SensorTestCase {
                 PackageManager.FEATURE_SENSOR_STEP_DETECTOR);
         // stepdetector sensor is optional
         if (hasStepDetector) {
+            assertNotNull(sensor);
             assertEquals(Sensor.TYPE_STEP_DETECTOR, sensor.getType());
             assertSensorValues(sensor);
         } else {
@@ -161,6 +166,7 @@ public class SensorTest extends SensorTestCase {
                 PackageManager.FEATURE_SENSOR_COMPASS);
         // compass sensor is optional
         if (hasCompass) {
+            assertNotNull(sensor);
             assertEquals(Sensor.TYPE_MAGNETIC_FIELD, sensor.getType());
             assertSensorValues(sensor);
         } else {
@@ -172,6 +178,7 @@ public class SensorTest extends SensorTestCase {
                 PackageManager.FEATURE_SENSOR_GYROSCOPE);
         // gyroscope sensor is optional
         if (hasGyroscope) {
+            assertNotNull(sensor);
             assertEquals(Sensor.TYPE_GYROSCOPE, sensor.getType());
             assertSensorValues(sensor);
         } else {
@@ -183,6 +190,7 @@ public class SensorTest extends SensorTestCase {
                 PackageManager.FEATURE_SENSOR_BAROMETER);
         // pressure sensor is optional
         if (hasPressure) {
+            assertNotNull(sensor);
             assertEquals(Sensor.TYPE_PRESSURE, sensor.getType());
             assertSensorValues(sensor);
         } else {
@@ -208,6 +216,7 @@ public class SensorTest extends SensorTestCase {
                 PackageManager.FEATURE_SENSOR_HINGE_ANGLE);
 
         if (hasHingeAngle) {
+            assertNotNull(sensor);
             assertEquals(Sensor.TYPE_HINGE_ANGLE, sensor.getType());
             assertSensorValues(sensor);
             assertTrue("Max range must not be larger than 360. Range=" + sensor.getMaximumRange()
@@ -231,10 +240,21 @@ public class SensorTest extends SensorTestCase {
         }
     }
 
+    private void assertAllSensorsNameUniqueness() {
+        Multimap<Integer, String> sensorTypeNameMap = ArrayListMultimap.create();
+
+        for (Sensor sensor : mSensorList) {
+            assertFalse("Duplicate sensor name " + sensor.getName() + " for type " + sensor.getType(),
+                        sensorTypeNameMap.containsEntry(sensor.getType(), sensor.getName()));
+            sensorTypeNameMap.put(sensor.getType(), sensor.getName());
+        }
+    }
+
     public void testValuesForAllSensors() {
         for (Sensor sensor : mSensorList) {
             assertSensorValues(sensor);
         }
+        assertAllSensorsNameUniqueness();
     }
 
     private void hasOnlyOneWakeUpSensorOrEmpty(List<Sensor> sensors) {

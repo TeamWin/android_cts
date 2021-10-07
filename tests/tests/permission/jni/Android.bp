@@ -33,3 +33,28 @@ cc_test_library {
     ],
     gtest: false,
 }
+
+cc_test_library {
+    name: "libpermissionmanager_native_test",
+    sdk_version: "current",
+    compile_multilib: "both",
+    srcs: [
+        "PermissionManagerNativeJniTest.cpp"
+    ],
+    shared_libs: [
+        "libandroid",
+        "liblog",
+    ],
+    static_libs: [
+        "libbase_ndk",
+    ],
+    whole_static_libs: [
+        "libnativetesthelper_jni"
+    ],
+    gtest: false,
+    stl: "libc++_static",
+    cflags: [
+        "-Werror",
+        "-Wall",
+    ],
+}

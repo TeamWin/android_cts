@@ -32,6 +32,7 @@ import android.content.UriPermission;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.res.AssetFileDescriptor;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.FileUtils;
@@ -49,6 +50,7 @@ import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject;
 import android.support.test.uiautomator.UiObject2;
 import android.support.test.uiautomator.UiObjectNotFoundException;
+import android.support.test.uiautomator.UiScrollable;
 import android.support.test.uiautomator.UiSelector;
 import android.support.test.uiautomator.Until;
 import android.system.Os;
@@ -82,6 +84,8 @@ public class MediaStoreUiTest {
 
     private static final int REQUEST_CODE = 42;
     private static final long TIMEOUT_MILLIS = 30 * DateUtils.SECOND_IN_MILLIS;
+    private static final String MEDIA_DOCUMENTS_PROVIDER_AUTHORITY =
+            "com.android.providers.media.documents";
 
     private Instrumentation mInstrumentation;
     private Context mContext;
@@ -91,6 +95,7 @@ public class MediaStoreUiTest {
     private File mFile;
     private Uri mMediaStoreUri;
     private String mTargetPackageName;
+    private String mDocumentsUiPackageId;
 
     @Parameter(0)
     public String mVolumeName;
@@ -105,6 +110,12 @@ public class MediaStoreUiTest {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mContext = InstrumentationRegistry.getTargetContext();
         mDevice = UiDevice.getInstance(mInstrumentation);
+        final PackageManager pm = mContext.getPackageManager();
+        final Intent intent2 = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent2.addCategory(Intent.CATEGORY_OPENABLE);
+        intent2.setType("*/*");
+        final ResolveInfo ri = pm.resolveActivity(intent2, 0);
+        mDocumentsUiPackageId = ri.activityInfo.packageName;
 
         final Intent intent = new Intent(mContext, GetResultActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -174,7 +185,7 @@ public class MediaStoreUiTest {
     }
 
     @Test
-    public void testGetDocumentUri_Symmetry() throws Exception {
+    public void testGetDocumentUri_Symmetry_ExternalStorageProvider() throws Exception {
         if (!supportsHardware()) return;
 
         prepareFile();
@@ -192,6 +203,99 @@ public class MediaStoreUiTest {
         assertNotNull(mediaUri);
 
         assertEquals(mMediaStoreUri, mediaUri);
+        assertAccessToMediaUri(mediaUri, mFile);
+    }
+
+    @Test
+    public void testGetMediaUriAccess_MediaDocumentsProvider() throws Exception {
+        if (!supportsHardware()) return;
+
+        prepareFile();
+        clearDocumentsUi();
+        final Intent intent = new Intent();
+        intent.setAction(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("*/*");
+        mActivity.startActivityForResult(intent, REQUEST_CODE);
+        mDevice.waitForIdle();
+
+        findDocument(mFile.getName()).click();
+        final Result result = mActivity.getResult();
+        final Uri uri = result.data.getData();
+        assertEquals(MEDIA_DOCUMENTS_PROVIDER_AUTHORITY, uri.getAuthority());
+        final Uri mediaUri = MediaStore.getMediaUri(mActivity, uri);
+
+        assertAccessToMediaUri(mediaUri, mFile);
+    }
+
+    private void assertAccessToMediaUri(Uri mediaUri, File file) {
+        final String[] projection = {MediaStore.MediaColumns.DISPLAY_NAME};
+        try (Cursor c = mContext.getContentResolver().query(
+                mediaUri, projection, null, null, null)) {
+            assertTrue(c.moveToFirst());
+            assertEquals(file.getName(), c.getString(0));
+        }
+    }
+
+    /**
+     * Clears the DocumentsUI package data.
+     */
+    protected void clearDocumentsUi() throws Exception {
+        executeShellCommand("pm clear " + getDocumentsUiPackageId());
+    }
+
+    private UiObject findDocument(String label) throws UiObjectNotFoundException {
+        final UiSelector docList = new UiSelector().resourceId(getDocumentsUiPackageId()
+                + ":id/dir_list");
+
+        // Wait for the first list item to appear
+        assertTrue("First list item",
+                new UiObject(docList.childSelector(new UiSelector()))
+                        .waitForExists(TIMEOUT_MILLIS));
+
+        try {
+            //Enforce to set the list mode
+            //Because UiScrollable can't reach the real bottom (when WEB_LINKABLE_FILE item)
+            // in grid mode when screen landscape mode
+            new UiObject(new UiSelector().resourceId(getDocumentsUiPackageId()
+                    + ":id/sub_menu_list")).click();
+            mDevice.waitForIdle();
+        }catch (UiObjectNotFoundException e){
+            //do nothing, already be in list mode.
+        }
+
+        // Repeat swipe gesture to find our item
+        // (UiScrollable#scrollIntoView does not seem to work well with SwipeRefreshLayout)
+        UiObject targetObject = new UiObject(docList.childSelector(new UiSelector().text(label)));
+        UiObject saveButton = findSaveButton();
+        int stepLimit = 10;
+        while (stepLimit-- > 0) {
+            if (targetObject.exists()) {
+                boolean targetObjectFullyVisible = !saveButton.exists()
+                        || targetObject.getVisibleBounds().bottom
+                        <= saveButton.getVisibleBounds().top;
+                if (targetObjectFullyVisible) {
+                    break;
+                }
+            }
+
+            mDevice.swipe(/* startX= */ mDevice.getDisplayWidth() / 2,
+                    /* startY= */ mDevice.getDisplayHeight() / 2,
+                    /* endX= */ mDevice.getDisplayWidth() / 2,
+                    /* endY= */ 0,
+                    /* steps= */ 40);
+        }
+        return targetObject;
+    }
+
+    private UiObject findSaveButton() throws UiObjectNotFoundException {
+        return new UiObject(new UiSelector().resourceId(
+                getDocumentsUiPackageId() + ":id/container_save")
+                .childSelector(new UiSelector().resourceId("android:id/button1")));
+    }
+
+    private String getDocumentsUiPackageId() {
+        return mDocumentsUiPackageId;
     }
 
     private boolean supportsHardware() {

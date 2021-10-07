@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 The Android Open Source Project
+ * Copyright (C) 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package android.hdmicec.cts.common;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecMessage;
@@ -28,13 +29,17 @@ import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
-import org.junit.Test;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-/** HDMI CEC test to check if the device reports power status correctly (Section 11.2.14) */
+/**
+ * HDMI CEC tests verifying power status related messages of the device (CEC 2.0 CTS Section 7.6)
+ */
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
 
@@ -43,15 +48,77 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
     private static final int IN_TRANSITION_TO_STANDBY = 0x3;
 
     private static final int SLEEP_TIMESTEP_SECONDS = 1;
-    private static final int WAIT_TIME = 5;
-    private static final int MAX_SLEEP_TIME = 8;
 
     @Rule
-    public RuleChain ruleChain =
-        RuleChain
-            .outerRule(CecRules.requiresCec(this))
-            .around(CecRules.requiresLeanback(this))
-            .around(hdmiCecClient);
+    public RuleChain mRuleChain =
+            RuleChain
+                    .outerRule(CecRules.requiresCec(this))
+                    .around(CecRules.requiresLeanback(this))
+                    .around(hdmiCecClient);
+
+    /**
+     * Test HF4-6-20
+     *
+     * Verifies that {@code <Report Power Status>} message is broadcast when the device transitions
+     * from standby to on.
+     */
+    @Test
+    public void cect_hf4_6_20_broadcastsWhenTurningOn() throws Exception {
+        ITestDevice device = getDevice();
+        setCec20();
+
+        // Move device to standby
+        device.executeShellCommand("input keyevent KEYCODE_SLEEP");
+        TimeUnit.SECONDS.sleep(HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS);
+
+        // Turn device on
+        device.executeShellCommand("input keyevent KEYCODE_WAKEUP");
+        TimeUnit.SECONDS.sleep(HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS);
+
+        String reportPowerStatus = hdmiCecClient.checkExpectedOutput(LogicalAddress.BROADCAST,
+                CecOperand.REPORT_POWER_STATUS);
+
+        if (CecMessage.getParams(reportPowerStatus) == HdmiCecConstants.CEC_POWER_STATUS_STANDBY) {
+            // Received the "turning off" broadcast, check for the next broadcast message
+            reportPowerStatus = hdmiCecClient.checkExpectedOutput(LogicalAddress.BROADCAST,
+                    CecOperand.REPORT_POWER_STATUS);
+        }
+
+        assertThat(CecMessage.getParams(reportPowerStatus)).isEqualTo(
+                HdmiCecConstants.CEC_POWER_STATUS_ON);
+    }
+
+    /**
+     * Test HF4-6-21
+     *
+     * Verifies that {@code <Report Power Status>} message is broadcast when the device transitions
+     * from on to standby.
+     */
+    @Test
+    public void cect_hf4_6_21_broadcastsWhenGoingToStandby() throws Exception {
+        ITestDevice device = getDevice();
+        setCec20();
+
+        // Turn device on
+        device.executeShellCommand("input keyevent KEYCODE_WAKEUP");
+        TimeUnit.SECONDS.sleep(HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS);
+
+        // Move device to standby
+        device.executeShellCommand("input keyevent KEYCODE_SLEEP");
+        TimeUnit.SECONDS.sleep(HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS);
+
+        String reportPowerStatus = hdmiCecClient.checkExpectedOutput(LogicalAddress.BROADCAST,
+                CecOperand.REPORT_POWER_STATUS);
+
+        if (CecMessage.getParams(reportPowerStatus) == HdmiCecConstants.CEC_POWER_STATUS_ON) {
+            // Received the "wake up" broadcast, check for the next broadcast message
+            reportPowerStatus = hdmiCecClient.checkExpectedOutput(LogicalAddress.BROADCAST,
+                    CecOperand.REPORT_POWER_STATUS);
+        }
+
+        assertThat(CecMessage.getParams(reportPowerStatus)).isEqualTo(
+                HdmiCecConstants.CEC_POWER_STATUS_STANDBY);
+    }
 
     /**
      * Test 11.1.14-1, 11.2.14-1
@@ -64,6 +131,9 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
         ITestDevice device = getDevice();
         /* Make sure the device is not booting up/in standby */
         device.waitForBootComplete(HdmiCecConstants.REBOOT_TIMEOUT);
+        device.executeShellCommand("input keyevent KEYCODE_WAKEUP");
+        TimeUnit.SECONDS.sleep(HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS);
+
         LogicalAddress cecClientDevice = hdmiCecClient.getSelfDevice();
         hdmiCecClient.sendCecMessage(cecClientDevice, CecOperand.GIVE_POWER_STATUS);
         String message =
@@ -85,8 +155,8 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
             device.waitForBootComplete(HdmiCecConstants.REBOOT_TIMEOUT);
             /* The sleep below could send some devices into a deep suspend state. */
             device.executeShellCommand("input keyevent KEYCODE_SLEEP");
-            TimeUnit.SECONDS.sleep(WAIT_TIME);
-            int waitTimeSeconds = WAIT_TIME;
+            TimeUnit.SECONDS.sleep(HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS);
+            int waitTimeSeconds = HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS;
             int powerStatus;
             LogicalAddress cecClientDevice = hdmiCecClient.getSelfDevice();
             do {
@@ -97,11 +167,89 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
                         CecMessage.getParams(
                                 hdmiCecClient.checkExpectedOutput(
                                         cecClientDevice, CecOperand.REPORT_POWER_STATUS));
-            } while (powerStatus == IN_TRANSITION_TO_STANDBY && waitTimeSeconds <= MAX_SLEEP_TIME);
+            } while (powerStatus == IN_TRANSITION_TO_STANDBY &&
+                    waitTimeSeconds <= HdmiCecConstants.MAX_SLEEP_TIME_SECONDS);
             assertThat(powerStatus).isEqualTo(OFF);
         } finally {
             /* Wake up the device */
             device.executeShellCommand("input keyevent KEYCODE_WAKEUP");
+        }
+    }
+
+    /**
+     * Test HF4-6-8
+     *
+     * Tests that a device comes out of the standby state when it receives a {@code <User Control
+     * Pressed>} message with power related operands.
+     */
+    @Test
+    public void cect_hf4_6_8_userControlPressed_powerOn() throws Exception {
+        ITestDevice device = getDevice();
+        List<Integer> powerControlOperands = Arrays.asList(HdmiCecConstants.CEC_CONTROL_POWER,
+                HdmiCecConstants.CEC_CONTROL_POWER_ON_FUNCTION,
+                HdmiCecConstants.CEC_CONTROL_POWER_TOGGLE_FUNCTION);
+
+        LogicalAddress source = hasDeviceType(HdmiCecConstants.CEC_DEVICE_TYPE_TV)
+                ? LogicalAddress.PLAYBACK_1
+                : LogicalAddress.TV;
+
+        for (Integer operand : powerControlOperands) {
+            try {
+                device.executeShellCommand("input keyevent KEYCODE_SLEEP");
+                TimeUnit.SECONDS.sleep(HdmiCecConstants.MAX_SLEEP_TIME_SECONDS);
+                String wakeStateBefore = device.executeShellCommand(
+                        "dumpsys power | grep mWakefulness=");
+                assertThat(wakeStateBefore.trim()).isEqualTo("mWakefulness=Asleep");
+
+                hdmiCecClient.sendUserControlPressAndRelease(source, operand, false);
+
+                TimeUnit.SECONDS.sleep(HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS);
+                String wakeStateAfter = device.executeShellCommand(
+                        "dumpsys power | grep mWakefulness=");
+                assertWithMessage("Device should wake up on <User Control Pressed> %s", operand)
+                        .that(wakeStateAfter.trim()).isEqualTo("mWakefulness=Awake");
+            } finally {
+                device.executeShellCommand("input keyevent KEYCODE_WAKEUP");
+            }
+        }
+    }
+
+    /**
+     * Test HF4-6-10
+     *
+     * Tests that a device comes enters the standby state when it receives a {@code <User Control
+     * Pressed>} message with power related operands.
+     */
+    @Test
+    public void cect_hf4_6_10_userControlPressed_powerOff() throws Exception {
+        ITestDevice device = getDevice();
+        List<Integer> powerControlOperands = Arrays.asList(
+                HdmiCecConstants.CEC_CONTROL_POWER_OFF_FUNCTION,
+                HdmiCecConstants.CEC_CONTROL_POWER_TOGGLE_FUNCTION);
+
+        LogicalAddress source = hasDeviceType(HdmiCecConstants.CEC_DEVICE_TYPE_TV)
+                ? LogicalAddress.PLAYBACK_1
+                : LogicalAddress.TV;
+
+        for (Integer operand : powerControlOperands) {
+            try {
+                device.executeShellCommand("input keyevent KEYCODE_WAKEUP");
+                TimeUnit.SECONDS.sleep(HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS);
+                String wakeStateBefore = device.executeShellCommand(
+                        "dumpsys power | grep mWakefulness=");
+                assertThat(wakeStateBefore.trim()).isEqualTo("mWakefulness=Awake");
+
+                hdmiCecClient.sendUserControlPressAndRelease(source, operand, false);
+
+                TimeUnit.SECONDS.sleep(HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS);
+                String wakeStateAfter = device.executeShellCommand(
+                        "dumpsys power | grep mWakefulness=");
+                assertWithMessage("Device should go to standby on <User Control Pressed> %s",
+                        operand)
+                        .that(wakeStateAfter.trim()).isEqualTo("mWakefulness=Asleep");
+            } finally {
+                device.executeShellCommand("input keyevent KEYCODE_WAKEUP");
+            }
         }
     }
 }

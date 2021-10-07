@@ -744,14 +744,16 @@ public class VideoCodecTestBase extends AndroidTestCase {
 
 
     /**
-     * Helper function to return InputStream from either filename (if set)
-     * or resource id (if filename is not set).
+     * Helper function to return InputStream from either fully specified filename (if set)
+     * or resource name within test assets (if filename is not set).
      */
     private InputStream OpenFileOrResource(String filename, final String resource)
             throws Exception {
         if (filename != null) {
+            Preconditions.assertTestFileExists(filename);
             return new FileInputStream(filename);
         }
+        Preconditions.assertTestFileExists(mInpPrefix + resource);
         return new FileInputStream(mInpPrefix + resource);
     }
 

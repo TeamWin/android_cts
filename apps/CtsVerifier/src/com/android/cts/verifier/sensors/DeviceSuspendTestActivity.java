@@ -74,7 +74,7 @@ public class DeviceSuspendTestActivity
                                             new IntentFilter(ACTION_ALARM));
 
             Intent intent = new Intent(this, AlarmReceiver.class);
-            mPendingIntent = PendingIntent.getBroadcast(this, 0, intent, 0);
+            mPendingIntent = PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_MUTABLE_UNAUDITED);
 
             mAlarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
 

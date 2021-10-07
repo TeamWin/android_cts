@@ -27,8 +27,10 @@ import android.support.test.uiautomator.By
 import android.support.test.uiautomator.BySelector
 import android.support.test.uiautomator.UiDevice
 import android.support.test.uiautomator.UiObject2
-import androidx.test.InstrumentationRegistry
+import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.rule.ActivityTestRule
+import com.android.compatibility.common.util.DisableAnimationRule
+import com.android.compatibility.common.util.FreezeRotationRule
 import com.android.compatibility.common.util.SystemUtil.runShellCommand
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
 import com.android.compatibility.common.util.UiAutomatorUtils
@@ -56,6 +58,12 @@ abstract class BasePermissionTest {
     protected val packageManager: PackageManager = context.packageManager
     private val mPermissionControllerResources: Resources = context.createPackageContext(
             context.packageManager.permissionControllerPackageName, 0).resources
+
+    @get:Rule
+    val disableAnimationRule = DisableAnimationRule()
+
+    @get:Rule
+    val freezeRotationRule = FreezeRotationRule()
 
     @get:Rule
     val activityRule = ActivityTestRule(StartForFutureActivity::class.java, false, false)
@@ -100,9 +108,13 @@ abstract class BasePermissionTest {
     protected fun installPackage(
         apkPath: String,
         reinstall: Boolean = false,
+        grantRuntimePermissions: Boolean = false,
         expectSuccess: Boolean = true
     ) {
-        val output = runShellCommand("pm install${if (reinstall) " -r" else ""} $apkPath").trim()
+        val output = runShellCommand(
+            "pm install${if (reinstall) " -r" else ""}${if (grantRuntimePermissions) " -g" else ""
+                } $apkPath"
+        ).trim()
         if (expectSuccess) {
             assertEquals("Success", output)
         } else {
@@ -125,6 +137,11 @@ abstract class BasePermissionTest {
     protected fun waitFindObject(selector: BySelector, timeoutMillis: Long): UiObject2 {
         waitForIdle()
         return UiAutomatorUtils.waitFindObject(selector, timeoutMillis)
+    }
+
+    protected fun waitFindObjectOrNull(selector: BySelector, timeoutMillis: Long): UiObject2? {
+        waitForIdle()
+        return UiAutomatorUtils.waitFindObjectOrNull(selector, timeoutMillis)
     }
 
     protected fun click(selector: BySelector, timeoutMillis: Long = 20_000) {

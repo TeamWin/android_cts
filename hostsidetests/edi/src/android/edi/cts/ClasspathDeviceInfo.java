@@ -16,7 +16,6 @@
 package android.edi.cts;
 
 import static android.compat.testing.Classpaths.ClasspathType.BOOTCLASSPATH;
-import static android.compat.testing.Classpaths.ClasspathType.DEX2OATBOOTCLASSPATH;
 import static android.compat.testing.Classpaths.ClasspathType.SYSTEMSERVERCLASSPATH;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -27,9 +26,12 @@ import android.compat.testing.Classpaths.ClasspathType;
 
 import com.android.compatibility.common.util.DeviceInfo;
 import com.android.compatibility.common.util.HostInfoStore;
+import com.android.modules.utils.build.testing.DeviceSdkLevel;
 import com.android.tradefed.device.ITestDevice;
+import com.android.tradefed.log.LogUtil.CLog;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 
 import org.jf.dexlib2.iface.ClassDef;
 
@@ -39,25 +41,27 @@ import org.jf.dexlib2.iface.ClassDef;
  */
 public class ClasspathDeviceInfo extends DeviceInfo {
 
-    private static final String HELPER_APP_PACKAGE = "android.edi.cts.apps.classpath";
+    private static final String HELPER_APP_PACKAGE = "android.edi.cts.app";
     private static final String HELPER_APP_CLASS = HELPER_APP_PACKAGE + ".ClasspathDeviceTest";
 
     private ITestDevice mDevice;
+    private DeviceSdkLevel deviceSdkLevel;
 
     @Override
     protected void collectDeviceInfo(HostInfoStore store) throws Exception {
         mDevice = getDevice();
+        deviceSdkLevel = new DeviceSdkLevel(mDevice);
 
         store.startArray("jars");
-        collectBootclasspathJars(store);
+        collectClasspathsJars(store);
         collectSharedLibraryJars(store);
         store.endArray();
     }
 
-    private void collectBootclasspathJars(HostInfoStore store) throws Exception {
+    private void collectClasspathsJars(HostInfoStore store) throws Exception {
         collectClasspathJarInfo(store, BOOTCLASSPATH);
         collectClasspathJarInfo(store, SYSTEMSERVERCLASSPATH);
-        collectClasspathJarInfo(store, DEX2OATBOOTCLASSPATH);
+        // No need to collect DEX2OATBOOTCLASSPATH, as it is just a subset of BOOTCLASSPATH
     }
 
     private void collectClasspathJarInfo(HostInfoStore store, ClasspathType classpath)
@@ -74,6 +78,10 @@ public class ClasspathDeviceInfo extends DeviceInfo {
     }
 
     private void collectSharedLibraryJars(HostInfoStore store) throws Exception {
+        if (!deviceSdkLevel.isDeviceAtLeastS()) {
+            return;
+        }
+
         // Trigger helper app to collect and write info about shared libraries on the device.
         assertThat(runDeviceTests(HELPER_APP_PACKAGE, HELPER_APP_CLASS)).isTrue();
 
@@ -96,6 +104,10 @@ public class ClasspathDeviceInfo extends DeviceInfo {
             String libraryVersion = words[2];
             for (int i = 3; i < words.length; i++) {
                 String path = words[i];
+                if (!mDevice.doesFileExist(path)) {
+                    CLog.w("Shared library is not present on device " + path);
+                    continue;
+                }
 
                 store.startGroup();
                 store.startGroup("shared_library");

@@ -68,7 +68,7 @@ public class DataCallResponseTest {
                 .setMappedHplmnSliceServiceType(TEST_HPLMN_SLICE_SERVICE_TYPE)
                 .build();
     private static final String DNN = "DNN";
-    private static final String OS_APP_ID = "OS_APP_ID";
+    private static final byte[] OS_APP_ID = {1, 2, 3, 4};
     private static final List<TrafficDescriptor> TRAFFIC_DESCRIPTORS =
             Arrays.asList(new TrafficDescriptor(DNN, OS_APP_ID));
 

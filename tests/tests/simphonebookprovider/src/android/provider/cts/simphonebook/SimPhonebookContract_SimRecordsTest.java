@@ -48,6 +48,7 @@ import com.android.compatibility.common.util.SystemUtil;
 
 import com.google.common.collect.ImmutableList;
 
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -156,6 +157,10 @@ public class SimPhonebookContract_SimRecordsTest {
 
     @Test
     public void queryFdn_noFdnRecords_returnsEmptyCursor() {
+        try (Cursor cursor =
+                     query(ElementaryFiles.getItemUri(mDefaultSubscriptionId, EF_FDN), null)) {
+            Assume.assumeTrue("SIM does not support FDN", cursor.moveToFirst());
+        }
         try (Cursor cursor = query(SimRecords.getContentUri(mDefaultSubscriptionId, EF_FDN),
                 null)) {
             assertThat(cursor).hasCount(0);

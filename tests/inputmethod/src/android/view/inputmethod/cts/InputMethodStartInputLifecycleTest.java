@@ -16,6 +16,7 @@
 
 package android.view.inputmethod.cts;
 
+import static android.inputmethodservice.InputMethodService.FINISH_INPUT_NO_FALLBACK_CONNECTION;
 import static android.view.View.SCREEN_STATE_OFF;
 import static android.view.View.SCREEN_STATE_ON;
 import static android.view.View.VISIBLE;
@@ -26,6 +27,7 @@ import static com.android.cts.mockime.ImeEventStreamTestUtils.expectCommand;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.notExpectEvent;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
@@ -36,11 +38,13 @@ import android.inputmethodservice.InputMethodService;
 import android.os.IBinder;
 import android.os.Process;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeFull;
 import android.text.TextUtils;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.view.inputmethod.cts.util.DisableScreenDozeRule;
 import android.view.inputmethod.cts.util.EndToEndImeTestBase;
+import android.view.inputmethod.cts.util.RequireImeCompatFlagRule;
 import android.view.inputmethod.cts.util.TestActivity;
 import android.view.inputmethod.cts.util.TestUtils;
 import android.view.inputmethod.cts.util.UnlockScreenRule;
@@ -75,14 +79,18 @@ public class InputMethodStartInputLifecycleTest extends EndToEndImeTestBase {
     public final DisableScreenDozeRule mDisableScreenDozeRule = new DisableScreenDozeRule();
     @Rule
     public final UnlockScreenRule mUnlockScreenRule = new UnlockScreenRule();
+    @Rule
+    public final RequireImeCompatFlagRule mRequireImeCompatFlagRule = new RequireImeCompatFlagRule(
+            FINISH_INPUT_NO_FALLBACK_CONNECTION, true);
 
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
 
+    @AppModeFull(reason = "KeyguardManager is not accessible from instant apps")
     @Test
     public void testInputConnectionStateWhenScreenStateChanges() throws Exception {
         final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
         final Context context = instrumentation.getTargetContext();
-        final InputMethodManager imManager = context.getSystemService(InputMethodManager.class);
+        final InputMethodManager imm = context.getSystemService(InputMethodManager.class);
         assumeTrue(context.getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_INPUT_METHODS));
         final AtomicReference<EditText> focusedEditTextRef = new AtomicReference<>();
@@ -125,7 +133,17 @@ public class InputMethodStartInputLifecycleTest extends EndToEndImeTestBase {
             TestUtils.turnScreenOff();
             TestUtils.waitOnMainUntil(() -> screenStateCallbackRef.get() == SCREEN_STATE_OFF
                             && editText.getWindowVisibility() != VISIBLE, TIMEOUT);
-            expectEvent(stream, onFinishInputMatcher(), TIMEOUT);
+
+            if (MockImeSession.isFinishInputNoFallbackConnectionEnabled()) {
+                // Expected only onFinishInput and the EditText is inactive for input method.
+                expectEvent(stream, onFinishInputMatcher(), TIMEOUT);
+                notExpectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
+                assertFalse(TestUtils.getOnMainSync(() -> imm.isActive(editText)));
+                assertFalse(TestUtils.getOnMainSync(() -> imm.isAcceptingText()));
+            } else {
+                expectEvent(stream, onFinishInputMatcher(), TIMEOUT);
+            }
+
             final ImeCommand commit = imeSession.callCommitText("Hi!", 1);
             expectCommand(stream, commit, TIMEOUT);
             TestUtils.waitOnMainUntil(() -> !TextUtils.equals(editText.getText(), "Hi!"), TIMEOUT,
@@ -137,9 +155,14 @@ public class InputMethodStartInputLifecycleTest extends EndToEndImeTestBase {
             TestUtils.waitOnMainUntil(() -> screenStateCallbackRef.get() == SCREEN_STATE_ON
                             && editText.getWindowVisibility() == VISIBLE, TIMEOUT);
             CtsTouchUtils.emulateTapOnViewCenter(instrumentation, null, editText);
+
             expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
+            if (MockImeSession.isFinishInputNoFallbackConnectionEnabled()) {
+                // Expected only onStartInput and the EditText is active for input method.
+                notExpectEvent(stream, onFinishInputMatcher(), TIMEOUT);
+            }
             assertTrue(TestUtils.getOnMainSync(
-                    () -> imManager.isActive(editText) && imManager.isAcceptingText()));
+                    () -> imm.isActive(editText) && imm.isAcceptingText()));
             final ImeCommand commit1 = imeSession.callCommitText("Hello!", 1);
             expectCommand(stream, commit1, TIMEOUT);
             TestUtils.waitOnMainUntil(() -> TextUtils.equals(editText.getText(), "Hello!"), TIMEOUT,

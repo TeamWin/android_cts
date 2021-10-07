@@ -36,8 +36,10 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.testng.Assert.assertThrows;
 
+import android.Manifest;
 import android.annotation.NonNull;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.media.AudioManager;
 import android.media.MediaRoute2Info;
 import android.media.MediaRouter2;
@@ -986,6 +988,14 @@ public class MediaRouter2Test {
     }
 
     @Test
+    public void testGetController() {
+        String systemControllerId = mRouter2.getSystemController().getId();
+        RoutingController controllerById = mRouter2.getController(systemControllerId);
+        assertNotNull(controllerById);
+        assertEquals(systemControllerId, controllerById.getId());
+    }
+
+    @Test
     public void testVolumeHandlingWhenVolumeFixed() {
         if (!mAudioManager.isVolumeFixed()) {
             return;
@@ -1039,6 +1049,16 @@ public class MediaRouter2Test {
             mRouter2.unregisterRouteCallback(routeCallback);
             mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, originalVolume, 0);
         }
+    }
+
+    @Test
+    public void testGettingSystemMediaRouter2WithoutPermissionThrowsSecurityException() {
+        // Make sure that the permission is not given.
+        assertNotEquals(PackageManager.PERMISSION_GRANTED,
+                mContext.checkSelfPermission(Manifest.permission.MEDIA_CONTENT_CONTROL));
+
+        assertThrows(SecurityException.class,
+                () -> MediaRouter2.getInstance(mContext, mContext.getPackageName()));
     }
 
     @Test

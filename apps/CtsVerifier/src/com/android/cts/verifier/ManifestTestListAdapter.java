@@ -103,6 +103,13 @@ import java.util.stream.Collectors;
  *             <meta-data android:name="test_applicable_features" android:value="android.hardware.sensor.compass" />
  *         </pre>
  *     </li>
+ *     <li>OPTIONAL: Add a meta data attribute to indicate which intent actions are required to run
+ *         the test. If the device does not have activities that handle all those actions, then it
+ *         will not appear in the test list. Use a colon (:) to specify multiple required intent actions.
+ *         <pre>
+ *             <meta-data android:name="test_required_actions" android:value="android.app.action.ADD_DEVICE_ADMIN" />
+ *         </pre>
+ *     </li>
  *
  * </ol>
  */
@@ -121,6 +128,8 @@ public class ManifestTestListAdapter extends TestListAdapter {
 
     private static final String TEST_REQUIRED_CONFIG_META_DATA = "test_required_configs";
 
+    private static final String TEST_REQUIRED_ACTIONS_META_DATA = "test_required_actions";
+
     private static final String TEST_DISPLAY_MODE_META_DATA = "display_mode";
 
     private static final String CONFIG_NO_EMULATOR = "config_no_emulator";
@@ -130,8 +139,6 @@ public class ManifestTestListAdapter extends TestListAdapter {
     private static final String CONFIG_HAS_RECENTS = "config_has_recents";
 
     private static final String CONFIG_HDMI_SOURCE = "config_hdmi_source";
-
-    private static final String CONFIG_TV_PANEL = "config_tv_panel";
 
     private static final String CONFIG_QUICK_SETTINGS_SUPPORTED = "config_quick_settings_supported";
 
@@ -254,11 +261,14 @@ public class ManifestTestListAdapter extends TestListAdapter {
             Intent intent = getActivityIntent(info.activityInfo);
             String[] requiredFeatures = getRequiredFeatures(info.activityInfo.metaData);
             String[] requiredConfigs = getRequiredConfigs(info.activityInfo.metaData);
+            String[] requiredActions = getRequiredActions(info.activityInfo.metaData);
             String[] excludedFeatures = getExcludedFeatures(info.activityInfo.metaData);
             String[] applicableFeatures = getApplicableFeatures(info.activityInfo.metaData);
             String displayMode = getDisplayMode(info.activityInfo.metaData);
+
             TestListItem item = TestListItem.newTest(title, testName, intent, requiredFeatures,
-                     requiredConfigs, excludedFeatures, applicableFeatures, displayMode);
+                     requiredConfigs, requiredActions, excludedFeatures, applicableFeatures,
+                     displayMode);
 
             String testCategory = getTestCategory(mContext, info.activityInfo.metaData);
             addTestToCategory(testsByCategory, testCategory, item);
@@ -288,6 +298,19 @@ public class ManifestTestListAdapter extends TestListAdapter {
             return null;
         } else {
             String value = metaData.getString(TEST_REQUIRED_FEATURES_META_DATA);
+            if (value == null) {
+                return null;
+            } else {
+                return value.split(":");
+            }
+        }
+    }
+
+    static String[] getRequiredActions(Bundle metaData) {
+        if (metaData == null) {
+            return null;
+        } else {
+            String value = metaData.getString(TEST_REQUIRED_ACTIONS_META_DATA);
             if (value == null) {
                 return null;
             } else {
@@ -383,6 +406,7 @@ public class ManifestTestListAdapter extends TestListAdapter {
                     return true;
                 }
             }
+            Log.v(LOG_TAG, "Missing features " + Arrays.toString(features));
         }
         return false;
     }
@@ -392,6 +416,21 @@ public class ManifestTestListAdapter extends TestListAdapter {
             PackageManager packageManager = mContext.getPackageManager();
             for (String feature : features) {
                 if (!packageManager.hasSystemFeature(feature)) {
+                    Log.v(LOG_TAG, "Missing feature " + feature);
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    private boolean hasAllActions(String[] actions) {
+        if (actions != null) {
+            PackageManager packageManager = mContext.getPackageManager();
+            for (String action : actions) {
+                Intent intent = new Intent(action);
+                if (packageManager.queryIntentActivities(intent, /* flags= */ 0).isEmpty()) {
+                    Log.v(LOG_TAG, "Missing action " + action);
                     return false;
                 }
             }
@@ -430,13 +469,16 @@ public class ManifestTestListAdapter extends TestListAdapter {
                         }
                         break;
                     case CONFIG_HDMI_SOURCE:
-                        if(isTvPanel()) {
-                            return false;
-                        }
-                        break;
-                    case CONFIG_TV_PANEL:
-                        if(!isTvPanel()) {
-                            return false;
+                        final int DEVICE_TYPE_HDMI_SOURCE = 4;
+                        try {
+                            if (!getHdmiDeviceType().contains(DEVICE_TYPE_HDMI_SOURCE)) {
+                                return false;
+                            }
+                        } catch (Exception exception) {
+                            Log.e(
+                                    LOG_TAG,
+                                    "Exception while looking up HDMI device type.",
+                                    exception);
                         }
                         break;
                     case CONFIG_QUICK_SETTINGS_SUPPORTED:
@@ -448,21 +490,6 @@ public class ManifestTestListAdapter extends TestListAdapter {
                         break;
                 }
             }
-        }
-        return true;
-    }
-
-    private boolean isTvPanel() {
-        final int DEVICE_TYPE_HDMI_SOURCE = 4;
-        try {
-            if (getHdmiDeviceType().contains(DEVICE_TYPE_HDMI_SOURCE)) {
-                return false;
-            }
-        } catch (Exception exception) {
-            Log.e(
-                    LOG_TAG,
-                    "Exception while looking up HDMI device type.",
-                    exception);
         }
         return true;
     }
@@ -519,13 +546,18 @@ public class ManifestTestListAdapter extends TestListAdapter {
         List<TestListItem> filteredTests = new ArrayList<>();
         for (TestListItem test : tests) {
             if (!hasAnyFeature(test.excludedFeatures) && hasAllFeatures(test.requiredFeatures)
-                && matchAllConfigs(test.requiredConfigs)
-                && matchDisplayMode(test.displayMode, mode)) {
+                    && hasAllActions(test.requiredActions)
+                    && matchAllConfigs(test.requiredConfigs)
+                    && matchDisplayMode(test.displayMode, mode)) {
                 if (test.applicableFeatures == null || hasAnyFeature(test.applicableFeatures)) {
                     // Add suffix in test name if the test is in the folded mode.
                     test.testName = setTestNameSuffix(mode, test.testName);
                     filteredTests.add(test);
+                } else {
+                    Log.d(LOG_TAG, "Skipping " + test.testName + " due to metadata filtering");
                 }
+            } else {
+                Log.d(LOG_TAG, "Skipping " + test.testName + " due to metadata filtering");
             }
         }
         return filteredTests;

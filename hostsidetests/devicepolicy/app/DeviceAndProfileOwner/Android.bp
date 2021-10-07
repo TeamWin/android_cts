@@ -32,6 +32,10 @@ android_test_helper_app {
         "cts-security-test-support-library",
         "androidx.legacy_legacy-support-v4",
         "cts-devicepolicy-suspensionchecker",
+        "devicepolicy-deviceside-common",
+        "ShortcutManagerTestUtils",
+        "MetricsRecorder",
+        "statsdprotolite",
     ],
     resource_dirs: ["res"],
     asset_dirs: ["assets"],
@@ -39,6 +43,7 @@ android_test_helper_app {
     test_suites: [
         "cts",
         "general-tests",
+        "mts",
     ],
     manifest: "api23/AndroidManifest.xml",
 }
@@ -47,6 +52,8 @@ android_test_helper_app {
     name: "CtsDeviceAndProfileOwnerApp25",
     defaults: ["cts_defaults"],
     platform_apis: true,
+    min_sdk_version: "30",
+    target_sdk_version: "25",
     srcs: ["src/**/*.java"],
     libs: [
         "android.test.runner",
@@ -59,6 +66,10 @@ android_test_helper_app {
         "cts-security-test-support-library",
         "androidx.legacy_legacy-support-v4",
         "cts-devicepolicy-suspensionchecker",
+        "devicepolicy-deviceside-common",
+        "ShortcutManagerTestUtils",
+        "MetricsRecorder",
+        "statsdprotolite",
     ],
     resource_dirs: ["res"],
     asset_dirs: ["assets"],
@@ -67,12 +78,13 @@ android_test_helper_app {
         "arcts",
         "cts",
         "general-tests",
+        "mts",
     ],
     manifest: "api25/AndroidManifest.xml",
 }
 
 android_test_helper_app {
-    name: "CtsDeviceAndProfileOwnerApp",
+    name: "CtsDeviceAndProfileOwnerApp30",
     defaults: ["cts_defaults"],
     platform_apis: true,
     srcs: ["src/**/*.java"],
@@ -87,6 +99,10 @@ android_test_helper_app {
         "cts-security-test-support-library",
         "androidx.legacy_legacy-support-v4",
         "cts-devicepolicy-suspensionchecker",
+        "devicepolicy-deviceside-common",
+        "ShortcutManagerTestUtils",
+        "MetricsRecorder",
+        "statsdprotolite",
     ],
     resource_dirs: ["res"],
     asset_dirs: ["assets"],
@@ -95,6 +111,44 @@ android_test_helper_app {
         "arcts",
         "cts",
         "general-tests",
+        "mts",
+    ],
+    manifest: "api30/AndroidManifest.xml",
+}
+
+android_test_helper_app {
+    name: "CtsDeviceAndProfileOwnerApp",
+    defaults: [
+        "cts_defaults",
+        "mts-target-sdk-version-current",
+    ],
+    platform_apis: true,
+    min_sdk_version: "30",
+    srcs: ["src/**/*.java"],
+    libs: [
+        "android.test.runner",
+        "android.test.base",
+    ],
+    static_libs: [
+        "compatibility-device-util-axt",
+        "ctstestrunner-axt",
+        "ub-uiautomator",
+        "cts-security-test-support-library",
+        "androidx.legacy_legacy-support-v4",
+        "cts-devicepolicy-suspensionchecker",
+        "devicepolicy-deviceside-common",
+        "ShortcutManagerTestUtils",
+        "MetricsRecorder",
+        "statsdprotolite",
+    ],
+    resource_dirs: ["res"],
+    asset_dirs: ["assets"],
+    // tag this module as a cts test artifact
+    test_suites: [
+        "arcts",
+        "cts",
+        "general-tests",
+        "mts",
     ],
     manifest: "latest/AndroidManifest.xml",
 }

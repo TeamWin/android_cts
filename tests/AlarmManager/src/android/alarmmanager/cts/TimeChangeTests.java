@@ -16,9 +16,13 @@
 
 package android.alarmmanager.cts;
 
+import static android.app.AlarmManager.ELAPSED_REALTIME_WAKEUP;
+import static android.app.AlarmManager.RTC_WAKEUP;
+
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import android.alarmmanager.util.AlarmManagerDeviceConfigHelper;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -26,6 +30,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
@@ -46,16 +51,18 @@ import java.util.concurrent.TimeUnit;
 /**
  * Tests that system time changes are handled appropriately for alarms
  */
+@AppModeFull
 @LargeTest
 @RunWith(AndroidJUnit4.class)
 public class TimeChangeTests {
     private static final String TAG = TimeChangeTests.class.getSimpleName();
     private static final String ACTION_ALARM = "android.alarmmanager.cts.ACTION_ALARM";
-    private static final long DEFAULT_WAIT_MILLIS = 1_000;
+    private static final long DEFAULT_WAIT_MILLIS = 5_000;
     private static final long MILLIS_IN_MINUTE = 60_000;
 
     private final Context mContext = InstrumentationRegistry.getTargetContext();
     private final AlarmManager mAlarmManager = mContext.getSystemService(AlarmManager.class);
+    private AlarmManagerDeviceConfigHelper mConfigHelper = new AlarmManagerDeviceConfigHelper();
     private PendingIntent mAlarmPi;
     private long mTestStartRtc;
     private long mTestStartElapsed;
@@ -91,14 +98,14 @@ public class TimeChangeTests {
     }
 
     @Before
-    public void setUp() {
+    public void setUp() throws Exception {
         final Intent alarmIntent = new Intent(ACTION_ALARM)
                 .setPackage(mContext.getPackageName())
                 .addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
-        mAlarmPi = PendingIntent.getBroadcast(mContext, 0, alarmIntent, 0);
+        mAlarmPi = PendingIntent.getBroadcast(mContext, 0, alarmIntent, PendingIntent.FLAG_MUTABLE);
         final IntentFilter alarmFilter = new IntentFilter(ACTION_ALARM);
         mContext.registerReceiver(mAlarmReceiver, alarmFilter);
-        SystemUtil.runShellCommand("settings put global alarm_manager_constants min_futurity=500");
+        mConfigHelper.with("min_futurity", 0L).commitAndAwaitPropagation();
         BatteryUtils.runDumpsysBatteryUnplug();
         mTestStartRtc = System.currentTimeMillis();
         mTestStartElapsed = SystemClock.elapsedRealtime();
@@ -111,8 +118,7 @@ public class TimeChangeTests {
     public void elapsedAlarmsUnaffected() throws Exception {
         final long delayElapsed = 5_000;
         final long expectedTriggerElapsed = mTestStartElapsed + delayElapsed;
-        mAlarmManager.setExactAndAllowWhileIdle(AlarmManager.ELAPSED_REALTIME_WAKEUP,
-                expectedTriggerElapsed, mAlarmPi);
+        mAlarmManager.setExact(ELAPSED_REALTIME_WAKEUP, expectedTriggerElapsed, mAlarmPi);
         final long newRtc = mTestStartRtc - 32 * MILLIS_IN_MINUTE; // arbitrary, shouldn't matter
         setTime(newRtc);
         Thread.sleep(delayElapsed);
@@ -125,8 +131,7 @@ public class TimeChangeTests {
         final long newRtc = mTestStartRtc + 14 * MILLIS_IN_MINUTE; // arbitrary, but in the future
         final long delayRtc = 4_231;
         final long expectedTriggerRtc = newRtc + delayRtc;
-        mAlarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, expectedTriggerRtc,
-                mAlarmPi);
+        mAlarmManager.setExact(RTC_WAKEUP, expectedTriggerRtc, mAlarmPi);
         Thread.sleep(delayRtc);
         assertFalse("Alarm fired before time was changed",
                 mAlarmLatch.await(DEFAULT_WAIT_MILLIS, TimeUnit.MILLISECONDS));
@@ -138,7 +143,7 @@ public class TimeChangeTests {
 
     @After
     public void tearDown() {
-        SystemUtil.runShellCommand("settings delete global alarm_manager_constants");
+        mConfigHelper.restoreAll();
         BatteryUtils.runDumpsysBatteryReset();
         if (mTimeChanged) {
             // Make an attempt at resetting the clock to normal
