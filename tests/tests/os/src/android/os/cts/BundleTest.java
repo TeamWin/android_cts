@@ -46,6 +46,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.File;
+import java.io.FileDescriptor;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -854,6 +855,36 @@ public class BundleTest {
         mBundle.putParcelableArrayList("baz", arrayList);
         assertFalse(mBundle.hasFileDescriptors());
         mBundle.clear();
+    }
+
+    @Test
+    public void testHasFileDescriptors_withOriginalParcelContainingFdButNotItems() throws IOException {
+        mBundle.putParcelable("fd", ParcelFileDescriptor.dup(FileDescriptor.in));
+        mBundle.putParcelable("parcelable", new CustomParcelable(13, "Tiramisu"));
+        assertTrue(mBundle.hasFileDescriptors());
+
+        roundtrip(/* parcel */ false);
+        mBundle.isEmpty(); // Triggers partial deserialization (leaving lazy values)
+        assertTrue(mBundle.hasFileDescriptors());
+        mBundle.remove("fd");
+
+        // Will check the item's specific range in the original parcel
+        assertFalse(mBundle.hasFileDescriptors());
+    }
+
+    @Test
+    public void testHasFileDescriptors_withOriginalParcelAndItemsContainingFd() throws IOException {
+        mBundle.putParcelable("fd", ParcelFileDescriptor.dup(FileDescriptor.in));
+        mBundle.putParcelable("parcelable", new CustomParcelable(13, "Tiramisu"));
+        assertTrue(mBundle.hasFileDescriptors());
+
+        roundtrip(/* parcel */ false);
+        mBundle.isEmpty(); // Triggers partial deserialization (leaving lazy values)
+        assertTrue(mBundle.hasFileDescriptors());
+        mBundle.remove("parcelable");
+
+        // Will check the item's specific range in the original parcel
+        assertTrue(mBundle.hasFileDescriptors());
     }
 
     @Test
