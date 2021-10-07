@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.appenumeration.cts.query;
+package android.appenumeration.cts;
 
 import static android.appenumeration.cts.Constants.ACTION_CHECK_SIGNATURES;
 import static android.appenumeration.cts.Constants.ACTION_GET_INSTALLED_PACKAGES;
@@ -46,6 +46,7 @@ import static android.appenumeration.cts.Constants.EXTRA_DATA;
 import static android.appenumeration.cts.Constants.EXTRA_ERROR;
 import static android.appenumeration.cts.Constants.EXTRA_FLAGS;
 import static android.appenumeration.cts.Constants.EXTRA_ID;
+import static android.appenumeration.cts.Constants.EXTRA_PENDING_INTENT;
 import static android.appenumeration.cts.Constants.EXTRA_REMOTE_CALLBACK;
 import static android.appenumeration.cts.Constants.EXTRA_REMOTE_READY_CALLBACK;
 import static android.content.Intent.EXTRA_COMPONENT_NAME;
@@ -57,9 +58,6 @@ import static android.os.Process.INVALID_UID;
 import android.accounts.Account;
 import android.app.Activity;
 import android.app.PendingIntent;
-import android.appenumeration.cts.Constants;
-import android.appenumeration.cts.MissingBroadcastException;
-import android.appenumeration.cts.MissingCallbackException;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProviderInfo;
 import android.content.ActivityNotFoundException;
@@ -98,6 +96,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ *  A test activity running in the query and target applications.
+ */
 public class TestActivity extends Activity {
 
     private final static long TIMEOUT_MS = 3000;
@@ -200,7 +201,7 @@ public class TestActivity extends Activity {
             } else if (ACTION_GET_INSTALLED_PACKAGES.equals(action)) {
                 sendGetInstalledPackages(remoteCallback, queryIntent.getIntExtra(EXTRA_FLAGS, 0));
             } else if (ACTION_START_SENDER_FOR_RESULT.equals(action)) {
-                PendingIntent pendingIntent = intent.getParcelableExtra("pendingIntent");
+                PendingIntent pendingIntent = intent.getParcelableExtra(EXTRA_PENDING_INTENT);
                 int requestCode = RESULT_FIRST_USER + callbacks.size();
                 callbacks.put(requestCode, remoteCallback);
                 try {
@@ -324,6 +325,11 @@ public class TestActivity extends Activity {
                 final List<SessionInfo> infos = getPackageManager().getPackageInstaller()
                         .getAllSessions();
                 sendSessionInfosListResult(remoteCallback, infos);
+            } else if (Constants.ACTION_PENDING_INTENT_GET_ACTIVITY.equals(action)) {
+                sendPendingIntentGetActivity(remoteCallback);
+            } else if (Constants.ACTION_PENDING_INTENT_GET_CREATOR_PACKAGE.equals(action)) {
+                sendPendingIntentGetCreatorPackage(remoteCallback,
+                        intent.getParcelableExtra(EXTRA_PENDING_INTENT));
             } else {
                 sendError(remoteCallback, new Exception("unknown action " + action));
             }
@@ -823,6 +829,23 @@ public class TestActivity extends Activity {
             launcherApps.unregisterPackageInstallerSessionCallback(sessionCallback);
             finish();
         }, token, timeoutMs);
+    }
+
+    private void sendPendingIntentGetActivity(RemoteCallback remoteCallback) {
+        final PendingIntent pendingIntent = PendingIntent.getActivity(this, 0 /* requestCode */,
+                new Intent(this, TestActivity.class), PendingIntent.FLAG_IMMUTABLE);
+        final Bundle result = new Bundle();
+        result.putParcelable(EXTRA_PENDING_INTENT, pendingIntent);
+        remoteCallback.sendResult(result);
+        finish();
+    }
+
+    private void sendPendingIntentGetCreatorPackage(RemoteCallback remoteCallback,
+            PendingIntent pendingIntent) {
+        final Bundle result = new Bundle();
+        result.putString(Intent.EXTRA_PACKAGE_NAME, pendingIntent.getCreatorPackage());
+        remoteCallback.sendResult(result);
+        finish();
     }
 
     @Override

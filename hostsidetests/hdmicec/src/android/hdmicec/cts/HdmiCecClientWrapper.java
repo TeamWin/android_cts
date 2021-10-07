@@ -733,18 +733,6 @@ public final class HdmiCecClientWrapper extends ExternalResource {
         }
      }
 
-    /** Discards all messages in the cec-client console till now */
-    public void discardAllMessages() throws CecClientWrapperException {
-        checkCecClient();
-        try {
-            while (mInputConsole.ready()) {
-                String line = mInputConsole.readLine();
-            }
-        } catch (IOException ioe) {
-            throw new CecClientWrapperException(ErrorCodes.ReadConsole, ioe);
-        }
-    }
-
     /** Returns the device type that the cec-client has started as. */
     public LogicalAddress getSelfDevice() {
         return selfDevice;

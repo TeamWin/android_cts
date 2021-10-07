@@ -48,7 +48,6 @@ public final class MockTestActivityUtil {
 
     private static final String ACTION_TRIGGER = "broadcast_action_trigger";
 
-
     /**
      * A key to be used as the {@code key} of {@link Map} passed as {@code extras} parameter of
      * {@link #launchSync(boolean, long, Map)}.
@@ -117,10 +116,11 @@ public final class MockTestActivityUtil {
                     String.format("pm set-app-links-user-selection --user cur --package %s true %s",
                             TEST_ACTIVITY.getPackageName(), TEST_ACTIVITY_URI.getHost()));
             final Uri uri = formatStringIntentParam(TEST_ACTIVITY_URI, extras);
-            commandBuilder.append(String.format("am start -a %s -c %s %s",
+            commandBuilder.append(String.format("am start -a %s -c %s --activity-clear-task %s",
                     Intent.ACTION_VIEW, Intent.CATEGORY_BROWSABLE, uri.toString()));
         } else {
-            commandBuilder.append("am start -n ").append(TEST_ACTIVITY.flattenToShortString());
+            commandBuilder.append("am start --activity-clear-task -n ")
+                    .append(TEST_ACTIVITY.flattenToShortString());
             if (extras != null) {
                 extras.forEach((key, value) -> commandBuilder.append(" --es ")
                         .append(key).append(" ").append(value));

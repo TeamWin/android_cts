@@ -20,10 +20,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.after;
+import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
@@ -49,6 +50,8 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Executors;
 
 @RunWith(AndroidJUnit4.class)
@@ -92,9 +95,16 @@ public class VibratorTest {
             VibrationEffect.Composition.PRIMITIVE_THUD,
     };
 
-    private Vibrator mVibrator;
+    /**
+     * This listener is used for test helper methods like asserting it starts/stops vibrating.
+     * It's not strongly required that the interactions with this mock are validated by all tests.
+     */
     @Mock
     private OnVibratorStateChangedListener mStateListener;
+
+    private Vibrator mVibrator;
+    /** Keep track of any listener created to be added to the vibrator, for cleanup purposes. */
+    private List<OnVibratorStateChangedListener> mStateListenersCreated = new ArrayList<>();
 
     @Before
     public void setUp() {
@@ -104,12 +114,27 @@ public class VibratorTest {
         mVibrator.addVibratorStateListener(mStateListener);
         // Adding a listener to the Vibrator should trigger the callback once with the current
         // vibrator state, so reset mocks to clear it for tests.
-        reset(mStateListener);
+        assertVibratorState(false);
+        clearInvocations(mStateListener);
     }
 
     @After
     public void cleanUp() {
+        // Clearing invocations so we can use this listener to wait for the vibrator to
+        // asynchronously cancel the ongoing vibration, if any was left pending by a test.
+        clearInvocations(mStateListener);
         mVibrator.cancel();
+
+        // Wait for cancel to take effect, if device is still vibrating.
+        if (mVibrator.isVibrating()) {
+            assertStopsVibrating();
+        }
+
+        // Remove all listeners added by the tests.
+        mVibrator.removeVibratorStateListener(mStateListener);
+        for (OnVibratorStateChangedListener listener : mStateListenersCreated) {
+            mVibrator.removeVibratorStateListener(listener);
+        }
     }
 
     @Test
@@ -339,8 +364,8 @@ public class VibratorTest {
             return;
         }
 
-        OnVibratorStateChangedListener listener1 = mock(OnVibratorStateChangedListener.class);
-        OnVibratorStateChangedListener listener2 = mock(OnVibratorStateChangedListener.class);
+        OnVibratorStateChangedListener listener1 = newMockStateListener();
+        OnVibratorStateChangedListener listener2 = newMockStateListener();
         // Add listener1 on executor
         mVibrator.addVibratorStateListener(Executors.newSingleThreadExecutor(), listener1);
         // Add listener2 on main thread.
@@ -348,33 +373,53 @@ public class VibratorTest {
         verify(listener1, timeout(CALLBACK_TIMEOUT_MILLIS).times(1)).onVibratorStateChanged(false);
         verify(listener2, timeout(CALLBACK_TIMEOUT_MILLIS).times(1)).onVibratorStateChanged(false);
 
-        mVibrator.vibrate(1000);
+        mVibrator.vibrate(10);
+        assertStartsVibrating();
 
         verify(listener1, timeout(CALLBACK_TIMEOUT_MILLIS).times(1)).onVibratorStateChanged(true);
         verify(listener2, timeout(CALLBACK_TIMEOUT_MILLIS).times(1)).onVibratorStateChanged(true);
+        verify(listener1, timeout(CALLBACK_TIMEOUT_MILLIS).times(1)).onVibratorStateChanged(false);
+        verify(listener2, timeout(CALLBACK_TIMEOUT_MILLIS).times(1)).onVibratorStateChanged(false);
+    }
 
-        mVibrator.cancel();
-        assertStopsVibrating();
+    @LargeTest
+    @Test
+    public void testVibratorStateCallbackRemoval() {
+        if (!mVibrator.hasVibrator()) {
+            return;
+        }
+
+        OnVibratorStateChangedListener listener1 = newMockStateListener();
+        OnVibratorStateChangedListener listener2 = newMockStateListener();
+        // Add listener1 on executor
+        mVibrator.addVibratorStateListener(Executors.newSingleThreadExecutor(), listener1);
+        // Add listener2 on main thread.
+        mVibrator.addVibratorStateListener(listener2);
+        verify(listener1, timeout(CALLBACK_TIMEOUT_MILLIS).times(1)).onVibratorStateChanged(false);
+        verify(listener2, timeout(CALLBACK_TIMEOUT_MILLIS).times(1)).onVibratorStateChanged(false);
 
         // Remove listener1 & listener2
         mVibrator.removeVibratorStateListener(listener1);
         mVibrator.removeVibratorStateListener(listener2);
-        reset(listener1);
-        reset(listener2);
 
         mVibrator.vibrate(1000);
         assertStartsVibrating();
 
-        verify(listener1, timeout(CALLBACK_TIMEOUT_MILLIS).times(0))
-                .onVibratorStateChanged(anyBoolean());
-        verify(listener2, timeout(CALLBACK_TIMEOUT_MILLIS).times(0))
-                .onVibratorStateChanged(anyBoolean());
+        // Wait the timeout to assert there was no more interactions with the removed listeners.
+        verify(listener1, after(CALLBACK_TIMEOUT_MILLIS).never()).onVibratorStateChanged(true);
+        // Previous call was blocking, so no need to wait for a timeout here as well.
+        verify(listener2, never()).onVibratorStateChanged(true);
+    }
+
+    private OnVibratorStateChangedListener newMockStateListener() {
+        OnVibratorStateChangedListener listener = mock(OnVibratorStateChangedListener.class);
+        mStateListenersCreated.add(listener);
+        return listener;
     }
 
     private void assertStartsThenStopsVibrating(long duration) {
         if (mVibrator.hasVibrator()) {
-            verify(mStateListener, timeout(CALLBACK_TIMEOUT_MILLIS).atLeastOnce())
-                    .onVibratorStateChanged(true);
+            assertVibratorState(true);
             SystemClock.sleep(duration);
             assertVibratorState(false);
         }
