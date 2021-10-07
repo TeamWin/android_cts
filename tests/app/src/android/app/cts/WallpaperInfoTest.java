@@ -74,16 +74,16 @@ public class WallpaperInfoTest {
             wallpaperInfo.getSettingsSliceUri().toString());
         assertTrue(wallpaperInfo.getShowMetadataInPreview());
         assertTrue(wallpaperInfo.supportsMultipleDisplays());
-        assertTrue(wallpaperInfo.shouldUseDefaultDisplayStateChangeTransition());
+        assertTrue(wallpaperInfo.shouldUseDefaultUnfoldTransition());
         assertNotNull(wallpaperInfo.loadIcon(pm));
         assertNotNull(wallpaperInfo.loadThumbnail(pm));
     }
 
     @Test
-    public void test_defaultDisplayStateChangeTransitionDisabled() {
+    public void test_defaultUnfoldTransitionDisabled() {
         WallpaperInfo wallpaperInfo = getInfoForService(LiveWallpaperNoUnfoldTransition.class);
 
-        assertFalse(wallpaperInfo.shouldUseDefaultDisplayStateChangeTransition());
+        assertFalse(wallpaperInfo.shouldUseDefaultUnfoldTransition());
     }
 
     private <T extends WallpaperService> WallpaperInfo getInfoForService(Class<T> service) {
