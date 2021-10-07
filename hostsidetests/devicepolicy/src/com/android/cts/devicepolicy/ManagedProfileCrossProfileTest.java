@@ -42,6 +42,7 @@ import com.android.tradefed.util.StreamUtil;
 
 import com.google.common.collect.Sets;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -464,6 +465,7 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
     }
 
     @Test
+    @Ignore
     public void testSetCrossProfilePackages_resetsAppOps() throws Exception {
         if (!mHasFeature) {
             return;
@@ -574,6 +576,7 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
     }
 
     @Test
+    @Ignore
     public void testSetCrossProfilePackages_killsApps() throws Exception {
         if (!mHasFeature) {
             return;
