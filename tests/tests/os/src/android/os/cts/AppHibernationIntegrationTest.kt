@@ -31,6 +31,7 @@ import android.provider.DeviceConfig.NAMESPACE_APP_HIBERNATION
 import android.provider.Settings
 import android.support.test.uiautomator.By
 import android.support.test.uiautomator.BySelector
+import android.support.test.uiautomator.UiDevice
 import android.support.test.uiautomator.UiObject2
 import android.support.test.uiautomator.UiScrollable
 import android.support.test.uiautomator.UiSelector
@@ -185,7 +186,9 @@ class AppHibernationIntegrationTest {
 
                 // Settings can have multiple scrollable containers so all of them should be
                 // searched.
-                var toggleFound = false
+                var toggleFound = UiDevice.getInstance(instrumentation)
+                    .findObject(UiSelector().text(title))
+                    .waitForExists(WAIT_TIME_MS)
                 var i = 0
                 var scrollableObject = UiScrollable(UiSelector().scrollable(true).instance(i))
                 while (!toggleFound && scrollableObject.waitForExists(WAIT_TIME_MS)) {
