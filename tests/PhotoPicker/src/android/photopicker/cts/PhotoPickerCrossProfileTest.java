@@ -41,6 +41,7 @@ import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
 
 import org.junit.After;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -69,6 +70,7 @@ public class PhotoPickerCrossProfileTest extends PhotoPickerBaseTest {
 
     @Test
     @RequireRunOnWorkProfile
+    @Ignore("Enable after b/201323670 is fixed")
     public void testWorkApp_canAccessPersonalProfileContents() throws Exception {
         final int imageCount = 2;
         createImages(imageCount, sDeviceState.primaryUser().id(), mUriList);

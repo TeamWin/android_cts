@@ -42,7 +42,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.AlertDialog;
-import android.app.Dialog;
 import android.app.Instrumentation;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -505,7 +504,7 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
             });
 
             try (AutoCloseableWrapper dialogCloseWrapper = AutoCloseableWrapper.create(
-                    dialogRef.get(), Dialog::dismiss)) {
+                    dialogRef.get(), dialog -> TestUtils.runOnMainSync(dialog::dismiss))) {
                 TestUtils.waitOnMainUntil(() -> dialogRef.get().isShowing()
                         && editTextRef.get().hasFocus(), TIMEOUT);
                 expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
