@@ -262,6 +262,9 @@ public abstract class ActivityManagerTestBase {
      */
     protected boolean mWaitForRotationOnTearDown;
 
+    /** Indicate to wait for all non-home activities to be destroyed when test finished. */
+    protected boolean mShouldWaitForAllNonHomeActivitiesToDestroyed = false;
+
     /**
      * @return the am command to start the given activity with the following extra key/value pairs.
      * {@param extras} a list of {@link CliIntentExtra} representing a generic intent extra
@@ -606,11 +609,14 @@ public abstract class ActivityManagerTestBase {
         // activities but home are cleaned up from the root task at the end of each test. Am force
         // stop shell commands might be asynchronous and could interrupt the task cleanup
         // process if executed first.
+        launchHomeActivityNoWait();
         removeRootTasksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
         stopTestPackage(TEST_PACKAGE);
         stopTestPackage(SECOND_TEST_PACKAGE);
         stopTestPackage(THIRD_TEST_PACKAGE);
-        launchHomeActivityNoWait();
+        if (mShouldWaitForAllNonHomeActivitiesToDestroyed) {
+            mWmState.waitForAllNonHomeActivitiesToDestroyed();
+        }
 
         if (mWaitForRotationOnTearDown) {
             mWmState.waitForDisplayUnfrozen();

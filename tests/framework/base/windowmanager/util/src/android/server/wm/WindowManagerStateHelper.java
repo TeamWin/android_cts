@@ -17,6 +17,7 @@
 package android.server.wm;
 
 import static android.app.ActivityTaskManager.INVALID_STACK_ID;
+import static android.app.WindowConfiguration.ACTIVITY_TYPE_HOME;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_UNDEFINED;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
 import static android.server.wm.ComponentNameUtils.getActivityName;
@@ -112,6 +113,19 @@ public class WindowManagerStateHelper extends WindowManagerState {
         })) {
             fail("All started activities have been removed");
         }
+    }
+
+    public void waitForAllNonHomeActivitiesToDestroyed() {
+        Condition.waitFor("all non-home activities to be destroyed", () -> {
+            computeState();
+            for (Task rootTask : getRootTasks()) {
+                final Activity activity = rootTask.getActivity(
+                        (a) -> !a.state.equals(STATE_DESTROYED)
+                                && a.getActivityType() != ACTIVITY_TYPE_HOME);
+                if (activity != null) return false;
+            }
+            return true;
+        });
     }
 
     /**
