@@ -53,6 +53,7 @@ import android.os.Build;
 import android.os.Looper;
 import android.os.PersistableBundle;
 import android.os.Process;
+import android.os.SystemProperties;
 import android.os.UserManager;
 import android.telecom.PhoneAccount;
 import android.telecom.PhoneAccountHandle;
@@ -98,6 +99,7 @@ import android.util.Pair;
 
 import androidx.test.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.TestThread;
 import com.android.internal.telephony.uicc.IccUtils;
@@ -1429,6 +1431,29 @@ public class TelephonyManagerTest {
         }
 
         assertNull(mTelephonyManager.createForSubscriptionId(inactiveValidSub).getServiceState());
+    }
+
+    // This test is to ensure the RAT IWLAN is not reported on WWAN transport if the device is
+    // operated in AP-assisted mode.
+    @Test
+    @CddTest(requirement = "7.4.1/C-4-1")
+    public void testIWlanServiceState() {
+        if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
+            Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
+            return;
+        }
+        String mode = SystemProperties.get("ro.telephony.iwlan_operation_mode");
+        if (!mode.equals("legacy")) {
+            ServiceState ss = mTelephonyManager.getServiceState();
+            if (ss != null) {
+                for (NetworkRegistrationInfo nri : ss.getNetworkRegistrationInfoList()) {
+                    if (nri.getTransportType() == AccessNetworkConstants.TRANSPORT_TYPE_WWAN) {
+                        assertNotEquals(TelephonyManager.NETWORK_TYPE_IWLAN,
+                                nri.getAccessNetworkTechnology());
+                    }
+                }
+            }
+        }
     }
 
     private MockPhoneCapabilityListener mMockPhoneCapabilityListener;
