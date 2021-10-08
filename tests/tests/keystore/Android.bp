@@ -76,7 +76,7 @@ android_test {
         "platformprotosnano",
         "testng",
     ],
-    srcs: ["src/android/keystore/cts/**/*.java"],
+    srcs: ["src/android/keystore/cts/*.java"],
     // Can't use public/test API only because some tests use hidden API
     // (e.g. device-provided Bouncy Castle).
     //
