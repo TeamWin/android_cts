@@ -34,7 +34,7 @@ import org.junit.runner.RunWith;
 import java.util.concurrent.TimeUnit;
 
 /**
- * HDMI CEC tests verifying power status related messages of the device (CEC 2.0 CTS Section 7.6)
+ * HDMI CEC tests verifying the active tracking mechanism of the CEC network for Playback devices
  */
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class HdmiCecActiveTrackingTest extends BaseHdmiCecCtsTest {
