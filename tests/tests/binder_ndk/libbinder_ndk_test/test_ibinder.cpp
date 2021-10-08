@@ -463,6 +463,8 @@ TEST_F(NdkBinderTest_AIBinder, NullArguments) {
 
   // Does not crash
   AIBinder_DeathRecipient_delete(nullptr);
+  AIBinder_DeathRecipient_setOnUnlinked(recipient, nullptr);
+  AIBinder_DeathRecipient_setOnUnlinked(nullptr, nullptr);
 
   AIBinder_DeathRecipient_delete(recipient);
   AIBinder_decStrong(binder);
