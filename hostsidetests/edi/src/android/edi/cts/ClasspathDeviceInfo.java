@@ -21,12 +21,15 @@ import static android.compat.testing.Classpaths.ClasspathType.SYSTEMSERVERCLASSP
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static org.junit.Assume.assumeTrue;
+
 import android.compat.testing.Classpaths;
 import android.compat.testing.Classpaths.ClasspathType;
 
 import com.android.compatibility.common.util.DeviceInfo;
 import com.android.compatibility.common.util.HostInfoStore;
 import com.android.modules.utils.build.testing.DeviceSdkLevel;
+import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
 
@@ -34,6 +37,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
 import org.jf.dexlib2.iface.ClassDef;
+import org.junit.Assume;
+import org.junit.Before;
 
 /**
  * Collects information about Java classes present in *CLASSPATH variables and Java shared libraries
@@ -44,14 +49,16 @@ public class ClasspathDeviceInfo extends DeviceInfo {
     private static final String HELPER_APP_PACKAGE = "android.edi.cts.app";
     private static final String HELPER_APP_CLASS = HELPER_APP_PACKAGE + ".ClasspathDeviceTest";
 
-    private ITestDevice mDevice;
-    private DeviceSdkLevel deviceSdkLevel;
+    private final ITestDevice mDevice = getDevice();
+    private final DeviceSdkLevel mDeviceSdkLevel = new DeviceSdkLevel(mDevice);
+
+    @Before
+    public void before() throws DeviceNotAvailableException {
+        assumeTrue(mDeviceSdkLevel.isDeviceAtLeastR());
+    }
 
     @Override
     protected void collectDeviceInfo(HostInfoStore store) throws Exception {
-        mDevice = getDevice();
-        deviceSdkLevel = new DeviceSdkLevel(mDevice);
-
         store.startArray("jars");
         collectClasspathsJars(store);
         collectSharedLibraryJars(store);
@@ -78,7 +85,7 @@ public class ClasspathDeviceInfo extends DeviceInfo {
     }
 
     private void collectSharedLibraryJars(HostInfoStore store) throws Exception {
-        if (!deviceSdkLevel.isDeviceAtLeastS()) {
+        if (!mDeviceSdkLevel.isDeviceAtLeastS()) {
             return;
         }
 
