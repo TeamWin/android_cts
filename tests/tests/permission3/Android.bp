@@ -52,6 +52,7 @@ android_test {
         ":CtsAccessMicrophoneApp",
         ":CtsAccessMicrophoneApp2",
         ":CtsAccessMicrophoneAppLocationProvider",
+        ":CtsUsePermissionApp31",
     ],
     test_suites: [
         "cts",
