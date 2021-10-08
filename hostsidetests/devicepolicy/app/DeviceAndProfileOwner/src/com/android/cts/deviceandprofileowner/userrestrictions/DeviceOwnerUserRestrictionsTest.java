@@ -63,6 +63,7 @@ public class DeviceOwnerUserRestrictionsTest extends BaseUserRestrictionsTest {
             UserManager.DISALLOW_UNIFIED_PASSWORD,
             UserManager.DISALLOW_CAMERA_TOGGLE,
             UserManager.DISALLOW_MICROPHONE_TOGGLE,
+            UserManager.DISALLOW_CHANGE_WIFI_STATE,
     };
 
     public static final String[] DISALLOWED = new String[] {
