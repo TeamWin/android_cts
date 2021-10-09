@@ -22,6 +22,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Resources
+import android.hardware.SensorPrivacyManager
+import android.location.LocationManager
 import android.provider.Settings
 import android.support.test.uiautomator.By
 import android.support.test.uiautomator.BySelector
@@ -59,7 +61,8 @@ abstract class BasePermissionTest {
     protected val packageManager: PackageManager = context.packageManager
     private val mPermissionControllerResources: Resources = context.createPackageContext(
             context.packageManager.permissionControllerPackageName, 0).resources
-
+    protected val spm = context.getSystemService(SensorPrivacyManager::class.java)!!
+    protected val lm = context.getSystemService(LocationManager::class.java)!!
     protected val isTv = packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
     protected val isWatch = packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)
     protected val isAutomotive = packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)

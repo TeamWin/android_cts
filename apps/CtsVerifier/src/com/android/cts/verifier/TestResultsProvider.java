@@ -104,7 +104,16 @@ public class TestResultsProvider extends ContentProvider {
     public static Uri getTestNameUri(Context context) {
         String name = context.getClass().getName();
         name = setTestNameSuffix(sCurrentDisplayMode, name);
-        final String testName = name;
+        return getTestNameUri(context, name);
+    }
+
+    /**
+     * Gets the URI from the context and test name.
+     * @param context current context
+     * @param testName name of the test which needs to get the URI
+     * @return the URI for the test result
+     */
+    public static Uri getTestNameUri(Context context, String testName) {
         return Uri.withAppendedPath(getResultContentUri(context), testName);
     }
 

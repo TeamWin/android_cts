@@ -61,6 +61,7 @@ import android.platform.test.annotations.AsbSecurityTest;
 import android.provider.DeviceConfig;
 import android.provider.Settings;
 import android.support.test.uiautomator.UiDevice;
+import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -1609,6 +1610,7 @@ public class ActivityManagerFgsBgStartTest {
                 PACKAGE_NAME_APP1, 0);
         WatchUidRunner uid1Watcher = new WatchUidRunner(mInstrumentation, app1Info.uid,
                 WAITFOR_MSEC);
+        final int defaultBehavior = getPushMessagingOverQuotaBehavior();
         try {
             // Enable the FGS background startForeground() restriction.
             enableFgsRestriction(true, true, null);
@@ -1670,8 +1672,7 @@ public class ActivityManagerFgsBgStartTest {
         } finally {
             uid1Watcher.finish();
             // Change back to default behavior.
-            setPushMessagingOverQuotaBehavior(
-                    TEMPORARY_ALLOW_LIST_TYPE_FOREGROUND_SERVICE_NOT_ALLOWED);
+            setPushMessagingOverQuotaBehavior(defaultBehavior);
             // allow temp allowlist to expire.
             SystemClock.sleep(TEMP_ALLOWLIST_DURATION_MS);
         }
@@ -1705,7 +1706,10 @@ public class ActivityManagerFgsBgStartTest {
                 WAITFOR_MSEC);
         WatchUidRunner uid2Watcher = new WatchUidRunner(mInstrumentation, app2Info.uid,
                 WAITFOR_MSEC);
+        final int defaultBehavior = getPushMessagingOverQuotaBehavior();
         try {
+            setPushMessagingOverQuotaBehavior(
+                    TEMPORARY_ALLOW_LIST_TYPE_FOREGROUND_SERVICE_NOT_ALLOWED);
             // Enable the FGS background startForeground() restriction.
             enableFgsRestriction(true, true, null);
             // Now it can start FGS.
@@ -1745,6 +1749,7 @@ public class ActivityManagerFgsBgStartTest {
         } finally {
             uid1Watcher.finish();
             uid2Watcher.finish();
+            setPushMessagingOverQuotaBehavior(defaultBehavior);
             // Sleep to let the temp allowlist expire so it won't affect next test case.
             SystemClock.sleep(TEMP_ALLOWLIST_DURATION_MS);
         }
@@ -2009,5 +2014,23 @@ public class ActivityManagerFgsBgStartTest {
                             Integer.toString(type), false);
                 }
         );
+        // Sleep 2 seconds to allow the device config change to be applied.
+        SystemClock.sleep(2000);
+    }
+
+    private int getPushMessagingOverQuotaBehavior() throws Exception {
+        final String defaultBehaviorStr = CtsAppTestUtils.executeShellCmd(mInstrumentation,
+                "device_config get activity_manager "
+                        + KEY_PUSH_MESSAGING_OVER_QUOTA_BEHAVIOR).trim();
+        int defaultBehavior = TEMPORARY_ALLOW_LIST_TYPE_FOREGROUND_SERVICE_NOT_ALLOWED;
+        if (!defaultBehaviorStr.equals("null")) {
+            try {
+                defaultBehavior = Integer.parseInt(defaultBehaviorStr);
+            } catch (NumberFormatException e) {
+                Log.e("ActivityManagerFgsBgStartTest",
+                        "getPushMessagingOverQuotaBehavior:", e);
+            }
+        }
+        return defaultBehavior;
     }
 }
