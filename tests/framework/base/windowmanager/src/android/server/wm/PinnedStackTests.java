@@ -1296,6 +1296,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         launchHomeActivity();
         waitForEnterPip(PIP_ACTIVITY);
         assertPinnedStackExists();
+        waitAndAssertActivityState(PIP_ACTIVITY, STATE_PAUSED, "activity must be paused");
     }
 
     @Test
