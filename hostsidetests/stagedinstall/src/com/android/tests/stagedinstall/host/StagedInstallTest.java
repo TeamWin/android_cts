@@ -911,6 +911,16 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
         runPhase("testRebootlessUpdate_targetsOlderSdk_fails");
     }
 
+    @Test
+    @LargeTest
+    public void testGetInactiveApexFactoryPackagesAfterApexInstall_containsNoDuplicates()
+            throws Exception {
+        assumeTrue("Device does not support updating APEX", mHostUtils.isApexUpdateSupported());
+
+        installV2Apex();
+        runPhase("testGetInactiveApexFactoryPackagesAfterApexInstall_containsNoDuplicates");
+    }
+
     private List<ApexInfo> readApexInfoList() throws Exception {
         File file = getDevice().pullFile("/apex/apex-info-list.xml");
         try (FileInputStream stream = new FileInputStream(file)) {
