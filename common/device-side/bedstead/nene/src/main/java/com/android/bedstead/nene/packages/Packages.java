@@ -55,10 +55,9 @@ import com.android.bedstead.nene.utils.ShellCommandUtils;
 import com.android.bedstead.nene.utils.Versions;
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
 
-import com.google.common.io.Files;
-
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -67,6 +66,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -240,6 +240,7 @@ public final class Packages {
                     .addOperand("-t") // Allow test-only install
                     .addOperand(apkFile.getAbsolutePath())
                     .validate(ShellCommandUtils::startsWithSuccess)
+                    .asRoot()
                     .execute();
 
             return waitForPackageAddedBroadcast(broadcastReceiver);
@@ -353,15 +354,29 @@ public final class Packages {
 
     private Package installPreS(UserReference user, byte[] apkFile) {
         // Prior to S we cannot pass bytes to stdin so we write it to a temp file first
-        File outputDir = TestApis.context().instrumentedContext().getCacheDir();
+        File outputDir = TestApis.context().instrumentedContext().getFilesDir();
         File outputFile = null;
         try {
-            outputFile = File.createTempFile("tmp", ".apk", outputDir);
-            Files.write(apkFile, outputFile);
-            outputFile.setReadable(true, false);
-            return install(user, outputFile);
+            // TODO(b/202705721): Replace this with fixed name
+            outputFile = new File(outputDir, UUID.randomUUID() + ".apk");
+            outputFile.getParentFile().mkdirs();
+            try (FileOutputStream output = new FileOutputStream(outputFile)) {
+                output.write(apkFile);
+            }
+            // Shell can't read the file in files dir, so we can move it to /data/local/tmp
+            File localTmpFile = new File("/data/local/tmp", outputFile.getName());
+            ShellCommand.builder("mv")
+                    .addOperand(outputFile.getAbsolutePath())
+                    .addOperand(localTmpFile.getAbsolutePath())
+                    .asRoot()
+                    .validate(String::isEmpty)
+                    .allowEmptyOutput(true)
+                    .execute();
+            return install(user, localTmpFile);
         } catch (IOException e) {
             throw new NeneException("Error when writing bytes to temp file", e);
+        } catch (AdbException e) {
+            throw new NeneException("Error when moving file to /data/local/tmp", e);
         } finally {
             if (outputFile != null) {
                 outputFile.delete();

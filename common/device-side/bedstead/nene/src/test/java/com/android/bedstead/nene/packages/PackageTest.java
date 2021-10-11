@@ -16,14 +16,18 @@
 
 package com.android.bedstead.nene.packages;
 
+import static android.os.Environment.DIRECTORY_DOCUMENTS;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.testng.Assert.assertThrows;
 
 import android.content.Context;
+import android.os.Environment;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.AfterClass;
 import com.android.bedstead.harrier.annotations.BeforeClass;
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnSystemUser;
@@ -42,6 +46,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.File;
+import java.util.UUID;
 
 @RunWith(BedsteadJUnit4.class)
 public class PackageTest {
@@ -75,13 +80,19 @@ public class PackageTest {
                     StringQuery.string().isEqualTo(DECLARED_RUNTIME_PERMISSION),
                     StringQuery.string().isEqualTo(INSTALL_PERMISSION)
             ).get();
-    private static final File sTestAppApkFile =
-            new File(sContext.getExternalFilesDir(/* type= */ null), "test.apk");
+    private static final File sOutputDir =
+            Environment.getExternalStoragePublicDirectory(DIRECTORY_DOCUMENTS);
+    // TODO(b/202705721): Fix issue with file name conflicts and go with a fixed name
+    private static final File sTestAppApkFile = new File(sOutputDir, UUID.randomUUID() + ".apk");
 
     @BeforeClass
     public static void setupClass() throws Exception {
-        sTestAppApkFile.delete();
         sTestApp.writeApkFile(sTestAppApkFile);
+    }
+
+    @AfterClass
+    public static void teardownClass() throws Exception {
+        sTestAppApkFile.delete();
     }
 
     @Test
@@ -114,7 +125,7 @@ public class PackageTest {
 
     @Test
     @EnsureHasSecondaryUser
-    @RequireRunOnSystemUser // TODO: this actually should be anything but secondary user
+    @RequireRunOnSystemUser // TODO(b/201319776): this should be anything but secondary user
     public void uninstallForAllUsers_isUninstalledForAllUsers() throws Exception {
         Package pkg = TestApis.packages().install(sTestAppApkFile);
         pkg.installExisting(sDeviceState.secondaryUser());
@@ -126,7 +137,7 @@ public class PackageTest {
 
     @Test
     @EnsureHasSecondaryUser
-    @RequireRunOnSystemUser // TODO: this actually should be anything but secondary user
+    @RequireRunOnSystemUser // TODO(b/201319776): this should be anything but secondary user
     public void uninstall_packageIsInstalledForDifferentUser_isUninstalledForUser()
             throws Exception {
         Package pkg = TestApis.packages().install(sTestAppApkFile);
@@ -155,7 +166,7 @@ public class PackageTest {
 
     @Test
     @EnsureHasSecondaryUser
-    @RequireRunOnSystemUser // TODO: this actually should be anything but secondary user
+    @RequireRunOnSystemUser // TODO(b/201319776): this should be anything but secondary user
     public void uninstall_packageNotInstalledForUser_doesNotThrowException() {
         TestApis.packages().install(sTestAppApkFile);
 
@@ -199,7 +210,7 @@ public class PackageTest {
 
     @Test
     @EnsureHasSecondaryUser
-    @RequireRunOnSystemUser // TODO: this actually should be anything but secondary user
+    @RequireRunOnSystemUser // TODO(b/201319776): this should be anything but secondary user
     public void grantPermission_permissionIsUserSpecific_permissionIsGrantedOnlyForThatUser() {
         try (TestAppInstanceReference instance1 = sTestApp.install();
              TestAppInstanceReference instance2 = sTestApp.install(sDeviceState.secondaryUser())) {
@@ -340,8 +351,8 @@ public class PackageTest {
 
     @Test
     @EnsureHasSecondaryUser
-    @RequireRunOnSystemUser // TODO: this actually should be anything but secondary user
-    public void installedOnUsers_doesNotIncludeUserWithoutPackageInstalled() {
+    @RequireRunOnSystemUser // TODO(b/201319776): this should be anything but secondary user
+    public void installedOnUsers_doesNotIncludeUserWithoutPackageInstalled() throws Exception {
         Package pkg = TestApis.packages().install(sTestAppApkFile);
         pkg.uninstall(sDeviceState.secondaryUser());
 

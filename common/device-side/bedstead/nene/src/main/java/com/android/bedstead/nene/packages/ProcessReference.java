@@ -66,6 +66,7 @@ public final class ProcessReference {
         try {
             ShellCommand.builder("kill")
                     .addOperand(mProcessId)
+                    .allowEmptyOutput(true)
                     .validate(String::isEmpty)
                     .asRoot()
                     .execute();

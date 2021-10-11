@@ -151,6 +151,7 @@ public class TestApp {
 
     /** Write the APK file to the given {@link File}. */
     public void writeApkFile(File outputFile) throws IOException {
+        outputFile.getParentFile().mkdirs();
         try (FileOutputStream output = new FileOutputStream(outputFile)) {
             output.write(apkBytes());
         }

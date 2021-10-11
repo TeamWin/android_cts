@@ -1390,8 +1390,17 @@ public final class DeviceState implements TestRule {
 
             if (!Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.S)) {
                 // Prior to S we can't set device owner if there are other users on the device
+
+                if (instrumentedUser.id() != 0) {
+                    // If we're not on the system user we can't reach the required state
+                    throw new AssumptionViolatedException(
+                            "Can't set Device Owner when running on non-system-user"
+                                    + " on this version of Android");
+                }
+
                 for (UserReference u : TestApis.users().all()) {
                     if (u.equals(instrumentedUser)) {
+                        // Can't remove the user we're running on
                         continue;
                     }
                     try {

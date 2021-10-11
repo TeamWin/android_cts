@@ -46,7 +46,7 @@ public final class Versions {
             throw new UnsupportedOperationException(
                     "Thie feature is only available on "
                             + versionToLetter(min)
-                            + "+ (currently " + Build.VERSION.CODENAME + ")");
+                            + "+ (currently " + Build.VERSION.RELEASE_OR_CODENAME + ")");
         }
     }
 

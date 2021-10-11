@@ -16,7 +16,6 @@
 
 package com.android.bedstead.nene.permissions;
 
-import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 
 import android.app.UiAutomation;
@@ -89,7 +88,7 @@ public final class Permissions {
         sIgnorePermissions.set(true);
         if (SUPPORTS_ADOPT_SHELL_PERMISSIONS) {
             ShellCommandUtils.uiAutomation()
-                    .adoptShellPermissionIdentity(INTERACT_ACROSS_USERS_FULL);
+                    .adoptShellPermissionIdentity();
             mShellPermissions = sShellPackage.requestedPermissions();
         } else {
             mShellPermissions = new HashSet<>();

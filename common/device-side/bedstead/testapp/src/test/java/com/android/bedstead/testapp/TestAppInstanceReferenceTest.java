@@ -17,6 +17,7 @@
 package com.android.bedstead.testapp;
 
 import static android.app.admin.DevicePolicyManager.OPERATION_SAFETY_REASON_DRIVING_DISTRACTION;
+import static android.os.Build.VERSION_CODES.S;
 
 import static com.android.eventlib.truth.EventLogsSubject.assertThat;
 
@@ -30,6 +31,7 @@ import android.content.IntentFilter;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.RequireSdkVersion;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.utils.Poll;
@@ -317,6 +319,7 @@ public class TestAppInstanceReferenceTest {
     }
 
     @Test
+    @RequireSdkVersion(min = S)
     public void devicePolicyManager_returnsUsableInstance() {
         TestApp testApp = mTestAppProvider.any();
         try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {

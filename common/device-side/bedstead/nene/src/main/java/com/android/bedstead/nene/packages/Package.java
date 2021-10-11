@@ -521,8 +521,8 @@ public final class Package {
             }
         }
 
-        if (!Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.Q)) {
-            return packageInfoForUserPreQ(user, flags);
+        if (!Versions.meetsMinimumSdkVersionRequirement(S)) {
+            return packageInfoForUserPreS(user, flags);
         }
 
         if (Permissions.sIgnorePermissions.get()) {
@@ -545,10 +545,14 @@ public final class Package {
         }
     }
 
-    private PackageInfo packageInfoForUserPreQ(UserReference user, int flags) {
+    private PackageInfo packageInfoForUserPreS(UserReference user, int flags) {
         AdbPackage pkg = parseDumpsys().mPackages.get(mPackageName);
 
         if (pkg == null) {
+            return null;
+        }
+
+        if (!pkg.installedOnUsers().contains(user)) {
             return null;
         }
 
