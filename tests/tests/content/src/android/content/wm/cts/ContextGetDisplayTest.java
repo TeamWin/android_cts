@@ -107,7 +107,7 @@ public class ContextGetDisplayTest extends ContextTestBase {
     public void testGetDisplayFromWindowContext() {
         final Display display = getDefaultDisplay();
         final Context windowContext = createWindowContext();
-        assertEquals(display, windowContext.getDisplay());
+        assertEquals(display.getDisplayId(), windowContext.getDisplay().getDisplayId());
     }
 
     @Test
@@ -115,7 +115,7 @@ public class ContextGetDisplayTest extends ContextTestBase {
         final Display display = getDefaultDisplay();
         final Context windowContext = mApplicationContext.createWindowContext(display,
                 WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY, null /* options */);
-        assertEquals(display, windowContext.getDisplay());
+        assertEquals(display.getDisplayId(), windowContext.getDisplay().getDisplayId());
     }
 
     @Test
@@ -123,7 +123,7 @@ public class ContextGetDisplayTest extends ContextTestBase {
         final Display display = getSecondaryDisplay();
         final Context windowContext = mApplicationContext.createWindowContext(display,
                 WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY, null /* options */);
-        assertEquals(display, windowContext.getDisplay());
+        assertEquals(display.getDisplayId(), windowContext.getDisplay().getDisplayId());
     }
 
     @Test
