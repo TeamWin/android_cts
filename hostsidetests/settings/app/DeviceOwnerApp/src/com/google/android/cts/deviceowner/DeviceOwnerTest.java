@@ -51,8 +51,6 @@ public final class DeviceOwnerTest extends InstrumentationTestCase {
 
     private static final String TAG = DeviceOwnerTest.class.getSimpleName();
 
-    private static final String WORK_POLICY_INFO_TEXT = "Your work policy info";
-
     public static final int TIMEOUT_MS = 2_000;
 
     protected Context mContext;
@@ -80,6 +78,7 @@ public final class DeviceOwnerTest extends InstrumentationTestCase {
     protected DevicePolicyManager mDevicePolicyManager;
     protected PackageManager mPackageManager;
     protected boolean mIsDeviceOwner;
+    private String mWorkPolicyInfoText;
 
     @Override
     protected void setUp() throws Exception {
@@ -89,6 +88,12 @@ public final class DeviceOwnerTest extends InstrumentationTestCase {
         mPackageManager = mContext.getPackageManager();
         mDevicePolicyManager = TestAppSystemServiceFactory.getDevicePolicyManager(mContext,
                 BasicAdminReceiver.class, /* forDeviceOwner= */ true);
+
+        boolean isAutomotive = mPackageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
+
+        mWorkPolicyInfoText = isAutomotive
+                ? "Privacy Settings for Device Owner CTS host side app vehicle policy"
+                : "Your work policy info";
 
         mIsDeviceOwner = mDevicePolicyManager.isDeviceOwnerApp(PACKAGE_NAME);
         Log.d(TAG, "setup(): dpm=" + mDevicePolicyManager + ", isDO: " + mIsDeviceOwner);
@@ -130,9 +135,9 @@ public final class DeviceOwnerTest extends InstrumentationTestCase {
         // Wait for loading permission usage data.
         mDevice.waitForIdle(TIMEOUT_MS);
 
-        Log.d(TAG, "Waiting " + TIMEOUT_MS + "ms for the '" + WORK_POLICY_INFO_TEXT + "' message");
+        Log.d(TAG, "Waiting " + TIMEOUT_MS + "ms for the '" + mWorkPolicyInfoText + "' message");
 
-        boolean found = null != mDevice.wait(Until.findObject(By.text(WORK_POLICY_INFO_TEXT)),
+        boolean found = null != mDevice.wait(Until.findObject(By.text(mWorkPolicyInfoText)),
                 TIMEOUT_MS);
 
         Log.d(TAG, "Message found: " + found);
@@ -166,12 +171,12 @@ public final class DeviceOwnerTest extends InstrumentationTestCase {
     }
 
     private void launchPrivacySettingsAndAssertWorkPolicyInfoIsShowing() throws Exception {
-        assertWithMessage("Work policy info (%s) on settings entry", WORK_POLICY_INFO_TEXT)
+        assertWithMessage("Work policy info (%s) on settings entry", mWorkPolicyInfoText)
                 .that(launchPrivacyAndCheckWorkPolicyInfo()).isTrue();
     }
 
     private void launchPrivacySettingsAndAssertWorkPolicyInfoIsNotShowing() throws Exception {
-        assertWithMessage("Work policy info (%s) on settings entry", WORK_POLICY_INFO_TEXT)
+        assertWithMessage("Work policy info (%s) on settings entry", mWorkPolicyInfoText)
                 .that(launchPrivacyAndCheckWorkPolicyInfo()).isFalse();
     }
 
