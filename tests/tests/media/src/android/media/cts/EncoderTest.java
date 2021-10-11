@@ -34,13 +34,16 @@ import com.android.compatibility.common.util.MediaUtils;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -70,10 +73,24 @@ public class EncoderTest extends AndroidTestCase {
      * and remove files left from a previous run.
      */
     private static boolean sSaveResults = false;
+    static final Map<String, String> mDefaultEncoders = new HashMap<>();
 
     @Override
     public void setContext(Context context) {
         super.setContext(context);
+    }
+
+    static boolean isDefaultCodec(String codecName, String mime)
+            throws IOException {
+        if (mDefaultEncoders.containsKey(mime)) {
+            return mDefaultEncoders.get(mime).equalsIgnoreCase(codecName);
+        }
+
+        MediaCodec codec = MediaCodec.createEncoderByType(mime);
+        boolean isDefault = codec.getName().equalsIgnoreCase(codecName);
+        mDefaultEncoders.put(mime, codec.getName());
+        codec.release();
+        return isDefault;
     }
 
     public void testAMRNBEncoders() {
@@ -377,6 +394,18 @@ public class EncoderTest extends AndroidTestCase {
         MediaCodec codec;
         try {
             codec = MediaCodec.createByCodecName(componentName);
+            String mime = format.getString(MediaFormat.KEY_MIME);
+            MediaCodecInfo codecInfo = codec.getCodecInfo();
+            MediaCodecInfo.CodecCapabilities caps = codecInfo.getCapabilitiesForType(mime);
+            if (!caps.isFormatSupported(format)) {
+                codec.release();
+                codec = null;
+                assertFalse(
+                    "Default codec doesn't support " + format.toString(),
+                    isDefaultCodec(componentName, mime));
+                MediaUtils.skipTest(componentName + " doesn't support " + format.toString());
+                return;
+            }
         } catch (Exception e) {
             fail("codec '" + componentName + "' failed construction.");
             return; /* does not get here, but avoids warning */
