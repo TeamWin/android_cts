@@ -18,35 +18,50 @@ package android.keystore.cts.performance;
 
 import android.security.keystore.KeyProperties;
 
-import org.junit.Test;
-
 public class RsaKeyGenPerformanceTest extends PerformanceTestBase {
 
-    private final int[] SUPPORTED_RSA_KEY_SIZES = {2048, 3072, 4096};
-
-    public void testRsaKeyGen() throws Exception {
-        for (int keySize : SUPPORTED_RSA_KEY_SIZES) {
-            measure(
-                    new KeystoreKeyPairGenMeasurable(
-                            new AndroidKeystoreRsaKeyenerator("RSA", keySize),
-                            keySize),
-                    new KeystoreKeyPairGenMeasurable(
-                            new DefaultKeystoreKeyPairGenerator("RSA", keySize),
-                            keySize));
-        }
+    public void testRsa2048KeyGenWithAndroidProvider() throws Exception {
+        measureKeyGenWithAndroidProvider(2048);
     }
 
-    private class AndroidKeystoreRsaKeyenerator extends AndroidKeystoreKeyGenerator {
+    public void testRsa3072KeyGenWithAndroidProvider() throws Exception {
+        measureKeyGenWithAndroidProvider(3072);
+    }
 
-        AndroidKeystoreRsaKeyenerator(String algorithm, int keySize) throws Exception {
-            super(algorithm);
-            getKeyPairGenerator()
-                    .initialize(
-                            getKeyGenParameterSpecBuilder(
-                                            KeyProperties.PURPOSE_SIGN
-                                                    | KeyProperties.PURPOSE_VERIFY)
-                                    .setKeySize(keySize)
-                                    .build());
-        }
+    public void testRsa4096KeyGenWithAndroidProvider() throws Exception {
+        measureKeyGenWithAndroidProvider(4096);
+    }
+
+    public void testRsa2048KeyGenWithDefaultProvider() throws Exception {
+        measureKeyGenWithDefaultProvider(2048);
+    }
+
+    public void testRsa3072KeyGenWithDefaultProvider() throws Exception {
+        measureKeyGenWithDefaultProvider(3072);
+    }
+
+    public void testRsa4096KeyGenWithDefaultProvider() throws Exception {
+        measureKeyGenWithDefaultProvider(4096);
+    }
+
+    private void measureKeyGen(KeystoreKeyGenerator generator, int keySize) throws Exception {
+        measure(new KeystoreKeyPairGenMeasurable(generator, keySize));
+    }
+
+    private void measureKeyGenWithAndroidProvider(int keySize) throws Exception {
+        AndroidKeystoreKeyGenerator generator = new AndroidKeystoreKeyGenerator("RSA") {
+        };
+        generator.getKeyPairGenerator()
+                .initialize(
+                        generator.getKeyGenParameterSpecBuilder(
+                                KeyProperties.PURPOSE_SIGN
+                                        | KeyProperties.PURPOSE_VERIFY)
+                                .setKeySize(keySize)
+                                .build());
+        measureKeyGen(generator, keySize);
+    }
+
+    private void measureKeyGenWithDefaultProvider(int keySize) throws Exception {
+        measureKeyGen(new DefaultKeystoreKeyPairGenerator("RSA", keySize), keySize);
     }
 }
