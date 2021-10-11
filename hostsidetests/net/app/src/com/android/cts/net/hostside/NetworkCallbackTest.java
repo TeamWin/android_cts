@@ -16,6 +16,7 @@
 
 package com.android.cts.net.hostside;
 
+import android.content.pm.PackageManager;
 import android.net.Network;
 
 import java.util.Objects;
@@ -26,6 +27,7 @@ public class NetworkCallbackTest extends AbstractRestrictBackgroundNetworkTestCa
 
     private boolean mIsDataSaverSupported;
     private Network mNetwork;
+    private PackageManager mPackageManager;
     private final TestNetworkCallback mTestNetworkCallback = new TestNetworkCallback();
 
     enum CallbackState {
@@ -149,6 +151,7 @@ public class NetworkCallbackTest extends AbstractRestrictBackgroundNetworkTestCa
         removeRestrictBackgroundWhitelist(mUid);
         removeRestrictBackgroundBlacklist(mUid);
         assertRestrictBackgroundChangedReceived(0);
+        mPackageManager = mContext.getPackageManager();
     }
 
     @Override
@@ -165,6 +168,10 @@ public class NetworkCallbackTest extends AbstractRestrictBackgroundNetworkTestCa
     }
 
     public void testOnBlockedStatusChanged_data_saver() throws Exception {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_WIFI)) {
+            // This test requires a WiFi data connection.
+            return;
+        }
         if (!mIsDataSaverSupported) return;
 
         // Prepare metered wifi
@@ -203,6 +210,10 @@ public class NetworkCallbackTest extends AbstractRestrictBackgroundNetworkTestCa
 
 
     public void testOnBlockedStatusChanged_power_saver() throws Exception {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_WIFI)) {
+            // This test requires a WiFi data connection.
+            return;
+        }
         // Prepare metered wifi
         if (!setMeteredNetwork()) return;
 
