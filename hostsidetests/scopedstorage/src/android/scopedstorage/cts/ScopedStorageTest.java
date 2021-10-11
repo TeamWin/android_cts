@@ -52,6 +52,8 @@ import static android.scopedstorage.cts.lib.TestUtils.pollForExternalStorageStat
 import static android.scopedstorage.cts.lib.TestUtils.pollForManageExternalStorageAllowed;
 import static android.scopedstorage.cts.lib.TestUtils.pollForPermission;
 import static android.scopedstorage.cts.lib.TestUtils.setupDefaultDirectories;
+import static android.scopedstorage.cts.lib.TestUtils.trashFileAndAssert;
+import static android.scopedstorage.cts.lib.TestUtils.untrashFileAndAssert;
 import static android.scopedstorage.cts.lib.TestUtils.verifyInsertFromExternalMediaDirViaData_allowed;
 import static android.scopedstorage.cts.lib.TestUtils.verifyInsertFromExternalMediaDirViaRelativePath_allowed;
 import static android.scopedstorage.cts.lib.TestUtils.verifyInsertFromExternalPrivateDirViaData_denied;
@@ -66,6 +68,7 @@ import static android.system.OsConstants.W_OK;
 import static androidx.test.InstrumentationRegistry.getContext;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
@@ -76,8 +79,10 @@ import static org.junit.Assume.assumeTrue;
 
 import android.Manifest;
 import android.app.WallpaperManager;
+import android.content.ContentValues;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
 import android.os.storage.StorageManager;
@@ -122,6 +127,7 @@ public class ScopedStorageTest {
 
     static final String AUDIO_FILE_NAME = "ScopedStorageTest_file_" + NONCE + ".mp3";
     static final String IMAGE_FILE_NAME = "ScopedStorageTest_file_" + NONCE + ".jpg";
+    static final String VIDEO_FILE_NAME = "ScopedStorageTest_file_" + NONCE + ".mp4";
     static final String NONMEDIA_FILE_NAME = "ScopedStorageTest_file_" + NONCE + ".pdf";
 
     // The following apps are installed before the tests are run via a target_preparer.
@@ -530,6 +536,62 @@ public class ScopedStorageTest {
             nomediaDir.delete();
             // Scan the directory to remove stale db rows.
             MediaStore.scanFile(getContentResolver(), nomediaDir);
+        }
+    }
+
+    @Test
+    public void testFileManagerCanTrashOtherAndroidMediaFiles() throws Exception {
+        pollForManageExternalStorageAllowed();
+
+        final File otherVideoFile = new File(getAndroidMediaDir(),
+                String.format("%s/%s", APP_B_NO_PERMS.getPackageName(), VIDEO_FILE_NAME));
+        try {
+            assertThat(createFileAs(APP_B_NO_PERMS, otherVideoFile.getAbsolutePath())).isTrue();
+
+            final Uri otherVideoUri = MediaStore.scanFile(getContentResolver(), otherVideoFile);
+            assertNotNull(otherVideoUri);
+
+            trashFileAndAssert(otherVideoUri);
+            untrashFileAndAssert(otherVideoUri);
+        } finally {
+            otherVideoFile.delete();
+        }
+    }
+
+    @Test
+    public void testFileManagerCanUpdateOtherAndroidMediaFiles() throws Exception {
+        pollForManageExternalStorageAllowed();
+
+        final File otherImageFile = new File(getAndroidMediaDir(),
+                String.format("%s/%s", APP_B_NO_PERMS.getPackageName(), IMAGE_FILE_NAME));
+        final File updatedImageFileInDcim = new File(getDcimDir(), IMAGE_FILE_NAME);
+        try {
+            assertThat(createFileAs(APP_B_NO_PERMS, otherImageFile.getAbsolutePath())).isTrue();
+
+            final Uri otherImageUri = MediaStore.scanFile(getContentResolver(), otherImageFile);
+            assertNotNull(otherImageUri);
+
+            final ContentValues values = new ContentValues();
+            values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DCIM);
+            // Test that we can move the file to "DCIM/"
+            assertWithMessage("Result of ContentResolver#update for " + otherImageUri
+                    + " with values " + values)
+                    .that(getContentResolver().update(otherImageUri, values, Bundle.EMPTY))
+                    .isEqualTo(1);
+            assertThat(updatedImageFileInDcim.exists()).isTrue();
+            assertThat(otherImageFile.exists()).isFalse();
+
+            values.clear();
+            values.put(MediaStore.MediaColumns.RELATIVE_PATH,
+                    "Android/media/" + APP_B_NO_PERMS.getPackageName());
+            // Test that we can move the file back to other app's owned path
+            assertWithMessage("Result of ContentResolver#update for " + otherImageUri
+                    + " with values " + values)
+                    .that(getContentResolver().update(otherImageUri, values, Bundle.EMPTY))
+                    .isEqualTo(1);
+        } finally {
+            otherImageFile.delete();
+            updatedImageFileInDcim.delete();
         }
     }
 
