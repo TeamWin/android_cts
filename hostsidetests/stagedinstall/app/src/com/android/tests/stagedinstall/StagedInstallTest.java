@@ -75,7 +75,9 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
@@ -1429,6 +1431,23 @@ public class StagedInstallTest {
                 "Requires development platform P",
                 Install.single(Apex2SdkTargetP));
         assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(1);
+    }
+
+    @Test
+    public void testGetInactiveApexFactoryPackagesAfterApexInstall_containsNoDuplicates()
+            throws Exception {
+        int flags = (PackageManager.MATCH_APEX | PackageManager.MATCH_FACTORY_ONLY
+                | PackageManager.MATCH_UNINSTALLED_PACKAGES);
+        List<PackageInfo> packageInfos =
+                InstrumentationRegistry.getInstrumentation().getContext().getPackageManager()
+                        .getInstalledPackages(flags);
+        Set<String> foundPackages = new HashSet<>();
+        for (PackageInfo pi : packageInfos) {
+            if (foundPackages.contains(pi.packageName)) {
+                throw new AssertionError(pi.packageName + " is listed at least twice.");
+            }
+            foundPackages.add(pi.packageName);
+        }
     }
 
     // It becomes harder to maintain this variety of install-related helper methods.
