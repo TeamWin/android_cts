@@ -570,7 +570,7 @@ class MultiCameraAlignmentTest(its_base_test.ItsBaseTest):
       # Check projections back into pixel space
       for i in [i_ref, i_2nd]:
         err = np.linalg.norm(np.array([circle[i]['x'], circle[i]['y']]) -
-                             np.array([x_p[i], y_p[i]]))
+                             np.array([x_p[i], y_p[i]]).reshape(1, -1))
         logging.debug('Camera %s projection error (pixels): %.1f', i, err)
         tol = ALIGN_TOL * sensor_diag[i]
         if err >= tol:
