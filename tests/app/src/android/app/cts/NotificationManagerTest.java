@@ -16,6 +16,7 @@
 
 package android.app.cts;
 
+import static android.app.Notification.CATEGORY_CALL;
 import static android.app.Notification.FLAG_BUBBLE;
 import static android.app.NotificationManager.BUBBLE_PREFERENCE_ALL;
 import static android.app.NotificationManager.BUBBLE_PREFERENCE_NONE;
@@ -39,6 +40,7 @@ import static android.app.NotificationManager.Policy.PRIORITY_CATEGORY_EVENTS;
 import static android.app.NotificationManager.Policy.PRIORITY_CATEGORY_MEDIA;
 import static android.app.NotificationManager.Policy.PRIORITY_CATEGORY_MESSAGES;
 import static android.app.NotificationManager.Policy.PRIORITY_CATEGORY_REMINDERS;
+import static android.app.NotificationManager.Policy.PRIORITY_CATEGORY_REPEAT_CALLERS;
 import static android.app.NotificationManager.Policy.PRIORITY_CATEGORY_SYSTEM;
 import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_AMBIENT;
 import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_FULL_SCREEN_INTENT;
@@ -209,6 +211,14 @@ public class NotificationManagerTest extends AndroidTestCase {
     private static final int MESSAGE_BROADCAST_NOTIFICATION = 1;
     private static final int MESSAGE_SERVICE_NOTIFICATION = 2;
     private static final int MESSAGE_CLICK_NOTIFICATION = 3;
+
+    // Constants for creating contacts
+    private static final String ALICE = "Alice";
+    private static final String ALICE_PHONE = "+16175551212";
+    private static final String ALICE_EMAIL = "alice@_foo._bar";
+    private static final String BOB = "Bob";
+    private static final String BOB_PHONE = "+16175553434";
+    private static final String BOB_EMAIL = "bob@_foo._bar";
 
     private PackageManager mPackageManager;
     private AudioManager mAudioManager;
@@ -504,6 +514,11 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     private void sendNotification(final int id, String groupKey, final int icon) throws Exception {
+        sendNotification(id, groupKey, icon, false, null);
+    }
+
+    private void sendNotification(final int id, String groupKey, final int icon,
+            boolean isCall, Uri phoneNumber) throws Exception {
         final Intent intent = new Intent(Intent.ACTION_MAIN, Threads.CONTENT_URI);
 
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP
@@ -512,15 +527,26 @@ public class NotificationManagerTest extends AndroidTestCase {
 
         final PendingIntent pendingIntent = PendingIntent.getActivity(mContext, 0, intent,
                 PendingIntent.FLAG_MUTABLE);
-        final Notification notification =
-                new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+        Notification.Builder nb = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
                         .setSmallIcon(icon)
                         .setWhen(System.currentTimeMillis())
                         .setContentTitle("notify#" + id)
                         .setContentText("This is #" + id + "notification  ")
                         .setContentIntent(pendingIntent)
-                        .setGroup(groupKey)
-                        .build();
+                        .setGroup(groupKey);
+
+        if (isCall) {
+            nb.setCategory(CATEGORY_CALL);
+            if (phoneNumber != null) {
+                Bundle extras = new Bundle();
+                ArrayList<Person> pList = new ArrayList<>();
+                pList.add(new Person.Builder().setUri(phoneNumber.toString()).build());
+                extras.putParcelableArrayList(Notification.EXTRA_PEOPLE_LIST, pList);
+                nb.setExtras(extras);
+            }
+        }
+
+        final Notification notification = nb.build();
         mNotificationManager.notify(id, notification);
 
         if (!checkNotificationExistence(id, /*shouldExist=*/ true)) {
@@ -2812,7 +2838,153 @@ public class NotificationManagerTest extends AndroidTestCase {
         mNotificationManager.shouldHideSilentStatusBarIcons();
     }
 
-    public void testMatchesCallFilter() throws Exception {
+    public void testMatchesCallFilter_zenOff() throws Exception {
+        // zen mode is not on so nothing is filtered; matchesCallFilter should always pass
+        toggleNotificationPolicyAccess(mContext.getPackageName(),
+                InstrumentationRegistry.getInstrumentation(), true);
+        int origFilter = mNotificationManager.getCurrentInterruptionFilter();
+        try {
+            // allowed from anyone: nothing is filtered
+            mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_ALL);
+
+            // create a phone URI from which to receive a call
+            Uri phoneUri = Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI,
+                    Uri.encode("+16175551212"));
+            assertTrue(mNotificationManager.matchesCallFilter(phoneUri));
+        } finally {
+            mNotificationManager.setInterruptionFilter(origFilter);
+        }
+    }
+
+    public void testMatchesCallFilter_noCallInterruptions() throws Exception {
+        // when no call interruptions are allowed at all, or only alarms, matchesCallFilter
+        // should always fail
+        toggleNotificationPolicyAccess(mContext.getPackageName(),
+                InstrumentationRegistry.getInstrumentation(), true);
+        int origFilter = mNotificationManager.getCurrentInterruptionFilter();
+        Policy origPolicy = mNotificationManager.getNotificationPolicy();
+        try {
+            // create a phone URI from which to receive a call
+            Uri phoneUri = Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI,
+                    Uri.encode("+16175551212"));
+
+            // no interruptions allowed at all
+            mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_NONE);
+            assertFalse(mNotificationManager.matchesCallFilter(phoneUri));
+
+            // only alarms
+            mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_ALARMS);
+            assertFalse(mNotificationManager.matchesCallFilter(phoneUri));
+
+            mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(
+                    PRIORITY_CATEGORY_MESSAGES, 0, 0));
+            // turn on manual DND
+            mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_PRIORITY);
+            assertFalse(mNotificationManager.matchesCallFilter(phoneUri));
+        } finally {
+            mNotificationManager.setInterruptionFilter(origFilter);
+            mNotificationManager.setNotificationPolicy(origPolicy);
+        }
+    }
+
+    public void testMatchesCallFilter_someCallers() throws Exception {
+        // zen mode is active; check various configurations where some calls, but not all calls,
+        // are allowed
+        toggleNotificationPolicyAccess(mContext.getPackageName(),
+                InstrumentationRegistry.getInstrumentation(), true);
+        int origFilter = mNotificationManager.getCurrentInterruptionFilter();
+        Policy origPolicy = mNotificationManager.getNotificationPolicy();
+        Uri aliceUri = null;
+        Uri bobUri = null;
+        try {
+            // set up phone numbers: one starred, one regular, one unknown number
+            // starred contact from whom to receive a call
+            insertSingleContact(ALICE, ALICE_PHONE, ALICE_EMAIL, true);
+            aliceUri = lookupContact(ALICE_PHONE);
+
+            // non-starred contact from whom to also receive a call
+
+            insertSingleContact(BOB, BOB_PHONE, BOB_EMAIL, false);
+            bobUri = lookupContact(BOB_PHONE);
+
+            // non-contact phone URI
+            Uri phoneUri = Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI,
+                    Uri.encode("+16175555656"));
+
+            // turn on manual DND
+            mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_PRIORITY);
+
+            // set up: any contacts are allowed to call.
+            mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(
+                    PRIORITY_CATEGORY_CALLS,
+                    NotificationManager.Policy.PRIORITY_SENDERS_CONTACTS, 0));
+
+            // in this case Alice and Bob should get through but not the unknown number.
+            assertTrue(mNotificationManager.matchesCallFilter(aliceUri));
+            assertTrue(mNotificationManager.matchesCallFilter(bobUri));
+            assertFalse(mNotificationManager.matchesCallFilter(phoneUri));
+
+            // set up: only starred contacts are allowed to call.
+            mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(
+                    PRIORITY_CATEGORY_CALLS,
+                    NotificationManager.Policy.PRIORITY_SENDERS_STARRED, 0));
+
+            // now only Alice should be allowed to get through
+            assertTrue(mNotificationManager.matchesCallFilter(aliceUri));
+            assertFalse(mNotificationManager.matchesCallFilter(bobUri));
+            assertFalse(mNotificationManager.matchesCallFilter(phoneUri));
+        } finally {
+            mNotificationManager.setInterruptionFilter(origFilter);
+            mNotificationManager.setNotificationPolicy(origPolicy);
+            if (aliceUri != null) {
+                // delete the contact
+                deleteSingleContact(aliceUri);
+            }
+            if (bobUri != null) {
+                deleteSingleContact(bobUri);
+            }
+        }
+    }
+
+    public void testMatchesCallFilter_repeatCallers() throws Exception {
+        // if repeat callers are allowed, an unknown number calling twice should go through
+        toggleNotificationPolicyAccess(mContext.getPackageName(),
+                InstrumentationRegistry.getInstrumentation(), true);
+        int origFilter = mNotificationManager.getCurrentInterruptionFilter();
+        Policy origPolicy = mNotificationManager.getNotificationPolicy();
+        long startTime = System.currentTimeMillis();
+        try {
+            // create a phone URI from which to receive a call
+            Uri phoneUri = Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI,
+                    Uri.encode("+16175551212"));
+
+            mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(
+                    PRIORITY_CATEGORY_REPEAT_CALLERS, 0, 0));
+            // turn on manual DND
+            mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_PRIORITY);
+
+            // not a repeat caller yet, so it shouldn't be allowed
+            assertFalse(mNotificationManager.matchesCallFilter(phoneUri));
+
+            // register a call from this number, then cancel the notification, which is when
+            // a call is actually recorded.
+            sendNotification(1, null, R.drawable.blue, true, phoneUri);
+            cancelAndPoll(1);
+
+            // now this number should count as a repeat caller
+            assertTrue(mNotificationManager.matchesCallFilter(phoneUri));
+        } finally {
+            mNotificationManager.setInterruptionFilter(origFilter);
+            mNotificationManager.setNotificationPolicy(origPolicy);
+
+            // make sure we clean up the recent call, otherwise future runs of this will fail
+            // and we'll have a fake call still kicking around somewhere.
+            SystemUtil.runWithShellPermissionIdentity(() ->
+                    mNotificationManager.cleanUpCallersAfter(startTime));
+        }
+    }
+
+    public void testMatchesCallFilter_allCallers() throws Exception {
         // allow all callers
         toggleNotificationPolicyAccess(mContext.getPackageName(),
                 InstrumentationRegistry.getInstrumentation(), true);
@@ -2822,26 +2994,16 @@ public class NotificationManagerTest extends AndroidTestCase {
             NotificationManager.Policy currPolicy = mNotificationManager.getNotificationPolicy();
             NotificationManager.Policy newPolicy = new NotificationManager.Policy(
                     NotificationManager.Policy.PRIORITY_CATEGORY_CALLS
-                            | NotificationManager.Policy.PRIORITY_CATEGORY_REPEAT_CALLERS,
+                            | PRIORITY_CATEGORY_REPEAT_CALLERS,
                     NotificationManager.Policy.PRIORITY_SENDERS_ANY,
                     currPolicy.priorityMessageSenders,
                     currPolicy.suppressedVisualEffects);
             mNotificationManager.setNotificationPolicy(newPolicy);
 
-            // add a contact
-            String ALICE = "Alice";
-            String ALICE_PHONE = "+16175551212";
-            String ALICE_EMAIL = "alice@_foo._bar";
-
             insertSingleContact(ALICE, ALICE_PHONE, ALICE_EMAIL, false);
 
-            final Bundle peopleExtras = new Bundle();
-            ArrayList<Person> personList = new ArrayList<>();
             aliceUri = lookupContact(ALICE_PHONE);
-            personList.add(new Person.Builder().setUri(aliceUri.toString()).build());
-            peopleExtras.putParcelableArrayList(Notification.EXTRA_PEOPLE_LIST, personList);
-            SystemUtil.runWithShellPermissionIdentity(() ->
-                    assertTrue(mNotificationManager.matchesCallFilter(peopleExtras)));
+            assertTrue(mNotificationManager.matchesCallFilter(aliceUri));
         } finally {
             mNotificationManager.setNotificationPolicy(origPolicy);
             if (aliceUri != null) {
@@ -2849,7 +3011,6 @@ public class NotificationManagerTest extends AndroidTestCase {
                 deleteSingleContact(aliceUri);
             }
         }
-
     }
 
     /* Confirm that the optional methods of TestNotificationListener still exist and
