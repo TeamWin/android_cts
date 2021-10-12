@@ -71,7 +71,11 @@ java_test_host {
     data: [
         ":CtsStatsdAtomApp",
         ":CtsStatsdApp", //TODO(b/163546661): Remove once migration to new lib is complete.
-    ]
+        ":CtsAppExitTestCases",
+        ":CtsExternalServiceService",
+        ":CtsSimpleApp",
+    ],
+    per_testcase_directory: true,
 }
 
 java_library_host {

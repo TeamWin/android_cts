@@ -40,7 +40,6 @@ import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -96,7 +95,6 @@ public class AppExitHostTest extends BaseHostJUnit4Test implements IBuildReceive
     }
 
     @Test
-    @Ignore("b/193168159 CTS tradefed doesn't support per-testcase directories")
     public void testLogStatsdPermChanged() throws Exception {
         final String helperPackage = HELPER_PKG2;
         final int expectedUid = getAppUid(helperPackage);
@@ -111,7 +109,6 @@ public class AppExitHostTest extends BaseHostJUnit4Test implements IBuildReceive
     }
 
     @Test
-    @Ignore("b/193168159 CTS tradefed doesn't support per-testcase directories")
     public void testLogStatsdOther() throws Exception {
         final String helperPackage = HELPER_PKG1;
         final int expectedUid = getAppUid(TEST_PKG);
