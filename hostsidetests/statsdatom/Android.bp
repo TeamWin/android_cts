@@ -38,6 +38,7 @@ java_test_host {
         "src/**/integrity/*.java",
         "src/**/memory/*.java",
         "src/**/net/*.java",
+        "src/**/neuralnetworks/*.java",
         "src/**/notification/*.java",
         "src/**/perfetto/*.java",
         "src/**/permissionstate/*.java",
