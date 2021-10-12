@@ -475,7 +475,10 @@ public class UsageStatsTest {
                 startTime, endTime);
         stats = events.get(mTargetPackage);
         assertEquals(startingCount + 1, stats.getAppLaunchCount());
-        mUiDevice.pressHome();
+
+        // Launch a new activity so the other sub activities go into a paused state.
+        launchTestActivity(TEST_APP_PKG, TEST_APP_CLASS);
+
         launchSubActivity(Activities.ActivityOne.class);
         launchSubActivity(Activities.ActivityTwo.class);
         launchSubActivity(Activities.ActivityThree.class);
