@@ -20,6 +20,7 @@ import androidx.annotation.CheckResult;
 
 import com.android.queryable.Queryable;
 
+import java.util.Collection;
 import java.util.Set;
 
 /** Query for a {@link Set}. */
@@ -36,6 +37,49 @@ public interface SetQuery<E extends Queryable, F, G extends Query<F>> extends Qu
     E isEmpty();
     E isNotEmpty();
 
+    /**
+     * Used to query whether a set contains certain objects.
+     */
     E contains(G... objects);
+
+    /**
+     * Used to query whether a set contains certain objects.
+     *
+     * <p>There are no bounds on the type for this method and therefore to find matches objects are
+     * compared using {@link Object#equals} If you are not checking for equality use
+     * {@link #contains(Query[])}.
+     */
+    E contains(F... objects);
+
+    /**
+     * Used to query whether a set does not contain certain objects.
+     */
     E doesNotContain(G... objects);
+
+    /**
+     * Used to query whether a set does not contain certain objects.
+     *
+     * <p>There are no bounds on the type for this method and therefore to find matches objects are
+     * compared using {@link Object#equals} If you are not checking for equality use
+     * {@link #contains(Query[])}.
+     */
+    E doesNotContain(F... objects);
+
+    /**
+     * Used to query whether a set contains all of the elements from a collection.
+     *
+     * <p>There are no bounds on the type for this method and therefore to find matches objects are
+     * compared using {@link Object#equals} If you are not checking for equality use
+     * {@link #contains(Query[])}.
+     */
+    <H extends Collection<F>> E containsAll(H... collections);
+
+    /**
+     * Used to query whether a set does not contain any elements given in a collection.
+     *
+     * <p>There are no bounds on the type for this method and therefore to find matches objects are
+     * compared using {@link Object#equals} If you are not checking for equality use
+     * {@link #contains(Query[])}.
+     */
+    <H extends Collection<F>> E doesNotContainAny(H... collections);
 }
