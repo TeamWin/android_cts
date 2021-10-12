@@ -50,6 +50,16 @@ public class SpatializerTest extends CtsAndroidTestCase {
         assertNotNull("Spatializer shouldn't be null", spat);
     }
 
+    public void testUnsupported() {
+        Spatializer spat = mAudioManager.getSpatializer();
+        if (spat.getImmersiveAudioLevel() != Spatializer.SPATIALIZER_IMMERSIVE_LEVEL_NONE) {
+            Log.i(TAG, "skipping testUnsupported, functionality supported");
+            return;
+        }
+        assertFalse(spat.isEnabled());
+        assertFalse(spat.isAvailable());
+    }
+
     public void testMinSpatializationCapabilities() {
         Spatializer spat = mAudioManager.getSpatializer();
         if (spat.getImmersiveAudioLevel() == Spatializer.SPATIALIZER_IMMERSIVE_LEVEL_NONE) {
