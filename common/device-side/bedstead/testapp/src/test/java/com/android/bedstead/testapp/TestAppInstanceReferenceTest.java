@@ -17,6 +17,7 @@
 package com.android.bedstead.testapp;
 
 import static android.app.admin.DevicePolicyManager.OPERATION_SAFETY_REASON_DRIVING_DISTRACTION;
+import static android.os.Build.VERSION_CODES.Q;
 import static android.os.Build.VERSION_CODES.S;
 
 import static com.android.eventlib.truth.EventLogsSubject.assertThat;
@@ -339,6 +340,7 @@ public class TestAppInstanceReferenceTest {
     }
 
     @Test
+    @RequireSdkVersion(min = Q, reason = "Wifimanager API only available on Q+")
     public void wifiManager_returnsUsableInstance() {
         TestApp testApp = mTestAppProvider.any();
         try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {

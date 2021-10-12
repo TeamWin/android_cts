@@ -23,6 +23,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.testng.Assert.assertThrows;
 
 import android.content.Context;
+import android.os.Build;
 import android.os.Environment;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
@@ -34,6 +35,7 @@ import com.android.bedstead.harrier.annotations.RequireRunOnSystemUser;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.users.UserReference;
+import com.android.bedstead.nene.utils.Versions;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstanceReference;
 import com.android.bedstead.testapp.TestAppProvider;
@@ -80,10 +82,18 @@ public class PackageTest {
                     StringQuery.string().isEqualTo(DECLARED_RUNTIME_PERMISSION),
                     StringQuery.string().isEqualTo(INSTALL_PERMISSION)
             ).get();
-    private static final File sOutputDir =
-            Environment.getExternalStoragePublicDirectory(DIRECTORY_DOCUMENTS);
+    private static final File sOutputDir = getOutputDir();
     // TODO(b/202705721): Fix issue with file name conflicts and go with a fixed name
     private static final File sTestAppApkFile = new File(sOutputDir, UUID.randomUUID() + ".apk");
+
+
+    private static File getOutputDir() {
+        if (Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.R)) {
+            return Environment.getExternalStoragePublicDirectory(DIRECTORY_DOCUMENTS);
+        }
+
+        return sContext.getFilesDir();
+    }
 
     @BeforeClass
     public static void setupClass() throws Exception {

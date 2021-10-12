@@ -94,7 +94,9 @@ public final class Permissions {
             mShellPermissions = new HashSet<>();
         }
         mInstrumentedRequestedPermissions = sInstrumentedPackage.requestedPermissions();
-        ShellCommandUtils.uiAutomation().dropShellPermissionIdentity();
+        if (SUPPORTS_ADOPT_SHELL_PERMISSIONS) {
+            ShellCommandUtils.uiAutomation().dropShellPermissionIdentity();
+        }
         sIgnorePermissions.set(false);
     }
 

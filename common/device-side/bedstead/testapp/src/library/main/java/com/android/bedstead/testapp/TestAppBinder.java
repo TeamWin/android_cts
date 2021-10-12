@@ -57,6 +57,19 @@ public final class TestAppBinder implements ConnectionBinder {
 
         Log.i(LOG_TAG, "Attempting to bind to " + bindIntent);
 
+        if (mTestAppInstance.user().equals(TestApis.users().instrumented())) {
+            try {
+                return context.bindServiceAsUser(bindIntent,
+                        connection, /* flags= */ BIND_AUTO_CREATE,
+                        mTestAppInstance.user().userHandle());
+            } catch (Exception e) {
+                // TODO(scottjonathan): This should actually be communicated back...
+                //  (catch the exception outside of the tryBind call)
+                Log.e(LOG_TAG, "Error binding", e);
+                return false;
+            }
+        }
+
         try (PermissionContext p =
                      TestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
             return context.bindServiceAsUser(bindIntent,

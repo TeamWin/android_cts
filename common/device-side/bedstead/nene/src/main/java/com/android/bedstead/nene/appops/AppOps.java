@@ -16,14 +16,18 @@
 
 package com.android.bedstead.nene.appops;
 
+import static android.os.Build.VERSION_CODES.Q;
+
 import static com.android.bedstead.nene.permissions.Permissions.MANAGE_APP_OPS_MODES;
 
+import android.annotation.TargetApi;
 import android.app.AppOpsManager;
 
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.annotations.Experimental;
 import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.permissions.PermissionContext;
+import com.android.bedstead.nene.utils.Versions;
 
 @Experimental
 /** Manage AppOps for a package. */
@@ -77,7 +81,9 @@ public final class AppOps {
     }
 
     /** Get the AppOp mode for the given package. */
+    @TargetApi(Q)
     public AppOpsMode get(String appOpName) {
+        Versions.requireMinimumVersion(Q);
         return AppOpsMode.forValue(
                 sAppOpsManager.unsafeCheckOpNoThrow(
                         appOpName, mPackage.uid(), mPackage.packageName()));

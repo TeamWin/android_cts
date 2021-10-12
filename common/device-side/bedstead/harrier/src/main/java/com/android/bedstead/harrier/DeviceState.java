@@ -786,7 +786,7 @@ public final class DeviceState implements TestRule {
             int min, int max, FailureMode failureMode, String failureMessage) {
         mMinSdkVersionCurrentTest = min;
         checkFailOrSkip(
-                failureMessage,
+                failureMessage + " (version is " + Build.VERSION.SDK_INT + ")",
                 meetsSdkVersionRequirements(min, max),
                 failureMode
         );

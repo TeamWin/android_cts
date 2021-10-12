@@ -153,15 +153,14 @@ public final class DevicePolicy {
             throw new NullPointerException();
         }
 
-        UserReference user = TestApis.users().system();
-
         if (!Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.S)) {
-            return setDeviceOwnerPreS(user, deviceOwnerComponent);
+            return setDeviceOwnerPreS(deviceOwnerComponent);
         }
 
         DevicePolicyManager devicePolicyManager =
                 TestApis.context().instrumentedContext()
                         .getSystemService(DevicePolicyManager.class);
+        UserReference user = TestApis.users().system();
 
         boolean dpmUserSetupComplete = getUserSetupComplete(user);
         Boolean currentUserSetupComplete = null;
@@ -288,12 +287,13 @@ public final class DevicePolicy {
         }
     }
 
-    private DeviceOwner setDeviceOwnerPreS(UserReference user, ComponentName deviceOwnerComponent) {
+    private DeviceOwner setDeviceOwnerPreS(ComponentName deviceOwnerComponent) {
+        UserReference user = TestApis.users().system();
+
         ShellCommand.Builder command = ShellCommand.builderForUser(
                 user, "dpm set-device-owner")
                 .addOperand(deviceOwnerComponent.flattenToShortString())
                 .validate(ShellCommandUtils::startsWithSuccess);
-
         // TODO(b/187925230): If it fails, we check for terminal failure states - and if not
         //  we retry because if the device owner was recently removed, it can take some time
         //  to be allowed to set it again

@@ -26,6 +26,7 @@ import static android.content.pm.PackageInstaller.STATUS_FAILURE;
 import static android.content.pm.PackageInstaller.STATUS_SUCCESS;
 import static android.content.pm.PackageInstaller.SessionParams.MODE_FULL_INSTALL;
 import static android.os.Build.VERSION.SDK_INT;
+import static android.os.Build.VERSION_CODES.R;
 
 import static com.android.bedstead.nene.users.User.UserState.RUNNING_UNLOCKED;
 import static com.android.compatibility.common.util.FileUtils.readInputStreamFully;
@@ -38,6 +39,7 @@ import android.content.pm.FeatureInfo;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
 import android.os.Build;
+import android.util.Log;
 
 import androidx.annotation.CheckResult;
 import androidx.annotation.RequiresApi;
@@ -69,10 +71,14 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import javax.annotation.Nullable;
+
 /**
  * Test APIs relating to packages.
  */
 public final class Packages {
+
+    private static final String LOG_TAG = "Packages";
 
     /** Reference to a Java resource. */
     public static final class JavaResource {
@@ -187,11 +193,22 @@ public final class Packages {
             throw new NullPointerException();
         }
 
-        return TestApis.context().androidContextAsUser(user).getPackageManager()
-                .getInstalledPackages(/* flags= */ 0)
-                .stream()
-                .map(i -> new Package(i.packageName))
-                .collect(Collectors.toSet());
+        if (user.equals(TestApis.users().instrumented())) {
+            return TestApis.context().instrumentedContext().getPackageManager()
+                    .getInstalledPackages(/* flags= */ 0)
+                    .stream()
+                    .map(i -> new Package(i.packageName))
+                    .collect(Collectors.toSet());
+        }
+
+        try (PermissionContext p = TestApis.permissions()
+                .withPermission(INTERACT_ACROSS_USERS_FULL)) {
+            return TestApis.context().androidContextAsUser(user).getPackageManager()
+                    .getInstalledPackages(/* flags= */ 0)
+                    .stream()
+                    .map(i -> new Package(i.packageName))
+                    .collect(Collectors.toSet());
+        }
     }
 
     /** Install the {@link File} to the instrumented user. */
@@ -212,7 +229,11 @@ public final class Packages {
      * <p>If the package is already installed, this will replace it.
      *
      * <p>If the package is marked testOnly, it will still be installed.
+     *
+     * <p>On versions of Android prior to Q, this will return null. On other versions it will return
+     * the installed package.
      */
+    @Nullable
     public Package install(UserReference user, File apkFile) {
         if (user == null || apkFile == null) {
             throw new NullPointerException();
@@ -247,12 +268,25 @@ public final class Packages {
         } catch (AdbException e) {
             throw new NeneException("Could not install " + apkFile + " for user " + user, e);
         } finally {
-            broadcastReceiver.unregisterQuietly();
+            if (broadcastReceiver != null) {
+                broadcastReceiver.unregisterQuietly();
+            }
         }
     }
 
-    private Package waitForPackageAddedBroadcast(
-            BlockingBroadcastReceiver broadcastReceiver) {
+    @Nullable
+    private Package waitForPackageAddedBroadcast(BlockingBroadcastReceiver broadcastReceiver) {
+        if (broadcastReceiver == null) {
+            // On Android versions prior to R we can't block on a broadcast for package installation
+            try {
+                Thread.sleep(20000);
+            } catch (InterruptedException e) {
+                Log.e(LOG_TAG, "Interrupted waiting for package installation", e);
+            }
+
+            return null;
+        }
+
         Intent intent = broadcastReceiver.awaitForBroadcast();
         if (intent == null) {
             throw new NeneException(
@@ -282,7 +316,11 @@ public final class Packages {
      * <p>If the package is already installed, this will replace it.
      *
      * <p>If the package is marked testOnly, it will still be installed.
+     *
+     * <p>On versions of Android prior to Q, this will return null. On other versions it will return
+     * the installed package.
      */
+    @Nullable
     public Package install(UserReference user, byte[] apkFile) {
         if (user == null || apkFile == null) {
             throw new NullPointerException();
@@ -348,10 +386,13 @@ public final class Packages {
         } catch (IOException e) {
             throw new NeneException("Could not install package", e);
         } finally {
-            broadcastReceiver.unregisterQuietly();
+            if (broadcastReceiver != null) {
+                broadcastReceiver.unregisterQuietly();
+            }
         }
     }
 
+    @Nullable
     private Package installPreS(UserReference user, byte[] apkFile) {
         // Prior to S we cannot pass bytes to stdin so we write it to a temp file first
         File outputDir = TestApis.context().instrumentedContext().getFilesDir();
@@ -365,7 +406,9 @@ public final class Packages {
             }
             // Shell can't read the file in files dir, so we can move it to /data/local/tmp
             File localTmpFile = new File("/data/local/tmp", outputFile.getName());
-            ShellCommand.builder("mv")
+            // I'm not sure why only mv works on R, and only cp works on < R
+            String command = Versions.meetsMinimumSdkVersionRequirement(R) ? "mv" : "cp";
+            ShellCommand.builder(command)
                     .addOperand(outputFile.getAbsolutePath())
                     .addOperand(localTmpFile.getAbsolutePath())
                     .asRoot()
@@ -425,6 +468,7 @@ public final class Packages {
         }
     }
 
+    @Nullable
     private BlockingBroadcastReceiver registerPackageInstalledBroadcastReceiver(
             UserReference user) {
         BlockingBroadcastReceiver broadcastReceiver = BlockingBroadcastReceiver.create(
@@ -433,13 +477,13 @@ public final class Packages {
 
         if (user.equals(TestApis.users().instrumented())) {
             broadcastReceiver.register();
-        } else {
-            // TODO(scottjonathan): If this is cross-user then it needs _FULL, but older versions
-            //  cannot get full - so we'll need to poll
+        } else if (Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.Q)) {
             try (PermissionContext p =
                          TestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
                 broadcastReceiver.register();
             }
+        } else {
+            return null;
         }
 
         return broadcastReceiver;

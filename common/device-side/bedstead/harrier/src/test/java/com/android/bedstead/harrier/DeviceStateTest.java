@@ -259,6 +259,8 @@ public class DeviceStateTest {
 
     @Test
     @EnsureHasPermission(TEST_PERMISSION_1)
+    @RequireSdkVersion(min = Build.VERSION_CODES.R,
+            reason = "Used permissions not available prior to R")
     public void ensureHasPermission_permissionIsGranted() {
         assertThat(TestApis.context().instrumentedContext()
                 .checkSelfPermission(TEST_PERMISSION_1)).isEqualTo(PERMISSION_GRANTED);
@@ -292,6 +294,8 @@ public class DeviceStateTest {
     @Test
     @EnsureHasPermission(TEST_PERMISSION_1)
     @EnsureDoesNotHavePermission(TEST_PERMISSION_2)
+    @RequireSdkVersion(min = Build.VERSION_CODES.R,
+            reason = "Used permissions not available prior to R")
     public void ensureHasPermissionAndDoesNotHavePermission_permissionsAreCorrect() {
         assertThat(TestApis.context().instrumentedContext()
                 .checkSelfPermission(TEST_PERMISSION_1)).isEqualTo(PERMISSION_GRANTED);
@@ -462,7 +466,7 @@ public class DeviceStateTest {
     @Test
     @RequirePackageNotInstalled(value = GMS_CORE_PACKAGE, onUser = ANY)
     public void requirePackageNotInstalledAnnotation_anyUser_packageIsNotInstalled() {
-        assertThat(TestApis.packages().find(GMS_CORE_PACKAGE).installedOnUsers().isEmpty());
+        assertThat(TestApis.packages().find(GMS_CORE_PACKAGE).installedOnUsers()).isEmpty();
     }
 
     @Test

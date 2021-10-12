@@ -39,6 +39,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.PermissionInfo;
 import android.os.Build;
 import android.os.UserHandle;
+import android.util.Log;
 
 import androidx.annotation.Nullable;
 
@@ -189,9 +190,17 @@ public final class Package {
                 packageRemovedIntentFilter);
 
         try {
-            try (PermissionContext p = TestApis.permissions().withPermission(
-                    INTERACT_ACROSS_USERS_FULL)) {
+
+            boolean canWaitForBroadcast = false;
+            if (Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.R)) {
+                try (PermissionContext p = TestApis.permissions().withPermission(
+                        INTERACT_ACROSS_USERS_FULL)) {
+                    broadcastReceiver.register();
+                }
+                canWaitForBroadcast = true;
+            } else if (user.equals(TestApis.users().instrumented())) {
                 broadcastReceiver.register();
+                canWaitForBroadcast = true;
             }
 
             String commandOutput = Poll.forValue(() -> {
@@ -225,7 +234,17 @@ public final class Package {
                     .await();
 
             if (commandOutput.toUpperCase().startsWith("SUCCESS")) {
-                broadcastReceiver.awaitForBroadcastOrFail();
+                if (canWaitForBroadcast) {
+                    broadcastReceiver.awaitForBroadcastOrFail();
+                } else {
+                    try {
+                        // On versions prior to R - cross user installs can't block for broadcasts
+                        // so we have an arbitrary sleep
+                        Thread.sleep(10000);
+                    } catch (InterruptedException e) {
+                        Log.i(LOG_TAG, "Interrupted waiting for package uninstallation", e);
+                    }
+                }
             }
             return this;
         } catch (NeneException e) {

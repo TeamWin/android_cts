@@ -17,6 +17,7 @@
 package com.android.bedstead.nene.utils;
 
 import static com.android.compatibility.common.util.VersionCodes.CUR_DEVELOPMENT;
+import static com.android.compatibility.common.util.VersionCodes.R;
 
 import android.os.Build;
 
@@ -43,10 +44,12 @@ public final class Versions {
      */
     public static void requireMinimumVersion(int min) {
         if (!meetsSdkVersionRequirements(min, ANY)) {
+            String currentVersion = meetsMinimumSdkVersionRequirement(R)
+                    ? Build.VERSION.RELEASE_OR_CODENAME : Integer.toString(Build.VERSION.SDK_INT);
             throw new UnsupportedOperationException(
-                    "Thie feature is only available on "
+                    "This feature is only available on "
                             + versionToLetter(min)
-                            + "+ (currently " + Build.VERSION.RELEASE_OR_CODENAME + ")");
+                            + "+ (currently " + currentVersion + ")");
         }
     }
 

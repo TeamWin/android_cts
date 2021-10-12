@@ -190,8 +190,8 @@ public class PackagesTest {
     @Test
     public void install_differentUser_isInstalled() {
         UserReference user = TestApis.users().createUser().createAndStart();
-        Package pkg =
-                TestApis.packages().install(user, TEST_APP_APK_FILE);
+        TestApis.packages().install(user, TEST_APP_APK_FILE);
+        Package pkg = TestApis.packages().find(TEST_APP_PACKAGE_NAME);
 
         try {
             assertThat(pkg.installedOnUser(user)).isTrue();
@@ -203,7 +203,8 @@ public class PackagesTest {
     @Test
     public void install_byteArray_differentUser_isInstalled() {
         UserReference user = TestApis.users().createUser().createAndStart();
-        Package pkg = TestApis.packages().install(user, TEST_APP_BYTES);
+        TestApis.packages().install(user, TEST_APP_BYTES);
+        Package pkg = TestApis.packages().find(TEST_APP_PACKAGE_NAME);
 
         try {
             assertThat(pkg.installedOnUser(user)).isTrue();

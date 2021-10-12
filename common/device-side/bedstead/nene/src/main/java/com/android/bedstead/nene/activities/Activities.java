@@ -17,13 +17,19 @@
 package com.android.bedstead.nene.activities;
 
 import static android.Manifest.permission.REAL_GET_TASKS;
+import static android.os.Build.VERSION_CODES.Q;
 
 import android.app.ActivityManager;
+import android.content.ComponentName;
 
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.annotations.Experimental;
+import com.android.bedstead.nene.exceptions.AdbException;
+import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.packages.ComponentReference;
 import com.android.bedstead.nene.permissions.PermissionContext;
+import com.android.bedstead.nene.utils.ShellCommand;
+import com.android.bedstead.nene.utils.Versions;
 
 import java.util.List;
 
@@ -60,6 +66,9 @@ public final class Activities {
      */
     @Experimental
     public ComponentReference foregroundActivity() {
+        if (!Versions.meetsMinimumSdkVersionRequirement(Q)) {
+            return foregroundActivityPreQ();
+        }
         try (PermissionContext p = TestApis.permissions().withPermission(REAL_GET_TASKS)) {
             ActivityManager activityManager =
                     TestApis.context().instrumentedContext().getSystemService(
@@ -70,6 +79,22 @@ public final class Activities {
             }
 
             return new ComponentReference(runningTasks.get(0).topActivity);
+        }
+    }
+
+    private ComponentReference foregroundActivityPreQ() {
+        try {
+            return ShellCommand.builder("dumpsys activity top")
+                    .executeAndParseOutput((dumpsysOutput) -> {
+                        // The final ACTIVITY is the one on top
+                        String[] activitySplits = dumpsysOutput.split("ACTIVITY ");
+                        String component = activitySplits[activitySplits.length - 1]
+                                .split(" ", 2)[0];
+                        ComponentName componentName = ComponentName.unflattenFromString(component);
+                        return new ComponentReference(componentName);
+                    });
+        } catch (AdbException | RuntimeException e) {
+            throw new NeneException("Error getting foreground activity pre Q", e);
         }
     }
 
