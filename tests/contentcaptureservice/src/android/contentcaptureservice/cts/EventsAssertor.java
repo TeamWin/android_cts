@@ -102,6 +102,16 @@ public class EventsAssertor {
     }
 
     /**
+     * Asserts the basic contents of a {@link ContentCaptureEvent#TYPE_CONTEXT_UPDATED} event.
+     */
+    public EventsAssertor assertContextUpdated() {
+        assertNextEvent((event) -> assertSessionLevelEvent(event),
+                ContentCaptureEvent.TYPE_CONTEXT_UPDATED,
+                "no TYPE_CONTEXT_UPDATED event");
+        return this;
+    }
+
+    /**
      * Asserts the contents of a {@link ContentCaptureEvent#TYPE_VIEW_APPEARED}
      * event for a decor view.
      *
@@ -223,6 +233,27 @@ public class EventsAssertor {
         return assertViewDisappeared(session.newAutofillId(parentId, childId));
     }
 
+    /**
+     * Asserts the contents of a {@link ContentCaptureEvent#TYPE_VIEW_TEXT_CHANGED} event.
+     */
+    @NonNull
+    public EventsAssertor assertViewTextChanged(AutofillId expectedId, String expectedText) {
+        assertNextEvent((event) -> assertTextChangedEvent(event, expectedId, expectedText),
+                ContentCaptureEvent.TYPE_VIEW_TEXT_CHANGED,
+                String.format("no TYPE_VIEW_TEXT_CHANGED event for %s:%s",
+                        expectedId, expectedText));
+        return this;
+    }
+
+    private String assertTextChangedEvent(ContentCaptureEvent event, AutofillId expectedId,
+            String expectedText) {
+        assertWithMessage("Wrong id on %s", event).that(event.getId())
+                .isEqualTo(expectedId);
+        assertWithMessage("Wrong text on %s", event).that(event.getText().toString())
+                .isEqualTo(expectedText);
+        return null;
+    }
+
     @Nullable
     private String assertVirtualViewEvent(@NonNull ContentCaptureEvent event,
             @NonNull AutofillId expectedId, @Nullable String expectedText) {
@@ -260,7 +291,7 @@ public class EventsAssertor {
         assertWithMessage("no autofillIds on event %s", event).that(ids)
                 .isNotNull();
         assertWithMessage("wrong autofillId on event %s", event)
-                .that(ids).containsExactly((Object[]) expectedIds).inOrder();
+                .that(ids).containsExactly((Object[]) expectedIds);
         assertWithMessage("event %s should not have autofillId", event)
                 .that(event.getId()).isNull();
         return null;
@@ -381,6 +412,10 @@ public class EventsAssertor {
         } while (mNextEvent < mEvents.size());
         throw new AssertionError(String.format(errorFormat, errorArgs) + "\n. Events("
                 + mEvents.size() + "): " + mEvents);
+    }
+
+    public ContentCaptureEvent getLastEvent() {
+        return mEvents.get(mNextEvent - 1);
     }
 
     private interface EventAssertion {
