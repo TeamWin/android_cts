@@ -24,7 +24,10 @@ android_test {
         "general-tests",
     ],
 
-    srcs: ["src/**/*.java"],
+    srcs: [
+        "src/**/*.java",
+        "src/**/*.aidl",
+    ],
     libs: [
         "android.car.builtin",
         "android.test.base",
