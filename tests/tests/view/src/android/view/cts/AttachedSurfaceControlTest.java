@@ -50,7 +50,7 @@ public class AttachedSurfaceControlTest {
     private static final String TAG = "AttachedSurfaceControlTest";
 
     private static class TransformHintListener implements
-            AttachedSurfaceControl.OnSurfaceTransformHintChangedListener {
+            AttachedSurfaceControl.OnBufferTransformHintChangedListener {
         Activity activity;
         int expectedOrientation;
         CountDownLatch latch = new CountDownLatch(1);
@@ -64,16 +64,16 @@ public class AttachedSurfaceControlTest {
         }
 
         @Override
-        public void onSurfaceTransformHintChanged(int hint) {
+        public void onBufferTransformHintChanged(int hint) {
             int orientation = activity.getResources().getConfiguration().orientation;
-            Log.d(TAG, "onSurfaceTransformHintChanged: orientation actual=" + orientation
+            Log.d(TAG, "onBufferTransformHintChanged: orientation actual=" + orientation
                     + " expected=" + expectedOrientation + " transformHint=" + hint);
             Assert.assertEquals("Failed to switch orientation hint=" + hint, orientation,
                     expectedOrientation);
             hintConsumer.accept(hint);
             latch.countDown();
             activity.getWindow().getRootSurfaceControl()
-                    .removeOnSurfaceTransformHintChangedListener(this);
+                    .removeOnBufferTransformHintChangedListener(this);
         }
     }
 
@@ -88,7 +88,7 @@ public class AttachedSurfaceControlTest {
     }
 
     @Test
-    public void testOnSurfaceTransformHintChangedListener() throws InterruptedException {
+    public void testOnBufferTransformHintChangedListener() throws InterruptedException {
         final int[] transformHintResult = new int[2];
         final CountDownLatch[] firstCallback = new CountDownLatch[1];
         final CountDownLatch[] secondCallback = new CountDownLatch[1];
@@ -101,7 +101,7 @@ public class AttachedSurfaceControlTest {
                         requestedOrientation, hint -> transformHintResult[0] = hint);
                 firstCallback[0] = listener.latch;
                 activity.getWindow().getRootSurfaceControl()
-                        .addOnSurfaceTransformHintChangedListener(listener);
+                        .addOnBufferTransformHintChangedListener(listener);
                 setRequestedOrientation(activity, requestedOrientation);
             });
             // Check we get a callback since the orientation has changed and we expect transform
@@ -110,7 +110,7 @@ public class AttachedSurfaceControlTest {
 
             // Check the callback value matches the call to get the transform hint.
             scenario.onActivity(activity -> Assert.assertEquals(transformHintResult[0],
-                    activity.getWindow().getRootSurfaceControl().getSurfaceTransformHint()));
+                    activity.getWindow().getRootSurfaceControl().getBufferTransformHint()));
 
             scenario.onActivity(activity -> {
                 int requestedOrientation = getRequestedOrientation(activity);
@@ -118,7 +118,7 @@ public class AttachedSurfaceControlTest {
                         requestedOrientation, hint -> transformHintResult[1] = hint);
                 secondCallback[0] = listener.latch;
                 activity.getWindow().getRootSurfaceControl()
-                        .addOnSurfaceTransformHintChangedListener(listener);
+                        .addOnBufferTransformHintChangedListener(listener);
                 setRequestedOrientation(activity, requestedOrientation);
             });
             // Check we get a callback since the orientation has changed and we expect transform
@@ -127,7 +127,7 @@ public class AttachedSurfaceControlTest {
 
             // Check the callback value matches the call to get the transform hint.
             scenario.onActivity(activity -> Assert.assertEquals(transformHintResult[1],
-                    activity.getWindow().getRootSurfaceControl().getSurfaceTransformHint()));
+                    activity.getWindow().getRootSurfaceControl().getBufferTransformHint()));
         }
 
         // If the app orientation was changed, we should get a different transform hint
@@ -152,7 +152,7 @@ public class AttachedSurfaceControlTest {
     }
 
     @Test
-    public void testOnSurfaceTransformHintChangesFromLandToSea() throws InterruptedException {
+    public void testOnBufferTransformHintChangesFromLandToSea() throws InterruptedException {
         final int[] transformHintResult = new int[2];
         final CountDownLatch[] firstCallback = new CountDownLatch[1];
         final CountDownLatch[] secondCallback = new CountDownLatch[1];
@@ -168,7 +168,7 @@ public class AttachedSurfaceControlTest {
                         ORIENTATION_LANDSCAPE, hint -> transformHintResult[0] = hint);
                 firstCallback[0] = listener.latch;
                 activity.getWindow().getRootSurfaceControl()
-                        .addOnSurfaceTransformHintChangedListener(listener);
+                        .addOnBufferTransformHintChangedListener(listener);
                 setRequestedOrientation(activity, ORIENTATION_LANDSCAPE);
             });
 
@@ -178,14 +178,14 @@ public class AttachedSurfaceControlTest {
             }
             // Check the callback value matches the call to get the transform hint.
             scenario.onActivity(activity -> Assert.assertEquals(transformHintResult[0],
-                    activity.getWindow().getRootSurfaceControl().getSurfaceTransformHint()));
+                    activity.getWindow().getRootSurfaceControl().getBufferTransformHint()));
 
             scenario.onActivity(activity -> {
                 TransformHintListener listener = new TransformHintListener(activity,
                         ORIENTATION_LANDSCAPE, hint -> transformHintResult[1] = hint);
                 secondCallback[0] = listener.latch;
                 activity.getWindow().getRootSurfaceControl()
-                        .addOnSurfaceTransformHintChangedListener(listener);
+                        .addOnBufferTransformHintChangedListener(listener);
                 activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE);
             });
             // Check we get a callback since the orientation has changed and we expect transform
@@ -194,7 +194,7 @@ public class AttachedSurfaceControlTest {
 
             // Check the callback value matches the call to get the transform hint.
             scenario.onActivity(activity -> Assert.assertEquals(transformHintResult[1],
-                    activity.getWindow().getRootSurfaceControl().getSurfaceTransformHint()));
+                    activity.getWindow().getRootSurfaceControl().getBufferTransformHint()));
         }
 
         // If the app orientation was changed, we should get a different transform hint
