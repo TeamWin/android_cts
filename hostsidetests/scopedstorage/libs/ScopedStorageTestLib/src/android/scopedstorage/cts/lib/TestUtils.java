@@ -1690,4 +1690,21 @@ public class TestUtils {
                 ActivityManager.class).getRunningAppProcesses().stream().filter(
                         p -> packageName.equals(p.processName)).findFirst();
     }
+
+    public static void trashFileAndAssert(Uri uri) {
+        final ContentValues values = new ContentValues();
+        values.put(MediaStore.MediaColumns.IS_TRASHED, 1);
+        assertWithMessage("Result of ContentResolver#update for " + uri + " with values to trash "
+                 + "file " + values)
+                .that(getContentResolver().update(uri, values, Bundle.EMPTY)).isEqualTo(1);
+    }
+
+    public static void untrashFileAndAssert(Uri uri) {
+        final ContentValues values = new ContentValues();
+        values.put(MediaStore.MediaColumns.IS_TRASHED, 0);
+        assertWithMessage("Result of ContentResolver#update for " + uri + " with values to untrash "
+                + "file " + values)
+                .that(getContentResolver().update(uri, values, Bundle.EMPTY)).isEqualTo(1);
+    }
+
 }

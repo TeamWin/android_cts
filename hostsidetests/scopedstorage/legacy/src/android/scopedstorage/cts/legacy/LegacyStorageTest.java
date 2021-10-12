@@ -49,6 +49,8 @@ import static android.scopedstorage.cts.lib.TestUtils.pollForExternalStorageStat
 import static android.scopedstorage.cts.lib.TestUtils.pollForPermission;
 import static android.scopedstorage.cts.lib.TestUtils.resetDefaultExternalStorageVolume;
 import static android.scopedstorage.cts.lib.TestUtils.setupDefaultDirectories;
+import static android.scopedstorage.cts.lib.TestUtils.trashFileAndAssert;
+import static android.scopedstorage.cts.lib.TestUtils.untrashFileAndAssert;
 import static android.scopedstorage.cts.lib.TestUtils.updateFile;
 import static android.scopedstorage.cts.lib.TestUtils.verifyInsertFromExternalMediaDirViaData_allowed;
 import static android.scopedstorage.cts.lib.TestUtils.verifyInsertFromExternalMediaDirViaRelativePath_allowed;
@@ -428,6 +430,23 @@ public class LegacyStorageTest {
             pdfFile2.delete();
             nonMediaDir1.delete();
             nonMediaDir2.delete();
+        }
+    }
+
+    @Test
+    public void testCanTrashOtherAndroidMediaFiles_hasRW() throws Exception {
+        final File otherVideoFile = new File(getAndroidMediaDir(),
+                String.format("%s/%s", APP_B_NO_PERMS.getPackageName(), VIDEO_FILE_NAME));
+        try {
+            assertThat(createFileAs(APP_B_NO_PERMS, otherVideoFile.getAbsolutePath())).isTrue();
+
+            final Uri otherVideoUri = MediaStore.scanFile(getContentResolver(), otherVideoFile);
+            assertNotNull(otherVideoUri);
+
+            trashFileAndAssert(otherVideoUri);
+            untrashFileAndAssert(otherVideoUri);
+        } finally {
+            otherVideoFile.delete();
         }
     }
 

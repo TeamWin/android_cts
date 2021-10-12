@@ -179,6 +179,26 @@ public class ScopedStorageHostTest extends BaseHostTestCase {
     }
 
     @Test
+    public void testFileManagerCanTrashOtherAndroidMediaFiles() throws Exception {
+        allowAppOps("android:manage_external_storage");
+        try {
+            runDeviceTest("testFileManagerCanTrashOtherAndroidMediaFiles");
+        } finally {
+            denyAppOps("android:manage_external_storage");
+        }
+    }
+
+    @Test
+    public void testFileManagerCanUpdateOtherAndroidMediaFiles() throws Exception {
+        allowAppOps("android:manage_external_storage");
+        try {
+            runDeviceTest("testFileManagerCanUpdateOtherAndroidMediaFiles");
+        } finally {
+            denyAppOps("android:manage_external_storage");
+        }
+    }
+
+    @Test
     public void testOpenOtherPendingFilesFromFuse() throws Exception {
         grantPermissions("android.permission.READ_EXTERNAL_STORAGE");
         try {
