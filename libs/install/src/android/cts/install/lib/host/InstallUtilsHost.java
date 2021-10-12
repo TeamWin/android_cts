@@ -39,6 +39,7 @@ import com.google.common.base.Stopwatch;
 import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
+import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -187,13 +188,12 @@ public class InstallUtilsHost {
     public File getTestFile(String testFileName) throws IOException {
         File testFile = null;
 
-        String testcasesPath = System.getenv(
-                SystemUtil.EnvVariable.ANDROID_HOST_OUT_TESTCASES.toString());
-        if (testcasesPath != null) {
-            testFile = searchTestFile(new File(testcasesPath), testFileName);
-        }
-        if (testFile != null) {
-            return testFile;
+        final List<File> testCasesDirs = SystemUtil.getTestCasesDirs(getTestInfo().getBuildInfo());
+        for (File testCasesDir : testCasesDirs) {
+            testFile = searchTestFile(testCasesDir, testFileName);
+            if (testFile != null) {
+                return testFile;
+            }
         }
 
         File hostLinkedDir = getTestInfo().getBuildInfo().getFile(
