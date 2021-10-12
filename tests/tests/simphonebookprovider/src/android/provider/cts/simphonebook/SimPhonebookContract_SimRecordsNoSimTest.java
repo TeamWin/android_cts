@@ -32,7 +32,6 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
-import android.platform.test.annotations.Presubmit;
 import android.provider.SimPhonebookContract;
 import android.provider.SimPhonebookContract.ElementaryFiles;
 import android.provider.SimPhonebookContract.SimRecords;
@@ -73,7 +72,6 @@ public class SimPhonebookContract_SimRecordsNoSimTest {
     }
 
     @Test
-    @Presubmit
     public void getType_recordsDir() {
         assertThat(
                 mResolver.getType(SimRecords.getContentUri(1, ElementaryFiles.EF_ADN))).isEqualTo(
@@ -87,7 +85,6 @@ public class SimPhonebookContract_SimRecordsNoSimTest {
     }
 
     @Test
-    @Presubmit
     public void getType_recordItem() {
         assertThat(
                 mResolver.getType(SimRecords.getItemUri(1, ElementaryFiles.EF_ADN, 3))).isEqualTo(
@@ -101,7 +98,6 @@ public class SimPhonebookContract_SimRecordsNoSimTest {
     }
 
     @Test
-    @Presubmit
     public void getType_invalidUri_returnsNull() {
         assertThat(mResolver.getType(
                 SimRecords.getContentUri(1, ElementaryFiles.EF_ADN).buildUpon().appendPath(
@@ -109,7 +105,6 @@ public class SimPhonebookContract_SimRecordsNoSimTest {
     }
 
     @Test
-    @Presubmit
     public void query_nonExistentSim_throwsIllegalArgumentException() {
         IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
                 () -> query(SimRecords.getContentUri(MISSING_SIM_SUBSCRIPTION_ID, EF_ADN), null)
@@ -128,7 +123,6 @@ public class SimPhonebookContract_SimRecordsNoSimTest {
     }
 
     @Test
-    @Presubmit
     public void query_invalidUri_throwsIllegalArgumentException() {
         assertThrows(IllegalArgumentException.class, () -> query(SimRecords.getContentUri(1,
                 EF_ADN).buildUpon().appendPath("invalid").build(), null)
@@ -136,7 +130,6 @@ public class SimPhonebookContract_SimRecordsNoSimTest {
     }
 
     @Test
-    @Presubmit
     public void query_subscriptionIdOverflow_throwsIllegalArgumentException() {
         assertThrows(IllegalArgumentException.class, () ->
                 query(SimPhonebookContract.AUTHORITY_URI.buildUpon()
@@ -156,7 +149,6 @@ public class SimPhonebookContract_SimRecordsNoSimTest {
     }
 
     @Test
-    @Presubmit
     public void insert_nonAdnDirUris_throwsUnsupportedOperationException() {
         ContentValues values = new ContentValues();
         values.put(SimRecords.NAME, "Name");
@@ -191,7 +183,6 @@ public class SimPhonebookContract_SimRecordsNoSimTest {
     }
 
     @Test
-    @Presubmit
     public void insertAdn_throwsCorrectException() {
         ContentValues values = new ContentValues();
         values.put(SimRecords.PHONE_NUMBER, "5550101");
@@ -204,7 +195,6 @@ public class SimPhonebookContract_SimRecordsNoSimTest {
     }
 
     @Test
-    @Presubmit
     public void updateAdn_throwsCorrectException() {
         ContentValues values = new ContentValues();
         values.put(SimRecords.PHONE_NUMBER, "5550101");
@@ -217,7 +207,6 @@ public class SimPhonebookContract_SimRecordsNoSimTest {
     }
 
     @Test
-    @Presubmit
     public void deleteAdn_throwsCorrectException() {
         IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () ->
                 mResolver.delete(SimRecords.getItemUri(
@@ -227,13 +216,11 @@ public class SimPhonebookContract_SimRecordsNoSimTest {
     }
 
     @Test
-    @Presubmit
     public void getEncodedNameLength_emptyName() {
         assertThat(SimRecords.getEncodedNameLength(mResolver, "")).isEqualTo(0);
     }
 
     @Test
-    @Presubmit
     public void getEncodedNameLength_basicGsm() {
         // This isn't actually exhaustive of all the basic GSM alphabet characters but
         // it's pretty good coverage. These should all require 1 byte each when encoded.
@@ -243,7 +230,6 @@ public class SimPhonebookContract_SimRecordsNoSimTest {
     }
 
     @Test
-    @Presubmit
     public void getEncodedNameLength_ucsEncodable() {
         String name = "日本";
         // This won't use GMS alphabet so at minimum it will need to use a byte to indicate the

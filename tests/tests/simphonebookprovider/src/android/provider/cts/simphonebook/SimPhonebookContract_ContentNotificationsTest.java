@@ -34,7 +34,6 @@ import android.database.ContentObserver;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
-import android.platform.test.annotations.Presubmit;
 import android.provider.SimPhonebookContract;
 import android.provider.SimPhonebookContract.ElementaryFiles;
 import android.telephony.SubscriptionInfo;
@@ -109,7 +108,6 @@ public class SimPhonebookContract_ContentNotificationsTest {
     }
 
     @Test
-    @Presubmit
     public void insert_notifiesObserver() throws Exception {
         ContentValues values = new ContentValues();
         values.put(SimPhonebookContract.SimRecords.PHONE_NUMBER, "5550101");
@@ -121,7 +119,6 @@ public class SimPhonebookContract_ContentNotificationsTest {
     }
 
     @Test
-    @Presubmit
     public void update_notifiesObserver() throws Exception {
         ContentValues values = new ContentValues();
         values.put(SimPhonebookContract.SimRecords.PHONE_NUMBER, "5550101");
@@ -140,7 +137,6 @@ public class SimPhonebookContract_ContentNotificationsTest {
     }
 
     @Test
-    @Presubmit
     public void delete_notifiesObserver() throws Exception {
         ContentValues values = new ContentValues();
         values.put(SimPhonebookContract.SimRecords.PHONE_NUMBER, "5550101");
@@ -157,7 +153,6 @@ public class SimPhonebookContract_ContentNotificationsTest {
                 DEFAULT_TIMEOUT, () -> mObserver.observed.size() > 1);
     }
 
-    // Not presubmit because this one is kind of flaky
     @Test
     public void subscriptionsChange_notifiesObserver() throws Exception {
         assumeThat(mSubscriptionInfo, Matchers.notNullValue());
