@@ -241,6 +241,8 @@ public class TvContractTest extends AndroidTestCase {
         values.put(PreviewPrograms.COLUMN_REVIEW_RATING_STYLE,
                 PreviewPrograms.REVIEW_RATING_STYLE_STARS);
         values.put(PreviewPrograms.COLUMN_REVIEW_RATING, "4.5");
+        values.put(PreviewPrograms.COLUMN_START_TIME_UTC_MILLIS, 1600000000);
+        values.put(PreviewPrograms.COLUMN_END_TIME_UTC_MILLIS, 1603600000);
         values.put(WatchNextPrograms.COLUMN_CONTENT_ID, "CID-125-6335");
 
         return values;
@@ -793,6 +795,9 @@ public class TvContractTest extends AndroidTestCase {
             verifyIntegerColumn(cursor, expectedValues, PreviewPrograms.COLUMN_INTERACTION_COUNT);
             verifyStringColumn(cursor, expectedValues, PreviewPrograms.COLUMN_AUTHOR);
             verifyIntegerColumn(cursor, expectedValues, PreviewPrograms.COLUMN_REVIEW_RATING_STYLE);
+            verifyIntegerColumn(cursor, expectedValues,
+                    PreviewPrograms.COLUMN_START_TIME_UTC_MILLIS);
+            verifyIntegerColumn(cursor, expectedValues, PreviewPrograms.COLUMN_END_TIME_UTC_MILLIS);
             verifyStringColumn(cursor, expectedValues, PreviewPrograms.COLUMN_REVIEW_RATING);
         }
     }
