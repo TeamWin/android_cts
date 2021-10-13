@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.telephony.sdk28.cts;
+package android.telephony3.cts;
 
 import static androidx.test.InstrumentationRegistry.getContext;
 
@@ -50,7 +50,7 @@ public class PhoneStateListenerTest {
     @Before
     public void setUp() throws Exception {
         mTelephonyManager =
-                (TelephonyManager)getContext().getSystemService(Context.TELEPHONY_SERVICE);
+                (TelephonyManager) getContext().getSystemService(Context.TELEPHONY_SERVICE);
 
         PackageManager packageManager = getContext().getPackageManager();
         if (packageManager != null) {
@@ -88,7 +88,7 @@ public class PhoneStateListenerTest {
                 mListener = new PhoneStateListener() {
                     @Override
                     public void onServiceStateChanged(ServiceState serviceState) {
-                        synchronized(mLock) {
+                        synchronized (mLock) {
                             mOnServiceStateChangedCalled = true;
                             mLock.notify();
                         }
@@ -104,7 +104,7 @@ public class PhoneStateListenerTest {
         t.start();
 
         synchronized (mLock) {
-            if (!mOnServiceStateChangedCalled){
+            if (!mOnServiceStateChangedCalled) {
                 mLock.wait(WAIT_TIME);
             }
         }
@@ -118,7 +118,7 @@ public class PhoneStateListenerTest {
             mTelephonyManager.listen(mListener, PhoneStateListener.LISTEN_NONE);
         }
         synchronized (mLock) {
-            if (!mOnServiceStateChangedCalled){
+            if (!mOnServiceStateChangedCalled) {
                 mLock.wait(WAIT_TIME);
             }
         }
@@ -127,7 +127,7 @@ public class PhoneStateListenerTest {
         // re-register the listener
         mTelephonyManager.listen(mListener, PhoneStateListener.LISTEN_SERVICE_STATE);
         synchronized (mLock) {
-            if (!mOnServiceStateChangedCalled){
+            if (!mOnServiceStateChangedCalled) {
                 mLock.wait(WAIT_TIME);
             }
         }

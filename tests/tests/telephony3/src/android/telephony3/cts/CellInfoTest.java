@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.telephony.sdk28.cts;
+package android.telephony3.cts;
 
 import static androidx.test.InstrumentationRegistry.getContext;
 
@@ -25,10 +25,7 @@ import static org.junit.Assert.fail;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.telephony.AccessNetworkConstants;
 import android.telephony.CellInfo;
-import android.telephony.NetworkRegistrationInfo;
-import android.telephony.ServiceState;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
@@ -53,17 +50,8 @@ public class CellInfoTest {
     private PackageManager mPm;
 
     private boolean isCamped() {
-        ServiceState ss = ShellIdentityUtils.invokeMethodWithShellPermissions(
-                mTm, TelephonyManager::getServiceState);
-
-        if (ss == null) return false;
-        if (ss.getState() == ServiceState.STATE_EMERGENCY_ONLY) return true;
-        List<NetworkRegistrationInfo> nris = ss.getNetworkRegistrationInfoList();
-        for (NetworkRegistrationInfo nri : nris) {
-            if (nri.getTransportType() != AccessNetworkConstants.TRANSPORT_TYPE_WWAN) continue;
-            if (nri.isRegistered()) return true;
-        }
-        return false;
+        return (mTm.getVoiceNetworkType() != TelephonyManager.NETWORK_TYPE_UNKNOWN
+                || mTm.getDataNetworkType() != TelephonyManager.NETWORK_TYPE_UNKNOWN);
     }
 
     @Before
@@ -96,7 +84,7 @@ public class CellInfoTest {
 
         final long initialTime = cellInfo.get(0).getTimeStamp();
 
-        for(int i = 0; i < MAX_WAIT_SECONDS; i++) {
+        for (int i = 0; i < MAX_WAIT_SECONDS; i++) {
             try {
                 Thread.sleep(POLL_INTERVAL_MILLIS); // 1 second
             } catch (InterruptedException ie) {
