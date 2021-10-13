@@ -71,9 +71,8 @@ public class SurfaceControlTest {
         public void surfaceDestroyed(@NonNull SurfaceHolder holder) {}
     }
 
-    private void verifyTest(SurfaceHolder.Callback callback,
-            PixelChecker pixelChecker) throws Throwable {
-        mActivity.verifyTest(callback, pixelChecker, 0 /* delayInMs */);
+    private void verifyTest(SurfaceHolder.Callback callback, PixelChecker pixelChecker) {
+        mActivity.verifyTest(callback, pixelChecker);
     }
 
     @Before
