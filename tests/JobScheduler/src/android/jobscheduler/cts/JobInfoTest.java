@@ -369,6 +369,21 @@ public class JobInfoTest extends BaseJobSchedulerTest {
         assertFalse(ji.isPrefetch());
         // Confirm JobScheduler accepts the JobInfo object.
         mJobScheduler.schedule(ji);
+
+        ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .setMinimumLatency(60_000L)
+                .setPrefetch(true)
+                .build();
+        assertTrue(ji.isPrefetch());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
+
+        // CTS naturally targets latest SDK version. Compat change should be enabled by default.
+        assertBuildFails("Modern prefetch jobs can't have a deadline",
+                new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                        .setMinimumLatency(60_000L)
+                        .setOverrideDeadline(600_000L)
+                        .setPrefetch(true));
     }
 
     public void testRequiredNetwork() {

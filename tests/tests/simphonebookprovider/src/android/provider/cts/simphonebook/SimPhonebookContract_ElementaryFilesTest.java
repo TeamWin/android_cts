@@ -30,7 +30,6 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
-import android.platform.test.annotations.Presubmit;
 import android.provider.SimPhonebookContract.ElementaryFiles;
 import android.provider.SimPhonebookContract.SimRecords;
 import android.telephony.SubscriptionInfo;
@@ -83,7 +82,6 @@ public class SimPhonebookContract_ElementaryFilesTest {
     }
 
     @Test
-    @Presubmit
     public void query_includesRowForEachElementaryFileOnEachSim() throws Exception {
         List<SubscriptionInfo> subscriptionInfos = SystemUtil.callWithShellPermissionIdentity(
                 () -> mSubscriptionManager.getActiveSubscriptionInfoList(),
@@ -158,7 +156,6 @@ public class SimPhonebookContract_ElementaryFilesTest {
     }
 
     @Test
-    @Presubmit
     public void query_nonEmptySim_countIsCorrect() {
         String[] projection = {
                 ElementaryFiles.SUBSCRIPTION_ID,
@@ -188,7 +185,6 @@ public class SimPhonebookContract_ElementaryFilesTest {
     }
 
     @Test
-    @Presubmit
     public void query_adnItemUri_returnsCorrectRow() {
         try (Cursor cursor = query(
                 ElementaryFiles.getItemUri(mValidSubscriptionId, ElementaryFiles.EF_ADN),
@@ -201,7 +197,6 @@ public class SimPhonebookContract_ElementaryFilesTest {
     }
 
     @Test
-    @Presubmit
     public void query_fdnItemUri_returnsCorrectRow() {
         try (Cursor cursor = query(
                 ElementaryFiles.getItemUri(mValidSubscriptionId, ElementaryFiles.EF_FDN),
