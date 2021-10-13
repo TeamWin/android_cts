@@ -28,7 +28,6 @@ import android.compat.testing.SharedLibraryInfo;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.tradefed.device.DeviceNotAvailableException;
-import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
@@ -39,10 +38,10 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 
-import org.jf.dexlib2.iface.ClassDef;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Set;
 
@@ -394,26 +393,24 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
     private Multimap<String, String> getDuplicateClasses(ImmutableCollection<String> jars)
             throws Exception {
         final Multimap<String, String> allClasses = HashMultimap.create();
-        for (String jar : jars) {
-            ImmutableSet<ClassDef> classes = Classpaths.getClassDefsFromJar(getDevice(), jar);
-            for (ClassDef classDef : classes) {
-                // No need to worry about inner classes, as they always go with their parent.
-                if (!classDef.getType().contains("$")) {
-                    allClasses.put(classDef.getType(), jar);
-                }
-            }
-        }
-
-        final Multimap<String, String> duplicates = HashMultimap.create();
-        for (String clazz : allClasses.keySet()) {
-            Collection<String> jarsWithClazz = allClasses.get(clazz);
-            if (jarsWithClazz.size() > 1) {
-                CLog.w("Class %s is duplicated in %s;", clazz, jarsWithClazz);
-                duplicates.putAll(clazz, jarsWithClazz);
-            }
-        }
-
-        return duplicates;
+        jars.stream()
+                .parallel()
+                .forEach(jar -> {
+                    try {
+                        Classpaths.getClassDefsFromJar(getDevice(), jar)
+                                .stream()
+                                // Inner classes always go with their parent.
+                                .filter(classDef -> !classDef.getType().contains("$"))
+                                .forEach(classDef -> {
+                                    synchronized (allClasses) {
+                                        allClasses.put(classDef.getType(), jar);
+                                    }
+                                });
+                    } catch (DeviceNotAvailableException | IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+        return Multimaps.filterKeys(allClasses, key -> allClasses.get(key).size() > 1);
     }
 
     private boolean doesFileExist(String path) {
