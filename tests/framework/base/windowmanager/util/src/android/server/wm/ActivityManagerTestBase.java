@@ -104,6 +104,7 @@ import static android.view.WindowManager.LayoutParams.TYPE_BASE_APPLICATION;
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -228,6 +229,9 @@ public abstract class ActivityManagerTestBase {
 
     private static final int UI_MODE_TYPE_MASK = 0x0f;
     private static final int UI_MODE_TYPE_VR_HEADSET = 0x07;
+
+    private static final boolean ENABLE_SHELL_TRANSITIONS =
+            SystemProperties.getBoolean("persist.debug.shell_transit", false);
 
     private static Boolean sHasHomeScreen = null;
     private static Boolean sSupportsSystemDecorsOnSecondaryDisplays = null;
@@ -614,6 +618,12 @@ public abstract class ActivityManagerTestBase {
 
         if (mWaitForRotationOnTearDown) {
             mWmState.waitForDisplayUnfrozen();
+        }
+
+        if (ENABLE_SHELL_TRANSITIONS) {
+            if (!mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY)) {
+                fail("Shell Transition left unfinished!");
+            }
         }
     }
 
