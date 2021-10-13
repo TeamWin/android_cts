@@ -27,8 +27,6 @@ import android.os.SystemClock;
 import android.util.Log;
 
 import androidx.annotation.GuardedBy;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
 import java.io.File;
 import java.io.FileDescriptor;
@@ -40,27 +38,30 @@ import java.nio.file.Files;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class CarWatchdogTestActivity extends Activity {
+public final class CarWatchdogTestActivity extends Activity {
     private static final String TAG = CarWatchdogTestActivity.class.getSimpleName();
+    private static final String BYTES_TO_KILL = "bytes_to_kill";
     private static final long TEN_MEGABYTES = 1024 * 1024 * 10;
     private static final long TWO_HUNDRED_MEGABYTES = 1024 * 1024 * 200;
     private static final int DISK_DELAY_MS = 4000;
+    private static final double WARN_THRESHOLD_PERCENT = 0.8;
     private static final double EXCEED_WARN_THRESHOLD_PERCENT = 0.9;
 
     private final ExecutorService mExecutor = Executors.newSingleThreadExecutor();
+    private final Object mLock = new Object();
+
+    @GuardedBy("mLock")
+    private CarWatchdogManager mCarWatchdogManager;
+
     private String mDumpMessage = "";
     private Car mCar;
     private File mTestDir;
 
-    private final Object mLock = new Object();
-    @GuardedBy("mLock")
-    private CarWatchdogManager mCarWatchdogManager;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        initCarApi();
 
+        initCarApi();
         try {
             mTestDir =
                     Files.createTempDirectory(getFilesDir().toPath(), "testDir").toFile();
@@ -69,39 +70,58 @@ public class CarWatchdogTestActivity extends Activity {
             finish();
             return;
         }
-
         mExecutor.execute(
                 () -> {
                     synchronized (mLock) {
-                        IoOveruseListener listener = addResourceOveruseListenerLocked();
-                        try {
-                            if (!writeToDisk(TEN_MEGABYTES)) {
-                                finish();
-                                return;
-                            }
+                        if (mCarWatchdogManager == null) {
+                            Log.e(TAG, "CarWatchdogManager is null.");
+                            finish();
+                            return;
+                        }
+                    }
+                    IoOveruseListener listener = addResourceOveruseListener();
+                    try {
+                        if (!writeToDisk(TEN_MEGABYTES)) {
+                            finish();
+                            return;
+                        }
 
-                            long remainingBytes = fetchRemainingBytesLocked(TEN_MEGABYTES);
-                            if (remainingBytes == 0) {
-                                finish();
-                                return;
-                            }
+                        long remainingBytes = fetchRemainingBytes(TEN_MEGABYTES);
+                        if (remainingBytes == 0) {
+                            Log.d(TAG, "Remaining bytes is 0 after writing " + TEN_MEGABYTES
+                                    + " bytes to disk.");
+                            finish();
+                            return;
+                        }
 
-                            long bytesToExceedWarnThreshold =
-                                    (long) Math.ceil(remainingBytes
-                                            * EXCEED_WARN_THRESHOLD_PERCENT);
+                        /*
+                         * Warning notification is received as soon as exceeding
+                         * |WARN_THRESHOLD_PERCENT|. So, set expected minimum written bytes to
+                         * |WARN_THRESHOLD_PERCENT| of the overuse threshold.
+                         */
+                        long bytesToWarnThreshold =
+                                (long) (TWO_HUNDRED_MEGABYTES * WARN_THRESHOLD_PERCENT);
 
-                            listener.setExpectedMinWrittenBytes(
-                                    TEN_MEGABYTES + bytesToExceedWarnThreshold);
+                        listener.setExpectedMinWrittenBytes(bytesToWarnThreshold);
 
-                            if (!writeToDisk(bytesToExceedWarnThreshold)) {
-                                finish();
-                                return;
-                            }
+                        long bytesToExceedWarnThreshold =
+                                (long) Math.ceil(remainingBytes
+                                        * EXCEED_WARN_THRESHOLD_PERCENT);
 
-                            listener.checkIsNotified();
-                        } finally {
+                        if (!writeToDisk(bytesToExceedWarnThreshold)) {
+                            finish();
+                            return;
+                        }
+
+                        listener.checkIsNotified();
+                    } finally {
+                        synchronized (mLock) {
                             mCarWatchdogManager.removeResourceOveruseListener(listener);
                         }
+                        /* Foreground mode bytes dumped after removing listener to ensure hostside
+                         * receives dump message after test is finished.
+                         */
+                        listener.dumpForegroundModeBytes();
                     }
                 });
     }
@@ -109,20 +129,28 @@ public class CarWatchdogTestActivity extends Activity {
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
+
         setDumpMessage("");
         Bundle extras = intent.getExtras();
         if (extras == null) {
             Log.w(TAG, "onNewIntent: empty extras");
             return;
         }
-        long remainingBytes = extras.getLong("bytes_to_kill");
+        long remainingBytes = extras.getLong(BYTES_TO_KILL);
         Log.d(TAG, "Bytes to kill: " + remainingBytes);
         if (remainingBytes == 0) {
             Log.w(TAG, "onNewIntent: remaining bytes is 0");
             return;
         }
         mExecutor.execute(() -> {
-            IoOveruseListener listener = addResourceOveruseListenerLocked();
+            synchronized (mLock) {
+                if (mCarWatchdogManager == null) {
+                    Log.e(TAG, "onNewIntent: CarWatchdogManager is null.");
+                    finish();
+                    return;
+                }
+            }
+            IoOveruseListener listener = addResourceOveruseListener();
             try {
                 listener.setExpectedMinWrittenBytes(TWO_HUNDRED_MEGABYTES);
 
@@ -130,15 +158,20 @@ public class CarWatchdogTestActivity extends Activity {
 
                 listener.checkIsNotified();
             } finally {
-                mCarWatchdogManager.removeResourceOveruseListener(listener);
+                synchronized (mLock) {
+                    mCarWatchdogManager.removeResourceOveruseListener(listener);
+                }
+                /* Foreground mode bytes dumped after removing listener to ensure hostside
+                 * receives dump message after test is finished.
+                 */
+                listener.dumpForegroundModeBytes();
             }
         });
     }
 
     @Override
-    public void dump(@NonNull String prefix, @Nullable FileDescriptor fd,
-            @NonNull PrintWriter writer, @Nullable String[] args) {
-        writer.println(String.format("%s: %s\n", TAG, mDumpMessage));
+    public void dump(String prefix, FileDescriptor fd, PrintWriter writer, String[] args) {
+        writer.printf("%s: %s\n", TAG, mDumpMessage);
     }
 
     @Override
@@ -146,6 +179,7 @@ public class CarWatchdogTestActivity extends Activity {
         if (mCar != null) {
             mCar.disconnect();
         }
+
         super.onDestroy();
     }
 
@@ -171,11 +205,12 @@ public class CarWatchdogTestActivity extends Activity {
         }
     }
 
-    @GuardedBy("mLock")
-    private IoOveruseListener addResourceOveruseListenerLocked() {
+    private IoOveruseListener addResourceOveruseListener() {
         IoOveruseListener listener = new IoOveruseListener();
-        mCarWatchdogManager.addResourceOveruseListener(getMainExecutor(),
-                CarWatchdogManager.FLAG_RESOURCE_OVERUSE_IO, listener);
+        synchronized (mLock) {
+            mCarWatchdogManager.addResourceOveruseListener(getMainExecutor(),
+                    CarWatchdogManager.FLAG_RESOURCE_OVERUSE_IO, listener);
+        }
         return listener;
     }
 
@@ -213,11 +248,11 @@ public class CarWatchdogTestActivity extends Activity {
             try {
                 fos.write(new byte[writeSize]);
             } catch (InterruptedIOException e) {
-                e.printStackTrace();
+                Log.d(TAG, "Exception while writing to file", e);
                 Thread.currentThread().interrupt();
                 return writtenSize;
             } catch (IOException e) {
-                e.printStackTrace();
+                Log.d(TAG, "Exception while writing to file", e);
                 return writtenSize;
             }
             writtenSize += writeSize;
@@ -230,13 +265,13 @@ public class CarWatchdogTestActivity extends Activity {
         return writtenSize;
     }
 
-    @GuardedBy("mLock")
-    private long fetchRemainingBytesLocked(long minWrittenBytes) {
-        ResourceOveruseStats stats =
-                mCarWatchdogManager.getResourceOveruseStats(
-                        CarWatchdogManager.FLAG_RESOURCE_OVERUSE_IO,
-                        CarWatchdogManager.STATS_PERIOD_CURRENT_DAY);
-
+    private long fetchRemainingBytes(long minWrittenBytes) {
+        ResourceOveruseStats stats;
+        synchronized (mLock) {
+            stats = mCarWatchdogManager.getResourceOveruseStats(
+                    CarWatchdogManager.FLAG_RESOURCE_OVERUSE_IO,
+                    CarWatchdogManager.STATS_PERIOD_CURRENT_DAY);
+        }
         IoOveruseStats ioOveruseStats = stats.getIoOveruseStats();
         if (ioOveruseStats == null) {
             setDumpMessage(
@@ -273,12 +308,15 @@ public class CarWatchdogTestActivity extends Activity {
         private final Object mLock = new Object();
         @GuardedBy("mLock")
         private boolean mNotificationReceived;
+        @GuardedBy("mLock")
+        private long mForegroundModeBytes;
 
         private long mExpectedMinWrittenBytes;
 
         @Override
         public void onOveruse(ResourceOveruseStats resourceOveruseStats) {
             synchronized (mLock) {
+                mForegroundModeBytes = -1;
                 mNotificationReceived = true;
                 mLock.notifyAll();
             }
@@ -297,11 +335,18 @@ public class CarWatchdogTestActivity extends Activity {
                         + "' reported in overuse notification");
                 return;
             }
-            long foregroundModeBytes =
-                    resourceOveruseStats.getIoOveruseStats().getRemainingWriteBytes()
-                            .getForegroundModeBytes();
-            // Dump the resource overuse stats
-            setDumpMessage("INFO: --Notification-- foregroundModeBytes = " + foregroundModeBytes);
+            synchronized (mLock) {
+                mForegroundModeBytes =
+                        resourceOveruseStats.getIoOveruseStats().getRemainingWriteBytes()
+                                .getForegroundModeBytes();
+            }
+        }
+
+        public void dumpForegroundModeBytes() {
+            synchronized (mLock) {
+                setDumpMessage(
+                        "INFO: --Notification-- foregroundModeBytes = " + mForegroundModeBytes);
+            }
         }
 
         public void setExpectedMinWrittenBytes(long expectedMinWrittenBytes) {
