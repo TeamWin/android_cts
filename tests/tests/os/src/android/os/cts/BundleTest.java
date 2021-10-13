@@ -54,6 +54,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -837,6 +838,61 @@ public class BundleTest {
     }
 
     @Test
+    public void testHasFileDescriptors_withParcelable() throws Exception {
+        assertTrue(mBundle.isEmpty());
+        assertFalse(mBundle.hasFileDescriptors());
+
+        mBundle.putParcelable("key", ParcelFileDescriptor.dup(FileDescriptor.in));
+        assertTrue(mBundle.hasFileDescriptors());
+
+        mBundle.putParcelable("key", new CustomParcelable(13, "Tiramisu"));
+        assertFalse(mBundle.hasFileDescriptors());
+    }
+
+    @Test
+    public void testHasFileDescriptors_withStringArray() throws Exception {
+        assertTrue(mBundle.isEmpty());
+        assertFalse(mBundle.hasFileDescriptors());
+
+        mBundle.putStringArray("key", new String[] { "string" });
+        assertFalse(mBundle.hasFileDescriptors());
+    }
+
+    @Test
+    public void testHasFileDescriptors_withSparseArray() throws Exception {
+        assertTrue(mBundle.isEmpty());
+        assertFalse(mBundle.hasFileDescriptors());
+
+        SparseArray<Parcelable> fdArray = new SparseArray<>();
+        fdArray.append(0, ParcelFileDescriptor.dup(FileDescriptor.in));
+        mBundle.putSparseParcelableArray("key", fdArray);
+        assertTrue(mBundle.hasFileDescriptors());
+
+        SparseArray<Parcelable> noFdArray = new SparseArray<>();
+        noFdArray.append(0, new CustomParcelable(13, "Tiramisu"));
+        mBundle.putSparseParcelableArray("key", noFdArray);
+        assertFalse(mBundle.hasFileDescriptors());
+
+        SparseArray<Parcelable> emptyArray = new SparseArray<>();
+        mBundle.putSparseParcelableArray("key", emptyArray);
+        assertFalse(mBundle.hasFileDescriptors());
+    }
+
+    @Test
+    public void testHasFileDescriptors_withParcelableArray() throws Exception {
+        assertTrue(mBundle.isEmpty());
+        assertFalse(mBundle.hasFileDescriptors());
+
+        mBundle.putParcelableArray("key",
+                new Parcelable[] { ParcelFileDescriptor.dup(FileDescriptor.in) });
+        assertTrue(mBundle.hasFileDescriptors());
+
+        mBundle.putParcelableArray("key",
+                new Parcelable[] { new CustomParcelable(13, "Tiramisu") });
+        assertFalse(mBundle.hasFileDescriptors());
+    }
+
+    @Test
     public void testHasFileDescriptorsOnNullValuedCollection() {
         assertFalse(mBundle.hasFileDescriptors());
 
@@ -855,6 +911,23 @@ public class BundleTest {
         mBundle.putParcelableArrayList("baz", arrayList);
         assertFalse(mBundle.hasFileDescriptors());
         mBundle.clear();
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testHasFileDescriptors_withNestedContainers() throws IOException {
+        // Purposely omitting generic types here, this is still "valid" app code after all.
+        ArrayList nested = new ArrayList(
+                Arrays.asList(Arrays.asList(ParcelFileDescriptor.dup(FileDescriptor.in))));
+        mBundle.putParcelableArrayList("list", nested);
+        assertTrue(mBundle.hasFileDescriptors());
+
+        roundtrip(/* parcel */ false);
+        assertTrue(mBundle.hasFileDescriptors());
+
+        mBundle.isEmpty(); // Triggers partial deserialization (leaving lazy values)
+        mBundle.remove("unexistent"); // Removes cached value (removes FLAG_HAS_FDS_KNOWN)
+        assertTrue(mBundle.hasFileDescriptors()); // Checks lazy value
     }
 
     @Test
