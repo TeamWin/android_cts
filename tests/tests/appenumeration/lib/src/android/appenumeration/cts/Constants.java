@@ -213,6 +213,8 @@ public class Constants {
             PKG_BASE + "cts.action.AWAIT_PACKAGES_SUSPENDED";
     public static final String ACTION_LAUNCHER_APPS_IS_ACTIVITY_ENABLED =
             PKG_BASE + "cts.action.LAUNCHER_APPS_IS_ACTIVITY_ENABLED";
+    public static final String ACTION_LAUNCHER_APPS_GET_SUSPENDED_PACKAGE_LAUNCHER_EXTRAS =
+            PKG_BASE + "cts.action.LAUNCHER_APPS_GET_SUSPENDED_PACKAGE_LAUNCHER_EXTRAS";
     public static final String ACTION_AWAIT_LAUNCHER_APPS_CALLBACK =
             PKG_BASE + "cts.action.AWAIT_LAUNCHER_APPS_CALLBACK";
     public static final String ACTION_GET_SHAREDLIBRARY_DEPENDENT_PACKAGES =

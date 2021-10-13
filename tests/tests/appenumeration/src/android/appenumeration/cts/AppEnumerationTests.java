@@ -40,6 +40,7 @@ import static android.appenumeration.cts.Constants.ACTION_GET_SYNCADAPTER_PACKAG
 import static android.appenumeration.cts.Constants.ACTION_GET_SYNCADAPTER_TYPES;
 import static android.appenumeration.cts.Constants.ACTION_HAS_SIGNING_CERTIFICATE;
 import static android.appenumeration.cts.Constants.ACTION_JUST_FINISH;
+import static android.appenumeration.cts.Constants.ACTION_LAUNCHER_APPS_GET_SUSPENDED_PACKAGE_LAUNCHER_EXTRAS;
 import static android.appenumeration.cts.Constants.ACTION_LAUNCHER_APPS_IS_ACTIVITY_ENABLED;
 import static android.appenumeration.cts.Constants.ACTION_LAUNCHER_APPS_SHOULD_HIDE_FROM_SUGGESTIONS;
 import static android.appenumeration.cts.Constants.ACTION_MANIFEST_ACTIVITY;
@@ -1731,6 +1732,32 @@ public class AppEnumerationTests {
     }
 
     @Test
+    public void launcherAppsGetSuspendedPackageLauncherExtras_queriesNothingHasPerm_canGetExtras()
+            throws Exception {
+        try {
+            setPackagesSuspendedWithLauncherExtras(/* suspend */ true,
+                    Arrays.asList(TARGET_NO_API), /* extras */ true);
+            Assert.assertNotNull(launcherAppsGetSuspendedPackageLauncherExtras(QUERIES_NOTHING_PERM,
+                            TARGET_NO_API));
+        } finally {
+            setPackagesSuspended(/* suspend */ false, Arrays.asList(TARGET_NO_API));
+        }
+    }
+
+    @Test
+    public void launcherAppsGetSuspendedPackageLauncherExtras_queriesNothing_cannotGetExtras()
+            throws Exception {
+        try {
+            setPackagesSuspendedWithLauncherExtras(/* suspend */ true,
+                    Arrays.asList(TARGET_NO_API), /* extras */ true);
+            Assert.assertNull(launcherAppsGetSuspendedPackageLauncherExtras(QUERIES_NOTHING,
+                    TARGET_NO_API));
+        } finally {
+            setPackagesSuspended(/* suspend */ false, Arrays.asList(TARGET_NO_API));
+        }
+    }
+
+    @Test
     public void launcherAppsShouldHideFromSuggestions_queriesPackage_canSeeNoApi()
             throws Exception {
         setDistractingPackageRestrictions(new String[]{TARGET_NO_API},
@@ -2204,6 +2231,11 @@ public class AppEnumerationTests {
     }
 
     private void setPackagesSuspended(boolean suspend, List<String> packages) {
+        setPackagesSuspendedWithLauncherExtras(suspend, packages, /* persistableBundle */ false);
+    }
+
+    private void setPackagesSuspendedWithLauncherExtras(boolean suspend, List<String> packages,
+            boolean extras) {
         final StringBuilder cmd = new StringBuilder("pm ");
         if (suspend) {
             cmd.append("suspend");
@@ -2211,6 +2243,9 @@ public class AppEnumerationTests {
             cmd.append("unsuspend");
         }
         cmd.append(" --user cur");
+        if (extras) {
+            cmd.append(" --les foo bar");
+        }
         packages.stream().forEach(p -> cmd.append(" ").append(p));
         runShellCommand(cmd.toString());
     }
@@ -2222,6 +2257,13 @@ public class AppEnumerationTests {
         final Bundle response = sendCommandBlocking(sourcePackageName, /* targetPackageName */ null,
                 extraData, ACTION_LAUNCHER_APPS_IS_ACTIVITY_ENABLED);
         return response.getBoolean(Intent.EXTRA_RETURN_RESULT);
+    }
+
+    private Bundle launcherAppsGetSuspendedPackageLauncherExtras(String sourcePackageName,
+            String targetPackageName) throws Exception {
+        final Bundle response = sendCommandBlocking(sourcePackageName, targetPackageName,
+                /* extraData */ null, ACTION_LAUNCHER_APPS_GET_SUSPENDED_PACKAGE_LAUNCHER_EXTRAS);
+        return response.getBundle(Intent.EXTRA_RETURN_RESULT);
     }
 
     private String[] getSharedLibraryDependentPackages(String sourcePackageName) throws Exception {
