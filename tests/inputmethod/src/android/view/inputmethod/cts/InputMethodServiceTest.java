@@ -18,6 +18,8 @@ package android.view.inputmethod.cts;
 
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
+import static android.view.Display.DEFAULT_DISPLAY;
+import static android.view.WindowManager.DISPLAY_IME_POLICY_LOCAL;
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN;
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE;
 import static android.view.inputmethod.cts.util.InputMethodVisibilityVerifier.expectImeInvisible;
@@ -31,6 +33,7 @@ import static com.android.cts.mockime.ImeEventStreamTestUtils.editorMatcher;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectCommand;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEventWithKeyValue;
+import static com.android.cts.mockime.ImeEventStreamTestUtils.expectNoImeCrash;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.notExpectEvent;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.verificationMatcher;
 
@@ -57,6 +60,7 @@ import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputConnectionWrapper;
 import android.view.inputmethod.InputMethodManager;
 import android.view.inputmethod.cts.util.EndToEndImeTestBase;
+import android.view.inputmethod.cts.util.SimulatedVirtualDisplaySession;
 import android.view.inputmethod.cts.util.TestActivity;
 import android.view.inputmethod.cts.util.TestActivity2;
 import android.view.inputmethod.cts.util.TestUtils;
@@ -98,6 +102,8 @@ import java.util.function.Predicate;
 public class InputMethodServiceTest extends EndToEndImeTestBase {
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(20);
     private static final long EXPECTED_TIMEOUT = TimeUnit.SECONDS.toMillis(2);
+    private static final long ACTIVITY_LAUNCH_INTERVAL = 500;  // msec
+
 
     private static final String ERASE_FONT_SCALE_CMD = "settings delete system font_scale";
     // 1.2 is an arbitrary value.
@@ -126,11 +132,15 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
     }
 
-    private TestActivity createTestActivity(final int windowFlags) {
+    private TestActivity createTestActivity(int windowFlags) {
         return TestActivity.startSync(activity -> createLayout(windowFlags, activity));
     }
 
-    private TestActivity createTestActivity2(final int windowFlags) {
+    private TestActivity createTestActivity(int windowFlags, int displayId) throws Exception {
+        return TestActivity.startSync(displayId, activity -> createLayout(windowFlags, activity));
+    }
+
+    private TestActivity createTestActivity2(int windowFlags) {
         return TestActivity2.startSync(activity -> createLayout(windowFlags, activity));
     }
 
@@ -727,6 +737,24 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
             // Verify if InputMethodService#isUiContext returns true
             notExpectEvent(forkedStream, event -> "onConfigurationChanged".equals(
                     event.getEventName()), EXPECTED_TIMEOUT);
+        }
+    }
+
+    @Test
+    public void testNoExceptionWhenSwitchingDisplaysWithImeReCreate() throws Exception {
+        try (SimulatedVirtualDisplaySession displaySession = SimulatedVirtualDisplaySession.create(
+                mInstrumentation.getContext(), 800, 600, 240, DISPLAY_IME_POLICY_LOCAL);
+                     MockImeSession imeSession = MockImeSession.create(
+                             mInstrumentation.getContext(), mInstrumentation.getUiAutomation(),
+                             new ImeSettings.Builder())) {
+            // Launch activity repeatedly with re-create / showing IME on different displays
+            for (int i = 0; i < 10; i++) {
+                int displayId = (i % 2 == 0) ? displaySession.getDisplayId() : DEFAULT_DISPLAY;
+                createTestActivity(SOFT_INPUT_STATE_ALWAYS_VISIBLE, displayId);
+                SystemClock.sleep(ACTIVITY_LAUNCH_INTERVAL);
+            }
+            // Verify no crash and onCreate / onDestroy keeps paired from MockIme event stream
+            expectNoImeCrash(imeSession, TIMEOUT);
         }
     }
 
