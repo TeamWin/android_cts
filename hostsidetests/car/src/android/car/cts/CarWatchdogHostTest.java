@@ -34,29 +34,20 @@ import java.util.regex.Pattern;
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class CarWatchdogHostTest extends CarHostJUnit4TestCase {
     /**
+     * CarWatchdog app package.
+     */
+    protected static final String WATCHDOG_APP_PKG = "android.car.cts.watchdog.sharedapp";
+
+    /**
+     * CarWatchdog app shared user id.
+     */
+    protected static final String WATCHDOG_APP_SHARED_USER_ID =
+            "android.car.cts.uid.watchdog.sharedapp";
+
+    /**
      * The class name of the main activity in the APK.
      */
-    private static final String ACTIVITY_CLASS = "CarWatchdogTestActivity";
-
-    /**
-     * The command to launch the main activity.
-     */
-    private static final String START_CMD = String.format(
-            "am start -W -a android.intent.action.MAIN -n %s/%s.%s", APP_PKG, APP_PKG,
-            ACTIVITY_CLASS);
-
-    /**
-     * The command to clear the main activity.
-     */
-    private static final String CLEAR_CMD = String.format("pm clear %s", APP_PKG);
-
-    /**
-     * The command to get PID of the application.
-     *
-     * Note: If executing the command returns an empty string, the application process is not
-     * running.
-     */
-    private static final String GET_PID_CMD = String.format("pidof %s", APP_PKG);
+    private static final String ACTIVITY_CLASS = APP_PKG + ".CarWatchdogTestActivity";
 
     /**
      * The command to start a custom performance collection with CarWatchdog.
@@ -77,7 +68,7 @@ public class CarWatchdogHostTest extends CarHostJUnit4TestCase {
      */
     private static final String RESET_RESOURCE_OVERUSE_CMD = String.format(
             "dumpsys android.automotive.watchdog.ICarWatchdog/default "
-                    + "--reset_resource_overuse_stats %s", APP_PKG);
+                    + "--reset_resource_overuse_stats %s,%s", APP_PKG, WATCHDOG_APP_SHARED_USER_ID);
 
     /**
      * The command to get I/O overuse foreground bytes threshold in the adb shell.
@@ -99,14 +90,12 @@ public class CarWatchdogHostTest extends CarHostJUnit4TestCase {
     private static final Pattern FOREGROUND_BYTES_PATTERN = Pattern.compile(
             "foregroundModeBytes = (\\d+)");
 
-    private static final long POLL_TIMEOUT_MS = 15000;
+    private static final long POLL_TIMEOUT_MS = 15_000;
 
     private long mOriginalForegroundBytes;
 
     @Before
     public void setUp() throws Exception {
-        String isClearSuccess = executeCommand(CLEAR_CMD);
-        assertWithMessage("pm clear").that(isClearSuccess.trim()).isEqualTo("Success");
         String foregroundBytesDump = executeCommand(GET_IO_OVERUSE_FOREGROUNG_BYTES_CMD);
         mOriginalForegroundBytes = parseForegroundBytesFromMessage(foregroundBytesDump);
         executeCommand("%s %d", SET_IO_OVERUSE_FOREGROUNG_BYTES_CMD, TWO_HUNDRED_MEGABYTES);
@@ -115,36 +104,44 @@ public class CarWatchdogHostTest extends CarHostJUnit4TestCase {
         executeCommand(RESET_RESOURCE_OVERUSE_CMD);
     }
 
-    @Test
-    public void testCarWatchdog() throws Exception {
-        executeCommand(START_CMD);
-        String pid = executeCommand(GET_PID_CMD);
-        assertWithMessage("pid").that(pid).isNotEmpty();
-
-        long remainingBytes = readForegroundBytesFromActivityDump();
-
-        // Send intent with amount of bytes to kill app
-        executeCommand(
-                "am start -W -a android.intent.action.MAIN -n %s/%s.%s --el bytes_to_kill %d",
-                APP_PKG, APP_PKG, ACTIVITY_CLASS, remainingBytes);
-
-        remainingBytes = readForegroundBytesFromActivityDump();
-        assertWithMessage("Application exceeded I/O overuse threshold").that(
-                remainingBytes).isEqualTo(0);
-
-        verifyTestAppKilled();
-    }
-
     @After
     public void tearDown() throws Exception {
         executeCommand(STOP_CUSTOM_PERF_COLLECTION_CMD);
         executeCommand("%s %d", SET_IO_OVERUSE_FOREGROUNG_BYTES_CMD, mOriginalForegroundBytes);
     }
 
-    private long readForegroundBytesFromActivityDump() throws Exception {
+    @Test
+    public void testCarWatchdog() throws Exception {
+        startMainActivity(APP_PKG);
+
+        long remainingBytes = readForegroundBytesFromActivityDump(APP_PKG);
+        sendBytesToKillApp(remainingBytes, APP_PKG);
+
+        remainingBytes = readForegroundBytesFromActivityDump(APP_PKG);
+        assertWithMessage("Application exceeded I/O overuse threshold")
+                .that(remainingBytes).isEqualTo(0);
+
+        verifyTestAppKilled(APP_PKG);
+    }
+
+    @Test
+    public void testCarWatchdogWithShareUserId() throws Exception {
+        startMainActivity(WATCHDOG_APP_PKG);
+
+        long remainingBytes = readForegroundBytesFromActivityDump(WATCHDOG_APP_PKG);
+        sendBytesToKillApp(remainingBytes, WATCHDOG_APP_PKG);
+
+        remainingBytes = readForegroundBytesFromActivityDump(WATCHDOG_APP_PKG);
+        assertWithMessage("Application exceeded I/O overuse threshold")
+                .that(remainingBytes).isEqualTo(0);
+
+        verifyTestAppKilled(WATCHDOG_APP_PKG);
+    }
+
+    private long readForegroundBytesFromActivityDump(String packageName) throws Exception {
         AtomicReference<String> notification = new AtomicReference<>();
         PollingCheck.check("Unable to receive notification", POLL_TIMEOUT_MS, () -> {
-            String dump = fetchActivityDumpsys();
+            String dump = fetchActivityDumpsys(packageName);
             if (dump.startsWith("INFO") && dump.contains("--Notification--")) {
                 notification.set(dump);
                 return true;
@@ -163,18 +160,16 @@ public class CarWatchdogHostTest extends CarHostJUnit4TestCase {
         throw new IllegalArgumentException("Invalid message format: " + message);
     }
 
-    private void verifyTestAppKilled() throws Exception {
+    private void verifyTestAppKilled(String packageName) throws Exception {
         PollingCheck.check("Unable to kill application", POLL_TIMEOUT_MS, () -> {
-            // Dump activity to check for logged errors.
-            // If error log found in dump, an exception is thrown.
-            fetchActivityDumpsys();
-            String pid = executeCommand(GET_PID_CMD);
-            return pid.isEmpty();
+            // Check activity dump for errors. Throws exception on error.
+            fetchActivityDumpsys(packageName);
+            return !isPackageRunning(packageName);
         });
     }
 
-    private String fetchActivityDumpsys() throws Exception {
-        String dump = executeCommand("dumpsys activity %s/.%s", APP_PKG, ACTIVITY_CLASS);
+    private String fetchActivityDumpsys(String packageName) throws Exception {
+        String dump = executeCommand("dumpsys activity %s/%s", packageName, ACTIVITY_CLASS);
         Matcher m = DUMP_PATTERN.matcher(dump);
         if (!m.find()) {
             return "";
@@ -184,5 +179,22 @@ public class CarWatchdogHostTest extends CarHostJUnit4TestCase {
             throw new Exception(message);
         }
         return message;
+    }
+
+    private void startMainActivity(String packageName) throws Exception {
+        String result = executeCommand("pm clear %s", packageName);
+        assertWithMessage("pm clear").that(result.trim()).isEqualTo("Success");
+
+        executeCommand("am start -W -a android.intent.action.MAIN -n %s/%s", packageName,
+                ACTIVITY_CLASS);
+
+        assertWithMessage("%s is running", packageName)
+                .that(isPackageRunning(packageName)).isTrue();
+    }
+
+    private void sendBytesToKillApp(long remainingBytes, String appPkg) throws Exception {
+        executeCommand(
+                "am start -W -a android.intent.action.MAIN -n %s/%s --el bytes_to_kill %d",
+                appPkg, ACTIVITY_CLASS, remainingBytes);
     }
 }
