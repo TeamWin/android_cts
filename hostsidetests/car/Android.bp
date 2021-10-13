@@ -42,5 +42,6 @@ java_test_host {
     ],
     data: [
         ":CtsCarApp",
+        ":CtsCarWatchdogSharedApp",
     ],
 }
