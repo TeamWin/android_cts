@@ -3454,6 +3454,13 @@
                        android:value="single_display_mode" />
         </activity>
 
+        <activity android:name=".wifiaware.DataPathOpenPassiveSubscribeAcceptAnyTestActivity"
+                  android:label="@string/aware_data_path_open_passive_subscribe"
+                  android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="single_display_mode" />
+        </activity>
+
         <activity android:name=".wifiaware.DataPathPassphraseUnsolicitedPublishTestActivity"
                   android:label="@string/aware_data_path_passphrase_unsolicited_publish"
                   android:configChanges="keyboardHidden|orientation|screenSize" >
@@ -3462,6 +3469,13 @@
         </activity>
 
         <activity android:name=".wifiaware.DataPathPassphrasePassiveSubscribeTestActivity"
+                  android:label="@string/aware_data_path_passphrase_passive_subscribe"
+                  android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="single_display_mode" />
+        </activity>
+
+        <activity android:name=".wifiaware.DataPathPassphrasePassiveSubscribeAcceptAnyTestActivity"
                   android:label="@string/aware_data_path_passphrase_passive_subscribe"
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
@@ -3482,6 +3496,13 @@
                        android:value="single_display_mode" />
         </activity>
 
+        <activity android:name=".wifiaware.DataPathPmkPassiveSubscribeAcceptAnyTestActivity"
+                  android:label="@string/aware_data_path_pmk_passive_subscribe"
+                  android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="single_display_mode" />
+        </activity>
+
         <activity android:name=".wifiaware.DataPathOpenSolicitedPublishTestActivity"
                   android:label="@string/aware_data_path_open_solicited_publish"
                   android:configChanges="keyboardHidden|orientation|screenSize" >
@@ -3490,6 +3511,13 @@
         </activity>
 
         <activity android:name=".wifiaware.DataPathOpenActiveSubscribeTestActivity"
+                  android:label="@string/aware_data_path_open_active_subscribe"
+                  android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="single_display_mode" />
+        </activity>
+
+        <activity android:name=".wifiaware.DataPathOpenActiveSubscribeAcceptAnyTestActivity"
                   android:label="@string/aware_data_path_open_active_subscribe"
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
@@ -3510,6 +3538,13 @@
                        android:value="single_display_mode" />
         </activity>
 
+        <activity android:name=".wifiaware.DataPathPassphraseActiveSubscribeAcceptAnyTestActivity"
+                  android:label="@string/aware_data_path_passphrase_active_subscribe"
+                  android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="single_display_mode" />
+        </activity>
+
         <activity android:name=".wifiaware.DataPathPmkSolicitedPublishTestActivity"
                   android:label="@string/aware_data_path_pmk_solicited_publish"
                   android:configChanges="keyboardHidden|orientation|screenSize" >
@@ -3518,6 +3553,13 @@
         </activity>
 
         <activity android:name=".wifiaware.DataPathPmkActiveSubscribeTestActivity"
+                  android:label="@string/aware_data_path_pmk_active_subscribe"
+                  android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="single_display_mode" />
+        </activity>
+
+        <activity android:name=".wifiaware.DataPathPmkActiveSubscribeAcceptAnyTestActivity"
                   android:label="@string/aware_data_path_pmk_active_subscribe"
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
