@@ -247,4 +247,7 @@
     <option name="compatibility:exclude-filter" value="CtsStatsdAtomHostTestCases android.cts.statsd.atom.UidAtomTests#testDangerousPermissionState" />
     <option name="compatibility:exclude-filter" value="CtsStatsdAtomHostTestCases android.cts.statsd.atom.UidAtomTests#testDangerousPermissionStateSampled" />
 
+    <!-- b/198682652 -->
+    <option name="compatibility:exclude-filter" value="CtsTelephonyTestCases android.telephony.cts.TelephonyCallbackTest#testOnLinkCapacityEstimateChangedByRegisterPhoneStateListener" />
+
 </configuration>
