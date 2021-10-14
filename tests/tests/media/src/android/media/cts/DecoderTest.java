@@ -4126,6 +4126,12 @@ public class DecoderTest extends MediaPlayerTestBase {
     }
 
     private void testTunneledAudioPtsGaps(String mimeType, String fileName) throws Exception {
+        if (!MediaUtils.check(isVideoFeatureSupported(mimeType,
+                CodecCapabilities.FEATURE_TunneledPlayback),
+                "No tunneled video playback codec found for MIME " + mimeType)) {
+            return;
+        }
+
         AudioManager am = mContext.getSystemService(AudioManager.class);
 
         mMediaCodecPlayer = new MediaCodecTunneledPlayer(mContext,
