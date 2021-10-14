@@ -227,6 +227,8 @@ public class PolicyTransparencyTestActivity extends PassFailButtons.Activity imp
             final PolicyTestItem testItem = POLICY_TEST_ITEMS.get(mTest);
             intent.putExtra(CommandReceiverActivity.EXTRA_COMMAND, testItem.command);
             intent.putExtra(CommandReceiverActivity.EXTRA_ENFORCED, isChecked);
+            intent.putExtra(CommandReceiverActivity.EXTRA_USE_CURRENT_USER_DPM,
+                    mForceCurrentUserDpm);
         }
         startActivity(intent);
     }
