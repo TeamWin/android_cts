@@ -48,12 +48,15 @@ import java.util.stream.IntStream;
  */
 public class ClasspathDeviceInfo extends DeviceInfo {
 
-    private final ITestDevice mDevice = getDevice();
-    private final DeviceSdkLevel mDeviceSdkLevel = new DeviceSdkLevel(mDevice);
     private final Object mStoreLock = new Object();
+
+    private ITestDevice mDevice;
+    private DeviceSdkLevel mDeviceSdkLevel;
 
     @Before
     public void before() throws DeviceNotAvailableException {
+        mDevice = getDevice();
+        mDeviceSdkLevel = new DeviceSdkLevel(mDevice);
         assumeTrue(mDeviceSdkLevel.isDeviceAtLeastR());
     }
 
