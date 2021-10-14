@@ -13,32 +13,45 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package android.permission3.cts
+
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
 import com.android.compatibility.common.util.SystemUtil.callWithShellPermissionIdentity
 import android.content.Intent
 import android.hardware.SensorPrivacyManager
 import android.hardware.SensorPrivacyManager.Sensors.CAMERA
 import android.hardware.SensorPrivacyManager.Sensors.MICROPHONE
+import android.location.LocationManager
+import android.os.Build
 import org.junit.Test
 import android.provider.Settings
+import androidx.test.filters.SdkSuppress
 import android.support.test.uiautomator.By
 import org.junit.Assume
 import org.junit.Before
+
 /**
  * Banner card display tests on sensors being blocked
  */
+@SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
 class SensorBlockedBannerTest : BaseUsePermissionTest() {
     companion object {
         const val LOCATION = -1
     }
+
+    val sensorPrivacyManager = context.getSystemService(SensorPrivacyManager::class.java)!!
+    val locationManager = context.getSystemService(LocationManager::class.java)!!
+
     private val permToLabel = mapOf(CAMERA to "privdash_label_camera",
             MICROPHONE to "privdash_label_microphone",
             LOCATION to "privdash_label_location")
+
     @Before
     fun install() {
         installPackage(APP_APK_PATH_31)
     }
+
     private fun navigateAndTest(sensor: Int) {
         val permLabel = permToLabel.getOrDefault(sensor, "Break")
         val intent = Intent(Settings.ACTION_PRIVACY_SETTINGS)
@@ -51,6 +64,7 @@ class SensorBlockedBannerTest : BaseUsePermissionTest() {
         pressBack()
         pressBack()
     }
+
     private fun runSensorTest(sensor: Int) {
         val blocked = isSensorPrivacyEnabled(sensor)
         if (!blocked) {
@@ -63,37 +77,43 @@ class SensorBlockedBannerTest : BaseUsePermissionTest() {
     }
     @Test
     fun testCameraCardDisplayed() {
-        Assume.assumeTrue(spm.supportsSensorToggle(CAMERA))
+        Assume.assumeTrue(sensorPrivacyManager.supportsSensorToggle(CAMERA))
         runSensorTest(CAMERA)
     }
+
     @Test
     fun testMicCardDisplayed() {
-        Assume.assumeTrue(spm.supportsSensorToggle(MICROPHONE))
+        Assume.assumeTrue(sensorPrivacyManager.supportsSensorToggle(MICROPHONE))
         runSensorTest(MICROPHONE)
     }
+
     @Test
     fun testLocationCardDisplayed() {
         runSensorTest(LOCATION)
     }
+
     private fun setSensor(sensor: Int, enable: Boolean) {
         if (sensor == LOCATION) {
             runWithShellPermissionIdentity {
-                lm.setLocationEnabledForUser(!enable, android.os.Process.myUserHandle())
+                locationManager.setLocationEnabledForUser(!enable,
+                        android.os.Process.myUserHandle())
             }
         } else {
             runWithShellPermissionIdentity {
-                spm.setSensorPrivacy(SensorPrivacyManager.Sources.OTHER, sensor, enable)
+                sensorPrivacyManager.setSensorPrivacy(SensorPrivacyManager.Sources.OTHER,
+                        sensor, enable)
             }
         }
     }
+
     private fun isSensorPrivacyEnabled(sensor: Int): Boolean {
         return if (sensor == LOCATION) {
             callWithShellPermissionIdentity {
-                !lm.isLocationEnabled()
+                !locationManager.isLocationEnabled()
             }
         } else {
             callWithShellPermissionIdentity {
-                spm.isSensorPrivacyEnabled(sensor)
+                sensorPrivacyManager.isSensorPrivacyEnabled(sensor)
             }
         }
     }
