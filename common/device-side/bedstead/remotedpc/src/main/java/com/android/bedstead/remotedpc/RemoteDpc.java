@@ -16,8 +16,11 @@
 
 package com.android.bedstead.remotedpc;
 
+import static android.os.UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES;
+
 import android.content.ComponentName;
 import android.content.Context;
+import android.os.Build;
 import android.os.UserHandle;
 
 import androidx.annotation.Nullable;
@@ -26,7 +29,9 @@ import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.devicepolicy.DeviceOwner;
 import com.android.bedstead.nene.devicepolicy.DevicePolicyController;
 import com.android.bedstead.nene.devicepolicy.ProfileOwner;
+import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.users.UserReference;
+import com.android.bedstead.nene.utils.Versions;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstanceReference;
 import com.android.bedstead.testapp.TestAppProvider;
@@ -39,7 +44,7 @@ public final class RemoteDpc extends TestAppInstanceReference {
 
     public static final ComponentName DPC_COMPONENT_NAME = new ComponentName(
             "com.android.RemoteDPC",
-            "com.android.eventlib.premade.EventLibDeviceAdminReceiver"
+            "com.android.bedstead.testapp.BaseTestAppDeviceAdminReceiver"
     );
 
     private static final TestAppProvider sTestAppProvider = new TestAppProvider();
@@ -174,7 +179,9 @@ public final class RemoteDpc extends TestAppInstanceReference {
         }
 
         ensureInstalled(TestApis.users().system());
-        return new RemoteDpc(TestApis.devicePolicy().setDeviceOwner(DPC_COMPONENT_NAME));
+        RemoteDpc remoteDpc = new RemoteDpc(
+                TestApis.devicePolicy().setDeviceOwner(DPC_COMPONENT_NAME));
+        return remoteDpc;
     }
 
     /**
@@ -189,10 +196,19 @@ public final class RemoteDpc extends TestAppInstanceReference {
 
     /**
      * Set RemoteDPC as the Profile Owner.
+     *
+     * <p>If called for Android versions prior to Q, an exception will be thrown if the user is not
+     * the instrumented user.
      */
     public static RemoteDpc setAsProfileOwner(UserReference user) {
         if (user == null) {
             throw new NullPointerException();
+        }
+
+        if (!user.equals(TestApis.users().instrumented())) {
+            if (!Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.Q)) {
+                throw new NeneException("Cannot use RemoteDPC across users prior to Q");
+            }
         }
 
         ProfileOwner profileOwner = TestApis.devicePolicy().getProfileOwner(user);
@@ -204,7 +220,14 @@ public final class RemoteDpc extends TestAppInstanceReference {
         }
 
         ensureInstalled(user);
-        return new RemoteDpc(TestApis.devicePolicy().setProfileOwner(user, DPC_COMPONENT_NAME));
+        RemoteDpc remoteDpc = new RemoteDpc(
+                TestApis.devicePolicy().setProfileOwner(user, DPC_COMPONENT_NAME));
+
+        // DISALLOW_INSTALL_UNKNOWN_SOURCES causes verification failures in work profiles
+        remoteDpc.devicePolicyManager()
+                .clearUserRestriction(remoteDpc.componentName(), DISALLOW_INSTALL_UNKNOWN_SOURCES);
+
+        return remoteDpc;
     }
 
     private static void ensureInstalled(UserReference user) {

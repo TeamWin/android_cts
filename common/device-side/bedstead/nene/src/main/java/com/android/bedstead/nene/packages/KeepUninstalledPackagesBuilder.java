@@ -79,7 +79,7 @@ public final class KeepUninstalledPackagesBuilder {
      * Add a package to the list of those which will not be cleaned up.
      */
     @CheckResult
-    public KeepUninstalledPackagesBuilder add(PackageReference pkg) {
+    public KeepUninstalledPackagesBuilder add(Package pkg) {
         mPackages.add(pkg.packageName());
         return this;
     }
@@ -96,8 +96,8 @@ public final class KeepUninstalledPackagesBuilder {
      * Add a collection of packages to the list of those which will not be cleaned up.
      */
     @CheckResult
-    public KeepUninstalledPackagesBuilder add(Collection<PackageReference> packages) {
-        for (PackageReference pkg : packages) {
+    public KeepUninstalledPackagesBuilder add(Collection<Package> packages) {
+        for (Package pkg : packages) {
             add(pkg);
         }
         return this;

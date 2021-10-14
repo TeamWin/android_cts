@@ -26,7 +26,6 @@ import android.os.PersistableBundle;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
-import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDeviceOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoProfileOwner;
 import com.android.bedstead.nene.TestApis;
@@ -98,8 +97,6 @@ public class EventLibDeviceAdminReceiverTest {
 
     @Test
     @EnsureHasNoDeviceOwner
-    // TODO(b/201313785): Auto doesn't support only having DO on user 0
-    @RequireDoesNotHaveFeature("android.hardware.type.automotive")
     public void enableDeviceOwner_logsEnabledEvent() {
         DeviceOwner deviceOwner =
                 TestApis.devicePolicy().setDeviceOwner(DEVICE_ADMIN_COMPONENT);

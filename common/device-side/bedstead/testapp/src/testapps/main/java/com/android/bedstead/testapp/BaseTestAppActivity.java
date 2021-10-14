@@ -20,6 +20,7 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.os.PersistableBundle;
 
+import com.android.bedstead.nene.utils.Poll;
 import com.android.eventlib.premade.EventLibActivity;
 
 import java.util.Map;
@@ -41,14 +42,13 @@ public class BaseTestAppActivity extends EventLibActivity {
      * <p>This method is thread-safe
      */
     public static BaseTestAppActivity findActivity(String activityClassName) {
-        synchronized (BaseTestAppActivity.class) {
-            if (!sActivities.containsKey(activityClassName)) {
-                throw new IllegalStateException("No existing activity named "
-                        + activityClassName + ". Found activities: " + sActivities.keySet());
+        return Poll.forValue("activity for className", () -> {
+            synchronized (BaseTestAppActivity.class) {
+                return sActivities.get(activityClassName);
             }
-
-            return sActivities.get(activityClassName);
-        }
+        }).toNotBeNull()
+                .errorOnFail("No existing activity named " + activityClassName)
+                .await();
     }
 
     @Override

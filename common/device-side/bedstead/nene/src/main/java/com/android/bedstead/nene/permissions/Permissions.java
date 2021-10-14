@@ -28,7 +28,6 @@ import android.util.Log;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.packages.Package;
-import com.android.bedstead.nene.packages.PackageReference;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.utils.ShellCommandUtils;
 import com.android.bedstead.nene.utils.Versions;
@@ -40,6 +39,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /** Permission manager for tests. */
 public final class Permissions {
@@ -49,19 +49,16 @@ public final class Permissions {
     public static final String MANAGE_DEVICE_ADMINS = "android.permission.MANAGE_DEVICE_ADMINS";
     public static final String NOTIFY_PENDING_SYSTEM_UPDATE =
             "android.permission.NOTIFY_PENDING_SYSTEM_UPDATE";
-
+    public static final String MANAGE_APP_OPS_MODES = "android.permission.MANAGE_APP_OPS_MODES";
+    public static final AtomicBoolean sIgnorePermissions = new AtomicBoolean(false);
     private static final String LOG_TAG = "Permissions";
-
-    private final List<PermissionContextImpl> mPermissionContexts =
-            Collections.synchronizedList(new ArrayList<>());
-    private static final TestApis sTestApis = new TestApis();
-    private static final Context sContext = sTestApis.context().instrumentedContext();
+    private static final Context sContext = TestApis.context().instrumentedContext();
     private static final PackageManager sPackageManager = sContext.getPackageManager();
-    private static final PackageReference sInstrumentedPackage =
-            sTestApis.packages().find(sContext.getPackageName());
-    private static final UserReference sUser = sTestApis.users().instrumented();
+    private static final Package sInstrumentedPackage =
+            TestApis.packages().find(sContext.getPackageName());
+    private static final UserReference sUser = TestApis.users().instrumented();
     private static final Package sShellPackage =
-            sTestApis.packages().find("com.android.shell").resolve();
+            TestApis.packages().find("com.android.shell");
     private static final Set<String> sCheckedGrantPermissions = new HashSet<>();
     private static final Set<String> sCheckedDenyPermissions = new HashSet<>();
     private static final boolean SUPPORTS_ADOPT_SHELL_PERMISSIONS =
@@ -76,13 +73,31 @@ public final class Permissions {
 
     );
 
-    // Permissions is a singleton as permission state must be application wide
     public static final Permissions sInstance = new Permissions();
 
+    private final List<PermissionContextImpl> mPermissionContexts =
+            Collections.synchronizedList(new ArrayList<>());
+    private final Set<String> mShellPermissions;
+    private final Set<String> mInstrumentedRequestedPermissions;
     private Set<String> mExistingPermissions;
 
     private Permissions() {
-
+        // Packages requires using INTERACT_ACROSS_USERS_FULL but we don't want it to rely on
+        // Permissions or it'll recurse forever - so we disable permission checks and just use
+        // shell permission adoption directly while initialising
+        sIgnorePermissions.set(true);
+        if (SUPPORTS_ADOPT_SHELL_PERMISSIONS) {
+            ShellCommandUtils.uiAutomation()
+                    .adoptShellPermissionIdentity();
+            mShellPermissions = sShellPackage.requestedPermissions();
+        } else {
+            mShellPermissions = new HashSet<>();
+        }
+        mInstrumentedRequestedPermissions = sInstrumentedPackage.requestedPermissions();
+        if (SUPPORTS_ADOPT_SHELL_PERMISSIONS) {
+            ShellCommandUtils.uiAutomation().dropShellPermissionIdentity();
+        }
+        sIgnorePermissions.set(false);
     }
 
     /**
@@ -95,7 +110,7 @@ public final class Permissions {
      * {@code
      *
      * try (PermissionContext p = mTestApis.permissions().withPermission(PERMISSION1, PERMISSION2) {
-     *     // Code which needs the permissions goes here
+     * // Code which needs the permissions goes here
      * }
      * }
      */
@@ -122,8 +137,8 @@ public final class Permissions {
      * {@code
      *
      * try (PermissionContext p =
-     *         mTestApis.permissions().withoutPermission(PERMISSION1, PERMISSION2) {
-     *     // Code which needs the permissions goes here
+     * mTestApis.permissions().withoutPermission(PERMISSION1, PERMISSION2) {
+     * // Code which needs the permissions goes here
      * }
      */
     public PermissionContextImpl withoutPermission(String... permissions) {
@@ -145,12 +160,14 @@ public final class Permissions {
     }
 
     void applyPermissions() {
+        if (sIgnorePermissions.get()) {
+            return;
+        }
+
         if (mPermissionContexts.isEmpty()) {
             restoreExistingPermissions();
             return;
         }
-
-        Package resolvedInstrumentedPackage = sInstrumentedPackage.resolve();
 
         if (SUPPORTS_ADOPT_SHELL_PERMISSIONS) {
             ShellCommandUtils.uiAutomation().dropShellPermissionIdentity();
@@ -178,20 +195,19 @@ public final class Permissions {
         // We first try to use shell permissions, because they can be revoked/etc. much more easily
 
         Set<String> adoptedShellPermissions = new HashSet<>();
-
         for (String permission : grantedPermissions) {
-            checkCanGrantOnAllSupportedVersions(permission, sUser, resolvedInstrumentedPackage);
+            checkCanGrantOnAllSupportedVersions(permission, sUser);
 
-            Log.d(LOG_TAG , "Trying to grant " + permission);
-            if (resolvedInstrumentedPackage.grantedPermissions(sUser).contains(permission)) {
+            Log.d(LOG_TAG, "Trying to grant " + permission);
+            if (sInstrumentedPackage.hasPermission(sUser, permission)) {
                 // Already granted, can skip
                 Log.d(LOG_TAG, permission + " already granted at runtime");
-            } else if (resolvedInstrumentedPackage.requestedPermissions().contains(permission)
+            } else if (mInstrumentedRequestedPermissions.contains(permission)
                     && sContext.checkSelfPermission(permission) == PERMISSION_GRANTED) {
                 // Already granted, can skip
                 Log.d(LOG_TAG, permission + " already granted from manifest");
             } else if (SUPPORTS_ADOPT_SHELL_PERMISSIONS
-                    && sShellPackage.requestedPermissions().contains(permission)) {
+                    && mShellPermissions.contains(permission)) {
                 adoptedShellPermissions.add(permission);
             } else if (canGrantPermission(permission)) {
                 sInstrumentedPackage.grantPermission(sUser, permission);
@@ -199,24 +215,22 @@ public final class Permissions {
                 removePermissionContextsUntilCanApply();
 
                 throwPermissionException("PermissionContext requires granting "
-                        + permission + " but cannot.", permission, sUser,
-                        resolvedInstrumentedPackage);
+                        + permission + " but cannot.", permission, sUser);
             }
         }
 
         for (String permission : deniedPermissions) {
-            checkCanDenyOnAllSupportedVersions(permission, sUser, resolvedInstrumentedPackage);
+            checkCanDenyOnAllSupportedVersions(permission, sUser);
 
-            if (!resolvedInstrumentedPackage.grantedPermissions(sUser).contains(permission)) {
+            if (!sInstrumentedPackage.hasPermission(sUser, permission)) {
                 // Already denied, can skip
             } else if (SUPPORTS_ADOPT_SHELL_PERMISSIONS
-                    && !sShellPackage.requestedPermissions().contains(permission)) {
+                    && !mShellPermissions.contains(permission)) {
                 adoptedShellPermissions.add(permission);
             } else { // We can't deny a permission to ourselves
                 removePermissionContextsUntilCanApply();
                 throwPermissionException("PermissionContext requires denying "
-                        + permission + " but cannot.", permission, sUser,
-                        resolvedInstrumentedPackage);
+                        + permission + " but cannot.", permission, sUser);
             }
         }
 
@@ -228,26 +242,28 @@ public final class Permissions {
     }
 
     private void checkCanGrantOnAllSupportedVersions(
-            String permission, UserReference user, Package instrumentedPackage) {
+            String permission, UserReference user) {
         if (sCheckedGrantPermissions.contains(permission)) {
             return;
         }
 
         if (Versions.isDevelopmentVersion()
-                && !sShellPackage.requestedPermissions().contains(permission)
+                && !mShellPermissions.contains(permission)
                 && !EXEMPT_SHELL_PERMISSIONS.contains(permission)) {
             throwPermissionException(permission + " is not granted to shell on latest development"
-                    + "version. You must add it to the com.android.shell manifest. If that is not"
-                    + "possible add it to"
-                    + "com.android.bedstead.nene.permissions.Permissions#EXEMPT_SHELL_PERMISSIONS",
-                    permission, user, instrumentedPackage);
+                            + "version. You must add it to the com.android.shell manifest. If "
+                            + "that is not"
+                            + "possible add it to"
+                            + "com.android.bedstead.nene.permissions"
+                            + ".Permissions#EXEMPT_SHELL_PERMISSIONS",
+                    permission, user);
         }
 
         sCheckedGrantPermissions.add(permission);
     }
 
     private void checkCanDenyOnAllSupportedVersions(
-            String permission, UserReference user, Package instrumentedPackage) {
+            String permission, UserReference user) {
         if (sCheckedDenyPermissions.contains(permission)) {
             return;
         }
@@ -256,7 +272,7 @@ public final class Permissions {
     }
 
     private void throwPermissionException(
-            String message, String permission, UserReference user, Package instrumentedPackage) {
+            String message, String permission, UserReference user) {
         String protectionLevel = "Permission not found";
         try {
             protectionLevel = Integer.toString(sPackageManager.getPermissionInfo(
@@ -269,14 +285,12 @@ public final class Permissions {
                 + "\nPermission: " + permission
                 + "\nPermission protection level: " + protectionLevel
                 + "\nPermission state: " + sContext.checkSelfPermission(permission)
-                + "\nInstrumented Package: " + instrumentedPackage.packageName()
-                + "\n\nGranted Permissions:\n"
-                + instrumentedPackage.grantedPermissions(user)
+                + "\nInstrumented Package: " + sInstrumentedPackage.packageName()
                 + "\n\nRequested Permissions:\n"
-                + instrumentedPackage.requestedPermissions()
+                + sInstrumentedPackage.requestedPermissions()
                 + "\n\nCan adopt shell permissions: " + SUPPORTS_ADOPT_SHELL_PERMISSIONS
                 + "\nShell permissions:"
-                + sShellPackage.requestedPermissions()
+                + mShellPermissions
                 + "\nExempt Shell permissions: " + EXEMPT_SHELL_PERMISSIONS);
     }
 
@@ -300,11 +314,7 @@ public final class Permissions {
             if ((p.protectionLevel & PermissionInfo.PROTECTION_FLAG_DEVELOPMENT) > 0) {
                 return true;
             }
-            if ((p.protectionLevel & PermissionInfo.PROTECTION_DANGEROUS) > 0) {
-                return true;
-            }
-
-            return false;
+            return (p.protectionLevel & PermissionInfo.PROTECTION_DANGEROUS) > 0;
         } catch (PackageManager.NameNotFoundException e) {
             return false;
         }
