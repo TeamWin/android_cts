@@ -145,8 +145,7 @@ android_test_helper_app {
 android_test_helper_app {
     name: "LockTaskApp",
     static_libs: [
-        "TestApp_TestApps",
-        "DeviceAdminApp"
+        "TestApp_TestApps"
     ],
     manifest: "manifests/LockTaskAppManifest.xml",
     min_sdk_version: "28"
@@ -165,8 +164,7 @@ android_test_helper_app {
 android_test_helper_app {
     name: "SmsApp",
     static_libs: [
-        "TestApp_TestApps",
-        "DeviceAdminApp"
+        "TestApp_TestApps"
     ],
     manifest: "manifests/SmsAppManifest.xml",
     min_sdk_version: "28"

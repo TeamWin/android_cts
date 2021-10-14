@@ -57,14 +57,17 @@ public abstract class TestAppActivityReference {
      * Starts the activity.
      */
     public com.android.bedstead.nene.activities.Activity<TestAppActivity> start() {
-        // TODO(scottjonathan): Use a connected call to ensure this succeeds cross-user
         Intent intent = new Intent();
         intent.setComponent(mComponent.componentName());
         intent.setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK);
 
-        try (PermissionContext p =
-                     TestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
+        if (mInstance.user().equals(TestApis.users().instrumented())) {
             TestApis.context().instrumentedContext().startActivity(intent);
+        } else {
+            try (PermissionContext p =
+                         TestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
+                TestApis.context().androidContextAsUser(mInstance.user()).startActivity(intent);
+            }
         }
 
         events().activityStarted().waitForEvent();

@@ -73,7 +73,7 @@ public class DeviceAdminAppTest {
                 .parent(TestApis.users().instrumented())
                 .type(TestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
                 .createAndStart()) {
-            TestApis.packages().find(sContext.getPackageName()).install(profile);
+            TestApis.packages().find(sContext.getPackageName()).installExisting(profile);
 
             TestApis.devicePolicy().setProfileOwner(
                     profile, DeviceAdminApp.deviceAdminComponentName(sContext));

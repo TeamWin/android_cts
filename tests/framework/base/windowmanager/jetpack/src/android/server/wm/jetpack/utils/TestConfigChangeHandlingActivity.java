@@ -14,14 +14,11 @@
  * limitations under the License.
  */
 
-package com.android.bedstead.nene.packages;
+package android.server.wm.jetpack.utils;
 
 /**
- * Default implementation of {@link PackageReference} used when we haven't fetched information from
- * the device.
+ * Activity that handles orientation configuration change. Copied from
+ * androidx.window.TestConfigChangeHandlingActivity.
  */
-public final class UnresolvedPackage extends PackageReference {
-    UnresolvedPackage(String packageName) {
-        super(packageName);
-    }
+public final class TestConfigChangeHandlingActivity extends TestActivity {
 }

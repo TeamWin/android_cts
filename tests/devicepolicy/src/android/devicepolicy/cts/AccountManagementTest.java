@@ -17,7 +17,6 @@
 package android.devicepolicy.cts;
 
 import static org.junit.Assert.assertThrows;
-
 import static com.google.common.truth.Truth.assertThat;
 
 import android.accounts.Account;
@@ -38,6 +37,7 @@ import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PositivePolicyTest;
 import com.android.bedstead.harrier.policies.AccountManagement;
 import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.utils.Poll;
 import com.android.bedstead.remotedpc.RemoteDpc;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstanceReference;
@@ -69,9 +69,8 @@ public class AccountManagementTest {
     private static final String EXISTING_ACCOUNT_TYPE =
             "com.android.bedstead.testapp.AccountManagementApp.account.type";
     private static final String FAKE_ACCOUNT_TYPE = "com.placeholder.account";
-    private static final  Account ACCOUNT_WITH_EXISTING_TYPE
+    private static final Account ACCOUNT_WITH_EXISTING_TYPE
             = new Account("user0", EXISTING_ACCOUNT_TYPE);
-    private static final int ACCOUNT_MANAGER_WAIT_MILLIS = 500;
 
     private ComponentName mAdmin;
     private RemoteDevicePolicyManager mDpm;
@@ -103,7 +102,7 @@ public class AccountManagementTest {
 
     @Test
     @Postsubmit(reason = "new test")
-    @CanSetPolicyTest(policy = AccountManagement.class, singleTestOnly=true)
+    @CanSetPolicyTest(policy = AccountManagement.class, singleTestOnly = true)
     public void setAccountTypesWithManagementDisabled_nullAdmin_throwsException() {
         assertThrows(NullPointerException.class, () ->
                 mDpm.setAccountManagementDisabled(
@@ -227,7 +226,7 @@ public class AccountManagementTest {
             mDpm.addUserRestriction(mAdmin, UserManager.DISALLOW_MODIFY_ACCOUNTS);
 
             assertThrows(OperationCanceledException.class, () ->
-                    addAccountWithType(EXISTING_ACCOUNT_TYPE));
+                    addAccountWithTypeOnce(EXISTING_ACCOUNT_TYPE));
         } finally {
             mDpm.clearUserRestriction(mAdmin, UserManager.DISALLOW_MODIFY_ACCOUNTS);
         }
@@ -254,13 +253,12 @@ public class AccountManagementTest {
     @Test
     @Postsubmit(reason = "new test with sleep")
     @CanSetPolicyTest(policy = AccountManagement.class)
-    public void addAccount_withAccountManagementDisabled_throwsException()
-            throws OperationCanceledException, AuthenticatorException, IOException {
+    public void addAccount_withAccountManagementDisabled_throwsException() {
         try (TestAppInstanceReference accountAuthenticatorApp = sAccountManagementApp.install()) {
             mDpm.setAccountManagementDisabled(mAdmin, EXISTING_ACCOUNT_TYPE, /* disabled= */ true);
 
             assertThrows(OperationCanceledException.class, () ->
-                    addAccountWithType(EXISTING_ACCOUNT_TYPE));
+                    addAccountWithTypeOnce(EXISTING_ACCOUNT_TYPE));
         } finally {
             mDpm.setAccountManagementDisabled(mAdmin, EXISTING_ACCOUNT_TYPE, /* disabled= */ false);
         }
@@ -288,10 +286,14 @@ public class AccountManagementTest {
      * Blocks until an account of {@code type} is added.
      */
     // TODO(b/199077745): Remove sleep once AccountManager race condition is fixed
-    private Bundle addAccountWithType(String type)
-            throws OperationCanceledException, IOException,
-            InterruptedException, AuthenticatorException {
-        Thread.sleep(ACCOUNT_MANAGER_WAIT_MILLIS);
+    private Bundle addAccountWithType(String type) {
+        return Poll.forValue("created account bundle", () -> addAccountWithTypeOnce(type))
+                .toNotBeNull()
+                .errorOnFail()
+                .await();
+    }
+
+    private Bundle addAccountWithTypeOnce(String type) throws Exception {
         return mAccountManager.addAccount(
                 type,
                 /* authTokenType= */ null,
@@ -299,8 +301,7 @@ public class AccountManagementTest {
                 /* addAccountOptions= */ null,
                 /* activity= */ null,
                 /* callback= */ null,
-                /* handler= */ null)
-                .getResult();
+                /* handler= */ null).getResult();
     }
 
     /**

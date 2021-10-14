@@ -60,10 +60,13 @@ public class CtsExtractNativeLibsHostTestAbiOverride extends CtsExtractNativeLib
     public void setUp() throws Exception {
         final String deviceAbi = getDeviceAbi();
         final Set<String> deviceAbis = getDeviceAbis();
+        final Set<String> apkAbis = getApkAbis();
         // Only run these tests for supported ABIs
         assumeTrue(deviceAbis.contains(mFirstAbi));
+        assumeTrue(apkAbis.contains(mFirstAbi));
         if (!mSecondAbi.equals("-")) {
             assumeTrue(deviceAbis.contains(mSecondAbi));
+            assumeTrue(apkAbis.contains(mSecondAbi));
         }
         assumeTrue(AbiUtils.getBaseArchForAbi(deviceAbi).equals(
                 AbiUtils.getBaseArchForAbi(mFirstAbi)));

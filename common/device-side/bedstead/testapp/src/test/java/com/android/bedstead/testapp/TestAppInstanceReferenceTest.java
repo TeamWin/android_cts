@@ -17,6 +17,10 @@
 package com.android.bedstead.testapp;
 
 import static android.app.admin.DevicePolicyManager.OPERATION_SAFETY_REASON_DRIVING_DISTRACTION;
+import static android.os.Build.VERSION_CODES.Q;
+import static android.os.Build.VERSION_CODES.S;
+
+import static com.android.eventlib.truth.EventLogsSubject.assertThat;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -28,10 +32,10 @@ import android.content.IntentFilter;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.RequireSdkVersion;
 import com.android.bedstead.nene.TestApis;
-import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.users.UserReference;
-import com.android.compatibility.common.util.PollingCheck;
+import com.android.bedstead.nene.utils.Poll;
 import com.android.eventlib.EventLogs;
 import com.android.eventlib.events.broadcastreceivers.BroadcastReceivedEvent;
 
@@ -47,22 +51,20 @@ import java.time.Duration;
 @RunWith(BedsteadJUnit4.class)
 public class TestAppInstanceReferenceTest {
 
-    @ClassRule @Rule
+    @ClassRule
+    @Rule
     public static final DeviceState sDeviceState = new DeviceState();
 
     private static final Context sContext = TestApis.context().instrumentedContext();
     private static final UserReference sUser = TestApis.users().instrumented();
-
-    private TestAppProvider mTestAppProvider;
-
     private static final String INTENT_ACTION = "com.android.bedstead.testapp.test_action";
     private static final IntentFilter INTENT_FILTER = new IntentFilter(INTENT_ACTION);
     private static final Intent INTENT = new Intent(INTENT_ACTION);
     private static final String INTENT_ACTION_2 = "com.android.bedstead.testapp.test_action2";
     private static final IntentFilter INTENT_FILTER_2 = new IntentFilter(INTENT_ACTION_2);
     private static final Intent INTENT_2 = new Intent(INTENT_ACTION_2);
-
     private static final Duration SHORT_TIMEOUT = Duration.ofSeconds(5);
+    private TestAppProvider mTestAppProvider;
 
     @Before
     public void setup() {
@@ -100,10 +102,8 @@ public class TestAppInstanceReferenceTest {
 
         testAppInstance.uninstall();
 
-        Package pkg = TestApis.packages().find(testApp.packageName()).resolve();
-        if (pkg != null) {
-            assertThat(pkg.installedOnUsers()).doesNotContain(sUser);
-        }
+        assertThat(TestApis.packages().find(testApp.packageName())
+                .installedOnUser(sUser)).isFalse();
     }
 
     @Test
@@ -113,10 +113,8 @@ public class TestAppInstanceReferenceTest {
             // Intentionally empty
         }
 
-        Package pkg = TestApis.packages().find(testApp.packageName()).resolve();
-        if (pkg != null) {
-            assertThat(pkg.installedOnUsers()).doesNotContain(sUser);
-        }
+        assertThat(TestApis.packages().find(testApp.packageName())
+                .installedOnUser(sUser)).isFalse();
     }
 
     @Test
@@ -135,7 +133,10 @@ public class TestAppInstanceReferenceTest {
 
             testAppInstance.process().kill();
 
-            PollingCheck.waitFor(() -> testApp.reference().runningProcess(sUser) != null);
+            Poll.forValue("running process", () -> testApp.pkg().runningProcess(sUser))
+                    .toNotBeNull()
+                    .errorOnFail()
+                    .await();
         }
     }
 
@@ -150,7 +151,7 @@ public class TestAppInstanceReferenceTest {
 
             testAppInstance.stop();
 
-            assertThat(testApp.reference().runningProcesses()).isEmpty();
+            assertThat(testApp.pkg().runningProcesses()).isEmpty();
         }
     }
 
@@ -163,7 +164,7 @@ public class TestAppInstanceReferenceTest {
 
             testAppInstance.stop();
 
-            assertThat(testApp.reference().runningProcesses()).isEmpty();
+            assertThat(testApp.pkg().runningProcesses()).isEmpty();
         }
     }
 
@@ -181,7 +182,10 @@ public class TestAppInstanceReferenceTest {
         try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
             testAppInstance.activities().any().start();
 
-            assertThat(testAppInstance.process()).isNotNull();
+            Poll.forValue("TestApp process", testAppInstance::process)
+                    .toNotBeNull()
+                    .errorOnFail()
+                    .await();
         }
     }
 
@@ -193,10 +197,9 @@ public class TestAppInstanceReferenceTest {
 
             sContext.sendBroadcast(INTENT);
 
-            EventLogs<BroadcastReceivedEvent> logs =
-                    BroadcastReceivedEvent.queryPackage(testApp.packageName())
-                    .whereIntent().action().isEqualTo(INTENT_ACTION);
-            assertThat(logs.poll()).isNotNull();
+            assertThat(testAppInstance.events().broadcastReceived()
+                    .whereIntent().action().isEqualTo(INTENT_ACTION))
+                    .eventOccurred();
         }
     }
 
@@ -210,14 +213,12 @@ public class TestAppInstanceReferenceTest {
             sContext.sendBroadcast(INTENT);
             sContext.sendBroadcast(INTENT_2);
 
-            EventLogs<BroadcastReceivedEvent> logs =
-                    BroadcastReceivedEvent.queryPackage(testApp.packageName())
-                            .whereIntent().action().isEqualTo(INTENT_ACTION);
-            EventLogs<BroadcastReceivedEvent> logs2 =
-                    BroadcastReceivedEvent.queryPackage(testApp.packageName())
-                            .whereIntent().action().isEqualTo(INTENT_ACTION_2);
-            assertThat(logs.poll()).isNotNull();
-            assertThat(logs2.poll()).isNotNull();
+            assertThat(testAppInstance.events().broadcastReceived()
+                    .whereIntent().action().isEqualTo(INTENT_ACTION))
+                    .eventOccurred();
+            assertThat(testAppInstance.events().broadcastReceived()
+                    .whereIntent().action().isEqualTo(INTENT_ACTION_2))
+                    .eventOccurred();
         }
     }
 
@@ -228,7 +229,7 @@ public class TestAppInstanceReferenceTest {
 
             testAppInstance.registerReceiver(INTENT_FILTER);
 
-            assertThat(testApp.reference().runningProcess(sUser)).isNotNull();
+            assertThat(testApp.pkg().runningProcess(sUser)).isNotNull();
         }
     }
 
@@ -293,7 +294,7 @@ public class TestAppInstanceReferenceTest {
 
             testAppInstance.keepAlive();
 
-            assertThat(testApp.reference().runningProcess(sUser)).isNotNull();
+            assertThat(testApp.pkg().runningProcess(sUser)).isNotNull();
         }
     }
 
@@ -303,8 +304,11 @@ public class TestAppInstanceReferenceTest {
         TestApp testApp = mTestAppProvider.any();
         try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
             testAppInstance.registerReceiver(INTENT_FILTER);
-            testApp.reference().runningProcess(sUser).kill();
-            PollingCheck.waitFor(() -> testApp.reference().runningProcess(sUser) != null);
+            testApp.pkg().runningProcess(sUser).kill();
+            Poll.forValue("running process", () -> testApp.pkg().runningProcess(sUser))
+                    .toNotBeNull()
+                    .errorOnFail()
+                    .await();
 
             sContext.sendBroadcast(INTENT);
 
@@ -316,6 +320,7 @@ public class TestAppInstanceReferenceTest {
     }
 
     @Test
+    @RequireSdkVersion(min = S)
     public void devicePolicyManager_returnsUsableInstance() {
         TestApp testApp = mTestAppProvider.any();
         try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
@@ -335,6 +340,7 @@ public class TestAppInstanceReferenceTest {
     }
 
     @Test
+    @RequireSdkVersion(min = Q, reason = "Wifimanager API only available on Q+")
     public void wifiManager_returnsUsableInstance() {
         TestApp testApp = mTestAppProvider.any();
         try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {

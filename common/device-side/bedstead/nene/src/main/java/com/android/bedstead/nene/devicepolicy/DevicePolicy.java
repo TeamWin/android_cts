@@ -39,7 +39,7 @@ import com.android.bedstead.nene.annotations.Experimental;
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.exceptions.AdbParseException;
 import com.android.bedstead.nene.exceptions.NeneException;
-import com.android.bedstead.nene.packages.PackageReference;
+import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.bedstead.nene.users.User;
 import com.android.bedstead.nene.users.UserReference;
@@ -60,11 +60,6 @@ import java.util.Set;
  * Test APIs related to device policy.
  */
 public final class DevicePolicy {
-
-    // TODO(b/201313785): Remove this logic once headless system user mode restores
-    //  setDeviceOwner
-    private static final boolean HEADLESS_SET_DO_AND_PO =
-            TestApis.users().isHeadlessSystemUserMode();
 
     public static final DevicePolicy sInstance = new DevicePolicy();
 
@@ -118,7 +113,7 @@ public final class DevicePolicy {
                             + " as a profile owner is already set: " + profileOwner);
         }
 
-        PackageReference pkg = TestApis.packages().find(
+        Package pkg = TestApis.packages().find(
                 profileOwnerComponent.getPackageName());
         if (!TestApis.packages().installedForUser(user).contains(pkg)) {
             throw new NeneException(
@@ -158,25 +153,20 @@ public final class DevicePolicy {
             throw new NullPointerException();
         }
 
-        UserReference user = TestApis.users().system();
-
         if (!Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.S)) {
-            return setDeviceOwnerPreS(user, deviceOwnerComponent);
+            return setDeviceOwnerPreS(deviceOwnerComponent);
         }
 
         DevicePolicyManager devicePolicyManager =
                 TestApis.context().instrumentedContext()
                         .getSystemService(DevicePolicyManager.class);
+        UserReference user = TestApis.users().system();
 
         boolean dpmUserSetupComplete = getUserSetupComplete(user);
         Boolean currentUserSetupComplete = null;
 
         try {
             setUserSetupComplete(user, false);
-            if (HEADLESS_SET_DO_AND_PO) {
-                currentUserSetupComplete = getUserSetupComplete(TestApis.users().current());
-                setUserSetupComplete(TestApis.users().current(), false);
-            }
 
             try (PermissionContext p =
                          TestApis.permissions().withPermission(
@@ -189,7 +179,7 @@ public final class DevicePolicy {
                 //  we retry because if the DO/PO was recently removed, it can take some time
                 //  to be allowed to set it again
                 retryIfNotTerminal(
-                        () -> devicePolicyManager.setDeviceOwner(
+                        () -> setDeviceOwnerOnly(devicePolicyManager,
                                 deviceOwnerComponent, "Nene", user.id()),
                         () -> checkForTerminalDeviceOwnerFailures(
                                 user, deviceOwnerComponent, /* allowAdditionalUsers= */ true));
@@ -203,17 +193,26 @@ public final class DevicePolicy {
             }
         }
 
-        PackageReference deviceOwnerPackage = TestApis.packages().find(
+        Package deviceOwnerPackage = TestApis.packages().find(
                 deviceOwnerComponent.getPackageName());
 
-        if (HEADLESS_SET_DO_AND_PO) {
-            ProfileOwner linkedProfileOwner =
-                    new ProfileOwner(
-                            TestApis.users().current(), deviceOwnerPackage, deviceOwnerComponent);
-            return new DeviceOwner(user, deviceOwnerPackage, deviceOwnerComponent,
-                    linkedProfileOwner);
-        }
         return new DeviceOwner(user, deviceOwnerPackage, deviceOwnerComponent);
+    }
+
+    /**
+     * Set Device Owner without changing any other device state.
+     *
+     * <p>This is used instead of {@link DevicePolicyManager#setDeviceOwner(ComponentName)} directly
+     * because on S_V2 and above, that method can also set profile owners and install packages in
+     * some circumstances.
+     */
+    private void setDeviceOwnerOnly(DevicePolicyManager devicePolicyManager,
+            ComponentName component, String name, int deviceOwnerUserId) {
+        if (Versions.meetsMinimumSdkVersionRequirement(Versions.S_V2)) {
+            devicePolicyManager.setDeviceOwnerOnly(component, name, deviceOwnerUserId);
+        } else {
+            devicePolicyManager.setDeviceOwner(component, name, deviceOwnerUserId);
+        }
     }
 
     /**
@@ -251,7 +250,7 @@ public final class DevicePolicy {
             terminalCheck.run();
 
             try {
-                PollingCheck.waitFor(30_000, () -> {
+                PollingCheck.waitFor(() -> {
                     try {
                         operation.run();
                         return true;
@@ -288,12 +287,13 @@ public final class DevicePolicy {
         }
     }
 
-    private DeviceOwner setDeviceOwnerPreS(UserReference user, ComponentName deviceOwnerComponent) {
+    private DeviceOwner setDeviceOwnerPreS(ComponentName deviceOwnerComponent) {
+        UserReference user = TestApis.users().system();
+
         ShellCommand.Builder command = ShellCommand.builderForUser(
                 user, "dpm set-device-owner")
                 .addOperand(deviceOwnerComponent.flattenToShortString())
                 .validate(ShellCommandUtils::startsWithSuccess);
-
         // TODO(b/187925230): If it fails, we check for terminal failure states - and if not
         //  we retry because if the device owner was recently removed, it can take some time
         //  to be allowed to set it again
@@ -320,7 +320,7 @@ public final class DevicePolicy {
                             + " as a device owner is already set: " + deviceOwner);
         }
 
-        PackageReference pkg = TestApis.packages().find(
+        Package pkg = TestApis.packages().find(
                 deviceOwnerComponent.getPackageName());
         if (!TestApis.packages().installedForUser(user).contains(pkg)) {
             throw new NeneException(
@@ -380,24 +380,6 @@ public final class DevicePolicy {
 
                 mCachedDeviceOwner = result.mDeviceOwner;
                 mCachedProfileOwners = result.mProfileOwners;
-
-                // TODO(b/201313785): Remove this logic once headless system user mode restores
-                //  setDeviceOwner
-                if (TestApis.users().isHeadlessSystemUserMode() && mCachedDeviceOwner != null) {
-                    ProfileOwner currentProfileOwner =
-                            mCachedProfileOwners.get(TestApis.users().current());
-
-                    if (currentProfileOwner != null
-                            && currentProfileOwner.mComponentName.equals(
-                                    mCachedDeviceOwner.mComponentName)) {
-                        // We will assume that the matching profile owner was created by setting
-                        // the device owner
-                        mCachedDeviceOwner = new DeviceOwner(mCachedDeviceOwner.user(),
-                                mCachedDeviceOwner.mPackage,
-                                mCachedDeviceOwner.mComponentName, currentProfileOwner);
-                    }
-
-                }
 
                 return;
             } catch (AdbParseException e) {

@@ -20,69 +20,53 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.content.ComponentName;
 
+import com.android.bedstead.harrier.BedsteadJUnit4;
+import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
 import com.android.bedstead.nene.TestApis;
-import com.android.bedstead.testapp.TestApp;
-import com.android.bedstead.testapp.TestAppProvider;
-import com.android.eventlib.premade.EventLibDeviceAdminReceiver;
+import com.android.bedstead.remotedpc.RemoteDpc;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
-@RunWith(JUnit4.class)
+@RunWith(BedsteadJUnit4.class)
+@EnsureHasDeviceOwner
 public class DeviceOwnerTest {
 
-    //  TODO(180478924): We shouldn't need to hardcode this
-    private static final String DEVICE_ADMIN_TESTAPP_PACKAGE_NAME =
-            "com.android.bedstead.testapp.DeviceAdminTestApp";
-    private static final ComponentName DPC_COMPONENT_NAME =
-            new ComponentName(DEVICE_ADMIN_TESTAPP_PACKAGE_NAME,
-                    EventLibDeviceAdminReceiver.class.getName());
+    @ClassRule @Rule
+    public static DeviceState sDeviceState = new DeviceState();
 
-    private static TestApp sTestApp;
-    private static DeviceOwner sDeviceOwner;
+    private static final ComponentName DPC_COMPONENT_NAME = RemoteDpc.DPC_COMPONENT_NAME;
 
-    @BeforeClass
-    public static void setupClass() {
-        sTestApp = new TestAppProvider().query()
-                .wherePackageName().isEqualTo(DEVICE_ADMIN_TESTAPP_PACKAGE_NAME)
-                .get();
+    private DeviceOwner mDeviceOwner;
 
-        sTestApp.install(TestApis.users().system());
-
-        sDeviceOwner = TestApis.devicePolicy().setDeviceOwner(DPC_COMPONENT_NAME);
-    }
-
-    @AfterClass
-    public static void teardownClass() {
-        sDeviceOwner.remove();
-        sTestApp.uninstallFromAllUsers();
+    @Before
+    public void setup() {
+        mDeviceOwner = TestApis.devicePolicy().getDeviceOwner();
     }
 
     @Test
     public void user_returnsUser() {
-        assertThat(sDeviceOwner.user()).isEqualTo(TestApis.users().system());
+        assertThat(mDeviceOwner.user()).isEqualTo(TestApis.users().system());
     }
 
     @Test
     public void pkg_returnsPackage() {
-        assertThat(sDeviceOwner.pkg()).isEqualTo(sTestApp.reference());
+        assertThat(mDeviceOwner.pkg().packageName()).isEqualTo(DPC_COMPONENT_NAME.getPackageName());
     }
 
     @Test
     public void componentName_returnsComponentName() {
-        assertThat(sDeviceOwner.componentName()).isEqualTo(DPC_COMPONENT_NAME);
+        assertThat(mDeviceOwner.componentName()).isEqualTo(DPC_COMPONENT_NAME);
     }
 
     @Test
     public void remove_removesDeviceOwner() {
-        sDeviceOwner.remove();
-        try {
-            assertThat(TestApis.devicePolicy().getDeviceOwner()).isNull();
-        } finally {
-            sDeviceOwner = TestApis.devicePolicy().setDeviceOwner(DPC_COMPONENT_NAME);
-        }
+        mDeviceOwner.remove();
+
+        assertThat(TestApis.devicePolicy().getDeviceOwner()).isNull();
     }
 }
