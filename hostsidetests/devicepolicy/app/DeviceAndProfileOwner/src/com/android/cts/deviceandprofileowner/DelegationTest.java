@@ -113,7 +113,7 @@ public class DelegationTest extends BaseDeviceAdminTest {
 
     public void testDelegateReceivesScopeChangedBroadcast() throws InterruptedException {
         if (UserManager.isHeadlessSystemUserMode()) {
-            // TODO(b/190627898): this test launched an activity to receive the broadcast from DPM,
+            // TODO(b/197907392): this test launched an activity to receive the broadcast from DPM,
             // but headless system user cannot launch activity. To make things worse, the intent
             // is only sent to registered receivers, so we cannot use the existing receivers from
             // DpmWrapper, we would need to start a service on user 0 to receive the broadcast,
@@ -122,7 +122,7 @@ public class DelegationTest extends BaseDeviceAdminTest {
             // - add a "launchIntent()" method on DpmWrapper so the intent is launched by user 0
             //
             // It might not be worth to make these changes, but rather wait for the test refactoring
-            Log.i(TAG, "Skipping testDelegateReceivesScopeChangedBroadcast() on headless system "
+            Log.w(TAG, "Skipping testDelegateReceivesScopeChangedBroadcast() on headless system "
                     + "user mode");
             return;
         }
