@@ -118,6 +118,8 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
     @FlakyTest
     @Override
     @Test
+    @TemporarilyIgnoreOnHeadlessSystemUserMode(bugId = "197907379",
+            reason = "Will be migrated to new test infra")
     public void testCaCertManagement() throws Exception {
         super.testCaCertManagement();
     }
@@ -132,6 +134,8 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
     @FlakyTest
     @Override
     @Test
+    @TemporarilyIgnoreOnHeadlessSystemUserMode(bugId = "197907379",
+            reason = "Will be migrated to new test infra")
     public void testInstallCaCertLogged() throws Exception {
         super.testInstallCaCertLogged();
     }
@@ -160,6 +164,22 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
             reason = "Will be migrated to new test infra")
     public void testApplicationRestrictions() throws Exception {
         super.testApplicationRestrictions();
+    }
+
+    @Override
+    @Test
+    @TemporarilyIgnoreOnHeadlessSystemUserMode(bugId = "197909577",
+            reason = "Will be migrated to new test infra")
+    public void testAccountManagement_userRestrictionAddAccount() throws Exception {
+        super.testAccountManagement_userRestrictionAddAccount();
+    }
+
+    @Override
+    @Test
+    @TemporarilyIgnoreOnHeadlessSystemUserMode(bugId = "197909577",
+            reason = "Will be migrated to new test infra")
+    public void testAccountManagement_userRestrictionRemoveAccount() throws Exception {
+        super.testAccountManagement_userRestrictionRemoveAccount();
     }
 
     @Test
@@ -471,7 +491,7 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Override
     @Test
-    @TemporarilyIgnoreOnHeadlessSystemUserMode(bugId = "195469779", reason = "Cannot be tested on "
+    @TemporarilyIgnoreOnHeadlessSystemUserMode(bugId = "197906636", reason = "Cannot be tested on "
             + "current setup as DpmWrapper would grant permission to user 0, and activity that "
             + "checks the permission runs on current user; need to re-enable once test is moved "
             + "to new infra")
