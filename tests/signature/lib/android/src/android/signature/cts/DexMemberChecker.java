@@ -97,12 +97,12 @@ public class DexMemberChecker {
             if (jni) {
                 try {
                     observer.fieldAccessibleViaJni(hasMatchingField_JNI(klass, field), field);
-                } catch (ExceptionInInitializerError | UnsatisfiedLinkError
+                } catch (ClassNotFoundException | ExceptionInInitializerError | UnsatisfiedLinkError
                         | NoClassDefFoundError e) {
                     if ((e instanceof NoClassDefFoundError)
                             && !(e.getCause() instanceof ExceptionInInitializerError)
                             && !(e.getCause() instanceof UnsatisfiedLinkError)) {
-                        throw e;
+                        throw (NoClassDefFoundError) e;
                     }
 
                     // Could not initialize the class. Skip JNI test.
@@ -167,7 +167,11 @@ public class DexMemberChecker {
         }
     }
 
-    private static boolean hasMatchingField_JNI(Class<?> klass, DexField dexField) {
+    private static boolean hasMatchingField_JNI(Class<?> klass, DexField dexField)
+            throws ClassNotFoundException {
+        // If we fail to resolve the type of the field, we will throw a ClassNotFoundException.
+        DexMember.typeToClass(dexField.getDexType());
+
         try {
             Field ifield = getField_JNI(klass, dexField.getName(), dexField.getDexType());
             if (ifield.getDeclaringClass() == klass) {
