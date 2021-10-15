@@ -53,7 +53,6 @@ import android.media.MediaPlayer;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
-import android.net.NetworkInfo;
 import android.net.NetworkRequest;
 import android.net.cts.util.CtsNetUtils;
 import android.net.wifi.WifiManager;
@@ -219,6 +218,7 @@ public class AtomTests {
         APP_OPS_ENUM_MAP.put(AppOpsManager.OPSTR_ACTIVITY_RECOGNITION_SOURCE, 113);
         APP_OPS_ENUM_MAP.put(AppOpsManager.OPSTR_BLUETOOTH_ADVERTISE, 114);
         APP_OPS_ENUM_MAP.put(AppOpsManager.OPSTR_RECORD_INCOMING_PHONE_AUDIO, 115);
+        APP_OPS_ENUM_MAP.put(AppOpsManager.OPSTR_NEARBY_WIFI_DEVICES, 116);
     }
 
     @Test
