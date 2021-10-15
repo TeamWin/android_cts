@@ -196,12 +196,17 @@ public class SimPhonebookContract_ContentNotificationsTest {
                 result, oneOf(
                         TelephonyManager.SET_SIM_POWER_STATE_ALREADY_IN_STATE,
                         TelephonyManager.SET_SIM_POWER_STATE_SUCCESS));
+        Thread.sleep(DEFAULT_TIMEOUT);
         int simState = SystemUtil.runWithShellPermissionIdentity(() ->
                         telephonyManager.getSimState(slotIndex),
                 Manifest.permission.READ_PHONE_STATE);
         // This doesn't work on Cuttlefish so confirm the SIM was actually powered off.
-        assumeThat(simState, Matchers.not(oneOf(
-                TelephonyManager.SIM_STATE_PRESENT, TelephonyManager.SIM_STATE_READY)));
+        if(powerState == 1) {
+            assumeThat(simState, Matchers.is(TelephonyManager.SIM_STATE_READY));
+        } else {
+            assumeThat(simState, Matchers.is(oneOf(TelephonyManager.SIM_STATE_ABSENT,
+                TelephonyManager.SIM_STATE_NOT_READY)));
+        }
     }
 
     private static class RecordingContentObserver extends ContentObserver {
