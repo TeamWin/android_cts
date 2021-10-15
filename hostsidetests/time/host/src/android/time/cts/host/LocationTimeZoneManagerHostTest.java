@@ -17,6 +17,7 @@
 package android.time.cts.host;
 
 
+import static android.app.time.cts.shell.DeviceConfigKeys.LocationTimeZoneManager.KEY_LTZP_EVENT_FILTERING_AGE_THRESHOLD_MILLIS;
 import static android.app.time.cts.shell.DeviceConfigKeys.NAMESPACE_SYSTEM_TIME;
 import static android.app.time.cts.shell.DeviceConfigShellHelper.SYNC_DISABLED_MODE_UNTIL_REBOOT;
 import static android.app.time.cts.shell.FakeTimeZoneProviderAppShellHelper.FAKE_TZPS_APP_APK;
@@ -34,6 +35,7 @@ import static org.junit.Assert.fail;
 import android.app.time.LocationTimeZoneManagerServiceStateProto;
 import android.app.time.TimeZoneProviderStateEnum;
 import android.app.time.TimeZoneProviderStateProto;
+import android.app.time.cts.shell.DeviceConfigKeys;
 import android.app.time.cts.shell.DeviceConfigShellHelper;
 import android.app.time.cts.shell.DeviceShellCommandExecutor;
 import android.app.time.cts.shell.FakeTimeZoneProviderAppShellHelper;
@@ -52,6 +54,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 
@@ -189,12 +192,17 @@ public class LocationTimeZoneManagerHostTest extends BaseHostJUnit4Test {
     }
 
     /**
-     * This demonstrates duplicate reports made by location time zone providers are ignored. It
-     * focuses on a single LTZP setup (primary only); the behavior for the secondary is assumed to
-     * be identical.
+     * Demonstrates that duplicate equivalent reports made by location time zone providers within
+     * a threshold time are ignored. It focuses on a single LTZP setup (primary only); the behavior
+     * for the secondary is assumed to be identical.
      */
     @Test
-    public void test_dupeSuggestionsMade() throws Exception {
+    public void test_dupeSuggestionsMade_rateLimited() throws Exception {
+        // Set the rate setting sufficiently high that rate limiting will definitely take place.
+        mDeviceConfigShellHelper.put(NAMESPACE_SYSTEM_TIME,
+                KEY_LTZP_EVENT_FILTERING_AGE_THRESHOLD_MILLIS,
+                Long.toString(Duration.ofMinutes(10).toMillis()));
+
         String testPrimaryLocationTimeZoneProviderPackageName = FAKE_TZPS_APP_PACKAGE;
         String testSecondaryLocationTimeZoneProviderPackageName = null;
         mLocationTimeZoneManagerShellHelper.startWithTestProviders(
@@ -202,6 +210,7 @@ public class LocationTimeZoneManagerHostTest extends BaseHostJUnit4Test {
                 testSecondaryLocationTimeZoneProviderPackageName,
                 true /* recordProviderStates */);
         mTimeZoneDetectorShellHelper.setGeoDetectionEnabled(true);
+
         mPrimaryFakeTimeZoneProviderShellHelper.assertCreated();
         mSecondaryFakeTimeZoneProviderShellHelper.assertNotCreated();
 
@@ -240,6 +249,51 @@ public class LocationTimeZoneManagerHostTest extends BaseHostJUnit4Test {
         // Report a new time zone.
         mPrimaryFakeTimeZoneProviderShellHelper.reportSuccess("Europe/Paris");
         assertPrimaryReportedCertain();
+        mLocationTimeZoneManagerShellHelper.clearRecordedProviderStates();
+    }
+
+    /**
+     * Demonstrates that duplicate equivalent reports made by location time zone providers above
+     * a threshold time are not filtered. It focuses on a single LTZP setup (primary only); the
+     * behavior for the secondary is assumed to be identical.
+     */
+    @Test
+    public void test_dupeSuggestionsMade_notRateLimited() throws Exception {
+        // Set the rate sufficiently low that rate limiting will not take place.
+        mDeviceConfigShellHelper.put(NAMESPACE_SYSTEM_TIME,
+                KEY_LTZP_EVENT_FILTERING_AGE_THRESHOLD_MILLIS,
+                "0");
+
+        String testPrimaryLocationTimeZoneProviderPackageName = FAKE_TZPS_APP_PACKAGE;
+        String testSecondaryLocationTimeZoneProviderPackageName = null;
+        mLocationTimeZoneManagerShellHelper.startWithTestProviders(
+                testPrimaryLocationTimeZoneProviderPackageName,
+                testSecondaryLocationTimeZoneProviderPackageName,
+                true /* recordProviderStates */);
+        mTimeZoneDetectorShellHelper.setGeoDetectionEnabled(true);
+        mPrimaryFakeTimeZoneProviderShellHelper.assertCreated();
+        mSecondaryFakeTimeZoneProviderShellHelper.assertNotCreated();
+
+        mLocationTimeZoneManagerShellHelper.clearRecordedProviderStates();
+
+        // Report a new time zone.
+        mPrimaryFakeTimeZoneProviderShellHelper.reportSuccess("Europe/London");
+        assertPrimaryReportedCertain();
+        mLocationTimeZoneManagerShellHelper.clearRecordedProviderStates();
+
+        // Duplicate time zone suggestion.
+        mPrimaryFakeTimeZoneProviderShellHelper.reportSuccess("Europe/London");
+        assertPrimaryReportedCertain();
+        mLocationTimeZoneManagerShellHelper.clearRecordedProviderStates();
+
+        // Report uncertain.
+        mPrimaryFakeTimeZoneProviderShellHelper.reportUncertain();
+        assertPrimaryReportedUncertain();
+        mLocationTimeZoneManagerShellHelper.clearRecordedProviderStates();
+
+        // Duplicate uncertain report.
+        mPrimaryFakeTimeZoneProviderShellHelper.reportUncertain();
+        assertPrimaryReportedUncertain();
         mLocationTimeZoneManagerShellHelper.clearRecordedProviderStates();
     }
 
