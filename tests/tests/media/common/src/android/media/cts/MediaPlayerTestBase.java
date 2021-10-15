@@ -15,15 +15,27 @@
  */
 package android.media.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import android.app.Activity;
+import android.app.Instrumentation;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
 import android.media.MediaPlayer;
 import android.media.cts.TestUtils.Monitor;
 import android.net.Uri;
+import android.os.ConditionVariable;
 import android.os.ParcelFileDescriptor;
 import android.os.PersistableBundle;
-import android.test.ActivityInstrumentationTestCase2;
+
+import androidx.annotation.CallSuper;
+import androidx.test.core.app.ActivityScenario;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.MediaUtils;
 
@@ -39,7 +51,7 @@ import java.util.Set;
 /**
  * Base class for tests which use MediaPlayer to play audio or video.
  */
-public class MediaPlayerTestBase extends ActivityInstrumentationTestCase2<MediaStubActivity> {
+public class MediaPlayerTestBase {
     private static final Logger LOG = Logger.getLogger(MediaPlayerTestBase.class.getName());
 
     static final String mInpPrefix = WorkDir.getMediaDirString();
@@ -62,33 +74,30 @@ public class MediaPlayerTestBase extends ActivityInstrumentationTestCase2<MediaS
 
     protected MediaPlayer mMediaPlayer = null;
     protected MediaPlayer mMediaPlayer2 = null;
+    protected ActivityScenario<MediaStubActivity> mActivityScenario;
     protected MediaStubActivity mActivity;
 
-    public MediaPlayerTestBase() {
-        super(MediaStubActivity.class);
-    }
+    @CallSuper
+    protected void setUp() throws Throwable {
+        mActivityScenario = ActivityScenario.launch(MediaStubActivity.class);
+        ConditionVariable activityReferenceObtained = new ConditionVariable();
+        mActivityScenario.onActivity(activity -> {
+            mActivity = activity;
+            activityReferenceObtained.open();
+        });
+        activityReferenceObtained.block(/* timeoutMs= */ 10000);
+        assertNotNull("Failed to acquire activity reference.", mActivity);
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mActivity = getActivity();
-        getInstrumentation().waitForIdleSync();
-        try {
-            runTestOnUiThread(new Runnable() {
-                public void run() {
-                    mMediaPlayer = new MediaPlayer();
-                    mMediaPlayer2 = new MediaPlayer();
-                }
-            });
-        } catch (Throwable e) {
-            e.printStackTrace();
-            fail();
-        }
         mContext = getInstrumentation().getTargetContext();
+        getInstrumentation().waitForIdleSync();
+        runOnUiThread(() -> {
+            mMediaPlayer = new MediaPlayer();
+            mMediaPlayer2 = new MediaPlayer();
+        });
     }
 
-    @Override
-    protected void tearDown() throws Exception {
+    @CallSuper
+    protected void tearDown() {
         if (mMediaPlayer != null) {
             mMediaPlayer.release();
             mMediaPlayer = null;
@@ -98,7 +107,28 @@ public class MediaPlayerTestBase extends ActivityInstrumentationTestCase2<MediaS
             mMediaPlayer2 = null;
         }
         mActivity = null;
-        super.tearDown();
+    }
+
+    protected Instrumentation getInstrumentation() {
+        return InstrumentationRegistry.getInstrumentation();
+    }
+
+    protected MediaStubActivity getActivity() {
+        return mActivity;
+    }
+
+    protected void runOnUiThread(Runnable runnable) throws Throwable {
+        Throwable[] throwableHolder = new Throwable[1];
+        getInstrumentation().runOnMainSync(() -> {
+            try {
+                runnable.run();
+            } catch (Throwable throwable) {
+                throwableHolder[0] = throwable;
+            }
+        });
+        if (throwableHolder[0] != null) {
+            throw throwableHolder[0];
+        }
     }
 
     protected static AssetFileDescriptor getAssetFileDescriptorFor(final String res)
@@ -117,20 +147,17 @@ public class MediaPlayerTestBase extends ActivityInstrumentationTestCase2<MediaS
             return false;
         }
 
-        AssetFileDescriptor afd = getAssetFileDescriptorFor(res);
-        try {
+        try (AssetFileDescriptor afd = getAssetFileDescriptorFor(res)) {
             mMediaPlayer.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(),
                     afd.getLength());
 
             // Although it is only meant for video playback, it should not
             // cause issues for audio-only playback.
-            int videoScalingMode = sUseScaleToFitMode?
-                                    MediaPlayer.VIDEO_SCALING_MODE_SCALE_TO_FIT
-                                  : MediaPlayer.VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING;
+            int videoScalingMode = sUseScaleToFitMode ?
+                    MediaPlayer.VIDEO_SCALING_MODE_SCALE_TO_FIT
+                    : MediaPlayer.VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING;
 
             mMediaPlayer.setVideoScalingMode(videoScalingMode);
-        } finally {
-            afd.close();
         }
         sUseScaleToFitMode = !sUseScaleToFitMode;  // Alternate the scaling mode
         return true;
@@ -141,12 +168,9 @@ public class MediaPlayerTestBase extends ActivityInstrumentationTestCase2<MediaS
     }
 
     protected void loadSubtitleSource(String res) throws Exception {
-        AssetFileDescriptor afd = getAssetFileDescriptorFor(res);
-        try {
+        try (AssetFileDescriptor afd = getAssetFileDescriptorFor(res)) {
             mMediaPlayer.addTimedTextSource(afd.getFileDescriptor(), afd.getStartOffset(),
-                      afd.getLength(), MediaPlayer.MEDIA_MIMETYPE_TEXT_SUBRIP);
-        } finally {
-            afd.close();
+                    afd.getLength(), MediaPlayer.MEDIA_MIMETYPE_TEXT_SUBRIP);
         }
     }
 
@@ -207,8 +231,11 @@ public class MediaPlayerTestBase extends ActivityInstrumentationTestCase2<MediaS
         for (int i = 0; i < STREAM_RETRIES; i++) {
             try {
                 mMediaPlayer.reset();
-                mMediaPlayer.setDataSource(getInstrumentation().getTargetContext(),
-                        uri, headers, cookies);
+                mMediaPlayer.setDataSource(
+                        getInstrumentation().getTargetContext(),
+                        uri,
+                        headers,
+                        cookies);
                 playLoadedVideo(width, height, playTime);
                 playedSuccessfully = true;
                 break;
@@ -237,43 +264,34 @@ public class MediaPlayerTestBase extends ActivityInstrumentationTestCase2<MediaS
         final float leftVolume = 0.5f;
         final float rightVolume = 0.5f;
 
-        boolean audioOnly = (width != null && width.intValue() == -1) ||
-                (height != null && height.intValue() == -1);
+        boolean audioOnly = (width != null && width == -1) ||
+                (height != null && height == -1);
 
         mMediaPlayer.setDisplay(mActivity.getSurfaceHolder());
         mMediaPlayer.setScreenOnWhilePlaying(true);
-        mMediaPlayer.setOnVideoSizeChangedListener(new MediaPlayer.OnVideoSizeChangedListener() {
-            @Override
-            public void onVideoSizeChanged(MediaPlayer mp, int w, int h) {
-                if (w == 0 && h == 0) {
-                    // A size of 0x0 can be sent initially one time when using NuPlayer.
-                    assertFalse(mOnVideoSizeChangedCalled.isSignalled());
-                    return;
-                }
-                mOnVideoSizeChangedCalled.signal();
-                if (width != null) {
-                    assertEquals(width.intValue(), w);
-                }
-                if (height != null) {
-                    assertEquals(height.intValue(), h);
-                }
+        mMediaPlayer.setOnVideoSizeChangedListener((mp, w, h) -> {
+            if (w == 0 && h == 0) {
+                // A size of 0x0 can be sent initially one time when using NuPlayer.
+                assertFalse(mOnVideoSizeChangedCalled.isSignalled());
+                return;
+            }
+            mOnVideoSizeChangedCalled.signal();
+            if (width != null) {
+                assertEquals(width.intValue(), w);
+            }
+            if (height != null) {
+                assertEquals(height.intValue(), h);
             }
         });
-        mMediaPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
-            @Override
-            public boolean onError(MediaPlayer mp, int what, int extra) {
-                fail("Media player had error " + what + " playing video");
-                return true;
-            }
+        mMediaPlayer.setOnErrorListener((mp, what, extra) -> {
+            fail("Media player had error " + what + " playing video");
+            return true;
         });
-        mMediaPlayer.setOnInfoListener(new MediaPlayer.OnInfoListener() {
-            @Override
-            public boolean onInfo(MediaPlayer mp, int what, int extra) {
-                if (what == MediaPlayer.MEDIA_INFO_VIDEO_RENDERING_START) {
-                    mOnVideoRenderingStartCalled.signal();
-                }
-                return true;
+        mMediaPlayer.setOnInfoListener((mp, what, extra) -> {
+            if (what == MediaPlayer.MEDIA_INFO_VIDEO_RENDERING_START) {
+                mOnVideoRenderingStartCalled.signal();
             }
+            return true;
         });
         try {
           mMediaPlayer.prepare();
@@ -344,8 +362,8 @@ public class MediaPlayerTestBase extends ActivityInstrumentationTestCase2<MediaS
 
     public boolean isTv() {
         PackageManager pm = getInstrumentation().getTargetContext().getPackageManager();
-        return pm.hasSystemFeature(pm.FEATURE_TELEVISION)
-                && pm.hasSystemFeature(pm.FEATURE_LEANBACK);
+        return pm.hasSystemFeature(PackageManager.FEATURE_TELEVISION)
+                && pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK);
     }
 
     public boolean checkTv() {
@@ -353,12 +371,9 @@ public class MediaPlayerTestBase extends ActivityInstrumentationTestCase2<MediaS
     }
 
     protected void setOnErrorListener() {
-        mMediaPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
-            @Override
-            public boolean onError(MediaPlayer mp, int what, int extra) {
-                mOnErrorCalled.signal();
-                return false;
-            }
+        mMediaPlayer.setOnErrorListener((mp, what, extra) -> {
+            mOnErrorCalled.signal();
+            return false;
         });
     }
 }
