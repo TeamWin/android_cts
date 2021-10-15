@@ -2844,8 +2844,9 @@ public class NotificationManagerTest extends AndroidTestCase {
                 InstrumentationRegistry.getInstrumentation(), true);
         int origFilter = mNotificationManager.getCurrentInterruptionFilter();
         try {
-            // allowed from anyone: nothing is filtered
+            // allowed from anyone: nothing is filtered, and make sure change went through
             mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_ALL);
+            assertExpectedDndState(INTERRUPTION_FILTER_ALL);
 
             // create a phone URI from which to receive a call
             Uri phoneUri = Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI,
@@ -2870,16 +2871,19 @@ public class NotificationManagerTest extends AndroidTestCase {
 
             // no interruptions allowed at all
             mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_NONE);
+            assertExpectedDndState(INTERRUPTION_FILTER_NONE);
             assertFalse(mNotificationManager.matchesCallFilter(phoneUri));
 
             // only alarms
             mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_ALARMS);
+            assertExpectedDndState(INTERRUPTION_FILTER_ALARMS);
             assertFalse(mNotificationManager.matchesCallFilter(phoneUri));
 
             mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(
                     PRIORITY_CATEGORY_MESSAGES, 0, 0));
             // turn on manual DND
             mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_PRIORITY);
+            assertExpectedDndState(INTERRUPTION_FILTER_PRIORITY);
             assertFalse(mNotificationManager.matchesCallFilter(phoneUri));
         } finally {
             mNotificationManager.setInterruptionFilter(origFilter);
@@ -2903,7 +2907,6 @@ public class NotificationManagerTest extends AndroidTestCase {
             aliceUri = lookupContact(ALICE_PHONE);
 
             // non-starred contact from whom to also receive a call
-
             insertSingleContact(BOB, BOB_PHONE, BOB_EMAIL, false);
             bobUri = lookupContact(BOB_PHONE);
 
@@ -2911,13 +2914,14 @@ public class NotificationManagerTest extends AndroidTestCase {
             Uri phoneUri = Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI,
                     Uri.encode("+16175555656"));
 
-            // turn on manual DND
-            mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_PRIORITY);
-
             // set up: any contacts are allowed to call.
             mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(
                     PRIORITY_CATEGORY_CALLS,
                     NotificationManager.Policy.PRIORITY_SENDERS_CONTACTS, 0));
+
+            // turn on manual DND
+            mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_PRIORITY);
+            assertExpectedDndState(INTERRUPTION_FILTER_PRIORITY);
 
             // in this case Alice and Bob should get through but not the unknown number.
             assertTrue(mNotificationManager.matchesCallFilter(aliceUri));
@@ -2928,6 +2932,7 @@ public class NotificationManagerTest extends AndroidTestCase {
             mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(
                     PRIORITY_CATEGORY_CALLS,
                     NotificationManager.Policy.PRIORITY_SENDERS_STARRED, 0));
+            assertExpectedDndState(INTERRUPTION_FILTER_PRIORITY);
 
             // now only Alice should be allowed to get through
             assertTrue(mNotificationManager.matchesCallFilter(aliceUri));
@@ -2962,6 +2967,7 @@ public class NotificationManagerTest extends AndroidTestCase {
                     PRIORITY_CATEGORY_REPEAT_CALLERS, 0, 0));
             // turn on manual DND
             mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_PRIORITY);
+            assertExpectedDndState(INTERRUPTION_FILTER_PRIORITY);
 
             // not a repeat caller yet, so it shouldn't be allowed
             assertFalse(mNotificationManager.matchesCallFilter(phoneUri));
@@ -2988,6 +2994,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         // allow all callers
         toggleNotificationPolicyAccess(mContext.getPackageName(),
                 InstrumentationRegistry.getInstrumentation(), true);
+        int origFilter = mNotificationManager.getCurrentInterruptionFilter();
         Policy origPolicy = mNotificationManager.getNotificationPolicy();
         Uri aliceUri = null;
         try {
@@ -2999,12 +3006,15 @@ public class NotificationManagerTest extends AndroidTestCase {
                     currPolicy.priorityMessageSenders,
                     currPolicy.suppressedVisualEffects);
             mNotificationManager.setNotificationPolicy(newPolicy);
+            mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_PRIORITY);
+            assertExpectedDndState(INTERRUPTION_FILTER_PRIORITY);
 
             insertSingleContact(ALICE, ALICE_PHONE, ALICE_EMAIL, false);
 
             aliceUri = lookupContact(ALICE_PHONE);
             assertTrue(mNotificationManager.matchesCallFilter(aliceUri));
         } finally {
+            mNotificationManager.setInterruptionFilter(origFilter);
             mNotificationManager.setNotificationPolicy(origPolicy);
             if (aliceUri != null) {
                 // delete the contact

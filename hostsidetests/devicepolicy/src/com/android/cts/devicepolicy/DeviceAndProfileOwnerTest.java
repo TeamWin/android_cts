@@ -28,6 +28,7 @@ import android.platform.test.annotations.LargeTest;
 import android.platform.test.annotations.RequiresDevice;
 import android.stats.devicepolicy.EventId;
 
+import com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.TemporarilyIgnoreOnHeadlessSystemUserMode;
 import com.android.cts.devicepolicy.annotations.LockSettingsTest;
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier;
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
@@ -815,6 +816,8 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     // This test currently duplicates the testDelegatedCertInstaller, with one difference:
     // The Delegated cert installer app is called directly rather than via intents from
     // the DelegatedCertinstallerTest.
+    @TemporarilyIgnoreOnHeadlessSystemUserMode(bugId = "197859595",
+            reason = "Will be migrated to new test infra")
     @Test
     public void testDelegatedCertInstallerDirectly() throws Exception {
         setUpDelegatedCertInstallerAndRunTests(() ->
@@ -824,6 +827,8 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     // This test generates a key pair and validates that an app can be silently granted
     // access to it.
+    @TemporarilyIgnoreOnHeadlessSystemUserMode(bugId = "197859595",
+            reason = "Will be migrated to new test infra")
     @Test
     public void testSetKeyGrant() throws Exception {
         // Install an app
@@ -1323,6 +1328,8 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         executeDeviceTestClass(".PrintingPolicyTest");
     }
 
+    @TemporarilyIgnoreOnHeadlessSystemUserMode(bugId = "197859595",
+            reason = "Will be migrated to new test infra")
     @Test
     public void testKeyManagement() throws Exception {
         installAppAsUser(SHARED_UID_APP1_APK, mUserId);
@@ -1347,6 +1354,8 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                 .build());
     }
 
+    @TemporarilyIgnoreOnHeadlessSystemUserMode(bugId = "197859595",
+            reason = "Will be migrated to new test infra")
     @Test
     public void testGenerateKeyPairLogged() throws Exception {
         assertMetricsLogged(getDevice(), () -> {
@@ -1367,6 +1376,8 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     }
 
+    @TemporarilyIgnoreOnHeadlessSystemUserMode(bugId = "197859595",
+            reason = "Will be migrated to new test infra")
     @Test
     public void testSetKeyPairCertificateLogged() throws Exception {
         assertMetricsLogged(getDevice(), () -> {

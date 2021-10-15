@@ -100,22 +100,24 @@ def check_face_landmarks(face, fd_mode, index):
     raise AssertionError(f'Unknown face detection mode: {fd_mode}.')
 
 
-def draw_face_rectangles(img, faces, aw, ah):
+def draw_face_rectangles(img, faces, crop):
   """Draw rectangles on top of image.
 
   Args:
     img:    image array
     faces:  list of dicts with face information
-    aw:     int; active array width
-    ah:     int; active array height
+    crop:   dict; crop region size with 'top, right, left, bottom' as keys
   Returns:
     img with face rectangles drawn on it
   """
+  cw, ch = crop['right'] - crop['left'], crop['bottom'] - crop['top']
+  logging.debug('crop region: %s', str(crop))
   for rect in [face['bounds'] for face in faces]:
-    top_left = (int(round(rect['left']*W/aw)),
-                int(round(rect['top']*H/ah)))
-    bot_rght = (int(round(rect['right']*W/aw)),
-                int(round(rect['bottom']*H/ah)))
+    logging.debug('rect: %s', str(rect))
+    top_left = (int(round((rect['left'] - crop['left']) * img.shape[1] / cw)),
+                int(round((rect['top'] - crop['top']) * img.shape[0] / ch)))
+    bot_rght = (int(round((rect['right'] - crop['left']) * img.shape[1] / cw)),
+                int(round((rect['bottom'] - crop['top']) * img.shape[0] / ch)))
     cv2.rectangle(img, top_left, bot_rght, (0, 1, 0), 2)
   return img
 
@@ -144,11 +146,14 @@ class NumFacesTest(its_base_test.ItsBaseTest):
       fd_modes = props['android.statistics.info.availableFaceDetectModes']
       a = props['android.sensor.info.activeArraySize']
       aw, ah = a['right'] - a['left'], a['bottom'] - a['top']
+      logging.debug('active array size: %s', str(a))
+      file_name_stem = os.path.join(self.log_path, NAME)
 
       if camera_properties_utils.read_3a(props):
         _, _, _, _, _ = cam.do_3a(get_results=True, mono_camera=mono_camera)
 
       for fd_mode in fd_modes:
+        logging.debug('face detection mode: %d', fd_mode)
         if not FD_MODE_OFF <= fd_mode <= FD_MODE_FULL:
           raise AssertionError(f'FD mode {fd_mode} not in MODES! '
                                f'OFF: {FD_MODE_OFF}, FULL: {FD_MODE_FULL}')
@@ -176,10 +181,10 @@ class NumFacesTest(its_base_test.ItsBaseTest):
             logging.debug('Found %d face(s), expected %d.',
                           fnd_faces, NUM_FACES)
             # draw boxes around faces
-            img = draw_face_rectangles(img, faces, aw, ah)
+            crop_region = cap['metadata']['android.scaler.cropRegion']
+            img = draw_face_rectangles(img, faces, crop_region)
             # save image with rectangles
-            img_name = '%s_fd_mode_%s.jpg' % (os.path.join(self.log_path,
-                                                           NAME), fd_mode)
+            img_name = f'{file_name_stem}_fd_mode_{fd_mode}.jpg'
             image_processing_utils.write_image(img, img_name)
             if fnd_faces != NUM_FACES:
               raise AssertionError('Wrong num of faces found! '

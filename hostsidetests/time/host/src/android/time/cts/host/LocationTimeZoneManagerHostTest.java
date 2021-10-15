@@ -29,6 +29,7 @@ import static android.app.time.cts.shell.FakeTimeZoneProviderAppShellHelper.STAT
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.app.time.LocationTimeZoneManagerServiceStateProto;
 import android.app.time.TimeZoneProviderStateEnum;
@@ -187,6 +188,78 @@ public class LocationTimeZoneManagerHostTest extends BaseHostJUnit4Test {
         }
     }
 
+    /**
+     * This demonstrates duplicate reports made by location time zone providers are ignored. It
+     * focuses on a single LTZP setup (primary only); the behavior for the secondary is assumed to
+     * be identical.
+     */
+    @Test
+    public void test_dupeSuggestionsMade() throws Exception {
+        String testPrimaryLocationTimeZoneProviderPackageName = FAKE_TZPS_APP_PACKAGE;
+        String testSecondaryLocationTimeZoneProviderPackageName = null;
+        mLocationTimeZoneManagerShellHelper.startWithTestProviders(
+                testPrimaryLocationTimeZoneProviderPackageName,
+                testSecondaryLocationTimeZoneProviderPackageName,
+                true /* recordProviderStates */);
+        mTimeZoneDetectorShellHelper.setGeoDetectionEnabled(true);
+        mPrimaryFakeTimeZoneProviderShellHelper.assertCreated();
+        mSecondaryFakeTimeZoneProviderShellHelper.assertNotCreated();
+
+        mLocationTimeZoneManagerShellHelper.clearRecordedProviderStates();
+
+        // Report a new time zone.
+        mPrimaryFakeTimeZoneProviderShellHelper.reportSuccess("Europe/London");
+        assertPrimaryReportedCertain();
+        mLocationTimeZoneManagerShellHelper.clearRecordedProviderStates();
+
+        // Duplicate time zone suggestion.
+        mPrimaryFakeTimeZoneProviderShellHelper.reportSuccess("Europe/London");
+        assertPrimaryMadeNoReport();
+        mLocationTimeZoneManagerShellHelper.clearRecordedProviderStates();
+
+        // Report a new time zone.
+        mPrimaryFakeTimeZoneProviderShellHelper.reportSuccess("Europe/Paris");
+        assertPrimaryReportedCertain();
+        mLocationTimeZoneManagerShellHelper.clearRecordedProviderStates();
+
+        // Duplicate time zone suggestion.
+        mPrimaryFakeTimeZoneProviderShellHelper.reportSuccess("Europe/Paris");
+        assertPrimaryMadeNoReport();
+        mLocationTimeZoneManagerShellHelper.clearRecordedProviderStates();
+
+        // Report uncertain.
+        mPrimaryFakeTimeZoneProviderShellHelper.reportUncertain();
+        assertPrimaryReportedUncertain();
+        mLocationTimeZoneManagerShellHelper.clearRecordedProviderStates();
+
+        // Duplicate uncertain report.
+        mPrimaryFakeTimeZoneProviderShellHelper.reportUncertain();
+        assertPrimaryMadeNoReport();
+        mLocationTimeZoneManagerShellHelper.clearRecordedProviderStates();
+
+        // Report a new time zone.
+        mPrimaryFakeTimeZoneProviderShellHelper.reportSuccess("Europe/Paris");
+        assertPrimaryReportedCertain();
+        mLocationTimeZoneManagerShellHelper.clearRecordedProviderStates();
+    }
+
+    private void assertPrimaryReportedCertain() throws Exception {
+        LocationTimeZoneManagerServiceStateProto serviceState = dumpServiceState();
+        assertProviderStates(serviceState.getPrimaryProviderStatesList(),
+                TimeZoneProviderStateEnum.TIME_ZONE_PROVIDER_STATE_CERTAIN);
+    }
+
+    private void assertPrimaryMadeNoReport() throws Exception {
+        LocationTimeZoneManagerServiceStateProto serviceState = dumpServiceState();
+        assertProviderStates(serviceState.getPrimaryProviderStatesList());
+    }
+
+    private void assertPrimaryReportedUncertain() throws Exception {
+        LocationTimeZoneManagerServiceStateProto serviceState = dumpServiceState();
+        assertProviderStates(serviceState.getPrimaryProviderStatesList(),
+                TimeZoneProviderStateEnum.TIME_ZONE_PROVIDER_STATE_UNCERTAIN);
+    }
+
     /** Tests what happens when there's only a secondary provider and it makes a suggestion. */
     @Test
     public void testOnlySecondary_suggestionMade() throws Exception {
@@ -306,7 +379,9 @@ public class LocationTimeZoneManagerHostTest extends BaseHostJUnit4Test {
 
     private static void assertNoLastSuggestion(
             LocationTimeZoneManagerServiceStateProto serviceState) {
-        assertFalse(serviceState.hasLastSuggestion());
+        if (serviceState.hasLastSuggestion()) {
+            fail("Expected no last suggestion, but found:" + serviceState.getLastSuggestion());
+        }
     }
 
     private static void assertLastSuggestion(LocationTimeZoneManagerServiceStateProto serviceState,
