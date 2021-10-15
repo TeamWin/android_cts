@@ -52,6 +52,7 @@ import java.util.List;
 /**
  * Photo Picker Device only tests for cross profile interaction flows.
  */
+@Ignore("Enable after b/201323670 is fixed")
 @RunWith(BedsteadJUnit4.class)
 @SdkSuppress(minSdkVersion = 31, codeName = "S")
 public class PhotoPickerCrossProfileTest extends PhotoPickerBaseTest {
@@ -70,7 +71,6 @@ public class PhotoPickerCrossProfileTest extends PhotoPickerBaseTest {
 
     @Test
     @RequireRunOnWorkProfile
-    @Ignore("Enable after b/201323670 is fixed")
     public void testWorkApp_canAccessPersonalProfileContents() throws Exception {
         final int imageCount = 2;
         createImages(imageCount, sDeviceState.primaryUser().id(), mUriList);
