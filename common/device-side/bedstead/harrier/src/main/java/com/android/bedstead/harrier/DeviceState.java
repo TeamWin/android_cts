@@ -124,11 +124,6 @@ import java.util.function.Function;
  */
 public final class DeviceState implements TestRule {
 
-    // TODO(b/201313785): Remove this logic once headless system user mode restores
-    //  setDeviceOwner
-    private static final boolean HEADLESS_SET_DO_AND_PO =
-            TestApis.users().isHeadlessSystemUserMode();
-
     private static final String GMS_PKG = "com.google.android.gms";
     private static final ComponentName REMOTE_DPC_COMPONENT_NAME = RemoteDpc.DPC_COMPONENT_NAME;
 
@@ -407,10 +402,19 @@ public final class DeviceState implements TestRule {
                 RequireSdkVersion requireSdkVersionAnnotation =
                         (RequireSdkVersion) annotation;
 
-                requireSdkVersion(
-                        requireSdkVersionAnnotation.min(),
-                        requireSdkVersionAnnotation.max(),
-                        requireSdkVersionAnnotation.failureMode());
+                if (requireSdkVersionAnnotation.reason().isEmpty()) {
+                    requireSdkVersion(
+                            requireSdkVersionAnnotation.min(),
+                            requireSdkVersionAnnotation.max(),
+                            requireSdkVersionAnnotation.failureMode());
+                } else {
+                    requireSdkVersion(
+                            requireSdkVersionAnnotation.min(),
+                            requireSdkVersionAnnotation.max(),
+                            requireSdkVersionAnnotation.failureMode(),
+                            requireSdkVersionAnnotation.reason());
+                }
+
                 continue;
             }
 
@@ -705,7 +709,7 @@ public final class DeviceState implements TestRule {
         mProfiles.get(instrumentedUser.type()).put(instrumentedUser.parent(), instrumentedUser);
 
         if (installInstrumentedAppInParent.equals(OptionalBoolean.TRUE)) {
-            TestApis.packages().find(sContext.getPackageName()).install(
+            TestApis.packages().find(sContext.getPackageName()).installExisting(
                     instrumentedUser.parent());
         } else if (installInstrumentedAppInParent.equals(OptionalBoolean.FALSE)) {
             TestApis.packages().find(sContext.getPackageName()).uninstall(
@@ -782,7 +786,7 @@ public final class DeviceState implements TestRule {
             int min, int max, FailureMode failureMode, String failureMessage) {
         mMinSdkVersionCurrentTest = min;
         checkFailOrSkip(
-                failureMessage,
+                failureMessage + " (version is " + Build.VERSION.SDK_INT + ")",
                 meetsSdkVersionRequirements(min, max),
                 failureMode
         );
@@ -1094,7 +1098,7 @@ public final class DeviceState implements TestRule {
         profile.start();
 
         if (installInstrumentedApp.equals(OptionalBoolean.TRUE)) {
-            TestApis.packages().find(sContext.getPackageName()).install(profile);
+            TestApis.packages().find(sContext.getPackageName()).installExisting(profile);
         } else if (installInstrumentedApp.equals(OptionalBoolean.FALSE)) {
             TestApis.packages().find(sContext.getPackageName()).uninstall(profile);
         }
@@ -1147,7 +1151,7 @@ public final class DeviceState implements TestRule {
         user.start();
 
         if (installInstrumentedApp.equals(OptionalBoolean.TRUE)) {
-            TestApis.packages().find(sContext.getPackageName()).install(user);
+            TestApis.packages().find(sContext.getPackageName()).installExisting(user);
         } else if (installInstrumentedApp.equals(OptionalBoolean.FALSE)) {
             TestApis.packages().find(sContext.getPackageName()).uninstall(user);
         }
@@ -1384,21 +1388,19 @@ public final class DeviceState implements TestRule {
         } else {
             UserReference instrumentedUser = TestApis.users().instrumented();
 
-            if (HEADLESS_SET_DO_AND_PO) {
-                if (instrumentedUser.equals(userReference)) {
-                    // Automotive devices don't allow setting a DO without a PO
-                    requireDoesNotHaveFeature("android.hardware.type.automotive", failureMode);
-                }
-
-                // Headless devices will set a PO when setting DO, so the existing PO must be
-                // removed
-                ensureHasNoProfileOwner(instrumentedUser);
-            }
-
             if (!Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.S)) {
                 // Prior to S we can't set device owner if there are other users on the device
+
+                if (instrumentedUser.id() != 0) {
+                    // If we're not on the system user we can't reach the required state
+                    throw new AssumptionViolatedException(
+                            "Can't set Device Owner when running on non-system-user"
+                                    + " on this version of Android");
+                }
+
                 for (UserReference u : TestApis.users().all()) {
                     if (u.equals(instrumentedUser)) {
+                        // Can't remove the user we're running on
                         continue;
                     }
                     try {
@@ -1593,11 +1595,7 @@ public final class DeviceState implements TestRule {
     private void requirePackageInstalled(
             String packageName, UserType forUser, FailureMode failureMode) {
 
-        Package pkg = TestApis.packages().find(packageName).resolve();
-        checkFailOrSkip(
-                packageName + " is required to be installed for " + forUser,
-                pkg != null,
-                failureMode);
+        Package pkg = TestApis.packages().find(packageName);
 
         if (forUser.equals(UserType.ANY)) {
             checkFailOrSkip(
@@ -1607,18 +1605,14 @@ public final class DeviceState implements TestRule {
         } else {
             checkFailOrSkip(
                     packageName + " is required to be installed for " + forUser,
-                    pkg.installedOnUsers().contains(resolveUserTypeToUser(forUser)),
+                    pkg.installedOnUser(resolveUserTypeToUser(forUser)),
                     failureMode);
         }
     }
 
     private void requirePackageNotInstalled(
             String packageName, UserType forUser, FailureMode failureMode) {
-        Package pkg = TestApis.packages().find(packageName).resolve();
-        if (pkg == null) {
-            // Definitely not installed
-            return;
-        }
+        Package pkg = TestApis.packages().find(packageName);
 
         if (forUser.equals(UserType.ANY)) {
             checkFailOrSkip(
@@ -1628,29 +1622,20 @@ public final class DeviceState implements TestRule {
         } else {
             checkFailOrSkip(
                     packageName + " is required to be not installed for " + forUser,
-                    !pkg.installedOnUsers().contains(resolveUserTypeToUser(forUser)),
+                    !pkg.installedOnUser(resolveUserTypeToUser(forUser)),
                     failureMode);
         }
     }
 
     private void ensurePackageNotInstalled(
             String packageName, UserType forUser) {
-
-        Package pkg = TestApis.packages().find(packageName).resolve();
-        if (pkg == null) {
-            // Definitely not installed
-            return;
-        }
+        Package pkg = TestApis.packages().find(packageName);
 
         if (forUser.equals(UserType.ANY)) {
-            if (!pkg.installedOnUsers().isEmpty()) {
-                pkg.uninstallFromAllUsers();
-            }
+            pkg.uninstallFromAllUsers();
         } else {
             UserReference user = resolveUserTypeToUser(forUser);
-            if (pkg.installedOnUsers().contains(user)) {
-                pkg.uninstall(user);
-            }
+            pkg.uninstall(user);
         }
     }
 

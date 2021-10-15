@@ -39,10 +39,10 @@ import com.android.bedstead.harrier.annotations.enterprise.NegativePolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PositivePolicyTest;
 import com.android.bedstead.harrier.policies.ScreenCaptureDisabled;
 import com.android.bedstead.metricsrecorder.EnterpriseMetricsRecorder;
+import com.android.bedstead.nene.utils.Poll;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstanceReference;
 import com.android.bedstead.testapp.TestAppProvider;
-import com.android.compatibility.common.util.PollingCheck;
 
 import org.junit.After;
 import org.junit.Before;
@@ -50,8 +50,6 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import java.util.Objects;
 
 
 @RunWith(BedsteadJUnit4.class)
@@ -68,8 +66,6 @@ public class ScreenCaptureDisabledTest {
     private DevicePolicyManager mLocalDevicePolicyManager;
     private ComponentName mAdmin;
     private UiAutomation mUiAutomation;
-    private static final int WAIT_IN_MILLISECOND = 500 * 20;
-
 
     @Before
     public void setUp() {
@@ -189,16 +185,18 @@ public class ScreenCaptureDisabledTest {
     private Bitmap takeScreenshotExpectingFailure() {
         try (TestAppInstanceReference testApp = sTestApp.install()) {
             testApp.activities().any().start();
-            return PollingCheck.waitFor(WAIT_IN_MILLISECOND, mUiAutomation::takeScreenshot,
-                    Objects::isNull);
+            return Poll.forValue(mUiAutomation::takeScreenshot)
+                    .toBeNull()
+                    .await();
         }
     }
 
     private Bitmap takeScreenshotExpectingSuccess() {
         try (TestAppInstanceReference testApp = sTestApp.install()) {
             testApp.activities().any().start();
-            return PollingCheck.waitFor(WAIT_IN_MILLISECOND, mUiAutomation::takeScreenshot,
-                    Objects::nonNull);
+            return Poll.forValue(mUiAutomation::takeScreenshot)
+                    .toNotBeNull()
+                    .await();
         }
     }
 }

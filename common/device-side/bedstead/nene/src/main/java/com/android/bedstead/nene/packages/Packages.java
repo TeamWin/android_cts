@@ -26,6 +26,7 @@ import static android.content.pm.PackageInstaller.STATUS_FAILURE;
 import static android.content.pm.PackageInstaller.STATUS_SUCCESS;
 import static android.content.pm.PackageInstaller.SessionParams.MODE_FULL_INSTALL;
 import static android.os.Build.VERSION.SDK_INT;
+import static android.os.Build.VERSION_CODES.R;
 
 import static com.android.bedstead.nene.users.User.UserState.RUNNING_UNLOCKED;
 import static com.android.compatibility.common.util.FileUtils.readInputStreamFully;
@@ -34,18 +35,18 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.FeatureInfo;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
 import android.os.Build;
+import android.util.Log;
 
 import androidx.annotation.CheckResult;
-import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.annotations.Experimental;
 import com.android.bedstead.nene.exceptions.AdbException;
-import com.android.bedstead.nene.exceptions.AdbParseException;
 import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.bedstead.nene.users.User;
@@ -56,23 +57,28 @@ import com.android.bedstead.nene.utils.ShellCommandUtils;
 import com.android.bedstead.nene.utils.Versions;
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
 
-import com.google.common.io.Files;
-
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import javax.annotation.Nullable;
 
 /**
  * Test APIs relating to packages.
  */
 public final class Packages {
+
+    private static final String LOG_TAG = "Packages";
 
     /** Reference to a Java resource. */
     public static final class JavaResource {
@@ -146,56 +152,73 @@ public final class Packages {
 
     public static final Packages sInstance = new Packages();
 
-    private Map<String, Package> mCachedPackages = null;
     private Set<String> mFeatures = null;
-    private final AdbPackageParser mParser;
     private final Context mInstrumentedContext;
 
     private final IntentFilter mPackageAddedIntentFilter =
             new IntentFilter(Intent.ACTION_PACKAGE_ADDED);
 
+    private static final PackageManager sPackageManager =
+            TestApis.context().instrumentedContext().getPackageManager();
+
+    static final AdbPackageParser sParser = AdbPackageParser.get(SDK_INT);
+
 
     public Packages() {
         mPackageAddedIntentFilter.addDataScheme("package");
-        mParser = AdbPackageParser.get(SDK_INT);
         mInstrumentedContext = TestApis.context().instrumentedContext();
     }
-
 
     /** Get the features available on the device. */
     public Set<String> features() {
         if (mFeatures == null) {
-            fillCache();
+            mFeatures = new HashSet<>();
+            PackageManager pm = TestApis.context().instrumentedContext().getPackageManager();
+            FeatureInfo[] features = pm.getSystemAvailableFeatures();
+            if (features != null) {
+                Arrays.stream(features).map(f -> f.name).forEach(mFeatures::add);
+            }
         }
-
         return mFeatures;
     }
 
-    /** Resolve all packages on the device. */
-    public Collection<PackageReference> all() {
-        return new HashSet<>(allResolved());
+    /** Get packages installed for the instrumented user. */
+    public Collection<Package> installedForUser() {
+        return installedForUser(TestApis.users().instrumented());
     }
 
     /** Resolve all packages installed for a given {@link UserReference}. */
-    public Collection<PackageReference> installedForUser(UserReference user) {
+    public Collection<Package> installedForUser(UserReference user) {
         if (user == null) {
             throw new NullPointerException();
         }
-        Set<PackageReference> installedForUser = new HashSet<>();
 
-        for (Package pkg : allResolved()) {
-            if (pkg.installedOnUsers().contains(user)) {
-                installedForUser.add(pkg);
-            }
+        if (user.equals(TestApis.users().instrumented())) {
+            return TestApis.context().instrumentedContext().getPackageManager()
+                    .getInstalledPackages(/* flags= */ 0)
+                    .stream()
+                    .map(i -> new Package(i.packageName))
+                    .collect(Collectors.toSet());
         }
 
-        return installedForUser;
+        try (PermissionContext p = TestApis.permissions()
+                .withPermission(INTERACT_ACROSS_USERS_FULL)) {
+            return TestApis.context().androidContextAsUser(user).getPackageManager()
+                    .getInstalledPackages(/* flags= */ 0)
+                    .stream()
+                    .map(i -> new Package(i.packageName))
+                    .collect(Collectors.toSet());
+        }
     }
 
-    private Collection<Package> allResolved() {
-        fillCache();
+    /** Install the {@link File} to the instrumented user. */
+    public Package install(File apkFile) {
+        return install(TestApis.users().instrumented(), apkFile);
+    }
 
-        return mCachedPackages.values();
+    /** Install a file as a byte array to the instrumented user. */
+    public Package install(byte[] apkFile) {
+        return install(TestApis.users().instrumented(), apkFile);
     }
 
     /**
@@ -206,8 +229,12 @@ public final class Packages {
      * <p>If the package is already installed, this will replace it.
      *
      * <p>If the package is marked testOnly, it will still be installed.
+     *
+     * <p>On versions of Android prior to Q, this will return null. On other versions it will return
+     * the installed package.
      */
-    public PackageReference install(UserReference user, File apkFile) {
+    @Nullable
+    public Package install(UserReference user, File apkFile) {
         if (user == null || apkFile == null) {
             throw new NullPointerException();
         }
@@ -234,18 +261,32 @@ public final class Packages {
                     .addOperand("-t") // Allow test-only install
                     .addOperand(apkFile.getAbsolutePath())
                     .validate(ShellCommandUtils::startsWithSuccess)
+                    .asRoot()
                     .execute();
 
             return waitForPackageAddedBroadcast(broadcastReceiver);
         } catch (AdbException e) {
             throw new NeneException("Could not install " + apkFile + " for user " + user, e);
         } finally {
-            broadcastReceiver.unregisterQuietly();
+            if (broadcastReceiver != null) {
+                broadcastReceiver.unregisterQuietly();
+            }
         }
     }
 
-    private PackageReference waitForPackageAddedBroadcast(
-            BlockingBroadcastReceiver broadcastReceiver) {
+    @Nullable
+    private Package waitForPackageAddedBroadcast(BlockingBroadcastReceiver broadcastReceiver) {
+        if (broadcastReceiver == null) {
+            // On Android versions prior to R we can't block on a broadcast for package installation
+            try {
+                Thread.sleep(20000);
+            } catch (InterruptedException e) {
+                Log.e(LOG_TAG, "Interrupted waiting for package installation", e);
+            }
+
+            return null;
+        }
+
         Intent intent = broadcastReceiver.awaitForBroadcast();
         if (intent == null) {
             throw new NeneException(
@@ -275,8 +316,12 @@ public final class Packages {
      * <p>If the package is already installed, this will replace it.
      *
      * <p>If the package is marked testOnly, it will still be installed.
+     *
+     * <p>On versions of Android prior to Q, this will return null. On other versions it will return
+     * the installed package.
      */
-    public PackageReference install(UserReference user, byte[] apkFile) {
+    @Nullable
+    public Package install(UserReference user, byte[] apkFile) {
         if (user == null || apkFile == null) {
             throw new NullPointerException();
         }
@@ -341,21 +386,40 @@ public final class Packages {
         } catch (IOException e) {
             throw new NeneException("Could not install package", e);
         } finally {
-            broadcastReceiver.unregisterQuietly();
+            if (broadcastReceiver != null) {
+                broadcastReceiver.unregisterQuietly();
+            }
         }
     }
 
-    private PackageReference installPreS(UserReference user, byte[] apkFile) {
+    @Nullable
+    private Package installPreS(UserReference user, byte[] apkFile) {
         // Prior to S we cannot pass bytes to stdin so we write it to a temp file first
-        File outputDir = TestApis.context().instrumentedContext().getCacheDir();
+        File outputDir = TestApis.context().instrumentedContext().getFilesDir();
         File outputFile = null;
         try {
-            outputFile = File.createTempFile("tmp", ".apk", outputDir);
-            Files.write(apkFile, outputFile);
-            outputFile.setReadable(true, false);
-            return install(user, outputFile);
+            // TODO(b/202705721): Replace this with fixed name
+            outputFile = new File(outputDir, UUID.randomUUID() + ".apk");
+            outputFile.getParentFile().mkdirs();
+            try (FileOutputStream output = new FileOutputStream(outputFile)) {
+                output.write(apkFile);
+            }
+            // Shell can't read the file in files dir, so we can move it to /data/local/tmp
+            File localTmpFile = new File("/data/local/tmp", outputFile.getName());
+            // I'm not sure why only mv works on R, and only cp works on < R
+            String command = Versions.meetsMinimumSdkVersionRequirement(R) ? "mv" : "cp";
+            ShellCommand.builder(command)
+                    .addOperand(outputFile.getAbsolutePath())
+                    .addOperand(localTmpFile.getAbsolutePath())
+                    .asRoot()
+                    .validate(String::isEmpty)
+                    .allowEmptyOutput(true)
+                    .execute();
+            return install(user, localTmpFile);
         } catch (IOException e) {
             throw new NeneException("Error when writing bytes to temp file", e);
+        } catch (AdbException e) {
+            throw new NeneException("Error when moving file to /data/local/tmp", e);
         } finally {
             if (outputFile != null) {
                 outputFile.delete();
@@ -373,7 +437,7 @@ public final class Packages {
      * <p>If the package is marked testOnly, it will still be installed.
      */
     @Experimental
-    public PackageReference install(UserReference user, AndroidResource resource) {
+    public Package install(UserReference user, AndroidResource resource) {
         int indexId = mInstrumentedContext.getResources().getIdentifier(
                 resource.mName, /* defType= */ null, /* defPackage= */ null);
 
@@ -395,7 +459,7 @@ public final class Packages {
      * <p>If the package is marked testOnly, it will still be installed.
      */
     @Experimental
-    public PackageReference install(UserReference user, JavaResource resource) {
+    public Package install(UserReference user, JavaResource resource) {
         try (InputStream inputStream =
                      Packages.class.getClassLoader().getResourceAsStream(resource.mName)) {
             return install(user, readInputStreamFully(inputStream));
@@ -404,6 +468,7 @@ public final class Packages {
         }
     }
 
+    @Nullable
     private BlockingBroadcastReceiver registerPackageInstalledBroadcastReceiver(
             UserReference user) {
         BlockingBroadcastReceiver broadcastReceiver = BlockingBroadcastReceiver.create(
@@ -412,13 +477,13 @@ public final class Packages {
 
         if (user.equals(TestApis.users().instrumented())) {
             broadcastReceiver.register();
-        } else {
-            // TODO(scottjonathan): If this is cross-user then it needs _FULL, but older versions
-            //  cannot get full - so we'll need to poll
+        } else if (Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.Q)) {
             try (PermissionContext p =
                          TestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
                 broadcastReceiver.register();
             }
+        } else {
+            return null;
         }
 
         return broadcastReceiver;
@@ -438,26 +503,18 @@ public final class Packages {
         return new KeepUninstalledPackagesBuilder();
     }
 
-    @Nullable
-    Package fetchPackage(String packageName) {
-        // TODO(scottjonathan): fillCache probably does more than we need here -
-        //  can we make it more efficient?
-        fillCache();
-
-        return mCachedPackages.get(packageName);
-    }
-
     /**
      * Get a reference to a package with the given {@code packageName}.
      *
-     * <p>This does not guarantee that the package exists. Call {@link PackageReference#resolve()}
-     * to find specific details about the package on the device.
+     * <p>This does not guarantee that the package exists. Call {@link Package#exists()}
+     * to find if the package exists on the device, or {@link Package#installedOnUsers()}
+     * to find the users it is installed for.
      */
-    public PackageReference find(String packageName) {
+    public Package find(String packageName) {
         if (packageName == null) {
             throw new NullPointerException();
         }
-        return new UnresolvedPackage(packageName);
+        return new Package(packageName);
     }
 
     /**
@@ -475,16 +532,9 @@ public final class Packages {
                 find(componentName.getPackageName()), componentName.getClassName());
     }
 
-    private void fillCache() {
-        try {
-            // TODO: Replace use of adb on supported versions of Android
-            String packageDumpsysOutput = ShellCommand.builder("dumpsys package").execute();
-            AdbPackageParser.ParseResult result = mParser.parse(packageDumpsysOutput);
-
-            mCachedPackages = result.mPackages;
-            mFeatures = result.mFeatures;
-        } catch (AdbException | AdbParseException e) {
-            throw new RuntimeException("Error filling cache", e);
-        }
+    /** Get a reference to the package being instrumented. */
+    @Experimental
+    public Package instrumented() {
+        return find(TestApis.context().instrumentedContext().getPackageName());
     }
 }

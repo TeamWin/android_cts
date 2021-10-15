@@ -200,11 +200,8 @@ public class
             if (user.state() != User.UserState.RUNNING_UNLOCKED) {
                 throw new AssertionError("Tried to bind to user " + user + " but they are not RUNNING_UNLOCKED");
             }
-            Package pkg = TestApis.packages().find(mPackageName).resolve();
-            if (pkg == null) {
-                throw new AssertionError("Tried to bind to package " + mPackageName + " but it is not installed on any user.");
-            }
-            if (!pkg.installedOnUsers().contains(user)) {
+            Package pkg = TestApis.packages().find(mPackageName);
+            if (!pkg.installedOnUser(user)) {
                 throw new AssertionError("Tried to bind to package " + mPackageName + " but it is not installed on target user " + user);
             }
 

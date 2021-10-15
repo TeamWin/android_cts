@@ -73,9 +73,20 @@ import com.android.bedstead.testapp.processor.annotations.TestAppReceiver;
         try {
             return super.instantiateReceiver(classLoader, className, intent);
         } catch (ClassNotFoundException e) {
+
+            if (className.endsWith("DeviceAdminReceiver")) {
+                Log.d(LOG_TAG, "Broadcast Receiver class (" + className
+                        + ") not found, routing to TestAppDeviceAdminReceiver");
+                BaseTestAppDeviceAdminReceiver receiver = (BaseTestAppDeviceAdminReceiver)
+                        super.instantiateReceiver(
+                                classLoader, BaseTestAppDeviceAdminReceiver.class.getName(),
+                                intent);
+                receiver.setOverrideDeviceAdminReceiverClassName(className);
+                return receiver;
+            }
+
             Log.d(LOG_TAG, "Broadcast Receiver class (" + className
                     + ") not found, routing to TestAppBroadcastReceiver");
-
             BaseTestAppBroadcastReceiver receiver = (BaseTestAppBroadcastReceiver)
                     super.instantiateReceiver(
                             classLoader, BaseTestAppBroadcastReceiver.class.getName(), intent);

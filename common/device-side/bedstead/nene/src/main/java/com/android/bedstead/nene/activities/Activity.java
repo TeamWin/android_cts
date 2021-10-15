@@ -24,9 +24,7 @@ import android.util.Log;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.annotations.Experimental;
 import com.android.bedstead.nene.packages.ComponentReference;
-import com.android.compatibility.common.util.PollingCheck;
-
-import java.util.Objects;
+import com.android.bedstead.nene.utils.Poll;
 
 /**
  * A wrapper around a specific Activity instance.
@@ -64,8 +62,10 @@ public class Activity<E> {
 
         // TODO(scottjonathan): What if we're already in lock task mode when we start it here?
         //  find another thing to poll on
-        PollingCheck.waitFor(
-                () -> TestApis.activities().getLockTaskModeState() != LOCK_TASK_MODE_NONE);
+        Poll.forValue("Lock task mode state", () -> TestApis.activities().getLockTaskModeState())
+                .toNotBeEqualTo(LOCK_TASK_MODE_NONE)
+                .errorOnFail()
+                .await();
     }
 
     /**
@@ -78,9 +78,11 @@ public class Activity<E> {
         mActivity.stopLockTask();
 
         // TODO(scottjonathan): What if we're already in lock task mode when we start it here?
-        //  find another thing to poll on
-        PollingCheck.waitFor(
-                () -> TestApis.activities().getLockTaskModeState() == LOCK_TASK_MODE_NONE);
+        //  find another thing to poll
+        Poll.forValue("Lock task mode state", () -> TestApis.activities().getLockTaskModeState())
+                .toBeEqualTo(LOCK_TASK_MODE_NONE)
+                .errorOnFail()
+                .await();
     }
 
     /**
@@ -96,13 +98,17 @@ public class Activity<E> {
         if (intent.getComponent() == null) {
             ComponentReference startActivity = TestApis.activities().foregroundActivity();
             mActivity.startActivity(intent);
-            PollingCheck.waitFor(() -> !Objects.equals(startActivity,
-                    TestApis.activities().foregroundActivity()));
+            Poll.forValue("Foreground activity", () -> TestApis.activities().foregroundActivity())
+                    .toNotBeEqualTo(startActivity)
+                    .errorOnFail()
+                    .await();
         } else {
             mActivity.startActivity(intent);
             ComponentReference component = new ComponentReference(intent.getComponent());
-            PollingCheck.waitFor(
-                    () -> component.equals(TestApis.activities().foregroundActivity()));
+            Poll.forValue("Foreground activity", () -> TestApis.activities().foregroundActivity())
+                    .toBeEqualTo(component)
+                    .errorOnFail()
+                    .await();
         }
     }
 

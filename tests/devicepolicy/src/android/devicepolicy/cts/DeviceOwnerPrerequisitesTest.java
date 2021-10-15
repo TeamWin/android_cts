@@ -22,14 +22,17 @@ import static org.junit.Assert.assertThrows;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
+import android.app.admin.DevicePolicyManager;
 import android.content.Context;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDeviceOwner;
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoProfileOwner;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.AdbException;
+import com.android.bedstead.nene.utils.Poll;
 import com.android.bedstead.nene.utils.ShellCommand;
 import com.android.bedstead.remotedpc.RemoteDpc;
 import com.android.bedstead.testapp.TestApp;
@@ -48,8 +51,7 @@ public class DeviceOwnerPrerequisitesTest {
     @Rule
     public static final DeviceState sDeviceState = new DeviceState();
 
-    private static final TestApis sTestApis = new TestApis();
-    private static final Context sContext = sTestApis.context().instrumentedContext();
+    private static final Context sContext = TestApis.context().instrumentedContext();
     private static final TestAppProvider sTestAppProvider = new TestAppProvider();
     private static final TestApp sAccountManagementApp = sTestAppProvider
             .query()
@@ -65,8 +67,6 @@ public class DeviceOwnerPrerequisitesTest {
 
     private static final String EXISTING_ACCOUNT_TYPE =
             "com.android.bedstead.testapp.AccountManagementApp.account.type";
-    private static final int ACCOUNT_MANAGER_WAIT_MILLIS = 1000;
-    private static final int DEVICE_POLICY_MANAGER_WAIT_MILLIS = 5000;
     private static final String SET_DEVICE_OWNER_COMMAND = "dpm set-device-owner";
     private static final Account ACCOUNT_WITH_EXISTING_TYPE
             = new Account("user0", EXISTING_ACCOUNT_TYPE);
@@ -82,33 +82,44 @@ public class DeviceOwnerPrerequisitesTest {
     @Test
     @Postsubmit(reason = "new test with sleep")
     @EnsureHasNoDeviceOwner
+    @EnsureHasNoProfileOwner
     public void setDeviceOwnerViaAdb_deviceHasAccount_fails()
             throws InterruptedException {
         try (TestAppInstanceReference accountAuthenticatorApp =
-                     sAccountManagementApp.install(sTestApis.users().instrumented());
-            TestAppInstanceReference dpcApp = sDpcApp.install(sTestApis.users().instrumented())) {
-            addAccountWithType();
+                     sAccountManagementApp.install(TestApis.users().instrumented());
+            TestAppInstanceReference dpcApp = sDpcApp.install(TestApis.users().instrumented())) {
+            addAccount();
 
             assertThrows(AdbException.class, () ->
                     ShellCommand
                             .builderForUser(
-                                    sTestApis.users().instrumented(), SET_DEVICE_OWNER_COMMAND)
+                                    TestApis.users().instrumented(), SET_DEVICE_OWNER_COMMAND)
                             .addOperand(RemoteDpc.DPC_COMPONENT_NAME.flattenToString())
                             .execute());
-            assertThat(sTestApis.devicePolicy().getDeviceOwner()).isNull();
-
-            // TODO(b/199174169): Uninstalling a recently-set DPC sometimes fails
-            Thread.sleep(DEVICE_POLICY_MANAGER_WAIT_MILLIS);
+            assertThat(TestApis.devicePolicy().getDeviceOwner()).isNull();
+            DevicePolicyManager dpm = TestApis.context().instrumentedContext()
+                    .getSystemService(DevicePolicyManager.class);
+            // After attempting and failing to set the device owner, it will remain as an active
+            // admin for a short while
+            Poll.forValue("Active admins", dpm::getActiveAdmins)
+                    .toMeet(i -> i == null || !i.contains(RemoteDpc.DPC_COMPONENT_NAME))
+                    .errorOnFail("Expected active admins to not contain RemoteDPC")
+                    .await();
         }
     }
 
     /**
-     * Blocks until an account of {@code type} is added.
+     * Blocks until an account is added.
      */
-    // TODO(b/199077745): Remove sleep once AccountManager race condition is fixed
-    private void addAccountWithType() throws InterruptedException {
-        Thread.sleep(ACCOUNT_MANAGER_WAIT_MILLIS);
-        mAccountManager.addAccountExplicitly(
+    private void addAccount() {
+        Poll.forValue("account created success", this::addAccountOnce)
+                .toBeEqualTo(true)
+                .errorOnFail()
+                .await();
+    }
+
+    private boolean addAccountOnce() {
+        return mAccountManager.addAccountExplicitly(
                 ACCOUNT_WITH_EXISTING_TYPE,
                 TEST_PASSWORD,
                 /* userdata= */ null);

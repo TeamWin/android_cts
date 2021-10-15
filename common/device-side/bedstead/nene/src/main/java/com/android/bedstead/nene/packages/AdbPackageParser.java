@@ -38,7 +38,7 @@ interface AdbPackageParser {
      * <p>Values which are not used on the current version of Android will be {@code null}.
      */
     class ParseResult {
-        Map<String, Package> mPackages;
+        Map<String, AdbPackage> mPackages;
         Set<String> mFeatures;
     }
 

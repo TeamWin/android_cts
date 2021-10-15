@@ -32,6 +32,7 @@ import java.lang.annotation.Target;
 @Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @ParameterizedAnnotation
+// Explicitly primary user which excludes headless users as this isn't a valid mode on headless
 @RequireRunOnPrimaryUser
 @EnsureHasNoWorkProfile
 @EnsureHasDeviceOwner(isPrimary = true)
