@@ -2539,6 +2539,139 @@ public class ParcelTest extends AndroidTestCase {
         p.recycle();
     }
 
+    public void testHasFileDescriptorInRange_outsideRange() {
+        Parcel p = Parcel.obtain();
+        int i0 = p.dataPosition();
+        p.writeInt(13);
+        int i1 = p.dataPosition();
+        p.writeFileDescriptor(FileDescriptor.in);
+        int i2 = p.dataPosition();
+        p.writeString("Tiramisu");
+        int i3 = p.dataPosition();
+
+        assertFalse(p.hasFileDescriptors(i0, i1 - i0));
+        assertFalse(p.hasFileDescriptors(i2, i3 - i2));
+        p.recycle();
+    }
+
+    public void testHasFileDescriptorInRange_partiallyInsideRange() {
+        Parcel p = Parcel.obtain();
+        int i0 = p.dataPosition();
+        p.writeInt(13);
+        int i1 = p.dataPosition();
+        p.writeFileDescriptor(FileDescriptor.in);
+        int i2 = p.dataPosition();
+        p.writeString("Tiramisu");
+        int i3 = p.dataPosition();
+
+        // It has to contain the whole object
+        assertFalse(p.hasFileDescriptors(i1, i2 - i1 - 1));
+        assertFalse(p.hasFileDescriptors(i1 + 1, i2 - i1));
+        p.recycle();
+    }
+
+    public void testHasFileDescriptorInRange_insideRange() {
+        Parcel p = Parcel.obtain();
+        int i0 = p.dataPosition();
+        p.writeInt(13);
+        int i1 = p.dataPosition();
+        p.writeFileDescriptor(FileDescriptor.in);
+        int i2 = p.dataPosition();
+        p.writeString("Tiramisu");
+        int i3 = p.dataPosition();
+
+        assertTrue(p.hasFileDescriptors(i0, i2 - i0));
+        assertTrue(p.hasFileDescriptors(i1, i2 - i1));
+        assertTrue(p.hasFileDescriptors(i1, i3 - i1));
+        assertTrue(p.hasFileDescriptors(i0, i3 - i0));
+        assertTrue(p.hasFileDescriptors(i0, p.dataSize()));
+        p.recycle();
+    }
+
+    public void testHasFileDescriptorInRange_zeroLength() {
+        Parcel p = Parcel.obtain();
+        int i0 = p.dataPosition();
+        p.writeInt(13);
+        int i1 = p.dataPosition();
+        p.writeFileDescriptor(FileDescriptor.in);
+        int i2 = p.dataPosition();
+        p.writeString("Tiramisu");
+        int i3 = p.dataPosition();
+
+        assertFalse(p.hasFileDescriptors(i1, 0));
+        p.recycle();
+    }
+
+    /**
+     * When we rewind the cursor using {@link Parcel#setDataPosition(int)} and write a FD, the
+     * internal representation of FDs in {@link Parcel} may lose the sorted property, so we test
+     * this case.
+     */
+    public void testHasFileDescriptorInRange_withUnsortedFdObjects() {
+        Parcel p = Parcel.obtain();
+        int i0 = p.dataPosition();
+        p.writeLongArray(new long[] {0, 0, 0, 0, 0, 0});
+        int i1 = p.dataPosition();
+        p.writeFileDescriptor(FileDescriptor.in);
+        p.setDataPosition(0);
+        p.writeFileDescriptor(FileDescriptor.in);
+        p.setDataPosition(0);
+
+        assertTrue(p.hasFileDescriptors(i0, i1 - i0));
+        p.recycle();
+    }
+
+    public void testHasFileDescriptorInRange_limitOutOfBounds() {
+        Parcel p = Parcel.obtain();
+        int i0 = p.dataPosition();
+        p.writeFileDescriptor(FileDescriptor.in);
+        int i1 = p.dataPosition();
+
+        assertThrows(IllegalArgumentException.class, () -> p.hasFileDescriptors(i0, i1 - i0 + 1));
+        assertThrows(IllegalArgumentException.class,
+                () -> p.hasFileDescriptors(0, p.dataSize() + 1));
+        p.recycle();
+    }
+
+    public void testHasFileDescriptorInRange_offsetOutOfBounds() {
+        Parcel p = Parcel.obtain();
+        int i0 = p.dataPosition();
+        p.writeFileDescriptor(FileDescriptor.in);
+        int i1 = p.dataPosition();
+
+        assertThrows(IllegalArgumentException.class, () -> p.hasFileDescriptors(i1 + 1, 1));
+        p.recycle();
+    }
+
+    public void testHasFileDescriptorInRange_offsetOutOfBoundsAndZeroLength() {
+        Parcel p = Parcel.obtain();
+        int i0 = p.dataPosition();
+        p.writeFileDescriptor(FileDescriptor.in);
+        int i1 = p.dataPosition();
+
+        assertThrows(IllegalArgumentException.class, () -> p.hasFileDescriptors(i1 + 1, 0));
+        p.recycle();
+    }
+
+    public void testHasFileDescriptorInRange_negativeLength() {
+        Parcel p = Parcel.obtain();
+        int i0 = p.dataPosition();
+        p.writeFileDescriptor(FileDescriptor.in);
+        int i1 = p.dataPosition();
+
+        assertThrows(IllegalArgumentException.class, () -> p.hasFileDescriptors(i0, -1));
+        assertThrows(IllegalArgumentException.class, () -> p.hasFileDescriptors(i0, -(i1 - i0)));
+        p.recycle();
+    }
+
+    public void testHasFileDescriptorInRange_negativeOffset() {
+        Parcel p = Parcel.obtain();
+        p.writeFileDescriptor(FileDescriptor.in);
+
+        assertThrows(IllegalArgumentException.class, () -> p.hasFileDescriptors(-1, 1));
+        p.recycle();
+    }
+
     public void testReadBundle() {
         Bundle bundle = new Bundle();
         bundle.putBoolean("boolean", true);
