@@ -45,7 +45,7 @@ import com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDeviceOwner;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.NeneException;
-import com.android.compatibility.common.util.PollingCheck;
+import com.android.bedstead.nene.utils.Poll;
 
 import org.junit.ClassRule;
 import org.junit.Ignore;
@@ -493,9 +493,11 @@ public class UsersTest {
             TestApis.users().setStopBgUsersOnSwitch(true);
             TestApis.users().system().switchTo();
 
-            PollingCheck.waitFor(() ->
-                    !sDeviceState.secondaryUser().resolve().state().equals(RUNNING_UNLOCKED),
-                    "Expected switched from user to stop. It did not.");
+            Poll.forValue("Secondary user state",
+                    () -> sDeviceState.secondaryUser().resolve().state())
+                    .toNotBeEqualTo(RUNNING_UNLOCKED)
+                    .errorOnFail()
+                    .await();
 
             assertThat(sDeviceState.secondaryUser().resolve().state())
                     .isNotEqualTo(RUNNING_UNLOCKED);

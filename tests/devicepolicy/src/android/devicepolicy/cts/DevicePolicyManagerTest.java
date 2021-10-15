@@ -70,7 +70,6 @@ import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDpc;
 import com.android.bedstead.nene.TestApis;
-import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -425,11 +424,8 @@ public final class DevicePolicyManagerTest {
     }
 
     private boolean isPackageInstalledOnUser(String packageName, UserHandle user) {
-        Package resolvedPackage = TestApis.packages().find(packageName).resolve();
-        if (resolvedPackage == null) {
-            return false;
-        }
-        return resolvedPackage.installedOnUsers().contains(TestApis.users().find(user));
+        return TestApis.packages().find(packageName)
+                .installedOnUser(user);
     }
 
     private Set<String> getConfigurableDefaultCrossProfilePackages() {

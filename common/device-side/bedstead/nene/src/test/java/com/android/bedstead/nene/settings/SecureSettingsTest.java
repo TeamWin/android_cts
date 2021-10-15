@@ -145,7 +145,7 @@ public class SecureSettingsTest {
     @Test
     @RequireSdkVersion(max = Build.VERSION_CODES.R)
     public void getIntWithContentResolver_preS_throwsException() {
-        assertThrows(NeneException.class, () -> TestApis.settings().secure().getInt(
+        assertThrows(UnsupportedOperationException.class, () -> TestApis.settings().secure().getInt(
                 TestApis.context().instrumentedContext().getContentResolver(), KEY));
     }
 

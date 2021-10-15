@@ -533,7 +533,7 @@ public class EventLogsTest {
     @Test
     @EnsureHasWorkProfile
     public void differentUser_queryWorks() {
-        TestApis.packages().find(TEST_APP_PACKAGE_NAME).install(sDeviceState.workProfile());
+        TestApis.packages().find(TEST_APP_PACKAGE_NAME).installExisting(sDeviceState.workProfile());
         logCustomEventOnTestApp(
                 sDeviceState.workProfile(), /* tag= */ TEST_TAG1, /* data= */ null);
 
@@ -546,7 +546,7 @@ public class EventLogsTest {
     @Test
     @EnsureHasWorkProfile
     public void differentUserSpecifiedByUserHandle_queryWorks() {
-        TestApis.packages().find(TEST_APP_PACKAGE_NAME).install(sDeviceState.workProfile());
+        TestApis.packages().find(TEST_APP_PACKAGE_NAME).installExisting(sDeviceState.workProfile());
         logCustomEventOnTestApp(
                 sDeviceState.workProfile(), /* tag= */ TEST_TAG1, /* data= */ null);
 
@@ -559,7 +559,7 @@ public class EventLogsTest {
     @Test
     @EnsureHasWorkProfile
     public void differentUser_doesntGetEventsFromWrongUser() {
-        TestApis.packages().find(TEST_APP_PACKAGE_NAME).install(sDeviceState.workProfile());
+        TestApis.packages().find(TEST_APP_PACKAGE_NAME).installExisting(sDeviceState.workProfile());
         logCustomEventOnTestApp(/* tag= */ TEST_TAG1, /* data= */ null);
         logCustomEventOnTestApp(
                 sDeviceState.workProfile(), /* tag= */ TEST_TAG2, /* data= */ null);

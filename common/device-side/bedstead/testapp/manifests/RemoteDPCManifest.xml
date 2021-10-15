@@ -17,9 +17,9 @@
   -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="com.android.RemoteDPC">
+          package="com.android.RemoteDPC" android:targetSandboxVersion="2">
 
-    <uses-permission android:name="android.permission.INTERACT_ACROSS_PROFILES"/>
+    <uses-permission android:name="android.permission.INTERACT_ACROSS_PROFILES" />
 
     <application
         android:appComponentFactory="com.android.bedstead.testapp.TestAppAppComponentFactory"
@@ -27,6 +27,16 @@
 
         <!-- Don't allow this test app to be returned by queries unless filtered by package name -->
         <meta-data android:name="testapp-package-query-only" android:value="true" />
+
+        <receiver android:name="com.android.bedstead.testapp.BaseTestAppDeviceAdminReceiver"
+                  android:permission="android.permission.BIND_DEVICE_ADMIN"
+                  android:exported="true">
+            <meta-data android:name="android.app.device_admin"
+                       android:resource="@xml/device_admin"/>
+            <intent-filter>
+                <action android:name="android.app.action.DEVICE_ADMIN_ENABLED"/>
+            </intent-filter>
+        </receiver>
 
     </application>
     <uses-sdk android:minSdkVersion="28" android:targetSdkVersion="28"/>
