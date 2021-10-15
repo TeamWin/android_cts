@@ -160,6 +160,12 @@
             </intent-filter>
         </service>
 
+        <service android:name="android.telephony.cts.TestMockModemService"
+             android:directBootAware="true"
+             android:persistent="true"
+             android:exported="true">
+        </service>
+
         <service
             android:name="android.telephony.cts.FakeCarrierMessagingService"
             android:permission="android.permission.BIND_CARRIER_SERVICES"
