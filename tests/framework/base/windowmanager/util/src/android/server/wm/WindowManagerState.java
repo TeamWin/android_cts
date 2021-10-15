@@ -127,10 +127,6 @@ public class WindowManagerState {
     /** @see WindowManager.LayoutParams */
     private static final int TYPE_NOTIFICATION_SHADE = 2040;
 
-    // Default minimal size of resizable task, used if none is set explicitly.
-    // Must be kept in sync with 'default_minimal_size_resizable_task' dimen from frameworks/base.
-    private static final int DEFAULT_RESIZABLE_TASK_SIZE_DP = 220;
-
     private RootWindowContainer mRoot = null;
     // Displays in z-order with the top most at the front of the list, starting with primary.
     private final List<DisplayContent> mDisplays = new ArrayList<>();
@@ -148,6 +144,7 @@ public class WindowManagerState {
     private String mFocusedWindow = null;
     private String mFocusedApp = null;
     private Boolean mIsHomeRecentsComponent;
+    private int mDefaultMinSizeOfResizableTaskDp;
     private String mTopResumedActivityRecord = null;
     final List<String> mResumedActivitiesInRootTasks = new ArrayList<>();
     final List<String> mResumedActivitiesInDisplays = new ArrayList<>();
@@ -424,6 +421,7 @@ public class WindowManagerState {
             mTopResumedActivityRecord = focusedDisplay.mResumedActivity;
         }
         mIsHomeRecentsComponent = new Boolean(root.isHomeRecentsComponent);
+        mDefaultMinSizeOfResizableTaskDp = root.defaultMinSizeResizableTask;
 
         for (int i = 0; i < root.pendingActivities.length; i++) {
             mPendingActivities.add(root.pendingActivities[i].title);
@@ -1265,6 +1263,10 @@ public class WindowManagerState {
             return mDisplayRect;
         }
 
+        public Rect getAppRect() {
+            return mAppRect;
+        }
+
         int getFlags() {
             return mFlags;
         }
@@ -2050,7 +2052,7 @@ public class WindowManagerState {
     }
 
     int defaultMinimalTaskSize(int displayId) {
-        return dpToPx(DEFAULT_RESIZABLE_TASK_SIZE_DP, getDisplay(displayId).getDpi());
+        return dpToPx(mDefaultMinSizeOfResizableTaskDp, getDisplay(displayId).getDpi());
     }
 
     int defaultMinimalDisplaySizeForSplitScreen(int displayId) {
