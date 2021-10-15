@@ -34,10 +34,8 @@ import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 
 import org.jf.dexlib2.iface.ClassDef;
-import org.junit.Assume;
 import org.junit.Before;
 
 /**
@@ -49,11 +47,13 @@ public class ClasspathDeviceInfo extends DeviceInfo {
     private static final String HELPER_APP_PACKAGE = "android.edi.cts.app";
     private static final String HELPER_APP_CLASS = HELPER_APP_PACKAGE + ".ClasspathDeviceTest";
 
-    private final ITestDevice mDevice = getDevice();
-    private final DeviceSdkLevel mDeviceSdkLevel = new DeviceSdkLevel(mDevice);
+    private ITestDevice mDevice;
+    private DeviceSdkLevel mDeviceSdkLevel;
 
     @Before
     public void before() throws DeviceNotAvailableException {
+        mDevice = getDevice();
+        mDeviceSdkLevel = new DeviceSdkLevel(mDevice);
         assumeTrue(mDeviceSdkLevel.isDeviceAtLeastR());
     }
 
