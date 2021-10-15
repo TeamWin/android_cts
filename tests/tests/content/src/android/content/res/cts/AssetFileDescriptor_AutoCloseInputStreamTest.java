@@ -152,6 +152,24 @@ public class AssetFileDescriptor_AutoCloseInputStreamTest extends AndroidTestCas
         assertEquals(FILE_DATA[2], mInput.read());
     }
 
+    public void testTwoFileDescriptorsWorkIndependently() throws IOException {
+        openInput(0, FILE_LENGTH);
+
+        AssetFileDescriptor fd2 = new AssetFileDescriptor(mFd.getParcelFileDescriptor(),
+                0,
+                FILE_LENGTH);
+        AssetFileDescriptor.AutoCloseInputStream input2 =
+                new AssetFileDescriptor.AutoCloseInputStream(fd2);
+
+        input2.skip(2);
+        input2.read();
+
+        for (int i = 0; i < FILE_LENGTH; i++) {
+            assertEquals(FILE_DATA[i], mInput.read());
+        }
+        assertEquals(FILE_END, mInput.read());
+    }
+
     private void openInput(long startOffset, long length)
             throws IOException {
         if (mFd != null) {
