@@ -3716,14 +3716,25 @@ public class TelephonyManagerTest {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             return;
         }
-
+        final String empty_pin = ""; // For getting current remaining pin attempt.
         final String pin = "fake_pin";
         final String puk = "fake_puk";
         final String newPin = "fake_new_pin";
 
+        //Refer GSM 02.17  5.6 PIN Manangement
+        //To avoid that sim may enter PUK state,
+        //TC should be allowed when current Pin attempt count is reset with 3.
         boolean isEnabled = ShellIdentityUtils.invokeMethodWithShellPermissions(
                 mTelephonyManager, TelephonyManager::isIccLockEnabled);
         PinResult result = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, (tm) -> tm.supplyIccLockPin(empty_pin));
+        assertTrue(result.getResult() == PinResult.PIN_RESULT_TYPE_SUCCESS);
+        if(result.getAttemptsRemaining() < 3){
+            Log.d(TAG, "Skipping test and requires that reboot device and unlock pin successfully");
+            return;
+        }
+
+        result = ShellIdentityUtils.invokeMethodWithShellPermissions(
                 mTelephonyManager, (tm) -> tm.setIccLockEnabled(!isEnabled, pin));
         assertTrue(result.getResult() == PinResult.PIN_RESULT_TYPE_INCORRECT
                 || result.getResult() == PinResult.PIN_RESULT_TYPE_FAILURE);
