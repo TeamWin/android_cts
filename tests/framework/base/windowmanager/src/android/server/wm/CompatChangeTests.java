@@ -80,6 +80,10 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
             component(ResizeableLargeAspectRatioActivity.class);
     private static final ComponentName NON_RESIZEABLE_PORTRAIT_ACTIVITY =
             component(NonResizeablePortraitActivity.class);
+    private static final ComponentName NON_RESIZEABLE_LANDSCAPE_ACTIVITY =
+            component(NonResizeableLandscapeActivity.class);
+    private static final ComponentName NON_RESIZEABLE_NON_FIXED_ORIENTATION_ACTIVITY =
+            component(NonResizeableNonFixedOrientationActivity.class);
     private static final ComponentName NON_RESIZEABLE_ASPECT_RATIO_ACTIVITY =
             component(NonResizeableAspectRatioActivity.class);
     private static final ComponentName NON_RESIZEABLE_LARGE_ASPECT_RATIO_ACTIVITY =
@@ -353,6 +357,38 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
         runMinAspectRatioTest(NON_RESIZEABLE_PORTRAIT_ACTIVITY,
                 /* expectedInPortrait= */ SIZE_COMPAT_DISPLAY_ASPECT_RATIO,
                 /* expectedInLandscape= */ FIXED_ORIENTATION_MIN_ASPECT_RATIO,
+                /* useAppBoundsInPortrait= */false);
+    }
+
+    /**
+     * Test that applying {@link ActivityInfo#OVERRIDE_MIN_ASPECT_RATIO_LARGE} has no effect on
+     * activities whose orientation is fixed to landscape.
+     */
+    @Test
+    @EnableCompatChanges({ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO,
+            ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO_LARGE})
+    public void testOverrideMinAspectRatioForLandscapeActivity() {
+        // Note that we're using getBounds() in portrait, rather than getAppBounds() like other
+        // tests, because we're comparing to the display size and therefore need to consider insets.
+        runMinAspectRatioTest(NON_RESIZEABLE_LANDSCAPE_ACTIVITY,
+                /* expectedInPortrait= */ FIXED_ORIENTATION_MIN_ASPECT_RATIO,
+                /* expectedInLandscape= */ SIZE_COMPAT_DISPLAY_ASPECT_RATIO,
+                /* useAppBoundsInPortrait= */false);
+    }
+
+    /**
+     * Test that applying {@link ActivityInfo#OVERRIDE_MIN_ASPECT_RATIO_LARGE} has no effect on
+     * activities whose orientation isn't fixed.
+     */
+    @Test
+    @EnableCompatChanges({ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO,
+            ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO_LARGE})
+    public void testOverrideMinAspectRatioForNonFixedOrientationActivity() {
+        // Note that we're using getBounds() in portrait, rather than getAppBounds() like other
+        // tests, because we're comparing to the display size and therefore need to consider insets.
+        runMinAspectRatioTest(NON_RESIZEABLE_NON_FIXED_ORIENTATION_ACTIVITY,
+                /* expectedInPortrait= */ SIZE_COMPAT_DISPLAY_ASPECT_RATIO,
+                /* expectedInLandscape= */ SIZE_COMPAT_DISPLAY_ASPECT_RATIO,
                 /* useAppBoundsInPortrait= */false);
     }
 
@@ -691,6 +727,12 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     }
 
     public static class NonResizeablePortraitActivity extends FocusableActivity {
+    }
+
+    public static class NonResizeableLandscapeActivity extends FocusableActivity {
+    }
+
+    public static class NonResizeableNonFixedOrientationActivity extends FocusableActivity {
     }
 
     public static class NonResizeableAspectRatioActivity extends FocusableActivity {

@@ -506,6 +506,15 @@
                   android:screenOrientation="portrait"
                   android:exported="true"/>
 
+        <activity android:name="android.server.wm.CompatChangeTests$NonResizeableLandscapeActivity"
+                  android:resizeableActivity="false"
+                  android:screenOrientation="landscape"
+                  android:exported="true"/>
+
+        <activity android:name="android.server.wm.CompatChangeTests$NonResizeableNonFixedOrientationActivity"
+                  android:resizeableActivity="false"
+                  android:exported="true"/>
+
         <activity android:name="android.server.wm.CompatChangeTests$NonResizeableAspectRatioActivity"
                   android:resizeableActivity="false"
                   android:screenOrientation="portrait"
