@@ -192,6 +192,22 @@ public class Components extends ComponentsBase {
     public static final ComponentName ALIAS_TEST_ACTIVITY = component("AliasTestActivity");
     public static final ComponentName DISPLAY_ACCESS_CHECK_EMBEDDING_ACTIVITY = component(
             "DisplayAccessCheckEmbeddingActivity");
+    public static final ComponentName MAX_ASPECT_RATIO_ACTIVITY =
+            component("MaxAspectRatioActivity");
+    public static final ComponentName MAX_ASPECT_RATIO_RESIZABLE_ACTIVITY =
+            component("MaxAspectRatioResizableActivity");
+    public static final ComponentName MAX_ASPECT_RATIO_UNSET_ACTIVITY =
+            component("MaxAspectRatioUnsetActivity");
+    public static final ComponentName META_DATA_MAX_ASPECT_RATIO_ACTIVITY =
+            component("MetaDataMaxAspectRatioActivity");
+    public static final ComponentName MIN_ASPECT_RATIO_ACTIVITY =
+            component("MinAspectRatioActivity");
+    public static final ComponentName MIN_ASPECT_RATIO_LANDSCAPE_ACTIVITY =
+            component("MinAspectRatioLandscapeActivity");
+    public static final ComponentName MIN_ASPECT_RATIO_PORTRAIT_ACTIVITY =
+            component("MinAspectRatioPortraitActivity");
+    public static final ComponentName MIN_ASPECT_RATIO_UNSET_ACTIVITY =
+            component("MinAspectRatioUnsetActivity");
 
     public static final ComponentName ASSISTANT_VOICE_INTERACTION_SERVICE =
             component("AssistantVoiceInteractionService");
