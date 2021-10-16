@@ -55,6 +55,7 @@ android_test {
         "hamcrest-library",
         "compatibility-device-util-axt",
         "truth-prebuilt",
+        "android.hardware.radio.config-V1-java",
     ],
     srcs: [
         "src/**/*.java",

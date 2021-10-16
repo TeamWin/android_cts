@@ -164,6 +164,9 @@
              android:directBootAware="true"
              android:persistent="true"
              android:exported="true">
+            <intent-filter>
+                <action android:name="android.telephony.cts.iradioconfig.mockmodem.service"/>
+            </intent-filter>
         </service>
 
         <service
