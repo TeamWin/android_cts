@@ -35,5 +35,6 @@ import java.lang.annotation.Target;
 public @interface RequireSdkVersion {
     int min() default 1;
     int max() default Integer.MAX_VALUE;
+    String reason() default "";
     FailureMode failureMode() default FailureMode.SKIP;
 }

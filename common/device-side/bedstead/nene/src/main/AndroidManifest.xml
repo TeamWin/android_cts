@@ -19,6 +19,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="com.android.bedstead.nene">
     <uses-sdk android:minSdkVersion="27" />
+    <uses-permission android:name="android.permission.GET_TASKS" android:maxSdkVersion="28" />
 
     <application>
     </application>

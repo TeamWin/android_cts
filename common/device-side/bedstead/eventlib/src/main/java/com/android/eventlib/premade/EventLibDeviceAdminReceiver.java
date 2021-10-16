@@ -61,6 +61,19 @@ public class EventLibDeviceAdminReceiver extends DeviceAdminReceiver {
         mOverrideDeviceAdminReceiverClassName = overrideDeviceAdminReceiverClassName;
     }
 
+    /**
+     * Get the class name for this {@link DeviceAdminReceiver}.
+     *
+     * <p>This will account for the name being overridden.
+     */
+    public String className() {
+        if (mOverrideDeviceAdminReceiverClassName != null) {
+            return mOverrideDeviceAdminReceiverClassName;
+        } else {
+            return EventLibDeviceAdminReceiver.class.getName();
+        }
+    }
+
     @Override
     public void onEnabled(Context context, Intent intent) {
         DeviceAdminEnabledEvent.DeviceAdminEnabledEventLogger logger =

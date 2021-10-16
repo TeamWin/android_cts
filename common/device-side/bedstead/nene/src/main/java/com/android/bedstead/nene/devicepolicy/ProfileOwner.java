@@ -25,7 +25,7 @@ import android.os.Build;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.exceptions.NeneException;
-import com.android.bedstead.nene.packages.PackageReference;
+import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.utils.ShellCommand;
@@ -40,7 +40,7 @@ import java.util.Objects;
 public final class ProfileOwner extends DevicePolicyController {
 
     ProfileOwner(UserReference user,
-            PackageReference pkg,
+            Package pkg,
             ComponentName componentName) {
         super(user, pkg, componentName);
     }

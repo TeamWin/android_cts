@@ -19,6 +19,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="com.android.bedstead.testapp.library">
     <uses-sdk android:minSdkVersion="27" />
+    <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS" android:maxSdkVersion="30" />
     <application>
     </application>
 </manifest>

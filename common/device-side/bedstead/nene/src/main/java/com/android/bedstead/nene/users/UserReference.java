@@ -17,10 +17,11 @@
 package com.android.bedstead.nene.users;
 
 import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
-import static android.os.Build.VERSION_CODES.Q;
+import static android.os.Build.VERSION_CODES.R;
 
 import android.content.Intent;
 import android.os.UserHandle;
+import android.util.Log;
 
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.AdbException;
@@ -40,6 +41,8 @@ import javax.annotation.Nullable;
  * <p>To resolve the user into a {@link User}, see {@link #resolve()}.
  */
 public abstract class UserReference implements AutoCloseable {
+
+    private static final String LOG_TAG = "UserReference";
 
     private final int mId;
 
@@ -149,7 +152,7 @@ public abstract class UserReference implements AutoCloseable {
      */
     public UserReference switchTo() {
         // This is created outside of the try because we don't want to wait for the broadcast
-        // on versions less than Q
+        // on versions less than R
         BlockingBroadcastReceiver broadcastReceiver =
                 new BlockingBroadcastReceiver(TestApis.context().instrumentedContext(),
                         Intent.ACTION_USER_FOREGROUND,
@@ -158,7 +161,7 @@ public abstract class UserReference implements AutoCloseable {
                                 .getIdentifier() == mId);
 
         try {
-            if (Versions.meetsMinimumSdkVersionRequirement(Q)) {
+            if (Versions.meetsMinimumSdkVersionRequirement(R)) {
                 try (PermissionContext p =
                              TestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
                     broadcastReceiver.registerForAllUsers();
@@ -172,11 +175,15 @@ public abstract class UserReference implements AutoCloseable {
                     .validate(String::isEmpty)
                     .execute();
 
-            if (Versions.meetsMinimumSdkVersionRequirement(Q)) {
+            if (Versions.meetsMinimumSdkVersionRequirement(R)) {
                 broadcastReceiver.awaitForBroadcast();
+            } else {
+                Thread.sleep(20000);
             }
         } catch (AdbException e) {
             throw new NeneException("Could not switch to user", e);
+        } catch (InterruptedException e) {
+            Log.e(LOG_TAG, "Interrupted while switching user", e);
         } finally {
             broadcastReceiver.unregisterQuietly();
         }

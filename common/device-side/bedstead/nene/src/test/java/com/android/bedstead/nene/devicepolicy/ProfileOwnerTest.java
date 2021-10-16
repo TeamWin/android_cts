@@ -61,7 +61,7 @@ public class ProfileOwnerTest {
     @Test
     @EnsureHasProfileOwner
     public void pkg_returnsPackage() {
-        assertThat(sProfileOwner.pkg()).isEqualTo(sTestApp.reference());
+        assertThat(sProfileOwner.pkg()).isEqualTo(sTestApp.pkg());
     }
 
     @Test

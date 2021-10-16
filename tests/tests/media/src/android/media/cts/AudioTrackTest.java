@@ -3280,6 +3280,28 @@ public class AudioTrackTest {
         }
     }
 
+    /**
+     * Ensure AudioTrack.getMinBufferSize invalid arguments return BAD_VALUE instead
+     * of throwing exception.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testInvalidMinBufferSize() throws Exception {
+        int TEST_SAMPLE_RATE = 24000;
+        int TEST_CHANNEL_CONFIGURATION = AudioFormat.CHANNEL_OUT_STEREO;
+        int TEST_ENCODING = AudioFormat.ENCODING_PCM_16BIT;
+
+        for (int i = 1; i < 8; ++i) {
+            int minBuffSize = AudioTrack.getMinBufferSize(
+                    (i & 1) != 0 ? 0 : TEST_SAMPLE_RATE,
+                    (i & 2) != 0 ? AudioFormat.CHANNEL_INVALID : TEST_CHANNEL_CONFIGURATION,
+                    (i & 4) != 0 ? AudioFormat.ENCODING_INVALID :TEST_ENCODING);
+            assertEquals("Invalid configuration " + i + " should return ERROR_BAD_VALUE",
+                    AudioTrack.ERROR_BAD_VALUE, minBuffSize);
+        }
+    }
+
 /* Do not run in JB-MR1. will be re-opened in the next platform release.
     public void testResourceLeakage() throws Exception {
         final int BUFFER_SIZE = 600 * 1024;

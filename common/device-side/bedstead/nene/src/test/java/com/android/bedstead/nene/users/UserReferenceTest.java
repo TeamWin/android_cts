@@ -176,7 +176,7 @@ public class UserReferenceTest {
                      TestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
 
             TestApis.packages().find(sContext.getPackageName())
-                    .install(sDeviceState.secondaryUser());
+                    .installExisting(sDeviceState.secondaryUser());
             sDeviceState.secondaryUser().switchTo();
 
             Intent intent = new Intent();

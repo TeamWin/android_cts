@@ -227,7 +227,7 @@ public class TestAppInstanceReference implements AutoCloseable, ConnectionListen
     public TestAppInstanceReference stop() {
         stopKeepAlive();
 
-        ProcessReference process = mTestApp.reference().runningProcess(mUser);
+        ProcessReference process = mTestApp.pkg().runningProcess(mUser);
         if (process != null) {
             try {
                 process.kill();
@@ -244,7 +244,7 @@ public class TestAppInstanceReference implements AutoCloseable, ConnectionListen
      */
     @Nullable
     public ProcessReference process() {
-        return mTestApp.reference().runningProcess(mUser);
+        return mTestApp.pkg().runningProcess(mUser);
     }
 
     @Override
