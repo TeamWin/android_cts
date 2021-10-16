@@ -17,21 +17,14 @@
 package com.android.bedstead.nene.exceptions;
 
 /**
- * Top level {@link Exception} thrown by Nene APIs.
- *
- * <p>This is a {@link RuntimeException} as, because Nene APIs are only to be used in tests, it is
- * expected that exceptional behaviour should just result in a failed test.
+ * Exception thrown when polling fails to reach the expected value.
  */
-public class NeneException extends RuntimeException {
-    public NeneException(Throwable cause) {
-        super(cause);
-    }
-
-    public NeneException(String message) {
+public class PollValueFailedException extends NeneException {
+    public PollValueFailedException(String message) {
         super(message);
     }
 
-    public NeneException(String message, Throwable throwable) {
+    public PollValueFailedException(String message, Throwable throwable) {
         super(message, throwable);
     }
 }

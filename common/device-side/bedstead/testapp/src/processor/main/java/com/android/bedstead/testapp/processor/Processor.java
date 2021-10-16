@@ -66,7 +66,8 @@ import javax.tools.JavaFileObject;
 @AutoService(javax.annotation.processing.Processor.class)
 public final class Processor extends AbstractProcessor {
     public static final String PACKAGE_NAME = "com.android.bedstead.testapp";
-    // TODO(scottjonathan): Add more verification before generating - and add processor tests
+    private static final ClassName RETRY_CLASSNAME =
+            ClassName.get("com.android.bedstead.nene.utils", "Retry");
     private static final ClassName CONTEXT_CLASSNAME =
             ClassName.get("android.content", "Context");
     private static final ClassName NENE_ACTIVITY_CLASSNAME =
@@ -269,9 +270,10 @@ public final class Processor extends AbstractProcessor {
                 methodBuilder.addParameter(parameterSpec);
             }
 
-            methodBuilder.addStatement("int retries = 300") // 30 seconds of retries
-                    .beginControlFlow("while (true)")
-                    .beginControlFlow("try")
+
+
+            CodeBlock.Builder logicLambda = CodeBlock.builder()
+                    .add("() -> {\n").indent()
                     .addStatement("mConnector.connect()");
 
             if (method.getReturnType().toString().equals(
@@ -279,43 +281,44 @@ public final class Processor extends AbstractProcessor {
                     && method.getSimpleName().contentEquals("getParentProfileInstance")) {
                 // Special case, we want to return a new parent wrapper, but still call through to
                 // the other side for exceptions, etc.
-                methodBuilder.addStatement(
+                logicLambda.addStatement(
                         "mProfileClass.other().$L($L)",
                         method.getSimpleName(), String.join(", ", params));
-                methodBuilder.addStatement("return new $T(mConnector, $L)",
+                logicLambda.addStatement("return new $T(mConnector, $L)",
                         REMOTE_DEVICE_POLICY_MANAGER_PARENT_WRAPPER_CLASSNAME,
                         String.join(", ", params));
             } else if (method.getReturnType().getKind().equals(TypeKind.VOID)) {
-                methodBuilder.addStatement(
-                        "mProfileClass.other().$L($L)",
-                        method.getSimpleName(), String.join(", ", params));
-                methodBuilder.addStatement("return");
+                logicLambda.addStatement("mProfileClass.other().$L($L)", method.getSimpleName(),
+                        String.join(", ", params));
             } else {
-                methodBuilder.addStatement(
-                        "return mProfileClass.other().$L($L)",
+                logicLambda.addStatement("return mProfileClass.other().$L($L)",
                         method.getSimpleName(), String.join(", ", params));
+            }
+            logicLambda.unindent().add("}");
+
+            CodeBlock runLogic = CodeBlock.of(
+                    "$1T.logic($2L).terminalException(e -> e instanceof $3T).run()",
+                    RETRY_CLASSNAME,
+                    logicLambda.build().toString(), PROFILE_RUNTIME_EXCEPTION_CLASSNAME);
+
+            methodBuilder.beginControlFlow("try");
+
+            if (method.getReturnType().getKind().equals(TypeKind.VOID)) {
+                methodBuilder.addStatement(runLogic);
+            } else {
+                methodBuilder.addStatement("return $L", runLogic);
             }
 
             methodBuilder.nextControlFlow(
-                    "catch ($T e)", UNAVAILABLE_PROFILE_EXCEPTION_CLASSNAME)
-                    .beginControlFlow("if (retries-- <= 0)")
-                    .addStatement(
-                            "throw new $T($S, e)",
-                            NENE_EXCEPTION_CLASSNAME, "Error connecting to test app")
-                    .endControlFlow()
-                    .beginControlFlow("try")
-                    .addStatement("$T.sleep(100)", Thread.class)
-                    .nextControlFlow("catch ($T e2)", InterruptedException.class)
-                    .addStatement(
-                            "throw new $T($S, e)",
-                            NENE_EXCEPTION_CLASSNAME, "Error connecting to test app")
-                    .endControlFlow()
-                    .nextControlFlow("catch ($T e)", PROFILE_RUNTIME_EXCEPTION_CLASSNAME)
+                    "catch ($T e)", PROFILE_RUNTIME_EXCEPTION_CLASSNAME)
                     .addStatement("throw ($T) e.getCause()", RuntimeException.class)
+                    .nextControlFlow("catch ($T e)", Throwable.class)
+                    .addStatement(
+                            "throw new $T($S, e)",
+                            NENE_EXCEPTION_CLASSNAME, "Error connecting to test app")
                     .nextControlFlow("finally")
                     .addStatement("mConnector.stopManualConnectionManagement()")
-                    .endControlFlow() // try
-                    .endControlFlow(); // while(true)
+                    .endControlFlow();
 
             classBuilder.addMethod(methodBuilder.build());
         }
@@ -383,53 +386,45 @@ public final class Processor extends AbstractProcessor {
                 methodBuilder.addParameter(parameterSpec);
             }
 
-            methodBuilder.beginControlFlow("try").addStatement("tryConnect(mConnector)");
+            CodeBlock.Builder logicLambda = CodeBlock.builder()
+                    .add("() -> {\n").indent()
+                    .addStatement("mConnector.connect()");
 
             if (method.getReturnType().getKind().equals(TypeKind.VOID)) {
-                methodBuilder.addStatement("mProfileClass.other().$L($L)", method.getSimpleName(),
+                logicLambda.addStatement("mProfileClass.other().$L($L)", method.getSimpleName(),
                         String.join(", ", params));
             } else {
-                methodBuilder.addStatement("return mProfileClass.other().$L($L)",
+                logicLambda.addStatement("return mProfileClass.other().$L($L)",
                         method.getSimpleName(), String.join(", ", params));
+            }
+            logicLambda.unindent().add("}");
+
+            CodeBlock runLogic = CodeBlock.of(
+                    "$1T.logic($2L).terminalException(e -> e instanceof $3T).run()",
+                    RETRY_CLASSNAME,
+                    logicLambda.build().toString(), PROFILE_RUNTIME_EXCEPTION_CLASSNAME);
+
+            methodBuilder.beginControlFlow("try");
+
+            if (method.getReturnType().getKind().equals(TypeKind.VOID)) {
+                methodBuilder.addStatement(runLogic);
+            } else {
+                methodBuilder.addStatement("return $L", runLogic);
             }
 
             methodBuilder.nextControlFlow(
-                    "catch ($T e)", UNAVAILABLE_PROFILE_EXCEPTION_CLASSNAME)
+                    "catch ($T e)", PROFILE_RUNTIME_EXCEPTION_CLASSNAME)
+                    .addStatement("throw ($T) e.getCause()", RuntimeException.class)
+                    .nextControlFlow("catch ($T e)", Throwable.class)
                     .addStatement(
                             "throw new $T($S, e)",
                             NENE_EXCEPTION_CLASSNAME, "Error connecting to test app")
-                    .nextControlFlow("catch ($T e)", PROFILE_RUNTIME_EXCEPTION_CLASSNAME)
-                    .addStatement("throw ($T) e.getCause()", RuntimeException.class)
                     .nextControlFlow("finally")
                     .addStatement("mConnector.stopManualConnectionManagement()")
                     .endControlFlow();
 
             classBuilder.addMethod(methodBuilder.build());
         }
-
-        classBuilder.addMethod(
-                MethodSpec.methodBuilder("tryConnect")
-                        .addModifiers(Modifier.PRIVATE)
-                        .addParameter(CROSS_PROFILE_CONNECTOR_CLASSNAME, "connector")
-                        .addException(UNAVAILABLE_PROFILE_EXCEPTION_CLASSNAME)
-                        .addStatement("int retries = 300") // 30 seconds of retries
-                        .beginControlFlow("while (true)")
-                        .beginControlFlow("try")
-                        .addStatement("connector.connect()")
-                        .addStatement("return")
-                        .nextControlFlow("catch ($T e)", UNAVAILABLE_PROFILE_EXCEPTION_CLASSNAME)
-                        .beginControlFlow("if (retries-- <= 0)")
-                        .addStatement("throw e")
-                        .endControlFlow()
-                        .beginControlFlow("try")
-                        .addStatement("$T.sleep(100)", Thread.class)
-                        .nextControlFlow("catch ($T e2)", InterruptedException.class)
-                        .addStatement("throw e")
-                        .endControlFlow()
-                        .endControlFlow()
-                        .endControlFlow()
-                        .build()
-        );
 
         writeClassToFile("android.app.admin", classBuilder.build());
     }
@@ -526,42 +521,43 @@ public final class Processor extends AbstractProcessor {
                 methodBuilder.addParameter(parameterSpec);
             }
 
-            methodBuilder.addStatement("int retries = 300") // 30 seconds of retries
-                    .beginControlFlow("while (true)")
-                    .beginControlFlow("try")
+            CodeBlock.Builder logicLambda = CodeBlock.builder()
+                    .add("() -> {\n").indent()
                     .addStatement("mConnector.connect()");
 
             if (method.getReturnType().getKind().equals(TypeKind.VOID)) {
-                methodBuilder.addStatement(
-                        "mProfileTargetedRemoteActivity.other().$L($L)",
-                        method.getSimpleName(), params);
-                methodBuilder.addStatement("return");
+                logicLambda.addStatement(
+                        "mProfileTargetedRemoteActivity.other().$L($L)", method.getSimpleName(),
+                        String.join(", ", params));
             } else {
-                methodBuilder.addStatement(
-                        "return mProfileTargetedRemoteActivity.other().$L($L)",
-                        method.getSimpleName(), params);
+                logicLambda.addStatement("return mProfileTargetedRemoteActivity.other().$L($L)",
+                        method.getSimpleName(), String.join(", ", params));
+            }
+            logicLambda.unindent().add("}");
+
+            CodeBlock runLogic = CodeBlock.of(
+                    "$1T.logic($2L).terminalException(e -> e instanceof $3T).run()",
+                    RETRY_CLASSNAME,
+                    logicLambda.build().toString(), PROFILE_RUNTIME_EXCEPTION_CLASSNAME);
+
+            methodBuilder.beginControlFlow("try");
+
+            if (method.getReturnType().getKind().equals(TypeKind.VOID)) {
+                methodBuilder.addStatement(runLogic);
+            } else {
+                methodBuilder.addStatement("return $L", runLogic);
             }
 
             methodBuilder.nextControlFlow(
-                    "catch ($T e)", UNAVAILABLE_PROFILE_EXCEPTION_CLASSNAME)
-                    .beginControlFlow("if (retries-- <= 0)")
-                    .addStatement(
-                            "throw new $T($S, e)",
-                            NENE_EXCEPTION_CLASSNAME, "Error connecting to test app")
-                    .endControlFlow()
-                    .beginControlFlow("try")
-                    .addStatement("$T.sleep(100)", Thread.class)
-                    .nextControlFlow("catch ($T e2)", InterruptedException.class)
-                    .addStatement(
-                            "throw new $T($S, e)",
-                            NENE_EXCEPTION_CLASSNAME, "Error connecting to test app")
-                    .endControlFlow()
-                    .nextControlFlow("catch ($T e)", PROFILE_RUNTIME_EXCEPTION_CLASSNAME)
+                    "catch ($T e)", PROFILE_RUNTIME_EXCEPTION_CLASSNAME)
                     .addStatement("throw ($T) e.getCause()", RuntimeException.class)
+                    .nextControlFlow("catch ($T e)", Throwable.class)
+                    .addStatement(
+                            "throw new $T($S, e)",
+                            NENE_EXCEPTION_CLASSNAME, "Error connecting to test app")
                     .nextControlFlow("finally")
                     .addStatement("mConnector.stopManualConnectionManagement()")
-                    .endControlFlow() // try
-                    .endControlFlow(); // while(true)
+                    .endControlFlow();
 
             classBuilder.addMethod(methodBuilder.build());
         }
