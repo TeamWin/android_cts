@@ -23,6 +23,7 @@ import android.os.BaseBundle;
 import android.os.Bundle;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.platform.test.annotations.AsbSecurityTest;
 import android.view.AbsSavedState;
 import android.view.View;
 import android.view.View.BaseSavedState;
@@ -31,11 +32,74 @@ import android.annotation.SuppressLint;
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.util.Random;
+import java.util.Iterator;
 
 import android.security.cts.R;
 import android.platform.test.annotations.AsbSecurityTest;
 
 public class AmbiguousBundlesTest extends AndroidTestCase {
+
+    /*
+     * b/112550251
+     */
+    @AsbSecurityTest(cveBugId = 112550251)
+    public void test_android_CVE_2018_9522() throws Exception {
+        Ambiguator ambiguator = new Ambiguator() {
+            @Override
+            public Bundle make(Bundle paramBundle1, Bundle paramBundle2)
+                    throws Exception {
+                Object localObject1 = new Random(1234L);
+                int i = 0;
+                int j = 0;
+                Object localObject2 = paramBundle1.keySet().iterator();
+                while (((Iterator) localObject2).hasNext()) {
+                    i = Math.min(i, ((String) ((Iterator) localObject2).next())
+                            .hashCode());
+                }
+                localObject2 = paramBundle2.keySet().iterator();
+                while (((Iterator) localObject2).hasNext()) {
+                    i = Math.min(i, ((String) ((Iterator) localObject2).next())
+                            .hashCode());
+                }
+                do {
+                    localObject2 = randomString((Random) localObject1);
+                    j = ((String) localObject2).hashCode();
+                } while (j >= i);
+                String str;
+                int k;
+                do {
+                    str = "\r\000" + randomString((Random) localObject1)
+                            + "AAAAAAAAAA";
+                    k = str.hashCode();
+                } while ((k >= i) || (k <= j));
+                padBundle(paramBundle2, paramBundle1.size(), i,
+                        (Random) localObject1);
+                padBundle(paramBundle1, paramBundle2.size(), i,
+                        (Random) localObject1);
+                localObject1 = Parcel.obtain();
+                ((Parcel) localObject1).writeInt(0);
+                ((Parcel) localObject1).writeInt(1279544898);
+                i = ((Parcel) localObject1).dataPosition();
+                ((Parcel) localObject1).writeInt(paramBundle1.size() + 2);
+                ((Parcel) localObject1).writeString((String) localObject2);
+                ((Parcel) localObject1).writeInt(4);
+                ((Parcel) localObject1)
+                        .writeString("android.os.StatsLogEventWrapper");
+                ((Parcel) localObject1).writeString(str);
+                ((Parcel) localObject1).writeInt(3);
+                ((Parcel) localObject1).writeBundle(paramBundle2);
+                writeBundleSkippingHeaders((Parcel) localObject1, paramBundle1);
+                j = ((Parcel) localObject1).dataPosition();
+                ((Parcel) localObject1).setDataPosition(0);
+                ((Parcel) localObject1).writeInt(j - i);
+                ((Parcel) localObject1).setDataPosition(0);
+                paramBundle1 = ((Parcel) localObject1).readBundle();
+                ((Parcel) localObject1).recycle();
+                return paramBundle1;
+            }
+        };
+        testAmbiguator(ambiguator);
+    }
 
     /*
      * b/71992105
