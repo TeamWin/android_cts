@@ -39,4 +39,34 @@ public interface BundleKeyQuery<E extends Queryable> extends Queryable {
 
     @CheckResult
     BundleQuery<E> bundleValue();
+
+    /**
+     * The integer value of the key/
+     */
+    @CheckResult
+    IntegerQuery<E> integerValue();
+
+    /**
+     * The long value of the key/
+     */
+    @CheckResult
+    LongQuery<E> longValue();
+
+    /**
+     * The boolean value of the key/
+     */
+    @CheckResult
+    BooleanQuery<E> booleanValue();
+
+    /**
+     * The string list value of the key/
+     */
+    @CheckResult
+    ListQuery<E, String, StringQuery<E>> stringListValue();
+
+    /**
+     * The integer list value of the key/
+     */
+    @CheckResult
+    ListQuery<E, Integer, IntegerQuery<E>> integerListValue();
 }
