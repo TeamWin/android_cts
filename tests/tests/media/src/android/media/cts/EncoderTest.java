@@ -325,6 +325,7 @@ public class EncoderTest extends AndroidTestCase {
 
     private void testEncoder(String componentName, MediaFormat format)
             throws FileNotFoundException {
+
         Log.i(TAG, "testEncoder " + componentName + "/" + format);
         // test with all zeroes/silence
         testEncoder(componentName, format, 0, null, MODE_SILENT);
@@ -344,7 +345,6 @@ public class EncoderTest extends AndroidTestCase {
 
     private void testEncoder(String componentName, MediaFormat format,
             long startSeed, final String res, int mode) throws FileNotFoundException {
-
         Log.i(TAG, "testEncoder " + componentName + "/" + mode + "/" + format);
         int sampleRate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE);
         int channelCount = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT);
@@ -371,6 +371,14 @@ public class EncoderTest extends AndroidTestCase {
         if ((mode & MODE_RESOURCE) != 0) {
             Preconditions.assertTestFileExists(mInpPrefix + res);
             istream = new FileInputStream(mInpPrefix + res);
+        }
+
+        // TODO(b/191447420) WORKAROUND: sleep for 30 msec before starting new codec to allow
+        // previous codec to get deleted.
+        try {
+            Thread.sleep(30);
+        } catch (InterruptedException e) {
+            // ignore interrupted exception for this workaround
         }
 
         Random random = new Random(startSeed);
@@ -491,4 +499,3 @@ public class EncoderTest extends AndroidTestCase {
         }
     }
 }
-
