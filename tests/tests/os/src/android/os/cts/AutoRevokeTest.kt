@@ -137,6 +137,10 @@ class AutoRevokeTest {
         assumeFalse(
                 "Watch doesn't provide a unified way to check notifications. it depends on UX",
                 hasFeatureWatch())
+        assumeFalse(
+                "AOSP TV doesn't support visible notifications",
+                context.packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK))
+
         withUnusedThresholdMs(3L) {
             withDummyApp {
                 // Setup
