@@ -19,8 +19,10 @@ package com.android.bedstead.harrier.annotations.enterprise;
 import static android.content.pm.PackageManager.FEATURE_DEVICE_ADMIN;
 
 import static com.android.bedstead.harrier.DeviceState.UserType.CURRENT_USER;
+import static com.android.bedstead.harrier.annotations.AnnotationRunPrecedence.MIDDLE;
 
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.AnnotationRunPrecedence;
 import com.android.bedstead.harrier.annotations.RequireFeature;
 
 import java.lang.annotation.ElementType;
@@ -53,4 +55,16 @@ public @interface EnsureHasProfileOwner {
      * Affiliation ids to be set for the profile owner.
      */
     String[] affiliationIds() default {};
+
+    /**
+     * Weight sets the order that annotations will be resolved.
+     *
+     * <p>Annotations with a lower weight will be resolved before annotations with a higher weight.
+     *
+     * <p>If there is an order requirement between annotations, ensure that the weight of the
+     * annotation which must be resolved first is lower than the one which must be resolved later.
+     *
+     * <p>Weight can be set to a {@link AnnotationRunPrecedence} constant, or to any {@link int}.
+     */
+    int weight() default MIDDLE;
 }

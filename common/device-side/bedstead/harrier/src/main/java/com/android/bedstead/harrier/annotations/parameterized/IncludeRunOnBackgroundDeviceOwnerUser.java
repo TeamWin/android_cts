@@ -17,7 +17,9 @@
 package com.android.bedstead.harrier.annotations.parameterized;
 
 import static com.android.bedstead.harrier.OptionalBoolean.FALSE;
+import static com.android.bedstead.harrier.annotations.AnnotationRunPrecedence.LATE;
 
+import com.android.bedstead.harrier.annotations.AnnotationRunPrecedence;
 import com.android.bedstead.harrier.annotations.RequireRunOnSystemUser;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
 import com.android.bedstead.harrier.annotations.meta.ParameterizedAnnotation;
@@ -37,4 +39,15 @@ import java.lang.annotation.Target;
 @RequireRunOnSystemUser(switchedToUser = FALSE)
 @EnsureHasDeviceOwner
 public @interface IncludeRunOnBackgroundDeviceOwnerUser {
+    /**
+     * Weight sets the order that annotations will be resolved.
+     *
+     * <p>Annotations with a lower weight will be resolved before annotations with a higher weight.
+     *
+     * <p>If there is an order requirement between annotations, ensure that the weight of the
+     * annotation which must be resolved first is lower than the one which must be resolved later.
+     *
+     * <p>Weight can be set to a {@link AnnotationRunPrecedence} constant, or to any {@link int}.
+     */
+    int weight() default LATE;
 }
