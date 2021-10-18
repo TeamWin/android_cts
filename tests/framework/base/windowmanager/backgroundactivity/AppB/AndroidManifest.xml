@@ -23,9 +23,6 @@
             android:name=".StartPendingIntentReceiver"
             android:exported="true"/>
         <activity
-            android:name=".StartPendingIntentActivity"
-            android:exported="true"/>
-        <activity
             android:name=".ForegroundActivity"
             android:exported="true" />
     </application>
