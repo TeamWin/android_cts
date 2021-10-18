@@ -248,4 +248,12 @@
     <option name="compatibility:exclude-filter" value="CtsStatsdAtomHostTestCases android.cts.statsd.atom.UidAtomTests#testDangerousPermissionState" />
     <option name="compatibility:exclude-filter" value="CtsStatsdAtomHostTestCases android.cts.statsd.atom.UidAtomTests#testDangerousPermissionStateSampled" />
 
+    <!-- b/202357331 -->
+    <option name="compatibility:exclude-filter" value="CtsDevicePolicyManagerTestCases com.android.cts.devicepolicy.MixedDeviceOwnerTest#testCreateAdminSupportIntent" />
+    <option name="compatibility:exclude-filter" value="CtsDevicePolicyManagerTestCases com.android.cts.devicepolicy.MixedManagedProfileOwnerTest#testCreateAdminSupportIntent" />
+    <option name="compatibility:exclude-filter" value="CtsDevicePolicyManagerTestCases com.android.cts.devicepolicy.MixedProfileOwnerTest#testCreateAdminSupportIntent" />
+    <option name="compatibility:exclude-filter" value="CtsDevicePolicyManagerTestCases com.android.cts.devicepolicy.MixedDeviceOwnerTest#testSetCameraDisabledLogged" />
+    <option name="compatibility:exclude-filter" value="CtsDevicePolicyManagerTestCases com.android.cts.devicepolicy.MixedManagedProfileOwnerTest#testSetCameraDisabledLogged" />
+    <option name="compatibility:exclude-filter" value="CtsDevicePolicyManagerTestCases com.android.cts.devicepolicy.MixedProfileOwnerTest#testSetCameraDisabledLogged" />
+
 </configuration>
