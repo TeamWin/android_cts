@@ -18,6 +18,7 @@ package com.android.bedstead.harrier;
 
 import androidx.annotation.Nullable;
 
+import com.android.bedstead.harrier.annotations.AnnotationRunPrecedence;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
@@ -57,7 +58,6 @@ import java.util.stream.Collectors;
 public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
 
     private static final String BEDSTEAD_PACKAGE_NAME = "com.android.bedstead";
-    private static final String REQUIRE_PREFIX = "Require";
 
     // These are annotations which are not included indirectly
     private static final Set<String> sIgnoredAnnotationPackages = new HashSet<>();
@@ -69,20 +69,22 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
     }
 
     private static int annotationSorter(Annotation a, Annotation b) {
-        // Sort so require comes before ensure and everything else is alphabetical
-        if (a.annotationType().getSimpleName().startsWith(REQUIRE_PREFIX)) {
-            return b.annotationType().getSimpleName().startsWith(REQUIRE_PREFIX)
-                    ? alphabeticSorter(a, b) : -1;
-        }
-        return b.annotationType().getSimpleName().startsWith(REQUIRE_PREFIX)
-                ? 1 : alphabeticSorter(a, b);
+        return getAnnotationWeight(a) - getAnnotationWeight(b);
     }
 
-    private static int alphabeticSorter(Annotation a, Annotation b) {
-        // TODO(b/201319781): This is currently arbitrarily in reverse alphabetical order because
-        // it works with existing tests we need to add support for explicit dependencies between
-        // annotations
-        return b.annotationType().getSimpleName().compareTo(a.annotationType().getSimpleName());
+    private static int getAnnotationWeight(Annotation a) {
+        if (!a.annotationType().getPackage().getName().startsWith(BEDSTEAD_PACKAGE_NAME)) {
+            return AnnotationRunPrecedence.FIRST;
+        }
+
+        try {
+            return (int) a.annotationType().getMethod("weight").invoke(a);
+        } catch (NoSuchMethodException e) {
+            // Default to PRECEDENCE_NOT_IMPORTANT if no weight is found on the annotation.
+            return AnnotationRunPrecedence.PRECEDENCE_NOT_IMPORTANT;
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            throw new NeneException("Failed to invoke weight on this annotation: " + a, e);
+        }
     }
 
     /**
