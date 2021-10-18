@@ -20,7 +20,6 @@ import static com.android.bedstead.harrier.DeviceState.UserType.PRIMARY_USER;
 import static com.android.bedstead.harrier.DeviceState.UserType.WORK_PROFILE;
 import static com.android.bedstead.harrier.OptionalBoolean.FALSE;
 import static com.android.bedstead.harrier.OptionalBoolean.TRUE;
-import static com.android.queryable.queries.StringQuery.string;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -80,11 +79,9 @@ public final class CrossProfileAppsTest {
     private static final TestAppProvider sTestAppProvider = new TestAppProvider();
 
     private static final TestApp sCrossProfileTestApp = sTestAppProvider.query()
-            .wherePermissions().contains(
-                    string().isEqualTo("android.permission.INTERACT_ACROSS_PROFILES")).get();
+            .wherePermissions().contains("android.permission.INTERACT_ACROSS_PROFILES").get();
     private static final TestApp sNonCrossProfileTestApp = sTestAppProvider.query()
-            .wherePermissions().doesNotContain(
-                    string().isEqualTo("android.permission.INTERACT_ACROSS_PROFILES")).get();
+            .wherePermissions().doesNotContain("android.permission.INTERACT_ACROSS_PROFILES").get();
 
     @Test
     @RequireRunOnPrimaryUser
