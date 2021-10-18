@@ -53,13 +53,13 @@ public class DisplayAreaPolicyTests extends ActivityManagerTestBase {
     }
 
     /**
-     * DisplayContent should have feature id of FEATURE_ROOT. It should not be organized.
+     * DisplayContent should have feature id of FEATURE_ROOT. It should be organized.
      */
     @Test
     public void testDisplayContent() {
         for (DisplayContent displayContent : mDisplays) {
             assertThat(displayContent.getFeatureId()).isEqualTo(FEATURE_ROOT);
-            assertThat(displayContent.isOrganized()).isFalse();
+            assertThat(displayContent.isOrganized()).isTrue();
         }
     }
 
