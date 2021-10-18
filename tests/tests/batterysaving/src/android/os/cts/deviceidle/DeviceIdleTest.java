@@ -77,46 +77,46 @@ public class DeviceIdleTest {
                 .getSystemService(PowerManager.class);
         waitUntil("Never made it to IDLE state", 30 /* seconds */, () -> {
             final CallbackAsserter idleModeChangedBroadcastAsserter = CallbackAsserter.forBroadcast(
-                    new IntentFilter(PowerManager.ACTION_LIGHT_DEVICE_IDLE_MODE_CHANGED));
+                    new IntentFilter(PowerManager.ACTION_DEVICE_LIGHT_IDLE_MODE_CHANGED));
             stepIdleState("light");
             final String state = getIdleState("light");
             if ("IDLE".equals(state)) {
                 idleModeChangedBroadcastAsserter.assertCalled(
                         "Didn't get light idle mode changed broadcast", 15 /* 15 seconds */);
-                assertTrue(powerManager.isLightDeviceIdleMode());
+                assertTrue(powerManager.isDeviceLightIdleMode());
                 return true;
             } else {
                 assertFalse("Returned true even though state is " + state,
-                        powerManager.isLightDeviceIdleMode());
+                        powerManager.isDeviceLightIdleMode());
                 return false;
             }
         });
 
         // We're IDLE. Step to IDLE_MAINTENANCE and confirm false is returned.
         CallbackAsserter idleModeChangedBroadcastAsserter = CallbackAsserter.forBroadcast(
-                new IntentFilter(PowerManager.ACTION_LIGHT_DEVICE_IDLE_MODE_CHANGED));
+                new IntentFilter(PowerManager.ACTION_DEVICE_LIGHT_IDLE_MODE_CHANGED));
         stepIdleState("light");
         idleModeChangedBroadcastAsserter.assertCalled(
                 "Didn't get light idle mode changed broadcast", 15 /* 15 seconds */);
         String state = getIdleState("light");
         assertEquals("IDLE_MAINTENANCE", state);
-        assertFalse(powerManager.isLightDeviceIdleMode());
+        assertFalse(powerManager.isDeviceLightIdleMode());
 
         idleModeChangedBroadcastAsserter = CallbackAsserter.forBroadcast(
-                new IntentFilter(PowerManager.ACTION_LIGHT_DEVICE_IDLE_MODE_CHANGED));
+                new IntentFilter(PowerManager.ACTION_DEVICE_LIGHT_IDLE_MODE_CHANGED));
         stepIdleState("light");
         idleModeChangedBroadcastAsserter.assertCalled(
                 "Didn't get light idle mode changed broadcast", 15 /* 15 seconds */);
         state = getIdleState("light");
         assertEquals("IDLE", state);
-        assertTrue(powerManager.isLightDeviceIdleMode());
+        assertTrue(powerManager.isDeviceLightIdleMode());
 
         idleModeChangedBroadcastAsserter = CallbackAsserter.forBroadcast(
-                new IntentFilter(PowerManager.ACTION_LIGHT_DEVICE_IDLE_MODE_CHANGED));
+                new IntentFilter(PowerManager.ACTION_DEVICE_LIGHT_IDLE_MODE_CHANGED));
         setScreenState(true);
         idleModeChangedBroadcastAsserter.assertCalled(
                 "Didn't get light idle mode changed broadcast", 15 /* 15 seconds */);
-        assertFalse(powerManager.isLightDeviceIdleMode());
+        assertFalse(powerManager.isDeviceLightIdleMode());
     }
 
     @Test
