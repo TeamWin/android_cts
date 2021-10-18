@@ -17,7 +17,6 @@
 package com.android.bedstead.testapp;
 
 import static com.android.queryable.queries.ActivityQuery.activity;
-import static com.android.queryable.queries.StringQuery.string;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -177,9 +176,8 @@ public class TestAppProviderTest {
     @Test
     public void query_withPermission_returnsMatching() {
         TestApp testApp = mTestAppProvider.query()
-                .wherePermissions().contains(
-                        string().isEqualTo(PERMISSION_DECLARED_BY_TESTAPP)
-                ).get();
+                .wherePermissions().contains(PERMISSION_DECLARED_BY_TESTAPP)
+                .get();
 
         assertThat(testApp.permissions()).contains(PERMISSION_DECLARED_BY_TESTAPP);
     }
@@ -187,9 +185,8 @@ public class TestAppProviderTest {
     @Test
     public void query_withoutPermission_returnsMatching() {
         TestApp testApp = mTestAppProvider.query()
-                .wherePermissions().doesNotContain(
-                        string().isEqualTo(PERMISSION_DECLARED_BY_TESTAPP)
-                ).get();
+                .wherePermissions().doesNotContain(PERMISSION_DECLARED_BY_TESTAPP)
+                .get();
 
         assertThat(testApp.permissions()).doesNotContain(PERMISSION_DECLARED_BY_TESTAPP);
     }
