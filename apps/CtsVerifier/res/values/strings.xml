@@ -2188,6 +2188,57 @@
     <string name="nls_anr">This test checks that notifications are not sent with content that is
         too long. If this test causes the test app to ANR, the test has failed.
     </string>
+    <string name="action_not_sent">SecureActionOnLockScreenTest</string>
+    <string name="action_received">Action Sent - SecureActionOnLockScreenTest</string>
+    <string name="action_test_title">Action</string>
+    <string name="nls_visibility">Please change the lock screen setting to hide sensitive content
+        on the lockscreen</string>
+    <string name="nls_restore_visibility">Please change the lock screen setting to show all
+        content on the lockscreen</string>
+    <string name="add_screen_lock">Add a secure screen lock of any type.\nLet all notification content be shown.</string>
+    <string name="set_global_visibility_public">Update notification settings to ensure that all notification content is shown.</string>
+    <string name="set_global_visibility_private">Update notification settings to ensure that sensitive notification content is shown only when unlocked.</string>
+    <string name="set_global_visibility_secret">Update notification settings to ensure that all notifications are hidden on the lock screen.</string>
+    <string name="remove_screen_lock">Remove the added screen lock</string>
+    <string name="secure_action_lockscreen">Lock the screen and find the SecureActionOnLockScreenTest
+        notification. Tap on its action. Verify that the keyguard displays on tap, and that the
+        notification text does not update until the passcode is entered. Ensure that the notification
+        text does update once the device is unlocked.</string>
+    <string name="np_start_channel_settings">Launch Channel Settings</string>
+    <string name="np_start_security_settings">Launch Security Settings</string>
+    <string name="np_start_notif_settings">Launch Notification Settings</string>
+    <string name="np_when_locked_see_redacted">Lock the screen and find the NotifPrivacyTest notification.\n
+        Pass the test if the notification content is REDACTED and the icon is B.</string>
+    <string name="np_when_locked_see_private">Lock the screen and find the NotifPrivacyTest notification.\n
+        Pass the test if the notification content is EXPOSED and the icon is A.</string>
+    <string name="np_when_locked_hidden">Lock the screen and look for the NotifPrivacyTest notification.\n
+        Fail the test if it can be found without unlocking the device.</string>
+    <string name="np_start_occluding">Launch CallSimulator</string>
+    <string name="np_occluding_instructions">Launch the CallSimulator and follow the instructions on that screen.</string>
+    <string name="np_occluding_see_redacted">CallSimulator
+        \n\n(Like a call, this screen will be visible even when the device is locked.)
+        \n\nLock the screen, then come back here without unlocking.
+        \nPull down the notification shade and find the NotifPrivacyTest notification.
+        \nPass the test if the notification content is REDACTED and the icon is B.
+        \n\nGo back when ready to Pass/Fail the step.</string>
+    <string name="np_occluding_see_private">CallSimulator
+        \n\n(Like a call, this screen will be visible even when the device is locked.)
+        \n\nLock the screen, then come back here without unlocking.
+        \nPull down the notification shade and find the NotifPrivacyTest notification.
+        \nPass the test if the notification content is EXPOSED and the icon is A.
+        \n\nGo back when ready to Pass/Fail the step.</string>
+    <string name="np_occluding_hidden">CallSimulator
+        \n\n(Like a call, this screen will be visible even when the device is locked.)
+        \n\nLock the screen, then come back here without unlocking.
+        \nPull down the notification shade and look for the NotifPrivacyTest notification.
+        \nFail the test if it can be found without unlocking the device.
+        \n\nGo back when ready to Pass/Fail the step.</string>
+    <string name="np_public_version_text">NotifPrivacyTest: REDACTED</string>
+    <string name="np_private_version_text">NotifPrivacyTest: EXPOSED</string>
+    <string name="notif_privacy_test">Notification Privacy Test</string>
+    <string name="notif_privacy_info">This test checks that Notification privacy is correctly
+        handled on the insecure and secure lockscreen.
+    </string>
     <string name="msg_extras_preserved">Check that Message extras Bundle was preserved.</string>
     <string name="conversation_section_ordering">If this device supports conversation notifications,
         and groups them into a separate section from alerting and silent non-conversation

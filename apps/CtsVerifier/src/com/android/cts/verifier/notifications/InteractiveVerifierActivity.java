@@ -191,14 +191,15 @@ public abstract class InteractiveVerifierActivity extends PassFailButtons.Activi
         outState.putInt(STATE, stateIndex);
         final int status = mCurrentTest == null ? SETUP : mCurrentTest.status;
         outState.putInt(STATUS, status);
-        Log.i(TAG, "saved state(" + stateIndex + "}, status(" + status + ")");
+        Log.i(TAG, "saved state(" + stateIndex + "), status(" + status + ")");
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         //To avoid NPE during onResume,before start to iterate next test order
-        if (mCurrentTest!= null && mCurrentTest.autoStart()) {
+        if (mCurrentTest != null && mCurrentTest.status != SETUP && mCurrentTest.autoStart()) {
+            Log.i(TAG, "auto starting: " + mCurrentTest.getClass().getSimpleName());
             mCurrentTest.status = READY;
         }
         next();
@@ -206,11 +207,22 @@ public abstract class InteractiveVerifierActivity extends PassFailButtons.Activi
 
     // Interface Utilities
 
+    protected final void setButtonsEnabled(View view, boolean enabled) {
+        if (view instanceof Button) {
+            view.setEnabled(enabled);
+        } else if (view instanceof ViewGroup) {
+            ViewGroup viewGroup = (ViewGroup) view;
+            for (int i = 0; i < viewGroup.getChildCount(); i++) {
+                View child = viewGroup.getChildAt(i);
+                setButtonsEnabled(child, enabled);
+            }
+        }
+    }
+
     protected void markItem(InteractiveTestCase test) {
         if (test == null) { return; }
         View item = test.view;
-        ImageView status = (ImageView) item.findViewById(R.id.nls_status);
-        View button = item.findViewById(R.id.nls_action_button);
+        ImageView status = item.findViewById(R.id.nls_status);
         switch (test.status) {
             case WAIT_FOR_USER:
                 status.setImageResource(R.drawable.fs_warning);
@@ -224,14 +236,12 @@ public abstract class InteractiveVerifierActivity extends PassFailButtons.Activi
 
             case FAIL:
                 status.setImageResource(R.drawable.fs_error);
-                button.setClickable(false);
-                button.setEnabled(false);
+                setButtonsEnabled(test.view, false);
                 break;
 
             case PASS:
                 status.setImageResource(R.drawable.fs_good);
-                button.setClickable(false);
-                button.setEnabled(false);
+                setButtonsEnabled(test.view, false);
                 break;
 
         }
@@ -251,7 +261,7 @@ public abstract class InteractiveVerifierActivity extends PassFailButtons.Activi
         View item = mInflater.inflate(R.layout.nls_item, parent, false);
         TextView instructions = item.findViewById(R.id.nls_instructions);
         instructions.setText(getString(messageId, messageFormatArgs));
-        Button button = (Button) item.findViewById(R.id.nls_action_button);
+        Button button = item.findViewById(R.id.nls_action_button);
         button.setText(actionId);
         button.setTag(actionId);
         return item;
@@ -270,6 +280,17 @@ public abstract class InteractiveVerifierActivity extends PassFailButtons.Activi
         View item = mInflater.inflate(R.layout.iva_pass_fail_item, parent, false);
         TextView instructions = item.findViewById(R.id.nls_instructions);
         instructions.setText(stringId);
+        return item;
+    }
+
+    protected View createUserAndPassFailItem(ViewGroup parent, int actionId, int stringId) {
+        View item = mInflater.inflate(R.layout.iva_pass_fail_item, parent, false);
+        TextView instructions = item.findViewById(R.id.nls_instructions);
+        instructions.setText(stringId);
+        Button button = item.findViewById(R.id.nls_action_button);
+        button.setVisibility(View.VISIBLE);
+        button.setText(actionId);
+        button.setTag(actionId);
         return item;
     }
 
