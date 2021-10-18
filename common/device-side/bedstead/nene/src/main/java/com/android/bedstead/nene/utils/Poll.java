@@ -191,7 +191,8 @@ public final class Poll<E> {
      * See {@link #errorOnFail()} to change this behavior.
      */
     public E await() {
-        Instant endTime = Instant.now().plus(mTimeout);
+        Instant startTime = Instant.now();
+        Instant endTime = startTime.plus(mTimeout);
 
         E value = null;
         int tries = 0;
@@ -229,8 +230,10 @@ public final class Poll<E> {
         try {
             value = mSupplier.get();
         } catch (Throwable e) {
+            long seconds = Duration.between(startTime, Instant.now()).toMillis() / 1000;
             throw new PollValueFailedException(mErrorSupplier.apply(mValueName, value)
-                    + " - Exception when getting value (checked " + tries + " times)", e);
+                    + " - Exception when getting value (checked " + tries + " times in "
+                    + seconds + " seconds)", e);
         }
 
         try {
@@ -238,11 +241,16 @@ public final class Poll<E> {
                 return value;
             }
 
+            long seconds = Duration.between(startTime, Instant.now()).toMillis() / 1000;
             throw new PollValueFailedException(
-                    mErrorSupplier.apply(mValueName, value) + " (checked " + tries + " times)");
+                    mErrorSupplier.apply(mValueName, value) + " (checked " + tries + " times in "
+                            + seconds + " seconds)");
         } catch (Throwable e) {
+            long seconds = Duration.between(startTime, Instant.now()).toMillis() / 1000;
             throw new PollValueFailedException(
-                    mErrorSupplier.apply(mValueName, value) + " (checked " + tries + " times)", e);
+                    mErrorSupplier.apply(mValueName, value) + " (checked " + tries + " times in "
+                            + seconds + " seconds)", e);
+
         }
     }
 

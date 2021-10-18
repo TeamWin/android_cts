@@ -28,7 +28,6 @@ import static android.content.pm.PackageInstaller.SessionParams.MODE_FULL_INSTAL
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.R;
 
-import static com.android.bedstead.nene.users.User.UserState.RUNNING_UNLOCKED;
 import static com.android.compatibility.common.util.FileUtils.readInputStreamFully;
 
 import android.content.ComponentName;
@@ -47,9 +46,9 @@ import androidx.annotation.RequiresApi;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.annotations.Experimental;
 import com.android.bedstead.nene.exceptions.AdbException;
+import com.android.bedstead.nene.exceptions.AdbParseException;
 import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.permissions.PermissionContext;
-import com.android.bedstead.nene.users.User;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.utils.BlockingIntentSender;
 import com.android.bedstead.nene.utils.ShellCommand;
@@ -187,7 +186,9 @@ public final class Packages {
         return installedForUser(TestApis.users().instrumented());
     }
 
-    /** Resolve all packages installed for a given {@link UserReference}. */
+    /**
+     * Resolve all packages installed for a given {@link UserReference}.
+     */
     public Collection<Package> installedForUser(UserReference user) {
         if (user == null) {
             throw new NullPointerException();
@@ -198,6 +199,14 @@ public final class Packages {
                     .getInstalledPackages(/* flags= */ 0)
                     .stream()
                     .map(i -> new Package(i.packageName))
+                    .collect(Collectors.toSet());
+        }
+
+        if (!Versions.meetsMinimumSdkVersionRequirement(R)) {
+            AdbPackageParser.ParseResult packages = parseDumpsys();
+            return packages.mPackages.values().stream()
+                    .filter(p -> p.installedOnUsers().contains(user))
+                    .map(p -> find(p.packageName()))
                     .collect(Collectors.toSet());
         }
 
@@ -243,11 +252,9 @@ public final class Packages {
             return install(user, loadBytes(apkFile));
         }
 
-        User resolvedUser = user.resolve();
-
-        if (resolvedUser == null || resolvedUser.state() != RUNNING_UNLOCKED) {
+        if (!user.exists() || !user.isUnlocked()) {
             throw new NeneException("Packages can not be installed in non-started users "
-                    + "(Trying to install into user " + resolvedUser + ")");
+                    + "(Trying to install into user " + user + ")");
         }
 
         // This is not in the try because if the install fails we don't want to await the broadcast
@@ -330,11 +337,9 @@ public final class Packages {
             return installPreS(user, apkFile);
         }
 
-        User resolvedUser = user.resolve();
-
-        if (resolvedUser == null || resolvedUser.state() != RUNNING_UNLOCKED) {
+        if (!user.exists() || !user.isUnlocked()) {
             throw new NeneException("Packages can not be installed in non-started users "
-                    + "(Trying to install into user " + resolvedUser + ")");
+                    + "(Trying to install into user " + user + ")");
         }
 
         // This is not inside the try because if the install is unsuccessful we don't want to await
@@ -536,5 +541,14 @@ public final class Packages {
     @Experimental
     public Package instrumented() {
         return find(TestApis.context().instrumentedContext().getPackageName());
+    }
+
+    static AdbPackageParser.ParseResult parseDumpsys() {
+        try {
+            String dumpsysOutput = ShellCommand.builder("dumpsys package").execute();
+            return Packages.sParser.parse(dumpsysOutput);
+        } catch (AdbException | AdbParseException e) {
+            throw new NeneException("Error parsing package dumpsys", e);
+        }
     }
 }

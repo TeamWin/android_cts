@@ -74,7 +74,6 @@ import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.permissions.PermissionContextImpl;
-import com.android.bedstead.nene.users.User;
 import com.android.bedstead.nene.users.UserBuilder;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.utils.ShellCommand;
@@ -683,7 +682,7 @@ public final class DeviceState implements TestRule {
     }
 
     private void requireRunOnUser(String[] userTypes, OptionalBoolean switchedToUser) {
-        User instrumentedUser = TestApis.users().instrumented().resolve();
+        UserReference instrumentedUser = TestApis.users().instrumented();
 
         assumeTrue("This test only runs on users of type " + Arrays.toString(userTypes),
                 Arrays.stream(userTypes).anyMatch(i -> i.equals(instrumentedUser.type().name())));
@@ -697,7 +696,7 @@ public final class DeviceState implements TestRule {
             OptionalBoolean installInstrumentedAppInParent,
             boolean hasProfileOwner, boolean dpcIsPrimary,
             OptionalBoolean switchedToParentUser, Set<String> affiliationIds) {
-        User instrumentedUser = TestApis.users().instrumented().resolve();
+        UserReference instrumentedUser = TestApis.users().instrumented();
 
         assumeTrue("This test only runs on users of type " + userType,
                 instrumentedUser.type().name().equals(userType));
@@ -956,7 +955,7 @@ public final class DeviceState implements TestRule {
         }
 
         if (!mProfiles.containsKey(userType) || !mProfiles.get(userType).containsKey(forUser)) {
-            UserReference parentUser = TestApis.users().instrumented().resolve().parent();
+            UserReference parentUser = TestApis.users().instrumented().parent();
 
             if (parentUser != null) {
                 if (mProfiles.containsKey(userType)
@@ -1014,7 +1013,7 @@ public final class DeviceState implements TestRule {
      */
     public UserReference primaryUser() {
         return TestApis.users().all()
-                .stream().filter(User::isPrimary).findFirst()
+                .stream().filter(UserReference::isPrimary).findFirst()
                 .orElseThrow(IllegalStateException::new);
     }
 
@@ -1190,16 +1189,14 @@ public final class DeviceState implements TestRule {
 
         switchFromUser(userReference);
 
-        User user = userReference.resolve();
-
-        if (!mCreatedUsers.remove(user)) {
+        if (!mCreatedUsers.remove(userReference)) {
             mRemovedUsers.add(TestApis.users().createUser()
-                    .name(user.name())
-                    .type(user.type())
-                    .parent(user.parent()));
+                    .name(userReference.name())
+                    .type(userReference.type())
+                    .parent(userReference.parent()));
         }
 
-        user.remove();
+        userReference.remove();
     }
 
     public void requireCanSupportAdditionalUser() {
@@ -1266,7 +1263,7 @@ public final class DeviceState implements TestRule {
 
     private void teardownShareableState() {
         if (mOriginalSwitchedUser != null) {
-            if (mOriginalSwitchedUser.resolve() == null) {
+            if (!mOriginalSwitchedUser.exists()) {
                 Log.d(LOG_TAG, "Could not switch back to original user "
                         + mOriginalSwitchedUser
                         + " as it does not exist. Switching to initial instead.");
@@ -1716,7 +1713,7 @@ public final class DeviceState implements TestRule {
                 continue;
             }
 
-            if (otherUser.resolve().parent() != null) {
+            if (otherUser.parent() != null) {
                 continue;
             }
 

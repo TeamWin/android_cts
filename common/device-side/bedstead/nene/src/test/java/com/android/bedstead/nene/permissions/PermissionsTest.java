@@ -18,6 +18,7 @@ package com.android.bedstead.nene.permissions;
 
 import static android.content.pm.PackageManager.PERMISSION_DENIED;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
+import static android.os.Build.VERSION_CODES.P;
 import static android.os.Build.VERSION_CODES.Q;
 import static android.os.Build.VERSION_CODES.R;
 import static android.os.Build.VERSION_CODES.S;
@@ -79,7 +80,7 @@ public class PermissionsTest {
     }
 
     @Test
-    @RequireSdkVersion(min = Q, reason = "adopt shell permissions only available on Q+")
+    @RequireSdkVersion(max = P, reason = "adopt shell permissions only available on Q+")
     public void withoutPermission_alreadyGranted_androidPreQ_throwsException() {
         assertThrows(NeneException.class,
                 () -> TestApis.permissions().withoutPermission(
@@ -114,7 +115,7 @@ public class PermissionsTest {
     }
 
     @Test
-    @RequireSdkVersion(min = Q, reason = "adopt shell permissions only available on Q+")
+    @RequireSdkVersion(max = P, reason = "adopt shell permissions only available on Q+")
     public void withoutPermission_installPermission_androidPreQ_throwsException() {
         assertThrows(NeneException.class,
                 () -> TestApis.permissions().withoutPermission(INSTALL_PERMISSION));
@@ -135,7 +136,7 @@ public class PermissionsTest {
     }
 
     @Test
-    @RequireSdkVersion(min = Q, reason = "adopt shell permissions only available on Q+")
+    @RequireSdkVersion(max = P, reason = "adopt shell permissions only available on Q+")
     public void withoutPermission_permissionIsAlreadyGrantedInInstrumentedApp_androidPreQ_throwsException() {
         assertThrows(NeneException.class,
                 () -> TestApis.permissions().withoutPermission(

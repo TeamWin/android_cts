@@ -22,13 +22,10 @@ import androidx.annotation.Nullable;
 
 /**
  * Representation of a user on an Android device.
- *
- * <p>{@link User} information represents the state of the device at construction time. To get an
- * updated reflection of the user on the device, see {@link #resolve()}.
  */
-public final class User extends UserReference {
+public final class AdbUser {
 
-    private static final String LOG_TAG = "User";
+    private static final String LOG_TAG = "AdbUser";
 
     /* From UserInfo */
     static final int FLAG_MANAGED_PROFILE = 0x00000020;
@@ -70,9 +67,13 @@ public final class User extends UserReference {
 
     final MutableUser mMutableUser;
 
-    User(MutableUser mutableUser) {
-        super(mutableUser.mId);
+    AdbUser(MutableUser mutableUser) {
         mMutableUser = mutableUser;
+    }
+
+    /** Get the id of the user. */
+    public int id() {
+        return mMutableUser.mId;
     }
 
     /** Get the serial number of the user. */

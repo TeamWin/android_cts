@@ -565,7 +565,7 @@ public final class Package {
     }
 
     private PackageInfo packageInfoForUserPreS(UserReference user, int flags) {
-        AdbPackage pkg = parseDumpsys().mPackages.get(mPackageName);
+        AdbPackage pkg = Packages.parseDumpsys().mPackages.get(mPackageName);
 
         if (pkg == null) {
             return null;
@@ -581,16 +581,6 @@ public final class Package {
 
         return packageInfo;
     }
-
-    private AdbPackageParser.ParseResult parseDumpsys() {
-        try {
-            String dumpsysOutput = ShellCommand.builder("dumpsys package").execute();
-            return Packages.sParser.parse(dumpsysOutput);
-        } catch (AdbException | AdbParseException e) {
-            throw new NeneException("Error parsing package dumpsys", e);
-        }
-    }
-
 
     @Nullable
     private ApplicationInfo applicationInfoFromAnyUser(int flags) {
@@ -776,7 +766,7 @@ public final class Package {
             }
         }
 
-        return parseDumpsys().mPackages.containsKey(mPackageName);
+        return Packages.parseDumpsys().mPackages.containsKey(mPackageName);
     }
 
     private static final class ProcessInfo {

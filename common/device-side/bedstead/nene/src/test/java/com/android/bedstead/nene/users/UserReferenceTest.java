@@ -16,10 +16,12 @@
 
 package com.android.bedstead.nene.users;
 
+import static android.Manifest.permission.CREATE_USERS;
 import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
 import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.os.Build.VERSION_CODES.Q;
+import static android.os.Build.VERSION_CODES.S;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -27,11 +29,12 @@ import static org.testng.Assert.assertThrows;
 
 import android.content.Context;
 import android.content.Intent;
+import android.os.Process;
+import android.os.UserManager;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
-import com.android.bedstead.harrier.annotations.EnsureHasNoSecondaryUser;
-import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
+import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
@@ -53,8 +56,10 @@ public class UserReferenceTest {
     private static final int USER_ID = NON_EXISTING_USER_ID;
     private static final String USER_NAME = "userName";
     private static final String TEST_ACTIVITY_NAME = "com.android.bedstead.nene.test.Activity";
-
+    private static final int SERIAL_NO = 1000;
+    private static final UserType USER_TYPE = new UserType(new UserType.MutableUserType());
     private static final Context sContext = TestApis.context().instrumentedContext();
+    private static final UserManager sUserManager = sContext.getSystemService(UserManager.class);
 
     @ClassRule @Rule
     public static final DeviceState sDeviceState = new DeviceState();
@@ -70,29 +75,14 @@ public class UserReferenceTest {
     }
 
     @Test
-    public void resolve_doesNotExist_returnsNull() {
-        assertThat(TestApis.users().find(NON_EXISTING_USER_ID).resolve()).isNull();
+    public void exists_doesNotExist_returnsFalse() {
+        assertThat(TestApis.users().find(NON_EXISTING_USER_ID).exists()).isFalse();
     }
 
     @Test
     @EnsureHasSecondaryUser
-    public void resolve_doesExist_returnsUser() {
-        assertThat(sDeviceState.secondaryUser().resolve()).isNotNull();
-    }
-
-    @Test
-    // TODO(scottjonathan): We should specify that we can create a new user
-    @EnsureHasNoSecondaryUser
-    @EnsureHasNoWorkProfile
-    public void resolve_doesExist_userHasCorrectDetails() {
-        UserReference userReference = TestApis.users().createUser().name(USER_NAME).create();
-
-        try {
-            User user = userReference.resolve();
-            assertThat(user.name()).isEqualTo(USER_NAME);
-        } finally {
-            userReference.remove();
-        }
+    public void exists_doesExist_returnsTrue() {
+        assertThat(sDeviceState.secondaryUser().exists()).isTrue();
     }
 
     @Test
@@ -116,13 +106,13 @@ public class UserReferenceTest {
     }
 
     @Test
-    public void start_userNotStarted_userIsStarted() {
+    public void start_userNotStarted_userIsUnlocked() {
         UserReference user = TestApis.users().createUser().create().stop();
 
         user.start();
 
         try {
-            assertThat(user.resolve().state()).isEqualTo(User.UserState.RUNNING_UNLOCKED);
+            assertThat(user.isUnlocked()).isTrue();
         } finally {
             user.remove();
         }
@@ -135,14 +125,12 @@ public class UserReferenceTest {
 
         sDeviceState.secondaryUser().start();
 
-        assertThat(sDeviceState.secondaryUser().resolve().state())
-                .isEqualTo(User.UserState.RUNNING_UNLOCKED);
+        assertThat(sDeviceState.secondaryUser().isUnlocked()).isTrue();
     }
 
     @Test
-    public void stop_userDoesNotExist_throwsException() {
-        assertThrows(NeneException.class,
-                () -> TestApis.users().find(NON_EXISTING_USER_ID).stop());
+    public void stop_userDoesNotExist_doesNothing() {
+        TestApis.users().find(NON_EXISTING_USER_ID).stop();
     }
 
     @Test
@@ -151,8 +139,7 @@ public class UserReferenceTest {
     public void stop_userStarted_userIsStopped() {
         sDeviceState.secondaryUser().stop();
 
-        assertThat(sDeviceState.secondaryUser().resolve().state())
-                .isEqualTo(User.UserState.NOT_RUNNING);
+        assertThat(sDeviceState.secondaryUser().isRunning()).isFalse();
     }
 
     @Test
@@ -163,8 +150,7 @@ public class UserReferenceTest {
 
         sDeviceState.secondaryUser().stop();
 
-        assertThat(sDeviceState.secondaryUser().resolve().state())
-                .isEqualTo(User.UserState.NOT_RUNNING);
+        assertThat(sDeviceState.secondaryUser().isRunning()).isFalse();
     }
 
     @Test
@@ -202,7 +188,161 @@ public class UserReferenceTest {
     public void stop_isWorkProfileOfCurrentUser_stops() {
         sDeviceState.workProfile().stop();
 
-        assertThat(sDeviceState.workProfile().resolve().state())
-                .isEqualTo(User.UserState.NOT_RUNNING);
+        assertThat(sDeviceState.workProfile().isRunning()).isFalse();
+    }
+
+    @Test
+    public void serialNo_returnsSerialNo() {
+        UserReference user = TestApis.users().instrumented();
+
+        assertThat(user.serialNo())
+                .isEqualTo(sUserManager.getSerialNumberForUser(Process.myUserHandle()));
+    }
+
+    @Test
+    public void serialNo_userDoesNotExist_throwsException() {
+        UserReference user = TestApis.users().find(NON_EXISTING_USER_ID);
+
+        assertThrows(NeneException.class, user::serialNo);
+    }
+
+    @Test
+    @EnsureHasPermission(CREATE_USERS)
+    @RequireSdkVersion(min = S, reason = "getUserName is only available on S+")
+    public void name_returnsName() {
+        UserReference user = TestApis.users().instrumented();
+
+        assertThat(user.name()).isEqualTo(sUserManager.getUserName());
+    }
+
+    @Test
+    public void name_userDoesNotExist_throwsException() {
+        UserReference user = TestApis.users().find(NON_EXISTING_USER_ID);
+
+        assertThrows(NeneException.class, user::name);
+    }
+
+    @Test
+    @EnsureHasPermission(CREATE_USERS)
+    @RequireSdkVersion(min = S, reason = "getUserType is only available on S+")
+    public void type_returnsType() {
+        UserReference user = TestApis.users().instrumented();
+
+        assertThat(user.type().name()).isEqualTo(sUserManager.getUserType());
+    }
+
+    @Test
+    public void type_userDoesNotExist_throwsException() {
+        UserReference user = TestApis.users().find(NON_EXISTING_USER_ID);
+
+        assertThrows(NeneException.class, user::type);
+    }
+
+    @Test
+    @RequireRunOnPrimaryUser
+    public void isPrimary_isPrimary_returnsTrue() {
+        UserReference user = TestApis.users().instrumented();
+
+        assertThat(user.isPrimary()).isTrue();
+    }
+
+    @Test
+    @RequireRunOnPrimaryUser
+    @EnsureHasSecondaryUser
+    public void isPrimary_isNotPrimary_returnsFalse() {
+        UserReference user = sDeviceState.secondaryUser();
+
+        assertThat(user.isPrimary()).isFalse();
+    }
+
+    @Test
+    public void isPrimary_userDoesNotExist_throwsException() {
+        UserReference user = TestApis.users().find(NON_EXISTING_USER_ID);
+
+        assertThrows(NeneException.class, user::isPrimary);
+    }
+
+    @Test
+    public void isRunning_userNotStarted_returnsFalse() {
+        UserReference user = TestApis.users().createUser().create();
+        user.stop();
+
+        try {
+            assertThat(user.isRunning()).isFalse();
+        } finally {
+            user.remove();
+        }
+    }
+
+    @Test
+    public void isRunning_userIsRunning_returnsTrue() {
+        UserReference user = TestApis.users().createUser().create();
+        user.start();
+
+        try {
+            assertThat(user.isRunning()).isTrue();
+        } finally {
+            user.remove();
+        }
+    }
+
+    @Test
+    public void isRunning_userDoesNotExist_returnsFalse() {
+        UserReference user = TestApis.users().find(NON_EXISTING_USER_ID);
+
+        assertThat(user.isRunning()).isFalse();
+    }
+
+    @Test
+    public void isUnlocked_userIsUnlocked_returnsTrue() {
+        UserReference user = TestApis.users().createUser().createAndStart();
+
+        try {
+            assertThat(user.isUnlocked()).isTrue();
+        } finally {
+            user.remove();
+        }
+    }
+
+    // TODO(b/203542772): add tests for locked state
+
+    @Test
+    public void isUnlocked_userDoesNotExist_returnsFalse() {
+        UserReference user = TestApis.users().find(NON_EXISTING_USER_ID);
+
+        assertThat(user.isUnlocked()).isFalse();
+    }
+
+    @Test
+    @EnsureHasWorkProfile
+    public void parent_returnsParent() {
+        assertThat(sDeviceState.workProfile().parent()).isNotNull();
+    }
+
+    @Test
+    @RequireRunOnPrimaryUser
+    public void parent_noParent_returnsNull() {
+        UserReference user = TestApis.users().instrumented();
+
+        assertThat(user.parent()).isNull();
+    }
+
+    @Test
+    @RequireRunOnPrimaryUser
+    public void parent_userDoesNotExist_throwsException() {
+        UserReference user = TestApis.users().find(NON_EXISTING_USER_ID);
+
+        assertThrows(NeneException.class, user::parent);
+    }
+
+    @Test
+    public void autoclose_removesUser() {
+        int numUsers = TestApis.users().all().size();
+
+        try (UserReference user = TestApis.users().createUser().create()) {
+            // We intentionally don't do anything here, just rely on the auto-close behaviour
+        }
+
+        assertThat(TestApis.users().all()).hasSize(numUsers);
     }
 }

@@ -20,7 +20,6 @@ import static android.os.Build.VERSION.SDK_INT;
 
 import static com.android.bedstead.harrier.DeviceState.UserType.SYSTEM_USER;
 import static com.android.bedstead.harrier.OptionalBoolean.TRUE;
-import static com.android.bedstead.nene.users.User.UserState.RUNNING_UNLOCKED;
 import static com.android.bedstead.nene.users.UserType.MANAGED_PROFILE_TYPE_NAME;
 import static com.android.bedstead.nene.users.UserType.SECONDARY_USER_TYPE_NAME;
 import static com.android.bedstead.nene.users.UserType.SYSTEM_USER_TYPE_NAME;
@@ -206,7 +205,7 @@ public class UsersTest {
                 .create();
 
         try {
-            assertThat(userReference.resolve().name()).isEqualTo(USER_NAME);
+            assertThat(userReference.name()).isEqualTo(USER_NAME);
         } finally {
             userReference.remove();
         }
@@ -219,7 +218,7 @@ public class UsersTest {
                 .create();
 
         try {
-            assertThat(userReference.resolve().type()).isEqualTo(mSecondaryUserType);
+            assertThat(userReference.type()).isEqualTo(mSecondaryUserType);
         } finally {
             userReference.remove();
         }
@@ -246,7 +245,7 @@ public class UsersTest {
         UserReference user = TestApis.users().createUser().type(mSecondaryUserType).create();
 
         try {
-            assertThat(user.resolve()).isNotNull();
+            assertThat(user.exists()).isTrue();
         } finally {
             user.remove();
         }
@@ -261,7 +260,7 @@ public class UsersTest {
                 .type(mManagedProfileType).parent(systemUser).create();
 
         try {
-            assertThat(user.resolve()).isNotNull();
+            assertThat(user.exists()).isTrue();
         } finally {
             user.remove();
         }
@@ -275,7 +274,7 @@ public class UsersTest {
                 .type(mManagedProfileType).parent(systemUser).create();
 
         try {
-            assertThat(user.resolve().parent()).isEqualTo(TestApis.users().system());
+            assertThat(user.parent()).isEqualTo(TestApis.users().system());
         } finally {
             user.remove();
         }
@@ -318,11 +317,11 @@ public class UsersTest {
 
     @Test
     public void createAndStart_isStarted() {
-        User user = null;
+        UserReference user = null;
 
         try {
-            user = TestApis.users().createUser().name(USER_NAME).createAndStart().resolve();
-            assertThat(user.state()).isEqualTo(RUNNING_UNLOCKED);
+            user = TestApis.users().createUser().name(USER_NAME).createAndStart();
+            assertThat(user.isUnlocked()).isTrue();
         } finally {
             if (user != null) {
                 user.remove();
@@ -468,7 +467,7 @@ public class UsersTest {
     public void nonExisting_userDoesNotExist() {
         UserReference userReference = TestApis.users().nonExisting();
 
-        assertThat(userReference.resolve()).isNull();
+        assertThat(userReference.exists()).isFalse();
     }
 
     @Test
@@ -493,14 +492,13 @@ public class UsersTest {
             TestApis.users().setStopBgUsersOnSwitch(true);
             TestApis.users().system().switchTo();
 
-            Poll.forValue("Secondary user state",
-                    () -> sDeviceState.secondaryUser().resolve().state())
-                    .toNotBeEqualTo(RUNNING_UNLOCKED)
+            Poll.forValue("Secondary user running",
+                    () -> sDeviceState.secondaryUser().isRunning())
+                    .toBeEqualTo(false)
                     .errorOnFail()
                     .await();
 
-            assertThat(sDeviceState.secondaryUser().resolve().state())
-                    .isNotEqualTo(RUNNING_UNLOCKED);
+            assertThat(sDeviceState.secondaryUser().isRunning()).isFalse();
         } finally {
             sDeviceState.secondaryUser().start();
             TestApis.users().setStopBgUsersOnSwitch(originalStopBgUsersOnSwitch);
@@ -516,7 +514,7 @@ public class UsersTest {
             TestApis.users().setStopBgUsersOnSwitch(false);
             TestApis.users().system().switchTo();
 
-            assertThat(sDeviceState.secondaryUser().resolve().state()).isEqualTo(RUNNING_UNLOCKED);
+            assertThat(sDeviceState.secondaryUser().isRunning()).isTrue();
         } finally {
             TestApis.users().setStopBgUsersOnSwitch(originalStopBgUsersOnSwitch);
             sDeviceState.secondaryUser().start();

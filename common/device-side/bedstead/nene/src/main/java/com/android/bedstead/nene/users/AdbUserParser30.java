@@ -271,9 +271,9 @@ public class AdbUserParser30 extends AdbUserParser26 {
     }
 
     @Override
-    User.MutableUser parseUser(String userString) throws AdbParseException {
+    AdbUser.MutableUser parseUser(String userString) throws AdbParseException {
         // This will be called after parseUserTypes, so the user types are already accessible
-        User.MutableUser user = super.parseUser(userString);
+        AdbUser.MutableUser user = super.parseUser(userString);
 
         try {
             user.mIsPrimary = Boolean.parseBoolean(

@@ -47,7 +47,7 @@ interface AdbUserParser {
      * <p>Values which are not used on the current version of Android will be {@code null}.
      */
     class ParseResult {
-        Map<Integer, User> mUsers;
+        Map<Integer, AdbUser> mUsers;
         @Nullable Map<String, UserType> mUserTypes;
     }
 

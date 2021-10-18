@@ -394,8 +394,7 @@ public class DeviceStateTest {
     @RequireRunOnWorkProfile
     public void requireRunOnWorkProfileAnnotation_isRunningOnWorkProfile() {
         assertThat(
-                TestApis.users().instrumented().resolve().type().name())
-                .isEqualTo(MANAGED_PROFILE_TYPE_NAME);
+                TestApis.users().instrumented().type().name()).isEqualTo(MANAGED_PROFILE_TYPE_NAME);
     }
 
     @Test
@@ -410,8 +409,7 @@ public class DeviceStateTest {
     @RequireRunOnSecondaryUser
     public void requireRunOnSecondaryUserAnnotation_isRunningOnSecondaryUser() {
         assertThat(
-                TestApis.users().instrumented().resolve().type().name())
-                .isEqualTo(SECONDARY_USER_TYPE_NAME);
+                TestApis.users().instrumented().type().name()).isEqualTo(SECONDARY_USER_TYPE_NAME);
     }
 
     @Test
@@ -426,7 +424,7 @@ public class DeviceStateTest {
     public void includeRunOnNonAffiliatedDeviceOwnerSecondaryUserAnnotation_isRunningOnNonAffiliatedDeviceOwnerSecondaryUser() {
         assertThat(TestApis.devicePolicy().getDeviceOwner().user())
                 .isNotEqualTo(TestApis.users().instrumented());
-        assertThat(TestApis.users().instrumented().resolve().type().name())
+        assertThat(TestApis.users().instrumented().type().name())
                 .isEqualTo(SECONDARY_USER_TYPE_NAME);
     }
 
@@ -441,7 +439,7 @@ public class DeviceStateTest {
     @Test
     @IncludeRunOnSecondaryUserInDifferentProfileGroupToProfileOwnerProfile
     public void includeRunOnSecondaryUserInDifferentProfileGroupToProfileOwnerAnnotation_isRunningOnSecondaryUserInDifferentProfileGroupToProfileOwner() {
-        assertThat(TestApis.users().instrumented().resolve().type().name())
+        assertThat(TestApis.users().instrumented().type().name())
                 .isEqualTo(SECONDARY_USER_TYPE_NAME);
         assertThat(sDeviceState.workProfile(PRIMARY_USER))
                 .isNotEqualTo(TestApis.users().instrumented());
@@ -552,14 +550,14 @@ public class DeviceStateTest {
     @Test
     @RequireRunOnPrimaryUser
     public void requireRunOnPrimaryUserAnnotation_isRunningOnPrimaryUser() {
-        assertThat(TestApis.users().instrumented().resolve().type().name())
+        assertThat(TestApis.users().instrumented().type().name())
                 .isEqualTo(SYSTEM_USER_TYPE_NAME);
     }
 
     @Test
     @RequireRunOnTvProfile
     public void requireRunOnTvProfileAnnotation_isRunningOnTvProfile() {
-        assertThat(TestApis.users().instrumented().resolve().type().name())
+        assertThat(TestApis.users().instrumented().type().name())
                 .isEqualTo(TV_PROFILE_TYPE_NAME);
     }
 
@@ -596,29 +594,25 @@ public class DeviceStateTest {
     @Test
     @RequireRunOnWorkProfile
     public void requireRunOnProfile_parentIsCurrentUser() {
-        assertThat(TestApis.users().current()).isEqualTo(
-                sDeviceState.workProfile().resolve().parent());
+        assertThat(TestApis.users().current()).isEqualTo(sDeviceState.workProfile().parent());
     }
 
     @Test
     @RequireRunOnWorkProfile(switchedToParentUser = FALSE)
     public void requireRunOnProfile_specifyNotSwitchedToParentUser_parentIsNotCurrentUser() {
-        assertThat(TestApis.users().current()).isNotEqualTo(
-                sDeviceState.workProfile().resolve().parent());
+        assertThat(TestApis.users().current()).isNotEqualTo(sDeviceState.workProfile().parent());
     }
 
     @Test
     @EnsureHasWorkProfile(switchedToParentUser = FALSE) // We don't test the default as it's ANY
     public void ensureHasWorkProfile_specifyNotSwitchedToParentUser_parentIsNotCurrentUser() {
-        assertThat(TestApis.users().current()).isNotEqualTo(
-                sDeviceState.workProfile().resolve().parent());
+        assertThat(TestApis.users().current()).isNotEqualTo(sDeviceState.workProfile().parent());
     }
 
     @Test
     @EnsureHasWorkProfile(switchedToParentUser = TRUE)
     public void ensureHasWorkProfile_specifySwitchedToParentUser_parentIsCurrentUser() {
-        assertThat(TestApis.users().current()).isEqualTo(
-                sDeviceState.workProfile().resolve().parent());
+        assertThat(TestApis.users().current()).isEqualTo(sDeviceState.workProfile().parent());
     }
 
     @Test
