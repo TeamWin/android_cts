@@ -25,6 +25,9 @@ import static org.testng.Assert.assertThrows;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
+import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
+import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
 import com.android.bedstead.harrier.annotations.RequireSdkVersion;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.NeneException;
@@ -188,15 +191,30 @@ public class PackagesTest {
     }
 
     @Test
-    public void install_differentUser_isInstalled() {
-        UserReference user = TestApis.users().createUser().createAndStart();
-        TestApis.packages().install(user, TEST_APP_APK_FILE);
+    @RequireRunOnPrimaryUser
+    @EnsureHasWorkProfile
+    public void install_inWorkProfile_isInstalled() {
+        TestApis.packages().install(sDeviceState.workProfile(), TEST_APP_APK_FILE);
         Package pkg = TestApis.packages().find(TEST_APP_PACKAGE_NAME);
 
         try {
-            assertThat(pkg.installedOnUser(user)).isTrue();
+            assertThat(pkg.installedOnUser(sDeviceState.workProfile())).isTrue();
         } finally {
-            user.remove();
+            pkg.uninstall(sDeviceState.workProfile());
+        }
+    }
+
+    @Test
+    @RequireRunOnPrimaryUser
+    @EnsureHasSecondaryUser
+    public void install_differentUser_isInstalled() {
+        TestApis.packages().install(sDeviceState.secondaryUser(), TEST_APP_APK_FILE);
+        Package pkg = TestApis.packages().find(TEST_APP_PACKAGE_NAME);
+
+        try {
+            assertThat(pkg.installedOnUser(sDeviceState.secondaryUser())).isTrue();
+        } finally {
+            pkg.uninstall(sDeviceState.secondaryUser());
         }
     }
 
@@ -214,6 +232,7 @@ public class PackagesTest {
     }
 
     @Test
+    @RequireRunOnPrimaryUser
     public void install_userNotStarted_throwsException() {
         try (UserReference user = TestApis.users().createUser().create().stop()) {
             assertThrows(NeneException.class, () -> TestApis.packages().install(user,
