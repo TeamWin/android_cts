@@ -320,7 +320,7 @@ public class TestAppInstanceReferenceTest {
     }
 
     @Test
-    @RequireSdkVersion(min = S)
+    @RequireSdkVersion(min = S, reason = "isSafeOperation only available on S+")
     public void devicePolicyManager_returnsUsableInstance() {
         TestApp testApp = mTestAppProvider.any();
         try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
