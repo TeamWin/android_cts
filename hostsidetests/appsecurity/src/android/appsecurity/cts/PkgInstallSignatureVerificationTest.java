@@ -722,6 +722,76 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
                 "verifySignatures_withRotation_succeeds");
     }
 
+    public void testInstallV41UpdateAfterRotation() throws Exception {
+        // V4 is only enabled on devices with Incremental feature
+        if (!hasIncrementalFeature()) {
+            return;
+        }
+
+        // This test is the same as above, but using the v4.1 signature scheme for rotation.
+        assertInstallV4FromBuildSucceeds("CtsSignatureQueryService.apk");
+        assertInstallV4FromBuildSucceeds("CtsSignatureQueryServiceTest.apk");
+        Utils.runDeviceTests(getDevice(), SERVICE_TEST_PKG, SERVICE_TEST_CLASS,
+                "verifySignatures_noRotation_succeeds");
+
+        assertInstallV4Succeeds("CtsSignatureQueryService_v2-tgt-33.apk");
+        Utils.runDeviceTests(getDevice(), SERVICE_TEST_PKG, SERVICE_TEST_CLASS,
+                "verifySignatures_withRotation_succeeds");
+
+        assertInstallV4Succeeds("CtsSignatureQueryService_v3-tgt-33.apk");
+        assertInstallV4Succeeds("CtsSignatureQueryServiceTest_v2-tgt-33.apk");
+        Utils.runDeviceTests(getDevice(), SERVICE_TEST_PKG, SERVICE_TEST_CLASS,
+                "verifySignatures_withRotation_succeeds");
+    }
+
+    public void testInstallV41WrongBlockId() throws Exception {
+        // V4 is only enabled on devices with Incremental feature
+        if (!hasIncrementalFeature()) {
+            return;
+        }
+
+        // This test is the same as above, but using the v4.1 signature scheme for rotation.
+        assertInstallV4FromBuildSucceeds("CtsSignatureQueryService.apk");
+        assertInstallV4FromBuildSucceeds("CtsSignatureQueryServiceTest.apk");
+        Utils.runDeviceTests(getDevice(), SERVICE_TEST_PKG, SERVICE_TEST_CLASS,
+                "verifySignatures_noRotation_succeeds");
+
+        assertInstallV4FailsWithError("CtsSignatureQueryService_v2-tgt-33-wrongV41Block.apk",
+                "Failed to find V4 signature block corresponding to V3 blockId: 462663009");
+    }
+
+    public void testInstallV41LegacyV4() throws Exception {
+        // V4 is only enabled on devices with Incremental feature
+        if (!hasIncrementalFeature()) {
+            return;
+        }
+
+        // This test is the same as above, but using the v4.1 signature scheme for rotation.
+        assertInstallV4FromBuildSucceeds("CtsSignatureQueryService.apk");
+        assertInstallV4FromBuildSucceeds("CtsSignatureQueryServiceTest.apk");
+        Utils.runDeviceTests(getDevice(), SERVICE_TEST_PKG, SERVICE_TEST_CLASS,
+                "verifySignatures_noRotation_succeeds");
+
+        assertInstallV4FailsWithError("CtsSignatureQueryService_v2-tgt-33-legacyV4.apk",
+                "Failed to find V4 signature block corresponding to V3 blockId: 462663009");
+    }
+
+    public void testInstallV41WrongDigest() throws Exception {
+        // V4 is only enabled on devices with Incremental feature
+        if (!hasIncrementalFeature()) {
+            return;
+        }
+
+        // This test is the same as above, but using the v4.1 signature scheme for rotation.
+        assertInstallV4FromBuildSucceeds("CtsSignatureQueryService.apk");
+        assertInstallV4FromBuildSucceeds("CtsSignatureQueryServiceTest.apk");
+        Utils.runDeviceTests(getDevice(), SERVICE_TEST_PKG, SERVICE_TEST_CLASS,
+                "verifySignatures_noRotation_succeeds");
+
+        assertInstallV4FailsWithError("CtsSignatureQueryService_v2-tgt-33-wrongDigest.apk",
+                "APK digest in V4 signature does not match V2/V3");
+    }
+
     public void testInstallV3KeyRotationSigPerm() throws Exception {
         // tests that a v3 signed APK can still get a signature permission from an app with its
         // older signing certificate.

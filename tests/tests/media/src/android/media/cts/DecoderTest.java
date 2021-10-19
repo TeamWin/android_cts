@@ -2929,7 +2929,7 @@ public class DecoderTest extends MediaPlayerTestBase {
 
     @Test
     public void testCodecEarlyEOSH263() throws Exception {
-        testCodecEarlyEOS("video_176x144_3gp_h263_300kbps_12fps_aac_stereo_128kbps_22050hz.mp4",
+        testCodecEarlyEOS("video_176x144_3gp_h263_300kbps_12fps_aac_stereo_128kbps_22050hz.3gp",
                 64 /* eosframe */);
     }
 
@@ -4121,6 +4121,12 @@ public class DecoderTest extends MediaPlayerTestBase {
     }
 
     private void testTunneledAudioPtsGaps(String mimeType, String fileName) throws Exception {
+        if (!MediaUtils.check(isVideoFeatureSupported(mimeType,
+                CodecCapabilities.FEATURE_TunneledPlayback),
+                "No tunneled video playback codec found for MIME " + mimeType)) {
+            return;
+        }
+
         AudioManager am = mContext.getSystemService(AudioManager.class);
 
         mMediaCodecPlayer = new MediaCodecTunneledPlayer(mContext,
