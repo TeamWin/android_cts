@@ -22,10 +22,9 @@ import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP;
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NO_USER_ACTION;
-import static android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP;
+import static android.server.wm.UiDeviceUtils.pressBackButton;
 import static android.server.wm.WindowManagerState.STATE_PAUSED;
 import static android.server.wm.WindowManagerState.STATE_STOPPED;
-import static android.server.wm.UiDeviceUtils.pressBackButton;
 import static android.server.wm.lifecycle.ActivityLifecycleClientTestBase.LaunchForResultActivity.EXTRA_LAUNCH_ON_RESULT;
 import static android.server.wm.lifecycle.ActivityLifecycleClientTestBase.LaunchForResultActivity.EXTRA_LAUNCH_ON_RESUME_AFTER_RESULT;
 import static android.server.wm.lifecycle.ActivityLifecycleClientTestBase.NoDisplayActivity.EXTRA_LAUNCH_ACTIVITY;
@@ -428,16 +427,6 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
                 .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 .putExtra(EXTRA_START_ACTIVITY_WHEN_IDLE, intent1));
         waitAndAssertActivityStates(state(SecondProcessCallbackTrackingActivity.class, ON_DESTROY));
-
-        // Finish and wait for test activity to be destroyed to avoid affecting the following test.
-        // The way we use here is to launch the same instance of
-        // SecondProcessCallbackTrackingActivity and then ask it to finish itself.
-        final Intent intent3 = new Intent(mContext, SecondProcessCallbackTrackingActivity.class)
-                .addFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_SINGLE_TOP)
-                .putExtra(EXTRA_FINISH_IN_ON_RESUME, true);
-        mContext.startActivity(intent3);
-        mWmState.waitForActivityRemoved(
-                getComponentName(SecondProcessCallbackTrackingActivity.class));
     }
 
     @Test
