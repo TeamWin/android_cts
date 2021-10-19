@@ -18,6 +18,7 @@ package com.android.bedstead.nene.utils;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.testng.Assert.assertThrows;
 import static org.testng.Assert.expectThrows;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
@@ -394,11 +395,124 @@ public class PollTest {
         assertThat(exception).hasCauseThat().isSameInstanceAs(EXCEPTION);
     }
 
+    @Test
+    public void terminalValue_hasTerminalValue_exitsImmediately() {
+        ValueTester<String> valueTester = new ValueTester<>(VALUE_1);
+
+        Poll.forValue("tester value", valueTester::get)
+                .toBeEqualTo(VALUE_2)
+                .terminalValue(c -> c.equals(VALUE_1))
+                .await();
+
+        assertThat(valueTester.mNumberOfTimesGetCalled).isEqualTo(1);
+    }
+
+    @Test
+    public void terminalValue_hasNonTerminalValue_doesNotExitImmediately() {
+        ValueTester<String> valueTester = new ValueTester<>(VALUE_1);
+
+        Poll.forValue("tester value", valueTester::get)
+                .toBeEqualTo(VALUE_2)
+                .timeout(SHORT_TIMEOUT)
+                .terminalValue(c -> c.equals(VALUE_2))
+                .await();
+
+        assertThat(valueTester.mNumberOfTimesGetCalled).isGreaterThan(1);
+    }
+
+    @Test
+    public void terminalValue_hasExceptionWithNoValue_doesNotExitImmediately() {
+        ValueTester<String> valueTester = new ValueTester<>(EXCEPTION);
+
+        Poll.forValue("tester value", valueTester::get)
+                .toBeEqualTo(VALUE_2)
+                .timeout(SHORT_TIMEOUT)
+                .terminalValue(c -> c.equals(VALUE_2))
+                .await();
+
+        assertThat(valueTester.mNumberOfTimesGetCalled).isGreaterThan(1);
+    }
+
+    @Test
+    public void terminalException_hasTerminalException_exitsImmediately() {
+        ValueTester<String> valueTester = new ValueTester<>(EXCEPTION);
+
+        Poll.forValue("tester value", valueTester::get)
+                .toBeEqualTo(VALUE_2)
+                .terminalException(c -> true)
+                .await();
+
+        assertThat(valueTester.mNumberOfTimesGetCalled).isEqualTo(1);
+    }
+
+    @Test
+    public void terminalException_hasNonTerminalException_doesNotExitImmediately() {
+        ValueTester<String> valueTester = new ValueTester<>(EXCEPTION);
+
+        Poll.forValue("tester value", valueTester::get)
+                .toBeEqualTo(VALUE_2)
+                .terminalException(c -> false)
+                .await();
+
+        assertThat(valueTester.mNumberOfTimesGetCalled).isGreaterThan(1);
+    }
+
+    @Test
+    public void terminal_hasValue_exitsImmediately() {
+        ValueTester<String> valueTester = new ValueTester<>(VALUE_1);
+
+        Poll.forValue("tester value", valueTester::get)
+                .toBeEqualTo(VALUE_2)
+                .terminal(() -> true)
+                .await();
+
+        assertThat(valueTester.mNumberOfTimesGetCalled).isEqualTo(1);
+    }
+
+    @Test
+    public void terminal_hasException_exitsImmediately() {
+        ValueTester<String> valueTester = new ValueTester<>(EXCEPTION);
+
+        Poll.forValue("tester value", valueTester::get)
+                .toBeEqualTo(VALUE_2)
+                .terminal(() -> true)
+                .await();
+
+        assertThat(valueTester.mNumberOfTimesGetCalled).isEqualTo(1);
+    }
+
+    @Test
+    public void await_noChecker_returnsFirstValue() {
+        ValueTester<String> valueTester = new ValueTester<>(VALUE_1);
+
+        assertThat(Poll.forValue("tester value", valueTester::get)
+                .await()).isEqualTo(VALUE_1);
+    }
+
+    @Test
+    public void await_noChecker_hasExceptions_returnsFirstValue() {
+        ValueTester<String> valueTester = new ValueTester<>(EXCEPTION, VALUE_1, 5);
+
+        assertThat(Poll.forValue("tester value", valueTester::get)
+                .await()).isEqualTo(VALUE_1);
+    }
+
+    @Test
+    public void await_noChecker_onlyHasExceptions_throwsException() {
+        ValueTester<String> valueTester = new ValueTester<>(EXCEPTION);
+
+        assertThrows(NeneException.class,
+                () -> Poll.forValue("tester value", valueTester::get)
+                        .errorOnFail()
+                        .await());
+    }
+
     private static final class ValueTester<E> {
         private final Throwable mOriginalThrowable;
         private final E mOriginalValue;
         private final E mChangedValue;
         private int mNumberOfIterations;
+        int mNumberOfTimesGetCalled = 0;
 
         ValueTester(E originalValue, E changedValue, int numberOfIterations) {
             mOriginalValue = originalValue;
@@ -423,6 +537,7 @@ public class PollTest {
         }
 
         E get() throws Throwable {
+            mNumberOfTimesGetCalled++;
             if (mNumberOfIterations-- >= 0) {
                 if (mOriginalThrowable != null) {
                     throw mOriginalThrowable;
