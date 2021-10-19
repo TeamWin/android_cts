@@ -124,6 +124,11 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
 
         // Track transitions and allow waiting for pending activity states.
         mLifecycleTracker = new LifecycleTracker(mLifecycleLog);
+
+        // Some lifecycle tracking activities that have not been destroyed may affect the
+        // verification of next test because of the lifecycle log. We need to wait them to be
+        // destroyed in tearDown.
+        mShouldWaitForAllNonHomeActivitiesToDestroyed = true;
     }
 
     /** Activity launch builder for lifecycle tests. */
