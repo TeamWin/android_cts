@@ -44,8 +44,11 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -490,6 +493,61 @@ public class HdmiControlManagerTest {
             mHdmiControlManager.setTvSendStandbyOnSleep(originalValue);
             assertThat(mHdmiControlManager.getTvSendStandbyOnSleep()).isEqualTo(
                     originalValue);
+        }
+    }
+
+    @Test
+    public void testHdmiCecConfig_SadsToQuery() throws Exception {
+        List<String> settings = new ArrayList<String>(Arrays.asList(
+                HdmiControlManager.CEC_SETTING_NAME_QUERY_SAD_LPCM,
+                HdmiControlManager.CEC_SETTING_NAME_QUERY_SAD_DD,
+                HdmiControlManager.CEC_SETTING_NAME_QUERY_SAD_MPEG1,
+                HdmiControlManager.CEC_SETTING_NAME_QUERY_SAD_MP3,
+                HdmiControlManager.CEC_SETTING_NAME_QUERY_SAD_MPEG2,
+                HdmiControlManager.CEC_SETTING_NAME_QUERY_SAD_AAC,
+                HdmiControlManager.CEC_SETTING_NAME_QUERY_SAD_DTS,
+                HdmiControlManager.CEC_SETTING_NAME_QUERY_SAD_ATRAC,
+                HdmiControlManager.CEC_SETTING_NAME_QUERY_SAD_ONEBITAUDIO,
+                HdmiControlManager.CEC_SETTING_NAME_QUERY_SAD_DDP,
+                HdmiControlManager.CEC_SETTING_NAME_QUERY_SAD_DTSHD,
+                HdmiControlManager.CEC_SETTING_NAME_QUERY_SAD_TRUEHD,
+                HdmiControlManager.CEC_SETTING_NAME_QUERY_SAD_DST,
+                HdmiControlManager.CEC_SETTING_NAME_QUERY_SAD_WMAPRO,
+                HdmiControlManager.CEC_SETTING_NAME_QUERY_SAD_MAX));
+        // User-configurable settings
+        List<String> userConfigurableSettings = new ArrayList<>();
+        // Map from user-configurable settings to original values
+        Map<String, Integer> originalValues = new HashMap<>();
+        for (String setting : settings) {
+            if (mHdmiControlManager.getUserCecSettings().contains(setting)) {
+                userConfigurableSettings.add(setting);
+                originalValues.put(setting, mHdmiControlManager.getSadPresenceInQuery(setting));
+            }
+        }
+        if (userConfigurableSettings.size() == 0) {
+            return;
+        }
+        try {
+            for (String setting : userConfigurableSettings) {
+                for (int value : mHdmiControlManager.getAllowedCecSettingIntValues(setting)) {
+                    mHdmiControlManager.setSadsPresenceInQuery(
+                            new ArrayList<String>(Arrays.asList(setting)), value);
+                    assertThat(mHdmiControlManager.getSadPresenceInQuery(setting)).isEqualTo(value);
+                }
+            }
+            for (String setting : userConfigurableSettings) {
+                for (int value : mHdmiControlManager.getAllowedCecSettingIntValues(setting)) {
+                    mHdmiControlManager.setSadPresenceInQuery(setting, value);
+                    assertThat(mHdmiControlManager.getSadPresenceInQuery(setting)).isEqualTo(value);
+                }
+            }
+        } finally {
+            // Restore original values
+            for (String setting : originalValues.keySet()) {
+                mHdmiControlManager.setSadPresenceInQuery(setting, originalValues.get(setting));
+                assertThat(mHdmiControlManager.getSadPresenceInQuery(setting)).isEqualTo(
+                        originalValues.get(setting));
+            }
         }
     }
 }
