@@ -40,8 +40,8 @@ import java.util.concurrent.TimeUnit;
 public final class HdmiCecActiveTrackingTest extends BaseHdmiCecCtsTest {
     // Delay to allow the DUT to poll all the non-local logical addresses (seconds)
     private static final int POLLING_WAIT_TIME = 5;
-    // Delay to wait for the HotplugDetectionAction to pass (seconds)
-    private static final int HOTPLUG_WAIT_TIME = 60;
+    // Delay to wait for the HotplugDetectionAction to start (milliseconds)
+    private static final int HOTPLUG_WAIT_TIME = 60000;
 
     public HdmiCecActiveTrackingTest() {
         super(HdmiCecConstants.CEC_DEVICE_TYPE_PLAYBACK_DEVICE);
@@ -65,13 +65,13 @@ public final class HdmiCecActiveTrackingTest extends BaseHdmiCecCtsTest {
 
     /**
      * Tests that the DUT removes a device from the network, when it doesn't answer to the polling
-     * message sent by HotplugDetection action.
+     * message sent by HotplugDetectionAction.
      */
     @Test
     public void cect_RemoveDeviceFromNetwork() throws Exception {
         // Wait for the device discovery action to pass.
         TimeUnit.SECONDS.sleep(POLLING_WAIT_TIME);
-        // Add Playback 2 in the network.
+        // Add an external playback device to the network.
         int playback2PhysicalAddress = createUnusedPhysicalAddress(getDumpsysPhysicalAddress());
         String formattedPhysicalAddress = CecMessage.formatParams(playback2PhysicalAddress,
                 HdmiCecConstants.PHYSICAL_ADDRESS_LENGTH);
@@ -90,8 +90,11 @@ public final class HdmiCecActiveTrackingTest extends BaseHdmiCecCtsTest {
                 CecOperand.SET_OSD_NAME,
                 CecMessage.convertStringToHexParams(deviceName)
         );
-        // Wait for the first HotplugDetection action to pass.
-        TimeUnit.SECONDS.sleep(HOTPLUG_WAIT_TIME);
+        // Wait for the first HotplugDetectionAction to start and leave enough time to poll all
+        // devices once.
+        hdmiCecClient.checkExpectedOutput(LogicalAddress.SPECIFIC_USE, CecOperand.POLL,
+                HOTPLUG_WAIT_TIME + HdmiCecConstants.DEVICE_WAIT_TIME_MS);
+        TimeUnit.SECONDS.sleep(HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS);
         String deviceList = getDeviceList();
         assertThat(deviceList).doesNotContain(deviceName);
     }
