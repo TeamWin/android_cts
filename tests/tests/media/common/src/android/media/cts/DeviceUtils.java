@@ -27,27 +27,27 @@ import android.media.AudioManager;
 
 import android.util.Log;
 
-/* package */ class DeviceUtils {
+public class DeviceUtils {
     private static final String TAG = "DeviceUtils";
 
-    /* package */ static boolean hasOutputDevice(AudioManager audioMgr) {
+    public static boolean hasOutputDevice(AudioManager audioMgr) {
         AudioDeviceInfo[] devices = audioMgr.getDevices(AudioManager.GET_DEVICES_OUTPUTS);
         return devices.length != 0;
     }
 
-    /* package */ static boolean hasInputDevice(AudioManager audioMgr) {
+    public static boolean hasInputDevice(AudioManager audioMgr) {
         AudioDeviceInfo[] devices = audioMgr.getDevices(AudioManager.GET_DEVICES_INPUTS);
         return devices.length != 0;
     }
 
-    /* package */ static boolean isTVDevice(Context context) {
+    public static boolean isTVDevice(Context context) {
         return context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK);
     }
 
     /*
      * HDMI
      */
-    /* package */ static boolean isHDMIConnected(Context context) {
+    public static boolean isHDMIConnected(Context context) {
         // configure the IntentFilter
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(AudioManager.ACTION_HDMI_AUDIO_PLUG);
