@@ -427,22 +427,26 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
     }
 
     /**
+     * Get the name of a shared library.
+     *
+     * @return the shared library name or the jar's path if it's not a shared library.
+     */
+    private String getSharedLibraryNameOrPath(String jar,
+                ImmutableList<SharedLibraryInfo> sharedLibs) {
+        return sharedLibs.stream()
+                         .filter(sharedLib -> sharedLib.paths.contains(jar))
+                         .map(sharedLib -> sharedLib.name)
+                         .findFirst().orElse(jar);
+    }
+
+    /**
      * Check whether a list of jars are all different versions of the same library.
      */
     private boolean isSameLibrary(Collection<String> jars,
                 ImmutableList<SharedLibraryInfo> sharedLibs) {
         return jars.stream()
-                .map(jar -> {
-                    for (SharedLibraryInfo sharedLib: sharedLibs) {
-                        for (String path: sharedLib.paths) {
-                            if (path.equals(jar)) {
-                                return sharedLib.name;
-                            }
-                        }
-                    }
-                    throw new RuntimeException(jar + " is not in shared libs.");
-                })
-                .distinct()
-                .count() == 1;
+                   .map(jar -> getSharedLibraryNameOrPath(jar, sharedLibs))
+                   .distinct()
+                   .count() == 1;
     }
 }
