@@ -274,10 +274,12 @@ class ZoomTest(its_base_test.ItsBaseTest):
 
     # assert some range is tested before circles get too big
     zoom_max_thresh = ZOOM_MAX_THRESH
-    if z_max < ZOOM_MAX_THRESH:
-      zoom_max_thresh = z_max
-    test_data_max_z = test_data[max(test_data.keys())]['z']
-    logging.debug('zoom data max: %.2f', test_data_max_z)
+    z_max_ratio = z_max / z_min
+    if z_max_ratio < ZOOM_MAX_THRESH:
+      zoom_max_thresh = z_max_ratio
+    test_data_max_z = (test_data[max(test_data.keys())]['z'] /
+                       test_data[min(test_data.keys())]['z'])
+    logging.debug('test zoom ratio max: %.2f', test_data_max_z)
     if test_data_max_z < zoom_max_thresh:
       raise AssertionError(f'Max zoom ratio tested: {test_data_max_z:.4f}, '
                            f'range advertised min: {z_min}, max: {z_max} '
