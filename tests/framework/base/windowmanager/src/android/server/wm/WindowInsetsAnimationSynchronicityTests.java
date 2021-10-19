@@ -63,6 +63,7 @@ import androidx.test.rule.ActivityTestRule;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.SystemUtil;
 
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -82,11 +83,13 @@ public class WindowInsetsAnimationSynchronicityTests {
 
     private final Context mContext = InstrumentationRegistry.getInstrumentation().getContext();
 
+    @Ignore("b/168446060")
     @Test
     public void testShowAndHide_renderSynchronouslyBetweenImeWindowAndAppContent() throws Throwable {
         runTest(false /* useControlApi */);
     }
 
+    @Ignore("b/168446060")
     @Test
     public void testControl_rendersSynchronouslyBetweenImeWindowAndAppContent() throws Throwable {
         runTest(true /* useControlApi */);
