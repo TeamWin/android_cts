@@ -20,7 +20,6 @@
           package="com.android.bedstead.nene">
     <uses-sdk android:minSdkVersion="27" />
     <uses-permission android:name="android.permission.GET_TASKS" android:maxSdkVersion="28" />
-    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
     <application>
     </application>
 </manifest>
