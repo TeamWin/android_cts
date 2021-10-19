@@ -32,6 +32,9 @@
         <service android:name="android.car.cts.builtin.os.SharedMemoryTestService"
             android:process=":shdmemservice">
         </service>
+        <service android:name="android.car.cts.builtin.os.ServiceManagerTestService"
+            android:process=":testservice">
+        </service>
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
