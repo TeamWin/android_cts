@@ -1938,29 +1938,39 @@ public class RcsUceAdapterTest {
                 subscribeRequestCount.set(0);
             }
 
-            // Prepare the network response with sip code 200 OK
+            // Override the network response with the sip code 503 Service Unavailable
             capabilityExchangeImpl.setSubscribeOperation((uris, cb) -> {
                 subscribeRequestCount.incrementAndGet();
-                cb.onNetworkResponse(200, "OK");
+                cb.onNetworkResponse(503, "Service Unavailable");
             });
 
             try {
                 // Request contact uce capabilities again.
                 requestCapabilities(uceAdapter, contacts, callback);
 
-                // Verify that the callback "onError" is called with the error code FORBIDDEN
-                assertEquals(RcsUceAdapter.ERROR_FORBIDDEN, waitForIntResult(errorQueue));
-                // Verify the retryAfter value
-                long retryAfterMillis = waitForLongResult(retryAfterQueue);
                 if (sipCode == sipCodeForbidden) {
-                    assertEquals(0L, retryAfterMillis);
+                    // Verify that device can still send the subscribe request. The callback
+                    // "onError" is called with the Server Unavailable error.
+                    assertEquals(RcsUceAdapter.ERROR_SERVER_UNAVAILABLE,
+                            waitForIntResult(errorQueue));
+                    // Verify the retryAfter value
+                    assertEquals(0L, waitForLongResult(retryAfterQueue));
+                    // Verify that the capabilities is not forbidden. The ImsService received the
+                    // request from the framework.
+                    assertEquals(1, subscribeRequestCount.get());
                 } else if (sipCode == sipCodeBadEvent) {
-                    assertTrue(retryAfterMillis > 0L);
-                }
+                    // When carrier config Bad Event flag is enabled and the device has received
+                    // the sip code 489 (bad event) before, the uce request will be forbidden.
 
-                // Verify that the capabilities won't be send to the ImsService because the
-                // uce request is forbidden.
-                assertEquals(0, subscribeRequestCount.get());
+                    // Verify that the callback "onError" is called with the error code FORBIDDEN
+                    assertEquals(RcsUceAdapter.ERROR_FORBIDDEN, waitForIntResult(errorQueue));
+                    // Verify the retryAfter value
+                    long retryAfterMillis = waitForLongResult(retryAfterQueue);
+                    assertTrue(retryAfterMillis > 0L);
+                    // Verify that the capabilities won't be send to the ImsService because the
+                    // uce request is forbidden.
+                    assertEquals(0, subscribeRequestCount.get());
+                }
             } catch (Exception e) {
                 fail("testForbiddenResponseToCapabilitiesRequest with command error failed: " + e);
             } finally {
