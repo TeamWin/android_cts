@@ -56,7 +56,7 @@ public class DefaultDisplayModeTest {
     @Rule
     public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
             InstrumentationRegistry.getInstrumentation().getUiAutomation(),
-            Manifest.permission.WRITE_SECURE_SETTINGS,
+            Manifest.permission.MODIFY_USER_PREFERRED_DISPLAY_MODE,
             Manifest.permission.HDMI_CEC);
 
     @Before
