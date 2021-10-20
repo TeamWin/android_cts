@@ -30,6 +30,9 @@
                   android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density|touchscreen"
         />
         <activity android:name="android.server.wm.jetpack.utils.TestGetWindowLayoutInfoActivity" />
+        <activity android:name="android.server.wm.jetpack.utils.TestActivityWithId"
+                  android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density|touchscreen"
+        />
     </application>
 
     <!--  self-instrumenting test package. -->
