@@ -19,10 +19,12 @@ package android.scopedstorage.cts.host;
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertNull;
+import static org.junit.Assume.assumeTrue;
 
 import android.platform.test.annotations.AppModeFull;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
+import com.android.modules.utils.build.testing.DeviceSdkLevel;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.After;
@@ -55,6 +57,10 @@ public class PreserveLegacyStorageHostTest extends BaseHostTestCase {
 
     @Test
     public void testPreserveLegacy() throws Exception {
+        // This was broken on R, so only run the test on S+ devices
+        DeviceSdkLevel deviceSdkLevel = new DeviceSdkLevel(getDevice());
+        assumeTrue(deviceSdkLevel.isDeviceAtLeastS());
+
         // Most of these tests are done device-side; see RestrictedStoragePermissionTest.java
         // This test is done on the host, because we want to verify preserveLegacyExternalStorage
         // is sticky across a reboot.
