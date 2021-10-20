@@ -29,6 +29,7 @@ import com.android.role.RoleServiceDumpProto;
 import com.android.role.RoleUserStateProto;
 import com.android.tradefed.device.CollectingByteOutputReceiver;
 import com.android.tradefed.device.DeviceNotAvailableException;
+import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.util.AbiUtils;
@@ -110,6 +111,7 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
     private static final String FEATURE_WATCH = "android.hardware.type.watch";
 
     private int[] mUsers;
+    private boolean mAdbWasRoot;
 
     private File getTestAppFile(String fileName) throws FileNotFoundException {
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(getBuild());
@@ -121,6 +123,16 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
         mUsers = Utils.prepareMultipleUsers(getDevice());
         assertNotNull(getAbi());
         assertNotNull(getBuild());
+
+        ITestDevice device = getDevice();
+        mAdbWasRoot = device.isAdbRoot();
+        if (mAdbWasRoot) {
+            // This test assumes that the test is not run with root privileges. But this test runs
+            // as a part of appsecurity test suite which contains a lot of other tests. Some of
+            // which may enable adb root, make sure that this test is run without root access.
+            device.disableAdbRoot();
+            assertFalse("adb root is enabled", device.isAdbRoot());
+        }
     }
 
     @Before
@@ -132,6 +144,16 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
         getDevice().uninstallPackage(MULTIUSER_PKG);
 
         wipePrimaryExternalStorage();
+    }
+
+    @After
+    public void tearDown() throws DeviceNotAvailableException {
+        ITestDevice device = getDevice();
+        if (mAdbWasRoot) {
+            device.enableAdbRoot();
+        } else {
+            device.disableAdbRoot();
+        }
     }
 
     @Test
