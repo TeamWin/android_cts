@@ -17,7 +17,11 @@
 package android.view.inputmethod.cts;
 
 import static android.view.WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM;
+import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN;
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE;
+import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN;
+import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_UNSPECIFIED;
+import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE;
 import static android.view.inputmethod.cts.util.InputMethodVisibilityVerifier.expectImeInvisible;
 import static android.view.inputmethod.cts.util.InputMethodVisibilityVerifier.expectImeVisible;
 import static android.view.inputmethod.cts.util.TestUtils.runOnMainSync;
@@ -55,6 +59,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.view.inputmethod.cts.util.AutoCloseableWrapper;
 import android.view.inputmethod.cts.util.EndToEndImeTestBase;
 import android.view.inputmethod.cts.util.TestActivity;
+import android.view.inputmethod.cts.util.TestActivity2;
 import android.view.inputmethod.cts.util.TestUtils;
 import android.view.inputmethod.cts.util.UnlockScreenRule;
 import android.view.inputmethod.cts.util.WindowFocusHandleService;
@@ -741,6 +746,123 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
             notExpectEvent(stream, event -> "hideSoftInput".equals(event.getEventName()),
                     NOT_EXPECT_TIMEOUT);
         }
+    }
+
+    /**
+     * Start an activity with a focused test editor and wait for the IME to become visible,
+     * then start another activity with the given {@code softInputMode} and an <b>unfocused</b>
+     * test editor.
+     *
+     * @return the event stream positioned before the second app is launched
+     */
+    private ImeEventStream startFocusedEditorActivity_thenAnotherUnfocusedEditorActivity(
+            int softInputMode)
+            throws Exception {
+        try (MockImeSession imeSession = createTestImeSession()) {
+            final String marker = getTestMarker();
+
+            // Launch an activity with a text edit and request focus
+            TestActivity.startSync(activity -> {
+                final LinearLayout layout = new LinearLayout(activity);
+                layout.setOrientation(LinearLayout.VERTICAL);
+
+                final EditText editText = new EditText(activity);
+                editText.setText("editText");
+                editText.setPrivateImeOptions(marker);
+                editText.requestFocus();
+
+                activity.getWindow().setSoftInputMode(SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+                layout.addView(editText);
+                return layout;
+            });
+
+            ImeEventStream stream = imeSession.openEventStream();
+
+            // Wait until the MockIme gets bound and started for the TestActivity.
+            expectBindInput(stream, Process.myPid(), TIMEOUT);
+            expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
+            expectImeVisible(TIMEOUT);
+
+            // Skip events relating to showStateInitializeActivity() and TestActivity1
+            stream.skipAll();
+
+            // Launch another activity without a text edit but with the requested softInputMode set
+            TestActivity2.startSync(activity -> {
+                activity.getWindow().setSoftInputMode(softInputMode);
+
+                final LinearLayout layout = new LinearLayout(activity);
+                layout.setOrientation(LinearLayout.VERTICAL);
+
+                final EditText editText = new EditText(activity);
+                // Do not request focus for the editText
+                editText.setText("Unfocused editText");
+                layout.addView(editText);
+                return layout;
+            });
+
+            return stream;
+        }
+    }
+
+    @Test
+    public void testUnfocusedEditor_stateUnspecified_hidesIme() throws Exception {
+        ImeEventStream stream = startFocusedEditorActivity_thenAnotherUnfocusedEditorActivity(
+                SOFT_INPUT_STATE_UNSPECIFIED);
+        expectImeHidden(stream);
+        expectOnFinishInput(stream);
+    }
+
+    @Test
+    public void testUnfocusedEditor_stateHidden_hidesIme() throws Exception {
+        ImeEventStream stream = startFocusedEditorActivity_thenAnotherUnfocusedEditorActivity(
+                SOFT_INPUT_STATE_HIDDEN);
+        expectImeHidden(stream);
+        expectOnFinishInput(stream);
+    }
+
+    @Test
+    public void testUnfocusedEditor_stateAlwaysHidden_hidesIme() throws Exception {
+        ImeEventStream stream = startFocusedEditorActivity_thenAnotherUnfocusedEditorActivity(
+                SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+        expectImeHidden(stream);
+        expectOnFinishInput(stream);
+    }
+
+    @Test
+    public void testUnfocusedEditor_stateVisible_startsIme() throws Exception {
+        ImeEventStream stream = startFocusedEditorActivity_thenAnotherUnfocusedEditorActivity(
+                SOFT_INPUT_STATE_VISIBLE);
+        // The previous IME should be finished
+        expectOnFinishInput(stream);
+
+        // Input should be started and shown
+        expectEvent(stream, event -> "onStartInput".equals(event.getEventName()),
+                EXPECT_TIMEOUT);
+        expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()),
+                EXPECT_TIMEOUT);
+    }
+
+    @Test
+    public void testUnfocusedEditor_stateAlwaysVisible_startsIme() throws Exception {
+        ImeEventStream stream = startFocusedEditorActivity_thenAnotherUnfocusedEditorActivity(
+                SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+        // The previous IME should be finished
+        expectOnFinishInput(stream);
+
+        // Input should be started and shown
+        expectEvent(stream, event -> "onStartInput".equals(event.getEventName()),
+                EXPECT_TIMEOUT);
+        expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()),
+                EXPECT_TIMEOUT);
+    }
+
+    private static void expectImeHidden(@NonNull ImeEventStream stream) throws TimeoutException {
+        expectEvent(stream, event -> "hideSoftInput".equals(event.getEventName()), EXPECT_TIMEOUT);
+    }
+
+    private static void expectOnFinishInput(@NonNull ImeEventStream stream)
+            throws TimeoutException {
+        expectEvent(stream, event -> "onFinishInput".equals(event.getEventName()), EXPECT_TIMEOUT);
     }
 
     @NonNull
