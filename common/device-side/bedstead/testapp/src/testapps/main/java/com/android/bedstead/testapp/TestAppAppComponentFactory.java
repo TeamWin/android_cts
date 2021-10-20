@@ -32,6 +32,7 @@ import android.os.UserManager;
 import android.util.Log;
 
 import com.android.bedstead.testapp.processor.annotations.TestAppReceiver;
+import com.android.eventlib.premade.EventLibService;
 
 /**
  * An {@link AppComponentFactory} which redirects invalid class names to premade TestApp classes.
@@ -110,9 +111,15 @@ import com.android.bedstead.testapp.processor.annotations.TestAppReceiver;
                         classLoader,
                         TestAppAccountAuthenticatorService.class.getName(),
                         intent);
-            } else {
-                throw e;
             }
+
+            Log.d(LOG_TAG,
+                    "Service class (" + className + ") not found, routing to EventLibService");
+            EventLibService service =
+                    (EventLibService) super.instantiateService(
+                            classLoader, EventLibService.class.getName(), intent);
+            service.setOverrideServiceClassName(className);
+            return service;
         }
     }
 }
