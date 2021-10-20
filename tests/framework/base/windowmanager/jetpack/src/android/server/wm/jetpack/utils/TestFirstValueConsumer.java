@@ -17,7 +17,6 @@
 package android.server.wm.jetpack.utils;
 
 import androidx.annotation.Nullable;
-import androidx.window.extensions.layout.WindowLayoutInfo;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -25,24 +24,32 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
-public class TestWindowLayoutInfoConsumer implements Consumer<WindowLayoutInfo> {
+/**
+ * Consumer that provides a simple way to wait for a value to be received within a timeout and then
+ * return it.
+ */
+public class TestFirstValueConsumer<T> implements Consumer<T> {
 
-    private static final String TAG = "TestWindowLayoutInfoConsumer";
-    private static final long WINDOW_LAYOUT_INFO_TIMEOUT_MS = 50;
+    private static final long TIMEOUT_MS = 3000;
 
-    CompletableFuture<WindowLayoutInfo> mFuture;
+    CompletableFuture<T> mFuture;
 
-    public TestWindowLayoutInfoConsumer() {
-        mFuture = new CompletableFuture<WindowLayoutInfo>();
+    public TestFirstValueConsumer() {
+        reset();
     }
 
     @Override
-    public void accept(WindowLayoutInfo windowLayoutInfo) {
-        mFuture.complete(windowLayoutInfo);
+    public void accept(T value) {
+        mFuture.complete(value);
     }
 
-    public @Nullable WindowLayoutInfo waitAndGet()
+    public void reset() {
+        mFuture = new CompletableFuture<T>();
+    }
+
+    @Nullable
+    public T waitAndGet()
             throws ExecutionException, InterruptedException, TimeoutException {
-        return mFuture.get(WINDOW_LAYOUT_INFO_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+        return mFuture.get(TIMEOUT_MS, TimeUnit.MILLISECONDS);
     }
 }
