@@ -16,10 +16,16 @@
 
 package android.mediapc.cts;
 
+import android.media.MediaFormat;
+import android.os.Build;
 import android.util.Pair;
 
 import androidx.test.filters.LargeTest;
+import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.DeviceReportLog;
+import com.android.compatibility.common.util.ResultType;
+import com.android.compatibility.common.util.ResultUnit;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -31,6 +37,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import static org.junit.Assert.assertTrue;
 /**
  * The following test class calculates the maximum number of concurrent encode sessions that it can
  * support by the two hardware (mime - encoder) pair calculated via the
@@ -91,21 +98,42 @@ public class MultiEncoderPairPerfTest extends MultiCodecPerfTestBase {
         mimeEncoderPairs.add(mFirstPair);
         mimeEncoderPairs.add(mSecondPair);
         int maxInstances = checkAndGetMaxSupportedInstancesFor720p(mimeEncoderPairs);
-        int secondPairInstances = maxInstances / 2;
-        int firstPairInstances = maxInstances - secondPairInstances;
-        ExecutorService pool = Executors.newFixedThreadPool(maxInstances);
-        List<Encode> testList = new ArrayList<>();
-        for (int i = 0; i < firstPairInstances; i++) {
-            testList.add(new Encode(mFirstPair.first, mFirstPair.second, mIsAsync));
+        int requiredMinInstances = REQUIRED_MIN_CONCURRENT_INSTANCES;
+        if (mFirstPair.first.equals(MediaFormat.MIMETYPE_VIDEO_VP9)
+                || mSecondPair.first.equals(MediaFormat.MIMETYPE_VIDEO_VP9)) {
+            requiredMinInstances = REQUIRED_MIN_CONCURRENT_INSTANCES_FOR_VP9;
         }
-        for (int i = 0; i < secondPairInstances; i++) {
-            testList.add(new Encode(mSecondPair.first, mSecondPair.second, mIsAsync));
-        }
-        List<Future<Double>> resultList = pool.invokeAll(testList);
-        double achievedFrameRate = 0.0;
-        for (Future<Double> result : resultList) {
-            achievedFrameRate += result.get();
+        if (maxInstances >= requiredMinInstances) {
+            int secondPairInstances = maxInstances / 2;
+            int firstPairInstances = maxInstances - secondPairInstances;
+            ExecutorService pool = Executors.newFixedThreadPool(maxInstances);
+            List<Encode> testList = new ArrayList<>();
+            for (int i = 0; i < firstPairInstances; i++) {
+                testList.add(new Encode(mFirstPair.first, mFirstPair.second, mIsAsync));
+            }
+            for (int i = 0; i < secondPairInstances; i++) {
+                testList.add(new Encode(mSecondPair.first, mSecondPair.second, mIsAsync));
+            }
+            List<Future<Double>> resultList = pool.invokeAll(testList);
+            double achievedFrameRate = 0.0;
+            for (Future<Double> result : resultList) {
+                achievedFrameRate += result.get();
+            }
         }
         // Achieved frame rate is not compared as this test runs in byte buffer mode.
+        if (Utils.isPerfClass()) {
+            assertTrue("Encoder pair " + mFirstPair.second + " and " + mSecondPair.second
+                    + " unable to support minimum concurrent instances. act/exp: " + maxInstances
+                    + "/" + requiredMinInstances, maxInstances >= requiredMinInstances);
+        } else {
+            int pc = maxInstances >= requiredMinInstances ? Build.VERSION_CODES.R : 0;
+            DeviceReportLog log = new DeviceReportLog("MediaPerformanceClassLogs",
+                    "MultiEncoderPairPerf_" + mFirstPair.second);
+            log.addValue("encoders",
+                    mFirstPair.first + "_" + mFirstPair.second + "_" + mSecondPair.first + "_"
+                            + mSecondPair.second, ResultType.NEUTRAL, ResultUnit.NONE);
+            log.setSummary("performance_class", pc, ResultType.NEUTRAL, ResultUnit.NONE);
+            log.submit(InstrumentationRegistry.getInstrumentation());
+        }
     }
 }
