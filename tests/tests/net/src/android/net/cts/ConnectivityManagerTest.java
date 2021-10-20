@@ -750,6 +750,10 @@ public class ConnectivityManagerTest {
     @AppModeFull(reason = "Cannot get WifiManager in instant app mode")
     @Test
     public void testGetMultipathPreference() throws Exception {
+        if (!mPackageManager.hasSystemFeature(FEATURE_WIFI)) {
+            Log.i(TAG, "testGetMultipathPreference cannot execute unless device supports WiFi");
+            return;
+        }
         final ContentResolver resolver = mContext.getContentResolver();
         ensureWifiConnected();
         final String ssid = unquoteSSID(mWifiManager.getConnectionInfo().getSSID());
