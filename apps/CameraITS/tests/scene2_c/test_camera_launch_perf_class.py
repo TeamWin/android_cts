@@ -11,20 +11,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Verify camera startup is < 500ms for both front and back primary cameras.
+"""Verify camera startup is < 600ms for both front and back primary cameras.
 """
 
 import its.caps
 import its.device
 
-CAMERA_LAUNCH_S_PERFORMANCE_CLASS_THRESHOLD = 500  # ms
+CAMERA_LAUNCH_S_PERFORMANCE_CLASS_THRESHOLD = 600  # ms
 
 
 def main():
     """Test camera launch latency for S performance class as specified in CDD.
 
     [7.5/H-1-7] MUST have camera2 startup latency (open camera to first preview
-    frame) < 500ms as measured by the CTS camera PerformanceTest under ITS
+    frame) < 600ms as measured by the CTS camera PerformanceTest under ITS
     lighting conditions (3000K) for both primary cameras.
     """
 
