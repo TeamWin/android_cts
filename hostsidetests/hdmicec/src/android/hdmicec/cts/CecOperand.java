@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public enum CecOperand {
+    POLL(-1),
     FEATURE_ABORT(0x00),
     IMAGE_VIEW_ON(0x04),
     TEXT_VIEW_ON(0x0d),

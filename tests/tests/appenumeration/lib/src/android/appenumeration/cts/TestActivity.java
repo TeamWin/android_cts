@@ -246,6 +246,10 @@ public class TestActivity extends Activity {
                         .getString(EXTRA_COMPONENT_NAME);
                 sendIsActivityEnabled(remoteCallback, ComponentName.unflattenFromString(
                         componentName));
+            } else if (Constants.ACTION_LAUNCHER_APPS_GET_SUSPENDED_PACKAGE_LAUNCHER_EXTRAS.equals(
+                    action)) {
+                final String packageName = intent.getStringExtra(Intent.EXTRA_PACKAGE_NAME);
+                sendGetSuspendedPackageLauncherExtras(remoteCallback, packageName);
             } else if (Constants.ACTION_GET_SYNCADAPTER_PACKAGES_FOR_AUTHORITY.equals(action)) {
                 final String authority = intent.getBundleExtra(EXTRA_DATA)
                         .getString(EXTRA_AUTHORITY);
@@ -636,6 +640,20 @@ public class TestActivity extends Activity {
         try {
             result.putBoolean(EXTRA_RETURN_RESULT, launcherApps.isActivityEnabled(componentName,
                     Process.myUserHandle()));
+        } catch (IllegalArgumentException e) {
+        }
+        remoteCallback.sendResult(result);
+        finish();
+    }
+
+    private void sendGetSuspendedPackageLauncherExtras(RemoteCallback remoteCallback,
+            String packageName) {
+        final LauncherApps launcherApps = getSystemService(LauncherApps.class);
+        final Bundle result = new Bundle();
+        try {
+            result.putBundle(EXTRA_RETURN_RESULT,
+                    launcherApps.getSuspendedPackageLauncherExtras(packageName,
+                            Process.myUserHandle()));
         } catch (IllegalArgumentException e) {
         }
         remoteCallback.sendResult(result);

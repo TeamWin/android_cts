@@ -17,7 +17,6 @@
 package android.app.cts;
 
 import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
 
 import android.app.BroadcastOptions;
@@ -165,14 +164,5 @@ public class BroadcastOptionsTest {
         // Clone the BroadcastOptions and check it too.
         final BroadcastOptions cloned = cloneViaBundle(bo);
         assertEquals(Build.VERSION_CODES.P, bo.getMaxManifestReceiverApiLevel());
-    }
-
-    @Test
-    public void testGetSetPendingIntentBackgroundActivityLaunchAllowed() {
-        BroadcastOptions options = BroadcastOptions.makeBasic();
-        options.setPendingIntentBackgroundActivityLaunchAllowed(true);
-        assertTrue(options.isPendingIntentBackgroundActivityLaunchAllowed());
-        options.setPendingIntentBackgroundActivityLaunchAllowed(false);
-        assertFalse(options.isPendingIntentBackgroundActivityLaunchAllowed());
     }
 }

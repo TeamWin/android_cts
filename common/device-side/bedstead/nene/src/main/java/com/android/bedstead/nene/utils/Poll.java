@@ -16,12 +16,16 @@
 
 package com.android.bedstead.nene.utils;
 
+import android.util.Log;
+
 import com.android.bedstead.nene.exceptions.NeneException;
+import com.android.bedstead.nene.exceptions.PollValueFailedException;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * Utility class for polling for some state to be reached.
@@ -33,7 +37,7 @@ import java.util.function.Function;
  * <p>Then you specify the criteria you are polling for, simple criteria are provided
  * (e.g. {@link #toBeNull()}, {@link #toBeEqualTo(Object)}, etc.) and these should be preferred when
  * possible as they provide good failure messages by default. If your state cannot be queried using
- * a simple matcher, you can use {@link #toMeet(Function)} and pass in an arbitrary function to
+ * a simple matcher, you can use {@link #toMeet(ValueChecker)} and pass in an arbitrary function to
  * check the value.
  *
  * <p>By default, this will poll up to {@link #timeout(Duration)} (defaulting to 30 seconds), and
@@ -41,7 +45,7 @@ import java.util.function.Function;
  * {@link NeneException} is thrown, you can use {@link #errorOnFail()}.
  *
  * <p>You can add more context to failures using the overloaded versions of {@link #errorOnFail()}.
- * In particular, you should do this if you're using {@link #toMeet(Function)} as otherwise the
+ * In particular, you should do this if you're using {@link #toMeet(ValueChecker)} as otherwise the
  * failure message is not helpful.
  *
  * <p>Any exceptions thrown when getting the value or when checking it will result in that check
@@ -53,12 +57,15 @@ import java.util.function.Function;
  */
 public final class Poll<E> {
 
+    private static final String LOG_TAG = Poll.class.getName();
+
     private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(30);
     private static final long SLEEP_MILLIS = 200;
     private final String mValueName;
     private final ValueSupplier<E> mSupplier;
-    private ValueChecker<E> mChecker;
-    private Function<E, Boolean> mTerminalChecker;
+    private ValueChecker<E> mChecker = (v) -> true;
+    private Function<E, Boolean> mTerminalValueChecker;
+    private Function<Throwable, Boolean> mTerminalExceptionChecker;
     private Function2<String, E, String> mErrorSupplier =
             (valueName, value) -> "Expected "
                     + valueName + " to meet checker function. Was " + value;
@@ -196,12 +203,13 @@ public final class Poll<E> {
                 if (mChecker.apply(value)) {
                     return value;
                 }
-                if (mTerminalChecker != null && mTerminalChecker.apply(value)) {
+                if (mTerminalValueChecker != null && mTerminalValueChecker.apply(value)) {
                     break;
                 }
             } catch (Throwable e) {
                 // Eat the exception until the timeout
-                if (mTerminalChecker != null && mTerminalChecker.apply(value)) {
+                Log.e(LOG_TAG, "Exception during retries", e);
+                if (mTerminalExceptionChecker != null && mTerminalExceptionChecker.apply(e)) {
                     break;
                 }
             }
@@ -209,7 +217,7 @@ public final class Poll<E> {
             try {
                 Thread.sleep(SLEEP_MILLIS);
             } catch (InterruptedException e) {
-                throw new NeneException("Interrupted while awaiting", e);
+                throw new PollValueFailedException("Interrupted while awaiting", e);
             }
         }
 
@@ -221,7 +229,7 @@ public final class Poll<E> {
         try {
             value = mSupplier.get();
         } catch (Throwable e) {
-            throw new NeneException(mErrorSupplier.apply(mValueName, value)
+            throw new PollValueFailedException(mErrorSupplier.apply(mValueName, value)
                     + " - Exception when getting value (checked " + tries + " times)", e);
         }
 
@@ -230,16 +238,16 @@ public final class Poll<E> {
                 return value;
             }
 
-            throw new NeneException(
+            throw new PollValueFailedException(
                     mErrorSupplier.apply(mValueName, value) + " (checked " + tries + " times)");
         } catch (Throwable e) {
-            throw new NeneException(
+            throw new PollValueFailedException(
                     mErrorSupplier.apply(mValueName, value) + " (checked " + tries + " times)", e);
         }
     }
 
     /**
-     * Add a method which, after a value fails the check, can tell if the failure is terminal.
+     * Set a method which, after a value fails the check, can tell if the failure is terminal.
      *
      * <p>This method will only be called after the value check fails. It will be passed the most
      * recent value and should return true if this value is terminal.
@@ -247,8 +255,37 @@ public final class Poll<E> {
      * <p>If true is returned, then no more retries will be attempted, otherwise retries will
      * continue until timeout.
      */
-    public Poll<E> terminal(Function<E, Boolean> terminalChecker) {
-        mTerminalChecker = terminalChecker;
+    public Poll<E> terminalValue(Function<E, Boolean> terminalChecker) {
+        mTerminalValueChecker = terminalChecker;
+        return this;
+    }
+
+    /**
+     * Set a method which, after a value fails the check, can tell if the failure is terminal.
+     *
+     * <p>This method will only be called after the value check fails with an exception. It will be
+     * passed the exception return true if this exception is terminal.
+     *
+     * <p>If true is returned, then no more retries will be attempted, otherwise retries will
+     * continue until timeout.
+     */
+    public Poll<E> terminalException(Function<Throwable, Boolean> terminalChecker) {
+        mTerminalExceptionChecker = terminalChecker;
+        return this;
+    }
+
+    /**
+     * Set a method which, after a value fails the check, can tell if the failure is terminal.
+     *
+     * <p>This method will only be called after the value check fails. It should return true if this
+     * state is terminal.
+     *
+     * <p>If true is returned, then no more retries will be attempted, otherwise retries will
+     * continue until timeout.
+     */
+    public Poll<E> terminal(Supplier<Boolean> terminalChecker) {
+        terminalValue((e) -> terminalChecker.get());
+        terminalException((e) -> terminalChecker.get());
         return this;
     }
 

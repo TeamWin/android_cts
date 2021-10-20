@@ -10,7 +10,7 @@ android_library {
         "src/main/aidl/**/I*.aidl",
     ],
     static_libs: [
-        "Nene",
+        "NeneInternal",
         "Queryable"
     ],
     manifest: "src/main/AndroidManifest.xml",

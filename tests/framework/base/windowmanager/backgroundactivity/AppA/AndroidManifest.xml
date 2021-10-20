@@ -25,8 +25,6 @@
         <receiver android:name=".StartBackgroundActivityReceiver"
              android:exported="true"/>
         <receiver android:name=".SendPendingIntentReceiver"
-                  android:exported="true"/>
-        <service android:name=".BackgroundActivityTestService"
              android:exported="true"/>
         <receiver android:name=".SimpleAdminReceiver"
              android:permission="android.permission.BIND_DEVICE_ADMIN"

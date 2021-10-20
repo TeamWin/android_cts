@@ -210,7 +210,7 @@ public final class Package {
                         .execute();
             }).toMeet(output -> output.toUpperCase().startsWith("SUCCESS")
                     || output.toUpperCase().contains("NOT INSTALLED FOR"))
-                    .terminal((output) -> {
+                    .terminalValue((output) -> {
                         if (output.contains("DELETE_FAILED_DEVICE_POLICY_MANAGER")) {
                             // A recently-removed device policy manager can't be removed - but won't
                             // show as DPC

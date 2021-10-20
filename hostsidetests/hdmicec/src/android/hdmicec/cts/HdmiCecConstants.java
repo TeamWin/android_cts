@@ -31,6 +31,7 @@ public final class HdmiCecConstants {
 
     // Standard delay to allow the DUT to react to a CEC message or ADB command
     public static final int DEVICE_WAIT_TIME_SECONDS = 5;
+    public static final int DEVICE_WAIT_TIME_MS = 5000;
     public static final int MAX_SLEEP_TIME_SECONDS = 8;
 
     public static final int DEFAULT_PHYSICAL_ADDRESS = 0x1000;

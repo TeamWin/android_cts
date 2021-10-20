@@ -94,7 +94,6 @@ import android.media.tv.tuner.frontend.ScanCallback;
 import android.media.tv.tunerresourcemanager.TunerFrontendInfo;
 import android.media.tv.tunerresourcemanager.TunerFrontendRequest;
 import android.media.tv.tunerresourcemanager.TunerResourceManager;
-
 import android.os.ConditionVariable;
 import android.os.Handler;
 import android.os.Looper;
@@ -108,7 +107,6 @@ import com.android.compatibility.common.util.RequiredFeatureRule;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -853,23 +851,77 @@ public class TunerTest {
 
     @Test
     public void testShareFrontendFromTuner() throws Exception {
-        Tuner other = new Tuner(mContext, null, 100);
-        List<Integer> ids = other.getFrontendIds();
+        Tuner tuner100 = new Tuner(mContext, null, 100);
+        List<Integer> ids = tuner100.getFrontendIds();
         assertFalse(ids.isEmpty());
-        FrontendInfo info = other.getFrontendInfoById(ids.get(0));
+        FrontendInfo info = tuner100.getFrontendInfoById(ids.get(0));
+        FrontendSettings feSettings = createFrontendSettings(info);
+        int[] statusTypes = {1};
+        boolean exceptionThrown = false;
+        int res;
 
-        // call tune() to open frontend resource
-        int res = other.tune(createFrontendSettings(info));
+        // CASE1: check resource reclaim while sharee's priority < owner's priority
+        // let tuner100 share from tuner200
+        Tuner tuner200 = new Tuner(mContext, null, 200);
+        res = tuner200.tune(feSettings);
         assertEquals(Tuner.RESULT_SUCCESS, res);
-        assertNotNull(other.getFrontendInfo());
-        mTuner.shareFrontendFromTuner(other);
 
+        tuner100 = new Tuner(mContext, null, 100);
+        tuner100.shareFrontendFromTuner(tuner200);
         // call openFilter to trigger ITunerDemux.setFrontendDataSourceById()
-        Filter f = mTuner.openFilter(
+        Filter f = tuner100.openFilter(
                 Filter.TYPE_TS, Filter.SUBTYPE_SECTION, 1000, getExecutor(), getFilterCallback());
         assertNotNull(f);
 
-        other.close();
+        // now try to steal the resource from a higher priority
+        Tuner tuner300 = new Tuner(mContext, null, 300);
+        res = tuner300.tune(feSettings);
+        assertEquals(Tuner.RESULT_SUCCESS, res);
+
+        // confirm owner & sharee's resource gets reclaimed by confirming an exception is thrown
+        exceptionThrown = false;
+        try {
+            tuner200.getFrontendStatus(statusTypes);
+        } catch (Exception e) {
+            exceptionThrown = true;
+        }
+        assertTrue(exceptionThrown);
+
+        exceptionThrown = false;
+        try {
+            tuner100.getFrontendStatus(statusTypes);
+        } catch (Exception e) {
+            exceptionThrown = true;
+        }
+        assertTrue(exceptionThrown);
+
+        tuner100.close();
+        tuner200.close();
+        tuner300.close();
+
+
+        // CASE2: check resource reclaim fail when sharee's priority > new requester
+        tuner100 = new Tuner(mContext, null, 100);
+        res = tuner100.tune(feSettings);
+        assertEquals(Tuner.RESULT_SUCCESS, res);
+
+        tuner300 = new Tuner(mContext, null, 300);
+        tuner300.shareFrontendFromTuner(tuner100);
+        f = tuner100.openFilter(
+                Filter.TYPE_TS, Filter.SUBTYPE_SECTION, 1000, getExecutor(), getFilterCallback());
+        assertNotNull(f);
+
+        tuner200 = new Tuner(mContext, null, 200);
+        res = tuner200.tune(feSettings);
+        assertNotEquals(Tuner.RESULT_SUCCESS, res);
+
+        // confirm the original tuner is still intact
+        res = tuner100.tune(feSettings);
+        assertEquals(Tuner.RESULT_SUCCESS, res);
+
+        tuner100.close();
+        tuner200.close();
+        tuner300.close();
     }
 
     @Test
