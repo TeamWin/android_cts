@@ -47,14 +47,15 @@ def main():
         # Digital gains might not be visible on RAW data
         sens_max = props["android.sensor.maxAnalogSensitivity"]
         sens_step = (sens_max - sens_min) / NUM_STEPS
-        s_ae, e_ae, _, _, f_dist = cam.do_3a(get_results=True)
+        # Intentionally blur images for noise measurements
+        s_ae, e_ae, _, _, _ = cam.do_3a(do_af=False, get_results=True)
         s_e_prod = s_ae * e_ae
 
         variances = []
         for s in range(sens_min, sens_max, sens_step):
 
             e = int(s_e_prod / float(s))
-            req = its.objects.manual_capture_request(s, e, f_dist)
+            req = its.objects.manual_capture_request(s, e, 0)
 
             # Capture raw in debug mode, rawStats otherwise
             # Measure the variance. Each shot should be noisier than the
