@@ -194,6 +194,7 @@ java_test_host {
     name: "CtsScopedStorageHostTest",
     srcs: ["host/src/**/*.java"],
     libs: ["cts-tradefed", "tradefed", "testng"],
+    static_libs: ["modules-utils-build-testing"],
     test_suites: ["general-tests", "mts-mediaprovider", "cts"],
     test_config: "AndroidTest.xml",
     data: [
@@ -206,6 +207,7 @@ java_test_host {
     name: "CtsScopedStoragePublicVolumeHostTest",
     srcs: ["host/src/**/*.java"],
     libs: ["cts-tradefed", "tradefed", "testng"],
+    static_libs: ["modules-utils-build-testing"],
     test_suites: ["general-tests", "mts-mediaprovider"],
     test_config: "PublicVolumeTest.xml",
 }
