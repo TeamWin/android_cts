@@ -28,6 +28,7 @@ android_test {
         "src/**/*.java",
         "src/**/*.aidl",
     ],
+    resource_dirs: ["res"],
     libs: [
         "android.car.builtin",
         "android.test.base",
@@ -42,5 +43,4 @@ android_test {
 
     platform_apis: true,
     sdk_version: "module_current",
-    resource_dirs: [],
 }
