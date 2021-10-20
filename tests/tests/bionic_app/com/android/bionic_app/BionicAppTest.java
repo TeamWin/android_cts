@@ -18,6 +18,8 @@ package com.android.bionic_app;
 
 import junit.framework.TestCase;
 
+import com.android.compatibility.common.util.CpuFeatures;
+
 public class BionicAppTest extends TestCase {
   static {
     System.loadLibrary("bionic_app_jni");
@@ -28,6 +30,12 @@ public class BionicAppTest extends TestCase {
   private native int callMainDlsym();
 
   public void test__progname() {
+    if (CpuFeatures.isNativeBridgedCpu()) {
+        // Android 11 is lacking r.android.com/1446695 to support
+        // conventional __progname overriding for native bridge.
+        // We are going to support this in the next Android versions (b/167968941).
+        return;
+    }
     // https://issuetracker.google.com/152893281
     assertEquals("com.android.bionic_app", progname());
   }
