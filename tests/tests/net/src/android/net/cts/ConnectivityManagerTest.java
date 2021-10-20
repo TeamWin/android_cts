@@ -1066,6 +1066,10 @@ public class ConnectivityManagerTest extends AndroidTestCase {
      * for metered and unmetered networks.
      */
     public void testGetMultipathPreference() throws Exception {
+        if (!mPackageManager.hasSystemFeature(FEATURE_WIFI)) {
+            Log.i(TAG, "testGetMultipathPreference cannot execute unless device supports WiFi");
+            return;
+        }
         final ContentResolver resolver = mContext.getContentResolver();
         final Network network = ensureWifiConnected();
         final String ssid = unquoteSSID(mWifiManager.getConnectionInfo().getSSID());
