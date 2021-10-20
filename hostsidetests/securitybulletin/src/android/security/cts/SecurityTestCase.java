@@ -340,7 +340,7 @@ public class SecurityTestCase extends BaseHostJUnit4Test {
         String supportedDrivers[] = { "/dev/nq-nci*", "/dev/pn54*", "/dev/pn551*", "/dev/pn553*",
                                       "/dev/pn557*", "/dev/pn65*", "/dev/pn66*", "/dev/pn67*",
                                       "/dev/pn80*", "/dev/pn81*", "/dev/sn100*", "/dev/sn220*",
-                                      "/dev/st54j*" };
+                                      "/dev/st54j*", "/dev/st21nfc*" };
         boolean isDriverFound = false;
         for(String supportedDriver : supportedDrivers) {
             if(containsDriver(device, supportedDriver, false)) {
