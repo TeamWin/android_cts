@@ -113,6 +113,43 @@ class PermissionCheckerTest {
         }
     }
 
+    @Test
+    fun testCheckPermissionForDataDeliveryFromDataSource() {
+        runWithShellPermissionIdentity({
+            assertThat(
+                permissionManager.checkPermissionForDataDeliveryFromDataSource(
+                    HELPER_PERMISSION_NAME, helperAttributionSource, null
+                )
+            ).isEqualTo(PermissionManager.PERMISSION_GRANTED)
+        }, android.Manifest.permission.UPDATE_APP_OPS_STATS)
+
+        runWithShellPermissionIdentity {
+            appOpsManager.setUidMode(HELPER_APP_OP_NAME, helperUid, AppOpsManager.MODE_IGNORED)
+        }
+
+        runWithShellPermissionIdentity({
+            assertThat(
+                permissionManager.checkPermissionForDataDeliveryFromDataSource(
+                    HELPER_PERMISSION_NAME, helperAttributionSource, null
+                )
+            ).isEqualTo(PermissionManager.PERMISSION_SOFT_DENIED)
+        }, android.Manifest.permission.UPDATE_APP_OPS_STATS)
+
+        runWithShellPermissionIdentity {
+            packageManager.revokeRuntimePermission(
+                HELPER_PACKAGE_NAME, HELPER_PERMISSION_NAME, currentUser
+            )
+        }
+
+        runWithShellPermissionIdentity({
+            assertThat(
+                permissionManager.checkPermissionForDataDeliveryFromDataSource(
+                    HELPER_PERMISSION_NAME, helperAttributionSource, null
+                )
+            ).isEqualTo(PermissionManager.PERMISSION_SOFT_DENIED)
+        }, android.Manifest.permission.UPDATE_APP_OPS_STATS)
+    }
+
     companion object {
         private const val HELPER_PACKAGE_NAME = "android.permission5.cts.blamed"
         private const val HELPER_PERMISSION_NAME = android.Manifest.permission.READ_CALENDAR
