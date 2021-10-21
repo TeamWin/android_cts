@@ -24,11 +24,14 @@ import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.os.Bundle;
 
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -44,6 +47,7 @@ public class SharedUserMigrationTest {
     private static final String TMP_APK_PATH = "/data/local/tmp/cts/uidmigration";
     private static final String INSTALL_TEST_PKG = "android.uidmigration.cts.InstallTestApp";
     private static final String PERM_TEST_PKG = "android.uidmigration.cts.PermissionTestApp";
+    private static final String DATA_TEST_PKG = "android.uidmigration.cts.DataTestApp";
 
     private Context mContext;
     private PackageManager mPm;
@@ -60,6 +64,7 @@ public class SharedUserMigrationTest {
         uninstallPackage(INSTALL_TEST_PKG + "2");
         uninstallPackage(PERM_TEST_PKG);
         uninstallPackage(PERM_TEST_PKG + ".secondary");
+        uninstallPackage(DATA_TEST_PKG);
     }
 
     @Test
@@ -130,6 +135,35 @@ public class SharedUserMigrationTest {
 
         uninstallPackage(PERM_TEST_PKG);
         uninstallPackage(secondaryPkg);
+    }
+
+    @Test
+    public void testDataMigration() throws PackageManager.NameNotFoundException {
+        String apk = TMP_APK_PATH + "/DataTestApp";
+        assertTrue(installPackage(apk + "1.apk"));
+        int oldUid = mPm.getPackageUid(DATA_TEST_PKG, 0);
+
+        String authority = DATA_TEST_PKG + ".provider";
+        ContentResolver resolver = mContext.getContentResolver();
+
+        // Ask the app to generate a new random UUID and persist in data
+        Bundle result = resolver.call(authority, "", null, null);
+        assertNotNull(result);
+        String oldUUID = result.getString("uuid");
+        assertNotNull(oldUUID);
+
+        // Update the data test APK and make sure UID changed
+        assertTrue(installPackage(apk + "2.apk"));
+        int newUid = mPm.getPackageUid(DATA_TEST_PKG, 0);
+        assertNotEquals(oldUid, newUid);
+
+        // Ask the app again for a UUID. If data migration is working, it shall be the same
+        result = resolver.call(authority, "", null, null);
+        assertNotNull(result);
+        String newUUID = result.getString("uuid");
+        assertEquals(oldUUID, newUUID);
+
+        uninstallPackage(DATA_TEST_PKG);
     }
 
     private boolean installPackage(String apkPath) {
