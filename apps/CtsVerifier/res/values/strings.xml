@@ -4960,15 +4960,10 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="audio_uap_play_test">USB Audio Peripheral Play Test</string>
     <string name="uapPlayTestInstructions">Connect the USB Audio Interface Peripheral and press the
         PLAY button below. Verify that a tone is correctly played.</string>
-    <string name="audio_uap_play_playBtn">Play</string>
-    <string name="audio_uap_play_stopBtn">Stop</string>
 
     <string name="audio_uap_record_test">USB Audio Peripheral Record Test</string>
     <string name="uapRecordTestInstructions">Connect the USB Audio Peripheral and press the RECORD or
         RECORD LOOPBACK button below. Verify that a tone is correctly played.</string>
-    <string name="audio_uap_record_recordBtn">Record</string>
-    <string name="audio_uap_record_recordLoopbackBtn">Record Loopback</string>
-    <string name="audio_uap_record_stopBtn">Stop</string>
 
     <string name="audio_uap_buttons_test">USB Audio Peripheral Buttons Test</string>
     <string name="uapButtonTestInstructions">Connect the USB Audio headset with buttons
@@ -5049,7 +5044,6 @@ You should be prompted to select credentials; choose the ones you just installed
         flag and therefore does not need to run this test.</string>
 
     <!-- Various test status strings -->
-    <string name="audio_proaudio_pass">Pass</string>
     <string name="audio_proaudio_latencytoohigh">Latency is too high</string>
     <string name="audio_proaudio_confidencetoolow">"Insufficient Confidence value"</string>
     <string name="audio_proaudio_midinotreported">"No MIDI support reported"</string>
@@ -5100,8 +5094,6 @@ You should be prompted to select credentials; choose the ones you just installed
 
     <!-- Audio general text -->
     <string name="audio_wired_exists">Does this device support wired USB or Analog audio peripherals?</string>
-    <string name="audio_wired_no">No</string>
-    <string name="audio_wired_yes">Yes</string>
     <string name="audio_general_deficiency_found">WARNING: Some results show potential deficiencies on the system.
     Please consider addressing them for a future release.</string>
     <string name="audio_general_test_passed">Test Result: Successful</string>
@@ -5118,6 +5110,13 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="audio_general_ok">Ok</string>
     <string name="audio_general_start">Start</string>
     <string name="audio_general_stop">Stop</string>
+    <string name="audio_general_play">Play</string>
+    <string name="audio_general_test">Test</string>
+    <string name="audio_general_status">Status</string>
+    <string name="audio_general_record">Record</string>
+    <string name="audio_general_recordLoopback">Record Loopback</string>
+    <string name="audio_general_results">Results...</string>
+    <string name="audio_general_pass">Pass</string>
 
     <string name="audio_general_JavaApi">Java API</string>
     <string name="audio_general_NativeApi">Native API</string>
@@ -5148,9 +5147,15 @@ You should be prompted to select credentials; choose the ones you just installed
           It might require multiple tries until a confidence >= 0.6 is achieved.
     </string>
     <string name="audio_loopback_level_text">Audio Level</string>
-    <string name="audio_loopback_test_btn">Test</string>
-    <string name="audio_loopback_results_text">Results...</string>
 
+    <!-- UI Labels -->
+    <string name="audio_loopback_lbl_proaudio">Pro Audio:</string>
+    <string name="audio_loopback_lbl_mmap">MMAP Supported:</string>
+    <string name="audio_loopback_lbl_mmexclusive">MMAP Exclusive Supported:</string>
+    <string name="audio_loopback_lbl_lowlatency">Low Latency Support:</string>
+    <string name="audio_loopback_lbl_testpath">Test Path:</string>
+    <string name="audio_loopback_lbl_mustlatency">Required Max Latency (ms):</string>
+    <string name="audio_loopback_lbl_recommededlatency">Recommended Max Latency (ms):</string>
     <string name="audio_loopback_failure">FAILURE - Could not allocate analyzer thread.</string>
 
     <!-- Audio Cold-Start Latency Test -->
@@ -5206,9 +5211,6 @@ You should be prompted to select credentials; choose the ones you just installed
     </string>
     <string name="audio_frequency_line_plug_ready_btn">Loopback Plug Ready</string>
 
-    <string name="audio_frequency_line_test_btn">Test</string>
-    <string name="audio_frequency_line_results_text">Results...</string>
-
     <!-- Audio Frequency Speaker Test -->
     <string name="audio_frequency_speaker_test">Audio Frequency Speaker Test</string>
     <string name="audio_frequency_speaker_info">
@@ -5223,8 +5225,6 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="audio_frequency_speaker_mic_ready_text">USB Audio device detected\n\nPlease set up Device Under test
     in quiet room, and Microphone 20 cms perpendicular to center of screen, then press TEST</string>
     <string name="audio_frequency_speaker_mic_not_ready_text">"No USB Audio device detected. Please reconnect."</string>
-    <string name="audio_frequency_speaker_test_btn">Test</string>
-    <string name="audio_frequency_speaker_results_text">Results...</string>
 
     <!-- Audio Frequency Microphone Test -->
     <string name="audio_frequency_mic_test">Audio Frequency Microphone Test</string>
@@ -5234,23 +5234,15 @@ You should be prompted to select credentials; choose the ones you just installed
 Follow the instructions on the screen to measure the frequency response for the built in microphone.
        </string>
 
-    <string name="frequency_mic_play">Play</string>
-    <string name="frequency_mic_stop">Stop</string>
     <string name="frequency_mic_noise_instructions">TEST NOISE: Position speakers 40 cms from device under test.
     Press [PLAY] to play broadband white noise. Press [TEST]
     </string>
-    <string name="frequency_mic_test_noise_btn">Test</string>
-    <string name="frequency_mic_test_noise_result">Results...</string>
 
     <string name="frequency_mic_test_usb_background_instructions">TEST USB BACKGROUND: Connect USB microphone and position it right next to microphone under test.
     No source of noise should be active during this test. Press [TEST]</string>
-    <string name="frequency_mic_test_usb_background_btn">Test</string>
-    <string name="frequency_mic_test_usb_background_result">Results...</string>
 
     <string name="frequency_mic_test_usb_noise_instructions">TEST USB NOISE: Connect USB microphone and position it right next to microphone under test.
     Position speakers 40 cms from device under test. Press [PLAY] to play broadband white noise. Press [TEST]</string>
-    <string name="frequency_mic_test_usb_noise_btn">Test</string>
-    <string name="frequency_mic_test_usb_noise_result">Results...</string>
 
     <string name="frequency_mic_test_global_result">Global Results...</string>
 
@@ -5267,30 +5259,17 @@ Follow the instructions on the screen to measure the frequency response for the 
     <string name="audio_frequency_unprocessed_defined">Audio Frequency Unprocessed feature is defined. Success in all tests is mandatory to pass</string>
     <string name="audio_frequency_unprocessed_not_defined">Audio Frequency Unprocessed feature is NOT defined. Success in all test is NOT mandatory to pass</string>
 
-    <string name="unprocessed_play">Play</string>
-    <string name="unprocessed_stop">Stop</string>
-
     <string name="unprocessed_test_tone_instructions">TEST TONE: Press [PLAY] to play tone at 1 Khz. Measure sound SPL to be 94 dB
     right next to microphone under test. Press [TEST]</string>
-    <string name="unprocessed_test_tone_btn">Test</string>
-    <string name="unprocessed_test_tone_result">Results...</string>
 
     <string name="unprocessed_test_noise_instructions">TEST NOISE: Position speakers 40 cms from device under test.
     Press [PLAY] to play broadband white noise. Press [TEST]</string>
-    <string name="unprocessed_test_noise_btn">Test</string>
-    <string name="unprocessed_test_noise_result">Results...</string>
 
     <string name="unprocessed_test_usb_background_instructions">TEST USB BACKGROUND: Connect USB microphone and position it right next to microphone under test.
     No source of noise should be active during this test. Press [TEST]</string>
-    <string name="unprocessed_test_usb_background_btn">Test</string>
-    <string name="unprocessed_test_usb_background_result">Results...</string>
 
     <string name="unprocessed_test_usb_noise_instructions">TEST USB NOISE: Connect USB microphone and position it right next to microphone under test.
     Position speakers 40 cms from device under test. Press [PLAY] to play broadband white noise. Press [TEST]</string>
-    <string name="unprocessed_test_usb_noise_btn">Test</string>
-    <string name="unprocessed_test_usb_noise_result">Results...</string>
-
-    <string name="unprocessed_test_global_result">Global Results...</string>
 
     <!-- Audio Frequency Voice_Recognition Test -->
     <string name="audio_frequency_voice_recognition_test">Audio Frequency Voice Recognition Test</string>
@@ -5311,8 +5290,6 @@ Follow the instructions on the screen to measure the frequency response for the 
     <!-- Analog Headset Test -->
     <string name="audio_headset_audio_test">Analog Headset Audio Test</string>
     <string name="analog_headset_query">Does this Android device have an analog headset jack?</string>
-    <string name="analog_headset_play">Play</string>
-    <string name="analog_headset_stop">Stop</string>
     <string name="analog_headset_playback_prompt">Play a test tone and verify correct playback</string>
     <string name="analog_headset_playback_query">Was the audio correctly played through the headset?</string>
     <string name="analog_headset_keycodes_label">Headset key codes</string>
@@ -5342,27 +5319,26 @@ Follow the instructions on the screen to measure the frequency response for the 
         \n(see <a href="https://source.android.com/devices/accessories/headset/plug-headset-spec">3.5 mm Headset: Accessory Specification</a> and
         <a href="https://source.android.com/compatibility/android-cdd#7_8_2_1_analog_audio_ports">Android CDD § 7.8.2.1. Analog Audio Ports</a>)
     </string>
+
     <!-- Audio AEC Test -->
     <string name="audio_aec_test">Audio Acoustic Echo Cancellation (AEC) Test</string>
-    <string name="audio_aec_info">
-        The recording source VOICE_COMMUNICATION will be tested with/without the Acoustic Echo Canceller effect engaged.
-        The Acoustic Coupling Factor (ACF) will be computed for each case. A successful test expects ACF less than 0.4 for AEC ON,
-        and ACF greater than 0.6 for AEC OFF.
-        This test requires a quiet environment, and no headphones or similar connected.
-        This test must pass in devices where AEC functionality is mandatory or any device which implements AEC.
+    <string name="audio_aec_info">Tests Acoustic Echo Canceler (AEC) functionality.
+        \n\nTest Setup:
+        \n\"Microphone\" permission is required.
+        \nPerform the test in a quiet room, placing the DUT on a flat surface. Do not connect any headphones or other audio peripherals.
+        \n\nTest Process:
+        \n1. Verify that AEC is mandatory for the DUT. If the answer is NO, the test passes at this point.
+        \n2. Press the \"Test\" button. The test will playback/record a short audio clip with both AEC enabled and disabled
+        to verify that the DUT meets the requirements for Acoustic Coupling Factor (ACF) in both modes.
+        \n\nTest Criteria:
+        \nRequires an ACF of less that 0.4 with AEC engaged and greater that 0.6 with AEC disengaged.
+        \n\nCDD Section: <a href="https://source.android.com/compatibility/android-cdd#544_acoustic_echo_canceler">5.4.4. Acoustic Echo Canceler</a>
     </string>
     <string name="audio_aec_instructions">Press [TEST] to play a voice recording twice with different parameters.</string>
     <string name="audio_aec_mandatory_test">Is AEC mandatory in this device?</string>
 
     <!--Audio Frequency Global strings -->
-    <string name="af_button_play">Play</string>
-    <string name="af_button_stop">Stop</string>
-
-    <string name="af_button_test">Test</string>
-    <string name="af_test_results">Results...</string>
     <string name="af_global_test_results">Global Results...</string>
-    <string name="af_no">No</string>
-    <string name="af_yes">Yes</string>
 
     <!-- AudioTap2Tone test -->
     <string name="audio_tap2tone">Audio Tap To Tone Test</string>
@@ -6076,9 +6052,6 @@ Follow the instructions on the screen to measure the frequency response for the 
     7. Click Pass button if checks in step 5 and 6 passed, otherwise click Fail button.
     </string>
 
-    <string name="uap_test_no">No</string>
-    <string name="uap_test_yes">Yes</string>
-    <string name="uap_test_info">Info</string>
     <string name="uap_test_question">Does this device allow for the connection of a USB audio peripheral?\nNote: phones and tablets generally do, watches and automobiles generally do not.</string>
     <string name="uap_refmic_question">Does this device allow for the connection of a USB reference microphone?</string>
     <string name="uap_mic_dlg_caption">USB Host Mode Audio Required</string>
@@ -6090,9 +6063,6 @@ Follow the instructions on the screen to measure the frequency response for the 
     Note: Devices declaring feature android.hardware.audio.pro MUST implement USB host mode (CDD 5.10 C-1-3) and if they omit a 4 conductor 3.5mm audio jack MUST support USB audio class (CDD 5.10 C-3-1)
     </string>
 
-    <string name="refmic_test_no">No</string>
-    <string name="refmic_test_yes">Yes</string>
-    <string name="refmic_test_info">Info</string>
     <string name="refmic_test_question">Does this device allow for the connection of a USB reference microphone?</string>
     <string name="ref_mic_dlg_caption">Reference Mic Required</string>
     <string name="ref_mic_dlg_text">This test requires a USB Reference Mic to be connected to the device.
