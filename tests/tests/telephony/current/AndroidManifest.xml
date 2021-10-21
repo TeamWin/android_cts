@@ -166,6 +166,7 @@
              android:exported="true">
             <intent-filter>
                 <action android:name="android.telephony.cts.iradioconfig.mockmodem.service"/>
+                <action android:name="android.telephony.cts.iradiomodem.mockmodem.service"/>
             </intent-filter>
         </service>
 
