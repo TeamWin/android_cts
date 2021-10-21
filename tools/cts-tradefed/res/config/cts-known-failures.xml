@@ -250,6 +250,10 @@
     <!-- b/198682652 -->
     <option name="compatibility:exclude-filter" value="CtsTelephonyTestCases android.telephony.cts.TelephonyCallbackTest#testOnLinkCapacityEstimateChangedByRegisterPhoneStateListener" />
 
+    <!-- b/199922992 -->
+    <option name="compatibility:exclude-filter" value="android.provider.cts.media.MediaStorePlacementTest#testDirectory_OutsideSandbox[1]"/>
+    <option name="compatibility:exclude-filter" value="android.provider.cts.media.MediaStorePlacementTest#testDirectory_InsideSandbox[1]"/>
+
     <!-- b/202357331 -->
     <option name="compatibility:exclude-filter" value="CtsDevicePolicyManagerTestCases com.android.cts.devicepolicy.MixedDeviceOwnerTest#testCreateAdminSupportIntent" />
     <option name="compatibility:exclude-filter" value="CtsDevicePolicyManagerTestCases com.android.cts.devicepolicy.MixedManagedProfileOwnerTest#testCreateAdminSupportIntent" />
