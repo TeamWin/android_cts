@@ -87,13 +87,12 @@ public class ActivityEmbeddingUtil {
 
     public static Activity startActivityAndVerifySplit(
             TestFirstValueConsumer<List<SplitInfo>> splitInfoConsumer, Activity primaryActivity,
-            Class secondActivityClass, SplitPairRule splitPairRule) {
+            Class secondActivityClass, SplitPairRule splitPairRule, String secondActivityId) {
         // Must reset consumer so that most recent split info update can be received
         splitInfoConsumer.reset();
 
         // Start second activity
-        final long secondActivityId = startActivityFromActivity(primaryActivity,
-                secondActivityClass);
+        startActivityFromActivity(primaryActivity, secondActivityClass, secondActivityId);
 
         // Get updated split info
         List<SplitInfo> activeSplitStates = null;
@@ -120,7 +119,7 @@ public class ActivityEmbeddingUtil {
 
     @Nullable
     public static Activity getSecondActivity(@NonNull List<SplitInfo> activeSplitStates,
-            @NonNull Activity primaryActivity, long secondaryClassId) {
+            @NonNull Activity primaryActivity, @NonNull String secondaryClassId) {
         Log.d(TAG, "Active split states: " + activeSplitStates);
         for (SplitInfo splitInfo : activeSplitStates) {
             // Find the split info whose top activity in the primary container is the primary
@@ -130,7 +129,7 @@ public class ActivityEmbeddingUtil {
                 Activity secondActivity = getSecondaryStackTopActivity(splitInfo);
                 // See if this activity is the secondary activity we expect
                 if (secondActivity != null && secondActivity instanceof TestActivityWithId
-                        && secondaryClassId == ((TestActivityWithId) secondActivity).getId()) {
+                        && secondaryClassId.equals(((TestActivityWithId) secondActivity).getId())) {
                     return secondActivity;
                 }
             }
