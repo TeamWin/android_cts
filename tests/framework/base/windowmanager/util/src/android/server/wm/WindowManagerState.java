@@ -45,7 +45,6 @@ import android.graphics.Rect;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
 import android.util.SparseArray;
-import android.view.WindowManager;
 import android.view.nano.DisplayInfoProto;
 import android.view.nano.ViewProtoEnums;
 
@@ -1891,12 +1890,11 @@ public class WindowManagerState {
         private int mStackId;
         private int mLayer;
         private boolean mShown;
-        private Rect mContainingFrame;
         private Rect mParentFrame;
         private Rect mFrame;
         private Rect mCompatFrame;
-        private Rect mSurfaceInsets = new Rect();
-        private Rect mGivenContentInsets = new Rect();
+        private Rect mSurfaceInsets;
+        private Rect mGivenContentInsets;
         private Rect mCrop = new Rect();
         private boolean mHasCompatScale;
         private float mGlobalScale;
@@ -1923,7 +1921,6 @@ public class WindowManagerState {
             WindowFramesProto windowFramesProto = proto.windowFrames;
             if (windowFramesProto != null) {
                 mFrame = extract(windowFramesProto.frame);
-                mContainingFrame = extract(windowFramesProto.containingFrame);
                 mParentFrame = extract(windowFramesProto.parentFrame);
                 mCompatFrame = extract(windowFramesProto.compatFrame);
             }
@@ -1965,10 +1962,6 @@ public class WindowManagerState {
 
         int getStackId() {
             return mStackId;
-        }
-
-        Rect getContainingFrame() {
-            return mContainingFrame;
         }
 
         public Rect getFrame() {
@@ -2037,7 +2030,7 @@ public class WindowManagerState {
         public String toString() {
             return "WindowState: {" + mAppToken + " " + mName
                     + getWindowTypeSuffix(mWindowType) + "}" + " type=" + mType
-                    + " cf=" + mContainingFrame + " pf=" + mParentFrame;
+                    + " pf=" + mParentFrame;
         }
 
         public String toLongString() {
