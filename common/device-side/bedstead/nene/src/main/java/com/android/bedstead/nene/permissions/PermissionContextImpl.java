@@ -17,6 +17,7 @@
 package com.android.bedstead.nene.permissions;
 
 import com.android.bedstead.nene.exceptions.NeneException;
+import com.android.bedstead.nene.utils.Versions;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -57,6 +58,17 @@ public final class PermissionContextImpl implements PermissionContext {
         mGrantedPermissions.addAll(Arrays.asList(permissions));
 
         mPermissions.applyPermissions();
+
+        return this;
+    }
+
+    /**
+     * See {@link Permissions#withPermissionOnVersion(int, String...)}
+     */
+    public PermissionContextImpl withPermissionOnVersion(int sdkVersion, String... permissions) {
+        if (Versions.meetsSdkVersionRequirements(sdkVersion, sdkVersion)) {
+            return withPermission(permissions);
+        }
 
         return this;
     }

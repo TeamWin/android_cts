@@ -40,7 +40,6 @@ import android.os.RemoteUserManagerWrapper;
 import android.os.UserManager;
 
 import com.android.bedstead.nene.TestApis;
-import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.packages.ProcessReference;
 import com.android.bedstead.nene.users.UserReference;
 
@@ -219,25 +218,26 @@ public class TestAppInstanceReference implements AutoCloseable, ConnectionListen
         return this;
     }
 
-    /**
-     * Immediately force stops the app.
-     *
-     * <p>This will also stop keeping the target app alive (see {@link #stopKeepAlive()}.
-     */
-    public TestAppInstanceReference stop() {
-        stopKeepAlive();
-
-        ProcessReference process = mTestApp.pkg().runningProcess(mUser);
-        if (process != null) {
-            try {
-                process.kill();
-            } catch (NeneException e) {
-                throw new NeneException("Error killing process... process is " + process(), e);
-            }
-        }
-
-        return this;
-    }
+    // TODO(b/203758521): Restore functionality of killing process
+//    /**
+//     * Immediately force stops the app.
+//     *
+//     * <p>This will also stop keeping the target app alive (see {@link #stopKeepAlive()}.
+//     */
+//    public TestAppInstanceReference stop() {
+//        stopKeepAlive();
+//
+//        ProcessReference process = mTestApp.pkg().runningProcess(mUser);
+//        if (process != null) {
+//            try {
+//                process.kill();
+//            } catch (NeneException e) {
+//                throw new NeneException("Error killing process... process is " + process(), e);
+//            }
+//        }
+//
+//        return this;
+//    }
 
     /**
      * Gets the {@link ProcessReference} of the app, if any.

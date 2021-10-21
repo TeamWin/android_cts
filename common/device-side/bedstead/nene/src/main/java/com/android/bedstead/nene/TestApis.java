@@ -23,6 +23,7 @@ import com.android.bedstead.nene.devicepolicy.DevicePolicy;
 import com.android.bedstead.nene.packages.Packages;
 import com.android.bedstead.nene.permissions.Permissions;
 import com.android.bedstead.nene.settings.Settings;
+import com.android.bedstead.nene.systemproperties.SystemProperties;
 import com.android.bedstead.nene.users.Users;
 
 /**
@@ -57,6 +58,11 @@ public final class TestApis {
     /** Access Test APIs relating to Settings. */
     public static Settings settings() {
         return Settings.sInstance;
+    }
+
+    /** Access Test APIs related to System Properties. */
+    public static SystemProperties systemProperties() {
+        return SystemProperties.sInstance;
     }
 
     /** Access Test APIs related to activities. */

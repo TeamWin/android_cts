@@ -43,6 +43,8 @@ import com.android.bedstead.nene.utils.Versions;
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
 
 import java.time.Duration;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -50,10 +52,11 @@ import java.util.Set;
  */
 public class UserReference implements AutoCloseable {
 
-    private static final Set<AdbUser.UserState> RUNNING_STATES =
-            Set.of(AdbUser.UserState.RUNNING_LOCKED,
+    private static final Set<AdbUser.UserState> RUNNING_STATES = new HashSet<>(
+            Arrays.asList(AdbUser.UserState.RUNNING_LOCKED,
                     AdbUser.UserState.RUNNING_UNLOCKED,
-                    AdbUser.UserState.RUNNING_UNLOCKING);
+                    AdbUser.UserState.RUNNING_UNLOCKING)
+    );
 
     private static final String LOG_TAG = "UserReference";
 
@@ -253,6 +256,10 @@ public class UserReference implements AutoCloseable {
     /** Is the user running? */
     public boolean isRunning() {
         if (!Versions.meetsMinimumSdkVersionRequirement(S)) {
+            AdbUser adbUser = adbUserOrNull();
+            if (adbUser == null) {
+                return false;
+            }
             return RUNNING_STATES.contains(adbUser().state());
         }
         try (PermissionContext p = TestApis.permissions().withPermission(INTERACT_ACROSS_USERS)) {
@@ -263,7 +270,11 @@ public class UserReference implements AutoCloseable {
     /** Is the user unlocked? */
     public boolean isUnlocked() {
         if (!Versions.meetsMinimumSdkVersionRequirement(S)) {
-            return adbUser().state().equals(AdbUser.UserState.RUNNING_UNLOCKED);
+            AdbUser adbUser = adbUserOrNull();
+            if (adbUser == null) {
+                return false;
+            }
+            return adbUser.state().equals(AdbUser.UserState.RUNNING_UNLOCKED);
         }
         try (PermissionContext p = TestApis.permissions().withPermission(INTERACT_ACROSS_USERS)) {
             return mUserManager.isUserUnlocked(userHandle());
@@ -368,8 +379,12 @@ public class UserReference implements AutoCloseable {
         remove();
     }
 
+    private AdbUser adbUserOrNull() {
+        return TestApis.users().fetchUser(mId);
+    }
+
     private AdbUser adbUser() {
-        AdbUser user = TestApis.users().fetchUser(mId);
+        AdbUser user = adbUserOrNull();
         if (user == null) {
             throw new NeneException("User does not exist " + this);
         }

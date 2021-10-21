@@ -29,6 +29,7 @@ import static com.android.bedstead.nene.users.UserType.SYSTEM_USER_TYPE_NAME;
 import android.app.ActivityManager;
 import android.content.pm.UserInfo;
 import android.os.Build;
+import android.os.SystemProperties;
 import android.os.UserHandle;
 import android.os.UserManager;
 
@@ -448,13 +449,8 @@ public final class Users {
         if (!Versions.meetsMinimumSdkVersionRequirement(S)) {
             return false;
         }
-        try {
-            return ShellCommand.builder("getprop")
-                    .addOperand(PROPERTY_STOP_BG_USERS_ON_SWITCH)
-                    .executeAndParseOutput(o -> !o.trim().equals("0"));
-        } catch (AdbException e) {
-            throw new NeneException("Error getting stopBgUsersOnSwitch", e);
-        }
+
+        return SystemProperties.getBoolean(PROPERTY_STOP_BG_USERS_ON_SWITCH, /* def= */ true);
     }
 
     /**
@@ -466,15 +462,9 @@ public final class Users {
         if (!Versions.meetsMinimumSdkVersionRequirement(S)) {
             return;
         }
-        try {
-            ShellCommand.builder("setprop")
-                    .addOperand(PROPERTY_STOP_BG_USERS_ON_SWITCH)
-                    .addOperand(stop ? "1" : "0")
-                    .asRoot()
-                    .execute();
-        } catch (AdbException e) {
-            throw new NeneException("Error setting stopBgUsersOnSwitch", e);
-        }
+
+        // TODO(203752848): Re-enable this once we can set it
+//        TestApis.systemProperties().set(PROPERTY_STOP_BG_USERS_ON_SWITCH, stop ? "1" : "0");
     }
 
     @Nullable

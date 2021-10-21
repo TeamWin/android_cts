@@ -20,6 +20,7 @@ import static android.Manifest.permission.INSTALL_PACKAGES;
 import static android.Manifest.permission.INSTALL_TEST_ONLY_PACKAGE;
 import static android.Manifest.permission.INTERACT_ACROSS_USERS;
 import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
+import static android.Manifest.permission.MANAGE_EXTERNAL_STORAGE;
 import static android.content.pm.PackageInstaller.EXTRA_STATUS;
 import static android.content.pm.PackageInstaller.EXTRA_STATUS_MESSAGE;
 import static android.content.pm.PackageInstaller.STATUS_FAILURE;
@@ -38,6 +39,7 @@ import android.content.pm.FeatureInfo;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
 import android.os.Build;
+import android.os.Environment;
 import android.util.Log;
 
 import androidx.annotation.CheckResult;
@@ -268,7 +270,6 @@ public final class Packages {
                     .addOperand("-t") // Allow test-only install
                     .addOperand(apkFile.getAbsolutePath())
                     .validate(ShellCommandUtils::startsWithSuccess)
-                    .asRoot()
                     .execute();
 
             return waitForPackageAddedBroadcast(broadcastReceiver);
@@ -400,31 +401,21 @@ public final class Packages {
     @Nullable
     private Package installPreS(UserReference user, byte[] apkFile) {
         // Prior to S we cannot pass bytes to stdin so we write it to a temp file first
-        File outputDir = TestApis.context().instrumentedContext().getFilesDir();
+        File outputDir = Environment.getExternalStorageDirectory();
         File outputFile = null;
-        try {
+
+        try (PermissionContext p =
+                     TestApis.permissions().withPermissionOnVersion(R, MANAGE_EXTERNAL_STORAGE)) {
             // TODO(b/202705721): Replace this with fixed name
             outputFile = new File(outputDir, UUID.randomUUID() + ".apk");
             outputFile.getParentFile().mkdirs();
             try (FileOutputStream output = new FileOutputStream(outputFile)) {
                 output.write(apkFile);
             }
-            // Shell can't read the file in files dir, so we can move it to /data/local/tmp
-            File localTmpFile = new File("/data/local/tmp", outputFile.getName());
-            // I'm not sure why only mv works on R, and only cp works on < R
-            String command = Versions.meetsMinimumSdkVersionRequirement(R) ? "mv" : "cp";
-            ShellCommand.builder(command)
-                    .addOperand(outputFile.getAbsolutePath())
-                    .addOperand(localTmpFile.getAbsolutePath())
-                    .asRoot()
-                    .validate(String::isEmpty)
-                    .allowEmptyOutput(true)
-                    .execute();
-            return install(user, localTmpFile);
+
+            return install(user, outputFile);
         } catch (IOException e) {
             throw new NeneException("Error when writing bytes to temp file", e);
-        } catch (AdbException e) {
-            throw new NeneException("Error when moving file to /data/local/tmp", e);
         } finally {
             if (outputFile != null) {
                 outputFile.delete();

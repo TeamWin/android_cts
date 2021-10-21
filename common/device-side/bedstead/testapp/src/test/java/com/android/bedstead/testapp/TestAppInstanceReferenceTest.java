@@ -126,12 +126,13 @@ public class TestAppInstanceReferenceTest {
     }
 
     @Test
+    @Ignore("b/203758521 Need to re-add support for killing processes")
     public void killProcess_keepAlive_processIsRunningAgain() {
         TestApp testApp = mTestAppProvider.any();
         try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
             testAppInstance.keepAlive();
 
-            testAppInstance.process().kill();
+//            testAppInstance.process().kill();
 
             Poll.forValue("running process", () -> testApp.pkg().runningProcess(sUser))
                     .toNotBeNull()
@@ -144,25 +145,27 @@ public class TestAppInstanceReferenceTest {
     // unbounded amount of time
 
     @Test
+    @Ignore("b/203758521 need to re-add support for killing processes")
     public void stop_processIsNotRunning() {
         TestApp testApp = mTestAppProvider.query().whereActivities().isNotEmpty().get();
         try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
             testAppInstance.activities().any().start();
 
-            testAppInstance.stop();
+//            testAppInstance.stop();
 
             assertThat(testApp.pkg().runningProcesses()).isEmpty();
         }
     }
 
     @Test
+    @Ignore("b/203758521 need to re-add support for killing processes")
     public void stop_previouslyCalledKeepAlive_processDoesNotRestart() {
         TestApp testApp = mTestAppProvider.query().whereActivities().isNotEmpty().get();
         try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
             testAppInstance.activities().any().start();
             testAppInstance.keepAlive();
 
-            testAppInstance.stop();
+//            testAppInstance.stop();
 
             assertThat(testApp.pkg().runningProcesses()).isEmpty();
         }
@@ -234,12 +237,13 @@ public class TestAppInstanceReferenceTest {
     }
 
     @Test
+    @Ignore("b/203758521 need to re-add support for killing processes")
     public void stop_registeredReceiver_doesNotReceiveBroadcast() {
         TestApp testApp = mTestAppProvider.any();
         try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
             testAppInstance.registerReceiver(INTENT_FILTER);
 
-            testAppInstance.stop();
+//            testAppInstance.stop();
             sContext.sendBroadcast(INTENT);
 
             EventLogs<BroadcastReceivedEvent> logs =
@@ -299,12 +303,12 @@ public class TestAppInstanceReferenceTest {
     }
 
     @Test
-    @Ignore("b/195626250 Disabled until logging surviving reboots is restored")
+    @Ignore("b/203758521 need to re-add support for killing processes")
     public void registerReceiver_appIsKilled_stillReceivesBroadcast() {
         TestApp testApp = mTestAppProvider.any();
         try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
             testAppInstance.registerReceiver(INTENT_FILTER);
-            testApp.pkg().runningProcess(sUser).kill();
+//            testApp.pkg().runningProcess(sUser).kill();
             Poll.forValue("running process", () -> testApp.pkg().runningProcess(sUser))
                     .toNotBeNull()
                     .errorOnFail()

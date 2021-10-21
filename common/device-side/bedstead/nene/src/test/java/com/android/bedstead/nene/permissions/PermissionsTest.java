@@ -16,6 +16,7 @@
 
 package com.android.bedstead.nene.permissions;
 
+import static android.Manifest.permission.MANAGE_EXTERNAL_STORAGE;
 import static android.content.pm.PackageManager.PERMISSION_DENIED;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 import static android.os.Build.VERSION_CODES.P;
@@ -229,4 +230,24 @@ public class PermissionsTest {
 
     // TODO(scottjonathan): Once we can install the testapp without granting all runtime
     //  permissions, add a test that this works pre-Q
+
+    @Test
+    @RequireSdkVersion(min = R, max = R)
+    public void withPermissionOnVersion_onVersion_hasPermission() {
+        try (PermissionContext p =
+                     TestApis.permissions().withPermissionOnVersion(R, MANAGE_EXTERNAL_STORAGE)) {
+            assertThat(sContext.checkSelfPermission(MANAGE_EXTERNAL_STORAGE))
+                    .isEqualTo(PERMISSION_GRANTED);
+        }
+    }
+
+    @Test
+    @RequireSdkVersion(min = S)
+    public void withPermissionOnVersion_notOnVersion_doesNotHavePermission() {
+        try (PermissionContext p =
+                     TestApis.permissions().withPermissionOnVersion(R, MANAGE_EXTERNAL_STORAGE)) {
+            assertThat(sContext.checkSelfPermission(MANAGE_EXTERNAL_STORAGE))
+                    .isNotEqualTo(PERMISSION_GRANTED);
+        }
+    }
 }
