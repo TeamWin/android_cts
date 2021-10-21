@@ -125,7 +125,7 @@ public class TunerTest {
     public RequiredFeatureRule featureRule = new RequiredFeatureRule(
             PackageManager.FEATURE_TUNER);
 
-    private static final int TIMEOUT_MS = 10000;
+    private static final int TIMEOUT_MS = 2 * 60 * 1000; // 2 minutes
 
     private Context mContext;
     private Tuner mTuner;
@@ -164,12 +164,14 @@ public class TunerTest {
     @Test
     public void testTuning() throws Exception {
         List<Integer> ids = mTuner.getFrontendIds();
+        if (ids == null) return;
         assertFalse(ids.isEmpty());
 
         FrontendInfo info = mTuner.getFrontendInfoById(ids.get(0));
         int res = mTuner.tune(createFrontendSettings(info));
         assertEquals(Tuner.RESULT_SUCCESS, res);
-        assertEquals(Tuner.RESULT_SUCCESS, mTuner.setLnaEnabled(false));
+        res = mTuner.setLnaEnabled(false);
+        assertTrue((res == Tuner.RESULT_SUCCESS) || (res == Tuner.RESULT_UNAVAILABLE));
         res = mTuner.cancelTuning();
         assertEquals(Tuner.RESULT_SUCCESS, res);
     }
@@ -177,6 +179,7 @@ public class TunerTest {
     @Test
     public void testScanning() throws Exception {
         List<Integer> ids = mTuner.getFrontendIds();
+        if (ids == null) return;
         assertFalse(ids.isEmpty());
         for (int id : ids) {
             FrontendInfo info = mTuner.getFrontendInfoById(id);
@@ -199,12 +202,10 @@ public class TunerTest {
     @Test
     public void testFrontendStatus() throws Exception {
         List<Integer> ids = mTuner.getFrontendIds();
+        if (ids == null) return;
         assertFalse(ids.isEmpty());
 
         for (int id : ids) {
-            if (mTuner == null) {
-                mTuner = new Tuner(mContext, null, 100);
-            }
             FrontendInfo info = mTuner.getFrontendInfoById(id);
             int res = mTuner.tune(createFrontendSettings(info));
 
@@ -336,8 +337,6 @@ public class TunerTest {
                         break;
                 }
             }
-            mTuner.close();
-            mTuner = null;
         }
     }
 
@@ -375,6 +374,7 @@ public class TunerTest {
     public void testFrontendToCiCam() throws Exception {
         // tune to get frontend resource
         List<Integer> ids = mTuner.getFrontendIds();
+        if (ids == null) return;
         assertFalse(ids.isEmpty());
         FrontendInfo info = mTuner.getFrontendInfoById(ids.get(0));
         int res = mTuner.tune(createFrontendSettings(info));
@@ -401,6 +401,8 @@ public class TunerTest {
     // open filter to get demux resource
         Filter f = mTuner.openFilter(
                 Filter.TYPE_TS, Filter.SUBTYPE_AUDIO, 1000, getExecutor(), getFilterCallback());
+        assertNotNull(f);
+        assertNotEquals(Tuner.INVALID_FILTER_ID, f.getId());
         Settings settings = AvSettings
                 .builder(Filter.TYPE_TS, true)
                 .setPassthrough(false)
@@ -449,6 +451,7 @@ public class TunerTest {
 
         // Tune a frontend before start the filter
         List<Integer> ids = mTuner.getFrontendIds();
+        if (ids == null) return;
         assertFalse(ids.isEmpty());
 
         FrontendInfo info = mTuner.getFrontendInfoById(ids.get(0));
@@ -486,6 +489,7 @@ public class TunerTest {
 
         // Tune a frontend before start the filter
         List<Integer> ids = mTuner.getFrontendIds();
+        if (ids == null) return;
         assertFalse(ids.isEmpty());
 
         FrontendInfo info = mTuner.getFrontendInfoById(ids.get(0));
@@ -517,7 +521,7 @@ public class TunerTest {
     public void testIpFilter() throws Exception {
         Filter f = mTuner.openFilter(
                 Filter.TYPE_IP, Filter.SUBTYPE_IP, 1000, getExecutor(), getFilterCallback());
-        assertNotNull(f);
+        if (f == null) return;
         assertNotEquals(Tuner.INVALID_FILTER_ID, f.getId());
 
         FilterConfiguration config = IpFilterConfiguration
@@ -534,6 +538,7 @@ public class TunerTest {
 
         // Tune a frontend before start the filter
         List<Integer> ids = mTuner.getFrontendIds();
+        if (ids == null) return;
         assertFalse(ids.isEmpty());
 
         FrontendInfo info = mTuner.getFrontendInfoById(ids.get(0));
@@ -552,7 +557,7 @@ public class TunerTest {
     public void testAlpSectionFilterConfig() throws Exception {
         Filter f = mTuner.openFilter(
                 Filter.TYPE_ALP, Filter.SUBTYPE_SECTION, 1000, getExecutor(), getFilterCallback());
-        assertNotNull(f);
+        if (f == null) return;
         assertNotEquals(Tuner.INVALID_FILTER_ID, f.getId());
 
         SectionSettingsWithSectionBits settings =
@@ -582,7 +587,7 @@ public class TunerTest {
     public void testMmtpPesFilterConfig() throws Exception {
         Filter f = mTuner.openFilter(
                 Filter.TYPE_MMTP, Filter.SUBTYPE_PES, 1000, getExecutor(), getFilterCallback());
-        assertNotNull(f);
+        if (f == null) return;
         assertNotEquals(Tuner.INVALID_FILTER_ID, f.getId());
 
         PesSettings settings =
@@ -608,7 +613,7 @@ public class TunerTest {
         Filter f = mTuner.openFilter(
                 Filter.TYPE_MMTP, Filter.SUBTYPE_DOWNLOAD,
                 1000, getExecutor(), getFilterCallback());
-        assertNotNull(f);
+        if (f == null) return;
         assertNotEquals(Tuner.INVALID_FILTER_ID, f.getId());
 
         DownloadSettings settings =
@@ -685,7 +690,7 @@ public class TunerTest {
     public void testTlvTlvFilterConfig() throws Exception {
         Filter f = mTuner.openFilter(
                 Filter.TYPE_TLV, Filter.SUBTYPE_TLV, 1000, getExecutor(), getFilterCallback());
-        assertNotNull(f);
+        if (f == null) return;
         assertNotEquals(Tuner.INVALID_FILTER_ID, f.getId());
 
         TlvFilterConfiguration config =
@@ -929,6 +934,7 @@ public class TunerTest {
         Tuner other = new Tuner(mContext, null, 100);
 
         List<Integer> ids = other.getFrontendIds();
+        if (ids == null) return;
         assertFalse(ids.isEmpty());
         FrontendInfo info = other.getFrontendInfoById(ids.get(0));
 
@@ -1639,7 +1645,7 @@ public class TunerTest {
                     int codeRate = getFirstCapable(dvbtCaps.getCodeRateCapability());
                     int hierarchy = getFirstCapable(dvbtCaps.getHierarchyCapability());
                     int guardInterval = getFirstCapable(dvbtCaps.getGuardIntervalCapability());
-                    return DvbtFrontendSettings
+                    DvbtFrontendSettings settings = DvbtFrontendSettings
                             .builder()
                             .setFrequencyLong(minFreq)
                             .setTransmissionMode(transmission)
@@ -1652,28 +1658,34 @@ public class TunerTest {
                             .setStandard(DvbtFrontendSettings.STANDARD_T)
                             .setMiso(false)
                             .build();
+                    settings.setEndFrequencyLong(maxFreq);
+                    return settings;
                 }
                 case FrontendSettings.TYPE_ISDBS3: {
                     Isdbs3FrontendCapabilities isdbs3Caps = (Isdbs3FrontendCapabilities) caps;
                     int modulation = getFirstCapable(isdbs3Caps.getModulationCapability());
                     int codeRate = getFirstCapable(isdbs3Caps.getCodeRateCapability());
-                    return Isdbs3FrontendSettings
+                    Isdbs3FrontendSettings settings = Isdbs3FrontendSettings
                             .builder()
                             .setFrequencyLong(minFreq)
                             .setModulation(modulation)
                             .setCodeRate(codeRate)
                             .build();
+                    settings.setEndFrequencyLong(maxFreq);
+                    return settings;
                 }
                 case FrontendSettings.TYPE_ISDBS: {
                     IsdbsFrontendCapabilities isdbsCaps = (IsdbsFrontendCapabilities) caps;
                     int modulation = getFirstCapable(isdbsCaps.getModulationCapability());
                     int codeRate = getFirstCapable(isdbsCaps.getCodeRateCapability());
-                    return IsdbsFrontendSettings
+                    IsdbsFrontendSettings settings = IsdbsFrontendSettings
                             .builder()
                             .setFrequencyLong(minFreq)
                             .setModulation(modulation)
                             .setCodeRate(codeRate)
                             .build();
+                    settings.setEndFrequencyLong(maxFreq);
+                    return settings;
                 }
                 case FrontendSettings.TYPE_ISDBT: {
                     IsdbtFrontendCapabilities isdbtCaps = (IsdbtFrontendCapabilities) caps;
@@ -1682,7 +1694,7 @@ public class TunerTest {
                     int modulation = getFirstCapable(isdbtCaps.getModulationCapability());
                     int codeRate = getFirstCapable(isdbtCaps.getCodeRateCapability());
                     int guardInterval = getFirstCapable(isdbtCaps.getGuardIntervalCapability());
-                    return IsdbtFrontendSettings
+                    IsdbtFrontendSettings settings = IsdbtFrontendSettings
                             .builder()
                             .setFrequencyLong(minFreq)
                             .setModulation(modulation)
@@ -1691,6 +1703,8 @@ public class TunerTest {
                             .setCodeRate(codeRate)
                             .setGuardInterval(guardInterval)
                             .build();
+                    settings.setEndFrequencyLong(maxFreq);
+                    return settings;
                 }
                 case FrontendSettings.TYPE_DTMB: {
                     DtmbFrontendCapabilities dtmbCaps = (DtmbFrontendCapabilities) caps;
