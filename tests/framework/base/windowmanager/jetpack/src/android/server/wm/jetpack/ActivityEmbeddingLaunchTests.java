@@ -24,6 +24,10 @@ import static android.server.wm.jetpack.utils.ExtensionUtil.getWindowExtensions;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.TAG;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.createWildcardSplitPairRule;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.startActivityAndVerifySplit;
+import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitForResumed;
+import static android.server.wm.jetpack.utils.WindowManagerJetpackTestBase.getActivityBounds;
+import static android.server.wm.jetpack.utils.WindowManagerJetpackTestBase.getMaximumActivityBounds;
+import static android.server.wm.jetpack.utils.WindowManagerJetpackTestBase.getResumedActivityById;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -40,8 +44,12 @@ import android.util.Pair;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.window.extensions.WindowExtensions;
 import androidx.window.extensions.embedding.ActivityEmbeddingComponent;
+import androidx.window.extensions.embedding.ActivityRule;
+import androidx.window.extensions.embedding.EmbeddingRule;
 import androidx.window.extensions.embedding.SplitInfo;
 import androidx.window.extensions.embedding.SplitPairRule;
+
+import com.google.common.collect.Sets;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -50,6 +58,7 @@ import org.junit.runner.RunWith;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -220,5 +229,76 @@ public class ActivityEmbeddingLaunchTests extends WindowManagerJetpackTestBase {
                         getSecondaryStackTopActivity(splitInfo));
             }
         }
+    }
+
+    /**
+     * Tests launching an activity that is set to always expand when it is launched over an existing
+     * split from the current primary activity.
+     */
+    @Test
+    public void testAlwaysExpandOverSplit_launchFromPrimary() {
+        // Create activity rule that sets the target activity to always expand
+        final String alwaysExpandedActivityId = "AlwaysExpandedActivityId";
+        Predicate<Activity> activityPredicate = activity ->
+                activity instanceof TestActivityWithId
+                        && alwaysExpandedActivityId.equals(((TestActivityWithId) activity).getId());
+        ActivityRule expandActivityRule = new ActivityRule.Builder(activityPredicate,
+                intent -> true /* intentPredicate */).setShouldAlwaysExpand(true).build();
+
+        // Register wildcard split pair rule and always-expanded activity rule
+        SplitPairRule splitPairRule = createWildcardSplitPairRule();
+        mActivityEmbeddingComponent.setEmbeddingRules(Sets.newHashSet(splitPairRule,
+                expandActivityRule));
+
+        // Launch two activities into a split
+        Activity primaryActivity = startActivityNewTask(TestConfigChangeHandlingActivity.class);
+        startActivityAndVerifySplit(primaryActivity, TestActivityWithId.class,
+                splitPairRule, "secondaryActivity" /* secondActivityId */, mSplitInfoConsumer);
+
+        // Launch always expanded activity from the primary activity
+        startActivityFromActivity(primaryActivity, TestActivityWithId.class,
+                alwaysExpandedActivityId);
+
+        // Verify that the always expanded activity is resumed and fills its parent
+        waitForResumed(alwaysExpandedActivityId);
+        Activity alwaysExpandedActivity = getResumedActivityById(alwaysExpandedActivityId);
+        assertEquals(getMaximumActivityBounds(alwaysExpandedActivity),
+                getActivityBounds(alwaysExpandedActivity));
+    }
+
+    /**
+     * Tests launching an activity that is set to always expand when it is launched over an existing
+     * split from the current secondary activity.
+     */
+    @Test
+    public void testAlwaysExpandOverSplit_launchFromSecondary() {
+        // Create activity rule that sets the target activity to always expand
+        final String alwaysExpandedActivityId = "AlwaysExpandedActivityId";
+        Predicate<Activity> activityPredicate = activity ->
+                activity instanceof TestActivityWithId
+                        && alwaysExpandedActivityId.equals(((TestActivityWithId) activity).getId());
+        ActivityRule expandActivityRule = new ActivityRule.Builder(activityPredicate,
+                intent -> true /* intentPredicate */).setShouldAlwaysExpand(true).build();
+
+        // Register wildcard split pair rule and always-expanded activity rule
+        SplitPairRule splitPairRule = createWildcardSplitPairRule();
+        mActivityEmbeddingComponent.setEmbeddingRules(Sets.newHashSet(splitPairRule,
+                expandActivityRule));
+
+        // Launch two activities into a split
+        Activity primaryActivity = startActivityNewTask(TestConfigChangeHandlingActivity.class);
+        Activity secondaryActivity = startActivityAndVerifySplit(primaryActivity,
+                TestActivityWithId.class, splitPairRule, "secondaryActivity" /* secondActivityId */,
+                mSplitInfoConsumer);
+
+        // Launch always expanded activity from the secondary activity
+        startActivityFromActivity(secondaryActivity, TestActivityWithId.class,
+                alwaysExpandedActivityId);
+
+        // Verify that the always expanded activity is resumed and fills its parent
+        waitForResumed(alwaysExpandedActivityId);
+        Activity alwaysExpandedActivity = getResumedActivityById(alwaysExpandedActivityId);
+        assertEquals(getMaximumActivityBounds(alwaysExpandedActivity),
+                getActivityBounds(alwaysExpandedActivity));
     }
 }

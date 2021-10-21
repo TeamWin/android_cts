@@ -20,6 +20,7 @@ import static android.server.wm.jetpack.utils.ExtensionUtil.assumeExtensionSuppo
 import static android.server.wm.jetpack.utils.ExtensionUtil.getWindowExtensions;
 import static android.server.wm.jetpack.utils.WindowManagerJetpackTestBase.getActivityBounds;
 import static android.server.wm.jetpack.utils.WindowManagerJetpackTestBase.getMaximumActivityBounds;
+import static android.server.wm.jetpack.utils.WindowManagerJetpackTestBase.getResumedActivityById;
 import static android.server.wm.jetpack.utils.WindowManagerJetpackTestBase.startActivityFromActivity;
 
 import static org.junit.Assert.assertEquals;
@@ -186,6 +187,16 @@ public class ActivityEmbeddingUtil {
                 }
             }
             if (allActivitiesResumed) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static boolean waitForResumed(@NonNull String activityId) {
+        final long startTime = System.currentTimeMillis();
+        while (System.currentTimeMillis() - startTime < WAIT_FOR_RESUMED_TIMEOUT_MS) {
+            if (getResumedActivityById(activityId) != null) {
                 return true;
             }
         }
