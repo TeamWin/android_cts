@@ -1720,7 +1720,7 @@ public class AudioTrackTest {
 
         playOnceStreamData(TEST_NAME, TEST_MODE, TEST_STREAM_TYPE, TEST_SWEEP,
                 TEST_IS_LOW_RAM_DEVICE, TEST_FORMAT, TEST_FREQUENCY, TEST_SR, TEST_CONF,
-                NO_WAIT);
+                NO_WAIT, 0 /* mask */);
     }
 
     @Test
@@ -1762,7 +1762,7 @@ public class AudioTrackTest {
                 for (int TEST_CONF : TEST_CONF_ARRAY) {
                     playOnceStreamData(TEST_NAME, TEST_MODE, TEST_STREAM_TYPE, TEST_SWEEP,
                             TEST_IS_LOW_RAM_DEVICE, TEST_FORMAT, frequency, TEST_SR, TEST_CONF,
-                            WAIT_MSEC);
+                            WAIT_MSEC, 0 /* mask */);
                     frequency += 50; // increment test tone frequency
                 }
             }
@@ -1771,7 +1771,8 @@ public class AudioTrackTest {
 
     private void playOnceStreamData(String testName, int testMode, int testStream,
             float testSweep, boolean isLowRamDevice, int testFormat, double testFrequency,
-            int testSr, int testConf, long waitMsec) throws InterruptedException {
+            int testSr, int testConf, long waitMsec, int mask)
+            throws InterruptedException {
         final int channelCount = Integer.bitCount(testConf);
         if (isLowRamDevice
                 && (testSr > 96000 || channelCount > 4)) {
@@ -1790,9 +1791,9 @@ public class AudioTrackTest {
         assertEquals(testName, testConf, format.getChannelMask());
         assertEquals(testName, channelCount, format.getChannelCount());
         assertEquals(testName, testFormat, format.getEncoding());
-        final int sourceSamples = channelCount
-                * AudioHelper.frameCountFromMsec(500,
-                format); // duration of test tones
+        // duration of test tones
+        final int frames = AudioHelper.frameCountFromMsec(500 /* ms */, format);
+        final int sourceSamples = channelCount * frames;
         final double frequency = testFrequency / channelCount;
 
         int written = 0;
@@ -1815,6 +1816,9 @@ public class AudioTrackTest {
                 byte data[] = AudioHelper.createSoundDataInByteArray(
                         sourceSamples, testSr,
                         frequency, testSweep);
+                if (mask != 0) {
+                    AudioHelper.maskArray(data, testConf, mask);
+                }
                 while (written < data.length) {
                     int samples = Math.min(data.length - written, samplesPerWrite);
                     int ret = track.write(data, written, samples);
@@ -1827,6 +1831,9 @@ public class AudioTrackTest {
                 short data[] = AudioHelper.createSoundDataInShortArray(
                         sourceSamples, testSr,
                         frequency, testSweep);
+                if (mask != 0) {
+                    AudioHelper.maskArray(data, testConf, mask);
+                }
                 while (written < data.length) {
                     int samples = Math.min(data.length - written, samplesPerWrite);
                     int ret = track.write(data, written, samples);
@@ -1839,6 +1846,9 @@ public class AudioTrackTest {
                 float data[] = AudioHelper.createSoundDataInFloatArray(
                         sourceSamples, testSr,
                         frequency, testSweep);
+                if (mask != 0) {
+                    AudioHelper.maskArray(data, testConf, mask);
+                }
                 while (written < data.length) {
                     int samples = Math.min(data.length - written, samplesPerWrite);
                     int ret = track.write(data, written, samples,
@@ -3225,7 +3235,7 @@ public class AudioTrackTest {
                     }
                     playOnceStreamData(TEST_NAME, TEST_MODE, TEST_STREAM_TYPE, TEST_SWEEP,
                             TEST_IS_LOW_RAM_DEVICE, TEST_FORMAT, frequency, TEST_SR, TEST_CONF,
-                            WAIT_MSEC);
+                            WAIT_MSEC, 0 /* mask */);
                     frequency += 50; // increment test tone frequency
                 }
             }
@@ -3274,6 +3284,61 @@ public class AudioTrackTest {
                                     true /* useChannelIndex */, useDirect != 0);
                             frequency += 30; // increment test tone frequency
                         }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Verifies downmixer works with different AudioTrack surround channel masks.
+     *
+     * Also a listening test: on a stereo output device, you should hear sine wave tones
+     * instead of silence if the downmixer is working.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testDownmix() throws Exception {
+        if (!hasAudioOutput()) {
+            return;
+        }
+
+        final String TEST_NAME = "testDownmix";
+        final int TEST_FORMAT_ARRAY[] = {
+            // AudioFormat.ENCODING_PCM_8BIT,  // sounds a bit tinny
+            AudioFormat.ENCODING_PCM_16BIT,
+            AudioFormat.ENCODING_PCM_FLOAT,
+        };
+        final int TEST_SR_ARRAY[] = {
+            48000,
+        };
+        final int TEST_CONF_ARRAY[] = {
+            // This test will play back FRONT_WIDE_LEFT, then FRONT_WIDE_RIGHT.
+            AudioFormat.CHANNEL_OUT_FRONT_LEFT | AudioFormat.CHANNEL_OUT_FRONT_RIGHT |
+            AudioFormat.CHANNEL_OUT_FRONT_WIDE_LEFT | AudioFormat.CHANNEL_OUT_FRONT_WIDE_RIGHT,
+        };
+
+        final int TEST_MODE = AudioTrack.MODE_STREAM;
+        final int TEST_STREAM_TYPE = AudioManager.STREAM_MUSIC;
+        final float TEST_SWEEP = 0; // sine wave only
+        final boolean TEST_IS_LOW_RAM_DEVICE = false;
+        for (int TEST_FORMAT : TEST_FORMAT_ARRAY) {
+            double frequency = 400; // Note: frequency changes for each test
+            for (int TEST_SR : TEST_SR_ARRAY) {
+                for (int TEST_CONF : TEST_CONF_ARRAY) {
+                    // Remove the front left and front right channels.
+                    int signalMask = TEST_CONF & ~(AudioFormat.CHANNEL_OUT_FRONT_LEFT
+                            | AudioFormat.CHANNEL_OUT_FRONT_RIGHT);
+                    // Play all the "surround channels" in the mask individually
+                    // at different frequencies.
+                    while (signalMask != 0) {
+                        final int lowbit = signalMask & -signalMask;
+                        playOnceStreamData(TEST_NAME, TEST_MODE, TEST_STREAM_TYPE, TEST_SWEEP,
+                                TEST_IS_LOW_RAM_DEVICE, TEST_FORMAT, frequency, TEST_SR,
+                                TEST_CONF, WAIT_MSEC, lowbit);
+                        signalMask -= lowbit;
+                        frequency += 50; // increment test tone frequency
                     }
                 }
             }
