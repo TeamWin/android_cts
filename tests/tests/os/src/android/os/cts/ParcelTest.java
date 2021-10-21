@@ -2639,6 +2639,7 @@ public class ParcelTest extends AndroidTestCase {
         p.writeFileDescriptor(FileDescriptor.in);
         int i1 = p.dataPosition();
 
+        assertThrows(IllegalArgumentException.class, () -> p.hasFileDescriptors(i1, 1));
         assertThrows(IllegalArgumentException.class, () -> p.hasFileDescriptors(i1 + 1, 1));
         p.recycle();
     }
@@ -2649,7 +2650,15 @@ public class ParcelTest extends AndroidTestCase {
         p.writeFileDescriptor(FileDescriptor.in);
         int i1 = p.dataPosition();
 
+        assertFalse(p.hasFileDescriptors(i1, 0));
         assertThrows(IllegalArgumentException.class, () -> p.hasFileDescriptors(i1 + 1, 0));
+        p.recycle();
+    }
+
+    public void testHasFileDescriptorInRange_zeroLengthParcel() {
+        Parcel p = Parcel.obtain();
+
+        assertFalse(p.hasFileDescriptors(0, 0));
         p.recycle();
     }
 
