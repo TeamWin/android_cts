@@ -166,7 +166,7 @@ public class ProAudioActivity
 
         Resources strings = getResources();
         if (hasPassed) {
-            mTestStatusLbl.setText(strings.getString(R.string.audio_proaudio_pass));
+            mTestStatusLbl.setText(strings.getString(R.string.audio_general_pass));
         } else if (!mClaimsMIDI) {
             mTestStatusLbl.setText(strings.getString(R.string.audio_proaudio_midinotreported));
         } else if (!mClaimsUSBHostMode) {
