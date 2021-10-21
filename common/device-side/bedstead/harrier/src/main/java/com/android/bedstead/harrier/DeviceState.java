@@ -29,6 +29,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
+import android.app.ActivityManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -49,7 +50,9 @@ import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature;
 import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.RequireGmsInstrumentation;
 import com.android.bedstead.harrier.annotations.RequireHeadlessSystemUserMode;
+import com.android.bedstead.harrier.annotations.RequireLowRamDevice;
 import com.android.bedstead.harrier.annotations.RequireNotHeadlessSystemUserMode;
+import com.android.bedstead.harrier.annotations.RequireNotLowRamDevice;
 import com.android.bedstead.harrier.annotations.RequirePackageInstalled;
 import com.android.bedstead.harrier.annotations.RequirePackageNotInstalled;
 import com.android.bedstead.harrier.annotations.RequireSdkVersion;
@@ -395,6 +398,22 @@ public final class DeviceState implements TestRule {
                         (RequireGmsInstrumentation) annotation;
                 requireGmsInstrumentation(requireGmsInstrumentationAnnotation.min(),
                         requireGmsInstrumentationAnnotation.max());
+                continue;
+            }
+
+            if (annotation instanceof RequireLowRamDevice) {
+                RequireLowRamDevice requireLowRamDeviceAnnotation =
+                        (RequireLowRamDevice) annotation;
+                requireLowRamDevice(requireLowRamDeviceAnnotation.reason(),
+                        requireLowRamDeviceAnnotation.failureMode());
+                continue;
+            }
+
+            if (annotation instanceof RequireNotLowRamDevice) {
+                RequireNotLowRamDevice requireNotLowRamDeviceAnnotation =
+                        (RequireNotLowRamDevice) annotation;
+                requireNotLowRamDevice(requireNotLowRamDeviceAnnotation.reason(),
+                        requireNotLowRamDeviceAnnotation.failureMode());
                 continue;
             }
 
@@ -1738,5 +1757,21 @@ public final class DeviceState implements TestRule {
     private void requireHeadlessSystemUserMode() {
         assumeTrue("This test is only supported on headless system user devices",
                 TestApis.users().isHeadlessSystemUserMode());
+    }
+
+    private void requireLowRamDevice(String reason, FailureMode failureMode) {
+        checkFailOrSkip(reason,
+                TestApis.context().instrumentedContext()
+                        .getSystemService(ActivityManager.class)
+                        .isLowRamDevice(),
+                failureMode);
+    }
+
+    private void requireNotLowRamDevice(String reason, FailureMode failureMode) {
+        checkFailOrSkip(reason,
+                !TestApis.context().instrumentedContext()
+                        .getSystemService(ActivityManager.class)
+                        .isLowRamDevice(),
+                failureMode);
     }
 }

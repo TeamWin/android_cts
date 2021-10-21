@@ -35,6 +35,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.testng.Assert.assertThrows;
 
+import android.app.ActivityManager;
 import android.os.Build;
 
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
@@ -52,8 +53,10 @@ import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature;
 import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.RequireGmsBuild;
 import com.android.bedstead.harrier.annotations.RequireHeadlessSystemUserMode;
+import com.android.bedstead.harrier.annotations.RequireLowRamDevice;
 import com.android.bedstead.harrier.annotations.RequireNotCnGmsBuild;
 import com.android.bedstead.harrier.annotations.RequireNotHeadlessSystemUserMode;
+import com.android.bedstead.harrier.annotations.RequireNotLowRamDevice;
 import com.android.bedstead.harrier.annotations.RequirePackageInstalled;
 import com.android.bedstead.harrier.annotations.RequirePackageNotInstalled;
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
@@ -682,5 +685,19 @@ public class DeviceStateTest {
     @RequireHeadlessSystemUserMode
     public void requireHeadlessSystemUserModeAnnotation_isHeadlessSystemUserMode() {
         assertThat(TestApis.users().isHeadlessSystemUserMode()).isTrue();
+    }
+
+    @Test
+    @RequireLowRamDevice(reason = "Test")
+    public void requireLowRamDeviceAnnotation_isLowRamDevice() {
+        assertThat(TestApis.context().instrumentedContext().getSystemService(ActivityManager.class)
+                .isLowRamDevice()).isTrue();
+    }
+
+    @Test
+    @RequireNotLowRamDevice(reason = "Test")
+    public void requireNotLowRamDeviceAnnotation_isNotLowRamDevice() {
+        assertThat(TestApis.context().instrumentedContext().getSystemService(ActivityManager.class)
+                .isLowRamDevice()).isFalse();
     }
 }
