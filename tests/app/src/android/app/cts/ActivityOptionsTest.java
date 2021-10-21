@@ -48,4 +48,12 @@ public class ActivityOptionsTest extends AndroidTestCase {
         assertThat(opts2.getLockTaskMode()).isTrue();
         assertThat(opts2.getLaunchBounds()).isEqualTo(bounds);
     }
+
+    public void testGetSetPendingIntentBackgroundActivityLaunchAllowed() {
+        ActivityOptions options = ActivityOptions.makeBasic();
+        options.setPendingIntentBackgroundActivityLaunchAllowed(true);
+        assertThat(options.isPendingIntentBackgroundActivityLaunchAllowed()).isTrue();
+        options.setPendingIntentBackgroundActivityLaunchAllowed(false);
+        assertThat(options.isPendingIntentBackgroundActivityLaunchAllowed()).isFalse();
+    }
 }
