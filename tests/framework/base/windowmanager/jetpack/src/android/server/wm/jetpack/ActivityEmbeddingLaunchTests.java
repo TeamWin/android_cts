@@ -48,6 +48,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Predicate;
@@ -169,5 +170,55 @@ public class ActivityEmbeddingLaunchTests extends WindowManagerJetpackTestBase {
         final SplitInfo splitInfo = lastReportedSplitInfo.get(0);
         assertEquals(1, splitInfo.getPrimaryActivityStack().getActivities().size());
         assertEquals(1, splitInfo.getSecondaryActivityStack().getActivities().size());
+    }
+
+    /**
+     * Tests that launching activities with wildcard split rules results in the newly launched
+     * activity being split with the activity that has the highest z-order, which is the top
+     * activity in the secondary stack.
+     */
+    @Test
+    public void testSplitWithTopmostActivity() {
+        SplitPairRule splitPairRule = createWildcardSplitPairRule();
+        mActivityEmbeddingComponent.setEmbeddingRules(Collections.singleton(splitPairRule));
+
+        Activity primaryActivity = startActivityNewTask(TestConfigChangeHandlingActivity.class);
+        Activity nextPrimaryActivity = startActivityAndVerifySplit(primaryActivity,
+                TestActivityWithId.class, splitPairRule,
+                "initialSecondaryActivity" /* secondActivityId */, mSplitInfoConsumer);
+
+        // Store the launched activities in order for later use in checking the split info
+        List<Activity> launchedActivitiesInOrder = new ArrayList<>();
+        launchedActivitiesInOrder.addAll(Arrays.asList(primaryActivity, nextPrimaryActivity));
+
+        // Launch multiple activities to the side from the secondary activity and verify that the
+        // secondary activity becomes the primary activity and that it is split with the activity
+        // that was just launched.
+        final int numActivitiesToLaunch = 4;
+        for (int activityLaunchIndex = 0; activityLaunchIndex < numActivitiesToLaunch;
+                activityLaunchIndex++) {
+            nextPrimaryActivity = startActivityAndVerifySplit(nextPrimaryActivity,
+                    TestActivityWithId.class, splitPairRule,
+                    Integer.toString(activityLaunchIndex) /* secondActivityId */,
+                    mSplitInfoConsumer);
+
+            launchedActivitiesInOrder.add(nextPrimaryActivity);
+
+            // Verify the split states match with the current and previous launches
+            final List<SplitInfo> lastReportedSplitInfoList =
+                    mSplitInfoConsumer.getLastReportedValue();
+            // The number of splits is number of launched activities - 1 because the first primary
+            // was the only activity to not launch into a split.
+            assertEquals(launchedActivitiesInOrder.size() - 1,
+                    lastReportedSplitInfoList.size());
+            for (int splitInfoIndex = 0; splitInfoIndex < lastReportedSplitInfoList.size();
+                    splitInfoIndex++) {
+                final SplitInfo splitInfo = lastReportedSplitInfoList.get(splitInfoIndex);
+                assertEquals(launchedActivitiesInOrder.get(splitInfoIndex),
+                        getPrimaryStackTopActivity(splitInfo));
+                assertEquals(launchedActivitiesInOrder.get(splitInfoIndex + 1),
+                        getSecondaryStackTopActivity(splitInfo));
+            }
+        }
     }
 }
