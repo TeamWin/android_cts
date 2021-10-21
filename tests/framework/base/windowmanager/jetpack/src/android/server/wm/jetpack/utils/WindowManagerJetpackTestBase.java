@@ -34,10 +34,12 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
+import android.app.Application;
 import android.app.Instrumentation;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Rect;
+import android.os.Bundle;
 import android.os.IBinder;
 
 import androidx.annotation.NonNull;
@@ -49,14 +51,21 @@ import org.junit.Before;
 import org.junit.runner.RunWith;
 
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 /** Base class for all tests in the module. */
 public class WindowManagerJetpackTestBase {
 
+    public static final String ACTIVITY_ID_LABEL = "ActivityID";
+
     public Instrumentation mInstrumentation;
     public Context mContext;
+    public Application mApplication;
+
+    private final static Set<Activity> sResumedActivities = new HashSet<>();
 
     @Before
     public void setUp() {
@@ -64,13 +73,34 @@ public class WindowManagerJetpackTestBase {
         assertNotNull(mInstrumentation);
         mContext = getApplicationContext();
         assertNotNull(mContext);
+        mApplication = (Application) mContext.getApplicationContext();
+        assertNotNull(mApplication);
+        // Register activity lifecycle callbacks to know which activities are resumed
+        registerActivityLifecycleCallbacks();
     }
 
     public Activity startActivityNewTask(Class activityClass) {
-        Intent intent = new Intent(mContext, activityClass);
+        final Intent intent = new Intent(mContext, activityClass);
         intent.addFlags(FLAG_ACTIVITY_NEW_TASK);
-        Activity activity = mInstrumentation.startActivitySync(intent);
+        final Activity activity = mInstrumentation.startActivitySync(intent);
         return activity;
+    }
+
+    /**
+     * Starts an instance of {@param activityToLaunchClass} from {@param activityToLaunchFrom}
+     * and returns the activity ID from the newly launched class.
+     */
+    public static <T extends Activity> long startActivityFromActivity(Activity activityToLaunchFrom,
+            Class<T> activityToLaunchClass) {
+        Intent intent = new Intent(activityToLaunchFrom, activityToLaunchClass);
+        final long activityId = createNewActivityId();
+        intent.putExtra(ACTIVITY_ID_LABEL, activityId);
+        activityToLaunchFrom.startActivity(intent);
+        return activityId;
+    }
+
+    private static long createNewActivityId() {
+        return System.currentTimeMillis();
     }
 
     public static IBinder getActivityWindowToken(Activity activity) {
@@ -147,5 +177,52 @@ public class WindowManagerJetpackTestBase {
                 && sidecarDeviceStatePosture == SidecarDeviceState.POSTURE_OPENED)
                 || (extensionDeviceState == FoldingFeature.STATE_HALF_OPENED
                 && sidecarDeviceStatePosture == SidecarDeviceState.POSTURE_HALF_OPENED);
+    }
+
+    private void registerActivityLifecycleCallbacks() {
+        mApplication.registerActivityLifecycleCallbacks(
+                new Application.ActivityLifecycleCallbacks() {
+                    @Override
+                    public void onActivityCreated(@NonNull Activity activity,
+                            @Nullable Bundle savedInstanceState) {
+                    }
+
+                    @Override
+                    public void onActivityStarted(@NonNull Activity activity) {
+                    }
+
+                    @Override
+                    public void onActivityResumed(@NonNull Activity activity) {
+                        synchronized (sResumedActivities) {
+                            sResumedActivities.add(activity);
+                        }
+                    }
+
+                    @Override
+                    public void onActivityPaused(@NonNull Activity activity) {
+                        synchronized (sResumedActivities) {
+                            sResumedActivities.remove(activity);
+                        }
+                    }
+
+                    @Override
+                    public void onActivityStopped(@NonNull Activity activity) {
+                    }
+
+                    @Override
+                    public void onActivitySaveInstanceState(@NonNull Activity activity,
+                            @NonNull Bundle outState) {
+                    }
+
+                    @Override
+                    public void onActivityDestroyed(@NonNull Activity activity) {
+                    }
+        });
+    }
+
+    public static boolean isActivityResumed(Activity activity) {
+        synchronized (sResumedActivities) {
+            return sResumedActivities.contains(activity);
+        }
     }
 }
