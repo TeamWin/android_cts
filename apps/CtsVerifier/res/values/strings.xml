@@ -4550,7 +4550,9 @@ You should be prompted to select credentials; choose the ones you just installed
         \n
         In additional, if quick settings is available, confirm that user switcher is hidden or
         disabled.
-        Use the Back button to return to this page.
+        Use the Back button to return to this page.\n
+        \n
+        Press \'Unset restriction\' to remove the restriction for use in later tests.
     </string>
     <string name="device_owner_disallow_user_switch_create_user">Create uninitialized user</string>
 
