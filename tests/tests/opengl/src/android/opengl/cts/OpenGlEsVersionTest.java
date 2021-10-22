@@ -197,7 +197,6 @@ public class OpenGlEsVersionTest {
             "GL_EXT_protected_textures",
             "GL_OVR_multiview",
             "GL_OVR_multiview2",
-            "GL_OVR_multiview_multisampled_render_to_texture",
         };
         final String vrHeadsetRequiredList[] = {
             "GL_EXT_EGL_image_array",
