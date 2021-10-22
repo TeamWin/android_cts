@@ -21,9 +21,12 @@ import android.security.keystore.KeyProperties;
 
 import org.junit.Test;
 import static org.junit.Assume.assumeTrue;
+import androidx.test.runner.AndroidJUnit4;
+import org.junit.runner.RunWith;
 
 import java.security.spec.ECGenParameterSpec;
 
+@RunWith(AndroidJUnit4.class)
 public class AttestationPerformanceTest extends PerformanceTestBase {
 
     private final int[] RSA_KEY_SIZES = {2048, 3072, 4096};
@@ -35,6 +38,7 @@ public class AttestationPerformanceTest extends PerformanceTestBase {
         new byte[128], // long challenge
     };
 
+    @Test
     public void testRsaKeyAttestation() throws Exception {
         assumeTrue(TestUtils.isAttestationSupported());
 
@@ -47,6 +51,7 @@ public class AttestationPerformanceTest extends PerformanceTestBase {
         }
     }
 
+    @Test
     public void testEcKeyAttestation() throws Exception {
         assumeTrue(TestUtils.isAttestationSupported());
 
