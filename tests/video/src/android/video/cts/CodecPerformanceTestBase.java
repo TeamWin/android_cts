@@ -285,7 +285,8 @@ class CodecPerformanceTestBase {
             }
         }
         codec.release();
-        assertTrue(maxOperatingRate != -1);
+        assumeTrue("Codec doesn't advertise performance point for " + mWidth + "x" + mHeight,
+                maxOperatingRate != -1);
         return maxOperatingRate;
     }
 

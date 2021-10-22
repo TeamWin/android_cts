@@ -108,8 +108,8 @@ public final class InstallTest {
             InstallUtils.commitExpectingFailure(AssertionError.class,
                 "does not support non-staged update", install);
         } else {
-            InstallUtils.commitExpectingFailure(AssertionError.class,
-                "Non-staged multi package install of APEX and APK packages is not supported",
+            InstallUtils.commitExpectingFailure(IllegalStateException.class,
+                "Mix of APK and APEX is not supported for non-staged multi-package session",
                 install);
         }
     }

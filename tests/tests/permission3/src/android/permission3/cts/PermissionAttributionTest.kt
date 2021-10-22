@@ -28,9 +28,11 @@ import androidx.test.filters.SdkSuppress
 import com.android.compatibility.common.util.AppOpsUtils.setOpMode
 import com.android.compatibility.common.util.SystemUtil.callWithShellPermissionIdentity
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
+import com.android.modules.utils.build.SdkLevel
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Assume.assumeFalse
 import org.junit.Before
 import org.junit.Test
 import java.util.concurrent.TimeUnit
@@ -44,6 +46,12 @@ class PermissionAttributionTest : BasePermissionHubTest() {
         android.Manifest.permission_group.MICROPHONE, 0).loadLabel(packageManager).toString()
     val locationManager = context.getSystemService(LocationManager::class.java)!!
     private var wasEnabled = false
+
+    // Permission history is not available on Auto devices running S or below.
+    @Before
+    fun assumeNotAutoBelowT() {
+        assumeFalse(isAutomotive && !SdkLevel.isAtLeastT())
+    }
 
     @Before
     fun installAppLocationProviderAndAllowMockLocation() {
