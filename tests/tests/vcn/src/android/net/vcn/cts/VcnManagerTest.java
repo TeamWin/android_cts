@@ -439,8 +439,10 @@ public class VcnManagerTest extends VcnTestBase {
 
         // Get current cell Network then wait for it to drop (due to losing NOT_VCN_MANAGED) before
         // waiting for VCN Network.
-        final NetworkRequest cellNetworkReq =
-                new NetworkRequest.Builder().addTransportType(TRANSPORT_CELLULAR).build();
+        final NetworkRequest cellNetworkReq = new NetworkRequest.Builder()
+                .addTransportType(TRANSPORT_CELLULAR)
+                .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                .build();
         final VcnTestNetworkCallback cellNetworkCb = new VcnTestNetworkCallback();
         mConnectivityManager.requestNetwork(cellNetworkReq, cellNetworkCb);
         final Network cellNetwork = cellNetworkCb.waitForAvailable();
@@ -560,8 +562,10 @@ public class VcnManagerTest extends VcnTestBase {
 
         // Get current cell Network then wait for it to drop (due to losing NOT_VCN_MANAGED) before
         // waiting for VCN Network.
-        final NetworkRequest cellNetworkReq =
-                new NetworkRequest.Builder().addTransportType(TRANSPORT_CELLULAR).build();
+        final NetworkRequest cellNetworkReq = new NetworkRequest.Builder()
+                .addTransportType(TRANSPORT_CELLULAR)
+                .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                .build();
         final VcnTestNetworkCallback cellNetworkCb = new VcnTestNetworkCallback();
         mConnectivityManager.requestNetwork(cellNetworkReq, cellNetworkCb);
         final Network cellNetwork = cellNetworkCb.waitForAvailable();
@@ -661,8 +665,10 @@ public class VcnManagerTest extends VcnTestBase {
 
         // Get current cell Network then wait for it to drop (due to losing NOT_VCN_MANAGED) before
         // waiting for VCN Network.
-        final NetworkRequest cellNetworkReq =
-                new NetworkRequest.Builder().addTransportType(TRANSPORT_CELLULAR).build();
+        final NetworkRequest cellNetworkReq = new NetworkRequest.Builder()
+                .addTransportType(TRANSPORT_CELLULAR)
+                .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                .build();
         final VcnTestNetworkCallback cellNetworkCb = new VcnTestNetworkCallback();
         mConnectivityManager.requestNetwork(cellNetworkReq, cellNetworkCb);
         final Network cellNetwork = cellNetworkCb.waitForAvailable();
