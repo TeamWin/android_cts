@@ -409,10 +409,14 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
         }
     }
 
-    public void sendDeviceToSleep() throws Exception {
+    public void sendDeviceToSleepWithoutWait() throws Exception {
         ITestDevice device = getDevice();
         WakeLockHelper.acquirePartialWakeLock(device);
         device.executeShellCommand("input keyevent KEYCODE_SLEEP");
+    }
+
+    public void sendDeviceToSleep() throws Exception {
+        sendDeviceToSleepWithoutWait();
         waitForTransitionTo(HdmiCecConstants.CEC_POWER_STATUS_STANDBY);
     }
 

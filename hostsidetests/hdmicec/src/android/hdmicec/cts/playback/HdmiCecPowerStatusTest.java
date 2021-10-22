@@ -140,4 +140,30 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
             wakeUpDevice();
         }
     }
+
+    /**
+     * Test HF4-6-16
+     *
+     * <p>Verify that the DUT initially sends a {@code <Standby>} message to the TV when system
+     * standby feature is enabled, before sending any {@code <User Control Pressed>} with
+     * power-related operands. (Ref section 11.5.1 in CEC 2.1 specification)
+     */
+    @Test
+    public void cect_hf4_6_16_standby_tvBeforeUcp_20() throws Exception {
+        ITestDevice device = getDevice();
+        setCec20();
+        String previousPowerControlMode =
+                setPowerControlMode(HdmiCecConstants.POWER_CONTROL_MODE_TV);
+
+        try {
+            sendDeviceToSleepWithoutWait();
+            hdmiCecClient.checkMessagesInOrder(
+                    LogicalAddress.TV,
+                    new ArrayList<>(Arrays.asList(CecOperand.STANDBY)),
+                    UCP_POWER_MSGS);
+        } finally {
+            wakeUpDevice();
+            setPowerControlMode(previousPowerControlMode);
+        }
+    }
 }
