@@ -23,9 +23,11 @@ import android.app.AppOpsManager
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
 import android.bluetooth.cts.BTAdapterUtils
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.PackageManager.FLAG_PERMISSION_REVOKED_COMPAT
+import android.location.LocationManager
 import android.os.Build
 import android.os.Process
 import androidx.test.InstrumentationRegistry
@@ -91,6 +93,11 @@ class PermissionTest30WithBluetooth : BaseUsePermissionTest() {
 
     @Test
     fun testGivenBluetoothIsDeniedWhenScanIsAttemptedThenThenGetEmptyScanResult() {
+        assertTrue("Please enable location to run this test. Bluetooth scanning " +
+                "requires location to be enabled.",
+                (context.getSystemService(
+                        Context.LOCATION_SERVICE) as LocationManager).isLocationEnabled())
+
         assertBluetoothRevokedCompatState(revoked = false)
         // Should return empty while the app does not have location
         assertEquals(BluetoothScanResult.EMPTY, scanForBluetoothDevices())
