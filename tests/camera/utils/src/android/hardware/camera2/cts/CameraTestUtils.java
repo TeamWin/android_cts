@@ -104,6 +104,7 @@ public class CameraTestUtils extends Assert {
     private static final String TAG = "CameraTestUtils";
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);
     private static final boolean DEBUG = Log.isLoggable(TAG, Log.DEBUG);
+    public static final Size SIZE_BOUND_720P = new Size(1280, 720);
     public static final Size SIZE_BOUND_1080P = new Size(1920, 1088);
     public static final Size SIZE_BOUND_2K = new Size(2048, 1088);
     public static final Size SIZE_BOUND_QHD = new Size(2560, 1440);
