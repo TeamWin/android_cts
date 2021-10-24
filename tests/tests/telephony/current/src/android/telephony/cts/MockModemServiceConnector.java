@@ -193,7 +193,13 @@ class MockModemServiceConnector {
         if (overrideModemService()) {
             isComplete =
                     mMockModemService.waitForLatchCountdown(
-                            TestMockModemService.LATCH_RADIO_INTERFACES_READY);
+                            TestMockModemService.LATCH_RADIO_INTERFACES_READY,
+                            BIND_RADIO_INTERFACE_READY_TIMEOUT_MS);
+
+            mMockModemService.initialization();
+            isComplete =
+                    mMockModemService.waitForLatchCountdown(
+                            TestMockModemService.LATCH_MOCK_MODEM_INITIALIZATION_READY);
         }
 
         return isComplete;
@@ -252,5 +258,9 @@ class MockModemServiceConnector {
         }
 
         return isComplete;
+    }
+
+    TestMockModemService getMockModemService() {
+        return mMockModemService;
     }
 }

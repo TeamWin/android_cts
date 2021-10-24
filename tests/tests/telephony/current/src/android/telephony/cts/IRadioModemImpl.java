@@ -22,6 +22,7 @@ import android.hardware.radio.RadioResponseInfo;
 import android.hardware.radio.modem.IRadioModem;
 import android.hardware.radio.modem.IRadioModemIndication;
 import android.hardware.radio.modem.IRadioModemResponse;
+import android.hardware.radio.modem.RadioState;
 import android.os.RemoteException;
 import android.util.Log;
 
@@ -275,6 +276,15 @@ public class IRadioModemImpl extends IRadioModem.Stub {
             mRadioModemResponse.setRadioPowerResponse(rsp);
         } catch (RemoteException ex) {
             Log.e(TAG, "Failed to setRadioPower from AIDL. Exception" + ex);
+        }
+
+        // TODO: The below should be handled by Helper function
+        if (powerOn) {
+            radioStateChanged(RadioState.ON);
+            mService.countDownLatch(TestMockModemService.LATCH_MOCK_MODEM_RADIO_POWR_ON);
+        } else {
+            radioStateChanged(RadioState.OFF);
+            mService.countDownLatch(TestMockModemService.LATCH_MOCK_MODEM_RADIO_POWR_OFF);
         }
     }
 
