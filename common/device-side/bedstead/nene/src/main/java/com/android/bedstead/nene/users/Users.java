@@ -16,6 +16,7 @@
 
 package com.android.bedstead.nene.users;
 
+import static android.Manifest.permission.CREATE_USERS;
 import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.S;
@@ -26,7 +27,9 @@ import static com.android.bedstead.nene.users.UserType.SECONDARY_USER_TYPE_NAME;
 import static com.android.bedstead.nene.users.UserType.SYSTEM_USER_TYPE_NAME;
 
 import android.app.ActivityManager;
+import android.content.pm.UserInfo;
 import android.os.Build;
+import android.os.SystemProperties;
 import android.os.UserHandle;
 import android.os.UserManager;
 
@@ -38,6 +41,7 @@ import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.exceptions.AdbParseException;
 import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.permissions.PermissionContext;
+import com.android.bedstead.nene.permissions.Permissions;
 import com.android.bedstead.nene.utils.Poll;
 import com.android.bedstead.nene.utils.ShellCommand;
 import com.android.bedstead.nene.utils.Versions;
@@ -54,17 +58,20 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public final class Users {
 
     static final int SYSTEM_USER_ID = 0;
-    private static final long WAIT_FOR_USER_TIMEOUT_MS = 1000 * 240;
+    private static final Duration WAIT_FOR_USER_TIMEOUT = Duration.ofMinutes(4);
     private static final String PROPERTY_STOP_BG_USERS_ON_SWITCH = "fw.stop_bg_users_on_switch";
 
-    private Map<Integer, User> mCachedUsers = null;
+    private Map<Integer, AdbUser> mCachedUsers = null;
     private Map<String, UserType> mCachedUserTypes = null;
     private Set<UserType> mCachedUserTypeValues = null;
     private final AdbUserParser mParser;
+    private static final UserManager sUserManager =
+            TestApis.context().instrumentedContext().getSystemService(UserManager.class);
 
     public static final Users sInstance = new Users();
 
@@ -72,11 +79,17 @@ public final class Users {
         mParser = AdbUserParser.get(SDK_INT);
     }
 
-    /** Get all {@link User}s on the device. */
-    public Collection<User> all() {
-        fillCache();
+    /** Get all {@link UserReference}s on the device. */
+    public Collection<UserReference> all() {
+        if (!Versions.meetsMinimumSdkVersionRequirement(S)) {
+            fillCache();
+            return mCachedUsers.keySet().stream().map(UserReference::new)
+                    .collect(Collectors.toSet());
+        }
 
-        return mCachedUsers.values();
+        return users().map(
+                ui -> new UserReference(ui.id)
+        ).collect(Collectors.toSet());
     }
 
     /**
@@ -97,11 +110,11 @@ public final class Users {
             }
         }
 
-        List<UserReference> users = new ArrayList<>(TestApis.users().all());
+        List<UserReference> users = new ArrayList<>(all());
         users.sort(Comparator.comparingInt(UserReference::id));
 
         for (UserReference user : users) {
-            if (user.resolve().parent() != null) {
+            if (user.parent() == null) {
                 return user;
             }
         }
@@ -138,30 +151,23 @@ public final class Users {
 
     /** Get a {@link UserReference} by {@code id}. */
     public UserReference find(int id) {
-        return new UnresolvedUser(id);
+        return new UserReference(id);
     }
 
     /** Get a {@link UserReference} by {@code userHandle}. */
     public UserReference find(UserHandle userHandle) {
-        return new UnresolvedUser(userHandle.getIdentifier());
-    }
-
-    @Nullable
-    User fetchUser(int id) {
-        // TODO(scottjonathan): fillCache probably does more than we need here -
-        //  can we make it more efficient?
-        fillCache();
-
-        return mCachedUsers.get(id);
+        return new UserReference(userHandle.getIdentifier());
     }
 
     /** Get all supported {@link UserType}s. */
     public Set<UserType> supportedTypes() {
+        // TODO(b/203557600): Stop using adb
         ensureSupportedTypesCacheFilled();
         return mCachedUserTypeValues;
     }
 
     /** Get a {@link UserType} with the given {@code typeName}, or {@code null} */
+    @Nullable
     public UserType supportedType(String typeName) {
         ensureSupportedTypesCacheFilled();
         return mCachedUserTypes.get(typeName);
@@ -307,14 +313,21 @@ public final class Users {
      * Get a {@link UserReference} to a user who does not exist.
      */
     public UserReference nonExisting() {
-        fillCache();
+        Set<Integer> userIds;
+        if (Versions.meetsMinimumSdkVersionRequirement(S)) {
+            userIds = users().map(ui -> ui.id).collect(Collectors.toSet());
+        } else {
+            fillCache();
+            userIds = mCachedUsers.keySet();
+        }
+
         int id = 0;
 
-        while (mCachedUsers.get(id) != null) {
+        while (userIds.contains(id)) {
             id++;
         }
 
-        return new UnresolvedUser(id);
+        return new UserReference(id);
     }
 
     private void fillCache() {
@@ -330,10 +343,10 @@ public final class Users {
                 ensureSupportedTypesCacheFilled();
             }
 
-            Iterator<Map.Entry<Integer, User>> iterator = mCachedUsers.entrySet().iterator();
+            Iterator<Map.Entry<Integer, AdbUser>> iterator = mCachedUsers.entrySet().iterator();
 
             while (iterator.hasNext()) {
-                Map.Entry<Integer, User> entry = iterator.next();
+                Map.Entry<Integer, AdbUser> entry = iterator.next();
 
                 if (entry.getValue().isRemoving()) {
                     // We don't expose users who are currently being removed
@@ -341,13 +354,13 @@ public final class Users {
                     continue;
                 }
 
-                User.MutableUser mutableUser = entry.getValue().mMutableUser;
+                AdbUser.MutableUser mutableUser = entry.getValue().mMutableUser;
 
                 if (SDK_INT < Build.VERSION_CODES.R) {
                     if (entry.getValue().id() == SYSTEM_USER_ID) {
                         mutableUser.mType = supportedType(SYSTEM_USER_TYPE_NAME);
                         mutableUser.mIsPrimary = true;
-                    } else if (entry.getValue().hasFlag(User.FLAG_MANAGED_PROFILE)) {
+                    } else if (entry.getValue().hasFlag(AdbUser.FLAG_MANAGED_PROFILE)) {
                         mutableUser.mType =
                                 supportedType(MANAGED_PROFILE_TYPE_NAME);
                         mutableUser.mIsPrimary = false;
@@ -376,52 +389,41 @@ public final class Users {
     }
 
     /**
-     * Block until the user with the given {@code userReference} exists and is in the correct state.
-     *
-     * <p>If this cannot be met before a timeout, a {@link NeneException} will be thrown.
-     */
-    User waitForUserToMatch(UserReference userReference, Function<User, Boolean> userChecker) {
-        return waitForUserToMatch(userReference, userChecker, /* waitForExist= */ true);
-    }
-
-    /**
      * Block until the user with the given {@code userReference} to not exist or to be in the
      * correct state.
      *
      * <p>If this cannot be met before a timeout, a {@link NeneException} will be thrown.
      */
     @Nullable
-    User waitForUserToNotExistOrMatch(
-            UserReference userReference, Function<User, Boolean> userChecker) {
+    UserReference waitForUserToNotExistOrMatch(
+            UserReference userReference, Function<UserReference, Boolean> userChecker) {
         return waitForUserToMatch(userReference, userChecker, /* waitForExist= */ false);
     }
 
     @Nullable
-    private User waitForUserToMatch(
-            UserReference userReference, Function<User, Boolean> userChecker,
+    private UserReference waitForUserToMatch(
+            UserReference userReference, Function<UserReference, Boolean> userChecker,
             boolean waitForExist) {
         // TODO(scottjonathan): This is pretty heavy because we resolve everything when we know we
         //  are throwing away everything except one user. Optimise
         try {
-            return Poll.forValue("user", userReference::resolve)
+            return Poll.forValue("user", () -> userReference)
                     .toMeet((user) -> {
                         if (user == null) {
                             return !waitForExist;
                         }
                         return userChecker.apply(user);
-                    }).timeout(Duration.ofMillis(WAIT_FOR_USER_TIMEOUT_MS))
+                    }).timeout(WAIT_FOR_USER_TIMEOUT)
                     .errorOnFail("Expected user to meet requirement")
                     .await();
         } catch (AssertionError e) {
-            User user = userReference.resolve();
-
-            if (user == null) {
+            if (!userReference.exists()) {
                 throw new NeneException(
                         "Timed out waiting for user state for user "
                                 + userReference + ". User does not exist.", e);
             }
             throw new NeneException(
-                    "Timed out waiting for user state, current state " + user, e
+                    "Timed out waiting for user state, current state " + userReference, e
             );
         }
     }
@@ -447,13 +449,8 @@ public final class Users {
         if (!Versions.meetsMinimumSdkVersionRequirement(S)) {
             return false;
         }
-        try {
-            return ShellCommand.builder("getprop")
-                    .addOperand(PROPERTY_STOP_BG_USERS_ON_SWITCH)
-                    .executeAndParseOutput(o -> !o.trim().equals("0"));
-        } catch (AdbException e) {
-            throw new NeneException("Error getting stopBgUsersOnSwitch", e);
-        }
+
+        return SystemProperties.getBoolean(PROPERTY_STOP_BG_USERS_ON_SWITCH, /* def= */ true);
     }
 
     /**
@@ -465,14 +462,30 @@ public final class Users {
         if (!Versions.meetsMinimumSdkVersionRequirement(S)) {
             return;
         }
-        try {
-            ShellCommand.builder("setprop")
-                    .addOperand(PROPERTY_STOP_BG_USERS_ON_SWITCH)
-                    .addOperand(stop ? "1" : "0")
-                    .asRoot()
-                    .execute();
-        } catch (AdbException e) {
-            throw new NeneException("Error setting stopBgUsersOnSwitch", e);
+
+        // TODO(203752848): Re-enable this once we can set it
+//        TestApis.systemProperties().set(PROPERTY_STOP_BG_USERS_ON_SWITCH, stop ? "1" : "0");
+    }
+
+    @Nullable
+    AdbUser fetchUser(int id) {
+        fillCache();
+        return mCachedUsers.get(id);
+    }
+
+    static Stream<UserInfo> users() {
+        if (Permissions.sIgnorePermissions.get()) {
+            return sUserManager.getUsers(
+                    /* excludePartial= */ false,
+                    /* excludeDying= */ true,
+                    /* excludePreCreated= */ false).stream();
+        }
+
+        try (PermissionContext p = TestApis.permissions().withPermission(CREATE_USERS)) {
+            return sUserManager.getUsers(
+                    /* excludePartial= */ false,
+                    /* excludeDying= */ true,
+                    /* excludePreCreated= */ false).stream();
         }
     }
 }

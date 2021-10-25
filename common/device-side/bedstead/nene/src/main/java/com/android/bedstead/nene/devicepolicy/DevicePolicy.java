@@ -41,7 +41,6 @@ import com.android.bedstead.nene.exceptions.AdbParseException;
 import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.permissions.PermissionContext;
-import com.android.bedstead.nene.users.User;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.utils.ShellCommand;
 import com.android.bedstead.nene.utils.ShellCommandUtils;
@@ -334,7 +333,7 @@ public final class DevicePolicy {
         }
 
         if (!allowAdditionalUsers) {
-            Collection<User> users = TestApis.users().all();
+            Collection<UserReference> users = TestApis.users().all();
 
             if (users.size() > 1) {
                 throw new NeneException("Could not set device owner for user "
