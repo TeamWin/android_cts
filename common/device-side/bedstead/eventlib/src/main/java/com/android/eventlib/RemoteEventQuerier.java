@@ -36,7 +36,7 @@ import android.util.Log;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.permissions.PermissionContext;
-import com.android.bedstead.nene.users.User;
+import com.android.bedstead.nene.users.UserReference;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -191,14 +191,15 @@ public class
                 throw new IllegalStateException("Interrupted while binding to service", e);
             }
         } else {
-            User user = (mEventLogsQuery.getUserHandle() == null)
-                    ? TestApis.users().instrumented().resolve()
-                    : TestApis.users().find(mEventLogsQuery.getUserHandle()).resolve();
-            if (user == null) {
+            UserReference user = (mEventLogsQuery.getUserHandle() == null)
+                    ? TestApis.users().instrumented()
+                    : TestApis.users().find(mEventLogsQuery.getUserHandle());
+            if (!user.exists()) {
                 throw new AssertionError("Tried to bind to user " + mEventLogsQuery.getUserHandle() + " but does not exist");
             }
-            if (user.state() != User.UserState.RUNNING_UNLOCKED) {
-                throw new AssertionError("Tried to bind to user " + user + " but they are not RUNNING_UNLOCKED");
+            if (!user.isUnlocked()) {
+                throw new AssertionError("Tried to bind to user " + user
+                        + " but they are not unlocked");
             }
             Package pkg = TestApis.packages().find(mPackageName);
             if (!pkg.installedOnUser(user)) {

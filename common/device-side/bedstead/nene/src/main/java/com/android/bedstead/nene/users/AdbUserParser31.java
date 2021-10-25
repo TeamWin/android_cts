@@ -40,8 +40,8 @@ public class AdbUserParser31 extends AdbUserParser30 {
     }
 
     @Override
-    User.MutableUser parseUser(String userString) throws AdbParseException {
-        User.MutableUser user = super.parseUser(userString);
+    AdbUser.MutableUser parseUser(String userString) throws AdbParseException {
+        AdbUser.MutableUser user = super.parseUser(userString);
 
         if (user.mType.baseType().contains(UserType.BaseType.PROFILE)) {
             try {
