@@ -16,7 +16,6 @@
 
 package com.android.cts.verifier;
 
-import com.android.cts.verifier.TestListAdapter.TestListItem;
 import android.app.ListActivity;
 import android.content.Intent;
 import android.content.res.Configuration;
@@ -26,6 +25,8 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
 import android.widget.ListView;
+
+import com.android.cts.verifier.TestListAdapter.TestListItem;
 
 /** {@link ListActivity} that displays a list of manual tests. */
 public abstract class AbstractTestListActivity extends ListActivity {
