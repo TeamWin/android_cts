@@ -21,6 +21,7 @@ import android.util.Log;
 
 import com.android.bedstead.nene.TestApis;
 import com.android.queryable.info.ActivityInfo;
+import com.android.queryable.info.ServiceInfo;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -97,6 +98,12 @@ public final class TestAppProvider {
                     .activityClass(activityEntry.getName())
                     .exported(activityEntry.getExported())
                     .build());
+        }
+
+        for (int i = 0; i < app.getServicesCount(); i++) {
+            TestappProtos.Service serviceEntry = app.getServices(i);
+            details.mServices.add(ServiceInfo.builder()
+                    .serviceClass(serviceEntry.getName()).build());
         }
 
         mTestApps.add(details);

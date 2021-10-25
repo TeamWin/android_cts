@@ -19,6 +19,7 @@ package com.android.bedstead.testapp;
 import android.os.Bundle;
 
 import com.android.queryable.info.ActivityInfo;
+import com.android.queryable.info.ServiceInfo;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -30,6 +31,7 @@ class TestAppDetails {
     final Bundle mMetadata = new Bundle();
     final Set<String> mPermissions = new HashSet<>();
     final Set<ActivityInfo> mActivities = new HashSet<>();
+    final Set<ServiceInfo> mServices = new HashSet<>();
 
     @Override
     public String toString() {
@@ -39,6 +41,7 @@ class TestAppDetails {
                 + ", mMetadata=" + mMetadata
                 + ", mPermissions=" + mPermissions
                 + ", mActivities=" + mActivities
+                + ", mServices=" + mServices
                 + '}';
     }
 }
