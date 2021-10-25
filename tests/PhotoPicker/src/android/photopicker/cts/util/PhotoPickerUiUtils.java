@@ -73,17 +73,17 @@ public class PhotoPickerUiUtils {
         return itemList;
     }
 
-    public static UiObject findPreviewAddButton() throws UiObjectNotFoundException {
+    public static UiObject findPreviewAddOrSelectButton() {
         return new UiObject(new UiSelector().resourceIdMatches(
-                REGEX_PACKAGE_NAME + ":id/preview_add_button"));
+                REGEX_PACKAGE_NAME + ":id/preview_add_or_select_button"));
     }
 
-    public static UiObject findAddButton() throws UiObjectNotFoundException {
+    public static UiObject findAddButton() {
         return new UiObject(new UiSelector().resourceIdMatches(
                 REGEX_PACKAGE_NAME + ":id/button_add"));
     }
 
-    public static UiObject findProfileButton() throws UiObjectNotFoundException {
+    public static UiObject findProfileButton() {
         return new UiObject(new UiSelector().resourceIdMatches(
                 REGEX_PACKAGE_NAME + ":id/profile_button"));
     }

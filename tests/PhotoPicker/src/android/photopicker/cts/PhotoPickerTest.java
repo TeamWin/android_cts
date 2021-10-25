@@ -25,7 +25,7 @@ import static android.photopicker.cts.util.PhotoPickerFilesUtils.deleteMedia;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.SHORT_TIMEOUT;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.findAddButton;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.findItemList;
-import static android.photopicker.cts.util.PhotoPickerUiUtils.findPreviewAddButton;
+import static android.photopicker.cts.util.PhotoPickerUiUtils.findPreviewAddOrSelectButton;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -77,7 +77,24 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
         item.click();
         mDevice.waitForIdle();
 
-        final UiObject addButton = findPreviewAddButton();
+        final Uri uri = mActivity.getResult().data.getData();
+        assertPickerUriFormat(uri, mContext.getUserId());
+        assertRedactedReadOnlyAccess(uri);
+    }
+
+    @Test
+    public void testSingleSelectWithPreview() throws Exception {
+        final int itemCount = 1;
+        createImages(itemCount, mContext.getUserId(), mUriList);
+
+        final Intent intent = new Intent(MediaStore.ACTION_PICK_IMAGES);
+        mActivity.startActivityForResult(intent, REQUEST_CODE);
+
+        final UiObject item = findItemList(itemCount).get(0);
+        item.longClick();
+        mDevice.waitForIdle();
+
+        final UiObject addButton = findPreviewAddOrSelectButton();
         addButton.click();
         mDevice.waitForIdle();
 
@@ -116,7 +133,7 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
         final List<UiObject> itemList = findItemList(imageCount);
         final int itemCount = itemList.size();
         assertThat(itemCount).isEqualTo(imageCount);
-        // Select maxCount + 1 items
+        // Select maxCount + 1 item
         for (int i = 0; i < itemCount; i++) {
             final UiObject item = itemList.get(i);
             item.click();
@@ -141,7 +158,7 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
     }
 
     @Test
-    public void testMultiSelect_doesNotRespectExtraAllowMultiple() throws Exception {
+    public void testDoesNotRespectExtraAllowMultiple() throws Exception {
         final int imageCount = 2;
         createImages(imageCount, mContext.getUserId(), mUriList);
         final Intent intent = new Intent(MediaStore.ACTION_PICK_IMAGES);
@@ -151,14 +168,9 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
         final List<UiObject> itemList = findItemList(imageCount);
         final int itemCount = itemList.size();
         assertThat(itemCount).isEqualTo(imageCount);
-        // Select 1 items
+        // Select 1 item
         final UiObject item = itemList.get(0);
         item.click();
-        mDevice.waitForIdle();
-
-        // Shows preview Add button; single select flow
-        final UiObject addButton = findPreviewAddButton();
-        addButton.click();
         mDevice.waitForIdle();
 
         final Uri uri = mActivity.getResult().data.getData();
@@ -190,6 +202,52 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
         final ClipData clipData = mActivity.getResult().data.getClipData();
         final int count = clipData.getItemCount();
         assertThat(count).isEqualTo(itemCount);
+        for (int i = 0; i < count; i++) {
+            final Uri uri = clipData.getItemAt(i).getUri();
+            assertPickerUriFormat(uri, mContext.getUserId());
+            assertRedactedReadOnlyAccess(uri);
+        }
+    }
+
+    @Test
+    public void testMultiSelect_longPress() throws Exception {
+        final int imageCount = 3;
+        createImages(imageCount, mContext.getUserId(), mUriList);
+        final Intent intent = new Intent(MediaStore.ACTION_PICK_IMAGES);
+        intent.putExtra(MediaStore.EXTRA_PICK_IMAGES_MAX, MediaStore.getPickImagesMaxLimit());
+        mActivity.startActivityForResult(intent, REQUEST_CODE);
+
+        final List<UiObject> itemList = findItemList(imageCount);
+        final int itemCount = itemList.size();
+        assertThat(itemCount).isEqualTo(imageCount);
+
+        // Select one item from Photo grid
+        itemList.get(0).click();
+        mDevice.waitForIdle();
+
+        UiObject item = itemList.get(1);
+        item.longClick();
+        mDevice.waitForIdle();
+
+        // Select the item from Preview
+        final UiObject selectButton = findPreviewAddOrSelectButton();
+        selectButton.click();
+        mDevice.waitForIdle();
+
+        mDevice.pressBack();
+
+        // Select one more item from Photo grid
+        itemList.get(2).click();
+        mDevice.waitForIdle();
+
+        final UiObject addButton = findAddButton();
+        addButton.click();
+        mDevice.waitForIdle();
+
+        // Verify that all 3 items are returned
+        final ClipData clipData = mActivity.getResult().data.getClipData();
+        final int count = clipData.getItemCount();
+        assertThat(count).isEqualTo(3);
         for (int i = 0; i < count; i++) {
             final Uri uri = clipData.getItemAt(i).getUri();
             assertPickerUriFormat(uri, mContext.getUserId());
