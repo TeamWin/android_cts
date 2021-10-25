@@ -16,6 +16,9 @@
 
 package com.android.bedstead.testapp;
 
+import android.accounts.AccountManager;
+import android.accounts.RemoteAccountManager;
+import android.accounts.RemoteAccountManagerWrapper;
 import android.app.admin.DevicePolicyManager;
 import android.app.admin.RemoteDevicePolicyManager;
 import android.app.admin.RemoteDevicePolicyManagerWrapper;
@@ -40,7 +43,6 @@ import android.os.RemoteUserManagerWrapper;
 import android.os.UserManager;
 
 import com.android.bedstead.nene.TestApis;
-import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.packages.ProcessReference;
 import com.android.bedstead.nene.users.UserReference;
 
@@ -65,9 +67,9 @@ public class TestAppInstanceReference implements AutoCloseable, ConnectionListen
     private final UserReference mUser;
     private final CrossProfileConnector mConnector;
     private final Map<IntentFilter, Long> mRegisteredBroadcastReceivers = new HashMap<>();
-    private boolean mKeepAliveManually = false;
     private final ProfileTestAppController mTestAppController;
     private final TestAppActivities mTestAppActivities;
+    private boolean mKeepAliveManually = false;
 
     /**
      * Use {@link TestApp#install} or {@link TestApp#instance} to get an instance of
@@ -157,7 +159,6 @@ public class TestAppInstanceReference implements AutoCloseable, ConnectionListen
 
     /**
      * Unregister the receiver
-     * @param intentFilter
      */
     public TestAppInstanceReference unregisterReceiver(IntentFilter intentFilter) {
         if (!mRegisteredBroadcastReceivers.containsKey(intentFilter)) {
@@ -219,25 +220,26 @@ public class TestAppInstanceReference implements AutoCloseable, ConnectionListen
         return this;
     }
 
-    /**
-     * Immediately force stops the app.
-     *
-     * <p>This will also stop keeping the target app alive (see {@link #stopKeepAlive()}.
-     */
-    public TestAppInstanceReference stop() {
-        stopKeepAlive();
-
-        ProcessReference process = mTestApp.pkg().runningProcess(mUser);
-        if (process != null) {
-            try {
-                process.kill();
-            } catch (NeneException e) {
-                throw new NeneException("Error killing process... process is " + process(), e);
-            }
-        }
-
-        return this;
-    }
+    // TODO(b/203758521): Restore functionality of killing process
+//    /**
+//     * Immediately force stops the app.
+//     *
+//     * <p>This will also stop keeping the target app alive (see {@link #stopKeepAlive()}.
+//     */
+//    public TestAppInstanceReference stop() {
+//        stopKeepAlive();
+//
+//        ProcessReference process = mTestApp.pkg().runningProcess(mUser);
+//        if (process != null) {
+//            try {
+//                process.kill();
+//            } catch (NeneException e) {
+//                throw new NeneException("Error killing process... process is " + process(), e);
+//            }
+//        }
+//
+//        return this;
+//    }
 
     /**
      * Gets the {@link ProcessReference} of the app, if any.
@@ -329,6 +331,15 @@ public class TestAppInstanceReference implements AutoCloseable, ConnectionListen
      */
     public RemoteLauncherApps launcherApps() {
         return new RemoteLauncherAppsWrapper(mConnector);
+    }
+
+    /**
+     * Access {@link AccountManager} using this test app.
+     *
+     * <p>Almost all methods are available. Those that are not will be missing from the interface.
+     */
+    public RemoteAccountManager accountManager() {
+        return new RemoteAccountManagerWrapper(mConnector);
     }
 
     @Override

@@ -18,6 +18,7 @@ package com.android.bedstead.testapp;
 
 import com.android.queryable.Queryable;
 import com.android.queryable.info.ActivityInfo;
+import com.android.queryable.info.ServiceInfo;
 import com.android.queryable.queries.ActivityQuery;
 import com.android.queryable.queries.BooleanQuery;
 import com.android.queryable.queries.BooleanQueryHelper;
@@ -25,13 +26,11 @@ import com.android.queryable.queries.BundleQuery;
 import com.android.queryable.queries.BundleQueryHelper;
 import com.android.queryable.queries.IntegerQuery;
 import com.android.queryable.queries.IntegerQueryHelper;
+import com.android.queryable.queries.ServiceQuery;
 import com.android.queryable.queries.SetQuery;
 import com.android.queryable.queries.SetQueryHelper;
 import com.android.queryable.queries.StringQuery;
 import com.android.queryable.queries.StringQueryHelper;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /** Builder for progressively building {@link TestApp} queries. */
 public final class TestAppQueryBuilder implements Queryable {
@@ -46,6 +45,8 @@ public final class TestAppQueryBuilder implements Queryable {
             new SetQueryHelper<>(this);
     BooleanQueryHelper<TestAppQueryBuilder> mTestOnly = new BooleanQueryHelper<>(this);
     SetQueryHelper<TestAppQueryBuilder, ActivityInfo, ActivityQuery<?>> mActivities =
+            new SetQueryHelper<>(this);
+    SetQueryHelper<TestAppQueryBuilder, ServiceInfo, ServiceQuery<?>> mServices =
             new SetQueryHelper<>(this);
 
     TestAppQueryBuilder(TestAppProvider provider) {
@@ -109,12 +110,18 @@ public final class TestAppQueryBuilder implements Queryable {
     }
 
     /**
-     * Query for a {@link TestApp} by the testOnly attribute.
+     * Query for a {@link TestApp} by its activities.
      */
     public SetQuery<TestAppQueryBuilder, ActivityInfo, ActivityQuery<?>> whereActivities() {
         return mActivities;
     }
 
+    /**
+     * Query for a {@link TestApp} by its services.
+     */
+    public SetQuery<TestAppQueryBuilder, ServiceInfo, ServiceQuery<?>> whereServices() {
+        return mServices;
+    }
 
     /**
      * Get the {@link TestApp} matching the query.
@@ -167,6 +174,10 @@ public final class TestAppQueryBuilder implements Queryable {
             return false;
         }
 
+        if (!SetQueryHelper.matches(mServices, details.mServices)) {
+            return false;
+        }
+
         if (!SetQueryHelper.matches(mPermissions, details.mPermissions)) {
             return false;
         }
@@ -194,6 +205,7 @@ public final class TestAppQueryBuilder implements Queryable {
                 mMaxSdkVersion.describeQuery("maxSdkVersion"),
                 mTargetSdkVersion.describeQuery("targetSdkVersion"),
                 mActivities.describeQuery("activities"),
+                mServices.describeQuery("services"),
                 mPermissions.describeQuery("permissions"),
                 mTestOnly.describeQuery("testOnly")
         ) + "}";

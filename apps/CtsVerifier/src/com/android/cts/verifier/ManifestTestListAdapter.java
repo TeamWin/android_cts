@@ -181,16 +181,19 @@ public class ManifestTestListAdapter extends TestListAdapter {
 
     @Override
     protected List<TestListItem> getRows() {
+        List<TestListItem> allRows = new ArrayList<TestListItem>();
+
         // When launching at the first time or after killing the process, needs to fetch the
         // test items of all display modes as the bases for switching.
-        if (!sInitialLaunch) {
-            return getRowsWithDisplayMode(sCurrentDisplayMode);
+        if (mDisplayModesTests.isEmpty()) {
+            for (DisplayMode mode : DisplayMode.values()) {
+                allRows = getRowsWithDisplayMode(mode.toString());
+                mDisplayModesTests.put(mode.toString(), allRows);
+            }
         }
 
-        List<TestListItem> allRows = new ArrayList<TestListItem>();
-        for (DisplayMode mode: DisplayMode.values()) {
-            allRows = getRowsWithDisplayMode(mode.toString());
-            mDisplayModesTests.put(mode.toString(), allRows);
+        if (!sInitialLaunch) {
+            return getRowsWithDisplayMode(sCurrentDisplayMode);
         }
         return allRows;
     }
