@@ -16,23 +16,35 @@
 
 package com.android.bedstead.harrier.annotations;
 
-import static com.android.bedstead.nene.utils.Tags.USES_NOTIFICATIONS;
+import static com.android.bedstead.harrier.annotations.AnnotationRunPrecedence.EARLY;
 
 import java.lang.annotation.ElementType;
+import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotation to indicate that a test interacts with notifications.
+ * Tag a test with a given string.
  *
- * <p>This will mean that the test will not run on low ram devices (as they do not support usage
- * of {@code NotificationListener}).
+ * Tags may change the behaviour of tests.
  */
 @Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-@RequireNotLowRamDevice(
-        reason = "This test uses NotificationListener which is not supported on low ram devices")
-@TestTag(USES_NOTIFICATIONS)
-public @interface NotificationsTest {
+@Repeatable(TestTags.class)
+public @interface TestTag {
+
+    String value();
+
+    /**
+     * Weight sets the order that annotations will be resolved.
+     *
+     * <p>Annotations with a lower weight will be resolved before annotations with a higher weight.
+     *
+     * <p>If there is an order requirement between annotations, ensure that the weight of the
+     * annotation which must be resolved first is lower than the one which must be resolved later.
+     *
+     * <p>Weight can be set to a {@link AnnotationRunPrecedence} constant, or to any {@link int}.
+     */
+    int weight() default EARLY;
 }

@@ -95,7 +95,8 @@ public final class DevicePolicy {
         retryIfNotTerminal(
                 () -> command.executeOrThrowNeneException("Could not set profile owner for user "
                         + user + " component " + profileOwnerComponent),
-                () -> checkForTerminalProfileOwnerFailures(user, profileOwnerComponent));
+                () -> checkForTerminalProfileOwnerFailures(user, profileOwnerComponent),
+                NeneException.class);
         return new ProfileOwner(user,
                 TestApis.packages().find(
                         profileOwnerComponent.getPackageName()), profileOwnerComponent);
@@ -182,7 +183,8 @@ public final class DevicePolicy {
                         () -> setDeviceOwnerOnly(devicePolicyManager,
                                 deviceOwnerComponent, "Nene", user.id()),
                         () -> checkForTerminalDeviceOwnerFailures(
-                                user, deviceOwnerComponent, /* allowAdditionalUsers= */ true));
+                                user, deviceOwnerComponent, /* allowAdditionalUsers= */ true),
+                        NeneException.class);
             } catch (IllegalArgumentException | IllegalStateException | SecurityException e) {
                 throw new NeneException("Error setting device owner", e);
             }

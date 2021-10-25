@@ -57,6 +57,7 @@ import com.android.bedstead.harrier.annotations.RequirePackageInstalled;
 import com.android.bedstead.harrier.annotations.RequirePackageNotInstalled;
 import com.android.bedstead.harrier.annotations.RequireSdkVersion;
 import com.android.bedstead.harrier.annotations.RequireUserSupported;
+import com.android.bedstead.harrier.annotations.TestTag;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDeviceOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoProfileOwner;
@@ -81,6 +82,7 @@ import com.android.bedstead.nene.users.User;
 import com.android.bedstead.nene.users.UserBuilder;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.utils.ShellCommand;
+import com.android.bedstead.nene.utils.Tags;
 import com.android.bedstead.nene.utils.Versions;
 import com.android.bedstead.remotedpc.RemoteDpc;
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
@@ -197,6 +199,8 @@ public final class DeviceState implements TestRule {
                 try {
                     Log.d(LOG_TAG, "Preparing state for test " + description.getMethodName());
 
+                    Tags.clearTags();
+                    Tags.addTag(Tags.USES_DEVICESTATE);
                     assumeFalse(mSkipTestsReason, mSkipTests);
                     assertFalse(mFailTestsReason, mFailTests);
 
@@ -303,6 +307,11 @@ public final class DeviceState implements TestRule {
                                 .getMethod(SWITCHED_TO_USER).invoke(annotation);
                 requireRunOnUser(requireRunOnUserAnnotation.value(), switchedToUser);
                 continue;
+            }
+
+            if (annotation instanceof TestTag) {
+                TestTag testTagAnnotation = (TestTag) annotation;
+                Tags.addTag(testTagAnnotation.value());
             }
 
             RequireRunOnProfileAnnotation requireRunOnProfileAnnotation =
@@ -589,6 +598,9 @@ public final class DeviceState implements TestRule {
                 }
 
                 Log.d(LOG_TAG, "Preparing state for suite " + description.getClassName());
+
+                Tags.clearTags();
+                Tags.addTag(Tags.USES_DEVICESTATE);
 
                 boolean originalStopBgUsersOnSwitch =
                         TestApis.users().getStopBgUsersOnSwitch();

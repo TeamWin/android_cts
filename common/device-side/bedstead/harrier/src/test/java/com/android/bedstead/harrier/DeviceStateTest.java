@@ -65,6 +65,7 @@ import com.android.bedstead.harrier.annotations.RequireRunOnTvProfile;
 import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
 import com.android.bedstead.harrier.annotations.RequireSdkVersion;
 import com.android.bedstead.harrier.annotations.RequireUserSupported;
+import com.android.bedstead.harrier.annotations.TestTag;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDeviceOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDpc;
@@ -79,6 +80,7 @@ import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnSecond
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.users.UserReference;
+import com.android.bedstead.nene.utils.Tags;
 
 import org.junit.ClassRule;
 import org.junit.Ignore;
@@ -699,5 +701,11 @@ public class DeviceStateTest {
     public void requireNotLowRamDeviceAnnotation_isNotLowRamDevice() {
         assertThat(TestApis.context().instrumentedContext().getSystemService(ActivityManager.class)
                 .isLowRamDevice()).isFalse();
+    }
+
+    @Test
+    @TestTag("TestTag")
+    public void testTagAnnoation_testTagIsSet() {
+        assertThat(Tags.hasTag("TestTag")).isTrue();
     }
 }
