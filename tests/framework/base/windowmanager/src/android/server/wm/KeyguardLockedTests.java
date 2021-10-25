@@ -57,6 +57,7 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 
 import com.android.compatibility.common.util.CtsTouchUtils;
+import com.android.compatibility.common.util.FeatureUtil;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.cts.mockime.ImeEventStream;
 import com.android.cts.mockime.MockImeSession;
@@ -344,6 +345,8 @@ public class KeyguardLockedTests extends KeyguardTestBase {
 
     @Test
     public void testDismissKeyguardPipActivity() {
+        assumeFalse("Skip test: Keyguard cannot be dismissed in Automotive",
+                FeatureUtil.isAutomotive());
         assumeTrue(supportsPip());
 
         final LockScreenSession lockScreenSession = createManagedLockScreenSession();
