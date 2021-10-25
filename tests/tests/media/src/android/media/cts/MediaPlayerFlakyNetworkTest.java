@@ -59,9 +59,9 @@ public class MediaPlayerFlakyNetworkTest extends MediaPlayerTestBase {
         "raw/video_176x144_3gp_h263_300kbps_25fps_aac_stereo_128kbps_22050hz"
     };
 
-    // Allow operations to block for 2500ms before assuming they will ANR.
+    // Allow operations to block for 3500ms before assuming they will ANR.
     // We don't allow the full 5s because cpu load, etc, reduces the budget.
-    private static final int ANR_TIMEOUT_MILLIS = 2500;
+    private static final int ANR_TIMEOUT_MILLIS = 3500;
 
     private CtsTestServer mServer;
 
