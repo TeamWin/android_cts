@@ -43,6 +43,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * {@link BaseAdapter} that handles loading, refreshing, and setting test
@@ -80,6 +81,9 @@ public abstract class TestListAdapter extends BaseAdapter {
 
     /** Map from test name to {@link TestResultHistoryCollection}. */
     private final Map<String, TestResultHistoryCollection> mHistories = new HashMap<>();
+
+    /** Flag to identify whether the mHistories has been loaded. */
+    private final AtomicBoolean mHasLoadedResultHistory = new AtomicBoolean(false);
 
     private final LayoutInflater mLayoutInflater;
 
@@ -258,11 +262,10 @@ public abstract class TestListAdapter extends BaseAdapter {
     class RefreshTestResultsTask extends AsyncTask<Void, Void, RefreshResult> {
         @Override
         protected RefreshResult doInBackground(Void... params) {
-            List<TestListItem> rows;
+            List<TestListItem> rows = getRows();
             // When initial launch, needs to fetch tests in the unfolded/folded mode
             // to be stored in mDisplayModesTests as the basis for the future switch.
             if (sInitialLaunch) {
-                getRows();
                 sInitialLaunch = false;
             }
 
@@ -287,6 +290,7 @@ public abstract class TestListAdapter extends BaseAdapter {
             mReportLogs.putAll(result.mReportLogs);
             mHistories.clear();
             mHistories.putAll(result.mHistories);
+            mHasLoadedResultHistory.set(true);
             notifyDataSetChanged();
         }
     }
@@ -388,8 +392,29 @@ public abstract class TestListAdapter extends BaseAdapter {
 
         @Override
         protected Void doInBackground(Void... params) {
+            if (mHasLoadedResultHistory.get()) {
+                mHistoryCollection.merge(null, mHistories.get(mTestName));
+            } else {
+                // Loads history from ContentProvider directly if it has not been loaded yet.
+                ContentResolver resolver = mContext.getContentResolver();
+
+                try (Cursor cursor = resolver.query(
+                        TestResultsProvider.getTestNameUri(mContext, mTestName),
+                        new String[] {TestResultsProvider.COLUMN_TEST_RESULT_HISTORY},
+                        null,
+                        null,
+                        null)) {
+                    if (cursor.moveToFirst()) {
+                        do {
+                            TestResultHistoryCollection historyCollection =
+                                    (TestResultHistoryCollection) deserialize(cursor.getBlob(0));
+                            mHistoryCollection.merge(null, historyCollection);
+                        } while (cursor.moveToNext());
+                    }
+                }
+            }
             TestResultsProvider.setTestResult(
-                mContext, mTestName, mResult, mDetails, mReportLog, mHistoryCollection);
+                    mContext, mTestName, mResult, mDetails, mReportLog, mHistoryCollection);
             return null;
         }
     }
@@ -431,7 +456,7 @@ public abstract class TestListAdapter extends BaseAdapter {
     @Override
     public int getCount() {
         if (!sInitialLaunch && checkTestsFromMainView()) {
-            return mDisplayModesTests.get(sCurrentDisplayMode).size();
+            return mDisplayModesTests.getOrDefault(sCurrentDisplayMode, new ArrayList<>()).size();
         }
         return mRows.size();
     }
@@ -501,7 +526,7 @@ public abstract class TestListAdapter extends BaseAdapter {
      * @return A count of test items.
      */
     public int getCount(String mode){
-        return mDisplayModesTests.get(mode).size();
+        return mDisplayModesTests.getOrDefault(mode, new ArrayList<>()).size();
     }
 
     /**
