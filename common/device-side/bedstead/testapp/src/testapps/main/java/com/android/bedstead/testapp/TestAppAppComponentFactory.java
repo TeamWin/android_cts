@@ -16,6 +16,7 @@
 
 package com.android.bedstead.testapp;
 
+import android.accounts.AccountManager;
 import android.app.Activity;
 import android.app.AppComponentFactory;
 import android.app.Service;
@@ -43,7 +44,8 @@ import com.android.bedstead.testapp.processor.annotations.TestAppReceiver;
                 WifiManager.class,
                 PackageManager.class,
                 CrossProfileApps.class,
-                LauncherApps.class
+                LauncherApps.class,
+                AccountManager.class
         }
 )public final class TestAppAppComponentFactory extends AppComponentFactory {
 

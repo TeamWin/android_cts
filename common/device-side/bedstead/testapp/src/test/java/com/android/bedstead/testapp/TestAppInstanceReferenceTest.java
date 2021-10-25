@@ -39,7 +39,6 @@ import com.android.bedstead.nene.utils.Poll;
 import com.android.eventlib.EventLogs;
 import com.android.eventlib.events.broadcastreceivers.BroadcastReceivedEvent;
 
-import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -57,6 +56,12 @@ public class TestAppInstanceReferenceTest {
 
     private static final Context sContext = TestApis.context().instrumentedContext();
     private static final UserReference sUser = TestApis.users().instrumented();
+
+    private static final TestAppProvider sTestAppProvider = new TestAppProvider();
+    private static final TestApp sTestApp = sTestAppProvider.query()
+            .whereActivities().isNotEmpty()
+            .get();
+
     private static final String INTENT_ACTION = "com.android.bedstead.testapp.test_action";
     private static final IntentFilter INTENT_FILTER = new IntentFilter(INTENT_ACTION);
     private static final Intent INTENT = new Intent(INTENT_ACTION);
@@ -66,61 +71,50 @@ public class TestAppInstanceReferenceTest {
     private static final Duration SHORT_TIMEOUT = Duration.ofSeconds(5);
     private TestAppProvider mTestAppProvider;
 
-    @Before
-    public void setup() {
-        mTestAppProvider = new TestAppProvider();
-    }
-
     @Test
     public void user_returnsUserReference() {
-        TestApp testApp = mTestAppProvider.any();
-        TestAppInstanceReference testAppInstance = testApp.instance(sUser);
+        TestAppInstanceReference testAppInstance = sTestApp.instance(sUser);
 
         assertThat(testAppInstance.user()).isEqualTo(sUser);
     }
 
     @Test
     public void testApp_returnsTestApp() {
-        TestApp testApp = mTestAppProvider.any();
-        TestAppInstanceReference testAppInstance = testApp.instance(sUser);
+        TestAppInstanceReference testAppInstance = sTestApp.instance(sUser);
 
-        assertThat(testAppInstance.testApp()).isEqualTo(testApp);
+        assertThat(testAppInstance.testApp()).isEqualTo(sTestApp);
     }
 
     @Test
     public void activities_any_returnsActivity() {
-        TestApp testApp = mTestAppProvider.query().whereActivities().isNotEmpty().get();
-        try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
+        try (TestAppInstanceReference testAppInstance = sTestApp.install(sUser)) {
             assertThat(testAppInstance.activities().any()).isNotNull();
         }
     }
 
     @Test
     public void uninstall_uninstalls() {
-        TestApp testApp = mTestAppProvider.any();
-        TestAppInstanceReference testAppInstance = testApp.install(sUser);
+        TestAppInstanceReference testAppInstance = sTestApp.install(sUser);
 
         testAppInstance.uninstall();
 
-        assertThat(TestApis.packages().find(testApp.packageName())
+        assertThat(TestApis.packages().find(sTestApp.packageName())
                 .installedOnUser(sUser)).isFalse();
     }
 
     @Test
     public void autoclose_uninstalls() {
-        TestApp testApp = mTestAppProvider.any();
-        try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
+        try (TestAppInstanceReference testAppInstance = sTestApp.install(sUser)) {
             // Intentionally empty
         }
 
-        assertThat(TestApis.packages().find(testApp.packageName())
+        assertThat(TestApis.packages().find(sTestApp.packageName())
                 .installedOnUser(sUser)).isFalse();
     }
 
     @Test
     public void keepAlive_notInstalled_throwsException() {
-        TestApp testApp = mTestAppProvider.any();
-        TestAppInstanceReference testAppInstance = testApp.instance(sUser);
+        TestAppInstanceReference testAppInstance = sTestApp.instance(sUser);
 
         assertThrows(IllegalStateException.class, testAppInstance::keepAlive);
     }
@@ -128,13 +122,12 @@ public class TestAppInstanceReferenceTest {
     @Test
     @Ignore("b/203758521 Need to re-add support for killing processes")
     public void killProcess_keepAlive_processIsRunningAgain() {
-        TestApp testApp = mTestAppProvider.any();
-        try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
+        try (TestAppInstanceReference testAppInstance = sTestApp.install(sUser)) {
             testAppInstance.keepAlive();
 
 //            testAppInstance.process().kill();
 
-            Poll.forValue("running process", () -> testApp.pkg().runningProcess(sUser))
+            Poll.forValue("running process", () -> sTestApp.pkg().runningProcess(sUser))
                     .toNotBeNull()
                     .errorOnFail()
                     .await();
@@ -147,42 +140,38 @@ public class TestAppInstanceReferenceTest {
     @Test
     @Ignore("b/203758521 need to re-add support for killing processes")
     public void stop_processIsNotRunning() {
-        TestApp testApp = mTestAppProvider.query().whereActivities().isNotEmpty().get();
-        try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
+        try (TestAppInstanceReference testAppInstance = sTestApp.install(sUser)) {
             testAppInstance.activities().any().start();
 
 //            testAppInstance.stop();
 
-            assertThat(testApp.pkg().runningProcesses()).isEmpty();
+            assertThat(sTestApp.pkg().runningProcesses()).isEmpty();
         }
     }
 
     @Test
     @Ignore("b/203758521 need to re-add support for killing processes")
     public void stop_previouslyCalledKeepAlive_processDoesNotRestart() {
-        TestApp testApp = mTestAppProvider.query().whereActivities().isNotEmpty().get();
-        try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
+        try (TestAppInstanceReference testAppInstance = sTestApp.install(sUser)) {
             testAppInstance.activities().any().start();
             testAppInstance.keepAlive();
 
 //            testAppInstance.stop();
 
-            assertThat(testApp.pkg().runningProcesses()).isEmpty();
+            assertThat(sTestApp.pkg().runningProcesses()).isEmpty();
         }
     }
 
     @Test
     public void process_isNotRunning_returnsNull() {
-        TestApp testApp = mTestAppProvider.any();
-        try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
+        try (TestAppInstanceReference testAppInstance = sTestApp.install(sUser)) {
             assertThat(testAppInstance.process()).isNull();
         }
     }
 
     @Test
     public void process_isRunning_isNotNull() {
-        TestApp testApp = mTestAppProvider.query().whereActivities().isNotEmpty().get();
-        try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
+        try (TestAppInstanceReference testAppInstance = sTestApp.install(sUser)) {
             testAppInstance.activities().any().start();
 
             Poll.forValue("TestApp process", testAppInstance::process)
@@ -194,8 +183,7 @@ public class TestAppInstanceReferenceTest {
 
     @Test
     public void registerReceiver_receivesBroadcast() {
-        TestApp testApp = mTestAppProvider.any();
-        try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
+        try (TestAppInstanceReference testAppInstance = sTestApp.install(sUser)) {
             testAppInstance.registerReceiver(INTENT_FILTER);
 
             sContext.sendBroadcast(INTENT);
@@ -208,8 +196,7 @@ public class TestAppInstanceReferenceTest {
 
     @Test
     public void registerReceiver_multipleIntentFilters_receivesAllMatchingBroadcasts() {
-        TestApp testApp = mTestAppProvider.any();
-        try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
+        try (TestAppInstanceReference testAppInstance = sTestApp.install(sUser)) {
             testAppInstance.registerReceiver(INTENT_FILTER);
             testAppInstance.registerReceiver(INTENT_FILTER_2);
 
@@ -227,27 +214,25 @@ public class TestAppInstanceReferenceTest {
 
     @Test
     public void registerReceiver_processIsRunning() {
-        TestApp testApp = mTestAppProvider.any();
-        try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
+        try (TestAppInstanceReference testAppInstance = sTestApp.install(sUser)) {
 
             testAppInstance.registerReceiver(INTENT_FILTER);
 
-            assertThat(testApp.pkg().runningProcess(sUser)).isNotNull();
+            assertThat(sTestApp.pkg().runningProcess(sUser)).isNotNull();
         }
     }
 
     @Test
     @Ignore("b/203758521 need to re-add support for killing processes")
     public void stop_registeredReceiver_doesNotReceiveBroadcast() {
-        TestApp testApp = mTestAppProvider.any();
-        try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
+        try (TestAppInstanceReference testAppInstance = sTestApp.install(sUser)) {
             testAppInstance.registerReceiver(INTENT_FILTER);
 
 //            testAppInstance.stop();
             sContext.sendBroadcast(INTENT);
 
             EventLogs<BroadcastReceivedEvent> logs =
-                    BroadcastReceivedEvent.queryPackage(testApp.packageName())
+                    BroadcastReceivedEvent.queryPackage(sTestApp.packageName())
                             .whereIntent().action().isEqualTo(INTENT_ACTION);
             assertThat(logs.poll(SHORT_TIMEOUT)).isNull();
         }
@@ -255,15 +240,14 @@ public class TestAppInstanceReferenceTest {
 
     @Test
     public void unregisterReceiver_registeredReceiver_doesNotReceiveBroadcast() {
-        TestApp testApp = mTestAppProvider.any();
-        try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
+        try (TestAppInstanceReference testAppInstance = sTestApp.install(sUser)) {
             testAppInstance.registerReceiver(INTENT_FILTER);
 
             testAppInstance.unregisterReceiver(INTENT_FILTER);
             sContext.sendBroadcast(INTENT);
 
             EventLogs<BroadcastReceivedEvent> logs =
-                    BroadcastReceivedEvent.queryPackage(testApp.packageName())
+                    BroadcastReceivedEvent.queryPackage(sTestApp.packageName())
                             .whereIntent().action().isEqualTo(INTENT_ACTION);
             assertThat(logs.poll(SHORT_TIMEOUT)).isNull();
         }
@@ -271,8 +255,7 @@ public class TestAppInstanceReferenceTest {
 
     @Test
     public void unregisterReceiver_doesNotUnregisterOtherReceivers() {
-        TestApp testApp = mTestAppProvider.any();
-        try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
+        try (TestAppInstanceReference testAppInstance = sTestApp.install(sUser)) {
             testAppInstance.registerReceiver(INTENT_FILTER);
             testAppInstance.registerReceiver(INTENT_FILTER_2);
 
@@ -281,10 +264,10 @@ public class TestAppInstanceReferenceTest {
             sContext.sendBroadcast(INTENT_2);
 
             EventLogs<BroadcastReceivedEvent> logs =
-                    BroadcastReceivedEvent.queryPackage(testApp.packageName())
+                    BroadcastReceivedEvent.queryPackage(sTestApp.packageName())
                             .whereIntent().action().isEqualTo(INTENT_ACTION);
             EventLogs<BroadcastReceivedEvent> logs2 =
-                    BroadcastReceivedEvent.queryPackage(testApp.packageName())
+                    BroadcastReceivedEvent.queryPackage(sTestApp.packageName())
                             .whereIntent().action().isEqualTo(INTENT_ACTION_2);
             assertThat(logs.poll(SHORT_TIMEOUT)).isNull();
             assertThat(logs2.poll()).isNotNull();
@@ -293,23 +276,21 @@ public class TestAppInstanceReferenceTest {
 
     @Test
     public void keepAlive_processIsRunning() {
-        TestApp testApp = mTestAppProvider.any();
-        try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
+        try (TestAppInstanceReference testAppInstance = sTestApp.install(sUser)) {
 
             testAppInstance.keepAlive();
 
-            assertThat(testApp.pkg().runningProcess(sUser)).isNotNull();
+            assertThat(sTestApp.pkg().runningProcess(sUser)).isNotNull();
         }
     }
 
     @Test
     @Ignore("b/203758521 need to re-add support for killing processes")
     public void registerReceiver_appIsKilled_stillReceivesBroadcast() {
-        TestApp testApp = mTestAppProvider.any();
-        try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
+        try (TestAppInstanceReference testAppInstance = sTestApp.install(sUser)) {
             testAppInstance.registerReceiver(INTENT_FILTER);
 //            testApp.pkg().runningProcess(sUser).kill();
-            Poll.forValue("running process", () -> testApp.pkg().runningProcess(sUser))
+            Poll.forValue("running process", () -> sTestApp.pkg().runningProcess(sUser))
                     .toNotBeNull()
                     .errorOnFail()
                     .await();
@@ -317,7 +298,7 @@ public class TestAppInstanceReferenceTest {
             sContext.sendBroadcast(INTENT);
 
             EventLogs<BroadcastReceivedEvent> logs =
-                    BroadcastReceivedEvent.queryPackage(testApp.packageName())
+                    BroadcastReceivedEvent.queryPackage(sTestApp.packageName())
                             .whereIntent().action().isEqualTo(INTENT_ACTION);
             assertThat(logs.poll()).isNotNull();
         }
@@ -326,8 +307,7 @@ public class TestAppInstanceReferenceTest {
     @Test
     @RequireSdkVersion(min = S, reason = "isSafeOperation only available on S+")
     public void devicePolicyManager_returnsUsableInstance() {
-        TestApp testApp = mTestAppProvider.any();
-        try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
+        try (TestAppInstanceReference testAppInstance = sTestApp.install(sUser)) {
             // Arbitrary call which does not require specific permissions to confirm no crash
             testAppInstance.devicePolicyManager()
                     .isSafeOperation(OPERATION_SAFETY_REASON_DRIVING_DISTRACTION);
@@ -336,8 +316,7 @@ public class TestAppInstanceReferenceTest {
 
     @Test
     public void userManager_returnsUsableInstance() {
-        TestApp testApp = mTestAppProvider.any();
-        try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
+        try (TestAppInstanceReference testAppInstance = sTestApp.install(sUser)) {
             // Arbitrary call which does not require specific permissions to confirm no crash
             testAppInstance.userManager().getUserProfiles();
         }
@@ -346,8 +325,7 @@ public class TestAppInstanceReferenceTest {
     @Test
     @RequireSdkVersion(min = Q, reason = "Wifimanager API only available on Q+")
     public void wifiManager_returnsUsableInstance() {
-        TestApp testApp = mTestAppProvider.any();
-        try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
+        try (TestAppInstanceReference testAppInstance = sTestApp.install(sUser)) {
             // Arbitrary call which does not require specific permissions to confirm no crash
             testAppInstance.wifiManager().getMaxNumberOfNetworkSuggestionsPerApp();
         }
@@ -355,8 +333,7 @@ public class TestAppInstanceReferenceTest {
 
     @Test
     public void hardwarePropertiesManager_returnsUsableInstance() {
-        TestApp testApp = mTestAppProvider.any();
-        try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
+        try (TestAppInstanceReference testAppInstance = sTestApp.install(sUser)) {
             // Arbitrary call - there are no methods on this service which don't require permissions
             assertThrows(SecurityException.class, () -> {
                 testAppInstance.hardwarePropertiesManager().getCpuUsages();
@@ -366,25 +343,30 @@ public class TestAppInstanceReferenceTest {
 
     @Test
     public void packageManager_returnsUsableInstance() {
-        TestApp testApp = mTestAppProvider.any();
-        try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
+        try (TestAppInstanceReference testAppInstance = sTestApp.install(sUser)) {
             assertThat(testAppInstance.packageManager().hasSystemFeature("")).isFalse();
         }
     }
 
     @Test
     public void crossProfileApps_returnsUsableInstance() {
-        TestApp testApp = mTestAppProvider.any();
-        try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
+        try (TestAppInstanceReference testAppInstance = sTestApp.install(sUser)) {
             assertThat(testAppInstance.crossProfileApps().getTargetUserProfiles()).isEmpty();
         }
     }
 
     @Test
     public void launcherApps_returnsUsableInstance() {
-        TestApp testApp = mTestAppProvider.any();
-        try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
+        try (TestAppInstanceReference testAppInstance = sTestApp.install(sUser)) {
             assertThat(testAppInstance.launcherApps().hasShortcutHostPermission()).isFalse();
+        }
+    }
+
+    @Test
+    public void accountManager_returnsUsableInstance() {
+        try (TestAppInstanceReference testAppInstance = sTestApp.install(sUser)) {
+            // Arbitrary call which does not require specific permissions to confirm no crash
+            assertThat(testAppInstance.accountManager().getAccounts()).isNotNull();
         }
     }
 }

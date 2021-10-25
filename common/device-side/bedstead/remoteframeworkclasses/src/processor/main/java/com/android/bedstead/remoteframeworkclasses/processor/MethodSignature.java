@@ -95,7 +95,9 @@ public final class MethodSignature {
         String methodName = parts[0];
         string = parts[1];
         parts = string.split("\\)", 2);
-        List<TypeMirror> parameters = Arrays.stream(parts[0].split(","))
+        // Remove generic types as we don't need to care about them at this point
+        String parametersString = parts[0].replaceAll("<.*>", "");
+        List<TypeMirror> parameters = Arrays.stream(parametersString.split(","))
                 .map(String::trim)
                 .filter(t -> !t.isEmpty())
                 .map(t -> typeForString(t, types, elements))
