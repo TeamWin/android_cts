@@ -448,14 +448,6 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
         }
     }
 
-    @Test
-    public void testLocationPermissionGrantNotifies() throws Exception {
-        installAppPermissionAppAsUser();
-        configureNotificationListener();
-        executeDeviceTestMethod(".PermissionsTest",
-                "testPermissionGrantStateGranted_userNotifiedOfLocationPermission");
-    }
-
     @Override
     @Test
     public void testAdminControlOverSensorPermissionGrantsDefault() throws Exception {
@@ -467,36 +459,14 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Override
     @Test
-    public void testGrantOfSensorsRelatedPermissions() throws Exception {
-        // Skip for now, re-enable when the code path sets DO as able to grant permissions.
-    }
-
-    @Override
-    @Test
     public void testSensorsRelatedPermissionsNotGrantedViaPolicy() throws Exception {
         // Skip for now, re-enable when the code path sets DO as able to grant permissions.
-    }
-
-    @Override
-    @Test
-    public void testStateOfSensorsRelatedPermissionsCannotBeRead() throws Exception {
-        // Skip because in DO mode the admin can read permission state.
     }
 
     //TODO(b/180413140) Investigate why the test fails on DO mode.
     @Override
     @Test
     public void testPermissionPrompts() throws Exception {
-    }
-
-    @Override
-    @Test
-    @TemporarilyIgnoreOnHeadlessSystemUserMode(bugId = "197906636", reason = "Cannot be tested on "
-            + "current setup as DpmWrapper would grant permission to user 0, and activity that "
-            + "checks the permission runs on current user; need to re-enable once test is moved "
-            + "to new infra")
-    public void testPermissionGrant() throws Exception {
-        super.testPermissionGrant();
     }
 
     @Override
@@ -656,11 +626,6 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
                 /* params= */ new HashMap<>());
     }
 
-    private void configureNotificationListener() throws DeviceNotAvailableException {
-        getDevice().executeShellCommand("cmd notification allow_listener "
-                + "com.android.cts.deviceandprofileowner/.NotificationListener");
-    }
-
     private void generateTestSecurityLogs() throws Exception {
         // Trigger security events of type TAG_ADB_SHELL_CMD.
         for (int i = 0; i < SECURITY_EVENTS_BATCH_SIZE; i++) {
@@ -677,12 +642,6 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
             setProfileOwnerOrFail(DEVICE_ADMIN_COMPONENT_FLATTENED, userId);
         }
         return userId;
-    }
-
-    private void switchToUser(int userId) throws Exception {
-        switchUser(userId);
-        waitForBroadcastIdle();
-        wakeupAndDismissKeyguard();
     }
 
     private void setUserAsAffiliatedUserToPrimary(int userId) throws Exception {
