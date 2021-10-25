@@ -46,6 +46,7 @@ import android.view.inputmethod.ExtractedTextRequest;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputContentInfo;
 import android.view.inputmethod.InputMethodManager;
+import android.view.inputmethod.TextAttribute;
 
 import androidx.annotation.AnyThread;
 import androidx.annotation.GuardedBy;
@@ -621,7 +622,39 @@ public class MockImeSession implements AutoCloseable {
         final Bundle params = new Bundle();
         params.putCharSequence("text", text);
         params.putInt("newCursorPosition", newCursorPosition);
-        return callCommandInternal("setComposingText", params);
+        return callCommandInternal("setComposingText(CharSequence,int)", params);
+    }
+
+    /**
+     * Lets {@link MockIme} to call
+     * {@link InputConnection#setComposingText(CharSequence, int, TextAttribute)} with the given
+     * parameters.
+     *
+     * <p>This triggers
+     * {@code getCurrentInputConnection().setComposingText(text, newCursorPosition, textAttribute)}.
+     * </p>
+     *
+     * <p>Use {@link ImeEvent#getReturnBooleanValue()} for {@link ImeEvent} returned from
+     * {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to see the
+     * value returned from the API.</p>
+     *
+     * <p>This can be affected by {@link #memorizeCurrentInputConnection()}.</p>
+     *
+     * @param text to be passed as the {@code text} parameter
+     * @param newCursorPosition to be passed as the {@code newCursorPosition} parameter
+     * @param textAttribute to be passed as the {@code textAttribute} parameter
+     * @return {@link ImeCommand} object that can be passed to
+     *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
+     *         wait until this event is handled by {@link MockIme}
+     */
+    @NonNull
+    public ImeCommand callSetComposingText(@Nullable CharSequence text, int newCursorPosition,
+            @Nullable TextAttribute textAttribute) {
+        final Bundle params = new Bundle();
+        params.putCharSequence("text", text);
+        params.putInt("newCursorPosition", newCursorPosition);
+        params.putParcelable("textAttribute", textAttribute);
+        return callCommandInternal("setComposingText(CharSequence,int,TextAttribute)", params);
     }
 
     /**
@@ -647,7 +680,37 @@ public class MockImeSession implements AutoCloseable {
         final Bundle params = new Bundle();
         params.putInt("start", start);
         params.putInt("end", end);
-        return callCommandInternal("setComposingRegion", params);
+        return callCommandInternal("setComposingRegion(int,int)", params);
+    }
+
+    /**
+     * Lets {@link MockIme} to call
+     * {@link InputConnection#setComposingRegion(int, int, TextAttribute)} with the given
+     * parameters.
+     *
+     * <p>This triggers
+     * {@code getCurrentInputConnection().setComposingRegion(start, end, TextAttribute)}.</p>
+     *
+     * <p>Use {@link ImeEvent#getReturnBooleanValue()} for {@link ImeEvent} returned from
+     * {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to see the
+     * value returned from the API.</p>
+     *
+     * <p>This can be affected by {@link #memorizeCurrentInputConnection()}.</p>
+     *
+     * @param start to be passed as the {@code start} parameter
+     * @param end to be passed as the {@code end} parameter
+     * @return {@link ImeCommand} object that can be passed to
+     *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
+     *         wait until this event is handled by {@link MockIme}.
+     */
+    @NonNull
+    public ImeCommand callSetComposingRegion(int start, int end,
+            @Nullable TextAttribute textAttribute) {
+        final Bundle params = new Bundle();
+        params.putInt("start", start);
+        params.putInt("end", end);
+        params.putParcelable("textAttribute", textAttribute);
+        return callCommandInternal("setComposingRegion(int,int,TextAttribute)", params);
     }
 
     /**
@@ -695,7 +758,37 @@ public class MockImeSession implements AutoCloseable {
         final Bundle params = new Bundle();
         params.putCharSequence("text", text);
         params.putInt("newCursorPosition", newCursorPosition);
-        return callCommandInternal("commitText", params);
+        return callCommandInternal("commitText(CharSequence,int)", params);
+    }
+
+    /**
+     * Lets {@link MockIme} to call
+     * {@link InputConnection#commitText(CharSequence, int, TextAttribute)} with the given
+     * parameters.
+     *
+     * <p>This triggers
+     * {@code getCurrentInputConnection().commitText(text, newCursorPosition, TextAttribute)}.</p>
+     *
+     * <p>Use {@link ImeEvent#getReturnBooleanValue()} for {@link ImeEvent} returned from
+     * {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to see the
+     * value returned from the API.</p>
+     *
+     * <p>This can be affected by {@link #memorizeCurrentInputConnection()}.</p>
+     *
+     * @param text to be passed as the {@code text} parameter
+     * @param newCursorPosition to be passed as the {@code newCursorPosition} parameter
+     * @return {@link ImeCommand} object that can be passed to
+     *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
+     *         wait until this event is handled by {@link MockIme}
+     */
+    @NonNull
+    public ImeCommand callCommitText(@Nullable CharSequence text, int newCursorPosition,
+            @Nullable TextAttribute textAttribute) {
+        final Bundle params = new Bundle();
+        params.putCharSequence("text", text);
+        params.putInt("newCursorPosition", newCursorPosition);
+        params.putParcelable("textAttribute", textAttribute);
+        return callCommandInternal("commitText(CharSequence,int,TextAttribute)", params);
     }
 
     /**
