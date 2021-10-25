@@ -16,20 +16,20 @@
 
 package android.permission3.cts
 
-import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
-import com.android.compatibility.common.util.SystemUtil.callWithShellPermissionIdentity
 import android.content.Intent
 import android.hardware.SensorPrivacyManager
 import android.hardware.SensorPrivacyManager.Sensors.CAMERA
 import android.hardware.SensorPrivacyManager.Sensors.MICROPHONE
 import android.location.LocationManager
 import android.os.Build
-import org.junit.Test
 import android.provider.Settings
-import androidx.test.filters.SdkSuppress
 import android.support.test.uiautomator.By
+import androidx.test.filters.SdkSuppress
+import com.android.compatibility.common.util.SystemUtil.callWithShellPermissionIdentity
+import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
 import org.junit.Assume
 import org.junit.Before
+import org.junit.Test
 
 /**
  * Banner card display tests on sensors being blocked
@@ -97,6 +97,14 @@ class SensorBlockedBannerTest : BaseUsePermissionTest() {
             runWithShellPermissionIdentity {
                 locationManager.setLocationEnabledForUser(!enable,
                         android.os.Process.myUserHandle())
+            }
+            if (!enable) {
+                try {
+                    waitFindObject(By.text("No location access"))
+                    click(By.text("CLOSE"))
+                } catch (e: Exception) {
+                    // Do nothing, warning didn't show up so test can proceed
+                }
             }
         } else {
             runWithShellPermissionIdentity {
