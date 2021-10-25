@@ -80,8 +80,6 @@ public @interface EnterprisePolicy {
     int APPLIES_TO_AFFILIATED_CHILD_PROFILES = 1 << 4;
     /** A policy that applies to the parent of the profile of the package which applied the policy. */
     int APPLIES_TO_PARENT = 1 << 5;
-    /** A policy that applies to the parent of the profile of the package which applied the policy if that profile is a COPE profile. */
-    int APPLIES_TO_COPE_PARENT = 1 << 6;
 
     /** A policy that applies to affiliated or unaffiliate profiles of the package which applied the policy. */
     int APPLIES_TO_CHILD_PROFILES =
@@ -97,12 +95,16 @@ public @interface EnterprisePolicy {
     // Applied by
 
     /** A policy that can be applied by a device owner. */
-    int APPLIED_BY_DEVICE_OWNER = 1 << 7;
+    int APPLIED_BY_DEVICE_OWNER = 1 << 6;
     /** A policy that can be applied by a profile owner of an unaffiliated profile. */
-    int APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_PROFILE = 1 << 8;
+    int APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_PROFILE = 1 << 7;
     /** A policy that can be applied by a profile owner of an affiliated profile */
-    int APPLIED_BY_AFFILIATED_PROFILE_OWNER_PROFILE = 1 << 9;
-    /** A policy that can be applied by a profile owner of an affiliated or unaffiliated profile. */
+    int APPLIED_BY_AFFILIATED_PROFILE_OWNER_PROFILE = 1 << 8;
+    /** A policy that can be applied by a profile owner of a cope profile */
+    int APPLIED_BY_COPE_PROFILE_OWNER = 1 << 9;
+
+    /** A policy that can be applied by a profile owner of an affiliated or unaffiliated profile.
+     * This does not include cope profiles. */
     int APPLIED_BY_PROFILE_OWNER_PROFILE =
             APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_PROFILE
                     | APPLIED_BY_AFFILIATED_PROFILE_OWNER_PROFILE;
