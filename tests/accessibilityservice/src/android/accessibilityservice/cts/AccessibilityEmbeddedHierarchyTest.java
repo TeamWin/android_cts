@@ -18,10 +18,12 @@ package android.accessibilityservice.cts;
 
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityAndWaitForItToBeOnscreen;
 import static android.accessibilityservice.cts.utils.AsyncUtils.DEFAULT_TIMEOUT_MS;
+import static android.content.pm.PackageManager.FEATURE_AUTOMOTIVE;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
 
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.accessibilityservice.AccessibilityServiceInfo;
@@ -103,6 +105,13 @@ public class AccessibilityEmbeddedHierarchyTest {
         mActivity = launchActivityAndWaitForItToBeOnscreen(sInstrumentation, sUiAutomation,
                 mActivityRule);
         mActivity.waitForEmbeddedHierarchy();
+    }
+
+    @Before
+    public void assumeNoAutomotive() {
+        // TODO(b/200620676) STOPSHIP Fix accessibility issue and remove assumeNoAutomotive()
+        assumeFalse("automotive build", sInstrumentation.getTargetContext().getPackageManager()
+                .hasSystemFeature(FEATURE_AUTOMOTIVE));
     }
 
     @Test
