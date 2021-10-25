@@ -138,7 +138,7 @@ public class UserBuilder {
                     commandBuilder.validate(ShellCommandUtils::startsWithSuccess)
                             .executeAndParseOutput(
                                     (output) -> Integer.parseInt(output.split("id ")[1].trim()));
-            return new UnresolvedUser(userId);
+            return new UserReference(userId);
         } catch (AdbException e) {
             throw new NeneException("Could not create user " + this, e);
         }

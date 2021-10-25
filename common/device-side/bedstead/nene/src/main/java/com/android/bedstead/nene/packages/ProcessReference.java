@@ -17,10 +17,7 @@
 package com.android.bedstead.nene.packages;
 
 import com.android.bedstead.nene.annotations.Experimental;
-import com.android.bedstead.nene.exceptions.AdbException;
-import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.users.UserReference;
-import com.android.bedstead.nene.utils.ShellCommand;
 
 @Experimental
 public final class ProcessReference {
@@ -59,21 +56,7 @@ public final class ProcessReference {
         return mUser;
     }
 
-    /**
-     * Kill the process.
-     */
-    public void kill() {
-        try {
-            ShellCommand.builder("kill")
-                    .addOperand(mProcessId)
-                    .allowEmptyOutput(true)
-                    .validate(String::isEmpty)
-                    .asRoot()
-                    .execute();
-        } catch (AdbException e) {
-            throw new NeneException("Error killing process", e);
-        }
-    }
+    // TODO(b/203758521): Add support for killing processes
 
     @Override
     public int hashCode() {
