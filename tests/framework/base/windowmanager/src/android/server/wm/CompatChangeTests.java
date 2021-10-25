@@ -365,12 +365,7 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     @EnableCompatChanges({ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO,
             ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO_LARGE})
     public void testOverrideMinAspectRatioForLandscapeActivity() {
-        // Note that we're using getBounds() in portrait, rather than getAppBounds() like other
-        // tests, because we're comparing to the display size and therefore need to consider insets.
-        runMinAspectRatioTest(NON_RESIZEABLE_LANDSCAPE_ACTIVITY,
-                /* expectedInPortrait= */ FIXED_ORIENTATION_MIN_ASPECT_RATIO,
-                /* expectedInLandscape= */ SIZE_COMPAT_DISPLAY_ASPECT_RATIO,
-                /* useAppBoundsInPortrait= */false);
+        runMinAspectRatioTest(NON_RESIZEABLE_LANDSCAPE_ACTIVITY, /* expected= */ 0);
     }
 
     /**
@@ -381,12 +376,7 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     @EnableCompatChanges({ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO,
             ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO_LARGE})
     public void testOverrideMinAspectRatioForNonFixedOrientationActivity() {
-        // Note that we're using getBounds() in portrait, rather than getAppBounds() like other
-        // tests, because we're comparing to the display size and therefore need to consider insets.
-        runMinAspectRatioTest(NON_RESIZEABLE_NON_FIXED_ORIENTATION_ACTIVITY,
-                /* expectedInPortrait= */ SIZE_COMPAT_DISPLAY_ASPECT_RATIO,
-                /* expectedInLandscape= */ SIZE_COMPAT_DISPLAY_ASPECT_RATIO,
-                /* useAppBoundsInPortrait= */false);
+        runMinAspectRatioTest(NON_RESIZEABLE_NON_FIXED_ORIENTATION_ACTIVITY, /* expected= */ 0);
     }
 
     /**
@@ -440,7 +430,7 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
 
     /**
      * Test that the min aspect ratio of the activity as defined in the manifest is upheld if
-     * there is a n override for a smaller min aspect ratio present (3:2 < 1.6).
+     * there is an override for a smaller min aspect ratio present (3:2 < 1.6).
      */
     @Test
     @EnableCompatChanges({ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO,
