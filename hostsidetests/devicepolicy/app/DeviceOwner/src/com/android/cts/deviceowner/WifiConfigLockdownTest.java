@@ -100,17 +100,21 @@ public class WifiConfigLockdownTest extends BaseDeviceOwnerTest {
 
     public void testDeviceOwnerCanRemoveConfig() throws Exception {
         List<WifiConfiguration> configs = mWifiManager.getConfiguredNetworks();
-        int removeCount = 0;
+        boolean removedDo = false;
+        boolean removedRegular = false;
         for (WifiConfiguration config : configs) {
-            if (areMatchingSsids(ORIGINAL_DEVICE_OWNER_SSID, config.SSID) ||
-                    areMatchingSsids(ORIGINAL_REGULAR_SSID, config.SSID)) {
-                assertTrue(mWifiManager.removeNetwork(config.networkId));
-                ++removeCount;
+            // Only one of auto-upgrade configs can be removed, which will remove the network.
+            if (areMatchingSsids(ORIGINAL_DEVICE_OWNER_SSID, config.SSID)) {
+                assertEquals("Unexpected result when removing DO network",
+                        !removedDo, mWifiManager.removeNetwork(config.networkId));
+                removedDo = true;
+            } else if (areMatchingSsids(ORIGINAL_REGULAR_SSID, config.SSID)) {
+                assertEquals("Unexpected result when removing regular network",
+                        !removedRegular, mWifiManager.removeNetwork(config.networkId));
+                removedRegular = true;
             }
         }
-        // There might be auto-upgrade configs returned.
-        assertTrue("Expected to remove two configs: the DO created one and the regular one." +
-                " Instead removed: " + removeCount, removeCount >= 2);
+        assertTrue("Expected to remove both DO and regular configs", removedDo && removedRegular);
     }
 
     public void testRegularAppCannotUpdateDeviceOwnerConfig() throws Exception {
