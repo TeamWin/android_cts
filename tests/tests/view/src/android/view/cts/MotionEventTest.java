@@ -680,7 +680,8 @@ public class MotionEventTest {
             originalRawCoords[i] = new PointerCoords(c);
         }
         final MotionEvent event = MotionEvent.obtain(0, 0, MotionEvent.ACTION_MOVE,
-                pointerCount, pointerIds, pointerCoords, 0, 0, 0, 0, 0, 0, 0);
+                pointerCount, pointerIds, pointerCoords, 0, 0, 0, 0, 0,
+                InputDevice.SOURCE_TOUCHSCREEN, 0);
         dump("Original points.", event);
 
         // Check original raw X and Y assumption.
