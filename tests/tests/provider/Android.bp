@@ -61,9 +61,3 @@ filegroup {
     srcs: ["src/android/provider/cts/ProviderTestUtils.java",
            "src/android/provider/cts/media/MediaStoreUtils.java"],
 }
-
-filegroup {
-    name: "CtsProviderTestUtils",
-    srcs: ["src/android/provider/cts/ProviderTestUtils.java",
-           "src/android/provider/cts/media/MediaStoreUtils.java"],
-}
