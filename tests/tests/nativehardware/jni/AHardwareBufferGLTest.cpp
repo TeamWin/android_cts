@@ -1501,11 +1501,6 @@ void AHardwareBufferGLTest::SetUpTexture(const AHardwareBuffer_Desc& desc, int u
             // Compatibility code for ES 2.0 goes here.
             GLenum internal_format = 0, format = 0, type = 0;
             switch (desc.format) {
-                case GL_RGB565:
-                    internal_format = GL_RGB;
-                    format = GL_RGB;
-                    type = GL_UNSIGNED_SHORT_5_6_5;
-                    break;
                 case GL_RGB8:
                     internal_format = GL_RGB;
                     format = GL_RGB;
@@ -1521,6 +1516,11 @@ void AHardwareBufferGLTest::SetUpTexture(const AHardwareBuffer_Desc& desc, int u
                     internal_format = GL_SRGB_ALPHA_EXT;
                     format = GL_RGBA;
                     type = GL_UNSIGNED_BYTE;
+                    break;
+                case GL_RGB565:
+                    internal_format = GL_RGB;
+                    format = GL_RGB;
+                    type = GL_UNSIGNED_SHORT_5_6_5;
                     break;
                 case GL_DEPTH_COMPONENT16:
                     // Available through GL_OES_depth_texture.
