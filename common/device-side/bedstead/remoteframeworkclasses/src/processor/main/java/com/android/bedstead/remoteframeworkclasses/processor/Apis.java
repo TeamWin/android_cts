@@ -28,6 +28,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.TypeKind;
+import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 
@@ -39,20 +42,19 @@ public final class Apis {
     private static final String[] API_FILES =
             {"current.txt", "test-current.txt", "wifi-current.txt"};
 
-    private static final Set<String> API_TXTS = initialiseApiTxts();
+    private static final Map<String, String> API_TXTS = initialiseApiTxts();
     private static final Map<String, Apis> sPackageToApi = new HashMap<>();
 
-    private static Set<String> initialiseApiTxts() {
+    private static Map<String, String> initialiseApiTxts() {
         return Arrays.stream(API_FILES)
-                .map(f -> {
+                .collect(Collectors.toMap(f -> f, f -> {
                     try {
                         return Resources.toString(Processor.class.getResource("/apis/" + f),
                                 StandardCharsets.UTF_8);
                     } catch (IOException e) {
                         throw new IllegalStateException("Could not read file " + f);
                     }
-                })
-                .collect(Collectors.toSet());
+                }));
     }
 
     /**
@@ -62,30 +64,53 @@ public final class Apis {
         if (sPackageToApi.containsKey(className)) {
             return sPackageToApi.get(className);
         }
-
         ImmutableSet.Builder<MethodSignature> methods = ImmutableSet.builder();
-        for (String apiTxt : API_TXTS) {
-            methods.addAll(parseApiTxt(apiTxt, className, types, elements));
+        Set<String> parents = new HashSet<>();
+        findParents(parents, className, elements);
+        for (String c : parents) {
+            for (Map.Entry<String, String> apiTxt : API_TXTS.entrySet()) {
+                methods.addAll(
+                        parseApiTxt(apiTxt.getKey(), apiTxt.getValue(), c, types, elements));
+            }
         }
 
         return new Apis(methods.build());
     }
 
+    private static void findParents(Set<String> parents, String className, Elements elements) {
+        parents.add(className);
+
+        if (className.equals("java.lang.Object")) {
+            return;
+        }
+
+        TypeElement element = elements.getTypeElement(className);
+        System.out.println("Checking " + className + " got " + element);
+
+        TypeMirror superClass = element.getSuperclass();
+        if (!superClass.getKind().equals(TypeKind.NONE)) {
+            findParents(parents, superClass.toString(), elements);
+        }
+
+        element.getInterfaces().stream().map(TypeMirror::toString)
+                .forEach(c -> findParents(parents, c, elements));
+    }
+
     private static Set<MethodSignature> parseApiTxt(
-            String apiTxt, String className, Types types, Elements elements) {
+            String filename, String apiTxt, String className, Types types, Elements elements) {
         int separatorPosition = className.lastIndexOf(".");
         String packageName = className.substring(0, separatorPosition);
         String simpleClassName = className.substring(separatorPosition + 1);
 
         String[] packageSplit = apiTxt.split("package " + packageName + " \\{", 2);
         if (packageSplit.length < 2) {
-            System.out.println("Package " + packageName + " not in file");
+            System.out.println("Package " + packageName + " not in file " + filename);
             // Package not in this file
             return new HashSet<>();
         }
-        String[] classSplit = packageSplit[1].split("class " + simpleClassName + " \\{", 2);
+        String[] classSplit = packageSplit[1].split("class " + simpleClassName + " .*?\n", 2);
         if (classSplit.length < 2) {
-            System.out.println("Class " + simpleClassName + " not in file");
+            System.out.println("Class " + simpleClassName + " not in file " + filename);
             // Class not in this file
             return new HashSet<>();
         }

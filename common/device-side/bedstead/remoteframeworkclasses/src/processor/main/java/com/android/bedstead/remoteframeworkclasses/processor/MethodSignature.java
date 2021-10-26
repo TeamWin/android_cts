@@ -76,19 +76,23 @@ public final class MethodSignature {
         string = string.replaceAll("@.+? ", "");
 
         String[] parts = string.split(" ", 2);
-        Visibility visibility = Visibility.valueOf(parts[0].toUpperCase());
+        Visibility visibility;
+        try {
+            visibility = Visibility.valueOf(parts[0].toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalStateException("Error finding visibility in string " + string);
+        }
         string = parts[1];
         parts = string.split(" ", 2);
 
         TypeMirror returnType;
-        if (parts[0].equals("abstract")) {
+        if (parts[0].equals("abstract") || parts[0].equals("final")) {
             // Doesn't matter - we're wrapping anyway
             string = parts[1];
             parts = string.split(" ", 2);
-            returnType = typeForString(parts[0], types, elements);
-        } else {
-            returnType = typeForString(parts[0], types, elements);
         }
+
+        returnType = typeForString(parts[0], types, elements);
 
         string = parts[1];
         parts = string.split("\\(", 2);
@@ -97,11 +101,18 @@ public final class MethodSignature {
         parts = string.split("\\)", 2);
         // Remove generic types as we don't need to care about them at this point
         String parametersString = parts[0].replaceAll("<.*>", "");
-        List<TypeMirror> parameters = Arrays.stream(parametersString.split(","))
-                .map(String::trim)
-                .filter(t -> !t.isEmpty())
-                .map(t -> typeForString(t, types, elements))
-                .collect(Collectors.toList());
+        // Remove varargs
+        parametersString = parametersString.replaceAll("\\.\\.\\.", "");
+        List<TypeMirror> parameters;
+        try {
+            parameters = Arrays.stream(parametersString.split(","))
+                    .map(String::trim)
+                    .filter(t -> !t.isEmpty())
+                    .map(t -> typeForString(t, types, elements))
+                    .collect(Collectors.toList());
+        } catch (IllegalStateException e) {
+            throw new IllegalStateException("Error parsing types from string " + parametersString);
+        }
         string = parts[1];
         Set<TypeMirror> exceptions = new HashSet<>();
         if (string.contains("throws")) {

@@ -89,7 +89,7 @@ public class PackageTest {
     @BeforeClass
     public static void setupClass() throws Exception {
         try (PermissionContext p = TestApis.permissions()
-                .withPermissionOnVersion(R, MANAGE_EXTERNAL_STORAGE)) {
+                .withPermissionOnVersionAtLeast(R, MANAGE_EXTERNAL_STORAGE)) {
             sTestApp.writeApkFile(sTestAppApkFile);
         }
     }
@@ -97,7 +97,7 @@ public class PackageTest {
     @AfterClass
     public static void teardownClass() throws Exception {
         try (PermissionContext p = TestApis.permissions()
-                .withPermissionOnVersion(R, MANAGE_EXTERNAL_STORAGE)) {
+                .withPermissionOnVersionAtLeast(R, MANAGE_EXTERNAL_STORAGE)) {
             sTestAppApkFile.delete();
         }
     }

@@ -34,6 +34,7 @@ import java.io.PrintWriter;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -57,7 +58,7 @@ import javax.tools.JavaFileObject;
  *
  * <p>This is started by including the {@link RemoteFrameworkClasses} annotation.
  *
- * <p>For each entry in {@code SYSTEM_SERVICES} this will generate an interface including all public
+ * <p>For each entry in {@code FRAMEWORK_CLASSES} this will generate an interface including all public
  * and test APIs with the {@code CrossUser} annotation. This interface will be named the same as the
  * framework class except with a prefix of "Remote", and will be in the same package.
  *
@@ -70,7 +71,7 @@ import javax.tools.JavaFileObject;
 @AutoService(javax.annotation.processing.Processor.class)
 public final class Processor extends AbstractProcessor {
 
-    private static final String[] SYSTEM_SERVICES = {
+    private static final String[] FRAMEWORK_CLASSES = {
             "android.app.admin.DevicePolicyManager",
             "android.net.wifi.WifiManager",
             "android.os.HardwarePropertiesManager",
@@ -78,7 +79,8 @@ public final class Processor extends AbstractProcessor {
             "android.content.pm.PackageManager",
             "android.content.pm.CrossProfileApps",
             "android.content.pm.LauncherApps",
-            "android.accounts.AccountManager"
+            "android.accounts.AccountManager",
+            "android.app.Activity"
     };
 
     private static final String PARENT_PROFILE_INSTANCE =
@@ -297,7 +299,170 @@ public final class Processor extends AbstractProcessor {
             "public android.os.Bundle isCredentialsUpdateSuggested(android.accounts.AccountAuthenticatorResponse, android.accounts.Account, String) throws android.accounts.NetworkErrorException",
             "public android.accounts.AccountManagerFuture<java.lang.Boolean> isCredentialsUpdateSuggested(android.accounts.Account, String, android.accounts.AccountManagerCallback<java.lang.Boolean>, android.os.Handler)",
             "public android.accounts.AccountManagerFuture<java.lang.Boolean> removeAccount(android.accounts.Account, android.accounts.AccountManagerCallback<java.lang.Boolean>, android.os.Handler)",
-            "public android.accounts.AccountManagerFuture<android.accounts.Account> renameAccount(android.accounts.Account, @Size(min=1) String, android.accounts.AccountManagerCallback<android.accounts.Account>, android.os.Handler)"
+            "public android.accounts.AccountManagerFuture<android.accounts.Account> renameAccount(android.accounts.Account, @Size(min=1) String, android.accounts.AccountManagerCallback<android.accounts.Account>, android.os.Handler)",
+
+            // Activity
+
+            // Uses android.view.View
+            "public void addContentView(android.view.View, android.view.ViewGroup.LayoutParams)",
+            "@Nullable public android.view.View getCurrentFocus()",
+            "@Nullable public android.view.View onCreatePanelView(int)",
+            "@Nullable public android.view.View onCreateView(@NonNull String, @NonNull android.content.Context, @NonNull android.util.AttributeSet)",
+            "@Nullable public android.view.View onCreateView(@Nullable android.view.View, @NonNull String, @NonNull android.content.Context, @NonNull android.util.AttributeSet)",
+            "public boolean onPreparePanel(int, @Nullable android.view.View, @NonNull android.view.Menu)",
+            "public void openContextMenu(android.view.View)",
+            "public void registerForContextMenu(android.view.View)",
+            "public void setContentView(android.view.View)",
+            "public void setContentView(android.view.View, android.view.ViewGroup.LayoutParams)",
+            "public void unregisterForContextMenu(android.view.View)",
+
+            // Uses java.io.FileDescriptor
+            "public void dump(@NonNull String, @Nullable java.io.FileDescriptor, @NonNull java.io.PrintWriter, @Nullable String[])",
+
+            // Uses android.app.Activity
+            "@Deprecated public void finishActivityFromChild(@NonNull android.app.Activity, int)",
+            "@Deprecated public void finishFromChild(android.app.Activity)",
+            "public final android.app.Activity getParent()",
+            "@Deprecated public boolean navigateUpToFromChild(android.app.Activity, android.content.Intent)",
+            "protected void onChildTitleChanged(android.app.Activity, CharSequence)",
+            "@Deprecated public boolean onNavigateUpFromChild(android.app.Activity)",
+            "@Deprecated public void startActivityFromChild(@NonNull android.app.Activity, @RequiresPermission android.content.Intent, int)",
+            "@Deprecated public void startActivityFromChild(@NonNull android.app.Activity, @RequiresPermission android.content.Intent, int, @Nullable android.os.Bundle)",
+            "@Deprecated public void startIntentSenderFromChild(android.app.Activity, android.content.IntentSender, int, android.content.Intent, int, int, int) throws android.content.IntentSender.SendIntentException",
+            "@Deprecated public void startIntentSenderFromChild(android.app.Activity, android.content.IntentSender, int, android.content.Intent, int, int, int, @Nullable android.os.Bundle) throws android.content.IntentSender.SendIntentException",
+
+            // Uses android.app.ActionBar
+            "@Nullable public android.app.ActionBar getActionBar()",
+
+            // Uses android.app.Application
+            "public final android.app.Application getApplication()",
+
+            // Uses android.app.Fragment
+            "@Deprecated public void onAttachFragment(android.app.Fragment)",
+            "@Deprecated public void startActivityFromFragment(@NonNull android.app.Fragment, @RequiresPermission android.content.Intent, int)",
+            "@Deprecated public void startActivityFromFragment(@NonNull android.app.Fragment, @RequiresPermission android.content.Intent, int, @Nullable android.os.Bundle)",
+
+            // Uses android.app.FragmentManager
+            "@Deprecated public android.app.FragmentManager getFragmentManager()",
+
+            // Uses android.transition.Scene
+            "public android.transition.Scene getContentScene()",
+
+            // Uses android.transition.TransitionManager
+            "public android.transition.TransitionManager getContentTransitionManager()",
+            "public void setContentTransitionManager(android.transition.TransitionManager)",
+
+            // Uses Object
+            "@Nullable public Object getLastNonConfigurationInstance()",
+            "public Object onRetainNonConfigurationInstance()",
+
+            // Uses android.view.LayoutInflater
+            "@NonNull public android.view.LayoutInflater getLayoutInflater()",
+
+            // Uses android.view.MenuInflater
+            "@NonNull public android.view.MenuInflater getMenuInflater()",
+
+            // Uses android.app.LoaderManager
+            "@Deprecated public android.app.LoaderManager getLoaderManager()",
+
+            // Uses android.media.session.MediaController
+            "public final android.media.session.MediaController getMediaController()",
+
+            // Uses android.content.SharedPreferences
+            "public android.content.SharedPreferences getPreferences(int)",
+
+            // Uses android.view.SearchEvent
+            "public final android.view.SearchEvent getSearchEvent()",
+
+            // Uses android.window.SplashScreen
+            "@NonNull public final android.window.SplashScreen getSplashScreen()",
+
+            // Uses android.app.VoiceInteractor
+            "public android.app.VoiceInteractor getVoiceInteractor()",
+
+            // Uses android.view.Window
+            "public android.view.Window getWindow()",
+
+            // Uses android.view.WindowManager
+            "public android.view.WindowManager getWindowManager()",
+
+            // Uses android.database.Cursor
+            "@Deprecated public final android.database.Cursor managedQuery(android.net.Uri, String[], String, String[], String)",
+            "@Deprecated public void startManagingCursor(android.database.Cursor)",
+            "@Deprecated public void stopManagingCursor(android.database.Cursor)",
+
+            // Uses android.view.ActionMode
+            "@CallSuper public void onActionModeFinished(android.view.ActionMode)",
+            "@CallSuper public void onActionModeStarted(android.view.ActionMode)",
+            "@Nullable public android.view.ActionMode onWindowStartingActionMode(android.view.ActionMode.Callback)",
+            "@Nullable public android.view.ActionMode onWindowStartingActionMode(android.view.ActionMode.Callback, int)",
+            "@Nullable public android.view.ActionMode startActionMode(android.view.ActionMode.Callback)",
+            "@Nullable public android.view.ActionMode startActionMode(android.view.ActionMode.Callback, int)",
+
+            // Uses android.view.MenuItem
+            "public boolean onContextItemSelected(@NonNull android.view.MenuItem)",
+            "public void onContextMenuClosed(@NonNull android.view.Menu)",
+            "public boolean onMenuItemSelected(int, @NonNull android.view.MenuItem)",
+            "public boolean onOptionsItemSelected(@NonNull android.view.MenuItem)",
+
+            // Uses android.view.ContextMenu
+            "public void onCreateContextMenu(android.view.ContextMenu, android.view.View, android.view.ContextMenu.ContextMenuInfo)",
+
+            // Uses android.app.Dialog
+            "@Deprecated protected android.app.Dialog onCreateDialog(int)",
+            "@Deprecated @Nullable protected android.app.Dialog onCreateDialog(int, android.os.Bundle)",
+            "@Deprecated protected void onPrepareDialog(int, android.app.Dialog)",
+            "@Deprecated protected void onPrepareDialog(int, android.app.Dialog, android.os.Bundle)",
+
+            // Uses android.app.TaskStackBuilder
+            "public void onCreateNavigateUpTaskStack(android.app.TaskStackBuilder)",
+            "public void onPrepareNavigateUpTaskStack(android.app.TaskStackBuilder)",
+
+            // Uses android.view.Menu
+            "public boolean onCreateOptionsMenu(android.view.Menu)",
+            "public boolean onCreatePanelMenu(int, @NonNull android.view.Menu)",
+            "public boolean onMenuOpened(int, @NonNull android.view.Menu)",
+            "public void onOptionsMenuClosed(android.view.Menu)",
+            "public void onPanelClosed(int, @NonNull android.view.Menu)",
+            "public boolean onPrepareOptionsMenu(android.view.Menu)",
+
+            // Uses android.graphics.Canvas
+            "@Deprecated public boolean onCreateThumbnail(android.graphics.Bitmap, android.graphics.Canvas)",
+
+            // Uses android.os.CancellationSignal
+            "public void onGetDirectActions(@NonNull android.os.CancellationSignal, @NonNull java.util.function.Consumer<java.util.List<android.app.DirectAction>>)",
+            "public void onPerformDirectAction(@NonNull String, @NonNull android.os.Bundle, @NonNull android.os.CancellationSignal, @NonNull java.util.function.Consumer<android.os.Bundle>)",
+
+            // Uses android.view.SearchEvent
+            "public boolean onSearchRequested(@Nullable android.view.SearchEvent)",
+
+            // Uses android.app.Application.ActivityLifecycleCallbacks
+            "public void registerActivityLifecycleCallbacks(@NonNull android.app.Application.ActivityLifecycleCallbacks)",
+            "public void unregisterActivityLifecycleCallbacks(@NonNull android.app.Application.ActivityLifecycleCallbacks)",
+
+            // Uses Runnable
+            "public final void runOnUiThread(Runnable)",
+
+            // Uses android.widget.Toolbar
+            "public void setActionBar(@Nullable android.widget.Toolbar)",
+
+            // Uses android.app.SharedElementCallback
+            "public void setEnterSharedElementCallback(android.app.SharedElementCallback)",
+            "public void setExitSharedElementCallback(android.app.SharedElementCallback)",
+
+            // Uses Drawable
+            "public final void setFeatureDrawable(int, android.graphics.drawable.Drawable)",
+
+            // Uses android.media.session.MediaController
+            "public final void setMediaController(android.media.session.MediaController)",
+
+            // Context
+
+            // Uses Object
+            "public abstract Object getSystemService(@NonNull String)",
+
+            // ContextThemeWrapper
+            "protected void onApplyThemeResource(android.content.res.Resources.Theme, int, boolean)"
     );
 
 
@@ -325,7 +490,7 @@ public final class Processor extends AbstractProcessor {
                             m, processingEnv.getTypeUtils(), processingEnv.getElementUtils()))
                     .collect(Collectors.toSet());
 
-            for (String systemService : SYSTEM_SERVICES) {
+            for (String systemService : FRAMEWORK_CLASSES) {
                 TypeElement typeElement =
                         processingEnv.getElementUtils().getTypeElement(systemService);
                 generateRemoteSystemService(
@@ -551,7 +716,7 @@ public final class Processor extends AbstractProcessor {
                 TypeSpec.classBuilder(
                         className)
                         .addSuperinterface(interfaceClassName)
-                        .addModifiers(Modifier.FINAL, Modifier.PUBLIC);
+                        .addModifiers(Modifier.PUBLIC);
 
         classBuilder.addField(ClassName.get(frameworkClass),
                 "mFrameworkClass", Modifier.PRIVATE, Modifier.FINAL);
@@ -616,9 +781,22 @@ public final class Processor extends AbstractProcessor {
 
     private Set<ExecutableElement> filterMethods(
             Set<ExecutableElement> allMethods, Apis validApis, Elements elements) {
-        return allMethods.stream()
-                .filter(m -> validApis.methods().contains(MethodSignature.forMethod(m, elements)))
-                .collect(Collectors.toSet());
+        Set<ExecutableElement> filteredMethods = new HashSet<>();
+
+        for (ExecutableElement method : allMethods) {
+            MethodSignature methodSignature = MethodSignature.forMethod(method, elements);
+            if (validApis.methods().contains(methodSignature)) {
+                if (method.getModifiers().contains(Modifier.PROTECTED)) {
+                    System.out.println(methodSignature + " is protected. Dropping");
+                } else {
+                    filteredMethods.add(method);
+                }
+            } else {
+                System.out.println("No matching public API for " + methodSignature);
+            }
+        }
+
+        return filteredMethods;
     }
 
     private void writeClassToFile(String packageName, TypeSpec clazz) {

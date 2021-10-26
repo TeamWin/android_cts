@@ -33,11 +33,13 @@ import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
+import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -70,10 +72,10 @@ public final class Processor extends AbstractProcessor {
             ClassName.get("com.android.bedstead.nene.utils", "Retry");
     private static final ClassName CONTEXT_CLASSNAME =
             ClassName.get("android.content", "Context");
-    private static final ClassName NENE_ACTIVITY_CLASSNAME =
+    private static final ClassName REMOTE_ACTIVITY_CLASSNAME =
             ClassName.get(
-                    "com.android.bedstead.nene.activities",
-                    "NeneActivityDirect");
+                    "android.app",
+                    "RemoteActivity");
     private static final ClassName TEST_APP_ACTIVITY_CLASSNAME =
             ClassName.get(
                     "com.android.bedstead.testapp",
@@ -105,10 +107,6 @@ public final class Processor extends AbstractProcessor {
     private static final ClassName CROSS_PROFILE_CONNECTOR_CLASSNAME =
             ClassName.get("com.google.android.enterprise.connectedapps",
                     "CrossProfileConnector");
-    private static final ClassName UNAVAILABLE_PROFILE_EXCEPTION_CLASSNAME =
-            ClassName.get(
-                    "com.google.android.enterprise.connectedapps.exceptions",
-                    "UnavailableProfileException");
     private static final ClassName PROFILE_RUNTIME_EXCEPTION_CLASSNAME =
             ClassName.get(
                     "com.google.android.enterprise.connectedapps.exceptions",
@@ -168,7 +166,7 @@ public final class Processor extends AbstractProcessor {
 
         TypeElement neneActivityInterface =
                 processingEnv.getElementUtils().getTypeElement(
-                        NENE_ACTIVITY_CLASSNAME.canonicalName());
+                        REMOTE_ACTIVITY_CLASSNAME.canonicalName());
 
         Set<? extends Element> receiverAnnotatedElements =
                 roundEnv.getElementsAnnotatedWith(TestAppReceiver.class);
@@ -195,8 +193,7 @@ public final class Processor extends AbstractProcessor {
 
             generateDpmParentWrapper(processingEnv.getElementUtils());
             for (TypeElement systemServiceClass : systemServiceClasses) {
-                generateRemoteFrameworkClassWrapper(
-                        processingEnv.getElementUtils(), systemServiceClass);
+                generateRemoteFrameworkClassWrapper(systemServiceClass);
             }
         }
 
@@ -207,8 +204,7 @@ public final class Processor extends AbstractProcessor {
         return true;
     }
 
-    private void generateRemoteFrameworkClassWrapper(
-            Elements elements, TypeElement systemServiceClass) {
+    private void generateRemoteFrameworkClassWrapper(TypeElement systemServiceClass) {
         ClassName originalClassName = ClassName.get(systemServiceClass);
         ClassName interfaceClassName = ClassName.get(
                 originalClassName.packageName(),
@@ -219,7 +215,8 @@ public final class Processor extends AbstractProcessor {
         ClassName profileClassName = ClassName.get(
                 originalClassName.packageName(),
                 "Profile" + interfaceClassName.simpleName());
-        TypeElement interfaceElement = elements.getTypeElement(interfaceClassName.canonicalName());
+        TypeElement interfaceElement =
+                processingEnv.getElementUtils().getTypeElement(interfaceClassName.canonicalName());
 
         TypeSpec.Builder classBuilder =
                 TypeSpec.classBuilder(
@@ -246,7 +243,8 @@ public final class Processor extends AbstractProcessor {
                         profileClassName)
                 .build());
 
-        for (ExecutableElement method : getMethods(interfaceElement)) {
+        for (ExecutableElement method : getMethods(
+                interfaceElement, processingEnv.getElementUtils())) {
             MethodSpec.Builder methodBuilder =
                     MethodSpec.methodBuilder(method.getSimpleName().toString())
                             .returns(ClassName.get(method.getReturnType()))
@@ -268,7 +266,6 @@ public final class Processor extends AbstractProcessor {
 
                 methodBuilder.addParameter(parameterSpec);
             }
-
 
 
             CodeBlock.Builder logicLambda = CodeBlock.builder()
@@ -361,7 +358,7 @@ public final class Processor extends AbstractProcessor {
                 .addStatement("mProfileClass = $T.create(connector)", profileClassName)
                 .build());
 
-        for (ExecutableElement method : getMethods(interfaceElement)) {
+        for (ExecutableElement method : getMethods(interfaceElement, elements)) {
             MethodSpec.Builder methodBuilder =
                     MethodSpec.methodBuilder(method.getSimpleName().toString())
                             .returns(ClassName.get(method.getReturnType()))
@@ -435,12 +432,16 @@ public final class Processor extends AbstractProcessor {
                         .addSuperinterface(TARGETED_REMOTE_ACTIVITY_CLASSNAME)
                         .addModifiers(Modifier.PUBLIC, Modifier.FINAL);
 
-        for (ExecutableElement method : getMethods(neneActivityInterface)) {
+        for (ExecutableElement method : getMethods(neneActivityInterface,
+                processingEnv.getElementUtils())) {
             MethodSpec.Builder methodBuilder =
                     MethodSpec.methodBuilder(method.getSimpleName().toString())
                             .returns(ClassName.get(method.getReturnType()))
                             .addModifiers(Modifier.PUBLIC)
-                            .addAnnotation(Override.class);
+                            .addAnnotation(Override.class)
+                            .addExceptions(
+                                    method.getThrownTypes().stream().map(TypeName::get).collect(
+                                            Collectors.toSet()));
 
             methodBuilder.addParameter(
                     ParameterSpec.builder(String.class, "activityClassName").build());
@@ -498,7 +499,8 @@ public final class Processor extends AbstractProcessor {
                         PROFILE_TARGETED_REMOTE_ACTIVITY_CLASSNAME)
                 .build());
 
-        for (ExecutableElement method : getMethods(neneActivityInterface)) {
+        for (ExecutableElement method : getMethods(neneActivityInterface,
+                processingEnv.getElementUtils())) {
             MethodSpec.Builder methodBuilder =
                     MethodSpec.methodBuilder(method.getSimpleName().toString())
                             .returns(ClassName.get(method.getReturnType()))
@@ -589,12 +591,16 @@ public final class Processor extends AbstractProcessor {
                         .build());
 
 
-        for (ExecutableElement method : getMethods(neneActivityInterface)) {
+        for (ExecutableElement method : getMethods(neneActivityInterface,
+                processingEnv.getElementUtils())) {
             MethodSpec.Builder methodBuilder =
                     MethodSpec.methodBuilder(method.getSimpleName().toString())
                             .returns(ClassName.get(method.getReturnType()))
                             .addModifiers(Modifier.PUBLIC)
-                            .addAnnotation(Override.class);
+                            .addAnnotation(Override.class)
+                            .addExceptions(
+                                    method.getThrownTypes().stream().map(TypeName::get).collect(
+                                            Collectors.toSet()));
 
             String params = "mActivityClassName";
 
@@ -628,12 +634,16 @@ public final class Processor extends AbstractProcessor {
                         TARGETED_REMOTE_ACTIVITY_CLASSNAME)
                         .addModifiers(Modifier.PUBLIC);
 
-        for (ExecutableElement method : getMethods(neneActivityInterface)) {
+        for (ExecutableElement method : getMethods(neneActivityInterface,
+                processingEnv.getElementUtils())) {
             MethodSpec.Builder methodBuilder =
                     MethodSpec.methodBuilder(method.getSimpleName().toString())
                             .returns(ClassName.get(method.getReturnType()))
                             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-                            .addAnnotation(CrossProfile.class);
+                            .addAnnotation(CrossProfile.class)
+                            .addExceptions(
+                                    method.getThrownTypes().stream().map(TypeName::get).collect(
+                                            Collectors.toSet()));
 
             methodBuilder.addParameter(
                     ParameterSpec.builder(String.class, "activityClassName").build());
@@ -741,10 +751,21 @@ public final class Processor extends AbstractProcessor {
         }
     }
 
-    private Set<ExecutableElement> getMethods(TypeElement interfaceClass) {
-        return interfaceClass.getEnclosedElements().stream()
+    private Set<ExecutableElement> getMethods(TypeElement interfaceClass, Elements elements) {
+        Set<ExecutableElement> methods = new HashSet<>();
+        getMethods(methods, interfaceClass, elements);
+        return methods;
+    }
+
+    private void getMethods(Set<ExecutableElement> methods, TypeElement interfaceClass,
+            Elements elements) {
+        methods.addAll(interfaceClass.getEnclosedElements().stream()
                 .filter(e -> e instanceof ExecutableElement)
                 .map(e -> (ExecutableElement) e)
-                .collect(Collectors.toSet());
+                .collect(Collectors.toSet()));
+
+        interfaceClass.getInterfaces().stream()
+                .map(m -> elements.getTypeElement(m.toString()))
+                .forEach(m -> getMethods(methods, m, elements));
     }
 }
