@@ -23,6 +23,7 @@ import static android.photopicker.cts.util.PhotoPickerFilesUtils.createImages;
 import static android.photopicker.cts.util.PhotoPickerFilesUtils.createVideos;
 import static android.photopicker.cts.util.PhotoPickerFilesUtils.deleteMedia;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.SHORT_TIMEOUT;
+import static android.photopicker.cts.util.PhotoPickerUiUtils.REGEX_PACKAGE_NAME;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.findAddButton;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.findItemList;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.findPreviewAddOrSelectButton;
@@ -54,7 +55,6 @@ import java.util.List;
 @RunWith(AndroidJUnit4.class)
 @SdkSuppress(minSdkVersion = 31, codeName = "S")
 public class PhotoPickerTest extends PhotoPickerBaseTest {
-    private static final String TAG = "PhotoPickerTest";
     private List<Uri> mUriList = new ArrayList<>();
 
     @After
@@ -256,6 +256,54 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
     }
 
     @Test
+    public void testMultiSelect_preview() throws Exception {
+        final int imageCount = 4;
+        createImages(imageCount, mContext.getUserId(), mUriList);
+        final Intent intent = new Intent(MediaStore.ACTION_PICK_IMAGES);
+        intent.putExtra(MediaStore.EXTRA_PICK_IMAGES_MAX, MediaStore.getPickImagesMaxLimit());
+        mActivity.startActivityForResult(intent, REQUEST_CODE);
+
+        final List<UiObject> itemList = findItemList(imageCount);
+        final int itemCount = itemList.size();
+        assertThat(itemCount).isEqualTo(imageCount);
+        for (int i = 0; i < itemCount; i++) {
+            final UiObject item = itemList.get(i);
+            item.click();
+            mDevice.waitForIdle();
+        }
+
+        final UiObject viewSelectedButton = findViewSelectedButton();
+        viewSelectedButton.click();
+        mDevice.waitForIdle();
+
+        // Swipe left three times
+        swipeLeft();
+        mDevice.waitForIdle();
+        swipeLeft();
+        mDevice.waitForIdle();
+        swipeLeft();
+        mDevice.waitForIdle();
+
+        // Deselect one item
+        final UiObject selectCheckButton = findPreviewSelectCheckButton();
+        selectCheckButton.click();
+        mDevice.waitForIdle();
+
+        final UiObject addButton = findPreviewAddOrSelectButton();
+        addButton.click();
+        mDevice.waitForIdle();
+
+        final ClipData clipData = mActivity.getResult().data.getClipData();
+        final int count = clipData.getItemCount();
+        assertThat(count).isEqualTo(itemCount - 1);
+        for (int i = 0; i < count; i++) {
+            final Uri uri = clipData.getItemAt(i).getUri();
+            assertPickerUriFormat(uri, mContext.getUserId());
+            assertRedactedReadOnlyAccess(uri);
+        }
+    }
+
+    @Test
     public void testMimeTypeFilter() throws Exception {
         final int videoCount = 2;
         createVideos(videoCount, mContext.getUserId(), mUriList);
@@ -291,5 +339,21 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
             assertRedactedReadOnlyAccess(uri);
             assertMimeType(uri, mimeType);
         }
+    }
+
+    private static UiObject findViewSelectedButton() {
+        return new UiObject(new UiSelector().resourceIdMatches(
+                REGEX_PACKAGE_NAME + ":id/button_view_selected"));
+    }
+
+    private static UiObject findPreviewSelectCheckButton() {
+        return new UiObject(new UiSelector().resourceIdMatches(
+                REGEX_PACKAGE_NAME + ":id/preview_select_check_button"));
+    }
+
+    private void swipeLeft() {
+        final int width = mDevice.getDisplayWidth();
+        final int height = mDevice.getDisplayHeight();
+        mDevice.swipe(width / 2, height / 2, width / 4, height / 2, 10);
     }
 }
