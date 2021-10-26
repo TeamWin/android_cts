@@ -57,6 +57,7 @@ android_test {
         "truth-prebuilt",
         "android.hardware.radio.config-V1-java",
         "android.hardware.radio.modem-V1-java",
+        "android.hardware.radio.sim-V1-java",
     ],
     srcs: [
         "src/**/*.java",
