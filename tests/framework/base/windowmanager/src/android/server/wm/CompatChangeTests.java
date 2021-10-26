@@ -77,6 +77,10 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
             component(ResizeableLargeAspectRatioActivity.class);
     private static final ComponentName NON_RESIZEABLE_PORTRAIT_ACTIVITY =
             component(NonResizeablePortraitActivity.class);
+    private static final ComponentName NON_RESIZEABLE_LANDSCAPE_ACTIVITY =
+            component(NonResizeableLandscapeActivity.class);
+    private static final ComponentName NON_RESIZEABLE_NON_FIXED_ORIENTATION_ACTIVITY =
+            component(NonResizeableNonFixedOrientationActivity.class);
     private static final ComponentName NON_RESIZEABLE_ASPECT_RATIO_ACTIVITY =
             component(NonResizeableAspectRatioActivity.class);
     private static final ComponentName NON_RESIZEABLE_LARGE_ASPECT_RATIO_ACTIVITY =
@@ -355,6 +359,28 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     }
 
     /**
+     * Test that applying {@link ActivityInfo#OVERRIDE_MIN_ASPECT_RATIO_LARGE} has no effect on
+     * activities whose orientation is fixed to landscape.
+     */
+    @Test
+    @EnableCompatChanges({ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO,
+            ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO_LARGE})
+    public void testOverrideMinAspectRatioForLandscapeActivity() {
+        runMinAspectRatioTest(NON_RESIZEABLE_LANDSCAPE_ACTIVITY, /* expected= */ 0);
+    }
+
+    /**
+     * Test that applying {@link ActivityInfo#OVERRIDE_MIN_ASPECT_RATIO_LARGE} has no effect on
+     * activities whose orientation isn't fixed.
+     */
+    @Test
+    @EnableCompatChanges({ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO,
+            ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO_LARGE})
+    public void testOverrideMinAspectRatioForNonFixedOrientationActivity() {
+        runMinAspectRatioTest(NON_RESIZEABLE_NON_FIXED_ORIENTATION_ACTIVITY, /* expected= */ 0);
+    }
+
+    /**
      * Test that applying {@link ActivityInfo#OVERRIDE_MIN_ASPECT_RATIO_LARGE} sets the min aspect
      * ratio to {@link ActivityInfo#OVERRIDE_MIN_ASPECT_RATIO_LARGE_VALUE}.
      */
@@ -405,7 +431,7 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
 
     /**
      * Test that the min aspect ratio of the activity as defined in the manifest is upheld if
-     * there is a n override for a smaller min aspect ratio present (3:2 < 1.6).
+     * there is an override for a smaller min aspect ratio present (3:2 < 1.6).
      */
     @Test
     @EnableCompatChanges({ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO,
@@ -659,6 +685,12 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     }
 
     public static class NonResizeablePortraitActivity extends FocusableActivity {
+    }
+
+    public static class NonResizeableLandscapeActivity extends FocusableActivity {
+    }
+
+    public static class NonResizeableNonFixedOrientationActivity extends FocusableActivity {
     }
 
     public static class NonResizeableAspectRatioActivity extends FocusableActivity {

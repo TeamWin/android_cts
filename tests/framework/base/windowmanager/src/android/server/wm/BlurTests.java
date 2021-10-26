@@ -363,10 +363,11 @@ public class BlurTests extends WindowManagerTestBase {
     }
 
     private static void assertBackgroundBlurOverBlurBehind(Bitmap screenshot, Rect windowFrame) {
-        // We are assuming that the background blur will become bigger by roughly half of the blur
-        // behind radius
-        assertBlur(screenshot, BACKGROUND_BLUR_PX + ((int) (BLUR_BEHIND_PX*0.5f)),
-                windowFrame.top, windowFrame.bottom);
+        assertBlur(
+                screenshot,
+                (int) Math.sqrt(Math.pow(BACKGROUND_BLUR_PX, 2.f) + Math.pow(BLUR_BEHIND_PX, 2.f)),
+                windowFrame.top,
+                windowFrame.bottom);
     }
 
     private static void assertNoBlurBehind(Bitmap screenshot, Rect windowFrame) {

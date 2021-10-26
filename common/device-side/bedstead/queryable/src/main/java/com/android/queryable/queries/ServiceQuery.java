@@ -14,20 +14,25 @@
  * limitations under the License.
  */
 
-package com.android.bedstead.nene.users;
+package com.android.queryable.queries;
+
+import android.app.Service;
+
+import com.android.queryable.Queryable;
+import com.android.queryable.info.ServiceInfo;
 
 /**
- * Default implementation of {@link UserReference}.
+ * Query for an {@link Service}.
  *
- * <p>Represents the abstract idea of a {@link User}, which may or may not exist.
+ * @param <E> Type of query.
  */
-public final class UnresolvedUser extends UserReference {
-    UnresolvedUser(int id) {
-        super(id);
+public interface ServiceQuery<E extends Queryable> extends Query<ServiceInfo>  {
+
+    /** Create a {@link ServiceQueryHelper}. */
+    static ServiceQuery<ServiceQuery<?>> service() {
+        return new ServiceQueryHelper<>();
     }
 
-    @Override
-    public String toString() {
-        return "UnresolvedUser{id=" + id() + "}";
-    }
+    /** Used to query the class name of a service. */
+    ClassQuery<E> serviceClass();
 }
