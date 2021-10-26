@@ -167,12 +167,12 @@ public class USBAudioPeripheralRecordActivity extends USBAudioPeripheralActivity
             case R.id.uap_recordRecordBtn:
                 if (!isRecording()) {
                     if (startRecording(false)) {
-                        mRecordBtn.setText(getString(R.string.audio_uap_record_stopBtn));
+                        mRecordBtn.setText(getString(R.string.audio_general_stop));
                         mRecordLoopbackBtn.setEnabled(false);
                     }
                 } else {
                     stopRecording();
-                    mRecordBtn.setText(getString(R.string.audio_uap_record_recordBtn));
+                    mRecordBtn.setText(getString(R.string.audio_general_record));
                     mRecordLoopbackBtn.setEnabled(true);
                 }
                 break;
@@ -180,13 +180,13 @@ public class USBAudioPeripheralRecordActivity extends USBAudioPeripheralActivity
             case R.id.uap_recordRecordLoopBtn:
                 if (!isRecording()) {
                     if (startRecording(true)) {
-                        mRecordLoopbackBtn.setText(getString(R.string.audio_uap_record_stopBtn));
+                        mRecordLoopbackBtn.setText(getString(R.string.audio_general_stop));
                         mRecordBtn.setEnabled(false);
                     }
                 } else {
                     stopRecording();
                     mRecordLoopbackBtn.setText(
-                        getString(R.string.audio_uap_record_recordLoopbackBtn));
+                        getString(R.string.audio_general_recordLoopback));
                     mRecordBtn.setEnabled(true);
                 }
                 break;
