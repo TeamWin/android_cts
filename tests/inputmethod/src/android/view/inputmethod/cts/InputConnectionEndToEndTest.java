@@ -52,6 +52,7 @@ import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputConnectionWrapper;
 import android.view.inputmethod.InputContentInfo;
 import android.view.inputmethod.SurroundingText;
+import android.view.inputmethod.TextSnapshot;
 import android.view.inputmethod.cts.util.EndToEndImeTestBase;
 import android.view.inputmethod.cts.util.MockTestActivityUtil;
 import android.view.inputmethod.cts.util.TestActivity;
@@ -3550,4 +3551,30 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
                     + "application does not implement it.", result.getReturnBooleanValue());
         });
     }
+
+    /**
+     * Test {@link InputConnection#takeSnapshot()} is ignored as expected.
+     */
+    @Test
+    public void testTakeSnapshot() throws Exception {
+        final TextSnapshot returnedTextSnapshot = new TextSnapshot(
+                new SurroundingText("test", 4, 4, 0), -1, -1, 0);
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public TextSnapshot takeSnapshot() {
+                return returnedTextSnapshot;
+            }
+        }
+
+        testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
+            final ImeCommand command = session.callTakeSnapshot();
+            assertTrue("takeSnapshot() always returns null",
+                    expectCommand(stream, command, TIMEOUT).isNullReturnValue());
+        });
+    }
+
 }
