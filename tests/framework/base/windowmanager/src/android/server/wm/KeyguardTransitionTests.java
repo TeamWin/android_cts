@@ -54,7 +54,7 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-
+        assumeFalse(ENABLE_SHELL_TRANSITIONS);
         assumeTrue(supportsInsecureLock());
         assumeFalse(isUiModeLockedToVrHeadset());
     }

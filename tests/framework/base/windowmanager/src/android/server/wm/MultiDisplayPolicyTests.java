@@ -754,6 +754,7 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
 
     @Test
     public void testAppTransitionForActivityOnDifferentDisplay() {
+        assumeFalse(ENABLE_SHELL_TRANSITIONS);
         final TestActivitySession<StandardActivity> transitionActivitySession =
                 createManagedTestActivitySession();
         // Create new simulated display.
