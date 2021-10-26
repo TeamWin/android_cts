@@ -199,12 +199,13 @@ public class TunerTest {
         assertFalse(ids.isEmpty());
 
         for (int id : ids) {
-            FrontendInfo info = mTuner.getFrontendInfoById(id);
-            int res = mTuner.tune(createFrontendSettings(info));
+            Tuner tuner = new Tuner(mContext, null, 100);
+            FrontendInfo info = tuner.getFrontendInfoById(id);
+            int res = tuner.tune(createFrontendSettings(info));
 
             int[] statusCapabilities = info.getStatusCapabilities();
             assertNotNull(statusCapabilities);
-            FrontendStatus status = mTuner.getFrontendStatus(statusCapabilities);
+            FrontendStatus status = tuner.getFrontendStatus(statusCapabilities);
             assertNotNull(status);
 
             for (int i = 0; i < statusCapabilities.length; i++) {
@@ -329,6 +330,8 @@ public class TunerTest {
                         break;
                 }
             }
+            tuner.close();
+            tuner = null;
         }
     }
 
