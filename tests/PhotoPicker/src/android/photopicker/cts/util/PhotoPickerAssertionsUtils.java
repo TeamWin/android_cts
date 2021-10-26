@@ -68,31 +68,32 @@ public class PhotoPickerAssertionsUtils {
         final String[] projection = new String[]{ MIME_TYPE };
         final Context context = InstrumentationRegistry.getTargetContext();
         final ContentResolver resolver = context.getContentResolver();
-        final Cursor c = resolver.query(uri, projection, null, null);
-        assertThat(c).isNotNull();
-        assertThat(c.moveToFirst()).isTrue();
+        try (Cursor c = resolver.query(uri, projection, null, null)) {
+            assertThat(c).isNotNull();
+            assertThat(c.moveToFirst()).isTrue();
 
-        if (getBoolean("sys.photopicker.pickerdb.enabled", true)) {
-            // TODO(b/205291616): Replace FileColumns.MIME_TYPE with PickerMediaColumns.MIME_TYPE
-            final String mimeType = c.getString(c.getColumnIndex(MIME_TYPE));
-            if (mimeType.startsWith("image")) {
-                assertImageRedactedReadOnlyAccess(uri, resolver);
-            } else if (mimeType.startsWith("video")) {
-                assertVideoRedactedReadOnlyAccess(uri, resolver);
-            } else {
-                fail("The mime type is not as expected: " + mimeType);
-            }
-        } else {
-            final int mediaType = c.getInt(1);
-            switch (mediaType) {
-                case MEDIA_TYPE_IMAGE:
+            if (getBoolean("sys.photopicker.pickerdb.enabled", true)) {
+                // TODO(b/205291616): Replace FileColumns.MIME_TYPE with PickerMediaColumns.MIME_TYPE
+                final String mimeType = c.getString(c.getColumnIndex(MIME_TYPE));
+                if (mimeType.startsWith("image")) {
                     assertImageRedactedReadOnlyAccess(uri, resolver);
-                    break;
-                case MEDIA_TYPE_VIDEO:
+                } else if (mimeType.startsWith("video")) {
                     assertVideoRedactedReadOnlyAccess(uri, resolver);
-                    break;
-                default:
-                    fail("The media type is not as expected: " + mediaType);
+                } else {
+                    fail("The mime type is not as expected: " + mimeType);
+                }
+            } else {
+                final int mediaType = c.getInt(1);
+                switch (mediaType) {
+                    case MEDIA_TYPE_IMAGE:
+                        assertImageRedactedReadOnlyAccess(uri, resolver);
+                        break;
+                    case MEDIA_TYPE_VIDEO:
+                        assertVideoRedactedReadOnlyAccess(uri, resolver);
+                        break;
+                    default:
+                        fail("The media type is not as expected: " + mediaType);
+                }
             }
         }
     }
