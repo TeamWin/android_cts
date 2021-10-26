@@ -29,8 +29,8 @@ import androidx.annotation.Nullable;
  */
 public class TestActivityWithId extends Activity {
 
-    private static final long DEFAULT_ID = -1;
-    private long mId = DEFAULT_ID;
+    private static final String DEFAULT_ID = "unknown";
+    private String mId = DEFAULT_ID;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -39,17 +39,17 @@ public class TestActivityWithId extends Activity {
         // Get ID
         Intent intent = getIntent();
         if (intent != null && intent.hasExtra(ACTIVITY_ID_LABEL)) {
-            mId = intent.getLongExtra(ACTIVITY_ID_LABEL, DEFAULT_ID);
+            mId = intent.getStringExtra(ACTIVITY_ID_LABEL);
         }
     }
 
-    public long getId() {
+    public String getId() {
         return mId;
     }
 
     @Override
     public String toString() {
-        return String.format("TestActivityWithID{id=%d}", mId);
+        return String.format("TestActivityWithID{id=%s}", mId);
     }
 
 }

@@ -90,17 +90,11 @@ public class WindowManagerJetpackTestBase {
      * Starts an instance of {@param activityToLaunchClass} from {@param activityToLaunchFrom}
      * and returns the activity ID from the newly launched class.
      */
-    public static <T extends Activity> long startActivityFromActivity(Activity activityToLaunchFrom,
-            Class<T> activityToLaunchClass) {
+    public static <T extends Activity> void startActivityFromActivity(Activity activityToLaunchFrom,
+            Class<T> activityToLaunchClass, String newActivityId) {
         Intent intent = new Intent(activityToLaunchFrom, activityToLaunchClass);
-        final long activityId = createNewActivityId();
-        intent.putExtra(ACTIVITY_ID_LABEL, activityId);
+        intent.putExtra(ACTIVITY_ID_LABEL, newActivityId);
         activityToLaunchFrom.startActivity(intent);
-        return activityId;
-    }
-
-    private static long createNewActivityId() {
-        return System.currentTimeMillis();
     }
 
     public static IBinder getActivityWindowToken(Activity activity) {
