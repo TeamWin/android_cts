@@ -58,7 +58,8 @@ _BLUE = {'color': 'BLUE',
          'RGGB': (_OFF, _OFF, _OFF, _SAT),
          'RGB': (0, 0, 255)}
 
-_COLORS_CHECKED_RGB = (_BLACK, _WHITE, _RED, _GREEN, _BLUE)
+_COLORS_CHECKED_RAW = (_BLACK, _WHITE, _RED, _GREEN, _BLUE)
+_COLORS_CHECKED_YUV = (_BLACK,)
 _COLORS_CHECKED_MONO = (_BLACK, _WHITE)
 _COLORS_CHECKED_UPGRADE = (_BLACK,)
 _COLORS_CHECKED_BLACK = (_WHITE,)  # To make sure testPatternData is ignored
@@ -170,7 +171,10 @@ class SolidColorTestPattern(its_base_test.ItsBaseTest):
         if camera_properties_utils.mono_camera(props):
           colors_checked_solid = _COLORS_CHECKED_MONO
         else:
-          colors_checked_solid = _COLORS_CHECKED_RGB
+          if camera_properties_utils.raw16(props):
+            colors_checked_solid = _COLORS_CHECKED_RAW
+          else:
+            colors_checked_solid = _COLORS_CHECKED_YUV
       else:
         colors_checked_solid = _COLORS_CHECKED_UPGRADE
 
