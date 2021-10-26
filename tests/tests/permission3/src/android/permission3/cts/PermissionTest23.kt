@@ -17,7 +17,6 @@
 package android.permission3.cts
 
 import androidx.test.filters.FlakyTest
-import com.android.modules.utils.build.SdkLevel
 import org.junit.Assume
 import org.junit.Before
 import org.junit.Test
@@ -182,11 +181,7 @@ class PermissionTest23 : BaseUsePermissionTest() {
         // Request the permission and allow it
         // Make sure the permission is granted
         requestAppPermissionsAndAssertResult(android.Manifest.permission.CAMERA to true) {
-            if (SdkLevel.isAtLeastS()) {
-                clickPermissionRequestAllowForegroundButton()
-            } else {
-                clickPermissionRequestAllowButton()
-            }
+            clickPermissionRequestAllowForegroundButton()
         }
     }
 
@@ -290,11 +285,7 @@ class PermissionTest23 : BaseUsePermissionTest() {
             null to false,
             android.Manifest.permission.RECORD_AUDIO to true
         ) {
-            if (SdkLevel.isAtLeastS()) {
-                clickPermissionRequestAllowForegroundButton()
-            } else {
-                clickPermissionRequestAllowButton()
-            }
+            clickPermissionRequestAllowForegroundButton()
             clickPermissionRequestAllowButton()
         }
     }
