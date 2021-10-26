@@ -90,7 +90,7 @@ public class ActivityEmbeddingLaunchTests extends WindowManagerJetpackTestBase {
         final int numActivitiesToLaunch = 4;
         for (int i = 0; i < numActivitiesToLaunch; i++) {
             Activity secondaryActivity = startActivityAndVerifySplit(mSplitInfoConsumer,
-                    primaryActivity, TestActivityWithId.class, splitPairRule);
+                    primaryActivity, TestActivityWithId.class, splitPairRule, Integer.toString(i));
         }
     }
 }
