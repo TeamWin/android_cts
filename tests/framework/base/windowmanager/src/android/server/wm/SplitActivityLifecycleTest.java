@@ -19,16 +19,20 @@ package android.server.wm;
 import static android.app.WindowConfiguration.WINDOWING_MODE_MULTI_WINDOW;
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+import static android.server.wm.SplitActivityLifecycleTest.ActivityB.EXTRA_SHOW_WHEN_LOCKED;
 import static android.server.wm.WindowManagerState.STATE_STOPPED;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
+
+import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Rect;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.WindowManagerState.Task;
@@ -73,6 +77,14 @@ public class SplitActivityLifecycleTest extends TaskFragmentOrganizerTestBase {
 
     /** Launch two Activities in two adjacent TaskFragments side-by-side. */
     private void initializeSplitActivities(boolean splitInEmbeddedTask) {
+        initializeSplitActivities(splitInEmbeddedTask, false /* showWhenLocked */);
+    }
+
+    /**
+     * Launch two Activities in two adjacent TaskFragments side-by-side and support to set the
+     * showWhenLocked attribute to Activity B.
+     */
+    private void initializeSplitActivities(boolean splitInEmbeddedTask, boolean showWhenLocked) {
         final Rect activityBounds = mOwnerActivity.getWindowManager().getCurrentWindowMetrics()
                 .getBounds();
         activityBounds.splitVertically(mPrimaryBounds, mSideBounds);
@@ -91,6 +103,9 @@ public class SplitActivityLifecycleTest extends TaskFragmentOrganizerTestBase {
         final Intent intent = new Intent().setComponent(mActivityB);
         if (splitInEmbeddedTask) {
             intent.addFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK);
+        }
+        if (showWhenLocked) {
+            intent.putExtra(EXTRA_SHOW_WHEN_LOCKED, true);
         }
         wct.startActivityInTaskFragment(taskFragTokenB, mOwnerToken, intent,
                 null /* activityOptions */);
@@ -444,6 +459,72 @@ public class SplitActivityLifecycleTest extends TaskFragmentOrganizerTestBase {
                 mWmState.getActivity(mActivityC));
     }
 
+    /**
+     * Verifies the show-when-locked behavior while launch embedded activities. Don't show the
+     * embedded activities even if one of Activity has showWhenLocked flag.
+     */
+    @Test
+    public void testLaunchEmbeddedActivityWithShowWhenLocked() {
+        assumeTrue(supportsLockScreen());
+
+        final LockScreenSession lockScreenSession = createManagedLockScreenSession();
+        // Initialize test environment by launching Activity A and B (with showWhenLocked)
+        // side-by-side.
+        initializeSplitActivities(false /* verifyEmbeddedTask */, true /* showWhenLocked */);
+
+        lockScreenSession.sleepDevice();
+        lockScreenSession.wakeUpDevice();
+
+        waitAndAssertActivityState(mActivityA, STATE_STOPPED,"Activity A must be stopped");
+        waitAndAssertActivityState(mActivityB, STATE_STOPPED,"Activity B must be stopped");
+    }
+
+    /**
+     * Verifies the show-when-locked behavior while launch embedded activities. Don't show the
+     * embedded activities if the activities don't have showWhenLocked flag.
+     */
+    @Test
+    public void testLaunchEmbeddedActivitiesWithoutShowWhenLocked() {
+        assumeTrue(supportsLockScreen());
+
+        final LockScreenSession lockScreenSession = createManagedLockScreenSession();
+        // Initialize test environment by launching Activity A and B side-by-side.
+        initializeSplitActivities(false /* verifyEmbeddedTask */, false /* showWhenLocked */);
+
+        lockScreenSession.sleepDevice();
+        lockScreenSession.wakeUpDevice();
+
+        waitAndAssertActivityState(mActivityA, STATE_STOPPED,"Activity A must be stopped");
+        waitAndAssertActivityState(mActivityB, STATE_STOPPED,"Activity B must be stopped");
+    }
+
+    /**
+     * Verifies the show-when-locked behavior while launch embedded activities. The embedded
+     * activities should be shown on top of the lock screen since they have the showWhenLocked flag.
+     * Don't show the embedded activities even if one of Activity has showWhenLocked flag.
+     */
+    @Test
+    public void testLaunchEmbeddedActivitiesWithShowWhenLocked() {
+        assumeTrue(supportsLockScreen());
+
+        final LockScreenSession lockScreenSession = createManagedLockScreenSession();
+        // Initialize test environment by launching Activity A and B side-by-side.
+        mOwnerActivity.setShowWhenLocked(true);
+        initializeSplitActivities(false /* verifyEmbeddedTask */, true /* showWhenLocked */);
+
+        lockScreenSession.sleepDevice();
+        lockScreenSession.wakeUpDevice();
+
+        waitAndAssertResumedActivity(mActivityA, "Activity A must be resumed.");
+        waitAndAssertResumedActivity(mActivityB, "Activity B must be resumed.");
+
+        // Launch Activity C without show-when-lock and verifies that both activities are stopped.
+        mOwnerActivity.startActivity(mIntent);
+        waitAndAssertActivityState(mActivityA, STATE_STOPPED,"Activity A must be stopped");
+        waitAndAssertActivityState(mActivityC, STATE_STOPPED,"Activity C must be stopped");
+
+    }
+
     private TaskFragmentCreationParams generatePrimaryTaskFragParams() {
         return mTaskFragmentOrganizer.generateTaskFragParams(mOwnerToken, mPrimaryBounds,
                 WINDOWING_MODE_MULTI_WINDOW);
@@ -478,7 +559,17 @@ public class SplitActivityLifecycleTest extends TaskFragmentOrganizerTestBase {
         }
     }
 
-    public static class ActivityA extends FocusableActivity {}
-    public static class ActivityB extends FocusableActivity {}
-    public static class ActivityC extends FocusableActivity {}
+    public static class ActivityA extends SplitTestActivity {}
+    public static class ActivityB extends SplitTestActivity {}
+    public static class ActivityC extends SplitTestActivity {}
+    public static class SplitTestActivity extends FocusableActivity {
+        public static final String EXTRA_SHOW_WHEN_LOCKED = "showWhenLocked";
+        @Override
+        protected void onCreate(Bundle icicle) {
+            super.onCreate(icicle);
+            if (getIntent().getBooleanExtra(EXTRA_SHOW_WHEN_LOCKED, false)) {
+                setShowWhenLocked(true);
+            }
+        }
+    }
 }
