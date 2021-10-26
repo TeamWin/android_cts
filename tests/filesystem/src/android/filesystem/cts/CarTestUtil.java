@@ -30,10 +30,13 @@ import com.android.compatibility.common.util.SystemUtil;
 import java.io.IOException;
 
 final class CarTestUtil {
-    //TODO (b/202761235) replace the string with the watchdog service disabling shell command
-    private static final String DISABLE_CAR_WATCHDOG_COMMAND = "cmd disable watchdog";
-    //TODO (b/202761235) replace the string with the watchdog service enabling shell command
-    private static final String ENABLE_CAR_WATCHDOG_COMMAND = "cmd enable watchdog";
+    private static final String ANDROID_FILESYSTEM_CTS_PKG_NAME = "android.filesystem.cts";
+    private static final String SET_CTS_PKG_AS_NOT_KILLABLE_COMMAND =
+            "cmd car_service watchdog-control-package-killable-state false "
+            + ANDROID_FILESYSTEM_CTS_PKG_NAME;
+    private static final String SET_CTS_PKG_AS_KILLABLE_COMMAND =
+            "cmd car_service watchdog-control-package-killable-state true "
+            + ANDROID_FILESYSTEM_CTS_PKG_NAME;
 
     private static final String PERMISSION_USE_CAR_WATCHDOG =
             "android.car.permission.USE_CAR_WATCHDOG";
@@ -60,26 +63,23 @@ final class CarTestUtil {
     public void setUp() throws Exception {
         if (mIsAutomotive) {
             assumeFalse("For automotive, instant app is skipped", mIsInstantApp);
-            disableWatchdogService();
+            setCtsPackageAsNotKillable();
         }
     }
 
     public void tearDown() throws Exception {
         if (mIsAutomotive) {
-            enableWatchdogService();
+            setCtsPackageAsKillable();
         }
     }
 
-    protected void disableWatchdogService() throws Exception {
-        // TODO (b/202761235) remove the assumption after watchdog disabling is implemented.
-        assumeFalse("Enable tests over Auto after watchdog is disabled", mIsAutomotive);
-
-        executeShellCommandWithPermission(DISABLE_CAR_WATCHDOG_COMMAND,
+    protected void setCtsPackageAsNotKillable() throws Exception {
+        executeShellCommandWithPermission(SET_CTS_PKG_AS_NOT_KILLABLE_COMMAND,
                 PERMISSION_USE_CAR_WATCHDOG);
     }
 
-    protected void enableWatchdogService() throws Exception {
-        executeShellCommandWithPermission(ENABLE_CAR_WATCHDOG_COMMAND,
+    protected void setCtsPackageAsKillable() throws Exception {
+        executeShellCommandWithPermission(SET_CTS_PKG_AS_KILLABLE_COMMAND,
                 PERMISSION_USE_CAR_WATCHDOG);
     }
 
