@@ -354,7 +354,7 @@ public class MotionEventUtils {
                     this.orientation, DELTA);
 
             assertEquals("Generic axis 1 should be the same",
-                    that.getHistoricalAxisValue(MotionEvent.AXIS_GENERIC_1, position),
+                    that.getHistoricalAxisValue(MotionEvent.AXIS_GENERIC_1, pointerIndex, position),
                     this.generic1, DELTA);
         }
 
