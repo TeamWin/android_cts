@@ -762,7 +762,7 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
 
         launchActivity(PORTRAIT_ORIENTATION_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
         mWmState.assertVisibility(PORTRAIT_ORIENTATION_ACTIVITY, true /* visible */);
-        final SizeInfo initialSize = getLastReportedSizesForActivity(PORTRAIT_ORIENTATION_ACTIVITY);
+        final SizeInfo initialSize = activitySession.getConfigInfo().sizeInfo;
 
         // Rotate the display and check that the orientation doesn't change
         rotationSession.set(ROTATION_0);
