@@ -16,9 +16,12 @@
 
 package com.android.queryable.queries;
 
+import static com.android.queryable.queries.IntentFilterQuery.intentFilter;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import android.app.Service;
+import android.content.IntentFilter;
 
 import com.android.queryable.Queryable;
 import com.android.queryable.info.ServiceInfo;
@@ -27,6 +30,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import java.util.Set;
+
 @RunWith(JUnit4.class)
 public class ServiceQueryHelperTest {
 
@@ -34,7 +39,10 @@ public class ServiceQueryHelperTest {
 
     private static final Class<? extends Service> CLASS_1 = Service.class;
 
+
     private static final String CLASS_1_CLASS_NAME = CLASS_1.getName();
+
+    private static final IntentFilter INTENT_FILTER_WITH_ACTION = new IntentFilter("action");
 
     private static final android.content.pm.ServiceInfo FRAMEWORK_SERVICE_INFO_1 =
             createServiceInfo(CLASS_1_CLASS_NAME);
@@ -52,6 +60,10 @@ public class ServiceQueryHelperTest {
             ServiceInfo.builder(FRAMEWORK_SERVICE_INFO_1).build();
     private static final ServiceInfo CLASS_2_SERVICE_INFO =
             ServiceInfo.builder(FRAMEWORK_SERVICE_INFO_2).build();
+    private static final ServiceInfo INTENT_FILTER_SERVICE_INFO = ServiceInfo.builder()
+            .serviceClass(CLASS_1_CLASS_NAME)
+            .intentFilters(Set.of(INTENT_FILTER_WITH_ACTION))
+            .build();
 
 
     @Test
@@ -77,5 +89,27 @@ public class ServiceQueryHelperTest {
         serviceQueryHelper.serviceClass().isSameClassAs(CLASS_1);
 
         assertThat(serviceQueryHelper.matches(CLASS_2_SERVICE_INFO)).isFalse();
+    }
+
+    @Test
+    public void matches_intentFilters_matches_returnsTrue() {
+        ServiceQueryHelper<Queryable> serviceQueryHelper = new ServiceQueryHelper<>(mQuery);
+
+        serviceQueryHelper.intentFilters().contains(
+                intentFilter().actions().contains("action")
+        );
+
+        assertThat(serviceQueryHelper.matches(INTENT_FILTER_SERVICE_INFO)).isTrue();
+    }
+
+    @Test
+    public void matches_intentFilters_doesNotMatch_returnsFalse() {
+        ServiceQueryHelper<Queryable> serviceQueryHelper = new ServiceQueryHelper<>(mQuery);
+
+        serviceQueryHelper.intentFilters().contains(
+                intentFilter().actions().doesNotContain("action")
+        );
+
+        assertThat(serviceQueryHelper.matches(INTENT_FILTER_SERVICE_INFO)).isFalse();
     }
 }

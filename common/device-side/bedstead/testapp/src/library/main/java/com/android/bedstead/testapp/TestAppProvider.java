@@ -17,6 +17,7 @@
 package com.android.bedstead.testapp;
 
 import android.content.Context;
+import android.content.IntentFilter;
 import android.util.Log;
 
 import com.android.bedstead.nene.TestApis;
@@ -26,6 +27,7 @@ import com.android.queryable.info.ServiceInfo;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /** Entry point to Test App. Used for querying for {@link TestApp} instances. */
@@ -97,16 +99,46 @@ public final class TestAppProvider {
             details.mActivities.add(ActivityInfo.builder()
                     .activityClass(activityEntry.getName())
                     .exported(activityEntry.getExported())
+                    .intentFilters(intentFilterSetFromProtoList(
+                            activityEntry.getIntentFiltersList()))
                     .build());
         }
 
         for (int i = 0; i < app.getServicesCount(); i++) {
             TestappProtos.Service serviceEntry = app.getServices(i);
             details.mServices.add(ServiceInfo.builder()
-                    .serviceClass(serviceEntry.getName()).build());
+                    .serviceClass(serviceEntry.getName())
+                    .intentFilters(intentFilterSetFromProtoList(
+                            serviceEntry.getIntentFiltersList()))
+                    .build());
         }
 
         mTestApps.add(details);
+    }
+
+    private Set<IntentFilter> intentFilterSetFromProtoList(
+            List<TestappProtos.IntentFilter> list) {
+        Set<IntentFilter> filterInfoSet = new HashSet<>();
+
+        for (TestappProtos.IntentFilter filter : list) {
+            IntentFilter filterInfo = intentFilterFromProto(filter);
+            filterInfoSet.add(filterInfo);
+        }
+
+        return filterInfoSet;
+    }
+
+    private IntentFilter intentFilterFromProto(TestappProtos.IntentFilter filterProto) {
+        IntentFilter filter = new IntentFilter();
+
+        for (String action : filterProto.getActionsList()) {
+            filter.addAction(action);
+        }
+        for (String category : filterProto.getCategoriesList()) {
+            filter.addCategory(category);
+        }
+
+        return filter;
     }
 
     private String getApkNameWithoutSuffix(String apkName) {
