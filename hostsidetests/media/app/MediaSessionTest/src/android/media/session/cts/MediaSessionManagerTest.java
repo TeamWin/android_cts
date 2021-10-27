@@ -141,7 +141,7 @@ public class MediaSessionManagerTest extends NotificationListenerService {
     public void testOnMediaKeyEventSessionChangedListener() throws Exception {
         MediaKeyEventSessionListener keyEventSessionListener = new MediaKeyEventSessionListener();
         mMediaSessionManager.addOnMediaKeyEventSessionChangedListener(
-                mComponentName, Executors.newSingleThreadExecutor(), keyEventSessionListener);
+                Executors.newSingleThreadExecutor(), keyEventSessionListener);
 
         MediaSession session = createMediaKeySession();
         assertTrue(keyEventSessionListener.mCountDownLatch
@@ -149,9 +149,9 @@ public class MediaSessionManagerTest extends NotificationListenerService {
 
         assertEquals(session.getSessionToken(), keyEventSessionListener.mSessionToken);
         assertEquals(session.getSessionToken(),
-                mMediaSessionManager.getMediaKeyEventSession(mComponentName));
+                mMediaSessionManager.getMediaKeyEventSession());
         assertEquals(mContext.getPackageName(),
-                mMediaSessionManager.getMediaKeyEventSessionPackageName(mComponentName));
+                mMediaSessionManager.getMediaKeyEventSessionPackageName());
 
         mMediaSessionManager.removeOnMediaKeyEventSessionChangedListener(keyEventSessionListener);
         keyEventSessionListener.resetCountDownLatch();
@@ -168,11 +168,11 @@ public class MediaSessionManagerTest extends NotificationListenerService {
     @Test
     public void testOnMediaKeyEventSessionChangedListener_whenSessionIsReleased() throws Exception {
         MediaSession.Token previousMediaKeyEventSessionToken =
-                mMediaSessionManager.getMediaKeyEventSession(mComponentName);
+                mMediaSessionManager.getMediaKeyEventSession();
 
         MediaKeyEventSessionListener keyEventSessionListener = new MediaKeyEventSessionListener();
         mMediaSessionManager.addOnMediaKeyEventSessionChangedListener(
-                mComponentName, Executors.newSingleThreadExecutor(), keyEventSessionListener);
+                Executors.newSingleThreadExecutor(), keyEventSessionListener);
 
         MediaSession session = createMediaKeySession();
         assertTrue(keyEventSessionListener.mCountDownLatch
@@ -184,8 +184,8 @@ public class MediaSessionManagerTest extends NotificationListenerService {
         assertTrue(keyEventSessionListener.mCountDownLatch
                 .await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
         assertNull(keyEventSessionListener.mSessionToken);
-        assertNull(mMediaSessionManager.getMediaKeyEventSession(mComponentName));
-        assertEquals("", mMediaSessionManager.getMediaKeyEventSessionPackageName(mComponentName));
+        assertNull(mMediaSessionManager.getMediaKeyEventSession());
+        assertEquals("", mMediaSessionManager.getMediaKeyEventSessionPackageName());
     }
 
     private MediaSession createMediaKeySession() {
