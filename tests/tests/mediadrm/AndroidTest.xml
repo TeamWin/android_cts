@@ -36,7 +36,7 @@
     </target_preparer>
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
         <!-- MediaProjectionTest needs this one to not be granted, SuiteApkInstaller grants all of them by default.-->
-        <option name="run-command" value="pm revoke android.media.cts android.permission.SYSTEM_ALERT_WINDOW"/>
+        <option name="run-command" value="pm revoke android.mediadrm.cts android.permission.SYSTEM_ALERT_WINDOW"/>
     </target_preparer>
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.DynamicConfigPusher">
         <option name="target" value="device" />
