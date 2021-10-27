@@ -177,6 +177,33 @@ public class TunerTest {
     }
 
     @Test
+    public void testMultiTuning() throws Exception {
+        List<Integer> ids = mTuner.getFrontendIds();
+        if (ids == null) return;
+        assertFalse(ids.isEmpty());
+
+        FrontendInfo info = mTuner.getFrontendInfoById(ids.get(0));
+        int res = mTuner.tune(createFrontendSettings(info));
+        assertEquals(Tuner.RESULT_SUCCESS, res);
+        res = mTuner.cancelTuning();
+        assertEquals(Tuner.RESULT_SUCCESS, res);
+
+        // Tune again with the same frontend.
+        mTuner.tune(createFrontendSettings(info));
+        assertEquals(Tuner.RESULT_SUCCESS, res);
+        res = mTuner.cancelTuning();
+        assertEquals(Tuner.RESULT_SUCCESS, res);
+
+        for (int i = 1; i < ids.size(); i++) {
+            FrontendInfo info2 = mTuner.getFrontendInfoById(ids.get(i));
+            if (info2.getType() != info.getType()) {
+                res = mTuner.tune(createFrontendSettings(info2));
+                assertEquals(Tuner.RESULT_INVALID_STATE, res);
+            }
+        }
+    }
+
+    @Test
     public void testScanning() throws Exception {
         List<Integer> ids = mTuner.getFrontendIds();
         if (ids == null) return;
