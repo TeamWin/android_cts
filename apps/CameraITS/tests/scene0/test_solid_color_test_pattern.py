@@ -113,11 +113,6 @@ def check_solid_color(img, exp_values, color, fmt):
                     'RGB variances: %s, ATOL: %d',
                     color, str(rgb_vars), ch_variance_atol)
       test_fail = True
-    if not all(i < _CH_VARIANCE_ATOL for i in rgb_vars):
-      logging.error('Image has too much variance for color %s. '
-                    'RGB variances: %s, ATOL: %d',
-                    color, str(rgb_vars), _CH_VARIANCE_ATOL)
-      test_fail = True
   else:
     exp_values_mask = np.array(exp_values)//255
     primary = max(rgb_means*exp_values_mask)
