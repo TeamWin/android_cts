@@ -35,10 +35,9 @@ import android.media.MediaCodecInfo.CodecProfileLevel;
 import android.media.MediaCodecInfo.VideoCapabilities;
 import android.media.MediaCodecList;
 import android.media.MediaCrypto;
-import android.media.MediaDrm;
-import android.media.MediaDrm.MediaDrmStateException;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
+import android.media.cts.AudioHelper;
 import android.opengl.GLES20;
 import android.os.Build;
 import android.os.ConditionVariable;
@@ -81,10 +80,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  * General MediaCodec tests.
  *
  * In particular, check various API edge cases.
- *
- * <p>The file in res/raw used by testDecodeShortInput are (c) copyright 2008,
- * Blender Foundation / www.bigbuckbunny.org, and are licensed under the Creative Commons
- * Attribution 3.0 License at http://creativecommons.org/licenses/by/3.0/us/.
  */
 @Presubmit
 @SmallTest
@@ -1955,57 +1950,6 @@ public class MediaCodecTest extends AndroidTestCase {
             new UUID(0x1077efecc0b24d02L, 0xace33c1e52e2fb4bL);
 
     /**
-     * Tests:
-     * <br> queueSecureInputBuffer() with erroneous input throws CryptoException
-     * <br> getInputBuffer() after the failed queueSecureInputBuffer() succeeds.
-     */
-    public void testCryptoError() throws Exception {
-        if (!supportsCodec(MIME_TYPE, true)) {
-            Log.i(TAG, "No encoder found for mimeType= " + MIME_TYPE);
-            return;
-        }
-
-        MediaDrm drm = new MediaDrm(CLEARKEY_SCHEME_UUID);
-        byte[] sessionId = drm.openSession();
-        MediaCrypto crypto = new MediaCrypto(CLEARKEY_SCHEME_UUID, new byte[0]);
-        MediaCodec codec = MediaCodec.createDecoderByType(MIME_TYPE);
-
-        try {
-            crypto.setMediaDrmSession(sessionId);
-
-            MediaCodec.CryptoInfo cryptoInfo = new MediaCodec.CryptoInfo();
-            MediaFormat format = createMediaFormat();
-
-            codec.configure(format, null, crypto, 0);
-            codec.start();
-            int index = codec.dequeueInputBuffer(-1);
-            assertTrue(index >= 0);
-            ByteBuffer buffer = codec.getInputBuffer(index);
-            cryptoInfo.set(
-                    1,
-                    new int[] { 0 },
-                    new int[] { buffer.capacity() },
-                    new byte[16],
-                    new byte[16],
-                    // Trying to decrypt encrypted data in unencrypted mode
-                    MediaCodec.CRYPTO_MODE_UNENCRYPTED);
-            try {
-                codec.queueSecureInputBuffer(index, 0, cryptoInfo, 0, 0);
-                fail("queueSecureInputBuffer should fail when trying to decrypt " +
-                        "encrypted data in unencrypted mode.");
-            } catch (MediaCodec.CryptoException e) {
-                // expected
-            }
-            buffer = codec.getInputBuffer(index);
-            codec.stop();
-        } finally {
-            codec.release();
-            crypto.release();
-            drm.closeSession(sessionId);
-        }
-    }
-
-    /**
      * Tests MediaCodec.CryptoException
      */
     public void testCryptoException() {
@@ -2147,65 +2091,6 @@ public class MediaCodecTest extends AndroidTestCase {
             codec.release();
         }
         return actualEncoding;
-    }
-
-    /*
-     * Simulate ERROR_LOST_STATE error during decryption, expected
-     * result is MediaCodec.CryptoException with errorCode == ERROR_LOST_STATE
-     */
-    public void testCryptoErrorLostSessionState() throws Exception {
-        if (!supportsCodec(MIME_TYPE, true)) {
-            Log.i(TAG, "No encoder found for mimeType= " + MIME_TYPE);
-            return;
-        }
-
-        MediaDrm drm = new MediaDrm(CLEARKEY_SCHEME_UUID);
-        drm.setPropertyString("drmErrorTest", "lostState");
-
-        byte[] sessionId = drm.openSession();
-        MediaCrypto crypto = new MediaCrypto(CLEARKEY_SCHEME_UUID, new byte[0]);
-        MediaCodec codec = MediaCodec.createDecoderByType(MIME_TYPE);
-
-        try {
-            crypto.setMediaDrmSession(sessionId);
-
-            MediaCodec.CryptoInfo cryptoInfo = new MediaCodec.CryptoInfo();
-            MediaFormat format = createMediaFormat();
-
-            codec.configure(format, null, crypto, 0);
-            codec.start();
-            int index = codec.dequeueInputBuffer(-1);
-            assertTrue(index >= 0);
-            ByteBuffer buffer = codec.getInputBuffer(index);
-            cryptoInfo.set(
-                    1,
-                    new int[] { 0 },
-                    new int[] { buffer.capacity() },
-                            new byte[16],
-                    new byte[16],
-                    MediaCodec.CRYPTO_MODE_AES_CTR);
-            try {
-                codec.queueSecureInputBuffer(index, 0, cryptoInfo, 0, 0);
-                fail("queueSecureInputBuffer should fail when trying to decrypt " +
-                        "after session lost state error.");
-            } catch (MediaCodec.CryptoException e) {
-                if (e.getErrorCode() != MediaCodec.CryptoException.ERROR_LOST_STATE) {
-                    fail("expected MediaCodec.CryptoException.ERROR_LOST_STATE: " +
-                            e.getErrorCode() + ": " + e.getMessage());
-                }
-                // received expected lost state exception
-            }
-            buffer = codec.getInputBuffer(index);
-            codec.stop();
-        } finally {
-            codec.release();
-            crypto.release();
-            try {
-                drm.closeSession(sessionId);
-            } catch (MediaDrmStateException e) {
-                // expected since session lost state
-            }
-        }
     }
 
     /* package */ static abstract class ByteBufferStream {
