@@ -42,10 +42,13 @@ import static android.server.wm.app.Components.TopActivity.EXTRA_FINISH_DELAY;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeTrue;
+import static org.junit.Assume.assumeFalse;
 
 import android.content.ComponentName;
+import android.os.SystemProperties;
 import android.platform.test.annotations.Presubmit;
 
+import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -62,6 +65,11 @@ import org.junit.Test;
  */
 @Presubmit
 public class TransitionSelectionTests extends ActivityManagerTestBase {
+
+    @Before
+    public void setup() {
+        assumeFalse(ENABLE_SHELL_TRANSITIONS);
+    }
 
     // Test activity open/close under normal timing
     @Test

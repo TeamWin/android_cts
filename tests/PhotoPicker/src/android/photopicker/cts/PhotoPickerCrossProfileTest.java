@@ -109,6 +109,7 @@ public class PhotoPickerCrossProfileTest extends PhotoPickerBaseTest {
 
     @Test
     @EnsureHasWorkProfile
+    @Ignore("Enable after b/201323670 is fixed")
     public void testPersonalApp_canAccessWorkProfileContents() throws Exception {
         final int imageCount = 2;
         createImages(imageCount, sDeviceState.workProfile().id(), mUriList);
