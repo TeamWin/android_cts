@@ -16,6 +16,11 @@
 
 package android.hardware.cts;
 
+import static android.os.Build.VERSION_CODES;
+
+import static com.android.compatibility.common.util.PropertyUtil.getFirstApiLevel;
+import static com.android.compatibility.common.util.PropertyUtil.getVendorApiLevel;
+
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
@@ -43,6 +48,10 @@ public class SecurityModelFeatureTest {
 
     @Before
     public void setUp() throws Exception {
+        final int firstApiLevel = Math.min(getFirstApiLevel(), getVendorApiLevel());
+        assumeTrue("Skipping test: it only applies to devices that first shipped with S or later.",
+                   firstApiLevel >= VERSION_CODES.S);
+
         mPackageManager = InstrumentationRegistry.getTargetContext().getPackageManager();
         mHasSecurityFeature =
             mPackageManager.hasSystemFeature(PackageManager.FEATURE_SECURITY_MODEL_COMPATIBLE);

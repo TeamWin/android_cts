@@ -35,17 +35,7 @@
 // The relevant Android API levels
 #define Q_API_LEVEL 29
 #define R_API_LEVEL 30
-
-static int getFirstApiLevel(void) {
-    int level = property_get_int32("ro.product.first_api_level", 0);
-    if (level == 0) {
-        level = property_get_int32("ro.build.version.sdk", 0);
-    }
-    if (level == 0) {
-        ADD_FAILURE() << "Failed to determine first API level";
-    }
-    return level;
-}
+#define S_API_LEVEL 31
 
 #ifdef __arm__
 // For ARM32, assemble the 'aese.8' instruction as an .inst, since otherwise
@@ -207,6 +197,7 @@ TEST(FileBasedEncryptionPolicyTest, allowedPolicy) {
         return;
     }
     int first_api_level = getFirstApiLevel();
+    int vendor_api_level = getVendorApiLevel();
     char crypto_type[PROPERTY_VALUE_MAX];
     struct fscrypt_get_policy_ex_arg arg;
     int res;
@@ -223,6 +214,18 @@ TEST(FileBasedEncryptionPolicyTest, allowedPolicy) {
     property_get("ro.crypto.type", crypto_type, "");
     GTEST_LOG_(INFO) << "ro.crypto.type is '" << crypto_type << "'";
     GTEST_LOG_(INFO) << "First API level is " << first_api_level;
+    GTEST_LOG_(INFO) << "Vendor API level is " << vendor_api_level;
+
+    // This feature name check only applies to devices that first shipped with
+    // SC or later.
+    int min_api_level = (first_api_level < vendor_api_level) ? first_api_level
+                                                             : vendor_api_level;
+    if (min_api_level >= S_API_LEVEL &&
+       !deviceSupportsFeature("android.hardware.security.model.compatible")) {
+        GTEST_SKIP()
+            << "Skipping test: FEATURE_SECURITY_MODEL_COMPATIBLE missing.";
+        return;
+    }
 
     // Note: SELinux policy allows the shell domain to use these ioctls, but not
     // apps.  Therefore this test needs to be a real native test that's run

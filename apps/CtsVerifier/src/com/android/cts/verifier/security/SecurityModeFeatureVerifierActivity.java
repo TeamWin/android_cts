@@ -16,6 +16,11 @@
 
 package com.android.cts.verifier.security;
 
+import static android.os.Build.VERSION_CODES;
+
+import static com.android.compatibility.common.util.PropertyUtil.getFirstApiLevel;
+import static com.android.compatibility.common.util.PropertyUtil.getVendorApiLevel;
+
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.view.View;
@@ -23,7 +28,6 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
-
 
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
@@ -38,6 +42,7 @@ public class SecurityModeFeatureVerifierActivity extends PassFailButtons.Activit
     private Button mHandheldOrTabletOkButton;
     private Button mHandheldOrTabletNaButton;
     private boolean mFeatureAvailable;
+    private boolean mDeviceLaunchedBeforeS;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,6 +58,9 @@ public class SecurityModeFeatureVerifierActivity extends PassFailButtons.Activit
         mHandheldOrTabletText = (TextView) findViewById(R.id.handheld_or_tablet_text);
         mHandheldOrTabletOkButton = (Button) findViewById(R.id.handheld_or_tablet_yes);
         mHandheldOrTabletNaButton = (Button) findViewById(R.id.handheld_or_tablet_not_applicable);
+
+        // Devices launched before S will always pass the test.
+        mDeviceLaunchedBeforeS = isLaunchedBeforeS();
 
         mFeatureAvailable = getPackageManager()
             .hasSystemFeature(PackageManager.FEATURE_SECURITY_MODEL_COMPATIBLE);
@@ -70,5 +78,9 @@ public class SecurityModeFeatureVerifierActivity extends PassFailButtons.Activit
                 setTestResultAndFinish(mFeatureAvailable);
             }
         });
+    }
+
+    private static boolean isLaunchedBeforeS() {
+        return Math.min(getFirstApiLevel(), getVendorApiLevel()) < VERSION_CODES.S;
     }
 }

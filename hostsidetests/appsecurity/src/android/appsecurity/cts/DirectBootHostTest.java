@@ -18,6 +18,9 @@ package android.appsecurity.cts;
 
 import static android.appsecurity.cts.Utils.waitForBootCompleted;
 
+import static com.android.compatibility.common.util.PropertyUtil.getFirstApiLevel;
+import static com.android.compatibility.common.util.PropertyUtil.getVendorApiLevel;
+
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
@@ -203,8 +206,14 @@ public class DirectBootHostTest extends BaseHostJUnit4Test {
                 getDevice().hasFeature(FEATURE_DEVICE_ADMIN));
         assumeTrue("Skipping test: FEATURE_SECURE_LOCK_SCREEN missing.",
                 getDevice().hasFeature(FEATURE_SECURE_LOCK_SCREEN));
-        assumeTrue("Skipping test: FEATURE_SECURITY_MODEL_COMPATIBLE missing.",
-                getDevice().hasFeature(FEATURE_SECURITY_MODEL_COMPATIBLE));
+        // This feature name check only applies to devices that first shipped with
+        // SC or later.
+        final int firstApiLevel =
+                Math.min(getFirstApiLevel(getDevice()), getVendorApiLevel(getDevice()));
+        if (firstApiLevel >= 31) {
+            assumeTrue("Skipping test: FEATURE_SECURITY_MODEL_COMPATIBLE missing.",
+                    getDevice().hasFeature(FEATURE_SECURITY_MODEL_COMPATIBLE));
+        }
     }
 
     private boolean isAutomotiveDevice() throws Exception {
