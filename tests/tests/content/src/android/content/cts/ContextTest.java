@@ -21,6 +21,8 @@ import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
+import static org.junit.Assume.assumeTrue;
+
 import android.app.Activity;
 import android.app.AppOpsManager;
 import android.app.Instrumentation;
@@ -64,7 +66,6 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.util.Xml;
 import android.view.WindowManager;
-
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.SystemUtil;
