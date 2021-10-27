@@ -163,8 +163,10 @@ public class Utils {
             final Handler handler = new Handler(handlerThread.getLooper());
 
             am.registerAudioPlaybackCallback(callback, handler);
-            mediaPlayer = MediaPlayer.create(context, Uri.fromFile(new File(mInpPrefix +
-                    "sine1khzm40db.wav")));
+            File testAudioFile = new File(mInpPrefix + "sine1khzm40db.wav");
+            Assert.assertTrue("Test audio file does not exist! path="
+                            + testAudioFile.getAbsolutePath(), testAudioFile.exists());
+            mediaPlayer = MediaPlayer.create(context, Uri.fromFile(testAudioFile));
             mediaPlayer.start();
             if (!callback.mCountDownLatch.await(TEST_TIMING_TOLERANCE_MS, TimeUnit.MILLISECONDS)
                     || callback.mActiveConfigSize != activeConfigSizeBeforeStart + 1) {
