@@ -898,7 +898,7 @@ public class FrameRateCtsActivity extends Activity {
 
             for (float frameRate : frameRates) {
                 int initialNumEvents = mModeChangedEvents.size();
-                surface.setFrameRate(frameRate, Surface.FRAME_RATE_COMPATIBILITY_DEFAULT,
+                surface.setFrameRate(frameRate, Surface.FRAME_RATE_COMPATIBILITY_FIXED_SOURCE,
                         Surface.CHANGE_FRAME_RATE_ALWAYS);
 
                 assertTrue("Mode switches are not expected but these were detected "
@@ -922,7 +922,7 @@ public class FrameRateCtsActivity extends Activity {
 
             for (float frameRate : frameRatesToTest) {
                 int initialNumEvents = mModeChangedEvents.size();
-                surface.setFrameRate(frameRate, Surface.FRAME_RATE_COMPATIBILITY_DEFAULT,
+                surface.setFrameRate(frameRate, Surface.FRAME_RATE_COMPATIBILITY_FIXED_SOURCE,
                         Surface.CHANGE_FRAME_RATE_ALWAYS);
 
                 verifyCompatibleAndStableFrameRate(frameRate, Arrays.asList(surface));
@@ -931,7 +931,7 @@ public class FrameRateCtsActivity extends Activity {
             }
 
             // Reset to default
-            surface.setFrameRate(0.f, Surface.FRAME_RATE_COMPATIBILITY_DEFAULT,
+            surface.setFrameRate(0.f, Surface.FRAME_RATE_COMPATIBILITY_FIXED_SOURCE,
                     Surface.CHANGE_FRAME_RATE_ALWAYS);
 
             // Wait for potential mode switches.
@@ -942,7 +942,7 @@ public class FrameRateCtsActivity extends Activity {
 
             for (float frameRate : seamedRefreshRates) {
                 int initialNumEvents = mModeChangedEvents.size();
-                surface.setFrameRate(frameRate, Surface.FRAME_RATE_COMPATIBILITY_DEFAULT,
+                surface.setFrameRate(frameRate, Surface.FRAME_RATE_COMPATIBILITY_FIXED_SOURCE,
                         Surface.CHANGE_FRAME_RATE_ALWAYS);
 
                 // Mode switches may have occurred, make sure they were all seamless.
@@ -964,7 +964,7 @@ public class FrameRateCtsActivity extends Activity {
             List<Float> frameRates = getRefreshRates(display.getMode(), display);
             for (float frameRate : frameRates) {
                 int initialNumEvents = mModeChangedEvents.size();
-                surface.setFrameRate(frameRate, Surface.FRAME_RATE_COMPATIBILITY_DEFAULT,
+                surface.setFrameRate(frameRate, Surface.FRAME_RATE_COMPATIBILITY_FIXED_SOURCE,
                         Surface.CHANGE_FRAME_RATE_ALWAYS);
 
                 verifyCompatibleAndStableFrameRate(frameRate, Arrays.asList(surface));
