@@ -22,6 +22,7 @@ import android.app.AppComponentFactory;
 import android.app.Service;
 import android.app.admin.DevicePolicyManager;
 import android.content.BroadcastReceiver;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.CrossProfileApps;
@@ -48,7 +49,8 @@ import com.android.bedstead.testapp.processor.annotations.TestAppReceiver;
                 @FrameworkClass(frameworkClass = CrossProfileApps.class, constructor = "context.getSystemService(android.content.pm.CrossProfileApps.class)"),
                 @FrameworkClass(frameworkClass = LauncherApps.class, constructor = "context.getSystemService(android.content.pm.LauncherApps.class)"),
                 @FrameworkClass(frameworkClass = AccountManager.class, constructor = "context.getSystemService(android.accounts.AccountManager.class)"),
-                @FrameworkClass(frameworkClass = Context.class, constructor = "context")
+                @FrameworkClass(frameworkClass = Context.class, constructor = "context"),
+                @FrameworkClass(frameworkClass = ContentResolver.class, constructor = "context.getContentResolver()")
         }
 )public final class TestAppAppComponentFactory extends AppComponentFactory {
 

@@ -378,4 +378,13 @@ public class TestAppInstanceTest {
                     .isEqualTo(Context.DEVICE_POLICY_SERVICE);
         }
     }
+
+    @Test
+    public void context_getContentResolver_returnsUsableInstance() {
+        try (TestAppInstance testAppInstance = sTestApp.install(sUser)) {
+            // Arbitrary call which does not require specific permissions to confirm no crash
+            assertThat(testAppInstance.context().getContentResolver().getPersistedUriPermissions())
+                    .isNotNull();
+        }
+    }
 }

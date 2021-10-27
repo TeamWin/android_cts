@@ -130,6 +130,9 @@ public final class Processor extends AbstractProcessor {
     private static final ClassName REMOTE_DEVICE_POLICY_MANAGER_PARENT_WRAPPER_CLASSNAME =
             ClassName.get("android.app.admin",
                     "RemoteDevicePolicyManagerParentWrapper");
+    private static final ClassName REMOTE_CONTENT_RESOLVER_WRAPPER_CLASSNAME =
+            ClassName.get("android.content",
+                    "RemoteContentResolverWrapper");
 
     /**
      * Extract a class provided in an annotation.
@@ -276,6 +279,16 @@ public final class Processor extends AbstractProcessor {
                 logicLambda.addStatement("return new $T(mConnector, $L)",
                         REMOTE_DEVICE_POLICY_MANAGER_PARENT_WRAPPER_CLASSNAME,
                         String.join(", ", params));
+            } else if (method.getReturnType().toString().equals(
+                    "android.content.RemoteContentResolver")
+                    && method.getSimpleName().contentEquals("getContentResolver")) {
+                // Special case, we want to return a contnet resolver, but still call through to
+                // the other side for exceptions, etc.
+                logicLambda.addStatement(
+                        "mProfileClass.other().$L($L)",
+                        method.getSimpleName(), String.join(", ", params));
+                logicLambda.addStatement("return new $T(mConnector)",
+                        REMOTE_CONTENT_RESOLVER_WRAPPER_CLASSNAME);
             } else if (method.getReturnType().getKind().equals(TypeKind.VOID)) {
                 logicLambda.addStatement("mProfileClass.other().$L($L)", method.getSimpleName(),
                         String.join(", ", params));

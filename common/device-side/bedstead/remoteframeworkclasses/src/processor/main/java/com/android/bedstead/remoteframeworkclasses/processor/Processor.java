@@ -82,12 +82,15 @@ public final class Processor extends AbstractProcessor {
             "android.content.pm.LauncherApps",
             "android.accounts.AccountManager",
             "android.app.Activity",
-            "android.content.Context"
+            "android.content.Context",
+            "android.content.ContentResolver"
     };
 
     private static final String PARENT_PROFILE_INSTANCE =
             "public android.app.admin.DevicePolicyManager getParentProfileInstance(android"
                     + ".content.ComponentName)";
+    private static final String GET_CONTENT_RESOLVER =
+            "public android.content.ContentResolver getContentResolver()";
 
     private static final Set<String> BLOCKLISTED_METHODS = ImmutableSet.of(
             // DevicePolicyManager
@@ -496,9 +499,6 @@ public final class Processor extends AbstractProcessor {
             // Uses java.lang.ClassLoader
             "public abstract ClassLoader getClassLoader()",
 
-            // Uses android.content.ContentResolver
-            "public abstract android.content.ContentResolver getContentResolver()",
-
             // Uses android.view.Display
             "@Nullable public android.view.Display getDisplay()",
 
@@ -566,16 +566,63 @@ public final class Processor extends AbstractProcessor {
 
             // Doesn't make sense as it requires an actual Context
             "public abstract boolean moveDatabaseFrom(android.content.Context, String)",
-            "public abstract boolean moveSharedPreferencesFrom(android.content.Context, String)"
+            "public abstract boolean moveSharedPreferencesFrom(android.content.Context, String)",
+
+            // ContentProvider
+
+            // Uses android.content.ContentProviderClient
+            "@Nullable public final android.content.ContentProviderClient acquireContentProviderClient(@NonNull android.net.Uri)",
+            "@Nullable public final android.content.ContentProviderClient acquireContentProviderClient(@NonNull String)",
+            "@Nullable public final android.content.ContentProviderClient acquireUnstableContentProviderClient(@NonNull android.net.Uri)",
+            "@Nullable public final android.content.ContentProviderClient acquireUnstableContentProviderClient(@NonNull String)",
+
+            // Uses android.content.ContentResolver.MimeTypeInfo
+            "@NonNull public final android.content.ContentResolver.MimeTypeInfo getTypeInfo(@NonNull String)",
+
+            // Uses android.util.Size
+            "@NonNull public android.graphics.Bitmap loadThumbnail(@NonNull android.net.Uri, @NonNull android.util.Size, @Nullable android.os.CancellationSignal) throws java.io.IOException",
+
+            // Uses android.database.ContentObserver
+            "public void notifyChange(@NonNull android.net.Uri, @Nullable android.database.ContentObserver)",
+            "@Deprecated public void notifyChange(@NonNull android.net.Uri, @Nullable android.database.ContentObserver, boolean)",
+            "public void notifyChange(@NonNull android.net.Uri, @Nullable android.database.ContentObserver, int)",
+            "public void notifyChange(@NonNull java.util.Collection<android.net.Uri>, @Nullable android.database.ContentObserver, int)",
+
+            // Uses android.os.CancellationSignal
+            "@Nullable public final android.content.res.AssetFileDescriptor openAssetFile(@NonNull android.net.Uri, @NonNull String, @Nullable android.os.CancellationSignal) throws java.io.FileNotFoundException",
+            "@Nullable public final android.content.res.AssetFileDescriptor openAssetFileDescriptor(@NonNull android.net.Uri, @NonNull String, @Nullable android.os.CancellationSignal) throws java.io.FileNotFoundException",
+            "@Nullable public final android.os.ParcelFileDescriptor openFile(@NonNull android.net.Uri, @NonNull String, @Nullable android.os.CancellationSignal) throws java.io.FileNotFoundException",
+            "@Nullable public final android.os.ParcelFileDescriptor openFileDescriptor(@NonNull android.net.Uri, @NonNull String, @Nullable android.os.CancellationSignal) throws java.io.FileNotFoundException",
+            "@Nullable public final android.content.res.AssetFileDescriptor openTypedAssetFile(@NonNull android.net.Uri, @NonNull String, @Nullable android.os.Bundle, @Nullable android.os.CancellationSignal) throws java.io.FileNotFoundException",
+            "@Nullable public final android.content.res.AssetFileDescriptor openTypedAssetFileDescriptor(@NonNull android.net.Uri, @NonNull String, @Nullable android.os.Bundle, @Nullable android.os.CancellationSignal) throws java.io.FileNotFoundException",
+            "public final boolean refresh(@NonNull android.net.Uri, @Nullable android.os.Bundle, @Nullable android.os.CancellationSignal)",
+
+            // Uses java.io.InputStream
+            "@Nullable public final java.io.InputStream openInputStream(@NonNull android.net.Uri) throws java.io.FileNotFoundException",
+
+            // Uses java.io.OutputStream
+            "@Nullable public final java.io.OutputStream openOutputStream(@NonNull android.net.Uri) throws java.io.FileNotFoundException",
+            "@Nullable public final java.io.OutputStream openOutputStream(@NonNull android.net.Uri, @NonNull String) throws java.io.FileNotFoundException",
+
+            // Uses android.database.Cursor
+            "@Nullable public final android.database.Cursor query(@NonNull @RequiresPermission.Read android.net.Uri, @Nullable String[], @Nullable String, @Nullable String[], @Nullable String)",
+            "@Nullable public final android.database.Cursor query(@NonNull @RequiresPermission.Read android.net.Uri, @Nullable String[], @Nullable String, @Nullable String[], @Nullable String, @Nullable android.os.CancellationSignal)",
+            "@Nullable public final android.database.Cursor query(@NonNull @RequiresPermission.Read android.net.Uri, @Nullable String[], @Nullable android.os.Bundle, @Nullable android.os.CancellationSignal)",
+
+            // Uses android.database.ContentObserver
+            "public final void registerContentObserver(@NonNull android.net.Uri, boolean, @NonNull android.database.ContentObserver)",
+            "public final void unregisterContentObserver(@NonNull android.database.ContentObserver)"
 
 
 
     );
 
-
     private static final ClassName NULL_PARCELABLE_REMOTE_DEVICE_POLICY_MANAGER_CLASSNAME =
             ClassName.get("com.android.bedstead.remoteframeworkclasses",
                     "NullParcelableRemoteDevicePolicyManager");
+    private static final ClassName NULL_PARCELABLE_REMOTE_CONTENT_RESOLVER_CLASSNAME =
+            ClassName.get("com.android.bedstead.remoteframeworkclasses",
+                    "NullParcelableRemoteContentResolver");
     private static final ClassName COMPONENT_NAME_CLASSNAME =
             ClassName.get("android.content", "ComponentName");
 
@@ -612,6 +659,7 @@ public final class Processor extends AbstractProcessor {
 
     private void generateWrappers() {
         generateWrapper(NULL_PARCELABLE_REMOTE_DEVICE_POLICY_MANAGER_CLASSNAME);
+        generateWrapper(NULL_PARCELABLE_REMOTE_CONTENT_RESOLVER_CLASSNAME);
     }
 
     private void generateWrapper(ClassName className) {
@@ -668,6 +716,16 @@ public final class Processor extends AbstractProcessor {
         MethodSignature parentProfileInstanceSignature =
                 MethodSignature.forApiString(PARENT_PROFILE_INSTANCE, processingEnv.getTypeUtils(),
                         processingEnv.getElementUtils());
+        MethodSignature getContentResolverSignature =
+                MethodSignature.forApiString(GET_CONTENT_RESOLVER, processingEnv.getTypeUtils(),
+                        processingEnv.getElementUtils());
+
+        Map<MethodSignature, ClassName> signatureReturnOverrides = new HashMap<>();
+        signatureReturnOverrides.put(parentProfileInstanceSignature,
+                ClassName.get("android.app.admin", "RemoteDevicePolicyManager"));
+        signatureReturnOverrides.put(getContentResolverSignature,
+                ClassName.get("android.content", "RemoteContentResolver"));
+
         String packageName = frameworkClass.getEnclosingElement().toString();
         ClassName className = ClassName.get(packageName,
                 "Remote" + frameworkClass.getSimpleName().toString());
@@ -685,8 +743,9 @@ public final class Processor extends AbstractProcessor {
 
 
         classBuilder.addAnnotation(AnnotationSpec.builder(CrossUser.class)
-                .addMember("parcelableWrappers", "$T.class",
-                        NULL_PARCELABLE_REMOTE_DEVICE_POLICY_MANAGER_CLASSNAME)
+                .addMember("parcelableWrappers", "{$T.class, $T.class}",
+                        NULL_PARCELABLE_REMOTE_DEVICE_POLICY_MANAGER_CLASSNAME,
+                        NULL_PARCELABLE_REMOTE_CONTENT_RESOLVER_CLASSNAME)
                 .addMember("futureWrappers", "$T.class",
                         ACCOUNT_MANAGE_FUTURE_WRAPPER_CLASSNAME)
                 .build());
@@ -701,10 +760,9 @@ public final class Processor extends AbstractProcessor {
 
             MethodSignature signature = MethodSignature.forMethod(method,
                     processingEnv.getElementUtils());
-            if (signature.equals(parentProfileInstanceSignature)) {
-                // Special case, we want to return a RemoteDevicePolicyManager instead
-                methodBuilder.returns(ClassName.get(
-                        "android.app.admin", "RemoteDevicePolicyManager"));
+
+            if (signatureReturnOverrides.containsKey(signature)) {
+                methodBuilder.returns(signatureReturnOverrides.get(signature));
             }
 
             methodBuilder.addJavadoc("See {@link $T#$L}.",
@@ -739,8 +797,9 @@ public final class Processor extends AbstractProcessor {
                 TypeSpec.classBuilder(className).addModifiers(Modifier.FINAL, Modifier.PUBLIC);
 
         classBuilder.addAnnotation(AnnotationSpec.builder(CrossUser.class)
-                .addMember("parcelableWrappers", "$T.class",
-                        NULL_PARCELABLE_REMOTE_DEVICE_POLICY_MANAGER_CLASSNAME)
+                .addMember("parcelableWrappers", "{$T.class, $T.class}",
+                        NULL_PARCELABLE_REMOTE_DEVICE_POLICY_MANAGER_CLASSNAME,
+                        NULL_PARCELABLE_REMOTE_CONTENT_RESOLVER_CLASSNAME)
                 .build());
 
         classBuilder.addField(ClassName.get(frameworkClass),
@@ -812,9 +871,19 @@ public final class Processor extends AbstractProcessor {
     }
 
     private void generateFrameworkImpl(TypeElement frameworkClass, Set<ExecutableElement> methods) {
-        MethodSignature parentProfileInstanceSignature = MethodSignature.forApiString(
-                PARENT_PROFILE_INSTANCE, processingEnv.getTypeUtils(),
-                processingEnv.getElementUtils());
+        MethodSignature parentProfileInstanceSignature =
+                MethodSignature.forApiString(PARENT_PROFILE_INSTANCE, processingEnv.getTypeUtils(),
+                        processingEnv.getElementUtils());
+        MethodSignature getContentResolverSignature =
+                MethodSignature.forApiString(GET_CONTENT_RESOLVER, processingEnv.getTypeUtils(),
+                        processingEnv.getElementUtils());
+
+        Map<MethodSignature, ClassName> signatureReturnOverrides = new HashMap<>();
+        signatureReturnOverrides.put(parentProfileInstanceSignature,
+                ClassName.get("android.app.admin", "RemoteDevicePolicyManager"));
+        signatureReturnOverrides.put(getContentResolverSignature,
+                ClassName.get("android.content", "RemoteContentResolver"));
+
         String packageName = frameworkClass.getEnclosingElement().toString();
         ClassName interfaceClassName = ClassName.get(packageName,
                 "Remote" + frameworkClass.getSimpleName().toString());
@@ -864,13 +933,12 @@ public final class Processor extends AbstractProcessor {
                 methodBuilder.addParameter(parameterSpec);
             }
 
-            if (signature.equals(parentProfileInstanceSignature)) {
-                // Special case, we want to return a RemoteDevicePolicyManager instead
-                methodBuilder.returns(ClassName.get(
-                        "android.app.admin", "RemoteDevicePolicyManager"));
+            if (signatureReturnOverrides.containsKey(signature)) {
+                methodBuilder.returns(signatureReturnOverrides.get(signature));
                 methodBuilder.addStatement(
-                        "return new $T(mFrameworkClass.$L($L))",
-                        className, method.getSimpleName(), String.join(", ", paramNames));
+                        "return new $TImpl(mFrameworkClass.$L($L))",
+                        signatureReturnOverrides.get(signature),
+                        method.getSimpleName(), String.join(", ", paramNames));
             } else if (method.getReturnType().getKind().equals(TypeKind.VOID)) {
                 methodBuilder.addStatement(
                         "mFrameworkClass.$L($L)",
