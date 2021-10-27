@@ -31,7 +31,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-class MediaCodecPlayerTestBase<T extends Activity> extends ActivityInstrumentationTestCase2<T> {
+public class MediaCodecPlayerTestBase<T extends Activity> extends ActivityInstrumentationTestCase2<T> {
 
     private static final String TAG = MediaCodecPlayerTestBase.class.getSimpleName();
     private static final int CONNECTION_RETRIES = 10;
