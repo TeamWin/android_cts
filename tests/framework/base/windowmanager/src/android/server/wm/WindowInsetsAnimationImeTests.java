@@ -19,6 +19,7 @@ package android.server.wm;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.graphics.Insets.NONE;
 import static android.view.WindowInsets.Type.ime;
+import static android.view.WindowInsets.Type.navigationBars;
 import static android.view.WindowInsets.Type.statusBars;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
