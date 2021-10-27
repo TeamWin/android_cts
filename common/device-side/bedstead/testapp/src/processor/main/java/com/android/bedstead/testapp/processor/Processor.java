@@ -115,9 +115,8 @@ public final class Processor extends AbstractProcessor {
             ClassName.get(
                     "com.android.bedstead.nene.exceptions",
                     "NeneException");
-    private static final ClassName TEST_APP_INSTANCE_REFERENCE_CLASSNAME =
-            ClassName.get("com.android.bedstead.testapp",
-                    "TestAppInstanceReference");
+    private static final ClassName TEST_APP_INSTANCE_CLASSNAME =
+            ClassName.get("com.android.bedstead.testapp", "TestAppInstance");
     private static final ClassName COMPONENT_REFERENCE_CLASSNAME =
             ClassName.get("com.android.bedstead.nene.packages",
                     "ComponentReference");
@@ -581,7 +580,7 @@ public final class Processor extends AbstractProcessor {
 
         classBuilder.addMethod(
                 MethodSpec.constructorBuilder()
-                        .addParameter(TEST_APP_INSTANCE_REFERENCE_CLASSNAME, "instance")
+                        .addParameter(TEST_APP_INSTANCE_CLASSNAME, "instance")
                         .addParameter(
                                 COMPONENT_REFERENCE_CLASSNAME, "component")
                         .addStatement("super(instance, component)")

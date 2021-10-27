@@ -37,7 +37,7 @@ import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.testapp.TestApp;
-import com.android.bedstead.testapp.TestAppInstanceReference;
+import com.android.bedstead.testapp.TestAppInstance;
 import com.android.bedstead.testapp.TestAppProvider;
 import com.android.queryable.queries.StringQuery;
 
@@ -208,7 +208,7 @@ public class PackageTest {
     @Test
     @EnsureHasSecondaryUser
     public void grantPermission_permissionIsGranted() {
-        try (TestAppInstanceReference instance = sTestApp.install()) {
+        try (TestAppInstance instance = sTestApp.install()) {
             sTestApp.pkg().grantPermission(USER_SPECIFIC_PERMISSION);
 
             assertThat(sTestApp.pkg().hasPermission(USER_SPECIFIC_PERMISSION)).isTrue();
@@ -219,8 +219,8 @@ public class PackageTest {
     @EnsureHasSecondaryUser
     @RequireRunOnSystemUser // TODO(b/201319776): this should be anything but secondary user
     public void grantPermission_permissionIsUserSpecific_permissionIsGrantedOnlyForThatUser() {
-        try (TestAppInstanceReference instance1 = sTestApp.install();
-             TestAppInstanceReference instance2 = sTestApp.install(sDeviceState.secondaryUser())) {
+        try (TestAppInstance instance1 = sTestApp.install();
+             TestAppInstance instance2 = sTestApp.install(sDeviceState.secondaryUser())) {
 
             sTestApp.pkg().grantPermission(sDeviceState.secondaryUser(), USER_SPECIFIC_PERMISSION);
 
@@ -271,7 +271,7 @@ public class PackageTest {
 
     @Test
     public void denyPermission_permissionIsNotGranted() {
-        try (TestAppInstanceReference instance = sTestApp.install()) {
+        try (TestAppInstance instance = sTestApp.install()) {
             sTestApp.pkg().grantPermission(USER_SPECIFIC_PERMISSION);
 
             sTestApp.pkg().denyPermission(USER_SPECIFIC_PERMISSION);
@@ -304,7 +304,7 @@ public class PackageTest {
 
     @Test
     public void denyPermission_installPermission_throwsException() {
-        try (TestAppInstanceReference instance = sTestApp.install()) {
+        try (TestAppInstance instance = sTestApp.install()) {
             assertThrows(NeneException.class, () ->
                     sTestApp.pkg().denyPermission(INSTALL_PERMISSION));
         }
@@ -319,7 +319,7 @@ public class PackageTest {
 
     @Test
     public void denyPermission_alreadyDenied_doesNothing() {
-        try (TestAppInstanceReference instance = sTestApp.install()) {
+        try (TestAppInstance instance = sTestApp.install()) {
             sTestApp.pkg().denyPermission(USER_SPECIFIC_PERMISSION);
             sTestApp.pkg().denyPermission(USER_SPECIFIC_PERMISSION);
 
@@ -331,8 +331,8 @@ public class PackageTest {
     @EnsureHasSecondaryUser
     @RequireRunOnSystemUser // TODO(201319776): Just needs to be not the secondary user
     public void denyPermission_permissionIsUserSpecific_permissionIsDeniedOnlyForThatUser() {
-        try (TestAppInstanceReference instance1 = sTestApp.install();
-             TestAppInstanceReference instance2 = sTestApp.install(sDeviceState.secondaryUser())) {
+        try (TestAppInstance instance1 = sTestApp.install();
+             TestAppInstance instance2 = sTestApp.install(sDeviceState.secondaryUser())) {
             sTestApp.pkg().grantPermission(USER_SPECIFIC_PERMISSION);
             sTestApp.pkg().grantPermission(sDeviceState.secondaryUser(), USER_SPECIFIC_PERMISSION);
 

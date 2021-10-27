@@ -32,7 +32,7 @@ import com.android.bedstead.harrier.annotations.enterprise.NegativePolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PositivePolicyTest;
 import com.android.bedstead.harrier.policies.ApplicationRestrictions;
 import com.android.bedstead.testapp.TestApp;
-import com.android.bedstead.testapp.TestAppInstanceReference;
+import com.android.bedstead.testapp.TestAppInstance;
 import com.android.bedstead.testapp.TestAppProvider;
 
 import org.junit.ClassRule;
@@ -74,7 +74,7 @@ public final class ApplicationRestrictionsTest {
                         .getApplicationRestrictions(
                                 sDeviceState.dpc().componentName(), sTestApp.packageName());
 
-        try (TestAppInstanceReference testApp = sTestApp.install()) {
+        try (TestAppInstance testApp = sTestApp.install()) {
             sDeviceState.dpc().devicePolicyManager()
                     .setApplicationRestrictions(
                             sDeviceState.dpc().componentName(), sTestApp.packageName(),
@@ -123,7 +123,7 @@ public final class ApplicationRestrictionsTest {
                         .getApplicationRestrictions(
                                 sDeviceState.dpc().componentName(), sTestApp.packageName());
 
-        try (TestAppInstanceReference differentTestApp = sDifferentTestApp.install()) {
+        try (TestAppInstance differentTestApp = sDifferentTestApp.install()) {
             sDeviceState.dpc().devicePolicyManager()
                     .setApplicationRestrictions(
                             sDeviceState.dpc().componentName(), sTestApp.packageName(),
@@ -148,7 +148,7 @@ public final class ApplicationRestrictionsTest {
                         .getApplicationRestrictions(
                                 sDeviceState.dpc().componentName(), sTestApp.packageName());
 
-        try (TestAppInstanceReference differentTestApp = sDifferentTestApp.install()) {
+        try (TestAppInstance differentTestApp = sDifferentTestApp.install()) {
             sDeviceState.dpc().devicePolicyManager()
                     .setApplicationRestrictions(
                             sDeviceState.dpc().componentName(), sTestApp.packageName(),
@@ -171,7 +171,7 @@ public final class ApplicationRestrictionsTest {
                 sDeviceState.dpc().devicePolicyManager().getApplicationRestrictions(
                         sDeviceState.dpc().componentName(), sTestApp.packageName());
 
-        try (TestAppInstanceReference testApp = sTestApp.install()) {
+        try (TestAppInstance testApp = sTestApp.install()) {
             sDeviceState.dpc().devicePolicyManager()
                     .setApplicationRestrictions(
                             sDeviceState.dpc().componentName(), sTestApp.packageName(),

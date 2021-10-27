@@ -30,8 +30,7 @@ import com.android.bedstead.nene.packages.ComponentReference;
  */
 public abstract class TestAppActivity extends TestAppActivityReference implements
         NeneActivity {
-    TestAppActivity(TestAppInstanceReference instance,
-            ComponentReference component) {
+    TestAppActivity(TestAppInstance instance, ComponentReference component) {
         super(instance, component);
     }
 

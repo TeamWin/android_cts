@@ -61,7 +61,7 @@ import javax.annotation.Nullable;
  *
  * <p>The user may not exist, or the test app may not be installed on the user.
  */
-public class TestAppInstanceReference implements AutoCloseable, ConnectionListener {
+public class TestAppInstance implements AutoCloseable, ConnectionListener {
 
     private final TestApp mTestApp;
     private final UserReference mUser;
@@ -73,9 +73,9 @@ public class TestAppInstanceReference implements AutoCloseable, ConnectionListen
 
     /**
      * Use {@link TestApp#install} or {@link TestApp#instance} to get an instance of
-     * {@link TestAppInstanceReference}.
+     * {@link TestAppInstance}.
      */
-    public TestAppInstanceReference(TestApp testApp, UserReference user) {
+    public TestAppInstance(TestApp testApp, UserReference user) {
         if (testApp == null || user == null) {
             throw new NullPointerException();
         }
@@ -117,7 +117,7 @@ public class TestAppInstanceReference implements AutoCloseable, ConnectionListen
 
     /**
      * Uninstall the {@link TestApp} from the user referenced by
-     * this {@link TestAppInstanceReference}.
+     * this {@link TestAppInstance}.
      */
     public void uninstall() {
         mTestApp.uninstall(mUser);
@@ -160,7 +160,7 @@ public class TestAppInstanceReference implements AutoCloseable, ConnectionListen
     /**
      * Unregister the receiver
      */
-    public TestAppInstanceReference unregisterReceiver(IntentFilter intentFilter) {
+    public TestAppInstance unregisterReceiver(IntentFilter intentFilter) {
         if (!mRegisteredBroadcastReceivers.containsKey(intentFilter)) {
             return this;
         }
@@ -191,7 +191,7 @@ public class TestAppInstanceReference implements AutoCloseable, ConnectionListen
      *
      * @see {@link #stopKeepAlive()}.
      */
-    public TestAppInstanceReference keepAlive() {
+    public TestAppInstance keepAlive() {
         keepAlive(/* manualKeepAlive=*/ true);
         return this;
     }
@@ -214,7 +214,7 @@ public class TestAppInstanceReference implements AutoCloseable, ConnectionListen
      *
      * <p>This will not kill the app immediately. To do that see {@link #stop()}.
      */
-    public TestAppInstanceReference stopKeepAlive() {
+    public TestAppInstance stopKeepAlive() {
         mKeepAliveManually = false;
         connector().stopManualConnectionManagement();
         return this;
@@ -226,7 +226,7 @@ public class TestAppInstanceReference implements AutoCloseable, ConnectionListen
 //     *
 //     * <p>This will also stop keeping the target app alive (see {@link #stopKeepAlive()}.
 //     */
-//    public TestAppInstanceReference stop() {
+//    public TestAppInstance stop() {
 //        stopKeepAlive();
 //
 //        ProcessReference process = mTestApp.pkg().runningProcess(mUser);
@@ -344,7 +344,7 @@ public class TestAppInstanceReference implements AutoCloseable, ConnectionListen
 
     @Override
     public String toString() {
-        return "TestAppInstanceReference{"
+        return "TestAppInstance{"
                 + "testApp=" + mTestApp
                 + ", user=" + mUser
                 + ", registeredBroadcastReceivers=" + mRegisteredBroadcastReceivers
