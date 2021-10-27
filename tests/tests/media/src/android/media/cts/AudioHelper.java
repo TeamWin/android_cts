@@ -624,7 +624,6 @@ public class AudioHelper {
             mTrack = new AudioTrackNative();
         }
 
-        @Override
         public boolean open(int numChannels, int sampleRate, boolean useFloat, int numBuffers) {
             if (super.open(numChannels, sampleRate, useFloat, numBuffers)) {
                 if (!mTrack.open(numChannels, sampleRate, useFloat, 2 /* numBuffers */)) {
@@ -635,7 +634,6 @@ public class AudioHelper {
             return false;
         }
 
-        @Override
         public void close() {
             super.close();
             if (mTrack != null) {
@@ -643,7 +641,6 @@ public class AudioHelper {
             }
         }
 
-        @Override
         public boolean start() {
             if (super.start()) {
                 if (mTrack != null) {
@@ -654,7 +651,6 @@ public class AudioHelper {
             return false;
         }
 
-        @Override
         public boolean stop() {
             if (super.stop()) {
                 if (mTrack != null) {
@@ -665,7 +661,6 @@ public class AudioHelper {
             return false;
         }
 
-        @Override
         public int read(short[] audioData, int offsetInShorts, int sizeInShorts, int readFlags) {
             int samples = super.read(audioData, offsetInShorts, sizeInShorts, readFlags);
             if (mTrack != null) {
@@ -676,7 +671,6 @@ public class AudioHelper {
             return samples;
         }
 
-        @Override
         public int read(float[] audioData, int offsetInFloats, int sizeInFloats, int readFlags) {
             int samples = super.read(audioData, offsetInFloats, sizeInFloats, readFlags);
             if (mTrack != null) {

@@ -16,7 +16,6 @@
 
 package android.media.cts;
 
-
 import android.os.Environment;
 
 import androidx.test.platform.app.InstrumentationRegistry;
