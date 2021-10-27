@@ -22,6 +22,7 @@ import android.app.AppComponentFactory;
 import android.app.Service;
 import android.app.admin.DevicePolicyManager;
 import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.CrossProfileApps;
 import android.content.pm.LauncherApps;
@@ -31,21 +32,23 @@ import android.os.HardwarePropertiesManager;
 import android.os.UserManager;
 import android.util.Log;
 
+import com.android.bedstead.testapp.processor.annotations.FrameworkClass;
 import com.android.bedstead.testapp.processor.annotations.TestAppReceiver;
 
 /**
  * An {@link AppComponentFactory} which redirects invalid class names to premade TestApp classes.
  */
 @TestAppReceiver(
-        systemServiceClasses = {
-                DevicePolicyManager.class,
-                HardwarePropertiesManager.class,
-                UserManager.class,
-                WifiManager.class,
-                PackageManager.class,
-                CrossProfileApps.class,
-                LauncherApps.class,
-                AccountManager.class
+        frameworkClasses = {
+                @FrameworkClass(frameworkClass = DevicePolicyManager.class, constructor = "context.getSystemService(android.app.admin.DevicePolicyManager.class)"),
+                @FrameworkClass(frameworkClass = HardwarePropertiesManager.class, constructor = "context.getSystemService(android.os.HardwarePropertiesManager.class)"),
+                @FrameworkClass(frameworkClass = UserManager.class, constructor = "context.getSystemService(android.os.UserManager.class)"),
+                @FrameworkClass(frameworkClass = WifiManager.class, constructor = "context.getSystemService(android.net.wifi.WifiManager.class)"),
+                @FrameworkClass(frameworkClass = PackageManager.class, constructor = "context.getPackageManager()"),
+                @FrameworkClass(frameworkClass = CrossProfileApps.class, constructor = "context.getSystemService(android.content.pm.CrossProfileApps.class)"),
+                @FrameworkClass(frameworkClass = LauncherApps.class, constructor = "context.getSystemService(android.content.pm.LauncherApps.class)"),
+                @FrameworkClass(frameworkClass = AccountManager.class, constructor = "context.getSystemService(android.accounts.AccountManager.class)"),
+                @FrameworkClass(frameworkClass = Context.class, constructor = "context")
         }
 )public final class TestAppAppComponentFactory extends AppComponentFactory {
 

@@ -23,7 +23,10 @@ import android.app.admin.DevicePolicyManager;
 import android.app.admin.RemoteDevicePolicyManager;
 import android.app.admin.RemoteDevicePolicyManagerWrapper;
 import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.IntentFilter;
+import android.content.RemoteContext;
+import android.content.RemoteContextWrapper;
 import android.content.pm.CrossProfileApps;
 import android.content.pm.PackageManager;
 import android.content.pm.RemoteCrossProfileApps;
@@ -340,6 +343,15 @@ public class TestAppInstance implements AutoCloseable, ConnectionListener {
      */
     public RemoteAccountManager accountManager() {
         return new RemoteAccountManagerWrapper(mConnector);
+    }
+
+    /**
+     * Access the application {@link Context} using this test app.
+     *
+     * <p>Almost all methods are available. Those that are not will be missing from the interface.
+     */
+    public RemoteContext context() {
+        return new RemoteContextWrapper(mConnector);
     }
 
     @Override

@@ -65,7 +65,7 @@ public class TestAppActivitiesTest {
     }
 
     @Test
-    public void query_matchesActivity_returnsActivity() {
+    public void query_msatchesActivity_returnsActivity() {
         TestAppActivityReference activity = sTestAppInstance.activities().query()
                     .whereActivity().activityClass().className().isEqualTo(EXISTING_ACTIVITY)
                     .get();

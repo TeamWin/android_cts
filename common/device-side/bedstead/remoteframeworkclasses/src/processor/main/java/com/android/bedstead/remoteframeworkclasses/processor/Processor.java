@@ -34,8 +34,10 @@ import java.io.PrintWriter;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -43,7 +45,6 @@ import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
 import javax.lang.model.SourceVersion;
-import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
@@ -80,7 +81,8 @@ public final class Processor extends AbstractProcessor {
             "android.content.pm.CrossProfileApps",
             "android.content.pm.LauncherApps",
             "android.accounts.AccountManager",
-            "android.app.Activity"
+            "android.app.Activity",
+            "android.content.Context"
     };
 
     private static final String PARENT_PROFILE_INSTANCE =
@@ -462,7 +464,112 @@ public final class Processor extends AbstractProcessor {
             "public abstract Object getSystemService(@NonNull String)",
 
             // ContextThemeWrapper
-            "protected void onApplyThemeResource(android.content.res.Resources.Theme, int, boolean)"
+            "protected void onApplyThemeResource(android.content.res.Resources.Theme, int, boolean)",
+
+            // Context
+
+            // Uses java.util.concurrent.Executor
+            "public boolean bindIsolatedService(@NonNull @RequiresPermission android.content.Intent, int, @NonNull String, @NonNull java.util.concurrent.Executor, @NonNull android.content.ServiceConnection)",
+            "public boolean bindService(@NonNull @RequiresPermission android.content.Intent, int, @NonNull java.util.concurrent.Executor, @NonNull android.content.ServiceConnection)",
+
+            // Uses android.content.ServiceConnection
+            "public abstract boolean bindService(@RequiresPermission android.content.Intent, @NonNull android.content.ServiceConnection, int)",
+            "public boolean bindServiceAsUser(@NonNull @RequiresPermission android.content.Intent, @NonNull android.content.ServiceConnection, int, @NonNull android.os.UserHandle)",
+            "public abstract void unbindService(@NonNull android.content.ServiceConnection)",
+            "public void updateServiceGroup(@NonNull android.content.ServiceConnection, int, int)",
+
+            // Uses android.content.Context
+            "@NonNull public android.content.Context createAttributionContext(@Nullable String)",
+            "public abstract android.content.Context createConfigurationContext(@NonNull android.content.res.Configuration)",
+            "@NonNull public android.content.Context createContext(@NonNull android.content.ContextParams)",
+            "public abstract android.content.Context createContextForSplit(String) throws android.content.pm.PackageManager.NameNotFoundException",
+            "public abstract android.content.Context createDeviceProtectedStorageContext()",
+            "@DisplayContext public abstract android.content.Context createDisplayContext(@NonNull android.view.Display)",
+            "public abstract android.content.Context createPackageContext(String, int) throws android.content.pm.PackageManager.NameNotFoundException",
+            "@NonNull @UiContext public android.content.Context createWindowContext(int, @Nullable android.os.Bundle)",
+            "@NonNull @UiContext public android.content.Context createWindowContext(@NonNull android.view.Display, int, @Nullable android.os.Bundle)",
+            "public abstract android.content.Context getApplicationContext()",
+
+            // Uses android.content.res.AssetManager
+            "public abstract android.content.res.AssetManager getAssets()",
+
+            // Uses java.lang.ClassLoader
+            "public abstract ClassLoader getClassLoader()",
+
+            // Uses android.content.ContentResolver
+            "public abstract android.content.ContentResolver getContentResolver()",
+
+            // Uses android.view.Display
+            "@Nullable public android.view.Display getDisplay()",
+
+            // Uses android.graphics.drawable.Drawable
+            "@Nullable public final android.graphics.drawable.Drawable getDrawable(@DrawableRes int)",
+            "@Deprecated public abstract android.graphics.drawable.Drawable getWallpaper()",
+            "@Deprecated public abstract android.graphics.drawable.Drawable peekWallpaper()",
+
+            // Uses java.util.concurrent.Executor
+            "public java.util.concurrent.Executor getMainExecutor()",
+
+            // Uses android.os.Looper
+            "public abstract android.os.Looper getMainLooper()",
+
+            // Uses android.content.pm.PackageManager
+            "public abstract android.content.pm.PackageManager getPackageManager()",
+
+            // Uses android.content.ContextParams
+            "@Nullable public android.content.ContextParams getParams()",
+
+            // Uses android.content.res.Resources
+            "public abstract android.content.res.Resources getResources()",
+
+            // Uses android.content.SharedPreferences
+            "public abstract android.content.SharedPreferences getSharedPreferences(String, int)",
+
+            // Uses android.content.res.Resources.Theme
+            "public abstract android.content.res.Resources.Theme getTheme()",
+
+            // Uses android.content.res.TypedArray
+            "@NonNull public final android.content.res.TypedArray obtainStyledAttributes(@NonNull @StyleableRes int[])",
+            "@NonNull public final android.content.res.TypedArray obtainStyledAttributes(@StyleRes int, @NonNull @StyleableRes int[]) throws android.content.res.Resources.NotFoundException",
+            "@NonNull public final android.content.res.TypedArray obtainStyledAttributes(@Nullable android.util.AttributeSet, @NonNull @StyleableRes int[])",
+            "@NonNull public final android.content.res.TypedArray obtainStyledAttributes(@Nullable android.util.AttributeSet, @NonNull @StyleableRes int[], @AttrRes int, @StyleRes int)",
+
+            // Uses java.io.FileInputStream
+            "public abstract java.io.FileInputStream openFileInput(String) throws java.io.FileNotFoundException",
+
+            // Uses java.io.FileOutputStream
+            "public abstract java.io.FileOutputStream openFileOutput(String, int) throws java.io.FileNotFoundException",
+
+            // Uses android.database.sqlite.SQLiteDatabase
+            "public abstract android.database.sqlite.SQLiteDatabase openOrCreateDatabase(String, int, android.database.sqlite.SQLiteDatabase.CursorFactory)",
+            "public abstract android.database.sqlite.SQLiteDatabase openOrCreateDatabase(String, int, android.database.sqlite.SQLiteDatabase.CursorFactory, @Nullable android.database.DatabaseErrorHandler)",
+
+            // Uses android.content.ComponentCallbacks
+            "public void registerComponentCallbacks(android.content.ComponentCallbacks)",
+            "public void unregisterComponentCallbacks(android.content.ComponentCallbacks)",
+
+            // Uses android.content.BroadcastReceiver
+            "@Nullable public abstract android.content.Intent registerReceiver(@Nullable android.content.BroadcastReceiver, android.content.IntentFilter)",
+            "@Nullable public abstract android.content.Intent registerReceiver(@Nullable android.content.BroadcastReceiver, android.content.IntentFilter, int)",
+            "@Nullable public abstract android.content.Intent registerReceiver(android.content.BroadcastReceiver, android.content.IntentFilter, @Nullable String, @Nullable android.os.Handler)",
+            "@Nullable public abstract android.content.Intent registerReceiver(android.content.BroadcastReceiver, android.content.IntentFilter, @Nullable String, @Nullable android.os.Handler, int)",
+            "public abstract void sendOrderedBroadcast(@NonNull @RequiresPermission android.content.Intent, @Nullable String, @Nullable android.content.BroadcastReceiver, @Nullable android.os.Handler, int, @Nullable String, @Nullable android.os.Bundle)",
+            "public void sendOrderedBroadcast(@NonNull android.content.Intent, @Nullable String, @Nullable String, @Nullable android.content.BroadcastReceiver, @Nullable android.os.Handler, int, @Nullable String, @Nullable android.os.Bundle)",
+            "public abstract void sendOrderedBroadcastAsUser(@RequiresPermission android.content.Intent, android.os.UserHandle, @Nullable String, android.content.BroadcastReceiver, @Nullable android.os.Handler, int, @Nullable String, @Nullable android.os.Bundle)",
+            "public abstract void sendStickyOrderedBroadcast(@RequiresPermission android.content.Intent, android.content.BroadcastReceiver, @Nullable android.os.Handler, int, @Nullable String, @Nullable android.os.Bundle)",
+            "public abstract void sendStickyOrderedBroadcastAsUser(@RequiresPermission android.content.Intent, android.os.UserHandle, android.content.BroadcastReceiver, @Nullable android.os.Handler, int, @Nullable String, @Nullable android.os.Bundle)",
+            "public abstract void unregisterReceiver(android.content.BroadcastReceiver)",
+
+            // Uses java.io.InputStream
+            "@Deprecated public abstract void setWallpaper(java.io.InputStream) throws java.io.IOException",
+
+
+            // Doesn't make sense as it requires an actual Context
+            "public abstract boolean moveDatabaseFrom(android.content.Context, String)",
+            "public abstract boolean moveSharedPreferencesFrom(android.content.Context, String)"
+
+
+
     );
 
 
@@ -538,7 +645,8 @@ public final class Processor extends AbstractProcessor {
             TypeElement frameworkClass,
             Set<MethodSignature> blocklistedMethodSignatures,
             Elements elements) {
-        Set<ExecutableElement> methods = filterMethods(getMethods(frameworkClass),
+        Set<ExecutableElement> methods = filterMethods(getMethods(frameworkClass,
+                processingEnv.getElementUtils()),
                 Apis.forClass(frameworkClass.getQualifiedName().toString(),
                         processingEnv.getTypeUtils(), processingEnv.getElementUtils()), elements)
                 .stream()
@@ -815,11 +923,25 @@ public final class Processor extends AbstractProcessor {
         }
     }
 
-    private Set<ExecutableElement> getMethods(TypeElement interfaceClass) {
-        return interfaceClass.getEnclosedElements().stream()
+    private Set<ExecutableElement> getMethods(TypeElement interfaceClass, Elements elements) {
+        Map<String, ExecutableElement> methods = new HashMap<>();
+        getMethods(methods, interfaceClass, elements);
+        return new HashSet<>(methods.values());
+    }
+
+    private void getMethods(Map<String, ExecutableElement> methods, TypeElement interfaceClass,
+            Elements elements) {
+        interfaceClass.getEnclosedElements().stream()
                 .filter(e -> e instanceof ExecutableElement)
                 .map(e -> (ExecutableElement) e)
-                .filter(e -> e.getKind().equals(ElementKind.METHOD))
-                .collect(Collectors.toSet());
+                .filter(e -> !methods.containsKey(e.getSimpleName().toString()))
+                .filter(e -> e.getModifiers().contains(Modifier.PUBLIC))
+                .forEach(e -> {
+                    methods.put(e.getSimpleName().toString(), e);
+                });
+
+        interfaceClass.getInterfaces().stream()
+                .map(m -> elements.getTypeElement(m.toString()))
+                .forEach(m -> getMethods(methods, m, elements));
     }
 }

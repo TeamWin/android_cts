@@ -17,8 +17,7 @@
 package com.android.bedstead.testapp.processor;
 
 
-import static java.util.stream.Collectors.toList;
-
+import com.android.bedstead.testapp.processor.annotations.FrameworkClass;
 import com.android.bedstead.testapp.processor.annotations.TestAppReceiver;
 import com.android.bedstead.testapp.processor.annotations.TestAppSender;
 
@@ -39,8 +38,10 @@ import com.squareup.javapoet.TypeSpec;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -53,7 +54,7 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
-import javax.lang.model.type.MirroredTypesException;
+import javax.lang.model.type.MirroredTypeException;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
@@ -131,27 +132,21 @@ public final class Processor extends AbstractProcessor {
                     "RemoteDevicePolicyManagerParentWrapper");
 
     /**
-     * Extract classes provided in an annotation.
+     * Extract a class provided in an annotation.
      *
-     * <p>The {@code runnable} should call the annotation method that the classes are being
-     * extracted for.
+     * <p>The {@code runnable} should call the annotation method that the class is being extracted
+     * for.
      */
-    public static List<TypeElement> extractClassesFromAnnotation(Types types, Runnable runnable) {
-        // From https://docs.oracle.com/javase/8/docs/api/javax/lang/model/AnnotatedConstruct.html
-        // "The annotation returned by this method could contain an element whose value is of type
-        // Class. This value cannot be returned directly: information necessary to locate and load a
-        // class (such as the class loader to use) is not available, and the class might not be
-        // loadable at all. Attempting to read a Class object by invoking the relevant method on the
-        // returned annotation will result in a MirroredTypeException, from which the corresponding
-        // TypeMirror may be extracted."
+    public static TypeElement extractClassFromAnnotation(Types types, Runnable runnable) {
         try {
             runnable.run();
-        } catch (MirroredTypesException e) {
+        } catch (MirroredTypeException e) {
             return e.getTypeMirrors().stream()
                     .map(t -> (TypeElement) types.asElement(t))
-                    .collect(toList());
+                    .findFirst()
+                    .get();
         }
-        throw new AssertionError("Could not extract classes from annotation");
+        throw new AssertionError("Could not extract class from annotation");
     }
 
     @Override
@@ -179,20 +174,19 @@ public final class Processor extends AbstractProcessor {
             TestAppReceiver testAppReceiver = receiverAnnotatedElements.iterator().next()
                     .getAnnotation(TestAppReceiver.class);
 
-
-            List<TypeElement> systemServiceClasses =
-                    extractClassesFromAnnotation(
-                            processingEnv.getTypeUtils(), testAppReceiver::systemServiceClasses);
+            FrameworkClass[] frameworkClasses = testAppReceiver.frameworkClasses();
 
             generateTargetedRemoteActivityInterface(neneActivityInterface);
             generateTargetedRemoteActivityImpl(neneActivityInterface);
             generateTargetedRemoteActivityWrapper(neneActivityInterface);
-            generateProvider(systemServiceClasses);
+            generateProvider(frameworkClasses);
             generateConfiguration();
 
             generateDpmParentWrapper(processingEnv.getElementUtils());
-            for (TypeElement systemServiceClass : systemServiceClasses) {
-                generateRemoteFrameworkClassWrapper(systemServiceClass);
+            for (FrameworkClass frameworkClass : frameworkClasses) {
+                generateRemoteFrameworkClassWrapper(
+                        extractClassFromAnnotation(processingEnv.getTypeUtils(),
+                                frameworkClass::frameworkClass));
             }
         }
 
@@ -661,7 +655,7 @@ public final class Processor extends AbstractProcessor {
         writeClassToFile(PACKAGE_NAME, classBuilder.build());
     }
 
-    private void generateProvider(List<TypeElement> systemServiceClasses) {
+    private void generateProvider(FrameworkClass[] frameworkClasses) {
         TypeSpec.Builder classBuilder =
                 TypeSpec.classBuilder(
                         "Provider")
@@ -692,21 +686,13 @@ public final class Processor extends AbstractProcessor {
                         DEVICE_POLICY_MANAGER_CLASSNAME)
                 .build());
 
-        for (TypeElement systemServiceClass : systemServiceClasses) {
-            ClassName originalClassName = ClassName.get(systemServiceClass);
+        for (FrameworkClass frameworkClass : frameworkClasses) {
+            ClassName originalClassName = ClassName.get(extractClassFromAnnotation(
+                    processingEnv.getTypeUtils(), frameworkClass::frameworkClass));
             ClassName interfaceClassName = ClassName.get(
                     originalClassName.packageName(), "Remote" + originalClassName.simpleName());
             ClassName implClassName = ClassName.get(
                     originalClassName.packageName(), interfaceClassName.simpleName() + "Impl");
-
-            CodeBlock systemServiceGetterCode = CodeBlock.of(
-                    "context.getSystemService($T.class)", originalClassName);
-
-            if (systemServiceClass.asType().toString().equals(
-                    "android.content.pm.PackageManager")) {
-                // Special case - getSystemService will return null
-                systemServiceGetterCode = CodeBlock.of("context.getPackageManager()");
-            }
 
             classBuilder.addMethod(
                     MethodSpec.methodBuilder("provide" + interfaceClassName.simpleName())
@@ -715,7 +701,7 @@ public final class Processor extends AbstractProcessor {
                             .addAnnotation(CrossProfileProvider.class)
                             .addParameter(CONTEXT_CLASSNAME, "context")
                             .addCode("return new $T($L);",
-                                    implClassName, systemServiceGetterCode)
+                                    implClassName, frameworkClass.constructor())
                             .build());
         }
 
@@ -751,17 +737,21 @@ public final class Processor extends AbstractProcessor {
     }
 
     private Set<ExecutableElement> getMethods(TypeElement interfaceClass, Elements elements) {
-        Set<ExecutableElement> methods = new HashSet<>();
+        Map<String, ExecutableElement> methods = new HashMap<>();
         getMethods(methods, interfaceClass, elements);
-        return methods;
+        return new HashSet<>(methods.values());
     }
 
-    private void getMethods(Set<ExecutableElement> methods, TypeElement interfaceClass,
+    private void getMethods(Map<String, ExecutableElement> methods, TypeElement interfaceClass,
             Elements elements) {
-        methods.addAll(interfaceClass.getEnclosedElements().stream()
+        interfaceClass.getEnclosedElements().stream()
                 .filter(e -> e instanceof ExecutableElement)
                 .map(e -> (ExecutableElement) e)
-                .collect(Collectors.toSet()));
+                .filter(e -> !methods.containsKey(e.getSimpleName().toString()))
+                .filter(e -> e.getModifiers().contains(Modifier.PUBLIC))
+                .forEach(e -> {
+                    methods.put(e.getSimpleName().toString(), e);
+                });
 
         interfaceClass.getInterfaces().stream()
                 .map(m -> elements.getTypeElement(m.toString()))

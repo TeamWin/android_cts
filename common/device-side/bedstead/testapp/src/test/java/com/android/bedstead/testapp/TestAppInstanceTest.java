@@ -26,6 +26,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.testng.Assert.assertThrows;
 
+import android.app.admin.DevicePolicyManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -367,6 +368,14 @@ public class TestAppInstanceTest {
         try (TestAppInstance testAppInstance = sTestApp.install(sUser)) {
             // Arbitrary call which does not require specific permissions to confirm no crash
             assertThat(testAppInstance.accountManager().getAccounts()).isNotNull();
+        }
+    }
+
+    @Test
+    public void context_returnsUsableInstance() {
+        try (TestAppInstance testAppInstance = sTestApp.install(sUser)) {
+            assertThat(testAppInstance.context().getSystemServiceName(DevicePolicyManager.class))
+                    .isEqualTo(Context.DEVICE_POLICY_SERVICE);
         }
     }
 }
