@@ -385,6 +385,11 @@
          android:label="@string/car_permission_car_cluster_control"
          android:description="@string/car_permission_desc_car_cluster_control"/>
 
+    <permission android:name="android.car.permission.CAR_MONITOR_CLUSTER_NAVIGATION_STATE"
+        android:protectionLevel="signature|privileged"
+        android:label="@string/car_permission_car_monitor_cluster_navigation_state"
+        android:description="@string/car_permission_desc_car_monitor_cluster_navigation_state"/>
+
     <permission android:name="android.car.permission.CAR_HANDLE_USB_AOAP_DEVICE"
          android:protectionLevel="system|signature"
          android:label="@string/car_permission_label_car_handle_usb_aoap_device"
