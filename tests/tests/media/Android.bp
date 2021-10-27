@@ -37,6 +37,15 @@ java_library {
     sdk_version: "current",
 }
 
+// Build the res and asset library to
+// share with android.mediadrm.cts package.
+android_library {
+    name: "cts-media-res-lib",
+    asset_dirs: ["assets"],
+    resource_dirs: ["res"],
+    min_sdk_version: "31",
+}
+
 android_test {
     name: "CtsMediaTestCases",
     defaults: ["cts_defaults"],
@@ -51,6 +60,7 @@ android_test {
         "ctstestrunner-axt",
         "hamcrest-library",
         "ctstestserver",
+        "cts-media-res-lib",
         "junit",
         "junit-params",
         "ndkaudio",
@@ -69,8 +79,14 @@ android_test {
         "libnativehelper_compat_libc++",
         "libndkaudioLib",
     ],
-    // do not compress VP9 video files
+    asset_dirs: ["assets"],
+    resource_dirs: ["res"],
     aaptflags: [
+        "--auto-add-overlay",
+        // Give com.android.mediadrm.cts Java files access to the R class
+        "--extra-packages com.android.mediadrm.cts",
+
+        // Do not compress these files:
         "-0 .vp9",
         "-0 .ts",
         "-0 .heic",
@@ -98,5 +114,5 @@ android_test {
         "mts-media",
     ],
     host_required: ["cts-dynamic-config"],
-    min_sdk_version: "29",
+    min_sdk_version: "31",
 }
