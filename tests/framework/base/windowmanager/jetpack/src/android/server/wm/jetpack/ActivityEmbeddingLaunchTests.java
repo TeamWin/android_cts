@@ -166,15 +166,9 @@ public class ActivityEmbeddingLaunchTests extends WindowManagerJetpackTestBase {
         Activity prevSecondaryActivity;
         for (int i = 0; i < numActivitiesToLaunch; i++) {
             prevSecondaryActivity = secondaryActivity;
-            // Expect the split info consumer to return a value after the 3rd callback because the
-            // 1st callback will return empty split states due to clearing the previous secondary
-            // container, the 2nd callback will return a non-empty primary container with an empty
-            // secondary container because the primary container was just registered, and finally
-            // the 3rd callback will contain the secondary activity in the secondary container.
             secondaryActivity = startActivityAndVerifySplit(primaryActivity,
                     TestActivityWithId.class, splitPairRule,
-                    Integer.toString(i) /* secondActivityId */, mSplitInfoConsumer,
-                    3 /* expectedCallbackCount */);
+                    Integer.toString(i) /* secondActivityId */, mSplitInfoConsumer);
             // The previous secondary activity should be finishing because shouldClearTop was set
             // to true, which clears the secondary container before launching the next secondary
             // activity.
@@ -345,7 +339,7 @@ public class ActivityEmbeddingLaunchTests extends WindowManagerJetpackTestBase {
                     secondaryActivity /* activityLaunchingFrom */,
                     primaryActivity /* expectedPrimaryActivity */, TestActivityWithId.class,
                     splitPairRule, Integer.toString(i) /* secondActivityId */,
-                    mSplitInfoConsumer, 1 /* expectedCallbackCount */);
+                    1 /* expectedCallbackCount */, mSplitInfoConsumer);
 
             // Verify the split states match with the current and previous launches
             secondaryActivities.add(secondaryActivity);

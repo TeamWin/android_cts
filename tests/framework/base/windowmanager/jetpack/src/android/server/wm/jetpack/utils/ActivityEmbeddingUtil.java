@@ -94,8 +94,8 @@ public class ActivityEmbeddingUtil {
     public static Activity startActivityAndVerifySplit(@NonNull Activity activityLaunchingFrom,
             @NonNull Activity expectedPrimaryActivity, @NonNull Class secondActivityClass,
             @NonNull SplitPairRule splitPairRule, @NonNull String secondActivityId,
-            @NonNull TestValueCountConsumer<List<SplitInfo>> splitInfoConsumer,
-            int expectedCallbackCount) {
+            int expectedCallbackCount,
+            @NonNull TestValueCountConsumer<List<SplitInfo>> splitInfoConsumer) {
         // Set the expected callback count
         splitInfoConsumer.setCount(expectedCallbackCount);
 
@@ -123,12 +123,11 @@ public class ActivityEmbeddingUtil {
 
     public static Activity startActivityAndVerifySplit(@NonNull Activity primaryActivity,
             @NonNull Class secondActivityClass, @NonNull SplitPairRule splitPairRule,
-            @NonNull String secondActivityId,
-            @NonNull TestValueCountConsumer<List<SplitInfo>> splitInfoConsumer,
-            int expectedCallbackCount) {
+            @NonNull String secondActivityId, int expectedCallbackCount,
+            @NonNull TestValueCountConsumer<List<SplitInfo>> splitInfoConsumer) {
         return startActivityAndVerifySplit(primaryActivity /* activityLaunchingFrom */,
                 primaryActivity, secondActivityClass, splitPairRule, secondActivityId,
-                splitInfoConsumer, 1 /* expectedCallbackCount */);
+                expectedCallbackCount, splitInfoConsumer);
     }
 
     public static Activity startActivityAndVerifySplit(@NonNull Activity primaryActivity,
@@ -136,12 +135,16 @@ public class ActivityEmbeddingUtil {
             @NonNull String secondActivityId,
             @NonNull TestValueCountConsumer<List<SplitInfo>> splitInfoConsumer) {
         return startActivityAndVerifySplit(primaryActivity, secondActivityClass, splitPairRule,
-                secondActivityId, splitInfoConsumer, 1 /* expectedCallbackCount */);
+                secondActivityId, 1 /* expectedCallbackCount */, splitInfoConsumer);
     }
 
     @Nullable
-    public static Activity getSecondActivity(@NonNull List<SplitInfo> activeSplitStates,
+    public static Activity getSecondActivity(@Nullable List<SplitInfo> activeSplitStates,
             @NonNull Activity primaryActivity, @NonNull String secondaryClassId) {
+        if (activeSplitStates == null) {
+            Log.d(TAG, "Null split states");
+            return null;
+        }
         Log.d(TAG, "Active split states: " + activeSplitStates);
         for (SplitInfo splitInfo : activeSplitStates) {
             // Find the split info whose top activity in the primary container is the primary
