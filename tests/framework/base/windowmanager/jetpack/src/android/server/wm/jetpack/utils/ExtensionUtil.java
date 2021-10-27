@@ -114,8 +114,8 @@ public class ExtensionUtil {
         if (windowLayoutComponent == null) {
             return null;
         }
-        TestFirstValueConsumer<WindowLayoutInfo> windowLayoutInfoConsumer =
-                new TestFirstValueConsumer<>();
+        TestValueCountConsumer<WindowLayoutInfo> windowLayoutInfoConsumer =
+                new TestValueCountConsumer<>();
         windowLayoutComponent.addWindowLayoutInfoListener(activity, windowLayoutInfoConsumer);
         return windowLayoutInfoConsumer.waitAndGet();
     }
