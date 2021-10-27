@@ -15,8 +15,6 @@
  */
 package android.media.cts;
 
-import static android.Manifest.permission.MEDIA_CONTENT_CONTROL;
-
 import android.media.AudioManager;
 import android.platform.test.annotations.AppModeFull;
 import com.android.compatibility.common.util.ApiLevelUtil;
@@ -107,8 +105,9 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
         // The permission can be held only on S+
         if (!MediaUtils.check(sIsAtLeastS, "test invalid before Android 12")) return;
 
-        getInstrumentation().getUiAutomation()
-                .adoptShellPermissionIdentity(Manifest.permission.MEDIA_CONTENT_CONTROL);
+        getInstrumentation().getUiAutomation().adoptShellPermissionIdentity(
+                Manifest.permission.MEDIA_CONTENT_CONTROL,
+                Manifest.permission.MANAGE_EXTERNAL_STORAGE);
 
         MediaKeyEventSessionListener keyEventSessionListener = new MediaKeyEventSessionListener();
         mSessionManager.addOnMediaKeyEventSessionChangedListener(
@@ -141,8 +140,9 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
         // The permission can be held only on S+
         if (!MediaUtils.check(sIsAtLeastS, "test invalid before Android 12")) return;
 
-        getInstrumentation().getUiAutomation()
-                .adoptShellPermissionIdentity(Manifest.permission.MEDIA_CONTENT_CONTROL);
+        getInstrumentation().getUiAutomation().adoptShellPermissionIdentity(
+                Manifest.permission.MEDIA_CONTENT_CONTROL,
+                Manifest.permission.MANAGE_EXTERNAL_STORAGE);
 
         MediaKeyEventDispatchedListener keyEventDispatchedListener =
                 new MediaKeyEventDispatchedListener();
