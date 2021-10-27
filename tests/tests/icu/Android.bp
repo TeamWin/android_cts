@@ -30,7 +30,6 @@ android_test {
     test_suites: [
         "cts",
         "general-tests",
-        "mts",
     ],
     platform_apis: true,
 }
