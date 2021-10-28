@@ -16,18 +16,24 @@
 
 package android.app.cts
 
+import android.Manifest.permission.STATUS_BAR
+import android.app.Activity
 import android.app.ActivityManager
 import android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND
+import android.app.Instrumentation
 import android.app.StatusBarManager
+import android.app.stubs.MockActivity
 import android.app.stubs.NotExportedTestTileService
 import android.app.stubs.TestTileService
 import android.content.ComponentName
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.drawable.Icon
 import android.service.quicksettings.TileService
 import androidx.test.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.android.compatibility.common.util.SystemUtil
 import com.google.common.truth.Truth.assertThat
 import com.google.common.util.concurrent.MoreExecutors
 import org.junit.Assume
@@ -55,6 +61,7 @@ class RequestTileServiceAddTest {
     private lateinit var context: Context
     private lateinit var icon: Icon
     private lateinit var consumer: StoreIntConsumer
+    private lateinit var instrumentation: Instrumentation
     private val executor = MoreExecutors.directExecutor()
     private lateinit var latch: CountDownLatch
 
@@ -62,7 +69,8 @@ class RequestTileServiceAddTest {
     fun setUp() {
         Assume.assumeTrue(TileService.isQuickSettingsSupported())
 
-        context = InstrumentationRegistry.getTargetContext()
+        instrumentation = InstrumentationRegistry.getInstrumentation()
+        context = instrumentation.getTargetContext()
         statusBarService = context.getSystemService(StatusBarManager::class.java)!!
 
         icon = Icon.createWithResource(context, R.drawable.ic_android)
@@ -124,6 +132,13 @@ class RequestTileServiceAddTest {
         latch.await(TIME_OUT_SECONDS, TimeUnit.SECONDS)
 
         assertThat(consumer.result).isEqualTo(StatusBarManager.TILE_ADD_REQUEST_ERROR_BAD_COMPONENT)
+
+        // Cleanup
+        context.packageManager.setComponentEnabledSetting(
+                componentName,
+                PackageManager.COMPONENT_ENABLED_STATE_DEFAULT,
+                PackageManager.SYNCHRONOUS or PackageManager.DONT_KILL_APP
+        )
     }
 
     @Test
@@ -163,6 +178,50 @@ class RequestTileServiceAddTest {
 
         assertThat(consumer.result)
                 .isEqualTo(StatusBarManager.TILE_ADD_REQUEST_ERROR_APP_NOT_IN_FOREGROUND)
+    }
+
+    @Test
+    fun testTwoSimultaneousRequests() {
+        // We need an activity in the foreground for the first request to not be denied
+        val activity = setUpForActivity()
+        val componentName = TestTileService.getComponentName()
+
+        statusBarService.requestAddTileService(
+                componentName,
+                LABEL,
+                icon,
+                executor,
+                {}
+        )
+
+        Thread.sleep(TimeUnit.SECONDS.toMillis(TIME_OUT_SECONDS))
+
+        statusBarService.requestAddTileService(
+                componentName,
+                LABEL,
+                icon,
+                executor,
+                consumer
+        )
+
+        latch.await(TIME_OUT_SECONDS, TimeUnit.SECONDS)
+        assertThat(consumer.result)
+                .isEqualTo(StatusBarManager.TILE_ADD_REQUEST_ERROR_REQUEST_IN_PROGRESS)
+
+        SystemUtil.callWithShellPermissionIdentity(
+                { statusBarService.cancelRequestAddTile(componentName.packageName) },
+                STATUS_BAR
+        )
+
+        activity.finish()
+    }
+
+    private fun setUpForActivity(): Activity {
+        val intent = Intent(context, MockActivity::class.java)
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        val activity = instrumentation.startActivitySync(intent)
+        instrumentation.waitForIdleSync()
+        return activity
     }
 
     private class StoreIntConsumer(private val latch: CountDownLatch) : Consumer<Int> {
