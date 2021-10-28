@@ -23,13 +23,13 @@ import android.app.AppOpsManager
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
 import android.bluetooth.cts.BTAdapterUtils
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.PackageManager.FLAG_PERMISSION_REVOKED_COMPAT
 import android.location.LocationManager
 import android.os.Build
 import android.os.Process
+import android.os.UserHandle
 import androidx.test.InstrumentationRegistry
 import androidx.test.filters.SdkSuppress
 import com.android.compatibility.common.util.SystemUtil.runShellCommandOrThrow
@@ -55,6 +55,8 @@ class PermissionTest30WithBluetooth : BaseUsePermissionTest() {
         "android.permission3.cts.usepermission"
     private lateinit var bluetoothAdapter: BluetoothAdapter
     private var bluetoothAdapterWasEnabled: Boolean = false
+    private val locationManager = context.getSystemService(LocationManager::class.java)!!
+    private var locationWasEnabled: Boolean = false
 
     private enum class BluetoothScanResult {
         UNKNOWN, ERROR, EXCEPTION, EMPTY, FILTERED, FULL
@@ -80,6 +82,28 @@ class PermissionTest30WithBluetooth : BaseUsePermissionTest() {
         enableTestMode()
     }
 
+    @Before
+    fun enableLocation() {
+        val userHandle: UserHandle = Process.myUserHandle()
+        locationWasEnabled = locationManager.isLocationEnabledForUser(userHandle)
+        if (!locationWasEnabled) {
+            runWithShellPermissionIdentity {
+                locationManager.setLocationEnabledForUser(true, userHandle)
+            }
+        }
+    }
+
+    @After
+    fun disableLocation() {
+        val userHandle: UserHandle = Process.myUserHandle()
+
+        if (!locationWasEnabled) {
+            runWithShellPermissionIdentity {
+                locationManager.setLocationEnabledForUser(false, userHandle)
+            }
+        }
+    }
+
     @After
     fun disableBluetooth() {
         assumeTrue(supportsBluetooth())
@@ -94,9 +118,7 @@ class PermissionTest30WithBluetooth : BaseUsePermissionTest() {
     @Test
     fun testGivenBluetoothIsDeniedWhenScanIsAttemptedThenThenGetEmptyScanResult() {
         assertTrue("Please enable location to run this test. Bluetooth scanning " +
-                "requires location to be enabled.",
-                (context.getSystemService(
-                        Context.LOCATION_SERVICE) as LocationManager).isLocationEnabled())
+                "requires location to be enabled.", locationManager.isLocationEnabled())
 
         assertBluetoothRevokedCompatState(revoked = false)
         // Should return empty while the app does not have location
