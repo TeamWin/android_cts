@@ -286,7 +286,7 @@ public class VirtualContainerActivityCompatModeTest extends VirtualContainerActi
         // Fill in some stuff
         mActivity.mUsername.setText("foo");
         sReplier.addResponse(CannedFillResponse.NO_RESPONSE);
-        SystemClock.sleep(300);
+        SystemClock.sleep(Timeouts.FILL_TIMEOUT.ms());
         focusToPasswordExpectNoWindowEvent();
         sReplier.getNextFillRequest();
         mActivity.mPassword.setText("bar");
