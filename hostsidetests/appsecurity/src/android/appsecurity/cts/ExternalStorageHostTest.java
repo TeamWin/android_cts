@@ -138,8 +138,6 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
     @Test
     public void testExternalStorageRename() throws Exception {
         try {
-            wipePrimaryExternalStorage();
-
             getDevice().uninstallPackage(WRITE_PKG);
             installPackage(WRITE_APK);
 
@@ -160,8 +158,6 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
     @Test
     public void testExternalStorageNone29() throws Exception {
         try {
-            wipePrimaryExternalStorage();
-
             getDevice().uninstallPackage(NONE_PKG);
             String[] options = {AbiUtils.createAbiFlag(getAbi().getName())};
             assertNull(getDevice().installPackage(getTestAppFile(NONE_APK), false, options));
@@ -183,8 +179,6 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
     @Test
     public void testExternalStorageRead29() throws Exception {
         try {
-            wipePrimaryExternalStorage();
-
             getDevice().uninstallPackage(READ_PKG);
             String[] options = {AbiUtils.createAbiFlag(getAbi().getName())};
             assertNull(getDevice().installPackage(getTestAppFile(READ_APK), false, options));
@@ -206,8 +200,6 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
     @Test
     public void testExternalStorageWrite() throws Exception {
         try {
-            wipePrimaryExternalStorage();
-
             getDevice().uninstallPackage(WRITE_PKG);
             String[] options = {AbiUtils.createAbiFlag(getAbi().getName())};
             assertNull(getDevice().installPackage(getTestAppFile(WRITE_APK), false, options));
@@ -229,8 +221,6 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
     @Test
     public void testExternalStorageNoGifts() throws Exception {
         try {
-            wipePrimaryExternalStorage();
-
             getDevice().uninstallPackage(NONE_PKG);
             getDevice().uninstallPackage(READ_PKG);
             getDevice().uninstallPackage(WRITE_PKG);
@@ -262,8 +252,6 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
     @Test
     public void testCanAccessOtherObbDirs() throws Exception {
         try {
-            wipePrimaryExternalStorage();
-
             getDevice().uninstallPackage(WRITE_PKG_2);
             getDevice().uninstallPackage(NONE_PKG);
             final String[] options = {AbiUtils.createAbiFlag(getAbi().getName())};
@@ -307,8 +295,6 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
         Assume.assumeTrue(numUsers > 1);
 
         try {
-            wipePrimaryExternalStorage();
-
             getDevice().uninstallPackage(NONE_PKG);
             getDevice().uninstallPackage(WRITE_PKG);
             final String[] options = {AbiUtils.createAbiFlag(getAbi().getName())};
@@ -392,8 +378,6 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
     @Test
     public void testMultiViewMoveConsistency() throws Exception {
         try {
-            wipePrimaryExternalStorage();
-
             getDevice().uninstallPackage(NONE_PKG);
             getDevice().uninstallPackage(READ_PKG);
             final String[] options = {AbiUtils.createAbiFlag(getAbi().getName())};
@@ -422,8 +406,6 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
     @Test
     public void testExternalStorageReadDefaultUris() throws Exception {
         try {
-            wipePrimaryExternalStorage();
-
             getDevice().uninstallPackage(NONE_PKG);
             getDevice().uninstallPackage(WRITE_PKG);
             final String[] options = {AbiUtils.createAbiFlag(getAbi().getName())};
