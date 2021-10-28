@@ -51,6 +51,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.time.Duration;
+
 
 @RunWith(BedsteadJUnit4.class)
 public class ScreenCaptureDisabledTest {
@@ -186,6 +188,7 @@ public class ScreenCaptureDisabledTest {
         try (TestAppInstanceReference testApp = sTestApp.install()) {
             testApp.activities().any().start();
             return Poll.forValue(mUiAutomation::takeScreenshot)
+                    .timeout(Duration.ofSeconds(60))
                     .toBeNull()
                     .await();
         }
