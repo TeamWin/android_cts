@@ -46,6 +46,7 @@ import android.net.wifi.WifiManager;
 import android.nfc.NfcAdapter;
 import android.os.Build;
 import android.telephony.TelephonyManager;
+import android.util.Pair;
 
 import androidx.test.filters.FlakyTest;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -81,6 +82,16 @@ public class SystemFeaturesTest {
     private TelephonyManager mTelephonyManager;
     private WifiManager mWifiManager;
     private CameraManager mCameraManager;
+
+    // Features in the Android namespace that can be defined on API levels earlier than the addition
+    // of the feature field itself.  This is usually because the feature does not require any other
+    // API support to take advantage of.  This is a list of string pairs, where the first entry is
+    // the PackageManager field name of the feature, and the second is the string contained in that
+    // field (the actual feature name used to declare support for that feature).
+    private static List<Pair<String,String>> sBackportedFeatures = new ArrayList<>();
+    static {
+        sBackportedFeatures.add(Pair.create("FEATURE_CAMERA_CONCURRENT", "android.hardware.camera.concurrent"));
+    }
 
     @Before
     public void setUp() {
@@ -442,6 +453,11 @@ public class SystemFeaturesTest {
             if (field.getName().startsWith(prefix)) {
                 String feature = (String) field.get(null);
                 features.add(feature);
+            }
+        }
+        for (Pair<String, String> backportedFeature : sBackportedFeatures) {
+            if (backportedFeature.first.startsWith(prefix)) {
+                features.add(backportedFeature.second);
             }
         }
         return features;
