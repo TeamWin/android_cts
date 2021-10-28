@@ -172,6 +172,10 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
     //
     // Peripheral Connection Logic
     //
+
+    // if true, don't filter device types to allow testing in automobiles
+    private static final boolean PASS_ALL_DEVICES = true;
+
     protected void scanPeripheralList(AudioDeviceInfo[] devices) {
         // CDD Section C-1-3: USB port, host-mode support
 
@@ -182,8 +186,10 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
 
         // Any valid peripherals
         // Do we leave in the Headset test to support a USB-Dongle?
+        // For auto, we will allow the test to run even with speaker/mic
         for (AudioDeviceInfo devInfo : devices) {
-            if (devInfo.getType() == AudioDeviceInfo.TYPE_USB_DEVICE || // USB Peripheral
+            if (PASS_ALL_DEVICES ||
+                    devInfo.getType() == AudioDeviceInfo.TYPE_USB_DEVICE || // USB Peripheral
                     devInfo.getType() == AudioDeviceInfo.TYPE_USB_HEADSET || // USB dongle+LBPlug
                     devInfo.getType() == AudioDeviceInfo.TYPE_WIRED_HEADSET || // Loopback Plug?
                     devInfo.getType() == AudioDeviceInfo.TYPE_AUX_LINE) { // Aux-cable loopback?
@@ -251,8 +257,10 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
     }
 
     private boolean isPeripheralValidForTest() {
-        return mTestPeripheral == TESTPERIPHERAL_ANALOG_JACK
-                    || mTestPeripheral == TESTPERIPHERAL_USB;
+        // For auto, we will allow the test to run even with speaker/mic
+        return true;
+        // mTestPeripheral == TESTPERIPHERAL_ANALOG_JACK
+        //            || mTestPeripheral == TESTPERIPHERAL_USB;
     }
 
     private void showConnectedAudioPeripheral() {
@@ -288,7 +296,8 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
         }
         mTestPathTxt.setText(pathName);
         mTestButton.setEnabled(
-                mTestPeripheral != TESTPERIPHERAL_INVALID && mTestPeripheral != TESTPERIPHERAL_NONE);
+                isPeripheralValidForTest());
+//                mTestPeripheral != TESTPERIPHERAL_INVALID && mTestPeripheral != TESTPERIPHERAL_NONE);
 
     }
 
