@@ -4873,20 +4873,56 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="error_screen_pinning_couldnt_exit">Could not exit screen pinning through API.</string>
 
     <!--  Audio Devices Notifications Tests -->
-    <string name="audio_out_devices_notifications_test">Audio Output Devices Notifications Test</string>
-    <string name="audio_out_devices_notification_instructions">
-          Click the "Clear Messages" button then connect and disconnect a wired headset.
-          Note if the appropriate notification messages appear below.
-    </string>
-    <string name="audio_in_devices_notifications_test">Audio Input Devices Notifications Test</string>
-    <string name="audio_in_devices_notification_instructions">
-          Click the "Clear Messages" button then connect and disconnect a microphone or wired headset.
-          Note if the appropriate notification messages appear below.
-    </string>
     <string name="audio_dev_notification_clearmsgs">Clear Messages</string>
     <string name="audio_dev_notification_connectMsg">CONNECT DETECTED</string>
     <string name="audio_dev_notification_disconnectMsg">DISCONNECT DETECTED</string>
 
+    <!-- AudioOutputDeviceNotificationsActivity -->
+    <string name="audio_out_devices_notifications_test">Audio Output Devices Notifications Test</string>
+    <string name="audio_out_devices_infotext">Tests whether wired output peripheral
+        connect/disconnect notifications are correctly sent when output peripherals are
+        connected or disconnected. A \"wired output peripheral\" can be a headset or headphones
+        connected to an analog 3.5mm jack or the USB port or a USB audio interface connected to
+        the USB port.
+        \n\nTest Setup:
+        \nDisconnect any wired audio peripherals.
+        \n\nTest Process:
+        \n1. Verify that the DUT supports USB or Analog audio peripherals.
+        \n2. Press the \"Clear Messages\" button to clear any previously sent \"sticky\" notifications.
+        \n3. Connect a wired output peripheral. A connect message should appear. Disconnect the
+        audio peripheral. A disconnect message should appear.
+        \n\nTest Criteria:
+        \nThe test passes if either the device DOES NOT support wired output peripherals, or both
+        the connect and disconnect notifications are received.
+    </string>
+    <string name="audio_out_devices_notification_instructions">
+          Click the "Clear Messages" button then connect and disconnect a wired headset.
+          Note if the appropriate notification messages appear below.
+    </string>
+
+    <!-- AudioInputDeviceNotificationsActivity -->
+    <string name="audio_in_devices_notifications_test">Audio Input Devices Notifications Test</string>
+    <string name="audio_in_devices_infotext">Tests whether wired input peripheral
+        connect/disconnect notifications are correctly sent when input peripherals are
+        connected or disconnected. A \"wired input peripheral\" can be a headset connected to an
+        analog 3.5mm jack or the USB port or a USB audio interface connected to the USB port.
+        \n\nTest Setup:
+        \nDisconnect any wired audio peripherals.
+        \n\nTest Process:
+        \n1. Verify that the DUT supports USB or Analog audio peripherals.
+        \n2. Press the \"Clear Messages\" button to clear any previously sent \"sticky\" notifications.
+        \n3. Connect a wired output peripheral. A connect message should appear. Disconnect the
+        audio peripheral. A disconnect message should appear.
+        \n\nTest Criteria:
+        \nThe test passes if either the device DOES NOT support wired output peripherals, or both
+        the connect and disconnect notifications are received.
+    </string>
+    <string name="audio_in_devices_notification_instructions">
+          Click the "Clear Messages" button then connect and disconnect a microphone or wired headset.
+          Note if the appropriate notification messages appear below.
+    </string>
+
+    <!--- AudioInputRoutingNotificationsActivity -->
     <string name="audio_input_routingnotifications_test">Audio Input Routing Notifications Test</string>
     <string name="audio_input_routingnotification_instructions">
           Click on the "Record" button in the AudioRecord Routing Notifications section below to
@@ -4894,6 +4930,8 @@ You should be prompted to select credentials; choose the ones you just installed
           rerouting event below. Remove the wired headset and observe the new routing message.
           Click on the "Stop" button to stop recording.\n
     </string>
+
+    <!--- AudioOutputRoutingNotificationsActivity -->
     <string name="audio_output_routingnotifications_test">Audio Output Routing Notifications Test</string>
     <string name="audio_output_routingnotification_instructions">
           Click on the "Play" button in the AudioTrack Routing Notifications section below to

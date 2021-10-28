@@ -40,20 +40,29 @@ abstract class AudioWiredDeviceBaseActivity extends PassFailButtons.Activity {
 
     private OnBtnClickListener mBtnClickListener = new OnBtnClickListener();
 
-    abstract protected void enableTestButtons(boolean enabled);
+    private Button mSupportsBtn;
+    private Button mDoesntSupportBtn;
 
-    private void recordWiredPortFound(boolean found) {
+    protected boolean mSupportsWiredPeripheral;
+
+    abstract protected void enableTestButtons(boolean enabled);
+    abstract protected void calculatePass();
+
+    // ReportLog schema
+    private static final String KEY_WIRED_PORT_SUPPORTED = "wired_port_supported";
+
+    private void recordWiredPortFound() {
         getReportLog().addValue(
-                "User Reported Wired Port",
-                found ? 1.0 : 0,
+                KEY_WIRED_PORT_SUPPORTED,
+                mSupportsWiredPeripheral ? 1 : 0,
                 ResultType.NEUTRAL,
                 ResultUnit.NONE);
     }
 
     protected void setup() {
         // The "Honor" system buttons
-        ((Button)findViewById(R.id.audio_wired_no)).setOnClickListener(mBtnClickListener);
-        ((Button)findViewById(R.id.audio_wired_yes)).setOnClickListener(mBtnClickListener);
+        (mSupportsBtn = (Button)findViewById(R.id.audio_wired_no)).setOnClickListener(mBtnClickListener);
+        (mDoesntSupportBtn = (Button)findViewById(R.id.audio_wired_yes)).setOnClickListener(mBtnClickListener);
 
         enableTestButtons(false);
     }
@@ -63,18 +72,31 @@ abstract class AudioWiredDeviceBaseActivity extends PassFailButtons.Activity {
         public void onClick(View v) {
             switch (v.getId()) {
                 case R.id.audio_wired_no:
-                    Log.i(TAG, "User denies wired device existence");
-                    enableTestButtons(false);
-                    recordWiredPortFound(false);
+                    mSupportsWiredPeripheral = false;
+                    mDoesntSupportBtn.setEnabled(false);
                     break;
 
                 case R.id.audio_wired_yes:
                     Log.i(TAG, "User confirms wired device existence");
-                    enableTestButtons(true);
-                    recordWiredPortFound(true);
+                    mSupportsWiredPeripheral = true;
+                    mSupportsBtn.setEnabled(false);
                     break;
             }
+            Log.i(TAG, "Wired Device Support:" + mSupportsWiredPeripheral);
+            enableTestButtons(mSupportsWiredPeripheral);
+            recordWiredPortFound();
+            calculatePass();
         }
     }
 
+    //
+    // PassFailButtons Overrides
+    //
+    @Override
+    public String getReportFileName() { return PassFailButtons.AUDIO_TESTS_REPORT_LOG_NAME; }
+
+    @Override
+    public void recordTestResults() {
+        getReportLog().submit();
+    }
 }
